@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, List, Mapping, Optional, TextIO, Union
+from typing import Dict, Iterable, List, Optional, TextIO, Union
 
 __all__ = [
     'Reference',
@@ -126,7 +126,7 @@ class Term:
     provenance: List[Reference]
 
     #: Relationships defined by [Typedef] stanzas
-    relationships: Mapping[str, List[Reference]] = field(default_factory=lambda: defaultdict(list))
+    relationships: Dict[str, List[Reference]] = field(default_factory=lambda: defaultdict(list))
 
     #: Relationships with the default "is_a"
     parents: List[Reference] = field(default_factory=list)
