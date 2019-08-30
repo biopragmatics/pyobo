@@ -38,6 +38,7 @@ class Reference:
 
     @staticmethod
     def from_curies(curies: str) -> List['Reference']:
+        """Get a list of references from a string with comma separated CURIEs."""
         return [
             Reference.from_curie(curie)
             for curie in curies.split(',')
@@ -107,8 +108,8 @@ class TypeDef:
             yield f'is_transitive: {"true" if self.is_transitive else "false"}'
 
     def to_obo(self) -> str:
-        """Convert this Typedef to an OBO entry."""
-        return '\n'.join(self._yield_obo_lines()) + '\n'
+        """Get the OBO document string."""
+        return '\n'.join(self._yield_obo_lines())
 
 
 @dataclass
@@ -142,20 +143,17 @@ class Term:
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: Optional[bool] = None
 
-    @property
-    def _namespace_normalized(self) -> str:
-        return self.namespace \
-            .replace(' ', '_') \
-            .replace('-', '_') \
-            .replace('(', '') \
-            .replace(')', '')
-
     def _yield_obo_lines(self) -> Iterable[str]:
         yield '\n[Term]'
         yield f'id: {self.reference.namespace}:{self.reference.identifier}'
         yield f'name: {self.reference.name}'
-        if self.namespace != '?':
-            yield f'namespace: {self._namespace_normalized}'
+        if self.namespace and self.namespace != '?':
+            namespace_normalized = self.namespace \
+                .replace(' ', '_') \
+                .replace('-', '_') \
+                .replace('(', '') \
+                .replace(')', '')
+            yield f'namespace: {namespace_normalized}'
         yield f'''def: "{self.description}" [{_combine_provenance(self.provenance)}]'''
 
         for xref in self.xrefs:
@@ -171,9 +169,9 @@ class Term:
         for synonym in self.synonyms:
             yield synonym.to_obo()
 
-
-    def __str__(self):  # noqa: D105
-        return self.to_obo()
+    def to_obo(self) -> str:
+        """Get the OBO document string."""
+        return '\n'.join(self._yield_obo_lines())
 
 
 @dataclass
