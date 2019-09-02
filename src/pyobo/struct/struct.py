@@ -8,6 +8,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, TextIO, Union
 
+from .utils import comma_separate, obo_escape
+
 __all__ = [
     'Reference',
     'Synonym',
@@ -29,6 +31,11 @@ class Reference:
 
     #: The entity's name/label
     name: Optional[str] = None
+
+    @property
+    def curie(self) -> str:
+        """The CURIE for this reference."""
+        return f'{self.namespace}:{self.identifier}'
 
     @staticmethod
     def from_curie(curie: str) -> 'Reference':
@@ -76,7 +83,7 @@ class Synonym:
 
     def to_obo(self) -> str:
         """Write this synonym as an OBO line to appear in a [Term] stanza."""
-        return f'synonym: "{self.name}" {self.specificity} [{_combine_provenance(self.provenance)}]'
+        return f'synonym: "{self.name}" {self.specificity} [{comma_separate(self.provenance)}]'
 
 
 @dataclass
@@ -90,7 +97,7 @@ class TypeDef:
     is_transitive: Optional[bool] = None
     xrefs: List[Reference] = field(default_factory=list)
 
-    def _yield_obo_lines(self) -> Iterable[str]:
+    def iterate_obo_lines(self) -> Iterable[str]:
         yield '\n[Typedef]'
         yield f'id: {self.id}'
         yield f'name: {self.name}'
@@ -109,7 +116,7 @@ class TypeDef:
 
     def to_obo(self) -> str:
         """Get the OBO document string."""
-        return '\n'.join(self._yield_obo_lines())
+        return '\n'.join(self.iterate_obo_lines())
 
 
 @dataclass
@@ -120,10 +127,10 @@ class Term:
     reference: Reference
 
     #: A description of the entity
-    description: str
+    definition: str
 
     #: References to articles in which the term appears
-    provenance: List[Reference]
+    provenance: List[Reference] = field(default_factory=list)
 
     #: Relationships defined by [Typedef] stanzas
     relationships: Dict[str, List[Reference]] = field(default_factory=lambda: defaultdict(list))
@@ -143,7 +150,12 @@ class Term:
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: Optional[bool] = None
 
-    def _yield_obo_lines(self) -> Iterable[str]:
+    @property
+    def curie(self) -> str:
+        """The CURIE for this term."""
+        return self.reference.curie
+
+    def iterate_obo_lines(self) -> Iterable[str]:
         yield '\n[Term]'
         yield f'id: {self.reference.namespace}:{self.reference.identifier}'
         yield f'name: {self.reference.name}'
@@ -154,7 +166,7 @@ class Term:
                 .replace('(', '') \
                 .replace(')', '')
             yield f'namespace: {namespace_normalized}'
-        yield f'''def: "{self.description}" [{_combine_provenance(self.provenance)}]'''
+        yield f'''def: "{self.definition}" [{comma_separate(self.provenance)}]'''
 
         for xref in self.xrefs:
             yield f'xref: {xref}'
@@ -171,7 +183,7 @@ class Term:
 
     def to_obo(self) -> str:
         """Get the OBO document string."""
-        return '\n'.join(self._yield_obo_lines())
+        return '\n'.join(self.iterate_obo_lines())
 
 
 @dataclass
@@ -181,14 +193,11 @@ class Obo:
     #: The name of the ontology
     ontology: str
 
-    #: The date the ontology was generated
-    date: datetime = field(default_factory=datetime.today)
-
     #: Type definitions
-    typedefs: List[TypeDef] = field(default_factory=list)
+    typedefs: List[TypeDef]
 
     #: Terms
-    terms: List[Term] = field(default_factory=list)
+    terms: List[Term]
 
     #: The OBO format
     format_version: str = '1.2'
@@ -196,9 +205,20 @@ class Obo:
     #: The ontology version
     data_version: Optional[str] = None
 
+    #: An annotation about how an ontology was generated
     auto_generated_by: Optional[str] = None
 
-    def _yield_obo_lines(self) -> Iterable[str]:
+    #: The date the ontology was generated
+    date: datetime = field(default_factory=datetime.today)
+
+    # _references: Mapping[str, Reference] = field(init=False)
+    #
+    # def __post_init__(self) -> None:
+    #     """Index all of the references."""
+    #     for term in self.terms:
+    #         self._references[term]
+
+    def iterate_obo_lines(self) -> Iterable[str]:
         yield f'format-version: {self.format_version}'
         yield f'date: {self.date.strftime("%d:%m:%Y %H:%M")}'
 
@@ -208,34 +228,15 @@ class Obo:
         yield f'ontology: {self.ontology}'
 
         for typedef in self.typedefs:
-            yield from typedef._yield_obo_lines()
+            yield from typedef.iterate_obo_lines()
 
         for term in self.terms:
-            yield from term._yield_obo_lines()
+            yield from term.iterate_obo_lines()
 
     def to_obo(self) -> str:
         """Get the OBO document string."""
-        return '\n'.join(self._yield_obo_lines())
+        return '\n'.join(self.iterate_obo_lines())
 
     def write(self, file: Union[None, TextIO, Path] = None) -> None:
         """Write the OBO to a file."""
         print(self.to_obo(), file=file)
-
-
-OBO_ESCAPE = {
-    c: f'\\{c}'
-    for c in ':,"\\()[]{}'
-}
-OBO_ESCAPE[' '] = '\\W'
-
-
-def obo_escape(string: str) -> str:
-    """Escape all funny characters for OBO."""
-    return ''.join(
-        OBO_ESCAPE.get(character, character)
-        for character in string
-    )
-
-
-def _combine_provenance(provenance):
-    return ', '.join(map(str, provenance))
