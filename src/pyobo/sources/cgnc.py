@@ -1,0 +1,53 @@
+# -*- coding: utf-8 -*-
+
+"""This module has the parser for HGNC."""
+
+import pandas as pd
+
+from pyobo import Obo, Reference, Synonym, Term
+from pyobo.constants import ensure_path
+
+PREFIX = 'cgnc'
+URL = "http://birdgenenames.org/cgnc/downloads.jsp?file=standard"
+
+
+def get_obo():
+    terms = list(get_terms())
+    return Obo(
+        terms=terms,
+        ontology=PREFIX,
+    )
+
+
+def get_terms():
+    path = ensure_path(PREFIX, URL, path=f'{PREFIX}.tsv')
+    df = pd.read_csv(path, sep='\t', dtype={'Entrez Gene id': str, 'CGNC id': str})
+    print(df.columns)
+
+    for cgnc_id, entrez_id, ensembl_id, symbol, name, synonyms, status, _ in df.values:
+        xrefs = []
+        if entrez_id and pd.notna(entrez_id):
+            xrefs.append(Reference(prefix='ncbigene', identifier=entrez_id))
+        if ensembl_id and pd.notna(ensembl_id):
+            xrefs.append(Reference(prefix='ensembl', identifier=ensembl_id))
+
+        if synonyms and pd.notna(synonyms):
+            synonyms = [
+                Synonym(name=synonym)
+                for synonym in synonyms.split('|')
+            ]
+        else:
+            synonyms = []
+
+        term = Term(
+            name=symbol,
+            reference=Reference(prefix=PREFIX, identifier=cgnc_id),
+            xrefs=xrefs,
+            synonyms=synonyms,
+            definition=name,
+        )
+        yield term
+
+
+if __name__ == '__main__':
+    get_obo().write_default()
