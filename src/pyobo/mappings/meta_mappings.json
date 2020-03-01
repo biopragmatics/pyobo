@@ -157,7 +157,9 @@
       },
       "synonyms": [
         "NCBITaxon",
-        "taxid"
+        "taxid",
+        "NCBI_Taxon_ID",
+        "NCBI_taxid"
       ]
     },
     "efo": {
@@ -652,6 +654,32 @@
     "complexportal": {
       "synyonms": [
         "ComplexPortal"
+      ]
+    },
+    "vega": {
+      "synonyms": [
+        "VEGA"
+      ]
+    },
+    "snornabase": {
+      "synonyms": [
+        "snoRNABase"
+      ]
+    },
+    "mirte": {
+      "synonyms": [
+        "miRNA Target Prediction at EMBL"
+      ]
+    },
+    "pmc": {
+      "synonyms": [
+        "PMCID",
+        "PMC"
+      ]
+    },
+    "pseudogene": {
+      "synonyms": [
+        "pseudogene.org"
       ]
     }
   }
