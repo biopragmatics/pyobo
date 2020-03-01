@@ -2,13 +2,21 @@
 
 """Data structures for OBO."""
 
+from __future__ import annotations
+
+import os
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
+from operator import attrgetter
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, TextIO, Union
 
+from networkx.utils import open_file
+
+from .registry import Registry, miriam
 from .utils import comma_separate, obo_escape
+from ..constants import OUTPUT_DIRECTORY
 
 __all__ = [
     'Reference',
@@ -23,28 +31,33 @@ __all__ = [
 class Reference:
     """A namespace, identifier, and label."""
 
+    #: The namespace's keyword
+    prefix: str
+
     #: The entity's identifier in the namespace
     identifier: str
 
-    #: The namespace's keyword
-    namespace: str
+    label: Optional[str] = field(default=None, repr=None)
 
-    #: The entity's name/label
-    name: Optional[str] = None
+    #: The namespace's identifier in the registry
+    registry_id: Optional[str] = field(default=None, repr=False)
+
+    #: The registry in which the namespace can be looked up
+    registry: Registry = field(default=miriam, repr=False)
 
     @property
     def curie(self) -> str:
         """The CURIE for this reference."""
-        return f'{self.namespace}:{self.identifier}'
+        return f'{self.prefix}:{self.identifier}'
 
     @staticmethod
-    def from_curie(curie: str) -> 'Reference':
+    def from_curie(curie: str) -> Reference:
         """Get a reference from a CURIE."""
-        namespace, identifier = curie.strip().split(':')
-        return Reference(namespace=namespace, identifier=identifier)
+        prefix, identifier = curie.strip().split(':')
+        return Reference(prefix=prefix, identifier=identifier)
 
     @staticmethod
-    def from_curies(curies: str) -> List['Reference']:
+    def from_curies(curies: str) -> List[Reference]:
         """Get a list of references from a string with comma separated CURIEs."""
         return [
             Reference.from_curie(curie)
@@ -57,15 +70,13 @@ class Reference:
         return obo_escape(self.identifier)
 
     def __str__(self):  # noqa: D105
-        if self.identifier.startswith(f'{self.namespace}:'):
-            curie = self.identifier
+        if self.identifier.lower().startswith(f'{self.prefix.lower()}:'):
+            rv = self.identifier.lower()
         else:
-            curie = f'{self.namespace}:{self._escaped_identifier}'
-
-        if not self.name:
-            return curie
-
-        return f'{curie} ! {self.name}'
+            rv = f'{self.prefix}:{self._escaped_identifier}'
+        if self.label:
+            rv = f'{rv} ! {self.label}'
+        return rv
 
 
 @dataclass
@@ -76,14 +87,31 @@ class Synonym:
     name: str
 
     #: The specificity of the synonym
-    specificity: str
+    specificity: str = 'EXACT'
+
+    #: The type of synonym. Must be defined in OBO document!
+    type: Optional[SynonymTypeDef] = None
 
     #: References to articles where the synonym appears
     provenance: List[Reference] = field(default_factory=list)
 
     def to_obo(self) -> str:
         """Write this synonym as an OBO line to appear in a [Term] stanza."""
-        return f'synonym: "{self.name}" {self.specificity} [{comma_separate(self.provenance)}]'
+        x = f'synonym: "{self.name}" {self.specificity}'
+        if self.type:
+            x = f'{x} {self.type.id}'
+        return f'{x} [{comma_separate(self.provenance)}]'
+
+
+@dataclass
+class SynonymTypeDef:
+    """A type definition for synonyms in OBO."""
+
+    id: str
+    name: str
+
+    def to_obo(self) -> str:
+        return f'synonymtypedef: {self.id} "{self.name}"'
 
 
 @dataclass
@@ -127,7 +155,7 @@ class Term:
     reference: Reference
 
     #: A description of the entity
-    definition: str
+    definition: Optional[str] = None
 
     #: References to articles in which the term appears
     provenance: List[Reference] = field(default_factory=list)
@@ -144,11 +172,21 @@ class Term:
     #: Equivalent references
     xrefs: List[Reference] = field(default_factory=list)
 
+    name: Optional[str] = None
+
     #: The sub-namespace within the ontology
     namespace: Optional[str] = None
 
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: Optional[bool] = None
+
+    def append_relationship(self, typedef: TypeDef, reference: Reference) -> None:
+        """Append a relationship."""
+        self.relationships[typedef.id].append(reference)
+
+    def extend_relationship(self, typedef: TypeDef, references: Iterable[Reference]) -> None:
+        """Append several relationships."""
+        self.relationships[typedef.id].extend(references)
 
     @property
     def curie(self) -> str:
@@ -157,8 +195,8 @@ class Term:
 
     def iterate_obo_lines(self) -> Iterable[str]:
         yield '\n[Term]'
-        yield f'id: {self.reference.namespace}:{self.reference.identifier}'
-        yield f'name: {self.reference.name}'
+        yield f'id: {self.curie}'
+        yield f'name: {self.name}'
         if self.namespace and self.namespace != '?':
             namespace_normalized = self.namespace \
                 .replace(' ', '_') \
@@ -168,13 +206,13 @@ class Term:
             yield f'namespace: {namespace_normalized}'
         yield f'''def: "{self.definition}" [{comma_separate(self.provenance)}]'''
 
-        for xref in self.xrefs:
+        for xref in sorted(self.xrefs, key=attrgetter('prefix', 'identifier')):
             yield f'xref: {xref}'
 
-        for parent in self.parents:
+        for parent in sorted(self.parents, key=attrgetter('prefix', 'identifier')):
             yield f'is_a: {parent}'
 
-        for relationship, relationship_references in self.relationships.items():
+        for relationship, relationship_references in sorted(self.relationships.items()):
             for relationship_reference in relationship_references:
                 yield f'relationship: {relationship} {relationship_reference}'
 
@@ -193,14 +231,17 @@ class Obo:
     #: The name of the ontology
     ontology: str
 
-    #: Type definitions
-    typedefs: List[TypeDef]
-
     #: Terms
     terms: List[Term]
 
     #: The OBO format
     format_version: str = '1.2'
+
+    #: Type definitions
+    typedefs: List[TypeDef] = field(default_factory=list)
+
+    #: Synonym type definitions
+    synonym_typedefs: List[SynonymTypeDef] = field(default_factory=list)
 
     #: The ontology version
     data_version: Optional[str] = None
@@ -225,6 +266,12 @@ class Obo:
         if self.auto_generated_by is not None:
             yield f'auto-generated-by: {self.auto_generated_by}'
 
+        if self.data_version is not None:
+            yield f'data-version: {self.data_version}'
+
+        for synonym_typedef in sorted(self.synonym_typedefs, key=attrgetter('id')):
+            yield synonym_typedef.to_obo()
+
         yield f'ontology: {self.ontology}'
 
         for typedef in self.typedefs:
@@ -237,6 +284,12 @@ class Obo:
         """Get the OBO document string."""
         return '\n'.join(self.iterate_obo_lines())
 
-    def write(self, file: Union[None, TextIO, Path] = None) -> None:
+    @open_file(1, mode='w')
+    def write(self, file: Union[None, str, TextIO, Path] = None) -> None:
         """Write the OBO to a file."""
         print(self.to_obo(), file=file)
+
+    def write_default(self) -> None:
+        """Write the OBO to the default path."""
+        path = os.path.join(OUTPUT_DIRECTORY, f'{self.ontology}.obo')
+        self.write(path)

@@ -2,4 +2,4 @@
 
 """Data structures for OBO."""
 
-from .struct import Obo, Reference, Synonym, Term, TypeDef  # noqa: F401
+from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef  # noqa: F401

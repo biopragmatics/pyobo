@@ -7,12 +7,14 @@ from typing import Callable, List
 
 import obonet
 
-from ..struct import Reference, Term, Obo
+from .. import TypeDef
+from ..struct import Reference, Term
 
 __all__ = [
     'build_term_getter',
     'get_terms_from_url',
     'get_terms_from_graph',
+    'from_species',
 ]
 
 
@@ -30,23 +32,21 @@ def get_terms_from_graph(g) -> List[Term]:
 
     #: Identifiers to references
     references = {
-        node: Reference(
-            namespace=ontology,
-            identifier=node,
-            name=data['name'],
-        )
+        node: (Reference(prefix=ontology, identifier=node), data['name'])
         for node, data in g.nodes(data=True)
     }
 
     def make_term(node, data) -> Term:
+        reference, name = references[node]
         return Term(
-            reference=references[node],
+            reference=reference,
+            name=name,
             definition=data['def'],
             parents=list(get_parents(data)),
         )
 
     def get_parents(data):
-        for parent in data.get('is_a', []):
+        for parent in data.resolve_resource('is_a', []):
             # May have to add more logic here later
             yield references[parent]
 
@@ -56,3 +56,9 @@ def get_terms_from_graph(g) -> List[Term]:
         terms.append(term)
 
     return terms
+
+
+from_species = TypeDef(
+    id='from_species',
+    name='from species',
+)
