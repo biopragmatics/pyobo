@@ -1,0 +1,658 @@
+{
+  "remappings": {
+    "full": {
+    },
+    "prefix": {
+      "BAO_": "BAO:",
+      "MedlinePlus: ": "MedlinePlus:",
+      "ATTC: ": "ATC:",
+      "ATCC number: ": "ATC:",
+      "PMID: ": "PMID:",
+      "KEGG COMPOUND": "KEGG.COMPOUND",
+      "KEGG DRUG": "KEGG.DRUG",
+      "NIST Chemistry WebBook": "NIST",
+      "UMLS CUI:": "UMLS:",
+      "SNOMEDCT: ": "SNOMEDCT",
+      "LIPID MAPS:": "LIPIDMAPS",
+      "VFB:FBbt_": "FBbt:",
+      "URL: ": "URL:"
+    }
+  },
+  "blacklists": {
+    "full": [
+      "KEGG",
+      "NIST",
+      "ICD9CM_2005:<new dbxref>",
+      "XX:<new dbxref>",
+      "XX:<new xref>",
+      "STRUCTURE_Formula",
+      "United:Kingdom",
+      "South:Korea",
+      "Codex:\\:260",
+      "Europe:\\:260"
+    ],
+    "prefix": [
+      "url:",
+      "Image:",
+      "Category",
+      "http://",
+      "https://",
+      "http://dbpedia.org",
+      "https://github.com",
+      "PERSON",
+      "similar to",
+      "modelled on",
+      "Wikipedia",
+      "SUBMITTER",
+      "STRUCTURE_ChemicalName_IUPAC",
+      "STRUCTURE_Formula",
+      "stedman",
+      "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com"
+    ],
+    "suffix": [
+      ".jpg",
+      ".svg",
+      ".png"
+    ]
+  },
+  "database": {
+    "mesh": {
+      "miriam": {
+        "id": "00000560",
+        "prefix": "mesh"
+      },
+      "synonyms": [
+        "MSH",
+        "MESH"
+      ]
+    },
+    "umls": {
+      "miriam": {
+        "id": "00000233",
+        "prefix": "umls"
+      },
+      "synonyms": [
+        "UMLS",
+        "UMLS_CUI",
+        "UMLS CUI"
+      ]
+    },
+    "snomedct": {
+      "miriam": {
+        "id": "00000269",
+        "prefix": "snomedct"
+      },
+      "synonyms": [
+        "SNOMED",
+        "SNOMECT",
+        "SNOMEDCT",
+        "SNOMED_CT",
+        "SNOMEDCTCT",
+        "SCTID",
+        "SNOWMEDCT_US",
+        "SNOWMEDCT",
+        "SNOMEDCT_US",
+        "SCTID_2010_1_31",
+        "SNOMEDCT_2010_1_31",
+        "SNOWMEDCT_US_2018_03_01",
+        "SNOMEDCT_US_2018_03_01",
+        "SNOMED_CT_US_2018_03_01",
+        "SNOMEDCT_US_2018_09_01",
+        "SNOMEDCTCT_2018_03_01",
+        "SNOMEDCT_US_2019_03_01",
+        "SNOMEDCTCT_2019_03_01"
+      ]
+    },
+    "icd10": {
+      "miriam": {
+        "id": "00000009",
+        "prefix": "icd"
+      },
+      "synonyms": [
+        "ICD10",
+        "ICD-10",
+        "ICD10CM"
+      ]
+    },
+    "icd9": {
+      "synonyms": [
+        "ICD9",
+        "IC9CM",
+        "ICD9CM_2005",
+        "ICDCM_2005",
+        "ICD9_2005",
+        "ICD9CM_2006",
+        "ICD9CM",
+        "ICD9CM_2005",
+        "MTHICD9_2006"
+      ]
+    },
+    "icdo": {
+      "synonyms": [
+        "ICD-O",
+        "ICDO"
+      ]
+    },
+    "ncit": {
+      "miriam": {
+        "id": "00000139",
+        "prefix": "ncit"
+      },
+      "synonyms": [
+        "NCIt",
+        "NCIT",
+        "NCI",
+        "NCI2004_11_17",
+        "ncithesaurus",
+        "NCI_Thesaurus",
+        "NCIT_Thesaurus",
+        "NCITm",
+        "NCITt"
+      ]
+    },
+    "taxonomy": {
+      "miriam": {
+        "id": "00000006",
+        "prefix": "taxonomy"
+      },
+      "synonyms": [
+        "NCBITaxon",
+        "taxid"
+      ]
+    },
+    "efo": {
+      "miriam": {
+        "id": "00000391",
+        "prefix": "efo"
+      },
+      "obofoundry": {
+        "prefix": "efo"
+      }
+    },
+    "doid": {
+      "miriam": {
+        "id": "00000233",
+        "prefix": "doid"
+      },
+      "obofoundry": {
+        "prefix": "doid"
+      }
+    },
+    "hp": {
+      "miriam": {
+        "id": "00000571",
+        "prefix": "hp"
+      },
+      "obofoundry": {
+        "prefix": "hp"
+      }
+    },
+    "atc": {
+      "miriam": {
+        "id": "",
+        "prefix": ""
+      },
+      "synonyms": [
+        "ATC_code",
+        "ATCC number",
+        "ATTC",
+        "ATCC"
+      ]
+    },
+    "meddra": {
+      "synonyms": [
+        "MedDRA",
+        "MeDRA",
+        "MEDRA",
+        "Medical Dictionary for Regulatory Activities"
+      ]
+    },
+    "lipidmaps": {
+      "synonyms": [
+        "LIPID_MAPS_instance",
+        "LIPID MAPS",
+        "LIPID_MAPS_class"
+      ]
+    },
+    "nist": {
+      "synonyms": [
+        "NIST Chemistry WebBook",
+        "NIST"
+      ]
+    },
+    "kegg.compound": {
+      "synonyms": [
+        "KEGG.COMPOUND",
+        "KEGG COMPOUND"
+      ]
+    },
+    "kegg.drug": {
+      "synonyms": [
+        "KEGG.DRUG",
+        "KEGG DRUG"
+      ]
+    },
+    "kegg.pathway": {
+      "synonyms": [
+        "KEGG_PATHWAY"
+      ]
+    },
+    "kegg.reaction": {
+      "synonyms": [
+        "KEGG_REACTION"
+      ]
+    },
+    "pubmed": {
+      "synonyms": [
+        "pmid",
+        "PMID"
+      ]
+    },
+    "lincs": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "chebi": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": [
+        "ChEBI",
+        "CHEBI"
+      ]
+    },
+    "reactome": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "citexplore": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "chemspider": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": [
+        "Chemspider"
+      ]
+    },
+    "omim": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "pdb": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "uniprot": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": [
+        "UniProt",
+        "UniProtKB"
+      ]
+    },
+    "patent": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "chembl": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": [
+        "ChEMBL"
+      ]
+    },
+    "metacyc": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": [
+        "MetaCyc"
+      ]
+    },
+    "bfo": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "chemidplus": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": [
+        "ChemIDplus"
+      ]
+    },
+    "symp": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": [
+        "SYMP"
+      ]
+    },
+    "pdbechem": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "hmdb": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": [
+        "HMDB"
+      ]
+    },
+    "fbbt": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": [
+        "FBbt_root",
+        "FBbt"
+      ]
+    },
+    "zfa": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "zfin": {
+      "synonyms": [
+        "ZFIN"
+      ]
+    },
+    "cl": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "pdbe": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "uberon": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": [
+        "UBERON",
+        "Uberon",
+        "Uber-anatomy ontology"
+      ]
+    },
+    "reaxys": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": [
+        "Reaxys"
+      ]
+    },
+    "hgnc": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "oprhanet": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "mfo": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "ordo": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "bao": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": [
+        "BAO"
+      ]
+    },
+    "kegg": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": [
+        "KEGG"
+      ]
+    },
+    "go": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "ncbitaxon": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "ncbigene": {
+      "synonyms": [
+        "entrez",
+        "NCBIGene"
+      ]
+    },
+    "mondo": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "sgd": {
+      "synonyms": [
+        "SGD"
+      ]
+    },
+    "pombase": {
+      "synonyms": [
+        "PomBase"
+      ]
+    },
+    "flybase": {
+      "synonyms": [
+        "FB",
+        "FlyBase"
+      ]
+    },
+    "mgi": {
+      "synonyms": [
+        "MGI",
+        "MGD"
+      ]
+    },
+    "rgd": {
+      "synonyms": [
+        "RGD"
+      ]
+    },
+    "iuphar.family": {
+      "synonyms": [
+        "IUPHARfam"
+      ]
+    },
+    "wormbase": {
+      "synonyms": [
+        "WormBase"
+      ]
+    },
+    "cas": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": []
+    },
+    "drugbank": {
+      "miriam": {
+        "id": null,
+        "prefix": null
+      },
+      "synonyms": [
+        "DrugBank"
+      ]
+    },
+    "drugcentral": {
+      "synonyms": [
+        "Drug_Central"
+      ]
+    },
+    "ensembl": {
+      "synonyms": [
+        "Ensembl"
+      ]
+    },
+    "pubchem.compound": {
+      "synonyms": [
+        "DSSTox_CID",
+        "CID",
+        "pubchem_id",
+        "Pubchem"
+      ]
+    },
+    "pubchem.substance": {
+      "synonyms": [
+        "DSSTox_Generic_SID"
+      ]
+    },
+    "bto": {
+      "synonyms": [
+        "BFO"
+      ]
+    },
+    "csp": {
+      "synonyms": [
+        "CRISP Thesaurus, 2006",
+        "CRISP Thesaurus",
+        "CSP2005"
+      ]
+    },
+    "gard": {
+      "synonyms": [
+        "GARD",
+        "Genetic and Rare Diseases Information Center"
+      ]
+    },
+    "clo": {
+      "synonyms": [
+        "CLO"
+      ]
+    },
+    "omit": {
+      "miriam": {
+        "id": "00000605",
+        "prefix": "omit"
+      },
+      "synonyms": [
+        "OMIT"
+      ]
+    },
+    "orcid": {
+      "namespaces": [
+        "ORCiD",
+        "ORCID"
+      ]
+    },
+    "eccode": {
+      "synonyms": [
+        "EC",
+        "EC-CODE",
+        "ECCODE"
+      ]
+    },
+    "rhea": {
+      "synonyms": [
+        "RHEA"
+      ]
+    },
+    "pr": {
+      "synonyms": [
+        "PR",
+        "PRO"
+      ]
+    },
+    "mpath": {
+      "synonyms": [
+        "MPATH"
+      ]
+    },
+    "interpro": {
+      "synoynms": [
+        "InterPro"
+      ]
+    },
+    "complexportal": {
+      "synyonms": [
+        "ComplexPortal"
+      ]
+    }
+  }
+}
