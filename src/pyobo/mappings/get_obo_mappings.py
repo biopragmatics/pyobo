@@ -8,6 +8,7 @@ https://ncim.nci.nih.gov/ncimbrowser/pages/source_help_info.jsf
 
 import json
 import os
+from collections import defaultdict
 from typing import Mapping, Optional
 from urllib.request import urlretrieve
 
@@ -15,6 +16,7 @@ import click
 import networkx as nx
 import obonet
 import pandas as pd
+from tqdm import tqdm
 
 from pyobo.constants import OUTPUT_DIRECTORY
 from pyobo.registries.registries import MIRIAM_CACHE_PATH, OLS_CACHE_PATH
@@ -124,34 +126,26 @@ def get_namespace_synonyms() -> Mapping[str, str]:
 
 
 SYNONYM_TO_KEY = get_namespace_synonyms()
-UNHANDLED_NAMESPACES = set()
-UBERON_UNHANDLED = set()
+UNHANDLED_NAMESPACES = defaultdict(list)
+UBERON_UNHANDLED = defaultdict(list)
 
 
 def normalize_namespace(namespace, node, xref=None) -> Optional[str]:
     """Normalize a namespace and return, if possible."""
-    if namespace in UNHANDLED_NAMESPACES:
-        return
-
     for t in (lambda x: x, str.lower, str.upper, str.casefold):
         namespace_transformed = t(namespace)
         if namespace_transformed in SYNONYM_TO_KEY:
             return SYNONYM_TO_KEY[namespace_transformed]
 
     if node.startswith('UBERON:'):  # uberon has tons of xrefs to anatomical features. skip them
-        UBERON_UNHANDLED.add(namespace)
+        UBERON_UNHANDLED[namespace].append((node, xref))
         return
 
-    UNHANDLED_NAMESPACES.add(namespace)
-
-    if xref is None:
-        print(f'?  node namespace={namespace} for node={node}')
-    else:
-        print(f'?  xref namespace={namespace} for node={node}/xref={xref}')
+    UNHANDLED_NAMESPACES[namespace].append((node, xref))
 
 
 def iterate_xrefs_from_graph(graph: nx.Graph, obo_key: str):
-    for node, data in graph.nodes(data=True):
+    for node, data in tqdm(graph.nodes(data=True), desc=f'Extracting {obo_key}'):
         node = node.strip()
 
         if node in XREF_BLACKLIST:
@@ -179,7 +173,7 @@ def iterate_xrefs_from_graph(graph: nx.Graph, obo_key: str):
             continue
 
         norm_head_ns = normalize_namespace(head_ns, node, None)
-        if norm_head_ns is None:
+        if not norm_head_ns:
             continue
 
         # TODO check if synonyms are also written like CURIEs,
@@ -219,6 +213,8 @@ def iterate_xrefs_from_graph(graph: nx.Graph, obo_key: str):
                 continue
 
             norm_xref_ns = normalize_namespace(xref_ns, node, xref)
+            if not norm_xref_ns:
+                continue
 
             yield norm_head_ns, head_id, norm_xref_ns, xref_id, obo_key
             yield norm_xref_ns, xref_id, norm_head_ns, head_id, obo_key
@@ -247,19 +243,25 @@ def main(directory):
 
         xrefs.extend(iterate_xrefs_from_graph(g, key))
 
-    export_path = os.path.join(directory, f'xrefs.tsv.gz')
     export_sample_path = os.path.join(directory, f'xrefs_sample.tsv')
 
     df = pd.DataFrame(set(xrefs), columns=('head_ns', 'head_id', 'tail_ns', 'tail_id', 'source'))
     df = df.sort_values(['head_ns', 'head_id', 'tail_ns', 'tail_id', 'source'])
 
-    df.to_csv(export_path, sep='\t', index=False)
+    df.to_csv(os.path.join(directory, f'xrefs.tsv'), sep='\t', index=False)
+    df.to_csv(os.path.join(directory, f'xrefs.tsv.gz'), sep='\t', index=False)
     df.head().to_csv(export_sample_path, sep='\t', index=False)
 
     summary_path = os.path.join(directory, 'summary.tsv')
     summary_df = df.groupby(['source', 'tail_ns'])['head_ns'].count().reset_index().sort_values(['head_ns'],
                                                                                                 ascending=False)
     summary_df.to_csv(summary_path, sep='\t', index=False)
+
+    unmapped_path = os.path.join(directory, 'unmapped.tsv')
+    with open(unmapped_path, 'w') as file:
+        for namespace, items in tqdm(sorted(UNHANDLED_NAMESPACES.items()), desc='Outputting unmapped.tsv'):
+            for node, xref in items:
+                print(node, namespace, xref, file=file, sep='\t')
 
 
 if __name__ == '__main__':
