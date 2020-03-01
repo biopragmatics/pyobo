@@ -294,12 +294,15 @@
         "Chemspider"
       ]
     },
-    "omim": {
+    "mim": {
       "miriam": {
         "id": null,
         "prefix": null
       },
-      "synonyms": []
+      "synonyms": [
+        "OMIM",
+        "OMIMPS"
+      ]
     },
     "pdb": {
       "miriam": {
