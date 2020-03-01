@@ -1,6 +1,9 @@
 {
   "remappings": {
     "full": {
+      "LIPIDMAPSLMFA01030152": "LIPIDMAPS:LMFA01030152",
+      "LIPIDMAPSLMFA01030141": "LIPIDMAPS:LMFA01030141",
+      "SNOMEDCT274897005": "SNOMEDCT:274897005"
     },
     "prefix": {
       "BAO_": "BAO:",
@@ -47,6 +50,7 @@
       "STRUCTURE_ChemicalName_IUPAC",
       "STRUCTURE_Formula",
       "stedman",
+      "WebElements",
       "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com"
     ],
     "suffix": [
@@ -680,6 +684,83 @@
     "pseudogene": {
       "synonyms": [
         "pseudogene.org"
+      ]
+    },
+    "dictybase": {
+      "synonyms": [
+        "dictyBase"
+      ]
+    },
+    "lncipedia": {},
+    "ucsc": {},
+    "umbbd.pathway": {
+      "url": "http://eawag-bbd.ethz.ch/$1/$1_map.html",
+      "synonyms": [
+        "UM-BBD_pathwayID"
+      ]
+    },
+    "umbbd.enzyme": {
+      "url": "http://eawag-bbd.ethz.ch/servlets/pageservlet?ptype=ep&enzymeID=$1",
+      "synonyms": [
+        "UM-BBD_enzymeID"
+      ]
+    },
+    "umbbd.compound": {
+      "url": "http://eawag-bbd.ethz.ch/servlets/pageservlet?ptype=c&compID=$1",
+      "synonyms": [
+        "UM-BBD_compID"
+      ]
+    },
+    "umbbd.reaction": {
+      "url": "http://eawag-bbd.ethz.ch/servlets/pageservlet?ptype=r&reacID=$1",
+      "synonyms": [
+        "UM-BBD_reactionID"
+      ]
+    },
+    "ymdb": {
+      "title": "Yeast Metabolome Database",
+      "url": "http://www.ymdb.ca/compounds/$1",
+      "pattern": "YMDB\\d+"
+    },
+    "vz": {
+      "title": "ViralZone",
+      "url": "https://viralzone.expasy.org/$1"
+    },
+    "uniprot.keyword": {
+      "title": "UniProt Keywords",
+      "url": "https://www.uniprot.org/keywords/$1",
+      "synonyms": [
+        "UniProtKB-KW"
+      ]
+    },
+    "uniprot.var": {
+      "url": "https://web.expasy.org/variant_pages/$1.html",
+      "pattern": "VAR_\\d+",
+      "synonyms": [
+        "UniProtKB_VAR"
+      ]
+    },
+    "pfr": {
+      "url": "http://repository.topdownproteomics.org/proteoforms/$1",
+      "pattern": "\\d+",
+      "synonyms": [
+        "TDR"
+      ]
+    },
+    "ecmdb": {
+      "title": "E. coli Metabolite Database",
+      "url": "http://ecmdb.ca/compounds/$1",
+      "pattern": "ECMDB\\d+",
+      "synonyms": [
+        "ECMDB"
+      ]
+    },
+    "cgnc": {
+      "title": "Chicken Gene Nomenclature Consortium",
+      "url": "http://birdgenenames.org/cgnc/GeneReport?id=",
+      "synonyms": [
+        "BirdBase",
+        "CGNC"
       ]
     }
   }
