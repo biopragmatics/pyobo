@@ -4,8 +4,18 @@ A programmatic interface for generating and handling OBO in Python.
 
 Installation
 ------------------------------------------------------------
-PyOBO can be installed easily from `GitHub <https://github.com/cthoyt/pyobo>`_ with:
+PyOBO can be installed from `PyPI <https://pypi.org/project/pyobo/>`_ with:
 
 .. code-block:: sh
 
-    $ pip install git+https://github.com/cthoyt/pyobo.git
+    $ pip install pyobo
+
+
+It can be installed in development mode from `GitHub <https://github.com/cthoyt/pyobo>`_
+with:
+
+.. code-block:: sh
+
+    $ git clone https://github.com/cthoyt/pyobo.git
+    $ cd pyobo
+    $ pip install -e .
