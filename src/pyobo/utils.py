@@ -4,6 +4,7 @@
 
 import logging
 import os
+import tarfile
 from typing import Mapping, Optional
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
@@ -48,6 +49,14 @@ def ensure_path(prefix: str, url: str, path: Optional[str] = None) -> str:
 def ensure_df(prefix: str, url: str, path: Optional[str] = None, **kwargs) -> pd.DataFrame:
     """Download a file and open as a dataframe."""
     return pd.read_csv(ensure_path(prefix, url, path=path), **kwargs)
+
+
+def ensure_tar_df(prefix: str, url: str, inner_path: str, **kwargs):
+    """Download a tar file and open as a dataframe."""
+    path = ensure_path(prefix, url)
+    with tarfile.open(path) as tar_file:
+        with tar_file.extractfile(inner_path) as file:
+            return pd.read_csv(file, **kwargs)
 
 
 def get_prefix_obo_path(prefix: str) -> str:

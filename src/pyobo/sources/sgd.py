@@ -4,18 +4,16 @@
 
 from urllib.parse import unquote_plus
 
-import pandas as pd
-
 from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
 from pyobo.sources.utils import from_species
+from pyobo.utils import ensure_tar_df
 
 HEADER = ['chromosome', 'database', 'feature', 'start', 'end', 'a', 'b', 'c', 'data']
 PREFIX = 'sgd'
 
-# FIXME make downloader for GZIP/archives
 URL = 'https://downloads.yeastgenome.org/sequence/' \
       'S288C_reference/genome_releases/S288C_reference_genome_R64-2-1_20150113.tgz'
-path = '/Users/cthoyt/Downloads/S288C_reference_genome_R64-2-1_20150113/saccharomyces_cerevisiae_R64-2-1_20150113.gff'
+INNER_PATH = 'S288C_reference_genome_R64-2-1_20150113/saccharomyces_cerevisiae_R64-2-1_20150113.gff'
 
 alias_type = SynonymTypeDef(id='alias', name='alias')
 
@@ -32,7 +30,15 @@ def get_obo() -> Obo:
 
 def get_terms() -> str:
     """Get SGD terms."""
-    df = pd.read_csv(path, sep='\t', skiprows=18, header=None, names=HEADER)
+    df = ensure_tar_df(
+        prefix=PREFIX,
+        url=URL,
+        inner_path=INNER_PATH,
+        sep='\t',
+        skiprows=18,
+        header=None,
+        names=HEADER,
+    )
     df = df[df['feature'] == 'gene']
     for data in df['data']:
         d = dict(entry.split('=') for entry in data.split(';'))
