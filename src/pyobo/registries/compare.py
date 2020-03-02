@@ -17,6 +17,7 @@ def _get_json(name):
 
 
 def main():
+    """Compare the registries."""
     miriam = _get_json('miriam.json')
     miriam_entries = {
         entry['prefix'].lower()

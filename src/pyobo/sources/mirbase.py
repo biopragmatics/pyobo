@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""This module has the parser for miRBase."""
+"""Converter for miRBase."""
 
 import gzip
 from typing import Iterable, List
@@ -9,9 +9,9 @@ import pandas as pd
 from tqdm import tqdm
 
 from pyobo import Obo, Synonym, Term, TypeDef
-from pyobo.constants import ensure_path
 from pyobo.sources.utils import from_species
 from pyobo.struct.struct import Reference
+from pyobo.utils import ensure_path
 
 PREFIX = 'mirbase'
 VERSION = '22.1'
@@ -27,6 +27,7 @@ xref_mapping = {
 
 
 def get_obo() -> Obo:
+    """Get miRBase as OBO."""
     terms = get_terms()
     return Obo(
         ontology=PREFIX,
@@ -108,7 +109,7 @@ def _process_definitions_lines(lines: Iterable[str]) -> Iterable[Term]:
 
         mature = []
         for index in mature_mirna_lines:
-            location = group[index][10:-1].strip()
+            # location = group[index][10:-1].strip()
             accession = group[index + 1][33:-2]
             product = group[index + 2][31:-2]
             product_reference = Reference(

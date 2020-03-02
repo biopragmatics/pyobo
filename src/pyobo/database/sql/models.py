@@ -56,4 +56,3 @@ class Term(Base):
         lazy='dynamic',
         backref=backref('children', lazy='dynamic'),
     )
-

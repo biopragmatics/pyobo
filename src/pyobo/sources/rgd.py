@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 
+"""Converter for RGD."""
+
+from typing import Iterable
+
 import pandas as pd
 from tqdm import tqdm
 
 from pyobo import Obo, Synonym, SynonymTypeDef, Term
-from pyobo.constants import ensure_path
 from pyobo.struct.struct import Reference
+from pyobo.utils import ensure_path
 
 PREFIX = 'rgd'
 
@@ -56,6 +60,7 @@ GENES_HEADER = [
 
 
 def get_obo() -> Obo:
+    """Get RGD as OBO."""
     terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
@@ -64,7 +69,7 @@ def get_obo() -> Obo:
     )
 
 
-x = [
+namespace_to_column = [
     ('ensembl', 'ENSEMBL_ID'),
     ('uniprot', 'UNIPROT_ID'),
     ('unigene', 'UNIGENE_ID'),
@@ -72,7 +77,8 @@ x = [
 ]
 
 
-def get_terms():
+def get_terms() -> Iterable[Term]:
+    """Get RGD terms."""
     path = ensure_path(PREFIX, GENES_URL)
     df = pd.read_csv(path, sep='\t', header=0, comment='#', dtype={'NCBI_GENE_ID': str}, low_memory=False)
     for _, row in tqdm(df.iterrows(), total=len(df.index), desc=f'Mapping {PREFIX}'):
@@ -88,7 +94,7 @@ def get_terms():
                 synonyms.append(Synonym(name=old_symbol, type=old_symbol_type))
 
         xrefs = []
-        for prefix, key in x:
+        for prefix, key in namespace_to_column:
             xref_ids = str(row[key])
             if xref_ids and pd.notna(xref_ids):
                 for xref_id in xref_ids.split(';'):

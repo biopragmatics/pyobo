@@ -10,16 +10,14 @@ import json
 import os
 from collections import defaultdict
 from typing import Mapping, Optional
-from urllib.request import urlretrieve
 
 import click
 import networkx as nx
-import obonet
 import pandas as pd
 from tqdm import tqdm
 
-from pyobo.constants import OUTPUT_DIRECTORY
 from pyobo.registries.registries import MIRIAM_CACHE_PATH, OLS_CACHE_PATH
+from pyobo.utils import MissingOboBuild, get_obo_graph, get_obo_graph_by_url
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 CURATED_DB_PATH = os.path.join(HERE, 'meta_mappings.json')
@@ -145,6 +143,7 @@ def normalize_namespace(namespace, node, xref=None) -> Optional[str]:
 
 
 def iterate_xrefs_from_graph(graph: nx.Graph, obo_key: str):
+    """Iterate over cross references in the graph."""
     for node, data in tqdm(graph.nodes(data=True), desc=f'Extracting {obo_key}'):
         node = node.strip()
 
@@ -223,25 +222,15 @@ def iterate_xrefs_from_graph(graph: nx.Graph, obo_key: str):
 @click.command()
 @click.option('--directory', type=click.Path(dir_okay=True, file_okay=False), default=os.getcwd())
 def main(directory):
-    os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
-
+    """Output the mappings."""
     xrefs = []
-    for key, url in OBO.items():
-        obo_path = os.path.join(OUTPUT_DIRECTORY, f'{key}.obo')
-        if not os.path.exists(obo_path):
-            print(f'downloading {url}')
-            urlretrieve(url, obo_path)
+    for prefix, url in OBO.items():
+        try:
+            graph = get_obo_graph(prefix)
+        except MissingOboBuild:
+            graph = get_obo_graph_by_url(prefix, url)
 
-        obo_pickle_path = os.path.join(OUTPUT_DIRECTORY, f'{key}.obo.pickle')
-        if os.path.exists(obo_pickle_path):
-            # click.secho(f'reading {obo_pickle_path}', fg='green', bold=True)
-            g = nx.read_gpickle(obo_pickle_path)
-        else:
-            print(f'parsing {obo_path}')
-            g = obonet.read_obo(obo_path)
-            nx.write_gpickle(g, obo_pickle_path)
-
-        xrefs.extend(iterate_xrefs_from_graph(g, key))
+        xrefs.extend(iterate_xrefs_from_graph(graph, prefix))
 
     export_sample_path = os.path.join(directory, f'xrefs_sample.tsv')
 

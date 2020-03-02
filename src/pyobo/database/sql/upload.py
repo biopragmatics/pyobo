@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 
+"""Uploader for OBO."""
+
 import click
 from tqdm import tqdm
 
 from pyobo.database.sql.manager import Manager
 from pyobo.database.sql.models import Reference, Term
+from pyobo.sources.utils import get_terms_from_graph
+from pyobo.utils import get_obo_graph
 
 
 @click.command()
 def main():
-    import pickle
-    from pyobo.sources.utils import get_terms_from_graph
-    with open('/Users/cthoyt/.bio2bel/go/go-basic.obo.gpickle', 'rb') as file:
-        g = pickle.load(file)
-
+    """Upload pickle graph."""
+    g = get_obo_graph('go')
     terms = get_terms_from_graph(g)
 
     references = {}

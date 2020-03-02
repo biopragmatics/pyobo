@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
 
-"""This module has the parser for HGNC."""
+"""Converter for CGNC."""
+
+from typing import Iterable
 
 import pandas as pd
 
 from pyobo import Obo, Reference, Synonym, Term
-from pyobo.constants import ensure_path
+from pyobo.utils import ensure_path
 
 PREFIX = 'cgnc'
 URL = "http://birdgenenames.org/cgnc/downloads.jsp?file=standard"
 
 
-def get_obo():
+def get_obo() -> Obo:
+    """Get CGNC as OBO."""
     terms = list(get_terms())
     return Obo(
         terms=terms,
@@ -19,7 +22,8 @@ def get_obo():
     )
 
 
-def get_terms():
+def get_terms() -> Iterable[Term]:
+    """Get CGNC terms."""
     path = ensure_path(PREFIX, URL, path=f'{PREFIX}.tsv')
     df = pd.read_csv(path, sep='\t', dtype={'Entrez Gene id': str, 'CGNC id': str})
     print(df.columns)

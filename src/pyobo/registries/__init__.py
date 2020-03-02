@@ -2,4 +2,4 @@
 
 """Extract registry information."""
 
-from .registries import *
+from .registries import get_miriam, get_obofoundry, get_ols  # noqa: F401

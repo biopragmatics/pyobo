@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+"""Converter for MGI."""
+
 from collections import defaultdict
 from typing import Iterable
 
@@ -7,9 +9,9 @@ import pandas as pd
 from tqdm import tqdm
 
 from pyobo import Obo, Synonym, Term
-from pyobo.constants import ensure_path
 from pyobo.sources.utils import from_species
 from pyobo.struct.struct import Reference
+from pyobo.utils import ensure_path
 
 PREFIX = 'mgi'
 MARKERS_URL = 'http://www.informatics.jax.org/downloads/reports/MRK_List2.rpt'
@@ -18,6 +20,7 @@ ENSEMBL_XREFS_URL = 'http://www.informatics.jax.org/downloads/reports/MRK_ENSEMB
 
 
 def get_obo() -> Obo:
+    """Get MGI as OBO."""
     terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
@@ -30,7 +33,8 @@ def get_obo() -> Obo:
 COLUMNS = ['MGI Accession ID', 'Marker Symbol', 'Marker Name']
 
 
-def get_ensembl_df():
+def get_ensembl_df() -> pd.DataFrame:
+    """Get the Ensembl mappings dataframe."""
     path = ensure_path(PREFIX, ENSEMBL_XREFS_URL)
     return pd.read_csv(
         path,
@@ -53,7 +57,8 @@ def get_ensembl_df():
     )
 
 
-def get_entrez_df():
+def get_entrez_df() -> pd.DataFrame:
+    """Get the Entrez mappings dataframe."""
     path = ensure_path(PREFIX, ENTREZ_XREFS_URL)
     return pd.read_csv(
         path,
@@ -82,6 +87,7 @@ def get_entrez_df():
 
 
 def get_terms() -> Iterable[Term]:
+    """Get the MGI terms."""
     path = ensure_path(PREFIX, MARKERS_URL)
     df = pd.read_csv(path, sep='\t')
 
@@ -95,7 +101,7 @@ def get_terms() -> Iterable[Term]:
             mgi_to_entrez_id[mgi_id] = entrez_id
 
     ensembl_df = get_ensembl_df()
-    #ensembl_df.to_csv('test.tsv', sep='\t', index=False)
+    # ensembl_df.to_csv('test.tsv', sep='\t', index=False)
     mgi_to_ensemble_ids = defaultdict(list)
     ensembl_columns = ['mgi_id', 'ensembl_accession_id', 'ensembl_transcript_id', 'ensembl_protein_id', ]
     ensembl_it = ensembl_df[ensembl_columns].values

@@ -5,6 +5,10 @@
 #########################
 
 [flake8]
+ignore =
+    S310
+    # line break before binary operator
+    W503
 exclude =
     .tox,
     .git,

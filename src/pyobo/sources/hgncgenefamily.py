@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
-"""This module has the parser for HGNC."""
+"""Converter for HGNC Gene Families."""
 
 from collections import defaultdict
-from typing import Iterable
+from typing import Iterable, List, Mapping
 
 import pandas as pd
 from tqdm import tqdm
 
 from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
-from pyobo.constants import ensure_path
+from pyobo.utils import ensure_path
 
 PREFIX = 'hgnc.genefamily'
 FAMILIES_URL = 'ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/csv/genefamily_db_tables/family.csv'
@@ -18,7 +18,8 @@ HIERARCHY_URL = 'ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/csv/genefamily_
 symbol_type = SynonymTypeDef(id='symbol', name='symbol')
 
 
-def get_obo():
+def get_obo() -> Obo:
+    """Get HGNC Gene Families as OBO."""
     terms = list(get_terms())
     hierarchy = get_hierarchy()
 
@@ -41,7 +42,8 @@ def get_obo():
     )
 
 
-def get_hierarchy():
+def get_hierarchy() -> Mapping[str, List[str]]:
+    """Get the HGNC Gene Families hierarchy as a dictionary."""
     path = ensure_path(PREFIX, HIERARCHY_URL)
     df = pd.read_csv(path, dtype={'parent_fam_id': str, 'child_fam_id': str})
     d = defaultdict(list)
@@ -54,6 +56,7 @@ COLUMNS = ['id', 'abbreviation', 'name', 'pubmed_ids', 'desc_comment', 'desc_go'
 
 
 def get_terms() -> Iterable[Term]:
+    """Get the HGNC Gene Family terms."""
     path = ensure_path(PREFIX, FAMILIES_URL)
     df = pd.read_csv(path, dtype={'id': str})
 

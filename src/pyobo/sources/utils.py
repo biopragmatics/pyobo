@@ -2,57 +2,46 @@
 
 """Utilities for generating OBO content."""
 
-from functools import partial
-from typing import Callable, List
+from typing import Any, List, Mapping
 
-import obonet
+import networkx as nx
 
 from .. import TypeDef
 from ..struct import Reference, Term
 
 __all__ = [
-    'build_term_getter',
-    'get_terms_from_url',
     'get_terms_from_graph',
     'from_species',
 ]
 
 
-def build_term_getter(url) -> Callable[[], List[Term]]:
-    return partial(get_terms_from_url, url)
-
-
-def get_terms_from_url(url: str) -> List[Term]:
-    g = obonet.read_obo(url)
-    return get_terms_from_graph(g)
-
-
-def get_terms_from_graph(g) -> List[Term]:
-    ontology = g.graph['ontology']
+def get_terms_from_graph(graph: nx.Graph) -> List[Term]:
+    """Get all of the terms from a OBO graph."""
+    ontology = graph.graph['ontology']
 
     #: Identifiers to references
     references = {
         node: (Reference(prefix=ontology, identifier=node), data['name'])
-        for node, data in g.nodes(data=True)
+        for node, data in graph.nodes(data=True)
     }
 
-    def make_term(node, data) -> Term:
+    def _make_term(node: str, data: Mapping[str, Any]) -> Term:
         reference, name = references[node]
         return Term(
             reference=reference,
             name=name,
             definition=data['def'],
-            parents=list(get_parents(data)),
+            parents=list(_get_parents(data)),
         )
 
-    def get_parents(data):
-        for parent in data.resolve_resource('is_a', []):
+    def _get_parents(data: Mapping[str, Any]):
+        for parent in data.get('is_a', []):
             # May have to add more logic here later
             yield references[parent]
 
     terms = []
-    for node, data in g.nodes(data=True):
-        term = make_term(node, data)
+    for node, data in graph.nodes(data=True):
+        term = _make_term(node, data)
         terms.append(term)
 
     return terms

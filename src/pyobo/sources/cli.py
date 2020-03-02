@@ -14,6 +14,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 @click.command()
 def main():
+    """Run the exporter."""
     for fname in os.listdir(HERE):
         if fname in {'__init__.py', '__main__.py', 'cli.py', 'utils.py'} or not os.path.isfile(fname):
             continue

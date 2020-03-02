@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import os
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -16,7 +15,7 @@ from networkx.utils import open_file
 
 from .registry import Registry, miriam
 from .utils import comma_separate, obo_escape
-from ..constants import OUTPUT_DIRECTORY
+from ..utils import get_prefix_obo_path
 
 __all__ = [
     'Reference',
@@ -46,7 +45,7 @@ class Reference:
     registry: Registry = field(default=miriam, repr=False)
 
     @property
-    def curie(self) -> str:
+    def curie(self) -> str:  # noqa: D401
         """The CURIE for this reference."""
         return f'{self.prefix}:{self.identifier}'
 
@@ -126,6 +125,7 @@ class TypeDef:
     xrefs: List[Reference] = field(default_factory=list)
 
     def iterate_obo_lines(self) -> Iterable[str]:
+        """Iterate over the lines to write in an OBO file."""
         yield '\n[Typedef]'
         yield f'id: {self.id}'
         yield f'name: {self.name}'
@@ -189,11 +189,12 @@ class Term:
         self.relationships[typedef.id].extend(references)
 
     @property
-    def curie(self) -> str:
+    def curie(self) -> str:  # noqa: D401
         """The CURIE for this term."""
         return self.reference.curie
 
     def iterate_obo_lines(self) -> Iterable[str]:
+        """Iterate over the lines to write in an OBO file."""
         yield '\n[Term]'
         yield f'id: {self.curie}'
         yield f'name: {self.name}'
@@ -260,6 +261,7 @@ class Obo:
     #         self._references[term]
 
     def iterate_obo_lines(self) -> Iterable[str]:
+        """Iterate over the lines to write in an OBO file."""
         yield f'format-version: {self.format_version}'
         yield f'date: {self.date.strftime("%d:%m:%Y %H:%M")}'
 
@@ -291,5 +293,5 @@ class Obo:
 
     def write_default(self) -> None:
         """Write the OBO to the default path."""
-        path = os.path.join(OUTPUT_DIRECTORY, f'{self.ontology}.obo')
+        path = get_prefix_obo_path(self.ontology)
         self.write(path)

@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+"""Converter for SGD."""
+
 from urllib.parse import unquote_plus
 
 import pandas as pd
@@ -8,13 +12,15 @@ from pyobo.sources.utils import from_species
 HEADER = ['chromosome', 'database', 'feature', 'start', 'end', 'a', 'b', 'c', 'data']
 PREFIX = 'sgd'
 
+# FIXME make downloader for GZIP/archives
 path = '/Users/cthoyt/Downloads/S288C_reference_genome_R64-2-1_20150113/saccharomyces_cerevisiae_R64-2-1_20150113.gff'
 
 alias_type = SynonymTypeDef(id='alias', name='alias')
 
 
 def get_obo() -> Obo:
-    terms = list(get_rows(path))
+    """Get SGD as OBO."""
+    terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
         terms=terms,
@@ -22,7 +28,8 @@ def get_obo() -> Obo:
     )
 
 
-def get_rows(path):
+def get_terms() -> str:
+    """Get SGD terms."""
     df = pd.read_csv(path, sep='\t', skiprows=18, header=None, names=HEADER)
     df = df[df['feature'] == 'gene']
     for data in df['data']:

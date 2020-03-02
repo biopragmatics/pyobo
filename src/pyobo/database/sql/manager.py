@@ -19,6 +19,7 @@ log = logging.getLogger(__name__)
 
 
 def build_engine_session() -> Tuple:
+    """Build a session."""
     engine = create_engine('sqlite:////Users/cthoyt/Desktop/obo.db')
 
     #: A SQLAlchemy session maker
@@ -63,5 +64,5 @@ class Manager:
         self.base.metadata.bind = self.engine
         self.base.query = self.session.query_property()
 
-    def __repr__(self):
+    def __repr__(self):  # noqa: D105
         return '<{} connection={}>'.format(self.__class__.__name__, self.engine.url)

@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
-"""This module has the parser for HGNC."""
+"""Converter for HGNC."""
 
 import json
+from typing import Iterable
 
 from tqdm import tqdm
 
 from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
-from pyobo.constants import ensure_path
 from pyobo.sources.utils import from_species
+from pyobo.utils import ensure_path
 
 PREFIX = 'hgnc'
 DEFINITIONS_URL = 'ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/json/hgnc_complete_set.json'
@@ -42,7 +43,8 @@ gene_xrefs = [
 ]
 
 
-def get_obo():
+def get_obo() -> Obo:
+    """Get HGNC as OBO."""
     terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
@@ -53,7 +55,8 @@ def get_obo():
     )
 
 
-def get_terms():
+def get_terms() -> Iterable[Term]:
+    """Get HGNC terms."""
     unhandled = set()
     path = ensure_path(PREFIX, DEFINITIONS_URL)
     with open(path) as file:
@@ -79,7 +82,6 @@ def get_terms():
 
         gene_group_ids = entry.pop('gene_group_id', [])
         gene_groups = entry.pop('gene_group', [])
-        assert len(gene_group_ids) == len(gene_groups)
         parents = [
             Reference(
                 prefix='hgnc.genefamily',
