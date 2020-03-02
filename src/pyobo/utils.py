@@ -10,6 +10,7 @@ from urllib.request import urlretrieve
 
 import networkx as nx
 import obonet
+import pandas as pd
 
 from pyobo.constants import PYOBO_HOME
 from pyobo.registries import get_obofoundry
@@ -42,6 +43,11 @@ def ensure_path(prefix: str, url: str, path: Optional[str] = None) -> str:
         urlretrieve(url, path)
 
     return path
+
+
+def ensure_df(prefix: str, url: str, path: Optional[str] = None, **kwargs) -> pd.DataFrame:
+    """Download a file and open as a dataframe."""
+    return pd.read_csv(ensure_path(prefix, url, path=path), **kwargs)
 
 
 def get_prefix_obo_path(prefix: str) -> str:

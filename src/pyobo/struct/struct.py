@@ -36,7 +36,7 @@ class Reference:
     #: The entity's identifier in the namespace
     identifier: str
 
-    label: Optional[str] = field(default=None, repr=None)
+    name: Optional[str] = field(default=None, repr=None)
 
     #: The namespace's identifier in the registry
     registry_id: Optional[str] = field(default=None, repr=False)
@@ -73,8 +73,8 @@ class Reference:
             rv = self.identifier.lower()
         else:
             rv = f'{self.prefix}:{self._escaped_identifier}'
-        if self.label:
-            rv = f'{rv} ! {self.label}'
+        if self.name:
+            rv = f'{rv} ! {self.name}'
         return rv
 
 
@@ -205,6 +205,7 @@ class Term:
                 .replace('(', '') \
                 .replace(')', '')
             yield f'namespace: {namespace_normalized}'
+
         yield f'''def: "{self.definition}" [{comma_separate(self.provenance)}]'''
 
         for xref in sorted(self.xrefs, key=attrgetter('prefix', 'identifier')):

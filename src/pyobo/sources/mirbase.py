@@ -5,13 +5,12 @@
 import gzip
 from typing import Iterable, List
 
-import pandas as pd
 from tqdm import tqdm
 
 from pyobo import Obo, Synonym, Term, TypeDef
 from pyobo.sources.utils import from_species
 from pyobo.struct.struct import Reference
-from pyobo.utils import ensure_path
+from pyobo.utils import ensure_df, ensure_path
 
 PREFIX = 'mirbase'
 VERSION = '22.1'
@@ -40,7 +39,7 @@ def get_obo() -> Obo:
 
 def get_terms() -> List[Term]:
     """Parse miRNA data from filepath and convert it to dictionary."""
-    definitions_path = ensure_path('mirbase', DEFINITIONS_URL)
+    definitions_path = ensure_path(PREFIX, DEFINITIONS_URL)
 
     file_handle = (
         gzip.open(definitions_path, 'rt')
@@ -52,8 +51,7 @@ def get_terms() -> List[Term]:
 
 
 def _prepare_organisms():
-    path = ensure_path('mirbase', SPECIES_URL)
-    df = pd.read_csv(path, sep='\t', dtype={'#NCBI-taxid': str})
+    df = ensure_df(PREFIX, SPECIES_URL, sep='\t', dtype={'#NCBI-taxid': str})
     return {
         division: (taxonomy_id, name)
         for _, division, name, _tree, taxonomy_id in df.values
@@ -61,8 +59,7 @@ def _prepare_organisms():
 
 
 def _prepare_aliases():
-    path = ensure_path('mirbase', ALIASES_URL)
-    df = pd.read_csv(path, sep='\t')
+    df = ensure_df(PREFIX, ALIASES_URL, sep='\t')
     return {
         mirbase_id: [s.strip() for s in synonyms.split(';') if s and s.strip()]
         for mirbase_id, synonyms in df.values
@@ -98,7 +95,7 @@ def _process_definitions_lines(lines: Iterable[str]) -> Iterable[Term]:
         species = Reference(
             prefix='taxonomy',
             identifier=species_identifier,
-            label=species_name,
+            name=species_name,
         )
 
         mature_mirna_lines = [
@@ -115,12 +112,13 @@ def _process_definitions_lines(lines: Iterable[str]) -> Iterable[Term]:
             product_reference = Reference(
                 prefix='mirbase.mature',
                 identifier=accession,
-                label=product,
+                name=product,
             )
             if product.endswith('3p') or product.endswith('5p'):
                 mature.append(product_reference)
             else:
-                print('Whats going on ', group[index])
+                pass
+                # print('Whats going on ', group[index])
 
         xrefs = []
         for line in group:
@@ -131,7 +129,7 @@ def _process_definitions_lines(lines: Iterable[str]) -> Iterable[Term]:
             xref_prefix = xref_prefix.lower()
             xref_prefix = xref_mapping.get(xref_prefix, xref_prefix)
             xrefs.append(Reference(prefix=xref_prefix, identifier=xref_identifier,
-                                   label=xref_label or None))
+                                   name=xref_label or None))
 
         # TODO add pubmed references
 

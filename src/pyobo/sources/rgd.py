@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from pyobo import Obo, Synonym, SynonymTypeDef, Term
 from pyobo.struct.struct import Reference
-from pyobo.utils import ensure_path
+from pyobo.utils import ensure_df
 
 PREFIX = 'rgd'
 
@@ -79,8 +79,7 @@ namespace_to_column = [
 
 def get_terms() -> Iterable[Term]:
     """Get RGD terms."""
-    path = ensure_path(PREFIX, GENES_URL)
-    df = pd.read_csv(path, sep='\t', header=0, comment='#', dtype={'NCBI_GENE_ID': str}, low_memory=False)
+    df = ensure_df(PREFIX, GENES_URL, sep='\t', header=0, comment='#', dtype={'NCBI_GENE_ID': str}, low_memory=False)
     for _, row in tqdm(df.iterrows(), total=len(df.index), desc=f'Mapping {PREFIX}'):
         synonyms = []
 

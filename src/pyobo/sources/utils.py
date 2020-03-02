@@ -21,15 +21,15 @@ def get_terms_from_graph(graph: nx.Graph) -> List[Term]:
 
     #: Identifiers to references
     references = {
-        node: (Reference(prefix=ontology, identifier=node), data['name'])
+        node: Reference(prefix=ontology, identifier=node, name=data['name'])
         for node, data in graph.nodes(data=True)
     }
 
     def _make_term(node: str, data: Mapping[str, Any]) -> Term:
-        reference, name = references[node]
+        reference = references[node]
         return Term(
             reference=reference,
-            name=name,
+            name=reference.name,
             definition=data['def'],
             parents=list(_get_parents(data)),
         )

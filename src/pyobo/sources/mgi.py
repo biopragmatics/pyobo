@@ -11,7 +11,7 @@ from tqdm import tqdm
 from pyobo import Obo, Synonym, Term
 from pyobo.sources.utils import from_species
 from pyobo.struct.struct import Reference
-from pyobo.utils import ensure_path
+from pyobo.utils import ensure_df
 
 PREFIX = 'mgi'
 MARKERS_URL = 'http://www.informatics.jax.org/downloads/reports/MRK_List2.rpt'
@@ -35,9 +35,9 @@ COLUMNS = ['MGI Accession ID', 'Marker Symbol', 'Marker Name']
 
 def get_ensembl_df() -> pd.DataFrame:
     """Get the Ensembl mappings dataframe."""
-    path = ensure_path(PREFIX, ENSEMBL_XREFS_URL)
-    return pd.read_csv(
-        path,
+    return ensure_df(
+        PREFIX,
+        ENSEMBL_XREFS_URL,
         sep='\t',
         names=[
             'mgi_id',
@@ -53,15 +53,15 @@ def get_ensembl_df() -> pd.DataFrame:
             'end',
             'strand',
             'biotypes',
-        ]
+        ],
     )
 
 
 def get_entrez_df() -> pd.DataFrame:
     """Get the Entrez mappings dataframe."""
-    path = ensure_path(PREFIX, ENTREZ_XREFS_URL)
-    return pd.read_csv(
-        path,
+    return ensure_df(
+        PREFIX,
+        ENTREZ_XREFS_URL,
         sep='\t',
         names=[
             'mgi_id',
@@ -88,8 +88,7 @@ def get_entrez_df() -> pd.DataFrame:
 
 def get_terms() -> Iterable[Term]:
     """Get the MGI terms."""
-    path = ensure_path(PREFIX, MARKERS_URL)
-    df = pd.read_csv(path, sep='\t')
+    df = ensure_df(PREFIX, MARKERS_URL, sep='\t')
 
     entrez_df = get_entrez_df()
     mgi_to_entrez_id, mgi_to_synonyms = {}, {}
@@ -140,7 +139,7 @@ def get_terms() -> Iterable[Term]:
         )
         term.append_relationship(
             from_species,
-            Reference(prefix='taxonomy', identifier='10090', label='Mus musculus'),
+            Reference(prefix='taxonomy', identifier='10090', name='Mus musculus'),
         )
         yield term
 

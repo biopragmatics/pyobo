@@ -31,7 +31,7 @@ def get_obo() -> Obo:
             child.parents.append(Reference(
                 prefix=PREFIX,
                 identifier=parent_id,
-                label=parent.name,
+                name=parent.name,
             ))
 
     return Obo(

@@ -13,6 +13,8 @@ HEADER = ['chromosome', 'database', 'feature', 'start', 'end', 'a', 'b', 'c', 'd
 PREFIX = 'sgd'
 
 # FIXME make downloader for GZIP/archives
+URL = 'https://downloads.yeastgenome.org/sequence/' \
+      'S288C_reference/genome_releases/S288C_reference_genome_R64-2-1_20150113.tgz'
 path = '/Users/cthoyt/Downloads/S288C_reference_genome_R64-2-1_20150113/saccharomyces_cerevisiae_R64-2-1_20150113.gff'
 
 alias_type = SynonymTypeDef(id='alias', name='alias')
@@ -54,7 +56,7 @@ def get_terms() -> str:
         )
         term.append_relationship(
             from_species,
-            Reference(prefix='taxonomy', identifier='4932', label='Saccharomyces cerevisiae'),
+            Reference(prefix='taxonomy', identifier='4932', name='Saccharomyces cerevisiae'),
         )
         yield term
 

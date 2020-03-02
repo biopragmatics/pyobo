@@ -86,7 +86,7 @@ def get_terms() -> Iterable[Term]:
             Reference(
                 prefix='hgnc.genefamily',
                 identifier=str(hgncgenefamily_id),
-                label=gene_group_label,
+                name=gene_group_label,
             )
             for hgncgenefamily_id, gene_group_label in zip(gene_group_ids, gene_groups)
         ]
@@ -110,7 +110,7 @@ def get_terms() -> Iterable[Term]:
             parents=parents,
             synonyms=synonyms,
         )
-        term.append_relationship(from_species, Reference(prefix='taxonomy', identifier='9606', label='Homo sapiens'))
+        term.append_relationship(from_species, Reference(prefix='taxonomy', identifier='9606', name='Homo sapiens'))
 
         unhandled.update(set(entry))
         yield term
