@@ -51,6 +51,7 @@ def get_prefix_obo_path(prefix: str) -> str:
 
 CURATED_URLS = {
     'mp': 'http://purl.obolibrary.org/obo/mp.obo',
+    'chiro': 'http://purl.obolibrary.org/obo/chiro.obo',
 }
 
 
