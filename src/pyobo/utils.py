@@ -75,7 +75,7 @@ def ensure_obo_path(prefix: str) -> str:
     return ensure_path(prefix, url)
 
 
-def get_obo_graph(prefix: str) -> nx.Graph:
+def get_obo_graph(prefix: str) -> nx.MultiDiGraph:
     """Get the OBO file as a graph using the OBOFoundry registry URL and cache if not already."""
     path = ensure_obo_path(prefix)
 
@@ -90,7 +90,7 @@ def get_obo_graph(prefix: str) -> nx.Graph:
     return graph
 
 
-def get_obo_graph_by_url(prefix: str, url: str) -> nx.Graph:
+def get_obo_graph_by_url(prefix: str, url: str) -> nx.MultiDiGraph:
     """Get the OBO file as a graph using the given URL and cache if not already."""
     d = get_prefix_directory(prefix)
     path = os.path.join(d, f'{prefix}.obo')
