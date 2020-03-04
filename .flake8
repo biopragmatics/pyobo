@@ -9,6 +9,10 @@ ignore =
     S310
     # line break before binary operator
     W503
+    # XML stuff
+    S405
+    # XML stuff
+    S314
 exclude =
     .tox,
     .git,
