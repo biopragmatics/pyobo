@@ -26,7 +26,6 @@ def get_terms() -> Iterable[Term]:
     """Get CGNC terms."""
     path = ensure_path(PREFIX, URL, path=f'{PREFIX}.tsv')
     df = pd.read_csv(path, sep='\t', dtype={'Entrez Gene id': str, 'CGNC id': str})
-    print(df.columns)
 
     for cgnc_id, entrez_id, ensembl_id, symbol, name, synonyms, status, _ in df.values:
         xrefs = []
