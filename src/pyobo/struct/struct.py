@@ -218,7 +218,7 @@ class Term:
             for relationship_reference in relationship_references:
                 yield f'relationship: {relationship} {relationship_reference}'
 
-        for synonym in self.synonyms:
+        for synonym in sorted(self.synonyms, key=attrgetter('name')):
             yield synonym.to_obo()
 
     def to_obo(self) -> str:
