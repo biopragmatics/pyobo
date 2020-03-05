@@ -2,7 +2,7 @@
 
 """Entry point for extraction script."""
 
-from .get_obo_mappings import main
+from .cli import main
 
 if __name__ == '__main__':
     main()

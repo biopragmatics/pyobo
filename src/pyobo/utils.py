@@ -5,7 +5,7 @@
 import logging
 import os
 import tarfile
-from typing import Mapping, Optional
+from typing import Mapping, Optional, Tuple
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
@@ -17,6 +17,12 @@ from pyobo.constants import PYOBO_HOME
 from pyobo.registries import get_obofoundry
 
 logger = logging.getLogger(__name__)
+
+
+def split_tab_pair(x: str) -> Tuple[str, str]:
+    """Split a pair of elements by a tab."""
+    a, b = x.strip().split('\t')
+    return a, b
 
 
 class MissingOboBuild(RuntimeError):
@@ -131,7 +137,7 @@ def get_id_name_mapping(prefix: str, url: Optional[str] = None) -> Mapping[str, 
     if os.path.exists(path):
         logger.debug('loading %s mapping from %s', prefix, path)
         with open(path) as file:
-            return dict(line.strip().split('\t') for line in file)
+            return dict(split_tab_pair(line) for line in file)
 
     if url is None:
         graph = get_obo_graph(prefix)

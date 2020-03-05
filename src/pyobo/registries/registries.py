@@ -3,10 +3,10 @@
 """Download information from several registries."""
 
 import json
+import logging
 import os
 import tempfile
-from pprint import pprint
-from typing import Optional
+from typing import Mapping, Optional
 from urllib.request import urlretrieve
 
 import requests
@@ -16,7 +16,11 @@ __all__ = [
     'get_obofoundry',
     'get_miriam',
     'get_ols',
+    'get_metaregistry',
+    'get_namespace_synonyms',
 ]
+
+logger = logging.getLogger(__name__)
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -27,6 +31,9 @@ OLS_URL = 'http://www.ebi.ac.uk/ols/api/ontologies'
 OBOFOUNDRY_CACHE_PATH = os.path.join(HERE, 'obofoundry.json')
 MIRIAM_CACHE_PATH = os.path.join(HERE, 'miriam.json')
 OLS_CACHE_PATH = os.path.join(HERE, 'ols.json')
+
+#: The self-curated registry metadatabase
+METAREGISTRY_PATH = os.path.join(HERE, 'metaregistry.json')
 
 
 def get_obofoundry(cache_path: Optional[str] = OBOFOUNDRY_CACHE_PATH, mappify: bool = False):
@@ -94,14 +101,54 @@ def _download_paginated(start_url, embedded_key):
     results = []
     url = start_url
     while True:
-        print('getting', url)
+        logger.debug('getting', url)
         g = requests.get(url)
         j = g.json()
         r = j['_embedded'][embedded_key]
-        pprint(r)
         results.extend(r)
         links = j['_links']
         if 'next' not in links:
             break
         url = links['next']['href']
     return results
+
+
+def get_metaregistry():
+    """Get the metaregistry."""
+    with open(METAREGISTRY_PATH) as file:
+        return json.load(file)
+
+
+def get_namespace_synonyms() -> Mapping[str, str]:
+    """Return a mapping from several variants of each synonym to the canonical namespace."""
+    synonym_to_key = {}
+
+    def _add_variety(_synonym, _target) -> None:
+        synonym_to_key[_synonym] = _target
+        synonym_to_key[_synonym.lower()] = _target
+        synonym_to_key[_synonym.upper()] = _target
+        synonym_to_key[_synonym.casefold()] = _target
+        for x, y in [('_', ' '), (' ', '_'), (' ', '')]:
+            synonym_to_key[_synonym.replace(x, y)] = _target
+            synonym_to_key[_synonym.lower().replace(x, y)] = _target
+            synonym_to_key[_synonym.upper().replace(x, y)] = _target
+            synonym_to_key[_synonym.casefold().replace(x, y)] = _target
+
+    for entry in get_miriam():
+        prefix, name = entry['prefix'], entry['name']
+        _add_variety(prefix, prefix)
+        _add_variety(name, prefix)
+
+    for entry in get_ols():
+        ontology_id = entry['ontologyId']
+        _add_variety(ontology_id, ontology_id)
+        _add_variety(entry['config']['title'], ontology_id)
+        _add_variety(entry['config']['namespace'], ontology_id)
+
+    metaregistry = get_metaregistry()
+    for key, values in metaregistry['database'].items():
+        _add_variety(key, key)
+        for synonym in values.get('synonyms', []):
+            _add_variety(synonym, key)
+
+    return synonym_to_key
