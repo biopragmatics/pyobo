@@ -101,8 +101,6 @@ def get_terms() -> Iterable[Term]:
             name = concept['name']
         except KeyError:
             continue
-            # from pprint import pprint
-            # pprint(data)
             # raise
 
         terms[ec_code] = Term(

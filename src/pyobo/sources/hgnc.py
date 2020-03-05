@@ -3,6 +3,7 @@
 """Converter for HGNC."""
 
 import json
+import logging
 from typing import Iterable
 
 from tqdm import tqdm
@@ -10,6 +11,8 @@ from tqdm import tqdm
 from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
 from pyobo.sources.utils import from_species
 from pyobo.utils import ensure_path
+
+logger = logging.getLogger(__name__)
 
 PREFIX = 'hgnc'
 DEFINITIONS_URL = 'ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/json/hgnc_complete_set.json'
@@ -115,9 +118,9 @@ def get_terms() -> Iterable[Term]:
         unhandled.update(set(entry))
         yield term
 
-    # print('Unhandled:')
+    # logger.warning('Unhandled:')
     # for u in sorted(unhandled):
-    #     print(u)
+    #     logger.warning(u)
 
 
 if __name__ == '__main__':

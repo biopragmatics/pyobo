@@ -3,6 +3,7 @@
 """Converter for miRBase."""
 
 import gzip
+import logging
 from typing import Iterable, List
 
 from tqdm import tqdm
@@ -11,6 +12,8 @@ from pyobo import Obo, Synonym, Term, TypeDef
 from pyobo.sources.utils import from_species
 from pyobo.struct.struct import Reference
 from pyobo.utils import ensure_df, ensure_path
+
+logger = logging.getLogger(__name__)
 
 PREFIX = 'mirbase'
 VERSION = '22.1'
@@ -118,7 +121,7 @@ def _process_definitions_lines(lines: Iterable[str]) -> Iterable[Term]:
                 mature.append(product_reference)
             else:
                 pass
-                # print('Whats going on ', group[index])
+                # logger.warning(f'Whats going on {group[index]}')
 
         xrefs = []
         for line in group:
