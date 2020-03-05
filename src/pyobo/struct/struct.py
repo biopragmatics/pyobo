@@ -301,3 +301,6 @@ class Obo:
         """Write the OBO to the default path."""
         path = get_prefix_obo_path(self.ontology)
         self.write(path)
+
+    def __iter__(self):  # noqa: D105
+        return iter(self.terms)
