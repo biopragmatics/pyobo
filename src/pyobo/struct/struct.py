@@ -189,6 +189,11 @@ class Term:
         self.relationships[typedef.id].extend(references)
 
     @property
+    def identifier(self) -> str:  # noqa: D401
+        """The local unique identifier for this term."""
+        return self.reference.identifier
+
+    @property
     def curie(self) -> str:  # noqa: D401
         """The CURIE for this term."""
         return self.reference.curie
