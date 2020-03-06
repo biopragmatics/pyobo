@@ -4,7 +4,7 @@
 
 import click
 
-from pyobo import get_id_name_mapping, get_synonyms, get_xrefs
+from pyobo import get_all_xrefs, get_id_name_mapping, get_synonyms, get_xrefs
 
 __all__ = ['main']
 
@@ -19,14 +19,20 @@ prefix_argument = click.argument('prefix')
 
 @main.command()
 @prefix_argument
-@click.argument('target')
+@click.option('--target')
 def xrefs(prefix: str, target: str):
     """Page through xrefs for the given namespace to the second given namespace."""
-    click.echo_via_pager('\n'.join(
-        f'{identifier}\t{_xref}'
-        for identifier, _xrefs in get_xrefs(prefix, target).items()
-        for _xref in _xrefs
-    ))
+    if target:
+        click.echo_via_pager('\n'.join(
+            f'{identifier}\t{_xref}'
+            for identifier, _xrefs in get_xrefs(prefix, target).items()
+            for _xref in _xrefs
+        ))
+    else:
+        click.echo_via_pager('\n'.join(
+            '\t'.join(row)
+            for row in get_all_xrefs(prefix).values
+        ))
 
 
 @main.command()

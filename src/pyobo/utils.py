@@ -97,7 +97,15 @@ def ensure_obo_path(prefix: str) -> str:
     return ensure_path(prefix, url)
 
 
-def get_obo_graph(prefix: str) -> nx.MultiDiGraph:
+def get_obo_graph(prefix: str, *, url: Optional[str] = None) -> nx.MultiDiGraph:
+    """Get the OBO file by prefix or URL."""
+    if url is None:
+        return get_obo_graph(prefix)
+    else:
+        return get_obo_graph_by_url(prefix, url)
+
+
+def get_obo_graph_by_prefix(prefix: str) -> nx.MultiDiGraph:
     """Get the OBO file as a graph using the OBOFoundry registry URL and cache if not already."""
     path = ensure_obo_path(prefix)
 
@@ -139,10 +147,7 @@ def get_id_name_mapping(prefix: str, url: Optional[str] = None) -> Mapping[str, 
         with open(path) as file:
             return dict(split_tab_pair(line) for line in file)
 
-    if url is None:
-        graph = get_obo_graph(prefix)
-    else:
-        graph = get_obo_graph_by_url(prefix, url)
+    graph = get_obo_graph(prefix, url=url)
 
     rv = {}
     logger.info('writing %s mapping to %s', prefix, path)

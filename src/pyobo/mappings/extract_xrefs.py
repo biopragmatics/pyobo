@@ -8,14 +8,16 @@ from collections import defaultdict
 from typing import List, Mapping, Optional
 
 import networkx as nx
+import pandas as pd
 from tqdm import tqdm
 
 from pyobo.registries.registries import get_metaregistry, get_namespace_synonyms
-from pyobo.utils import get_obo_graph, get_obo_graph_by_url, get_prefix_directory, split_tab_pair
+from pyobo.utils import get_obo_graph, get_prefix_directory, split_tab_pair
 
 __all__ = [
     'iterate_xrefs_from_graph',
     'get_xrefs',
+    'get_all_xrefs',
 ]
 
 logger = logging.getLogger(__name__)
@@ -39,8 +41,25 @@ UNHANDLED_NAMESPACES = defaultdict(list)
 UBERON_UNHANDLED = defaultdict(list)
 
 
+def get_all_xrefs(prefix: str, url: Optional[str] = None) -> pd.DataFrame:
+    """Get all xrefs."""
+    path = os.path.join(get_prefix_directory(prefix), f"{prefix}_mappings.tsv")
+    if os.path.exists(path):
+        logger.debug('loading %s xrefs', prefix, path)
+        return pd.read_csv(path, sep='\t')
+
+    graph = get_obo_graph(prefix, url=url)
+
+    logger.info('writing %s mapping to %s', prefix, path)
+
+    rows = list(iterate_xrefs_from_graph(graph))
+    df = pd.DataFrame(rows)
+    df.to_csv(path, sep='\t', index=False)
+    return df
+
+
 def get_xrefs(prefix: str, xref_prefix: str, url: Optional[str] = None) -> Mapping[str, List[str]]:
-    """Get xrefs."""
+    """Get xrefs to a given target."""
     path = os.path.join(get_prefix_directory(prefix), f"{prefix}_{xref_prefix}_mappings.tsv")
     rv = defaultdict(list)
     if os.path.exists(path):
@@ -52,10 +71,7 @@ def get_xrefs(prefix: str, xref_prefix: str, url: Optional[str] = None) -> Mappi
                 rv[x].append(y)
             return dict(rv)
 
-    if url is None:
-        graph = get_obo_graph(prefix)
-    else:
-        graph = get_obo_graph_by_url(prefix, url)
+    graph = get_obo_graph(prefix, url=url)
 
     logger.info('writing %s mapping to %s', prefix, path)
 

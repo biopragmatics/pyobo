@@ -7,7 +7,7 @@ import os
 from collections import defaultdict
 from typing import List, Mapping, Optional
 
-from pyobo.utils import get_obo_graph, get_obo_graph_by_url, get_prefix_directory, split_tab_pair
+from pyobo.utils import get_obo_graph, get_prefix_directory, split_tab_pair
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +26,7 @@ def get_synonyms(prefix: str, url: Optional[str] = None) -> Mapping[str, List[st
                 rv[x].append(y)
             return dict(rv)
 
-    if url is None:
-        graph = get_obo_graph(prefix)
-    else:
-        graph = get_obo_graph_by_url(prefix, url)
+    graph = get_obo_graph(prefix, url=url)
 
     for node, data in graph.nodes(data=True):
         if not node.lower().startswith(f'{prefix.lower()}:'):
