@@ -80,7 +80,10 @@ namespace_to_column = [
 
 def get_terms() -> Iterable[Term]:
     """Get RGD terms."""
-    df = ensure_df(PREFIX, GENES_URL, sep='\t', header=0, comment='#', dtype={'NCBI_GENE_ID': str}, low_memory=False)
+    df = ensure_df(PREFIX, GENES_URL, sep='\t', header=0, comment='#', dtype={
+        'NCBI_GENE_ID': str,
+        'GENE_RGD_ID': str,
+    })
     for _, row in tqdm(df.iterrows(), total=len(df.index), desc=f'Mapping {PREFIX}'):
         synonyms = []
 
