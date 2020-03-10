@@ -13,8 +13,8 @@ import networkx as nx
 import obonet
 import pandas as pd
 
-from pyobo.constants import PYOBO_HOME
-from pyobo.registries import get_obofoundry
+from .constants import PYOBO_HOME
+from .registries import get_obofoundry
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ def ensure_obo_path(prefix: str) -> str:
 def get_obo_graph(prefix: str, *, url: Optional[str] = None) -> nx.MultiDiGraph:
     """Get the OBO file by prefix or URL."""
     if url is None:
-        return get_obo_graph(prefix)
+        return get_obo_graph_by_prefix(prefix)
     else:
         return get_obo_graph_by_url(prefix, url)
 
