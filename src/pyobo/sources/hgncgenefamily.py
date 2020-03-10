@@ -36,6 +36,7 @@ def get_obo() -> Obo:
 
     return Obo(
         ontology=PREFIX,
+        name='HGNC Gene Families',
         terms=terms,
         synonym_typedefs=[symbol_type],
         auto_generated_by='bio2obo:hgnc.genefamily',

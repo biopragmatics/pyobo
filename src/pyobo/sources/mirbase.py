@@ -33,6 +33,7 @@ def get_obo() -> Obo:
     terms = get_terms()
     return Obo(
         ontology=PREFIX,
+        name='miRBase',
         terms=terms,
         typedefs=[from_species, has_mature],
         data_version=VERSION,

@@ -23,6 +23,7 @@ def get_obo() -> Obo:
     terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
+        name='Saccharomyces Genome Database',
         terms=terms,
         synonym_typedefs=[alias_type],
     )

@@ -24,6 +24,7 @@ def get_obo() -> Obo:
     terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
+        name='Mouse Genome Database',
         terms=terms,
         typedefs=[from_species],
         auto_generated_by=f'bio2obo:{PREFIX}',

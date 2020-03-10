@@ -37,6 +37,7 @@ def get_obo() -> Obo:
     terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
+        name='ExPASy Enzyme Nomenclature',
         terms=terms,
     )
 

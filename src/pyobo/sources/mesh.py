@@ -26,6 +26,7 @@ def get_obo() -> Obo:
     terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
+        name='Medical Subject Headings',
         terms=terms,
         data_version=YEAR,
     )

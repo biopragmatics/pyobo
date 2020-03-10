@@ -18,6 +18,7 @@ def get_obo() -> Obo:
     terms = list(get_terms())
     return Obo(
         terms=terms,
+        name='CGNC',
         ontology=PREFIX,
     )
 

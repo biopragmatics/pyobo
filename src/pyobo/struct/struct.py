@@ -235,8 +235,11 @@ class Term:
 class Obo:
     """An OBO document."""
 
-    #: The name of the ontology
+    #: The prefix for the ontology
     ontology: str
+
+    #: The name of the ontology
+    name: str
 
     #: Terms
     terms: List[Term]

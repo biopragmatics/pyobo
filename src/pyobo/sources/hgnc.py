@@ -51,6 +51,7 @@ def get_obo() -> Obo:
     terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
+        name='HGNC',
         terms=terms,
         typedefs=[from_species],
         synonym_typedefs=[previous_name_type, previous_symbol_type, alias_name_type, alias_symbol_type],
