@@ -253,6 +253,12 @@ class Obo:
     #: Synonym type definitions
     synonym_typedefs: List[SynonymTypeDef] = field(default_factory=list)
 
+    #: Regular expression pattern describing the local unique identifiers
+    pattern: Optional[str] = None
+
+    #: Is the prefix at the begging of each local unique identifier
+    namespace_in_pattern: Optional[bool] = None
+
     #: The ontology version
     data_version: Optional[str] = None
 
@@ -261,13 +267,6 @@ class Obo:
 
     #: The date the ontology was generated
     date: datetime = field(default_factory=datetime.today)
-
-    # _references: Mapping[str, Reference] = field(init=False)
-    #
-    # def __post_init__(self) -> None:
-    #     """Index all of the references."""
-    #     for term in self.terms:
-    #         self._references[term]
 
     def iterate_obo_lines(self) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
