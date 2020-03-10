@@ -10,9 +10,9 @@ from xml.etree.ElementTree import Element
 
 from tqdm import tqdm
 
-from pyobo import Obo, Reference, Synonym, Term
-from pyobo.sources.utils import parse_xml_gz
-from pyobo.utils import ensure_path, get_prefix_directory
+from .utils import parse_xml_gz
+from ..struct import Obo, Reference, Synonym, Term
+from ..utils import ensure_path, get_prefix_directory, split_tab_pair
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,29 @@ def get_obo() -> Obo:
         terms=terms,
         data_version=YEAR,
     )
+
+
+def get_tree_to_mesh_id() -> Mapping[str, str]:
+    """Get a mapping from MeSH tree numbers to their MeSH identifiers."""
+    mesh_tree_path = os.path.join(get_prefix_directory(PREFIX), f'mesh_{YEAR}_tree.tsv')
+    if os.path.exists(mesh_tree_path):
+        with open(mesh_tree_path) as file:
+            next(file)  # throw away header
+            return dict(split_tab_pair(line) for line in file)
+
+    mesh = ensure_mesh()
+    rv = {}
+    for entry in mesh:
+        mesh_id = entry['descriptor_ui']
+        for tree_number in entry['tree_numbers']:
+            rv[tree_number] = mesh_id
+
+    with open(mesh_tree_path, 'w') as file:
+        print('mesh_tree_number', 'mesh_id', sep='\t', file=file)
+        for mesh_tree_number, mesh_id in sorted(rv.items()):
+            print(mesh_tree_number, mesh_id, sep='\t', file=file)
+
+    return rv
 
 
 def get_terms() -> Iterable[Term]:
