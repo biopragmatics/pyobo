@@ -6,7 +6,7 @@ import json
 import logging
 import os
 import tempfile
-from typing import Mapping, Optional
+from typing import Any, Iterable, Mapping, Optional
 from urllib.request import urlretrieve
 
 import requests
@@ -16,8 +16,9 @@ __all__ = [
     'get_obofoundry',
     'get_miriam',
     'get_ols',
-    'get_metaregistry',
+    'get_curated_registry',
     'get_namespace_synonyms',
+    'get_metaregistry',
 ]
 
 logger = logging.getLogger(__name__)
@@ -113,7 +114,7 @@ def _download_paginated(start_url, embedded_key):
     return results
 
 
-def get_metaregistry():
+def get_curated_registry():
     """Get the metaregistry."""
     with open(METAREGISTRY_PATH) as file:
         return json.load(file)
@@ -145,10 +146,32 @@ def get_namespace_synonyms() -> Mapping[str, str]:
         _add_variety(entry['config']['title'], ontology_id)
         _add_variety(entry['config']['namespace'], ontology_id)
 
-    metaregistry = get_metaregistry()
+    metaregistry = get_curated_registry()
     for key, values in metaregistry['database'].items():
         _add_variety(key, key)
         for synonym in values.get('synonyms', []):
             _add_variety(synonym, key)
 
     return synonym_to_key
+
+
+def get_metaregistry() -> Iterable[Mapping[str, Any]]:
+    """Get a combine registry."""
+    # TODO!
+    for namespace in get_miriam():
+        yield dict(
+            prefix=namespace['prefix'],
+            name=namespace['name'],
+            pattern=namespace['pattern'],
+            namespace_in_pattern=namespace['namespaceEmbeddedInLui'],
+        )
+
+    # for obo in get_converted_obos():
+    #     if obo.pattern is not None:
+    #         continue
+    #     yield dict(
+    #         prefix=obo.ontology,
+    #         name=obo.name,
+    #         pattern=obo.pattern,
+    #         namespace_in_pattern=obo.namespace_in_pattern,
+    #     )

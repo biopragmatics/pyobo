@@ -11,7 +11,7 @@ import networkx as nx
 import pandas as pd
 from tqdm import tqdm
 
-from pyobo.registries.registries import get_metaregistry, get_namespace_synonyms
+from pyobo.registries.registries import get_curated_registry, get_namespace_synonyms
 from pyobo.utils import get_obo_graph, get_prefix_directory, split_tab_pair
 
 __all__ = [
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-METAREGISTRY = get_metaregistry()
+METAREGISTRY = get_curated_registry()
 
 #: Xrefs starting with these prefixes will be ignored
 XREF_PREFIX_BLACKLIST = set(METAREGISTRY['blacklists']['prefix'])
