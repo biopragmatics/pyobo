@@ -4,23 +4,27 @@
 
 import gzip
 import logging
+import os
 import time
-from typing import Any, List, Mapping
+from importlib import import_module
+from typing import Any, Iterable, List, Mapping
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
 import networkx as nx
 
 from .. import TypeDef
-from ..struct import Reference, Term
+from ..struct import Obo, Reference, Term
 
 __all__ = [
     'get_terms_from_graph',
     'from_species',
     'parse_xml_gz',
+    'get_converted_obos',
 ]
 
 logger = logging.getLogger(__name__)
+HERE = os.path.abspath(os.path.dirname(__file__))
 
 
 def get_terms_from_graph(graph: nx.Graph) -> List[Term]:
@@ -69,3 +73,17 @@ def parse_xml_gz(path: str) -> Element:
         tree = ElementTree.parse(file)
     logger.info('parsed xml in %.2f seconds', time.time() - t)
     return tree.getroot()
+
+
+def get_converted_obos() -> Iterable[Obo]:
+    """Get all modules in the PyOBO sources."""
+    for name in os.listdir(HERE):
+        if (
+            name in {'__init__.py', '__main__.py', 'cli.py', 'utils.py'}
+            or not os.path.isfile(name)
+            or not name.endswith('.py')
+        ):
+            continue
+        prefix = name[:-len('.py')]
+        module = import_module(prefix)
+        yield module.get_obo()
