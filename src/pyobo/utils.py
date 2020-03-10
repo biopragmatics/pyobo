@@ -145,6 +145,7 @@ def get_id_name_mapping(prefix: str, url: Optional[str] = None) -> Mapping[str, 
     if os.path.exists(path):
         logger.debug('loading %s mapping from %s', prefix, path)
         with open(path) as file:
+            next(file)  # throw away header
             return dict(split_tab_pair(line) for line in file)
 
     graph = get_obo_graph(prefix, url=url)
@@ -152,12 +153,13 @@ def get_id_name_mapping(prefix: str, url: Optional[str] = None) -> Mapping[str, 
     rv = {}
     logger.info('writing %s mapping to %s', prefix, path)
     with open(path, 'w') as file:
+        print(f'{prefix}_id', 'name', sep='\t', file=file)
         for node, data in graph.nodes(data=True):
+            identifier = node[len(f'{prefix}:'):]
             name = data.get('name')
             if name is None:
                 continue
-
-            rv[node] = name
-            print(node, name, sep='\t', file=file)
+            rv[identifier] = name
+            print(identifier, name, sep='\t', file=file)
 
     return rv
