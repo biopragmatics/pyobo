@@ -1,0 +1,48 @@
+START TRANSACTION;
+CREATE MIGRATION obo TO {
+    MODULE default {
+        TYPE Namespace {
+            REQUIRED PROPERTY prefix -> str;
+            REQUIRED PROPERTY name -> str;
+            REQUIRED PROPERTY pattern -> str;
+            REQUIRED PROPERTY namespace_in_pattern -> bool;
+
+            PROPERTY description -> str;
+
+            PROPERTY miriam_id -> str;
+            PROPERTY miriam_curie :=  'MIR:' ++ .miriam_id;
+
+            PROPERTY ols_id -> str;
+            PROPERTY obofoundry_id -> str;
+
+            PROPERTY created -> datetime;
+            PROPERTY modified -> datetime;
+            PROPERTY deprecated -> datetime;
+            PROPERTY sample_id -> str;
+        }
+        TYPE Identifier {
+            REQUIRED link namespace -> Namespace;
+            REQUIRED PROPERTY reference -> str;
+            PROPERTY curie := .namespace.prefix ++ ':' ++ .reference;
+        }
+        Type Term {
+            REQUIRED PROPERTY identifier -> Identifier;
+            REQUIRED PROPERTY obsolete -> bool;
+            PROPERTY namespace -> str;
+            MULTI LINK xrefs -> Identifier;
+            MULTI LINK parents -> Identifier;
+            MULTI LINK synonyms -> Synonym;
+        }
+        TYPE Relationship {
+            REQUIRED PROPERTY relationship -> str;
+            REQUIRED PROPERTY tail -> Identifier;
+        }
+        TYPE Synonym {
+            REQUIRED PROPERTY name -> str;
+            PROPERTY specificity -> str;
+            MULTI LINK provenance -> Identifier;
+        }
+    }
+};
+COMMIT MIGRATION obo;
+COMMIT;
