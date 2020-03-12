@@ -11,8 +11,9 @@ import networkx as nx
 import pandas as pd
 from tqdm import tqdm
 
+from ..cache_utils import cached_df, cached_multidict
 from ..getters import get_obo_graph
-from ..io_utils import multidict, open_multimap_tsv, write_multimap_tsv
+from ..io_utils import multidict
 from ..path_utils import prefix_directory_join
 from ..registries import get_curated_registry, get_namespace_synonyms
 
@@ -46,43 +47,37 @@ UBERON_UNHANDLED = defaultdict(list)
 def get_all_xrefs(prefix: str, url: Optional[str] = None) -> pd.DataFrame:
     """Get all xrefs."""
     path = prefix_directory_join(prefix, f"{prefix}_mappings.tsv")
-    if os.path.exists(path):
-        logger.debug('loading %s xrefs', prefix, path)
-        return pd.read_csv(path, sep='\t', dtype={
-            'source_ns': str, 'source_id': str, 'xref_ns': str, 'xref_id': str,
-        })
+    dtype = {
+        'source_ns': str, 'source_id': str, 'xref_ns': str, 'xref_id': str,
+    }
 
-    graph = get_obo_graph(prefix, url=url)
+    @cached_df(path=path, dtype=dtype)
+    def _df_getter() -> pd.DataFrame:
+        graph = get_obo_graph(prefix, url=url)
+        logger.info('writing %s mapping to %s', prefix, path)
+        return pd.DataFrame(
+            list(iterate_xrefs_from_graph(graph)),
+            columns=['source_ns', 'source_id', 'target_ns', 'target_id'],
+        )
 
-    logger.info('writing %s mapping to %s', prefix, path)
-    df = pd.DataFrame(
-        list(iterate_xrefs_from_graph(graph)),
-        columns=['source_ns', 'source_id', 'target_ns', 'target_id'],
-    )
-
-    df.to_csv(path, sep='\t', index=False)
-    return df
+    return _df_getter()
 
 
 def get_xrefs(prefix: str, xref_prefix: str, url: Optional[str] = None) -> Mapping[str, List[str]]:
     """Get xrefs to a given target."""
     path = prefix_directory_join(prefix, f"{prefix}_{xref_prefix}_mappings.tsv")
-    if os.path.exists(path):
-        logger.debug('loading %s xrefs to %s from %s', prefix, xref_prefix, path)
-        return open_multimap_tsv(path)
+    header = [f'{prefix}_id', f'{xref_prefix}_id']
 
-    graph = get_obo_graph(prefix, url=url)
+    @cached_multidict(path=path, header=header)
+    def _get_multidict() -> Mapping[str, List[str]]:
+        graph = get_obo_graph(prefix, url=url)
+        return multidict(
+            (head_id, xref_id)
+            for head_ns, head_id, xref_ns, xref_id in iterate_xrefs_from_graph(graph)
+            if head_ns == prefix and xref_ns == xref_prefix
+        )
 
-    rv = multidict(
-        (head_id, xref_id)
-        for head_ns, head_id, xref_ns, xref_id in iterate_xrefs_from_graph(graph)
-        if head_ns == prefix and xref_ns == xref_prefix
-    )
-
-    logger.info('writing %s mapping to %s', prefix, path)
-    write_multimap_tsv(path=path, header=[f'{prefix}_id', f'{xref_prefix}_id'], rv=rv)
-
-    return rv
+    return _get_multidict()
 
 
 def iterate_xrefs_from_graph(graph: nx.Graph, use_tqdm: bool = True) -> Iterable[Tuple[str, str, str, str]]:

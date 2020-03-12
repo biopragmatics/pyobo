@@ -10,8 +10,9 @@ from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Union
 
 import networkx as nx
 import obonet
+import pandas as pd
 
-from .io_utils import open_map_tsv, write_map_tsv
+from .io_utils import open_map_tsv, open_multimap_tsv, write_map_tsv, write_multimap_tsv
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +22,10 @@ JSONType = Union[
 ]
 
 MappingGetter = Callable[[], Mapping[str, str]]
+MultiMappingGetter = Callable[[], Mapping[str, List[str]]]
 JSONGetter = Callable[[], JSONType]
 GraphGetter = Callable[[], nx.MultiDiGraph]
+DataFrameGetter = Callable[[], pd.DataFrame]
 
 
 def cached_mapping(path: str, header: Iterable[str]) -> Callable[[MappingGetter], MappingGetter]:  # noqa: D202
@@ -78,6 +81,44 @@ def cached_graph(path: str) -> Callable[[GraphGetter], GraphGetter]:  # noqa: D2
                 return nx.read_gpickle(path)
             rv = f()
             nx.write_gpickle(rv, path)
+            return rv
+
+        return _wrapped
+
+    return wrapped
+
+
+def cached_df(path: str, sep: str = '\t', **kwargs):  # noqa: D202
+    """Create a decorator to apply to a dataframe getter."""
+
+    def wrapped(f: DataFrameGetter) -> DataFrameGetter:  # noqa: D202
+        """Wrap a mapping getter so it can be auto-loaded from a cache."""
+
+        @functools.wraps(f)
+        def _wrapped() -> pd.DataFrame:
+            if os.path.exists(path):
+                return pd.read_csv(path, sep=sep, **kwargs)
+            rv = f()
+            rv.to_csv(path, sep=sep, index=False)
+            return rv
+
+        return _wrapped
+
+    return wrapped
+
+
+def cached_multidict(path: str, header: Iterable[str]):  # noqa: D202
+    """Create a decorator to apply to a dataframe getter."""
+
+    def wrapped(f: MultiMappingGetter) -> MultiMappingGetter:  # noqa: D202
+        """Wrap a mapping getter so it can be auto-loaded from a cache."""
+
+        @functools.wraps(f)
+        def _wrapped() -> Mapping[str, List[str]]:
+            if os.path.exists(path):
+                return open_multimap_tsv(path)
+            rv = f()
+            write_multimap_tsv(path=path, header=header, rv=rv)
             return rv
 
         return _wrapped
