@@ -8,10 +8,8 @@ from typing import Iterable
 import pandas as pd
 from tqdm import tqdm
 
-from pyobo import Obo, Synonym, Term
-from pyobo.sources.utils import from_species
-from pyobo.struct.struct import Reference
-from pyobo.utils import ensure_df
+from ..path_utils import ensure_df
+from ..struct import Obo, Reference, Synonym, Term, from_species
 
 PREFIX = 'mgi'
 MARKERS_URL = 'http://www.informatics.jax.org/downloads/reports/MRK_List2.rpt'

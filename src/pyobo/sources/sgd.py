@@ -4,9 +4,8 @@
 
 from urllib.parse import unquote_plus
 
-from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
-from pyobo.sources.utils import from_species
-from pyobo.utils import ensure_tar_df
+from ..path_utils import ensure_tar_df
+from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
 
 HEADER = ['chromosome', 'database', 'feature', 'start', 'end', 'a', 'b', 'c', 'data']
 PREFIX = 'sgd'

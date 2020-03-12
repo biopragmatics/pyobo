@@ -6,7 +6,8 @@ import logging
 from collections import defaultdict
 from typing import Dict, Iterable, Mapping
 
-from pyobo import Obo, Reference, Synonym, Term, ensure_path
+from ..path_utils import ensure_path
+from ..struct import Obo, Reference, Synonym, Term
 
 PREFIX = 'ec-code'
 EXPASY_DATABASE_URL = 'ftp://ftp.expasy.org/databases/enzyme/enzyme.dat'

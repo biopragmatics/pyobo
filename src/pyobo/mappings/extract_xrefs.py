@@ -5,14 +5,16 @@
 import logging
 import os
 from collections import defaultdict
-from typing import List, Mapping, Optional
+from typing import Iterable, List, Mapping, Optional, Tuple
 
 import networkx as nx
 import pandas as pd
 from tqdm import tqdm
 
-from pyobo.registries.registries import get_curated_registry, get_namespace_synonyms
-from pyobo.utils import get_obo_graph, get_prefix_directory, split_tab_pair
+from ..getters import get_obo_graph
+from ..io_utils import multidict, open_multimap_tsv, write_multimap_tsv
+from ..path_utils import prefix_directory_join
+from ..registries import get_curated_registry, get_namespace_synonyms
 
 __all__ = [
     'iterate_xrefs_from_graph',
@@ -43,54 +45,47 @@ UBERON_UNHANDLED = defaultdict(list)
 
 def get_all_xrefs(prefix: str, url: Optional[str] = None) -> pd.DataFrame:
     """Get all xrefs."""
-    path = os.path.join(get_prefix_directory(prefix), f"{prefix}_mappings.tsv")
+    path = prefix_directory_join(prefix, f"{prefix}_mappings.tsv")
     if os.path.exists(path):
         logger.debug('loading %s xrefs', prefix, path)
-        return pd.read_csv(path, sep='\t')
+        return pd.read_csv(path, sep='\t', dtype={
+            'source_ns': str, 'source_id': str, 'xref_ns': str, 'xref_id': str,
+        })
 
     graph = get_obo_graph(prefix, url=url)
 
     logger.info('writing %s mapping to %s', prefix, path)
+    df = pd.DataFrame(
+        list(iterate_xrefs_from_graph(graph)),
+        columns=['source_ns', 'source_id', 'target_ns', 'target_id'],
+    )
 
-    rows = list(iterate_xrefs_from_graph(graph))
-    df = pd.DataFrame(rows)
     df.to_csv(path, sep='\t', index=False)
     return df
 
 
 def get_xrefs(prefix: str, xref_prefix: str, url: Optional[str] = None) -> Mapping[str, List[str]]:
     """Get xrefs to a given target."""
-    path = os.path.join(get_prefix_directory(prefix), f"{prefix}_{xref_prefix}_mappings.tsv")
-    rv = defaultdict(list)
+    path = prefix_directory_join(prefix, f"{prefix}_{xref_prefix}_mappings.tsv")
     if os.path.exists(path):
         logger.debug('loading %s xrefs to %s from %s', prefix, xref_prefix, path)
-        with open(path) as file:
-            next(file)  # throw away header
-            for line in file:
-                x, y = split_tab_pair(line)
-                rv[x].append(y)
-            return dict(rv)
+        return open_multimap_tsv(path)
 
     graph = get_obo_graph(prefix, url=url)
 
-    logger.info('writing %s mapping to %s', prefix, path)
-
-    pairs = sorted(  # make sure it's sorted and consistent
+    rv = multidict(
         (head_id, xref_id)
         for head_ns, head_id, xref_ns, xref_id in iterate_xrefs_from_graph(graph)
         if head_ns == prefix and xref_ns == xref_prefix
     )
 
-    with open(path, 'w') as file:
-        print(f'{prefix}_id', f'{xref_prefix}_id', sep='\t', file=file)  # add header
-        for head_id, xref_id in pairs:
-            rv[head_id].append(xref_id)
-            print(head_id, xref_id, sep='\t', file=file)
+    logger.info('writing %s mapping to %s', prefix, path)
+    write_multimap_tsv(path=path, header=[f'{prefix}_id', f'{xref_prefix}_id'], rv=rv)
 
-    return dict(rv)
+    return rv
 
 
-def iterate_xrefs_from_graph(graph: nx.Graph, use_tqdm: bool = True):
+def iterate_xrefs_from_graph(graph: nx.Graph, use_tqdm: bool = True) -> Iterable[Tuple[str, str, str, str]]:
     """Iterate over cross references in the graph."""
     it = graph.nodes(data=True)
     if use_tqdm:

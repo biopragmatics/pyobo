@@ -8,9 +8,8 @@ from typing import Iterable
 
 from tqdm import tqdm
 
-from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
-from pyobo.sources.utils import from_species
-from pyobo.utils import ensure_path
+from ..path_utils import ensure_path
+from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
 
 logger = logging.getLogger(__name__)
 

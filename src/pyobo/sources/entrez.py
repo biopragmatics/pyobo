@@ -8,9 +8,9 @@ from typing import Iterable
 import pandas as pd
 from tqdm import tqdm
 
-from pyobo import Obo, Reference, Term
-from pyobo.sources.utils import from_species
-from pyobo.utils import ensure_df, get_id_name_mapping
+from ..mappings import get_id_name_mapping
+from ..path_utils import ensure_df
+from ..struct import Obo, Reference, Term, from_species
 
 logger = logging.getLogger(__name__)
 

@@ -2,17 +2,16 @@
 
 """Parser for the MeSH descriptors."""
 
-import json
 import logging
-import os
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 from xml.etree.ElementTree import Element
 
 from tqdm import tqdm
 
-from .utils import parse_xml_gz
+from ..cache_utils import cached_json, cached_mapping
+from ..io_utils import parse_xml_gz
+from ..path_utils import ensure_path, prefix_directory_join
 from ..struct import Obo, Reference, Synonym, Term
-from ..utils import ensure_path, get_prefix_directory, split_tab_pair
 
 logger = logging.getLogger(__name__)
 
@@ -32,26 +31,18 @@ def get_obo() -> Obo:
     )
 
 
+@cached_mapping(
+    path=prefix_directory_join(PREFIX, f'mesh_{YEAR}_tree.tsv'),
+    header=['mesh_tree_number', 'mesh_id'],
+)
 def get_tree_to_mesh_id() -> Mapping[str, str]:
     """Get a mapping from MeSH tree numbers to their MeSH identifiers."""
-    mesh_tree_path = os.path.join(get_prefix_directory(PREFIX), f'mesh_{YEAR}_tree.tsv')
-    if os.path.exists(mesh_tree_path):
-        with open(mesh_tree_path) as file:
-            next(file)  # throw away header
-            return dict(split_tab_pair(line) for line in file)
-
     mesh = ensure_mesh()
     rv = {}
     for entry in mesh:
         mesh_id = entry['descriptor_ui']
         for tree_number in entry['tree_numbers']:
             rv[tree_number] = mesh_id
-
-    with open(mesh_tree_path, 'w') as file:
-        print('mesh_tree_number', 'mesh_id', sep='\t', file=file)
-        for mesh_tree_number, mesh_id in sorted(rv.items()):
-            print(mesh_tree_number, mesh_id, sep='\t', file=file)
-
     return rv
 
 
@@ -91,21 +82,12 @@ def get_terms() -> Iterable[Term]:
     return mesh_id_to_term.values()
 
 
+@cached_json(path=prefix_directory_join(PREFIX, f'mesh_{YEAR}.json'))
 def ensure_mesh() -> List[Mapping[str, Any]]:
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
-    mesh_json_path = os.path.join(get_prefix_directory(PREFIX), f'mesh_{YEAR}.json')
-    if os.path.exists(mesh_json_path):
-        with open(mesh_json_path) as file:
-            return json.load(file)
-
     path = ensure_path(PREFIX, DESCRIPTOR_URL)
     root = parse_xml_gz(path)
-    rv = get_descriptor_records(root)
-
-    with open(mesh_json_path, 'w') as file:
-        json.dump(rv, file, indent=2)
-
-    return rv
+    return get_descriptor_records(root)
 
 
 def get_descriptor_records(element: Element) -> List[Mapping]:

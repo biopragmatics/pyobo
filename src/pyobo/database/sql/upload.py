@@ -5,10 +5,9 @@
 import click
 from tqdm import tqdm
 
+from pyobo import get_obo_graph, get_terms_from_graph
 from pyobo.database.sql.manager import Manager
 from pyobo.database.sql.models import Reference, Term
-from pyobo.sources.utils import get_terms_from_graph
-from pyobo.utils import get_obo_graph
 
 
 @click.command()

@@ -2,4 +2,5 @@
 
 """Data structures for OBO."""
 
-from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef  # noqa: F401
+from .parser import get_terms_from_graph  # noqa: F401
+from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef, from_species  # noqa: F401

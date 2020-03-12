@@ -6,8 +6,8 @@ from typing import Iterable
 
 import pandas as pd
 
-from pyobo import Obo, Reference, Synonym, Term
-from pyobo.utils import ensure_path
+from ..path_utils import ensure_path
+from ..struct import Obo, Reference, Synonym, Term, from_species
 
 PREFIX = 'cgnc'
 URL = "http://birdgenenames.org/cgnc/downloads.jsp?file=standard"
@@ -50,6 +50,9 @@ def get_terms() -> Iterable[Term]:
             synonyms=synonyms,
             definition=name,
         )
+        term.append_relationship(from_species, Reference(
+            prefix='taxonomy', identifier='9031', name='Gallus gallus',
+        ))
         yield term
 
 

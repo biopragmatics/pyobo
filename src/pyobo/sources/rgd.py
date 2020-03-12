@@ -7,9 +7,8 @@ from typing import Iterable
 import pandas as pd
 from tqdm import tqdm
 
-from pyobo import Obo, Synonym, SynonymTypeDef, Term
-from pyobo.struct.struct import Reference
-from pyobo.utils import ensure_df
+from ..path_utils import ensure_df
+from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term
 
 PREFIX = 'rgd'
 

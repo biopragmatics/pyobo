@@ -4,7 +4,7 @@
 
 import click
 
-from pyobo import get_all_xrefs, get_id_name_mapping, get_synonyms, get_xrefs
+from .mappings import get_all_xrefs, get_id_name_mapping, get_synonyms, get_xrefs
 
 __all__ = ['main']
 

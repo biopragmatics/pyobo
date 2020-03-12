@@ -8,10 +8,8 @@ from typing import Iterable, Set, Tuple
 import click
 import pandas as pd
 
-from pyobo import get_obo_graph_by_prefix, get_obo_graph_by_url
-from pyobo.mappings import iterate_xrefs_from_graph
-from pyobo.mappings.extract_xrefs import UNHANDLED_NAMESPACES
-from pyobo.utils import MissingOboBuild
+from .extract_xrefs import UNHANDLED_NAMESPACES, iterate_xrefs_from_graph
+from ..getters import MissingOboBuild, get_obo_graph_by_prefix, get_obo_graph_by_url
 
 #: Keys are prefixes and values point to OBO URLs to download
 OBO = {

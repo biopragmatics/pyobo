@@ -15,14 +15,16 @@ from networkx.utils import open_file
 
 from .registry import Registry, miriam
 from .utils import comma_separate, obo_escape
-from ..utils import get_prefix_obo_path
+from ..path_utils import get_prefix_obo_path
 
 __all__ = [
     'Reference',
     'Synonym',
+    'SynonymTypeDef',
     'TypeDef',
     'Term',
     'Obo',
+    'from_species',
 ]
 
 
@@ -110,6 +112,7 @@ class SynonymTypeDef:
     name: str
 
     def to_obo(self) -> str:
+        """Serialize to OBO."""
         return f'synonymtypedef: {self.id} "{self.name}"'
 
 
@@ -180,13 +183,17 @@ class Term:
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: Optional[bool] = None
 
-    def append_relationship(self, typedef: TypeDef, reference: Reference) -> None:
-        """Append a relationship."""
-        self.relationships[typedef.id].append(reference)
+    def get_relationships(self, type_def: TypeDef) -> List[Reference]:
+        """Get relationships from the given type."""
+        return self.relationships[type_def.id]
 
-    def extend_relationship(self, typedef: TypeDef, references: Iterable[Reference]) -> None:
+    def append_relationship(self, type_def: TypeDef, reference: Reference) -> None:
+        """Append a relationship."""
+        self.relationships[type_def.id].append(reference)
+
+    def extend_relationship(self, type_def: TypeDef, references: Iterable[Reference]) -> None:
         """Append several relationships."""
-        self.relationships[typedef.id].extend(references)
+        self.relationships[type_def.id].extend(references)
 
     @property
     def identifier(self) -> str:  # noqa: D401
@@ -306,3 +313,9 @@ class Obo:
 
     def __iter__(self):  # noqa: D105
         return iter(self.terms)
+
+
+from_species = TypeDef(
+    id='from_species',
+    name='from species',
+)
