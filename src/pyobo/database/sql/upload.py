@@ -27,7 +27,7 @@ def main():
             reference = references[term.reference.curie] = Reference(
                 namespace=term.reference.namespace,
                 identifier=term.reference.identifier,
-                name=term.reference.name
+                name=term.reference.name,
             )
 
         term = Term(

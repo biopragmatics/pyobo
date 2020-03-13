@@ -81,7 +81,7 @@ def get_entrez_df() -> pd.DataFrame:
         ],
         dtype={
             'entrez_id': str,
-        }
+        },
     )
 
 
@@ -101,7 +101,7 @@ def get_terms() -> Iterable[Term]:
     ensembl_df = get_ensembl_df()
     # ensembl_df.to_csv('test.tsv', sep='\t', index=False)
     mgi_to_ensemble_ids = defaultdict(list)
-    ensembl_columns = ['mgi_id', 'ensembl_accession_id', 'ensembl_transcript_id', 'ensembl_protein_id', ]
+    ensembl_columns = ['mgi_id', 'ensembl_accession_id', 'ensembl_transcript_id', 'ensembl_protein_id']
     ensembl_it = ensembl_df[ensembl_columns].values
     for mgi_id, ensemble_accession_id, ensemble_transcript_ids, ensemble_protein_ids in ensembl_it:
         mgi_id = mgi_id[len('MGI:'):]

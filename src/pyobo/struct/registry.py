@@ -29,12 +29,12 @@ class Registry:
 
 miriam = Registry(
     name='miriam',
-    resolution_url='https://registry.identifiers.org/registry/'
+    resolution_url='https://registry.identifiers.org/registry/',
 )
 
 ols = Registry(
     name='ols',
-    resolution_url='https://www.ebi.ac.uk/ols/ontologies/'
+    resolution_url='https://www.ebi.ac.uk/ols/ontologies/',
 )
 
 obofoundry = Registry(

@@ -65,7 +65,7 @@ def get_obo() -> Obo:
         ontology=PREFIX,
         name='Rat Genome Database',
         terms=terms,
-        synonym_typedefs=[old_name_type, old_symbol_type]
+        synonym_typedefs=[old_name_type, old_symbol_type],
     )
 
 

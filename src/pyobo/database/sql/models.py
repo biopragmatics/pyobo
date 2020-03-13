@@ -24,7 +24,7 @@ Base = declarative_base()
 term_parents = Table(
     PARENTS_TABLE_NAME, Base.metadata,
     Column('term_id', Integer, ForeignKey(f'{TERM_TABLE_NAME}.id'), primary_key=True),
-    Column('reference_id', Integer, ForeignKey(f'{REFERENCE_TABLE_NAME}.id'), primary_key=True)
+    Column('reference_id', Integer, ForeignKey(f'{REFERENCE_TABLE_NAME}.id'), primary_key=True),
 )
 
 
