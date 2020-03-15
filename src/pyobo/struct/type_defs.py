@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Default typedefs"""
+"""Default typedefs."""
 
 from .struct import TypeDef
 
