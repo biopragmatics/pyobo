@@ -24,7 +24,6 @@ __all__ = [
     'TypeDef',
     'Term',
     'Obo',
-    'from_species',
 ]
 
 
@@ -218,7 +217,8 @@ class Term:
                 .replace(')', '')
             yield f'namespace: {namespace_normalized}'
 
-        yield f'''def: "{self.definition}" [{comma_separate(self.provenance)}]'''
+        if self.definition:
+            yield f'''def: "{self.definition}" [{comma_separate(self.provenance)}]'''
 
         for xref in sorted(self.xrefs, key=attrgetter('prefix', 'identifier')):
             yield f'xref: {xref}'
@@ -313,9 +313,3 @@ class Obo:
 
     def __iter__(self):  # noqa: D105
         return iter(self.terms)
-
-
-from_species = TypeDef(
-    id='from_species',
-    name='from species',
-)
