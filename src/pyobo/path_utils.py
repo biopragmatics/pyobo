@@ -17,6 +17,7 @@ __all__ = [
     'get_prefix_directory',
     'prefix_directory_join',
     'get_prefix_obo_path',
+    'get_url_filename',
     'ensure_path',
     'ensure_df',
     'ensure_tar_df',
@@ -25,16 +26,21 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def get_prefix_directory(prefix: str) -> str:
+def get_prefix_directory(prefix: str, *, version: Optional[str] = None) -> str:
     """Get the directory."""
-    directory = os.path.abspath(os.path.join(PYOBO_HOME, prefix))
+    if version:
+        directory = os.path.abspath(os.path.join(PYOBO_HOME, prefix, version))
+    else:
+        directory = os.path.abspath(os.path.join(PYOBO_HOME, prefix))
     os.makedirs(directory, exist_ok=True)
     return directory
 
 
-def prefix_directory_join(prefix: str, *parts: str) -> str:
+def prefix_directory_join(prefix: str, *parts: str, version: Optional[str] = None) -> str:
     """Join the parts onto the prefix directory."""
-    return os.path.join(get_prefix_directory(prefix), *parts)
+    rv = os.path.join(get_prefix_directory(prefix, version=version), *parts)
+    os.makedirs(os.path.dirname(rv), exist_ok=True)
+    return rv
 
 
 def get_prefix_obo_path(prefix: str) -> str:
@@ -42,13 +48,27 @@ def get_prefix_obo_path(prefix: str) -> str:
     return prefix_directory_join(prefix, f"{prefix}.obo")
 
 
-def ensure_path(prefix: str, url: str, path: Optional[str] = None) -> str:
+def get_url_filename(url: str) -> str:
+    """Get the filename from the end of the URL."""
+    parse_result = urlparse(url)
+    return os.path.basename(parse_result.path)
+
+
+def ensure_path(
+    prefix: str,
+    url: str,
+    *,
+    version: Optional[str] = None,
+    path: Optional[str] = None,
+) -> str:
     """Download a file if it doesn't exist."""
     if path is None:
-        parse_result = urlparse(url)
-        path = os.path.basename(parse_result.path)
+        path = get_url_filename(url)
 
-    path = prefix_directory_join(prefix, path)
+    if version:
+        path = prefix_directory_join(prefix, version, path)
+    else:
+        path = prefix_directory_join(prefix, path)
 
     if not os.path.exists(path):
         logger.info('downloading %s OBO from %s', prefix, url)
@@ -57,15 +77,31 @@ def ensure_path(prefix: str, url: str, path: Optional[str] = None) -> str:
     return path
 
 
-def ensure_df(prefix: str, url: str, path: Optional[str] = None, **kwargs) -> pd.DataFrame:
+def ensure_df(
+    prefix: str,
+    url: str,
+    *,
+    version: Optional[str] = None,
+    path: Optional[str] = None,
+    sep: str = '\t',
+    **kwargs,
+) -> pd.DataFrame:
     """Download a file and open as a dataframe."""
-    path = ensure_path(prefix, url, path=path)
-    return pd.read_csv(path, **kwargs)
+    path = ensure_path(prefix, url, version=version, path=path)
+    return pd.read_csv(path, sep=sep, **kwargs)
 
 
-def ensure_tar_df(prefix: str, url: str, inner_path: str, **kwargs) -> pd.DataFrame:
+def ensure_tar_df(
+    prefix: str,
+    url: str,
+    inner_path: str,
+    *,
+    version: Optional[str] = None,
+    path: Optional[str] = None,
+    **kwargs,
+) -> pd.DataFrame:
     """Download a tar file and open as a dataframe."""
-    path = ensure_path(prefix, url)
+    path = ensure_path(prefix, url, version=version, path=path)
     with tarfile.open(path) as tar_file:
         with tar_file.extractfile(inner_path) as file:
             return pd.read_csv(file, **kwargs)
