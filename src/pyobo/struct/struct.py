@@ -300,14 +300,11 @@ class Obo:
         for term in self.iter_terms():
             yield from term.iterate_obo_lines()
 
-    def to_obo(self) -> str:
-        """Get the OBO document string."""
-        return '\n'.join(self.iterate_obo_lines())
-
     @open_file(1, mode='w')
     def write(self, file: Union[None, str, TextIO, Path] = None) -> None:
         """Write the OBO to a file."""
-        print(self.to_obo(), file=file)
+        for line in self.iterate_obo_lines():
+            print(line, file=file)
 
     def write_default(self) -> None:
         """Write the OBO to the default path."""
