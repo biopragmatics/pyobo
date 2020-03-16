@@ -19,12 +19,12 @@ alias_type = SynonymTypeDef(id='alias', name='alias')
 
 def get_obo() -> Obo:
     """Get SGD as OBO."""
-    terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
         name='Saccharomyces Genome Database',
-        terms=terms,
+        iter_terms=get_terms,
         synonym_typedefs=[alias_type],
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 

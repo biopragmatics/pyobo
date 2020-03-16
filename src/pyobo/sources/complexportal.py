@@ -98,12 +98,12 @@ def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
 
 def get_obo() -> Obo:
     """Get the ComplexPortal OBO."""
-    terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
         name='Complex Portal',
         data_version=VERSION,
-        terms=terms,
+        iter_terms=get_terms,
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 

@@ -22,12 +22,12 @@ DESCRIPTOR_URL = f'ftp://nlmpubs.nlm.nih.gov/online/mesh/{YEAR}/xmlmesh/desc{YEA
 
 def get_obo() -> Obo:
     """Get MeSH as OBO."""
-    terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
         name='Medical Subject Headings',
-        terms=terms,
+        iter_terms=get_terms,
         data_version=YEAR,
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 

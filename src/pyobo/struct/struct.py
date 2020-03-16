@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, TextIO, Union
+from typing import Callable, Dict, Iterable, List, Optional, TextIO, Union
 
 from networkx.utils import open_file
 
@@ -248,8 +248,8 @@ class Obo:
     #: The name of the ontology
     name: str
 
-    #: Terms
-    terms: List[Term]
+    #: A function that iterates over terms
+    iter_terms: Callable[[], Iterable[Term]]
 
     #: The OBO format
     format_version: str = '1.2'
@@ -294,7 +294,7 @@ class Obo:
         for typedef in self.typedefs:
             yield from typedef.iterate_obo_lines()
 
-        for term in self.terms:
+        for term in self.iter_terms():
             yield from term.iterate_obo_lines()
 
     def to_obo(self) -> str:
@@ -312,4 +312,4 @@ class Obo:
         self.write(path)
 
     def __iter__(self):  # noqa: D105
-        return iter(self.terms)
+        return iter(self.iter_terms())

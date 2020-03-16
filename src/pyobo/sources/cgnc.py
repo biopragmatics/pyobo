@@ -15,11 +15,11 @@ URL = "http://birdgenenames.org/cgnc/downloads.jsp?file=standard"
 
 def get_obo() -> Obo:
     """Get CGNC as OBO."""
-    terms = list(get_terms())
     return Obo(
-        terms=terms,
+        iter_terms=get_terms,
         name='CGNC',
         ontology=PREFIX,
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 

@@ -30,11 +30,10 @@ xref_mapping = {
 
 def get_obo() -> Obo:
     """Get miRBase as OBO."""
-    terms = get_terms()
     return Obo(
         ontology=PREFIX,
         name='miRBase',
-        terms=terms,
+        iter_terms=get_terms,
         typedefs=[from_species, has_mature],
         data_version=VERSION,
         auto_generated_by=f'bio2obo:{PREFIX}',

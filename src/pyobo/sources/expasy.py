@@ -35,11 +35,11 @@ DR = 'DR'
 
 def get_obo() -> Obo:
     """Get ExPASy as OBO."""
-    terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
         name='ExPASy Enzyme Nomenclature',
-        terms=terms,
+        iter_terms=get_terms,
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 

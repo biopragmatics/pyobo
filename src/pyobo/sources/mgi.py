@@ -19,11 +19,10 @@ ENSEMBL_XREFS_URL = 'http://www.informatics.jax.org/downloads/reports/MRK_ENSEMB
 
 def get_obo() -> Obo:
     """Get MGI as OBO."""
-    terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
         name='Mouse Genome Database',
-        terms=terms,
+        iter_terms=get_terms,
         typedefs=[from_species],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )

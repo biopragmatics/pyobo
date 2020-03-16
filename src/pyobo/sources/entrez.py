@@ -46,13 +46,12 @@ GENE_INFO_COLUMNS = [
 
 def get_obo() -> Obo:
     """Get Entrez as OBO."""
-    terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
         name='Entrez Gene',
-        terms=terms,
+        iter_terms=get_terms,
         typedefs=[from_species],
-        auto_generated_by='bio2obo:entrez',
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 

@@ -47,14 +47,13 @@ gene_xrefs = [
 
 def get_obo() -> Obo:
     """Get HGNC as OBO."""
-    terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
         name='HGNC',
-        terms=terms,
+        iter_terms=get_terms,
         typedefs=[from_species],
         synonym_typedefs=[previous_name_type, previous_symbol_type, alias_name_type, alias_symbol_type],
-        auto_generated_by='bio2obo:hgnc',
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 

@@ -60,12 +60,12 @@ GENES_HEADER = [
 
 def get_obo() -> Obo:
     """Get RGD as OBO."""
-    terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
         name='Rat Genome Database',
-        terms=terms,
+        iter_terms=get_terms,
         synonym_typedefs=[old_name_type, old_symbol_type],
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
