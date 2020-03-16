@@ -5,6 +5,7 @@
 import click
 
 from .mappings import get_all_xrefs, get_id_name_mapping, get_synonyms, get_xrefs
+from .sources import iter_converted_obos
 
 __all__ = ['main']
 
@@ -54,6 +55,14 @@ def synonyms(prefix: str):
         for identifier, _synonyms in get_synonyms(prefix).items()
         for _synonym in _synonyms
     ))
+
+
+@main.command()
+def cache():
+    """Cache all resources."""
+    for obo in iter_converted_obos():
+        click.secho(f'Caching {obo.ontology}', bold=True, fg='green')
+        obo.write_default()
 
 
 if __name__ == '__main__':

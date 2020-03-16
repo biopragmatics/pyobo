@@ -11,7 +11,7 @@ from ..struct import Obo
 __all__ = [
     'CONVERTED',
     'get_converted_obo',
-    'get_converted_obos',
+    'iter_converted_obos',
 ]
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -37,7 +37,7 @@ def get_converted_obo(prefix: str) -> Obo:
     return module.get_obo()
 
 
-def get_converted_obos() -> Iterable[Obo]:
+def iter_converted_obos() -> Iterable[Obo]:
     """Get all modules in the PyOBO sources."""
     for prefix in sorted(CONVERTED):
         yield get_converted_obo(prefix)
