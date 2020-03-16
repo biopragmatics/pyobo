@@ -26,6 +26,7 @@ CONVERTED = {
     'mesh': 'mesh',
     'mgi': 'mgi',
     'mirbase': 'mirbase',
+    'pubchem.compound': 'pubchem',
     'rgd': 'rgd',
     'sgd': 'sgd',
 }
