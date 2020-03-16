@@ -109,8 +109,7 @@ def get_terms() -> Iterable[Term]:
                 provenance.append(Reference(prefix='pubmed', identifier=pubmed_id))
 
         term = Term(
-            reference=Reference(prefix=PREFIX, identifier=row['GENE_RGD_ID']),
-            name=row['SYMBOL'],
+            reference=Reference(prefix=PREFIX, identifier=row['GENE_RGD_ID'], name=row['SYMBOL']),
             definition=row['NAME'] or row['GENE_DESC'],
             synonyms=synonyms,
             xrefs=xrefs,

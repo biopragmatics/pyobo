@@ -137,7 +137,7 @@ def get_terms() -> Iterable[Term]:
         'taxonomy_name',
         'members',
     ]]
-    it = tqdm(slim_df.values, total=len(slim_df.index))
+    it = tqdm(slim_df.values, total=len(slim_df.index), desc=f'mapping {PREFIX}')
     unhandled_xref_type = set()
     for complexportal_id, name, definition, aliases, xrefs, taxonomy_id, taxonomy_name, members in it:
         synonyms = [
@@ -157,7 +157,6 @@ def get_terms() -> Iterable[Term]:
 
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=complexportal_id, name=name),
-            name=name,
             definition=definition.strip(),
             synonyms=synonyms,
             xrefs=_xrefs,

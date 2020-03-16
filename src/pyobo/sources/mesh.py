@@ -67,7 +67,6 @@ def get_terms() -> Iterable[Term]:
         ]
 
         mesh_id_to_term[identifier] = Term(
-            name=name,
             definition=definition,
             reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
             synonyms=synonyms,

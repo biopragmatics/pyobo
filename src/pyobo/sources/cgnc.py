@@ -44,8 +44,7 @@ def get_terms() -> Iterable[Term]:
             synonyms = []
 
         term = Term(
-            name=symbol,
-            reference=Reference(prefix=PREFIX, identifier=cgnc_id),
+            reference=Reference(prefix=PREFIX, identifier=cgnc_id, name=symbol),
             xrefs=xrefs,
             synonyms=synonyms,
             definition=name,

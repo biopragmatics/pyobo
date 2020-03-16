@@ -84,8 +84,7 @@ def _get_terms_helper() -> Iterable[Term]:
             synonyms.append(Synonym(name=symbol, type=symbol_type))
 
         term = Term(
-            name=name,
-            reference=Reference(prefix=PREFIX, identifier=hgncgenefamily_id),
+            reference=Reference(prefix=PREFIX, identifier=hgncgenefamily_id, name=name),
             definition=definition,
             provenance=provenance,
             xrefs=xrefs,

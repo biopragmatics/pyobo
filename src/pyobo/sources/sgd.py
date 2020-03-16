@@ -55,8 +55,7 @@ def get_terms() -> str:
                 synonyms.append(Synonym(name=unquote_plus(alias), type=alias_type))
 
         term = Term(
-            reference=Reference(prefix=PREFIX, identifier=identifier),
-            name=name,
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
             definition=definition,
             synonyms=synonyms,
         )

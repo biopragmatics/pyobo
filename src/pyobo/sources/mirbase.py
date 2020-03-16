@@ -82,7 +82,7 @@ def _process_definitions_lines(lines: Iterable[str]) -> Iterable[Term]:
             groups.append(listnew)
         groups[-1].append(line)
 
-    for group in tqdm(groups, desc='Parsing miRBase'):
+    for group in tqdm(groups, desc=f'mapping {PREFIX}'):
         name = group[0][5:23].strip()
         qualifier, dtype, species_code, length = map(str.strip, group[0][23:].strip().rstrip('.').split(';'))
         identifier = group[2][3:-2].strip()
@@ -137,8 +137,7 @@ def _process_definitions_lines(lines: Iterable[str]) -> Iterable[Term]:
         # TODO add pubmed references
 
         term = Term(
-            name=name,
-            reference=Reference(prefix=PREFIX, identifier=identifier),
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
             definition=definition,
             xrefs=xrefs,
             synonyms=synonyms,

@@ -136,7 +136,6 @@ def get_terms() -> Iterable[Term]:
                 xrefs.append(Reference(prefix=xref_ns, identifier=xref_id))
 
         term = Term(
-            name=symbol,
             reference=Reference(prefix=PREFIX, identifier=gene_id, name=symbol),
             definition=description,
             xrefs=xrefs,

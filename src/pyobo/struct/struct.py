@@ -174,8 +174,6 @@ class Term:
     #: Equivalent references
     xrefs: List[Reference] = field(default_factory=list)
 
-    name: Optional[str] = None
-
     #: The sub-namespace within the ontology
     namespace: Optional[str] = None
 
@@ -193,6 +191,11 @@ class Term:
     def extend_relationship(self, type_def: TypeDef, references: Iterable[Reference]) -> None:
         """Append several relationships."""
         self.relationships[type_def.id].extend(references)
+
+    @property
+    def name(self):  # noqa: D401
+        """The name of the term."""
+        return self.reference.name
 
     @property
     def identifier(self) -> str:  # noqa: D401

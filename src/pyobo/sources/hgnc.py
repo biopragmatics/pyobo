@@ -104,9 +104,8 @@ def get_terms() -> Iterable[Term]:
             synonyms.append(Synonym(name=previous_name, type=previous_name_type))
 
         term = Term(
-            name=symbol,
             definition=name,
-            reference=Reference(prefix=PREFIX, identifier=identifier),
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=symbol),
             xrefs=xrefs,
             provenance=provenance,
             parents=parents,

@@ -53,8 +53,7 @@ def get_terms() -> Iterable[Term]:
     child_to_parents = defaultdict(list)
     for ec_code, data in tree.items():
         terms[ec_code] = Term(
-            name=data['name'],
-            reference=Reference(prefix=PREFIX, identifier=ec_code),
+            reference=Reference(prefix=PREFIX, identifier=ec_code, name=data['name']),
         )
         for child_data in data.get('children', []):
             child_ec_code = child_data['identifier']
@@ -106,8 +105,7 @@ def get_terms() -> Iterable[Term]:
             # raise
 
         terms[ec_code] = Term(
-            name=name,
-            reference=Reference(prefix=PREFIX, identifier=ec_code),
+            reference=Reference(prefix=PREFIX, identifier=ec_code, name=name),
             parents=[parent_term.reference],
             synonyms=synonyms,
             xrefs=xrefs,

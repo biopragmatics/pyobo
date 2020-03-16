@@ -129,8 +129,7 @@ def get_terms() -> Iterable[Term]:
                 xrefs.append(Reference(prefix='ensembl', identifier=ensembl_id))
 
         term = Term(
-            reference=Reference(prefix=PREFIX, identifier=identifier),
-            name=name,
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
             definition=definition,
             xrefs=xrefs,
             synonyms=synonyms,
