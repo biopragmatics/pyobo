@@ -27,7 +27,6 @@ def get_terms_from_graph(graph: nx.Graph) -> List[Term]:
         reference = references[node]
         return Term(
             reference=reference,
-            name=reference.name,
             definition=data['def'],
             parents=list(_get_parents(data)),
         )
