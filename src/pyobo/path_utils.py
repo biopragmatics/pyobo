@@ -66,7 +66,7 @@ def ensure_path(
         path = get_url_filename(url)
 
     if version:
-        path = prefix_directory_join(prefix, version, path)
+        path = prefix_directory_join(prefix, path, version=version)
     else:
         path = prefix_directory_join(prefix, path)
 
