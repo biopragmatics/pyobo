@@ -91,8 +91,8 @@ def iterate_xrefs_from_graph(graph: nx.Graph, use_tqdm: bool = True) -> Iterable
             continue
 
         # Skip node if it has a blacklisted prefix
-        for prefix in XREF_PREFIX_BLACKLIST:
-            if node.startswith(prefix):
+        for blacklisted_prefix in XREF_PREFIX_BLACKLIST:
+            if node.startswith(blacklisted_prefix):
                 continue
 
         # Skip node if it has a blacklisted suffix
@@ -101,9 +101,10 @@ def iterate_xrefs_from_graph(graph: nx.Graph, use_tqdm: bool = True) -> Iterable
                 continue
 
         # Remap node's prefix (if necessary)
-        for prefix, new_prefix in PREFIX_REMAP.items():
-            if node.startswith(prefix):
-                node = new_prefix + node[len(prefix):]
+        for old_prefix, new_prefix in PREFIX_REMAP.items():
+            old_prefix_colon = f'{old_prefix}:'
+            if node.startswith(old_prefix_colon):
+                node = new_prefix + ':' + node[len(old_prefix_colon):]
 
         try:
             head_ns, head_id = node.split(':', 1)
@@ -129,9 +130,9 @@ def iterate_xrefs_from_graph(graph: nx.Graph, use_tqdm: bool = True) -> Iterable
             ):
                 continue  # sometimes xref to self... weird
 
-            for prefix, new_prefix in PREFIX_REMAP.items():
-                if xref.startswith(prefix):
-                    xref = new_prefix + xref[len(prefix):]
+            for blacklisted_prefix, new_prefix in PREFIX_REMAP.items():
+                if xref.startswith(blacklisted_prefix):
+                    xref = new_prefix + xref[len(blacklisted_prefix):]
 
             split_space = ' ' in xref
             if split_space:

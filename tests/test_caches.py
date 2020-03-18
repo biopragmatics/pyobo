@@ -3,13 +3,14 @@
 """Tests for PyOBO caches."""
 
 import os
+import time
 import unittest
 from tempfile import TemporaryDirectory
 
-import time
+from pyobo.cache_utils import cached_mapping, cached_multidict
+from pyobo.io_utils import open_map_tsv, open_multimap_tsv
 
-from pyobo.cache_utils import cached_mapping
-from pyobo.io_utils import open_map_tsv
+sleep_time = 3
 
 
 class TestCaches(unittest.TestCase):
@@ -17,7 +18,6 @@ class TestCaches(unittest.TestCase):
 
     def test_mapping(self):
         """Test the mapping cache."""
-        sleep_time = 3
         with TemporaryDirectory() as directory:
             path = os.path.join(directory, 'test.tsv')
             header = ['key', 'value']
@@ -52,3 +52,39 @@ class TestCaches(unittest.TestCase):
         self.assertIsNotNone(d)
         self.assertEqual(3, len(d))
         self.assertEqual(dict(a='x', b='y', c='z'), d)
+
+    def test_multidict(self):
+        """Test caching a multidict."""
+        with TemporaryDirectory() as directory:
+            path = os.path.join(directory, 'test.tsv')
+            header = ['key', 'value']
+
+            @cached_multidict(path=path, header=header)
+            def _get_multidict():
+                """Return mapping"""
+                time.sleep(sleep_time)
+                return dict(a=['a1', 'a2'], b=['b1'], c=['c1', 'c2'])
+
+            start_time = time.time()
+            rv1 = _get_multidict()
+            elapsed = time.time() - start_time
+            self.assertGreater(elapsed, sleep_time)
+
+            self._help_test_multidict(rv1)
+
+            """Test cache"""
+            rv3 = open_multimap_tsv(path)
+            self._help_test_multidict(rv3)
+
+            """Test reload"""
+            start_time = time.time()
+            rv2 = _get_multidict()  # this time should be fast
+            elapsed = time.time() - start_time
+            self.assertLess(elapsed, sleep_time)
+
+            self._help_test_multidict(rv2)
+
+    def _help_test_multidict(self, d):
+        self.assertIsNotNone(d)
+        self.assertEqual(3, len(d))
+        self.assertEqual(dict(a=['a1', 'a2'], b=['b1'], c=['c1', 'c2']), d)

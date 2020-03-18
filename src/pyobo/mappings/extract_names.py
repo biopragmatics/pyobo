@@ -8,6 +8,7 @@ import networkx as nx
 
 from ..cache_utils import cached_mapping
 from ..getters import get_obo_graph
+from ..graph_utils import iterate_obo_nodes
 from ..path_utils import prefix_directory_join
 
 __all__ = [
@@ -35,8 +36,7 @@ def get_name_id_mapping(prefix: str, url: Optional[str] = None) -> Mapping[str, 
 
 
 def _iterate_identifier_names(graph: nx.MultiDiGraph, prefix: str) -> Iterable[Tuple[str, str]]:
-    for node, data in graph.nodes(data=True):
-        identifier = node[len(f'{prefix}:'):]
+    for identifier, data in iterate_obo_nodes(graph=graph, prefix=prefix):
         name = data.get('name')
         if name is None:
             continue
