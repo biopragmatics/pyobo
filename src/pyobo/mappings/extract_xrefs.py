@@ -43,7 +43,7 @@ UNHANDLED_NAMESPACES = defaultdict(list)
 UBERON_UNHANDLED = defaultdict(list)
 
 
-def get_all_xrefs(prefix: str, url: Optional[str] = None) -> pd.DataFrame:
+def get_all_xrefs(prefix: str, **kwargs) -> pd.DataFrame:
     """Get all xrefs."""
     path = prefix_directory_join(prefix, f"{prefix}_mappings.tsv")
     dtype = {
@@ -52,7 +52,7 @@ def get_all_xrefs(prefix: str, url: Optional[str] = None) -> pd.DataFrame:
 
     @cached_df(path=path, dtype=dtype)
     def _df_getter() -> pd.DataFrame:
-        graph = get_obo_graph(prefix, url=url)
+        graph = get_obo_graph(prefix, **kwargs)
         logger.info('writing %s mapping to %s', prefix, path)
         return pd.DataFrame(
             list(iterate_xrefs_from_graph(graph)),
@@ -62,21 +62,24 @@ def get_all_xrefs(prefix: str, url: Optional[str] = None) -> pd.DataFrame:
     return _df_getter()
 
 
-def get_xrefs(prefix: str, xref_prefix: str, url: Optional[str] = None) -> Mapping[str, str]:
+def get_xrefs(prefix: str, xref_prefix: str, **kwargs) -> Mapping[str, str]:
     """Get xrefs to a given target."""
     path = prefix_directory_join(prefix, f"{prefix}_{xref_prefix}_mappings.tsv")
     header = [f'{prefix}_id', f'{xref_prefix}_id']
 
     @cached_mapping(path=path, header=header)
     def _get_mapping() -> Mapping[str, str]:
-        graph = get_obo_graph(prefix, url=url)
-        return {
-            head_id: xref_id
-            for head_ns, head_id, xref_ns, xref_id in iterate_xrefs_from_graph(graph)
-            if head_ns == prefix and xref_ns == xref_prefix
-        }
+        graph = get_obo_graph(prefix, **kwargs)
+        return dict(iterate_xrefs_filtered(graph, prefix, xref_prefix))
 
     return _get_mapping()
+
+
+def iterate_xrefs_filtered(graph, p1, p2, use_tqdm: bool = True) -> Iterable[Tuple[str, str]]:
+    """Iterate over cross references between the two namespaces in the graph."""
+    for head_ns, head_id, xref_ns, xref_id in iterate_xrefs_from_graph(graph, use_tqdm=use_tqdm):
+        if (head_ns == p1 and xref_ns == p2) or (head_ns == p2 and xref_ns == p1):
+            yield head_id, xref_id
 
 
 def iterate_xrefs_from_graph(graph: nx.Graph, use_tqdm: bool = True) -> Iterable[Tuple[str, str, str, str]]:

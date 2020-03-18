@@ -3,7 +3,7 @@
 """Utilities for extracting synonyms."""
 
 import logging
-from typing import Iterable, List, Mapping, Optional, Tuple
+from typing import Iterable, List, Mapping, Tuple
 
 import networkx as nx
 
@@ -20,14 +20,14 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def get_synonyms(prefix: str, url: Optional[str] = None) -> Mapping[str, List[str]]:
+def get_synonyms(prefix: str, **kwargs) -> Mapping[str, List[str]]:
     """Get the OBO file and output a synonym dictionary."""
     path = prefix_directory_join(prefix, f"{prefix}_synonyms.tsv")
     header = [f'{prefix}_id', 'synonym']
 
     @cached_multidict(path=path, header=header)
     def _get_multidict() -> Mapping[str, List[str]]:
-        graph = get_obo_graph(prefix, url=url)
+        graph = get_obo_graph(prefix, **kwargs)
         rv = multidict(_iterate(graph=graph, prefix=prefix))
         return {
             k: sorted(set(v))

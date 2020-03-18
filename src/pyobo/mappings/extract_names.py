@@ -2,7 +2,7 @@
 
 """Getters for OBO content."""
 
-from typing import Iterable, Mapping, Optional, Tuple
+from typing import Iterable, Mapping, Tuple
 
 import networkx as nx
 
@@ -17,21 +17,21 @@ __all__ = [
 ]
 
 
-def get_id_name_mapping(prefix: str, url: Optional[str] = None) -> Mapping[str, str]:
+def get_id_name_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     path = prefix_directory_join(prefix, f"{prefix}.mapping.tsv")
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'])
     def _get_id_name_mapping() -> Mapping[str, str]:
-        graph = get_obo_graph(prefix, url=url)
+        graph = get_obo_graph(prefix, **kwargs)
         return dict(_iterate_identifier_names(graph, prefix))
 
     return _get_id_name_mapping()
 
 
-def get_name_id_mapping(prefix: str, url: Optional[str] = None) -> Mapping[str, str]:
+def get_name_id_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     """Get a name to identifier mapping for the OBO file."""
-    d = get_id_name_mapping(prefix=prefix, url=url)
+    d = get_id_name_mapping(prefix=prefix, **kwargs)
     return {v: k for k, v in d.items()}
 
 
