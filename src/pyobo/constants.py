@@ -21,4 +21,5 @@ OUTPUT_DIRECTORY = (
 CURATED_URLS = {
     'mp': 'http://purl.obolibrary.org/obo/mp.obo',
     'chiro': 'http://purl.obolibrary.org/obo/chiro.obo',
+    'ncbitaxon': 'http://purl.obolibrary.org/obo/ncbitaxon.obo',
 }
