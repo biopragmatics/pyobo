@@ -32,7 +32,8 @@ class MissingOboBuild(RuntimeError):
 def get_obo_graph(prefix: str, *, url: Optional[str] = None, local: bool = False) -> nx.MultiDiGraph:
     """Get the OBO file by prefix or URL."""
     if prefix in CONVERTED:
-        get_converted_obo(prefix).write_default()
+        obo = get_converted_obo(prefix)
+        obo.write_default()
     if url is None:
         return get_obo_graph_by_prefix(prefix)
     elif local:
@@ -59,10 +60,13 @@ def get_obo_graph_by_prefix(prefix: str) -> nx.MultiDiGraph:
 def ensure_obo_path(prefix: str) -> str:
     """Get the path to the OBO file and download if missing."""
     if prefix in CURATED_URLS:
-        return ensure_path(prefix, CURATED_URLS[prefix])
+        curated_url = CURATED_URLS[prefix]
+        logger.debug(f'loading {prefix} OBO from curated URL: {curated_url}')
+        return ensure_path(prefix, url=curated_url)
 
     path = get_prefix_obo_path(prefix)
     if os.path.exists(path):
+        logger.debug(f'{prefix} OBO already exists at {path}')
         return path
 
     obofoundry = get_obofoundry(mappify=True)
