@@ -164,7 +164,7 @@ def get_terms() -> Iterable[Term]:
         )
         term.append_relationship(from_species, Reference(prefix='taxonomy', identifier=taxonomy_id, name=taxonomy_name))
 
-        for reference, count in members:
+        for reference, _count in members:
             term.append_relationship(has_part, reference)
 
         yield term

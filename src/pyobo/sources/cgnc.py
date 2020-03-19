@@ -28,7 +28,7 @@ def get_terms() -> Iterable[Term]:
     path = ensure_path(PREFIX, URL, path=f'{PREFIX}.tsv')
     df = pd.read_csv(path, sep='\t', dtype={'Entrez Gene id': str, 'CGNC id': str})
 
-    for cgnc_id, entrez_id, ensembl_id, symbol, name, synonyms, status, _ in df.values:
+    for cgnc_id, entrez_id, ensembl_id, symbol, name, synonyms, _, _ in df.values:
         xrefs = []
         if entrez_id and pd.notna(entrez_id):
             xrefs.append(Reference(prefix='ncbigene', identifier=entrez_id))
