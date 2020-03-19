@@ -19,7 +19,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 CONVERTED = {
     'cgnc': 'cgnc',
     'complexportal': 'complexportal',
-    'ncbigene': 'entrez',
+    'ncbigene': 'ncbigene',
     'ec-code': 'expasy',
     'hgnc': 'hgnc',
     'hgnc.genefamily': 'hgncgenefamily',

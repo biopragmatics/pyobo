@@ -14,7 +14,7 @@ from ..struct import Obo, Reference, Term, from_species
 
 logger = logging.getLogger(__name__)
 
-PREFIX = 'entrez'
+PREFIX = 'ncbigene'
 
 SPECIES_CONSORTIUM_MAPPING = {
     '10090': 'mgi',  # Mouse
@@ -117,9 +117,9 @@ def get_terms() -> Iterable[Term]:
     df = get_gene_info_df()
 
     taxonomy_id_to_name = get_id_name_mapping('ncbitaxon')
-    it = tqdm(df.values, total=len(df.index), desc=f'mapping {PREFIX}')
 
-    for tax_id, gene_id, symbol, dbxrfs, description, gene_type in it:
+    it = tqdm(df.values, total=len(df.index), desc=f'mapping {PREFIX}')
+    for tax_id, gene_id, symbol, dbxrfs, description, _gene_type in it:
         if pd.isna(symbol):
             continue
         try:
