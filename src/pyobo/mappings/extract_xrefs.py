@@ -82,11 +82,11 @@ def iterate_xrefs_filtered(graph, p1, p2, use_tqdm: bool = True) -> Iterable[Tup
             yield head_id, xref_id
 
 
-def iterate_xrefs_from_graph(graph: nx.Graph, use_tqdm: bool = True) -> Iterable[Tuple[str, str, str, str]]:
+def iterate_xrefs_from_graph(graph: nx.MultiDiGraph, use_tqdm: bool = True) -> Iterable[Tuple[str, str, str, str]]:
     """Iterate over cross references in the graph."""
     it = graph.nodes(data=True)
     if use_tqdm:
-        it = tqdm(it, desc=f'Extracting xrefs from {graph}')
+        it = tqdm(it, desc=f'Extracting xrefs')
     for node, data in it:
         node = node.strip()
 
