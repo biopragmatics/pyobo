@@ -3,10 +3,11 @@
 """Utilities for caching files."""
 
 import functools
+import gzip
 import json
 import logging
 import os
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Union
 
 import networkx as nx
 import obonet
@@ -77,11 +78,13 @@ def cached_graph(path: str) -> Callable[[GraphGetter], GraphGetter]:  # noqa: D2
         @functools.wraps(f)
         def _wrapped() -> nx.MultiDiGraph:
             if os.path.exists(path):
-                logger.debug('loading graph from pickle: %s', path)
-                return nx.read_gpickle(path)
-            rv = f()
-            nx.write_gpickle(rv, path)
-            return rv
+                logger.debug('loading pre-compiled graph from: %s', path)
+                with gzip.open(path, 'rt') as file:
+                    return nx.node_link_graph(json.load(file))
+            graph = f()
+            with gzip.open(path, 'wt') as file:
+                json.dump(nx.node_link_data(graph), file)
+            return graph
 
         return _wrapped
 
@@ -126,12 +129,11 @@ def cached_multidict(path: str, header: Iterable[str]):  # noqa: D202
     return wrapped
 
 
-def ensure_obo_graph(path: str, pickle_path: Optional[str] = None) -> nx.MultiDiGraph:
+def ensure_obo_graph(path: str) -> nx.MultiDiGraph:
     """Get an OBO graph from a given path."""
-    if pickle_path is None:
-        pickle_path = f'{path}.pickle'
+    cache_path = f'{path}.json.gz'
 
-    @cached_graph(path=pickle_path)
+    @cached_graph(path=cache_path)
     def _read_obo() -> nx.MultiDiGraph:
         return obonet.read_obo(path)
 
