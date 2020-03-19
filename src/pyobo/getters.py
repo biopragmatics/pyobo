@@ -73,5 +73,9 @@ def ensure_obo_path(prefix: str) -> str:
     build = entry.get('build')
     if build is None:
         raise MissingOboBuild(f'OBO Foundry is missing a build for: {prefix}')
-    url = build['source_url']
+
+    url = build.get('source_url')
+    if url is None:
+        raise MissingOboBuild(f'OBO Foundry build is missing a URL for: {prefix}, {build}')
+
     return ensure_path(prefix, url)
