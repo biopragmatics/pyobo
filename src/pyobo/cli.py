@@ -33,10 +33,10 @@ prefix_argument = click.argument('prefix')
 def xrefs(prefix: str, target: str):
     """Page through xrefs for the given namespace to the second given namespace."""
     if target:
-        filtered_xrfs = get_xrefs(prefix, target)
+        filtered_xrefs = get_xrefs(prefix, target)
         click.echo_via_pager('\n'.join(
             f'{identifier}\t{_xref}'
-            for identifier, _xrefs in filtered_xrfs.items()
+            for identifier, _xrefs in filtered_xrefs.items()
             for _xref in _xrefs
         ))
     else:
