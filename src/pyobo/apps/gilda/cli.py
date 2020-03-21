@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""CLI for PyOBO's Gilda Service."""
+"""PyOBO's Gilda Service."""
 
 import logging
 from typing import Iterable, Optional
