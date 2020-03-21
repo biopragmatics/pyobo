@@ -10,7 +10,7 @@ import click
 from .cli_utils import verbose_option
 from .constants import PYOBO_HOME
 from .mappings import get_all_xrefs, get_id_name_mapping, get_synonyms, get_xrefs
-from .mappings.cli import cache_xrefs as cache_xrefs
+from .mappings.cli import cache_xrefs
 from .sources import iter_converted_obos
 
 __all__ = ['main']
