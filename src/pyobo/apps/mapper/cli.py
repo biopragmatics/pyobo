@@ -4,7 +4,7 @@
 
 import itertools as itt
 from functools import lru_cache
-from typing import Optional
+from typing import Iterable, Union
 
 import click
 import networkx as nx
@@ -25,12 +25,17 @@ def _to_curie(prefix, identifier):
     return f'{prefix}:{identifier}'
 
 
-def get_app(path: Optional[str] = None) -> Flask:
+def get_app(paths: Union[None, str, Iterable[str]] = None) -> Flask:
     """Build the Flask app."""
-    if path is not None:
-        df = pd.read_csv(path, sep='\t', dtype=str)
-    else:
+    if paths is None:
         df = get_xref_df()
+    elif isinstance(paths, str):
+        df = pd.read_csv(paths, sep='\t', dtype=str)
+    else:
+        df = pd.concat(
+            pd.read_csv(path, sep='\t', dtype=str)
+            for path in paths
+        )
 
     app = Flask(__name__)
 
@@ -142,9 +147,10 @@ def get_app(path: Optional[str] = None) -> Flask:
 
 
 @click.command()
-def main():
+@click.option('-m', '--mappings-file', multiple=True, default=['/Users/cthoyt/Desktop/xrefs.tsv.gz'])
+def main(mappings_file):
     """Run the mappings app."""
-    app = get_app('/Users/cthoyt/Desktop/xrefs.tsv.gz')
+    app = get_app(mappings_file)
     app.run()
 
 
