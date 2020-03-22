@@ -26,9 +26,12 @@ CONVERTED = {
     'mesh': 'mesh',
     'mgi': 'mgi',
     'mirbase': 'mirbase',
+    'pathbank': 'pathbank',
     'pubchem.compound': 'pubchem',
+    'reactome': 'reactome',
     'rgd': 'rgd',
     'sgd': 'sgd',
+    'wikipathways': 'wikipathways',
 }
 
 

@@ -7,6 +7,7 @@ from .struct import Reference, TypeDef
 __all__ = [
     'from_species',
     'has_part',
+    'pathway_has_part',
     'part_of',
     'is_a',
     'subclass',
@@ -32,7 +33,11 @@ has_part = TypeDef(
     comment='Inverse of part_of',
     inverse=Reference(prefix='bfo', identifier='0000050', name='part of'),
 )
-
+pathway_has_part = TypeDef(
+    reference=Reference(prefix='obo', identifier='pathway_has_part', name='pathway has part'),
+    comment='More specific version of has_part for pathways',
+    parents=[Reference(prefix='bfo', identifier='0000051', name='has part')],
+)
 is_a = TypeDef(
     reference=Reference.default(identifier='is_a', name='is a'),
     inverse=Reference.default(identifier='subclass', name='subclass'),

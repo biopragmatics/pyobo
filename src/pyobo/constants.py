@@ -8,6 +8,7 @@ __all__ = [
     'PYOBO_HOME',
     'OUTPUT_DIRECTORY',
     'CURATED_URLS',
+    'SPECIES_REMAPPING',
 ]
 
 PYOBO_HOME = os.environ.get('PYOBO_HOME') or os.path.join(os.path.expanduser('~'), '.obo')
@@ -38,4 +39,8 @@ CURATED_URLS = {
     'miro': 'http://purl.obolibrary.org/obo/miro.obo',
     'tads': 'http://purl.obolibrary.org/obo/tads.obo',
     'tgma': 'http://purl.obolibrary.org/obo/tgma.obo',
+}
+
+SPECIES_REMAPPING = {
+    'Canis familiaris': 'Canis lupus familiaris',
 }
