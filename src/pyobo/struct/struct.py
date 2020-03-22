@@ -4,13 +4,16 @@
 
 from __future__ import annotations
 
+import gzip
+import json
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Optional, TextIO, Union
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, TextIO, Union
 
+import networkx as nx
 from networkx.utils import open_file
 
 from .registry import Registry, miriam
@@ -105,7 +108,10 @@ class Synonym:
 
     def to_obo(self) -> str:
         """Write this synonym as an OBO line to appear in a [Term] stanza."""
-        x = f'synonym: "{self.name}" {self.specificity}'
+        return f'synonym: {self._fp()}'
+
+    def _fp(self) -> str:
+        x = f'"{self.name}" {self.specificity}'
         if self.type:
             x = f'{x} {self.type.id}'
         return f'{x} [{comma_separate(self.provenance)}]'
@@ -229,6 +235,9 @@ class Term(_Referenced):
         """Append several relationships."""
         self.relationships[type_def].extend(references)
 
+    def _definition_fp(self):
+        return f'"{self.definition}" [{comma_separate(self.provenance)}]'
+
     def iterate_obo_lines(self) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield '\n[Term]'
@@ -243,7 +252,7 @@ class Term(_Referenced):
             yield f'namespace: {namespace_normalized}'
 
         if self.definition:
-            yield f'''def: "{self.definition}" [{comma_separate(self.provenance)}]'''
+            yield f'def: {self._definition_fp()}'
 
         for xref in sorted(self.xrefs, key=attrgetter('prefix', 'identifier')):
             yield f'xref: {xref}'
@@ -251,15 +260,16 @@ class Term(_Referenced):
         for parent in sorted(self.parents, key=attrgetter('prefix', 'identifier')):
             yield f'is_a: {parent}'
 
-        for type_def, references in sorted(self.relationships.items(), key=lambda x: x[0].reference.name):
+        for type_def, references in sorted(self.relationships.items(), key=lambda x: x[0].name):
             for reference in references:
-                s = f'relationship: {type_def.reference.curie} {reference.curie}'
-                if type_def.name or reference.name:
-                    s += ' !'
-                if type_def.name:
-                    s += f' {type_def.name}'
-                if reference.name:
-                    s += f' {reference.name}'
+                s = f'relationship: {type_def.curie} {reference.curie}'
+                # Obonet doesn't support this. re-enable later.
+                # if type_def.name or reference.name:
+                #     s += ' !'
+                # if type_def.name:
+                #     s += f' {type_def.name}'
+                # if reference.name:
+                #     s += f' {reference.name}'
                 yield s
 
         for synonym in sorted(self.synonyms, key=attrgetter('name')):
@@ -303,10 +313,15 @@ class Obo:
     #: The date the ontology was generated
     date: datetime = field(default_factory=datetime.today)
 
+    @property
+    def date_formatted(self) -> str:
+        """Get the date as a formatted string."""
+        return self.date.strftime("%d:%m:%Y %H:%M")
+
     def iterate_obo_lines(self) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield f'format-version: {self.format_version}'
-        yield f'date: {self.date.strftime("%d:%m:%Y %H:%M")}'
+        yield f'date: {self.date_formatted}'
 
         if self.auto_generated_by is not None:
             yield f'auto-generated-by: {self.auto_generated_by}'
@@ -331,6 +346,12 @@ class Obo:
         for line in self.iterate_obo_lines():
             print(line, file=file)
 
+    def write_obonet_gz(self, path: str) -> None:
+        """Write the OBO to a gzipped dump in Obonet JSON."""
+        graph = self.to_obonet()
+        with gzip.open(path, 'wt') as file:
+            json.dump(nx.node_link_data(graph), file)
+
     def write_default(self) -> None:
         """Write the OBO to the default path."""
         path = get_prefix_obo_path(self.ontology)
@@ -338,3 +359,79 @@ class Obo:
 
     def __iter__(self):  # noqa: D105
         return iter(self.iter_terms())
+
+    def to_obonet(self: Obo) -> nx.MultiDiGraph:
+        """Export as a :mod`obonet` style graph."""
+        rv = nx.MultiDiGraph()
+        rv.graph.update({
+            'name': self.name,
+            'ontology': self.ontology,
+            'auto-generated-by': self.auto_generated_by,
+            'typedefs': _convert_type_defs(self.typedefs),
+            'format_version': self.format_version,
+            'synonymtypedef': _convert_synonym_type_defs(self.synonym_typedefs),
+            'date': self.date_formatted,
+        })
+
+        nodes = {}
+        links = []
+        for term in self.iter_terms():
+            parents = []
+            for parent in term.parents:
+                links.append((term.curie, 'is_a', parent.curie))
+                parents.append(parent.curie)
+
+            relations = []
+            for type_def, targets in term.relationships.items():
+                for target in targets:
+                    relations.append(f'{type_def.curie} {target.curie}')
+                    links.append((term.curie, type_def.curie, target.curie))
+
+            nodes[term.curie] = {
+                'id': term.curie,
+                'name': term.name,
+                'def': term._definition_fp(),
+                'xref': [
+                    xref.curie
+                    for xref in term.xrefs
+                ],
+                'is_a': parents,
+                'relationship': relations,
+                'synonym': [
+                    synonym._fp()
+                    for synonym in term.synonyms
+                ],
+            }
+
+        for source, key, target in links:
+            rv.add_edge(source, target, key=key)
+
+        return rv
+
+
+def _convert_synonym_type_defs(synonym_type_defs: Iterable[SynonymTypeDef]) -> List[str]:
+    """Convert the synonym type defs."""
+    return [
+        _convert_synonym_type_def(synonym_type_def)
+        for synonym_type_def in synonym_type_defs
+    ]
+
+
+def _convert_synonym_type_def(synonym_type_def: SynonymTypeDef) -> str:
+    return f'{synonym_type_def.id} "{synonym_type_def.name}"'
+
+
+def _convert_type_defs(type_defs: Iterable[TypeDef]) -> List[Mapping[str, Any]]:
+    """Convert the type defs."""
+    return [
+        _convert_type_def(type_def)
+        for type_def in type_defs
+    ]
+
+
+def _convert_type_def(type_def: TypeDef) -> Mapping[str, Any]:
+    """Convert a type def."""
+    return dict(
+        id=type_def.identifier,
+        name=type_def.name,
+    )
