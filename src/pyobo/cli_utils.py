@@ -5,9 +5,11 @@
 import logging
 
 import click
+import pandas as pd
 
 __all__ = [
     'verbose_option',
+    'echo_df',
 ]
 
 logger = logging.getLogger(__name__)
@@ -29,3 +31,11 @@ verbose_option = click.option(
     callback=_debug_callback,
     expose_value=False,
 )
+
+
+def echo_df(df: pd.DataFrame) -> None:
+    """Echo a dataframe via the pager."""
+    click.echo_via_pager('\n'.join(
+        '\t'.join(row)
+        for row in df.values
+    ))

@@ -7,7 +7,7 @@ import os
 
 import click
 
-from .cli_utils import verbose_option
+from .cli_utils import echo_df, verbose_option
 from .constants import PYOBO_HOME
 from .mappings import get_all_xrefs, get_id_name_mapping, get_synonyms, get_xrefs
 from .mappings.cli import cache_xrefs
@@ -41,10 +41,7 @@ def xrefs(prefix: str, target: str):
         ))
     else:
         all_xrefs_df = get_all_xrefs(prefix)
-        click.echo_via_pager('\n'.join(
-            '\t'.join(row)
-            for row in all_xrefs_df.values
-        ))
+        echo_df(all_xrefs_df)
 
 
 @main.command()
