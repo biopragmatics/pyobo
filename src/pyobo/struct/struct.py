@@ -65,6 +65,11 @@ class Reference:
             if curie.strip()
         ]
 
+    @staticmethod
+    def default(identifier, name) -> Reference:
+        """Return a reference from the PyOBO namespace."""
+        return Reference(prefix='obo', identifier=identifier, name=name)
+
     @property
     def _escaped_identifier(self):
         return obo_escape(self.identifier)
