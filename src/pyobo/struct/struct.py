@@ -144,10 +144,6 @@ class TypeDef:
         if self.is_transitive is not None:
             yield f'is_transitive: {"true" if self.is_transitive else "false"}'
 
-    def to_obo(self) -> str:
-        """Get the OBO document string."""
-        return '\n'.join(self.iterate_obo_lines())
-
 
 @dataclass
 class Term:
@@ -235,10 +231,6 @@ class Term:
 
         for synonym in sorted(self.synonyms, key=attrgetter('name')):
             yield synonym.to_obo()
-
-    def to_obo(self) -> str:
-        """Get the OBO document string."""
-        return '\n'.join(self.iterate_obo_lines())
 
 
 @dataclass
