@@ -8,7 +8,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..path_utils import ensure_df
-from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term
+from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
 
 PREFIX = 'rgd'
 
@@ -64,6 +64,7 @@ def get_obo() -> Obo:
         ontology=PREFIX,
         name='Rat Genome Database',
         iter_terms=get_terms,
+        typedefs=[from_species],
         synonym_typedefs=[old_name_type, old_symbol_type],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
@@ -115,6 +116,9 @@ def get_terms() -> Iterable[Term]:
             xrefs=xrefs,
             provenance=provenance,
         )
+        term.append_relationship(from_species, Reference(
+            prefix='taxonomy', identifier='10116', name='Rattus norvegicus',
+        ))
         yield term
 
 

@@ -23,6 +23,7 @@ def get_obo() -> Obo:
         ontology=PREFIX,
         name='Saccharomyces Genome Database',
         iter_terms=get_terms,
+        typedefs=[from_species],
         synonym_typedefs=[alias_type],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )

@@ -19,6 +19,7 @@ def get_obo() -> Obo:
         iter_terms=get_terms,
         name='CGNC',
         ontology=PREFIX,
+        typedefs=[from_species],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 

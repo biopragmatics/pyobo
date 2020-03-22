@@ -103,6 +103,7 @@ def get_obo() -> Obo:
         name='Complex Portal',
         data_version=VERSION,
         iter_terms=get_terms,
+        typedefs=[from_species, has_part],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 

@@ -9,7 +9,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..path_utils import ensure_path
-from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term
+from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
 
 PREFIX = 'hgnc.genefamily'
 FAMILIES_URL = 'ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/csv/genefamily_db_tables/family.csv'
@@ -25,6 +25,7 @@ def get_obo() -> Obo:
         name='HGNC Gene Families',
         iter_terms=get_terms,
         synonym_typedefs=[symbol_type],
+        typedefs=[from_species],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
@@ -90,6 +91,7 @@ def _get_terms_helper() -> Iterable[Term]:
             xrefs=xrefs,
             synonyms=synonyms,
         )
+        term.append_relationship(from_species, Reference(prefix='taxonomy', identifier='9606', name='Homo sapiens'))
         yield term
 
 
