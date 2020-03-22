@@ -10,7 +10,8 @@ from tqdm import tqdm
 
 from ..cache_utils import cached_mapping
 from ..path_utils import ensure_df, ensure_path, prefix_directory_join
-from ..struct import Obo, Reference, Synonym, Term, TypeDef, from_species
+from ..struct import Obo, Reference, Synonym, Term, from_species
+from ..struct.defs import has_mature
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +21,6 @@ VERSION = '22.1'
 DEFINITIONS_URL = f'ftp://mirbase.org/pub/mirbase/{VERSION}/miRNA.dat.gz'
 ALIASES_URL = f'ftp://mirbase.org/pub/mirbase/{VERSION}/aliases.txt.gz'
 SPECIES_URL = f'ftp://mirbase.org/pub/mirbase/{VERSION}/organisms.txt.gz'
-
-has_mature = TypeDef(id='has_mature', name='has mature miRNA')
 
 xref_mapping = {
     'entrezgene': 'ncbigene',

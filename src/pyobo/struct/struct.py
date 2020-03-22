@@ -78,6 +78,9 @@ class Reference:
             rv = f'{rv} ! {self.name}'
         return rv
 
+    def __hash__(self):  # noqa: D105
+        return hash((self.__class__, self.prefix, self.identifier))
+
 
 @dataclass
 class Synonym:
@@ -115,22 +118,55 @@ class SynonymTypeDef:
         return f'synonymtypedef: {self.id} "{self.name}"'
 
 
+class _Referenced:
+    """A class that contains a reference."""
+
+    reference: Reference
+
+    @property
+    def prefix(self):  # noqa: D401
+        """The prefix of the typedef."""
+        return self.reference.prefix
+
+    @property
+    def name(self):  # noqa: D401
+        """The name of the typedef."""
+        return self.reference.name
+
+    @property
+    def identifier(self) -> str:  # noqa: D401
+        """The local unique identifier for this typedef."""
+        return self.reference.identifier
+
+    @property
+    def curie(self) -> str:  # noqa: D401
+        """The CURIE for this typedef."""
+        return self.reference.curie
+
+
 @dataclass
-class TypeDef:
+class TypeDef(_Referenced):
     """A type definition in OBO."""
 
-    id: str
-    name: str
+    reference: Reference
     comment: Optional[str] = None
     namespace: Optional[str] = None
+    definition: Optional[str] = None
     is_transitive: Optional[bool] = None
+    domain: Optional[Reference] = None
+    range: Optional[Reference] = None
+    parents: List[Reference] = field(default_factory=list)
     xrefs: List[Reference] = field(default_factory=list)
+    inverse: Optional[Reference] = None
+
+    def __hash__(self) -> int:  # noqa: D105
+        return hash((self.__class__, self.prefix, self.identifier))
 
     def iterate_obo_lines(self) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield '\n[Typedef]'
-        yield f'id: {self.id}'
-        yield f'name: {self.name}'
+        yield f'id: {self.reference.curie}'
+        yield f'name: {self.reference.name}'
 
         if self.namespace:
             yield f'namespace: {self.namespace}'
@@ -146,7 +182,7 @@ class TypeDef:
 
 
 @dataclass
-class Term:
+class Term(_Referenced):
     """A term in OBO."""
 
     #: The primary reference for the entity
@@ -159,7 +195,7 @@ class Term:
     provenance: List[Reference] = field(default_factory=list)
 
     #: Relationships defined by [Typedef] stanzas
-    relationships: Dict[str, List[Reference]] = field(default_factory=lambda: defaultdict(list))
+    relationships: Dict[TypeDef, List[Reference]] = field(default_factory=lambda: defaultdict(list))
 
     #: Relationships with the default "is_a"
     parents: List[Reference] = field(default_factory=list)
@@ -178,30 +214,15 @@ class Term:
 
     def get_relationships(self, type_def: TypeDef) -> List[Reference]:
         """Get relationships from the given type."""
-        return self.relationships[type_def.id]
+        return self.relationships[type_def]
 
     def append_relationship(self, type_def: TypeDef, reference: Reference) -> None:
         """Append a relationship."""
-        self.relationships[type_def.id].append(reference)
+        self.relationships[type_def].append(reference)
 
     def extend_relationship(self, type_def: TypeDef, references: Iterable[Reference]) -> None:
         """Append several relationships."""
-        self.relationships[type_def.id].extend(references)
-
-    @property
-    def name(self):  # noqa: D401
-        """The name of the term."""
-        return self.reference.name
-
-    @property
-    def identifier(self) -> str:  # noqa: D401
-        """The local unique identifier for this term."""
-        return self.reference.identifier
-
-    @property
-    def curie(self) -> str:  # noqa: D401
-        """The CURIE for this term."""
-        return self.reference.curie
+        self.relationships[type_def].extend(references)
 
     def iterate_obo_lines(self) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
@@ -225,9 +246,16 @@ class Term:
         for parent in sorted(self.parents, key=attrgetter('prefix', 'identifier')):
             yield f'is_a: {parent}'
 
-        for relationship, relationship_references in sorted(self.relationships.items()):
-            for relationship_reference in relationship_references:
-                yield f'relationship: {relationship} {relationship_reference}'
+        for type_def, references in sorted(self.relationships.items(), key=lambda x: x[0].reference.name):
+            for reference in references:
+                s = f'relationship: {type_def.reference.curie} {reference.curie}'
+                if type_def.name or reference.name:
+                    s += ' !'
+                if type_def.name:
+                    s += f' {type_def.name}'
+                if reference.name:
+                    s += f' {reference.name}'
+                yield s
 
         for synonym in sorted(self.synonyms, key=attrgetter('name')):
             yield synonym.to_obo()
