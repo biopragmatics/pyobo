@@ -9,7 +9,7 @@ import click
 
 from .cli_utils import echo_df, verbose_option
 from .constants import PYOBO_HOME
-from .mappings import get_all_xrefs, get_id_name_mapping, get_synonyms, get_xrefs
+from .mappings import get_all_xrefs, get_id_name_mapping, get_properties_df, get_relations_df, get_synonyms, get_xrefs
 from .mappings.cli import cache_xrefs
 from .sources import iter_converted_obos
 
@@ -67,6 +67,24 @@ def synonyms(prefix: str):
         for identifier, _synonyms in id_to_synonyms.items()
         for _synonym in _synonyms
     ))
+
+
+@main.command()
+@prefix_argument
+@verbose_option
+def relations(prefix: str):
+    """Page through the relations for entities in the given namespace."""
+    relations_df = get_relations_df(prefix)
+    echo_df(relations_df)
+
+
+@main.command()
+@prefix_argument
+@verbose_option
+def properties(prefix: str):
+    """Page through the properties for entities in the given namespace."""
+    properties_df = get_properties_df(prefix)
+    echo_df(properties_df)
 
 
 @main.command()
