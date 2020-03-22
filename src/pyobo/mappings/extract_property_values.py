@@ -9,8 +9,8 @@ from typing import Iterable, Optional, Tuple
 import networkx as nx
 import pandas as pd
 
-from pyobo import get_obo_graph
-from pyobo.graph_utils import iterate_obo_nodes
+from ..getters import get_obo_graph
+from ..graph_utils import iterate_obo_nodes
 
 __all__ = [
     'get_properties_df',

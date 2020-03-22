@@ -42,6 +42,8 @@ SYNONYM_TO_KEY = get_namespace_synonyms()
 UNHANDLED_NAMESPACES = defaultdict(list)
 UBERON_UNHANDLED = defaultdict(list)
 
+COLUMNS = ['source_ns', 'source_id', 'target_ns', 'target_id']
+
 
 def get_all_xrefs(prefix: str, **kwargs) -> pd.DataFrame:
     """Get all xrefs."""
@@ -56,7 +58,7 @@ def get_all_xrefs(prefix: str, **kwargs) -> pd.DataFrame:
         logger.info('writing %s mapping to %s', prefix, path)
         return pd.DataFrame(
             list(iterate_xrefs_from_graph(graph)),
-            columns=['source_ns', 'source_id', 'target_ns', 'target_id'],
+            columns=COLUMNS,
         )
 
     return _df_getter()
