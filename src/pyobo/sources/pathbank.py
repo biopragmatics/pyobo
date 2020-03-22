@@ -35,7 +35,7 @@ PROTEINS_COLUMNS = [
 METABOLITE_URL = 'https://pathbank.org/downloads/pathbank_all_metabolites.csv.zip'
 METABOLITE_COLUMNS = [
     'PathBank ID', 'Pathway Name', 'Pathway Subject', 'Species', 'Metabolite ID', 'Metabolite Name',
-    'HMDB ID', 'KEGG ID', 'ChEBI ID', 'DrugBank ID', 'CAS', 'Formula', 'IUPAC', 'SMILES', 'InChI', 'InChI Key'
+    'HMDB ID', 'KEGG ID', 'ChEBI ID', 'DrugBank ID', 'CAS', 'Formula', 'IUPAC', 'SMILES', 'InChI', 'InChI Key',
 ]
 
 pathway_type = TypeDef(
@@ -67,7 +67,7 @@ def get_proteins_df() -> pd.DataFrame:
 
 
 def get_protein_mapping() -> Mapping[str, Set[Reference]]:
-    """"""
+    """Make the protein mapping."""
     proteins_df = get_proteins_df()
     smpdb_id_to_proteins = defaultdict(set)
     for pathway_id, protein_id in tqdm(proteins_df.values, desc='mapping proteins'):
@@ -77,6 +77,7 @@ def get_protein_mapping() -> Mapping[str, Set[Reference]]:
 
 
 def get_metabolite_df() -> pd.DataFrame:
+    """Get the metabolites dataframe."""
     return ensure_df(
         PREFIX, METABOLITE_URL, sep=',',
         usecols=['PathBank ID', 'Metabolite ID', 'Metabolite Name'],
@@ -84,6 +85,7 @@ def get_metabolite_df() -> pd.DataFrame:
 
 
 def get_metabolite_mapping() -> Mapping[str, Set[Reference]]:
+    """Make the metabolite mapping."""
     metabolites_df = get_metabolite_df()
     smpdb_id_to_metabolites = defaultdict(set)
     for pathway_id, metabolite_id, metabolite_name in tqdm(metabolites_df.values, desc='mapping metabolites'):
@@ -100,7 +102,7 @@ def iter_terms() -> Iterable[Term]:
 
     pathways_df = ensure_df(PREFIX, PATHWAY_URL, sep=',')
     it = tqdm(pathways_df.values, total=len(pathways_df.index), desc=f'mapping {PREFIX}')
-    for smpdb_id, pathbank_id, name, subject, description in it:
+    for smpdb_id, pathbank_id, name, subject, _description in it:
         reference = Reference(prefix=PREFIX, identifier=pathbank_id, name=name)
         term = Term(
             reference=reference,

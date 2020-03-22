@@ -22,6 +22,7 @@ PATHWAY_NAMES_URL = 'https://reactome.org/download/current/ReactomePathways.txt'
 PATHWAYS_HIERARCHY_URL = 'https://reactome.org/download/current/ReactomePathwaysRelation.txt'
 PROVENANCE_URL = 'https://reactome.org/download/current/ReactionPMIDS.txt'
 
+
 # TODO add protein mappings
 # TODO add chemical mappings
 # TODO alt ids https://reactome.org/download/current/reactome_stable_ids.txt
