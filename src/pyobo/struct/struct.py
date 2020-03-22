@@ -54,7 +54,7 @@ class Reference:
     def from_curie(curie: str) -> Reference:
         """Get a reference from a CURIE."""
         prefix, identifier = curie.strip().split(':')
-        return Reference(prefix=prefix, identifier=identifier)
+        return Reference(prefix=prefix.lower(), identifier=identifier)
 
     @staticmethod
     def from_curies(curies: str) -> List[Reference]:
