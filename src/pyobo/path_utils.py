@@ -20,6 +20,7 @@ __all__ = [
     'get_url_filename',
     'ensure_path',
     'ensure_df',
+    'ensure_excel',
     'ensure_tar_df',
 ]
 
@@ -89,6 +90,19 @@ def ensure_df(
     """Download a file and open as a dataframe."""
     path = ensure_path(prefix, url, version=version, path=path)
     return pd.read_csv(path, sep=sep, **kwargs)
+
+
+def ensure_excel(
+    prefix: str,
+    url: str,
+    *,
+    version: Optional[str] = None,
+    path: Optional[str] = None,
+    **kwargs,
+) -> pd.DataFrame:
+    """Download an excel file and open as a dataframe."""
+    path = ensure_path(prefix, url, version=version, path=path)
+    return pd.read_excel(path, **kwargs)
 
 
 def ensure_tar_df(

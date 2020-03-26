@@ -27,6 +27,7 @@ CONVERTED = {
     'mgi': 'mgi',
     'mirbase': 'mirbase',
     'pathbank': 'pathbank',
+    'pid.pathway': 'pid',
     'pubchem.compound': 'pubchem',
     'reactome': 'reactome',
     'rgd': 'rgd',
