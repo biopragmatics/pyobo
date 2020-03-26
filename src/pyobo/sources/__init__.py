@@ -25,6 +25,7 @@ CONVERTED = {
     'hgnc.genefamily': 'hgncgenefamily',
     'mesh': 'mesh',
     'mgi': 'mgi',
+    'msig': 'msig',
     'mirbase': 'mirbase',
     'pathbank': 'pathbank',
     'pid.pathway': 'pid',
