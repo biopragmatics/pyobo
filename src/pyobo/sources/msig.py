@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Parsers for Bio2BEL MSig."""
+"""Parsers for MSig."""
 
 import logging
 import os
