@@ -485,6 +485,13 @@ class Obo:
             for term, xref in self.iterate_filtered_xrefs(prefix)
         }
 
+    def get_filtered_multixrefs_mapping(self, prefix: str) -> Mapping[str, List[str]]:
+        """Get filtered xrefs as a dictionary."""
+        return multidict(
+            (term.identifier, xref.identifier)
+            for term, xref in self.iterate_filtered_xrefs(prefix)
+        )
+
     def get_id_relations_mapping(self, type_def: TypeDef) -> Mapping[str, List[Reference]]:
         """Get a mapping from identifiers to a list of all references for the given relation."""
         return multidict(
