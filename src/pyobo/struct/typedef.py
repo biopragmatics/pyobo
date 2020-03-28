@@ -13,6 +13,7 @@ __all__ = [
     'has_part',
     'pathway_has_part',
     'part_of',
+    'is_a',
     'subclass',
     'has_role',
     'role_of',

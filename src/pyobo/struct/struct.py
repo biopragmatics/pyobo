@@ -422,7 +422,7 @@ class Obo:
             iter_terms=_iter_terms,
         )
 
-    def get_id_to_name_mapping(self) -> Mapping[str, str]:
+    def get_id_name_mapping(self) -> Mapping[str, str]:
         """Get a mapping from identifiers to names."""
         return {
             term.identifier: term.name
@@ -460,14 +460,6 @@ class Obo:
             columns=[f'{self.ontology}_id', 'relation_ns', 'relation_id', 'target_ns', 'target_id'],
         )
 
-    def get_id_to_relations(self, type_def: TypeDef) -> Mapping[str, List[Reference]]:
-        """Get the OBO file and output a synonym dictionary."""
-        return multidict(
-            (term.identifier, reference)
-            for term in self
-            for reference in term.relationships.get(type_def)
-        )
-
     def iterate_filtered_xrefs(self, prefix: str) -> Iterable[Tuple[Term, Reference]]:
         """Iterate over xrefs to a given prefix."""
         for term in self:
@@ -494,7 +486,7 @@ class Obo:
         }
 
     def get_id_relations_mapping(self, type_def: TypeDef) -> Mapping[str, List[Reference]]:
-        """Get a mappin from identifiers to a list of all references for the given relation."""
+        """Get a mapping from identifiers to a list of all references for the given relation."""
         return multidict(
             (term.identifier, reference)
             for term in self

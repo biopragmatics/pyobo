@@ -30,7 +30,7 @@ def get_id_name_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'])
     def _get_id_name_mapping() -> Mapping[str, str]:
         obo = get(prefix, **kwargs)
-        return obo.get_id_to_name_mapping()
+        return obo.get_id_name_mapping()
 
     return _get_id_name_mapping()
 
