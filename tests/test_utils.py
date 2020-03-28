@@ -4,7 +4,24 @@
 
 import unittest
 
+from pyobo.identifier_utils import normalize_curie
 from pyobo.iter_utils import iterate_together
+
+
+class TestIdentifierUtils(unittest.TestCase):
+
+    def test_strip_prefix(self):
+        """Test stripping prefixes works."""
+        self.assertEqual(('go', '1234'), normalize_curie('GO:1234'))
+        self.assertEqual(('go', '1234'), normalize_curie('go:1234'))
+
+        self.assertEqual((None, None), normalize_curie('1234'))
+        self.assertEqual(('go', 'GO:1234'), normalize_curie('GO:GO:1234'))
+
+        self.assertEqual(('pubmed', '1234'), normalize_curie('pubmed:1234'))
+        # Test remapping
+        self.assertEqual(('pubmed', '1234'), normalize_curie('pmid:1234'))
+        self.assertEqual(('pubmed', '1234'), normalize_curie('PMID:1234'))
 
 
 class TestIterate(unittest.TestCase):

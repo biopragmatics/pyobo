@@ -10,16 +10,15 @@ from urllib.request import urlretrieve
 import networkx as nx
 import obonet
 
-from .cache_utils import ensure_obo_graph
+from .cache_utils import cached_graph
 from .constants import CURATED_URLS
 from .path_utils import ensure_path, get_prefix_obo_path
 from .registries import get_obofoundry
 from .sources import CONVERTED, get_converted_obo
+from .struct import Obo
 
 __all__ = [
-    'get_obo_graph',
-    'get_obo_graph_by_url',
-    'get_obo_graph_by_prefix',
+    'get',
 ]
 
 logger = logging.getLogger(__name__)
@@ -27,6 +26,12 @@ logger = logging.getLogger(__name__)
 
 class MissingOboBuild(RuntimeError):
     """Raised when OBOFoundry doesn't track an OBO file, but only has OWL."""
+
+
+def get(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
+    """Get the OBO for a given graph."""
+    graph = get_obo_graph(prefix=prefix, url=url, local=local)
+    return Obo.from_obonet(graph)
 
 
 def get_obo_graph(prefix: str, *, url: Optional[str] = None, local: bool = False) -> nx.MultiDiGraph:
@@ -83,3 +88,14 @@ def ensure_obo_path(prefix: str) -> str:
         raise MissingOboBuild(f'OBO Foundry build is missing a URL for: {prefix}, {build}')
 
     return ensure_path(prefix, url)
+
+
+def ensure_obo_graph(path: str) -> nx.MultiDiGraph:
+    """Get an OBO graph from a given path."""
+    cache_path = f'{path}.json.gz'
+
+    @cached_graph(path=cache_path)
+    def _read_obo() -> nx.MultiDiGraph:
+        return obonet.read_obo(path)
+
+    return _read_obo()

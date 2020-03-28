@@ -7,9 +7,9 @@ import os
 import click
 import pandas as pd
 
-from .extract_xrefs import UNHANDLED_NAMESPACES
 from .xrefs_pipeline import get_xref_df
 from ..cli_utils import verbose_option
+from ..identifier_utils import UNHANDLED_NAMESPACES
 
 
 @click.group()

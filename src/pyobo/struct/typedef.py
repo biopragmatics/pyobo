@@ -2,14 +2,17 @@
 
 """Default typedefs, references, and other structures."""
 
-from .struct import Reference, TypeDef
+from dataclasses import dataclass, field
+from typing import Iterable, List, Optional
+
+from .reference import Reference, Referenced
 
 __all__ = [
+    'TypeDef',
     'from_species',
     'has_part',
     'pathway_has_part',
     'part_of',
-    'is_a',
     'subclass',
     'has_role',
     'role_of',
@@ -18,6 +21,44 @@ __all__ = [
     'alternative_term',
     'editor_note',
 ]
+
+
+@dataclass
+class TypeDef(Referenced):
+    """A type definition in OBO."""
+
+    reference: Reference
+    comment: Optional[str] = None
+    namespace: Optional[str] = None
+    definition: Optional[str] = None
+    is_transitive: Optional[bool] = None
+    domain: Optional[Reference] = None
+    range: Optional[Reference] = None
+    parents: List[Reference] = field(default_factory=list)
+    xrefs: List[Reference] = field(default_factory=list)
+    inverse: Optional[Reference] = None
+
+    def __hash__(self) -> int:  # noqa: D105
+        return hash((self.__class__, self.prefix, self.identifier))
+
+    def iterate_obo_lines(self) -> Iterable[str]:
+        """Iterate over the lines to write in an OBO file."""
+        yield '\n[Typedef]'
+        yield f'id: {self.reference.curie}'
+        yield f'name: {self.reference.name}'
+
+        if self.namespace:
+            yield f'namespace: {self.namespace}'
+
+        if self.comment:
+            yield f'comment: {self.comment}'
+
+        for xref in self.xrefs:
+            yield f'xref: {xref}'
+
+        if self.is_transitive is not None:
+            yield f'is_transitive: {"true" if self.is_transitive else "false"}'
+
 
 from_species = TypeDef(
     reference=Reference(prefix='ro', identifier='0002162', name='in taxon'),
@@ -42,7 +83,6 @@ is_a = TypeDef(
     reference=Reference.default(identifier='is_a', name='is a'),
     inverse=Reference.default(identifier='subclass', name='subclass'),
 )
-
 subclass = TypeDef(
     reference=Reference.default(identifier='subclass', name='subclass'),
     comment='Inverse of isA',

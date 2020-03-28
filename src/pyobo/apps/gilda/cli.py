@@ -17,7 +17,7 @@ from tqdm import tqdm
 from wtforms.fields import StringField, SubmitField
 from wtforms.validators import DataRequired
 
-from pyobo import get_id_name_mapping, get_synonyms
+from pyobo import get_id_name_mapping, get_id_synonyms_mapping
 from pyobo.io_utils import multidict
 
 
@@ -81,7 +81,7 @@ def get_gilda_terms(prefix: str, url: Optional[str] = None) -> Iterable[gilda.te
             source=prefix,
         )
 
-    id_to_synonyms = get_synonyms(prefix, url=url)
+    id_to_synonyms = get_id_synonyms_mapping(prefix, url=url)
     for identifier, synonyms in tqdm(id_to_synonyms.items(), desc='mapping synonyms'):
         name = id_to_name[identifier]
         for synonym in synonyms:

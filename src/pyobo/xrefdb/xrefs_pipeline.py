@@ -9,8 +9,8 @@ from typing import Iterable
 import click
 import pandas as pd
 
-from .extract_xrefs import get_all_xrefs
-from .xref_sources import get_cbms2019_xrefs_df, get_gilda_xrefs_df
+from .sources import get_cbms2019_xrefs_df, get_gilda_xrefs_df
+from ..extract import get_xrefs_df
 from ..getters import MissingOboBuild
 from ..path_utils import get_prefix_directory
 from ..registries import get_metaregistry
@@ -33,14 +33,14 @@ def get_xref_df() -> pd.DataFrame:
 def _iterate_xref_dfs() -> Iterable[pd.DataFrame]:
     for prefix, _entry in _iterate_metaregistry():
         try:
-            df = get_all_xrefs(prefix)
+            df = get_xrefs_df(prefix)
         except MissingOboBuild as e:
             click.secho(f'💾 {prefix}', bold=True)
             click.secho(str(e), fg='yellow')
             url = f'http://purl.obolibrary.org/obo/{prefix}.obo'
             click.secho(f'trying to query purl at {url}', fg='yellow')
             try:
-                df = get_all_xrefs(prefix, url=url)
+                df = get_xrefs_df(prefix, url=url)
                 click.secho(f'resolved {prefix} with {url}', fg='green')
             except Exception as e2:
                 click.secho(str(e2), fg='yellow')

@@ -9,9 +9,12 @@ import click
 
 from .cli_utils import echo_df, verbose_option
 from .constants import PYOBO_HOME
-from .mappings import get_all_xrefs, get_id_name_mapping, get_properties_df, get_relations_df, get_synonyms, get_xrefs
-from .mappings.cli import cache_xrefs
+from .extract import (
+    get_filtered_xrefs, get_id_name_mapping, get_id_synonyms_mapping, get_properties_df,
+    get_relations_df, get_xrefs_df,
+)
 from .sources import iter_converted_obos
+from .xrefdb.cli import cache_xrefs
 
 __all__ = ['main']
 
@@ -33,14 +36,14 @@ prefix_argument = click.argument('prefix')
 def xrefs(prefix: str, target: str):
     """Page through xrefs for the given namespace to the second given namespace."""
     if target:
-        filtered_xrefs = get_xrefs(prefix, target)
+        filtered_xrefs = get_filtered_xrefs(prefix, target)
         click.echo_via_pager('\n'.join(
             f'{identifier}\t{_xref}'
             for identifier, _xrefs in filtered_xrefs.items()
             for _xref in _xrefs
         ))
     else:
-        all_xrefs_df = get_all_xrefs(prefix)
+        all_xrefs_df = get_xrefs_df(prefix)
         echo_df(all_xrefs_df)
 
 
@@ -61,7 +64,7 @@ def names(prefix: str):
 @verbose_option
 def synonyms(prefix: str):
     """Page through the synonyms for entities in the given namespace."""
-    id_to_synonyms = get_synonyms(prefix)
+    id_to_synonyms = get_id_synonyms_mapping(prefix)
     click.echo_via_pager('\n'.join(
         f'{identifier}\t{_synonym}'
         for identifier, _synonyms in id_to_synonyms.items()

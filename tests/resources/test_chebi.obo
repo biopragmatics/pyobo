@@ -370,3 +370,67 @@ xref: KEGG:D04057
 xref: DrugBank:DB01062
 is_a: CHEBI:36807
 relationship: has_part CHEBI:51329
+
+[Typedef]
+id: has_part
+name: has part
+is_cyclic: false
+is_transitive: true
+xref: BFO:0000051
+
+[Typedef]
+id: is_conjugate_base_of
+name: is conjugate base of
+inverse_of: is_conjugate_acid_of
+is_cyclic: true
+is_transitive: false
+
+[Typedef]
+id: is_conjugate_acid_of
+name: is conjugate acid of
+inverse_of: is_conjugate_base_of
+is_cyclic: true
+is_transitive: false
+
+[Typedef]
+id: is_tautomer_of
+name: is tautomer of
+is_cyclic: true
+is_transitive: true
+
+[Typedef]
+id: is_enantiomer_of
+name: is enantiomer of
+is_cyclic: true
+is_transitive: false
+
+[Typedef]
+id: has_functional_parent
+name: has functional parent
+is_cyclic: false
+is_transitive: false
+
+[Typedef]
+id: has_parent_hydride
+name: has parent hydride
+is_cyclic: false
+is_transitive: false
+
+[Typedef]
+id: is_substituent_group_from
+name: is substituent group from
+is_cyclic: false
+is_transitive: false
+
+[Typedef]
+id: has_role
+name: has role
+is_cyclic: false
+is_transitive: false
+xref: RO:0000087
+
+[Typedef]
+id: has_major_microspecies_at_pH_7_3
+name: has major microspecies at pH 7.3
+is_cyclic: true
+is_transitive: false

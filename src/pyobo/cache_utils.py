@@ -10,7 +10,6 @@ import os
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Union
 
 import networkx as nx
-import obonet
 import pandas as pd
 
 from .io_utils import open_map_tsv, open_multimap_tsv, write_map_tsv, write_multimap_tsv
@@ -127,14 +126,3 @@ def cached_multidict(path: str, header: Iterable[str]):  # noqa: D202
         return _wrapped
 
     return wrapped
-
-
-def ensure_obo_graph(path: str) -> nx.MultiDiGraph:
-    """Get an OBO graph from a given path."""
-    cache_path = f'{path}.json.gz'
-
-    @cached_graph(path=cache_path)
-    def _read_obo() -> nx.MultiDiGraph:
-        return obonet.read_obo(path)
-
-    return _read_obo()

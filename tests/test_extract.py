@@ -7,7 +7,7 @@ from itertools import chain
 
 import pandas as pd
 
-from pyobo import get_all_xrefs, get_id_name_mapping, get_xrefs
+from pyobo import get_xrefs_df, get_id_name_mapping, get_filtered_xrefs
 from tests.constants import TEST_CHEBI_OBO_PATH
 
 
@@ -25,7 +25,7 @@ class TestMapping(unittest.TestCase):
 
     def test_get_xrefs(self):
         """Test getting xrefs."""
-        df = get_all_xrefs('chebi', url=TEST_CHEBI_OBO_PATH, local=True)
+        df = get_xrefs_df('chebi', url=TEST_CHEBI_OBO_PATH, local=True)
         self.assertIsInstance(df, pd.DataFrame)
 
         for key, value in chain(
@@ -39,7 +39,7 @@ class TestMapping(unittest.TestCase):
 
     def test_get_target_xrefs(self):
         """Test getting xrefs."""
-        kegg_xrefs = get_xrefs('chebi', 'kegg', url=TEST_CHEBI_OBO_PATH, local=True)
+        kegg_xrefs = get_filtered_xrefs('chebi', 'kegg', url=TEST_CHEBI_OBO_PATH, local=True)
         print(kegg_xrefs)
 
         for key, value in kegg_xrefs.items():

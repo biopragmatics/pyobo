@@ -63,6 +63,11 @@
         "BAO"
       ]
     },
+    "beilstein": {
+      "synonyms": [
+        "Beilstein"
+      ]
+    },
     "bfo": {
       "pattern": "\\d{7}",
       "synonyms": []
