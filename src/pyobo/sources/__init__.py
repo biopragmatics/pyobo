@@ -40,7 +40,7 @@ CONVERTED = {
 def get_converted_obo(prefix: str) -> Obo:
     """Get a converted PyOBO source."""
     module = import_module(f'pyobo.sources.{CONVERTED[prefix]}')
-    return module.get()
+    return module.get_obo()
 
 
 def iter_converted_obos() -> Iterable[Obo]:
