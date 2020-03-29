@@ -158,7 +158,7 @@ class Term(Referenced):
             for value in values:
                 yield prop, value
 
-    def iterate_obo_lines(self) -> Iterable[str]:
+    def iterate_obo_lines(self, write_relation_comments: bool = False) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield '\n[Term]'
         yield f'id: {self.curie}'
@@ -183,13 +183,14 @@ class Term(Referenced):
         for type_def, references in sorted(self.relationships.items(), key=lambda x: x[0].name):
             for reference in references:
                 s = f'relationship: {type_def.curie} {reference.curie}'
-                # Obonet doesn't support this. re-enable later.
-                # if type_def.name or reference.name:
-                #     s += ' !'
-                # if type_def.name:
-                #     s += f' {type_def.name}'
-                # if reference.name:
-                #     s += f' {reference.name}'
+                if write_relation_comments:
+                    # TODO Obonet doesn't support this. re-enable later.
+                    if type_def.name or reference.name:
+                        s += ' !'
+                    if type_def.name:
+                        s += f' {type_def.name}'
+                    if reference.name:
+                        s += f' {reference.name}'
                 yield s
 
         for prop, value in self.iterate_properties():
