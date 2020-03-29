@@ -10,7 +10,7 @@ import pandas as pd
 from protmapper.uniprot_client import get_gene_name, get_hgnc_id
 
 from ..extract import get_id_name_mapping
-from ..ndex_utils import ensure_ndex_network_set, iterate_aspect
+from ..ndex_utils import CX, ensure_ndex_network_set, iterate_aspect
 from ..struct import Obo, Reference, Term
 from ..struct.typedef import pathway_has_part
 
@@ -33,12 +33,17 @@ def get_obo() -> Obo:
     )
 
 
+def iter_networks(use_tqdm: bool = False) -> Iterable[Tuple[str, CX]]:
+    """Iterate over NCI PID networks."""
+    yield from ensure_ndex_network_set(PREFIX, NDEX_NETWORK_SET_UUID, use_tqdm=use_tqdm)
+
+
 def iter_terms() -> Iterable[Term]:
     """Iterate over NCI PID terms."""
     hgnc_id_to_name = get_id_name_mapping('hgnc')
     hgnc_name_to_id = {v: k for k, v in hgnc_id_to_name.items()}
 
-    for uuid, cx in ensure_ndex_network_set(PREFIX, NDEX_NETWORK_SET_UUID, use_tqdm=True):
+    for uuid, cx in iter_networks(use_tqdm=True):
         name = None
         for node in iterate_aspect(cx, 'networkAttributes'):
             if node['n'] == 'name':
