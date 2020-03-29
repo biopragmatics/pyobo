@@ -4,13 +4,14 @@
 
 import logging
 import os
+from typing import Optional
 
 import click
 
 from .cli_utils import echo_df, verbose_option
 from .constants import PYOBO_HOME
 from .extract import (
-    get_filtered_xrefs, get_id_name_mapping, get_id_synonyms_mapping, get_properties_df,
+    get_filtered_properties_df, get_filtered_xrefs, get_id_name_mapping, get_id_synonyms_mapping, get_properties_df,
     get_relations_df, get_xrefs_df,
 )
 from .sources import iter_converted_obos
@@ -31,7 +32,7 @@ prefix_argument = click.argument('prefix')
 
 @main.command()
 @prefix_argument
-@click.option('--target')
+@click.option('-t', '--target')
 @verbose_option
 def xrefs(prefix: str, target: str):
     """Page through xrefs for the given namespace to the second given namespace."""
@@ -83,10 +84,14 @@ def relations(prefix: str):
 
 @main.command()
 @prefix_argument
+@click.option('-k', '--key')
 @verbose_option
-def properties(prefix: str):
+def properties(prefix: str, key: Optional[str]):
     """Page through the properties for entities in the given namespace."""
-    properties_df = get_properties_df(prefix)
+    if key is None:
+        properties_df = get_properties_df(prefix)
+    else:
+        properties_df = get_filtered_properties_df(prefix, prop=key)
     echo_df(properties_df)
 
 

@@ -111,6 +111,28 @@ class Term(Referenced):
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: Optional[bool] = None
 
+    def get_properties(self, prop) -> List[str]:
+        """Get properties from the given key."""
+        return self.properties[prop]
+
+    def get_property(self, prop) -> Optional[str]:
+        """Get a single property of the given key."""
+        r = self.get_properties(prop)
+        if not r:
+            return
+        if len(r) != 1:
+            raise
+        return r[0]
+
+    def get_relationship(self, type_def: TypeDef) -> Optional[Reference]:
+        """Get a single relationship of the given type."""
+        r = self.get_relationships(type_def)
+        if not r:
+            return
+        if len(r) != 1:
+            raise
+        return r[0]
+
     def get_relationships(self, type_def: TypeDef) -> List[Reference]:
         """Get relationships from the given type."""
         return self.relationships[type_def]
@@ -170,7 +192,8 @@ class Term(Referenced):
                 #     s += f' {reference.name}'
                 yield s
 
-        # TODO add properties
+        for prop, value in self.iterate_properties():
+            yield f'property_value: {prop} "{value}" xsd:string'  # TODO deal with types later
 
         for synonym in sorted(self.synonyms, key=attrgetter('name')):
             yield synonym.to_obo()
@@ -437,9 +460,51 @@ class Obo:
 
     def iterate_properties(self) -> Iterable[Tuple[Term, str, str]]:
         """Iterate over tuples of terms, properties, and their values."""
+        # TODO if property_prefix is set, try removing that as a prefix from all prop strings.
         for term in self:
             for prop, value in term.iterate_properties():
                 yield term, prop, value
+
+    def get_properties_df(self) -> pd.DataFrame:
+        """Get all properties as a dataframe."""
+        return pd.DataFrame(
+            [
+                (term.identifier, prop, value)
+                for term, prop, value in self.iterate_properties()
+            ],
+            columns=[f'{self.ontology}_id', 'property', 'value'],
+        )
+
+    def iterate_filtered_properties(self, prop: str) -> Iterable[Tuple[Term, str]]:
+        """Iterate over tuples of terms and the values for the given property."""
+        for term in self:
+            for _prop, value in term.iterate_properties():
+                if _prop == prop:
+                    yield term, value
+
+    def get_filtered_properties_df(self, prop: str) -> pd.DataFrame:
+        """Get a dataframe of terms' identifiers to the given property's values."""
+        return pd.DataFrame(
+            list(self.get_filtered_properties_mapping(prop).items()),
+            columns=[f'{self.ontology}_id', prop],
+        )
+
+    def get_filtered_properties_mapping(self, prop: str) -> Mapping[str, str]:
+        """Get a mapping from a term's identifier to the property.
+
+        .. warning:: Assumes there's only one version of the property for each term.
+        """
+        return {
+            term.identifier: value
+            for term, value in self.iterate_filtered_properties(prop)
+        }
+
+    def get_filtered_multiproperties_mapping(self, prop: str) -> Mapping[str, List[str]]:
+        """Get a mapping from a term's identifier to the property values."""
+        return multidict(
+            (term.identifier, value)
+            for term, value in self.iterate_filtered_properties(prop)
+        )
 
     def iterate_relations(self) -> Iterable[Tuple[Term, TypeDef, Reference]]:
         """Iterate over tuples of terms, relations, and their targets."""
@@ -492,7 +557,7 @@ class Obo:
             for term, xref in self.iterate_filtered_xrefs(prefix)
         )
 
-    def get_id_relations_mapping(self, type_def: TypeDef) -> Mapping[str, List[Reference]]:
+    def get_id_multirelations_mapping(self, type_def: TypeDef) -> Mapping[str, List[Reference]]:
         """Get a mapping from identifiers to a list of all references for the given relation."""
         return multidict(
             (term.identifier, reference)
