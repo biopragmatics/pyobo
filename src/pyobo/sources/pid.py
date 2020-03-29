@@ -66,12 +66,15 @@ def iter_terms() -> Iterable[Term]:
                 hgnc_id = get_hgnc_id(uniprot_id)
                 if hgnc_id is None:  # this only happens for proteins that seem to be virus related
                     # TODO reinvestigate this later
-                    logger.debug(f'uniprot could not map {name}/{reference}/{get_gene_name(uniprot_id)} to HGNC')
+                    logger.debug(
+                        f'uniprot could not map %s/%s/%s to HGNC',
+                        name, reference, get_gene_name(uniprot_id, web_fallback=False),
+                    )
                 else:
                     name = hgnc_id_to_name[hgnc_id]
                     genes.add((hgnc_id, name))
             else:
-                print(f'unmapped: {name}, {reference}')
+                logger.debug(f'unmapped: {name}, {reference}')
 
         for hgnc_id, hgnc_symbol in genes:
             term.append_relationship(pathway_has_part, Reference('hgnc', hgnc_id, hgnc_symbol))
