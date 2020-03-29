@@ -21,6 +21,7 @@ alias_symbol_type = SynonymTypeDef(id='alias_symbol', name='alias symbol')
 previous_name_type = SynonymTypeDef(id='previous_name', name='previous name')
 alias_name_type = SynonymTypeDef(id='alias_name', name='alias name')
 
+#: First column is MIRIAM prefix, second column is HGNC key
 gene_xrefs = [
     ('ensembl', 'ensembl_gene_id'),
     ('ncbigene', 'entrez_id'),
@@ -111,6 +112,11 @@ def get_terms() -> Iterable[Term]:
             parents=parents,
             synonyms=synonyms,
         )
+
+        for prop in ['locus_group', 'locus_type', 'location']:
+            value = entry.get(prop)
+            if value:
+                term.append_property(prop, value)
         term.append_relationship(from_species, Reference(prefix='taxonomy', identifier='9606', name='Homo sapiens'))
 
         unhandled.update(set(entry))
