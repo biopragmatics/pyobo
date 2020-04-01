@@ -21,6 +21,7 @@ CONVERTED = {
     'complexportal': 'complexportal',
     'ncbigene': 'ncbigene',
     'ec-code': 'expasy',
+    'fplx': 'famplex',
     'hgnc': 'hgnc',
     'hgnc.genefamily': 'hgncgenefamily',
     'mesh': 'mesh',
