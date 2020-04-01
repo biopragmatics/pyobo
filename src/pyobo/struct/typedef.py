@@ -14,6 +14,7 @@ __all__ = [
     'pathway_has_part',
     'part_of',
     'is_a',
+    'has_member',
     'subclass',
     'has_role',
     'role_of',
@@ -83,6 +84,9 @@ pathway_has_part = TypeDef(
 is_a = TypeDef(
     reference=Reference.default(identifier='is_a', name='is a'),
     inverse=Reference.default(identifier='subclass', name='subclass'),
+)
+has_member = TypeDef(
+    reference=Reference.default(identifier='has_member', name='has member'),
 )
 subclass = TypeDef(
     reference=Reference.default(identifier='subclass', name='subclass'),
