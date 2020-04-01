@@ -163,7 +163,7 @@ def get_terms() -> Iterable[Term]:
             xrefs=_xrefs,
             provenance=provenance,
         )
-        term.append_relationship(from_species, Reference(prefix='taxonomy', identifier=taxonomy_id, name=taxonomy_name))
+        term.set_species(identifier=taxonomy_id, name=taxonomy_name)
 
         for reference, _count in members:
             term.append_relationship(has_part, reference)

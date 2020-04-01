@@ -140,7 +140,7 @@ def get_terms() -> Iterable[Term]:
             definition=description,
             xrefs=xrefs,
         )
-        term.append_relationship(from_species, Reference(prefix='taxonomy', identifier=tax_id, name=tax_name))
+        term.set_species(identifier=tax_id, name=tax_name)
         yield term
 
 

@@ -19,7 +19,7 @@ import pandas as pd
 from networkx.utils import open_file
 
 from .reference import Reference, Referenced
-from .typedef import TypeDef, is_a
+from .typedef import TypeDef, from_species, is_a
 from .utils import comma_separate
 from ..identifier_utils import PREFIX_REMAP, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST, normalize_curie, normalize_prefix
 from ..io_utils import multidict
@@ -140,6 +140,10 @@ class Term(Referenced):
     def append_relationship(self, type_def: TypeDef, reference: Reference) -> None:
         """Append a relationship."""
         self.relationships[type_def].append(reference)
+
+    def set_species(self, identifier: str, name: str):
+        """Append the from_species relation."""
+        self.append_relationship(from_species, Reference(prefix='taxonomy', identifier=identifier, name=name))
 
     def extend_relationship(self, type_def: TypeDef, references: Iterable[Reference]) -> None:
         """Append several relationships."""

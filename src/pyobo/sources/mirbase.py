@@ -92,14 +92,6 @@ def _process_definitions_lines(lines: Iterable[str]) -> Iterable[Term]:
             for alias in aliases.get(identifier, [])
             if alias != name
         ]
-
-        species_identifier, species_name = organisms[species_code]
-        species = Reference(
-            prefix='taxonomy',
-            identifier=species_identifier,
-            name=species_name,
-        )
-
         mature_mirna_lines = [
             i
             for i, element in enumerate(group)
@@ -141,7 +133,9 @@ def _process_definitions_lines(lines: Iterable[str]) -> Iterable[Term]:
             xrefs=xrefs,
             synonyms=synonyms,
         )
-        term.append_relationship(from_species, species)
+
+        species_identifier, species_name = organisms[species_code]
+        term.set_species(species_identifier, species_name)
         term.extend_relationship(has_mature, matures)
 
         yield term

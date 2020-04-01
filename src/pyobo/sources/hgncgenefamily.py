@@ -91,7 +91,7 @@ def _get_terms_helper() -> Iterable[Term]:
             xrefs=xrefs,
             synonyms=synonyms,
         )
-        term.append_relationship(from_species, Reference(prefix='taxonomy', identifier='9606', name='Homo sapiens'))
+        term.set_species(identifier='9606', name='Homo sapiens')
         yield term
 
 

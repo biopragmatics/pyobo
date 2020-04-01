@@ -116,9 +116,7 @@ def get_terms() -> Iterable[Term]:
             xrefs=xrefs,
             provenance=provenance,
         )
-        term.append_relationship(from_species, Reference(
-            prefix='taxonomy', identifier='10116', name='Rattus norvegicus',
-        ))
+        term.set_species(identifier='10116', name='Rattus norvegicus')
         yield term
 
 

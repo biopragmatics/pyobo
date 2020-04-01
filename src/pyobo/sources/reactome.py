@@ -61,7 +61,7 @@ def iter_terms() -> Iterable[Term]:
         if not taxonomy_id or pd.isna(taxonomy_id):
             raise ValueError(f'unmapped species: {species_name}')
 
-        term.append_relationship(from_species, Reference(prefix='taxonomy', identifier=taxonomy_id, name=species_name))
+        term.set_species(identifier=taxonomy_id, name=species_name)
 
     hierarchy_df = ensure_df(PREFIX, PATHWAYS_HIERARCHY_URL, header=None)
     for parent_id, child_id in hierarchy_df.values:

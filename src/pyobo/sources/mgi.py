@@ -134,10 +134,7 @@ def get_terms() -> Iterable[Term]:
             xrefs=xrefs,
             synonyms=synonyms,
         )
-        term.append_relationship(
-            from_species,
-            Reference(prefix='taxonomy', identifier='10090', name='Mus musculus'),
-        )
+        term.set_species(identifier='10090', name='Mus musculus')
         yield term
 
 

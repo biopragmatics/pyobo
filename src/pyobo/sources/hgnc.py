@@ -117,7 +117,7 @@ def get_terms() -> Iterable[Term]:
             value = entry.get(prop)
             if value:
                 term.append_property(prop, value)
-        term.append_relationship(from_species, Reference(prefix='taxonomy', identifier='9606', name='Homo sapiens'))
+        term.set_species(identifier='9606', name='Homo sapiens')
 
         unhandled.update(set(entry))
         yield term

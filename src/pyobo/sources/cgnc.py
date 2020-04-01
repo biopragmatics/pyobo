@@ -50,9 +50,7 @@ def get_terms() -> Iterable[Term]:
             synonyms=synonyms,
             definition=name,
         )
-        term.append_relationship(from_species, Reference(
-            prefix='taxonomy', identifier='9031', name='Gallus gallus',
-        ))
+        term.set_species(identifier='9031', name='Gallus gallus')
         yield term
 
 

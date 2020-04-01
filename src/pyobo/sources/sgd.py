@@ -60,10 +60,7 @@ def get_terms() -> str:
             definition=definition,
             synonyms=synonyms,
         )
-        term.append_relationship(
-            from_species,
-            Reference(prefix='taxonomy', identifier='4932', name='Saccharomyces cerevisiae'),
-        )
+        term.set_species(identifier='4932', name='Saccharomyces cerevisiae')
         yield term
 
 
