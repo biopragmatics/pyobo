@@ -7,9 +7,8 @@ from typing import Iterable
 import pandas as pd
 from tqdm import tqdm
 
-from pyobo import Obo, Synonym, SynonymTypeDef, Term
-from pyobo.struct.struct import Reference
-from pyobo.utils import ensure_df
+from ..path_utils import ensure_df
+from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
 
 PREFIX = 'rgd'
 
@@ -61,12 +60,13 @@ GENES_HEADER = [
 
 def get_obo() -> Obo:
     """Get RGD as OBO."""
-    terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
         name='Rat Genome Database',
-        terms=terms,
-        synonym_typedefs=[old_name_type, old_symbol_type]
+        iter_terms=get_terms,
+        typedefs=[from_species],
+        synonym_typedefs=[old_name_type, old_symbol_type],
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
@@ -110,13 +110,13 @@ def get_terms() -> Iterable[Term]:
                 provenance.append(Reference(prefix='pubmed', identifier=pubmed_id))
 
         term = Term(
-            reference=Reference(prefix=PREFIX, identifier=row['GENE_RGD_ID']),
-            name=row['SYMBOL'],
+            reference=Reference(prefix=PREFIX, identifier=row['GENE_RGD_ID'], name=row['SYMBOL']),
             definition=row['NAME'] or row['GENE_DESC'],
             synonyms=synonyms,
             xrefs=xrefs,
             provenance=provenance,
         )
+        term.set_species(identifier='10116', name='Rattus norvegicus')
         yield term
 
 

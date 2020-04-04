@@ -2,7 +2,12 @@
 
 """A python package for handling and generating OBO."""
 
-from .mappings import get_all_xrefs, get_synonyms, get_xrefs, iterate_xrefs_from_graph  # noqa: F401
-from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef  # noqa: F401
-from .utils import ensure_path, get_id_name_mapping, get_obo_graph_by_prefix, get_obo_graph_by_url  # noqa: F401
+from .extract import (  # noqa: F401
+    get_filtered_xrefs, get_id_name_mapping, get_id_synonyms_mapping, get_name_id_mapping,
+    get_xrefs_df,
+)
+from .getters import get  # noqa: F401
+from .path_utils import ensure_path  # noqa: F401
+from .sources import CONVERTED, get_converted_obo, iter_converted_obos  # noqa: F401
+from .struct import Obo, Synonym, SynonymTypeDef, Term  # noqa: F401
 from .version import get_version  # noqa: F401

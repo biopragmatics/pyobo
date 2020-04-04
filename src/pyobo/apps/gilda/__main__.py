@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Run the exporter."""
+"""CLI for PyOBO's Gilda Service."""
 
 from .cli import main
 

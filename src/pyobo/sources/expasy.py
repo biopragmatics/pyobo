@@ -6,7 +6,8 @@ import logging
 from collections import defaultdict
 from typing import Dict, Iterable, Mapping
 
-from pyobo import Obo, Reference, Synonym, Term, ensure_path
+from ..path_utils import ensure_path
+from ..struct import Obo, Reference, Synonym, Term
 
 PREFIX = 'ec-code'
 EXPASY_DATABASE_URL = 'ftp://ftp.expasy.org/databases/enzyme/enzyme.dat'
@@ -34,11 +35,11 @@ DR = 'DR'
 
 def get_obo() -> Obo:
     """Get ExPASy as OBO."""
-    terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
         name='ExPASy Enzyme Nomenclature',
-        terms=terms,
+        iter_terms=get_terms,
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
@@ -52,8 +53,7 @@ def get_terms() -> Iterable[Term]:
     child_to_parents = defaultdict(list)
     for ec_code, data in tree.items():
         terms[ec_code] = Term(
-            name=data['name'],
-            reference=Reference(prefix=PREFIX, identifier=ec_code),
+            reference=Reference(prefix=PREFIX, identifier=ec_code, name=data['name']),
         )
         for child_data in data.get('children', []):
             child_ec_code = child_data['identifier']
@@ -105,8 +105,7 @@ def get_terms() -> Iterable[Term]:
             # raise
 
         terms[ec_code] = Term(
-            name=name,
-            reference=Reference(prefix=PREFIX, identifier=ec_code),
+            reference=Reference(prefix=PREFIX, identifier=ec_code, name=name),
             parents=[parent_term.reference],
             synonyms=synonyms,
             xrefs=xrefs,

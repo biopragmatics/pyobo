@@ -5,10 +5,9 @@
 import click
 from tqdm import tqdm
 
+from pyobo import get_obo_graph, get_terms_from_graph
 from pyobo.database.sql.manager import Manager
 from pyobo.database.sql.models import Reference, Term
-from pyobo.sources.utils import get_terms_from_graph
-from pyobo.utils import get_obo_graph
 
 
 @click.command()
@@ -28,7 +27,7 @@ def main():
             reference = references[term.reference.curie] = Reference(
                 namespace=term.reference.namespace,
                 identifier=term.reference.identifier,
-                name=term.reference.name
+                name=term.reference.name,
             )
 
         term = Term(

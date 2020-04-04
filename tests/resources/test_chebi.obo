@@ -1,0 +1,436 @@
+format-version: 1.2
+data-version: 185
+date: 27:02:2020 18:48
+saved-by: chebi
+subsetdef: 1_STAR "Preliminary entries"
+subsetdef: 2_STAR "Annotated by 3rd party"
+subsetdef: 3_STAR "Manually annotated by ChEBI Team"
+synonymtypedef: IUPAC_NAME "IUPAC NAME"
+synonymtypedef: BRAND_NAME "BRAND NAME"
+synonymtypedef: INN "INN"
+default-namespace: chebi_ontology
+remark: ChEBI subsumes and replaces the Chemical Ontology first
+remark: developed by Michael Ashburner & Pankaj Jaiswal.
+remark: Author: ChEBI curation team
+remark: ChEBI Release version 185
+remark: For any queries contact chebi-help@ebi.ac.uk
+ontology: chebi
+
+[Term]
+id: CHEBI:24431
+name: chemical entity
+subset: 3_STAR
+def: "A chemical entity is a physical entity of interest in chemistry including molecular entities, parts thereof, and chemical substances." []
+synonym: "chemical entity" EXACT [UniProt]
+
+[Term]
+id: CHEBI:23367
+name: molecular entity
+subset: 3_STAR
+def: "Any constitutionally or isotopically distinct atom, molecule, ion, ion pair, radical, radical ion, complex, conformer etc., identifiable as a separately distinguishable entity." []
+synonym: "molekulare Entitaet" RELATED [ChEBI]
+synonym: "molecular entity" EXACT IUPAC_NAME [IUPAC]
+synonym: "entite moleculaire" RELATED [IUPAC]
+synonym: "entidades moleculares" RELATED [IUPAC]
+synonym: "molecular entities" RELATED [IUPAC]
+synonym: "entidad molecular" RELATED [IUPAC]
+is_a: CHEBI:24431
+
+[Term]
+id: CHEBI:24870
+name: ion
+subset: 3_STAR
+def: "A molecular entity having a net electric charge." []
+synonym: "Ionen" RELATED [ChEBI]
+synonym: "Ion" EXACT [ChEBI]
+synonym: "ion" EXACT [ChEBI]
+synonym: "ion" EXACT IUPAC_NAME [IUPAC]
+synonym: "iones" RELATED [ChEBI]
+synonym: "ions" RELATED [ChEBI]
+is_a: CHEBI:23367
+
+[Term]
+id: CHEBI:24867
+name: monoatomic ion
+subset: 3_STAR
+synonym: "monoatomic ions" RELATED [ChEBI]
+is_a: CHEBI:24870
+is_a: CHEBI:33238
+
+[Term]
+id: CHEBI:23905
+name: monoatomic anion
+subset: 3_STAR
+synonym: "monoatomic anions" RELATED [ChEBI]
+is_a: CHEBI:24867
+is_a: CHEBI:22563
+
+[Term]
+id: CHEBI:33429
+name: monoatomic monoanion
+subset: 3_STAR
+synonym: "monoatomic monoanions" RELATED [ChEBI]
+property_value: http://purl.obolibrary.org/obo/chebi/mass "0.00000" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/charge "-1" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/smiles "[*-]" xsd:string
+is_a: CHEBI:23905
+is_a: CHEBI:36830
+
+[Term]
+id: CHEBI:30151
+name: aluminide(1-)
+subset: 3_STAR
+synonym: "Aluminum anion" RELATED [NIST_Chemistry_WebBook]
+synonym: "Al(-)" RELATED [IUPAC]
+synonym: "aluminide(1-)" EXACT IUPAC_NAME [IUPAC]
+synonym: "aluminide(-I)" EXACT IUPAC_NAME [IUPAC]
+property_value: http://purl.obolibrary.org/obo/chebi/formula "Al" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/charge "-1" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/monoisotopicmass "26.98209" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/mass "26.98154" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchi "InChI=1S/Al/q-1" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/smiles "[Al-]" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchikey "SBLSYFIUPXRQRY-UHFFFAOYSA-N" xsd:string
+xref: CAS:22325-47-9 "NIST Chemistry WebBook"
+is_a: CHEBI:33429
+is_a: CHEBI:33627
+
+[Term]
+id: CHEBI:16042
+name: halide anion
+alt_id: CHEBI:5605
+alt_id: CHEBI:14384
+subset: 3_STAR
+def: "A monoatomic monoanion resulting from the addition of an electron to any halogen atom." []
+synonym: "halide anions" RELATED [ChEBI]
+synonym: "halides" RELATED [ChEBI]
+synonym: "HX" RELATED [KEGG_COMPOUND]
+synonym: "halide ions" EXACT IUPAC_NAME [IUPAC]
+synonym: "halide(1-)" RELATED [ChEBI]
+synonym: "halogen anion" RELATED [ChEBI]
+synonym: "Halide" RELATED [KEGG_COMPOUND]
+synonym: "a halide anion" RELATED [UniProt]
+property_value: http://purl.obolibrary.org/obo/chebi/mass "0.0" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/charge "-1" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/monoisotopicmass "0.0" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/formula "X" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/smiles "[*-]" xsd:string
+xref: KEGG:C00462
+is_a: CHEBI:33429
+is_a: CHEBI:79389
+
+[Term]
+id: CHEBI:17051
+name: fluoride
+alt_id: CHEBI:5113
+alt_id: CHEBI:49593
+alt_id: CHEBI:14271
+subset: 3_STAR
+synonym: "fluoride" EXACT IUPAC_NAME [IUPAC]
+synonym: "Fluoride ion" RELATED [KEGG_COMPOUND]
+synonym: "F(-)" RELATED [IUPAC]
+synonym: "fluoride" EXACT [UniProt]
+synonym: "fluoride(1-)" EXACT IUPAC_NAME [IUPAC]
+synonym: "Fluorine anion" RELATED [NIST_Chemistry_WebBook]
+synonym: "Fluoride" EXACT [KEGG_COMPOUND]
+synonym: "F-" RELATED [KEGG_COMPOUND]
+synonym: "FLUORIDE ION" RELATED [PDBeChem]
+property_value: http://purl.obolibrary.org/obo/chebi/mass "18.99840" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/charge "-1" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/monoisotopicmass "18.99895" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/formula "F" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchi "InChI=1S/FH/h1H/p-1" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchikey "KRHYYFGTRYWZRS-UHFFFAOYSA-M" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/smiles "[F-]" xsd:string
+xref: Gmelin:14905 "Gmelin"
+xref: CAS:16984-48-8 "ChemIDplus"
+xref: CAS:16984-48-8 "NIST Chemistry WebBook"
+xref: KEGG:C00742
+xref: PDBeChem:F
+is_a: CHEBI:16042
+is_a: CHEBI:36895
+relationship: is_conjugate_base_of CHEBI:29228
+
+[Term]
+id: CHEBI:24060
+name: fluoride salt
+subset: 3_STAR
+synonym: "fluoride salts" RELATED [ChEBI]
+synonym: "fluorides" RELATED [ChEBI]
+is_a: CHEBI:33958
+is_a: CHEBI:24062
+relationship: has_part CHEBI:17051
+
+[Term]
+id: CHEBI:28741
+name: sodium fluoride
+alt_id: CHEBI:26713
+alt_id: CHEBI:9178
+subset: 3_STAR
+def: "A metal fluoride salt with a Na(+) counterion." []
+synonym: "sodium fluoride" EXACT IUPAC_NAME [IUPAC]
+synonym: "NaF" RELATED [IUPAC]
+synonym: "Sodium fluoride" EXACT [KEGG_COMPOUND]
+property_value: http://purl.obolibrary.org/obo/chebi/monoisotopicmass "41.98817" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/mass "41.98817" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/formula "FNa" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/charge "0" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/formula "Na.F" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/smiles "[F-].[Na+]" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchikey "PUZPDOWCWNUUKD-UHFFFAOYSA-M" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchi "InChI=1S/FH.Na/h1H;/q;+1/p-1" xsd:string
+xref: Wikipedia:Sodium_Fluoride
+xref: KEGG:D00943
+xref: CAS:7681-49-4 "ChemIDplus"
+xref: KEGG:C08142
+xref: CAS:7681-49-4 "KEGG COMPOUND"
+is_a: CHEBI:24060
+relationship: has_role CHEBI:25435
+
+[Term]
+id: CHEBI:32129
+name: diamminesilver(1+) fluoride
+subset: 3_STAR
+synonym: "diamminefluorosilver" RELATED [ChemIDplus]
+synonym: "diammine silver fluoride" RELATED [ChemIDplus]
+synonym: "Silver diammine fluoride" RELATED [KEGG_COMPOUND]
+synonym: "diamminesilver(I) fluoride" EXACT IUPAC_NAME [IUPAC]
+synonym: "diamminesilver(1+) fluoride" EXACT IUPAC_NAME [IUPAC]
+synonym: "[Ag(NH3)2]F" RELATED [IUPAC]
+property_value: http://purl.obolibrary.org/obo/chebi/formula "AgFH6N2" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/mass "160.92772" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/formula "Ag.F.2H3N" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/monoisotopicmass "159.95659" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/charge "0" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/smiles "[F-].[H][N]([H])([H])[Ag+][N]([H])([H])[H]" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchi "InChI=1S/Ag.FH.2H3N/h;1H;2*1H3/q+1;;;/p-1" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchikey "FJKGRAZQBBWYLG-UHFFFAOYSA-M" xsd:string
+xref: CAS:34445-07-3 "ChemIDplus"
+xref: CAS:34445-07-3 "KEGG COMPOUND"
+xref: KEGG:D01502
+is_a: CHEBI:24060
+relationship: has_part CHEBI:33049
+
+[Term]
+id: CHEBI:30340
+name: silver monofluoride
+subset: 3_STAR
+synonym: "silver(I) fluoride" EXACT IUPAC_NAME [IUPAC]
+synonym: "silver(1+) fluoride" EXACT IUPAC_NAME [IUPAC]
+synonym: "argentous fluoride" RELATED [NIST_Chemistry_WebBook]
+synonym: "silver monofluoride" EXACT IUPAC_NAME [IUPAC]
+synonym: "AgF" RELATED [IUPAC]
+property_value: http://purl.obolibrary.org/obo/chebi/monoisotopicmass "125.90349" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/formula "AgF" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/mass "126.86660" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/charge "0" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchi "InChI=1S/Ag.FH/h;1H/q+1;/p-1" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchikey "REYHXKZHIMGNSE-UHFFFAOYSA-M" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/smiles "[F-].[Ag+]" xsd:string
+xref: CAS:7775-41-9 "NIST Chemistry WebBook"
+xref: CAS:7775-41-9 "ChemIDplus"
+xref: Gmelin:122625 "Gmelin"
+is_a: CHEBI:33968
+is_a: CHEBI:24060
+
+[Term]
+id: CHEBI:51990
+name: tetrabutylammonium fluoride
+subset: 3_STAR
+synonym: "N,N,N-tributylbutan-1-aminium fluoride" EXACT IUPAC_NAME [IUPAC]
+property_value: http://purl.obolibrary.org/obo/chebi/monoisotopicmass "261.28318" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/formula "C16H36FN" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/mass "261.46210" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/charge "0" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/smiles "[F-].CCCC[N+](CCCC)(CCCC)CCCC" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchikey "FPGGTKZVZWFYPV-UHFFFAOYSA-M" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchi "InChI=1S/C16H36N.FH/c1-5-9-13-17(14-10-6-2,15-11-7-3)16-12-8-4;/h5-16H2,1-4H3;1H/q+1;/p-1" xsd:string
+xref: Reaxys:3570522 "Reaxys"
+xref: Beilstein:3570522 "Beilstein"
+xref: CAS:429-41-4 "ChemIDplus"
+xref: PMID:21142041 "Europe PMC"
+xref: PMID:21517057 "Europe PMC"
+xref: PMID:22229781 "Europe PMC"
+xref: PMID:15074950 "Europe PMC"
+is_a: CHEBI:24060
+is_a: CHEBI:51992
+relationship: has_role CHEBI:63060
+
+[Term]
+id: CHEBI:49499
+name: beryllium difluoride
+subset: 3_STAR
+def: "The fluoride salt of beryllium (+2 oxidation state). In the solid state it exists as a glass, with four-coordinate Be(2+) tetrahedral centres and two-coordinate fluoride centres. As a gas it adopts a linear triatomic structure and in the liquid state a fluctuating tetrahedral structure. In protein crystallography it is used as a mimic of phosphate." []
+synonym: "Berylliumfluorid" RELATED [ChEBI]
+synonym: "Be2F4" RELATED [ChemIDplus]
+synonym: "Beryllium fluoride" RELATED [ChemIDplus]
+synonym: "BeF2" RELATED [ChemIDplus]
+property_value: http://purl.obolibrary.org/obo/chebi/mass "47.00899" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/monoisotopicmass "47.00899" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/formula "BeF2" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/charge "0" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchi "InChI=1S/Be.2FH/h;2*1H/q+2;;/p-2" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchikey "JZKFIPKXQBZXMW-UHFFFAOYSA-L" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/smiles "F[Be]F" xsd:string
+xref: CAS:7787-49-7 "ChemIDplus"
+xref: PMID:20572721 "Europe PMC"
+xref: PMID:16771419 "Europe PMC"
+xref: PMID:17979355 "Europe PMC"
+xref: Reaxys:14667390 "Reaxys"
+xref: PMID:17963376 "Europe PMC"
+xref: PMID:19561071 "Europe PMC"
+xref: PMID:18651739 "Europe PMC"
+xref: PMID:21141831 "Europe PMC"
+xref: PMID:20529842 "Europe PMC"
+xref: PMID:1551879 "Europe PMC"
+xref: PMID:16223284 "Europe PMC"
+xref: PMID:11897645 "Europe PMC"
+xref: PMID:8800204 "Europe PMC"
+xref: PMID:16771420 "Europe PMC"
+xref: MetaCyc:CPD0-1230
+xref: PMID:2808407 "Europe PMC"
+xref: CAS:7787-49-7 "NIST Chemistry WebBook"
+xref: Gmelin:95146 "Gmelin"
+is_a: CHEBI:33780
+is_a: CHEBI:24060
+
+[Term]
+id: CHEBI:66871
+name: ammonium fluoride
+subset: 3_STAR
+def: "A fluoride salt having ammonium (NH4+) as the counterion." []
+synonym: "NH4F" RELATED [ChEBI]
+synonym: "Ammonium fluorure" RELATED [ChEBI]
+synonym: "ammonium fluoride" EXACT IUPAC_NAME [IUPAC]
+synonym: "Fluoruro amonico" RELATED [ChEBI]
+synonym: "Fluorure d'ammonium" RELATED [ChEBI]
+property_value: http://purl.obolibrary.org/obo/chebi/formula "FH4N" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/mass "37.03690" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/monoisotopicmass "37.03278" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/charge "0" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/smiles "[F-].[H][N+]([H])([H])[H]" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchi "InChI=1S/FH.H3N/h1H;1H3" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchikey "LDDQLRUQCUTJBB-UHFFFAOYSA-N" xsd:string
+xref: CAS:12125-01-8 "ChemIDplus"
+xref: Wikipedia:Ammonium_fluoride
+xref: Reaxys:13192588 "Reaxys"
+is_a: CHEBI:47704
+is_a: CHEBI:24060
+
+[Term]
+id: CHEBI:66872
+name: potassium fluoride
+subset: 3_STAR
+def: "A fluoride salt having K+ as the counterion." []
+synonym: "Potassium fluorure" RELATED [ChemIDplus]
+synonym: "potassium fluoride" EXACT IUPAC_NAME [IUPAC]
+synonym: "Fluorure de potassium" RELATED [ChemIDplus]
+property_value: http://purl.obolibrary.org/obo/chebi/mass "58.09670" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/monoisotopicmass "57.96211" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/formula "FK" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/charge "0" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/smiles "[F-].[K+]" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchi "InChI=1S/FH.K/h1H;/q;+1/p-1" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchikey "NROKBHXJSPEDAR-UHFFFAOYSA-M" xsd:string
+xref: CAS:7789-23-3 "ChemIDplus"
+xref: PMID:22169214 "Europe PMC"
+xref: PMID:22721409 "Europe PMC"
+xref: Beilstein:3902818 "SUBMITTER"
+xref: PMID:22777777 "Europe PMC"
+xref: PMID:21863787 "Europe PMC"
+xref: Reaxys:3902818 "Reaxys"
+xref: PMID:22359362 "Europe PMC"
+xref: PMID:22013284 "Europe PMC"
+xref: Reaxys:11339017 "Reaxys"
+xref: CAS:7789-23-3 "NIST Chemistry WebBook"
+xref: Wikipedia:Potassium_fluoride
+xref: PMID:21486073 "Europe PMC"
+xref: PMID:22700337 "Europe PMC"
+xref: PMID:21412559 "Europe PMC"
+xref: PMID:21636316 "Europe PMC"
+is_a: CHEBI:24060
+is_a: CHEBI:26218
+relationship: has_role CHEBI:64909
+
+[Term]
+id: CHEBI:51330
+name: esoxybutynin chloride
+subset: 3_STAR
+synonym: "4-(diethylamino)but-2-yn-1-yl (2S)-cyclohexyl(hydroxy)phenylacetate hydrochloride" EXACT IUPAC_NAME [IUPAC]
+property_value: http://purl.obolibrary.org/obo/chebi/monoisotopicmass "393.20707" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/mass "393.950" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/formula "C22H31NO3.Cl.H" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/formula "C22H32ClNO3" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/charge "0" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchi "InChI=1S/C22H31NO3.ClH/c1-3-23(4-2)17-11-12-18-26-21(24)22(25,19-13-7-5-8-14-19)20-15-9-6-10-16-20;/h5,7-8,13-14,20,25H,3-4,6,9-10,15-18H2,1-2H3;1H/t22-;/m1./s1" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/smiles "[H+].[Cl-].C1(CCCCC1)[C@@](C(OCC#CCN(CC)CC)=O)(C2=CC=CC=C2)O" xsd:string
+property_value: http://purl.obolibrary.org/obo/chebi/inchikey "SWIJYDAEGSIQPZ-VZYDHVRKSA-N" xsd:string
+xref: CAS:230949-16-3 "ChemIDplus"
+xref: KEGG:D04057
+xref: DrugBank:DB01062
+is_a: CHEBI:36807
+relationship: has_part CHEBI:51329
+
+[Typedef]
+id: has_part
+name: has part
+is_cyclic: false
+is_transitive: true
+xref: BFO:0000051
+
+[Typedef]
+id: is_conjugate_base_of
+name: is conjugate base of
+inverse_of: is_conjugate_acid_of
+is_cyclic: true
+is_transitive: false
+
+[Typedef]
+id: is_conjugate_acid_of
+name: is conjugate acid of
+inverse_of: is_conjugate_base_of
+is_cyclic: true
+is_transitive: false
+
+[Typedef]
+id: is_tautomer_of
+name: is tautomer of
+is_cyclic: true
+is_transitive: true
+
+[Typedef]
+id: is_enantiomer_of
+name: is enantiomer of
+is_cyclic: true
+is_transitive: false
+
+[Typedef]
+id: has_functional_parent
+name: has functional parent
+is_cyclic: false
+is_transitive: false
+
+[Typedef]
+id: has_parent_hydride
+name: has parent hydride
+is_cyclic: false
+is_transitive: false
+
+[Typedef]
+id: is_substituent_group_from
+name: is substituent group from
+is_cyclic: false
+is_transitive: false
+
+[Typedef]
+id: has_role
+name: has role
+is_cyclic: false
+is_transitive: false
+xref: RO:0000087
+
+[Typedef]
+id: has_major_microspecies_at_pH_7_3
+name: has major microspecies at pH 7.3
+is_cyclic: true
+is_transitive: false

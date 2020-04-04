@@ -8,9 +8,8 @@ from typing import Iterable
 
 from tqdm import tqdm
 
-from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
-from pyobo.sources.utils import from_species
-from pyobo.utils import ensure_path
+from ..path_utils import ensure_path
+from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +21,7 @@ alias_symbol_type = SynonymTypeDef(id='alias_symbol', name='alias symbol')
 previous_name_type = SynonymTypeDef(id='previous_name', name='previous name')
 alias_name_type = SynonymTypeDef(id='alias_name', name='alias name')
 
+#: First column is MIRIAM prefix, second column is HGNC key
 gene_xrefs = [
     ('ensembl', 'ensembl_gene_id'),
     ('ncbigene', 'entrez_id'),
@@ -45,17 +45,53 @@ gene_xrefs = [
     ('snornabase', 'snornabase'),
 ]
 
+#: Encodings from https://www.genenames.org/cgi-bin/statistics
+#: To see all, do: ``cat hgnc_complete_set.json | jq .response.docs[].locus_type | sort | uniq``
+ENCODINGS = {
+    # protein-coding gene
+    'gene with protein product': 'GRP',
+    # non-coding RNA
+    'RNA, Y': 'GR',
+    'RNA, cluster': 'GR',
+    'RNA, long non-coding': 'GR',
+    'RNA, micro': 'GM',
+    'RNA, misc': 'GR',
+    'RNA, ribosomal': 'GR',
+    'RNA, small cytoplasmic': 'GR',
+    'RNA, small nuclear': 'GR',
+    'RNA, small nucleolar': 'GR',
+    'RNA, transfer': 'GR',
+    'RNA, vault': 'GR',
+    # phenotype
+    'phenotype only': 'G',
+    # pseudogene
+    'T cell receptor pseudogene': 'GRP',
+    'immunoglobulin pseudogene': 'GRP',
+    'immunoglobulin gene': 'GRP',
+    'pseudogene': 'G',
+    # other
+    'T cell receptor gene': 'GRP',
+    'complex locus constituent': 'G',
+    'endogenous retrovirus': 'G',
+    'fragile site': 'G',
+    'protocadherin': 'GRP',
+    'readthrough': 'G',
+    'region': 'G',
+    'transposable element': 'G',
+    'virus integration site': 'G',
+    'unknown': 'GRP',
+}
+
 
 def get_obo() -> Obo:
     """Get HGNC as OBO."""
-    terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
         name='HGNC',
-        terms=terms,
+        iter_terms=get_terms,
         typedefs=[from_species],
         synonym_typedefs=[previous_name_type, previous_symbol_type, alias_name_type, alias_symbol_type],
-        auto_generated_by='bio2obo:hgnc',
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
@@ -106,15 +142,19 @@ def get_terms() -> Iterable[Term]:
             synonyms.append(Synonym(name=previous_name, type=previous_name_type))
 
         term = Term(
-            name=symbol,
             definition=name,
-            reference=Reference(prefix=PREFIX, identifier=identifier),
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=symbol),
             xrefs=xrefs,
             provenance=provenance,
             parents=parents,
             synonyms=synonyms,
         )
-        term.append_relationship(from_species, Reference(prefix='taxonomy', identifier='9606', name='Homo sapiens'))
+
+        for prop in ['locus_group', 'locus_type', 'location']:
+            value = entry.get(prop)
+            if value:
+                term.append_property(prop, value)
+        term.set_species(identifier='9606', name='Homo sapiens')
 
         unhandled.update(set(entry))
         yield term

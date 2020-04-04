@@ -8,10 +8,8 @@ from typing import Iterable
 import pandas as pd
 from tqdm import tqdm
 
-from pyobo import Obo, Synonym, Term
-from pyobo.sources.utils import from_species
-from pyobo.struct.struct import Reference
-from pyobo.utils import ensure_df
+from ..path_utils import ensure_df
+from ..struct import Obo, Reference, Synonym, Term, from_species
 
 PREFIX = 'mgi'
 MARKERS_URL = 'http://www.informatics.jax.org/downloads/reports/MRK_List2.rpt'
@@ -21,11 +19,10 @@ ENSEMBL_XREFS_URL = 'http://www.informatics.jax.org/downloads/reports/MRK_ENSEMB
 
 def get_obo() -> Obo:
     """Get MGI as OBO."""
-    terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
         name='Mouse Genome Database',
-        terms=terms,
+        iter_terms=get_terms,
         typedefs=[from_species],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
@@ -83,7 +80,7 @@ def get_entrez_df() -> pd.DataFrame:
         ],
         dtype={
             'entrez_id': str,
-        }
+        },
     )
 
 
@@ -103,7 +100,7 @@ def get_terms() -> Iterable[Term]:
     ensembl_df = get_ensembl_df()
     # ensembl_df.to_csv('test.tsv', sep='\t', index=False)
     mgi_to_ensemble_ids = defaultdict(list)
-    ensembl_columns = ['mgi_id', 'ensembl_accession_id', 'ensembl_transcript_id', 'ensembl_protein_id', ]
+    ensembl_columns = ['mgi_id', 'ensembl_accession_id', 'ensembl_transcript_id', 'ensembl_protein_id']
     ensembl_it = ensembl_df[ensembl_columns].values
     for mgi_id, ensemble_accession_id, ensemble_transcript_ids, ensemble_protein_ids in ensembl_it:
         mgi_id = mgi_id[len('MGI:'):]
@@ -132,16 +129,12 @@ def get_terms() -> Iterable[Term]:
                 xrefs.append(Reference(prefix='ensembl', identifier=ensembl_id))
 
         term = Term(
-            reference=Reference(prefix=PREFIX, identifier=identifier),
-            name=name,
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
             definition=definition,
             xrefs=xrefs,
             synonyms=synonyms,
         )
-        term.append_relationship(
-            from_species,
-            Reference(prefix='taxonomy', identifier='10090', name='Mus musculus'),
-        )
+        term.set_species(identifier='10090', name='Mus musculus')
         yield term
 
 

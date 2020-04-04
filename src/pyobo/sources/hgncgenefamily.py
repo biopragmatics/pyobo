@@ -8,8 +8,8 @@ from typing import Iterable, List, Mapping
 import pandas as pd
 from tqdm import tqdm
 
-from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
-from pyobo.utils import ensure_path
+from ..path_utils import ensure_path
+from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
 
 PREFIX = 'hgnc.genefamily'
 FAMILIES_URL = 'ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/csv/genefamily_db_tables/family.csv'
@@ -20,26 +20,13 @@ symbol_type = SynonymTypeDef(id='symbol', name='symbol')
 
 def get_obo() -> Obo:
     """Get HGNC Gene Families as OBO."""
-    terms = list(get_terms())
-    hierarchy = get_hierarchy()
-
-    id_to_term = {term.reference.identifier: term for term in terms}
-    for child_id, parent_ids in hierarchy.items():
-        child = id_to_term[child_id]
-        for parent_id in parent_ids:
-            parent: Term = id_to_term[parent_id]
-            child.parents.append(Reference(
-                prefix=PREFIX,
-                identifier=parent_id,
-                name=parent.name,
-            ))
-
     return Obo(
         ontology=PREFIX,
         name='HGNC Gene Families',
-        terms=terms,
+        iter_terms=get_terms,
         synonym_typedefs=[symbol_type],
-        auto_generated_by='bio2obo:hgnc.genefamily',
+        typedefs=[from_species],
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
@@ -58,6 +45,23 @@ COLUMNS = ['id', 'abbreviation', 'name', 'pubmed_ids', 'desc_comment', 'desc_go'
 
 def get_terms() -> Iterable[Term]:
     """Get the HGNC Gene Family terms."""
+    terms = list(_get_terms_helper())
+    hierarchy = get_hierarchy()
+
+    id_to_term = {term.reference.identifier: term for term in terms}
+    for child_id, parent_ids in hierarchy.items():
+        child = id_to_term[child_id]
+        for parent_id in parent_ids:
+            parent: Term = id_to_term[parent_id]
+            child.parents.append(Reference(
+                prefix=PREFIX,
+                identifier=parent_id,
+                name=parent.name,
+            ))
+    return terms
+
+
+def _get_terms_helper() -> Iterable[Term]:
     path = ensure_path(PREFIX, FAMILIES_URL)
     df = pd.read_csv(path, dtype={'id': str})
 
@@ -81,13 +85,13 @@ def get_terms() -> Iterable[Term]:
             synonyms.append(Synonym(name=symbol, type=symbol_type))
 
         term = Term(
-            name=name,
-            reference=Reference(prefix=PREFIX, identifier=hgncgenefamily_id),
+            reference=Reference(prefix=PREFIX, identifier=hgncgenefamily_id, name=name),
             definition=definition,
             provenance=provenance,
             xrefs=xrefs,
             synonyms=synonyms,
         )
+        term.set_species(identifier='9606', name='Homo sapiens')
         yield term
 
 

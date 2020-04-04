@@ -11,11 +11,11 @@ PyOBO can be installed from `PyPI <https://pypi.org/project/pyobo/>`_ with:
     $ pip install pyobo
 
 
-It can be installed in development mode from `GitHub <https://github.com/cthoyt/pyobo>`_
+It can be installed in development mode from `GitHub <https://github.com/pyobo/pyobo>`_
 with:
 
 .. code-block:: sh
 
-    $ git clone https://github.com/cthoyt/pyobo.git
+    $ git clone https://github.com/pyobo/pyobo.git
     $ cd pyobo
     $ pip install -e .

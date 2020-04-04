@@ -4,9 +4,8 @@
 
 from urllib.parse import unquote_plus
 
-from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
-from pyobo.sources.utils import from_species
-from pyobo.utils import ensure_tar_df
+from ..path_utils import ensure_tar_df
+from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
 
 HEADER = ['chromosome', 'database', 'feature', 'start', 'end', 'a', 'b', 'c', 'data']
 PREFIX = 'sgd'
@@ -20,12 +19,13 @@ alias_type = SynonymTypeDef(id='alias', name='alias')
 
 def get_obo() -> Obo:
     """Get SGD as OBO."""
-    terms = list(get_terms())
     return Obo(
         ontology=PREFIX,
         name='Saccharomyces Genome Database',
-        terms=terms,
+        iter_terms=get_terms,
+        typedefs=[from_species],
         synonym_typedefs=[alias_type],
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
@@ -56,15 +56,11 @@ def get_terms() -> str:
                 synonyms.append(Synonym(name=unquote_plus(alias), type=alias_type))
 
         term = Term(
-            reference=Reference(prefix=PREFIX, identifier=identifier),
-            name=name,
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
             definition=definition,
             synonyms=synonyms,
         )
-        term.append_relationship(
-            from_species,
-            Reference(prefix='taxonomy', identifier='4932', name='Saccharomyces cerevisiae'),
-        )
+        term.set_species(identifier='4932', name='Saccharomyces cerevisiae')
         yield term
 
 
