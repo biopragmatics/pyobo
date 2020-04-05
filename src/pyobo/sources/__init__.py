@@ -23,6 +23,7 @@ CONVERTED = {
     'ec-code': 'expasy',
     'hgnc': 'hgnc',
     'hgnc.genefamily': 'hgncgenefamily',
+    'itis': 'itis',
     'mesh': 'mesh',
     'mgi': 'mgi',
     'msig': 'msig',

@@ -51,18 +51,18 @@
       "pattern": "\\d{7}"
     },
     "atc": {
-      "title": "Anatomical Therapeutic Chemical Classification System",
       "synonyms": [
         "ATC_code",
         "ATTC"
-      ]
+      ],
+      "title": "Anatomical Therapeutic Chemical Classification System"
     },
     "atcc": {
-      "title": "American Type Culture Collection",
       "synonyms": [
         "ATCC number",
         "ATCC"
       ],
+      "title": "American Type Culture Collection",
       "url": "https://www.lgcstandards-atcc.org"
     },
     "bao": {
@@ -378,6 +378,11 @@
       "synoynms": [
         "InterPro"
       ]
+    },
+    "itis": {
+      "pattern": "\\d+",
+      "title": "Integrated Taxonomic Information System",
+      "url": "https://www.itis.gov/servlet/SingleRpt/SingleRpt?search_topic=TSN&search_value=$1"
     },
     "iuphar.family": {
       "synonyms": [
