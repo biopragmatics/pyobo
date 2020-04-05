@@ -9,7 +9,7 @@ from .gmt_utils import parse_wikipathways_gmt
 from ..constants import SPECIES_REMAPPING
 from ..path_utils import ensure_path
 from ..struct import Obo, Reference, Term, from_species
-from ..struct.defs import pathway_has_part
+from ..struct.typedef import pathway_has_part
 
 logger = logging.getLogger(__name__)
 
