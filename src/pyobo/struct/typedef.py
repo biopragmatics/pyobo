@@ -3,12 +3,13 @@
 """Default typedefs, references, and other structures."""
 
 from dataclasses import dataclass, field
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Mapping, Optional, Tuple
 
 from .reference import Reference, Referenced
 
 __all__ = [
     'TypeDef',
+    'default_typedefs',
     'from_species',
     'has_part',
     'pathway_has_part',
@@ -143,3 +144,9 @@ is_substituent_group_from = TypeDef(
 has_functional_parent = TypeDef(
     reference=Reference(prefix='chebi', identifier='has_functional_parent', name='has functional parent'),
 )
+
+default_typedefs: Mapping[Tuple[str, str], TypeDef] = {
+    (v.prefix, v.identifier): v
+    for k, v in locals().items()
+    if isinstance(v, TypeDef)
+}

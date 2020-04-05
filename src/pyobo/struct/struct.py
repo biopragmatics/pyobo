@@ -19,7 +19,7 @@ import pandas as pd
 from networkx.utils import open_file
 
 from .reference import Reference, Referenced
-from .typedef import TypeDef, from_species, is_a
+from .typedef import TypeDef, default_typedefs, from_species, is_a
 from .utils import comma_separate
 from ..identifier_utils import PREFIX_REMAP, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST, normalize_curie, normalize_prefix
 from ..io_utils import multidict
@@ -428,8 +428,15 @@ class Obo:
                     xrefs=xrefs,
                     provenance=provenance,
                 )
-                for relation, reference in iterate_node_relationships(data, ontology):
-                    term.append_relationship(typedefs[relation.prefix, relation.identifier], reference)
+                for relation, reference in iterate_node_relationships(data, default_prefix=ontology):
+                    if (relation.prefix, relation.identifier) in typedefs:
+                        typedef = typedefs[relation.prefix, relation.identifier]
+                    elif (relation.prefix, relation.identifier) in default_typedefs:
+                        typedef = default_typedefs[relation.prefix, relation.identifier]
+                    else:
+                        logger.warning(f'{ontology} has no typedef for {relation}')
+                        continue
+                    term.append_relationship(typedef, reference)
                 for prop, value in iterate_node_properties(data):
                     term.append_property(prop, value)
                 yield term
@@ -706,14 +713,22 @@ def iterate_node_parents(data: Mapping[str, Any]) -> Iterable[Reference]:
         yield Reference.from_curie(parent_curie)
 
 
-def iterate_node_relationships(data: Mapping[str, Any], default_prefix: str) -> Iterable[Tuple[Reference, Reference]]:
+def iterate_node_relationships(
+    data: Mapping[str, Any],
+    *,
+    default_prefix: Optional[str] = None,
+) -> Iterable[Tuple[Reference, Reference]]:
     """Extract relationships from a :mod:`obonet` node's data."""
     for s in data.get('relationship', []):
         relation_curie, target_curie = s.split(' ')
         relation_prefix, relation_identifier = normalize_curie(relation_curie)
-        if relation_prefix is None and relation_identifier is None:
-            relation_prefix, relation_identifier = default_prefix, relation_curie
-        relation = Reference(prefix=relation_prefix, identifier=relation_identifier)
+        if relation_prefix is not None and relation_identifier is not None:
+            relation = Reference(prefix=relation_prefix, identifier=relation_identifier)
+        elif default_prefix is not None:
+            relation = Reference(prefix=default_prefix, identifier=relation_curie)
+        else:
+            relation = Reference.default(identifier=relation_curie)
+
         target = Reference.from_curie(target_curie)
         yield relation, target
 
