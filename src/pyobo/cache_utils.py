@@ -37,8 +37,11 @@ def cached_mapping(path: str, header: Iterable[str]) -> Callable[[MappingGetter]
         @functools.wraps(f)
         def _wrapped() -> Mapping[str, str]:
             if os.path.exists(path):
+                logger.debug('loading from cache at %s', path)
                 return open_map_tsv(path)
+            logger.debug('no cache found at %s', path)
             rv = f()
+            logger.debug('writing cache to %s', path)
             write_map_tsv(path=path, header=header, rv=rv)
             return rv
 

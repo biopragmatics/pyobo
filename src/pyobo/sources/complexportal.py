@@ -153,7 +153,7 @@ def get_terms() -> Iterable[Term]:
             elif note == 'see-also' and reference.prefix == 'pubmed':
                 provenance.append(reference)
             elif (note, reference.prefix) not in unhandled_xref_type:
-                it.write(f'unhandled xref type: {note} / {reference.prefix}')
+                logger.debug(f'unhandled xref type: {note} / {reference.prefix}')
                 unhandled_xref_type.add((note, reference.prefix))
 
         term = Term(
