@@ -51,12 +51,19 @@
       "pattern": "\\d{7}"
     },
     "atc": {
+      "title": "Anatomical Therapeutic Chemical Classification System",
       "synonyms": [
         "ATC_code",
-        "ATCC number",
-        "ATTC",
-        "ATCC"
+        "ATTC"
       ]
+    },
+    "atcc": {
+      "title": "American Type Culture Collection",
+      "synonyms": [
+        "ATCC number",
+        "ATCC"
+      ],
+      "url": "https://www.lgcstandards-atcc.org"
     },
     "bao": {
       "synonyms": [
@@ -905,8 +912,8 @@
       "SNOMEDCT274897005": "SNOMEDCT:274897005"
     },
     "prefix": {
-      "ATCC number: ": "ATC:",
-      "ATTC: ": "ATC:",
+      "ATCC number: ": "ATCC:",
+      "ATTC: ": "ATCC:",
       "BAO_": "BAO:",
       "KEGG COMPOUND": "KEGG.COMPOUND",
       "KEGG DRUG": "KEGG.DRUG",
