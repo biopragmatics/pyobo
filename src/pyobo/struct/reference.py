@@ -56,7 +56,7 @@ class Reference:
         ]
 
     @staticmethod
-    def default(identifier, name) -> Reference:
+    def default(identifier: str, name: Optional[str] = None) -> Reference:
         """Return a reference from the PyOBO namespace."""
         return Reference(prefix='obo', identifier=identifier, name=name)
 
