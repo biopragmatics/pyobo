@@ -629,7 +629,10 @@ def iterate_graph_synonym_typedefs(graph: nx.MultiDiGraph) -> Iterable[SynonymTy
 def iterate_graph_typedefs(graph: nx.MultiDiGraph, default_prefix: str) -> Iterable[TypeDef]:
     """Get type definitions from an :mod:`obonet` graph."""
     for typedef in graph.graph.get('typedefs', []):
-        name = typedef['name']
+        name = typedef.get('name')
+        if name is None:
+            logger.warning('%s typedef %s is missing a name', graph.graph['ontology'], typedef['id'])
+            name = typedef['id']
 
         prefix, identifier = normalize_curie(typedef['id'])
         if prefix is None and identifier is None:
