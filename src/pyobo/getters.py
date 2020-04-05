@@ -40,11 +40,17 @@ def get_obo_graph(prefix: str, *, url: Optional[str] = None, local: bool = False
         obo = get_converted_obo(prefix)
         obo.write_default()
     if url is None:
-        return get_obo_graph_by_prefix(prefix)
+        rv = get_obo_graph_by_prefix(prefix)
     elif local:
-        return obonet.read_obo(url)
+        rv = obonet.read_obo(url)
     else:
-        return get_obo_graph_by_url(prefix, url)
+        rv = get_obo_graph_by_url(prefix, url)
+
+    if 'ontology' not in rv.graph:
+        logger.warning('missing "ontology" key. setting to %s', prefix)
+        rv.graph['ontology'] = prefix
+
+    return rv
 
 
 def get_obo_graph_by_url(prefix: str, url: str) -> nx.MultiDiGraph:
