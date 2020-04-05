@@ -6,7 +6,8 @@ import json
 import logging
 import os
 import tempfile
-from typing import Mapping, Optional
+from dataclasses import dataclass
+from typing import Any, Dict, List, Mapping, Optional, Union
 from urllib.request import urlretrieve
 
 import requests
@@ -82,7 +83,15 @@ def get_ols(cache_path: Optional[str] = OLS_CACHE_PATH, mappify: bool = False):
     return _ensure(OLS_URL, embedded_key='ontologies', cache_path=cache_path, mappify_key=mappify and 'ontologyId')
 
 
-def _ensure(url, embedded_key, cache_path: Optional[str] = None, mappify_key: Optional[str] = None):
+EnsureEntry = Any
+
+
+def _ensure(
+    url: str,
+    embedded_key: str,
+    cache_path: Optional[str] = None,
+    mappify_key: Optional[str] = None,
+) -> Union[List[EnsureEntry], Mapping[str, EnsureEntry]]:
     if cache_path is not None and os.path.exists(cache_path):
         with open(cache_path) as file:
             return json.load(file)
@@ -98,7 +107,7 @@ def _ensure(url, embedded_key, cache_path: Optional[str] = None, mappify_key: Op
     return rv
 
 
-def _download_paginated(start_url, embedded_key):
+def _download_paginated(start_url: str, embedded_key: str) -> List[EnsureEntry]:
     results = []
     url = start_url
     while True:
@@ -158,7 +167,17 @@ def get_namespace_synonyms() -> Mapping[str, str]:
     return synonym_to_key
 
 
-def get_metaregistry(try_new=False) -> Mapping[str, Mapping[str, str]]:
+@dataclass
+class Resource:
+    name: str
+    prefix: str
+    pattern: str
+    miriam_id: Optional[str] = None
+    obofoundry_id: Optional[str] = None
+    ols_id: Optional[str] = None
+
+
+def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
     """Get a combine registry."""
     x = get_curated_registry()
 
@@ -175,36 +194,40 @@ def get_metaregistry(try_new=False) -> Mapping[str, Mapping[str, str]]:
         for synonym in entry.get("synonyms", {}):
             synonym_to_prefix[synonym.lower()] = prefix
 
-    rv = {}
-    for namespace in get_miriam():
-        prefix = namespace['prefix']
+    rv: Dict[str, Resource] = {}
+    for entry in get_miriam():
+        prefix = entry['prefix']
         if prefix in obsolete_registry:
             continue
-        rv[prefix] = dict(
+        rv[prefix] = Resource(
+            name=entry['name'],
             prefix=prefix,
-            name=namespace['name'],
-            pattern=namespace['pattern'],
+            pattern=entry['pattern'],
+            miriam_id=entry['mirId'],
             # namespace_in_pattern=namespace['namespaceEmbeddedInLui'],
         )
 
-    for namespace in sorted(get_obofoundry(), key=lambda x: x['id'].lower()):
-        prefix = namespace['id'].lower()
-        is_obsolete = namespace.get('is_obsolete') or prefix in obsolete_registry
+    for entry in sorted(get_obofoundry(), key=lambda x: x['id'].lower()):
+        prefix = entry['id'].lower()
+        is_obsolete = entry.get('is_obsolete') or prefix in obsolete_registry
         already_found = prefix in rv
-
-        if is_obsolete or already_found:
-            if is_obsolete and already_found:
+        if already_found:
+            if is_obsolete:
                 del rv[prefix]
+            else:
+                rv[prefix].obofoundry_id = prefix
+            continue
+        elif is_obsolete:
             continue
 
-        title = namespace['title']
+        title = entry['title']
         prefix = synonym_to_prefix.get(prefix, prefix)
         curated_info = curated_registry.get(prefix)
         if curated_info and 'pattern' in curated_info:
             # namespace_in_pattern = curated_registry.get('namespace_in_pattern')
-            rv[prefix] = dict(
-                prefix=prefix,
+            rv[prefix] = Resource(
                 name=title,
+                prefix=prefix,
                 pattern=curated_info['pattern'],
                 # namespace_in_pattern=namespace_in_pattern,
             )
@@ -258,4 +281,4 @@ def _sample_graph(prefix):
 
 
 if __name__ == '__main__':
-    r = get_metaregistry()
+    _r = get_metaregistry()
