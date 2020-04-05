@@ -38,7 +38,7 @@ Base.query = session.query_property()
 
 
 class Resource(Base):
-    """A resource,"""
+    """A resource."""
 
     __tablename__ = 'resource'
     id = Column(Integer, primary_key=True)
@@ -60,10 +60,11 @@ class Reference(Base):
     name = Column(String)
 
     @property
-    def prefix(self) -> str:
+    def prefix(self) -> str:  # noqa:D401
+        """The prefix for the reference, from the resource."""
         return self.resource.prefix
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # noqa:D105
         if self.name:
             return f'{self.prefix}:{self.identifier} ! {self.name}'
         return f'{self.prefix}:{self.identifier}'
@@ -175,10 +176,6 @@ def load() -> None:
     logger.info(f'number synonyms loaded: {Synonym.query.count():,}')
 
 
-def main():
-    load()
-
-
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    main()
+    load()
