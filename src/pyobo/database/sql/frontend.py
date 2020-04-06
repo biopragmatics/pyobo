@@ -14,7 +14,7 @@ __all__ = [
 ]
 
 app = Flask(__name__)
-admin = Admin(app, template_mode='bootstrap3')
+admin = Admin(app, template_mode='bootstrap3', url='/')
 
 
 class View(ModelView):
