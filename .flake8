@@ -11,8 +11,10 @@ ignore =
     W503
     # XML stuff
     S405
-    # XML stuff
     S314
+    # Pickle stuff
+    S301
+    S403
 exclude =
     .tox,
     .git,
