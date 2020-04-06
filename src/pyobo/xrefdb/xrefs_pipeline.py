@@ -26,6 +26,7 @@ COLUMNS = ['source_ns', 'source_id', 'target_ns', 'target_id', 'source']
 def get_xref_df() -> pd.DataFrame:
     """Get the ultimate xref databse."""
     df = pd.concat(_iterate_xref_dfs())
+    df.dropna(inplace=True)
     df.sort_values(COLUMNS, inplace=True)
     return df
 
