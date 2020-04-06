@@ -116,5 +116,5 @@ class TestGet(unittest.TestCase):
     def test_get_obo(self):
         """Test getting an OBO document."""
         obo = get('chebi', url=TEST_CHEBI_OBO_PATH, local=True)
-        terms = list(obo.iter_terms())
+        terms = list(obo)
         self.assertEqual(18, len(terms))
