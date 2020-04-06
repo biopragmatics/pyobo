@@ -26,7 +26,7 @@ __all__ = [
 
 def get_id_name_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
-    path = prefix_directory_join(prefix, 'cache', f"{prefix}.mapping.tsv")
+    path = prefix_directory_join(prefix, 'cache', "names.tsv")
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'])
     def _get_id_name_mapping() -> Mapping[str, str]:
@@ -114,7 +114,7 @@ def get_filtered_xrefs(prefix: str, xref_prefix: str, **kwargs) -> Mapping[str, 
 
 def get_xrefs_df(prefix: str, **kwargs) -> pd.DataFrame:
     """Get all xrefs."""
-    path = prefix_directory_join(prefix, 'cache', "mappings.tsv")
+    path = prefix_directory_join(prefix, 'cache', 'xrefs.tsv')
 
     @cached_df(path=path, dtype=str)
     def _df_getter() -> pd.DataFrame:
