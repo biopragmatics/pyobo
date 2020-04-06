@@ -19,6 +19,7 @@ from .struct import Obo
 
 __all__ = [
     'get',
+    'MissingOboBuild',
 ]
 
 logger = logging.getLogger(__name__)
