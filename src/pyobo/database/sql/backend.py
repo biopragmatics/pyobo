@@ -5,14 +5,20 @@
 from __future__ import annotations
 
 import logging
+import os
 
 from sqlalchemy import Column, ForeignKey, Integer, String, Table, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import backref, relationship, scoped_session, sessionmaker
 
+from ...constants import PYOBO_HOME
+
 logger = logging.getLogger(__name__)
 
-engine = create_engine('sqlite:////Users/cthoyt/Desktop/obo.db')
+uri_default = os.path.abspath(os.path.join(PYOBO_HOME, 'pyobo.db'))
+uri = os.environ.get('PYOBO_DB_URI', f'sqlite///{uri_default}')
+
+engine = create_engine(uri)
 
 #: A SQLAlchemy session maker
 session_maker = sessionmaker(bind=engine)

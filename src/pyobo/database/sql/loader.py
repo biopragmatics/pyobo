@@ -6,10 +6,10 @@ import logging
 import time
 from typing import Dict, Optional, Set, Tuple
 
-from pyobo import registries
-from pyobo.database.sql.backend import Reference, Resource, Synonym, Term, create_all, drop_all, session
-from pyobo.extract import get_id_name_mapping, get_id_synonyms_mapping
-from pyobo.xrefdb.xrefs_pipeline import get_xref_df
+from .backend import Reference, Resource, Synonym, Term, create_all, drop_all, session
+from ... import registries
+from ...extract import get_id_name_mapping, get_id_synonyms_mapping
+from ...xrefdb.xrefs_pipeline import get_xref_df
 
 __all__ = [
     'load',

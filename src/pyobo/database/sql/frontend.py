@@ -6,7 +6,7 @@ from flask import Flask
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 
-from pyobo.database.sql.backend import Reference, Resource, Term, session
+from .backend import Reference, Resource, Term, session
 
 __all__ = [
     'app',

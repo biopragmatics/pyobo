@@ -18,6 +18,7 @@ OUTPUT_DIRECTORY = (
     or os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, 'obo'))
 )
 
+# TODO move to metaregistry
 #: A curated list of prefixes to URLs for OBO files that aren't properly listed in OBO Foundry
 CURATED_URLS = {
     'mp': 'http://purl.obolibrary.org/obo/mp.obo',
