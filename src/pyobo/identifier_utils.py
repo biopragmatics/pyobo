@@ -5,6 +5,7 @@
 __all__ = [
     'normalize_curie',
     'normalize_prefix',
+    'normalize_dashes',
 ]
 
 from collections import defaultdict
@@ -87,3 +88,20 @@ def normalize_curie(node: str) -> Union[Tuple[str, str], Tuple[None, None]]:
     if not norm_node_prefix:
         return None, None
     return norm_node_prefix, identifier
+
+
+# See: https://en.wikipedia.org/wiki/Dash
+FIGURE_DASH = b'\xe2\x80\x92'.decode('utf-8')
+EN_DASH = b'\xe2\x80\x93'.decode('utf-8')
+EM_DASH = b'\xe2\x80\x94'.decode('utf-8')
+HORIZONAL_BAR = b'\xe2\x80\x95'.decode('utf-8')
+NORMAL_DASH = '-'
+
+
+def normalize_dashes(s: str) -> str:
+    """Normalize dashes in a string."""
+    return s. \
+        replace(FIGURE_DASH, NORMAL_DASH). \
+        replace(EN_DASH, NORMAL_DASH). \
+        replace(EM_DASH, NORMAL_DASH). \
+        replace(HORIZONAL_BAR, NORMAL_DASH)

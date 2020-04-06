@@ -6,7 +6,7 @@ import gzip
 import logging
 import time
 from collections import defaultdict
-from typing import Iterable, List, Mapping, Tuple, TypeVar
+from typing import Iterable, List, Mapping, Set, Tuple, TypeVar
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
@@ -15,6 +15,7 @@ __all__ = [
     'open_map_tsv',
     'open_multimap_tsv',
     'multidict',
+    'multisetdict',
     'write_map_tsv',
     'write_multimap_tsv',
     'write_iterable_tsv',
@@ -56,6 +57,14 @@ def multidict(pairs: Iterable[Tuple[X, Y]]) -> Mapping[X, List[Y]]:
     rv = defaultdict(list)
     for key, value in pairs:
         rv[key].append(value)
+    return dict(rv)
+
+
+def multisetdict(pairs: Iterable[Tuple[X, Y]]) -> Mapping[X, Set[Y]]:
+    """Accumulate a multisetdict from a list of pairs."""
+    rv = defaultdict(set)
+    for key, value in pairs:
+        rv[key].add(value)
     return dict(rv)
 
 
