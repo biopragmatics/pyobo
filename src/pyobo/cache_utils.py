@@ -71,6 +71,18 @@ def cached_json(path: str) -> Callable[[JSONGetter], JSONGetter]:  # noqa: D202
     return wrapped
 
 
+def get_gzipped_graph(path) -> nx.MultiDiGraph:
+    """Read a graph that's gzipped nodelink."""
+    with gzip.open(path, 'rt') as file:
+        return nx.node_link_graph(json.load(file))
+
+
+def write_gzipped_graph(graph: nx.MultiDiGraph, path: str) -> None:
+    """Write a graph as gzipped nodelink."""
+    with gzip.open(path, 'wt') as file:
+        json.dump(nx.node_link_data(graph), file)
+
+
 def cached_graph(path: str) -> Callable[[GraphGetter], GraphGetter]:  # noqa: D202
     """Create a decorator to apply to a graph getter."""
 
@@ -81,11 +93,9 @@ def cached_graph(path: str) -> Callable[[GraphGetter], GraphGetter]:  # noqa: D2
         def _wrapped() -> nx.MultiDiGraph:
             if os.path.exists(path):
                 logger.debug('loading pre-compiled graph from: %s', path)
-                with gzip.open(path, 'rt') as file:
-                    return nx.node_link_graph(json.load(file))
+                return get_gzipped_graph(path)
             graph = f()
-            with gzip.open(path, 'wt') as file:
-                json.dump(nx.node_link_data(graph), file)
+            write_gzipped_graph(graph, path)
             return graph
 
         return _wrapped

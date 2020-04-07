@@ -64,7 +64,9 @@ def get_properties_df(prefix: str, **kwargs) -> pd.DataFrame:
     @cached_df(path=path, dtype=str)
     def _df_getter() -> pd.DataFrame:
         obo = get(prefix, **kwargs)
-        return obo.get_properties_df()
+        df = obo.get_properties_df()
+        df.dropna(inplace=True)
+        return df
 
     return _df_getter()
 

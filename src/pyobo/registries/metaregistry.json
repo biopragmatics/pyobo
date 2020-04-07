@@ -39,6 +39,7 @@
   },
   "database": {
     "aeo": {
+      "download": "https://raw.githubusercontent.com/obophenotype/human-developmental-anatomy-ontology/master/src/ontology/aeo.obo",
       "pattern": "\\d{7}"
     },
     "agro": {
@@ -80,6 +81,7 @@
       "synonyms": []
     },
     "bspo": {
+      "download": "https://raw.githubusercontent.com/obophenotype/biological-spatial-ontology/master/bspo.obo",
       "pattern": "\\d{7}"
     },
     "bto": {
@@ -92,6 +94,7 @@
       "synonyms": []
     },
     "ceph": {
+      "download": "https://raw.githubusercontent.com/obophenotype/cephalopod-ontology/master/ceph.obo",
       "pattern": "\\d{7}"
     },
     "cgnc": {
@@ -127,6 +130,7 @@
       ]
     },
     "chiro": {
+      "download": "http://purl.obolibrary.org/obo/chiro.obo",
       "no_own_terms": true
     },
     "chmo": {
@@ -139,6 +143,7 @@
       "synonyms": []
     },
     "cl": {
+      "download": "https://raw.githubusercontent.com/obophenotype/cell-ontology/master/cl-full.obo",
       "synonyms": []
     },
     "clo": {
@@ -156,6 +161,7 @@
       ]
     },
     "cro": {
+      "download": "https://raw.githubusercontent.com/data2health/contributor-role-ontology/master/cro.obo",
       "pattern": "\\d{7}"
     },
     "csp": {
@@ -166,12 +172,14 @@
       ]
     },
     "cteno": {
+      "download": "https://raw.githubusercontent.com/obophenotype/ctenophore-ontology/master/cteno.obo",
       "pattern": "\\d{7}"
     },
     "ddanat": {
       "pattern": "\\d{7}"
     },
     "ddpheno": {
+      "download": "https://raw.githubusercontent.com/obophenotype/dicty-phenotype-ontology/master/ddpheno.obo",
       "pattern": "\\d{7}"
     },
     "dictybase": {
@@ -304,6 +312,7 @@
       "pattern": "\\d{8}"
     },
     "geno": {
+      "download": "https://raw.githubusercontent.com/monarch-initiative/GENO-ontology/develop/geno-full.obo",
       "pattern": "\\d{7}"
     },
     "gno": {
@@ -324,6 +333,7 @@
       ]
     },
     "hp": {
+      "download": "http://purl.obolibrary.org/obo/hp.obo",
       "miriam": {
         "id": "00000571",
         "prefix": "hp"
@@ -369,6 +379,7 @@
       ]
     },
     "idomal": {
+      "download": "http://purl.obolibrary.org/obo/idomal.obo",
       "pattern": "\\d{7}"
     },
     "iev": {
@@ -472,6 +483,7 @@
       ]
     },
     "miro": {
+      "download": "http://purl.obolibrary.org/obo/miro.obo",
       "pattern": "\\d{8}"
     },
     "mirte": {
@@ -497,6 +509,7 @@
       "pattern": "\\d{7}"
     },
     "mpath": {
+      "download": "https://raw.githubusercontent.com/PaulNSchofield/mpath/master/mpath.obo",
       "pattern": "\\d+",
       "synonyms": [
         "MPATH"
@@ -509,6 +522,20 @@
       "synonyms": [
         "entrez",
         "NCBIGene"
+      ]
+    },
+    "ncbitaxon": {
+      "download": "http://purl.obolibrary.org/obo/ncbitaxon.obo",
+      "miriam": {
+        "id": "00000006",
+        "prefix": "taxonomy"
+      },
+      "pattern": "\\d+",
+      "synonyms": [
+        "NCBITaxon",
+        "taxid",
+        "NCBI_Taxon_ID",
+        "NCBI_taxid"
       ]
     },
     "ncit": {
@@ -730,25 +757,14 @@
       ]
     },
     "tads": {
+      "download": "http://purl.obolibrary.org/obo/tads.obo",
       "pattern": "\\d{7}"
-    },
-    "taxonomy": {
-      "miriam": {
-        "id": "00000006",
-        "prefix": "taxonomy"
-      },
-      "pattern": "\\d+",
-      "synonyms": [
-        "NCBITaxon",
-        "taxid",
-        "NCBI_Taxon_ID",
-        "NCBI_taxid"
-      ]
     },
     "taxrank": {
       "pattern": "\\d{7}"
     },
     "tgma": {
+      "download": "http://purl.obolibrary.org/obo/tgma.obo",
       "pattern": "\\d{7}"
     },
     "to": {
@@ -761,6 +777,7 @@
       "pattern": "\\d+"
     },
     "uberon": {
+      "download": "http://purl.obolibrary.org/obo/uberon/basic.obo",
       "synonyms": [
         "UBERON",
         "Uberon",
@@ -917,19 +934,19 @@
       "SNOMEDCT274897005": "SNOMEDCT:274897005"
     },
     "prefix": {
-      "ATCC number: ": "ATCC:",
-      "ATTC: ": "ATCC:",
-      "BAO_": "BAO:",
+      "ATCC number: ": "ATCC",
+      "ATTC: ": "ATCC",
+      "BAO_": "BAO",
       "KEGG COMPOUND": "KEGG.COMPOUND",
       "KEGG DRUG": "KEGG.DRUG",
       "LIPID MAPS:": "LIPIDMAPS",
-      "MedlinePlus: ": "MedlinePlus:",
+      "MedlinePlus: ": "MedlinePlus",
       "NIST Chemistry WebBook": "NIST",
-      "PMID: ": "PMID:",
+      "PMID: ": "PMID",
       "SNOMEDCT: ": "SNOMEDCT",
-      "UMLS CUI:": "UMLS:",
-      "URL: ": "URL:",
-      "VFB:FBbt_": "FBbt:",
+      "UMLS CUI:": "UMLS",
+      "URL: ": "URL",
+      "VFB:FBbt_": "FBbt",
       "chembl target:CHEMBL": "CHEMBL:CHEMBL",
       "protein ontology:PR\\:": "PR:PR:"
     }

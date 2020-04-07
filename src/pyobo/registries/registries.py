@@ -20,6 +20,12 @@ __all__ = [
     'get_curated_registry',
     'get_namespace_synonyms',
     'get_metaregistry',
+    'REMAPPINGS_PREFIX',
+    'XREF_BLACKLIST',
+    'XREF_PREFIX_BLACKLIST',
+    'XREF_SUFFIX_BLACKLIST',
+    'CURATED_REGISTRY',
+    'CURATED_URLS',
 ]
 
 logger = logging.getLogger(__name__)
@@ -132,6 +138,32 @@ def get_curated_registry():
     return x
 
 
+CURATED_REGISTRY = get_curated_registry()
+
+CURATED_REGISTRY_DATABASE = CURATED_REGISTRY['database']
+
+#: URLs of resources that weren't listed in OBO Foundry properly
+CURATED_URLS = {
+    k: v['download']
+    for k, v in CURATED_REGISTRY_DATABASE.items()
+    if 'download' in v
+}
+
+#: Xrefs starting with these prefixes will be ignored
+XREF_PREFIX_BLACKLIST = set(CURATED_REGISTRY['blacklists']['prefix'])
+#: Xrefs ending with these suffixes will be ignored
+XREF_SUFFIX_BLACKLIST = set(CURATED_REGISTRY['blacklists']['suffix'])
+#: Xrefs matching these will be ignored
+XREF_BLACKLIST = set(CURATED_REGISTRY['blacklists']['full'])
+
+OBSOLETE = CURATED_REGISTRY['obsolete']
+
+#: Remappings for xrefs based on the entire xre
+REMAPPINGS_FULL = CURATED_REGISTRY['remappings']['full']
+#: Remappings for xrefs based on the prefix. Doesn't take into account the semicolon :
+REMAPPINGS_PREFIX = CURATED_REGISTRY['remappings']['prefix']
+
+
 def get_namespace_synonyms() -> Mapping[str, str]:
     """Return a mapping from several variants of each synonym to the canonical namespace."""
     synonym_to_key = {}
@@ -158,8 +190,7 @@ def get_namespace_synonyms() -> Mapping[str, str]:
         _add_variety(entry['config']['title'], ontology_id)
         _add_variety(entry['config']['namespace'], ontology_id)
 
-    metaregistry = get_curated_registry()
-    for key, values in metaregistry['database'].items():
+    for key, values in CURATED_REGISTRY_DATABASE.items():
         _add_variety(key, key)
         for synonym in values.get('synonyms', []):
             _add_variety(synonym, key)
@@ -179,13 +210,9 @@ class Resource:
 
 def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
     """Get a combine registry."""
-    x = get_curated_registry()
-
-    obsolete_registry = x['obsolete']
-    curated_registry = x['database']
     synonym_to_prefix = {}
-    for prefix, entry in curated_registry.items():
-        if prefix in obsolete_registry:
+    for prefix, entry in CURATED_REGISTRY_DATABASE.items():
+        if prefix in OBSOLETE:
             continue
         synonym_to_prefix[prefix.lower()] = prefix
 
@@ -197,7 +224,7 @@ def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
     rv: Dict[str, Resource] = {}
     for entry in get_miriam():
         prefix = entry['prefix']
-        if prefix in obsolete_registry:
+        if prefix in OBSOLETE:
             continue
         rv[prefix] = Resource(
             name=entry['name'],
@@ -209,7 +236,7 @@ def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
 
     for entry in sorted(get_obofoundry(), key=lambda x: x['id'].lower()):
         prefix = entry['id'].lower()
-        is_obsolete = entry.get('is_obsolete') or prefix in obsolete_registry
+        is_obsolete = entry.get('is_obsolete') or prefix in OBSOLETE
         already_found = prefix in rv
         if already_found:
             if is_obsolete:
@@ -222,7 +249,7 @@ def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
 
         title = entry['title']
         prefix = synonym_to_prefix.get(prefix, prefix)
-        curated_info = curated_registry.get(prefix)
+        curated_info = CURATED_REGISTRY_DATABASE.get(prefix)
         if curated_info and 'pattern' in curated_info:
             # namespace_in_pattern = curated_registry.get('namespace_in_pattern')
             rv[prefix] = Resource(

@@ -72,7 +72,7 @@ def ensure_path(
         path = prefix_directory_join(prefix, path)
 
     if not os.path.exists(path):
-        logger.info('downloading %s OBO from %s', prefix, url)
+        logger.info('[%s] downloading OBO from %s', prefix, url)
         urlretrieve(url, path)
 
     return path

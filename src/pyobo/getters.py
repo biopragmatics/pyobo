@@ -7,13 +7,11 @@ import os
 from typing import Optional
 from urllib.request import urlretrieve
 
-import networkx as nx
 import obonet
+from tqdm import tqdm
 
-from .cache_utils import cached_graph
-from .constants import CURATED_URLS
 from .path_utils import ensure_path, get_prefix_obo_path
-from .registries import get_obofoundry
+from .registries import CURATED_URLS, get_obofoundry
 from .sources import CONVERTED, get_converted_obo
 from .struct import Obo
 
@@ -30,55 +28,61 @@ class MissingOboBuild(RuntimeError):
 
 
 def get(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
-    """Get the OBO for a given graph."""
-    graph = get_obo_graph(prefix=prefix, url=url, local=local)
+    """Get the OBO for a given graph.
+
+    :param prefix: The prefix of the ontology to look up
+    :param url: A URL to give if the OBOfoundry can not be used to look up the given prefix
+    :param local: A local file path is given. Do not cache.
+    """
+    path = f'{get_prefix_obo_path(prefix)}.obonet.json.gz'
+    if os.path.exists(path) and not local:
+        return Obo.from_obonet_gz(path)
+
+    if prefix in CONVERTED:  # these graphs are converted in :mod:`pyobo.sources`
+        obo = get_converted_obo(prefix)
+        logger.info('[%s] caching OBO at %s', prefix, path)
+        obo.write_default()
+    else:
+        obo = _get_obo_via_obonet(prefix=prefix, url=url, local=local)
+
+    if not local:
+        logger.info('[%s] caching pre-compiled OBO at %s', prefix, path)
+        obo.write_obonet_gz(path)
+
+    return obo
+
+
+def _get_obo_via_obonet(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
+    """Get the OBO file by prefix or URL."""
+    if url is None:
+        path = _ensure_obo_path(prefix)
+    elif local:
+        path = url
+    else:
+        path = get_prefix_obo_path(prefix)
+        if not os.path.exists(path):
+            logger.info('[%s] downloading OBO from %s to %s', prefix, url, path)
+            urlretrieve(url, path)
+
+    logger.info('[%s] parsing with obonet from %s', prefix, path)
+    with open(path) as file:
+        graph = obonet.read_obo(tqdm(file, unit_scale=True, desc=f'[{prefix}] parsing obo'))
+    if 'ontology' not in graph.graph:
+        logger.warning('[%s] missing "ontology" key', prefix)
+        graph.graph['ontology'] = prefix
     return Obo.from_obonet(graph)
 
 
-def get_obo_graph(prefix: str, *, url: Optional[str] = None, local: bool = False) -> nx.MultiDiGraph:
-    """Get the OBO file by prefix or URL."""
-    if prefix in CONVERTED:
-        obo = get_converted_obo(prefix)
-        obo.write_default()
-    if url is None:
-        rv = get_obo_graph_by_prefix(prefix)
-    elif local:
-        rv = obonet.read_obo(url)
-    else:
-        rv = get_obo_graph_by_url(prefix, url)
-
-    if 'ontology' not in rv.graph:
-        logger.warning('missing "ontology" key. setting to %s', prefix)
-        rv.graph['ontology'] = prefix
-
-    return rv
-
-
-def get_obo_graph_by_url(prefix: str, url: str) -> nx.MultiDiGraph:
-    """Get the OBO file as a graph using the given URL and cache if not already."""
-    path = get_prefix_obo_path(prefix)
-    if not os.path.exists(path):
-        logger.info('downloading %s OBO from %s', prefix, url)
-        urlretrieve(url, path)
-    return ensure_obo_graph(path)
-
-
-def get_obo_graph_by_prefix(prefix: str) -> nx.MultiDiGraph:
-    """Get the OBO file as a graph using the OBOFoundry registry URL and cache if not already."""
-    path = ensure_obo_path(prefix)
-    return ensure_obo_graph(path=path)
-
-
-def ensure_obo_path(prefix: str) -> str:
+def _ensure_obo_path(prefix: str) -> str:
     """Get the path to the OBO file and download if missing."""
     if prefix in CURATED_URLS:
         curated_url = CURATED_URLS[prefix]
-        logger.debug(f'loading {prefix} OBO from curated URL: {curated_url}')
+        logger.debug('[%s] checking for OBO at curated URL: %s', prefix, curated_url)
         return ensure_path(prefix, url=curated_url)
 
     path = get_prefix_obo_path(prefix)
     if os.path.exists(path):
-        logger.debug(f'{prefix} OBO already exists at {path}')
+        logger.debug('[%s] OBO already exists at %s', prefix, path)
         return path
 
     obofoundry = get_obofoundry(mappify=True)
@@ -95,14 +99,3 @@ def ensure_obo_path(prefix: str) -> str:
         raise MissingOboBuild(f'OBO Foundry build is missing a URL for: {prefix}, {build}')
 
     return ensure_path(prefix, url)
-
-
-def ensure_obo_graph(path: str) -> nx.MultiDiGraph:
-    """Get an OBO graph from a given path."""
-    cache_path = f'{path}.json.gz'
-
-    @cached_graph(path=cache_path)
-    def _read_obo() -> nx.MultiDiGraph:
-        return obonet.read_obo(path)
-
-    return _read_obo()

@@ -11,7 +11,9 @@ __all__ = [
 from collections import defaultdict
 from typing import Optional, Tuple, Union
 
-from .registries import get_curated_registry, get_namespace_synonyms
+from .registries import (
+    REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST, XREF_SUFFIX_BLACKLIST, get_namespace_synonyms,
+)
 
 
 def alternate_strip_prefix(s, prefix):
@@ -41,18 +43,6 @@ def normalize_prefix(prefix: str, *, curie=None, xref=None) -> Optional[str]:
         UNHANDLED_NAMESPACES[prefix].append((curie, xref))
 
 
-METAREGISTRY = get_curated_registry()
-
-#: Xrefs starting with these prefixes will be ignored
-XREF_PREFIX_BLACKLIST = set(METAREGISTRY['blacklists']['prefix'])
-XREF_SUFFIX_BLACKLIST = set(METAREGISTRY['blacklists']['suffix'])
-#: Xrefs matching these will be ignored
-XREF_BLACKLIST = set(METAREGISTRY['blacklists']['full'])
-
-PREFIX_REMAP = METAREGISTRY['remappings']['prefix']
-
-ALLOWED_UNNORM = set(METAREGISTRY['database'])
-
 COLUMNS = ['source_ns', 'source_id', 'target_ns', 'target_id']
 
 
@@ -73,10 +63,9 @@ def normalize_curie(node: str) -> Union[Tuple[str, str], Tuple[None, None]]:
         if node.endswith(suffix):
             return None, None
     # Remap node's prefix (if necessary)
-    for old_prefix, new_prefix in PREFIX_REMAP.items():
-        old_prefix_colon = f'{old_prefix}:'
-        if node.startswith(old_prefix_colon):
-            node = new_prefix + ':' + node[len(old_prefix_colon):]
+    for old_prefix, new_prefix in REMAPPINGS_PREFIX.items():
+        if node.startswith(old_prefix):
+            node = new_prefix + ':' + node[len(old_prefix):]
 
     try:
         head_ns, identifier = node.split(':', 1)

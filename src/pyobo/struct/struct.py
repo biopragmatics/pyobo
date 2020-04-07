@@ -21,9 +21,11 @@ from networkx.utils import open_file
 from .reference import Reference, Referenced
 from .typedef import TypeDef, default_typedefs, from_species, is_a
 from .utils import comma_separate
-from ..identifier_utils import PREFIX_REMAP, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST, normalize_curie, normalize_prefix
+from ..cache_utils import get_gzipped_graph
+from ..identifier_utils import normalize_curie, normalize_prefix
 from ..io_utils import multidict
 from ..path_utils import get_prefix_obo_path
+from ..registries.registries import REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST
 
 __all__ = [
     'Synonym',
@@ -247,7 +249,7 @@ class Obo:
     @property
     def date_formatted(self) -> str:
         """Get the date as a formatted string."""
-        return self.date.strftime(DATE_FORMAT)
+        return (self.date if self.date else datetime.now()).strftime(DATE_FORMAT)
 
     def iterate_obo_lines(self) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
@@ -282,6 +284,11 @@ class Obo:
         graph = self.to_obonet()
         with gzip.open(path, 'wt') as file:
             json.dump(nx.node_link_data(graph), file)
+
+    @classmethod
+    def from_obonet_gz(cls, path: str) -> Obo:
+        """Read OBO from a pre-compiled Obonet JSON."""
+        return cls.from_obonet(get_gzipped_graph(path))
 
     def write_default(self) -> None:
         """Write the OBO to the default path."""
@@ -367,18 +374,25 @@ class Obo:
                     synonym._fp()
                     for synonym in term.synonyms
                 ],
+                'property_value': [
+                    f'{prop} {value}'
+                    for prop, values in term.properties.items()
+                    for value in values
+                ],
             }
 
+        rv.add_nodes_from(nodes.items())
         for source, key, target in links:
             rv.add_edge(source, target, key=key)
 
+        logger.info('[%s] exported graph with %d nodes', self.ontology, rv.number_of_nodes())
         return rv
 
     @staticmethod
     def from_obonet(graph: nx.MultiDiGraph):
         """Get all of the terms from a OBO graph."""
-        ontology = graph.graph['ontology'].lower()  # probably always okay
-        logger.info('parsing OBO from %s', ontology)
+        ontology = normalize_prefix(graph.graph['ontology'])  # probably always okay
+        logger.info('[%s] extracting OBO using obonet', ontology)
 
         #: Parsed CURIEs to references (even external ones)
         references: Mapping[Tuple[str, str], Reference] = {
@@ -389,57 +403,59 @@ class Obo:
             )
             for prefix, identifier, data in _iter_obo_graph(graph=graph)
         }
-        logger.info('extracted %d references from %s', len(references), ontology)
+        logger.info('[%s] extracted %d references', ontology, len(references))
 
         #: CURIEs to typedefs
         typedefs: Mapping[Tuple[str, str], TypeDef] = {
             (typedef.prefix, typedef.identifier): typedef
             for typedef in iterate_graph_typedefs(graph, ontology)
         }
-        logger.info('extracted %d typedefs from %s', len(typedefs), ontology)
+        logger.info('[%s] extracted %d typedefs', ontology, len(typedefs))
 
         synonym_typedefs: Mapping[str, SynonymTypeDef] = {
             synonym_typedef.id: synonym_typedef
             for synonym_typedef in iterate_graph_synonym_typedefs(graph)
         }
-        logger.info('extracted %d synonym typedefs from %s', len(synonym_typedefs), ontology)
+        logger.info('[%s] extracted %d synonym typedefs', ontology, len(synonym_typedefs))
 
-        def _iter_terms() -> Iterable[Term]:
-            for prefix, identifier, data in _iter_obo_graph(graph=graph):
-                if prefix != ontology or not data:
+        terms = []
+        for prefix, identifier, data in _iter_obo_graph(graph=graph):
+            if prefix != ontology or not data:
+                continue
+
+            xrefs, provenance = [], []
+            for reference in iterate_node_xrefs(data):
+                if reference.prefix == 'pubmed':
+                    provenance.append(reference)
+                else:
+                    xrefs.append(reference)
+
+            reference = references[ontology, identifier]
+
+            definition = data.get('def')  # it's allowed not to have a definition
+
+            term = Term(
+                reference=reference,
+                definition=definition,
+                parents=list(iterate_node_parents(data)),
+                synonyms=list(iterate_node_synonyms(data)),
+                xrefs=xrefs,
+                provenance=provenance,
+            )
+            for relation, reference in iterate_node_relationships(data, default_prefix=ontology):
+                if (relation.prefix, relation.identifier) in typedefs:
+                    typedef = typedefs[relation.prefix, relation.identifier]
+                elif (relation.prefix, relation.identifier) in default_typedefs:
+                    typedef = default_typedefs[relation.prefix, relation.identifier]
+                else:
+                    logger.warning(f'{ontology} has no typedef for {relation}')
                     continue
+                term.append_relationship(typedef, reference)
+            for prop, value in iterate_node_properties(data):
+                term.append_property(prop, value)
+            terms.append(term)
 
-                xrefs, provenance = [], []
-                for reference in iterate_node_xrefs(data):
-                    if reference.prefix == 'pubmed':
-                        provenance.append(reference)
-                    else:
-                        xrefs.append(reference)
-
-                reference = references[ontology, identifier]
-
-                definition = data.get('def')  # it's allowed not to have a definition
-
-                term = Term(
-                    reference=reference,
-                    definition=definition,
-                    parents=list(iterate_node_parents(data)),
-                    synonyms=list(iterate_node_synonyms(data)),
-                    xrefs=xrefs,
-                    provenance=provenance,
-                )
-                for relation, reference in iterate_node_relationships(data, default_prefix=ontology):
-                    if (relation.prefix, relation.identifier) in typedefs:
-                        typedef = typedefs[relation.prefix, relation.identifier]
-                    elif (relation.prefix, relation.identifier) in default_typedefs:
-                        typedef = default_typedefs[relation.prefix, relation.identifier]
-                    else:
-                        logger.warning(f'{ontology} has no typedef for {relation}')
-                        continue
-                    term.append_relationship(typedef, reference)
-                for prop, value in iterate_node_properties(data):
-                    term.append_property(prop, value)
-                yield term
+        logger.info('[%s] extracted %d terms', ontology, len(terms))
 
         try:
             date = datetime.strptime(graph.graph['date'], DATE_FORMAT)
@@ -454,7 +470,7 @@ class Obo:
             date=date,
             typedefs=list(typedefs.values()),
             synonym_typedefs=list(synonym_typedefs.values()),
-            iter_terms=_iter_terms,
+            iter_terms=lambda: iter(terms),
         )
 
     def get_id_name_mapping(self) -> Mapping[str, str]:
@@ -745,7 +761,7 @@ def iterate_node_xrefs(data: Mapping[str, Any]) -> Iterable[Reference]:
         ):
             continue  # sometimes xref to self... weird
 
-        for blacklisted_prefix, new_prefix in PREFIX_REMAP.items():
+        for blacklisted_prefix, new_prefix in REMAPPINGS_PREFIX.items():
             if xref.startswith(blacklisted_prefix):
                 xref = new_prefix + xref[len(blacklisted_prefix):]
 
