@@ -3,12 +3,12 @@
 """Converter for PubChem Compound."""
 
 import logging
-from typing import Iterable
+from typing import Iterable, Mapping
 
 from tqdm import tqdm
 
 from ..iter_utils import iterate_gzips_together
-from ..path_utils import ensure_path
+from ..path_utils import ensure_df, ensure_path
 from ..struct import Obo, Reference, Synonym, Term
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,8 @@ BASE_URL = f'ftp://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Monthly/{VERSION}/Extra
 CID_NAME_URL = f'{BASE_URL}/CID-Title.gz'
 # 2 tab-separated columns: compound_id, synonym
 CID_SYNONYMS_URL = f'{BASE_URL}/CID-Synonym-filtered.gz'
-
+# TODO
+CID_TO_SMILES_URL = f'{BASE_URL}/CID-SMILES.gz'
 # TODO
 CID_PMID_URL = f'{BASE_URL}/CID-PMID.gz'
 
@@ -38,10 +39,30 @@ def get_obo() -> Obo:
     return obo
 
 
+def get_pubchem_id_smiles_mapping() -> Mapping[str, str]:
+    """Get a mapping from PubChem compound identifiers to SMILES strings."""
+    df = ensure_df(PREFIX, CID_TO_SMILES_URL, version=VERSION, dtype=str)
+    return dict(df.values)
+
+
+def get_pubchem_smiles_id_mapping() -> Mapping[str, str]:
+    """Get a mapping from SMILES strings to PubChem compound identifiers."""
+    df = ensure_df(PREFIX, CID_TO_SMILES_URL, version=VERSION, dtype=str)
+    return {v: k for k, v in df.values}
+
+
+def get_pubchem_id_to_name() -> Mapping[str, str]:
+    """Get a mapping from PubChem compound identifiers to their titles."""
+    df = ensure_df(PREFIX, CID_NAME_URL, version=VERSION, dtype=str)
+    return dict(df.values)
+
+
 def get_terms(use_tqdm: bool = True) -> Iterable[Term]:
     """Get PubChem Compound terms."""
     cid_name_path = ensure_path(PREFIX, CID_NAME_URL, version=VERSION)
     cid_synonyms_path = ensure_path(PREFIX, CID_SYNONYMS_URL, version=VERSION)
+    cid_smiles_path = ensure_path(PREFIX, CID_TO_SMILES_URL, version=VERSION)
+    logger.debug('smiles at %s', cid_smiles_path)
 
     it = iterate_gzips_together(cid_name_path, cid_synonyms_path)
 
