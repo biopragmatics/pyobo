@@ -12,14 +12,14 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, TextIO, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Set, TextIO, Tuple, Union
 
 import networkx as nx
 import pandas as pd
 from networkx.utils import open_file
 
 from .reference import Reference, Referenced
-from .typedef import TypeDef, default_typedefs, from_species, is_a
+from .typedef import TypeDef, default_typedefs, from_species, get_reference_tuple, is_a
 from .utils import comma_separate
 from ..cache_utils import get_gzipped_graph
 from ..identifier_utils import normalize_curie, normalize_prefix
@@ -551,6 +551,16 @@ class Obo:
                 for reference in references:
                     yield term, typedef, reference
 
+    def iterate_filtered_relations(
+        self,
+        relation: Union[Reference, TypeDef, Tuple[str, str]],
+    ) -> Iterable[Tuple[Term, Reference]]:
+        """Iterate over tuples of terms and ther targets for the given relation."""
+        _target_prefix, _target_identifier = get_reference_tuple(relation)
+        for term, typedef, reference in self.iterate_relations():
+            if typedef.prefix == _target_prefix and typedef.identifier == _target_identifier:
+                yield term, reference
+
     def get_relations_df(self) -> pd.DataFrame:
         """Get all relations from the OBO."""
         return pd.DataFrame(
@@ -559,6 +569,16 @@ class Obo:
                 for term, typedef, reference in self.iterate_relations()
             ],
             columns=[f'{self.ontology}_id', 'relation_ns', 'relation_id', 'target_ns', 'target_id'],
+        )
+
+    def get_filtered_relations_df(self, relation: Union[Reference, TypeDef, Tuple[str, str]]) -> pd.DataFrame:
+        """Get a specific relation from OBO."""
+        return pd.DataFrame(
+            [
+                (term.identifier, reference.prefix, reference.identifier)
+                for term, reference in self.iterate_filtered_relations(relation)
+            ],
+            columns=[f'{self.ontology}_id', 'target_ns', 'target_id'],
         )
 
     def iterate_filtered_xrefs(self, prefix: str) -> Iterable[Tuple[Term, Reference]]:

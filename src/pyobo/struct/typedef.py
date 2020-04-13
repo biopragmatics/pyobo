@@ -3,12 +3,13 @@
 """Default typedefs, references, and other structures."""
 
 from dataclasses import dataclass, field
-from typing import Iterable, List, Mapping, Optional, Tuple
+from typing import Iterable, List, Mapping, Optional, Tuple, Union
 
 from .reference import Reference, Referenced
 
 __all__ = [
     'TypeDef',
+    'get_reference_tuple',
     'default_typedefs',
     'from_species',
     'has_part',
@@ -61,6 +62,16 @@ class TypeDef(Referenced):
 
         if self.is_transitive is not None:
             yield f'is_transitive: {"true" if self.is_transitive else "false"}'
+
+
+def get_reference_tuple(relation: Union[Tuple[str, str], Reference, TypeDef]) -> Tuple[str, str]:
+    """Get tuple for typedef/reference."""
+    if isinstance(relation, (Reference, TypeDef)):
+        return relation.prefix, relation.identifier
+    elif isinstance(relation, tuple):
+        return relation
+    else:
+        raise TypeError(f'Relation is invalid tyoe: {relation}')
 
 
 from_species = TypeDef(

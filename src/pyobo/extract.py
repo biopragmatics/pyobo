@@ -2,23 +2,30 @@
 
 """High level API for extracting OBO content."""
 
-from typing import List, Mapping
+from typing import List, Mapping, Union, Tuple
 
 import pandas as pd
 
 from .cache_utils import cached_df, cached_mapping, cached_multidict
 from .getters import get
 from .path_utils import prefix_directory_join
-from .struct import Reference, TypeDef
+from .struct import Reference, TypeDef, get_reference_tuple
 
 __all__ = [
+    # Nomenclature
     'get_name_id_mapping',
     'get_id_name_mapping',
+    # Synonyms
     'get_id_synonyms_mapping',
+    # Properties
     'get_properties_df',
     'get_filtered_properties_df',
+    'get_filtered_properties_mapping',
+    # Relations
+    'get_filtered_relations_df',
     'get_id_multirelations_mapping',
     'get_relations_df',
+    # Xrefs
     'get_filtered_xrefs',
     'get_xrefs_df',
 ]
@@ -71,6 +78,18 @@ def get_properties_df(prefix: str, **kwargs) -> pd.DataFrame:
     return _df_getter()
 
 
+def get_filtered_properties_mapping(prefix: str, prop: str, **kwargs) -> Mapping[str, str]:
+    """Extract a single property for each term as a dictionary."""
+    path = prefix_directory_join(prefix, 'cache', 'properties', f"{prop}.tsv")
+
+    @cached_mapping(path=path, header=[f'{prefix}_id', prop])
+    def _mapping_getter() -> Mapping[str, str]:
+        obo = get(prefix, **kwargs)
+        return obo.get_filtered_properties_mapping(prop)
+
+    return _mapping_getter()
+
+
 def get_filtered_properties_df(prefix: str, prop: str, **kwargs) -> pd.DataFrame:
     """Extract a single property for each term."""
     path = prefix_directory_join(prefix, 'cache', 'properties', f"{prop}.tsv")
@@ -91,6 +110,23 @@ def get_relations_df(prefix: str, **kwargs) -> pd.DataFrame:
     def _df_getter() -> pd.DataFrame:
         obo = get(prefix, **kwargs)
         return obo.get_relations_df()
+
+    return _df_getter()
+
+
+def get_filtered_relations_df(
+    prefix: str,
+    relation: Union[Reference, TypeDef, Tuple[str, str]],
+    **kwargs,
+) -> pd.DataFrame:
+    """Get all of the given relation."""
+    relation = get_reference_tuple(relation)
+    path = prefix_directory_join(prefix, 'cache', 'relations', f'{relation[0]}:{relation[1]}.tsv')
+
+    @cached_df(path=path, dtype=str)
+    def _df_getter() -> pd.DataFrame:
+        obo = get(prefix, **kwargs)
+        return obo.get_filtered_relations_df(relation)
 
     return _df_getter()
 
