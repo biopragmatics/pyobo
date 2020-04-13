@@ -65,8 +65,9 @@ class Reference:
         return obo_escape(self.identifier)
 
     def __str__(self):  # noqa: D105
-        if self.identifier.lower().startswith(f'{self.prefix.lower()}:'):
-            rv = self.identifier.lower()
+        identifier_lower = self.identifier.lower()
+        if identifier_lower.startswith(f'{self.prefix.lower()}:'):
+            rv = identifier_lower
         else:
             rv = f'{self.prefix}:{self._escaped_identifier}'
         if self.name:
