@@ -2,7 +2,7 @@
 
 """High level API for extracting OBO content."""
 
-from typing import List, Mapping, Union, Tuple
+from typing import List, Mapping, Tuple, Union
 
 import pandas as pd
 

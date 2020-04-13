@@ -4,14 +4,17 @@
 
 import logging
 from collections import defaultdict
-from typing import Dict, Iterable, Mapping
+from typing import Dict, Iterable, Mapping, Optional, Set, Tuple
 
+from .utils import get_go_mapping
 from ..path_utils import ensure_path
-from ..struct import Obo, Reference, Synonym, Term
+from ..struct import Obo, Reference, Synonym, Term, TypeDef
+from ..struct.typedef import has_member
 
 PREFIX = 'ec-code'
 EXPASY_DATABASE_URL = 'ftp://ftp.expasy.org/databases/enzyme/enzyme.dat'
 EXPASY_TREE_URL = 'ftp://ftp.expasy.org/databases/enzyme/enzclass.txt'
+EC2GO_URL = 'http://current.geneontology.org/ontology/external2go/ec2go'
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +34,10 @@ CF = 'CF'
 PR = 'PR'
 #: Reference to UniProt or SwissProt (Many)
 DR = 'DR'
+
+has_molecular_function = TypeDef(
+    reference=Reference(prefix='go', identifier='has_molecular_function'),
+)
 
 
 def get_obo() -> Obo:
@@ -52,7 +59,7 @@ def get_terms() -> Iterable[Term]:
     terms: Dict[str, Term] = {}
     child_to_parents = defaultdict(list)
     for ec_code, data in tree.items():
-        terms[ec_code] = Term(
+        term = terms[ec_code] = Term(
             reference=Reference(prefix=PREFIX, identifier=ec_code, name=data['name']),
         )
         for child_data in data.get('children', []):
@@ -68,6 +75,8 @@ def get_terms() -> Iterable[Term]:
     database_path = ensure_path(PREFIX, EXPASY_DATABASE_URL)
     with open(database_path) as file:
         data = get_database(file)
+
+    ec2go = get_ec2go()
 
     ec_code_to_alt_ids = {}
     for ec_code, data in data.items():
@@ -91,12 +100,6 @@ def get_terms() -> Iterable[Term]:
                     if alt_id != 'and'
                 ]
 
-        xrefs = []
-        for domain in data.get('domains', []):
-            xrefs.append(Reference(prefix=domain['namespace'], identifier=domain['identifier']))
-        for protein in data.get('proteins', []):
-            xrefs.append(Reference(prefix=protein['namespace'], identifier=protein['identifier'], name=protein['name']))
-
         concept = data['concept']
         try:
             name = concept['name']
@@ -104,12 +107,23 @@ def get_terms() -> Iterable[Term]:
             continue
             # raise
 
-        terms[ec_code] = Term(
+        term = terms[ec_code] = Term(
             reference=Reference(prefix=PREFIX, identifier=ec_code, name=name),
             parents=[parent_term.reference],
             synonyms=synonyms,
-            xrefs=xrefs,
         )
+        for domain in data.get('domains', []):
+            term.append_relationship(
+                has_member,
+                Reference(prefix=domain['namespace'], identifier=domain['identifier']),
+            )
+        for protein in data.get('proteins', []):
+            term.append_relationship(
+                has_member,
+                Reference(prefix=protein['namespace'], identifier=protein['identifier'], name=protein['name']),
+            )
+        for go_id, go_name in ec2go.get(ec_code, []):
+            term.append_relationship(has_molecular_function, Reference(prefix='go', identifier=go_id, name=go_name))
 
     return terms.values()
 
@@ -125,54 +139,17 @@ def normalize_expasy_id(expasy_id: str) -> str:
     return expasy_id.replace(" ", "")
 
 
-def give_edge(head_str: str):
+def give_edge(unnormalized_ec_code: str) -> Tuple[int, Optional[str], str]:
     """Return a (parent, child) tuple for given id."""
-    head_str = normalize_expasy_id(head_str)
-    nums = head_str.split('.')
-    for i, obj in enumerate(nums):
-        nums[i] = obj.strip()
-
-    while '-' in nums:
-        nums.remove('-')
-
-    level = len(nums)
+    levels = [x for x in unnormalized_ec_code.replace(' ', '').replace('-', '').split('.') if x]
+    level = len(levels)
 
     if level == 1:
-        return level, None, "{}.-.-.-".format(nums[0])
+        parent_id = None
+    else:
+        parent_id = '.'.join(levels[:-1])
 
-    if level == 2:
-        return (
-            level,
-            normalize_expasy_id("{}. -. -.-".format(nums[0])),
-            normalize_expasy_id("{}.{:>2}. -.-".format(nums[0], nums[1])),
-        )
-
-    if level == 3:
-        return (
-            level,
-            normalize_expasy_id("{}.{:>2}. -.-".format(nums[0], nums[1])),
-            normalize_expasy_id("{}.{:>2}.{:>2}.-".format(nums[0], nums[1], nums[2])),
-        )
-
-    if level == 4:
-        return (
-            level,
-            normalize_expasy_id("{}.{:>2}.{:>2}.-".format(nums[0], nums[1], nums[2])),
-            normalize_expasy_id("{}.{:>2}.{:>2}.{}".format(nums[0], nums[1], nums[2], nums[3])),
-        )
-
-
-def _process_line(line, graph):
-    line.rstrip('\n')
-    if not line[0].isnumeric():
-        return
-    head = line[:10]
-    l_nums, parent, child = give_edge(head)
-    name = line[11:]
-    name = name.strip().strip('.')
-    graph.add_node(child, description=name)
-    if parent is not None:
-        graph.add_edge(parent, child)
+    return level, parent_id, '.'.join(levels)
 
 
 def get_tree(lines: Iterable[str]):
@@ -181,8 +158,7 @@ def get_tree(lines: Iterable[str]):
     for line in lines:
         if not line[0].isnumeric():
             continue
-        head = line[:10]
-        level, parent_expasy_id, expasy_id = give_edge(head)
+        level, parent_expasy_id, expasy_id = give_edge(line[:7])
         name = line[11:]
         name = name.strip().strip('.')
 
@@ -205,16 +181,13 @@ def get_tree(lines: Iterable[str]):
     return rv
 
 
-"""DATABASE"""
-
-
 def get_database(lines: Iterable[str]) -> Mapping:
     """Parse the ExPASy database file and returns a list of enzyme entry dictionaries.
 
     :param lines: An iterator over the ExPASy database file or file-like
     """
     rv = {}
-    for groups in group_by_id(lines):
+    for groups in _group_by_id(lines):
         _, expasy_id = groups[0]
 
         rv[expasy_id] = ec_data_entry = {
@@ -224,7 +197,7 @@ def get_database(lines: Iterable[str]) -> Mapping:
             },
             'parent': {
                 'namespace': 'ec-code',
-                'identifier': expasy_id.rsplit('.', 1)[0] + '.-',
+                'identifier': expasy_id.rsplit('.', 1)[0],
             },
             'synonyms': [],
             'cofactors': [],
@@ -270,7 +243,7 @@ def get_database(lines: Iterable[str]) -> Mapping:
     return rv
 
 
-def group_by_id(lines):
+def _group_by_id(lines):
     """Group lines by identifier."""
     groups = []
     for line in lines:  # TODO replace with itertools.groupby
@@ -288,6 +261,12 @@ def group_by_id(lines):
         groups[-1].append((descriptor, value))
 
     return groups
+
+
+def get_ec2go() -> Mapping[str, Set[Tuple[str, str]]]:
+    """Get the EC mapping to GO activities."""
+    path = ensure_path(PREFIX, EC2GO_URL)
+    return get_go_mapping(path, 'EC')
 
 
 if __name__ == '__main__':
