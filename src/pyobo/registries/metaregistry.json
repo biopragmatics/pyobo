@@ -160,6 +160,9 @@
         "ComplexPortal"
       ]
     },
+    "conso": {
+      "pattern": "CONSO\\d{5}"
+    },
     "cro": {
       "download": "https://raw.githubusercontent.com/data2health/contributor-role-ontology/master/cro.obo",
       "pattern": "\\d{7}"
@@ -194,7 +197,10 @@
       },
       "obofoundry": {
         "prefix": "doid"
-      }
+      },
+      "synonyms": [
+        "do"
+      ]
     },
     "dpo": {
       "no_own_terms": true
@@ -234,6 +240,7 @@
       "pattern": "\\d{7}"
     },
     "efo": {
+      "download": "http://www.ebi.ac.uk/efo/efo.obo",
       "miriam": {
         "id": "00000391",
         "prefix": "efo"
@@ -319,13 +326,23 @@
       "pattern": "\\d{8}"
     },
     "go": {
-      "synonyms": []
+      "synonyms": [
+        "gobp",
+        "gocc",
+        "gomf"
+      ]
     },
     "hao": {
       "pattern": "\\d{7}"
     },
     "hgnc": {
-      "synonyms": []
+      "synonyms": [],
+      "wikidata_relation": "wdt:P354"
+    },
+    "hgnc.genefamily": {
+      "synonyms": [
+        "GFAM"
+      ]
     },
     "hmdb": {
       "synonyms": [
@@ -456,7 +473,11 @@
       },
       "synonyms": [
         "MSH",
-        "MESH"
+        "MESH",
+        "MESHD",
+        "MESHA",
+        "MESHC",
+        "MESHPP"
       ]
     },
     "metacyc": {
@@ -521,7 +542,8 @@
     "ncbigene": {
       "synonyms": [
         "entrez",
-        "NCBIGene"
+        "NCBIGene",
+        "EGID"
       ]
     },
     "ncbitaxon": {
@@ -535,7 +557,9 @@
         "NCBITaxon",
         "taxid",
         "NCBI_Taxon_ID",
-        "NCBI_taxid"
+        "NCBI_taxid",
+        "taxonomy",
+        "TAX"
       ]
     },
     "ncit": {
@@ -824,7 +848,8 @@
       "synonyms": [
         "UniProt",
         "UniProtKB"
-      ]
+      ],
+      "wikidata_relation": "wdt:P352"
     },
     "uniprot.keyword": {
       "synonyms": [
