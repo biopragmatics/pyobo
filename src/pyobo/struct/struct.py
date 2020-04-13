@@ -298,7 +298,15 @@ class Obo:
     def __iter__(self):  # noqa: D105
         return iter(self.iter_terms())
 
-    def is_descendant(self, identifier: str, ancestor: str) -> bool:
+    def ancestors(self, identifier: str) -> Set[str]:
+        """Return a set of identifiers for parents of the given identifier."""
+        return nx.descendants(self.hierarchy, identifier)  # note this is backwards
+
+    def descendants(self, identifier: str) -> Set[str]:
+        """Return a set of identifiers for the children of the given identifier."""
+        return nx.ancestors(self.hierarchy, identifier)  # note this is backwards
+
+    def is_descendant(self, descendant: str, ancestor: str) -> bool:
         """Return if the given identifier is a descendent of the ancestor.
 
         .. code-block:: python
@@ -310,7 +318,7 @@ class Obo:
             all_complexes = '0032991'
             assert obo.is_descendant('1905571', '0032991')
         """
-        return ancestor in nx.descendants(self.hierarchy, identifier)
+        return ancestor in self.ancestors(descendant)
 
     @property
     def hierarchy(self) -> nx.DiGraph:  # noqa: D401
