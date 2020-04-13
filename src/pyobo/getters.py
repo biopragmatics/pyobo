@@ -70,6 +70,9 @@ def _get_obo_via_obonet(prefix: str, *, url: Optional[str] = None, local: bool =
     if 'ontology' not in graph.graph:
         logger.warning('[%s] missing "ontology" key', prefix)
         graph.graph['ontology'] = prefix
+    elif not graph.graph['ontology'].isalpha():
+        logger.warning('[%s] "ontology" has strange format. replacing with prefix', prefix)
+        graph.graph['ontology'] = prefix
     return Obo.from_obonet(graph)
 
 
