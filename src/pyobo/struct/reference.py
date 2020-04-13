@@ -41,9 +41,11 @@ class Reference:
         return f'{self.prefix}:{self.identifier}'
 
     @staticmethod
-    def from_curie(curie: str, name: Optional[str] = None) -> Reference:
+    def from_curie(curie: str, name: Optional[str] = None) -> Optional[Reference]:
         """Get a reference from a CURIE."""
         prefix, identifier = normalize_curie(curie)
+        if prefix is None and identifier is None:
+            return
         return Reference(prefix=prefix, identifier=identifier, name=name)
 
     @staticmethod
