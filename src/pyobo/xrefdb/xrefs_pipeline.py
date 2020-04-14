@@ -184,7 +184,7 @@ def single_source_shortest_path(graph: nx.Graph, curie: str) -> Optional[Mapping
 
 
 def get_xref_df() -> pd.DataFrame:
-    """Get the ultimate xref databse."""
+    """Get the ultimate xref database."""
     df = pd.concat(_iterate_xref_dfs())
     df.dropna(inplace=True)
     df.sort_values(COLUMNS, inplace=True)
