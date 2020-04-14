@@ -37,6 +37,9 @@ class Canonicalizer:
     #: A list of prefixes. The ones with the lower index are higher priority
     priority: List[str]
 
+    #: Longest length paths allowed
+    cutoff: int = 5
+
     _priority: Mapping[str, int] = field(init=False)
 
     def __post_init__(self):
@@ -52,7 +55,7 @@ class Canonicalizer:
 
     def _get_priority_dict(self, curie: str) -> Mapping[str, int]:
         rv = {}
-        for target in nx.node_connected_component(self.graph, curie):
+        for target in nx.single_source_shortest_path(self.graph, curie, cutoff=self.cutoff):
             priority = self._key(target)
             if priority is not None:
                 rv[target] = priority
