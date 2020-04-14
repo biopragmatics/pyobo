@@ -76,6 +76,12 @@
         "Beilstein"
       ]
     },
+    "bel": {
+      "synonyms": [
+        "SCOMP",
+        "SFAM"
+      ]
+    },
     "bfo": {
       "pattern": "\\d{7}",
       "synonyms": []
@@ -341,7 +347,8 @@
     },
     "hgnc.genefamily": {
       "synonyms": [
-        "GFAM"
+        "GFAM",
+        "HGNC_GROUP"
       ]
     },
     "hmdb": {
@@ -404,7 +411,8 @@
     },
     "interpro": {
       "synoynms": [
-        "InterPro"
+        "InterPro",
+        "IP"
       ]
     },
     "itis": {
@@ -706,7 +714,9 @@
       ]
     },
     "reactome": {
-      "synonyms": []
+      "synonyms": [
+        "RE"
+      ]
     },
     "reaxys": {
       "synonyms": [
