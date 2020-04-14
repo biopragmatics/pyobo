@@ -456,7 +456,7 @@ class Obo:
                 elif (relation.prefix, relation.identifier) in default_typedefs:
                     typedef = default_typedefs[relation.prefix, relation.identifier]
                 else:
-                    logger.warning(f'{ontology} has no typedef for {relation}')
+                    logger.warning(f'[%s] has no typedef for %s', ontology, relation)
                     continue
                 term.append_relationship(typedef, reference)
             for prop, value in iterate_node_properties(data):
@@ -682,7 +682,7 @@ def iterate_graph_typedefs(graph: nx.MultiDiGraph, default_prefix: str) -> Itera
     for typedef in graph.graph.get('typedefs', []):
         name = typedef.get('name')
         if name is None:
-            logger.warning('%s typedef %s is missing a name', graph.graph['ontology'], typedef['id'])
+            logger.warning('[%s] typedef %s is missing a name', graph.graph['ontology'], typedef['id'])
             name = typedef['id']
 
         prefix, identifier = normalize_curie(typedef['id'])
@@ -720,7 +720,7 @@ def iterate_node_synonyms(data: Mapping[str, Any]) -> Iterable[Synonym]:
             name = s[:s.index('NARROW')].rstrip().rstrip('"')
             specificity = 'NARROW'
         else:
-            logger.warning(f'For unhandled synonym: {s}')
+            logger.warning(f'Unhandled synonym: {s}')
             continue
 
         yield Synonym(name=name, specificity=specificity)
