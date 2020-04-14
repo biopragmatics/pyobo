@@ -27,6 +27,37 @@ SKIP = {
 }
 COLUMNS = ['source_ns', 'source_id', 'target_ns', 'target_id', 'source']
 
+DEFAULT_PRIORITY_LIST = [
+    # Genes
+    'hgnc',
+    'rgd',
+    'mgi',
+    'ncbigene',
+    'ensembl',
+    'uniprot',
+    # protein families and complexes (and famplexes :))
+    'complexportal'
+    'fplx',
+    'ec-code',
+    'interpro',
+    'pfam',
+    'signor'
+    # Pathologies/phenotypes
+    'efo',
+    'doid',
+    'hp',
+    # Taxa
+    'ncbitaxon',
+    'itis',
+    # If you can get away from MeSH, do it
+    'mesh',
+]
+DEFAULT_PRIORITY_LIST = [normalize_prefix(x) for x in DEFAULT_PRIORITY_LIST]
+
+
+# TODO a normal graph can easily be turned into a directed graph where each
+#  edge points from low priority to higher priority, then the graph can
+#  be reduced to a set of star graphs and ultimately to a single dictionary
 
 @dataclass
 class Canonicalizer:
@@ -35,7 +66,7 @@ class Canonicalizer:
     #: A graph from :func:`get_graph_from_xref_df`
     graph: nx.Graph
     #: A list of prefixes. The ones with the lower index are higher priority
-    priority: List[str]
+    priority: List[str] = field(default_factory=lambda: DEFAULT_PRIORITY_LIST)
 
     #: Longest length paths allowed
     cutoff: int = 5
