@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Get famplex xrefs"""
+"""Get FamPlex xrefs."""
 
 import pandas as pd
 
