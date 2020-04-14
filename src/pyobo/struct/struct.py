@@ -186,7 +186,7 @@ class Term(Referenced):
         for parent in sorted(self.parents, key=attrgetter('prefix', 'identifier')):
             yield f'is_a: {parent}'
 
-        for type_def, references in sorted(self.relationships.items(), key=lambda x: x[0].name):
+        for type_def, references in sorted(self.relationships.items(), key=lambda x: x[0].name or x[0].identifier):
             for reference in references:
                 s = f'relationship: {type_def.curie} {reference.curie}'
                 if write_relation_comments:
