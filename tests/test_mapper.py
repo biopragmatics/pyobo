@@ -43,7 +43,7 @@ class TestCanonicalizer(unittest.TestCase):
         self.assertEqual(2, self.canonicalizer._key('omim:o1'))
         self.assertEqual(1, self.canonicalizer._key('ensembl:e1'))
         # Since CDS isn't there, it gets no priority at all
-        self.assertEqual(0, self.canonicalizer._key('cds:c1'))
+        self.assertEqual(None, self.canonicalizer._key('cds:c1'))
 
     def test_mapper(self):
         """Test mapping back to hgnc for cluster 1."""

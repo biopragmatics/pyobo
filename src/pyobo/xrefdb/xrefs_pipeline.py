@@ -46,18 +46,28 @@ class Canonicalizer:
             for i, entry in enumerate(self.priority)
         }
 
-    def _key(self, curie: str) -> int:
-        # Assume node is in graph
+    def _key(self, curie: str) -> Optional[int]:
         prefix = self.graph.nodes[curie]['prefix']
-        return self._priority.get(prefix, -1)
+        return self._priority.get(prefix)
+
+    def _get_priority_dict(self, curie: str) -> Mapping[str, int]:
+        rv = {}
+        for target in nx.node_connected_component(self.graph, curie):
+            priority = self._key(target)
+            if priority is not None:
+                rv[target] = priority
+            elif target == curie:
+                rv[target] = 0
+            else:
+                rv[target] = -1
+        return rv
 
     def canonicalize(self, curie: str) -> str:
         """Get the best CURIE from the given CURIE."""
         if curie not in self.graph:
             return curie
-        #: CURIEs of possible targets
-        targets = nx.node_connected_component(self.graph, curie)
-        return max(targets, key=self._key)
+        priority_dict = self._get_priority_dict(curie)
+        return max(priority_dict, key=priority_dict.get)
 
 
 def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
