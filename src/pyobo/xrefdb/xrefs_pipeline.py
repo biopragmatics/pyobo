@@ -14,7 +14,7 @@ import pandas as pd
 from more_itertools import pairwise
 from tqdm import tqdm
 
-from .sources import get_cbms2019_xrefs_df, get_gilda_xrefs_df
+from .sources import iter_sourced_xref_dfs
 from ..extract import get_xrefs_df
 from ..getters import MissingOboBuild
 from ..path_utils import get_prefix_directory
@@ -188,8 +188,7 @@ def _iterate_xref_dfs() -> Iterable[pd.DataFrame]:
         if not os.listdir(prefix_directory):
             os.rmdir(prefix_directory)
 
-    yield get_gilda_xrefs_df()
-    yield get_cbms2019_xrefs_df()
+    yield from iter_sourced_xref_dfs()
 
 
 def _iterate_metaregistry():
