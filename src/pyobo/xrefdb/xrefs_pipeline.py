@@ -17,6 +17,7 @@ from tqdm import tqdm
 from .sources import iter_sourced_xref_dfs
 from ..extract import get_xrefs_df
 from ..getters import MissingOboBuild
+from ..identifier_utils import normalize_prefix
 from ..path_utils import get_prefix_directory
 from ..registries import get_metaregistry
 
