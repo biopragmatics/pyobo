@@ -76,6 +76,12 @@
         "Beilstein"
       ]
     },
+    "bel": {
+      "synonyms": [
+        "SCOMP",
+        "SFAM"
+      ]
+    },
     "bfo": {
       "pattern": "\\d{7}",
       "synonyms": []
@@ -91,7 +97,9 @@
       ]
     },
     "cas": {
-      "synonyms": []
+      "synonyms": [
+        "CASID"
+      ]
     },
     "ceph": {
       "download": "https://raw.githubusercontent.com/obophenotype/cephalopod-ontology/master/ceph.obo",
@@ -341,7 +349,8 @@
     },
     "hgnc.genefamily": {
       "synonyms": [
-        "GFAM"
+        "GFAM",
+        "HGNC_GROUP"
       ]
     },
     "hmdb": {
@@ -404,7 +413,8 @@
     },
     "interpro": {
       "synoynms": [
-        "InterPro"
+        "InterPro",
+        "IP"
       ]
     },
     "itis": {
@@ -706,7 +716,9 @@
       ]
     },
     "reactome": {
-      "synonyms": []
+      "synonyms": [
+        "RE"
+      ]
     },
     "reaxys": {
       "synonyms": [
