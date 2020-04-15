@@ -97,7 +97,9 @@
       ]
     },
     "cas": {
-      "synonyms": []
+      "synonyms": [
+        "CASID"
+      ]
     },
     "ceph": {
       "download": "https://raw.githubusercontent.com/obophenotype/cephalopod-ontology/master/ceph.obo",
