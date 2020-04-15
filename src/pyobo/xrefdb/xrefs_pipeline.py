@@ -37,12 +37,12 @@ DEFAULT_PRIORITY_LIST = [
     'ensembl',
     'uniprot',
     # protein families and complexes (and famplexes :))
-    'complexportal'
+    'complexportal',
     'fplx',
     'ec-code',
     'interpro',
     'pfam',
-    'signor'
+    'signor',
     # Pathologies/phenotypes
     'efo',
     'doid',
