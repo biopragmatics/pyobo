@@ -553,7 +553,8 @@
       "synonyms": [
         "entrez",
         "NCBIGene",
-        "EGID"
+        "EGID",
+        "entrez gene/locuslink"
       ]
     },
     "ncbitaxon": {
@@ -859,7 +860,8 @@
     "uniprot": {
       "synonyms": [
         "UniProt",
-        "UniProtKB"
+        "UniProtKB",
+        "uniprot/swiss-prot"
       ],
       "wikidata_relation": "wdt:P352"
     },
