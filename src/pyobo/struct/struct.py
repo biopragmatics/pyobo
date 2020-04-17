@@ -754,7 +754,11 @@ def iterate_node_properties(
 def iterate_node_parents(data: Mapping[str, Any]) -> Iterable[Reference]:
     """Extract parents from a :mod:`obonet` node's data."""
     for parent_curie in data.get('is_a', []):
-        yield Reference.from_curie(parent_curie)
+        reference = Reference.from_curie(parent_curie)
+        if reference is None:
+            logger.warning('could not parse parent curie: %s', parent_curie)
+            continue
+        yield reference
 
 
 def iterate_node_relationships(
@@ -774,6 +778,10 @@ def iterate_node_relationships(
             relation = Reference.default(identifier=relation_curie)
 
         target = Reference.from_curie(target_curie)
+        if target is None:
+            logger.warning('could not parse relation %s', s)
+            continue
+
         yield relation, target
 
 
