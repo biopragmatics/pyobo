@@ -52,8 +52,8 @@ def cache_xrefs(directory):  # noqa: D202
 
 @output.command()
 @click.option('-d', '--directory', type=click.Path(dir_okay=True, file_okay=False), default=os.getcwd())
-def cache_nomenclatures(directory):
-    """Cache nomenclature stuff."""
+def ooh_na_na(directory):
+    """Make prefix-identifier-name cache."""
     c = Counter()
 
     path = os.path.join(directory, 'ooh_na_na.tsv.gz')
