@@ -18,6 +18,7 @@ from .struct import Obo
 __all__ = [
     'get',
     'MissingOboBuild',
+    'NoOboFoundry',
 ]
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,10 @@ logger = logging.getLogger(__name__)
 
 class MissingOboBuild(RuntimeError):
     """Raised when OBOFoundry doesn't track an OBO file, but only has OWL."""
+
+
+class NoOboFoundry(ValueError):
+    """Raised when OBO foundry doesn't have it."""
 
 
 def get(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
@@ -91,7 +96,7 @@ def _ensure_obo_path(prefix: str) -> str:
     obofoundry = get_obofoundry(mappify=True)
     entry = obofoundry.get(prefix)
     if entry is None:
-        raise ValueError(f'OBO Foundry is missing the prefix: {prefix}')
+        raise NoOboFoundry(f'OBO Foundry is missing the prefix: {prefix}')
 
     build = entry.get('build')
     if build is None:
