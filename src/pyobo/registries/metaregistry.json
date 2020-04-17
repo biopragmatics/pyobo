@@ -93,7 +93,7 @@
     "bto": {
       "pattern": "\\d{7}",
       "synonyms": [
-        "BFO"
+        "BTO"
       ]
     },
     "cas": {
