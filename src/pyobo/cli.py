@@ -15,7 +15,7 @@ from .extract import (
     get_relations_df, get_xrefs_df,
 )
 from .sources import iter_converted_obos
-from .xrefdb.cli import cache_xrefs
+from .xrefdb.cli import cache_nomenclatures, cache_xrefs
 
 __all__ = ['main']
 
@@ -130,6 +130,7 @@ def clean(remove_obo: bool):
 
 
 main.add_command(cache_xrefs)
+main.add_command(cache_nomenclatures)
 
 if __name__ == '__main__':
     main()

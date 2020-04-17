@@ -2,11 +2,13 @@
 
 """Pipeline for extracting all xrefs from OBO documents available."""
 
+import gzip
 import itertools as itt
+import logging
 import os
 import urllib.error
 from dataclasses import dataclass, field
-from typing import Iterable, List, Mapping, Optional
+from typing import Iterable, List, Mapping, Optional, Tuple
 
 import click
 import networkx as nx
@@ -15,16 +17,20 @@ from more_itertools import pairwise
 from tqdm import tqdm
 
 from .sources import iter_sourced_xref_dfs
-from ..extract import get_xrefs_df
-from ..getters import MissingOboBuild
+from ..extract import get_id_name_mapping, get_xrefs_df
+from ..getters import MissingOboBuild, NoOboFoundry
 from ..identifier_utils import normalize_prefix
-from ..path_utils import get_prefix_directory
+from ..path_utils import ensure_path, get_prefix_directory
 from ..registries import get_metaregistry
+from ..sources import ncbigene
+
+logger = logging.getLogger(__name__)
 
 SKIP = {
     'obi',
     'ncbigene',  # too big, refs acquired from other dbs
     'pubchem.compound',  # to big, can't deal with this now
+    'rnao',  # just really malformed, way too much unconverted OWL
 }
 COLUMNS = ['source_ns', 'source_id', 'target_ns', 'target_id', 'source']
 
@@ -194,7 +200,7 @@ def get_xref_df() -> pd.DataFrame:
 def _iterate_xref_dfs() -> Iterable[pd.DataFrame]:
     for prefix, _entry in _iterate_metaregistry():
         try:
-            df = get_xrefs_df(prefix)
+            df = get_xrefs_df(prefix)  # FIXME encase this logic in pyobo.get
         except MissingOboBuild as e:
             click.secho(f'💾 {prefix}', bold=True)
             click.secho(str(e), fg='yellow')
@@ -211,8 +217,9 @@ def _iterate_xref_dfs() -> Iterable[pd.DataFrame]:
             click.secho(f'Bad URL for {prefix}')
             click.secho(str(e))
             continue
-        except ValueError:
-            # click.secho(f'Not in available as OBO through OBO Foundry or PyOBO: {prefix}', fg='yellow')
+        except ValueError as e:
+            click.secho(f'Not in available as OBO through OBO Foundry or PyOBO: {prefix}', fg='yellow')
+            click.secho(str(e), fg='yellow')
             continue
 
         df['source'] = prefix
@@ -230,3 +237,35 @@ def _iterate_metaregistry():
     for prefix, _entry in sorted(get_metaregistry().items()):
         if prefix not in SKIP:
             yield prefix, _entry
+
+
+def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
+    """Iterate over all prefix-identifier-name triples we can get.
+
+    :param leave: should the tqdm be left behind?
+    """
+    for prefix in sorted(get_metaregistry()):
+        if prefix in SKIP:
+            continue
+        try:
+            id_name_mapping = get_id_name_mapping(prefix)
+        except (NoOboFoundry, MissingOboBuild):
+            continue
+        except ValueError as e:
+            if (
+                str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0"?>')
+                or str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0" encoding="UTF-8"?>')
+            ):
+                logger.info('no resource available for %s', prefix)
+                continue  # this means that it tried doing parsing on an xml page saying get the fuck out
+            logger.warning('could not successfully parse %s: %s', prefix, e)
+        else:
+            for identifier, name in tqdm(id_name_mapping.items(), desc=f'iterating {prefix}', leave=leave):
+                yield prefix, identifier, name
+
+    ncbi_path = ensure_path(ncbigene.PREFIX, ncbigene.GENE_INFO_URL)
+    with gzip.open(ncbi_path, 'rt') as file:
+        next(file)  # throw away the header
+        for line in tqdm(file, desc='extracting ncbigene'):
+            line = line.split('\t')
+            yield 'ncbigene', line[1], line[2]
