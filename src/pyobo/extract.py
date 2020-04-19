@@ -2,13 +2,14 @@
 
 """High level API for extracting OBO content."""
 
-from typing import List, Mapping, Tuple, Union
 from functools import lru_cache
+from typing import List, Mapping, Optional, Tuple, Union
 
 import pandas as pd
 
 from .cache_utils import cached_df, cached_mapping, cached_multidict
 from .getters import get
+from .identifier_utils import normalize_curie
 from .path_utils import prefix_directory_join
 from .struct import Reference, TypeDef, get_reference_tuple
 
@@ -30,6 +31,18 @@ __all__ = [
     'get_filtered_xrefs',
     'get_xrefs_df',
 ]
+
+
+def get_name_by_curie(curie: str) -> Optional[str]:
+    """Get the name for a CURIE, if possible."""
+    prefix, identifier = normalize_curie(curie)
+    if prefix and identifier:
+        return get_name(prefix, identifier)
+
+
+def get_name(prefix: str, identifier: str) -> Optional[str]:
+    """Get the name for an entity."""
+    return get_id_name_mapping(prefix).get(identifier)
 
 
 @lru_cache()
