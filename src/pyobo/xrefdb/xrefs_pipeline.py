@@ -134,6 +134,15 @@ def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
     return rv
 
 
+def summarize_xref_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Get all meta-mappings."""
+    c = ['source_ns', 'target_ns']
+    rv = df[c].groupby(c).size().reset_index()
+    rv.columns = ['source_ns', 'target_ns', 'count']
+    rv.sort_values('count', inplace=True, ascending=False)
+    return rv
+
+
 def _to_curie(prefix: str, identifier: str) -> str:
     return f'{prefix}:{identifier}'
 
