@@ -2,19 +2,11 @@
 
 """PyOBO's Resolution Service."""
 
-from functools import lru_cache
-
 import click
 from flask import Blueprint, Flask, jsonify
 
-from pyobo import get_id_name_mapping
+from pyobo.extract import get_name
 from pyobo.identifier_utils import normalize_curie
-
-
-@lru_cache()
-def _get_id_name_mapping(prefix):
-    return get_id_name_mapping(prefix)
-
 
 resolve_blueprint = Blueprint('resolver', __name__)
 
@@ -30,7 +22,7 @@ def resolve(curie: str):
             message='Could not identify prefix',
         )
 
-    name = _get_id_name_mapping(prefix).get(identifier)
+    name = get_name(prefix, identifier)
     if name is None:
         return jsonify(
             query=curie,
