@@ -56,12 +56,17 @@ def home():
         source_curie='hgnc:6893',
         target_curie='ensembl:ENSG00000186868',
     )
+    prioritize_path = url_for(
+        f'.{prioritize_curie.__name__}',
+        curie='ensembl:ENSG00000186868',
+    )
     summary_path = url_for(f'.{summarize.__name__}')
     summary_one_path = url_for(
         f'.{summarize_one.__name__}',
         prefix='umls',
     )
     return f'''
+    <h1>PyOBO Mapping Service</h1>
     <ul>
     <li>Use the /mappings endpoint to look up equivalent entities,
      for example, <a href="{example_url_1}">{example_url_1}</a>.</li>
@@ -69,6 +74,8 @@ def home():
      for example, <a href="{example_url_2}">{example_url_2}</a>.</li>
     <li>Use the /summarize endpoint to look at a count of all mappings <a href="{summary_path}">{summary_path}</a>.</li>
     <li>For a specific prefix, add it after like <a href="{summary_one_path}">{summary_one_path}</a>.</li>
+    <li>Use the /prioritize endpoint to get the best CURIE for a given one. 
+     for example, <a href="{prioritize_path}">{prioritize_path}</a> remaps MATP to HGNC.</li>
     </ul>
         '''
 
@@ -124,8 +131,8 @@ def summarize_one(prefix: str):
     '''
 
 
-@search_blueprint.route('/canonicalize/<curie>')
-def canonicalize_curie(curie: str):
+@search_blueprint.route('/prioritize/<curie>')
+def prioritize_curie(curie: str):
     """Return the best CURIE."""
     # TODO maybe normalize the curie first?
     norm_curie = normalize_curie(curie)
