@@ -3,6 +3,7 @@
 """High level API for extracting OBO content."""
 
 from typing import List, Mapping, Tuple, Union
+from functools import lru_cache
 
 import pandas as pd
 
@@ -31,6 +32,7 @@ __all__ = [
 ]
 
 
+@lru_cache()
 def get_id_name_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     path = prefix_directory_join(prefix, 'cache', "names.tsv")
