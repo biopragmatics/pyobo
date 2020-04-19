@@ -809,18 +809,6 @@ def iterate_node_xrefs(data: Mapping[str, Any]) -> Iterable[Reference]:
                 continue
             xref = _xref_split[0]
 
-        try:
-            xref_prefix, xref_identifier = xref.split(':', 1)
-        except ValueError:
-            if split_space:
-                logger.warning(f'problem splitting after space split {xref}')
-            else:
-                logger.warning(f'problem splitting {xref}')
-
-            continue
-
-        norm_xref_prefix = normalize_prefix(xref_prefix)
-        if not norm_xref_prefix:
-            continue
-
-        yield Reference(prefix=norm_xref_prefix, identifier=xref_identifier)
+        yv = Reference.from_curie(xref)
+        if yv is not None:
+            yield yv
