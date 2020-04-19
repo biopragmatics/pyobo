@@ -15,7 +15,7 @@ from .extract import (
     get_relations_df, get_xrefs_df,
 )
 from .sources import iter_converted_obos
-from .xrefdb.cli import cache_xrefs, ooh_na_na
+from .xrefdb.cli import javerts_xrefs, ooh_na_na
 
 __all__ = ['main']
 
@@ -129,7 +129,7 @@ def clean(remove_obo: bool):
                 os.remove(os.path.join(d, f))
 
 
-main.add_command(cache_xrefs)
+main.add_command(javerts_xrefs)
 main.add_command(ooh_na_na)
 
 if __name__ == '__main__':

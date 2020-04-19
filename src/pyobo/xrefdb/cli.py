@@ -9,9 +9,15 @@ from collections import Counter
 import click
 import pandas as pd
 
-from .xrefs_pipeline import _iter_ooh_na_na, get_xref_df
+from .xrefs_pipeline import _iter_ooh_na_na, get_xref_df, summarize_xref_df
 from ..cli_utils import verbose_option
 from ..identifier_utils import UNHANDLED_NAMESPACES
+
+directory_option = click.option(
+    '--directory',
+    type=click.Path(dir_okay=True, file_okay=False, exists=True),
+    default=os.getcwd(),
+)
 
 
 @click.group()
@@ -20,10 +26,10 @@ def output():
 
 
 @output.command()
-@click.option('--directory', type=click.Path(dir_okay=True, file_okay=False, exists=True), default=os.getcwd())
+@directory_option
 @verbose_option
-def cache_xrefs(directory):  # noqa: D202
-    """Output the mappings."""
+def javerts_xrefs(directory: str):  # noqa: D202
+    """Make the xref dump."""
 
     def _write_tsv(df: pd.DataFrame, name: str) -> None:
         df.to_csv(os.path.join(directory, name), sep='\t', index=False)
@@ -31,19 +37,17 @@ def cache_xrefs(directory):  # noqa: D202
     xrefs_df = get_xref_df()
 
     # Export all xrefs
-    _write_tsv(xrefs_df, f'xrefs.tsv')
-    _write_tsv(xrefs_df, f'xrefs.tsv.gz')
+    _write_tsv(xrefs_df, f'inspector_javerts_xrefs.tsv.gz')
 
     # Export a sample of xrefs
-    _write_tsv(xrefs_df.head(), f'xrefs_sample.tsv')
+    _write_tsv(xrefs_df.head(), f'inspector_javerts_xrefs_sample.tsv')
 
     # Export a summary dataframe
-    summary_df = xrefs_df.groupby(['source', 'target_ns'])['source_ns'].count().reset_index()
-    summary_df = summary_df.sort_values(['source_ns'], ascending=False)
-    _write_tsv(summary_df, 'summary.tsv')
+    summary_df = summarize_xref_df(xrefs_df)
+    _write_tsv(summary_df, 'inspector_javerts_xref_summary.tsv')
 
     # Export the namespaces that haven't been handled yet
-    unmapped_path = os.path.join(directory, 'unmapped.tsv')
+    unmapped_path = os.path.join(directory, 'inspector_javerts_unmapped_xrefs.tsv')
     with open(unmapped_path, 'w') as file:
         for namespace, items in sorted(UNHANDLED_NAMESPACES.items()):
             for curie, xref in items:
@@ -51,9 +55,10 @@ def cache_xrefs(directory):  # noqa: D202
 
 
 @output.command()
-@click.option('-d', '--directory', type=click.Path(dir_okay=True, file_okay=False), default=os.getcwd())
-def ooh_na_na(directory):
-    """Make prefix-identifier-name cache."""
+@directory_option
+@verbose_option
+def ooh_na_na(directory: str):
+    """Make the prefix-identifier-name dump."""
     c = Counter()
 
     path = os.path.join(directory, 'ooh_na_na.tsv.gz')

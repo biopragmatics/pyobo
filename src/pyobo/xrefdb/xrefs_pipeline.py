@@ -6,11 +6,9 @@ import gzip
 import itertools as itt
 import logging
 import os
-import urllib.error
 from dataclasses import dataclass, field
 from typing import Iterable, List, Mapping, Optional, Tuple
 
-import click
 import networkx as nx
 import pandas as pd
 from more_itertools import pairwise
@@ -31,6 +29,9 @@ SKIP = {
     'ncbigene',  # too big, refs acquired from other dbs
     'pubchem.compound',  # to big, can't deal with this now
     'rnao',  # just really malformed, way too much unconverted OWL
+}
+SKIP_XREFS = {
+    'apo',
 }
 COLUMNS = ['source_ns', 'source_id', 'target_ns', 'target_id', 'source']
 
@@ -208,27 +209,20 @@ def get_xref_df() -> pd.DataFrame:
 
 def _iterate_xref_dfs() -> Iterable[pd.DataFrame]:
     for prefix, _entry in _iterate_metaregistry():
+        if prefix in SKIP_XREFS:
+            continue
         try:
             df = get_xrefs_df(prefix)  # FIXME encase this logic in pyobo.get
-        except MissingOboBuild as e:
-            click.secho(f'💾 {prefix}', bold=True)
-            click.secho(str(e), fg='yellow')
-            url = f'http://purl.obolibrary.org/obo/{prefix}.obo'
-            click.secho(f'trying to query purl at {url}', fg='yellow')
-            try:
-                df = get_xrefs_df(prefix, url=url)
-                click.secho(f'resolved {prefix} with {url}', fg='green')
-            except Exception as e2:
-                click.secho(str(e2), fg='yellow')
-                continue
-        except (urllib.error.HTTPError, urllib.error.URLError) as e:
-            click.secho(f'💾 {prefix}', bold=True)
-            click.secho(f'Bad URL for {prefix}')
-            click.secho(str(e))
+        except (NoOboFoundry, MissingOboBuild):
             continue
         except ValueError as e:
-            click.secho(f'Not in available as OBO through OBO Foundry or PyOBO: {prefix}', fg='yellow')
-            click.secho(str(e), fg='yellow')
+            if (
+                str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0"?>')
+                or str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0" encoding="UTF-8"?>')
+            ):
+                logger.info('no resource available for %s', prefix)
+                continue  # this means that it tried doing parsing on an xml page saying get the fuck out
+            logger.warning('could not successfully parse %s: %s', prefix, e)
             continue
 
         df['source'] = prefix
