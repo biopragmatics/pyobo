@@ -10,7 +10,7 @@ import pandas as pd
 from pyobo.identifier_utils import normalize_prefix
 
 __all__ = [
-    'get_famplex_xrefs',
+    'get_famplex_xrefs_df',
 ]
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ def _get_df() -> pd.DataFrame:
     return pd.read_csv(URL, header=None, names=['target_ns', 'target_id', 'source_id'])
 
 
-def get_famplex_xrefs() -> pd.DataFrame:
+def get_famplex_xrefs_df() -> pd.DataFrame:
     """Get xrefs from FamPlex."""
     df = _get_df()
     df['source_ns'] = 'fplx'
