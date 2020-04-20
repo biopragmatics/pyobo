@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Set, TextIO, Tuple, Union
+from typing import Any, Callable, Collection, Dict, Iterable, List, Mapping, Optional, Set, TextIO, Tuple, Union
 
 import networkx as nx
 import pandas as pd
@@ -113,6 +113,18 @@ class Term(Referenced):
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: Optional[bool] = None
 
+    def append_parent(self, reference: Reference) -> None:
+        """Add a parent to this entity."""
+        if reference is None:
+            raise ValueError('can not append a null parent')
+        self.parents.append(reference)
+
+    def extend_parents(self, references: Collection[Reference]) -> None:
+        """Add a collection of parents to this entity."""
+        if any(x is None for x in references):
+            raise ValueError('can not append a collection of parents containing a null parent')
+        self.parents.extend(references)
+
     def get_properties(self, prop) -> List[str]:
         """Get properties from the given key."""
         return self.properties[prop]
@@ -141,14 +153,18 @@ class Term(Referenced):
 
     def append_relationship(self, type_def: TypeDef, reference: Reference) -> None:
         """Append a relationship."""
+        if reference is None:
+            raise ValueError('can not append null reference')
         self.relationships[type_def].append(reference)
 
     def set_species(self, identifier: str, name: str):
         """Append the from_species relation."""
         self.append_relationship(from_species, Reference(prefix='taxonomy', identifier=identifier, name=name))
 
-    def extend_relationship(self, type_def: TypeDef, references: Iterable[Reference]) -> None:
+    def extend_relationship(self, type_def: TypeDef, references: Collection[Reference]) -> None:
         """Append several relationships."""
+        if any(x is None for x in references):
+            raise ValueError('can not extend a collection that includes a null reference')
         self.relationships[type_def].extend(references)
 
     def append_property(self, prop: str, value: str) -> None:
@@ -359,12 +375,16 @@ class Obo:
         for term in self:
             parents = []
             for parent in term.parents:
+                if parent is None:
+                    raise ValueError('parent should not be none!')
                 links.append((term.curie, 'is_a', parent.curie))
                 parents.append(parent.curie)
 
             relations = []
             for type_def, targets in term.relationships.items():
                 for target in targets:
+                    if target is None:
+                        raise ValueError('target should not be none!')
                     relations.append(f'{type_def.curie} {target.curie}')
                     links.append((term.curie, type_def.curie, target.curie))
 
