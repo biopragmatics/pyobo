@@ -58,6 +58,7 @@ def get_id_name_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     return _get_id_name_mapping()
 
 
+@lru_cache()
 def get_name_id_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     """Get a name to identifier mapping for the OBO file."""
     return {
