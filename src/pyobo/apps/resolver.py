@@ -3,6 +3,7 @@
 """PyOBO's Resolution Service."""
 
 import gzip
+from collections import defaultdict
 from typing import Optional, Union
 
 import click
@@ -16,7 +17,7 @@ from pyobo.identifier_utils import normalize_curie
 
 resolve_blueprint = Blueprint('resolver', __name__)
 
-REMOTE_DATA_URL = 'https://zenodo.org/record/3756206/files/ooh_na_na.tsv.gz?download=1'
+REMOTE_DATA_URL = 'https://zenodo.org/record/3756206/files/ooh_na_na.tsv.gz'
 
 get_name = LocalProxy(lambda: current_app.config['get_name'])
 
@@ -90,23 +91,25 @@ def get_app(data: Union[None, str, pd.DataFrame] = None) -> Flask:
         import pyobo.extract
         app.config['get_name'] = pyobo.extract.get_name
     else:
+        lookup = defaultdict(dict)
+
         if isinstance(data, str):
             with gzip.open(data, 'rt') as data:
                 _ = next(data)
-                lookup = {}
                 for line in tqdm(data, desc='loading mappings', unit_scale=True):
                     prefix, identifier, name = line.strip().split('\t')
-                    lookup[prefix, identifier] = name
+                    lookup[prefix][identifier] = name
         elif isinstance(data, pd.DataFrame):
-            lookup = {
-                (prefix, identifier): name
-                for prefix, identifier, name in data.values
-            }
+            it = tqdm(data.values, total=len(data.index), desc='loading mappings', unit_scale=True)
+            for prefix, identifier, name in it:
+                lookup[prefix][identifier] = name
         else:
             raise TypeError(f'invalid type: {data}')
 
+        lookup = dict(lookup)
+
         def _get_name(_prefix: str, _identifier: str) -> Optional[str]:
-            return lookup.get((_prefix, _identifier))
+            return lookup.get(_prefix, {}).get(identifier)
 
         app.config['get_name'] = _get_name
 
