@@ -74,7 +74,7 @@ def home():
      for example, <a href="{example_url_2}">{example_url_2}</a>.</li>
     <li>Use the /summarize endpoint to look at a count of all mappings <a href="{summary_path}">{summary_path}</a>.</li>
     <li>For a specific prefix, add it after like <a href="{summary_one_path}">{summary_one_path}</a>.</li>
-    <li>Use the /prioritize endpoint to get the best CURIE for a given one. 
+    <li>Use the /prioritize endpoint to get the best CURIE for a given one.
      for example, <a href="{prioritize_path}">{prioritize_path}</a> remaps MATP to HGNC.</li>
     </ul>
         '''
