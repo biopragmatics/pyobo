@@ -492,7 +492,8 @@
         "MESHD",
         "MESHA",
         "MESHC",
-        "MESHPP"
+        "MESHPP",
+        "MESHCS"
       ],
       "wikidata_property": "P486"
     },
