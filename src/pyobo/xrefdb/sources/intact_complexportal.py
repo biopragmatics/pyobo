@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-from collections import Mapping
+
+"""Get the xrefs from IntAct."""
+
+from typing import Mapping
 
 import pandas as pd
 

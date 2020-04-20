@@ -8,10 +8,11 @@ from typing import Optional, Union
 import click
 import pandas as pd
 from flask import Blueprint, Flask, current_app, jsonify, url_for
-from pyobo.cli_utils import verbose_option
-from pyobo.identifier_utils import normalize_curie
 from tqdm import tqdm
 from werkzeug.local import LocalProxy
+
+from pyobo.cli_utils import verbose_option
+from pyobo.identifier_utils import normalize_curie
 
 resolve_blueprint = Blueprint('resolver', __name__)
 
