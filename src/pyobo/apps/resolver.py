@@ -114,11 +114,11 @@ def get_app(data: Union[None, str, pd.DataFrame] = None) -> Flask:
 
 
 @click.command()
-@click.option('--port')
-@click.option('--host', type=int)
+@click.option('--port', type=int)
+@click.option('--host')
 @click.option('--data')
 @verbose_option
-def main(port: str, host: int, data: Optional[str]):
+def main(port: int, host: str, data: Optional[str]):
     """Run the resolver app."""
     app = get_app(data)
     app.run(port=port, host=host)
