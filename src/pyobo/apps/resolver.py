@@ -2,13 +2,22 @@
 
 """PyOBO's Resolution Service."""
 
-import click
-from flask import Blueprint, Flask, jsonify, url_for
+import gzip
+from typing import Optional, Union
 
-from pyobo.extract import get_name
+import click
+import pandas as pd
+from flask import Blueprint, Flask, current_app, jsonify, url_for
+from pyobo.cli_utils import verbose_option
 from pyobo.identifier_utils import normalize_curie
+from tqdm import tqdm
+from werkzeug.local import LocalProxy
 
 resolve_blueprint = Blueprint('resolver', __name__)
+
+REMOTE_DATA_URL = 'https://zenodo.org/record/3756206/files/ooh_na_na.tsv.gz?download=1'
+
+get_name = LocalProxy(lambda: current_app.config['get_name'])
 
 
 @resolve_blueprint.route('/')
@@ -67,9 +76,39 @@ def resolve(curie: str):
     )
 
 
-def get_app() -> Flask:
-    """Build a flask app."""
+def get_app(data: Union[None, str, pd.DataFrame] = None) -> Flask:
+    """Build a flask app.
+
+    :param data: If none, uses the internal PyOBO loader. If a string, assumes is a gzip and reads a
+     dataframe from there. If a dataframe, uses it directly. Assumes data frame has 3 columns - prefix,
+     identifier, and name and is a TSV.
+    """
     app = Flask(__name__)
+
+    if data is None:
+        import pyobo.extract
+        app.config['get_name'] = pyobo.extract.get_name
+    else:
+        if isinstance(data, str):
+            with gzip.open(data, 'rt') as data:
+                _ = next(data)
+                lookup = {}
+                for line in tqdm(data, desc='loading mappings', unit_scale=True):
+                    prefix, identifier, name = line.strip().split('\t')
+                    lookup[prefix, identifier] = name
+        elif isinstance(data, pd.DataFrame):
+            lookup = {
+                (prefix, identifier): name
+                for prefix, identifier, name in data.values
+            }
+        else:
+            raise TypeError(f'invalid type: {data}')
+
+        def _get_name(_prefix: str, _identifier: str) -> Optional[str]:
+            return lookup.get((_prefix, _identifier))
+
+        app.config['get_name'] = _get_name
+
     app.register_blueprint(resolve_blueprint)
     return app
 
@@ -77,9 +116,11 @@ def get_app() -> Flask:
 @click.command()
 @click.option('--port')
 @click.option('--host', type=int)
-def main(port: str, host: int):
+@click.option('--data')
+@verbose_option
+def main(port: str, host: int, data: Optional[str]):
     """Run the resolver app."""
-    app = get_app()
+    app = get_app(data)
     app.run(port=port, host=host)
 
 
