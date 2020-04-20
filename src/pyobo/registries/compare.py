@@ -40,7 +40,8 @@ def main():
         subsets=[miriam_entries, ols_entries, obofoundry_entries],
         set_labels=('MIRIAM', 'OLS', 'OBOFoundry'),
     )
-    plt.savefig('compare.png')
+    plt.tight_layout()
+    plt.savefig('compare.svg')
 
     # nothing interesting unique to OLS
     # print(*sorted(ols_entries - miriam_entries - obofoundry_entries), sep='\n')
