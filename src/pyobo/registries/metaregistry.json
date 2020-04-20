@@ -158,7 +158,8 @@
       "not_available_as_obo": true,
       "synonyms": [
         "CLO"
-      ]
+      ],
+      "wikidata_property": "P2158"
     },
     "cmo": {
       "pattern": "\\d{7}"
@@ -231,7 +232,8 @@
         "EC",
         "EC-CODE",
         "ECCODE"
-      ]
+      ],
+      "wikidata_property": "P591"
     },
     "ecmdb": {
       "pattern": "ECMDB\\d+",
@@ -266,7 +268,8 @@
     "ensembl": {
       "synonyms": [
         "Ensembl"
-      ]
+      ],
+      "wikidata_property": "P594"
     },
     "ero": {
       "not_available_as_obo": true
@@ -338,14 +341,15 @@
         "gobp",
         "gocc",
         "gomf"
-      ]
+      ],
+      "wikidata_property": "P686"
     },
     "hao": {
       "pattern": "\\d{7}"
     },
     "hgnc": {
       "synonyms": [],
-      "wikidata_relation": "wdt:P354"
+      "wikidata_property": "P354"
     },
     "hgnc.genefamily": {
       "synonyms": [
@@ -415,7 +419,8 @@
       "synoynms": [
         "InterPro",
         "IP"
-      ]
+      ],
+      "wikidata_property": "P2926"
     },
     "itis": {
       "pattern": "\\d+",
@@ -488,7 +493,8 @@
         "MESHA",
         "MESHC",
         "MESHPP"
-      ]
+      ],
+      "wikidata_property": "P486"
     },
     "metacyc": {
       "synonyms": [
@@ -511,7 +517,14 @@
       "synonyms": [
         "OMIM",
         "OMIMPS"
-      ]
+      ],
+      "wikidata_property": "P492"
+    },
+    "mirbase": {
+      "wikidata_property": "P2870"
+    },
+    "mirbase.mature": {
+      "wikidata_property": "P2871"
     },
     "miro": {
       "download": "http://purl.obolibrary.org/obo/miro.obo",
@@ -555,7 +568,8 @@
         "NCBIGene",
         "EGID",
         "entrez gene/locuslink"
-      ]
+      ],
+      "wikidata_property": "P351"
     },
     "ncbitaxon": {
       "download": "http://purl.obolibrary.org/obo/ncbitaxon.obo",
@@ -588,6 +602,11 @@
         "NCIT_Thesaurus",
         "NCITm",
         "NCITt"
+      ]
+    },
+    "nextprot": {
+      "synoynms": [
+        "NXP"
       ]
     },
     "nist": {
@@ -656,12 +675,20 @@
     "peco": {
       "pattern": "\\d{7}"
     },
+    "pfam": {
+      "synonyms": [
+        "PF"
+      ]
+    },
     "pfr": {
       "pattern": "\\d+",
       "synonyms": [
         "TDR"
       ],
       "url": "http://repository.topdownproteomics.org/proteoforms/$1"
+    },
+    "pharmgkb": {
+      "wikidata_property": "P7001"
     },
     "phipo": {
       "pattern": "\\d{7}"
@@ -692,6 +719,9 @@
         "PRO"
       ]
     },
+    "prosite": {
+      "wikidata_property": "P4355"
+    },
     "pseudogene": {
       "synonyms": [
         "pseudogene.org"
@@ -703,12 +733,14 @@
         "CID",
         "pubchem_id",
         "Pubchem"
-      ]
+      ],
+      "wikidata_property": "P662"
     },
     "pubchem.substance": {
       "synonyms": [
         "DSSTox_Generic_SID"
-      ]
+      ],
+      "wikidata_property": "P2153"
     },
     "pubmed": {
       "synonyms": [
@@ -719,7 +751,8 @@
     "reactome": {
       "synonyms": [
         "RE"
-      ]
+      ],
+      "wikidata_property": "P3937"
     },
     "reaxys": {
       "synonyms": [
@@ -752,6 +785,11 @@
     },
     "sibo": {
       "pattern": "\\d{7}"
+    },
+    "signor": {
+      "synonyms": [
+        "SIGNOR"
+      ]
     },
     "snomedct": {
       "miriam": {
@@ -821,7 +859,9 @@
         "Uber-anatomy ontology"
       ]
     },
-    "ucsc": {},
+    "ucsc": {
+      "wikidata_property": "P2576"
+    },
     "umbbd.compound": {
       "synonyms": [
         "UM-BBD_compID"
@@ -918,6 +958,9 @@
         "WBPhenotype"
       ]
     },
+    "wikipathways": {
+      "wikidata_property": "P2410"
+    },
     "wormbase": {
       "synonyms": [
         "WormBase"
@@ -949,7 +992,8 @@
     "zfin": {
       "synonyms": [
         "ZFIN"
-      ]
+      ],
+      "wikidata_property": "P3870"
     },
     "zfs": {
       "pattern": "\\d{7}"
