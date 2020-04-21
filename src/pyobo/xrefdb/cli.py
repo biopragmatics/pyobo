@@ -14,7 +14,7 @@ from ..cli_utils import verbose_option
 from ..identifier_utils import UNHANDLED_NAMESPACES
 
 directory_option = click.option(
-    '--directory',
+    '-d', '--directory',
     type=click.Path(dir_okay=True, file_okay=False, exists=True),
     default=os.getcwd(),
 )
