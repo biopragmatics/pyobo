@@ -5,7 +5,7 @@
 import logging
 import os
 import tarfile
-from typing import Optional
+from typing import List, Optional, Tuple
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
@@ -22,6 +22,7 @@ __all__ = [
     'ensure_df',
     'ensure_excel',
     'ensure_tar_df',
+    'iter_cached_obo',
 ]
 
 logger = logging.getLogger(__name__)
@@ -119,3 +120,15 @@ def ensure_tar_df(
     with tarfile.open(path) as tar_file:
         with tar_file.extractfile(inner_path) as file:
             return pd.read_csv(file, **kwargs)
+
+
+def iter_cached_obo() -> List[Tuple[str, str]]:
+    """Iterate over cached OBO paths."""
+    for prefix in os.listdir(PYOBO_HOME):
+        d = os.path.join(PYOBO_HOME, prefix)
+        if not os.path.isdir(d):
+            continue
+        for x in os.listdir(d):
+            if x.endswith('.obo'):
+                p = os.path.join(d, x)
+                yield prefix, p

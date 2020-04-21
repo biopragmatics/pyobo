@@ -4,9 +4,12 @@
 
 import logging
 import os
+from operator import itemgetter
 from typing import Optional
 
 import click
+import humanize
+from tabulate import tabulate
 
 from .cli_utils import echo_df, verbose_option
 from .constants import PYOBO_HOME
@@ -14,7 +17,8 @@ from .extract import (
     get_filtered_properties_df, get_filtered_xrefs, get_id_name_mapping, get_id_synonyms_mapping, get_properties_df,
     get_relations_df, get_xrefs_df,
 )
-from .sources import iter_converted_obos
+from .path_utils import iter_cached_obo
+from .sources import CONVERTED, iter_converted_obos
 from .xrefdb.cli import javerts_xrefs, ooh_na_na
 
 __all__ = ['main']
@@ -127,6 +131,20 @@ def clean(remove_obo: bool):
         for f in entities:
             if any(f.endswith(suffix) for suffix in suffixes):
                 os.remove(os.path.join(d, f))
+
+
+@main.command()
+def ls():
+    """List how big all of the OBO files are."""
+    entries = [
+        (prefix, os.path.getsize(path))
+        for prefix, path in iter_cached_obo()
+    ]
+    entries = [
+        (prefix, humanize.naturalsize(size), '✅' if prefix not in CONVERTED else '❌')
+        for prefix, size in sorted(entries, key=itemgetter(1), reverse=True)
+    ]
+    click.echo(tabulate(entries, headers=['Source', 'Size', 'OBO']))
 
 
 main.add_command(javerts_xrefs)
