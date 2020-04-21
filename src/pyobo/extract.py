@@ -206,21 +206,21 @@ def get_hierarchy(
 
     is_a_df = get_filtered_relations_df(prefix=prefix, relation=is_a, **kwargs)
     for source_id, target_ns, target_id in is_a_df.values:
-        rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}')
+        rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation='is_a')
 
     if include_has_member:
         has_member_df = get_filtered_relations_df(prefix, relation=has_member, **kwargs)
         for target_id, source_ns, source_id in has_member_df.values:
-            rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}')
+            rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}', relation='is_a')
 
     if include_part_of:
         part_of_df = get_filtered_relations_df(prefix=prefix, relation=part_of, **kwargs)
         for source_id, target_ns, target_id in part_of_df.values:
-            rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}')
+            rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation='part_of')
 
         has_part_df = get_filtered_relations_df(prefix=prefix, relation=part_of, **kwargs)
         for target_id, source_ns, source_id in has_part_df.values:
-            rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}')
+            rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}', relation='part_of')
 
     return rv
 

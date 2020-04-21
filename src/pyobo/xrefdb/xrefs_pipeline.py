@@ -272,3 +272,15 @@ def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
         for line in tqdm(file, desc='extracting ncbigene'):
             line = line.split('\t')
             yield 'ncbigene', line[1], line[2]
+
+
+def bens_magical_ontology() -> nx.DiGraph:
+    """This makes a super graph containing is_a, part_of, and xref relationships."""
+    rv = nx.DiGraph()
+    df = get_xref_df()
+    for source_ns, source_id, target_ns, target_id, provenance in df.values:
+        rv.add_edge(f'{source_ns}:{source_id}', f'{target_ns}:{target_id}', relation='xref')
+    for prefix, _ in _iterate_metaregistry():
+        hierarchy = get_hierarchy(prefix, include_has_member=True, include_part_of=True)
+        rv.add_edges_from(hierarchy.edges(data=True))
+    return rv
