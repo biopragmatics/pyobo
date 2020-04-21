@@ -33,6 +33,8 @@ __all__ = [
     # Xrefs
     'get_filtered_xrefs',
     'get_xrefs_df',
+    # Alt ids
+    'get_id_to_alts',
     # misc
     'iter_cached_obo',
 ]
@@ -181,6 +183,19 @@ def get_xrefs_df(prefix: str, **kwargs) -> pd.DataFrame:
         return obo.get_xrefs_df()
 
     return _df_getter()
+
+
+def get_id_to_alts(prefix: str, **kwargs) -> Mapping[str, List[str]]:
+    """Get alternate identifiers."""
+    path = prefix_directory_join(prefix, 'cache', 'alt_ids.tsv')
+    header = [f'{prefix}_id', 'alt_id']
+
+    @cached_multidict(path=path, header=header)
+    def _get_mapping() -> Mapping[str, List[str]]:
+        obo = get(prefix, **kwargs)
+        return obo.get_id_alts_mapping()
+
+    return _get_mapping()
 
 
 def iter_cached_obo() -> List[Tuple[str, str]]:

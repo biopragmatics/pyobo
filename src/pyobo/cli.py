@@ -14,8 +14,8 @@ from tabulate import tabulate
 from .cli_utils import echo_df, verbose_option
 from .constants import PYOBO_HOME
 from .extract import (
-    get_filtered_properties_df, get_filtered_xrefs, get_id_name_mapping, get_id_synonyms_mapping, get_properties_df,
-    get_relations_df, get_xrefs_df, iter_cached_obo,
+    get_filtered_properties_df, get_filtered_xrefs, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts,
+    get_properties_df, get_relations_df, get_xrefs_df, iter_cached_obo,
 )
 from .sources import CONVERTED, iter_converted_obos
 from .xrefdb.cli import javerts_xrefs, ooh_na_na
@@ -96,6 +96,19 @@ def properties(prefix: str, key: Optional[str]):
     else:
         properties_df = get_filtered_properties_df(prefix, prop=key)
     echo_df(properties_df)
+
+
+@main.command()
+@prefix_argument
+@verbose_option
+def alts(prefix: str):
+    """Page through alt ids in a namespace."""
+    id_to_alts = get_id_to_alts(prefix)
+    click.echo_via_pager('\n'.join(
+        f'{identifier}\t{alt}'
+        for identifier, alts in id_to_alts.items()
+        for alt in alts
+    ))
 
 
 @main.command()
