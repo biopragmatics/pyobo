@@ -35,7 +35,7 @@ def _get_df(name) -> pd.DataFrame:
 
 
 def iter_compath_dfs() -> Iterable[pd.DataFrame]:
-    """Iterate over all ComPath mappings"""
+    """Iterate over all ComPath mappings."""
     yield _get_df('kegg_reactome.csv')
     yield _get_df('kegg_wikipathways.csv')
     yield _get_df('pathbank_kegg.csv')

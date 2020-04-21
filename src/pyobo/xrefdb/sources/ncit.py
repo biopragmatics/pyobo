@@ -5,7 +5,8 @@
 from typing import Iterable
 
 import pandas as pd
-from pyobo.path_utils import ensure_df
+
+from ...path_utils import ensure_df
 
 __all__ = [
     'iter_ncit_dfs',
