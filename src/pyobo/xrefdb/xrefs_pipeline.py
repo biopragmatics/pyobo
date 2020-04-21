@@ -31,7 +31,7 @@ SKIP = {
     'rnao',  # just really malformed, way too much unconverted OWL
 }
 SKIP_XREFS = {
-    'apo',
+    'apo', 'rxno', 'omit', 'mop', 'mamo', 'ido', 'iao', 'gaz', 'fypo', 'nbo',
 }
 COLUMNS = ['source_ns', 'source_id', 'target_ns', 'target_id', 'source']
 
@@ -202,6 +202,7 @@ def single_source_shortest_path(graph: nx.Graph, curie: str) -> Optional[Mapping
 def get_xref_df() -> pd.DataFrame:
     """Get the ultimate xref database."""
     df = pd.concat(_iterate_xref_dfs())
+    df.drop_duplicates(inplace=True)
     df.dropna(inplace=True)
     df.sort_values(COLUMNS, inplace=True)
     return df
@@ -226,7 +227,6 @@ def _iterate_xref_dfs() -> Iterable[pd.DataFrame]:
             continue
 
         df['source'] = prefix
-        df.drop_duplicates(inplace=True)
         yield df
 
         prefix_directory = get_prefix_directory(prefix)
@@ -259,7 +259,7 @@ def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
                 str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0"?>')
                 or str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0" encoding="UTF-8"?>')
             ):
-                logger.info('no resource available for %s', prefix)
+                logger.info('no resource available for %s. See http://www.obofoundry.org/ontology/%s', prefix, prefix)
                 continue  # this means that it tried doing parsing on an xml page saying get the fuck out
             logger.warning('could not successfully parse %s: %s', prefix, e)
         else:
