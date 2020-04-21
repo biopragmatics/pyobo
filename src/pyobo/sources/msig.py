@@ -13,7 +13,7 @@ from scrapy.crawler import CrawlerProcess
 from .gmt_utils import parse_gmt_file
 from ..path_utils import prefix_directory_join
 from ..struct import Obo, Reference, Term
-from ..struct.defs import pathway_has_part
+from ..struct.typedef import pathway_has_part
 
 logger = logging.getLogger(__name__)
 
