@@ -25,5 +25,5 @@ GLOBAL_SKIP = {
     'rnao',
     'mo',  # deprecated
     'resid',  # deprecated
-    'adw', # deprecated
+    'adw',  # deprecated
 }

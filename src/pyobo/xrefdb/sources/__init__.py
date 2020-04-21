@@ -12,6 +12,7 @@ from .famplex import get_famplex_xrefs_df
 from .gilda import get_gilda_xrefs_df
 from .intact import get_intact_complex_portal_xrefs_df, get_intact_reactome_xrefs_df
 from .ncit import iter_ncit_dfs
+from .wikidata import iterate_wikidata_dfs
 
 __all__ = [
     'get_famplex_xrefs_df',
@@ -32,3 +33,4 @@ def iter_sourced_xref_dfs() -> Iterable[pd.DataFrame]:
     yield get_intact_reactome_xrefs_df()
     yield from iter_ncit_dfs()
     yield from iter_compath_dfs()
+    yield from iterate_wikidata_dfs()
