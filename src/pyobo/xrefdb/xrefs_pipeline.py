@@ -15,7 +15,7 @@ from more_itertools import pairwise
 from tqdm import tqdm
 
 from .sources import iter_sourced_xref_dfs
-from ..extract import get_id_name_mapping, get_xrefs_df
+from ..extract import get_hierarchy, get_id_name_mapping, get_xrefs_df
 from ..getters import MissingOboBuild, NoOboFoundry
 from ..identifier_utils import normalize_prefix
 from ..path_utils import ensure_path, get_prefix_directory
