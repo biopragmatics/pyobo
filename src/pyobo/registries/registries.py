@@ -142,6 +142,13 @@ CURATED_REGISTRY = get_curated_registry()
 
 CURATED_REGISTRY_DATABASE = CURATED_REGISTRY['database']
 
+#: A list of prefixes that have been manually annotated as not being available in OBO
+NOT_AVAILABLE_AS_OBO = {
+    prefix
+    for prefix, entry in CURATED_REGISTRY_DATABASE.items()
+    if 'not_available_as_obo' in entry and entry['not_available_as_obo']
+}
+
 #: URLs of resources that weren't listed in OBO Foundry properly
 CURATED_URLS = {
     k: v['download']
@@ -156,6 +163,7 @@ XREF_SUFFIX_BLACKLIST = set(CURATED_REGISTRY['blacklists']['suffix'])
 #: Xrefs matching these will be ignored
 XREF_BLACKLIST = set(CURATED_REGISTRY['blacklists']['full'])
 
+#: A list of prefixes that have been manually annotated as obsolete
 OBSOLETE = CURATED_REGISTRY['obsolete']
 
 #: Remappings for xrefs based on the entire xre

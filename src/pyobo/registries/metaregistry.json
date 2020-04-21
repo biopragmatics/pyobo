@@ -333,6 +333,9 @@
       "download": "https://raw.githubusercontent.com/monarch-initiative/GENO-ontology/develop/geno-full.obo",
       "pattern": "\\d{7}"
     },
+    "geo": {
+      "not_available_as_obo": true
+    },
     "gno": {
       "pattern": "\\d{8}"
     },

@@ -20,3 +20,10 @@ OUTPUT_DIRECTORY = (
 SPECIES_REMAPPING = {
     "Canis familiaris": "Canis lupus familiaris",
 }
+
+GLOBAL_SKIP = {
+    'rnao',
+    'mo',  # deprecated
+    'resid',  # deprecated
+    'adw', # deprecated
+}

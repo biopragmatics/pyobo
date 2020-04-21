@@ -15,9 +15,8 @@ from .cli_utils import echo_df, verbose_option
 from .constants import PYOBO_HOME
 from .extract import (
     get_filtered_properties_df, get_filtered_xrefs, get_id_name_mapping, get_id_synonyms_mapping, get_properties_df,
-    get_relations_df, get_xrefs_df,
+    get_relations_df, get_xrefs_df, iter_cached_obo,
 )
-from .path_utils import iter_cached_obo
 from .sources import CONVERTED, iter_converted_obos
 from .xrefdb.cli import javerts_xrefs, ooh_na_na
 

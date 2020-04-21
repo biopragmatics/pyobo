@@ -2,15 +2,18 @@
 
 """High level API for extracting OBO content."""
 
+import os
 from functools import lru_cache
 from typing import List, Mapping, Optional, Tuple, Union
 
 import pandas as pd
 
 from .cache_utils import cached_df, cached_mapping, cached_multidict
+from .constants import GLOBAL_SKIP, PYOBO_HOME
 from .getters import get
 from .identifier_utils import normalize_curie
 from .path_utils import prefix_directory_join
+from .registries.registries import NOT_AVAILABLE_AS_OBO, OBSOLETE
 from .struct import Reference, TypeDef, get_reference_tuple
 
 __all__ = [
@@ -30,6 +33,8 @@ __all__ = [
     # Xrefs
     'get_filtered_xrefs',
     'get_xrefs_df',
+    # misc
+    'iter_cached_obo',
 ]
 
 
@@ -176,3 +181,17 @@ def get_xrefs_df(prefix: str, **kwargs) -> pd.DataFrame:
         return obo.get_xrefs_df()
 
     return _df_getter()
+
+
+def iter_cached_obo() -> List[Tuple[str, str]]:
+    """Iterate over cached OBO paths."""
+    for prefix in os.listdir(PYOBO_HOME):
+        if prefix in GLOBAL_SKIP or prefix in NOT_AVAILABLE_AS_OBO or prefix in OBSOLETE:
+            continue
+        d = os.path.join(PYOBO_HOME, prefix)
+        if not os.path.isdir(d):
+            continue
+        for x in os.listdir(d):
+            if x.endswith('.obo'):
+                p = os.path.join(d, x)
+                yield prefix, p
