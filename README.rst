@@ -118,6 +118,39 @@ with:
     $ cd pyobo
     $ pip install -e .
 
+Curation of the Metaregistry
+----------------------------
+At src/pyobo/registries/metaregistry.json is the curated registry. This is a source of information that contains
+all sorts of fixes for missing/wrong information in MIRIAM, OLS, and OBO Foundry; entries that don't appear in
+any of them; additional synonym information for each namespace/prefix; rules for normalizing xrefs and CURIEs, etc.
+
+Most users will be interested in the ``"database"`` subdictionary.
+Each entry can have some combination of these keys:
+
+- ``title``
+- ``pattern``, a regex string for identifiers
+- ``url``, a url pattern to resolve identifiers. Uses $1 to represent the identifier.
+- ``synonyms``, a list of alternative prefixes that should point to this
+- ``download``, a URL to the OBO file in case OBO Foundry doesn't list it or has a mistake
+- ``not_available_as_obo``, a boolean telling you exactly what it sounds like
+- ``no_own_terms``, a boolean telling you if it is completely derived from external sources
+- ``wikidata_property``, a string pointing to the wikidata property that connects item in WikiData
+  to identifers in this namespace
+- ``miriam``: a dictionary containing "id" and "prefix" to point to MIRIAM
+- ``obofoundry``: a dictionary containing "prefix" to point to OBO Foundry
+- ``ols``, a dictionary containing "ontologyId" to point to OLS
+
+Other entries in thhe metaregistry:
+
+- The ``"remappings"->"full"`` entry is a dictionary from strings that might follow ``xref:``
+  in a given OBO file that need to be completely replaced, due to incorrect formatting
+- The ``"remappings"->"prefix"`` entry contains a dictionary of prefixes for xrefs that need
+  to be remapped. Several rules, for example, remove superfluous spaces that occur inside
+  CURIEs or and others address instances of the GOGO issue.
+- The ``"obsolete"`` entry maps prefixes that have been changed.
+- The ``"blacklists"`` entry contains rules for throwing out malformed xrefs based on
+  full string, just prefix, or just suffix.
+
 Development
 -----------
 Update the registries with the following commands. These external resources get updated all the
