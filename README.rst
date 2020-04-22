@@ -118,6 +118,18 @@ with:
     $ cd pyobo
     $ pip install -e .
 
+Development
+-----------
+Update the registries with the following commands. These external resources get updated all the
+time, so don't forget about this.
+
+.. code-block:: bash
+
+    $ python -m pyobo.registries.obofoundry
+    $ python -m pyobo.registries.ols
+    $ python -m pyobo.registries.miriam
+
+
 .. |build| image:: https://travis-ci.com/pyobo/pyobo.svg?branch=master
     :target: https://travis-ci.com/pyobo/pyobo
     :alt: Build Status
