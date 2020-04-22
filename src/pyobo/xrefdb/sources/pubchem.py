@@ -16,11 +16,7 @@ def get_pubchem_mesh_df() -> pd.DataFrame:
     return pd.DataFrame(
         [
             ('pubchem.compound', k, 'mesh', v, CID_MESH_URL)
-            for k, v in get_pubchem_id_to_mesh_id()
+            for k, v in get_pubchem_id_to_mesh_id().items()
         ],
         columns=['source_ns', 'source_id', 'target_ns', 'target_id', 'source'],
     )
-
-
-if __name__ == '__main__':
-    print(get_pubchem_mesh_df())
