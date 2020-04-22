@@ -4059,7 +4059,7 @@
     "build": {
       "method": "obo2owl",
       "notes": "SWITCH",
-      "source_url": "https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/master/so.obo"
+      "source_url": "https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/master/Ontology_Files/so.obo"
     },
     "contact": {
       "email": "keilbeck@genetics.utah.edu",
