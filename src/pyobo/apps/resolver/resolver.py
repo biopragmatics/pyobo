@@ -139,7 +139,7 @@ def get_app(data: Union[None, str, pd.DataFrame] = None) -> Flask:
 
 
 @click.command()
-@click.version_option()
+@click.version_option(version=pyobo.version.VERSION)
 @click.option('--port', type=int, help='port on which the app is served')
 @click.option('--host', help='host on which the app is run')
 @click.option('--data', help='local 3-column gzipped TSV as database')
