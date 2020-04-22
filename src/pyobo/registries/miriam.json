@@ -1394,6 +1394,30 @@
   {
     "_links": {
       "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2160/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2160"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2160"
+      }
+    },
+    "created": "2020-03-20T15:04:54.734+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "A high level datamodel of biological entities (genes, diseases, phenotypes, pathways, individuals, substances, etc) and their associations.",
+    "mirId": "MIR:00000782",
+    "modified": "2020-03-20T15:04:54.734+0000",
+    "name": "BioLink Model",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^\\S+$",
+    "prefix": "biolink",
+    "sampleId": "Gene"
+  },
+  {
+    "_links": {
+      "contactPerson": {
         "href": "https://registry.api.identifiers.org/restApi/namespaces/1760/contactPerson"
       },
       "namespace": {
@@ -3218,6 +3242,30 @@
   {
     "_links": {
       "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2168/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2168"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2168"
+      }
+    },
+    "created": "2020-03-24T05:11:19.658+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "DANDI works with BICCN and other BRAIN Initiative awardees to curate data using community data standards such as NWB and BIDS, and to make data and software for cellular neurophysiology FAIR (Findable, Accessible, Interoperable, and Reusable).\nDANDI references electrical and optical cellular neurophysiology recordings and associated MRI and/or optical imaging data.\nThese data will help scientists uncover and understand cellular level mechanisms of brain function. Scientists will study the formation of neural networks, how cells and networks enable functions such as learning and memory, and how these functions are disrupted in neurological disorders.",
+    "mirId": "MIR:00000786",
+    "modified": "2020-03-24T05:11:19.658+0000",
+    "name": "DANDI: Distributed Archives for Neurophysiology Data Integration",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^\\d{6}(/\\d+\\.\\d+\\.\\d+)?$",
+    "prefix": "dandi",
+    "sampleId": "000017"
+  },
+  {
+    "_links": {
+      "contactPerson": {
         "href": "https://registry.api.identifiers.org/restApi/namespaces/1049/contactPerson"
       },
       "namespace": {
@@ -4634,6 +4682,30 @@
   {
     "_links": {
       "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2198/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2198"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2198"
+      }
+    },
+    "created": "2020-03-24T07:50:16.285+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "enviPath is a database and prediction system for the microbial biotransformation of organic environmental contaminants. The database provides the possibility to store and view experimentally observed biotransformation pathways. The pathway prediction system provides different relative reasoning models to predict likely biotransformation pathways and products.",
+    "mirId": "MIR:00000727",
+    "modified": "2020-03-24T07:50:16.285+0000",
+    "name": "enviPath",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^[\\w^_]{8}-[\\w^_]{4}-[\\w^_]{4}-[\\w^_]{4}-[\\w^_]{12}\\/[\\w-]+\\/[\\w^_]{8}-[\\w^_]{4}-[\\w^_]{4}-[\\w^_]{4}-[\\w^_]{12}$",
+    "prefix": "envipath",
+    "sampleId": "32de3cf4-e3e6-4168-956e-32fa5ddb0ce1/compound/b545cabc-8c9e-4b20-8848-efa015b481ea"
+  },
+  {
+    "_links": {
+      "contactPerson": {
         "href": "https://registry.api.identifiers.org/restApi/namespaces/1644/contactPerson"
       },
       "namespace": {
@@ -5930,6 +6002,30 @@
   {
     "_links": {
       "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2129/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2129"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2129"
+      }
+    },
+    "created": "2020-03-17T08:03:56.077+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "The Genomes OnLine Database (GOLD) catalogues genome and metagenome sequencing projects from around the world, along with their associated metadata. Information in GOLD is organized into four levels: Study, Biosample/Organism, Sequencing Project and Analysis Project.",
+    "mirId": "MIR:00000733",
+    "modified": "2020-03-17T08:03:56.077+0000",
+    "name": "Genomes OnLine Database (GOLD)",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^[A-Z][a-z][0-9]+$",
+    "prefix": "gold",
+    "sampleId": "Gs0000008"
+  },
+  {
+    "_links": {
+      "contactPerson": {
         "href": "https://registry.api.identifiers.org/restApi/namespaces/1164/contactPerson"
       },
       "namespace": {
@@ -5942,12 +6038,12 @@
     "created": "2019-06-11T14:17:12.343+0000",
     "deprecated": false,
     "deprecationDate": null,
-    "description": "The GOLD (Genomes OnLine Database)is a resource for centralized monitoring of genome and metagenome projects worldwide. It stores information on complete and ongoing projects, along with their associated metadata. This collection references the sequencing status of individual genomes.",
+    "description": "- DEPRECATION NOTE -\nPlease, keep in mind that this namespace has been superseeded by \u2018gold\u2019 prefix at https://registry.identifiers.org/registry/gold, and this namespace is kept here for support to already existing citations, new ones would need to use the pointed \u2018gold\u2019 namespace.\n\nThe GOLD (Genomes OnLine Database)is a resource for centralised monitoring of genome and metagenome projects worldwide. It stores information on complete and ongoing projects, along with their associated metadata. This collection references the sequencing status of individual genomes.",
     "mirId": "MIR:00000401",
-    "modified": "2019-06-11T14:17:12.343+0000",
+    "modified": "2020-03-26T09:37:26.767+0000",
     "name": "GOLD genome",
     "namespaceEmbeddedInLui": false,
-    "pattern": "^[Gi|Gc]\\d+$",
+    "pattern": "^(Gi|Gc)\\d+$",
     "prefix": "gold.genome",
     "sampleId": "Gi07796"
   },
@@ -5966,9 +6062,9 @@
     "created": "2019-06-11T14:17:12.564+0000",
     "deprecated": false,
     "deprecationDate": null,
-    "description": "The GOLD (Genomes OnLine Database)is a resource for centralized monitoring of genome and metagenome projects worldwide. It stores information on complete and ongoing projects, along with their associated metadata. This collection references metadata associated with samples.",
+    "description": "- DEPRECATION NOTE -\nPlease, keep in mind that this namespace has been superseeded by \u2018gold\u2019 prefix at https://registry.identifiers.org/registry/gold, and this namespace is kept here for support to already existing citations, new ones would need to use the pointed \u2018gold\u2019 namespace. \n\nThe GOLD (Genomes OnLine Database)is a resource for centralized monitoring of genome and metagenome projects worldwide. It stores information on complete and ongoing projects, along with their associated metadata. This collection references metadata associated with samples.",
     "mirId": "MIR:00000402",
-    "modified": "2019-06-11T14:17:12.564+0000",
+    "modified": "2020-03-26T09:38:38.398+0000",
     "name": "GOLD metadata",
     "namespaceEmbeddedInLui": false,
     "pattern": "^Gm\\d+$",
@@ -7226,6 +7322,30 @@
   {
     "_links": {
       "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2108/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2108"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2108"
+      }
+    },
+    "created": "2020-03-02T17:27:03.688+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "Image Data Resource (IDR) is an online, public data repository that seeks to store, integrate and serve image datasets from published scientific studies. We have collected and are continuing to receive existing and newly created \u201creference image\" datasets that are valuable resources for a broad community of users, either because they will be frequently accessed and cited or because they can serve as a basis for re-analysis and the development of new computational tools.",
+    "mirId": "MIR:00000743",
+    "modified": "2020-03-02T17:27:03.688+0000",
+    "name": "Image Data Resource",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^[0-9]{4}$",
+    "prefix": "idr",
+    "sampleId": "0001"
+  },
+  {
+    "_links": {
+      "contactPerson": {
         "href": "https://registry.api.identifiers.org/restApi/namespaces/386/contactPerson"
       },
       "namespace": {
@@ -7456,10 +7576,10 @@
     "deprecationDate": null,
     "description": "The genome assembly database contains detailed information about genome assemblies for eukaryota, bacteria and archaea. The scope of the genome collections database does not extend to viruses, viroids and bacteriophage.",
     "mirId": "MIR:00000607",
-    "modified": "2019-11-04T16:22:10.920+0000",
+    "modified": "2020-03-31T12:32:16.941+0000",
     "name": "Genome assembly database",
     "namespaceEmbeddedInLui": false,
-    "pattern": "^GC[AF]_[0-9]{9}\\.[0-9]$",
+    "pattern": "^GC[AF]_[0-9]{9}\\.[0-9]+$",
     "prefix": "insdc.gca",
     "sampleId": "GCA_000155495.1"
   },
@@ -8270,10 +8390,10 @@
     "created": "2019-06-11T14:16:41.635+0000",
     "deprecated": false,
     "deprecationDate": null,
-    "description": "Knapsack provides information on metabolites and  the taxonomic class with which they are associated.",
+    "description": "KNApSAcK provides information on metabolites and the\ntaxonomic class with which they are associated.",
     "mirId": "MIR:00000271",
-    "modified": "2019-06-11T14:16:41.635+0000",
-    "name": "KnapSack",
+    "modified": "2020-04-22T09:28:07.963+0000",
+    "name": "KNApSAcK",
     "namespaceEmbeddedInLui": false,
     "pattern": "^C\\d{8}",
     "prefix": "knapsack",
@@ -8944,10 +9064,10 @@
     "deprecationDate": null,
     "description": "MeSH (Medical Subject Headings) is the National Library of Medicine's controlled vocabulary thesaurus. It consists of sets of terms naming descriptors in a hierarchical structure that permits searching at various levels of specificity. This thesaurus is used by NLM for indexing articles from biomedical journals, cataloguing of books, documents, etc.",
     "mirId": "MIR:00000560",
-    "modified": "2019-06-11T14:17:48.752+0000",
+    "modified": "2020-04-21T17:40:51.334+0000",
     "name": "MeSH",
     "namespaceEmbeddedInLui": false,
-    "pattern": "^(C|D)\\d{6}$",
+    "pattern": "^(C|D)\\d{6,9}$",
     "prefix": "mesh",
     "sampleId": "C000100"
   },
@@ -9400,12 +9520,36 @@
     "deprecationDate": null,
     "description": "Minid are identifiers used to provide robust reference to intermediate data generated during the course of a research investigation.",
     "mirId": "MIR:00000645",
-    "modified": "2019-06-11T14:18:10.091+0000",
-    "name": "Minimal Identifiers for Transient Data",
+    "modified": "2020-03-20T09:37:38.029+0000",
+    "name": "Minimal Viable Identifier",
     "namespaceEmbeddedInLui": false,
     "pattern": "^[A-Za-z0-9]+$",
     "prefix": "minid",
     "sampleId": "b97957"
+  },
+  {
+    "_links": {
+      "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2085/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2085"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2085"
+      }
+    },
+    "created": "2020-02-25T11:14:38.686+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "Minid are identifiers used to provide robust reference to intermediate data generated during the course of a research investigation. This is a prefix for referencing identifiers in the minid test namespace. ",
+    "mirId": "MIR:00000707",
+    "modified": "2020-02-28T10:24:36.137+0000",
+    "name": "MINID Test",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "[A-Za-z0-9]+$",
+    "prefix": "minid.test",
+    "sampleId": "3SBPLMKKVEVR"
   },
   {
     "_links": {
@@ -10802,6 +10946,30 @@
   {
     "_links": {
       "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2140/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2140"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2140"
+      }
+    },
+    "created": "2020-03-17T12:41:40.413+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "NMR database for organic structures and their nuclear magnetic resonance (nmr) spectra. It allows for spectrum prediction (13C, 1H and other nuclei) as well as for searching spectra, structures and other properties.",
+    "mirId": "MIR:00000748",
+    "modified": "2020-03-17T12:43:18.460+0000",
+    "name": "NMR Shift Database",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^[0-9]+$",
+    "prefix": "nmrshiftdb2",
+    "sampleId": "234"
+  },
+  {
+    "_links": {
+      "contactPerson": {
         "href": "https://registry.api.identifiers.org/restApi/namespaces/736/contactPerson"
       },
       "namespace": {
@@ -12026,6 +12194,30 @@
   {
     "_links": {
       "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2215/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2215"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2215"
+      }
+    },
+    "created": "2020-04-22T09:46:18.729+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "The Polygenic Score (PGS) Catalog is an open database of PGS and the relevant metadata required for accurate application and evaluation.",
+    "mirId": "MIR:00000753",
+    "modified": "2020-04-22T09:46:18.729+0000",
+    "name": "Polygenic Score Catalog",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^PGS[0-9]{6}$",
+    "prefix": "pgs",
+    "sampleId": "PGS000018"
+  },
+  {
+    "_links": {
+      "contactPerson": {
         "href": "https://registry.api.identifiers.org/restApi/namespaces/1666/contactPerson"
       },
       "namespace": {
@@ -12712,10 +12904,10 @@
     "deprecationDate": null,
     "description": "The PRotein Ontology (PRO) has been designed to describe the relationships of proteins and protein evolutionary classes, to delineate the multiple protein forms of a gene locus (ontology for protein forms), and to interconnect existing ontologies.",
     "mirId": "MIR:00000141",
-    "modified": "2019-06-11T14:16:11.083+0000",
+    "modified": "2020-03-16T08:35:08.949+0000",
     "name": "Protein Ontology",
     "namespaceEmbeddedInLui": true,
-    "pattern": "^PR\\:P?\\d+$",
+    "pattern": "^PR:P?\\d+$",
     "prefix": "pr",
     "sampleId": "000000024"
   },
@@ -13250,6 +13442,54 @@
   {
     "_links": {
       "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2187/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2187"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2187"
+      }
+    },
+    "created": "2020-03-24T06:41:41.433+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "Rice Annotation Project Database (RAP-DB) is a primary rice (Oryza sativa) annotation database established in 2004 upon the completion of the Oryza sativa ssp. japonica cv. Nipponbare genome sequencing by the International Rice Genome Sequencing Project. RAP-DB provides comprehensive resources (e.g. genome annotation, gene expression, DNA markers, genetic diversity, etc.) for biological and agricultural research communities. This collection provides locus information in RAP-DB.",
+    "mirId": "MIR:00000702",
+    "modified": "2020-03-24T06:41:41.433+0000",
+    "name": "RAP-DB Locus",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^Os\\S+g\\d{7}$",
+    "prefix": "rapdb.locus",
+    "sampleId": "Os01g0883800"
+  },
+  {
+    "_links": {
+      "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2184/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2184"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2184"
+      }
+    },
+    "created": "2020-03-24T06:40:28.546+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "Rice Annotation Project Database (RAP-DB) is a primary rice (Oryza sativa) annotation database established in 2004 upon the completion of the Oryza sativa ssp. japonica cv. Nipponbare genome sequencing by the International Rice Genome Sequencing Project. RAP-DB provides comprehensive resources (e.g. genome annotation, gene expression, DNA markers, genetic diversity, etc.) for biological and agricultural research communities. This collection provides transcript information in RAP-DB.",
+    "mirId": "MIR:00000762",
+    "modified": "2020-03-24T06:40:28.546+0000",
+    "name": "RAP-DB Transcript",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^Os\\S+t\\d{7}-\\d{2}$",
+    "prefix": "rapdb.transcript",
+    "sampleId": "Os01t0883800-02"
+  },
+  {
+    "_links": {
+      "contactPerson": {
         "href": "https://registry.api.identifiers.org/restApi/namespaces/1828/contactPerson"
       },
       "namespace": {
@@ -13336,10 +13576,10 @@
     "deprecationDate": null,
     "description": "The Reference Sequence (RefSeq) collection aims to provide a comprehensive, integrated, non-redundant set of sequences, including genomic DNA, transcript (RNA), and protein products.",
     "mirId": "MIR:00000039",
-    "modified": "2019-06-11T14:15:43.085+0000",
+    "modified": "2020-03-31T09:55:28.774+0000",
     "name": "RefSeq",
     "namespaceEmbeddedInLui": false,
-    "pattern": "^((AC|AP|NC|NG|NM|NP|NR|NT|NW|XM|XP|XR|YP|ZP)_\\d+|(NZ\\_[A-Z]{4}\\d+))(\\.\\d+)?$",
+    "pattern": "^(((AC|AP|NC|NG|NM|NP|NR|NT|NW|XM|XP|XR|YP|ZP)_\\d+)|(NZ\\_[A-Z]{2,4}\\d+))(\\.\\d+)?$",
     "prefix": "refseq",
     "sampleId": "NP_012345"
   },
@@ -13744,10 +13984,10 @@
     "deprecationDate": null,
     "description": "The Research Resource Identification Initiative provides RRIDs to 4 main classes of resources: Antibodies, Cell Lines, Model Organisms, and Databases / Software tools.: Antibodies, Model Organisms, and Databases / Software tools.\r\nThe initiative works with participating journals to intercept manuscripts in the publication process that use these resources, and allows publication authors to incorporate RRIDs within the methods sections. It also provides resolver services that access curated data from 10 data sources: the antibody registry (a curated catalog of antibodies), the SciCrunch registry (a curated catalog of software tools and databases), and model organism nomenclature authority databases (MGI, FlyBase, WormBase, RGD), as well as various stock centers. These RRIDs are aggregated and can be searched through SciCrunch.",
     "mirId": "MIR:00000558",
-    "modified": "2019-11-07T09:50:56.983+0000",
+    "modified": "2020-03-11T14:52:15.242+0000",
     "name": "RRID",
     "namespaceEmbeddedInLui": true,
-    "pattern": "^[a-zA-Z]+.+$",
+    "pattern": "^RRID:[a-zA-Z]+.+$",
     "prefix": "rrid",
     "sampleId": "AB_262044"
   },
@@ -14326,6 +14566,30 @@
     "pattern": "^(\\w+)?\\d+$",
     "prefix": "snomedct",
     "sampleId": "284196006"
+  },
+  {
+    "_links": {
+      "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2152/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2152"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2152"
+      }
+    },
+    "created": "2020-03-20T12:58:53.045+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "SNP2TFBS is aimed at studying variations (SNPs/indels) that affect transcription factor binding (TFB) in the Human genome.",
+    "mirId": "MIR:00000766",
+    "modified": "2020-03-20T12:58:53.045+0000",
+    "name": "SNP2TFBS",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^rs[0-9]+$",
+    "prefix": "snp2tfbs",
+    "sampleId": "rs11603840"
   },
   {
     "_links": {
@@ -15094,6 +15358,30 @@
     "pattern": "^\\w+$",
     "prefix": "toxoplasma",
     "sampleId": "TGME49_053730"
+  },
+  {
+    "_links": {
+      "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2096/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2096"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2096"
+      }
+    },
+    "created": "2020-02-28T10:48:52.126+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "The Transport Systems Tracker (TranSyT) is a tool to identify transport systems and the compounds carried across membranes.",
+    "mirId": "MIR:00000736",
+    "modified": "2020-03-03T05:45:40.200+0000",
+    "name": "TranSyT",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "T[A-Z]\\d{7}",
+    "prefix": "transyt",
+    "sampleId": "TR0000001"
   },
   {
     "_links": {

@@ -51,7 +51,8 @@
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "ontology_purl": "http://purl.obolibrary.org/obo/aeo.owl",
-    "title": "Anatomical Entity Ontology"
+    "title": "Anatomical Entity Ontology",
+    "tracker": "https://github.com/obophenotype/human-developmental-anatomy-ontology/issues"
   },
   {
     "activity_status": "inactive",
@@ -108,6 +109,15 @@
       },
       {
         "id": "iao"
+      },
+      {
+        "id": "ncbitaxon"
+      },
+      {
+        "id": "po"
+      },
+      {
+        "id": "peco"
       }
     ],
     "description": "Ontology of agronomic practices, agronomic techniques, and agronomic variables used in agronomic experiments",
@@ -130,6 +140,36 @@
     "ontology_purl": "http://purl.obolibrary.org/obo/agro.owl",
     "title": "Agronomy Ontology",
     "tracker": "https://github.com/AgriculturalSemantics/agro/issues/"
+  },
+  {
+    "activity_status": "active",
+    "build": {
+      "checkout": "git clone https://github.com/EBISPOT/amphx_ontology.git",
+      "path": ".",
+      "system": "git"
+    },
+    "contact": {
+      "email": "hescriva@obs-banyuls.fr",
+      "label": "Hector Escriva"
+    },
+    "dependencies": [
+      {
+        "id": "uberon"
+      }
+    ],
+    "description": "An ontology for the development and anatomy of Amphioxus (Branchiostoma lanceolatum).",
+    "domain": "anatomy",
+    "homepage": "https://github.com/EBISPOT/amphx_ontology",
+    "id": "amphx",
+    "layout": "ontology_detail",
+    "license": {
+      "label": "CC-BY",
+      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
+      "url": "http://creativecommons.org/licenses/by/3.0/"
+    },
+    "ontology_purl": "http://purl.obolibrary.org/obo/amphx.owl",
+    "title": "The Amphioxus Development and Anatomy Ontology",
+    "tracker": "https://github.com/EBISPOT/amphx_ontology/issues"
   },
   {
     "activity_status": "active",
@@ -218,7 +258,7 @@
     "title": "Amphibian taxonomy"
   },
   {
-    "activity_status": "active",
+    "activity_status": "inactive",
     "contact": {
       "email": "jiezheng@pennmedicine.upenn.edu",
       "github": "zhengj2007",
@@ -228,13 +268,13 @@
     "homepage": "https://github.com/obi-bcgo/bcgo",
     "id": "bcgo",
     "in_foundry": false,
+    "is_obsolete": true,
     "layout": "ontology_detail",
     "license": {
       "label": "CC-BY",
       "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
       "url": "http://creativecommons.org/licenses/by/3.0/"
     },
-    "ontology_purl": "http://purl.obolibrary.org/obo/bcgo.owl",
     "title": "Beta Cell Genomics Ontology",
     "tracker": "https://github.com/obi-bcgo/bcgo/issues"
   },
@@ -246,6 +286,7 @@
       "label": "Ramona Walls"
     },
     "description": "An ontology to support the interoperability of biodiversity data, including data on museum collections, environmental/metagenomic samples, and ecological surveys.",
+    "domain": "biodiversity collections",
     "homepage": "https://github.com/tucotuco/bco",
     "id": "bco",
     "in_foundry": false,
@@ -279,6 +320,13 @@
     },
     "mailing_list": "https://groups.google.com/forum/#!forum/bfo-discuss",
     "ontology_purl": "http://purl.obolibrary.org/obo/bfo.owl",
+    "review": {
+      "date": 2016,
+      "document": {
+        "label": "PDF",
+        "link": "https://drive.google.com/open?id=0B81h9ah4tAM_RnNTRUZnVGRyWXM"
+      }
+    },
     "title": "Basic Formal Ontology",
     "tracker": "https://github.com/BFO-ontology/BFO/issues"
   },
@@ -479,9 +527,9 @@
       "source_url": "ftp://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi.obo"
     },
     "contact": {
-      "email": "gowen@ebi.ac.uk",
-      "github": "G-Owen",
-      "label": "Gareth Owen"
+      "email": "amalik@ebi.ac.uk",
+      "github": "amalik01",
+      "label": "Adnan Malik"
     },
     "description": "A structured classification of molecular entities of biological interest focusing on 'small' chemical compounds.",
     "domain": "biochemistry",
@@ -496,6 +544,15 @@
     },
     "ontology_purl": "http://purl.obolibrary.org/obo/chebi.owl",
     "page": "http://www.ebi.ac.uk/chebi/init.do?toolBarForward=userManual",
+    "publications": [
+      {
+        "id": "http://europepmc.org/article/MED/26467479",
+        "title": "ChEBI in 2016: Improved services and an expanding collection of metabolites."
+      }
+    ],
+    "review": {
+      "date": 2010
+    },
     "title": "Chemical Entities of Biological Interest",
     "tracker": "https://github.com/ebi-chebi/ChEBI/issues",
     "twitter": "chebit"
@@ -572,9 +629,9 @@
     ],
     "layout": "ontology_detail",
     "license": {
-      "label": "CC-BY",
-      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
-      "url": "http://creativecommons.org/licenses/by/3.0/"
+      "label": "CC-0",
+      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/cc-zero.png",
+      "url": "http://creativecommons.org/publicdomain/zero/1.0/"
     },
     "ontology_purl": "http://purl.obolibrary.org/obo/chiro.owl",
     "title": "CHEBI Integrated Role Ontology",
@@ -601,6 +658,26 @@
     "ontology_purl": "http://purl.obolibrary.org/obo/chmo.owl",
     "title": "Chemical Methods Ontology",
     "tracker": "https://github.com/rsc-ontologies/rsc-cmo/issues"
+  },
+  {
+    "activity_status": "active",
+    "contact": {
+      "email": "yongqunh@med.umich.edu",
+      "label": "Yongqun Oliver He"
+    },
+    "description": "The Coronavirus Infectious Disease Ontology (CIDO) aims to ontologically represent and standardize various aspects of coronavirus infectious diseases, including their etiology, transmission, epidemiology, pathogenesis, diagnosis, prevention, and treatment.",
+    "homepage": "https://github.com/cido-ontology/cido",
+    "id": "cido",
+    "layout": "ontology_detail",
+    "license": {
+      "label": "CC-BY",
+      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
+      "url": "http://creativecommons.org/licenses/by/4.0/"
+    },
+    "mailing_list": "cido-discuss@googlegroups.com",
+    "ontology_purl": "http://purl.obolibrary.org/obo/cido.owl",
+    "title": "Coronavirus Infectious Disease Ontology",
+    "tracker": "https://github.com/cido-ontology/cido/issues"
   },
   {
     "activity_status": "active",
@@ -674,11 +751,16 @@
     },
     "mailing_list": "https://lists.sourceforge.net/lists/listinfo/obo-cell-type",
     "ontology_purl": "http://purl.obolibrary.org/obo/cl.owl",
+    "publications": [
+      {
+        "id": "https://www.ncbi.nlm.nih.gov/pubmed/27377652",
+        "title": "The Cell Ontology 2016: enhanced content, modularization, and ontology interoperability."
+      }
+    ],
     "taxon": {
       "id": "NCBITaxon:33208",
       "label": "Metazoa"
     },
-    "termgenie": "http://cl.termgenie.org",
     "title": "Cell Ontology",
     "tracker": "https://github.com/obophenotype/cell-ontology/issues"
   },
@@ -763,6 +845,27 @@
   },
   {
     "activity_status": "active",
+    "contact": {
+      "email": "bpeters@lji.org",
+      "github": "bpeters42",
+      "label": "Bjoern Peters"
+    },
+    "description": "COB brings together key terms from a wide range of OBO projects to improve interoperability.",
+    "domain": "upper",
+    "homepage": "https://github.com/OBOFoundry/COB",
+    "id": "cob",
+    "layout": "ontology_detail",
+    "license": {
+      "label": "CC0",
+      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/cc-zero.png",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    "ontology_purl": "http://purl.obolibrary.org/obo/cob.owl",
+    "title": "Core Ontology for Biology and Biomedicine",
+    "tracker": "https://github.com/OBOFoundry/COB/issues"
+  },
+  {
+    "activity_status": "active",
     "build": {
       "checkout": "git clone https://github.com/data2health/contributor-role-ontology.git",
       "path": "src/ontology",
@@ -839,8 +942,8 @@
       "source_url": "http://purl.obolibrary.org/obo/cvdo.owl"
     },
     "contact": {
-      "email": "adrien.barton@gmail.com",
-      "label": "Adrien Barton"
+      "email": "paul.fabry@usherbrooke.ca",
+      "label": "Paul Fabry"
     },
     "description": "An ontology to describe entities related to cardiovascular diseases",
     "domain": "health",
@@ -1013,6 +1116,13 @@
         "title": "Disease Ontology 2015 update: an expanded and updated database of human diseases for linking biomedical knowledge through disease data"
       }
     ],
+    "review": {
+      "date": 2015,
+      "document": {
+        "label": "PDF",
+        "link": "https://drive.google.com/open?id=0B8vqEgF1N0NIZ082U2JETHlSTGs"
+      }
+    },
     "taxon": {
       "id": "NCBITaxon:9606",
       "label": "Homo sapiens"
@@ -1432,9 +1542,9 @@
       "github": "tfhayamizu",
       "label": "Terry Hayamizu"
     },
-    "description": "Abstract (i.e. non-stage specific) stage-specific anatomical structures of the mouse.",
+    "description": "An ontology for mouse anatomy covering embryonic development and postnatal stages.",
     "domain": "anatomy",
-    "homepage": "http://emouseatlas.org",
+    "homepage": "http://www.informatics.jax.org/expression.shtml",
     "id": "emapa",
     "layout": "ontology_detail",
     "license": {
@@ -1443,12 +1553,11 @@
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "ontology_purl": "http://purl.obolibrary.org/obo/emapa.owl",
-    "page": "http://www.obofoundry.org/wiki/index.php/EMAPA:Main_Page",
     "taxon": {
       "id": "NCBITaxon:10088",
       "label": "Mus"
     },
-    "title": "Mouse gross anatomy and development, timed",
+    "title": "Mouse Developmental Anatomy Ontology",
     "tracker": "https://github.com/obophenotype/mouse-anatomy-ontology/issues"
   },
   {
@@ -1481,6 +1590,15 @@
       },
       {
         "id": "ncbitaxon"
+      },
+      {
+        "id": "foodon"
+      },
+      {
+        "id": "po"
+      },
+      {
+        "id": "go"
       }
     ],
     "description": "Ontology of environmental features and habitats",
@@ -1593,6 +1711,7 @@
       "label": "Chris Stoeckert"
     },
     "description": "An ontology is developed to support Eukaryotic Pathogen, Host & Vector Genomics Resource (VEuPathDB; https://veupathdb.org).",
+    "domain": "functional genomics, population biology, clinical epidemiology, and microbiomes",
     "homepage": "https://github.com/VEuPathDB-ontology/VEuPathDB-ontology",
     "id": "eupath",
     "layout": "ontology_detail",
@@ -2029,7 +2148,7 @@
     "license": {
       "label": "CC-BY",
       "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
-      "url": "http://creativecommons.org/licenses/by/3.0/"
+      "url": "http://creativecommons.org/licenses/by/4.0/"
     },
     "ontology_purl": "http://purl.obolibrary.org/obo/fypo.owl",
     "publications": [
@@ -2166,9 +2285,9 @@
       "github": "edwardsnj",
       "label": "Nathan Edwards"
     },
-    "description": "An ontology for glycans based on GlyTouCan, but organized by subsumption.",
+    "description": "GlyTouCan provides stable accessions for glycans described at varyious degrees of characterization, including compositions (no linkage) and topologies (no carbon bond positions or anomeric configurations). GNOme organizes these stable accessions for interative browsing, for text-based searching, and for automated reasoning with well-defined characterization levels.",
     "domain": "glycan structure",
-    "homepage": "https://github.com/glygen-glycan-data/GNOme",
+    "homepage": "https://github.com/glygen-glycan-data/GNOme#readme",
     "id": "gno",
     "layout": "ontology_detail",
     "license": {
@@ -2177,7 +2296,7 @@
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "ontology_purl": "http://purl.obolibrary.org/obo/gno.owl",
-    "title": "Glycan Naming Ontology",
+    "title": "Glycan Naming and Subsumption Ontology (GNOme)",
     "tracker": "https://github.com/glygen-glycan-data/GNOme/issues"
   },
   {
@@ -2239,11 +2358,13 @@
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "ontology_purl": "http://purl.obolibrary.org/obo/go.owl",
+    "review": {
+      "date": 2010
+    },
     "taxon": {
       "id": "NCBITaxon:1",
       "label": "All life"
     },
-    "termgenie": "http://go.termgenie.org",
     "title": "Gene Ontology",
     "tracker": "https://github.com/geneontology/go-ontology/issues/",
     "twitter": "news4go"
@@ -2375,7 +2496,7 @@
       "label": "hpo",
       "url": "https://hpo.jax.org/app/license"
     },
-    "mailing_list": "https://groups.google.com/forum/#!forum/phenotype-ontologies-editors",
+    "mailing_list": "https://groups.io/g/human-phenotype-ontology",
     "ontology_purl": "http://purl.obolibrary.org/obo/hp.owl",
     "publications": [
       {
@@ -2399,7 +2520,6 @@
       "id": "NCBITaxon:9606",
       "label": "Homo sapiens"
     },
-    "termgenie": "http://hp.termgenie.org",
     "title": "Human Phenotype Ontology",
     "tracker": "https://github.com/obophenotype/human-phenotype-ontology/issues/",
     "twitter": "hp_ontology"
@@ -2543,11 +2663,7 @@
     "tracker": "https://github.com/infectious-disease-ontology/infectious-disease-ontology/issues"
   },
   {
-    "activity_status": "active",
-    "build": {
-      "method": "obo2owl",
-      "source_url": "http://anobase.vectorbase.org/idomal/IDOMAL.obo"
-    },
+    "activity_status": "inactive",
     "contact": {
       "email": "topalis@imbb.forth.gr",
       "label": "Pantelis Topalis"
@@ -2654,18 +2770,44 @@
       "email": "paul.fabry@usherbrooke.ca",
       "label": "Paul Fabry"
     },
+    "dependencies": [
+      {
+        "id": "iao"
+      },
+      {
+        "id": "obi"
+      },
+      {
+        "id": "ogms"
+      },
+      {
+        "id": "omiabis"
+      },
+      {
+        "id": "omrse"
+      },
+      {
+        "id": "opmi"
+      }
+    ],
     "description": "LABO is an ontology of informational entities formalizing clinical laboratory tests prescriptions and reporting documents.",
     "domain": "clinical documentation",
     "homepage": "https://github.com/OpenLHS/LABO",
     "id": "labo",
     "layout": "ontology_detail",
     "license": {
-      "label": "CC-BY 4.0",
+      "label": "CC BY 4.0",
       "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "ontology_purl": "http://purl.obolibrary.org/obo/labo.owl",
-    "title": "clinical LABoratory Ontology"
+    "releases": "https://github.com/OpenLHS/LABO/releases/",
+    "taxon": {
+      "id": "NCBITaxon:9606",
+      "label": "Homo sapiens"
+    },
+    "title": "clinical LABoratory Ontology",
+    "tracker": "https://github.com/OpenLHS/LABO/issues"
   },
   {
     "activity_status": "inactive",
@@ -2774,6 +2916,58 @@
     "is_obsolete": true,
     "layout": "ontology_detail",
     "title": "Minimal anatomical terminology"
+  },
+  {
+    "activity_status": "active",
+    "build": {
+      "checkout": "git clone https://github.com/monarch-initiative/MAxO.git",
+      "path": ".",
+      "system": "git"
+    },
+    "contact": {
+      "email": "Leigh.Carmody@jax.org",
+      "github": "LCCarmody",
+      "label": "Leigh Carmody"
+    },
+    "dependencies": [
+      {
+        "id": "iao"
+      },
+      {
+        "id": "go"
+      },
+      {
+        "id": "ro"
+      },
+      {
+        "id": "uberon"
+      },
+      {
+        "id": "foodon"
+      },
+      {
+        "id": "chebi"
+      }
+    ],
+    "description": "Medical Action Ontology is an ontology...",
+    "domain": "stuff",
+    "homepage": "https://github.com/monarch-initiative/MAxO",
+    "id": "maxo",
+    "jobs": [
+      {
+        "id": "https://travis-ci.org/monarch-initiative/MAxO",
+        "type": "travis-ci"
+      }
+    ],
+    "layout": "ontology_detail",
+    "license": {
+      "label": "CC-BY",
+      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
+      "url": "http://creativecommons.org/licenses/by/3.0/"
+    },
+    "ontology_purl": "http://purl.obolibrary.org/obo/maxo.owl",
+    "title": "Medical Action Ontology",
+    "tracker": "https://github.com/monarch-initiative/MAxO/issues"
   },
   {
     "activity_status": "active",
@@ -3040,7 +3234,7 @@
     "tracker": "https://github.com/carrineblank/MicrO/issues"
   },
   {
-    "activity_status": "active",
+    "activity_status": "inactive",
     "contact": {
       "email": "topalis@imbb.forth.gr",
       "label": "Pantelis Topalis"
@@ -3048,28 +3242,23 @@
     "description": "An application ontology for use with miRNA databases.",
     "homepage": "http://code.google.com/p/mirna-ontology/",
     "id": "mirnao",
+    "is_obsolete": true,
     "layout": "ontology_detail",
     "license": {
       "label": "CC0",
       "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/cc-zero.png",
       "url": "https://creativecommons.org/publicdomain/zero/1.0/"
     },
-    "ontology_purl": "http://purl.obolibrary.org/obo/mirnao.owl",
     "title": "microRNA Ontology"
   },
   {
-    "activity_status": "active",
-    "build": {
-      "method": "obo2owl",
-      "source_url": "http://anobase.vectorbase.org/miro/miro_release.obo"
-    },
+    "activity_status": "inactive",
     "contact": {
       "email": "louis@imbb.forth.gr",
       "label": "C. Louis"
     },
     "description": "Application ontology for entities related to insecticide resistance in mosquitos",
     "domain": "environment",
-    "homepage": "http://anobase.vectorbase.org",
     "id": "miro",
     "layout": "ontology_detail",
     "ontology_purl": "http://purl.obolibrary.org/obo/miro.owl",
@@ -3195,9 +3384,9 @@
     "label": "Mondo",
     "layout": "ontology_detail",
     "license": {
-      "label": "CC BY 3.0",
+      "label": "CC BY 4.0",
       "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
-      "url": "http://creativecommons.org/licenses/by/3.0/"
+      "url": "http://creativecommons.org/licenses/by/4.0/"
     },
     "mailing_list": "https://groups.google.com/group/mondo-users",
     "ontology_purl": "http://purl.obolibrary.org/obo/mondo.owl",
@@ -3327,6 +3516,7 @@
       "label": "Bjoern Peters"
     },
     "description": "An ontology for Major Histocompatibility Complex (MHC) restriction in experiments",
+    "domain": "Major Histocompatibility Complex",
     "homepage": "https://github.com/IEDB/MRO",
     "id": "mro",
     "layout": "ontology_detail",
@@ -3415,8 +3605,9 @@
       "source_url": "http://build.berkeleybop.org/job/build-ncbitaxon/lastSuccessfulBuild/artifact/*zip*/archive.zip"
     },
     "contact": {
-      "email": "obo-taxonomy@lists.sourceforge.net",
-      "label": "obo-taxonomy-list"
+      "email": "frederic.bastian@unil.ch",
+      "github": "fbastian",
+      "label": "Frederic Bastian"
     },
     "createdWith": "https://github.com/owlcollab/owltools/",
     "description": "An ontology representation of the NCBI organismal taxonomy",
@@ -3696,12 +3887,19 @@
     "integration_server": "http://build.berkeleybop.org/job/build-obi/",
     "layout": "ontology_detail",
     "license": {
-      "label": "CC-BY 3.0",
+      "label": "CC-BY 4.0",
       "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
-      "url": "https://creativecommons.org/licenses/by/3.0/"
+      "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "mailing_list": "http://groups.google.com/group/obi-users",
     "ontology_purl": "http://purl.obolibrary.org/obo/obi.owl",
+    "review": {
+      "date": 2013,
+      "document": {
+        "label": "PDF",
+        "link": "https://drive.google.com/open?id=0B8vqEgF1N0NIMFlSM3RvdUxGTnc"
+      }
+    },
     "title": "Ontology for Biomedical Investigations",
     "tracker": "http://purl.obolibrary.org/obo/obi/tracker"
   },
@@ -4160,6 +4358,9 @@
     },
     "ontology_purl": "http://purl.obolibrary.org/obo/pato.owl",
     "repository": "https://github.com/pato-ontology/pato/",
+    "review": {
+      "date": 2010
+    },
     "title": "Phenotype And Trait Ontology",
     "tracker": "https://github.com/pato-ontology/pato/issues"
   },
@@ -4247,8 +4448,9 @@
       "source_url": "http://purl.obolibrary.org/obo/pdro.owl"
     },
     "contact": {
-      "email": "info@griis.ca",
-      "label": "Ryeyan Taseen"
+      "email": "paul.fabry@usherbrooke.ca",
+      "github": "pfabry",
+      "label": "Paul Fabry"
     },
     "description": "An ontology to describe entities related to prescription of drugs",
     "domain": "health",
@@ -4505,6 +4707,13 @@
         "title": "The Planteome database: an integrated resource for reference ontologies, plant genomics and phenomics."
       }
     ],
+    "review": {
+      "date": 2013,
+      "document": {
+        "label": "PDF",
+        "link": "https://drive.google.com/open?id=0B8vqEgF1N0NIV1o0N21UOHlLSmc"
+      }
+    },
     "taxon": {
       "id": "NCBITaxon:33090",
       "label": "Viridiplantae"
@@ -4623,6 +4832,9 @@
         "title": "Publications & Dissemination"
       }
     ],
+    "review": {
+      "date": 2010
+    },
     "title": "PRotein Ontology (PRO)",
     "tracker": "https://github.com/PROconsortium/PRoteinOntology/issues"
   },
@@ -4727,15 +4939,11 @@
     "title": "Protein covalent bond"
   },
   {
-    "activity_status": "inactive",
+    "activity_status": "orphaned",
     "build": {
       "insert_ontology_id": true,
       "method": "obo2owl",
       "source_url": "http://obo.cvs.sourceforge.net/*checkout*/obo/obo/ontology/physicochemical/rex.obo"
-    },
-    "contact": {
-      "email": "hastings@ebi.ac.uk",
-      "label": "Janna Hastings"
     },
     "description": "An ontology of physico-chemical processes, i.e. physico-chemical changes occurring in course of time.",
     "id": "rex",
@@ -4769,6 +4977,7 @@
     "tracker": "https://github.com/BGSU-RNA/rnao/issues"
   },
   {
+    "aberowl_id": "relo",
     "activity_status": "active",
     "build": {
       "checkout": "git clone https://github.com/oborel/obo-relations.git",
@@ -5131,11 +5340,7 @@
     "tracker": "https://github.com/DiseaseOntology/SymptomOntology/issues"
   },
   {
-    "activity_status": "active",
-    "build": {
-      "method": "obo2owl",
-      "source_url": "http://anobase.vectorbase.org/anatomy/tick_anatomy.obo"
-    },
+    "activity_status": "inactive",
     "contact": {
       "email": "dsonensh@odu.edu",
       "label": "Daniel Sonenshine"
@@ -5256,18 +5461,14 @@
     "tracker": "https://github.com/phenoscape/taxrank/issues"
   },
   {
-    "activity_status": "active",
-    "build": {
-      "method": "obo2owl",
-      "source_url": "http://anobase.vectorbase.org/anatomy/mosquito_anatomy.obo"
-    },
+    "activity_status": "inactive",
     "contact": {
       "email": "topalis@imbb.forth.gr",
       "label": "Pantelis Topalis"
     },
     "description": "A structured controlled vocabulary of the anatomy of mosquitoes.",
     "domain": "anatomy",
-    "homepage": "http://anobase.vectorbase.org",
+    "homepage": "https://www.vectorbase.org/ontology-browser",
     "id": "tgma",
     "layout": "ontology_detail",
     "license": {
@@ -5792,7 +5993,8 @@
       "id": "NCBITaxon:6237",
       "label": "Caenorhabditis"
     },
-    "title": "C. elegans phenotype"
+    "title": "C. elegans phenotype",
+    "tracker": "https://github.com/obophenotype/c-elegans-phenotype-ontology/issues"
   },
   {
     "activity_status": "active",
@@ -5806,7 +6008,7 @@
       "github": "seger",
       "label": "Erik Segerdell"
     },
-    "description": "Anatomy and development of the African clawed frog (<i>Xenopus laevis</i>).",
+    "description": "XAO represents the anatomy and development of the African frogs Xenopus laevis and tropicalis.",
     "domain": "anatomy",
     "homepage": "http://www.xenbase.org/anatomy/xao.do?method=display",
     "id": "xao",
@@ -5828,6 +6030,9 @@
         "title": "Enhanced XAO: the ontology of Xenopus anatomy and development underpins more accurate annotation of gene expression and queries on Xenbase."
       }
     ],
+    "review": {
+      "date": 2010
+    },
     "taxon": {
       "id": "NCBITaxon:8353",
       "label": "Xenopus"
@@ -5906,6 +6111,7 @@
     },
     "contact": {
       "email": "esegerd3@gmail.com",
+      "github": "seger",
       "label": "Erik Segerdell"
     },
     "dependencies": [
@@ -5934,7 +6140,7 @@
         "id": "xao"
       }
     ],
-    "description": "An ontology of anatomical, cellular, and gene function phenotypes in Xenopus, the African clawed frogs.",
+    "description": "XPO represents anatomical, cellular, and gene function phenotypes occurring throughout the development of the African frogs Xenopus laevis and tropicalis.",
     "domain": "phenotype",
     "homepage": "https://github.com/obophenotype/xenopus-phenotype-ontology",
     "id": "xpo",
@@ -5951,6 +6157,10 @@
       "url": "http://creativecommons.org/licenses/by/3.0/"
     },
     "ontology_purl": "http://purl.obolibrary.org/obo/xpo.owl",
+    "taxon": {
+      "id": "NCBITaxon:8353",
+      "label": "Xenopus"
+    },
     "title": "Xenopus Phenotype Ontology",
     "tracker": "https://github.com/obophenotype/xenopus-phenotype-ontology/issues"
   },
@@ -6046,6 +6256,9 @@
         "title": "The zebrafish anatomy and stage ontologies: representing the anatomy and development of Danio rerio."
       }
     ],
+    "review": {
+      "date": 2010
+    },
     "taxon": {
       "id": "NCBITaxon:7954",
       "label": "Danio"

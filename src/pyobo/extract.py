@@ -13,7 +13,7 @@ from .constants import GLOBAL_SKIP, PYOBO_HOME
 from .getters import get
 from .identifier_utils import normalize_curie
 from .path_utils import prefix_directory_join
-from .registries.registries import NOT_AVAILABLE_AS_OBO, OBSOLETE
+from .registries import NOT_AVAILABLE_AS_OBO, OBSOLETE
 from .struct import Reference, TypeDef, get_reference_tuple
 
 __all__ = [

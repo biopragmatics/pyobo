@@ -25,7 +25,7 @@ from ..cache_utils import get_gzipped_graph
 from ..identifier_utils import normalize_curie, normalize_prefix
 from ..io_utils import multidict
 from ..path_utils import get_prefix_obo_path
-from ..registries.registries import REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST
+from ..registries import REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST
 
 __all__ = [
     'Synonym',
