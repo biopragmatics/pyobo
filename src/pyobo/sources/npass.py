@@ -15,7 +15,12 @@ logger = logging.getLogger(__name__)
 
 PREFIX = 'npass'
 VERSION = '1.0'
-URL = f'http://bidd2.nus.edu.sg/NPASS/downloadFiles/NPASSv{VERSION}_download_naturalProducts_generalInfo.txt'
+
+BASE_URL = 'fhttp://bidd2.nus.edu.sg/NPASS/downloadFiles/NPASSv{VERSION}_download'
+GENERAL_URL = f'{BASE_URL}_naturalProducts_generalInfo.txt'
+
+# TODO add InChI, InChI-key, and SMILES information from NPASS, if desired
+METADATA_URL = f'{BASE_URL}_naturalProducts_properties.txt'
 
 
 def get_obo() -> Obo:
@@ -31,7 +36,14 @@ def get_obo() -> Obo:
 
 def get_df() -> pd.DataFrame:
     """Get the NPASS chemical nomenclature."""
-    return ensure_df(PREFIX, URL, version=VERSION, dtype=str, encoding='ISO-8859-1', na_values={'NA', 'n.a.', 'nan'})
+    return ensure_df(
+        PREFIX,
+        GENERAL_URL,
+        version=VERSION,
+        dtype=str,
+        encoding='ISO-8859-1',
+        na_values={'NA', 'n.a.', 'nan'},
+    )
 
 
 def iter_terms() -> Iterable[Term]:
