@@ -7,6 +7,7 @@ from typing import Iterable, Mapping
 
 from tqdm import tqdm
 
+from ..extract import get_name_id_mapping
 from ..iter_utils import iterate_gzips_together
 from ..path_utils import ensure_df, ensure_path
 from ..struct import Obo, Reference, Synonym, Term
@@ -25,6 +26,8 @@ CID_SYNONYMS_URL = f'{BASE_URL}/CID-Synonym-filtered.gz'
 CID_TO_SMILES_URL = f'{BASE_URL}/CID-SMILES.gz'
 # TODO
 CID_PMID_URL = f'{BASE_URL}/CID-PMID.gz'
+
+CID_MESH_URL = f'{BASE_URL}/CID-MeSH'
 
 
 def get_obo() -> Obo:
@@ -54,6 +57,24 @@ def get_pubchem_smiles_id_mapping() -> Mapping[str, str]:
 def get_pubchem_id_to_name() -> Mapping[str, str]:
     """Get a mapping from PubChem compound identifiers to their titles."""
     df = ensure_df(PREFIX, CID_NAME_URL, version=VERSION, dtype=str)
+    return dict(df.values)
+
+
+def get_pubchem_id_to_mesh_id() -> Mapping[str, str]:
+    """Get a mapping from PubChem compound identifiers to their equivalent MeSH terms."""
+    df = ensure_df(PREFIX, CID_MESH_URL, version=VERSION,
+                   dtype=str, header=None, names=['pubchem.compound_id', 'mesh_id'])
+    mesh_name_to_id = get_name_id_mapping('mesh')
+    needs_curation = 0
+    mesh_ids = []
+    for name in df['mesh_id']:
+        mesh_id = mesh_name_to_id.get(name)
+        if mesh_id is None:
+            logger.warning('needs updating: %s', name)
+            needs_curation += 1
+        mesh_ids.append(mesh_id)
+    logger.warning('%d/%d need updating', needs_curation, len(mesh_ids))
+    df['mesh_id'] = mesh_ids
     return dict(df.values)
 
 
