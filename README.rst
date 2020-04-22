@@ -125,7 +125,9 @@ all sorts of fixes for missing/wrong information in MIRIAM, OLS, and OBO Foundry
 any of them; additional synonym information for each namespace/prefix; rules for normalizing xrefs and CURIEs, etc.
 
 Most users will be interested in the ``"database"`` subdictionary.
-Each entry can have some combination of these keys:
+Each entry has a key that was chosen first by preference for MIRIAM, then OBO Foundry,
+then OLS, or assigned based on what felt right/was how they appeared in xrefs in other OBO files.
+Their corresponding entries can have some combination of these keys:
 
 - ``title``
 - ``pattern``, a regex string for identifiers
@@ -140,7 +142,7 @@ Each entry can have some combination of these keys:
 - ``obofoundry``: a dictionary containing "prefix" to point to OBO Foundry
 - ``ols``, a dictionary containing "ontologyId" to point to OLS
 
-Other entries in thhe metaregistry:
+Other entries in the metaregistry:
 
 - The ``"remappings"->"full"`` entry is a dictionary from strings that might follow ``xref:``
   in a given OBO file that need to be completely replaced, due to incorrect formatting
