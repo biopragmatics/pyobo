@@ -131,6 +131,7 @@ Their corresponding entries can have some combination of these keys:
 
 - ``title``
 - ``pattern``, a regex string for identifiers
+- ``example``, an example identifier
 - ``url``, a url pattern to resolve identifiers. Uses $1 to represent the identifier.
 - ``synonyms``, a list of alternative prefixes that should point to this
 - ``download``, a URL to the OBO file in case OBO Foundry doesn't list it or has a mistake

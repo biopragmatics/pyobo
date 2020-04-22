@@ -484,6 +484,9 @@
         "Medical Dictionary for Regulatory Activities"
       ]
     },
+    "medscan": {
+      "example": "urn:agi-aopfc:0000458"
+    },
     "mesh": {
       "miriam": {
         "id": "00000560",
