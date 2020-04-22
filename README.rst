@@ -1,5 +1,5 @@
-PyOBO |build| |coverage| |docs| |zenodo|
-========================================
+PyOBO |build|
+=============
 Tools for biological identifiers, names, synonyms, xrefs, hierarchies, relations, and properties through the
 perspective of OBO.
 
@@ -118,7 +118,7 @@ with:
     $ cd pyobo
     $ pip install -e .
 
-.. |build| image:: https://travis-ci.com/pyobo/bio2bel.svg?branch=master
+.. |build| image:: https://travis-ci.com/pyobo/pyobo.svg?branch=master
     :target: https://travis-ci.com/pyobo/pyobo
     :alt: Build Status
 
@@ -138,6 +138,3 @@ with:
 
 .. |pypi_license| image:: https://img.shields.io/pypi/l/pyobo.svg
     :alt: MIT License
-
-.. |zenodo| image:: https://zenodo.org/badge/99800349.svg
-    :target: https://zenodo.org/badge/latestdoi/99800349
