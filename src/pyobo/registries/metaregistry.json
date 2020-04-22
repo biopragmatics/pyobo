@@ -826,6 +826,9 @@
         "snoRNABase"
       ]
     },
+    "so":  {
+      "download": "https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/master/Ontology_Files/so.obo"
+    },
     "spd": {
       "pattern": "\\d{7}"
     },
