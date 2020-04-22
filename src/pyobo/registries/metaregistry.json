@@ -962,6 +962,11 @@
         "WBPhenotype"
       ]
     },
+    "wikidata": {
+      "synonyms": [
+        "wd"
+      ]
+    },
     "wikipathways": {
       "wikidata_property": "P2410"
     },
