@@ -419,7 +419,7 @@
       "pattern": "\\d{7}"
     },
     "interpro": {
-      "synoynms": [
+      "synonyms": [
         "InterPro",
         "IP"
       ],
@@ -609,7 +609,7 @@
       ]
     },
     "nextprot": {
-      "synoynms": [
+      "synonyms": [
         "NXP"
       ]
     },
