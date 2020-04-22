@@ -65,15 +65,16 @@ def get_pubchem_id_to_mesh_id() -> Mapping[str, str]:
     df = ensure_df(PREFIX, CID_MESH_URL, version=VERSION,
                    dtype=str, header=None, names=['pubchem.compound_id', 'mesh_id'])
     mesh_name_to_id = get_name_id_mapping('mesh')
-    needs_curation = 0
+    needs_curation = set()
     mesh_ids = []
     for name in df['mesh_id']:
         mesh_id = mesh_name_to_id.get(name)
         if mesh_id is None:
-            logger.warning('needs updating: %s', name)
-            needs_curation += 1
+            if name not in needs_curation:
+                needs_curation.add(name)
+                logger.warning('[mesh] needs curating: %s', name)
         mesh_ids.append(mesh_id)
-    logger.warning('%d/%d need updating', needs_curation, len(mesh_ids))
+    logger.warning('[mesh] %d/%d need updating', len(needs_curation), len(mesh_ids))
     df['mesh_id'] = mesh_ids
     return dict(df.values)
 
