@@ -684,8 +684,7 @@
         "PF"
       ]
     },
-    "pfam.clan": {
-    },
+    "pfam.clan": {},
     "pfr": {
       "pattern": "\\d+",
       "synonyms": [
