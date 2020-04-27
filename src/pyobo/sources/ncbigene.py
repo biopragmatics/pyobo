@@ -54,6 +54,7 @@ def get_ncbigene_id_to_name_mapping() -> Mapping[str, str]:
         usecols=['GeneID', 'Symbol'],
         dtype=str,
     )
+    df.dropna(inplace=True)
     return dict(df[['GeneID', 'Symbol']].values)
 
 
