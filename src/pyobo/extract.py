@@ -53,6 +53,10 @@ def get_name(prefix: str, identifier: str) -> Optional[str]:
 @lru_cache()
 def get_id_name_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
+    if prefix == 'ncbigene':
+        from .sources.ncbigene import get_ncbigene_id_to_name_mapping
+        return get_ncbigene_id_to_name_mapping()
+
     path = prefix_directory_join(prefix, 'cache', "names.tsv")
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'])

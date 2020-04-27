@@ -3,7 +3,7 @@
 """Converter for Entrez."""
 
 import logging
-from typing import Iterable
+from typing import Iterable, Mapping
 
 import pandas as pd
 from tqdm import tqdm
@@ -42,6 +42,19 @@ GENE_INFO_COLUMNS = [
     'description',
     'type_of_gene',
 ]
+
+
+def get_ncbigene_id_to_name_mapping() -> Mapping[str, str]:
+    """Get the Entrez name mapping."""
+    df = ensure_df(
+        PREFIX,
+        GENE_INFO_URL,
+        sep='\t',
+        na_values=['-', 'NEWENTRY'],
+        usecols=['GeneID', 'Symbol'],
+        dtype=str,
+    )
+    return dict(df[['GeneID', 'Symbol']].values)
 
 
 def get_obo() -> Obo:
