@@ -31,6 +31,8 @@ CONVERTED = {
     'msig': 'msig',
     'mirbase': 'mirbase',
     'pathbank': 'pathbank',
+    'pfam': 'pfam',
+    'pfam.clan': 'pfam_clan',
     'pid.pathway': 'pid',
     'pubchem.compound': 'pubchem',
     'reactome': 'reactome',
