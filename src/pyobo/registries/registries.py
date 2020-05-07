@@ -68,18 +68,20 @@ class Resource:
 
 def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
     """Get a combine registry."""
+    rv: Dict[str, Resource] = {}
+
     synonym_to_prefix = {}
     for prefix, entry in CURATED_REGISTRY_DATABASE.items():
         if prefix in OBSOLETE:
             continue
         synonym_to_prefix[prefix.lower()] = prefix
 
-        if 'title' in entry:
-            synonym_to_prefix[entry['title'].lower()] = prefix
+        title = entry.get('title')
+        if title is not None:
+            synonym_to_prefix[title.lower()] = prefix
         for synonym in entry.get("synonyms", {}):
             synonym_to_prefix[synonym.lower()] = prefix
 
-    rv: Dict[str, Resource] = {}
     for entry in get_miriam():
         prefix = entry['prefix']
         if prefix in OBSOLETE:
@@ -129,6 +131,19 @@ def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
             continue
         if curated_info.get('not_available_as_obo') or curated_info.get('no_own_terms'):
             continue
+
+    for prefix, entry in CURATED_REGISTRY_DATABASE.items():
+        if prefix in rv:
+            continue
+        name = entry.get('name')
+        pattern = entry.get('pattern')
+        if not name or not pattern:
+            continue
+        rv[prefix] = Resource(
+            name=name,
+            prefix=prefix,
+            pattern=pattern,
+        )
 
         # print(f'unhandled {prefix}')
     return rv
