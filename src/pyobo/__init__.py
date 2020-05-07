@@ -10,5 +10,5 @@ from .getters import get  # noqa: F401
 from .normalizer import OboNormalizer, ground  # noqa: F401
 from .path_utils import ensure_path  # noqa: F401
 from .sources import CONVERTED, get_converted_obo, iter_converted_obos  # noqa: F401
-from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term  # noqa: F401
+from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef  # noqa: F401
 from .version import get_version  # noqa: F401
