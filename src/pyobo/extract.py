@@ -56,6 +56,8 @@ def get_id_name_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     if prefix == 'ncbigene':
         from .sources.ncbigene import get_ncbigene_id_to_name_mapping
         return get_ncbigene_id_to_name_mapping()
+    elif prefix == 'taxonomy':
+        prefix = 'ncbitaxon'
 
     path = prefix_directory_join(prefix, 'cache', "names.tsv")
 
