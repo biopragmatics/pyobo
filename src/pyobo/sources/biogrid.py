@@ -2,7 +2,6 @@
 
 """Extract and convert BioGRID identifiers."""
 
-from collections import ChainMap
 from typing import Mapping
 
 import pandas as pd
@@ -44,14 +43,17 @@ taxonomy_remapping = {  # so much for official names
     "Severe acute respiratory syndrome coronavirus 2": "2697049",  # Severe acute respiratory syndrome coronavirus 2
 }
 
-taxonomy_name_id_mapping = get_name_id_mapping('ncbitaxon')
-lookup = ChainMap(taxonomy_remapping, taxonomy_name_id_mapping)
+
+def _lookup(name):
+    if name in taxonomy_remapping:
+        return taxonomy_remapping[name]
+    return get_name_id_mapping('ncbitaxon')[name]
 
 
 def get_df() -> pd.DataFrame:
     """Get the BioGRID identifiers mapping dataframe."""
     df = ensure_df(PREFIX, URL, skiprows=28, dtype=str)
-    df['taxonomy_id'] = df['ORGANISM_OFFICIAL_NAME'].map(lookup.__getitem__)
+    df['taxonomy_id'] = df['ORGANISM_OFFICIAL_NAME'].map(_lookup)
     return df
 
 
