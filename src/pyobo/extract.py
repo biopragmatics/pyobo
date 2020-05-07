@@ -47,7 +47,9 @@ def get_name_by_curie(curie: str) -> Optional[str]:
 
 def get_name(prefix: str, identifier: str) -> Optional[str]:
     """Get the name for an entity."""
-    return get_id_name_mapping(prefix).get(identifier)
+    id_name = get_id_name_mapping(prefix)
+    if id_name:
+        return id_name.get(identifier)
 
 
 @lru_cache()
