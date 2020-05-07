@@ -172,6 +172,7 @@
     "conso": {
       "pattern": "CONSO\\d{5}"
     },
+    "covid": {},
     "cro": {
       "download": "https://raw.githubusercontent.com/data2health/contributor-role-ontology/master/cro.obo",
       "pattern": "\\d{7}"
