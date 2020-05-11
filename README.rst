@@ -88,6 +88,19 @@ Get xrefs from ChEBI to PubChem
     pubchem_compound_id = chebi_id_to_pubchem_compound_id['132964']
     assert pubchem_compound_id == '3033674'
 
+Get xrefs from Entrez to HGNC, but they're only available through HGNC
+so you need to flip them
+
+.. code-block:: python
+
+    import pyobo
+
+    hgnc_id_to_ncbigene_id = pyobo.get_filtered_xrefs('hgnc', 'ncbigene')
+    ncbigene_id_to_hgnc_id = {
+        ncbigene_id: hgnc_id 
+        for hgnc_id, ncbigene_id in hgnc_id_to_ncbigene_id.items()
+    }
+
 Get properties, like SMILES. The semantics of these are defined on an OBO-OBO basis.
 
 .. code-block:: python
