@@ -341,6 +341,7 @@
       "pattern": "\\d{8}"
     },
     "go": {
+      "download": "http://purl.obolibrary.org/obo/go.obo",
       "synonyms": [
         "gobp",
         "gocc",
