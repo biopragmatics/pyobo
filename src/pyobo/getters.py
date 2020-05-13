@@ -10,7 +10,7 @@ from urllib.request import urlretrieve
 import obonet
 from tqdm import tqdm
 
-from .path_utils import ensure_path, get_prefix_obo_path
+from .path_utils import ensure_path, get_prefix_directory, get_prefix_obo_path
 from .registries import CURATED_URLS, get_obofoundry
 from .sources import CONVERTED, get_converted_obo
 from .struct import Obo
@@ -39,9 +39,12 @@ def get(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
     :param url: A URL to give if the OBOfoundry can not be used to look up the given prefix
     :param local: A local file path is given. Do not cache.
     """
-    path = f'{get_prefix_obo_path(prefix)}.obonet.json.gz'
+    path = os.path.join(get_prefix_directory(prefix), f'{prefix}.obonet.json.gz')
     if os.path.exists(path) and not local:
+        logger.debug('[%s] using obonet cache at %s', prefix, path)
         return Obo.from_obonet_gz(path)
+    else:
+        logger.debug('[%s] no obonet cache found at %s', prefix, path)
 
     if prefix in CONVERTED:  # these graphs are converted in :mod:`pyobo.sources`
         obo = get_converted_obo(prefix)
