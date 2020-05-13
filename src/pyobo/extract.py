@@ -10,7 +10,7 @@ import pandas as pd
 
 from .cache_utils import cached_df, cached_mapping, cached_multidict
 from .constants import GLOBAL_SKIP, PYOBO_HOME
-from .getters import get
+from .getters import NoOboFoundry, get
 from .identifier_utils import normalize_curie
 from .path_utils import prefix_directory_join
 from .registries import NOT_AVAILABLE_AS_OBO, OBSOLETE
@@ -47,7 +47,10 @@ def get_name_by_curie(curie: str) -> Optional[str]:
 
 def get_name(prefix: str, identifier: str) -> Optional[str]:
     """Get the name for an entity."""
-    id_name = get_id_name_mapping(prefix)
+    try:
+        id_name = get_id_name_mapping(prefix)
+    except NoOboFoundry:
+        return  # sorry, this namespace isn't available at all
     if id_name:
         return id_name.get(identifier)
 
