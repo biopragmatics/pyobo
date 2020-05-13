@@ -21,6 +21,7 @@ CONVERTED = {
     'complexportal': 'complexportal',
     'conso': 'conso',
     'covid': 'covid',
+    'drugbank': 'drugbank',
     'ncbigene': 'ncbigene',
     'eccode': 'expasy',
     'hgnc': 'hgnc',
