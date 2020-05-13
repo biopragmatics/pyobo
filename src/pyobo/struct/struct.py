@@ -25,7 +25,7 @@ from .utils import comma_separate
 from ..cache_utils import get_gzipped_graph
 from ..identifier_utils import normalize_curie, normalize_prefix
 from ..io_utils import multidict
-from ..path_utils import get_prefix_obo_path
+from ..path_utils import get_prefix_obo_path, prefix_directory_join
 from ..registries import REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST
 
 __all__ = [
@@ -298,6 +298,9 @@ class Obo:
         """Write the OBO to the default path."""
         path = get_prefix_obo_path(self.ontology)
         self.write(path, use_tqdm=use_tqdm)
+
+        obonet_gz_path = prefix_directory_join(self.ontology, f"{self.ontology}.obonet.json.gz")
+        self.write_obonet_gz(obonet_gz_path)
 
     def __iter__(self):  # noqa: D105
         return iter(self.iter_terms())
