@@ -37,10 +37,10 @@ def javerts_xrefs(directory: str):  # noqa: D202
     xrefs_df = get_xref_df()
 
     # Export all xrefs
-    _write_tsv(xrefs_df, f'inspector_javerts_xrefs.tsv.gz')
+    _write_tsv(xrefs_df, 'inspector_javerts_xrefs.tsv.gz')
 
     # Export a sample of xrefs
-    _write_tsv(xrefs_df.head(), f'inspector_javerts_xrefs_sample.tsv')
+    _write_tsv(xrefs_df.head(), 'inspector_javerts_xrefs_sample.tsv')
 
     # Export a summary dataframe
     summary_df = summarize_xref_df(xrefs_df)
