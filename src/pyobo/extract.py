@@ -6,6 +6,7 @@ import os
 from functools import lru_cache
 from typing import List, Mapping, Optional, Tuple, Union
 
+import networkx as nx
 import pandas as pd
 
 from .cache_utils import cached_df, cached_mapping, cached_multidict
@@ -15,6 +16,7 @@ from .identifier_utils import normalize_curie
 from .path_utils import prefix_directory_join
 from .registries import NOT_AVAILABLE_AS_OBO, OBSOLETE
 from .struct import Reference, TypeDef, get_reference_tuple
+from .struct.typedef import has_member, is_a, part_of
 
 __all__ = [
     # Nomenclature
@@ -33,9 +35,16 @@ __all__ = [
     # Xrefs
     'get_filtered_xrefs',
     'get_xrefs_df',
+    # Hierarchy
+    'get_hierarchy',
+    'get_subhierarchy',
+    'get_descendants',
+    'get_ancestors',
     # misc
     'iter_cached_obo',
 ]
+
+RelationHint = Union[Reference, TypeDef, Tuple[str, str]]
 
 
 def get_name_by_curie(curie: str) -> Optional[str]:
@@ -148,7 +157,7 @@ def get_relations_df(prefix: str, **kwargs) -> pd.DataFrame:
 
 def get_filtered_relations_df(
     prefix: str,
-    relation: Union[Reference, TypeDef, Tuple[str, str]],
+    relation: RelationHint,
     **kwargs,
 ) -> pd.DataFrame:
     """Get all of the given relation."""
@@ -169,6 +178,7 @@ def get_id_multirelations_mapping(prefix: str, type_def: TypeDef, **kwargs) -> M
     return obo.get_id_multirelations_mapping(type_def)
 
 
+@lru_cache()
 def get_filtered_xrefs(prefix: str, xref_prefix: str, flip: bool = False, **kwargs) -> Mapping[str, str]:
     """Get xrefs to a given target."""
     path = prefix_directory_join(prefix, 'cache', 'xrefs', f"{xref_prefix}.tsv")
@@ -195,6 +205,105 @@ def get_xrefs_df(prefix: str, **kwargs) -> pd.DataFrame:
         return obo.get_xrefs_df()
 
     return _df_getter()
+
+
+@lru_cache()
+def get_hierarchy(
+    prefix: str,
+    include_part_of: bool = True,
+    include_has_member: bool = False,
+    extra_relations: Optional[List[RelationHint]] = None,
+    **kwargs,
+) -> nx.DiGraph:
+    """Get hierarchy of parents as a directed graph.
+
+    :param prefix: The name of the namespace.
+    :param include_part_of: Add "part of" relations. Only works if the relations are properly
+     defined using bfo:0000050 ! part of or bfo:0000051 ! has part
+    :param include_has_member: Add "has member" relations. These aren't part of the BFO, but
+     are hacked into PyOBO using :data:`pyobo.struct.typedef.has_member` for relationships like
+     from protein families to their actual proteins.
+    :param extra_relations: Other relations that you want to include in the hierarchy. For
+     example, it might be useful to include the positively_regulates
+    """
+    rv = nx.DiGraph()
+
+    is_a_df = get_filtered_relations_df(prefix=prefix, relation=is_a, **kwargs)
+    for source_id, target_ns, target_id in is_a_df.values:
+        rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation='is_a')
+
+    if include_has_member:
+        has_member_df = get_filtered_relations_df(prefix, relation=has_member, **kwargs)
+        for target_id, source_ns, source_id in has_member_df.values:
+            rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}', relation='is_a')
+
+    if include_part_of:
+        part_of_df = get_filtered_relations_df(prefix=prefix, relation=part_of, **kwargs)
+        for source_id, target_ns, target_id in part_of_df.values:
+            rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation='part_of')
+
+        has_part_df = get_filtered_relations_df(prefix=prefix, relation=part_of, **kwargs)
+        for target_id, source_ns, source_id in has_part_df.values:
+            rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}', relation='part_of')
+
+    for relation in extra_relations or []:
+        relation_df = get_filtered_relations_df(prefix=prefix, relation=relation, **kwargs)
+        for source_id, target_ns, target_id in relation_df.values:
+            rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation=relation.identifier)
+
+    return rv
+
+
+def get_descendants(
+    prefix,
+    identifier,
+    include_part_of: bool = True,
+    include_has_member: bool = False,
+    **kwargs,
+) -> List[str]:
+    """Get all of the descendants (children) of the term as CURIEs."""
+    hierarchy = get_hierarchy(
+        prefix=prefix,
+        include_has_member=include_has_member,
+        include_part_of=include_part_of,
+        **kwargs,
+    )
+    return nx.ancestors(hierarchy, f'{prefix}:{identifier}')  # note this is backwards
+
+
+def get_ancestors(
+    prefix,
+    identifier,
+    include_part_of: bool = True,
+    include_has_member: bool = False,
+    **kwargs,
+) -> List[str]:
+    """Get all of the ancestors (parents) of the term as CURIEs."""
+    hierarchy = get_hierarchy(
+        prefix=prefix,
+        include_has_member=include_has_member,
+        include_part_of=include_part_of,
+        **kwargs,
+    )
+    return nx.descendants(hierarchy, f'{prefix}:{identifier}')  # note this is backwards
+
+
+def get_subhierarchy(
+    prefix,
+    identifier,
+    include_part_of: bool = True,
+    include_has_member: bool = False,
+    **kwargs,
+) -> nx.DiGraph:
+    """Get the subhierarchy for a given node."""
+    hierarchy = get_hierarchy(
+        prefix=prefix,
+        include_has_member=include_has_member,
+        include_part_of=include_part_of,
+        **kwargs,
+    )
+    curies = nx.ancestors(hierarchy, f'{prefix}:{identifier}')  # note this is backwards
+    return hierarchy.subgraph(curies)
 
 
 def iter_cached_obo() -> List[Tuple[str, str]]:

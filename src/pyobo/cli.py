@@ -14,9 +14,11 @@ from tabulate import tabulate
 from .cli_utils import echo_df, verbose_option
 from .constants import PYOBO_HOME
 from .extract import (
-    get_filtered_properties_df, get_filtered_xrefs, get_id_name_mapping, get_id_synonyms_mapping, get_properties_df,
-    get_relations_df, get_xrefs_df, iter_cached_obo,
+    get_ancestors, get_descendants, get_filtered_properties_df, get_filtered_relations_df, get_filtered_xrefs,
+    get_id_name_mapping, get_id_synonyms_mapping, get_name_by_curie, get_properties_df, get_relations_df, get_xrefs_df,
+    iter_cached_obo,
 )
+from .identifier_utils import normalize_curie
 from .sources import CONVERTED, iter_converted_obos
 from .xrefdb.cli import javerts_xrefs, ooh_na_na
 
@@ -78,11 +80,42 @@ def synonyms(prefix: str):
 
 @main.command()
 @prefix_argument
+@click.option('--relation', help='CURIE for the relationship or just the ID if local to the ontology')
 @verbose_option
-def relations(prefix: str):
+def relations(prefix: str, relation: str):
     """Page through the relations for entities in the given namespace."""
-    relations_df = get_relations_df(prefix)
+    if relation is not None:
+        curie = normalize_curie(relation)
+        if curie[1] is None:  # that's the identifier
+            click.secho(f'not valid curie, assuming local to {prefix}', fg='yellow')
+            curie = prefix, relation
+        relations_df = get_filtered_relations_df(prefix, relation=curie)
+    else:
+        relations_df = get_relations_df(prefix)
+
     echo_df(relations_df)
+
+
+@main.command()
+@prefix_argument
+@click.argument('identifier')
+@verbose_option
+def ancestors(prefix: str, identifier: str):
+    """Look up ancestors."""
+    curies = get_ancestors(prefix=prefix, identifier=identifier)
+    for curie in curies:
+        click.echo(f'{curie}\t{get_name_by_curie(curie)}')
+
+
+@main.command()
+@prefix_argument
+@click.argument('identifier')
+@verbose_option
+def descendants(prefix: str, identifier: str):
+    """Look up descendants."""
+    curies = get_descendants(prefix=prefix, identifier=identifier)
+    for curie in curies:
+        click.echo(f'{curie}\t{get_name_by_curie(curie)}')
 
 
 @main.command()

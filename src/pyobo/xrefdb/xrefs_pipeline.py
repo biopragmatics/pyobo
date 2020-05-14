@@ -15,7 +15,7 @@ from more_itertools import pairwise
 from tqdm import tqdm
 
 from .sources import iter_sourced_xref_dfs
-from ..extract import get_id_name_mapping, get_xrefs_df
+from ..extract import get_hierarchy, get_id_name_mapping, get_xrefs_df
 from ..getters import MissingOboBuild, NoOboFoundry
 from ..identifier_utils import normalize_prefix
 from ..path_utils import ensure_path, get_prefix_directory
@@ -272,3 +272,22 @@ def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
         for line in tqdm(file, desc='extracting ncbigene'):
             line = line.split('\t')
             yield 'ncbigene', line[1], line[2]
+
+
+def bens_magical_ontology() -> nx.DiGraph:
+    """Make a super graph containing is_a, part_of, and xref relationships."""
+    rv = nx.DiGraph()
+
+    logger.info('getting xrefs')
+    df = get_xref_df()
+    for source_ns, source_id, target_ns, target_id, provenance in df.values:
+        rv.add_edge(f'{source_ns}:{source_id}', f'{target_ns}:{target_id}', relation='xref', provenance=provenance)
+
+    logger.info('getting hierarchies')
+    for prefix, _ in _iterate_metaregistry():
+        hierarchy = get_hierarchy(prefix, include_has_member=True, include_part_of=True)
+        rv.add_edges_from(hierarchy.edges(data=True))
+
+    # TODO include translates_to, transcribes_to, and has_variant
+
+    return rv
