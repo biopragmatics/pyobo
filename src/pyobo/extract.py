@@ -169,7 +169,7 @@ def get_id_multirelations_mapping(prefix: str, type_def: TypeDef, **kwargs) -> M
     return obo.get_id_multirelations_mapping(type_def)
 
 
-def get_filtered_xrefs(prefix: str, xref_prefix: str, **kwargs) -> Mapping[str, str]:
+def get_filtered_xrefs(prefix: str, xref_prefix: str, flip: bool = False, **kwargs) -> Mapping[str, str]:
     """Get xrefs to a given target."""
     path = prefix_directory_join(prefix, 'cache', 'xrefs', f"{xref_prefix}.tsv")
     header = [f'{prefix}_id', f'{xref_prefix}_id']
@@ -179,7 +179,10 @@ def get_filtered_xrefs(prefix: str, xref_prefix: str, **kwargs) -> Mapping[str, 
         obo = get(prefix, **kwargs)
         return obo.get_filtered_xrefs_mapping(xref_prefix)
 
-    return _get_mapping()
+    rv = _get_mapping()
+    if flip:
+        return {v: k for k, v in rv.items()}
+    return rv
 
 
 def get_xrefs_df(prefix: str, **kwargs) -> pd.DataFrame:

@@ -100,6 +100,19 @@ so you need to flip them
         ncbigene_id: hgnc_id 
         for hgnc_id, ncbigene_id in hgnc_id_to_ncbigene_id.items()
     }
+    mapt_hgnc = ncbigene_id_to_hgnc_id['4137']
+    assert mapt_hgnc == '6893'
+
+Since this is a common pattern, there's a keyword argument `flip`
+that does this for you:
+
+.. code-block:: python
+
+    import pyobo
+
+    ncbigene_id_to_hgnc_id = pyobo.get_filtered_xrefs('hgnc', 'ncbigene', flip=True)
+    mapt_hgnc = ncbigene_id_to_hgnc_id['4137']
+    assert mapt_hgnc == '6893'
 
 Get properties, like SMILES. The semantics of these are defined on an OBO-OBO basis.
 
