@@ -15,8 +15,8 @@ from ...constants import PYOBO_HOME
 
 logger = logging.getLogger(__name__)
 
-uri_default = os.path.abspath(os.path.join(PYOBO_HOME, 'pyobo.db'))
-uri = os.environ.get('PYOBO_DB_URI', f'sqlite///{uri_default}')
+default_db_path = os.path.abspath(os.path.join(PYOBO_HOME, 'pyobo.db'))
+uri = os.environ.get('PYOBO_SQLALCHEMY_URI', f'sqlite:///{default_db_path}')
 
 engine = create_engine(uri)
 

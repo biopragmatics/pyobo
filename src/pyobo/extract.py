@@ -11,10 +11,10 @@ import pandas as pd
 
 from .cache_utils import cached_df, cached_mapping, cached_multidict
 from .constants import GLOBAL_SKIP, PYOBO_HOME
-from .getters import get
+from .getters import NoOboFoundry, get
 from .identifier_utils import normalize_curie
 from .path_utils import prefix_directory_join
-from .registries.registries import NOT_AVAILABLE_AS_OBO, OBSOLETE
+from .registries import NOT_AVAILABLE_AS_OBO, OBSOLETE
 from .struct import Reference, TypeDef, get_reference_tuple
 from .struct.typedef import has_member, is_a, part_of
 
@@ -51,12 +51,23 @@ def get_name_by_curie(curie: str) -> Optional[str]:
 
 def get_name(prefix: str, identifier: str) -> Optional[str]:
     """Get the name for an entity."""
-    return get_id_name_mapping(prefix).get(identifier)
+    try:
+        id_name = get_id_name_mapping(prefix)
+    except NoOboFoundry:
+        return  # sorry, this namespace isn't available at all
+    if id_name:
+        return id_name.get(identifier)
 
 
 @lru_cache()
 def get_id_name_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
+    if prefix == 'ncbigene':
+        from .sources.ncbigene import get_ncbigene_id_to_name_mapping
+        return get_ncbigene_id_to_name_mapping()
+    elif prefix == 'taxonomy':
+        prefix = 'ncbitaxon'
+
     path = prefix_directory_join(prefix, 'cache', "names.tsv")
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'])
@@ -162,7 +173,7 @@ def get_id_multirelations_mapping(prefix: str, type_def: TypeDef, **kwargs) -> M
     return obo.get_id_multirelations_mapping(type_def)
 
 
-def get_filtered_xrefs(prefix: str, xref_prefix: str, **kwargs) -> Mapping[str, str]:
+def get_filtered_xrefs(prefix: str, xref_prefix: str, flip: bool = False, **kwargs) -> Mapping[str, str]:
     """Get xrefs to a given target."""
     path = prefix_directory_join(prefix, 'cache', 'xrefs', f"{xref_prefix}.tsv")
     header = [f'{prefix}_id', f'{xref_prefix}_id']
@@ -172,7 +183,10 @@ def get_filtered_xrefs(prefix: str, xref_prefix: str, **kwargs) -> Mapping[str, 
         obo = get(prefix, **kwargs)
         return obo.get_filtered_xrefs_mapping(xref_prefix)
 
-    return _get_mapping()
+    rv = _get_mapping()
+    if flip:
+        return {v: k for k, v in rv.items()}
+    return rv
 
 
 def get_xrefs_df(prefix: str, **kwargs) -> pd.DataFrame:

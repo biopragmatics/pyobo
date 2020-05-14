@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Set, 
 import networkx as nx
 import pandas as pd
 from networkx.utils import open_file
+from tqdm import tqdm
 
 from .reference import Reference, Referenced
 from .typedef import TypeDef, default_typedefs, from_species, get_reference_tuple, is_a
@@ -24,8 +25,8 @@ from .utils import comma_separate
 from ..cache_utils import get_gzipped_graph
 from ..identifier_utils import normalize_curie, normalize_prefix
 from ..io_utils import multidict
-from ..path_utils import get_prefix_obo_path
-from ..registries.registries import REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST
+from ..path_utils import get_prefix_obo_path, prefix_directory_join
+from ..registries import REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST
 
 __all__ = [
     'Synonym',
@@ -274,9 +275,12 @@ class Obo:
             yield from term.iterate_obo_lines()
 
     @open_file(1, mode='w')
-    def write(self, file: Union[None, str, TextIO, Path] = None) -> None:
+    def write(self, file: Union[None, str, TextIO, Path] = None, use_tqdm: bool = False) -> None:
         """Write the OBO to a file."""
-        for line in self.iterate_obo_lines():
+        it = self.iterate_obo_lines()
+        if use_tqdm:
+            it = tqdm(it, desc=f'writing {self.ontology}')
+        for line in it:
             print(line, file=file)
 
     def write_obonet_gz(self, path: str) -> None:
@@ -290,10 +294,13 @@ class Obo:
         """Read OBO from a pre-compiled Obonet JSON."""
         return cls.from_obonet(get_gzipped_graph(path))
 
-    def write_default(self) -> None:
+    def write_default(self, use_tqdm: bool = False) -> None:
         """Write the OBO to the default path."""
         path = get_prefix_obo_path(self.ontology)
-        self.write(path)
+        self.write(path, use_tqdm=use_tqdm)
+
+        obonet_gz_path = prefix_directory_join(self.ontology, f"{self.ontology}.obonet.json.gz")
+        self.write_obonet_gz(obonet_gz_path)
 
     def __iter__(self):  # noqa: D105
         return iter(self.iter_terms())

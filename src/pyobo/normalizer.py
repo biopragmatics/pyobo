@@ -7,6 +7,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Iterable, List, Mapping, Optional, Set, Tuple, Union
 
 from .extract import get_id_name_mapping, get_id_synonyms_mapping
@@ -14,6 +15,7 @@ from .identifier_utils import normalize_dashes
 from .io_utils import multisetdict
 
 __all__ = [
+    'ground',
     'Normalizer',
     'OboNormalizer',
     'MultiNormalizer',
@@ -106,6 +108,20 @@ class Normalizer(ABC):
         raise NotImplementedError
 
 
+@lru_cache()
+def get_normalizer(prefix: str) -> Normalizer:
+    """Get an OBO normalizer."""
+    normalizer = OboNormalizer(prefix)
+    logger.debug('normalizer for %s with %s name lookups', normalizer.prefix, len(normalizer.norm_name_to_name))
+    return normalizer
+
+
+def ground(prefix: str, query: str) -> NormalizationResult:
+    """Normalize a string given the prefix's labels and synonyms."""
+    normalizer = get_normalizer(prefix)
+    return normalizer.normalize(query)
+
+
 class OboNormalizer(Normalizer):
     """A utility for normalizing by names."""
 
@@ -163,12 +179,10 @@ class MultiNormalizer:
     @staticmethod
     def from_prefixes(prefixes: List[str]) -> MultiNormalizer:
         """Instantiate normalizers based on the given prefixes, in preferred order.."""
-        normalizers = []
-        for prefix in prefixes:
-            normalizer = OboNormalizer(prefix)
-            logger.debug('normalizer for %s with %s name lookups', normalizer.prefix, len(normalizer.norm_name_to_name))
-            normalizers.append(normalizer)
-        return MultiNormalizer(normalizers)
+        return MultiNormalizer([
+            get_normalizer(prefix)
+            for prefix in prefixes
+        ])
 
     def normalize(self, query: str) -> NormalizationResult:
         """Try and normalize a canonical name using multiple normalizers."""

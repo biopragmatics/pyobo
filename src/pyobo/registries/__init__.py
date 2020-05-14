@@ -2,8 +2,11 @@
 
 """Extract registry information."""
 
-from .registries import (  # noqa: F401
-    CURATED_REGISTRY, CURATED_URLS, REMAPPINGS_PREFIX, Resource, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST,
-    XREF_SUFFIX_BLACKLIST, get_curated_registry, get_metaregistry, get_miriam, get_namespace_synonyms, get_obofoundry,
-    get_ols,
+from .metaregistry import (  # noqa: F401
+    CURATED_REGISTRY, CURATED_URLS, NOT_AVAILABLE_AS_OBO, OBSOLETE, REMAPPINGS_PREFIX, XREF_BLACKLIST,
+    XREF_PREFIX_BLACKLIST, XREF_SUFFIX_BLACKLIST, get_curated_registry,
 )
+from .miriam import get_miriam  # noqa: F401
+from .obofoundry import get_obofoundry  # noqa: F401
+from .ols import get_ols  # noqa: F401
+from .registries import Resource, get_metaregistry, get_namespace_synonyms  # noqa: F401
