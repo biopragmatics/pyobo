@@ -124,13 +124,13 @@ def load(whitelist: Optional[Set[str]] = None) -> None:
                 session.add(s)
 
     t = time.time()
-    logger.info(f'committing started at %s', time.asctime())
+    logger.info('committing started at %s', time.asctime())
     try:
         session.commit()
     except Exception:
-        logger.exception(f'commit failed at %s (%.2f seconds)', time.asctime(), time.time() - t)
+        logger.exception('commit failed at %s (%.2f seconds)', time.asctime(), time.time() - t)
     else:
-        logger.info(f'commit ended at %s (%.2f seconds)', time.asctime(), time.time() - t)
+        logger.info('commit ended at %s (%.2f seconds)', time.asctime(), time.time() - t)
         logger.info(f'number resources loaded: {Resource.query.count():,}')
         logger.info(f'number references loaded: {Reference.query.count():,}')
         logger.info(f'number terms loaded: {Term.query.count():,}')

@@ -463,7 +463,7 @@ class Obo:
                 elif (relation.prefix, relation.identifier) in default_typedefs:
                     typedef = default_typedefs[relation.prefix, relation.identifier]
                 else:
-                    logger.warning(f'[%s] has no typedef for %s', ontology, relation)
+                    logger.warning('[%s] has no typedef for %s', ontology, relation)
                     continue
                 term.append_relationship(typedef, reference)
             for prop, value in iterate_node_properties(data):
