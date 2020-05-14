@@ -208,7 +208,7 @@ def get_xrefs_df(prefix: str, **kwargs) -> pd.DataFrame:
 @lru_cache()
 def get_hierarchy(
     prefix: str,
-    include_part_of: bool = False,
+    include_part_of: bool = True,
     include_has_member: bool = False,
     **kwargs,
 ) -> nx.DiGraph:
@@ -247,7 +247,7 @@ def get_hierarchy(
 def get_descendants(
     prefix,
     identifier,
-    include_part_of: bool = False,
+    include_part_of: bool = True,
     include_has_member: bool = False,
     **kwargs,
 ) -> List[str]:
@@ -264,7 +264,7 @@ def get_descendants(
 def get_ancestors(
     prefix,
     identifier,
-    include_part_of: bool = False,
+    include_part_of: bool = True,
     include_has_member: bool = False,
     **kwargs,
 ) -> List[str]:
@@ -281,7 +281,7 @@ def get_ancestors(
 def get_subhierarchy(
     prefix,
     identifier,
-    include_part_of: bool = False,
+    include_part_of: bool = True,
     include_has_member: bool = False,
     **kwargs,
 ) -> nx.DiGraph:
