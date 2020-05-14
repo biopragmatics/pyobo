@@ -37,6 +37,9 @@ __all__ = [
     'get_xrefs_df',
     # Hierarchy
     'get_hierarchy',
+    'get_subhierarchy',
+    'get_descendants',
+    'get_ancestors',
     # misc
     'iter_cached_obo',
 ]
@@ -173,6 +176,7 @@ def get_id_multirelations_mapping(prefix: str, type_def: TypeDef, **kwargs) -> M
     return obo.get_id_multirelations_mapping(type_def)
 
 
+@lru_cache()
 def get_filtered_xrefs(prefix: str, xref_prefix: str, flip: bool = False, **kwargs) -> Mapping[str, str]:
     """Get xrefs to a given target."""
     path = prefix_directory_join(prefix, 'cache', 'xrefs', f"{xref_prefix}.tsv")
@@ -201,6 +205,7 @@ def get_xrefs_df(prefix: str, **kwargs) -> pd.DataFrame:
     return _df_getter()
 
 
+@lru_cache()
 def get_hierarchy(
     prefix: str,
     include_part_of: bool = False,
@@ -237,6 +242,58 @@ def get_hierarchy(
             rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}', relation='part_of')
 
     return rv
+
+
+def get_descendants(
+    prefix,
+    identifier,
+    include_part_of: bool = False,
+    include_has_member: bool = False,
+    **kwargs,
+) -> List[str]:
+    """Get all of the descendants (children) of the term as CURIEs."""
+    hierarchy = get_hierarchy(
+        prefix=prefix,
+        include_has_member=include_has_member,
+        include_part_of=include_part_of,
+        **kwargs,
+    )
+    return nx.ancestors(hierarchy, f'{prefix}:{identifier}')  # note this is backwards
+
+
+def get_ancestors(
+    prefix,
+    identifier,
+    include_part_of: bool = False,
+    include_has_member: bool = False,
+    **kwargs,
+) -> List[str]:
+    """Get all of the ancestors (parents) of the term as CURIEs."""
+    hierarchy = get_hierarchy(
+        prefix=prefix,
+        include_has_member=include_has_member,
+        include_part_of=include_part_of,
+        **kwargs,
+    )
+    return nx.descendants(hierarchy, f'{prefix}:{identifier}')  # note this is backwards
+
+
+def get_subhierarchy(
+    prefix,
+    identifier,
+    include_part_of: bool = False,
+    include_has_member: bool = False,
+    **kwargs,
+) -> nx.DiGraph:
+    """Get the subhierarchy for a given node."""
+    hierarchy = get_hierarchy(
+        prefix=prefix,
+        include_has_member=include_has_member,
+        include_part_of=include_part_of,
+        **kwargs,
+    )
+    curies = nx.ancestors(hierarchy, f'{prefix}:{identifier}')  # note this is backwards
+    return hierarchy.subgraph(curies)
 
 
 def iter_cached_obo() -> List[Tuple[str, str]]:

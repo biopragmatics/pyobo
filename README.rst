@@ -127,6 +127,25 @@ Get properties, like SMILES. The semantics of these are defined on an OBO-OBO ba
     smiles = chebi_id_to_smiles['132964']
     assert smiles == 'C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F'
 
+Check if an entity is in the hierarchy:
+
+.. code-block:: python
+
+    import networkx as nx
+    import pyobo
+
+    # check that go:0008219 ! cell death is an ancestor of go:0006915 ! apoptotic process
+    assert 'go:0008219' in pyobo.get_ancestors('go', '0006915')
+
+    # check that go:0070246 ! natural killer cell apoptotic process is a
+    # descendant of go:0006915 ! apoptotic process
+    apopototic_process_descendants = pyobo.get_descendants('go', '0006915')
+    assert 'go:0070246' in apopototic_process_descendants
+
+    # get the descendant graph using networkx builtins
+    go_hierarchy = pyobo.get_hierarchy('go')
+    apoptotic_process_subhierarchy = go_hierarchy.subgraph(apopototic_process_descendants)
+
 Installation |pypi_version| |python_versions| |pypi_license|
 ------------------------------------------------------------
 PyOBO can be installed from `PyPI <https://pypi.org/project/pyobo/>`_ with:
