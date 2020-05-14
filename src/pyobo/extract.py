@@ -44,6 +44,8 @@ __all__ = [
     'iter_cached_obo',
 ]
 
+RelationHint = Union[Reference, TypeDef, Tuple[str, str]]
+
 
 def get_name_by_curie(curie: str) -> Optional[str]:
     """Get the name for a CURIE, if possible."""
@@ -155,7 +157,7 @@ def get_relations_df(prefix: str, **kwargs) -> pd.DataFrame:
 
 def get_filtered_relations_df(
     prefix: str,
-    relation: Union[Reference, TypeDef, Tuple[str, str]],
+    relation: RelationHint,
     **kwargs,
 ) -> pd.DataFrame:
     """Get all of the given relation."""
@@ -210,6 +212,7 @@ def get_hierarchy(
     prefix: str,
     include_part_of: bool = True,
     include_has_member: bool = False,
+    extra_relations: Optional[List[RelationHint]] = None,
     **kwargs,
 ) -> nx.DiGraph:
     """Get hierarchy of parents as a directed graph.
@@ -220,6 +223,8 @@ def get_hierarchy(
     :param include_has_member: Add "has member" relations. These aren't part of the BFO, but
      are hacked into PyOBO using :data:`pyobo.struct.typedef.has_member` for relationships like
      from protein families to their actual proteins.
+    :param extra_relations: Other relations that you want to include in the hierarchy. For
+     example, it might be useful to include the positively_regulates
     """
     rv = nx.DiGraph()
 
@@ -240,6 +245,11 @@ def get_hierarchy(
         has_part_df = get_filtered_relations_df(prefix=prefix, relation=part_of, **kwargs)
         for target_id, source_ns, source_id in has_part_df.values:
             rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}', relation='part_of')
+
+    for relation in extra_relations or []:
+        relation_df = get_filtered_relations_df(prefix=prefix, relation=relation, **kwargs)
+        for source_id, target_ns, target_id in relation_df.values:
+            rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation=relation.identifier)
 
     return rv
 
