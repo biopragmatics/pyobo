@@ -146,6 +146,20 @@ Check if an entity is in the hierarchy:
     go_hierarchy = pyobo.get_hierarchy('go')
     apoptotic_process_subhierarchy = go_hierarchy.subgraph(apopototic_process_descendants)
 
+Remap a CURIE based on pre-defined priority list and [Inspector Javert's Xref
+Database](https://cthoyt.com/2020/04/19/inspector-javerts-xref-database.html):
+
+.. code-block:: python
+
+    import pyobo
+
+    # Map to the best source possible
+    mapt_ncbigene = pyobo.get_priority_curie('hgnc:6893')
+    assert mapt_ncbigene == 'ncbigene:4137'
+
+    # Sometimes you know you're the best. Own it.
+    assert 'ncbigene:4137' == pyobo.get_priority_curie('ncbigene:4137')
+
 Installation |pypi_version| |python_versions| |pypi_license|
 ------------------------------------------------------------
 PyOBO can be installed from `PyPI <https://pypi.org/project/pyobo/>`_ with:

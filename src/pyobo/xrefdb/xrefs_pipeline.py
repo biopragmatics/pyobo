@@ -2,11 +2,14 @@
 
 """Pipeline for extracting all xrefs from OBO documents available."""
 
+from __future__ import annotations
+
 import gzip
 import itertools as itt
 import logging
 import os
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Iterable, List, Mapping, Optional, Tuple
 
 import networkx as nx
@@ -15,12 +18,15 @@ from more_itertools import pairwise
 from tqdm import tqdm
 
 from .sources import iter_sourced_xref_dfs
+from ..constants import PYOBO_HOME
 from ..extract import get_hierarchy, get_id_name_mapping, get_xrefs_df
 from ..getters import MissingOboBuild, NoOboFoundry
 from ..identifier_utils import normalize_prefix
 from ..path_utils import ensure_path, get_prefix_directory
 from ..registries import get_metaregistry
 from ..sources import ncbigene
+
+XREF_DB_CACHE = os.path.join(PYOBO_HOME, 'inspector_javerts_xrefs.tsv.gz')
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +117,14 @@ class Canonicalizer:
         priority_dict = self._get_priority_dict(curie)
         return max(priority_dict, key=priority_dict.get)
 
+    @classmethod
+    @lru_cache()
+    def get_default(cls) -> Canonicalizer:
+        """Get the default canonicalizer."""
+        df = get_xref_df(use_cached=True)
+        graph = get_graph_from_xref_df(df)
+        return cls(graph=graph)
+
 
 def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
     """Generate a graph from the mappings dataframe."""
@@ -199,12 +213,19 @@ def single_source_shortest_path(graph: nx.Graph, curie: str) -> Optional[Mapping
     }
 
 
-def get_xref_df() -> pd.DataFrame:
+def get_xref_df(use_cached: bool = False) -> pd.DataFrame:
     """Get the ultimate xref database."""
+    if use_cached and os.path.exists(XREF_DB_CACHE):
+        return pd.read_csv(XREF_DB_CACHE, sep='\t', dtype=str)
+
     df = pd.concat(_iterate_xref_dfs())
     df.drop_duplicates(inplace=True)
     df.dropna(inplace=True)
     df.sort_values(COLUMNS, inplace=True)
+
+    if use_cached:
+        df.to_csv(XREF_DB_CACHE, sep='\t', index=False)
+
     return df
 
 
@@ -291,3 +312,17 @@ def bens_magical_ontology() -> nx.DiGraph:
     # TODO include translates_to, transcribes_to, and has_variant
 
     return rv
+
+
+def get_priority_curie(curie: str) -> str:
+    """Get the priority CURIE mapped to the best namespace."""
+    canonicalizer = Canonicalizer.get_default()
+    return canonicalizer.canonicalize(curie)
+
+
+def remap_file_stream(file_in, file_out, column: int, sep='\t') -> None:
+    """Remap a file."""
+    for line in file_in:
+        line = line.strip().split(sep)
+        line[column] = get_priority_curie(line[column])
+        print(*line, sep=sep, file=file_out)

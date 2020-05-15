@@ -4,6 +4,7 @@
 
 import logging
 import os
+import sys
 from operator import itemgetter
 from typing import Optional
 
@@ -21,6 +22,7 @@ from .extract import (
 from .identifier_utils import normalize_curie
 from .sources import CONVERTED, iter_converted_obos
 from .xrefdb.cli import javerts_xrefs, ooh_na_na
+from .xrefdb.xrefs_pipeline import DEFAULT_PRIORITY_LIST, get_priority_curie, remap_file_stream
 
 __all__ = ['main']
 
@@ -129,6 +131,30 @@ def properties(prefix: str, key: Optional[str]):
     else:
         properties_df = get_filtered_properties_df(prefix, prop=key)
     echo_df(properties_df)
+
+
+_ORDERING_TEXT = ', '.join(
+    f'{i}) {x}'
+    for i, x in enumerate(DEFAULT_PRIORITY_LIST, start=1)
+)
+
+
+@main.command(help=f'Prioritize a CURIE from ordering: {_ORDERING_TEXT}')
+@click.argument('curie')
+def prioritize(curie: str):
+    """Prioritize a CURIE."""
+    priority_curie = get_priority_curie(curie)
+    click.secho(priority_curie)
+
+
+@main.command()
+@click.option('-i', '--file-in', type=click.File('r'), default=sys.stdin)
+@click.option('-o', '--file-out', type=click.File('w'), default=sys.stdout)
+@click.option('--column', type=int, default=0, show_default=True)
+@click.option('--sep', default='\t', show_default=True)
+def recurify(file_in, file_out, column: int, sep: str):
+    """Remap a column in a given file stream."""
+    remap_file_stream(file_in=file_in, file_out=file_out, column=column, sep=sep)
 
 
 @main.command()
