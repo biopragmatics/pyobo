@@ -76,6 +76,19 @@ it up and its preferred label.
     assert identifier is None
     assert name is None
 
+If you're not really sure which namespace a name might belong to, you
+can try a few in a row (prioritize by ones that cover the appropriate
+entity type to avoid false positives in case of conflicts):
+
+.. code-block:: python
+
+    import pyobo
+
+    # looking for phenotypes/pathways
+    prefix, identifier, name = pyobo.multiground(['efo', 'go'], 'ERAD')
+    assert prefix == 'go'
+    assert identifier == '0030433'
+    assert name == 'ubiquitin-dependent ERAD pathway'
 
 Get xrefs from ChEBI to PubChem
 

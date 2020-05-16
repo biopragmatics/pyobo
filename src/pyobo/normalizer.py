@@ -16,6 +16,7 @@ from .io_utils import multisetdict
 
 __all__ = [
     'ground',
+    'multiground',
     'Normalizer',
     'OboNormalizer',
     'MultiNormalizer',
@@ -120,6 +121,18 @@ def ground(prefix: str, query: str) -> NormalizationResult:
     """Normalize a string given the prefix's labels and synonyms."""
     normalizer = get_normalizer(prefix)
     return normalizer.normalize(query)
+
+
+def multiground(prefixes: List[str], query: str) -> NormalizationResult:
+    """Normalize a string given the prefixes' labels and synonyms.
+
+    Gives the first result that is found by order of prefixes.
+    """
+    for prefix in prefixes:
+        norm_prefix, identifier, name = ground(prefix, query)
+        if norm_prefix and identifier and name:
+            return norm_prefix, identifier, name
+    return None, None, query
 
 
 class OboNormalizer(Normalizer):
