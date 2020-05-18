@@ -621,6 +621,7 @@
         "NIST"
       ]
     },
+    "npass": {},
     "oba": {
       "pattern": "\\d{7}"
     },
@@ -926,6 +927,7 @@
       ],
       "url": "https://web.expasy.org/variant_pages/$1.html"
     },
+    "unpd": {},
     "upa": {
       "pattern": "\\d{8}",
       "synonyms": [
