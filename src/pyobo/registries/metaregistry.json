@@ -230,6 +230,11 @@
       "not_available_as_obo": true
     },
     "eccode": {
+      "miriam": {
+        "id": "00000004",
+        "namespaceEmbeddedInLui": false,
+        "prefix": "ec-code"
+      },
       "synonyms": [
         "EC",
         "EC-CODE",
@@ -315,6 +320,11 @@
       "pattern": "\\d{7}"
     },
     "flybase": {
+      "miriam": {
+        "id": "00000030",
+        "namespaceEmbeddedInLui": false,
+        "prefix": "fb"
+      },
       "synonyms": [
         "FB",
         "FlyBase"

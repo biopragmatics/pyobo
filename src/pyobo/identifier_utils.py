@@ -8,7 +8,7 @@ from typing import Optional, Tuple, Union
 
 from .registries import (
     PREFIX_TO_MIRIAM_PREFIX, REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST, XREF_SUFFIX_BLACKLIST,
-    get_namespace_synonyms,
+    get_miriam, get_namespace_synonyms,
 )
 
 __all__ = [
@@ -31,6 +31,7 @@ def alternate_strip_prefix(s, prefix):
 SYNONYM_TO_KEY = get_namespace_synonyms()
 UNHANDLED_NAMESPACES = defaultdict(list)
 UBERON_UNHANDLED = defaultdict(list)
+MIRIAM = get_miriam(mappify=True)
 
 
 def normalize_prefix(prefix: str, *, curie=None, xref=None) -> Optional[str]:
@@ -87,6 +88,9 @@ def normalize_curie(node: str) -> Union[Tuple[str, str], Tuple[None, None]]:
 def get_identifiers_org_link(prefix: str, identifier: str) -> Optional[str]:
     """Get the identifiers.org URL if possible."""
     miriam_prefix, namespace_in_lui = PREFIX_TO_MIRIAM_PREFIX.get(prefix, (None, None))
+    if not miriam_prefix and prefix in MIRIAM:
+        miriam_prefix = prefix
+        namespace_in_lui = MIRIAM[prefix]['namespaceEmbeddedInLui']
     if not miriam_prefix:
         return
     if namespace_in_lui:
