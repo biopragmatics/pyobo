@@ -41,14 +41,23 @@ SKIP_XREFS = {
 }
 COLUMNS = ['source_ns', 'source_id', 'target_ns', 'target_id', 'source']
 
-DEFAULT_PRIORITY_LIST = [
+_DEFAULT_PRIORITY_LIST = [
     # Genes
+    'ncbigene',
     'hgnc',
     'rgd',
     'mgi',
-    'ncbigene',
     'ensembl',
     'uniprot',
+    # Chemicals
+    'pubchem.compound',
+    'chebi',
+    'drugbank',
+    'chembl.compound',
+    'zinc',
+    'npass',
+    'unpd',
+    'knapsack',
     # protein families and complexes (and famplexes :))
     'complexportal',
     'fplx',
@@ -57,6 +66,7 @@ DEFAULT_PRIORITY_LIST = [
     'pfam',
     'signor',
     # Pathologies/phenotypes
+    'mondo',
     'efo',
     'doid',
     'hp',
@@ -65,8 +75,16 @@ DEFAULT_PRIORITY_LIST = [
     'itis',
     # If you can get away from MeSH, do it
     'mesh',
+    'icd',
 ]
-DEFAULT_PRIORITY_LIST = [normalize_prefix(x) for x in DEFAULT_PRIORITY_LIST]
+DEFAULT_PRIORITY_LIST = []
+for _entry in _DEFAULT_PRIORITY_LIST:
+    _prefix = normalize_prefix(_entry)
+    if not _prefix:
+        raise RuntimeError(f'unresolved prefix: {_entry}')
+    if _prefix in DEFAULT_PRIORITY_LIST:
+        raise RuntimeError(f'duplicate found in priority list: {_entry}/{_prefix}')
+    DEFAULT_PRIORITY_LIST.append(_prefix)
 
 
 # TODO a normal graph can easily be turned into a directed graph where each
