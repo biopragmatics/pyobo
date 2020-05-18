@@ -2,6 +2,15 @@
 
 """Utilities for handling prefixes."""
 
+import logging
+from collections import defaultdict
+from typing import Optional, Tuple, Union
+
+from .registries import (
+    PREFIX_TO_MIRIAM_PREFIX, REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST, XREF_SUFFIX_BLACKLIST,
+    get_namespace_synonyms,
+)
+
 __all__ = [
     'normalize_curie',
     'get_identifiers_org_link',
@@ -9,12 +18,7 @@ __all__ = [
     'normalize_dashes',
 ]
 
-from collections import defaultdict
-from typing import Optional, Tuple, Union
-
-from .registries import (
-    REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST, XREF_SUFFIX_BLACKLIST, get_namespace_synonyms,
-)
+logger = logging.getLogger(__name__)
 
 
 def alternate_strip_prefix(s, prefix):
@@ -82,6 +86,12 @@ def normalize_curie(node: str) -> Union[Tuple[str, str], Tuple[None, None]]:
 
 def get_identifiers_org_link(prefix: str, identifier: str) -> Optional[str]:
     """Get the identifiers.org URL if possible."""
+    miriam_prefix, namespace_in_lui = PREFIX_TO_MIRIAM_PREFIX.get(prefix, (None, None))
+    if not miriam_prefix:
+        return
+    if namespace_in_lui:
+        miriam_prefix = miriam_prefix.upper()
+    return f'https://identifiers.org/{miriam_prefix}:{identifier}'
 
 
 # See: https://en.wikipedia.org/wiki/Dash

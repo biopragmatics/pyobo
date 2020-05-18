@@ -203,6 +203,7 @@
     "doid": {
       "miriam": {
         "id": "00000233",
+        "namespaceEmbeddedInLui": true,
         "prefix": "doid"
       },
       "obofoundry": {
@@ -254,6 +255,7 @@
       "download": "http://www.ebi.ac.uk/efo/efo.obo",
       "miriam": {
         "id": "00000391",
+        "namespaceEmbeddedInLui": false,
         "prefix": "efo"
       },
       "obofoundry": {
@@ -342,6 +344,11 @@
     },
     "go": {
       "download": "http://purl.obolibrary.org/obo/go.obo",
+      "miriam": {
+        "id": "00000022",
+        "namespaceEmbeddedInLui": true,
+        "prefix": "go"
+      },
       "synonyms": [
         "gobp",
         "gocc",
@@ -371,6 +378,7 @@
       "download": "http://purl.obolibrary.org/obo/hp.obo",
       "miriam": {
         "id": "00000571",
+        "namespaceEmbeddedInLui": true,
         "prefix": "hp"
       },
       "obofoundry": {
@@ -386,6 +394,7 @@
     "icd10": {
       "miriam": {
         "id": "00000009",
+        "namespaceEmbeddedInLui": false,
         "prefix": "icd"
       },
       "synonyms": [
@@ -489,6 +498,7 @@
     "mesh": {
       "miriam": {
         "id": "00000560",
+        "namespaceEmbeddedInLui": false,
         "prefix": "mesh"
       },
       "synonyms": [
@@ -581,6 +591,7 @@
       "download": "http://purl.obolibrary.org/obo/ncbitaxon.obo",
       "miriam": {
         "id": "00000006",
+        "namespaceEmbeddedInLui": false,
         "prefix": "taxonomy"
       },
       "pattern": "\\d+",
@@ -596,6 +607,7 @@
     "ncit": {
       "miriam": {
         "id": "00000139",
+        "namespaceEmbeddedInLui": false,
         "prefix": "ncit"
       },
       "synonyms": [
@@ -633,6 +645,7 @@
     "omit": {
       "miriam": {
         "id": "00000605",
+        "namespaceEmbeddedInLui": false,
         "prefix": "omit"
       },
       "synonyms": [
@@ -801,6 +814,7 @@
     "snomedct": {
       "miriam": {
         "id": "00000269",
+        "namespaceEmbeddedInLui": false,
         "prefix": "snomedct"
       },
       "synonyms": [
@@ -896,6 +910,7 @@
     "umls": {
       "miriam": {
         "id": "00000233",
+        "namespaceEmbeddedInLui": false,
         "prefix": "umls"
       },
       "synonyms": [
