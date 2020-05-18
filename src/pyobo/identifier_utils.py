@@ -4,6 +4,7 @@
 
 __all__ = [
     'normalize_curie',
+    'get_identifiers_org_link',
     'normalize_prefix',
     'normalize_dashes',
 ]
@@ -77,6 +78,10 @@ def normalize_curie(node: str) -> Union[Tuple[str, str], Tuple[None, None]]:
     if not norm_node_prefix:
         return None, None
     return norm_node_prefix, identifier
+
+
+def get_identifiers_org_link(prefix: str, identifier: str) -> Optional[str]:
+    """Get the identifiers.org URL if possible."""
 
 
 # See: https://en.wikipedia.org/wiki/Dash

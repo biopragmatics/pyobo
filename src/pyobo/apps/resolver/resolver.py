@@ -16,7 +16,7 @@ from werkzeug.local import LocalProxy
 
 import pyobo
 from pyobo.cli_utils import verbose_option
-from pyobo.identifier_utils import normalize_curie
+from pyobo.identifier_utils import get_identifiers_org_link, normalize_curie
 
 resolve_blueprint = Blueprint('resolver', __name__)
 
@@ -96,6 +96,7 @@ def _help_resolve(curie: str) -> Mapping[str, Any]:
         identifier=identifier,
         name=name,
         success=True,
+        miriam=get_identifiers_org_link(prefix, identifier),
     )
 
 
