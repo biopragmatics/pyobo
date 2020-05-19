@@ -28,7 +28,12 @@ GraphGetter = Callable[[], nx.MultiDiGraph]
 DataFrameGetter = Callable[[], pd.DataFrame]
 
 
-def cached_mapping(path: str, header: Iterable[str]) -> Callable[[MappingGetter], MappingGetter]:  # noqa: D202
+def cached_mapping(
+    path: str,
+    header: Iterable[str],
+    *,
+    use_tqdm: bool = False,
+) -> Callable[[MappingGetter], MappingGetter]:  # noqa: D202
     """Create a decorator to apply to a mapping getter."""
 
     def wrapped(f: MappingGetter) -> MappingGetter:  # noqa: D202
@@ -38,7 +43,7 @@ def cached_mapping(path: str, header: Iterable[str]) -> Callable[[MappingGetter]
         def _wrapped() -> Mapping[str, str]:
             if os.path.exists(path):
                 logger.debug('loading from cache at %s', path)
-                return open_map_tsv(path)
+                return open_map_tsv(path, use_tqdm=use_tqdm)
             logger.debug('no cache found at %s', path)
             rv = f()
             logger.debug('writing cache to %s', path)
@@ -122,7 +127,7 @@ def cached_df(path: str, sep: str = '\t', **kwargs):  # noqa: D202
     return wrapped
 
 
-def cached_multidict(path: str, header: Iterable[str]):  # noqa: D202
+def cached_multidict(path: str, header: Iterable[str], *, use_tqdm: bool = False):  # noqa: D202
     """Create a decorator to apply to a dataframe getter."""
 
     def wrapped(f: MultiMappingGetter) -> MultiMappingGetter:  # noqa: D202
@@ -131,7 +136,7 @@ def cached_multidict(path: str, header: Iterable[str]):  # noqa: D202
         @functools.wraps(f)
         def _wrapped() -> Mapping[str, List[str]]:
             if os.path.exists(path):
-                return open_multimap_tsv(path)
+                return open_multimap_tsv(path, use_tqdm=use_tqdm)
             rv = f()
             write_multimap_tsv(path=path, header=header, rv=rv)
             return rv
