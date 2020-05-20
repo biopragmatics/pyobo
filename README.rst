@@ -102,7 +102,7 @@ entity type to avoid false positives in case of conflicts):
     import pyobo
 
     # looking for phenotypes/pathways
-    prefix, identifier, name = pyobo.multiground(['efo', 'go'], 'ERAD')
+    prefix, identifier, name = pyobo.ground(['efo', 'go'], 'ERAD')
     assert prefix == 'go'
     assert identifier == '0030433'
     assert name == 'ubiquitin-dependent ERAD pathway'
