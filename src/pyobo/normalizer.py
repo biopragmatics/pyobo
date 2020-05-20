@@ -112,6 +112,7 @@ class Normalizer(ABC):
 @lru_cache()
 def get_normalizer(prefix: str) -> Normalizer:
     """Get an OBO normalizer."""
+    logger.info('getting obo normalizer for %s', prefix)
     normalizer = OboNormalizer(prefix)
     logger.debug('normalizer for %s with %s name lookups', normalizer.prefix, len(normalizer.norm_name_to_name))
     return normalizer
