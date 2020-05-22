@@ -8,7 +8,7 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Iterable, List, Mapping, Optional, Set, Tuple, Union
+from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, Union
 
 from .extract import get_id_name_mapping, get_id_synonyms_mapping
 from .identifier_utils import normalize_dashes
@@ -32,8 +32,8 @@ NormalizationResult = Union[NormalizationSuccess, NormalizationFailure]
 class Normalizer(ABC):
     """A normalizer."""
 
-    id_to_name: Mapping[str, str]
-    id_to_synonyms: Mapping[str, List[str]]
+    id_to_name: Dict[str, str]
+    id_to_synonyms: Dict[str, List[str]]
 
     #: A mapping from all synonyms to the set of identifiers that they point to.
     #: In a perfect world, each would only be a single element.
@@ -43,8 +43,8 @@ class Normalizer(ABC):
 
     def __init__(
         self,
-        id_to_name: Mapping[str, str],
-        id_to_synonyms: Mapping[str, List[str]],
+        id_to_name: Dict[str, str],
+        id_to_synonyms: Dict[str, List[str]],
         remove_prefix: Optional[str] = None,
     ) -> None:  # noqa: D107
         self.id_to_name = id_to_name
