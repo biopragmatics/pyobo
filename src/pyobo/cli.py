@@ -47,8 +47,7 @@ def xrefs(prefix: str, target: str):
         filtered_xrefs = get_filtered_xrefs(prefix, target)
         click.echo_via_pager('\n'.join(
             f'{identifier}\t{_xref}'
-            for identifier, _xrefs in filtered_xrefs.items()
-            for _xref in _xrefs
+            for identifier, _xref in filtered_xrefs.items()
         ))
     else:
         all_xrefs_df = get_xrefs_df(prefix)
