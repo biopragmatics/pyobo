@@ -180,6 +180,19 @@ Check if an entity is in the hierarchy:
     go_hierarchy = pyobo.get_hierarchy('go')
     apoptotic_process_subhierarchy = go_hierarchy.subgraph(apopototic_process_descendants)
 
+Get a hierarchy with properties pre-loaded in the node data dictionaries:
+
+.. code-block:: python
+
+    import pyobo
+
+    prop = 'http://purl.obolibrary.org/obo/chebi/smiles'
+    chebi_hierarchy = pyobo.get_hierarchy('chebi', properties=[prop])
+
+    assert 'chebi:132964' in chebi_hierarchy
+    assert prop in chebi_hierarchy.nodes['chebi:132964']
+    assert chebi_hierarchy.nodes['chebi:132964'][prop] == 'C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F'
+
 Installation |pypi_version| |python_versions| |pypi_license|
 ------------------------------------------------------------
 PyOBO can be installed from `PyPI <https://pypi.org/project/pyobo/>`_ with:

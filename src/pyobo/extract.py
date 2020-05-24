@@ -5,7 +5,7 @@
 import logging
 import os
 from functools import lru_cache
-from typing import List, Mapping, Optional, Tuple, Union
+from typing import Iterable, List, Mapping, Optional, Tuple, Union
 
 import networkx as nx
 import pandas as pd
@@ -225,12 +225,13 @@ def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, **kwargs) -> pd.DataFra
     return _df_getter()
 
 
-@lru_cache()
 def get_hierarchy(
     prefix: str,
+    *,
     include_part_of: bool = True,
     include_has_member: bool = False,
-    extra_relations: Optional[List[RelationHint]] = None,
+    extra_relations: Optional[Iterable[RelationHint]] = None,
+    properties: Optional[Iterable[str]] = None,
     use_tqdm: bool = False,
     **kwargs,
 ) -> nx.DiGraph:
@@ -244,7 +245,34 @@ def get_hierarchy(
      from protein families to their actual proteins.
     :param extra_relations: Other relations that you want to include in the hierarchy. For
      example, it might be useful to include the positively_regulates
+    :param properties: Properties to include in the data part of each node. For example, might want
+     to include SMILES strings with the ChEBI tree.
+    :param use_tqdm: Show a progress bar
+
+    This function thinly wraps :func:`_get_hierarchy_helper` to make it easier to work with the lru_cache mechanism.
     """
+    return _get_hierarchy_helper(
+        prefix=prefix,
+        include_part_of=include_part_of,
+        include_has_member=include_has_member,
+        extra_relations=tuple(sorted(extra_relations or [])),
+        properties=tuple(sorted(properties or [])),
+        use_tqdm=use_tqdm,
+        **kwargs,
+    )
+
+
+@lru_cache()
+def _get_hierarchy_helper(
+    *,
+    prefix: str,
+    extra_relations: Tuple[RelationHint, ...],
+    properties: Tuple[str, ...],
+    include_part_of: bool,
+    include_has_member: bool,
+    use_tqdm: bool,
+    **kwargs,
+) -> nx.DiGraph:
     rv = nx.DiGraph()
 
     is_a_df = get_filtered_relations_df(prefix=prefix, relation=is_a, use_tqdm=use_tqdm, **kwargs)
@@ -265,10 +293,17 @@ def get_hierarchy(
         for target_id, source_ns, source_id in has_part_df.values:
             rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}', relation='part_of')
 
-    for relation in extra_relations or []:
+    for relation in extra_relations:
         relation_df = get_filtered_relations_df(prefix=prefix, relation=relation, use_tqdm=use_tqdm, **kwargs)
         for source_id, target_ns, target_id in relation_df.values:
             rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation=relation.identifier)
+
+    for prop in properties:
+        props = get_filtered_properties_mapping(prefix=prefix, prop=prop, use_tqdm=use_tqdm)
+        for identifier, value in props.items():
+            curie = f'{prefix}:{identifier}'
+            if curie in rv:
+                rv.nodes[curie][prop] = value
 
     return rv
 
