@@ -37,9 +37,9 @@ class Normalizer(ABC):
 
     #: A mapping from all synonyms to the set of identifiers that they point to.
     #: In a perfect world, each would only be a single element.
-    synonym_to_identifiers_mapping: Mapping[str, Set[str]]
+    synonym_to_identifiers_mapping: Dict[str, Set[str]]
     #: A mapping from normalized names to the actual ones that they came from
-    norm_name_to_name: Mapping[str, Set[str]]
+    norm_name_to_name: Dict[str, Set[str]]
 
     def __init__(
         self,
