@@ -176,9 +176,16 @@ Check if an entity is in the hierarchy:
     apopototic_process_descendants = pyobo.get_descendants('go', '0006915')
     assert 'go:0070246' in apopototic_process_descendants
 
-    # get the descendant graph using networkx builtins
-    go_hierarchy = pyobo.get_hierarchy('go')
-    apoptotic_process_subhierarchy = go_hierarchy.subgraph(apopototic_process_descendants)
+Get the subhierarchy below a given node:
+
+.. code-block:: python
+
+    # get the descendant graph of go:0006915 ! apoptotic process
+    apopototic_process_subhierarchy = pyobo.get_subhierarchy('go', '0006915')
+
+    # check that go:0070246 ! natural killer cell apoptotic process is a
+    # descendant of go:0006915 ! apoptotic process through the subhierarchy
+    assert 'go:0070246' in apopototic_process_subhierarchy
 
 Get a hierarchy with properties pre-loaded in the node data dictionaries:
 
