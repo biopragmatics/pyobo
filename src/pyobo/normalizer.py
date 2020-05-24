@@ -11,7 +11,7 @@ from functools import lru_cache
 from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, Union
 
 from .extract import get_id_name_mapping, get_id_synonyms_mapping
-from .identifier_utils import normalize_dashes
+from .identifier_utils import normalize_dashes, normalize_prefix
 from .io_utils import multisetdict
 
 __all__ = [
@@ -111,8 +111,11 @@ class Normalizer(ABC):
 @lru_cache()
 def get_normalizer(prefix: str) -> Normalizer:
     """Get an OBO normalizer."""
-    logger.info('getting obo normalizer for %s', prefix)
-    normalizer = OboNormalizer(prefix)
+    norm_prefix = normalize_prefix(prefix)
+    if norm_prefix is None:
+        raise ValueError(f'unhandled prefix: {prefix}')
+    logger.info('getting obo normalizer for %s', norm_prefix)
+    normalizer = OboNormalizer(norm_prefix)
     logger.debug('normalizer for %s with %s name lookups', normalizer.prefix, len(normalizer.norm_name_to_name))
     return normalizer
 
