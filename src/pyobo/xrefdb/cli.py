@@ -9,7 +9,7 @@ from collections import Counter
 import click
 import pandas as pd
 
-from .xrefs_pipeline import _iter_ooh_na_na, get_xref_df, summarize_xref_df
+from .xrefs_pipeline import Canonicalizer, _iter_ooh_na_na, get_xref_df, summarize_xref_df
 from ..cli_utils import verbose_option
 from ..identifier_utils import UNHANDLED_NAMESPACES
 
@@ -72,6 +72,17 @@ def ooh_na_na(directory: str):
     with open(path, 'w') as file:
         for k, v in c.most_common():
             print(k, v, sep='\t', file=file)
+
+
+@output.command()
+@verbose_option
+@click.option('-f', '--file', type=click.File('w'))
+def javerts_remapping(file):
+    """Make a canonical remapping."""
+    canonicalizer = Canonicalizer.get_default()
+    print('input', 'canonical', sep='\t', file=file)
+    for source, target in canonicalizer.iterate_flat_mapping():
+        print(source, target, sep='\t', file=file)
 
 
 if __name__ == '__main__':
