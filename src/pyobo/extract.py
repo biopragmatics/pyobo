@@ -72,6 +72,7 @@ def get_id_name_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == 'ncbigene':
         from .sources.ncbigene import get_ncbigene_id_to_name_mapping
+        logger.info('[%s] loading mappings', prefix)
         return get_ncbigene_id_to_name_mapping()
     elif prefix == 'taxonomy':
         prefix = 'ncbitaxon'
@@ -81,6 +82,7 @@ def get_id_name_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'])
     def _get_id_name_mapping() -> Mapping[str, str]:
         obo = get(prefix, **kwargs)
+        logger.info('[%s] loading mappings', prefix)
         return obo.get_id_name_mapping()
 
     return _get_id_name_mapping()
