@@ -53,7 +53,10 @@ def open_multimap_tsv(path: str, *, use_tqdm: bool = False) -> Mapping[str, List
         if use_tqdm:
             file = tqdm(file, desc=f'loading TSV from {path}')
         for line in file:
-            key, value = split_tab_pair(line)
+            try:
+                key, value = split_tab_pair(line)
+            except ValueError:
+                logger.warning('bad line: %s', line)
             rv[key].append(value)
     return dict(rv)
 
