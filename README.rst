@@ -15,6 +15,8 @@ so all scripts should be completely reproducible. There's some
 AWS tools for hosting/downloading pre-compiled versions in
 ``pyobo.aws`` if you don't have time for that.
 
+Mapping Identifiers and CURIEs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Get mapping of ChEBI identifiers to names.
 
 .. code-block:: python
@@ -56,7 +58,22 @@ Maybe you live in CURIE world and just want to normalize something like
     name = pyobo.get_name_by_curie('CHEBI:132964')
     assert name == 'fluazifop-P-butyl'
 
+Remap a CURIE based on pre-defined priority list and `Inspector Javert's Xref
+Database <https://cthoyt.com/2020/04/19/inspector-javerts-xref-database.html>`_:
 
+.. code-block:: python
+
+    import pyobo
+
+    # Map to the best source possible
+    mapt_ncbigene = pyobo.get_priority_curie('hgnc:6893')
+    assert mapt_ncbigene == 'ncbigene:4137'
+
+    # Sometimes you know you're the best. Own it.
+    assert 'ncbigene:4137' == pyobo.get_priority_curie('ncbigene:4137')
+
+Grounding
+~~~~~~~~~
 Maybe you've got names/synonyms you want to try and map back to ChEBI synonyms.
 Given the brand name `Fusilade II` of `CHEBI:132964`, it should be able to look
 it up and its preferred label.
@@ -85,11 +102,13 @@ entity type to avoid false positives in case of conflicts):
     import pyobo
 
     # looking for phenotypes/pathways
-    prefix, identifier, name = pyobo.multiground(['efo', 'go'], 'ERAD')
+    prefix, identifier, name = pyobo.ground(['efo', 'go'], 'ERAD')
     assert prefix == 'go'
     assert identifier == '0030433'
     assert name == 'ubiquitin-dependent ERAD pathway'
 
+Cross-referencing
+~~~~~~~~~~~~~~~~~
 Get xrefs from ChEBI to PubChem
 
 .. code-block:: python
@@ -127,6 +146,8 @@ that does this for you:
     mapt_hgnc = ncbigene_id_to_hgnc_id['4137']
     assert mapt_hgnc == '6893'
 
+Properties and Relations
+~~~~~~~~~~~~~~~~~~~~~~~~
 Get properties, like SMILES. The semantics of these are defined on an OBO-OBO basis.
 
 .. code-block:: python
@@ -155,23 +176,29 @@ Check if an entity is in the hierarchy:
     apopototic_process_descendants = pyobo.get_descendants('go', '0006915')
     assert 'go:0070246' in apopototic_process_descendants
 
-    # get the descendant graph using networkx builtins
-    go_hierarchy = pyobo.get_hierarchy('go')
-    apoptotic_process_subhierarchy = go_hierarchy.subgraph(apopototic_process_descendants)
+Get the subhierarchy below a given node:
 
-Remap a CURIE based on pre-defined priority list and [Inspector Javert's Xref
-Database](https://cthoyt.com/2020/04/19/inspector-javerts-xref-database.html):
+.. code-block:: python
+
+    # get the descendant graph of go:0006915 ! apoptotic process
+    apopototic_process_subhierarchy = pyobo.get_subhierarchy('go', '0006915')
+
+    # check that go:0070246 ! natural killer cell apoptotic process is a
+    # descendant of go:0006915 ! apoptotic process through the subhierarchy
+    assert 'go:0070246' in apopototic_process_subhierarchy
+
+Get a hierarchy with properties pre-loaded in the node data dictionaries:
 
 .. code-block:: python
 
     import pyobo
 
-    # Map to the best source possible
-    mapt_ncbigene = pyobo.get_priority_curie('hgnc:6893')
-    assert mapt_ncbigene == 'ncbigene:4137'
+    prop = 'http://purl.obolibrary.org/obo/chebi/smiles'
+    chebi_hierarchy = pyobo.get_hierarchy('chebi', properties=[prop])
 
-    # Sometimes you know you're the best. Own it.
-    assert 'ncbigene:4137' == pyobo.get_priority_curie('ncbigene:4137')
+    assert 'chebi:132964' in chebi_hierarchy
+    assert prop in chebi_hierarchy.nodes['chebi:132964']
+    assert chebi_hierarchy.nodes['chebi:132964'][prop] == 'C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F'
 
 Installation |pypi_version| |python_versions| |pypi_license|
 ------------------------------------------------------------

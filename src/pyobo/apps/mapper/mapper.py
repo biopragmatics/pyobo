@@ -10,10 +10,14 @@ from functools import lru_cache
 from typing import Iterable, List, Mapping, Optional, Union
 
 import click
+import networkx as nx
 import pandas as pd
-from flask import Blueprint, Flask, current_app, jsonify, url_for
+from flasgger import Swagger
+from flask import Blueprint, Flask, current_app, jsonify, render_template, url_for
+from flask_bootstrap import Bootstrap
 from werkzeug.local import LocalProxy
 
+from pyobo.cli_utils import verbose_option
 from pyobo.identifier_utils import normalize_curie, normalize_prefix
 from pyobo.xrefdb.xrefs_pipeline import (
     Canonicalizer, all_shortest_paths, get_graph_from_xref_df, get_xref_df, single_source_shortest_path,
@@ -26,7 +30,7 @@ __all__ = [
 ]
 
 summary_df = LocalProxy(lambda: current_app.config['summary'])
-graph = LocalProxy(lambda: current_app.config['graph'])
+graph: nx.Graph = LocalProxy(lambda: current_app.config['graph'])
 canonicalizer: Canonicalizer = LocalProxy(lambda: current_app.config['canonicalizer'])
 
 
@@ -40,44 +44,14 @@ def _all_shortest_paths(source_curie: str, target_curie: str) -> List[List[Mappi
     return all_shortest_paths(graph=graph, source_curie=source_curie, target_curie=target_curie)
 
 
-#: The blueprint that gets added to the app.s
+#: The blueprint that gets added to the app
 search_blueprint = Blueprint('search', __name__)
 
 
 @search_blueprint.route('/')
 def home():
     """Show the home page."""
-    example_url_1 = url_for(
-        f'.{single_source_mappings.__name__}',
-        curie='hgnc:6893',
-    )
-    example_url_2 = url_for(
-        f'.{all_mappings.__name__}',
-        source_curie='hgnc:6893',
-        target_curie='ensembl:ENSG00000186868',
-    )
-    prioritize_path = url_for(
-        f'.{prioritize_curie.__name__}',
-        curie='ensembl:ENSG00000186868',
-    )
-    summary_path = url_for(f'.{summarize.__name__}')
-    summary_one_path = url_for(
-        f'.{summarize_one.__name__}',
-        prefix='umls',
-    )
-    return f'''
-    <h1>PyOBO Mapping Service</h1>
-    <ul>
-    <li>Use the /mappings endpoint to look up equivalent entities,
-     for example, <a href="{example_url_1}">{example_url_1}</a>.</li>
-    <li>Use the /mapping endpoint to look up all mappings between two entities,
-     for example, <a href="{example_url_2}">{example_url_2}</a>.</li>
-    <li>Use the /summarize endpoint to look at a count of all mappings <a href="{summary_path}">{summary_path}</a>.</li>
-    <li>For a specific prefix, add it after like <a href="{summary_one_path}">{summary_one_path}</a>.</li>
-    <li>Use the /prioritize endpoint to get the best CURIE for a given one.
-     for example, <a href="{prioritize_path}">{prioritize_path}</a> remaps MATP to HGNC.</li>
-    </ul>
-        '''
+    return render_template('mapper_home.html')
 
 
 @search_blueprint.route('/mappings/<curie>')
@@ -131,18 +105,18 @@ def summarize_one(prefix: str):
     '''
 
 
-@search_blueprint.route('/prioritize/<curie>')
-def prioritize_curie(curie: str):
+@search_blueprint.route('/canonicalize/<curie>')
+def canonicalize(curie: str):
     """Return the best CURIE."""
     # TODO maybe normalize the curie first?
-    norm_curie = normalize_curie(curie)
-    if not norm_curie:
+    norm_prefix, norm_identifier = normalize_curie(curie)
+    if norm_prefix is None or norm_identifier is None:
         return jsonify(
             query=curie,
             normalizable=False,
         )
 
-    norm_curie = ':'.join(norm_curie)
+    norm_curie = f'{norm_prefix}:{norm_identifier}'
 
     rv = dict(query=curie)
     if norm_curie != curie:
@@ -189,6 +163,8 @@ def get_app(paths: Union[None, str, Iterable[str]] = None) -> Flask:
 
 def _get_app_from_xref_df(df: pd.DataFrame):
     app = Flask(__name__)
+    Swagger(app)
+    Bootstrap(app)
     app.config['summary'] = summarize_xref_df(df)
     app.config['graph'] = get_graph_from_xref_df(df)
     # TODO allow for specification of priorities in the canonicalizer
@@ -201,6 +177,7 @@ def _get_app_from_xref_df(df: pd.DataFrame):
 @click.option('-x', '--mappings-file')
 @click.option('--port')
 @click.option('--host', type=int)
+@verbose_option
 def main(mappings_file, port: str, host: int):
     """Run the mappings app."""
     app = get_app(mappings_file)

@@ -8,15 +8,14 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Iterable, List, Mapping, Optional, Set, Tuple, Union
+from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, Union
 
 from .extract import get_id_name_mapping, get_id_synonyms_mapping
-from .identifier_utils import normalize_dashes
+from .identifier_utils import normalize_dashes, normalize_prefix
 from .io_utils import multisetdict
 
 __all__ = [
     'ground',
-    'multiground',
     'Normalizer',
     'OboNormalizer',
     'MultiNormalizer',
@@ -33,19 +32,19 @@ NormalizationResult = Union[NormalizationSuccess, NormalizationFailure]
 class Normalizer(ABC):
     """A normalizer."""
 
-    id_to_name: Mapping[str, str]
-    id_to_synonyms: Mapping[str, List[str]]
+    id_to_name: Dict[str, str]
+    id_to_synonyms: Dict[str, List[str]]
 
     #: A mapping from all synonyms to the set of identifiers that they point to.
     #: In a perfect world, each would only be a single element.
-    synonym_to_identifiers_mapping: Mapping[str, Set[str]]
+    synonym_to_identifiers_mapping: Dict[str, Set[str]]
     #: A mapping from normalized names to the actual ones that they came from
-    norm_name_to_name: Mapping[str, Set[str]]
+    norm_name_to_name: Dict[str, Set[str]]
 
     def __init__(
         self,
-        id_to_name: Mapping[str, str],
-        id_to_synonyms: Mapping[str, List[str]],
+        id_to_name: Dict[str, str],
+        id_to_synonyms: Dict[str, List[str]],
         remove_prefix: Optional[str] = None,
     ) -> None:  # noqa: D107
         self.id_to_name = id_to_name
@@ -112,27 +111,31 @@ class Normalizer(ABC):
 @lru_cache()
 def get_normalizer(prefix: str) -> Normalizer:
     """Get an OBO normalizer."""
-    normalizer = OboNormalizer(prefix)
+    norm_prefix = normalize_prefix(prefix)
+    if norm_prefix is None:
+        raise ValueError(f'unhandled prefix: {prefix}')
+    logger.info('getting obo normalizer for %s', norm_prefix)
+    normalizer = OboNormalizer(norm_prefix)
     logger.debug('normalizer for %s with %s name lookups', normalizer.prefix, len(normalizer.norm_name_to_name))
     return normalizer
 
 
-def ground(prefix: str, query: str) -> NormalizationResult:
-    """Normalize a string given the prefix's labels and synonyms."""
-    normalizer = get_normalizer(prefix)
-    return normalizer.normalize(query)
+def ground(prefix: Union[str, Iterable[str]], query: str) -> NormalizationResult:
+    """Normalize a string given the prefix's labels and synonyms.
 
-
-def multiground(prefixes: List[str], query: str) -> NormalizationResult:
-    """Normalize a string given the prefixes' labels and synonyms.
-
-    Gives the first result that is found by order of prefixes.
+    :param prefix: If a string, only grounds against that namespace. If a list, will try grounding
+     against all in that order
+    :param query: The string to try grounding
     """
-    for prefix in prefixes:
-        norm_prefix, identifier, name = ground(prefix, query)
-        if norm_prefix and identifier and name:
-            return norm_prefix, identifier, name
-    return None, None, query
+    if isinstance(prefix, str):
+        normalizer = get_normalizer(prefix)
+        return normalizer.normalize(query)
+    else:
+        for p in prefix:
+            norm_prefix, identifier, name = ground(p, query)
+            if norm_prefix and identifier and name:
+                return norm_prefix, identifier, name
+        return None, None, query
 
 
 class OboNormalizer(Normalizer):

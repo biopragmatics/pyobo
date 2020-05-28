@@ -10,6 +10,8 @@ from typing import Iterable, List, Mapping, Set, Tuple, TypeVar
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
+from tqdm import tqdm
+
 __all__ = [
     'split_tab_pair',
     'open_map_tsv',
@@ -34,20 +36,27 @@ def split_tab_pair(x: str) -> Tuple[str, str]:
     return a, b
 
 
-def open_map_tsv(path: str) -> Mapping[str, str]:
+def open_map_tsv(path: str, *, use_tqdm: bool = False) -> Mapping[str, str]:
     """Load a mapping TSV file into a dictionary."""
     with open(path) as file:
         next(file)  # throw away header
+        if use_tqdm:
+            file = tqdm(file, desc=f'loading TSV from {path}')
         return dict(split_tab_pair(line) for line in file)
 
 
-def open_multimap_tsv(path) -> Mapping[str, List[str]]:
+def open_multimap_tsv(path: str, *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
     """Load a mapping TSV file that has multiple mappings for each."""
     rv = defaultdict(list)
     with open(path) as file:
         next(file)  # throw away header
+        if use_tqdm:
+            file = tqdm(file, desc=f'loading TSV from {path}')
         for line in file:
-            key, value = split_tab_pair(line)
+            try:
+                key, value = split_tab_pair(line)
+            except ValueError:
+                logger.warning('bad line: %s', line)
             rv[key].append(value)
     return dict(rv)
 

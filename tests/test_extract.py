@@ -3,11 +3,10 @@
 """Tests for PyOBO."""
 
 import unittest
-from itertools import chain
 
 import pandas as pd
 
-from pyobo import get_xrefs_df, get_id_name_mapping, get_filtered_xrefs
+from pyobo import get_filtered_xrefs, get_id_name_mapping, get_xrefs_df
 from tests.constants import TEST_CHEBI_OBO_PATH
 
 
@@ -28,12 +27,9 @@ class TestMapping(unittest.TestCase):
         df = get_xrefs_df('chebi', url=TEST_CHEBI_OBO_PATH, local=True)
         self.assertIsInstance(df, pd.DataFrame)
 
-        for key, value in chain(
-            df[['source_ns', 'source_id']].values,
-            df[['target_ns', 'target_id']].values,
-        ):
+        for key, value in df[['source_ns', 'source_id']].values:  # no need for targets since are external
             self.assertFalse(value.startswith(key))
-            self.assertFalse(value.lower().startswith(key.lower()))
+            self.assertFalse(value.lower().startswith(key.lower()), msg=f'Bad value: {value}')
             self.assertFalse(value.startswith(f'{key}:'))
             self.assertFalse(value.lower().startswith(f'{key.lower()}:'))
 

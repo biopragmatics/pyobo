@@ -41,14 +41,26 @@ SKIP_XREFS = {
 }
 COLUMNS = ['source_ns', 'source_id', 'target_ns', 'target_id', 'source']
 
-DEFAULT_PRIORITY_LIST = [
+_DEFAULT_PRIORITY_LIST = [
     # Genes
+    'ncbigene',
     'hgnc',
     'rgd',
     'mgi',
-    'ncbigene',
     'ensembl',
     'uniprot',
+    # Chemicals
+    # 'inchikey',
+    # 'inchi',
+    # 'smiles',
+    'pubchem.compound',
+    'chebi',
+    'drugbank',
+    'chembl.compound',
+    'zinc',
+    'npass',
+    'unpd',
+    'knapsack',
     # protein families and complexes (and famplexes :))
     'complexportal',
     'fplx',
@@ -57,6 +69,7 @@ DEFAULT_PRIORITY_LIST = [
     'pfam',
     'signor',
     # Pathologies/phenotypes
+    'mondo',
     'efo',
     'doid',
     'hp',
@@ -65,8 +78,16 @@ DEFAULT_PRIORITY_LIST = [
     'itis',
     # If you can get away from MeSH, do it
     'mesh',
+    'icd',
 ]
-DEFAULT_PRIORITY_LIST = [normalize_prefix(x) for x in DEFAULT_PRIORITY_LIST]
+DEFAULT_PRIORITY_LIST = []
+for _entry in _DEFAULT_PRIORITY_LIST:
+    _prefix = normalize_prefix(_entry)
+    if not _prefix:
+        raise RuntimeError(f'unresolved prefix: {_entry}')
+    if _prefix in DEFAULT_PRIORITY_LIST:
+        raise RuntimeError(f'duplicate found in priority list: {_entry}/{_prefix}')
+    DEFAULT_PRIORITY_LIST.append(_prefix)
 
 
 # TODO a normal graph can easily be turned into a directed graph where each
@@ -79,8 +100,9 @@ class Canonicalizer:
 
     #: A graph from :func:`get_graph_from_xref_df`
     graph: nx.Graph
+
     #: A list of prefixes. The ones with the lower index are higher priority
-    priority: List[str] = field(default_factory=lambda: DEFAULT_PRIORITY_LIST)
+    priority: Optional[List[str]] = None
 
     #: Longest length paths allowed
     cutoff: int = 5
@@ -89,6 +111,8 @@ class Canonicalizer:
 
     def __post_init__(self):
         """Initialize the priority map based on the priority list."""
+        if self.priority is None:
+            self.priority = DEFAULT_PRIORITY_LIST
         self._priority = {
             entry: len(self.priority) - i
             for i, entry in enumerate(self.priority)
@@ -99,16 +123,17 @@ class Canonicalizer:
         return self._priority.get(prefix)
 
     def _get_priority_dict(self, curie: str) -> Mapping[str, int]:
-        rv = {}
+        return dict(self._iterate_priority_targets(curie))
+
+    def _iterate_priority_targets(self, curie: str) -> Iterable[Tuple[str, int]]:
         for target in nx.single_source_shortest_path(self.graph, curie, cutoff=self.cutoff):
             priority = self._key(target)
             if priority is not None:
-                rv[target] = priority
+                yield target, priority
             elif target == curie:
-                rv[target] = 0
+                yield target, 0
             else:
-                rv[target] = -1
-        return rv
+                yield target, -1
 
     def canonicalize(self, curie: str) -> str:
         """Get the best CURIE from the given CURIE."""
@@ -118,12 +143,43 @@ class Canonicalizer:
         return max(priority_dict, key=priority_dict.get)
 
     @classmethod
-    @lru_cache()
-    def get_default(cls) -> Canonicalizer:
+    def get_default(cls, priority: Optional[Iterable[str]] = None) -> Canonicalizer:
         """Get the default canonicalizer."""
+        if priority is not None:
+            priority = tuple(priority)
+        return cls._get_default_helper(priority=priority)
+
+    @classmethod
+    @lru_cache()
+    def _get_default_helper(cls, priority: Optional[Tuple[str, ...]] = None) -> Canonicalizer:
+        """Help get the default canonicalizer."""
+        graph = cls._get_default_graph()
+        return cls(graph=graph, priority=list(priority) if priority else None)
+
+    @staticmethod
+    @lru_cache()
+    def _get_default_graph() -> nx.Graph:
         df = get_xref_df(use_cached=True)
         graph = get_graph_from_xref_df(df)
-        return cls(graph=graph)
+        return graph
+
+    def iterate_flat_mapping(self, use_tqdm: bool = True) -> Iterable[Tuple[str, str]]:
+        """Iterate over the canonical mapping from all nodes to their canonical CURIEs."""
+        nodes = self.graph.nodes()
+        if use_tqdm:
+            nodes = tqdm(
+                nodes,
+                total=self.graph.number_of_nodes(),
+                desc='building flat mapping',
+                unit_scale=True,
+                unit='CURIE',
+            )
+        for node in nodes:
+            yield node, self.canonicalize(node)
+
+    def get_flat_mapping(self, use_tqdm: bool = True) -> Mapping[str, str]:
+        """Get a canonical mapping from all nodes to their canonical CURIEs."""
+        return dict(self.iterate_flat_mapping(use_tqdm=use_tqdm))
 
 
 def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:

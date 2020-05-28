@@ -16,12 +16,12 @@ from .cli_utils import echo_df, verbose_option
 from .constants import PYOBO_HOME
 from .extract import (
     get_ancestors, get_descendants, get_filtered_properties_df, get_filtered_relations_df, get_filtered_xrefs,
-    get_id_name_mapping, get_id_synonyms_mapping, get_name_by_curie, get_properties_df, get_relations_df, get_xrefs_df,
-    iter_cached_obo,
+    get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_name_by_curie, get_properties_df, get_relations_df,
+    get_xrefs_df, iter_cached_obo,
 )
 from .identifier_utils import normalize_curie
 from .sources import CONVERTED, iter_converted_obos
-from .xrefdb.cli import javerts_xrefs, ooh_na_na
+from .xrefdb.cli import javerts_remapping, javerts_xrefs, ooh_na_na
 from .xrefdb.xrefs_pipeline import DEFAULT_PRIORITY_LIST, get_priority_curie, remap_file_stream
 
 __all__ = ['main']
@@ -47,8 +47,7 @@ def xrefs(prefix: str, target: str):
         filtered_xrefs = get_filtered_xrefs(prefix, target)
         click.echo_via_pager('\n'.join(
             f'{identifier}\t{_xref}'
-            for identifier, _xrefs in filtered_xrefs.items()
-            for _xref in _xrefs
+            for identifier, _xref in filtered_xrefs.items()
         ))
     else:
         all_xrefs_df = get_xrefs_df(prefix)
@@ -96,6 +95,20 @@ def relations(prefix: str, relation: str):
         relations_df = get_relations_df(prefix)
 
     echo_df(relations_df)
+
+
+@main.command()
+@prefix_argument
+@click.option('--include-part-of', is_flag=True)
+@click.option('--include-has-member', is_flag=True)
+@verbose_option
+def hierarchy(prefix: str, include_part_of: bool, include_has_member):
+    """Page through the hierarchy for entities in the namespace."""
+    h = get_hierarchy(prefix, include_part_of=include_part_of, include_has_member=include_has_member)
+    click.echo_via_pager('\n'.join(
+        '\t'.join(row)
+        for row in h.edges()
+    ))
 
 
 @main.command()
@@ -206,6 +219,7 @@ def ls():
 
 
 main.add_command(javerts_xrefs)
+main.add_command(javerts_remapping)
 main.add_command(ooh_na_na)
 
 if __name__ == '__main__':
