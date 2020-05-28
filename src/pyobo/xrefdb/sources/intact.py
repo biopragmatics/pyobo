@@ -37,7 +37,7 @@ def get_intact_complex_portal_xrefs_df() -> pd.DataFrame:
 
 @cached_mapping(
     path=prefix_directory_join('intact', 'cache', 'xrefs', 'complexportal.tsv'),
-    header=[f'intact_id', f'complexportal_id'],
+    header=['intact_id', 'complexportal_id'],
 )
 def get_complexportal_mapping() -> Mapping[str, str]:
     """Get IntAct to Complex Portal mapping.
@@ -69,7 +69,7 @@ def get_intact_reactome_xrefs_df() -> pd.DataFrame:
 
 @cached_mapping(
     path=prefix_directory_join('intact', 'cache', 'xrefs', 'reactome.tsv'),
-    header=[f'intact_id', f'reactome_id'],
+    header=['intact_id', 'reactome_id'],
 )
 def get_reactome_mapping() -> Mapping[str, str]:
     """Get IntAct to Reactome mapping.

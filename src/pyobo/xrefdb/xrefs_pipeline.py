@@ -2,11 +2,14 @@
 
 """Pipeline for extracting all xrefs from OBO documents available."""
 
+from __future__ import annotations
+
 import gzip
 import itertools as itt
 import logging
 import os
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Iterable, List, Mapping, Optional, Tuple
 
 import networkx as nx
@@ -15,12 +18,15 @@ from more_itertools import pairwise
 from tqdm import tqdm
 
 from .sources import iter_sourced_xref_dfs
-from ..extract import get_id_name_mapping, get_xrefs_df
+from ..constants import PYOBO_HOME
+from ..extract import get_hierarchy, get_id_name_mapping, get_xrefs_df
 from ..getters import MissingOboBuild, NoOboFoundry
 from ..identifier_utils import normalize_prefix
 from ..path_utils import ensure_path, get_prefix_directory
 from ..registries import get_metaregistry
 from ..sources import ncbigene
+
+XREF_DB_CACHE = os.path.join(PYOBO_HOME, 'inspector_javerts_xrefs.tsv.gz')
 
 logger = logging.getLogger(__name__)
 
@@ -35,14 +41,26 @@ SKIP_XREFS = {
 }
 COLUMNS = ['source_ns', 'source_id', 'target_ns', 'target_id', 'source']
 
-DEFAULT_PRIORITY_LIST = [
+_DEFAULT_PRIORITY_LIST = [
     # Genes
+    'ncbigene',
     'hgnc',
     'rgd',
     'mgi',
-    'ncbigene',
     'ensembl',
     'uniprot',
+    # Chemicals
+    # 'inchikey',
+    # 'inchi',
+    # 'smiles',
+    'pubchem.compound',
+    'chebi',
+    'drugbank',
+    'chembl.compound',
+    'zinc',
+    'npass',
+    'unpd',
+    'knapsack',
     # protein families and complexes (and famplexes :))
     'complexportal',
     'fplx',
@@ -51,6 +69,7 @@ DEFAULT_PRIORITY_LIST = [
     'pfam',
     'signor',
     # Pathologies/phenotypes
+    'mondo',
     'efo',
     'doid',
     'hp',
@@ -59,8 +78,16 @@ DEFAULT_PRIORITY_LIST = [
     'itis',
     # If you can get away from MeSH, do it
     'mesh',
+    'icd',
 ]
-DEFAULT_PRIORITY_LIST = [normalize_prefix(x) for x in DEFAULT_PRIORITY_LIST]
+DEFAULT_PRIORITY_LIST = []
+for _entry in _DEFAULT_PRIORITY_LIST:
+    _prefix = normalize_prefix(_entry)
+    if not _prefix:
+        raise RuntimeError(f'unresolved prefix: {_entry}')
+    if _prefix in DEFAULT_PRIORITY_LIST:
+        raise RuntimeError(f'duplicate found in priority list: {_entry}/{_prefix}')
+    DEFAULT_PRIORITY_LIST.append(_prefix)
 
 
 # TODO a normal graph can easily be turned into a directed graph where each
@@ -73,8 +100,9 @@ class Canonicalizer:
 
     #: A graph from :func:`get_graph_from_xref_df`
     graph: nx.Graph
+
     #: A list of prefixes. The ones with the lower index are higher priority
-    priority: List[str] = field(default_factory=lambda: DEFAULT_PRIORITY_LIST)
+    priority: Optional[List[str]] = None
 
     #: Longest length paths allowed
     cutoff: int = 5
@@ -83,6 +111,8 @@ class Canonicalizer:
 
     def __post_init__(self):
         """Initialize the priority map based on the priority list."""
+        if self.priority is None:
+            self.priority = DEFAULT_PRIORITY_LIST
         self._priority = {
             entry: len(self.priority) - i
             for i, entry in enumerate(self.priority)
@@ -110,6 +140,45 @@ class Canonicalizer:
             return curie
         priority_dict = self._get_priority_dict(curie)
         return max(priority_dict, key=priority_dict.get)
+
+    @classmethod
+    def get_default(cls, priority: Optional[Iterable[str]] = None) -> Canonicalizer:
+        """Get the default canonicalizer."""
+        if priority is not None:
+            priority = tuple(priority)
+        return cls._get_default_helper(priority=priority)
+
+    @classmethod
+    @lru_cache()
+    def _get_default_helper(cls, priority: Optional[Tuple[str, ...]] = None) -> Canonicalizer:
+        """Help get the default canonicalizer."""
+        graph = cls._get_default_graph()
+        return cls(graph=graph, priority=list(priority) if priority else None)
+
+    @staticmethod
+    @lru_cache()
+    def _get_default_graph() -> nx.Graph:
+        df = get_xref_df(use_cached=True)
+        graph = get_graph_from_xref_df(df)
+        return graph
+
+    def iterate_flat_mapping(self, use_tqdm: bool = True) -> Iterable[Tuple[str, str]]:
+        """Iterate over the canonical mapping from all nodes to their canonical CURIEs."""
+        nodes = self.graph.nodes()
+        if use_tqdm:
+            nodes = tqdm(
+                nodes,
+                total=self.graph.number_of_nodes(),
+                desc='building flat mapping',
+                unit_scale=True,
+                unit='CURIE',
+            )
+        for node in nodes:
+            yield node, self.canonicalize(node)
+
+    def get_flat_mapping(self, use_tqdm: bool = True) -> Mapping[str, str]:
+        """Get a canonical mapping from all nodes to their canonical CURIEs."""
+        return dict(self.iterate_flat_mapping(use_tqdm=use_tqdm))
 
 
 def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
@@ -199,12 +268,19 @@ def single_source_shortest_path(graph: nx.Graph, curie: str) -> Optional[Mapping
     }
 
 
-def get_xref_df() -> pd.DataFrame:
+def get_xref_df(use_cached: bool = False) -> pd.DataFrame:
     """Get the ultimate xref database."""
+    if use_cached and os.path.exists(XREF_DB_CACHE):
+        return pd.read_csv(XREF_DB_CACHE, sep='\t', dtype=str)
+
     df = pd.concat(_iterate_xref_dfs())
     df.drop_duplicates(inplace=True)
     df.dropna(inplace=True)
     df.sort_values(COLUMNS, inplace=True)
+
+    if use_cached:
+        df.to_csv(XREF_DB_CACHE, sep='\t', index=False)
+
     return df
 
 
@@ -272,3 +348,36 @@ def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
         for line in tqdm(file, desc='extracting ncbigene'):
             line = line.split('\t')
             yield 'ncbigene', line[1], line[2]
+
+
+def bens_magical_ontology() -> nx.DiGraph:
+    """Make a super graph containing is_a, part_of, and xref relationships."""
+    rv = nx.DiGraph()
+
+    logger.info('getting xrefs')
+    df = get_xref_df()
+    for source_ns, source_id, target_ns, target_id, provenance in df.values:
+        rv.add_edge(f'{source_ns}:{source_id}', f'{target_ns}:{target_id}', relation='xref', provenance=provenance)
+
+    logger.info('getting hierarchies')
+    for prefix, _ in _iterate_metaregistry():
+        hierarchy = get_hierarchy(prefix, include_has_member=True, include_part_of=True)
+        rv.add_edges_from(hierarchy.edges(data=True))
+
+    # TODO include translates_to, transcribes_to, and has_variant
+
+    return rv
+
+
+def get_priority_curie(curie: str) -> str:
+    """Get the priority CURIE mapped to the best namespace."""
+    canonicalizer = Canonicalizer.get_default()
+    return canonicalizer.canonicalize(curie)
+
+
+def remap_file_stream(file_in, file_out, column: int, sep='\t') -> None:
+    """Remap a file."""
+    for line in file_in:
+        line = line.strip().split(sep)
+        line[column] = get_priority_curie(line[column])
+        print(*line, sep=sep, file=file_out)

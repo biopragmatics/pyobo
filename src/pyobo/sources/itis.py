@@ -14,6 +14,7 @@ from pyobo.struct import Obo, Reference, Term
 
 PREFIX = 'itis'
 URL = 'https://www.itis.gov/downloads/itisSqlite.zip'
+VERSION = 'itisSqlite043020'
 
 LONGNAMES_QUERY = """
 SELECT tsn, completename
@@ -39,10 +40,13 @@ def get_obo() -> Obo:
 def iter_terms() -> Iterable[Term]:
     """Get ITIS terms."""
     zip_path = ensure_path(PREFIX, URL)
-    sqlite_path = prefix_directory_join(PREFIX, 'itisSqlite032520', 'ITIS.sqlite')
+    sqlite_path = prefix_directory_join(PREFIX, 'itisSqlite043020', 'ITIS.sqlite')
     if not os.path.exists(sqlite_path):
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(get_prefix_directory(PREFIX))
+
+    if not os.path.exists(sqlite_path):
+        raise FileNotFoundError(f'file missing: {sqlite_path}')
 
     conn = sqlite3.connect(sqlite_path)
 

@@ -4,6 +4,7 @@
 
 import logging
 import os
+import sys
 from operator import itemgetter
 from typing import Optional
 
@@ -14,11 +15,14 @@ from tabulate import tabulate
 from .cli_utils import echo_df, verbose_option
 from .constants import PYOBO_HOME
 from .extract import (
-    get_filtered_properties_df, get_filtered_xrefs, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts,
-    get_properties_df, get_relations_df, get_xrefs_df, iter_cached_obo,
+    get_ancestors, get_descendants, get_filtered_properties_df, get_filtered_relations_df, get_filtered_xrefs,
+    get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_name_by_curie, get_properties_df,
+    get_relations_df, get_xrefs_df, iter_cached_obo,
 )
+from .identifier_utils import normalize_curie
 from .sources import CONVERTED, iter_converted_obos
-from .xrefdb.cli import javerts_xrefs, ooh_na_na
+from .xrefdb.cli import javerts_remapping, javerts_xrefs, ooh_na_na
+from .xrefdb.xrefs_pipeline import DEFAULT_PRIORITY_LIST, get_priority_curie, remap_file_stream
 
 __all__ = ['main']
 
@@ -43,8 +47,7 @@ def xrefs(prefix: str, target: str):
         filtered_xrefs = get_filtered_xrefs(prefix, target)
         click.echo_via_pager('\n'.join(
             f'{identifier}\t{_xref}'
-            for identifier, _xrefs in filtered_xrefs.items()
-            for _xref in _xrefs
+            for identifier, _xref in filtered_xrefs.items()
         ))
     else:
         all_xrefs_df = get_xrefs_df(prefix)
@@ -78,11 +81,56 @@ def synonyms(prefix: str):
 
 @main.command()
 @prefix_argument
+@click.option('--relation', help='CURIE for the relationship or just the ID if local to the ontology')
 @verbose_option
-def relations(prefix: str):
+def relations(prefix: str, relation: str):
     """Page through the relations for entities in the given namespace."""
-    relations_df = get_relations_df(prefix)
+    if relation is not None:
+        curie = normalize_curie(relation)
+        if curie[1] is None:  # that's the identifier
+            click.secho(f'not valid curie, assuming local to {prefix}', fg='yellow')
+            curie = prefix, relation
+        relations_df = get_filtered_relations_df(prefix, relation=curie)
+    else:
+        relations_df = get_relations_df(prefix)
+
     echo_df(relations_df)
+
+
+@main.command()
+@prefix_argument
+@click.option('--include-part-of', is_flag=True)
+@click.option('--include-has-member', is_flag=True)
+@verbose_option
+def hierarchy(prefix: str, include_part_of: bool, include_has_member):
+    """Page through the hierarchy for entities in the namespace."""
+    h = get_hierarchy(prefix, include_part_of=include_part_of, include_has_member=include_has_member)
+    click.echo_via_pager('\n'.join(
+        '\t'.join(row)
+        for row in h.edges()
+    ))
+
+
+@main.command()
+@prefix_argument
+@click.argument('identifier')
+@verbose_option
+def ancestors(prefix: str, identifier: str):
+    """Look up ancestors."""
+    curies = get_ancestors(prefix=prefix, identifier=identifier)
+    for curie in curies:
+        click.echo(f'{curie}\t{get_name_by_curie(curie)}')
+
+
+@main.command()
+@prefix_argument
+@click.argument('identifier')
+@verbose_option
+def descendants(prefix: str, identifier: str):
+    """Look up descendants."""
+    curies = get_descendants(prefix=prefix, identifier=identifier)
+    for curie in curies:
+        click.echo(f'{curie}\t{get_name_by_curie(curie)}')
 
 
 @main.command()
@@ -96,6 +144,30 @@ def properties(prefix: str, key: Optional[str]):
     else:
         properties_df = get_filtered_properties_df(prefix, prop=key)
     echo_df(properties_df)
+
+
+_ORDERING_TEXT = ', '.join(
+    f'{i}) {x}'
+    for i, x in enumerate(DEFAULT_PRIORITY_LIST, start=1)
+)
+
+
+@main.command(help=f'Prioritize a CURIE from ordering: {_ORDERING_TEXT}')
+@click.argument('curie')
+def prioritize(curie: str):
+    """Prioritize a CURIE."""
+    priority_curie = get_priority_curie(curie)
+    click.secho(priority_curie)
+
+
+@main.command()
+@click.option('-i', '--file-in', type=click.File('r'), default=sys.stdin)
+@click.option('-o', '--file-out', type=click.File('w'), default=sys.stdout)
+@click.option('--column', type=int, default=0, show_default=True)
+@click.option('--sep', default='\t', show_default=True)
+def recurify(file_in, file_out, column: int, sep: str):
+    """Remap a column in a given file stream."""
+    remap_file_stream(file_in=file_in, file_out=file_out, column=column, sep=sep)
 
 
 @main.command()
@@ -160,6 +232,7 @@ def ls():
 
 
 main.add_command(javerts_xrefs)
+main.add_command(javerts_remapping)
 main.add_command(ooh_na_na)
 
 if __name__ == '__main__':

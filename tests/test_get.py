@@ -23,7 +23,7 @@ class TestParseObonet(unittest.TestCase):
         """Test getting type definitions from an :mod:`obonet` graph."""
         pairs = {
             (typedef.prefix, typedef.identifier)
-            for typedef in iterate_graph_typedefs(self.graph)
+            for typedef in iterate_graph_typedefs(self.graph, 'chebi')
         }
         self.assertIn(('chebi', 'has_part'), pairs)
 
@@ -95,7 +95,7 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_relations(self):
         """Test getting relations from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes['CHEBI:17051']
-        relations = list(iterate_node_relationships(data, 'chebi'))
+        relations = list(iterate_node_relationships(data, default_prefix='chebi'))
         self.assertEqual(1, len(relations))
         typedef, target = relations[0]
 
