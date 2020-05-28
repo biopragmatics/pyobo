@@ -123,16 +123,17 @@ class Canonicalizer:
         return self._priority.get(prefix)
 
     def _get_priority_dict(self, curie: str) -> Mapping[str, int]:
-        rv = {}
+        return dict(self._iterate_priority_targets(curie))
+
+    def _iterate_priority_targets(self, curie: str) -> Iterable[Tuple[str, int]]:
         for target in nx.single_source_shortest_path(self.graph, curie, cutoff=self.cutoff):
             priority = self._key(target)
             if priority is not None:
-                rv[target] = priority
+                yield target, priority
             elif target == curie:
-                rv[target] = 0
+                yield target, 0
             else:
-                rv[target] = -1
-        return rv
+                yield target, -1
 
     def canonicalize(self, curie: str) -> str:
         """Get the best CURIE from the given CURIE."""
