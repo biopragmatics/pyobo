@@ -23,6 +23,7 @@ resolve_blueprint = Blueprint('resolver', __name__)
 REMOTE_DATA_URL = 'https://zenodo.org/record/3756206/files/ooh_na_na.tsv.gz'
 
 get_id_name_mapping = LocalProxy(lambda: current_app.config['get_id_name_mapping'])
+get_primary_identifier = LocalProxy(lambda: current_app.config['get_primary_identifier'])
 get_summary = LocalProxy(lambda: current_app.config['summarize'])
 
 
@@ -70,6 +71,16 @@ def _help_resolve(curie: str) -> Mapping[str, Any]:
             message='Could not identify prefix',
         )
 
+    identifier = pyobo.get_primary_identifier(prefix, identifier)
+    if not identifier:
+        return dict(
+            query=curie,
+            prefix=prefix,
+            identifier=identifier,
+            success=False,
+            message='Could not look up alt identifiers',
+        )
+
     id_name_mapping = get_id_name_mapping(prefix)
     if id_name_mapping is None:
         return dict(
@@ -113,6 +124,8 @@ def get_app(data: Union[None, str, pd.DataFrame] = None) -> Flask:
     if data is None:
         app.config['get_id_name_mapping'] = pyobo.get_id_name_mapping
         app.config['summarize'] = lambda: Counter({})
+        app.config['get_primary_identifier'] = pyobo.get_primary_identifier
+
     else:
         lookup = defaultdict(dict)
 
@@ -133,6 +146,7 @@ def get_app(data: Union[None, str, pd.DataFrame] = None) -> Flask:
 
         app.config['get_id_name_mapping'] = lookup.get
         app.config['summarize'] = lambda: Counter({k: len(v) for k, v in lookup.items()})
+        app.config['get_primary_identifier'] = pyobo.get_primary_identifier
 
     app.register_blueprint(resolve_blueprint)
     return app
@@ -150,7 +164,7 @@ def main(port: int, host: str, data: Optional[str], test: bool):
     if test:
         data = [
             (prefix, identifier, name)
-            for prefix in ['hgnc', 'chebi', 'doid']
+            for prefix in ['hgnc', 'chebi', 'doid', 'go']
             for identifier, name in pyobo.get_id_name_mapping(prefix).items()
         ]
         data = pd.DataFrame(data, columns=['prefix', 'identifier', 'name'])
