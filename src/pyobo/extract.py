@@ -24,6 +24,7 @@ __all__ = [
     'get_name_id_mapping',
     'get_id_name_mapping',
     'get_name',
+    'get_name_by_curie',
     # Synonyms
     'get_id_synonyms_mapping',
     # Properties
