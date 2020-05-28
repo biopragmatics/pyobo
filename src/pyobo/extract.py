@@ -251,14 +251,19 @@ def get_alts_to_id(prefix: str, **kwargs) -> Mapping[str, str]:
     """Get alternative id to primary id mapping."""
     return {
         alt: primary
-        for primary, alts in get_id_to_alts(prefix, **kwargs)
+        for primary, alts in get_id_to_alts(prefix, **kwargs).items()
         for alt in alts
     }
 
 
 def get_primary_identifier(prefix: str, identifier: str) -> Optional[str]:
-    """Get the primary identifier for an entity."""
-    return get_alts_to_id(prefix).get(identifier)
+    """Get the primary identifier for an entity.
+
+    Returns none if the prefix is not handled.
+    """
+    alts_to_id = get_alts_to_id(prefix)
+    if alts_to_id:
+        return alts_to_id.get(identifier, identifier)
 
 
 def get_hierarchy(
