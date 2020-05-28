@@ -99,7 +99,8 @@
     "cas": {
       "synonyms": [
         "CASID"
-      ]
+      ],
+      "wikidata_property": "P231"
     },
     "ceph": {
       "download": "https://raw.githubusercontent.com/obophenotype/cephalopod-ontology/master/ceph.obo",
@@ -117,12 +118,14 @@
       "synonyms": [
         "ChEBI",
         "CHEBI"
-      ]
+      ],
+      "wikidata_property": "P683"
     },
     "chembl": {
       "synonyms": [
         "ChEMBL"
-      ]
+      ],
+      "wikidata_property": "P592"
     },
     "chemidplus": {
       "synonyms": [
@@ -135,7 +138,8 @@
     "chemspider": {
       "synonyms": [
         "Chemspider"
-      ]
+      ],
+      "wikidata_property": "P661"
     },
     "chiro": {
       "download": "http://purl.obolibrary.org/obo/chiro.obo",
@@ -218,7 +222,8 @@
     "drugbank": {
       "synonyms": [
         "DrugBank"
-      ]
+      ],
+      "wikidata_property": "P715"
     },
     "drugcentral": {
       "synonyms": [
@@ -365,7 +370,8 @@
     "hmdb": {
       "synonyms": [
         "HMDB"
-      ]
+      ],
+      "wikidata_property": "P2057"
     },
     "hp": {
       "download": "http://purl.obolibrary.org/obo/hp.obo",
@@ -420,6 +426,12 @@
     "iev": {
       "pattern": "\\d{7}"
     },
+    "inchi": {
+      "wikidata_property": "P234"
+    },
+    "inchikey": {
+      "wikidata_property": "P235"
+    },
     "interpro": {
       "synonyms": [
         "InterPro",
@@ -463,6 +475,9 @@
       "synonyms": [
         "KEGG_REACTION"
       ]
+    },
+    "knapsack": {
+      "wikidata_property": "P2064"
     },
     "lincs": {
       "synonyms": []
@@ -786,6 +801,11 @@
     "rxno": {
       "pattern": "\\d{7}"
     },
+    "rxnorm": {
+      "pattern": "[0-9]{1,7}",
+      "url": "https://mor.nlm.nih.gov/RxNav/search?searchBy=RXCUI&searchTerm=$1",
+      "wikidata_property": "P3345"
+    },
     "sgd": {
       "synonyms": [
         "SGD"
@@ -798,6 +818,9 @@
       "synonyms": [
         "SIGNOR"
       ]
+    },
+    "smiles": {
+      "wikidata_property": "P233"
     },
     "snomedct": {
       "miriam": {
@@ -874,7 +897,8 @@
       "synonyms": [
         "UM-BBD_compID"
       ],
-      "url": "http://eawag-bbd.ethz.ch/servlets/pageservlet?ptype=c&compID=$1"
+      "url": "http://eawag-bbd.ethz.ch/servlets/pageservlet?ptype=c&compID=$1",
+      "wikidata_property": "P8121"
     },
     "umbbd.enzyme": {
       "synonyms": [
@@ -903,7 +927,8 @@
         "UMLS",
         "UMLS_CUI",
         "UMLS CUI"
-      ]
+      ],
+      "wikidata_property": "P2892"
     },
     "uniprot": {
       "synonyms": [
