@@ -55,22 +55,24 @@ class TestMiriam(unittest.TestCase):
         #     self.assertIsNotNone(norm_prefix, msg=f'could not normalize MIRIAM prefix: {norm_prefix}')
         #     curies.append((prefix, norm_prefix, entry['sampleId']))
 
-        for miriam_prefix, norm_prefix, identifier in curies:
-            if miriam_prefix in BLACKLIST or miriam_prefix in UNSOLVED:
+        for prefix, identifier in curies:
+            if prefix in BLACKLIST or prefix in UNSOLVED:
                 continue
-            with self.subTest(prefix=norm_prefix, msg=f'failed for MIRIAM prefix: {miriam_prefix}'):
-                url = get_identifiers_org_link(norm_prefix, identifier)
-                self.assertIsNotNone(url, msg=f'metaregistry does not contain prefix {norm_prefix}')
+            with self.subTest(prefix=prefix, msg=f'failed for MIRIAM prefix: {prefix}'):
+                url = get_identifiers_org_link(prefix, identifier)
+                self.assertIsNotNone(url, msg=f'metaregistry does not contain prefix {prefix}')
                 try:
                     res = requests.get(url)
                 except (
                     requests.exceptions.SSLError,
                     requests.exceptions.ConnectionError,
                 ):
-                    logger.warning(f'identifiers.org has a problem resolving prefix {miriam_prefix}')
+                    logger.warning(f'identifiers.org has a problem resolving prefix {prefix}')
                     continue
-                self.assertFalse(res.text.startswith('INVALID'),
-                                 msg=f'invalid url for {norm_prefix}: {url}\n\n{res.text}')
+                self.assertFalse(
+                    res.text.startswith('INVALID'),
+                    msg=f'invalid url for {prefix}: {url}\n\n{res.text}',
+                )
 
     def test_unsuccessful(self):
         """Test links that should fail."""
