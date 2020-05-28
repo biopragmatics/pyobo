@@ -71,7 +71,7 @@ def _help_resolve(curie: str) -> Mapping[str, Any]:
             message='Could not identify prefix',
         )
 
-    identifier = pyobo.get_primary_identifier(prefix, identifier)
+    identifier = get_primary_identifier(prefix, identifier)
     if not identifier:
         return dict(
             query=curie,
