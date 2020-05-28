@@ -41,6 +41,7 @@ __all__ = [
     'get_id_to_alts',
     'get_alts_to_id',
     'get_primary_identifier',
+    'get_primary_curie',
     # Hierarchy
     'get_hierarchy',
     'get_subhierarchy',
@@ -254,6 +255,14 @@ def get_alts_to_id(prefix: str, **kwargs) -> Mapping[str, str]:
         for primary, alts in get_id_to_alts(prefix, **kwargs).items()
         for alt in alts
     }
+
+
+def get_primary_curie(curie: str) -> Optional[str]:
+    """Get the primary curie for an entity."""
+    prefix, identifier = normalize_curie(curie)
+    primary_identifier = get_primary_identifier(prefix, identifier)
+    if primary_identifier is not None:
+        return f'{prefix}:{primary_identifier}'
 
 
 def get_primary_identifier(prefix: str, identifier: str) -> Optional[str]:
