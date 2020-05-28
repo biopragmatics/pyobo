@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""PyOBO's Resolution Service."""
+"""PyOBO's Resolution Service.
+
+Run with ``python -m pyobo.apps.resolver``
+"""
 
 from .resolver import main
 

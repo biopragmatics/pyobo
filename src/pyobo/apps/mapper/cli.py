@@ -10,6 +10,7 @@ from functools import lru_cache
 from typing import Iterable, List, Mapping, Optional, Union
 
 import click
+import networkx as nx
 import pandas as pd
 from flask import Blueprint, Flask, current_app, jsonify, url_for
 from werkzeug.local import LocalProxy
@@ -26,7 +27,7 @@ __all__ = [
 ]
 
 summary_df = LocalProxy(lambda: current_app.config['summary'])
-graph = LocalProxy(lambda: current_app.config['graph'])
+graph: nx.Graph = LocalProxy(lambda: current_app.config['graph'])
 canonicalizer: Canonicalizer = LocalProxy(lambda: current_app.config['canonicalizer'])
 
 
@@ -40,7 +41,7 @@ def _all_shortest_paths(source_curie: str, target_curie: str) -> List[List[Mappi
     return all_shortest_paths(graph=graph, source_curie=source_curie, target_curie=target_curie)
 
 
-#: The blueprint that gets added to the app.s
+#: The blueprint that gets added to the app
 search_blueprint = Blueprint('search', __name__)
 
 
