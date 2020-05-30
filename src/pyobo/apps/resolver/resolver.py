@@ -73,15 +73,24 @@ def _help_resolve(curie: str) -> Mapping[str, Any]:
             message='Could not identify prefix',
         )
 
+    miriam = get_identifiers_org_link(prefix, identifier)
+
     id_name_mapping = get_id_name_mapping(prefix)
     if id_name_mapping is None:
-        return dict(
+        rv = dict(
             query=curie,
             prefix=prefix,
             identifier=identifier,
             success=False,
-            message='Could not find id->name mapping for prefix',
         )
+        if miriam:
+            rv.update(dict(
+                miriam=miriam,
+                message='Could not find id->name mapping for prefix, but still able to report Identifiers.org link',
+            ))
+        else:
+            rv['message'] = 'Could not find id->name mapping for prefix'
+        return rv
 
     name = id_name_mapping.get(identifier)
     if name is None:
@@ -99,7 +108,7 @@ def _help_resolve(curie: str) -> Mapping[str, Any]:
         identifier=identifier,
         name=name,
         success=True,
-        miriam=get_identifiers_org_link(prefix, identifier),
+        miriam=miriam,
     )
 
 
