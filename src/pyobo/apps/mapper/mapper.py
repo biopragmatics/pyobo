@@ -17,6 +17,7 @@ from flask import Blueprint, Flask, current_app, jsonify, render_template, url_f
 from flask_bootstrap import Bootstrap
 from werkzeug.local import LocalProxy
 
+from pyobo.apps.utils import gunicorn_option, host_option, port_option, run_app
 from pyobo.cli_utils import verbose_option
 from pyobo.identifier_utils import normalize_curie, normalize_prefix
 from pyobo.xrefdb.xrefs_pipeline import (
@@ -175,13 +176,14 @@ def _get_app_from_xref_df(df: pd.DataFrame):
 
 @click.command()
 @click.option('-x', '--mappings-file')
-@click.option('--port')
-@click.option('--host', type=int)
+@port_option
+@host_option
+@gunicorn_option
 @verbose_option
-def main(mappings_file, port: str, host: int):
+def main(mappings_file, host: str, port: int, gunicorn: bool):
     """Run the mappings app."""
     app = get_app(mappings_file)
-    app.run(port=port, host=host)
+    run_app(app=app, host=host, port=port, gunicorn=gunicorn)
 
 
 if __name__ == '__main__':

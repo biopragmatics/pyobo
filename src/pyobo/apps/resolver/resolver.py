@@ -18,6 +18,7 @@ from tqdm import tqdm
 from werkzeug.local import LocalProxy
 
 import pyobo
+from pyobo.apps.utils import gunicorn_option, host_option, port_option, run_app
 from pyobo.cli_utils import verbose_option
 from pyobo.identifier_utils import normalize_curie
 
@@ -143,12 +144,13 @@ def get_app(data: Union[None, str, pd.DataFrame] = None) -> Flask:
 
 @click.command()
 @click.version_option(version=pyobo.version.VERSION)
-@click.option('--port', type=int, help='port on which the app is served')
-@click.option('--host', help='host on which the app is run')
+@port_option
+@host_option
 @click.option('--data', help='local 3-column gzipped TSV as database')
 @click.option('--test', is_flag=True, help='run in test mode with only a few datasets')
+@gunicorn_option
 @verbose_option
-def main(port: int, host: str, data: Optional[str], test: bool):
+def main(port: int, host: str, data: Optional[str], test: bool, gunicorn: bool):
     """Run the resolver app."""
     if test:
         data = [
@@ -159,7 +161,7 @@ def main(port: int, host: str, data: Optional[str], test: bool):
         data = pd.DataFrame(data, columns=['prefix', 'identifier', 'name'])
 
     app = get_app(data)
-    app.run(port=port, host=host)
+    run_app(app=app, host=host, port=port, gunicorn=gunicorn)
 
 
 if __name__ == '__main__':
