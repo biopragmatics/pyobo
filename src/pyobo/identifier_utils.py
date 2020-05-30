@@ -2,18 +2,23 @@
 
 """Utilities for handling prefixes."""
 
-__all__ = [
-    'normalize_curie',
-    'normalize_prefix',
-    'normalize_dashes',
-]
-
+import logging
 from collections import defaultdict
 from typing import Optional, Tuple, Union
 
 from .registries import (
-    REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST, XREF_SUFFIX_BLACKLIST, get_namespace_synonyms,
+    PREFIX_TO_MIRIAM_PREFIX, REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST, XREF_SUFFIX_BLACKLIST,
+    get_miriam, get_namespace_synonyms,
 )
+
+__all__ = [
+    'normalize_curie',
+    'get_identifiers_org_link',
+    'normalize_prefix',
+    'normalize_dashes',
+]
+
+logger = logging.getLogger(__name__)
 
 
 def alternate_strip_prefix(s, prefix):
@@ -26,6 +31,7 @@ def alternate_strip_prefix(s, prefix):
 SYNONYM_TO_KEY = get_namespace_synonyms()
 UNHANDLED_NAMESPACES = defaultdict(list)
 UBERON_UNHANDLED = defaultdict(list)
+MIRIAM = get_miriam(mappify=True)
 
 
 def normalize_prefix(prefix: str, *, curie=None, xref=None) -> Optional[str]:
@@ -77,6 +83,19 @@ def normalize_curie(node: str) -> Union[Tuple[str, str], Tuple[None, None]]:
     if not norm_node_prefix:
         return None, None
     return norm_node_prefix, identifier
+
+
+def get_identifiers_org_link(prefix: str, identifier: str) -> Optional[str]:
+    """Get the identifiers.org URL if possible."""
+    miriam_prefix, namespace_in_lui = PREFIX_TO_MIRIAM_PREFIX.get(prefix, (None, None))
+    if not miriam_prefix and prefix in MIRIAM:
+        miriam_prefix = prefix
+        namespace_in_lui = MIRIAM[prefix]['namespaceEmbeddedInLui']
+    if not miriam_prefix:
+        return
+    if namespace_in_lui:
+        miriam_prefix = miriam_prefix.upper()
+    return f'https://identifiers.org/{miriam_prefix}:{identifier}'
 
 
 # See: https://en.wikipedia.org/wiki/Dash

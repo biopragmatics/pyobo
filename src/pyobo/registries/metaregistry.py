@@ -4,6 +4,7 @@
 
 import json
 import os
+from typing import Mapping, Tuple
 
 __all__ = [
     'CURATED_REGISTRY_PATH',
@@ -56,3 +57,9 @@ OBSOLETE = CURATED_REGISTRY['obsolete']
 REMAPPINGS_FULL = CURATED_REGISTRY['remappings']['full']
 #: Remappings for xrefs based on the prefix. Doesn't take into account the semicolon :
 REMAPPINGS_PREFIX = CURATED_REGISTRY['remappings']['prefix']
+
+PREFIX_TO_MIRIAM_PREFIX: Mapping[str, Tuple[str, str]] = {
+    prefix: (entry['miriam']['prefix'], entry['miriam']['namespaceEmbeddedInLui'])
+    for prefix, entry in CURATED_REGISTRY_DATABASE.items()
+    if 'miriam' in entry
+}
