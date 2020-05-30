@@ -42,6 +42,11 @@ def make_gunicorn_app(app: Flask, host: str, port: int, workers: int):
 
     :rtype: gunicorn.app.base.BaseApplication
     """
+    if not host:
+        raise ValueError('Must specify host')
+    if not port:
+        raise ValueError('Must specify port')
+
     import gunicorn.app.base
 
     class StandaloneApplication(gunicorn.app.base.BaseApplication):
