@@ -8,6 +8,7 @@ from typing import Iterable, List, Mapping
 
 from tqdm import tqdm
 
+from .mirbase_constants import VERSION
 from ..cache_utils import cached_mapping
 from ..path_utils import ensure_df, ensure_path, prefix_directory_join
 from ..struct import Obo, Reference, Synonym, Term, from_species
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 PREFIX = 'mirbase'
 MIRBASE_MATURE_PREFIX = 'mirbase.mature'
-VERSION = '22.1'
+
 DEFINITIONS_URL = f'ftp://mirbase.org/pub/mirbase/{VERSION}/miRNA.dat.gz'
 ALIASES_URL = f'ftp://mirbase.org/pub/mirbase/{VERSION}/aliases.txt.gz'
 SPECIES_URL = f'ftp://mirbase.org/pub/mirbase/{VERSION}/organisms.txt.gz'

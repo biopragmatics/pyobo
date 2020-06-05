@@ -32,6 +32,8 @@ CONVERTED = {
     'mgi': 'mgi',
     'msig': 'msig',
     'mirbase': 'mirbase',
+    'mirbase.family': 'mirbase_family',
+    'mirbase.mature': 'mirbase_mature',
     'pathbank': 'pathbank',
     'pfam': 'pfam',
     'pfam.clan': 'pfam_clan',
