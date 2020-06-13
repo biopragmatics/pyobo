@@ -2,7 +2,7 @@
 
 """Entry point for extraction script."""
 
-from .cli import cache_xrefs
+from .cli import output
 
 if __name__ == '__main__':
-    cache_xrefs()
+    output()

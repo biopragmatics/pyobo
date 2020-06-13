@@ -21,7 +21,7 @@ from .extract import (
 )
 from .identifier_utils import normalize_curie
 from .sources import CONVERTED, iter_converted_obos
-from .xrefdb.cli import javerts_remapping, javerts_xrefs, ooh_na_na
+from .xrefdb.cli import javerts_remapping, javerts_xrefs, ooh_na_na, synonymsdb
 from .xrefdb.xrefs_pipeline import DEFAULT_PRIORITY_LIST, get_priority_curie, remap_file_stream
 
 __all__ = ['main']
@@ -221,6 +221,7 @@ def ls():
 main.add_command(javerts_xrefs)
 main.add_command(javerts_remapping)
 main.add_command(ooh_na_na)
+main.add_command(synonymsdb)
 
 if __name__ == '__main__':
     main()

@@ -19,7 +19,7 @@ from tqdm import tqdm
 
 from .sources import iter_sourced_xref_dfs
 from ..constants import PYOBO_HOME
-from ..extract import get_hierarchy, get_id_name_mapping, get_xrefs_df
+from ..extract import get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_xrefs_df
 from ..getters import MissingOboBuild, NoOboFoundry
 from ..identifier_utils import normalize_prefix
 from ..path_utils import ensure_path, get_prefix_directory
@@ -349,6 +349,32 @@ def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
         for line in tqdm(file, desc='extracting ncbigene'):
             line = line.split('\t')
             yield 'ncbigene', line[1], line[2]
+
+
+def _iter_synonyms(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
+    """Iterate over all prefix-identifier-synonym triples we can get.
+
+    :param leave: should the tqdm be left behind?
+    """
+    for prefix in sorted(get_metaregistry()):
+        if prefix in SKIP:
+            continue
+        try:
+            id_synonyms = get_id_synonyms_mapping(prefix)
+        except (NoOboFoundry, MissingOboBuild):
+            continue
+        except ValueError as e:
+            if (
+                str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0"?>')
+                or str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0" encoding="UTF-8"?>')
+            ):
+                logger.info('no resource available for %s. See http://www.obofoundry.org/ontology/%s', prefix, prefix)
+                continue  # this means that it tried doing parsing on an xml page saying get the fuck out
+            logger.warning('could not successfully parse %s: %s', prefix, e)
+        else:
+            for identifier, synonyms in tqdm(id_synonyms.items(), desc=f'iterating {prefix}', leave=leave):
+                for synonym in synonyms:
+                    yield prefix, identifier, synonym
 
 
 def bens_magical_ontology() -> nx.DiGraph:
