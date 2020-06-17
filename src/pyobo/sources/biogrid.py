@@ -72,5 +72,5 @@ def get_ncbigene_mapping() -> Mapping[str, str]:
         biogrid_ncbigene_mapping = get_filtered_xrefs('biogrid', 'ncbigene')
     """
     df = get_df()
-    df = df[df['IDENTIFIER_TYPE'] == 'ENTREZ_GENE', ['BIOGRID_ID', 'IDENTIFIER_VALUE']]
+    df = df.loc[df['IDENTIFIER_TYPE'] == 'ENTREZ_GENE', ['BIOGRID_ID', 'IDENTIFIER_VALUE']]
     return dict(df.values)
