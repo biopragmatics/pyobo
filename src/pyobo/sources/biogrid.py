@@ -11,7 +11,7 @@ from pyobo.extract import get_name_id_mapping
 from pyobo.path_utils import ensure_df, prefix_directory_join
 
 PREFIX = 'biogrid'
-VERSION = '3.5.183'
+VERSION = '3.5.186'
 BASE_URL = 'https://downloads.thebiogrid.org/Download/BioGRID/Release-Archive'
 URL = f'{BASE_URL}/BIOGRID-{VERSION}/BIOGRID-IDENTIFIERS-{VERSION}.tab.zip'
 
