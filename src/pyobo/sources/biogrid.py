@@ -41,6 +41,7 @@ taxonomy_remapping = {  # so much for official names
 
     # Not in my current dump, but definitely there!
     "Severe acute respiratory syndrome coronavirus 2": "2697049",  # Severe acute respiratory syndrome coronavirus 2
+    'Middle-East Respiratory Syndrome-related Coronavirus': '1335626',
 }
 
 
