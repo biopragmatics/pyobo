@@ -42,6 +42,7 @@ CONVERTED = {
     'reactome': 'reactome',
     'rgd': 'rgd',
     'sgd': 'sgd',
+    'umls': 'umls',
     'wikipathways': 'wikipathways',
 }
 
