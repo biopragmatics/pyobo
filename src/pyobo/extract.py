@@ -364,7 +364,7 @@ def get_subhierarchy(
         use_tqdm=use_tqdm,
         **kwargs,
     )
-    logger.info('getting descendants of %s:%s', prefix, identifier)
+    logger.info('getting descendants of %s:%s ! %s', prefix, identifier, get_name(prefix, identifier))
     curies = nx.ancestors(hierarchy, f'{prefix}:{identifier}')  # note this is backwards
     logger.info('inducing subgraph')
     sg = hierarchy.subgraph(curies).copy()
