@@ -63,20 +63,6 @@ Maybe you live in CURIE world and just want to normalize something like
     name = pyobo.get_name_by_curie('CHEBI:132964')
     assert name == 'fluazifop-P-butyl'
 
-Remap a CURIE based on pre-defined priority list and `Inspector Javert's Xref
-Database <https://cthoyt.com/2020/04/19/inspector-javerts-xref-database.html>`_:
-
-.. code-block:: python
-
-    import pyobo
-
-    # Map to the best source possible
-    mapt_ncbigene = pyobo.get_priority_curie('hgnc:6893')
-    assert mapt_ncbigene == 'ncbigene:4137'
-
-    # Sometimes you know you're the best. Own it.
-    assert 'ncbigene:4137' == pyobo.get_priority_curie('ncbigene:4137')
-
 Grounding
 ~~~~~~~~~
 Maybe you've got names/synonyms you want to try and map back to ChEBI synonyms.
@@ -151,18 +137,40 @@ that does this for you:
     mapt_hgnc = ncbigene_id_to_hgnc_id['4137']
     assert mapt_hgnc == '6893'
 
-Find all CURIEs mapped to a given one using
-`Inspector Javert's Xref Database <https://cthoyt.com/2020/04/19/inspector-javerts-xref-database.html>`_:
+Remap a CURIE based on pre-defined priority list and `Inspector Javert's Xref
+Database <https://cthoyt.com/2020/04/19/inspector-javerts-xref-database.html>`_:
 
-.. code-block::
-
-    # If you don't have a local cache and don't want to build one, first do this:
-    import pyobo.resource_utils
-    pyobo.resource_utils.download_inspector_javert
+.. code-block:: python
 
     import pyobo
+
+    # Map to the best source possible
+    mapt_ncbigene = pyobo.get_priority_curie('hgnc:6893')
+    assert mapt_ncbigene == 'ncbigene:4137'
+
+    # Sometimes you know you're the best. Own it.
+    assert 'ncbigene:4137' == pyobo.get_priority_curie('ncbigene:4137')
+
+Find all CURIEs mapped to a given one using Inspector Javert's Xref Database:
+
+.. code-block:: python
+
+    import pyobo
+
+    # Get a set of all CURIEs mapped to MAPT
     mapt_curies = pyobo.get_equivalent('hgnc:6893')
     assert 'ncbigene:4137' in mapt_curies
+    assert 'ensembl:ENSG00000186868:4137' in mapt_curies
+
+If you don't want to wait to build the database locally for the ``pyobo.get_priority_curie`` and
+``pyobo.get_equivalent``, you can use the following code to download a release from
+`Zenodo <https://zenodo.org/record/3757266>`_:
+
+.. code-block:: python
+
+    import pyobo.resource_utils
+
+    pyobo.resource_utils.download_inspector_javert()
 
 Properties and Relations
 ~~~~~~~~~~~~~~~~~~~~~~~~
