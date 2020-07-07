@@ -151,6 +151,19 @@ that does this for you:
     mapt_hgnc = ncbigene_id_to_hgnc_id['4137']
     assert mapt_hgnc == '6893'
 
+Find all CURIEs mapped to a given one using
+`Inspector Javert's Xref Database <https://cthoyt.com/2020/04/19/inspector-javerts-xref-database.html>`_:
+
+.. code-block::
+
+    import pandas as pd
+    URL = 'https://zenodo.org/record/3757266/files/inspector_javerts_xrefs.tsv.gz'
+    df = pd.read_csv(URL, sep='\t', compression='gzip')
+
+    from pyobo import Canonicalizer
+    canonicalizer = Canonicalizer.from_df(df)
+    canonicalizer.single_source_shortest_path('wikipathways:WP254')
+
 Properties and Relations
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Get properties, like SMILES. The semantics of these are defined on an OBO-OBO basis.

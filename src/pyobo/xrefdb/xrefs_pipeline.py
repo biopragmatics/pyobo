@@ -181,6 +181,34 @@ class Canonicalizer:
         """Get a canonical mapping from all nodes to their canonical CURIEs."""
         return dict(self.iterate_flat_mapping(use_tqdm=use_tqdm))
 
+    def single_source_shortest_path(
+        self,
+        curie: str,
+        cutoff: Optional[int] = None,
+    ) -> Optional[Mapping[str, List[Mapping[str, str]]]]:
+        """Get all shortest paths between given entity and its equivalent entities."""
+        return single_source_shortest_path(graph=self.graph, curie=curie, cutoff=cutoff)
+
+    def all_shortest_paths(self, source_curie: str, target_curie: str) -> List[List[Mapping[str, str]]]:
+        """Get all shortest paths between the two entities."""
+        return all_shortest_paths(graph=self.graph, source_curie=source_curie, target_curie=target_curie)
+
+    @classmethod
+    def from_df(cls, df: pd.DataFrame) -> Canonicalizer:
+        """Instantiate from a dataframe.
+
+        .. code-block:: python
+
+            import pandas as pd
+            URL = 'https://zenodo.org/record/3757266/files/inspector_javerts_xrefs.tsv.gz'
+            df = pd.read_csv(URL, sep='\t', compression='gzip')
+
+            from pyobo import Canonicalizer
+            canonicalizer = Canonicalizer.from_df(df)
+            canonicalizer.single_source_shortest_path('hgnc:6893')
+        """
+        return cls(graph=get_graph_from_xref_df(df))
+
 
 def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
     """Generate a graph from the mappings dataframe."""
@@ -230,7 +258,11 @@ def all_shortest_paths(graph: nx.Graph, source_curie: str, target_curie: str) ->
     ]
 
 
-def single_source_shortest_path(graph: nx.Graph, curie: str) -> Optional[Mapping[str, List[Mapping[str, str]]]]:
+def single_source_shortest_path(
+    graph: nx.Graph,
+    curie: str,
+    cutoff: Optional[int] = None,
+) -> Optional[Mapping[str, List[Mapping[str, str]]]]:
     """Get the shortest path from the CURIE to all elements of its equivalence class.
 
     Things that didn't work:
@@ -258,7 +290,7 @@ def single_source_shortest_path(graph: nx.Graph, curie: str) -> Optional[Mapping
     """
     if curie not in graph:
         return None
-    rv = nx.single_source_shortest_path(graph, curie)
+    rv = nx.single_source_shortest_path(graph, curie, cutoff=cutoff)
     return {
         k: [
             dict(source=s, target=t, provenance=graph[s][t]['source'])
