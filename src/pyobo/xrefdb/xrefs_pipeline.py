@@ -10,7 +10,7 @@ import logging
 import os
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import Iterable, List, Mapping, Optional, Tuple
+from typing import Iterable, List, Mapping, Optional, Set, Tuple
 
 import networkx as nx
 import pandas as pd
@@ -195,18 +195,7 @@ class Canonicalizer:
 
     @classmethod
     def from_df(cls, df: pd.DataFrame) -> Canonicalizer:
-        """Instantiate from a dataframe.
-
-        .. code-block:: python
-
-            import pandas as pd
-            URL = 'https://zenodo.org/record/3757266/files/inspector_javerts_xrefs.tsv.gz'
-            df = pd.read_csv(URL, sep='\t', compression='gzip')
-
-            from pyobo import Canonicalizer
-            canonicalizer = Canonicalizer.from_df(df)
-            canonicalizer.single_source_shortest_path('hgnc:6893')
-        """
+        """Instantiate from a dataframe."""
         return cls(graph=get_graph_from_xref_df(df))
 
 
@@ -426,6 +415,13 @@ def bens_magical_ontology() -> nx.DiGraph:
     # TODO include translates_to, transcribes_to, and has_variant
 
     return rv
+
+
+def get_equivalent(curie: str, cutoff: Optional[int] = None) -> Set[str]:
+    """Get equivalent CURIEs."""
+    canonicalizer = Canonicalizer.get_default()
+    r = canonicalizer.single_source_shortest_path(curie=curie, cutoff=cutoff)
+    return set(r or [])
 
 
 def get_priority_curie(curie: str) -> str:

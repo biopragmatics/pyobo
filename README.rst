@@ -156,13 +156,13 @@ Find all CURIEs mapped to a given one using
 
 .. code-block::
 
-    import pandas as pd
-    URL = 'https://zenodo.org/record/3757266/files/inspector_javerts_xrefs.tsv.gz'
-    df = pd.read_csv(URL, sep='\t', compression='gzip')
+    # If you don't have a local cache and don't want to build one, first do this:
+    import pyobo.resource_utils
+    pyobo.resource_utils.download_inspector_javert
 
-    from pyobo import Canonicalizer
-    canonicalizer = Canonicalizer.from_df(df)
-    canonicalizer.single_source_shortest_path('wikipathways:WP254')
+    import pyobo
+    mapt_curies = pyobo.get_equivalent('hgnc:6893')
+    assert 'ncbigene:4137' in mapt_curies
 
 Properties and Relations
 ~~~~~~~~~~~~~~~~~~~~~~~~

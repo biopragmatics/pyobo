@@ -24,12 +24,10 @@ from werkzeug.local import LocalProxy
 import pyobo
 from pyobo.apps.utils import gunicorn_option, host_option, port_option, run_app
 from pyobo.cli_utils import verbose_option
-from pyobo.constants import PYOBO_HOME
+from pyobo.constants import OOH_NA_NA_URL, PYOBO_HOME
 from pyobo.identifier_utils import get_identifiers_org_link, normalize_curie
 
 resolve_blueprint = Blueprint('resolver', __name__)
-
-REMOTE_DATA_URL = 'https://zenodo.org/record/3866538/files/ooh_na_na.tsv.gz'
 
 get_id_name_mapping = LocalProxy(lambda: current_app.config['get_id_name_mapping'])
 get_summary = LocalProxy(lambda: current_app.config['summarize'])
@@ -150,7 +148,7 @@ def get_app(data: Union[None, str, pd.DataFrame] = None, lazy: bool = False) -> 
     if data is None and not lazy:
         path = os.path.join(PYOBO_HOME, 'ooh_na_na.tsv.gz')
         if not os.path.exists(path):
-            urlretrieve(REMOTE_DATA_URL, path)
+            urlretrieve(OOH_NA_NA_URL, path)
         lookup = _get_lookup_from_path(path)
         _prepare_app_with_lookup(app, lookup)
     elif isinstance(data, str):
