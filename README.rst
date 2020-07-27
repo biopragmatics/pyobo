@@ -257,6 +257,18 @@ Other entries in the metaregistry:
 - The ``"blacklists"`` entry contains rules for throwing out malformed xrefs based on
   full string, just prefix, or just suffix.
 
+
+Troubleshoting
+--------------
+The OBO Foundry seems to be pretty unstable with respect to the URLs to OBO resources. If you get an error like:
+
+.. code-block::
+
+   pyobo.getters.MissingOboBuild: OBO Foundry is missing a build for: mondo
+   
+Then you should check the corresponding page on the OBO Foundry (in this case, http://www.obofoundry.org/ontology/mondo.html)
+and make an update to the ``url`` entry for that namespace in the metaregistry.
+
 Development
 -----------
 Update the registries with the following commands. These external resources get updated all the
