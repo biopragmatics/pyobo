@@ -46,9 +46,10 @@ def download_artifacts(bucket: str, suffix: Optional[str] = None) -> None:
         if suffix and not key.endswith(suffix):
             pass
         path = os.path.join(PYOBO_HOME, key)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         if os.path.exists(path):
             continue  # no need to download again
-        logging.info('downloading %s to %s', key, path)
+        logging.warning('downloading %s to %s', key, path)
         s3_client.download_file(bucket, key, path)
 
 
