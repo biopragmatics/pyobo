@@ -591,6 +591,7 @@
       ]
     },
     "mondo": {
+      "download": "http://purl.obolibrary.org/obo/mondo.obo",
       "example": "0000001",
       "pattern": "\\d{7}",
       "synonyms": []
