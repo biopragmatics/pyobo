@@ -12,6 +12,7 @@ import click
 import humanize
 from tabulate import tabulate
 
+from . import aws
 from .cli_utils import echo_df, verbose_option
 from .constants import PYOBO_HOME
 from .extract import (
@@ -222,6 +223,7 @@ main.add_command(javerts_xrefs)
 main.add_command(javerts_remapping)
 main.add_command(ooh_na_na)
 main.add_command(synonymsdb)
+main.add_command(aws.aws)
 
 if __name__ == '__main__':
     main()
