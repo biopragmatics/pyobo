@@ -36,6 +36,8 @@ def get_remapping() -> Mapping[Tuple[str, str], Tuple[str, str, str]]:
     df = _get_df()
     rv = {}
     for target_ns, target_id, source_id in df.values:
+        if target_ns.lower() == 'medscan':
+            continue  # MEDSCAN is proprietary and Ben said to skip using these identifiers
         remapped_prefix = normalize_prefix(target_ns)
         if remapped_prefix is None:
             logger.debug('could not remap %s', target_ns)
