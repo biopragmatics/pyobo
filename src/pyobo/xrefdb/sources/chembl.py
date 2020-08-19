@@ -15,9 +15,14 @@ CHEMICALS = f'{BASE}/chembl_{VERSION}_chemreps.txt.gz'
 PROTEINS = f'{BASE}/chembl_uniprot_mapping.txt'
 
 
+def get_chembl_compound_equivalences_raw(usecols=None) -> pd.DataFrame:
+    """Get the chemical representations raw dataframe."""
+    return ensure_df(PREFIX, CHEMICALS, sep='\t', usecols=usecols)
+
+
 def get_chembl_compound_equivalences() -> pd.DataFrame:
     """Get ChEMBL chemical equivalences."""
-    df = ensure_df(PREFIX, CHEMICALS, sep='\t')
+    df = get_chembl_compound_equivalences_raw()
     rows = []
     for chembl, smiles, inchi, inchi_key in df.values:
         rows.extend([
