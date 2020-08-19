@@ -566,6 +566,9 @@
       "wikidata_property": "P2870"
     },
     "mirbase.family": {
+      "synonyms": [
+        "MIRBASE_FAMILY"
+      ],
       "url": "http://www.mirbase.org/cgi-bin/mirna_summary.pl?fam=$1"
     },
     "mirbase.mature": {
