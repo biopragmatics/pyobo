@@ -117,7 +117,8 @@
     "chebi": {
       "synonyms": [
         "ChEBI",
-        "CHEBI"
+        "CHEBI",
+        "CHEBIID"
       ],
       "wikidata_property": "P683"
     },
@@ -367,7 +368,10 @@
       "synonyms": [
         "gobp",
         "gocc",
-        "gomf"
+        "gomf",
+        "gobpid",
+        "goccid",
+        "gomfid"
       ],
       "wikidata_property": "P686"
     },
