@@ -6,6 +6,7 @@ Run with ``python -m pyobo.apps.resolver``
 """
 
 import gzip
+import logging
 import os
 import sys
 from collections import Counter, defaultdict
@@ -28,13 +29,15 @@ from pyobo.cli_utils import verbose_option
 from pyobo.constants import PYOBO_HOME
 from pyobo.identifier_utils import get_identifiers_org_link, normalize_curie
 
+logger = logging.getLogger(__name__)
+
 resolve_blueprint = Blueprint('resolver', __name__)
 
-REMOTE_DATA_URL = 'https://zenodo.org/record/3866538/files/ooh_na_na.tsv.gz'
+REMOTE_NAME_DATA_URL = 'https://zenodo.org/record/3866538/files/ooh_na_na.tsv.gz'
+REMOTE_ALT_DATA_URL = 'https://zenodo.org/record/4013858/files/pyobo_alts.tsv.gz'
 
 get_id_name_mapping = LocalProxy(lambda: current_app.config['get_id_name_mapping'])
 get_alts_to_id = LocalProxy(lambda: current_app.config['get_alts_to_id'])
-get_summary = LocalProxy(lambda: current_app.config['summarize'])
 
 
 @resolve_blueprint.route('/')
@@ -69,6 +72,7 @@ def resolve(curie: str):
 @resolve_blueprint.route('/summary')
 def summary():
     """Summary of the content in the service."""
+    get_summary = current_app.config['summarize']
     return jsonify(get_summary())
 
 
@@ -139,7 +143,7 @@ def _help_resolve(curie: str) -> Mapping[str, Any]:
 
 def get_app(
     name_data: Union[None, str, pd.DataFrame] = None,
-    alt_data: Union[None, str, pd.DataFrame] = None,
+    alts_data: Union[None, str, pd.DataFrame] = None,
     lazy: bool = False,
 ) -> Flask:
     """Build a flask app.
@@ -147,6 +151,9 @@ def get_app(
     :param name_data: If none, uses the internal PyOBO loader. If a string, assumes is a gzip and reads a
      dataframe from there. If a dataframe, uses it directly. Assumes data frame has 3 columns - prefix,
      identifier, and name and is a TSV.
+    :param alts_data: If none, uses the internal PyOBO loader. If a string, assumes is a gzip and reads a
+     dataframe from there. If a dataframe, uses it directly. Assumes data frame has 3 columns - prefix,
+     alt identifier, and identifier and is a TSV.
     :param lazy: don't load the full cache into memory to run
     """
     app = Flask(__name__)
@@ -156,10 +163,10 @@ def get_app(
     if lazy:
         name_lookup = None
     elif name_data is None:
-        lookup_path = os.path.join(PYOBO_HOME, 'ooh_na_na.tsv.gz')
-        if not os.path.exists(lookup_path):
-            urlretrieve(REMOTE_DATA_URL, lookup_path)
-        name_lookup = _get_lookup_from_path(lookup_path)
+        name_lookup_path = os.path.join(PYOBO_HOME, 'ooh_na_na.tsv.gz')
+        if not os.path.exists(name_lookup_path):
+            urlretrieve(REMOTE_NAME_DATA_URL, name_lookup_path)
+        name_lookup = _get_lookup_from_path(name_lookup_path)
     elif isinstance(name_data, str):
         name_lookup = _get_lookup_from_path(name_data)
     elif isinstance(name_data, pd.DataFrame):
@@ -168,17 +175,20 @@ def get_app(
         raise TypeError(f'invalid type for `name_data`: {name_data}')
 
     if lazy:
-        alt_lookup = None
-    elif alt_data is None and not lazy:
-        raise NotImplementedError('no external alt id file available yet')
-    elif isinstance(alt_data, str):
-        alt_lookup = _get_lookup_from_path(alt_data)
-    elif isinstance(alt_data, pd.DataFrame):
-        alt_lookup = _get_lookup_from_df(alt_data)
+        alts_lookup = None
+    elif alts_data is None and not lazy:
+        alts_lookup_path = os.path.join(PYOBO_HOME, 'pyobo_alts.tsv.gz')
+        if not os.path.exists(alts_lookup_path):
+            urlretrieve(REMOTE_ALT_DATA_URL, alts_lookup_path)
+        alts_lookup = _get_lookup_from_path(alts_lookup_path)
+    elif isinstance(alts_data, str):
+        alts_lookup = _get_lookup_from_path(alts_data)
+    elif isinstance(alts_data, pd.DataFrame):
+        alts_lookup = _get_lookup_from_df(alts_data)
     else:
-        raise TypeError(f'invalid type for `alt_data`: {alt_data}')
+        raise TypeError(f'invalid type for `alt_data`: {alts_data}')
 
-    _prepare_app_with_lookup(app, name_lookup=name_lookup, alt_lookup=alt_lookup)
+    _prepare_app_with_lookup(app, name_lookup=name_lookup, alts_lookup=alts_lookup)
     app.register_blueprint(resolve_blueprint)
     return app
 
@@ -186,19 +196,19 @@ def get_app(
 def _prepare_app_with_lookup(
     app: Flask,
     name_lookup: Optional[Mapping[str, Mapping[str, str]]] = None,
-    alt_lookup: Optional[Mapping[str, Mapping[str, str]]] = None,
+    alts_lookup: Optional[Mapping[str, Mapping[str, str]]] = None,
 ) -> None:
-    if name_lookup is None:
+    if name_lookup is None:  # lazy mode, will download/cache data as needed
         app.config['get_id_name_mapping'] = pyobo.get_id_name_mapping
+        app.config['summarize'] = Counter  # not so good to calculate this in lazy mode
     else:
         app.config['get_id_name_mapping'] = name_lookup.get
+        app.config['summarize'] = lambda: Counter({k: len(v) for k, v in name_lookup.items()})
 
-    if alt_lookup is None:
+    if alts_lookup is None:  # lazy mode, will download/cache data as needed
         app.config['get_alts_to_id'] = pyobo.get_alts_to_id
     else:
-        app.config['get_alts_to_id'] = alt_lookup.get
-
-    app.config['summarize'] = lambda: Counter({k: len(v) for k, v in name_lookup.items()})
+        app.config['get_alts_to_id'] = alts_lookup.get
 
 
 def _get_lookup_from_df(df: pd.DataFrame) -> Mapping[str, Mapping[str, str]]:
