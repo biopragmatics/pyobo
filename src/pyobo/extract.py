@@ -69,9 +69,17 @@ def get_name(prefix: str, identifier: str) -> Optional[str]:
     try:
         id_name = get_id_name_mapping(prefix)
     except NoOboFoundry:
-        return  # sorry, this namespace isn't available at all
-    if id_name:
-        return id_name.get(identifier)
+        id_name = None
+
+    if not id_name:
+        logger.warning('unable to look up prefix %s', prefix)
+        return
+
+    primary_id = get_primary_identifier(prefix, identifier)
+    if not primary_id:
+        return
+
+    return id_name.get(primary_id)
 
 
 @lru_cache()
