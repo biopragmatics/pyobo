@@ -4,9 +4,10 @@
 
 import logging
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Dict, Mapping, Optional
 
-from .metaregistry import CURATED_REGISTRY_DATABASE, OBSOLETE
+from .metaregistry import get_curated_registry_database, get_obsolete
 from .miriam import get_miriam
 from .obofoundry import get_obofoundry
 from .ols import get_ols
@@ -20,6 +21,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
+@lru_cache
 def get_namespace_synonyms() -> Mapping[str, str]:
     """Return a mapping from several variants of each synonym to the canonical namespace."""
     synonym_to_key = {}
@@ -46,7 +48,7 @@ def get_namespace_synonyms() -> Mapping[str, str]:
         _add_variety(entry['config']['title'], ontology_id)
         _add_variety(entry['config']['namespace'], ontology_id)
 
-    for key, values in CURATED_REGISTRY_DATABASE.items():
+    for key, values in get_curated_registry_database().items():
         _add_variety(key, key)
         for synonym in values.get('synonyms', []):
             _add_variety(synonym, key)
@@ -71,8 +73,8 @@ def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
     rv: Dict[str, Resource] = {}
 
     synonym_to_prefix = {}
-    for prefix, entry in CURATED_REGISTRY_DATABASE.items():
-        if prefix in OBSOLETE:
+    for prefix, entry in get_curated_registry_database().items():
+        if prefix in get_obsolete():
             continue
         synonym_to_prefix[prefix.lower()] = prefix
 
@@ -84,7 +86,7 @@ def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
 
     for entry in get_miriam():
         prefix = entry['prefix']
-        if prefix in OBSOLETE:
+        if prefix in get_obsolete():
             continue
         rv[prefix] = Resource(
             name=entry['name'],
@@ -96,7 +98,7 @@ def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
 
     for entry in sorted(get_obofoundry(), key=lambda x: x['id'].lower()):
         prefix = entry['id'].lower()
-        is_obsolete = entry.get('is_obsolete') or prefix in OBSOLETE
+        is_obsolete = entry.get('is_obsolete') or prefix in get_obsolete()
         already_found = prefix in rv
         if already_found:
             if is_obsolete:
@@ -109,7 +111,7 @@ def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
 
         title = entry['title']
         prefix = synonym_to_prefix.get(prefix, prefix)
-        curated_info = CURATED_REGISTRY_DATABASE.get(prefix)
+        curated_info = get_curated_registry_database().get(prefix)
         if curated_info and 'pattern' in curated_info:
             # namespace_in_pattern = curated_registry.get('namespace_in_pattern')
             rv[prefix] = Resource(
@@ -132,7 +134,7 @@ def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
         if curated_info.get('not_available_as_obo') or curated_info.get('no_own_terms'):
             continue
 
-    for prefix, entry in CURATED_REGISTRY_DATABASE.items():
+    for prefix, entry in get_curated_registry_database().items():
         if prefix in rv:
             continue
         name = entry.get('name')

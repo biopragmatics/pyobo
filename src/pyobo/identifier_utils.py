@@ -7,8 +7,8 @@ from collections import defaultdict
 from typing import Optional, Tuple, Union
 
 from .registries import (
-    PREFIX_TO_MIRIAM_PREFIX, REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST, XREF_SUFFIX_BLACKLIST,
-    get_miriam, get_namespace_synonyms,
+    get_miriam, get_namespace_synonyms, get_prefix_to_miriam_prefix, get_remappings_prefix,
+    get_xrefs_blacklist, get_xrefs_prefix_blacklist, get_xrefs_suffix_blacklist,
 )
 
 __all__ = [
@@ -28,7 +28,6 @@ def alternate_strip_prefix(s, prefix):
     return s
 
 
-SYNONYM_TO_KEY = get_namespace_synonyms()
 UNHANDLED_NAMESPACES = defaultdict(list)
 UBERON_UNHANDLED = defaultdict(list)
 MIRIAM = get_miriam(mappify=True)
@@ -38,8 +37,9 @@ def normalize_prefix(prefix: str, *, curie=None, xref=None) -> Optional[str]:
     """Normalize a namespace and return, if possible."""
     for string_transformation in (lambda x: x, str.lower, str.upper, str.casefold):
         namespace_transformed = string_transformation(prefix)
-        if namespace_transformed in SYNONYM_TO_KEY:
-            return SYNONYM_TO_KEY[namespace_transformed]
+        rv = get_namespace_synonyms().get(namespace_transformed)
+        if rv is not None:
+            return rv
 
     if curie is None:
         return
@@ -58,18 +58,18 @@ def normalize_curie(node: str) -> Union[Tuple[str, str], Tuple[None, None]]:
     - Normalizes the namespace
     - Checks against a blacklist for the entire curie, for the namespace, and for suffixes.
     """
-    if node in XREF_BLACKLIST:
+    if node in get_xrefs_blacklist():
         return None, None
     # Skip node if it has a blacklisted prefix
-    for blacklisted_prefix in XREF_PREFIX_BLACKLIST:
+    for blacklisted_prefix in get_xrefs_prefix_blacklist():
         if node.startswith(blacklisted_prefix):
             return None, None
     # Skip node if it has a blacklisted suffix
-    for suffix in XREF_SUFFIX_BLACKLIST:
+    for suffix in get_xrefs_suffix_blacklist():
         if node.endswith(suffix):
             return None, None
     # Remap node's prefix (if necessary)
-    for old_prefix, new_prefix in REMAPPINGS_PREFIX.items():
+    for old_prefix, new_prefix in get_remappings_prefix().items():
         if node.startswith(old_prefix):
             node = new_prefix + ':' + node[len(old_prefix):]
 
@@ -87,7 +87,7 @@ def normalize_curie(node: str) -> Union[Tuple[str, str], Tuple[None, None]]:
 
 def get_identifiers_org_link(prefix: str, identifier: str) -> Optional[str]:
     """Get the identifiers.org URL if possible."""
-    miriam_prefix, namespace_in_lui = PREFIX_TO_MIRIAM_PREFIX.get(prefix, (None, None))
+    miriam_prefix, namespace_in_lui = get_prefix_to_miriam_prefix().get(prefix, (None, None))
     if not miriam_prefix and prefix in MIRIAM:
         miriam_prefix = prefix
         namespace_in_lui = MIRIAM[prefix]['namespaceEmbeddedInLui']
