@@ -14,4 +14,4 @@ from .path_utils import ensure_path  # noqa: F401
 from .sources import CONVERTED, get_converted_obo, iter_converted_obos  # noqa: F401
 from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef  # noqa: F401
 from .version import get_version  # noqa: F401
-from .xrefdb.xrefs_pipeline import get_priority_curie  # noqa: F401
+from .xrefdb.xrefs_pipeline import Canonicalizer, get_equivalent, get_priority_curie  # noqa: F401

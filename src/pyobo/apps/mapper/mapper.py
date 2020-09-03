@@ -10,7 +10,6 @@ from functools import lru_cache
 from typing import Iterable, List, Mapping, Optional, Union
 
 import click
-import networkx as nx
 import pandas as pd
 from flasgger import Swagger
 from flask import Blueprint, Flask, current_app, jsonify, render_template, url_for
@@ -21,8 +20,7 @@ from pyobo.apps.utils import gunicorn_option, host_option, port_option, run_app
 from pyobo.cli_utils import verbose_option
 from pyobo.identifier_utils import normalize_curie, normalize_prefix
 from pyobo.xrefdb.xrefs_pipeline import (
-    Canonicalizer, all_shortest_paths, get_graph_from_xref_df, get_xref_df, single_source_shortest_path,
-    summarize_xref_df,
+    Canonicalizer, get_xref_df, summarize_xref_df,
 )
 
 __all__ = [
@@ -31,18 +29,17 @@ __all__ = [
 ]
 
 summary_df = LocalProxy(lambda: current_app.config['summary'])
-graph: nx.Graph = LocalProxy(lambda: current_app.config['graph'])
 canonicalizer: Canonicalizer = LocalProxy(lambda: current_app.config['canonicalizer'])
 
 
 @lru_cache()
 def _single_source_shortest_path(curie: str) -> Optional[Mapping[str, List[Mapping[str, str]]]]:
-    return single_source_shortest_path(graph=graph, curie=curie)
+    return canonicalizer.single_source_shortest_path(curie=curie)
 
 
 @lru_cache()
 def _all_shortest_paths(source_curie: str, target_curie: str) -> List[List[Mapping[str, str]]]:
-    return all_shortest_paths(graph=graph, source_curie=source_curie, target_curie=target_curie)
+    return canonicalizer.all_shortest_paths(source_curie=source_curie, target_curie=target_curie)
 
 
 #: The blueprint that gets added to the app
@@ -58,7 +55,7 @@ def home():
 @search_blueprint.route('/mappings/<curie>')
 def single_source_mappings(curie: str):
     """Return all length xrefs from the given identifier."""
-    if curie not in graph:
+    if curie not in canonicalizer.graph:
         return jsonify(
             success=False,
             query=dict(curie=curie),
@@ -70,13 +67,13 @@ def single_source_mappings(curie: str):
 @search_blueprint.route('/mappings/<source_curie>/<target_curie>')
 def all_mappings(source_curie: str, target_curie: str):
     """Return all shortest paths of xrefs between the two identifiers."""
-    if source_curie not in graph:
+    if source_curie not in canonicalizer.graph:
         return jsonify(
             success=False,
             query=dict(source_curie=source_curie, target_curie=target_curie),
             message='could not find source curie',
         )
-    if target_curie not in graph:
+    if target_curie not in canonicalizer.graph:
         return jsonify(
             success=False,
             query=dict(source_curie=source_curie, target_curie=target_curie),
@@ -123,7 +120,7 @@ def canonicalize(curie: str):
     if norm_curie != curie:
         rv['norm_curie'] = norm_curie
 
-    if norm_curie not in graph:
+    if norm_curie not in canonicalizer.graph:
         rv['found'] = False
     else:
         result_curie = canonicalizer.canonicalize(norm_curie)
@@ -167,9 +164,8 @@ def _get_app_from_xref_df(df: pd.DataFrame):
     Swagger(app)
     Bootstrap(app)
     app.config['summary'] = summarize_xref_df(df)
-    app.config['graph'] = get_graph_from_xref_df(df)
     # TODO allow for specification of priorities in the canonicalizer
-    app.config['canonicalizer'] = Canonicalizer(graph=app.config['graph'])
+    app.config['canonicalizer'] = Canonicalizer.from_df(df)
     app.register_blueprint(search_blueprint)
     return app
 

@@ -10,7 +10,7 @@ import logging
 import os
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import Iterable, List, Mapping, Optional, Tuple
+from typing import Iterable, List, Mapping, Optional, Set, Tuple
 
 import networkx as nx
 import pandas as pd
@@ -181,6 +181,23 @@ class Canonicalizer:
         """Get a canonical mapping from all nodes to their canonical CURIEs."""
         return dict(self.iterate_flat_mapping(use_tqdm=use_tqdm))
 
+    def single_source_shortest_path(
+        self,
+        curie: str,
+        cutoff: Optional[int] = None,
+    ) -> Optional[Mapping[str, List[Mapping[str, str]]]]:
+        """Get all shortest paths between given entity and its equivalent entities."""
+        return single_source_shortest_path(graph=self.graph, curie=curie, cutoff=cutoff)
+
+    def all_shortest_paths(self, source_curie: str, target_curie: str) -> List[List[Mapping[str, str]]]:
+        """Get all shortest paths between the two entities."""
+        return all_shortest_paths(graph=self.graph, source_curie=source_curie, target_curie=target_curie)
+
+    @classmethod
+    def from_df(cls, df: pd.DataFrame) -> Canonicalizer:
+        """Instantiate from a dataframe."""
+        return cls(graph=get_graph_from_xref_df(df))
+
 
 def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
     """Generate a graph from the mappings dataframe."""
@@ -230,7 +247,11 @@ def all_shortest_paths(graph: nx.Graph, source_curie: str, target_curie: str) ->
     ]
 
 
-def single_source_shortest_path(graph: nx.Graph, curie: str) -> Optional[Mapping[str, List[Mapping[str, str]]]]:
+def single_source_shortest_path(
+    graph: nx.Graph,
+    curie: str,
+    cutoff: Optional[int] = None,
+) -> Optional[Mapping[str, List[Mapping[str, str]]]]:
     """Get the shortest path from the CURIE to all elements of its equivalence class.
 
     Things that didn't work:
@@ -258,7 +279,7 @@ def single_source_shortest_path(graph: nx.Graph, curie: str) -> Optional[Mapping
     """
     if curie not in graph:
         return None
-    rv = nx.single_source_shortest_path(graph, curie)
+    rv = nx.single_source_shortest_path(graph, curie, cutoff=cutoff)
     return {
         k: [
             dict(source=s, target=t, provenance=graph[s][t]['source'])
@@ -386,6 +407,13 @@ def bens_magical_ontology() -> nx.DiGraph:
     # TODO include translates_to, transcribes_to, and has_variant
 
     return rv
+
+
+def get_equivalent(curie: str, cutoff: Optional[int] = None) -> Set[str]:
+    """Get equivalent CURIEs."""
+    canonicalizer = Canonicalizer.get_default()
+    r = canonicalizer.single_source_shortest_path(curie=curie, cutoff=cutoff)
+    return set(r or [])
 
 
 def get_priority_curie(curie: str) -> str:
