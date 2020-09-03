@@ -6,6 +6,7 @@ import unittest
 
 import pandas as pd
 
+import pyobo
 from pyobo import get_filtered_xrefs, get_id_name_mapping, get_xrefs_df
 from tests.constants import TEST_CHEBI_OBO_PATH
 
@@ -49,3 +50,10 @@ class TestMapping(unittest.TestCase):
             self.assertFalse(value.startswith('kegg'))
 
         self.assertIsInstance(kegg_xrefs, dict)
+
+    def test_get_equivalent(self):
+        """Test getting equivalent CURIEs."""
+        mapt_curies = pyobo.get_equivalent('hgnc:6893')
+        self.assertIn('ncbigene:4137', mapt_curies)
+        self.assertIn('ensembl:ENSG00000186868', mapt_curies)
+        self.assertNotIn('hgnc:6893', mapt_curies)

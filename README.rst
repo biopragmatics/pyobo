@@ -175,7 +175,7 @@ Find all CURIEs mapped to a given one using Inspector Javert's Xref Database:
     # Get a set of all CURIEs mapped to MAPT
     mapt_curies = pyobo.get_equivalent('hgnc:6893')
     assert 'ncbigene:4137' in mapt_curies
-    assert 'ensembl:ENSG00000186868:4137' in mapt_curies
+    assert 'ensembl:ENSG00000186868' in mapt_curies
 
 If you don't want to wait to build the database locally for the ``pyobo.get_priority_curie`` and
 ``pyobo.get_equivalent``, you can use the following code to download a release from
