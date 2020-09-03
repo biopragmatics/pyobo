@@ -14,8 +14,8 @@ from tabulate import tabulate
 from pyobo.cli_utils import verbose_option
 from pyobo.constants import PYOBO_HOME
 from pyobo.extract import (
-    get_id_name_mapping, get_id_synonyms_mapping, get_properties_df, get_relations_df,
-    get_xrefs_df, iter_cached_obo,
+    get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_properties_df, get_relations_df, get_xrefs_df,
+    iter_cached_obo,
 )
 from pyobo.path_utils import prefix_directory_join
 
@@ -116,6 +116,13 @@ def upload_artifacts_for_prefix(*, prefix: str, bucket: str, s3_client=None):
     properties_key = os.path.join(prefix, 'cache', 'properties.tsv')
     logger.info('[%s] uploading properties', prefix)
     upload_file(path=properties_path, bucket=bucket, key=properties_key, s3_client=s3_client)
+
+    logger.info('[%s] getting alternative identifiers', prefix)
+    get_id_to_alts(prefix)
+    alts_path = prefix_directory_join(prefix, 'cache', 'alt_ids.tsv')
+    alts_key = os.path.join(prefix, 'cache', 'alt_ids.tsv')
+    logger.info('[%s] uploading alternative identifiers', prefix)
+    upload_file(path=alts_path, bucket=bucket, key=alts_key)
 
 
 def upload_file(*, path, bucket, key, s3_client=None):

@@ -23,6 +23,8 @@ __all__ = [
     # Nomenclature
     'get_name_id_mapping',
     'get_id_name_mapping',
+    'get_name',
+    'get_name_by_curie',
     # Synonyms
     'get_id_synonyms_mapping',
     # Properties
@@ -36,6 +38,11 @@ __all__ = [
     # Xrefs
     'get_filtered_xrefs',
     'get_xrefs_df',
+    # Alt ids
+    'get_id_to_alts',
+    'get_alts_to_id',
+    'get_primary_identifier',
+    'get_primary_curie',
     # Hierarchy
     'get_hierarchy',
     'get_subhierarchy',
@@ -62,9 +69,17 @@ def get_name(prefix: str, identifier: str) -> Optional[str]:
     try:
         id_name = get_id_name_mapping(prefix)
     except NoOboFoundry:
-        return  # sorry, this namespace isn't available at all
-    if id_name:
-        return id_name.get(identifier)
+        id_name = None
+
+    if not id_name:
+        logger.warning('unable to look up prefix %s', prefix)
+        return
+
+    primary_id = get_primary_identifier(prefix, identifier)
+    if not primary_id:
+        return
+
+    return id_name.get(primary_id)
 
 
 @lru_cache()
@@ -225,6 +240,48 @@ def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, **kwargs) -> pd.DataFra
         return obo.get_xrefs_df(use_tqdm=use_tqdm)
 
     return _df_getter()
+
+
+@lru_cache()
+def get_id_to_alts(prefix: str, **kwargs) -> Mapping[str, List[str]]:
+    """Get alternate identifiers."""
+    path = prefix_directory_join(prefix, 'cache', 'alt_ids.tsv')
+    header = [f'{prefix}_id', 'alt_id']
+
+    @cached_multidict(path=path, header=header)
+    def _get_mapping() -> Mapping[str, List[str]]:
+        obo = get(prefix, **kwargs)
+        return obo.get_id_alts_mapping()
+
+    return _get_mapping()
+
+
+@lru_cache()
+def get_alts_to_id(prefix: str, **kwargs) -> Mapping[str, str]:
+    """Get alternative id to primary id mapping."""
+    return {
+        alt: primary
+        for primary, alts in get_id_to_alts(prefix, **kwargs).items()
+        for alt in alts
+    }
+
+
+def get_primary_curie(curie: str) -> Optional[str]:
+    """Get the primary curie for an entity."""
+    prefix, identifier = normalize_curie(curie)
+    primary_identifier = get_primary_identifier(prefix, identifier)
+    if primary_identifier is not None:
+        return f'{prefix}:{primary_identifier}'
+
+
+def get_primary_identifier(prefix: str, identifier: str) -> Optional[str]:
+    """Get the primary identifier for an entity.
+
+    Returns none if the prefix is not handled.
+    """
+    alts_to_id = get_alts_to_id(prefix)
+    if alts_to_id:
+        return alts_to_id.get(identifier, identifier)
 
 
 def get_hierarchy(

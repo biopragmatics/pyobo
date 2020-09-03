@@ -63,6 +63,21 @@ Maybe you live in CURIE world and just want to normalize something like
     name = pyobo.get_name_by_curie('CHEBI:132964')
     assert name == 'fluazifop-P-butyl'
 
+Sometimes you accidentally got an old CURIE. It can be mapped to the more recent
+one using alternative identifiers listed in the underlying OBO with:
+
+.. code-block:: python
+
+    import pyobo
+
+    # Look up DNA-binding transcription factor activity (go:0003700)
+    # based on an old id
+    primary_curie = pyobo.get_primary_curie('go:0001071')
+    assert primary_curie == 'go:0003700'
+
+    # If it's already the primary, it just gets returned
+    assert 'go:0003700' == pyobo.get_priority_curie('go:0003700')
+
 Remap a CURIE based on pre-defined priority list and `Inspector Javert's Xref
 Database <https://cthoyt.com/2020/04/19/inspector-javerts-xref-database.html>`_:
 

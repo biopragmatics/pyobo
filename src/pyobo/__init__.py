@@ -3,9 +3,9 @@
 """A python package for handling and generating OBO."""
 
 from .extract import (  # noqa: F401
-    get_ancestors, get_descendants, get_filtered_properties_mapping, get_filtered_xrefs, get_hierarchy,
-    get_id_name_mapping, get_id_synonyms_mapping, get_name, get_name_by_curie, get_name_id_mapping, get_subhierarchy,
-    get_xrefs_df,
+    get_alts_to_id, get_ancestors, get_descendants, get_filtered_properties_mapping, get_filtered_xrefs, get_hierarchy,
+    get_id_name_mapping, get_id_synonyms_mapping, get_name, get_name_by_curie, get_name_id_mapping, get_primary_curie,
+    get_primary_identifier, get_subhierarchy, get_xrefs_df,
 )
 from .getters import get  # noqa: F401
 from .identifier_utils import normalize_curie, normalize_prefix  # noqa: F401

@@ -17,12 +17,12 @@ from .cli_utils import echo_df, verbose_option
 from .constants import PYOBO_HOME
 from .extract import (
     get_ancestors, get_descendants, get_filtered_properties_df, get_filtered_relations_df, get_filtered_xrefs,
-    get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_name_by_curie, get_properties_df, get_relations_df,
-    get_xrefs_df, iter_cached_obo,
+    get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_name_by_curie, get_properties_df,
+    get_relations_df, get_xrefs_df, iter_cached_obo,
 )
 from .identifier_utils import normalize_curie
 from .sources import CONVERTED, iter_converted_obos
-from .xrefdb.cli import javerts_remapping, javerts_xrefs, ooh_na_na, synonymsdb
+from .xrefdb.cli import altsdb, javerts_remapping, javerts_xrefs, ooh_na_na, synonymsdb
 from .xrefdb.xrefs_pipeline import DEFAULT_PRIORITY_LIST, get_priority_curie, remap_file_stream
 
 __all__ = ['main']
@@ -172,6 +172,19 @@ def recurify(file_in, file_out, column: int, sep: str):
 
 
 @main.command()
+@prefix_argument
+@verbose_option
+def alts(prefix: str):
+    """Page through alt ids in a namespace."""
+    id_to_alts = get_id_to_alts(prefix)
+    click.echo_via_pager('\n'.join(
+        f'{identifier}\t{alt}'
+        for identifier, alts in id_to_alts.items()
+        for alt in alts
+    ))
+
+
+@main.command()
 @verbose_option
 def cache():
     """Cache all resources."""
@@ -222,6 +235,7 @@ def ls():
 main.add_command(javerts_xrefs)
 main.add_command(javerts_remapping)
 main.add_command(ooh_na_na)
+main.add_command(altsdb)
 main.add_command(synonymsdb)
 main.add_command(aws.aws)
 
