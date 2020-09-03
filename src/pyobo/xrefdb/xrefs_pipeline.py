@@ -19,7 +19,7 @@ from tqdm import tqdm
 
 from .sources import iter_sourced_xref_dfs
 from ..constants import PYOBO_HOME
-from ..extract import get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_xrefs_df
+from ..extract import get_alts_to_id, get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_xrefs_df
 from ..getters import MissingOboBuild, NoOboFoundry
 from ..identifier_utils import normalize_prefix
 from ..path_utils import ensure_path, get_prefix_directory
@@ -340,16 +340,12 @@ def _iterate_metaregistry():
             yield prefix, _entry
 
 
-def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
-    """Iterate over all prefix-identifier-name triples we can get.
-
-    :param leave: should the tqdm be left behind?
-    """
+def _iter_helper(fn, leave: bool = False):
     for prefix in sorted(get_metaregistry()):
         if prefix in SKIP:
             continue
         try:
-            id_name_mapping = get_id_name_mapping(prefix)
+            mapping = fn(prefix)
         except (NoOboFoundry, MissingOboBuild):
             continue
         except ValueError as e:
@@ -361,8 +357,16 @@ def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
                 continue  # this means that it tried doing parsing on an xml page saying get the fuck out
             logger.warning('could not successfully parse %s: %s', prefix, e)
         else:
-            for identifier, name in tqdm(id_name_mapping.items(), desc=f'iterating {prefix}', leave=leave):
-                yield prefix, identifier, name
+            for key, value in tqdm(mapping.items(), desc=f'iterating {prefix}', leave=leave):
+                yield prefix, key, value
+
+
+def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
+    """Iterate over all prefix-identifier-name triples we can get.
+
+    :param leave: should the tqdm be left behind?
+    """
+    yield from _iter_helper(get_id_name_mapping, leave=leave)
 
     ncbi_path = ensure_path(ncbigene.PREFIX, ncbigene.GENE_INFO_URL)
     with gzip.open(ncbi_path, 'rt') as file:
@@ -372,30 +376,18 @@ def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
             yield 'ncbigene', line[1], line[2]
 
 
+def _iter_alts(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
+    yield from _iter_helper(get_alts_to_id, leave=leave)
+
+
 def _iter_synonyms(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
     """Iterate over all prefix-identifier-synonym triples we can get.
 
     :param leave: should the tqdm be left behind?
     """
-    for prefix in sorted(get_metaregistry()):
-        if prefix in SKIP:
-            continue
-        try:
-            id_synonyms = get_id_synonyms_mapping(prefix)
-        except (NoOboFoundry, MissingOboBuild):
-            continue
-        except ValueError as e:
-            if (
-                str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0"?>')
-                or str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0" encoding="UTF-8"?>')
-            ):
-                logger.info('no resource available for %s. See http://www.obofoundry.org/ontology/%s', prefix, prefix)
-                continue  # this means that it tried doing parsing on an xml page saying get the fuck out
-            logger.warning('could not successfully parse %s: %s', prefix, e)
-        else:
-            for identifier, synonyms in tqdm(id_synonyms.items(), desc=f'iterating {prefix}', leave=leave):
-                for synonym in synonyms:
-                    yield prefix, identifier, synonym
+    for prefix, identifier, synonyms in _iter_helper(get_id_synonyms_mapping, leave=leave):
+        for synonym in synonyms:
+            yield prefix, identifier, synonym
 
 
 def bens_magical_ontology() -> nx.DiGraph:

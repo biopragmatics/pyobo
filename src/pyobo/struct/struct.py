@@ -26,7 +26,7 @@ from ..cache_utils import get_gzipped_graph
 from ..identifier_utils import normalize_curie, normalize_prefix
 from ..io_utils import multidict
 from ..path_utils import get_prefix_obo_path, prefix_directory_join
-from ..registries import REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST
+from ..registries import get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist
 
 __all__ = [
     'Synonym',
@@ -115,6 +115,9 @@ class Term(Referenced):
 
     #: Equivalent references
     xrefs: List[Reference] = field(default_factory=list)
+
+    #: Alternate Identifiers
+    alt_ids: List[Reference] = field(default_factory=list)
 
     #: The sub-namespace within the ontology
     namespace: Optional[str] = None
@@ -470,6 +473,7 @@ class Obo:
                 synonyms=list(iterate_node_synonyms(data)),
                 xrefs=xrefs,
                 provenance=provenance,
+                alt_ids=list(iterate_node_alt_ids(data)),
             )
             for relation, reference in iterate_node_relationships(data, default_prefix=ontology):
                 if (relation.prefix, relation.identifier) in typedefs:
@@ -665,6 +669,19 @@ class Obo:
             for k, v in rv.items()
         }
 
+    def iterate_alts(self) -> Iterable[Tuple[Term, Reference]]:
+        """Iterate over alternative identifiers."""
+        for term in self:
+            for alt in term.alt_ids:
+                yield term, alt
+
+    def get_id_alts_mapping(self) -> Mapping[str, List[str]]:
+        """Get a mapping from identifiers to a list of alternative identifiers."""
+        return multidict(
+            (term.identifier, alt.identifier)
+            for term, alt in self.iterate_alts()
+        )
+
 
 def _iter_obo_graph(graph: nx.MultiDiGraph) -> Iterable[Tuple[Optional[str], str, Mapping[str, Any]]]:
     """Iterate over the nodes in the graph with the prefix stripped (if it's there)."""
@@ -794,6 +811,14 @@ def iterate_node_parents(data: Mapping[str, Any]) -> Iterable[Reference]:
         yield reference
 
 
+def iterate_node_alt_ids(data: Mapping[str, Any]) -> Iterable[Reference]:
+    """Extract alternate identifiers from a :mod:`obonet` node's data."""
+    for curie in data.get('alt_id', []):
+        reference = Reference.from_curie(curie)
+        if reference is not None:
+            yield reference
+
+
 def iterate_node_relationships(
     data: Mapping[str, Any],
     *,
@@ -824,13 +849,13 @@ def iterate_node_xrefs(data: Mapping[str, Any]) -> Iterable[Reference]:
         xref = xref.strip()
 
         if (
-            any(xref.startswith(x) for x in XREF_PREFIX_BLACKLIST)
-            or xref in XREF_BLACKLIST
+            any(xref.startswith(x) for x in get_xrefs_prefix_blacklist())
+            or xref in get_xrefs_blacklist()
             or ':' not in xref
         ):
             continue  # sometimes xref to self... weird
 
-        for blacklisted_prefix, new_prefix in REMAPPINGS_PREFIX.items():
+        for blacklisted_prefix, new_prefix in get_remappings_prefix().items():
             if xref.startswith(blacklisted_prefix):
                 xref = new_prefix + xref[len(blacklisted_prefix):]
 

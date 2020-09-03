@@ -11,7 +11,7 @@ import obonet
 from tqdm import tqdm
 
 from .path_utils import ensure_path, get_prefix_directory, get_prefix_obo_path
-from .registries import CURATED_URLS, get_obofoundry
+from .registries import get_curated_urls, get_obofoundry
 from .sources import CONVERTED, get_converted_obo
 from .struct import Obo
 
@@ -86,8 +86,8 @@ def _get_obo_via_obonet(prefix: str, *, url: Optional[str] = None, local: bool =
 
 def _ensure_obo_path(prefix: str) -> str:
     """Get the path to the OBO file and download if missing."""
-    if prefix in CURATED_URLS:
-        curated_url = CURATED_URLS[prefix]
+    curated_url = get_curated_urls().get(prefix)
+    if curated_url:
         logger.debug('[%s] checking for OBO at curated URL: %s', prefix, curated_url)
         return ensure_path(prefix, url=curated_url)
 
