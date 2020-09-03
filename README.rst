@@ -149,7 +149,7 @@ so you need to flip them
 
     hgnc_id_to_ncbigene_id = pyobo.get_filtered_xrefs('hgnc', 'ncbigene')
     ncbigene_id_to_hgnc_id = {
-        ncbigene_id: hgnc_id 
+        ncbigene_id: hgnc_id
         for hgnc_id, ncbigene_id in hgnc_id_to_ncbigene_id.items()
     }
     mapt_hgnc = ncbigene_id_to_hgnc_id['4137']
@@ -280,7 +280,7 @@ The OBO Foundry seems to be pretty unstable with respect to the URLs to OBO reso
 .. code-block::
 
    pyobo.getters.MissingOboBuild: OBO Foundry is missing a build for: mondo
-   
+
 Then you should check the corresponding page on the OBO Foundry (in this case, http://www.obofoundry.org/ontology/mondo.html)
 and make an update to the ``url`` entry for that namespace in the metaregistry.
 
