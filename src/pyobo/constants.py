@@ -33,3 +33,5 @@ INSPECTOR_JAVERT_URL = 'https://zenodo.org/record/3757266/files/inspector_javert
 
 #: URL for the nomenclature data that's pre-cached
 OOH_NA_NA_URL = 'https://zenodo.org/record/3866538/files/ooh_na_na.tsv.gz'
+
+REMOTE_ALT_DATA_URL = 'https://zenodo.org/record/4013858/files/pyobo_alts.tsv.gz'

@@ -11,7 +11,6 @@ import os
 import sys
 from collections import Counter, defaultdict
 from typing import Any, Mapping, Optional, Union
-from urllib.request import urlretrieve
 
 import click
 import pandas as pd
@@ -26,15 +25,12 @@ from werkzeug.local import LocalProxy
 import pyobo
 from pyobo.apps.utils import gunicorn_option, host_option, port_option, run_app
 from pyobo.cli_utils import verbose_option
-from pyobo.constants import OOH_NA_NA_URL, PYOBO_HOME
 from pyobo.identifier_utils import get_identifiers_org_link, normalize_curie
+from pyobo.resource_utils import ensure_alts, ensure_ooh_na_na
 
 logger = logging.getLogger(__name__)
 
 resolve_blueprint = Blueprint('resolver', __name__)
-
-REMOTE_NAME_DATA_URL = 'https://zenodo.org/record/3866538/files/ooh_na_na.tsv.gz'
-REMOTE_ALT_DATA_URL = 'https://zenodo.org/record/4013858/files/pyobo_alts.tsv.gz'
 
 get_id_name_mapping = LocalProxy(lambda: current_app.config['get_id_name_mapping'])
 get_alts_to_id = LocalProxy(lambda: current_app.config['get_alts_to_id'])
@@ -163,10 +159,7 @@ def get_app(
     if lazy:
         name_lookup = None
     elif name_data is None:
-        name_lookup_path = os.path.join(PYOBO_HOME, 'ooh_na_na.tsv.gz')
-        if not os.path.exists(name_lookup_path):
-            urlretrieve(REMOTE_NAME_DATA_URL, name_lookup_path)
-        name_lookup = _get_lookup_from_path(name_lookup_path)
+        name_lookup = _get_lookup_from_path(ensure_ooh_na_na())
     elif isinstance(name_data, str):
         name_lookup = _get_lookup_from_path(name_data)
     elif isinstance(name_data, pd.DataFrame):
@@ -177,10 +170,7 @@ def get_app(
     if lazy:
         alts_lookup = None
     elif alts_data is None and not lazy:
-        alts_lookup_path = os.path.join(PYOBO_HOME, 'pyobo_alts.tsv.gz')
-        if not os.path.exists(alts_lookup_path):
-            urlretrieve(REMOTE_ALT_DATA_URL, alts_lookup_path)
-        alts_lookup = _get_lookup_from_path(alts_lookup_path)
+        alts_lookup = _get_lookup_from_path(ensure_alts())
     elif isinstance(alts_data, str):
         alts_lookup = _get_lookup_from_path(alts_data)
     elif isinstance(alts_data, pd.DataFrame):
