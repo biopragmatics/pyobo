@@ -1,6 +1,10 @@
 graft src
 graft tests
 
+recursive-include docs/source *.py
+recursive-include docs/source *.rst
+include docs/Makefile
+
 global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle
 
 exclude .bumpversion.cfg
