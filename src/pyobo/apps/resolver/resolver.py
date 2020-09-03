@@ -7,6 +7,7 @@ Run with ``python -m pyobo.apps.resolver``
 
 import gzip
 import os
+import sys
 from collections import Counter, defaultdict
 from typing import Any, Mapping, Optional, Union
 from urllib.request import urlretrieve
@@ -32,7 +33,7 @@ resolve_blueprint = Blueprint('resolver', __name__)
 REMOTE_DATA_URL = 'https://zenodo.org/record/3866538/files/ooh_na_na.tsv.gz'
 
 get_id_name_mapping = LocalProxy(lambda: current_app.config['get_id_name_mapping'])
-get_primary_identifier = LocalProxy(lambda: current_app.config['get_primary_identifier'])
+get_alts_to_id = LocalProxy(lambda: current_app.config['get_alts_to_id'])
 get_summary = LocalProxy(lambda: current_app.config['summarize'])
 
 
@@ -86,7 +87,7 @@ def size():
 
 
 def _help_resolve(curie: str) -> Mapping[str, Any]:
-    prefix, identifier = normalize_curie(curie)
+    prefix, secondary_identifier = normalize_curie(curie)
     if prefix is None:
         return dict(
             query=curie,
@@ -94,16 +95,8 @@ def _help_resolve(curie: str) -> Mapping[str, Any]:
             message='Could not identify prefix',
         )
 
-    # TODO
-    # identifier = get_primary_identifier(prefix, identifier)
-    # if not identifier:
-    #     return dict(
-    #         query=curie,
-    #         prefix=prefix,
-    #         identifier=identifier,
-    #         success=False,
-    #         message='Could not look up alt identifiers',
-    #     )
+    alts_to_id = get_alts_to_id(prefix)
+    identifier = alts_to_id.get(secondary_identifier, secondary_identifier)
 
     miriam = get_identifiers_org_link(prefix, identifier)
 
@@ -144,10 +137,14 @@ def _help_resolve(curie: str) -> Mapping[str, Any]:
     )
 
 
-def get_app(data: Union[None, str, pd.DataFrame] = None, lazy: bool = False) -> Flask:
+def get_app(
+    name_data: Union[None, str, pd.DataFrame] = None,
+    alt_data: Union[None, str, pd.DataFrame] = None,
+    lazy: bool = False,
+) -> Flask:
     """Build a flask app.
 
-    :param data: If none, uses the internal PyOBO loader. If a string, assumes is a gzip and reads a
+    :param name_data: If none, uses the internal PyOBO loader. If a string, assumes is a gzip and reads a
      dataframe from there. If a dataframe, uses it directly. Assumes data frame has 3 columns - prefix,
      identifier, and name and is a TSV.
     :param lazy: don't load the full cache into memory to run
@@ -156,28 +153,52 @@ def get_app(data: Union[None, str, pd.DataFrame] = None, lazy: bool = False) -> 
     Swagger(app)
     Bootstrap(app)
 
-    if data is None and not lazy:
-        path = os.path.join(PYOBO_HOME, 'ooh_na_na.tsv.gz')
-        if not os.path.exists(path):
-            urlretrieve(REMOTE_DATA_URL, path)
-        lookup = _get_lookup_from_path(path)
-        _prepare_app_with_lookup(app, lookup)
-    elif isinstance(data, str):
-        lookup = _get_lookup_from_path(data)
-        _prepare_app_with_lookup(app, lookup)
-    elif isinstance(data, pd.DataFrame):
-        lookup = _get_lookup_from_df(data)
-        _prepare_app_with_lookup(app, lookup)
+    if lazy:
+        name_lookup = None
+    elif name_data is None:
+        lookup_path = os.path.join(PYOBO_HOME, 'ooh_na_na.tsv.gz')
+        if not os.path.exists(lookup_path):
+            urlretrieve(REMOTE_DATA_URL, lookup_path)
+        name_lookup = _get_lookup_from_path(lookup_path)
+    elif isinstance(name_data, str):
+        name_lookup = _get_lookup_from_path(name_data)
+    elif isinstance(name_data, pd.DataFrame):
+        name_lookup = _get_lookup_from_df(name_data)
     else:
-        raise TypeError(f'invalid type: {data}')
+        raise TypeError(f'invalid type for `name_data`: {name_data}')
 
+    if lazy:
+        alt_lookup = None
+    elif alt_data is None and not lazy:
+        raise NotImplementedError('no external alt id file available yet')
+    elif isinstance(alt_data, str):
+        alt_lookup = _get_lookup_from_path(alt_data)
+    elif isinstance(alt_data, pd.DataFrame):
+        alt_lookup = _get_lookup_from_df(alt_data)
+    else:
+        raise TypeError(f'invalid type for `alt_data`: {alt_data}')
+
+    _prepare_app_with_lookup(app, name_lookup=name_lookup, alt_lookup=alt_lookup)
     app.register_blueprint(resolve_blueprint)
     return app
 
 
-def _prepare_app_with_lookup(app: Flask, lookup: Mapping[str, Mapping[str, str]]) -> None:
-    app.config['get_id_name_mapping'] = lookup.get
-    app.config['summarize'] = lambda: Counter({k: len(v) for k, v in lookup.items()})
+def _prepare_app_with_lookup(
+    app: Flask,
+    name_lookup: Optional[Mapping[str, Mapping[str, str]]] = None,
+    alt_lookup: Optional[Mapping[str, Mapping[str, str]]] = None,
+) -> None:
+    if name_lookup is None:
+        app.config['get_id_name_mapping'] = pyobo.get_id_name_mapping
+    else:
+        app.config['get_id_name_mapping'] = name_lookup.get
+
+    if alt_lookup is None:
+        app.config['get_alts_to_id'] = pyobo.get_alts_to_id
+    else:
+        app.config['get_alts_to_id'] = alt_lookup.get
+
+    app.config['summarize'] = lambda: Counter({k: len(v) for k, v in name_lookup.items()})
 
 
 def _get_lookup_from_df(df: pd.DataFrame) -> Mapping[str, Mapping[str, str]]:
@@ -209,6 +230,10 @@ def _get_lookup_from_path(path: str) -> Mapping[str, Mapping[str, str]]:
 @verbose_option
 def main(port: int, host: str, data: Optional[str], test: bool, gunicorn: bool, lazy: bool):
     """Run the resolver app."""
+    if test and lazy:
+        click.secho('Can not run in --test and --lazy mode at the same time', fg='red')
+        sys.exit(0)
+
     if test:
         data = [
             (prefix, identifier, name)
