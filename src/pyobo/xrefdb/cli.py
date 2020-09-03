@@ -9,7 +9,7 @@ from collections import Counter
 import click
 import pandas as pd
 
-from .xrefs_pipeline import Canonicalizer, _iter_ooh_na_na, _iter_synonyms, get_xref_df, summarize_xref_df
+from .xrefs_pipeline import Canonicalizer, _iter_alts, _iter_ooh_na_na, _iter_synonyms, get_xref_df, summarize_xref_df
 from ..cli_utils import verbose_option
 from ..constants import PYOBO_HOME
 from ..identifier_utils import UNHANDLED_NAMESPACES
@@ -55,26 +55,38 @@ def javerts_xrefs(directory: str):  # noqa: D202
                 print(curie, namespace, xref, file=file, sep='\t')
 
 
+def _helper(directory, f, db_name, columns):
+    c = Counter()
+
+    db_path = os.path.join(directory, f'{db_name}.tsv.gz')
+    click.echo(f'Writing {db_name} to {db_path}')
+    with gzip.open(db_path, mode='wt') as gzipped_file:
+        print(*columns, sep='\t', file=gzipped_file)
+        for prefix, identifier, name in f():
+            c[prefix] += 1
+            print(prefix, identifier, name, sep='\t', file=gzipped_file)
+
+    summary_path = os.path.join(directory, f'{db_name}_summary.tsv')
+    click.echo(f'Writing {db_name} summary to {summary_path}')
+    with open(summary_path, 'w') as file:
+        for k, v in c.most_common():
+            print(k, v, sep='\t', file=file)
+
+
 @output.command()
 @directory_option
 @verbose_option
 def ooh_na_na(directory: str):
     """Make the prefix-identifier-name dump."""
-    c = Counter()
+    _helper(directory, _iter_ooh_na_na, 'ooh_na_na', ('prefix', 'identifier', 'name'))
 
-    db_path = os.path.join(directory, 'ooh_na_na.tsv.gz')
-    click.echo(f'Writing Ooh-Na-Na to {db_path}')
-    with gzip.open(db_path, mode='wt') as gzipped_file:
-        print('prefix', 'identifier', 'name', sep='\t', file=gzipped_file)
-        for prefix, identifier, name in _iter_ooh_na_na():
-            c[prefix] += 1
-            print(prefix, identifier, name, sep='\t', file=gzipped_file)
 
-    summary_path = os.path.join(directory, 'ooh_na_na_summary.tsv')
-    click.echo(f'Writing Ooh-Na-Na summary to {summary_path}')
-    with open(summary_path, 'w') as file:
-        for k, v in c.most_common():
-            print(k, v, sep='\t', file=file)
+@output.command()
+@directory_option
+@verbose_option
+def altsdb(directory: str):
+    """Make the prefix-alt-id dump."""
+    _helper(directory, _iter_alts, 'pyobo_alts', ('prefix', 'alt', 'identifier'))
 
 
 @output.command()
@@ -82,19 +94,7 @@ def ooh_na_na(directory: str):
 @verbose_option
 def synonymsdb(directory: str):
     """Make the prefix-identifier-synonym dump."""
-    c = Counter()
-    db_path = os.path.join(directory, 'synonymdb.tsv.gz')
-    click.echo(f'Writing SynonymDB to {db_path}')
-    with gzip.open(db_path, mode='wt') as gzipped_file:
-        print('prefix', 'identifier', 'name', sep='\t', file=gzipped_file)
-        for prefix, identifier, name in _iter_synonyms():
-            c[prefix] += 1
-            print(prefix, identifier, name, sep='\t', file=gzipped_file)
-    summary_path = os.path.join(directory, 'synonym_summary.tsv')
-    click.echo(f'Writing SynonymDB summary to {summary_path}')
-    with open(summary_path, 'w') as file:
-        for k, v in c.most_common():
-            print(k, v, sep='\t', file=file)
+    _helper(directory, _iter_synonyms, 'pyobo_synonyms', ('prefix', 'identifier', 'synonym'))
 
 
 @output.command()
