@@ -21,8 +21,6 @@ jobs:
       env: TOXENV=doc8
     - env: TOXENV=readme
     - env: TOXENV=docs
-
-matrix:
   allow_failures:
     - env: TOXENV=mypy
 
