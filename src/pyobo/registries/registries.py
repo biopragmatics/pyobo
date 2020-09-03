@@ -21,7 +21,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-@lru_cache
+@lru_cache()
 def get_namespace_synonyms() -> Mapping[str, str]:
     """Return a mapping from several variants of each synonym to the canonical namespace."""
     synonym_to_key = {}
