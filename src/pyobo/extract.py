@@ -15,7 +15,7 @@ from .constants import GLOBAL_SKIP, PYOBO_HOME
 from .getters import NoOboFoundry, get
 from .identifier_utils import normalize_curie
 from .path_utils import prefix_directory_join
-from .registries import NOT_AVAILABLE_AS_OBO, OBSOLETE
+from .registries import get_not_available_as_obo, get_obsolete
 from .struct import Reference, TypeDef, get_reference_tuple
 from .struct.typedef import has_member, is_a, part_of
 
@@ -413,7 +413,7 @@ def get_subhierarchy(
         use_tqdm=use_tqdm,
         **kwargs,
     )
-    logger.info('getting descendants of %s:%s', prefix, identifier)
+    logger.info('getting descendants of %s:%s ! %s', prefix, identifier, get_name(prefix, identifier))
     curies = nx.ancestors(hierarchy, f'{prefix}:{identifier}')  # note this is backwards
     logger.info('inducing subgraph')
     sg = hierarchy.subgraph(curies).copy()
@@ -424,7 +424,7 @@ def get_subhierarchy(
 def iter_cached_obo() -> List[Tuple[str, str]]:
     """Iterate over cached OBO paths."""
     for prefix in os.listdir(PYOBO_HOME):
-        if prefix in GLOBAL_SKIP or prefix in NOT_AVAILABLE_AS_OBO or prefix in OBSOLETE:
+        if prefix in GLOBAL_SKIP or prefix in get_not_available_as_obo() or prefix in get_obsolete():
             continue
         d = os.path.join(PYOBO_HOME, prefix)
         if not os.path.isdir(d):

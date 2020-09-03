@@ -26,7 +26,7 @@ from ..cache_utils import get_gzipped_graph
 from ..identifier_utils import normalize_curie, normalize_prefix
 from ..io_utils import multidict
 from ..path_utils import get_prefix_obo_path, prefix_directory_join
-from ..registries import REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST
+from ..registries import get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist
 
 __all__ = [
     'Synonym',
@@ -78,6 +78,14 @@ class SynonymTypeDef:
     def to_obo(self) -> str:
         """Serialize to OBO."""
         return f'synonymtypedef: {self.id} "{self.name}"'
+
+    @classmethod
+    def from_text(cls, text) -> SynonymTypeDef:
+        """Get a type definition from text that's normalized."""
+        return cls(
+            id=text.lower().replace('-', '_').replace(' ', '_').replace('"', "").replace(')', '').replace('(', ''),
+            name=text.replace('"', ""),
+        )
 
 
 @dataclass
@@ -841,13 +849,13 @@ def iterate_node_xrefs(data: Mapping[str, Any]) -> Iterable[Reference]:
         xref = xref.strip()
 
         if (
-            any(xref.startswith(x) for x in XREF_PREFIX_BLACKLIST)
-            or xref in XREF_BLACKLIST
+            any(xref.startswith(x) for x in get_xrefs_prefix_blacklist())
+            or xref in get_xrefs_blacklist()
             or ':' not in xref
         ):
             continue  # sometimes xref to self... weird
 
-        for blacklisted_prefix, new_prefix in REMAPPINGS_PREFIX.items():
+        for blacklisted_prefix, new_prefix in get_remappings_prefix().items():
             if xref.startswith(blacklisted_prefix):
                 xref = new_prefix + xref[len(blacklisted_prefix):]
 

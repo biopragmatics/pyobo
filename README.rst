@@ -5,7 +5,7 @@ perspective of OBO.
 
 Example Usage
 -------------
-Note! PyOBO is no nonsense. This means that there's no repetitive
+Note! PyOBO is no-nonsense. This means that there's no repetitive
 prefixes in identifiers. It also means all identifiers are strings,
 no exceptions.
 
@@ -14,6 +14,11 @@ all resources. We're not in the business of redistributing data,
 so all scripts should be completely reproducible. There's some
 AWS tools for hosting/downloading pre-compiled versions in
 ``pyobo.aws`` if you don't have time for that.
+
+Note! PyOBO can perform grounding in a limited number of cases, but
+it is *not* a general solution for named entity recognition (NER) or grounding.
+It's suggested to check `Gilda <https://github.com/indralab/gilda>`_
+for a no-nonsense solution.
 
 Mapping Identifiers and CURIEs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -266,6 +271,18 @@ Other entries in the metaregistry:
 - The ``"obsolete"`` entry maps prefixes that have been changed.
 - The ``"blacklists"`` entry contains rules for throwing out malformed xrefs based on
   full string, just prefix, or just suffix.
+
+
+Troubleshoting
+--------------
+The OBO Foundry seems to be pretty unstable with respect to the URLs to OBO resources. If you get an error like:
+
+.. code-block::
+
+   pyobo.getters.MissingOboBuild: OBO Foundry is missing a build for: mondo
+   
+Then you should check the corresponding page on the OBO Foundry (in this case, http://www.obofoundry.org/ontology/mondo.html)
+and make an update to the ``url`` entry for that namespace in the metaregistry.
 
 Development
 -----------

@@ -4,7 +4,7 @@
 
 import unittest
 
-from pyobo.registries import get_curated_registry
+from pyobo.registries.metaregistry import _get_curated_registry
 
 
 class TestCuratedRegistry(unittest.TestCase):
@@ -12,7 +12,7 @@ class TestCuratedRegistry(unittest.TestCase):
 
     def test_integrity(self):
         """Test the curated registry's integrity."""
-        g = get_curated_registry()
+        g = _get_curated_registry()
         for prefix, entry in g.items():
             with self.subTest(prefix=prefix, msg='failed for prefix'):
                 pass

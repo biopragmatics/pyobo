@@ -11,7 +11,7 @@ from pyobo.extract import get_name_id_mapping
 from pyobo.path_utils import ensure_df, prefix_directory_join
 
 PREFIX = 'biogrid'
-VERSION = '3.5.183'
+VERSION = '3.5.186'
 BASE_URL = 'https://downloads.thebiogrid.org/Download/BioGRID/Release-Archive'
 URL = f'{BASE_URL}/BIOGRID-{VERSION}/BIOGRID-IDENTIFIERS-{VERSION}.tab.zip'
 
@@ -41,6 +41,7 @@ taxonomy_remapping = {  # so much for official names
 
     # Not in my current dump, but definitely there!
     "Severe acute respiratory syndrome coronavirus 2": "2697049",  # Severe acute respiratory syndrome coronavirus 2
+    'Middle-East Respiratory Syndrome-related Coronavirus': '1335626',
 }
 
 
@@ -72,5 +73,5 @@ def get_ncbigene_mapping() -> Mapping[str, str]:
         biogrid_ncbigene_mapping = get_filtered_xrefs('biogrid', 'ncbigene')
     """
     df = get_df()
-    df = df[df['IDENTIFIER_TYPE'] == 'ENTREZ_GENE', ['BIOGRID_ID', 'IDENTIFIER_VALUE']]
+    df = df.loc[df['IDENTIFIER_TYPE'] == 'ENTREZ_GENE', ['BIOGRID_ID', 'IDENTIFIER_VALUE']]
     return dict(df.values)

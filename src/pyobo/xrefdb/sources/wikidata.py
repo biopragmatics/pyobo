@@ -13,7 +13,7 @@ import pandas as pd
 import requests
 
 from ...cli_utils import verbose_option
-from ...registries.registries import CURATED_REGISTRY_DATABASE
+from ...registries import get_curated_registry_database
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ URL = 'https://query.wikidata.org/bigdata/namespace/wdq/sparql'
 
 def iterate_wikidata_dfs() -> Iterable[pd.DataFrame]:
     """Iterate over WikiData xref dataframes."""
-    for prefix, entry in CURATED_REGISTRY_DATABASE.items():
+    for prefix, entry in get_curated_registry_database().items():
         wikidata_property = entry.get('wikidata_property')
         if wikidata_property is None:
             continue

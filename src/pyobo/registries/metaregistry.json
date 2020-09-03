@@ -117,7 +117,8 @@
     "chebi": {
       "synonyms": [
         "ChEBI",
-        "CHEBI"
+        "CHEBI",
+        "CHEBIID"
       ],
       "wikidata_property": "P683"
     },
@@ -207,6 +208,7 @@
     "doid": {
       "miriam": {
         "id": "00000233",
+        "namespaceEmbeddedInLui": true,
         "prefix": "doid"
       },
       "obofoundry": {
@@ -234,6 +236,11 @@
       "not_available_as_obo": true
     },
     "eccode": {
+      "miriam": {
+        "id": "00000004",
+        "namespaceEmbeddedInLui": false,
+        "prefix": "ec-code"
+      },
       "synonyms": [
         "EC",
         "EC-CODE",
@@ -259,6 +266,7 @@
       "download": "http://www.ebi.ac.uk/efo/efo.obo",
       "miriam": {
         "id": "00000391",
+        "namespaceEmbeddedInLui": false,
         "prefix": "efo"
       },
       "obofoundry": {
@@ -318,6 +326,11 @@
       "pattern": "\\d{7}"
     },
     "flybase": {
+      "miriam": {
+        "id": "00000030",
+        "namespaceEmbeddedInLui": false,
+        "prefix": "fb"
+      },
       "synonyms": [
         "FB",
         "FlyBase"
@@ -347,10 +360,18 @@
     },
     "go": {
       "download": "http://purl.obolibrary.org/obo/go.obo",
+      "miriam": {
+        "id": "00000022",
+        "namespaceEmbeddedInLui": true,
+        "prefix": "go"
+      },
       "synonyms": [
         "gobp",
         "gocc",
-        "gomf"
+        "gomf",
+        "gobpid",
+        "goccid",
+        "gomfid"
       ],
       "wikidata_property": "P686"
     },
@@ -377,6 +398,7 @@
       "download": "http://purl.obolibrary.org/obo/hp.obo",
       "miriam": {
         "id": "00000571",
+        "namespaceEmbeddedInLui": true,
         "prefix": "hp"
       },
       "obofoundry": {
@@ -392,6 +414,7 @@
     "icd10": {
       "miriam": {
         "id": "00000009",
+        "namespaceEmbeddedInLui": false,
         "prefix": "icd"
       },
       "synonyms": [
@@ -504,6 +527,7 @@
     "mesh": {
       "miriam": {
         "id": "00000560",
+        "namespaceEmbeddedInLui": false,
         "prefix": "mesh"
       },
       "synonyms": [
@@ -542,9 +566,17 @@
       "wikidata_property": "P492"
     },
     "mirbase": {
+      "url": "http://www.mirbase.org/cgi-bin/mirna_entry.pl?acc=$1",
       "wikidata_property": "P2870"
     },
+    "mirbase.family": {
+      "synonyms": [
+        "MIRBASE_FAMILY"
+      ],
+      "url": "http://www.mirbase.org/cgi-bin/mirna_summary.pl?fam=$1"
+    },
     "mirbase.mature": {
+      "url": "http://mirbase.org/cgi-bin/mature.pl?mature_acc=$1",
       "wikidata_property": "P2871"
     },
     "miro": {
@@ -566,6 +598,7 @@
       ]
     },
     "mondo": {
+      "download": "http://purl.obolibrary.org/obo/mondo.obo",
       "example": "0000001",
       "pattern": "\\d{7}",
       "synonyms": []
@@ -596,6 +629,7 @@
       "download": "http://purl.obolibrary.org/obo/ncbitaxon.obo",
       "miriam": {
         "id": "00000006",
+        "namespaceEmbeddedInLui": false,
         "prefix": "taxonomy"
       },
       "pattern": "\\d+",
@@ -611,6 +645,7 @@
     "ncit": {
       "miriam": {
         "id": "00000139",
+        "namespaceEmbeddedInLui": false,
         "prefix": "ncit"
       },
       "synonyms": [
@@ -649,6 +684,7 @@
     "omit": {
       "miriam": {
         "id": "00000605",
+        "namespaceEmbeddedInLui": false,
         "prefix": "omit"
       },
       "synonyms": [
@@ -825,6 +861,7 @@
     "snomedct": {
       "miriam": {
         "id": "00000269",
+        "namespaceEmbeddedInLui": false,
         "prefix": "snomedct"
       },
       "synonyms": [
@@ -921,6 +958,7 @@
     "umls": {
       "miriam": {
         "id": "00000233",
+        "namespaceEmbeddedInLui": false,
         "prefix": "umls"
       },
       "synonyms": [
