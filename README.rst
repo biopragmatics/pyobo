@@ -185,7 +185,7 @@ If you don't want to wait to build the database locally for the ``pyobo.get_prio
 
     import pyobo.resource_utils
 
-    pyobo.resource_utils.download_inspector_javert()
+    pyobo.resource_utils.ensure_inspector_javert()
 
 Properties and Relations
 ~~~~~~~~~~~~~~~~~~~~~~~~
