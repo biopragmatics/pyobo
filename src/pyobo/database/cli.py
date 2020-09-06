@@ -4,6 +4,8 @@
 
 import click
 
+from pyobo.cli_utils import verbose_option
+
 __all__ = [
     'main',
 ]
@@ -20,16 +22,22 @@ def sql():
 
 
 @sql.command()
+@verbose_option
 def load():
     """Load the SQL database."""
     from .sql.loader import load as _load
-    _load(whitelist={'mesh', 'hpo', 'hp', 'efo', 'snomedct'})
+    whitelist = {
+        'hp', 'go', 'hgnc', 'efo', 'mesh', 'rgd', 'mgi', 'chebi', 'drugbank', 'interpro',
+        'mirbase', 'mirbase.family', 'npass', 'ncbitaxon',
+    }
+    _load()
 
 
 @sql.command()
+@verbose_option
 def web():
     """Run the flask-admin frontend."""
-    from .sql.frontend import app
+    from .sql.wsgi import app
     app.run()
 
 

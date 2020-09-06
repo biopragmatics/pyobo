@@ -6,7 +6,7 @@ from flask import Flask
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 
-from .backend import Reference, Resource, Term, session
+from .models import Reference, Resource, Synonym, session
 
 __all__ = [
     'app',
@@ -25,19 +25,23 @@ class View(ModelView):
     # can_delete = False
 
 
-admin.add_view(View(Resource, session))
-admin.add_view(View(Reference, session))
+class ResourceView(View):
+    """A view for resources."""
+
+    column_searchable_list = ['prefix', 'name']
 
 
-class TermView(View):
-    """A view for Terms."""
-
-    column_hide_backrefs = False
-    column_list = ('reference', 'synonyms', 'xrefs')
-    # column_searchable_list = ['reference', 'synonyms']
+admin.add_view(ResourceView(Resource, session))
 
 
-admin.add_view(TermView(Term, session))
+class ReferenceView(View):
+    """A view for references."""
+
+    column_searchable_list = ['identifier', 'name']
+
+
+admin.add_view(ReferenceView(Reference, session))
+admin.add_view(View(Synonym, session))
 
 if __name__ == '__main__':
     app.run()

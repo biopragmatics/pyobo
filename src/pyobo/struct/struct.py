@@ -456,8 +456,8 @@ class Obo:
                 continue
 
             xrefs, provenance = [], []
-            for reference in iterate_node_xrefs(data):
-                if reference.prefix == 'pubmed':
+            for reference in iterate_node_xrefs(prefix=prefix, data=data):
+                if reference.prefix in {'pubmed', 'pmc', 'doi'}:  # TODO add other provenance prefixes
                     provenance.append(reference)
                 else:
                     xrefs.append(reference)
@@ -843,7 +843,7 @@ def iterate_node_relationships(
         yield relation, target
 
 
-def iterate_node_xrefs(data: Mapping[str, Any]) -> Iterable[Reference]:
+def iterate_node_xrefs(*, prefix: str, data: Mapping[str, Any]) -> Iterable[Reference]:
     """Extract xrefs from a :mod:`obonet` node's data."""
     for xref in data.get('xref', []):
         xref = xref.strip()
@@ -863,7 +863,7 @@ def iterate_node_xrefs(data: Mapping[str, Any]) -> Iterable[Reference]:
         if split_space:
             _xref_split = xref.split(' ', 1)
             if _xref_split[1][0] not in {'"', '('}:
-                logger.warning(f'Problem with space in xref {xref}')
+                logger.debug('[%s] Problem with space in xref %s', prefix, xref)
                 continue
             xref = _xref_split[0]
 
