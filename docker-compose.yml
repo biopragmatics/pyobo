@@ -4,7 +4,7 @@ services:
   base:
     image: pyobo/resolver
     build:
-      context: src
+      context: .
       args:
         PYOBO_SQLALCHEMY_URI: postgresql://pyobouser:pyobopassword@database:5432/pyobodb
     command: python -m pyobo.apps.resolver --port 80 --host "0.0.0.0" --gunicorn --sql
