@@ -10,6 +10,13 @@ __all__ = [
     'SPECIES_REMAPPING',
 ]
 
+if 'PYOBO_CONFIG' in os.environ:
+    PYOBO_CONFIG = os.environ['PYOBO_CONFIG']
+else:
+    _config_dir = os.path.join(os.path.expanduser('~'), '.config')
+    os.makedirs(_config_dir, exist_ok=True)
+    PYOBO_CONFIG = os.path.join(_config_dir, 'pyobo.ini')
+
 PYOBO_HOME = os.environ.get('PYOBO_HOME') or os.path.join(os.path.expanduser('~'), '.obo')
 
 OUTPUT_DIRECTORY = (

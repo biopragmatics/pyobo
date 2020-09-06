@@ -4,19 +4,27 @@
 
 from __future__ import annotations
 
+import configparser
 import logging
 import os
+
 from sqlalchemy import Column, ForeignKey, Index, String, Text, UniqueConstraint, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker
 
-from ...constants import PYOBO_HOME
+from ...constants import PYOBO_CONFIG, PYOBO_HOME
 
 logger = logging.getLogger(__name__)
 
-default_db_path = os.path.abspath(os.path.join(PYOBO_HOME, 'pyobo.db'))
-# uri = os.environ.get('PYOBO_SQLALCHEMY_URI', f'sqlite:///{default_db_path}')
-uri = 'postgresql+psycopg2://cthoyt:@localhost/obo'
+# try loading from config file
+uri = None
+if os.path.exists(PYOBO_CONFIG):
+    cfp = configparser.ConfigParser()
+    cfp.read_file(PYOBO_CONFIG)
+    uri = cfp.get('pyobo', 'SQLALCHEMY_URI')
+if uri is None:
+    default_db_path = os.path.abspath(os.path.join(PYOBO_HOME, 'pyobo.db'))
+    uri = os.environ.get('PYOBO_SQLALCHEMY_URI', f'sqlite:///{default_db_path}')
 
 engine = create_engine(uri)
 
@@ -99,8 +107,6 @@ class Alt(Base):
 
     identifier = Column(String, index=True)
 
-
-
     __table_args__ = (
         # ForeignKeyConstraint(
         #     ('prefix', 'identifier'),
@@ -118,16 +124,15 @@ class Xref(Base):
     prefix = Column(String, ForeignKey(f'{Resource.__tablename__}.prefix'), primary_key=True)
     identifier = Column(String, primary_key=True)
 
-    xref_prefix = Column(String)
-    xref_identifier = Column(String)
+    xref_prefix = Column(String, primary_key=True)
+    xref_identifier = Column(String, primary_key=True)
 
-    source = Column(Text)
+    source = Column(Text, primary_key=True)
 
     __table_args__ = (
         # ForeignKeyConstraint(
         #     ('prefix', 'identifier'),
         #     (f'{Resource.__tablename__}.prefix', f'{Resource.__tablename__}.identifier'),
         # ),
-        UniqueConstraint(prefix, identifier, xref_prefix, xref_identifier),
-        Index('alt_xref_curie', xref_prefix, xref_identifier),
+        Index('xref_curie', xref_prefix, xref_identifier),
     )

@@ -26,10 +26,6 @@ def sql():
 def load():
     """Load the SQL database."""
     from .sql.loader import load as _load
-    whitelist = {
-        'hp', 'go', 'hgnc', 'efo', 'mesh', 'rgd', 'mgi', 'chebi', 'drugbank', 'interpro',
-        'mirbase', 'mirbase.family', 'npass', 'ncbitaxon',
-    }
     _load()
 
 

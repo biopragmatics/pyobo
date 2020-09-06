@@ -3,9 +3,10 @@
 """Resource utilities for PyOBO."""
 
 import os
-import pandas as pd
 from typing import Optional
 from urllib.request import urlretrieve
+
+import pandas as pd
 
 from .constants import INSPECTOR_JAVERT_URL, OOH_NA_NA_URL, PYOBO_HOME, REMOTE_ALT_DATA_URL, SYNONYMS_URL
 

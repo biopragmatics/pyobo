@@ -6,7 +6,7 @@ from flask import Flask
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 
-from .models import Reference, Resource, Synonym, session
+from .models import Alt, Reference, Resource, Synonym, session
 
 __all__ = [
     'app',
@@ -41,6 +41,16 @@ class ReferenceView(View):
 
 
 admin.add_view(ReferenceView(Reference, session))
+
+
+class AltView(View):
+    """A view for references."""
+
+    column_searchable_list = ['identifier', 'alt']
+
+
+admin.add_view(AltView(Alt, session))
+
 admin.add_view(View(Synonym, session))
 
 if __name__ == '__main__':
