@@ -74,7 +74,8 @@
     "beilstein": {
       "synonyms": [
         "Beilstein"
-      ]
+      ],
+      "title": "Beilstein Handbook"
     },
     "bel": {
       "synonyms": [
@@ -144,7 +145,8 @@
     },
     "chiro": {
       "download": "http://purl.obolibrary.org/obo/chiro.obo",
-      "no_own_terms": true
+      "no_own_terms": true,
+      "title": "ChEBI Integrated Role Ontology"
     },
     "chmo": {
       "pattern": "\\d{7}"
@@ -153,7 +155,8 @@
       "pattern": "\\d{7}"
     },
     "citexplore": {
-      "synonyms": []
+      "synonyms": [],
+      "title": "CiteXplore"
     },
     "cl": {
       "download": "https://raw.githubusercontent.com/obophenotype/cell-ontology/master/cl-full.obo",
@@ -175,7 +178,8 @@
       ]
     },
     "conso": {
-      "pattern": "CONSO\\d{5}"
+      "pattern": "CONSO\\d{5}",
+      "title": "Curation of Neurodegeneration Supporting Ontology"
     },
     "covid": {},
     "cro": {
@@ -187,7 +191,8 @@
         "CRISP Thesaurus, 2006",
         "CRISP Thesaurus",
         "CSP2005"
-      ]
+      ],
+      "title": "CRISP Thesaurus"
     },
     "cteno": {
       "download": "https://raw.githubusercontent.com/obophenotype/ctenophore-ontology/master/cteno.obo",
@@ -201,9 +206,11 @@
       "pattern": "\\d{7}"
     },
     "dictybase": {
+      "description": "A resource for Dictyostelid discoideum (a soil-dwelling amoeba) genomics",
       "synonyms": [
         "dictyBase"
-      ]
+      ],
+      "title": "dictyBase"
     },
     "doid": {
       "miriam": {
@@ -230,7 +237,8 @@
     "drugcentral": {
       "synonyms": [
         "Drug_Central"
-      ]
+      ],
+      "title": "Drug Central"
     },
     "duo": {
       "not_available_as_obo": true
@@ -248,6 +256,7 @@
         "ECCODE",
         "ec-code"
       ],
+      "title": "Enzyme Nomenclature",
       "wikidata_property": "P591"
     },
     "ecmdb": {
@@ -345,7 +354,8 @@
       "synonyms": [
         "GARD",
         "Genetic and Rare Diseases Information Center"
-      ]
+      ],
+      "title": "Genetic and Rare Diseases Information Center"
     },
     "gaz": {
       "pattern": "\\d{8}"
@@ -423,7 +433,8 @@
         "ICD10",
         "ICD-10",
         "ICD10CM"
-      ]
+      ],
+      "title": "International Classification of Diseases"
     },
     "icd9": {
       "synonyms": [
@@ -575,6 +586,7 @@
       "synonyms": [
         "MIRBASE_FAMILY"
       ],
+      "title": "miRBase Families",
       "url": "http://www.mirbase.org/cgi-bin/mirna_summary.pl?fam=$1"
     },
     "mirbase.mature": {
@@ -673,7 +685,9 @@
         "NIST"
       ]
     },
-    "npass": {},
+    "npass": {
+      "title": "Natural Product Activity and Species Source Database"
+    },
     "oba": {
       "pattern": "\\d{7}"
     },
@@ -696,9 +710,6 @@
     "omp": {
       "pattern": "\\d{7}"
     },
-    "oprhanet": {
-      "synonyms": []
-    },
     "orcid": {
       "namespaces": [
         "ORCiD",
@@ -710,6 +721,10 @@
     },
     "ornaseq": {
       "pattern": "\\d{7}"
+    },
+    "orphanet": {
+      "synonyms": [],
+      "title": "Orphanet"
     },
     "patent": {
       "synonyms": []
@@ -727,7 +742,8 @@
       "synonyms": []
     },
     "pdbe": {
-      "synonyms": []
+      "synonyms": [],
+      "title": "Protein Data Bank in Europe"
     },
     "pdbechem": {
       "synonyms": []
@@ -861,13 +877,20 @@
     "signor": {
       "synonyms": [
         "SIGNOR"
-      ]
+      ],
+      "title": "Signaling Network Open Resource"
     },
     "smiles": {
+      "title": "Simplified molecular-input line-entry system",
       "wikidata_property": "P233"
     },
     "smpdb": {
       "example": "SMP0000219",
+      "miriam": {
+        "id": "00000104",
+        "namespaceEmbeddedInLui": false,
+        "prefix": "smpdb"
+      },
       "pattern": "^SMP\\d+$",
       "title": "Small Molecule Pathway Database",
       "url": "https://smpdb.ca/view/$1"

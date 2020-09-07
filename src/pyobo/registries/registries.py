@@ -137,12 +137,15 @@ def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
     for prefix, entry in get_curated_registry_database().items():
         if prefix in rv:
             continue
-        name = entry.get('name')
+        title = entry.get('title')
+        if not title:
+            logger.warning('No title for %s', prefix)
+            title = prefix
         pattern = entry.get('pattern')
-        if not name or not pattern:
+        if not title or not pattern:
             continue
         rv[prefix] = Resource(
-            name=name,
+            name=title,
             prefix=prefix,
             pattern=pattern,
         )
