@@ -2,16 +2,20 @@
 
 """Utilities for OBO files."""
 
+import gzip
 import logging
 import os
-from typing import Optional
+from collections import Counter
+from typing import Callable, Iterable, Mapping, Optional, Tuple, TypeVar
 from urllib.request import urlretrieve
 
 import obonet
 from tqdm import tqdm
 
+from .constants import DATABASE_DIRECTORY
+from .identifier_utils import hash_curie
 from .path_utils import ensure_path, get_prefix_directory, get_prefix_obo_path
-from .registries import get_curated_urls, get_obofoundry
+from .registries import get_curated_urls, get_metaregistry, get_obofoundry
 from .sources import CONVERTED, get_converted_obo
 from .struct import Obo
 
@@ -110,3 +114,77 @@ def _ensure_obo_path(prefix: str) -> str:
         raise MissingOboBuild(f'OBO Foundry build is missing a URL for: {prefix}, {build}')
 
     return ensure_path(prefix, url)
+
+
+SKIP = {
+    'obi',
+    'ncbigene',  # too big, refs acquired from other dbs
+    'pubchem.compound',  # to big, can't deal with this now
+    'rnao',  # just really malformed, way too much unconverted OWL
+    'gaz',
+}
+
+X = TypeVar('X')
+
+
+def iter_helper(f: Callable[[str], Mapping[str, X]], leave: bool = False) -> Iterable[Tuple[str, str, X]]:
+    """Yield all mappings extracted from each database given."""
+    for prefix in sorted(get_metaregistry()):
+        if prefix in SKIP:
+            continue
+        try:
+            mapping = f(prefix)
+        except (NoOboFoundry, MissingOboBuild):
+            continue
+        except ValueError as e:
+            if (
+                str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0"?>')
+                or str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0" encoding="UTF-8"?>')
+            ):
+                logger.info('no resource available for %s. See http://www.obofoundry.org/ontology/%s', prefix, prefix)
+                continue  # this means that it tried doing parsing on an xml page saying get the fuck out
+            logger.warning('could not successfully parse %s: %s', prefix, e)
+        else:
+            for key, value in tqdm(mapping.items(), desc=f'iterating {prefix}', leave=leave, unit_scale=True):
+                yield prefix, key, value
+
+
+def db_output_helper(directory, f, db_name, columns) -> None:
+    """Help output database builds."""
+    c = Counter()
+    db_path = os.path.join(DATABASE_DIRECTORY, f'{db_name}.tsv.gz')
+    db_md5_path = os.path.join(DATABASE_DIRECTORY, f'{db_name}_md5.tsv.gz')
+    db_sample_path = os.path.join(DATABASE_DIRECTORY, f'{db_name}_sample.tsv')
+    db_sample_md5_path = os.path.join(DATABASE_DIRECTORY, f'{db_name}_md5_sample.tsv')
+    logger.info('Writing %s to %s', db_name, db_path)
+
+    it = f()
+    with gzip.open(db_path, mode='wt') as gzipped_file, gzip.open(db_md5_path, mode='wt') as gzipped_md5_file:
+        # for the first 10 rows, put it in a sample file too
+        with open(db_sample_path, 'w') as sample_file, open(db_sample_md5_path, 'w') as sample_md5_file:
+            print(*columns, sep='\t', file=gzipped_file)
+            print('md5', columns[-1], sep='\t', file=gzipped_md5_file)
+            print(*columns, sep='\t', file=sample_file)
+            print('md5', columns[-1], sep='\t', file=sample_md5_file)
+
+            for _ in range(10):
+                prefix, identifier, name = next(it)
+                md5 = hash_curie(prefix, identifier)
+                c[prefix] += 1
+                print(prefix, identifier, name, sep='\t', file=gzipped_file)
+                print(prefix, identifier, name, sep='\t', file=sample_file)
+                print(md5, name, sep='\t', file=gzipped_md5_file)
+                print(md5, name, sep='\t', file=sample_md5_file)
+
+        # continue just in the gzipped one
+        for prefix, identifier, name in it:
+            c[prefix] += 1
+            md5 = hash_curie(prefix, identifier)
+            print(prefix, identifier, name, sep='\t', file=gzipped_file)
+            print(md5, prefix, identifier, name, sep='\t', file=gzipped_md5_file)
+
+    summary_path = os.path.join(directory, f'{db_name}_summary.tsv')
+    logger.info(f'Writing {db_name} summary to {summary_path}')
+    with open(summary_path, 'w') as file:
+        for k, v in c.most_common():
+            print(k, v, sep='\t', file=file)

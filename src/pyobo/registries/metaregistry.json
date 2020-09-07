@@ -103,6 +103,11 @@
       ],
       "wikidata_property": "P231"
     },
+    "cellosaurus": {
+      "example": "CVCL_0440",
+      "pattern": "^CVCL_[A-Z0-9]{4}$",
+      "wikidata_property": "P3289"
+    },
     "ceph": {
       "download": "https://raw.githubusercontent.com/obophenotype/cephalopod-ontology/master/ceph.obo",
       "pattern": "\\d{7}"
@@ -212,6 +217,9 @@
       ],
       "title": "dictyBase"
     },
+    "diseasesdb": {
+      "wikidata_property": "P557"
+    },
     "doid": {
       "miriam": {
         "id": "00000233",
@@ -223,7 +231,8 @@
       },
       "synonyms": [
         "do"
-      ]
+      ],
+      "wikidata_property": "P699"
     },
     "dpo": {
       "no_own_terms": true
@@ -348,16 +357,20 @@
       ]
     },
     "fypo": {
-      "pattern": "\\d{7}"
+      "download": "http://purl.obolibrary.org/obo/fypo.obo",
+      "pattern": "\\d{7}",
+      "title": "Fission Yeast Phenotype Ontology"
     },
     "gard": {
       "synonyms": [
         "GARD",
         "Genetic and Rare Diseases Information Center"
       ],
-      "title": "Genetic and Rare Diseases Information Center"
+      "title": "Genetic and Rare Diseases Information Center",
+      "wikidata_property": "P4317"
     },
     "gaz": {
+      "download": "http://purl.obolibrary.org/obo/gaz.obo",
       "pattern": "\\d{8}"
     },
     "geno": {
@@ -434,7 +447,8 @@
         "ICD-10",
         "ICD10CM"
       ],
-      "title": "International Classification of Diseases"
+      "title": "International Classification of Diseases",
+      "wikidata_property": "P4229"
     },
     "icd9": {
       "synonyms": [
@@ -485,6 +499,12 @@
         "IUPHARfam"
       ]
     },
+    "iuphar.ligand": {
+      "wikidata_property": "P595"
+    },
+    "iuphar.receptor": {
+      "wikidata_property": "P5458"
+    },
     "kegg": {
       "synonyms": [
         "KEGG"
@@ -526,6 +546,9 @@
       ]
     },
     "lncipedia": {},
+    "massbank": {
+      "wikidata_property": "P6689"
+    },
     "mco": {
       "pattern": "\\d+"
     },
@@ -615,9 +638,11 @@
       "download": "http://purl.obolibrary.org/obo/mondo.obo",
       "example": "0000001",
       "pattern": "\\d{7}",
-      "synonyms": []
+      "synonyms": [],
+      "wikidata_property": "P5270"
     },
     "mop": {
+      "download": "https://raw.githubusercontent.com/rsc-ontologies/rxno/master/mop.obo",
       "pattern": "\\d{7}"
     },
     "mpath": {
@@ -628,6 +653,7 @@
       ]
     },
     "nbo": {
+      "download": "https://github.com/obo-behavior/behavior-ontology/raw/master/nbo.obo",
       "pattern": "\\d{7}"
     },
     "ncbigene": {
@@ -698,6 +724,7 @@
       "pattern": "\\d{7}"
     },
     "omit": {
+      "download": "https://raw.githubusercontent.com/OmniSearch/omit/master/src/ontology/omit.obo",
       "miriam": {
         "id": "00000605",
         "namespaceEmbeddedInLui": false,
@@ -724,7 +751,8 @@
     },
     "orphanet": {
       "synonyms": [],
-      "title": "Orphanet"
+      "title": "Orphanet",
+      "wikidata_property": "P1550"
     },
     "patent": {
       "synonyms": []
@@ -859,6 +887,7 @@
       "pattern": "\\d{7}"
     },
     "rxno": {
+      "download": "https://github.com/rsc-ontologies/rxno/raw/master/rxno.obo",
       "pattern": "\\d{7}"
     },
     "rxnorm": {
@@ -1004,6 +1033,10 @@
         "UMLS CUI"
       ],
       "wikidata_property": "P2892"
+    },
+    "unii": {
+      "title": "Unique Ingredient Identifier",
+      "wikidata_property": "P652"
     },
     "uniprot": {
       "synonyms": [

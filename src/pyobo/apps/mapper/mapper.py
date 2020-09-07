@@ -18,6 +18,7 @@ from werkzeug.local import LocalProxy
 
 from pyobo.apps.utils import gunicorn_option, host_option, port_option, run_app
 from pyobo.cli_utils import verbose_option
+from pyobo.constants import SOURCE_PREFIX, TARGET_PREFIX
 from pyobo.identifier_utils import normalize_curie, normalize_prefix
 from pyobo.xrefdb.xrefs_pipeline import (
     Canonicalizer, get_xref_df, summarize_xref_df,
@@ -93,8 +94,8 @@ def summarize():
 def summarize_one(prefix: str):
     """Summarize the mappings."""
     prefix = normalize_prefix(prefix)
-    in_df = summary_df.loc[summary_df['target_ns'] == prefix, ['source_ns', 'count']]
-    out_df = summary_df.loc[summary_df['source_ns'] == prefix, ['target_ns', 'count']]
+    in_df = summary_df.loc[summary_df[TARGET_PREFIX] == prefix, [SOURCE_PREFIX, 'count']]
+    out_df = summary_df.loc[summary_df[SOURCE_PREFIX] == prefix, [TARGET_PREFIX, 'count']]
     return f'''
     <h1>Incoming Mappings to {prefix}</h1>
     {in_df.to_html(index=False)}
@@ -154,8 +155,8 @@ def get_app(paths: Union[None, str, Iterable[str]] = None) -> Flask:
             for path in paths
         )
 
-    df['source_ns'] = df['source_ns'].map(normalize_prefix)
-    df['target_ns'] = df['target_ns'].map(normalize_prefix)
+    df[SOURCE_PREFIX] = df[SOURCE_PREFIX].map(normalize_prefix)
+    df[TARGET_PREFIX] = df[TARGET_PREFIX].map(normalize_prefix)
     return _get_app_from_xref_df(df)
 
 

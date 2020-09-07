@@ -8,7 +8,7 @@ from urllib.request import urlretrieve
 
 import pandas as pd
 
-from .constants import INSPECTOR_JAVERT_URL, OOH_NA_NA_URL, PYOBO_HOME, REMOTE_ALT_DATA_URL, SYNONYMS_URL
+from .constants import DATABASE_DIRECTORY, INSPECTOR_JAVERT_URL, OOH_NA_NA_URL, REMOTE_ALT_DATA_URL, SYNONYMS_URL
 
 __all__ = [
     'ensure_inspector_javert',
@@ -48,7 +48,7 @@ def ensure_alts(force: bool = False) -> str:
 
 
 def _ensure(url: str, name: str, force: bool = False) -> str:
-    path = os.path.join(PYOBO_HOME, name)
+    path = os.path.join(DATABASE_DIRECTORY, name)
     if not os.path.exists(path) or force:
         urlretrieve(url, path)
     return path

@@ -12,7 +12,7 @@ import humanize
 from tabulate import tabulate
 
 from pyobo.cli_utils import verbose_option
-from pyobo.constants import PYOBO_HOME
+from pyobo.constants import RAW_DIRECTORY
 from pyobo.extract import (
     get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_properties_df, get_relations_df, get_xrefs_df,
     iter_cached_obo,
@@ -44,7 +44,7 @@ def download_artifacts(bucket: str, suffix: Optional[str] = None) -> None:
         key = entry['Key']
         if suffix and not key.endswith(suffix):
             pass
-        path = os.path.join(PYOBO_HOME, key)
+        path = os.path.join(RAW_DIRECTORY, key)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         if os.path.exists(path):
             continue  # no need to download again

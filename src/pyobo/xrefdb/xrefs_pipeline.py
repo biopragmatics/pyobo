@@ -18,15 +18,16 @@ from more_itertools import pairwise
 from tqdm import tqdm
 
 from .sources import iter_sourced_xref_dfs
-from ..constants import PYOBO_HOME
-from ..extract import get_alts_to_id, get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_xrefs_df
-from ..getters import MissingOboBuild, NoOboFoundry
+from ..constants import DATABASE_DIRECTORY, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
+from ..extract import (
+    get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts,
+    get_xrefs_df,
+)
+from ..getters import MissingOboBuild, NoOboFoundry, iter_helper
 from ..identifier_utils import normalize_prefix
 from ..path_utils import ensure_path, get_prefix_directory
 from ..registries import get_metaregistry
-from ..sources import ncbigene
-
-XREF_DB_CACHE = os.path.join(PYOBO_HOME, 'inspector_javerts_xrefs.tsv.gz')
+from ..sources import ncbigene, pubchem
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +36,12 @@ SKIP = {
     'ncbigene',  # too big, refs acquired from other dbs
     'pubchem.compound',  # to big, can't deal with this now
     'rnao',  # just really malformed, way too much unconverted OWL
+    'gaz',
+    'geo',
 }
 SKIP_XREFS = {
-    'apo', 'rxno', 'omit', 'mop', 'mamo', 'ido', 'iao', 'gaz', 'fypo', 'nbo',
+    'mamo', 'ido', 'iao', 'gaz', 'nbo', 'geo',
 }
-COLUMNS = ['source_ns', 'source_id', 'target_ns', 'target_id', 'source']
 
 _DEFAULT_PRIORITY_LIST = [
     # Genes
@@ -204,8 +206,8 @@ def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
     rv = nx.Graph()
 
     it = itt.chain(
-        df[['source_ns', 'source_id']].drop_duplicates().values,
-        df[['target_ns', 'target_id']].drop_duplicates().values,
+        df[[SOURCE_PREFIX, SOURCE_ID]].drop_duplicates().values,
+        df[[TARGET_PREFIX, TARGET_ID]].drop_duplicates().values,
     )
     it = tqdm(it, desc='loading curies', unit_scale=True)
     for prefix, identifier in it:
@@ -224,9 +226,9 @@ def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
 
 def summarize_xref_df(df: pd.DataFrame) -> pd.DataFrame:
     """Get all meta-mappings."""
-    c = ['source_ns', 'target_ns']
+    c = [SOURCE_PREFIX, TARGET_PREFIX]
     rv = df[c].groupby(c).size().reset_index()
-    rv.columns = ['source_ns', 'target_ns', 'count']
+    rv.columns = [SOURCE_PREFIX, TARGET_PREFIX, 'count']
     rv.sort_values('count', inplace=True, ascending=False)
     return rv
 
@@ -290,6 +292,9 @@ def single_source_shortest_path(
     }
 
 
+XREF_DB_CACHE = os.path.join(DATABASE_DIRECTORY, 'xrefs.tsv.gz')
+
+
 def get_xref_df(use_cached: bool = False) -> pd.DataFrame:
     """Get the ultimate xref database."""
     if use_cached and os.path.exists(XREF_DB_CACHE):
@@ -298,7 +303,7 @@ def get_xref_df(use_cached: bool = False) -> pd.DataFrame:
     df = pd.concat(_iterate_xref_dfs())
     df.drop_duplicates(inplace=True)
     df.dropna(inplace=True)
-    df.sort_values(COLUMNS, inplace=True)
+    df.sort_values(XREF_COLUMNS, inplace=True)
 
     if use_cached:
         df.to_csv(XREF_DB_CACHE, sep='\t', index=False)
@@ -340,44 +345,31 @@ def _iterate_metaregistry():
             yield prefix, _entry
 
 
-def _iter_helper(fn, leave: bool = False):
-    for prefix in sorted(get_metaregistry()):
-        if prefix in SKIP:
-            continue
-        try:
-            mapping = fn(prefix)
-        except (NoOboFoundry, MissingOboBuild):
-            continue
-        except ValueError as e:
-            if (
-                str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0"?>')
-                or str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0" encoding="UTF-8"?>')
-            ):
-                logger.info('no resource available for %s. See http://www.obofoundry.org/ontology/%s', prefix, prefix)
-                continue  # this means that it tried doing parsing on an xml page saying get the fuck out
-            logger.warning('could not successfully parse %s: %s', prefix, e)
-        else:
-            for key, value in tqdm(mapping.items(), desc=f'iterating {prefix}', leave=leave):
-                yield prefix, key, value
-
-
 def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
     """Iterate over all prefix-identifier-name triples we can get.
 
     :param leave: should the tqdm be left behind?
     """
-    yield from _iter_helper(get_id_name_mapping, leave=leave)
+    yield from iter_helper(get_id_name_mapping, leave=leave)
 
     ncbi_path = ensure_path(ncbigene.PREFIX, ncbigene.GENE_INFO_URL)
     with gzip.open(ncbi_path, 'rt') as file:
         next(file)  # throw away the header
-        for line in tqdm(file, desc='extracting ncbigene'):
-            line = line.split('\t')
-            yield 'ncbigene', line[1], line[2]
+        for line in tqdm(file, desc=f'extracting {ncbigene.PREFIX}', unit_scale=True):
+            line = line.strip().split('\t')
+            yield ncbigene.PREFIX, line[1], line[2]
+
+    pcc_path = ensure_path(pubchem.PREFIX, pubchem.CID_NAME_URL)
+    with gzip.open(pcc_path, mode='rt', encoding='ISO-8859-1') as file:
+        for line in tqdm(file, desc=f'extracting {pubchem.PREFIX}', unit_scale=True):
+            identifier, name = line.strip().split('\t', 1)
+            yield pubchem.PREFIX, identifier, name
 
 
 def _iter_alts(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
-    yield from _iter_helper(get_alts_to_id, leave=leave)
+    for prefix, identifier, alts in iter_helper(get_id_to_alts, leave=leave):
+        for alt in alts:
+            yield prefix, identifier, alt
 
 
 def _iter_synonyms(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
@@ -385,7 +377,7 @@ def _iter_synonyms(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
 
     :param leave: should the tqdm be left behind?
     """
-    for prefix, identifier, synonyms in _iter_helper(get_id_synonyms_mapping, leave=leave):
+    for prefix, identifier, synonyms in iter_helper(get_id_synonyms_mapping, leave=leave):
         for synonym in synonyms:
             yield prefix, identifier, synonym
 

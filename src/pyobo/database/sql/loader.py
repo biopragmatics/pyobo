@@ -29,8 +29,10 @@ logger = logging.getLogger(__name__)
 @click.option('--load-alts', is_flag=True)
 @click.option('--load-xrefs', is_flag=True)
 @click.option('--load-synonyms', is_flag=True)
+@click.option('-a', '--load-all', is_flag=True)
 @click.option('--reset', is_flag=True)
 def load(
+    load_all: bool,
     load_resources: bool = False,
     load_names: bool = False,
     load_alts: bool = False,
@@ -43,7 +45,7 @@ def load(
         drop_all()
     create_all()
 
-    if load_resources:
+    if load_resources or load_all:
         metaregistry = get_metaregistry()
         prefix_to_resource: Dict[str, Resource] = {}
 
@@ -63,7 +65,7 @@ def load(
     synonyms_path = ensure_synonyms()
     xrefs_path = ensure_inspector_javert()
 
-    if load_alts:
+    if load_alts or load_all:
         alts_path = ensure_alts()
         alts_df = pd.read_csv(alts_path, sep='\t', dtype=str)  # prefix, alt, identifier
         logger.info('inserting %d alt identifiers', len(alts_df.index))
@@ -77,7 +79,7 @@ def load(
         ('synonyms', synonyms_path, Synonym, ['prefix', 'identifier', 'name'], load_synonyms),
         ('xrefs', xrefs_path, Xref, ['prefix', 'identifier', 'xref_prefix', 'xref_identifier', 'source'], load_xrefs),
     ]:
-        if not checker:
+        if not checker and not load_all:
             continue
         logger.info('beginning insertion of %s', label)
         conn = engine.raw_connection()
@@ -85,15 +87,16 @@ def load(
         if columns:
             columns = ', '.join(columns)
             logger.info('corresponding to columns: %s', columns)
-            columns = f'({columns})'
+            columns = f' ({columns})'
         else:
             columns = ''
+
         with conn.cursor() as cursor, gzip.open(path) as file:
             # next(file)  # skip the header
-            sql = f'''COPY {table.__tablename__} {columns} FROM STDIN WITH CSV HEADER DELIMITER E'\\t' QUOTE E'\\b';'''
+            sql = f'''COPY {table.__tablename__}{columns} FROM STDIN WITH CSV HEADER DELIMITER E'\\t' QUOTE E'\\b';'''
             logger.info('running SQL: %s', sql)
             cursor.copy_expert(sql=sql, file=file)
-            # cursor.copy_from(file, table.__tablename__, sep='\t', columns=columns)  # insert the table
+
         logger.info('committing %s', label)
         conn.commit()
         logger.info('done committing %s', label)

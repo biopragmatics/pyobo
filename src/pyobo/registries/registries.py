@@ -139,7 +139,7 @@ def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
             continue
         title = entry.get('title')
         if not title:
-            logger.warning('No title for %s', prefix)
+            logger.debug('No title for %s', prefix)
             title = prefix
         pattern = entry.get('pattern')
         if not title or not pattern:

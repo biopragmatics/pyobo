@@ -12,9 +12,9 @@ import click
 import humanize
 from tabulate import tabulate
 
-from . import aws
+from . import aws, cli_database
 from .cli_utils import echo_df, verbose_option
-from .constants import PYOBO_HOME
+from .constants import RAW_DIRECTORY
 from .extract import (
     get_ancestors, get_descendants, get_filtered_properties_df, get_filtered_relations_df, get_filtered_xrefs,
     get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_name_by_curie, get_properties_df,
@@ -22,8 +22,9 @@ from .extract import (
 )
 from .identifier_utils import normalize_curie
 from .sources import CONVERTED, iter_converted_obos
-from .xrefdb.cli import altsdb, javerts_remapping, javerts_xrefs, ooh_na_na, synonymsdb
-from .xrefdb.xrefs_pipeline import DEFAULT_PRIORITY_LIST, get_priority_curie, remap_file_stream
+from .xrefdb.xrefs_pipeline import (
+    DEFAULT_PRIORITY_LIST, get_priority_curie, remap_file_stream,
+)
 
 __all__ = ['main']
 
@@ -203,8 +204,8 @@ def clean(remove_obo: bool):
     ]
     if remove_obo:
         suffixes.append('.obo')
-    for directory in os.listdir(PYOBO_HOME):
-        d = os.path.join(PYOBO_HOME, directory)
+    for directory in os.listdir(RAW_DIRECTORY):
+        d = os.path.join(RAW_DIRECTORY, directory)
         if not os.path.isdir(d):
             continue
         entities = list(os.listdir(d))
@@ -232,12 +233,8 @@ def ls():
     click.echo(tabulate(entries, headers=['Source', 'Size', 'OBO']))
 
 
-main.add_command(javerts_xrefs)
-main.add_command(javerts_remapping)
-main.add_command(ooh_na_na)
-main.add_command(altsdb)
-main.add_command(synonymsdb)
 main.add_command(aws.aws)
+main.add_command(cli_database.database)
 
 if __name__ == '__main__':
     main()

@@ -2,6 +2,7 @@
 
 """Utilities for handling prefixes."""
 
+import hashlib
 import logging
 from collections import defaultdict
 from typing import Optional, Tuple, Union
@@ -16,6 +17,7 @@ __all__ = [
     'get_identifiers_org_link',
     'normalize_prefix',
     'normalize_dashes',
+    'hash_curie',
 ]
 
 logger = logging.getLogger(__name__)
@@ -28,7 +30,6 @@ def alternate_strip_prefix(s, prefix):
     return s
 
 
-UNHANDLED_NAMESPACES = defaultdict(list)
 UBERON_UNHANDLED = defaultdict(list)
 MIRIAM = get_miriam(mappify=True)
 
@@ -41,15 +42,12 @@ def normalize_prefix(prefix: str, *, curie=None, xref=None) -> Optional[str]:
         if rv is not None:
             return rv
 
-    if curie is None:
+    if curie is None or curie.startswith('obo:'):
         return
     if curie.startswith('UBERON:'):  # uberon has tons of xrefs to anatomical features. skip them
         UBERON_UNHANDLED[prefix].append((curie, xref))
     else:
-        UNHANDLED_NAMESPACES[prefix].append((curie, xref))
-
-
-COLUMNS = ['source_ns', 'source_id', 'target_ns', 'target_id']
+        logger.warning('unhandled prefix %s found in curie %s/xref %s', prefix, curie, xref)
 
 
 def normalize_curie(node: str) -> Union[Tuple[str, str], Tuple[None, None]]:
@@ -113,3 +111,8 @@ def normalize_dashes(s: str) -> str:
         replace(EN_DASH, NORMAL_DASH). \
         replace(EM_DASH, NORMAL_DASH). \
         replace(HORIZONAL_BAR, NORMAL_DASH)
+
+
+def hash_curie(prefix, identifier) -> str:
+    """Hash a curie with MD5."""
+    return hashlib.md5(f'{prefix}:{identifier}'.encode('utf-8')).hexdigest()  # noqa:S303

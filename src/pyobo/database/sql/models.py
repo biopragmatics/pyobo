@@ -4,30 +4,17 @@
 
 from __future__ import annotations
 
-import configparser
 import logging
-import os
 
 from sqlalchemy import Column, ForeignKey, Index, Integer, String, Text, UniqueConstraint, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker
 
-from ...constants import PYOBO_CONFIG, PYOBO_HOME
+from ...constants import get_sqlalchemy_uri
 
 logger = logging.getLogger(__name__)
 
-# try loading from config file
-uri = None
-if os.path.exists(PYOBO_CONFIG):
-    cfp = configparser.ConfigParser()
-    logger.debug('reading configuration from %s', PYOBO_CONFIG)
-    with open(PYOBO_CONFIG) as file:
-        cfp.read_file(file)
-    uri = cfp.get('pyobo', 'SQLALCHEMY_URI')
-if uri is None:
-    default_db_path = os.path.abspath(os.path.join(PYOBO_HOME, 'pyobo.db'))
-    uri = os.environ.get('PYOBO_SQLALCHEMY_URI', f'sqlite:///{default_db_path}')
-
+uri = get_sqlalchemy_uri()
 engine = create_engine(uri)
 
 #: A SQLAlchemy session maker

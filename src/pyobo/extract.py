@@ -11,7 +11,7 @@ import networkx as nx
 import pandas as pd
 
 from .cache_utils import cached_df, cached_mapping, cached_multidict
-from .constants import GLOBAL_SKIP, PYOBO_HOME
+from .constants import GLOBAL_SKIP, RAW_DIRECTORY
 from .getters import NoOboFoundry, get
 from .identifier_utils import normalize_curie
 from .path_utils import prefix_directory_join
@@ -431,10 +431,10 @@ def get_subhierarchy(
 
 def iter_cached_obo() -> List[Tuple[str, str]]:
     """Iterate over cached OBO paths."""
-    for prefix in os.listdir(PYOBO_HOME):
+    for prefix in os.listdir(RAW_DIRECTORY):
         if prefix in GLOBAL_SKIP or prefix in get_not_available_as_obo() or prefix in get_obsolete():
             continue
-        d = os.path.join(PYOBO_HOME, prefix)
+        d = os.path.join(RAW_DIRECTORY, prefix)
         if not os.path.isdir(d):
             continue
         for x in os.listdir(d):

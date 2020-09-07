@@ -7,6 +7,8 @@
 
 import pandas as pd
 
+from pyobo.constants import PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
+
 __all__ = [
     'get_cbms2019_xrefs_df',
 ]
@@ -30,13 +32,13 @@ NSM = {
 
 def _get_doid(url: str) -> pd.DataFrame:
     df = pd.read_csv(url, sep='\t', usecols=['DO_ID', 'resource', 'resource_ID'])
-    df.columns = ['source_id', 'target_ns', 'target_id']
+    df.columns = [SOURCE_ID, TARGET_PREFIX, TARGET_ID]
 
-    df['source_ns'] = 'doid'
-    df['source_id'] = df['source_id'].map(lambda s: s[len('DOID:'):])
-    df['source'] = url
-    df['target_ns'] = df['target_ns'].map(NSM.get)
-    df = df[['source_ns', 'source_id', 'target_ns', 'target_id', 'source']]
+    df[SOURCE_PREFIX] = 'doid'
+    df[SOURCE_ID] = df[SOURCE_ID].map(lambda s: s[len('DOID:'):])
+    df[PROVENANCE] = url
+    df[TARGET_PREFIX] = df[TARGET_PREFIX].map(NSM.get)
+    df = df[XREF_COLUMNS]
     return df
 
 
@@ -50,7 +52,7 @@ def _get_mesh_to_icd_via_snomedct() -> pd.DataFrame:
     for snomedct_id, icd_id, mesh_id in df.values:
         rows.append(('mesh', mesh_id, 'snomedct', snomedct_id, all_to_all))
         rows.append(('snomedct', snomedct_id, 'icd', icd_id, all_to_all))
-    return pd.DataFrame(rows, columns=['source_ns', 'source_id', 'target_ns', 'target_id', 'source'])
+    return pd.DataFrame(rows, columns=XREF_COLUMNS)
 
 
 def _get_mesh_to_snomedct_via_doid() -> pd.DataFrame:
@@ -69,7 +71,7 @@ def _get_mesh_to_snomedct_via_icd() -> pd.DataFrame:
         snomedct_id = str(int(snomedct_id))
         rows.append(('mesh', mesh_id, 'icd', icd_id, all_to_all))
         rows.append(('icd', icd_id, 'snomedct', snomedct_id, all_to_all))
-    return pd.DataFrame(rows, columns=['source_ns', 'source_id', 'target_ns', 'target_id', 'source'])
+    return pd.DataFrame(rows, columns=XREF_COLUMNS)
 
 
 def get_cbms2019_xrefs_df() -> pd.DataFrame:
