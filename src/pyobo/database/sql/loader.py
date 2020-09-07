@@ -6,11 +6,13 @@ import gzip
 import logging
 from typing import Dict
 
+import click
 import pandas as pd
 from tqdm import tqdm
 
 from .models import Alt, Reference, Resource, Synonym, Xref, create_all, drop_all, engine, session
-from ... import registries
+from ...cli_utils import verbose_option
+from ...registries import get_metaregistry
 from ...resource_utils import ensure_alts, ensure_inspector_javert, ensure_ooh_na_na, ensure_synonyms
 
 __all__ = [
@@ -20,6 +22,14 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
+@click.command()
+@verbose_option
+@click.option('--load-resources', is_flag=True)
+@click.option('--load-names', is_flag=True)
+@click.option('--load-alts', is_flag=True)
+@click.option('--load-xrefs', is_flag=True)
+@click.option('--load-synonyms', is_flag=True)
+@click.option('--reset', is_flag=True)
 def load(
     load_resources: bool = False,
     load_names: bool = False,
@@ -34,9 +44,13 @@ def load(
     create_all()
 
     if load_resources:
-        metaregistry = registries.get_metaregistry()
+        metaregistry = get_metaregistry()
         prefix_to_resource: Dict[str, Resource] = {}
+
+        prefixes = {resource.prefix for resource in Resource.query.all()}
         for resource_dataclass in tqdm(metaregistry.values(), desc='loading resources'):
+            if resource_dataclass.prefix in prefixes:
+                continue
             prefix_to_resource[resource_dataclass.prefix] = resource_model = Resource(
                 prefix=resource_dataclass.prefix,
                 name=resource_dataclass.name,
@@ -58,19 +72,28 @@ def load(
         session.commit()
         logger.info('done committing alt identifiers')
 
-    for label, path, table, checker in [
-        ('names', ooh_na_na_path, Reference, load_names),
-        ('synonyms', synonyms_path, Synonym, load_synonyms),
-        ('xrefs', xrefs_path, Xref, load_xrefs),
+    for label, path, table, columns, checker in [
+        ('names', ooh_na_na_path, Reference, None, load_names),
+        ('synonyms', synonyms_path, Synonym, ['prefix', 'identifier', 'name'], load_synonyms),
+        ('xrefs', xrefs_path, Xref, ['prefix', 'identifier', 'xref_prefix', 'xref_identifier', 'source'], load_xrefs),
     ]:
         if not checker:
             continue
-        logger.info('beginning insertion of %', label)
+        logger.info('beginning insertion of %s', label)
         conn = engine.raw_connection()
-        logger.info('inserting with low-level copy of % from: %s', label, path)
+        logger.info('inserting with low-level copy of %s from: %s', label, path)
+        if columns:
+            columns = ', '.join(columns)
+            logger.info('corresponding to columns: %s', columns)
+            columns = f'({columns})'
+        else:
+            columns = ''
         with conn.cursor() as cursor, gzip.open(path) as file:
-            next(file)  # skip the header
-            cursor.copy_from(file, table.__tablename__, sep='\t')  # insert the table
+            # next(file)  # skip the header
+            sql = f'''COPY {table.__tablename__} {columns} FROM STDIN WITH CSV HEADER DELIMITER E'\\t' QUOTE E'\\b';'''
+            logger.info('running SQL: %s', sql)
+            cursor.copy_expert(sql=sql, file=file)
+            # cursor.copy_from(file, table.__tablename__, sep='\t', columns=columns)  # insert the table
         logger.info('committing %s', label)
         conn.commit()
         logger.info('done committing %s', label)
@@ -154,5 +177,4 @@ def load(
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
     load()

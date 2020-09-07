@@ -10,7 +10,7 @@ import logging
 import os
 import sys
 from collections import Counter, defaultdict
-from typing import Any, Mapping, Optional, Union
+from typing import Any, List, Mapping, Optional, Union
 
 import click
 import pandas as pd
@@ -46,6 +46,14 @@ class Backend:
 
     def get_name(self, prefix: str, identifier: str) -> Optional[str]:
         """Get the canonical/preferred (english) name for the identifier in the given resource."""
+        raise NotImplementedError
+
+    def get_synonyms(self, prefix: str, identifier: str) -> List[str]:
+        """Get a list of synonyms."""
+        raise NotImplementedError
+
+    def get_xrefs(self, prefix: str, identifier: str) -> List[Mapping[str, str]]:
+        """Get a list of xrefs."""
         raise NotImplementedError
 
     def summarize(self) -> Mapping[str, Any]:
@@ -145,6 +153,20 @@ class SQLBackend(Backend):
         reference = Reference.query.filter(Reference.prefix == prefix, Reference.identifier == identifier).one_or_none()
         if reference:
             return reference.name
+
+    def get_synonyms(self, prefix: str, identifier: str) -> List[str]:  # noqa:D102
+        from pyobo.database.sql.models import Synonym
+        synonyms = Synonym.query.filter(Synonym.prefix == prefix, Synonym.identifier == identifier).all()
+        return [s.name for s in synonyms]
+
+    def get_xrefs(self, prefix: str, identifier: str) -> List[Mapping[str, str]]:  # noqa:D102
+        from pyobo.database.sql.models import Xref
+        xrefs = Xref.query.filter(Xref.prefix == prefix, Xref.identifier == identifier).all()
+        xrefs = {(xref.xref_prefix, xref.xref_identifier) for xref in xrefs}
+        return [
+            dict(prefix=xref_prefix, identifier=xref_identifier)
+            for xref_prefix, xref_identifier in sorted(xrefs)
+        ]
 
 
 backend: Backend = LocalProxy(lambda: current_app.config['resolver_backend'])
@@ -305,9 +327,10 @@ def _get_lookup_from_path(path: str) -> Mapping[str, Mapping[str, str]]:
 @click.option('--sql', is_flag=True, help='use preloaded SQL database as backend')
 @click.option('--lazy', is_flag=True, help='do no load full cache into memory automatically')
 @click.option('--test', is_flag=True, help='run in test mode with only a few datasets')
+@click.option('--workers', type=int, help='number of workers to use in --gunicorn mode')
 @gunicorn_option
 @verbose_option
-def main(port: int, host: str, sql: bool, data: Optional[str], test: bool, gunicorn: bool, lazy: bool):
+def main(port: int, host: str, sql: bool, data: Optional[str], test: bool, gunicorn: bool, lazy: bool, workers: int):
     """Run the resolver app."""
     if test and lazy:
         click.secho('Can not run in --test and --lazy mode at the same time', fg='red')
@@ -322,7 +345,7 @@ def main(port: int, host: str, sql: bool, data: Optional[str], test: bool, gunic
         data = pd.DataFrame(data, columns=['prefix', 'identifier', 'name'])
 
     app = get_app(data, lazy=lazy, sql=sql)
-    run_app(app=app, host=host, port=port, gunicorn=gunicorn)
+    run_app(app=app, host=host, port=port, gunicorn=gunicorn, workers=workers)
 
 
 if __name__ == '__main__':
