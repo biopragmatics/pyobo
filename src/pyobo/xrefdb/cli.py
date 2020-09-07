@@ -18,6 +18,7 @@ directory_option = click.option(
     '-d', '--directory',
     type=click.Path(dir_okay=True, file_okay=False, exists=True),
     default=PYOBO_HOME,
+    show_default=True,
 )
 
 
