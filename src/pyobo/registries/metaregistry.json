@@ -714,6 +714,12 @@
     "patent": {
       "synonyms": []
     },
+    "pathbank": {
+      "example": "SMP0000219",
+      "pattern": "^SMP\\d+$",
+      "title": "PathBank",
+      "url": "https://pathbank.org/view/$1"
+    },
     "pco": {
       "pattern": "\\d{7}"
     },
@@ -859,6 +865,12 @@
     },
     "smiles": {
       "wikidata_property": "P233"
+    },
+    "smpdb": {
+      "example": "SMP0000219",
+      "pattern": "^SMP\\d+$",
+      "title": "Small Molecule Pathway Database",
+      "url": "https://smpdb.ca/view/$1"
     },
     "snomedct": {
       "miriam": {
