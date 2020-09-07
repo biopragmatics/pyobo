@@ -19,12 +19,6 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-BLACKLIST = {
-    'obi',
-    'ncbigene',  # too big, refs acquired from  other dbs
-    'pubchem.compound',  # to big, can't deal with this now
-}
-
 
 def load(
     load_resources: bool = False,
