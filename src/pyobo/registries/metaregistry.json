@@ -46,7 +46,8 @@
       "not_available_as_obo": true
     },
     "apo": {
-      "pattern": "\\d{7}"
+      "pattern": "\\d{7}",
+      "url": "https://www.yeastgenome.org/observable/$1"
     },
     "aro": {
       "pattern": "\\d{7}"
@@ -882,6 +883,12 @@
     },
     "rnao": {
       "pattern": "\\d{7}"
+    },
+    "ro": {
+      "synonyms": [
+        "obo_rel"
+      ],
+      "title": "Relation Ontology"
     },
     "rs": {
       "pattern": "\\d{7}"

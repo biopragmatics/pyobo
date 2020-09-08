@@ -24,9 +24,8 @@ from ..extract import (
     get_xrefs_df,
 )
 from ..getters import MissingOboBuild, NoOboFoundry, iter_helper
-from ..identifier_utils import normalize_prefix
+from ..identifier_utils import get_metaregistry, normalize_prefix
 from ..path_utils import ensure_path, get_prefix_directory
-from ..registries import get_metaregistry
 from ..sources import ncbigene, pubchem
 
 logger = logging.getLogger(__name__)
@@ -355,13 +354,13 @@ def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
     ncbi_path = ensure_path(ncbigene.PREFIX, ncbigene.GENE_INFO_URL)
     with gzip.open(ncbi_path, 'rt') as file:
         next(file)  # throw away the header
-        for line in tqdm(file, desc=f'extracting {ncbigene.PREFIX}', unit_scale=True):
+        for line in tqdm(file, desc=f'extracting {ncbigene.PREFIX}', unit_scale=True, total=27_000_000):
             line = line.strip().split('\t')
             yield ncbigene.PREFIX, line[1], line[2]
 
     pcc_path = ensure_path(pubchem.PREFIX, pubchem.CID_NAME_URL)
     with gzip.open(pcc_path, mode='rt', encoding='ISO-8859-1') as file:
-        for line in tqdm(file, desc=f'extracting {pubchem.PREFIX}', unit_scale=True):
+        for line in tqdm(file, desc=f'extracting {pubchem.PREFIX}', unit_scale=True, total=103_000_000):
             identifier, name = line.strip().split('\t', 1)
             yield pubchem.PREFIX, identifier, name
 

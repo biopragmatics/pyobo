@@ -5,12 +5,15 @@
 import hashlib
 import logging
 from collections import defaultdict
-from typing import Optional, Tuple, Union
+from functools import wraps
+from typing import Dict, Mapping, Optional, Tuple, Union
 
 from .registries import (
-    get_miriam, get_namespace_synonyms, get_prefix_to_miriam_prefix, get_remappings_prefix,
-    get_xrefs_blacklist, get_xrefs_prefix_blacklist, get_xrefs_suffix_blacklist,
+    Resource, get_curated_registry_database, get_miriam, get_namespace_synonyms, get_obofoundry, get_obsolete,
+    get_prefix_to_miriam_prefix, get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist,
+    get_xrefs_suffix_blacklist,
 )
+from .registries.registries import _sample_graph
 
 __all__ = [
     'normalize_curie',
@@ -18,6 +21,7 @@ __all__ = [
     'normalize_prefix',
     'normalize_dashes',
     'hash_curie',
+    'wrap_norm_prefix',
 ]
 
 logger = logging.getLogger(__name__)
@@ -116,3 +120,107 @@ def normalize_dashes(s: str) -> str:
 def hash_curie(prefix, identifier) -> str:
     """Hash a curie with MD5."""
     return hashlib.md5(f'{prefix}:{identifier}'.encode('utf-8')).hexdigest()  # noqa:S303
+
+
+def wrap_norm_prefix(f):
+    """Decorate a function that take in a prefix to auto-normalize, or return None if it can't be normalized."""
+
+    @wraps(f)
+    def _wrapped(prefix, *args, **kwargs):
+        norm_prefix = normalize_prefix(prefix)
+        if norm_prefix is not None:
+            return f(norm_prefix, *args, **kwargs)
+
+    return _wrapped
+
+
+def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
+    """Get a combine registry."""
+    rv: Dict[str, Resource] = {}
+
+    synonym_to_prefix = {}
+    for prefix, entry in get_curated_registry_database().items():
+        if prefix in get_obsolete():
+            continue
+        synonym_to_prefix[prefix.lower()] = prefix
+
+        title = entry.get('title')
+        if title is not None:
+            synonym_to_prefix[title.lower()] = prefix
+        for synonym in entry.get("synonyms", {}):
+            synonym_to_prefix[synonym.lower()] = prefix
+
+    for entry in get_miriam():
+        prefix = normalize_prefix(entry['prefix'])
+        if prefix is None:
+            prefix = entry['prefix']
+            logger.debug(f'Could not look up MIRIAM prefix: {prefix}')
+        if prefix in get_obsolete():
+            continue
+        rv[prefix] = Resource(
+            name=entry['name'],
+            prefix=prefix,
+            pattern=entry['pattern'],
+            miriam_id=entry['mirId'],
+            # namespace_in_pattern=namespace['namespaceEmbeddedInLui'],
+        )
+
+    for entry in sorted(get_obofoundry(), key=lambda x: x['id'].lower()):
+        prefix = normalize_prefix(entry['id'])
+        if prefix is None:
+            prefix = entry['id']
+            logger.debug(f'Could not look up OBO prefix: {prefix}')
+        is_obsolete = entry.get('is_obsolete') or prefix in get_obsolete()
+        already_found = prefix in rv
+        if already_found:
+            if is_obsolete:
+                del rv[prefix]
+            else:
+                rv[prefix].obofoundry_id = prefix
+            continue
+        elif is_obsolete:
+            continue
+
+        title = entry['title']
+        prefix = synonym_to_prefix.get(prefix, prefix)
+        curated_info = get_curated_registry_database().get(prefix)
+        if curated_info and 'pattern' in curated_info:
+            # namespace_in_pattern = curated_registry.get('namespace_in_pattern')
+            rv[prefix] = Resource(
+                name=title,
+                prefix=prefix,
+                pattern=curated_info['pattern'],
+                # namespace_in_pattern=namespace_in_pattern,
+            )
+            continue
+
+        if not try_new:
+            continue
+
+        if not curated_info:
+            print(f'missing curated pattern for {prefix}')
+            leng = _sample_graph(prefix)
+            if leng:
+                print(f'"{prefix}": {{\n   "pattern": "\\\\d{{{leng}}}"\n}},')
+            continue
+        if curated_info.get('not_available_as_obo') or curated_info.get('no_own_terms'):
+            continue
+
+    for prefix, entry in get_curated_registry_database().items():
+        if prefix in rv:
+            continue
+        title = entry.get('title')
+        if not title:
+            logger.debug('No title for %s', prefix)
+            title = prefix
+        pattern = entry.get('pattern')
+        if not title or not pattern:
+            continue
+        rv[prefix] = Resource(
+            name=title,
+            prefix=prefix,
+            pattern=pattern,
+        )
+
+        # print(f'unhandled {prefix}')
+    return rv

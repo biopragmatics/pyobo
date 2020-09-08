@@ -5,17 +5,15 @@
 import logging
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Dict, Mapping, Optional
+from typing import Mapping, Optional
 
-from .metaregistry import get_curated_registry_database, get_obsolete
+from .metaregistry import get_curated_registry_database
 from .miriam import get_miriam
-from .obofoundry import get_obofoundry
 from .ols import get_ols
 
 __all__ = [
     'Resource',
     'get_namespace_synonyms',
-    'get_metaregistry',
 ]
 
 logger = logging.getLogger(__name__)
@@ -66,92 +64,6 @@ class Resource:
     miriam_id: Optional[str] = None
     obofoundry_id: Optional[str] = None
     ols_id: Optional[str] = None
-
-
-def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
-    """Get a combine registry."""
-    rv: Dict[str, Resource] = {}
-
-    synonym_to_prefix = {}
-    for prefix, entry in get_curated_registry_database().items():
-        if prefix in get_obsolete():
-            continue
-        synonym_to_prefix[prefix.lower()] = prefix
-
-        title = entry.get('title')
-        if title is not None:
-            synonym_to_prefix[title.lower()] = prefix
-        for synonym in entry.get("synonyms", {}):
-            synonym_to_prefix[synonym.lower()] = prefix
-
-    for entry in get_miriam():
-        prefix = entry['prefix']
-        if prefix in get_obsolete():
-            continue
-        rv[prefix] = Resource(
-            name=entry['name'],
-            prefix=prefix,
-            pattern=entry['pattern'],
-            miriam_id=entry['mirId'],
-            # namespace_in_pattern=namespace['namespaceEmbeddedInLui'],
-        )
-
-    for entry in sorted(get_obofoundry(), key=lambda x: x['id'].lower()):
-        prefix = entry['id'].lower()
-        is_obsolete = entry.get('is_obsolete') or prefix in get_obsolete()
-        already_found = prefix in rv
-        if already_found:
-            if is_obsolete:
-                del rv[prefix]
-            else:
-                rv[prefix].obofoundry_id = prefix
-            continue
-        elif is_obsolete:
-            continue
-
-        title = entry['title']
-        prefix = synonym_to_prefix.get(prefix, prefix)
-        curated_info = get_curated_registry_database().get(prefix)
-        if curated_info and 'pattern' in curated_info:
-            # namespace_in_pattern = curated_registry.get('namespace_in_pattern')
-            rv[prefix] = Resource(
-                name=title,
-                prefix=prefix,
-                pattern=curated_info['pattern'],
-                # namespace_in_pattern=namespace_in_pattern,
-            )
-            continue
-
-        if not try_new:
-            continue
-
-        if not curated_info:
-            print(f'missing curated pattern for {prefix}')
-            leng = _sample_graph(prefix)
-            if leng:
-                print(f'"{prefix}": {{\n   "pattern": "\\\\d{{{leng}}}"\n}},')
-            continue
-        if curated_info.get('not_available_as_obo') or curated_info.get('no_own_terms'):
-            continue
-
-    for prefix, entry in get_curated_registry_database().items():
-        if prefix in rv:
-            continue
-        title = entry.get('title')
-        if not title:
-            logger.debug('No title for %s', prefix)
-            title = prefix
-        pattern = entry.get('pattern')
-        if not title or not pattern:
-            continue
-        rv[prefix] = Resource(
-            name=title,
-            prefix=prefix,
-            pattern=pattern,
-        )
-
-        # print(f'unhandled {prefix}')
-    return rv
 
 
 def _sample_graph(prefix):

@@ -20,7 +20,7 @@ from .extract import (
     get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_name_by_curie, get_properties_df,
     get_relations_df, get_xrefs_df, iter_cached_obo,
 )
-from .identifier_utils import normalize_curie
+from .identifier_utils import normalize_curie, normalize_prefix
 from .sources import CONVERTED, iter_converted_obos
 from .xrefdb.xrefs_pipeline import (
     DEFAULT_PRIORITY_LIST, get_priority_curie, remap_file_stream,
@@ -231,6 +231,22 @@ def ls():
         for prefix, size in sorted(entries, key=itemgetter(1), reverse=True)
     ]
     click.echo(tabulate(entries, headers=['Source', 'Size', 'OBO']))
+
+
+@main.command()
+@click.argument('text')
+def normalize(text: str):
+    """Normalize a prefix or CURIE."""
+    if ':' in text:  # it's a curie
+        click.echo(':'.join(normalize_curie(text)))
+    else:
+        click.echo(normalize_prefix(text))
+
+
+@main.command()
+def mr():
+    from .identifier_utils import get_metaregistry
+    get_metaregistry()
 
 
 main.add_command(aws.aws)

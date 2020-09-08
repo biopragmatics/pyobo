@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from .models import Alt, Reference, Resource, Synonym, Xref, create_all, drop_all, engine, session
 from ...cli_utils import verbose_option
-from ...registries import get_metaregistry
+from ...identifier_utils import get_metaregistry
 from ...resource_utils import ensure_alts, ensure_inspector_javert, ensure_ooh_na_na, ensure_synonyms
 
 __all__ = [

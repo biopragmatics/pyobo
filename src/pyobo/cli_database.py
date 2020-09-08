@@ -42,7 +42,7 @@ def build(ctx: click.Context, directory: str):
 @verbose_option
 def names(directory: str):
     """Make the prefix-identifier-name dump."""
-    db_output_helper(directory, _iter_ooh_na_na, 'names', ('prefix', 'identifier', 'name'))
+    db_output_helper(directory, _iter_ooh_na_na, 'names', ('prefix', 'identifier', 'name'), separate_md5=False)
 
 
 @database.command()

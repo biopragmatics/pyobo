@@ -51,6 +51,7 @@ def get_obo() -> Obo:
         name='PathBank',
         typedefs=[pathway_type, pathway_has_part],
         iter_terms=iter_terms,
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 

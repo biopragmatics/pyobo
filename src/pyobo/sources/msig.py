@@ -79,6 +79,7 @@ def get_obo() -> Obo:
         ontology=PREFIX,
         name='Molecular Signatures Database',
         iter_terms=iter_terms,
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
