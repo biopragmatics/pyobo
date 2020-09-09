@@ -156,7 +156,7 @@ class RawSQLBackend(Backend):
         refs_table: Optional[str] = None,
         alts_table: Optional[str] = None,
         engine=None,
-    ):
+    ):  # noqa:D107
         if engine is None:
             self.engine = create_engine(get_sqlalchemy_uri())
         elif isinstance(engine, str):

@@ -13,7 +13,7 @@ import obonet
 from tqdm import tqdm
 
 from .constants import DATABASE_DIRECTORY
-from .identifier_utils import get_metaregistry, hash_curie, wrap_norm_prefix
+from .identifier_utils import get_metaregistry, wrap_norm_prefix
 from .path_utils import ensure_path, get_prefix_directory, get_prefix_obo_path
 from .registries import get_curated_urls, get_obofoundry
 from .sources import CONVERTED, get_converted_obo

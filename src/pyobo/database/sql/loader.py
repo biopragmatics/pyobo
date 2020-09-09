@@ -87,12 +87,12 @@ def _load_names(engine, table, path, test, target_col, target_col_size, add_uniq
 
     unique_statement_1 = dedent(f'''
     ALTER TABLE {table}
-        ADD CONSTRAINT {table}_prefix_identifier_unique UNIQUE (prefix, identifier); 
+        ADD CONSTRAINT {table}_prefix_identifier_unique UNIQUE (prefix, identifier);
     ''').rstrip()
 
     unique_statement_2 = dedent(f'''
     ALTER TABLE {table}
-        ADD CONSTRAINT {table}_md5_hash_unique UNIQUE (md5_hash); 
+        ADD CONSTRAINT {table}_md5_hash_unique UNIQUE (md5_hash);
     ''').rstrip()
 
     with closing(engine.raw_connection()) as connection:
