@@ -287,7 +287,7 @@ def get_primary_curie(curie: str) -> Optional[str]:
 def get_primary_identifier(prefix: str, identifier: str) -> str:
     """Get the primary identifier for an entity.
 
-    Returns the original prefix if there are no alts available or if there's no mapping.
+    Returns the original identifier if there are no alts available or if there's no mapping.
     """
     alts_to_id = get_alts_to_id(prefix)
     if alts_to_id and identifier in alts_to_id:
