@@ -10,7 +10,7 @@ from contextlib import closing
 from typing import Iterable
 
 from pyobo.io_utils import multidict
-from pyobo.path_utils import ensure_path, prefix_directory_join
+from pyobo.path_utils import ensure_path, get_prefix_directory, prefix_directory_join
 from pyobo.struct import Obo, Reference, Term
 
 PREFIX = 'itis'
@@ -52,7 +52,7 @@ def iter_terms() -> Iterable[Term]:
     """Get ITIS terms."""
     zip_path = ensure_path(PREFIX, URL)
     version = _get_version()
-    sqlite_dir = prefix_directory_join(PREFIX, version=version)
+    sqlite_dir = get_prefix_directory(PREFIX, version=version)
     sqlite_path = prefix_directory_join(PREFIX, 'ITIS.sqlite', version=version)
     if not os.path.exists(sqlite_path):
         with zipfile.ZipFile(zip_path) as zip_file:
