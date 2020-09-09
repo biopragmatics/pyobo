@@ -50,7 +50,14 @@ def main(uri: str, refs_table: str, refs_path: str, alts_table: str, alts_path: 
         with connection.cursor() as cursor:
             cursor.execute(f'CREATE INDEX ON {alts_table} (prefix, alt);')
 
-    _load_names(engine=engine, table=refs_table, path=refs_path, test=test, target_col='name', target_col_size=4096)
+    _load_names(
+        engine=engine,
+        table=refs_table,
+        path=refs_path,
+        test=test,
+        target_col='name',
+        target_col_size=4096,
+    )
 
 
 def _load_names(engine, table, path, test, target_col, target_col_size, add_unique_constraints: bool = True):
