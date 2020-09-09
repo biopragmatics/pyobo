@@ -153,8 +153,8 @@ class RawSQLBackend(Backend):
 
     def __init__(
         self, *,
-        refs_table: str = 'obo_references',
-        alts_table: str = 'obo_alts',
+        refs_table: Optional[str] = None,
+        alts_table: Optional[str] = None,
         engine=None,
     ):
         if engine is None:
@@ -164,8 +164,8 @@ class RawSQLBackend(Backend):
         else:
             self.engine = engine
 
-        self.refs_table = refs_table
-        self.alts_table = alts_table
+        self.refs_table = refs_table or 'obo_references'
+        self.alts_table = alts_table or 'obo_alts'
 
     @lru_cache()
     def count_curies(self) -> int:  # noqa:D102
@@ -305,6 +305,7 @@ def get_app(
     name_data: Union[None, str, pd.DataFrame] = None,
     alts_data: Union[None, str, pd.DataFrame] = None,
     lazy: bool = False,
+    sql: bool = False,
     refs_table: Optional[str] = None,
     alts_table: Optional[str] = None,
 ) -> Flask:
@@ -323,7 +324,7 @@ def get_app(
     Swagger(app)
     Bootstrap(app)
 
-    if refs_table and alts_table:
+    if sql:
         app.config['resolver_backend'] = RawSQLBackend(
             refs_table=refs_table,
             alts_table=alts_table,
@@ -407,6 +408,7 @@ def _get_lookup_from_path(path: str) -> Mapping[str, Mapping[str, str]]:
 @port_option
 @host_option
 @click.option('--data', help='local 3-column gzipped TSV as database')
+@click.option('--sql', is_flag=True)
 @click.option('--sql-refs-table', help='use preloaded SQL database as backend')
 @click.option('--sql-alts-table', help='use preloaded SQL database as backend')
 @click.option('--lazy', is_flag=True, help='do no load full cache into memory automatically')
@@ -417,6 +419,7 @@ def _get_lookup_from_path(path: str) -> Mapping[str, Mapping[str, str]]:
 def main(
     port: int,
     host: str,
+    sql: bool,
     sql_refs_table: str,
     sql_alts_table: str,
     data: Optional[str],
@@ -438,7 +441,7 @@ def main(
         ]
         data = pd.DataFrame(data, columns=['prefix', 'identifier', 'name'])
 
-    app = get_app(data, lazy=lazy, refs_table=sql_refs_table, alts_table=sql_alts_table)
+    app = get_app(data, lazy=lazy, sql=sql, refs_table=sql_refs_table, alts_table=sql_alts_table)
     run_app(app=app, host=host, port=port, gunicorn=gunicorn, workers=workers)
 
 
