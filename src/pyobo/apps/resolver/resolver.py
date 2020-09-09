@@ -164,8 +164,8 @@ class RawSQLBackend(Backend):
         else:
             self.engine = engine
 
-        self.refs_table = refs_table or 'obo_references'
-        self.alts_table = alts_table or 'obo_alts'
+        self.refs_table = refs_table or 'obo_reference'
+        self.alts_table = alts_table or 'obo_alt'
 
     @lru_cache()
     def count_curies(self) -> int:  # noqa:D102
