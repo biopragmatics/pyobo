@@ -10,6 +10,7 @@ import logging
 import os
 import sys
 from collections import Counter, defaultdict
+from functools import lru_cache
 from typing import Any, List, Mapping, Optional, Union
 
 import click
@@ -19,12 +20,15 @@ from flasgger import Swagger
 from flask import Blueprint, Flask, current_app, jsonify, render_template
 from flask_bootstrap import Bootstrap
 from humanize.filesize import naturalsize
+from sqlalchemy import create_engine
+from sqlalchemy.sql import text
 from tqdm import tqdm
 from werkzeug.local import LocalProxy
 
 import pyobo
 from pyobo.apps.utils import gunicorn_option, host_option, port_option, run_app
 from pyobo.cli_utils import verbose_option
+from pyobo.constants import get_sqlalchemy_uri
 from pyobo.identifier_utils import get_identifiers_org_link, normalize_curie
 from pyobo.resource_utils import ensure_alts, ensure_ooh_na_na
 
@@ -60,9 +64,18 @@ class Backend:
         """Summarize the contents of the database."""
         raise NotImplementedError
 
-    def resolve(self, curie: str) -> Mapping[str, Any]:
+    def count_curies(self) -> Optional[int]:
+        """Count the number of identifiers in the database."""
+
+    def count_alts(self) -> Optional[int]:
+        """Count the number of alternative identifiers in the database."""
+
+    def count_prefixes(self) -> Optional[int]:
+        """Count the number of prefixes in the database."""
+
+    def resolve(self, curie: str, resolve_alternate: bool = False) -> Mapping[str, Any]:
         """Return the results and summary when resolving a CURIE string."""
-        prefix, secondary_identifier = normalize_curie(curie)
+        prefix, identifier = normalize_curie(curie)
         if prefix is None:
             return dict(
                 query=curie,
@@ -70,9 +83,7 @@ class Backend:
                 message='Could not identify prefix',
             )
 
-        identifier = self.get_primary_id(prefix, secondary_identifier)
         miriam = get_identifiers_org_link(prefix, identifier)
-
         if not self.has_prefix(prefix):
             rv = dict(
                 query=curie,
@@ -90,6 +101,13 @@ class Backend:
             return rv
 
         name = self.get_name(prefix, identifier)
+
+        if name is None and resolve_alternate:
+            primary_id = self.get_primary_id(prefix, identifier)
+            if primary_id != identifier:
+                miriam = get_identifiers_org_link(prefix, primary_id)
+                name = self.get_name(prefix, primary_id)
+
         if name is None:
             return dict(
                 query=curie,
@@ -130,7 +148,69 @@ class MemoryBackend(Backend):
         return id_name_mapping.get(identifier)
 
 
-class SQLBackend(Backend):
+class RawSQLBackend(Backend):
+    """A backend that communicates with low-level SQL statements."""
+
+    def __init__(
+        self, *,
+        refs_table: str = 'obo_references',
+        alts_table: str = 'obo_alts',
+        engine=None,
+    ):
+        if engine is None:
+            self.engine = create_engine(get_sqlalchemy_uri())
+        elif isinstance(engine, str):
+            self.engine = create_engine(engine)
+        else:
+            self.engine = engine
+
+        self.refs_table = refs_table
+        self.alts_table = alts_table
+
+    @lru_cache()
+    def count_curies(self) -> int:  # noqa:D102
+        """Get the number of terms."""
+        return self._get_one(f'SELECT COUNT(id) FROM {self.refs_table};')
+
+    @lru_cache()
+    def count_prefixes(self) -> int:  # noqa:D102
+        return self._get_one(f'SELECT COUNT(DISTINCT prefix) FROM {self.refs_table};')
+
+    @lru_cache()
+    def count_alts(self) -> Optional[int]:  # noqa:D102
+        return self._get_one(f'SELECT COUNT(id) FROM {self.alts_table};')
+
+    def _get_one(self, sql: str):
+        with self.engine.connect() as connection:
+            result = connection.execute(sql).fetchone()
+            return result[0]
+
+    def summarize(self) -> Counter:  # noqa:D102
+        sql = f'SELECT prefix, COUNT(identifier) FROM {self.refs_table} GROUP BY prefix;'
+        with self.engine.connect() as connection:
+            return Counter(dict(connection.execute(sql).fetchall()))
+
+    def has_prefix(self, prefix: str) -> bool:  # noqa:D102
+        sql = text(f"SELECT prefix FROM {self.refs_table} WHERE prefix = :prefix LIMIT 1;")
+        with self.engine.connect() as connection:
+            result = connection.execute(sql, prefix=prefix).fetchone()
+            return bool(result)
+
+    def get_primary_id(self, prefix: str, identifier: str) -> str:  # noqa:D102
+        sql = text(f'SELECT identifier FROM {self.alts_table} WHERE prefix = :prefix and alt = :alt LIMIT 1;')
+        with self.engine.connect() as connection:
+            result = connection.execute(sql, prefix=prefix, alt=identifier).fetchone()
+            return result[0] if result else identifier
+
+    def get_name(self, prefix, identifier) -> Optional[str]:  # noqa:D102
+        sql = text(f"SELECT name FROM {self.refs_table} WHERE prefix = :prefix and identifier = :identifier LIMIT 1;")
+        with self.engine.connect() as connection:
+            result = connection.execute(sql, prefix=prefix, identifier=identifier).fetchone()
+            if result:
+                return result[0]
+
+
+class SQLAlchemyBackend(Backend):
     """A resolution service using a SQL database."""
 
     def summarize(self) -> Mapping[str, Any]:  # noqa:D102
@@ -175,7 +255,7 @@ backend: Backend = LocalProxy(lambda: current_app.config['resolver_backend'])
 @resolve_blueprint.route('/')
 def home():
     """Serve the home page."""
-    return render_template('home.html')
+    return render_template('home.html', backend=backend)
 
 
 @resolve_blueprint.route('/resolve/<curie>')
@@ -204,8 +284,7 @@ def resolve(curie: str):
 @resolve_blueprint.route('/summary')
 def summary():
     """Summary of the content in the service."""
-    get_summary = current_app.config['summarize']
-    return jsonify(get_summary())
+    return jsonify(backend.summarize())
 
 
 @resolve_blueprint.route('/size')
@@ -226,7 +305,8 @@ def get_app(
     name_data: Union[None, str, pd.DataFrame] = None,
     alts_data: Union[None, str, pd.DataFrame] = None,
     lazy: bool = False,
-    sql: bool = False,
+    refs_table: Optional[str] = None,
+    alts_table: Optional[str] = None,
 ) -> Flask:
     """Build a flask app.
 
@@ -237,14 +317,17 @@ def get_app(
      dataframe from there. If a dataframe, uses it directly. Assumes data frame has 3 columns - prefix,
      alt identifier, and identifier and is a TSV.
     :param lazy: don't load the full cache into memory to run
-    :param sql: Use SQL-based backend
+    :param sql_table: Use SQL-based backend
     """
     app = Flask(__name__)
     Swagger(app)
     Bootstrap(app)
 
-    if sql:
-        app.config['resolver_backend'] = SQLBackend()
+    if refs_table and alts_table:
+        app.config['resolver_backend'] = RawSQLBackend(
+            refs_table=refs_table,
+            alts_table=alts_table,
+        )
 
     else:
         if lazy:
@@ -324,13 +407,24 @@ def _get_lookup_from_path(path: str) -> Mapping[str, Mapping[str, str]]:
 @port_option
 @host_option
 @click.option('--data', help='local 3-column gzipped TSV as database')
-@click.option('--sql', is_flag=True, help='use preloaded SQL database as backend')
+@click.option('--sql-refs-table', help='use preloaded SQL database as backend')
+@click.option('--sql-alts-table', help='use preloaded SQL database as backend')
 @click.option('--lazy', is_flag=True, help='do no load full cache into memory automatically')
 @click.option('--test', is_flag=True, help='run in test mode with only a few datasets')
 @click.option('--workers', type=int, help='number of workers to use in --gunicorn mode')
 @gunicorn_option
 @verbose_option
-def main(port: int, host: str, sql: bool, data: Optional[str], test: bool, gunicorn: bool, lazy: bool, workers: int):
+def main(
+    port: int,
+    host: str,
+    sql_refs_table: str,
+    sql_alts_table: str,
+    data: Optional[str],
+    test: bool,
+    gunicorn: bool,
+    lazy: bool,
+    workers: int,
+):
     """Run the resolver app."""
     if test and lazy:
         click.secho('Can not run in --test and --lazy mode at the same time', fg='red')
@@ -344,7 +438,7 @@ def main(port: int, host: str, sql: bool, data: Optional[str], test: bool, gunic
         ]
         data = pd.DataFrame(data, columns=['prefix', 'identifier', 'name'])
 
-    app = get_app(data, lazy=lazy, sql=sql)
+    app = get_app(data, lazy=lazy, refs_table=sql_refs_table, alts_table=sql_alts_table)
     run_app(app=app, host=host, port=port, gunicorn=gunicorn, workers=workers)
 
 

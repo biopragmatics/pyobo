@@ -15,6 +15,9 @@
                     <p>
                         This service resolves <a href="https://en.wikipedia.org/wiki/CURIE">CURIEs</a>
                         to their labels and builds Identifiers.org URLs when possible.
+                        {% if backend.count_curies() %}It currently covers {{ backend.count_curies() }} identifiers and
+                            {{ backend.count_alts() }} alternate identifiers across {{ backend.count_prefixes() }}
+                            resources.{% endif %}
                     </p>
                     <p>
                         It has a single endpoint <code>/resolve/&lt;curie&gt;</code> that gives back JSON.

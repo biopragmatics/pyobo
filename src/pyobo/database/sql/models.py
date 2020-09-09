@@ -2,11 +2,9 @@
 
 """SQLAlchemy models for OBO."""
 
-from __future__ import annotations
-
 import logging
 
-from sqlalchemy import Column, ForeignKey, Index, Integer, String, Text, UniqueConstraint, create_engine
+from sqlalchemy import Column, ForeignKey, Index, Integer, String, Text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker
 
@@ -42,9 +40,10 @@ Base.query = session.query_property()
 class Resource(Base):
     """A resource."""
 
-    __tablename__ = 'resource'
-    prefix = Column(String(32), nullable=False, unique=True, index=True, primary_key=True)
+    __tablename__ = 'obo_resource'
+    id = Column(Integer, primary_key=True)
 
+    prefix = Column(String(32), nullable=False, unique=True, index=True)
     name = Column(String, nullable=False, unique=True, index=True)
     pattern = Column(String, nullable=False)
     description = Column(Text, nullable=True)
@@ -56,32 +55,41 @@ class Resource(Base):
 class Reference(Base):
     """Represent a CURIE and label."""
 
-    __tablename__ = 'reference'
-    prefix = Column(String(32), ForeignKey(f'{Resource.__tablename__}.prefix'), primary_key=True)
-    identifier = Column(String, primary_key=True)
+    __tablename__ = 'obo_reference'
+    id = Column(Integer, primary_key=True)
 
-    name = Column(String, index=True, nullable=True)
-
-    resource = relationship(Resource)
+    prefix = Column(String(32))
+    identifier = Column(String(64))
+    name = Column(String(4096))
 
     def __repr__(self) -> str:  # noqa:D105
         if self.name:
             return f'{self.prefix}:{self.identifier} ! {self.name}'
         return f'{self.prefix}:{self.identifier}'
 
-    __table_args__ = (
-        Index('reference_prefix_identifier_idx', prefix, identifier),
-    )
+
+class Alt(Base):
+    """Represents an alternate identifier relationship."""
+
+    __tablename__ = 'obo_alt'
+    id = Column(Integer, primary_key=True)
+
+    prefix = Column(String(32))
+    identifier = Column(String(64))
+    alt = Column(String(64))
+
+    def __repr__(self) -> str:  # noqa:D105
+        return f'{self.prefix}:{self.alt}->{self.identifier}'
 
 
 class Synonym(Base):
     """Represent an OBO term's synonym."""
 
-    __tablename__ = 'synonym'
+    __tablename__ = 'obo_synonym'
     id = Column(Integer, primary_key=True)
 
     prefix = Column(String(32), ForeignKey(f'{Resource.__tablename__}.prefix'))
-    identifier = Column(String)
+    identifier = Column(String(64))
     name = Column(String, index=True)
 
     resource = relationship(Resource)
@@ -96,33 +104,17 @@ class Synonym(Base):
     )
 
 
-class Alt(Base):
-    """Represents an alternate identifier relationship."""
-
-    __tablename__ = 'alt'
-    prefix = Column(String(32), ForeignKey(f'{Resource.__tablename__}.prefix'), primary_key=True)
-    alt = Column(String, primary_key=True)
-
-    identifier = Column(String, index=True)
-
-    __table_args__ = (
-        Index('alt_prefix_alt_idx', prefix, alt),
-        Index('alt_prefix_identifier_idx', prefix, identifier),
-        UniqueConstraint(prefix, identifier, alt),
-    )
-
-
 class Xref(Base):
     """Represents an equivalence in between terms in two resources."""
 
-    __tablename__ = 'xref'
+    __tablename__ = 'obo_xref'
     id = Column(Integer, primary_key=True)
 
     prefix = Column(String(32), ForeignKey(f'{Resource.__tablename__}.prefix'))
-    identifier = Column(String)
+    identifier = Column(String(64))
 
     xref_prefix = Column(String(32))
-    xref_identifier = Column(String)
+    xref_identifier = Column(String(64))
 
     source = Column(Text, index=True)
 

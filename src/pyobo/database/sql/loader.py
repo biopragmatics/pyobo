@@ -1,112 +1,154 @@
 # -*- coding: utf-8 -*-
 
-"""A script for loading the PyOBO database."""
+"""Upload the Ooh Na Na nomenclature database to PostgreSQL."""
 
-import gzip
-import logging
-from typing import Dict
+import time
+from contextlib import closing
+from textwrap import dedent
 
 import click
-import pandas as pd
-from tqdm import tqdm
+from sqlalchemy import create_engine
+from tabulate import tabulate
 
-from .models import Alt, Reference, Resource, Synonym, Xref, create_all, drop_all, engine, session
-from ...cli_utils import verbose_option
-from ...identifier_utils import get_metaregistry
-from ...resource_utils import ensure_alts, ensure_inspector_javert, ensure_ooh_na_na, ensure_synonyms
+from pyobo.constants import get_sqlalchemy_uri
+from pyobo.resource_utils import ensure_alts, ensure_ooh_na_na
 
-__all__ = [
-    'load',
-]
 
-logger = logging.getLogger(__name__)
+def echo(s, **kwargs) -> None:
+    """Wrap echo with time logging."""
+    click.echo(f'[{time.strftime("%Y-%m-%d %H:%M:%S")}] ', nl='')
+    click.secho(s, **kwargs)
+
+
+#: Number of test rows if --test is used
+TEST_N = 1_000_000
 
 
 @click.command()
-@verbose_option
-@click.option('--load-resources', is_flag=True)
-@click.option('--load-names', is_flag=True)
-@click.option('--load-alts', is_flag=True)
-@click.option('--load-xrefs', is_flag=True)
-@click.option('--load-synonyms', is_flag=True)
-@click.option('-a', '--load-all', is_flag=True)
-@click.option('--reset', is_flag=True)
-def load(
-    load_all: bool,
-    load_resources: bool = False,
-    load_names: bool = False,
-    load_alts: bool = False,
-    load_xrefs: bool = True,
-    load_synonyms: bool = False,
-    reset: bool = False,
-) -> None:
-    """Load the database."""
-    if reset:
-        drop_all()
-    create_all()
+@click.option('--uri', default=get_sqlalchemy_uri)
+@click.option('--references-table', default='obo_reference', show_default=True)
+@click.option('--references-path', type=click.Path(exists=True), default=ensure_ooh_na_na)
+@click.option('--alts-table', default='obo_alt', show_default=True)
+@click.option('--alts-path', type=click.Path(exists=True), default=ensure_alts)
+@click.option('--test', is_flag=True, help=f'Test run with only the first {TEST_N} rows')
+def main(uri: str, names_table: str, names_path: str, alts_table: str, alts_path: str, test: bool):
+    """Load the Ooh Na Na nomenclature data."""
+    engine = create_engine(uri)
 
-    if load_resources or load_all:
-        metaregistry = get_metaregistry()
-        prefix_to_resource: Dict[str, Resource] = {}
+    _load_names(engine=engine, table=alts_table, path=alts_path, test=test, target_col='alt', target_col_size=64)
+    with closing(engine.raw_connection()) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(f'CREATE INDEX ON {alts_table} (prefix, alt);')
 
-        prefixes = {resource.prefix for resource in Resource.query.all()}
-        for resource_dataclass in tqdm(metaregistry.values(), desc='loading resources'):
-            if resource_dataclass.prefix in prefixes:
-                continue
-            prefix_to_resource[resource_dataclass.prefix] = resource_model = Resource(
-                prefix=resource_dataclass.prefix,
-                name=resource_dataclass.name,
-                pattern=resource_dataclass.pattern,
-            )
-            session.add(resource_model)
-        session.commit()
+    _load_names(engine=engine, table=names_table, path=names_path, test=test, target_col='name', target_col_size=4096)
 
-    ooh_na_na_path = ensure_ooh_na_na()
-    synonyms_path = ensure_synonyms()
-    xrefs_path = ensure_inspector_javert()
 
-    if load_alts or load_all:
-        alts_path = ensure_alts()
-        alts_df = pd.read_csv(alts_path, sep='\t', dtype=str)  # prefix, alt, identifier
-        logger.info('inserting %d alt identifiers', len(alts_df.index))
-        alts_df.to_sql(name=Alt.__tablename__, con=engine, if_exists='append', index=False)
-        logger.info('committing alt identifier')
-        session.commit()
-        logger.info('done committing alt identifiers')
+def _load_names(engine, table, path, test, target_col, target_col_size, add_unique_constraints: bool = True):
+    drop_statement = f'DROP TABLE IF EXISTS {table};'
 
-    for label, path, table, columns, checker in [
-        ('names', ooh_na_na_path, Reference, None, load_names),
-        ('synonyms', synonyms_path, Synonym, ['prefix', 'identifier', 'name'], load_synonyms),
-        ('xrefs', xrefs_path, Xref, ['prefix', 'identifier', 'xref_prefix', 'xref_identifier', 'source'], load_xrefs),
-    ]:
-        if not checker and not load_all:
-            continue
-        logger.info('beginning insertion of %s', label)
-        conn = engine.raw_connection()
-        logger.info('inserting with low-level copy of %s from: %s', label, path)
-        if columns:
-            columns = ', '.join(columns)
-            logger.info('corresponding to columns: %s', columns)
-            columns = f' ({columns})'
-        else:
-            columns = ''
+    create_statement = dedent(f'''
+    CREATE TABLE {table} (
+        id SERIAL,  /* automatically the primary key */
+        prefix VARCHAR(32),
+        identifier VARCHAR(64),
+        {target_col} VARCHAR({target_col_size}),  /* largest name's length is 2936 characters */
+        md5_hash VARCHAR(32) GENERATED ALWAYS AS (md5(prefix || ':' || identifier)) STORED
+    ) WITH (
+        autovacuum_enabled = false,
+        toast.autovacuum_enabled = false
+    );
+    ''').rstrip()
 
-        with conn.cursor() as cursor, gzip.open(path) as file:
-            # next(file)  # skip the header
-            sql = f'''COPY {table.__tablename__}{columns} FROM STDIN WITH CSV HEADER DELIMITER E'\\t' QUOTE E'\\b';'''
-            logger.info('running SQL: %s', sql)
-            cursor.copy_expert(sql=sql, file=file)
+    if test:
+        program = f'gunzip -c {path} | head -n {TEST_N}'
+    else:
+        program = f'gunzip -c {path}'
 
-        logger.info('committing %s', label)
-        conn.commit()
-        logger.info('done committing %s', label)
+    copy_statement = dedent(f'''
+    COPY {table} (prefix, identifier, {target_col})
+    FROM PROGRAM '{program}'
+    WITH CSV HEADER DELIMITER E'\\t' QUOTE E'\\b';
+    ''').rstrip()
 
-    logger.info(f'number resources loaded: {Resource.query.count():,}')
-    logger.info(f'number references loaded: {Reference.query.count():,}')
-    logger.info(f'number alts loaded: {Alt.query.count():,}')
-    logger.info(f'number synonyms loaded: {Synonym.query.count():,}')
-    logger.info(f'number xrefs loaded: {Xref.query.count():,}')
+    cleanup_statement = dedent(f'''
+    ALTER TABLE {table} SET (
+        autovacuum_enabled = true,
+        toast.autovacuum_enabled = true
+    );
+    ''').rstrip()
+
+    index_1_statement = f'CREATE INDEX ON {table} (prefix, identifier);'
+    index_2_statement = f'CREATE INDEX ON {table} (md5_hash);'
+
+    unique_statement_1 = dedent(f'''
+    ALTER TABLE {table}
+        ADD CONSTRAINT {table}_prefix_identifier_unique UNIQUE (prefix, identifier); 
+    ''').rstrip()
+
+    unique_statement_2 = dedent(f'''
+    ALTER TABLE {table}
+        ADD CONSTRAINT {table}_md5_hash_unique UNIQUE (md5_hash); 
+    ''').rstrip()
+
+    with closing(engine.raw_connection()) as connection:
+        with connection.cursor() as cursor:
+            echo('Preparing blank slate')
+            echo(drop_statement, fg='yellow')
+            cursor.execute(drop_statement)
+
+            echo('Creating table')
+            echo(create_statement, fg='yellow')
+            cursor.execute(create_statement)
+
+            echo('Start COPY')
+            echo(copy_statement, fg='yellow')
+            try:
+                cursor.execute(copy_statement)
+            except Exception:
+                echo('Copy failed')
+                raise
+            else:
+                echo('Copy ended')
+
+            try:
+                connection.commit()
+            except Exception:
+                echo('Commit failed')
+                raise
+            else:
+                echo('Commit ended')
+
+            echo('Start re-enable autovacuum')
+            echo(cleanup_statement, fg='yellow')
+            cursor.execute(cleanup_statement)
+            echo('End re-enable autovacuum')
+
+            echo('Start index on prefix/identifier')
+            echo(index_1_statement, fg='yellow')
+            cursor.execute(index_1_statement)
+            echo('End indexing')
+
+            echo('Start index on MD5 hash')
+            echo(index_2_statement, fg='yellow')
+            cursor.execute(index_2_statement)
+            echo('End indexing')
+
+            if add_unique_constraints:
+                echo('Start unique on prefix/identifier')
+                echo(unique_statement_1, fg='yellow')
+                cursor.execute(unique_statement_1)
+                echo('End unique')
+
+                echo('Start unique on md5_hash')
+                echo(unique_statement_2, fg='yellow')
+                cursor.execute(unique_statement_2)
+                echo('End unique')
+
+    with engine.connect() as connection:
+        select_statement = f"select * from {table} LIMIT 15"
+        result = connection.execute(select_statement)
+        click.echo(tabulate(result))
 
 
 if __name__ == '__main__':
-    load()
+    main()
