@@ -163,7 +163,7 @@ def _load_names(engine, table, path, test, target_col, target_col_size, add_uniq
                 echo('End unique')
 
     with engine.connect() as connection:
-        select_statement = f"select * from {table} LIMIT 15"
+        select_statement = f"select * from {table} LIMIT 15"  # noqa:S608
         result = connection.execute(select_statement)
         click.echo(tabulate(result, headers=['id', 'prefix', 'identifier', target_col, 'md5_hash']))
 

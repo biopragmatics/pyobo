@@ -174,7 +174,7 @@ class RawSQLBackend(Backend):
 
     @lru_cache()
     def count_prefixes(self) -> int:  # noqa:D102
-        return self._get_one(f'SELECT COUNT(DISTINCT prefix) FROM {self.refs_table};')
+        return self._get_one(f'SELECT COUNT(DISTINCT prefix) FROM {self.refs_table};')  # noqa:S608
 
     @lru_cache()
     def count_alts(self) -> Optional[int]:  # noqa:D102
@@ -197,13 +197,21 @@ class RawSQLBackend(Backend):
             return bool(result)
 
     def get_primary_id(self, prefix: str, identifier: str) -> str:  # noqa:D102
-        sql = text(f'SELECT identifier FROM {self.alts_table} WHERE prefix = :prefix and alt = :alt LIMIT 1;')
+        sql = text(f'''
+            SELECT identifier
+            FROM {self.alts_table}
+            WHERE prefix = :prefix and alt = :alt LIMIT 1;
+        ''')  # noqa:S608
         with self.engine.connect() as connection:
             result = connection.execute(sql, prefix=prefix, alt=identifier).fetchone()
             return result[0] if result else identifier
 
     def get_name(self, prefix, identifier) -> Optional[str]:  # noqa:D102
-        sql = text(f"SELECT name FROM {self.refs_table} WHERE prefix = :prefix and identifier = :identifier LIMIT 1;")
+        sql = text(f"""
+            SELECT name
+            FROM {self.refs_table}
+            WHERE prefix = :prefix and identifier = :identifier LIMIT 1;
+        """)  # noqa:S608
         with self.engine.connect() as connection:
             result = connection.execute(sql, prefix=prefix, identifier=identifier).fetchone()
             if result:
