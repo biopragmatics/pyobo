@@ -20,7 +20,7 @@ __all__ = [
 
 def ensure_ooh_na_na(force: bool = False) -> str:
     """Ensure that the Ooh Na Na Nomenclature Database is downloaded/built."""
-    return _ensure(url=OOH_NA_NA_URL, name='ooh_na_na.tsv.gz', force=force)
+    return _ensure(url=OOH_NA_NA_URL, name='names.tsv.gz', force=force)
 
 
 def get_ooh_na_na(force: bool = False, chunksize: Optional[int] = None) -> pd.DataFrame:
@@ -34,7 +34,7 @@ def get_ooh_na_na(force: bool = False, chunksize: Optional[int] = None) -> pd.Da
 
 def ensure_inspector_javert(force: bool = False) -> str:
     """Ensure that the Inspector Javert's Xref Database is downloaded/built."""
-    return _ensure(url=INSPECTOR_JAVERT_URL, name='inspector_javerts_xrefs.tsv.gz', force=force)
+    return _ensure(url=INSPECTOR_JAVERT_URL, name='xrefs.tsv.gz', force=force)
 
 
 def ensure_synonyms(force: bool = False) -> str:
@@ -44,7 +44,7 @@ def ensure_synonyms(force: bool = False) -> str:
 
 def ensure_alts(force: bool = False) -> str:
     """Ensure that the alt data is downloaded/built."""
-    return _ensure(url=REMOTE_ALT_DATA_URL, name='pyobo_alts.tsv.gz', force=force)
+    return _ensure(url=REMOTE_ALT_DATA_URL, name='alts.tsv.gz', force=force)
 
 
 def _ensure(url: str, name: str, force: bool = False) -> str:

@@ -41,7 +41,7 @@ GLOBAL_SKIP = {
 }
 
 #: URL for the xref data that's pre-cached
-INSPECTOR_JAVERT_URL = 'https://zenodo.org/record/3757266/files/inspector_javerts_xrefs.tsv.gz'
+INSPECTOR_JAVERT_URL = 'https://zenodo.org/record/4021477/files/xrefs.tsv.gz'
 SOURCE_PREFIX = 'source_ns'
 SOURCE_ID = 'source_id'
 RELATION_PREFIX = 'relation_ns'
@@ -52,11 +52,11 @@ PROVENANCE = 'source'
 XREF_COLUMNS = [SOURCE_PREFIX, SOURCE_ID, TARGET_PREFIX, TARGET_ID, PROVENANCE]
 
 #: URL for the nomenclature data that's pre-cached
-OOH_NA_NA_URL = 'https://zenodo.org/record/3866538/files/ooh_na_na.tsv.gz'
+OOH_NA_NA_URL = 'https://zenodo.org/record/4020486/files/names.tsv.gz'
 
-SYNONYMS_URL = 'https://zenodo.org/record/3893085/files/synonyms.tsv.gz'
+SYNONYMS_URL = 'https://zenodo.org/record/4021482/files/synonyms.tsv.gz'
 
-REMOTE_ALT_DATA_URL = 'https://zenodo.org/record/4013858/files/pyobo_alts.tsv.gz'
+REMOTE_ALT_DATA_URL = 'https://zenodo.org/record/4021476/files/alts.tsv.gz'
 
 
 def get_sqlalchemy_uri() -> str:
