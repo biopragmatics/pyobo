@@ -4,10 +4,11 @@
 
 import pandas as pd
 
+from pyobo.constants import PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
 from pyobo.path_utils import ensure_df
 
-PREFIX = 'chembl.compound'
-TARGET_PREFIX = 'chembl.target'
+CHEMBL_COMPOUND_PREFIX = 'chembl.compound'
+CHEMBL_TARGET_PREFIX = 'chembl.target'
 VERSION = '27'
 
 BASE = f'ftp://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_{VERSION}'
@@ -17,7 +18,7 @@ PROTEINS = f'{BASE}/chembl_uniprot_mapping.txt'
 
 def get_chembl_compound_equivalences_raw(usecols=None) -> pd.DataFrame:
     """Get the chemical representations raw dataframe."""
-    return ensure_df(PREFIX, CHEMICALS, sep='\t', usecols=usecols)
+    return ensure_df(CHEMBL_COMPOUND_PREFIX, CHEMICALS, sep='\t', usecols=usecols)
 
 
 def get_chembl_compound_equivalences() -> pd.DataFrame:
@@ -30,24 +31,22 @@ def get_chembl_compound_equivalences() -> pd.DataFrame:
             ('chembl.compound', chembl, 'inchi', inchi, f'chembl{VERSION}'),
             ('chembl.compound', chembl, 'inchikey', inchi_key, f'chembl{VERSION}'),
         ])
-    return pd.DataFrame(
-        rows, columns=['source_ns', 'source_id', 'target_ns', 'target_id', 'source'],
-    )
+    return pd.DataFrame(rows, columns=XREF_COLUMNS)
 
 
 def get_chembl_protein_equivalences() -> pd.DataFrame:
     """Get ChEMBL protein equivalences."""
     df = ensure_df(
-        TARGET_PREFIX,
+        CHEMBL_TARGET_PREFIX,
         PROTEINS,
         sep='\t',
         usecols=[0, 1],
-        names=['target_id', 'source_id'],  # switch around
+        names=[TARGET_ID, SOURCE_ID],  # switch around
     )
-    df.loc[:, 'source_ns'] = 'chembl.target'
-    df.loc[:, 'target_ns'] = 'uniprot'
-    df.loc[:, 'source'] = f'chembl{VERSION}'
-    df = df[['source_ns', 'source_id', 'target_ns', 'target_id', 'source']]
+    df.loc[:, SOURCE_PREFIX] = 'chembl.target'
+    df.loc[:, TARGET_PREFIX] = 'uniprot'
+    df.loc[:, PROVENANCE] = f'chembl{VERSION}'
+    df = df[XREF_COLUMNS]
     return df
 
 

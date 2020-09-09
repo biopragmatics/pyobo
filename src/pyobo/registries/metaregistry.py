@@ -13,7 +13,7 @@ CURATED_REGISTRY_PATH = os.path.join(HERE, 'metaregistry.json')
 
 
 @lru_cache()
-def _get_curated_registry(rewrite: bool = False):
+def _get_curated_registry(rewrite: bool = True):
     """Get the metaregistry."""
     with open(CURATED_REGISTRY_PATH) as file:
         x = json.load(file)

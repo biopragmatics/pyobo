@@ -11,9 +11,9 @@ import networkx as nx
 import pandas as pd
 
 from .cache_utils import cached_df, cached_mapping, cached_multidict
-from .constants import GLOBAL_SKIP, PYOBO_HOME
+from .constants import GLOBAL_SKIP, RAW_DIRECTORY
 from .getters import NoOboFoundry, get
-from .identifier_utils import normalize_curie
+from .identifier_utils import normalize_curie, wrap_norm_prefix
 from .path_utils import prefix_directory_join
 from .registries import get_not_available_as_obo, get_obsolete
 from .struct import Reference, TypeDef, get_reference_tuple
@@ -64,6 +64,7 @@ def get_name_by_curie(curie: str) -> Optional[str]:
         return get_name(prefix, identifier)
 
 
+@wrap_norm_prefix
 def get_name(prefix: str, identifier: str) -> Optional[str]:
     """Get the name for an entity."""
     try:
@@ -83,16 +84,15 @@ def get_name(prefix: str, identifier: str) -> Optional[str]:
 
 
 @lru_cache()
+@wrap_norm_prefix
 def get_id_name_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == 'ncbigene':
         from .sources.ncbigene import get_ncbigene_id_to_name_mapping
         logger.info('[%s] loading mappings', prefix)
         return get_ncbigene_id_to_name_mapping()
-    elif prefix == 'taxonomy':
-        prefix = 'ncbitaxon'
 
-    path = prefix_directory_join(prefix, 'cache', "names.tsv")
+    path = prefix_directory_join(prefix, 'cache', 'names.tsv')
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'])
     def _get_id_name_mapping() -> Mapping[str, str]:
@@ -104,6 +104,7 @@ def get_id_name_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
 
 
 @lru_cache()
+@wrap_norm_prefix
 def get_name_id_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     """Get a name to identifier mapping for the OBO file."""
     return {
@@ -112,6 +113,7 @@ def get_name_id_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     }
 
 
+@wrap_norm_prefix
 def get_id_synonyms_mapping(prefix: str, **kwargs) -> Mapping[str, List[str]]:
     """Get the OBO file and output a synonym dictionary."""
     path = prefix_directory_join(prefix, 'cache', "synonyms.tsv")
@@ -125,6 +127,7 @@ def get_id_synonyms_mapping(prefix: str, **kwargs) -> Mapping[str, List[str]]:
     return _get_multidict()
 
 
+@wrap_norm_prefix
 def get_properties_df(prefix: str, **kwargs) -> pd.DataFrame:
     """Extract properties."""
     path = prefix_directory_join(prefix, 'cache', "properties.tsv")
@@ -139,6 +142,7 @@ def get_properties_df(prefix: str, **kwargs) -> pd.DataFrame:
     return _df_getter()
 
 
+@wrap_norm_prefix
 def get_filtered_properties_mapping(prefix: str, prop: str, use_tqdm: bool = False, **kwargs) -> Mapping[str, str]:
     """Extract a single property for each term as a dictionary."""
     path = prefix_directory_join(prefix, 'cache', 'properties', f"{prop}.tsv")
@@ -151,6 +155,7 @@ def get_filtered_properties_mapping(prefix: str, prop: str, use_tqdm: bool = Fal
     return _mapping_getter()
 
 
+@wrap_norm_prefix
 def get_filtered_properties_df(prefix: str, prop: str, *, use_tqdm: bool = False, **kwargs) -> pd.DataFrame:
     """Extract a single property for each term."""
     path = prefix_directory_join(prefix, 'cache', 'properties', f"{prop}.tsv")
@@ -163,6 +168,7 @@ def get_filtered_properties_df(prefix: str, prop: str, *, use_tqdm: bool = False
     return _df_getter()
 
 
+@wrap_norm_prefix
 def get_relations_df(prefix: str, *, use_tqdm: bool = False, **kwargs) -> pd.DataFrame:
     """Get all relations from the OBO."""
     path = prefix_directory_join(prefix, 'cache', 'relations.tsv')
@@ -175,6 +181,7 @@ def get_relations_df(prefix: str, *, use_tqdm: bool = False, **kwargs) -> pd.Dat
     return _df_getter()
 
 
+@wrap_norm_prefix
 def get_filtered_relations_df(
     prefix: str,
     relation: RelationHint,
@@ -194,6 +201,7 @@ def get_filtered_relations_df(
     return _df_getter()
 
 
+@wrap_norm_prefix
 def get_id_multirelations_mapping(
     prefix: str,
     type_def: TypeDef,
@@ -207,6 +215,7 @@ def get_id_multirelations_mapping(
 
 
 @lru_cache()
+@wrap_norm_prefix
 def get_filtered_xrefs(
     prefix: str,
     xref_prefix: str,
@@ -230,6 +239,7 @@ def get_filtered_xrefs(
     return rv
 
 
+@wrap_norm_prefix
 def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, **kwargs) -> pd.DataFrame:
     """Get all xrefs."""
     path = prefix_directory_join(prefix, 'cache', 'xrefs.tsv')
@@ -243,6 +253,7 @@ def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, **kwargs) -> pd.DataFra
 
 
 @lru_cache()
+@wrap_norm_prefix
 def get_id_to_alts(prefix: str, **kwargs) -> Mapping[str, List[str]]:
     """Get alternate identifiers."""
     path = prefix_directory_join(prefix, 'cache', 'alt_ids.tsv')
@@ -257,6 +268,7 @@ def get_id_to_alts(prefix: str, **kwargs) -> Mapping[str, List[str]]:
 
 
 @lru_cache()
+@wrap_norm_prefix
 def get_alts_to_id(prefix: str, **kwargs) -> Mapping[str, str]:
     """Get alternative id to primary id mapping."""
     return {
@@ -274,6 +286,7 @@ def get_primary_curie(curie: str) -> Optional[str]:
         return f'{prefix}:{primary_identifier}'
 
 
+@wrap_norm_prefix
 def get_primary_identifier(prefix: str, identifier: str) -> Optional[str]:
     """Get the primary identifier for an entity.
 
@@ -322,9 +335,10 @@ def get_hierarchy(
 
 
 @lru_cache()
+@wrap_norm_prefix
 def _get_hierarchy_helper(
-    *,
     prefix: str,
+    *,
     extra_relations: Tuple[RelationHint, ...],
     properties: Tuple[str, ...],
     include_part_of: bool,
@@ -431,10 +445,10 @@ def get_subhierarchy(
 
 def iter_cached_obo() -> List[Tuple[str, str]]:
     """Iterate over cached OBO paths."""
-    for prefix in os.listdir(PYOBO_HOME):
+    for prefix in os.listdir(RAW_DIRECTORY):
         if prefix in GLOBAL_SKIP or prefix in get_not_available_as_obo() or prefix in get_obsolete():
             continue
-        d = os.path.join(PYOBO_HOME, prefix)
+        d = os.path.join(RAW_DIRECTORY, prefix)
         if not os.path.isdir(d):
             continue
         for x in os.listdir(d):

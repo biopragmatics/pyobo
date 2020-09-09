@@ -13,6 +13,7 @@ import pandas as pd
 import requests
 
 from ...cli_utils import verbose_option
+from ...constants import XREF_COLUMNS
 from ...registries import get_curated_registry_database
 
 logger = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ def get_wikidata_df(prefix: str, wikidata_property: str) -> pd.DataFrame:
             ('wikidata', wikidata_id, prefix, external_id, 'wikidata')
             for wikidata_id, external_id in iter_wikidata_mappings(wikidata_property)
         ],
-        columns=['source_ns', 'source_id', 'target_ns', 'target_id', 'source'],
+        columns=XREF_COLUMNS,
     )
     logger.info('got wikidata (%s; %s): %d rows', prefix, wikidata_property, len(df.index))
     return df

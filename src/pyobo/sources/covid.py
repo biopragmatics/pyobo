@@ -16,9 +16,10 @@ URL = 'https://raw.githubusercontent.com/covid19kg/covid19kg/master/supplement/t
 def get_obo() -> Obo:
     """Return the Fraunhofer COVID 19 terminology as OBO."""
     return Obo(
-        ontology='covid',
+        ontology=prefix,
         name='Fraunhofer COVID terminology',
         iter_terms=iter_terms,
+        auto_generated_by=f'bio2obo:{prefix}',
     )
 
 

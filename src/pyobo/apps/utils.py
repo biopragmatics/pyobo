@@ -31,13 +31,13 @@ def run_app(app: Flask, host: str, port: int, gunicorn: bool, workers: Optional[
         app.run(port=port, host=host)
 
 
-def run_with_gunicorn(app: Flask, host: str, port: int, workers: int) -> NoReturn:
+def run_with_gunicorn(app: Flask, host: str, port: int, workers: Optional[int] = None) -> NoReturn:
     """Run a flask app with Gunicorn."""
     gunicorn_app = make_gunicorn_app(app=app, host=host, port=port, workers=workers)
     gunicorn_app.run()
 
 
-def make_gunicorn_app(app: Flask, host: str, port: int, workers: int):
+def make_gunicorn_app(app: Flask, host: str, port: int, workers: Optional[int] = None):
     """Make a GUnicorn App.
 
     :rtype: gunicorn.app.base.BaseApplication

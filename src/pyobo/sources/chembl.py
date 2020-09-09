@@ -43,6 +43,7 @@ def get_obo() -> Obo:
         ontology='chembl.compound',
         name='ChEMBL',
         iter_terms=iter_terms,
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 

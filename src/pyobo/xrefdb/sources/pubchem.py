@@ -4,6 +4,7 @@
 
 import pandas as pd
 
+from ...constants import XREF_COLUMNS
 from ...sources.pubchem import CID_MESH_URL, get_pubchem_id_to_mesh_id
 
 __all__ = [
@@ -18,5 +19,5 @@ def get_pubchem_mesh_df() -> pd.DataFrame:
             ('pubchem.compound', k, 'mesh', v, CID_MESH_URL)
             for k, v in get_pubchem_id_to_mesh_id().items()
         ],
-        columns=['source_ns', 'source_id', 'target_ns', 'target_id', 'source'],
+        columns=XREF_COLUMNS,
     )

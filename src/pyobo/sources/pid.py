@@ -30,6 +30,7 @@ def get_obo() -> Obo:
         name='NCI Pathway Interaction Database',
         typedefs=[pathway_has_part],
         iter_terms=iter_terms,
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
