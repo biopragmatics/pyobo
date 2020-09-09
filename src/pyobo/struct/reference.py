@@ -27,7 +27,7 @@ class Reference:
     #: The entity's identifier in the namespace
     identifier: str
 
-    name: Optional[str] = field(default=None, repr=None)
+    name: Optional[str] = field(default=None)
 
     #: The namespace's identifier in the registry
     registry_id: Optional[str] = field(default=None, repr=False)
