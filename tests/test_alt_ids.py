@@ -45,3 +45,9 @@ class TestAltIds(unittest.TestCase):
         name = get_name_by_curie('go:0003700')
         self.assertIsNotNone(name)
         self.assertEqual('DNA-binding transcription factor activity', name)
+
+    def test_no_alts(self):
+        """Test alternate behavior for nomenclature source with no alts."""
+        primary_id = get_primary_identifier('ncbitaxon', '52818')
+        self.assertEqual('52818', primary_id)
+        self.assertEqual('Allamanda cathartica', get_name('ncbitaxon', '52818'))
