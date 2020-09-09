@@ -154,60 +154,30 @@ def iter_helper(f: Callable[[str], Mapping[str, X]], leave: bool = False) -> Ite
                 yield prefix, key, value
 
 
-def db_output_helper(directory, f, db_name, columns, separate_md5: bool = True) -> None:
+def db_output_helper(directory, f, db_name, columns) -> None:
     """Help output database builds."""
     c = Counter()
     db_path = os.path.join(DATABASE_DIRECTORY, f'{db_name}.tsv.gz')
-    db_md5_path = os.path.join(DATABASE_DIRECTORY, f'{db_name}_md5.tsv.gz')
     db_sample_path = os.path.join(DATABASE_DIRECTORY, f'{db_name}_sample.tsv')
-    db_sample_md5_path = os.path.join(DATABASE_DIRECTORY, f'{db_name}_md5_sample.tsv')
     logger.info('Writing %s to %s', db_name, db_path)
 
     it = f()
-    if separate_md5:
-        with gzip.open(db_path, mode='wt') as gzipped_file, gzip.open(db_md5_path, mode='wt') as gzipped_md5_file:
-            # for the first 10 rows, put it in a sample file too
-            with open(db_sample_path, 'w') as sample_file, open(db_sample_md5_path, 'w') as sample_md5_file:
-                print(*columns, sep='\t', file=gzipped_file)
-                print('md5', columns[-1], sep='\t', file=gzipped_md5_file)
-                print(*columns, sep='\t', file=sample_file)
-                print('md5', columns[-1], sep='\t', file=sample_md5_file)
+    with gzip.open(db_path, mode='wt') as gzipped_file:
+        # for the first 10 rows, put it in a sample file too
+        with open(db_sample_path, 'w') as sample_file:
+            print(*columns, sep='\t', file=gzipped_file)
+            print(*columns, sep='\t', file=sample_file)
 
-                for _ in range(10):
-                    prefix, identifier, name = next(it)
-                    md5 = hash_curie(prefix, identifier)
-                    c[prefix] += 1
-                    print(prefix, identifier, name, sep='\t', file=gzipped_file)
-                    print(prefix, identifier, name, sep='\t', file=sample_file)
-                    print(md5, name, sep='\t', file=gzipped_md5_file)
-                    print(md5, name, sep='\t', file=sample_md5_file)
-
-            # continue just in the gzipped one
-            for prefix, identifier, name in it:
+            for _ in range(10):
+                prefix, identifier, name = next(it)
                 c[prefix] += 1
-                md5 = hash_curie(prefix, identifier)
                 print(prefix, identifier, name, sep='\t', file=gzipped_file)
-                print(md5, prefix, identifier, name, sep='\t', file=gzipped_md5_file)
+                print(prefix, identifier, name, sep='\t', file=sample_file)
 
-    else:
-        with gzip.open(db_path, mode='wt') as gzipped_file:
-            # for the first 10 rows, put it in a sample file too
-            with open(db_sample_path, 'w') as sample_file:
-                print('md5', *columns, sep='\t', file=gzipped_file)
-                print('md5', *columns, sep='\t', file=sample_file)
-
-                for _ in range(10):
-                    prefix, identifier, name = next(it)
-                    md5 = hash_curie(prefix, identifier)
-                    c[prefix] += 1
-                    print(md5, prefix, identifier, name, sep='\t', file=gzipped_file)
-                    print(md5, prefix, identifier, name, sep='\t', file=sample_file)
-
-            # continue just in the gzipped one
-            for prefix, identifier, name in it:
-                c[prefix] += 1
-                md5 = hash_curie(prefix, identifier)
-                print(md5, prefix, identifier, name, sep='\t', file=gzipped_file)
+        # continue just in the gzipped one
+        for prefix, identifier, name in it:
+            c[prefix] += 1
+            print(prefix, identifier, name, sep='\t', file=gzipped_file)
 
     summary_path = os.path.join(directory, f'{db_name}_summary.tsv')
     logger.info(f'Writing {db_name} summary to {summary_path}')
