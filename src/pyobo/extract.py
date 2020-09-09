@@ -77,9 +77,6 @@ def get_name(prefix: str, identifier: str) -> Optional[str]:
         return
 
     primary_id = get_primary_identifier(prefix, identifier)
-    if not primary_id:
-        return
-
     return id_name.get(primary_id)
 
 
@@ -287,14 +284,15 @@ def get_primary_curie(curie: str) -> Optional[str]:
 
 
 @wrap_norm_prefix
-def get_primary_identifier(prefix: str, identifier: str) -> Optional[str]:
+def get_primary_identifier(prefix: str, identifier: str) -> str:
     """Get the primary identifier for an entity.
 
-    Returns none if the prefix is not handled.
+    Returns the original identifier if there are no alts available or if there's no mapping.
     """
     alts_to_id = get_alts_to_id(prefix)
-    if alts_to_id:
-        return alts_to_id.get(identifier, identifier)
+    if alts_to_id and identifier in alts_to_id:
+        return alts_to_id[identifier]
+    return identifier
 
 
 def get_hierarchy(
