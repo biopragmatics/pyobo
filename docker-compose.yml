@@ -2,22 +2,17 @@ version: '3'
 
 services:
   base:
-    image: pyobo/resolver
     build:
       context: .
       args:
-        PYOBO_SQLALCHEMY_URI: postgresql://pyobouser:pyobopassword@database:5432/pyobodb
-    command: python -m pyobo.apps.resolver --port 80 --host "0.0.0.0" --gunicorn --sql
+        PYOBO_SQLALCHEMY_URI: postgresql://postgres:pyobo@database:5432/postgres
+    command: python -m pyobo.apps.resolver --port 80 --host "0.0.0.0" --sql
     ports:
       - 80:80
     depends_on:
       - database
 
   database:
-    image: postgres:11.1
-    environment:
-      POSTGRES_USER: pyobouser
-      POSTGRES_PASSWORD: pybelpassword
-      POSTGRES_DB: pyobodb
+    image: cthoyt/oohnana-test:a771ca2a6bd2c5d32ee359a4cd3527055f5a1045
     ports:
       - 5432:5432
