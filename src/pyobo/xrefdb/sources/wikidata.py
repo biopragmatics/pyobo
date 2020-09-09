@@ -56,6 +56,28 @@ def iter_wikidata_mappings(wikidata_property: str) -> Iterable[Tuple[str, str]]:
         yield wikidata_id, entity_id
 
 
+def get_exact_matches(prefix: str) -> Iterable[Tuple[str, str]]:
+    """Get exact matches"""
+    prefix = prefix.upper()
+    query = f"""
+    SELECT ?item ?{prefix}
+    WHERE
+    {{
+      ?item wdt:P31 wd:Q21014462 .
+      ?item wdt:P2888 ?value .
+      FILTER( strStarts( str(?value), "http://purl.obolibrary.org/obo/{prefix}_" ) ) .
+      BIND( SUBSTR(str(?value), 1 + STRLEN("http://purl.obolibrary.org/obo/{prefix}_")) as ?{prefix} ).
+    }}
+    """
+    res = requests.get(URL, params={'query': query, 'format': 'json'})
+    res.raise_for_status()
+    res_json = res.json()
+    for d in res_json['results']['bindings']:
+        wikidata_id = d['wikidata_id']['value'][len('http://wikidata.org/entity/'):]
+        entity_id = d[prefix]['value']
+        yield wikidata_id, entity_id
+
+
 @click.command()
 @verbose_option
 def _main():
