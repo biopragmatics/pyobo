@@ -2,6 +2,8 @@
 
 """Upload the Ooh Na Na nomenclature database to PostgreSQL."""
 
+import gzip
+import io
 import time
 from contextlib import closing
 from textwrap import dedent
@@ -26,21 +28,29 @@ TEST_N = 1_000_000
 
 @click.command()
 @click.option('--uri', default=get_sqlalchemy_uri)
-@click.option('--references-table', default='obo_reference', show_default=True)
-@click.option('--references-path', type=click.Path(exists=True), default=ensure_ooh_na_na)
+@click.option('--refs-table', default='obo_reference', show_default=True)
+@click.option('--refs-path', default=ensure_ooh_na_na)
 @click.option('--alts-table', default='obo_alt', show_default=True)
-@click.option('--alts-path', type=click.Path(exists=True), default=ensure_alts)
+@click.option('--alts-path', default=ensure_alts)
 @click.option('--test', is_flag=True, help=f'Test run with only the first {TEST_N} rows')
-def main(uri: str, names_table: str, names_path: str, alts_table: str, alts_path: str, test: bool):
+def main(uri: str, refs_table: str, refs_path: str, alts_table: str, alts_path: str, test: bool):
     """Load the Ooh Na Na nomenclature data."""
     engine = create_engine(uri)
 
-    _load_names(engine=engine, table=alts_table, path=alts_path, test=test, target_col='alt', target_col_size=64)
+    _load_names(
+        engine=engine,
+        table=alts_table,
+        path=alts_path,
+        test=test,
+        target_col='alt',
+        target_col_size=64,
+        add_unique_constraints=False,
+    )
     with closing(engine.raw_connection()) as connection:
         with connection.cursor() as cursor:
             cursor.execute(f'CREATE INDEX ON {alts_table} (prefix, alt);')
 
-    _load_names(engine=engine, table=names_table, path=names_path, test=test, target_col='name', target_col_size=4096)
+    _load_names(engine=engine, table=refs_table, path=refs_path, test=test, target_col='name', target_col_size=4096)
 
 
 def _load_names(engine, table, path, test, target_col, target_col_size, add_unique_constraints: bool = True):
@@ -59,14 +69,9 @@ def _load_names(engine, table, path, test, target_col, target_col_size, add_uniq
     );
     ''').rstrip()
 
-    if test:
-        program = f'gunzip -c {path} | head -n {TEST_N}'
-    else:
-        program = f'gunzip -c {path}'
-
     copy_statement = dedent(f'''
     COPY {table} (prefix, identifier, {target_col})
-    FROM PROGRAM '{program}'
+    FROM STDIN
     WITH CSV HEADER DELIMITER E'\\t' QUOTE E'\\b';
     ''').rstrip()
 
@@ -103,7 +108,13 @@ def _load_names(engine, table, path, test, target_col, target_col_size, add_uniq
             echo('Start COPY')
             echo(copy_statement, fg='yellow')
             try:
-                cursor.execute(copy_statement)
+                with gzip.open(path, 'rt') as file:
+                    if test:
+                        sio = io.StringIO(''.join(line for line, _ in zip(file, range(TEST_N))))
+                        sio.seek(0)
+                        cursor.copy_expert(copy_statement, sio)
+                    else:
+                        cursor.copy_expert(copy_statement, file)
             except Exception:
                 echo('Copy failed')
                 raise
@@ -147,7 +158,7 @@ def _load_names(engine, table, path, test, target_col, target_col_size, add_uniq
     with engine.connect() as connection:
         select_statement = f"select * from {table} LIMIT 15"
         result = connection.execute(select_statement)
-        click.echo(tabulate(result))
+        click.echo(tabulate(result, headers=['id', 'prefix', 'identifier', target_col, 'md5_hash']))
 
 
 if __name__ == '__main__':
