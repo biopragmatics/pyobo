@@ -170,7 +170,7 @@ class RawSQLBackend(Backend):
     @lru_cache()
     def count_curies(self) -> int:  # noqa:D102
         """Get the number of terms."""
-        return self._get_one(f'SELECT COUNT(id) FROM {self.refs_table};')
+        return self._get_one(f'SELECT COUNT(id) FROM {self.refs_table};')  # noqa:S608
 
     @lru_cache()
     def count_prefixes(self) -> int:  # noqa:D102
@@ -178,7 +178,7 @@ class RawSQLBackend(Backend):
 
     @lru_cache()
     def count_alts(self) -> Optional[int]:  # noqa:D102
-        return self._get_one(f'SELECT COUNT(id) FROM {self.alts_table};')
+        return self._get_one(f'SELECT COUNT(id) FROM {self.alts_table};')   # noqa:S608
 
     def _get_one(self, sql: str):
         with self.engine.connect() as connection:
@@ -186,12 +186,12 @@ class RawSQLBackend(Backend):
             return result[0]
 
     def summarize(self) -> Counter:  # noqa:D102
-        sql = f'SELECT prefix, COUNT(identifier) FROM {self.refs_table} GROUP BY prefix;'
+        sql = f'SELECT prefix, COUNT(identifier) FROM {self.refs_table} GROUP BY prefix;'  # noqa:S608
         with self.engine.connect() as connection:
             return Counter(dict(connection.execute(sql).fetchall()))
 
     def has_prefix(self, prefix: str) -> bool:  # noqa:D102
-        sql = text(f"SELECT prefix FROM {self.refs_table} WHERE prefix = :prefix LIMIT 1;")
+        sql = text(f"SELECT prefix FROM {self.refs_table} WHERE prefix = :prefix LIMIT 1;")  # noqa:S608
         with self.engine.connect() as connection:
             result = connection.execute(sql, prefix=prefix).fetchone()
             return bool(result)
