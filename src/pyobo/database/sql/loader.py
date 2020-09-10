@@ -60,16 +60,30 @@ def main(uri: str, refs_table: str, refs_path: str, alts_table: str, alts_path: 
     )
 
 
-def _load_names(engine, table, path, test, target_col, target_col_size, add_unique_constraints: bool = True):
+def _load_names(
+    engine,
+    table,
+    path,
+    test,
+    target_col,
+    target_col_size,
+    add_unique_constraints: bool = True,
+    use_md5: bool = False,
+) -> None:
     drop_statement = f'DROP TABLE IF EXISTS {table};'
+
+    if use_md5:
+        md5_ddl = "md5_hash VARCHAR(32) GENERATED ALWAYS AS (md5(prefix || ':' || identifier)) STORED,"
+    else:
+        md5_ddl = ''
 
     create_statement = dedent(f'''
     CREATE TABLE {table} (
         id SERIAL,  /* automatically the primary key */
         prefix VARCHAR(32),
         identifier VARCHAR(64),
-        {target_col} VARCHAR({target_col_size}),  /* largest name's length is 2936 characters */
-        md5_hash VARCHAR(32) GENERATED ALWAYS AS (md5(prefix || ':' || identifier)) STORED
+        {md5_ddl}
+        {target_col} VARCHAR({target_col_size})  /* largest name's length is 2936 characters */
     ) WITH (
         autovacuum_enabled = false,
         toast.autovacuum_enabled = false
@@ -89,15 +103,15 @@ def _load_names(engine, table, path, test, target_col, target_col_size, add_uniq
     );
     ''').rstrip()
 
-    index_1_statement = f'CREATE INDEX ON {table} (prefix, identifier);'
-    index_2_statement = f'CREATE INDEX ON {table} (md5_hash);'
+    index_curie_statement = f'CREATE INDEX ON {table} (prefix, identifier);'
+    index_md5_statement = f'CREATE INDEX ON {table} (md5_hash);'
 
-    unique_statement_1 = dedent(f'''
+    unique_curie_stmt = dedent(f'''
     ALTER TABLE {table}
         ADD CONSTRAINT {table}_prefix_identifier_unique UNIQUE (prefix, identifier);
     ''').rstrip()
 
-    unique_statement_2 = dedent(f'''
+    unique_md5_hash_stmt = dedent(f'''
     ALTER TABLE {table}
         ADD CONSTRAINT {table}_md5_hash_unique UNIQUE (md5_hash);
     ''').rstrip()
@@ -117,10 +131,12 @@ def _load_names(engine, table, path, test, target_col, target_col_size, add_uniq
             try:
                 with gzip.open(path, 'rt') as file:
                     if test:
+                        echo(f'Loading testing data (rows={TEST_N}) from {path}')
                         sio = io.StringIO(''.join(line for line, _ in zip(file, range(TEST_N))))
                         sio.seek(0)
                         cursor.copy_expert(copy_statement, sio)
                     else:
+                        echo(f'Loading data from {path}')
                         cursor.copy_expert(copy_statement, file)
             except Exception:
                 echo('Copy failed')
@@ -142,28 +158,30 @@ def _load_names(engine, table, path, test, target_col, target_col_size, add_uniq
             echo('End re-enable autovacuum')
 
             echo('Start index on prefix/identifier')
-            echo(index_1_statement, fg='yellow')
-            cursor.execute(index_1_statement)
+            echo(index_curie_statement, fg='yellow')
+            cursor.execute(index_curie_statement)
             echo('End indexing')
 
-            echo('Start index on MD5 hash')
-            echo(index_2_statement, fg='yellow')
-            cursor.execute(index_2_statement)
-            echo('End indexing')
+            if use_md5:
+                echo('Start index on MD5 hash')
+                echo(index_md5_statement, fg='yellow')
+                cursor.execute(index_md5_statement)
+                echo('End indexing')
 
             if add_unique_constraints:
                 echo('Start unique on prefix/identifier')
-                echo(unique_statement_1, fg='yellow')
-                cursor.execute(unique_statement_1)
+                echo(unique_curie_stmt, fg='yellow')
+                cursor.execute(unique_curie_stmt)
                 echo('End unique')
 
+            if add_unique_constraints and use_md5:
                 echo('Start unique on md5_hash')
-                echo(unique_statement_2, fg='yellow')
-                cursor.execute(unique_statement_2)
+                echo(unique_md5_hash_stmt, fg='yellow')
+                cursor.execute(unique_md5_hash_stmt)
                 echo('End unique')
 
     with engine.connect() as connection:
-        select_statement = f"select * from {table} LIMIT 15"  # noqa:S608
+        select_statement = f"SELECT * FROM {table} LIMIT 10;"  # noqa:S608
         result = connection.execute(select_statement)
         click.echo(tabulate(result, headers=['id', 'prefix', 'identifier', target_col, 'md5_hash']))
 
