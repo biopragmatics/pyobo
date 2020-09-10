@@ -25,6 +25,7 @@ URL = 'https://query.wikidata.org/bigdata/namespace/wdq/sparql'
 
 def iterate_wikidata_dfs() -> Iterable[pd.DataFrame]:
     """Iterate over WikiData xref dataframes."""
+    yield get_exact_matches_df()
     for prefix, entry in get_curated_registry_database().items():
         wikidata_property = entry.get('wikidata_property')
         if wikidata_property is None:
@@ -59,7 +60,17 @@ def iter_wikidata_mappings(wikidata_property: str) -> Iterable[Tuple[str, str]]:
 
 
 def get_exact_matches_df() -> pd.DataFrame:
-    """Get exact matches dataframe"""
+    """Get exact matches dataframe."""
+    df = pd.DataFrame(
+        [
+            ('wikidata', wikidata_id, prefix, identifier, 'wikidata')
+            for wikidata_id, prefix, identifier in get_exact_matches()
+        ],
+        columns=XREF_COLUMNS,
+    )
+    logger.info('got %d wikidata exact matches', len(df.index))
+    return df
+
 
 def get_exact_matches() -> Iterable[Tuple[str, str, str]]:
     """Get exact matches"""
