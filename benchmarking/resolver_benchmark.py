@@ -4,8 +4,10 @@ can handle. Since one of our previous bottlenecks was 5 per second from PubChem,
 improvement is nice!
 """
 
-import requests
 import time
+
+import click
+import requests
 from requests_toolbelt.threaded import pool
 from tqdm import tqdm
 
@@ -48,6 +50,14 @@ def benchmark_async(prefix='doid', host='localhost', port=5000):
     print(f'Made {len(urls)} async requests in {elapsed:.2f} seconds. Avg = {avg_elapsed:.2f} requests/s')
 
 
+@click.command()
+@click.option('--prefix', default='doid')
+@click.option('--host', default='localhost')
+@click.option('--port', default='5000')
+def main(prefix, host, port):
+    benchmark_sync(prefix=prefix, host=host, port=port)
+    benchmark_async(prefix=prefix, host=host, port=port)
+
+
 if __name__ == '__main__':
-    benchmark_sync()
-    benchmark_async()
+    main()
