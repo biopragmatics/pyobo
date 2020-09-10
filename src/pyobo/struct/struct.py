@@ -23,6 +23,7 @@ from .reference import Reference, Referenced
 from .typedef import TypeDef, default_typedefs, from_species, get_reference_tuple, is_a
 from .utils import comma_separate
 from ..cache_utils import get_gzipped_graph
+from ..constants import RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
 from ..identifier_utils import normalize_curie, normalize_prefix
 from ..io_utils import multidict
 from ..path_utils import get_prefix_obo_path, prefix_directory_join
@@ -38,7 +39,6 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 DATE_FORMAT = "%d:%m:%Y %H:%M"
-COLUMNS = ['source_ns', 'source_id', 'target_ns', 'target_id']
 
 
 @dataclass
@@ -456,8 +456,8 @@ class Obo:
                 continue
 
             xrefs, provenance = [], []
-            for reference in iterate_node_xrefs(data):
-                if reference.prefix == 'pubmed':
+            for reference in iterate_node_xrefs(prefix=prefix, data=data):
+                if reference.prefix in {'pubmed', 'pmc', 'doi'}:  # TODO add other provenance prefixes
                     provenance.append(reference)
                 else:
                     xrefs.append(reference)
@@ -595,7 +595,7 @@ class Obo:
                 (term.identifier, typedef.prefix, typedef.identifier, reference.prefix, reference.identifier)
                 for term, typedef, reference in self.iterate_relations(use_tqdm=use_tqdm)
             ],
-            columns=[f'{self.ontology}_id', 'relation_ns', 'relation_id', 'target_ns', 'target_id'],
+            columns=[f'{self.ontology}_id', RELATION_PREFIX, RELATION_ID, TARGET_PREFIX, TARGET_ID],
         )
 
     def get_filtered_relations_df(
@@ -610,7 +610,7 @@ class Obo:
                 (term.identifier, reference.prefix, reference.identifier)
                 for term, reference in self.iterate_filtered_relations(relation, use_tqdm=use_tqdm)
             ],
-            columns=[f'{self.ontology}_id', 'target_ns', 'target_id'],
+            columns=[f'{self.ontology}_id', TARGET_PREFIX, TARGET_ID],
         )
 
     def iterate_filtered_xrefs(self, prefix: str, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, Reference]]:
@@ -628,7 +628,7 @@ class Obo:
                 for term in self._iter_terms(use_tqdm=use_tqdm)
                 for xref in term.xrefs
             ],
-            columns=COLUMNS,
+            columns=[SOURCE_PREFIX, SOURCE_ID, TARGET_PREFIX, TARGET_ID],
         )
 
     def get_filtered_xrefs_mapping(self, prefix: str, *, use_tqdm: bool = False) -> Mapping[str, str]:
@@ -843,7 +843,7 @@ def iterate_node_relationships(
         yield relation, target
 
 
-def iterate_node_xrefs(data: Mapping[str, Any]) -> Iterable[Reference]:
+def iterate_node_xrefs(*, prefix: str, data: Mapping[str, Any]) -> Iterable[Reference]:
     """Extract xrefs from a :mod:`obonet` node's data."""
     for xref in data.get('xref', []):
         xref = xref.strip()
@@ -863,7 +863,7 @@ def iterate_node_xrefs(data: Mapping[str, Any]) -> Iterable[Reference]:
         if split_space:
             _xref_split = xref.split(' ', 1)
             if _xref_split[1][0] not in {'"', '('}:
-                logger.warning(f'Problem with space in xref {xref}')
+                logger.debug('[%s] Problem with space in xref %s', prefix, xref)
                 continue
             xref = _xref_split[0]
 

@@ -56,7 +56,7 @@ def open_multimap_tsv(path: str, *, use_tqdm: bool = False) -> Mapping[str, List
             try:
                 key, value = split_tab_pair(line)
             except ValueError:
-                logger.warning('bad line: %s', line)
+                logger.warning('bad line: %s', line.strip())
             rv[key].append(value)
     return dict(rv)
 

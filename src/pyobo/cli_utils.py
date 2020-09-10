@@ -7,8 +7,11 @@ import logging
 import click
 import pandas as pd
 
+from .constants import DATABASE_DIRECTORY
+
 __all__ = [
     'verbose_option',
+    'directory_option',
     'echo_df',
 ]
 
@@ -32,6 +35,13 @@ verbose_option = click.option(
     count=True,
     callback=_debug_callback,
     expose_value=False,
+)
+
+directory_option = click.option(
+    '-d', '--directory',
+    type=click.Path(dir_okay=True, file_okay=False, exists=True),
+    default=DATABASE_DIRECTORY,
+    show_default=True,
 )
 
 

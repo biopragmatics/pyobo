@@ -89,7 +89,7 @@ has_part = TypeDef(
     inverse=Reference(prefix='bfo', identifier='0000050', name='part of'),
 )
 pathway_has_part = TypeDef(
-    reference=Reference(prefix='obo', identifier='pathway_has_part', name='pathway has part'),
+    reference=Reference.default(identifier='pathway_has_part', name='pathway has part'),
     comment='More specific version of has_part for pathways',
     parents=[Reference(prefix='bfo', identifier='0000051', name='has part')],
 )

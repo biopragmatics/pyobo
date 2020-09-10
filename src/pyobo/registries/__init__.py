@@ -10,4 +10,4 @@ from .metaregistry import (  # noqa: F401
 from .miriam import get_miriam  # noqa: F401
 from .obofoundry import get_obofoundry  # noqa: F401
 from .ols import get_ols  # noqa: F401
-from .registries import Resource, get_metaregistry, get_namespace_synonyms  # noqa: F401
+from .registries import Resource, get_namespace_synonyms  # noqa: F401

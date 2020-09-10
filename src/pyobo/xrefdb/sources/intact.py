@@ -7,6 +7,7 @@ from typing import Mapping
 import pandas as pd
 
 from pyobo.cache_utils import cached_mapping
+from pyobo.constants import PROVENANCE, SOURCE_PREFIX, TARGET_PREFIX, XREF_COLUMNS
 from pyobo.path_utils import prefix_directory_join
 
 __all__ = [
@@ -28,10 +29,10 @@ def _get_complexportal_df():
 def get_intact_complex_portal_xrefs_df() -> pd.DataFrame:
     """Get IntAct-Complex Portal xrefs."""
     df = _get_complexportal_df()
-    df['source_ns'] = 'intact'
-    df['target_ns'] = 'complexportal'
-    df['source'] = COMPLEXPORTAL_MAPPINGS
-    df = df[['source_ns', 'source_id', 'target_ns', 'target_id', 'source']]
+    df[SOURCE_PREFIX] = 'intact'
+    df[TARGET_PREFIX] = 'complexportal'
+    df[PROVENANCE] = COMPLEXPORTAL_MAPPINGS
+    df = df[XREF_COLUMNS]
     return df
 
 
@@ -60,10 +61,10 @@ def _get_reactome_df():
 def get_intact_reactome_xrefs_df() -> pd.DataFrame:
     """Get IntAct-Reactome xrefs."""
     df = _get_reactome_df()
-    df['source_ns'] = 'intact'
-    df['target_ns'] = 'reactome'
-    df['source'] = REACTOME_MAPPINGS
-    df = df[['source_ns', 'source_id', 'target_ns', 'target_id', 'source']]
+    df[SOURCE_PREFIX] = 'intact'
+    df[TARGET_PREFIX] = 'reactome'
+    df[PROVENANCE] = REACTOME_MAPPINGS
+    df = df[XREF_COLUMNS]
     return df
 
 

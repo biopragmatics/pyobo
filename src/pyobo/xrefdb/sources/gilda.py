@@ -7,6 +7,7 @@
 
 import pandas as pd
 
+from pyobo.constants import PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
 from pyobo.identifier_utils import normalize_prefix
 
 __all__ = [
@@ -23,14 +24,14 @@ def get_gilda_xrefs_df() -> pd.DataFrame:
         sep='\t',
         header=None,
         usecols=[0, 1, 3, 4],
-        names=['source_ns', 'source_id', 'target_ns', 'target_id'],
+        names=[SOURCE_PREFIX, SOURCE_ID, TARGET_PREFIX, TARGET_ID],
     )
-    df['source'] = GILDA_MAPPINGS
+    df[PROVENANCE] = GILDA_MAPPINGS
 
-    for k in 'source_ns', 'target_ns':
+    for k in SOURCE_PREFIX, TARGET_PREFIX:
         df[k] = df[k].map(normalize_prefix)
 
-    for k in 'source_id', 'target_id':
+    for k in SOURCE_ID, TARGET_ID:
         df[k] = df[k].map(_fix_gogo)
 
     return df

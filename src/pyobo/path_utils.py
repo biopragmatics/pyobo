@@ -11,7 +11,7 @@ from urllib.request import urlretrieve
 
 import pandas as pd
 
-from .constants import PYOBO_HOME
+from .constants import RAW_DIRECTORY
 
 __all__ = [
     'get_prefix_directory',
@@ -30,9 +30,9 @@ logger = logging.getLogger(__name__)
 def get_prefix_directory(prefix: str, *, version: Optional[str] = None) -> str:
     """Get the directory."""
     if version:
-        directory = os.path.abspath(os.path.join(PYOBO_HOME, prefix, version))
+        directory = os.path.abspath(os.path.join(RAW_DIRECTORY, prefix, version))
     else:
-        directory = os.path.abspath(os.path.join(PYOBO_HOME, prefix))
+        directory = os.path.abspath(os.path.join(RAW_DIRECTORY, prefix))
     os.makedirs(directory, exist_ok=True)
     return directory
 

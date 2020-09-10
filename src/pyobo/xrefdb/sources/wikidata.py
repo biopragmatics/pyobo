@@ -13,6 +13,7 @@ import pandas as pd
 import requests
 
 from ...cli_utils import verbose_option
+from ...constants import XREF_COLUMNS
 from ...identifier_utils import normalize_curie
 from ...registries import get_curated_registry_database
 
@@ -38,7 +39,7 @@ def get_wikidata_df(prefix: str, wikidata_property: str) -> pd.DataFrame:
             ('wikidata', wikidata_id, prefix, external_id, 'wikidata')
             for wikidata_id, external_id in iter_wikidata_mappings(wikidata_property)
         ],
-        columns=['source_ns', 'source_id', 'target_ns', 'target_id', 'source'],
+        columns=XREF_COLUMNS,
     )
     logger.info('got wikidata (%s; %s): %d rows', prefix, wikidata_property, len(df.index))
     return df
@@ -56,6 +57,9 @@ def iter_wikidata_mappings(wikidata_property: str) -> Iterable[Tuple[str, str]]:
         entity_id = d['id']['value']
         yield wikidata_id, entity_id
 
+
+def get_exact_matches_df() -> pd.DataFrame:
+    """Get exact matches dataframe"""
 
 def get_exact_matches() -> Iterable[Tuple[str, str, str]]:
     """Get exact matches"""

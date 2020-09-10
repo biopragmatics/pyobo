@@ -46,6 +46,7 @@ def get_obo() -> Obo:
         data_version=DATA_VERSION,
         iter_terms=iter_terms,
         typedefs=[pathway_has_part, from_species],
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
