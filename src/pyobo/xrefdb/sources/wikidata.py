@@ -25,7 +25,7 @@ URL = 'https://query.wikidata.org/bigdata/namespace/wdq/sparql'
 
 def iterate_wikidata_dfs() -> Iterable[pd.DataFrame]:
     """Iterate over WikiData xref dataframes."""
-    yield get_exact_matches_df()
+    yield get_exact_matches_df('Q21014462')  # cell line
     for prefix, entry in get_curated_registry_database().items():
         wikidata_property = entry.get('wikidata_property')
         if wikidata_property is None:
@@ -59,26 +59,27 @@ def iter_wikidata_mappings(wikidata_property: str) -> Iterable[Tuple[str, str]]:
         yield wikidata_id, entity_id
 
 
-def get_exact_matches_df() -> pd.DataFrame:
+def get_exact_matches_df(type_wikidata_id: str) -> pd.DataFrame:
     """Get exact matches dataframe."""
     df = pd.DataFrame(
         [
             ('wikidata', wikidata_id, prefix, identifier, 'wikidata')
-            for wikidata_id, prefix, identifier in get_exact_matches()
+            for wikidata_id, prefix, identifier in get_exact_matches(type_wikidata_id)
         ],
         columns=XREF_COLUMNS,
     )
-    logger.info('got %d wikidata exact matches', len(df.index))
+    logger.info('got %d wikidata exact matches for type %s', len(df.index), type_wikidata_id)
     return df
 
 
-def get_exact_matches() -> Iterable[Tuple[str, str, str]]:
+def get_exact_matches(type_wikidata_id: str = 'Q21014462') -> Iterable[Tuple[str, str, str]]:
     """Get exact matches"""
     query = f"""
     SELECT ?wikidata_id ?id
     WHERE
     {{
-        ?item wdt:P2888 ?value .
+        ?wikidata_id wdt:P31 wd:{type_wikidata_id} .
+        ?wikidata_id wdt:P2888 ?value .
         FILTER( strStarts( str(?value), "http://purl.obolibrary.org/obo/" ) ) .
         BIND( SUBSTR(str(?value), 1 + STRLEN("http://purl.obolibrary.org/obo/")) as ?id ).
     }}
