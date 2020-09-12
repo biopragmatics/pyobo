@@ -394,6 +394,7 @@
         "prefix": "go"
       },
       "synonyms": [
+        "go",
         "gobp",
         "gocc",
         "gomf",
