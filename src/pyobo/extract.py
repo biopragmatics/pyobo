@@ -56,6 +56,8 @@ logger = logging.getLogger(__name__)
 
 RelationHint = Union[Reference, TypeDef, Tuple[str, str]]
 
+NO_ALTS = {'ncbigene'}
+
 
 def get_name_by_curie(curie: str) -> Optional[str]:
     """Get the name for a CURIE, if possible."""
@@ -253,6 +255,9 @@ def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, **kwargs) -> pd.DataFra
 @wrap_norm_prefix
 def get_id_to_alts(prefix: str, **kwargs) -> Mapping[str, List[str]]:
     """Get alternate identifiers."""
+    if prefix in NO_ALTS:
+        return {}
+
     path = prefix_directory_join(prefix, 'cache', 'alt_ids.tsv')
     header = [f'{prefix}_id', 'alt_id']
 
@@ -289,6 +294,9 @@ def get_primary_identifier(prefix: str, identifier: str) -> str:
 
     Returns the original identifier if there are no alts available or if there's no mapping.
     """
+    if prefix in NO_ALTS:  # TODO later expand list to other namespaces with no alts
+        return identifier
+
     alts_to_id = get_alts_to_id(prefix)
     if alts_to_id and identifier in alts_to_id:
         return alts_to_id[identifier]
