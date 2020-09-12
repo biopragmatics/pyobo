@@ -73,7 +73,7 @@ def get_exact_matches_df(type_wikidata_id: str) -> pd.DataFrame:
 
 
 def get_exact_matches(type_wikidata_id: str = 'Q21014462') -> Iterable[Tuple[str, str, str]]:
-    """Get exact matches"""
+    """Get exact matches."""
     query = f"""
     SELECT ?wikidata_id ?id
     WHERE
