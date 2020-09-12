@@ -129,8 +129,10 @@
       ],
       "wikidata_property": "P683"
     },
-    "chembl": {
+    "chembl.compound": {
+      "pattern": "^CHEMBL\\d+$",
       "synonyms": [
+        "chembl",
         "ChEMBL"
       ],
       "wikidata_property": "P592"
@@ -1184,7 +1186,7 @@
       "UMLS CUI:": "UMLS",
       "URL: ": "URL",
       "VFB:FBbt_": "FBbt",
-      "chembl target:CHEMBL": "CHEMBL:CHEMBL",
+      "chembl target:CHEMBL": "chembl.target:CHEMBL",
       "protein ontology:PR\\:": "PR:PR:"
     }
   }
