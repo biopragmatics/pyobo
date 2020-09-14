@@ -250,7 +250,8 @@
       "synonyms": [
         "Drug_Central"
       ],
-      "title": "Drug Central"
+      "title": "Drug Central",
+      "url": "http://drugcentral.org/drugcard/$1"
     },
     "duo": {
       "not_available_as_obo": true

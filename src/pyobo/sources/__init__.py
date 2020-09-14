@@ -23,6 +23,7 @@ CONVERTED = {
     'conso': 'conso',
     'covid': 'covid',
     'drugbank': 'drugbank',
+    'drugcentral': 'drugcentral',
     'eccode': 'expasy',
     'hgnc': 'hgnc',
     'hgnc.genefamily': 'hgncgenefamily',
