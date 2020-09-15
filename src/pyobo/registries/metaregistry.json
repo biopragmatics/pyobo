@@ -46,7 +46,8 @@
       "not_available_as_obo": true
     },
     "apo": {
-      "pattern": "\\d{7}"
+      "pattern": "\\d{7}",
+      "url": "https://www.yeastgenome.org/observable/$1"
     },
     "aro": {
       "pattern": "\\d{7}"
@@ -74,7 +75,8 @@
     "beilstein": {
       "synonyms": [
         "Beilstein"
-      ]
+      ],
+      "title": "Beilstein Handbook"
     },
     "bel": {
       "synonyms": [
@@ -99,7 +101,13 @@
     "cas": {
       "synonyms": [
         "CASID"
-      ]
+      ],
+      "wikidata_property": "P231"
+    },
+    "cellosaurus": {
+      "example": "CVCL_0440",
+      "pattern": "^CVCL_[A-Z0-9]{4}$",
+      "wikidata_property": "P3289"
     },
     "ceph": {
       "download": "https://raw.githubusercontent.com/obophenotype/cephalopod-ontology/master/ceph.obo",
@@ -116,13 +124,18 @@
     "chebi": {
       "synonyms": [
         "ChEBI",
-        "CHEBI"
-      ]
+        "CHEBI",
+        "CHEBIID"
+      ],
+      "wikidata_property": "P683"
     },
-    "chembl": {
+    "chembl.compound": {
+      "pattern": "^CHEMBL\\d+$",
       "synonyms": [
+        "chembl",
         "ChEMBL"
-      ]
+      ],
+      "wikidata_property": "P592"
     },
     "chemidplus": {
       "synonyms": [
@@ -135,11 +148,13 @@
     "chemspider": {
       "synonyms": [
         "Chemspider"
-      ]
+      ],
+      "wikidata_property": "P661"
     },
     "chiro": {
       "download": "http://purl.obolibrary.org/obo/chiro.obo",
-      "no_own_terms": true
+      "no_own_terms": true,
+      "title": "ChEBI Integrated Role Ontology"
     },
     "chmo": {
       "pattern": "\\d{7}"
@@ -148,7 +163,8 @@
       "pattern": "\\d{7}"
     },
     "citexplore": {
-      "synonyms": []
+      "synonyms": [],
+      "title": "CiteXplore"
     },
     "cl": {
       "download": "https://raw.githubusercontent.com/obophenotype/cell-ontology/master/cl-full.obo",
@@ -170,8 +186,10 @@
       ]
     },
     "conso": {
-      "pattern": "CONSO\\d{5}"
+      "pattern": "CONSO\\d{5}",
+      "title": "Curation of Neurodegeneration Supporting Ontology"
     },
+    "covid": {},
     "cro": {
       "download": "https://raw.githubusercontent.com/data2health/contributor-role-ontology/master/cro.obo",
       "pattern": "\\d{7}"
@@ -181,7 +199,8 @@
         "CRISP Thesaurus, 2006",
         "CRISP Thesaurus",
         "CSP2005"
-      ]
+      ],
+      "title": "CRISP Thesaurus"
     },
     "cteno": {
       "download": "https://raw.githubusercontent.com/obophenotype/ctenophore-ontology/master/cteno.obo",
@@ -195,13 +214,19 @@
       "pattern": "\\d{7}"
     },
     "dictybase": {
+      "description": "A resource for Dictyostelid discoideum (a soil-dwelling amoeba) genomics",
       "synonyms": [
         "dictyBase"
-      ]
+      ],
+      "title": "dictyBase"
+    },
+    "diseasesdb": {
+      "wikidata_property": "P557"
     },
     "doid": {
       "miriam": {
         "id": "00000233",
+        "namespaceEmbeddedInLui": true,
         "prefix": "doid"
       },
       "obofoundry": {
@@ -209,7 +234,8 @@
       },
       "synonyms": [
         "do"
-      ]
+      ],
+      "wikidata_property": "P699"
     },
     "dpo": {
       "no_own_terms": true
@@ -217,22 +243,33 @@
     "drugbank": {
       "synonyms": [
         "DrugBank"
-      ]
+      ],
+      "wikidata_property": "P715"
     },
     "drugcentral": {
       "synonyms": [
         "Drug_Central"
-      ]
+      ],
+      "title": "Drug Central",
+      "url": "http://drugcentral.org/drugcard/$1"
     },
     "duo": {
       "not_available_as_obo": true
     },
     "eccode": {
+      "miriam": {
+        "id": "00000004",
+        "namespaceEmbeddedInLui": false,
+        "prefix": "ec-code"
+      },
       "synonyms": [
         "EC",
         "EC-CODE",
-        "ECCODE"
+        "EC_CODE",
+        "ECCODE",
+        "ec-code"
       ],
+      "title": "Enzyme Nomenclature",
       "wikidata_property": "P591"
     },
     "ecmdb": {
@@ -253,6 +290,7 @@
       "download": "http://www.ebi.ac.uk/efo/efo.obo",
       "miriam": {
         "id": "00000391",
+        "namespaceEmbeddedInLui": false,
         "prefix": "efo"
       },
       "obofoundry": {
@@ -312,35 +350,58 @@
       "pattern": "\\d{7}"
     },
     "flybase": {
+      "miriam": {
+        "id": "00000030",
+        "namespaceEmbeddedInLui": false,
+        "prefix": "fb"
+      },
       "synonyms": [
         "FB",
         "FlyBase"
       ]
     },
     "fypo": {
-      "pattern": "\\d{7}"
+      "download": "http://purl.obolibrary.org/obo/fypo.obo",
+      "pattern": "\\d{7}",
+      "title": "Fission Yeast Phenotype Ontology"
     },
     "gard": {
       "synonyms": [
         "GARD",
         "Genetic and Rare Diseases Information Center"
-      ]
+      ],
+      "title": "Genetic and Rare Diseases Information Center",
+      "wikidata_property": "P4317"
     },
     "gaz": {
+      "download": "http://purl.obolibrary.org/obo/gaz.obo",
       "pattern": "\\d{8}"
     },
     "geno": {
       "download": "https://raw.githubusercontent.com/monarch-initiative/GENO-ontology/develop/geno-full.obo",
       "pattern": "\\d{7}"
     },
+    "geo": {
+      "not_available_as_obo": true
+    },
     "gno": {
       "pattern": "\\d{8}"
     },
     "go": {
+      "download": "http://purl.obolibrary.org/obo/go.obo",
+      "miriam": {
+        "id": "00000022",
+        "namespaceEmbeddedInLui": true,
+        "prefix": "go"
+      },
       "synonyms": [
+        "go",
         "gobp",
         "gocc",
-        "gomf"
+        "gomf",
+        "gobpid",
+        "goccid",
+        "gomfid"
       ],
       "wikidata_property": "P686"
     },
@@ -360,12 +421,14 @@
     "hmdb": {
       "synonyms": [
         "HMDB"
-      ]
+      ],
+      "wikidata_property": "P2057"
     },
     "hp": {
       "download": "http://purl.obolibrary.org/obo/hp.obo",
       "miriam": {
         "id": "00000571",
+        "namespaceEmbeddedInLui": true,
         "prefix": "hp"
       },
       "obofoundry": {
@@ -381,13 +444,16 @@
     "icd10": {
       "miriam": {
         "id": "00000009",
+        "namespaceEmbeddedInLui": false,
         "prefix": "icd"
       },
       "synonyms": [
         "ICD10",
         "ICD-10",
         "ICD10CM"
-      ]
+      ],
+      "title": "International Classification of Diseases",
+      "wikidata_property": "P4229"
     },
     "icd9": {
       "synonyms": [
@@ -415,8 +481,14 @@
     "iev": {
       "pattern": "\\d{7}"
     },
+    "inchi": {
+      "wikidata_property": "P234"
+    },
+    "inchikey": {
+      "wikidata_property": "P235"
+    },
     "interpro": {
-      "synoynms": [
+      "synonyms": [
         "InterPro",
         "IP"
       ],
@@ -431,6 +503,12 @@
       "synonyms": [
         "IUPHARfam"
       ]
+    },
+    "iuphar.ligand": {
+      "wikidata_property": "P595"
+    },
+    "iuphar.receptor": {
+      "wikidata_property": "P5458"
     },
     "kegg": {
       "synonyms": [
@@ -459,6 +537,9 @@
         "KEGG_REACTION"
       ]
     },
+    "knapsack": {
+      "wikidata_property": "P2064"
+    },
     "lincs": {
       "synonyms": []
     },
@@ -470,6 +551,9 @@
       ]
     },
     "lncipedia": {},
+    "massbank": {
+      "wikidata_property": "P6689"
+    },
     "mco": {
       "pattern": "\\d+"
     },
@@ -484,6 +568,7 @@
     "mesh": {
       "miriam": {
         "id": "00000560",
+        "namespaceEmbeddedInLui": false,
         "prefix": "mesh"
       },
       "synonyms": [
@@ -522,9 +607,18 @@
       "wikidata_property": "P492"
     },
     "mirbase": {
+      "url": "http://www.mirbase.org/cgi-bin/mirna_entry.pl?acc=$1",
       "wikidata_property": "P2870"
     },
+    "mirbase.family": {
+      "synonyms": [
+        "MIRBASE_FAMILY"
+      ],
+      "title": "miRBase Families",
+      "url": "http://www.mirbase.org/cgi-bin/mirna_summary.pl?fam=$1"
+    },
     "mirbase.mature": {
+      "url": "http://mirbase.org/cgi-bin/mature.pl?mature_acc=$1",
       "wikidata_property": "P2871"
     },
     "miro": {
@@ -546,11 +640,14 @@
       ]
     },
     "mondo": {
+      "download": "http://purl.obolibrary.org/obo/mondo.obo",
       "example": "0000001",
       "pattern": "\\d{7}",
-      "synonyms": []
+      "synonyms": [],
+      "wikidata_property": "P5270"
     },
     "mop": {
+      "download": "https://raw.githubusercontent.com/rsc-ontologies/rxno/master/mop.obo",
       "pattern": "\\d{7}"
     },
     "mpath": {
@@ -561,6 +658,7 @@
       ]
     },
     "nbo": {
+      "download": "https://github.com/obo-behavior/behavior-ontology/raw/master/nbo.obo",
       "pattern": "\\d{7}"
     },
     "ncbigene": {
@@ -576,6 +674,7 @@
       "download": "http://purl.obolibrary.org/obo/ncbitaxon.obo",
       "miriam": {
         "id": "00000006",
+        "namespaceEmbeddedInLui": false,
         "prefix": "taxonomy"
       },
       "pattern": "\\d+",
@@ -591,6 +690,7 @@
     "ncit": {
       "miriam": {
         "id": "00000139",
+        "namespaceEmbeddedInLui": false,
         "prefix": "ncit"
       },
       "synonyms": [
@@ -606,7 +706,7 @@
       ]
     },
     "nextprot": {
-      "synoynms": [
+      "synonyms": [
         "NXP"
       ]
     },
@@ -615,6 +715,9 @@
         "NIST Chemistry WebBook",
         "NIST"
       ]
+    },
+    "npass": {
+      "title": "Natural Product Activity and Species Source Database"
     },
     "oba": {
       "pattern": "\\d{7}"
@@ -626,8 +729,10 @@
       "pattern": "\\d{7}"
     },
     "omit": {
+      "download": "https://raw.githubusercontent.com/OmniSearch/omit/master/src/ontology/omit.obo",
       "miriam": {
         "id": "00000605",
+        "namespaceEmbeddedInLui": false,
         "prefix": "omit"
       },
       "synonyms": [
@@ -636,9 +741,6 @@
     },
     "omp": {
       "pattern": "\\d{7}"
-    },
-    "oprhanet": {
-      "synonyms": []
     },
     "orcid": {
       "namespaces": [
@@ -652,8 +754,19 @@
     "ornaseq": {
       "pattern": "\\d{7}"
     },
+    "orphanet": {
+      "synonyms": [],
+      "title": "Orphanet",
+      "wikidata_property": "P1550"
+    },
     "patent": {
       "synonyms": []
+    },
+    "pathbank": {
+      "example": "SMP0000219",
+      "pattern": "^SMP\\d+$",
+      "title": "PathBank",
+      "url": "https://pathbank.org/view/$1"
     },
     "pco": {
       "pattern": "\\d{7}"
@@ -662,7 +775,8 @@
       "synonyms": []
     },
     "pdbe": {
-      "synonyms": []
+      "synonyms": [],
+      "title": "Protein Data Bank in Europe"
     },
     "pdbechem": {
       "synonyms": []
@@ -681,6 +795,7 @@
         "PF"
       ]
     },
+    "pfam.clan": {},
     "pfr": {
       "pattern": "\\d+",
       "synonyms": [
@@ -773,11 +888,23 @@
     "rnao": {
       "pattern": "\\d{7}"
     },
+    "ro": {
+      "synonyms": [
+        "obo_rel"
+      ],
+      "title": "Relation Ontology"
+    },
     "rs": {
       "pattern": "\\d{7}"
     },
     "rxno": {
+      "download": "https://github.com/rsc-ontologies/rxno/raw/master/rxno.obo",
       "pattern": "\\d{7}"
+    },
+    "rxnorm": {
+      "pattern": "[0-9]{1,7}",
+      "url": "https://mor.nlm.nih.gov/RxNav/search?searchBy=RXCUI&searchTerm=$1",
+      "wikidata_property": "P3345"
     },
     "sgd": {
       "synonyms": [
@@ -790,11 +917,28 @@
     "signor": {
       "synonyms": [
         "SIGNOR"
-      ]
+      ],
+      "title": "Signaling Network Open Resource"
+    },
+    "smiles": {
+      "title": "Simplified molecular-input line-entry system",
+      "wikidata_property": "P233"
+    },
+    "smpdb": {
+      "example": "SMP0000219",
+      "miriam": {
+        "id": "00000104",
+        "namespaceEmbeddedInLui": false,
+        "prefix": "smpdb"
+      },
+      "pattern": "^SMP\\d+$",
+      "title": "Small Molecule Pathway Database",
+      "url": "https://smpdb.ca/view/$1"
     },
     "snomedct": {
       "miriam": {
         "id": "00000269",
+        "namespaceEmbeddedInLui": false,
         "prefix": "snomedct"
       },
       "synonyms": [
@@ -867,7 +1011,8 @@
       "synonyms": [
         "UM-BBD_compID"
       ],
-      "url": "http://eawag-bbd.ethz.ch/servlets/pageservlet?ptype=c&compID=$1"
+      "url": "http://eawag-bbd.ethz.ch/servlets/pageservlet?ptype=c&compID=$1",
+      "wikidata_property": "P8121"
     },
     "umbbd.enzyme": {
       "synonyms": [
@@ -890,13 +1035,19 @@
     "umls": {
       "miriam": {
         "id": "00000233",
+        "namespaceEmbeddedInLui": false,
         "prefix": "umls"
       },
       "synonyms": [
         "UMLS",
         "UMLS_CUI",
         "UMLS CUI"
-      ]
+      ],
+      "wikidata_property": "P2892"
+    },
+    "unii": {
+      "title": "Unique Ingredient Identifier",
+      "wikidata_property": "P652"
     },
     "uniprot": {
       "synonyms": [
@@ -920,6 +1071,7 @@
       ],
       "url": "https://web.expasy.org/variant_pages/$1.html"
     },
+    "unpd": {},
     "upa": {
       "pattern": "\\d{8}",
       "synonyms": [
@@ -957,6 +1109,11 @@
       "pattern": "\\d{7}",
       "synonyms": [
         "WBPhenotype"
+      ]
+    },
+    "wikidata": {
+      "synonyms": [
+        "wd"
       ]
     },
     "wikipathways": {
@@ -1031,7 +1188,7 @@
       "UMLS CUI:": "UMLS",
       "URL: ": "URL",
       "VFB:FBbt_": "FBbt",
-      "chembl target:CHEMBL": "CHEMBL:CHEMBL",
+      "chembl target:CHEMBL": "chembl.target:CHEMBL",
       "protein ontology:PR\\:": "PR:PR:"
     }
   }

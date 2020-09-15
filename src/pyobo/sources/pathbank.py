@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from ..path_utils import ensure_df
 from ..struct import Obo, Reference, Term, TypeDef
-from ..struct.defs import is_a, pathway_has_part
+from ..struct.typedef import is_a, pathway_has_part
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +49,9 @@ def get_obo() -> Obo:
     return Obo(
         ontology=PREFIX,
         name='PathBank',
-        typedefs=[pathway_type],
+        typedefs=[pathway_type, pathway_has_part],
         iter_terms=iter_terms,
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 

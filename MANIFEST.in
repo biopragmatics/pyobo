@@ -1,7 +1,12 @@
 graft src
 graft tests
+prune benchmarking
+
+recursive-include docs/source *.py
+recursive-include docs/source *.rst
+include docs/Makefile
 
 global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle
 
-exclude .bumpversion.cfg
+exclude .bumpversion.cfg Dockerfile docker-compose.yml
 include *.rst *.txt *.yml LICENSE tox.ini .flake8 doc8.ini .coveragerc

@@ -2,7 +2,6 @@
 
 """Extract and convert BioGRID identifiers."""
 
-from collections import ChainMap
 from typing import Mapping
 
 import pandas as pd
@@ -12,7 +11,7 @@ from pyobo.extract import get_name_id_mapping
 from pyobo.path_utils import ensure_df, prefix_directory_join
 
 PREFIX = 'biogrid'
-VERSION = '3.5.183'
+VERSION = '3.5.186'
 BASE_URL = 'https://downloads.thebiogrid.org/Download/BioGRID/Release-Archive'
 URL = f'{BASE_URL}/BIOGRID-{VERSION}/BIOGRID-IDENTIFIERS-{VERSION}.tab.zip'
 
@@ -42,22 +41,26 @@ taxonomy_remapping = {  # so much for official names
 
     # Not in my current dump, but definitely there!
     "Severe acute respiratory syndrome coronavirus 2": "2697049",  # Severe acute respiratory syndrome coronavirus 2
+    'Middle-East Respiratory Syndrome-related Coronavirus': '1335626',
 }
 
-taxonomy_name_id_mapping = get_name_id_mapping('ncbitaxon')
-lookup = ChainMap(taxonomy_remapping, taxonomy_name_id_mapping)
+
+def _lookup(name):
+    if name in taxonomy_remapping:
+        return taxonomy_remapping[name]
+    return get_name_id_mapping('ncbitaxon')[name]
 
 
 def get_df() -> pd.DataFrame:
     """Get the BioGRID identifiers mapping dataframe."""
     df = ensure_df(PREFIX, URL, skiprows=28, dtype=str)
-    df['taxonomy_id'] = df['ORGANISM_OFFICIAL_NAME'].map(lookup.__getitem__)
+    df['taxonomy_id'] = df['ORGANISM_OFFICIAL_NAME'].map(_lookup)
     return df
 
 
 @cached_mapping(
     path=prefix_directory_join(PREFIX, 'cache', 'xrefs', 'ncbigene.tsv'),
-    header=[f'biogrid_id', f'ncbigene_id'],
+    header=['biogrid_id', 'ncbigene_id'],
 )
 def get_ncbigene_mapping() -> Mapping[str, str]:
     """Get BioGRID to NCBIGENE mapping.
@@ -70,5 +73,5 @@ def get_ncbigene_mapping() -> Mapping[str, str]:
         biogrid_ncbigene_mapping = get_filtered_xrefs('biogrid', 'ncbigene')
     """
     df = get_df()
-    df = df[df['IDENTIFIER_TYPE'] == 'ENTREZ_GENE', ['BIOGRID_ID', 'IDENTIFIER_VALUE']]
+    df = df.loc[df['IDENTIFIER_TYPE'] == 'ENTREZ_GENE', ['BIOGRID_ID', 'IDENTIFIER_VALUE']]
     return dict(df.values)

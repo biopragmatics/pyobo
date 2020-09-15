@@ -2,6 +2,7 @@
 
 """Parser for the MeSH descriptors."""
 
+import itertools as itt
 import logging
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 from xml.etree.ElementTree import Element
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 PREFIX = 'mesh'
 YEAR = '2019'
 DESCRIPTOR_URL = f'ftp://nlmpubs.nlm.nih.gov/online/mesh/{YEAR}/xmlmesh/desc{YEAR}.gz'
+SUPPLEMENT_URL = f'ftp://nlmpubs.nlm.nih.gov/online/mesh/{YEAR}/xmlmesh/supp{YEAR}.gz'
 
 
 def get_obo() -> Obo:
@@ -37,10 +39,10 @@ def get_obo() -> Obo:
 )
 def get_tree_to_mesh_id() -> Mapping[str, str]:
     """Get a mapping from MeSH tree numbers to their MeSH identifiers."""
-    mesh = ensure_mesh()
+    mesh = ensure_mesh_descriptors()
     rv = {}
     for entry in mesh:
-        mesh_id = entry['descriptor_ui']
+        mesh_id = entry['identifier']
         for tree_number in entry['tree_numbers']:
             rv[tree_number] = mesh_id
     return rv
@@ -48,10 +50,13 @@ def get_tree_to_mesh_id() -> Mapping[str, str]:
 
 def get_terms() -> Iterable[Term]:
     """Get MeSH OBO terms."""
-    mesh = ensure_mesh()
     mesh_id_to_term: Dict[str, Term] = {}
-    for entry in mesh:
-        identifier = entry['descriptor_ui']
+
+    descriptors = ensure_mesh_descriptors()
+    supplemental_records = ensure_mesh_supplemental_records()
+
+    for entry in itt.chain(descriptors, supplemental_records):
+        identifier = entry['identifier']
         name = entry['name']
         definition = (get_scope_note(entry) or '').strip()
 
@@ -72,8 +77,8 @@ def get_terms() -> Iterable[Term]:
             synonyms=synonyms,
         )
 
-    for entry in mesh:
-        mesh_id_to_term[entry['descriptor_ui']].parents = [
+    for entry in descriptors:
+        mesh_id_to_term[entry['identifier']].parents = [
             mesh_id_to_term[parent_descriptor_id].reference
             for parent_descriptor_id in entry['parents']
         ]
@@ -81,27 +86,35 @@ def get_terms() -> Iterable[Term]:
     return mesh_id_to_term.values()
 
 
-@cached_json(path=prefix_directory_join(PREFIX, f'mesh_{YEAR}.json'))
-def ensure_mesh() -> List[Mapping[str, Any]]:
+@cached_json(path=prefix_directory_join(PREFIX, f'mesh{YEAR}.json'))
+def ensure_mesh_descriptors() -> List[Mapping[str, Any]]:
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
     path = ensure_path(PREFIX, DESCRIPTOR_URL)
     root = parse_xml_gz(path)
-    return get_descriptor_records(root)
+    return get_descriptor_records(root, id_key='DescriptorUI', name_key='DescriptorName/String')
 
 
-def get_descriptor_records(element: Element) -> List[Mapping]:
+@cached_json(path=prefix_directory_join(PREFIX, f'supp{YEAR}.json'))
+def ensure_mesh_supplemental_records() -> List[Mapping[str, Any]]:
+    """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
+    path = ensure_path(PREFIX, SUPPLEMENT_URL)
+    root = parse_xml_gz(path)
+    return get_descriptor_records(root, id_key='SupplementalRecordUI', name_key='SupplementalRecordName/String')
+
+
+def get_descriptor_records(element: Element, id_key: str, name_key) -> List[Mapping]:
     """Get MeSH descriptor records."""
     logger.info('extract MeSH descriptors, concepts, and terms')
 
     rv = [
-        get_descriptor_record(descriptor)
+        get_descriptor_record(descriptor, id_key=id_key, name_key=name_key)
         for descriptor in tqdm(element, desc='Getting MeSH Descriptors')
     ]
     logger.debug(f'got {len(rv)} descriptors')
 
     # cache tree numbers
     tree_number_to_descriptor_ui = {
-        tree_number: descriptor['descriptor_ui']
+        tree_number: descriptor['identifier']
         for descriptor in rv
         for tree_number in descriptor['tree_numbers']
     }
@@ -135,11 +148,21 @@ def get_scope_note(term) -> Optional[str]:
             return concept['ScopeNote']
 
 
-def get_descriptor_record(element: Element) -> Dict[str, Any]:
-    """Get descriptor records from the main element."""
+def get_descriptor_record(
+    element: Element,
+    id_key: str,
+    name_key: str,
+) -> Dict[str, Any]:
+    """Get descriptor records from the main element.
+
+    :param element: An XML element
+    :param id_key: For descriptors, set to 'DescriptorUI'. For supplement, set to 'SupplementalRecordUI'
+    :param name_key: For descriptors, set to 'DescriptorName/String'.
+     For supplement, set to 'SupplementalRecordName/String'
+    """
     return {
-        'descriptor_ui': element.findtext('DescriptorUI'),
-        'name': element.findtext('DescriptorName/String'),
+        'identifier': element.findtext(id_key),
+        'name': element.findtext(name_key),
         'tree_numbers': sorted({
             x.text
             for x in element.findall('TreeNumberList/TreeNumber')

@@ -34,6 +34,7 @@ def get_obo() -> Obo:
         name='Reactome',
         iter_terms=iter_terms,
         typedefs=[from_species],
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
