@@ -198,7 +198,7 @@ class Term(Referenced):
         for parent in sorted(self.parents, key=attrgetter('prefix', 'identifier')):
             yield f'is_a: {parent}'
 
-        for type_def, references in sorted(self.relationships.items(), key=lambda x: x[0].name or x[0].identifier):
+        for type_def, references in sorted(self.relationships.items(), key=_sort_relations):
             for reference in references:
                 s = f'relationship: {type_def.curie} {reference.curie}'
                 if write_relation_comments:
@@ -216,6 +216,11 @@ class Term(Referenced):
 
         for synonym in sorted(self.synonyms, key=attrgetter('name')):
             yield synonym.to_obo()
+
+
+def _sort_relations(r):
+    typedef, _references = r
+    return typedef.reference.name or typedef.reference.identifier
 
 
 @dataclass
