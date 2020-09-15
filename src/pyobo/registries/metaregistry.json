@@ -866,7 +866,8 @@
     },
     "reactome": {
       "synonyms": [
-        "RE"
+        "RE",
+        "REACT"
       ],
       "wikidata_property": "P3937"
     },
