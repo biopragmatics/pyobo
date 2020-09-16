@@ -69,6 +69,10 @@ def get_name_by_curie(curie: str) -> Optional[str]:
 @wrap_norm_prefix
 def get_name(prefix: str, identifier: str) -> Optional[str]:
     """Get the name for an entity."""
+    if prefix == 'uniprot':
+        from protmapper import uniprot_client
+        return uniprot_client.get_mnemonic(identifier)
+
     try:
         id_name = get_id_name_mapping(prefix)
     except NoOboFoundry:
