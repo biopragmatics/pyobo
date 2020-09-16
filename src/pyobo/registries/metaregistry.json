@@ -688,6 +688,7 @@
       ]
     },
     "ncit": {
+      "download": "http://purl.obolibrary.org/obo/ncit.obo",
       "miriam": {
         "id": "00000139",
         "namespaceEmbeddedInLui": false,
@@ -703,8 +704,7 @@
         "NCIT_Thesaurus",
         "NCITm",
         "NCITt"
-      ],
-      "url": "http://purl.obolibrary.org/obo/ncit.obo"
+      ]
     },
     "nextprot": {
       "synonyms": [
