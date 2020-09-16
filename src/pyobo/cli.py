@@ -235,12 +235,17 @@ def ls():
 
 @main.command()
 @click.argument('text')
-def normalize(text: str):
+@click.option('--name', is_flag=True)
+def normalize(text: str, name: bool):
     """Normalize a prefix or CURIE."""
     if ':' in text:  # it's a curie
-        click.echo(':'.join(normalize_curie(text)))
+        s = ':'.join(normalize_curie(text))
     else:
-        click.echo(normalize_prefix(text))
+        s = normalize_prefix(text)
+    if name:
+        name = get_name_by_curie(s)
+        s = f'{s} ! {name}'
+    click.echo(s)
 
 
 @main.command()
