@@ -703,7 +703,8 @@
         "NCIT_Thesaurus",
         "NCITm",
         "NCITt"
-      ]
+      ],
+      "url": "http://purl.obolibrary.org/obo/ncit.obo"
     },
     "nextprot": {
       "synonyms": [
