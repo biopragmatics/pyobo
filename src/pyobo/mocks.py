@@ -13,6 +13,7 @@ __all__ = [
     'get_mock_id_name_mapping',
     'get_mock_id_synonyms_mapping',
     'get_mock_get_xrefs_df',
+    'get_mock_id_alts_mapping',
 ]
 
 
@@ -32,6 +33,24 @@ def get_mock_id_synonyms_mapping(data: Mapping[str, Mapping[str, List[str]]]) ->
     return _replace_mapping_getter('pyobo.extract.get_id_synonyms_mapping', data)
 
 
+def get_mock_id_alts_mapping(data: Mapping[str, Mapping[str, List[str]]]) -> mock.patch:
+    """Mock the :func:`pyobo.extract.get_id_to_alts` function.
+
+    :param data: A mapping from prefix to mappings of identifier to lists of alternative identifiers.
+    """
+    return _replace_mapping_getter('pyobo.extract.get_id_to_alts', data)
+
+
+X = TypeVar('X')
+
+
+def _replace_mapping_getter(name: str, data: Mapping[str, X]) -> mock.patch:
+    def _mock_get_data(prefix: str) -> X:
+        return data.get(prefix, {})
+
+    return mock.patch(name, side_effect=_mock_get_data)
+
+
 def get_mock_get_xrefs_df(df: Union[List[Tuple[str, str, str, str, str]], pd.DataFrame]) -> mock.patch:
     """Mock the :func:`pyobo.xrefsdb.xrefs_pipeline.get_xref_df` function.
 
@@ -44,13 +63,3 @@ def get_mock_get_xrefs_df(df: Union[List[Tuple[str, str, str, str, str]], pd.Dat
         return df
 
     return mock.patch('pyobo.xrefdb.xrefs_pipeline.get_xref_df', side_effect=_mock_get_xrefs_df)
-
-
-X = TypeVar('X')
-
-
-def _replace_mapping_getter(name: str, data: Mapping[str, X]) -> mock.patch:
-    def _mock_get_id_synonyms_mapping(prefix: str) -> X:
-        return data[prefix]
-
-    return mock.patch(name, side_effect=_mock_get_id_synonyms_mapping)
