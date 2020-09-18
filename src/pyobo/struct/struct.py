@@ -2,8 +2,6 @@
 
 """Data structures for OBO."""
 
-from __future__ import annotations
-
 import gzip
 import json
 import logging
@@ -52,7 +50,7 @@ class Synonym:
     specificity: str = 'EXACT'
 
     #: The type of synonym. Must be defined in OBO document!
-    type: Optional[SynonymTypeDef] = None
+    type: Optional['SynonymTypeDef'] = None
 
     #: References to articles where the synonym appears
     provenance: List[Reference] = field(default_factory=list)
@@ -80,7 +78,7 @@ class SynonymTypeDef:
         return f'synonymtypedef: {self.id} "{self.name}"'
 
     @classmethod
-    def from_text(cls, text) -> SynonymTypeDef:
+    def from_text(cls, text) -> 'SynonymTypeDef':
         """Get a type definition from text that's normalized."""
         return cls(
             id=text.lower().replace('-', '_').replace(' ', '_').replace('"', "").replace(')', '').replace('(', ''),
@@ -312,7 +310,7 @@ class Obo:
             json.dump(nx.node_link_data(graph), file)
 
     @classmethod
-    def from_obonet_gz(cls, path: str) -> Obo:
+    def from_obonet_gz(cls, path: str) -> 'Obo':
         """Read OBO from a pre-compiled Obonet JSON."""
         return cls.from_obonet(get_gzipped_graph(path))
 
@@ -370,7 +368,7 @@ class Obo:
                     self._hierarchy.add_edge(term.identifier, parent.identifier)
         return self._hierarchy
 
-    def to_obonet(self: Obo, *, use_tqdm: bool = False) -> nx.MultiDiGraph:
+    def to_obonet(self: 'Obo', *, use_tqdm: bool = False) -> nx.MultiDiGraph:
         """Export as a :mod`obonet` style graph."""
         rv = nx.MultiDiGraph()
         rv.graph.update({
