@@ -168,7 +168,7 @@ class Term(Referenced):
     def _definition_fp(self):
         return f'"{self.definition}" [{comma_separate(self.provenance)}]'
 
-    def iterate_properties(self) -> Iterable[str, str]:
+    def iterate_properties(self) -> Iterable[Tuple[str, str]]:
         """Iterate over pairs of property and values."""
         for prop, values in self.properties.items():
             for value in values:
