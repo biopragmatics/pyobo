@@ -23,12 +23,10 @@ mock_id_synonyms_mapping = get_mock_id_synonyms_mapping({
 class TestGround(unittest.TestCase):
     """Test grounding."""
 
-    @mock_id_name_mapping
-    @mock_id_synonyms_mapping
-    def test_ground(self, _, __):
+    def test_ground(self):
         """Test grounding a ChEBI entry by name and synonym."""
         for query in ('Fusilade II', 'fluazifop-P-butyl'):
-            with self.subTest(query=query):
+            with self.subTest(query=query), mock_id_name_mapping, mock_id_synonyms_mapping:
                 prefix, identifier, name = pyobo.ground('chebi', query)
                 self.assertIsNotNone(prefix)
                 self.assertIsNotNone(identifier)
