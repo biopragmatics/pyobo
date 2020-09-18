@@ -77,7 +77,7 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_xrefs(self):
         """Test getting parents from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes['CHEBI:51990']
-        xrefs = list(iterate_node_xrefs(data))
+        xrefs = list(iterate_node_xrefs(prefix='chebi', data=data))
         self.assertEqual(7, len(xrefs))
         # NOTE the prefixes are remapped by PyOBO
         self.assertEqual({'pubmed', 'cas', 'beilstein', 'reaxys'}, {

@@ -2,15 +2,13 @@
 
 """Use synonyms from OBO to normalize names."""
 
-from __future__ import annotations
-
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, Union
 
-from .extract import get_id_name_mapping, get_id_synonyms_mapping
+from . import extract
 from .identifier_utils import normalize_dashes, normalize_prefix
 from .io_utils import multisetdict
 
@@ -144,8 +142,8 @@ class OboNormalizer(Normalizer):
     def __init__(self, prefix: str) -> None:  # noqa: D107
         self.prefix = prefix
         self._len_prefix = len(prefix)
-        id_to_name = get_id_name_mapping(prefix)
-        id_to_synonyms = get_id_synonyms_mapping(prefix)
+        id_to_name = extract.get_id_name_mapping(prefix)
+        id_to_synonyms = extract.get_id_synonyms_mapping(prefix)
         super().__init__(
             id_to_name=dict(id_to_name),
             id_to_synonyms=dict(id_to_synonyms),
@@ -193,7 +191,7 @@ class MultiNormalizer:
     normalizers: List[Normalizer]
 
     @staticmethod
-    def from_prefixes(prefixes: List[str]) -> MultiNormalizer:
+    def from_prefixes(prefixes: List[str]) -> 'MultiNormalizer':
         """Instantiate normalizers based on the given prefixes, in preferred order.."""
         return MultiNormalizer([
             get_normalizer(prefix)
