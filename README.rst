@@ -241,6 +241,33 @@ Get a hierarchy with properties pre-loaded in the node data dictionaries:
     assert prop in chebi_hierarchy.nodes['chebi:132964']
     assert chebi_hierarchy.nodes['chebi:132964'][prop] == 'C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F'
 
+Writings Tests that Use PyOBO
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If you're writing your own code that relies on PyOBO, and unit
+testing it (as you should) in a continuous integration setting,
+you've probably realized that loading all of the resources on each
+build is not so fast. In those scenarios, you can use some of the
+pre-build patches like in the following:
+
+.. code-block:: python
+
+    import unittest
+    import pyobo
+    from pyobo.mocks import get_mock_id_name_mapping
+
+    mock_id_name_mapping = get_mock_id_name_mapping({
+        'chebi': {
+            '132964': 'fluazifop-P-butyl',
+        },
+    })
+
+    class MyTestCase(unittest.TestCase):
+        def my_test(self):
+            with mock_id_name_mapping:
+                # use functions directly, or use your functions that wrap them
+                pyobo.get_name('chebi', '1234')
+
+
 Installation |pypi_version| |python_versions| |pypi_license|
 ------------------------------------------------------------
 PyOBO can be installed from `PyPI <https://pypi.org/project/pyobo/>`_ with:
