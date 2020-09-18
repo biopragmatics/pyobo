@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Test mapping program"""
+"""Test mapping program."""
 
 import unittest
 

@@ -22,7 +22,7 @@ class TestMapping(unittest.TestCase):
     """Test extracting information."""
 
     def test_get_names(self):
-        """Test getting names"""
+        """Test getting names."""
         id_to_name = get_id_name_mapping('chebi', url=TEST_CHEBI_OBO_PATH, local=True)
         for identifier in id_to_name:
             self.assertFalse(identifier.startswith('CHEBI'))

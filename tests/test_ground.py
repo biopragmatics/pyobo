@@ -16,7 +16,7 @@ mock_id_name_mapping = get_mock_id_name_mapping({
 mock_id_synonyms_mapping = get_mock_id_synonyms_mapping({
     'chebi': {
         '132964': ['Fusilade II'],
-    }
+    },
 })
 
 
@@ -32,5 +32,5 @@ class TestGround(unittest.TestCase):
                 self.assertIsNotNone(identifier)
                 self.assertIsNotNone(name)
                 self.assertEqual('chebi', prefix)
-                self.assertEqual('132964', identifier, )
+                self.assertEqual('132964', identifier)
                 self.assertEqual('fluazifop-P-butyl', name)

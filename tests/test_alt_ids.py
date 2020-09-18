@@ -15,7 +15,7 @@ mock_id_alts_mapping = get_mock_id_alts_mapping({
 
 mock_id_names_mapping = get_mock_id_name_mapping({
     'go': {
-        '0003700': 'DNA-binding transcription factor activity'
+        '0003700': 'DNA-binding transcription factor activity',
     },
     'ncbitaxon': {
         '52818': 'Allamanda cathartica',
