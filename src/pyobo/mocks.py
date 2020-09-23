@@ -2,7 +2,7 @@
 
 """Mocks for PyOBO."""
 
-from typing import List, Mapping, Tuple, TypeVar, Union
+from typing import List, Mapping, Optional, Tuple, TypeVar, Union
 from unittest import mock
 
 import pandas as pd
@@ -63,3 +63,10 @@ def get_mock_get_xrefs_df(df: Union[List[Tuple[str, str, str, str, str]], pd.Dat
         return df
 
     return mock.patch('pyobo.xrefdb.xrefs_pipeline.get_xref_df', side_effect=_mock_get_xrefs_df)
+
+
+def _make_mock_get_name(name: str, data: Mapping[str, Mapping[str, X]]) -> mock.patch:
+    def _get_name(prefix: str, identifier: str) -> Optional[X]:
+        return data.get(prefix, {}).get(identifier)
+
+    return mock.patch(name, side_effect=_get_name)
