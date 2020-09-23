@@ -11,7 +11,10 @@ import networkx as nx
 import pandas as pd
 
 from .cache_utils import cached_df, cached_mapping, cached_multidict
-from .constants import GLOBAL_SKIP, RAW_DIRECTORY
+from .constants import (
+    GLOBAL_SKIP, RAW_DIRECTORY, RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX, TARGET_ID,
+    TARGET_PREFIX,
+)
 from .getters import NoOboFoundry, get
 from .identifier_utils import normalize_curie, wrap_norm_prefix
 from .path_utils import prefix_directory_join
@@ -149,9 +152,17 @@ def get_properties_df(prefix: str, **kwargs) -> pd.DataFrame:
 def get_filtered_properties_mapping(prefix: str, prop: str, use_tqdm: bool = False, **kwargs) -> Mapping[str, str]:
     """Extract a single property for each term as a dictionary."""
     path = prefix_directory_join(prefix, 'cache', 'properties', f"{prop}.tsv")
+    all_properties_path = prefix_directory_join(prefix, 'cache', 'properties.tsv')
 
     @cached_mapping(path=path, header=[f'{prefix}_id', prop])
     def _mapping_getter() -> Mapping[str, str]:
+        if os.path.exists(all_properties_path):
+            logger.info('[%s] loading pre-cached properties', prefix)
+            df = pd.read_csv(all_properties_path, sep='\t')
+            logger.info('[%s] filtering pre-cached properties', prefix)
+            df = df.loc[df['property'] == prop, [f'{prefix}_id', 'value']]
+            return dict(df.values)
+
         obo = get(prefix, **kwargs)
         return obo.get_filtered_properties_mapping(prop, use_tqdm=use_tqdm)
 
@@ -162,9 +173,16 @@ def get_filtered_properties_mapping(prefix: str, prop: str, use_tqdm: bool = Fal
 def get_filtered_properties_df(prefix: str, prop: str, *, use_tqdm: bool = False, **kwargs) -> pd.DataFrame:
     """Extract a single property for each term."""
     path = prefix_directory_join(prefix, 'cache', 'properties', f"{prop}.tsv")
+    all_properties_path = prefix_directory_join(prefix, 'cache', 'properties.tsv')
 
     @cached_df(path=path, dtype=str)
     def _df_getter() -> pd.DataFrame:
+        if os.path.exists(all_properties_path):
+            logger.info('[%s] loading pre-cached properties', prefix)
+            df = pd.read_csv(all_properties_path, sep='\t')
+            logger.info('[%s] filtering pre-cached properties', prefix)
+            return df.loc[df['property'] == prop, [f'{prefix}_id', 'value']]
+
         obo = get(prefix, **kwargs)
         return obo.get_filtered_properties_df(prop, use_tqdm=use_tqdm)
 
@@ -195,9 +213,18 @@ def get_filtered_relations_df(
     """Get all of the given relation."""
     relation = get_reference_tuple(relation)
     path = prefix_directory_join(prefix, 'cache', 'relations', f'{relation[0]}:{relation[1]}.tsv')
+    all_relations_path = prefix_directory_join(prefix, 'cache', 'relations.tsv')
+
+    # chebi_id        relation_ns     relation_id     target_ns       target_id
 
     @cached_df(path=path, dtype=str)
     def _df_getter() -> pd.DataFrame:
+        if os.path.exists(all_relations_path):
+            df = pd.read_csv(all_relations_path, sep='\t')
+            idx = (df[RELATION_PREFIX] == relation.prefix) & (df[RELATION_ID] == relation.identifier)
+            columns = [f'{prefix}_id', TARGET_PREFIX, TARGET_ID]
+            return df.loc[idx, columns]
+
         obo = get(prefix, **kwargs)
         return obo.get_filtered_relations_df(relation, use_tqdm=use_tqdm)
 
@@ -229,10 +256,19 @@ def get_filtered_xrefs(
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
     path = prefix_directory_join(prefix, 'cache', 'xrefs', f"{xref_prefix}.tsv")
+    all_xrefs_path = prefix_directory_join(prefix, 'cache', 'xrefs.tsv')
     header = [f'{prefix}_id', f'{xref_prefix}_id']
 
     @cached_mapping(path=path, header=header, use_tqdm=use_tqdm)
     def _get_mapping() -> Mapping[str, str]:
+        if os.path.exists(all_xrefs_path):
+            logger.info('[%s] loading pre-cached xrefs', prefix)
+            df = pd.read_csv(all_xrefs_path, sep='\t')
+            logger.info('[%s] filtering pre-cached xrefs', prefix)
+            idx = (df[SOURCE_PREFIX] == prefix) & (df[TARGET_PREFIX] == prefix)
+            df = df.loc[idx, [SOURCE_ID, TARGET_ID]]
+            return dict(df.values)
+
         obo = get(prefix, **kwargs)
         return obo.get_filtered_xrefs_mapping(xref_prefix, use_tqdm=use_tqdm)
 
