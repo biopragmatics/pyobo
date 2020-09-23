@@ -17,8 +17,8 @@ from .cli_utils import echo_df, verbose_option
 from .constants import RAW_DIRECTORY
 from .extract import (
     get_ancestors, get_descendants, get_filtered_properties_df, get_filtered_relations_df, get_filtered_xrefs,
-    get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_name_by_curie, get_properties_df,
-    get_relations_df, get_xrefs_df, iter_cached_obo,
+    get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_name, get_name_by_curie,
+    get_properties_df, get_relations_df, get_xrefs_df, iter_cached_obo,
 )
 from .identifier_utils import normalize_curie, normalize_prefix
 from .sources import CONVERTED, iter_converted_obos
@@ -73,12 +73,20 @@ def names(prefix: str):
 @verbose_option
 def synonyms(prefix: str):
     """Page through the synonyms for entities in the given namespace."""
-    id_to_synonyms = get_id_synonyms_mapping(prefix)
-    click.echo_via_pager('\n'.join(
-        f'{identifier}\t{_synonym}'
-        for identifier, _synonyms in id_to_synonyms.items()
-        for _synonym in _synonyms
-    ))
+    if ':' in prefix:
+        prefix, identifier = normalize_curie(prefix)
+        name = get_name(prefix, identifier)
+        id_to_synonyms = get_id_synonyms_mapping(prefix)
+        click.echo(f'Synonyms for {prefix}:{identifier} ! {name}')
+        for synonym in id_to_synonyms.get(identifier, []):
+            click.echo(synonym)
+    else:  # it's a prefix
+        id_to_synonyms = get_id_synonyms_mapping(prefix)
+        click.echo_via_pager('\n'.join(
+            f'{identifier}\t{_synonym}'
+            for identifier, _synonyms in id_to_synonyms.items()
+            for _synonym in _synonyms
+        ))
 
 
 @main.command()
