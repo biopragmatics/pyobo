@@ -5,7 +5,7 @@
 import logging
 import os
 from functools import lru_cache
-from typing import Iterable, List, Mapping, Optional, Tuple, Union
+from typing import Iterable, List, Mapping, Optional, Set, Tuple, Union
 
 import networkx as nx
 import pandas as pd
@@ -434,7 +434,7 @@ def get_descendants(
     include_has_member: bool = False,
     use_tqdm: bool = False,
     **kwargs,
-) -> List[str]:
+) -> Set[str]:
     """Get all of the descendants (children) of the term as CURIEs."""
     hierarchy = get_hierarchy(
         prefix=prefix,
@@ -453,7 +453,7 @@ def get_ancestors(
     include_has_member: bool = False,
     use_tqdm: bool = False,
     **kwargs,
-) -> List[str]:
+) -> Set[str]:
     """Get all of the ancestors (parents) of the term as CURIEs."""
     hierarchy = get_hierarchy(
         prefix=prefix,
