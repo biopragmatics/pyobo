@@ -3,7 +3,7 @@
 """Data structures for OBO."""
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Mapping, Optional
 
 from .registry import Registry, miriam
 from .utils import obo_escape
@@ -63,6 +63,16 @@ class Reference:
     @property
     def _escaped_identifier(self):
         return obo_escape(self.identifier)
+
+    def to_dict(self) -> Mapping[str, str]:
+        """Return the reference as a dictionary."""
+        rv = {
+            'prefix': self.prefix,
+            'identifier': self.identifier,
+        }
+        if self.name:
+            rv['name'] = self.name
+        return rv
 
     def __str__(self):  # noqa: D105
         identifier_lower = self.identifier.lower()
