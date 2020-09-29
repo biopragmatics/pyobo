@@ -308,6 +308,8 @@ Their corresponding entries can have some combination of these keys:
 - ``miriam``: a dictionary containing "id" and "prefix" to point to MIRIAM
 - ``obofoundry``: a dictionary containing "prefix" to point to OBO Foundry
 - ``ols``, a dictionary containing "ontologyId" to point to OLS
+- ``references``, a list of URLs to web pages and articles describing the resource. Often
+  used for NCBI resources that can't actually be accessed, but seem to keep popping up
 
 Other entries in the metaregistry:
 

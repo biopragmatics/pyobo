@@ -100,7 +100,9 @@
     },
     "cas": {
       "synonyms": [
-        "CASID"
+        "CASID",
+        "SECONDARY_CAS_RN",
+        "CAS_RN"
       ],
       "wikidata_property": "P231"
     },
@@ -133,7 +135,8 @@
       "pattern": "^CHEMBL\\d+$",
       "synonyms": [
         "chembl",
-        "ChEMBL"
+        "ChEMBL",
+        "ChEMBL_ID"
       ],
       "wikidata_property": "P592"
     },
@@ -242,7 +245,8 @@
     },
     "drugbank": {
       "synonyms": [
-        "DrugBank"
+        "DrugBank",
+        "DRUGBANK_ID"
       ],
       "wikidata_property": "P715"
     },
@@ -487,6 +491,14 @@
     "inchikey": {
       "wikidata_property": "P235"
     },
+    "inn": {
+      "note": "can not find a place to resolve to",
+      "synonyms": [
+        "INN_ID"
+      ],
+      "title": "International Nonproprietary Names",
+      "url": "https://mednet-communities.net/inn/db/ViewINN.aspx?i=$1"
+    },
     "interpro": {
       "synonyms": [
         "InterPro",
@@ -505,6 +517,10 @@
       ]
     },
     "iuphar.ligand": {
+      "synonyms": [
+        "IUPHAR_LIGAND",
+        "IUPHAR_LIGAND_ID"
+      ],
       "wikidata_property": "P595"
     },
     "iuphar.receptor": {
@@ -578,7 +594,9 @@
         "MESHA",
         "MESHC",
         "MESHPP",
-        "MESHCS"
+        "MESHCS",
+        "MESH_SUPPLEMENTAL_RECORD_UI",
+        "MESH_DESCRIPTOR_UI"
       ],
       "wikidata_property": "P486"
     },
@@ -632,6 +650,15 @@
     },
     "mmo": {
       "pattern": "\\d{7}"
+    },
+    "mmsl": {
+      "references": [
+        "https://www.nlm.nih.gov/research/umls/rxnorm/sourcereleasedocs/mmsl.html"
+      ],
+      "synonyms": [
+        "MMSL_CODE"
+      ],
+      "title": "Multum MediSource Lexicon"
     },
     "mmusdv": {
       "pattern": "\\d{7}",
@@ -706,6 +733,19 @@
         "NCITt"
       ]
     },
+    "nddf": {
+      "references": [
+        "https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/NDDF/index.html"
+      ],
+      "title": "National Drug Data File"
+    },
+    "ndfrt": {
+      "bioportal": "NDFRT",
+      "synonyms": [
+        "NUI"
+      ],
+      "title": "National Drug File - Reference Terminology"
+    },
     "nextprot": {
       "synonyms": [
         "NXP"
@@ -774,6 +814,11 @@
     },
     "pdb": {
       "synonyms": []
+    },
+    "pdb.ligand": {
+      "synonyms": [
+        "PDB_CHEM_ID"
+      ]
     },
     "pdbe": {
       "synonyms": [],
@@ -849,6 +894,7 @@
         "DSSTox_CID",
         "CID",
         "pubchem_id",
+        "PUBCHEM_CID",
         "Pubchem"
       ],
       "wikidata_property": "P662"
@@ -1080,6 +1126,12 @@
         "UPa"
       ]
     },
+    "vandf": {
+      "references": [
+        "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2244318/"
+      ],
+      "title": "Veterans Administration National Drug File"
+    },
     "vega": {
       "synonyms": [
         "VEGA"
@@ -1090,6 +1142,12 @@
     },
     "vto": {
       "pattern": "\\d{7}"
+    },
+    "vuid": {
+      "references": [
+        "https://academic.oup.com/jamia/article/17/4/432/866953"
+      ],
+      "title": "Veterans Health Administration (VHA) unique identifier"
     },
     "vz": {
       "title": "ViralZone",
