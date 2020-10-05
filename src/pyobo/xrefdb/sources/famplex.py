@@ -22,7 +22,14 @@ URL = 'https://github.com/sorgerlab/famplex/raw/master/equivalences.csv'
 
 
 def _get_famplex_df(force: bool = False) -> pd.DataFrame:
-    return ensure_df(prefix='fplx', url=URL, force=force, header=None, names=[TARGET_PREFIX, TARGET_ID, SOURCE_ID])
+    return ensure_df(
+        prefix='fplx',
+        url=URL,
+        force=force,
+        header=None,
+        names=[TARGET_PREFIX, TARGET_ID, SOURCE_ID],
+        sep=',',
+    )
 
 
 def get_famplex_xrefs_df(force: bool = False) -> pd.DataFrame:
@@ -44,7 +51,7 @@ def get_remapping(force: bool = False) -> Mapping[Tuple[str, str], Tuple[str, st
             continue  # MEDSCAN is proprietary and Ben said to skip using these identifiers
         remapped_prefix = normalize_prefix(target_ns)
         if remapped_prefix is None:
-            logger.debug('could not remap %s', target_ns)
+            logger.warning('could not remap %s', target_ns)
         else:
             rv[remapped_prefix, target_id] = 'fplx', source_id, source_id
     return rv
