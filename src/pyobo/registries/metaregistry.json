@@ -381,6 +381,11 @@
       "download": "http://purl.obolibrary.org/obo/gaz.obo",
       "pattern": "\\d{8}"
     },
+    "gbif": {
+      "title": "Global Biodiversity Information Facility",
+      "url": "https://www.gbif.org/species/$1",
+      "wikidata_property": "P846"
+    },
     "geno": {
       "download": "https://raw.githubusercontent.com/monarch-initiative/GENO-ontology/develop/geno-full.obo",
       "pattern": "\\d{7}"
@@ -509,7 +514,8 @@
     "itis": {
       "pattern": "\\d+",
       "title": "Integrated Taxonomic Information System",
-      "url": "https://www.itis.gov/servlet/SingleRpt/SingleRpt?search_topic=TSN&search_value=$1"
+      "url": "https://www.itis.gov/servlet/SingleRpt/SingleRpt?search_topic=TSN&search_value=$1",
+      "wikidata_property": "P815"
     },
     "iuphar.family": {
       "synonyms": [
@@ -712,7 +718,8 @@
         "NCBI_taxid",
         "taxonomy",
         "TAX"
-      ]
+      ],
+      "wikidata_property": "P685"
     },
     "ncit": {
       "download": "http://purl.obolibrary.org/obo/ncit.obo",
@@ -1251,5 +1258,8 @@
       "chembl target:CHEMBL": "chembl.target:CHEMBL",
       "protein ontology:PR\\:": "PR:PR:"
     }
-  }
+  },
+  "wikidata_property_types": [
+    "Q42396390"
+  ]
 }
