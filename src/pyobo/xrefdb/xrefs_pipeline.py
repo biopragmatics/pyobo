@@ -57,9 +57,6 @@ _DEFAULT_PRIORITY_LIST = [
     'drugbank',
     'chembl.compound',
     'zinc',
-    'npass',
-    'unpd',
-    'knapsack',
     # protein families and complexes (and famplexes :))
     'complexportal',
     'fplx',
@@ -74,7 +71,6 @@ _DEFAULT_PRIORITY_LIST = [
     'hp',
     # Taxa
     'ncbitaxon',
-    'itis',
     # If you can get away from MeSH, do it
     'mesh',
     'icd',
