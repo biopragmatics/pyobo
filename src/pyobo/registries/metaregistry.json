@@ -1015,7 +1015,9 @@
         "SNOMEDCT_US_2018_09_01",
         "SNOMEDCTCT_2018_03_01",
         "SNOMEDCT_US_2019_03_01",
-        "SNOMEDCTCT_2019_03_01"
+        "SNOMEDCTCT_2019_03_01",
+        "SNOMEDCT_US_2020_03_01",
+        "SNOMEDCT_US_2020_09_01"
       ]
     },
     "snornabase": {
