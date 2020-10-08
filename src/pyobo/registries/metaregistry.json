@@ -238,7 +238,8 @@
       "synonyms": [
         "do"
       ],
-      "wikidata_property": "P699"
+      "wikidata_property": "P699",
+      "download": "https://github.com/DiseaseOntology/HumanDiseaseOntology/raw/main/src/ontology/doid.obo",
     },
     "dpo": {
       "no_own_terms": true
