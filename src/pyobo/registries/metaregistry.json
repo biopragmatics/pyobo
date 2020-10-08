@@ -227,7 +227,7 @@
       "wikidata_property": "P557"
     },
     "doid": {
-      "download": "https://github.com/DiseaseOntology/HumanDiseaseOntology/raw/main/src/ontology/doid.obo"
+      "download": "https://github.com/DiseaseOntology/HumanDiseaseOntology/raw/main/src/ontology/doid.obo",
       "miriam": {
         "id": "00000233",
         "namespaceEmbeddedInLui": true,
@@ -239,7 +239,7 @@
       "synonyms": [
         "do"
       ],
-      "wikidata_property": "P699",
+      "wikidata_property": "P699"
     },
     "dpo": {
       "no_own_terms": true
