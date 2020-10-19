@@ -22,6 +22,11 @@ logger = logging.getLogger(__name__)
 URL = 'https://query.wikidata.org/bigdata/namespace/wdq/sparql'
 
 
+def get_wikidata_xrefs_df() -> pd.DataFrame:
+    """Get all Wikidata xrefs."""
+    return pd.concat(iterate_wikidata_dfs())
+
+
 def iterate_wikidata_dfs() -> Iterable[pd.DataFrame]:
     """Iterate over WikiData xref dataframes."""
     wikidata_properties = {

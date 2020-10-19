@@ -15,7 +15,7 @@ import pandas as pd
 from more_itertools import pairwise
 from tqdm import tqdm
 
-from .sources import iter_sourced_xref_dfs
+from .sources import iter_xref_plugins
 from ..constants import DATABASE_DIRECTORY, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
 from ..extract import (
     get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts,
@@ -329,7 +329,7 @@ def _iterate_xref_dfs() -> Iterable[pd.DataFrame]:
         if not os.listdir(prefix_directory):
             os.rmdir(prefix_directory)
 
-    yield from iter_sourced_xref_dfs()
+    yield from iter_xref_plugins()
 
 
 def _iterate_metaregistry():
