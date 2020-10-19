@@ -2,42 +2,53 @@
 
 """Sources of xrefs not from OBO."""
 
-from typing import Iterable
+import logging
+from functools import lru_cache
+from pkg_resources import iter_entry_points
+from typing import Callable, Iterable, Mapping
 
 import pandas as pd
 
-from .cbms2019 import get_cbms2019_xrefs_df
-from .chembl import get_chembl_compound_equivalences, get_chembl_protein_equivalences
-from .compath import iter_compath_dfs
-from .famplex import get_famplex_xrefs_df
-from .gilda import get_gilda_xrefs_df
-from .intact import get_intact_complex_portal_xrefs_df, get_intact_reactome_xrefs_df
-from .ncit import iter_ncit_dfs
-from .pubchem import get_pubchem_mesh_df
-from .wikidata import iterate_wikidata_dfs
-
 __all__ = [
-    'get_famplex_xrefs_df',
-    'get_gilda_xrefs_df',
-    'get_cbms2019_xrefs_df',
-    'get_intact_complex_portal_xrefs_df',
-    'get_intact_reactome_xrefs_df',
-    'iter_sourced_xref_dfs',
-    'get_chembl_compound_equivalences',
-    'get_chembl_protein_equivalences',
+    'iter_xref_plugins',
+    'has_xref_plugin',
+    'run_xref_plugin',
+    'iter_xref_plugins',
 ]
 
+logger = logging.getLogger(__name__)
 
-def iter_sourced_xref_dfs() -> Iterable[pd.DataFrame]:
-    """Iterate all sourced xref dataframes."""
-    yield get_gilda_xrefs_df()
-    yield get_cbms2019_xrefs_df()
-    yield get_famplex_xrefs_df()
-    yield get_intact_complex_portal_xrefs_df()
-    yield get_intact_reactome_xrefs_df()
-    yield from iter_ncit_dfs()
-    yield from iter_compath_dfs()
-    yield from iterate_wikidata_dfs()
-    yield get_pubchem_mesh_df()
-    yield get_chembl_compound_equivalences()
-    yield get_chembl_protein_equivalences()
+
+@lru_cache()
+def _get_xref_plugins() -> Mapping[str, Callable[[], pd.DataFrame]]:
+    return {
+        entry.name: entry.load()
+        for entry in iter_entry_points(group='pyobo.xrefs')
+    }
+
+
+def has_xref_plugin(prefix: str) -> bool:
+    """Check if there's a plugin for converting the prefix."""
+    return prefix in _get_xref_plugins()
+
+
+def run_xref_plugin(prefix: str) -> pd.DataFrame:
+    """Get a converted PyOBO source."""
+    rv = _get_xref_plugins()[prefix]()
+
+    if isinstance(rv, pd.DataFrame):
+        return rv
+
+    logger.warning('can not load %s since it yields many dataframes', prefix)
+
+
+def iter_xref_plugins() -> Iterable[pd.DataFrame]:
+    """Get all modules in the PyOBO sources."""
+    for _prefix, get_df in sorted(_get_xref_plugins().items()):
+        rv = get_df()
+        if isinstance(rv, pd.DataFrame):
+            yield rv
+        elif isinstance(rv, Iterable):
+            yield from rv
+        else:
+            raise TypeError

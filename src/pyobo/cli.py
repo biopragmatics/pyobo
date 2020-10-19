@@ -21,7 +21,7 @@ from .extract import (
     get_properties_df, get_relations_df, get_xrefs_df, iter_cached_obo,
 )
 from .identifier_utils import normalize_curie, normalize_prefix
-from .sources import CONVERTED, iter_converted_obos
+from .sources import has_nomenclature_plugin, iter_nomenclature_plugins
 from .xrefdb.xrefs_pipeline import (
     DEFAULT_PRIORITY_LIST, get_priority_curie, remap_file_stream,
 )
@@ -197,7 +197,7 @@ def alts(prefix: str):
 @verbose_option
 def cache():
     """Cache all resources."""
-    for obo in iter_converted_obos():
+    for obo in iter_nomenclature_plugins():
         click.secho(f'Caching {obo.ontology}', bold=True, fg='green')
         obo.write_default()
 
@@ -235,7 +235,7 @@ def ls():
         for prefix, path in iter_cached_obo()
     ]
     entries = [
-        (prefix, humanize.naturalsize(size), '✅' if prefix not in CONVERTED else '❌')
+        (prefix, humanize.naturalsize(size), '✅' if not has_nomenclature_plugin(prefix) else '❌')
         for prefix, size in sorted(entries, key=itemgetter(1), reverse=True)
     ]
     click.echo(tabulate(entries, headers=['Source', 'Size', 'OBO']))

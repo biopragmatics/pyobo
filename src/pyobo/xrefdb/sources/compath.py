@@ -46,3 +46,8 @@ def iter_compath_dfs() -> Iterable[pd.DataFrame]:
     yield _get_df('pathbank_wikipathways.csv')
     yield _get_df('special_mappings.csv')
     yield _get_df('wikipathways_reactome.csv')
+
+
+def get_compath_xrefs_df() -> Iterable[pd.DataFrame]:
+    """Iterate over all ComPath mappings."""
+    return pd.concat(iter_compath_dfs())
