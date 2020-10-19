@@ -4,10 +4,10 @@
 
 import logging
 from functools import lru_cache
-from pkg_resources import iter_entry_points
 from typing import Callable, Iterable, Mapping
 
 import pandas as pd
+from pkg_resources import iter_entry_points
 
 __all__ = [
     'iter_xref_plugins',
