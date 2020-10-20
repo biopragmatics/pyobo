@@ -251,6 +251,9 @@
       ],
       "wikidata_property": "P715"
     },
+    "drugbank.salt": {
+      "title": "DrugBank Salts"
+    },
     "drugcentral": {
       "synonyms": [
         "Drug_Central"
@@ -770,6 +773,9 @@
     },
     "oba": {
       "pattern": "\\d{7}"
+    },
+    "obo": {
+      "title": "Internal OBO and PyOBO Relations"
     },
     "ogms": {
       "not_available_as_obo": true
