@@ -716,10 +716,8 @@ def _convert_type_defs(type_defs: Iterable[TypeDef]) -> List[Mapping[str, Any]]:
 
 def _convert_type_def(type_def: TypeDef) -> Mapping[str, Any]:
     """Convert a type def."""
-    return dict(
-        id=type_def.identifier,
-        name=type_def.name,
-    )
+    # TODO add more later
+    return type_def.reference.to_dict()
 
 
 def iterate_graph_synonym_typedefs(graph: nx.MultiDiGraph) -> Iterable[SynonymTypeDef]:
@@ -733,14 +731,19 @@ def iterate_graph_synonym_typedefs(graph: nx.MultiDiGraph) -> Iterable[SynonymTy
 def iterate_graph_typedefs(graph: nx.MultiDiGraph, default_prefix: str) -> Iterable[TypeDef]:
     """Get type definitions from an :mod:`obonet` graph."""
     for typedef in graph.graph.get('typedefs', []):
+        prefix = typedef.get('prefix', default_prefix)
+
+        if 'id' in typedef:
+            identifier = typedef['id']
+        elif 'identifier' in typedef:
+            identifier = typedef['identifier']
+        else:
+            raise KeyError
+
         name = typedef.get('name')
         if name is None:
             logger.warning('[%s] typedef %s is missing a name', graph.graph['ontology'], typedef['id'])
             name = typedef['id']
-
-        prefix, identifier = normalize_curie(typedef['id'])
-        if prefix is None and identifier is None:
-            prefix, identifier = default_prefix, typedef['id']
 
         reference = Reference(prefix=prefix, identifier=identifier, name=name)
 
