@@ -221,7 +221,7 @@ def get_filtered_relations_df(
     def _df_getter() -> pd.DataFrame:
         if os.path.exists(all_relations_path):
             df = pd.read_csv(all_relations_path, sep='\t')
-            idx = (df[RELATION_PREFIX] == relation.prefix) & (df[RELATION_ID] == relation.identifier)
+            idx = (df[RELATION_PREFIX] == relation[0]) & (df[RELATION_ID] == relation[1])
             columns = [f'{prefix}_id', TARGET_PREFIX, TARGET_ID]
             return df.loc[idx, columns]
 
