@@ -11,13 +11,17 @@ from typing import Iterable, List, Mapping, Optional, Union
 
 import click
 import pandas as pd
-from flask import Blueprint, Flask, current_app, jsonify, url_for
+from flasgger import Swagger
+from flask import Blueprint, Flask, current_app, jsonify, render_template, url_for
+from flask_bootstrap import Bootstrap
 from werkzeug.local import LocalProxy
 
+from pyobo.apps.utils import gunicorn_option, host_option, port_option, run_app
+from pyobo.cli_utils import verbose_option
+from pyobo.constants import SOURCE_PREFIX, TARGET_PREFIX
 from pyobo.identifier_utils import normalize_curie, normalize_prefix
 from pyobo.xrefdb.xrefs_pipeline import (
-    Canonicalizer, all_shortest_paths, get_graph_from_xref_df, get_xref_df, single_source_shortest_path,
-    summarize_xref_df,
+    Canonicalizer, get_xref_df, summarize_xref_df,
 )
 
 __all__ = [
@@ -26,64 +30,33 @@ __all__ = [
 ]
 
 summary_df = LocalProxy(lambda: current_app.config['summary'])
-graph = LocalProxy(lambda: current_app.config['graph'])
 canonicalizer: Canonicalizer = LocalProxy(lambda: current_app.config['canonicalizer'])
 
 
 @lru_cache()
 def _single_source_shortest_path(curie: str) -> Optional[Mapping[str, List[Mapping[str, str]]]]:
-    return single_source_shortest_path(graph=graph, curie=curie)
+    return canonicalizer.single_source_shortest_path(curie=curie)
 
 
 @lru_cache()
 def _all_shortest_paths(source_curie: str, target_curie: str) -> List[List[Mapping[str, str]]]:
-    return all_shortest_paths(graph=graph, source_curie=source_curie, target_curie=target_curie)
+    return canonicalizer.all_shortest_paths(source_curie=source_curie, target_curie=target_curie)
 
 
-#: The blueprint that gets added to the app.s
+#: The blueprint that gets added to the app
 search_blueprint = Blueprint('search', __name__)
 
 
 @search_blueprint.route('/')
 def home():
     """Show the home page."""
-    example_url_1 = url_for(
-        f'.{single_source_mappings.__name__}',
-        curie='hgnc:6893',
-    )
-    example_url_2 = url_for(
-        f'.{all_mappings.__name__}',
-        source_curie='hgnc:6893',
-        target_curie='ensembl:ENSG00000186868',
-    )
-    prioritize_path = url_for(
-        f'.{prioritize_curie.__name__}',
-        curie='ensembl:ENSG00000186868',
-    )
-    summary_path = url_for(f'.{summarize.__name__}')
-    summary_one_path = url_for(
-        f'.{summarize_one.__name__}',
-        prefix='umls',
-    )
-    return f'''
-    <h1>PyOBO Mapping Service</h1>
-    <ul>
-    <li>Use the /mappings endpoint to look up equivalent entities,
-     for example, <a href="{example_url_1}">{example_url_1}</a>.</li>
-    <li>Use the /mapping endpoint to look up all mappings between two entities,
-     for example, <a href="{example_url_2}">{example_url_2}</a>.</li>
-    <li>Use the /summarize endpoint to look at a count of all mappings <a href="{summary_path}">{summary_path}</a>.</li>
-    <li>For a specific prefix, add it after like <a href="{summary_one_path}">{summary_one_path}</a>.</li>
-    <li>Use the /prioritize endpoint to get the best CURIE for a given one.
-     for example, <a href="{prioritize_path}">{prioritize_path}</a> remaps MATP to HGNC.</li>
-    </ul>
-        '''
+    return render_template('mapper_home.html')
 
 
 @search_blueprint.route('/mappings/<curie>')
 def single_source_mappings(curie: str):
     """Return all length xrefs from the given identifier."""
-    if curie not in graph:
+    if curie not in canonicalizer.graph:
         return jsonify(
             success=False,
             query=dict(curie=curie),
@@ -95,13 +68,13 @@ def single_source_mappings(curie: str):
 @search_blueprint.route('/mappings/<source_curie>/<target_curie>')
 def all_mappings(source_curie: str, target_curie: str):
     """Return all shortest paths of xrefs between the two identifiers."""
-    if source_curie not in graph:
+    if source_curie not in canonicalizer.graph:
         return jsonify(
             success=False,
             query=dict(source_curie=source_curie, target_curie=target_curie),
             message='could not find source curie',
         )
-    if target_curie not in graph:
+    if target_curie not in canonicalizer.graph:
         return jsonify(
             success=False,
             query=dict(source_curie=source_curie, target_curie=target_curie),
@@ -121,8 +94,8 @@ def summarize():
 def summarize_one(prefix: str):
     """Summarize the mappings."""
     prefix = normalize_prefix(prefix)
-    in_df = summary_df.loc[summary_df['target_ns'] == prefix, ['source_ns', 'count']]
-    out_df = summary_df.loc[summary_df['source_ns'] == prefix, ['target_ns', 'count']]
+    in_df = summary_df.loc[summary_df[TARGET_PREFIX] == prefix, [SOURCE_PREFIX, 'count']]
+    out_df = summary_df.loc[summary_df[SOURCE_PREFIX] == prefix, [TARGET_PREFIX, 'count']]
     return f'''
     <h1>Incoming Mappings to {prefix}</h1>
     {in_df.to_html(index=False)}
@@ -131,24 +104,24 @@ def summarize_one(prefix: str):
     '''
 
 
-@search_blueprint.route('/prioritize/<curie>')
-def prioritize_curie(curie: str):
+@search_blueprint.route('/canonicalize/<curie>')
+def canonicalize(curie: str):
     """Return the best CURIE."""
     # TODO maybe normalize the curie first?
-    norm_curie = normalize_curie(curie)
-    if not norm_curie:
+    norm_prefix, norm_identifier = normalize_curie(curie)
+    if norm_prefix is None or norm_identifier is None:
         return jsonify(
             query=curie,
             normalizable=False,
         )
 
-    norm_curie = ':'.join(norm_curie)
+    norm_curie = f'{norm_prefix}:{norm_identifier}'
 
     rv = dict(query=curie)
     if norm_curie != curie:
         rv['norm_curie'] = norm_curie
 
-    if norm_curie not in graph:
+    if norm_curie not in canonicalizer.graph:
         rv['found'] = False
     else:
         result_curie = canonicalizer.canonicalize(norm_curie)
@@ -182,29 +155,32 @@ def get_app(paths: Union[None, str, Iterable[str]] = None) -> Flask:
             for path in paths
         )
 
-    df['source_ns'] = df['source_ns'].map(normalize_prefix)
-    df['target_ns'] = df['target_ns'].map(normalize_prefix)
+    df[SOURCE_PREFIX] = df[SOURCE_PREFIX].map(normalize_prefix)
+    df[TARGET_PREFIX] = df[TARGET_PREFIX].map(normalize_prefix)
     return _get_app_from_xref_df(df)
 
 
 def _get_app_from_xref_df(df: pd.DataFrame):
     app = Flask(__name__)
+    Swagger(app)
+    Bootstrap(app)
     app.config['summary'] = summarize_xref_df(df)
-    app.config['graph'] = get_graph_from_xref_df(df)
     # TODO allow for specification of priorities in the canonicalizer
-    app.config['canonicalizer'] = Canonicalizer(graph=app.config['graph'])
+    app.config['canonicalizer'] = Canonicalizer.from_df(df)
     app.register_blueprint(search_blueprint)
     return app
 
 
 @click.command()
 @click.option('-x', '--mappings-file')
-@click.option('--port')
-@click.option('--host', type=int)
-def main(mappings_file, port: str, host: int):
+@port_option
+@host_option
+@gunicorn_option
+@verbose_option
+def main(mappings_file, host: str, port: int, gunicorn: bool):
     """Run the mappings app."""
     app = get_app(mappings_file)
-    app.run(port=port, host=host)
+    run_app(app=app, host=host, port=port, gunicorn=gunicorn)
 
 
 if __name__ == '__main__':

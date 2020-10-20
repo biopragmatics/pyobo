@@ -6,6 +6,7 @@ from typing import Iterable
 
 import pandas as pd
 
+from ...constants import PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
 from ...path_utils import ensure_df
 
 __all__ = [
@@ -48,14 +49,15 @@ def get_ncit_hgnc_df() -> pd.DataFrame:
     In this file, the only association type was mapsTo.
     """
     df = ensure_df(PREFIX, HGNC_MAPPINGS_URL, path='ncit_hgnc.csv', sep=',', usecols=['Source Code', 'Target Code'])
-    df.rename(columns={'Source Code': 'source_id', 'Target Code': 'target_id'}, inplace=True)
-    df['target_id'] = df['target_id'].map(lambda s: s[len('HGNC:'):])
+    df.rename(columns={'Source Code': SOURCE_ID, 'Target Code': TARGET_ID}, inplace=True)
+    df[TARGET_ID] = df[TARGET_ID].map(lambda s: s[len('HGNC:'):])
     df.dropna(inplace=True)
 
-    df['source_ns'] = 'ncit'
-    df['target_ns'] = 'hgnc'
-    df['source'] = HGNC_MAPPINGS_URL
-    return df[['source_ns', 'source_id', 'target_ns', 'target_id', 'source']]
+    df[SOURCE_PREFIX] = 'ncit'
+    df[TARGET_PREFIX] = 'hgnc'
+    df[PROVENANCE] = HGNC_MAPPINGS_URL
+    df = df[XREF_COLUMNS]
+    return df
 
 
 def get_ncit_go_df() -> pd.DataFrame:
@@ -64,14 +66,16 @@ def get_ncit_go_df() -> pd.DataFrame:
     In this file, the only association type was mapsTo.
     """
     df = ensure_df(PREFIX, GO_MAPPINGS_URL, path='ncit_go.csv', sep=',')
-    df.rename(columns={'Source Code': 'target_id', 'Target Code': 'source_id'}, inplace=True)
-    df['target_id'] = df['target_id'].map(lambda s: s[len('GO:')])
+    # The data is flipped here
+    df.rename(columns={'Source Code': TARGET_ID, 'Target Code': SOURCE_ID}, inplace=True)
+    df[TARGET_ID] = df[TARGET_ID].map(lambda s: s[len('GO:')])
     df.dropna(inplace=True)
 
-    df['source_ns'] = 'ncit'
-    df['target_ns'] = 'go'
-    df['source'] = GO_MAPPINGS_URL
-    return df[['source_ns', 'source_id', 'target_ns', 'target_id', 'source']]
+    df[SOURCE_PREFIX] = 'ncit'
+    df[TARGET_PREFIX] = 'go'
+    df[PROVENANCE] = GO_MAPPINGS_URL
+    df = df[XREF_COLUMNS]
+    return df
 
 
 def get_ncit_chebi_df() -> pd.DataFrame:
@@ -80,14 +84,15 @@ def get_ncit_chebi_df() -> pd.DataFrame:
     In this file, the only association type was mapsTo.
     """
     df = ensure_df(PREFIX, CHEBI_MAPPINGS_URL, path='ncit_chebi.csv', sep=',')
-    df.rename(columns={'Source Code': 'source_id', 'Target Code': 'target_id'}, inplace=True)
-    df['target_id'] = df['target_id'].map(lambda s: s[len('CHEBI:')])
+    df.rename(columns={'Source Code': SOURCE_ID, 'Target Code': TARGET_ID}, inplace=True)
+    df[TARGET_ID] = df[TARGET_ID].map(lambda s: s[len('CHEBI:')])
     df.dropna(inplace=True)
 
-    df['source_ns'] = 'ncit'
-    df['target_ns'] = 'chebi'
-    df['source'] = CHEBI_MAPPINGS_URL
-    return df[['source_ns', 'source_id', 'target_ns', 'target_id', 'source']]
+    df[SOURCE_PREFIX] = 'ncit'
+    df[TARGET_PREFIX] = 'chebi'
+    df[PROVENANCE] = CHEBI_MAPPINGS_URL
+    df = df[XREF_COLUMNS]
+    return df
 
 
 def get_ncit_uniprot_df() -> pd.DataFrame:
@@ -96,8 +101,9 @@ def get_ncit_uniprot_df() -> pd.DataFrame:
     In this file, the only association type was mapsTo.
     """
     df = ensure_df(PREFIX, UNIPROT_MAPPINGS_URL, path='ncit_uniprot.csv')
-    df.rename(columns={'NCIt Code': 'source_id', 'SwissProt ID': 'target_id'}, inplace=True)
-    df['source_ns'] = 'ncit'
-    df['target_ns'] = 'uniprot'
-    df['source'] = UNIPROT_MAPPINGS_URL
-    return df[['source_ns', 'source_id', 'target_ns', 'target_id', 'source']]
+    df.rename(columns={'NCIt Code': SOURCE_ID, 'SwissProt ID': TARGET_ID}, inplace=True)
+    df[SOURCE_PREFIX] = 'ncit'
+    df[TARGET_PREFIX] = 'uniprot'
+    df[PROVENANCE] = UNIPROT_MAPPINGS_URL
+    df = df[XREF_COLUMNS]
+    return df

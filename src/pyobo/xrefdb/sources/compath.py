@@ -6,6 +6,8 @@ from typing import Iterable
 
 import pandas as pd
 
+from ...constants import PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
+
 __all__ = [
     'iter_compath_dfs',
 ]
@@ -21,17 +23,18 @@ def _get_df(name) -> pd.DataFrame:
     )
     df.rename(
         columns={
-            'Source Resource': 'source_ns',
-            'Source ID': 'source_id',
-            'Target Resource': 'target_ns',
-            'Target ID': 'target_id',
+            'Source Resource': SOURCE_PREFIX,
+            'Source ID': SOURCE_ID,
+            'Target Resource': TARGET_PREFIX,
+            'Target ID': TARGET_ID,
         },
         inplace=True,
     )
     df = df[df['Mapping Type'] == 'equivalentTo']
     del df['Mapping Type']
-    df['source'] = url
-    return df[['source_ns', 'source_id', 'target_ns', 'target_id', 'source']]
+    df[PROVENANCE] = url
+    df = df[XREF_COLUMNS]
+    return df
 
 
 def iter_compath_dfs() -> Iterable[pd.DataFrame]:
@@ -43,3 +46,8 @@ def iter_compath_dfs() -> Iterable[pd.DataFrame]:
     yield _get_df('pathbank_wikipathways.csv')
     yield _get_df('special_mappings.csv')
     yield _get_df('wikipathways_reactome.csv')
+
+
+def get_compath_xrefs_df() -> Iterable[pd.DataFrame]:
+    """Iterate over all ComPath mappings."""
+    return pd.concat(iter_compath_dfs())

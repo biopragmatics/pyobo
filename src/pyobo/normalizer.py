@@ -2,16 +2,14 @@
 
 """Use synonyms from OBO to normalize names."""
 
-from __future__ import annotations
-
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Iterable, List, Mapping, Optional, Set, Tuple, Union
+from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, Union
 
-from .extract import get_id_name_mapping, get_id_synonyms_mapping
-from .identifier_utils import normalize_dashes
+from . import extract
+from .identifier_utils import normalize_dashes, normalize_prefix
 from .io_utils import multisetdict
 
 __all__ = [
@@ -32,19 +30,19 @@ NormalizationResult = Union[NormalizationSuccess, NormalizationFailure]
 class Normalizer(ABC):
     """A normalizer."""
 
-    id_to_name: Mapping[str, str]
-    id_to_synonyms: Mapping[str, List[str]]
+    id_to_name: Dict[str, str]
+    id_to_synonyms: Dict[str, List[str]]
 
     #: A mapping from all synonyms to the set of identifiers that they point to.
     #: In a perfect world, each would only be a single element.
-    synonym_to_identifiers_mapping: Mapping[str, Set[str]]
+    synonym_to_identifiers_mapping: Dict[str, Set[str]]
     #: A mapping from normalized names to the actual ones that they came from
-    norm_name_to_name: Mapping[str, Set[str]]
+    norm_name_to_name: Dict[str, Set[str]]
 
     def __init__(
         self,
-        id_to_name: Mapping[str, str],
-        id_to_synonyms: Mapping[str, List[str]],
+        id_to_name: Dict[str, str],
+        id_to_synonyms: Dict[str, List[str]],
         remove_prefix: Optional[str] = None,
     ) -> None:  # noqa: D107
         self.id_to_name = id_to_name
@@ -111,15 +109,31 @@ class Normalizer(ABC):
 @lru_cache()
 def get_normalizer(prefix: str) -> Normalizer:
     """Get an OBO normalizer."""
-    normalizer = OboNormalizer(prefix)
+    norm_prefix = normalize_prefix(prefix)
+    if norm_prefix is None:
+        raise ValueError(f'unhandled prefix: {prefix}')
+    logger.info('getting obo normalizer for %s', norm_prefix)
+    normalizer = OboNormalizer(norm_prefix)
     logger.debug('normalizer for %s with %s name lookups', normalizer.prefix, len(normalizer.norm_name_to_name))
     return normalizer
 
 
-def ground(prefix: str, query: str) -> NormalizationResult:
-    """Normalize a string given the prefix's labels and synonyms."""
-    normalizer = get_normalizer(prefix)
-    return normalizer.normalize(query)
+def ground(prefix: Union[str, Iterable[str]], query: str) -> NormalizationResult:
+    """Normalize a string given the prefix's labels and synonyms.
+
+    :param prefix: If a string, only grounds against that namespace. If a list, will try grounding
+     against all in that order
+    :param query: The string to try grounding
+    """
+    if isinstance(prefix, str):
+        normalizer = get_normalizer(prefix)
+        return normalizer.normalize(query)
+    else:
+        for p in prefix:
+            norm_prefix, identifier, name = ground(p, query)
+            if norm_prefix and identifier and name:
+                return norm_prefix, identifier, name
+        return None, None, query
 
 
 class OboNormalizer(Normalizer):
@@ -128,8 +142,8 @@ class OboNormalizer(Normalizer):
     def __init__(self, prefix: str) -> None:  # noqa: D107
         self.prefix = prefix
         self._len_prefix = len(prefix)
-        id_to_name = get_id_name_mapping(prefix)
-        id_to_synonyms = get_id_synonyms_mapping(prefix)
+        id_to_name = extract.get_id_name_mapping(prefix)
+        id_to_synonyms = extract.get_id_synonyms_mapping(prefix)
         super().__init__(
             id_to_name=dict(id_to_name),
             id_to_synonyms=dict(id_to_synonyms),
@@ -177,7 +191,7 @@ class MultiNormalizer:
     normalizers: List[Normalizer]
 
     @staticmethod
-    def from_prefixes(prefixes: List[str]) -> MultiNormalizer:
+    def from_prefixes(prefixes: List[str]) -> 'MultiNormalizer':
         """Instantiate normalizers based on the given prefixes, in preferred order.."""
         return MultiNormalizer([
             get_normalizer(prefix)

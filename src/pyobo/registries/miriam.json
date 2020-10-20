@@ -3338,6 +3338,54 @@
   {
     "_links": {
       "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2251/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2251"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2251"
+      }
+    },
+    "created": "2020-05-22T09:05:34.813+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "Datanator is an integrated database of genomic and biochemical data designed to help investigators find data about specific molecules and reactions in specific organisms and specific environments for meta-analyses and mechanistic models. Datanator currently includes metabolite concentrations, RNA modifications and half-lives, protein abundances and modifications, and reaction kinetics integrated from several databases and numerous publications. The Datanator website and REST API provide tools for extracting clouds of data about specific molecules and reactions in specific organisms and specific environments, as well as data about similar molecules and reactions in taxonomically similar organisms.",
+    "mirId": "MIR:00000720",
+    "modified": "2020-05-22T09:05:34.813+0000",
+    "name": "Datanator Gene",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^K[0-9]+$",
+    "prefix": "datanator.gene",
+    "sampleId": "K00973"
+  },
+  {
+    "_links": {
+      "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2248/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2248"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2248"
+      }
+    },
+    "created": "2020-05-22T09:04:15.866+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "Datanator is an integrated database of genomic and biochemical data designed to help investigators find data about specific molecules and reactions in specific organisms and specific environments for meta-analyses and mechanistic models. Datanator currently includes metabolite concentrations, RNA modifications and half-lives, protein abundances and modifications, and reaction kinetics integrated from several databases and numerous publications. The Datanator website and REST API provide tools for extracting clouds of data about specific molecules and reactions in specific organisms and specific environments, as well as data about similar molecules and reactions in taxonomically similar organisms.",
+    "mirId": "MIR:00000718",
+    "modified": "2020-05-22T09:04:15.866+0000",
+    "name": "Datanator Metabolite",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^[A-Z\\-]+$",
+    "prefix": "datanator.metabolite",
+    "sampleId": "OUYCCCASQSFEME-MRVPVSSYSA-N"
+  },
+  {
+    "_links": {
+      "contactPerson": {
         "href": "https://registry.api.identifiers.org/restApi/namespaces/1307/contactPerson"
       },
       "namespace": {
@@ -3808,10 +3856,10 @@
     "deprecationDate": null,
     "description": "The Disease Ontology has been developed as a standardized ontology for human disease with the purpose of providing the biomedical community with consistent, reusable and sustainable descriptions of human disease terms, phenotype characteristics and related medical vocabulary disease concepts.",
     "mirId": "MIR:00000233",
-    "modified": "2019-06-11T14:16:32.719+0000",
+    "modified": "2020-07-20T14:34:20.285+0000",
     "name": "Human Disease Ontology",
     "namespaceEmbeddedInLui": true,
-    "pattern": "^DOID\\:\\d+$",
+    "pattern": "^DOID:\\d+$",
     "prefix": "doid",
     "sampleId": "11337"
   },
@@ -5968,12 +6016,12 @@
     "deprecationDate": null,
     "description": "The GO reference collection is a set of abstracts that can be cited in the GO ontologies (e.g. as dbxrefs for term definitions) and annotation files (in the Reference column). It provides two types of reference; It can be used to provide details of why specific Evidence codes (see http://identifiers.org/eco/) are assigned, or to present abstract-style descriptions of \"GO content\" meetings at which substantial changes in the ontologies are discussed and made.",
     "mirId": "MIR:00000450",
-    "modified": "2019-06-11T14:17:23.452+0000",
+    "modified": "2020-07-30T07:27:34.233+0000",
     "name": "Gene Ontology Reference",
-    "namespaceEmbeddedInLui": false,
+    "namespaceEmbeddedInLui": true,
     "pattern": "^GO_REF:\\d{7}$",
-    "prefix": "go.ref",
-    "sampleId": "GO_REF:0000041"
+    "prefix": "go_ref",
+    "sampleId": "0000041"
   },
   {
     "_links": {
@@ -6660,11 +6708,11 @@
       }
     },
     "created": "2019-06-11T14:17:39.700+0000",
-    "deprecated": false,
-    "deprecationDate": null,
+    "deprecated": true,
+    "deprecationDate": "2020-07-16T06:11:33.734+0000",
     "description": "The HGNC (HUGO Gene Nomenclature Committee) provides an approved gene name and symbol (short-form abbreviation) for each known human gene. All approved symbols are stored in the HGNC database, and each symbol is unique. In addition, HGNC also provides symbols for both structural and functional gene families. This collection refers to records using the HGNC family symbol.",
     "mirId": "MIR:00000520",
-    "modified": "2019-06-11T14:17:39.700+0000",
+    "modified": "2020-07-16T06:11:33.736+0000",
     "name": "HGNC Family",
     "namespaceEmbeddedInLui": false,
     "pattern": "^[A-Z0-9-]+(#[A-Z0-9-]+)?$",
@@ -6693,6 +6741,30 @@
     "namespaceEmbeddedInLui": false,
     "pattern": "^\\d+$",
     "prefix": "hgnc.genefamily",
+    "sampleId": "141"
+  },
+  {
+    "_links": {
+      "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2306/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2306"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2306"
+      }
+    },
+    "created": "2020-07-16T06:20:43.698+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "The HGNC (HUGO Gene Nomenclature Committee) provides an approved gene name and symbol (short-form abbreviation) for each known human gene. All approved symbols are stored in the HGNC database, and each symbol is unique. In addition, HGNC also provides a unique numerical ID to identify gene families, providing a display of curated hierarchical relationships between families.",
+    "mirId": "MIR:00000709",
+    "modified": "2020-07-16T06:20:43.698+0000",
+    "name": "HGNC Gene Group",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^\\d+$",
+    "prefix": "hgnc.genegroup",
     "sampleId": "141"
   },
   {
@@ -8702,9 +8774,9 @@
     "created": "2019-06-11T14:17:05.115+0000",
     "deprecated": false,
     "deprecationDate": null,
-    "description": "Locus Reference Genomic (LRG) provides identifiers to stable genomic DNA sequences for regions of the human genome, providing a recognized reference-sequence standard for reporting sequence variants. LRG is maintained by the NCBI and the European Bioinformatics Institute (EBI).",
+    "description": "A Locus Reference Genomic (LRG) is a manually curated record that contains stable genomic, transcript and protein reference sequences for reporting clinically relevant sequence variants. All LRGs are generated and maintained by the NCBI and EMBL-EBI.",
     "mirId": "MIR:00000376",
-    "modified": "2019-06-11T14:17:05.115+0000",
+    "modified": "2020-05-22T10:35:39.544+0000",
     "name": "Locus Reference Genomic",
     "namespaceEmbeddedInLui": false,
     "pattern": "^LRG_\\d+$",
@@ -9410,6 +9482,30 @@
   {
     "_links": {
       "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/350/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/350"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/350"
+      }
+    },
+    "created": "2019-06-11T14:16:01.860+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "The Molecular Interactions (MI) ontology forms a structured controlled vocabulary for the annotation of experiments concerned with protein-protein interactions. MI is developed by the HUPO Proteomics Standards Initiative.",
+    "mirId": "MIR:00000109",
+    "modified": "2020-06-26T10:17:31.752+0000",
+    "name": "Molecular Interactions Ontology",
+    "namespaceEmbeddedInLui": true,
+    "pattern": "^MI:\\d{4}$",
+    "prefix": "mi",
+    "sampleId": "0308"
+  },
+  {
+    "_links": {
+      "contactPerson": {
         "href": "https://registry.api.identifiers.org/restApi/namespaces/1752/contactPerson"
       },
       "namespace": {
@@ -9708,11 +9804,11 @@
       }
     },
     "created": "2019-06-11T14:15:31.442+0000",
-    "deprecated": false,
-    "deprecationDate": null,
+    "deprecated": true,
+    "deprecationDate": "2020-06-04T11:17:21.453+0000",
     "description": "MIRIAM Registry is an online resource created to catalogue collections (Gene Ontology, Taxonomy or PubMed are some examples) and the corresponding resources (physical locations) providing access to those data collections. The Registry provides unique and perennial URIs for each entity of those data collections.",
     "mirId": "MIR:00000008",
-    "modified": "2019-06-11T14:15:31.442+0000",
+    "modified": "2020-06-04T11:17:21.456+0000",
     "name": "MIRIAM Registry collection",
     "namespaceEmbeddedInLui": false,
     "pattern": "^MIR:000\\d{5}$",
@@ -10078,6 +10174,30 @@
     "pattern": "^(\\d{1,7}\\-\\d{2}\\-\\d)|([A-Za-z0-9\\+\\-\\_]+)$",
     "prefix": "molbase",
     "sampleId": "128796-39-4"
+  },
+  {
+    "_links": {
+      "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2277/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2277"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2277"
+      }
+    },
+    "created": "2020-07-03T09:30:53.125+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "MolMeDB is an open chemistry database about interactions of molecules with membranes. We collect information on how chemicals interact with individual membranes either from experiment or from simulations. ",
+    "mirId": "MIR:00000768",
+    "modified": "2020-07-03T09:30:53.125+0000",
+    "name": "MolMeDB",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^[m,M]{2}[0-9]{5}[0-9]*$",
+    "prefix": "molmedb",
+    "sampleId": "MM00040"
   },
   {
     "_links": {
@@ -11206,6 +11326,30 @@
     "pattern": "^[0-9]+$",
     "prefix": "oclc",
     "sampleId": "634515043"
+  },
+  {
+    "_links": {
+      "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2293/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2293"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2293"
+      }
+    },
+    "created": "2020-07-08T15:12:19.317+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "Experimental data table management software to make research data accessible and available for reuse with minimal effort on the part of the data provider. Designed to manage experimental data tables in an easy way for users, ODAM provides a model for structuring both data and metadata that facilitates data handling and analysis. It also encourages data dissemination according to FAIR principles by making the data interoperable and reusable by both humans and machines, allowing the dataset to be explored and then extracted in whole or in part as needed.",
+    "mirId": "MIR:00000722",
+    "modified": "2020-07-08T15:12:19.317+0000",
+    "name": "Open Data for Access and Mining",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^[A-Za-z0-9]+$",
+    "prefix": "odam",
+    "sampleId": "frim1"
   },
   {
     "_links": {
@@ -13250,30 +13394,6 @@
   {
     "_links": {
       "contactPerson": {
-        "href": "https://registry.api.identifiers.org/restApi/namespaces/350/contactPerson"
-      },
-      "namespace": {
-        "href": "https://registry.api.identifiers.org/restApi/namespaces/350"
-      },
-      "self": {
-        "href": "https://registry.api.identifiers.org/restApi/namespaces/350"
-      }
-    },
-    "created": "2019-06-11T14:16:01.860+0000",
-    "deprecated": false,
-    "deprecationDate": null,
-    "description": "The Molecular Interactions (MI) ontology forms a structured controlled vocabulary for the annotation of experiments concerned with protein-protein interactions. MI is developed by the HUPO Proteomics Standards Initiative.",
-    "mirId": "MIR:00000109",
-    "modified": "2019-06-11T14:16:01.860+0000",
-    "name": "Molecular Interactions Ontology",
-    "namespaceEmbeddedInLui": true,
-    "pattern": "^MI:\\d{4}$",
-    "prefix": "psimi",
-    "sampleId": "0308"
-  },
-  {
-    "_links": {
-      "contactPerson": {
         "href": "https://registry.api.identifiers.org/restApi/namespaces/1497/contactPerson"
       },
       "namespace": {
@@ -14498,6 +14618,30 @@
   {
     "_links": {
       "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/1539/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/1539"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/1539"
+      }
+    },
+    "created": "2019-06-11T14:17:46.314+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "SwissLipids is a curated resource that provides information about known lipids, including lipid structure, metabolism, interactions, and subcellular and tissue localization. Information is curated from peer-reviewed literature and referenced using established ontologies, and provided with full provenance and evidence codes for curated assertions.",
+    "mirId": "MIR:00000550",
+    "modified": "2020-05-01T09:59:44.482+0000",
+    "name": "SwissLipids",
+    "namespaceEmbeddedInLui": true,
+    "pattern": "^SLM:\\d+$",
+    "prefix": "slm",
+    "sampleId": "000048885"
+  },
+  {
+    "_links": {
+      "contactPerson": {
         "href": "https://registry.api.identifiers.org/restApi/namespaces/374/contactPerson"
       },
       "namespace": {
@@ -14974,30 +15118,6 @@
     "pattern": "^\\w+$",
     "prefix": "swiss-model",
     "sampleId": "P23298"
-  },
-  {
-    "_links": {
-      "contactPerson": {
-        "href": "https://registry.api.identifiers.org/restApi/namespaces/1539/contactPerson"
-      },
-      "namespace": {
-        "href": "https://registry.api.identifiers.org/restApi/namespaces/1539"
-      },
-      "self": {
-        "href": "https://registry.api.identifiers.org/restApi/namespaces/1539"
-      }
-    },
-    "created": "2019-06-11T14:17:46.314+0000",
-    "deprecated": false,
-    "deprecationDate": null,
-    "description": "SwissLipids is a curated resource that provides information about known lipids, including lipid structure, metabolism, interactions, and subcellular and tissue localization. Information is curated from peer-reviewed literature and referenced using established ontologies, and provided with full provenance and evidence codes for curated assertions.",
-    "mirId": "MIR:00000550",
-    "modified": "2019-06-11T14:17:46.314+0000",
-    "name": "SwissLipids",
-    "namespaceEmbeddedInLui": true,
-    "pattern": "^SLM:\\d+$",
-    "prefix": "swisslipid",
-    "sampleId": "000048885"
   },
   {
     "_links": {
@@ -15890,6 +16010,30 @@
   {
     "_links": {
       "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2265/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2265"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2265"
+      }
+    },
+    "created": "2020-06-09T20:12:07.077+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "This collection is a subset of UniProtKB that provides a means to reference the proteolytic cleavage products of a precursor protein.",
+    "mirId": "MIR:00000739",
+    "modified": "2020-06-26T08:48:10.292+0000",
+    "name": "UniProt Chain",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^PRO_[0-9]{10}$",
+    "prefix": "uniprot.chain",
+    "sampleId": "PRO_0000016681"
+  },
+  {
+    "_links": {
+      "contactPerson": {
         "href": "https://registry.api.identifiers.org/restApi/namespaces/1123/contactPerson"
       },
       "namespace": {
@@ -16222,6 +16366,30 @@
     "pattern": "^\\w+$",
     "prefix": "vfdb.genus",
     "sampleId": "Chlamydia"
+  },
+  {
+    "_links": {
+      "contactPerson": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2222/contactPerson"
+      },
+      "namespace": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2222"
+      },
+      "self": {
+        "href": "https://registry.api.identifiers.org/restApi/namespaces/2222"
+      }
+    },
+    "created": "2020-05-12T14:08:31.024+0000",
+    "deprecated": false,
+    "deprecationDate": null,
+    "description": "The Vertebrate Gene Nomenclature Committee (VGNC) is an extension of the established HGNC (HUGO Gene Nomenclature Committee) project that names human genes. VGNC is responsible for assigning standardized names to genes in vertebrate species that currently lack a nomenclature committee.",
+    "mirId": "MIR:00000765",
+    "modified": "2020-05-12T14:08:31.024+0000",
+    "name": "VGNC",
+    "namespaceEmbeddedInLui": false,
+    "pattern": "^((VGNC|vgnc):)?\\d{1,9}$",
+    "prefix": "vgnc",
+    "sampleId": "VGNC:3792"
   },
   {
     "_links": {
@@ -16600,12 +16768,12 @@
     "deprecationDate": null,
     "description": "Xenbase is the model organism database for Xenopus laevis and X. (Silurana) tropicalis. It contains genomic, development data and community information for Xenopus research. it includes gene expression patterns that incorporates image data from the literature, large scale screens and community submissions.",
     "mirId": "MIR:00000186",
-    "modified": "2019-06-11T14:16:21.651+0000",
+    "modified": "2020-06-09T19:30:57.158+0000",
     "name": "Xenbase",
     "namespaceEmbeddedInLui": false,
-    "pattern": "^(XB-GENE-)?\\d+$",
+    "pattern": "^XB\\-\\w+\\-\\d+$",
     "prefix": "xenbase",
-    "sampleId": "922462"
+    "sampleId": "XB-GENE-922462"
   },
   {
     "_links": {

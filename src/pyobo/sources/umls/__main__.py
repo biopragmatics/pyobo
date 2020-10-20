@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""CLI for PyOBO database."""
+"""CLI for UMLS exporter."""
 
-from .cli import main
+from .umls import main
 
 if __name__ == '__main__':
     main()

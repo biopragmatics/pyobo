@@ -1,0 +1,242 @@
+key	name
+AA	Attribute type abbreviation
+AB	Abbreviation in any source vocabulary
+ACR	Acronym
+AC	Activities
+AD	Adjective
+AM	Short form of modifier
+AS	Attribute type synonym
+AT	Attribute type
+AUN	Authority name
+BD	Fully-specified drug brand name that can be prescribed
+BN	Fully-specified drug brand name that can not be prescribed
+BPCK	Branded Drug Delivery Device
+BR	Binding realm
+CA2	ISO 3166-1 standard country code in alpha-2 (two-letter) format
+CA3	ISO 3166-1 standard country code in alpha-3 (three-letter) format
+CCN	Chemical code name
+CCS	FIPS 10-4 country code
+CC	Trimmed ICPC component process
+CDA	Clinical drug name in abbreviated format
+CDC	Clinical drug name in concatenated format (NDDF), Clinical drug name (NDFRT)
+CDD	Clinical drug name in delimited format
+CDO	Concept domain
+CD	Clinical Drug
+CE	Entry term for a Supplementary Concept
+CHN	Chemical structure name
+CL	Class
+CMN	Common name
+CN	LOINC official component name
+CO	Component name (these are hierarchical terms, as opposed to the LOINC component names which are analytes)
+CPR	Concept property
+CP	ICPC component process (in original form)
+CR	Concept relationship
+CSN	Chemical Structure Name
+CSY	Code system
+CS	Short component process in ICPC, i.e. include some abbreviations
+CU	Common usage
+CV	Content view
+CX	Component, with abbreviations expanded.
+DC10	Diagnostic criteria for ICD10 code
+DC9	Diagnostic criteria for ICD9 code
+DEV	Descriptor entry version
+DE	Descriptor
+DFG	Dose Form Group
+DF	Dose Form
+DI	Disease name
+DN	Display Name
+DO	Domain
+DP	Drug Product
+DSV	Descriptor sort version
+DS	Short form of descriptor
+DT	Definitional term, present in the Metathesaurus because of its connection to a Dorland's definition or to a definition created especially for the Metathesaurus
+EP	Print entry term
+EQ	Equivalent name
+ES	Short form of entry term
+ETAL	Entry Term Alias
+ETCF	Entry term, consumer friendly description
+ETCLIN	Entry term, clinician description
+ET	Entry term
+EX	Expanded form of entry term
+FBD	Foreign brand name
+FI	Finding name
+FN	Full form of descriptor
+FSY	Foreign Synonym
+GLP	Global period
+GN	Generic drug name
+GO	Goal
+GPCK	Generic Drug Delivery Device
+GT	Glossary term
+HC	Hierarchical class
+HD	Hierarchical descriptor
+HGJKN1	Japanese High Level Group Term (kana1)
+HGJKN	Japanese High Level Group Term (kana)
+HG	High Level Group Term
+HS	Short or alternate version of hierarchical term
+HTJKN1	Japanese Hierarchical term (kana1)
+HTJKN	Japanese Hierarchical term (kana)
+HTN	HL7 Table Name
+HT	Hierarchical term
+HX	Expanded version of short hierarchical term
+ID	Nursing indicator
+IN	Name for an ingredient
+IS	Obsolete Synonym
+IT	Index term
+IVC	Intervention categories
+IV	Intervention
+LA	LOINC answer
+LC	Long common name
+LG	LOINC group
+LLTJKN1	Japanese Lower Level Term (kana1)
+LLTJKN	Japanese Lower Level Term (kana)
+LLT	Lower Level Term
+LN	LOINC official fully specified name
+LO	Obsolete official fully specified name
+LPDN	LOINC parts display name
+LPN	LOINC parts name
+LS	Expanded system/sample type (The expanded version was created for the Metathesaurus and includes the full name of some abbreviations.)
+LVDN	Linguistic variant display name
+LV	Lexical variant
+MD	CCS multi-level diagnosis categories
+MH	Main heading
+MIN	name for a multi-ingredient
+MP	Preferred names of modifiers
+MS	Multum names of branded and generic supplies or supplements
+MTH_ACR	MTH acronym
+MTH_CN	MTH Component, with abbreviations expanded.
+MTH_ET	Metathesaurus entry term
+MTH_FN	MTH Full form of descriptor
+MTH_HG	MTH High Level Group Term
+MTH_HT	MTH Hierarchical term
+MTH_HX	MTH Hierarchical term expanded
+MTH_IS	Metathesaurus-supplied form of obsolete synonym
+MTH_LLT	MTH Lower Level Term
+MTH_LN	MTH Official fully specified name with expanded abbreviations
+MTH_LO	MTH Expanded LOINC obsolete fully specified name
+MTH_OAF	Metathesaurus-supplied form of obsolete active fully specified name
+MTH_OAP	Metathesaurus-supplied form of obsolete active preferred term
+MTH_OAS	Metathesaurus-supplied form of obsolete active synonym
+MTH_OET	Metathesaurus obsolete entry term
+MTH_OF	Metathesaurus-supplied form of obsolete fully specified name
+MTH_OL	MTH Non-current Lower Level Term
+MTH_OPN	Metathesaurus obsolete preferred term, natural language form
+MTH_OP	Metathesaurus obsolete preferred term
+MTH_OS	MTH System-organ class
+MTH_PTGB	Metathesaurus-supplied form of British preferred term
+MTH_PTN	Metathesaurus preferred term, natural language form
+MTH_PT	Metathesaurus preferred term
+MTH_RXN_BD	RxNorm Created BD
+MTH_RXN_CDC	RxNorm Created CDC
+MTH_RXN_CD	RxNorm Created CD
+MTH_RXN_DP	RxNorm Created DP
+MTH_SI	MTH Sign or symptom of
+MTH_SMQ	Metathesaurus version of Standardised MedDRA Query
+MTH_SYGB	Metathesaurus-supplied form of British synonym
+MTH_SY	MTH Designated synonym
+MV	Multi-level procedure category
+N1	Chemical Abstracts Service Type 1 name of a chemical
+NA	Name aliases
+NM	Name of Supplementary Concept
+NPT	HL7 non-preferred for language term
+NP	Non-preferred term
+NS	Short form of non-preferred term
+NX	Expanded form of non-preferred term
+OAF	Obsolete active fully specified name
+OAM	Obsolete Modifier Abbreviation
+OAP	Obsolete active preferred term
+OAS	Obsolete active synonym
+OA	Obsolete abbreviation
+OC	Nursing outcomes
+OET	Obsolete entry term
+OF	Obsolete fully specified name
+OLC	Obsolete Long common name
+OLG	Obsolete LOINC group name
+OLJKN1	Japanese Non-current Lower Level Term (kana1)
+OLJKN	Japanese Non-current Lower Level Term (kana)
+OL	Non-current Lower Level Term
+OM	Obsolete modifiers in HCPCS
+ONP	Obsolete non-preferred for language term
+OOSN	Obsolete official short name
+OPN	Obsolete preferred term, natural language form
+OP	Obsolete preferred name
+OR	Orders
+OSJKN1	Japanese System-organ class in the WHO Adverse Reaction Terminology (kana1)
+OSJKN	Japanese System-organ class in the WHO Adverse Reaction Terminology (kana)
+OSN	Official short name
+OS	System-organ class
+PCE	Preferred entry term for Supplementary Concept
+PC	"Preferred ""trimmed term"" in ICPC"
+PEP	Preferred entry term
+PHENO_ET	Phenotype entry term
+PHENO	Phenotype
+PIN	Name from a precise ingredient
+PM	Machine permutation
+PN	Metathesaurus preferred name
+POS	Place of service
+PQ	Qualifier for a problem
+PR	Name of a problem
+PSC	Protocol selection criteria
+PSN	Prescribable Names
+PS	Short forms that needed full specification
+PTAV	Preferred Allelic Variant
+PTCS	Preferred Clinical Synopsis
+PTGB	British preferred term
+PTJKN1	Japanese Designated preferred name (kana1)
+PTJKN	Japanese Designated preferred name (kana)
+PTN	Preferred term, natural language form
+PT	Designated preferred name
+PXQ	Preferred qualifier term
+PX	Expanded preferred terms (pair with PS)
+QAB	Qualifier abbreviation
+QEV	Qualifier entry version
+QSV	Qualifier sort version
+RAB	Root abbreviation
+RHT	Root hierarchical term
+RPT	Root preferred term
+RSY	Root synonym
+RS	Extracted related names in SNOMED2
+RT	Term that is related to, but often considered non-synonymous with, the preferred term
+RXN_IN	Rxnorm Preferred Ingredient
+RXN_PT	Rxnorm Preferred
+SBDC	Semantic Branded Drug Component
+SBDF	Semantic branded drug and form
+SBDG	Semantic branded drug group
+SBD	Semantic branded drug
+SB	Named subset of a source
+SCALE	Scale
+SCDC	Semantic Drug Component
+SCDF	Semantic clinical drug and form
+SCDG	Semantic clinical drug group
+SCD	Semantic Clinical Drug
+SCN	Scientific name
+SC	Special Category term
+SD	CCS single-level diagnosis categories
+SI	Name of a sign or symptom of a problem
+SMQ	Standardised MedDRA Query
+SP	CCS single-level procedure categories
+SSN	Source short name, used in the UMLS Knowledge Source Server
+SS	"Synonymous ""short"" forms"
+ST	Step
+SU	Active Substance
+SX	Mixed-case component synonym with expanded abbreviations
+SYGB	British synonym
+SYN	Designated alias
+SY	Designated synonym
+TA	Task
+TC	Term class
+TG	Name of the target of an intervention
+TMSY	Tall Man synonym
+TQ	Topical qualifier
+TX	CCPSS synthesized problems for TC termgroup
+UAUN	Unique authority name
+UCN	Unique common name
+UE	Unique equivalent name
+USN	Unique scientific name
+USY	Unique synonym
+VAB	Versioned abbreviation
+VPT	Versioned preferred term
+VSY	Versioned synonym
+VS	Value Set
+XD	Expanded descriptor in AOD
+XM	Cross mapping set
+XQ	Alternate name for a qualifier

@@ -33,7 +33,10 @@ def ensure_registry(
     """Download the registry (works for MIRIAM and OLS) if it doesn't already exist."""
     if not force_download and cache_path is not None and os.path.exists(cache_path):
         with open(cache_path) as file:
-            return json.load(file)
+            rv = json.load(file)
+            if mappify:
+                rv = list_to_map(rv, id_key)
+            return rv
 
     rv = _download_paginated(url, embedded_key=embedded_key)
     rv = sorted(rv, key=itemgetter(id_key))

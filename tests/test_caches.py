@@ -24,7 +24,6 @@ class TestCaches(unittest.TestCase):
 
             @cached_mapping(path=path, header=header)
             def _get_mapping():
-                """Return mapping"""
                 time.sleep(sleep_time)
                 return dict(a='x', b='y', c='z')
 
@@ -61,7 +60,6 @@ class TestCaches(unittest.TestCase):
 
             @cached_multidict(path=path, header=header)
             def _get_multidict():
-                """Return mapping"""
                 time.sleep(sleep_time)
                 return dict(a=['a1', 'a2'], b=['b1'], c=['c1', 'c2'])
 

@@ -747,7 +747,7 @@
     "license": {
       "label": "CC-BY",
       "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
-      "url": "http://creativecommons.org/licenses/by/3.0/"
+      "url": "http://creativecommons.org/licenses/by/4.0/"
     },
     "mailing_list": "https://lists.sourceforge.net/lists/listinfo/obo-cell-type",
     "ontology_purl": "http://purl.obolibrary.org/obo/cl.owl",
@@ -796,6 +796,43 @@
     "ontology_purl": "http://purl.obolibrary.org/obo/clo.owl",
     "title": "Cell Line Ontology",
     "tracker": "https://github.com/CLO-Ontology/CLO/issues"
+  },
+  {
+    "activity_status": "active",
+    "build": {
+      "checkout": "git clone https://github.com/EBISPOT/clyh_ontology.git",
+      "path": ".",
+      "system": "git"
+    },
+    "contact": {
+      "email": "lucas.leclere@obs-vlfr.fr",
+      "github": "L-Leclere",
+      "label": "Lucas Leclere"
+    },
+    "dependencies": [
+      {
+        "id": "uberon"
+      },
+      {
+        "id": "ro"
+      },
+      {
+        "id": "iao"
+      }
+    ],
+    "description": "The Clytia hemisphaerica Development and Anatomy Ontology (CLYH) describes the anatomical and developmental features of the Clytia hemisphaerica life cycle.",
+    "domain": "anatomy",
+    "homepage": "https://github.com/EBISPOT/clyh_ontology",
+    "id": "clyh",
+    "layout": "ontology_detail",
+    "license": {
+      "label": "CC-BY",
+      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
+      "url": "http://creativecommons.org/licenses/by/3.0/"
+    },
+    "ontology_purl": "http://purl.obolibrary.org/obo/clyh.owl",
+    "title": "Clytia hemisphaerica Development and Anatomy Ontology",
+    "tracker": "https://github.com/EBISPOT/clyh_ontology/issues"
   },
   {
     "activity_status": "inactive",
@@ -937,6 +974,26 @@
   },
   {
     "activity_status": "active",
+    "contact": {
+      "email": "alpha.tom.kodamullil@scai.fraunhofer.de",
+      "github": "akodamullil",
+      "label": "Dr. Alpha Tom Kodamullil"
+    },
+    "description": "The core Ontology of Clinical Trials (CTO) will serve as a structured resource integrating basic terms and concepts in the context of clinical trials. Thereby covering clinicaltrails.gov. CoreCTO will serve as a basic ontology to generate extended versions for specific applications such as annotation of variables in study documents from clinical trials.",
+    "homepage": "https://github.com/ClinicalTrialOntology/CTO/",
+    "id": "cto",
+    "layout": "ontology_detail",
+    "license": {
+      "label": "CC-BY",
+      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
+      "url": "http://creativecommons.org/licenses/by/4.0/"
+    },
+    "ontology_purl": "http://purl.obolibrary.org/obo/cto.owl",
+    "title": "CTO: Core Ontology of Clinical Trials",
+    "tracker": "https://github.com/ClinicalTrialOntology/CTO/issues"
+  },
+  {
+    "activity_status": "active",
     "build": {
       "method": "owl2obo",
       "source_url": "http://purl.obolibrary.org/obo/cvdo.owl"
@@ -1059,7 +1116,7 @@
     "tracker": "https://github.com/DIDEO/DIDEO/issues"
   },
   {
-    "activity_status": "active",
+    "activity_status": "inactive",
     "contact": {
       "email": "maria.herrero@kcl.ac.uk",
       "label": "Maria Herrero"
@@ -1068,13 +1125,13 @@
     "domain": "health",
     "homepage": "http://labda.inf.uc3m.es/doku.php?id=es:labda_dinto",
     "id": "dinto",
+    "is_obsolete": true,
     "layout": "ontology_detail",
     "license": {
       "label": "CC-BY",
       "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
       "url": "https://creativecommons.org/licenses/by/3.0/"
     },
-    "ontology_purl": "http://purl.obolibrary.org/obo/dinto.owl",
     "publications": [
       {
         "id": "http://pubs.acs.org/doi/10.1021/acs.jcim.5b00119",
@@ -1227,8 +1284,45 @@
       "url": "http://creativecommons.org/licenses/by/3.0/"
     },
     "ontology_purl": "http://purl.obolibrary.org/obo/duo.owl",
-    "title": "The Data Use Ontology",
+    "title": "Data Use Ontology",
     "tracker": "https://github.com/EBISPOT/DUO/issues"
+  },
+  {
+    "activity_status": "active",
+    "build": {
+      "checkout": "git clone https://github.com/echinoderm-ontology/ecao_ontology.git",
+      "path": ".",
+      "system": "git"
+    },
+    "contact": {
+      "email": "ettensohn@cmu.edu",
+      "github": "ettensohn",
+      "label": "Charles Ettensohn"
+    },
+    "dependencies": [
+      {
+        "id": "uberon"
+      },
+      {
+        "id": "ro"
+      },
+      {
+        "id": "cl"
+      }
+    ],
+    "description": "An ontology for the development and anatomy of the different species of the phylum Echinodermata (NCBITaxon:7586).",
+    "domain": "anatomy",
+    "homepage": "https://github.com/echinoderm-ontology/ecao_ontology",
+    "id": "ecao",
+    "layout": "ontology_detail",
+    "license": {
+      "label": "CC-BY",
+      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
+      "url": "http://creativecommons.org/licenses/by/3.0/"
+    },
+    "ontology_purl": "http://purl.obolibrary.org/obo/ecao.owl",
+    "title": "The Echinoderm Anatomy and Development Ontology",
+    "tracker": "https://github.com/echinoderm-ontology/ecao_ontology/issues"
   },
   {
     "activity_status": "active",
@@ -1945,6 +2039,27 @@
     "title": "Fly taxonomy"
   },
   {
+    "activity_status": "active",
+    "contact": {
+      "email": "georgeta.bordea@u-bordeaux.fr",
+      "github": "getbordea",
+      "label": "Georgeta Bordea"
+    },
+    "description": "Food-Drug interactions automatically extracted from scientific literature",
+    "domain": "diet, metabolomics and nutrition",
+    "homepage": "https://gitub.u-bordeaux.fr/erias/fideo",
+    "id": "fideo",
+    "layout": "ontology_detail",
+    "license": {
+      "label": "CC0",
+      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/cc-zero.png",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    "ontology_purl": "http://purl.obolibrary.org/obo/fideo.owl",
+    "title": "Food Interactions with Drugs Evidence Ontology",
+    "tracker": "https://github.com/getbordea/fideo/issues"
+  },
+  {
     "activity_status": "orphaned",
     "build": {
       "infallible": 1,
@@ -2131,6 +2246,64 @@
   {
     "activity_status": "active",
     "build": {
+      "checkout": "git clone https://github.com/futres/fovt.git",
+      "path": ".",
+      "system": "git"
+    },
+    "contact": {
+      "email": "rlwalls2008@gmail.com",
+      "github": "https://github.com/futres/fovt",
+      "label": "FuTRES Ontology of Vertebrate Traits"
+    },
+    "dependencies": [
+      {
+        "id": "bco"
+      },
+      {
+        "id": "oba"
+      },
+      {
+        "id": "ro"
+      },
+      {
+        "id": "bfo"
+      },
+      {
+        "id": "pato"
+      },
+      {
+        "id": "bspo"
+      },
+      {
+        "id": "iao"
+      },
+      {
+        "id": "uberon"
+      }
+    ],
+    "description": "FuTRES Ontology of Vertebrate Traits is an application ontology used to convert vertebrate trait data in spreadsheet to triples. FOVT leverages the BioCollections Ontology (BCO) to link observations of individual specimens to their trait values. Traits are defined in the Ontology of Biological Attributes (OBA).",
+    "domain": "vertebrate traits",
+    "homepage": "https://github.com/futres/fovt",
+    "id": "fovt",
+    "jobs": [
+      {
+        "id": "https://travis-ci.org/futres/fovt",
+        "type": "travis-ci"
+      }
+    ],
+    "layout": "ontology_detail",
+    "license": {
+      "label": "CC0",
+      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/cc-zero.png",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    "ontology_purl": "http://purl.obolibrary.org/obo/fovt.owl",
+    "title": "FuTRES Ontology of Vertebrate Traits",
+    "tracker": "https://github.com/futres/fovt/issues"
+  },
+  {
+    "activity_status": "active",
+    "build": {
       "infallible": 1,
       "method": "obo2owl",
       "source_url": "https://raw.githubusercontent.com/pombase/fypo/master/release/fypo.owl"
@@ -2189,6 +2362,27 @@
     "ontology_purl": "http://purl.obolibrary.org/obo/gaz.owl",
     "title": "Gazetteer",
     "tracker": "https://github.com/EnvironmentOntology/gaz/issues"
+  },
+  {
+    "activity_status": "active",
+    "contact": {
+      "email": "rbca.jackson@gmail.com",
+      "github": "beckyjackson",
+      "label": "Rebecca Jackson"
+    },
+    "description": "An ontology to represent genomics cohort attributes",
+    "domain": "cohort studies",
+    "homepage": "https://github.com/IHCC-cohorts/GECKO",
+    "id": "gecko",
+    "layout": "ontology_detail",
+    "license": {
+      "label": "CC-BY 4.0",
+      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
+      "url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "ontology_purl": "http://purl.obolibrary.org/obo/gecko.owl",
+    "title": "Genomics Cohorts Knowledge Ontology",
+    "tracker": "https://github.com/IHCC-cohorts/GECKO/issues"
   },
   {
     "activity_status": "active",
@@ -2287,7 +2481,7 @@
     },
     "description": "GlyTouCan provides stable accessions for glycans described at varyious degrees of characterization, including compositions (no linkage) and topologies (no carbon bond positions or anomeric configurations). GNOme organizes these stable accessions for interative browsing, for text-based searching, and for automated reasoning with well-defined characterization levels.",
     "domain": "glycan structure",
-    "homepage": "https://github.com/glygen-glycan-data/GNOme#readme",
+    "homepage": "https://gnome.glyomics.org/",
     "id": "gno",
     "layout": "ontology_detail",
     "license": {
@@ -2372,8 +2566,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Plant Ontology Administrators",
-      "label": "po-discuss@plantontology.org"
+      "email": "po-discuss@plantontology.org",
+      "label": "Plant Ontology Administrators"
     },
     "homepage": "http://www.gramene.org/plant_ontology/",
     "id": "gro",
@@ -2384,8 +2578,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Peter Midford",
-      "label": "peteremidford@yahoo.com"
+      "email": "peteremidford@yahoo.com",
+      "label": "Peter Midford"
     },
     "homepage": "http://www.mesquiteproject.org/ontology/Habronattus/index.html",
     "id": "habronattus",
@@ -2702,8 +2896,8 @@
       "source_url": "https://web.archive.org/web/20131127090937/http://www.inoh.org/ontologies/MoleculeRoleOntology.obo"
     },
     "contact": {
-      "email": "INOH curators",
-      "label": "curator@inoh.org"
+      "email": "curator@inoh.org",
+      "label": "INOH curators"
     },
     "homepage": "http://www.inoh.org",
     "id": "imr",
@@ -2733,8 +2927,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "InterPro Help",
-      "label": "interhelp@ebi.ac.uk"
+      "email": "interhelp@ebi.ac.uk",
+      "label": "InterPro Help"
     },
     "homepage": "http://www.ebi.ac.uk/interpro/index.html",
     "id": "ipr",
@@ -2830,8 +3024,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Peter Midford",
-      "label": "peteremidford@yahoo.com"
+      "email": "peteremidford@yahoo.com",
+      "label": "Peter Midford"
     },
     "homepage": "http://www.mesquiteproject.org/ontology/Loggerhead/index.html",
     "id": "loggerhead",
@@ -2896,8 +3090,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Julie Thompson",
-      "label": "julie@igbmc.u-strasbg.fr"
+      "email": "julie@igbmc.u-strasbg.fr",
+      "label": "Julie Thompson"
     },
     "homepage": "http://www-igbmc.u-strasbg.fr/BioInfo/MAO/mao.html",
     "id": "mao",
@@ -2908,8 +3102,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Jonathan Bard",
-      "label": "j.bard@ed.ac.uk"
+      "email": "j.bard@ed.ac.uk",
+      "label": "Jonathan Bard"
     },
     "homepage": null,
     "id": "mat",
@@ -3683,8 +3877,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Fahim Imam",
-      "label": "smtifahim@gmail.com"
+      "email": "smtifahim@gmail.com",
+      "label": "Fahim Imam"
     },
     "description": "Neuronal cell types",
     "homepage": "http://neuinfo.org/",
@@ -3697,8 +3891,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Fahim Imam",
-      "label": "smtifahim@gmail.com"
+      "email": "smtifahim@gmail.com",
+      "label": "Fahim Imam"
     },
     "homepage": "http://neuinfo.org/",
     "id": "nif_dysfunction",
@@ -3710,8 +3904,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Fahim Imam",
-      "label": "smtifahim@gmail.com"
+      "email": "smtifahim@gmail.com",
+      "label": "Fahim Imam"
     },
     "homepage": "http://neuinfo.org/",
     "id": "nif_grossanatomy",
@@ -3926,8 +4120,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Chris Mungall",
-      "label": "cjmungall@lbl.gov"
+      "email": "cjmungall@lbl.gov",
+      "label": "Chris Mungall"
     },
     "homepage": "http://www.obofoundry.org/ro",
     "id": "obo_rel",
@@ -4139,6 +4333,27 @@
   },
   {
     "activity_status": "active",
+    "contact": {
+      "email": "cjmungall@lbl.gov",
+      "github": "cmungall",
+      "label": "Chris Mungall"
+    },
+    "description": "An ontology specifies terms that are used to annotate ontology terms for all OBO ontologies. The ontology was developed as part of Information Artifact Ontology (IAO).",
+    "domain": "ontology term annotation",
+    "homepage": "https://github.com/information-artifact-ontology/ontology-metadata",
+    "id": "omo",
+    "layout": "ontology_detail",
+    "license": {
+      "label": "CC0",
+      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/cc-zero.png",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    "ontology_purl": "http://purl.obolibrary.org/obo/omo.owl",
+    "title": "OBO Metadata Ontology",
+    "tracker": "https://github.com/information-artifact-ontology/ontology-metadata/issues"
+  },
+  {
+    "activity_status": "active",
     "build": {
       "method": "obo2owl",
       "source_url": "https://raw.githubusercontent.com/microbialphenotypes/OMP-ontology-files/master/omp.obo"
@@ -4188,6 +4403,54 @@
     },
     "title": "Ontology of Medically Related Social Entities",
     "tracker": "https://github.com/ufbmi/OMRSE/issues"
+  },
+  {
+    "activity_status": "active",
+    "contact": {
+      "email": "francesco.vitali@ibba.cnr.it",
+      "github": "FrancescoVit",
+      "label": "Francesco Vitali"
+    },
+    "dependencies": [
+      {
+        "id": "uberon"
+      },
+      {
+        "id": "ro"
+      },
+      {
+        "id": "chebi"
+      },
+      {
+        "id": "ncbitaxon"
+      },
+      {
+        "id": "bfo"
+      },
+      {
+        "id": "envo"
+      },
+      {
+        "id": "obi"
+      },
+      {
+        "id": "foodon"
+      }
+    ],
+    "description": "An ontology for description of concepts in the nutritional studies domain.",
+    "domain": "nutrition, nutritional studies, nutrition professionals",
+    "homepage": "https://github.com/enpadasi/Ontology-for-Nutritional-Studies",
+    "id": "ons",
+    "layout": "ontology_detail",
+    "license": {
+      "label": "CC-BY",
+      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
+      "url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "ontology_purl": "http://purl.obolibrary.org/obo/ons.owl",
+    "page": "https://github.com/enpadasi/Ontology-for-Nutritional-Studies",
+    "title": "ONS",
+    "tracker": "https://github.com/enpadasi/Ontology-for-Nutritional-Studies/issues"
   },
   {
     "activity_status": "active",
@@ -4314,8 +4577,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Pankaj Jaiswal",
-      "label": "jaiswalp@science.oregonstate.edu"
+      "email": "jaiswalp@science.oregonstate.edu",
+      "label": "Pankaj Jaiswal"
     },
     "homepage": "http://www.plantontology.org",
     "id": "pao",
@@ -4427,8 +4690,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Thorsten Heinrich",
-      "label": "henrich@embl.de"
+      "email": "henrich@embl.de",
+      "label": "Thorsten Heinrich"
     },
     "homepage": "http://4dx.embl.de/platy",
     "id": "pd_st",
@@ -4520,8 +4783,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Plant Ontology Administrators",
-      "label": "po-discuss@plantontology.org"
+      "email": "po-discuss@plantontology.org",
+      "label": "Plant Ontology Administrators"
     },
     "homepage": "http://www.plantontology.org",
     "id": "pgdso",
@@ -4588,7 +4851,7 @@
         "id": "uberon"
       }
     ],
-    "description": "planaria-ontology is an ontology for planarian anatomy and developmental stages of S.med",
+    "description": "PLANA, the planarian anatomy ontology, encompasses the anatomy and life cycle stages for both __Schmidtea mediterranea__ biotypes.",
     "domain": "anatomy",
     "homepage": "https://github.com/obophenotype/planaria-ontology",
     "id": "plana",
@@ -4656,8 +4919,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Matt Berriman",
-      "label": "mb4@sanger.ac.uk"
+      "email": "mb4@sanger.ac.uk",
+      "label": "Matt Berriman"
     },
     "homepage": "http://www.sanger.ac.uk/Users/mb4/PLO/",
     "id": "plo",
@@ -4841,8 +5104,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Satya S. Sahoo",
-      "label": "satya30@uga.edu"
+      "email": "satya30@uga.edu",
+      "label": "Satya S. Sahoo"
     },
     "homepage": "http://lsdis.cs.uga.edu/projects/glycomics/propreo/",
     "id": "propreo",
@@ -4888,6 +5151,42 @@
     "ontology_purl": "http://purl.obolibrary.org/obo/psdo.owl",
     "title": "Performance Summary Display Ontology",
     "tracker": "https://github.com/Display-Lab/psdo/issues"
+  },
+  {
+    "activity_status": "active",
+    "build": {
+      "checkout": "git clone https://github.com/Planteome/plant-stress-ontology.git",
+      "path": ".",
+      "system": "git"
+    },
+    "contact": {
+      "email": "cooperl@science.oregonstate.edu",
+      "label": "Laurel Cooper"
+    },
+    "dependencies": [
+      {
+        "id": "ro"
+      }
+    ],
+    "description": "The Plant Stress Ontology describes...",
+    "domain": "plant disease and abiotic stress",
+    "homepage": "https://github.com/Planteome/plant-stress-ontology",
+    "id": "pso",
+    "jobs": [
+      {
+        "id": "https://travis-ci.org/Planteome/plant-stress-ontology",
+        "type": "travis-ci"
+      }
+    ],
+    "layout": "ontology_detail",
+    "license": {
+      "label": "CC-BY",
+      "logo": "http://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png",
+      "url": "http://creativecommons.org/licenses/by/3.0/"
+    },
+    "ontology_purl": "http://purl.obolibrary.org/obo/pso.owl",
+    "title": "Plant Stress Ontology",
+    "tracker": "https://github.com/Planteome/plant-stress-ontology/issues"
   },
   {
     "activity_status": "active",
@@ -4952,7 +5251,7 @@
     "title": "Physico-chemical process"
   },
   {
-    "activity_status": "active",
+    "activity_status": "inactive",
     "build": {
       "checkout": "git clone https://github.com/BGSU-RNA/rnao.git",
       "method": "vcs",
@@ -5077,8 +5376,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Stephen Larson",
-      "label": "slarson@ncmir.ucsd.edu"
+      "email": "slarson@ncmir.ucsd.edu",
+      "label": "Stephen Larson"
     },
     "homepage": "http://ccdb.ucsd.edu/CCDBWebSite/sao.html",
     "id": "sao",
@@ -5225,8 +5524,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Adrien Coulet",
-      "label": "Adrien.Coulet@loria.fr"
+      "email": "Adrien.Coulet@loria.fr",
+      "label": "Adrien Coulet"
     },
     "homepage": "http://www.loria.fr/~coulet/sopharm2.0_description.php",
     "id": "sopharm",
@@ -5299,6 +5598,7 @@
       "label": "Allyson Lister"
     },
     "description": "The Software Ontology (SWO) is a resource for describing software tools, their types, tasks, versions, provenance and associated data. It contains detailed information on licensing and formats as well as software applications themselves, mainly (but not limited) to the bioinformatics community.",
+    "domain": "software",
     "homepage": "https://github.com/allysonlister/swo",
     "id": "swo",
     "layout": "ontology_detail",
@@ -5365,8 +5665,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Pierre Sprumont",
-      "label": "pierre.sprumont@unifr.ch"
+      "email": "pierre.sprumont@unifr.ch",
+      "label": "Pierre Sprumont"
     },
     "homepage": null,
     "id": "tahe",
@@ -5381,8 +5681,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Pierre Sprumont",
-      "label": "pierre.sprumont@unifr.ch"
+      "email": "pierre.sprumont@unifr.ch",
+      "label": "Pierre Sprumont"
     },
     "homepage": null,
     "id": "tahh",
@@ -5914,7 +6214,7 @@
     },
     "description": "A structured controlled vocabulary of the anatomy of <i>Caenorhabditis elegans</i>.",
     "domain": "anatomy",
-    "homepage": "http://www.wormbase.org/",
+    "homepage": "https://github.com/obophenotype/c-elegans-gross-anatomy-ontology",
     "id": "wbbt",
     "layout": "ontology_detail",
     "license": {
@@ -5924,6 +6224,12 @@
     },
     "ontology_purl": "http://purl.obolibrary.org/obo/wbbt.owl",
     "preferredPrefix": "WBbt",
+    "publications": [
+      {
+        "id": "https://pubmed.ncbi.nlm.nih.gov/18629098/",
+        "title": "Building a cell and anatomy ontology of Caenorhabditis elegans"
+      }
+    ],
     "taxon": {
       "id": "NCBITaxon:6237",
       "label": "Caenorhabditis"
@@ -5939,12 +6245,12 @@
       "system": "git"
     },
     "contact": {
-      "email": "draciti@caltech.edu",
-      "label": "Daniela Raciti"
+      "email": "cgrove@caltech.edu",
+      "label": "Chris Grove"
     },
     "description": "A structured controlled vocabulary of the development of <i>Caenorhabditis elegans</i>.",
-    "domain": "anatomy",
-    "homepage": "http://www.wormbase.org/",
+    "domain": "developemental life stage",
+    "homepage": "https://github.com/obophenotype/c-elegans-development-ontology",
     "id": "wbls",
     "layout": "ontology_detail",
     "license": {
@@ -5954,11 +6260,18 @@
     },
     "ontology_purl": "http://purl.obolibrary.org/obo/wbls.owl",
     "preferredPrefix": "WBls",
+    "publications": [
+      {
+        "id": "https://academic.oup.com/nar/article/48/D1/D762/5603222",
+        "title": "WormBase: a modern Model Organism Information Resource"
+      }
+    ],
     "taxon": {
       "id": "NCBITaxon:6237",
       "label": "Caenorhabditis"
     },
-    "title": "C. elegans development ontology"
+    "title": "C. elegans development ontology",
+    "tracker": "https://github.com/obophenotype/c-elegans-development-ontology/issues"
   },
   {
     "activity_status": "active",
@@ -6167,8 +6480,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Mike Cherry",
-      "label": "cherry@genome.stanford.edu"
+      "email": "cherry@genome.stanford.edu",
+      "label": "Mike Cherry"
     },
     "homepage": "http://www.yeastgenome.org/",
     "id": "ypo",
@@ -6184,8 +6497,8 @@
   {
     "activity_status": "inactive",
     "contact": {
-      "email": "Leszek Vincent",
-      "label": "Leszek@missouri.edu"
+      "email": "Leszek@missouri.edu",
+      "label": "Leszek Vincent"
     },
     "homepage": "http://www.maizemap.org/",
     "id": "zea",

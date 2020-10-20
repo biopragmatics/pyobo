@@ -11,7 +11,7 @@ from urllib.request import urlretrieve
 
 import pandas as pd
 
-from .constants import PYOBO_HOME
+from .constants import RAW_DIRECTORY
 
 __all__ = [
     'get_prefix_directory',
@@ -30,9 +30,9 @@ logger = logging.getLogger(__name__)
 def get_prefix_directory(prefix: str, *, version: Optional[str] = None) -> str:
     """Get the directory."""
     if version:
-        directory = os.path.abspath(os.path.join(PYOBO_HOME, prefix, version))
+        directory = os.path.abspath(os.path.join(RAW_DIRECTORY, prefix, version))
     else:
-        directory = os.path.abspath(os.path.join(PYOBO_HOME, prefix))
+        directory = os.path.abspath(os.path.join(RAW_DIRECTORY, prefix))
     os.makedirs(directory, exist_ok=True)
     return directory
 
@@ -61,6 +61,7 @@ def ensure_path(
     *,
     version: Optional[str] = None,
     path: Optional[str] = None,
+    force: bool = False,
 ) -> str:
     """Download a file if it doesn't exist."""
     if path is None:
@@ -71,7 +72,7 @@ def ensure_path(
     else:
         path = prefix_directory_join(prefix, path)
 
-    if not os.path.exists(path):
+    if not os.path.exists(path) or force:
         logger.info('[%s] downloading OBO from %s', prefix, url)
         urlretrieve(url, path)
 
@@ -84,11 +85,12 @@ def ensure_df(
     *,
     version: Optional[str] = None,
     path: Optional[str] = None,
+    force: bool = False,
     sep: str = '\t',
     **kwargs,
 ) -> pd.DataFrame:
     """Download a file and open as a dataframe."""
-    path = ensure_path(prefix, url, version=version, path=path)
+    path = ensure_path(prefix, url, version=version, path=path, force=force)
     return pd.read_csv(path, sep=sep, **kwargs)
 
 

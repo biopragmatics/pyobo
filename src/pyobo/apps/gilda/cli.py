@@ -2,7 +2,6 @@
 
 """PyOBO's Gilda Service."""
 
-import logging
 from typing import Iterable, Optional
 
 import click
@@ -18,6 +17,8 @@ from wtforms.fields import StringField, SubmitField
 from wtforms.validators import DataRequired
 
 from pyobo import get_id_name_mapping, get_id_synonyms_mapping
+from pyobo.apps.utils import gunicorn_option, host_option, port_option, run_app
+from pyobo.cli_utils import verbose_option
 from pyobo.io_utils import multidict
 
 
@@ -98,12 +99,15 @@ def get_gilda_terms(prefix: str, url: Optional[str] = None) -> Iterable[gilda.te
 
 @click.command()
 @click.argument('prefix')
-def main(prefix):
+@verbose_option
+@host_option
+@port_option
+@gunicorn_option
+def main(prefix: str, host: str, port: int, gunicorn: bool):
     """Run the Gilda service for this database."""
     app = get_app(prefix)
-    app.run()
+    run_app(app=app, host=host, port=port, gunicorn=gunicorn)
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
     main()

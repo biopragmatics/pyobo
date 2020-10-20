@@ -30,6 +30,7 @@ def get_obo() -> Obo:
         name='NCI Pathway Interaction Database',
         typedefs=[pathway_has_part],
         iter_terms=iter_terms,
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
@@ -67,7 +68,7 @@ def iter_terms() -> Iterable[Term]:
                 if hgnc_id is None:  # this only happens for proteins that seem to be virus related
                     # TODO reinvestigate this later
                     logger.debug(
-                        f'uniprot could not map %s/%s/%s to HGNC',
+                        'uniprot could not map %s/%s/%s to HGNC',
                         name, reference, get_gene_name(uniprot_id, web_fallback=False),
                     )
                 else:

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-"""Test mapping program"""
+"""Test mapping program."""
 
 import unittest
 
 import pandas as pd
 
-from pyobo.xrefdb.xrefs_pipeline import COLUMNS, Canonicalizer, get_graph_from_xref_df
+from pyobo.constants import XREF_COLUMNS
+from pyobo.xrefdb.xrefs_pipeline import Canonicalizer, get_graph_from_xref_df
 
 
 class TestCanonicalizer(unittest.TestCase):
@@ -27,7 +28,7 @@ class TestCanonicalizer(unittest.TestCase):
                 # Cluster 3 - irrelevant
                 ['y', 'y1', 'z', 'z1', 'irrelevant_source'],
             ],
-            columns=COLUMNS,
+            columns=XREF_COLUMNS,
         )
         graph = get_graph_from_xref_df(df)
         priority = [

@@ -2,8 +2,6 @@
 
 """Data structures for OBO."""
 
-from __future__ import annotations
-
 import gzip
 import json
 import logging
@@ -23,10 +21,11 @@ from .reference import Reference, Referenced
 from .typedef import TypeDef, default_typedefs, from_species, get_reference_tuple, is_a
 from .utils import comma_separate
 from ..cache_utils import get_gzipped_graph
+from ..constants import RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
 from ..identifier_utils import normalize_curie, normalize_prefix
 from ..io_utils import multidict
-from ..path_utils import get_prefix_obo_path
-from ..registries import REMAPPINGS_PREFIX, XREF_BLACKLIST, XREF_PREFIX_BLACKLIST
+from ..path_utils import get_prefix_obo_path, prefix_directory_join
+from ..registries import get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist
 
 __all__ = [
     'Synonym',
@@ -38,7 +37,6 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 DATE_FORMAT = "%d:%m:%Y %H:%M"
-COLUMNS = ['source_ns', 'source_id', 'target_ns', 'target_id']
 
 
 @dataclass
@@ -52,7 +50,7 @@ class Synonym:
     specificity: str = 'EXACT'
 
     #: The type of synonym. Must be defined in OBO document!
-    type: Optional[SynonymTypeDef] = None
+    type: Optional['SynonymTypeDef'] = None
 
     #: References to articles where the synonym appears
     provenance: List[Reference] = field(default_factory=list)
@@ -78,6 +76,14 @@ class SynonymTypeDef:
     def to_obo(self) -> str:
         """Serialize to OBO."""
         return f'synonymtypedef: {self.id} "{self.name}"'
+
+    @classmethod
+    def from_text(cls, text) -> 'SynonymTypeDef':
+        """Get a type definition from text that's normalized."""
+        return cls(
+            id=text.lower().replace('-', '_').replace(' ', '_').replace('"', "").replace(')', '').replace('(', ''),
+            name=text.replace('"', ""),
+        )
 
 
 @dataclass
@@ -108,6 +114,9 @@ class Term(Referenced):
     #: Equivalent references
     xrefs: List[Reference] = field(default_factory=list)
 
+    #: Alternate Identifiers
+    alt_ids: List[Reference] = field(default_factory=list)
+
     #: The sub-namespace within the ontology
     namespace: Optional[str] = None
 
@@ -127,30 +136,30 @@ class Term(Referenced):
             raise
         return r[0]
 
-    def get_relationship(self, type_def: TypeDef) -> Optional[Reference]:
+    def get_relationship(self, typedef: TypeDef) -> Optional[Reference]:
         """Get a single relationship of the given type."""
-        r = self.get_relationships(type_def)
+        r = self.get_relationships(typedef)
         if not r:
             return
         if len(r) != 1:
             raise
         return r[0]
 
-    def get_relationships(self, type_def: TypeDef) -> List[Reference]:
+    def get_relationships(self, typedef: TypeDef) -> List[Reference]:
         """Get relationships from the given type."""
-        return self.relationships[type_def]
+        return self.relationships[typedef]
 
-    def append_relationship(self, type_def: TypeDef, reference: Reference) -> None:
+    def append_relationship(self, typedef: TypeDef, reference: Reference) -> None:
         """Append a relationship."""
-        self.relationships[type_def].append(reference)
+        self.relationships[typedef].append(reference)
 
     def set_species(self, identifier: str, name: str):
         """Append the from_species relation."""
         self.append_relationship(from_species, Reference(prefix='taxonomy', identifier=identifier, name=name))
 
-    def extend_relationship(self, type_def: TypeDef, references: Iterable[Reference]) -> None:
+    def extend_relationship(self, typedef: TypeDef, references: Iterable[Reference]) -> None:
         """Append several relationships."""
-        self.relationships[type_def].extend(references)
+        self.relationships[typedef].extend(references)
 
     def append_property(self, prop: str, value: str) -> None:
         """Append a property."""
@@ -159,7 +168,7 @@ class Term(Referenced):
     def _definition_fp(self):
         return f'"{self.definition}" [{comma_separate(self.provenance)}]'
 
-    def iterate_properties(self) -> Iterable[str, str]:
+    def iterate_properties(self) -> Iterable[Tuple[str, str]]:
         """Iterate over pairs of property and values."""
         for prop, values in self.properties.items():
             for value in values:
@@ -187,15 +196,15 @@ class Term(Referenced):
         for parent in sorted(self.parents, key=attrgetter('prefix', 'identifier')):
             yield f'is_a: {parent}'
 
-        for type_def, references in sorted(self.relationships.items(), key=lambda x: x[0].name or x[0].identifier):
+        for typedef, references in sorted(self.relationships.items(), key=_sort_relations):
             for reference in references:
-                s = f'relationship: {type_def.curie} {reference.curie}'
+                s = f'relationship: {typedef.curie} {reference.curie}'
                 if write_relation_comments:
                     # TODO Obonet doesn't support this. re-enable later.
-                    if type_def.name or reference.name:
+                    if typedef.name or reference.name:
                         s += ' !'
-                    if type_def.name:
-                        s += f' {type_def.name}'
+                    if typedef.name:
+                        s += f' {typedef.name}'
                     if reference.name:
                         s += f' {reference.name}'
                 yield s
@@ -205,6 +214,11 @@ class Term(Referenced):
 
         for synonym in sorted(self.synonyms, key=attrgetter('name')):
             yield synonym.to_obo()
+
+
+def _sort_relations(r):
+    typedef, _references = r
+    return typedef.reference.name or typedef.reference.identifier
 
 
 @dataclass
@@ -252,6 +266,12 @@ class Obo:
         """Get the date as a formatted string."""
         return (self.date if self.date else datetime.now()).strftime(DATE_FORMAT)
 
+    def _iter_terms(self, use_tqdm: bool = False) -> Iterable[Term]:
+        if use_tqdm:
+            yield from tqdm(self, desc='terms', unit_scale=True, unit='term')
+        else:
+            yield from self
+
     def iterate_obo_lines(self) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield f'format-version: {self.format_version}'
@@ -290,7 +310,7 @@ class Obo:
             json.dump(nx.node_link_data(graph), file)
 
     @classmethod
-    def from_obonet_gz(cls, path: str) -> Obo:
+    def from_obonet_gz(cls, path: str) -> 'Obo':
         """Read OBO from a pre-compiled Obonet JSON."""
         return cls.from_obonet(get_gzipped_graph(path))
 
@@ -298,6 +318,9 @@ class Obo:
         """Write the OBO to the default path."""
         path = get_prefix_obo_path(self.ontology)
         self.write(path, use_tqdm=use_tqdm)
+
+        obonet_gz_path = prefix_directory_join(self.ontology, f"{self.ontology}.obonet.json.gz")
+        self.write_obonet_gz(obonet_gz_path)
 
     def __iter__(self):  # noqa: D105
         return iter(self.iter_terms())
@@ -325,7 +348,7 @@ class Obo:
         return ancestor in self.ancestors(descendant)
 
     @property
-    def hierarchy(self) -> nx.DiGraph:  # noqa: D401
+    def hierarchy(self, *, use_tqdm: bool = False) -> nx.DiGraph:  # noqa: D401
         """A graph representing the parent/child relationships between the entities.
 
         To get all children of a given entity, do:
@@ -340,37 +363,37 @@ class Obo:
         """
         if self._hierarchy is None:
             self._hierarchy = nx.DiGraph()
-            for term in self:
+            for term in self._iter_terms(use_tqdm=use_tqdm):
                 for parent in term.parents:
                     self._hierarchy.add_edge(term.identifier, parent.identifier)
         return self._hierarchy
 
-    def to_obonet(self: Obo) -> nx.MultiDiGraph:
+    def to_obonet(self: 'Obo', *, use_tqdm: bool = False) -> nx.MultiDiGraph:
         """Export as a :mod`obonet` style graph."""
         rv = nx.MultiDiGraph()
         rv.graph.update({
             'name': self.name,
             'ontology': self.ontology,
             'auto-generated-by': self.auto_generated_by,
-            'typedefs': _convert_type_defs(self.typedefs),
+            'typedefs': _convert_typedefs(self.typedefs),
             'format_version': self.format_version,
-            'synonymtypedef': _convert_synonym_type_defs(self.synonym_typedefs),
+            'synonymtypedef': _convert_synonym_typedefs(self.synonym_typedefs),
             'date': self.date_formatted,
         })
 
         nodes = {}
         links = []
-        for term in self:
+        for term in self._iter_terms(use_tqdm=use_tqdm):
             parents = []
             for parent in term.parents:
                 links.append((term.curie, 'is_a', parent.curie))
                 parents.append(parent.curie)
 
             relations = []
-            for type_def, targets in term.relationships.items():
+            for typedef, targets in term.relationships.items():
                 for target in targets:
-                    relations.append(f'{type_def.curie} {target.curie}')
-                    links.append((term.curie, type_def.curie, target.curie))
+                    relations.append(f'{typedef.curie} {target.curie}')
+                    links.append((term.curie, typedef.curie, target.curie))
 
             nodes[term.curie] = {
                 'id': term.curie,
@@ -436,8 +459,8 @@ class Obo:
                 continue
 
             xrefs, provenance = [], []
-            for reference in iterate_node_xrefs(data):
-                if reference.prefix == 'pubmed':
+            for reference in iterate_node_xrefs(prefix=prefix, data=data):
+                if reference.prefix in {'pubmed', 'pmc', 'doi'}:  # TODO add other provenance prefixes
                     provenance.append(reference)
                 else:
                     xrefs.append(reference)
@@ -453,6 +476,7 @@ class Obo:
                 synonyms=list(iterate_node_synonyms(data)),
                 xrefs=xrefs,
                 provenance=provenance,
+                alt_ids=list(iterate_node_alt_ids(data)),
             )
             for relation, reference in iterate_node_relationships(data, default_prefix=ontology):
                 if (relation.prefix, relation.identifier) in typedefs:
@@ -460,7 +484,7 @@ class Obo:
                 elif (relation.prefix, relation.identifier) in default_typedefs:
                     typedef = default_typedefs[relation.prefix, relation.identifier]
                 else:
-                    logger.warning(f'[%s] has no typedef for %s', ontology, relation)
+                    logger.warning('[%s] has no typedef for %s', ontology, relation)
                     continue
                 term.append_relationship(typedef, reference)
             for prop, value in iterate_node_properties(data):
@@ -485,70 +509,70 @@ class Obo:
             iter_terms=lambda: iter(terms),
         )
 
-    def get_id_name_mapping(self) -> Mapping[str, str]:
+    def get_id_name_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, str]:
         """Get a mapping from identifiers to names."""
         return {
             term.identifier: term.name
-            for term in self
+            for term in self._iter_terms(use_tqdm=use_tqdm)
         }
 
-    def iterate_synonyms(self) -> Iterable[Tuple[Term, Synonym]]:
+    def iterate_synonyms(self, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, Synonym]]:
         """Iterate over synonyms for each term."""
-        for term in self:
+        for term in self._iter_terms(use_tqdm=use_tqdm):
             for synonym in term.synonyms:
                 yield term, synonym
 
-    def iterate_properties(self) -> Iterable[Tuple[Term, str, str]]:
+    def iterate_properties(self, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, str, str]]:
         """Iterate over tuples of terms, properties, and their values."""
         # TODO if property_prefix is set, try removing that as a prefix from all prop strings.
-        for term in self:
+        for term in self._iter_terms(use_tqdm=use_tqdm):
             for prop, value in term.iterate_properties():
                 yield term, prop, value
 
-    def get_properties_df(self) -> pd.DataFrame:
+    def get_properties_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get all properties as a dataframe."""
         return pd.DataFrame(
             [
                 (term.identifier, prop, value)
-                for term, prop, value in self.iterate_properties()
+                for term, prop, value in self.iterate_properties(use_tqdm=use_tqdm)
             ],
             columns=[f'{self.ontology}_id', 'property', 'value'],
         )
 
-    def iterate_filtered_properties(self, prop: str) -> Iterable[Tuple[Term, str]]:
+    def iterate_filtered_properties(self, prop: str, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, str]]:
         """Iterate over tuples of terms and the values for the given property."""
-        for term in self:
+        for term in self._iter_terms(use_tqdm=use_tqdm):
             for _prop, value in term.iterate_properties():
                 if _prop == prop:
                     yield term, value
 
-    def get_filtered_properties_df(self, prop: str) -> pd.DataFrame:
+    def get_filtered_properties_df(self, prop: str, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get a dataframe of terms' identifiers to the given property's values."""
         return pd.DataFrame(
-            list(self.get_filtered_properties_mapping(prop).items()),
+            list(self.get_filtered_properties_mapping(prop, use_tqdm=use_tqdm).items()),
             columns=[f'{self.ontology}_id', prop],
         )
 
-    def get_filtered_properties_mapping(self, prop: str) -> Mapping[str, str]:
+    def get_filtered_properties_mapping(self, prop: str, *, use_tqdm: bool = False) -> Mapping[str, str]:
         """Get a mapping from a term's identifier to the property.
 
         .. warning:: Assumes there's only one version of the property for each term.
         """
         return {
             term.identifier: value
-            for term, value in self.iterate_filtered_properties(prop)
+            for term, value in self.iterate_filtered_properties(prop, use_tqdm=use_tqdm)
         }
 
-    def get_filtered_multiproperties_mapping(self, prop: str) -> Mapping[str, List[str]]:
+    def get_filtered_multiproperties_mapping(self, prop: str, *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
         """Get a mapping from a term's identifier to the property values."""
         return multidict(
             (term.identifier, value)
-            for term, value in self.iterate_filtered_properties(prop)
+            for term, value in self.iterate_filtered_properties(prop, use_tqdm=use_tqdm)
         )
 
-    def iterate_relations(self) -> Iterable[Tuple[Term, TypeDef, Reference]]:
+    def iterate_relations(self, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, TypeDef, Reference]]:
         """Iterate over tuples of terms, relations, and their targets."""
-        for term in self:
+        for term in self._iter_terms(use_tqdm=use_tqdm):
             for parent in term.parents:
                 yield term, is_a, parent
             for typedef, references in term.relationships.items():
@@ -558,83 +582,108 @@ class Obo:
     def iterate_filtered_relations(
         self,
         relation: Union[Reference, TypeDef, Tuple[str, str]],
+        *,
+        use_tqdm: bool = False,
     ) -> Iterable[Tuple[Term, Reference]]:
         """Iterate over tuples of terms and ther targets for the given relation."""
         _target_prefix, _target_identifier = get_reference_tuple(relation)
-        for term, typedef, reference in self.iterate_relations():
+        for term, typedef, reference in self.iterate_relations(use_tqdm=use_tqdm):
             if typedef.prefix == _target_prefix and typedef.identifier == _target_identifier:
                 yield term, reference
 
-    def get_relations_df(self) -> pd.DataFrame:
+    def get_relations_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get all relations from the OBO."""
         return pd.DataFrame(
             [
                 (term.identifier, typedef.prefix, typedef.identifier, reference.prefix, reference.identifier)
-                for term, typedef, reference in self.iterate_relations()
+                for term, typedef, reference in self.iterate_relations(use_tqdm=use_tqdm)
             ],
-            columns=[f'{self.ontology}_id', 'relation_ns', 'relation_id', 'target_ns', 'target_id'],
+            columns=[f'{self.ontology}_id', RELATION_PREFIX, RELATION_ID, TARGET_PREFIX, TARGET_ID],
         )
 
-    def get_filtered_relations_df(self, relation: Union[Reference, TypeDef, Tuple[str, str]]) -> pd.DataFrame:
+    def get_filtered_relations_df(
+        self,
+        relation: Union[Reference, TypeDef, Tuple[str, str]],
+        *,
+        use_tqdm: bool = False,
+    ) -> pd.DataFrame:
         """Get a specific relation from OBO."""
         return pd.DataFrame(
             [
                 (term.identifier, reference.prefix, reference.identifier)
-                for term, reference in self.iterate_filtered_relations(relation)
+                for term, reference in self.iterate_filtered_relations(relation, use_tqdm=use_tqdm)
             ],
-            columns=[f'{self.ontology}_id', 'target_ns', 'target_id'],
+            columns=[f'{self.ontology}_id', TARGET_PREFIX, TARGET_ID],
         )
 
-    def iterate_filtered_xrefs(self, prefix: str) -> Iterable[Tuple[Term, Reference]]:
+    def iterate_filtered_xrefs(self, prefix: str, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, Reference]]:
         """Iterate over xrefs to a given prefix."""
-        for term in self:
+        for term in self._iter_terms(use_tqdm=use_tqdm):
             for xref in term.xrefs:
                 if xref.prefix == prefix:
                     yield term, xref
 
-    def get_xrefs_df(self) -> pd.DataFrame:
+    def get_xrefs_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get a dataframe of all xrefs extracted from the OBO document."""
         return pd.DataFrame(
             [
                 (term.prefix, term.identifier, xref.prefix, xref.identifier)
-                for term in self
+                for term in self._iter_terms(use_tqdm=use_tqdm)
                 for xref in term.xrefs
             ],
-            columns=COLUMNS,
-        )
+            columns=[SOURCE_PREFIX, SOURCE_ID, TARGET_PREFIX, TARGET_ID],
+        ).drop_duplicates()
 
-    def get_filtered_xrefs_mapping(self, prefix: str) -> Mapping[str, str]:
+    def get_filtered_xrefs_mapping(self, prefix: str, *, use_tqdm: bool = False) -> Mapping[str, str]:
         """Get filtered xrefs as a dictionary."""
         return {
             term.identifier: xref.identifier
-            for term, xref in self.iterate_filtered_xrefs(prefix)
+            for term, xref in self.iterate_filtered_xrefs(prefix, use_tqdm=use_tqdm)
         }
 
-    def get_filtered_multixrefs_mapping(self, prefix: str) -> Mapping[str, List[str]]:
+    def get_filtered_multixrefs_mapping(self, prefix: str, *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
         """Get filtered xrefs as a dictionary."""
         return multidict(
             (term.identifier, xref.identifier)
-            for term, xref in self.iterate_filtered_xrefs(prefix)
+            for term, xref in self.iterate_filtered_xrefs(prefix, use_tqdm=use_tqdm)
         )
 
-    def get_id_multirelations_mapping(self, type_def: TypeDef) -> Mapping[str, List[Reference]]:
+    def get_id_multirelations_mapping(
+        self,
+        typedef: TypeDef,
+        *,
+        use_tqdm: bool = False,
+    ) -> Mapping[str, List[Reference]]:
         """Get a mapping from identifiers to a list of all references for the given relation."""
         return multidict(
             (term.identifier, reference)
-            for term in self
-            for reference in term.relationships.get(type_def)
+            for term in self._iter_terms(use_tqdm=use_tqdm)
+            for reference in term.relationships.get(typedef)
         )
 
-    def get_id_synonyms_mapping(self) -> Mapping[str, List[str]]:
+    def get_id_synonyms_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
         """Get a mapping from identifiers to a list of sorted synonym strings."""
         rv = multidict(
             (term.identifier, synonym.name)
-            for term, synonym in self.iterate_synonyms()
+            for term, synonym in self.iterate_synonyms(use_tqdm=use_tqdm)
         )
         return {
             k: sorted(set(v))
             for k, v in rv.items()
         }
+
+    def iterate_alts(self) -> Iterable[Tuple[Term, Reference]]:
+        """Iterate over alternative identifiers."""
+        for term in self:
+            for alt in term.alt_ids:
+                yield term, alt
+
+    def get_id_alts_mapping(self) -> Mapping[str, List[str]]:
+        """Get a mapping from identifiers to a list of alternative identifiers."""
+        return multidict(
+            (term.identifier, alt.identifier)
+            for term, alt in self.iterate_alts()
+        )
 
 
 def _iter_obo_graph(graph: nx.MultiDiGraph) -> Iterable[Tuple[Optional[str], str, Mapping[str, Any]]]:
@@ -645,32 +694,30 @@ def _iter_obo_graph(graph: nx.MultiDiGraph) -> Iterable[Tuple[Optional[str], str
             yield prefix, identifier, data
 
 
-def _convert_synonym_type_defs(synonym_type_defs: Iterable[SynonymTypeDef]) -> List[str]:
+def _convert_synonym_typedefs(synonym_typedefs: Iterable[SynonymTypeDef]) -> List[str]:
     """Convert the synonym type defs."""
     return [
-        _convert_synonym_type_def(synonym_type_def)
-        for synonym_type_def in synonym_type_defs
+        _convert_synonym_typedef(synonym_typedef)
+        for synonym_typedef in synonym_typedefs
     ]
 
 
-def _convert_synonym_type_def(synonym_type_def: SynonymTypeDef) -> str:
-    return f'{synonym_type_def.id} "{synonym_type_def.name}"'
+def _convert_synonym_typedef(synonym_typedef: SynonymTypeDef) -> str:
+    return f'{synonym_typedef.id} "{synonym_typedef.name}"'
 
 
-def _convert_type_defs(type_defs: Iterable[TypeDef]) -> List[Mapping[str, Any]]:
+def _convert_typedefs(typedefs: Iterable[TypeDef]) -> List[Mapping[str, Any]]:
     """Convert the type defs."""
     return [
-        _convert_type_def(type_def)
-        for type_def in type_defs
+        _convert_typedef(typedef)
+        for typedef in typedefs
     ]
 
 
-def _convert_type_def(type_def: TypeDef) -> Mapping[str, Any]:
+def _convert_typedef(typedef: TypeDef) -> Mapping[str, Any]:
     """Convert a type def."""
-    return dict(
-        id=type_def.identifier,
-        name=type_def.name,
-    )
+    # TODO add more later
+    return typedef.reference.to_dict()
 
 
 def iterate_graph_synonym_typedefs(graph: nx.MultiDiGraph) -> Iterable[SynonymTypeDef]:
@@ -684,14 +731,19 @@ def iterate_graph_synonym_typedefs(graph: nx.MultiDiGraph) -> Iterable[SynonymTy
 def iterate_graph_typedefs(graph: nx.MultiDiGraph, default_prefix: str) -> Iterable[TypeDef]:
     """Get type definitions from an :mod:`obonet` graph."""
     for typedef in graph.graph.get('typedefs', []):
+        prefix = typedef.get('prefix', default_prefix)
+
+        if 'id' in typedef:
+            identifier = typedef['id']
+        elif 'identifier' in typedef:
+            identifier = typedef['identifier']
+        else:
+            raise KeyError
+
         name = typedef.get('name')
         if name is None:
             logger.warning('[%s] typedef %s is missing a name', graph.graph['ontology'], typedef['id'])
             name = typedef['id']
-
-        prefix, identifier = normalize_curie(typedef['id'])
-        if prefix is None and identifier is None:
-            prefix, identifier = default_prefix, typedef['id']
 
         reference = Reference(prefix=prefix, identifier=identifier, name=name)
 
@@ -765,6 +817,14 @@ def iterate_node_parents(data: Mapping[str, Any]) -> Iterable[Reference]:
         yield reference
 
 
+def iterate_node_alt_ids(data: Mapping[str, Any]) -> Iterable[Reference]:
+    """Extract alternate identifiers from a :mod:`obonet` node's data."""
+    for curie in data.get('alt_id', []):
+        reference = Reference.from_curie(curie)
+        if reference is not None:
+            yield reference
+
+
 def iterate_node_relationships(
     data: Mapping[str, Any],
     *,
@@ -789,19 +849,19 @@ def iterate_node_relationships(
         yield relation, target
 
 
-def iterate_node_xrefs(data: Mapping[str, Any]) -> Iterable[Reference]:
+def iterate_node_xrefs(*, prefix: str, data: Mapping[str, Any]) -> Iterable[Reference]:
     """Extract xrefs from a :mod:`obonet` node's data."""
     for xref in data.get('xref', []):
         xref = xref.strip()
 
         if (
-            any(xref.startswith(x) for x in XREF_PREFIX_BLACKLIST)
-            or xref in XREF_BLACKLIST
+            any(xref.startswith(x) for x in get_xrefs_prefix_blacklist())
+            or xref in get_xrefs_blacklist()
             or ':' not in xref
         ):
             continue  # sometimes xref to self... weird
 
-        for blacklisted_prefix, new_prefix in REMAPPINGS_PREFIX.items():
+        for blacklisted_prefix, new_prefix in get_remappings_prefix().items():
             if xref.startswith(blacklisted_prefix):
                 xref = new_prefix + xref[len(blacklisted_prefix):]
 
@@ -809,7 +869,7 @@ def iterate_node_xrefs(data: Mapping[str, Any]) -> Iterable[Reference]:
         if split_space:
             _xref_split = xref.split(' ', 1)
             if _xref_split[1][0] not in {'"', '('}:
-                logger.warning(f'Problem with space in xref {xref}')
+                logger.debug('[%s] Problem with space in xref %s', prefix, xref)
                 continue
             xref = _xref_split[0]
 
