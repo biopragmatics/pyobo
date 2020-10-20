@@ -7,6 +7,7 @@ import gzip
 import json
 import logging
 import os
+import pickle
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Union
 
 import networkx as nx
@@ -69,6 +70,27 @@ def cached_json(path: str) -> Callable[[JSONGetter], JSONGetter]:  # noqa: D202
             rv = f()
             with open(path, 'w') as file:
                 json.dump(rv, file, indent=2)
+            return rv
+
+        return _wrapped
+
+    return wrapped
+
+
+def cached_pickle(path: str, force: bool = False):
+    """Create a decorator to apply to a pickle getter."""
+
+    def wrapped(f):  # noqa: D202
+        """Wrap a mapping getter so it can be auto-loaded from a cache."""
+
+        @functools.wraps(f)
+        def _wrapped():
+            if os.path.exists(path) and not force:
+                with open(path, 'rb') as file:
+                    return pickle.load(file)
+            rv = f()
+            with open(path, 'wb') as file:
+                pickle.dump(rv, file, protocol=pickle.HIGHEST_PROTOCOL)
             return rv
 
         return _wrapped
