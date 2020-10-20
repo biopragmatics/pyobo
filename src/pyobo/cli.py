@@ -37,16 +37,18 @@ def main():
 
 
 prefix_argument = click.argument('prefix')
+force_option = click.option('-f', '--force', is_flag=True)
 
 
 @main.command()
 @prefix_argument
 @click.option('-t', '--target')
 @verbose_option
-def xrefs(prefix: str, target: str):
+@force_option
+def xrefs(prefix: str, target: str, force: bool):
     """Page through xrefs for the given namespace to the second given namespace."""
     if target:
-        filtered_xrefs = get_filtered_xrefs(prefix, target)
+        filtered_xrefs = get_filtered_xrefs(prefix, target, force=force)
         click.echo_via_pager('\n'.join(
             f'{identifier}\t{_xref}'
             for identifier, _xref in filtered_xrefs.items()
@@ -59,9 +61,10 @@ def xrefs(prefix: str, target: str):
 @main.command()
 @prefix_argument
 @verbose_option
-def names(prefix: str):
+@force_option
+def names(prefix: str, force: bool):
     """Page through the identifiers and names of entities in the given namespace."""
-    id_to_name = get_id_name_mapping(prefix)
+    id_to_name = get_id_name_mapping(prefix, force=force)
     click.echo_via_pager('\n'.join(
         '\t'.join(item)
         for item in id_to_name.items()
@@ -71,17 +74,18 @@ def names(prefix: str):
 @main.command()
 @prefix_argument
 @verbose_option
-def synonyms(prefix: str):
+@force_option
+def synonyms(prefix: str, force: bool):
     """Page through the synonyms for entities in the given namespace."""
     if ':' in prefix:
         prefix, identifier = normalize_curie(prefix)
         name = get_name(prefix, identifier)
-        id_to_synonyms = get_id_synonyms_mapping(prefix)
+        id_to_synonyms = get_id_synonyms_mapping(prefix, force=force)
         click.echo(f'Synonyms for {prefix}:{identifier} ! {name}')
         for synonym in id_to_synonyms.get(identifier, []):
             click.echo(synonym)
     else:  # it's a prefix
-        id_to_synonyms = get_id_synonyms_mapping(prefix)
+        id_to_synonyms = get_id_synonyms_mapping(prefix, force=force)
         click.echo_via_pager('\n'.join(
             f'{identifier}\t{_synonym}'
             for identifier, _synonyms in id_to_synonyms.items()
@@ -93,16 +97,17 @@ def synonyms(prefix: str):
 @prefix_argument
 @click.option('--relation', help='CURIE for the relationship or just the ID if local to the ontology')
 @verbose_option
-def relations(prefix: str, relation: str):
+@force_option
+def relations(prefix: str, relation: str, force: bool):
     """Page through the relations for entities in the given namespace."""
     if relation is not None:
         curie = normalize_curie(relation)
         if curie[1] is None:  # that's the identifier
             click.secho(f'not valid curie, assuming local to {prefix}', fg='yellow')
             curie = prefix, relation
-        relations_df = get_filtered_relations_df(prefix, relation=curie)
+        relations_df = get_filtered_relations_df(prefix, relation=curie, force=force)
     else:
-        relations_df = get_relations_df(prefix)
+        relations_df = get_relations_df(prefix, force=force)
 
     echo_df(relations_df)
 
@@ -112,7 +117,8 @@ def relations(prefix: str, relation: str):
 @click.option('--include-part-of', is_flag=True)
 @click.option('--include-has-member', is_flag=True)
 @verbose_option
-def hierarchy(prefix: str, include_part_of: bool, include_has_member):
+@force_option
+def hierarchy(prefix: str, include_part_of: bool, include_has_member: bool, force: bool):
     """Page through the hierarchy for entities in the namespace."""
     h = get_hierarchy(prefix, include_part_of=include_part_of, include_has_member=include_has_member)
     click.echo_via_pager('\n'.join(
@@ -125,9 +131,10 @@ def hierarchy(prefix: str, include_part_of: bool, include_has_member):
 @prefix_argument
 @click.argument('identifier')
 @verbose_option
-def ancestors(prefix: str, identifier: str):
+@force_option
+def ancestors(prefix: str, identifier: str, force: bool):
     """Look up ancestors."""
-    curies = get_ancestors(prefix=prefix, identifier=identifier)
+    curies = get_ancestors(prefix=prefix, identifier=identifier, force=force)
     for curie in curies:
         click.echo(f'{curie}\t{get_name_by_curie(curie)}')
 
@@ -136,9 +143,10 @@ def ancestors(prefix: str, identifier: str):
 @prefix_argument
 @click.argument('identifier')
 @verbose_option
-def descendants(prefix: str, identifier: str):
+@force_option
+def descendants(prefix: str, identifier: str, force: bool):
     """Look up descendants."""
-    curies = get_descendants(prefix=prefix, identifier=identifier)
+    curies = get_descendants(prefix=prefix, identifier=identifier, force=force)
     for curie in curies:
         click.echo(f'{curie}\t{get_name_by_curie(curie)}')
 
@@ -147,12 +155,13 @@ def descendants(prefix: str, identifier: str):
 @prefix_argument
 @click.option('-k', '--key')
 @verbose_option
-def properties(prefix: str, key: Optional[str]):
+@force_option
+def properties(prefix: str, key: Optional[str], force: bool):
     """Page through the properties for entities in the given namespace."""
     if key is None:
-        properties_df = get_properties_df(prefix)
+        properties_df = get_properties_df(prefix, force=force)
     else:
-        properties_df = get_filtered_properties_df(prefix, prop=key)
+        properties_df = get_filtered_properties_df(prefix, prop=key, force=force)
     echo_df(properties_df)
 
 
@@ -183,9 +192,10 @@ def recurify(file_in, file_out, column: int, sep: str):
 @main.command()
 @prefix_argument
 @verbose_option
-def alts(prefix: str):
+@force_option
+def alts(prefix: str, force: bool):
     """Page through alt ids in a namespace."""
-    id_to_alts = get_id_to_alts(prefix)
+    id_to_alts = get_id_to_alts(prefix, force=force)
     click.echo_via_pager('\n'.join(
         f'{identifier}\t{alt}'
         for identifier, alts in id_to_alts.items()

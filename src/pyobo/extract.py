@@ -91,7 +91,7 @@ def get_name(prefix: str, identifier: str) -> Optional[str]:
 
 @lru_cache()
 @wrap_norm_prefix
-def get_id_name_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
+def get_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == 'ncbigene':
         from .sources.ncbigene import get_ncbigene_id_to_name_mapping
@@ -100,7 +100,7 @@ def get_id_name_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
 
     path = prefix_directory_join(prefix, 'cache', 'names.tsv')
 
-    @cached_mapping(path=path, header=[f'{prefix}_id', 'name'])
+    @cached_mapping(path=path, header=[f'{prefix}_id', 'name'], force=force)
     def _get_id_name_mapping() -> Mapping[str, str]:
         obo = get(prefix, **kwargs)
         logger.info('[%s] loading mappings', prefix)
@@ -120,12 +120,12 @@ def get_name_id_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
 
 
 @wrap_norm_prefix
-def get_id_synonyms_mapping(prefix: str, **kwargs) -> Mapping[str, List[str]]:
+def get_id_synonyms_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, List[str]]:
     """Get the OBO file and output a synonym dictionary."""
     path = prefix_directory_join(prefix, 'cache', "synonyms.tsv")
     header = [f'{prefix}_id', 'synonym']
 
-    @cached_multidict(path=path, header=header)
+    @cached_multidict(path=path, header=header, force=force)
     def _get_multidict() -> Mapping[str, List[str]]:
         obo = get(prefix, **kwargs)
         return obo.get_id_synonyms_mapping()
@@ -134,11 +134,11 @@ def get_id_synonyms_mapping(prefix: str, **kwargs) -> Mapping[str, List[str]]:
 
 
 @wrap_norm_prefix
-def get_properties_df(prefix: str, **kwargs) -> pd.DataFrame:
+def get_properties_df(prefix: str, force: bool = False, **kwargs) -> pd.DataFrame:
     """Extract properties."""
     path = prefix_directory_join(prefix, 'cache', "properties.tsv")
 
-    @cached_df(path=path, dtype=str)
+    @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         obo = get(prefix, **kwargs)
         df = obo.get_properties_df()
@@ -149,12 +149,18 @@ def get_properties_df(prefix: str, **kwargs) -> pd.DataFrame:
 
 
 @wrap_norm_prefix
-def get_filtered_properties_mapping(prefix: str, prop: str, use_tqdm: bool = False, **kwargs) -> Mapping[str, str]:
+def get_filtered_properties_mapping(
+    prefix: str,
+    prop: str,
+    use_tqdm: bool = False,
+    force: bool = False,
+    **kwargs,
+) -> Mapping[str, str]:
     """Extract a single property for each term as a dictionary."""
     path = prefix_directory_join(prefix, 'cache', 'properties', f"{prop}.tsv")
     all_properties_path = prefix_directory_join(prefix, 'cache', 'properties.tsv')
 
-    @cached_mapping(path=path, header=[f'{prefix}_id', prop])
+    @cached_mapping(path=path, header=[f'{prefix}_id', prop], force=force)
     def _mapping_getter() -> Mapping[str, str]:
         if os.path.exists(all_properties_path):
             logger.info('[%s] loading pre-cached properties', prefix)
@@ -170,12 +176,19 @@ def get_filtered_properties_mapping(prefix: str, prop: str, use_tqdm: bool = Fal
 
 
 @wrap_norm_prefix
-def get_filtered_properties_df(prefix: str, prop: str, *, use_tqdm: bool = False, **kwargs) -> pd.DataFrame:
+def get_filtered_properties_df(
+    prefix: str,
+    prop: str,
+    *,
+    use_tqdm: bool = False,
+    force: bool = False,
+    **kwargs,
+) -> pd.DataFrame:
     """Extract a single property for each term."""
     path = prefix_directory_join(prefix, 'cache', 'properties', f"{prop}.tsv")
     all_properties_path = prefix_directory_join(prefix, 'cache', 'properties.tsv')
 
-    @cached_df(path=path, dtype=str)
+    @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         if os.path.exists(all_properties_path):
             logger.info('[%s] loading pre-cached properties', prefix)
@@ -190,11 +203,11 @@ def get_filtered_properties_df(prefix: str, prop: str, *, use_tqdm: bool = False
 
 
 @wrap_norm_prefix
-def get_relations_df(prefix: str, *, use_tqdm: bool = False, **kwargs) -> pd.DataFrame:
+def get_relations_df(prefix: str, *, use_tqdm: bool = False, force: bool = False, **kwargs) -> pd.DataFrame:
     """Get all relations from the OBO."""
     path = prefix_directory_join(prefix, 'cache', 'relations.tsv')
 
-    @cached_df(path=path, dtype=str)
+    @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         obo = get(prefix, **kwargs)
         return obo.get_relations_df(use_tqdm=use_tqdm)
@@ -208,6 +221,7 @@ def get_filtered_relations_df(
     relation: RelationHint,
     *,
     use_tqdm: bool = False,
+    force: bool = False,
     **kwargs,
 ) -> pd.DataFrame:
     """Get all of the given relation."""
@@ -217,11 +231,11 @@ def get_filtered_relations_df(
 
     # chebi_id        relation_ns     relation_id     target_ns       target_id
 
-    @cached_df(path=path, dtype=str)
+    @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         if os.path.exists(all_relations_path):
             df = pd.read_csv(all_relations_path, sep='\t')
-            idx = (df[RELATION_PREFIX] == relation.prefix) & (df[RELATION_ID] == relation.identifier)
+            idx = (df[RELATION_PREFIX] == relation[0]) & (df[RELATION_ID] == relation[1])
             columns = [f'{prefix}_id', TARGET_PREFIX, TARGET_ID]
             return df.loc[idx, columns]
 
@@ -279,11 +293,11 @@ def get_filtered_xrefs(
 
 
 @wrap_norm_prefix
-def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, **kwargs) -> pd.DataFrame:
+def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, force: bool = False, **kwargs) -> pd.DataFrame:
     """Get all xrefs."""
     path = prefix_directory_join(prefix, 'cache', 'xrefs.tsv')
 
-    @cached_df(path=path, dtype=str)
+    @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         obo = get(prefix, **kwargs)
         return obo.get_xrefs_df(use_tqdm=use_tqdm)
@@ -293,7 +307,7 @@ def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, **kwargs) -> pd.DataFra
 
 @lru_cache()
 @wrap_norm_prefix
-def get_id_to_alts(prefix: str, **kwargs) -> Mapping[str, List[str]]:
+def get_id_to_alts(prefix: str, force: bool = False, **kwargs) -> Mapping[str, List[str]]:
     """Get alternate identifiers."""
     if prefix in NO_ALTS:
         return {}
@@ -301,7 +315,7 @@ def get_id_to_alts(prefix: str, **kwargs) -> Mapping[str, List[str]]:
     path = prefix_directory_join(prefix, 'cache', 'alt_ids.tsv')
     header = [f'{prefix}_id', 'alt_id']
 
-    @cached_multidict(path=path, header=header)
+    @cached_multidict(path=path, header=header, force=force)
     def _get_mapping() -> Mapping[str, List[str]]:
         obo = get(prefix, **kwargs)
         return obo.get_id_alts_mapping()
@@ -351,6 +365,7 @@ def get_hierarchy(
     extra_relations: Optional[Iterable[RelationHint]] = None,
     properties: Optional[Iterable[str]] = None,
     use_tqdm: bool = False,
+    force: bool = False,
     **kwargs,
 ) -> nx.DiGraph:
     """Get hierarchy of parents as a directed graph.
@@ -376,6 +391,7 @@ def get_hierarchy(
         extra_relations=tuple(sorted(extra_relations or [])),
         properties=tuple(sorted(properties or [])),
         use_tqdm=use_tqdm,
+        force=force,
         **kwargs,
     )
 
@@ -390,35 +406,66 @@ def _get_hierarchy_helper(
     include_part_of: bool,
     include_has_member: bool,
     use_tqdm: bool,
+    force: bool = False,
     **kwargs,
 ) -> nx.DiGraph:
     rv = nx.DiGraph()
 
-    is_a_df = get_filtered_relations_df(prefix=prefix, relation=is_a, use_tqdm=use_tqdm, **kwargs)
+    is_a_df = get_filtered_relations_df(
+        prefix=prefix,
+        relation=is_a,
+        use_tqdm=use_tqdm,
+        force=force,
+        **kwargs,
+    )
     for source_id, target_ns, target_id in is_a_df.values:
         rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation='is_a')
 
     if include_has_member:
-        has_member_df = get_filtered_relations_df(prefix, relation=has_member, use_tqdm=use_tqdm, **kwargs)
+        has_member_df = get_filtered_relations_df(
+            prefix=prefix,
+            relation=has_member,
+            use_tqdm=use_tqdm,
+            force=force,
+            **kwargs,
+        )
         for target_id, source_ns, source_id in has_member_df.values:
             rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}', relation='is_a')
 
     if include_part_of:
-        part_of_df = get_filtered_relations_df(prefix=prefix, relation=part_of, use_tqdm=use_tqdm, **kwargs)
+        part_of_df = get_filtered_relations_df(
+            prefix=prefix,
+            relation=part_of,
+            use_tqdm=use_tqdm,
+            force=force,
+            **kwargs,
+        )
         for source_id, target_ns, target_id in part_of_df.values:
             rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation='part_of')
 
-        has_part_df = get_filtered_relations_df(prefix=prefix, relation=part_of, use_tqdm=use_tqdm, **kwargs)
+        has_part_df = get_filtered_relations_df(
+            prefix=prefix,
+            relation=part_of,
+            use_tqdm=use_tqdm,
+            force=force,
+            **kwargs,
+        )
         for target_id, source_ns, source_id in has_part_df.values:
             rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}', relation='part_of')
 
     for relation in extra_relations:
-        relation_df = get_filtered_relations_df(prefix=prefix, relation=relation, use_tqdm=use_tqdm, **kwargs)
+        relation_df = get_filtered_relations_df(
+            prefix=prefix,
+            relation=relation,
+            use_tqdm=use_tqdm,
+            force=force,
+            **kwargs,
+        )
         for source_id, target_ns, target_id in relation_df.values:
             rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation=relation.identifier)
 
     for prop in properties:
-        props = get_filtered_properties_mapping(prefix=prefix, prop=prop, use_tqdm=use_tqdm)
+        props = get_filtered_properties_mapping(prefix=prefix, prop=prop, use_tqdm=use_tqdm, force=force)
         for identifier, value in props.items():
             curie = f'{prefix}:{identifier}'
             if curie in rv:
@@ -433,6 +480,7 @@ def get_descendants(
     include_part_of: bool = True,
     include_has_member: bool = False,
     use_tqdm: bool = False,
+    force: bool = False,
     **kwargs,
 ) -> Set[str]:
     """Get all of the descendants (children) of the term as CURIEs."""
@@ -452,6 +500,7 @@ def get_ancestors(
     include_part_of: bool = True,
     include_has_member: bool = False,
     use_tqdm: bool = False,
+    force: bool = False,
     **kwargs,
 ) -> Set[str]:
     """Get all of the ancestors (parents) of the term as CURIEs."""
@@ -460,6 +509,7 @@ def get_ancestors(
         include_has_member=include_has_member,
         include_part_of=include_part_of,
         use_tqdm=use_tqdm,
+        force=force,
         **kwargs,
     )
     return nx.descendants(hierarchy, f'{prefix}:{identifier}')  # note this is backwards
