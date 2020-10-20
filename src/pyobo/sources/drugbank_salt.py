@@ -33,7 +33,7 @@ def iter_terms() -> Iterable[Term]:
             xrefs = []
             for key in ['unii', 'cas', 'inchikey']:
                 identifier = salt.get(key)
-                if identifier is not None:
+                if identifier:
                     xrefs.append(Reference(prefix=key, identifier=identifier))
 
             yield Term(
