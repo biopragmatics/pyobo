@@ -3,6 +3,14 @@
 """Convert DrugBank Salts to OBO.
 
 Run with ``python -m pyobo.sources.drugbank_salt``
+
+Get relations between drugbank salts and drugbank parents with
+``pyobo relations drugbank --relation obo:has_salt`` or
+
+.. code-block:: python
+
+    import pyobo
+    df = pyobo.get_filtered_relations_df('drugbank', 'obo:has_salt')
 """
 
 import logging
