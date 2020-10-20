@@ -184,7 +184,7 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
             {
                 'identifier': x.findtext(f'{ns}drugbank-id'),
                 'name': x.findtext(f'{ns}name'),
-                'unii': x.findtext(f'{ns}name'),
+                'unii': x.findtext(f'{ns}unii'),
                 'cas': x.findtext(f'{ns}cas-number'),
                 'inchikey': x.findtext(f'{ns}inchikey'),
             }

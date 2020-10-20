@@ -31,7 +31,7 @@ def iter_terms() -> Iterable[Term]:
     for drug_info in iterate_drug_info():
         for salt in drug_info.get('salts', []):
             xrefs = []
-            for key in ['unii', 'cas_id', 'inchikey']:
+            for key in ['unii', 'cas', 'inchikey']:
                 identifier = salt.get(key)
                 if identifier is not None:
                     xrefs.append(Reference(prefix=key, identifier=identifier))
