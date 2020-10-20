@@ -248,14 +248,14 @@ def get_filtered_relations_df(
 @wrap_norm_prefix
 def get_id_multirelations_mapping(
     prefix: str,
-    type_def: TypeDef,
+    typedef: TypeDef,
     *,
     use_tqdm: bool = False,
     **kwargs,
 ) -> Mapping[str, List[Reference]]:
     """Get the OBO file and output a synonym dictionary."""
     obo = get(prefix, **kwargs)
-    return obo.get_id_multirelations_mapping(type_def, use_tqdm=use_tqdm)
+    return obo.get_id_multirelations_mapping(typedef=typedef, use_tqdm=use_tqdm)
 
 
 @lru_cache()
@@ -266,6 +266,7 @@ def get_filtered_xrefs(
     flip: bool = False,
     *,
     use_tqdm: bool = False,
+    force: bool = False,
     **kwargs,
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
@@ -273,13 +274,13 @@ def get_filtered_xrefs(
     all_xrefs_path = prefix_directory_join(prefix, 'cache', 'xrefs.tsv')
     header = [f'{prefix}_id', f'{xref_prefix}_id']
 
-    @cached_mapping(path=path, header=header, use_tqdm=use_tqdm)
+    @cached_mapping(path=path, header=header, use_tqdm=use_tqdm, force=force)
     def _get_mapping() -> Mapping[str, str]:
         if os.path.exists(all_xrefs_path):
             logger.info('[%s] loading pre-cached xrefs', prefix)
             df = pd.read_csv(all_xrefs_path, sep='\t')
             logger.info('[%s] filtering pre-cached xrefs', prefix)
-            idx = (df[SOURCE_PREFIX] == prefix) & (df[TARGET_PREFIX] == prefix)
+            idx = (df[SOURCE_PREFIX] == prefix) & (df[TARGET_PREFIX] == xref_prefix)
             df = df.loc[idx, [SOURCE_ID, TARGET_ID]]
             return dict(df.values)
 
@@ -489,6 +490,7 @@ def get_descendants(
         include_has_member=include_has_member,
         include_part_of=include_part_of,
         use_tqdm=use_tqdm,
+        force=force,
         **kwargs,
     )
     return nx.ancestors(hierarchy, f'{prefix}:{identifier}')  # note this is backwards
@@ -521,6 +523,7 @@ def get_subhierarchy(
     include_part_of: bool = True,
     include_has_member: bool = False,
     use_tqdm: bool = False,
+    force: bool = False,
     **kwargs,
 ) -> nx.DiGraph:
     """Get the subhierarchy for a given node."""
@@ -529,6 +532,7 @@ def get_subhierarchy(
         include_has_member=include_has_member,
         include_part_of=include_part_of,
         use_tqdm=use_tqdm,
+        force=force,
         **kwargs,
     )
     logger.info('getting descendants of %s:%s ! %s', prefix, identifier, get_name(prefix, identifier))

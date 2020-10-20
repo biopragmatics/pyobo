@@ -136,30 +136,30 @@ class Term(Referenced):
             raise
         return r[0]
 
-    def get_relationship(self, type_def: TypeDef) -> Optional[Reference]:
+    def get_relationship(self, typedef: TypeDef) -> Optional[Reference]:
         """Get a single relationship of the given type."""
-        r = self.get_relationships(type_def)
+        r = self.get_relationships(typedef)
         if not r:
             return
         if len(r) != 1:
             raise
         return r[0]
 
-    def get_relationships(self, type_def: TypeDef) -> List[Reference]:
+    def get_relationships(self, typedef: TypeDef) -> List[Reference]:
         """Get relationships from the given type."""
-        return self.relationships[type_def]
+        return self.relationships[typedef]
 
-    def append_relationship(self, type_def: TypeDef, reference: Reference) -> None:
+    def append_relationship(self, typedef: TypeDef, reference: Reference) -> None:
         """Append a relationship."""
-        self.relationships[type_def].append(reference)
+        self.relationships[typedef].append(reference)
 
     def set_species(self, identifier: str, name: str):
         """Append the from_species relation."""
         self.append_relationship(from_species, Reference(prefix='taxonomy', identifier=identifier, name=name))
 
-    def extend_relationship(self, type_def: TypeDef, references: Iterable[Reference]) -> None:
+    def extend_relationship(self, typedef: TypeDef, references: Iterable[Reference]) -> None:
         """Append several relationships."""
-        self.relationships[type_def].extend(references)
+        self.relationships[typedef].extend(references)
 
     def append_property(self, prop: str, value: str) -> None:
         """Append a property."""
@@ -196,15 +196,15 @@ class Term(Referenced):
         for parent in sorted(self.parents, key=attrgetter('prefix', 'identifier')):
             yield f'is_a: {parent}'
 
-        for type_def, references in sorted(self.relationships.items(), key=_sort_relations):
+        for typedef, references in sorted(self.relationships.items(), key=_sort_relations):
             for reference in references:
-                s = f'relationship: {type_def.curie} {reference.curie}'
+                s = f'relationship: {typedef.curie} {reference.curie}'
                 if write_relation_comments:
                     # TODO Obonet doesn't support this. re-enable later.
-                    if type_def.name or reference.name:
+                    if typedef.name or reference.name:
                         s += ' !'
-                    if type_def.name:
-                        s += f' {type_def.name}'
+                    if typedef.name:
+                        s += f' {typedef.name}'
                     if reference.name:
                         s += f' {reference.name}'
                 yield s
@@ -375,9 +375,9 @@ class Obo:
             'name': self.name,
             'ontology': self.ontology,
             'auto-generated-by': self.auto_generated_by,
-            'typedefs': _convert_type_defs(self.typedefs),
+            'typedefs': _convert_typedefs(self.typedefs),
             'format_version': self.format_version,
-            'synonymtypedef': _convert_synonym_type_defs(self.synonym_typedefs),
+            'synonymtypedef': _convert_synonym_typedefs(self.synonym_typedefs),
             'date': self.date_formatted,
         })
 
@@ -390,10 +390,10 @@ class Obo:
                 parents.append(parent.curie)
 
             relations = []
-            for type_def, targets in term.relationships.items():
+            for typedef, targets in term.relationships.items():
                 for target in targets:
-                    relations.append(f'{type_def.curie} {target.curie}')
-                    links.append((term.curie, type_def.curie, target.curie))
+                    relations.append(f'{typedef.curie} {target.curie}')
+                    links.append((term.curie, typedef.curie, target.curie))
 
             nodes[term.curie] = {
                 'id': term.curie,
@@ -632,7 +632,7 @@ class Obo:
                 for xref in term.xrefs
             ],
             columns=[SOURCE_PREFIX, SOURCE_ID, TARGET_PREFIX, TARGET_ID],
-        )
+        ).drop_duplicates()
 
     def get_filtered_xrefs_mapping(self, prefix: str, *, use_tqdm: bool = False) -> Mapping[str, str]:
         """Get filtered xrefs as a dictionary."""
@@ -650,7 +650,7 @@ class Obo:
 
     def get_id_multirelations_mapping(
         self,
-        type_def: TypeDef,
+        typedef: TypeDef,
         *,
         use_tqdm: bool = False,
     ) -> Mapping[str, List[Reference]]:
@@ -658,7 +658,7 @@ class Obo:
         return multidict(
             (term.identifier, reference)
             for term in self._iter_terms(use_tqdm=use_tqdm)
-            for reference in term.relationships.get(type_def)
+            for reference in term.relationships.get(typedef)
         )
 
     def get_id_synonyms_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
@@ -694,30 +694,30 @@ def _iter_obo_graph(graph: nx.MultiDiGraph) -> Iterable[Tuple[Optional[str], str
             yield prefix, identifier, data
 
 
-def _convert_synonym_type_defs(synonym_type_defs: Iterable[SynonymTypeDef]) -> List[str]:
+def _convert_synonym_typedefs(synonym_typedefs: Iterable[SynonymTypeDef]) -> List[str]:
     """Convert the synonym type defs."""
     return [
-        _convert_synonym_type_def(synonym_type_def)
-        for synonym_type_def in synonym_type_defs
+        _convert_synonym_typedef(synonym_typedef)
+        for synonym_typedef in synonym_typedefs
     ]
 
 
-def _convert_synonym_type_def(synonym_type_def: SynonymTypeDef) -> str:
-    return f'{synonym_type_def.id} "{synonym_type_def.name}"'
+def _convert_synonym_typedef(synonym_typedef: SynonymTypeDef) -> str:
+    return f'{synonym_typedef.id} "{synonym_typedef.name}"'
 
 
-def _convert_type_defs(type_defs: Iterable[TypeDef]) -> List[Mapping[str, Any]]:
+def _convert_typedefs(typedefs: Iterable[TypeDef]) -> List[Mapping[str, Any]]:
     """Convert the type defs."""
     return [
-        _convert_type_def(type_def)
-        for type_def in type_defs
+        _convert_typedef(typedef)
+        for typedef in typedefs
     ]
 
 
-def _convert_type_def(type_def: TypeDef) -> Mapping[str, Any]:
+def _convert_typedef(typedef: TypeDef) -> Mapping[str, Any]:
     """Convert a type def."""
     # TODO add more later
-    return type_def.reference.to_dict()
+    return typedef.reference.to_dict()
 
 
 def iterate_graph_synonym_typedefs(graph: nx.MultiDiGraph) -> Iterable[SynonymTypeDef]:

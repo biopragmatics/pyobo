@@ -140,7 +140,12 @@ def cached_df(path: str, sep: str = '\t', force: bool = False, **kwargs):  # noq
         @functools.wraps(f)
         def _wrapped() -> pd.DataFrame:
             if os.path.exists(path) and not force:
-                return pd.read_csv(path, sep=sep, **kwargs)
+                return pd.read_csv(
+                    path,
+                    sep=sep,
+                    keep_default_na=False,  # sometimes NA is actually a value
+                    **kwargs,
+                )
             rv = f()
             rv.to_csv(path, sep=sep, index=False)
             return rv
