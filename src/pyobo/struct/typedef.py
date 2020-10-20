@@ -5,7 +5,7 @@
 from dataclasses import dataclass, field
 from typing import Iterable, List, Mapping, Optional, Tuple, Union
 
-from .reference import Reference, Referenced
+from .reference import Reference, Referenced, normalize_curie
 
 __all__ = [
     'TypeDef',
@@ -70,6 +70,11 @@ def get_reference_tuple(relation: Union[Tuple[str, str], Reference, TypeDef]) ->
         return relation.prefix, relation.identifier
     elif isinstance(relation, tuple):
         return relation
+    elif isinstance(relation, str):
+        prefix, identifier = normalize_curie(relation)
+        if prefix is None:
+            raise ValueError(f'string given is not valid curie: {relation}')
+        return prefix, identifier
     else:
         raise TypeError(f'Relation is invalid tyoe: {relation}')
 

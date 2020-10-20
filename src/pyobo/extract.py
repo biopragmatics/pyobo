@@ -225,8 +225,8 @@ def get_filtered_relations_df(
     **kwargs,
 ) -> pd.DataFrame:
     """Get all of the given relation."""
-    relation = get_reference_tuple(relation)
-    path = prefix_directory_join(prefix, 'cache', 'relations', f'{relation[0]}:{relation[1]}.tsv')
+    relation_prefix, relation_identifier = relation = get_reference_tuple(relation)
+    path = prefix_directory_join(prefix, 'cache', 'relations', f'{relation_prefix}:{relation_identifier}.tsv')
     all_relations_path = prefix_directory_join(prefix, 'cache', 'relations.tsv')
 
     # chebi_id        relation_ns     relation_id     target_ns       target_id
@@ -235,7 +235,7 @@ def get_filtered_relations_df(
     def _df_getter() -> pd.DataFrame:
         if os.path.exists(all_relations_path):
             df = pd.read_csv(all_relations_path, sep='\t')
-            idx = (df[RELATION_PREFIX] == relation[0]) & (df[RELATION_ID] == relation[1])
+            idx = (df[RELATION_PREFIX] == relation_prefix) & (df[RELATION_ID] == relation_identifier)
             columns = [f'{prefix}_id', TARGET_PREFIX, TARGET_ID]
             return df.loc[idx, columns]
 
