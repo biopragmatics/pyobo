@@ -252,8 +252,8 @@
       "wikidata_property": "P715"
     },
     "drugbank.salt": {
-      "title": "DrugBank Salts",
-      "pattern": "DBSALT\\d{6}"
+      "pattern": "DBSALT\\d{6}",
+      "title": "DrugBank Salts"
     },
     "drugcentral": {
       "synonyms": [
