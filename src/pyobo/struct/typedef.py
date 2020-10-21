@@ -21,6 +21,8 @@ __all__ = [
     'has_role',
     'role_of',
     'has_mature',
+    'has_gene_product',
+    'gene_product_is_a',
     'example_of_usage',
     'alternative_term',
     'editor_note',
@@ -131,6 +133,14 @@ role_of = TypeDef(
 
 has_mature = TypeDef(
     reference=Reference(prefix='mirbase', identifier='has_mature', name='has mature miRNA'),
+)
+
+has_gene_product = TypeDef(
+    reference=Reference(prefix='ro', identifier='0002205', name='has gene product'),
+    inverse=Reference(prefix='ro', identifier='0002204', name='gene product of'),
+)
+gene_product_is_a = TypeDef(
+    reference=Reference(prefix='obo', identifier='gene_product_is_a', name='gene product is a'),
 )
 
 example_of_usage = Reference(prefix='iao', identifier='0000112', name='example of usage')

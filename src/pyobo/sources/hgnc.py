@@ -9,7 +9,7 @@ from typing import Iterable
 from tqdm import tqdm
 
 from ..path_utils import ensure_path
-from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
+from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species, gene_product_is_a, has_gene_product
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +38,8 @@ gene_xrefs = [
     ('ccds', 'ccds_id'),
     ('rgd', 'rgd_id'),
     ('omim', 'omim_id'),
-    ('uniprot', 'uniprot_ids'),
-    ('ec-code', 'enzyme_id'),
+    # ('uniprot', 'uniprot_ids'),
+    # ('ec-code', 'enzyme_id'),
     ('rnacentral', 'rna_central_id'),
     ('mirbase', 'mirbase'),
     ('snornabase', 'snornabase'),
@@ -89,7 +89,7 @@ def get_obo() -> Obo:
         ontology=PREFIX,
         name='HGNC',
         iter_terms=get_terms,
-        typedefs=[from_species],
+        typedefs=[from_species, has_gene_product, gene_product_is_a],
         synonym_typedefs=[previous_name_type, previous_symbol_type, alias_name_type, alias_symbol_type],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
@@ -104,6 +104,12 @@ def get_terms() -> Iterable[Term]:
 
     for entry in tqdm(entries, desc=f'Mapping {PREFIX}'):
         name, symbol, identifier = entry.pop('name'), entry.pop('symbol'), entry.pop('hgnc_id')[len('HGNC:'):]
+
+        relations = []
+        for uniprot_id in entry.pop('uniprot_ids', []):
+            relations.append((has_gene_product, Reference(prefix='uniprot', identifier=uniprot_id)))
+        for ec_code in entry.pop('enzyme_id', []):
+            relations.append((gene_product_is_a, Reference(prefix='ec-code', identifier=ec_code)))
 
         xrefs = []
         for xref_prefix, key in gene_xrefs:
@@ -149,6 +155,9 @@ def get_terms() -> Iterable[Term]:
             parents=parents,
             synonyms=synonyms,
         )
+
+        for typedef, reference in relations:
+            term.append_relationship(typedef, reference)
 
         for prop in ['locus_group', 'locus_type', 'location']:
             value = entry.get(prop)
