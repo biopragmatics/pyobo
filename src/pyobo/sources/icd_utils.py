@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 
-"""Utilities or interacting with the ICD API."""
+"""Utilities or interacting with the ICD API.
+
+Want to get your own API cliend ID and client secret?
+
+1. Register at https://icdapihome.azurewebsites.net/icdapi/Account/Register
+2. Sell your soul to the American government
+"""
 
 import datetime
 import json
@@ -11,10 +17,11 @@ import requests
 from cachier import cachier
 from tqdm import tqdm
 
-from pyobo import Term
+from ..config import get_config
+from ..struct import Term
 
-CLIENT_ID = '7570c9bb-728c-46b9-b729-ef4a3675790e_e55b6899-2d00-4804-adf2-a3195d210316'
-CLIENT_SECRET = 'FnncINDvJ1zoDrLsszBsjXAeJ8bQEc7TBAOo5hBu2G0='
+ICD_CLIENT_ID = get_config('icd_client_id')
+ICD_CLIENT_SECRET = get_config('icd_client_secret')
 
 TOKEN_URL = 'https://icdaccessmanagement.who.int/connect/token'
 
@@ -50,7 +57,7 @@ def get_icd_api_headers() -> Mapping[str, str]:
     grant_type = 'client_credentials'
     body_params = {'grant_type': grant_type}
     tqdm.write('getting ICD API token')
-    res = requests.post(TOKEN_URL, data=body_params, auth=(CLIENT_ID, CLIENT_SECRET))
+    res = requests.post(TOKEN_URL, data=body_params, auth=(ICD_CLIENT_ID, ICD_CLIENT_SECRET))
     res_json = res.json()
     access_type = res_json['token_type']
     access_token = res_json['access_token']

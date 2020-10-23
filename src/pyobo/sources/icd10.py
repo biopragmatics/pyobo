@@ -11,11 +11,10 @@ from typing import Any, Iterable, Mapping
 import click
 from tqdm import tqdm
 
-from pyobo import Reference, Synonym
-from pyobo.cli_utils import verbose_option
-from pyobo.path_utils import get_prefix_directory
-from pyobo.sources.icd_utils import ICD10_TOP_LEVEL_URL, get_child_identifiers, get_icd, visiter
-from pyobo.struct import Obo, Term
+from ..cli_utils import verbose_option
+from ..path_utils import get_prefix_directory
+from ..sources.icd_utils import ICD10_TOP_LEVEL_URL, get_child_identifiers, get_icd, visiter
+from ..struct import Obo, Reference, Synonym, Term
 
 logger = logging.getLogger(__name__)
 
