@@ -23,7 +23,7 @@ from ..struct import Term
 ICD_CLIENT_ID = get_config('icd_client_id')
 ICD_CLIENT_SECRET = get_config('icd_client_secret')
 
-TOKEN_URL = 'https://icdaccessmanagement.who.int/connect/token'
+TOKEN_URL = 'https://icdaccessmanagement.who.int/connect/token'  # noqa:S105
 
 ICD_BASE_URL = 'https://id.who.int/icd'
 
