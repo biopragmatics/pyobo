@@ -143,12 +143,9 @@ has_gene_product = TypeDef(
     reference=Reference(prefix='ro', identifier='0002205', name='has gene product'),
     inverse=Reference(prefix='ro', identifier='0002204', name='gene product of'),
 )
-gene_product_is_a = TypeDef(
-    reference=Reference(prefix='obo', identifier='gene_product_is_a', name='gene product is a'),
-)
 transcribes_to = TypeDef(
     reference=Reference.default(identifier='transcribes_to', name='transcribes to'),
-    definition='Relation between a gene and a transcript'
+    definition='Relation between a gene and a transcript',
 )
 translates_to = TypeDef(
     reference=Reference.default(identifier='translates_to', name='translates to'),
