@@ -12,7 +12,8 @@ import pandas as pd
 
 from .cache_utils import cached_df, cached_mapping, cached_multidict
 from .constants import (
-    GLOBAL_SKIP, RAW_DIRECTORY, RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX, TARGET_ID,
+    GLOBAL_SKIP, RAW_DIRECTORY, RELATION_COLUMNS, RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX,
+    TARGET_ID,
     TARGET_PREFIX,
 )
 from .getters import NoOboFoundry, get
@@ -119,6 +120,21 @@ def get_name_id_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     }
 
 
+@lru_cache()
+@wrap_norm_prefix
+def get_typedef_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, str]:
+    """Get an identifier to name mapping for the typedefs in an OBO file."""
+    path = prefix_directory_join(prefix, 'cache', 'typedefs.tsv')
+
+    @cached_mapping(path=path, header=[f'{prefix}_id', 'name'], force=force)
+    def _get_typedef_id_name_mapping() -> Mapping[str, str]:
+        obo = get(prefix, **kwargs)
+        logger.info('[%s] loading typedef mappings', prefix)
+        return obo.get_typedef_id_name_mapping()
+
+    return _get_typedef_id_name_mapping()
+
+
 @wrap_norm_prefix
 def get_id_synonyms_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, List[str]]:
     """Get the OBO file and output a synonym dictionary."""
@@ -203,7 +219,14 @@ def get_filtered_properties_df(
 
 
 @wrap_norm_prefix
-def get_relations_df(prefix: str, *, use_tqdm: bool = False, force: bool = False, **kwargs) -> pd.DataFrame:
+def get_relations_df(
+    prefix: str,
+    *,
+    use_tqdm: bool = False,
+    force: bool = False,
+    wide: bool = False,
+    **kwargs,
+) -> pd.DataFrame:
     """Get all relations from the OBO."""
     path = prefix_directory_join(prefix, 'cache', 'relations.tsv')
 
@@ -212,7 +235,18 @@ def get_relations_df(prefix: str, *, use_tqdm: bool = False, force: bool = False
         obo = get(prefix, **kwargs)
         return obo.get_relations_df(use_tqdm=use_tqdm)
 
-    return _df_getter()
+    rv = _df_getter()
+
+    if wide:
+        rv = rv.rename(columns={f'{prefix}_id': SOURCE_ID})
+        rv[SOURCE_PREFIX] = prefix
+        try:
+            rv = rv[RELATION_COLUMNS]
+        except:
+            print(rv.columns)
+            raise
+
+    return rv
 
 
 @wrap_norm_prefix
