@@ -516,6 +516,13 @@ class Obo:
             for term in self._iter_terms(use_tqdm=use_tqdm)
         }
 
+    def get_typedef_id_name_mapping(self) -> Mapping[str, str]:
+        """Get a mapping from identifiers to names."""
+        return {
+            typedef.identifier: typedef.name
+            for typedef in self.typedefs
+        }
+
     def iterate_synonyms(self, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, Synonym]]:
         """Iterate over synonyms for each term."""
         for term in self._iter_terms(use_tqdm=use_tqdm):

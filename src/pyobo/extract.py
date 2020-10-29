@@ -120,6 +120,21 @@ def get_name_id_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     }
 
 
+@lru_cache()
+@wrap_norm_prefix
+def get_typedef_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, str]:
+    """Get an identifier to name mapping for the typedefs in an OBO file."""
+    path = prefix_directory_join(prefix, 'cache', 'typedefs.tsv')
+
+    @cached_mapping(path=path, header=[f'{prefix}_id', 'name'], force=force)
+    def _get_typedef_id_name_mapping() -> Mapping[str, str]:
+        obo = get(prefix, **kwargs)
+        logger.info('[%s] loading typedef mappings', prefix)
+        return obo.get_typedef_id_name_mapping()
+
+    return _get_typedef_id_name_mapping()
+
+
 @wrap_norm_prefix
 def get_id_synonyms_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, List[str]]:
     """Get the OBO file and output a synonym dictionary."""
