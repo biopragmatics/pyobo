@@ -12,7 +12,8 @@ import pandas as pd
 
 from .cache_utils import cached_df, cached_mapping, cached_multidict
 from .constants import (
-    GLOBAL_SKIP, RAW_DIRECTORY, RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX, TARGET_ID,
+    GLOBAL_SKIP, RAW_DIRECTORY, RELATION_COLUMNS, RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX,
+    TARGET_ID,
     TARGET_PREFIX,
 )
 from .getters import NoOboFoundry, get
@@ -203,7 +204,14 @@ def get_filtered_properties_df(
 
 
 @wrap_norm_prefix
-def get_relations_df(prefix: str, *, use_tqdm: bool = False, force: bool = False, **kwargs) -> pd.DataFrame:
+def get_relations_df(
+    prefix: str,
+    *,
+    use_tqdm: bool = False,
+    force: bool = False,
+    wide: bool = False,
+    **kwargs,
+) -> pd.DataFrame:
     """Get all relations from the OBO."""
     path = prefix_directory_join(prefix, 'cache', 'relations.tsv')
 
@@ -212,7 +220,18 @@ def get_relations_df(prefix: str, *, use_tqdm: bool = False, force: bool = False
         obo = get(prefix, **kwargs)
         return obo.get_relations_df(use_tqdm=use_tqdm)
 
-    return _df_getter()
+    rv = _df_getter()
+
+    if wide:
+        rv = rv.rename(columns={f'{prefix}_id': SOURCE_ID})
+        rv[SOURCE_PREFIX] = prefix
+        try:
+            rv = rv[RELATION_COLUMNS]
+        except:
+            print(rv.columns)
+            raise
+
+    return rv
 
 
 @wrap_norm_prefix
