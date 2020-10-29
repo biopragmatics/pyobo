@@ -36,7 +36,7 @@ PR = 'PR'
 DR = 'DR'
 
 has_molecular_function = TypeDef(
-    reference=Reference(prefix='go', identifier='has_molecular_function'),
+    reference=Reference(prefix='go', identifier='has_molecular_function', name='has molecular function'),
 )
 
 
