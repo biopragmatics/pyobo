@@ -18,7 +18,7 @@ from .constants import RAW_DIRECTORY
 from .extract import (
     get_ancestors, get_descendants, get_filtered_properties_df, get_filtered_relations_df, get_filtered_xrefs,
     get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_name, get_name_by_curie,
-    get_properties_df, get_relations_df, get_xrefs_df, iter_cached_obo,
+    get_properties_df, get_relations_df, get_typedef_id_name_mapping, get_xrefs_df, iter_cached_obo,
 )
 from .identifier_utils import normalize_curie, normalize_prefix
 from .sources import has_nomenclature_plugin, iter_nomenclature_plugins
@@ -65,6 +65,20 @@ def xrefs(prefix: str, target: str, force: bool):
 def names(prefix: str, force: bool):
     """Page through the identifiers and names of entities in the given namespace."""
     id_to_name = get_id_name_mapping(prefix, force=force)
+    _help_page_mapping(id_to_name)
+
+
+@main.command()
+@prefix_argument
+@verbose_option
+@force_option
+def typedefs(prefix: str, force: bool):
+    """Page through the identifiers and names of typedefs in the given namespace."""
+    id_to_name = get_typedef_id_name_mapping(prefix, force=force)
+    _help_page_mapping(id_to_name)
+
+
+def _help_page_mapping(id_to_name):
     click.echo_via_pager('\n'.join(
         '\t'.join(item)
         for item in id_to_name.items()
