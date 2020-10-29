@@ -6,7 +6,10 @@ import logging
 from collections import defaultdict
 from typing import Iterable
 
+import click
+
 from pyobo import get_name_id_mapping
+from pyobo.cli_utils import verbose_option
 from pyobo.path_utils import ensure_df
 from pyobo.struct import Obo, Reference, Term
 from pyobo.struct.typedef import has_member, has_part, is_a, part_of
@@ -90,5 +93,11 @@ def get_terms() -> Iterable[Term]:
         yield term
 
 
+@click.command()
+@verbose_option
+def _main():
+    get_obo().write_default(use_tqdm=True)
+
+
 if __name__ == '__main__':
-    get_obo().write_default()
+    _main()
