@@ -123,10 +123,12 @@ class Term(Referenced):
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: Optional[bool] = None
 
-    def append_parent(self, reference: Reference) -> None:
+    def append_parent(self, reference: Union['Term', Reference]) -> None:
         """Add a parent to this entity."""
         if reference is None:
             raise ValueError('can not append a null parent')
+        if isinstance(reference, Term):
+            reference = reference.reference
         self.parents.append(reference)
 
     def extend_parents(self, references: Collection[Reference]) -> None:

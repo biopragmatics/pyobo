@@ -66,7 +66,7 @@ def iter_terms() -> Iterable[Term]:
 
     hierarchy_df = ensure_df(PREFIX, PATHWAYS_HIERARCHY_URL, header=None)
     for parent_id, child_id in hierarchy_df.values:
-        terms[child_id].parents.append(terms[parent_id].reference)
+        terms[child_id].append_parent(terms[parent_id])
 
     yield from terms.values()
 
