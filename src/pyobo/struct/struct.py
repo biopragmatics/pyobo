@@ -2,8 +2,6 @@
 
 """Data structures for OBO."""
 
-from __future__ import annotations
-
 import gzip
 import json
 import logging
@@ -12,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Set, TextIO, Tuple, Union
+from typing import Any, Callable, Collection, Dict, Iterable, List, Mapping, Optional, Set, TextIO, Tuple, Union
 
 import networkx as nx
 import pandas as pd
@@ -52,7 +50,7 @@ class Synonym:
     specificity: str = 'EXACT'
 
     #: The type of synonym. Must be defined in OBO document!
-    type: Optional[SynonymTypeDef] = None
+    type: Optional['SynonymTypeDef'] = None
 
     #: References to articles where the synonym appears
     provenance: List[Reference] = field(default_factory=list)
@@ -80,7 +78,7 @@ class SynonymTypeDef:
         return f'synonymtypedef: {self.id} "{self.name}"'
 
     @classmethod
-    def from_text(cls, text) -> SynonymTypeDef:
+    def from_text(cls, text) -> 'SynonymTypeDef':
         """Get a type definition from text that's normalized."""
         return cls(
             id=text.lower().replace('-', '_').replace(' ', '_').replace('"', "").replace(')', '').replace('(', ''),
@@ -125,6 +123,20 @@ class Term(Referenced):
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: Optional[bool] = None
 
+    def append_parent(self, reference: Union['Term', Reference]) -> None:
+        """Add a parent to this entity."""
+        if reference is None:
+            raise ValueError('can not append a null parent')
+        if isinstance(reference, Term):
+            reference = reference.reference
+        self.parents.append(reference)
+
+    def extend_parents(self, references: Collection[Reference]) -> None:
+        """Add a collection of parents to this entity."""
+        if any(x is None for x in references):
+            raise ValueError('can not append a collection of parents containing a null parent')
+        self.parents.extend(references)
+
     def get_properties(self, prop) -> List[str]:
         """Get properties from the given key."""
         return self.properties[prop]
@@ -138,30 +150,34 @@ class Term(Referenced):
             raise
         return r[0]
 
-    def get_relationship(self, type_def: TypeDef) -> Optional[Reference]:
+    def get_relationship(self, typedef: TypeDef) -> Optional[Reference]:
         """Get a single relationship of the given type."""
-        r = self.get_relationships(type_def)
+        r = self.get_relationships(typedef)
         if not r:
             return
         if len(r) != 1:
             raise
         return r[0]
 
-    def get_relationships(self, type_def: TypeDef) -> List[Reference]:
+    def get_relationships(self, typedef: TypeDef) -> List[Reference]:
         """Get relationships from the given type."""
-        return self.relationships[type_def]
+        return self.relationships[typedef]
 
-    def append_relationship(self, type_def: TypeDef, reference: Reference) -> None:
+    def append_relationship(self, typedef: TypeDef, reference: Reference) -> None:
         """Append a relationship."""
-        self.relationships[type_def].append(reference)
+        if reference is None:
+            raise ValueError('can not append null reference')
+        self.relationships[typedef].append(reference)
 
     def set_species(self, identifier: str, name: str):
         """Append the from_species relation."""
         self.append_relationship(from_species, Reference(prefix='taxonomy', identifier=identifier, name=name))
 
-    def extend_relationship(self, type_def: TypeDef, references: Iterable[Reference]) -> None:
+    def extend_relationship(self, typedef: TypeDef, references: Iterable[Reference]) -> None:
         """Append several relationships."""
-        self.relationships[type_def].extend(references)
+        if any(x is None for x in references):
+            raise ValueError('can not extend a collection that includes a null reference')
+        self.relationships[typedef].extend(references)
 
     def append_property(self, prop: str, value: str) -> None:
         """Append a property."""
@@ -170,7 +186,7 @@ class Term(Referenced):
     def _definition_fp(self):
         return f'"{self.definition}" [{comma_separate(self.provenance)}]'
 
-    def iterate_properties(self) -> Iterable[str, str]:
+    def iterate_properties(self) -> Iterable[Tuple[str, str]]:
         """Iterate over pairs of property and values."""
         for prop, values in self.properties.items():
             for value in values:
@@ -198,15 +214,15 @@ class Term(Referenced):
         for parent in sorted(self.parents, key=attrgetter('prefix', 'identifier')):
             yield f'is_a: {parent}'
 
-        for type_def, references in sorted(self.relationships.items(), key=lambda x: x[0].name or x[0].identifier):
+        for typedef, references in sorted(self.relationships.items(), key=_sort_relations):
             for reference in references:
-                s = f'relationship: {type_def.curie} {reference.curie}'
+                s = f'relationship: {typedef.curie} {reference.curie}'
                 if write_relation_comments:
                     # TODO Obonet doesn't support this. re-enable later.
-                    if type_def.name or reference.name:
+                    if typedef.name or reference.name:
                         s += ' !'
-                    if type_def.name:
-                        s += f' {type_def.name}'
+                    if typedef.name:
+                        s += f' {typedef.name}'
                     if reference.name:
                         s += f' {reference.name}'
                 yield s
@@ -216,6 +232,11 @@ class Term(Referenced):
 
         for synonym in sorted(self.synonyms, key=attrgetter('name')):
             yield synonym.to_obo()
+
+
+def _sort_relations(r):
+    typedef, _references = r
+    return typedef.reference.name or typedef.reference.identifier
 
 
 @dataclass
@@ -296,7 +317,7 @@ class Obo:
         """Write the OBO to a file."""
         it = self.iterate_obo_lines()
         if use_tqdm:
-            it = tqdm(it, desc=f'writing {self.ontology}')
+            it = tqdm(it, desc=f'writing {self.ontology}', unit_scale=True, unit='line')
         for line in it:
             print(line, file=file)
 
@@ -307,7 +328,7 @@ class Obo:
             json.dump(nx.node_link_data(graph), file)
 
     @classmethod
-    def from_obonet_gz(cls, path: str) -> Obo:
+    def from_obonet_gz(cls, path: str) -> 'Obo':
         """Read OBO from a pre-compiled Obonet JSON."""
         return cls.from_obonet(get_gzipped_graph(path))
 
@@ -365,16 +386,16 @@ class Obo:
                     self._hierarchy.add_edge(term.identifier, parent.identifier)
         return self._hierarchy
 
-    def to_obonet(self: Obo, *, use_tqdm: bool = False) -> nx.MultiDiGraph:
+    def to_obonet(self: 'Obo', *, use_tqdm: bool = False) -> nx.MultiDiGraph:
         """Export as a :mod`obonet` style graph."""
         rv = nx.MultiDiGraph()
         rv.graph.update({
             'name': self.name,
             'ontology': self.ontology,
             'auto-generated-by': self.auto_generated_by,
-            'typedefs': _convert_type_defs(self.typedefs),
+            'typedefs': _convert_typedefs(self.typedefs),
             'format_version': self.format_version,
-            'synonymtypedef': _convert_synonym_type_defs(self.synonym_typedefs),
+            'synonymtypedef': _convert_synonym_typedefs(self.synonym_typedefs),
             'date': self.date_formatted,
         })
 
@@ -383,14 +404,18 @@ class Obo:
         for term in self._iter_terms(use_tqdm=use_tqdm):
             parents = []
             for parent in term.parents:
+                if parent is None:
+                    raise ValueError('parent should not be none!')
                 links.append((term.curie, 'is_a', parent.curie))
                 parents.append(parent.curie)
 
             relations = []
-            for type_def, targets in term.relationships.items():
+            for typedef, targets in term.relationships.items():
                 for target in targets:
-                    relations.append(f'{type_def.curie} {target.curie}')
-                    links.append((term.curie, type_def.curie, target.curie))
+                    if target is None:
+                        raise ValueError('target should not be none!')
+                    relations.append(f'{typedef.curie} {target.curie}')
+                    links.append((term.curie, typedef.curie, target.curie))
 
             nodes[term.curie] = {
                 'id': term.curie,
@@ -513,6 +538,13 @@ class Obo:
             for term in self._iter_terms(use_tqdm=use_tqdm)
         }
 
+    def get_typedef_id_name_mapping(self) -> Mapping[str, str]:
+        """Get a mapping from identifiers to names."""
+        return {
+            typedef.identifier: typedef.name
+            for typedef in self.typedefs
+        }
+
     def iterate_synonyms(self, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, Synonym]]:
         """Iterate over synonyms for each term."""
         for term in self._iter_terms(use_tqdm=use_tqdm):
@@ -629,7 +661,7 @@ class Obo:
                 for xref in term.xrefs
             ],
             columns=[SOURCE_PREFIX, SOURCE_ID, TARGET_PREFIX, TARGET_ID],
-        )
+        ).drop_duplicates()
 
     def get_filtered_xrefs_mapping(self, prefix: str, *, use_tqdm: bool = False) -> Mapping[str, str]:
         """Get filtered xrefs as a dictionary."""
@@ -647,7 +679,7 @@ class Obo:
 
     def get_id_multirelations_mapping(
         self,
-        type_def: TypeDef,
+        typedef: TypeDef,
         *,
         use_tqdm: bool = False,
     ) -> Mapping[str, List[Reference]]:
@@ -655,7 +687,7 @@ class Obo:
         return multidict(
             (term.identifier, reference)
             for term in self._iter_terms(use_tqdm=use_tqdm)
-            for reference in term.relationships.get(type_def)
+            for reference in term.relationships.get(typedef)
         )
 
     def get_id_synonyms_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
@@ -691,32 +723,30 @@ def _iter_obo_graph(graph: nx.MultiDiGraph) -> Iterable[Tuple[Optional[str], str
             yield prefix, identifier, data
 
 
-def _convert_synonym_type_defs(synonym_type_defs: Iterable[SynonymTypeDef]) -> List[str]:
+def _convert_synonym_typedefs(synonym_typedefs: Iterable[SynonymTypeDef]) -> List[str]:
     """Convert the synonym type defs."""
     return [
-        _convert_synonym_type_def(synonym_type_def)
-        for synonym_type_def in synonym_type_defs
+        _convert_synonym_typedef(synonym_typedef)
+        for synonym_typedef in synonym_typedefs
     ]
 
 
-def _convert_synonym_type_def(synonym_type_def: SynonymTypeDef) -> str:
-    return f'{synonym_type_def.id} "{synonym_type_def.name}"'
+def _convert_synonym_typedef(synonym_typedef: SynonymTypeDef) -> str:
+    return f'{synonym_typedef.id} "{synonym_typedef.name}"'
 
 
-def _convert_type_defs(type_defs: Iterable[TypeDef]) -> List[Mapping[str, Any]]:
+def _convert_typedefs(typedefs: Iterable[TypeDef]) -> List[Mapping[str, Any]]:
     """Convert the type defs."""
     return [
-        _convert_type_def(type_def)
-        for type_def in type_defs
+        _convert_typedef(typedef)
+        for typedef in typedefs
     ]
 
 
-def _convert_type_def(type_def: TypeDef) -> Mapping[str, Any]:
+def _convert_typedef(typedef: TypeDef) -> Mapping[str, Any]:
     """Convert a type def."""
-    return dict(
-        id=type_def.identifier,
-        name=type_def.name,
-    )
+    # TODO add more later
+    return typedef.reference.to_dict()
 
 
 def iterate_graph_synonym_typedefs(graph: nx.MultiDiGraph) -> Iterable[SynonymTypeDef]:
@@ -730,14 +760,19 @@ def iterate_graph_synonym_typedefs(graph: nx.MultiDiGraph) -> Iterable[SynonymTy
 def iterate_graph_typedefs(graph: nx.MultiDiGraph, default_prefix: str) -> Iterable[TypeDef]:
     """Get type definitions from an :mod:`obonet` graph."""
     for typedef in graph.graph.get('typedefs', []):
+        prefix = typedef.get('prefix', default_prefix)
+
+        if 'id' in typedef:
+            identifier = typedef['id']
+        elif 'identifier' in typedef:
+            identifier = typedef['identifier']
+        else:
+            raise KeyError
+
         name = typedef.get('name')
         if name is None:
-            logger.warning('[%s] typedef %s is missing a name', graph.graph['ontology'], typedef['id'])
-            name = typedef['id']
-
-        prefix, identifier = normalize_curie(typedef['id'])
-        if prefix is None and identifier is None:
-            prefix, identifier = default_prefix, typedef['id']
+            logger.warning('[%s] typedef %s is missing a name', graph.graph['ontology'], identifier)
+            name = identifier
 
         reference = Reference(prefix=prefix, identifier=identifier, name=name)
 

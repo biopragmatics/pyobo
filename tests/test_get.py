@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+"""Tests for getting OBO."""
+
 import unittest
 from operator import attrgetter
 
@@ -13,10 +17,11 @@ from tests.constants import TEST_CHEBI_OBO_PATH
 
 
 class TestParseObonet(unittest.TestCase):
-    """"""
+    """Test parsing OBO."""
 
     @classmethod
     def setUpClass(cls) -> None:
+        """Set up the test case with a mock ChEBI OBO."""
         cls.graph = obonet.read_obo(TEST_CHEBI_OBO_PATH)
 
     def test_get_graph_typedefs(self):
@@ -77,7 +82,7 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_xrefs(self):
         """Test getting parents from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes['CHEBI:51990']
-        xrefs = list(iterate_node_xrefs(data))
+        xrefs = list(iterate_node_xrefs(prefix='chebi', data=data))
         self.assertEqual(7, len(xrefs))
         # NOTE the prefixes are remapped by PyOBO
         self.assertEqual({'pubmed', 'cas', 'beilstein', 'reaxys'}, {
@@ -89,7 +94,7 @@ class TestParseObonet(unittest.TestCase):
                 ('reaxys', '3570522'), ('beilstein', '3570522'), ('cas', '429-41-4'),
                 ('pubmed', '21142041'), ('pubmed', '21517057'), ('pubmed', '22229781'), ('pubmed', '15074950'),
             },
-            {(xref.prefix, xref.identifier) for xref in xrefs}
+            {(xref.prefix, xref.identifier) for xref in xrefs},
         )
 
     def test_get_node_relations(self):

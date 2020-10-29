@@ -50,6 +50,9 @@ def get_chembl_protein_equivalences() -> pd.DataFrame:
     return df
 
 
-if __name__ == '__main__':
-    get_chembl_compound_equivalences()
-    get_chembl_protein_equivalences()
+def get_chembl_xrefs_df() -> pd.DataFrame:
+    """Get all ChEBML equivalences."""
+    return pd.concat([
+        get_chembl_compound_equivalences(),
+        get_chembl_protein_equivalences(),
+    ])

@@ -11,7 +11,7 @@ from ..path_utils import ensure_path
 from ..struct import Obo, Reference, Synonym, Term, TypeDef
 from ..struct.typedef import has_member
 
-PREFIX = 'ec-code'
+PREFIX = 'eccode'
 EXPASY_DATABASE_URL = 'ftp://ftp.expasy.org/databases/enzyme/enzyme.dat'
 EXPASY_TREE_URL = 'ftp://ftp.expasy.org/databases/enzyme/enzclass.txt'
 EC2GO_URL = 'http://current.geneontology.org/ontology/external2go/ec2go'
@@ -36,7 +36,7 @@ PR = 'PR'
 DR = 'DR'
 
 has_molecular_function = TypeDef(
-    reference=Reference(prefix='go', identifier='has_molecular_function'),
+    reference=Reference(prefix='go', identifier='has_molecular_function', name='has molecular function'),
 )
 
 

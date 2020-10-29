@@ -100,7 +100,10 @@
     },
     "cas": {
       "synonyms": [
-        "CASID"
+        "CASID",
+        "SECONDARY_CAS_RN",
+        "CAS_RN",
+        "cas_id"
       ],
       "wikidata_property": "P231"
     },
@@ -129,9 +132,12 @@
       ],
       "wikidata_property": "P683"
     },
-    "chembl": {
+    "chembl.compound": {
+      "pattern": "^CHEMBL\\d+$",
       "synonyms": [
-        "ChEMBL"
+        "chembl",
+        "ChEMBL",
+        "ChEMBL_ID"
       ],
       "wikidata_property": "P592"
     },
@@ -222,6 +228,7 @@
       "wikidata_property": "P557"
     },
     "doid": {
+      "download": "https://github.com/DiseaseOntology/HumanDiseaseOntology/raw/main/src/ontology/doid.obo",
       "miriam": {
         "id": "00000233",
         "namespaceEmbeddedInLui": true,
@@ -240,15 +247,21 @@
     },
     "drugbank": {
       "synonyms": [
-        "DrugBank"
+        "DrugBank",
+        "DRUGBANK_ID"
       ],
       "wikidata_property": "P715"
+    },
+    "drugbank.salt": {
+      "pattern": "DBSALT\\d{6}",
+      "title": "DrugBank Salts"
     },
     "drugcentral": {
       "synonyms": [
         "Drug_Central"
       ],
-      "title": "Drug Central"
+      "title": "Drug Central",
+      "url": "http://drugcentral.org/drugcard/$1"
     },
     "duo": {
       "not_available_as_obo": true
@@ -357,6 +370,12 @@
         "FlyBase"
       ]
     },
+    "fplx": {
+      "synonyms": [
+        "famplex"
+      ],
+      "title": "FamPlex"
+    },
     "fypo": {
       "download": "http://purl.obolibrary.org/obo/fypo.obo",
       "pattern": "\\d{7}",
@@ -373,6 +392,11 @@
     "gaz": {
       "download": "http://purl.obolibrary.org/obo/gaz.obo",
       "pattern": "\\d{8}"
+    },
+    "gbif": {
+      "title": "Global Biodiversity Information Facility",
+      "url": "https://www.gbif.org/species/$1",
+      "wikidata_property": "P846"
     },
     "geno": {
       "download": "https://raw.githubusercontent.com/monarch-initiative/GENO-ontology/develop/geno-full.obo",
@@ -392,6 +416,7 @@
         "prefix": "go"
       },
       "synonyms": [
+        "go",
         "gobp",
         "gocc",
         "gomf",
@@ -444,12 +469,18 @@
         "prefix": "icd"
       },
       "synonyms": [
+        "ICD",
         "ICD10",
         "ICD-10",
         "ICD10CM"
       ],
       "title": "International Classification of Diseases",
       "wikidata_property": "P4229"
+    },
+    "icd11": {
+      "synonyms": [
+        "ICD-11"
+      ]
     },
     "icd9": {
       "synonyms": [
@@ -483,6 +514,14 @@
     "inchikey": {
       "wikidata_property": "P235"
     },
+    "inn": {
+      "note": "can not find a place to resolve to",
+      "synonyms": [
+        "INN_ID"
+      ],
+      "title": "International Nonproprietary Names",
+      "url": "https://mednet-communities.net/inn/db/ViewINN.aspx?i=$1"
+    },
     "interpro": {
       "synonyms": [
         "InterPro",
@@ -493,7 +532,8 @@
     "itis": {
       "pattern": "\\d+",
       "title": "Integrated Taxonomic Information System",
-      "url": "https://www.itis.gov/servlet/SingleRpt/SingleRpt?search_topic=TSN&search_value=$1"
+      "url": "https://www.itis.gov/servlet/SingleRpt/SingleRpt?search_topic=TSN&search_value=$1",
+      "wikidata_property": "P815"
     },
     "iuphar.family": {
       "synonyms": [
@@ -501,6 +541,10 @@
       ]
     },
     "iuphar.ligand": {
+      "synonyms": [
+        "IUPHAR_LIGAND",
+        "IUPHAR_LIGAND_ID"
+      ],
       "wikidata_property": "P595"
     },
     "iuphar.receptor": {
@@ -574,7 +618,9 @@
         "MESHA",
         "MESHC",
         "MESHPP",
-        "MESHCS"
+        "MESHCS",
+        "MESH_SUPPLEMENTAL_RECORD_UI",
+        "MESH_DESCRIPTOR_UI"
       ],
       "wikidata_property": "P486"
     },
@@ -629,6 +675,15 @@
     "mmo": {
       "pattern": "\\d{7}"
     },
+    "mmsl": {
+      "references": [
+        "https://www.nlm.nih.gov/research/umls/rxnorm/sourcereleasedocs/mmsl.html"
+      ],
+      "synonyms": [
+        "MMSL_CODE"
+      ],
+      "title": "Multum MediSource Lexicon"
+    },
     "mmusdv": {
       "pattern": "\\d{7}",
       "synonyms": [
@@ -681,9 +736,11 @@
         "NCBI_taxid",
         "taxonomy",
         "TAX"
-      ]
+      ],
+      "wikidata_property": "P685"
     },
     "ncit": {
+      "download": "http://purl.obolibrary.org/obo/ncit.obo",
       "miriam": {
         "id": "00000139",
         "namespaceEmbeddedInLui": false,
@@ -701,6 +758,19 @@
         "NCITt"
       ]
     },
+    "nddf": {
+      "references": [
+        "https://www.nlm.nih.gov/research/umls/sourcereleasedocs/current/NDDF/index.html"
+      ],
+      "title": "National Drug Data File"
+    },
+    "ndfrt": {
+      "bioportal": "NDFRT",
+      "synonyms": [
+        "NUI"
+      ],
+      "title": "National Drug File - Reference Terminology"
+    },
     "nextprot": {
       "synonyms": [
         "NXP"
@@ -717,6 +787,9 @@
     },
     "oba": {
       "pattern": "\\d{7}"
+    },
+    "obo": {
+      "title": "Internal OBO and PyOBO Relations"
     },
     "ogms": {
       "not_available_as_obo": true
@@ -769,6 +842,11 @@
     },
     "pdb": {
       "synonyms": []
+    },
+    "pdb.ligand": {
+      "synonyms": [
+        "PDB_CHEM_ID"
+      ]
     },
     "pdbe": {
       "synonyms": [],
@@ -844,6 +922,7 @@
         "DSSTox_CID",
         "CID",
         "pubchem_id",
+        "PUBCHEM_CID",
         "Pubchem"
       ],
       "wikidata_property": "P662"
@@ -862,7 +941,8 @@
     },
     "reactome": {
       "synonyms": [
-        "RE"
+        "RE",
+        "REACT"
       ],
       "wikidata_property": "P3937"
     },
@@ -955,7 +1035,9 @@
         "SNOMEDCT_US_2018_09_01",
         "SNOMEDCTCT_2018_03_01",
         "SNOMEDCT_US_2019_03_01",
-        "SNOMEDCTCT_2019_03_01"
+        "SNOMEDCTCT_2019_03_01",
+        "SNOMEDCT_US_2020_03_01",
+        "SNOMEDCT_US_2020_09_01"
       ]
     },
     "snornabase": {
@@ -1074,6 +1156,12 @@
         "UPa"
       ]
     },
+    "vandf": {
+      "references": [
+        "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2244318/"
+      ],
+      "title": "Veterans Administration National Drug File"
+    },
     "vega": {
       "synonyms": [
         "VEGA"
@@ -1084,6 +1172,12 @@
     },
     "vto": {
       "pattern": "\\d{7}"
+    },
+    "vuid": {
+      "references": [
+        "https://academic.oup.com/jamia/article/17/4/432/866953"
+      ],
+      "title": "Veterans Health Administration (VHA) unique identifier"
     },
     "vz": {
       "title": "ViralZone",
@@ -1184,8 +1278,11 @@
       "UMLS CUI:": "UMLS",
       "URL: ": "URL",
       "VFB:FBbt_": "FBbt",
-      "chembl target:CHEMBL": "CHEMBL:CHEMBL",
+      "chembl target:CHEMBL": "chembl.target:CHEMBL",
       "protein ontology:PR\\:": "PR:PR:"
     }
-  }
+  },
+  "wikidata_property_types": [
+    "Q42396390"
+  ]
 }

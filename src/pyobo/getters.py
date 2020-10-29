@@ -16,7 +16,7 @@ from .constants import DATABASE_DIRECTORY
 from .identifier_utils import get_metaregistry, wrap_norm_prefix
 from .path_utils import ensure_path, get_prefix_directory, get_prefix_obo_path
 from .registries import get_curated_urls, get_obofoundry
-from .sources import CONVERTED, get_converted_obo
+from .sources import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
 
 __all__ = [
@@ -51,8 +51,8 @@ def get(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
     else:
         logger.debug('[%s] no obonet cache found at %s', prefix, path)
 
-    if prefix in CONVERTED:  # these graphs are converted in :mod:`pyobo.sources`
-        obo = get_converted_obo(prefix)
+    if has_nomenclature_plugin(prefix):
+        obo = run_nomenclature_plugin(prefix)
         logger.info('[%s] caching OBO at %s', prefix, path)
         obo.write_default()
     else:

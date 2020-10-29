@@ -9,17 +9,23 @@ import datetime
 import itertools as itt
 import logging
 import zipfile
+from functools import lru_cache
 from typing import Any, Iterable, Mapping
 from xml.etree import ElementTree
 
 from tqdm import tqdm
 
+from ..cache_utils import cached_pickle
 from ..path_utils import prefix_directory_join
-from ..struct import Obo, Reference, Synonym, Term
+from ..struct import Obo, Reference, Synonym, Term, TypeDef
 
 logger = logging.getLogger(__name__)
 
 PREFIX = 'drugbank'
+
+has_salt = TypeDef(
+    reference=Reference.default(identifier='has_salt', name='has salt'),
+)
 
 
 def get_obo() -> Obo:
@@ -29,6 +35,7 @@ def get_obo() -> Obo:
         name='DrugBank',
         iter_terms=iter_terms,
         auto_generated_by=f'bio2obo:{PREFIX}',
+        typedefs=[has_salt],
     )
 
 
@@ -38,11 +45,15 @@ def iter_terms() -> Iterable[Term]:
         yield _make_term(drug_info)
 
 
+@cached_pickle(prefix_directory_join(PREFIX, 'precompiled.pkl'))
 def iterate_drug_info() -> Iterable[Mapping[str, Any]]:
     """Iterate over DrugBank records."""
     root = get_xml_root()
-    for drug_xml in tqdm(root, desc='Drugs'):
-        yield _extract_drug_info(drug_xml)
+    rv = [
+        _extract_drug_info(drug_xml)
+        for drug_xml in tqdm(root, desc='Drugs')
+    ]
+    return rv
 
 
 DRUG_XREF_SKIP = {
@@ -90,7 +101,7 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
         if identifier is not None:
             xrefs.append(Reference(prefix=k, identifier=identifier))
 
-    return Term(
+    term = Term(
         reference=Reference(prefix=PREFIX, identifier=drug_info['drugbank_id'], name=drug_info['name']),
         definition=drug_info['description'],
         xrefs=xrefs,
@@ -100,22 +111,30 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
         ],
     )
 
+    for salt in drug_info.get('salts', []):
+        term.append_relationship(has_salt, Reference(
+            prefix='drugbank.salt',
+            identifier=salt['identifier'],
+            name=salt['name'],
+        ))
 
+    return term
+
+
+@lru_cache()
 def get_xml_root() -> ElementTree.Element:
     """Get the DrugBank XML parser root.
 
     Takes between 35-60 seconds.
-
-    :param path: A custom URL for DrugBank XML file
     """
     # FIXME get data automatically
     path = prefix_directory_join(PREFIX, 'drugbank_all_full_database.xml.zip')
 
     with zipfile.ZipFile(path) as zip_file:
         with zip_file.open('full database.xml') as file:
-            logger.info('loading XML')
+            logger.info('loading DrugBank XML')
             tree = ElementTree.parse(file)
-            logger.info('done parsing XML')
+            logger.info('done parsing DrugBank XML')
 
     return tree.getroot()
 
@@ -160,6 +179,16 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
 
             }
             for x in drug_xml.findall(f"{ns}patents/{ns}patent")
+        ],
+        'salts': [
+            {
+                'identifier': x.findtext(f'{ns}drugbank-id'),
+                'name': x.findtext(f'{ns}name'),
+                'unii': x.findtext(f'{ns}unii'),
+                'cas': x.findtext(f'{ns}cas-number'),
+                'inchikey': x.findtext(f'{ns}inchikey'),
+            }
+            for x in drug_xml.findall(f'{ns}salts/{ns}salt')
         ],
         'xrefs': [
             {

@@ -2,10 +2,8 @@
 
 """Data structures for OBO."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Mapping, Optional
 
 from .registry import Registry, miriam
 from .utils import obo_escape
@@ -41,7 +39,7 @@ class Reference:
         return f'{self.prefix}:{self.identifier}'
 
     @staticmethod
-    def from_curie(curie: str, name: Optional[str] = None) -> Optional[Reference]:
+    def from_curie(curie: str, name: Optional[str] = None) -> Optional['Reference']:
         """Get a reference from a CURIE."""
         prefix, identifier = normalize_curie(curie)
         if prefix is None and identifier is None:
@@ -49,7 +47,7 @@ class Reference:
         return Reference(prefix=prefix, identifier=identifier, name=name)
 
     @staticmethod
-    def from_curies(curies: str) -> List[Reference]:
+    def from_curies(curies: str) -> List['Reference']:
         """Get a list of references from a string with comma separated CURIEs."""
         return [
             Reference.from_curie(curie)
@@ -58,13 +56,23 @@ class Reference:
         ]
 
     @staticmethod
-    def default(identifier: str, name: Optional[str] = None) -> Reference:
+    def default(identifier: str, name: Optional[str] = None) -> 'Reference':
         """Return a reference from the PyOBO namespace."""
         return Reference(prefix='obo', identifier=identifier, name=name)
 
     @property
     def _escaped_identifier(self):
         return obo_escape(self.identifier)
+
+    def to_dict(self) -> Mapping[str, str]:
+        """Return the reference as a dictionary."""
+        rv = {
+            'prefix': self.prefix,
+            'identifier': self.identifier,
+        }
+        if self.name:
+            rv['name'] = self.name
+        return rv
 
     def __str__(self):  # noqa: D105
         identifier_lower = self.identifier.lower()

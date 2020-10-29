@@ -69,7 +69,12 @@ def iter_terms() -> Iterable[Term]:
             logger.info('using cursor %s', cursor)
             cursor.execute(QUERY)
             for chembl_id, name in cursor.fetchall():
-                yield Term(reference=Reference(prefix=PREFIX, identifier=chembl_id, name=name))
+                # TODO add xrefs to smiles, inchi, inchikey here
+                xrefs = []
+                yield Term(
+                    reference=Reference(prefix=PREFIX, identifier=chembl_id, name=name),
+                    xrefs=xrefs,
+                )
 
 
 @click.command()
