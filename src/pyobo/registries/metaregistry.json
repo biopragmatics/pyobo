@@ -57,7 +57,8 @@
         "ATC_code",
         "ATTC"
       ],
-      "title": "Anatomical Therapeutic Chemical Classification System"
+      "title": "Anatomical Therapeutic Chemical Classification System",
+      "wikidata_property": "P267"
     },
     "atcc": {
       "synonyms": [
@@ -356,6 +357,9 @@
         "FBdv"
       ]
     },
+    "fishbase.species": {
+      "wikidata_property": "P938"
+    },
     "fix": {
       "pattern": "\\d{7}"
     },
@@ -368,7 +372,8 @@
       "synonyms": [
         "FB",
         "FlyBase"
-      ]
+      ],
+      "wikidata_property": "P3852"
     },
     "fplx": {
       "synonyms": [
@@ -445,6 +450,9 @@
       ],
       "wikidata_property": "P2057"
     },
+    "homologene": {
+      "wikidata_property": "P593"
+    },
     "hp": {
       "download": "http://purl.obolibrary.org/obo/hp.obo",
       "miriam": {
@@ -461,6 +469,10 @@
       "synonyms": [
         "HsapDv"
       ]
+    },
+    "hsdb": {
+      "title": "Hazardous Substances Data Bank",
+      "wikidata_property": "P2062"
     },
     "icd10": {
       "miriam": {
@@ -588,7 +600,8 @@
         "LIPID_MAPS_instance",
         "LIPID MAPS",
         "LIPID_MAPS_class"
-      ]
+      ],
+      "wikidata_property": "P2063"
     },
     "lncipedia": {},
     "massbank": {
@@ -624,6 +637,9 @@
       ],
       "wikidata_property": "P486"
     },
+    "metabolights": {
+      "wikidata_property": "P3890"
+    },
     "metacyc": {
       "synonyms": [
         "MetaCyc"
@@ -636,7 +652,8 @@
       "synonyms": [
         "MGI",
         "MGD"
-      ]
+      ],
+      "wikidata_property": "P671"
     },
     "mi": {
       "pattern": "\\d{4}"
@@ -867,7 +884,8 @@
     "pfam": {
       "synonyms": [
         "PF"
-      ]
+      ],
+      "wikidata_property": "P3519"
     },
     "pfam.clan": {},
     "pfr": {
@@ -949,12 +967,14 @@
     "reaxys": {
       "synonyms": [
         "Reaxys"
-      ]
+      ],
+      "wikidata_property": "P1579"
     },
     "rgd": {
       "synonyms": [
         "RGD"
-      ]
+      ],
+      "wikidata_property": "P3853"
     },
     "rhea": {
       "synonyms": [
@@ -1133,7 +1153,7 @@
         "UniProtKB",
         "uniprot/swiss-prot"
       ],
-      "wikidata_relation": "wdt:P352"
+      "wikidata_relation": "P352"
     },
     "uniprot.keyword": {
       "synonyms": [
@@ -1246,6 +1266,9 @@
     "zfs": {
       "pattern": "\\d{7}"
     },
+    "zinc": {
+      "wikidata_property": "P2084"
+    },
     "zp": {
       "pattern": "\\d+"
     }
@@ -1283,6 +1306,9 @@
     }
   },
   "wikidata_property_types": [
-    "Q42396390"
+    "Q42396390",
+    "Q19833835",
+    "Q42415644",
+    "Q42415497"
   ]
 }
