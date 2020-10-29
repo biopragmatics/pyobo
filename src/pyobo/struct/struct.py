@@ -749,8 +749,8 @@ def iterate_graph_typedefs(graph: nx.MultiDiGraph, default_prefix: str) -> Itera
 
         name = typedef.get('name')
         if name is None:
-            logger.warning('[%s] typedef %s is missing a name', graph.graph['ontology'], typedef['id'])
-            name = typedef['id']
+            logger.warning('[%s] typedef %s is missing a name', graph.graph['ontology'], identifier)
+            name = identifier
 
         reference = Reference(prefix=prefix, identifier=identifier, name=name)
 
