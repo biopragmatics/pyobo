@@ -75,7 +75,7 @@ def get_terms() -> Iterable[Term]:
 
         for r, t in out_edges.get(reference, []):
             if r == 'isa' and t.prefix == 'fplx':
-                term.parents.append(t)
+                term.append_parent(t)
             elif r == 'isa':
                 term.append_relationship(is_a, t)
             elif r == 'partof':
