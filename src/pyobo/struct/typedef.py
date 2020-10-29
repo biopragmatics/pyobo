@@ -76,7 +76,7 @@ def get_reference_tuple(relation: Union[Tuple[str, str], Reference, TypeDef]) ->
             raise ValueError(f'string given is not valid curie: {relation}')
         return prefix, identifier
     else:
-        raise TypeError(f'Relation is invalid tyoe: {relation}')
+        raise TypeError(f'Relation is invalid type: {relation}')
 
 
 from_species = TypeDef(
