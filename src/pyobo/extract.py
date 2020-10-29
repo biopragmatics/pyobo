@@ -240,11 +240,7 @@ def get_relations_df(
     if wide:
         rv = rv.rename(columns={f'{prefix}_id': SOURCE_ID})
         rv[SOURCE_PREFIX] = prefix
-        try:
-            rv = rv[RELATION_COLUMNS]
-        except:
-            print(rv.columns)
-            raise
+        rv = rv[RELATION_COLUMNS]
 
     return rv
 
