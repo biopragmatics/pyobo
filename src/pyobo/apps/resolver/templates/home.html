@@ -1,0 +1,77 @@
+{% extends "bootstrap/base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block content %}
+    <div class="container">
+        <div class="col-md-offset-3 col-md-6 col-sm-offset-3 col-sm-6">
+            <div class="panel panel-info" style="margin-top: 75px">
+                <div class="panel-heading">
+                    <h2>Ooh Na Na CURIE Resolver</h2>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        This service resolves <a href="https://en.wikipedia.org/wiki/CURIE">CURIEs</a>
+                        to their labels and builds Identifiers.org URLs when possible.
+                        {% if backend.count_curies() %}It currently covers {{ backend.count_curies() }} identifiers and
+                            {{ backend.count_alts() }} alternate identifiers across {{ backend.count_prefixes() }}
+                            resources.{% endif %}
+                    </p>
+                    <p>
+                        It has a single endpoint <code>/resolve/&lt;curie&gt;</code> that gives back JSON.
+                        Here are a few examples:
+                    </p>
+                </div>
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th scope="col">CURIE</th>
+                        <th scope="col">Description</th>
+                    </tr>
+                    </thead>
+                    <tr>
+                        <td><a href="{{ url_for('.resolve', curie='DOID:14330' ) }}">DOID:14330</a></td>
+                        <td>🟢 exact</td>
+                    </tr>
+                    <tr>
+                        <td><a href="{{ url_for('.resolve', curie='doid:14330' ) }}">doid:14330</a></td>
+                        <td>🟢 capitalization variant</td>
+                    </tr>
+                    <tr>
+                        <td><a href="{{ url_for('.resolve', curie='DO:14330' ) }}">DO:14330</a></td>
+                        <td>🟢 synonym identified in metaregistry</td>
+                    </tr>
+                    <tr>
+                        <td><a href="{{ url_for('.resolve', curie='GO:0001071' ) }}">GO:0001071</a></td>
+                        <td>🟢 secondary identifier mapped</td>
+                    </tr>
+                    <tr>
+                        <td><a href="{{ url_for('.resolve', curie='APO:0000155' ) }}">apo:0000155</a></td>
+                        <td>🟡 able to look up name, but prefix is not listed on Identifiers.org</td>
+                    </tr>
+                    <tr>
+                        <td><a href="{{ url_for('.resolve', curie='wikidata:Q11085' ) }}">wikidata:Q11085</a></td>
+                        <td>🟡 able to generate Identifiers.org link, but name unavailable</td>
+                    </tr>
+                    <tr>
+                        <td><a href="{{ url_for('.resolve', curie='DOID:00000' ) }}">DOID:00000</a></td>
+                        <td>🔴 valid prefix, but invalid identifier</td>
+                    </tr>
+                    <tr>
+                        <td><a href="{{ url_for('.resolve', curie='NNN:00000' ) }}">NNN:00000</a></td>
+                        <td>🔴 invalid prefix</td>
+                    </tr>
+                </table>
+                <div class="panel-footer">
+                    <p>
+                        This service is implemented in <a href="https://github.com/pyobo/pyobo">PyOBO</a>. If
+                        you want to know more about how it was built, check this
+                        <a href="https://cthoyt.com/2020/04/18/ooh-na-na.html">blog post</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

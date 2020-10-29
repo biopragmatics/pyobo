@@ -3,12 +3,14 @@
 """Default typedefs, references, and other structures."""
 
 from dataclasses import dataclass, field
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Mapping, Optional, Tuple, Union
 
-from .reference import Reference, Referenced
+from .reference import Reference, Referenced, normalize_curie
 
 __all__ = [
     'TypeDef',
+    'get_reference_tuple',
+    'default_typedefs',
     'from_species',
     'has_part',
     'pathway_has_part',
@@ -62,6 +64,21 @@ class TypeDef(Referenced):
             yield f'is_transitive: {"true" if self.is_transitive else "false"}'
 
 
+def get_reference_tuple(relation: Union[Tuple[str, str], Reference, TypeDef]) -> Tuple[str, str]:
+    """Get tuple for typedef/reference."""
+    if isinstance(relation, (Reference, TypeDef)):
+        return relation.prefix, relation.identifier
+    elif isinstance(relation, tuple):
+        return relation
+    elif isinstance(relation, str):
+        prefix, identifier = normalize_curie(relation)
+        if prefix is None:
+            raise ValueError(f'string given is not valid curie: {relation}')
+        return prefix, identifier
+    else:
+        raise TypeError(f'Relation is invalid tyoe: {relation}')
+
+
 from_species = TypeDef(
     reference=Reference(prefix='ro', identifier='0002162', name='in taxon'),
 )
@@ -77,7 +94,7 @@ has_part = TypeDef(
     inverse=Reference(prefix='bfo', identifier='0000050', name='part of'),
 )
 pathway_has_part = TypeDef(
-    reference=Reference(prefix='obo', identifier='pathway_has_part', name='pathway has part'),
+    reference=Reference.default(identifier='pathway_has_part', name='pathway has part'),
     comment='More specific version of has_part for pathways',
     parents=[Reference(prefix='bfo', identifier='0000051', name='has part')],
 )
@@ -143,3 +160,9 @@ is_substituent_group_from = TypeDef(
 has_functional_parent = TypeDef(
     reference=Reference(prefix='chebi', identifier='has_functional_parent', name='has functional parent'),
 )
+
+default_typedefs: Mapping[Tuple[str, str], TypeDef] = {
+    (v.prefix, v.identifier): v
+    for k, v in locals().items()
+    if isinstance(v, TypeDef)
+}

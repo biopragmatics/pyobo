@@ -9,6 +9,7 @@ from pyobo.iter_utils import iterate_together
 
 
 class TestIdentifierUtils(unittest.TestCase):
+    """Test identifier utilities."""
 
     def test_strip_prefix(self):
         """Test stripping prefixes works."""

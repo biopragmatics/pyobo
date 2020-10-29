@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+"""Tests for getting OBO."""
+
 import unittest
 from operator import attrgetter
 
@@ -13,17 +17,18 @@ from tests.constants import TEST_CHEBI_OBO_PATH
 
 
 class TestParseObonet(unittest.TestCase):
-    """"""
+    """Test parsing OBO."""
 
     @classmethod
     def setUpClass(cls) -> None:
+        """Set up the test case with a mock ChEBI OBO."""
         cls.graph = obonet.read_obo(TEST_CHEBI_OBO_PATH)
 
     def test_get_graph_typedefs(self):
         """Test getting type definitions from an :mod:`obonet` graph."""
         pairs = {
             (typedef.prefix, typedef.identifier)
-            for typedef in iterate_graph_typedefs(self.graph)
+            for typedef in iterate_graph_typedefs(self.graph, 'chebi')
         }
         self.assertIn(('chebi', 'has_part'), pairs)
 
@@ -77,7 +82,7 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_xrefs(self):
         """Test getting parents from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes['CHEBI:51990']
-        xrefs = list(iterate_node_xrefs(data))
+        xrefs = list(iterate_node_xrefs(prefix='chebi', data=data))
         self.assertEqual(7, len(xrefs))
         # NOTE the prefixes are remapped by PyOBO
         self.assertEqual({'pubmed', 'cas', 'beilstein', 'reaxys'}, {
@@ -89,13 +94,13 @@ class TestParseObonet(unittest.TestCase):
                 ('reaxys', '3570522'), ('beilstein', '3570522'), ('cas', '429-41-4'),
                 ('pubmed', '21142041'), ('pubmed', '21517057'), ('pubmed', '22229781'), ('pubmed', '15074950'),
             },
-            {(xref.prefix, xref.identifier) for xref in xrefs}
+            {(xref.prefix, xref.identifier) for xref in xrefs},
         )
 
     def test_get_node_relations(self):
         """Test getting relations from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes['CHEBI:17051']
-        relations = list(iterate_node_relationships(data, 'chebi'))
+        relations = list(iterate_node_relationships(data, default_prefix='chebi'))
         self.assertEqual(1, len(relations))
         typedef, target = relations[0]
 
@@ -116,5 +121,5 @@ class TestGet(unittest.TestCase):
     def test_get_obo(self):
         """Test getting an OBO document."""
         obo = get('chebi', url=TEST_CHEBI_OBO_PATH, local=True)
-        terms = list(obo.iter_terms())
+        terms = list(obo)
         self.assertEqual(18, len(terms))

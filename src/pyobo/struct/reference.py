@@ -2,10 +2,8 @@
 
 """Data structures for OBO."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Mapping, Optional
 
 from .registry import Registry, miriam
 from .utils import obo_escape
@@ -27,7 +25,7 @@ class Reference:
     #: The entity's identifier in the namespace
     identifier: str
 
-    name: Optional[str] = field(default=None, repr=None)
+    name: Optional[str] = field(default=None)
 
     #: The namespace's identifier in the registry
     registry_id: Optional[str] = field(default=None, repr=False)
@@ -41,13 +39,15 @@ class Reference:
         return f'{self.prefix}:{self.identifier}'
 
     @staticmethod
-    def from_curie(curie: str, name: Optional[str] = None) -> Reference:
+    def from_curie(curie: str, name: Optional[str] = None) -> Optional['Reference']:
         """Get a reference from a CURIE."""
         prefix, identifier = normalize_curie(curie)
+        if prefix is None and identifier is None:
+            return
         return Reference(prefix=prefix, identifier=identifier, name=name)
 
     @staticmethod
-    def from_curies(curies: str) -> List[Reference]:
+    def from_curies(curies: str) -> List['Reference']:
         """Get a list of references from a string with comma separated CURIEs."""
         return [
             Reference.from_curie(curie)
@@ -56,7 +56,7 @@ class Reference:
         ]
 
     @staticmethod
-    def default(identifier, name) -> Reference:
+    def default(identifier: str, name: Optional[str] = None) -> 'Reference':
         """Return a reference from the PyOBO namespace."""
         return Reference(prefix='obo', identifier=identifier, name=name)
 
@@ -64,9 +64,20 @@ class Reference:
     def _escaped_identifier(self):
         return obo_escape(self.identifier)
 
+    def to_dict(self) -> Mapping[str, str]:
+        """Return the reference as a dictionary."""
+        rv = {
+            'prefix': self.prefix,
+            'identifier': self.identifier,
+        }
+        if self.name:
+            rv['name'] = self.name
+        return rv
+
     def __str__(self):  # noqa: D105
-        if self.identifier.lower().startswith(f'{self.prefix.lower()}:'):
-            rv = self.identifier.lower()
+        identifier_lower = self.identifier.lower()
+        if identifier_lower.startswith(f'{self.prefix.lower()}:'):
+            rv = identifier_lower
         else:
             rv = f'{self.prefix}:{self._escaped_identifier}'
         if self.name:

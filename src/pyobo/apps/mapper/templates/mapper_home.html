@@ -1,0 +1,75 @@
+{% extends "bootstrap/base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block content %}
+    <div class="container">
+        <div class="col-md-offset-3 col-md-6 col-sm-offset-3 col-sm-6">
+            <div class="panel panel-info" style="margin-top: 75px">
+                <div class="panel-heading">
+                    <h2>Inspector Javert's Xref Resolver</h2>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        This service resolves <a href="https://en.wikipedia.org/wiki/CURIE">CURIEs</a>
+                        to the best CURIE that's mapped to it.
+                    </p>
+                    <p>
+                        A summary of all of the xrefs can be found <a href="{{ url_for('.summarize') }}">here</a>.
+                        You can also look at a summary for a specific prefix like <a
+                            href="{{ url_for('.summarize_one', prefix='umls') }}"><code>UMLS</code></a>.
+                    </p>
+                </div>
+                <ul>
+                    <li>
+                        Use the <code>/mappings</code> endpoint to look up equivalent entities,
+                        for example, <a href="{{ url_for('.single_source_mappings', curie='hgnc:6893') }}"><code>hgnc:6893</code></a>.
+                    </li>
+                    <li>
+                        Use the <code>/mappings</code> endpoint to look up all mappings between two entities,
+                        for example, <a
+                            href="{{ url_for('.all_mappings', source_curie='hgnc:6893', target_curie='ensembl:ENSG00000186868') }}"><code>hgnc:6893</code>
+                        and <code>ensembl:ENSG00000186868</code></a>.
+                    </li>
+                </ul>
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th scope="col">CURIE</th>
+                        <th scope="col">Description</th>
+                    </tr>
+                    </thead>
+                    <tr>
+                        <td><a href="{{ url_for('.canonicalize', curie='hgnc:6893') }}">HGNC:6893</a></td>
+                        <td>✅ maps correct identifier to higher priority namespace (ncbigene)</td>
+                    </tr>
+                    <tr>
+                        <td><a href="{{ url_for('.canonicalize', curie='ncbigene:4137') }}">ncbigene:4137</a></td>
+                        <td>✅ already priority namespace</td>
+                    </tr>
+                    <tr>
+                        <td><a href="{{ url_for('.canonicalize', curie='DOID:00000') }}">DOID:00000</a></td>
+                        <td>❌ invalid identifier</td>
+                    </tr>
+                    <tr>
+                        <td><a href="{{ url_for('.canonicalize', curie='NNN:00000') }}">NNN:00000</a></td>
+                        <td>❌ invalid prefix</td>
+                    </tr>
+                    <tr>
+                        <td><a href="{{ url_for('.canonicalize', curie='wikidata:Q42') }}">wikidata:Q42</a></td>
+                        <td>❌ unmapped prefix</td>
+                    </tr>
+                </table>
+                <div class="panel-footer">
+                    <p>
+                        This service is implemented in <a href="https://github.com/pyobo/pyobo">PyOBO</a>.
+                        If you want to know more about how it was built, check this
+                        <a href="https://cthoyt.com/2020/04/19/inspector-javerts-xref-database.html">blog post</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

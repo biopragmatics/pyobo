@@ -9,7 +9,7 @@ from .gmt_utils import parse_wikipathways_gmt
 from ..constants import SPECIES_REMAPPING
 from ..path_utils import ensure_path
 from ..struct import Obo, Reference, Term, from_species
-from ..struct.defs import pathway_has_part
+from ..struct.typedef import pathway_has_part
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +46,7 @@ def get_obo() -> Obo:
         data_version=DATA_VERSION,
         iter_terms=iter_terms,
         typedefs=[pathway_has_part, from_species],
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 

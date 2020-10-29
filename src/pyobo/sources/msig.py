@@ -11,9 +11,10 @@ import scrapy
 from scrapy.crawler import CrawlerProcess
 
 from .gmt_utils import parse_gmt_file
+from ..config import get_config
 from ..path_utils import prefix_directory_join
 from ..struct import Obo, Reference, Term
-from ..struct.defs import pathway_has_part
+from ..struct.typedef import pathway_has_part
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,9 @@ GMT_HGNC_URL = f'{BASE_URL}/{VERSION}/msigdb.v{VERSION}.symbols.gmt'
 GMT_ENTREZ_PATH = prefix_directory_join(PREFIX, f'msigdb.v{VERSION}.entrez.gmt', version=VERSION)
 GMT_HGNC_PATH = prefix_directory_join(PREFIX, f'msigdb.v{VERSION}.symbols.gmt', version=VERSION)
 
+MSIG_USERNAME = get_config('msig_username')
+MSIG_PASSWORD = get_config('msig_password')
+
 
 class GSEASpider(scrapy.Spider):
     """A Scrapy Spider for downloading GMT files from GSEA."""
@@ -39,8 +43,8 @@ class GSEASpider(scrapy.Spider):
         return scrapy.FormRequest.from_response(
             response,
             formdata={
-                'j_username': 'cthoyt@gmail.com',
-                'j_password': 'password',
+                'j_username': MSIG_USERNAME,
+                'j_password': MSIG_PASSWORD,
             },
             callback=self.after_login,
         )
@@ -79,6 +83,7 @@ def get_obo() -> Obo:
         ontology=PREFIX,
         name='Molecular Signatures Database',
         iter_terms=iter_terms,
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 

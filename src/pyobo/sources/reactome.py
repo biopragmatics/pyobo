@@ -9,8 +9,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..constants import SPECIES_REMAPPING
+from ..extract import get_name_id_mapping
 from ..io_utils import multidict
-from ..mappings import get_name_id_mapping
 from ..path_utils import ensure_df
 from ..struct import Obo, Reference, Term, from_species
 
@@ -34,6 +34,7 @@ def get_obo() -> Obo:
         name='Reactome',
         iter_terms=iter_terms,
         typedefs=[from_species],
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
