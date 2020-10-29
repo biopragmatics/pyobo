@@ -463,12 +463,18 @@
         "prefix": "icd"
       },
       "synonyms": [
+        "ICD",
         "ICD10",
         "ICD-10",
         "ICD10CM"
       ],
       "title": "International Classification of Diseases",
       "wikidata_property": "P4229"
+    },
+    "icd11": {
+      "synonyms": [
+        "ICD-11"
+      ]
     },
     "icd9": {
       "synonyms": [

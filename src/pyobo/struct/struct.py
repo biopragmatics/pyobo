@@ -299,7 +299,7 @@ class Obo:
         """Write the OBO to a file."""
         it = self.iterate_obo_lines()
         if use_tqdm:
-            it = tqdm(it, desc=f'writing {self.ontology}')
+            it = tqdm(it, desc=f'writing {self.ontology}', unit_scale=True, unit='line')
         for line in it:
             print(line, file=file)
 
