@@ -76,7 +76,7 @@ def get_reference_tuple(relation: Union[Tuple[str, str], Reference, TypeDef]) ->
             raise ValueError(f'string given is not valid curie: {relation}')
         return prefix, identifier
     else:
-        raise TypeError(f'Relation is invalid tyoe: {relation}')
+        raise TypeError(f'Relation is invalid type: {relation}')
 
 
 from_species = TypeDef(
@@ -84,19 +84,19 @@ from_species = TypeDef(
 )
 
 part_of = TypeDef(
-    reference=Reference(prefix='bfo', identifier='0000050', name='part of'),
+    reference=Reference(prefix='ro', identifier='0000050', name='part of'),
     comment='Inverse of has_part',
-    inverse=Reference(prefix='bfo', identifier='0000051', name='has part'),
+    inverse=Reference(prefix='ro', identifier='0000051', name='has part'),
 )
 has_part = TypeDef(
-    reference=Reference(prefix='bfo', identifier='0000051', name='has part'),
+    reference=Reference(prefix='ro', identifier='0000051', name='has part'),
     comment='Inverse of part_of',
-    inverse=Reference(prefix='bfo', identifier='0000050', name='part of'),
+    inverse=Reference(prefix='ro', identifier='0000050', name='part of'),
 )
 pathway_has_part = TypeDef(
     reference=Reference.default(identifier='pathway_has_part', name='pathway has part'),
     comment='More specific version of has_part for pathways',
-    parents=[Reference(prefix='bfo', identifier='0000051', name='has part')],
+    parents=[Reference(prefix='ro', identifier='0000051', name='has part')],
 )
 is_a = TypeDef(
     reference=Reference.default(identifier='is_a', name='is a'),
