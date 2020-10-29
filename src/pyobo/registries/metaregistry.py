@@ -5,7 +5,7 @@
 import json
 import os
 from functools import lru_cache
-from typing import Mapping, Set, Tuple
+from typing import List, Mapping, Set, Tuple
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -27,6 +27,12 @@ def _get_curated_registry(rewrite: bool = True):
 def get_curated_registry_database():
     """Get the curated metaregistry."""
     return _get_curated_registry()['database']
+
+
+@lru_cache()
+def get_wikidata_property_types() -> List[str]:
+    """Get the wikidata property types."""
+    return _get_curated_registry()['wikidata_property_types']
 
 
 @lru_cache()

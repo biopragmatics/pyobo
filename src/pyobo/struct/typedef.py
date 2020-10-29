@@ -5,7 +5,7 @@
 from dataclasses import dataclass, field
 from typing import Iterable, List, Mapping, Optional, Tuple, Union
 
-from .reference import Reference, Referenced
+from .reference import Reference, Referenced, normalize_curie
 
 __all__ = [
     'TypeDef',
@@ -21,6 +21,12 @@ __all__ = [
     'has_role',
     'role_of',
     'has_mature',
+    'has_gene_product',
+    'gene_product_is_a',
+    'has_gene_product',
+    'transcribes_to',
+    'translates_to',
+    'gene_product_is_a',
     'example_of_usage',
     'alternative_term',
     'editor_note',
@@ -70,8 +76,13 @@ def get_reference_tuple(relation: Union[Tuple[str, str], Reference, TypeDef]) ->
         return relation.prefix, relation.identifier
     elif isinstance(relation, tuple):
         return relation
+    elif isinstance(relation, str):
+        prefix, identifier = normalize_curie(relation)
+        if prefix is None:
+            raise ValueError(f'string given is not valid curie: {relation}')
+        return prefix, identifier
     else:
-        raise TypeError(f'Relation is invalid tyoe: {relation}')
+        raise TypeError(f'Relation is invalid type: {relation}')
 
 
 from_species = TypeDef(
@@ -79,19 +90,19 @@ from_species = TypeDef(
 )
 
 part_of = TypeDef(
-    reference=Reference(prefix='bfo', identifier='0000050', name='part of'),
+    reference=Reference(prefix='ro', identifier='0000050', name='part of'),
     comment='Inverse of has_part',
-    inverse=Reference(prefix='bfo', identifier='0000051', name='has part'),
+    inverse=Reference(prefix='ro', identifier='0000051', name='has part'),
 )
 has_part = TypeDef(
-    reference=Reference(prefix='bfo', identifier='0000051', name='has part'),
+    reference=Reference(prefix='ro', identifier='0000051', name='has part'),
     comment='Inverse of part_of',
-    inverse=Reference(prefix='bfo', identifier='0000050', name='part of'),
+    inverse=Reference(prefix='ro', identifier='0000050', name='part of'),
 )
 pathway_has_part = TypeDef(
     reference=Reference.default(identifier='pathway_has_part', name='pathway has part'),
     comment='More specific version of has_part for pathways',
-    parents=[Reference(prefix='bfo', identifier='0000051', name='has part')],
+    parents=[Reference(prefix='ro', identifier='0000051', name='has part')],
 )
 is_a = TypeDef(
     reference=Reference.default(identifier='is_a', name='is a'),
@@ -126,6 +137,22 @@ role_of = TypeDef(
 
 has_mature = TypeDef(
     reference=Reference(prefix='mirbase', identifier='has_mature', name='has mature miRNA'),
+)
+
+has_gene_product = TypeDef(
+    reference=Reference(prefix='ro', identifier='0002205', name='has gene product'),
+    inverse=Reference(prefix='ro', identifier='0002204', name='gene product of'),
+)
+transcribes_to = TypeDef(
+    reference=Reference.default(identifier='transcribes_to', name='transcribes to'),
+    definition='Relation between a gene and a transcript',
+)
+translates_to = TypeDef(
+    reference=Reference.default(identifier='translates_to', name='translates to'),
+    definition='Relation between a transcript and a protein',
+)
+gene_product_is_a = TypeDef(
+    reference=Reference.default(identifier='gene_product_is_a', name='gene product is a'),
 )
 
 example_of_usage = Reference(prefix='iao', identifier='0000112', name='example of usage')

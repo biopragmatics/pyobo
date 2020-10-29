@@ -7,8 +7,7 @@ import unittest
 
 import requests
 
-from pyobo.identifier_utils import get_identifiers_org_link, normalize_prefix
-from pyobo.registries.miriam import get_miriam
+from pyobo.identifier_utils import get_identifiers_org_link
 
 logger = logging.getLogger(__name__)
 

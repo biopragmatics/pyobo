@@ -2,8 +2,6 @@
 
 """Pipeline for extracting all xrefs from OBO documents available."""
 
-from __future__ import annotations
-
 import gzip
 import itertools as itt
 import logging
@@ -17,7 +15,7 @@ import pandas as pd
 from more_itertools import pairwise
 from tqdm import tqdm
 
-from .sources import iter_sourced_xref_dfs
+from .sources import iter_xref_plugins
 from ..constants import DATABASE_DIRECTORY, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
 from ..extract import (
     get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts,
@@ -59,9 +57,6 @@ _DEFAULT_PRIORITY_LIST = [
     'drugbank',
     'chembl.compound',
     'zinc',
-    'npass',
-    'unpd',
-    'knapsack',
     # protein families and complexes (and famplexes :))
     'complexportal',
     'fplx',
@@ -76,7 +71,6 @@ _DEFAULT_PRIORITY_LIST = [
     'hp',
     # Taxa
     'ncbitaxon',
-    'itis',
     # If you can get away from MeSH, do it
     'mesh',
     'icd',
@@ -144,7 +138,7 @@ class Canonicalizer:
         return max(priority_dict, key=priority_dict.get)
 
     @classmethod
-    def get_default(cls, priority: Optional[Iterable[str]] = None) -> Canonicalizer:
+    def get_default(cls, priority: Optional[Iterable[str]] = None) -> 'Canonicalizer':
         """Get the default canonicalizer."""
         if priority is not None:
             priority = tuple(priority)
@@ -152,7 +146,7 @@ class Canonicalizer:
 
     @classmethod
     @lru_cache()
-    def _get_default_helper(cls, priority: Optional[Tuple[str, ...]] = None) -> Canonicalizer:
+    def _get_default_helper(cls, priority: Optional[Tuple[str, ...]] = None) -> 'Canonicalizer':
         """Help get the default canonicalizer."""
         graph = cls._get_default_graph()
         return cls(graph=graph, priority=list(priority) if priority else None)
@@ -195,7 +189,7 @@ class Canonicalizer:
         return all_shortest_paths(graph=self.graph, source_curie=source_curie, target_curie=target_curie)
 
     @classmethod
-    def from_df(cls, df: pd.DataFrame) -> Canonicalizer:
+    def from_df(cls, df: pd.DataFrame) -> 'Canonicalizer':
         """Instantiate from a dataframe."""
         return cls(graph=get_graph_from_xref_df(df))
 
@@ -335,7 +329,7 @@ def _iterate_xref_dfs() -> Iterable[pd.DataFrame]:
         if not os.listdir(prefix_directory):
             os.rmdir(prefix_directory)
 
-    yield from iter_sourced_xref_dfs()
+    yield from iter_xref_plugins()
 
 
 def _iterate_metaregistry():

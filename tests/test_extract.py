@@ -8,14 +8,21 @@ import pandas as pd
 
 import pyobo
 from pyobo import get_filtered_xrefs, get_id_name_mapping, get_xrefs_df
+from pyobo.mocks import get_mock_get_xrefs_df
 from tests.constants import TEST_CHEBI_OBO_PATH
+
+_mock_rows = [
+    ('hgnc', '6893', 'ncbigene', '4137', 'N/A'),
+    ('hgnc', '6893', 'ensembl', 'ENSG00000186868', 'N/A'),
+]
+mock_get_xrefs_df = get_mock_get_xrefs_df(_mock_rows)
 
 
 class TestMapping(unittest.TestCase):
-    """Test extrating information."""
+    """Test extracting information."""
 
     def test_get_names(self):
-        """Test getting names"""
+        """Test getting names."""
         id_to_name = get_id_name_mapping('chebi', url=TEST_CHEBI_OBO_PATH, local=True)
         for identifier in id_to_name:
             self.assertFalse(identifier.startswith('CHEBI'))
@@ -51,7 +58,8 @@ class TestMapping(unittest.TestCase):
 
         self.assertIsInstance(kegg_xrefs, dict)
 
-    def test_get_equivalent(self):
+    @mock_get_xrefs_df
+    def test_get_equivalent(self, _):
         """Test getting equivalent CURIEs."""
         mapt_curies = pyobo.get_equivalent('hgnc:6893')
         self.assertIn('ncbigene:4137', mapt_curies)
