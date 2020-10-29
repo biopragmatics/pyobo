@@ -40,7 +40,10 @@ def get_terms() -> Iterable[Term]:
     out_edges = defaultdict(list)
     for h_ns, h_name, r, t_ns, t_name in relations_df.values:
         if h_ns == 'HGNC':
-            h = Reference(prefix='hgnc', identifier=hgnc_name_to_id[h_name], name=h_name)
+            h_identifier = hgnc_name_to_id.get(h_name)
+            if h_identifier is None:
+                logger.warning('[%s] could not look up HGNC identifier for gene: %s', PREFIX, h_name)
+            h = Reference(prefix='hgnc', identifier=h_identifier, name=h_name)
         elif h_ns == 'FPLX':
             h = Reference(prefix='fplx', identifier=h_name, name=h_name)
         elif h_ns == 'UP':
@@ -49,7 +52,10 @@ def get_terms() -> Iterable[Term]:
             print(h_ns)
             raise
         if t_ns == 'HGNC':
-            t = Reference(prefix='hgnc', identifier=hgnc_name_to_id[t_name], name=t_name)
+            t_identifier = hgnc_name_to_id.get(t_name)
+            if t_identifier is None:
+                logger.warning('[%s] could not look up HGNC identifier for gene: %s', PREFIX, t_name)
+            t = Reference(prefix='hgnc', identifier=t_identifier, name=t_name)
         elif t_ns == 'FPLX':
             t = Reference(prefix='fplx', identifier=t_name, name=t_name)
         elif h_ns == 'UP':
