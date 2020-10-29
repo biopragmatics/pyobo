@@ -370,6 +370,12 @@
         "FlyBase"
       ]
     },
+    "fplx": {
+      "synonyms": [
+        "famplex"
+      ],
+      "title": "FamPlex"
+    },
     "fypo": {
       "download": "http://purl.obolibrary.org/obo/fypo.obo",
       "pattern": "\\d{7}",
