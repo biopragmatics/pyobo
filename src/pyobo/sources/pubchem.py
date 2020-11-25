@@ -56,7 +56,8 @@ def get_pubchem_smiles_id_mapping() -> Mapping[str, str]:
 
 def get_pubchem_id_to_name() -> Mapping[str, str]:
     """Get a mapping from PubChem compound identifiers to their titles."""
-    df = ensure_df(PREFIX, CID_NAME_URL, version=VERSION, dtype=str)
+    df = ensure_df(PREFIX, CID_NAME_URL, version=VERSION, dtype=str,
+                   encoding='latin-1')
     return dict(df.values)
 
 
