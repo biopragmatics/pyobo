@@ -15,7 +15,7 @@ from ..struct import Obo, Reference, Synonym, Term
 logger = logging.getLogger(__name__)
 
 PREFIX = 'pubchem.compound'
-VERSION = '2020-07-02'
+VERSION = '2020-11-01'
 BASE_URL = f'ftp://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Monthly/{VERSION}/Extras'
 
 # 2 tab-separated columns: compound_id, name
@@ -56,7 +56,8 @@ def get_pubchem_smiles_id_mapping() -> Mapping[str, str]:
 
 def get_pubchem_id_to_name() -> Mapping[str, str]:
     """Get a mapping from PubChem compound identifiers to their titles."""
-    df = ensure_df(PREFIX, CID_NAME_URL, version=VERSION, dtype=str)
+    df = ensure_df(PREFIX, CID_NAME_URL, version=VERSION, dtype=str,
+                   encoding='latin-1')
     return dict(df.values)
 
 
