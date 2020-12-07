@@ -7,12 +7,11 @@ import gzip
 import json
 import logging
 import os
-import pathlib
 import pickle
+from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Union
 
 import networkx as nx
-from pathlib import Path
 import pandas as pd
 
 from .io_utils import open_map_tsv, open_multimap_tsv, write_map_tsv, write_multimap_tsv

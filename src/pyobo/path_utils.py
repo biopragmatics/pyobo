@@ -5,19 +5,19 @@
 import logging
 import os
 import tarfile
+from pathlib import Path
 from typing import Optional
-from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
 import pandas as pd
+from pystow.utils import mkdir, name_from_url
 
-from .constants import RAW_DIRECTORY
+from .constants import RAW_MODULE
 
 __all__ = [
     'get_prefix_directory',
     'prefix_directory_join',
     'get_prefix_obo_path',
-    'get_url_filename',
     'ensure_path',
     'ensure_df',
     'ensure_excel',
@@ -27,32 +27,24 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def get_prefix_directory(prefix: str, *, version: Optional[str] = None) -> str:
+def get_prefix_directory(prefix: str, *, version: Optional[str] = None) -> Path:
     """Get the directory."""
-    if version:
-        directory = os.path.abspath(os.path.join(RAW_DIRECTORY, prefix, version))
+    if version is None:
+        return RAW_MODULE.get(prefix)
     else:
-        directory = os.path.abspath(os.path.join(RAW_DIRECTORY, prefix))
-    os.makedirs(directory, exist_ok=True)
-    return directory
+        return RAW_MODULE.get(prefix, version)
 
 
-def prefix_directory_join(prefix: str, *parts: str, version: Optional[str] = None) -> str:
+def prefix_directory_join(prefix: str, *parts: str, version: Optional[str] = None) -> Path:
     """Join the parts onto the prefix directory."""
-    rv = os.path.join(get_prefix_directory(prefix, version=version), *parts)
-    os.makedirs(os.path.dirname(rv), exist_ok=True)
+    rv = get_prefix_directory(prefix, version=version).joinpath(*parts)
+    mkdir(rv)
     return rv
 
 
-def get_prefix_obo_path(prefix: str) -> str:
+def get_prefix_obo_path(prefix: str) -> Path:
     """Get the canonical path to the OBO file."""
     return prefix_directory_join(prefix, f"{prefix}.obo")
-
-
-def get_url_filename(url: str) -> str:
-    """Get the filename from the end of the URL."""
-    parse_result = urlparse(url)
-    return os.path.basename(parse_result.path)
 
 
 def ensure_path(
@@ -65,12 +57,9 @@ def ensure_path(
 ) -> str:
     """Download a file if it doesn't exist."""
     if path is None:
-        path = get_url_filename(url)
+        path = name_from_url(url)
 
-    if version:
-        path = prefix_directory_join(prefix, path, version=version)
-    else:
-        path = prefix_directory_join(prefix, path)
+    path = prefix_directory_join(prefix, path, version=version)
 
     if not os.path.exists(path) or force:
         logger.info('[%s] downloading data from %s', prefix, url)

@@ -6,6 +6,8 @@ import configparser
 import logging
 import os
 
+import pystow
+
 __all__ = [
     'PYOBO_HOME',
     'RAW_DIRECTORY',
@@ -23,11 +25,17 @@ else:
     os.makedirs(_config_dir, exist_ok=True)
     PYOBO_CONFIG = os.path.join(_config_dir, 'pyobo.ini')
 
-PYOBO_HOME = os.environ.get('PYOBO_HOME') or os.path.join(os.path.expanduser('~'), '.obo')
-RAW_DIRECTORY = os.path.join(PYOBO_HOME, 'raw')
-os.makedirs(RAW_DIRECTORY, exist_ok=True)
-DATABASE_DIRECTORY = os.path.join(PYOBO_HOME, 'database')
-os.makedirs(DATABASE_DIRECTORY, exist_ok=True)
+PYOBO_MODULE = pystow.Module.from_key('pyobo')
+PYOBO_HOME = PYOBO_MODULE.base
+RAW_MODULE = PYOBO_MODULE.submodule('raw')
+RAW_DIRECTORY = RAW_MODULE.base
+DATABASE_DIRECTORY = PYOBO_MODULE.get('database')
+
+
+def get_raw(*parts, **kwargs):
+    # TODO replace with module!!
+    return pystow.get('pyobo', 'raw', *parts, **kwargs)
+
 
 SPECIES_REMAPPING = {
     "Canis familiaris": "Canis lupus familiaris",
@@ -75,6 +83,5 @@ def get_sqlalchemy_uri() -> str:
     if rv is not None:
         return rv
 
-    os.makedirs(PYOBO_HOME, exist_ok=True)
-    default_db_path = os.path.abspath(os.path.join(PYOBO_HOME, 'pyobo.db'))
+    default_db_path = (PYOBO_HOME / 'pyobo.db').as_posix()
     return f'sqlite:///{default_db_path}'
