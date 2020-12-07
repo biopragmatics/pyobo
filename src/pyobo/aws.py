@@ -17,7 +17,7 @@ from pyobo.extract import (
     get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_properties_df, get_relations_df, get_xrefs_df,
     iter_cached_obo,
 )
-from pyobo.path_utils import prefix_directory_join
+from pyobo.path_utils import prefix_cache_join
 
 __all__ = [
     'download_artifacts',
@@ -84,42 +84,42 @@ def upload_artifacts_for_prefix(*, prefix: str, bucket: str, s3_client=None):
 
     logger.info('[%s] getting id->name mapping', prefix)
     get_id_name_mapping(prefix)
-    id_name_path = prefix_directory_join(prefix, 'cache', 'names.tsv')
+    id_name_path = prefix_cache_join(prefix, 'names.tsv')
     id_name_key = os.path.join(prefix, 'cache', 'names.tsv')
     logger.info('[%s] uploading id->name mapping', prefix)
     upload_file(path=id_name_path, bucket=bucket, key=id_name_key, s3_client=s3_client)
 
     logger.info('[%s] getting id->synonyms mapping', prefix)
     get_id_synonyms_mapping(prefix)
-    id_synonyms_path = prefix_directory_join(prefix, 'cache', 'synonyms.tsv')
+    id_synonyms_path = prefix_cache_join(prefix, 'synonyms.tsv')
     id_synonyms_key = os.path.join(prefix, 'cache', 'synonyms.tsv')
     logger.info('[%s] uploading id->synonyms mapping', prefix)
     upload_file(path=id_synonyms_path, bucket=bucket, key=id_synonyms_key, s3_client=s3_client)
 
     logger.info('[%s] getting xrefs', prefix)
     get_xrefs_df(prefix)
-    xrefs_path = prefix_directory_join(prefix, 'cache', 'xrefs.tsv')
+    xrefs_path = prefix_cache_join(prefix, 'xrefs.tsv')
     xrefs_key = os.path.join(prefix, 'cache', 'xrefs.tsv')
     logger.info('[%s] uploading xrefs', prefix)
     upload_file(path=xrefs_path, bucket=bucket, key=xrefs_key, s3_client=s3_client)
 
     logger.info('[%s] getting relations', prefix)
     get_relations_df(prefix)
-    relations_path = prefix_directory_join(prefix, 'cache', 'relations.tsv')
+    relations_path = prefix_cache_join(prefix, 'relations.tsv')
     relations_key = os.path.join(prefix, 'cache', 'relations.tsv')
     logger.info('[%s] uploading relations', prefix)
     upload_file(path=relations_path, bucket=bucket, key=relations_key, s3_client=s3_client)
 
     logger.info('[%s] getting properties', prefix)
     get_properties_df(prefix)
-    properties_path = prefix_directory_join(prefix, 'cache', 'properties.tsv')
+    properties_path = prefix_cache_join(prefix, 'properties.tsv')
     properties_key = os.path.join(prefix, 'cache', 'properties.tsv')
     logger.info('[%s] uploading properties', prefix)
     upload_file(path=properties_path, bucket=bucket, key=properties_key, s3_client=s3_client)
 
     logger.info('[%s] getting alternative identifiers', prefix)
     get_id_to_alts(prefix)
-    alts_path = prefix_directory_join(prefix, 'cache', 'alt_ids.tsv')
+    alts_path = prefix_cache_join(prefix, 'alt_ids.tsv')
     alts_key = os.path.join(prefix, 'cache', 'alt_ids.tsv')
     logger.info('[%s] uploading alternative identifiers', prefix)
     upload_file(path=alts_path, bucket=bucket, key=alts_key)

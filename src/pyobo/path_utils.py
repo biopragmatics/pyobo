@@ -121,3 +121,8 @@ def ensure_tar_df(
     with tarfile.open(path) as tar_file:
         with tar_file.extractfile(inner_path) as file:
             return pd.read_csv(file, **kwargs)
+
+
+def prefix_cache_join(prefix: str, *parts):
+    """Ensure the prefix cache is available."""
+    return prefix_directory_join(prefix, 'cache', *parts)

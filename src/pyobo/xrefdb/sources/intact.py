@@ -8,7 +8,7 @@ import pandas as pd
 
 from pyobo.cache_utils import cached_mapping
 from pyobo.constants import PROVENANCE, SOURCE_PREFIX, TARGET_PREFIX, XREF_COLUMNS
-from pyobo.path_utils import prefix_directory_join
+from pyobo.path_utils import prefix_cache_join
 
 __all__ = [
     'COMPLEXPORTAL_MAPPINGS',
@@ -37,7 +37,7 @@ def get_intact_complex_portal_xrefs_df() -> pd.DataFrame:
 
 
 @cached_mapping(
-    path=prefix_directory_join('intact', 'cache', 'xrefs', 'complexportal.tsv'),
+    path=prefix_cache_join('intact', 'xrefs', 'complexportal.tsv'),
     header=['intact_id', 'complexportal_id'],
 )
 def get_complexportal_mapping() -> Mapping[str, str]:
@@ -69,7 +69,7 @@ def get_intact_reactome_xrefs_df() -> pd.DataFrame:
 
 
 @cached_mapping(
-    path=prefix_directory_join('intact', 'cache', 'xrefs', 'reactome.tsv'),
+    path=prefix_cache_join('intact', 'xrefs', 'reactome.tsv'),
     header=['intact_id', 'reactome_id'],
 )
 def get_reactome_mapping() -> Mapping[str, str]:
