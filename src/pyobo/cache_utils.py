@@ -7,10 +7,12 @@ import gzip
 import json
 import logging
 import os
+import pathlib
 import pickle
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Union
 
 import networkx as nx
+from pathlib import Path
 import pandas as pd
 
 from .io_utils import open_map_tsv, open_multimap_tsv, write_map_tsv, write_multimap_tsv
@@ -30,7 +32,7 @@ DataFrameGetter = Callable[[], pd.DataFrame]
 
 
 def cached_mapping(
-    path: str,
+    path: Union[str, Path],
     header: Iterable[str],
     *,
     use_tqdm: bool = False,
@@ -57,7 +59,7 @@ def cached_mapping(
     return wrapped
 
 
-def cached_json(path: str, force: bool = False) -> Callable[[JSONGetter], JSONGetter]:  # noqa: D202
+def cached_json(path: Union[str, Path], force: bool = False) -> Callable[[JSONGetter], JSONGetter]:  # noqa: D202
     """Create a decorator to apply to a mapping getter."""
 
     def wrapped(f: JSONGetter) -> JSONGetter:  # noqa: D202
@@ -99,19 +101,19 @@ def cached_pickle(path: str, force: bool = False):
     return wrapped
 
 
-def get_gzipped_graph(path) -> nx.MultiDiGraph:
+def get_gzipped_graph(path: Union[str, Path]) -> nx.MultiDiGraph:
     """Read a graph that's gzipped nodelink."""
     with gzip.open(path, 'rt') as file:
         return nx.node_link_graph(json.load(file))
 
 
-def write_gzipped_graph(graph: nx.MultiDiGraph, path: str) -> None:
+def write_gzipped_graph(graph: nx.MultiDiGraph, path: Union[str, Path]) -> None:
     """Write a graph as gzipped nodelink."""
     with gzip.open(path, 'wt') as file:
         json.dump(nx.node_link_data(graph), file)
 
 
-def cached_graph(path: str, force: bool = False) -> Callable[[GraphGetter], GraphGetter]:  # noqa: D202
+def cached_graph(path: Union[str, Path], force: bool = False) -> Callable[[GraphGetter], GraphGetter]:  # noqa: D202
     """Create a decorator to apply to a graph getter."""
 
     def wrapped(f: GraphGetter) -> GraphGetter:  # noqa: D202
@@ -131,7 +133,7 @@ def cached_graph(path: str, force: bool = False) -> Callable[[GraphGetter], Grap
     return wrapped
 
 
-def cached_df(path: str, sep: str = '\t', force: bool = False, **kwargs):  # noqa: D202
+def cached_df(path: Union[str, Path], sep: str = '\t', force: bool = False, **kwargs):  # noqa: D202
     """Create a decorator to apply to a dataframe getter."""
 
     def wrapped(f: DataFrameGetter) -> DataFrameGetter:  # noqa: D202
@@ -155,7 +157,13 @@ def cached_df(path: str, sep: str = '\t', force: bool = False, **kwargs):  # noq
     return wrapped
 
 
-def cached_multidict(path: str, header: Iterable[str], *, use_tqdm: bool = False, force: bool = False):  # noqa: D202
+def cached_multidict(
+    path: Union[str, Path],
+    header: Iterable[str],
+    *,
+    use_tqdm: bool = False,
+    force: bool = False,
+):  # noqa: D202
     """Create a decorator to apply to a dataframe getter."""
 
     def wrapped(f: MultiMappingGetter) -> MultiMappingGetter:  # noqa: D202

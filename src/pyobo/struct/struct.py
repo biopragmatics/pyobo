@@ -5,6 +5,7 @@
 import gzip
 import json
 import logging
+import pathlib
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -321,14 +322,14 @@ class Obo:
         for line in it:
             print(line, file=file)
 
-    def write_obonet_gz(self, path: str) -> None:
+    def write_obonet_gz(self, path: Union[str, pathlib.Path]) -> None:
         """Write the OBO to a gzipped dump in Obonet JSON."""
         graph = self.to_obonet()
         with gzip.open(path, 'wt') as file:
             json.dump(nx.node_link_data(graph), file)
 
     @classmethod
-    def from_obonet_gz(cls, path: str) -> 'Obo':
+    def from_obonet_gz(cls, path: Union[str, pathlib.Path]) -> 'Obo':
         """Read OBO from a pre-compiled Obonet JSON."""
         return cls.from_obonet(get_gzipped_graph(path))
 
