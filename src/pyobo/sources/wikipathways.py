@@ -5,6 +5,8 @@
 import logging
 from typing import Iterable
 
+import bioversions
+
 from .gmt_utils import parse_wikipathways_gmt
 from ..constants import SPECIES_REMAPPING
 from ..path_utils import ensure_path
@@ -14,8 +16,6 @@ from ..struct.typedef import pathway_has_part
 logger = logging.getLogger(__name__)
 
 PREFIX = 'wikipathways'
-DATA_VERSION = '20200310'
-BASE_URL = f'http://data.wikipathways.org/{DATA_VERSION}/gmt/wikipathways-{DATA_VERSION}-gmt'
 
 _PATHWAY_INFO = [
     ('Anopheles_gambiae', '7165'),
@@ -43,7 +43,7 @@ def get_obo() -> Obo:
     return Obo(
         ontology=PREFIX,
         name='WikiPathways',
-        data_version=DATA_VERSION,
+        data_version=bioversions.get_version('wikipathways'),
         iter_terms=iter_terms,
         typedefs=[pathway_has_part, from_species],
         auto_generated_by=f'bio2obo:{PREFIX}',
@@ -52,9 +52,12 @@ def get_obo() -> Obo:
 
 def iter_terms() -> Iterable[Term]:
     """Get WikiPathways terms."""
+    version = bioversions.get_version('wikipathways')
+    base_url = f'http://data.wikipathways.org/{version}/gmt/wikipathways-{version}-gmt'
+
     for species_code, tax_id in _PATHWAY_INFO:
-        url = f'{BASE_URL}-{species_code}.gmt'
-        path = ensure_path(PREFIX, url, version=DATA_VERSION)
+        url = f'{base_url}-{species_code}.gmt'
+        path = ensure_path(PREFIX, url, version=version)
 
         species_code = species_code.replace('_', ' ')
         species_reference = Reference(
