@@ -395,7 +395,8 @@ class Obo:
             'ontology': self.ontology,
             'auto-generated-by': self.auto_generated_by,
             'typedefs': _convert_typedefs(self.typedefs),
-            'format_version': self.format_version,
+            'format-version': self.format_version,
+            'data-version': self.data_version,
             'synonymtypedef': _convert_synonym_typedefs(self.synonym_typedefs),
             'date': self.date_formatted,
         })
@@ -526,6 +527,7 @@ class Obo:
             name=graph.graph['name'],
             auto_generated_by=graph.graph.get('auto-generated-by'),
             format_version=graph.graph.get('format-version'),
+            data_version=graph.graph.get('data-version'),
             date=date,
             typedefs=list(typedefs.values()),
             synonym_typedefs=list(synonym_typedefs.values()),
