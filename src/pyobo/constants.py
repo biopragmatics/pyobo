@@ -5,7 +5,10 @@
 import configparser
 import logging
 import os
+from functools import partial
+from typing import Callable
 
+import bioversions
 import pystow
 
 __all__ = [
@@ -14,6 +17,7 @@ __all__ = [
     'DATABASE_DIRECTORY',
     'SPECIES_REMAPPING',
     'get_sqlalchemy_uri',
+    'version_getter',
 ]
 
 logger = logging.getLogger(__name__)
@@ -85,3 +89,8 @@ def get_sqlalchemy_uri() -> str:
 
     default_db_path = (PYOBO_HOME / 'pyobo.db').as_posix()
     return f'sqlite:///{default_db_path}'
+
+
+def version_getter(name: str) -> Callable[[], str]:
+    """Make a function appropriate for getting versions."""
+    return partial(bioversions.get_version, name)

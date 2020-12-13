@@ -4,16 +4,16 @@
 
 from typing import Mapping
 
+import bioversions
 import pandas as pd
 
 from pyobo.cache_utils import cached_mapping
+from pyobo.constants import version_getter
 from pyobo.extract import get_name_id_mapping
 from pyobo.path_utils import ensure_df, prefix_directory_join
 
 PREFIX = 'biogrid'
-VERSION = '3.5.186'
 BASE_URL = 'https://downloads.thebiogrid.org/Download/BioGRID/Release-Archive'
-URL = f'{BASE_URL}/BIOGRID-{VERSION}/BIOGRID-IDENTIFIERS-{VERSION}.tab.zip'
 
 taxonomy_remapping = {  # so much for official names
     "Canis familiaris": "9615",  # Canis lupus familiaris
@@ -53,13 +53,15 @@ def _lookup(name):
 
 def get_df() -> pd.DataFrame:
     """Get the BioGRID identifiers mapping dataframe."""
-    df = ensure_df(PREFIX, URL, skiprows=28, dtype=str)
+    version = bioversions.get_version('biogrid')
+    url = f'{BASE_URL}/BIOGRID-{version}/BIOGRID-IDENTIFIERS-{version}.tab.zip'
+    df = ensure_df(PREFIX, url, skiprows=28, dtype=str, version=version)
     df['taxonomy_id'] = df['ORGANISM_OFFICIAL_NAME'].map(_lookup)
     return df
 
 
 @cached_mapping(
-    path=prefix_directory_join(PREFIX, 'cache', 'xrefs', 'ncbigene.tsv'),
+    path=prefix_directory_join(PREFIX, 'cache', 'xrefs', 'ncbigene.tsv', version=version_getter(PREFIX)),
     header=['biogrid_id', 'ncbigene_id'],
 )
 def get_ncbigene_mapping() -> Mapping[str, str]:
@@ -75,3 +77,6 @@ def get_ncbigene_mapping() -> Mapping[str, str]:
     df = get_df()
     df = df.loc[df['IDENTIFIER_TYPE'] == 'ENTREZ_GENE', ['BIOGRID_ID', 'IDENTIFIER_VALUE']]
     return dict(df.values)
+
+if __name__ == '__main__':
+    print(get_df().head())
