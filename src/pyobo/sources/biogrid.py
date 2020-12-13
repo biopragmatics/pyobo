@@ -77,6 +77,3 @@ def get_ncbigene_mapping() -> Mapping[str, str]:
     df = get_df()
     df = df.loc[df['IDENTIFIER_TYPE'] == 'ENTREZ_GENE', ['BIOGRID_ID', 'IDENTIFIER_VALUE']]
     return dict(df.values)
-
-if __name__ == '__main__':
-    print(get_df().head())
