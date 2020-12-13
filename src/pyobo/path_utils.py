@@ -4,12 +4,14 @@
 
 import logging
 import os
+import shutil
 import tarfile
 from pathlib import Path
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Mapping, Optional, Union
 from urllib.request import urlretrieve
 
 import pandas as pd
+import requests
 from pystow.utils import mkdir, name_from_url
 
 from .constants import RAW_MODULE
@@ -55,6 +57,35 @@ def get_prefix_obo_path(prefix: str, version: VersionHint = None) -> Path:
     return prefix_directory_join(prefix, f"{prefix}.obo", version=version)
 
 
+def _urlretrieve(
+    url: str,
+    path: Union[str, Path],
+    clean_on_failure: bool = True,
+    stream: bool = True,
+    **kwargs,
+) -> None:
+    """Download a file from a given URL.
+
+    :param url: URL to download
+    :param path: Path to download the file to
+    :param clean_on_failure: If true, will delete the file on any exception raised during download
+    """
+    if not stream:
+        logger.info('downloading from %s to %s', url, path)
+        urlretrieve(url, path)  # noqa:S310
+    else:
+        # see https://requests.readthedocs.io/en/master/user/quickstart/#raw-response-content
+        # pattern from https://stackoverflow.com/a/39217788/5775947
+        try:
+            with requests.get(url, stream=True, **kwargs) as response, open(path, 'wb') as file:
+                logger.info('downloading (streaming) from %s to %s', url, path)
+                shutil.copyfileobj(response.raw, file)
+        except (Exception, KeyboardInterrupt):
+            if clean_on_failure:
+                os.remove(path)
+            raise
+
+
 def ensure_path(
     prefix: str,
     url: str,
@@ -62,6 +93,8 @@ def ensure_path(
     version: VersionHint = None,
     path: Optional[str] = None,
     force: bool = False,
+    stream: bool = False,
+    urlretrieve_kwargs: Optional[Mapping[str, Any]] = None,
 ) -> str:
     """Download a file if it doesn't exist."""
     if path is None:
@@ -70,8 +103,7 @@ def ensure_path(
     path = prefix_directory_join(prefix, path, version=version)
 
     if not os.path.exists(path) or force:
-        logger.info('[%s] downloading data from %s to %s', prefix, url, path)
-        urlretrieve(url, path)
+        _urlretrieve(url=url, path=path, stream=stream, **(urlretrieve_kwargs or {}))
 
     return path.as_posix()
 
