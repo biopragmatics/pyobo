@@ -13,10 +13,12 @@ from functools import lru_cache
 from typing import Any, Iterable, Mapping
 from xml.etree import ElementTree
 
+import bioversions
 from tqdm import tqdm
 
 from ..cache_utils import cached_pickle
-from ..path_utils import prefix_directory_join
+from ..config import get_config
+from ..path_utils import ensure_path, prefix_directory_join
 from ..struct import Obo, Reference, Synonym, Term, TypeDef
 
 logger = logging.getLogger(__name__)
@@ -30,9 +32,11 @@ has_salt = TypeDef(
 
 def get_obo() -> Obo:
     """Get DrugBank as OBO."""
+    version = bioversions.get_version('drugbank')
     return Obo(
         ontology=PREFIX,
         name='DrugBank',
+        data_version=version,
         iter_terms=iter_terms,
         auto_generated_by=f'bio2obo:{PREFIX}',
         typedefs=[has_salt],
@@ -41,19 +45,24 @@ def get_obo() -> Obo:
 
 def iter_terms() -> Iterable[Term]:
     """Iterate over DrugBank terms in OBO."""
-    for drug_info in iterate_drug_info():
+    version = bioversions.get_version('drugbank')
+    for drug_info in iterate_drug_info(version):
         yield _make_term(drug_info)
 
 
-@cached_pickle(prefix_directory_join(PREFIX, 'precompiled.pkl'))
-def iterate_drug_info() -> Iterable[Mapping[str, Any]]:
+def iterate_drug_info(version: str) -> Iterable[Mapping[str, Any]]:
     """Iterate over DrugBank records."""
-    root = get_xml_root()
-    rv = [
-        _extract_drug_info(drug_xml)
-        for drug_xml in tqdm(root, desc='Drugs')
-    ]
-    return rv
+
+    @cached_pickle(prefix_directory_join(PREFIX, 'precompiled.pkl', version=version))
+    def _inner():
+        root = get_xml_root(version)
+        rv = [
+            _extract_drug_info(drug_xml)
+            for drug_xml in tqdm(root, desc='Drugs')
+        ]
+        return rv
+
+    return _inner()
 
 
 DRUG_XREF_SKIP = {
@@ -121,14 +130,28 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
     return term
 
 
+def get_drugbank_path(version: str) -> str:
+    """Get download the DrugBank data."""
+    url = f'https://go.drugbank.com/releases/{version.replace(".", "-")}/downloads/all-full-database'
+    auth = get_config('drugbank_username'), get_config('drugbank_password')
+    return ensure_path(
+        prefix=PREFIX,
+        url=url,
+        path='full database.xml.zip',
+        stream=True,
+        version=version,
+        urlretrieve_kwargs=dict(auth=auth),
+    )
+
+
 @lru_cache()
-def get_xml_root() -> ElementTree.Element:
+def get_xml_root(version: str) -> ElementTree.Element:
     """Get the DrugBank XML parser root.
 
     Takes between 35-60 seconds.
     """
     # FIXME get data automatically
-    path = prefix_directory_join(PREFIX, 'drugbank_all_full_database.xml.zip')
+    path = get_drugbank_path(version)
 
     with zipfile.ZipFile(path) as zip_file:
         with zip_file.open('full database.xml') as file:
