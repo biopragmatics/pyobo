@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 PREFIX = 'npass'
 VERSION = '1.0'
 
-BASE_URL = 'fhttp://bidd2.nus.edu.sg/NPASS/downloadFiles/NPASSv{VERSION}_download'
+BASE_URL = f'http://bidd2.nus.edu.sg/NPASS/downloadFiles/NPASSv{VERSION}_download'
 GENERAL_URL = f'{BASE_URL}_naturalProducts_generalInfo.txt'
 
 # TODO add InChI, InChI-key, and SMILES information from NPASS, if desired
