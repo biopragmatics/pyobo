@@ -262,6 +262,9 @@ class Obo:
     #: Synonym type definitions
     synonym_typedefs: List[SynonymTypeDef] = field(default_factory=list)
 
+    #: Kwargs to add to the iter_items when called
+    iter_items_kwargs: Optional[Mapping[str, Any]] = None
+
     #: Regular expression pattern describing the local unique identifiers
     pattern: Optional[str] = None
 
@@ -310,7 +313,7 @@ class Obo:
         for typedef in self.typedefs:
             yield from typedef.iterate_obo_lines()
 
-        for term in self.iter_terms():
+        for term in self:
             yield from term.iterate_obo_lines()
 
     @open_file(1, mode='w')
@@ -344,7 +347,7 @@ class Obo:
         self.write_obonet_gz(obonet_gz_path)
 
     def __iter__(self):  # noqa: D105
-        return iter(self.iter_terms())
+        return iter(self.iter_terms(**(self.iter_items_kwargs or {})))
 
     def ancestors(self, identifier: str) -> Set[str]:
         """Return a set of identifiers for parents of the given identifier."""

@@ -29,18 +29,19 @@ def ensure_msigdb_path(version: str):
 
 def get_obo() -> Obo:
     """Get MSIG as Obo."""
+    version = bioversions.get_version(PREFIX)
     return Obo(
         ontology=PREFIX,
         name='Molecular Signatures Database',
         iter_terms=iter_terms,
-        data_version=bioversions.get_version(PREFIX),
+        iter_items_kwargs=dict(version=version),
+        data_version=version,
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
-def iter_terms() -> Iterable[Term]:
+def iter_terms(version: str) -> Iterable[Term]:
     """Get MSigDb terms."""
-    version = bioversions.get_version(PREFIX)
     path, _ = ensure_msigdb_path(version)
     for identifier, name, genes in parse_gmt_file(path):
         term = Term(

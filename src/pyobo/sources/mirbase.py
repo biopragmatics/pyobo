@@ -6,9 +6,9 @@ import gzip
 import logging
 from typing import Iterable, List, Mapping
 
+import bioversions
 from tqdm import tqdm
 
-from .mirbase_constants import VERSION
 from ..cache_utils import cached_mapping
 from ..path_utils import ensure_df, ensure_path, prefix_directory_join
 from ..struct import Obo, Reference, Synonym, Term, from_species
@@ -19,10 +19,6 @@ logger = logging.getLogger(__name__)
 PREFIX = 'mirbase'
 MIRBASE_MATURE_PREFIX = 'mirbase.mature'
 
-DEFINITIONS_URL = f'ftp://mirbase.org/pub/mirbase/{VERSION}/miRNA.dat.gz'
-ALIASES_URL = f'ftp://mirbase.org/pub/mirbase/{VERSION}/aliases.txt.gz'
-SPECIES_URL = f'ftp://mirbase.org/pub/mirbase/{VERSION}/organisms.txt.gz'
-
 xref_mapping = {
     'entrezgene': 'ncbigene',
 }
@@ -30,19 +26,22 @@ xref_mapping = {
 
 def get_obo() -> Obo:
     """Get miRBase as OBO."""
+    version = bioversions.get_version(PREFIX)
     return Obo(
         ontology=PREFIX,
         name='miRBase',
         iter_terms=get_terms,
+        iter_items_kwargs=dict(version=version),
         typedefs=[from_species, has_mature],
-        data_version=VERSION,
+        data_version=version,
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
-def get_terms() -> List[Term]:
+def get_terms(version: str) -> List[Term]:
     """Parse miRNA data from filepath and convert it to dictionary."""
-    definitions_path = ensure_path(PREFIX, DEFINITIONS_URL)
+    url = f'ftp://mirbase.org/pub/mirbase/{version}/miRNA.dat.gz'
+    definitions_path = ensure_path(PREFIX, url, version=version)
 
     file_handle = (
         gzip.open(definitions_path, 'rt')
@@ -50,29 +49,31 @@ def get_terms() -> List[Term]:
         open(definitions_path)
     )
     with file_handle as file:
-        return list(_process_definitions_lines(file))
+        return list(_process_definitions_lines(file, version=version))
 
 
-def _prepare_organisms():
-    df = ensure_df(PREFIX, SPECIES_URL, sep='\t', dtype={'#NCBI-taxid': str})
+def _prepare_organisms(version: str):
+    url = f'ftp://mirbase.org/pub/mirbase/{version}/organisms.txt.gz'
+    df = ensure_df(PREFIX, url, sep='\t', dtype={'#NCBI-taxid': str}, version=version)
     return {
         division: (taxonomy_id, name)
         for _, division, name, _tree, taxonomy_id in df.values
     }
 
 
-def _prepare_aliases() -> Mapping[str, List[str]]:
-    df = ensure_df(PREFIX, ALIASES_URL, sep='\t')
+def _prepare_aliases(version: str) -> Mapping[str, List[str]]:
+    url = f'ftp://mirbase.org/pub/mirbase/{version}/aliases.txt.gz'
+    df = ensure_df(PREFIX, url, sep='\t', version=version)
     return {
         mirbase_id: [s.strip() for s in synonyms.split(';') if s and s.strip()]
         for mirbase_id, synonyms in df.values
     }
 
 
-def _process_definitions_lines(lines: Iterable[str]) -> Iterable[Term]:
+def _process_definitions_lines(lines: Iterable[str], version: str) -> Iterable[Term]:
     """Process the lines of the definitions file."""
-    organisms = _prepare_organisms()
-    aliases = _prepare_aliases()
+    organisms = _prepare_organisms(version)
+    aliases = _prepare_aliases(version)
 
     groups = []
 
@@ -142,30 +143,36 @@ def _process_definitions_lines(lines: Iterable[str]) -> Iterable[Term]:
         yield term
 
 
-@cached_mapping(
-    path=prefix_directory_join(PREFIX, f'{PREFIX}.mature_to_{PREFIX}.tsv'),
-    header=['mirbase.mature_id', 'mirbase_id'],
-)
-def get_mature_to_premature() -> Mapping[str, str]:
+def get_mature_to_premature(version: str) -> Mapping[str, str]:
     """Get a mapping from mature miRNAs to their parents."""
-    return {
-        mature.identifier: term.identifier
-        for term in get_terms()
-        for mature in term.get_relationships(has_mature)
-    }
+
+    @cached_mapping(
+        path=prefix_directory_join(PREFIX, f'{PREFIX}.mature_to_{PREFIX}.tsv', version=version),
+        header=['mirbase.mature_id', 'mirbase_id'],
+    )
+    def _inner():
+        return {
+            mature.identifier: term.identifier
+            for term in get_terms(version)
+            for mature in term.get_relationships(has_mature)
+        }
+
+    return _inner()
 
 
-@cached_mapping(
-    path=prefix_directory_join(PREFIX, f'{PREFIX}.mature_mapping.tsv'),
-    header=['mirbase.mature_id', 'name'],
-)
-def get_mature_id_to_name() -> Mapping[str, str]:
+def get_mature_id_to_name(version: str) -> Mapping[str, str]:
     """Get a mapping from mature miRNAs to their parents."""
-    return {
-        mature.identifier: mature.name
-        for term in get_terms()
-        for mature in term.get_relationships(has_mature)
-    }
+
+    @cached_mapping(
+        path=prefix_directory_join(PREFIX, f'{PREFIX}.mature_mapping.tsv', version=version),
+        header=['mirbase.mature_id', 'name'],
+    )
+    def _inner():
+        return {
+            mature.identifier: mature.name
+            for term in get_terms(version)
+            for mature in term.get_relationships(has_mature)
+        }
 
 
 if __name__ == '__main__':

@@ -5,6 +5,7 @@
 import logging
 from typing import Iterable
 
+import bioversions
 import pandas as pd
 
 from pyobo.path_utils import ensure_df
@@ -18,17 +19,20 @@ URL = 'http://unmtid-shinyapps.net/download/structures.smiles.tsv'
 
 def get_obo() -> Obo:
     """Get DrugCentral OBO."""
+    version = bioversions.get_version(PREFIX)
     return Obo(
         ontology=PREFIX,
         name='DrugCentral',
+        data_version=version,
         iter_terms=iter_terms,
+        iter_items_kwargs=dict(version=version),
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
-def iter_terms() -> Iterable[Term]:
+def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over DrugCentral terms."""
-    df = ensure_df(PREFIX, URL)
+    df = ensure_df(PREFIX, URL, version=version)
     for smiles, inchi, inchi_key, drugcentral_id, drugcentral_name, cas in df.values:
         if pd.isna(smiles) or pd.isna(inchi) or pd.isna(inchi_key):
             logger.warning('missing data for drugcentral:%s', drugcentral_id)

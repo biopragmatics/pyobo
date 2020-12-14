@@ -4,9 +4,10 @@
 
 from typing import Iterable
 
+import bioversions
 from tqdm import tqdm
 
-from .mirbase_constants import VERSION, get_mature_df
+from .mirbase_constants import get_mature_df
 from ..struct import Obo, Reference, Synonym, Term
 
 PREFIX = 'mirbase.mature'
@@ -14,18 +15,20 @@ PREFIX = 'mirbase.mature'
 
 def get_obo() -> Obo:
     """Get miRBase mature as OBO."""
+    version = bioversions.get_version('mirbase')
     return Obo(
         ontology=PREFIX,
         name='miRBase Mature',
         auto_generated_by=f'bio2obo:{PREFIX}',
-        data_version=VERSION,
+        data_version=version,
         iter_terms=iter_terms,
+        iter_items_kwargs=dict(version=version),
     )
 
 
-def iter_terms() -> Iterable[Term]:
+def iter_terms(version: str) -> Iterable[Term]:
     """Get miRBase mature terms."""
-    df = get_mature_df()
+    df = get_mature_df(version)
     for name, previous_name, mirbase_mature_id in tqdm(df.values, total=len(df.index)):
         yield Term(
             reference=Reference(prefix=PREFIX, identifier=mirbase_mature_id, name=name),

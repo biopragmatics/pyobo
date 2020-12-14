@@ -38,14 +38,14 @@ def get_obo() -> Obo:
         name='DrugBank',
         data_version=version,
         iter_terms=iter_terms,
+        iter_items_kwargs=dict(version=version),
         auto_generated_by=f'bio2obo:{PREFIX}',
         typedefs=[has_salt],
     )
 
 
-def iter_terms() -> Iterable[Term]:
+def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over DrugBank terms in OBO."""
-    version = bioversions.get_version('drugbank')
     for drug_info in iterate_drug_info(version):
         yield _make_term(drug_info)
 
@@ -150,12 +150,11 @@ def get_xml_root(version: str) -> ElementTree.Element:
 
     Takes between 35-60 seconds.
     """
-    # FIXME get data automatically
     path = get_drugbank_path(version)
 
     with zipfile.ZipFile(path) as zip_file:
         with zip_file.open('full database.xml') as file:
-            logger.info('loading DrugBank XML')
+            logger.info('loading DrugBank v%s XML', version)
             tree = ElementTree.parse(file)
             logger.info('done parsing DrugBank XML')
 
