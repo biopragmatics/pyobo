@@ -45,10 +45,14 @@ def get_terms() -> Iterable[Term]:
             synonyms = []
 
         term = Term(
-            reference=Reference(prefix=PREFIX, identifier=cgnc_id, name=symbol),
+            reference=Reference(
+                prefix=PREFIX,
+                identifier=cgnc_id,
+                name=symbol if pd.notna(symbol) else None,
+            ),
             xrefs=xrefs,
             synonyms=synonyms,
-            definition=name,
+            definition=name if pd.notna(name) else None,
         )
         term.set_species(identifier='9031', name='Gallus gallus')
         yield term
