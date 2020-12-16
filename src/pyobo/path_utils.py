@@ -141,7 +141,7 @@ def ensure_tar_df(
     url: str,
     inner_path: str,
     *,
-    version: VersionHint,
+    version: VersionHint = None,
     path: Optional[str] = None,
     **kwargs,
 ) -> pd.DataFrame:
