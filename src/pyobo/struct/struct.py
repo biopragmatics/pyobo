@@ -544,6 +544,7 @@ class Obo:
         return {
             term.identifier: term.name
             for term in self._iter_terms(use_tqdm=use_tqdm)
+            if term.name
         }
 
     def get_typedef_id_name_mapping(self) -> Mapping[str, str]:
