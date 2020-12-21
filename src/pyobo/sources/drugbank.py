@@ -8,9 +8,8 @@ Run with ``python -m pyobo.sources.drugbank``
 import datetime
 import itertools as itt
 import logging
-import zipfile
 from functools import lru_cache
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, Optional
 from xml.etree import ElementTree
 
 import bioversions
@@ -18,7 +17,7 @@ from tqdm import tqdm
 
 from ..cache_utils import cached_pickle
 from ..config import get_config
-from ..path_utils import ensure_path, prefix_directory_join
+from ..path_utils import prefix_directory_join
 from ..struct import Obo, Reference, Synonym, Term, TypeDef
 
 logger = logging.getLogger(__name__)
@@ -130,35 +129,18 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
     return term
 
 
-def get_drugbank_path(version: str) -> str:
-    """Get download the DrugBank data."""
-    url = f'https://go.drugbank.com/releases/{version.replace(".", "-")}/downloads/all-full-database'
-    auth = get_config('drugbank_username'), get_config('drugbank_password')
-    return ensure_path(
-        prefix=PREFIX,
-        url=url,
-        path='full database.xml.zip',
-        stream=True,
-        version=version,
-        urlretrieve_kwargs=dict(auth=auth),
-    )
-
-
 @lru_cache()
-def get_xml_root(version: str) -> ElementTree.Element:
+def get_xml_root(version: Optional[str] = None) -> ElementTree.Element:
     """Get the DrugBank XML parser root.
 
     Takes between 35-60 seconds.
     """
-    path = get_drugbank_path(version)
-
-    with zipfile.ZipFile(path) as zip_file:
-        with zip_file.open('full database.xml') as file:
-            logger.info('loading DrugBank v%s XML', version)
-            tree = ElementTree.parse(file)
-            logger.info('done parsing DrugBank XML')
-
-    return tree.getroot()
+    from drugbank_downloader import parse_drugbank
+    return parse_drugbank(
+        version=version,
+        username=get_config('drugbank_username'),
+        password=get_config('drugbank_password'),
+    )
 
 
 ns = '{http://www.drugbank.ca}'
@@ -198,7 +180,6 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
                 'approved': datetime.datetime.strptime(x.findtext(f'{ns}approved'), '%Y-%m-%d'),
                 'expires': datetime.datetime.strptime(x.findtext(f'{ns}expires'), '%Y-%m-%d'),
                 'pediatric_extension': x.findtext(f'{ns}pediatric-extension') != 'false',
-
             }
             for x in drug_xml.findall(f"{ns}patents/{ns}patent")
         ],

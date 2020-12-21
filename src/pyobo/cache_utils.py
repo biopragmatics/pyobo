@@ -79,7 +79,7 @@ def cached_json(path: Union[str, Path], force: bool = False) -> Callable[[JSONGe
     return wrapped
 
 
-def cached_pickle(path: str, force: bool = False):
+def cached_pickle(path: Union[str, Path], force: bool = False):
     """Create a decorator to apply to a pickle getter."""
 
     def wrapped(f):  # noqa: D202
