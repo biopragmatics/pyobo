@@ -1,5 +1,15 @@
-PyOBO |build|
-=============
+.. raw:: html
+
+    <p align="center">
+      <img src="docs/source/logo.png" height="150">
+    </p>
+
+    <h1 align="center">
+        PyOBO
+    </h1>
+
+|build|
+
 Tools for biological identifiers, names, synonyms, xrefs, hierarchies, relations, and properties through the
 perspective of OBO.
 
