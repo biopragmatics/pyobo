@@ -8,7 +8,7 @@
         PyOBO
     </h1>
 
-|build| |pypi_version| |python_versions| |pypi_license|
+|build| |pypi_version| |python_versions| |pypi_license| |zenodo|
 
 Tools for biological identifiers, names, synonyms, xrefs, hierarchies, relations, and properties through the
 perspective of OBO.
@@ -369,3 +369,7 @@ and make an update to the ``url`` entry for that namespace in the Bioregistry.
 
 .. |pypi_license| image:: https://img.shields.io/pypi/l/pyobo.svg
     :alt: MIT License
+
+.. |zenodo| image:: https://zenodo.org/badge/203449095.svg
+    :target: https://zenodo.org/badge/latestdoi/203449095
+    :alt: Zenodo
