@@ -9,13 +9,13 @@ from functools import wraps
 from typing import Dict, Mapping, Optional, Tuple, Union
 
 import bioregistry
+from bioregistry.external import get_miriam, get_obofoundry
 
 from .registries import (
-    Resource, get_curated_registry_database, get_miriam, get_obofoundry, get_obsolete,
-    get_prefix_to_miriam_prefix, get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist,
-    get_xrefs_suffix_blacklist,
+    Resource, get_curated_registry_database, get_obsolete, get_prefix_to_miriam_prefix,
+    get_prefix_to_obofoundry_prefix, get_prefix_to_ols_prefix, get_remappings_prefix, get_xrefs_blacklist,
+    get_xrefs_prefix_blacklist, get_xrefs_suffix_blacklist,
 )
-from .registries.metaregistry import get_prefix_to_obofoundry_prefix, get_prefix_to_ols_prefix
 from .registries.registries import _sample_graph
 
 __all__ = [

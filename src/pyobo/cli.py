@@ -280,12 +280,6 @@ def normalize(text: str, name: bool):
     click.echo(s)
 
 
-@main.command()
-def mr():
-    from .identifier_utils import get_metaregistry
-    get_metaregistry()
-
-
 main.add_command(aws.aws)
 main.add_command(cli_database.database)
 

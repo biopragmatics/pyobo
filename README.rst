@@ -285,8 +285,13 @@ with:
     $ cd pyobo
     $ pip install -e .
 
-Curation of the Metaregistry
-----------------------------
+Curation of the Bioregistry
+---------------------------
+In order to normalize references and identify resources, PyOBO uses the
+`Bioregistry <https://github.com/cthoyt/bioregistry>`_. It used to be a part of PyOBO, but has since
+been externalized for more general reuse. The following text is out of date, and will be updated with
+the next PyOBO release to better reflect how to contribute.
+
 At src/pyobo/registries/metaregistry.json is the curated registry. This is a source of information that contains
 all sorts of fixes for missing/wrong information in MIRIAM, OLS, and OBO Foundry; entries that don't appear in
 any of them; additional synonym information for each namespace/prefix; rules for normalizing xrefs and CURIEs, etc.
@@ -333,18 +338,6 @@ The OBO Foundry seems to be pretty unstable with respect to the URLs to OBO reso
 
 Then you should check the corresponding page on the OBO Foundry (in this case, http://www.obofoundry.org/ontology/mondo.html)
 and make an update to the ``url`` entry for that namespace in the metaregistry.
-
-Development
------------
-Update the registries with the following commands. These external resources get updated all the
-time, so don't forget about this.
-
-.. code-block:: bash
-
-    $ python -m pyobo.registries.obofoundry
-    $ python -m pyobo.registries.ols
-    $ python -m pyobo.registries.miriam
-
 
 .. |build| image:: https://travis-ci.com/pyobo/pyobo.svg?branch=master
     :target: https://travis-ci.com/pyobo/pyobo

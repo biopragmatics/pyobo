@@ -2,15 +2,15 @@
 
 """Download information from several registries."""
 
-import logging
 from dataclasses import dataclass
 from typing import Optional
+from urllib.error import HTTPError
+
+from obonet import read_obo
 
 __all__ = [
     'Resource',
 ]
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -25,9 +25,7 @@ class Resource:
     ols_id: Optional[str] = None
 
 
-def _sample_graph(prefix):
-    from obonet import read_obo
-    from urllib.error import HTTPError
+def _sample_graph(prefix: str):
     url = f'http://purl.obolibrary.org/obo/{prefix}.obo'
     try:
         graph = read_obo(url)
