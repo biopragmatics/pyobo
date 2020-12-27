@@ -8,7 +8,7 @@
         PyOBO
     </h1>
 
-|build|
+|build| |pypi_version| |python_versions| |pypi_license|
 
 Tools for biological identifiers, names, synonyms, xrefs, hierarchies, relations, and properties through the
 perspective of OBO.
@@ -278,8 +278,8 @@ pre-build patches like in the following:
                 pyobo.get_name('chebi', '1234')
 
 
-Installation |pypi_version| |python_versions| |pypi_license|
-------------------------------------------------------------
+Installation
+------------
 PyOBO can be installed from `PyPI <https://pypi.org/project/pyobo/>`_ with:
 
 .. code-block:: sh
