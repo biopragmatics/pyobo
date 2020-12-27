@@ -12,9 +12,8 @@ import bioregistry
 from bioregistry.external import get_miriam, get_obofoundry
 
 from .registries import (
-    Resource, get_curated_registry_database, get_obsolete, get_prefix_to_miriam_prefix,
-    get_prefix_to_obofoundry_prefix, get_prefix_to_ols_prefix, get_remappings_prefix, get_xrefs_blacklist,
-    get_xrefs_prefix_blacklist, get_xrefs_suffix_blacklist,
+    Resource, get_obsolete, get_prefix_to_miriam_prefix, get_prefix_to_obofoundry_prefix, get_prefix_to_ols_prefix,
+    get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist, get_xrefs_suffix_blacklist,
 )
 from .registries.registries import _sample_graph
 
@@ -156,7 +155,7 @@ def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
     rv: Dict[str, Resource] = {}
 
     synonym_to_prefix = {}
-    for prefix, entry in get_curated_registry_database().items():
+    for prefix, entry in bioregistry.read_bioregistry().items():
         if prefix in get_obsolete():
             continue
         synonym_to_prefix[prefix.lower()] = prefix
@@ -200,7 +199,7 @@ def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
 
         title = entry['title']
         prefix = synonym_to_prefix.get(prefix, prefix)
-        curated_info = get_curated_registry_database().get(prefix)
+        curated_info = bioregistry.read_bioregistry().get(prefix)
         if curated_info and 'pattern' in curated_info:
             # namespace_in_pattern = curated_registry.get('namespace_in_pattern')
             rv[prefix] = Resource(
@@ -223,7 +222,7 @@ def get_metaregistry(try_new=False) -> Mapping[str, Resource]:
         if curated_info.get('not_available_as_obo') or curated_info.get('no_own_terms'):
             continue
 
-    for prefix, entry in get_curated_registry_database().items():
+    for prefix, entry in bioregistry.read_bioregistry().items():
         if prefix in rv:
             continue
         title = entry.get('title')

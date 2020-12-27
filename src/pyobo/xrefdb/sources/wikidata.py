@@ -9,6 +9,7 @@ import json
 import logging
 from typing import Iterable, Tuple
 
+import bioregistry
 import click
 import pandas as pd
 import requests
@@ -16,7 +17,7 @@ from tqdm import tqdm
 
 from ...cli_utils import verbose_option
 from ...constants import RAW_MODULE, XREF_COLUMNS
-from ...registries import get_curated_registry_database, get_wikidata_property_types
+from ...registries import get_wikidata_property_types
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ def iterate_wikidata_dfs(*, use_tqdm: bool = True) -> Iterable[pd.DataFrame]:
     """Iterate over WikiData xref dataframes."""
     wikidata_properties = {
         prefix: entry['wikidata']['property']
-        for prefix, entry in get_curated_registry_database().items()
+        for prefix, entry in bioregistry.read_bioregistry().items()
         if 'wikidata' in entry and 'property' in entry['wikidata']
     }
     # wikidata_properties.update(get_wikidata_properties())

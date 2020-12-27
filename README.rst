@@ -328,8 +328,8 @@ Other entries in the metaregistry:
   full string, just prefix, or just suffix.
 
 
-Troubleshoting
---------------
+Troubleshooting
+---------------
 The OBO Foundry seems to be pretty unstable with respect to the URLs to OBO resources. If you get an error like:
 
 .. code-block::
@@ -337,7 +337,7 @@ The OBO Foundry seems to be pretty unstable with respect to the URLs to OBO reso
    pyobo.getters.MissingOboBuild: OBO Foundry is missing a build for: mondo
 
 Then you should check the corresponding page on the OBO Foundry (in this case, http://www.obofoundry.org/ontology/mondo.html)
-and make an update to the ``url`` entry for that namespace in the metaregistry.
+and make an update to the ``url`` entry for that namespace in the Bioregistry.
 
 .. |build| image:: https://travis-ci.com/pyobo/pyobo.svg?branch=master
     :target: https://travis-ci.com/pyobo/pyobo
