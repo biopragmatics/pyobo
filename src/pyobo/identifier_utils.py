@@ -8,11 +8,14 @@ from collections import defaultdict
 from functools import wraps
 from typing import Dict, Mapping, Optional, Tuple, Union
 
+import bioregistry
+
 from .registries import (
-    Resource, get_curated_registry_database, get_miriam, get_namespace_synonyms, get_obofoundry, get_obsolete,
+    Resource, get_curated_registry_database, get_miriam, get_obofoundry, get_obsolete,
     get_prefix_to_miriam_prefix, get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist,
     get_xrefs_suffix_blacklist,
 )
+from .registries.metaregistry import get_prefix_to_obofoundry_prefix, get_prefix_to_ols_prefix
 from .registries.registries import _sample_graph
 
 __all__ = [
@@ -40,11 +43,9 @@ MIRIAM = get_miriam(mappify=True)
 
 def normalize_prefix(prefix: str, *, curie=None, xref=None) -> Optional[str]:
     """Normalize a namespace and return, if possible."""
-    for string_transformation in (lambda x: x, str.lower, str.upper, str.casefold):
-        namespace_transformed = string_transformation(prefix)
-        rv = get_namespace_synonyms().get(namespace_transformed)
-        if rv is not None:
-            return rv
+    norm_prefix = bioregistry.normalize_prefix(prefix)
+    if norm_prefix is not None:
+        return norm_prefix
 
     if curie is None or curie.startswith('obo:'):
         return
@@ -98,6 +99,22 @@ def get_identifiers_org_link(prefix: str, identifier: str) -> Optional[str]:
     if namespace_in_lui:
         miriam_prefix = miriam_prefix.upper()
     return f'https://identifiers.org/{miriam_prefix}:{identifier}'
+
+
+def get_obofoundry_link(prefix: str, identifier: str) -> Optional[str]:
+    """Get the OBO Foundry URL if possible."""
+    obo_prefix = get_prefix_to_obofoundry_prefix().get(prefix)
+    return f'http://purl.obolibrary.org/obo/{obo_prefix.upper()}_{identifier}'
+
+
+def get_ols_link(prefix: str, identifier: str) -> Optional[str]:
+    """Get the OLS URL if possible."""
+    ols_prefix = get_prefix_to_ols_prefix().get(prefix)
+    if ols_prefix is None:
+        return
+    obo_link = get_obofoundry_link(prefix, identifier)
+    if obo_link is not None:
+        return f'https://www.ebi.ac.uk/ols/ontologies/{ols_prefix}/terms?iri={obo_link}'
 
 
 # See: https://en.wikipedia.org/wiki/Dash

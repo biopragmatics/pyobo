@@ -12,12 +12,13 @@ from flask_wtf import FlaskForm
 from gilda.generate_terms import filter_out_duplicates
 from gilda.grounder import Grounder
 from gilda.process import normalize
+from more_click.options import host_option, port_option, with_gunicorn_option, workers_option
 from tqdm import tqdm
 from wtforms.fields import StringField, SubmitField
 from wtforms.validators import DataRequired
 
 from pyobo import get_id_name_mapping, get_id_synonyms_mapping
-from pyobo.apps.utils import gunicorn_option, host_option, port_option, run_app
+from pyobo.apps.utils import run_app
 from pyobo.cli_utils import verbose_option
 from pyobo.io_utils import multidict
 
@@ -101,12 +102,13 @@ def get_gilda_terms(prefix: str, url: Optional[str] = None) -> Iterable[gilda.te
 @click.argument('prefix')
 @verbose_option
 @host_option
+@workers_option
 @port_option
-@gunicorn_option
-def main(prefix: str, host: str, port: int, gunicorn: bool):
+@with_gunicorn_option
+def main(prefix: str, host: str, port: str, with_gunicorn: bool, workers: int):
     """Run the Gilda service for this database."""
     app = get_app(prefix)
-    run_app(app=app, host=host, port=port, gunicorn=gunicorn)
+    run_app(app, host=host, port=port, with_gunicorn=with_gunicorn, workers=workers)
 
 
 if __name__ == '__main__':

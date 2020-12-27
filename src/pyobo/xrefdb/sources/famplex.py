@@ -7,9 +7,9 @@ from functools import lru_cache
 from typing import Mapping, Tuple
 
 import pandas as pd
+from bioregistry import normalize_prefix
 
 from ...constants import PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
-from ...identifier_utils import normalize_prefix
 from ...path_utils import ensure_df
 
 __all__ = [
@@ -35,6 +35,8 @@ def _get_famplex_df(force: bool = False) -> pd.DataFrame:
 def get_famplex_xrefs_df(force: bool = False) -> pd.DataFrame:
     """Get xrefs from FamPlex."""
     df = _get_famplex_df(force=force)
+    df[TARGET_PREFIX] = df[TARGET_PREFIX].map(normalize_prefix)
+    df = df[df[TARGET_PREFIX].notna()]
     df[SOURCE_PREFIX] = 'fplx'
     df[PROVENANCE] = 'https://github.com/sorgerlab/famplex/raw/master/equivalences.csv'
     df = df[XREF_COLUMNS]

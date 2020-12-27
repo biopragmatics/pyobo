@@ -5,6 +5,7 @@
 from collections import defaultdict
 from typing import Iterable, Mapping, Set, Tuple
 
+import bioversions
 from tqdm import tqdm
 
 from .utils import get_go_mapping
@@ -14,13 +15,6 @@ from ..struct import Obo, Reference, Term
 from ..struct.typedef import has_member
 
 PREFIX = 'interpro'
-
-VERSION = '78.0'
-BASE_URL = f'ftp://ftp.ebi.ac.uk/pub/databases/interpro/{VERSION}'
-INTERPRO_ENTRIES_URL = f'{BASE_URL}/entry.list'
-
-#: Data source for InterPro tree
-INTERPRO_TREE_URL = f'{BASE_URL}/ParentChildTreeFile.txt'
 
 #: Data source for protein-interpro mappings
 INTERPRO_PROTEIN_URL = 'ftp://ftp.ebi.ac.uk/pub/databases/interpro/protein2ipr.dat.gz'
@@ -39,17 +33,21 @@ INTERPRO_GO_MAPPING_URL = 'ftp://ftp.ebi.ac.uk/pub/databases/interpro/interpro2g
 
 def get_obo() -> Obo:
     """Get InterPro as OBO."""
+    version = bioversions.get_version(PREFIX)
+
     return Obo(
         ontology=PREFIX,
         name='InterPro',
+        data_version=version,
         auto_generated_by=f'bio2obo:{PREFIX}',
         iter_terms=iter_terms,
+        iter_items_kwargs=dict(version=version),
     )
 
 
-def iter_terms(proteins: bool = False) -> Iterable[Term]:
+def iter_terms(*, version: str, proteins: bool = False) -> Iterable[Term]:
     """Get InterPro terms."""
-    parents = get_interpro_tree()
+    parents = get_interpro_tree(version=version)
 
     interpro_to_gos = get_interpro_go_df()
 
@@ -57,7 +55,7 @@ def iter_terms(proteins: bool = False) -> Iterable[Term]:
 
     entries_df = ensure_df(
         PREFIX,
-        INTERPRO_ENTRIES_URL,
+        url=f'ftp://ftp.ebi.ac.uk/pub/databases/interpro/{version}/entry.list',
         skiprows=1,
         names=('ENTRY_AC', 'ENTRY_TYPE', 'ENTRY_NAME'),
     )
@@ -88,13 +86,14 @@ def iter_terms(proteins: bool = False) -> Iterable[Term]:
 
 def get_interpro_go_df() -> Mapping[str, Set[Tuple[str, str]]]:
     """Get InterPro to Gene Ontology molecular function mapping."""
-    path = ensure_path(PREFIX, INTERPRO_GO_MAPPING_URL)
+    path = ensure_path(PREFIX, INTERPRO_GO_MAPPING_URL, path='interpro2go.tsv')
     return get_go_mapping(path, prefix=PREFIX)
 
 
-def get_interpro_tree():
+def get_interpro_tree(version: str):
     """Get InterPro Data source."""
-    path = ensure_path(PREFIX, INTERPRO_TREE_URL)
+    url = f'ftp://ftp.ebi.ac.uk/pub/databases/interpro/{version}/ParentChildTreeFile.txt'
+    path = ensure_path(PREFIX, url)
     with open(path) as f:
         return _parse_tree_helper(f)
 

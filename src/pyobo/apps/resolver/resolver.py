@@ -20,16 +20,16 @@ from flasgger import Swagger
 from flask import Blueprint, Flask, current_app, jsonify, render_template
 from flask_bootstrap import Bootstrap
 from humanize.filesize import naturalsize
+from more_click.options import host_option, port_option, verbose_option, with_gunicorn_option
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 from tqdm import tqdm
 from werkzeug.local import LocalProxy
 
 import pyobo
-from pyobo.apps.utils import gunicorn_option, host_option, port_option, run_app
-from pyobo.cli_utils import verbose_option
+from pyobo.apps.utils import run_app
 from pyobo.constants import get_sqlalchemy_uri
-from pyobo.identifier_utils import get_identifiers_org_link, normalize_curie
+from pyobo.identifier_utils import get_identifiers_org_link, get_obofoundry_link, get_ols_link, normalize_curie
 from pyobo.resource_utils import ensure_alts, ensure_ooh_na_na
 
 logger = logging.getLogger(__name__)
@@ -83,21 +83,23 @@ class Backend:
                 message='Could not identify prefix',
             )
 
-        miriam = get_identifiers_org_link(prefix, identifier)
+        miriam_link = get_identifiers_org_link(prefix, identifier)
+        obofoundry_link = get_obofoundry_link(prefix, identifier)
+        ols_link = get_ols_link(prefix, identifier)
         if not self.has_prefix(prefix):
             rv = dict(
                 query=curie,
                 prefix=prefix,
                 identifier=identifier,
                 success=False,
+                message=f'Could not find id->name mapping for {prefix}',
             )
-            if miriam:
-                rv.update(dict(
-                    miriam=miriam,
-                    message='Could not find id->name mapping for prefix, but still able to report Identifiers.org link',
-                ))
-            else:
-                rv['message'] = 'Could not find id->name mapping for prefix'
+            if miriam_link:
+                rv['miriam'] = miriam_link
+            if obofoundry_link:
+                rv['obofoundry'] = obofoundry_link
+            if ols_link:
+                rv['ols'] = ols_link
             return rv
 
         name = self.get_name(prefix, identifier)
@@ -105,7 +107,9 @@ class Backend:
         if name is None and resolve_alternate:
             primary_id = self.get_primary_id(prefix, identifier)
             if primary_id != identifier:
-                miriam = get_identifiers_org_link(prefix, primary_id)
+                miriam_link = get_identifiers_org_link(prefix, primary_id)
+                obofoundry_link = get_obofoundry_link(prefix, primary_id)
+                ols_link = get_ols_link(prefix, primary_id)
                 name = self.get_name(prefix, primary_id)
 
         if name is None:
@@ -114,7 +118,9 @@ class Backend:
                 prefix=prefix,
                 identifier=identifier,
                 success=False,
-                miriam=miriam,
+                miriam=miriam_link,
+                obofoundry=obofoundry_link,
+                ols=ols_link,
                 message='Could not look up identifier',
             )
 
@@ -124,7 +130,9 @@ class Backend:
             identifier=identifier,
             name=name,
             success=True,
-            miriam=miriam,
+            miriam=miriam_link,
+            obofoundry=obofoundry_link,
+            ols=ols_link,
         )
 
 
@@ -178,7 +186,7 @@ class RawSQLBackend(Backend):
 
     @lru_cache()
     def count_alts(self) -> Optional[int]:  # noqa:D102
-        return self._get_one(f'SELECT COUNT(id) FROM {self.alts_table};')   # noqa:S608
+        return self._get_one(f'SELECT COUNT(id) FROM {self.alts_table};')  # noqa:S608
 
     def _get_one(self, sql: str):
         with self.engine.connect() as connection:
@@ -425,10 +433,10 @@ def _get_lookup_from_path(path: str) -> Mapping[str, Mapping[str, str]]:
 @click.option('--lazy', is_flag=True, help='do no load full cache into memory automatically')
 @click.option('--test', is_flag=True, help='run in test mode with only a few datasets')
 @click.option('--workers', type=int, help='number of workers to use in --gunicorn mode')
-@gunicorn_option
+@with_gunicorn_option
 @verbose_option
 def main(
-    port: int,
+    port: str,
     host: str,
     sql: bool,
     sql_uri: str,
@@ -436,7 +444,7 @@ def main(
     sql_alts_table: str,
     data: Optional[str],
     test: bool,
-    gunicorn: bool,
+    with_gunicorn: bool,
     lazy: bool,
     workers: int,
 ):
@@ -461,7 +469,7 @@ def main(
         refs_table=sql_refs_table,
         alts_table=sql_alts_table,
     )
-    run_app(app=app, host=host, port=port, gunicorn=gunicorn, workers=workers)
+    run_app(app=app, host=host, port=port, with_gunicorn=with_gunicorn, workers=workers)
 
 
 if __name__ == '__main__':

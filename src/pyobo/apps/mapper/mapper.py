@@ -5,7 +5,7 @@
 Run with ``python -m pyobo.apps.mapper``.
 """
 
-import os
+import logging
 from functools import lru_cache
 from typing import Iterable, List, Mapping, Optional, Union
 
@@ -13,21 +13,22 @@ import click
 import pandas as pd
 from flasgger import Swagger
 from flask import Blueprint, Flask, current_app, jsonify, render_template, url_for
-from flask_bootstrap import Bootstrap
+from flask_bootstrap import Bootstrap, VERSION_BOOTSTRAP
+from more_click.options import host_option, port_option, with_gunicorn_option
 from werkzeug.local import LocalProxy
 
-from pyobo.apps.utils import gunicorn_option, host_option, port_option, run_app
+from pyobo.apps.utils import run_app
 from pyobo.cli_utils import verbose_option
 from pyobo.constants import SOURCE_PREFIX, TARGET_PREFIX
 from pyobo.identifier_utils import normalize_curie, normalize_prefix
-from pyobo.xrefdb.xrefs_pipeline import (
-    Canonicalizer, get_xref_df, summarize_xref_df,
-)
+from pyobo.xrefdb.xrefs_pipeline import Canonicalizer, get_xref_df, summarize_xref_df, summarize_xref_provenances_df
 
 __all__ = [
     'get_app',
     'main',
 ]
+
+logger = logging.getLogger(__name__)
 
 summary_df = LocalProxy(lambda: current_app.config['summary'])
 canonicalizer: Canonicalizer = LocalProxy(lambda: current_app.config['canonicalizer'])
@@ -140,13 +141,14 @@ def canonicalize(curie: str):
 
 def get_app(paths: Union[None, str, Iterable[str]] = None) -> Flask:
     """Build the Flask app."""
+    app = Flask(__name__)
+    Swagger(app)
+
+    logger.info('using bootstrap_flask %s', VERSION_BOOTSTRAP)
+    Bootstrap(app)
+
     if paths is None:
-        paths = os.path.join(os.path.expanduser('~'), 'Desktop', 'all_xrefs.tsv')
-        if os.path.exists(paths):
-            df = pd.read_csv(paths, sep='\t', dtype=str)
-        else:
-            df = get_xref_df()
-            df.to_csv(paths, sep='\t', index=False)
+        df = get_xref_df(use_cached=True)
     elif isinstance(paths, str):
         df = pd.read_csv(paths, sep='\t', dtype=str)
     else:
@@ -155,16 +157,8 @@ def get_app(paths: Union[None, str, Iterable[str]] = None) -> Flask:
             for path in paths
         )
 
-    df[SOURCE_PREFIX] = df[SOURCE_PREFIX].map(normalize_prefix)
-    df[TARGET_PREFIX] = df[TARGET_PREFIX].map(normalize_prefix)
-    return _get_app_from_xref_df(df)
-
-
-def _get_app_from_xref_df(df: pd.DataFrame):
-    app = Flask(__name__)
-    Swagger(app)
-    Bootstrap(app)
     app.config['summary'] = summarize_xref_df(df)
+    app.config['summary_provenances'] = summarize_xref_provenances_df(df)
     # TODO allow for specification of priorities in the canonicalizer
     app.config['canonicalizer'] = Canonicalizer.from_df(df)
     app.register_blueprint(search_blueprint)
@@ -175,12 +169,12 @@ def _get_app_from_xref_df(df: pd.DataFrame):
 @click.option('-x', '--mappings-file')
 @port_option
 @host_option
-@gunicorn_option
+@with_gunicorn_option
 @verbose_option
-def main(mappings_file, host: str, port: int, gunicorn: bool):
+def main(mappings_file, host: str, port: str, with_gunicorn: bool):
     """Run the mappings app."""
     app = get_app(mappings_file)
-    run_app(app=app, host=host, port=port, gunicorn=gunicorn)
+    run_app(app=app, host=host, port=port, with_gunicorn=with_gunicorn)
 
 
 if __name__ == '__main__':

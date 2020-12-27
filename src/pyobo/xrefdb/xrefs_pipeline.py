@@ -6,27 +6,32 @@ import gzip
 import itertools as itt
 import logging
 import os
+import time
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Iterable, List, Mapping, Optional, Set, Tuple
 
+import click
 import networkx as nx
 import pandas as pd
+from more_click import verbose_option
 from more_itertools import pairwise
 from tqdm import tqdm
 
 from .sources import iter_xref_plugins
-from ..constants import DATABASE_DIRECTORY, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
-from ..extract import (
-    get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts,
-    get_xrefs_df,
-)
+from ..constants import DATABASE_DIRECTORY, PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
+from ..extract import get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_xrefs_df
 from ..getters import MissingOboBuild, NoOboFoundry, iter_helper
 from ..identifier_utils import get_metaregistry, normalize_prefix
 from ..path_utils import ensure_path, get_prefix_directory
 from ..sources import ncbigene, pubchem
 
 logger = logging.getLogger(__name__)
+
+MAPPINGS_DB_TSV_CACHE = os.path.join(DATABASE_DIRECTORY, 'xrefs.tsv.gz')
+MAPPINGS_DB_PKL_CACHE = os.path.join(DATABASE_DIRECTORY, 'xrefs.pkl.gz')
+MAPPINGS_DB_SUMMARY_CACHE = os.path.join(DATABASE_DIRECTORY, 'xrefs_summary.tsv')
+MAPPINGS_DB_SUMMARY_PROVENANCES_CACHE = os.path.join(DATABASE_DIRECTORY, 'xrefs_summary_provenance.tsv')
 
 SKIP = {
     'obi',
@@ -75,14 +80,22 @@ _DEFAULT_PRIORITY_LIST = [
     'mesh',
     'icd',
 ]
-DEFAULT_PRIORITY_LIST = []
-for _entry in _DEFAULT_PRIORITY_LIST:
-    _prefix = normalize_prefix(_entry)
-    if not _prefix:
-        raise RuntimeError(f'unresolved prefix: {_entry}')
-    if _prefix in DEFAULT_PRIORITY_LIST:
-        raise RuntimeError(f'duplicate found in priority list: {_entry}/{_prefix}')
-    DEFAULT_PRIORITY_LIST.append(_prefix)
+
+
+def _get_default_priority_list():
+    rv = []
+    for _entry in _DEFAULT_PRIORITY_LIST:
+        _prefix = normalize_prefix(_entry)
+        if not _prefix:
+            raise RuntimeError(f'unresolved prefix: {_entry}')
+        if _prefix in rv:
+            raise RuntimeError(f'duplicate found in priority list: {_entry}/{_prefix}')
+        rv.append(_prefix)
+    return rv
+
+
+DEFAULT_PRIORITY_LIST = _get_default_priority_list()
+del _get_default_priority_list
 
 
 # TODO a normal graph can easily be turned into a directed graph where each
@@ -207,11 +220,11 @@ def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
         rv.add_node(_to_curie(prefix, identifier), prefix=prefix, identifier=identifier)
 
     it = tqdm(df.values, total=len(df.index), desc='loading xrefs', unit_scale=True)
-    for source_ns, source_id, target_ns, target_id, source in it:
+    for source_ns, source_id, target_ns, target_id, provenance in it:
         rv.add_edge(
             _to_curie(source_ns, source_id),
             _to_curie(target_ns, target_id),
-            source=source,
+            provenance=provenance,
         )
 
     return rv
@@ -219,9 +232,18 @@ def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
 
 def summarize_xref_df(df: pd.DataFrame) -> pd.DataFrame:
     """Get all meta-mappings."""
-    c = [SOURCE_PREFIX, TARGET_PREFIX]
-    rv = df[c].groupby(c).size().reset_index()
-    rv.columns = [SOURCE_PREFIX, TARGET_PREFIX, 'count']
+    return _summarize(df, [SOURCE_PREFIX, TARGET_PREFIX])
+
+
+def summarize_xref_provenances_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Get all meta-mappings."""
+    return _summarize(df, [SOURCE_PREFIX, TARGET_PREFIX, PROVENANCE])
+
+
+def _summarize(df: pd.DataFrame, columns) -> pd.DataFrame:
+    """Get all meta-mappings."""
+    rv = df[columns].groupby(columns).size().reset_index()
+    rv.columns = [*columns, 'count']
     rv.sort_values('count', inplace=True, ascending=False)
     return rv
 
@@ -285,27 +307,59 @@ def single_source_shortest_path(
     }
 
 
-XREF_DB_CACHE = os.path.join(DATABASE_DIRECTORY, 'xrefs.tsv.gz')
-
-
-def get_xref_df(use_cached: bool = False) -> pd.DataFrame:
+def get_xref_df(*, use_cached: bool = False, use_tqdm: bool = True, make_summary: bool = True) -> pd.DataFrame:
     """Get the ultimate xref database."""
-    if use_cached and os.path.exists(XREF_DB_CACHE):
-        return pd.read_csv(XREF_DB_CACHE, sep='\t', dtype=str)
+    if use_cached and os.path.exists(MAPPINGS_DB_TSV_CACHE):
+        logger.info('loading cached mapping database from %s', MAPPINGS_DB_TSV_CACHE)
+        t = time.time()
+        rv = pd.read_csv(MAPPINGS_DB_TSV_CACHE, sep='\t', dtype=str)
+        logger.info('loaded in %.2fs', time.time() - t)
+        return rv
 
-    df = pd.concat(_iterate_xref_dfs())
-    df.drop_duplicates(inplace=True)
-    df.dropna(inplace=True)
+    df = pd.concat(_iterate_xref_dfs(use_tqdm=use_tqdm))
+
+    logger.info('sorting xrefs')
+    sort_start = time.time()
     df.sort_values(XREF_COLUMNS, inplace=True)
+    logger.info('sorted in %.2fs', time.time() - sort_start)
 
-    if use_cached:
-        df.to_csv(XREF_DB_CACHE, sep='\t', index=False)
+    logger.info('dropping duplicates')
+    drop_duplicate_start = time.time()
+    df.drop_duplicates(inplace=True)
+    logger.info('dropped duplicates in %.2fs', time.time() - drop_duplicate_start)
+
+    logger.info('dropping NA')
+    drop_na_start = time.time()
+    df.dropna(inplace=True)
+    logger.info('dropped NAs in %.2fs', time.time() - drop_na_start)
+
+    logger.info('writing mapping database to %s', MAPPINGS_DB_TSV_CACHE)
+    t = time.time()
+    df.to_csv(MAPPINGS_DB_TSV_CACHE, sep='\t', index=False)
+    logger.info('wrote in %.2fs', time.time() - t)
+
+    logger.info('writing mapping database to %s', MAPPINGS_DB_PKL_CACHE)
+    t = time.time()
+    df.to_pickle(MAPPINGS_DB_PKL_CACHE)
+    logger.info('wrote in %.2fs', time.time() - t)
+
+    logger.info('making mapping summary')
+    t = time.time()
+    summary_df = summarize_xref_df(df)
+    logger.info('made mapping summary in %.2fs', time.time() - t)
+    summary_df.to_csv(MAPPINGS_DB_SUMMARY_CACHE, index=False, sep='\t')
+
+    logger.info('making provenance summary')
+    t = time.time()
+    xref_provenances_df = summarize_xref_provenances_df(df)
+    logger.info('made provenance summary in %.2fs', time.time() - t)
+    xref_provenances_df.to_csv(MAPPINGS_DB_SUMMARY_PROVENANCES_CACHE, index=False, sep='\t')
 
     return df
 
 
-def _iterate_xref_dfs() -> Iterable[pd.DataFrame]:
-    for prefix, _entry in _iterate_metaregistry():
+def _iterate_xref_dfs(*, use_tqdm: bool = True) -> Iterable[pd.DataFrame]:
+    for prefix, _entry in _iterate_metaregistry(use_tqdm=use_tqdm):
         if prefix in SKIP_XREFS:
             continue
         try:
@@ -317,9 +371,16 @@ def _iterate_xref_dfs() -> Iterable[pd.DataFrame]:
                 str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0"?>')
                 or str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0" encoding="UTF-8"?>')
             ):
-                logger.info('no resource available for %s', prefix)
+                logger.info('[%s] no resource available for %s', prefix, prefix)
                 continue  # this means that it tried doing parsing on an xml page saying get the fuck out
-            logger.warning('could not successfully parse %s: %s', prefix, e)
+            logger.warning('[%] could not successfully parse: %s', prefix, e)
+            continue
+        except Exception:
+            logger.exception('[%s] other problem', prefix)
+            continue
+
+        if df is None:
+            logger.debug('[%s] could not get a dataframe', prefix)
             continue
 
         df['source'] = prefix
@@ -332,8 +393,11 @@ def _iterate_xref_dfs() -> Iterable[pd.DataFrame]:
     yield from iter_xref_plugins()
 
 
-def _iterate_metaregistry():
-    for prefix, _entry in sorted(get_metaregistry().items()):
+def _iterate_metaregistry(use_tqdm: bool = True):
+    it = sorted(get_metaregistry().items())
+    if use_tqdm:
+        it = tqdm(it, desc='Entries')
+    for prefix, _entry in it:
         if prefix not in SKIP:
             yield prefix, _entry
 
@@ -413,3 +477,14 @@ def remap_file_stream(file_in, file_out, column: int, sep='\t') -> None:
         line = line.strip().split(sep)
         line[column] = get_priority_curie(line[column])
         print(*line, sep=sep, file=file_out)
+
+
+@click.command()
+@verbose_option
+@click.option('--force', is_flag=True)
+def _main(force):
+    get_xref_df(use_cached=not force)
+
+
+if __name__ == '__main__':
+    _main()

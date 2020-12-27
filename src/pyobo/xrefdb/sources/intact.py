@@ -86,7 +86,7 @@ def get_reactome_mapping() -> Mapping[str, str]:
     return dict(df.values)
 
 
-def get_intact_xref_df() -> pd.DataFrame:
+def get_xrefs_df() -> pd.DataFrame:
     """Get IntAct xrefs."""
     return pd.concat([
         get_intact_complex_portal_xrefs_df(),

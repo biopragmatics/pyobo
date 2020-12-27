@@ -266,7 +266,7 @@ def _group_by_id(lines):
 
 def get_ec2go() -> Mapping[str, Set[Tuple[str, str]]]:
     """Get the EC mapping to GO activities."""
-    path = ensure_path(PREFIX, EC2GO_URL)
+    path = ensure_path(PREFIX, EC2GO_URL, path='ec2go.tsv')
     return get_go_mapping(path, 'EC')
 
 

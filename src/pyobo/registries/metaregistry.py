@@ -7,26 +7,22 @@ import os
 from functools import lru_cache
 from typing import List, Mapping, Set, Tuple
 
-HERE = os.path.abspath(os.path.dirname(__file__))
+import bioregistry
 
+HERE = os.path.abspath(os.path.dirname(__file__))
 CURATED_REGISTRY_PATH = os.path.join(HERE, 'metaregistry.json')
 
 
 @lru_cache()
-def _get_curated_registry(rewrite: bool = True):
+def _get_curated_registry():
     """Get the metaregistry."""
     with open(CURATED_REGISTRY_PATH) as file:
-        x = json.load(file)
-    if rewrite:
-        with open(CURATED_REGISTRY_PATH, 'w') as file:
-            json.dump(x, file, indent=2, sort_keys=True)
-    return x
+        return json.load(file)
 
 
-@lru_cache()
 def get_curated_registry_database():
     """Get the curated metaregistry."""
-    return _get_curated_registry()['database']
+    return bioregistry.read_bioregistry()
 
 
 @lru_cache()
@@ -100,9 +96,29 @@ def get_remappings_prefix():
 
 @lru_cache()
 def get_prefix_to_miriam_prefix() -> Mapping[str, Tuple[str, str]]:
-    """Get a mapping of prefixes to MIRIAM prefixes."""
+    """Get a mapping of bioregistry prefixes to MIRIAM prefixes."""
     return {
         prefix: (entry['miriam']['prefix'], entry['miriam']['namespaceEmbeddedInLui'])
         for prefix, entry in get_curated_registry_database().items()
-        if 'miriam' in entry
+        if 'miriam' in entry and 'prefix' in entry['miriam']
+    }
+
+
+@lru_cache(maxsize=1)
+def get_prefix_to_obofoundry_prefix() -> Mapping[str, str]:
+    """Get a mapping of bioregistry prefixes to OBO Foundry prefixes."""
+    return _get_map('obofoundry')
+
+
+@lru_cache(maxsize=1)
+def get_prefix_to_ols_prefix() -> Mapping[str, str]:
+    """Get a mapping of bioregistry prefixes to OLS prefixes."""
+    return _get_map('ols')
+
+
+def _get_map(registry: str) -> Mapping[str, str]:
+    return {
+        prefix: entry[registry]['prefix']
+        for prefix, entry in get_curated_registry_database().items()
+        if registry in entry
     }

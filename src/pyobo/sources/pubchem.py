@@ -5,6 +5,7 @@
 import logging
 from typing import Iterable, Mapping
 
+import pandas as pd
 from tqdm import tqdm
 
 from ..extract import get_name_id_mapping
@@ -15,56 +16,63 @@ from ..struct import Obo, Reference, Synonym, Term
 logger = logging.getLogger(__name__)
 
 PREFIX = 'pubchem.compound'
-VERSION = '2020-11-01'
-BASE_URL = f'ftp://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Monthly/{VERSION}/Extras'
 
-# 2 tab-separated columns: compound_id, name
-CID_NAME_URL = f'{BASE_URL}/CID-Title.gz'
-# 2 tab-separated columns: compound_id, synonym
-CID_SYNONYMS_URL = f'{BASE_URL}/CID-Synonym-filtered.gz'
-# TODO
-CID_TO_SMILES_URL = f'{BASE_URL}/CID-SMILES.gz'
-# TODO
-CID_PMID_URL = f'{BASE_URL}/CID-PMID.gz'
 
-CID_MESH_URL = f'{BASE_URL}/CID-MeSH'
+def _get_pubchem_extras_url(version: str, end: str) -> str:
+    return f'ftp://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Monthly/{version}/Extras/{end}'
 
 
 def get_obo() -> Obo:
     """Get PubChem Compound OBO."""
+    version = '2020-11-01'
     obo = Obo(
         ontology='pubchem.compound',
         name='PubChem Compound',
         iter_terms=get_terms,
-        data_version=VERSION,
+        iter_items_kwargs=dict(version=version),
+        data_version=version,
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
     return obo
 
 
-def get_pubchem_id_smiles_mapping() -> Mapping[str, str]:
+def _get_cid_smiles_df(version: str) -> pd.DataFrame:
+    url = _get_pubchem_extras_url(version, 'CID-SMILES.gz')
+    return ensure_df(PREFIX, url=url, version=version, dtype=str)
+
+
+def get_pubchem_id_smiles_mapping(version: str) -> Mapping[str, str]:
     """Get a mapping from PubChem compound identifiers to SMILES strings."""
-    df = ensure_df(PREFIX, CID_TO_SMILES_URL, version=VERSION, dtype=str)
+    df = _get_cid_smiles_df(version=version)
     return dict(df.values)
 
 
-def get_pubchem_smiles_id_mapping() -> Mapping[str, str]:
+def get_pubchem_smiles_id_mapping(version: str) -> Mapping[str, str]:
     """Get a mapping from SMILES strings to PubChem compound identifiers."""
-    df = ensure_df(PREFIX, CID_TO_SMILES_URL, version=VERSION, dtype=str)
+    df = _get_cid_smiles_df(version=version)
     return {v: k for k, v in df.values}
 
 
-def get_pubchem_id_to_name() -> Mapping[str, str]:
+def get_pubchem_id_to_name(version: str) -> Mapping[str, str]:
     """Get a mapping from PubChem compound identifiers to their titles."""
-    df = ensure_df(PREFIX, CID_NAME_URL, version=VERSION, dtype=str,
-                   encoding='latin-1')
+    # 2 tab-separated columns: compound_id, name
+    url = _get_pubchem_extras_url(version, 'CID-Title.gz')
+    df = ensure_df(PREFIX, url, version=version, dtype=str, encoding='latin-1')
     return dict(df.values)
 
 
-def get_pubchem_id_to_mesh_id() -> Mapping[str, str]:
+def get_pubchem_id_to_mesh_id(version: str) -> Mapping[str, str]:
     """Get a mapping from PubChem compound identifiers to their equivalent MeSH terms."""
-    df = ensure_df(PREFIX, CID_MESH_URL, version=VERSION,
-                   dtype=str, header=None, names=['pubchem.compound_id', 'mesh_id'])
+    url = _get_pubchem_extras_url(version, 'CID-MeSH')
+    df = ensure_df(
+        PREFIX,
+        url=url,
+        version=version,
+        dtype=str,
+        header=None,
+        path='CID-MeSH.tsv',
+        names=['pubchem.compound_id', 'mesh_id'],
+    )
     mesh_name_to_id = get_name_id_mapping('mesh')
     needs_curation = set()
     mesh_ids = []
@@ -73,19 +81,22 @@ def get_pubchem_id_to_mesh_id() -> Mapping[str, str]:
         if mesh_id is None:
             if name not in needs_curation:
                 needs_curation.add(name)
-                logger.warning('[mesh] needs curating: %s', name)
+                logger.debug('[mesh] needs curating: %s', name)
         mesh_ids.append(mesh_id)
-    logger.warning('[mesh] %d/%d need updating', len(needs_curation), len(mesh_ids))
+    logger.info('[mesh] %d/%d need updating', len(needs_curation), len(mesh_ids))
     df['mesh_id'] = mesh_ids
     return dict(df.values)
 
 
-def get_terms(use_tqdm: bool = True) -> Iterable[Term]:
+def get_terms(*, version: str, use_tqdm: bool = True) -> Iterable[Term]:
     """Get PubChem Compound terms."""
-    cid_name_path = ensure_path(PREFIX, CID_NAME_URL, version=VERSION)
-    cid_synonyms_path = ensure_path(PREFIX, CID_SYNONYMS_URL, version=VERSION)
-    cid_smiles_path = ensure_path(PREFIX, CID_TO_SMILES_URL, version=VERSION)
-    logger.debug('smiles at %s', cid_smiles_path)
+    # 2 tab-separated columns: compound_id, name
+    cid_name_url = _get_pubchem_extras_url(version, 'CID-Title.gz')
+    cid_name_path = ensure_path(PREFIX, cid_name_url, version=version)
+
+    # 2 tab-separated columns: compound_id, synonym
+    cid_synonyms_url = _get_pubchem_extras_url(version, 'CID-Synonym-filtered.gz')
+    cid_synonyms_path = ensure_path(PREFIX, cid_synonyms_url, version=version)
 
     it = iterate_gzips_together(cid_name_path, cid_synonyms_path)
 

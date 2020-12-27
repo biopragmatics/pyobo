@@ -35,6 +35,11 @@ CHEBI_MAPPINGS_URL = 'https://ncit.nci.nih.gov/ncitbrowser/ajax?action=' + \
 UNIPROT_MAPPINGS_URL = 'https://evs.nci.nih.gov/ftp1/NCI_Thesaurus/Mappings/NCIt-SwissProt_Mapping.txt'
 
 
+def get_ncit_xrefs_df() -> pd.DataFrame:
+    """Get all NCIT mappings in a single dataframe."""
+    return pd.concat(iter_ncit_dfs())
+
+
 def iter_ncit_dfs() -> Iterable[pd.DataFrame]:
     """Iterate all NCIT mappings dataframes."""
     yield get_ncit_hgnc_df()

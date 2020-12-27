@@ -8,6 +8,7 @@ from typing import Callable, Iterable, Mapping
 
 import pandas as pd
 from pkg_resources import iter_entry_points
+from tqdm import tqdm
 
 __all__ = [
     'iter_xref_plugins',
@@ -42,9 +43,12 @@ def run_xref_plugin(prefix: str) -> pd.DataFrame:
     logger.warning('can not load %s since it yields many dataframes', prefix)
 
 
-def iter_xref_plugins() -> Iterable[pd.DataFrame]:
+def iter_xref_plugins(use_tqdm: bool = True) -> Iterable[pd.DataFrame]:
     """Get all modules in the PyOBO sources."""
-    for _prefix, get_df in sorted(_get_xref_plugins().items()):
+    it = sorted(_get_xref_plugins().items())
+    if use_tqdm:
+        it = tqdm(it, desc='Mapping Plugins')
+    for _prefix, get_df in it:
         rv = get_df()
         if isinstance(rv, pd.DataFrame):
             yield rv

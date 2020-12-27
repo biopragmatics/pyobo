@@ -5,6 +5,7 @@
 import logging
 from typing import Iterable, List, Tuple
 
+import bioversions
 import pandas as pd
 from tqdm import tqdm
 
@@ -15,8 +16,6 @@ from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_part
 logger = logging.getLogger(__name__)
 
 PREFIX = 'complexportal'
-VERSION = '2020-03-11'
-URL_BASE = f'ftp://ftp.ebi.ac.uk/pub/databases/intact/complex/{VERSION}/complextab'
 SPECIES = [
     'arabidopsis_thaliana',
     'bos_taurus',
@@ -40,8 +39,6 @@ SPECIES = [
     'torpedo_marmorata',
     'xenopus_laevis',
 ]
-URLS = [f'{URL_BASE}/{species}.tsv' for species in SPECIES]
-
 COLUMNS = [
     'complexportal_id',
     'name',
@@ -98,28 +95,34 @@ def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
 
 def get_obo() -> Obo:
     """Get the ComplexPortal OBO."""
+    version = bioversions.get_version(PREFIX)
+
     return Obo(
         ontology=PREFIX,
         name='Complex Portal',
-        data_version=VERSION,
+        data_version=version,
         iter_terms=get_terms,
+        iter_items_kwargs=dict(version=version),
         typedefs=[from_species, has_part],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
-def get_df() -> pd.DataFrame:
+def get_df(version: str) -> pd.DataFrame:
     """Get a combine ComplexPortal dataframe."""
+    url_base = f'ftp://ftp.ebi.ac.uk/pub/databases/intact/complex/{version}/complextab'
+    urls = [f'{url_base}/{species}.tsv' for species in SPECIES]
+
     dfs = [
-        ensure_df(PREFIX, url, version=VERSION, na_values={'-'}, names=COLUMNS, header=0, dtype=DTYPE)
-        for url in URLS
+        ensure_df(PREFIX, url, version=version, na_values={'-'}, names=COLUMNS, header=0, dtype=DTYPE)
+        for url in urls
     ]
     return pd.concat(dfs)
 
 
-def get_terms() -> Iterable[Term]:
+def get_terms(version: str) -> Iterable[Term]:
     """Get ComplexPortal terms."""
-    df = get_df()
+    df = get_df(version=version)
 
     df['aliases'] = df['aliases'].map(lambda s: s.split('|') if pd.notna(s) else [])
     df['members'] = df['members'].map(_parse_members)

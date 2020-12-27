@@ -84,14 +84,14 @@ class TestParseObonet(unittest.TestCase):
         data = self.graph.nodes['CHEBI:51990']
         xrefs = list(iterate_node_xrefs(prefix='chebi', data=data))
         self.assertEqual(7, len(xrefs))
-        # NOTE the prefixes are remapped by PyOBO
-        self.assertEqual({'pubmed', 'cas', 'beilstein', 'reaxys'}, {
+        # NOTE the prefixes are remapped by Bioregistry
+        self.assertEqual({'pubmed', 'cas', 'reaxys'}, {
             xref.prefix
             for xref in xrefs
         })
         self.assertEqual(
             {
-                ('reaxys', '3570522'), ('beilstein', '3570522'), ('cas', '429-41-4'),
+                ('reaxys', '3570522'), ('cas', '429-41-4'),
                 ('pubmed', '21142041'), ('pubmed', '21517057'), ('pubmed', '22229781'), ('pubmed', '15074950'),
             },
             {(xref.prefix, xref.identifier) for xref in xrefs},
