@@ -35,7 +35,7 @@ def get_ensembl_df() -> pd.DataFrame:
     """Get the Ensembl mappings dataframe."""
     return ensure_df(
         PREFIX,
-        ENSEMBL_XREFS_URL,
+        url=ENSEMBL_XREFS_URL,
         sep='\t',
         names=[
             'mgi_id',
@@ -59,7 +59,7 @@ def get_entrez_df() -> pd.DataFrame:
     """Get the Entrez mappings dataframe."""
     return ensure_df(
         PREFIX,
-        ENTREZ_XREFS_URL,
+        url=ENTREZ_XREFS_URL,
         sep='\t',
         names=[
             'mgi_id',
@@ -86,7 +86,7 @@ def get_entrez_df() -> pd.DataFrame:
 
 def get_terms() -> Iterable[Term]:
     """Get the MGI terms."""
-    df = ensure_df(PREFIX, MARKERS_URL, sep='\t')
+    df = ensure_df(PREFIX, url=MARKERS_URL, sep='\t')
 
     entrez_df = get_entrez_df()
     mgi_to_entrez_id, mgi_to_synonyms = {}, {}

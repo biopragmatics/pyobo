@@ -53,7 +53,7 @@ def get_ncit_hgnc_df() -> pd.DataFrame:
 
     In this file, the only association type was mapsTo.
     """
-    df = ensure_df(PREFIX, HGNC_MAPPINGS_URL, path='ncit_hgnc.csv', sep=',', usecols=['Source Code', 'Target Code'])
+    df = ensure_df(PREFIX, url=HGNC_MAPPINGS_URL, path='ncit_hgnc.csv', sep=',', usecols=['Source Code', 'Target Code'])
     df.rename(columns={'Source Code': SOURCE_ID, 'Target Code': TARGET_ID}, inplace=True)
     df[TARGET_ID] = df[TARGET_ID].map(lambda s: s[len('HGNC:'):])
     df.dropna(inplace=True)
@@ -70,7 +70,7 @@ def get_ncit_go_df() -> pd.DataFrame:
 
     In this file, the only association type was mapsTo.
     """
-    df = ensure_df(PREFIX, GO_MAPPINGS_URL, path='ncit_go.csv', sep=',')
+    df = ensure_df(PREFIX, url=GO_MAPPINGS_URL, path='ncit_go.csv', sep=',')
     # The data is flipped here
     df.rename(columns={'Source Code': TARGET_ID, 'Target Code': SOURCE_ID}, inplace=True)
     df[TARGET_ID] = df[TARGET_ID].map(lambda s: s[len('GO:')])
@@ -88,7 +88,7 @@ def get_ncit_chebi_df() -> pd.DataFrame:
 
     In this file, the only association type was mapsTo.
     """
-    df = ensure_df(PREFIX, CHEBI_MAPPINGS_URL, path='ncit_chebi.csv', sep=',')
+    df = ensure_df(PREFIX, url=CHEBI_MAPPINGS_URL, path='ncit_chebi.csv', sep=',')
     df.rename(columns={'Source Code': SOURCE_ID, 'Target Code': TARGET_ID}, inplace=True)
     df[TARGET_ID] = df[TARGET_ID].map(lambda s: s[len('CHEBI:')])
     df.dropna(inplace=True)
@@ -105,7 +105,7 @@ def get_ncit_uniprot_df() -> pd.DataFrame:
 
     In this file, the only association type was mapsTo.
     """
-    df = ensure_df(PREFIX, UNIPROT_MAPPINGS_URL, path='ncit_uniprot.csv')
+    df = ensure_df(PREFIX, url=UNIPROT_MAPPINGS_URL, path='ncit_uniprot.csv')
     df.rename(columns={'NCIt Code': SOURCE_ID, 'SwissProt ID': TARGET_ID}, inplace=True)
     df[SOURCE_PREFIX] = 'ncit'
     df[TARGET_PREFIX] = 'uniprot'

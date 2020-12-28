@@ -7,6 +7,7 @@ from collections import defaultdict
 from typing import Iterable
 
 import click
+from pystow.utils import get_commit
 
 from pyobo import get_name_id_mapping
 from pyobo.cli_utils import verbose_option
@@ -17,26 +18,33 @@ from pyobo.struct.typedef import has_member, has_part, is_a, part_of
 logger = logging.getLogger(__name__)
 
 PREFIX = 'fplx'
-ENTITIES_URL = 'https://raw.githubusercontent.com/sorgerlab/famplex/master/entities.csv'
-XREFS_URL = 'https://raw.githubusercontent.com/sorgerlab/famplex/master/equivalences.csv'
-RELATIONS_URL = 'https://raw.githubusercontent.com/sorgerlab/famplex/master/relations.csv'
 
 
 def get_obo() -> Obo:
     """Get FamPlex as OBO."""
+    version = get_commit('sorgerlab', 'famplex')
     return Obo(
         ontology=PREFIX,
         name='FamPlex',
         iter_terms=get_terms,
+        iter_items_kwargs=dict(version=version),
+        data_version=version,
         typedefs=[has_member, has_part, is_a, part_of],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
-def get_terms() -> Iterable[Term]:
+def get_terms(version: str) -> Iterable[Term]:
     """Get the FamPlex terms."""
-    entities_df = ensure_df(PREFIX, ENTITIES_URL, dtype=str)
-    relations_df = ensure_df(PREFIX, RELATIONS_URL, header=None, sep=',', dtype=str)
+    entities_url = f'https://raw.githubusercontent.com/sorgerlab/famplex/{version}/entities.csv'
+    entities_df = ensure_df(PREFIX, url=entities_url, version=version, dtype=str)
+
+    relations_url = f'https://raw.githubusercontent.com/sorgerlab/famplex/{version}/relations.csv'
+    relations_df = ensure_df(PREFIX, url=relations_url, version=version, header=None, sep=',', dtype=str)
+
+    # TODO add xrefs
+    # xrefs_url = f'https://raw.githubusercontent.com/sorgerlab/famplex/{version}/equivalences.csv'
+    # xrefs_df = ensure_df(PREFIX, url=xrefs_url, version=version, header=None, sep=',', dtype=str)
 
     hgnc_name_to_id = get_name_id_mapping('hgnc')
     in_edges = defaultdict(list)

@@ -80,7 +80,7 @@ namespace_to_column = [
 
 def get_terms() -> Iterable[Term]:
     """Get RGD terms."""
-    df = ensure_df(PREFIX, GENES_URL, sep='\t', header=0, comment='#', dtype={
+    df = ensure_df(PREFIX, url=GENES_URL, sep='\t', header=0, comment='#', dtype={
         'NCBI_GENE_ID': str,
         'GENE_RGD_ID': str,
     })

@@ -115,7 +115,7 @@ def _ensure_obo_path(prefix: str) -> str:
     if url is None:
         raise MissingOboBuild(f'OBO Foundry build is missing a URL for: {prefix}, {build}')
 
-    return ensure_path(prefix, url)
+    return ensure_path(prefix, url=url)
 
 
 SKIP = {

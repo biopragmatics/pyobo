@@ -32,7 +32,7 @@ def get_obo() -> Obo:
 
 def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over DrugCentral terms."""
-    df = ensure_df(PREFIX, URL, version=version)
+    df = ensure_df(PREFIX, url=URL, version=version)
     for smiles, inchi, inchi_key, drugcentral_id, drugcentral_name, cas in df.values:
         if pd.isna(smiles) or pd.isna(inchi) or pd.isna(inchi_key):
             logger.warning('missing data for drugcentral:%s', drugcentral_id)

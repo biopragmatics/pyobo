@@ -114,7 +114,7 @@ def get_df(version: str) -> pd.DataFrame:
     urls = [f'{url_base}/{species}.tsv' for species in SPECIES]
 
     dfs = [
-        ensure_df(PREFIX, url, version=version, na_values={'-'}, names=COLUMNS, header=0, dtype=DTYPE)
+        ensure_df(PREFIX, url=url, version=version, na_values={'-'}, names=COLUMNS, header=0, dtype=DTYPE)
         for url in urls
     ]
     return pd.concat(dfs)

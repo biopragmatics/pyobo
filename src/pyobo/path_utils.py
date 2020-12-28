@@ -23,7 +23,6 @@ __all__ = [
     'get_prefix_obo_path',
     'ensure_path',
     'ensure_df',
-    'ensure_excel',
     'ensure_tar_df',
 ]
 
@@ -88,8 +87,8 @@ def _urlretrieve(
 
 def ensure_path(
     prefix: str,
-    url: str,
     *,
+    url: str,
     version: VersionHint = None,
     path: Optional[str] = None,
     force: bool = False,
@@ -110,8 +109,8 @@ def ensure_path(
 
 def ensure_df(
     prefix: str,
-    url: str,
     *,
+    url: str,
     version: VersionHint = None,
     path: Optional[str] = None,
     force: bool = False,
@@ -119,34 +118,21 @@ def ensure_df(
     **kwargs,
 ) -> pd.DataFrame:
     """Download a file and open as a dataframe."""
-    path = ensure_path(prefix, url, version=version, path=path, force=force)
+    path = ensure_path(prefix, url=url, version=version, path=path, force=force)
     return pd.read_csv(path, sep=sep, **kwargs)
-
-
-def ensure_excel(
-    prefix: str,
-    url: str,
-    *,
-    version: VersionHint = None,
-    path: Optional[str] = None,
-    **kwargs,
-) -> pd.DataFrame:
-    """Download an excel file and open as a dataframe."""
-    path = ensure_path(prefix, url, version=version, path=path)
-    return pd.read_excel(path, **kwargs)
 
 
 def ensure_tar_df(
     prefix: str,
+    *,
     url: str,
     inner_path: str,
-    *,
     version: VersionHint = None,
     path: Optional[str] = None,
     **kwargs,
 ) -> pd.DataFrame:
     """Download a tar file and open as a dataframe."""
-    path = ensure_path(prefix, url, version=version, path=path)
+    path = ensure_path(prefix, url=url, version=version, path=path)
     with tarfile.open(path) as tar_file:
         with tar_file.extractfile(inner_path) as file:
             return pd.read_csv(file, **kwargs)

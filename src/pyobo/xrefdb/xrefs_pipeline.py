@@ -409,14 +409,14 @@ def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
     """
     yield from iter_helper(get_id_name_mapping, leave=leave)
 
-    ncbi_path = ensure_path(ncbigene.PREFIX, ncbigene.GENE_INFO_URL)
+    ncbi_path = ensure_path(ncbigene.PREFIX, url=ncbigene.GENE_INFO_URL)
     with gzip.open(ncbi_path, 'rt') as file:
         next(file)  # throw away the header
         for line in tqdm(file, desc=f'extracting {ncbigene.PREFIX}', unit_scale=True, total=27_000_000):
             line = line.strip().split('\t')
             yield ncbigene.PREFIX, line[1], line[2]
 
-    pcc_path = ensure_path(pubchem.PREFIX, pubchem.CID_NAME_URL)
+    pcc_path = pubchem._ensure_cid_name_path()
     with gzip.open(pcc_path, mode='rt', encoding='ISO-8859-1') as file:
         for line in tqdm(file, desc=f'extracting {pubchem.PREFIX}', unit_scale=True, total=103_000_000):
             identifier, name = line.strip().split('\t', 1)

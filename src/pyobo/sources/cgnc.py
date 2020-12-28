@@ -26,7 +26,7 @@ def get_obo() -> Obo:
 
 def get_terms() -> Iterable[Term]:
     """Get CGNC terms."""
-    path = ensure_path(PREFIX, URL, path=f'{PREFIX}.tsv')
+    path = ensure_path(PREFIX, url=URL, path=f'{PREFIX}.tsv')
     df = pd.read_csv(path, sep='\t', dtype={'Entrez Gene id': str, 'CGNC id': str})
 
     for cgnc_id, entrez_id, ensembl_id, symbol, name, synonyms, _, _ in df.values:

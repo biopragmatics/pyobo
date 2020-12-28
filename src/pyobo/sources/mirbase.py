@@ -41,7 +41,7 @@ def get_obo() -> Obo:
 def get_terms(version: str) -> List[Term]:
     """Parse miRNA data from filepath and convert it to dictionary."""
     url = f'ftp://mirbase.org/pub/mirbase/{version}/miRNA.dat.gz'
-    definitions_path = ensure_path(PREFIX, url, version=version)
+    definitions_path = ensure_path(PREFIX, url=url, version=version)
 
     file_handle = (
         gzip.open(definitions_path, 'rt')
@@ -54,7 +54,7 @@ def get_terms(version: str) -> List[Term]:
 
 def _prepare_organisms(version: str):
     url = f'ftp://mirbase.org/pub/mirbase/{version}/organisms.txt.gz'
-    df = ensure_df(PREFIX, url, sep='\t', dtype={'#NCBI-taxid': str}, version=version)
+    df = ensure_df(PREFIX, url=url, sep='\t', dtype={'#NCBI-taxid': str}, version=version)
     return {
         division: (taxonomy_id, name)
         for _, division, name, _tree, taxonomy_id in df.values
@@ -63,7 +63,7 @@ def _prepare_organisms(version: str):
 
 def _prepare_aliases(version: str) -> Mapping[str, List[str]]:
     url = f'ftp://mirbase.org/pub/mirbase/{version}/aliases.txt.gz'
-    df = ensure_df(PREFIX, url, sep='\t', version=version)
+    df = ensure_df(PREFIX, url=url, sep='\t', version=version)
     return {
         mirbase_id: [s.strip() for s in synonyms.split(';') if s and s.strip()]
         for mirbase_id, synonyms in df.values

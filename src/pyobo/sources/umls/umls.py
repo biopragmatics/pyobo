@@ -70,7 +70,7 @@ def get_obo() -> Obo:
 def iter_terms():
     """Iterate over UMLS terms."""
     # FIXME needs automated scrapy step where you put in user/password
-    path = ensure_path(PREFIX, URL, version=VERSION)
+    path = ensure_path(PREFIX, url=URL, version=VERSION)
     with zipfile.ZipFile(path) as zip_file:
         with zip_file.open('MRCONSO.RRF', mode='r') as file:
             it = tqdm(file, unit_scale=True, desc='[umls] parsing')

@@ -17,7 +17,6 @@ from ..struct.typedef import has_member
 PREFIX = 'interpro'
 
 #: Data source for protein-interpro mappings
-INTERPRO_PROTEIN_URL = 'ftp://ftp.ebi.ac.uk/pub/databases/interpro/protein2ipr.dat.gz'
 INTERPRO_PROTEIN_COLUMNS = [
     'uniprot_id',
     'interpro_id',
@@ -26,9 +25,6 @@ INTERPRO_PROTEIN_COLUMNS = [
     'start',  # int
     'end',  # int
 ]
-
-#: Data source for interpro-GO mappings
-INTERPRO_GO_MAPPING_URL = 'ftp://ftp.ebi.ac.uk/pub/databases/interpro/interpro2go'
 
 
 def get_obo() -> Obo:
@@ -48,10 +44,8 @@ def get_obo() -> Obo:
 def iter_terms(*, version: str, proteins: bool = False) -> Iterable[Term]:
     """Get InterPro terms."""
     parents = get_interpro_tree(version=version)
-
-    interpro_to_gos = get_interpro_go_df()
-
-    interpro_to_proteins = get_interpro_to_proteins_df() if proteins else {}
+    interpro_to_gos = get_interpro_go_df(version=version)
+    interpro_to_proteins = get_interpro_to_proteins_df(version=version) if proteins else {}
 
     entries_df = ensure_df(
         PREFIX,
@@ -84,16 +78,17 @@ def iter_terms(*, version: str, proteins: bool = False) -> Iterable[Term]:
         yield term
 
 
-def get_interpro_go_df() -> Mapping[str, Set[Tuple[str, str]]]:
+def get_interpro_go_df(version: str) -> Mapping[str, Set[Tuple[str, str]]]:
     """Get InterPro to Gene Ontology molecular function mapping."""
-    path = ensure_path(PREFIX, INTERPRO_GO_MAPPING_URL, path='interpro2go.tsv')
+    url = f'ftp://ftp.ebi.ac.uk/pub/databases/interpro/{version}/interpro2go'
+    path = ensure_path(PREFIX, url=url, path='interpro2go.tsv', version=version)
     return get_go_mapping(path, prefix=PREFIX)
 
 
 def get_interpro_tree(version: str):
     """Get InterPro Data source."""
     url = f'ftp://ftp.ebi.ac.uk/pub/databases/interpro/{version}/ParentChildTreeFile.txt'
-    path = ensure_path(PREFIX, url)
+    path = ensure_path(PREFIX, url=url, version=version)
     with open(path) as f:
         return _parse_tree_helper(f)
 
@@ -132,10 +127,12 @@ def _count_front(s: str) -> int:
             return position
 
 
-def get_interpro_to_proteins_df():
+def get_interpro_to_proteins_df(version: str):
     """Get InterPro to Protein dataframe."""
+    url = f'ftp://ftp.ebi.ac.uk/pub/databases/interpro/{version}/protein2ipr.dat.gz'
     df = ensure_df(
-        PREFIX, INTERPRO_PROTEIN_URL,
+        PREFIX,
+        url=url,
         compression='gzip',
         usecols=[0, 1, 3],
         names=INTERPRO_PROTEIN_COLUMNS,

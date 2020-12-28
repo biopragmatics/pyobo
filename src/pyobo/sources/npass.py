@@ -38,7 +38,7 @@ def get_df() -> pd.DataFrame:
     """Get the NPASS chemical nomenclature."""
     return ensure_df(
         PREFIX,
-        GENERAL_URL,
+        url=GENERAL_URL,
         version=VERSION,
         dtype=str,
         encoding='ISO-8859-1',

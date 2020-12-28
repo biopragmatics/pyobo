@@ -17,43 +17,49 @@ from ..struct import Obo, Reference, Synonym, Term
 logger = logging.getLogger(__name__)
 
 PREFIX = 'mesh'
-YEAR = '2019'
-DESCRIPTOR_URL = f'ftp://nlmpubs.nlm.nih.gov/online/mesh/{YEAR}/xmlmesh/desc{YEAR}.gz'
-SUPPLEMENT_URL = f'ftp://nlmpubs.nlm.nih.gov/online/mesh/{YEAR}/xmlmesh/supp{YEAR}.gz'
+
+
+# VERSION = '2019'
 
 
 def get_obo() -> Obo:
     """Get MeSH as OBO."""
+    version = '2019'
     return Obo(
         ontology=PREFIX,
         name='Medical Subject Headings',
         iter_terms=get_terms,
-        data_version=YEAR,
+        iter_items_kwargs=dict(version=version),
+        data_version=version,
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
-@cached_mapping(
-    path=prefix_directory_join(PREFIX, f'mesh_{YEAR}_tree.tsv'),
-    header=['mesh_tree_number', 'mesh_id'],
-)
-def get_tree_to_mesh_id() -> Mapping[str, str]:
+def get_tree_to_mesh_id(version: str) -> Mapping[str, str]:
     """Get a mapping from MeSH tree numbers to their MeSH identifiers."""
-    mesh = ensure_mesh_descriptors()
-    rv = {}
-    for entry in mesh:
-        mesh_id = entry['identifier']
-        for tree_number in entry['tree_numbers']:
-            rv[tree_number] = mesh_id
-    return rv
+
+    @cached_mapping(
+        path=prefix_directory_join(PREFIX, 'mesh_tree.tsv', version=version),
+        header=['mesh_tree_number', 'mesh_id'],
+    )
+    def _inner():
+        mesh = ensure_mesh_descriptors(version=version)
+        rv = {}
+        for entry in mesh:
+            mesh_id = entry['identifier']
+            for tree_number in entry['tree_numbers']:
+                rv[tree_number] = mesh_id
+        return rv
+
+    return _inner()
 
 
-def get_terms() -> Iterable[Term]:
+def get_terms(version: str) -> Iterable[Term]:
     """Get MeSH OBO terms."""
     mesh_id_to_term: Dict[str, Term] = {}
 
-    descriptors = ensure_mesh_descriptors()
-    supplemental_records = ensure_mesh_supplemental_records()
+    descriptors = ensure_mesh_descriptors(version=version)
+    supplemental_records = ensure_mesh_supplemental_records(version=version)
 
     for entry in itt.chain(descriptors, supplemental_records):
         identifier = entry['identifier']
@@ -86,20 +92,30 @@ def get_terms() -> Iterable[Term]:
     return mesh_id_to_term.values()
 
 
-@cached_json(path=prefix_directory_join(PREFIX, f'mesh{YEAR}.json'))
-def ensure_mesh_descriptors() -> List[Mapping[str, Any]]:
+def ensure_mesh_descriptors(version: str) -> List[Mapping[str, Any]]:
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
-    path = ensure_path(PREFIX, DESCRIPTOR_URL)
-    root = parse_xml_gz(path)
-    return get_descriptor_records(root, id_key='DescriptorUI', name_key='DescriptorName/String')
+
+    @cached_json(path=prefix_directory_join(PREFIX, 'mesh.json', version=version))
+    def _inner():
+        url = f'ftp://nlmpubs.nlm.nih.gov/online/mesh/{version}/xmlmesh/desc{version}.gz'
+        path = ensure_path(PREFIX, url=url, version=version)
+        root = parse_xml_gz(path)
+        return get_descriptor_records(root, id_key='DescriptorUI', name_key='DescriptorName/String')
+
+    return _inner()
 
 
-@cached_json(path=prefix_directory_join(PREFIX, f'supp{YEAR}.json'))
-def ensure_mesh_supplemental_records() -> List[Mapping[str, Any]]:
+def ensure_mesh_supplemental_records(version: str) -> List[Mapping[str, Any]]:
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
-    path = ensure_path(PREFIX, SUPPLEMENT_URL)
-    root = parse_xml_gz(path)
-    return get_descriptor_records(root, id_key='SupplementalRecordUI', name_key='SupplementalRecordName/String')
+
+    @cached_json(path=prefix_directory_join(PREFIX, 'supp.json', version=version))
+    def _inner():
+        url = f'ftp://nlmpubs.nlm.nih.gov/online/mesh/{version}/xmlmesh/supp{version}.gz'
+        path = ensure_path(PREFIX, url=url, version=version)
+        root = parse_xml_gz(path)
+        return get_descriptor_records(root, id_key='SupplementalRecordUI', name_key='SupplementalRecordName/String')
+
+    return _inner()
 
 
 def get_descriptor_records(element: Element, id_key: str, name_key) -> List[Mapping]:

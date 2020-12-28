@@ -48,7 +48,7 @@ def get_ncbigene_id_to_name_mapping() -> Mapping[str, str]:
     """Get the Entrez name mapping."""
     df = ensure_df(
         PREFIX,
-        GENE_INFO_URL,
+        url=GENE_INFO_URL,
         sep='\t',
         na_values=['-', 'NEWENTRY'],
         usecols=['GeneID', 'Symbol'],
@@ -73,7 +73,7 @@ def get_gene_info_df() -> pd.DataFrame:
     """Get the gene info dataframe."""
     return ensure_df(
         PREFIX,
-        GENE_INFO_URL,
+        url=GENE_INFO_URL,
         sep='\t',
         na_values=['-', 'NEWENTRY'],
         usecols=GENE_INFO_COLUMNS,

@@ -12,6 +12,7 @@ import tarfile
 from contextlib import closing
 from typing import Iterable
 
+import bioversions
 import click
 
 from pyobo.cli_utils import verbose_option
@@ -21,8 +22,6 @@ from pyobo.struct import Obo, Reference, Term
 logger = logging.getLogger(__name__)
 
 PREFIX = 'chembl.compound'
-VERSION = '27'
-URL = f'ftp://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_{VERSION}/chembl_{VERSION}_sqlite.tar.gz'
 
 QUERY = '''
 SELECT
@@ -39,19 +38,23 @@ WHERE molecule_dictionary.pref_name IS NOT NULL
 
 def get_obo() -> Obo:
     """Return ChEMBL as OBO."""
+    version = bioversions.get_version('chembl')
     return Obo(
         ontology='chembl.compound',
         name='ChEMBL',
+        data_version=version,
         iter_terms=iter_terms,
+        iter_items_kwargs=dict(version=version),
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
-def get_path():
+def get_path(version: str):
     """Get the path to the extracted ChEMBL SQLite database."""
-    path = ensure_path(PREFIX, URL, version=VERSION)
-    name = f'chembl_{VERSION}/chembl_{VERSION}_sqlite/chembl_{VERSION}.db'
-    d = get_prefix_directory(PREFIX, version=VERSION)
+    url = f'ftp://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_{version}/chembl_{version}_sqlite.tar.gz'
+    path = ensure_path(PREFIX, url=url, version=version)
+    name = f'chembl_{version}/chembl_{version}_sqlite/chembl_{version}.db'
+    d = get_prefix_directory(PREFIX, version=version)
     op = os.path.join(d, name)
     if not os.path.exists(op):
         with tarfile.open(path, mode='r', encoding='utf-8') as tar_file:
@@ -59,9 +62,9 @@ def get_path():
     return op
 
 
-def iter_terms() -> Iterable[Term]:
+def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over ChEMBL compound's names."""
-    op = get_path()
+    op = get_path(version=version)
     logger.info('opening connection to %s', op)
     with closing(sqlite3.connect(op)) as conn:
         logger.info('using connection %s', conn)

@@ -57,7 +57,7 @@ def iter_terms() -> Iterable[Term]:
 
     for species_code, tax_id in _PATHWAY_INFO:
         url = f'{base_url}-{species_code}.gmt'
-        path = ensure_path(PREFIX, url, version=version)
+        path = ensure_path(PREFIX, url=url, version=version)
 
         species_code = species_code.replace('_', ' ')
         species_reference = Reference(

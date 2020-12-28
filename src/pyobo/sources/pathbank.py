@@ -58,7 +58,9 @@ def get_obo() -> Obo:
 def get_proteins_df() -> pd.DataFrame:
     """Get the proteins dataframe."""
     proteins_df = ensure_df(
-        PREFIX, PROTEINS_URL, sep=',',
+        PREFIX,
+        url=PROTEINS_URL,
+        sep=',',
         usecols=['PathBank ID', 'Uniprot ID'],
     )
     proteins_df = proteins_df[proteins_df['Uniprot ID'].notna()]
@@ -80,7 +82,9 @@ def get_protein_mapping() -> Mapping[str, Set[Reference]]:
 def get_metabolite_df() -> pd.DataFrame:
     """Get the metabolites dataframe."""
     return ensure_df(
-        PREFIX, METABOLITE_URL, sep=',',
+        PREFIX,
+        url=METABOLITE_URL,
+        sep=',',
         usecols=['PathBank ID', 'Metabolite ID', 'Metabolite Name'],
     )
 
@@ -101,7 +105,7 @@ def iter_terms() -> Iterable[Term]:
     smpdb_id_to_proteins = get_protein_mapping()
     smpdb_id_to_metabolites = get_metabolite_mapping()
 
-    pathways_df = ensure_df(PREFIX, PATHWAY_URL, sep=',')
+    pathways_df = ensure_df(PREFIX, url=PATHWAY_URL, sep=',')
     it = tqdm(pathways_df.values, total=len(pathways_df.index), desc=f'mapping {PREFIX}')
     for smpdb_id, pathbank_id, name, subject, _description in it:
         reference = Reference(prefix=PREFIX, identifier=pathbank_id, name=name)

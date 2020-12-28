@@ -32,7 +32,7 @@ def get_obo() -> Obo:
 
 def get_hierarchy() -> Mapping[str, List[str]]:
     """Get the HGNC Gene Families hierarchy as a dictionary."""
-    path = ensure_path(PREFIX, HIERARCHY_URL)
+    path = ensure_path(PREFIX, url=HIERARCHY_URL)
     df = pd.read_csv(path, dtype={'parent_fam_id': str, 'child_fam_id': str})
     d = defaultdict(list)
     for parent_id, child_id in df.values:
@@ -62,7 +62,7 @@ def get_terms() -> Iterable[Term]:
 
 
 def _get_terms_helper() -> Iterable[Term]:
-    path = ensure_path(PREFIX, FAMILIES_URL)
+    path = ensure_path(PREFIX, url=FAMILIES_URL)
     df = pd.read_csv(path, dtype={'id': str})
 
     it = tqdm(df[COLUMNS].values, desc=f'Mapping {PREFIX}')

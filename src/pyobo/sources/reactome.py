@@ -42,10 +42,10 @@ def iter_terms() -> Iterable[Term]:
     """Iterate Reactome terms."""
     ncbitaxon_name_to_id = get_name_id_mapping('ncbitaxon')
 
-    provenance_df = ensure_df(PREFIX, PROVENANCE_URL, header=None)
+    provenance_df = ensure_df(PREFIX, url=PROVENANCE_URL, header=None)
     provenance_d = multidict(provenance_df.values)
 
-    df = ensure_df(PREFIX, PATHWAY_NAMES_URL, header=None, names=['reactome_id', 'name', 'species'])
+    df = ensure_df(PREFIX, url=PATHWAY_NAMES_URL, header=None, names=['reactome_id', 'name', 'species'])
     df['species'] = df['species'].map(lambda x: SPECIES_REMAPPING.get(x) or x)
     df['taxonomy_id'] = df['species'].map(ncbitaxon_name_to_id.get)
 
@@ -64,7 +64,7 @@ def iter_terms() -> Iterable[Term]:
 
         term.set_species(identifier=taxonomy_id, name=species_name)
 
-    hierarchy_df = ensure_df(PREFIX, PATHWAYS_HIERARCHY_URL, header=None)
+    hierarchy_df = ensure_df(PREFIX, url=PATHWAYS_HIERARCHY_URL, header=None)
     for parent_id, child_id in hierarchy_df.values:
         terms[child_id].append_parent(terms[parent_id])
 

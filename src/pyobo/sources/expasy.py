@@ -6,6 +6,8 @@ import logging
 from collections import defaultdict
 from typing import Dict, Iterable, Mapping, Optional, Set, Tuple
 
+import bioversions
+
 from .utils import get_go_mapping
 from ..path_utils import ensure_path
 from ..struct import Obo, Reference, Synonym, Term, TypeDef
@@ -14,7 +16,6 @@ from ..struct.typedef import has_member
 PREFIX = 'eccode'
 EXPASY_DATABASE_URL = 'ftp://ftp.expasy.org/databases/enzyme/enzyme.dat'
 EXPASY_TREE_URL = 'ftp://ftp.expasy.org/databases/enzyme/enzclass.txt'
-EC2GO_URL = 'http://current.geneontology.org/ontology/external2go/ec2go'
 
 logger = logging.getLogger(__name__)
 
@@ -42,18 +43,21 @@ has_molecular_function = TypeDef(
 
 def get_obo() -> Obo:
     """Get ExPASy as OBO."""
+    version = bioversions.get_version('expasy')
     return Obo(
         ontology=PREFIX,
         name='ExPASy Enzyme Nomenclature',
         iter_terms=get_terms,
+        iter_items_kwargs=dict(version=version),
+        data_version=version,
         typedefs=[has_member, has_molecular_function],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
-def get_terms() -> Iterable[Term]:
+def get_terms(version: str) -> Iterable[Term]:
     """Get the ExPASy terms."""
-    tree_path = ensure_path(PREFIX, EXPASY_TREE_URL)
+    tree_path = ensure_path(PREFIX, url=EXPASY_TREE_URL, version=version)
     with open(tree_path) as file:
         tree = get_tree(file)
 
@@ -73,7 +77,7 @@ def get_terms() -> Iterable[Term]:
             for parent_ec_code in parents_ec_codes
         ]
 
-    database_path = ensure_path(PREFIX, EXPASY_DATABASE_URL)
+    database_path = ensure_path(PREFIX, url=EXPASY_DATABASE_URL, version=version)
     with open(database_path) as file:
         data = get_database(file)
 
@@ -266,7 +270,8 @@ def _group_by_id(lines):
 
 def get_ec2go() -> Mapping[str, Set[Tuple[str, str]]]:
     """Get the EC mapping to GO activities."""
-    path = ensure_path(PREFIX, EC2GO_URL, path='ec2go.tsv')
+    url = 'http://current.geneontology.org/ontology/external2go/ec2go'
+    path = ensure_path(PREFIX, url=url, path='ec2go.tsv')
     return get_go_mapping(path, 'EC')
 
 

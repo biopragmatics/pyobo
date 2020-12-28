@@ -101,7 +101,7 @@ def get_obo() -> Obo:
 def get_terms() -> Iterable[Term]:
     """Get HGNC terms."""
     unhandled = set()
-    path = ensure_path(PREFIX, DEFINITIONS_URL)
+    path = ensure_path(PREFIX, url=DEFINITIONS_URL)
     with open(path) as file:
         entries = json.load(file)['response']['docs']
 

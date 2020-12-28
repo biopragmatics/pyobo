@@ -30,9 +30,9 @@ def get_obo() -> Obo:
 
 def iter_terms() -> Iterable[Term]:
     """Get CONSO terms."""
-    terms_df = ensure_df(PREFIX, TERMS_URL)
+    terms_df = ensure_df(PREFIX, url=TERMS_URL)
 
-    synonyms_df = ensure_df(PREFIX, SYNONYMS_URL)
+    synonyms_df = ensure_df(PREFIX, url=SYNONYMS_URL)
     synonyms_df['reference'] = synonyms_df['reference'].map(
         lambda s: [Reference.from_curie(s)] if pd.notna(s) and s != '?' else [],
     )

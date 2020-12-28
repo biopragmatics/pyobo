@@ -40,7 +40,7 @@ def get_obo() -> Obo:
 
 def _get_version() -> str:
     """Get the version of the current data."""
-    zip_path = ensure_path(PREFIX, URL)
+    zip_path = ensure_path(PREFIX, url=URL)
     with zipfile.ZipFile(zip_path) as zip_file:
         for x in zip_file.filelist:
             if x.filename.endswith('.sqlite'):
@@ -50,7 +50,7 @@ def _get_version() -> str:
 
 def iter_terms() -> Iterable[Term]:
     """Get ITIS terms."""
-    zip_path = ensure_path(PREFIX, URL)
+    zip_path = ensure_path(PREFIX, url=URL)
     version = _get_version()
     sqlite_dir = get_prefix_directory(PREFIX, version=version)
     sqlite_path = prefix_directory_join(PREFIX, 'ITIS.sqlite', version=version)

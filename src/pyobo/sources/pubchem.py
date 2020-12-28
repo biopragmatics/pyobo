@@ -3,7 +3,7 @@
 """Converter for PubChem Compound."""
 
 import logging
-from typing import Iterable, Mapping
+from typing import Iterable, Mapping, Optional
 
 import pandas as pd
 from tqdm import tqdm
@@ -16,6 +16,7 @@ from ..struct import Obo, Reference, Synonym, Term
 logger = logging.getLogger(__name__)
 
 PREFIX = 'pubchem.compound'
+VERSION = '2020-12-01'
 
 
 def _get_pubchem_extras_url(version: str, end: str) -> str:
@@ -24,13 +25,12 @@ def _get_pubchem_extras_url(version: str, end: str) -> str:
 
 def get_obo() -> Obo:
     """Get PubChem Compound OBO."""
-    version = '2020-11-01'
     obo = Obo(
         ontology='pubchem.compound',
         name='PubChem Compound',
         iter_terms=get_terms,
-        iter_items_kwargs=dict(version=version),
-        data_version=version,
+        iter_items_kwargs=dict(version=VERSION),
+        data_version=VERSION,
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
     return obo
@@ -57,7 +57,7 @@ def get_pubchem_id_to_name(version: str) -> Mapping[str, str]:
     """Get a mapping from PubChem compound identifiers to their titles."""
     # 2 tab-separated columns: compound_id, name
     url = _get_pubchem_extras_url(version, 'CID-Title.gz')
-    df = ensure_df(PREFIX, url, version=version, dtype=str, encoding='latin-1')
+    df = ensure_df(PREFIX, url=url, version=version, dtype=str, encoding='latin-1')
     return dict(df.values)
 
 
@@ -88,15 +88,22 @@ def get_pubchem_id_to_mesh_id(version: str) -> Mapping[str, str]:
     return dict(df.values)
 
 
-def get_terms(*, version: str, use_tqdm: bool = True) -> Iterable[Term]:
-    """Get PubChem Compound terms."""
+def _ensure_cid_name_path(*, version: Optional[str] = None) -> str:
+    if version is None:
+        version = VERSION
     # 2 tab-separated columns: compound_id, name
     cid_name_url = _get_pubchem_extras_url(version, 'CID-Title.gz')
-    cid_name_path = ensure_path(PREFIX, cid_name_url, version=version)
+    cid_name_path = ensure_path(PREFIX, url=cid_name_url, version=version)
+    return cid_name_path
+
+
+def get_terms(*, version: str, use_tqdm: bool = True) -> Iterable[Term]:
+    """Get PubChem Compound terms."""
+    cid_name_path = _ensure_cid_name_path(version=version)
 
     # 2 tab-separated columns: compound_id, synonym
     cid_synonyms_url = _get_pubchem_extras_url(version, 'CID-Synonym-filtered.gz')
-    cid_synonyms_path = ensure_path(PREFIX, cid_synonyms_url, version=version)
+    cid_synonyms_path = ensure_path(PREFIX, url=cid_synonyms_url, version=version)
 
     it = iterate_gzips_together(cid_name_path, cid_synonyms_path)
 
