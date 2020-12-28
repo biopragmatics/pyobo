@@ -4,6 +4,7 @@ prune benchmarking
 
 recursive-include docs/source *.py
 recursive-include docs/source *.rst
+recursive-include docs/source *.png
 include docs/Makefile
 
 global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle
