@@ -286,6 +286,11 @@ class Obo:
     #: The hierarchy of terms
     _hierarchy: Optional[nx.DiGraph] = field(init=False, default=None)
 
+    #: For super-sized datasets that shouldn't be read into memory
+    iter_only: bool = False
+
+    _items: Optional[List[Term]] = field(init=False, default=None)
+
     @property
     def date_formatted(self) -> str:
         """Get the date as a formatted string."""
@@ -350,7 +355,11 @@ class Obo:
         self.write_obonet_gz(obonet_gz_path)
 
     def __iter__(self):  # noqa: D105
-        return iter(self.iter_terms(**(self.iter_items_kwargs or {})))
+        if self.iter_only:
+            return iter(self.iter_terms(**(self.iter_items_kwargs or {})))
+        if self._items is None:
+            self._items = list(self.iter_terms(**(self.iter_items_kwargs or {})))
+        return iter(self._items)
 
     def ancestors(self, identifier: str) -> Set[str]:
         """Return a set of identifiers for parents of the given identifier."""
