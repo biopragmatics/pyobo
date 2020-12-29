@@ -87,7 +87,7 @@ def _urlretrieve(
 
 def ensure_path(
     prefix: str,
-    *,
+    *parts: str,
     url: str,
     version: VersionHint = None,
     path: Optional[str] = None,
@@ -99,17 +99,17 @@ def ensure_path(
     if path is None:
         path = name_from_url(url)
 
-    path = prefix_directory_join(prefix, path, version=version)
+    _path = prefix_directory_join(prefix, *parts, path, version=version)
 
-    if not os.path.exists(path) or force:
-        _urlretrieve(url=url, path=path, stream=stream, **(urlretrieve_kwargs or {}))
+    if not _path.exists() or force:
+        _urlretrieve(url=url, path=_path, stream=stream, **(urlretrieve_kwargs or {}))
 
-    return path.as_posix()
+    return _path.as_posix()
 
 
 def ensure_df(
     prefix: str,
-    *,
+    *parts: str,
     url: str,
     version: VersionHint = None,
     path: Optional[str] = None,
@@ -118,13 +118,13 @@ def ensure_df(
     **kwargs,
 ) -> pd.DataFrame:
     """Download a file and open as a dataframe."""
-    path = ensure_path(prefix, url=url, version=version, path=path, force=force)
+    path = ensure_path(prefix, *parts, url=url, version=version, path=path, force=force)
     return pd.read_csv(path, sep=sep, **kwargs)
 
 
 def ensure_tar_df(
     prefix: str,
-    *,
+    *parts: str,
     url: str,
     inner_path: str,
     version: VersionHint = None,
@@ -132,7 +132,7 @@ def ensure_tar_df(
     **kwargs,
 ) -> pd.DataFrame:
     """Download a tar file and open as a dataframe."""
-    path = ensure_path(prefix, url=url, version=version, path=path)
+    path = ensure_path(prefix, *parts, url=url, version=version, path=path)
     with tarfile.open(path) as tar_file:
         with tar_file.extractfile(inner_path) as file:
             return pd.read_csv(file, **kwargs)
