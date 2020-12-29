@@ -170,9 +170,12 @@ class Term(Referenced):
             raise ValueError('can not append null reference')
         self.relationships[typedef].append(reference)
 
-    def set_species(self, identifier: str, name: str):
+    def set_species(self, identifier: str, name: Optional[str] = None):
         """Append the from_species relation."""
-        self.append_relationship(from_species, Reference(prefix='taxonomy', identifier=identifier, name=name))
+        if name is None:
+            import pyobo
+            name = pyobo.get_name('ncbitaxon', identifier)
+        self.append_relationship(from_species, Reference(prefix='ncbitaxon', identifier=identifier, name=name))
 
     def extend_relationship(self, typedef: TypeDef, references: Iterable[Reference]) -> None:
         """Append several relationships."""
