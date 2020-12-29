@@ -5,13 +5,15 @@
 from dataclasses import dataclass, field
 from typing import Iterable, List, Mapping, Optional, Tuple, Union
 
-from .reference import Reference, Referenced, normalize_curie
+from .reference import Reference, Referenced
+from ..identifier_utils import normalize_curie
 
 __all__ = [
     'TypeDef',
     'get_reference_tuple',
     'default_typedefs',
     'from_species',
+    'species_specific',
     'has_part',
     'pathway_has_part',
     'part_of',
@@ -87,6 +89,12 @@ def get_reference_tuple(relation: Union[Tuple[str, str], Reference, TypeDef]) ->
 
 from_species = TypeDef(
     reference=Reference(prefix='ro', identifier='0002162', name='in taxon'),
+)
+species_specific = TypeDef(
+    reference=Reference.default('speciesSpecific', 'Species Specific'),
+    definition='X speciesSpecific Y means that Y is a general phenomena, '
+               'like a pathway, and X is the version that appears in a species. X should state which'
+               'species with RO:0002162 (in taxon)',
 )
 
 part_of = TypeDef(

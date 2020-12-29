@@ -6,15 +6,14 @@ Run with ``python -m pyobo.sources.kegg.genome``
 """
 
 import logging
-from dataclasses import dataclass
-from typing import Iterable, Optional
+from typing import Iterable
 
 import click
 from more_click import verbose_option
 from tqdm import tqdm
 
 import pyobo
-from pyobo.sources.kegg.api import KEGG_GENOME_PREFIX, ensure_list_genomes
+from pyobo.sources.kegg.api import KEGGGenome, KEGG_GENOME_PREFIX, ensure_list_genomes
 from pyobo.struct import Obo, Reference, Term
 
 logger = logging.getLogger(__name__)
@@ -32,25 +31,6 @@ def get_obo() -> Obo:
         name='KEGG Genome',
         auto_generated_by=f'bio2obo:{KEGG_GENOME_PREFIX}',
     )
-
-
-@dataclass
-class KEGGGenome:
-    """A data structure for a parsed line of the KEGG Genomes list."""
-
-    identifier: str
-    name: str
-    code: Optional[str]
-    long_code: Optional[str]
-    taxonomy_id: Optional[str]
-
-    def get_reference(self) -> Reference:
-        """Get the reference for this genome."""
-        return Reference(
-            prefix='kegg.genome',
-            identifier=self.identifier,
-            name=self.name,
-        )
 
 
 def parse_genome_line(line: str) -> KEGGGenome:

@@ -14,21 +14,11 @@ from more_click import verbose_option
 from tqdm import tqdm
 
 from pyobo.sources.kegg.api import (
-    KEGG_PATHWAY_PREFIX, ensure_link_pathway_genome, ensure_list_pathway_genome, ensure_list_pathways,
+    KEGGGenome, KEGG_GENES_PREFIX, KEGG_PATHWAY_PREFIX, ensure_link_pathway_genome, ensure_list_pathway_genome,
+    ensure_list_pathways, from_kegg_species,
 )
-from pyobo.sources.kegg.genome import KEGGGenome, iter_kegg_genomes
-from pyobo.struct import Obo, Reference, Term, TypeDef, from_species, has_part
-
-from_kegg_species = TypeDef(
-    reference=Reference.default('inKeggTaxon', 'in KEGG taxon'),
-)
-
-species_specific = TypeDef(
-    reference=Reference.default('speciesSpecific', 'Species Specific'),
-    definition='X speciesSpecific Y means that Y is a general phenomena, '
-               'like a pathway, and X is the version that appears in a species. X should state which'
-               'species with RO:0002162 (in taxon)',
-)
+from pyobo.sources.kegg.genome import iter_kegg_genomes
+from pyobo.struct import Obo, Reference, Term, from_species, has_part, species_specific
 
 
 def get_obo() -> Obo:
@@ -88,9 +78,6 @@ def _iter_genome_terms(
         pathway_id, name = [part.strip() for part in line.split('\t')]
         pathway_id = pathway_id[len('path:'):]
 
-        _start = min(i for i, e in enumerate(pathway_id) if e.isnumeric())
-        pathway_code = pathway_id[_start:]
-
         terms[pathway_id] = term = Term(
             reference=Reference(
                 prefix=KEGG_PATHWAY_PREFIX,
@@ -98,16 +85,17 @@ def _iter_genome_terms(
                 name=name,
             ),
         )
+
+        # Annotate species information
+        kegg_genome.annotate_term(term)
+
+        # Annotate the non-species specific code
+        _start = min(i for i, e in enumerate(pathway_id) if e.isnumeric())
+        pathway_code = pathway_id[_start:]
         term.append_relationship(
             species_specific,
             Reference(prefix=KEGG_PATHWAY_PREFIX, identifier=f'map{pathway_code}'),
         )
-        term.append_relationship(
-            from_kegg_species,
-            kegg_genome.get_reference(),
-        )
-        if kegg_genome.taxonomy_id is not None:
-            term.set_species(kegg_genome.taxonomy_id)
 
     for pathway_id, protein_ids in _get_link_pathway_map(link_pathway_path).items():
         term = terms.get(pathway_id)
@@ -115,7 +103,7 @@ def _iter_genome_terms(
             tqdm.write(f'could not find kegg.pathway:{pathway_id}')
         for protein_id in protein_ids:
             term.append_relationship(has_part, Reference(
-                prefix='kegg.genes',
+                prefix=KEGG_GENES_PREFIX,
                 identifier=protein_id,
             ))
 

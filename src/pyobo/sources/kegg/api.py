@@ -2,9 +2,11 @@
 
 """API utilities for KEGG."""
 
-from typing import Mapping
+import urllib.error
+from dataclasses import dataclass
+from typing import Mapping, Optional
 
-from pyobo import ensure_path
+from pyobo import Reference, Term, TypeDef, ensure_path
 from pyobo.path_utils import ensure_df
 
 KEGG_GENES_PREFIX = 'kegg.genes'
@@ -12,6 +14,38 @@ KEGG_GENOME_PREFIX = 'kegg.genome'
 KEGG_PATHWAY_PREFIX = 'kegg.pathway'
 
 BASE = 'http://rest.kegg.jp'
+
+from_kegg_species = TypeDef(
+    reference=Reference.default('inKeggTaxon', 'in KEGG taxon'),
+)
+
+
+@dataclass
+class KEGGGenome:
+    """A data structure for a parsed line of the KEGG Genomes list."""
+
+    identifier: str
+    name: str
+    code: Optional[str]
+    long_code: Optional[str]
+    taxonomy_id: Optional[str]
+
+    def annotate_term(self, term: Term) -> None:
+        """Annotate the term with the species represented by this object."""
+        term.append_relationship(
+            from_kegg_species,
+            self.get_reference(),
+        )
+        if self.taxonomy_id is not None:
+            term.set_species(self.taxonomy_id)
+
+    def get_reference(self) -> Reference:
+        """Get the reference for this genome."""
+        return Reference(
+            prefix='kegg.genome',
+            identifier=self.identifier,
+            name=self.name,
+        )
 
 
 def ensure_list_genomes() -> str:
@@ -49,24 +83,29 @@ def ensure_list_genome(kegg_genome_id: str) -> str:
     )
 
 
-def ensure_conv_genome_uniprot(kegg_genome_id: str) -> str:
+def ensure_conv_genome_uniprot(kegg_genome_id: str) -> Optional[str]:
     """Get the KEGG-UniProt protein map for the given organism."""
     return _ensure_conv_genome_helper(kegg_genome_id, 'uniprot')
 
 
-def ensure_conv_genome_ncbigene(kegg_genome_id: str) -> str:
+def ensure_conv_genome_ncbigene(kegg_genome_id: str) -> Optional[str]:
     """Get the KEGG-NCBIGENE protein map for the given organism."""
     return _ensure_conv_genome_helper(kegg_genome_id, 'ncbi-geneid')
 
 
-def _ensure_conv_genome_helper(kegg_genome_id: str, target_database: str) -> str:
+def _ensure_conv_genome_helper(kegg_genome_id: str, target_database: str) -> Optional[str]:
     """Get the KEGG-external protein map for the given organism/database."""
-    return ensure_path(
-        KEGG_GENES_PREFIX,
-        f'conv_{target_database}',
-        url=f'{BASE}/conv/{target_database}/{kegg_genome_id}',
-        path=f'{kegg_genome_id}.tsv',
-    )
+    try:
+        rv = ensure_path(
+            KEGG_GENES_PREFIX,
+            f'conv_{target_database}',
+            url=f'{BASE}/conv/{target_database}/{kegg_genome_id}',
+            path=f'{kegg_genome_id}.tsv',
+        )
+    except urllib.error.HTTPError:
+        return None
+    else:
+        return rv
 
 
 def ensure_link_pathway_genome(kegg_genome_id: str) -> str:
