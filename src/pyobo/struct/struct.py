@@ -254,7 +254,7 @@ class Obo:
     name: str
 
     #: A function that iterates over terms
-    iter_terms: Callable[[], Iterable[Term]] = field(repr=False)
+    iter_terms: Callable[..., Iterable[Term]] = field(repr=False)
 
     #: The OBO format
     format_version: str = '1.2'
