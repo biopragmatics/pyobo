@@ -20,14 +20,13 @@ from flasgger import Swagger
 from flask import Blueprint, Flask, current_app, jsonify, render_template
 from flask_bootstrap import Bootstrap
 from humanize.filesize import naturalsize
-from more_click.options import host_option, port_option, verbose_option, with_gunicorn_option
+from more_click import host_option, port_option, run_app, verbose_option, with_gunicorn_option
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 from tqdm import tqdm
 from werkzeug.local import LocalProxy
 
 import pyobo
-from pyobo.apps.utils import run_app
 from pyobo.constants import get_sqlalchemy_uri
 from pyobo.identifier_utils import get_identifiers_org_link, get_obofoundry_link, get_ols_link, normalize_curie
 from pyobo.resource_utils import ensure_alts, ensure_ooh_na_na
