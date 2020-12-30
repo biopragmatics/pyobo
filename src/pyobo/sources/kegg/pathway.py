@@ -5,6 +5,7 @@
 Run with ``python -m pyobo.sources.kegg.pathway``
 """
 
+import logging
 import urllib.error
 from collections import defaultdict
 from typing import Iterable, List, Mapping, Tuple
@@ -19,6 +20,8 @@ from pyobo.sources.kegg.api import (
 )
 from pyobo.sources.kegg.genome import iter_kegg_genomes
 from pyobo.struct import Obo, Reference, Term, from_species, has_part, species_specific
+
+logger = logging.getLogger(__name__)
 
 
 def get_obo(skip_missing: bool = True) -> Obo:
@@ -48,8 +51,12 @@ def _get_link_pathway_map(path: str) -> Mapping[str, List[str]]:
     rv = defaultdict(list)
     with open(path) as file:
         for line in file:
-            protein_id, pathway_id = line.strip().split('\t')
-            rv[pathway_id[len('path:'):]].append(protein_id)
+            try:
+                protein_id, pathway_id = line.strip().split('\t')
+            except ValueError:
+                logger.warning('Unable to parse link file line: %s', line)
+            else:
+                rv[pathway_id[len('path:'):]].append(protein_id)
 
     return {
         pathway_id: sorted(protein_ids)
@@ -104,7 +111,7 @@ def _iter_genome_terms(
     for pathway_id, protein_ids in _get_link_pathway_map(link_pathway_path).items():
         term = terms.get(pathway_id)
         if term is None:
-            tqdm.write(f'could not find kegg.pathway:{pathway_id}')
+            tqdm.write(f'could not find kegg.pathway:{pathway_id} for {kegg_genome.name}')
             continue
         for protein_id in protein_ids:
             term.append_relationship(has_part, Reference(
