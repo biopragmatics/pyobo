@@ -299,7 +299,7 @@ def single_source_shortest_path(
     rv = nx.single_source_shortest_path(graph, curie, cutoff=cutoff)
     return {
         k: [
-            dict(source=s, target=t, provenance=graph[s][t]['source'])
+            dict(source=s, target=t, provenance=graph[s][t]['provenance'])
             for s, t in pairwise(v)
         ]
         for k, v in rv.items()
