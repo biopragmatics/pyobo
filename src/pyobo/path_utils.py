@@ -94,12 +94,16 @@ def ensure_path(
     force: bool = False,
     stream: bool = False,
     urlretrieve_kwargs: Optional[Mapping[str, Any]] = None,
+    error_on_missing: bool = False,
 ) -> str:
     """Download a file if it doesn't exist."""
     if path is None:
         path = name_from_url(url)
 
     _path = prefix_directory_join(prefix, *parts, path, version=version)
+
+    if not _path.exists() and error_on_missing:
+        raise FileNotFoundError
 
     if not _path.exists() or force:
         _urlretrieve(url=url, path=_path, stream=stream, **(urlretrieve_kwargs or {}))

@@ -83,17 +83,21 @@ def ensure_list_genome(kegg_genome_id: str) -> str:
     )
 
 
-def ensure_conv_genome_uniprot(kegg_genome_id: str) -> Optional[str]:
+def ensure_conv_genome_uniprot(kegg_genome_id: str, error_on_missing: bool = False) -> Optional[str]:
     """Get the KEGG-UniProt protein map for the given organism."""
-    return _ensure_conv_genome_helper(kegg_genome_id, 'uniprot')
+    return _ensure_conv_genome_helper(kegg_genome_id, 'uniprot', error_on_missing=error_on_missing)
 
 
-def ensure_conv_genome_ncbigene(kegg_genome_id: str) -> Optional[str]:
+def ensure_conv_genome_ncbigene(kegg_genome_id: str, error_on_missing: bool = False) -> Optional[str]:
     """Get the KEGG-NCBIGENE protein map for the given organism."""
-    return _ensure_conv_genome_helper(kegg_genome_id, 'ncbi-geneid')
+    return _ensure_conv_genome_helper(kegg_genome_id, 'ncbi-geneid', error_on_missing=error_on_missing)
 
 
-def _ensure_conv_genome_helper(kegg_genome_id: str, target_database: str) -> Optional[str]:
+def _ensure_conv_genome_helper(
+    kegg_genome_id: str,
+    target_database: str,
+    error_on_missing: bool = False,
+) -> Optional[str]:
     """Get the KEGG-external protein map for the given organism/database."""
     try:
         rv = ensure_path(
@@ -101,28 +105,33 @@ def _ensure_conv_genome_helper(kegg_genome_id: str, target_database: str) -> Opt
             f'conv_{target_database}',
             url=f'{BASE}/conv/{target_database}/{kegg_genome_id}',
             path=f'{kegg_genome_id}.tsv',
+            error_on_missing=error_on_missing,
         )
     except urllib.error.HTTPError:
+        return None
+    except FileNotFoundError:
         return None
     else:
         return rv
 
 
-def ensure_link_pathway_genome(kegg_genome_id: str) -> str:
+def ensure_link_pathway_genome(kegg_genome_id: str, error_on_missing: bool = False) -> str:
     """Get the protein-pathway links for the given organism."""
     return ensure_path(
         KEGG_PATHWAY_PREFIX,
         'link_pathway',
         url=f'{BASE}/link/pathway/{kegg_genome_id}',
         path=f'{kegg_genome_id}.tsv',
+        error_on_missing=error_on_missing,
     )
 
 
-def ensure_list_pathway_genome(kegg_genome_id: str) -> str:
+def ensure_list_pathway_genome(kegg_genome_id: str, error_on_missing: bool = False) -> str:
     """Get the list of pathways for the given organism."""
     return ensure_path(
         KEGG_PATHWAY_PREFIX,
         'pathways',
         url=f'{BASE}/list/pathway/{kegg_genome_id}',
         path=f'{kegg_genome_id}.txt',  # TODO rename to .tsv
+        error_on_missing=error_on_missing,
     )
