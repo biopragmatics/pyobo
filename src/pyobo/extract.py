@@ -505,9 +505,10 @@ def _get_hierarchy_helper(
     return rv
 
 
+@lru_cache()
 def get_descendants(
-    prefix,
-    identifier,
+    prefix: str,
+    identifier: str,
     include_part_of: bool = True,
     include_has_member: bool = False,
     use_tqdm: bool = False,
@@ -526,6 +527,7 @@ def get_descendants(
     return nx.ancestors(hierarchy, f'{prefix}:{identifier}')  # note this is backwards
 
 
+@lru_cache()
 def get_ancestors(
     prefix: str,
     identifier: str,
