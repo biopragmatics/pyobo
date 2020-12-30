@@ -344,7 +344,7 @@ class Obo:
         """Read OBO from a pre-compiled Obonet JSON."""
         return cls.from_obonet(get_gzipped_graph(path))
 
-    def write_default(self, use_tqdm: bool = False) -> None:
+    def write_default(self, use_tqdm: bool = True) -> None:
         """Write the OBO to the default path."""
         path = get_prefix_obo_path(self.ontology, version=self.data_version)
         self.write(path, use_tqdm=use_tqdm)
@@ -352,6 +352,7 @@ class Obo:
         obonet_gz_path = prefix_directory_join(
             self.ontology, f"{self.ontology}.obonet.json.gz", version=self.data_version,
         )
+        logger.info('writing obonet to %s', obonet_gz_path)
         self.write_obonet_gz(obonet_gz_path)
 
     def __iter__(self):  # noqa: D105
