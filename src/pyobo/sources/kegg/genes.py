@@ -34,7 +34,6 @@ def get_obo() -> Obo:
 
 def iter_terms() -> Iterable[Term]:
     """Iterate over terms for KEGG Genome."""
-    i = 0
     for kegg_genome in iter_kegg_genomes():
         tqdm.write(f'Iterating {kegg_genome}')
         try:
