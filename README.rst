@@ -1,6 +1,3 @@
-.. image:: docs/source/logo.png
-    :width: 150
-
 PyOBO
 =====
 |build| |pypi_version| |python_versions| |pypi_license| |zenodo|
