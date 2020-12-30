@@ -47,10 +47,13 @@ def _get_link_pathway_map(path: str) -> Mapping[str, List[str]]:
     rv = defaultdict(list)
     with open(path) as file:
         for line in file:
-            protein, pathway = line.strip().split('\t')
-            pathway = pathway[len('path:'):]
-            rv[pathway].append(pathway)
-    return {k: sorted(v) for k, v in rv.items()}
+            protein_id, pathway_id = line.strip().split('\t')
+            rv[pathway_id[len('path:'):]].append(protein_id)
+
+    return {
+        pathway_id: sorted(protein_ids)
+        for pathway_id, protein_ids in rv.items()
+    }
 
 
 def _iter_map_terms() -> Iterable[Term]:
