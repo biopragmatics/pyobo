@@ -1,4 +1,5 @@
 .. image:: docs/source/logo.png
+    :width: 150
 
 PyOBO
 =====
