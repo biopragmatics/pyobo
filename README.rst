@@ -1,13 +1,7 @@
-.. raw:: html
+.. image:: docs/source/logo.png
 
-    <p align="center">
-      <img src="docs/source/logo.png" height="150">
-    </p>
-
-    <h1 align="center">
-        PyOBO
-    </h1>
-
+PyOBO
+=====
 |build| |pypi_version| |python_versions| |pypi_license| |zenodo|
 
 Tools for biological identifiers, names, synonyms, xrefs, hierarchies, relations, and properties through the
