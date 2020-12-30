@@ -37,7 +37,7 @@ def get_obo() -> Obo:
         name='DrugBank',
         data_version=version,
         iter_terms=iter_terms,
-        iter_items_kwargs=dict(version=version),
+        iter_terms_kwargs=dict(version=version),
         auto_generated_by=f'bio2obo:{PREFIX}',
         typedefs=[has_salt],
     )

@@ -48,7 +48,7 @@ def get_obo() -> Obo:
         ontology=PREFIX,
         name='ExPASy Enzyme Nomenclature',
         iter_terms=get_terms,
-        iter_items_kwargs=dict(version=version),
+        iter_terms_kwargs=dict(version=version),
         data_version=version,
         typedefs=[has_member, has_molecular_function],
         auto_generated_by=f'bio2obo:{PREFIX}',

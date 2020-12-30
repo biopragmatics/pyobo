@@ -266,7 +266,7 @@ class Obo:
     synonym_typedefs: List[SynonymTypeDef] = field(default_factory=list)
 
     #: Kwargs to add to the iter_items when called
-    iter_items_kwargs: Optional[Mapping[str, Any]] = None
+    iter_terms_kwargs: Optional[Mapping[str, Any]] = None
 
     #: Regular expression pattern describing the local unique identifiers
     pattern: Optional[str] = None
@@ -356,9 +356,9 @@ class Obo:
 
     def __iter__(self):  # noqa: D105
         if self.iter_only:
-            return iter(self.iter_terms(**(self.iter_items_kwargs or {})))
+            return iter(self.iter_terms(**(self.iter_terms_kwargs or {})))
         if self._items is None:
-            self._items = list(self.iter_terms(**(self.iter_items_kwargs or {})))
+            self._items = list(self.iter_terms(**(self.iter_terms_kwargs or {})))
         return iter(self._items)
 
     def ancestors(self, identifier: str) -> Set[str]:

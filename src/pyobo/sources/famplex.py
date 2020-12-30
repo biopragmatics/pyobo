@@ -27,7 +27,7 @@ def get_obo() -> Obo:
         ontology=PREFIX,
         name='FamPlex',
         iter_terms=get_terms,
-        iter_items_kwargs=dict(version=version),
+        iter_terms_kwargs=dict(version=version),
         data_version=version,
         typedefs=[has_member, has_part, is_a, part_of],
         auto_generated_by=f'bio2obo:{PREFIX}',

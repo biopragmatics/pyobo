@@ -37,7 +37,7 @@ def get_obo() -> Obo:
         data_version=version,
         auto_generated_by=f'bio2obo:{PREFIX}',
         iter_terms=iter_terms,
-        iter_items_kwargs=dict(version=version),
+        iter_terms_kwargs=dict(version=version),
     )
 
 

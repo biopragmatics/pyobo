@@ -40,19 +40,20 @@ _PATHWAY_INFO = [
 
 def get_obo() -> Obo:
     """Get WikiPathways as OBO."""
+    version = bioversions.get_version('wikipathways')
     return Obo(
         ontology=PREFIX,
         name='WikiPathways',
-        data_version=bioversions.get_version('wikipathways'),
+        data_version=version,
         iter_terms=iter_terms,
+        iter_terms_kwargs=dict(version=version),
         typedefs=[pathway_has_part, from_species],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
-def iter_terms() -> Iterable[Term]:
+def iter_terms(version: str) -> Iterable[Term]:
     """Get WikiPathways terms."""
-    version = bioversions.get_version('wikipathways')
     base_url = f'http://data.wikipathways.org/{version}/gmt/wikipathways-{version}-gmt'
 
     for species_code, tax_id in _PATHWAY_INFO:

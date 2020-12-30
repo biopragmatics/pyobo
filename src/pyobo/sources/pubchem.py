@@ -29,7 +29,7 @@ def get_obo() -> Obo:
         ontology='pubchem.compound',
         name='PubChem Compound',
         iter_terms=get_terms,
-        iter_items_kwargs=dict(version=VERSION),
+        iter_terms_kwargs=dict(version=VERSION),
         data_version=VERSION,
         auto_generated_by=f'bio2obo:{PREFIX}',
     )

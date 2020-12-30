@@ -24,7 +24,7 @@ def get_obo() -> Obo:
         auto_generated_by=f'bio2obo:{PREFIX}',
         data_version=version,
         iter_terms=iter_terms,
-        iter_items_kwargs=dict(version=version),
+        iter_terms_kwargs=dict(version=version),
     )
 
 

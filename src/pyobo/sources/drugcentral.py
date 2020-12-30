@@ -25,7 +25,7 @@ def get_obo() -> Obo:
         name='DrugCentral',
         data_version=version,
         iter_terms=iter_terms,
-        iter_items_kwargs=dict(version=version),
+        iter_terms_kwargs=dict(version=version),
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
