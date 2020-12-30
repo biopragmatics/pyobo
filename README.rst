@@ -349,8 +349,8 @@ The OBO Foundry seems to be pretty unstable with respect to the URLs to OBO reso
 Then you should check the corresponding page on the OBO Foundry (in this case, http://www.obofoundry.org/ontology/mondo.html)
 and make an update to the ``url`` entry for that namespace in the Bioregistry.
 
-.. |build| image:: https://travis-ci.com/pyobo/pyobo.svg?branch=master
-    :target: https://travis-ci.com/pyobo/pyobo
+.. |build| image:: https://github.com/pyobo/pyobo/workflows/Tests/badge.svg
+    :target: https://github.com/pyobo/pyobo/actions?query=workflow%3ATests
     :alt: Build Status
 
 .. |coverage| image:: https://codecov.io/gh/pyobo/pyobo/coverage.svg?branch=master
