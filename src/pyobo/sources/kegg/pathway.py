@@ -21,21 +21,22 @@ from pyobo.sources.kegg.genome import iter_kegg_genomes
 from pyobo.struct import Obo, Reference, Term, from_species, has_part, species_specific
 
 
-def get_obo() -> Obo:
+def get_obo(skip_missing: bool = True) -> Obo:
     """Get KEGG Pathways as OBO."""
     return Obo(
         ontology=KEGG_PATHWAY_PREFIX,
         iter_terms=iter_terms,
+        iter_terms_kwargs=dict(skip_missing=skip_missing),
         name='KEGG Pathways',
         typedefs=[from_kegg_species, from_species, species_specific, has_part],
         auto_generated_by=f'bio2obo:{KEGG_PATHWAY_PREFIX}',
     )
 
 
-def iter_terms() -> Iterable[Term]:
+def iter_terms(skip_missing: bool = True) -> Iterable[Term]:
     """Iterate over terms for KEGG Pathway."""
     yield from _iter_map_terms()
-    for kegg_genome, list_pathway_path, link_pathway_path in iter_kegg_pathway_paths():
+    for kegg_genome, list_pathway_path, link_pathway_path in iter_kegg_pathway_paths(skip_missing=skip_missing):
         yield from _iter_genome_terms(
             list_pathway_path=list_pathway_path,
             link_pathway_path=link_pathway_path,
@@ -114,12 +115,12 @@ def _iter_genome_terms(
     yield from terms.values()
 
 
-def iter_kegg_pathway_paths() -> Iterable[Tuple[KEGGGenome, str, str]]:
+def iter_kegg_pathway_paths(skip_missing: bool = True) -> Iterable[Tuple[KEGGGenome, str, str]]:
     """Get paths for the KEGG Pathway files."""
     for kegg_genome in iter_kegg_genomes():
         try:
-            list_pathway_path = ensure_list_pathway_genome(kegg_genome.identifier)
-            link_pathway_path = ensure_link_pathway_genome(kegg_genome.identifier)
+            list_pathway_path = ensure_list_pathway_genome(kegg_genome.identifier, error_on_missing=not skip_missing)
+            link_pathway_path = ensure_link_pathway_genome(kegg_genome.identifier, error_on_missing=not skip_missing)
         except urllib.error.HTTPError as e:
             code = e.getcode()
             if code != 404:
@@ -129,14 +130,17 @@ def iter_kegg_pathway_paths() -> Iterable[Tuple[KEGGGenome, str, str]]:
                 else:
                     msg = f'{msg}; taxonomy:{kegg_genome.taxonomy_id}): {e.geturl()}'
                 tqdm.write(msg)
+        except FileNotFoundError:
+            continue
         else:
             yield kegg_genome, list_pathway_path, link_pathway_path
 
 
 @click.command()
 @verbose_option
-def _main():
-    get_obo().write_default()
+@click.option('--skip-missing', is_flag=True)
+def _main(skip_missing: bool):
+    get_obo(skip_missing=skip_missing).write_default()
 
 
 if __name__ == '__main__':

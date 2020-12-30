@@ -116,7 +116,10 @@ def _ensure_conv_genome_helper(
 
 
 def ensure_link_pathway_genome(kegg_genome_id: str, error_on_missing: bool = False) -> str:
-    """Get the protein-pathway links for the given organism."""
+    """Get the protein-pathway links for the given organism.
+
+    :raises: FileNotFoundError
+    """
     return ensure_path(
         KEGG_PATHWAY_PREFIX,
         'link_pathway',
@@ -127,7 +130,10 @@ def ensure_link_pathway_genome(kegg_genome_id: str, error_on_missing: bool = Fal
 
 
 def ensure_list_pathway_genome(kegg_genome_id: str, error_on_missing: bool = False) -> str:
-    """Get the list of pathways for the given organism."""
+    """Get the list of pathways for the given organism.
+
+    :raises: FileNotFoundError
+    """
     return ensure_path(
         KEGG_PATHWAY_PREFIX,
         'pathways',
