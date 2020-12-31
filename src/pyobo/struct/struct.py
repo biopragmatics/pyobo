@@ -177,6 +177,15 @@ class Term(Referenced):
             name = pyobo.get_name('ncbitaxon', identifier)
         self.append_relationship(from_species, Reference(prefix='ncbitaxon', identifier=identifier, name=name))
 
+    def get_species(self, prefix: str = 'ncbitaxon') -> Optional[Reference]:
+        """Get the species if it exists.
+
+        :param prefix: The prefix to use in case the term has several species annotations.
+        """
+        for species in self.relationships.get(from_species, []):
+            if species.prefix == prefix:
+                return species
+
     def extend_relationship(self, typedef: TypeDef, references: Iterable[Reference]) -> None:
         """Append several relationships."""
         if any(x is None for x in references):
@@ -559,6 +568,17 @@ class Obo:
             for term in self._iter_terms(use_tqdm=use_tqdm)
             if term.name
         }
+
+    def get_id_species_mapping(self, *, prefix: Optional[str] = None, use_tqdm: bool = False) -> Mapping[str, str]:
+        """Get a mapping from identifiers to species."""
+        if prefix is None:
+            prefix = 'ncbitaxon'
+        rv = {}
+        for term in self._iter_terms(use_tqdm=use_tqdm):
+            species = term.get_species(prefix=prefix)
+            if species:
+                rv[term.identifier] = species.identifier
+        return rv
 
     def get_typedef_id_name_mapping(self) -> Mapping[str, str]:
         """Get a mapping from identifiers to names."""

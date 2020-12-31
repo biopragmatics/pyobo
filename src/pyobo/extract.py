@@ -13,8 +13,7 @@ import pandas as pd
 from .cache_utils import cached_df, cached_mapping, cached_multidict
 from .constants import (
     GLOBAL_SKIP, RAW_DIRECTORY, RELATION_COLUMNS, RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX,
-    TARGET_ID,
-    TARGET_PREFIX,
+    TARGET_ID, TARGET_PREFIX,
 )
 from .getters import NoOboFoundry, get
 from .identifier_utils import normalize_curie, wrap_norm_prefix
@@ -29,6 +28,9 @@ __all__ = [
     'get_id_name_mapping',
     'get_name',
     'get_name_by_curie',
+    # Species
+    'get_id_species_mapping',
+    'get_species',
     # Synonyms
     'get_id_synonyms_mapping',
     # Properties
@@ -90,6 +92,25 @@ def get_name(prefix: str, identifier: str) -> Optional[str]:
     return id_name.get(primary_id)
 
 
+@wrap_norm_prefix
+def get_species(prefix: str, identifier: str) -> Optional[str]:
+    """Get the species."""
+    if prefix == 'uniprot':
+        raise NotImplementedError
+
+    try:
+        id_species = get_id_species_mapping(prefix)
+    except NoOboFoundry:
+        id_species = None
+
+    if not id_species:
+        logger.warning('unable to look up prefix %s', prefix)
+        return
+
+    primary_id = get_primary_identifier(prefix, identifier)
+    return id_species.get(primary_id)
+
+
 @lru_cache()
 @wrap_norm_prefix
 def get_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, str]:
@@ -118,6 +139,23 @@ def get_name_id_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
         name: identifier
         for identifier, name in get_id_name_mapping(prefix=prefix, **kwargs).items()
     }
+
+
+@wrap_norm_prefix
+def get_id_species_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, str]:
+    """Get an identifier to species mapping."""
+    if prefix == 'ncbigene':
+        raise NotImplementedError
+
+    path = prefix_cache_join(prefix, 'species.tsv')
+
+    @cached_mapping(path=path, header=[f'{prefix}_id', 'species'], force=force)
+    def _get_id_name_mapping() -> Mapping[str, str]:
+        obo = get(prefix, **kwargs)
+        logger.info('[%s] loading species mappings', prefix)
+        return obo.get_id_species_mapping()
+
+    return _get_id_name_mapping()
 
 
 @lru_cache()
