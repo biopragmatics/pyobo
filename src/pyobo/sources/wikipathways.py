@@ -56,14 +56,14 @@ def iter_terms(version: str) -> Iterable[Term]:
     """Get WikiPathways terms."""
     base_url = f'http://data.wikipathways.org/{version}/gmt/wikipathways-{version}-gmt'
 
-    for species_code, tax_id in _PATHWAY_INFO:
+    for species_code, taxonomy_id in _PATHWAY_INFO:
         url = f'{base_url}-{species_code}.gmt'
         path = ensure_path(PREFIX, url=url, version=version)
 
         species_code = species_code.replace('_', ' ')
         species_reference = Reference(
-            prefix='taxonomy',
-            identifier=tax_id,
+            prefix='ncbitaxon',
+            identifier=taxonomy_id,
             name=SPECIES_REMAPPING.get(species_code, species_code),
         )
 
