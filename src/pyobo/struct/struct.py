@@ -19,12 +19,12 @@ from networkx.utils import open_file
 from tqdm import tqdm
 
 from .reference import Reference, Referenced
-from .typedef import TypeDef, default_typedefs, from_species, get_reference_tuple, is_a
+from .typedef import TypeDef, default_typedefs, from_species, get_reference_tuple, has_part, is_a, orthologous, part_of
 from .utils import comma_separate
 from ..cache_utils import get_gzipped_graph
 from ..constants import RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
 from ..identifier_utils import normalize_curie, normalize_prefix
-from ..io_utils import multidict
+from ..io_utils import multidict, write_map_tsv, write_multimap_tsv
 from ..path_utils import get_prefix_obo_path, prefix_directory_join
 from ..registries import get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist
 
@@ -338,7 +338,7 @@ class Obo:
             yield from term.iterate_obo_lines()
 
     @open_file(1, mode='w')
-    def write(self, file: Union[None, str, TextIO, Path] = None, use_tqdm: bool = False) -> None:
+    def write_obo(self, file: Union[None, str, TextIO, Path] = None, use_tqdm: bool = False) -> None:
         """Write the OBO to a file."""
         it = self.iterate_obo_lines()
         if use_tqdm:
@@ -357,16 +357,62 @@ class Obo:
         """Read OBO from a pre-compiled Obonet JSON."""
         return cls.from_obonet(get_gzipped_graph(path))
 
-    def write_default(self, use_tqdm: bool = True) -> None:
-        """Write the OBO to the default path."""
-        path = get_prefix_obo_path(self.ontology, version=self.data_version)
-        self.write(path, use_tqdm=use_tqdm)
+    def _path(self, *parts: str):
+        return prefix_directory_join(self.ontology, *parts, version=self.data_version)
 
-        obonet_gz_path = prefix_directory_join(
-            self.ontology, f"{self.ontology}.obonet.json.gz", version=self.data_version,
+    def _cache(self, *parts: str):
+        return self._path('cache', *parts)
+
+    def write_default(self, use_tqdm: bool = True, write_obo: bool = False, write_obonet: bool = False) -> None:
+        """Write the OBO to the default path."""
+        write_map_tsv(
+            path=self._cache('names.tsv'),
+            header=[f'{self.ontology}_id', 'name'],
+            rv=self.get_id_name_mapping(),
         )
-        logger.info('writing obonet to %s', obonet_gz_path)
-        self.write_obonet_gz(obonet_gz_path)
+        write_map_tsv(
+            path=self._cache('species.tsv'),
+            header=[f'{self.ontology}_id', 'taxonomy_id'],
+            rv=self.get_id_species_mapping(),
+        )
+        write_multimap_tsv(
+            path=self._cache('synonyms.tsv'),
+            header=[f'{self.ontology}_id', 'synonym'],
+            rv=self.get_id_synonyms_mapping(),
+        )
+        write_multimap_tsv(
+            path=self._cache('alt_ids.tsv'),
+            header=[f'{self.ontology}_id', 'alt_id'],
+            rv=self.get_id_alts_mapping(),
+        )
+
+        for df_name, get_df in [
+            ('xrefs', self.get_xrefs_df),
+            ('relations', self.get_relations_df),
+            ('properties', self.get_properties_df),
+        ]:
+            df: pd.DataFrame = get_df(use_tqdm=use_tqdm)
+            if len(df.index):
+                df.sort_values(list(df.columns), inplace=True)
+                df.to_csv(self._cache(f'{df_name}.tsv'), sep='\t', index=False)
+
+        for relation in (is_a, has_part, part_of, from_species, orthologous):
+            if relation is not is_a and relation not in self.typedefs:
+                continue
+            relation_df = self.get_filtered_relations_df(relation)
+            if not len(relation_df.index):
+                continue
+            relation_df.sort_values(list(relation_df.columns), inplace=True)
+            relation_df.to_csv(self._cache('relations', f'{relation.curie}.tsv'), sep='\t', index=False)
+
+        if write_obo:
+            obo_path = get_prefix_obo_path(self.ontology, version=self.data_version)
+            self.write_obo(obo_path, use_tqdm=use_tqdm)
+
+        if write_obonet:
+            obonet_gz_path = self._path(f"{self.ontology}.obonet.json.gz")
+            logger.info('writing obonet to %s', obonet_gz_path)
+            self.write_obonet_gz(obonet_gz_path)
 
     def __iter__(self):  # noqa: D105
         if self.iter_only:
