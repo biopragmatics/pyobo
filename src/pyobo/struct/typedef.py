@@ -15,7 +15,6 @@ __all__ = [
     'from_species',
     'species_specific',
     'has_part',
-    'pathway_has_part',
     'part_of',
     'is_a',
     'has_member',
@@ -45,6 +44,7 @@ class TypeDef(Referenced):
     namespace: Optional[str] = None
     definition: Optional[str] = None
     is_transitive: Optional[bool] = None
+    is_symmetric: Optional[bool] = None
     domain: Optional[Reference] = None
     range: Optional[Reference] = None
     parents: List[Reference] = field(default_factory=list)
@@ -110,11 +110,6 @@ has_part = TypeDef(
     reference=Reference(prefix='ro', identifier='0000051', name='has part'),
     comment='Inverse of part_of',
     inverse=Reference(prefix='ro', identifier='0000050', name='part of'),
-)
-pathway_has_part = TypeDef(
-    reference=Reference.default(identifier='pathway_has_part', name='pathway has part'),
-    comment='More specific version of has_part for pathways',
-    parents=[Reference(prefix='ro', identifier='0000051', name='has part')],
 )
 is_a = TypeDef(
     reference=Reference.default(identifier='is_a', name='is a'),
