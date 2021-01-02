@@ -144,8 +144,9 @@ def wrap_norm_prefix(f):
     @wraps(f)
     def _wrapped(prefix, *args, **kwargs):
         norm_prefix = normalize_prefix(prefix)
-        if norm_prefix is not None:
-            return f(norm_prefix, *args, **kwargs)
+        if norm_prefix is None:
+            raise ValueError(f'Invalid prefix: {prefix}')
+        return f(norm_prefix, *args, **kwargs)
 
     return _wrapped
 
