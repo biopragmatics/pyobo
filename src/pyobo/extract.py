@@ -308,7 +308,8 @@ def get_filtered_relations_df(
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         if os.path.exists(all_relations_path):
-            df = pd.read_csv(all_relations_path, sep='\t')
+            logger.debug('[%] loading all relations from %s', prefix, all_relations_path)
+            df = pd.read_csv(all_relations_path, sep='\t', dtype=str)
             idx = (df[RELATION_PREFIX] == relation_prefix) & (df[RELATION_ID] == relation_identifier)
             columns = [f'{prefix}_id', TARGET_PREFIX, TARGET_ID]
             return df.loc[idx, columns]
@@ -353,7 +354,7 @@ def get_filtered_xrefs(
     def _get_mapping() -> Mapping[str, str]:
         if os.path.exists(all_xrefs_path):
             logger.info('[%s] loading pre-cached xrefs', prefix)
-            df = pd.read_csv(all_xrefs_path, sep='\t')
+            df = pd.read_csv(all_xrefs_path, sep='\t', dtype=str)
             logger.info('[%s] filtering pre-cached xrefs', prefix)
             idx = (df[SOURCE_PREFIX] == prefix) & (df[TARGET_PREFIX] == xref_prefix)
             df = df.loc[idx, [SOURCE_ID, TARGET_ID]]
