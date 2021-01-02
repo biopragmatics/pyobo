@@ -11,7 +11,7 @@ from .gmt_utils import parse_wikipathways_gmt
 from ..constants import SPECIES_REMAPPING
 from ..path_utils import ensure_path
 from ..struct import Obo, Reference, Term, from_species
-from ..struct.typedef import pathway_has_part
+from ..struct.typedef import has_part
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ def get_obo() -> Obo:
         data_version=version,
         iter_terms=iter_terms,
         iter_terms_kwargs=dict(version=version),
-        typedefs=[pathway_has_part, from_species],
+        typedefs=[has_part, from_species],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
@@ -71,7 +71,7 @@ def iter_terms(version: str) -> Iterable[Term]:
             term = Term(reference=Reference(prefix=PREFIX, identifier=identifier, name=name))
             term.append_relationship(from_species, species_reference)
             for ncbigene_id in genes:
-                term.append_relationship(pathway_has_part, Reference(prefix='ncbigene', identifier=ncbigene_id))
+                term.append_relationship(has_part, Reference(prefix='ncbigene', identifier=ncbigene_id))
             yield term
 
 
