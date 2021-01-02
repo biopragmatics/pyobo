@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from ..path_utils import ensure_path
 from ..struct import (
-    Obo, Reference, Synonym, SynonymTypeDef, Term, from_species, gene_product_is_a, has_gene_product,
+    Obo, Reference, Synonym, SynonymTypeDef, Term, from_species, gene_product_is_a, has_gene_product, orthologous,
     transcribes_to,
 )
 
@@ -92,7 +92,7 @@ def get_obo() -> Obo:
         ontology=PREFIX,
         name='HGNC',
         iter_terms=get_terms,
-        typedefs=[from_species, has_gene_product, gene_product_is_a, transcribes_to],
+        typedefs=[from_species, has_gene_product, gene_product_is_a, transcribes_to, orthologous],
         synonym_typedefs=[previous_name_type, previous_symbol_type, alias_name_type, alias_symbol_type],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
@@ -121,6 +121,11 @@ def get_terms() -> Iterable[Term]:
         snornabase_id = entry.pop('snornabase', None)
         if snornabase_id:
             relations.append((transcribes_to, Reference(prefix='snornabase', identifier=snornabase_id)))
+
+        for rgd_id in entry.pop('rgd_id', []):
+            relations.append((orthologous, Reference(prefix='rgd', identifier=rgd_id[len('RGD:'):])))
+        for mgi_id in entry.pop('mgd_id', []):
+            relations.append((orthologous, Reference(prefix='mgi', identifier=mgi_id[len('MGI:'):])))
 
         xrefs = []
         for xref_prefix, key in gene_xrefs:

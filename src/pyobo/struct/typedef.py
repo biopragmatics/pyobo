@@ -20,6 +20,7 @@ __all__ = [
     'is_a',
     'has_member',
     'subclass',
+    'orthologous',
     'has_role',
     'role_of',
     'has_mature',
@@ -126,6 +127,11 @@ subclass = TypeDef(
     reference=Reference.default(identifier='subclass', name='subclass'),
     comment='Inverse of isA',
     inverse=Reference.default(identifier='is_a', name='is a'),
+)
+
+orthologous = TypeDef(
+    reference=Reference(prefix='ro', identifier='HOM0000017', name='in orthology relationship with'),
+    is_symmetric=True,
 )
 
 has_role = TypeDef(
