@@ -6,7 +6,8 @@ import gzip
 import logging
 import time
 from collections import defaultdict
-from typing import Iterable, List, Mapping, Set, Tuple, TypeVar
+from pathlib import Path
+from typing import Iterable, List, Mapping, Set, Tuple, TypeVar, Union
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
@@ -36,7 +37,7 @@ def split_tab_pair(x: str) -> Tuple[str, str]:
     return a, b
 
 
-def open_map_tsv(path: str, *, use_tqdm: bool = False) -> Mapping[str, str]:
+def open_map_tsv(path: Union[str, Path], *, use_tqdm: bool = False) -> Mapping[str, str]:
     """Load a mapping TSV file into a dictionary."""
     with open(path) as file:
         next(file)  # throw away header
@@ -45,7 +46,7 @@ def open_map_tsv(path: str, *, use_tqdm: bool = False) -> Mapping[str, str]:
         return dict(split_tab_pair(line) for line in file)
 
 
-def open_multimap_tsv(path: str, *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
+def open_multimap_tsv(path: Union[str, Path], *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
     """Load a mapping TSV file that has multiple mappings for each."""
     rv = defaultdict(list)
     with open(path) as file:
@@ -77,12 +78,24 @@ def multisetdict(pairs: Iterable[Tuple[X, Y]]) -> Mapping[X, Set[Y]]:
     return dict(rv)
 
 
-def write_map_tsv(*, path: str, header: Iterable[str], rv: Mapping[str, str], sep: str = '\t') -> None:
+def write_map_tsv(
+    *,
+    path: Union[str, Path],
+    header: Iterable[str],
+    rv: Mapping[str, str],
+    sep: str = '\t',
+) -> None:
     """Write a mapping dictionary to a TSV file."""
     write_iterable_tsv(path=path, header=header, it=rv.items(), sep=sep)
 
 
-def write_multimap_tsv(*, path: str, header: Iterable[str], rv: Mapping[str, List[str]], sep: str = '\t') -> None:
+def write_multimap_tsv(
+    *,
+    path: Union[str, Path],
+    header: Iterable[str],
+    rv: Mapping[str, List[str]],
+    sep: str = '\t',
+) -> None:
     """Write a multiple mapping dictionary to a TSV file."""
     it = (
         (key, value)
@@ -92,7 +105,13 @@ def write_multimap_tsv(*, path: str, header: Iterable[str], rv: Mapping[str, Lis
     write_iterable_tsv(path=path, header=header, it=it, sep=sep)
 
 
-def write_iterable_tsv(*, path: str, header: Iterable[str], it: Iterable[Tuple[str, str]], sep: str = '\t') -> None:
+def write_iterable_tsv(
+    *,
+    path: Union[str, Path],
+    header: Iterable[str],
+    it: Iterable[Tuple[str, str]],
+    sep: str = '\t',
+) -> None:
     """Write a mapping dictionary to a TSV file."""
     with open(path, 'w') as file:
         print(*header, sep=sep, file=file)
@@ -100,7 +119,7 @@ def write_iterable_tsv(*, path: str, header: Iterable[str], it: Iterable[Tuple[s
             print(key, value, sep=sep, file=file)
 
 
-def parse_xml_gz(path: str) -> Element:
+def parse_xml_gz(path: Union[str, Path]) -> Element:
     """Parse an XML file from a path to a GZIP file."""
     t = time.time()
     logger.info('parsing xml from %s', path)
