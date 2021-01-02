@@ -34,7 +34,29 @@ def _get_df(name: str, *, sha: str, sep: str = ',') -> pd.DataFrame:
     del df['Mapping Type']
     df[PROVENANCE] = url
     df = df[XREF_COLUMNS]
+
+    df[SOURCE_PREFIX] = df[SOURCE_PREFIX].map(_fix_kegg_prefix)
+    df[TARGET_PREFIX] = df[TARGET_PREFIX].map(_fix_kegg_prefix)
+    df[SOURCE_ID] = [
+        _fix_kegg_identifier(prefix, identifier)
+        for prefix, identifier in df[[SOURCE_PREFIX, SOURCE_ID]].values
+    ]
+    df[TARGET_ID] = [
+        _fix_kegg_identifier(prefix, identifier)
+        for prefix, identifier in df[[TARGET_PREFIX, TARGET_ID]].values
+    ]
+
     return df
+
+
+def _fix_kegg_identifier(prefix, identifier) -> str:
+    if prefix == 'kegg.pathway':
+        return identifier[len('path:'):]
+    return identifier
+
+
+def _fix_kegg_prefix(s):
+    return s if s != 'kegg' else 'kegg.pathway'
 
 
 def iter_compath_dfs() -> Iterable[pd.DataFrame]:
