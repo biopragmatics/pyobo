@@ -85,7 +85,7 @@ def get_name(prefix: str, identifier: str) -> Optional[str]:
         id_name = None
 
     if not id_name:
-        logger.warning('unable to look up prefix %s', prefix)
+        logger.warning('unable to look up names for prefix %s', prefix)
         return
 
     primary_id = get_primary_identifier(prefix, identifier)
@@ -104,7 +104,7 @@ def get_species(prefix: str, identifier: str) -> Optional[str]:
         id_species = None
 
     if not id_species:
-        logger.warning('unable to look up prefix %s', prefix)
+        logger.warning('unable to look up species for prefix %s', prefix)
         return
 
     primary_id = get_primary_identifier(prefix, identifier)
@@ -117,15 +117,16 @@ def get_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[s
     """Get an identifier to name mapping for the OBO file."""
     if prefix == 'ncbigene':
         from .sources.ncbigene import get_ncbigene_id_to_name_mapping
-        logger.info('[%s] loading mappings', prefix)
+        logger.info('[%s] loading name mappings', prefix)
         return get_ncbigene_id_to_name_mapping()
 
     path = prefix_cache_join(prefix, 'names.tsv')
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'], force=force)
     def _get_id_name_mapping() -> Mapping[str, str]:
+        logger.info('[%s] no cached names found. getting from OBO loader', prefix)
         obo = get(prefix, **kwargs)
-        logger.info('[%s] loading mappings', prefix)
+        logger.info('[%s] loading name mappings', prefix)
         return obo.get_id_name_mapping()
 
     return _get_id_name_mapping()
@@ -150,12 +151,13 @@ def get_id_species_mapping(prefix: str, force: bool = False, **kwargs) -> Mappin
     path = prefix_cache_join(prefix, 'species.tsv')
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'species'], force=force)
-    def _get_id_name_mapping() -> Mapping[str, str]:
+    def _get_id_species_mapping() -> Mapping[str, str]:
+        logger.info('[%s] no cached species found. getting from OBO loader', prefix)
         obo = get(prefix, **kwargs)
         logger.info('[%s] loading species mappings', prefix)
         return obo.get_id_species_mapping()
 
-    return _get_id_name_mapping()
+    return _get_id_species_mapping()
 
 
 @lru_cache()
@@ -166,6 +168,7 @@ def get_typedef_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> M
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'], force=force)
     def _get_typedef_id_name_mapping() -> Mapping[str, str]:
+        logger.info('[%s] no cached typedefs found. getting from OBO loader', prefix)
         obo = get(prefix, **kwargs)
         logger.info('[%s] loading typedef mappings', prefix)
         return obo.get_typedef_id_name_mapping()
@@ -177,10 +180,10 @@ def get_typedef_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> M
 def get_id_synonyms_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, List[str]]:
     """Get the OBO file and output a synonym dictionary."""
     path = prefix_cache_join(prefix, "synonyms.tsv")
-    header = [f'{prefix}_id', 'synonym']
 
-    @cached_multidict(path=path, header=header, force=force)
+    @cached_multidict(path=path, header=[f'{prefix}_id', 'synonym'], force=force)
     def _get_multidict() -> Mapping[str, List[str]]:
+        logger.info('[%s] no cached synonyms found. getting from OBO loader', prefix)
         obo = get(prefix, **kwargs)
         return obo.get_id_synonyms_mapping()
 
@@ -194,6 +197,7 @@ def get_properties_df(prefix: str, force: bool = False, **kwargs) -> pd.DataFram
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
+        logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
         obo = get(prefix, **kwargs)
         df = obo.get_properties_df()
         df.dropna(inplace=True)
@@ -223,6 +227,7 @@ def get_filtered_properties_mapping(
             df = df.loc[df['property'] == prop, [f'{prefix}_id', 'value']]
             return dict(df.values)
 
+        logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
         obo = get(prefix, **kwargs)
         return obo.get_filtered_properties_mapping(prop, use_tqdm=use_tqdm)
 
@@ -250,6 +255,7 @@ def get_filtered_properties_df(
             logger.info('[%s] filtering pre-cached properties', prefix)
             return df.loc[df['property'] == prop, [f'{prefix}_id', 'value']]
 
+        logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
         obo = get(prefix, **kwargs)
         return obo.get_filtered_properties_df(prop, use_tqdm=use_tqdm)
 
@@ -270,6 +276,7 @@ def get_relations_df(
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
+        logger.info('[%s] no cached relations found. getting from OBO loader', prefix)
         obo = get(prefix, **kwargs)
         return obo.get_relations_df(use_tqdm=use_tqdm)
 
@@ -297,8 +304,6 @@ def get_filtered_relations_df(
     path = prefix_cache_join(prefix, 'relations', f'{relation_prefix}:{relation_identifier}.tsv')
     all_relations_path = prefix_cache_join(prefix, 'relations.tsv')
 
-    # chebi_id        relation_ns     relation_id     target_ns       target_id
-
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         if os.path.exists(all_relations_path):
@@ -307,6 +312,7 @@ def get_filtered_relations_df(
             columns = [f'{prefix}_id', TARGET_PREFIX, TARGET_ID]
             return df.loc[idx, columns]
 
+        logger.info('[%s] no cached relations found. getting from OBO loader', prefix)
         obo = get(prefix, **kwargs)
         return obo.get_filtered_relations_df(relation, use_tqdm=use_tqdm)
 
@@ -352,6 +358,7 @@ def get_filtered_xrefs(
             df = df.loc[idx, [SOURCE_ID, TARGET_ID]]
             return dict(df.values)
 
+        logger.info('[%s] no cached xrefs found. getting from OBO loader', prefix)
         obo = get(prefix, **kwargs)
         return obo.get_filtered_xrefs_mapping(xref_prefix, use_tqdm=use_tqdm)
 
@@ -368,6 +375,7 @@ def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, force: bool = False, **
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
+        logger.info('[%s] no cached xrefs found. getting from OBO loader', prefix)
         obo = get(prefix, **kwargs)
         return obo.get_xrefs_df(use_tqdm=use_tqdm)
 
@@ -386,6 +394,7 @@ def get_id_to_alts(prefix: str, force: bool = False, **kwargs) -> Mapping[str, L
 
     @cached_multidict(path=path, header=header, force=force)
     def _get_mapping() -> Mapping[str, List[str]]:
+        logger.info('[%s] no cached alts found. getting from OBO loader', prefix)
         obo = get(prefix, **kwargs)
         return obo.get_id_alts_mapping()
 
