@@ -446,10 +446,10 @@ class Obo:
                     relations.append(f'{typedef.curie} {target.curie}')
                     links.append((term.curie, typedef.curie, target.curie))
 
-            nodes[term.curie] = {
+            d = {
                 'id': term.curie,
                 'name': term.name,
-                'def': term._definition_fp(),
+                'def': term.definition and term._definition_fp(),
                 'xref': [
                     xref.curie
                     for xref in term.xrefs
@@ -465,6 +465,11 @@ class Obo:
                     for prop, values in term.properties.items()
                     for value in values
                 ],
+            }
+            nodes[term.curie] = {
+                k: v
+                for k, v in d.items()
+                if v
             }
 
         rv.add_nodes_from(nodes.items())
