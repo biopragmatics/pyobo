@@ -12,7 +12,7 @@ from protmapper.uniprot_client import get_gene_name, get_hgnc_id
 from ..extract import get_id_name_mapping
 from ..ndex_utils import CX, ensure_ndex_network_set, iterate_aspect
 from ..struct import Obo, Reference, Term
-from ..struct.typedef import pathway_has_part
+from ..struct.typedef import has_part
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ def get_obo() -> Obo:
     return Obo(
         ontology=PREFIX,
         name='NCI Pathway Interaction Database',
-        typedefs=[pathway_has_part],
+        typedefs=[has_part],
         iter_terms=iter_terms,
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
@@ -78,7 +78,7 @@ def iter_terms() -> Iterable[Term]:
                 logger.debug(f'unmapped: {name}, {reference}')
 
         for hgnc_id, hgnc_symbol in genes:
-            term.append_relationship(pathway_has_part, Reference('hgnc', hgnc_id, hgnc_symbol))
+            term.append_relationship(has_part, Reference('hgnc', hgnc_id, hgnc_symbol))
 
         yield term
 
