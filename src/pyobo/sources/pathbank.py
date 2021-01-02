@@ -10,8 +10,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..path_utils import ensure_df
-from ..struct import Obo, Reference, Term, TypeDef
-from ..struct.typedef import is_a, pathway_has_part
+from ..struct import Obo, Reference, Term
+from ..struct.typedef import has_part
 
 logger = logging.getLogger(__name__)
 
@@ -38,18 +38,13 @@ METABOLITE_COLUMNS = [
     'HMDB ID', 'KEGG ID', 'ChEBI ID', 'DrugBank ID', 'CAS', 'Formula', 'IUPAC', 'SMILES', 'InChI', 'InChI Key',
 ]
 
-pathway_type = TypeDef(
-    reference=Reference(prefix=PREFIX, identifier='pathway_type', name='pathway is a'),
-    parents=[is_a],
-)
-
 
 def get_obo() -> Obo:
     """Get PathBank as OBO."""
     return Obo(
         ontology=PREFIX,
         name='PathBank',
-        typedefs=[pathway_type, pathway_has_part],
+        typedefs=[has_part],
         iter_terms=iter_terms,
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
@@ -73,7 +68,7 @@ def get_protein_mapping() -> Mapping[str, Set[Reference]]:
     """Make the protein mapping."""
     proteins_df = get_proteins_df()
     smpdb_id_to_proteins = defaultdict(set)
-    for pathway_id, protein_id in tqdm(proteins_df.values, desc='mapping proteins'):
+    for pathway_id, protein_id in tqdm(proteins_df.values, desc=f'[{PREFIX}] mapping proteins', unit_scale=True):
         # TODO get protein names
         smpdb_id_to_proteins[pathway_id].add(Reference(prefix='uniprot', identifier=protein_id))
     return smpdb_id_to_proteins
@@ -93,7 +88,8 @@ def get_metabolite_mapping() -> Mapping[str, Set[Reference]]:
     """Make the metabolite mapping."""
     metabolites_df = get_metabolite_df()
     smpdb_id_to_metabolites = defaultdict(set)
-    for pathway_id, metabolite_id, metabolite_name in tqdm(metabolites_df.values, desc='mapping metabolites'):
+    it = tqdm(metabolites_df.values, desc=f'[{PREFIX}] mapping metabolites', unit_scale=True)
+    for pathway_id, metabolite_id, metabolite_name in it:
         smpdb_id_to_metabolites[pathway_id].add(Reference(
             prefix=PREFIX, identifier=metabolite_id, name=metabolite_name,
         ))
@@ -114,11 +110,11 @@ def iter_terms() -> Iterable[Term]:
             # definition=description.replace('\n', ' '),
             xrefs=[Reference(prefix='smpdb', identifier=smpdb_id)],
         )
-        term.append_relationship(pathway_type, Reference(
+        term.append_parent(Reference(
             prefix=PREFIX, identifier=subject.lower().replace(' ', '_'), name=subject,
         ))
-        term.extend_relationship(pathway_has_part, smpdb_id_to_proteins[smpdb_id])
-        term.extend_relationship(pathway_has_part, smpdb_id_to_metabolites[smpdb_id])
+        term.extend_relationship(has_part, smpdb_id_to_proteins[smpdb_id])
+        term.extend_relationship(has_part, smpdb_id_to_metabolites[smpdb_id])
         yield term
 
 
