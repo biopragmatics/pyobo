@@ -305,9 +305,13 @@ class Obo:
         """Get the date as a formatted string."""
         return (self.date if self.date else datetime.now()).strftime(DATE_FORMAT)
 
-    def _iter_terms(self, use_tqdm: bool = False) -> Iterable[Term]:
+    def _iter_terms(self, use_tqdm: bool = False, desc: str = 'terms') -> Iterable[Term]:
         if use_tqdm:
-            yield from tqdm(self, desc='terms', unit_scale=True, unit='term')
+            try:
+                total = len(self._items)
+            except TypeError:
+                total = None
+            yield from tqdm(self, desc=desc, unit_scale=True, unit='term', total=total)
         else:
             yield from self
 
@@ -409,7 +413,7 @@ class Obo:
         """
         if self._hierarchy is None:
             self._hierarchy = nx.DiGraph()
-            for term in self._iter_terms(use_tqdm=use_tqdm):
+            for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting hierarchy'):
                 for parent in term.parents:
                     self._hierarchy.add_edge(term.identifier, parent.identifier)
         return self._hierarchy
@@ -570,7 +574,7 @@ class Obo:
         """Get a mapping from identifiers to names."""
         return {
             term.identifier: term.name
-            for term in self._iter_terms(use_tqdm=use_tqdm)
+            for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting names')
             if term.name
         }
 
@@ -579,7 +583,7 @@ class Obo:
         if prefix is None:
             prefix = 'ncbitaxon'
         rv = {}
-        for term in self._iter_terms(use_tqdm=use_tqdm):
+        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting species'):
             species = term.get_species(prefix=prefix)
             if species:
                 rv[term.identifier] = species.identifier
@@ -594,14 +598,14 @@ class Obo:
 
     def iterate_synonyms(self, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, Synonym]]:
         """Iterate over synonyms for each term."""
-        for term in self._iter_terms(use_tqdm=use_tqdm):
+        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting synonyms'):
             for synonym in term.synonyms:
                 yield term, synonym
 
     def iterate_properties(self, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, str, str]]:
         """Iterate over tuples of terms, properties, and their values."""
         # TODO if property_prefix is set, try removing that as a prefix from all prop strings.
-        for term in self._iter_terms(use_tqdm=use_tqdm):
+        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting properties'):
             for prop, value in term.iterate_properties():
                 yield term, prop, value
 
@@ -648,7 +652,7 @@ class Obo:
 
     def iterate_relations(self, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, TypeDef, Reference]]:
         """Iterate over tuples of terms, relations, and their targets."""
-        for term in self._iter_terms(use_tqdm=use_tqdm):
+        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting relations'):
             for parent in term.parents:
                 yield term, is_a, parent
             for typedef, references in term.relationships.items():
@@ -704,7 +708,7 @@ class Obo:
         return pd.DataFrame(
             [
                 (term.prefix, term.identifier, xref.prefix, xref.identifier)
-                for term in self._iter_terms(use_tqdm=use_tqdm)
+                for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting xrefs')
                 for xref in term.xrefs
             ],
             columns=[SOURCE_PREFIX, SOURCE_ID, TARGET_PREFIX, TARGET_ID],
@@ -733,7 +737,7 @@ class Obo:
         """Get a mapping from identifiers to a list of all references for the given relation."""
         return multidict(
             (term.identifier, reference)
-            for term in self._iter_terms(use_tqdm=use_tqdm)
+            for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting {typedef.curie}')
             for reference in term.relationships.get(typedef)
         )
 
