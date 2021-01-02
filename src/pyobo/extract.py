@@ -142,6 +142,7 @@ def get_name_id_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
     }
 
 
+@lru_cache()
 @wrap_norm_prefix
 def get_id_species_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, str]:
     """Get an identifier to species mapping."""
