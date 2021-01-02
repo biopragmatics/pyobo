@@ -196,7 +196,7 @@ class Term(Referenced):
         """Append a property."""
         self.properties[prop].append(value)
 
-    def _definition_fp(self):
+    def _definition_fp(self) -> str:
         return f'"{self.definition}" [{comma_separate(self.provenance)}]'
 
     def iterate_properties(self) -> Iterable[Tuple[str, str]]:
