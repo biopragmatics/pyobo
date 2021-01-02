@@ -119,11 +119,12 @@ def ensure_df(
     path: Optional[str] = None,
     force: bool = False,
     sep: str = '\t',
+    dtype=str,
     **kwargs,
 ) -> pd.DataFrame:
     """Download a file and open as a dataframe."""
     path = ensure_path(prefix, *parts, url=url, version=version, path=path, force=force)
-    return pd.read_csv(path, sep=sep, **kwargs)
+    return pd.read_csv(path, sep=sep, dtype=dtype, **kwargs)
 
 
 def ensure_tar_df(
