@@ -71,6 +71,9 @@ class TypeDef(Referenced):
         if self.is_transitive is not None:
             yield f'is_transitive: {"true" if self.is_transitive else "false"}'
 
+        if self.is_symmetric is not None:
+            yield f'is_symmetric: {"true" if self.is_symmetric else "false"}'
+
 
 def get_reference_tuple(relation: Union[Tuple[str, str], Reference, TypeDef]) -> Tuple[str, str]:
     """Get tuple for typedef/reference."""
