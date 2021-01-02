@@ -656,6 +656,8 @@ class Obo:
             for parent in term.parents:
                 yield term, is_a, parent
             for typedef, references in term.relationships.items():
+                if typedef not in self.typedefs:
+                    raise ValueError(f'Undefined typedef: {typedef.curie} ! {typedef.name}')
                 for reference in references:
                     yield term, typedef, reference
 
