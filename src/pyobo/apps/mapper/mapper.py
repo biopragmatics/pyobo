@@ -17,10 +17,11 @@ from flask_bootstrap import Bootstrap, VERSION_BOOTSTRAP
 from more_click import host_option, port_option, run_app, with_gunicorn_option
 from werkzeug.local import LocalProxy
 
+from pyobo import Canonicalizer
 from pyobo.cli_utils import verbose_option
 from pyobo.constants import SOURCE_PREFIX, TARGET_PREFIX
 from pyobo.identifier_utils import normalize_curie, normalize_prefix
-from pyobo.xrefdb.xrefs_pipeline import Canonicalizer, get_xref_df, summarize_xref_df, summarize_xref_provenances_df
+from pyobo.xrefdb.xrefs_pipeline import get_xref_df, summarize_xref_df, summarize_xref_provenances_df
 
 __all__ = [
     'get_app',
@@ -147,7 +148,7 @@ def get_app(paths: Union[None, str, Iterable[str]] = None) -> Flask:
     Bootstrap(app)
 
     if paths is None:
-        df = get_xref_df(use_cached=True)
+        df = get_xref_df(force=True)
     elif isinstance(paths, str):
         df = pd.read_csv(paths, sep='\t', dtype=str)
     else:

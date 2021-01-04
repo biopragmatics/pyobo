@@ -40,6 +40,25 @@ UBERON_UNHANDLED = defaultdict(list)
 MIRIAM = get_miriam(mappify=True)
 
 
+class MissingPrefix(ValueError):
+    """Raised on a missing prefix."""
+
+    def __init__(self, prefix, curie, xref=None, ontology=None):
+        self.prefix = prefix
+        self.curie = curie
+        self.xref = xref
+        self.ontology = ontology
+
+    def __str__(self) -> str:
+        s = ''
+        if self.ontology:
+            s += f'[{self.ontology}] '
+        s += f'unhandled prefix {self.prefix} found in curie {self.curie}'
+        if self.xref:
+            s += f'/xref {self.xref}'
+        return s
+
+
 def normalize_prefix(prefix: str, *, curie=None, xref=None) -> Optional[str]:
     """Normalize a namespace and return, if possible."""
     norm_prefix = bioregistry.normalize_prefix(prefix)
@@ -51,7 +70,7 @@ def normalize_prefix(prefix: str, *, curie=None, xref=None) -> Optional[str]:
     if curie.startswith('UBERON:'):  # uberon has tons of xrefs to anatomical features. skip them
         UBERON_UNHANDLED[prefix].append((curie, xref))
     else:
-        logger.warning('unhandled prefix %s found in curie %s/xref %s', prefix, curie, xref)
+        raise MissingPrefix(prefix=prefix, curie=curie, xref=xref)
 
 
 def normalize_curie(node: str) -> Union[Tuple[str, str], Tuple[None, None]]:

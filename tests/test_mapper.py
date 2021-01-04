@@ -6,8 +6,9 @@ import unittest
 
 import pandas as pd
 
+from pyobo import Canonicalizer
 from pyobo.constants import XREF_COLUMNS
-from pyobo.xrefdb.xrefs_pipeline import Canonicalizer, get_graph_from_xref_df
+from pyobo.xrefdb.xrefs_pipeline import get_graph_from_xref_df
 
 
 class TestCanonicalizer(unittest.TestCase):

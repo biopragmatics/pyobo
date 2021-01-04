@@ -22,9 +22,8 @@ from .extract import (
 )
 from .identifier_utils import normalize_curie, normalize_prefix
 from .sources import has_nomenclature_plugin, iter_nomenclature_plugins
-from .xrefdb.xrefs_pipeline import (
-    DEFAULT_PRIORITY_LIST, get_priority_curie, remap_file_stream,
-)
+from .xrefdb.canonicalizer import get_priority_curie, remap_file_stream
+from .xrefdb.priority import DEFAULT_PRIORITY_LIST
 
 __all__ = ['main']
 

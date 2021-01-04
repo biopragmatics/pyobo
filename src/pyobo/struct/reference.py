@@ -3,7 +3,7 @@
 """Data structures for OBO."""
 
 from dataclasses import dataclass, field
-from typing import List, Mapping, Optional
+from typing import Mapping, Optional
 
 from .registry import Registry, miriam
 from .utils import obo_escape
@@ -40,20 +40,15 @@ class Reference:
 
     @staticmethod
     def from_curie(curie: str, name: Optional[str] = None) -> Optional['Reference']:
-        """Get a reference from a CURIE."""
+        """Get a reference from a CURIE.
+
+        :param curie: The compact URI (CURIE) to parse in the form of `<prefix>:<identifier>`
+        :param name: The name associated with the CURIE
+        """
         prefix, identifier = normalize_curie(curie)
         if prefix is None and identifier is None:
             return
         return Reference(prefix=prefix, identifier=identifier, name=name)
-
-    @staticmethod
-    def from_curies(curies: str) -> List['Reference']:
-        """Get a list of references from a string with comma separated CURIEs."""
-        return [
-            Reference.from_curie(curie)
-            for curie in curies.split(',')
-            if curie.strip()
-        ]
 
     @staticmethod
     def default(identifier: str, name: Optional[str] = None) -> 'Reference':

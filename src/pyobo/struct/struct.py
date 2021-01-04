@@ -530,7 +530,7 @@ class Obo:
         return rv
 
     @staticmethod
-    def from_obonet(graph: nx.MultiDiGraph):
+    def from_obonet(graph: nx.MultiDiGraph) -> 'Obo':
         """Get all of the terms from a OBO graph."""
         ontology = normalize_prefix(graph.graph['ontology'])  # probably always okay
         logger.info('[%s] extracting OBO using obonet', ontology)
@@ -559,6 +559,7 @@ class Obo:
         }
         logger.info('[%s] extracted %d synonym typedefs', ontology, len(synonym_typedefs))
 
+        missing_typedefs = set()
         terms = []
         for prefix, identifier, data in _iter_obo_graph(graph=graph):
             if prefix != ontology or not data:
@@ -590,7 +591,9 @@ class Obo:
                 elif (relation.prefix, relation.identifier) in default_typedefs:
                     typedef = default_typedefs[relation.prefix, relation.identifier]
                 else:
-                    logger.warning('[%s] has no typedef for %s', ontology, relation)
+                    if relation not in missing_typedefs:
+                        missing_typedefs.add(relation)
+                        logger.warning('[%s] has no typedef for %s', ontology, relation)
                     continue
                 term.append_relationship(typedef, reference)
             for prop, value in iterate_node_properties(data):

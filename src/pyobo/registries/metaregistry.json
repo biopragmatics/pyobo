@@ -11,7 +11,18 @@
       "South:Korea",
       "Codex:\\:260",
       "Europe:\\:260",
-      "BioGRID:curators"
+      "BioGRID:curators",
+      "DiffAvg:",
+      "DiffFormula:",
+      "DiffMono:",
+      "Formula:",
+      "MassAvg:",
+      "MassMono:",
+      "Origin:",
+      "Source:",
+      "TermSpec:",
+      "FormalCharge:",
+      "snap:Quality"
     ],
     "prefix": [
       "url:",
@@ -30,7 +41,9 @@
       "STRUCTURE_Formula",
       "stedman",
       "WebElements",
-      "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com"
+      "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com",
+      "value-type:",
+      "binary-data-type:MS\\"
     ],
     "suffix": [
       ".jpg",
