@@ -43,6 +43,7 @@ __all__ = [
     'get_relations_df',
     # Xrefs
     'get_filtered_xrefs',
+    'get_xref',
     'get_xrefs_df',
     # Alt ids
     'get_id_to_alts',
@@ -90,6 +91,13 @@ def get_name(prefix: str, identifier: str) -> Optional[str]:
 
     primary_id = get_primary_identifier(prefix, identifier)
     return id_name.get(primary_id)
+
+
+@wrap_norm_prefix
+def get_xref(prefix: str, identifier: str, new_prefix: str, flip: bool = False) -> Optional[str]:
+    """Get the xref with the new prefix if a direct path exists."""
+    filtered_xrefs = get_filtered_xrefs(prefix, new_prefix, flip=flip)
+    return filtered_xrefs.get(identifier)
 
 
 @wrap_norm_prefix
