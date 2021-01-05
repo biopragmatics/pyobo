@@ -36,7 +36,13 @@ SKIP_XREFS = {
 }
 
 
-def iterate_obo_xrefs(*, force: bool = False, use_tqdm: bool = True, skip_pyobo: bool = False):
+def iterate_obo_xrefs(
+    *,
+    force: bool = False,
+    use_tqdm: bool = True,
+    skip_below: Optional[str] = None,
+    skip_pyobo: bool = False,
+):
     """Iterate over OBO Xrefs.
 
     :param force: If true, don't use cached xrefs tables
@@ -45,6 +51,8 @@ def iterate_obo_xrefs(*, force: bool = False, use_tqdm: bool = True, skip_pyobo:
     """
     for prefix in iterate_bioregistry(use_tqdm=use_tqdm):
         if prefix in SKIP_XREFS:
+            continue
+        if skip_below and prefix < skip_below:
             continue
         if skip_pyobo and has_nomenclature_plugin(prefix):
             continue

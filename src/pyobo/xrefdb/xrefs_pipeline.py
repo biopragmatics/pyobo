@@ -81,7 +81,7 @@ def _to_curie(prefix: str, identifier: str) -> str:
     return f'{prefix}:{identifier}'
 
 
-def get_xref_df(*, force: bool = False, use_tqdm: bool = True) -> pd.DataFrame:
+def get_xref_df(*, force: bool = False, use_tqdm: bool = True, skip_below=None) -> pd.DataFrame:
     """Get the ultimate xref database."""
     if not force and os.path.exists(MAPPINGS_DB_TSV_CACHE):
         logger.info('loading cached mapping database from %s', MAPPINGS_DB_TSV_CACHE)
@@ -90,7 +90,7 @@ def get_xref_df(*, force: bool = False, use_tqdm: bool = True) -> pd.DataFrame:
         logger.info('loaded in %.2fs', time.time() - t)
         return rv
 
-    df = pd.concat(_iterate_xref_dfs(force=force, use_tqdm=use_tqdm))
+    df = pd.concat(_iterate_xref_dfs(force=force, use_tqdm=use_tqdm, skip_below=skip_below))
 
     logger.info('sorting xrefs')
     sort_start = time.time()
@@ -136,9 +136,10 @@ def _iterate_xref_dfs(
     *,
     force: bool = False,
     use_tqdm: bool = True,
+    skip_below: Optional[str] = None,
 ) -> Iterable[pd.DataFrame]:
-    yield from iterate_obo_xrefs(use_tqdm=use_tqdm, force=force)
-    yield from iter_xref_plugins()
+    yield from iterate_obo_xrefs(use_tqdm=use_tqdm, force=force, skip_below=skip_below)
+    yield from iter_xref_plugins(skip_below=skip_below)
 
 
 def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:

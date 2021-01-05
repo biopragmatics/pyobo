@@ -4,7 +4,7 @@
 
 import logging
 from functools import lru_cache
-from typing import Callable, Iterable, Mapping
+from typing import Callable, Iterable, Mapping, Optional
 
 import pandas as pd
 from pkg_resources import iter_entry_points
@@ -43,12 +43,14 @@ def run_xref_plugin(prefix: str) -> pd.DataFrame:
     logger.warning('can not load %s since it yields many dataframes', prefix)
 
 
-def iter_xref_plugins(use_tqdm: bool = True) -> Iterable[pd.DataFrame]:
+def iter_xref_plugins(use_tqdm: bool = True, skip_below: Optional[str] = None) -> Iterable[pd.DataFrame]:
     """Get all modules in the PyOBO sources."""
     it = sorted(_get_xref_plugins().items())
     if use_tqdm:
         it = tqdm(it, desc='Mapping Plugins')
     for _prefix, get_df in it:
+        if skip_below and _prefix < skip_below:
+            continue
         rv = get_df()
         if isinstance(rv, pd.DataFrame):
             yield rv
