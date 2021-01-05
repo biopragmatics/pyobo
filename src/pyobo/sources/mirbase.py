@@ -22,6 +22,7 @@ MIRBASE_MATURE_PREFIX = 'mirbase.mature'
 xref_mapping = {
     'entrezgene': 'ncbigene',
     'targets:pictar-vert': 'pictar',
+    "targets:mirte": "mirte",
 }
 
 
