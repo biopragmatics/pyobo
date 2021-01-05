@@ -5,6 +5,7 @@
 import logging
 from typing import Iterable
 
+import bioversions
 import pandas as pd
 from tqdm import tqdm
 
@@ -14,41 +15,40 @@ from ..struct import Obo, Reference, Synonym, Term
 logger = logging.getLogger(__name__)
 
 PREFIX = 'npass'
-VERSION = '1.0'
-
-BASE_URL = f'http://bidd2.nus.edu.sg/NPASS/downloadFiles/NPASSv{VERSION}_download'
-GENERAL_URL = f'{BASE_URL}_naturalProducts_generalInfo.txt'
-
 # TODO add InChI, InChI-key, and SMILES information from NPASS, if desired
-METADATA_URL = f'{BASE_URL}_naturalProducts_properties.txt'
+# METADATA_URL = f'{BASE_URL}_naturalProducts_properties.txt'
 
 
 def get_obo() -> Obo:
     """Get NPASS as OBO."""
+    version = bioversions.get_version('npass')
     return Obo(
         ontology=PREFIX,
         name='Natural Products Activity and Species Source Database',
         iter_terms=iter_terms,
+        iter_terms_kwargs=dict(version=version),
         auto_generated_by=f'bio2obo:{PREFIX}',
         pattern=r'NPC\d+',
     )
 
 
-def get_df() -> pd.DataFrame:
+def get_df(version: str) -> pd.DataFrame:
     """Get the NPASS chemical nomenclature."""
+    base_url = f'http://bidd.group/NPASS/downloadFiles/NPASSv{version}_download'
+    url = f'{base_url}_naturalProducts_generalInfo.txt'
     return ensure_df(
         PREFIX,
-        url=GENERAL_URL,
-        version=VERSION,
+        url=url,
+        version=version,
         dtype=str,
         encoding='ISO-8859-1',
         na_values={'NA', 'n.a.', 'nan'},
     )
 
 
-def iter_terms() -> Iterable[Term]:
+def iter_terms(version: str) -> Iterable[Term]:
     """Iterate NPASS terms."""
-    df = get_df()
+    df = get_df(version=version)
     it = tqdm(df.values, total=len(df.index), desc=f'mapping {PREFIX}')
     for identifier, name, iupac, chembl_id, pubchem_compound_ids, zinc_id in it:
         xrefs = [
