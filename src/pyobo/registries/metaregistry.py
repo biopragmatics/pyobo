@@ -26,6 +26,12 @@ def get_wikidata_property_types() -> List[str]:
     return _get_curated_registry()['wikidata_property_types']
 
 
+def not_available_as_obo(prefix: str) -> bool:
+    """Return if the prefix is not available."""
+    prefix_norm = bioregistry.normalize_prefix(prefix)
+    return prefix_norm is not None and prefix_norm in get_not_available_as_obo()
+
+
 @lru_cache(maxsize=1)
 def get_not_available_as_obo():
     """Get the list of prefixes not available as OBO."""
