@@ -24,7 +24,7 @@ for a no-nonsense solution.
 
 Mapping Identifiers and CURIEs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Get mapping of ChEBI identifiers to names.
+Get mapping of ChEBI identifiers to names:
 
 .. code-block:: python
 
@@ -35,7 +35,7 @@ Get mapping of ChEBI identifiers to names.
    name = chebi_id_to_name['132964']
    assert name == 'fluazifop-P-butyl'
 
-Or, you don't have time for two lines
+Or, you don't have time for two lines:
 
 .. code-block:: python
 
@@ -44,7 +44,7 @@ Or, you don't have time for two lines
     name = pyobo.get_name('chebi', '132964')
     assert name == 'fluazifop-P-butyl'
 
-Get reverse mapping of ChEBI names to identifiers
+Get reverse mapping of ChEBI names to identifiers:
 
 .. code-block:: python
 
@@ -83,7 +83,7 @@ one using alternative identifiers listed in the underlying OBO with:
 Mapping Species
 ~~~~~~~~~~~~~~~
 Some resources have species information for their term. Get a mapping of WikiPathway identifiers
-to species (as NCBI taxonomy identifiers).
+to species (as NCBI taxonomy identifiers):
 
 .. code-block:: python
 
@@ -95,7 +95,7 @@ to species (as NCBI taxonomy identifiers).
     taxonomy_id = wikipathways_id_to_species['WP254']
     assert taxonomy_id == '9606'
 
-Or, you don't have time for two lines
+Or, you don't have time for two lines:
 
 .. code-block:: python
 
@@ -142,7 +142,7 @@ entity type to avoid false positives in case of conflicts):
 
 Cross-referencing
 ~~~~~~~~~~~~~~~~~
-Get xrefs from ChEBI to PubChem
+Get xrefs from ChEBI to PubChem:
 
 .. code-block:: python
 
@@ -153,8 +153,17 @@ Get xrefs from ChEBI to PubChem
     pubchem_compound_id = chebi_id_to_pubchem_compound_id['132964']
     assert pubchem_compound_id == '3033674'
 
+If you don't have time for two lines:
+
+.. code-block:: python
+
+    import pyobo
+
+    pubchem_compound_id = pyobo.get_xref('chebi', '132964', 'pubchem.compound')
+    assert pubchem_compound_id == '3033674'
+
 Get xrefs from Entrez to HGNC, but they're only available through HGNC
-so you need to flip them
+so you need to flip them:
 
 .. code-block:: python
 
@@ -176,8 +185,18 @@ that does this for you:
     import pyobo
 
     ncbigene_id_to_hgnc_id = pyobo.get_filtered_xrefs('hgnc', 'ncbigene', flip=True)
-    mapt_hgnc = ncbigene_id_to_hgnc_id['4137']
-    assert mapt_hgnc == '6893'
+    mapt_hgnc_id = ncbigene_id_to_hgnc_id['4137']
+    assert mapt_hgnc_id == '6893'
+
+If you don't have time for two lines (I admit this one is a bit confusing) and
+need to flip it:
+
+.. code-block:: python
+
+    import pyobo
+
+    hgnc_id = pyobo.get_xref('hgnc', '4137', 'ncbigene', flip=True)
+    assert hgnc_id == '6893'
 
 Remap a CURIE based on pre-defined priority list and `Inspector Javert's Xref
 Database <https://cthoyt.com/2020/04/19/inspector-javerts-xref-database.html>`_:
