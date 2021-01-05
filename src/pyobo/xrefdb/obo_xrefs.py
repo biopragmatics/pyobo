@@ -43,7 +43,7 @@ def iterate_obo_xrefs(*, force: bool = False, use_tqdm: bool = True, skip_pyobo:
     :param use_tqdm:
     :param skip_pyobo: If true, skip prefixes that have PyOBO-implemented nomenclatures
     """
-    for prefix, _entry in _iterate_metaregistry(use_tqdm=use_tqdm):
+    for prefix in iterate_bioregistry(use_tqdm=use_tqdm):
         if prefix in SKIP_XREFS:
             continue
         if skip_pyobo and has_nomenclature_plugin(prefix):
