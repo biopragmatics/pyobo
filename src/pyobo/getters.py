@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 from .constants import DATABASE_DIRECTORY
 from .identifier_utils import get_metaregistry, wrap_norm_prefix
-from .path_utils import ensure_path, get_prefix_directory, get_prefix_obo_path
+from .path_utils import ensure_path, get_prefix_obo_path, prefix_directory_join
 from .registries import get_curated_urls
 from .sources import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
@@ -45,8 +45,8 @@ def get(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
     :param url: A URL to give if the OBOfoundry can not be used to look up the given prefix
     :param local: A local file path is given. Do not cache.
     """
-    path = os.path.join(get_prefix_directory(prefix), f'{prefix}.obonet.json.gz')
-    if os.path.exists(path) and not local:
+    path = prefix_directory_join(prefix, f'{prefix}.obonet.json.gz')
+    if path.exists() and not local:
         logger.debug('[%s] using obonet cache at %s', prefix, path)
         return Obo.from_obonet_gz(path)
     else:
@@ -68,6 +68,20 @@ def get(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
 
 def _get_obo_via_obonet(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
     """Get the OBO file by prefix or URL."""
+    path = _get_path(prefix=prefix, url=url, local=local)
+
+    logger.info('[%s] parsing with obonet from %s', prefix, path)
+    with open(path) as file:
+        graph = obonet.read_obo(tqdm(file, unit_scale=True, desc=f'[{prefix}] parsing obo'))
+
+    # Make sure the graph is named properly
+    _clean_graph_ontology(graph, prefix)
+
+    # Convert to an Obo instance and return
+    return Obo.from_obonet(graph)
+
+
+def _get_path(*, url, prefix, local) -> str:
     if url is None:
         path = _ensure_obo_path(prefix)
     elif local:
@@ -77,17 +91,17 @@ def _get_obo_via_obonet(prefix: str, *, url: Optional[str] = None, local: bool =
         if not os.path.exists(path):
             logger.info('[%s] downloading OBO from %s to %s', prefix, url, path)
             urlretrieve(url, path)
+    return path
 
-    logger.info('[%s] parsing with obonet from %s', prefix, path)
-    with open(path) as file:
-        graph = obonet.read_obo(tqdm(file, unit_scale=True, desc=f'[{prefix}] parsing obo'))
+
+def _clean_graph_ontology(graph, prefix: str) -> None:
+    """Update the ontology entry in the graph's metadata, if necessary."""
     if 'ontology' not in graph.graph:
         logger.warning('[%s] missing "ontology" key', prefix)
         graph.graph['ontology'] = prefix
     elif not graph.graph['ontology'].isalpha():
         logger.warning('[%s] ontology=%s has a strange format. replacing with prefix', prefix, graph.graph['ontology'])
         graph.graph['ontology'] = prefix
-    return Obo.from_obonet(graph)
 
 
 def _ensure_obo_path(prefix: str) -> str:
