@@ -80,6 +80,31 @@ one using alternative identifiers listed in the underlying OBO with:
     # If it's already the primary, it just gets returned
     assert 'go:0003700' == pyobo.get_priority_curie('go:0003700')
 
+Mapping Species
+~~~~~~~~~~~~~~~
+Some resources have species information for their term. Get a mapping of WikiPathway identifiers
+to species (as NCBI taxonomy identifiers).
+
+.. code-block:: python
+
+    import pyobo
+
+    wikipathways_id_to_species = pyobo.get_id_name_mapping('wikipathways')
+
+    # Apoptosis (Homo sapiens)
+    taxonomy_id = wikipathways_id_to_species['WP254']
+    assert taxonomy_id == '9606'
+
+Or, you don't have time for two lines
+
+.. code-block:: python
+
+    import pyobo
+
+    # Apoptosis (Homo sapiens)
+    taxonomy_id = pyobo.get_species('wikipathways', 'WP254')
+    assert taxonomy_id == '9606'
+
 Grounding
 ~~~~~~~~~
 Maybe you've got names/synonyms you want to try and map back to ChEBI synonyms.
