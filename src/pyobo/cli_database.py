@@ -5,16 +5,13 @@
 Run with ``obo database <subcommand>``.
 """
 
-import os
-
 import click
 import pandas as pd
 
-from .cli_utils import directory_option, verbose_option
-from .constants import PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
+from .cli_utils import verbose_option
+from .constants import DATABASE_DIRECTORY, PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
 from .getters import db_output_helper
 from .identifier_utils import hash_curie
-from .xrefdb.canonicalizer import Canonicalizer
 from .xrefdb.xrefs_pipeline import _iter_alts, _iter_ooh_na_na, _iter_synonyms, get_xref_df, summarize_xref_df
 
 
@@ -24,10 +21,9 @@ def database():
 
 
 @database.command()
-@directory_option
 @verbose_option
 @click.pass_context
-def build(ctx: click.Context, directory: str):
+def build(ctx: click.Context):
     """Build all databases."""
     ctx.invoke(alts)
     ctx.invoke(synonyms)
@@ -36,38 +32,30 @@ def build(ctx: click.Context, directory: str):
 
 
 @database.command()
-@directory_option
 @verbose_option
-def names(directory: str):
+def names():
     """Make the prefix-identifier-name dump."""
-    db_output_helper(directory, _iter_ooh_na_na, 'names', ('prefix', 'identifier', 'name'))
+    db_output_helper(_iter_ooh_na_na, 'names', ('prefix', 'identifier', 'name'))
 
 
 @database.command()
-@directory_option
 @verbose_option
-def alts(directory: str):
+def alts():
     """Make the prefix-alt-id dump."""
-    db_output_helper(directory, _iter_alts, 'alts', ('prefix', 'identifier', 'alt'))
+    db_output_helper(_iter_alts, 'alts', ('prefix', 'identifier', 'alt'))
 
 
 @database.command()
-@directory_option
 @verbose_option
-def synonyms(directory: str):
+def synonyms():
     """Make the prefix-identifier-synonym dump."""
-    db_output_helper(directory, _iter_synonyms, 'synonyms', ('prefix', 'identifier', 'synonym'))
+    db_output_helper(_iter_synonyms, 'synonyms', ('prefix', 'identifier', 'synonym'))
 
 
 @database.command()
-@directory_option
 @verbose_option
-def xrefs(directory: str):  # noqa: D202
+def xrefs():  # noqa: D202
     """Make the prefix-identifier-xref dump."""
-
-    def _write_tsv(df: pd.DataFrame, name: str) -> None:
-        df.to_csv(os.path.join(directory, name), sep='\t', index=False)
-
     xrefs_df = get_xref_df()
 
     # Export all xrefs
@@ -89,15 +77,8 @@ def xrefs(directory: str):  # noqa: D202
     _write_tsv(summary_df, 'xrefs_summary.tsv')
 
 
-@database.command()
-@verbose_option
-@click.option('-f', '--file', type=click.File('w'))
-def remapping(file):
-    """Make a canonical remapping."""
-    canonicalizer = Canonicalizer.get_default()
-    print('input', 'canonical', sep='\t', file=file)
-    for source, target in canonicalizer.iterate_flat_mapping():
-        print(source, target, sep='\t', file=file)
+def _write_tsv(df: pd.DataFrame, name: str) -> None:
+    df.to_csv(DATABASE_DIRECTORY / name, sep='\t', index=False)
 
 
 if __name__ == '__main__':

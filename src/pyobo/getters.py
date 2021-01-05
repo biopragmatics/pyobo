@@ -2,9 +2,13 @@
 
 """Utilities for OBO files."""
 
+import datetime
 import gzip
+import json
 import logging
 import os
+import urllib.error
+import zipfile
 from collections import Counter
 from typing import Callable, Iterable, Mapping, Optional, Tuple, TypeVar
 from urllib.request import urlretrieve
@@ -20,6 +24,7 @@ from .path_utils import ensure_path, get_prefix_obo_path, prefix_directory_join
 from .registries import get_curated_urls
 from .sources import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
+from .version import get_git_hash, get_version
 
 __all__ = [
     'get',
@@ -70,6 +75,8 @@ def get(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
 def _get_obo_via_obonet(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
     """Get the OBO file by prefix or URL."""
     path = _get_path(prefix=prefix, url=url, local=local)
+    if path.endswith('.owl'):
+        raise ValueError(f'[{prefix}] unhandled OWL file')
 
     logger.info('[%s] parsing with obonet from %s', prefix, path)
     with open(path) as file:
@@ -89,7 +96,7 @@ def _get_path(*, url, prefix, local) -> str:
         path = url
     else:
         path = get_prefix_obo_path(prefix)
-        if not os.path.exists(path):
+        if path.exists():
             logger.info('[%s] downloading OBO from %s to %s', prefix, url, path)
             urlretrieve(url, path)
     return path
@@ -115,7 +122,7 @@ def _ensure_obo_path(prefix: str) -> str:
     path = get_prefix_obo_path(prefix)
     if os.path.exists(path):
         logger.debug('[%s] OBO already exists at %s', prefix, path)
-        return path
+        return path.as_posix()
 
     obofoundry = get_obofoundry(mappify=True)
     entry = obofoundry.get(prefix)
@@ -143,12 +150,20 @@ SKIP = {
     'ido',
     'iao',
     'geo',
+    'ma',
 }
 
 X = TypeVar('X')
 
 
 def iter_helper(f: Callable[[str], Mapping[str, X]], leave: bool = False) -> Iterable[Tuple[str, str, X]]:
+    """Yield all mappings extracted from each database given."""
+    for prefix, mapping in iter_helper_helper(f):
+        for key, value in tqdm(mapping.items(), desc=f'iterating {prefix}', leave=leave, unit_scale=True):
+            yield prefix, key, value
+
+
+def iter_helper_helper(f: Callable[[str], X]) -> Iterable[Tuple[str, X]]:
     """Yield all mappings extracted from each database given."""
     for prefix in sorted(bioregistry.read_bioregistry()):
         if prefix in SKIP:
@@ -157,6 +172,12 @@ def iter_helper(f: Callable[[str], Mapping[str, X]], leave: bool = False) -> Ite
             mapping = f(prefix)
         except (NoOboFoundry, MissingOboBuild):
             continue
+        except urllib.error.HTTPError as e:
+            logger.warning('[%s] HTTP %s error: unable to download', prefix, e.getcode())
+        except urllib.error.URLError as e:
+            logger.warning('[%s] unable to download: %s', prefix, e)
+        except zipfile.BadZipFile as e:
+            logger.warning('[%s] bad zip file: %s', prefix, e)
         except ValueError as e:
             if (
                 str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0"?>')
@@ -164,19 +185,33 @@ def iter_helper(f: Callable[[str], Mapping[str, X]], leave: bool = False) -> Ite
             ):
                 logger.info('no resource available for %s. See http://www.obofoundry.org/ontology/%s', prefix, prefix)
                 continue  # this means that it tried doing parsing on an xml page saying get the fuck out
-            logger.warning('could not successfully parse %s: %s', prefix, e)
+            logger.warning('[%s] error while parsing: %s', prefix, e)
         else:
-            for key, value in tqdm(mapping.items(), desc=f'iterating {prefix}', leave=leave, unit_scale=True):
-                yield prefix, key, value
+            yield prefix, mapping
 
 
-def db_output_helper(directory, f, db_name, columns) -> None:
+def db_output_helper(f, db_name, columns) -> None:
     """Help output database builds."""
     c = Counter()
-    db_path = os.path.join(DATABASE_DIRECTORY, f'{db_name}.tsv.gz')
-    db_sample_path = os.path.join(DATABASE_DIRECTORY, f'{db_name}_sample.tsv')
-    logger.info('Writing %s to %s', db_name, db_path)
 
+    db_metadata_path = DATABASE_DIRECTORY / f'{db_name}_metadata.json'
+    with open(db_metadata_path, 'w') as file:
+        json.dump(
+            {
+                'version': get_version(),
+                'git_hash': get_git_hash(),
+                'date': datetime.datetime.now().strftime('%Y-%m-%d-%H-%M'),
+            },
+            file,
+            indent=2,
+        )
+
+    db_path = DATABASE_DIRECTORY / f'{db_name}.tsv.gz'
+    db_sample_path = DATABASE_DIRECTORY / f'{db_name}_sample.tsv'
+    db_summary_path = DATABASE_DIRECTORY / f'{db_name}_summary.tsv'
+
+    logger.info('writing %s to %s', db_name, db_path)
+    logger.info('writing %s sample to %s', db_name, db_sample_path)
     it = f()
     with gzip.open(db_path, mode='wt') as gzipped_file:
         # for the first 10 rows, put it in a sample file too
@@ -195,8 +230,7 @@ def db_output_helper(directory, f, db_name, columns) -> None:
             c[prefix] += 1
             print(prefix, identifier, name, sep='\t', file=gzipped_file)
 
-    summary_path = os.path.join(directory, f'{db_name}_summary.tsv')
-    logger.info(f'Writing {db_name} summary to {summary_path}')
-    with open(summary_path, 'w') as file:
+    logger.info(f'writing {db_name} summary to {db_summary_path}')
+    with open(db_summary_path, 'w') as file:
         for k, v in c.most_common():
             print(k, v, sep='\t', file=file)

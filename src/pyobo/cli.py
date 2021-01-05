@@ -22,7 +22,7 @@ from .extract import (
 )
 from .identifier_utils import normalize_curie, normalize_prefix
 from .sources import has_nomenclature_plugin, iter_nomenclature_plugins
-from .xrefdb.canonicalizer import get_priority_curie, remap_file_stream
+from .xrefdb.canonicalizer import Canonicalizer, get_priority_curie, remap_file_stream
 from .xrefdb.priority import DEFAULT_PRIORITY_LIST
 
 __all__ = ['main']
@@ -277,6 +277,17 @@ def normalize(text: str, name: bool):
         name = get_name_by_curie(s)
         s = f'{s} ! {name}'
     click.echo(s)
+
+
+@main.command()
+@verbose_option
+@click.option('-f', '--file', type=click.File('w'))
+def remapping(file):
+    """Make a canonical remapping."""
+    canonicalizer = Canonicalizer.get_default()
+    print('input', 'canonical', sep='\t', file=file)
+    for source, target in canonicalizer.iterate_flat_mapping():
+        print(source, target, sep='\t', file=file)
 
 
 main.add_command(aws.aws)
