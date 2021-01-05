@@ -43,7 +43,9 @@
       "WebElements",
       "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com",
       "value-type:",
-      "binary-data-type:MS\\"
+      "binary-data-type:MS\\",
+      "PECO_GIT",
+      "OBO_SF2_PECO"
     ],
     "suffix": [
       ".jpg",
