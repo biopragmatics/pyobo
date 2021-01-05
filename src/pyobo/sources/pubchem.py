@@ -16,21 +16,26 @@ from ..struct import Obo, Reference, Synonym, Term
 logger = logging.getLogger(__name__)
 
 PREFIX = 'pubchem.compound'
-VERSION = '2020-12-01'
 
 
 def _get_pubchem_extras_url(version: str, end: str) -> str:
     return f'ftp://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Monthly/{version}/Extras/{end}'
 
 
+def _get_version() -> str:
+    # TODO use bioversions
+    return '2020-12-01'
+
+
 def get_obo() -> Obo:
     """Get PubChem Compound OBO."""
+    version = _get_version()
     obo = Obo(
         ontology='pubchem.compound',
         name='PubChem Compound',
         iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=VERSION),
-        data_version=VERSION,
+        iter_terms_kwargs=dict(version=version),
+        data_version=version,
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
     return obo
@@ -61,8 +66,10 @@ def get_pubchem_id_to_name(version: str) -> Mapping[str, str]:
     return dict(df.values)
 
 
-def get_pubchem_id_to_mesh_id(version: str) -> Mapping[str, str]:
+def get_pubchem_id_to_mesh_id(version: Optional[str] = None) -> Mapping[str, str]:
     """Get a mapping from PubChem compound identifiers to their equivalent MeSH terms."""
+    if version is None:
+        version = _get_version()
     url = _get_pubchem_extras_url(version, 'CID-MeSH')
     df = ensure_df(
         PREFIX,
@@ -90,7 +97,7 @@ def get_pubchem_id_to_mesh_id(version: str) -> Mapping[str, str]:
 
 def _ensure_cid_name_path(*, version: Optional[str] = None) -> str:
     if version is None:
-        version = VERSION
+        version = _get_version()
     # 2 tab-separated columns: compound_id, name
     cid_name_url = _get_pubchem_extras_url(version, 'CID-Title.gz')
     cid_name_path = ensure_path(PREFIX, url=cid_name_url, version=version)

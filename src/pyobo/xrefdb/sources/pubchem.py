@@ -2,6 +2,8 @@
 
 """Get xrefs from PubChem Compound to MeSH."""
 
+from typing import Optional
+
 import pandas as pd
 
 from ...constants import XREF_COLUMNS
@@ -12,7 +14,7 @@ __all__ = [
 ]
 
 
-def get_pubchem_mesh_df(version: str) -> pd.DataFrame:
+def get_pubchem_mesh_df(version: Optional[str] = None) -> pd.DataFrame:
     """Get PubChem Compound-MeSH xrefs."""
     cid_mesh_url = _get_pubchem_extras_url(version, 'CID-MeSH')
     return pd.DataFrame(
