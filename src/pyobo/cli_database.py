@@ -25,9 +25,13 @@ def database():
 @click.pass_context
 def build(ctx: click.Context):
     """Build all databases."""
+    click.secho('Alternate Identifiers', fg='cyan', bold=True)
     ctx.invoke(alts)
+    click.secho('Synonyms', fg='cyan', bold=True)
     ctx.invoke(synonyms)
+    click.secho('Xrefs', fg='cyan', bold=True)
     ctx.invoke(xrefs)
+    click.secho('Names', fg='cyan', bold=True)
     ctx.invoke(names)
 
 
