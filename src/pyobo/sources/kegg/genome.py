@@ -55,6 +55,10 @@ def parse_genome_line(line: str) -> KEGGGenome:
         long_code = None
         kegg_code = None
 
+    if '\t' in name:
+        logger.warning('tab in name: %s', name)
+        name = name.replace('\t', ' ')
+
     return KEGGGenome(
         identifier=identifier,
         code=kegg_code,
