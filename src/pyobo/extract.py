@@ -7,6 +7,7 @@ import os
 from functools import lru_cache
 from typing import Iterable, List, Mapping, Optional, Set, Tuple, Union
 
+import bioregistry
 import networkx as nx
 import pandas as pd
 
@@ -18,7 +19,7 @@ from .constants import (
 from .getters import NoOboFoundry, get
 from .identifier_utils import normalize_curie, wrap_norm_prefix
 from .path_utils import prefix_cache_join
-from .registries import get_not_available_as_obo, get_obsolete
+from .registries import get_not_available_as_obo
 from .struct import Reference, TypeDef, get_reference_tuple
 from .struct.typedef import has_member, is_a, part_of
 
@@ -635,7 +636,7 @@ def get_subhierarchy(
 def iter_cached_obo() -> List[Tuple[str, str]]:
     """Iterate over cached OBO paths."""
     for prefix in os.listdir(RAW_DIRECTORY):
-        if prefix in GLOBAL_SKIP or prefix in get_not_available_as_obo() or prefix in get_obsolete():
+        if prefix in GLOBAL_SKIP or prefix in get_not_available_as_obo() or bioregistry.is_deprecated(prefix):
             continue
         d = os.path.join(RAW_DIRECTORY, prefix)
         if not os.path.isdir(d):

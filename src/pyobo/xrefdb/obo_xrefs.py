@@ -4,14 +4,16 @@
 
 import logging
 import os
+from typing import Iterable, Optional
 
+import bioregistry
 import click
 from more_click import verbose_option
 from tqdm import tqdm
 
 from ..extract import get_xrefs_df
 from ..getters import MissingOboBuild, NoOboFoundry
-from ..identifier_utils import MissingPrefix, get_metaregistry
+from ..identifier_utils import MissingPrefix
 from ..path_utils import get_prefix_directory
 from ..sources import has_nomenclature_plugin
 
@@ -80,15 +82,17 @@ def iterate_obo_xrefs(*, force: bool = False, use_tqdm: bool = True, skip_pyobo:
             os.rmdir(prefix_directory)
 
 
-def _iterate_metaregistry(use_tqdm: bool = True):
-    it = sorted(get_metaregistry().items())
+def iterate_bioregistry(use_tqdm: bool = True) -> Iterable[str]:
+    """Iterate over prefixes from the bioregistry."""
+    it = sorted(bioregistry.read_bioregistry())
     if use_tqdm:
         it = tqdm(it, desc='Entries')
-    for prefix, entry in it:
-        if prefix not in SKIP:
-            if use_tqdm:
-                it.set_postfix({'prefix': prefix})
-            yield prefix, entry
+    for prefix in it:
+        if bioregistry.is_deprecated(prefix) or prefix in SKIP:
+            continue
+        if use_tqdm:
+            it.set_postfix({'prefix': prefix})
+        yield prefix
 
 
 @click.command()

@@ -6,13 +6,13 @@ import gzip
 import logging
 from typing import Dict
 
+import bioregistry
 import click
 import pandas as pd
 from tqdm import tqdm
 
 from .models import Alt, Reference, Resource, Synonym, Xref, create_all, drop_all, engine, session
 from ...cli_utils import verbose_option
-from ...identifier_utils import get_metaregistry
 from ...resource_utils import ensure_alts, ensure_inspector_javert, ensure_ooh_na_na, ensure_synonyms
 
 __all__ = [
@@ -46,17 +46,18 @@ def load(
     create_all()
 
     if load_resources or load_all:
-        metaregistry = get_metaregistry()
         prefix_to_resource: Dict[str, Resource] = {}
-
         prefixes = {resource.prefix for resource in Resource.query.all()}
-        for resource_dataclass in tqdm(metaregistry.values(), desc='loading resources'):
-            if resource_dataclass.prefix in prefixes:
+
+        for prefix, entry in tqdm(bioregistry.read_bioregistry().items(), desc='loading resources'):
+            if bioregistry.is_deprecated(prefix):
                 continue
-            prefix_to_resource[resource_dataclass.prefix] = resource_model = Resource(
-                prefix=resource_dataclass.prefix,
-                name=resource_dataclass.name,
-                pattern=resource_dataclass.pattern,
+            if prefix in prefixes:
+                continue
+            prefix_to_resource[prefix] = resource_model = Resource(
+                prefix=prefix,
+                name=entry['name'],
+                pattern=bioregistry.get_pattern(prefix),
             )
             session.add(resource_model)
         session.commit()

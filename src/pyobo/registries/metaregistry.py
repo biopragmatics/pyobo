@@ -31,9 +31,9 @@ def get_not_available_as_obo():
     """Get the list of prefixes not available as OBO."""
     #: A list of prefixes that have been manually annotated as not being available in OBO
     return {
-        prefix
-        for prefix, entry in bioregistry.read_bioregistry().items()
-        if 'not_available_as_obo' in entry and entry['not_available_as_obo']
+        bioregistry_prefix
+        for bioregistry_prefix, bioregistry_entry in bioregistry.read_bioregistry().items()
+        if 'not_available_as_obo' in bioregistry_entry and bioregistry_entry['not_available_as_obo']
     }
 
 
@@ -42,9 +42,9 @@ def get_curated_urls() -> Mapping[str, str]:
     """Get a mapping of prefixes to their custom download URLs."""
     #: URLs of resources that weren't listed in OBO Foundry properly
     return {
-        k: v['download']
-        for k, v in bioregistry.read_bioregistry().items()
-        if 'download' in v
+        bioregistry_prefix: bioregistry_entry['download']
+        for bioregistry_prefix, bioregistry_entry in bioregistry.read_bioregistry().items()
+        if 'download' in bioregistry_entry
     }
 
 
@@ -69,19 +69,13 @@ def get_xrefs_blacklist() -> Set[str]:
 
 
 @lru_cache(maxsize=1)
-def get_obsolete():
-    """Get the set of prefixes that have been manually annotated as obsolete."""
-    return _get_curated_registry()['obsolete']
-
-
-@lru_cache(maxsize=1)
-def get_remappings_full():
+def get_remappings_full() -> Mapping[str, str]:
     """Get the remappings for xrefs based on the entire xref database."""
     return _get_curated_registry()['remappings']['full']
 
 
 @lru_cache(maxsize=1)
-def get_remappings_prefix():
+def get_remappings_prefix() -> Mapping[str, str]:
     """Get the remappings for xrefs based on the prefix.
 
     .. note:: Doesn't take into account the semicolon `:`

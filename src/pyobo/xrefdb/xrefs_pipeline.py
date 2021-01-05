@@ -7,7 +7,7 @@ import itertools as itt
 import logging
 import os
 import time
-from typing import Iterable, Tuple
+from typing import Iterable, Optional, Tuple
 
 import click
 import networkx as nx
@@ -15,7 +15,7 @@ import pandas as pd
 from more_click import verbose_option
 from tqdm import tqdm
 
-from .obo_xrefs import _iterate_metaregistry, iterate_obo_xrefs
+from .obo_xrefs import iterate_bioregistry, iterate_obo_xrefs
 from .sources import iter_xref_plugins
 from ..constants import DATABASE_DIRECTORY, PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
 from ..extract import get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts
@@ -178,7 +178,7 @@ def _iter_synonyms(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
             yield prefix, identifier, synonym
 
 
-def bens_magical_ontology() -> nx.DiGraph:
+def bens_magical_ontology(use_tqdm: bool = True) -> nx.DiGraph:
     """Make a super graph containing is_a, part_of, and xref relationships."""
     rv = nx.DiGraph()
 
@@ -188,7 +188,7 @@ def bens_magical_ontology() -> nx.DiGraph:
         rv.add_edge(f'{source_ns}:{source_id}', f'{target_ns}:{target_id}', relation='xref', provenance=provenance)
 
     logger.info('getting hierarchies')
-    for prefix, _ in _iterate_metaregistry():
+    for prefix in iterate_bioregistry(use_tqdm=use_tqdm):
         hierarchy = get_hierarchy(prefix, include_has_member=True, include_part_of=True)
         rv.add_edges_from(hierarchy.edges(data=True))
 
@@ -200,8 +200,9 @@ def bens_magical_ontology() -> nx.DiGraph:
 @click.command()
 @verbose_option
 @click.option('--force', is_flag=True)
-def _main(force: bool):
-    get_xref_df(force=force)
+@click.option('-s', '--skip-below')
+def _main(force: bool, skip_below: Optional[str]):
+    get_xref_df(force=force, skip_below=skip_below)
 
 
 if __name__ == '__main__':

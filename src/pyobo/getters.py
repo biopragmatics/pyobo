@@ -9,12 +9,13 @@ from collections import Counter
 from typing import Callable, Iterable, Mapping, Optional, Tuple, TypeVar
 from urllib.request import urlretrieve
 
+import bioregistry
 import obonet
 from bioregistry.external import get_obofoundry
 from tqdm import tqdm
 
 from .constants import DATABASE_DIRECTORY
-from .identifier_utils import get_metaregistry, wrap_norm_prefix
+from .identifier_utils import wrap_norm_prefix
 from .path_utils import ensure_path, get_prefix_obo_path, prefix_directory_join
 from .registries import get_curated_urls
 from .sources import has_nomenclature_plugin, run_nomenclature_plugin
@@ -149,7 +150,7 @@ X = TypeVar('X')
 
 def iter_helper(f: Callable[[str], Mapping[str, X]], leave: bool = False) -> Iterable[Tuple[str, str, X]]:
     """Yield all mappings extracted from each database given."""
-    for prefix in sorted(get_metaregistry()):
+    for prefix in sorted(bioregistry.read_bioregistry()):
         if prefix in SKIP:
             continue
         try:

@@ -51,9 +51,6 @@
       ".png"
     ]
   },
-  "obsolete": {
-    "ma": "emapa"
-  },
   "remappings": {
     "full": {
       "CHEBI:133245 MetaCyc:quercetin 3-rhamnoside-7-rhamnoside": "CHEBI:133245",
