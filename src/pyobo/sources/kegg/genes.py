@@ -12,12 +12,13 @@ import click
 from more_click import verbose_option
 from tqdm import tqdm
 
-from pyobo.io_utils import open_map_tsv
-from pyobo.sources.kegg.api import (
-    KEGGGenome, KEGG_GENES_PREFIX, ensure_conv_genome_ncbigene, ensure_conv_genome_uniprot, ensure_list_genome,
+from .api import (
+    KEGGGenome, KEGG_GENES_PREFIX, ensure_conv_genome_ncbigene, ensure_conv_genome_uniprot,
+    ensure_list_genome, from_kegg_species,
 )
-from pyobo.sources.kegg.genome import iter_kegg_genomes
-from pyobo.struct import Obo, Reference, Term
+from .genome import iter_kegg_genomes
+from ...io_utils import open_map_tsv
+from ...struct import Obo, Reference, Term
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ def get_obo() -> Obo:
     return Obo(
         ontology=KEGG_GENES_PREFIX,
         iter_terms=iter_terms,
+        typedefs=[from_kegg_species],
         name='KEGG Genes',
         auto_generated_by=f'bio2obo:{KEGG_GENES_PREFIX}',
     )
