@@ -35,12 +35,20 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-class MissingOboBuild(RuntimeError):
+class NoBuild(RuntimeError):
+    """Base exception for being unable to build."""
+
+
+class MissingOboBuild(NoBuild):
     """Raised when OBOFoundry doesn't track an OBO file, but only has OWL."""
 
 
-class NoOboFoundry(ValueError):
+class NoOboFoundry(NoBuild):
     """Raised when OBO foundry doesn't have it."""
+
+
+class OnlyOWLError(NoBuild):
+    """Only OWL is available."""
 
 
 @wrap_norm_prefix
@@ -62,12 +70,11 @@ def get(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
         obo = run_nomenclature_plugin(prefix)
         logger.info('[%s] caching OBO at %s', prefix, path)
         obo.write_default()
-    else:
-        obo = _get_obo_via_obonet(prefix=prefix, url=url, local=local)
+        return obo
 
+    obo = _get_obo_via_obonet(prefix=prefix, url=url, local=local)
     if not local:
-        logger.info('[%s] caching pre-compiled OBO at %s', prefix, path)
-        obo.write_obonet_gz(path)
+        obo.write_default()
 
     return obo
 
@@ -76,7 +83,7 @@ def _get_obo_via_obonet(prefix: str, *, url: Optional[str] = None, local: bool =
     """Get the OBO file by prefix or URL."""
     path = _get_path(prefix=prefix, url=url, local=local)
     if path.endswith('.owl'):
-        raise ValueError(f'[{prefix}] unhandled OWL file')
+        raise OnlyOWLError(f'[{prefix}] unhandled OWL file')
 
     logger.info('[%s] parsing with obonet from %s', prefix, path)
     with open(path) as file:
@@ -141,16 +148,13 @@ def _ensure_obo_path(prefix: str) -> str:
 
 
 SKIP = {
-    'obi',
     'ncbigene',  # too big, refs acquired from other dbs
     'pubchem.compound',  # to big, can't deal with this now
-    'rnao',  # just really malformed, way too much unconverted OWL
-    'gaz',
-    'mamo',
-    'ido',
-    'iao',
-    'geo',
-    'ma',
+    'gaz',  # Gazetteer is irrelevant for biology
+    'ma',  # yanked
+    # FIXME below
+    'mirbase.family',
+    'pfam.clan',
 }
 
 X = TypeVar('X')
@@ -163,31 +167,49 @@ def iter_helper(f: Callable[[str], Mapping[str, X]], leave: bool = False) -> Ite
             yield prefix, key, value
 
 
-def iter_helper_helper(f: Callable[[str], X]) -> Iterable[Tuple[str, X]]:
-    """Yield all mappings extracted from each database given."""
+def iter_helper_helper(f: Callable[[str], X], strict: bool = True) -> Iterable[Tuple[str, X]]:
+    """Yield all mappings extracted from each database given.
+
+    :param f: A function that takes a prefix and gives back something that will be used by an outer function.
+    :param strict: If true, will raise exceptions and crash the program instead of logging them.
+    :raises HTTPError: If the resource could not be downloaded
+    :raises URLError: If another problem was encountered during download
+    :raises ValueError: If the data was not in the format that was expected (e.g., OWL)
+    """
     for prefix in sorted(bioregistry.read_bioregistry()):
         if prefix in SKIP:
             continue
         try:
             mapping = f(prefix)
-        except (NoOboFoundry, MissingOboBuild):
+        except NoBuild:
             continue
         except urllib.error.HTTPError as e:
-            logger.warning('[%s] HTTP %s error: unable to download', prefix, e.getcode())
-        except urllib.error.URLError as e:
-            logger.warning('[%s] unable to download: %s', prefix, e)
+            logger.warning('[%s] HTTP %s: unable to download %s', prefix, e.getcode(), e.geturl())
+            if strict:
+                raise
+        except urllib.error.URLError:
+            logger.warning('[%s] unable to download', prefix)
+            if strict:
+                raise
         except zipfile.BadZipFile as e:
             logger.warning('[%s] bad zip file: %s', prefix, e)
         except ValueError as e:
-            if (
-                str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0"?>')
-                or str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0" encoding="UTF-8"?>')
-            ):
+            if _is_xml(e):
+                # this means that it tried doing parsing on an xml page saying get the fuck out
                 logger.info('no resource available for %s. See http://www.obofoundry.org/ontology/%s', prefix, prefix)
-                continue  # this means that it tried doing parsing on an xml page saying get the fuck out
-            logger.warning('[%s] error while parsing: %s', prefix, e)
+            else:
+                logger.warning('[%s] error while parsing: %s', prefix, e)
+            if strict:
+                raise e
         else:
             yield prefix, mapping
+
+
+def _is_xml(e) -> bool:
+    return (
+        str(e).startswith('Tag-value pair parsing failed for:')
+        or str(e).startswith('Tag-value pair parsing failed for:\n<?xml version="1.0" encoding="UTF-8"?>')
+    )
 
 
 def db_output_helper(f, db_name, columns) -> None:

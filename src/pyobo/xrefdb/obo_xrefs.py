@@ -12,7 +12,7 @@ from more_click import verbose_option
 from tqdm import tqdm
 
 from ..extract import get_xrefs_df
-from ..getters import MissingOboBuild, NoOboFoundry
+from ..getters import NoBuild
 from ..identifier_utils import MissingPrefix
 from ..path_utils import get_prefix_directory
 from ..sources import has_nomenclature_plugin
@@ -63,7 +63,7 @@ def iterate_obo_xrefs(
         except MissingPrefix as e:
             e.ontology = prefix
             raise e
-        except (NoOboFoundry, MissingOboBuild):
+        except NoBuild:
             continue
         except ValueError as e:
             if (
