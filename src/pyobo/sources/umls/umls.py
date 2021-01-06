@@ -9,15 +9,16 @@ import itertools as itt
 import operator
 import os
 import zipfile
+from typing import Iterable
 
 import click
 import pandas as pd
 from tqdm import tqdm
 
-from ...identifier_utils import normalize_prefix
-from ...io_utils import open_map_tsv
-from ...path_utils import ensure_path
-from ...struct import Obo, Reference, Synonym, SynonymTypeDef, Term
+from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term, normalize_prefix
+from pyobo.constants import RAW_MODULE
+from pyobo.io_utils import open_map_tsv
+from pyobo.path_utils import ensure_path
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 SYNONYM_TYPE_PATH = os.path.join(HERE, 'synonym_types.tsv')
@@ -45,17 +46,21 @@ RRF_COLUMNS = [
 ]
 
 PREFIX = 'umls'
-VERSION = '2020AA'
-SOURCE_VOCAB_URL = 'https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html'
-URL = 'https://download.nlm.nih.gov/umls/kss/2020AA/umls-2020AA-mrconso.zip'
 
+SOURCE_VOCAB_URL = 'https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html'
 synonym_abb = open_map_tsv(SYNONYM_TYPE_PATH)
+
+
+def _get_version() -> str:
+    return '2020AB'
 
 
 def get_obo() -> Obo:
     """Get UMLS as OBO."""
+    version = _get_version()
     return Obo(
         iter_terms=iter_terms,
+        iter_terms_kwargs=dict(version=version),
         name='Unified Medical Language System',
         ontology=PREFIX,
         synonym_typedefs=[
@@ -63,14 +68,25 @@ def get_obo() -> Obo:
             for v in synonym_abb.values()
         ],
         auto_generated_by=f'bio2obo:{PREFIX}',
-        data_version=VERSION,
+        data_version=version,
     )
 
 
-def iter_terms():
+def iter_terms(version: str, autodownload: bool = False) -> Iterable[Term]:
     """Iterate over UMLS terms."""
-    # FIXME needs automated scrapy step where you put in user/password
-    path = ensure_path(PREFIX, url=URL, version=VERSION)
+    name = f'umls-{version}-mrconso.zip'
+    url = f'https://download.nlm.nih.gov/umls/kss/{version}/{name}'
+    if autodownload:
+        # FIXME needs automated scrapy step where you put in user/password
+        path = ensure_path(PREFIX, url=url, version=version)
+    else:
+        path = RAW_MODULE.get(PREFIX, version, name)
+        if not path.exists():
+            raise FileNotFoundError(
+                f'UMLS needs to be downloaded manually still and moved to  {path}. '
+                f'See https://www.nlm.nih.gov/research/umls/index.html',
+            )
+
     with zipfile.ZipFile(path) as zip_file:
         with zip_file.open('MRCONSO.RRF', mode='r') as file:
             it = tqdm(file, unit_scale=True, desc='[umls] parsing')
