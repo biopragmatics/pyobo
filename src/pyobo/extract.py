@@ -127,7 +127,9 @@ def get_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[s
     if prefix == 'ncbigene':
         from .sources.ncbigene import get_ncbigene_id_to_name_mapping
         logger.info('[%s] loading name mappings', prefix)
-        return get_ncbigene_id_to_name_mapping()
+        rv = get_ncbigene_id_to_name_mapping()
+        logger.info('[%s] done loading name mappings', prefix)
+        return rv
 
     path = prefix_cache_join(prefix, 'names.tsv')
 
@@ -158,7 +160,9 @@ def get_id_species_mapping(prefix: str, force: bool = False, **kwargs) -> Mappin
     if prefix == 'ncbigene':
         from .sources.ncbigene import get_ncbigene_id_to_species_mapping
         logger.info('[%s] loading species mappings', prefix)
-        return get_ncbigene_id_to_species_mapping()
+        rv = get_ncbigene_id_to_species_mapping()
+        logger.info('[%s] done loading species mappings', prefix)
+        return rv
 
     path = prefix_cache_join(prefix, 'species.tsv')
 
