@@ -119,6 +119,7 @@ class TestGet(unittest.TestCase):
     """Test generation of OBO objects."""
 
     def setUp(self) -> None:
+        """Set up the test with the mock ChEBI OBO file."""
         # TODO use mock
         self.obo = get('chebi', url=TEST_CHEBI_OBO_PATH, local=True)
 

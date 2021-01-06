@@ -48,6 +48,7 @@ PROVENANCE_PREFIXES = {
     'google.patent',
 }
 
+
 @dataclass
 class Synonym:
     """A synonym with optional specificity and references."""
