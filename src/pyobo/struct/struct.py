@@ -38,7 +38,15 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 DATE_FORMAT = "%d:%m:%Y %H:%M"
-
+PROVENANCE_PREFIXES = {
+    'pubmed',
+    'pmc',
+    'doi',
+    'biorxiv',
+    'chemrxiv',
+    'wikipedia',
+    'google.patent',
+}
 
 @dataclass
 class Synonym:
@@ -567,7 +575,7 @@ class Obo:
 
             xrefs, provenance = [], []
             for reference in iterate_node_xrefs(prefix=prefix, data=data):
-                if reference.prefix in {'pubmed', 'pmc', 'doi'}:  # TODO add other provenance prefixes
+                if reference.prefix in PROVENANCE_PREFIXES:
                     provenance.append(reference)
                 else:
                     xrefs.append(reference)
