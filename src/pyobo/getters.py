@@ -219,8 +219,7 @@ def db_output_helper(f, db_name, columns) -> None:
             print(*columns, sep='\t', file=gzipped_file)
             print(*columns, sep='\t', file=sample_file)
 
-            for _ in range(10):
-                prefix, identifier, name = next(it)
+            for (prefix, identifier, name), _ in zip(it, range(10)):
                 c[prefix] += 1
                 print(prefix, identifier, name, sep='\t', file=gzipped_file)
                 print(prefix, identifier, name, sep='\t', file=sample_file)
