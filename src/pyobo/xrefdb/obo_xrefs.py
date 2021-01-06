@@ -74,9 +74,6 @@ def iterate_obo_xrefs(
                 continue  # this means that it tried doing parsing on an xml page saying get the fuck out
             logger.warning('[%s] could not successfully parse: %s', prefix, e)
             continue
-        except Exception:
-            logger.exception('[%s] other problem', prefix)
-            continue
 
         if df is None:
             logger.debug('[%s] could not get a dataframe', prefix)
