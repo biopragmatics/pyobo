@@ -118,8 +118,26 @@ class TestParseObonet(unittest.TestCase):
 class TestGet(unittest.TestCase):
     """Test generation of OBO objects."""
 
-    def test_get_obo(self):
+    def setUp(self) -> None:
+        # TODO use mock
+        self.obo = get('chebi', url=TEST_CHEBI_OBO_PATH, local=True)
+
+    def test_get_terms(self):
         """Test getting an OBO document."""
-        obo = get('chebi', url=TEST_CHEBI_OBO_PATH, local=True)
-        terms = list(obo)
+        terms = list(self.obo)
         self.assertEqual(18, len(terms))
+
+    def test_get_id_alts_mapping(self):
+        """Make sure the alternative ids are mapped properly.
+
+        .. code-block::
+
+            [Term]
+            id: CHEBI:16042
+            name: halide anion
+            alt_id: CHEBI:5605
+            alt_id: CHEBI:14384
+        """
+        id_alts_mapping = self.obo.get_id_alts_mapping()
+        self.assertIn('16042', id_alts_mapping)
+        self.assertEqual({'5605', '14384'}, set(id_alts_mapping['16042']))
