@@ -22,7 +22,12 @@
       "Source:",
       "TermSpec:",
       "FormalCharge:",
-      "snap:Quality"
+      "snap:Quality",
+      "depicted:by",
+      "http:http\\://www.pacificbiosciences.com/pdf/WP_Detecting_DNA_Base_Modifications_Using_SMRT_Sequencing.pdf",
+      "XX:www.ensembl.org/info/genome/variation/predicted_data.html#consequences",
+      "http:www.ensembl.org/info/genome/variation/predicted_data.html#consequences",
+      "EBI:www.ebi.ac.uk/mutations/recommendations/mutevent.html"
     ],
     "prefix": [
       "url:",
@@ -80,7 +85,13 @@
       "VFB:FBbt_": "FBbt",
       "chembl target:CHEMBL": "chembl.target:CHEMBL",
       "protein ontology:PR\\:": "PR:PR:",
-      "http://orcid.org/": "orcid:"
+      "http://orcid.org/": "orcid:",
+      "http:http\\://en.wikipedia.org/wiki/": "wikipedia:",
+      "http://en.wikipedia.org/wiki/": "wikipedia:",
+      "http:en.wikipedia.org/wiki/": "wikipedia:",
+      "http:http\\:en.wikipedia.org/wiki/": "wikipedia:",
+      "WIKI:https\\://en.wikipedia.org/wiki/": "wikipedia:",
+      "BioRXiv:https\\://doi.org/": "doi:"
     }
   },
   "wikidata_property_types": [
