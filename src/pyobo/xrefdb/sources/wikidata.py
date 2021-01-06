@@ -93,9 +93,9 @@ def get_wikidata_properties() -> Iterable[str]:
             yield d['item']['value'][len('wd:'):]
 
 
-def _run_query(query):
+def _run_query(query, base: str = URL):
     logger.debug('running query: %s', query)
-    res = requests.get(URL, params={'query': query, 'format': 'json'})
+    res = requests.get(base, params={'query': query, 'format': 'json'})
     res.raise_for_status()
     res_json = res.json()
     return res_json['results']['bindings']
