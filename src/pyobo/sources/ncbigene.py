@@ -46,16 +46,25 @@ GENE_INFO_COLUMNS = [
 
 def get_ncbigene_id_to_name_mapping() -> Mapping[str, str]:
     """Get the Entrez name mapping."""
+    return _get_ncbigene_info_subset(['GeneID', 'Symbol'])
+
+
+def get_ncbigene_id_to_species_mapping() -> Mapping[str, str]:
+    """Get the Entrez species mapping."""
+    return _get_ncbigene_info_subset(['GeneID', 'Symbol'])
+
+
+def _get_ncbigene_info_subset(usecols) -> Mapping[str, str]:
     df = ensure_df(
         PREFIX,
         url=GENE_INFO_URL,
         sep='\t',
         na_values=['-', 'NEWENTRY'],
-        usecols=['GeneID', 'Symbol'],
+        usecols=usecols,
         dtype=str,
     )
     df.dropna(inplace=True)
-    return dict(df[['GeneID', 'Symbol']].values)
+    return dict(df[usecols].values)
 
 
 def get_obo() -> Obo:

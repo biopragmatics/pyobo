@@ -156,7 +156,9 @@ def get_name_id_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
 def get_id_species_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, str]:
     """Get an identifier to species mapping."""
     if prefix == 'ncbigene':
-        raise NotImplementedError
+        from .sources.ncbigene import get_ncbigene_id_to_species_mapping
+        logger.info('[%s] loading species mappings', prefix)
+        return get_ncbigene_id_to_species_mapping()
 
     path = prefix_cache_join(prefix, 'species.tsv')
 
