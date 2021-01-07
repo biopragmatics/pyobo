@@ -466,7 +466,7 @@ class Obo:
             relations_path = self._cache('relations', f'{relation.curie}.tsv')
             if relations_path.exists() and not force:
                 continue
-            logger.info('[%s] caching relation %s ! %', self.ontology, relation.curie, relation.name)
+            logger.info('[%s] caching relation %s ! %s', self.ontology, relation.curie, relation.name)
             relation_df = self.get_filtered_relations_df(relation)
             if not len(relation_df.index):
                 continue
