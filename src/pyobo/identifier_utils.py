@@ -2,7 +2,6 @@
 
 """Utilities for handling prefixes."""
 
-import hashlib
 import logging
 from collections import defaultdict
 from functools import wraps

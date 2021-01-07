@@ -165,7 +165,13 @@ def iter_helper(f: Callable[[str], Mapping[str, X]], leave: bool = False) -> Ite
             yield prefix, key, value
 
 
-def iter_helper_helper(f: Callable[[str], X], strict: bool = True) -> Iterable[Tuple[str, X]]:
+def iter_helper_helper(
+    f: Callable[[str], X],
+    use_tqdm: bool = True,
+    skip_below: Optional[str] = None,
+    skip_pyobo: bool = False,
+    strict: bool = True,
+) -> Iterable[Tuple[str, X]]:
     """Yield all mappings extracted from each database given.
 
     :param f: A function that takes a prefix and gives back something that will be used by an outer function.
@@ -174,11 +180,18 @@ def iter_helper_helper(f: Callable[[str], X], strict: bool = True) -> Iterable[T
     :raises URLError: If another problem was encountered during download
     :raises ValueError: If the data was not in the format that was expected (e.g., OWL)
     """
-    it = tqdm(sorted(bioregistry.read_bioregistry()))
+    it = sorted(bioregistry.read_bioregistry())
+    if use_tqdm:
+        it = tqdm(it)
     for prefix in it:
         if prefix in SKIP:
             continue
-        it.set_postfix({'prefix': prefix})
+        if skip_below is not None and prefix < skip_below:
+            continue
+        if skip_pyobo and has_nomenclature_plugin(prefix):
+            continue
+        if use_tqdm:
+            it.set_postfix({'prefix': prefix})
         try:
             mapping = f(prefix)
         except NoBuild:

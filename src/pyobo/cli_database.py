@@ -59,7 +59,7 @@ def synonyms():
 @verbose_option
 def xrefs():  # noqa: D202
     """Make the prefix-identifier-xref dump."""
-    xrefs_df = get_xref_df()
+    xrefs_df = get_xref_df(rebuild=True, force=False)
 
     # Export all xrefs
     _write_tsv(xrefs_df, 'xrefs.tsv.gz')

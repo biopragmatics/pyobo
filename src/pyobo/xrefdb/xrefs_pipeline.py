@@ -9,17 +9,18 @@ import os
 import time
 from typing import Iterable, Optional, Tuple
 
+import bioregistry
 import click
 import networkx as nx
 import pandas as pd
 from more_click import verbose_option
 from tqdm import tqdm
 
-from .obo_xrefs import iterate_bioregistry, iterate_obo_xrefs
+from .obo_xrefs import iterate_obo_xrefs
 from .sources import iter_xref_plugins
 from ..constants import DATABASE_DIRECTORY, PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
 from ..extract import get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts
-from ..getters import iter_helper
+from ..getters import SKIP, iter_helper
 from ..path_utils import ensure_path
 from ..sources import ncbigene, pubchem
 
@@ -81,9 +82,9 @@ def _to_curie(prefix: str, identifier: str) -> str:
     return f'{prefix}:{identifier}'
 
 
-def get_xref_df(*, force: bool = False, use_tqdm: bool = True, skip_below=None) -> pd.DataFrame:
+def get_xref_df(*, force: bool = False, rebuild: bool = False, use_tqdm: bool = True, skip_below=None) -> pd.DataFrame:
     """Get the ultimate xref database."""
-    if not force and os.path.exists(MAPPINGS_DB_TSV_CACHE):
+    if not rebuild and os.path.exists(MAPPINGS_DB_TSV_CACHE):
         logger.info('loading cached mapping database from %s', MAPPINGS_DB_TSV_CACHE)
         t = time.time()
         rv = pd.read_csv(MAPPINGS_DB_TSV_CACHE, sep='\t', dtype=str)
@@ -128,6 +129,8 @@ def get_xref_df(*, force: bool = False, use_tqdm: bool = True, skip_below=None) 
     xref_provenances_df = summarize_xref_provenances_df(df)
     logger.info('made provenance summary in %.2fs', time.time() - t)
     xref_provenances_df.to_csv(MAPPINGS_DB_SUMMARY_PROVENANCES_CACHE, index=False, sep='\t')
+
+    logger.info('done')
 
     return df
 
@@ -189,7 +192,15 @@ def bens_magical_ontology(use_tqdm: bool = True) -> nx.DiGraph:
         rv.add_edge(f'{source_ns}:{source_id}', f'{target_ns}:{target_id}', relation='xref', provenance=provenance)
 
     logger.info('getting hierarchies')
-    for prefix in iterate_bioregistry(use_tqdm=use_tqdm):
+    it = sorted(bioregistry.read_bioregistry())
+    if use_tqdm:
+        it = tqdm(it, desc='Entries')
+    for prefix in it:
+        if bioregistry.is_deprecated(prefix) or prefix in SKIP:
+            continue
+        if use_tqdm:
+            it.set_postfix({'prefix': prefix})
+
         hierarchy = get_hierarchy(prefix, include_has_member=True, include_part_of=True)
         rv.add_edges_from(hierarchy.edges(data=True))
 
