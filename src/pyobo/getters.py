@@ -8,7 +8,6 @@ import json
 import logging
 import os
 import urllib.error
-import zipfile
 from collections import Counter
 from typing import Callable, Iterable, Mapping, Optional, Tuple, TypeVar
 from urllib.request import urlretrieve
@@ -192,8 +191,6 @@ def iter_helper_helper(f: Callable[[str], X], strict: bool = True) -> Iterable[T
             logger.warning('[%s] unable to download', prefix)
             if strict:
                 raise
-        except zipfile.BadZipFile as e:
-            logger.warning('[%s] bad zip file: %s', prefix, e)
         except ValueError as e:
             if _is_xml(e):
                 # this means that it tried doing parsing on an xml page saying get the fuck out
