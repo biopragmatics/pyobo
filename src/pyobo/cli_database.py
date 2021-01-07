@@ -9,9 +9,8 @@ import click
 import pandas as pd
 
 from .cli_utils import verbose_option
-from .constants import DATABASE_DIRECTORY, PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
+from .constants import DATABASE_DIRECTORY
 from .getters import db_output_helper
-from .identifier_utils import hash_curie
 from .xrefdb.xrefs_pipeline import _iter_alts, _iter_ooh_na_na, _iter_synonyms, get_xref_df, summarize_xref_df
 
 
@@ -67,14 +66,6 @@ def xrefs():  # noqa: D202
 
     # Export a sample of xrefs
     _write_tsv(xrefs_df.head(), 'xrefs_sample.tsv')
-
-    md5_df = pd.DataFrame({
-        'md5': [hash_curie(p, i) for p, i in xrefs_df[[SOURCE_PREFIX, SOURCE_ID]].values],
-        'xref_md5': [hash_curie(p, i) for p, i in xrefs_df[[TARGET_PREFIX, TARGET_ID]].values],
-        'source': xrefs_df[PROVENANCE],
-    })
-    _write_tsv(md5_df, 'xrefs_md5.tsv.gz')
-    _write_tsv(md5_df.head(), 'xrefs_md5_sample.tsv')
 
     # Export a summary dataframe
     summary_df = summarize_xref_df(xrefs_df)

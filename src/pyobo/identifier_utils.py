@@ -21,7 +21,6 @@ __all__ = [
     'get_identifiers_org_link',
     'normalize_prefix',
     'normalize_dashes',
-    'hash_curie',
     'wrap_norm_prefix',
 ]
 
@@ -149,11 +148,6 @@ def normalize_dashes(s: str) -> str:
         replace(EN_DASH, NORMAL_DASH). \
         replace(EM_DASH, NORMAL_DASH). \
         replace(HORIZONAL_BAR, NORMAL_DASH)
-
-
-def hash_curie(prefix, identifier) -> str:
-    """Hash a curie with MD5."""
-    return hashlib.md5(f'{prefix}:{identifier}'.encode('utf-8')).hexdigest()  # noqa:S303
 
 
 def wrap_norm_prefix(f):
