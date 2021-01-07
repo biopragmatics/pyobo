@@ -20,6 +20,7 @@ from .getters import NoOboFoundry, get
 from .identifier_utils import normalize_curie, wrap_norm_prefix
 from .path_utils import prefix_cache_join
 from .registries import not_available_as_obo
+from .sources import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Reference, TypeDef, get_reference_tuple
 from .struct.typedef import has_member, is_a, part_of
 
@@ -64,7 +65,14 @@ logger = logging.getLogger(__name__)
 
 RelationHint = Union[Reference, TypeDef, Tuple[str, str]]
 
-NO_ALTS = {'ncbigene'}
+NO_ALTS = {
+    'ncbigene',
+}
+
+
+def _get_version(prefix: str) -> Optional[str]:
+    if has_nomenclature_plugin(prefix):
+        return run_nomenclature_plugin(prefix).data_version
 
 
 def get_name_by_curie(curie: str) -> Optional[str]:
@@ -131,7 +139,7 @@ def get_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[s
         logger.info('[%s] done loading name mappings', prefix)
         return rv
 
-    path = prefix_cache_join(prefix, 'names.tsv')
+    path = prefix_cache_join(prefix, 'names.tsv', version=_get_version(prefix))
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'], force=force)
     def _get_id_name_mapping() -> Mapping[str, str]:
@@ -164,7 +172,7 @@ def get_id_species_mapping(prefix: str, force: bool = False, **kwargs) -> Mappin
         logger.info('[%s] done loading species mappings', prefix)
         return rv
 
-    path = prefix_cache_join(prefix, 'species.tsv')
+    path = prefix_cache_join(prefix, 'species.tsv', version=_get_version(prefix))
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'species'], force=force)
     def _get_id_species_mapping() -> Mapping[str, str]:
@@ -180,7 +188,7 @@ def get_id_species_mapping(prefix: str, force: bool = False, **kwargs) -> Mappin
 @wrap_norm_prefix
 def get_typedef_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, str]:
     """Get an identifier to name mapping for the typedefs in an OBO file."""
-    path = prefix_cache_join(prefix, 'typedefs.tsv')
+    path = prefix_cache_join(prefix, 'typedefs.tsv', version=_get_version(prefix))
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'], force=force)
     def _get_typedef_id_name_mapping() -> Mapping[str, str]:
@@ -195,7 +203,7 @@ def get_typedef_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> M
 @wrap_norm_prefix
 def get_id_synonyms_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, List[str]]:
     """Get the OBO file and output a synonym dictionary."""
-    path = prefix_cache_join(prefix, "synonyms.tsv")
+    path = prefix_cache_join(prefix, "synonyms.tsv", version=_get_version(prefix))
 
     @cached_multidict(path=path, header=[f'{prefix}_id', 'synonym'], force=force)
     def _get_multidict() -> Mapping[str, List[str]]:
@@ -209,7 +217,7 @@ def get_id_synonyms_mapping(prefix: str, force: bool = False, **kwargs) -> Mappi
 @wrap_norm_prefix
 def get_properties_df(prefix: str, force: bool = False, **kwargs) -> pd.DataFrame:
     """Extract properties."""
-    path = prefix_cache_join(prefix, "properties.tsv")
+    path = prefix_cache_join(prefix, "properties.tsv", version=_get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
@@ -231,8 +239,8 @@ def get_filtered_properties_mapping(
     **kwargs,
 ) -> Mapping[str, str]:
     """Extract a single property for each term as a dictionary."""
-    path = prefix_cache_join(prefix, 'properties', f"{prop}.tsv")
-    all_properties_path = prefix_cache_join(prefix, 'properties.tsv')
+    path = prefix_cache_join(prefix, 'properties', f"{prop}.tsv", version=_get_version(prefix))
+    all_properties_path = prefix_cache_join(prefix, 'properties.tsv', version=_get_version(prefix))
 
     @cached_mapping(path=path, header=[f'{prefix}_id', prop], force=force)
     def _mapping_getter() -> Mapping[str, str]:
@@ -260,8 +268,8 @@ def get_filtered_properties_df(
     **kwargs,
 ) -> pd.DataFrame:
     """Extract a single property for each term."""
-    path = prefix_cache_join(prefix, 'properties', f"{prop}.tsv")
-    all_properties_path = prefix_cache_join(prefix, 'properties.tsv')
+    path = prefix_cache_join(prefix, 'properties', f"{prop}.tsv", version=_get_version(prefix))
+    all_properties_path = prefix_cache_join(prefix, 'properties.tsv', version=_get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
@@ -288,7 +296,7 @@ def get_relations_df(
     **kwargs,
 ) -> pd.DataFrame:
     """Get all relations from the OBO."""
-    path = prefix_cache_join(prefix, 'relations.tsv')
+    path = prefix_cache_join(prefix, 'relations.tsv', version=_get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
@@ -317,8 +325,10 @@ def get_filtered_relations_df(
 ) -> pd.DataFrame:
     """Get all of the given relation."""
     relation_prefix, relation_identifier = relation = get_reference_tuple(relation)
-    path = prefix_cache_join(prefix, 'relations', f'{relation_prefix}:{relation_identifier}.tsv')
-    all_relations_path = prefix_cache_join(prefix, 'relations.tsv')
+    path = prefix_cache_join(
+        prefix, 'relations', f'{relation_prefix}:{relation_identifier}.tsv', version=_get_version(prefix),
+    )
+    all_relations_path = prefix_cache_join(prefix, 'relations.tsv', version=_get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
@@ -361,8 +371,8 @@ def get_filtered_xrefs(
     **kwargs,
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
-    path = prefix_cache_join(prefix, 'xrefs', f"{xref_prefix}.tsv")
-    all_xrefs_path = prefix_cache_join(prefix, 'xrefs.tsv')
+    path = prefix_cache_join(prefix, 'xrefs', f"{xref_prefix}.tsv", version=_get_version(prefix))
+    all_xrefs_path = prefix_cache_join(prefix, 'xrefs.tsv', version=_get_version(prefix))
     header = [f'{prefix}_id', f'{xref_prefix}_id']
 
     @cached_mapping(path=path, header=header, use_tqdm=use_tqdm, force=force)
@@ -388,7 +398,7 @@ def get_filtered_xrefs(
 @wrap_norm_prefix
 def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, force: bool = False, **kwargs) -> pd.DataFrame:
     """Get all xrefs."""
-    path = prefix_cache_join(prefix, 'xrefs.tsv')
+    path = prefix_cache_join(prefix, 'xrefs.tsv', version=_get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
@@ -406,7 +416,7 @@ def get_id_to_alts(prefix: str, force: bool = False, **kwargs) -> Mapping[str, L
     if prefix in NO_ALTS:
         return {}
 
-    path = prefix_cache_join(prefix, 'alt_ids.tsv')
+    path = prefix_cache_join(prefix, 'alt_ids.tsv', version=_get_version(prefix))
     header = [f'{prefix}_id', 'alt_id']
 
     @cached_multidict(path=path, header=header, force=force)

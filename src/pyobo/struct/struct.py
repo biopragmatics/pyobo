@@ -366,62 +366,119 @@ class Obo:
         """Read OBO from a pre-compiled Obonet JSON."""
         return cls.from_obonet(get_gzipped_graph(path))
 
-    def _path(self, *parts: str):
+    def _path(self, *parts: str) -> Path:
         return prefix_directory_join(self.ontology, *parts, version=self.data_version)
 
-    def _cache(self, *parts: str):
+    def _cache(self, *parts: str) -> Path:
         return self._path('cache', *parts)
 
-    def write_default(self, use_tqdm: bool = True, write_obo: bool = False, write_obonet: bool = False) -> None:
-        """Write the OBO to the default path."""
-        write_map_tsv(
-            path=self._cache('names.tsv'),
-            header=[f'{self.ontology}_id', 'name'],
-            rv=self.get_id_name_mapping(),
-        )
-        write_map_tsv(
-            path=self._cache('species.tsv'),
-            header=[f'{self.ontology}_id', 'taxonomy_id'],
-            rv=self.get_id_species_mapping(),
-        )
-        write_multimap_tsv(
-            path=self._cache('synonyms.tsv'),
-            header=[f'{self.ontology}_id', 'synonym'],
-            rv=self.get_id_synonyms_mapping(),
-        )
-        write_multimap_tsv(
-            path=self._cache('alt_ids.tsv'),
-            header=[f'{self.ontology}_id', 'alt_id'],
-            rv=self.get_id_alts_mapping(),
-        )
+    @property
+    def _names_path(self) -> Path:
+        return self._cache('names.tsv')
 
-        for df_name, get_df in [
-            ('xrefs', self.get_xrefs_df),
-            ('relations', self.get_relations_df),
-            ('properties', self.get_properties_df),
+    @property
+    def _species_path(self) -> Path:
+        return self._cache('species.tsv')
+
+    @property
+    def _synonyms_path(self) -> Path:
+        return self._cache('synonyms.tsv')
+
+    @property
+    def _alts_path(self):
+        return self._cache('alt_ids.tsv')
+
+    @property
+    def _xrefs_path(self) -> Path:
+        return self._cache('xrefs.tsv')
+
+    @property
+    def _relations_path(self) -> Path:
+        return self._cache('relations.tsv')
+
+    @property
+    def _properties_path(self) -> Path:
+        return self._cache('properties.tsv')
+
+    @property
+    def _obo_path(self) -> Path:
+        return get_prefix_obo_path(self.ontology, version=self.data_version)
+
+    @property
+    def _obonet_gz_path(self) -> Path:
+        return self._path(f"{self.ontology}.obonet.json.gz")
+
+    def write_default(
+        self,
+        use_tqdm: bool = True,
+        force: bool = False,
+        write_obo: bool = False,
+        write_obonet: bool = False,
+    ) -> None:
+        """Write the OBO to the default path."""
+        if not self._names_path.exists() or force:
+            logger.info('[%s] caching names', self.ontology)
+            write_map_tsv(
+                path=self._names_path,
+                header=[f'{self.ontology}_id', 'name'],
+                rv=self.get_id_name_mapping(),
+            )
+
+        if not self._species_path.exists() or force:
+            logger.info('[%s] caching species', self.ontology)
+            write_map_tsv(
+                path=self._species_path,
+                header=[f'{self.ontology}_id', 'taxonomy_id'],
+                rv=self.get_id_species_mapping(),
+            )
+
+        if not self._synonyms_path.exists() or force:
+            logger.info('[%s] caching synonyms', self.ontology)
+            write_multimap_tsv(
+                path=self._synonyms_path,
+                header=[f'{self.ontology}_id', 'synonym'],
+                rv=self.get_id_synonyms_mapping(),
+            )
+
+        if not self._alts_path.exists() or force:
+            logger.info('[%s] caching alts', self.ontology)
+            write_multimap_tsv(
+                path=self._alts_path,
+                header=[f'{self.ontology}_id', 'alt_id'],
+                rv=self.get_id_alts_mapping(),
+            )
+
+        for path, get_df in [
+            (self._xrefs_path, self.get_xrefs_df),
+            (self._relations_path, self.get_relations_df),
+            (self._properties_path, self.get_properties_df),
         ]:
+            if path.exists() and not force:
+                continue
+            logger.info('[%s] caching %s', self.ontology, path)
             df: pd.DataFrame = get_df(use_tqdm=use_tqdm)
-            if len(df.index):
-                df.sort_values(list(df.columns), inplace=True)
-                df.to_csv(self._cache(f'{df_name}.tsv'), sep='\t', index=False)
+            df.sort_values(list(df.columns), inplace=True)
+            df.to_csv(path, sep='\t', index=False)
 
         for relation in (is_a, has_part, part_of, from_species, orthologous):
             if relation is not is_a and relation not in self.typedefs:
                 continue
+            relations_path = self._cache('relations', f'{relation.curie}.tsv')
+            if relations_path.exists() and not force:
+                continue
+            logger.info('[%s] caching relation %s ! %', self.ontology, relation.curie, relation.name)
             relation_df = self.get_filtered_relations_df(relation)
             if not len(relation_df.index):
                 continue
             relation_df.sort_values(list(relation_df.columns), inplace=True)
-            relation_df.to_csv(self._cache('relations', f'{relation.curie}.tsv'), sep='\t', index=False)
+            relation_df.to_csv(relations_path, sep='\t', index=False)
 
-        if write_obo:
-            obo_path = get_prefix_obo_path(self.ontology, version=self.data_version)
-            self.write_obo(obo_path, use_tqdm=use_tqdm)
+        if write_obo and (not self._obo_path.exists() or force):
+            self.write_obo(self._obo_path, use_tqdm=use_tqdm)
 
-        if write_obonet:
-            obonet_gz_path = self._path(f"{self.ontology}.obonet.json.gz")
-            logger.info('writing obonet to %s', obonet_gz_path)
-            self.write_obonet_gz(obonet_gz_path)
+        if write_obonet and (not self._obonet_gz_path.exists() or force):
+            logger.info('writing obonet to %s', self._obonet_gz_path)
+            self.write_obonet_gz(self._obonet_gz_path)
 
     def __iter__(self):  # noqa: D105
         if self.iter_only:

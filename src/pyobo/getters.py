@@ -63,14 +63,13 @@ def get(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
     if path.exists() and not local:
         logger.debug('[%s] using obonet cache at %s', prefix, path)
         return Obo.from_obonet_gz(path)
-    else:
-        logger.debug('[%s] no obonet cache found at %s', prefix, path)
-
-    if has_nomenclature_plugin(prefix):
+    elif has_nomenclature_plugin(prefix):
         obo = run_nomenclature_plugin(prefix)
-        logger.info('[%s] caching OBO at %s', prefix, path)
+        logger.info('[%s] caching nomenclature plugin', prefix)
         obo.write_default()
         return obo
+    else:
+        logger.debug('[%s] no obonet cache found at %s', prefix, path)
 
     obo = _get_obo_via_obonet(prefix=prefix, url=url, local=local)
     if not local:
@@ -176,9 +175,11 @@ def iter_helper_helper(f: Callable[[str], X], strict: bool = True) -> Iterable[T
     :raises URLError: If another problem was encountered during download
     :raises ValueError: If the data was not in the format that was expected (e.g., OWL)
     """
-    for prefix in sorted(bioregistry.read_bioregistry()):
+    it = tqdm(sorted(bioregistry.read_bioregistry()))
+    for prefix in it:
         if prefix in SKIP:
             continue
+        it.set_postfix({'prefix': prefix})
         try:
             mapping = f(prefix)
         except NoBuild:
