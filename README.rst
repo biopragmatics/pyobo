@@ -1,3 +1,5 @@
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpyobo%2Fpyobo.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpyobo%2Fpyobo?ref=badge_shield)
+
 PyOBO
 =====
 |build| |pypi_version| |python_versions| |pypi_license| |zenodo|
@@ -409,3 +411,6 @@ and make an update to the ``url`` entry for that namespace in the Bioregistry.
 .. |zenodo| image:: https://zenodo.org/badge/203449095.svg
     :target: https://zenodo.org/badge/latestdoi/203449095
     :alt: Zenodo
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpyobo%2Fpyobo.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpyobo%2Fpyobo?ref=badge_large)
