@@ -46,6 +46,11 @@ PROVENANCE_PREFIXES = {
     'chemrxiv',
     'wikipedia',
     'google.patent',
+    'agricola',
+    'cba',
+    'ppr',
+    'citexplore',
+    'goc',
 }
 
 
