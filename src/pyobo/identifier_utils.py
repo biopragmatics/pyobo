@@ -45,6 +45,7 @@ class MissingPrefix(ValueError):
         self.curie = curie
         self.xref = xref
         self.ontology = ontology
+        self.reference = None
 
     def __str__(self) -> str:
         s = ''
@@ -53,6 +54,8 @@ class MissingPrefix(ValueError):
         s += f'unhandled prefix {self.prefix} found in curie {self.curie}'
         if self.xref:
             s += f'/xref {self.xref}'
+        if self.reference is not None:
+            s += f' from {self.reference.curie}'
         return s
 
 
