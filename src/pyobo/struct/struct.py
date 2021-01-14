@@ -23,7 +23,7 @@ from .typedef import TypeDef, default_typedefs, from_species, get_reference_tupl
 from .utils import comma_separate
 from ..cache_utils import get_gzipped_graph
 from ..constants import RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
-from ..identifier_utils import normalize_curie, normalize_prefix
+from ..identifier_utils import MissingPrefix, normalize_curie, normalize_prefix
 from ..io_utils import multidict, write_map_tsv, write_multimap_tsv
 from ..path_utils import get_prefix_obo_path, prefix_directory_join
 from ..registries import get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist
@@ -610,7 +610,7 @@ class Obo:
         if data_version:
             logger.info('[%s] using version %s', ontology, data_version)
         else:
-            logger.info('[%s] does not report a version %s', ontology)
+            logger.info('[%s] does not report a version', ontology)
 
         #: Parsed CURIEs to references (even external ones)
         references: Mapping[Tuple[str, str], Reference] = {
@@ -638,31 +638,59 @@ class Obo:
 
         missing_typedefs = set()
         terms = []
+        n_alt_ids, n_parents, n_synonyms = 0, 0, 0
         for prefix, identifier, data in _iter_obo_graph(graph=graph):
             if prefix != ontology or not data:
                 continue
 
+            reference = references[ontology, identifier]
+            definition = data.get('def')  # it's allowed not to have a definition
+
+            try:
+                node_xrefs = list(iterate_node_xrefs(prefix=prefix, data=data))
+            except MissingPrefix as e:
+                e.reference = reference
+                raise e
             xrefs, provenance = [], []
-            for reference in iterate_node_xrefs(prefix=prefix, data=data):
+            for reference in node_xrefs:
                 if reference.prefix in PROVENANCE_PREFIXES:
                     provenance.append(reference)
                 else:
                     xrefs.append(reference)
 
-            reference = references[ontology, identifier]
+            try:
+                alt_ids = list(iterate_node_alt_ids(data))
+            except MissingPrefix as e:
+                e.reference = reference
+                raise e
+            n_alt_ids += len(alt_ids)
 
-            definition = data.get('def')  # it's allowed not to have a definition
+            try:
+                parents = list(iterate_node_parents(data))
+            except MissingPrefix as e:
+                e.reference = reference
+                raise e
+            n_parents += len(parents)
+
+            synonyms = list(iterate_node_synonyms(data))
+            n_synonyms += len(synonyms)
 
             term = Term(
                 reference=reference,
                 definition=definition,
-                parents=list(iterate_node_parents(data)),
-                synonyms=list(iterate_node_synonyms(data)),
+                parents=parents,
+                synonyms=synonyms,
                 xrefs=xrefs,
                 provenance=provenance,
-                alt_ids=list(iterate_node_alt_ids(data)),
+                alt_ids=alt_ids,
             )
-            for relation, reference in iterate_node_relationships(data, default_prefix=ontology):
+
+            try:
+                relations_references = list(iterate_node_relationships(data, default_prefix=ontology))
+            except MissingPrefix as e:
+                e.reference = reference
+                raise e
+            for relation, reference in relations_references:
                 if (relation.prefix, relation.identifier) in typedefs:
                     typedef = typedefs[relation.prefix, relation.identifier]
                 elif (relation.prefix, relation.identifier) in default_typedefs:
@@ -678,6 +706,9 @@ class Obo:
             terms.append(term)
 
         logger.info('[%s] extracted %d terms', ontology, len(terms))
+        logger.info('[%s] extracted %d alt ids', ontology, n_alt_ids)
+        logger.info('[%s] extracted %d parents', ontology, n_parents)
+        logger.info('[%s] extracted %d synonyms', ontology, n_synonyms)
 
         try:
             date = datetime.strptime(graph.graph['date'], DATE_FORMAT)
@@ -782,7 +813,7 @@ class Obo:
             for parent in term.parents:
                 yield term, is_a, parent
             for typedef, references in term.relationships.items():
-                if typedef not in self.typedefs:
+                if typedef not in self.typedefs and (typedef.prefix, typedef.identifier) not in default_typedefs:
                     raise ValueError(f'Undefined typedef: {typedef.curie} ! {typedef.name}')
                 for reference in references:
                     yield term, typedef, reference
@@ -1009,7 +1040,7 @@ def iterate_node_properties(
         try:
             value, _ = value_type.rsplit(' ', 1)  # second entry is the value type
         except ValueError:
-            logger.debug(f'property missing datatype. defaulting to string - {prop_value_type}')
+            # logger.debug(f'property missing datatype. defaulting to string - {prop_value_type}')
             value = value_type  # could assign type to be 'xsd:string' by default
         value = value.strip('"')
         yield prop, value
