@@ -601,6 +601,12 @@ class Obo:
         ontology = normalize_prefix(graph.graph['ontology'])  # probably always okay
         logger.info('[%s] extracting OBO using obonet', ontology)
 
+        data_version = graph.graph.get('data-version')
+        if data_version:
+            logger.info('[%s] using version %s', ontology, data_version)
+        else:
+            logger.info('[%s] does not report a version %s', ontology)
+
         #: Parsed CURIEs to references (even external ones)
         references: Mapping[Tuple[str, str], Reference] = {
             (prefix, identifier): Reference(
@@ -678,7 +684,7 @@ class Obo:
             name=graph.graph['name'],
             auto_generated_by=graph.graph.get('auto-generated-by'),
             format_version=graph.graph.get('format-version'),
-            data_version=graph.graph.get('data-version'),
+            data_version=data_version,
             date=date,
             typedefs=list(typedefs.values()),
             synonym_typedefs=list(synonym_typedefs.values()),
