@@ -117,7 +117,7 @@ def _clean_graph_ontology(graph, prefix: str) -> None:
         graph.graph['ontology'] = prefix
 
 
-def _ensure_obo_path(prefix: str) -> str:
+def _ensure_obo_path(prefix: str, force: bool = False) -> str:
     """Get the path to the OBO file and download if missing."""
     curated_url = get_curated_urls().get(prefix)
     if curated_url:
@@ -142,7 +142,7 @@ def _ensure_obo_path(prefix: str) -> str:
     if url is None:
         raise MissingOboBuild(f'OBO Foundry build is missing a URL for: {prefix}, {build}')
 
-    return ensure_path(prefix, url=url)
+    return ensure_path(prefix, url=url, force=force)
 
 
 SKIP = {
@@ -171,11 +171,16 @@ def iter_helper_helper(
     skip_below: Optional[str] = None,
     skip_pyobo: bool = False,
     strict: bool = True,
+    **kwargs,
 ) -> Iterable[Tuple[str, X]]:
     """Yield all mappings extracted from each database given.
 
     :param f: A function that takes a prefix and gives back something that will be used by an outer function.
+    :param use_tqdm: If true, use the tqdm progress bar
+    :param skip_below: If true, skip sources whose names are less than this (used for iterative curation
+    :param skip_pyobo: If true, skip sources implemented in PyOBO
     :param strict: If true, will raise exceptions and crash the program instead of logging them.
+    :param kwargs: Keyword arguments passed to ``f``.
     :raises HTTPError: If the resource could not be downloaded
     :raises URLError: If another problem was encountered during download
     :raises ValueError: If the data was not in the format that was expected (e.g., OWL)
@@ -193,7 +198,7 @@ def iter_helper_helper(
         if use_tqdm:
             it.set_postfix({'prefix': prefix})
         try:
-            mapping = f(prefix)
+            mapping = f(prefix, **kwargs)
         except NoBuild:
             continue
         except urllib.error.HTTPError as e:
@@ -223,7 +228,12 @@ def _is_xml(e) -> bool:
     )
 
 
-def db_output_helper(f, db_name, columns) -> None:
+def db_output_helper(
+    f: Callable[..., Iterable[Tuple[str, str, str]]],
+    db_name: str,
+    columns: Sequence[str],
+    **kwargs,
+) -> None:
     """Help output database builds."""
     c = Counter()
 
@@ -245,7 +255,7 @@ def db_output_helper(f, db_name, columns) -> None:
 
     logger.info('writing %s to %s', db_name, db_path)
     logger.info('writing %s sample to %s', db_name, db_sample_path)
-    it = f()
+    it = f(**kwargs)
     with gzip.open(db_path, mode='wt') as gzipped_file:
         # for the first 10 rows, put it in a sample file too
         with open(db_sample_path, 'w') as sample_file:
