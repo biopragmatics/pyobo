@@ -27,7 +27,8 @@
       "http:http\\://www.pacificbiosciences.com/pdf/WP_Detecting_DNA_Base_Modifications_Using_SMRT_Sequencing.pdf",
       "XX:www.ensembl.org/info/genome/variation/predicted_data.html#consequences",
       "http:www.ensembl.org/info/genome/variation/predicted_data.html#consequences",
-      "EBI:www.ebi.ac.uk/mutations/recommendations/mutevent.html"
+      "EBI:www.ebi.ac.uk/mutations/recommendations/mutevent.html",
+      "\\:has_start_point"
     ],
     "prefix": [
       "url:",
@@ -91,7 +92,13 @@
       "http:en.wikipedia.org/wiki/": "wikipedia:",
       "http:http\\:en.wikipedia.org/wiki/": "wikipedia:",
       "WIKI:https\\://en.wikipedia.org/wiki/": "wikipedia:",
-      "BioRXiv:https\\://doi.org/": "doi:"
+      "BioRXiv:https\\://doi.org/": "doi:",
+      "NIF_Subcellular:sao": "SAO:",
+      "NIF_Subcellular:nlx_subcell_": "NLXANAT:",
+      "NIF_Subcellular:birnlex": "neurolex:birnlex",
+      "NIF_Subcellular:nlx": "neurolex:nlx",
+      "NIFSTD:nifext_": "neurolex:nifext_",
+      "NIFSTD:sao": "SAO:"
     }
   },
   "wikidata_property_types": [
