@@ -8,6 +8,7 @@
       "XX:<new xref>",
       "STRUCTURE_Formula",
       "United:Kingdom",
+      "United:States",
       "South:Korea",
       "Codex:\\:260",
       "Europe:\\:260",
@@ -28,10 +29,17 @@
       "XX:www.ensembl.org/info/genome/variation/predicted_data.html#consequences",
       "http:www.ensembl.org/info/genome/variation/predicted_data.html#consequences",
       "EBI:www.ebi.ac.uk/mutations/recommendations/mutevent.html",
-      "\\:has_start_point"
+      "\\:has_start_point",
+      "DDB:pf",
+      "TS:0",
+      "CTD:curators",
+      "MTH:217",
+      "IEDB:RV",
+      "Tail:fat"
     ],
     "prefix": [
       "url:",
+      "URL:",
       "Image:",
       "Category",
       "http://",
@@ -51,7 +59,14 @@
       "value-type:",
       "binary-data-type:MS\\",
       "PECO_GIT",
-      "OBO_SF2_PECO"
+      "OBO_SF2_PECO",
+      "id-validation-regexp: ",
+      "id-validation-regex: ",
+      "search-url: ",
+      "regexp: ",
+      "IUPAC:",
+      "IUPHAR:GPCRListForward?",
+      "UMLS_ICD9CM_2005_AUI"
     ],
     "suffix": [
       ".jpg",
@@ -96,9 +111,13 @@
       "NIF_Subcellular:sao": "SAO:",
       "NIF_Subcellular:nlx_subcell_": "NLXANAT:",
       "NIF_Subcellular:birnlex": "neurolex:birnlex",
+      "NIFSTD:birnlex": "neurolex:birnlex",
       "NIF_Subcellular:nlx": "neurolex:nlx",
       "NIFSTD:nifext_": "neurolex:nifext_",
-      "NIFSTD:sao": "SAO:"
+      "NIFSTD:sao": "SAO:",
+      "NIFSTD:nlx_dys_": "NLXDYS:",
+      "URL:http\\://": "http://",
+      "URL: http\\://": "http://"
     }
   },
   "wikidata_property_types": [
