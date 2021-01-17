@@ -51,6 +51,8 @@ PROVENANCE_PREFIXES = {
     'ppr',
     'citexplore',
     'goc',
+    'isbn',
+    'issn',
 }
 
 
