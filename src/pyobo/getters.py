@@ -203,11 +203,11 @@ def iter_helper_helper(
             continue
         except urllib.error.HTTPError as e:
             logger.warning('[%s] HTTP %s: unable to download %s', prefix, e.getcode(), e.geturl())
-            if strict:
+            if strict and not bioregistry.is_deprecated(prefix):
                 raise
         except urllib.error.URLError:
             logger.warning('[%s] unable to download', prefix)
-            if strict:
+            if strict and not bioregistry.is_deprecated(prefix):
                 raise
         except ValueError as e:
             if _is_xml(e):
