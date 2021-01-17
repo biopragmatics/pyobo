@@ -77,14 +77,17 @@ class TestParseObonet(unittest.TestCase):
 
     def test_get_node_synonyms(self):
         """Test getting synonyms from a node in a :mod:`obonet` graph."""
+        iupac_name = SynonymTypeDef(id='IUPAC_NAME', name='IUPAC NAME')
+        synoynym_typedefs = {
+            'IUPAC_NAME': iupac_name,
+        }
         data = self.graph.nodes['CHEBI:51990']
-        synonyms = list(iterate_node_synonyms(data))
+        synonyms = list(iterate_node_synonyms(data, synoynym_typedefs))
         self.assertEqual(1, len(synonyms))
         synonym = synonyms[0]
         self.assertEqual('N,N,N-tributylbutan-1-aminium fluoride', synonym.name, msg='name parsing failed')
         self.assertEqual('EXACT', synonym.specificity, msg='specificity parsing failed')
-        # TODO implement
-        # self.assertEqual(SynonymTypeDef(id='IUPAC_NAME', name='IUPAC NAME'), synonym.type)
+        self.assertEqual(iupac_name, synonym.type)
 
     def test_get_node_properties(self):
         """Test getting properties from a node in a :mod:`obonet` graph."""
