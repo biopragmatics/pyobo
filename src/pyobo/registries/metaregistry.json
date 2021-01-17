@@ -9,6 +9,7 @@
       "STRUCTURE_Formula",
       "United:Kingdom",
       "United:States",
+      "Harvard-Oxford:Atlas",
       "South:Korea",
       "Codex:\\:260",
       "Europe:\\:260",
@@ -35,11 +36,55 @@
       "CTD:curators",
       "MTH:217",
       "IEDB:RV",
-      "Tail:fat"
+      "Tail:fat",
+      "Pituitary:gland",
+      "Compound:eye",
+      "Lymph:node",
+      "Lamina:propria",
+      "Follicular:fluid"
     ],
+    "resource_prefix": {
+      "efo": [
+        "Germplasm:",
+        "BilaDO:",
+        "OGES:"
+      ],
+      "hp": [
+        "ORPHA:"
+      ],
+      "idomal": [
+        "VSMO:",
+        "IRAC:",
+        "MOSBP"
+      ],
+      "mondo": [
+        "url:https\\://rarediseases.info.nih.gov"
+      ],
+      "symp": [
+        "SyOID",
+        "UMLS_ICD9CM_2005_AUI"
+      ],
+      "uberon": [
+        "GAID:",
+        "OpenCyc:",
+        "BM:",
+        "DHBA:",
+        "HBA:",
+        "BSA:",
+        "DMBA:",
+        "XtroDO:",
+        "nlx_subcell",
+        "OGEM:",
+        "MBA:",
+        "ANISEED:",
+        "NLX:",
+        "BILS:",
+        "ABA:",
+        "PBA:",
+        "MAP:"
+      ]
+    },
     "prefix": [
-      "url:",
-      "URL:",
       "Image:",
       "Category",
       "http://",
@@ -64,9 +109,10 @@
       "id-validation-regex: ",
       "search-url: ",
       "regexp: ",
+      "Germplasm:",
       "IUPAC:",
       "IUPHAR:GPCRListForward?",
-      "UMLS_ICD9CM_2005_AUI"
+      "GOC:"
     ],
     "suffix": [
       ".jpg",
@@ -86,30 +132,31 @@
       "SNOMEDCT274897005": "SNOMEDCT:274897005"
     },
     "prefix": {
-      "ATCC number: ": "ATCC",
-      "ATTC: ": "ATCC",
-      "BAO_": "BAO",
+      "ATCC number: ": "ATCC:",
+      "ATTC: ": "ATCC:",
+      "BAO_": "BAO:",
       "KEGG COMPOUND": "KEGG.COMPOUND",
       "KEGG DRUG": "KEGG.DRUG",
-      "LIPID MAPS:": "LIPIDMAPS",
-      "MedlinePlus: ": "MedlinePlus",
+      "LIPID MAPS:": "LIPIDMAPS:",
+      "MedlinePlus: ": "MedlinePlus:",
       "NIST Chemistry WebBook": "NIST",
-      "PMID: ": "PMID",
-      "SNOMEDCT: ": "SNOMEDCT",
-      "UMLS CUI:": "UMLS",
-      "URL: ": "URL",
-      "VFB:FBbt_": "FBbt",
+      "PMID: ": "PMID:",
+      "SNOMEDCT: ": "SNOMEDCT:",
+      "UMLS CUI:": "UMLS:",
+      "http://linkedlifedata.com/resource/umls/id/": "UMLS:",
+      "URL: ": "URL:",
+      "VFB:FBbt_": "FBbt:",
       "chembl target:CHEMBL": "chembl.target:CHEMBL",
       "protein ontology:PR\\:": "PR:PR:",
       "http://orcid.org/": "orcid:",
-      "http:http\\://en.wikipedia.org/wiki/": "wikipedia:",
-      "http://en.wikipedia.org/wiki/": "wikipedia:",
-      "http:en.wikipedia.org/wiki/": "wikipedia:",
-      "http:http\\:en.wikipedia.org/wiki/": "wikipedia:",
-      "WIKI:https\\://en.wikipedia.org/wiki/": "wikipedia:",
+      "http:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "http://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "http:en.wikipedia.org/wiki/": "wikipedia.en:",
+      "http:http\\:en.wikipedia.org/wiki/": "wikipedia.en:",
+      "WIKI:https\\://en.wikipedia.org/wiki/": "wikipedia.en:",
       "BioRXiv:https\\://doi.org/": "doi:",
       "NIF_Subcellular:sao": "SAO:",
-      "NIF_Subcellular:nlx_subcell_": "NLXANAT:",
+      "NIF_Subcellular:nlx_subcell_": "NLXANAT",
       "NIF_Subcellular:birnlex": "neurolex:birnlex",
       "NIFSTD:birnlex": "neurolex:birnlex",
       "NIF_Subcellular:nlx": "neurolex:nlx",
@@ -117,7 +164,12 @@
       "NIFSTD:sao": "SAO:",
       "NIFSTD:nlx_dys_": "NLXDYS:",
       "URL:http\\://": "http://",
-      "URL: http\\://": "http://"
+      "URL: http\\://": "http://",
+      "url:http\\://": "http://",
+      "url: \"https://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "url:https\\://www.ncbi.nlm.nih.gov/pubmed/": "pubmed:",
+      "url:https\\://ghr.nlm.nih.gov/condition/": "ghr:",
+      "NIF_Subcellular:FMA_": "FMA:"
     }
   },
   "wikidata_property_types": [
