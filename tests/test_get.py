@@ -70,7 +70,7 @@ class TestParseObonet(unittest.TestCase):
             (
                 Synonym(name='LTEC I', specificity='EXACT'),
                 '"LTEC I" []',
-            )
+            ),
         ]:
             with self.subTest(s=s):
                 self.assertEqual(synonym, _extract_synonym(s, synoynym_typedefs))
