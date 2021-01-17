@@ -603,16 +603,48 @@ class Obo:
         return rv
 
     @staticmethod
-    def from_obonet(graph: nx.MultiDiGraph) -> 'Obo':
+    def _cleanup_version(data_version: str) -> Optional[str]:
+        if data_version.replace('.', '').isnumeric():
+            return data_version  # consectuive, major.minor, or semantic versioning
+        if data_version.startswith('http://www.ebi.ac.uk/efo/releases/v'):
+            return data_version[len('http://www.ebi.ac.uk/efo/releases/v'):].split('/')[0]
+        for v in data_version.split('/'):
+            v = v.strip()
+            try:
+                datetime.strptime(v, '%Y-%m-%d')
+            except ValueError:
+                continue
+            else:
+                return v
+
+    @classmethod
+    def from_obonet(cls, graph: nx.MultiDiGraph) -> 'Obo':
         """Get all of the terms from a OBO graph."""
         ontology = normalize_prefix(graph.graph['ontology'])  # probably always okay
         logger.info('[%s] extracting OBO using obonet', ontology)
 
+        try:
+            date = datetime.strptime(graph.graph['date'], DATE_FORMAT)
+        except KeyError:
+            logger.info('[%s] does not report a date', ontology)
+            date = None
+
         data_version = graph.graph.get('data-version')
-        if data_version:
-            logger.info('[%s] using version %s', ontology, data_version)
+        if not data_version:
+            if date is not None:
+                data_version = date.strftime('%Y-%m-%d')
+                logger.info('[%s] does not report a version. falling back to date: %s', ontology, data_version)
+            else:
+                logger.warning('[%s] XXX does not report a version nor a date', ontology)
         else:
-            logger.info('[%s] does not report a version', ontology)
+            data_version = cls._cleanup_version(data_version)
+            if data_version is not None:
+                logger.info('[%s] using version %s', ontology, data_version)
+            elif date is not None:
+                logger.info('[%s] unrecognized version format, falling back to date: %s', ontology, data_version)
+                data_version = date.strftime('%Y-%m-%d')
+            else:
+                logger.warning('[%s] XXX UNRECOGNIZED VERSION FORMAT AND MISSING DATE: %s', ontology, data_version)
 
         #: Parsed CURIEs to references (even external ones)
         references: Mapping[Tuple[str, str], Reference] = {
@@ -711,11 +743,6 @@ class Obo:
         logger.info('[%s] extracted %d alt ids', ontology, n_alt_ids)
         logger.info('[%s] extracted %d parents', ontology, n_parents)
         logger.info('[%s] extracted %d synonyms', ontology, n_synonyms)
-
-        try:
-            date = datetime.strptime(graph.graph['date'], DATE_FORMAT)
-        except KeyError:
-            date = None
 
         return Obo(
             ontology=ontology,
