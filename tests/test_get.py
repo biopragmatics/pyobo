@@ -8,10 +8,10 @@ from operator import attrgetter
 import obonet
 
 from pyobo import SynonymTypeDef, get
-from pyobo.struct import Reference
+from pyobo.struct import Reference, Synonym
 from pyobo.struct.struct import (
-    iterate_graph_synonym_typedefs, iterate_graph_typedefs, iterate_node_parents, iterate_node_properties,
-    iterate_node_relationships, iterate_node_synonyms, iterate_node_xrefs,
+    _extract_synonym, iterate_graph_synonym_typedefs, iterate_graph_typedefs, iterate_node_parents,
+    iterate_node_properties, iterate_node_relationships, iterate_node_synonyms, iterate_node_xrefs,
 )
 from tests.constants import TEST_CHEBI_OBO_PATH
 
@@ -44,16 +44,50 @@ class TestParseObonet(unittest.TestCase):
             synonym_typedefs,
         )
 
+    def test_extract_synonym(self):
+        """Test extracting synonym strings."""
+        iupac_name = SynonymTypeDef(id='IUPAC_NAME', name='IUPAC NAME')
+        synoynym_typedefs = {
+            'IUPAC_NAME': iupac_name,
+        }
+
+        for synonym, s in [
+            (
+                Synonym(
+                    name='LTEC I', specificity='EXACT', type=iupac_name,
+                    provenance=[Reference('orphanet', '93938')],
+                ),
+                '"LTEC I" EXACT IUPAC_NAME [Orphanet:93938]',
+            ),
+            (
+                Synonym(name='LTEC I', specificity='EXACT', provenance=[Reference('orphanet', '93938')]),
+                '"LTEC I" EXACT [Orphanet:93938]',
+            ),
+            (
+                Synonym(name='LTEC I', specificity='EXACT', provenance=[Reference('orphanet', '93938')]),
+                '"LTEC I" [Orphanet:93938]',
+            ),
+            (
+                Synonym(name='LTEC I', specificity='EXACT'),
+                '"LTEC I" []',
+            ),
+        ]:
+            with self.subTest(s=s):
+                self.assertEqual(synonym, _extract_synonym(s, synoynym_typedefs))
+
     def test_get_node_synonyms(self):
         """Test getting synonyms from a node in a :mod:`obonet` graph."""
+        iupac_name = SynonymTypeDef(id='IUPAC_NAME', name='IUPAC NAME')
+        synoynym_typedefs = {
+            'IUPAC_NAME': iupac_name,
+        }
         data = self.graph.nodes['CHEBI:51990']
-        synonyms = list(iterate_node_synonyms(data))
+        synonyms = list(iterate_node_synonyms(data, synoynym_typedefs))
         self.assertEqual(1, len(synonyms))
         synonym = synonyms[0]
         self.assertEqual('N,N,N-tributylbutan-1-aminium fluoride', synonym.name, msg='name parsing failed')
         self.assertEqual('EXACT', synonym.specificity, msg='specificity parsing failed')
-        # TODO implement
-        # self.assertEqual(SynonymTypeDef(id='IUPAC_NAME', name='IUPAC NAME'), synonym.type)
+        self.assertEqual(iupac_name, synonym.type)
 
     def test_get_node_properties(self):
         """Test getting properties from a node in a :mod:`obonet` graph."""
