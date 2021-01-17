@@ -970,21 +970,24 @@ def iterate_graph_synonym_typedefs(graph: nx.MultiDiGraph) -> Iterable[SynonymTy
 def iterate_graph_typedefs(graph: nx.MultiDiGraph, default_prefix: str) -> Iterable[TypeDef]:
     """Get type definitions from an :mod:`obonet` graph."""
     for typedef in graph.graph.get('typedefs', []):
-        prefix = typedef.get('prefix', default_prefix)
-
         if 'id' in typedef:
-            identifier = typedef['id']
+            curie = typedef['id']
         elif 'identifier' in typedef:
-            identifier = typedef['identifier']
+            curie = typedef['identifier']
         else:
             raise KeyError
 
         name = typedef.get('name')
         if name is None:
-            logger.warning('[%s] typedef %s is missing a name', graph.graph['ontology'], identifier)
-            name = identifier
+            logger.warning('[%s] typedef %s is missing a name', graph.graph['ontology'], curie)
 
-        reference = Reference(prefix=prefix, identifier=identifier, name=name)
+        if ':' in curie:
+            reference = Reference.from_curie(curie, name=name)
+        else:
+            reference = Reference(prefix=graph.graph['ontology'], identifier=curie, name=name)
+        if reference is None:
+            logger.warning('[%s] unable to parse typedef CURIE %s', graph.graph['ontology'], curie)
+            continue
 
         xrefs = [
             Reference.from_curie(curie)
