@@ -51,22 +51,29 @@ class TestParseObonet(unittest.TestCase):
             'IUPAC_NAME': iupac_name,
         }
 
-        self.assertEqual(
-            Synonym(name='LTEX I', specificity='EXACT', type=iupac_name, provenance=[Reference('orphanet', '93938')]),
-            _extract_synonym('"X" EXACT IUPAC_NAME [Orphanet:93938]', synoynym_typedefs),
-        )
-        self.assertEqual(
-            Synonym(name='LTEX I', specificity='EXACT', provenance=[Reference('orphanet', '93938')]),
-            _extract_synonym('"LTEC I" EXACT [Orphanet:93938]', synoynym_typedefs),
-        )
-        self.assertEqual(
-            Synonym(name='LTEX I', specificity='EXACT', provenance=[Reference('orphanet', '93938')]),
-            _extract_synonym('"LTEC I" [Orphanet:93938]', synoynym_typedefs),
-        )
-        self.assertEqual(
-            Synonym(name='LTEX I', specificity='EXACT'),
-            _extract_synonym('"LTEC I" []', synoynym_typedefs),
-        )
+        for synonym, s in [
+            (
+                Synonym(
+                    name='LTEC I', specificity='EXACT', type=iupac_name,
+                    provenance=[Reference('orphanet', '93938')],
+                ),
+                '"LTEC I" EXACT IUPAC_NAME [Orphanet:93938]',
+            ),
+            (
+                Synonym(name='LTEC I', specificity='EXACT', provenance=[Reference('orphanet', '93938')]),
+                '"LTEC I" EXACT [Orphanet:93938]',
+            ),
+            (
+                Synonym(name='LTEC I', specificity='EXACT', provenance=[Reference('orphanet', '93938')]),
+                '"LTEC I" [Orphanet:93938]',
+            ),
+            (
+                Synonym(name='LTEC I', specificity='EXACT'),
+                '"LTEC I" []',
+            )
+        ]:
+            with self.subTest(s=s):
+                self.assertEqual(synonym, _extract_synonym(s, synoynym_typedefs))
 
     def test_get_node_synonyms(self):
         """Test getting synonyms from a node in a :mod:`obonet` graph."""

@@ -1026,42 +1026,37 @@ def iterate_graph_typedefs(graph: nx.MultiDiGraph, default_prefix: str) -> Itera
 
 
 def _extract_synonym(s: str, synonym_typedefs: Mapping[str, SynonymTypeDef]) -> Optional[Synonym]:
-    s = s.strip().rsplit('[', 1)
-    if 2 == len(s):
-        s, provenance = s
-    else:
-        s = s[0]
-
-    if s.endswith('[]'):
-        s = s[:-len('[]')].rstrip()
-    # FIXME what about (optional) square brackets at the end [] that denote the sources
-
-    s = s.strip('"')
-    if not s:
-        return
-
     # TODO check if the synonym is written like a CURIE... it shouldn't but I've seen it happen
 
-    if "RELATED" in s:
-        name = s[:s.index('RELATED')].rstrip().rstrip('"').rstrip()
-        specificity = 'RELATED'
-    elif "EXACT" in s:
-        name = s[:s.index('EXACT')].rstrip().rstrip('"').rstrip()
-        specificity = 'EXACT'
-    elif "BROAD" in s:
-        name = s[:s.index('BROAD')].rstrip().rstrip('"').rstrip()
-        specificity = 'BROAD'
-    elif "NARROW" in s:
-        name = s[:s.index('NARROW')].rstrip().rstrip('"').rstrip()
-        specificity = 'NARROW'
-    elif s.startswith('"'):  # no specificity
-        name = s.rstrip().rstrip('"').rstrip()
-        specificity = 'EXACT'
-    else:
-        logger.warning(f'Unhandled synonym: {s}')
+    s = s.lstrip('"')
+    name, rest = [x.strip() for x in s.split('"', 1)]
+
+    specificity = None
+    for skos in 'RELATED', 'EXACT', 'BROAD', 'NARROW':
+        if rest.startswith(skos):
+            specificity = skos
+            rest = rest[len(skos):].strip()
+            break
+
+    stype = None
+    if specificity is not None:  # go fishing for a synonym type definition
+        for std in synonym_typedefs:
+            if rest.startswith(std):
+                stype = synonym_typedefs[std]
+                rest = rest[len(std):].strip()
+                break
+
+    if not rest.startswith('[') or not rest.endswith(']'):
+        logger.warning('problem with synonym: %s', s)
         return
 
-    return Synonym(name=name, specificity=specificity)
+    rest = rest.lstrip('[').rstrip(']')
+    provenance = [
+        Reference.from_curie(curie.strip())
+        for curie in rest.split(',')
+        if curie
+    ]
+    return Synonym(name=name, specificity=specificity or 'EXACT', type=stype, provenance=provenance)
 
 
 def iterate_node_synonyms(data: Mapping[str, Any], synonym_typedefs: Mapping[str, SynonymTypeDef]) -> Iterable[Synonym]:
