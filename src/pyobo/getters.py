@@ -9,7 +9,7 @@ import logging
 import os
 import urllib.error
 from collections import Counter
-from typing import Callable, Iterable, Mapping, Optional, Tuple, TypeVar
+from typing import Callable, Iterable, Mapping, Optional, Sequence, Set, Tuple, TypeVar
 from urllib.request import urlretrieve
 
 import bioregistry
