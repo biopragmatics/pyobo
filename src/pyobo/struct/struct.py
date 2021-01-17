@@ -696,8 +696,8 @@ class Obo:
                 elif (relation.prefix, relation.identifier) in default_typedefs:
                     typedef = default_typedefs[relation.prefix, relation.identifier]
                 else:
-                    if relation not in missing_typedefs:
-                        missing_typedefs.add(relation)
+                    if (relation.prefix, relation.identifier) not in missing_typedefs:
+                        missing_typedefs.add((relation.prefix, relation.identifier))
                         logger.warning('[%s] has no typedef for %s', ontology, relation)
                     continue
                 term.append_relationship(typedef, reference)
