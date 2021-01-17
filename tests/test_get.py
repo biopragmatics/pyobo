@@ -8,10 +8,10 @@ from operator import attrgetter
 import obonet
 
 from pyobo import SynonymTypeDef, get
-from pyobo.struct import Reference
+from pyobo.struct import Reference, Synonym
 from pyobo.struct.struct import (
-    iterate_graph_synonym_typedefs, iterate_graph_typedefs, iterate_node_parents, iterate_node_properties,
-    iterate_node_relationships, iterate_node_synonyms, iterate_node_xrefs,
+    _extract_synonym, iterate_graph_synonym_typedefs, iterate_graph_typedefs, iterate_node_parents,
+    iterate_node_properties, iterate_node_relationships, iterate_node_synonyms, iterate_node_xrefs,
 )
 from tests.constants import TEST_CHEBI_OBO_PATH
 
@@ -42,6 +42,30 @@ class TestParseObonet(unittest.TestCase):
                 SynonymTypeDef(id='INN', name='INN'),
             ], key=attrgetter('id')),
             synonym_typedefs,
+        )
+
+    def test_extract_synonym(self):
+        """Test extracting synonym strings."""
+        iupac_name = SynonymTypeDef(id='IUPAC_NAME', name='IUPAC NAME')
+        synoynym_typedefs = {
+            'IUPAC_NAME': iupac_name,
+        }
+
+        self.assertEqual(
+            Synonym(name='LTEX I', specificity='EXACT', type=iupac_name, provenance=[Reference('orphanet', '93938')]),
+            _extract_synonym('"X" EXACT IUPAC_NAME [Orphanet:93938]', synoynym_typedefs),
+        )
+        self.assertEqual(
+            Synonym(name='LTEX I', specificity='EXACT', provenance=[Reference('orphanet', '93938')]),
+            _extract_synonym('"LTEC I" EXACT [Orphanet:93938]', synoynym_typedefs),
+        )
+        self.assertEqual(
+            Synonym(name='LTEX I', specificity='EXACT', provenance=[Reference('orphanet', '93938')]),
+            _extract_synonym('"LTEC I" [Orphanet:93938]', synoynym_typedefs),
+        )
+        self.assertEqual(
+            Synonym(name='LTEX I', specificity='EXACT'),
+            _extract_synonym('"LTEC I" []', synoynym_typedefs),
         )
 
     def test_get_node_synonyms(self):

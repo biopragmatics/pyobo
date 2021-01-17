@@ -706,7 +706,7 @@ class Obo:
                 raise e
             n_parents += len(parents)
 
-            synonyms = list(iterate_node_synonyms(data))
+            synonyms = list(iterate_node_synonyms(data, synonym_typedefs))
             n_synonyms += len(synonyms)
 
             term = Term(
@@ -1025,32 +1025,58 @@ def iterate_graph_typedefs(graph: nx.MultiDiGraph, default_prefix: str) -> Itera
         yield TypeDef(reference=reference, xrefs=xrefs)
 
 
-def iterate_node_synonyms(data: Mapping[str, Any]) -> Iterable[Synonym]:
-    """Extract synonyms from a :mod:`obonet` node's data."""
+def _extract_synonym(s: str, synonym_typedefs: Mapping[str, SynonymTypeDef]) -> Optional[Synonym]:
+    s = s.strip().rsplit('[', 1)
+    if 2 == len(s):
+        s, provenance = s
+    else:
+        s = s[0]
+
+    if s.endswith('[]'):
+        s = s[:-len('[]')].rstrip()
+    # FIXME what about (optional) square brackets at the end [] that denote the sources
+
+    s = s.strip('"')
+    if not s:
+        return
+
+    # TODO check if the synonym is written like a CURIE... it shouldn't but I've seen it happen
+
+    if "RELATED" in s:
+        name = s[:s.index('RELATED')].rstrip().rstrip('"').rstrip()
+        specificity = 'RELATED'
+    elif "EXACT" in s:
+        name = s[:s.index('EXACT')].rstrip().rstrip('"').rstrip()
+        specificity = 'EXACT'
+    elif "BROAD" in s:
+        name = s[:s.index('BROAD')].rstrip().rstrip('"').rstrip()
+        specificity = 'BROAD'
+    elif "NARROW" in s:
+        name = s[:s.index('NARROW')].rstrip().rstrip('"').rstrip()
+        specificity = 'NARROW'
+    elif s.startswith('"'):  # no specificity
+        name = s.rstrip().rstrip('"').rstrip()
+        specificity = 'EXACT'
+    else:
+        logger.warning(f'Unhandled synonym: {s}')
+        return
+
+    return Synonym(name=name, specificity=specificity)
+
+
+def iterate_node_synonyms(data: Mapping[str, Any], synonym_typedefs: Mapping[str, SynonymTypeDef]) -> Iterable[Synonym]:
+    """Extract synonyms from a :mod:`obonet` node's data.
+
+    Example strings:
+    - "LTEC I" EXACT [Orphanet:93938,DOI:xxxx]
+    - "LTEC I" EXACT [Orphanet:93938]
+    - "LTEC I" [Orphanet:93938]
+    - "LTEC I" []
+    """
     for s in data.get('synonym', []):
-        s = s.strip('"')
-        if not s:
-            continue
-
-        # TODO check if the synonym is written like a CURIE... it shouldn't but I've seen it happen
-
-        if "RELATED" in s:
-            name = s[:s.index('RELATED')].rstrip().rstrip('"')
-            specificity = 'RELATED'
-        elif "EXACT" in s:
-            name = s[:s.index('EXACT')].rstrip().rstrip('"')
-            specificity = 'EXACT'
-        elif "BROAD" in s:
-            name = s[:s.index('BROAD')].rstrip().rstrip('"')
-            specificity = 'BROAD'
-        elif "NARROW" in s:
-            name = s[:s.index('NARROW')].rstrip().rstrip('"')
-            specificity = 'NARROW'
-        else:
-            logger.warning(f'Unhandled synonym: {s}')
-            continue
-
-        yield Synonym(name=name, specificity=specificity)
+        s = _extract_synonym(s, synonym_typedefs)
+        if s is not None:
+            yield s
 
 
 HANDLED_PROPERTY_TYPES = {
