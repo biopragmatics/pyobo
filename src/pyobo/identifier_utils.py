@@ -92,7 +92,7 @@ def normalize_curie(node: str) -> Union[Tuple[str, str], Tuple[None, None]]:
     # Remap node's prefix (if necessary)
     for old_prefix, new_prefix in get_remappings_prefix().items():
         if node.startswith(old_prefix):
-            node = new_prefix + ':' + node[len(old_prefix):]
+            node = new_prefix + node[len(old_prefix):]
 
     try:
         head_ns, identifier = node.split(':', 1)
