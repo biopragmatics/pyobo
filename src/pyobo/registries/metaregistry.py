@@ -2,6 +2,7 @@
 
 """Load the manually curated metaregistry."""
 
+import itertools as itt
 import json
 import os
 from functools import lru_cache
@@ -58,7 +59,10 @@ def get_curated_urls() -> Mapping[str, str]:
 def get_xrefs_prefix_blacklist() -> Set[str]:
     """Get the set of blacklisted xref prefixes."""
     #: Xrefs starting with these prefixes will be ignored
-    return set(_get_curated_registry()['blacklists']['prefix'])
+    return (
+        set(itt.chain.from_iterable(_get_curated_registry()['blacklists']['resource_prefix'].values()))
+        | set(_get_curated_registry()['blacklists']['prefix'])
+    )
 
 
 @lru_cache(maxsize=1)
