@@ -170,6 +170,7 @@ def iter_helper_helper(
     use_tqdm: bool = True,
     skip_below: Optional[str] = None,
     skip_pyobo: bool = False,
+    skip_set: Optional[Set[str]] = None,
     strict: bool = True,
     **kwargs,
 ) -> Iterable[Tuple[str, X]]:
@@ -192,6 +193,8 @@ def iter_helper_helper(
         if use_tqdm:
             it.set_postfix({'prefix': prefix})
         if prefix in SKIP:
+            continue
+        if skip_set and prefix in skip_set:
             continue
         if skip_below is not None and prefix < skip_below:
             continue
