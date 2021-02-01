@@ -689,11 +689,11 @@ class Obo:
                 e.reference = reference
                 raise e
             xrefs, provenance = [], []
-            for reference in node_xrefs:
-                if reference.prefix in PROVENANCE_PREFIXES:
-                    provenance.append(reference)
+            for node_xref in node_xrefs:
+                if node_xref.prefix in PROVENANCE_PREFIXES:
+                    provenance.append(node_xref)
                 else:
-                    xrefs.append(reference)
+                    xrefs.append(node_xref)
 
             try:
                 alt_ids = list(iterate_node_alt_ids(data))

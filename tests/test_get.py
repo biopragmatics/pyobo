@@ -174,5 +174,6 @@ class TestGet(unittest.TestCase):
             alt_id: CHEBI:14384
         """
         id_alts_mapping = self.obo.get_id_alts_mapping()
-        self.assertIn('16042', id_alts_mapping)
+        self.assertNotIn('C00462', id_alts_mapping)
+        self.assertIn('16042', id_alts_mapping, msg='halide anion alt_id fields not parsed')
         self.assertEqual({'5605', '14384'}, set(id_alts_mapping['16042']))
