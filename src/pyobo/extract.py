@@ -144,7 +144,7 @@ def get_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[s
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'], force=force)
     def _get_id_name_mapping() -> Mapping[str, str]:
         logger.info('[%s] no cached names found. getting from OBO loader', prefix)
-        obo = get(prefix, **kwargs)
+        obo = get(prefix, redownload=force, **kwargs)
         logger.info('[%s] loading name mappings', prefix)
         return obo.get_id_name_mapping()
 
