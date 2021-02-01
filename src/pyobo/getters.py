@@ -177,7 +177,14 @@ X = TypeVar('X')
 def iter_helper(f: Callable[[str], Mapping[str, X]], leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, X]]:
     """Yield all mappings extracted from each database given."""
     for prefix, mapping in iter_helper_helper(f, **kwargs):
-        for key, value in tqdm(mapping.items(), desc=f'iterating {prefix}', leave=leave, unit_scale=True):
+        it = tqdm(
+            mapping.items(),
+            desc=f'iterating {prefix}',
+            leave=leave,
+            unit_scale=True,
+            disable=None,
+        )
+        for key, value in it:
             yield prefix, key, value
 
 
@@ -204,7 +211,7 @@ def iter_helper_helper(
     """
     it = sorted(bioregistry.read_bioregistry())
     if use_tqdm:
-        it = tqdm(it)
+        it = tqdm(it, disable=None)
     for prefix in it:
         if use_tqdm:
             it.set_postfix({'prefix': prefix})
