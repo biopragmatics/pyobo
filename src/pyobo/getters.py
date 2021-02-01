@@ -163,9 +163,11 @@ SKIP = {
     'pubchem.compound',  # to big, can't deal with this now
     'gaz',  # Gazetteer is irrelevant for biology
     'ma',  # yanked
+    'bila',  # yanked
     # FIXME below
     'mirbase.family',
     'pfam.clan',
+    'caloha',  # waiting on Bgee to fix the typo in the OBO file
 }
 
 X = TypeVar('X')
