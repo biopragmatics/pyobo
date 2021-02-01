@@ -172,8 +172,8 @@ def _iter_ooh_na_na(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, s
             yield pubchem.PREFIX, identifier, name
 
 
-def _iter_alts(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, str]]:
-    for prefix, identifier, alts in iter_helper(get_id_to_alts, leave=leave, **kwargs):
+def _iter_alts(leave: bool = False, strict: bool = True, **kwargs) -> Iterable[Tuple[str, str, str]]:
+    for prefix, identifier, alts in iter_helper(get_id_to_alts, leave=leave, strict=strict, **kwargs):
         for alt in alts:
             yield prefix, identifier, alt
 

@@ -36,9 +36,15 @@ def build(ctx: click.Context):
 
 @database.command()
 @verbose_option
-def names():
+@click.option('--no-strict', is_flag=True)
+def names(no_strict: bool):
     """Make the prefix-identifier-name dump."""
-    db_output_helper(_iter_ooh_na_na, 'names', ('prefix', 'identifier', 'name'))
+    db_output_helper(
+        _iter_ooh_na_na,
+        'names',
+        ('prefix', 'identifier', 'name'),
+        strict=not no_strict,
+    )
 
 
 @database.command()

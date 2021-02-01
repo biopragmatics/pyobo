@@ -99,7 +99,7 @@ def _get_obo_via_obonet(
 
     logger.info('[%s] parsing with obonet from %s', prefix, path)
     with open(path) as file:
-        graph = obonet.read_obo(tqdm(file, unit_scale=True, desc=f'[{prefix}] parsing obo'))
+        graph = obonet.read_obo(tqdm(file, unit_scale=True, desc=f'[{prefix}] parsing obo', disable=None))
 
     # Make sure the graph is named properly
     _clean_graph_ontology(graph, prefix)
@@ -174,9 +174,14 @@ SKIP = {
 X = TypeVar('X')
 
 
-def iter_helper(f: Callable[[str], Mapping[str, X]], leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, X]]:
+def iter_helper(
+    f: Callable[[str], Mapping[str, X]],
+    leave: bool = False,
+    strict: bool = True,
+    **kwargs,
+) -> Iterable[Tuple[str, str, X]]:
     """Yield all mappings extracted from each database given."""
-    for prefix, mapping in iter_helper_helper(f, **kwargs):
+    for prefix, mapping in iter_helper_helper(f, strict=strict, **kwargs):
         it = tqdm(
             mapping.items(),
             desc=f'iterating {prefix}',
@@ -260,6 +265,7 @@ def db_output_helper(
     columns: Sequence[str],
     *,
     directory: Union[None, str, pathlib.Path] = None,
+    strict: bool = True,
     **kwargs,
 ) -> None:
     """Help output database builds."""
@@ -289,7 +295,7 @@ def db_output_helper(
 
     logger.info('writing %s to %s', db_name, db_path)
     logger.info('writing %s sample to %s', db_name, db_sample_path)
-    it = f(**kwargs)
+    it = f(strict=strict, **kwargs)
     with gzip.open(db_path, mode='wt') as gzipped_file:
         # for the first 10 rows, put it in a sample file too
         with open(db_sample_path, 'w') as sample_file:
