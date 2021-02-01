@@ -248,6 +248,10 @@ def iter_helper_helper(
                 logger.warning('[%s] error while parsing: %s', prefix, e)
             if strict:
                 raise e
+        except TypeError as e:
+            logger.exception(f'TypeError on %s', prefix)
+            if strict:
+                raise e
         else:
             yield prefix, mapping
 
