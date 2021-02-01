@@ -82,7 +82,13 @@ def _to_curie(prefix: str, identifier: str) -> str:
     return f'{prefix}:{identifier}'
 
 
-def get_xref_df(*, force: bool = False, rebuild: bool = False, use_tqdm: bool = True, skip_below=None) -> pd.DataFrame:
+def get_xref_df(
+    *,
+    force: bool = False,
+    rebuild: bool = False,
+    use_tqdm: bool = True,
+    skip_below=None,
+) -> pd.DataFrame:
     """Get the ultimate xref database."""
     if not rebuild and os.path.exists(MAPPINGS_DB_TSV_CACHE):
         logger.info('loading cached mapping database from %s', MAPPINGS_DB_TSV_CACHE)
