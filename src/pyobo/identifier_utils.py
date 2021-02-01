@@ -70,6 +70,8 @@ def normalize_prefix(prefix: str, *, curie=None, xref=None) -> Optional[str]:
     if curie.startswith('UBERON:'):  # uberon has tons of xrefs to anatomical features. skip them
         UBERON_UNHANDLED[prefix].append((curie, xref))
     else:
+        # if prefix.replace(':', '').replace("'", '').replace('-', '').replace('%27', '').isalpha():
+        #     return  # skip if its just text
         raise MissingPrefix(prefix=prefix, curie=curie, xref=xref)
 
 
@@ -97,7 +99,7 @@ def normalize_curie(node: str) -> Union[Tuple[str, str], Tuple[None, None]]:
     try:
         head_ns, identifier = node.split(':', 1)
     except ValueError:  # skip nodes that don't look like normal CURIEs
-        # logger.info(f'skipping: {node}')
+        logger.debug(f'skipping: {node}')
         return None, None
 
     norm_node_prefix = normalize_prefix(head_ns, curie=node)
