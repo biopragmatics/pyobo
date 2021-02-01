@@ -417,7 +417,7 @@ class Obo:
 
     def write_default(
         self,
-        use_tqdm: bool = True,
+        use_tqdm: bool = False,
         force: bool = False,
         write_obo: bool = False,
         write_obonet: bool = False,
@@ -733,6 +733,8 @@ class Obo:
                     if (relation.prefix, relation.identifier) not in missing_typedefs:
                         missing_typedefs.add((relation.prefix, relation.identifier))
                         logger.warning('[%s] has no typedef for %s', ontology, relation)
+                        logger.debug('[%s] available typedefs: %s', ontology, set(typedefs))
+                        logger.debug('[%s] available default typedefs: %s', ontology, set(default_typedefs))
                     continue
                 term.append_relationship(typedef, reference)
             for prop, value in iterate_node_properties(data):
