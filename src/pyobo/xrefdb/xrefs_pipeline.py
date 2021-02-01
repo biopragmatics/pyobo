@@ -151,12 +151,12 @@ def _iterate_xref_dfs(
     yield from iter_xref_plugins(skip_below=skip_below)
 
 
-def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
+def _iter_ooh_na_na(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, str]]:
     """Iterate over all prefix-identifier-name triples we can get.
 
     :param leave: should the tqdm be left behind?
     """
-    yield from iter_helper(get_id_name_mapping, leave=leave)
+    yield from iter_helper(get_id_name_mapping, leave=leave, **kwargs)
 
     ncbi_path = ensure_path(ncbigene.PREFIX, url=ncbigene.GENE_INFO_URL)
     with gzip.open(ncbi_path, 'rt') as file:
@@ -172,18 +172,18 @@ def _iter_ooh_na_na(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
             yield pubchem.PREFIX, identifier, name
 
 
-def _iter_alts(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
-    for prefix, identifier, alts in iter_helper(get_id_to_alts, leave=leave):
+def _iter_alts(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, str]]:
+    for prefix, identifier, alts in iter_helper(get_id_to_alts, leave=leave, **kwargs):
         for alt in alts:
             yield prefix, identifier, alt
 
 
-def _iter_synonyms(leave: bool = False) -> Iterable[Tuple[str, str, str]]:
+def _iter_synonyms(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, str]]:
     """Iterate over all prefix-identifier-synonym triples we can get.
 
     :param leave: should the tqdm be left behind?
     """
-    for prefix, identifier, synonyms in iter_helper(get_id_synonyms_mapping, leave=leave):
+    for prefix, identifier, synonyms in iter_helper(get_id_synonyms_mapping, leave=leave, **kwargs):
         for synonym in synonyms:
             yield prefix, identifier, synonym
 

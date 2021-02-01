@@ -7,9 +7,10 @@ import gzip
 import json
 import logging
 import os
+import pathlib
 import urllib.error
 from collections import Counter
-from typing import Callable, Iterable, Mapping, Optional, Sequence, Set, Tuple, TypeVar
+from typing import Callable, Iterable, Mapping, Optional, Sequence, Set, Tuple, TypeVar, Union
 from urllib.request import urlretrieve
 
 import bioregistry
@@ -173,9 +174,9 @@ SKIP = {
 X = TypeVar('X')
 
 
-def iter_helper(f: Callable[[str], Mapping[str, X]], leave: bool = False) -> Iterable[Tuple[str, str, X]]:
+def iter_helper(f: Callable[[str], Mapping[str, X]], leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, X]]:
     """Yield all mappings extracted from each database given."""
-    for prefix, mapping in iter_helper_helper(f):
+    for prefix, mapping in iter_helper_helper(f, **kwargs):
         for key, value in tqdm(mapping.items(), desc=f'iterating {prefix}', leave=leave, unit_scale=True):
             yield prefix, key, value
 
@@ -250,12 +251,20 @@ def db_output_helper(
     f: Callable[..., Iterable[Tuple[str, str, str]]],
     db_name: str,
     columns: Sequence[str],
+    *,
+    directory: Union[None, str, pathlib.Path] = None,
     **kwargs,
 ) -> None:
     """Help output database builds."""
+    if directory is None:
+        directory = DATABASE_DIRECTORY
+    elif isinstance(directory, str):
+        directory = pathlib.Path(directory)
+        directory.mkdir(parents=True, exist_ok=True)
+
     c = Counter()
 
-    db_metadata_path = DATABASE_DIRECTORY / f'{db_name}_metadata.json'
+    db_metadata_path = directory / f'{db_name}_metadata.json'
     with open(db_metadata_path, 'w') as file:
         json.dump(
             {
@@ -267,9 +276,9 @@ def db_output_helper(
             indent=2,
         )
 
-    db_path = DATABASE_DIRECTORY / f'{db_name}.tsv.gz'
-    db_sample_path = DATABASE_DIRECTORY / f'{db_name}_sample.tsv'
-    db_summary_path = DATABASE_DIRECTORY / f'{db_name}_summary.tsv'
+    db_path = directory / f'{db_name}.tsv.gz'
+    db_sample_path = directory / f'{db_name}_sample.tsv'
+    db_summary_path = directory / f'{db_name}_summary.tsv'
 
     logger.info('writing %s to %s', db_name, db_path)
     logger.info('writing %s sample to %s', db_name, db_sample_path)
