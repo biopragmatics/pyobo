@@ -51,35 +51,48 @@ class OnlyOWLError(NoBuild):
 
 
 @wrap_norm_prefix
-def get(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
+def get(
+    prefix: str, *,
+    redownload: bool = False,
+    rewrite: bool = False,
+    url: Optional[str] = None,
+    local: bool = False,
+) -> Obo:
     """Get the OBO for a given graph.
 
     :param prefix: The prefix of the ontology to look up
+    :param redownload: Download the data again
     :param url: A URL to give if the OBOfoundry can not be used to look up the given prefix
     :param local: A local file path is given. Do not cache.
     """
+    if redownload:
+        rewrite = True
     path = prefix_directory_join(prefix, f'{prefix}.obonet.json.gz')
-    if path.exists() and not local:
+    if path.exists() and not local and not redownload:
         logger.debug('[%s] using obonet cache at %s', prefix, path)
         return Obo.from_obonet_gz(path)
     elif has_nomenclature_plugin(prefix):
         obo = run_nomenclature_plugin(prefix)
         logger.info('[%s] caching nomenclature plugin', prefix)
-        obo.write_default()
+        obo.write_default(force=rewrite)
         return obo
     else:
         logger.debug('[%s] no obonet cache found at %s', prefix, path)
-
-    obo = _get_obo_via_obonet(prefix=prefix, url=url, local=local)
-    if not local:
-        obo.write_default()
-
-    return obo
+        obo = _get_obo_via_obonet(prefix=prefix, url=url, local=local, redownload=redownload)
+        if not local:
+            obo.write_default(force=rewrite)
+        return obo
 
 
-def _get_obo_via_obonet(prefix: str, *, url: Optional[str] = None, local: bool = False) -> Obo:
+def _get_obo_via_obonet(
+    prefix: str,
+    *,
+    url: Optional[str] = None,
+    local: bool = False,
+    redownload: bool = False,
+) -> Obo:
     """Get the OBO file by prefix or URL."""
-    path = _get_path(prefix=prefix, url=url, local=local)
+    path = _get_path(prefix=prefix, url=url, local=local, redownload=redownload)
     if path.endswith('.owl'):
         raise OnlyOWLError(f'[{prefix}] unhandled OWL file')
 
@@ -94,15 +107,15 @@ def _get_obo_via_obonet(prefix: str, *, url: Optional[str] = None, local: bool =
     return Obo.from_obonet(graph)
 
 
-def _get_path(*, url, prefix, local) -> str:
+def _get_path(*, url, prefix, local, redownload: bool = False) -> str:
     if url is None:
-        path = _ensure_obo_path(prefix)
+        path = _ensure_obo_path(prefix, force=redownload)
     elif local:
         path = url
     else:
         path = get_prefix_obo_path(prefix)
-        if path.exists():
-            logger.info('[%s] downloading OBO from %s to %s', prefix, url, path)
+        if not path.exists() or redownload:
+            tqdm.write(f'[{prefix}] downloading OBO from {url} to {path}')
             urlretrieve(url, path)
     return path
 
@@ -122,7 +135,7 @@ def _ensure_obo_path(prefix: str, force: bool = False) -> str:
     curated_url = get_curated_urls().get(prefix)
     if curated_url:
         logger.debug('[%s] checking for OBO at curated URL: %s', prefix, curated_url)
-        return ensure_path(prefix, url=curated_url)
+        return ensure_path(prefix, url=curated_url, force=force)
 
     path = get_prefix_obo_path(prefix)
     if os.path.exists(path):
