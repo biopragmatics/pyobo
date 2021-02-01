@@ -23,8 +23,10 @@ def get_obo():
         ontology=PREFIX,
         name='GWAS Central Study',
         iter_terms=iterate_terms,
+        iter_terms_kwargs=dict(version=VERSION),
         data_version=VERSION,
         typedefs=[has_part],
+        auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
@@ -47,9 +49,9 @@ def _get_term_from_tree(tree: ElementTree.ElementTree) -> Term:
     return term
 
 
-def iterate_terms() -> Iterable[Term]:
+def iterate_terms(version: str) -> Iterable[Term]:
     """Iterate over GWAS Central Study terms."""
-    path = ensure_path(PREFIX, url=URL)
+    path = ensure_path(PREFIX, url=URL, version=version)
     with tarfile.open(path) as tar_file:
         for tar_info in tar_file:
             if not tar_info.path.endswith('.xml'):
