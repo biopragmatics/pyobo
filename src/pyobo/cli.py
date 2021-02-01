@@ -109,18 +109,23 @@ def synonyms(prefix: str, force: bool):
 @main.command()
 @prefix_argument
 @click.option('--relation', help='CURIE for the relationship or just the ID if local to the ontology')
+@click.option('--target', help='Prefix for the target')
 @verbose_option
 @force_option
-def relations(prefix: str, relation: str, force: bool):
+def relations(prefix: str, relation: str, target: str, force: bool):
     """Page through the relations for entities in the given namespace."""
-    if relation is not None:
+    if relation is None:
+        relations_df = get_relations_df(prefix, force=force)
+    else:
         curie = normalize_curie(relation)
         if curie[1] is None:  # that's the identifier
             click.secho(f'not valid curie, assuming local to {prefix}', fg='yellow')
             curie = prefix, relation
-        relations_df = get_filtered_relations_df(prefix, relation=curie, force=force)
-    else:
-        relations_df = get_relations_df(prefix, force=force)
+
+        if target is None:
+            relations_df = get_filtered_relations_df(prefix, relation=curie, force=force)
+        else:
+            raise NotImplementedError(f'can not filter by target prefix {target}')
 
     echo_df(relations_df)
 

@@ -5,7 +5,7 @@
 import logging
 import os
 from functools import lru_cache
-from typing import Iterable, List, Mapping, Optional, Set, Tuple, Union
+from typing import Iterable, List, Mapping, Optional, Set, Tuple
 
 import bioregistry
 import networkx as nx
@@ -22,7 +22,7 @@ from .path_utils import prefix_cache_join
 from .registries import not_available_as_obo
 from .sources import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Reference, TypeDef, get_reference_tuple
-from .struct.typedef import has_member, is_a, part_of
+from .struct.typedef import RelationHint, has_member, is_a, part_of
 
 __all__ = [
     # Nomenclature
@@ -62,8 +62,6 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-
-RelationHint = Union[Reference, TypeDef, Tuple[str, str]]
 
 NO_ALTS = {
     'ncbigene',

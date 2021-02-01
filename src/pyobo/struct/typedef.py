@@ -10,6 +10,7 @@ from ..identifier_utils import normalize_curie
 
 __all__ = [
     'TypeDef',
+    'RelationHint',
     'get_reference_tuple',
     'default_typedefs',
     'from_species',
@@ -76,7 +77,10 @@ class TypeDef(Referenced):
             yield f'is_symmetric: {"true" if self.is_symmetric else "false"}'
 
 
-def get_reference_tuple(relation: Union[Tuple[str, str], Reference, TypeDef]) -> Tuple[str, str]:
+RelationHint = Union[Reference, TypeDef, Tuple[str, str], str]
+
+
+def get_reference_tuple(relation: RelationHint) -> Tuple[str, str]:
     """Get tuple for typedef/reference."""
     if isinstance(relation, (Reference, TypeDef)):
         return relation.prefix, relation.identifier

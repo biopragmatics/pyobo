@@ -19,7 +19,10 @@ from networkx.utils import open_file
 from tqdm import tqdm
 
 from .reference import Reference, Referenced
-from .typedef import TypeDef, default_typedefs, from_species, get_reference_tuple, has_part, is_a, orthologous, part_of
+from .typedef import (
+    RelationHint, TypeDef, default_typedefs, from_species, get_reference_tuple, has_part, is_a,
+    orthologous, part_of,
+)
 from .utils import comma_separate
 from ..cache_utils import get_gzipped_graph
 from ..constants import RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
@@ -831,7 +834,7 @@ class Obo:
             for term, value in self.iterate_filtered_properties(prop, use_tqdm=use_tqdm)
         }
 
-    def get_filtered_multiproperties_mapping(self, prop: str, *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
+    def get_filtered_properties_multimapping(self, prop: str, *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
         """Get a mapping from a term's identifier to the property values."""
         return multidict(
             (term.identifier, value)
@@ -851,7 +854,7 @@ class Obo:
 
     def iterate_filtered_relations(
         self,
-        relation: Union[Reference, TypeDef, Tuple[str, str]],
+        relation: RelationHint,
         *,
         use_tqdm: bool = False,
     ) -> Iterable[Tuple[Term, Reference]]:
@@ -873,7 +876,7 @@ class Obo:
 
     def get_filtered_relations_df(
         self,
-        relation: Union[Reference, TypeDef, Tuple[str, str]],
+        relation: RelationHint,
         *,
         use_tqdm: bool = False,
     ) -> pd.DataFrame:
@@ -884,6 +887,57 @@ class Obo:
                 for term, reference in self.iterate_filtered_relations(relation, use_tqdm=use_tqdm)
             ],
             columns=[f'{self.ontology}_id', TARGET_PREFIX, TARGET_ID],
+        )
+
+    def iterate_filtered_relations_filtered_targets(
+        self,
+        relation: RelationHint,
+        target_prefix: str,
+        *,
+        use_tqdm: bool = False,
+    ) -> Iterable[Tuple[Term, Reference]]:
+        """Iterate over relationships between one identifier and another."""
+        for term, reference in self.iterate_filtered_relations(relation=relation, use_tqdm=use_tqdm):
+            if reference.prefix == target_prefix:
+                yield term, reference
+
+    def get_relation_mapping(
+        self,
+        relation: RelationHint,
+        target_prefix: str,
+        *,
+        use_tqdm: bool = False,
+    ) -> Mapping[str, str]:
+        """Get a mapping from the term's identifier to the target's identifier.
+
+        .. warning:: Assumes there's only one version of the property for each term.
+
+         Example usage: get homology between HGNC and MGI:
+
+        >>> from pyobo.sources.hgnc import get_obo
+        >>> obo = get_obo()
+        >>> hgnc_mgi_orthology_mapping = obo.get_relation_mapping('ro:HOM0000017', 'mgi')
+        """
+        return {
+            term.identifier: reference.identifier
+            for term, reference in self.iterate_filtered_relations_filtered_targets(
+                relation=relation, target_prefix=target_prefix, use_tqdm=use_tqdm,
+            )
+        }
+
+    def get_relation_multimapping(
+        self,
+        relation: RelationHint,
+        target_prefix: str,
+        *,
+        use_tqdm: bool = False,
+    ) -> Mapping[str, List[str]]:
+        """Get a mapping from the term's identifier to the target's identifiers."""
+        return multidict(
+            (term.identifier, reference.identifier)
+            for term, reference in self.iterate_filtered_relations_filtered_targets(
+                relation=relation, target_prefix=target_prefix, use_tqdm=use_tqdm,
+            )
         )
 
     def iterate_filtered_xrefs(self, prefix: str, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, Reference]]:
@@ -928,7 +982,7 @@ class Obo:
         return multidict(
             (term.identifier, reference)
             for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting {typedef.curie}')
-            for reference in term.relationships.get(typedef)
+            for reference in term.get_relationships(typedef)
         )
 
     def get_id_synonyms_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
