@@ -249,7 +249,7 @@ def iter_helper_helper(
             if strict:
                 raise e
         except TypeError as e:
-            logger.exception(f'TypeError on %s', prefix)
+            logger.exception('TypeError on %s', prefix)
             if strict:
                 raise e
         else:
