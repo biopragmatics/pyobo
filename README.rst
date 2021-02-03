@@ -248,6 +248,15 @@ Get properties, like SMILES. The semantics of these are defined on an OBO-OBO ba
     smiles = chebi_id_to_smiles['132964']
     assert smiles == 'C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F'
 
+If you don't have time for two lines:
+
+.. code-block:: python
+
+    import pyobo
+
+    smiles = pyobo.get_property('chebi', '132964', 'http://purl.obolibrary.org/obo/chebi/smiles')
+    assert smiles == 'C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F'
+
 Check if an entity is in the hierarchy:
 
 .. code-block:: python

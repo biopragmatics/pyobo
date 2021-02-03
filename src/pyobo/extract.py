@@ -39,6 +39,7 @@ __all__ = [
     'get_properties_df',
     'get_filtered_properties_df',
     'get_filtered_properties_mapping',
+    'get_property',
     # Relations
     'get_filtered_relations_df',
     'get_id_multirelations_mapping',
@@ -254,6 +255,17 @@ def get_filtered_properties_mapping(
         return obo.get_filtered_properties_mapping(prop, use_tqdm=use_tqdm)
 
     return _mapping_getter()
+
+
+def get_property(prefix: str, identifier: str, prop: str) -> Optional[str]:
+    """Extract a single property for the given entity.
+
+    >>> import pyobo
+    >>> pyobo.get_property('chebi', '132964', 'http://purl.obolibrary.org/obo/chebi/smiles')
+    "C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F"
+    """
+    filtered_properties_mapping = get_filtered_properties_mapping(prefix=prefix, prop=prop)
+    return filtered_properties_mapping.get(identifier)
 
 
 @wrap_norm_prefix
