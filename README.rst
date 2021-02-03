@@ -89,7 +89,7 @@ to species (as NCBI taxonomy identifiers):
 
     import pyobo
 
-    wikipathways_id_to_species = pyobo.get_id_name_mapping('wikipathways')
+    wikipathways_id_to_species = pyobo.get_id_species_mapping('wikipathways')
 
     # Apoptosis (Homo sapiens)
     taxonomy_id = wikipathways_id_to_species['WP254']
@@ -241,7 +241,7 @@ Get properties, like SMILES. The semantics of these are defined on an OBO-OBO ba
 
     import pyobo
 
-    # I dont make the rules. I wouldn't have chosen this as the key for this property. It could be any string
+    # I don't make the rules. I wouldn't have chosen this as the key for this property. It could be any string
     chebi_smiles_property = 'http://purl.obolibrary.org/obo/chebi/smiles'
     chebi_id_to_smiles = pyobo.get_filtered_properties_mapping('chebi', chebi_smiles_property)
 
