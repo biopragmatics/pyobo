@@ -344,32 +344,12 @@ Curation of the Bioregistry
 ---------------------------
 In order to normalize references and identify resources, PyOBO uses the
 `Bioregistry <https://github.com/cthoyt/bioregistry>`_. It used to be a part of PyOBO, but has since
-been externalized for more general reuse. The following text is out of date, and will be updated with
-the next PyOBO release to better reflect how to contribute.
+been externalized for more general reuse.
 
-At src/pyobo/registries/metaregistry.json is the curated registry. This is a source of information that contains
+At `src/pyobo/registries/metaregistry.json <https://github.com/pyobo/pyobo/blob/master/src/pyobo/registries/metaregistry.json>`_
+is the curated "metaregistry". This is a source of information that contains
 all sorts of fixes for missing/wrong information in MIRIAM, OLS, and OBO Foundry; entries that don't appear in
 any of them; additional synonym information for each namespace/prefix; rules for normalizing xrefs and CURIEs, etc.
-
-Most users will be interested in the ``"database"`` subdictionary.
-Each entry has a key that was chosen first by preference for MIRIAM, then OBO Foundry,
-then OLS, or assigned based on what felt right/was how they appeared in xrefs in other OBO files.
-Their corresponding entries can have some combination of these keys:
-
-- ``title``
-- ``pattern``, a regex string for identifiers
-- ``url``, a url pattern to resolve identifiers. Uses $1 to represent the identifier.
-- ``synonyms``, a list of alternative prefixes that should point to this
-- ``download``, a URL to the OBO file in case OBO Foundry doesn't list it or has a mistake
-- ``not_available_as_obo``, a boolean telling you exactly what it sounds like
-- ``no_own_terms``, a boolean telling you if it is completely derived from external sources
-- ``wikidata_property``, a string pointing to the wikidata property that connects item in WikiData
-  to identifers in this namespace
-- ``miriam``: a dictionary containing "id" and "prefix" to point to MIRIAM
-- ``obofoundry``: a dictionary containing "prefix" to point to OBO Foundry
-- ``ols``, a dictionary containing "ontologyId" to point to OLS
-- ``references``, a list of URLs to web pages and articles describing the resource. Often
-  used for NCBI resources that can't actually be accessed, but seem to keep popping up
 
 Other entries in the metaregistry:
 
@@ -378,10 +358,8 @@ Other entries in the metaregistry:
 - The ``"remappings"->"prefix"`` entry contains a dictionary of prefixes for xrefs that need
   to be remapped. Several rules, for example, remove superfluous spaces that occur inside
   CURIEs or and others address instances of the GOGO issue.
-- The ``"obsolete"`` entry maps prefixes that have been changed.
 - The ``"blacklists"`` entry contains rules for throwing out malformed xrefs based on
   full string, just prefix, or just suffix.
-
 
 Troubleshooting
 ---------------
@@ -392,7 +370,7 @@ The OBO Foundry seems to be pretty unstable with respect to the URLs to OBO reso
    pyobo.getters.MissingOboBuild: OBO Foundry is missing a build for: mondo
 
 Then you should check the corresponding page on the OBO Foundry (in this case, http://www.obofoundry.org/ontology/mondo.html)
-and make an update to the ``url`` entry for that namespace in the Bioregistry.
+and make update to the ``url`` entry for that namespace in the Bioregistry.
 
 .. |build| image:: https://github.com/pyobo/pyobo/workflows/Tests/badge.svg
     :target: https://github.com/pyobo/pyobo/actions?query=workflow%3ATests
