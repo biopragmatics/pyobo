@@ -59,7 +59,8 @@ class TypeDef(Referenced):
         """Iterate over the lines to write in an OBO file."""
         yield '\n[Typedef]'
         yield f'id: {self.reference.curie}'
-        yield f'name: {self.reference.name}'
+        if self.name:
+            yield f'name: {self.reference.name}'
 
         if self.namespace:
             yield f'namespace: {self.namespace}'

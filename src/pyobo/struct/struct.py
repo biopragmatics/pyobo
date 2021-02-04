@@ -228,7 +228,8 @@ class Term(Referenced):
         """Iterate over the lines to write in an OBO file."""
         yield '\n[Term]'
         yield f'id: {self.curie}'
-        yield f'name: {self.name}'
+        if self.name:
+            yield f'name: {self.name}'
         if self.namespace and self.namespace != '?':
             namespace_normalized = self.namespace \
                 .replace(' ', '_') \
