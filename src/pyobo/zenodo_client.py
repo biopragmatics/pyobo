@@ -100,6 +100,7 @@ class Zenodo:
         new_deposition_data = res.json()
         # Update the version
         new_deposition_data['metadata']['version'] = _prepare_new_version(new_deposition_data['metadata']['version'])
+        new_deposition_data['metadata']['publication_date'] = datetime.datetime.today().strftime('%Y-%m-%d')
 
         # Update the deposition for the new version
         # see: https://developers.zenodo.org/#update
