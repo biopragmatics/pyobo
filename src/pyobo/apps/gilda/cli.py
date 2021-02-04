@@ -12,13 +12,12 @@ from flask_wtf import FlaskForm
 from gilda.generate_terms import filter_out_duplicates
 from gilda.grounder import Grounder
 from gilda.process import normalize
-from more_click import host_option, port_option, run_app, with_gunicorn_option, workers_option
+from more_click import host_option, port_option, run_app, verbose_option, with_gunicorn_option, workers_option
 from tqdm import tqdm
 from wtforms.fields import StringField, SubmitField
 from wtforms.validators import DataRequired
 
 from pyobo import get_id_name_mapping, get_id_synonyms_mapping
-from pyobo.cli_utils import verbose_option
 from pyobo.io_utils import multidict
 
 

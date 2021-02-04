@@ -13,9 +13,9 @@ import bioregistry
 import click
 import pandas as pd
 import requests
+from more_click import verbose_option
 from tqdm import tqdm
 
-from ...cli_utils import verbose_option
 from ...constants import RAW_MODULE, XREF_COLUMNS
 from ...registries import get_wikidata_property_types
 

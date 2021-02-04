@@ -14,8 +14,8 @@ from typing import Iterable
 
 import bioversions
 import click
+from more_click import verbose_option
 
-from pyobo.cli_utils import verbose_option
 from pyobo.path_utils import ensure_path, get_prefix_directory
 from pyobo.struct import Obo, Reference, Term
 

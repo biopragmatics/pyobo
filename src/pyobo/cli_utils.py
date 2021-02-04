@@ -4,10 +4,8 @@
 
 import click
 import pandas as pd
-from more_click import verbose_option
 
 __all__ = [
-    'verbose_option',
     'echo_df',
 ]
 

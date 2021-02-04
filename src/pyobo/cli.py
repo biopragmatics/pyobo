@@ -10,10 +10,11 @@ from typing import Optional
 
 import click
 import humanize
+from more_click import verbose_option
 from tabulate import tabulate
 
 from . import aws, cli_database
-from .cli_utils import echo_df, verbose_option
+from .cli_utils import echo_df
 from .constants import RAW_DIRECTORY
 from .extract import (
     get_ancestors, get_descendants, get_filtered_properties_df, get_filtered_relations_df, get_filtered_xrefs,

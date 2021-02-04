@@ -11,9 +11,9 @@ import os
 from typing import Any, Iterable, Mapping
 
 import click
+from more_click import verbose_option
 from tqdm import tqdm
 
-from ..cli_utils import verbose_option
 from ..path_utils import get_prefix_directory
 from ..sources.icd_utils import ICD11_TOP_LEVEL_URL, get_child_identifiers, get_icd, visiter
 from ..struct import Obo, Reference, Synonym, Term

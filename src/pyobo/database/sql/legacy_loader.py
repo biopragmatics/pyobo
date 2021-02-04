@@ -9,10 +9,10 @@ from typing import Dict
 import bioregistry
 import click
 import pandas as pd
+from more_click import verbose_option
 from tqdm import tqdm
 
 from .models import Alt, Reference, Resource, Synonym, Xref, create_all, drop_all, engine, session
-from ...cli_utils import verbose_option
 from ...resource_utils import ensure_alts, ensure_inspector_javert, ensure_ooh_na_na, ensure_synonyms
 
 __all__ = [

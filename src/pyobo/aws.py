@@ -9,9 +9,9 @@ from typing import Optional, Set
 import boto3
 import click
 import humanize
+from more_click import verbose_option
 from tabulate import tabulate
 
-from pyobo.cli_utils import verbose_option
 from pyobo.constants import RAW_DIRECTORY
 from pyobo.extract import (
     get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_properties_df, get_relations_df, get_xrefs_df,

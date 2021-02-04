@@ -14,11 +14,10 @@ import pandas as pd
 from flasgger import Swagger
 from flask import Blueprint, Flask, current_app, jsonify, render_template, url_for
 from flask_bootstrap import Bootstrap, VERSION_BOOTSTRAP
-from more_click import host_option, port_option, run_app, with_gunicorn_option
+from more_click import host_option, port_option, run_app, verbose_option, with_gunicorn_option
 from werkzeug.local import LocalProxy
 
 from pyobo import Canonicalizer
-from pyobo.cli_utils import verbose_option
 from pyobo.constants import SOURCE_PREFIX, TARGET_PREFIX
 from pyobo.identifier_utils import normalize_curie, normalize_prefix
 from pyobo.xrefdb.xrefs_pipeline import get_xref_df, summarize_xref_df, summarize_xref_provenances_df
