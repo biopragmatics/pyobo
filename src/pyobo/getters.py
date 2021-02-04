@@ -325,6 +325,7 @@ def db_output_helper(
             print(k, v, sep='\t', file=file)
 
     return [
+        db_metadata_path,
         db_path,
         db_sample_path,
         db_summary_path,
