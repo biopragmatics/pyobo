@@ -271,8 +271,11 @@ def db_output_helper(
     directory: Union[None, str, pathlib.Path] = None,
     strict: bool = True,
     **kwargs,
-) -> None:
-    """Help output database builds."""
+) -> Sequence[str]:
+    """Help output database builds.
+
+    :returns: A sequence of paths that got created.
+    """
     if directory is None:
         directory = DATABASE_DIRECTORY
     elif isinstance(directory, str):
@@ -320,3 +323,9 @@ def db_output_helper(
     with open(db_summary_path, 'w') as file:
         for k, v in c.most_common():
             print(k, v, sep='\t', file=file)
+
+    return [
+        db_path,
+        db_sample_path,
+        db_summary_path,
+    ]

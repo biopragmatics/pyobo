@@ -1,20 +1,16 @@
 # -*- coding: utf-8 -*-
 
-"""CLI for PyOBO Database Generation.
-
-Run with ``obo database <subcommand>``.
-"""
+"""CLI for PyOBO Database Generation."""
 
 import os
-from typing import Optional
 
 import click
-import pandas as pd
 
 from .cli_utils import verbose_option
 from .constants import DATABASE_DIRECTORY
 from .getters import db_output_helper
 from .xrefdb.xrefs_pipeline import _iter_alts, _iter_ooh_na_na, _iter_synonyms, get_xref_df, summarize_xref_df
+from .zenodo_client import update_zenodo
 
 
 @click.group()
@@ -25,7 +21,9 @@ def database():
 directory_option = click.option(
     '--directory',
     type=click.Path(dir_okay=True, file_okay=False, exists=True),
+    help='Build location',
 )
+zenodo_option = click.option('--no-zenodo', is_flag=True)
 
 
 @database.command()
@@ -48,54 +46,72 @@ def build(ctx: click.Context, directory: str):
 @database.command()
 @verbose_option
 @directory_option
+@zenodo_option
 @click.option('--no-strict', is_flag=True)
-def names(directory: str, no_strict: bool):
+def names(directory: str, zenodo: bool, no_strict: bool):
     """Make the prefix-identifier-name dump."""
-    db_output_helper(
+    paths = db_output_helper(
         _iter_ooh_na_na,
         'names',
         ('prefix', 'identifier', 'name'),
         strict=not no_strict,
         directory=directory,
     )
+    if zenodo:
+        # see https://zenodo.org/record/4020486
+        update_zenodo('4020486', paths)
 
 
 @database.command()
 @verbose_option
 @directory_option
-def alts(directory: str):
+@zenodo_option
+def alts(directory: str, zenodo: bool):
     """Make the prefix-alt-id dump."""
-    db_output_helper(_iter_alts, 'alts', ('prefix', 'identifier', 'alt'), directory=directory)
+    paths = db_output_helper(_iter_alts, 'alts', ('prefix', 'identifier', 'alt'), directory=directory)
+    if zenodo:
+        # see https://zenodo.org/record/4021476
+        update_zenodo('4021476', paths)
 
 
 @database.command()
 @verbose_option
 @directory_option
-def synonyms(directory: str):
+@zenodo_option
+def synonyms(directory: str, zenodo: bool):
     """Make the prefix-identifier-synonym dump."""
-    db_output_helper(_iter_synonyms, 'synonyms', ('prefix', 'identifier', 'synonym'), directory=directory)
+    paths = db_output_helper(_iter_synonyms, 'synonyms', ('prefix', 'identifier', 'synonym'), directory=directory)
+    if zenodo:
+        # see https://zenodo.org/record/4021482
+        update_zenodo('4021482', paths)
 
 
 @database.command()
 @verbose_option
 @directory_option
-def xrefs(directory: str):  # noqa: D202
+@zenodo_option
+def xrefs(directory: str, zenodo: bool):  # noqa: D202
     """Make the prefix-identifier-xref dump."""
-    xrefs_df = get_xref_df(rebuild=True, force=False)
+    if directory is None:
+        directory = DATABASE_DIRECTORY
 
     # Export all xrefs
-    _write_tsv(xrefs_df, 'xrefs.tsv.gz', directory=directory)
+    xrefs_df = get_xref_df(rebuild=True, force=False)
+    xrefs_path = os.path.join(directory, 'xrefs.tsv.gz')
+    xrefs_df.to_csv(xrefs_path, sep='\t', index=False)
 
     # Export a sample of xrefs
-    _write_tsv(xrefs_df.head(), 'xrefs_sample.tsv', directory=directory)
+    sample_path = os.path.join(directory, 'xrefs_sample.tsv')
+    xrefs_df.head().to_csv(sample_path, sep='\t', index=False)
 
     # Export a summary dataframe
     summary_df = summarize_xref_df(xrefs_df)
-    _write_tsv(summary_df, 'xrefs_summary.tsv', directory=directory)
+    summary_path = os.path.join(directory, 'xrefs_summary.tsv')
+    summary_df.to_csv(summary_path, sep='\t', index=False)
 
-
-def _write_tsv(df: pd.DataFrame, name: str, *, directory: Optional[str] = None) -> None:
-    df.to_csv(os.path.join(directory or DATABASE_DIRECTORY, name), sep='\t', index=False)
+    if zenodo:
+        # see https://zenodo.org/record/4021477
+        update_zenodo('4021477', [xrefs_path, sample_path, summary_path])
 
 
 if __name__ == '__main__':
