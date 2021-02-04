@@ -26,23 +26,24 @@ directory_option = click.option(
     type=click.Path(dir_okay=True, file_okay=False, exists=True),
     help='Build location',
 )
-zenodo_option = click.option('--no-zenodo', is_flag=True)
+zenodo_option = click.option('--zenodo', is_flag=True)
 
 
 @database.command()
 @verbose_option
 @directory_option
+@zenodo_option
 @click.pass_context
-def build(ctx: click.Context, directory: str):
+def build(ctx: click.Context, directory: str, zenodo: bool):
     """Build all databases."""
     click.secho('Alternate Identifiers', fg='cyan', bold=True)
-    ctx.invoke(alts, directory=directory)
+    ctx.invoke(alts, directory=directory, zenodo=zenodo)
     click.secho('Synonyms', fg='cyan', bold=True)
-    ctx.invoke(synonyms, directory=directory)
+    ctx.invoke(synonyms, directory=directory, zenodo=zenodo)
     click.secho('Xrefs', fg='cyan', bold=True)
-    ctx.invoke(xrefs, directory=directory)
+    ctx.invoke(xrefs, directory=directory, zenodo=zenodo)
     click.secho('Names', fg='cyan', bold=True)
-    ctx.invoke(names, directory=directory)
+    ctx.invoke(names, directory=directory, zenodo=zenodo)
     # TODO relations
 
 
