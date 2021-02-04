@@ -9,7 +9,10 @@ from more_click import verbose_option
 
 from .constants import DATABASE_DIRECTORY
 from .getters import db_output_helper
-from .xrefdb.xrefs_pipeline import _iter_alts, _iter_ooh_na_na, _iter_synonyms, get_xref_df, summarize_xref_df
+from .xrefdb.xrefs_pipeline import (
+    _iter_alts, _iter_ooh_na_na, _iter_synonyms, get_xref_df, summarize_xref_df,
+    summarize_xref_provenances_df,
+)
 from .zenodo_client import update_zenodo
 
 
@@ -109,9 +112,13 @@ def xrefs(directory: str, zenodo: bool):  # noqa: D202
     summary_path = os.path.join(directory, 'xrefs_summary.tsv')
     summary_df.to_csv(summary_path, sep='\t', index=False)
 
+    summary_provenances_df = summarize_xref_provenances_df(xrefs_df)
+    summary_provenances_path = os.path.join(directory, 'xrefs_summary_provenance.tsv')
+    summary_provenances_df.to_csv(summary_provenances_path, sep='\t', index=False)
+
     if zenodo:
         # see https://zenodo.org/record/4021477
-        update_zenodo('4021477', [xrefs_path, sample_path, summary_path])
+        update_zenodo('4021477', [xrefs_path, sample_path, summary_path, summary_provenances_path])
 
 
 if __name__ == '__main__':
