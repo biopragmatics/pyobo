@@ -6,12 +6,12 @@ import logging
 from typing import Iterable
 
 import bioversions
+import pystow
 from pyobo.path_utils import ensure_df
 from pyobo.struct import Obo, Reference, Term, TypeDef
 
 logger = logging.getLogger(__name__)
 PREFIX = 'rhea'
-RHEA_DATA = 'ftp://ftp.expasy.org/databases/rhea/tsv/rhea-tsv.tar.gz'
 
 has_lr = TypeDef(Reference(PREFIX, 'has_lr_reaction'))
 has_rl = TypeDef(Reference(PREFIX, 'has_rl_reaction'))
@@ -56,22 +56,43 @@ def iter_terms(version: str) -> Iterable[Term]:
             raise ValueError(f'RHEA unrecognized relation: {relation}')
         terms[source].append_parent(terms[target])
 
-    ecocyc = ensure_df(PREFIX, url='ftp://ftp.expasy.org/databases/rhea/tsv/rhea2ecocyc.tsv', version=version)
-    for rhea_id, _, _, ecocyc_id in ecocyc.values:
-        terms[rhea_id].append_xref(Reference('ecocyc', ecocyc_id))
+    for xref_prefix, url in [
+        ('ecocyc', 'rhea2ecocyc'),
+        ('kegg.reaction', 'rhea2kegg_reaction'),
+        ('reactome', 'rhea2reactome'),
+        ('macie', 'rhea2macie'),
+        ('metacyc', 'rhea2metacyc'),
+    ]:
+        xref_df = ensure_df(PREFIX, url=f'ftp://ftp.expasy.org/databases/rhea/tsv/{url}.tsv', version=version)
+        for rhea_id, _, _, xref_id in xref_df.values:
+            if rhea_id not in terms:
+                logger.warning('[%s] could not find %s:%s for xref %s:%s', PREFIX, PREFIX, rhea_id, xref_prefix,
+                               xref_id)
+                continue
+            terms[rhea_id].append_xref(Reference(xref_prefix, xref_id))
 
-    kegg = ensure_df(PREFIX, url='ftp://ftp.expasy.org/databases/rhea/tsv/rhea2kegg_reaction.tsv', version=version)
-    for rhea_id, _, _, kegg_id in kegg.values:
-        if rhea_id not in terms:
-            logger.warning('missing rhea:%s', rhea_id)
-            continue
-        terms[rhea_id].append_xref(Reference('kegg.pathway', kegg_id))
-
-    reactome = ensure_df(PREFIX, url='ftp://ftp.expasy.org/databases/rhea/tsv/rhea2reactome.tsv', version=version)
-    for rhea_id, _, _, reactome_id in reactome.values:
-        terms[rhea_id].append_xref(Reference('reactome', reactome_id))
-
+    # TODO are EC codes equivalent?
+    # TODO uniprot enabled by (RO:0002333)
     # TODO names?
+
+    url = 'ftp://ftp.expasy.org/databases/rhea/rdf/rhea.rdf.gz'
+    graph = pystow.ensure_rdf('pyobo', 'raw', PREFIX, version, url=url)
+    result = graph.query('''
+    PREFIX rh:<http://rdf.rhea-db.org/>
+    SELECT ?reaction ?reactionId ?reactionLabel WHERE {
+      ?reaction rdfs:subClassOf rh:Reaction .
+      ?reaction rh:id ?reactionId .
+      ?reaction rdfs:label ?reactionLabel .
+    }
+    ''')
+    for _, identifier, name in result:
+        identifier = str(identifier)
+        if identifier not in terms:
+            logger.warning('isolated element in rdf: rhea:%s ! %s', identifier, name)
+            continue
+        terms[identifier].reference.name = name
+
+    # TODO participants?
 
     yield from terms.values()
 
