@@ -1094,7 +1094,12 @@ def _extract_synonym(s: str, synonym_typedefs: Mapping[str, SynonymTypeDef]) -> 
     # TODO check if the synonym is written like a CURIE... it shouldn't but I've seen it happen
 
     s = s.lstrip('"')
-    name, rest = [x.strip() for x in s.split('"', 1)]
+
+    try:
+        name, rest = [x.strip() for x in s.split('"', 1)]
+    except ValueError:
+        logger.warning('invalid synonym: %s', s)
+        return
 
     specificity = None
     for skos in 'RELATED', 'EXACT', 'BROAD', 'NARROW':
