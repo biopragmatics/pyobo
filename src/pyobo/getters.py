@@ -284,18 +284,6 @@ def db_output_helper(
 
     c = Counter()
 
-    db_metadata_path = directory / f'{db_name}_metadata.json'
-    with open(db_metadata_path, 'w') as file:
-        json.dump(
-            {
-                'version': get_version(),
-                'git_hash': get_git_hash(),
-                'date': datetime.datetime.now().strftime('%Y-%m-%d-%H-%M'),
-            },
-            file,
-            indent=2,
-        )
-
     db_path = directory / f'{db_name}.tsv.gz'
     db_sample_path = directory / f'{db_name}_sample.tsv'
     db_summary_path = directory / f'{db_name}_summary.tsv'
@@ -323,6 +311,19 @@ def db_output_helper(
     with open(db_summary_path, 'w') as file:
         for k, v in c.most_common():
             print(k, v, sep='\t', file=file)
+
+    db_metadata_path = directory / f'{db_name}_metadata.json'
+    with open(db_metadata_path, 'w') as file:
+        json.dump(
+            {
+                'version': get_version(),
+                'git_hash': get_git_hash(),
+                'date': datetime.datetime.now().strftime('%Y-%m-%d-%H-%M'),
+                'count': sum(c.values()),
+            },
+            file,
+            indent=2,
+        )
 
     return [
         db_metadata_path,
