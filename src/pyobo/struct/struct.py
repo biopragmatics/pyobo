@@ -183,10 +183,18 @@ class Term(Referenced):
         """Get relationships from the given type."""
         return self.relationships[typedef]
 
-    def append_relationship(self, typedef: TypeDef, reference: Reference) -> None:
+    def append_xref(self, reference: Union[Reference, 'Term']) -> None:
+        """Append an xref."""
+        if isinstance(reference, Term):
+            reference = reference.reference
+        self.xrefs.append(reference)
+
+    def append_relationship(self, typedef: TypeDef, reference: Union[Reference, 'Term']) -> None:
         """Append a relationship."""
         if reference is None:
             raise ValueError('can not append null reference')
+        if isinstance(reference, Term):
+            reference = reference.reference
         self.relationships[typedef].append(reference)
 
     def set_species(self, identifier: str, name: Optional[str] = None):
