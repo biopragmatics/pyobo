@@ -7,6 +7,7 @@ from typing import Iterable
 
 import bioversions
 import pystow
+
 from pyobo.path_utils import ensure_df
 from pyobo.struct import Obo, Reference, Term, TypeDef
 
