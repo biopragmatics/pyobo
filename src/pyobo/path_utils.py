@@ -12,8 +12,8 @@ from urllib.request import urlretrieve
 
 import pandas as pd
 import requests
-from pystow.utils import mkdir, name_from_url
 
+from pystow.utils import mkdir, name_from_url
 from .constants import RAW_MODULE
 
 __all__ = [
@@ -56,6 +56,7 @@ def get_prefix_obo_path(prefix: str, version: VersionHint = None) -> Path:
     return prefix_directory_join(prefix, f"{prefix}.obo", version=version)
 
 
+# TODO replace with pystow.download
 def _urlretrieve(
     url: str,
     path: Union[str, Path],
@@ -100,15 +101,15 @@ def ensure_path(
     if path is None:
         path = name_from_url(url)
 
-    _path = prefix_directory_join(prefix, *parts, path, version=version)
+    rv = prefix_directory_join(prefix, *parts, path, version=version)
 
-    if not _path.exists() and error_on_missing:
+    if not rv.exists() and error_on_missing:
         raise FileNotFoundError
 
-    if not _path.exists() or force:
-        _urlretrieve(url=url, path=_path, stream=stream, **(urlretrieve_kwargs or {}))
+    if not rv.exists() or force:
+        _urlretrieve(url=url, path=rv, stream=stream, **(urlretrieve_kwargs or {}))
 
-    return _path.as_posix()
+    return rv.as_posix()
 
 
 def ensure_df(
