@@ -8,7 +8,7 @@ from typing import Iterable, Mapping
 import pandas as pd
 from tqdm import tqdm
 
-from ..extract import get_id_name_mapping
+from ..api import get_id_name_mapping
 from ..path_utils import ensure_df
 from ..struct import Obo, Reference, Term, from_species
 

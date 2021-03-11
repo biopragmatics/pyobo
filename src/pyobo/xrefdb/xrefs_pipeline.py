@@ -18,8 +18,8 @@ from tqdm import tqdm
 
 from .obo_xrefs import iterate_obo_xrefs
 from .sources import iter_xref_plugins
+from ..api import get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts
 from ..constants import DATABASE_DIRECTORY, PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
-from ..extract import get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts
 from ..getters import SKIP, iter_helper
 from ..path_utils import ensure_path
 from ..sources import ncbigene, pubchem

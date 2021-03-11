@@ -12,12 +12,13 @@ import humanize
 from more_click import verbose_option
 from tabulate import tabulate
 
-from pyobo.constants import RAW_DIRECTORY
-from pyobo.extract import (
-    get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_properties_df, get_relations_df, get_xrefs_df,
-    iter_cached_obo,
+from pyobo import (
+    get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_properties_df, get_relations_df,
+    get_xrefs_df,
 )
+from pyobo.constants import RAW_DIRECTORY
 from pyobo.path_utils import prefix_cache_join
+from pyobo.registries import iter_cached_obo
 
 __all__ = [
     'download_artifacts',

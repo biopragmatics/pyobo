@@ -4,7 +4,7 @@
 
 from typing import Mapping, Set, Tuple
 
-from ..extract import get_filtered_properties_mapping, get_filtered_relations_df
+from ..api import get_filtered_properties_mapping, get_filtered_relations_df
 from ..io_utils import multisetdict
 from ..struct import Reference, TypeDef
 
