@@ -129,7 +129,7 @@ def get_species(prefix: str, identifier: str) -> Optional[str]:
 
 @lru_cache()
 @wrap_norm_prefix
-def get_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, str]:
+def get_id_name_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == 'ncbigene':
         from .sources.ncbigene import get_ncbigene_id_to_name_mapping
@@ -143,7 +143,7 @@ def get_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[s
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'], force=force)
     def _get_id_name_mapping() -> Mapping[str, str]:
         logger.info('[%s] no cached names found. getting from OBO loader', prefix)
-        obo = get(prefix, redownload=force, **kwargs)
+        obo = get(prefix, force=force)
         logger.info('[%s] loading name mappings', prefix)
         return obo.get_id_name_mapping()
 
@@ -152,17 +152,17 @@ def get_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[s
 
 @lru_cache()
 @wrap_norm_prefix
-def get_name_id_mapping(prefix: str, **kwargs) -> Mapping[str, str]:
+def get_name_id_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
     """Get a name to identifier mapping for the OBO file."""
     return {
         name: identifier
-        for identifier, name in get_id_name_mapping(prefix=prefix, **kwargs).items()
+        for identifier, name in get_id_name_mapping(prefix=prefix, force=force).items()
     }
 
 
 @lru_cache()
 @wrap_norm_prefix
-def get_id_species_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, str]:
+def get_id_species_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
     """Get an identifier to species mapping."""
     if prefix == 'ncbigene':
         from .sources.ncbigene import get_ncbigene_id_to_species_mapping
@@ -176,7 +176,7 @@ def get_id_species_mapping(prefix: str, force: bool = False, **kwargs) -> Mappin
     @cached_mapping(path=path, header=[f'{prefix}_id', 'species'], force=force)
     def _get_id_species_mapping() -> Mapping[str, str]:
         logger.info('[%s] no cached species found. getting from OBO loader', prefix)
-        obo = get(prefix, **kwargs)
+        obo = get(prefix, force=force)
         logger.info('[%s] loading species mappings', prefix)
         return obo.get_id_species_mapping()
 
@@ -185,14 +185,14 @@ def get_id_species_mapping(prefix: str, force: bool = False, **kwargs) -> Mappin
 
 @lru_cache()
 @wrap_norm_prefix
-def get_typedef_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, str]:
+def get_typedef_id_name_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
     """Get an identifier to name mapping for the typedefs in an OBO file."""
     path = prefix_cache_join(prefix, 'typedefs.tsv', version=_get_version(prefix))
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'], force=force)
     def _get_typedef_id_name_mapping() -> Mapping[str, str]:
         logger.info('[%s] no cached typedefs found. getting from OBO loader', prefix)
-        obo = get(prefix, **kwargs)
+        obo = get(prefix, force=force)
         logger.info('[%s] loading typedef mappings', prefix)
         return obo.get_typedef_id_name_mapping()
 
@@ -200,28 +200,33 @@ def get_typedef_id_name_mapping(prefix: str, force: bool = False, **kwargs) -> M
 
 
 @wrap_norm_prefix
-def get_id_synonyms_mapping(prefix: str, force: bool = False, **kwargs) -> Mapping[str, List[str]]:
+def get_id_synonyms_mapping(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
     """Get the OBO file and output a synonym dictionary."""
     path = prefix_cache_join(prefix, "synonyms.tsv", version=_get_version(prefix))
 
     @cached_multidict(path=path, header=[f'{prefix}_id', 'synonym'], force=force)
     def _get_multidict() -> Mapping[str, List[str]]:
         logger.info('[%s] no cached synonyms found. getting from OBO loader', prefix)
-        obo = get(prefix, **kwargs)
+        obo = get(prefix, force=force)
         return obo.get_id_synonyms_mapping()
 
     return _get_multidict()
 
 
 @wrap_norm_prefix
-def get_properties_df(prefix: str, force: bool = False, **kwargs) -> pd.DataFrame:
-    """Extract properties."""
+def get_properties_df(prefix: str, *, force: bool = False) -> pd.DataFrame:
+    """Extract properties.
+
+    :param prefix: the resource to load
+    :param force: should the resource be re-downloaded, re-parsed, and re-cached?
+    :returns: A dataframe with the properties
+    """
     path = prefix_cache_join(prefix, "properties.tsv", version=_get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
-        obo = get(prefix, **kwargs)
+        obo = get(prefix, force=force)
         df = obo.get_properties_df()
         df.dropna(inplace=True)
         return df
@@ -233,11 +238,18 @@ def get_properties_df(prefix: str, force: bool = False, **kwargs) -> pd.DataFram
 def get_filtered_properties_mapping(
     prefix: str,
     prop: str,
+    *,
     use_tqdm: bool = False,
     force: bool = False,
-    **kwargs,
 ) -> Mapping[str, str]:
-    """Extract a single property for each term as a dictionary."""
+    """Extract a single property for each term as a dictionary.
+
+    :param prefix: the resource to load
+    :param prop: the property to extract
+    :param use_tqdm: should a progress bar be shown?
+    :param force: should the resource be re-downloaded, re-parsed, and re-cached?
+    :returns: A mapping from identifier to property value
+    """
     path = prefix_cache_join(prefix, 'properties', f"{prop}.tsv", version=_get_version(prefix))
     all_properties_path = prefix_cache_join(prefix, 'properties.tsv', version=_get_version(prefix))
 
@@ -251,7 +263,7 @@ def get_filtered_properties_mapping(
             return dict(df.values)
 
         logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
-        obo = get(prefix, **kwargs)
+        obo = get(prefix, force=force)
         return obo.get_filtered_properties_mapping(prop, use_tqdm=use_tqdm)
 
     return _mapping_getter()
@@ -259,6 +271,11 @@ def get_filtered_properties_mapping(
 
 def get_property(prefix: str, identifier: str, prop: str) -> Optional[str]:
     """Extract a single property for the given entity.
+
+    :param prefix: the resource to load
+    :param identifier: the identifier withing the resource
+    :param prop: the property to extract
+    :returns: The single value for the property. If multiple are expected, use :func:`get_properties`
 
     >>> import pyobo
     >>> pyobo.get_property('chebi', '132964', 'http://purl.obolibrary.org/obo/chebi/smiles')
@@ -268,6 +285,17 @@ def get_property(prefix: str, identifier: str, prop: str) -> Optional[str]:
     return filtered_properties_mapping.get(identifier)
 
 
+def get_properties(prefix: str, identifier: str, prop: str) -> Optional[Set[str]]:
+    """Extract a set of properties for the given entity.
+
+    :param prefix: the resource to load
+    :param identifier: the identifier withing the resource
+    :param prop: the property to extract
+    :returns: Multiple values for the property. If only one is expected, use :func:`get_property`
+    """
+    raise NotImplementedError
+
+
 @wrap_norm_prefix
 def get_filtered_properties_df(
     prefix: str,
@@ -275,9 +303,15 @@ def get_filtered_properties_df(
     *,
     use_tqdm: bool = False,
     force: bool = False,
-    **kwargs,
 ) -> pd.DataFrame:
-    """Extract a single property for each term."""
+    """Extract a single property for each term.
+
+    :param prefix: the resource to load
+    :param prop: the property to extract
+    :param use_tqdm: should a progress bar be shown?
+    :param force: should the resource be re-downloaded, re-parsed, and re-cached?
+    :returns: A dataframe from identifier to property value. Columns are [<prefix>_id, value].
+    """
     path = prefix_cache_join(prefix, 'properties', f"{prop}.tsv", version=_get_version(prefix))
     all_properties_path = prefix_cache_join(prefix, 'properties.tsv', version=_get_version(prefix))
 
@@ -290,7 +324,7 @@ def get_filtered_properties_df(
             return df.loc[df['property'] == prop, [f'{prefix}_id', 'value']]
 
         logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
-        obo = get(prefix, **kwargs)
+        obo = get(prefix, force=force)
         return obo.get_filtered_properties_df(prop, use_tqdm=use_tqdm)
 
     return _df_getter()
@@ -303,7 +337,6 @@ def get_relations_df(
     use_tqdm: bool = False,
     force: bool = False,
     wide: bool = False,
-    **kwargs,
 ) -> pd.DataFrame:
     """Get all relations from the OBO."""
     path = prefix_cache_join(prefix, 'relations.tsv', version=_get_version(prefix))
@@ -311,7 +344,7 @@ def get_relations_df(
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         logger.info('[%s] no cached relations found. getting from OBO loader', prefix)
-        obo = get(prefix, **kwargs)
+        obo = get(prefix, force=force)
         return obo.get_relations_df(use_tqdm=use_tqdm)
 
     rv = _df_getter()
@@ -331,7 +364,6 @@ def get_filtered_relations_df(
     *,
     use_tqdm: bool = False,
     force: bool = False,
-    **kwargs,
 ) -> pd.DataFrame:
     """Get all of the given relation."""
     relation_prefix, relation_identifier = relation = get_reference_tuple(relation)
@@ -350,7 +382,7 @@ def get_filtered_relations_df(
             return df.loc[idx, columns]
 
         logger.info('[%s] no cached relations found. getting from OBO loader', prefix)
-        obo = get(prefix, **kwargs)
+        obo = get(prefix, force=force)
         return obo.get_filtered_relations_df(relation, use_tqdm=use_tqdm)
 
     return _df_getter()
@@ -362,10 +394,10 @@ def get_id_multirelations_mapping(
     typedef: TypeDef,
     *,
     use_tqdm: bool = False,
-    **kwargs,
+    force: bool = False,
 ) -> Mapping[str, List[Reference]]:
     """Get the OBO file and output a synonym dictionary."""
-    obo = get(prefix, **kwargs)
+    obo = get(prefix, force=force)
     return obo.get_id_multirelations_mapping(typedef=typedef, use_tqdm=use_tqdm)
 
 
@@ -378,7 +410,6 @@ def get_filtered_xrefs(
     *,
     use_tqdm: bool = False,
     force: bool = False,
-    **kwargs,
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
     path = prefix_cache_join(prefix, 'xrefs', f"{xref_prefix}.tsv", version=_get_version(prefix))
@@ -396,7 +427,7 @@ def get_filtered_xrefs(
             return dict(df.values)
 
         logger.info('[%s] no cached xrefs found. getting from OBO loader', prefix)
-        obo = get(prefix, **kwargs)
+        obo = get(prefix, force=force)
         return obo.get_filtered_xrefs_mapping(xref_prefix, use_tqdm=use_tqdm)
 
     rv = _get_mapping()
@@ -406,14 +437,14 @@ def get_filtered_xrefs(
 
 
 @wrap_norm_prefix
-def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, force: bool = False, **kwargs) -> pd.DataFrame:
+def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, force: bool = False) -> pd.DataFrame:
     """Get all xrefs."""
     path = prefix_cache_join(prefix, 'xrefs.tsv', version=_get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         logger.info('[%s] no cached xrefs found. getting from OBO loader', prefix)
-        obo = get(prefix, **kwargs)
+        obo = get(prefix, force=force)
         return obo.get_xrefs_df(use_tqdm=use_tqdm)
 
     return _df_getter()
@@ -421,7 +452,7 @@ def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, force: bool = False, **
 
 @lru_cache()
 @wrap_norm_prefix
-def get_id_to_alts(prefix: str, force: bool = False, **kwargs) -> Mapping[str, List[str]]:
+def get_id_to_alts(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
     """Get alternate identifiers."""
     if prefix in NO_ALTS:
         return {}
@@ -432,7 +463,7 @@ def get_id_to_alts(prefix: str, force: bool = False, **kwargs) -> Mapping[str, L
     @cached_multidict(path=path, header=header, force=force)
     def _get_mapping() -> Mapping[str, List[str]]:
         logger.info('[%s] no cached alts found. getting from OBO loader', prefix)
-        obo = get(prefix, **kwargs)
+        obo = get(prefix, force=force)
         return obo.get_id_alts_mapping()
 
     return _get_mapping()
@@ -440,11 +471,11 @@ def get_id_to_alts(prefix: str, force: bool = False, **kwargs) -> Mapping[str, L
 
 @lru_cache()
 @wrap_norm_prefix
-def get_alts_to_id(prefix: str, **kwargs) -> Mapping[str, str]:
+def get_alts_to_id(prefix: str, force: bool = False) -> Mapping[str, str]:
     """Get alternative id to primary id mapping."""
     return {
         alt: primary
-        for primary, alts in get_id_to_alts(prefix, **kwargs).items()
+        for primary, alts in get_id_to_alts(prefix, force=force).items()
         for alt in alts
     }
 
@@ -481,7 +512,6 @@ def get_hierarchy(
     properties: Optional[Iterable[str]] = None,
     use_tqdm: bool = False,
     force: bool = False,
-    **kwargs,
 ) -> nx.DiGraph:
     """Get hierarchy of parents as a directed graph.
 
@@ -507,7 +537,6 @@ def get_hierarchy(
         properties=tuple(sorted(properties or [])),
         use_tqdm=use_tqdm,
         force=force,
-        **kwargs,
     )
 
 
@@ -522,7 +551,6 @@ def _get_hierarchy_helper(
     include_has_member: bool,
     use_tqdm: bool,
     force: bool = False,
-    **kwargs,
 ) -> nx.DiGraph:
     rv = nx.DiGraph()
 
@@ -531,7 +559,6 @@ def _get_hierarchy_helper(
         relation=is_a,
         use_tqdm=use_tqdm,
         force=force,
-        **kwargs,
     )
     for source_id, target_ns, target_id in is_a_df.values:
         rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation='is_a')
@@ -542,7 +569,6 @@ def _get_hierarchy_helper(
             relation=has_member,
             use_tqdm=use_tqdm,
             force=force,
-            **kwargs,
         )
         for target_id, source_ns, source_id in has_member_df.values:
             rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}', relation='is_a')
@@ -553,7 +579,6 @@ def _get_hierarchy_helper(
             relation=part_of,
             use_tqdm=use_tqdm,
             force=force,
-            **kwargs,
         )
         for source_id, target_ns, target_id in part_of_df.values:
             rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation='part_of')
@@ -563,7 +588,6 @@ def _get_hierarchy_helper(
             relation=part_of,
             use_tqdm=use_tqdm,
             force=force,
-            **kwargs,
         )
         for target_id, source_ns, source_id in has_part_df.values:
             rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}', relation='part_of')
@@ -574,7 +598,6 @@ def _get_hierarchy_helper(
             relation=relation,
             use_tqdm=use_tqdm,
             force=force,
-            **kwargs,
         )
         for source_id, target_ns, target_id in relation_df.values:
             rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation=relation.identifier)

@@ -9,11 +9,11 @@ import logging
 import os
 import pathlib
 import urllib.error
+import warnings
 from collections import Counter
 from typing import Callable, Iterable, Mapping, Optional, Sequence, Set, Tuple, TypeVar, Union
 
 import bioregistry
-import obonet
 from bioregistry.external import get_obofoundry
 from pystow.utils import download
 from tqdm import tqdm
@@ -53,23 +53,36 @@ class OnlyOWLError(NoBuild):
 
 @wrap_norm_prefix
 def get(
-    prefix: str, *,
-    redownload: bool = False,
+    prefix: str,
+    *,
+    force: bool = False,
     rewrite: bool = False,
     url: Optional[str] = None,
 ) -> Obo:
     """Get the OBO for a given graph.
 
     :param prefix: The prefix of the ontology to look up
-    :param redownload: Download the data again
-    :param rewrite: Should the OBO cache be rewritten? Automatically set to true if redownload is true
-    :param url: A URL to give if the OBOfoundry can not be used to look up the given prefix
+    :param force: Download the data again
+    :param rewrite: Should the OBO cache be rewritten? Automatically set to true if ``force`` is true
+    :param url: A URL to give if the OBOfoundry can not be used to look up the given prefix. This option is deprecated,
+        you should make a PR to the bioregistry or use other code if you have a custom URL, like:
+    :returns: An OBO object
+
+    :raises OnlyOWLError: If the OBO foundry only has an OWL document for this resource.
+
+    Alternate usage if you have a custom url::
+    >>> from pystow.utils import download
+    >>> from pyobo import Obo
+    >>> url = ...
+    >>> obo_path = ...
+    >>> download(url=url, path=obo_path)
+    >>> obo = Obo.from_obo_path(obo_path)
     """
-    if redownload:
+    if force:
         rewrite = True
 
     obonet_json_gz_path = prefix_directory_join(prefix, f'{prefix}.obonet.json.gz')
-    if obonet_json_gz_path.exists() and not redownload:
+    if obonet_json_gz_path.exists() and not force:
         logger.debug('[%s] using obonet cache at %s', prefix, obonet_json_gz_path)
         return Obo.from_obonet_gz(obonet_json_gz_path)
 
@@ -80,30 +93,18 @@ def get(
         return obo
 
     logger.debug('[%s] no obonet cache found at %s', prefix, obonet_json_gz_path)
-    obo_path = _ensure_obo_path(prefix, url=url, force=redownload)
+    obo_path = _ensure_obo_path(prefix, url=url, force=force)
     if obo_path.endswith('.owl'):
         raise OnlyOWLError(f'[{prefix}] unhandled OWL file')
-    obo = _obonet_path(obo_path, prefix)
+    obo = Obo.from_obo_path(obo_path, prefix=prefix)
     obo.write_default(force=rewrite)
-    return obo
-
-
-def _obonet_path(path, prefix) -> Obo:
-    logger.info('[%s] parsing with obonet from %s', prefix, path)
-    with open(path) as file:
-        graph = obonet.read_obo(tqdm(file, unit_scale=True, desc=f'[{prefix}] parsing obo', disable=None))
-
-    # Make sure the graph is named properly
-    _clean_graph_ontology(graph, prefix)
-
-    # Convert to an Obo instance and return
-    obo = Obo.from_obonet(graph)
     return obo
 
 
 def _ensure_obo_path(prefix: str, url: Optional[str] = None, force: bool = False) -> str:
     """Get the path to the OBO file and download if missing."""
     if url is not None:
+        warnings.warn('Should make curations in the bioregistry instead', DeprecationWarning)
         path = get_prefix_obo_path(prefix).as_posix()
         download(url=url, path=path, force=force)
         return path
@@ -132,16 +133,6 @@ def _ensure_obo_path(prefix: str, url: Optional[str] = None, force: bool = False
         raise MissingOboBuild(f'OBO Foundry build is missing a URL for: {prefix}, {build}')
 
     return ensure_path(prefix, url=url, force=force)
-
-
-def _clean_graph_ontology(graph, prefix: str) -> None:
-    """Update the ontology entry in the graph's metadata, if necessary."""
-    if 'ontology' not in graph.graph:
-        logger.warning('[%s] missing "ontology" key', prefix)
-        graph.graph['ontology'] = prefix
-    elif not graph.graph['ontology'].isalpha():
-        logger.warning('[%s] ontology=%s has a strange format. replacing with prefix', prefix, graph.graph['ontology'])
-        graph.graph['ontology'] = prefix
 
 
 SKIP = {
@@ -193,10 +184,14 @@ def iter_helper_helper(
     :param use_tqdm: If true, use the tqdm progress bar
     :param skip_below: If true, skip sources whose names are less than this (used for iterative curation
     :param skip_pyobo: If true, skip sources implemented in PyOBO
+    :param skip_set: A pre-defined blacklist to skip
     :param strict: If true, will raise exceptions and crash the program instead of logging them.
     :param kwargs: Keyword arguments passed to ``f``.
-    :raises HTTPError: If the resource could not be downloaded
-    :raises URLError: If another problem was encountered during download
+    :yields: A prefix and the result of the callable ``f``
+
+    :raises TypeError: If a type error is raised, it gets re-raised
+    :raises urllib.error.HTTPError: If the resource could not be downloaded
+    :raises urllib.error.URLError: If another problem was encountered during download
     :raises ValueError: If the data was not in the format that was expected (e.g., OWL)
     """
     it = sorted(bioregistry.read_bioregistry())
@@ -259,6 +254,12 @@ def db_output_helper(
 ) -> Sequence[str]:
     """Help output database builds.
 
+    :param f: A function that takes a prefix and gives back something that will be used by an outer function.
+    :param db_name: name of the output resource (e.g., "alts", "names")
+    :param columns: The names of the columns
+    :param directory: The directory to output everything, or defaults to :data:`pyobo.constants.DATABASE_DIRECTORY`.
+    :param strict: Passed to ``f`` by keyword
+    :param kwargs: Passed to ``f`` by splat
     :returns: A sequence of paths that got created.
     """
     if directory is None:

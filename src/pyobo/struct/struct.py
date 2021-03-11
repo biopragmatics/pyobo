@@ -630,6 +630,23 @@ class Obo:
                 return v
 
     @classmethod
+    def from_obo_path(cls, path: str, prefix: Optional[str] = None) -> 'Obo':
+        """Get the OBO graph from a path."""
+        import obonet
+
+        logger.info('[%s] parsing with obonet from %s', prefix or '', path)
+        with open(path) as file:
+            graph = obonet.read_obo(tqdm(file, unit_scale=True, desc=f'[{prefix or ""}] parsing obo', disable=None))
+
+        if prefix:
+            # Make sure the graph is named properly
+            _clean_graph_ontology(graph, prefix)
+
+        # Convert to an Obo instance and return
+        obo = Obo.from_obonet(graph)
+        return obo
+
+    @classmethod
     def from_obonet(cls, graph: nx.MultiDiGraph) -> 'Obo':
         """Get all of the terms from a OBO graph."""
         ontology = normalize_prefix(graph.graph['ontology'])  # probably always okay
@@ -1017,6 +1034,16 @@ class Obo:
             (term.identifier, alt.identifier)
             for term, alt in self.iterate_alts()
         )
+
+
+def _clean_graph_ontology(graph, prefix: str) -> None:
+    """Update the ontology entry in the graph's metadata, if necessary."""
+    if 'ontology' not in graph.graph:
+        logger.warning('[%s] missing "ontology" key', prefix)
+        graph.graph['ontology'] = prefix
+    elif not graph.graph['ontology'].isalpha():
+        logger.warning('[%s] ontology=%s has a strange format. replacing with prefix', prefix, graph.graph['ontology'])
+        graph.graph['ontology'] = prefix
 
 
 def _iter_obo_graph(graph: nx.MultiDiGraph) -> Iterable[Tuple[Optional[str], str, Mapping[str, Any]]]:
