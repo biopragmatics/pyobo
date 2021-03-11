@@ -1124,7 +1124,7 @@ def _extract_synonym(s: str, synonym_typedefs: Mapping[str, SynonymTypeDef]) -> 
     provenance = [
         Reference.from_curie(curie.strip())
         for curie in rest.split(',')
-        if curie
+        if curie.strip()
     ]
     return Synonym(name=name, specificity=specificity or 'EXACT', type=stype, provenance=provenance)
 
