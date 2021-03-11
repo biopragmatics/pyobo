@@ -7,7 +7,12 @@ import pandas as pd
 
 __all__ = [
     'echo_df',
+    'force_option',
+    'prefix_argument',
 ]
+
+prefix_argument = click.argument('prefix')
+force_option = click.option('-f', '--force', is_flag=True)
 
 
 def echo_df(df: pd.DataFrame) -> None:

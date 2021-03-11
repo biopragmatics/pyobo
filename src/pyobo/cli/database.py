@@ -2,34 +2,46 @@
 
 """CLI for PyOBO Database Generation."""
 
+import datetime
 import os
 
 import click
 from more_click import verbose_option
 from zenodo_client import update_zenodo
 
-from .constants import DATABASE_DIRECTORY
-from .getters import db_output_helper
-from .xrefdb.xrefs_pipeline import (
+from ..constants import DATABASE_DIRECTORY
+from ..getters import db_output_helper
+from ..xrefdb.xrefs_pipeline import (
     _iter_alts, _iter_ooh_na_na, _iter_synonyms, get_xref_df, summarize_xref_df,
     summarize_xref_provenances_df,
 )
 
+__all__ = [
+    'main',
+]
 
-@click.group()
-def database():
+
+@click.group(name='database')
+def main():
     """Build the PyOBO Database."""
+
+
+def _get_default_directory():
+    rv = DATABASE_DIRECTORY / datetime.datetime.today().strftime('%Y-%m-%d')
+    rv.mkdir(exist_ok=True, parents=True)
+    return rv
 
 
 directory_option = click.option(
     '--directory',
     type=click.Path(dir_okay=True, file_okay=False, exists=True),
-    help='Build location',
+    default=_get_default_directory,
+    help=f'Build location. Defaults to {DATABASE_DIRECTORY}/<today>',
 )
 zenodo_option = click.option('--zenodo', is_flag=True)
 
 
-@database.command()
+@main.command()
 @verbose_option
 @directory_option
 @zenodo_option
@@ -45,9 +57,10 @@ def build(ctx: click.Context, directory: str, zenodo: bool):
     click.secho('Names', fg='cyan', bold=True)
     ctx.invoke(names, directory=directory, zenodo=zenodo)
     # TODO relations
+    # TODO properties
 
 
-@database.command()
+@main.command()
 @verbose_option
 @directory_option
 @zenodo_option
@@ -66,7 +79,7 @@ def names(directory: str, zenodo: bool, no_strict: bool):
         update_zenodo('4020486', paths)
 
 
-@database.command()
+@main.command()
 @verbose_option
 @directory_option
 @zenodo_option
@@ -78,7 +91,7 @@ def alts(directory: str, zenodo: bool):
         update_zenodo('4021476', paths)
 
 
-@database.command()
+@main.command()
 @verbose_option
 @directory_option
 @zenodo_option
@@ -90,7 +103,7 @@ def synonyms(directory: str, zenodo: bool):
         update_zenodo('4021482', paths)
 
 
-@database.command()
+@main.command()
 @verbose_option
 @directory_option
 @zenodo_option
@@ -123,4 +136,4 @@ def xrefs(directory: str, zenodo: bool):  # noqa: D202
 
 
 if __name__ == '__main__':
-    database()
+    main()

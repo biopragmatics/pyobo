@@ -9,12 +9,10 @@ import logging
 from functools import lru_cache
 from typing import Iterable, List, Mapping, Optional, Union
 
-import click
 import pandas as pd
 from flasgger import Swagger
 from flask import Blueprint, Flask, current_app, jsonify, render_template, url_for
 from flask_bootstrap import Bootstrap, VERSION_BOOTSTRAP
-from more_click import host_option, port_option, run_app, verbose_option, with_gunicorn_option
 from werkzeug.local import LocalProxy
 
 from pyobo import Canonicalizer
@@ -24,7 +22,6 @@ from pyobo.xrefdb.xrefs_pipeline import get_xref_df, summarize_xref_df, summariz
 
 __all__ = [
     'get_app',
-    'main',
 ]
 
 logger = logging.getLogger(__name__)
@@ -162,19 +159,3 @@ def get_app(paths: Union[None, str, Iterable[str]] = None) -> Flask:
     app.config['canonicalizer'] = Canonicalizer.from_df(df)
     app.register_blueprint(search_blueprint)
     return app
-
-
-@click.command()
-@click.option('-x', '--mappings-file')
-@port_option
-@host_option
-@with_gunicorn_option
-@verbose_option
-def main(mappings_file, host: str, port: str, with_gunicorn: bool):
-    """Run the mappings app."""
-    app = get_app(mappings_file)
-    run_app(app=app, host=host, port=port, with_gunicorn=with_gunicorn)
-
-
-if __name__ == '__main__':
-    main()
