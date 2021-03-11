@@ -6,6 +6,7 @@ import os
 
 import click
 from more_click import verbose_option
+from zenodo_client import update_zenodo
 
 from .constants import DATABASE_DIRECTORY
 from .getters import db_output_helper
@@ -13,7 +14,6 @@ from .xrefdb.xrefs_pipeline import (
     _iter_alts, _iter_ooh_na_na, _iter_synonyms, get_xref_df, summarize_xref_df,
     summarize_xref_provenances_df,
 )
-from .zenodo_client import update_zenodo
 
 
 @click.group()
