@@ -12,8 +12,8 @@ from urllib.request import urlretrieve
 
 import pandas as pd
 import requests
-
 from pystow.utils import mkdir, name_from_url
+
 from .constants import RAW_MODULE
 
 __all__ = [
@@ -101,15 +101,15 @@ def ensure_path(
     if path is None:
         path = name_from_url(url)
 
-    rv = prefix_directory_join(prefix, *parts, path, version=version)
+    _path = prefix_directory_join(prefix, *parts, path, version=version)
 
-    if not rv.exists() and error_on_missing:
+    if not _path.exists() and error_on_missing:
         raise FileNotFoundError
 
-    if not rv.exists() or force:
-        _urlretrieve(url=url, path=rv, stream=stream, **(urlretrieve_kwargs or {}))
+    if not _path.exists() or force:
+        _urlretrieve(url=url, path=_path, stream=stream, **(urlretrieve_kwargs or {}))
 
-    return rv.as_posix()
+    return _path.as_posix()
 
 
 def ensure_df(
