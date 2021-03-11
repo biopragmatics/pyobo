@@ -14,9 +14,9 @@ from typing import Callable, Iterable, Mapping, Optional, Sequence, Set, Tuple, 
 
 import bioregistry
 import obonet
-from tqdm import tqdm
 from bioregistry.external import get_obofoundry
 from pystow.utils import download
+from tqdm import tqdm
 
 from .constants import DATABASE_DIRECTORY
 from .identifier_utils import wrap_norm_prefix

@@ -13,7 +13,7 @@ from pyobo.struct.struct import (
     _extract_synonym, iterate_graph_synonym_typedefs, iterate_graph_typedefs, iterate_node_parents,
     iterate_node_properties, iterate_node_relationships, iterate_node_synonyms, iterate_node_xrefs,
 )
-from tests.constants import TEST_CHEBI_OBO_PATH
+from tests.constants import TEST_CHEBI_OBO_PATH, chebi_patch
 
 
 class TestParseObonet(unittest.TestCase):
@@ -154,8 +154,8 @@ class TestGet(unittest.TestCase):
 
     def setUp(self) -> None:
         """Set up the test with the mock ChEBI OBO file."""
-        # TODO use mock
-        self.obo = get('chebi', url=TEST_CHEBI_OBO_PATH, local=True)
+        with chebi_patch:
+            self.obo = get('chebi')
 
     def test_get_terms(self):
         """Test getting an OBO document."""
