@@ -6,6 +6,8 @@ import logging
 from functools import lru_cache
 from typing import List, Mapping, Optional
 
+from tqdm import tqdm
+
 from .utils import get_version
 from ..cache_utils import cached_multidict
 from ..getters import get
@@ -38,7 +40,10 @@ def get_id_to_alts(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
 
     @cached_multidict(path=path, header=header, force=force)
     def _get_mapping() -> Mapping[str, List[str]]:
-        logger.info('[%s] no cached alts found. getting from OBO loader', prefix)
+        if force:
+            tqdm.write(f'[{prefix}] forcing reload for alts')
+        else:
+            logger.info('[%s] no cached alts found. getting from OBO loader', prefix)
         obo = get(prefix, force=force)
         return obo.get_id_alts_mapping()
 

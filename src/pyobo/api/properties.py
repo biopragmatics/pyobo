@@ -39,7 +39,10 @@ def get_properties_df(prefix: str, *, force: bool = False) -> pd.DataFrame:
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
-        logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
+        if force:
+            logger.info('[%s] forcing reload for properties', prefix)
+        else:
+            logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
         obo = get(prefix, force=force)
         df = obo.get_properties_df()
         df.dropna(inplace=True)
@@ -173,7 +176,10 @@ def get_filtered_properties_df(
             logger.info('[%s] filtering pre-cached properties', prefix)
             return df.loc[df['property'] == prop, [f'{prefix}_id', 'value']]
 
-        logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
+        if force:
+            logger.info('[%s] forcing reload for properties', prefix)
+        else:
+            logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
         obo = get(prefix, force=force)
         return obo.get_filtered_properties_df(prop, use_tqdm=use_tqdm)
 
