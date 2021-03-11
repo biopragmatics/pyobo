@@ -2,8 +2,13 @@
 
 """Utilities for the CLI."""
 
+import datetime
+import pathlib
+
 import click
 import pandas as pd
+
+from ..constants import DATABASE_DIRECTORY
 
 __all__ = [
     'echo_df',
@@ -21,3 +26,19 @@ def echo_df(df: pd.DataFrame) -> None:
         '\t'.join(row)
         for row in df.values
     ))
+
+
+def get_default_directory() -> pathlib.Path:
+    """Get the default database build directory."""
+    rv = DATABASE_DIRECTORY / datetime.datetime.today().strftime('%Y-%m-%d')
+    rv.mkdir(exist_ok=True, parents=True)
+    return rv
+
+
+directory_option = click.option(
+    '--directory',
+    type=click.Path(dir_okay=True, file_okay=False, exists=True),
+    default=get_default_directory,
+    help=f'Build location. Defaults to {DATABASE_DIRECTORY}/<today>',
+)
+zenodo_option = click.option('--zenodo', is_flag=True)

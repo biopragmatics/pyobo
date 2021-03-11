@@ -2,14 +2,13 @@
 
 """CLI for PyOBO Database Generation."""
 
-import datetime
 import os
 
 import click
 from more_click import verbose_option
 from zenodo_client import update_zenodo
 
-from ..constants import DATABASE_DIRECTORY
+from .utils import directory_option, zenodo_option
 from ..getters import db_output_helper
 from ..xrefdb.xrefs_pipeline import (
     _iter_alts, _iter_ooh_na_na, _iter_synonyms, get_xref_df, summarize_xref_df,
@@ -24,21 +23,6 @@ __all__ = [
 @click.group(name='database')
 def main():
     """Build the PyOBO Database."""
-
-
-def _get_default_directory():
-    rv = DATABASE_DIRECTORY / datetime.datetime.today().strftime('%Y-%m-%d')
-    rv.mkdir(exist_ok=True, parents=True)
-    return rv
-
-
-directory_option = click.option(
-    '--directory',
-    type=click.Path(dir_okay=True, file_okay=False, exists=True),
-    default=_get_default_directory,
-    help=f'Build location. Defaults to {DATABASE_DIRECTORY}/<today>',
-)
-zenodo_option = click.option('--zenodo', is_flag=True)
 
 
 @main.command()
@@ -109,9 +93,6 @@ def synonyms(directory: str, zenodo: bool):
 @zenodo_option
 def xrefs(directory: str, zenodo: bool):  # noqa: D202
     """Make the prefix-identifier-xref dump."""
-    if directory is None:
-        directory = DATABASE_DIRECTORY
-
     # Export all xrefs
     xrefs_df = get_xref_df(rebuild=True, force=False)
     xrefs_path = os.path.join(directory, 'xrefs.tsv.gz')
