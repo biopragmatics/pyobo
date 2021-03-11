@@ -56,6 +56,7 @@ def get_prefix_obo_path(prefix: str, version: VersionHint = None) -> Path:
     return prefix_directory_join(prefix, f"{prefix}.obo", version=version)
 
 
+# TODO replace with pystow.download
 def _urlretrieve(
     url: str,
     path: Union[str, Path],

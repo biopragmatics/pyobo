@@ -11,11 +11,11 @@ import pathlib
 import urllib.error
 from collections import Counter
 from typing import Callable, Iterable, Mapping, Optional, Sequence, Set, Tuple, TypeVar, Union
-from urllib.request import urlretrieve
 
 import bioregistry
 import obonet
 from bioregistry.external import get_obofoundry
+from pystow.utils import download
 from tqdm import tqdm
 
 from .constants import DATABASE_DIRECTORY
@@ -57,46 +57,38 @@ def get(
     redownload: bool = False,
     rewrite: bool = False,
     url: Optional[str] = None,
-    local: bool = False,
 ) -> Obo:
     """Get the OBO for a given graph.
 
     :param prefix: The prefix of the ontology to look up
     :param redownload: Download the data again
+    :param rewrite: Should the OBO cache be rewritten? Automatically set to true if redownload is true
     :param url: A URL to give if the OBOfoundry can not be used to look up the given prefix
-    :param local: A local file path is given. Do not cache.
     """
     if redownload:
         rewrite = True
-    path = prefix_directory_join(prefix, f'{prefix}.obonet.json.gz')
-    if path.exists() and not local and not redownload:
-        logger.debug('[%s] using obonet cache at %s', prefix, path)
-        return Obo.from_obonet_gz(path)
-    elif has_nomenclature_plugin(prefix):
+
+    obonet_json_gz_path = prefix_directory_join(prefix, f'{prefix}.obonet.json.gz')
+    if obonet_json_gz_path.exists() and not redownload:
+        logger.debug('[%s] using obonet cache at %s', prefix, obonet_json_gz_path)
+        return Obo.from_obonet_gz(obonet_json_gz_path)
+
+    if has_nomenclature_plugin(prefix):
         obo = run_nomenclature_plugin(prefix)
         logger.info('[%s] caching nomenclature plugin', prefix)
         obo.write_default(force=rewrite)
         return obo
-    else:
-        logger.debug('[%s] no obonet cache found at %s', prefix, path)
-        obo = _get_obo_via_obonet(prefix=prefix, url=url, local=local, redownload=redownload)
-        if not local:
-            obo.write_default(force=rewrite)
-        return obo
 
-
-def _get_obo_via_obonet(
-    prefix: str,
-    *,
-    url: Optional[str] = None,
-    local: bool = False,
-    redownload: bool = False,
-) -> Obo:
-    """Get the OBO file by prefix or URL."""
-    path = _get_path(prefix=prefix, url=url, local=local, redownload=redownload)
-    if path.endswith('.owl'):
+    logger.debug('[%s] no obonet cache found at %s', prefix, obonet_json_gz_path)
+    obo_path = _ensure_obo_path(prefix, url=url, force=redownload)
+    if obo_path.endswith('.owl'):
         raise OnlyOWLError(f'[{prefix}] unhandled OWL file')
+    obo = _obonet_path(obo_path, prefix)
+    obo.write_default(force=rewrite)
+    return obo
 
+
+def _obonet_path(path, prefix) -> Obo:
     logger.info('[%s] parsing with obonet from %s', prefix, path)
     with open(path) as file:
         graph = obonet.read_obo(tqdm(file, unit_scale=True, desc=f'[{prefix}] parsing obo', disable=None))
@@ -105,34 +97,17 @@ def _get_obo_via_obonet(
     _clean_graph_ontology(graph, prefix)
 
     # Convert to an Obo instance and return
-    return Obo.from_obonet(graph)
+    obo = Obo.from_obonet(graph)
+    return obo
 
 
-def _get_path(*, url, prefix, local, redownload: bool = False) -> str:
-    if url is None:
-        path = _ensure_obo_path(prefix, force=redownload)
-    elif local:
-        path = url
-    else:
-        path = get_prefix_obo_path(prefix)
-        if not path.exists() or redownload:
-            tqdm.write(f'[{prefix}] downloading OBO from {url} to {path}')
-            urlretrieve(url, path)
-    return path
-
-
-def _clean_graph_ontology(graph, prefix: str) -> None:
-    """Update the ontology entry in the graph's metadata, if necessary."""
-    if 'ontology' not in graph.graph:
-        logger.warning('[%s] missing "ontology" key', prefix)
-        graph.graph['ontology'] = prefix
-    elif not graph.graph['ontology'].isalpha():
-        logger.warning('[%s] ontology=%s has a strange format. replacing with prefix', prefix, graph.graph['ontology'])
-        graph.graph['ontology'] = prefix
-
-
-def _ensure_obo_path(prefix: str, force: bool = False) -> str:
+def _ensure_obo_path(prefix: str, url: Optional[str] = None, force: bool = False) -> str:
     """Get the path to the OBO file and download if missing."""
+    if url is not None:
+        path = get_prefix_obo_path(prefix).as_posix()
+        download(url=url, path=path, force=force)
+        return path
+
     curated_url = get_curated_urls().get(prefix)
     if curated_url:
         logger.debug('[%s] checking for OBO at curated URL: %s', prefix, curated_url)
@@ -157,6 +132,16 @@ def _ensure_obo_path(prefix: str, force: bool = False) -> str:
         raise MissingOboBuild(f'OBO Foundry build is missing a URL for: {prefix}, {build}')
 
     return ensure_path(prefix, url=url, force=force)
+
+
+def _clean_graph_ontology(graph, prefix: str) -> None:
+    """Update the ontology entry in the graph's metadata, if necessary."""
+    if 'ontology' not in graph.graph:
+        logger.warning('[%s] missing "ontology" key', prefix)
+        graph.graph['ontology'] = prefix
+    elif not graph.graph['ontology'].isalpha():
+        logger.warning('[%s] ontology=%s has a strange format. replacing with prefix', prefix, graph.graph['ontology'])
+        graph.graph['ontology'] = prefix
 
 
 SKIP = {

@@ -9,7 +9,7 @@ import pandas as pd
 import pyobo
 from pyobo import get_filtered_xrefs, get_id_name_mapping, get_xrefs_df
 from pyobo.mocks import get_mock_get_xrefs_df
-from tests.constants import TEST_CHEBI_OBO_PATH
+from tests.constants import chebi_patch
 
 _mock_rows = [
     ('hgnc', '6893', 'ncbigene', '4137', 'N/A'),
@@ -23,7 +23,8 @@ class TestMapping(unittest.TestCase):
 
     def test_get_names(self):
         """Test getting names."""
-        id_to_name = get_id_name_mapping('chebi', url=TEST_CHEBI_OBO_PATH, local=True)
+        with chebi_patch:
+            id_to_name = get_id_name_mapping('chebi')
         for identifier in id_to_name:
             self.assertFalse(identifier.startswith('CHEBI'))
             self.assertFalse(identifier.startswith('CHEBI:'))
@@ -32,7 +33,8 @@ class TestMapping(unittest.TestCase):
 
     def test_get_xrefs(self):
         """Test getting xrefs."""
-        df = get_xrefs_df('chebi', url=TEST_CHEBI_OBO_PATH, local=True)
+        with chebi_patch:
+            df = get_xrefs_df('chebi')
         self.assertIsInstance(df, pd.DataFrame)
 
         for key, value in df[['source_ns', 'source_id']].values:  # no need for targets since are external
@@ -43,7 +45,8 @@ class TestMapping(unittest.TestCase):
 
     def test_get_target_xrefs(self):
         """Test getting xrefs."""
-        kegg_xrefs = get_filtered_xrefs('chebi', 'kegg', url=TEST_CHEBI_OBO_PATH, local=True)
+        with chebi_patch:
+            kegg_xrefs = get_filtered_xrefs('chebi', 'kegg')
         print(kegg_xrefs)
 
         for key, value in kegg_xrefs.items():
