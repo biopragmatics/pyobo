@@ -10,7 +10,7 @@ import obonet
 from pyobo import SynonymTypeDef, get
 from pyobo.struct import Reference, Synonym
 from pyobo.struct.struct import (
-    _extract_synonym, iterate_graph_synonym_typedefs, iterate_graph_typedefs, iterate_node_parents,
+    _extract_definition, _extract_synonym, iterate_graph_synonym_typedefs, iterate_graph_typedefs, iterate_node_parents,
     iterate_node_properties, iterate_node_relationships, iterate_node_synonyms, iterate_node_xrefs,
 )
 from tests.constants import TEST_CHEBI_OBO_PATH, chebi_patch
@@ -43,6 +43,21 @@ class TestParseObonet(unittest.TestCase):
             ], key=attrgetter('id')),
             synonym_typedefs,
         )
+
+    def test_extract_definition(self):
+        """Test extracting a definition."""
+        expected_text = "Test Text."
+
+        for s, expected_references in [
+            (f'"{expected_text}"', []),
+            (f'"{expected_text}" []', []),
+            (f'"{expected_text}" [PMID:1234]', [Reference('pubmed', '1234')]),
+            (f'"{expected_text}" [PMID:1234, PMID:1235]', [Reference('pubmed', '1234'), Reference('pubmed', '1235')]),
+        ]:
+            with self.subTest(s=s):
+                actual_text, actual_references = _extract_definition(s)
+                self.assertEqual(expected_text, actual_text)
+                self.assertEqual(expected_references, actual_references)
 
     def test_extract_synonym(self):
         """Test extracting synonym strings."""
