@@ -4,11 +4,11 @@
 
 import logging
 from functools import lru_cache
-from typing import List, Mapping, Optional
+from typing import Callable, List, Mapping, Optional, TypeVar
 
 from .alts import get_primary_identifier
 from .utils import get_version
-from ..cache_utils import cached_mapping, cached_multidict
+from ..cache_utils import cached_mapping, cached_multidict, reverse_mapping
 from ..getters import NoOboFoundry, get
 from ..identifier_utils import normalize_curie, wrap_norm_prefix
 from ..path_utils import prefix_cache_join
@@ -34,6 +34,24 @@ def get_name_by_curie(curie: str) -> Optional[str]:
         return get_name(prefix, identifier)
 
 
+X = TypeVar('X')
+
+
+def _help_get(f: Callable[[str], Mapping[str, X]], prefix: str, identifier: str) -> Optional[X]:
+    """Get the result for an entity based on a mapping maker function ``f``."""
+    try:
+        mapping = f(prefix)
+    except NoOboFoundry:
+        mapping = None
+
+    if not mapping:
+        logger.warning('unable to look up results for prefix %s with %s', prefix, f)
+        return
+
+    primary_id = get_primary_identifier(prefix, identifier)
+    return mapping.get(primary_id)
+
+
 @wrap_norm_prefix
 def get_name(prefix: str, identifier: str) -> Optional[str]:
     """Get the name for an entity."""
@@ -41,17 +59,7 @@ def get_name(prefix: str, identifier: str) -> Optional[str]:
         from protmapper import uniprot_client
         return uniprot_client.get_mnemonic(identifier)
 
-    try:
-        id_name = get_id_name_mapping(prefix)
-    except NoOboFoundry:
-        id_name = None
-
-    if not id_name:
-        logger.warning('unable to look up names for prefix %s', prefix)
-        return
-
-    primary_id = get_primary_identifier(prefix, identifier)
-    return id_name.get(primary_id)
+    return _help_get(get_id_name_mapping, prefix, identifier)
 
 
 @lru_cache()
@@ -83,26 +91,14 @@ def get_id_name_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
 @wrap_norm_prefix
 def get_name_id_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
     """Get a name to identifier mapping for the OBO file."""
-    return {
-        name: identifier
-        for identifier, name in get_id_name_mapping(prefix=prefix, force=force).items()
-    }
+    id_name = get_id_name_mapping(prefix=prefix, force=force)
+    return reverse_mapping(id_name)
 
 
 @wrap_norm_prefix
 def get_definition(prefix: str, identifier: str) -> Optional[str]:
     """Get the definition for an entity."""
-    try:
-        id_definition = get_id_definition_mapping(prefix)
-    except NoOboFoundry:
-        id_definition = None
-
-    if not id_definition:
-        logger.warning('unable to look up names for prefix %s', prefix)
-        return
-
-    primary_id = get_primary_identifier(prefix, identifier)
-    return id_definition.get(primary_id)
+    return _help_get(get_id_definition_mapping, prefix, identifier)
 
 
 def get_id_definition_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
@@ -121,17 +117,7 @@ def get_id_definition_mapping(prefix: str, force: bool = False) -> Mapping[str, 
 @wrap_norm_prefix
 def get_synonyms(prefix: str, identifier: str) -> Optional[List[str]]:
     """Get the synonyms for an entity."""
-    try:
-        id_synonyms = get_id_synonyms_mapping(prefix)
-    except NoOboFoundry:
-        id_synonyms = None
-
-    if not id_synonyms:
-        logger.warning('unable to look up names for prefix %s', prefix)
-        return
-
-    primary_id = get_primary_identifier(prefix, identifier)
-    return id_synonyms.get(primary_id)
+    return _help_get(get_id_synonyms_mapping, prefix, identifier)
 
 
 @wrap_norm_prefix

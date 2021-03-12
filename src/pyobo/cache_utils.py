@@ -180,3 +180,8 @@ def cached_multidict(
         return _wrapped
 
     return wrapped
+
+
+def reverse_mapping(d):
+    """Reverse a mapping."""
+    return {v: k for k, v in d.items()}
