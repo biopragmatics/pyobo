@@ -41,7 +41,10 @@
       "Compound:eye",
       "Lymph:node",
       "Lamina:propria",
-      "Follicular:fluid"
+      "Follicular:fluid",
+      "dph:GOC",
+      "gOC:dph",
+      "gOC:dph"
     ],
     "resource_prefix": {
       "efo": [
@@ -112,7 +115,9 @@
       "Germplasm:",
       "IUPAC:",
       "IUPHAR:GPCRListForward?",
-      "GOC:"
+      "GOC:",
+      "goc:",
+      "GIOC:"
     ],
     "suffix": [
       ".jpg",
@@ -129,7 +134,8 @@
       "CHEBI:84990 MetaCyc:<locant>gamma</locant>-carboxy-<stereo>L</stereo>-glutamate residue \"SUBMITTER\"": "CHEBI:84990",
       "LIPIDMAPSLMFA01030141": "LIPIDMAPS:LMFA01030141",
       "LIPIDMAPSLMFA01030152": "LIPIDMAPS:LMFA01030152",
-      "SNOMEDCT274897005": "SNOMEDCT:274897005"
+      "SNOMEDCT274897005": "SNOMEDCT:274897005",
+      "GIOC:vw": "GOC:vw"
     },
     "prefix": {
       "ATCC number: ": "ATCC:",
@@ -169,7 +175,8 @@
       "url: \"https://en.wikipedia.org/wiki/": "wikipedia.en:",
       "url:https\\://www.ncbi.nlm.nih.gov/pubmed/": "pubmed:",
       "url:https\\://ghr.nlm.nih.gov/condition/": "ghr:",
-      "NIF_Subcellular:FMA_": "FMA:"
+      "NIF_Subcellular:FMA_": "FMA:",
+      "Wikipeda:": "wikipedia:"
     }
   },
   "wikidata_property_types": [
