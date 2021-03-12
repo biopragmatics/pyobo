@@ -5,8 +5,8 @@
 from .alts import get_alts_to_id, get_id_to_alts, get_primary_curie, get_primary_identifier  # noqa: F401
 from .hierarchy import get_ancestors, get_descendants, get_hierarchy, get_subhierarchy  # noqa: F401
 from .names import (  # noqa: F401
-    get_id_name_mapping, get_id_synonyms_mapping, get_name, get_name_by_curie,
-    get_name_id_mapping,
+    get_definition, get_id_definition_mapping, get_id_name_mapping, get_id_synonyms_mapping, get_name,
+    get_name_by_curie, get_name_id_mapping, get_synonyms,
 )
 from .properties import (  # noqa: F401
     get_filtered_properties_df, get_filtered_properties_mapping, get_filtered_properties_multimapping, get_properties,

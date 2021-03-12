@@ -396,6 +396,10 @@ class Obo:
         return self._cache('names.tsv')
 
     @property
+    def _definitions_path(self) -> Path:
+        return self._cache('definitions.tsv')
+
+    @property
     def _species_path(self) -> Path:
         return self._cache('species.tsv')
 
@@ -441,6 +445,14 @@ class Obo:
                 path=self._names_path,
                 header=[f'{self.ontology}_id', 'name'],
                 rv=self.get_id_name_mapping(),
+            )
+
+        if not self._definitions_path.exists() or force:
+            logger.info('[%s] caching definitions', self.ontology)
+            write_map_tsv(
+                path=self._definitions_path,
+                header=[f'{self.ontology}_id', 'name'],
+                rv=self.get_id_definition_mapping(),
             )
 
         if not self._species_path.exists() or force:
@@ -793,6 +805,14 @@ class Obo:
             term.identifier: term.name
             for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting names')
             if term.name
+        }
+
+    def get_id_definition_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, str]:
+        """Get a mapping from identifiers to definitions."""
+        return {
+            term.identifier: term.definition
+            for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting names')
+            if term.definition
         }
 
     def get_id_species_mapping(self, *, prefix: Optional[str] = None, use_tqdm: bool = False) -> Mapping[str, str]:

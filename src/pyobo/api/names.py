@@ -18,6 +18,9 @@ __all__ = [
     'get_name_by_curie',
     'get_id_name_mapping',
     'get_name_id_mapping',
+    'get_definition',
+    'get_id_definition_mapping',
+    'get_synonyms',
     'get_id_synonyms_mapping',
 ]
 
@@ -84,6 +87,51 @@ def get_name_id_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
         name: identifier
         for identifier, name in get_id_name_mapping(prefix=prefix, force=force).items()
     }
+
+
+@wrap_norm_prefix
+def get_definition(prefix: str, identifier: str) -> Optional[str]:
+    """Get the definition for an entity."""
+    try:
+        id_definition = get_id_definition_mapping(prefix)
+    except NoOboFoundry:
+        id_definition = None
+
+    if not id_definition:
+        logger.warning('unable to look up names for prefix %s', prefix)
+        return
+
+    primary_id = get_primary_identifier(prefix, identifier)
+    return id_definition.get(primary_id)
+
+
+def get_id_definition_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
+    """Get a mapping of descriptions."""
+    path = prefix_cache_join(prefix, "definitions.tsv", version=get_version(prefix))
+
+    @cached_mapping(path=path, header=[f'{prefix}_id', 'name'], force=force)
+    def _get_mapping() -> Mapping[str, str]:
+        logger.info('[%s] no cached descriptions found. getting from OBO loader', prefix)
+        obo = get(prefix, force=force)
+        return obo.get_id_definition_mapping()
+
+    return _get_mapping()
+
+
+@wrap_norm_prefix
+def get_synonyms(prefix: str, identifier: str) -> Optional[List[str]]:
+    """Get the synonyms for an entity."""
+    try:
+        id_synonyms = get_id_synonyms_mapping(prefix)
+    except NoOboFoundry:
+        id_synonyms = None
+
+    if not id_synonyms:
+        logger.warning('unable to look up names for prefix %s', prefix)
+        return
+
+    primary_id = get_primary_identifier(prefix, identifier)
+    return id_synonyms.get(primary_id)
 
 
 @wrap_norm_prefix
