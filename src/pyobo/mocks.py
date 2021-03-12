@@ -22,7 +22,7 @@ def get_mock_id_name_mapping(data: Mapping[str, Mapping[str, str]]) -> mock.patc
 
     :param data: A mapping from prefix to mappings of identifier to names.
     """
-    return _replace_mapping_getter('pyobo.api.get_id_name_mapping', data)
+    return _replace_mapping_getter('pyobo.api.names.get_id_name_mapping', data)
 
 
 def get_mock_id_synonyms_mapping(data: Mapping[str, Mapping[str, List[str]]]) -> mock.patch:
@@ -30,7 +30,7 @@ def get_mock_id_synonyms_mapping(data: Mapping[str, Mapping[str, List[str]]]) ->
 
     :param data: A mapping from prefix to mappings of identifier to lists of synonyms.
     """
-    return _replace_mapping_getter('pyobo.api.get_id_synonyms_mapping', data)
+    return _replace_mapping_getter('pyobo.api.names.get_id_synonyms_mapping', data)
 
 
 def get_mock_id_alts_mapping(data: Mapping[str, Mapping[str, List[str]]]) -> mock.patch:
@@ -38,7 +38,7 @@ def get_mock_id_alts_mapping(data: Mapping[str, Mapping[str, List[str]]]) -> moc
 
     :param data: A mapping from prefix to mappings of identifier to lists of alternative identifiers.
     """
-    return _replace_mapping_getter('pyobo.api.get_id_to_alts', data)
+    return _replace_mapping_getter('pyobo.api.alts.get_id_to_alts', data)
 
 
 X = TypeVar('X')

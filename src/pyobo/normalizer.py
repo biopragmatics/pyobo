@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, Union
 
-from . import api
+from .api import names
 from .identifier_utils import normalize_dashes, normalize_prefix
 from .io_utils import multisetdict
 
@@ -142,8 +142,8 @@ class OboNormalizer(Normalizer):
     def __init__(self, prefix: str) -> None:  # noqa: D107
         self.prefix = prefix
         self._len_prefix = len(prefix)
-        id_to_name = api.get_id_name_mapping(prefix)
-        id_to_synonyms = api.get_id_synonyms_mapping(prefix)
+        id_to_name = names.get_id_name_mapping(prefix)
+        id_to_synonyms = names.get_id_synonyms_mapping(prefix)
         super().__init__(
             id_to_name=dict(id_to_name),
             id_to_synonyms=dict(id_to_synonyms),
