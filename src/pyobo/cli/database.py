@@ -8,7 +8,7 @@ import click
 from more_click import verbose_option
 from zenodo_client import update_zenodo
 
-from .utils import directory_option, force_option, zenodo_option
+from .utils import directory_option, force_option, no_strict_option, zenodo_option
 from ..getters import db_output_helper
 from ..xrefdb.xrefs_pipeline import (
     _iter_alts, _iter_ooh_na_na, _iter_synonyms, get_xref_df, summarize_xref_df,
@@ -30,11 +30,12 @@ def main():
 @directory_option
 @zenodo_option
 @force_option
+@no_strict_option
 @click.pass_context
-def build(ctx: click.Context, directory: str, zenodo: bool, force: bool):
+def build(ctx: click.Context, directory: str, zenodo: bool, no_strict: bool, force: bool):
     """Build all databases."""
     click.secho('Alternate Identifiers', fg='cyan', bold=True)
-    ctx.invoke(alts, directory=directory, zenodo=zenodo, force=force)  # only need to force once
+    ctx.invoke(alts, directory=directory, zenodo=zenodo, no_strict=no_strict, force=force)  # only need to force once
     click.secho('Synonyms', fg='cyan', bold=True)
     ctx.invoke(synonyms, directory=directory, zenodo=zenodo)
     click.secho('Xrefs', fg='cyan', bold=True)
@@ -50,7 +51,7 @@ def build(ctx: click.Context, directory: str, zenodo: bool, force: bool):
 @directory_option
 @zenodo_option
 @force_option
-@click.option('--no-strict', is_flag=True)
+@no_strict_option
 def names(directory: str, zenodo: bool, no_strict: bool, force: bool):
     """Make the prefix-identifier-name dump."""
     paths = db_output_helper(
@@ -58,6 +59,7 @@ def names(directory: str, zenodo: bool, no_strict: bool, force: bool):
         'names',
         ('prefix', 'identifier', 'name'),
         strict=not no_strict,
+        force=force,
         directory=directory,
     )
     if zenodo:
@@ -70,9 +72,15 @@ def names(directory: str, zenodo: bool, no_strict: bool, force: bool):
 @directory_option
 @zenodo_option
 @force_option
-def alts(directory: str, zenodo: bool, force: bool):
+@no_strict_option
+def alts(directory: str, zenodo: bool, force: bool, no_strict: bool):
     """Make the prefix-alt-id dump."""
-    paths = db_output_helper(_iter_alts, 'alts', ('prefix', 'identifier', 'alt'), directory=directory, force=force)
+    paths = db_output_helper(
+        _iter_alts, 'alts', ('prefix', 'identifier', 'alt'),
+        directory=directory,
+        force=force,
+        strict=not no_strict,
+    )
     if zenodo:
         # see https://zenodo.org/record/4021476
         update_zenodo('4021476', paths)
@@ -83,9 +91,15 @@ def alts(directory: str, zenodo: bool, force: bool):
 @directory_option
 @zenodo_option
 @force_option
-def synonyms(directory: str, zenodo: bool, force: bool):
+@no_strict_option
+def synonyms(directory: str, zenodo: bool, force: bool, no_strict: bool):
     """Make the prefix-identifier-synonym dump."""
-    paths = db_output_helper(_iter_synonyms, 'synonyms', ('prefix', 'identifier', 'synonym'), directory=directory)
+    paths = db_output_helper(
+        _iter_synonyms, 'synonyms', ('prefix', 'identifier', 'synonym'),
+        directory=directory,
+        force=force,
+        strict=not no_strict,
+    )
     if zenodo:
         # see https://zenodo.org/record/4021482
         update_zenodo('4021482', paths)
@@ -96,10 +110,11 @@ def synonyms(directory: str, zenodo: bool, force: bool):
 @directory_option
 @zenodo_option
 @force_option
-def xrefs(directory: str, zenodo: bool, force: bool):  # noqa: D202
+@no_strict_option
+def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool):  # noqa: D202
     """Make the prefix-identifier-xref dump."""
     # Export all xrefs
-    xrefs_df = get_xref_df(rebuild=True, force=False)
+    xrefs_df = get_xref_df(rebuild=True, force=force, strict=not no_strict)
     xrefs_path = os.path.join(directory, 'xrefs.tsv.gz')
     xrefs_df.to_csv(xrefs_path, sep='\t', index=False)
 

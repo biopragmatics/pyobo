@@ -12,12 +12,12 @@ from ..constants import DATABASE_DIRECTORY
 
 __all__ = [
     'echo_df',
+    'directory_option',
+    'zenodo_option',
     'force_option',
     'prefix_argument',
+    'no_strict_option',
 ]
-
-prefix_argument = click.argument('prefix')
-force_option = click.option('-f', '--force', is_flag=True)
 
 
 def echo_df(df: pd.DataFrame) -> None:
@@ -42,3 +42,6 @@ directory_option = click.option(
     help=f'Build location. Defaults to {DATABASE_DIRECTORY}/<today>',
 )
 zenodo_option = click.option('--zenodo', is_flag=True)
+no_strict_option = click.option('-x', '--no-strict', is_flag=True)
+prefix_argument = click.argument('prefix')
+force_option = click.option('-f', '--force', is_flag=True)
