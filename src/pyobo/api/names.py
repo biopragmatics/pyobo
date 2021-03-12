@@ -56,7 +56,7 @@ def get_name(prefix: str, identifier: str) -> Optional[str]:
 def get_id_name_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == 'ncbigene':
-        from .sources.ncbigene import get_ncbigene_id_to_name_mapping
+        from ..sources.ncbigene import get_ncbigene_id_to_name_mapping
         logger.info('[%s] loading name mappings', prefix)
         rv = get_ncbigene_id_to_name_mapping()
         logger.info('[%s] done loading name mappings', prefix)
