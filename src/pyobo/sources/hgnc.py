@@ -8,11 +8,11 @@ from typing import Iterable
 
 from tqdm import tqdm
 
-from ..path_utils import ensure_path
 from ..struct import (
     Obo, Reference, Synonym, SynonymTypeDef, Term, from_species, gene_product_is_a, has_gene_product, orthologous,
     transcribes_to,
 )
+from ..utils.path import ensure_path
 
 logger = logging.getLogger(__name__)
 

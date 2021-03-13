@@ -9,7 +9,7 @@ from typing import Optional
 
 from ..api import get_xrefs_df
 from ..getters import iter_helper_helper
-from ..path_utils import get_prefix_directory
+from ..utils.path import get_prefix_directory
 
 __all__ = [
     'iterate_obo_xrefs',

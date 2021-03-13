@@ -8,8 +8,8 @@ from typing import Iterable, List, Mapping
 import pandas as pd
 from tqdm import tqdm
 
-from ..path_utils import ensure_path
 from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
+from ..utils.path import ensure_path
 
 PREFIX = 'hgnc.genefamily'
 FAMILIES_URL = 'ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/csv/genefamily_db_tables/family.csv'

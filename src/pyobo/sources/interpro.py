@@ -9,10 +9,10 @@ import bioversions
 from tqdm import tqdm
 
 from .utils import get_go_mapping
-from ..path_utils import ensure_df, ensure_path
 from ..struct import Obo, Reference, Term
 from ..struct.typedef import has_member
 from ..utils.io import multisetdict
+from ..utils.path import ensure_df, ensure_path
 
 PREFIX = 'interpro'
 

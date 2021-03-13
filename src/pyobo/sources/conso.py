@@ -6,9 +6,9 @@ from typing import Iterable
 
 import pandas as pd
 
-from ..path_utils import ensure_df
 from ..struct import Obo, Reference, Synonym, Term
 from ..utils.io import multidict
+from ..utils.path import ensure_df
 
 PREFIX = 'conso'
 BASE_URL = 'https://raw.githubusercontent.com/pharmacome/conso/master'

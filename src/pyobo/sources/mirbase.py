@@ -9,10 +9,10 @@ from typing import Iterable, List, Mapping
 import bioversions
 from tqdm import tqdm
 
-from ..path_utils import ensure_df, ensure_path, prefix_directory_join
 from ..struct import Obo, Reference, Synonym, Term, from_species
 from ..struct.typedef import has_mature
 from ..utils.cache import cached_mapping
+from ..utils.path import ensure_df, ensure_path, prefix_directory_join
 
 logger = logging.getLogger(__name__)
 

@@ -7,8 +7,8 @@ import tarfile
 from typing import Iterable
 from xml.etree import ElementTree
 
-from pyobo.path_utils import ensure_path
 from pyobo.struct import Obo, Reference, Term, has_part
+from pyobo.utils.path import ensure_path
 
 logger = logging.getLogger(__name__)
 

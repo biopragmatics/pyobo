@@ -9,8 +9,8 @@ from typing import Mapping
 from .utils import get_version
 from ..getters import get
 from ..identifier_utils import wrap_norm_prefix
-from ..path_utils import prefix_cache_join
 from ..utils.cache import cached_mapping
+from ..utils.path import prefix_cache_join
 
 __all__ = [
     'get_typedef_id_name_mapping',

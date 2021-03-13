@@ -10,8 +10,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from pyobo import get_id_name_mapping
-from pyobo.path_utils import ensure_df
 from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_part
+from pyobo.utils.path import ensure_df
 
 logger = logging.getLogger(__name__)
 

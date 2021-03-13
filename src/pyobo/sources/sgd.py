@@ -4,8 +4,8 @@
 
 from urllib.parse import unquote_plus
 
-from ..path_utils import ensure_tar_df
 from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
+from ..utils.path import ensure_tar_df
 
 HEADER = ['chromosome', 'database', 'feature', 'start', 'end', 'a', 'b', 'c', 'data']
 PREFIX = 'sgd'

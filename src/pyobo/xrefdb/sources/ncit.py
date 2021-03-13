@@ -7,7 +7,7 @@ from typing import Iterable
 import pandas as pd
 
 from ...constants import PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
-from ...path_utils import ensure_df
+from ...utils.path import ensure_df
 
 __all__ = [
     'iter_ncit_dfs',

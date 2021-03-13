@@ -7,9 +7,9 @@ from typing import Iterable
 
 from tqdm import tqdm, trange
 
-from pyobo.path_utils import ensure_path
 from pyobo.sources.gwascentral_study import VERSION
 from pyobo.struct import Obo, Reference, Term
+from pyobo.utils.path import ensure_path
 
 PREFIX = 'gwascentral.phenotype'
 

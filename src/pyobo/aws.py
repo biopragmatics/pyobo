@@ -16,8 +16,8 @@ from pyobo import (
 )
 from pyobo.api.utils import get_version
 from pyobo.constants import RAW_DIRECTORY
-from pyobo.path_utils import prefix_cache_join
 from pyobo.registries import iter_cached_obo
+from pyobo.utils.path import prefix_cache_join
 
 __all__ = [
     'download_artifacts',

@@ -20,10 +20,10 @@ from tqdm import tqdm
 
 from .constants import DATABASE_DIRECTORY
 from .identifier_utils import wrap_norm_prefix
-from .path_utils import ensure_path, get_prefix_obo_path, prefix_directory_join
 from .registries import get_curated_urls
 from .sources import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
+from .utils.path import ensure_path, get_prefix_obo_path, prefix_directory_join
 from .version import get_git_hash, get_version
 
 __all__ = [

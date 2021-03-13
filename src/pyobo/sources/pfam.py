@@ -8,8 +8,8 @@ import bioversions
 import pandas as pd
 from tqdm import tqdm
 
-from ..path_utils import ensure_df
 from ..struct import Obo, Reference, Term
+from ..utils.path import ensure_df
 
 PREFIX = 'pfam'
 

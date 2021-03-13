@@ -9,9 +9,9 @@ from typing import Dict, Iterable, Mapping, Optional, Set, Tuple
 import bioversions
 
 from .utils import get_go_mapping
-from ..path_utils import ensure_path
 from ..struct import Obo, Reference, Synonym, Term, TypeDef
 from ..struct.typedef import has_member
+from ..utils.path import ensure_path
 
 PREFIX = 'eccode'
 EXPASY_DATABASE_URL = 'ftp://ftp.expasy.org/databases/enzyme/enzyme.dat'

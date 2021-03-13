@@ -8,8 +8,8 @@ from typing import Iterable
 import bioversions
 import pystow
 
-from pyobo.path_utils import ensure_df
 from pyobo.struct import Obo, Reference, Term, TypeDef
+from pyobo.utils.path import ensure_df
 
 logger = logging.getLogger(__name__)
 PREFIX = 'rhea'

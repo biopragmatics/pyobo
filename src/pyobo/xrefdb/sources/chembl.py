@@ -8,7 +8,7 @@ import bioversions
 import pandas as pd
 
 from pyobo.constants import PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
-from pyobo.path_utils import ensure_df
+from pyobo.utils.path import ensure_df
 
 CHEMBL_COMPOUND_PREFIX = 'chembl.compound'
 CHEMBL_TARGET_PREFIX = 'chembl.target'

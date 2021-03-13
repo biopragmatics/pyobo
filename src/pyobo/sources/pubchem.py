@@ -9,9 +9,9 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..api import get_name_id_mapping
-from ..path_utils import ensure_df, ensure_path
 from ..struct import Obo, Reference, Synonym, Term
 from ..utils.iter import iterate_gzips_together
+from ..utils.path import ensure_df, ensure_path
 
 logger = logging.getLogger(__name__)
 

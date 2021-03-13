@@ -7,8 +7,8 @@ from typing import Iterable
 import pandas as pd
 from tqdm import tqdm
 
-from ..path_utils import ensure_df
 from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
+from ..utils.path import ensure_df
 
 PREFIX = 'rgd'
 

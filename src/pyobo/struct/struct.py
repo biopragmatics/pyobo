@@ -26,10 +26,10 @@ from .typedef import (
 from .utils import comma_separate
 from ..constants import RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
 from ..identifier_utils import MissingPrefix, normalize_curie, normalize_prefix
-from ..path_utils import get_prefix_obo_path, prefix_directory_join
 from ..registries import get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist
 from ..utils.cache import get_gzipped_graph
 from ..utils.io import multidict, write_map_tsv, write_multimap_tsv
+from ..utils.path import get_prefix_obo_path, prefix_directory_join
 
 __all__ = [
     'Synonym',

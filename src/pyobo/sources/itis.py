@@ -9,9 +9,9 @@ import zipfile
 from contextlib import closing
 from typing import Iterable
 
-from pyobo.path_utils import ensure_path, get_prefix_directory, prefix_directory_join
 from pyobo.struct import Obo, Reference, Term
 from pyobo.utils.io import multidict
+from pyobo.utils.path import ensure_path, get_prefix_directory, prefix_directory_join
 
 PREFIX = 'itis'
 URL = 'https://www.itis.gov/downloads/itisSqlite.zip'

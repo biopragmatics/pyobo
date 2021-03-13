@@ -11,9 +11,9 @@ from tqdm import tqdm
 
 from ..api import get_name_id_mapping
 from ..constants import SPECIES_REMAPPING
-from ..path_utils import ensure_df
 from ..struct import Obo, Reference, Term, from_species, has_part
 from ..utils.io import multidict
+from ..utils.path import ensure_df
 
 logger = logging.getLogger(__name__)
 

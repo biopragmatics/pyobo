@@ -10,7 +10,7 @@ import pandas as pd
 from bioregistry import normalize_prefix
 
 from ...constants import PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
-from ...path_utils import ensure_df
+from ...utils.path import ensure_df
 
 __all__ = [
     'get_famplex_xrefs_df',

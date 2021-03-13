@@ -16,8 +16,8 @@ import bioversions
 import click
 from more_click import verbose_option
 
-from pyobo.path_utils import ensure_path, get_prefix_directory
 from pyobo.struct import Obo, Reference, Term
+from pyobo.utils.path import ensure_path, get_prefix_directory
 
 logger = logging.getLogger(__name__)
 

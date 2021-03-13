@@ -9,8 +9,8 @@ import click
 import pandas as pd
 from more_click import verbose_option
 
-from ..path_utils import ensure_df
 from ..struct import Obo, Reference, Synonym, Term, from_species
+from ..utils.path import ensure_df
 
 PREFIX = 'cgnc'
 URL = "http://birdgenenames.org/cgnc/downloads.jsp?file=standard"

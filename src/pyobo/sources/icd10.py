@@ -12,9 +12,9 @@ import click
 from more_click import verbose_option
 from tqdm import tqdm
 
-from ..path_utils import get_prefix_directory
 from ..sources.icd_utils import ICD10_TOP_LEVEL_URL, get_child_identifiers, get_icd, visiter
 from ..struct import Obo, Reference, Synonym, Term
+from ..utils.path import get_prefix_directory
 
 logger = logging.getLogger(__name__)
 

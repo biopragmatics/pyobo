@@ -11,9 +11,9 @@ from more_click import verbose_option
 from pystow.utils import get_commit
 
 from pyobo import get_name_id_mapping
-from pyobo.path_utils import ensure_df
 from pyobo.struct import Obo, Reference, Term
 from pyobo.struct.typedef import has_member, has_part, is_a, part_of
+from pyobo.utils.path import ensure_df
 
 logger = logging.getLogger(__name__)
 

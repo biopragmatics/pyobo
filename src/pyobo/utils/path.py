@@ -14,7 +14,7 @@ import pandas as pd
 import requests
 from pystow.utils import mkdir, name_from_url
 
-from .constants import RAW_MODULE
+from pyobo.constants import RAW_MODULE
 
 __all__ = [
     'get_prefix_directory',

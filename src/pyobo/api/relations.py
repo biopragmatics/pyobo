@@ -15,9 +15,9 @@ from ..constants import (
 )
 from ..getters import get
 from ..identifier_utils import wrap_norm_prefix
-from ..path_utils import prefix_cache_join
 from ..struct import Reference, RelationHint, TypeDef, get_reference_tuple
 from ..utils.cache import cached_df
+from ..utils.path import prefix_cache_join
 
 # TODO get_relation, get_relations
 

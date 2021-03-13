@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Mapping, Optional
 
 from pyobo import Reference, Term, TypeDef, ensure_path
-from pyobo.path_utils import ensure_df
+from pyobo.utils.path import ensure_df
 
 KEGG_GENES_PREFIX = 'kegg.genes'
 KEGG_GENOME_PREFIX = 'kegg.genome'

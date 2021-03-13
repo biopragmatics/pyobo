@@ -10,9 +10,9 @@ import click
 from more_click import verbose_option
 
 from .gmt_utils import parse_gmt_file
-from ..path_utils import ensure_path
 from ..struct import Obo, Reference, Term
 from ..struct.typedef import has_part
+from ..utils.path import ensure_path
 
 logger = logging.getLogger(__name__)
 

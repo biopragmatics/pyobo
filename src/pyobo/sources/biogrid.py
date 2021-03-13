@@ -9,8 +9,8 @@ import pandas as pd
 
 from pyobo import get_name_id_mapping
 from pyobo.constants import version_getter
-from pyobo.path_utils import ensure_df, prefix_directory_join
 from pyobo.utils.cache import cached_mapping
+from pyobo.utils.path import ensure_df, prefix_directory_join
 
 PREFIX = 'biogrid'
 BASE_URL = 'https://downloads.thebiogrid.org/Download/BioGRID/Release-Archive'

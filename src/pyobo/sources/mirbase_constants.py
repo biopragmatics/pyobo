@@ -4,7 +4,7 @@
 
 import pandas as pd
 
-from ..path_utils import ensure_df
+from pyobo.utils.path import ensure_df
 
 PREFIX = 'mirbase'
 

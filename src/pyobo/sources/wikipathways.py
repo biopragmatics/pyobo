@@ -9,9 +9,9 @@ import bioversions
 
 from .gmt_utils import parse_wikipathways_gmt
 from ..constants import SPECIES_REMAPPING
-from ..path_utils import ensure_path
 from ..struct import Obo, Reference, Term, from_species
 from ..struct.typedef import has_part
+from ..utils.path import ensure_path
 
 logger = logging.getLogger(__name__)
 
