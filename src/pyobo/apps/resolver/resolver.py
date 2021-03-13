@@ -10,6 +10,7 @@ import logging
 import os
 from collections import Counter, defaultdict
 from functools import lru_cache
+from pathlib import Path
 from typing import Any, List, Mapping, Optional, Union
 
 import pandas as pd
@@ -407,11 +408,11 @@ def _get_lookup_from_df(df: pd.DataFrame) -> Mapping[str, Mapping[str, str]]:
     return dict(lookup)
 
 
-def _get_lookup_from_path(path: str) -> Mapping[str, Mapping[str, str]]:
+def _get_lookup_from_path(path: Union[str, Path]) -> Mapping[str, Mapping[str, str]]:
     lookup = defaultdict(dict)
-    with gzip.open(path, 'rt') as path:
-        _ = next(path)
-        for line in tqdm(path, desc='loading mappings', unit_scale=True):
+    with gzip.open(path, 'rt') as file:
+        _ = next(file)
+        for line in tqdm(file, desc='loading mappings', unit_scale=True):
             prefix, identifier, name = line.strip().split('\t')
             lookup[prefix][identifier] = name
     return dict(lookup)
