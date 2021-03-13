@@ -16,9 +16,9 @@ import bioversions
 import pystow
 from tqdm import tqdm
 
-from ..cache_utils import cached_pickle
 from ..path_utils import prefix_directory_join
 from ..struct import Obo, Reference, Synonym, Term, TypeDef
+from ..utils.cache import cached_pickle
 
 logger = logging.getLogger(__name__)
 

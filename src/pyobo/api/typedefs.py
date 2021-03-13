@@ -7,10 +7,10 @@ from functools import lru_cache
 from typing import Mapping
 
 from .utils import get_version
-from ..cache_utils import cached_mapping
 from ..getters import get
 from ..identifier_utils import wrap_norm_prefix
 from ..path_utils import prefix_cache_join
+from ..utils.cache import cached_mapping
 
 __all__ = [
     'get_typedef_id_name_mapping',

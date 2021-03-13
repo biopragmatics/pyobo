@@ -9,10 +9,10 @@ from typing import List, Mapping, Optional
 from tqdm import tqdm
 
 from .utils import get_version
-from ..cache_utils import cached_multidict
 from ..getters import get
 from ..identifier_utils import normalize_curie, wrap_norm_prefix
 from ..path_utils import prefix_cache_join
+from ..utils.cache import cached_multidict
 
 __all__ = [
     'get_id_to_alts',

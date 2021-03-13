@@ -10,11 +10,11 @@ from typing import Mapping, Optional
 import pandas as pd
 
 from .utils import get_version
-from ..cache_utils import cached_df, cached_mapping
 from ..constants import SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
 from ..getters import get
 from ..identifier_utils import wrap_norm_prefix
 from ..path_utils import prefix_cache_join
+from ..utils.cache import cached_df, cached_mapping
 
 __all__ = [
     'get_xrefs_df',

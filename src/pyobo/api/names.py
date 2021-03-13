@@ -8,10 +8,10 @@ from typing import Callable, List, Mapping, Optional, TypeVar
 
 from .alts import get_primary_identifier
 from .utils import get_version
-from ..cache_utils import cached_mapping, cached_multidict, reverse_mapping
 from ..getters import NoOboFoundry, get
 from ..identifier_utils import normalize_curie, wrap_norm_prefix
 from ..path_utils import prefix_cache_join
+from ..utils.cache import cached_mapping, cached_multidict, reverse_mapping
 
 __all__ = [
     'get_name',

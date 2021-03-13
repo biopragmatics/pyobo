@@ -9,7 +9,6 @@ from typing import List, Mapping
 import pandas as pd
 
 from .utils import get_version
-from ..cache_utils import cached_df
 from ..constants import (
     RELATION_COLUMNS, RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX, TARGET_ID,
     TARGET_PREFIX,
@@ -18,6 +17,7 @@ from ..getters import get
 from ..identifier_utils import wrap_norm_prefix
 from ..path_utils import prefix_cache_join
 from ..struct import Reference, RelationHint, TypeDef, get_reference_tuple
+from ..utils.cache import cached_df
 
 # TODO get_relation, get_relations
 

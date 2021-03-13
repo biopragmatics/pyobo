@@ -9,9 +9,9 @@ from xml.etree.ElementTree import Element
 
 from tqdm import tqdm
 
-from ..cache_utils import cached_json, cached_mapping
 from ..path_utils import ensure_path, prefix_directory_join
 from ..struct import Obo, Reference, Synonym, Term
+from ..utils.cache import cached_json, cached_mapping
 from ..utils.io import parse_xml_gz
 
 logger = logging.getLogger(__name__)

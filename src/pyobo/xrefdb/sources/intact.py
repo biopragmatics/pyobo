@@ -7,9 +7,9 @@ from typing import Mapping
 import pandas as pd
 
 from pyobo.api.utils import get_version
-from pyobo.cache_utils import cached_mapping
 from pyobo.constants import PROVENANCE, SOURCE_PREFIX, TARGET_PREFIX, XREF_COLUMNS
 from pyobo.path_utils import prefix_cache_join
+from pyobo.utils.cache import cached_mapping
 
 __all__ = [
     'COMPLEXPORTAL_MAPPINGS',
