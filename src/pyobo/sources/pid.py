@@ -10,9 +10,9 @@ import pandas as pd
 from protmapper.uniprot_client import get_gene_name, get_hgnc_id
 
 from ..api import get_id_name_mapping
-from ..ndex_utils import CX, ensure_ndex_network_set, iterate_aspect
 from ..struct import Obo, Reference, Term
 from ..struct.typedef import has_part
+from ..utils.ndex_utils import CX, ensure_ndex_network_set, iterate_aspect
 
 logger = logging.getLogger(__name__)
 

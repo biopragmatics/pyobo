@@ -9,7 +9,7 @@ from typing import Any, Iterable, List, Mapping, Tuple
 import requests
 from tqdm import tqdm
 
-from .utils.path import prefix_directory_join
+from .path import prefix_directory_join
 
 __all__ = [
     'CX',
