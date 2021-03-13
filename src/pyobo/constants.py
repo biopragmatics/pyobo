@@ -61,9 +61,13 @@ ALTS_FILE = 'alts.tsv.gz'
 
 def get_sqlalchemy_uri() -> str:
     """Get the SQLAlchemy URI."""
+    rv = pystow.get_config('pyobo', 'sqlalchemy_uri')
+    if rv is not None:
+        return rv
+
     default_db_path = PYOBO_MODULE.join('pyobo.db')
     default_value = f'sqlite:///{default_db_path.as_posix()}'
-    return pystow.get_config('pyobo', 'sqlalchemy_uri', fallback=default_value)
+    return default_value
 
 
 def version_getter(name: str) -> Callable[[], str]:
