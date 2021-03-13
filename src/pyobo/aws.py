@@ -24,7 +24,6 @@ __all__ = [
     'upload_artifacts',
     'upload_artifacts_for_prefix',
     'list_artifacts',
-    'aws',
 ]
 
 logger = logging.getLogger(__name__)
