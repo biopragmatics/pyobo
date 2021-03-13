@@ -7,7 +7,7 @@ from typing import Iterable, List, Tuple, TypeVar
 
 from more_itertools import peekable
 
-from .io_utils import split_tab_pair
+from .utils.io import split_tab_pair
 
 X = TypeVar('X')
 Z = TypeVar('Z')

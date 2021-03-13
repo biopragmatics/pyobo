@@ -14,7 +14,7 @@ from typing import Any, Callable, Dict, Iterable, List, Mapping, Union
 import networkx as nx
 import pandas as pd
 
-from .io_utils import open_map_tsv, open_multimap_tsv, write_map_tsv, write_multimap_tsv
+from .utils.io import open_map_tsv, open_multimap_tsv, write_map_tsv, write_multimap_tsv
 
 logger = logging.getLogger(__name__)
 

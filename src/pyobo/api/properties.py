@@ -12,8 +12,8 @@ from .utils import get_version
 from ..cache_utils import cached_df, cached_mapping, cached_multidict
 from ..getters import get
 from ..identifier_utils import wrap_norm_prefix
-from ..io_utils import multidict
 from ..path_utils import prefix_cache_join
+from ..utils.io import multidict
 
 __all__ = [
     'get_properties_df',

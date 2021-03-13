@@ -17,8 +17,8 @@ from .api import (
     ensure_list_genome, from_kegg_species,
 )
 from .genome import iter_kegg_genomes
-from ...io_utils import open_map_tsv
 from ...struct import Obo, Reference, Term
+from ...utils.io import open_map_tsv
 
 logger = logging.getLogger(__name__)
 

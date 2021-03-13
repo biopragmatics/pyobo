@@ -8,7 +8,7 @@ import unittest
 from tempfile import TemporaryDirectory
 
 from pyobo.cache_utils import cached_mapping, cached_multidict
-from pyobo.io_utils import open_map_tsv, open_multimap_tsv
+from pyobo.utils.io import open_map_tsv, open_multimap_tsv
 
 sleep_time = 3
 

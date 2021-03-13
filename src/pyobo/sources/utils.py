@@ -4,7 +4,7 @@
 
 from typing import Mapping, Set, Tuple
 
-from ..io_utils import multisetdict
+from ..utils.io import multisetdict
 
 __all__ = [
     'get_go_mapping',

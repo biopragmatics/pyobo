@@ -10,7 +10,7 @@ from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, Union
 
 from .api import names
 from .identifier_utils import normalize_dashes, normalize_prefix
-from .io_utils import multisetdict
+from .utils.io import multisetdict
 
 __all__ = [
     'ground',

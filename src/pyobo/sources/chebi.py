@@ -5,8 +5,8 @@
 from typing import Mapping, Set, Tuple
 
 from ..api import get_filtered_properties_mapping, get_filtered_relations_df
-from ..io_utils import multisetdict
 from ..struct import Reference, TypeDef
+from ..utils.io import multisetdict
 
 __all__ = [
     'get_chebi_smiles_id_mapping',

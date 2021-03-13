@@ -17,8 +17,8 @@ from tqdm import tqdm
 
 from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term, normalize_prefix
 from pyobo.constants import RAW_MODULE
-from pyobo.io_utils import open_map_tsv
 from pyobo.path_utils import ensure_path
+from pyobo.utils.io import open_map_tsv
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 SYNONYM_TYPE_PATH = os.path.join(HERE, 'synonym_types.tsv')

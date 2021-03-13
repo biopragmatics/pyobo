@@ -16,7 +16,7 @@ from wtforms.fields import StringField, SubmitField
 from wtforms.validators import DataRequired
 
 from pyobo import get_id_name_mapping, get_id_synonyms_mapping
-from pyobo.io_utils import multidict
+from pyobo.utils.io import multidict
 
 
 class Form(FlaskForm):
