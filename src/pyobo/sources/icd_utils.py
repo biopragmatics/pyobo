@@ -13,15 +13,15 @@ import json
 import os
 from typing import Any, Callable, Iterable, List, Mapping, Set
 
+import pystow
 import requests
 from cachier import cachier
 from tqdm import tqdm
 
-from ..config import get_config
 from ..struct import Term
 
-ICD_CLIENT_ID = get_config('icd_client_id')
-ICD_CLIENT_SECRET = get_config('icd_client_secret')
+ICD_CLIENT_ID = pystow.get_config('pyobo', 'icd_client_id')
+ICD_CLIENT_SECRET = pystow.get_config('pyobo', 'icd_client_secret')
 
 TOKEN_URL = 'https://icdaccessmanagement.who.int/connect/token'  # noqa:S105
 

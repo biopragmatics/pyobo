@@ -10,7 +10,6 @@ from .api import (  # noqa: F401
     get_primary_identifier, get_properties, get_properties_df, get_property, get_relations_df, get_species,
     get_subhierarchy, get_synonyms, get_typedef_id_name_mapping, get_xref, get_xrefs_df,
 )
-from .config import get_config  # noqa: F401
 from .getters import get  # noqa: F401
 from .identifier_utils import normalize_curie, normalize_prefix  # noqa: F401
 from .normalizer import OboNormalizer, ground  # noqa: F401

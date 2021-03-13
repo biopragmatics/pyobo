@@ -13,10 +13,10 @@ from typing import Any, Iterable, Mapping, Optional
 from xml.etree import ElementTree
 
 import bioversions
+import pystow
 from tqdm import tqdm
 
 from ..cache_utils import cached_pickle
-from ..config import get_config
 from ..path_utils import prefix_directory_join
 from ..struct import Obo, Reference, Synonym, Term, TypeDef
 
@@ -138,8 +138,8 @@ def get_xml_root(version: Optional[str] = None) -> ElementTree.Element:
     from drugbank_downloader import parse_drugbank
     return parse_drugbank(
         version=version,
-        username=get_config('drugbank_username'),
-        password=get_config('drugbank_password'),
+        username=pystow.get_config('pyobo', 'drugbank_username'),
+        password=pystow.get_config('pyobo', 'drugbank_password'),
     )
 
 

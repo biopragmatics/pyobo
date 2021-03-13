@@ -2,9 +2,7 @@
 
 """Constants for PyOBO."""
 
-import configparser
 import logging
-import os
 from functools import partial
 from typing import Callable
 
@@ -21,13 +19,6 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-
-if 'PYOBO_CONFIG' in os.environ:
-    PYOBO_CONFIG = os.environ['PYOBO_CONFIG']
-else:
-    _config_dir = os.path.join(os.path.expanduser('~'), '.config')
-    os.makedirs(_config_dir, exist_ok=True)
-    PYOBO_CONFIG = os.path.join(_config_dir, 'pyobo.ini')
 
 PYOBO_MODULE = pystow.Module.from_key('pyobo')
 PYOBO_HOME = PYOBO_MODULE.base
@@ -68,21 +59,9 @@ REMOTE_ALT_DATA_URL = 'https://zenodo.org/record/4021476/files/alts.tsv.gz'
 
 def get_sqlalchemy_uri() -> str:
     """Get the SQLAlchemy URI."""
-    if os.path.exists(PYOBO_CONFIG):
-        cfp = configparser.ConfigParser()
-        logger.debug('reading configuration from %s', PYOBO_CONFIG)
-        with open(PYOBO_CONFIG) as file:
-            cfp.read_file(file)
-        rv = cfp.get('pyobo', 'SQLALCHEMY_URI')
-        if rv:
-            return rv
-
-    rv = os.environ.get('PYOBO_SQLALCHEMY_URI')
-    if rv is not None:
-        return rv
-
     default_db_path = (PYOBO_HOME / 'pyobo.db').as_posix()
-    return f'sqlite:///{default_db_path}'
+    default_value = f'sqlite:///{default_db_path}'
+    return pystow.get_config('pyobo', 'sqlalchemy_uri', fallback=default_value)
 
 
 def version_getter(name: str) -> Callable[[], str]:
