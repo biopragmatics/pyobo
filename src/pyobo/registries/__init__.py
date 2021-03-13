@@ -7,4 +7,3 @@ from .metaregistry import (  # noqa: F401
     get_remappings_prefix, get_wikidata_property_types, get_xrefs_blacklist, get_xrefs_prefix_blacklist,
     get_xrefs_suffix_blacklist, iter_cached_obo, not_available_as_obo,
 )
-from .registries import Resource  # noqa: F401

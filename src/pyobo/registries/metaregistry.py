@@ -7,8 +7,10 @@ import json
 import os
 from functools import lru_cache
 from typing import List, Mapping, Set, Tuple
+from urllib.error import HTTPError
 
 import bioregistry
+from obonet import read_obo
 
 from ..constants import GLOBAL_SKIP, RAW_DIRECTORY
 
@@ -137,3 +139,32 @@ def iter_cached_obo() -> List[Tuple[str, str]]:
             if x.endswith('.obo'):
                 p = os.path.join(d, x)
                 yield prefix, p
+
+
+def _sample_graph(prefix: str):
+    url = f'http://purl.obolibrary.org/obo/{prefix}.obo'
+    try:
+        graph = read_obo(url)
+    except HTTPError:
+        print(f'{prefix} URL invalid {url}. See: http://www.obofoundry.org/ontology/{prefix}')
+        return False
+    except ValueError:
+        print(f'Issue parsing {url}. See: http://www.obofoundry.org/ontology/{prefix}')
+        return False
+
+    nodes = (
+        node
+        for node in graph
+        if node.lower().startswith(prefix)
+    )
+    nodes = [
+        node
+        for node, _ in zip(nodes, range(10))
+    ]
+    if not nodes:
+        print(f'No own terms in {prefix}')
+    for node in nodes:
+        print('  example', node)
+
+    if all(len(nodes[0]) == len(node) for node in nodes[1:]):
+        return len(nodes[0]) - 1 - len(prefix)
