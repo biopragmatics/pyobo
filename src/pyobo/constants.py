@@ -37,8 +37,6 @@ GLOBAL_SKIP = {
     'adw',  # deprecated
 }
 
-#: URL for the xref data that's pre-cached
-INSPECTOR_JAVERT_URL = 'https://zenodo.org/record/4021477/files/xrefs.tsv.gz'
 SOURCE_PREFIX = 'source_ns'
 SOURCE_ID = 'source_id'
 RELATION_PREFIX = 'relation_ns'
@@ -49,12 +47,17 @@ PROVENANCE = 'source'
 RELATION_COLUMNS = [SOURCE_PREFIX, SOURCE_ID, RELATION_PREFIX, RELATION_ID, TARGET_PREFIX, TARGET_ID]
 XREF_COLUMNS = [SOURCE_PREFIX, SOURCE_ID, TARGET_PREFIX, TARGET_ID, PROVENANCE]
 
-#: URL for the nomenclature data that's pre-cached
-OOH_NA_NA_URL = 'https://zenodo.org/record/4020486/files/names.tsv.gz'
+JAVERT_RECORD = '4021477'
+JAVERT_FILE = 'xrefs.tsv.gz'
 
-SYNONYMS_URL = 'https://zenodo.org/record/4021482/files/synonyms.tsv.gz'
+OOH_NA_NA_RECORD = '4020486'
+OOH_NA_NA_FILE = 'names.tsv.gz'
 
-REMOTE_ALT_DATA_URL = 'https://zenodo.org/record/4021476/files/alts.tsv.gz'
+SYNONYMS_RECORD = '4021482'
+SYNONYMS_FILE = 'synonyms.tsv.gz'
+
+ALTS_DATA_RECORD = '4021476'
+ALTS_FILE = 'alts.tsv.gz'
 
 
 def get_sqlalchemy_uri() -> str:

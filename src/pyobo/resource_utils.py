@@ -2,13 +2,17 @@
 
 """Resource utilities for PyOBO."""
 
-import os
-from typing import Optional
-from urllib.request import urlretrieve
+from functools import lru_cache
+from typing import Sequence
 
-import pandas as pd
+import click
+from more_click import verbose_option
+from zenodo_client import Zenodo
 
-from .constants import DATABASE_DIRECTORY, INSPECTOR_JAVERT_URL, OOH_NA_NA_URL, REMOTE_ALT_DATA_URL, SYNONYMS_URL
+from .constants import (
+    ALTS_DATA_RECORD, ALTS_FILE, JAVERT_FILE, JAVERT_RECORD, OOH_NA_NA_FILE, OOH_NA_NA_RECORD, SYNONYMS_FILE,
+    SYNONYMS_RECORD,
+)
 
 __all__ = [
     'ensure_inspector_javert',
@@ -18,37 +22,72 @@ __all__ = [
 ]
 
 
-def ensure_ooh_na_na(force: bool = False) -> str:
-    """Ensure that the Ooh Na Na Nomenclature Database is downloaded/built."""
-    return _ensure(url=OOH_NA_NA_URL, name='names.tsv.gz', force=force)
+@lru_cache(maxsize=1)
+def _get_zenodo() -> Zenodo:
+    """Get the cached Zenodo client."""
+    return Zenodo()
 
 
-def get_ooh_na_na(force: bool = False, chunksize: Optional[int] = None) -> pd.DataFrame:
-    """Get the Ooh Na Na database.
+def _get_parts(_concept_rec_id, _record_id, version) -> Sequence[str]:
+    """Get sequence to use in :func:`pystow.ensure`.
 
-    If chunksize is given, will read in chunks and return an iterator instead of a dataframe.
+    .. note:: Corresponds to :data:`pyobo.constants.DATABASE_MODULE`.
     """
-    path = ensure_ooh_na_na(force=force)
-    return pd.read_csv(path, sep='\t', chunksize=chunksize, dtype=str)
+    return ['pyobo', 'database', version]
+
+
+def _ensure(record_id, path, force: bool = False) -> str:
+    rv = _get_zenodo().download_latest(record_id=record_id, path=path, parts=_get_parts, force=force)
+    return rv.as_posix()
+
+
+def ensure_ooh_na_na(force: bool = False) -> str:
+    """Ensure that the Ooh Na Na Nomenclature Database is downloaded/built.
+
+    .. seealso:: :data:`pyobo.constants.OOH_NA_NA_RECORD`
+    """
+    return _ensure(record_id=OOH_NA_NA_RECORD, path=OOH_NA_NA_FILE, force=force)
 
 
 def ensure_inspector_javert(force: bool = False) -> str:
-    """Ensure that the Inspector Javert's Xref Database is downloaded/built."""
-    return _ensure(url=INSPECTOR_JAVERT_URL, name='xrefs.tsv.gz', force=force)
+    """Ensure that the Inspector Javert's Xref Database is downloaded/built.
+
+    .. seealso:: :data:`pyobo.constants.JAVERT_RECORD`
+    """
+    return _ensure(record_id=JAVERT_RECORD, path=JAVERT_FILE, force=force)
 
 
 def ensure_synonyms(force: bool = False) -> str:
-    """Ensure that the Synonym Database is downloaded/built."""
-    return _ensure(url=SYNONYMS_URL, name='synonyms.tsv.gz', force=force)
+    """Ensure that the Synonym Database is downloaded/built.
+
+    .. seealso:: :data:`pyobo.constants.SYNONYMS_RECORD`
+    """
+    return _ensure(record_id=SYNONYMS_RECORD, path=SYNONYMS_FILE, force=force)
 
 
 def ensure_alts(force: bool = False) -> str:
-    """Ensure that the alt data is downloaded/built."""
-    return _ensure(url=REMOTE_ALT_DATA_URL, name='alts.tsv.gz', force=force)
+    """Ensure that the alt data is downloaded/built.
+
+    .. seealso:: :data:`pyobo.constants.ALTS_DATA_RECORD`
+    """
+    return _ensure(record_id=ALTS_DATA_RECORD, path=ALTS_FILE, force=force)
 
 
-def _ensure(url: str, name: str, force: bool = False) -> str:
-    path = os.path.join(DATABASE_DIRECTORY, name)
-    if not os.path.exists(path) or force:
-        urlretrieve(url, path)
-    return path
+@click.command()
+@verbose_option
+@click.option('-f', '--force', is_flag=True)
+def main(force: bool):
+    """Ensure resources are available."""
+    for f in [
+        ensure_ooh_na_na,
+        ensure_synonyms,
+        ensure_alts,
+        ensure_inspector_javert,
+    ]:
+        click.secho(f.__doc__.splitlines()[0], fg='green', bold=True)
+        path = f(force=force)
+        click.echo(path)
+
+
+if __name__ == '__main__':
+    main()
