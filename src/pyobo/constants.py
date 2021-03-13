@@ -35,12 +35,6 @@ RAW_MODULE = PYOBO_MODULE.submodule('raw')
 RAW_DIRECTORY = RAW_MODULE.base
 DATABASE_DIRECTORY = PYOBO_MODULE.get('database')
 
-
-def get_raw(*parts, **kwargs):
-    # TODO replace with module!!
-    return pystow.get('pyobo', 'raw', *parts, **kwargs)
-
-
 SPECIES_REMAPPING = {
     "Canis familiaris": "Canis lupus familiaris",
 }
