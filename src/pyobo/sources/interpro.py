@@ -100,7 +100,7 @@ def _parse_tree_helper(lines: Iterable[str]):
 
     for line in tqdm(lines, desc='parsing InterPro tree'):
         depth = _count_front(line)
-        parent_id, _, _ = line[depth:].split('::')
+        parent_id, _ = line[depth:].split('::')
 
         if depth == 0:
             stack.clear()

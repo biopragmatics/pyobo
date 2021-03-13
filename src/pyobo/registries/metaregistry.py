@@ -10,6 +10,8 @@ from typing import List, Mapping, Set, Tuple
 
 import bioregistry
 
+from ..constants import GLOBAL_SKIP, RAW_DIRECTORY
+
 HERE = os.path.abspath(os.path.dirname(__file__))
 CURATED_REGISTRY_PATH = os.path.join(HERE, 'metaregistry.json')
 
@@ -121,3 +123,17 @@ def _get_map(registry: str) -> Mapping[str, str]:
         for prefix, entry in bioregistry.read_bioregistry().items()
         if registry in entry
     }
+
+
+def iter_cached_obo() -> List[Tuple[str, str]]:
+    """Iterate over cached OBO paths."""
+    for prefix in os.listdir(RAW_DIRECTORY):
+        if prefix in GLOBAL_SKIP or not_available_as_obo(prefix) or bioregistry.is_deprecated(prefix):
+            continue
+        d = os.path.join(RAW_DIRECTORY, prefix)
+        if not os.path.isdir(d):
+            continue
+        for x in os.listdir(d):
+            if x.endswith('.obo'):
+                p = os.path.join(d, x)
+                yield prefix, p

@@ -2,15 +2,20 @@
 
 """Converter for CGNC."""
 
+import logging
 from typing import Iterable
 
+import click
 import pandas as pd
+from more_click import verbose_option
 
 from ..path_utils import ensure_df
 from ..struct import Obo, Reference, Synonym, Term, from_species
 
 PREFIX = 'cgnc'
 URL = "http://birdgenenames.org/cgnc/downloads.jsp?file=standard"
+
+logger = logging.getLogger(__name__)
 
 
 def get_obo() -> Obo:
@@ -27,8 +32,17 @@ def get_obo() -> Obo:
 def get_terms() -> Iterable[Term]:
     """Get CGNC terms."""
     df = ensure_df(PREFIX, url=URL, path=f'{PREFIX}.tsv')
-
     for cgnc_id, entrez_id, ensembl_id, symbol, name, synonyms, _, _ in df.values:
+        if pd.isna(cgnc_id):
+            logger.warning('CGNC ID is none')
+            continue
+
+        try:
+            int(cgnc_id)
+        except ValueError:
+            logger.warning('CGNC ID is not int-like: %s', cgnc_id)
+            continue
+
         xrefs = []
         if entrez_id and pd.notna(entrez_id):
             xrefs.append(Reference(prefix='ncbigene', identifier=entrez_id))
@@ -57,5 +71,12 @@ def get_terms() -> Iterable[Term]:
         yield term
 
 
+@click.command()
+@verbose_option
+def _main():
+    obo = get_obo()
+    obo.write_default(force=True, write_obonet=True, write_obo=True)
+
+
 if __name__ == '__main__':
-    get_obo().write_default()
+    _main()

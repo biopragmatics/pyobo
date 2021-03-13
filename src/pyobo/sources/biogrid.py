@@ -7,9 +7,9 @@ from typing import Mapping
 import bioversions
 import pandas as pd
 
+from pyobo import get_name_id_mapping
 from pyobo.cache_utils import cached_mapping
 from pyobo.constants import version_getter
-from pyobo.extract import get_name_id_mapping
 from pyobo.path_utils import ensure_df, prefix_directory_join
 
 PREFIX = 'biogrid'

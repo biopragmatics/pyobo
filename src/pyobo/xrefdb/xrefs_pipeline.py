@@ -18,8 +18,8 @@ from tqdm import tqdm
 
 from .obo_xrefs import iterate_obo_xrefs
 from .sources import iter_xref_plugins
+from ..api import get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts
 from ..constants import DATABASE_DIRECTORY, PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
-from ..extract import get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts
 from ..getters import SKIP, iter_helper
 from ..path_utils import ensure_path
 from ..sources import ncbigene, pubchem
@@ -88,6 +88,7 @@ def get_xref_df(
     rebuild: bool = False,
     use_tqdm: bool = True,
     skip_below=None,
+    strict: bool = True,
 ) -> pd.DataFrame:
     """Get the ultimate xref database."""
     if not rebuild and os.path.exists(MAPPINGS_DB_TSV_CACHE):
@@ -97,7 +98,7 @@ def get_xref_df(
         logger.info('loaded in %.2fs', time.time() - t)
         return rv
 
-    df = pd.concat(_iterate_xref_dfs(force=force, use_tqdm=use_tqdm, skip_below=skip_below))
+    df = pd.concat(_iterate_xref_dfs(force=force, use_tqdm=use_tqdm, skip_below=skip_below, strict=strict))
 
     logger.info('sorting xrefs')
     sort_start = time.time()
@@ -146,8 +147,9 @@ def _iterate_xref_dfs(
     force: bool = False,
     use_tqdm: bool = True,
     skip_below: Optional[str] = None,
+    strict: bool = True,
 ) -> Iterable[pd.DataFrame]:
-    yield from iterate_obo_xrefs(use_tqdm=use_tqdm, force=force, skip_below=skip_below)
+    yield from iterate_obo_xrefs(use_tqdm=use_tqdm, force=force, skip_below=skip_below, strict=strict)
     yield from iter_xref_plugins(skip_below=skip_below)
 
 

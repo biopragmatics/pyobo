@@ -15,10 +15,11 @@ from tabulate import tabulate
 from .aws import main as aws_main
 from .database import main as database_main
 from .lookup import lookup
+from ..api import get_name_by_curie
 from ..apps.cli import main as apps_main
 from ..constants import RAW_DIRECTORY
-from ..extract import get_name_by_curie, iter_cached_obo
 from ..identifier_utils import normalize_curie, normalize_prefix
+from ..registries import iter_cached_obo
 from ..sources import has_nomenclature_plugin, iter_nomenclature_plugins
 from ..xrefdb.canonicalizer import Canonicalizer, get_priority_curie, remap_file_stream
 from ..xrefdb.priority import DEFAULT_PRIORITY_LIST

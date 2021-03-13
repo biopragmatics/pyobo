@@ -2,14 +2,13 @@
 
 """CLI for PyOBO Database Generation."""
 
-import datetime
 import os
 
 import click
 from more_click import verbose_option
 from zenodo_client import update_zenodo
 
-from ..constants import DATABASE_DIRECTORY
+from .utils import directory_option, force_option, no_strict_option, zenodo_option
 from ..getters import db_output_helper
 from ..xrefdb.xrefs_pipeline import (
     _iter_alts, _iter_ooh_na_na, _iter_synonyms, get_xref_df, summarize_xref_df,
@@ -26,30 +25,17 @@ def main():
     """Build the PyOBO Database."""
 
 
-def _get_default_directory():
-    rv = DATABASE_DIRECTORY / datetime.datetime.today().strftime('%Y-%m-%d')
-    rv.mkdir(exist_ok=True, parents=True)
-    return rv
-
-
-directory_option = click.option(
-    '--directory',
-    type=click.Path(dir_okay=True, file_okay=False, exists=True),
-    default=_get_default_directory,
-    help=f'Build location. Defaults to {DATABASE_DIRECTORY}/<today>',
-)
-zenodo_option = click.option('--zenodo', is_flag=True)
-
-
 @main.command()
 @verbose_option
 @directory_option
 @zenodo_option
+@force_option
+@no_strict_option
 @click.pass_context
-def build(ctx: click.Context, directory: str, zenodo: bool):
+def build(ctx: click.Context, directory: str, zenodo: bool, no_strict: bool, force: bool):
     """Build all databases."""
     click.secho('Alternate Identifiers', fg='cyan', bold=True)
-    ctx.invoke(alts, directory=directory, zenodo=zenodo)
+    ctx.invoke(alts, directory=directory, zenodo=zenodo, no_strict=no_strict, force=force)  # only need to force once
     click.secho('Synonyms', fg='cyan', bold=True)
     ctx.invoke(synonyms, directory=directory, zenodo=zenodo)
     click.secho('Xrefs', fg='cyan', bold=True)
@@ -64,14 +50,16 @@ def build(ctx: click.Context, directory: str, zenodo: bool):
 @verbose_option
 @directory_option
 @zenodo_option
-@click.option('--no-strict', is_flag=True)
-def names(directory: str, zenodo: bool, no_strict: bool):
+@force_option
+@no_strict_option
+def names(directory: str, zenodo: bool, no_strict: bool, force: bool):
     """Make the prefix-identifier-name dump."""
     paths = db_output_helper(
         _iter_ooh_na_na,
         'names',
         ('prefix', 'identifier', 'name'),
         strict=not no_strict,
+        force=force,
         directory=directory,
     )
     if zenodo:
@@ -83,9 +71,16 @@ def names(directory: str, zenodo: bool, no_strict: bool):
 @verbose_option
 @directory_option
 @zenodo_option
-def alts(directory: str, zenodo: bool):
+@force_option
+@no_strict_option
+def alts(directory: str, zenodo: bool, force: bool, no_strict: bool):
     """Make the prefix-alt-id dump."""
-    paths = db_output_helper(_iter_alts, 'alts', ('prefix', 'identifier', 'alt'), directory=directory)
+    paths = db_output_helper(
+        _iter_alts, 'alts', ('prefix', 'identifier', 'alt'),
+        directory=directory,
+        force=force,
+        strict=not no_strict,
+    )
     if zenodo:
         # see https://zenodo.org/record/4021476
         update_zenodo('4021476', paths)
@@ -95,9 +90,16 @@ def alts(directory: str, zenodo: bool):
 @verbose_option
 @directory_option
 @zenodo_option
-def synonyms(directory: str, zenodo: bool):
+@force_option
+@no_strict_option
+def synonyms(directory: str, zenodo: bool, force: bool, no_strict: bool):
     """Make the prefix-identifier-synonym dump."""
-    paths = db_output_helper(_iter_synonyms, 'synonyms', ('prefix', 'identifier', 'synonym'), directory=directory)
+    paths = db_output_helper(
+        _iter_synonyms, 'synonyms', ('prefix', 'identifier', 'synonym'),
+        directory=directory,
+        force=force,
+        strict=not no_strict,
+    )
     if zenodo:
         # see https://zenodo.org/record/4021482
         update_zenodo('4021482', paths)
@@ -107,13 +109,12 @@ def synonyms(directory: str, zenodo: bool):
 @verbose_option
 @directory_option
 @zenodo_option
-def xrefs(directory: str, zenodo: bool):  # noqa: D202
+@force_option
+@no_strict_option
+def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool):  # noqa: D202
     """Make the prefix-identifier-xref dump."""
-    if directory is None:
-        directory = DATABASE_DIRECTORY
-
     # Export all xrefs
-    xrefs_df = get_xref_df(rebuild=True, force=False)
+    xrefs_df = get_xref_df(rebuild=True, force=force, strict=not no_strict)
     xrefs_path = os.path.join(directory, 'xrefs.tsv.gz')
     xrefs_df.to_csv(xrefs_path, sep='\t', index=False)
 

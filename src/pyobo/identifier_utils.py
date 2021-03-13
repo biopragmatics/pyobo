@@ -59,7 +59,7 @@ class MissingPrefix(ValueError):
         return s
 
 
-def normalize_prefix(prefix: str, *, curie=None, xref=None) -> Optional[str]:
+def normalize_prefix(prefix: str, *, curie=None, xref=None, strict: bool = True) -> Optional[str]:
     """Normalize a namespace and return, if possible."""
     norm_prefix = bioregistry.normalize_prefix(prefix)
     if norm_prefix is not None:
@@ -69,40 +69,44 @@ def normalize_prefix(prefix: str, *, curie=None, xref=None) -> Optional[str]:
         return
     if curie.startswith('UBERON:'):  # uberon has tons of xrefs to anatomical features. skip them
         UBERON_UNHANDLED[prefix].append((curie, xref))
-    else:
-        # if prefix.replace(':', '').replace("'", '').replace('-', '').replace('%27', '').isalpha():
-        #     return  # skip if its just text
+    elif strict:
         raise MissingPrefix(prefix=prefix, curie=curie, xref=xref)
+    # if prefix.replace(':', '').replace("'", '').replace('-', '').replace('%27', '').isalpha():
+    #     return  # skip if its just text
 
 
-def normalize_curie(node: str) -> Union[Tuple[str, str], Tuple[None, None]]:
+def normalize_curie(curie: str, *, strict: bool = True) -> Union[Tuple[str, str], Tuple[None, None]]:
     """Parse a string that looks like a CURIE.
+
+    :param curie: A compact uniform resource identifier (CURIE)
+    :param strict: Should an exception be thrown if the CURIE can not be parsed w.r.t. the Bioregistry?
+    :return: A parse tuple or a tuple of None, None if not able to parse and not strict
 
     - Normalizes the namespace
     - Checks against a blacklist for the entire curie, for the namespace, and for suffixes.
     """
-    if node in get_xrefs_blacklist():
+    if curie in get_xrefs_blacklist():
         return None, None
     # Skip node if it has a blacklisted prefix
     for blacklisted_prefix in get_xrefs_prefix_blacklist():
-        if node.startswith(blacklisted_prefix):
+        if curie.startswith(blacklisted_prefix):
             return None, None
     # Skip node if it has a blacklisted suffix
     for suffix in get_xrefs_suffix_blacklist():
-        if node.endswith(suffix):
+        if curie.endswith(suffix):
             return None, None
     # Remap node's prefix (if necessary)
     for old_prefix, new_prefix in get_remappings_prefix().items():
-        if node.startswith(old_prefix):
-            node = new_prefix + node[len(old_prefix):]
+        if curie.startswith(old_prefix):
+            curie = new_prefix + curie[len(old_prefix):]
 
     try:
-        head_ns, identifier = node.split(':', 1)
+        head_ns, identifier = curie.split(':', 1)
     except ValueError:  # skip nodes that don't look like normal CURIEs
-        logger.debug(f'skipping: {node}')
+        logger.debug(f'skipping: {curie}')
         return None, None
 
-    norm_node_prefix = normalize_prefix(head_ns, curie=node)
+    norm_node_prefix = normalize_prefix(head_ns, curie=curie, strict=strict)
     if not norm_node_prefix:
         return None, None
     return norm_node_prefix, identifier
@@ -159,7 +163,7 @@ def wrap_norm_prefix(f):
 
     @wraps(f)
     def _wrapped(prefix, *args, **kwargs):
-        norm_prefix = normalize_prefix(prefix)
+        norm_prefix = normalize_prefix(prefix, strict=True)
         if norm_prefix is None:
             raise ValueError(f'Invalid prefix: {prefix}')
         return f(norm_prefix, *args, **kwargs)

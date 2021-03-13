@@ -47,7 +47,6 @@ class TestMapping(unittest.TestCase):
         """Test getting xrefs."""
         with chebi_patch:
             kegg_xrefs = get_filtered_xrefs('chebi', 'kegg')
-        print(kegg_xrefs)
 
         for key, value in kegg_xrefs.items():
             self.assertFalse(key.startswith('CHEBI:'))

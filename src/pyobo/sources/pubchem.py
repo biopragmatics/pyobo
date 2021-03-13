@@ -8,7 +8,7 @@ from typing import Iterable, Mapping, Optional
 import pandas as pd
 from tqdm import tqdm
 
-from ..extract import get_name_id_mapping
+from ..api import get_name_id_mapping
 from ..iter_utils import iterate_gzips_together
 from ..path_utils import ensure_df, ensure_path
 from ..struct import Obo, Reference, Synonym, Term

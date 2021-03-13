@@ -7,7 +7,7 @@ import logging
 import os
 from typing import Optional
 
-from ..extract import get_xrefs_df
+from ..api import get_xrefs_df
 from ..getters import iter_helper_helper
 from ..path_utils import get_prefix_directory
 
