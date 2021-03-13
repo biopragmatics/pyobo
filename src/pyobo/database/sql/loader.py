@@ -4,6 +4,7 @@
 
 import gzip
 import io
+import logging
 import time
 from contextlib import closing
 from textwrap import dedent
@@ -12,8 +13,7 @@ import click
 from sqlalchemy import create_engine
 from tabulate import tabulate
 
-from pyobo.constants import get_sqlalchemy_uri
-from pyobo.resource_utils import ensure_alts, ensure_ooh_na_na
+logger = logging.getLogger(__name__)
 
 
 def echo(s, **kwargs) -> None:
@@ -26,15 +26,18 @@ def echo(s, **kwargs) -> None:
 TEST_N = 1_000_000
 
 
-@click.command()
-@click.option('--uri', default=get_sqlalchemy_uri)
-@click.option('--refs-table', default='obo_reference', show_default=True)
-@click.option('--refs-path', default=ensure_ooh_na_na)
-@click.option('--alts-table', default='obo_alt', show_default=True)
-@click.option('--alts-path', default=ensure_alts)
-@click.option('--test', is_flag=True, help=f'Test run with only the first {TEST_N} rows')
-def main(uri: str, refs_table: str, refs_path: str, alts_table: str, alts_path: str, test: bool):
-    """Load the Ooh Na Na nomenclature data."""
+def load(uri: str, refs_table: str, refs_path: str, alts_table: str, alts_path: str, test: bool):
+    """Load the database.
+
+    :param uri:
+    :param refs_table:
+    :param refs_path:
+    :param alts_table:
+    :param alts_path:
+    :param test:
+    :return:
+    """
+    logger.debug('connecting to database %s', uri)
     engine = create_engine(uri)
 
     _load_names(
@@ -47,7 +50,7 @@ def main(uri: str, refs_table: str, refs_path: str, alts_table: str, alts_path: 
         add_unique_constraints=False,
     )
     with closing(engine.raw_connection()) as connection:
-        with connection.cursor() as cursor:
+        with closing(connection.cursor()) as cursor:
             cursor.execute(f'CREATE INDEX ON {alts_table} (prefix, alt);')
 
     _load_names(
@@ -63,10 +66,10 @@ def main(uri: str, refs_table: str, refs_path: str, alts_table: str, alts_path: 
 def _load_names(
     engine,
     table,
-    path,
-    test,
-    target_col,
-    target_col_size,
+    path: str,
+    test: bool,
+    target_col: str,
+    target_col_size: int,
     add_unique_constraints: bool = True,
     use_md5: bool = False,
 ) -> None:
@@ -117,7 +120,7 @@ def _load_names(
     ''').rstrip()
 
     with closing(engine.raw_connection()) as connection:
-        with connection.cursor() as cursor:
+        with closing(connection.cursor()) as cursor:
             echo('Preparing blank slate')
             echo(drop_statement, fg='yellow')
             cursor.execute(drop_statement)
@@ -182,9 +185,7 @@ def _load_names(
 
     with engine.connect() as connection:
         select_statement = f"SELECT * FROM {table} LIMIT 10;"  # noqa:S608
+        click.secho('Example query:', fg='green', bold=True)
+        click.secho(select_statement, fg='green')
         result = connection.execute(select_statement)
         click.echo(tabulate(result, headers=['id', 'prefix', 'identifier', target_col, 'md5_hash']))
-
-
-if __name__ == '__main__':
-    main()
