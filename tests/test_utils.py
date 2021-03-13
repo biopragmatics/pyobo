@@ -5,7 +5,7 @@
 import unittest
 
 from pyobo.identifier_utils import normalize_curie
-from pyobo.iter_utils import iterate_together
+from pyobo.utils.iter import iterate_together
 
 
 class TestIdentifierUtils(unittest.TestCase):

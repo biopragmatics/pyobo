@@ -7,16 +7,16 @@ from typing import Iterable, List, Tuple, TypeVar
 
 from more_itertools import peekable
 
-from .utils.io import split_tab_pair
-
-X = TypeVar('X')
-Z = TypeVar('Z')
-Y = TypeVar('Y')
+from .io import split_tab_pair
 
 __all__ = [
     'iterate_together',
     'iterate_gzips_together',
 ]
+
+X = TypeVar('X')
+Z = TypeVar('Z')
+Y = TypeVar('Y')
 
 
 def iterate_gzips_together(a_path, b_path) -> Iterable[Tuple[str, str, List[str]]]:
