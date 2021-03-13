@@ -7,9 +7,7 @@ import os
 from typing import Optional, Set
 
 import boto3
-import click
 import humanize
-from more_click import verbose_option
 from tabulate import tabulate
 
 from pyobo import (
@@ -160,41 +158,3 @@ def list_artifacts(bucket: str) -> None:
         for entry in all_objects['Contents']
     ]
     print(tabulate(rows, headers=['File', 'Size']))
-
-
-bucket_argument = click.argument('bucket')
-
-
-@click.group()
-def aws():
-    """CLI for storing OBO artifacts on S3."""
-
-
-@aws.command()
-@bucket_argument
-@verbose_option
-def download(bucket):
-    """Download all artifacts from the S3 bucket."""
-    download_artifacts(bucket)
-
-
-@aws.command()
-@bucket_argument
-@verbose_option
-@click.option('-w', '--whitelist', multiple=True)
-@click.option('-b', '--blacklist', multiple=True)
-def upload(bucket, whitelist, blacklist):
-    """Download all artifacts from the S3 bucket."""
-    upload_artifacts(bucket, whitelist=whitelist, blacklist=blacklist)
-
-
-@aws.command()
-@bucket_argument
-@verbose_option
-def ls(bucket):
-    """List all artifacts on the S3 bucket."""
-    list_artifacts(bucket)
-
-
-if __name__ == '__main__':
-    aws()
