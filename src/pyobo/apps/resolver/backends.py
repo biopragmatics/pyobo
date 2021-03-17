@@ -192,7 +192,7 @@ class RawSQLBackend(Backend):
         sql = text(f'''
             SELECT identifier
             FROM {self.alts_table}
-            WHERE prefix = :prefix and alt = :alt LIMIT 1;
+            WHERE prefix = :prefix and alt = :alt;
         ''')  # noqa:S608
         with self.engine.connect() as connection:
             result = connection.execute(sql, prefix=prefix, alt=identifier).fetchone()
@@ -202,7 +202,7 @@ class RawSQLBackend(Backend):
         sql = text(f"""
             SELECT name
             FROM {self.refs_table}
-            WHERE prefix = :prefix and identifier = :identifier LIMIT 1;
+            WHERE prefix = :prefix and identifier = :identifier;
         """)  # noqa:S608
         with self.engine.connect() as connection:
             result = connection.execute(sql, prefix=prefix, identifier=identifier).fetchone()
