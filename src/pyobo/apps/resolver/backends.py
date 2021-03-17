@@ -183,7 +183,7 @@ class RawSQLBackend(Backend):
             return Counter(dict(connection.execute(sql).fetchall()))
 
     def has_prefix(self, prefix: str) -> bool:  # noqa:D102
-        sql = text(f"SELECT prefix FROM {self.refs_table} WHERE prefix = :prefix LIMIT 1;")  # noqa:S608
+        sql = text(f"SELECT EXISTS(SELECT 1 from {self.refs_table} where WHERE prefix = :prefix);")  # noqa:S608
         with self.engine.connect() as connection:
             result = connection.execute(sql, prefix=prefix).fetchone()
             return bool(result)
