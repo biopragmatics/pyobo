@@ -16,6 +16,7 @@ from contextlib import closing
 from textwrap import dedent
 
 import click
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from tabulate import tabulate
@@ -45,7 +46,7 @@ def load(uri: str, refs_table: str, refs_path: str, alts_table: str, alts_path: 
     :return:
     """
     logger.debug('connecting to database %s', uri)
-    engine = create_engine(uri)
+    engine: Engine = create_engine(uri)
 
     _load_names(
         engine=engine,
@@ -56,9 +57,8 @@ def load(uri: str, refs_table: str, refs_path: str, alts_table: str, alts_path: 
         target_col_size=64,
         add_unique_constraints=False,
     )
-    with closing(engine.raw_connection()) as connection:
-        with closing(connection.cursor()) as cursor:
-            cursor.execute(f'CREATE INDEX ON {alts_table} (prefix, alt);')
+    with engine.begin() as connection:
+        connection.execute(f'CREATE INDEX ON {alts_table} (prefix, alt);')
 
     _load_names(
         engine=engine,
@@ -190,11 +190,12 @@ def _load_names(
                 cursor.execute(unique_md5_hash_stmt)
                 echo('End unique')
 
-    # TODO still a problem with a transaction being open
-    # with engine.connect() as connection:
-    #     sql = f'VACUUM ANALYZE {table}'
-    #     echo(sql, fg='yellow')
-    #     connection.execute(sql)
+    with closing(engine.raw_connection()) as connection:
+        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        with connection.cursor() as cursor:
+            sql = f"VACUUM ANALYSE {table}"
+            echo(sql, fg='yellow')
+            cursor.execute(sql)
 
     with engine.connect() as connection:
         select_statement = f"SELECT * FROM {table} LIMIT 10;"  # noqa:S608
