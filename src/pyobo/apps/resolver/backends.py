@@ -158,7 +158,7 @@ class RawSQLBackend(Backend):
         """Get the number of terms."""
         logger.info('counting CURIEs')
         start = time.time()
-        rv = self._get_one(f'SELECT COUNT(id) FROM {self.refs_table};')  # noqa:S608
+        rv = self._get_one(f'SELECT COUNT(*) FROM {self.refs_table};')  # noqa:S608
         logger.info('done counting CURIEs after %.2fs', time.time() - start)
         return rv
 
@@ -170,7 +170,7 @@ class RawSQLBackend(Backend):
     @lru_cache(maxsize=1)
     def count_alts(self) -> Optional[int]:  # noqa:D102
         logger.info('counting alts')
-        return self._get_one(f'SELECT COUNT(id) FROM {self.alts_table};')  # noqa:S608
+        return self._get_one(f'SELECT COUNT(*) FROM {self.alts_table};')  # noqa:S608
 
     def _get_one(self, sql: str):
         with self.engine.connect() as connection:
