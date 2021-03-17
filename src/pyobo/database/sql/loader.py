@@ -86,7 +86,7 @@ def _load_names(
     else:
         md5_ddl = ''
 
-    create_statement = dedent(f'''
+    create_statement = dedent(f'''\
     CREATE TABLE {table} (
         id SERIAL,  /* automatically the primary key */
         prefix VARCHAR(32),
@@ -99,13 +99,13 @@ def _load_names(
     );
     ''').rstrip()
 
-    copy_statement = dedent(f'''
+    copy_statement = dedent(f'''\
     COPY {table} (prefix, identifier, {target_col})
     FROM STDIN
     WITH CSV HEADER DELIMITER E'\\t' QUOTE E'\\b';
     ''').rstrip()
 
-    cleanup_statement = dedent(f'''
+    cleanup_statement = dedent(f'''\
     ALTER TABLE {table} SET (
         autovacuum_enabled = true,
         toast.autovacuum_enabled = true
@@ -115,12 +115,12 @@ def _load_names(
     index_curie_statement = f'CREATE INDEX ON {table} (prefix, identifier);'
     index_md5_statement = f'CREATE INDEX ON {table} (md5_hash);'
 
-    unique_curie_stmt = dedent(f'''
+    unique_curie_stmt = dedent(f'''\
     ALTER TABLE {table}
         ADD CONSTRAINT {table}_prefix_identifier_unique UNIQUE (prefix, identifier);
     ''').rstrip()
 
-    unique_md5_hash_stmt = dedent(f'''
+    unique_md5_hash_stmt = dedent(f'''\
     ALTER TABLE {table}
         ADD CONSTRAINT {table}_md5_hash_unique UNIQUE (md5_hash);
     ''').rstrip()
