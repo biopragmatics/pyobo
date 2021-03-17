@@ -17,6 +17,7 @@ from textwrap import dedent
 
 import click
 from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 from tabulate import tabulate
 
 logger = logging.getLogger(__name__)
@@ -70,8 +71,8 @@ def load(uri: str, refs_table: str, refs_path: str, alts_table: str, alts_path: 
 
 
 def _load_names(
-    engine,
-    table,
+    engine: Engine,
+    table: str,
     path: str,
     test: bool,
     target_col: str,
@@ -88,11 +89,11 @@ def _load_names(
 
     create_statement = dedent(f'''\
     CREATE TABLE {table} (
-        id SERIAL,  /* automatically the primary key */
-        prefix VARCHAR(32),
-        identifier VARCHAR(64),
+        id           SERIAL,  /* automatically the primary key */
+        prefix       VARCHAR(32) NOT NULL,
+        identifier   VARCHAR(64) NOT NULL,
         {md5_ddl}
-        {target_col} VARCHAR({target_col_size})  /* largest name's length is 2936 characters */
+        {target_col} VARCHAR({target_col_size}) NOT NULL  /* largest name's length is 2936 characters */
     ) WITH (
         autovacuum_enabled = false,
         toast.autovacuum_enabled = false
@@ -110,7 +111,6 @@ def _load_names(
         autovacuum_enabled = true,
         toast.autovacuum_enabled = true
     );
-    VACUUM FULL ANALYZE;
     ''').rstrip()
 
     index_curie_statement = f'CREATE INDEX ON {table} (prefix, identifier);'
@@ -190,9 +190,19 @@ def _load_names(
                 cursor.execute(unique_md5_hash_stmt)
                 echo('End unique')
 
+    # TODO still a problem with a transaction being open
+    # with engine.connect() as connection:
+    #     sql = f'VACUUM ANALYZE {table}'
+    #     echo(sql, fg='yellow')
+    #     connection.execute(sql)
+
     with engine.connect() as connection:
         select_statement = f"SELECT * FROM {table} LIMIT 10;"  # noqa:S608
         click.secho('Example query:', fg='green', bold=True)
         click.secho(select_statement, fg='green')
         result = connection.execute(select_statement)
-        click.echo(tabulate(result, headers=['id', 'prefix', 'identifier', target_col, 'md5_hash']))
+        if use_md5:
+            headers = ['id', 'prefix', 'identifier', target_col, 'md5_hash']
+        else:
+            headers = ['id', 'prefix', 'identifier', target_col]
+        click.echo(tabulate(map(tuple, result), headers=headers))
