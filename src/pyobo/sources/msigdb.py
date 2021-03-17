@@ -44,6 +44,7 @@ _SPECIES = {
 
 REACTOME_URL_PREFIX = 'https://www.reactome.org/content/detail/'
 GO_URL_PREFIX = 'http://amigo.geneontology.org/amigo/term/GO:'
+KEGG_URL_PREFIX = 'http://www.genome.jp/kegg/pathway/hsa/'
 
 
 def iter_terms(version: str) -> Iterable[Term]:
@@ -101,6 +102,12 @@ def iter_terms(version: str) -> Iterable[Term]:
             if not external_id:
                 logger.warning('missing %s source: msigdb:%s (%s)', contributor, identifier, external_details)
             term.append_xref(Reference('go', external_id))
+        elif contributor == 'KEGG':
+            if not external_id:
+                external_id = external_details[len(KEGG_URL_PREFIX):len('.html')]
+            if not external_id:
+                logger.warning('missing %s source: msigdb:%s (%s)', contributor, identifier, external_details)
+            term.append_xref(Reference('kegg.pathway', external_id))
 
         for ncbigene_id in attrib['MEMBERS_EZID'].strip().split(','):
             if ncbigene_id:
