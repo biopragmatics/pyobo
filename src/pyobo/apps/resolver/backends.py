@@ -3,6 +3,7 @@
 """Backends."""
 
 import logging
+import time
 from collections import Counter
 from functools import lru_cache
 from typing import Any, List, Mapping, Optional, Union
@@ -13,7 +14,7 @@ from sqlalchemy.engine import Engine
 from pyobo import normalize_curie
 from pyobo.constants import get_sqlalchemy_uri
 from pyobo.identifier_utils import get_providers
-import time
+
 __all__ = [
     'Backend',
     'RawSQLBackend',
@@ -132,6 +133,9 @@ class MemoryBackend(Backend):
 
 class RawSQLBackend(Backend):
     """A backend that communicates with low-level SQL statements."""
+
+    #: The engine
+    engine: Engine
 
     def __init__(
         self, *,
