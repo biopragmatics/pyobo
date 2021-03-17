@@ -2,7 +2,7 @@
 
 """CLI for PyOBO SQL database."""
 
-from .cli import main
+from .cli import database_sql
 
 if __name__ == '__main__':
-    main()
+    database_sql()

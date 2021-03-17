@@ -5,7 +5,7 @@
 import logging
 from collections import defaultdict
 from functools import wraps
-from typing import Optional, Tuple, Union
+from typing import Mapping, Optional, Tuple, Union
 
 import bioregistry
 from bioregistry.external import get_miriam
@@ -110,6 +110,21 @@ def normalize_curie(curie: str, *, strict: bool = True) -> Union[Tuple[str, str]
     if not norm_node_prefix:
         return None, None
     return norm_node_prefix, identifier
+
+
+def get_providers(prefix: str, identifier: str) -> Mapping[str, str]:
+    """Get all providers for the CURIE."""
+    providers = {}
+    miriam_link = get_identifiers_org_link(prefix, identifier)
+    if miriam_link:
+        providers['miriam'] = miriam_link
+    obofoundry_link = get_obofoundry_link(prefix, identifier)
+    if obofoundry_link:
+        providers['obofoundry'] = obofoundry_link
+    ols_link = get_ols_link(prefix, identifier)
+    if ols_link:
+        providers['ols'] = ols_link
+    return providers
 
 
 def get_identifiers_org_link(prefix: str, identifier: str) -> Optional[str]:

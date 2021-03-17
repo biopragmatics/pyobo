@@ -9,12 +9,12 @@ from pyobo.constants import get_sqlalchemy_uri
 from pyobo.resource_utils import ensure_alts, ensure_ooh_na_na
 
 
-@click.group()
-def main():
+@click.group(name='sql')
+def database_sql():
     """PyOBO SQL Database."""  # noqa:D403
 
 
-@main.command()
+@database_sql.command()
 @click.option('--uri', default=get_sqlalchemy_uri, help='The database URL.', show_default=True)
 @click.option('--refs-table', default='obo_reference', show_default=True)
 @click.option('--refs-path', default=ensure_ooh_na_na, show_default=True, help='By default, load from Zenodo')
@@ -28,7 +28,7 @@ def load(uri: str, refs_table: str, refs_path: str, alts_table: str, alts_path: 
     _load(uri=uri, refs_table=refs_table, refs_path=refs_path, alts_table=alts_table, alts_path=alts_path, test=test)
 
 
-make_web_command('pyobo.database.sql.wsgi:app', group=main)
+make_web_command('pyobo.database.sql.wsgi:app', group=database_sql)
 
 if __name__ == '__main__':
-    main()
+    database_sql()

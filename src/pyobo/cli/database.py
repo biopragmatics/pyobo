@@ -9,6 +9,7 @@ from more_click import verbose_option
 from zenodo_client import update_zenodo
 
 from .utils import directory_option, force_option, no_strict_option, zenodo_option
+from ..database.sql.cli import database_sql
 from ..getters import db_output_helper
 from ..xrefdb.xrefs_pipeline import (
     _iter_alts, _iter_ooh_na_na, _iter_synonyms, get_xref_df, summarize_xref_df,
@@ -23,6 +24,9 @@ __all__ = [
 @click.group(name='database')
 def main():
     """Build the PyOBO Database."""
+
+
+main.add_command(database_sql)
 
 
 @main.command()
