@@ -110,6 +110,7 @@ def _load_names(
         autovacuum_enabled = true,
         toast.autovacuum_enabled = true
     );
+    VACUUM FULL ANALYZE;
     ''').rstrip()
 
     index_curie_statement = f'CREATE INDEX ON {table} (prefix, identifier);'
