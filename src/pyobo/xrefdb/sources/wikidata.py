@@ -18,6 +18,7 @@ from tqdm import tqdm
 
 from ...constants import RAW_MODULE, XREF_COLUMNS
 from ...registries import get_wikidata_property_types
+from ...version import get_version
 
 logger = logging.getLogger(__name__)
 
@@ -93,9 +94,14 @@ def get_wikidata_properties() -> Iterable[str]:
             yield d['item']['value'][len('wd:'):]
 
 
+HEADERS = {
+    'User-Agent': f'pyobo/{get_version()}',
+}
+
+
 def _run_query(query, base: str = URL):
     logger.debug('running query: %s', query)
-    res = requests.get(base, params={'query': query, 'format': 'json'})
+    res = requests.get(base, params={'query': query, 'format': 'json'}, headers=HEADERS)
     res.raise_for_status()
     res_json = res.json()
     return res_json['results']['bindings']
