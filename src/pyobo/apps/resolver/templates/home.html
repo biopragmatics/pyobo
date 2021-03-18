@@ -6,8 +6,8 @@
         <p>
             This service resolves <a href="https://en.wikipedia.org/wiki/CURIE">CURIEs</a>
             to their labels and builds Identifiers.org URLs when possible.
-            {% if backend.count_curies() %}It currently covers {{ backend.count_curies() }} identifiers and
-                {{ backend.count_alts() }} alternate identifiers across {{ backend.count_prefixes() }}
+            {% if total_count %}It currently covers {{ total_count }} identifiers
+                and {{ alts_count }} alternate identifiers across {{ prefix_count }}
                 resources.{% endif %}
         </p>
         <p>
@@ -35,7 +35,7 @@
             <td>🟢 synonym identified in metaregistry</td>
         </tr>
         <tr>
-            <td><a href="{{ url_for('.resolve', curie='GO:0001071' ) }}">GO:0001071</a></td>
+            <td><a href="{{ url_for('.resolve', curie='GO:0000501' ) }}">GO:0000501</a></td>
             <td>🟢 secondary identifier mapped</td>
         </tr>
         <tr>

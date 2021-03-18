@@ -8,12 +8,12 @@ from collections import Counter
 from functools import lru_cache
 from typing import Any, List, Mapping, Optional, Union
 
+import bioregistry
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 
 from pyobo import normalize_curie
 from pyobo.constants import get_sqlalchemy_uri
-from pyobo.identifier_utils import get_providers
 
 __all__ = [
     'Backend',
@@ -61,9 +61,9 @@ class Backend:
     def count_prefixes(self) -> Optional[int]:
         """Count the number of prefixes in the database."""
 
-    def resolve(self, curie: str, resolve_alternate: bool = False) -> Mapping[str, Any]:
+    def resolve(self, curie: str, resolve_alternate: bool = True) -> Mapping[str, Any]:
         """Return the results and summary when resolving a CURIE string."""
-        prefix, identifier = normalize_curie(curie)
+        prefix, identifier = normalize_curie(curie, strict=False)
         if prefix is None or identifier is None:
             return dict(
                 query=curie,
@@ -71,7 +71,7 @@ class Backend:
                 message='Could not identify prefix',
             )
 
-        providers = get_providers(prefix, identifier)
+        providers = bioregistry.get_providers(prefix, identifier)
         if not self.has_prefix(prefix):
             rv = dict(
                 query=curie,
@@ -84,12 +84,11 @@ class Backend:
             return rv
 
         name = self.get_name(prefix, identifier)
-
         if name is None and resolve_alternate:
-            primary_id = self.get_primary_id(prefix, identifier)
-            if primary_id != identifier:
-                providers = get_providers(prefix, primary_id)
-                name = self.get_name(prefix, primary_id)
+            identifier, _secondary_id = self.get_primary_id(prefix, identifier), identifier
+            if identifier != _secondary_id:
+                providers = bioregistry.get_providers(prefix, identifier)
+                name = self.get_name(prefix, identifier)
 
         if name is None:
             return dict(
@@ -158,14 +157,17 @@ class RawSQLBackend(Backend):
         """Get the number of terms."""
         logger.info('counting CURIEs')
         start = time.time()
-        rv = self._get_one(f'SELECT COUNT(*) FROM {self.refs_table};')  # noqa:S608
+        rv = self._get_one(f'SELECT SUM(count) FROM {self.refs_table}_summary;')  # noqa:S608
         logger.info('done counting CURIEs after %.2fs', time.time() - start)
         return rv
 
     @lru_cache(maxsize=1)
     def count_prefixes(self) -> int:  # noqa:D102
         logger.info('counting prefixes')
-        return self._get_one(f'SELECT COUNT(DISTINCT prefix) FROM {self.refs_table};')  # noqa:S608
+        start = time.time()
+        rv = self._get_one(f'SELECT COUNT(DISTINCT prefix) FROM {self.refs_table}_summary;')  # noqa:S608
+        logger.info('done counting prefixes after %.2fs', time.time() - start)
+        return rv
 
     @lru_cache(maxsize=1)
     def count_alts(self) -> Optional[int]:  # noqa:D102
@@ -177,17 +179,20 @@ class RawSQLBackend(Backend):
             result = connection.execute(sql).fetchone()
             return result[0]
 
+    @lru_cache(maxsize=1)
     def summarize(self) -> Counter:  # noqa:D102
-        sql = f'SELECT prefix, COUNT(identifier) FROM {self.refs_table} GROUP BY prefix;'  # noqa:S608
+        sql = f'SELECT prefix, count FROM {self.refs_table}_summary;'  # noqa:S608
         with self.engine.connect() as connection:
             return Counter(dict(connection.execute(sql).fetchall()))
 
+    @lru_cache()
     def has_prefix(self, prefix: str) -> bool:  # noqa:D102
-        sql = text(f"SELECT EXISTS(SELECT 1 from {self.refs_table} where WHERE prefix = :prefix);")  # noqa:S608
+        sql = text(f"SELECT EXISTS(SELECT 1 from {self.refs_table} WHERE prefix = :prefix);")  # noqa:S608
         with self.engine.connect() as connection:
             result = connection.execute(sql, prefix=prefix).fetchone()
             return bool(result)
 
+    @lru_cache(maxsize=100_000)
     def get_primary_id(self, prefix: str, identifier: str) -> str:  # noqa:D102
         sql = text(f'''
             SELECT identifier
@@ -198,6 +203,7 @@ class RawSQLBackend(Backend):
             result = connection.execute(sql, prefix=prefix, alt=identifier).fetchone()
             return result[0] if result else identifier
 
+    @lru_cache(maxsize=100_000)
     def get_name(self, prefix, identifier) -> Optional[str]:  # noqa:D102
         sql = text(f"""
             SELECT name

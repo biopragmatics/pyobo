@@ -17,6 +17,7 @@ import psutil
 from flasgger import Swagger
 from flask import Blueprint, Flask, current_app, jsonify, render_template
 from flask_bootstrap import Bootstrap
+from humanize import intcomma
 from humanize.filesize import naturalsize
 from tqdm import tqdm
 from werkzeug.local import LocalProxy
@@ -35,7 +36,12 @@ backend: Backend = LocalProxy(lambda: current_app.config['resolver_backend'])
 @resolve_blueprint.route('/')
 def home():
     """Serve the home page."""
-    return render_template('home.html', backend=backend)
+    return render_template(
+        'home.html',
+        total_count=intcomma(backend.count_curies()),
+        alts_count=intcomma(backend.count_alts()),
+        prefix_count=intcomma(backend.count_prefixes()),
+    )
 
 
 @resolve_blueprint.route('/resolve/<curie>')

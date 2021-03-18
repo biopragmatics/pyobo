@@ -9,7 +9,7 @@ from functools import lru_cache
 from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, Union
 
 from .api import names
-from .identifier_utils import normalize_dashes, normalize_prefix
+from .identifier_utils import normalize_prefix
 from .utils.io import multisetdict
 
 __all__ = [
@@ -205,3 +205,20 @@ class MultiNormalizer:
             if prefix and identifier and name:  # all not empty
                 return prefix, identifier, name
         return None, None, query
+
+
+# See: https://en.wikipedia.org/wiki/Dash
+FIGURE_DASH = b'\xe2\x80\x92'.decode('utf-8')
+EN_DASH = b'\xe2\x80\x93'.decode('utf-8')
+EM_DASH = b'\xe2\x80\x94'.decode('utf-8')
+HORIZONAL_BAR = b'\xe2\x80\x95'.decode('utf-8')
+NORMAL_DASH = '-'
+
+
+def normalize_dashes(s: str) -> str:
+    """Normalize dashes in a string."""
+    return s. \
+        replace(FIGURE_DASH, NORMAL_DASH). \
+        replace(EN_DASH, NORMAL_DASH). \
+        replace(EM_DASH, NORMAL_DASH). \
+        replace(HORIZONAL_BAR, NORMAL_DASH)

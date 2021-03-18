@@ -80,7 +80,7 @@ def _load_names(
     add_unique_constraints: bool = True,
     use_md5: bool = False,
 ) -> None:
-    drop_statement = f'DROP TABLE IF EXISTS {table};'
+    drop_statement = f'DROP TABLE IF EXISTS {table} CASCADE;'
 
     if use_md5:
         md5_ddl = "md5_hash VARCHAR(32) GENERATED ALWAYS AS (md5(prefix || ':' || identifier)) STORED,"
@@ -99,6 +99,16 @@ def _load_names(
         toast.autovacuum_enabled = false
     );
     ''').rstrip()
+
+    create_summary_statement = dedent(f'''\
+    CREATE MATERIALIZED VIEW {table}_summary AS
+      SELECT prefix, COUNT(identifier) as count
+      FROM {table}
+      GROUP BY prefix;
+
+    CREATE UNIQUE INDEX {table}_summary_prefix
+        ON {table}_summary (prefix);
+    ''').rstrip()  # noqa:S608
 
     copy_statement = dedent(f'''\
     COPY {table} (prefix, identifier, {target_col})
@@ -189,6 +199,10 @@ def _load_names(
                 echo(unique_md5_hash_stmt, fg='yellow')
                 cursor.execute(unique_md5_hash_stmt)
                 echo('End unique')
+
+            echo('Creating summary table')
+            echo(create_summary_statement, fg='yellow')
+            cursor.execute(create_summary_statement)
 
     with closing(engine.raw_connection()) as connection:
         connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
