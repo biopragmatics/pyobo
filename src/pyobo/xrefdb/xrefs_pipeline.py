@@ -18,7 +18,10 @@ from tqdm import tqdm
 
 from .obo_xrefs import iterate_obo_xrefs
 from .sources import iter_xref_plugins
-from ..api import get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_relations_df
+from ..api import (
+    get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_properties_df,
+    get_relations_df,
+)
 from ..constants import DATABASE_DIRECTORY, PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
 from ..getters import SKIP, iter_helper, iter_helper_helper
 from ..sources import ncbigene, pubchem
@@ -190,12 +193,14 @@ def _iter_synonyms(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, st
             yield prefix, identifier, synonym
 
 
-def _iter_relations(
-    leave: bool = False,
-    strict: bool = True,
-    **kwargs,
-) -> Iterable[Tuple[str, str, str, str, str, str]]:
-    for prefix, df in iter_helper_helper(get_relations_df):
+def _iter_relations(**kwargs) -> Iterable[Tuple[str, str, str, str, str, str]]:
+    for prefix, df in iter_helper_helper(get_relations_df, **kwargs):
+        for t in df.values:
+            yield (prefix, *t)
+
+
+def _iter_properties(**kwargs) -> Iterable[Tuple[str, str, str, str]]:
+    for prefix, df in iter_helper_helper(get_properties_df, **kwargs):
         for t in df.values:
             yield (prefix, *t)
 

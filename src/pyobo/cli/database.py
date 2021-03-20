@@ -12,7 +12,7 @@ from .utils import directory_option, force_option, no_strict_option, zenodo_opti
 from ..database.sql.cli import database_sql
 from ..getters import db_output_helper
 from ..xrefdb.xrefs_pipeline import (
-    _iter_alts, _iter_ooh_na_na, _iter_relations, _iter_synonyms, get_xref_df, summarize_xref_df,
+    _iter_alts, _iter_ooh_na_na, _iter_properties, _iter_relations, _iter_synonyms, get_xref_df, summarize_xref_df,
     summarize_xref_provenances_df,
 )
 
@@ -46,8 +46,10 @@ def build(ctx: click.Context, directory: str, zenodo: bool, no_strict: bool, for
     ctx.invoke(xrefs, directory=directory, zenodo=zenodo)
     click.secho('Names', fg='cyan', bold=True)
     ctx.invoke(names, directory=directory, zenodo=zenodo)
-    # TODO relations
-    # TODO properties
+    click.secho('Properties', fg='cyan', bold=True)
+    ctx.invoke(properties, directory=directory, zenodo=zenodo)
+    click.secho('Relations', fg='cyan', bold=True)
+    ctx.invoke(relations, directory=directory, zenodo=zenodo)
 
 
 @main.command()
@@ -130,7 +132,29 @@ def relations(directory: str, zenodo: bool, force: bool, no_strict: bool):
         strict=not no_strict,
     )
     if zenodo:
-        click.secho('no zenodo ID minted yet', fg='red')
+        # see https://zenodo.org/record/4625167
+        update_zenodo('4625167', paths)
+
+
+@main.command()
+@verbose_option
+@directory_option
+@zenodo_option
+@force_option
+@no_strict_option
+def properties(directory: str, zenodo: bool, force: bool, no_strict: bool):
+    """Make the properties dump."""
+    paths = db_output_helper(
+        _iter_properties,
+        'properties',
+        ('prefix', 'identifier', 'property', 'value'),
+        directory=directory,
+        force=force,
+        strict=not no_strict,
+    )
+    if zenodo:
+        # see https://zenodo.org/record/4625172
+        update_zenodo('4625172', paths)
 
 
 @main.command()
