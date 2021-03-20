@@ -7,6 +7,7 @@ from typing import Iterable, List, Mapping, Optional, Tuple, Union
 
 from .reference import Reference, Referenced
 from ..identifier_utils import normalize_curie
+from ..resources.ro import load_ro
 
 __all__ = [
     'TypeDef',
@@ -215,7 +216,11 @@ has_functional_parent = TypeDef(
 )
 
 default_typedefs: Mapping[Tuple[str, str], TypeDef] = {
-    (v.prefix, v.identifier): v
+    v.pair: v
     for k, v in locals().items()
     if isinstance(v, TypeDef)
 }
+
+for pair, name in load_ro().items():
+    if pair not in default_typedefs:
+        default_typedefs[pair] = TypeDef.from_triple(pair[0], pair[1], name)
