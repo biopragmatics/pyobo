@@ -441,7 +441,7 @@ class Obo:
     ) -> None:
         """Write the OBO to the default path."""
         if not self._names_path.exists() or force:
-            logger.info('[%s] caching names', self.ontology)
+            logger.info('[%s] caching names to %s', self.ontology, self._names_path)
             write_map_tsv(
                 path=self._names_path,
                 header=[f'{self.ontology}_id', 'name'],
@@ -449,7 +449,7 @@ class Obo:
             )
 
         if not self._definitions_path.exists() or force:
-            logger.info('[%s] caching definitions', self.ontology)
+            logger.info('[%s] caching definitions to %s', self.ontology, self._definitions_path)
             write_map_tsv(
                 path=self._definitions_path,
                 header=[f'{self.ontology}_id', 'name'],
@@ -457,7 +457,7 @@ class Obo:
             )
 
         if not self._species_path.exists() or force:
-            logger.info('[%s] caching species', self.ontology)
+            logger.info('[%s] caching species to %s', self.ontology, self._species_path)
             write_map_tsv(
                 path=self._species_path,
                 header=[f'{self.ontology}_id', 'taxonomy_id'],
@@ -465,7 +465,7 @@ class Obo:
             )
 
         if not self._synonyms_path.exists() or force:
-            logger.info('[%s] caching synonyms', self.ontology)
+            logger.info('[%s] caching synonyms to %s', self.ontology, self._synonyms_path)
             write_multimap_tsv(
                 path=self._synonyms_path,
                 header=[f'{self.ontology}_id', 'synonym'],
@@ -473,21 +473,21 @@ class Obo:
             )
 
         if not self._alts_path.exists() or force:
-            logger.info('[%s] caching alts', self.ontology)
+            logger.info('[%s] caching alts to %s', self.ontology, self._alts_path)
             write_multimap_tsv(
                 path=self._alts_path,
                 header=[f'{self.ontology}_id', 'alt_id'],
                 rv=self.get_id_alts_mapping(),
             )
 
-        for path, get_df in [
-            (self._xrefs_path, self.get_xrefs_df),
-            (self._relations_path, self.get_relations_df),
-            (self._properties_path, self.get_properties_df),
+        for label, path, get_df in [
+            ('xrefs', self._xrefs_path, self.get_xrefs_df),
+            ('relations', self._relations_path, self.get_relations_df),
+            ('properties', self._properties_path, self.get_properties_df),
         ]:
             if path.exists() and not force:
                 continue
-            logger.info('[%s] caching %s', self.ontology, path)
+            logger.info('[%s] caching %s to %s', self.ontology, label, path)
             df: pd.DataFrame = get_df(use_tqdm=use_tqdm)
             df.sort_values(list(df.columns), inplace=True)
             df.to_csv(path, sep='\t', index=False)
@@ -697,20 +697,17 @@ class Obo:
             )
             for prefix, identifier, data in _iter_obo_graph(graph=graph)
         }
-        logger.info('[%s] extracted %d references', ontology, len(references))
 
         #: CURIEs to typedefs
         typedefs: Mapping[Tuple[str, str], TypeDef] = {
             (typedef.prefix, typedef.identifier): typedef
             for typedef in iterate_graph_typedefs(graph, ontology)
         }
-        logger.info('[%s] extracted %d typedefs', ontology, len(typedefs))
 
         synonym_typedefs: Mapping[str, SynonymTypeDef] = {
             synonym_typedef.id: synonym_typedef
             for synonym_typedef in iterate_graph_synonym_typedefs(graph)
         }
-        logger.info('[%s] extracted %d synonym typedefs', ontology, len(synonym_typedefs))
 
         missing_typedefs = set()
         terms = []
@@ -788,12 +785,11 @@ class Obo:
                 term.append_property(prop, value)
             terms.append(term)
 
-        logger.info('[%s] extracted %d terms', ontology, len(terms))
-        logger.info('[%s] extracted %d alt ids', ontology, n_alt_ids)
-        logger.info('[%s] extracted %d parents', ontology, n_parents)
-        logger.info('[%s] extracted %d synonyms', ontology, n_synonyms)
-        logger.info('[%s] extracted %d relations', ontology, n_relations)
-        logger.info('[%s] extracted %d properties', ontology, n_properties)
+        logger.info(
+            f'[{ontology}] got {len(references)} references, {len(typedefs)} typedefs, {len(terms)} terms,'
+            f' {n_alt_ids} alt ids, {n_parents} parents, {n_synonyms} synonyms,'
+            f' {n_relations} relations, and {n_properties} properties',
+        )
 
         return Obo(
             ontology=ontology,
