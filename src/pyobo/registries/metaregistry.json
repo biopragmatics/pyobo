@@ -43,7 +43,8 @@
       "Follicular:fluid",
       "dph:GOC",
       "gOC:dph",
-      "gOC:dph"
+      "gOC:dph",
+      "ftp://ftp.ncbi.nih.gov/snp/specs/docsum_3.1.xsd"
     ],
     "resource_prefix": {
       "efo": [
@@ -119,7 +120,9 @@
       "GIOC:",
       "MONDORULE:",
       "MTH:",
-      "FBC:"
+      "FBC:",
+      "RSC:",
+      "http:www"
     ],
     "suffix": [
       ".jpg",
@@ -137,7 +140,8 @@
       "LIPIDMAPSLMFA01030141": "LIPIDMAPS:LMFA01030141",
       "LIPIDMAPSLMFA01030152": "LIPIDMAPS:LMFA01030152",
       "SNOMEDCT274897005": "SNOMEDCT:274897005",
-      "GIOC:vw": "GOC:vw"
+      "GIOC:vw": "GOC:vw",
+      ":has_start_point": "has_start_point"
     },
     "prefix": {
       "ATCC number: ": "ATCC:",
@@ -181,7 +185,9 @@
       "Wikipeda:": "wikipedia:",
       "has:": "has_",
       "NSH:D0": "MESH:D0",
-      "MONDOLEX:": "MONDO:"
+      "MONDOLEX:": "MONDO:",
+      "unirot:": "uniprot:",
+      "http:www": "http://www"
     }
   },
   "wikidata_property_types": [
