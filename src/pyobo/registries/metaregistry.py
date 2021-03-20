@@ -88,6 +88,11 @@ def get_remappings_full() -> Mapping[str, str]:
     return _get_curated_registry()['remappings']['full']
 
 
+def remap_full(x: str) -> str:
+    """Remap the string if possible otherwise return it."""
+    return get_remappings_full().get(x, x)
+
+
 @lru_cache(maxsize=1)
 def get_remappings_prefix() -> Mapping[str, str]:
     """Get the remappings for xrefs based on the prefix.

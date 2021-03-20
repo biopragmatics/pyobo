@@ -10,7 +10,7 @@ from typing import Optional, Tuple, Union
 import bioregistry
 
 from .registries import (
-    get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist, get_xrefs_suffix_blacklist,
+    get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist, get_xrefs_suffix_blacklist, remap_full,
 )
 
 __all__ = [
@@ -90,6 +90,10 @@ def normalize_curie(curie: str, *, strict: bool = True) -> Union[Tuple[str, str]
     for suffix in get_xrefs_suffix_blacklist():
         if curie.endswith(suffix):
             return None, None
+
+    # Remap the curie with the full list
+    curie = remap_full(curie)
+
     # Remap node's prefix (if necessary)
     for old_prefix, new_prefix in get_remappings_prefix().items():
         if curie.startswith(old_prefix):
