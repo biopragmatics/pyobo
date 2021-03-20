@@ -713,7 +713,7 @@ class Obo:
 
         missing_typedefs = set()
         terms = []
-        n_alt_ids, n_parents, n_synonyms = 0, 0, 0
+        n_alt_ids, n_parents, n_synonyms, n_relations, n_properties = 0, 0, 0, 0, 0
         for prefix, identifier, data in _iter_obo_graph(graph=graph):
             if prefix != ontology or not data:
                 continue
@@ -780,8 +780,10 @@ class Obo:
                         logger.debug('[%s] available typedefs: %s', ontology, set(typedefs))
                         logger.debug('[%s] available default typedefs: %s', ontology, set(default_typedefs))
                     continue
+                n_relations += 1
                 term.append_relationship(typedef, reference)
             for prop, value in iterate_node_properties(data):
+                n_properties += 1
                 term.append_property(prop, value)
             terms.append(term)
 
@@ -789,6 +791,8 @@ class Obo:
         logger.info('[%s] extracted %d alt ids', ontology, n_alt_ids)
         logger.info('[%s] extracted %d parents', ontology, n_parents)
         logger.info('[%s] extracted %d synonyms', ontology, n_synonyms)
+        logger.info('[%s] extracted %d relations', ontology, n_relations)
+        logger.info('[%s] extracted %d properties', ontology, n_properties)
 
         return Obo(
             ontology=ontology,
