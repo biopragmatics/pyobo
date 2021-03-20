@@ -846,6 +846,10 @@ class Obo:
             for synonym in term.synonyms:
                 yield term, synonym
 
+    #########
+    # PROPS #
+    #########
+
     def iterate_properties(self, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, str, str]]:
         """Iterate over tuples of terms, properties, and their values."""
         # TODO if property_prefix is set, try removing that as a prefix from all prop strings.
@@ -893,6 +897,10 @@ class Obo:
             (term.identifier, value)
             for term, value in self.iterate_filtered_properties(prop, use_tqdm=use_tqdm)
         )
+
+    #############
+    # RELATIONS #
+    #############
 
     def iterate_relations(self, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, TypeDef, Reference]]:
         """Iterate over tuples of terms, relations, and their targets."""
@@ -994,6 +1002,23 @@ class Obo:
             )
         )
 
+    def get_id_multirelations_mapping(
+        self,
+        typedef: TypeDef,
+        *,
+        use_tqdm: bool = False,
+    ) -> Mapping[str, List[Reference]]:
+        """Get a mapping from identifiers to a list of all references for the given relation."""
+        return multidict(
+            (term.identifier, reference)
+            for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting {typedef.curie}')
+            for reference in term.get_relationships(typedef)
+        )
+
+    #########
+    # XREFS #
+    #########
+
     def iterate_filtered_xrefs(self, prefix: str, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, Reference]]:
         """Iterate over xrefs to a given prefix."""
         for term in self._iter_terms(use_tqdm=use_tqdm):
@@ -1024,19 +1049,6 @@ class Obo:
         return multidict(
             (term.identifier, xref.identifier)
             for term, xref in self.iterate_filtered_xrefs(prefix, use_tqdm=use_tqdm)
-        )
-
-    def get_id_multirelations_mapping(
-        self,
-        typedef: TypeDef,
-        *,
-        use_tqdm: bool = False,
-    ) -> Mapping[str, List[Reference]]:
-        """Get a mapping from identifiers to a list of all references for the given relation."""
-        return multidict(
-            (term.identifier, reference)
-            for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting {typedef.curie}')
-            for reference in term.get_relationships(typedef)
         )
 
     def get_id_synonyms_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
