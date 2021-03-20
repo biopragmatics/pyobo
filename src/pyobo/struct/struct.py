@@ -15,6 +15,7 @@ from typing import Any, Callable, Collection, Dict, Iterable, List, Mapping, Opt
 
 import networkx as nx
 import pandas as pd
+from more_itertools import pairwise
 from networkx.utils import open_file
 from tqdm import tqdm
 
@@ -1172,8 +1173,8 @@ def _extract_definition(s: str, strict: bool = False) -> Tuple[str, List[Referen
     """Extract the definitions."""
     if not s.startswith('"'):
         raise ValueError('definition does not start with a quote')
-    definition, rest = s.lstrip('"').split('"', 1)
-    rest = rest.strip()
+
+    definition, rest = _quote_split(s)
 
     if not rest.startswith('[') or not rest.endswith(']'):
         logger.warning('problem with synonym: %s', s)
@@ -1183,6 +1184,19 @@ def _extract_definition(s: str, strict: bool = False) -> Tuple[str, List[Referen
     return definition, provenance
 
 
+def _get_first_nonquoted(s):
+    for i, (a, b) in enumerate(pairwise(s), start=1):
+        if b == '"' and a != "\\":
+            return i
+    raise ValueError
+
+
+def _quote_split(s):
+    s = s.lstrip('"')
+    i = _get_first_nonquoted(s)
+    return s[:i].strip().replace('\\"', '"'), s[i + 1:].strip()
+
+
 def _extract_synonym(
     s: str,
     synonym_typedefs: Mapping[str, SynonymTypeDef],
@@ -1190,11 +1204,8 @@ def _extract_synonym(
     strict: bool = True,
 ) -> Optional[Synonym]:
     # TODO check if the synonym is written like a CURIE... it shouldn't but I've seen it happen
-
-    s = s.lstrip('"')
-
     try:
-        name, rest = [x.strip() for x in s.split('"', 1)]
+        name, rest = _quote_split(s)
     except ValueError:
         logger.warning('invalid synonym: %s', s)
         return

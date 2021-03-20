@@ -59,6 +59,13 @@ class TestParseObonet(unittest.TestCase):
                 self.assertEqual(expected_text, actual_text)
                 self.assertEqual(expected_references, actual_references)
 
+    def test_extract_definition_with_escapes(self):
+        expected_text = '''The canonical 3' splice site has the sequence "AG".'''
+        s = '''"The canonical 3' splice site has the sequence \\"AG\\"." [PMID:1234]'''
+        actual_text, actual_references = _extract_definition(s, strict=True)
+        self.assertEqual(expected_text, actual_text)
+        self.assertEqual([Reference('pubmed', '1234')], actual_references)
+
     def test_extract_synonym(self):
         """Test extracting synonym strings."""
         iupac_name = SynonymTypeDef(id='IUPAC_NAME', name='IUPAC NAME')
