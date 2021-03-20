@@ -3,7 +3,7 @@
 """Data structures for OBO."""
 
 from dataclasses import dataclass, field
-from typing import Mapping, Optional
+from typing import Mapping, Optional, Tuple
 
 from .registry import Registry, miriam
 from .utils import obo_escape
@@ -37,6 +37,11 @@ class Reference:
     def curie(self) -> str:  # noqa: D401
         """The CURIE for this reference."""
         return f'{self.prefix}:{self.identifier}'
+
+    @property
+    def pair(self) -> Tuple[str, str]:  # noqa: D401
+        """The pair of namespace/identifier."""
+        return self.prefix, self.identifier
 
     @staticmethod
     def from_curie(curie: str, name: Optional[str] = None, *, strict: bool = True) -> Optional['Reference']:
@@ -108,3 +113,8 @@ class Referenced:
     def curie(self) -> str:  # noqa: D401
         """The CURIE for this typedef."""
         return self.reference.curie
+
+    @property
+    def pair(self) -> Tuple[str, str]:  # noqa: D401
+        """The pair of namespace/identifier."""
+        return self.reference.pair
