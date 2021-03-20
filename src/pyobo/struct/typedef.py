@@ -77,6 +77,17 @@ class TypeDef(Referenced):
         if self.is_symmetric is not None:
             yield f'is_symmetric: {"true" if self.is_symmetric else "false"}'
 
+    @classmethod
+    def from_triple(cls, prefix: str, identifier: str, name: Optional[str] = None) -> 'TypeDef':
+        """Create a typedef from a reference."""
+        return cls(reference=Reference(prefix=prefix, identifier=identifier, name=name))
+
+    @classmethod
+    def from_curie(cls, curie: str, name: Optional[str] = None) -> 'TypeDef':
+        """Create a TypeDef directly from a CURIE and optional name."""
+        prefix, identifier = normalize_curie(curie)
+        return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
+
 
 RelationHint = Union[Reference, TypeDef, Tuple[str, str], str]
 
@@ -129,6 +140,7 @@ subclass = TypeDef(
     inverse=Reference.default(identifier='is_a', name='is a'),
 )
 
+develops_from = TypeDef.from_triple(prefix='ro', identifier='0002202', name='develops from')
 orthologous = TypeDef(
     reference=Reference(prefix='ro', identifier='HOM0000017', name='in orthology relationship with'),
     is_symmetric=True,
@@ -175,6 +187,8 @@ gene_product_is_a = TypeDef(
 example_of_usage = Reference(prefix='iao', identifier='0000112', name='example of usage')
 alternative_term = Reference(prefix='iao', identifier='0000118', name='alternative term')
 editor_note = Reference(prefix='iao', identifier='0000116', name='editor note')
+
+is_immediately_transformed_from = TypeDef.from_curie('sio:000658', name='is immediately transformed from')
 
 """ChEBI"""
 
