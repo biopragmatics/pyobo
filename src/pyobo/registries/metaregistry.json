@@ -34,7 +34,6 @@
       "DDB:pf",
       "TS:0",
       "CTD:curators",
-      "MTH:217",
       "IEDB:RV",
       "Tail:fat",
       "Pituitary:gland",
@@ -117,7 +116,9 @@
       "IUPHAR:GPCRListForward?",
       "GOC:",
       "goc:",
-      "GIOC:"
+      "GIOC:",
+      "MONDORULE:",
+      "MTH:"
     ],
     "suffix": [
       ".jpg",
@@ -176,7 +177,10 @@
       "url:https\\://www.ncbi.nlm.nih.gov/pubmed/": "pubmed:",
       "url:https\\://ghr.nlm.nih.gov/condition/": "ghr:",
       "NIF_Subcellular:FMA_": "FMA:",
-      "Wikipeda:": "wikipedia:"
+      "Wikipeda:": "wikipedia:",
+      "has:": "has_",
+      "NSH:D0": "MESH:D0",
+      "MONDOLEX:": "MONDO:"
     }
   },
   "wikidata_property_types": [
