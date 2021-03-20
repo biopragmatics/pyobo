@@ -1,0 +1,684 @@
+bfo	0000002	continuant
+bfo	0000003	occurrent
+bfo	0000004	independent continuant
+bfo	0000005	obsolete dependent continuant
+bfo	0000006	spatial region
+bfo	0000015	process
+bfo	0000016	disposition
+bfo	0000017	realizable entity
+bfo	0000019	quality
+bfo	0000020	specifically dependent continuant
+bfo	0000023	role
+bfo	0000031	generically dependent continuant
+bfo	0000034	function
+bfo	0000040	material entity
+bfo	0000050	part of
+bfo	0000051	has part
+bfo	0000054	realized in
+bfo	0000055	realizes
+bfo	0000060	obsolete preceded by
+bfo	0000062	preceded by
+bfo	0000063	precedes
+bfo	0000066	occurs in
+bfo	0000067	contains process
+bfo	0000141	immaterial entity
+ro	0000052	inheres in
+ro	0000053	bearer of
+ro	0000056	participates in
+ro	0000057	has participant
+ro	0000058	is concretized as
+ro	0000059	concretizes
+ro	0000079	function of
+ro	0000080	quality of
+ro	0000081	role of
+ro	0000085	has function
+ro	0000086	has quality
+ro	0000087	has role
+ro	0000091	has disposition
+ro	0000092	disposition of
+ro	0000300	obsolete in neural circuit with
+ro	0000301	obsolete upstream in neural circuit with
+ro	0000302	obsolete downstream in neural circuit with
+ro	0001000	derives from
+ro	0001001	derives into
+ro	0001015	location of
+ro	0001018	contained in
+ro	0001019	contains
+ro	0001020	is allergic trigger for
+ro	0001021	is autoimmune trigger for
+ro	0001022	has allergic trigger
+ro	0001023	has autoimmune trigger
+ro	0001025	located in
+ro	0001900	temporal interpretation
+ro	0001901	axiom holds for all times
+ro	0001902	relation has no temporal argument
+ro	0002000	2D boundary of
+ro	0002001	aligned with
+ro	0002002	has 2D boundary
+ro	0002003	electrically_synapsed_to
+ro	0002004	tracheates
+ro	0002005	innervated_by
+ro	0002006	has synaptic terminal of
+ro	0002007	bounding layer of
+ro	0002008	coincident with
+ro	0002009	cell expresses
+ro	0002010	regulates in other organism
+ro	0002011	regulates transport of
+ro	0002012	occurent part of
+ro	0002013	has regulatory component activity
+ro	0002014	has negative regulatory component activity
+ro	0002015	has positive regulatory component activity
+ro	0002016	has necessary component activity
+ro	0002017	has component activity
+ro	0002018	has component process
+ro	0002019	has ligand
+ro	0002020	transports
+ro	0002021	occurs across
+ro	0002022	directly regulated by
+ro	0002023	directly negatively regulated by
+ro	0002024	directly positively regulated by
+ro	0002025	has effector activity
+ro	0002026	in register with
+ro	0002029	has increased age-specific mortality rate
+ro	0002081	before or simultaneous with
+ro	0002082	simultaneous with
+ro	0002083	before
+ro	0002084	during which ends
+ro	0002085	encompasses
+ro	0002086	ends after
+ro	0002087	immediately preceded by
+ro	0002088	during which starts
+ro	0002089	starts before
+ro	0002090	immediately precedes
+ro	0002091	starts during
+ro	0002092	happens during
+ro	0002093	ends during
+ro	0002100	has soma location
+ro	0002101	fasciculates with
+ro	0002102	axon synapses in
+ro	0002103	synapsed by
+ro	0002104	has plasma membrane part
+ro	0002105	synapsed_via_type_Ib_bouton_to
+ro	0002106	synapsed_via_type_Is_bouton_to
+ro	0002107	synapsed_via_type_II_bouton_to
+ro	0002108	synapsed_by_via_type_II_bouton
+ro	0002109	synapsed_by_via_type_Ib_bouton
+ro	0002110	has postsynaptic terminal in
+ro	0002111	releases neurotransmitter
+ro	0002112	synapsed_by_via_type_Is_bouton
+ro	0002113	has presynaptic terminal in
+ro	0002114	synapsed_via_type_III_bouton_to
+ro	0002115	synapsed_by_via_type_III_bouton
+ro	0002120	synapsed to
+ro	0002121	dendrite synapsed in
+ro	0002130	has synaptic terminal in
+ro	0002131	overlaps
+ro	0002132	has fasciculating neuron projection
+ro	0002134	innervates
+ro	0002150	continuous with
+ro	0002151	partially overlaps
+ro	0002156	derived by descent from
+ro	0002157	has derived by descendant
+ro	0002158	shares ancestor with
+ro	0002159	serially homologous to
+ro	0002160	only in taxon
+ro	0002161	never in taxon
+ro	0002162	in taxon
+ro	0002163	spatially disjoint from
+ro	0002170	connected to
+ro	0002171	mutually spatially disjoint with
+ro	0002172	taxonomic class assertion
+ro	0002173	ambiguous for taxon
+ro	0002174	dubious for taxon
+ro	0002175	present in taxon
+ro	0002176	connects
+ro	0002177	attached to part of
+ro	0002178	supplies
+ro	0002179	drains
+ro	0002180	has component
+ro	0002200	has phenotype
+ro	0002201	phenotype of
+ro	0002202	develops from
+ro	0002203	develops into
+ro	0002204	gene product of
+ro	0002205	has gene product
+ro	0002206	expressed in
+ro	0002207	directly develops from
+ro	0002208	parasitoid of
+ro	0002209	has parasitoid
+ro	0002210	directly develops into
+ro	0002211	regulates
+ro	0002212	negatively regulates
+ro	0002213	positively regulates
+ro	0002214	has prototype
+ro	0002215	capable of
+ro	0002216	capable of part of
+ro	0002217	obsolete actively participates in
+ro	0002218	obsolete has active participant
+ro	0002219	surrounded by
+ro	0002220	adjacent to
+ro	0002221	surrounds
+ro	0002222	temporally related to
+ro	0002223	starts
+ro	0002224	starts with
+ro	0002225	develops from part of
+ro	0002226	develops in
+ro	0002227	obligate parasite of
+ro	0002228	facultative parasite of
+ro	0002229	ends
+ro	0002230	ends with
+ro	0002231	has start location
+ro	0002232	has end location
+ro	0002233	has input
+ro	0002234	has output
+ro	0002235	stem parasite of
+ro	0002236	root parasite of
+ro	0002237	hemiparasite of
+ro	0002240	has exposure receptor
+ro	0002241	has exposure stressor
+ro	0002242	has exposure route
+ro	0002243	has exposure transport path
+ro	0002244	related via exposure to
+ro	0002245	over-expressed in
+ro	0002246	under-expressed in
+ro	0002248	has active ingredient
+ro	0002249	active ingredient in
+ro	0002252	connecting branch of
+ro	0002253	has connecting branch
+ro	0002254	has developmental contribution from
+ro	0002255	developmentally contributes to
+ro	0002256	developmentally induced by
+ro	0002257	developmentally induces
+ro	0002258	developmentally preceded by
+ro	0002259	defined by inverse
+ro	0002260	has biological role
+ro	0002261	has application role
+ro	0002262	has chemical role
+ro	0002263	acts upstream of
+ro	0002264	acts upstream of or within
+ro	0002285	developmentally replaces
+ro	0002286	developmentally succeeded by
+ro	0002287	part of developmental precursor of
+ro	0002291	ubiquitously expressed in
+ro	0002292	expresses
+ro	0002293	ubiquitously expresses
+ro	0002295	results in developmental progression of
+ro	0002296	results in development of
+ro	0002297	results in formation of
+ro	0002298	results in morphogenesis of
+ro	0002299	results in maturation of
+ro	0002300	results in disappearance of
+ro	0002301	results in developmental regression of
+ro	0002302	is treated by substance
+ro	0002303	has habitat
+ro	0002304	causally upstream of, positive effect
+ro	0002305	causally upstream of, negative effect
+ro	0002309	has exposure stimulus
+ro	0002310	exposure event or process
+ro	0002312	evolutionary variant of
+ro	0002313	transports or maintains localization of
+ro	0002314	inheres in part of
+ro	0002315	results in acquisition of features of
+ro	0002320	evolutionarily related to
+ro	0002321	ecologically related to
+ro	0002322	confers advantage in
+ro	0002323	mereotopologically related to
+ro	0002324	developmentally related to
+ro	0002325	colocalizes with
+ro	0002326	contributes to
+ro	0002327	enables
+ro	0002328	functionally related to
+ro	0002329	part of structure that is capable of
+ro	0002330	genomically related to
+ro	0002331	involved in
+ro	0002332	regulates levels of
+ro	0002333	enabled by
+ro	0002334	regulated by
+ro	0002335	negatively regulated by
+ro	0002336	positively regulated by
+ro	0002337	related via localization to
+ro	0002338	has target start location
+ro	0002339	has target end location
+ro	0002340	imports
+ro	0002341	results in transport along
+ro	0002342	results in transport across
+ro	0002343	results in growth of
+ro	0002344	results in transport to from or in
+ro	0002345	exports
+ro	0002348	results in commitment to
+ro	0002349	results in determination of
+ro	0002350	member of
+ro	0002351	has member
+ro	0002352	input of
+ro	0002353	output of
+ro	0002354	formed as result of
+ro	0002355	results in structural organization of
+ro	0002356	results in specification of
+ro	0002357	results in developmental induction of
+ro	0002360	has dendrite location
+ro	0002371	attached to
+ro	0002372	has muscle origin
+ro	0002373	has muscle insertion
+ro	0002374	derived from ancestral fusion of
+ro	0002375	in branching relationship with
+ro	0002376	tributary of
+ro	0002377	distributary of
+ro	0002378	anabranch of
+ro	0002379	spatially coextensive with
+ro	0002380	branching part of
+ro	0002381	main stem of
+ro	0002382	proper distributary of
+ro	0002383	proper tributary of
+ro	0002384	has developmental potential involving
+ro	0002385	has potential to developmentally contribute to
+ro	0002386	has potential to developmentally induce
+ro	0002387	has potential to develop into
+ro	0002388	has potential to directly develop into
+ro	0002400	has direct input
+ro	0002401	obsolete has indirect input
+ro	0002402	obsolete has direct output
+ro	0002403	obsolete has indirect output
+ro	0002404	causally downstream of
+ro	0002405	immediately causally downstream of
+ro	0002406	directly activates
+ro	0002407	indirectly activates
+ro	0002408	directly inhibits
+ro	0002409	indirectly inhibits
+ro	0002410	causally related to
+ro	0002411	causally upstream of
+ro	0002412	immediately causally upstream of
+ro	0002413	directly provides input for
+ro	0002414	transitively provides input for
+ro	0002416	logical macro assertion
+ro	0002418	causally upstream of or within
+ro	0002419	annotation property cardinality
+ro	0002420	logical macro assertion on a class
+ro	0002421	logical macro assertion on a property
+ro	0002422	logical macro assertion on an object property
+ro	0002423	logical macro assertion on an annotation property
+ro	0002424	differs in
+ro	0002425	differs in attribute of
+ro	0002426	differs in attribute
+ro	0002427	causally downstream of or within
+ro	0002428	involved in regulation of
+ro	0002429	involved in positive regulation of
+ro	0002430	involved in negative regulation of
+ro	0002431	involved in or involved in regulation of
+ro	0002432	is active in
+ro	0002433	contributes to morphology of
+ro	0002434	interacts with
+ro	0002435	genetically interacts with
+ro	0002436	molecularly interacts with
+ro	0002437	biotically interacts with
+ro	0002438	trophically interacts with
+ro	0002439	preys on
+ro	0002440	symbiotically interacts with
+ro	0002441	commensually interacts with
+ro	0002442	mutualistically interacts with
+ro	0002443	interacts with via parasite-host interaction
+ro	0002444	parasite of
+ro	0002445	parasitized by
+ro	0002446	participates in a abiotic-biotic interaction with
+ro	0002447	phosphorylates
+ro	0002448	directly regulates activity of
+ro	0002449	directly negatively regulates activity of
+ro	0002450	directly positively regulates activity of
+ro	0002451	transmitted by
+ro	0002452	has symptom
+ro	0002453	host of
+ro	0002454	has host
+ro	0002455	pollinates
+ro	0002456	pollinated by
+ro	0002457	acquires nutrients from
+ro	0002458	preyed upon by
+ro	0002459	is vector for
+ro	0002460	has vector
+ro	0002461	partner in
+ro	0002462	subject participant in
+ro	0002463	target participant in
+ro	0002464	helper property (not for use in curation)
+ro	0002465	is symbiosis
+ro	0002466	is commensalism
+ro	0002467	is mutualism
+ro	0002468	is parasitism
+ro	0002469	provides nutrients for
+ro	0002470	eats
+ro	0002471	is eaten by
+ro	0002472	is evidence for
+ro	0002473	composed primarily of
+ro	0002474	dispositional interpretation
+ro	0002475	has no connections with
+ro	0002476	child nucleus of
+ro	0002477	child nucleus of in hermaphrodite
+ro	0002478	child nucleus of in male
+ro	0002479	has part that occurs in
+ro	0002480	ubiquitinates
+ro	0002481	is kinase activity
+ro	0002482	is ubiquitination
+ro	0002483	inherited annotation property
+ro	0002484	curator guidance link
+ro	0002485	receives input from
+ro	0002486	sends output to
+ro	0002487	relation between physical entity and a process or stage
+ro	0002488	existence starts during
+ro	0002489	existence starts with
+ro	0002490	existence overlaps
+ro	0002491	existence starts and ends during
+ro	0002492	existence ends during
+ro	0002493	existence ends with
+ro	0002494	transformation of
+ro	0002495	immediate transformation of
+ro	0002496	existence starts during or after
+ro	0002497	existence ends during or before
+ro	0002500	causal agent in process
+ro	0002501	causal relation between processes
+ro	0002502	depends on
+ro	0002503	towards
+ro	0002504	always present in taxon
+ro	0002505	has intermediate
+ro	0002506	causal relation between entities
+ro	0002507	determined by
+ro	0002508	determines
+ro	0002509	determined by part of
+ro	0002510	transcribed from
+ro	0002511	transcribed to
+ro	0002512	ribosomal translation of
+ro	0002513	ribosomally translates to
+ro	0002514	sequentially related to
+ro	0002515	sequentially adjacent to
+ro	0002516	has start sequence
+ro	0002517	is start sequence of
+ro	0002518	has end sequence
+ro	0002519	is end sequence of
+ro	0002520	is consecutive sequence of
+ro	0002521	is sequentially aligned with
+ro	0002522	bounds sequence of
+ro	0002523	is bound by sequence of
+ro	0002524	has subsequence
+ro	0002525	is subsequence of
+ro	0002526	overlaps sequence of
+ro	0002527	does not overlap sequence of
+ro	0002528	is upstream of sequence of
+ro	0002529	is downstream of sequence of
+ro	0002530	is immediately downstream of sequence of
+ro	0002531	is immediately upstream of sequence of
+ro	0002532	sequentially ordered entity
+ro	0002533	sequence atomic unit
+ro	0002534	sequence bearer
+ro	0002535	temporal logical macro assertion on a class
+ro	0002536	measurement property has unit
+ro	0002537	has start time value
+ro	0002538	has end time value
+ro	0002539	start, days post fertilization
+ro	0002540	end, days post fertilization
+ro	0002541	start, years post birth
+ro	0002542	end, years post birth
+ro	0002543	start, months post birth
+ro	0002544	end, months post birth
+ro	0002545	month of gestation
+ro	0002546	has developmental stage marker
+ro	0002547	start, days post coitum
+ro	0002548	end, days post coitum
+ro	0002549	start, weeks post birth
+ro	0002550	end, weeks post birth
+ro	0002551	has skeleton
+ro	0002552	results in ending of
+ro	0002553	hyperparasite of
+ro	0002554	hyperparasitized by
+ro	0002555	allelopath of
+ro	0002556	pathogen of
+ro	0002557	has pathogen
+ro	0002558	has evidence
+ro	0002559	causally influenced by
+ro	0002560	is asymmetric relational form of process class
+ro	0002561	is symmetric relational form of process class
+ro	0002562	is relational form of process class
+ro	0002563	interaction relation helper property
+ro	0002564	molecular interaction relation helper property
+ro	0002565	results in movement of
+ro	0002566	causally influences
+ro	0002567	biomechanically related to
+ro	0002568	has muscle antagonist
+ro	0002569	has branching part
+ro	0002570	conduit for
+ro	0002571	lumen of
+ro	0002572	luminal space of
+ro	0002573	has modifier
+ro	0002574	participates in a biotic-biotic interaction with
+ro	0002575	is direct form of
+ro	0002576	skeleton of
+ro	0002577	system
+ro	0002578	directly regulates
+ro	0002579	is indirect form of
+ro	0002580	logical macro assertion on an axiom
+ro	0002581	is a defining property chain axiom
+ro	0002582	is a defining property chain axiom where second argument is reflexive
+ro	0002583	existence starts at end of
+ro	0002584	has part structure that is capable of
+ro	0002585	results in closure of
+ro	0002586	results in breakdown of
+ro	0002587	results in synthesis of
+ro	0002588	results in assembly of
+ro	0002589	results in catabolism of
+ro	0002590	results in disassembly of
+ro	0002591	results in remodeling of
+ro	0002592	results in organization of
+ro	0002593	existence ends at start of
+ro	0002594	is relational form of a class
+ro	0002595	causal relation between material entity and a process
+ro	0002596	capable of regulating
+ro	0002597	capable of negatively regulating
+ro	0002598	capable of positively regulating
+ro	0002599	capable of inhibiting or preventing pathological process
+ro	0002600	capable of upregulating or causing pathological process
+ro	0002601	logical macro assertion involving identity
+ro	0002602	in approximate one to one relationship with
+ro	0002603	is approximately equivalent to
+ro	0002604	is opposite of
+ro	0002605	is indistinguishable from
+ro	0002606	is substance that treats
+ro	0002607	is marker for
+ro	0002608	process has causal agent
+ro	0002609	obsolete related via dependence to
+ro	0002610	correlated with
+ro	0002611	evidential logical macro assertion on an axiom
+ro	0002612	axiom has evidence
+ro	0002613	axiom contradicted by evidence
+ro	0002614	is evidence with support from
+ro	0002615	has model
+ro	0002616	related via evidence or inference to
+ro	0002617	is representative IRI for equivalence set
+ro	0002618	visits
+ro	0002619	visited by
+ro	0002622	visits flowers of
+ro	0002623	has flowers visited by
+ro	0002624	lays eggs in
+ro	0002625	has eggs laid in by
+ro	0002626	kills
+ro	0002627	is killed by
+ro	0002629	directly positively regulates
+ro	0002630	directly negatively regulates
+ro	0002632	ectoparasite of
+ro	0002633	has ectoparasite
+ro	0002634	endoparasite of
+ro	0002635	has endoparasite
+ro	0002636	mesoparasite of
+ro	0002637	has mesoparasite
+ro	0002638	intercellular endoparasite of
+ro	0002639	has intercellular endoparasite
+ro	0002640	intracellular endoparasite of
+ro	0002641	has intracellular endoparasite
+ro	0002801	co-roosts with
+ro	0003000	produces
+ro	0003001	produced by
+ro	0003002	represses expression of
+ro	0003003	increases expression of
+ro	0003301	has role in modeling
+ro	0003302	causes or contributes to condition
+ro	0003303	causes condition
+ro	0003304	contributes to condition
+ro	0003305	contributes to severity of condition
+ro	0003306	contributes to frequency of condition
+ro	0003307	ameliorates condition
+ro	0003308	correlated with condition
+ro	0003309	exacerbates condition
+ro	0003310	condition ameliorated by
+ro	0003311	condition exacerbated by
+ro	0004000	condition has genetic basis in
+ro	0004001	has material basis in gain of function germline mutation in
+ro	0004002	has material basis in loss of function germline mutation in
+ro	0004003	has material basis in germline mutation in
+ro	0004004	has material basis in somatic mutation in
+ro	0004005	has major susceptibility factor
+ro	0004006	has partial material basis in germline mutation in
+ro	0004007	has primary input or output
+ro	0004008	has primary output
+ro	0004009	has primary input
+ro	0004010	is genetic basis for condition
+ro	0004011	is causal gain of function germline mutation of in
+ro	0004012	is causal loss of function germline mutation of in
+ro	0004013	is causal germline mutation in
+ro	0004014	is causal somatic mutation in
+ro	0004015	is causal susceptibility factor for
+ro	0004016	is causal germline mutation partially giving rise to
+ro	0004017	realizable has basis in
+ro	0004018	is basis for realizable
+ro	0004019	disease has basis in
+ro	0004020	disease has basis in dysfunction of
+ro	0004021	disease has basis in disruption of
+ro	0004022	disease has basis in feature
+ro	0004023	causal relationship with disease as subject
+ro	0004024	disease causes disruption of
+ro	0004025	disease causes dysfunction of
+ro	0004026	disease has location
+ro	0004027	disease has inflammation site
+ro	0004028	realized in response to stimulus
+ro	0004029	disease has feature
+ro	0004030	disease arises from structure
+ro	0004031	enables subfunction
+ro	0004032	acts upstream of or within, positive effect
+ro	0004033	acts upstream of or within, negative effect
+ro	0004034	acts upstream of, positive effect
+ro	0004035	acts upstream of, negative effect
+ro	0004046	causally upstream of or within, negative effect
+ro	0004047	causally upstream of or within, positive effect
+ro	0004048	is directional form of
+ro	0004049	is positive form of
+ro	0004050	is negative form of
+ro	0008501	epiphyte of
+ro	0008502	has epiphyte
+ro	0008503	kleptoparasite of
+ro	0008504	kleptoparasitized by
+ro	0008505	creates habitat for
+ro	0008506	ecologically co-occurs with
+ro	0008507	lays eggs on
+ro	0008508	has eggs laid on by
+ro	0009001	has substance added
+ro	0009002	has substance removed
+ro	0009003	immersed in
+ro	0009004	has consumer
+ro	0009005	has primary substance added
+ro	0009501	realized in response to
+ro	0010001	generically depends on
+ro	0010002	is carrier of
+ro	0011002	regulates activity of
+ro	0011003	regulates quantity of
+ro	0011004	indirectly regulates activity of
+ro	0011007	decreases by repression quantity of
+ro	0011008	increases by expression quantity of
+ro	0011009	directly positively regulates quantity of
+ro	0011010	directly negatively regulates quantity of
+ro	0011013	indirectly positively regulates activity of
+ro	0011014	destabilizes quantity of
+ro	0011015	stabilizes quantity of
+ro	0011016	indirectly negatively regulates activity of
+ro	0011021	directly regulates quantity of
+ro	0011022	indirectly regulates quantity of
+ro	0011023	indirectly negatively regulates quantity of
+ro	0011024	indirectly positively regulates quantity of
+ro	0012000	has small molecule regulator
+ro	0012001	has small molecule activator
+ro	0012002	has small molecule inhibitor
+ro	0012003	acts on population of
+ro	0012004	is small molecule regulator
+ro	0012005	is small molecule activator
+ro	0012006	is small molecule inhibitor
+ro	0012007	results in adhesion of
+ro	0012008	results in fusion of
+ro	0013001	has synaptic IO in
+ro	0013002	receives synaptic input in
+ro	0013003	sends synaptic output to
+ro	0013004	has synaptic IO throughout
+ro	0013005	receives synaptic input throughout
+ro	0013006	sends synaptic output throughout
+ro	0013007	has sensory dendrite in
+ro	0014001	disease has infectious agent
+ro	0040035	disease relationship
+ro	0040036	has anatomical participant
+ro	0040042	is homeomorphic for
+ro	HOM0000000	in similarity relationship with
+ro	HOM0000001	in homology relationship with
+ro	HOM0000002	in homoplasy relationship with
+ro	HOM0000003	in homocracy relationship with
+ro	HOM0000004	in convergence relationship with
+ro	HOM0000005	in parallelism relationship with
+ro	HOM0000006	in structural homology relationship with
+ro	HOM0000007	in historical homology relationship with
+ro	HOM0000008	in biological homology relationship with
+ro	HOM0000009	in reversal relationship with
+ro	HOM0000010	in syntenic homology relationship with
+ro	HOM0000011	in paralogy relationship with
+ro	HOM0000012	in syntenic paralogy relationship with
+ro	HOM0000013	in syntenic orthology relationship with
+ro	HOM0000014	in partial homology relationship with
+ro	HOM0000015	in protein structural homology relationship with
+ro	HOM0000016	in non functional homology relationship with
+ro	HOM0000017	in orthology relationship with
+ro	HOM0000018	in xenology relationship with
+ro	HOM0000019	in 1 to 1 homology relationship with
+ro	HOM0000020	in 1 to 1 orthology relationship with
+ro	HOM0000022	in ohnology relationship with
+ro	HOM0000023	in in-paralogy relationship with
+ro	HOM0000024	in out-paralogy relationship with
+ro	HOM0000025	in pro-orthology relationship with
+ro	HOM0000026	in semi-orthology relationship with
+ro	HOM0000027	in serial homology relationship with
+ro	HOM0000028	in heterochronous homology relationship with
+ro	HOM0000029	in paedomorphorsis relationship with
+ro	HOM0000030	in peramorphosis relationship with
+ro	HOM0000031	in progenesis relationship with
+ro	HOM0000032	in neoteny relationship with
+ro	HOM0000033	in mimicry relationship with
+ro	HOM0000034	in 1 to many orthology relationship with
+ro	HOM0000036	in many to many homology relationship with
+ro	HOM0000037	in 1 to many homology relationship with
+ro	HOM0000042	in apomorphy relationship with
+ro	HOM0000043	in plesiomorphy relationship with
+ro	HOM0000044	in deep homology relationship with
+ro	HOM0000045	in hemiplasy relationship with
+ro	HOM0000046	in gametology relationship with
+ro	HOM0000047	in chromosomal homology relationship with
+ro	HOM0000048	in many to many orthology relationship with
+ro	HOM0000049	in within-species paralogy relationship with
+ro	HOM0000050	in between-species paralogy relationship with
+ro	HOM0000051	in postdisplacement relationship with
+ro	HOM0000052	in hypermorphosis relationship with
+ro	HOM0000053	in synology relationship with
+ro	HOM0000054	in isoorthology relationship with
+ro	HOM0000055	in tandem paralogy relationship with
+ro	HOM0000057	in latent homology relationship with
+ro	HOM0000058	in syngeny relationship with
+ro	HOM0000060	in apparent orthology relationship with
+ro	HOM0000061	in pseudoparalogy relationship with
+ro	HOM0000062	in equivalogy relationship with
+ro	HOM0000063	in interology relationship with
+ro	HOM0000065	in functional equivalence relationship with
+ro	HOM0000066	in iterative homology relationship with
+ro	HOM0000068	in paraxenology relationship with
+ro	HOM0000069	in plerology relationship with
+ro	HOM0000071	in homotopy relationship with
+ro	HOM0000072	in homeosis relationship with
+ro	HOM0000073	in homoeology relationship with
+ro	HOM0000074	in paramorphism relationship with
+ro	HOM0000075	in regulogy relationship with
+upheno	0001001	phenotype
