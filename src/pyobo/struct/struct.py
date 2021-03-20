@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 from .reference import Reference, Referenced
 from .typedef import (
-    RelationHint, TypeDef, default_typedefs, from_species, get_reference_tuple, has_part, is_a,
+    RelationHint, TypeDef, default_typedefs, develops_from, from_species, get_reference_tuple, has_part, is_a,
     orthologous, part_of,
 )
 from .utils import comma_separate
@@ -1300,6 +1300,13 @@ def iterate_node_alt_ids(data: Mapping[str, Any], *, strict: bool = True) -> Ite
             yield reference
 
 
+RELATION_REMAPPINGS = {
+    'part_of': part_of.pair,
+    'has_part': has_part.pair,
+    'develops_from': develops_from.pair,
+}
+
+
 def iterate_node_relationships(
     data: Mapping[str, Any],
     *,
@@ -1309,7 +1316,10 @@ def iterate_node_relationships(
     """Extract relationships from a :mod:`obonet` node's data."""
     for s in data.get('relationship', []):
         relation_curie, target_curie = s.split(' ')
-        relation_prefix, relation_identifier = normalize_curie(relation_curie)
+        if relation_curie in RELATION_REMAPPINGS:
+            relation_prefix, relation_identifier = RELATION_REMAPPINGS[relation_curie]
+        else:
+            relation_prefix, relation_identifier = normalize_curie(relation_curie)
         if relation_prefix is not None and relation_identifier is not None:
             relation = Reference(prefix=relation_prefix, identifier=relation_identifier)
         elif default_prefix is not None:
