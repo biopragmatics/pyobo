@@ -905,6 +905,10 @@ class Obo:
                 for reference in references:
                     yield term, typedef, reference
 
+    def _iter_relations_expanted(self, use_tqdm: bool = False) -> Iterable[Tuple[str, str, str, str, str, str]]:
+        for term, typedef, reference in self.iterate_relations(use_tqdm=use_tqdm):
+            yield term.identifier, typedef.prefix, typedef.identifier, reference.prefix, reference.identifier
+
     def iterate_filtered_relations(
         self,
         relation: RelationHint,
@@ -920,10 +924,7 @@ class Obo:
     def get_relations_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get all relations from the OBO."""
         return pd.DataFrame(
-            [
-                (term.identifier, typedef.prefix, typedef.identifier, reference.prefix, reference.identifier)
-                for term, typedef, reference in self.iterate_relations(use_tqdm=use_tqdm)
-            ],
+            list(self._iter_relations_expanted(use_tqdm=use_tqdm)),
             columns=[f'{self.ontology}_id', RELATION_PREFIX, RELATION_ID, TARGET_PREFIX, TARGET_ID],
         )
 
