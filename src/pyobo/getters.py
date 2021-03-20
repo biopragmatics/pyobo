@@ -244,7 +244,7 @@ def _is_xml(e) -> bool:
 
 
 def db_output_helper(
-    f: Callable[..., Iterable[Tuple[str, str, str]]],
+    f: Callable[..., Iterable[Tuple[str, ...]]],
     db_name: str,
     columns: Sequence[str],
     *,
@@ -283,15 +283,15 @@ def db_output_helper(
             print(*columns, sep='\t', file=gzipped_file)
             print(*columns, sep='\t', file=sample_file)
 
-            for (prefix, identifier, name), _ in zip(it, range(10)):
-                c[prefix] += 1
-                print(prefix, identifier, name, sep='\t', file=gzipped_file)
-                print(prefix, identifier, name, sep='\t', file=sample_file)
+            for row, _ in zip(it, range(10)):
+                c[row[0]] += 1
+                print(*row, sep='\t', file=gzipped_file)
+                print(*row, sep='\t', file=sample_file)
 
         # continue just in the gzipped one
-        for prefix, identifier, name in it:
-            c[prefix] += 1
-            print(prefix, identifier, name, sep='\t', file=gzipped_file)
+        for row in it:
+            c[row[0]] += 1
+            print(*row, sep='\t', file=gzipped_file)
 
     logger.info(f'writing {db_name} summary to {db_summary_path}')
     with open(db_summary_path, 'w') as file:

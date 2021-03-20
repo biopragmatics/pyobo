@@ -18,9 +18,9 @@ from tqdm import tqdm
 
 from .obo_xrefs import iterate_obo_xrefs
 from .sources import iter_xref_plugins
-from ..api import get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts
+from ..api import get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_relations_df
 from ..constants import DATABASE_DIRECTORY, PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
-from ..getters import SKIP, iter_helper
+from ..getters import SKIP, iter_helper, iter_helper_helper
 from ..sources import ncbigene, pubchem
 from ..utils.path import ensure_path
 
@@ -188,6 +188,16 @@ def _iter_synonyms(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, st
     for prefix, identifier, synonyms in iter_helper(get_id_synonyms_mapping, leave=leave, **kwargs):
         for synonym in synonyms:
             yield prefix, identifier, synonym
+
+
+def _iter_relations(
+    leave: bool = False,
+    strict: bool = True,
+    **kwargs,
+) -> Iterable[Tuple[str, str, str, str, str, str]]:
+    for prefix, df in iter_helper_helper(get_relations_df):
+        for t in df.values:
+            yield (prefix, *t)
 
 
 def bens_magical_ontology(use_tqdm: bool = True) -> nx.DiGraph:

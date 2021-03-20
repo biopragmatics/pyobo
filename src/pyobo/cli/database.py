@@ -12,7 +12,7 @@ from .utils import directory_option, force_option, no_strict_option, zenodo_opti
 from ..database.sql.cli import database_sql
 from ..getters import db_output_helper
 from ..xrefdb.xrefs_pipeline import (
-    _iter_alts, _iter_ooh_na_na, _iter_synonyms, get_xref_df, summarize_xref_df,
+    _iter_alts, _iter_ooh_na_na, _iter_relations, _iter_synonyms, get_xref_df, summarize_xref_df,
     summarize_xref_provenances_df,
 )
 
@@ -107,6 +107,30 @@ def synonyms(directory: str, zenodo: bool, force: bool, no_strict: bool):
     if zenodo:
         # see https://zenodo.org/record/4021482
         update_zenodo('4021482', paths)
+
+
+@main.command()
+@verbose_option
+@directory_option
+@zenodo_option
+@force_option
+@no_strict_option
+def relations(directory: str, zenodo: bool, force: bool, no_strict: bool):
+    """Make the relation dump."""
+    paths = db_output_helper(
+        _iter_relations,
+        'relations',
+        (
+            'source_prefix', 'source_identifier',
+            'relation_prefix', 'relation_identifier',
+            'target_prefix', 'target_identifier',
+        ),
+        directory=directory,
+        force=force,
+        strict=not no_strict,
+    )
+    if zenodo:
+        click.secho('no zenodo ID minted yet', fg='red')
 
 
 @main.command()
