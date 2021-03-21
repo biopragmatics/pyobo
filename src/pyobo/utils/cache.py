@@ -141,7 +141,7 @@ def cached_df(path: Union[str, Path], sep: str = '\t', force: bool = False, **kw
         @functools.wraps(f)
         def _wrapped() -> pd.DataFrame:
             if os.path.exists(path) and not force:
-                logger.info('loading cached dataframe from %s', path)
+                logger.debug('loading cached dataframe from %s', path)
                 return pd.read_csv(
                     path,
                     sep=sep,

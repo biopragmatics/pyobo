@@ -37,7 +37,10 @@ def get_relations_df(
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
-        logger.info('[%s] no cached relations found. getting from OBO loader', prefix)
+        if force:
+            logger.info('[%s] forcing reload for relations', prefix)
+        else:
+            logger.info('[%s] no cached relations found. getting from OBO loader', prefix)
         obo = get(prefix, force=force)
         return obo.get_relations_df(use_tqdm=use_tqdm)
 

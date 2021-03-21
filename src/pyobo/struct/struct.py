@@ -776,7 +776,6 @@ class Obo:
                         missing_typedefs.add((relation.prefix, relation.identifier))
                         logger.warning('[%s] has no typedef for %s', ontology, relation)
                         logger.debug('[%s] available typedefs: %s', ontology, set(typedefs))
-                        logger.debug('[%s] available default typedefs: %s', ontology, set(default_typedefs))
                     continue
                 n_relations += 1
                 term.append_relationship(typedef, reference)

@@ -41,7 +41,7 @@ def get_id_to_alts(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
     @cached_multidict(path=path, header=header, force=force)
     def _get_mapping() -> Mapping[str, List[str]]:
         if force:
-            tqdm.write(f'[{prefix}] forcing reload for alts')
+            logger.info(f'[{prefix}] forcing reload for alts')
         else:
             logger.info('[%s] no cached alts found. getting from OBO loader', prefix)
         obo = get(prefix, force=force)
