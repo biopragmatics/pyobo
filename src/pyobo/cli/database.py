@@ -9,6 +9,10 @@ from more_click import verbose_option
 from zenodo_client import update_zenodo
 
 from .utils import directory_option, force_option, no_strict_option, zenodo_option
+from ..constants import (
+    ALTS_DATA_RECORD, JAVERT_RECORD, OOH_NA_NA_RECORD, PROPERTIES_RECORD, RELATIONS_RECORD,
+    SYNONYMS_RECORD,
+)
 from ..database.sql.cli import database_sql
 from ..getters import db_output_helper
 from ..xrefdb.xrefs_pipeline import (
@@ -89,7 +93,7 @@ def alts(directory: str, zenodo: bool, force: bool, no_strict: bool):
     )
     if zenodo:
         # see https://zenodo.org/record/4021476
-        update_zenodo('4021476', paths)
+        update_zenodo(ALTS_DATA_RECORD, paths)
 
 
 @main.command()
@@ -108,7 +112,7 @@ def synonyms(directory: str, zenodo: bool, force: bool, no_strict: bool):
     )
     if zenodo:
         # see https://zenodo.org/record/4021482
-        update_zenodo('4021482', paths)
+        update_zenodo(SYNONYMS_RECORD, paths)
 
 
 @main.command()
@@ -133,7 +137,7 @@ def relations(directory: str, zenodo: bool, force: bool, no_strict: bool):
     )
     if zenodo:
         # see https://zenodo.org/record/4625167
-        update_zenodo('4625167', paths)
+        update_zenodo(RELATIONS_RECORD, paths)
 
 
 @main.command()
@@ -154,7 +158,7 @@ def properties(directory: str, zenodo: bool, force: bool, no_strict: bool):
     )
     if zenodo:
         # see https://zenodo.org/record/4625172
-        update_zenodo('4625172', paths)
+        update_zenodo(PROPERTIES_RECORD, paths)
 
 
 @main.command()
@@ -185,7 +189,7 @@ def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool):  # noqa: 
 
     if zenodo:
         # see https://zenodo.org/record/4021477
-        update_zenodo('4021477', [xrefs_path, sample_path, summary_path, summary_provenances_path])
+        update_zenodo(JAVERT_RECORD, [xrefs_path, sample_path, summary_path, summary_provenances_path])
 
 
 if __name__ == '__main__':

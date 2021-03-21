@@ -55,6 +55,12 @@ OOH_NA_NA_FILE = 'names.tsv.gz'
 SYNONYMS_RECORD = '4021482'
 SYNONYMS_FILE = 'synonyms.tsv.gz'
 
+RELATIONS_RECORD = '4625167'
+RELATIONS_FILE = 'relations.tsv.gz'
+
+PROPERTIES_RECORD = '4625172'
+PROPERTIES_FILE = 'properties.tsv.gz'
+
 ALTS_DATA_RECORD = '4021476'
 ALTS_FILE = 'alts.tsv.gz'
 
