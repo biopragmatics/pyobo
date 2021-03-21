@@ -14,5 +14,5 @@ from .properties import (  # noqa: F401
 )
 from .relations import get_filtered_relations_df, get_relations_df  # noqa: F401
 from .species import get_id_species_mapping, get_species  # noqa: F401
-from .typedefs import get_typedef_id_name_mapping  # noqa: F401
+from .typedefs import get_typedef_df  # noqa: F401
 from .xrefs import get_filtered_xrefs, get_xref, get_xrefs_df  # noqa: F401

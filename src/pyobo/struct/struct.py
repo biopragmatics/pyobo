@@ -413,6 +413,10 @@ class Obo:
         return self._cache('alt_ids.tsv')
 
     @property
+    def _typedefs_path(self) -> Path:
+        return self._cache('typedefs.tsv')
+
+    @property
     def _xrefs_path(self) -> Path:
         return self._cache('xrefs.tsv')
 
@@ -484,6 +488,7 @@ class Obo:
             ('xrefs', self._xrefs_path, self.get_xrefs_df),
             ('relations', self._relations_path, self.get_relations_df),
             ('properties', self._properties_path, self.get_properties_df),
+            ('typedefs', self._typedefs_path, self.get_typedef_df),
         ]:
             if path.exists() and not force:
                 continue
@@ -828,6 +833,14 @@ class Obo:
             if species:
                 rv[term.identifier] = species.identifier
         return rv
+
+    def get_typedef_df(self, use_tqdm: bool = False) -> pd.DataFrame:
+        """Get a typedef dataframe."""
+        rows = [
+            (typedef.prefix, typedef.identifier, typedef.name)
+            for typedef in tqdm(self.typedefs, disable=not use_tqdm)
+        ]
+        return pd.DataFrame(rows, columns=['prefix', 'identifier', 'name'])
 
     def get_typedef_id_name_mapping(self) -> Mapping[str, str]:
         """Get a mapping from identifiers to names."""

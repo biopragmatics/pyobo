@@ -16,8 +16,8 @@ from ..constants import (
 from ..database.sql.cli import database_sql
 from ..getters import db_output_helper
 from ..xrefdb.xrefs_pipeline import (
-    _iter_alts, _iter_ooh_na_na, _iter_properties, _iter_relations, _iter_synonyms, get_xref_df, summarize_xref_df,
-    summarize_xref_provenances_df,
+    _iter_alts, _iter_ooh_na_na, _iter_properties, _iter_relations, _iter_synonyms, _iter_typedefs, get_xref_df,
+    summarize_xref_df, summarize_xref_provenances_df,
 )
 
 __all__ = [
@@ -74,7 +74,28 @@ def names(directory: str, zenodo: bool, no_strict: bool, force: bool):
     )
     if zenodo:
         # see https://zenodo.org/record/4020486
-        update_zenodo('4020486', paths)
+        update_zenodo(OOH_NA_NA_RECORD, paths)
+
+
+@main.command()
+@verbose_option
+@directory_option
+@zenodo_option
+@force_option
+@no_strict_option
+def typedefs(directory: str, zenodo: bool, no_strict: bool, force: bool):
+    """Make the typedef prefix-identifier-name dump."""
+    paths = db_output_helper(
+        _iter_typedefs,
+        'typedefs',
+        ('prefix', 'typedef_prefix', 'identifier', 'name'),
+        strict=not no_strict,
+        force=force,
+        directory=directory,
+        skip_set={'ncbigene', 'kegg.pathway', 'kegg.gene', 'emapa'},
+    )
+    if zenodo:
+        pass
 
 
 @main.command()

@@ -11,7 +11,7 @@ from .utils import echo_df, force_option, prefix_argument
 from ..api import (
     get_ancestors, get_descendants, get_filtered_properties_df, get_filtered_relations_df, get_filtered_xrefs,
     get_hierarchy, get_id_definition_mapping, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_name,
-    get_name_by_curie, get_properties_df, get_relations_df, get_typedef_id_name_mapping, get_xrefs_df,
+    get_name_by_curie, get_properties_df, get_relations_df, get_typedef_df, get_xrefs_df,
 )
 from ..identifier_utils import normalize_curie
 
@@ -69,8 +69,8 @@ def definitions(prefix: str, force: bool):
 @force_option
 def typedefs(prefix: str, force: bool):
     """Page through the identifiers and names of typedefs in the given namespace."""
-    id_to_name = get_typedef_id_name_mapping(prefix, force=force)
-    _help_page_mapping(id_to_name)
+    df = get_typedef_df(prefix, force=force)
+    echo_df(df)
 
 
 def _help_page_mapping(id_to_name):
