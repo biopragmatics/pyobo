@@ -17,27 +17,32 @@ logger = logging.getLogger(__name__)
 
 PREFIX = 'complexportal'
 SPECIES = [
-    'arabidopsis_thaliana',
-    'bos_taurus',
-    'caenorhabditis_elegans',
-    'canis_familiaris',
-    'danio_rerio',
-    'drosophila_melanogaster',
-    'escherichia_coli',
-    'gallus_gallus',
-    'homo_sapiens',
-    'lymnaea_stagnalis',
-    'mus_musculus',
-    'oryctolagus_cuniculus',
-    'ovis_aries',
-    'pseudomonas_aeruginosa',
-    'rattus_norvegicus',
-    'saccharomyces_cerevisiae',
-    'schizosaccharomyces_pombe',
-    'sus_scrofa',
-    'torpedo_californica',
-    'torpedo_marmorata',
-    'xenopus_laevis',
+    '10090',
+    '10116',
+    '1235996',
+    '1263720',
+    '208964',
+    '2697049',
+    '284812',
+    '3702',
+    '559292',
+    '562',
+    '6239',
+    '6523',
+    '694009',
+    '7227',
+    '7787',
+    '7788',
+    '7955',
+    '83333',
+    '8355',
+    '9031',
+    '9606',
+    '9615',
+    '9823',
+    '9913',
+    '9940',
+    '9986',
 ]
 COLUMNS = [
     'complexportal_id',
@@ -86,10 +91,21 @@ def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
 
     rv = []
     for xref in s.split('|'):
-        entity_id, note = xref.split('(')
+        try:
+            xref_curie, note = xref.split('(')
+        except ValueError:
+            logger.warning('bad xref: %s', xref)
+            continue
         note = note.rstrip(')')
-        prefix, identifier = entity_id.split(':', 1)
-        rv.append((Reference(prefix=prefix, identifier=identifier), note))
+        try:
+            reference = Reference.from_curie(xref_curie)
+        except ValueError:
+            logger.warning('bad xref: %s', xref)
+            continue
+        if reference is None:
+            logger.warning('bad xref: %s', xref)
+            continue
+        rv.append((reference, note))
     return rv
 
 
@@ -111,10 +127,10 @@ def get_obo() -> Obo:
 def get_df(version: str) -> pd.DataFrame:
     """Get a combine ComplexPortal dataframe."""
     url_base = f'ftp://ftp.ebi.ac.uk/pub/databases/intact/complex/{version}/complextab'
-    urls = [f'{url_base}/{species}.tsv' for species in SPECIES]
+    urls = [f'{url_base}/{ncbitaxonomy_id}.tsv' for ncbitaxonomy_id in SPECIES]
 
     dfs = [
-        ensure_df(PREFIX, url=url, version=version, na_values={'-'}, names=COLUMNS, header=0, dtype=DTYPE)
+        ensure_df(PREFIX, url=url, version=version, na_values={'-'}, names=COLUMNS, header=0, dtype=str)
         for url in urls
     ]
     return pd.concat(dfs)
@@ -161,7 +177,7 @@ def get_terms(version: str) -> Iterable[Term]:
 
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=complexportal_id, name=name),
-            definition=definition.strip(),
+            definition=definition.strip() if pd.notna(definition) else None,
             synonyms=synonyms,
             xrefs=_xrefs,
             provenance=provenance,

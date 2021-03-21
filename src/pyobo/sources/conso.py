@@ -11,7 +11,7 @@ from ..utils.io import multidict
 from ..utils.path import ensure_df
 
 PREFIX = 'conso'
-BASE_URL = 'https://raw.githubusercontent.com/pharmacome/conso/master'
+BASE_URL = 'https://raw.githubusercontent.com/pharmacome/conso/master/src/conso/resources'
 TERMS_URL = f'{BASE_URL}/terms.tsv'
 RELATIONS_URL = f'{BASE_URL}/relations.tsv'
 TYPEDEFS_URL = f'{BASE_URL}/typedefs.tsv'
