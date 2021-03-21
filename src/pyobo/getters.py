@@ -144,7 +144,6 @@ SKIP = {
     # FIXME below
     'mirbase.family',
     'pfam.clan',
-    'caloha',  # waiting on Bgee to fix the typo in the OBO file
 }
 
 X = TypeVar('X')
