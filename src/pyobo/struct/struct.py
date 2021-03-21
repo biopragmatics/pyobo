@@ -735,7 +735,7 @@ class Obo:
                 else:
                     xrefs.append(node_xref)
 
-            definition, definition_references = get_definition(data)
+            definition, definition_references = get_definition(data, prefix=prefix)
             if definition_references:
                 provenance.extend(definition_references)
 
@@ -753,7 +753,7 @@ class Obo:
                 raise e
             n_parents += len(parents)
 
-            synonyms = list(iterate_node_synonyms(data, synonym_typedefs))
+            synonyms = list(iterate_node_synonyms(data, synonym_typedefs, prefix=prefix))
             n_synonyms += len(synonyms)
 
             term = Term(
@@ -1170,14 +1170,14 @@ def iterate_graph_typedefs(graph: nx.MultiDiGraph, default_prefix: str, *, stric
         yield TypeDef(reference=reference, xrefs=xrefs)
 
 
-def get_definition(data) -> Union[Tuple[None, None], Tuple[str, List[Reference]]]:
+def get_definition(data, *, prefix: str) -> Union[Tuple[None, None], Tuple[str, List[Reference]]]:
     definition = data.get('def')  # it's allowed not to have a definition
     if not definition:
         return None, None
-    return _extract_definition(definition)
+    return _extract_definition(definition, prefix=prefix)
 
 
-def _extract_definition(s: str, strict: bool = False) -> Tuple[str, List[Reference]]:
+def _extract_definition(s: str, *, prefix: str, strict: bool = False) -> Tuple[str, List[Reference]]:
     """Extract the definitions."""
     if not s.startswith('"'):
         raise ValueError('definition does not start with a quote')
@@ -1185,23 +1185,24 @@ def _extract_definition(s: str, strict: bool = False) -> Tuple[str, List[Referen
     definition, rest = _quote_split(s)
 
     if not rest.startswith('[') or not rest.endswith(']'):
-        logger.warning('problem with synonym: %s', s)
+        logger.warning('[%s] problem with synonym: %s', prefix, s)
         provenance = []
     else:
         provenance = _parse_trailing_ref_list(rest, strict=strict)
     return definition, provenance
 
 
-def _get_first_nonquoted(s):
+def _get_first_nonquoted(s: str) -> Optional[int]:
     for i, (a, b) in enumerate(pairwise(s), start=1):
         if b == '"' and a != "\\":
             return i
-    raise ValueError
 
 
-def _quote_split(s):
+def _quote_split(s: str) -> Tuple[str, str]:
     s = s.lstrip('"')
     i = _get_first_nonquoted(s)
+    if i is None:
+        raise ValueError
     return s[:i].strip().replace('\\"', '"'), s[i + 1:].strip()
 
 
@@ -1209,13 +1210,14 @@ def _extract_synonym(
     s: str,
     synonym_typedefs: Mapping[str, SynonymTypeDef],
     *,
+    prefix: str,
     strict: bool = True,
 ) -> Optional[Synonym]:
     # TODO check if the synonym is written like a CURIE... it shouldn't but I've seen it happen
     try:
         name, rest = _quote_split(s)
     except ValueError:
-        logger.warning('invalid synonym: %s', s)
+        logger.warning('[%s] invalid synonym: %s', prefix, s)
         return
 
     specificity = None
@@ -1234,7 +1236,7 @@ def _extract_synonym(
                 break
 
     if not rest.startswith('[') or not rest.endswith(']'):
-        logger.warning('problem with synonym: %s', s)
+        logger.warning('[%s] problem with synonym: %s', prefix, s)
         return
 
     provenance = _parse_trailing_ref_list(rest, strict=strict)
@@ -1250,7 +1252,12 @@ def _parse_trailing_ref_list(rest, *, strict: bool = True):
     ]
 
 
-def iterate_node_synonyms(data: Mapping[str, Any], synonym_typedefs: Mapping[str, SynonymTypeDef]) -> Iterable[Synonym]:
+def iterate_node_synonyms(
+    data: Mapping[str, Any],
+    synonym_typedefs: Mapping[str, SynonymTypeDef],
+    *,
+    prefix: str,
+) -> Iterable[Synonym]:
     """Extract synonyms from a :mod:`obonet` node's data.
 
     Example strings:
@@ -1260,7 +1267,7 @@ def iterate_node_synonyms(data: Mapping[str, Any], synonym_typedefs: Mapping[str
     - "LTEC I" []
     """
     for s in data.get('synonym', []):
-        s = _extract_synonym(s, synonym_typedefs)
+        s = _extract_synonym(s, synonym_typedefs, prefix=prefix)
         if s is not None:
             yield s
 
@@ -1337,7 +1344,7 @@ def iterate_node_relationships(
 
         target = Reference.from_curie(target_curie, strict=strict)
         if target is None:
-            logger.warning('could not parse relation %s', s)
+            logger.warning('[%s] could not parse relation %s', default_prefix, s)
             continue
 
         yield relation, target
