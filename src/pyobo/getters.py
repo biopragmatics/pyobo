@@ -200,10 +200,10 @@ def iter_helper_helper(
         if use_tqdm:
             it.set_postfix({'prefix': prefix})
         if prefix in SKIP:
-            logger.info('skipping %s because in default skip set', prefix)
+            tqdm.write(f'skipping {prefix} because in default skip set')
             continue
         if skip_set and prefix in skip_set:
-            logger.info('skipping %s because in skip set', prefix)
+            tqdm.write(f'skipping {prefix} because in skip set')
             continue
         if skip_below is not None and prefix < skip_below:
             continue
