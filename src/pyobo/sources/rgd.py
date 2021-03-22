@@ -15,6 +15,8 @@ PREFIX = 'rgd'
 old_symbol_type = SynonymTypeDef(id='old_symbol', name='old symbol')
 old_name_type = SynonymTypeDef(id='old_name', name='old name')
 
+# NOTE unigene id was discontinue in January 18th, 2021 dump
+
 GENES_URL = 'ftp://ftp.rgd.mcw.edu/pub/data_release/GENES_RAT.txt'
 GENES_HEADER = [
     'GENE_RGD_ID',
@@ -43,7 +45,6 @@ GENES_HEADER = [
     'GENBANK_NUCLEOTIDE',
     'TIGR_ID',
     'GENBANK_PROTEIN',
-    'UNIGENE_ID',
     'SSLP_RGD_ID',
     'SSLP_SYMBOL',
     'OLD_SYMBOL',
@@ -73,7 +74,6 @@ def get_obo() -> Obo:
 namespace_to_column = [
     ('ensembl', 'ENSEMBL_ID'),
     ('uniprot', 'UNIPROT_ID'),
-    ('unigene', 'UNIGENE_ID'),
     ('ncbigene', 'NCBI_GENE_ID'),
 ]
 
