@@ -747,7 +747,7 @@ class Obo:
             n_alt_ids += len(alt_ids)
 
             try:
-                parents = list(iterate_node_parents(data))
+                parents = list(iterate_node_parents(data), prefix=prefix)
             except MissingPrefix as e:
                 e.reference = reference
                 raise e
@@ -1297,12 +1297,12 @@ def iterate_node_properties(
         yield prop, value
 
 
-def iterate_node_parents(data: Mapping[str, Any], *, strict: bool = True) -> Iterable[Reference]:
+def iterate_node_parents(data: Mapping[str, Any], *, prefix: str, strict: bool = True) -> Iterable[Reference]:
     """Extract parents from a :mod:`obonet` node's data."""
     for parent_curie in data.get('is_a', []):
         reference = Reference.from_curie(parent_curie, strict=strict)
         if reference is None:
-            logger.warning('could not parse parent curie: %s', parent_curie)
+            logger.warning('[%s] could not parse parent curie: %s', prefix, parent_curie)
             continue
         yield reference
 

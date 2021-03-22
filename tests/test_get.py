@@ -55,14 +55,14 @@ class TestParseObonet(unittest.TestCase):
             (f'"{expected_text}" [PMID:1234, PMID:1235]', [Reference('pubmed', '1234'), Reference('pubmed', '1235')]),
         ]:
             with self.subTest(s=s):
-                actual_text, actual_references = _extract_definition(s)
+                actual_text, actual_references = _extract_definition(s, prefix='chebi')
                 self.assertEqual(expected_text, actual_text)
                 self.assertEqual(expected_references, actual_references)
 
     def test_extract_definition_with_escapes(self):
         expected_text = '''The canonical 3' splice site has the sequence "AG".'''
         s = '''"The canonical 3' splice site has the sequence \\"AG\\"." [PMID:1234]'''
-        actual_text, actual_references = _extract_definition(s, strict=True)
+        actual_text, actual_references = _extract_definition(s, strict=True, prefix='chebi')
         self.assertEqual(expected_text, actual_text)
         self.assertEqual([Reference('pubmed', '1234')], actual_references)
 
@@ -95,7 +95,7 @@ class TestParseObonet(unittest.TestCase):
             ),
         ]:
             with self.subTest(s=s):
-                self.assertEqual(synonym, _extract_synonym(s, synoynym_typedefs))
+                self.assertEqual(synonym, _extract_synonym(s, synoynym_typedefs, prefix='chebi'))
 
     def test_get_node_synonyms(self):
         """Test getting synonyms from a node in a :mod:`obonet` graph."""
@@ -104,7 +104,7 @@ class TestParseObonet(unittest.TestCase):
             'IUPAC_NAME': iupac_name,
         }
         data = self.graph.nodes['CHEBI:51990']
-        synonyms = list(iterate_node_synonyms(data, synoynym_typedefs))
+        synonyms = list(iterate_node_synonyms(data, synoynym_typedefs, prefix='chebi'))
         self.assertEqual(1, len(synonyms))
         synonym = synonyms[0]
         self.assertEqual('N,N,N-tributylbutan-1-aminium fluoride', synonym.name, msg='name parsing failed')
@@ -124,7 +124,7 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_parents(self):
         """Test getting parents from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes['CHEBI:51990']
-        parents = list(iterate_node_parents(data))
+        parents = list(iterate_node_parents(data, prefix='chebi'))
         self.assertEqual(2, len(parents))
         self.assertEqual({'24060', '51992'}, {
             parent.identifier
