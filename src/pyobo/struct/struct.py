@@ -747,7 +747,7 @@ class Obo:
             n_alt_ids += len(alt_ids)
 
             try:
-                parents = list(iterate_node_parents(data), prefix=prefix)
+                parents = list(iterate_node_parents(data, prefix=prefix))
             except MissingPrefix as e:
                 e.reference = reference
                 raise e
