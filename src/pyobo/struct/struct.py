@@ -1177,12 +1177,21 @@ def get_definition(data, *, prefix: str) -> Union[Tuple[None, None], Tuple[str, 
     return _extract_definition(definition, prefix=prefix)
 
 
-def _extract_definition(s: str, *, prefix: str, strict: bool = False) -> Tuple[str, List[Reference]]:
+def _extract_definition(
+    s: str,
+    *,
+    prefix: str,
+    strict: bool = False,
+) -> Union[Tuple[None, None], Tuple[str, List[Reference]]]:
     """Extract the definitions."""
     if not s.startswith('"'):
         raise ValueError('definition does not start with a quote')
 
-    definition, rest = _quote_split(s)
+    try:
+        definition, rest = _quote_split(s)
+    except ValueError:
+        logger.warning('[%s] could not parse definition: %s', prefix, s)
+        return None, None
 
     if not rest.startswith('[') or not rest.endswith(']'):
         logger.warning('[%s] problem with synonym: %s', prefix, s)

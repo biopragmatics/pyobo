@@ -105,7 +105,7 @@ def get_id_definition_mapping(prefix: str, force: bool = False) -> Mapping[str, 
     """Get a mapping of descriptions."""
     path = prefix_cache_join(prefix, "definitions.tsv", version=get_version(prefix))
 
-    @cached_mapping(path=path, header=[f'{prefix}_id', 'name'], force=force)
+    @cached_mapping(path=path, header=[f'{prefix}_id', 'definition'], force=force)
     def _get_mapping() -> Mapping[str, str]:
         logger.info('[%s] no cached descriptions found. getting from OBO loader', prefix)
         obo = get(prefix, force=force)

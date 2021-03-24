@@ -19,8 +19,8 @@ from tqdm import tqdm
 from .obo_xrefs import iterate_obo_xrefs
 from .sources import iter_xref_plugins
 from ..api import (
-    get_hierarchy, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_properties_df, get_relations_df,
-    get_typedef_df,
+    get_hierarchy, get_id_definition_mapping, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts,
+    get_properties_df, get_relations_df, get_typedef_df,
 )
 from ..constants import DATABASE_DIRECTORY, PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
 from ..getters import SKIP, iter_helper, iter_helper_helper
@@ -156,25 +156,34 @@ def _iterate_xref_dfs(
     yield from iter_xref_plugins(skip_below=skip_below)
 
 
+def _iter_ncbigene(left, right):
+    ncbi_path = ensure_path(ncbigene.PREFIX, url=ncbigene.GENE_INFO_URL)
+    with gzip.open(ncbi_path, 'rt') as file:
+        next(file)  # throw away the header
+        for line in tqdm(file, desc=f'extracting {ncbigene.PREFIX}', unit_scale=True, total=27_000_000):
+            line = line.strip().split('\t')
+            yield ncbigene.PREFIX, line[left], line[right]
+
+
 def _iter_ooh_na_na(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, str]]:
     """Iterate over all prefix-identifier-name triples we can get.
 
     :param leave: should the tqdm be left behind?
     """
     yield from iter_helper(get_id_name_mapping, leave=leave, **kwargs)
-
-    ncbi_path = ensure_path(ncbigene.PREFIX, url=ncbigene.GENE_INFO_URL)
-    with gzip.open(ncbi_path, 'rt') as file:
-        next(file)  # throw away the header
-        for line in tqdm(file, desc=f'extracting {ncbigene.PREFIX}', unit_scale=True, total=27_000_000):
-            line = line.strip().split('\t')
-            yield ncbigene.PREFIX, line[1], line[2]
+    yield from _iter_ncbigene(1, 2)
 
     pcc_path = pubchem._ensure_cid_name_path()
     with gzip.open(pcc_path, mode='rt', encoding='ISO-8859-1') as file:
         for line in tqdm(file, desc=f'extracting {pubchem.PREFIX}', unit_scale=True, total=103_000_000):
             identifier, name = line.strip().split('\t', 1)
             yield pubchem.PREFIX, identifier, name
+
+
+def _iter_definitions(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, str]]:
+    """Iterate over all prefix-identifier-descriptions triples we can get."""
+    yield from iter_helper(get_id_definition_mapping, leave=leave, **kwargs)
+    yield from _iter_ncbigene(1, 8)
 
 
 def _iter_alts(leave: bool = False, strict: bool = True, **kwargs) -> Iterable[Tuple[str, str, str]]:

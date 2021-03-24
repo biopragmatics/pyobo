@@ -16,8 +16,8 @@ from ..constants import (
 from ..database.sql.cli import database_sql
 from ..getters import db_output_helper
 from ..xrefdb.xrefs_pipeline import (
-    _iter_alts, _iter_ooh_na_na, _iter_properties, _iter_relations, _iter_synonyms, _iter_typedefs, get_xref_df,
-    summarize_xref_df, summarize_xref_provenances_df,
+    _iter_alts, _iter_definitions, _iter_ooh_na_na, _iter_properties, _iter_relations, _iter_synonyms, _iter_typedefs,
+    get_xref_df, summarize_xref_df, summarize_xref_provenances_df,
 )
 
 __all__ = [
@@ -75,6 +75,26 @@ def names(directory: str, zenodo: bool, no_strict: bool, force: bool):
     if zenodo:
         # see https://zenodo.org/record/4020486
         update_zenodo(OOH_NA_NA_RECORD, paths)
+
+
+@main.command()
+@verbose_option
+@directory_option
+@zenodo_option
+@force_option
+@no_strict_option
+def definitions(directory: str, zenodo: bool, no_strict: bool, force: bool):
+    """Make the prefix-identifier-definition dump."""
+    paths = db_output_helper(
+        _iter_definitions,
+        'names',
+        ('prefix', 'identifier', 'definition'),
+        strict=not no_strict,
+        force=force,
+        directory=directory,
+    )
+    if zenodo:
+        pass
 
 
 @main.command()
