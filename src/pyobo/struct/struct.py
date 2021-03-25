@@ -456,7 +456,7 @@ class Obo:
             write_map_tsv(
                 path=self._definitions_path,
                 header=[f'{self.ontology}_id', 'name'],
-                rv=self.get_id_definition_mapping(),
+                rv=self.iterate_id_definition(),
             )
 
         if not self._species_path.exists() or force:
@@ -464,7 +464,7 @@ class Obo:
             write_map_tsv(
                 path=self._species_path,
                 header=[f'{self.ontology}_id', 'taxonomy_id'],
-                rv=self.get_id_species_mapping(),
+                rv=self.iterate_id_species(),
             )
 
         if not self._synonyms_path.exists() or force:
@@ -814,24 +814,36 @@ class Obo:
             if term.name
         }
 
+    def iterate_id_definition(self, *, use_tqdm: bool = False) -> Iterable[Tuple[str, str]]:
+        """Iterate over pairs of terms' identifiers and their respective definitions."""
+        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting names'):
+            if term.identifier and term.definition:
+                yield term.identifier, term.definition
+
     def get_id_definition_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, str]:
         """Get a mapping from identifiers to definitions."""
-        return {
-            term.identifier: term.definition
-            for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting names')
-            if term.definition
-        }
+        return dict(self.iterate_id_definition(use_tqdm=use_tqdm))
 
-    def get_id_species_mapping(self, *, prefix: Optional[str] = None, use_tqdm: bool = False) -> Mapping[str, str]:
-        """Get a mapping from identifiers to species."""
+    ############
+    # TYPEDEFS #
+    ############
+
+    def iterate_id_species(self, *, prefix: Optional[str] = None, use_tqdm: bool = False) -> Iterable[Tuple[str, str]]:
+        """Iterate over terms' identifiers and respective species (if available)."""
         if prefix is None:
             prefix = 'ncbitaxon'
-        rv = {}
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting species'):
             species = term.get_species(prefix=prefix)
             if species:
-                rv[term.identifier] = species.identifier
-        return rv
+                yield term.identifier, species.identifier
+
+    def get_id_species_mapping(self, *, prefix: Optional[str] = None, use_tqdm: bool = False) -> Mapping[str, str]:
+        """Get a mapping from identifiers to species."""
+        return dict(self.iterate_id_species(prefix=prefix, use_tqdm=use_tqdm))
+
+    ############
+    # TYPEDEFS #
+    ############
 
     def get_typedef_df(self, use_tqdm: bool = False) -> pd.DataFrame:
         """Get a typedef dataframe."""
@@ -841,18 +853,14 @@ class Obo:
         ]
         return pd.DataFrame(rows, columns=['prefix', 'identifier', 'name'])
 
-    def get_typedef_id_name_mapping(self) -> Mapping[str, str]:
-        """Get a mapping from identifiers to names."""
-        return {
-            typedef.identifier: typedef.name
-            for typedef in self.typedefs
-        }
+    def iter_typedef_id_name(self) -> Iterable[Tuple[str, str]]:
+        """Iterate over typedefs' identifiers and their respective names."""
+        for typedef in self.typedefs:
+            yield typedef.identifier, typedef.name
 
-    def iterate_synonyms(self, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, Synonym]]:
-        """Iterate over synonyms for each term."""
-        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting synonyms'):
-            for synonym in term.synonyms:
-                yield term, synonym
+    def get_typedef_id_name_mapping(self) -> Mapping[str, str]:
+        """Get a mapping from typedefs' identifiers to names."""
+        return dict(self.iter_typedef_id_name())
 
     #########
     # PROPS #
@@ -921,7 +929,7 @@ class Obo:
                 for reference in references:
                     yield term, typedef, reference
 
-    def _iter_relations_expanted(self, use_tqdm: bool = False) -> Iterable[Tuple[str, str, str, str, str, str]]:
+    def _iter_relations_expanded(self, use_tqdm: bool = False) -> Iterable[Tuple[str, str, str, str, str, str]]:
         for term, typedef, reference in self.iterate_relations(use_tqdm=use_tqdm):
             yield term.identifier, typedef.prefix, typedef.identifier, reference.prefix, reference.identifier
 
@@ -940,7 +948,7 @@ class Obo:
     def get_relations_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get all relations from the OBO."""
         return pd.DataFrame(
-            list(self._iter_relations_expanted(use_tqdm=use_tqdm)),
+            list(self._iter_relations_expanded(use_tqdm=use_tqdm)),
             columns=[f'{self.ontology}_id', RELATION_PREFIX, RELATION_ID, TARGET_PREFIX, TARGET_ID],
         )
 
@@ -1023,6 +1031,27 @@ class Obo:
             for reference in term.get_relationships(typedef)
         )
 
+    ############
+    # SYNONYMS #
+    ############
+
+    def iterate_synonyms(self, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, Synonym]]:
+        """Iterate over synonyms for each term."""
+        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting synonyms'):
+            for synonym in term.synonyms:
+                yield term, synonym
+
+    def get_id_synonyms_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
+        """Get a mapping from identifiers to a list of sorted synonym strings."""
+        rv = multidict(
+            (term.identifier, synonym.name)
+            for term, synonym in self.iterate_synonyms(use_tqdm=use_tqdm)
+        )
+        return {
+            k: sorted(set(v))
+            for k, v in rv.items()
+        }
+
     #########
     # XREFS #
     #########
@@ -1059,16 +1088,9 @@ class Obo:
             for term, xref in self.iterate_filtered_xrefs(prefix, use_tqdm=use_tqdm)
         )
 
-    def get_id_synonyms_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
-        """Get a mapping from identifiers to a list of sorted synonym strings."""
-        rv = multidict(
-            (term.identifier, synonym.name)
-            for term, synonym in self.iterate_synonyms(use_tqdm=use_tqdm)
-        )
-        return {
-            k: sorted(set(v))
-            for k, v in rv.items()
-        }
+    ########
+    # ALTS #
+    ########
 
     def iterate_alts(self) -> Iterable[Tuple[Term, Reference]]:
         """Iterate over alternative identifiers."""
