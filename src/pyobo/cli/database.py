@@ -112,7 +112,7 @@ def typedefs(directory: str, zenodo: bool, no_strict: bool, force: bool):
         strict=not no_strict,
         force=force,
         directory=directory,
-        skip_set={'ncbigene', 'kegg.pathway', 'kegg.gene', 'emapa'},
+        skip_set={'ncbigene', 'kegg.pathway', 'kegg.gene'},
     )
     if zenodo:
         pass

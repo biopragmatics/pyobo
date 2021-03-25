@@ -141,9 +141,12 @@ SKIP = {
     'gaz',  # Gazetteer is irrelevant for biology
     'ma',  # yanked
     'bila',  # yanked
+    # Only OWL
+    'gorel',
     # FIXME below
     'mirbase.family',
     'pfam.clan',
+    'emapa',  # recently changed with EMAP... not sure what the difference is anymore
 }
 
 X = TypeVar('X')

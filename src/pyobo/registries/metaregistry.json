@@ -44,7 +44,43 @@
       "dph:GOC",
       "gOC:dph",
       "gOC:dph",
-      "ftp://ftp.ncbi.nih.gov/snp/specs/docsum_3.1.xsd"
+      "ftp://ftp.ncbi.nih.gov/snp/specs/docsum_3.1.xsd",
+      "HPO:PCS",
+      "HPO:ICE",
+      "PomBane:vw",
+      "PomBase\\:mah",
+      {
+        "type": "group",
+        "from": "hp",
+        "reason": "curator names appearing in definition and synonym provenance strings",
+        "text": [
+          "LMU:mgriese",
+          "HPO:sdoelken",
+          "HPO:curators",
+          "Sanford:krageth",
+          "HPO:probinson",
+          "UToronto:chum",
+          "PhenoTips:CHum"
+        ]
+      },
+      {
+        "type": "group",
+        "text": [
+          "KL:KL",
+          "PT:PT",
+          "EM:EM"
+        ],
+        "reason": "nonsense attribution",
+        "from": "idomal"
+      },
+      {
+        "type": "group",
+        "text": [
+          "NS:NS",
+          "Walter_Reed:taxonomy"
+        ],
+        "from": "miro"
+      }
     ],
     "resource_prefix": {
       "efo": [
@@ -122,7 +158,10 @@
       "MTH:",
       "FBC:",
       "RSC:",
-      "http:www"
+      "DDB:",
+      "http:www",
+      "NCBITaxon_Union",
+      "PhenoScape:"
     ],
     "suffix": [
       ".jpg",
@@ -141,7 +180,12 @@
       "LIPIDMAPSLMFA01030152": "LIPIDMAPS:LMFA01030152",
       "SNOMEDCT274897005": "SNOMEDCT:274897005",
       "GIOC:vw": "GOC:vw",
-      ":has_start_point": "has_start_point"
+      ":has_start_point": "has_start_point",
+      "dc-creator": "dc:creator",
+      "PMI:17498297": "PMID:17498297",
+      "HPO:SKOEHLER": "orcid:0000-0002-5316-1399",
+      "HPO:skoehler": "orcid:0000-0002-5316-1399",
+      "UBERON:cjm": "orcid:0000-0002-6601-2165"
     },
     "prefix": {
       "ATCC number: ": "ATCC:",
@@ -187,7 +231,8 @@
       "NSH:D0": "MESH:D0",
       "MONDOLEX:": "MONDO:",
       "unirot:": "uniprot:",
-      "http:www": "http://www"
+      "http:www": "http://www",
+      "ECGOntology:<new dbxref> \"": "ECGOntology:"
     }
   },
   "wikidata_property_types": [

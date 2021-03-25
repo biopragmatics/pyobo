@@ -79,7 +79,20 @@ def get_xrefs_suffix_blacklist() -> Set[str]:
 @lru_cache(maxsize=1)
 def get_xrefs_blacklist() -> Set[str]:
     """Get the set of blacklisted xrefs."""
-    return set(_get_curated_registry()['blacklists']['full'])
+    rv = set()
+    for x in _get_curated_registry()['blacklists']['full']:
+        if isinstance(x, str):
+            rv.add(x)
+        elif isinstance(x, dict):
+            if x.get('type') == 'group':
+                rv.update(x['text'])
+            elif 'text' in x:
+                rv.add(x['text'])
+            else:
+                raise ValueError('invalid schema')
+        else:
+            raise TypeError
+    return rv
 
 
 @lru_cache(maxsize=1)
