@@ -47,20 +47,36 @@ def xrefs(prefix: str, target: str, force: bool):
 @prefix_argument
 @verbose_option
 @force_option
-def names(prefix: str, force: bool):
+@click.option('-i', '--identifier')
+def names(prefix: str, identifier: Optional[str], force: bool):
     """Page through the identifiers and names of entities in the given namespace."""
     id_to_name = get_id_name_mapping(prefix, force=force)
-    _help_page_mapping(id_to_name)
+    if identifier is None:
+        _help_page_mapping(id_to_name)
+    else:
+        name = id_to_name.get(identifier)
+        if name is None:
+            click.secho(f'No name available for {identifier}', fg='red')
+        else:
+            click.echo(name)
 
 
 @lookup.command()
 @prefix_argument
 @verbose_option
 @force_option
-def definitions(prefix: str, force: bool):
+@click.option('-i', '--identifier')
+def definitions(prefix: str, identifier: Optional[str], force: bool):
     """Page through the identifiers and definitions of entities in the given namespace."""
     id_to_definition = get_id_definition_mapping(prefix, force=force)
-    _help_page_mapping(id_to_definition)
+    if identifier is None:
+        _help_page_mapping(id_to_definition)
+    else:
+        definition = id_to_definition.get(identifier)
+        if definition is None:
+            click.secho(f'No definition available for {identifier}', fg='red')
+        else:
+            click.echo(definition)
 
 
 @lookup.command()
@@ -183,11 +199,19 @@ def properties(prefix: str, key: Optional[str], force: bool):
 @prefix_argument
 @verbose_option
 @force_option
-def alts(prefix: str, force: bool):
+@click.option('-i', '--identifier')
+def alts(prefix: str, identifier: Optional[str], force: bool):
     """Page through alt ids in a namespace."""
     id_to_alts = get_id_to_alts(prefix, force=force)
-    click.echo_via_pager('\n'.join(
-        f'{identifier}\t{alt}'
-        for identifier, alts in id_to_alts.items()
-        for alt in alts
-    ))
+    if identifier is None:
+        click.echo_via_pager('\n'.join(
+            f'{identifier}\t{alt}'
+            for identifier, alts in id_to_alts.items()
+            for alt in alts
+        ))
+    else:
+        _alts = id_to_alts.get(identifier)
+        if _alts is None:
+            click.secho(f'No alternate identifiers for {identifier}', fg='red')
+        else:
+            click.echo('\n'.join(_alts))
