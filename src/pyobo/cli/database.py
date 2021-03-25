@@ -92,6 +92,7 @@ def definitions(directory: str, zenodo: bool, no_strict: bool, force: bool):
         strict=not no_strict,
         force=force,
         directory=directory,
+        skip_set={'kegg.pathway', 'kegg.genes', 'umls'},
     )
     if zenodo:
         # see https://zenodo.org/record/4637061
@@ -113,7 +114,7 @@ def typedefs(directory: str, zenodo: bool, no_strict: bool, force: bool):
         strict=not no_strict,
         force=force,
         directory=directory,
-        skip_set={'ncbigene', 'kegg.pathway', 'kegg.gene'},
+        skip_set={'ncbigene', 'kegg.pathway', 'kegg.genes'},
     )
     if zenodo:
         click.echo(f'Zenodo upload not yet implemented for paths: {paths}')
