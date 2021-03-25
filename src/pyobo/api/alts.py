@@ -6,8 +6,6 @@ import logging
 from functools import lru_cache
 from typing import List, Mapping, Optional
 
-from tqdm import tqdm
-
 from .utils import get_version
 from ..getters import get
 from ..identifier_utils import normalize_curie, wrap_norm_prefix
