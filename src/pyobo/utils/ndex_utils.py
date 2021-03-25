@@ -33,7 +33,7 @@ def iterate_aspect(cx: CX, aspect: str) -> List[Any]:
 
 def ensure_ndex_network(prefix: str, uuid: str) -> CX:
     """Ensure a network from NDEx is cached."""
-    path = prefix_directory_join(prefix, 'ndex', f'{uuid}.json')
+    path = prefix_directory_join(prefix, 'ndex', name=f'{uuid}.json')
     if os.path.exists(path):
         with open(path) as file:
             return json.load(file)
@@ -56,7 +56,7 @@ def ensure_ndex_network_set(prefix: str, uuid: str, use_tqdm: bool = False) -> I
 
 def _help_ensure_ndex_network_set(prefix: str, uuid: str) -> List[str]:
     """Ensure the list of networks that goes with NCI PID on NDEx."""
-    networkset_path = prefix_directory_join(prefix, 'networks.txt')
+    networkset_path = prefix_directory_join(prefix, name='networks.txt')
     if os.path.exists(networkset_path):
         with open(networkset_path) as file:
             return sorted(line.strip() for line in file)
