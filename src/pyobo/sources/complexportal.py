@@ -44,26 +44,6 @@ SPECIES = [
     '9940',
     '9986',
 ]
-COLUMNS = [
-    'complexportal_id',
-    'name',
-    'aliases',
-    'taxonomy_id',
-    'members',
-    'confidence',
-    'experimental_evidence',
-    'goa',
-    'xrefs',
-    'definition',
-    'Complex properties',
-    'Complex assembly',
-    'Ligand',
-    'Disease',
-    'Agonist',
-    'Antagonist',
-    'Comment',
-    'Source',
-]
 DTYPE = {
     'taxonomy_id': str,
 }
@@ -91,19 +71,21 @@ def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
 
     rv = []
     for xref in s.split('|'):
+        xref = xref.replace('protein ontology:PR:', 'PR:')
+        xref = xref.replace('protein ontology:PR_', 'PR:')
         try:
             xref_curie, note = xref.split('(')
         except ValueError:
-            logger.warning('bad xref: %s', xref)
+            logger.warning('xref missing (: %s', xref)
             continue
         note = note.rstrip(')')
         try:
             reference = Reference.from_curie(xref_curie)
         except ValueError:
-            logger.warning('bad xref: %s', xref)
+            logger.warning('can not parse CURIE: %s', xref)
             continue
         if reference is None:
-            logger.warning('bad xref: %s', xref)
+            logger.warning('reference is None after parsing: %s', xref)
             continue
         rv.append((reference, note))
     return rv
@@ -127,11 +109,16 @@ def get_obo() -> Obo:
 def get_df(version: str) -> pd.DataFrame:
     """Get a combine ComplexPortal dataframe."""
     url_base = f'ftp://ftp.ebi.ac.uk/pub/databases/intact/complex/{version}/complextab'
-    urls = [f'{url_base}/{ncbitaxonomy_id}.tsv' for ncbitaxonomy_id in SPECIES]
-
     dfs = [
-        ensure_df(PREFIX, url=url, version=version, na_values={'-'}, names=COLUMNS, header=0, dtype=str)
-        for url in urls
+        ensure_df(
+            PREFIX,
+            url=f'{url_base}/{ncbitaxonomy_id}.tsv',
+            version=version,
+            na_values={'-'},
+            header=0,
+            dtype=str,
+        )
+        for ncbitaxonomy_id in SPECIES
     ]
     return pd.concat(dfs)
 
@@ -139,6 +126,15 @@ def get_df(version: str) -> pd.DataFrame:
 def get_terms(version: str) -> Iterable[Term]:
     """Get ComplexPortal terms."""
     df = get_df(version=version)
+    df.rename(inplace=True, columns={
+        'Aliases for complex': 'aliases',
+        'Identifiers (and stoichiometry) of molecules in complex': 'members',
+        'Taxonomy identifier': 'taxonomy_id',
+        'Cross references': 'xrefs',
+        'Description': 'definition',
+        'Recommended name': 'name',
+        '#Complex ac': 'complexportal_id',
+    })
 
     df['aliases'] = df['aliases'].map(lambda s: s.split('|') if pd.notna(s) else [])
     df['members'] = df['members'].map(_parse_members)
