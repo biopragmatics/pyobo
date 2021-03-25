@@ -48,7 +48,6 @@ RRF_COLUMNS = [
 PREFIX = 'umls'
 
 SOURCE_VOCAB_URL = 'https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html'
-synonym_abb = open_map_tsv(SYNONYM_TYPE_PATH)
 
 
 def _get_version() -> str:
@@ -58,9 +57,10 @@ def _get_version() -> str:
 def get_obo() -> Obo:
     """Get UMLS as OBO."""
     version = _get_version()
+    synonym_abb = open_map_tsv(SYNONYM_TYPE_PATH)
     return Obo(
         iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
+        iter_terms_kwargs=dict(version=version, synonym_abb=synonym_abb),
         name='Unified Medical Language System',
         ontology=PREFIX,
         synonym_typedefs=[
@@ -72,7 +72,7 @@ def get_obo() -> Obo:
     )
 
 
-def iter_terms(version: str, autodownload: bool = False) -> Iterable[Term]:
+def iter_terms(version: str, synonym_abb, autodownload: bool = False) -> Iterable[Term]:
     """Iterate over UMLS terms."""
     name = f'umls-{version}-mrconso.zip'
     url = f'https://download.nlm.nih.gov/umls/kss/{version}/{name}'
