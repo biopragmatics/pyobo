@@ -67,6 +67,10 @@ ALTS_FILE = 'alts.tsv.gz'
 DEFINITIONS_RECORD = '4637061'
 DEFINITIONS_FILE = 'definitions.tsv.gz'
 
+REFS_TABLE_NAME = 'obo_reference'
+ALTS_TABLE_NAME = 'obo_alt'
+DEFS_TABLE_NAME = 'obo_def'
+
 
 def get_sqlalchemy_uri() -> str:
     """Get the SQLAlchemy URI."""
