@@ -64,6 +64,9 @@ PROPERTIES_FILE = 'properties.tsv.gz'
 ALTS_DATA_RECORD = '4021476'
 ALTS_FILE = 'alts.tsv.gz'
 
+DEFINITIONS_RECORD = '4637061'
+DEFINITIONS_FILE = 'definitions.tsv.gz'
+
 
 def get_sqlalchemy_uri() -> str:
     """Get the SQLAlchemy URI."""

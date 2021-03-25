@@ -10,7 +10,7 @@ from zenodo_client import update_zenodo
 
 from .utils import directory_option, force_option, no_strict_option, zenodo_option
 from ..constants import (
-    ALTS_DATA_RECORD, JAVERT_RECORD, OOH_NA_NA_RECORD, PROPERTIES_RECORD, RELATIONS_RECORD,
+    ALTS_DATA_RECORD, DEFINITIONS_RECORD, JAVERT_RECORD, OOH_NA_NA_RECORD, PROPERTIES_RECORD, RELATIONS_RECORD,
     SYNONYMS_RECORD,
 )
 from ..database.sql.cli import database_sql
@@ -87,14 +87,15 @@ def definitions(directory: str, zenodo: bool, no_strict: bool, force: bool):
     """Make the prefix-identifier-definition dump."""
     paths = db_output_helper(
         _iter_definitions,
-        'names',
+        'definitions',
         ('prefix', 'identifier', 'definition'),
         strict=not no_strict,
         force=force,
         directory=directory,
     )
     if zenodo:
-        click.echo(f'Zenodo upload not yet implemented for paths: {paths}')
+        # see https://zenodo.org/record/4637061
+        update_zenodo(DEFINITIONS_RECORD, paths)
 
 
 @main.command()
