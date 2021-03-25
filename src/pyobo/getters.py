@@ -19,7 +19,7 @@ from pystow.utils import download
 from tqdm import tqdm
 
 from .constants import DATABASE_DIRECTORY
-from .identifier_utils import wrap_norm_prefix
+from .identifier_utils import MissingPrefix, wrap_norm_prefix
 from .registries import get_curated_urls
 from .sources import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
@@ -225,6 +225,10 @@ def iter_helper_helper(
             logger.warning('[%s] unable to download', prefix)
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
+        except MissingPrefix as e:
+            logger.warning('[%s] missing prefix: %s', prefix, e)
+            if strict:
+                raise e
         except ValueError as e:
             if _is_xml(e):
                 # this means that it tried doing parsing on an xml page saying get the fuck out
