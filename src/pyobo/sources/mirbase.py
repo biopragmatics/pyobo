@@ -177,6 +177,8 @@ def get_mature_id_to_name(version: str) -> Mapping[str, str]:
             for mature in term.get_relationships(has_mature)
         }
 
+    return _inner()
+
 
 if __name__ == '__main__':
     get_obo().write_default()
