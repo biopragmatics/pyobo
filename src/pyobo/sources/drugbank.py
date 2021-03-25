@@ -29,7 +29,7 @@ has_salt = TypeDef(
 )
 
 
-def get_obo() -> Obo:
+def get_obo(force: bool = False) -> Obo:
     """Get DrugBank as OBO."""
     version = bioversions.get_version('drugbank')
     return Obo(
@@ -37,22 +37,22 @@ def get_obo() -> Obo:
         name='DrugBank',
         data_version=version,
         iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
+        iter_terms_kwargs=dict(version=version, force=force),
         auto_generated_by=f'bio2obo:{PREFIX}',
         typedefs=[has_salt],
     )
 
 
-def iter_terms(version: str) -> Iterable[Term]:
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over DrugBank terms in OBO."""
-    for drug_info in iterate_drug_info(version):
+    for drug_info in iterate_drug_info(version, force=force):
         yield _make_term(drug_info)
 
 
-def iterate_drug_info(version: str) -> Iterable[Mapping[str, Any]]:
+def iterate_drug_info(version: str, force: bool = False) -> Iterable[Mapping[str, Any]]:
     """Iterate over DrugBank records."""
 
-    @cached_pickle(prefix_directory_join(PREFIX, 'precompiled.pkl', version=version))
+    @cached_pickle(prefix_directory_join(PREFIX, 'precompiled.pkl', version=version), force=force)
     def _inner():
         root = get_xml_root(version)
         rv = [
