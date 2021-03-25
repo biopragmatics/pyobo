@@ -17,7 +17,7 @@ from .api import (
     ensure_list_genome, from_kegg_species,
 )
 from .genome import iter_kegg_genomes
-from ...struct import Obo, Reference, Term
+from ...struct import Obo, Reference, Term, from_species, has_gene_product
 from ...utils.io import open_map_tsv
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ def get_obo() -> Obo:
     return Obo(
         ontology=KEGG_GENES_PREFIX,
         iter_terms=iter_terms,
-        typedefs=[from_kegg_species],
+        typedefs=[from_species, from_kegg_species, has_gene_product],
         name='KEGG Genes',
         auto_generated_by=f'bio2obo:{KEGG_GENES_PREFIX}',
     )
@@ -43,7 +43,7 @@ def iter_terms() -> Iterable[Term]:
             conv_uniprot_path = ensure_conv_genome_uniprot(kegg_genome.identifier)
             conv_ncbigene_path = ensure_conv_genome_ncbigene(kegg_genome.identifier)
         except (OSError, ValueError) as e:
-            tqdm.write(f'Failed: {e}')
+            tqdm.write(f'[{KEGG_GENES_PREFIX}] {kegg_genome.identifier} failed: {e}')
         else:
             yield from _make_terms(
                 kegg_genome,
@@ -70,24 +70,22 @@ def _make_terms(
             else:
                 name = extras
 
-            xrefs = []
-
-            # FIXME should these be proteins or genes?
-            uniprot_xref = uniprot_conv.get(identifier)
-            if uniprot_xref is not None:
-                xrefs.append(Reference('uniprot', uniprot_xref))
-            ncbigene_xref = ncbigene_conv.get(identifier)
-            if ncbigene_xref is not None:
-                xrefs.append(Reference('ncbigene', ncbigene_xref))
-
             term = Term(
                 reference=Reference(
                     prefix=KEGG_GENES_PREFIX,
                     identifier=identifier,
                     name=name,
                 ),
-                xrefs=xrefs,
             )
+
+            uniprot_xref = uniprot_conv.get(identifier)
+            if uniprot_xref is not None:
+                term.append_relationship(has_gene_product, Reference('uniprot', uniprot_xref))
+
+            ncbigene_xref = ncbigene_conv.get(identifier)
+            if ncbigene_xref is not None:
+                term.append_xref(Reference('ncbigene', ncbigene_xref))
+
             kegg_genome.annotate_term(term)
             yield term
 
