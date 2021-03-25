@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+"""Loading of the relations ontology names."""
+
+import csv
 import os
 from functools import lru_cache
 from typing import Mapping, Tuple
@@ -19,12 +22,13 @@ PREFIX = 'http://purl.obolibrary.org/obo/'
 @lru_cache(maxsize=1)
 def load_ro() -> Mapping[Tuple[str, str], str]:
     """Load the relation ontology names."""
-    rv = {}
+    if not os.path.exists(PATH):
+        download()
     with open(PATH) as file:
-        for line in file:
-            prefix, identifier, name = line.strip().split('\t')
-            rv[prefix, identifier] = name
-    return rv
+        return {
+            (prefix, identifier): name
+            for prefix, identifier, name in csv.reader(file, delimiter='\t')
+        }
 
 
 def download():
@@ -44,12 +48,5 @@ def download():
             rows.append((prefix.lower(), identifier, name))
 
     with open(PATH, 'w') as file:
-        for prefix, identifier, name in sorted(rows):
-            print(prefix, identifier, name, sep='\t', file=file)
-
-
-if __name__ == '__main__':
-    from pprint import pprint
-
-    download()
-    pprint(load_ro())
+        writer = csv.writer(file, delimiter='\t')
+        writer.writerows(sorted(rows))
