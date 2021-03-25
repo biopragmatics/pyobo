@@ -102,7 +102,7 @@ def normalize_curie(curie: str, *, strict: bool = True) -> Union[Tuple[str, str]
     try:
         head_ns, identifier = curie.split(':', 1)
     except ValueError:  # skip nodes that don't look like normal CURIEs
-        logger.debug(f'skipping: {curie}')
+        logger.debug(f'could not split CURIE on colon: {curie}')
         return None, None
 
     norm_node_prefix = normalize_prefix(head_ns, curie=curie, strict=strict)

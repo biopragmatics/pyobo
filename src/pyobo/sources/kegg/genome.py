@@ -86,7 +86,7 @@ def iter_terms() -> Iterable[Term]:
             taxonomy_name = pyobo.get_name('ncbitaxon', kegg_genome.taxonomy_id)
             if taxonomy_name is None:
                 errors += 1
-                tqdm.write(f'could not find name for taxonomy:{kegg_genome.taxonomy_id}')
+                logger.debug(f'[{KEGG_GENOME_PREFIX}] could not find name for taxonomy:{kegg_genome.taxonomy_id}')
             xrefs.append(Reference(
                 prefix='ncbitaxon',
                 identifier=kegg_genome.taxonomy_id,
