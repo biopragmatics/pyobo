@@ -271,7 +271,7 @@ def _group_by_id(lines):
 def get_ec2go() -> Mapping[str, Set[Tuple[str, str]]]:
     """Get the EC mapping to GO activities."""
     url = 'http://current.geneontology.org/ontology/external2go/ec2go'
-    path = ensure_path(PREFIX, url=url, path='ec2go.tsv')
+    path = ensure_path(PREFIX, url=url, name='ec2go.tsv')
     return get_go_mapping(path, 'EC')
 
 

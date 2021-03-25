@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from ..sources.icd_utils import ICD10_TOP_LEVEL_URL, get_child_identifiers, get_icd, visiter
 from ..struct import Obo, Reference, Synonym, Term
-from ..utils.path import get_prefix_directory
+from ..utils.path import prefix_directory_join
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def iter_terms() -> Iterable[Term]:
     r = get_icd(ICD10_TOP_LEVEL_URL)
     res_json = r.json()
 
-    directory = get_prefix_directory(PREFIX, version=VERSION)
+    directory = prefix_directory_join(PREFIX, version=VERSION)
 
     chapter_urls = res_json['child']
     tqdm.write(f'there are {len(chapter_urls)} chapters')

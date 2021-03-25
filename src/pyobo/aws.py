@@ -83,7 +83,7 @@ def upload_artifacts_for_prefix(*, prefix: str, bucket: str, s3_client=None):
 
     logger.info('[%s] getting id->name mapping', prefix)
     get_id_name_mapping(prefix)
-    id_name_path = prefix_cache_join(prefix, 'names.tsv', version=get_version(prefix))
+    id_name_path = prefix_cache_join(prefix, name='names.tsv', version=get_version(prefix))
     if not id_name_path.exists():
         raise FileNotFoundError
     id_name_key = os.path.join(prefix, 'cache', 'names.tsv')
@@ -92,7 +92,7 @@ def upload_artifacts_for_prefix(*, prefix: str, bucket: str, s3_client=None):
 
     logger.info('[%s] getting id->synonyms mapping', prefix)
     get_id_synonyms_mapping(prefix)
-    id_synonyms_path = prefix_cache_join(prefix, 'synonyms.tsv', version=get_version(prefix))
+    id_synonyms_path = prefix_cache_join(prefix, name='synonyms.tsv', version=get_version(prefix))
     if not id_synonyms_path.exists():
         raise FileNotFoundError
     id_synonyms_key = os.path.join(prefix, 'cache', 'synonyms.tsv')
@@ -101,7 +101,7 @@ def upload_artifacts_for_prefix(*, prefix: str, bucket: str, s3_client=None):
 
     logger.info('[%s] getting xrefs', prefix)
     get_xrefs_df(prefix)
-    xrefs_path = prefix_cache_join(prefix, 'xrefs.tsv', version=get_version(prefix))
+    xrefs_path = prefix_cache_join(prefix, name='xrefs.tsv', version=get_version(prefix))
     if not xrefs_path.exists():
         raise FileNotFoundError
     xrefs_key = os.path.join(prefix, 'cache', 'xrefs.tsv')
@@ -110,7 +110,7 @@ def upload_artifacts_for_prefix(*, prefix: str, bucket: str, s3_client=None):
 
     logger.info('[%s] getting relations', prefix)
     get_relations_df(prefix)
-    relations_path = prefix_cache_join(prefix, 'relations.tsv', version=get_version(prefix))
+    relations_path = prefix_cache_join(prefix, name='relations.tsv', version=get_version(prefix))
     if not relations_path.exists():
         raise FileNotFoundError
     relations_key = os.path.join(prefix, 'cache', 'relations.tsv')
@@ -119,7 +119,7 @@ def upload_artifacts_for_prefix(*, prefix: str, bucket: str, s3_client=None):
 
     logger.info('[%s] getting properties', prefix)
     get_properties_df(prefix)
-    properties_path = prefix_cache_join(prefix, 'properties.tsv', version=get_version(prefix))
+    properties_path = prefix_cache_join(prefix, name='properties.tsv', version=get_version(prefix))
     if not properties_path.exists():
         raise FileNotFoundError
     properties_key = os.path.join(prefix, 'cache', 'properties.tsv')
@@ -128,7 +128,7 @@ def upload_artifacts_for_prefix(*, prefix: str, bucket: str, s3_client=None):
 
     logger.info('[%s] getting alternative identifiers', prefix)
     get_id_to_alts(prefix)
-    alts_path = prefix_cache_join(prefix, 'alt_ids.tsv', version=get_version(prefix))
+    alts_path = prefix_cache_join(prefix, name='alt_ids.tsv', version=get_version(prefix))
     if not alts_path.exists():
         raise FileNotFoundError
     alts_key = os.path.join(prefix, 'cache', 'alt_ids.tsv')

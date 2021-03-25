@@ -150,7 +150,7 @@ def get_mature_to_premature(version: str) -> Mapping[str, str]:
     """Get a mapping from mature miRNAs to their parents."""
 
     @cached_mapping(
-        path=prefix_directory_join(PREFIX, f'{PREFIX}.mature_to_{PREFIX}.tsv', version=version),
+        path=prefix_directory_join(PREFIX, name=f'{PREFIX}.mature_to_{PREFIX}.tsv', version=version),
         header=['mirbase.mature_id', 'mirbase_id'],
     )
     def _inner():
@@ -167,7 +167,7 @@ def get_mature_id_to_name(version: str) -> Mapping[str, str]:
     """Get a mapping from mature miRNAs to their parents."""
 
     @cached_mapping(
-        path=prefix_directory_join(PREFIX, f'{PREFIX}.mature_mapping.tsv', version=version),
+        path=prefix_directory_join(PREFIX, name=f'{PREFIX}.mature_mapping.tsv', version=version),
         header=['mirbase.mature_id', 'name'],
     )
     def _inner():

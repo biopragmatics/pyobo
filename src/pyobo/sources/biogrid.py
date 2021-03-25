@@ -61,7 +61,7 @@ def get_df() -> pd.DataFrame:
 
 
 @cached_mapping(
-    path=prefix_directory_join(PREFIX, 'cache', 'xrefs', 'ncbigene.tsv', version=version_getter(PREFIX)),
+    path=prefix_directory_join(PREFIX, 'cache', 'xrefs', name='ncbigene.tsv', version=version_getter(PREFIX)),
     header=['biogrid_id', 'ncbigene_id'],
 )
 def get_ncbigene_mapping() -> Mapping[str, str]:

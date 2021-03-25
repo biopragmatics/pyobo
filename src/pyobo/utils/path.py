@@ -12,12 +12,12 @@ from urllib.request import urlretrieve
 
 import pandas as pd
 import requests
-from pystow.utils import mkdir, name_from_url
+from pystow.utils import name_from_url
 
 from pyobo.constants import RAW_MODULE
 
 __all__ = [
-    'get_prefix_directory',
+    'prefix_directory_join',
     'prefix_directory_join',
     'prefix_cache_join',
     'get_prefix_obo_path',
@@ -31,29 +31,22 @@ logger = logging.getLogger(__name__)
 VersionHint = Union[None, str, Callable[[], str]]
 
 
-def get_prefix_directory(prefix: str, *, version: VersionHint = None) -> Path:
-    """Get the directory."""
+def prefix_directory_join(prefix: str, *parts: str, name: Optional[str] = None, version: VersionHint = None) -> Path:
+    """Join in the prefix directory."""
     if version is None:
-        return RAW_MODULE.get(prefix)
+        return RAW_MODULE.join(prefix, *parts, name=name)
     if callable(version):
         logger.info('[%s] looking up version', prefix)
         version = version()
         logger.info('[%s] got version %s', version)
     elif not isinstance(version, str):
         raise TypeError(f'Invalid type: {version} ({type(version)})')
-    return RAW_MODULE.get(prefix, version)
-
-
-def prefix_directory_join(prefix: str, *parts: str, version: VersionHint = None) -> Path:
-    """Join the parts onto the prefix directory."""
-    rv = get_prefix_directory(prefix, version=version).joinpath(*parts)
-    mkdir(rv)
-    return rv
+    return RAW_MODULE.join(prefix, version, *parts, name=name)
 
 
 def get_prefix_obo_path(prefix: str, version: VersionHint = None) -> Path:
     """Get the canonical path to the OBO file."""
-    return prefix_directory_join(prefix, f"{prefix}.obo", version=version)
+    return prefix_directory_join(prefix, name=f"{prefix}.obo", version=version)
 
 
 # TODO replace with pystow.download
@@ -91,25 +84,25 @@ def ensure_path(
     *parts: str,
     url: str,
     version: VersionHint = None,
-    path: Optional[str] = None,
+    name: Optional[str] = None,
     force: bool = False,
     stream: bool = False,
     urlretrieve_kwargs: Optional[Mapping[str, Any]] = None,
     error_on_missing: bool = False,
 ) -> str:
     """Download a file if it doesn't exist."""
-    if path is None:
-        path = name_from_url(url)
+    if name is None:
+        name = name_from_url(url)
 
-    _path = prefix_directory_join(prefix, *parts, path, version=version)
+    path = prefix_directory_join(prefix, *parts, name=name, version=version)
 
-    if not _path.exists() and error_on_missing:
+    if not path.exists() and error_on_missing:
         raise FileNotFoundError
 
-    if not _path.exists() or force:
-        _urlretrieve(url=url, path=_path, stream=stream, **(urlretrieve_kwargs or {}))
+    if not path.exists() or force:
+        _urlretrieve(url=url, path=path, stream=stream, **(urlretrieve_kwargs or {}))
 
-    return _path.as_posix()
+    return path.as_posix()
 
 
 def ensure_df(
@@ -124,7 +117,7 @@ def ensure_df(
     **kwargs,
 ) -> pd.DataFrame:
     """Download a file and open as a dataframe."""
-    path = ensure_path(prefix, *parts, url=url, version=version, path=path, force=force)
+    path = ensure_path(prefix, *parts, url=url, version=version, name=path, force=force)
     return pd.read_csv(path, sep=sep, dtype=dtype, **kwargs)
 
 
@@ -138,12 +131,12 @@ def ensure_tar_df(
     **kwargs,
 ) -> pd.DataFrame:
     """Download a tar file and open as a dataframe."""
-    path = ensure_path(prefix, *parts, url=url, version=version, path=path)
+    path = ensure_path(prefix, *parts, url=url, version=version, name=path)
     with tarfile.open(path) as tar_file:
         with tar_file.extractfile(inner_path) as file:
             return pd.read_csv(file, **kwargs)
 
 
-def prefix_cache_join(prefix: str, *parts, version: VersionHint) -> Path:
+def prefix_cache_join(prefix: str, *parts, name: Optional[str], version: VersionHint) -> Path:
     """Ensure the prefix cache is available."""
-    return prefix_directory_join(prefix, 'cache', *parts, version=version)
+    return prefix_directory_join(prefix, 'cache', *parts, name=name, version=version)

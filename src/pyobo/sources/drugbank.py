@@ -52,7 +52,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 def iterate_drug_info(version: str, force: bool = False) -> Iterable[Mapping[str, Any]]:
     """Iterate over DrugBank records."""
 
-    @cached_pickle(prefix_directory_join(PREFIX, 'precompiled.pkl', version=version), force=force)
+    @cached_pickle(prefix_directory_join(PREFIX, name='precompiled.pkl', version=version), force=force)
     def _inner():
         root = get_xml_root(version)
         rv = [

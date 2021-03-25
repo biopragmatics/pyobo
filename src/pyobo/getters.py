@@ -82,7 +82,7 @@ def get(
     if force:
         rewrite = True
 
-    obonet_json_gz_path = prefix_directory_join(prefix, f'{prefix}.obonet.json.gz')
+    obonet_json_gz_path = prefix_directory_join(prefix, name=f'{prefix}.obonet.json.gz')
     if obonet_json_gz_path.exists() and not force:
         logger.debug('[%s] using obonet cache at %s', prefix, obonet_json_gz_path)
         return Obo.from_obonet_gz(obonet_json_gz_path)

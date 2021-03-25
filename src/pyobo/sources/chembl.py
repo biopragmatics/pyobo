@@ -17,7 +17,7 @@ import click
 from more_click import verbose_option
 
 from pyobo.struct import Obo, Reference, Term
-from pyobo.utils.path import ensure_path, get_prefix_directory
+from pyobo.utils.path import ensure_path, prefix_directory_join
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ def get_path(version: str):
     url = f'ftp://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_{version}/chembl_{version}_sqlite.tar.gz'
     path = ensure_path(PREFIX, url=url, version=version)
     name = f'chembl_{version}/chembl_{version}_sqlite/chembl_{version}.db'
-    d = get_prefix_directory(PREFIX, version=version)
+    d = prefix_directory_join(PREFIX, version=version)
     op = os.path.join(d, name)
     if not os.path.exists(op):
         with tarfile.open(path, mode='r', encoding='utf-8') as tar_file:

@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 @wrap_norm_prefix
 def get_typedef_df(prefix: str, force: bool = False) -> pd.DataFrame:
     """Get an identifier to name mapping for the typedefs in an OBO file."""
-    path = prefix_cache_join(prefix, 'typedefs.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, name='typedefs.tsv', version=get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:

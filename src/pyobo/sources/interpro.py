@@ -81,7 +81,7 @@ def iter_terms(*, version: str, proteins: bool = False) -> Iterable[Term]:
 def get_interpro_go_df(version: str) -> Mapping[str, Set[Tuple[str, str]]]:
     """Get InterPro to Gene Ontology molecular function mapping."""
     url = f'ftp://ftp.ebi.ac.uk/pub/databases/interpro/{version}/interpro2go'
-    path = ensure_path(PREFIX, url=url, path='interpro2go.tsv', version=version)
+    path = ensure_path(PREFIX, url=url, name='interpro2go.tsv', version=version)
     return get_go_mapping(path, prefix=PREFIX)
 
 

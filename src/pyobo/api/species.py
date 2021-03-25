@@ -51,7 +51,7 @@ def get_id_species_mapping(prefix: str, force: bool = False) -> Mapping[str, str
         logger.info('[%s] done loading species mappings', prefix)
         return rv
 
-    path = prefix_cache_join(prefix, 'species.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, name='species.tsv', version=get_version(prefix))
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'species'], force=force)
     def _get_id_species_mapping() -> Mapping[str, str]:

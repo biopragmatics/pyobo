@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 from ..sources.icd_utils import ICD11_TOP_LEVEL_URL, get_child_identifiers, get_icd, visiter
 from ..struct import Obo, Reference, Synonym, Term
-from ..utils.path import get_prefix_directory
+from ..utils.path import prefix_directory_join
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ def iterate_icd11() -> Iterable[Term]:
     res_json = res.json()
 
     version = res_json['releaseId']
-    directory = get_prefix_directory(PREFIX, version=version)
+    directory = prefix_directory_join(PREFIX, version=version)
 
     with open(os.path.join(directory, 'top.json'), 'w') as file:
         json.dump(res_json, file, indent=2)

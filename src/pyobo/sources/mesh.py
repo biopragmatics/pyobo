@@ -39,7 +39,7 @@ def get_tree_to_mesh_id(version: str) -> Mapping[str, str]:
     """Get a mapping from MeSH tree numbers to their MeSH identifiers."""
 
     @cached_mapping(
-        path=prefix_directory_join(PREFIX, 'mesh_tree.tsv', version=version),
+        path=prefix_directory_join(PREFIX, name='mesh_tree.tsv', version=version),
         header=['mesh_tree_number', 'mesh_id'],
     )
     def _inner():
@@ -95,7 +95,7 @@ def get_terms(version: str) -> Iterable[Term]:
 def ensure_mesh_descriptors(version: str) -> List[Mapping[str, Any]]:
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
 
-    @cached_json(path=prefix_directory_join(PREFIX, 'mesh.json', version=version))
+    @cached_json(path=prefix_directory_join(PREFIX, name='mesh.json', version=version))
     def _inner():
         url = f'ftp://nlmpubs.nlm.nih.gov/online/mesh/{version}/xmlmesh/desc{version}.gz'
         path = ensure_path(PREFIX, url=url, version=version)
@@ -108,7 +108,7 @@ def ensure_mesh_descriptors(version: str) -> List[Mapping[str, Any]]:
 def ensure_mesh_supplemental_records(version: str) -> List[Mapping[str, Any]]:
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
 
-    @cached_json(path=prefix_directory_join(PREFIX, 'supp.json', version=version))
+    @cached_json(path=prefix_directory_join(PREFIX, name='supp.json', version=version))
     def _inner():
         url = f'ftp://nlmpubs.nlm.nih.gov/online/mesh/{version}/xmlmesh/supp{version}.gz'
         path = ensure_path(PREFIX, url=url, version=version)

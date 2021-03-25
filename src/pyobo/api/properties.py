@@ -35,7 +35,7 @@ def get_properties_df(prefix: str, *, force: bool = False) -> pd.DataFrame:
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A dataframe with the properties
     """
-    path = prefix_cache_join(prefix, "properties.tsv", version=get_version(prefix))
+    path = prefix_cache_join(prefix, name="properties.tsv", version=get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
@@ -67,8 +67,8 @@ def get_filtered_properties_mapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property value
     """
-    path = prefix_cache_join(prefix, 'properties', f"{prop}.tsv", version=get_version(prefix))
-    all_properties_path = prefix_cache_join(prefix, 'properties.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, 'properties', name=f"{prop}.tsv", version=get_version(prefix))
+    all_properties_path = prefix_cache_join(prefix, name='properties.tsv', version=get_version(prefix))
 
     @cached_mapping(path=path, header=[f'{prefix}_id', prop], force=force)
     def _mapping_getter() -> Mapping[str, str]:
@@ -102,8 +102,8 @@ def get_filtered_properties_multimapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property values
     """
-    path = prefix_cache_join(prefix, 'properties', f"{prop}.tsv", version=get_version(prefix))
-    all_properties_path = prefix_cache_join(prefix, 'properties.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, 'properties', name=f"{prop}.tsv", version=get_version(prefix))
+    all_properties_path = prefix_cache_join(prefix, name='properties.tsv', version=get_version(prefix))
 
     @cached_multidict(path=path, header=[f'{prefix}_id', prop], force=force)
     def _mapping_getter() -> Mapping[str, List[str]]:
@@ -165,8 +165,8 @@ def get_filtered_properties_df(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A dataframe from identifier to property value. Columns are [<prefix>_id, value].
     """
-    path = prefix_cache_join(prefix, 'properties', f"{prop}.tsv", version=get_version(prefix))
-    all_properties_path = prefix_cache_join(prefix, 'properties.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, 'properties', name=f"{prop}.tsv", version=get_version(prefix))
+    all_properties_path = prefix_cache_join(prefix, name='properties.tsv', version=get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:

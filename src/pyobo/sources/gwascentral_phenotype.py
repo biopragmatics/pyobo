@@ -35,7 +35,7 @@ def iter_terms(version: str) -> Iterable[Term]:
                 'phenotype',
                 version=version,
                 url=f'https://www.gwascentral.org/phenotype/HGVPM{n}?format=json',
-                path=f'HGVPM{n}.json',
+                name=f'HGVPM{n}.json',
             )
         except OSError as e:
             tqdm.write(f'{n}: {e}')

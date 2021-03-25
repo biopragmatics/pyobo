@@ -73,7 +73,7 @@ def get_id_name_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
         logger.info('[%s] done loading name mappings', prefix)
         return rv
 
-    path = prefix_cache_join(prefix, 'names.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, name='names.tsv', version=get_version(prefix))
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'name'], force=force)
     def _get_id_name_mapping() -> Mapping[str, str]:
@@ -103,7 +103,7 @@ def get_definition(prefix: str, identifier: str) -> Optional[str]:
 
 def get_id_definition_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
     """Get a mapping of descriptions."""
-    path = prefix_cache_join(prefix, "definitions.tsv", version=get_version(prefix))
+    path = prefix_cache_join(prefix, name="definitions.tsv", version=get_version(prefix))
 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'definition'], force=force)
     def _get_mapping() -> Mapping[str, str]:
@@ -123,7 +123,7 @@ def get_synonyms(prefix: str, identifier: str) -> Optional[List[str]]:
 @wrap_norm_prefix
 def get_id_synonyms_mapping(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
     """Get the OBO file and output a synonym dictionary."""
-    path = prefix_cache_join(prefix, "synonyms.tsv", version=get_version(prefix))
+    path = prefix_cache_join(prefix, name="synonyms.tsv", version=get_version(prefix))
 
     @cached_multidict(path=path, header=[f'{prefix}_id', 'synonym'], force=force)
     def _get_multidict() -> Mapping[str, List[str]]:

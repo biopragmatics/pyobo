@@ -9,7 +9,7 @@ from typing import Optional
 
 from ..api import get_xrefs_df
 from ..getters import iter_helper_helper
-from ..utils.path import get_prefix_directory
+from ..utils.path import prefix_directory_join
 
 __all__ = [
     'iterate_obo_xrefs',
@@ -47,6 +47,6 @@ def iterate_obo_xrefs(
         df['source'] = prefix
         yield df
 
-        prefix_directory = get_prefix_directory(prefix)
+        prefix_directory = prefix_directory_join(prefix)
         if not os.listdir(prefix_directory):
             os.rmdir(prefix_directory)

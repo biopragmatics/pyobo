@@ -49,7 +49,7 @@ def get_complexportal_mapping() -> Mapping[str, str]:
     """
 
     @cached_mapping(
-        path=prefix_cache_join('intact', 'xrefs', 'complexportal.tsv', version=get_version('intact')),
+        path=prefix_cache_join('intact', 'xrefs', name='complexportal.tsv', version=get_version('intact')),
         header=['intact_id', 'complexportal_id'],
     )
     def _cache():
@@ -85,7 +85,7 @@ def get_reactome_mapping() -> Mapping[str, str]:
     """
 
     @cached_mapping(
-        path=prefix_cache_join('intact', 'xrefs', 'reactome.tsv', version=get_version('intact')),
+        path=prefix_cache_join('intact', 'xrefs', name='reactome.tsv', version=get_version('intact')),
         header=['intact_id', 'reactome_id'],
     )
     def _cache():

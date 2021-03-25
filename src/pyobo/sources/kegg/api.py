@@ -53,7 +53,7 @@ def ensure_list_genomes() -> str:
     return ensure_path(
         KEGG_GENOME_PREFIX,
         url=f'{BASE}/list/genome',
-        path='genome.tsv',
+        name='genome.tsv',
     )
 
 
@@ -79,7 +79,7 @@ def ensure_list_genome(kegg_genome_id: str) -> str:
         KEGG_GENES_PREFIX,
         'genes',
         url=f'{BASE}/list/{kegg_genome_id}',
-        path=f'{kegg_genome_id}.tsv',
+        name=f'{kegg_genome_id}.tsv',
     )
 
 
@@ -104,7 +104,7 @@ def _ensure_conv_genome_helper(
             KEGG_GENES_PREFIX,
             f'conv_{target_database}',
             url=f'{BASE}/conv/{target_database}/{kegg_genome_id}',
-            path=f'{kegg_genome_id}.tsv',
+            name=f'{kegg_genome_id}.tsv',
             error_on_missing=error_on_missing,
         )
     except urllib.error.HTTPError:
@@ -124,7 +124,7 @@ def ensure_link_pathway_genome(kegg_genome_id: str, error_on_missing: bool = Fal
         KEGG_PATHWAY_PREFIX,
         'link_pathway',
         url=f'{BASE}/link/pathway/{kegg_genome_id}',
-        path=f'{kegg_genome_id}.tsv',
+        name=f'{kegg_genome_id}.tsv',
         error_on_missing=error_on_missing,
     )
 
@@ -138,6 +138,6 @@ def ensure_list_pathway_genome(kegg_genome_id: str, error_on_missing: bool = Fal
         KEGG_PATHWAY_PREFIX,
         'pathways',
         url=f'{BASE}/list/pathway/{kegg_genome_id}',
-        path=f'{kegg_genome_id}.txt',  # TODO rename to .tsv
+        name=f'{kegg_genome_id}.txt',  # TODO rename to .tsv
         error_on_missing=error_on_missing,
     )

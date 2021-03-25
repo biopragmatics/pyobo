@@ -385,47 +385,47 @@ class Obo:
         """Read OBO from a pre-compiled Obonet JSON."""
         return cls.from_obonet(get_gzipped_graph(path))
 
-    def _path(self, *parts: str) -> Path:
-        return prefix_directory_join(self.ontology, *parts, version=self.data_version)
+    def _path(self, *parts: str, name: Optional[str] = None) -> Path:
+        return prefix_directory_join(self.ontology, *parts, name=name, version=self.data_version)
 
-    def _cache(self, *parts: str) -> Path:
-        return self._path('cache', *parts)
+    def _cache(self, *parts: str, name: Optional[str] = None) -> Path:
+        return self._path('cache', *parts, name=name)
 
     @property
     def _names_path(self) -> Path:
-        return self._cache('names.tsv')
+        return self._cache(name='names.tsv')
 
     @property
     def _definitions_path(self) -> Path:
-        return self._cache('definitions.tsv')
+        return self._cache(name='definitions.tsv')
 
     @property
     def _species_path(self) -> Path:
-        return self._cache('species.tsv')
+        return self._cache(name='species.tsv')
 
     @property
     def _synonyms_path(self) -> Path:
-        return self._cache('synonyms.tsv')
+        return self._cache(name='synonyms.tsv')
 
     @property
     def _alts_path(self):
-        return self._cache('alt_ids.tsv')
+        return self._cache(name='alt_ids.tsv')
 
     @property
     def _typedefs_path(self) -> Path:
-        return self._cache('typedefs.tsv')
+        return self._cache(name='typedefs.tsv')
 
     @property
     def _xrefs_path(self) -> Path:
-        return self._cache('xrefs.tsv')
+        return self._cache(name='xrefs.tsv')
 
     @property
     def _relations_path(self) -> Path:
-        return self._cache('relations.tsv')
+        return self._cache(name='relations.tsv')
 
     @property
     def _properties_path(self) -> Path:
-        return self._cache('properties.tsv')
+        return self._cache(name='properties.tsv')
 
     @property
     def _obo_path(self) -> Path:
@@ -433,7 +433,7 @@ class Obo:
 
     @property
     def _obonet_gz_path(self) -> Path:
-        return self._path(f"{self.ontology}.obonet.json.gz")
+        return self._path(name=f"{self.ontology}.obonet.json.gz")
 
     def write_default(
         self,
@@ -499,7 +499,7 @@ class Obo:
         for relation in (is_a, has_part, part_of, from_species, orthologous):
             if relation is not is_a and relation not in self.typedefs:
                 continue
-            relations_path = self._cache('relations', f'{relation.curie}.tsv')
+            relations_path = self._cache('relations', name=f'{relation.curie}.tsv')
             if relations_path.exists() and not force:
                 continue
             logger.info('[%s] caching relation %s ! %s', self.ontology, relation.curie, relation.name)

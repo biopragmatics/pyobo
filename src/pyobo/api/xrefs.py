@@ -43,8 +43,8 @@ def get_filtered_xrefs(
     force: bool = False,
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
-    path = prefix_cache_join(prefix, 'xrefs', f"{xref_prefix}.tsv", version=get_version(prefix))
-    all_xrefs_path = prefix_cache_join(prefix, 'xrefs.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, 'xrefs', name=f"{xref_prefix}.tsv", version=get_version(prefix))
+    all_xrefs_path = prefix_cache_join(prefix, name='xrefs.tsv', version=get_version(prefix))
     header = [f'{prefix}_id', f'{xref_prefix}_id']
 
     @cached_mapping(path=path, header=header, use_tqdm=use_tqdm, force=force)
@@ -70,7 +70,7 @@ def get_filtered_xrefs(
 @wrap_norm_prefix
 def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, force: bool = False) -> pd.DataFrame:
     """Get all xrefs."""
-    path = prefix_cache_join(prefix, 'xrefs.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, name='xrefs.tsv', version=get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:

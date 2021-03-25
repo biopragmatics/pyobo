@@ -33,7 +33,7 @@ def get_id_to_alts(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
     if prefix in NO_ALTS:
         return {}
 
-    path = prefix_cache_join(prefix, 'alt_ids.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, name='alt_ids.tsv', version=get_version(prefix))
     header = [f'{prefix}_id', 'alt_id']
 
     @cached_multidict(path=path, header=header, force=force)

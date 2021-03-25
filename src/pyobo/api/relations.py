@@ -33,7 +33,7 @@ def get_relations_df(
     wide: bool = False,
 ) -> pd.DataFrame:
     """Get all relations from the OBO."""
-    path = prefix_cache_join(prefix, 'relations.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, name='relations.tsv', version=get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
@@ -65,9 +65,9 @@ def get_filtered_relations_df(
     """Get all of the given relation."""
     relation_prefix, relation_identifier = relation = get_reference_tuple(relation)
     path = prefix_cache_join(
-        prefix, 'relations', f'{relation_prefix}:{relation_identifier}.tsv', version=get_version(prefix),
+        prefix, 'relations', name=f'{relation_prefix}:{relation_identifier}.tsv', version=get_version(prefix),
     )
-    all_relations_path = prefix_cache_join(prefix, 'relations.tsv', version=get_version(prefix))
+    all_relations_path = prefix_cache_join(prefix, name='relations.tsv', version=get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
