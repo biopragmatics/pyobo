@@ -157,7 +157,7 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
         'drugbank_id': drug_xml.findtext(f"{ns}drugbank-id[@primary='true']"),
         'cas_number': drug_xml.findtext(f"{ns}cas-number"),
         'name': drug_xml.findtext(f"{ns}name"),
-        'description': drug_xml.findtext(f"{ns}description"),
+        'description': drug_xml.findtext(f"{ns}description").replace('\r', '').replace('\n', '\\n'),
         'groups': [
             group.text
             for group in drug_xml.findall(f"{ns}groups/{ns}group")
