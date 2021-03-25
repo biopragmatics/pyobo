@@ -10,7 +10,8 @@ from more_click import verbose_option
 from zenodo_client import Zenodo
 
 from .constants import (
-    ALTS_DATA_RECORD, ALTS_FILE, JAVERT_FILE, JAVERT_RECORD, OOH_NA_NA_FILE, OOH_NA_NA_RECORD, SYNONYMS_FILE,
+    ALTS_DATA_RECORD, ALTS_FILE, DEFINITIONS_FILE, DEFINITIONS_RECORD, JAVERT_FILE, JAVERT_RECORD, OOH_NA_NA_FILE,
+    OOH_NA_NA_RECORD, PROPERTIES_FILE, PROPERTIES_RECORD, RELATIONS_FILE, RELATIONS_RECORD, SYNONYMS_FILE,
     SYNONYMS_RECORD,
 )
 
@@ -19,6 +20,9 @@ __all__ = [
     'ensure_ooh_na_na',
     'ensure_alts',
     'ensure_synonyms',
+    'ensure_definitions',
+    'ensure_properties',
+    'ensure_relations',
 ]
 
 
@@ -73,6 +77,30 @@ def ensure_alts(force: bool = False) -> str:
     return _ensure(record_id=ALTS_DATA_RECORD, path=ALTS_FILE, force=force)
 
 
+def ensure_definitions(force: bool = False) -> str:
+    """Ensure that the definitions data is downloaded/built.
+
+    .. seealso:: :data:`pyobo.constants.DEFINITIONS_RECORD`
+    """
+    return _ensure(record_id=DEFINITIONS_RECORD, path=DEFINITIONS_FILE, force=force)
+
+
+def ensure_properties(force: bool = False) -> str:
+    """Ensure that the properties data is downloaded/built.
+
+    .. seealso:: :data:`pyobo.constants.PROPERTIES_RECORD`
+    """
+    return _ensure(record_id=PROPERTIES_RECORD, path=PROPERTIES_FILE, force=force)
+
+
+def ensure_relations(force: bool = False) -> str:
+    """Ensure that the relations data is downloaded/built.
+
+    .. seealso:: :data:`pyobo.constants.RELATIONS_RECORD`
+    """
+    return _ensure(record_id=RELATIONS_RECORD, path=RELATIONS_FILE, force=force)
+
+
 @click.command()
 @verbose_option
 @click.option('-f', '--force', is_flag=True)
@@ -83,6 +111,9 @@ def main(force: bool):
         ensure_synonyms,
         ensure_alts,
         ensure_inspector_javert,
+        ensure_definitions,
+        ensure_properties,
+        ensure_relations,
     ]:
         click.secho(f.__doc__.splitlines()[0], fg='green', bold=True)
         path = f(force=force)
