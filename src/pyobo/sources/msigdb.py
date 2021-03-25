@@ -3,7 +3,7 @@
 """Parsers for MSig."""
 
 import logging
-from typing import Iterable
+from typing import Iterable, Optional
 from xml.etree import ElementTree
 
 import bioversions
@@ -74,7 +74,7 @@ def iter_terms(version: str) -> Iterable[Term]:
 
         term = Term(
             reference=Reference(PREFIX, identifier, name),
-            definition=attrib["DESCRIPTION_FULL"].strip() or attrib["DESCRIPTION_BRIEF"].strip() or None,
+            definition=_get_definition(attrib),
             provenance=reference and [reference],
             is_obsolete=is_obsolete,
         )
@@ -113,6 +113,12 @@ def iter_terms(version: str) -> Iterable[Term]:
             if ncbigene_id:
                 term.append_relationship(has_part, Reference(prefix='ncbigene', identifier=ncbigene_id))
         yield term
+
+
+def _get_definition(attrib) -> Optional[str]:
+    rv = attrib["DESCRIPTION_FULL"].strip() or attrib["DESCRIPTION_BRIEF"].strip() or None
+    if rv is not None:
+        return rv.replace('\d', '').replace('\s', '')
 
 
 @click.command()

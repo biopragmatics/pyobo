@@ -33,6 +33,8 @@ def get_obo():
 def _get_term_from_tree(tree: ElementTree.ElementTree) -> Term:
     name = tree.find('name').text
     description = tree.find('description').text
+    if description:
+        description = description.strip().replace('\n', ' ')
     identifier = tree.find('identifier').text
     term = Term(
         reference=Reference(PREFIX, identifier, name),

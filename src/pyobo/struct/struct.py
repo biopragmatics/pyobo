@@ -1234,7 +1234,18 @@ def _quote_split(s: str) -> Tuple[str, str]:
     i = _get_first_nonquoted(s)
     if i is None:
         raise ValueError
-    return s[:i].strip().replace('\\"', '"'), s[i + 1:].strip()
+    return _clean_definition(s[:i].strip()), s[i + 1:].strip()
+
+
+def _clean_definition(s: str) -> str:
+    # if '\t' in s:
+    #     logger.warning('has tab')
+    return (
+        s.replace('\\"', '"')
+            .replace('\n', ' ')
+            .replace('\t', ' ')
+            .replace('\d', '')
+    )
 
 
 def _extract_synonym(

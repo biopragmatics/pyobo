@@ -44,7 +44,7 @@ def iter_terms(version: str) -> Iterable[Term]:
             j = json.load(file)
         term = Term(
             reference=Reference(PREFIX, j['identifier'], j['name']),
-            definition=j['description'],
+            definition=j['description'].strip().replace('\n', ' '),
         )
         yield term
 
