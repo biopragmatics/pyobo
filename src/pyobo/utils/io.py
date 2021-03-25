@@ -2,19 +2,19 @@
 
 """I/O utilities."""
 
+import csv
 import gzip
 import logging
 import time
 from collections import defaultdict
 from pathlib import Path
-from typing import Iterable, List, Mapping, Set, Tuple, TypeVar, Union
+from typing import Iterable, List, Mapping, Optional, Set, Tuple, TypeVar, Union
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
 from tqdm import tqdm
 
 __all__ = [
-    'split_tab_pair',
     'open_map_tsv',
     'open_multimap_tsv',
     'multidict',
@@ -23,6 +23,8 @@ __all__ = [
     'write_multimap_tsv',
     'write_iterable_tsv',
     'parse_xml_gz',
+    'get_writer',
+    'get_reader',
 ]
 
 logger = logging.getLogger(__name__)
@@ -31,35 +33,48 @@ X = TypeVar('X')
 Y = TypeVar('Y')
 
 
-def split_tab_pair(x: str) -> Tuple[str, str]:
-    """Split a pair of elements by a tab."""
-    a, b = x.strip().split('\t')
-    return a, b
+def get_reader(x, sep: str = '\t'):
+    """Get a :func:`csv.reader` with PyOBO default settings."""
+    return csv.reader(x, delimiter=sep, quoting=csv.QUOTE_MINIMAL)
 
 
-def open_map_tsv(path: Union[str, Path], *, use_tqdm: bool = False) -> Mapping[str, str]:
+def get_writer(x, sep: str = '\t'):
+    """Get a :func:`csv.writer` with PyOBO default settings."""
+    return csv.writer(x, delimiter=sep, quoting=csv.QUOTE_MINIMAL)
+
+
+def open_map_tsv(path: Union[str, Path], *, use_tqdm: bool = False, has_header: bool = True) -> Mapping[str, str]:
     """Load a mapping TSV file into a dictionary."""
     with open(path) as file:
-        next(file)  # throw away header
+        if has_header:
+            next(file)  # throw away header
         if use_tqdm:
             file = tqdm(file, desc=f'loading TSV from {path}')
-        return dict(split_tab_pair(line) for line in file)
+        return dict(get_reader(file))
 
 
-def open_multimap_tsv(path: Union[str, Path], *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
+def open_multimap_tsv(
+    path: Union[str, Path],
+    *,
+    use_tqdm: bool = False,
+    has_header: bool = True,
+) -> Mapping[str, List[str]]:
     """Load a mapping TSV file that has multiple mappings for each."""
-    rv = defaultdict(list)
+    return multidict(_help_multimap_tsv(path=path, use_tqdm=use_tqdm, has_header=has_header))
+
+
+def _help_multimap_tsv(
+    path: Union[str, Path],
+    *,
+    use_tqdm: bool = False,
+    has_header: bool = True,
+) -> Iterable[Tuple[str, str]]:
     with open(path) as file:
-        next(file)  # throw away header
+        if has_header:
+            next(file)  # throw away header
         if use_tqdm:
             file = tqdm(file, desc=f'loading TSV from {path}')
-        for line in file:
-            try:
-                key, value = split_tab_pair(line)
-            except ValueError:
-                logger.warning('bad line: %s', line.strip())
-            rv[key].append(value)
-    return dict(rv)
+        yield from get_reader(file)
 
 
 def multidict(pairs: Iterable[Tuple[X, Y]]) -> Mapping[X, List[Y]]:
@@ -81,12 +96,14 @@ def multisetdict(pairs: Iterable[Tuple[X, Y]]) -> Mapping[X, Set[Y]]:
 def write_map_tsv(
     *,
     path: Union[str, Path],
-    header: Iterable[str],
-    rv: Mapping[str, str],
+    header: Optional[Iterable[str]] = None,
+    rv: Union[Iterable[Tuple[str, str]], Mapping[str, str]],
     sep: str = '\t',
 ) -> None:
     """Write a mapping dictionary to a TSV file."""
-    write_iterable_tsv(path=path, header=header, it=rv.items(), sep=sep)
+    if isinstance(rv, dict):
+        rv = rv.items()
+    write_iterable_tsv(path=path, header=header, it=rv, sep=sep)
 
 
 def write_multimap_tsv(
@@ -108,15 +125,16 @@ def write_multimap_tsv(
 def write_iterable_tsv(
     *,
     path: Union[str, Path],
-    header: Iterable[str],
+    header: Optional[Iterable[str]] = None,
     it: Iterable[Tuple[str, str]],
     sep: str = '\t',
 ) -> None:
     """Write a mapping dictionary to a TSV file."""
     with open(path, 'w') as file:
-        print(*header, sep=sep, file=file)
-        for key, value in sorted(it):
-            print(key, value, sep=sep, file=file)
+        writer = get_writer(file, sep=sep)
+        if header is not None:
+            writer.writerow(header)
+        writer.writerows(sorted(it))
 
 
 def parse_xml_gz(path: Union[str, Path]) -> Element:

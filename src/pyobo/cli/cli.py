@@ -21,6 +21,7 @@ from ..constants import RAW_DIRECTORY
 from ..identifier_utils import normalize_curie, normalize_prefix
 from ..registries import iter_cached_obo
 from ..sources import has_nomenclature_plugin, iter_nomenclature_plugins
+from ..utils.io import get_writer
 from ..xrefdb.canonicalizer import Canonicalizer, get_priority_curie, remap_file_stream
 from ..xrefdb.priority import DEFAULT_PRIORITY_LIST
 
@@ -128,9 +129,9 @@ def normalize(text: str, name: bool):
 def remapping(file):
     """Make a canonical remapping."""
     canonicalizer = Canonicalizer.get_default()
-    print('input', 'canonical', sep='\t', file=file)
-    for source, target in canonicalizer.iterate_flat_mapping():
-        print(source, target, sep='\t', file=file)
+    writer = get_writer(file)
+    writer.writerow(['input', 'canonical'])
+    writer.writerows(canonicalizer.iterate_flat_mapping())
 
 
 main.add_command(lookup)

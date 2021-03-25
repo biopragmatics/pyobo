@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from .priority import DEFAULT_PRIORITY_LIST
 from .xrefs_pipeline import get_graph_from_xref_df, get_xref_df
+from ..utils.io import get_reader, get_writer
 
 __all__ = [
     'Canonicalizer',
@@ -199,7 +200,8 @@ def get_priority_curie(curie: str) -> str:
 
 def remap_file_stream(file_in, file_out, column: int, sep='\t') -> None:
     """Remap a file."""
-    for line in file_in:
-        line = line.strip().split(sep)
-        line[column] = get_priority_curie(line[column])
-        print(*line, sep=sep, file=file_out)
+    reader = get_reader(file_in, sep=sep)
+    writer = get_writer(file_out, sep=sep)
+    for row in reader:
+        row[column] = get_priority_curie(row[column])
+        writer.writerow(row)

@@ -2,12 +2,11 @@
 
 """Tools for iterating over things."""
 
+import csv
 import gzip
 from typing import Iterable, List, Tuple, TypeVar
 
 from more_itertools import peekable
-
-from .io import split_tab_pair
 
 __all__ = [
     'iterate_together',
@@ -22,8 +21,8 @@ Y = TypeVar('Y')
 def iterate_gzips_together(a_path, b_path) -> Iterable[Tuple[str, str, List[str]]]:
     """Iterate over two gzipped files together."""
     with gzip.open(a_path, mode='rt', errors='ignore') as a, gzip.open(b_path, mode='rt') as b:
-        a = (split_tab_pair(line) for line in a)
-        b = (split_tab_pair(line) for line in b)
+        a = csv.reader(a, delimiter='\t', quoting=csv.QUOTE_MINIMAL)
+        b = csv.reader(b, delimiter='\t', quoting=csv.QUOTE_MINIMAL)
         yield from iterate_together(a, b)
 
 

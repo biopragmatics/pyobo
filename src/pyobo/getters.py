@@ -23,6 +23,7 @@ from .identifier_utils import wrap_norm_prefix
 from .registries import get_curated_urls
 from .sources import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
+from .utils.io import get_writer
 from .utils.path import ensure_path, get_prefix_obo_path, prefix_directory_join
 from .version import get_git_hash, get_version
 
@@ -282,25 +283,30 @@ def db_output_helper(
     logger.info('writing %s sample to %s', db_name, db_sample_path)
     it = f(strict=strict, **kwargs)
     with gzip.open(db_path, mode='wt') as gzipped_file:
+        writer = get_writer(gzipped_file)
+
         # for the first 10 rows, put it in a sample file too
         with open(db_sample_path, 'w') as sample_file:
-            print(*columns, sep='\t', file=gzipped_file)
-            print(*columns, sep='\t', file=sample_file)
+            sample_writer = get_writer(sample_file)
+
+            # write header
+            writer.writerow(columns)
+            sample_writer.writerow(columns)
 
             for row, _ in zip(it, range(10)):
                 c[row[0]] += 1
-                print(*row, sep='\t', file=gzipped_file)
-                print(*row, sep='\t', file=sample_file)
+                writer.writerow(row)
+                sample_writer.writerow(row)
 
         # continue just in the gzipped one
         for row in it:
             c[row[0]] += 1
-            print(*row, sep='\t', file=gzipped_file)
+            writer.writerow(row)
 
     logger.info(f'writing {db_name} summary to {db_summary_path}')
     with open(db_summary_path, 'w') as file:
-        for k, v in c.most_common():
-            print(k, v, sep='\t', file=file)
+        writer = get_writer(file)
+        writer.writerows(c.most_common())
 
     db_metadata_path = directory / f'{db_name}_metadata.json'
     with open(db_metadata_path, 'w') as file:
