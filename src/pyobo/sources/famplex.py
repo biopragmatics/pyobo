@@ -60,7 +60,7 @@ def get_terms(version: str) -> Iterable[Term]:
         elif h_ns == 'UP':
             continue
         else:
-            print(h_ns)
+            logger.exception(h_ns)
             raise
         if t_ns == 'HGNC':
             t_identifier = hgnc_name_to_id.get(t_name)

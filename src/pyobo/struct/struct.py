@@ -5,7 +5,6 @@
 import gzip
 import json
 import logging
-import pathlib
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -373,16 +372,16 @@ class Obo:
         if use_tqdm:
             it = tqdm(it, desc=f'writing {self.ontology}', unit_scale=True, unit='line')
         for line in it:
-            print(line, file=file)
+            print(line, file=file)  # noqa:T001
 
-    def write_obonet_gz(self, path: Union[str, pathlib.Path]) -> None:
+    def write_obonet_gz(self, path: Union[str, Path]) -> None:
         """Write the OBO to a gzipped dump in Obonet JSON."""
         graph = self.to_obonet()
         with gzip.open(path, 'wt') as file:
             json.dump(nx.node_link_data(graph), file)
 
     @classmethod
-    def from_obonet_gz(cls, path: Union[str, pathlib.Path]) -> 'Obo':
+    def from_obonet_gz(cls, path: Union[str, Path]) -> 'Obo':
         """Read OBO from a pre-compiled Obonet JSON."""
         return cls.from_obonet(get_gzipped_graph(path))
 
@@ -547,7 +546,7 @@ class Obo:
         return ancestor in self.ancestors(descendant)
 
     @property
-    def hierarchy(self, *, use_tqdm: bool = False) -> nx.DiGraph:  # noqa: D401
+    def hierarchy(self, *, use_tqdm: bool = False) -> nx.DiGraph:  # noqa:D401
         """A graph representing the parent/child relationships between the entities.
 
         To get all children of a given entity, do:

@@ -60,6 +60,7 @@ class TestParseObonet(unittest.TestCase):
                 self.assertEqual(expected_references, actual_references)
 
     def test_extract_definition_with_escapes(self):
+        """Test extracting a definition with escapes in it."""
         expected_text = '''The canonical 3' splice site has the sequence "AG".'''
         s = '''"The canonical 3' splice site has the sequence \\"AG\\"." [PMID:1234]'''
         actual_text, actual_references = _extract_definition(s, strict=True, prefix='chebi')

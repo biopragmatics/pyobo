@@ -45,6 +45,12 @@ class Normalizer(ABC):
         id_to_synonyms: Dict[str, List[str]],
         remove_prefix: Optional[str] = None,
     ) -> None:  # noqa: D107
+        """Initialize the normalizer.
+
+        :param id_to_name: An identifier to name dictionary.
+        :param id_to_synonyms: An identifier to list of synonyms dictionary.
+        :param remove_prefix: A prefix to be removed from the identifiers. Useful for nomenclatures like ChEBI.
+        """
         self.id_to_name = id_to_name
         self.id_to_synonyms = id_to_synonyms
         self.synonym_to_identifiers_mapping = multisetdict(self._iterate_synonyms_to_identifiers(

@@ -113,7 +113,13 @@ class Backend:
 class MemoryBackend(Backend):
     """A resolution service using a dictionary-based in-memory cache."""
 
-    def __init__(self, get_id_name_mapping, get_alts_to_id, summarize) -> None:  # noqa:D107
+    def __init__(self, get_id_name_mapping, get_alts_to_id, summarize) -> None:
+        """Initialize the in-memory backend.
+
+        :param get_id_name_mapping: A function for getting id-name mappings
+        :param get_alts_to_id: A function for getting alts-id mappings
+        :param summarize: A function for summarizing
+        """
         self.get_id_name_mapping = get_id_name_mapping
         self.get_alts_to_id = get_alts_to_id
         self.summarize = summarize
@@ -141,7 +147,13 @@ class RawSQLBackend(Backend):
         refs_table: Optional[str] = None,
         alts_table: Optional[str] = None,
         engine: Union[None, str, Engine] = None,
-    ):  # noqa:D107
+    ):
+        """Initialize the raw SQL backend.
+
+        :param refs_table: A name for the references (prefix-id-name) table. Defaults to 'obo_reference'
+        :param alts_table: A name for the alts (prefix-alt-id) table. Defaults to 'obo_alt'
+        :param engine:
+        """
         if engine is None:
             self.engine = create_engine(get_sqlalchemy_uri())
         elif isinstance(engine, str):

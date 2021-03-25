@@ -75,7 +75,3 @@ def iter_compath_dfs() -> Iterable[pd.DataFrame]:
 def get_compath_xrefs_df() -> pd.DataFrame:
     """Iterate over all ComPath mappings."""
     return pd.concat(iter_compath_dfs())
-
-
-if __name__ == '__main__':
-    print(get_compath_xrefs_df().head())

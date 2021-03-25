@@ -2,6 +2,7 @@
 
 """Utilities for converters."""
 
+import logging
 from typing import Mapping, Set, Tuple
 
 from ..utils.io import multisetdict
@@ -10,6 +11,8 @@ __all__ = [
     'get_go_mapping',
     'process_go_mapping_line',
 ]
+
+logger = logging.getLogger(__name__)
 
 
 def get_go_mapping(path: str, prefix: str) -> Mapping[str, Set[Tuple[str, str]]]:
@@ -30,8 +33,8 @@ def process_go_mapping_line(line: str, prefix: str) -> Tuple[str, Tuple[str, str
     try:
         line3, go_name = line2.rsplit('>', 1)
     except ValueError:
-        print(line)
-        print('go', go_id)
+        logger.warning(line)
+        logger.warning('go:%s', go_id)
         raise
 
     go_name = go_name.strip()[len('GO:'):]

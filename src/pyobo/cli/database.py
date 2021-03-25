@@ -94,7 +94,7 @@ def definitions(directory: str, zenodo: bool, no_strict: bool, force: bool):
         directory=directory,
     )
     if zenodo:
-        pass
+        click.echo(f'Zenodo upload not yet implemented for paths: {paths}')
 
 
 @main.command()
@@ -115,7 +115,7 @@ def typedefs(directory: str, zenodo: bool, no_strict: bool, force: bool):
         skip_set={'ncbigene', 'kegg.pathway', 'kegg.gene'},
     )
     if zenodo:
-        pass
+        click.echo(f'Zenodo upload not yet implemented for paths: {paths}')
 
 
 @main.command()

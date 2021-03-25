@@ -26,7 +26,3 @@ def get_biomappings_df() -> pd.DataFrame:
     }, inplace=True)
     df = df[XREF_COLUMNS]
     return df
-
-
-if __name__ == '__main__':
-    print(get_biomappings_df().head())

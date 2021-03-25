@@ -42,7 +42,7 @@ def upload(bucket, whitelist, blacklist):
 @verbose_option
 def ls(bucket):
     """List all artifacts on the S3 bucket."""
-    list_artifacts(bucket)
+    click.echo(list_artifacts(bucket))
 
 
 if __name__ == '__main__':

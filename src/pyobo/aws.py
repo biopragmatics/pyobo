@@ -148,7 +148,7 @@ def upload_file(*, path, bucket, key, s3_client=None):
     s3_client.upload_file(path, bucket, key)
 
 
-def list_artifacts(bucket: str) -> None:
+def list_artifacts(bucket: str) -> str:
     """List the files in a given bucket."""
     s3_client = boto3.client('s3')
     all_objects = s3_client.list_objects(Bucket=bucket)
@@ -156,4 +156,4 @@ def list_artifacts(bucket: str) -> None:
         (entry['Key'], humanize.naturalsize(entry['Size']))
         for entry in all_objects['Contents']
     ]
-    print(tabulate(rows, headers=['File', 'Size']))
+    return tabulate(rows, headers=['File', 'Size'])
