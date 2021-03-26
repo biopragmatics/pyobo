@@ -38,9 +38,10 @@ def home():
     """Serve the home page."""
     return render_template(
         'home.html',
-        total_count=intcomma(backend.count_curies()),
+        name_count=intcomma(backend.count_names()),
         alts_count=intcomma(backend.count_alts()),
         prefix_count=intcomma(backend.count_prefixes()),
+        definition_count=intcomma(backend.count_definitions()),
     )
 
 
@@ -95,6 +96,7 @@ def get_app(
     uri: Optional[str] = None,
     refs_table: Optional[str] = None,
     alts_table: Optional[str] = None,
+    defs_table: Optional[str] = None,
 ) -> Flask:
     """Build a flask app.
 
@@ -119,6 +121,7 @@ def get_app(
         uri=uri,
         refs_table=refs_table,
         alts_table=alts_table,
+        defs_table=defs_table,
     )
     app.register_blueprint(resolve_blueprint)
 
@@ -127,7 +130,7 @@ def get_app(
         logger.info("before_first_request")
         backend.count_prefixes()
         backend.count_alts()
-        backend.count_curies()
+        backend.count_names()
 
     return app
 
@@ -140,6 +143,7 @@ def _get_resolver(
     uri: Optional[str] = None,
     refs_table: Optional[str] = None,
     alts_table: Optional[str] = None,
+    defs_table: Optional[str] = None,
 ) -> Backend:
     if sql:
         logger.info('using raw SQL backend')
@@ -147,6 +151,7 @@ def _get_resolver(
             engine=uri,
             refs_table=refs_table,
             alts_table=alts_table,
+            defs_table=defs_table,
         )
 
     if lazy:

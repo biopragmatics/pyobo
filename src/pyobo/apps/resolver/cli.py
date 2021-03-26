@@ -24,6 +24,7 @@ __all__ = [
 @click.option('--sql-uri')
 @click.option('--sql-refs-table', help='use preloaded SQL database as backend')
 @click.option('--sql-alts-table', help='use preloaded SQL database as backend')
+@click.option('--sql-defs-table', help='use preloaded SQL database as backend')
 @click.option('--lazy', is_flag=True, help='do no load full cache into memory automatically')
 @click.option('--test', is_flag=True, help='run in test mode with only a few datasets')
 @click.option('--workers', type=int, help='number of workers to use in --gunicorn mode')
@@ -36,6 +37,7 @@ def main(
     sql_uri: str,
     sql_refs_table: str,
     sql_alts_table: str,
+    sql_defs_table: str,
     data: Optional[str],
     test: bool,
     with_gunicorn: bool,
@@ -66,6 +68,7 @@ def main(
         uri=sql_uri,
         refs_table=sql_refs_table,
         alts_table=sql_alts_table,
+        defs_table=sql_defs_table,
     )
     run_app(app=app, host=host, port=port, with_gunicorn=with_gunicorn, workers=workers)
 

@@ -13,7 +13,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 
 from pyobo import normalize_curie
-from pyobo.constants import get_sqlalchemy_uri
+from pyobo.constants import ALTS_TABLE_NAME, DEFS_TABLE_NAME, REFS_TABLE_NAME, get_sqlalchemy_uri
 
 __all__ = [
     'Backend',
@@ -40,6 +40,10 @@ class Backend:
         """Get the canonical/preferred (english) name for the identifier in the given resource."""
         raise NotImplementedError
 
+    def get_definition(self, prefix: str, identifier: str) -> Optional[str]:
+        """Get the definition associated with the prefix/identifier."""
+        raise NotImplementedError
+
     def get_synonyms(self, prefix: str, identifier: str) -> List[str]:
         """Get a list of synonyms."""
         raise NotImplementedError
@@ -52,8 +56,11 @@ class Backend:
         """Summarize the contents of the database."""
         raise NotImplementedError
 
-    def count_curies(self) -> Optional[int]:
-        """Count the number of identifiers in the database."""
+    def count_names(self) -> Optional[int]:
+        """Count the number of names in the database."""
+
+    def count_definitions(self) -> Optional[int]:
+        """Count the number of definitions in the database."""
 
     def count_alts(self) -> Optional[int]:
         """Count the number of alternative identifiers in the database."""
@@ -99,8 +106,7 @@ class Backend:
                 providers=providers,
                 message='Could not look up identifier',
             )
-
-        return dict(
+        rv = dict(
             query=curie,
             prefix=prefix,
             identifier=identifier,
@@ -108,12 +114,17 @@ class Backend:
             success=True,
             providers=providers,
         )
+        definition = self.get_definition(prefix, identifier)
+        if definition:
+            rv['definition'] = definition
+
+        return rv
 
 
 class MemoryBackend(Backend):
     """A resolution service using a dictionary-based in-memory cache."""
 
-    def __init__(self, get_id_name_mapping, get_alts_to_id, summarize) -> None:
+    def __init__(self, get_id_name_mapping, get_alts_to_id, summarize, get_id_definition_mapping=None) -> None:
         """Initialize the in-memory backend.
 
         :param get_id_name_mapping: A function for getting id-name mappings
@@ -122,6 +133,7 @@ class MemoryBackend(Backend):
         """
         self.get_id_name_mapping = get_id_name_mapping
         self.get_alts_to_id = get_alts_to_id
+        self.get_id_definition_mapping = get_id_definition_mapping
         self.summarize = summarize
 
     def has_prefix(self, prefix: str) -> bool:  # noqa:D102
@@ -135,6 +147,12 @@ class MemoryBackend(Backend):
         id_name_mapping = self.get_id_name_mapping(prefix) or {}
         return id_name_mapping.get(identifier)
 
+    def get_definition(self, prefix: str, identifier: str) -> Optional[str]:  # noqa:D102
+        if self.get_id_definition_mapping is None:
+            return
+        id_definition_mapping = self.get_id_definition_mapping(prefix) or {}
+        return id_definition_mapping.get(identifier)
+
 
 class RawSQLBackend(Backend):
     """A backend that communicates with low-level SQL statements."""
@@ -146,6 +164,7 @@ class RawSQLBackend(Backend):
         self, *,
         refs_table: Optional[str] = None,
         alts_table: Optional[str] = None,
+        defs_table: Optional[str] = None,
         engine: Union[None, str, Engine] = None,
     ):
         """Initialize the raw SQL backend.
@@ -161,17 +180,14 @@ class RawSQLBackend(Backend):
         else:
             self.engine = engine
 
-        self.refs_table = refs_table or 'obo_reference'
-        self.alts_table = alts_table or 'obo_alt'
+        self.refs_table = refs_table or REFS_TABLE_NAME
+        self.alts_table = alts_table or ALTS_TABLE_NAME
+        self.defs_table = defs_table or DEFS_TABLE_NAME
 
     @lru_cache(maxsize=1)
-    def count_curies(self) -> int:  # noqa:D102
-        """Get the number of terms."""
-        logger.info('counting CURIEs')
-        start = time.time()
-        rv = self._get_one(f'SELECT SUM(count) FROM {self.refs_table}_summary;')  # noqa:S608
-        logger.info('done counting CURIEs after %.2fs', time.time() - start)
-        return rv
+    def count_names(self) -> int:  # noqa:D102
+        """Get the number of names."""
+        return self._get_one(f'SELECT SUM(identifier_count) FROM {self.refs_table}_summary;')  # noqa:S608
 
     @lru_cache(maxsize=1)
     def count_prefixes(self) -> int:  # noqa:D102
@@ -180,6 +196,11 @@ class RawSQLBackend(Backend):
         rv = self._get_one(f'SELECT COUNT(DISTINCT prefix) FROM {self.refs_table}_summary;')  # noqa:S608
         logger.info('done counting prefixes after %.2fs', time.time() - start)
         return rv
+
+    @lru_cache(maxsize=1)
+    def count_definitions(self) -> int:  # noqa:D102
+        """Get the number of definitions."""
+        return self._get_one(f'SELECT SUM(identifier_count) FROM {self.defs_table}_summary;')  # noqa:S608
 
     @lru_cache(maxsize=1)
     def count_alts(self) -> Optional[int]:  # noqa:D102
@@ -193,7 +214,7 @@ class RawSQLBackend(Backend):
 
     @lru_cache(maxsize=1)
     def summarize(self) -> Counter:  # noqa:D102
-        sql = f'SELECT prefix, count FROM {self.refs_table}_summary;'  # noqa:S608
+        sql = f'SELECT prefix, identifier_count FROM {self.refs_table}_summary;'  # noqa:S608
         with self.engine.connect() as connection:
             return Counter(dict(connection.execute(sql).fetchall()))
 
@@ -215,11 +236,17 @@ class RawSQLBackend(Backend):
             result = connection.execute(sql, prefix=prefix, alt=identifier).fetchone()
             return result[0] if result else identifier
 
+    def get_name(self, prefix: str, identifier: str) -> Optional[str]:  # noqa:D102
+        return self._help_one(self.refs_table, 'name', prefix, identifier)
+
+    def get_definition(self, prefix: str, identifier: str) -> Optional[str]:  # noqa:D102
+        return self._help_one(self.defs_table, 'definition', prefix, identifier)
+
     @lru_cache(maxsize=100_000)
-    def get_name(self, prefix, identifier) -> Optional[str]:  # noqa:D102
+    def _help_one(self, table: str, column: str, prefix: str, identifier: str) -> Optional[str]:  # noqa:D102
         sql = text(f"""
-            SELECT name
-            FROM {self.refs_table}
+            SELECT {column}
+            FROM {table}
             WHERE prefix = :prefix and identifier = :identifier;
         """)  # noqa:S608
         with self.engine.connect() as connection:

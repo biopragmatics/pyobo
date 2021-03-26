@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h5 class="card-header">Ooh Na Na CURIE Resolver</h5>
+    <h5 class="card-header">Bioresolver</h5>
     <div class="card-body">
         <p>
             This service resolves <a href="https://en.wikipedia.org/wiki/CURIE">CURIEs</a>
-            to their labels and builds Identifiers.org URLs when possible.
-            {% if total_count %}It currently covers {{ total_count }} identifiers
-                and {{ alts_count }} alternate identifiers across {{ prefix_count }}
-                resources.{% endif %}
+            to their labels, names, and builds provider URLs (like for Identifiers.org) when possible.
+            {% if name_count %}It currently covers {{ name_count }} names,
+                {{ alts_count }} alternate identifiers, and {{ definition_count }} definitions
+                across {{ prefix_count }} resources.{% endif %}
         </p>
         <p>
             It has a single endpoint <code>/resolve/&lt;curie&gt;</code> that gives back JSON.
@@ -56,8 +56,13 @@
         </tr>
     </table>
     <div class="card-footer text-center">
-        Developed with ❤️ in 🇩🇪 by <a href="https://github.com/cthoyt">@cthoyt</a>.
-        (<a href="https://github.com/pyobo/pyobo">Source code</a> |
-        <a href="https://cthoyt.com/2020/04/18/ooh-na-na.html">blog post</a>)
+        <p class="small" style="margin-bottom: 0">
+            Developed with ❤️ in 🇩🇪 and 🇺🇸 by the <a href="https://indralab.github.io">INDRA labs</a> in the
+            <a href="https://hits.harvard.edu">Harvard Program in Therapeutic Science (HiTS)</a>.<br/>
+            Funded by the DARPA Automating Scientific Knowledge Extraction (ASKE) program under award
+            HR00111990009.<br/> Point of contact: <a href="https://github.com/cthoyt">@cthoyt</a>.
+            (<a href="https://github.com/pyobo/pyobo">Source code</a> |
+            <a href="https://cthoyt.com/2020/04/18/ooh-na-na.html">blog post</a>)
+        </p>
     </div>
 {% endblock %}

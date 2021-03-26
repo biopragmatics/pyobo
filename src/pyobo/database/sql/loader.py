@@ -14,12 +14,15 @@ import logging
 import time
 from contextlib import closing
 from textwrap import dedent
+from typing import Optional, Union
 
 import click
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from tabulate import tabulate
+
+from pyobo.constants import ALTS_TABLE_NAME, DEFS_TABLE_NAME, REFS_TABLE_NAME, get_sqlalchemy_uri
 
 logger = logging.getLogger(__name__)
 
@@ -31,24 +34,34 @@ def echo(s, **kwargs) -> None:
 
 
 #: Number of test rows if --test is used
-TEST_N = 1_000_000
+TEST_N = 1_000
 
 
-def load(uri: str, refs_table: str, refs_path: str, alts_table: str, alts_path: str, test: bool):
+def load(
+    *,
+    refs_path: str,
+    alts_path: str,
+    defs_path: str,
+    refs_table: str = REFS_TABLE_NAME,
+    alts_table: str = ALTS_TABLE_NAME,
+    defs_table: str = DEFS_TABLE_NAME,
+    test: bool = False,
+    uri: Optional[str] = None,
+) -> None:
     """Load the database.
 
-    :param uri:
-    :param refs_table:
-    :param refs_path:
-    :param alts_table:
-    :param alts_path:
-    :param test:
-    :return:
+    :param refs_table: Name of the references table
+    :param refs_path: Path to the references table data
+    :param alts_table: Name of the alts table
+    :param alts_path: Path to the alts table data
+    :param defs_table: Name of the definitions table
+    :param defs_path: Path to the definitions table data
+    :param test: Should only a test set of rows be uploaded? Defaults to false.
+    :param uri: The URI of the database to connect to.
     """
-    logger.debug('connecting to database %s', uri)
-    engine: Engine = create_engine(uri)
+    engine = _ensure_engine(uri)
 
-    _load_names(
+    _load_table(
         engine=engine,
         table=alts_table,
         path=alts_path,
@@ -56,11 +69,19 @@ def load(uri: str, refs_table: str, refs_path: str, alts_table: str, alts_path: 
         target_col='alt',
         target_col_size=64,
         add_unique_constraints=False,
+        add_reverse_index=True,
     )
-    with engine.begin() as connection:
-        connection.execute(f'CREATE INDEX ON {alts_table} (prefix, alt);')
 
-    _load_names(
+    _load_table(
+        engine=engine,
+        table=defs_table,
+        path=defs_path,
+        test=test,
+        target_col='definition',
+        use_varchar=False,
+    )
+
+    _load_table(
         engine=engine,
         table=refs_table,
         path=refs_path,
@@ -70,53 +91,74 @@ def load(uri: str, refs_table: str, refs_path: str, alts_table: str, alts_path: 
     )
 
 
-def _load_names(
-    engine: Engine,
+def _ensure_engine(engine: Union[None, str, Engine] = None) -> Engine:
+    if engine is None:
+        engine = get_sqlalchemy_uri()
+    if isinstance(engine, str):
+        logger.debug('connecting to database %s', engine)
+        engine = create_engine(engine)
+    return engine
+
+
+def _load_table(
     table: str,
     path: str,
-    test: bool,
     target_col: str,
-    target_col_size: int,
+    *,
+    test: bool = False,
+    target_col_size: Optional[int] = None,
+    engine: Union[None, str, Engine] = None,
     add_unique_constraints: bool = True,
+    add_reverse_index: bool = False,
     use_md5: bool = False,
+    use_varchar: bool = True,
 ) -> None:
+    engine = _ensure_engine(engine)
+
     drop_statement = f'DROP TABLE IF EXISTS {table} CASCADE;'
 
     if use_md5:
-        md5_ddl = "md5_hash VARCHAR(32) GENERATED ALWAYS AS (md5(prefix || ':' || identifier)) STORED,"
+        md5_ddl = "\nmd5_hash VARCHAR(32) GENERATED ALWAYS AS (md5(prefix || ':' || identifier)) STORED,"
     else:
         md5_ddl = ''
 
-    create_statement = dedent(f'''\
+    if use_varchar:
+        if target_col_size is None:
+            raise ValueError('target_col_size should not be none when use_varchar=True')
+        target_col_type = f'VARCHAR({target_col_size})'
+    else:
+        target_col_type = 'TEXT'
+
+    # tidbit: the largest name's length is 2936 characters
+    create_statement = dedent(f'''
     CREATE TABLE {table} (
         id           SERIAL,  /* automatically the primary key */
         prefix       VARCHAR(32) NOT NULL,
-        identifier   VARCHAR(64) NOT NULL,
-        {md5_ddl}
-        {target_col} VARCHAR({target_col_size}) NOT NULL  /* largest name's length is 2936 characters */
+        identifier   VARCHAR(64) NOT NULL,{md5_ddl}
+        {target_col} {target_col_type} NOT NULL
     ) WITH (
         autovacuum_enabled = false,
         toast.autovacuum_enabled = false
     );
     ''').rstrip()
 
-    create_summary_statement = dedent(f'''\
+    create_summary_statement = dedent(f'''
     CREATE MATERIALIZED VIEW {table}_summary AS
-      SELECT prefix, COUNT(identifier) as count
+      SELECT prefix, COUNT(identifier) as identifier_count
       FROM {table}
       GROUP BY prefix;
-
+      
     CREATE UNIQUE INDEX {table}_summary_prefix
         ON {table}_summary (prefix);
     ''').rstrip()  # noqa:S608
 
-    copy_statement = dedent(f'''\
+    copy_statement = dedent(f'''
     COPY {table} (prefix, identifier, {target_col})
     FROM STDIN
     WITH CSV HEADER DELIMITER E'\\t' QUOTE E'\\b';
     ''').rstrip()
 
-    cleanup_statement = dedent(f'''\
+    cleanup_statement = dedent(f'''
     ALTER TABLE {table} SET (
         autovacuum_enabled = true,
         toast.autovacuum_enabled = true
@@ -126,12 +168,12 @@ def _load_names(
     index_curie_statement = f'CREATE INDEX ON {table} (prefix, identifier);'
     index_md5_statement = f'CREATE INDEX ON {table} (md5_hash);'
 
-    unique_curie_stmt = dedent(f'''\
+    unique_curie_stmt = dedent(f'''
     ALTER TABLE {table}
         ADD CONSTRAINT {table}_prefix_identifier_unique UNIQUE (prefix, identifier);
     ''').rstrip()
 
-    unique_md5_hash_stmt = dedent(f'''\
+    unique_md5_hash_stmt = dedent(f'''
     ALTER TABLE {table}
         ADD CONSTRAINT {table}_md5_hash_unique UNIQUE (md5_hash);
     ''').rstrip()
@@ -200,16 +242,28 @@ def _load_names(
                 cursor.execute(unique_md5_hash_stmt)
                 echo('End unique')
 
-            echo('Creating summary table')
-            echo(create_summary_statement, fg='yellow')
-            cursor.execute(create_summary_statement)
+            if add_reverse_index:
+                index_reverse_statement = f'CREATE INDEX ON {table} (prefix, {target_col});'
+                echo('Start reverse indexing')
+                echo(index_reverse_statement, fg='yellow')
+                cursor.execute(index_reverse_statement)
+                echo('End reverse indexing')
 
     with closing(engine.raw_connection()) as connection:
         connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         with connection.cursor() as cursor:
-            sql = f"VACUUM ANALYSE {table}"
-            echo(sql, fg='yellow')
-            cursor.execute(sql)
+            echo('Creating summary table')
+            echo(create_summary_statement, fg='yellow')
+            cursor.execute(create_summary_statement)
+            echo('Done creating summary table')
+
+    with closing(engine.raw_connection()) as connection:
+        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        with connection.cursor() as cursor:
+            for x in (table, f'{table}_summary'):
+                sql = f"VACUUM ANALYSE {x};"
+                echo(sql, fg='yellow')
+                cursor.execute(sql)
 
     with engine.connect() as connection:
         select_statement = f"SELECT * FROM {table} LIMIT 10;"  # noqa:S608
@@ -221,3 +275,10 @@ def _load_names(
         else:
             headers = ['id', 'prefix', 'identifier', target_col]
         click.echo(tabulate(map(tuple, result), headers=headers))
+
+        # Summary table
+        select_statement = f"SELECT * FROM {table}_summary ORDER BY identifier_count DESC LIMIT 10 ;"  # noqa:S608
+        click.secho('Top entries in summary view:', fg='green', bold=True)
+        click.secho(select_statement, fg='green')
+        result = connection.execute(select_statement)
+        click.echo(tabulate(map(tuple, result), headers=['prefix', 'count']))
