@@ -2,6 +2,7 @@
 
 """CLI for PyOBO lookups."""
 
+import json
 from typing import Optional
 
 import click
@@ -10,8 +11,8 @@ from more_click import verbose_option
 from .utils import echo_df, force_option, prefix_argument
 from ..api import (
     get_ancestors, get_descendants, get_filtered_properties_df, get_filtered_relations_df, get_filtered_xrefs,
-    get_hierarchy, get_id_definition_mapping, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts, get_name,
-    get_name_by_curie, get_properties_df, get_relations_df, get_typedef_df, get_xrefs_df,
+    get_hierarchy, get_id_definition_mapping, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts,
+    get_metadata, get_name, get_name_by_curie, get_properties_df, get_relations_df, get_typedef_df, get_xrefs_df,
 )
 from ..identifier_utils import normalize_curie
 
@@ -41,6 +42,16 @@ def xrefs(prefix: str, target: str, force: bool):
     else:
         all_xrefs_df = get_xrefs_df(prefix)
         echo_df(all_xrefs_df)
+
+
+@lookup.command()
+@prefix_argument
+@verbose_option
+@force_option
+def metadata(prefix: str, force: bool):
+    """Page through the identifiers and names of entities in the given namespace."""
+    metadata = get_metadata(prefix, force=force)
+    click.echo(json.dumps(metadata, indent=2))
 
 
 @lookup.command()

@@ -439,6 +439,10 @@ class Obo:
         return self._cache(name='properties.tsv')
 
     @property
+    def _metadata_path(self) -> Path:
+        return self._cache(name='metadata.json')
+
+    @property
     def _obo_path(self) -> Path:
         return get_prefix_obo_path(self.ontology, version=self.data_version)
 
@@ -454,6 +458,11 @@ class Obo:
         write_obonet: bool = False,
     ) -> None:
         """Write the OBO to the default path."""
+        if not self._metadata_path.exists() or force:
+            logger.info('[%s] caching metadata to %s', self.ontology, self._metadata_path)
+            with self._metadata_path.open('w') as file:
+                json.dump(self.get_metadata(), file, indent=2)
+
         if not self._names_path.exists() or force:
             logger.info('[%s] caching names to %s', self.ontology, self._names_path)
             write_map_tsv(
@@ -815,6 +824,13 @@ class Obo:
             typedefs=list(typedefs.values()),
             synonym_typedefs=list(synonym_typedefs.values()),
             iter_terms=lambda: iter(terms),
+        )
+
+    def get_metadata(self) -> Mapping[str, Any]:
+        """Get metadata."""
+        return dict(
+            version=self.data_version,
+            date=self.date and self.date.isoformat(),
         )
 
     def get_id_name_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, str]:
