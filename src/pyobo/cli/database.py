@@ -11,7 +11,7 @@ from zenodo_client import update_zenodo
 from .utils import directory_option, force_option, no_strict_option, zenodo_option
 from ..constants import (
     ALTS_DATA_RECORD, DEFINITIONS_RECORD, JAVERT_RECORD, OOH_NA_NA_RECORD, PROPERTIES_RECORD, RELATIONS_RECORD,
-    SYNONYMS_RECORD,
+    SYNONYMS_RECORD, TYPEDEFS_RECORD,
 )
 from ..database.sql.cli import database_sql
 from ..getters import db_output_helper
@@ -54,6 +54,8 @@ def build(ctx: click.Context, directory: str, zenodo: bool, no_strict: bool, for
     ctx.invoke(properties, directory=directory, zenodo=zenodo)
     click.secho('Relations', fg='cyan', bold=True)
     ctx.invoke(relations, directory=directory, zenodo=zenodo)
+    click.secho('Typedefs', fg='cyan', bold=True)
+    ctx.invoke(typedefs, directory=directory, zenodo=zenodo)
 
 
 @main.command()
@@ -117,7 +119,8 @@ def typedefs(directory: str, zenodo: bool, no_strict: bool, force: bool):
         skip_set={'ncbigene', 'kegg.pathway', 'kegg.genes'},
     )
     if zenodo:
-        click.echo(f'Zenodo upload not yet implemented for paths: {paths}')
+        # see https://zenodo.org/record/4644013
+        update_zenodo(TYPEDEFS_RECORD, paths)
 
 
 @main.command()

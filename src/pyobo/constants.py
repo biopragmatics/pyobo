@@ -67,6 +67,9 @@ ALTS_FILE = 'alts.tsv.gz'
 DEFINITIONS_RECORD = '4637061'
 DEFINITIONS_FILE = 'definitions.tsv.gz'
 
+TYPEDEFS_RECORD = '4644013'
+TYPEDEFS_FILE = 'typedefs.tzv.gz'
+
 REFS_TABLE_NAME = 'obo_reference'
 ALTS_TABLE_NAME = 'obo_alt'
 DEFS_TABLE_NAME = 'obo_def'
