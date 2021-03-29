@@ -7,6 +7,7 @@ import logging
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 from xml.etree.ElementTree import Element
 
+import bioversions
 from tqdm import tqdm
 
 from ..struct import Obo, Reference, Synonym, Term
@@ -18,13 +19,9 @@ logger = logging.getLogger(__name__)
 
 PREFIX = 'mesh'
 
-
-# VERSION = '2019'
-
-
 def get_obo() -> Obo:
     """Get MeSH as OBO."""
-    version = '2019'
+    version = bioversions.get_version('mesh')
     return Obo(
         ontology=PREFIX,
         name='Medical Subject Headings',
