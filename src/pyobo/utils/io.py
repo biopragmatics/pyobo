@@ -7,6 +7,7 @@ import gzip
 import logging
 import time
 from collections import defaultdict
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterable, List, Mapping, Optional, Set, Tuple, TypeVar, Union
 from xml.etree import ElementTree
@@ -24,6 +25,7 @@ __all__ = [
     'write_iterable_tsv',
     'parse_xml_gz',
     'get_writer',
+    'open_reader',
     'get_reader',
 ]
 
@@ -31,6 +33,14 @@ logger = logging.getLogger(__name__)
 
 X = TypeVar('X')
 Y = TypeVar('Y')
+
+
+@contextmanager
+def open_reader(path: Union[str, Path], sep: str = '\t'):
+    """Open a file and get a reader for it."""
+    path = Path(path)
+    with (gzip.open(path, 'rt') if path.suffix == '.gz' else open(path)) as file:
+        yield get_reader(file, sep=sep)
 
 
 def get_reader(x, sep: str = '\t'):

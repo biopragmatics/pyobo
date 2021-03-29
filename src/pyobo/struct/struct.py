@@ -143,6 +143,17 @@ class Term(Referenced):
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: Optional[bool] = None
 
+    @classmethod
+    def from_triple(cls, prefix: str, identifier: str, name: Optional[str] = None) -> 'Term':
+        """Create a term from a reference."""
+        return cls(reference=Reference(prefix=prefix, identifier=identifier, name=name))
+
+    @classmethod
+    def from_curie(cls, curie: str, name: Optional[str] = None) -> 'Term':
+        """Create a term directly from a CURIE and optional name."""
+        prefix, identifier = normalize_curie(curie)
+        return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
+
     def append_parent(self, reference: Union['Term', Reference]) -> None:
         """Add a parent to this entity."""
         if reference is None:

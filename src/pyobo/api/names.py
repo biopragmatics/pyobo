@@ -55,10 +55,6 @@ def _help_get(f: Callable[[str], Mapping[str, X]], prefix: str, identifier: str)
 @wrap_norm_prefix
 def get_name(prefix: str, identifier: str) -> Optional[str]:
     """Get the name for an entity."""
-    if prefix == 'uniprot':
-        from protmapper import uniprot_client
-        return uniprot_client.get_mnemonic(identifier)
-
     return _help_get(get_id_name_mapping, prefix, identifier)
 
 
