@@ -69,7 +69,7 @@ def get_wikidata_df(prefix: str, wikidata_property: str) -> pd.DataFrame:
 
 def iter_wikidata_mappings(wikidata_property: str) -> Iterable[Tuple[str, str]]:
     """Iterate over Wikidata xrefs."""
-    path = WIKIDATA_MAPPING_DIRECTORY.get(f'{wikidata_property}.json')
+    path = WIKIDATA_MAPPING_DIRECTORY.join(name=f'{wikidata_property}.json')
     if path.exists():
         with path.open() as file:
             rows = json.load(file)

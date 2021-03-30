@@ -80,7 +80,7 @@ def iter_terms(version: str, synonym_abb, autodownload: bool = False) -> Iterabl
         # FIXME needs automated scrapy step where you put in user/password
         path = ensure_path(PREFIX, url=url, version=version)
     else:
-        path = RAW_MODULE.get(PREFIX, version, name)
+        path = RAW_MODULE.get(PREFIX, version, name=name)
         if not path.exists():
             raise FileNotFoundError(
                 f'UMLS needs to be downloaded manually still and moved to  {path}. '
