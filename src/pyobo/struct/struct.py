@@ -566,7 +566,7 @@ class Obo:
         return ancestor in self.ancestors(descendant)
 
     @property
-    def hierarchy(self, *, use_tqdm: bool = False) -> nx.DiGraph:  # noqa:D401
+    def hierarchy(self, *, use_tqdm: bool = False) -> nx.DiGraph:
         """A graph representing the parent/child relationships between the entities.
 
         To get all children of a given entity, do:
@@ -578,7 +578,7 @@ class Obo:
 
             identifier = '1905571'  # interleukin-10 receptor complex
             is_complex = '0032991' in  nx.descendants(obo.hierarchy, identifier)  # should be true
-        """
+        """  # noqa:D401
         if self._hierarchy is None:
             self._hierarchy = nx.DiGraph()
             for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting hierarchy'):
@@ -1269,9 +1269,9 @@ def _clean_definition(s: str) -> str:
     #     logger.warning('has tab')
     return (
         s.replace('\\"', '"')
-            .replace('\n', ' ')
-            .replace('\t', ' ')
-            .replace('\d', '')
+        .replace('\n', ' ')
+        .replace('\t', ' ')
+        .replace('\d', '')  # noqa:W605
     )
 
 
@@ -1327,7 +1327,7 @@ def iterate_node_synonyms(
     synonym_typedefs: Mapping[str, SynonymTypeDef],
     *,
     prefix: str,
-    identifier: str
+    identifier: str,
 ) -> Iterable[Synonym]:
     """Extract synonyms from a :mod:`obonet` node's data.
 
