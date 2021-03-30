@@ -147,7 +147,7 @@ def _load_table(
       SELECT prefix, COUNT(identifier) as identifier_count
       FROM {table}
       GROUP BY prefix;
-      
+
     CREATE UNIQUE INDEX {table}_summary_prefix
         ON {table}_summary (prefix);
     ''').rstrip()  # noqa:S608
