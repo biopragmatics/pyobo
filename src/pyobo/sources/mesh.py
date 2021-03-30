@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 PREFIX = 'mesh'
 
+
 def get_obo() -> Obo:
     """Get MeSH as OBO."""
     version = bioversions.get_version('mesh')

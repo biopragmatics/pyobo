@@ -34,13 +34,13 @@ class Reference:
     registry: Registry = field(default=miriam, repr=False)
 
     @property
-    def curie(self) -> str:  # noqa: D401
-        """The CURIE for this reference."""
+    def curie(self) -> str:
+        """The CURIE for this reference."""  # noqa: D401
         return f'{self.prefix}:{self.identifier}'
 
     @property
-    def pair(self) -> Tuple[str, str]:  # noqa: D401
-        """The pair of namespace/identifier."""
+    def pair(self) -> Tuple[str, str]:
+        """The pair of namespace/identifier."""  # noqa: D401
         return self.prefix, self.identifier
 
     @staticmethod
@@ -95,26 +95,26 @@ class Referenced:
     reference: Reference
 
     @property
-    def prefix(self):  # noqa: D401
-        """The prefix of the typedef."""
+    def prefix(self):
+        """The prefix of the typedef."""  # noqa: D401
         return self.reference.prefix
 
     @property
-    def name(self):  # noqa: D401
-        """The name of the typedef."""
+    def name(self):
+        """The name of the typedef."""  # noqa: D401
         return self.reference.name
 
     @property
-    def identifier(self) -> str:  # noqa: D401
-        """The local unique identifier for this typedef."""
+    def identifier(self) -> str:
+        """The local unique identifier for this typedef."""  # noqa: D401
         return self.reference.identifier
 
     @property
-    def curie(self) -> str:  # noqa: D401
-        """The CURIE for this typedef."""
+    def curie(self) -> str:
+        """The CURIE for this typedef."""  # noqa: D401
         return self.reference.curie
 
     @property
-    def pair(self) -> Tuple[str, str]:  # noqa: D401
-        """The pair of namespace/identifier."""
+    def pair(self) -> Tuple[str, str]:
+        """The pair of namespace/identifier."""  # noqa: D401
         return self.reference.pair

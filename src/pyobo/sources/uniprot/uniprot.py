@@ -34,6 +34,7 @@ def get_obo() -> Obo:
 
 
 def iter_terms(version: str) -> Iterable[Term]:
+    """Iterate over UniProt Terms."""
     with open_reader(ensure(version)) as reader:
         for uniprot_id, name, taxonomy_id in reader:
             term = Term.from_triple(prefix=PREFIX, identifier=uniprot_id, name=name)
@@ -42,6 +43,7 @@ def iter_terms(version: str) -> Iterable[Term]:
 
 
 def ensure(version: Optional[str] = None) -> Path:
+    """Ensure the reviewed uniprot names are available."""
     if version is None:
         version = bioversions.get_version('uniprot')
     return RAW_MODULE.ensure(PREFIX, version, name='reviewed.tsv.gz', url=REVIEWED_URL)
