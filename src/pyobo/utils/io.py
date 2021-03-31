@@ -60,7 +60,13 @@ def open_map_tsv(path: Union[str, Path], *, use_tqdm: bool = False, has_header: 
             next(file)  # throw away header
         if use_tqdm:
             file = tqdm(file, desc=f'loading TSV from {path}')
-        return dict(get_reader(file))
+        rv = {}
+        for row in get_reader(file):
+            if len(row) != 2:
+                logger.warning('[%s] malformed row can not be put in dict: %s', path, row)
+                continue
+            rv[row[0]] = row[1]
+        return rv
 
 
 def open_multimap_tsv(
