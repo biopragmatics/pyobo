@@ -259,6 +259,7 @@ def db_output_helper(
     *,
     directory: Union[None, str, pathlib.Path] = None,
     strict: bool = True,
+    use_gzip: bool = True,
     **kwargs,
 ) -> Sequence[str]:
     """Help output database builds.
@@ -279,14 +280,17 @@ def db_output_helper(
 
     c = Counter()
 
-    db_path = directory / f'{db_name}.tsv.gz'
+    if use_gzip:
+        db_path = directory / f'{db_name}.tsv.gz'
+    else:
+        db_path = directory / f'{db_name}.tsv'
     db_sample_path = directory / f'{db_name}_sample.tsv'
     db_summary_path = directory / f'{db_name}_summary.tsv'
 
     logger.info('writing %s to %s', db_name, db_path)
     logger.info('writing %s sample to %s', db_name, db_sample_path)
     it = f(strict=strict, **kwargs)
-    with gzip.open(db_path, mode='wt') as gzipped_file:
+    with gzip.open(db_path, mode='wt') if use_gzip else open(db_path, 'w') as gzipped_file:
         writer = get_writer(gzipped_file)
 
         # for the first 10 rows, put it in a sample file too
