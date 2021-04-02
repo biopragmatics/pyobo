@@ -8,12 +8,13 @@ Run with ``python -m pyobo.sources.kegg.genome``
 import logging
 from typing import Iterable
 
+import bioversions
 import click
 from more_click import verbose_option
 from tqdm import tqdm
 
 import pyobo
-from pyobo.sources.kegg.api import KEGGGenome, KEGG_GENOME_PREFIX, ensure_list_genomes
+from pyobo.sources.kegg.api import KEGGGenome, KEGG_GENOME_PREFIX, SKIP, ensure_list_genomes
 from pyobo.struct import Obo, Reference, Term
 
 logger = logging.getLogger(__name__)
@@ -25,10 +26,13 @@ def _s(line: str, sep: str):
 
 def get_obo() -> Obo:
     """Get KEGG Genome as OBO."""
+    version = bioversions.get_version('kegg')
     return Obo(
         ontology=KEGG_GENOME_PREFIX,
         iter_terms=iter_terms,
+        iter_terms_kwargs=dict(version=version),
         name='KEGG Genome',
+        data_version=version,
         auto_generated_by=f'bio2obo:{KEGG_GENOME_PREFIX}',
     )
 
@@ -56,7 +60,7 @@ def parse_genome_line(line: str) -> KEGGGenome:
         kegg_code = None
 
     if '\t' in name:
-        logger.warning('tab in name: %s', name)
+        logger.warning('[%s] tab in name: %s', KEGG_GENOME_PREFIX, name)
         name = name.replace('\t', ' ')
 
     return KEGGGenome(
@@ -68,39 +72,39 @@ def parse_genome_line(line: str) -> KEGGGenome:
     )
 
 
-def iter_kegg_genomes() -> Iterable[KEGGGenome]:
+def iter_kegg_genomes(version: str, desc: str) -> Iterable[KEGGGenome]:
     """Iterate over all KEGG genomes."""
-    path = ensure_list_genomes()
+    path = ensure_list_genomes(version=version)
     with open(path) as file:
         lines = [line.strip() for line in file]
-    for line in tqdm(lines, desc='KEGG Genomes'):
-        yield parse_genome_line(line)
+    it = tqdm(lines, desc=desc)
+    for line in it:
+        yv = parse_genome_line(line)
+        it.set_postfix({'id': yv.identifier, 'name': yv.name})
+        yield yv
 
 
-def iter_terms() -> Iterable[Term]:
+def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over terms for KEGG Genome."""
     errors = 0
-    for kegg_genome in iter_kegg_genomes():
-        xrefs = []
+    for kegg_genome in iter_kegg_genomes(version=version, desc='KEGG Genomes'):
+        if kegg_genome.identifier in SKIP:
+            continue
+        term = Term.from_triple(
+            prefix=KEGG_GENOME_PREFIX,
+            identifier=kegg_genome.identifier,
+            name=kegg_genome.name,
+        )
         if kegg_genome.taxonomy_id is not None:
             taxonomy_name = pyobo.get_name('ncbitaxon', kegg_genome.taxonomy_id)
             if taxonomy_name is None:
                 errors += 1
                 logger.debug(f'[{KEGG_GENOME_PREFIX}] could not find name for taxonomy:{kegg_genome.taxonomy_id}')
-            xrefs.append(Reference(
+            term.append_xref(Reference(
                 prefix='ncbitaxon',
                 identifier=kegg_genome.taxonomy_id,
                 name=taxonomy_name,
             ))
-
-        term = Term(
-            reference=Reference(
-                prefix='kegg.genome',
-                identifier=kegg_genome.identifier,
-                name=kegg_genome.name,
-            ),
-            xrefs=xrefs,
-        )
         yield term
 
     logger.info('[%s] unable to find %d taxonomy names in NCBI', KEGG_GENOME_PREFIX, errors)

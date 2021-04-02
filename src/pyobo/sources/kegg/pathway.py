@@ -10,6 +10,7 @@ import urllib.error
 from collections import defaultdict
 from typing import Iterable, List, Mapping, Tuple
 
+import bioversions
 import click
 from more_click import verbose_option
 from tqdm import tqdm
@@ -26,20 +27,23 @@ logger = logging.getLogger(__name__)
 
 def get_obo(skip_missing: bool = True) -> Obo:
     """Get KEGG Pathways as OBO."""
+    version = bioversions.get_version('kegg')
     return Obo(
         ontology=KEGG_PATHWAY_PREFIX,
         iter_terms=iter_terms,
-        iter_terms_kwargs=dict(skip_missing=skip_missing),
+        iter_terms_kwargs=dict(skip_missing=skip_missing, version=version),
         name='KEGG Pathways',
         typedefs=[from_kegg_species, from_species, species_specific, has_part],
         auto_generated_by=f'bio2obo:{KEGG_PATHWAY_PREFIX}',
+        data_version=version,
     )
 
 
-def iter_terms(skip_missing: bool = True) -> Iterable[Term]:
+def iter_terms(version: str, skip_missing: bool = True) -> Iterable[Term]:
     """Iterate over terms for KEGG Pathway."""
-    yield from _iter_map_terms()
-    for kegg_genome, list_pathway_path, link_pathway_path in iter_kegg_pathway_paths(skip_missing=skip_missing):
+    yield from _iter_map_terms(version=version)
+    it = iter_kegg_pathway_paths(version=version, skip_missing=skip_missing)
+    for kegg_genome, list_pathway_path, link_pathway_path in it:
         yield from _iter_genome_terms(
             list_pathway_path=list_pathway_path,
             link_pathway_path=link_pathway_path,
@@ -64,14 +68,12 @@ def _get_link_pathway_map(path: str) -> Mapping[str, List[str]]:
     }
 
 
-def _iter_map_terms() -> Iterable[Term]:
-    for identifier, name in ensure_list_pathways().items():
-        yield Term(
-            reference=Reference(
-                prefix=KEGG_PATHWAY_PREFIX,
-                identifier=identifier,
-                name=name,
-            ),
+def _iter_map_terms(version: str) -> Iterable[Term]:
+    for identifier, name in ensure_list_pathways(version=version).items():
+        yield Term.from_triple(
+            prefix=KEGG_PATHWAY_PREFIX,
+            identifier=identifier,
+            name=name,
         )
 
 
@@ -89,12 +91,10 @@ def _iter_genome_terms(
         pathway_id, name = [part.strip() for part in line.split('\t')]
         pathway_id = pathway_id[len('path:'):]
 
-        terms[pathway_id] = term = Term(
-            reference=Reference(
-                prefix=KEGG_PATHWAY_PREFIX,
-                identifier=pathway_id,
-                name=name,
-            ),
+        terms[pathway_id] = term = Term.from_triple(
+            prefix=KEGG_PATHWAY_PREFIX,
+            identifier=pathway_id,
+            name=name,
         )
 
         # Annotate species information
@@ -122,12 +122,16 @@ def _iter_genome_terms(
     yield from terms.values()
 
 
-def iter_kegg_pathway_paths(skip_missing: bool = True) -> Iterable[Tuple[KEGGGenome, str, str]]:
+def iter_kegg_pathway_paths(version: str, skip_missing: bool = True) -> Iterable[Tuple[KEGGGenome, str, str]]:
     """Get paths for the KEGG Pathway files."""
-    for kegg_genome in iter_kegg_genomes():
+    for kegg_genome in iter_kegg_genomes(version=version, desc='KEGG Pathways'):
         try:
-            list_pathway_path = ensure_list_pathway_genome(kegg_genome.identifier, error_on_missing=not skip_missing)
-            link_pathway_path = ensure_link_pathway_genome(kegg_genome.identifier, error_on_missing=not skip_missing)
+            list_pathway_path = ensure_list_pathway_genome(
+                kegg_genome.identifier, version=version, error_on_missing=not skip_missing,
+            )
+            link_pathway_path = ensure_link_pathway_genome(
+                kegg_genome.identifier, version=version, error_on_missing=not skip_missing,
+            )
         except urllib.error.HTTPError as e:
             code = e.getcode()
             if code != 404:

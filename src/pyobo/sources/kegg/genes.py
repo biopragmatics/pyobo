@@ -8,13 +8,14 @@ Run with ``python -m pyobo.sources.kegg.genes``
 import logging
 from typing import Iterable, Optional
 
+import bioversions
 import click
 from more_click import verbose_option
 from tqdm import tqdm
 
 from .api import (
-    KEGGGenome, KEGG_GENES_PREFIX, ensure_conv_genome_ncbigene, ensure_conv_genome_uniprot,
-    ensure_list_genome, from_kegg_species,
+    KEGGGenome, KEGG_GENES_PREFIX, SKIP, ensure_conv_genome_ncbigene, ensure_conv_genome_uniprot, ensure_list_genome,
+    from_kegg_species,
 )
 from .genome import iter_kegg_genomes
 from ...struct import Obo, Reference, Term, from_species, has_gene_product
@@ -25,32 +26,37 @@ logger = logging.getLogger(__name__)
 
 def get_obo() -> Obo:
     """Get KEGG Genes as OBO."""
+    version = bioversions.get_version('kegg')
     return Obo(
         ontology=KEGG_GENES_PREFIX,
         iter_terms=iter_terms,
+        iter_terms_kwargs=dict(version=version),
         typedefs=[from_species, from_kegg_species, has_gene_product],
         name='KEGG Genes',
+        data_version=version,
         auto_generated_by=f'bio2obo:{KEGG_GENES_PREFIX}',
     )
 
 
-def iter_terms() -> Iterable[Term]:
+def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over terms for KEGG Genome."""
-    for kegg_genome in iter_kegg_genomes():
-        tqdm.write(f'Iterating {kegg_genome}')
+    for kegg_genome in iter_kegg_genomes(version=version, desc='KEGG Genes'):
+        if kegg_genome.identifier in SKIP:
+            continue
         try:
-            list_genome_path = ensure_list_genome(kegg_genome.identifier)
-            conv_uniprot_path = ensure_conv_genome_uniprot(kegg_genome.identifier)
-            conv_ncbigene_path = ensure_conv_genome_ncbigene(kegg_genome.identifier)
+            list_genome_path = ensure_list_genome(kegg_genome.identifier, version=version)
+            conv_uniprot_path = ensure_conv_genome_uniprot(kegg_genome.identifier, version=version)
+            conv_ncbigene_path = ensure_conv_genome_ncbigene(kegg_genome.identifier, version=version)
         except (OSError, ValueError) as e:
             tqdm.write(f'[{KEGG_GENES_PREFIX}] {kegg_genome.identifier} failed: {e}')
-        else:
-            yield from _make_terms(
-                kegg_genome,
-                list_genome_path,
-                conv_uniprot_path,
-                conv_ncbigene_path,
-            )
+            continue
+
+        yield from _make_terms(
+            kegg_genome,
+            list_genome_path,
+            conv_uniprot_path,
+            conv_ncbigene_path,
+        )
 
 
 def _make_terms(
@@ -64,18 +70,20 @@ def _make_terms(
 
     with open(list_genome_path) as file:
         for line in file:
-            identifier, extras = line.strip().split('\t')
+            try:
+                identifier, extras = line.strip().split('\t')
+            except ValueError:
+                logger.warning('[%s] could not parse line in %s: %s', KEGG_GENES_PREFIX, list_genome_path, line)
+                continue
             if ';' in line:
                 *_extras, name = [part.strip() for part in extras.split(';')]
             else:
                 name = extras
 
-            term = Term(
-                reference=Reference(
-                    prefix=KEGG_GENES_PREFIX,
-                    identifier=identifier,
-                    name=name,
-                ),
+            term = Term.from_triple(
+                prefix=KEGG_GENES_PREFIX,
+                identifier=identifier,
+                name=name,
             )
 
             uniprot_xref = uniprot_conv.get(identifier)
