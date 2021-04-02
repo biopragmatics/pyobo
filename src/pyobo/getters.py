@@ -199,7 +199,7 @@ def iter_helper_helper(
     """
     it = sorted(bioregistry.read_bioregistry())
     if use_tqdm:
-        it = tqdm(it, disable=None)
+        it = tqdm(it, disable=None, desc='Resources')
     for prefix in it:
         if use_tqdm:
             it.set_postfix({'prefix': prefix})
@@ -214,7 +214,7 @@ def iter_helper_helper(
         if skip_pyobo and has_nomenclature_plugin(prefix):
             continue
         try:
-            mapping = f(prefix, **kwargs)
+            yv = f(prefix, **kwargs)
         except NoBuild:
             continue
         except urllib.error.HTTPError as e:
@@ -234,7 +234,7 @@ def iter_helper_helper(
                 # this means that it tried doing parsing on an xml page saying get the fuck out
                 logger.info('no resource available for %s. See http://www.obofoundry.org/ontology/%s', prefix, prefix)
             else:
-                logger.warning('[%s] error while parsing: %s', prefix, e)
+                logger.exception('[%s] error while parsing: %s', prefix, e.__class__)
             if strict:
                 raise e
         except TypeError as e:
@@ -242,7 +242,7 @@ def iter_helper_helper(
             if strict:
                 raise e
         else:
-            yield prefix, mapping
+            yield prefix, yv
 
 
 def _is_xml(e) -> bool:
