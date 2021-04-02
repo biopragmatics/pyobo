@@ -29,11 +29,6 @@ from ..utils.path import ensure_path
 
 logger = logging.getLogger(__name__)
 
-MAPPINGS_DB_TSV_CACHE = os.path.join(DATABASE_DIRECTORY, 'xrefs.tsv.gz')
-MAPPINGS_DB_PKL_CACHE = os.path.join(DATABASE_DIRECTORY, 'xrefs.pkl.gz')
-MAPPINGS_DB_SUMMARY_CACHE = os.path.join(DATABASE_DIRECTORY, 'xrefs_summary.tsv')
-MAPPINGS_DB_SUMMARY_PROVENANCES_CACHE = os.path.join(DATABASE_DIRECTORY, 'xrefs_summary_provenance.tsv')
-
 
 # TODO a normal graph can easily be turned into a directed graph where each
 #  edge points from low priority to higher priority, then the graph can
@@ -88,19 +83,11 @@ def _to_curie(prefix: str, identifier: str) -> str:
 def get_xref_df(
     *,
     force: bool = False,
-    rebuild: bool = False,
     use_tqdm: bool = True,
     skip_below=None,
     strict: bool = True,
 ) -> pd.DataFrame:
     """Get the ultimate xref database."""
-    if not rebuild and os.path.exists(MAPPINGS_DB_TSV_CACHE):
-        logger.info('loading cached mapping database from %s', MAPPINGS_DB_TSV_CACHE)
-        t = time.time()
-        rv = pd.read_csv(MAPPINGS_DB_TSV_CACHE, sep='\t', dtype=str)
-        logger.info('loaded in %.2fs', time.time() - t)
-        return rv
-
     df = pd.concat(_iterate_xref_dfs(force=force, use_tqdm=use_tqdm, skip_below=skip_below, strict=strict))
 
     logger.info('sorting xrefs')
@@ -117,30 +104,6 @@ def get_xref_df(
     drop_na_start = time.time()
     df.dropna(inplace=True)
     logger.info('dropped NAs in %.2fs', time.time() - drop_na_start)
-
-    logger.info('writing mapping database to %s', MAPPINGS_DB_TSV_CACHE)
-    t = time.time()
-    df.to_csv(MAPPINGS_DB_TSV_CACHE, sep='\t', index=False)
-    logger.info('wrote in %.2fs', time.time() - t)
-
-    logger.info('writing mapping database to %s', MAPPINGS_DB_PKL_CACHE)
-    t = time.time()
-    df.to_pickle(MAPPINGS_DB_PKL_CACHE)
-    logger.info('wrote in %.2fs', time.time() - t)
-
-    logger.info('making mapping summary')
-    t = time.time()
-    summary_df = summarize_xref_df(df)
-    logger.info('made mapping summary in %.2fs', time.time() - t)
-    summary_df.to_csv(MAPPINGS_DB_SUMMARY_CACHE, index=False, sep='\t')
-
-    logger.info('making provenance summary')
-    t = time.time()
-    xref_provenances_df = summarize_xref_provenances_df(df)
-    logger.info('made provenance summary in %.2fs', time.time() - t)
-    xref_provenances_df.to_csv(MAPPINGS_DB_SUMMARY_PROVENANCES_CACHE, index=False, sep='\t')
-
-    logger.info('done')
 
     return df
 
