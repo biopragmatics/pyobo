@@ -1097,11 +1097,11 @@ class Obo:
 
     def get_xrefs_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get a dataframe of all xrefs extracted from the OBO document."""
+        # TODO cut out term.prefix and change column to f'{self.ontology}_id'
         return pd.DataFrame(
             [
                 (term.prefix, term.identifier, xref.prefix, xref.identifier)
-                for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting xrefs')
-                for xref in term.xrefs
+                for term, xref in self.iterate_xrefs(use_tqdm=use_tqdm)
             ],
             columns=[SOURCE_PREFIX, SOURCE_ID, TARGET_PREFIX, TARGET_ID],
         ).drop_duplicates()
