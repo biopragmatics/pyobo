@@ -18,7 +18,8 @@ from werkzeug.local import LocalProxy
 from pyobo import Canonicalizer
 from pyobo.constants import SOURCE_PREFIX, TARGET_PREFIX
 from pyobo.identifier_utils import normalize_curie, normalize_prefix
-from pyobo.xrefdb.xrefs_pipeline import get_xref_df, summarize_xref_df, summarize_xref_provenances_df
+from pyobo.resource_utils import ensure_inspector_javert_df
+from pyobo.xrefdb.xrefs_pipeline import summarize_xref_df, summarize_xref_provenances_df
 
 __all__ = [
     'get_app',
@@ -144,7 +145,7 @@ def get_app(paths: Union[None, str, Iterable[str]] = None) -> Flask:
     Bootstrap(app)
 
     if paths is None:
-        df = get_xref_df(force=True)
+        df = ensure_inspector_javert_df()
     elif isinstance(paths, str):
         df = pd.read_csv(paths, sep='\t', dtype=str)
     else:
