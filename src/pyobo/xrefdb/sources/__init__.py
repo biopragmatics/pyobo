@@ -48,9 +48,10 @@ def iter_xref_plugins(use_tqdm: bool = True, skip_below: Optional[str] = None) -
     it = sorted(_get_xref_plugins().items())
     if use_tqdm:
         it = tqdm(it, desc='Mapping Plugins')
-    for _prefix, get_df in it:
-        if skip_below and _prefix < skip_below:
+    for prefix, get_df in it:
+        if skip_below and prefix < skip_below:
             continue
+        it.set_postfix({'prefix': prefix})
         rv = get_df()
         if isinstance(rv, pd.DataFrame):
             yield rv
