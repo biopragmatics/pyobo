@@ -43,11 +43,11 @@ def iterate_wikidata_dfs(*, use_tqdm: bool = True) -> Iterable[pd.DataFrame]:
     # wikidata_properties.update(get_wikidata_properties())
 
     it = sorted(wikidata_properties.items())
-    if use_tqdm:
-        it = tqdm(it, desc='Wikidata properties')
+    it = tqdm(it, disable=not use_tqdm, desc='Wikidata properties')
     for prefix, wikidata_property in it:
         if prefix in {'pubmed', 'pmc', 'orcid'}:
             continue  # too many
+        it.set_postfix({'prefix': prefix})
         try:
             yield get_wikidata_df(prefix, wikidata_property)
         except json.decoder.JSONDecodeError as e:
