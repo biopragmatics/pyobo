@@ -766,13 +766,17 @@ class Obo:
             n_alt_ids += len(alt_ids)
 
             try:
-                parents = list(iterate_node_parents(data, prefix=prefix, identifier=identifier))
+                parents = list(iterate_node_parents(
+                    data, prefix=prefix, identifier=identifier, strict=strict,
+                ))
             except MissingPrefix as e:
                 e.reference = reference
                 raise e
             n_parents += len(parents)
 
-            synonyms = list(iterate_node_synonyms(data, synonym_typedefs, prefix=prefix, identifier=identifier))
+            synonyms = list(iterate_node_synonyms(
+                data, synonym_typedefs, prefix=prefix, identifier=identifier, strict=strict,
+            ))
             n_synonyms += len(synonyms)
 
             term = Term(
@@ -786,7 +790,9 @@ class Obo:
             )
 
             try:
-                relations_references = list(iterate_node_relationships(data, prefix=ontology, identifier=identifier))
+                relations_references = list(iterate_node_relationships(
+                    data, prefix=ontology, identifier=identifier, strict=strict,
+                ))
             except MissingPrefix as e:
                 e.reference = reference
                 raise e
@@ -1333,6 +1339,7 @@ def iterate_node_synonyms(
     *,
     prefix: str,
     identifier: str,
+    strict: bool = False,
 ) -> Iterable[Synonym]:
     """Extract synonyms from a :mod:`obonet` node's data.
 
@@ -1343,7 +1350,7 @@ def iterate_node_synonyms(
     - "LTEC I" []
     """
     for s in data.get('synonym', []):
-        s = _extract_synonym(s, synonym_typedefs, prefix=prefix, identifier=identifier)
+        s = _extract_synonym(s, synonym_typedefs, prefix=prefix, identifier=identifier, strict=strict)
         if s is not None:
             yield s
 
