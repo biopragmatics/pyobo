@@ -31,17 +31,23 @@ logger = logging.getLogger(__name__)
 VersionHint = Union[None, str, Callable[[], str]]
 
 
-def prefix_directory_join(prefix: str, *parts: str, name: Optional[str] = None, version: VersionHint = None) -> Path:
+def prefix_directory_join(
+    prefix: str,
+    *parts: str,
+    name: Optional[str] = None,
+    version: VersionHint = None,
+    ensure_exists: bool = True,
+) -> Path:
     """Join in the prefix directory."""
     if version is None:
-        return RAW_MODULE.join(prefix, *parts, name=name)
+        return RAW_MODULE.join(prefix, *parts, name=name, ensure_exists=ensure_exists)
     if callable(version):
         logger.info('[%s] looking up version', prefix)
         version = version()
         logger.info('[%s] got version %s', version)
     elif not isinstance(version, str):
         raise TypeError(f'Invalid type: {version} ({type(version)})')
-    return RAW_MODULE.join(prefix, version, *parts, name=name)
+    return RAW_MODULE.join(prefix, version, *parts, name=name, ensure_exists=ensure_exists)
 
 
 def get_prefix_obo_path(prefix: str, version: VersionHint = None) -> Path:
