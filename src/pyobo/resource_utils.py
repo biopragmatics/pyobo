@@ -6,6 +6,7 @@ from functools import lru_cache
 from typing import Sequence
 
 import click
+import pandas as pd
 from more_click import verbose_option
 from zenodo_client import Zenodo
 
@@ -17,6 +18,7 @@ from .constants import (
 
 __all__ = [
     'ensure_inspector_javert',
+    'ensure_inspector_javert_df',
     'ensure_ooh_na_na',
     'ensure_alts',
     'ensure_synonyms',
@@ -59,6 +61,12 @@ def ensure_inspector_javert(force: bool = False) -> str:
     .. seealso:: :data:`pyobo.constants.JAVERT_RECORD`
     """
     return _ensure(record_id=JAVERT_RECORD, path=JAVERT_FILE, force=force)
+
+
+def ensure_inspector_javert_df(force: bool = False) -> pd.DataFrame:
+    """Ensure the inspector javert database as a dataframe."""
+    path = ensure_inspector_javert(force=force)
+    return pd.read_csv(path, sep='\t', dtype=str)
 
 
 def ensure_synonyms(force: bool = False) -> str:
