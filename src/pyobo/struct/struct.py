@@ -1083,12 +1083,17 @@ class Obo:
     # XREFS #
     #########
 
+    def iterate_xrefs(self, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, Reference]]:
+        """Iterate over xrefs."""
+        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting xrefs'):
+            for xref in term.xrefs:
+                yield term, xref
+
     def iterate_filtered_xrefs(self, prefix: str, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, Reference]]:
         """Iterate over xrefs to a given prefix."""
-        for term in self._iter_terms(use_tqdm=use_tqdm):
-            for xref in term.xrefs:
-                if xref.prefix == prefix:
-                    yield term, xref
+        for term, xref in self.iterate_xrefs(use_tqdm=use_tqdm):
+            if xref.prefix == prefix:
+                yield term, xref
 
     def get_xrefs_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get a dataframe of all xrefs extracted from the OBO document."""
