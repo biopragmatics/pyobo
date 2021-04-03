@@ -8,7 +8,7 @@ import pandas as pd
 
 import pyobo
 from pyobo import get_filtered_xrefs, get_id_name_mapping, get_xrefs_df
-from pyobo.constants import PROVENANCE, TARGET_ID, TARGET_PREFIX
+from pyobo.constants import TARGET_ID, TARGET_PREFIX
 from pyobo.mocks import get_mock_get_xrefs_df
 from tests.constants import chebi_patch
 

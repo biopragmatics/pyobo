@@ -10,7 +10,7 @@ from typing import Mapping, Optional
 import pandas as pd
 
 from .utils import get_version
-from ..constants import SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
+from ..constants import TARGET_ID, TARGET_PREFIX
 from ..getters import get
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_df, cached_mapping
