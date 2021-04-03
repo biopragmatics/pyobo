@@ -8,7 +8,7 @@ from typing import Optional
 import click
 from more_click import verbose_option
 
-from .utils import echo_df, force_option, prefix_argument
+from .utils import echo_df, force_option, no_strict_option, prefix_argument
 from ..api import (
     get_ancestors, get_descendants, get_filtered_properties_df, get_filtered_relations_df, get_filtered_xrefs,
     get_hierarchy, get_id_definition_mapping, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts,
@@ -31,7 +31,8 @@ def lookup():
 @click.option('-t', '--target')
 @verbose_option
 @force_option
-def xrefs(prefix: str, target: str, force: bool):
+@no_strict_option
+def xrefs(prefix: str, target: str, force: bool, no_strict: bool):
     """Page through xrefs for the given namespace to the second given namespace."""
     if target:
         filtered_xrefs = get_filtered_xrefs(prefix, target, force=force)
@@ -40,7 +41,7 @@ def xrefs(prefix: str, target: str, force: bool):
             for identifier, _xref in filtered_xrefs.items()
         ))
     else:
-        all_xrefs_df = get_xrefs_df(prefix)
+        all_xrefs_df = get_xrefs_df(prefix, force=force, strict=not no_strict)
         echo_df(all_xrefs_df)
 
 
@@ -58,10 +59,11 @@ def metadata(prefix: str, force: bool):
 @prefix_argument
 @verbose_option
 @force_option
+@no_strict_option
 @click.option('-i', '--identifier')
-def names(prefix: str, identifier: Optional[str], force: bool):
+def names(prefix: str, identifier: Optional[str], force: bool, no_strict: bool):
     """Page through the identifiers and names of entities in the given namespace."""
-    id_to_name = get_id_name_mapping(prefix, force=force)
+    id_to_name = get_id_name_mapping(prefix, force=force, strict=not no_strict)
     if identifier is None:
         _help_page_mapping(id_to_name)
     else:

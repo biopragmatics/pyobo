@@ -10,7 +10,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
-from typing import Any, Callable, Collection, Dict, Iterable, List, Mapping, Optional, Set, TextIO, Tuple, Union
+from typing import (
+    Any, Callable, Collection, Dict, Iterable, List, Mapping, Optional, Sequence, Set, TextIO, Tuple,
+    Union,
+)
 
 import networkx as nx
 import pandas as pd
@@ -24,11 +27,11 @@ from .typedef import (
     orthologous, part_of,
 )
 from .utils import comma_separate
-from ..constants import RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
+from ..constants import RELATION_ID, RELATION_PREFIX, TARGET_ID, TARGET_PREFIX
 from ..identifier_utils import MissingPrefix, normalize_curie, normalize_prefix
 from ..registries import get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist
 from ..utils.cache import get_gzipped_graph
-from ..utils.io import multidict, write_map_tsv, write_multimap_tsv
+from ..utils.io import multidict, write_iterable_tsv
 from ..utils.path import get_prefix_obo_path, prefix_directory_join
 
 __all__ = [
@@ -237,6 +240,12 @@ class Term(Referenced):
     def _definition_fp(self) -> str:
         return f'"{self.definition}" [{comma_separate(self.provenance)}]'
 
+    def iterate_relations(self) -> Iterable[Tuple[TypeDef, Reference]]:
+        """Iterate over pairs of typedefs and targets."""
+        for typedef, targets in self.relationships.items():
+            for target in targets:
+                yield typedef, target
+
     def iterate_properties(self) -> Iterable[Tuple[str, str]]:
         """Iterate over pairs of property and values."""
         for prop, values in self.properties.items():
@@ -439,7 +448,11 @@ class Obo:
         return self._cache(name='properties.tsv')
 
     @property
-    def _metadata_path(self) -> Path:
+    def _root_metadata_path(self) -> Path:
+        return prefix_directory_join(self.ontology, name='metadata.json')
+
+    @property
+    def _versioned_metadata_path(self) -> Path:
         return self._cache(name='metadata.json')
 
     @property
@@ -458,63 +471,35 @@ class Obo:
         write_obonet: bool = False,
     ) -> None:
         """Write the OBO to the default path."""
-        if not self._metadata_path.exists() or force:
-            logger.info('[%s] caching metadata to %s', self.ontology, self._metadata_path)
-            with self._metadata_path.open('w') as file:
-                json.dump(self.get_metadata(), file, indent=2)
+        metadata = self.get_metadata()
+        for path in (self._root_metadata_path, self._versioned_metadata_path):
+            logger.info('[%s] caching metadata to %s', self.ontology, path)
+            with path.open('w') as file:
+                json.dump(metadata, file, indent=2)
 
-        if not self._names_path.exists() or force:
-            logger.info('[%s] caching names to %s', self.ontology, self._names_path)
-            write_map_tsv(
-                path=self._names_path,
-                header=[f'{self.ontology}_id', 'name'],
-                rv=self.get_id_name_mapping(),
-            )
+        logger.info('[%s] caching typedefs to %s', self.ontology, self._typedefs_path)
+        typedef_df: pd.DataFrame = self.get_typedef_df()
+        typedef_df.sort_values(list(typedef_df.columns), inplace=True)
+        typedef_df.to_csv(self._typedefs_path, sep='\t', index=False)
 
-        if not self._definitions_path.exists() or force:
-            logger.info('[%s] caching definitions to %s', self.ontology, self._definitions_path)
-            write_map_tsv(
-                path=self._definitions_path,
-                header=[f'{self.ontology}_id', 'name'],
-                rv=self.iterate_id_definition(),
-            )
-
-        if not self._species_path.exists() or force:
-            logger.info('[%s] caching species to %s', self.ontology, self._species_path)
-            write_map_tsv(
-                path=self._species_path,
-                header=[f'{self.ontology}_id', 'taxonomy_id'],
-                rv=self.iterate_id_species(),
-            )
-
-        if not self._synonyms_path.exists() or force:
-            logger.info('[%s] caching synonyms to %s', self.ontology, self._synonyms_path)
-            write_multimap_tsv(
-                path=self._synonyms_path,
-                header=[f'{self.ontology}_id', 'synonym'],
-                rv=self.get_id_synonyms_mapping(),
-            )
-
-        if not self._alts_path.exists() or force:
-            logger.info('[%s] caching alts to %s', self.ontology, self._alts_path)
-            write_multimap_tsv(
-                path=self._alts_path,
-                header=[f'{self.ontology}_id', 'alt_id'],
-                rv=self.get_id_alts_mapping(),
-            )
-
-        for label, path, get_df in [
-            ('xrefs', self._xrefs_path, self.get_xrefs_df),
-            ('relations', self._relations_path, self.get_relations_df),
-            ('properties', self._properties_path, self.get_properties_df),
-            ('typedefs', self._typedefs_path, self.get_typedef_df),
+        for label, path, header, fn in [
+            ('names', self._names_path, [f'{self.ontology}_id', 'name'], self.iterate_id_name),
+            ('definitions', self._definitions_path, [f'{self.ontology}_id', 'definition'], self.iterate_id_definition),
+            ('species', self._species_path, [f'{self.ontology}_id', 'taxonomy_id'], self.iterate_id_species),
+            ('synonyms', self._synonyms_path, [f'{self.ontology}_id', 'synonym'], self.iterate_synonym_rows),
+            ('alts', self._alts_path, [f'{self.ontology}_id', 'alt_id'], self.iterate_alt_rows),
+            ('xrefs', self._xrefs_path, self.xrefs_header, self.iterate_xref_rows),
+            ('relations', self._relations_path, self.relations_header, self.iter_relation_rows),
+            ('properties', self._properties_path, self.properties_header, self.iter_property_rows),
         ]:
             if path.exists() and not force:
                 continue
             logger.info('[%s] caching %s to %s', self.ontology, label, path)
-            df: pd.DataFrame = get_df(use_tqdm=use_tqdm)
-            df.sort_values(list(df.columns), inplace=True)
-            df.to_csv(path, sep='\t', index=False)
+            write_iterable_tsv(
+                path=path,
+                header=header,
+                it=fn(),
+            )
 
         for relation in (is_a, has_part, part_of, from_species, orthologous):
             if relation is not is_a and relation not in self.typedefs:
@@ -611,12 +596,11 @@ class Obo:
                 parents.append(parent.curie)
 
             relations = []
-            for typedef, targets in term.relationships.items():
-                for target in targets:
-                    if target is None:
-                        raise ValueError('target should not be none!')
-                    relations.append(f'{typedef.curie} {target.curie}')
-                    links.append((term.curie, typedef.curie, target.curie))
+            for typedef, target in term.iterate_relations():
+                if target is None:
+                    raise ValueError('target should not be none!')
+                relations.append(f'{typedef.curie} {target.curie}')
+                links.append((term.curie, typedef.curie, target.curie))
 
             d = {
                 'id': term.curie,
@@ -743,7 +727,7 @@ class Obo:
             reference = references[ontology, identifier]
 
             try:
-                node_xrefs = list(iterate_node_xrefs(prefix=prefix, data=data))
+                node_xrefs = list(iterate_node_xrefs(prefix=prefix, data=data, strict=strict))
             except MissingPrefix as e:
                 e.reference = reference
                 raise e
@@ -759,7 +743,7 @@ class Obo:
                 provenance.extend(definition_references)
 
             try:
-                alt_ids = list(iterate_node_alt_ids(data))
+                alt_ids = list(iterate_node_alt_ids(data, strict=strict))
             except MissingPrefix as e:
                 e.reference = reference
                 raise e
@@ -839,13 +823,15 @@ class Obo:
             date=self.date and self.date.isoformat(),
         )
 
+    def iterate_id_name(self, *, use_tqdm: bool = False) -> Iterable[Tuple[str, str]]:
+        """Iterate identifier name pairs."""
+        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting names'):
+            if term.name:
+                yield term.identifier, term.name
+
     def get_id_name_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, str]:
         """Get a mapping from identifiers to names."""
-        return {
-            term.identifier: term.name
-            for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting names')
-            if term.name
-        }
+        return dict(self.iterate_id_name(use_tqdm=use_tqdm))
 
     def iterate_id_definition(self, *, use_tqdm: bool = False) -> Iterable[Tuple[str, str]]:
         """Iterate over pairs of terms' identifiers and their respective definitions."""
@@ -906,14 +892,21 @@ class Obo:
             for prop, value in term.iterate_properties():
                 yield term, prop, value
 
+    @property
+    def properties_header(self):
+        """Property dataframe header."""  # noqa:D401
+        return [f'{self.ontology}_id', 'property', 'value']
+
+    def iter_property_rows(self, *, use_tqdm: bool = False) -> Iterable[Tuple[str, str, str]]:
+        """Iterate property rows."""
+        for term, prop, value in self.iterate_properties(use_tqdm=use_tqdm):
+            yield term.identifier, prop, value
+
     def get_properties_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get all properties as a dataframe."""
         return pd.DataFrame(
-            [
-                (term.identifier, prop, value)
-                for term, prop, value in self.iterate_properties(use_tqdm=use_tqdm)
-            ],
-            columns=[f'{self.ontology}_id', 'property', 'value'],
+            list(self.iter_property_rows(use_tqdm=use_tqdm)),
+            columns=self.properties_header,
         )
 
     def iterate_filtered_properties(self, prop: str, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, str]]:
@@ -956,13 +949,13 @@ class Obo:
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting relations'):
             for parent in term.parents:
                 yield term, is_a, parent
-            for typedef, references in term.relationships.items():
+            for typedef, reference in term.iterate_relations():
                 if typedef not in self.typedefs and (typedef.prefix, typedef.identifier) not in default_typedefs:
                     raise ValueError(f'Undefined typedef: {typedef.curie} ! {typedef.name}')
-                for reference in references:
-                    yield term, typedef, reference
+                yield term, typedef, reference
 
-    def _iter_relations_expanded(self, use_tqdm: bool = False) -> Iterable[Tuple[str, str, str, str, str, str]]:
+    def iter_relation_rows(self, use_tqdm: bool = False) -> Iterable[Tuple[str, str, str, str, str, str]]:
+        """Iterate the relations' rows."""
         for term, typedef, reference in self.iterate_relations(use_tqdm=use_tqdm):
             yield term.identifier, typedef.prefix, typedef.identifier, reference.prefix, reference.identifier
 
@@ -978,11 +971,16 @@ class Obo:
             if typedef.prefix == _target_prefix and typedef.identifier == _target_identifier:
                 yield term, reference
 
+    @property
+    def relations_header(self) -> Sequence[str]:
+        """Header for the relations dataframe."""  # noqa:D401
+        return [f'{self.ontology}_id', RELATION_PREFIX, RELATION_ID, TARGET_PREFIX, TARGET_ID]
+
     def get_relations_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get all relations from the OBO."""
         return pd.DataFrame(
-            list(self._iter_relations_expanded(use_tqdm=use_tqdm)),
-            columns=[f'{self.ontology}_id', RELATION_PREFIX, RELATION_ID, TARGET_PREFIX, TARGET_ID],
+            list(self.iter_relation_rows(use_tqdm=use_tqdm)),
+            columns=self.relations_header,
         )
 
     def get_filtered_relations_df(
@@ -1069,21 +1067,19 @@ class Obo:
     ############
 
     def iterate_synonyms(self, *, use_tqdm: bool = False) -> Iterable[Tuple[Term, Synonym]]:
-        """Iterate over synonyms for each term."""
+        """Iterate over pairs of term and synonym object."""
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f'[{self.ontology}] getting synonyms'):
-            for synonym in term.synonyms:
+            for synonym in sorted(term.synonyms, key=attrgetter('name')):
                 yield term, synonym
+
+    def iterate_synonym_rows(self, *, use_tqdm: bool = False) -> Iterable[Tuple[str, str]]:
+        """Iterate over pairs of identifier and synonym text."""
+        for term, synonym in self.iterate_synonyms(use_tqdm=use_tqdm):
+            yield term.identifier, synonym.name
 
     def get_id_synonyms_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, List[str]]:
         """Get a mapping from identifiers to a list of sorted synonym strings."""
-        rv = multidict(
-            (term.identifier, synonym.name)
-            for term, synonym in self.iterate_synonyms(use_tqdm=use_tqdm)
-        )
-        return {
-            k: sorted(set(v))
-            for k, v in rv.items()
-        }
+        return multidict(self.iterate_synonym_rows(use_tqdm=use_tqdm))
 
     #########
     # XREFS #
@@ -1101,15 +1097,21 @@ class Obo:
             if xref.prefix == prefix:
                 yield term, xref
 
+    def iterate_xref_rows(self, *, use_tqdm: bool = False) -> Iterable[Tuple[str, str, str]]:
+        """Iterate over terms' identifiers, xref prefixes, and xref identifiers."""
+        for term, xref in self.iterate_xrefs(use_tqdm=use_tqdm):
+            yield term.identifier, xref.prefix, xref.identifier
+
+    @property
+    def xrefs_header(self):
+        """The header for the xref dataframe."""  # noqa:D401
+        return [f'{self.ontology}_id', TARGET_PREFIX, TARGET_ID]
+
     def get_xrefs_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get a dataframe of all xrefs extracted from the OBO document."""
-        # TODO cut out term.prefix and change column to f'{self.ontology}_id'
         return pd.DataFrame(
-            [
-                (term.prefix, term.identifier, xref.prefix, xref.identifier)
-                for term, xref in self.iterate_xrefs(use_tqdm=use_tqdm)
-            ],
-            columns=[SOURCE_PREFIX, SOURCE_ID, TARGET_PREFIX, TARGET_ID],
+            list(self.iterate_xref_rows(use_tqdm=use_tqdm)),
+            columns=[f'{self.ontology}_id', TARGET_PREFIX, TARGET_ID],
         ).drop_duplicates()
 
     def get_filtered_xrefs_mapping(self, prefix: str, *, use_tqdm: bool = False) -> Mapping[str, str]:
@@ -1135,6 +1137,11 @@ class Obo:
         for term in self:
             for alt in term.alt_ids:
                 yield term, alt
+
+    def iterate_alt_rows(self) -> Iterable[Tuple[str, str]]:
+        """Iterate over pairs of terms' primary identifiers and alternate identifiers."""
+        for term, alt in self.iterate_alts():
+            yield term.identifier, alt.identifier
 
     def get_id_alts_mapping(self) -> Mapping[str, List[str]]:
         """Get a mapping from identifiers to a list of alternative identifiers."""

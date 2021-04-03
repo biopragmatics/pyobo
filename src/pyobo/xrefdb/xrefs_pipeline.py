@@ -5,25 +5,20 @@
 import gzip
 import itertools as itt
 import logging
-import os
-import time
 from typing import Iterable, Optional, Tuple
 
-import bioregistry
-import click
 import networkx as nx
 import pandas as pd
-from more_click import verbose_option
 from tqdm import tqdm
 
-from .obo_xrefs import iterate_obo_xrefs
 from .sources import iter_xref_plugins
+from .. import get_xrefs_df
 from ..api import (
-    get_hierarchy, get_id_definition_mapping, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts,
-    get_properties_df, get_relations_df, get_typedef_df,
+    get_id_definition_mapping, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts,
+    get_metadata, get_properties_df, get_relations_df, get_typedef_df,
 )
-from ..constants import DATABASE_DIRECTORY, PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
-from ..getters import SKIP, iter_helper, iter_helper_helper
+from ..constants import SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
+from ..getters import iter_helper, iter_helper_helper
 from ..sources import ncbigene, pubchem
 from ..utils.path import ensure_path
 
@@ -58,65 +53,8 @@ def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
     return rv
 
 
-def summarize_xref_df(df: pd.DataFrame) -> pd.DataFrame:
-    """Get all meta-mappings."""
-    return _summarize(df, [SOURCE_PREFIX, TARGET_PREFIX])
-
-
-def summarize_xref_provenances_df(df: pd.DataFrame) -> pd.DataFrame:
-    """Get all meta-mappings."""
-    return _summarize(df, [SOURCE_PREFIX, TARGET_PREFIX, PROVENANCE])
-
-
-def _summarize(df: pd.DataFrame, columns) -> pd.DataFrame:
-    """Get all meta-mappings."""
-    rv = df[columns].groupby(columns).size().reset_index()
-    rv.columns = [*columns, 'count']
-    rv.sort_values('count', inplace=True, ascending=False)
-    return rv
-
-
 def _to_curie(prefix: str, identifier: str) -> str:
     return f'{prefix}:{identifier}'
-
-
-def get_xref_df(
-    *,
-    force: bool = False,
-    use_tqdm: bool = True,
-    skip_below=None,
-    strict: bool = True,
-) -> pd.DataFrame:
-    """Get the ultimate xref database."""
-    df = pd.concat(_iterate_xref_dfs(force=force, use_tqdm=use_tqdm, skip_below=skip_below, strict=strict))
-
-    logger.info('sorting xrefs')
-    sort_start = time.time()
-    df.sort_values(XREF_COLUMNS, inplace=True)
-    logger.info('sorted in %.2fs', time.time() - sort_start)
-
-    logger.info('dropping duplicates')
-    drop_duplicate_start = time.time()
-    df.drop_duplicates(inplace=True)
-    logger.info('dropped duplicates in %.2fs', time.time() - drop_duplicate_start)
-
-    logger.info('dropping NA')
-    drop_na_start = time.time()
-    df.dropna(inplace=True)
-    logger.info('dropped NAs in %.2fs', time.time() - drop_na_start)
-
-    return df
-
-
-def _iterate_xref_dfs(
-    *,
-    force: bool = False,
-    use_tqdm: bool = True,
-    skip_below: Optional[str] = None,
-    strict: bool = True,
-) -> Iterable[pd.DataFrame]:
-    yield from iterate_obo_xrefs(use_tqdm=use_tqdm, force=force, skip_below=skip_below, strict=strict)
-    yield from iter_xref_plugins(skip_below=skip_below)
 
 
 def _iter_ncbigene(left, right):
@@ -126,6 +64,13 @@ def _iter_ncbigene(left, right):
         for line in tqdm(file, desc=f'extracting {ncbigene.PREFIX}', unit_scale=True, total=27_000_000):
             line = line.strip().split('\t')
             yield ncbigene.PREFIX, line[left], line[right]
+
+
+def _iter_metadata(**kwargs):
+    for prefix, data in iter_helper_helper(get_metadata, **kwargs):
+        version = data['version']
+        tqdm.write(f'[{prefix}] using version {version}')
+        yield prefix, version, data['date']
 
 
 def _iter_ooh_na_na(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, str]]:
@@ -182,3 +127,28 @@ def _iter_properties(**kwargs) -> Iterable[Tuple[str, str, str, str]]:
     for prefix, df in iter_helper_helper(get_properties_df, **kwargs):
         for t in df.values:
             yield (prefix, *t)
+
+
+def _iter_xrefs(
+    *,
+    force: bool = False,
+    use_tqdm: bool = True,
+    skip_below: Optional[str] = None,
+    strict: bool = True,
+    **kwargs,
+) -> Iterable[Tuple[str, str, str, str, str]]:
+    it = iter_helper_helper(
+        get_xrefs_df,
+        use_tqdm=use_tqdm,
+        force=force,
+        skip_below=skip_below,
+        strict=strict,
+        **kwargs,
+    )
+    for prefix, df in it:
+        df.dropna(inplace=True)
+        for t in df.values:
+            yield (prefix, *t, prefix)
+    for df in iter_xref_plugins(skip_below=skip_below):
+        df.dropna(inplace=True)
+        yield from df.values

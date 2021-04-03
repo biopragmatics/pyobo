@@ -12,9 +12,9 @@ from more_itertools import pairwise
 from tqdm import tqdm
 
 from .priority import DEFAULT_PRIORITY_LIST
-from .xrefs_pipeline import get_graph_from_xref_df, get_xref_df
+from .xrefs_pipeline import get_graph_from_xref_df
+from .. import resource_utils
 from ..utils.io import get_reader, get_writer
-from ..resource_utils import ensure_inspector_javert_df
 
 __all__ = [
     'Canonicalizer',
@@ -91,7 +91,7 @@ class Canonicalizer:
     @staticmethod
     @lru_cache()
     def _get_default_graph() -> nx.Graph:
-        df = ensure_inspector_javert_df()
+        df = resource_utils.ensure_inspector_javert_df()
         graph = get_graph_from_xref_df(df)
         return graph
 

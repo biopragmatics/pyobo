@@ -2,7 +2,7 @@
 
 """CLI for PyOBO Database Generation."""
 
-import os
+import sys
 
 import click
 from more_click import verbose_option
@@ -16,8 +16,8 @@ from ..constants import (
 from ..database.sql.cli import database_sql
 from ..getters import db_output_helper
 from ..xrefdb.xrefs_pipeline import (
-    _iter_alts, _iter_definitions, _iter_ooh_na_na, _iter_properties, _iter_relations, _iter_synonyms, _iter_typedefs,
-    get_xref_df, summarize_xref_df, summarize_xref_provenances_df,
+    _iter_alts, _iter_definitions, _iter_metadata, _iter_ooh_na_na, _iter_properties, _iter_relations, _iter_synonyms,
+    _iter_typedefs, _iter_xrefs,
 )
 
 __all__ = [
@@ -42,20 +42,46 @@ main.add_command(database_sql)
 @click.pass_context
 def build(ctx: click.Context, directory: str, zenodo: bool, no_strict: bool, force: bool):
     """Build all databases."""
+    if no_strict and zenodo:
+        click.secho('Must be strict before uploading', fg='red')
+        sys.exit(1)
+
+    click.secho('Collecting metadata and building', fg='cyan', bold=True)
+    ctx.invoke(metadata, directory=directory, no_strict=no_strict, force=force)
     click.secho('Alternate Identifiers', fg='cyan', bold=True)
-    ctx.invoke(alts, directory=directory, zenodo=zenodo, no_strict=no_strict, force=force)  # only need to force once
+    ctx.invoke(alts, directory=directory, zenodo=zenodo, no_strict=no_strict)
     click.secho('Synonyms', fg='cyan', bold=True)
-    ctx.invoke(synonyms, directory=directory, zenodo=zenodo)
+    ctx.invoke(synonyms, directory=directory, zenodo=zenodo, no_strict=no_strict)
     click.secho('Xrefs', fg='cyan', bold=True)
-    ctx.invoke(xrefs, directory=directory, zenodo=zenodo)
+    ctx.invoke(xrefs, directory=directory, zenodo=zenodo, no_strict=no_strict)
     click.secho('Names', fg='cyan', bold=True)
-    ctx.invoke(names, directory=directory, zenodo=zenodo)
+    ctx.invoke(names, directory=directory, zenodo=zenodo, no_strict=no_strict)
+    click.secho('Definitions', fg='cyan', bold=True)
+    ctx.invoke(definitions, directory=directory, zenodo=zenodo, no_strict=no_strict)
     click.secho('Properties', fg='cyan', bold=True)
-    ctx.invoke(properties, directory=directory, zenodo=zenodo)
+    ctx.invoke(properties, directory=directory, zenodo=zenodo, no_strict=no_strict)
     click.secho('Relations', fg='cyan', bold=True)
-    ctx.invoke(relations, directory=directory, zenodo=zenodo)
+    ctx.invoke(relations, directory=directory, zenodo=zenodo, no_strict=no_strict)
     click.secho('Typedefs', fg='cyan', bold=True)
-    ctx.invoke(typedefs, directory=directory, zenodo=zenodo)
+    ctx.invoke(typedefs, directory=directory, zenodo=zenodo, no_strict=no_strict)
+
+
+@main.command()
+@verbose_option
+@directory_option
+@force_option
+@no_strict_option
+def metadata(directory: str, no_strict: bool, force: bool):
+    """Make the prefix-metadata dump."""
+    db_output_helper(
+        _iter_metadata,
+        'metadata',
+        ('prefix', 'version', 'date'),
+        strict=not no_strict,
+        force=force,
+        directory=directory,
+        use_gzip=False,
+    )
 
 
 @main.command()
@@ -94,7 +120,7 @@ def definitions(directory: str, zenodo: bool, no_strict: bool, force: bool):
         strict=not no_strict,
         force=force,
         directory=directory,
-        skip_set={'kegg.pathway', 'kegg.genes', 'umls'},
+        skip_set={'kegg.pathway', 'kegg.genes', 'kegg.genome', 'umls'},
     )
     if zenodo:
         # see https://zenodo.org/record/4637061
@@ -116,7 +142,8 @@ def typedefs(directory: str, zenodo: bool, no_strict: bool, force: bool):
         strict=not no_strict,
         force=force,
         directory=directory,
-        skip_set={'ncbigene', 'kegg.pathway', 'kegg.genes'},
+        use_gzip=False,
+        skip_set={'ncbigene', 'kegg.pathway', 'kegg.genes', 'kegg.genome'},
     )
     if zenodo:
         # see https://zenodo.org/record/4644013
@@ -136,6 +163,7 @@ def alts(directory: str, zenodo: bool, force: bool, no_strict: bool):
         directory=directory,
         force=force,
         strict=not no_strict,
+        skip_set={'kegg.pathway', 'kegg.genes', 'kegg.genome', 'umls'},
     )
     if zenodo:
         # see https://zenodo.org/record/4021476
@@ -155,6 +183,7 @@ def synonyms(directory: str, zenodo: bool, force: bool, no_strict: bool):
         directory=directory,
         force=force,
         strict=not no_strict,
+        skip_set={'kegg.pathway', 'kegg.genes', 'kegg.genome'},
     )
     if zenodo:
         # see https://zenodo.org/record/4021482
@@ -180,6 +209,7 @@ def relations(directory: str, zenodo: bool, force: bool, no_strict: bool):
         directory=directory,
         force=force,
         strict=not no_strict,
+        summary_detailed=(0, 2, 3),  # second column corresponds to relation type
     )
     if zenodo:
         # see https://zenodo.org/record/4625167
@@ -201,6 +231,7 @@ def properties(directory: str, zenodo: bool, force: bool, no_strict: bool):
         directory=directory,
         force=force,
         strict=not no_strict,
+        summary_detailed=(0, 2),  # second column corresponds to property type
     )
     if zenodo:
         # see https://zenodo.org/record/4625172
@@ -215,27 +246,18 @@ def properties(directory: str, zenodo: bool, force: bool, no_strict: bool):
 @no_strict_option
 def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool):  # noqa: D202
     """Make the prefix-identifier-xref dump."""
-    # Export all xrefs
-    xrefs_df = get_xref_df(rebuild=True, force=force, strict=not no_strict)
-    xrefs_path = os.path.join(directory, 'xrefs.tsv.gz')
-    xrefs_df.to_csv(xrefs_path, sep='\t', index=False)
-
-    # Export a sample of xrefs
-    sample_path = os.path.join(directory, 'xrefs_sample.tsv')
-    xrefs_df.head().to_csv(sample_path, sep='\t', index=False)
-
-    # Export a summary dataframe
-    summary_df = summarize_xref_df(xrefs_df)
-    summary_path = os.path.join(directory, 'xrefs_summary.tsv')
-    summary_df.to_csv(summary_path, sep='\t', index=False)
-
-    summary_provenances_df = summarize_xref_provenances_df(xrefs_df)
-    summary_provenances_path = os.path.join(directory, 'xrefs_summary_provenance.tsv')
-    summary_provenances_df.to_csv(summary_provenances_path, sep='\t', index=False)
-
+    paths = db_output_helper(
+        _iter_xrefs,
+        'xrefs',
+        ('prefix', 'identifier', 'xref_prefix', 'xref_identifier', 'provenance'),
+        directory=directory,
+        force=force,
+        strict=not no_strict,
+        summary_detailed=(0, 2),  # second column corresponds to xref prefix
+    )
     if zenodo:
         # see https://zenodo.org/record/4021477
-        update_zenodo(JAVERT_RECORD, [xrefs_path, sample_path, summary_path, summary_provenances_path])
+        update_zenodo(JAVERT_RECORD, paths)
 
 
 if __name__ == '__main__':

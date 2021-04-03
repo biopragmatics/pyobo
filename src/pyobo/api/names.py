@@ -60,7 +60,7 @@ def get_name(prefix: str, identifier: str) -> Optional[str]:
 
 @lru_cache()
 @wrap_norm_prefix
-def get_id_name_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
+def get_id_name_mapping(prefix: str, force: bool = False, strict: bool = True) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == 'ncbigene':
         from ..sources.ncbigene import get_ncbigene_id_to_name_mapping
@@ -77,7 +77,7 @@ def get_id_name_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
             logger.info('[%s] forcing reload for names', prefix)
         else:
             logger.info('[%s] no cached names found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
+        obo = get(prefix, force=force, strict=strict)
         return obo.get_id_name_mapping()
 
     return _get_id_name_mapping()

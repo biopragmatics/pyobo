@@ -16,10 +16,9 @@ from flask_bootstrap import Bootstrap, VERSION_BOOTSTRAP
 from werkzeug.local import LocalProxy
 
 from pyobo import Canonicalizer
-from pyobo.constants import SOURCE_PREFIX, TARGET_PREFIX
+from pyobo.constants import PROVENANCE, SOURCE_PREFIX, TARGET_PREFIX
 from pyobo.identifier_utils import normalize_curie, normalize_prefix
 from pyobo.resource_utils import ensure_inspector_javert_df
-from pyobo.xrefdb.xrefs_pipeline import summarize_xref_df, summarize_xref_provenances_df
 
 __all__ = [
     'get_app',
@@ -160,3 +159,21 @@ def get_app(paths: Union[None, str, Iterable[str]] = None) -> Flask:
     app.config['canonicalizer'] = Canonicalizer.from_df(df)
     app.register_blueprint(search_blueprint)
     return app
+
+
+def summarize_xref_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Get all meta-mappings."""
+    return _summarize(df, [SOURCE_PREFIX, TARGET_PREFIX])
+
+
+def summarize_xref_provenances_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Get all meta-mappings."""
+    return _summarize(df, [SOURCE_PREFIX, TARGET_PREFIX, PROVENANCE])
+
+
+def _summarize(df: pd.DataFrame, columns) -> pd.DataFrame:
+    """Get all meta-mappings."""
+    rv = df[columns].groupby(columns).size().reset_index()
+    rv.columns = [*columns, 'count']
+    rv.sort_values('count', inplace=True, ascending=False)
+    return rv

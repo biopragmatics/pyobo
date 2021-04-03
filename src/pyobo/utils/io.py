@@ -142,15 +142,21 @@ def write_iterable_tsv(
     *,
     path: Union[str, Path],
     header: Optional[Iterable[str]] = None,
-    it: Iterable[Tuple[str, str]],
+    it: Iterable[Tuple[str, ...]],
     sep: str = '\t',
 ) -> None:
     """Write a mapping dictionary to a TSV file."""
+    it = (
+        row
+        for row in it
+        if all(cell is not None for cell in row)
+    )
+    it = sorted(it)
     with open(path, 'w') as file:
         writer = get_writer(file, sep=sep)
         if header is not None:
             writer.writerow(header)
-        writer.writerows(sorted(it))
+        writer.writerows(it)
 
 
 def parse_xml_gz(path: Union[str, Path]) -> Element:

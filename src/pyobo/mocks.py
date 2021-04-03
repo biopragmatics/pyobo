@@ -62,7 +62,7 @@ def get_mock_get_xrefs_df(df: Union[List[Tuple[str, str, str, str, str]], pd.Dat
     def _mock_get_xrefs_df(*_args, **_kwargs) -> pd.DataFrame:
         return df
 
-    return mock.patch('pyobo.xrefdb.canonicalizer.get_xref_df', side_effect=_mock_get_xrefs_df)
+    return mock.patch('pyobo.resource_utils.ensure_inspector_javert_df', side_effect=_mock_get_xrefs_df)
 
 
 def _make_mock_get_name(name: str, data: Mapping[str, Mapping[str, X]]) -> mock.patch:

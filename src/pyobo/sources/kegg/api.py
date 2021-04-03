@@ -134,7 +134,7 @@ def _ensure_conv_genome_helper(
             version=version,
         )
         with rv.open('w') as file:
-            print(file=file)
+            print(file=file)  # noqa:T001
         return rv.as_posix()
     except FileNotFoundError:
         return None

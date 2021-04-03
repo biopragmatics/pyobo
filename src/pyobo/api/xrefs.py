@@ -53,8 +53,7 @@ def get_filtered_xrefs(
             logger.info('[%s] loading pre-cached xrefs', prefix)
             df = pd.read_csv(all_xrefs_path, sep='\t', dtype=str)
             logger.info('[%s] filtering pre-cached xrefs', prefix)
-            idx = (df[SOURCE_PREFIX] == prefix) & (df[TARGET_PREFIX] == xref_prefix)
-            df = df.loc[idx, [SOURCE_ID, TARGET_ID]]
+            df = df.loc[df[TARGET_PREFIX] == xref_prefix, [f'{prefix}_id', TARGET_ID]]
             return dict(df.values)
 
         logger.info('[%s] no cached xrefs found. getting from OBO loader', prefix)
@@ -68,14 +67,14 @@ def get_filtered_xrefs(
 
 
 @wrap_norm_prefix
-def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, force: bool = False) -> pd.DataFrame:
+def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, force: bool = False, strict: bool = False) -> pd.DataFrame:
     """Get all xrefs."""
     path = prefix_cache_join(prefix, name='xrefs.tsv', version=get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         logger.info('[%s] no cached xrefs found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
+        obo = get(prefix, force=force, strict=strict)
         return obo.get_xrefs_df(use_tqdm=use_tqdm)
 
     return _df_getter()

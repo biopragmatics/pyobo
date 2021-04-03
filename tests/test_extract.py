@@ -8,6 +8,7 @@ import pandas as pd
 
 import pyobo
 from pyobo import get_filtered_xrefs, get_id_name_mapping, get_xrefs_df
+from pyobo.constants import PROVENANCE, TARGET_ID, TARGET_PREFIX
 from pyobo.mocks import get_mock_get_xrefs_df
 from tests.constants import chebi_patch
 
@@ -36,12 +37,7 @@ class TestMapping(unittest.TestCase):
         with chebi_patch:
             df = get_xrefs_df('chebi')
         self.assertIsInstance(df, pd.DataFrame)
-
-        for key, value in df[['source_ns', 'source_id']].values:  # no need for targets since are external
-            self.assertFalse(value.startswith(key))
-            self.assertFalse(value.lower().startswith(key.lower()), msg=f'Bad value: {value}')
-            self.assertFalse(value.startswith(f'{key}:'))
-            self.assertFalse(value.lower().startswith(f'{key.lower()}:'))
+        self.assertEqual(['chebi_id', TARGET_PREFIX, TARGET_ID], list(df.columns))
 
     def test_get_target_xrefs(self):
         """Test getting xrefs."""

@@ -59,6 +59,7 @@ def get(
     force: bool = False,
     rewrite: bool = False,
     url: Optional[str] = None,
+    strict: bool = True,
 ) -> Obo:
     """Get the OBO for a given graph.
 
@@ -81,6 +82,9 @@ def get(
     """
     if force:
         rewrite = True
+    if prefix == 'uberon':
+        logger.info('UBERON has so much garbage in it that defaulting to non-strict parsing')
+        strict = False
 
     obonet_json_gz_path = prefix_directory_join(prefix, name=f'{prefix}.obonet.json.gz', ensure_exists=False)
     if obonet_json_gz_path.exists() and not force:
@@ -97,7 +101,7 @@ def get(
     obo_path = _ensure_obo_path(prefix, url=url, force=force)
     if obo_path.endswith('.owl'):
         raise OnlyOWLError(f'[{prefix}] unhandled OWL file')
-    obo = Obo.from_obo_path(obo_path, prefix=prefix)
+    obo = Obo.from_obo_path(obo_path, prefix=prefix, strict=strict)
     obo.write_default(force=rewrite)
     return obo
 
@@ -148,6 +152,9 @@ SKIP = {
     'mirbase.family',
     'pfam.clan',
     'emapa',  # recently changed with EMAP... not sure what the difference is anymore
+    'kegg.genes',
+    'kegg.genome',
+    'kegg.pathway',
 }
 
 X = TypeVar('X')
@@ -260,6 +267,7 @@ def db_output_helper(
     directory: Union[None, str, pathlib.Path] = None,
     strict: bool = True,
     use_gzip: bool = True,
+    summary_detailed: Optional[Sequence[int]] = None,
     **kwargs,
 ) -> Sequence[str]:
     """Help output database builds.
@@ -279,6 +287,8 @@ def db_output_helper(
         directory.mkdir(parents=True, exist_ok=True)
 
     c = Counter()
+    c_detailed = Counter()
+    summary_detailed_not_none = summary_detailed is not None
 
     if use_gzip:
         db_path = directory / f'{db_name}.tsv.gz'
@@ -286,6 +296,7 @@ def db_output_helper(
         db_path = directory / f'{db_name}.tsv'
     db_sample_path = directory / f'{db_name}_sample.tsv'
     db_summary_path = directory / f'{db_name}_summary.tsv'
+    db_summary_detailed_path = directory / f'{db_name}_summary_detailed.tsv'
 
     logger.info('writing %s to %s', db_name, db_path)
     logger.info('writing %s sample to %s', db_name, db_sample_path)
@@ -303,18 +314,31 @@ def db_output_helper(
 
             for row, _ in zip(it, range(10)):
                 c[row[0]] += 1
+                if summary_detailed_not_none:
+                    c_detailed[tuple(row[i] for i in summary_detailed)] += 1
                 writer.writerow(row)
                 sample_writer.writerow(row)
 
         # continue just in the gzipped one
         for row in it:
             c[row[0]] += 1
+            if summary_detailed_not_none:
+                c_detailed[tuple(row[i] for i in summary_detailed)] += 1
             writer.writerow(row)
 
     logger.info(f'writing {db_name} summary to {db_summary_path}')
     with open(db_summary_path, 'w') as file:
         writer = get_writer(file)
         writer.writerows(c.most_common())
+
+    if summary_detailed_not_none:
+        logger.info(f'writing {db_name} detailed summary to {db_summary_detailed_path}')
+        with open(db_summary_detailed_path, 'w') as file:
+            writer = get_writer(file)
+            writer.writerows(
+                (*keys, v)
+                for keys, v in c_detailed.most_common()
+            )
 
     db_metadata_path = directory / f'{db_name}_metadata.json'
     with open(db_metadata_path, 'w') as file:
@@ -329,9 +353,12 @@ def db_output_helper(
             indent=2,
         )
 
-    return [
+    rv = [
         db_metadata_path,
         db_path,
         db_sample_path,
         db_summary_path,
     ]
+    if summary_detailed:
+        rv.append(db_summary_detailed_path)
+    return rv

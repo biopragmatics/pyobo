@@ -1,6 +1,7 @@
 {
   "blacklists": {
     "full": [
+      "ClinGen:AminoacidopathyGeneCurationPanel",
       "KEGG",
       "NIST",
       "ICD9CM_2005:<new dbxref>",
@@ -47,8 +48,17 @@
       "ftp://ftp.ncbi.nih.gov/snp/specs/docsum_3.1.xsd",
       "HPO:PCS",
       "HPO:ICE",
+      "IEDB:BP",
       "PomBane:vw",
       "PomBase\\:mah",
+      {
+        "type": "group",
+        "from": "mpath",
+        "text": [
+          "Pathbase: Curation",
+          "Pathbase: Pathology Committee"
+        ]
+      },
       {
         "type": "group",
         "from": "hp",
@@ -80,6 +90,25 @@
           "Walter_Reed:taxonomy"
         ],
         "from": "miro"
+      },
+      "PLATY:A.H.L.Fischer",
+      "URL:http\\://digitalcommons.unl.edu/cgi/viewcontent.cgi?article=1007&context=onlinedictinvertzoology",
+      "NIFSTD:NeuroNames_abbrevSource",
+      {
+        "type": "group",
+        "text": [
+          "OBOL:accepted",
+          "OBOL:automatic",
+          "Follicular:antrum",
+          "Leydig's:organ",
+          "Dermal:denticle",
+          "Serous:membrane",
+          "Pinhole:eye",
+          "Vaginal:fornix",
+          "Duct:(anatomy)",
+          "Organ:(anatomy)"
+        ],
+        "from": "uberon"
       }
     ],
     "resource_prefix": {
@@ -102,6 +131,11 @@
       "symp": [
         "SyOID",
         "UMLS_ICD9CM_2005_AUI"
+      ],
+      "mod": [
+        "Remap:",
+        "UnMod:",
+        "UniMo:"
       ],
       "uberon": [
         "GAID:",
@@ -219,11 +253,12 @@
       "NIFSTD:nifext_": "neurolex:nifext_",
       "NIFSTD:sao": "SAO:",
       "NIFSTD:nlx_dys_": "NLXDYS:",
+      "URL:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "url: \"https://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "url:https\\://www.ncbi.nlm.nih.gov/pubmed/": "pubmed:",
       "URL:http\\://": "http://",
       "URL: http\\://": "http://",
       "url:http\\://": "http://",
-      "url: \"https://en.wikipedia.org/wiki/": "wikipedia.en:",
-      "url:https\\://www.ncbi.nlm.nih.gov/pubmed/": "pubmed:",
       "url:https\\://ghr.nlm.nih.gov/condition/": "ghr:",
       "NIF_Subcellular:FMA_": "FMA:",
       "Wikipeda:": "wikipedia:",
@@ -232,7 +267,12 @@
       "MONDOLEX:": "MONDO:",
       "unirot:": "uniprot:",
       "http:www": "http://www",
-      "ECGOntology:<new dbxref> \"": "ECGOntology:"
+      "ECGOntology:<new dbxref> \"": "ECGOntology:",
+      "GNOme: \"GNO:": "glygen",
+      "UniProt: \"": "uniprot:",
+      "Unimod: \"Unimod:": "unimod:",
+      "OMIMl:": "OMIM:",
+      "CREDIT_00": "CREDIT:00"
     }
   },
   "wikidata_property_types": [
