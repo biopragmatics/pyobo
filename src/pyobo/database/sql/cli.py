@@ -48,6 +48,27 @@ def load(
     )
 
 
+@database_sql.command()
+@click.option('--uri', default=get_sqlalchemy_uri, help='The database URL.', show_default=True)
+@click.option('--defs-table', default=DEFS_TABLE_NAME, show_default=True)
+@click.option('--defs-path', default=ensure_definitions, show_default=True, help='By default, load from Zenodo')
+@verbose_option
+def load_defs(
+    uri: str,
+    defs_table: str,
+    defs_path: str,
+    test: bool,
+):
+    """Load the definitions table of the SQL database."""
+    from .loader import _load_definition
+    _load_definition(
+        engine=uri,
+        table=defs_table,
+        path=defs_path,
+        test=test,
+    )
+
+
 make_web_command('pyobo.database.sql.wsgi:app', group=database_sql)
 
 if __name__ == '__main__':

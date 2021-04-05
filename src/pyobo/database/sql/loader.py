@@ -23,6 +23,7 @@ from sqlalchemy.engine import Engine
 from tabulate import tabulate
 
 from pyobo.constants import ALTS_TABLE_NAME, DEFS_TABLE_NAME, REFS_TABLE_NAME, get_sqlalchemy_uri
+from pyobo.resource_utils import ensure_alts, ensure_definitions, ensure_ooh_na_na
 
 logger = logging.getLogger(__name__)
 
@@ -39,12 +40,12 @@ TEST_N = 1_000
 
 def load(
     *,
-    refs_path: str,
-    alts_path: str,
-    defs_path: str,
-    refs_table: str = REFS_TABLE_NAME,
-    alts_table: str = ALTS_TABLE_NAME,
-    defs_table: str = DEFS_TABLE_NAME,
+    refs_path: Optional[str] = None,
+    alts_path: Optional[str] = None,
+    defs_path: Optional[str] = None,
+    refs_table: Optional[str] = None,
+    alts_table: Optional[str] = None,
+    defs_table: Optional[str] = None,
     test: bool = False,
     uri: Optional[str] = None,
 ) -> None:
@@ -60,11 +61,23 @@ def load(
     :param uri: The URI of the database to connect to.
     """
     engine = _ensure_engine(uri)
+    _load_alts(engine=engine, table=alts_table, path=alts_path, test=test)
+    _load_definition(engine=engine, table=defs_table, path=defs_path, test=test)
+    _load_name(engine=engine, table=refs_table, path=refs_path, test=test)
 
+
+def _load_alts(
+    *,
+    engine: Union[None, str, Engine] = None,
+    table: Optional[str] = None,
+    path: Optional[str] = None,
+    test: bool = False,
+):
+    engine = _ensure_engine(engine)
     _load_table(
         engine=engine,
-        table=alts_table,
-        path=alts_path,
+        table=table or ALTS_TABLE_NAME,
+        path=path if path is not None else ensure_alts(),
         test=test,
         target_col='alt',
         target_col_size=64,
@@ -72,19 +85,37 @@ def load(
         add_reverse_index=True,
     )
 
+
+def _load_definition(
+    *,
+    engine: Union[None, str, Engine] = None,
+    table: Optional[str] = None,
+    path: Optional[str] = None,
+    test: bool = False,
+):
+    engine = _ensure_engine(engine)
     _load_table(
         engine=engine,
-        table=defs_table,
-        path=defs_path,
+        table=table or DEFS_TABLE_NAME,
+        path=path if path else ensure_definitions(),
         test=test,
         target_col='definition',
         use_varchar=False,
     )
 
+
+def _load_name(
+    *,
+    engine: Union[None, str, Engine] = None,
+    table: Optional[str] = None,
+    path: Optional[str] = None,
+    test: bool = False,
+):
+    engine = _ensure_engine(engine)
     _load_table(
         engine=engine,
-        table=refs_table,
-        path=refs_path,
+        table=table or REFS_TABLE_NAME,
+        path=path if path else ensure_ooh_na_na(),
         test=test,
         target_col='name',
         target_col_size=4096,
