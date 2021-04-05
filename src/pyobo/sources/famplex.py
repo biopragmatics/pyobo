@@ -20,27 +20,38 @@ logger = logging.getLogger(__name__)
 PREFIX = 'fplx'
 
 
-def get_obo() -> Obo:
+def get_obo(force: bool = False) -> Obo:
     """Get FamPlex as OBO."""
     version = get_commit('sorgerlab', 'famplex')
     return Obo(
         ontology=PREFIX,
         name='FamPlex',
         iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version),
+        iter_terms_kwargs=dict(version=version, force=force),
         data_version=version,
         typedefs=[has_member, has_part, is_a, part_of],
         auto_generated_by=f'bio2obo:{PREFIX}',
     )
 
 
-def get_terms(version: str) -> Iterable[Term]:
+def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get the FamPlex terms."""
-    entities_url = f'https://raw.githubusercontent.com/sorgerlab/famplex/{version}/entities.csv'
-    entities_df = ensure_df(PREFIX, url=entities_url, version=version, dtype=str)
+    base_url = f'https://raw.githubusercontent.com/sorgerlab/famplex/{version}'
 
-    relations_url = f'https://raw.githubusercontent.com/sorgerlab/famplex/{version}/relations.csv'
-    relations_df = ensure_df(PREFIX, url=relations_url, version=version, header=None, sep=',', dtype=str)
+    entities_url = f'{base_url}/entities.csv'
+    entities_df = ensure_df(PREFIX, url=entities_url, version=version, dtype=str, force=force)
+
+    relations_url = f'{base_url}/relations.csv'
+    relations_df = ensure_df(PREFIX, url=relations_url, version=version, header=None, sep=',', dtype=str, force=force)
+
+    definitions_url = f'{base_url}/descriptions.csv'
+    definitions_df = ensure_df(
+        PREFIX, url=definitions_url, version=version, header=None, sep=',', dtype=str, force=force,
+    )
+    id_to_definition = {
+        identifier: (definition, provenance)
+        for identifier, provenance, definition in definitions_df.values
+    }
 
     # TODO add xrefs
     # xrefs_url = f'https://raw.githubusercontent.com/sorgerlab/famplex/{version}/equivalences.csv'
@@ -79,7 +90,12 @@ def get_terms(version: str) -> Iterable[Term]:
 
     for entity, in entities_df.values:
         reference = Reference(prefix=PREFIX, identifier=entity, name=entity)
-        term = Term(reference=reference)
+        definition, provenance = id_to_definition.get(entity, (None, None))
+        term = Term(
+            reference=reference,
+            definition=definition,
+            provenance=[Reference.from_curie(provenance)] if definition is not None else None,
+        )
 
         for r, t in out_edges.get(reference, []):
             if r == 'isa' and t.prefix == 'fplx':
@@ -104,7 +120,7 @@ def get_terms(version: str) -> Iterable[Term]:
 @click.command()
 @verbose_option
 def _main():
-    get_obo().write_default(use_tqdm=True)
+    get_obo().write_default(use_tqdm=True, write_obo=True)
 
 
 if __name__ == '__main__':
