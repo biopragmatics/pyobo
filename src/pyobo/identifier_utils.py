@@ -105,6 +105,10 @@ def normalize_curie(curie: str, *, strict: bool = True) -> Union[Tuple[str, str]
         logger.debug(f'could not split CURIE on colon: {curie}')
         return None, None
 
+    # remove redundant prefix
+    if identifier.casefold().startswith(f'{head_ns.casefold()}:'):
+        identifier = identifier[len(head_ns) + 1:]
+
     norm_node_prefix = normalize_prefix(head_ns, curie=curie, strict=strict)
     if not norm_node_prefix:
         return None, None

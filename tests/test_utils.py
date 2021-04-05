@@ -17,7 +17,7 @@ class TestIdentifierUtils(unittest.TestCase):
         self.assertEqual(('go', '1234'), normalize_curie('go:1234'))
 
         self.assertEqual((None, None), normalize_curie('1234'))
-        self.assertEqual(('go', 'GO:1234'), normalize_curie('GO:GO:1234'))
+        self.assertEqual(('go', '1234'), normalize_curie('GO:GO:1234'))
 
         self.assertEqual(('pubmed', '1234'), normalize_curie('pubmed:1234'))
         # Test remapping
