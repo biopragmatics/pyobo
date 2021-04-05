@@ -19,7 +19,9 @@ __all__ = [
 @click.command(name='resolver')
 @port_option
 @host_option
-@click.option('--data', help='local 3-column gzipped TSV as database')
+@click.option('--name-data', help='local 3-column gzipped TSV as database')
+@click.option('--alts-data', help='local 3-column gzipped TSV as database')
+@click.option('--defs-data', help='local 3-column gzipped TSV as database')
 @click.option('--sql', is_flag=True)
 @click.option('--sql-uri')
 @click.option('--sql-refs-table', help='use preloaded SQL database as backend')
@@ -38,7 +40,9 @@ def main(
     sql_refs_table: str,
     sql_alts_table: str,
     sql_defs_table: str,
-    data: Optional[str],
+    name_data: Optional[str],
+    alts_data: Optional[str],
+    defs_data: Optional[str],
     test: bool,
     with_gunicorn: bool,
     lazy: bool,
@@ -52,17 +56,38 @@ def main(
     from .resolver import get_app
 
     if test:
-        from pyobo import get_id_name_mapping
+        from pyobo import get_id_name_mapping, get_alts_to_id, get_id_definition_mapping
         import pandas as pd
-        data = [
-            (prefix, identifier, name)
-            for prefix in ['hgnc', 'chebi', 'doid', 'go']
-            for identifier, name in get_id_name_mapping(prefix).items()
-        ]
-        data = pd.DataFrame(data, columns=['prefix', 'identifier', 'name'])
+        prefixes = ['hgnc', 'chebi', 'doid', 'go']
+        name_data = pd.DataFrame(
+            [
+                (prefix, identifier, name)
+                for prefix in prefixes
+                for identifier, name in get_id_name_mapping(prefix).items()
+            ],
+            columns=['prefix', 'identifier', 'name'],
+        )
+        alts_data = pd.DataFrame(
+            [
+                (prefix, alt, identifier)
+                for prefix in prefixes
+                for alt, identifier in get_alts_to_id(prefix).items()
+            ],
+            columns=['prefix', 'alt', 'identifier'],
+        )
+        defs_data = pd.DataFrame(
+            [
+                (prefix, identifier, definition)
+                for prefix in prefixes
+                for identifier, definition in get_id_definition_mapping(prefix).items()
+            ],
+            columns=['prefix', 'identifier', 'definition'],
+        )
 
     app = get_app(
-        data,
+        name_data=name_data,
+        alts_data=alts_data,
+        defs_data=defs_data,
         lazy=lazy,
         sql=sql,
         uri=sql_uri,

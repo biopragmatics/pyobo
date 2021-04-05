@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block styles %}
+    {{ super() }}
+    <!-- DataTables, see: https://datatables.net/examples/styling/bootstrap4.html-->
+    <link
+            rel="stylesheet"
+            href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css"
+    />
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <!-- DataTables, see: https://datatables.net/examples/styling/bootstrap4.html-->
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#table-summary").DataTable();
+            $("#table-summary_wrapper").children(":first-child").addClass("card-body");
+            $("#table-summary_wrapper").children(":last-child").addClass("card-body");
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    <h5 class="card-header">Bioresolver</h5>
+    <div class="card-body">
+        <h5 class="card-title">Summary</h5>
+        <p>
+            This page is a summary of the content in the Bioresolver. Go <a href="{{ url_for('.home') }}">home</a>.
+        </p>
+    </div>
+    <table class="table" id="table-summary">
+        <thead>
+        <tr>
+            <th scope="col">Prefix</th>
+            <th scope="col">Name</th>
+            <th scope="col">Example</th>
+            <th scope="col">Names</th>
+            <th scope="col">Alts</th>
+            <th scope="col">Definitions</th>
+        </tr>
+        </thead>
+        {% for prefix, name, homepage, example, link, names, alts, defs in summary_df.values %}
+            <tr>
+                <td><code>{{ prefix }}</code></td>
+                <td>
+                    {% if homepage %}
+                        <a href="{{ homepage }}">{{ name }}</a>
+                    {% else %}
+                        {{ name }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if example %}
+                        <a href="{{ url_for('.resolve', curie=prefix + ':' + example ) }}">{{ example }}</a>
+                    {% endif %}
+                </td>
+                <td align="right">{{ names }}</td>
+                <td align="right">{{ alts }}</td>
+                <td align="right">{{ defs }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <div class="card-footer text-center">
+        {% include "footer.html" %}
+    </div>
+{% endblock %}

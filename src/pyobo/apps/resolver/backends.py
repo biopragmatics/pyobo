@@ -9,6 +9,7 @@ from functools import lru_cache
 from typing import Any, List, Mapping, Optional, Union
 
 import bioregistry
+import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 
@@ -52,8 +53,16 @@ class Backend:
         """Get a list of xrefs."""
         raise NotImplementedError
 
-    def summarize(self) -> Mapping[str, Any]:
-        """Summarize the contents of the database."""
+    def summarize_names(self) -> Mapping[str, Any]:
+        """Summarize the names."""
+        raise NotImplementedError
+
+    def summarize_alts(self) -> Mapping[str, Any]:
+        """Summarize the alternate identifiers."""
+        raise NotImplementedError
+
+    def summarize_definitions(self) -> Mapping[str, Any]:
+        """Summarize the definitions."""
         raise NotImplementedError
 
     def count_names(self) -> Optional[int]:
@@ -120,21 +129,55 @@ class Backend:
 
         return rv
 
+    def summary_df(self) -> pd.DataFrame:
+        """Generate a summary dataframe."""
+        summary_names = self.summarize_names()
+        summary_alts = self.summarize_alts() if self.summarize_alts is not None else {}
+        summary_defs = self.summarize_definitions() if self.summarize_definitions is not None else {}
+        return pd.DataFrame(
+            [
+                (
+                    prefix,
+                    bioregistry.get_name(prefix),
+                    bioregistry.get_homepage(prefix),
+                    bioregistry.get_example(prefix),
+                    bioregistry.get_link(prefix, bioregistry.get_example(prefix)),
+                    names_count,
+                    summary_alts.get(prefix, 0),
+                    summary_defs.get(prefix, 0),
+                )
+                for prefix, names_count in summary_names.items()
+            ],
+            columns=[
+                'prefix', 'name', 'homepage', 'example', 'link', 'names', 'alts', 'defs',
+            ],
+        )
+
 
 class MemoryBackend(Backend):
     """A resolution service using a dictionary-based in-memory cache."""
 
-    def __init__(self, get_id_name_mapping, get_alts_to_id, summarize, get_id_definition_mapping=None) -> None:
+    def __init__(
+        self,
+        get_id_name_mapping,
+        get_alts_to_id,
+        summarize_names,
+        summarize_alts=None,
+        summarize_definitions=None,
+        get_id_definition_mapping=None,
+    ) -> None:
         """Initialize the in-memory backend.
 
         :param get_id_name_mapping: A function for getting id-name mappings
         :param get_alts_to_id: A function for getting alts-id mappings
-        :param summarize: A function for summarizing
+        :param summarize_names: A function for summarizing
         """
         self.get_id_name_mapping = get_id_name_mapping
         self.get_alts_to_id = get_alts_to_id
         self.get_id_definition_mapping = get_id_definition_mapping
-        self.summarize = summarize
+        self.summarize_names = summarize_names
+        self.summarize_alts = summarize_alts
+        self.summarize_definitions = summarize_definitions
 
     def has_prefix(self, prefix: str) -> bool:  # noqa:D102
         return self.get_id_name_mapping(prefix) is not None
@@ -152,6 +195,22 @@ class MemoryBackend(Backend):
             return
         id_definition_mapping = self.get_id_definition_mapping(prefix) or {}
         return id_definition_mapping.get(identifier)
+
+    def count_prefixes(self) -> Optional[int]:  # noqa:D102
+        if self.summarize_names:
+            return len(self.summarize_names().keys())
+
+    def count_names(self) -> Optional[int]:  # noqa:D102
+        if self.summarize_names:
+            return sum(self.summarize_names().values())
+
+    def count_alts(self) -> Optional[int]:  # noqa:D102
+        if self.summarize_alts:
+            return sum(self.summarize_alts().values())
+
+    def count_definitions(self) -> Optional[int]:  # noqa:D102
+        if self.summarize_definitions:
+            return sum(self.summarize_definitions().values())
 
 
 class RawSQLBackend(Backend):
@@ -212,9 +271,18 @@ class RawSQLBackend(Backend):
             result = connection.execute(sql).fetchone()
             return result[0]
 
-    @lru_cache(maxsize=1)
-    def summarize(self) -> Counter:  # noqa:D102
-        sql = f'SELECT prefix, identifier_count FROM {self.refs_table}_summary;'  # noqa:S608
+    def summarize_names(self) -> Counter:  # noqa:D102
+        return self._get_summary(self.refs_table)
+
+    def summarize_alts(self) -> Counter:  # noqa:D102
+        return self._get_summary(self.alts_table)
+
+    def summarize_definitions(self) -> Counter:  # noqa:D102
+        return self._get_summary(self.defs_table)
+
+    @lru_cache()
+    def _get_summary(self, table) -> Counter:
+        sql = f'SELECT prefix, identifier_count FROM {table}_summary;'  # noqa:S608
         with self.engine.connect() as connection:
             return Counter(dict(connection.execute(sql).fetchall()))
 
@@ -258,7 +326,7 @@ class RawSQLBackend(Backend):
 class SQLAlchemyBackend(Backend):
     """A resolution service using a SQL database."""
 
-    def summarize(self) -> Mapping[str, Any]:  # noqa:D102
+    def summarize_names(self) -> Mapping[str, Any]:  # noqa:D102
         from pyobo.database.sql.models import Reference
         return dict(Reference.query.groupby(Reference.prefix).count())
 

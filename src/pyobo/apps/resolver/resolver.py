@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Mapping, Optional, Union
 
 import pandas as pd
-import psutil
 from flasgger import Swagger
 from flask import Blueprint, Flask, current_app, jsonify, render_template
 from flask_bootstrap import Bootstrap
@@ -24,7 +23,7 @@ from werkzeug.local import LocalProxy
 
 import pyobo
 from pyobo.apps.resolver.backends import Backend, MemoryBackend, RawSQLBackend
-from pyobo.resource_utils import ensure_alts, ensure_ooh_na_na
+from pyobo.resource_utils import ensure_alts, ensure_definitions, ensure_ooh_na_na
 
 logger = logging.getLogger(__name__)
 
@@ -70,8 +69,17 @@ def resolve(curie: str):
 
 @resolve_blueprint.route('/summary')
 def summary():
+    """Serve the summary page."""
+    return render_template(
+        'summary.html',
+        summary_df=backend.summary_df(),
+    )
+
+
+@resolve_blueprint.route('/summary.json')
+def summary_json():
     """Summary of the content in the service."""
-    return jsonify(backend.summarize())
+    return jsonify(backend.summarize_names())
 
 
 @resolve_blueprint.route('/size')
@@ -80,6 +88,10 @@ def size():
 
     Doesn't work if you're running with Gunicorn because it makes child processes.
     """
+    try:
+        import psutil
+    except ImportError:
+        return jsonify({})
     process = psutil.Process(os.getpid())
     n_bytes = process.memory_info().rss  # in bytes
     return jsonify(
@@ -91,6 +103,7 @@ def size():
 def get_app(
     name_data: Union[None, str, pd.DataFrame] = None,
     alts_data: Union[None, str, pd.DataFrame] = None,
+    defs_data: Union[None, str, pd.DataFrame] = None,
     lazy: bool = False,
     sql: bool = False,
     uri: Optional[str] = None,
@@ -110,12 +123,20 @@ def get_app(
     :param sql_table: Use SQL-based backend
     """
     app = Flask(__name__)
-    Swagger(app)
+    Swagger(app, merge=True, config={
+        'title': 'Bioresolver API',
+        'description': 'Resolves CURIEs to their names, definitions, and other attributes.',
+        'contact': {
+            'responsibleDeveloper': 'Charles Tapley Hoyt',
+            'email': 'cthoyt@gmail.com',
+        },
+    })
     Bootstrap(app)
 
     app.config['resolver_backend'] = _get_resolver(
         name_data=name_data,
         alts_data=alts_data,
+        defs_data=defs_data,
         lazy=lazy,
         sql=sql,
         uri=uri,
@@ -138,6 +159,7 @@ def get_app(
 def _get_resolver(
     name_data: Union[None, str, pd.DataFrame] = None,
     alts_data: Union[None, str, pd.DataFrame] = None,
+    defs_data: Union[None, str, pd.DataFrame] = None,
     lazy: bool = False,
     sql: bool = False,
     uri: Optional[str] = None,
@@ -176,33 +198,51 @@ def _get_resolver(
     else:
         raise TypeError(f'invalid type for `alt_data`: {alts_data}')
 
-    return _prepare_backend_with_lookup(name_lookup=name_lookup, alts_lookup=alts_lookup)
+    if lazy:
+        defs_lookup = None
+    elif defs_data is None and not lazy:
+        defs_lookup = _get_lookup_from_path(ensure_definitions())
+    elif isinstance(defs_data, str):
+        defs_lookup = _get_lookup_from_path(defs_data)
+    elif isinstance(defs_data, pd.DataFrame):
+        defs_lookup = _get_lookup_from_df(defs_data)
+    else:
+        raise TypeError(f'invalid type for `defs_data`: {defs_data}')
+
+    return _prepare_backend_with_lookup(
+        name_lookup=name_lookup,
+        alts_lookup=alts_lookup,
+        defs_lookup=defs_lookup,
+    )
 
 
 def _prepare_backend_with_lookup(
     name_lookup: Optional[Mapping[str, Mapping[str, str]]] = None,
     alts_lookup: Optional[Mapping[str, Mapping[str, str]]] = None,
+    defs_lookup: Optional[Mapping[str, Mapping[str, str]]] = None,
 ) -> Backend:
-    if name_lookup is None:  # lazy mode, will download/cache data as needed
-        get_id_name_mapping = pyobo.get_id_name_mapping
-        summarize = Counter  # not so good to calculate this in lazy mode
-    else:
-        get_id_name_mapping = name_lookup.get
-
-        def summarize():
-            """Count the number of references in each resource."""
-            return Counter({k: len(v) for k, v in name_lookup.items()})
-
-    if alts_lookup is None:  # lazy mode, will download/cache data as needed
-        get_alts_to_id = pyobo.get_alts_to_id
-    else:
-        get_alts_to_id = alts_lookup.get
+    get_id_name_mapping, summarize_names = _h(name_lookup, pyobo.get_id_name_mapping)
+    get_alts_to_id, summarize_alts = _h(alts_lookup, pyobo.get_alts_to_id)
+    get_id_definition_mapping, summarize_definitions = _h(defs_lookup, pyobo.get_id_definition_mapping)
 
     return MemoryBackend(
         get_id_name_mapping=get_id_name_mapping,
         get_alts_to_id=get_alts_to_id,
-        summarize=summarize,
+        get_id_definition_mapping=get_id_definition_mapping,
+        summarize_names=summarize_names,
+        summarize_alts=summarize_alts,
+        summarize_definitions=summarize_definitions,
     )
+
+
+def _h(lookup, alt_lookup):
+    if lookup is None:  # lazy mode, will download/cache data as needed
+        return alt_lookup, Counter
+
+    def _summarize():
+        return Counter({k: len(v) for k, v in lookup.items()})
+
+    return lookup.get, _summarize
 
 
 def _get_lookup_from_df(df: pd.DataFrame) -> Mapping[str, Mapping[str, str]]:

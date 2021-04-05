@@ -8,8 +8,12 @@
             to their labels, names, and builds provider URLs (like for Identifiers.org) when possible.
             {% if name_count %}It currently covers {{ name_count }} names,
                 {{ alts_count }} alternate identifiers, and {{ definition_count }} definitions
-                across {{ prefix_count }} resources.{% endif %}
+                across {{ prefix_count }} resources{% endif %}.
+            See also the <a href="{{ url_for(".summary") }}"> summary</a> and
+            <a href="{{ url_for("flasgger.apidocs") }}">Swagger docs</a>.
         </p>
+
+        <h5 class="card-title">Examples</h5>
         <p>
             It has a single endpoint <code>/resolve/&lt;curie&gt;</code> that gives back JSON.
             Here are a few examples:
@@ -39,6 +43,10 @@
             <td>🟢 secondary identifier mapped</td>
         </tr>
         <tr>
+            <td><a href="{{ url_for('.resolve', curie='GO:GO:0000501' ) }}">GO:GO:0000501</a></td>
+            <td>🟢 banana problem mapped</td>
+        </tr>
+        <tr>
             <td><a href="{{ url_for('.resolve', curie='APO:0000155' ) }}">apo:0000155</a></td>
             <td>🟡 able to look up name, but prefix is not listed on Identifiers.org</td>
         </tr>
@@ -56,13 +64,6 @@
         </tr>
     </table>
     <div class="card-footer text-center">
-        <p class="small" style="margin-bottom: 0">
-            Developed with ❤️ in 🇩🇪 and 🇺🇸 by the <a href="https://indralab.github.io">INDRA labs</a> in the
-            <a href="https://hits.harvard.edu">Harvard Program in Therapeutic Science (HiTS)</a>.<br/>
-            Funded by the DARPA Automating Scientific Knowledge Extraction (ASKE) program under award
-            HR00111990009.<br/> Point of contact: <a href="https://github.com/cthoyt">@cthoyt</a>.
-            (<a href="https://github.com/pyobo/pyobo">Source code</a> |
-            <a href="https://cthoyt.com/2020/04/18/ooh-na-na.html">blog post</a>)
-        </p>
+        {% include "footer.html" %}
     </div>
 {% endblock %}
