@@ -343,7 +343,7 @@ with:
 Curation of the Bioregistry
 ---------------------------
 In order to normalize references and identify resources, PyOBO uses the
-`Bioregistry <https://github.com/cthoyt/bioregistry>`_. It used to be a part of PyOBO, but has since
+`Bioregistry <https://github.com/bioregistry/bioregistry>`_. It used to be a part of PyOBO, but has since
 been externalized for more general reuse.
 
 At `src/pyobo/registries/metaregistry.json <https://github.com/pyobo/pyobo/blob/master/src/pyobo/registries/metaregistry.json>`_
