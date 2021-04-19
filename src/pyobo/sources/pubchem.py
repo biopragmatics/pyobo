@@ -77,7 +77,7 @@ def get_pubchem_id_to_mesh_id(version: Optional[str] = None) -> Mapping[str, str
         version=version,
         dtype=str,
         header=None,
-        path='CID-MeSH.tsv',
+        name='CID-MeSH.tsv',
         names=['pubchem.compound_id', 'mesh_id'],
     )
     mesh_name_to_id = get_name_id_mapping('mesh')

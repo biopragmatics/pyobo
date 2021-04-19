@@ -31,7 +31,7 @@ def get_obo() -> Obo:
 
 def get_terms() -> Iterable[Term]:
     """Get CGNC terms."""
-    df = ensure_df(PREFIX, url=URL, path=f'{PREFIX}.tsv')
+    df = ensure_df(PREFIX, url=URL, name=f'{PREFIX}.tsv')
     for cgnc_id, entrez_id, ensembl_id, symbol, name, synonyms, _, _ in df.values:
         if pd.isna(cgnc_id):
             logger.warning('CGNC ID is none')

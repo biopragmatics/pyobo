@@ -73,7 +73,7 @@ def ensure_list_pathways(version: str) -> Mapping[str, str]:
     rv = ensure_df(
         KEGG_PATHWAY_PREFIX,
         url=f'{BASE}/list/pathway',
-        path='pathway.tsv',
+        name='pathway.tsv',
         version=version,
     )
     return {
