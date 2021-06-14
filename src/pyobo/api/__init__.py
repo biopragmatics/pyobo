@@ -3,7 +3,10 @@
 """High-level API for accessing content."""
 
 from .alts import get_alts_to_id, get_id_to_alts, get_primary_curie, get_primary_identifier  # noqa: F401
-from .hierarchy import get_ancestors, get_descendants, get_hierarchy, get_subhierarchy  # noqa: F401
+from .hierarchy import (  # noqa: F401
+    get_ancestors, get_descendants, get_hierarchy, get_subhierarchy, has_ancestor,
+    is_descendent,
+)
 from .metadata import get_metadata  # noqa: F401
 from .names import (  # noqa: F401
     get_definition, get_id_definition_mapping, get_id_name_mapping, get_id_synonyms_mapping, get_name,

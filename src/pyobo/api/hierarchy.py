@@ -19,6 +19,8 @@ __all__ = [
     'get_subhierarchy',
     'get_descendants',
     'get_ancestors',
+    'has_ancestor',
+    'is_descendent',
 ]
 
 logger = logging.getLogger(__name__)
@@ -135,6 +137,17 @@ def _get_hierarchy_helper(
     return rv
 
 
+def is_descendent(prefix, identifier, ancestor_prefix, ancestor_identifier) -> bool:
+    """Check that the first identifier has the second as a descendent.
+
+    Check that go:0070246 ! natural killer cell apoptotic process is a
+    descendant of go:0006915 ! apoptotic process::
+    >>> assert is_descendent('go', '0070246', 'go', '0006915')
+    """
+    descendants = get_descendants(ancestor_prefix, ancestor_identifier)
+    return descendants is not None and f'{prefix}:{identifier}' in descendants
+
+
 @lru_cache()
 def get_descendants(
     prefix: str,
@@ -144,7 +157,7 @@ def get_descendants(
     use_tqdm: bool = False,
     force: bool = False,
     **kwargs,
-) -> Set[str]:
+) -> Optional[Set[str]]:
     """Get all of the descendants (children) of the term as CURIEs."""
     hierarchy = get_hierarchy(
         prefix=prefix,
@@ -154,7 +167,20 @@ def get_descendants(
         force=force,
         **kwargs,
     )
-    return nx.ancestors(hierarchy, f'{prefix}:{identifier}')  # note this is backwards
+    curie = f'{prefix}:{identifier}'
+    if curie not in hierarchy:
+        return None
+    return nx.ancestors(hierarchy, curie)  # note this is backwards
+
+
+def has_ancestor(prefix, identifier, ancestor_prefix, ancestor_identifier) -> bool:
+    """Check that the first identifier has the second as an ancestor.
+
+    Check that go:0008219 ! cell death is an ancestor of go:0006915 ! apoptotic process::
+    >>> assert has_ancestor('go', '0006915', 'go', '0008219')
+    """
+    ancestors = get_ancestors(prefix, identifier)
+    return ancestors is not None and f'{ancestor_prefix}:{ancestor_identifier}' in ancestors
 
 
 @lru_cache()
@@ -166,7 +192,7 @@ def get_ancestors(
     use_tqdm: bool = False,
     force: bool = False,
     **kwargs,
-) -> Set[str]:
+) -> Optional[Set[str]]:
     """Get all of the ancestors (parents) of the term as CURIEs."""
     hierarchy = get_hierarchy(
         prefix=prefix,
@@ -176,7 +202,10 @@ def get_ancestors(
         force=force,
         **kwargs,
     )
-    return nx.descendants(hierarchy, f'{prefix}:{identifier}')  # note this is backwards
+    curie = f'{prefix}:{identifier}'
+    if curie not in hierarchy:
+        return None
+    return nx.descendants(hierarchy, curie)  # note this is backwards
 
 
 def get_subhierarchy(
