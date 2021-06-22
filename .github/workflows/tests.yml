@@ -59,6 +59,8 @@ jobs:
             python-version: 3.7
           - os: windows-latest
             python-version: 3.8
+          - os: windows-latest
+            python-version: 3.9
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
