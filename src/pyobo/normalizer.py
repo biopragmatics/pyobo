@@ -13,11 +13,11 @@ from .identifier_utils import normalize_prefix
 from .utils.io import multisetdict
 
 __all__ = [
-    'ground',
-    'Normalizer',
-    'OboNormalizer',
-    'MultiNormalizer',
-    'NormalizationResult',
+    "ground",
+    "Normalizer",
+    "OboNormalizer",
+    "MultiNormalizer",
+    "NormalizationResult",
 ]
 
 logger = logging.getLogger(__name__)
@@ -53,26 +53,25 @@ class Normalizer(ABC):
         """
         self.id_to_name = id_to_name
         self.id_to_synonyms = id_to_synonyms
-        self.synonym_to_identifiers_mapping = multisetdict(self._iterate_synonyms_to_identifiers(
-            id_to_name=self.id_to_name,
-            id_to_synonyms=self.id_to_synonyms,
-            remove_prefix=remove_prefix,
-        ))
+        self.synonym_to_identifiers_mapping = multisetdict(
+            self._iterate_synonyms_to_identifiers(
+                id_to_name=self.id_to_name,
+                id_to_synonyms=self.id_to_synonyms,
+                remove_prefix=remove_prefix,
+            )
+        )
         self.norm_name_to_name = self._get_norm_name_to_names(self.synonym_to_identifiers_mapping)
 
     @classmethod
     def _get_norm_name_to_names(cls, synonyms: Iterable[str]) -> Mapping[str, Set[str]]:
-        return multisetdict(
-            (cls._normalize_text(synonym), synonym)
-            for synonym in synonyms
-        )
+        return multisetdict((cls._normalize_text(synonym), synonym) for synonym in synonyms)
 
     @staticmethod
     def _normalize_text(text: str) -> str:
         text = text.strip().strip('"').strip("'").lower()
         text = normalize_dashes(text)
-        text = text.replace('-', '')  # remove all dashes
-        text = text.replace(' ', '')  # remove all spaces
+        text = text.replace("-", "")  # remove all dashes
+        text = text.replace(" ", "")  # remove all spaces
         return text
 
     @staticmethod
@@ -88,14 +87,14 @@ class Normalizer(ABC):
         # Add name
         for identifier, name in id_to_name.items():
             if remove_prefix and identifier.lower().startswith(remove_prefix):
-                identifier = identifier[len(remove_prefix):]
+                identifier = identifier[len(remove_prefix) :]
 
             yield name, identifier
 
         # Add synonyms
         for identifier, synonyms in id_to_synonyms.items():
             if remove_prefix and identifier.lower().startswith(remove_prefix):
-                identifier = identifier[len(remove_prefix):]
+                identifier = identifier[len(remove_prefix) :]
 
             for synonym in synonyms:
                 # it might overwrite but this is probably always due to alternate ids
@@ -117,10 +116,14 @@ def get_normalizer(prefix: str) -> Normalizer:
     """Get an OBO normalizer."""
     norm_prefix = normalize_prefix(prefix)
     if norm_prefix is None:
-        raise ValueError(f'unhandled prefix: {prefix}')
-    logger.info('getting obo normalizer for %s', norm_prefix)
+        raise ValueError(f"unhandled prefix: {prefix}")
+    logger.info("getting obo normalizer for %s", norm_prefix)
     normalizer = OboNormalizer(norm_prefix)
-    logger.debug('normalizer for %s with %s name lookups', normalizer.prefix, len(normalizer.norm_name_to_name))
+    logger.debug(
+        "normalizer for %s with %s name lookups",
+        normalizer.prefix,
+        len(normalizer.norm_name_to_name),
+    )
     return normalizer
 
 
@@ -170,10 +173,10 @@ class OboNormalizer(Normalizer):
             for identifier in identifiers:
                 if identifier in self.id_to_name:
                     return self.prefix, identifier, self.id_to_name[identifier]
-            logger.warning(f'Could not find valid identifier for {name} from {identifiers}')
+            logger.warning(f"Could not find valid identifier for {name} from {identifiers}")
 
         # maybe it happens that one can't be found?
-        logger.warning(f'was able to look up name {query}->{names} but not find fresh identifier')
+        logger.warning(f"was able to look up name {query}->{names} but not find fresh identifier")
         return None, None, query
 
 
@@ -197,12 +200,9 @@ class MultiNormalizer:
     normalizers: List[Normalizer]
 
     @staticmethod
-    def from_prefixes(prefixes: List[str]) -> 'MultiNormalizer':
+    def from_prefixes(prefixes: List[str]) -> "MultiNormalizer":
         """Instantiate normalizers based on the given prefixes, in preferred order.."""
-        return MultiNormalizer([
-            get_normalizer(prefix)
-            for prefix in prefixes
-        ])
+        return MultiNormalizer([get_normalizer(prefix) for prefix in prefixes])
 
     def normalize(self, query: str) -> NormalizationResult:
         """Try and normalize a canonical name using multiple normalizers."""
@@ -214,17 +214,18 @@ class MultiNormalizer:
 
 
 # See: https://en.wikipedia.org/wiki/Dash
-FIGURE_DASH = b'\xe2\x80\x92'.decode('utf-8')
-EN_DASH = b'\xe2\x80\x93'.decode('utf-8')
-EM_DASH = b'\xe2\x80\x94'.decode('utf-8')
-HORIZONAL_BAR = b'\xe2\x80\x95'.decode('utf-8')
-NORMAL_DASH = '-'
+FIGURE_DASH = b"\xe2\x80\x92".decode("utf-8")
+EN_DASH = b"\xe2\x80\x93".decode("utf-8")
+EM_DASH = b"\xe2\x80\x94".decode("utf-8")
+HORIZONAL_BAR = b"\xe2\x80\x95".decode("utf-8")
+NORMAL_DASH = "-"
 
 
 def normalize_dashes(s: str) -> str:
     """Normalize dashes in a string."""
-    return s. \
-        replace(FIGURE_DASH, NORMAL_DASH). \
-        replace(EN_DASH, NORMAL_DASH). \
-        replace(EM_DASH, NORMAL_DASH). \
-        replace(HORIZONAL_BAR, NORMAL_DASH)
+    return (
+        s.replace(FIGURE_DASH, NORMAL_DASH)
+        .replace(EN_DASH, NORMAL_DASH)
+        .replace(EM_DASH, NORMAL_DASH)
+        .replace(HORIZONAL_BAR, NORMAL_DASH)
+    )

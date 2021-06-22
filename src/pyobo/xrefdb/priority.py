@@ -5,43 +5,43 @@
 from ..identifier_utils import normalize_prefix
 
 __all__ = [
-    'DEFAULT_PRIORITY_LIST',
+    "DEFAULT_PRIORITY_LIST",
 ]
 
 _DEFAULT_PRIORITY_LIST = [
     # Genes
-    'ncbigene',
-    'hgnc',
-    'rgd',
-    'mgi',
-    'ensembl',
-    'uniprot',
+    "ncbigene",
+    "hgnc",
+    "rgd",
+    "mgi",
+    "ensembl",
+    "uniprot",
     # Chemicals
     # 'inchikey',
     # 'inchi',
     # 'smiles',
-    'pubchem.compound',
-    'chebi',
-    'drugbank',
-    'chembl.compound',
-    'zinc',
+    "pubchem.compound",
+    "chebi",
+    "drugbank",
+    "chembl.compound",
+    "zinc",
     # protein families and complexes (and famplexes :))
-    'complexportal',
-    'fplx',
-    'ec-code',
-    'interpro',
-    'pfam',
-    'signor',
+    "complexportal",
+    "fplx",
+    "ec-code",
+    "interpro",
+    "pfam",
+    "signor",
     # Pathologies/phenotypes
-    'mondo',
-    'efo',
-    'doid',
-    'hp',
+    "mondo",
+    "efo",
+    "doid",
+    "hp",
     # Taxa
-    'ncbitaxon',
+    "ncbitaxon",
     # If you can get away from MeSH, do it
-    'mesh',
-    'icd',
+    "mesh",
+    "icd",
 ]
 
 
@@ -50,9 +50,9 @@ def _get_default_priority_list():
     for _entry in _DEFAULT_PRIORITY_LIST:
         _prefix = normalize_prefix(_entry)
         if not _prefix:
-            raise RuntimeError(f'unresolved prefix: {_entry}')
+            raise RuntimeError(f"unresolved prefix: {_entry}")
         if _prefix in rv:
-            raise RuntimeError(f'duplicate found in priority list: {_entry}/{_prefix}')
+            raise RuntimeError(f"duplicate found in priority list: {_entry}/{_prefix}")
         rv.append(_prefix)
     return rv
 

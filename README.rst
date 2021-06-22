@@ -1,6 +1,6 @@
 PyOBO
 =====
-|build| |pypi_version| |python_versions| |pypi_license| |zenodo|
+|build| |pypi_version| |python_versions| |pypi_license| |zenodo| |black|
 
 Tools for biological identifiers, names, synonyms, xrefs, hierarchies, relations, and properties through the
 perspective of OBO.
@@ -396,3 +396,7 @@ and make update to the ``url`` entry for that namespace in the Bioregistry.
 .. |zenodo| image:: https://zenodo.org/badge/203449095.svg
     :target: https://zenodo.org/badge/latestdoi/203449095
     :alt: Zenodo
+
+.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
+    :alt: Black Code Style

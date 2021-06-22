@@ -21,17 +21,22 @@ def bens_magical_ontology(use_tqdm: bool = True) -> nx.DiGraph:
 
     df = ensure_inspector_javert_df()
     for source_ns, source_id, target_ns, target_id, provenance in df.values:
-        rv.add_edge(f'{source_ns}:{source_id}', f'{target_ns}:{target_id}', relation='xref', provenance=provenance)
+        rv.add_edge(
+            f"{source_ns}:{source_id}",
+            f"{target_ns}:{target_id}",
+            relation="xref",
+            provenance=provenance,
+        )
 
-    logger.info('getting hierarchies')
+    logger.info("getting hierarchies")
     it = sorted(bioregistry.read_bioregistry())
     if use_tqdm:
-        it = tqdm(it, desc='Entries')
+        it = tqdm(it, desc="Entries")
     for prefix in it:
         if bioregistry.is_deprecated(prefix) or prefix in SKIP:
             continue
         if use_tqdm:
-            it.set_postfix({'prefix': prefix})
+            it.set_postfix({"prefix": prefix})
 
         hierarchy = get_hierarchy(prefix, include_has_member=True, include_part_of=True)
         rv.add_edges_from(hierarchy.edges(data=True))

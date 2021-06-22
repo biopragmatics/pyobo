@@ -12,23 +12,23 @@ logger = logging.getLogger(__name__)
 
 #: These resources don't seem to exist anymore
 BLACKLIST = {
-    'abs',
-    'aftol.taxonomy',
-    'agricola',
-    'ecogene',
-    'euclinicaltrials',
-    'fsnp',
-    'gold',
-    'gold.genome',
-    'gold.meta',
+    "abs",
+    "aftol.taxonomy",
+    "agricola",
+    "ecogene",
+    "euclinicaltrials",
+    "fsnp",
+    "gold",
+    "gold.genome",
+    "gold.meta",
 }
 
 #: These resources will need special rules for resolving
 UNSOLVED = {
-    'ark',
-    'did',
-    'gramene.growthstage',
-    'gwascentral.phenotype',
+    "ark",
+    "did",
+    "gramene.growthstage",
+    "gwascentral.phenotype",
     # TODO
 }
 
@@ -39,9 +39,9 @@ class TestMiriam(unittest.TestCase):
     def test_successful(self):
         """Test CURIEs that should work."""
         curies = [
-            ('go', '0006915'),  # name in LUI
-            ('doid', '11337'),  # name in LUI
-            ('mesh', 'C000100'),  # namespace not in LUI
+            ("go", "0006915"),  # name in LUI
+            ("doid", "11337"),  # name in LUI
+            ("mesh", "C000100"),  # namespace not in LUI
         ]
 
         # curies = []
@@ -56,26 +56,26 @@ class TestMiriam(unittest.TestCase):
         for prefix, identifier in curies:
             if prefix in BLACKLIST or prefix in UNSOLVED:
                 continue
-            with self.subTest(prefix=prefix, msg=f'failed for MIRIAM prefix: {prefix}'):
+            with self.subTest(prefix=prefix, msg=f"failed for MIRIAM prefix: {prefix}"):
                 url = get_identifiers_org_url(prefix, identifier)
-                self.assertIsNotNone(url, msg=f'metaregistry does not contain prefix {prefix}')
+                self.assertIsNotNone(url, msg=f"metaregistry does not contain prefix {prefix}")
                 try:
                     res = requests.get(url)
                 except (
                     requests.exceptions.SSLError,
                     requests.exceptions.ConnectionError,
                 ):
-                    logger.warning(f'identifiers.org has a problem resolving prefix {prefix}')
+                    logger.warning(f"identifiers.org has a problem resolving prefix {prefix}")
                     continue
                 self.assertFalse(
-                    res.text.startswith('INVALID'),
-                    msg=f'invalid url for {prefix}: {url}\n\n{res.text}',
+                    res.text.startswith("INVALID"),
+                    msg=f"invalid url for {prefix}: {url}\n\n{res.text}",
                 )
 
     def test_unsuccessful(self):
         """Test links that should fail."""
         curies = [
-            ('nope_nope_nope', '0006915'),
+            ("nope_nope_nope", "0006915"),
         ]
         for prefix, identifier in curies:
             with self.subTest(prefix=prefix):

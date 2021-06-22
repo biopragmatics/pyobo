@@ -17,9 +17,9 @@ from ..utils.cache import cached_df, cached_mapping
 from ..utils.path import prefix_cache_join
 
 __all__ = [
-    'get_xrefs_df',
-    'get_filtered_xrefs',
-    'get_xref',
+    "get_xrefs_df",
+    "get_filtered_xrefs",
+    "get_xref",
 ]
 
 logger = logging.getLogger(__name__)
@@ -43,20 +43,22 @@ def get_filtered_xrefs(
     force: bool = False,
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
-    path = prefix_cache_join(prefix, 'xrefs', name=f"{xref_prefix}.tsv", version=get_version(prefix))
-    all_xrefs_path = prefix_cache_join(prefix, name='xrefs.tsv', version=get_version(prefix))
-    header = [f'{prefix}_id', f'{xref_prefix}_id']
+    path = prefix_cache_join(
+        prefix, "xrefs", name=f"{xref_prefix}.tsv", version=get_version(prefix)
+    )
+    all_xrefs_path = prefix_cache_join(prefix, name="xrefs.tsv", version=get_version(prefix))
+    header = [f"{prefix}_id", f"{xref_prefix}_id"]
 
     @cached_mapping(path=path, header=header, use_tqdm=use_tqdm, force=force)
     def _get_mapping() -> Mapping[str, str]:
         if os.path.exists(all_xrefs_path):
-            logger.info('[%s] loading pre-cached xrefs', prefix)
-            df = pd.read_csv(all_xrefs_path, sep='\t', dtype=str)
-            logger.info('[%s] filtering pre-cached xrefs', prefix)
-            df = df.loc[df[TARGET_PREFIX] == xref_prefix, [f'{prefix}_id', TARGET_ID]]
+            logger.info("[%s] loading pre-cached xrefs", prefix)
+            df = pd.read_csv(all_xrefs_path, sep="\t", dtype=str)
+            logger.info("[%s] filtering pre-cached xrefs", prefix)
+            df = df.loc[df[TARGET_PREFIX] == xref_prefix, [f"{prefix}_id", TARGET_ID]]
             return dict(df.values)
 
-        logger.info('[%s] no cached xrefs found. getting from OBO loader', prefix)
+        logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, force=force)
         return ontology.get_filtered_xrefs_mapping(xref_prefix, use_tqdm=use_tqdm)
 
@@ -67,13 +69,15 @@ def get_filtered_xrefs(
 
 
 @wrap_norm_prefix
-def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, force: bool = False, strict: bool = False) -> pd.DataFrame:
+def get_xrefs_df(
+    prefix: str, *, use_tqdm: bool = False, force: bool = False, strict: bool = False
+) -> pd.DataFrame:
     """Get all xrefs."""
-    path = prefix_cache_join(prefix, name='xrefs.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, name="xrefs.tsv", version=get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
-        logger.info('[%s] no cached xrefs found. getting from OBO loader', prefix)
+        logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, force=force, strict=strict)
         return ontology.get_xrefs_df(use_tqdm=use_tqdm)
 

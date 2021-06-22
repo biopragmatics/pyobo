@@ -17,12 +17,12 @@ from .. import resource_utils
 from ..utils.io import get_reader, get_writer
 
 __all__ = [
-    'Canonicalizer',
-    'all_shortest_paths',
-    'single_source_shortest_path',
-    'get_equivalent',
-    'get_priority_curie',
-    'remap_file_stream',
+    "Canonicalizer",
+    "all_shortest_paths",
+    "single_source_shortest_path",
+    "get_equivalent",
+    "get_priority_curie",
+    "remap_file_stream",
 ]
 
 
@@ -45,13 +45,10 @@ class Canonicalizer:
         """Initialize the priority map based on the priority list."""
         if self.priority is None:
             self.priority = DEFAULT_PRIORITY_LIST
-        self._priority = {
-            entry: len(self.priority) - i
-            for i, entry in enumerate(self.priority)
-        }
+        self._priority = {entry: len(self.priority) - i for i, entry in enumerate(self.priority)}
 
     def _key(self, curie: str) -> Optional[int]:
-        prefix = self.graph.nodes[curie]['prefix']
+        prefix = self.graph.nodes[curie]["prefix"]
         return self._priority.get(prefix)
 
     def _get_priority_dict(self, curie: str) -> Mapping[str, int]:
@@ -75,7 +72,7 @@ class Canonicalizer:
         return max(priority_dict, key=priority_dict.get)
 
     @classmethod
-    def get_default(cls, priority: Optional[Iterable[str]] = None) -> 'Canonicalizer':
+    def get_default(cls, priority: Optional[Iterable[str]] = None) -> "Canonicalizer":
         """Get the default canonicalizer."""
         if priority is not None:
             priority = tuple(priority)
@@ -83,7 +80,7 @@ class Canonicalizer:
 
     @classmethod
     @lru_cache()
-    def _get_default_helper(cls, priority: Optional[Tuple[str, ...]] = None) -> 'Canonicalizer':
+    def _get_default_helper(cls, priority: Optional[Tuple[str, ...]] = None) -> "Canonicalizer":
         """Help get the default canonicalizer."""
         graph = cls._get_default_graph()
         return cls(graph=graph, priority=list(priority) if priority else None)
@@ -102,9 +99,9 @@ class Canonicalizer:
             nodes = tqdm(
                 nodes,
                 total=self.graph.number_of_nodes(),
-                desc='building flat mapping',
+                desc="building flat mapping",
                 unit_scale=True,
-                unit='CURIE',
+                unit="CURIE",
             )
         for node in nodes:
             yield node, self.canonicalize(node)
@@ -121,24 +118,27 @@ class Canonicalizer:
         """Get all shortest paths between given entity and its equivalent entities."""
         return single_source_shortest_path(graph=self.graph, curie=curie, cutoff=cutoff)
 
-    def all_shortest_paths(self, source_curie: str, target_curie: str) -> List[List[Mapping[str, str]]]:
+    def all_shortest_paths(
+        self, source_curie: str, target_curie: str
+    ) -> List[List[Mapping[str, str]]]:
         """Get all shortest paths between the two entities."""
-        return all_shortest_paths(graph=self.graph, source_curie=source_curie, target_curie=target_curie)
+        return all_shortest_paths(
+            graph=self.graph, source_curie=source_curie, target_curie=target_curie
+        )
 
     @classmethod
-    def from_df(cls, df: pd.DataFrame) -> 'Canonicalizer':
+    def from_df(cls, df: pd.DataFrame) -> "Canonicalizer":
         """Instantiate from a dataframe."""
         return cls(graph=get_graph_from_xref_df(df))
 
 
-def all_shortest_paths(graph: nx.Graph, source_curie: str, target_curie: str) -> List[List[Mapping[str, str]]]:
+def all_shortest_paths(
+    graph: nx.Graph, source_curie: str, target_curie: str
+) -> List[List[Mapping[str, str]]]:
     """Get all shortest paths between the two CURIEs."""
     _paths = nx.all_shortest_paths(graph, source=source_curie, target=target_curie)
     return [
-        [
-            dict(source=s, target=t, provenance=graph[s][t]['source'])
-            for s, t in pairwise(_path)
-        ]
+        [dict(source=s, target=t, provenance=graph[s][t]["source"]) for s, t in pairwise(_path)]
         for _path in _paths
     ]
 
@@ -177,10 +177,7 @@ def single_source_shortest_path(
         return None
     rv = nx.single_source_shortest_path(graph, curie, cutoff=cutoff)
     return {
-        k: [
-            dict(source=s, target=t, provenance=graph[s][t]['provenance'])
-            for s, t in pairwise(v)
-        ]
+        k: [dict(source=s, target=t, provenance=graph[s][t]["provenance"]) for s, t in pairwise(v)]
         for k, v in rv.items()
         if k != curie  # don't map to self
     }
@@ -199,7 +196,7 @@ def get_priority_curie(curie: str) -> str:
     return canonicalizer.canonicalize(curie)
 
 
-def remap_file_stream(file_in, file_out, column: int, sep='\t') -> None:
+def remap_file_stream(file_in, file_out, column: int, sep="\t") -> None:
     """Remap a file."""
     reader = get_reader(file_in, sep=sep)
     writer = get_writer(file_out, sep=sep)

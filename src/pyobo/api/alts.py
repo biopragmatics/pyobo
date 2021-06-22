@@ -13,16 +13,16 @@ from ..utils.cache import cached_multidict
 from ..utils.path import prefix_cache_join
 
 __all__ = [
-    'get_id_to_alts',
-    'get_alts_to_id',
-    'get_primary_curie',
-    'get_primary_identifier',
+    "get_id_to_alts",
+    "get_alts_to_id",
+    "get_primary_curie",
+    "get_primary_identifier",
 ]
 
 logger = logging.getLogger(__name__)
 
 NO_ALTS = {
-    'ncbigene',
+    "ncbigene",
 }
 
 
@@ -33,15 +33,15 @@ def get_id_to_alts(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
     if prefix in NO_ALTS:
         return {}
 
-    path = prefix_cache_join(prefix, name='alt_ids.tsv', version=get_version(prefix))
-    header = [f'{prefix}_id', 'alt_id']
+    path = prefix_cache_join(prefix, name="alt_ids.tsv", version=get_version(prefix))
+    header = [f"{prefix}_id", "alt_id"]
 
     @cached_multidict(path=path, header=header, force=force)
     def _get_mapping() -> Mapping[str, List[str]]:
         if force:
-            logger.info(f'[{prefix}] forcing reload for alts')
+            logger.info(f"[{prefix}] forcing reload for alts")
         else:
-            logger.info('[%s] no cached alts found. getting from OBO loader', prefix)
+            logger.info("[%s] no cached alts found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, force=force)
         return ontology.get_id_alts_mapping()
 
@@ -64,7 +64,7 @@ def get_primary_curie(curie: str) -> Optional[str]:
     prefix, identifier = normalize_curie(curie)
     primary_identifier = get_primary_identifier(prefix, identifier)
     if primary_identifier is not None:
-        return f'{prefix}:{primary_identifier}'
+        return f"{prefix}:{primary_identifier}"
 
 
 @wrap_norm_prefix

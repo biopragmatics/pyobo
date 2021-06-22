@@ -22,12 +22,12 @@ from pyobo.utils.io import multidict
 class Form(FlaskForm):
     """Form for submitting a query."""
 
-    text = StringField('Text', validators=[DataRequired()])
+    text = StringField("Text", validators=[DataRequired()])
     submit = SubmitField()
 
     def make_response(self):
         """Make a response with the text."""
-        return flask.redirect(flask.url_for('ground', text=self.text.data))
+        return flask.redirect(flask.url_for("ground", text=self.text.data))
 
 
 def get_app(prefix: str, url: Optional[str] = None):
@@ -35,24 +35,21 @@ def get_app(prefix: str, url: Optional[str] = None):
     grounder = get_grounder(prefix, url=url)
 
     app = flask.Flask(__name__)
-    app.config['WTF_CSRF_ENABLED'] = False
+    app.config["WTF_CSRF_ENABLED"] = False
     Bootstrap(app)
 
-    @app.route('/', methods=['GET', 'POST'])
+    @app.route("/", methods=["GET", "POST"])
     def home():
         """Ground the given text."""
         form = Form()
         if form.validate_on_submit():
             return form.make_response()
-        return flask.render_template('home.html', form=form)
+        return flask.render_template("home.html", form=form)
 
-    @app.route('/ground/<text>')
+    @app.route("/ground/<text>")
     def ground(text: str):
         """Ground the given text."""
-        return flask.jsonify([
-            scored_match.to_json()
-            for scored_match in grounder.ground(text)
-        ])
+        return flask.jsonify([scored_match.to_json() for scored_match in grounder.ground(text)])
 
     return app
 
@@ -68,19 +65,19 @@ def get_grounder(prefix, url: Optional[str] = None) -> Grounder:
 def get_gilda_terms(prefix: str, url: Optional[str] = None) -> Iterable[gilda.term.Term]:
     """Get gilda terms for the given namespace."""
     id_to_name = get_id_name_mapping(prefix, url=url)
-    for identifier, name in tqdm(id_to_name.items(), desc='mapping names'):
+    for identifier, name in tqdm(id_to_name.items(), desc="mapping names"):
         yield gilda.term.Term(
             norm_text=normalize(name),
             text=name,
             db=prefix,
             id=identifier,
             entry_name=name,
-            status='name',
+            status="name",
             source=prefix,
         )
 
     id_to_synonyms = get_id_synonyms_mapping(prefix, url=url)
-    for identifier, synonyms in tqdm(id_to_synonyms.items(), desc='mapping synonyms'):
+    for identifier, synonyms in tqdm(id_to_synonyms.items(), desc="mapping synonyms"):
         name = id_to_name[identifier]
         for synonym in synonyms:
             yield gilda.term.Term(
@@ -89,6 +86,6 @@ def get_gilda_terms(prefix: str, url: Optional[str] = None) -> Iterable[gilda.te
                 db=prefix,
                 id=identifier,
                 entry_name=name,
-                status='synonym',
+                status="synonym",
                 source=prefix,
             )

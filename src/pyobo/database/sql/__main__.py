@@ -4,5 +4,5 @@
 
 from .cli import database_sql
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     database_sql()

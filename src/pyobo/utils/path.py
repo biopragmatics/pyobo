@@ -17,13 +17,13 @@ from pystow.utils import name_from_url
 from pyobo.constants import RAW_MODULE
 
 __all__ = [
-    'prefix_directory_join',
-    'prefix_directory_join',
-    'prefix_cache_join',
-    'get_prefix_obo_path',
-    'ensure_path',
-    'ensure_df',
-    'ensure_tar_df',
+    "prefix_directory_join",
+    "prefix_directory_join",
+    "prefix_cache_join",
+    "get_prefix_obo_path",
+    "ensure_path",
+    "ensure_df",
+    "ensure_tar_df",
 ]
 
 logger = logging.getLogger(__name__)
@@ -42,11 +42,11 @@ def prefix_directory_join(
     if version is None:
         return RAW_MODULE.join(prefix, *parts, name=name, ensure_exists=ensure_exists)
     if callable(version):
-        logger.info('[%s] looking up version', prefix)
+        logger.info("[%s] looking up version", prefix)
         version = version()
-        logger.info('[%s] got version %s', version)
+        logger.info("[%s] got version %s", version)
     elif not isinstance(version, str):
-        raise TypeError(f'Invalid type: {version} ({type(version)})')
+        raise TypeError(f"Invalid type: {version} ({type(version)})")
     return RAW_MODULE.join(prefix, version, *parts, name=name, ensure_exists=ensure_exists)
 
 
@@ -70,14 +70,14 @@ def _urlretrieve(
     :param clean_on_failure: If true, will delete the file on any exception raised during download
     """
     if not stream:
-        logger.info('downloading from %s to %s', url, path)
+        logger.info("downloading from %s to %s", url, path)
         urlretrieve(url, path)  # noqa:S310
     else:
         # see https://requests.readthedocs.io/en/master/user/quickstart/#raw-response-content
         # pattern from https://stackoverflow.com/a/39217788/5775947
         try:
-            with requests.get(url, stream=True, **kwargs) as response, open(path, 'wb') as file:
-                logger.info('downloading (streaming) from %s to %s', url, path)
+            with requests.get(url, stream=True, **kwargs) as response, open(path, "wb") as file:
+                logger.info("downloading (streaming) from %s to %s", url, path)
                 shutil.copyfileobj(response.raw, file)
         except (Exception, KeyboardInterrupt):
             if clean_on_failure:
@@ -118,7 +118,7 @@ def ensure_df(
     version: VersionHint = None,
     name: Optional[str] = None,
     force: bool = False,
-    sep: str = '\t',
+    sep: str = "\t",
     dtype=str,
     **kwargs,
 ) -> pd.DataFrame:
@@ -145,4 +145,4 @@ def ensure_tar_df(
 
 def prefix_cache_join(prefix: str, *parts, name: Optional[str], version: VersionHint) -> Path:
     """Ensure the prefix cache is available."""
-    return prefix_directory_join(prefix, 'cache', *parts, name=name, version=version)
+    return prefix_directory_join(prefix, "cache", *parts, name=name, version=version)

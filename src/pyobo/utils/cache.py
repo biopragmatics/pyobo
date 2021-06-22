@@ -45,11 +45,11 @@ def cached_mapping(
         @functools.wraps(f)
         def _wrapped() -> Mapping[str, str]:
             if os.path.exists(path) and not force:
-                logger.debug('loading from cache at %s', path)
+                logger.debug("loading from cache at %s", path)
                 return open_map_tsv(path, use_tqdm=use_tqdm)
-            logger.debug('no cache found at %s', path)
+            logger.debug("no cache found at %s", path)
             rv = f()
-            logger.debug('writing cache to %s', path)
+            logger.debug("writing cache to %s", path)
             write_map_tsv(path=path, header=header, rv=rv)
             return rv
 
@@ -58,7 +58,9 @@ def cached_mapping(
     return wrapped
 
 
-def cached_json(path: Union[str, Path], force: bool = False) -> Callable[[JSONGetter], JSONGetter]:  # noqa: D202
+def cached_json(
+    path: Union[str, Path], force: bool = False
+) -> Callable[[JSONGetter], JSONGetter]:  # noqa: D202
     """Create a decorator to apply to a mapping getter."""
 
     def wrapped(f: JSONGetter) -> JSONGetter:  # noqa: D202
@@ -70,7 +72,7 @@ def cached_json(path: Union[str, Path], force: bool = False) -> Callable[[JSONGe
                 with open(path) as file:
                     return json.load(file)
             rv = f()
-            with open(path, 'w') as file:
+            with open(path, "w") as file:
                 json.dump(rv, file, indent=2)
             return rv
 
@@ -88,10 +90,10 @@ def cached_pickle(path: Union[str, Path], force: bool = False):
         @functools.wraps(f)
         def _wrapped():
             if os.path.exists(path) and not force:
-                with open(path, 'rb') as file:
+                with open(path, "rb") as file:
                     return pickle.load(file)
             rv = f()
-            with open(path, 'wb') as file:
+            with open(path, "wb") as file:
                 pickle.dump(rv, file, protocol=pickle.HIGHEST_PROTOCOL)
             return rv
 
@@ -102,17 +104,19 @@ def cached_pickle(path: Union[str, Path], force: bool = False):
 
 def get_gzipped_graph(path: Union[str, Path]) -> nx.MultiDiGraph:
     """Read a graph that's gzipped nodelink."""
-    with gzip.open(path, 'rt') as file:
+    with gzip.open(path, "rt") as file:
         return nx.node_link_graph(json.load(file))
 
 
 def write_gzipped_graph(graph: nx.MultiDiGraph, path: Union[str, Path]) -> None:
     """Write a graph as gzipped nodelink."""
-    with gzip.open(path, 'wt') as file:
+    with gzip.open(path, "wt") as file:
         json.dump(nx.node_link_data(graph), file)
 
 
-def cached_graph(path: Union[str, Path], force: bool = False) -> Callable[[GraphGetter], GraphGetter]:  # noqa: D202
+def cached_graph(
+    path: Union[str, Path], force: bool = False
+) -> Callable[[GraphGetter], GraphGetter]:  # noqa: D202
     """Create a decorator to apply to a graph getter."""
 
     def wrapped(f: GraphGetter) -> GraphGetter:  # noqa: D202
@@ -121,7 +125,7 @@ def cached_graph(path: Union[str, Path], force: bool = False) -> Callable[[Graph
         @functools.wraps(f)
         def _wrapped() -> nx.MultiDiGraph:
             if os.path.exists(path) and not force:
-                logger.debug('loading pre-compiled graph from: %s', path)
+                logger.debug("loading pre-compiled graph from: %s", path)
                 return get_gzipped_graph(path)
             graph = f()
             write_gzipped_graph(graph, path)
@@ -132,7 +136,7 @@ def cached_graph(path: Union[str, Path], force: bool = False) -> Callable[[Graph
     return wrapped
 
 
-def cached_df(path: Union[str, Path], sep: str = '\t', force: bool = False, **kwargs):  # noqa: D202
+def cached_df(path: Union[str, Path], sep: str = "\t", force: bool = False, **kwargs):  # noqa: D202
     """Create a decorator to apply to a dataframe getter."""
 
     def wrapped(f: DataFrameGetter) -> DataFrameGetter:  # noqa: D202
@@ -141,7 +145,7 @@ def cached_df(path: Union[str, Path], sep: str = '\t', force: bool = False, **kw
         @functools.wraps(f)
         def _wrapped() -> pd.DataFrame:
             if os.path.exists(path) and not force:
-                logger.debug('loading cached dataframe from %s', path)
+                logger.debug("loading cached dataframe from %s", path)
                 return pd.read_csv(
                     path,
                     sep=sep,

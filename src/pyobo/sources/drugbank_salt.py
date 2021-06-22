@@ -23,28 +23,28 @@ from ..struct import Obo, Reference, Term
 
 logger = logging.getLogger(__name__)
 
-PREFIX = 'drugbank.salt'
+PREFIX = "drugbank.salt"
 
 
 def get_obo() -> Obo:
     """Get DrugBank Salts as OBO."""
-    version = bioversions.get_version('drugbank')
+    version = bioversions.get_version("drugbank")
     return Obo(
         ontology=PREFIX,
-        name='DrugBank Salts',
+        name="DrugBank Salts",
         iter_terms=iter_terms,
         iter_terms_kwargs=dict(version=version),
         data_version=version,
-        auto_generated_by=f'bio2obo:{PREFIX}',
+        auto_generated_by=f"bio2obo:{PREFIX}",
     )
 
 
 def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over DrugBank Salt terms in OBO."""
     for drug_info in iterate_drug_info(version):
-        for salt in drug_info.get('salts', []):
+        for salt in drug_info.get("salts", []):
             xrefs = []
-            for key in ['unii', 'cas', 'inchikey']:
+            for key in ["unii", "cas", "inchikey"]:
                 identifier = salt.get(key)
                 if identifier:
                     xrefs.append(Reference(prefix=key, identifier=identifier))
@@ -52,13 +52,13 @@ def iter_terms(version: str) -> Iterable[Term]:
             yield Term(
                 reference=Reference(
                     prefix=PREFIX,
-                    identifier=salt['identifier'],
-                    name=salt['name'],
+                    identifier=salt["identifier"],
+                    name=salt["name"],
                 ),
                 xrefs=xrefs,
             )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     get_obo().write_default()

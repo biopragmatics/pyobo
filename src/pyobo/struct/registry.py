@@ -5,10 +5,10 @@
 from dataclasses import dataclass
 
 __all__ = [
-    'Registry',
-    'miriam',
-    'ols',
-    'obofoundry',
+    "Registry",
+    "miriam",
+    "ols",
+    "obofoundry",
 ]
 
 
@@ -28,16 +28,16 @@ class Registry:
 
 
 miriam = Registry(
-    name='miriam',
-    resolution_url='https://registry.identifiers.org/registry/',
+    name="miriam",
+    resolution_url="https://registry.identifiers.org/registry/",
 )
 
 ols = Registry(
-    name='ols',
-    resolution_url='https://www.ebi.ac.uk/ols/ontologies/',
+    name="ols",
+    resolution_url="https://www.ebi.ac.uk/ols/ontologies/",
 )
 
 obofoundry = Registry(
-    name='obofoundry',
-    resolution_url='http://www.obofoundry.org/ontology/',
+    name="obofoundry",
+    resolution_url="http://www.obofoundry.org/ontology/",
 )
