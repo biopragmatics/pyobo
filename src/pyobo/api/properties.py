@@ -16,12 +16,12 @@ from ..utils.io import multidict
 from ..utils.path import prefix_cache_join
 
 __all__ = [
-    'get_properties_df',
-    'get_filtered_properties_df',
-    'get_filtered_properties_mapping',
-    'get_filtered_properties_multimapping',
-    'get_property',
-    'get_properties',
+    "get_properties_df",
+    "get_filtered_properties_df",
+    "get_filtered_properties_mapping",
+    "get_filtered_properties_multimapping",
+    "get_property",
+    "get_properties",
 ]
 
 logger = logging.getLogger(__name__)
@@ -40,9 +40,9 @@ def get_properties_df(prefix: str, *, force: bool = False) -> pd.DataFrame:
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         if force:
-            logger.info('[%s] forcing reload for properties', prefix)
+            logger.info("[%s] forcing reload for properties", prefix)
         else:
-            logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
+            logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, force=force)
         df = ontology.get_properties_df()
         df.dropna(inplace=True)
@@ -67,19 +67,21 @@ def get_filtered_properties_mapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property value
     """
-    path = prefix_cache_join(prefix, 'properties', name=f"{prop}.tsv", version=get_version(prefix))
-    all_properties_path = prefix_cache_join(prefix, name='properties.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=get_version(prefix))
+    all_properties_path = prefix_cache_join(
+        prefix, name="properties.tsv", version=get_version(prefix)
+    )
 
-    @cached_mapping(path=path, header=[f'{prefix}_id', prop], force=force)
+    @cached_mapping(path=path, header=[f"{prefix}_id", prop], force=force)
     def _mapping_getter() -> Mapping[str, str]:
         if os.path.exists(all_properties_path):
-            logger.info('[%s] loading pre-cached properties', prefix)
-            df = pd.read_csv(all_properties_path, sep='\t')
-            logger.info('[%s] filtering pre-cached properties', prefix)
-            df = df.loc[df['property'] == prop, [f'{prefix}_id', 'value']]
+            logger.info("[%s] loading pre-cached properties", prefix)
+            df = pd.read_csv(all_properties_path, sep="\t")
+            logger.info("[%s] filtering pre-cached properties", prefix)
+            df = df.loc[df["property"] == prop, [f"{prefix}_id", "value"]]
             return dict(df.values)
 
-        logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
+        logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, force=force)
         return ontology.get_filtered_properties_mapping(prop, use_tqdm=use_tqdm)
 
@@ -102,19 +104,21 @@ def get_filtered_properties_multimapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property values
     """
-    path = prefix_cache_join(prefix, 'properties', name=f"{prop}.tsv", version=get_version(prefix))
-    all_properties_path = prefix_cache_join(prefix, name='properties.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=get_version(prefix))
+    all_properties_path = prefix_cache_join(
+        prefix, name="properties.tsv", version=get_version(prefix)
+    )
 
-    @cached_multidict(path=path, header=[f'{prefix}_id', prop], force=force)
+    @cached_multidict(path=path, header=[f"{prefix}_id", prop], force=force)
     def _mapping_getter() -> Mapping[str, List[str]]:
         if os.path.exists(all_properties_path):
-            logger.info('[%s] loading pre-cached properties', prefix)
-            df = pd.read_csv(all_properties_path, sep='\t')
-            logger.info('[%s] filtering pre-cached properties', prefix)
-            df = df.loc[df['property'] == prop, [f'{prefix}_id', 'value']]
+            logger.info("[%s] loading pre-cached properties", prefix)
+            df = pd.read_csv(all_properties_path, sep="\t")
+            logger.info("[%s] filtering pre-cached properties", prefix)
+            df = df.loc[df["property"] == prop, [f"{prefix}_id", "value"]]
             return multidict(df.values)
 
-        logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
+        logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, force=force)
         return ontology.get_filtered_properties_multimapping(prop, use_tqdm=use_tqdm)
 
@@ -145,7 +149,9 @@ def get_properties(prefix: str, identifier: str, prop: str) -> Optional[List[str
     :param prop: the property to extract
     :returns: Multiple values for the property. If only one is expected, use :func:`get_property`
     """
-    filtered_properties_multimapping = get_filtered_properties_multimapping(prefix=prefix, prop=prop)
+    filtered_properties_multimapping = get_filtered_properties_multimapping(
+        prefix=prefix, prop=prop
+    )
     return filtered_properties_multimapping.get(identifier)
 
 
@@ -165,21 +171,23 @@ def get_filtered_properties_df(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A dataframe from identifier to property value. Columns are [<prefix>_id, value].
     """
-    path = prefix_cache_join(prefix, 'properties', name=f"{prop}.tsv", version=get_version(prefix))
-    all_properties_path = prefix_cache_join(prefix, name='properties.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=get_version(prefix))
+    all_properties_path = prefix_cache_join(
+        prefix, name="properties.tsv", version=get_version(prefix)
+    )
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         if os.path.exists(all_properties_path):
-            logger.info('[%s] loading pre-cached properties', prefix)
-            df = pd.read_csv(all_properties_path, sep='\t')
-            logger.info('[%s] filtering pre-cached properties', prefix)
-            return df.loc[df['property'] == prop, [f'{prefix}_id', 'value']]
+            logger.info("[%s] loading pre-cached properties", prefix)
+            df = pd.read_csv(all_properties_path, sep="\t")
+            logger.info("[%s] filtering pre-cached properties", prefix)
+            return df.loc[df["property"] == prop, [f"{prefix}_id", "value"]]
 
         if force:
-            logger.info('[%s] forcing reload for properties', prefix)
+            logger.info("[%s] forcing reload for properties", prefix)
         else:
-            logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
+            logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, force=force)
         return ontology.get_filtered_properties_df(prop, use_tqdm=use_tqdm)
 

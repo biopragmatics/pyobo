@@ -10,18 +10,15 @@ from pkg_resources import iter_entry_points
 from ..struct import Obo
 
 __all__ = [
-    'has_nomenclature_plugin',
-    'run_nomenclature_plugin',
-    'iter_nomenclature_plugins',
+    "has_nomenclature_plugin",
+    "run_nomenclature_plugin",
+    "iter_nomenclature_plugins",
 ]
 
 
 @lru_cache()
 def _get_nomenclature_plugins() -> Mapping[str, Callable[[], Obo]]:
-    return {
-        entry.name: entry.load()
-        for entry in iter_entry_points(group='pyobo.nomenclatures')
-    }
+    return {entry.name: entry.load() for entry in iter_entry_points(group="pyobo.nomenclatures")}
 
 
 def has_nomenclature_plugin(prefix: str) -> bool:

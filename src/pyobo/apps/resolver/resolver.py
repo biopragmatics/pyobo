@@ -27,16 +27,16 @@ from pyobo.resource_utils import ensure_alts, ensure_definitions, ensure_ooh_na_
 
 logger = logging.getLogger(__name__)
 
-resolve_blueprint = Blueprint('resolver', __name__)
+resolve_blueprint = Blueprint("resolver", __name__)
 
-backend: Backend = LocalProxy(lambda: current_app.config['resolver_backend'])
+backend: Backend = LocalProxy(lambda: current_app.config["resolver_backend"])
 
 
-@resolve_blueprint.route('/')
+@resolve_blueprint.route("/")
 def home():
     """Serve the home page."""
     return render_template(
-        'home.html',
+        "home.html",
         name_count=intcomma(backend.count_names()),
         alts_count=intcomma(backend.count_alts()),
         prefix_count=intcomma(backend.count_prefixes()),
@@ -44,7 +44,7 @@ def home():
     )
 
 
-@resolve_blueprint.route('/resolve/<curie>')
+@resolve_blueprint.route("/resolve/<curie>")
 def resolve(curie: str):
     """Resolve a CURIE.
 
@@ -67,22 +67,22 @@ def resolve(curie: str):
     return jsonify(backend.resolve(curie))
 
 
-@resolve_blueprint.route('/summary')
+@resolve_blueprint.route("/summary")
 def summary():
     """Serve the summary page."""
     return render_template(
-        'summary.html',
+        "summary.html",
         summary_df=backend.summary_df(),
     )
 
 
-@resolve_blueprint.route('/summary.json')
+@resolve_blueprint.route("/summary.json")
 def summary_json():
     """Summary of the content in the service."""
     return jsonify(backend.summarize_names())
 
 
-@resolve_blueprint.route('/size')
+@resolve_blueprint.route("/size")
 def size():
     """Return how much memory we're taking.
 
@@ -123,17 +123,21 @@ def get_app(
     :param sql_table: Use SQL-based backend
     """
     app = Flask(__name__)
-    Swagger(app, merge=True, config={
-        'title': 'Bioresolver API',
-        'description': 'Resolves CURIEs to their names, definitions, and other attributes.',
-        'contact': {
-            'responsibleDeveloper': 'Charles Tapley Hoyt',
-            'email': 'cthoyt@gmail.com',
+    Swagger(
+        app,
+        merge=True,
+        config={
+            "title": "Bioresolver API",
+            "description": "Resolves CURIEs to their names, definitions, and other attributes.",
+            "contact": {
+                "responsibleDeveloper": "Charles Tapley Hoyt",
+                "email": "cthoyt@gmail.com",
+            },
         },
-    })
+    )
     Bootstrap(app)
 
-    app.config['resolver_backend'] = _get_resolver(
+    app.config["resolver_backend"] = _get_resolver(
         name_data=name_data,
         alts_data=alts_data,
         defs_data=defs_data,
@@ -168,7 +172,7 @@ def _get_resolver(
     defs_table: Optional[str] = None,
 ) -> Backend:
     if sql:
-        logger.info('using raw SQL backend')
+        logger.info("using raw SQL backend")
         return RawSQLBackend(
             engine=uri,
             refs_table=refs_table,
@@ -185,7 +189,7 @@ def _get_resolver(
     elif isinstance(name_data, pd.DataFrame):
         name_lookup = _get_lookup_from_df(name_data)
     else:
-        raise TypeError(f'invalid type for `name_data`: {name_data}')
+        raise TypeError(f"invalid type for `name_data`: {name_data}")
 
     if lazy:
         alts_lookup = None
@@ -196,7 +200,7 @@ def _get_resolver(
     elif isinstance(alts_data, pd.DataFrame):
         alts_lookup = _get_lookup_from_df(alts_data)
     else:
-        raise TypeError(f'invalid type for `alt_data`: {alts_data}')
+        raise TypeError(f"invalid type for `alt_data`: {alts_data}")
 
     if lazy:
         defs_lookup = None
@@ -207,7 +211,7 @@ def _get_resolver(
     elif isinstance(defs_data, pd.DataFrame):
         defs_lookup = _get_lookup_from_df(defs_data)
     else:
-        raise TypeError(f'invalid type for `defs_data`: {defs_data}')
+        raise TypeError(f"invalid type for `defs_data`: {defs_data}")
 
     return _prepare_backend_with_lookup(
         name_lookup=name_lookup,
@@ -223,7 +227,9 @@ def _prepare_backend_with_lookup(
 ) -> Backend:
     get_id_name_mapping, summarize_names = _h(name_lookup, pyobo.get_id_name_mapping)
     get_alts_to_id, summarize_alts = _h(alts_lookup, pyobo.get_alts_to_id)
-    get_id_definition_mapping, summarize_definitions = _h(defs_lookup, pyobo.get_id_definition_mapping)
+    get_id_definition_mapping, summarize_definitions = _h(
+        defs_lookup, pyobo.get_id_definition_mapping
+    )
 
     return MemoryBackend(
         get_id_name_mapping=get_id_name_mapping,
@@ -247,7 +253,7 @@ def _h(lookup, alt_lookup):
 
 def _get_lookup_from_df(df: pd.DataFrame) -> Mapping[str, Mapping[str, str]]:
     lookup = defaultdict(dict)
-    it = tqdm(df.values, total=len(df.index), desc='loading mappings', unit_scale=True)
+    it = tqdm(df.values, total=len(df.index), desc="loading mappings", unit_scale=True)
     for prefix, identifier, name in it:
         lookup[prefix][identifier] = name
     return dict(lookup)
@@ -255,9 +261,9 @@ def _get_lookup_from_df(df: pd.DataFrame) -> Mapping[str, Mapping[str, str]]:
 
 def _get_lookup_from_path(path: Union[str, Path]) -> Mapping[str, Mapping[str, str]]:
     lookup = defaultdict(dict)
-    with gzip.open(path, 'rt') as file:
+    with gzip.open(path, "rt") as file:
         _ = next(file)
-        for line in tqdm(file, desc='loading mappings', unit_scale=True):
-            prefix, identifier, name = line.strip().split('\t')
+        for line in tqdm(file, desc="loading mappings", unit_scale=True):
+            prefix, identifier, name = line.strip().split("\t")
             lookup[prefix][identifier] = name
     return dict(lookup)

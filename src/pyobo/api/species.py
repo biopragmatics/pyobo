@@ -14,8 +14,8 @@ from ..utils.cache import cached_mapping
 from ..utils.path import prefix_cache_join
 
 __all__ = [
-    'get_id_species_mapping',
-    'get_species',
+    "get_id_species_mapping",
+    "get_species",
 ]
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 @wrap_norm_prefix
 def get_species(prefix: str, identifier: str) -> Optional[str]:
     """Get the species."""
-    if prefix == 'uniprot':
+    if prefix == "uniprot":
         raise NotImplementedError
 
     try:
@@ -33,7 +33,7 @@ def get_species(prefix: str, identifier: str) -> Optional[str]:
         id_species = None
 
     if not id_species:
-        logger.warning('unable to look up species for prefix %s', prefix)
+        logger.warning("unable to look up species for prefix %s", prefix)
         return
 
     primary_id = get_primary_identifier(prefix, identifier)
@@ -44,20 +44,21 @@ def get_species(prefix: str, identifier: str) -> Optional[str]:
 @wrap_norm_prefix
 def get_id_species_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
     """Get an identifier to species mapping."""
-    if prefix == 'ncbigene':
+    if prefix == "ncbigene":
         from ..sources.ncbigene import get_ncbigene_id_to_species_mapping
-        logger.info('[%s] loading species mappings', prefix)
+
+        logger.info("[%s] loading species mappings", prefix)
         rv = get_ncbigene_id_to_species_mapping()
-        logger.info('[%s] done loading species mappings', prefix)
+        logger.info("[%s] done loading species mappings", prefix)
         return rv
 
-    path = prefix_cache_join(prefix, name='species.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, name="species.tsv", version=get_version(prefix))
 
-    @cached_mapping(path=path, header=[f'{prefix}_id', 'species'], force=force)
+    @cached_mapping(path=path, header=[f"{prefix}_id", "species"], force=force)
     def _get_id_species_mapping() -> Mapping[str, str]:
-        logger.info('[%s] no cached species found. getting from OBO loader', prefix)
+        logger.info("[%s] no cached species found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, force=force)
-        logger.info('[%s] loading species mappings', prefix)
+        logger.info("[%s] loading species mappings", prefix)
         return ontology.get_id_species_mapping()
 
     return _get_id_species_mapping()

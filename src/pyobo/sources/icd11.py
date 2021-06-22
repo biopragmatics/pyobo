@@ -20,16 +20,16 @@ from ..utils.path import prefix_directory_join
 
 logger = logging.getLogger(__name__)
 
-PREFIX = 'icd11'
+PREFIX = "icd11"
 
 
 def get_obo() -> Obo:
     """Get ICD11 as OBO."""
     return Obo(
         ontology=PREFIX,
-        name='International Statistical Classification of Diseases and Related Health Problems 11th Revision',
+        name="International Statistical Classification of Diseases and Related Health Problems 11th Revision",
         iter_terms=iterate_icd11,
-        auto_generated_by=f'bio2obo:{PREFIX}',
+        auto_generated_by=f"bio2obo:{PREFIX}",
     )
 
 
@@ -44,10 +44,10 @@ def iterate_icd11() -> Iterable[Term]:
     res = get_icd(ICD11_TOP_LEVEL_URL)
     res_json = res.json()
 
-    version = res_json['releaseId']
+    version = res_json["releaseId"]
     directory = prefix_directory_join(PREFIX, version=version)
 
-    with open(os.path.join(directory, 'top.json'), 'w') as file:
+    with open(os.path.join(directory, "top.json"), "w") as file:
         json.dump(res_json, file, indent=2)
 
     tqdm.write(f'There are {len(res_json["child"])} top level entities')
@@ -64,17 +64,14 @@ def iterate_icd11() -> Iterable[Term]:
 
 
 def _extract_icd11(res_json: Mapping[str, Any]) -> Term:
-    identifier = res_json['@id'][len(ICD11_TOP_LEVEL_URL):].lstrip('/')
-    definition = res_json['definition']['@value'] if 'definition' in res_json else None
-    name = res_json['title']['@value']
-    synonyms = [
-        Synonym(synonym['label']['@value'])
-        for synonym in res_json.get('synonym', [])
-    ]
+    identifier = res_json["@id"][len(ICD11_TOP_LEVEL_URL) :].lstrip("/")
+    definition = res_json["definition"]["@value"] if "definition" in res_json else None
+    name = res_json["title"]["@value"]
+    synonyms = [Synonym(synonym["label"]["@value"]) for synonym in res_json.get("synonym", [])]
     parents = [
-        Reference(prefix=PREFIX, identifier=url[len('http://id.who.int/icd/entity/'):])
-        for url in res_json['parent']
-        if url[len('http://id.who.int/icd/entity/'):]
+        Reference(prefix=PREFIX, identifier=url[len("http://id.who.int/icd/entity/") :])
+        for url in res_json["parent"]
+        if url[len("http://id.who.int/icd/entity/") :]
     ]
     return Term(
         reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
@@ -90,5 +87,5 @@ def _main():
     get_obo().write_default(use_tqdm=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _main()

@@ -11,20 +11,31 @@ from more_click import verbose_option
 from zenodo_client import Zenodo
 
 from .constants import (
-    ALTS_DATA_RECORD, ALTS_FILE, DEFINITIONS_FILE, DEFINITIONS_RECORD, JAVERT_FILE, JAVERT_RECORD, OOH_NA_NA_FILE,
-    OOH_NA_NA_RECORD, PROPERTIES_FILE, PROPERTIES_RECORD, RELATIONS_FILE, RELATIONS_RECORD, SYNONYMS_FILE,
+    ALTS_DATA_RECORD,
+    ALTS_FILE,
+    DEFINITIONS_FILE,
+    DEFINITIONS_RECORD,
+    JAVERT_FILE,
+    JAVERT_RECORD,
+    OOH_NA_NA_FILE,
+    OOH_NA_NA_RECORD,
+    PROPERTIES_FILE,
+    PROPERTIES_RECORD,
+    RELATIONS_FILE,
+    RELATIONS_RECORD,
+    SYNONYMS_FILE,
     SYNONYMS_RECORD,
 )
 
 __all__ = [
-    'ensure_inspector_javert',
-    'ensure_inspector_javert_df',
-    'ensure_ooh_na_na',
-    'ensure_alts',
-    'ensure_synonyms',
-    'ensure_definitions',
-    'ensure_properties',
-    'ensure_relations',
+    "ensure_inspector_javert",
+    "ensure_inspector_javert_df",
+    "ensure_ooh_na_na",
+    "ensure_alts",
+    "ensure_synonyms",
+    "ensure_definitions",
+    "ensure_properties",
+    "ensure_relations",
 ]
 
 
@@ -39,11 +50,13 @@ def _get_parts(_concept_rec_id, _record_id, version) -> Sequence[str]:
 
     .. note:: Corresponds to :data:`pyobo.constants.DATABASE_MODULE`.
     """
-    return ['pyobo', 'database', version]
+    return ["pyobo", "database", version]
 
 
 def _ensure(record_id, path, force: bool = False) -> str:
-    rv = _get_zenodo().download_latest(record_id=record_id, path=path, parts=_get_parts, force=force)
+    rv = _get_zenodo().download_latest(
+        record_id=record_id, path=path, parts=_get_parts, force=force
+    )
     return rv.as_posix()
 
 
@@ -66,7 +79,7 @@ def ensure_inspector_javert(force: bool = False) -> str:
 def ensure_inspector_javert_df(force: bool = False) -> pd.DataFrame:
     """Ensure the inspector javert database as a dataframe."""
     path = ensure_inspector_javert(force=force)
-    return pd.read_csv(path, sep='\t', dtype=str)
+    return pd.read_csv(path, sep="\t", dtype=str)
 
 
 def ensure_synonyms(force: bool = False) -> str:
@@ -111,7 +124,7 @@ def ensure_relations(force: bool = False) -> str:
 
 @click.command()
 @verbose_option
-@click.option('-f', '--force', is_flag=True)
+@click.option("-f", "--force", is_flag=True)
 def main(force: bool):
     """Ensure resources are available."""
     for f in [
@@ -123,10 +136,10 @@ def main(force: bool):
         ensure_properties,
         ensure_relations,
     ]:
-        click.secho(f.__doc__.splitlines()[0], fg='green', bold=True)
+        click.secho(f.__doc__.splitlines()[0], fg="green", bold=True)
         path = f(force=force)
         click.echo(path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

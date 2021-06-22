@@ -9,12 +9,12 @@ from flask_admin.contrib.sqla import ModelView
 from .models import Alt, Reference, Resource, Synonym, Xref, session
 
 __all__ = [
-    'app',
-    'admin',
+    "app",
+    "admin",
 ]
 
 app = Flask(__name__)
-admin = Admin(app, template_mode='bootstrap3', url='/')
+admin = Admin(app, template_mode="bootstrap3", url="/")
 
 
 class View(ModelView):
@@ -28,19 +28,19 @@ class View(ModelView):
 class ResourceView(View):
     """A view for resources."""
 
-    column_searchable_list = ['prefix', 'name']
+    column_searchable_list = ["prefix", "name"]
 
 
 class ReferenceView(View):
     """A view for references."""
 
-    column_searchable_list = ['identifier', 'name']
+    column_searchable_list = ["identifier", "name"]
 
 
 class AltView(View):
     """A view for references."""
 
-    column_searchable_list = ['identifier', 'alt']
+    column_searchable_list = ["identifier", "alt"]
 
 
 admin.add_view(ResourceView(Resource, session))
@@ -50,5 +50,5 @@ admin.add_view(AltView(Alt, session))
 admin.add_view(View(Synonym, session))
 admin.add_view(View(Xref, session))
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run()

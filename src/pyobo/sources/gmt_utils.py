@@ -28,14 +28,14 @@ def _process_line(line: str) -> Tuple[str, str, Set[str]]:
     :return: pathway info url
     :return: genes set associated
     """
-    name, info, *entries = (p.strip() for p in line.split('\t'))
+    name, info, *entries = (p.strip() for p in line.split("\t"))
     return name, info, set(entries)
 
 
 def parse_wikipathways_gmt(path: Union[str, Path]) -> Iterable[WikiPathwaysGMTSummary]:
     """Parse WikiPathways GMT."""
     for name, info, entries in parse_gmt_file(path):
-        name, version, identifier, species = name.split('%')
-        version = version.split('_')[1]
-        revision = info.rsplit('_', 1)[1].lstrip('r')
+        name, version, identifier, species = name.split("%")
+        version = version.split("_")[1]
+        revision = info.rsplit("_", 1)[1].lstrip("r")
         yield identifier, version, revision, name, species, entries

@@ -9,11 +9,11 @@ from .mapper.cli import main as mapper_main
 from .resolver.cli import main as resolver_main
 
 __all__ = [
-    'main',
+    "main",
 ]
 
 
-@click.group(name='apps')
+@click.group(name="apps")
 def main():
     """Apps."""
 
@@ -22,5 +22,5 @@ main.add_command(gilda_main)
 main.add_command(resolver_main)
 main.add_command(mapper_main)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

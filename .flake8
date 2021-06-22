@@ -12,6 +12,8 @@ ignore =
     # XML stuff
     S405
     S314
+    # Whitespace stuff
+    E203
     # Pickle stuff
     S301
     S403

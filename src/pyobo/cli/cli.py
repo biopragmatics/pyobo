@@ -25,7 +25,7 @@ from ..utils.io import get_writer
 from ..xrefdb.canonicalizer import Canonicalizer, get_priority_curie, remap_file_stream
 from ..xrefdb.priority import DEFAULT_PRIORITY_LIST
 
-__all__ = ['main']
+__all__ = ["main"]
 
 logger = logging.getLogger(__name__)
 
@@ -36,14 +36,11 @@ def main():
     """CLI for PyOBO."""
 
 
-_ORDERING_TEXT = ', '.join(
-    f'{i}) {x}'
-    for i, x in enumerate(DEFAULT_PRIORITY_LIST, start=1)
-)
+_ORDERING_TEXT = ", ".join(f"{i}) {x}" for i, x in enumerate(DEFAULT_PRIORITY_LIST, start=1))
 
 
-@main.command(help=f'Prioritize a CURIE from ordering: {_ORDERING_TEXT}')
-@click.argument('curie')
+@main.command(help=f"Prioritize a CURIE from ordering: {_ORDERING_TEXT}")
+@click.argument("curie")
 def prioritize(curie: str):
     """Prioritize a CURIE."""
     priority_curie = get_priority_curie(curie)
@@ -51,10 +48,10 @@ def prioritize(curie: str):
 
 
 @main.command()
-@click.option('-i', '--file-in', type=click.File('r'), default=sys.stdin)
-@click.option('-o', '--file-out', type=click.File('w'), default=sys.stdout)
-@click.option('--column', type=int, default=0, show_default=True)
-@click.option('--sep', default='\t', show_default=True)
+@click.option("-i", "--file-in", type=click.File("r"), default=sys.stdin)
+@click.option("-o", "--file-out", type=click.File("w"), default=sys.stdout)
+@click.option("--column", type=int, default=0, show_default=True)
+@click.option("--sep", default="\t", show_default=True)
 def recurify(file_in, file_out, column: int, sep: str):
     """Remap a column in a given file stream."""
     remap_file_stream(file_in=file_in, file_out=file_out, column=column, sep=sep)
@@ -65,20 +62,24 @@ def recurify(file_in, file_out, column: int, sep: str):
 def cache():
     """Cache all resources."""
     for obo in iter_nomenclature_plugins():
-        click.secho(f'Caching {obo.ontology}', bold=True, fg='green')
+        click.secho(f"Caching {obo.ontology}", bold=True, fg="green")
         obo.write_default()
 
 
 @main.command()
-@click.option('--remove-obo', is_flag=True)
+@click.option("--remove-obo", is_flag=True)
 def clean(remove_obo: bool):
     """Delete all cached files."""
     suffixes = [
-        '_mappings.tsv', '.mapping.tsv', '_synonyms.tsv',
-        '.obo.pickle', '.obo.json.gz', '.owl',
+        "_mappings.tsv",
+        ".mapping.tsv",
+        "_synonyms.tsv",
+        ".obo.pickle",
+        ".obo.json.gz",
+        ".owl",
     ]
     if remove_obo:
-        suffixes.append('.obo')
+        suffixes.append(".obo")
     for directory in os.listdir(RAW_DIRECTORY):
         d = os.path.join(RAW_DIRECTORY, directory)
         if not os.path.isdir(d):
@@ -86,7 +87,7 @@ def clean(remove_obo: bool):
         entities = list(os.listdir(d))
         if not entities:
             os.rmdir(d)
-        obo_pickle = os.path.join(d, f'{directory}.obo.pickle')
+        obo_pickle = os.path.join(d, f"{directory}.obo.pickle")
         if os.path.exists(obo_pickle):
             os.remove(obo_pickle)
         for f in entities:
@@ -97,40 +98,37 @@ def clean(remove_obo: bool):
 @main.command()
 def ls():
     """List how big all of the OBO files are."""
+    entries = [(prefix, os.path.getsize(path)) for prefix, path in iter_cached_obo()]
     entries = [
-        (prefix, os.path.getsize(path))
-        for prefix, path in iter_cached_obo()
-    ]
-    entries = [
-        (prefix, humanize.naturalsize(size), '✅' if not has_nomenclature_plugin(prefix) else '❌')
+        (prefix, humanize.naturalsize(size), "✅" if not has_nomenclature_plugin(prefix) else "❌")
         for prefix, size in sorted(entries, key=itemgetter(1), reverse=True)
     ]
-    click.echo(tabulate(entries, headers=['Source', 'Size', 'OBO']))
+    click.echo(tabulate(entries, headers=["Source", "Size", "OBO"]))
 
 
 @main.command()
-@click.argument('text')
-@click.option('--name', is_flag=True)
+@click.argument("text")
+@click.option("--name", is_flag=True)
 def normalize(text: str, name: bool):
     """Normalize a prefix or CURIE."""
-    if ':' in text:  # it's a curie
-        s = ':'.join(normalize_curie(text))
+    if ":" in text:  # it's a curie
+        s = ":".join(normalize_curie(text))
     else:
         s = normalize_prefix(text)
     if name:
         name = get_name_by_curie(s)
-        s = f'{s} ! {name}'
+        s = f"{s} ! {name}"
     click.echo(s)
 
 
 @main.command()
 @verbose_option
-@click.option('-f', '--file', type=click.File('w'))
+@click.option("-f", "--file", type=click.File("w"))
 def remapping(file):
     """Make a canonical remapping."""
     canonicalizer = Canonicalizer.get_default()
     writer = get_writer(file)
-    writer.writerow(['input', 'canonical'])
+    writer.writerow(["input", "canonical"])
     writer.writerows(canonicalizer.iterate_flat_mapping())
 
 
@@ -139,5 +137,5 @@ main.add_command(apps_main)
 main.add_command(aws_main)
 main.add_command(database_main)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

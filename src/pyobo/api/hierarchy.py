@@ -15,12 +15,12 @@ from ..identifier_utils import wrap_norm_prefix
 from ..struct import RelationHint, has_member, is_a, part_of
 
 __all__ = [
-    'get_hierarchy',
-    'get_subhierarchy',
-    'get_descendants',
-    'get_ancestors',
-    'has_ancestor',
-    'is_descendent',
+    "get_hierarchy",
+    "get_subhierarchy",
+    "get_descendants",
+    "get_ancestors",
+    "has_ancestor",
+    "is_descendent",
 ]
 
 logger = logging.getLogger(__name__)
@@ -86,7 +86,7 @@ def _get_hierarchy_helper(
         force=force,
     )
     for source_id, target_ns, target_id in is_a_df.values:
-        rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation='is_a')
+        rv.add_edge(f"{prefix}:{source_id}", f"{target_ns}:{target_id}", relation="is_a")
 
     if include_has_member:
         has_member_df = get_filtered_relations_df(
@@ -96,7 +96,7 @@ def _get_hierarchy_helper(
             force=force,
         )
         for target_id, source_ns, source_id in has_member_df.values:
-            rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}', relation='is_a')
+            rv.add_edge(f"{source_ns}:{source_id}", f"{prefix}:{target_id}", relation="is_a")
 
     if include_part_of:
         part_of_df = get_filtered_relations_df(
@@ -106,7 +106,7 @@ def _get_hierarchy_helper(
             force=force,
         )
         for source_id, target_ns, target_id in part_of_df.values:
-            rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation='part_of')
+            rv.add_edge(f"{prefix}:{source_id}", f"{target_ns}:{target_id}", relation="part_of")
 
         has_part_df = get_filtered_relations_df(
             prefix=prefix,
@@ -115,7 +115,7 @@ def _get_hierarchy_helper(
             force=force,
         )
         for target_id, source_ns, source_id in has_part_df.values:
-            rv.add_edge(f'{source_ns}:{source_id}', f'{prefix}:{target_id}', relation='part_of')
+            rv.add_edge(f"{source_ns}:{source_id}", f"{prefix}:{target_id}", relation="part_of")
 
     for relation in extra_relations:
         relation_df = get_filtered_relations_df(
@@ -125,12 +125,16 @@ def _get_hierarchy_helper(
             force=force,
         )
         for source_id, target_ns, target_id in relation_df.values:
-            rv.add_edge(f'{prefix}:{source_id}', f'{target_ns}:{target_id}', relation=relation.identifier)
+            rv.add_edge(
+                f"{prefix}:{source_id}", f"{target_ns}:{target_id}", relation=relation.identifier
+            )
 
     for prop in properties:
-        props = get_filtered_properties_mapping(prefix=prefix, prop=prop, use_tqdm=use_tqdm, force=force)
+        props = get_filtered_properties_mapping(
+            prefix=prefix, prop=prop, use_tqdm=use_tqdm, force=force
+        )
         for identifier, value in props.items():
-            curie = f'{prefix}:{identifier}'
+            curie = f"{prefix}:{identifier}"
             if curie in rv:
                 rv.nodes[curie][prop] = value
 
@@ -145,7 +149,7 @@ def is_descendent(prefix, identifier, ancestor_prefix, ancestor_identifier) -> b
     >>> assert is_descendent('go', '0070246', 'go', '0006915')
     """
     descendants = get_descendants(ancestor_prefix, ancestor_identifier)
-    return descendants is not None and f'{prefix}:{identifier}' in descendants
+    return descendants is not None and f"{prefix}:{identifier}" in descendants
 
 
 @lru_cache()
@@ -167,7 +171,7 @@ def get_descendants(
         force=force,
         **kwargs,
     )
-    curie = f'{prefix}:{identifier}'
+    curie = f"{prefix}:{identifier}"
     if curie not in hierarchy:
         return None
     return nx.ancestors(hierarchy, curie)  # note this is backwards
@@ -180,7 +184,7 @@ def has_ancestor(prefix, identifier, ancestor_prefix, ancestor_identifier) -> bo
     >>> assert has_ancestor('go', '0006915', 'go', '0008219')
     """
     ancestors = get_ancestors(prefix, identifier)
-    return ancestors is not None and f'{ancestor_prefix}:{ancestor_identifier}' in ancestors
+    return ancestors is not None and f"{ancestor_prefix}:{ancestor_identifier}" in ancestors
 
 
 @lru_cache()
@@ -202,7 +206,7 @@ def get_ancestors(
         force=force,
         **kwargs,
     )
-    curie = f'{prefix}:{identifier}'
+    curie = f"{prefix}:{identifier}"
     if curie not in hierarchy:
         return None
     return nx.descendants(hierarchy, curie)  # note this is backwards
@@ -226,9 +230,11 @@ def get_subhierarchy(
         force=force,
         **kwargs,
     )
-    logger.info('getting descendants of %s:%s ! %s', prefix, identifier, get_name(prefix, identifier))
-    curies = nx.ancestors(hierarchy, f'{prefix}:{identifier}')  # note this is backwards
-    logger.info('inducing subgraph')
+    logger.info(
+        "getting descendants of %s:%s ! %s", prefix, identifier, get_name(prefix, identifier)
+    )
+    curies = nx.ancestors(hierarchy, f"{prefix}:{identifier}")  # note this is backwards
+    logger.info("inducing subgraph")
     sg = hierarchy.subgraph(curies).copy()
-    logger.info('subgraph has %d nodes/%d edges', sg.number_of_nodes(), sg.number_of_edges())
+    logger.info("subgraph has %d nodes/%d edges", sg.number_of_nodes(), sg.number_of_edges())
     return sg

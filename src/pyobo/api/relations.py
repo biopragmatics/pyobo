@@ -10,7 +10,12 @@ import pandas as pd
 
 from .utils import get_version
 from ..constants import (
-    RELATION_COLUMNS, RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX, TARGET_ID,
+    RELATION_COLUMNS,
+    RELATION_ID,
+    RELATION_PREFIX,
+    SOURCE_ID,
+    SOURCE_PREFIX,
+    TARGET_ID,
     TARGET_PREFIX,
 )
 from ..getters import get_ontology
@@ -33,21 +38,21 @@ def get_relations_df(
     wide: bool = False,
 ) -> pd.DataFrame:
     """Get all relations from the OBO."""
-    path = prefix_cache_join(prefix, name='relations.tsv', version=get_version(prefix))
+    path = prefix_cache_join(prefix, name="relations.tsv", version=get_version(prefix))
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         if force:
-            logger.info('[%s] forcing reload for relations', prefix)
+            logger.info("[%s] forcing reload for relations", prefix)
         else:
-            logger.info('[%s] no cached relations found. getting from OBO loader', prefix)
+            logger.info("[%s] no cached relations found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, force=force)
         return ontology.get_relations_df(use_tqdm=use_tqdm)
 
     rv = _df_getter()
 
     if wide:
-        rv = rv.rename(columns={f'{prefix}_id': SOURCE_ID})
+        rv = rv.rename(columns={f"{prefix}_id": SOURCE_ID})
         rv[SOURCE_PREFIX] = prefix
         rv = rv[RELATION_COLUMNS]
 
@@ -65,20 +70,27 @@ def get_filtered_relations_df(
     """Get all of the given relation."""
     relation_prefix, relation_identifier = relation = get_reference_tuple(relation)
     path = prefix_cache_join(
-        prefix, 'relations', name=f'{relation_prefix}:{relation_identifier}.tsv', version=get_version(prefix),
+        prefix,
+        "relations",
+        name=f"{relation_prefix}:{relation_identifier}.tsv",
+        version=get_version(prefix),
     )
-    all_relations_path = prefix_cache_join(prefix, name='relations.tsv', version=get_version(prefix))
+    all_relations_path = prefix_cache_join(
+        prefix, name="relations.tsv", version=get_version(prefix)
+    )
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         if os.path.exists(all_relations_path):
-            logger.debug('[%] loading all relations from %s', prefix, all_relations_path)
-            df = pd.read_csv(all_relations_path, sep='\t', dtype=str)
-            idx = (df[RELATION_PREFIX] == relation_prefix) & (df[RELATION_ID] == relation_identifier)
-            columns = [f'{prefix}_id', TARGET_PREFIX, TARGET_ID]
+            logger.debug("[%] loading all relations from %s", prefix, all_relations_path)
+            df = pd.read_csv(all_relations_path, sep="\t", dtype=str)
+            idx = (df[RELATION_PREFIX] == relation_prefix) & (
+                df[RELATION_ID] == relation_identifier
+            )
+            columns = [f"{prefix}_id", TARGET_PREFIX, TARGET_ID]
             return df.loc[idx, columns]
 
-        logger.info('[%s] no cached relations found. getting from OBO loader', prefix)
+        logger.info("[%s] no cached relations found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, force=force)
         return ontology.get_filtered_relations_df(relation, use_tqdm=use_tqdm)
 

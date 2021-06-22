@@ -15,37 +15,37 @@ from pyobo.utils.path import ensure_df
 
 logger = logging.getLogger(__name__)
 
-PREFIX = 'complexportal'
+PREFIX = "complexportal"
 SPECIES = [
-    '10090',
-    '10116',
-    '1235996',
-    '1263720',
-    '208964',
-    '2697049',
-    '284812',
-    '3702',
-    '559292',
-    '562',
-    '6239',
-    '6523',
-    '694009',
-    '7227',
-    '7787',
-    '7788',
-    '7955',
-    '83333',
-    '8355',
-    '9031',
-    '9606',
-    '9615',
-    '9823',
-    '9913',
-    '9940',
-    '9986',
+    "10090",
+    "10116",
+    "1235996",
+    "1263720",
+    "208964",
+    "2697049",
+    "284812",
+    "3702",
+    "559292",
+    "562",
+    "6239",
+    "6523",
+    "694009",
+    "7227",
+    "7787",
+    "7788",
+    "7955",
+    "83333",
+    "8355",
+    "9031",
+    "9606",
+    "9615",
+    "9823",
+    "9913",
+    "9940",
+    "9986",
 ]
 DTYPE = {
-    'taxonomy_id': str,
+    "taxonomy_id": str,
 }
 
 
@@ -54,13 +54,13 @@ def _parse_members(s) -> List[Tuple[Reference, str]]:
         return []
 
     rv = []
-    for member in s.split('|'):
-        entity_id, count = member.split('(')
-        count = count.rstrip(')')
-        if ':' in entity_id:
-            prefix, identifier = entity_id.split(':', 1)
+    for member in s.split("|"):
+        entity_id, count = member.split("(")
+        count = count.rstrip(")")
+        if ":" in entity_id:
+            prefix, identifier = entity_id.split(":", 1)
         else:
-            prefix, identifier = 'uniprot', entity_id
+            prefix, identifier = "uniprot", entity_id
         rv.append((Reference(prefix=prefix, identifier=identifier), count))
     return rv
 
@@ -70,22 +70,22 @@ def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
         return []
 
     rv = []
-    for xref in s.split('|'):
-        xref = xref.replace('protein ontology:PR:', 'PR:')
-        xref = xref.replace('protein ontology:PR_', 'PR:')
+    for xref in s.split("|"):
+        xref = xref.replace("protein ontology:PR:", "PR:")
+        xref = xref.replace("protein ontology:PR_", "PR:")
         try:
-            xref_curie, note = xref.split('(')
+            xref_curie, note = xref.split("(")
         except ValueError:
-            logger.warning('xref missing (: %s', xref)
+            logger.warning("xref missing (: %s", xref)
             continue
-        note = note.rstrip(')')
+        note = note.rstrip(")")
         try:
             reference = Reference.from_curie(xref_curie)
         except ValueError:
-            logger.warning('can not parse CURIE: %s', xref)
+            logger.warning("can not parse CURIE: %s", xref)
             continue
         if reference is None:
-            logger.warning('reference is None after parsing: %s', xref)
+            logger.warning("reference is None after parsing: %s", xref)
             continue
         rv.append((reference, note))
     return rv
@@ -97,24 +97,24 @@ def get_obo() -> Obo:
 
     return Obo(
         ontology=PREFIX,
-        name='Complex Portal',
+        name="Complex Portal",
         data_version=version,
         iter_terms=get_terms,
         iter_terms_kwargs=dict(version=version),
         typedefs=[from_species, has_part],
-        auto_generated_by=f'bio2obo:{PREFIX}',
+        auto_generated_by=f"bio2obo:{PREFIX}",
     )
 
 
 def get_df(version: str) -> pd.DataFrame:
     """Get a combine ComplexPortal dataframe."""
-    url_base = f'ftp://ftp.ebi.ac.uk/pub/databases/intact/complex/{version}/complextab'
+    url_base = f"ftp://ftp.ebi.ac.uk/pub/databases/intact/complex/{version}/complextab"
     dfs = [
         ensure_df(
             PREFIX,
-            url=f'{url_base}/{ncbitaxonomy_id}.tsv',
+            url=f"{url_base}/{ncbitaxonomy_id}.tsv",
             version=version,
-            na_values={'-'},
+            na_values={"-"},
             header=0,
             dtype=str,
         )
@@ -126,49 +126,60 @@ def get_df(version: str) -> pd.DataFrame:
 def get_terms(version: str) -> Iterable[Term]:
     """Get ComplexPortal terms."""
     df = get_df(version=version)
-    df.rename(inplace=True, columns={
-        'Aliases for complex': 'aliases',
-        'Identifiers (and stoichiometry) of molecules in complex': 'members',
-        'Taxonomy identifier': 'taxonomy_id',
-        'Cross references': 'xrefs',
-        'Description': 'definition',
-        'Recommended name': 'name',
-        '#Complex ac': 'complexportal_id',
-    })
+    df.rename(
+        inplace=True,
+        columns={
+            "Aliases for complex": "aliases",
+            "Identifiers (and stoichiometry) of molecules in complex": "members",
+            "Taxonomy identifier": "taxonomy_id",
+            "Cross references": "xrefs",
+            "Description": "definition",
+            "Recommended name": "name",
+            "#Complex ac": "complexportal_id",
+        },
+    )
 
-    df['aliases'] = df['aliases'].map(lambda s: s.split('|') if pd.notna(s) else [])
-    df['members'] = df['members'].map(_parse_members)
-    df['xrefs'] = df['xrefs'].map(_parse_xrefs)
+    df["aliases"] = df["aliases"].map(lambda s: s.split("|") if pd.notna(s) else [])
+    df["members"] = df["members"].map(_parse_members)
+    df["xrefs"] = df["xrefs"].map(_parse_xrefs)
 
-    taxnomy_id_to_name = get_id_name_mapping('ncbitaxon')
-    df['taxonomy_name'] = df['taxonomy_id'].map(taxnomy_id_to_name.get)
+    taxnomy_id_to_name = get_id_name_mapping("ncbitaxon")
+    df["taxonomy_name"] = df["taxonomy_id"].map(taxnomy_id_to_name.get)
 
-    slim_df = df[[
-        'complexportal_id',
-        'name',
-        'definition',
-        'aliases',
-        'xrefs',
-        'taxonomy_id',
-        'taxonomy_name',
-        'members',
-    ]]
-    it = tqdm(slim_df.values, total=len(slim_df.index), desc=f'mapping {PREFIX}')
-    unhandled_xref_type = set()
-    for complexportal_id, name, definition, aliases, xrefs, taxonomy_id, taxonomy_name, members in it:
-        synonyms = [
-            Synonym(name=alias)
-            for alias in aliases
+    slim_df = df[
+        [
+            "complexportal_id",
+            "name",
+            "definition",
+            "aliases",
+            "xrefs",
+            "taxonomy_id",
+            "taxonomy_name",
+            "members",
         ]
+    ]
+    it = tqdm(slim_df.values, total=len(slim_df.index), desc=f"mapping {PREFIX}")
+    unhandled_xref_type = set()
+    for (
+        complexportal_id,
+        name,
+        definition,
+        aliases,
+        xrefs,
+        taxonomy_id,
+        taxonomy_name,
+        members,
+    ) in it:
+        synonyms = [Synonym(name=alias) for alias in aliases]
         _xrefs = []
         provenance = []
         for reference, note in xrefs:
-            if note == 'identity':
+            if note == "identity":
                 _xrefs.append(reference)
-            elif note == 'see-also' and reference.prefix == 'pubmed':
+            elif note == "see-also" and reference.prefix == "pubmed":
                 provenance.append(reference)
             elif (note, reference.prefix) not in unhandled_xref_type:
-                logger.debug(f'unhandled xref type: {note} / {reference.prefix}')
+                logger.debug(f"unhandled xref type: {note} / {reference.prefix}")
                 unhandled_xref_type.add((note, reference.prefix))
 
         term = Term(
@@ -186,5 +197,5 @@ def get_terms(version: str) -> Iterable[Term]:
         yield term
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     get_obo().write_default()

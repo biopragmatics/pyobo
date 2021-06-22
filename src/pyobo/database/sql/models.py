@@ -40,7 +40,7 @@ Base.query = session.query_property()
 class Resource(Base):
     """A resource."""
 
-    __tablename__ = 'obo_resource'
+    __tablename__ = "obo_resource"
     id = Column(Integer, primary_key=True)
 
     prefix = Column(String(32), nullable=False, unique=True, index=True)
@@ -55,7 +55,7 @@ class Resource(Base):
 class Reference(Base):
     """Represent a CURIE and label."""
 
-    __tablename__ = 'obo_reference'
+    __tablename__ = "obo_reference"
     id = Column(Integer, primary_key=True)
 
     prefix = Column(String(32))
@@ -64,14 +64,14 @@ class Reference(Base):
 
     def __repr__(self) -> str:  # noqa:D105
         if self.name:
-            return f'{self.prefix}:{self.identifier} ! {self.name}'
-        return f'{self.prefix}:{self.identifier}'
+            return f"{self.prefix}:{self.identifier} ! {self.name}"
+        return f"{self.prefix}:{self.identifier}"
 
 
 class Alt(Base):
     """Represents an alternate identifier relationship."""
 
-    __tablename__ = 'obo_alt'
+    __tablename__ = "obo_alt"
     id = Column(Integer, primary_key=True)
 
     prefix = Column(String(32))
@@ -79,16 +79,16 @@ class Alt(Base):
     alt = Column(String(64))
 
     def __repr__(self) -> str:  # noqa:D105
-        return f'{self.prefix}:{self.alt}->{self.identifier}'
+        return f"{self.prefix}:{self.alt}->{self.identifier}"
 
 
 class Synonym(Base):
     """Represent an OBO term's synonym."""
 
-    __tablename__ = 'obo_synonym'
+    __tablename__ = "obo_synonym"
     id = Column(Integer, primary_key=True)
 
-    prefix = Column(String(32), ForeignKey(f'{Resource.__tablename__}.prefix'))
+    prefix = Column(String(32), ForeignKey(f"{Resource.__tablename__}.prefix"))
     identifier = Column(String(64))
     name = Column(String, index=True)
 
@@ -99,18 +99,16 @@ class Synonym(Base):
     def __repr__(self) -> str:  # noqa:D105
         return self.name
 
-    __table_args__ = (
-        Index('synonym_prefix_identifier_idx', prefix, identifier),
-    )
+    __table_args__ = (Index("synonym_prefix_identifier_idx", prefix, identifier),)
 
 
 class Xref(Base):
     """Represents an equivalence in between terms in two resources."""
 
-    __tablename__ = 'obo_xref'
+    __tablename__ = "obo_xref"
     id = Column(Integer, primary_key=True)
 
-    prefix = Column(String(32), ForeignKey(f'{Resource.__tablename__}.prefix'))
+    prefix = Column(String(32), ForeignKey(f"{Resource.__tablename__}.prefix"))
     identifier = Column(String(64))
 
     xref_prefix = Column(String(32))
@@ -119,6 +117,6 @@ class Xref(Base):
     source = Column(Text, index=True)
 
     __table_args__ = (
-        Index('xref_prefix_identifier_idx', prefix, identifier),
-        Index('xref_xprefix_xidentifier_idx', xref_prefix, xref_identifier),
+        Index("xref_prefix_identifier_idx", prefix, identifier),
+        Index("xref_xprefix_xidentifier_idx", xref_prefix, xref_identifier),
     )

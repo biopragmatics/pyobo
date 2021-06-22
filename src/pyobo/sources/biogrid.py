@@ -12,8 +12,8 @@ from pyobo.constants import version_getter
 from pyobo.utils.cache import cached_mapping
 from pyobo.utils.path import ensure_df, prefix_directory_join
 
-PREFIX = 'biogrid'
-BASE_URL = 'https://downloads.thebiogrid.org/Download/BioGRID/Release-Archive'
+PREFIX = "biogrid"
+BASE_URL = "https://downloads.thebiogrid.org/Download/BioGRID/Release-Archive"
 
 taxonomy_remapping = {  # so much for official names
     "Canis familiaris": "9615",  # Canis lupus familiaris
@@ -38,31 +38,32 @@ taxonomy_remapping = {  # so much for official names
     "Simian Virus 40": "1891767",  # Macaca mulatta polyomavirus 1
     "Simian Immunodeficiency Virus": "11723",  # Simian immunodeficiency virus
     "Tobacco Mosaic Virus": "12242",  # Tobacco mosaic virus
-
     # Not in my current dump, but definitely there!
     "Severe acute respiratory syndrome coronavirus 2": "2697049",  # Severe acute respiratory syndrome coronavirus 2
-    'Middle-East Respiratory Syndrome-related Coronavirus': '1335626',
+    "Middle-East Respiratory Syndrome-related Coronavirus": "1335626",
 }
 
 
 def _lookup(name):
     if name in taxonomy_remapping:
         return taxonomy_remapping[name]
-    return get_name_id_mapping('ncbitaxon')[name]
+    return get_name_id_mapping("ncbitaxon")[name]
 
 
 def get_df() -> pd.DataFrame:
     """Get the BioGRID identifiers mapping dataframe."""
-    version = bioversions.get_version('biogrid')
-    url = f'{BASE_URL}/BIOGRID-{version}/BIOGRID-IDENTIFIERS-{version}.tab.zip'
+    version = bioversions.get_version("biogrid")
+    url = f"{BASE_URL}/BIOGRID-{version}/BIOGRID-IDENTIFIERS-{version}.tab.zip"
     df = ensure_df(PREFIX, url=url, skiprows=28, dtype=str, version=version)
-    df['taxonomy_id'] = df['ORGANISM_OFFICIAL_NAME'].map(_lookup)
+    df["taxonomy_id"] = df["ORGANISM_OFFICIAL_NAME"].map(_lookup)
     return df
 
 
 @cached_mapping(
-    path=prefix_directory_join(PREFIX, 'cache', 'xrefs', name='ncbigene.tsv', version=version_getter(PREFIX)),
-    header=['biogrid_id', 'ncbigene_id'],
+    path=prefix_directory_join(
+        PREFIX, "cache", "xrefs", name="ncbigene.tsv", version=version_getter(PREFIX)
+    ),
+    header=["biogrid_id", "ncbigene_id"],
 )
 def get_ncbigene_mapping() -> Mapping[str, str]:
     """Get BioGRID to NCBIGENE mapping.
@@ -75,5 +76,5 @@ def get_ncbigene_mapping() -> Mapping[str, str]:
         biogrid_ncbigene_mapping = get_filtered_xrefs('biogrid', 'ncbigene')
     """
     df = get_df()
-    df = df.loc[df['IDENTIFIER_TYPE'] == 'ENTREZ_GENE', ['BIOGRID_ID', 'IDENTIFIER_VALUE']]
+    df = df.loc[df["IDENTIFIER_TYPE"] == "ENTREZ_GENE", ["BIOGRID_ID", "IDENTIFIER_VALUE"]]
     return dict(df.values)

@@ -11,17 +11,19 @@ from pyobo.constants import PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TAR
 from pyobo.identifier_utils import normalize_prefix
 
 __all__ = [
-    'get_gilda_xrefs_df',
+    "get_gilda_xrefs_df",
 ]
 
-GILDA_MAPPINGS = 'https://raw.githubusercontent.com/indralab/gilda/master/gilda/resources/mesh_mappings.tsv'
+GILDA_MAPPINGS = (
+    "https://raw.githubusercontent.com/indralab/gilda/master/gilda/resources/mesh_mappings.tsv"
+)
 
 
 def get_gilda_xrefs_df() -> pd.DataFrame:
     """Get xrefs from Gilda."""
     df = pd.read_csv(
         GILDA_MAPPINGS,
-        sep='\t',
+        sep="\t",
         header=None,
         usecols=[0, 1, 3, 4],
         names=[SOURCE_PREFIX, SOURCE_ID, TARGET_PREFIX, TARGET_ID],
@@ -38,7 +40,7 @@ def get_gilda_xrefs_df() -> pd.DataFrame:
 
 
 def _fix_gogo(s):
-    for prefix in ('CHEBI:', 'DOID:', 'HP:', 'GO:'):
+    for prefix in ("CHEBI:", "DOID:", "HP:", "GO:"):
         if s.startswith(prefix):
-            return s[len(prefix):]
+            return s[len(prefix) :]
     return s

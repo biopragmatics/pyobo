@@ -17,10 +17,10 @@ from pyobo import normalize_curie
 from pyobo.constants import ALTS_TABLE_NAME, DEFS_TABLE_NAME, REFS_TABLE_NAME, get_sqlalchemy_uri
 
 __all__ = [
-    'Backend',
-    'RawSQLBackend',
-    'MemoryBackend',
-    'SQLAlchemyBackend',
+    "Backend",
+    "RawSQLBackend",
+    "MemoryBackend",
+    "SQLAlchemyBackend",
 ]
 
 logger = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ class Backend:
             return dict(
                 query=curie,
                 success=False,
-                message='Could not identify prefix',
+                message="Could not identify prefix",
             )
 
         providers = bioregistry.get_providers(prefix, identifier)
@@ -95,7 +95,7 @@ class Backend:
                 identifier=identifier,
                 providers=providers,
                 success=False,
-                message=f'Could not find id->name mapping for {prefix}',
+                message=f"Could not find id->name mapping for {prefix}",
             )
             return rv
 
@@ -113,7 +113,7 @@ class Backend:
                 identifier=identifier,
                 success=False,
                 providers=providers,
-                message='Could not look up identifier',
+                message="Could not look up identifier",
             )
         rv = dict(
             query=curie,
@@ -125,7 +125,7 @@ class Backend:
         )
         definition = self.get_definition(prefix, identifier)
         if definition:
-            rv['definition'] = definition
+            rv["definition"] = definition
 
         return rv
 
@@ -133,7 +133,9 @@ class Backend:
         """Generate a summary dataframe."""
         summary_names = self.summarize_names()
         summary_alts = self.summarize_alts() if self.summarize_alts is not None else {}
-        summary_defs = self.summarize_definitions() if self.summarize_definitions is not None else {}
+        summary_defs = (
+            self.summarize_definitions() if self.summarize_definitions is not None else {}
+        )
         return pd.DataFrame(
             [
                 (
@@ -149,7 +151,14 @@ class Backend:
                 for prefix, names_count in summary_names.items()
             ],
             columns=[
-                'prefix', 'name', 'homepage', 'example', 'link', 'names', 'alts', 'defs',
+                "prefix",
+                "name",
+                "homepage",
+                "example",
+                "link",
+                "names",
+                "alts",
+                "defs",
             ],
         )
 
@@ -220,7 +229,8 @@ class RawSQLBackend(Backend):
     engine: Engine
 
     def __init__(
-        self, *,
+        self,
+        *,
         refs_table: Optional[str] = None,
         alts_table: Optional[str] = None,
         defs_table: Optional[str] = None,
@@ -246,25 +256,31 @@ class RawSQLBackend(Backend):
     @lru_cache(maxsize=1)
     def count_names(self) -> int:  # noqa:D102
         """Get the number of names."""
-        return self._get_one(f'SELECT SUM(identifier_count) FROM {self.refs_table}_summary;')  # noqa:S608
+        return self._get_one(
+            f"SELECT SUM(identifier_count) FROM {self.refs_table}_summary;"  # noqa:S608
+        )
 
     @lru_cache(maxsize=1)
     def count_prefixes(self) -> int:  # noqa:D102
-        logger.info('counting prefixes')
+        logger.info("counting prefixes")
         start = time.time()
-        rv = self._get_one(f'SELECT COUNT(DISTINCT prefix) FROM {self.refs_table}_summary;')  # noqa:S608
-        logger.info('done counting prefixes after %.2fs', time.time() - start)
+        rv = self._get_one(
+            f"SELECT COUNT(DISTINCT prefix) FROM {self.refs_table}_summary;"  # noqa:S608
+        )
+        logger.info("done counting prefixes after %.2fs", time.time() - start)
         return rv
 
     @lru_cache(maxsize=1)
     def count_definitions(self) -> int:  # noqa:D102
         """Get the number of definitions."""
-        return self._get_one(f'SELECT SUM(identifier_count) FROM {self.defs_table}_summary;')  # noqa:S608
+        return self._get_one(
+            f"SELECT SUM(identifier_count) FROM {self.defs_table}_summary;"  # noqa:S608
+        )
 
     @lru_cache(maxsize=1)
     def count_alts(self) -> Optional[int]:  # noqa:D102
-        logger.info('counting alts')
-        return self._get_one(f'SELECT COUNT(*) FROM {self.alts_table};')  # noqa:S608
+        logger.info("counting alts")
+        return self._get_one(f"SELECT COUNT(*) FROM {self.alts_table};")  # noqa:S608
 
     def _get_one(self, sql: str):
         with self.engine.connect() as connection:
@@ -282,41 +298,49 @@ class RawSQLBackend(Backend):
 
     @lru_cache()
     def _get_summary(self, table) -> Counter:
-        sql = f'SELECT prefix, identifier_count FROM {table}_summary;'  # noqa:S608
+        sql = f"SELECT prefix, identifier_count FROM {table}_summary;"  # noqa:S608
         with self.engine.connect() as connection:
             return Counter(dict(connection.execute(sql).fetchall()))
 
     @lru_cache()
     def has_prefix(self, prefix: str) -> bool:  # noqa:D102
-        sql = text(f"SELECT EXISTS(SELECT 1 from {self.refs_table} WHERE prefix = :prefix);")  # noqa:S608
+        sql = text(
+            f"SELECT EXISTS(SELECT 1 from {self.refs_table} WHERE prefix = :prefix);"  # noqa:S608
+        )
         with self.engine.connect() as connection:
             result = connection.execute(sql, prefix=prefix).fetchone()
             return bool(result)
 
     @lru_cache(maxsize=100_000)
     def get_primary_id(self, prefix: str, identifier: str) -> str:  # noqa:D102
-        sql = text(f'''
+        sql = text(
+            f"""
             SELECT identifier
             FROM {self.alts_table}
             WHERE prefix = :prefix and alt = :alt;
-        ''')  # noqa:S608
+        """  # noqa:S608
+        )
         with self.engine.connect() as connection:
             result = connection.execute(sql, prefix=prefix, alt=identifier).fetchone()
             return result[0] if result else identifier
 
     def get_name(self, prefix: str, identifier: str) -> Optional[str]:  # noqa:D102
-        return self._help_one(self.refs_table, 'name', prefix, identifier)
+        return self._help_one(self.refs_table, "name", prefix, identifier)
 
     def get_definition(self, prefix: str, identifier: str) -> Optional[str]:  # noqa:D102
-        return self._help_one(self.defs_table, 'definition', prefix, identifier)
+        return self._help_one(self.defs_table, "definition", prefix, identifier)
 
     @lru_cache(maxsize=100_000)
-    def _help_one(self, table: str, column: str, prefix: str, identifier: str) -> Optional[str]:  # noqa:D102
-        sql = text(f"""
+    def _help_one(
+        self, table: str, column: str, prefix: str, identifier: str
+    ) -> Optional[str]:  # noqa:D102
+        sql = text(
+            f"""
             SELECT {column}
             FROM {table}
             WHERE prefix = :prefix and identifier = :identifier;
-        """)  # noqa:S608
+        """
+        )  # noqa:S608
         with self.engine.connect() as connection:
             result = connection.execute(sql, prefix=prefix, identifier=identifier).fetchone()
             if result:
@@ -328,14 +352,17 @@ class SQLAlchemyBackend(Backend):
 
     def summarize_names(self) -> Mapping[str, Any]:  # noqa:D102
         from pyobo.database.sql.models import Reference
+
         return dict(Reference.query.groupby(Reference.prefix).count())
 
     def has_prefix(self, prefix: str) -> bool:  # noqa:D102
         from pyobo.database.sql.models import Reference
+
         return Reference.query.filter(Reference.prefix == prefix).first()
 
     def get_primary_id(self, prefix: str, identifier: str) -> str:  # noqa:D102
         from pyobo.database.sql.models import Alt
+
         new_id = Alt.query.filter(Alt.prefix == prefix, Alt.alt == identifier).one_or_none()
         if new_id is None:
             return identifier
@@ -343,17 +370,24 @@ class SQLAlchemyBackend(Backend):
 
     def get_name(self, prefix, identifier) -> Optional[str]:  # noqa:D102
         from pyobo.database.sql.models import Reference
-        reference = Reference.query.filter(Reference.prefix == prefix, Reference.identifier == identifier).one_or_none()
+
+        reference = Reference.query.filter(
+            Reference.prefix == prefix, Reference.identifier == identifier
+        ).one_or_none()
         if reference:
             return reference.name
 
     def get_synonyms(self, prefix: str, identifier: str) -> List[str]:  # noqa:D102
         from pyobo.database.sql.models import Synonym
-        synonyms = Synonym.query.filter(Synonym.prefix == prefix, Synonym.identifier == identifier).all()
+
+        synonyms = Synonym.query.filter(
+            Synonym.prefix == prefix, Synonym.identifier == identifier
+        ).all()
         return [s.name for s in synonyms]
 
     def get_xrefs(self, prefix: str, identifier: str) -> List[Mapping[str, str]]:  # noqa:D102
         from pyobo.database.sql.models import Xref
+
         xrefs = Xref.query.filter(Xref.prefix == prefix, Xref.identifier == identifier).all()
         xrefs = {(xref.xref_prefix, xref.xref_identifier) for xref in xrefs}
         return [

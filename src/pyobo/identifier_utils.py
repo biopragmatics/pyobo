@@ -10,22 +10,26 @@ from typing import Optional, Tuple, Union
 import bioregistry
 
 from .registries import (
-    get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist, get_xrefs_suffix_blacklist, remap_full,
+    get_remappings_prefix,
+    get_xrefs_blacklist,
+    get_xrefs_prefix_blacklist,
+    get_xrefs_suffix_blacklist,
+    remap_full,
 )
 
 __all__ = [
-    'normalize_curie',
-    'normalize_prefix',
-    'wrap_norm_prefix',
+    "normalize_curie",
+    "normalize_prefix",
+    "wrap_norm_prefix",
 ]
 
 logger = logging.getLogger(__name__)
 
 
 def alternate_strip_prefix(s, prefix):
-    _prefix_colon = f'{prefix.lower()}:'
+    _prefix_colon = f"{prefix.lower()}:"
     if s.lower().startswith(_prefix_colon):
-        s = s[len(_prefix_colon):]
+        s = s[len(_prefix_colon) :]
     return s
 
 
@@ -43,14 +47,14 @@ class MissingPrefix(ValueError):
         self.reference = None
 
     def __str__(self) -> str:
-        s = ''
+        s = ""
         if self.ontology:
-            s += f'[{self.ontology}] '
-        s += f'unhandled prefix {self.prefix} found in curie {self.curie}'
+            s += f"[{self.ontology}] "
+        s += f"unhandled prefix {self.prefix} found in curie {self.curie}"
         if self.xref:
-            s += f'/xref {self.xref}'
+            s += f"/xref {self.xref}"
         if self.reference is not None:
-            s += f' from {self.reference.curie}'
+            s += f" from {self.reference.curie}"
         return s
 
 
@@ -60,9 +64,9 @@ def normalize_prefix(prefix: str, *, curie=None, xref=None, strict: bool = True)
     if norm_prefix is not None:
         return norm_prefix
 
-    if curie is None or curie.startswith('obo:'):
+    if curie is None or curie.startswith("obo:"):
         return
-    if curie.startswith('UBERON:'):  # uberon has tons of xrefs to anatomical features. skip them
+    if curie.startswith("UBERON:"):  # uberon has tons of xrefs to anatomical features. skip them
         UBERON_UNHANDLED[prefix].append((curie, xref))
     elif strict:
         raise MissingPrefix(prefix=prefix, curie=curie, xref=xref)
@@ -70,7 +74,9 @@ def normalize_prefix(prefix: str, *, curie=None, xref=None, strict: bool = True)
     #     return  # skip if its just text
 
 
-def normalize_curie(curie: str, *, strict: bool = True) -> Union[Tuple[str, str], Tuple[None, None]]:
+def normalize_curie(
+    curie: str, *, strict: bool = True
+) -> Union[Tuple[str, str], Tuple[None, None]]:
     """Parse a string that looks like a CURIE.
 
     :param curie: A compact uniform resource identifier (CURIE)
@@ -97,17 +103,17 @@ def normalize_curie(curie: str, *, strict: bool = True) -> Union[Tuple[str, str]
     # Remap node's prefix (if necessary)
     for old_prefix, new_prefix in get_remappings_prefix().items():
         if curie.startswith(old_prefix):
-            curie = new_prefix + curie[len(old_prefix):]
+            curie = new_prefix + curie[len(old_prefix) :]
 
     try:
-        head_ns, identifier = curie.split(':', 1)
+        head_ns, identifier = curie.split(":", 1)
     except ValueError:  # skip nodes that don't look like normal CURIEs
-        logger.debug(f'could not split CURIE on colon: {curie}')
+        logger.debug(f"could not split CURIE on colon: {curie}")
         return None, None
 
     # remove redundant prefix
-    if identifier.casefold().startswith(f'{head_ns.casefold()}:'):
-        identifier = identifier[len(head_ns) + 1:]
+    if identifier.casefold().startswith(f"{head_ns.casefold()}:"):
+        identifier = identifier[len(head_ns) + 1 :]
 
     norm_node_prefix = normalize_prefix(head_ns, curie=curie, strict=strict)
     if not norm_node_prefix:
@@ -122,7 +128,7 @@ def wrap_norm_prefix(f):
     def _wrapped(prefix, *args, **kwargs):
         norm_prefix = normalize_prefix(prefix, strict=True)
         if norm_prefix is None:
-            raise ValueError(f'Invalid prefix: {prefix}')
+            raise ValueError(f"Invalid prefix: {prefix}")
         return f(norm_prefix, *args, **kwargs)
 
     return _wrapped

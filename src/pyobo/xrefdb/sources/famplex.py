@@ -9,26 +9,33 @@ from typing import Mapping, Tuple
 import pandas as pd
 from bioregistry import normalize_prefix
 
-from ...constants import PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX, XREF_COLUMNS
+from ...constants import (
+    PROVENANCE,
+    SOURCE_ID,
+    SOURCE_PREFIX,
+    TARGET_ID,
+    TARGET_PREFIX,
+    XREF_COLUMNS,
+)
 from ...utils.path import ensure_df
 
 __all__ = [
-    'get_famplex_xrefs_df',
+    "get_famplex_xrefs_df",
 ]
 
 logger = logging.getLogger(__name__)
 
-URL = 'https://github.com/sorgerlab/famplex/raw/master/equivalences.csv'
+URL = "https://github.com/sorgerlab/famplex/raw/master/equivalences.csv"
 
 
 def _get_famplex_df(force: bool = False) -> pd.DataFrame:
     return ensure_df(
-        prefix='fplx',
+        prefix="fplx",
         url=URL,
         force=force,
         header=None,
         names=[TARGET_PREFIX, TARGET_ID, SOURCE_ID],
-        sep=',',
+        sep=",",
     )
 
 
@@ -37,8 +44,8 @@ def get_famplex_xrefs_df(force: bool = False) -> pd.DataFrame:
     df = _get_famplex_df(force=force)
     df[TARGET_PREFIX] = df[TARGET_PREFIX].map(normalize_prefix)
     df = df[df[TARGET_PREFIX].notna()]
-    df[SOURCE_PREFIX] = 'fplx'
-    df[PROVENANCE] = 'https://github.com/sorgerlab/famplex/raw/master/equivalences.csv'
+    df[SOURCE_PREFIX] = "fplx"
+    df[PROVENANCE] = "https://github.com/sorgerlab/famplex/raw/master/equivalences.csv"
     df = df[XREF_COLUMNS]
     return df
 
@@ -49,11 +56,11 @@ def get_remapping(force: bool = False) -> Mapping[Tuple[str, str], Tuple[str, st
     df = _get_famplex_df(force=force)
     rv = {}
     for target_ns, target_id, source_id in df.values:
-        if target_ns.lower() == 'medscan':
+        if target_ns.lower() == "medscan":
             continue  # MEDSCAN is proprietary and Ben said to skip using these identifiers
         remapped_prefix = normalize_prefix(target_ns)
         if remapped_prefix is None:
-            logger.warning('could not remap %s', target_ns)
+            logger.warning("could not remap %s", target_ns)
         else:
-            rv[remapped_prefix, target_id] = 'fplx', source_id, source_id
+            rv[remapped_prefix, target_id] = "fplx", source_id, source_id
     return rv

@@ -18,16 +18,16 @@ from ..utils.path import prefix_directory_join
 
 logger = logging.getLogger(__name__)
 
-PREFIX = 'icd10'
-VERSION = '2016'
+PREFIX = "icd10"
+VERSION = "2016"
 
 
 def get_obo() -> Obo:
     """Get ICD-10 as OBO."""
     return Obo(
         ontology=PREFIX,
-        name='International Statistical Classification of Diseases and Related Health Problems 10th Revision',
-        auto_generated_by=f'bio2obo:{PREFIX}',
+        name="International Statistical Classification of Diseases and Related Health Problems 10th Revision",
+        auto_generated_by=f"bio2obo:{PREFIX}",
         iter_terms=iter_terms,
     )
 
@@ -39,8 +39,8 @@ def iter_terms() -> Iterable[Term]:
 
     directory = prefix_directory_join(PREFIX, version=VERSION)
 
-    chapter_urls = res_json['child']
-    tqdm.write(f'there are {len(chapter_urls)} chapters')
+    chapter_urls = res_json["child"]
+    tqdm.write(f"there are {len(chapter_urls)} chapters")
 
     visited_identifiers = set()
     for identifier in get_child_identifiers(ICD10_TOP_LEVEL_URL, res_json):
@@ -54,16 +54,13 @@ def iter_terms() -> Iterable[Term]:
 
 
 def _extract_icd10(res_json: Mapping[str, Any]) -> Term:
-    identifier = res_json['code']
-    name = res_json['title']['@value']
-    synonyms = [
-        Synonym(synonym['label']['@value'])
-        for synonym in res_json.get('synonym', [])
-    ]
+    identifier = res_json["code"]
+    name = res_json["title"]["@value"]
+    synonyms = [Synonym(synonym["label"]["@value"]) for synonym in res_json.get("synonym", [])]
     parents = [
-        Reference(prefix=PREFIX, identifier=url[len(ICD10_TOP_LEVEL_URL):])
-        for url in res_json['parent']
-        if url[len(ICD10_TOP_LEVEL_URL):]
+        Reference(prefix=PREFIX, identifier=url[len(ICD10_TOP_LEVEL_URL) :])
+        for url in res_json["parent"]
+        if url[len(ICD10_TOP_LEVEL_URL) :]
     ]
     rv = Term(
         reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
@@ -71,7 +68,7 @@ def _extract_icd10(res_json: Mapping[str, Any]) -> Term:
         parents=parents,
     )
 
-    rv.append_property('class_kind', res_json['classKind'])
+    rv.append_property("class_kind", res_json["classKind"])
 
     return rv
 
@@ -82,5 +79,5 @@ def _main():
     get_obo().write_default(use_tqdm=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _main()

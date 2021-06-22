@@ -11,10 +11,10 @@ from pkg_resources import iter_entry_points
 from tqdm import tqdm
 
 __all__ = [
-    'iter_xref_plugins',
-    'has_xref_plugin',
-    'run_xref_plugin',
-    'iter_xref_plugins',
+    "iter_xref_plugins",
+    "has_xref_plugin",
+    "run_xref_plugin",
+    "iter_xref_plugins",
 ]
 
 logger = logging.getLogger(__name__)
@@ -22,10 +22,7 @@ logger = logging.getLogger(__name__)
 
 @lru_cache()
 def _get_xref_plugins() -> Mapping[str, Callable[[], pd.DataFrame]]:
-    return {
-        entry.name: entry.load()
-        for entry in iter_entry_points(group='pyobo.xrefs')
-    }
+    return {entry.name: entry.load() for entry in iter_entry_points(group="pyobo.xrefs")}
 
 
 def has_xref_plugin(prefix: str) -> bool:
@@ -40,18 +37,20 @@ def run_xref_plugin(prefix: str) -> pd.DataFrame:
     if isinstance(rv, pd.DataFrame):
         return rv
 
-    logger.warning('can not load %s since it yields many dataframes', prefix)
+    logger.warning("can not load %s since it yields many dataframes", prefix)
 
 
-def iter_xref_plugins(use_tqdm: bool = True, skip_below: Optional[str] = None) -> Iterable[pd.DataFrame]:
+def iter_xref_plugins(
+    use_tqdm: bool = True, skip_below: Optional[str] = None
+) -> Iterable[pd.DataFrame]:
     """Get all modules in the PyOBO sources."""
     it = sorted(_get_xref_plugins().items())
     if use_tqdm:
-        it = tqdm(it, desc='Mapping Plugins')
+        it = tqdm(it, desc="Mapping Plugins")
     for prefix, get_df in it:
         if skip_below and prefix < skip_below:
             continue
-        it.set_postfix({'prefix': prefix})
+        it.set_postfix({"prefix": prefix})
         rv = get_df()
         if isinstance(rv, pd.DataFrame):
             yield rv

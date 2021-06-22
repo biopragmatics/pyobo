@@ -10,8 +10,8 @@ from .utils import obo_escape
 from ..identifier_utils import normalize_curie
 
 __all__ = [
-    'Reference',
-    'Referenced',
+    "Reference",
+    "Referenced",
 ]
 
 
@@ -36,7 +36,7 @@ class Reference:
     @property
     def curie(self) -> str:
         """The CURIE for this reference."""  # noqa: D401
-        return f'{self.prefix}:{self.identifier}'
+        return f"{self.prefix}:{self.identifier}"
 
     @property
     def pair(self) -> Tuple[str, str]:
@@ -44,7 +44,9 @@ class Reference:
         return self.prefix, self.identifier
 
     @staticmethod
-    def from_curie(curie: str, name: Optional[str] = None, *, strict: bool = True) -> Optional['Reference']:
+    def from_curie(
+        curie: str, name: Optional[str] = None, *, strict: bool = True
+    ) -> Optional["Reference"]:
         """Get a reference from a CURIE.
 
         :param curie: The compact URI (CURIE) to parse in the form of `<prefix>:<identifier>`
@@ -57,9 +59,9 @@ class Reference:
         return Reference(prefix=prefix, identifier=identifier, name=name)
 
     @staticmethod
-    def default(identifier: str, name: Optional[str] = None) -> 'Reference':
+    def default(identifier: str, name: Optional[str] = None) -> "Reference":
         """Return a reference from the PyOBO namespace."""
-        return Reference(prefix='obo', identifier=identifier, name=name)
+        return Reference(prefix="obo", identifier=identifier, name=name)
 
     @property
     def _escaped_identifier(self):
@@ -68,21 +70,21 @@ class Reference:
     def to_dict(self) -> Mapping[str, str]:
         """Return the reference as a dictionary."""
         rv = {
-            'prefix': self.prefix,
-            'identifier': self.identifier,
+            "prefix": self.prefix,
+            "identifier": self.identifier,
         }
         if self.name:
-            rv['name'] = self.name
+            rv["name"] = self.name
         return rv
 
     def __str__(self):  # noqa: D105
         identifier_lower = self.identifier.lower()
-        if identifier_lower.startswith(f'{self.prefix.lower()}:'):
+        if identifier_lower.startswith(f"{self.prefix.lower()}:"):
             rv = identifier_lower
         else:
-            rv = f'{self.prefix}:{self._escaped_identifier}'
+            rv = f"{self.prefix}:{self._escaped_identifier}"
         if self.name:
-            rv = f'{rv} ! {self.name}'
+            rv = f"{rv} ! {self.name}"
         return rv
 
     def __hash__(self):  # noqa: D105

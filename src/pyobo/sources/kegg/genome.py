@@ -26,26 +26,26 @@ def _s(line: str, sep: str):
 
 def get_obo() -> Obo:
     """Get KEGG Genome as OBO."""
-    version = bioversions.get_version('kegg')
+    version = bioversions.get_version("kegg")
     return Obo(
         ontology=KEGG_GENOME_PREFIX,
         iter_terms=iter_terms,
         iter_terms_kwargs=dict(version=version),
-        name='KEGG Genome',
+        name="KEGG Genome",
         data_version=version,
-        auto_generated_by=f'bio2obo:{KEGG_GENOME_PREFIX}',
+        auto_generated_by=f"bio2obo:{KEGG_GENOME_PREFIX}",
     )
 
 
 def parse_genome_line(line: str) -> KEGGGenome:
     """Parse a line from the KEGG Genome database."""
     line = line.strip()
-    identifier, rest = _s(line, '\t')
-    identifier = identifier[len('gn:'):]
-    if ';' in rest:
-        rest, name = _s(rest, ';')
+    identifier, rest = _s(line, "\t")
+    identifier = identifier[len("gn:") :]
+    if ";" in rest:
+        rest, name = _s(rest, ";")
 
-        rest = [part.strip() for part in rest.split(',')]
+        rest = [part.strip() for part in rest.split(",")]
         if len(rest) == 3:
             kegg_code, long_code, taxonomy_id = rest
         elif len(rest) == 2:
@@ -59,9 +59,9 @@ def parse_genome_line(line: str) -> KEGGGenome:
         long_code = None
         kegg_code = None
 
-    if '\t' in name:
-        logger.warning('[%s] tab in name: %s', KEGG_GENOME_PREFIX, name)
-        name = name.replace('\t', ' ')
+    if "\t" in name:
+        logger.warning("[%s] tab in name: %s", KEGG_GENOME_PREFIX, name)
+        name = name.replace("\t", " ")
 
     return KEGGGenome(
         identifier=identifier,
@@ -80,14 +80,14 @@ def iter_kegg_genomes(version: str, desc: str) -> Iterable[KEGGGenome]:
     it = tqdm(lines, desc=desc)
     for line in it:
         yv = parse_genome_line(line)
-        it.set_postfix({'id': yv.identifier, 'name': yv.name})
+        it.set_postfix({"id": yv.identifier, "name": yv.name})
         yield yv
 
 
 def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over terms for KEGG Genome."""
     errors = 0
-    for kegg_genome in iter_kegg_genomes(version=version, desc='KEGG Genomes'):
+    for kegg_genome in iter_kegg_genomes(version=version, desc="KEGG Genomes"):
         if kegg_genome.identifier in SKIP:
             continue
         term = Term.from_triple(
@@ -96,18 +96,22 @@ def iter_terms(version: str) -> Iterable[Term]:
             name=kegg_genome.name,
         )
         if kegg_genome.taxonomy_id is not None:
-            taxonomy_name = pyobo.get_name('ncbitaxon', kegg_genome.taxonomy_id)
+            taxonomy_name = pyobo.get_name("ncbitaxon", kegg_genome.taxonomy_id)
             if taxonomy_name is None:
                 errors += 1
-                logger.debug(f'[{KEGG_GENOME_PREFIX}] could not find name for taxonomy:{kegg_genome.taxonomy_id}')
-            term.append_xref(Reference(
-                prefix='ncbitaxon',
-                identifier=kegg_genome.taxonomy_id,
-                name=taxonomy_name,
-            ))
+                logger.debug(
+                    f"[{KEGG_GENOME_PREFIX}] could not find name for taxonomy:{kegg_genome.taxonomy_id}"
+                )
+            term.append_xref(
+                Reference(
+                    prefix="ncbitaxon",
+                    identifier=kegg_genome.taxonomy_id,
+                    name=taxonomy_name,
+                )
+            )
         yield term
 
-    logger.info('[%s] unable to find %d taxonomy names in NCBI', KEGG_GENOME_PREFIX, errors)
+    logger.info("[%s] unable to find %d taxonomy names in NCBI", KEGG_GENOME_PREFIX, errors)
 
 
 @click.command()
@@ -116,5 +120,5 @@ def _main():
     get_obo().write_default()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _main()

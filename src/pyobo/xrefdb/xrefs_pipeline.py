@@ -14,8 +14,14 @@ from tqdm import tqdm
 from .sources import iter_xref_plugins
 from .. import get_xrefs_df
 from ..api import (
-    get_id_definition_mapping, get_id_name_mapping, get_id_synonyms_mapping, get_id_to_alts,
-    get_metadata, get_properties_df, get_relations_df, get_typedef_df,
+    get_id_definition_mapping,
+    get_id_name_mapping,
+    get_id_synonyms_mapping,
+    get_id_to_alts,
+    get_metadata,
+    get_properties_df,
+    get_relations_df,
+    get_typedef_df,
 )
 from ..constants import SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
 from ..getters import iter_helper, iter_helper_helper
@@ -38,11 +44,11 @@ def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
         df[[SOURCE_PREFIX, SOURCE_ID]].drop_duplicates().values,
         df[[TARGET_PREFIX, TARGET_ID]].drop_duplicates().values,
     )
-    it = tqdm(it, desc='loading curies', unit_scale=True)
+    it = tqdm(it, desc="loading curies", unit_scale=True)
     for prefix, identifier in it:
         rv.add_node(_to_curie(prefix, identifier), prefix=prefix, identifier=identifier)
 
-    it = tqdm(df.values, total=len(df.index), desc='loading xrefs', unit_scale=True)
+    it = tqdm(df.values, total=len(df.index), desc="loading xrefs", unit_scale=True)
     for source_ns, source_id, target_ns, target_id, provenance in it:
         rv.add_edge(
             _to_curie(source_ns, source_id),
@@ -54,23 +60,25 @@ def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
 
 
 def _to_curie(prefix: str, identifier: str) -> str:
-    return f'{prefix}:{identifier}'
+    return f"{prefix}:{identifier}"
 
 
 def _iter_ncbigene(left, right):
     ncbi_path = ensure_path(ncbigene.PREFIX, url=ncbigene.GENE_INFO_URL)
-    with gzip.open(ncbi_path, 'rt') as file:
+    with gzip.open(ncbi_path, "rt") as file:
         next(file)  # throw away the header
-        for line in tqdm(file, desc=f'extracting {ncbigene.PREFIX}', unit_scale=True, total=27_000_000):
-            line = line.strip().split('\t')
+        for line in tqdm(
+            file, desc=f"extracting {ncbigene.PREFIX}", unit_scale=True, total=27_000_000
+        ):
+            line = line.strip().split("\t")
             yield ncbigene.PREFIX, line[left], line[right]
 
 
 def _iter_metadata(**kwargs):
     for prefix, data in iter_helper_helper(get_metadata, **kwargs):
-        version = data['version']
-        tqdm.write(f'[{prefix}] using version {version}')
-        yield prefix, version, data['date']
+        version = data["version"]
+        tqdm.write(f"[{prefix}] using version {version}")
+        yield prefix, version, data["date"]
 
 
 def _iter_ooh_na_na(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, str]]:
@@ -82,9 +90,11 @@ def _iter_ooh_na_na(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, s
     yield from _iter_ncbigene(1, 2)
 
     pcc_path = pubchem._ensure_cid_name_path()
-    with gzip.open(pcc_path, mode='rt', encoding='ISO-8859-1') as file:
-        for line in tqdm(file, desc=f'extracting {pubchem.PREFIX}', unit_scale=True, total=103_000_000):
-            identifier, name = line.strip().split('\t', 1)
+    with gzip.open(pcc_path, mode="rt", encoding="ISO-8859-1") as file:
+        for line in tqdm(
+            file, desc=f"extracting {pubchem.PREFIX}", unit_scale=True, total=103_000_000
+        ):
+            identifier, name = line.strip().split("\t", 1)
             yield pubchem.PREFIX, identifier, name
 
 
@@ -94,8 +104,12 @@ def _iter_definitions(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str,
     yield from _iter_ncbigene(1, 8)
 
 
-def _iter_alts(leave: bool = False, strict: bool = True, **kwargs) -> Iterable[Tuple[str, str, str]]:
-    for prefix, identifier, alts in iter_helper(get_id_to_alts, leave=leave, strict=strict, **kwargs):
+def _iter_alts(
+    leave: bool = False, strict: bool = True, **kwargs
+) -> Iterable[Tuple[str, str, str]]:
+    for prefix, identifier, alts in iter_helper(
+        get_id_to_alts, leave=leave, strict=strict, **kwargs
+    ):
         for alt in alts:
             yield prefix, identifier, alt
 
