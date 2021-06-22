@@ -8,7 +8,7 @@ from typing import Mapping, Optional
 
 from .alts import get_primary_identifier
 from .utils import get_version
-from ..getters import NoOboFoundry, get
+from ..getters import NoOboFoundry, get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_mapping
 from ..utils.path import prefix_cache_join
@@ -56,8 +56,8 @@ def get_id_species_mapping(prefix: str, force: bool = False) -> Mapping[str, str
     @cached_mapping(path=path, header=[f'{prefix}_id', 'species'], force=force)
     def _get_id_species_mapping() -> Mapping[str, str]:
         logger.info('[%s] no cached species found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
+        ontology = get_ontology(prefix, force=force)
         logger.info('[%s] loading species mappings', prefix)
-        return obo.get_id_species_mapping()
+        return ontology.get_id_species_mapping()
 
     return _get_id_species_mapping()

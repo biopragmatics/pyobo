@@ -7,7 +7,7 @@ from functools import lru_cache
 from typing import List, Mapping, Optional
 
 from .utils import get_version
-from ..getters import get
+from ..getters import get_ontology
 from ..identifier_utils import normalize_curie, wrap_norm_prefix
 from ..utils.cache import cached_multidict
 from ..utils.path import prefix_cache_join
@@ -42,8 +42,8 @@ def get_id_to_alts(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
             logger.info(f'[{prefix}] forcing reload for alts')
         else:
             logger.info('[%s] no cached alts found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
-        return obo.get_id_alts_mapping()
+        ontology = get_ontology(prefix, force=force)
+        return ontology.get_id_alts_mapping()
 
     return _get_mapping()
 

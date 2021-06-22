@@ -7,7 +7,7 @@ from functools import lru_cache
 from typing import Mapping
 
 from .utils import get_version
-from ..getters import get
+from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_json
 from ..utils.path import prefix_cache_join
@@ -31,7 +31,7 @@ def get_metadata(prefix: str, force: bool = False) -> Mapping[str, str]:
             logger.info('[%s] forcing reload for metadata', prefix)
         else:
             logger.info('[%s] no cached metadata found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
-        return obo.get_metadata()
+        ontology = get_ontology(prefix, force=force)
+        return ontology.get_metadata()
 
     return _get_json()

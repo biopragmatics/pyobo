@@ -28,7 +28,7 @@ from .utils.path import ensure_path, get_prefix_obo_path, prefix_directory_join
 from .version import get_git_hash, get_version
 
 __all__ = [
-    'get',
+    'get_ontology',
     'MissingOboBuild',
     'NoOboFoundry',
 ]
@@ -53,7 +53,7 @@ class OnlyOWLError(NoBuild):
 
 
 @wrap_norm_prefix
-def get(
+def get_ontology(
     prefix: str,
     *,
     force: bool = False,
@@ -124,7 +124,7 @@ def _ensure_obo_path(prefix: str, url: Optional[str] = None, force: bool = False
         logger.debug('[%s] OBO already exists at %s', prefix, path)
         return path.as_posix()
 
-    obofoundry = get_obofoundry(mappify=True)
+    obofoundry = get_obofoundry()
     entry = obofoundry.get(prefix)
     if entry is None:
         raise NoOboFoundry(f'OBO Foundry is missing the prefix: {prefix}')

@@ -9,7 +9,7 @@ from typing import List, Mapping, Optional
 import pandas as pd
 
 from .utils import get_version
-from ..getters import get
+from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_df, cached_mapping, cached_multidict
 from ..utils.io import multidict
@@ -43,8 +43,8 @@ def get_properties_df(prefix: str, *, force: bool = False) -> pd.DataFrame:
             logger.info('[%s] forcing reload for properties', prefix)
         else:
             logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
-        df = obo.get_properties_df()
+        ontology = get_ontology(prefix, force=force)
+        df = ontology.get_properties_df()
         df.dropna(inplace=True)
         return df
 
@@ -80,8 +80,8 @@ def get_filtered_properties_mapping(
             return dict(df.values)
 
         logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
-        return obo.get_filtered_properties_mapping(prop, use_tqdm=use_tqdm)
+        ontology = get_ontology(prefix, force=force)
+        return ontology.get_filtered_properties_mapping(prop, use_tqdm=use_tqdm)
 
     return _mapping_getter()
 
@@ -115,8 +115,8 @@ def get_filtered_properties_multimapping(
             return multidict(df.values)
 
         logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
-        return obo.get_filtered_properties_multimapping(prop, use_tqdm=use_tqdm)
+        ontology = get_ontology(prefix, force=force)
+        return ontology.get_filtered_properties_multimapping(prop, use_tqdm=use_tqdm)
 
     return _mapping_getter()
 
@@ -180,7 +180,7 @@ def get_filtered_properties_df(
             logger.info('[%s] forcing reload for properties', prefix)
         else:
             logger.info('[%s] no cached properties found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
-        return obo.get_filtered_properties_df(prop, use_tqdm=use_tqdm)
+        ontology = get_ontology(prefix, force=force)
+        return ontology.get_filtered_properties_df(prop, use_tqdm=use_tqdm)
 
     return _df_getter()

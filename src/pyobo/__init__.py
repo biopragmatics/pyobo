@@ -10,7 +10,7 @@ from .api import (  # noqa: F401
     get_primary_curie, get_primary_identifier, get_properties, get_properties_df, get_property, get_relations_df,
     get_species, get_subhierarchy, get_synonyms, get_typedef_df, get_xref, get_xrefs_df, has_ancestor, is_descendent,
 )
-from .getters import get  # noqa: F401
+from .getters import get_ontology  # noqa: F401
 from .identifier_utils import normalize_curie, normalize_prefix  # noqa: F401
 from .normalizer import OboNormalizer, ground  # noqa: F401
 from .sources import has_nomenclature_plugin, iter_nomenclature_plugins, run_nomenclature_plugin  # noqa: F401

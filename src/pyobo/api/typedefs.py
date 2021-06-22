@@ -8,7 +8,7 @@ from functools import lru_cache
 import pandas as pd
 
 from .utils import get_version
-from ..getters import get
+from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_df
 from ..utils.path import prefix_cache_join
@@ -29,8 +29,8 @@ def get_typedef_df(prefix: str, force: bool = False) -> pd.DataFrame:
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         logger.debug('[%s] no cached typedefs found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
+        ontology = get_ontology(prefix, force=force)
         logger.debug('[%s] loading typedef mappings', prefix)
-        return obo.get_typedef_df()
+        return ontology.get_typedef_df()
 
     return _df_getter()

@@ -7,7 +7,7 @@ from operator import attrgetter
 
 import obonet
 
-from pyobo import SynonymTypeDef, get
+from pyobo import SynonymTypeDef, get_ontology
 from pyobo.struct import Reference, Synonym
 from pyobo.struct.struct import (
     _extract_definition, _extract_synonym, iterate_graph_synonym_typedefs, iterate_graph_typedefs, iterate_node_parents,
@@ -178,11 +178,11 @@ class TestGet(unittest.TestCase):
     def setUp(self) -> None:
         """Set up the test with the mock ChEBI OBO file."""
         with chebi_patch:
-            self.obo = get('chebi')
+            self.ontology = get_ontology('chebi')
 
     def test_get_terms(self):
         """Test getting an OBO document."""
-        terms = list(self.obo)
+        terms = list(self.ontology)
         self.assertEqual(18, len(terms))
 
     def test_get_id_alts_mapping(self):
@@ -196,7 +196,7 @@ class TestGet(unittest.TestCase):
             alt_id: CHEBI:5605
             alt_id: CHEBI:14384
         """
-        id_alts_mapping = self.obo.get_id_alts_mapping()
+        id_alts_mapping = self.ontology.get_id_alts_mapping()
         self.assertNotIn('C00462', id_alts_mapping)
         self.assertIn('16042', id_alts_mapping, msg='halide anion alt_id fields not parsed')
         self.assertEqual({'5605', '14384'}, set(id_alts_mapping['16042']))

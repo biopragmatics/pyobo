@@ -8,7 +8,7 @@ from typing import Callable, List, Mapping, Optional, TypeVar
 
 from .alts import get_primary_identifier
 from .utils import get_version
-from ..getters import NoOboFoundry, get
+from ..getters import NoOboFoundry, get_ontology
 from ..identifier_utils import normalize_curie, wrap_norm_prefix
 from ..utils.cache import cached_mapping, cached_multidict, reverse_mapping
 from ..utils.path import prefix_cache_join
@@ -77,8 +77,8 @@ def get_id_name_mapping(prefix: str, force: bool = False, strict: bool = True) -
             logger.info('[%s] forcing reload for names', prefix)
         else:
             logger.info('[%s] no cached names found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force, strict=strict)
-        return obo.get_id_name_mapping()
+        ontology = get_ontology(prefix, force=force, strict=strict)
+        return ontology.get_id_name_mapping()
 
     return _get_id_name_mapping()
 
@@ -104,8 +104,8 @@ def get_id_definition_mapping(prefix: str, force: bool = False) -> Mapping[str, 
     @cached_mapping(path=path, header=[f'{prefix}_id', 'definition'], force=force)
     def _get_mapping() -> Mapping[str, str]:
         logger.info('[%s] no cached descriptions found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
-        return obo.get_id_definition_mapping()
+        ontology = get_ontology(prefix, force=force)
+        return ontology.get_id_definition_mapping()
 
     return _get_mapping()
 
@@ -124,7 +124,7 @@ def get_id_synonyms_mapping(prefix: str, force: bool = False) -> Mapping[str, Li
     @cached_multidict(path=path, header=[f'{prefix}_id', 'synonym'], force=force)
     def _get_multidict() -> Mapping[str, List[str]]:
         logger.info('[%s] no cached synonyms found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
-        return obo.get_id_synonyms_mapping()
+        ontology = get_ontology(prefix, force=force)
+        return ontology.get_id_synonyms_mapping()
 
     return _get_multidict()

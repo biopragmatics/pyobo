@@ -11,7 +11,7 @@ import pandas as pd
 
 from .utils import get_version
 from ..constants import TARGET_ID, TARGET_PREFIX
-from ..getters import get
+from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_df, cached_mapping
 from ..utils.path import prefix_cache_join
@@ -57,8 +57,8 @@ def get_filtered_xrefs(
             return dict(df.values)
 
         logger.info('[%s] no cached xrefs found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
-        return obo.get_filtered_xrefs_mapping(xref_prefix, use_tqdm=use_tqdm)
+        ontology = get_ontology(prefix, force=force)
+        return ontology.get_filtered_xrefs_mapping(xref_prefix, use_tqdm=use_tqdm)
 
     rv = _get_mapping()
     if flip:
@@ -74,7 +74,7 @@ def get_xrefs_df(prefix: str, *, use_tqdm: bool = False, force: bool = False, st
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         logger.info('[%s] no cached xrefs found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force, strict=strict)
-        return obo.get_xrefs_df(use_tqdm=use_tqdm)
+        ontology = get_ontology(prefix, force=force, strict=strict)
+        return ontology.get_xrefs_df(use_tqdm=use_tqdm)
 
     return _df_getter()

@@ -13,7 +13,7 @@ from ..constants import (
     RELATION_COLUMNS, RELATION_ID, RELATION_PREFIX, SOURCE_ID, SOURCE_PREFIX, TARGET_ID,
     TARGET_PREFIX,
 )
-from ..getters import get
+from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct import Reference, RelationHint, TypeDef, get_reference_tuple
 from ..utils.cache import cached_df
@@ -41,8 +41,8 @@ def get_relations_df(
             logger.info('[%s] forcing reload for relations', prefix)
         else:
             logger.info('[%s] no cached relations found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
-        return obo.get_relations_df(use_tqdm=use_tqdm)
+        ontology = get_ontology(prefix, force=force)
+        return ontology.get_relations_df(use_tqdm=use_tqdm)
 
     rv = _df_getter()
 
@@ -79,8 +79,8 @@ def get_filtered_relations_df(
             return df.loc[idx, columns]
 
         logger.info('[%s] no cached relations found. getting from OBO loader', prefix)
-        obo = get(prefix, force=force)
-        return obo.get_filtered_relations_df(relation, use_tqdm=use_tqdm)
+        ontology = get_ontology(prefix, force=force)
+        return ontology.get_filtered_relations_df(relation, use_tqdm=use_tqdm)
 
     return _df_getter()
 
@@ -94,5 +94,5 @@ def get_id_multirelations_mapping(
     force: bool = False,
 ) -> Mapping[str, List[Reference]]:
     """Get the OBO file and output a synonym dictionary."""
-    obo = get(prefix, force=force)
-    return obo.get_id_multirelations_mapping(typedef=typedef, use_tqdm=use_tqdm)
+    ontology = get_ontology(prefix, force=force)
+    return ontology.get_id_multirelations_mapping(typedef=typedef, use_tqdm=use_tqdm)
