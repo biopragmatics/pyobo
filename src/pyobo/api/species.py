@@ -8,7 +8,7 @@ from typing import Mapping, Optional
 
 from .alts import get_primary_identifier
 from .utils import get_version
-from ..getters import NoOboFoundry, get_ontology
+from ..getters import NoBuild, get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_mapping
 from ..utils.path import prefix_cache_join
@@ -29,7 +29,7 @@ def get_species(prefix: str, identifier: str) -> Optional[str]:
 
     try:
         id_species = get_id_species_mapping(prefix)
-    except NoOboFoundry:
+    except NoBuild:
         id_species = None
 
     if not id_species:

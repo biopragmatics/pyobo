@@ -54,7 +54,7 @@ def load(
         prefix_to_resource: Dict[str, Resource] = {}
         prefixes = {resource.prefix for resource in Resource.query.all()}
 
-        for prefix, entry in tqdm(bioregistry.read_bioregistry().items(), desc="loading resources"):
+        for prefix, entry in tqdm(bioregistry.read_registry().items(), desc="loading resources"):
             if bioregistry.is_deprecated(prefix):
                 continue
             if prefix in prefixes:

@@ -8,7 +8,7 @@ from typing import Callable, List, Mapping, Optional, TypeVar
 
 from .alts import get_primary_identifier
 from .utils import get_version
-from ..getters import NoOboFoundry, get_ontology
+from ..getters import NoBuild, get_ontology
 from ..identifier_utils import normalize_curie, wrap_norm_prefix
 from ..utils.cache import cached_mapping, cached_multidict, reverse_mapping
 from ..utils.path import prefix_cache_join
@@ -41,7 +41,7 @@ def _help_get(f: Callable[[str], Mapping[str, X]], prefix: str, identifier: str)
     """Get the result for an entity based on a mapping maker function ``f``."""
     try:
         mapping = f(prefix)
-    except NoOboFoundry:
+    except NoBuild:
         mapping = None
 
     if not mapping:

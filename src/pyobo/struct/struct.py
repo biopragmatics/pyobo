@@ -690,7 +690,7 @@ class Obo:
 
     @classmethod
     def from_obo_path(
-        cls, path: str, prefix: Optional[str] = None, *, strict: bool = True
+        cls, path: Union[str, Path], prefix: Optional[str] = None, *, strict: bool = True
     ) -> "Obo":
         """Get the OBO graph from a path."""
         import obonet

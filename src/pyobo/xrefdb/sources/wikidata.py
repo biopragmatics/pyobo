@@ -37,7 +37,7 @@ def iterate_wikidata_dfs(*, use_tqdm: bool = True) -> Iterable[pd.DataFrame]:
     """Iterate over WikiData xref dataframes."""
     wikidata_properties = {
         prefix: entry["wikidata"]["property"]
-        for prefix, entry in bioregistry.read_bioregistry().items()
+        for prefix, entry in bioregistry.read_registry().items()
         if "wikidata" in entry and "property" in entry["wikidata"]
     }
     # wikidata_properties.update(get_wikidata_properties())

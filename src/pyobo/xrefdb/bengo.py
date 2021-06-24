@@ -29,7 +29,7 @@ def bens_magical_ontology(use_tqdm: bool = True) -> nx.DiGraph:
         )
 
     logger.info("getting hierarchies")
-    it = sorted(bioregistry.read_bioregistry())
+    it = sorted(bioregistry.read_registry())
     if use_tqdm:
         it = tqdm(it, desc="Entries")
     for prefix in it:
