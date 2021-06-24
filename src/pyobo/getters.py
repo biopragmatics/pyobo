@@ -6,21 +6,19 @@ import datetime
 import gzip
 import json
 import logging
-import os
 import pathlib
 import urllib.error
 import warnings
 from collections import Counter
+from functools import lru_cache
 from typing import Callable, Iterable, Mapping, Optional, Sequence, Set, Tuple, TypeVar, Union
 
 import bioregistry
-from bioregistry.external import get_obofoundry
 from pystow.utils import download
 from tqdm import tqdm
 
 from .constants import DATABASE_DIRECTORY
 from .identifier_utils import MissingPrefix, wrap_norm_prefix
-from .registries import get_curated_urls
 from .sources import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
 from .utils.io import get_writer
@@ -29,8 +27,7 @@ from .version import get_git_hash, get_version
 
 __all__ = [
     "get_ontology",
-    "MissingOboBuild",
-    "NoOboFoundry",
+    "NoBuild",
 ]
 
 logger = logging.getLogger(__name__)
@@ -40,15 +37,7 @@ class NoBuild(RuntimeError):
     """Base exception for being unable to build."""
 
 
-class MissingOboBuild(NoBuild):
-    """Raised when OBOFoundry doesn't track an OBO file, but only has OWL."""
-
-
-class NoOboFoundry(NoBuild):
-    """Raised when OBO foundry doesn't have it."""
-
-
-class OnlyOWLError(NoBuild):
+class UnhandledFormat(NoBuild):
     """Only OWL is available."""
 
 
@@ -73,12 +62,13 @@ def get_ontology(
     :raises OnlyOWLError: If the OBO foundry only has an OWL document for this resource.
 
     Alternate usage if you have a custom url::
+
     >>> from pystow.utils import download
     >>> from pyobo import Obo
     >>> url = ...
     >>> obo_path = ...
-    >>> download(url=url, path=obo_path)
-    >>> obo = Obo.from_obo_path(obo_path)
+    >>> download(url=url, path=path)
+    >>> obo = Obo.from_obo_path(path)
     """
     if force:
         rewrite = True
@@ -100,46 +90,53 @@ def get_ontology(
         return obo
 
     logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
-    obo_path = _ensure_obo_path(prefix, url=url, force=force)
-    if obo_path.endswith(".owl"):
-        raise OnlyOWLError(f"[{prefix}] unhandled OWL file")
-    obo = Obo.from_obo_path(obo_path, prefix=prefix, strict=strict)
+    path = _ensure_ontology_path(prefix, url=url, force=force)
+
+    if path.suffix == ".obo":
+        pass  # all gucci
+    elif path.suffix == ".owl":
+        import pronto
+
+        try:
+            prontology = pronto.Ontology(path)
+        except KeyError:
+            raise NoBuild(f'[{prefix}] could not parse OWL with pronto')
+        version = prontology.metadata.data_version
+        # prefix = prontology.metadata.ontology
+        path = get_prefix_obo_path(prefix=prefix, version=version)
+        with path.open("wb") as file:
+            prontology.dump(file, format="obo")
+    else:
+        raise UnhandledFormat(f"[{prefix}] unhandled ontology file format: {path.suffix}")
+    obo = Obo.from_obo_path(path, prefix=prefix, strict=strict)
     obo.write_default(force=rewrite)
     return obo
 
 
-def _ensure_obo_path(prefix: str, url: Optional[str] = None, force: bool = False) -> str:
-    """Get the path to the OBO file and download if missing."""
+def _ensure_ontology_path(
+    prefix: str, url: Optional[str] = None, force: bool = False
+) -> pathlib.Path:
+    """Get the path to the ontology file and download if missing."""
     if url is not None:
         warnings.warn("Should make curations in the bioregistry instead", DeprecationWarning)
-        path = get_prefix_obo_path(prefix).as_posix()
+        path = get_prefix_obo_path(prefix)
         download(url=url, path=path, force=force)
         return path
 
-    curated_url = get_curated_urls().get(prefix)
-    if curated_url:
-        logger.debug("[%s] checking for OBO at curated URL: %s", prefix, curated_url)
-        return ensure_path(prefix, url=curated_url, force=force)
-
     path = get_prefix_obo_path(prefix)
-    if os.path.exists(path):
+    if path.is_file():
         logger.debug("[%s] OBO already exists at %s", prefix, path)
-        return path.as_posix()
+        return path
 
-    obofoundry = get_obofoundry()
-    entry = obofoundry.get(prefix)
-    if entry is None:
-        raise NoOboFoundry(f"OBO Foundry is missing the prefix: {prefix}")
+    for url in [
+        bioregistry.get_obo_download(prefix),
+        bioregistry.get_owl_download(prefix),
+        bioregistry.get_json_download(prefix),
+    ]:
+        if url is not None:
+            return pathlib.Path(ensure_path(prefix, url=url, force=force))
 
-    build = entry.get("build")
-    if build is None:
-        raise MissingOboBuild(f"OBO Foundry is missing a build for: {prefix}")
-
-    url = build.get("source_url")
-    if url is None:
-        raise MissingOboBuild(f"OBO Foundry build is missing a URL for: {prefix}, {build}")
-
-    return ensure_path(prefix, url=url, force=force)
+    raise NoBuild(f"could not find a download link for {prefix}")
 
 
 SKIP = {
@@ -206,7 +203,7 @@ def iter_helper_helper(
     :raises urllib.error.URLError: If another problem was encountered during download
     :raises ValueError: If the data was not in the format that was expected (e.g., OWL)
     """
-    it = sorted(bioregistry.read_bioregistry())
+    it = sorted(bioregistry.read_registry())
     if use_tqdm:
         it = tqdm(it, disable=None, desc="Resources")
     for prefix in it:

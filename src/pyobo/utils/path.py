@@ -50,9 +50,9 @@ def prefix_directory_join(
     return RAW_MODULE.join(prefix, version, *parts, name=name, ensure_exists=ensure_exists)
 
 
-def get_prefix_obo_path(prefix: str, version: VersionHint = None) -> Path:
+def get_prefix_obo_path(prefix: str, version: VersionHint = None, ext: str = "obo") -> Path:
     """Get the canonical path to the OBO file."""
-    return prefix_directory_join(prefix, name=f"{prefix}.obo", version=version)
+    return prefix_directory_join(prefix, name=f"{prefix}.{ext}", version=version)
 
 
 # TODO replace with pystow.download

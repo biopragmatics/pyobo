@@ -29,31 +29,20 @@ def get_wikidata_property_types() -> List[str]:
     return _get_curated_registry()["wikidata_property_types"]
 
 
-def not_available_as_obo(prefix: str) -> bool:
+def has_no_download(prefix: str) -> bool:
     """Return if the prefix is not available."""
     prefix_norm = bioregistry.normalize_prefix(prefix)
-    return prefix_norm is not None and prefix_norm in get_not_available_as_obo()
+    return prefix_norm is not None and prefix_norm in _no_download()
 
 
 @lru_cache(maxsize=1)
-def get_not_available_as_obo():
+def _no_download() -> Set[str]:
     """Get the list of prefixes not available as OBO."""
-    #: A list of prefixes that have been manually annotated as not being available in OBO
     return {
-        bioregistry_prefix
-        for bioregistry_prefix, bioregistry_entry in bioregistry.read_bioregistry().items()
-        if "not_available_as_obo" in bioregistry_entry and bioregistry_entry["not_available_as_obo"]
-    }
-
-
-@lru_cache(maxsize=1)
-def get_curated_urls() -> Mapping[str, str]:
-    """Get a mapping of prefixes to their custom download URLs."""
-    #: URLs of resources that weren't listed in OBO Foundry properly
-    return {
-        bioregistry_prefix: bioregistry_entry["download"]
-        for bioregistry_prefix, bioregistry_entry in bioregistry.read_bioregistry().items()
-        if "download" in bioregistry_entry
+        prefix
+        for prefix in bioregistry.read_registry()
+        if bioregistry.get_obo_download(prefix) is None
+        and bioregistry.get_owl_download(prefix) is None
     }
 
 
@@ -112,44 +101,10 @@ def get_remappings_prefix() -> Mapping[str, str]:
     return _get_curated_registry()["remappings"]["prefix"]
 
 
-@lru_cache(maxsize=1)
-def get_prefix_to_miriam_prefix() -> Mapping[str, Tuple[str, str]]:
-    """Get a mapping of bioregistry prefixes to MIRIAM prefixes."""
-    return {
-        prefix: (entry["miriam"]["prefix"], entry["miriam"]["namespaceEmbeddedInLui"])
-        for prefix, entry in bioregistry.read_bioregistry().items()
-        if "miriam" in entry and "prefix" in entry["miriam"]
-    }
-
-
-@lru_cache(maxsize=1)
-def get_prefix_to_obofoundry_prefix() -> Mapping[str, str]:
-    """Get a mapping of bioregistry prefixes to OBO Foundry prefixes."""
-    return _get_map("obofoundry")
-
-
-@lru_cache(maxsize=1)
-def get_prefix_to_ols_prefix() -> Mapping[str, str]:
-    """Get a mapping of bioregistry prefixes to OLS prefixes."""
-    return _get_map("ols")
-
-
-def _get_map(registry: str) -> Mapping[str, str]:
-    return {
-        prefix: entry[registry]["prefix"]
-        for prefix, entry in bioregistry.read_bioregistry().items()
-        if registry in entry
-    }
-
-
 def iter_cached_obo() -> List[Tuple[str, str]]:
     """Iterate over cached OBO paths."""
     for prefix in os.listdir(RAW_DIRECTORY):
-        if (
-            prefix in GLOBAL_SKIP
-            or not_available_as_obo(prefix)
-            or bioregistry.is_deprecated(prefix)
-        ):
+        if prefix in GLOBAL_SKIP or has_no_download(prefix) or bioregistry.is_deprecated(prefix):
             continue
         d = os.path.join(RAW_DIRECTORY, prefix)
         if not os.path.isdir(d):
