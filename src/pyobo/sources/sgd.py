@@ -2,6 +2,7 @@
 
 """Converter for SGD."""
 
+from typing import Iterable
 from urllib.parse import unquote_plus
 
 from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
@@ -31,7 +32,7 @@ def get_obo() -> Obo:
     )
 
 
-def get_terms() -> str:
+def get_terms() -> Iterable[Term]:
     """Get SGD terms."""
     df = ensure_tar_df(
         prefix=PREFIX,
