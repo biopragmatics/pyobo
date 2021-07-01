@@ -27,6 +27,8 @@ from .api import (  # noqa: F401
     get_properties,
     get_properties_df,
     get_property,
+    get_relation,
+    get_relation_mapping,
     get_relations_df,
     get_species,
     get_subhierarchy,

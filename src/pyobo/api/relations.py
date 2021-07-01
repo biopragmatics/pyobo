@@ -4,7 +4,8 @@
 
 import logging
 import os
-from typing import List, Mapping
+from functools import lru_cache
+from typing import List, Mapping, Optional
 
 import pandas as pd
 
@@ -108,3 +109,62 @@ def get_id_multirelations_mapping(
     """Get the OBO file and output a synonym dictionary."""
     ontology = get_ontology(prefix, force=force)
     return ontology.get_id_multirelations_mapping(typedef=typedef, use_tqdm=use_tqdm)
+
+
+@lru_cache()
+@wrap_norm_prefix
+def get_relation_mapping(
+    prefix: str,
+    relation: RelationHint,
+    target_prefix: str,
+    *,
+    use_tqdm: bool = False,
+    force: bool = False,
+) -> Mapping[str, str]:
+    """Get relations from identifiers in the source prefix to target prefix with the given relation.
+
+    .. warning:: Assumes there's only one version of the property for each term.
+
+     Example usage: get homology between HGNC and MGI:
+
+    >>> import pyobo
+    >>> human_mapt_hgnc_id = '6893'
+    >>> mouse_mapt_mgi_id = '97180'
+    >>> hgnc_mgi_orthology_mapping = pyobo.get_relation_mapping('hgnc', 'ro:HOM0000017', 'mgi')
+    >>> assert mouse_mapt_mgi_id == hgnc_mgi_orthology_mapping[human_mapt_hgnc_id]
+    """
+    ontology = get_ontology(prefix, force=force)
+    return ontology.get_relation_mapping(
+        relation=relation, target_prefix=target_prefix, use_tqdm=use_tqdm
+    )
+
+
+@wrap_norm_prefix
+def get_relation(
+    prefix: str,
+    source_identifier: str,
+    relation: RelationHint,
+    target_prefix: str,
+    *,
+    use_tqdm: bool = False,
+    force: bool = False,
+) -> Optional[str]:
+    """Get the target identifier corresponding to the given relationship from the source prefix/identifier pair.
+
+    .. warning:: Assumes there's only one version of the property for each term.
+
+     Example usage: get homology between MAPT in HGNC and MGI:
+
+    >>> import pyobo
+    >>> human_mapt_hgnc_id = '6893'
+    >>> mouse_mapt_mgi_id = '97180'
+    >>> assert mouse_mapt_mgi_id == pyobo.get_relation('hgnc', human_mapt_hgnc_id, 'ro:HOM0000017', 'mgi')
+    """
+    relation_mapping = get_relation_mapping(
+        prefix=prefix,
+        relation=relation,
+        target_prefix=target_prefix,
+        use_tqdm=use_tqdm,
+        force=force,
+    )
+    return relation_mapping.get(source_identifier)

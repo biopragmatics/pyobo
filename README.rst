@@ -233,8 +233,8 @@ If you don't want to wait to build the database locally for the ``pyobo.get_prio
 
     pyobo.resource_utils.ensure_inspector_javert()
 
-Properties and Relations
-~~~~~~~~~~~~~~~~~~~~~~~~
+Properties
+~~~~~~~~~~
 Get properties, like SMILES. The semantics of these are defined on an OBO-OBO basis.
 
 .. code-block:: python
@@ -257,6 +257,8 @@ If you don't have time for two lines:
     smiles = pyobo.get_property('chebi', '132964', 'http://purl.obolibrary.org/obo/chebi/smiles')
     assert smiles == 'C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F'
 
+Hierarchy
+~~~~~~~~~
 Check if an entity is in the hierarchy:
 
 .. code-block:: python
@@ -295,6 +297,27 @@ Get a hierarchy with properties pre-loaded in the node data dictionaries:
     assert 'chebi:132964' in chebi_hierarchy
     assert prop in chebi_hierarchy.nodes['chebi:132964']
     assert chebi_hierarchy.nodes['chebi:132964'][prop] == 'C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F'
+
+Relations
+~~~~~~~~~
+Get all orthologies (``ro:HOM0000017``) between HGNC and MGI (note: this is one way)
+
+.. code-block:: python
+
+    >>> import pyobo
+    >>> human_mapt_hgnc_id = '6893'
+    >>> mouse_mapt_mgi_id = '97180'
+    >>> hgnc_mgi_orthology_mapping = pyobo.get_relation_mapping('hgnc', 'ro:HOM0000017', 'mgi')
+    >>> assert mouse_mapt_mgi_id == hgnc_mgi_orthology_mapping[human_mapt_hgnc_id]
+
+If you want to do it in one line, use:
+
+.. code-block:: python
+
+    >>> import pyobo
+    >>> human_mapt_hgnc_id = '6893'
+    >>> mouse_mapt_mgi_id = '97180'
+    >>> assert mouse_mapt_mgi_id == pyobo.get_relation('hgnc', 'ro:HOM0000017', 'mgi', human_mapt_hgnc_id)
 
 Writings Tests that Use PyOBO
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

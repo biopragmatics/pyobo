@@ -38,6 +38,8 @@ from .properties import (  # noqa: F401
 from .relations import (  # noqa: F401
     get_filtered_relations_df,
     get_id_multirelations_mapping,
+    get_relation,
+    get_relation_mapping,
     get_relations_df,
 )
 from .species import get_id_species_mapping, get_species  # noqa: F401

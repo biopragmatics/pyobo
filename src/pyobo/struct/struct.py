@@ -1120,7 +1120,10 @@ class Obo:
 
         >>> from pyobo.sources.hgnc import get_obo
         >>> obo = get_obo()
+        >>> human_mapt_hgnc_id = '6893'
+        >>> mouse_mapt_mgi_id = '97180'
         >>> hgnc_mgi_orthology_mapping = obo.get_relation_mapping('ro:HOM0000017', 'mgi')
+        >>> assert mouse_mapt_mgi_id == hgnc_mgi_orthology_mapping[human_mapt_hgnc_id]
         """
         return {
             term.identifier: reference.identifier
@@ -1130,6 +1133,27 @@ class Obo:
                 use_tqdm=use_tqdm,
             )
         }
+
+    def get_relation(
+        self,
+        source_identifier: str,
+        relation: RelationHint,
+        target_prefix: str,
+        *,
+        use_tqdm: bool = False,
+    ) -> Optional[str]:
+        """Get the value for a bijective relation mapping between this resource and a target resource.
+
+        >>> from pyobo.sources.hgnc import get_obo
+        >>> obo = get_obo()
+        >>> human_mapt_hgnc_id = '6893'
+        >>> mouse_mapt_mgi_id = '97180'
+        >>> assert mouse_mapt_mgi_id == obo.get_relation(human_mapt_hgnc_id, 'ro:HOM0000017', 'mgi')
+        """
+        relation_mapping = self.get_relation_mapping(
+            relation=relation, target_prefix=target_prefix, use_tqdm=use_tqdm
+        )
+        return relation_mapping.get(source_identifier)
 
     def get_relation_multimapping(
         self,
