@@ -100,7 +100,7 @@ def get_ontology(
         try:
             prontology = pronto.Ontology(path)
         except KeyError:
-            raise NoBuild(f'[{prefix}] could not parse OWL with pronto')
+            raise NoBuild(f"[{prefix}] could not parse OWL with pronto")
         version = prontology.metadata.data_version
         # prefix = prontology.metadata.ontology
         path = get_prefix_obo_path(prefix=prefix, version=version)
