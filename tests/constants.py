@@ -2,7 +2,6 @@
 
 """Constants for tests for PyOBO."""
 
-import os
 import pathlib
 from unittest import mock
 
