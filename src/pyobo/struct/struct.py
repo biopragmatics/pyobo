@@ -709,23 +709,32 @@ class Obo:
         obo = Obo.from_obonet(graph, strict=strict)
         return obo
 
+    @staticmethod
+    def _get_name(graph, ontology: str) -> str:
+        try:
+            rv = graph.graph["name"]
+        except KeyError:
+            logger.info("[%s] does not report a name", ontology)
+            rv = ontology
+        return rv
+
+    @staticmethod
+    def _get_date(graph, ontology: str) -> Optional[datetime]:
+        try:
+            rv = datetime.strptime(graph.graph["date"], DATE_FORMAT)
+        except KeyError:
+            logger.info("[%s] does not report a date", ontology)
+            rv = None
+        return rv
+
     @classmethod
-    def from_obonet(cls, graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noqa:C901
+    def from_obonet(cls, graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
         """Get all of the terms from a OBO graph."""
         ontology = normalize_prefix(graph.graph["ontology"])  # probably always okay
         logger.info("[%s] extracting OBO using obonet", ontology)
 
-        try:
-            date = datetime.strptime(graph.graph["date"], DATE_FORMAT)
-        except KeyError:
-            logger.info("[%s] does not report a date", ontology)
-            date = None
-
-        try:
-            name = graph.graph["name"]
-        except KeyError:
-            logger.info("[%s] does not report a name", ontology)
-            name = ontology
+        date = cls._get_date(graph=graph, ontology=ontology)
+        name = cls._get_name(graph=graph, ontology=ontology)
 
         data_version = graph.graph.get("data-version")
         if not data_version:
@@ -759,9 +768,8 @@ class Obo:
             (prefix, identifier): Reference(
                 prefix=prefix,
                 identifier=identifier,
-                name=data.get(
-                    "name"
-                ),  # if name isn't available, it means its external to this ontology
+                # if name isn't available, it means its external to this ontology
+                name=data.get("name"),
             )
             for prefix, identifier, data in _iter_obo_graph(graph=graph)
         }
