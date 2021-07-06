@@ -721,6 +721,12 @@ class Obo:
             logger.info("[%s] does not report a date", ontology)
             date = None
 
+        try:
+            name = graph.graph["name"]
+        except KeyError:
+            logger.info("[%s] does not report a name", ontology)
+            name = ontology
+
         data_version = graph.graph.get("data-version")
         if not data_version:
             if date is not None:
@@ -878,7 +884,7 @@ class Obo:
 
         return Obo(
             ontology=ontology,
-            name=graph.graph["name"],
+            name=name,
             auto_generated_by=graph.graph.get("auto-generated-by"),
             format_version=graph.graph.get("format-version"),
             data_version=data_version,
