@@ -10,7 +10,6 @@ import pathlib
 import urllib.error
 import warnings
 from collections import Counter
-from functools import lru_cache
 from typing import Callable, Iterable, Mapping, Optional, Sequence, Set, Tuple, TypeVar, Union
 
 import bioregistry

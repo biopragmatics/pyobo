@@ -9,7 +9,7 @@ from .metaregistry import (  # noqa: F401
     get_xrefs_blacklist,
     get_xrefs_prefix_blacklist,
     get_xrefs_suffix_blacklist,
-    iter_cached_obo,
     has_no_download,
+    iter_cached_obo,
     remap_full,
 )

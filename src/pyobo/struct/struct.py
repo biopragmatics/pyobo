@@ -710,7 +710,7 @@ class Obo:
         return obo
 
     @classmethod
-    def from_obonet(cls, graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
+    def from_obonet(cls, graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noqa:C901
         """Get all of the terms from a OBO graph."""
         ontology = normalize_prefix(graph.graph["ontology"])  # probably always okay
         logger.info("[%s] extracting OBO using obonet", ontology)
