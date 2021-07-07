@@ -2,7 +2,7 @@
 
 """PyOBO's Gilda Service."""
 
-from typing import Iterable, Optional, Union
+from typing import Iterable, Union
 
 import flask
 from flask_bootstrap import Bootstrap

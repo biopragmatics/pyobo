@@ -20,7 +20,9 @@ __all__ = [
 ]
 
 
-def get_grounder(prefix: Union[str, Iterable[str]], unnamed: Optional[Iterable[str]] = None) -> Grounder:
+def get_grounder(
+    prefix: Union[str, Iterable[str]], unnamed: Optional[Iterable[str]] = None
+) -> Grounder:
     """Get a Gilda grounder for the given namespace."""
     unnamed = set() if unnamed is None else set(unnamed)
     if isinstance(prefix, str):
@@ -68,7 +70,7 @@ def get_gilda_terms(prefix: str, use_identifiers: bool = False) -> Iterable[gild
             )
 
     if use_identifiers:
-        for identifier in tqdm(get_ids(prefix), desc='mapping identifiers'):
+        for identifier in tqdm(get_ids(prefix), desc="mapping identifiers"):
             yield gilda.term.Term(
                 norm_text=normalize(identifier),
                 text=identifier,
