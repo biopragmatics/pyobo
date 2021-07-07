@@ -18,7 +18,7 @@ __all__ = [
 
 
 @click.command(name="gilda")
-@click.argument("prefix")
+@click.argument("prefix", nargs=-1)
 @verbose_option
 @host_option
 @workers_option
