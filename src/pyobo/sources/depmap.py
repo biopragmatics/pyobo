@@ -12,7 +12,7 @@ from more_click import verbose_option
 from pyobo import Obo, Reference, Term
 
 __all__ = [
-    'get_obo',
+    "get_obo",
 ]
 
 PREFIX = "depmap"
