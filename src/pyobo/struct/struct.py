@@ -181,6 +181,12 @@ class Term(Referenced):
         prefix, identifier = normalize_curie(curie)
         return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
 
+    def append_synonym(self, synonym: Union[str, Synonym]) -> None:
+        """Add a synonym."""
+        if isinstance(synonym, str):
+            synonym = Synonym(synonym)
+        self.synonyms.append(synonym)
+
     def append_parent(self, reference: Union["Term", Reference]) -> None:
         """Add a parent to this entity."""
         if reference is None:
