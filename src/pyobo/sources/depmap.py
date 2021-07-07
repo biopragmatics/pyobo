@@ -58,7 +58,7 @@ def _fix_mangled_int(x: str) -> str:
 
 
 def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
-    """Iterate over DepMap cell line terms"""
+    """Iterate over DepMap cell line terms."""
     df = ensure(force=force, version=version)
     columns = [
         "DepMap_ID",
