@@ -72,7 +72,7 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
     ]
     df["WTSI_Master_Cell_ID"] = df["WTSI_Master_Cell_ID"].map(_fix_mangled_int)
     df["COSMICID"] = df["COSMICID"].map(_fix_mangled_int)
-    for identifier, name, sname, aliases, cosmic_id, cellosaurus_id, wtsi_id, sanger_id in df[
+    for identifier, name, sname, aliases, cosmic_id, cellosaurus_id, _wtsi_id, _sanger_id in df[
         columns
     ].values:
         term = Term.from_triple(PREFIX, identifier, name)
