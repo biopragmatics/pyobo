@@ -53,6 +53,10 @@ def get_url(version: Optional[str] = None) -> str:
     return url
 
 
+def _fix_mangled_int(x: str) -> str:
+    return str(int(float(x))) if pd.notna(x) else None
+
+
 def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
     """Iterate over DepMap cell line terms"""
     df = ensure(force=force, version=version)
@@ -66,6 +70,8 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
         "WTSI_Master_Cell_ID",
         "Sanger_Model_ID",
     ]
+    df["WTSI_Master_Cell_ID"] = df["WTSI_Master_Cell_ID"].map(_fix_mangled_int)
+    df["COSMICID"] = df["COSMICID"].map(_fix_mangled_int)
     for identifier, name, sname, aliases, cosmic_id, cellosaurus_id, wtsi_id, sanger_id in df[
         columns
     ].values:
