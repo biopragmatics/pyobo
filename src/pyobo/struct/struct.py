@@ -918,8 +918,7 @@ class Obo:
     def iterate_ids(self, *, use_tqdm: bool = False) -> Iterable[str]:
         """Iterate over identifiers."""
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"):
-            if term.name:
-                yield term.identifier
+            yield term.identifier
 
     def get_ids(self, *, use_tqdm: bool = False) -> Set[str]:
         """Get the set of identifiers."""
