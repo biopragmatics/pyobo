@@ -9,7 +9,7 @@ import logging
 import os
 import pickle
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Union
+from typing import Any, Callable, Dict, Iterable, List, Mapping, TypeVar, Union
 
 import networkx as nx
 import pandas as pd
@@ -23,11 +23,15 @@ JSONType = Union[
     List[Any],
 ]
 
-MappingGetter = Callable[[], Mapping[str, str]]
-MultiMappingGetter = Callable[[], Mapping[str, List[str]]]
-JSONGetter = Callable[[], JSONType]
-GraphGetter = Callable[[], nx.MultiDiGraph]
-DataFrameGetter = Callable[[], pd.DataFrame]
+X = TypeVar('X')
+Getter = Callable[[], X]
+Modifier = Callable[[X], X]
+
+MappingGetter = Getter[Mapping[str, str]]
+MultiMappingGetter = Getter[Mapping[str, List[str]]]
+JSONGetter = Getter[JSONType]
+GraphGetter = Getter[nx.MultiDiGraph]
+DataFrameGetter = Getter[pd.DataFrame]
 
 
 def cached_mapping(
