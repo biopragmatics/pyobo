@@ -19,6 +19,7 @@ from .api import (  # noqa: F401
     get_id_species_mapping,
     get_id_synonyms_mapping,
     get_id_to_alts,
+    get_ids,
     get_name,
     get_name_by_curie,
     get_name_id_mapping,
