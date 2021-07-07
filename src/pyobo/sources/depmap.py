@@ -85,14 +85,19 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
                     continue
                 term.append_synonym(alias)
         if pd.notna(cosmic_id):
-            term.append_xref(Reference("cosmic", cosmic_id))
+            term.append_xref(Reference("cosmic.cell", cosmic_id))
         if pd.notna(cellosaurus_id):
             term.append_xref(Reference("cellosaurus", cellosaurus_id))
+
+        # WTSI stands for welcome trust sanger institute
+        # Not sure where this prefix goes
+        # if pd.notna(wtsi_id):
+        #    term.append_xref(Reference("sanger", wtsi_id))
+
         # Not sure what this is
-        if pd.notna(wtsi_id):
-            term.append_xref(Reference("wtsi", wtsi_id))
-        if pd.notna(sanger_id):
-            term.append_xref(Reference("sanger", sanger_id))
+        # if pd.notna(sanger_id):
+        #    term.append_xref(Reference("sanger", sanger_id))
+
         # TODO There's lots of other great ontological information in here. Next time.
         yield term
 
