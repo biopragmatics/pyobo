@@ -20,6 +20,7 @@ from ..api import (
     get_id_name_mapping,
     get_id_synonyms_mapping,
     get_id_to_alts,
+    get_ids,
     get_metadata,
     get_name,
     get_name_by_curie,
@@ -66,6 +67,17 @@ def metadata(prefix: str, force: bool):
     """Page through the identifiers and names of entities in the given namespace."""
     metadata = get_metadata(prefix, force=force)
     click.echo(json.dumps(metadata, indent=2))
+
+
+@lookup.command()
+@prefix_argument
+@verbose_option
+@force_option
+@no_strict_option
+def ids(prefix: str, force: bool, no_strict: bool):
+    """Page through the identifiers of entities in the given namespace."""
+    id_list = get_ids(prefix, force=force, strict=not no_strict)
+    click.echo_via_pager("\n".join(id_list))
 
 
 @lookup.command()
