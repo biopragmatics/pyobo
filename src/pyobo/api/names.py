@@ -4,18 +4,19 @@
 
 import logging
 from functools import lru_cache
-from typing import Callable, List, Mapping, Optional, TypeVar
+from typing import Callable, List, Mapping, Optional, Set, TypeVar
 
 from .alts import get_primary_identifier
 from .utils import get_version
 from ..getters import NoBuild, get_ontology
 from ..identifier_utils import normalize_curie, wrap_norm_prefix
-from ..utils.cache import cached_mapping, cached_multidict, reverse_mapping
+from ..utils.cache import cached_collection, cached_mapping, cached_multidict, reverse_mapping
 from ..utils.path import prefix_cache_join
 
 __all__ = [
     "get_name",
     "get_name_by_curie",
+    "get_ids",
     "get_id_name_mapping",
     "get_name_id_mapping",
     "get_definition",
@@ -56,6 +57,32 @@ def _help_get(f: Callable[[str], Mapping[str, X]], prefix: str, identifier: str)
 def get_name(prefix: str, identifier: str) -> Optional[str]:
     """Get the name for an entity."""
     return _help_get(get_id_name_mapping, prefix, identifier)
+
+
+@lru_cache()
+@wrap_norm_prefix
+def get_ids(prefix: str, force: bool = False, strict: bool = True) -> Set[str]:
+    """Get the set of identifiers for this prefix."""
+    if prefix == "ncbigene":
+        from ..sources.ncbigene import get_ncbigene_ids
+
+        logger.info("[%s] loading name mappings", prefix)
+        rv = get_ncbigene_ids()
+        logger.info("[%s] done loading name mappings", prefix)
+        return rv
+
+    path = prefix_cache_join(prefix, name="ids.tsv", version=get_version(prefix))
+
+    @cached_collection(path=path, force=force)
+    def _get_ids() -> Set[str]:
+        if force:
+            logger.info("[%s] forcing reload for names", prefix)
+        else:
+            logger.info("[%s] no cached names found. getting from OBO loader", prefix)
+        ontology = get_ontology(prefix, force=force, strict=strict)
+        return ontology.get_ids()
+
+    return set(_get_ids())
 
 
 @lru_cache()

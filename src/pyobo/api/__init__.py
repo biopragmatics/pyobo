@@ -22,6 +22,7 @@ from .names import (  # noqa: F401
     get_id_definition_mapping,
     get_id_name_mapping,
     get_id_synonyms_mapping,
+    get_ids,
     get_name,
     get_name_by_curie,
     get_name_id_mapping,

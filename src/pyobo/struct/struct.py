@@ -915,6 +915,15 @@ class Obo:
             date=self.date and self.date.isoformat(),
         )
 
+    def iterate_ids(self, *, use_tqdm: bool = False) -> Iterable[str]:
+        """Iterate over identifiers."""
+        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"):
+            yield term.identifier
+
+    def get_ids(self, *, use_tqdm: bool = False) -> Set[str]:
+        """Get the set of identifiers."""
+        return set(self.iterate_ids(use_tqdm=use_tqdm))
+
     def iterate_id_name(self, *, use_tqdm: bool = False) -> Iterable[Tuple[str, str]]:
         """Iterate identifier name pairs."""
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"):

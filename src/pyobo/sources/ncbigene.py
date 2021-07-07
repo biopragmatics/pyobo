@@ -3,7 +3,7 @@
 """Converter for Entrez."""
 
 import logging
-from typing import Iterable, Mapping
+from typing import Iterable, List, Mapping, Set
 
 import pandas as pd
 from tqdm import tqdm
@@ -43,6 +43,12 @@ GENE_INFO_COLUMNS = [
 ]
 
 
+def get_ncbigene_ids() -> Set[str]:
+    """Get the Entrez name mapping."""
+    df = _get_ncbigene_subset(["GeneID"])
+    return set(df["GeneID"])
+
+
 def get_ncbigene_id_to_name_mapping() -> Mapping[str, str]:
     """Get the Entrez name mapping."""
     return _get_ncbigene_info_subset(["GeneID", "Symbol"])
@@ -54,6 +60,11 @@ def get_ncbigene_id_to_species_mapping() -> Mapping[str, str]:
 
 
 def _get_ncbigene_info_subset(usecols) -> Mapping[str, str]:
+    df = _get_ncbigene_subset(usecols)
+    return dict(df.values)
+
+
+def _get_ncbigene_subset(usecols: List[str]) -> pd.DataFrame:
     df = ensure_df(
         PREFIX,
         url=GENE_INFO_URL,
@@ -63,7 +74,9 @@ def _get_ncbigene_info_subset(usecols) -> Mapping[str, str]:
         dtype=str,
     )
     df.dropna(inplace=True)
-    return dict(df[usecols].values)
+    if len(usecols) > 1:
+        df = df[usecols]
+    return df
 
 
 def get_obo() -> Obo:

@@ -9,7 +9,7 @@ import logging
 import os
 import pickle
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Union
+from typing import Any, Callable, Collection, Dict, Iterable, List, Mapping, TypeVar, Union
 
 import networkx as nx
 import pandas as pd
@@ -23,11 +23,15 @@ JSONType = Union[
     List[Any],
 ]
 
-MappingGetter = Callable[[], Mapping[str, str]]
-MultiMappingGetter = Callable[[], Mapping[str, List[str]]]
-JSONGetter = Callable[[], JSONType]
-GraphGetter = Callable[[], nx.MultiDiGraph]
-DataFrameGetter = Callable[[], pd.DataFrame]
+X = TypeVar("X")
+Getter = Callable[[], X]
+Modifier = Callable[[X], X]
+
+MappingGetter = Getter[Mapping[str, str]]
+MultiMappingGetter = Getter[Mapping[str, List[str]]]
+JSONGetter = Getter[JSONType]
+GraphGetter = Getter[nx.MultiDiGraph]
+DataFrameGetter = Getter[pd.DataFrame]
 
 
 def cached_mapping(
@@ -189,3 +193,32 @@ def cached_multidict(
 def reverse_mapping(d):
     """Reverse a mapping."""
     return {v: k for k, v in d.items()}
+
+
+def cached_collection(
+    path: Union[str, Path],
+    *,
+    force: bool = False,
+) -> Modifier[Getter[Collection[str]]]:
+    """Create a decorator to apply to a mapping getter."""
+
+    def wrapped(f: Getter[Collection[str]]) -> Getter[Collection[str]]:  # noqa: D202
+        """Wrap a mapping getter so it can be auto-loaded from a cache."""
+
+        @functools.wraps(f)
+        def _wrapped() -> Collection[str]:
+            if os.path.exists(path) and not force:
+                logger.debug("loading from cache at %s", path)
+                with open(path) as file:
+                    return [line.strip() for line in file]
+            logger.debug("no cache found at %s", path)
+            rv = f()
+            logger.debug("writing cache to %s", path)
+            with open(path, "w") as file:
+                for line in rv:
+                    print(line, file=file)  # noqa:T001
+            return rv
+
+        return _wrapped
+
+    return wrapped
