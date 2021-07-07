@@ -43,7 +43,7 @@ GENE_INFO_COLUMNS = [
 ]
 
 
-def get_ncbigene_ids() -> Set[str, str]:
+def get_ncbigene_ids() -> Set[str]:
     """Get the Entrez name mapping."""
     df = _get_ncbigene_subset(["GeneID"])
     return set(df["GeneID"])
