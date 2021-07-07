@@ -74,7 +74,10 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
             term.append_synonym(sname)
         if pd.notna(aliases):
             for alias in aliases.split(","):
-                term.append_synonym(alias.strip())
+                alias = alias.strip()
+                if alias == name:
+                    continue
+                term.append_synonym(alias)
         if pd.notna(cosmic_id):
             term.append_xref(Reference("cosmic", cosmic_id))
         if pd.notna(cellosaurus_id):
