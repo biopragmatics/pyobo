@@ -216,7 +216,7 @@ def cached_collection(
             logger.debug("writing cache to %s", path)
             with open(path, "w") as file:
                 for line in rv:
-                    print(line, file=file)
+                    print(line, file=file)  # noqa:T001
             return rv
 
         return _wrapped
