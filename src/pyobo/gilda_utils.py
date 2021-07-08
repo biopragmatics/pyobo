@@ -4,6 +4,7 @@
 
 from typing import Iterable, Optional, Union
 
+import gilda.api
 import gilda.term
 from gilda.generate_terms import filter_out_duplicates
 from gilda.grounder import Grounder
@@ -15,9 +16,34 @@ from pyobo.getters import NoBuild
 from pyobo.utils.io import multidict
 
 __all__ = [
+    "iter_gilda_prediction_tuples",
     "get_grounder",
     "get_gilda_terms",
 ]
+
+
+def iter_gilda_prediction_tuples(
+    prefix: str,
+    relation: str,
+    grounder: Optional[Grounder] = None,
+) -> Iterable[Tuple[str, str, str, str, str, str, str, str, float]]:
+    """Iterate over prediction tuples for a given prefix."""
+    if grounder is None:
+        grounder = gilda.api.grounder
+    id_name_mapping = get_id_name_mapping(prefix)
+    for identifier, name in tqdm(id_name_mapping.items(), desc=f"Mapping {prefix}"):
+        for scored_match in grounder.ground(name):
+            yield (
+                prefix,
+                identifier,
+                name,
+                relation,
+                scored_match.term.db.lower(),
+                scored_match.term.id,
+                scored_match.term.entry_name,
+                "lexical",
+                scored_match.score,
+            )
 
 
 def get_grounder(
