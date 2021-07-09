@@ -4,6 +4,7 @@
 
 from typing import Iterable, Optional, Tuple, Union
 
+import bioregistry
 import gilda.api
 import gilda.term
 from gilda.generate_terms import filter_out_duplicates
@@ -33,17 +34,32 @@ def iter_gilda_prediction_tuples(
     id_name_mapping = get_id_name_mapping(prefix)
     for identifier, name in tqdm(id_name_mapping.items(), desc=f"Mapping {prefix}"):
         for scored_match in grounder.ground(name):
+            target_prefix = scored_match.term.db.lower()
             yield (
                 prefix,
                 identifier,
                 name,
                 relation,
-                scored_match.term.db.lower(),
-                scored_match.term.id,
+                target_prefix,
+                normalize_identifier(target_prefix, scored_match.term.id),
                 scored_match.term.entry_name,
                 "lexical",
                 scored_match.score,
             )
+
+
+def normalize_identifier(prefix: str, identifier: str) -> str:
+    """Normalize the identifier."""
+    # TODO in bioregistry.resolve_identifier there is similar code. just combine with that
+    banana = bioregistry.get_banana(prefix)
+    if banana:
+        if not identifier.startswith(banana):
+            return f"{banana}:{identifier}"
+    elif bioregistry.namespace_in_lui(prefix):
+        banana = f"{prefix.upper()}:"
+        if not identifier.startswith(banana):
+            return f"{banana}{identifier}"
+    return identifier
 
 
 def get_grounder(
