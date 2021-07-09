@@ -27,6 +27,7 @@ def iter_gilda_prediction_tuples(
     prefix: str,
     relation: str,
     grounder: Optional[Grounder] = None,
+    identifiers_are_names: bool = False,
 ) -> Iterable[Tuple[str, str, str, str, str, str, str, str, float]]:
     """Iterate over prediction tuples for a given prefix."""
     if grounder is None:
@@ -46,6 +47,22 @@ def iter_gilda_prediction_tuples(
                 "lexical",
                 scored_match.score,
             )
+
+    if identifiers_are_names:
+        for identifier in tqdm(get_ids(prefix), desc=f'Mapping {prefix} (id as names)'):
+            for scored_match in grounder.ground(identifier):
+                target_prefix = scored_match.term.db.lower()
+                yield (
+                    prefix,
+                    identifier,
+                    identifier,
+                    relation,
+                    target_prefix,
+                    normalize_identifier(target_prefix, scored_match.term.id),
+                    scored_match.term.entry_name,
+                    "lexical",
+                    scored_match.score,
+                )
 
 
 def normalize_identifier(prefix: str, identifier: str) -> str:
@@ -73,7 +90,7 @@ def get_grounder(
     terms = []
     for p in prefix:
         try:
-            p_terms = list(get_gilda_terms(p, use_identifiers=p in unnamed))
+            p_terms = list(get_gilda_terms(p, identifiers_are_names=p in unnamed))
         except NoBuild:
             continue
         else:
@@ -83,7 +100,7 @@ def get_grounder(
     return Grounder(terms)
 
 
-def get_gilda_terms(prefix: str, use_identifiers: bool = False) -> Iterable[gilda.term.Term]:
+def get_gilda_terms(prefix: str, identifiers_are_names: bool = False) -> Iterable[gilda.term.Term]:
     """Get gilda terms for the given namespace."""
     id_to_name = get_id_name_mapping(prefix)
     for identifier, name in tqdm(id_to_name.items(), desc="mapping names"):
@@ -111,7 +128,7 @@ def get_gilda_terms(prefix: str, use_identifiers: bool = False) -> Iterable[gild
                 source=prefix,
             )
 
-    if use_identifiers:
+    if identifiers_are_names:
         for identifier in tqdm(get_ids(prefix), desc="mapping identifiers"):
             yield gilda.term.Term(
                 norm_text=normalize(identifier),
