@@ -2,7 +2,7 @@
 
 """PyOBO's Gilda utilities."""
 
-from typing import Iterable, Optional, Union
+from typing import Iterable, Optional, Tuple, Union
 
 import gilda.api
 import gilda.term
