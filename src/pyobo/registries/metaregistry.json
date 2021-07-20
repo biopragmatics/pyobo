@@ -275,7 +275,8 @@
       "UniProt: \"": "uniprot:",
       "Unimod: \"Unimod:": "unimod:",
       "OMIMl:": "OMIM:",
-      "CREDIT_00": "CREDIT:00"
+      "CREDIT_00": "CREDIT:00",
+      "CCLV:CCLV-RIE ": "CCLV:"
     }
   },
   "wikidata_property_types": [

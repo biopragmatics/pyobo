@@ -41,6 +41,7 @@ def get_filtered_xrefs(
     *,
     use_tqdm: bool = False,
     force: bool = False,
+    strict: bool = False,
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
     path = prefix_cache_join(
@@ -59,7 +60,7 @@ def get_filtered_xrefs(
             return dict(df.values)
 
         logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+        ontology = get_ontology(prefix, force=force, strict=strict)
         return ontology.get_filtered_xrefs_mapping(xref_prefix, use_tqdm=use_tqdm)
 
     rv = _get_mapping()

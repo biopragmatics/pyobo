@@ -74,6 +74,9 @@ def normalize_prefix(prefix: str, *, curie=None, xref=None, strict: bool = True)
     #     return  # skip if its just text
 
 
+BAD_CURIES = set()
+
+
 def normalize_curie(
     curie: str, *, strict: bool = True
 ) -> Union[Tuple[str, str], Tuple[None, None]]:
@@ -108,7 +111,9 @@ def normalize_curie(
     try:
         head_ns, identifier = curie.split(":", 1)
     except ValueError:  # skip nodes that don't look like normal CURIEs
-        logger.debug(f"could not split CURIE on colon: {curie}")
+        if curie not in BAD_CURIES:
+            BAD_CURIES.add(curie)
+            logger.debug(f"could not split CURIE on colon: {curie}")
         return None, None
 
     # remove redundant prefix

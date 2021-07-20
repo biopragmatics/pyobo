@@ -5,6 +5,7 @@
 import json
 from typing import Optional
 
+import bioregistry
 import click
 from more_click import verbose_option
 
@@ -50,7 +51,8 @@ def lookup():
 def xrefs(prefix: str, target: str, force: bool, no_strict: bool):
     """Page through xrefs for the given namespace to the second given namespace."""
     if target:
-        filtered_xrefs = get_filtered_xrefs(prefix, target, force=force)
+        target = bioregistry.normalize_prefix(target)
+        filtered_xrefs = get_filtered_xrefs(prefix, target, force=force, strict=not no_strict)
         click.echo_via_pager(
             "\n".join(f"{identifier}\t{_xref}" for identifier, _xref in filtered_xrefs.items())
         )
@@ -162,11 +164,12 @@ def synonyms(prefix: str, force: bool):
 )
 @click.option("--target", help="Prefix for the target")
 @verbose_option
+@no_strict_option
 @force_option
-def relations(prefix: str, relation: str, target: str, force: bool):
+def relations(prefix: str, relation: str, target: str, force: bool, no_strict: bool):
     """Page through the relations for entities in the given namespace."""
     if relation is None:
-        relations_df = get_relations_df(prefix, force=force)
+        relations_df = get_relations_df(prefix, force=force, strict=not no_strict)
     else:
         curie = normalize_curie(relation)
         if curie[1] is None:  # that's the identifier
@@ -174,7 +177,10 @@ def relations(prefix: str, relation: str, target: str, force: bool):
             curie = prefix, relation
 
         if target is None:
-            relations_df = get_filtered_relations_df(prefix, relation=curie, force=force)
+            target = bioregistry.normalize_prefix(target)
+            relations_df = get_filtered_relations_df(
+                prefix, relation=curie, force=force, strict=not no_strict
+            )
         else:
             raise NotImplementedError(f"can not filter by target prefix {target}")
 
@@ -190,7 +196,10 @@ def relations(prefix: str, relation: str, target: str, force: bool):
 def hierarchy(prefix: str, include_part_of: bool, include_has_member: bool, force: bool):
     """Page through the hierarchy for entities in the namespace."""
     h = get_hierarchy(
-        prefix, include_part_of=include_part_of, include_has_member=include_has_member
+        prefix,
+        include_part_of=include_part_of,
+        include_has_member=include_has_member,
+        force=force,
     )
     click.echo_via_pager("\n".join("\t".join(row) for row in h.edges()))
 

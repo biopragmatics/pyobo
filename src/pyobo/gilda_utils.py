@@ -49,7 +49,7 @@ def iter_gilda_prediction_tuples(
             )
 
     if identifiers_are_names:
-        for identifier in tqdm(get_ids(prefix), desc=f'Mapping {prefix} (id as names)'):
+        for identifier in tqdm(get_ids(prefix), desc=f"Mapping {prefix} (id as names)"):
             for scored_match in grounder.ground(identifier):
                 target_prefix = scored_match.term.db.lower()
                 yield (
