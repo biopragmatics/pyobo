@@ -20,7 +20,7 @@ def get_obo(*, force: bool = False) -> Obo:
     """Get Selventa chemical as OBO."""
     return Obo(
         ontology=PREFIX,
-        name="Selventa Diseases",
+        name="Selventa Chemicals",
         iter_terms=iter_terms,
         iter_terms_kwargs=dict(force=force),
         data_version="1.0.0",
