@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-"""Selventa diseases
+"""Selventa diseases.
 
 .. seealso:: https://github.com/pyobo/pyobo/issues/26
 """
 
-import pandas as pd
 from typing import Iterable, Optional
+
+import pandas as pd
 
 from pyobo import Obo, Term
 from pyobo.utils.path import ensure_df

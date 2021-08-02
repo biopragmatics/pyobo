@@ -5,8 +5,9 @@
 .. seealso:: https://github.com/pyobo/pyobo/issues/27
 """
 
-import pandas as pd
 from typing import Iterable, Optional
+
+import pandas as pd
 
 from pyobo import Obo, Term
 from pyobo.utils.path import ensure_df
