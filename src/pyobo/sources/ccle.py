@@ -15,7 +15,7 @@ __all__ = [
     "get_obo",
 ]
 
-PREFIX = "ccle.cell"
+PREFIX = "ccle"
 
 
 def get_obo(*, version: Optional[str] = None, force: bool = False) -> Obo:
