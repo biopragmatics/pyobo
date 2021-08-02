@@ -227,10 +227,14 @@ class Term(Referenced):
         """Get relationships from the given type."""
         return self.relationships[typedef]
 
-    def append_xref(self, reference: Union[Reference, "Term"]) -> None:
+    def append_xref(self, reference: Union[Reference, "Term", Tuple[str, str], str]) -> None:
         """Append an xref."""
         if isinstance(reference, Term):
             reference = reference.reference
+        elif isinstance(reference, str):
+            reference = Reference.from_curie(reference)
+        elif isinstance(reference, tuple):
+            reference = Reference(*reference)
         self.xrefs.append(reference)
 
     def append_relationship(self, typedef: TypeDef, reference: Union[Reference, "Term"]) -> None:
