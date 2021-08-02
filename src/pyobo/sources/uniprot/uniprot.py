@@ -36,6 +36,7 @@ def get_obo() -> Obo:
 def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over UniProt Terms."""
     with open_reader(ensure(version)) as reader:
+        _header = next(reader)
         for uniprot_id, name, taxonomy_id in reader:
             term = Term.from_triple(prefix=PREFIX, identifier=uniprot_id, name=name)
             term.set_species(taxonomy_id)
