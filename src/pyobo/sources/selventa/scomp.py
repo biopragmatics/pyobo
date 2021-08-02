@@ -25,6 +25,7 @@ def get_obo(*, force: bool = False) -> Obo:
 
 
 def iter_terms(force: Optional[bool] = False) -> Iterable[Term]:
+    """Iterate over selventa complex terms."""
     df = ensure_df(PREFIX, url=URL, skiprows=9, force=force)
 
     terms = {}

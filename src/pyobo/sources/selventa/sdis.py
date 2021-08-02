@@ -28,6 +28,7 @@ def get_obo(*, force: bool = False) -> Obo:
 
 
 def iter_terms(force: Optional[bool] = False) -> Iterable[Term]:
+    """Iterate over selventa disease terms."""
     df = ensure_df(PREFIX, url=URL, skiprows=9, force=force)
     print(df.to_markdown())
 
