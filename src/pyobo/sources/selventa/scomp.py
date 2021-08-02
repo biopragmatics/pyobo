@@ -25,10 +25,9 @@ def get_obo(*, force: bool = False) -> Obo:
 
 
 def iter_terms(force: Optional[bool] = False) -> Iterable[Term]:
-    df = ensure_df(PREFIX, url=URL, skiprows=9)
+    df = ensure_df(PREFIX, url=URL, skiprows=9, force=force)
 
     terms = {}
-
     for identifier, label, synonyms, xref in df[['ID', 'LABEL', 'SYNONYMS', 'XREF']].values:
         term = Term.from_triple(PREFIX, identifier, label)
         for synonym in synonyms.split('|') if pd.notna(synonyms) else []:
@@ -38,7 +37,6 @@ def iter_terms(force: Optional[bool] = False) -> Iterable[Term]:
         terms[identifier] = term
 
     df.PARENTS = df.PARENTS.map(lambda x: x[len('SCOMP:'):], na_action='ignore')
-
     for child, parent in df.loc[df.PARENTS.notna(), ['ID', 'PARENTS']].values:
         if child == parent:
             continue  # wow...
