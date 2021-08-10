@@ -91,7 +91,7 @@ def get_interpro_tree(version: str):
 
 
 def _parse_tree_helper(lines: Iterable[str]):
-    rv = defaultdict(list)
+    rv1 = defaultdict(list)
     previous_depth, previous_id = 0, None
     stack = [previous_id]
 
@@ -110,11 +110,15 @@ def _parse_tree_helper(lines: Iterable[str]):
                 del stack[-1]
 
             child_id = stack[-1]
-            rv[child_id].append(parent_id)
+            rv1[child_id].append(parent_id)
 
         previous_depth, previous_id = depth, parent_id
 
-    return dict(rv)
+    rv2 = defaultdict(list)
+    for k, vs in rv1.items():
+        for v in vs:
+            rv2[v].append(k)
+    return dict(rv2)
 
 
 def _count_front(s: str) -> int:
