@@ -133,6 +133,23 @@ class SynonymTypeDef:
         )
 
 
+ReferenceHint = Union[Reference, "Term", Tuple[str, str], str]
+
+
+def _ensure_ref(reference: ReferenceHint) -> Reference:
+    if reference is None:
+        raise ValueError("can not append null reference")
+    if isinstance(reference, Term):
+        return reference.reference
+    if isinstance(reference, str):
+        return Reference.from_curie(reference)
+    if isinstance(reference, tuple):
+        return Reference(*reference)
+    if isinstance(reference, Reference):
+        return reference
+    raise TypeError
+
+
 @dataclass
 class Term(Referenced):
     """A term in OBO."""
@@ -181,19 +198,19 @@ class Term(Referenced):
         prefix, identifier = normalize_curie(curie)
         return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
 
-    def append_synonym(self, synonym: Union[str, Synonym]) -> None:
+    def append_provenance(self, reference: ReferenceHint) -> None:
+        """Add a provenance reference."""
+        self.provenance.append(_ensure_ref(reference))
+
+    def append_synonym(self, synonym: Union[str, Synonym], type: Optional[SynonymTypeDef]) -> None:
         """Add a synonym."""
         if isinstance(synonym, str):
-            synonym = Synonym(synonym)
+            synonym = Synonym(synonym, type=typedefef)
         self.synonyms.append(synonym)
 
-    def append_parent(self, reference: Union["Term", Reference]) -> None:
+    def append_parent(self, reference: ReferenceHint) -> None:
         """Add a parent to this entity."""
-        if reference is None:
-            raise ValueError("can not append a null parent")
-        if isinstance(reference, Term):
-            reference = reference.reference
-        self.parents.append(reference)
+        self.parents.append(_ensure_ref(reference))
 
     def extend_parents(self, references: Collection[Reference]) -> None:
         """Add a collection of parents to this entity."""
@@ -227,23 +244,13 @@ class Term(Referenced):
         """Get relationships from the given type."""
         return self.relationships[typedef]
 
-    def append_xref(self, reference: Union[Reference, "Term", Tuple[str, str], str]) -> None:
+    def append_xref(self, reference: ReferenceHint) -> None:
         """Append an xref."""
-        if isinstance(reference, Term):
-            reference = reference.reference
-        elif isinstance(reference, str):
-            reference = Reference.from_curie(reference)
-        elif isinstance(reference, tuple):
-            reference = Reference(*reference)
-        self.xrefs.append(reference)
+        self.xrefs.append(_ensure_ref(reference))
 
-    def append_relationship(self, typedef: TypeDef, reference: Union[Reference, "Term"]) -> None:
+    def append_relationship(self, typedef: TypeDef, reference: ReferenceHint) -> None:
         """Append a relationship."""
-        if reference is None:
-            raise ValueError("can not append null reference")
-        if isinstance(reference, Term):
-            reference = reference.reference
-        self.relationships[typedef].append(reference)
+        self.relationships[typedef].append(_ensure_ref(reference))
 
     def set_species(self, identifier: str, name: Optional[str] = None):
         """Append the from_species relation."""
