@@ -2,12 +2,12 @@
 
 """Parser for the MeSH descriptors."""
 
+import datetime
 import itertools as itt
 import logging
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 from xml.etree.ElementTree import Element
 
-import bioversions
 from tqdm import tqdm
 
 from ..struct import Obo, Reference, Synonym, Term
@@ -18,11 +18,12 @@ from ..utils.path import ensure_path, prefix_directory_join
 logger = logging.getLogger(__name__)
 
 PREFIX = "mesh"
+NOW_YEAR = str(datetime.datetime.now().year)
 
 
 def get_obo() -> Obo:
     """Get MeSH as OBO."""
-    version = bioversions.get_version("mesh")
+    version = NOW_YEAR  # bioversions.get_version("mesh")
     return Obo(
         ontology=PREFIX,
         name="Medical Subject Headings",
@@ -91,12 +92,25 @@ def ensure_mesh_descriptors(version: str) -> List[Mapping[str, Any]]:
 
     @cached_json(path=prefix_directory_join(PREFIX, name="mesh.json", version=version))
     def _inner():
-        url = f"ftp://nlmpubs.nlm.nih.gov/online/mesh/{version}/xmlmesh/desc{version}.gz"
-        path = ensure_path(PREFIX, url=url, version=version)
+        path = ensure_path(PREFIX, url=get_descriptors_url(version), version=version)
         root = parse_xml_gz(path)
         return get_descriptor_records(root, id_key="DescriptorUI", name_key="DescriptorName/String")
 
     return _inner()
+
+
+def get_descriptors_url(version: str) -> str:
+    """Get the MeSH descriptors URL for the given version."""
+    if version == NOW_YEAR:
+        return f'https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/desc{version}.gz'
+    return f'https://nlmpubs.nlm.nih.gov/projects/mesh/{version}/xmlmesh/desc{version}.gz'
+
+
+def get_supplemental_url(version: str) -> str:
+    """Get the MeSH supplemental URL for the given version."""
+    if version == NOW_YEAR:
+        return f'https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/supp{version}.gz'
+    return f'https://nlmpubs.nlm.nih.gov/projects/mesh/{version}/xmlmesh/supp{version}.gz'
 
 
 def ensure_mesh_supplemental_records(version: str) -> List[Mapping[str, Any]]:
@@ -104,8 +118,7 @@ def ensure_mesh_supplemental_records(version: str) -> List[Mapping[str, Any]]:
 
     @cached_json(path=prefix_directory_join(PREFIX, name="supp.json", version=version))
     def _inner():
-        url = f"ftp://nlmpubs.nlm.nih.gov/online/mesh/{version}/xmlmesh/supp{version}.gz"
-        path = ensure_path(PREFIX, url=url, version=version)
+        path = ensure_path(PREFIX, url=get_supplemental_url(version), version=version)
         root = parse_xml_gz(path)
         return get_descriptor_records(
             root, id_key="SupplementalRecordUI", name_key="SupplementalRecordName/String"
