@@ -202,10 +202,12 @@ class Term(Referenced):
         """Add a provenance reference."""
         self.provenance.append(_ensure_ref(reference))
 
-    def append_synonym(self, synonym: Union[str, Synonym], type: Optional[SynonymTypeDef]) -> None:
+    def append_synonym(
+        self, synonym: Union[str, Synonym], type: Optional[SynonymTypeDef] = None
+    ) -> None:
         """Add a synonym."""
         if isinstance(synonym, str):
-            synonym = Synonym(synonym, type=typedefef)
+            synonym = Synonym(synonym, type=type)
         self.synonyms.append(synonym)
 
     def append_parent(self, reference: ReferenceHint) -> None:
