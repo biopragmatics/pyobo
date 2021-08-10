@@ -6,7 +6,7 @@ import logging
 import unittest
 
 import requests
-from bioregistry import get_identifiers_org_url
+from bioregistry import get_identifiers_org_iri
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ class TestMiriam(unittest.TestCase):
             if prefix in BLACKLIST or prefix in UNSOLVED:
                 continue
             with self.subTest(prefix=prefix, msg=f"failed for MIRIAM prefix: {prefix}"):
-                url = get_identifiers_org_url(prefix, identifier)
+                url = get_identifiers_org_iri(prefix, identifier)
                 self.assertIsNotNone(url, msg=f"metaregistry does not contain prefix {prefix}")
                 try:
                     res = requests.get(url)
@@ -79,5 +79,5 @@ class TestMiriam(unittest.TestCase):
         ]
         for prefix, identifier in curies:
             with self.subTest(prefix=prefix):
-                url = get_identifiers_org_url(prefix, identifier)
+                url = get_identifiers_org_iri(prefix, identifier)
                 self.assertIsNone(url)
