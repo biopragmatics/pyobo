@@ -6,30 +6,31 @@ Run with ``python -m pyobo.sources.chembl -vv``.
 """
 
 import logging
-import os
-import sqlite3
-import tarfile
 from contextlib import closing
 from typing import Iterable
 
 import bioversions
+import chembl_downloader
 import click
 from more_click import verbose_option
 
 from pyobo.struct import Obo, Reference, Term
-from pyobo.utils.path import ensure_path, prefix_directory_join
 
 logger = logging.getLogger(__name__)
 
 PREFIX = "chembl.compound"
 
-QUERY = """
+QUERY = """\
 SELECT
     MOLECULE_DICTIONARY.chembl_id,
-    MOLECULE_DICTIONARY.pref_name
+    MOLECULE_DICTIONARY.pref_name,
+    COMPOUND_STRUCTURES.canonical_smiles,
+    COMPOUND_STRUCTURES.standard_inchi,
+    COMPOUND_STRUCTURES.standard_inchi_key
 FROM MOLECULE_DICTIONARY
-JOIN COMPOUND_STRUCTURES ON MOLECULE_DICTIONARY.molregno == COMPOUND_STRUCTURES.molregno
-WHERE molecule_dictionary.pref_name IS NOT NULL
+    JOIN COMPOUND_STRUCTURES ON MOLECULE_DICTIONARY.molregno == COMPOUND_STRUCTURES.molregno
+WHERE
+    molecule_dictionary.pref_name IS NOT NULL
 """
 
 
@@ -50,42 +51,30 @@ def get_obo() -> Obo:
     )
 
 
-def get_path(version: str):
-    """Get the path to the extracted ChEMBL SQLite database."""
-    url = f"ftp://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_{version}/chembl_{version}_sqlite.tar.gz"
-    path = ensure_path(PREFIX, url=url, version=version)
-    name = f"chembl_{version}/chembl_{version}_sqlite/chembl_{version}.db"
-    d = prefix_directory_join(PREFIX, version=version)
-    op = os.path.join(d, name)
-    if not os.path.exists(op):
-        with tarfile.open(path, mode="r", encoding="utf-8") as tar_file:
-            tar_file.extractall(d)
-    return op
-
-
 def iter_terms(version: str) -> Iterable[Term]:
-    """Iterate over ChEMBL compound's names."""
-    op = get_path(version=version)
-    logger.info("opening connection to %s", op)
-    with closing(sqlite3.connect(op)) as conn:
+    """Iterate over ChEMBL compounds."""
+    with chembl_downloader.connect(version=version) as conn:
         logger.info("using connection %s", conn)
         with closing(conn.cursor()) as cursor:
             logger.info("using cursor %s", cursor)
             cursor.execute(QUERY)
-            for chembl_id, name in cursor.fetchall():
-                # TODO add xrefs to smiles, inchi, inchikey here
-                xrefs = []
-                yield Term(
-                    reference=Reference(prefix=PREFIX, identifier=chembl_id, name=name),
-                    xrefs=xrefs,
-                )
+            for chembl_id, name, smiles, inchi, inchi_key in cursor.fetchall():
+                # TODO add xrefs?
+                term = Term.from_triple(prefix=PREFIX, identifier=chembl_id, name=name)
+                if smiles:
+                    term.append_property('smiles', smiles)
+                if inchi:
+                    term.append_property('inchi', inchi)
+                if inchi_key:
+                    term.append_property('inchikey', inchi_key)
+                yield term
 
 
 @click.command()
 @verbose_option
 def main():
     """Write the default OBO."""
-    get_obo().write_default()
+    get_obo().write_default(force=True, use_tqdm=True)
 
 
 if __name__ == "__main__":
