@@ -5,7 +5,7 @@
 Run with ``python -m pyobo.apps.resolver``
 """
 
-from .resolver import main
+from .cli import main
 
 if __name__ == "__main__":
     main()
