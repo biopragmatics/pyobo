@@ -169,8 +169,10 @@ def get_descriptor_records(element: Element, id_key: str, name_key) -> List[Mapp
 def get_scope_note(term) -> Optional[str]:
     """Get the scope note from the preferred concept in a term's record."""
     for concept in term["concepts"]:
-        if "ScopeNote" in concept:
-            return concept["ScopeNote"].replace("\\n", "\n").strip()
+        scope_note = concept.get("ScopeNote")
+        if scope_note is not None:
+            return scope_note.replace("\\n", "\n").strip()
+    return None
 
 
 def get_descriptor_record(
@@ -209,6 +211,10 @@ def get_concept_record(concept):
     if registry_number is not None:
         registry_numbers.append(registry_number)
 
+    scope_note = concept.findtext("ScopeNote")
+    if scope_note is not None:
+        scope_note = scope_note.replace("\\n", "\n").strip()
+
     return {
         "concept_ui": concept.findtext("ConceptUI"),
         "name": concept.findtext("ConceptName/String"),
@@ -216,7 +222,7 @@ def get_concept_record(concept):
             {x.text for x in concept.findall("SemanticTypeList/SemanticType/SemanticTypeUI")}
         ),
         "related_registries": registry_numbers,
-        "ScopeNote": concept.findtext("ScopeNote"),
+        "ScopeNote": scope_note,
         "terms": get_term_records(concept),
         # TODO handle ConceptRelationList
         **concept.attrib,
@@ -250,4 +256,4 @@ def _get_descriptor_qualifiers(descriptor: Element) -> List[Mapping[str, str]]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).write_default(force=True)
+    get_obo(force=True).write_default(force=True, write_obo=True)
