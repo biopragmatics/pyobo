@@ -88,9 +88,8 @@ def get_sqlalchemy_uri() -> str:
     if rv is not None:
         return rv
 
-    default_db_path = PYOBO_MODULE.join("pyobo.db")
-    default_value = f"sqlite:///{default_db_path.as_posix()}"
-    return default_value
+    # Default value
+    return PYOBO_MODULE.joinpath_sqlite(name="pyobo.db")
 
 
 def version_getter(name: str) -> Callable[[], str]:
