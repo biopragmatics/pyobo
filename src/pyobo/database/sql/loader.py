@@ -35,7 +35,7 @@ def echo(s, **kwargs) -> None:
 
 
 #: Number of test rows if --test is used
-TEST_N = 1_000
+TEST_N = 100_000
 
 
 def load(
@@ -239,7 +239,7 @@ def _load_table(
                 with gzip.open(path, "rt") as file:
                     if test:
                         echo(f"Loading testing data (rows={TEST_N}) from {path}")
-                        sio = io.StringIO("".join(line for line, _ in zip(file, range(TEST_N))))
+                        sio = io.StringIO("".join(line for line, _ in zip(file, range(TEST_N + 1))))
                         sio.seek(0)
                         cursor.copy_expert(copy_statement, sio)
                     else:
