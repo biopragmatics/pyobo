@@ -6,15 +6,7 @@ from flask import Flask
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 
-from .models import Alt, Reference, Resource, Synonym, Xref, session
-
-__all__ = [
-    "app",
-    "admin",
-]
-
-app = Flask(__name__)
-admin = Admin(app, template_mode="bootstrap3", url="/")
+from .models import Alt, Reference, Synonym, session, Definition
 
 
 class View(ModelView):
@@ -37,18 +29,37 @@ class ReferenceView(View):
     column_searchable_list = ["identifier", "name"]
 
 
+class DefinitionView(View):
+    """A view for definitions."""
+
+    column_searchable_list = ["identifier", "definition"]
+
+
 class AltView(View):
     """A view for references."""
 
     column_searchable_list = ["identifier", "alt"]
 
 
-admin.add_view(ResourceView(Resource, session))
+def get_admin(app=None) -> Admin:
+    admin = Admin(app=app, template_mode="bootstrap3", url="/")
+    # admin.add_view(ResourceView(Resource, session))
+    admin.add_view(ReferenceView(Reference, session))
+    admin.add_view(AltView(Alt, session))
+    admin.add_view(DefinitionView(Definition, session))
+    # admin.add_view(View(Synonym, session))
+    # admin.add_view(View(Xref, session))
+    return admin
 
-admin.add_view(ReferenceView(Reference, session))
-admin.add_view(AltView(Alt, session))
-admin.add_view(View(Synonym, session))
-admin.add_view(View(Xref, session))
+
+def get_app() -> Flask:
+    rv = Flask(__name__)
+    admin = get_admin()
+    admin.init_app(rv)
+    return rv
+
+
+app = get_app()
 
 if __name__ == "__main__":
     app.run()

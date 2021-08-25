@@ -82,6 +82,20 @@ class Alt(Base):
         return f"{self.prefix}:{self.alt}->{self.identifier}"
 
 
+class Definition(Base):
+    """Represents an alternate identifier relationship."""
+
+    __tablename__ = "obo_def"
+    id = Column(Integer, primary_key=True)
+
+    prefix = Column(String(32))
+    identifier = Column(String(64))
+    definition = Column(Text)
+
+    def __repr__(self) -> str:  # noqa:D105
+        return f"{self.prefix}:{self.alt}->{self.identifier}"
+
+
 class Synonym(Base):
     """Represent an OBO term's synonym."""
 
