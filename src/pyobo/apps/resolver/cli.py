@@ -111,7 +111,7 @@ def main(
 
     from pyobo.constants import PYOBO_MODULE
 
-    log_path = PYOBO_MODULE.joinpath("biolookup", name="log.txt")
+    log_path = PYOBO_MODULE.join("biolookup", name="log.txt")
     # see logging cookbook https://docs.python.org/3/howto/logging-cookbook.html
     fh = logging.FileHandler(log_path)
     fh.setLevel(logging.DEBUG)
