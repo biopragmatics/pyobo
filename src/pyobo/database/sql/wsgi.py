@@ -6,7 +6,7 @@ from flask import Flask
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 
-from .models import Alt, Reference, Synonym, session, Definition
+from .models import Alt, Definition, Reference, session
 
 
 class View(ModelView):
@@ -41,8 +41,9 @@ class AltView(View):
     column_searchable_list = ["identifier", "alt"]
 
 
-def get_admin(app=None) -> Admin:
-    admin = Admin(app=app, template_mode="bootstrap3", url="/")
+def get_admin() -> Admin:
+    """Get admin instance."""
+    admin = Admin(template_mode="bootstrap3", url="/")
     # admin.add_view(ResourceView(Resource, session))
     admin.add_view(ReferenceView(Reference, session))
     admin.add_view(AltView(Alt, session))
@@ -53,6 +54,7 @@ def get_admin(app=None) -> Admin:
 
 
 def get_app() -> Flask:
+    """Get flask app."""
     rv = Flask(__name__)
     admin = get_admin()
     admin.init_app(rv)

@@ -39,6 +39,8 @@ directory_option = click.option(
     help=f"Build location. Defaults to {DATABASE_DIRECTORY}/<today>",
 )
 zenodo_option = click.option("--zenodo", is_flag=True, help="Automatically upload to zenodo")
-no_strict_option = click.option("-x", "--no-strict", is_flag=True, help="Turn off failure on bad CURIEs")
+no_strict_option = click.option(
+    "-x", "--no-strict", is_flag=True, help="Turn off failure on bad CURIEs"
+)
 prefix_argument = click.argument("prefix")
 force_option = click.option("-f", "--force", is_flag=True)

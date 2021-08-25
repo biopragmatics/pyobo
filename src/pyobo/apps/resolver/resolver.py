@@ -183,9 +183,7 @@ def _get_resolver(
     if lazy:
         name_lookup = None
     elif name_data is None:
-        name_lookup = _get_lookup_from_path(
-            ensure_ooh_na_na(), desc=f"Processing names from zenodo"
-        )
+        name_lookup = _get_lookup_from_path(ensure_ooh_na_na(), desc="Processing names from zenodo")
     elif isinstance(name_data, str):
         name_lookup = _get_lookup_from_path(name_data, desc=f"Processing names from {name_data}")
     elif isinstance(name_data, pd.DataFrame):
