@@ -22,8 +22,12 @@ __all__ = [
 @click.option("--name-data", help="local 3-column gzipped TSV as database")
 @click.option("--alts-data", help="local 3-column gzipped TSV as database")
 @click.option("--defs-data", help="local 3-column gzipped TSV as database")
-@click.option("--sql", is_flag=True)
-@click.option("--sql-uri")
+@click.option(
+    "--sql",
+    is_flag=True,
+    help="Use a sql database backend. If not used, defaults to in memory dictionaries",
+)
+@click.option("--sql-uri", help="SQL URI string if using --sql. ")
 @click.option("--sql-refs-table", help="use preloaded SQL database as backend")
 @click.option("--sql-alts-table", help="use preloaded SQL database as backend")
 @click.option("--sql-defs-table", help="use preloaded SQL database as backend")
@@ -36,10 +40,10 @@ def main(
     port: str,
     host: str,
     sql: bool,
-    sql_uri: str,
-    sql_refs_table: str,
-    sql_alts_table: str,
-    sql_defs_table: str,
+    sql_uri: Optional[str],
+    sql_refs_table: Optional[str],
+    sql_alts_table: Optional[str],
+    sql_defs_table: Optional[str],
     name_data: Optional[str],
     alts_data: Optional[str],
     defs_data: Optional[str],
@@ -49,9 +53,13 @@ def main(
     workers: int,
 ):
     """Run the resolver app."""
-    if test and lazy:
-        click.secho("Can not run in --test and --lazy mode at the same time", fg="red")
-        sys.exit(0)
+    if test:
+        if lazy:
+            click.secho("Can not run in --test and --lazy mode at the same time", fg="red")
+            sys.exit(0)
+        if sql:
+            click.secho("Can not run in --test and --sql mode at the same time", fg="red")
+            sys.exit(0)
 
     from .resolver import get_app
 
@@ -59,7 +67,7 @@ def main(
         from pyobo import get_id_name_mapping, get_alts_to_id, get_id_definition_mapping
         import pandas as pd
 
-        prefixes = ["hgnc", "chebi", "doid", "go"]
+        prefixes = ["hgnc", "chebi", "doid", "go", "uniprot"]
         name_data = pd.DataFrame(
             [
                 (prefix, identifier, name)
@@ -68,6 +76,7 @@ def main(
             ],
             columns=["prefix", "identifier", "name"],
         )
+        click.echo(f"prepared {len(name_data):,} test names from {prefixes}")
         alts_data = pd.DataFrame(
             [
                 (prefix, alt, identifier)
@@ -76,6 +85,7 @@ def main(
             ],
             columns=["prefix", "alt", "identifier"],
         )
+        click.echo(f"prepared {len(alts_data):,} test alts from {prefixes}")
         defs_data = pd.DataFrame(
             [
                 (prefix, identifier, definition)
@@ -84,6 +94,7 @@ def main(
             ],
             columns=["prefix", "identifier", "definition"],
         )
+        click.echo(f"prepared {len(defs_data):,} test defs from {prefixes}")
 
     app = get_app(
         name_data=name_data,

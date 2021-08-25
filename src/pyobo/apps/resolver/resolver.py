@@ -183,33 +183,37 @@ def _get_resolver(
     if lazy:
         name_lookup = None
     elif name_data is None:
-        name_lookup = _get_lookup_from_path(ensure_ooh_na_na())
+        name_lookup = _get_lookup_from_path(
+            ensure_ooh_na_na(), desc=f"Processing names from zenodo"
+        )
     elif isinstance(name_data, str):
-        name_lookup = _get_lookup_from_path(name_data)
+        name_lookup = _get_lookup_from_path(name_data, desc=f"Processing names from {name_data}")
     elif isinstance(name_data, pd.DataFrame):
-        name_lookup = _get_lookup_from_df(name_data)
+        name_lookup = _get_lookup_from_df(name_data, desc="Processing names from dataframe")
     else:
         raise TypeError(f"invalid type for `name_data`: {name_data}")
 
     if lazy:
         alts_lookup = None
     elif alts_data is None and not lazy:
-        alts_lookup = _get_lookup_from_path(ensure_alts())
+        alts_lookup = _get_lookup_from_path(ensure_alts(), desc="Processing alts from zenodo")
     elif isinstance(alts_data, str):
-        alts_lookup = _get_lookup_from_path(alts_data)
+        alts_lookup = _get_lookup_from_path(alts_data, desc=f"Processing alts from {alts_data}")
     elif isinstance(alts_data, pd.DataFrame):
-        alts_lookup = _get_lookup_from_df(alts_data)
+        alts_lookup = _get_lookup_from_df(alts_data, desc="Processing alts from dataframe")
     else:
         raise TypeError(f"invalid type for `alt_data`: {alts_data}")
 
     if lazy:
         defs_lookup = None
     elif defs_data is None and not lazy:
-        defs_lookup = _get_lookup_from_path(ensure_definitions())
+        defs_lookup = _get_lookup_from_path(
+            ensure_definitions(), desc="Processing defs from zenodo"
+        )
     elif isinstance(defs_data, str):
-        defs_lookup = _get_lookup_from_path(defs_data)
+        defs_lookup = _get_lookup_from_path(defs_data, desc=f"Processing defs from {defs_data}")
     elif isinstance(defs_data, pd.DataFrame):
-        defs_lookup = _get_lookup_from_df(defs_data)
+        defs_lookup = _get_lookup_from_df(defs_data, desc="Processing defs from dataframe")
     else:
         raise TypeError(f"invalid type for `defs_data`: {defs_data}")
 
@@ -251,19 +255,27 @@ def _h(lookup, alt_lookup):
     return lookup.get, _summarize
 
 
-def _get_lookup_from_df(df: pd.DataFrame) -> Mapping[str, Mapping[str, str]]:
+def _get_lookup_from_df(
+    df: pd.DataFrame, desc: Optional[str] = None
+) -> Mapping[str, Mapping[str, str]]:
     lookup = defaultdict(dict)
-    it = tqdm(df.values, total=len(df.index), desc="loading mappings", unit_scale=True)
+    if desc is None:
+        desc = "processing mappings from df"
+    it = tqdm(df.values, total=len(df.index), desc=desc, unit_scale=True)
     for prefix, identifier, name in it:
         lookup[prefix][identifier] = name
     return dict(lookup)
 
 
-def _get_lookup_from_path(path: Union[str, Path]) -> Mapping[str, Mapping[str, str]]:
+def _get_lookup_from_path(
+    path: Union[str, Path], desc: Optional[str] = None
+) -> Mapping[str, Mapping[str, str]]:
     lookup = defaultdict(dict)
+    if desc is None:
+        desc = "loading mappings"
     with gzip.open(path, "rt") as file:
         _ = next(file)
-        for line in tqdm(file, desc="loading mappings", unit_scale=True):
+        for line in tqdm(file, desc=desc, unit_scale=True):
             prefix, identifier, name = line.strip().split("\t")
             lookup[prefix][identifier] = name
     return dict(lookup)
