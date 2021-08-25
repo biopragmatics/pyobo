@@ -202,12 +202,20 @@ def get_concept_records(element: Element) -> List[Mapping[str, Any]]:
 
 def get_concept_record(concept):
     """Get a single MeSH concept record."""
+    registry_numbers = list(
+        {x.text for x in concept.findall("RelatedRegistryNumberList/RelatedRegistryNumber")}
+    )
+    registry_number = concept.findtext("RelatedRegistryNumber")
+    if registry_number is not None:
+        registry_numbers.append(registry_number)
+
     return {
         "concept_ui": concept.findtext("ConceptUI"),
         "name": concept.findtext("ConceptName/String"),
         "semantic_types": list(
             {x.text for x in concept.findall("SemanticTypeList/SemanticType/SemanticTypeUI")}
         ),
+        "related_registries": registry_numbers,
         "ScopeNote": concept.findtext("ScopeNote"),
         "terms": get_term_records(concept),
         # TODO handle ConceptRelationList
