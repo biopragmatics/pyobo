@@ -170,7 +170,7 @@ def get_scope_note(term) -> Optional[str]:
     """Get the scope note from the preferred concept in a term's record."""
     for concept in term["concepts"]:
         if "ScopeNote" in concept:
-            return concept["ScopeNote"]
+            return concept["ScopeNote"].replace("\\n", "\n").strip()
 
 
 def get_descriptor_record(
