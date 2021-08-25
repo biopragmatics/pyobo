@@ -192,7 +192,7 @@ class MemoryBackend(Backend):
         return self.get_id_name_mapping(prefix) is not None
 
     def get_primary_id(self, prefix: str, identifier: str) -> str:  # noqa:D102
-        alts_to_id = self.get_alts_to_id(prefix)
+        alts_to_id = self.get_alts_to_id(prefix) or {}
         return alts_to_id.get(identifier, identifier)
 
     def get_name(self, prefix: str, identifier: str) -> Optional[str]:  # noqa:D102
