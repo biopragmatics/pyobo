@@ -21,14 +21,14 @@ PREFIX = "mesh"
 NOW_YEAR = str(datetime.datetime.now().year)
 
 
-def get_obo() -> Obo:
+def get_obo(force: bool = False) -> Obo:
     """Get MeSH as OBO."""
     version = NOW_YEAR  # bioversions.get_version("mesh")
     return Obo(
         ontology=PREFIX,
         name="Medical Subject Headings",
         iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version),
+        iter_terms_kwargs=dict(version=version, force=force),
         data_version=version,
         auto_generated_by=f"bio2obo:{PREFIX}",
     )
@@ -53,12 +53,12 @@ def get_tree_to_mesh_id(version: str) -> Mapping[str, str]:
     return _inner()
 
 
-def get_terms(version: str) -> Iterable[Term]:
+def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get MeSH OBO terms."""
     mesh_id_to_term: Dict[str, Term] = {}
 
-    descriptors = ensure_mesh_descriptors(version=version)
-    supplemental_records = ensure_mesh_supplemental_records(version=version)
+    descriptors = ensure_mesh_descriptors(version=version, force=force)
+    supplemental_records = ensure_mesh_supplemental_records(version=version, force=force)
 
     for entry in itt.chain(descriptors, supplemental_records):
         identifier = entry["identifier"]
@@ -87,12 +87,12 @@ def get_terms(version: str) -> Iterable[Term]:
     return mesh_id_to_term.values()
 
 
-def ensure_mesh_descriptors(version: str) -> List[Mapping[str, Any]]:
+def ensure_mesh_descriptors(version: str, force: bool = False) -> List[Mapping[str, Any]]:
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
 
-    @cached_json(path=prefix_directory_join(PREFIX, name="mesh.json", version=version))
+    @cached_json(path=prefix_directory_join(PREFIX, name="mesh.json", version=version), force=force)
     def _inner():
-        path = ensure_path(PREFIX, url=get_descriptors_url(version), version=version)
+        path = ensure_path(PREFIX, url=get_descriptors_url(version), version=version, force=force)
         root = parse_xml_gz(path)
         return get_descriptor_records(root, id_key="DescriptorUI", name_key="DescriptorName/String")
 
@@ -113,12 +113,12 @@ def get_supplemental_url(version: str) -> str:
     return f'https://nlmpubs.nlm.nih.gov/projects/mesh/{version}/xmlmesh/supp{version}.gz'
 
 
-def ensure_mesh_supplemental_records(version: str) -> List[Mapping[str, Any]]:
+def ensure_mesh_supplemental_records(version: str, force: bool = False) -> List[Mapping[str, Any]]:
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
 
-    @cached_json(path=prefix_directory_join(PREFIX, name="supp.json", version=version))
+    @cached_json(path=prefix_directory_join(PREFIX, name="supp.json", version=version), force=force)
     def _inner():
-        path = ensure_path(PREFIX, url=get_supplemental_url(version), version=version)
+        path = ensure_path(PREFIX, url=get_supplemental_url(version), version=version, force=force)
         root = parse_xml_gz(path)
         return get_descriptor_records(
             root, id_key="SupplementalRecordUI", name_key="SupplementalRecordName/String"
@@ -242,4 +242,4 @@ def _get_descriptor_qualifiers(descriptor: Element) -> List[Mapping[str, str]]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    get_obo(force=True).write_default(force=True)
