@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h5 class="card-header">Bioresolver</h5>
+    <h5 class="card-header">Biolookup Service</h5>
     <div class="card-body">
         <p>
-            This service resolves <a href="https://en.wikipedia.org/wiki/CURIE">CURIEs</a>
-            to their labels, names, and builds provider URLs (like for Identifiers.org) when possible.
+            This service looks up for <a href="https://en.wikipedia.org/wiki/CURIE">CURIEs</a>
+            their labels, names, and builds provider URLs (like for Identifiers.org) when possible.
             {% if name_count %}It currently covers {{ name_count }} names,
                 {{ alts_count }} alternate identifiers, and {{ definition_count }} definitions
                 across {{ prefix_count }} resources{% endif %}.

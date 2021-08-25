@@ -127,7 +127,7 @@ def get_app(
         app,
         merge=True,
         config={
-            "title": "Bioresolver API",
+            "title": "Biolookup API",
             "description": "Resolves CURIEs to their names, definitions, and other attributes.",
             "contact": {
                 "responsibleDeveloper": "Charles Tapley Hoyt",
