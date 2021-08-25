@@ -60,6 +60,7 @@ def build(ctx: click.Context, directory: str, zenodo: bool, no_strict: bool, for
         sys.exit(1)
 
     click.secho("Collecting metadata and building", fg="cyan", bold=True)
+    # note that this is the only one that needs a force=force
     ctx.invoke(metadata, directory=directory, no_strict=no_strict, force=force)
     click.secho("Alternate Identifiers", fg="cyan", bold=True)
     ctx.invoke(alts, directory=directory, zenodo=zenodo, no_strict=no_strict)

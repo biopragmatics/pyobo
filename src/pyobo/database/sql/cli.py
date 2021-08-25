@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""CLI for PyOBO SQL database."""
+"""CLI for PyOBO SQL database.
+
+Run with: ``pyobo database sql``.
+"""
 
 import click
 from more_click import make_web_command, verbose_option
