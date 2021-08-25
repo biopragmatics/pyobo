@@ -5,6 +5,7 @@
 Run with ``python -m pyobo.apps.resolver``
 """
 
+import logging
 import sys
 from typing import Optional
 
@@ -107,6 +108,24 @@ def main(
         alts_table=sql_alts_table,
         defs_table=sql_defs_table,
     )
+
+    from pyobo.constants import PYOBO_MODULE
+
+    log_path = PYOBO_MODULE.joinpath("biolookup", name="log.txt")
+    # see logging cookbook https://docs.python.org/3/howto/logging-cookbook.html
+    fh = logging.FileHandler(log_path)
+    fh.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    fh.setFormatter(formatter)
+
+    from . import backends, resolver
+
+    logging.getLogger("werkzeug").addHandler(fh)
+    backends.logger.setLevel(logging.DEBUG)
+    backends.logger.addHandler(fh)
+    resolver.logger.setLevel(logging.DEBUG)
+    resolver.logger.addHandler(fh)
+
     run_app(app=app, host=host, port=port, with_gunicorn=with_gunicorn, workers=workers)
 
 

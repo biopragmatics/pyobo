@@ -8,6 +8,7 @@ Run with ``python -m pyobo.apps.resolver``
 import gzip
 import logging
 import os
+import time
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Mapping, Optional, Union
@@ -64,7 +65,11 @@ def resolve(curie: str):
         type: string
         example: doid:14330
     """
-    return jsonify(backend.resolve(curie))
+    logger.debug("resolving %s", curie)
+    start = time.time()
+    rv = backend.resolve(curie)
+    logger.debug("resolved %s in %.2f seconds", curie, time.time() - start)
+    return jsonify(rv)
 
 
 @resolve_blueprint.route("/summary")
