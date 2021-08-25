@@ -276,7 +276,8 @@
       "Unimod: \"Unimod:": "unimod:",
       "OMIMl:": "OMIM:",
       "CREDIT_00": "CREDIT:00",
-      "CCLV:CCLV-RIE ": "CCLV:"
+      "CCLV:CCLV-RIE ": "CCLV:",
+      "APOLLO:SV_": "APOLLO_SV:"
     }
   },
   "wikidata_property_types": [
