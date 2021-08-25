@@ -102,15 +102,15 @@ def ensure_mesh_descriptors(version: str, force: bool = False) -> List[Mapping[s
 def get_descriptors_url(version: str) -> str:
     """Get the MeSH descriptors URL for the given version."""
     if version == NOW_YEAR:
-        return f'https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/desc{version}.gz'
-    return f'https://nlmpubs.nlm.nih.gov/projects/mesh/{version}/xmlmesh/desc{version}.gz'
+        return f"https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/desc{version}.gz"
+    return f"https://nlmpubs.nlm.nih.gov/projects/mesh/{version}/xmlmesh/desc{version}.gz"
 
 
 def get_supplemental_url(version: str) -> str:
     """Get the MeSH supplemental URL for the given version."""
     if version == NOW_YEAR:
-        return f'https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/supp{version}.gz'
-    return f'https://nlmpubs.nlm.nih.gov/projects/mesh/{version}/xmlmesh/supp{version}.gz'
+        return f"https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/supp{version}.gz"
+    return f"https://nlmpubs.nlm.nih.gov/projects/mesh/{version}/xmlmesh/supp{version}.gz"
 
 
 def ensure_mesh_supplemental_records(version: str, force: bool = False) -> List[Mapping[str, Any]]:

@@ -14,7 +14,7 @@ import chembl_downloader
 import click
 from more_click import verbose_option
 
-from pyobo.struct import Obo, Reference, Term
+from pyobo.struct import Obo, Term
 
 logger = logging.getLogger(__name__)
 
@@ -62,11 +62,11 @@ def iter_terms(version: str) -> Iterable[Term]:
                 # TODO add xrefs?
                 term = Term.from_triple(prefix=PREFIX, identifier=chembl_id, name=name)
                 if smiles:
-                    term.append_property('smiles', smiles)
+                    term.append_property("smiles", smiles)
                 if inchi:
-                    term.append_property('inchi', inchi)
+                    term.append_property("inchi", inchi)
                 if inchi_key:
-                    term.append_property('inchikey', inchi_key)
+                    term.append_property("inchikey", inchi_key)
                 yield term
 
 
