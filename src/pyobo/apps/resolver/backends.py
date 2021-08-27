@@ -20,7 +20,6 @@ __all__ = [
     "Backend",
     "RawSQLBackend",
     "MemoryBackend",
-    "SQLAlchemyBackend",
 ]
 
 logger = logging.getLogger(__name__)
@@ -345,52 +344,3 @@ class RawSQLBackend(Backend):
             result = connection.execute(sql, prefix=prefix, identifier=identifier).fetchone()
             if result:
                 return result[0]
-
-
-class SQLAlchemyBackend(Backend):
-    """A resolution service using a SQL database."""
-
-    def summarize_names(self) -> Mapping[str, Any]:  # noqa:D102
-        from pyobo.database.sql.models import Reference
-
-        return dict(Reference.query.groupby(Reference.prefix).count())
-
-    def has_prefix(self, prefix: str) -> bool:  # noqa:D102
-        from pyobo.database.sql.models import Reference
-
-        return Reference.query.filter(Reference.prefix == prefix).first()
-
-    def get_primary_id(self, prefix: str, identifier: str) -> str:  # noqa:D102
-        from pyobo.database.sql.models import Alt
-
-        new_id = Alt.query.filter(Alt.prefix == prefix, Alt.alt == identifier).one_or_none()
-        if new_id is None:
-            return identifier
-        return new_id.identifier
-
-    def get_name(self, prefix, identifier) -> Optional[str]:  # noqa:D102
-        from pyobo.database.sql.models import Reference
-
-        reference = Reference.query.filter(
-            Reference.prefix == prefix, Reference.identifier == identifier
-        ).one_or_none()
-        if reference:
-            return reference.name
-
-    def get_synonyms(self, prefix: str, identifier: str) -> List[str]:  # noqa:D102
-        from pyobo.database.sql.models import Synonym
-
-        synonyms = Synonym.query.filter(
-            Synonym.prefix == prefix, Synonym.identifier == identifier
-        ).all()
-        return [s.name for s in synonyms]
-
-    def get_xrefs(self, prefix: str, identifier: str) -> List[Mapping[str, str]]:  # noqa:D102
-        from pyobo.database.sql.models import Xref
-
-        xrefs = Xref.query.filter(Xref.prefix == prefix, Xref.identifier == identifier).all()
-        xrefs = {(xref.xref_prefix, xref.xref_identifier) for xref in xrefs}
-        return [
-            dict(prefix=xref_prefix, identifier=xref_identifier)
-            for xref_prefix, xref_identifier in sorted(xrefs)
-        ]

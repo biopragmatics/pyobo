@@ -4,9 +4,9 @@
 
 import logging
 
-from sqlalchemy import Column, ForeignKey, Index, Integer, String, Text, create_engine
+from sqlalchemy import Column, Integer, String, Text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, scoped_session, sessionmaker
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 from ...constants import get_sqlalchemy_uri
 
@@ -94,43 +94,3 @@ class Definition(Base):
 
     def __repr__(self) -> str:  # noqa:D105
         return f"{self.prefix}:{self.alt}->{self.identifier}"
-
-
-class Synonym(Base):
-    """Represent an OBO term's synonym."""
-
-    __tablename__ = "obo_synonym"
-    id = Column(Integer, primary_key=True)
-
-    prefix = Column(String(32), ForeignKey(f"{Resource.__tablename__}.prefix"))
-    identifier = Column(String(64))
-    name = Column(String, index=True)
-
-    resource = relationship(Resource)
-
-    # specificity = Column(Enum(pyobo.struct.SynonymSpecifity))
-
-    def __repr__(self) -> str:  # noqa:D105
-        return self.name
-
-    __table_args__ = (Index("synonym_prefix_identifier_idx", prefix, identifier),)
-
-
-class Xref(Base):
-    """Represents an equivalence in between terms in two resources."""
-
-    __tablename__ = "obo_xref"
-    id = Column(Integer, primary_key=True)
-
-    prefix = Column(String(32), ForeignKey(f"{Resource.__tablename__}.prefix"))
-    identifier = Column(String(64))
-
-    xref_prefix = Column(String(32))
-    xref_identifier = Column(String(64))
-
-    source = Column(Text, index=True)
-
-    __table_args__ = (
-        Index("xref_prefix_identifier_idx", prefix, identifier),
-        Index("xref_xprefix_xidentifier_idx", xref_prefix, xref_identifier),
-    )

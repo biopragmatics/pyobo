@@ -48,8 +48,6 @@ def get_admin() -> Admin:
     admin.add_view(ReferenceView(Reference, session))
     admin.add_view(AltView(Alt, session))
     admin.add_view(DefinitionView(Definition, session))
-    # admin.add_view(View(Synonym, session))
-    # admin.add_view(View(Xref, session))
     return admin
 
 
