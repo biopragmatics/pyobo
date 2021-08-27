@@ -42,7 +42,9 @@ def get_species(prefix: str, identifier: str) -> Optional[str]:
 
 @lru_cache()
 @wrap_norm_prefix
-def get_id_species_mapping(prefix: str, force: bool = False, strict: bool = True) -> Mapping[str, str]:
+def get_id_species_mapping(
+    prefix: str, force: bool = False, strict: bool = True
+) -> Mapping[str, str]:
     """Get an identifier to species mapping."""
     if prefix == "ncbigene":
         from ..sources.ncbigene import get_ncbigene_id_to_species_mapping
