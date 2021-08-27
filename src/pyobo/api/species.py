@@ -42,7 +42,7 @@ def get_species(prefix: str, identifier: str) -> Optional[str]:
 
 @lru_cache()
 @wrap_norm_prefix
-def get_id_species_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
+def get_id_species_mapping(prefix: str, force: bool = False, strict: bool = True) -> Mapping[str, str]:
     """Get an identifier to species mapping."""
     if prefix == "ncbigene":
         from ..sources.ncbigene import get_ncbigene_id_to_species_mapping
@@ -57,7 +57,7 @@ def get_id_species_mapping(prefix: str, force: bool = False) -> Mapping[str, str
     @cached_mapping(path=path, header=[f"{prefix}_id", "species"], force=force)
     def _get_id_species_mapping() -> Mapping[str, str]:
         logger.info("[%s] no cached species found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+        ontology = get_ontology(prefix, force=force, strict=strict)
         logger.info("[%s] loading species mappings", prefix)
         return ontology.get_id_species_mapping()
 

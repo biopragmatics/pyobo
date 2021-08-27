@@ -19,6 +19,7 @@ from ..api import (
     get_hierarchy,
     get_id_definition_mapping,
     get_id_name_mapping,
+    get_id_species_mapping,
     get_id_synonyms_mapping,
     get_id_to_alts,
     get_ids,
@@ -66,7 +67,7 @@ def xrefs(prefix: str, target: str, force: bool, no_strict: bool):
 @verbose_option
 @force_option
 def metadata(prefix: str, force: bool):
-    """Page through the identifiers and names of entities in the given namespace."""
+    """Print the metadata for the given namespace."""
     metadata = get_metadata(prefix, force=force)
     click.echo(json.dumps(metadata, indent=2))
 
@@ -99,6 +100,25 @@ def names(prefix: str, identifier: Optional[str], force: bool, no_strict: bool):
             click.secho(f"No name available for {identifier}", fg="red")
         else:
             click.echo(name)
+
+
+@lookup.command()
+@prefix_argument
+@verbose_option
+@force_option
+@no_strict_option
+@click.option("-i", "--identifier")
+def species(prefix: str, identifier: Optional[str], force: bool, no_strict: bool):
+    """Page through the identifiers and species of entities in the given namespace."""
+    id_to_species = get_id_species_mapping(prefix, force=force, strict=not no_strict)
+    if identifier is None:
+        _help_page_mapping(id_to_species)
+    else:
+        species = id_to_species.get(identifier)
+        if species is None:
+            click.secho(f"No species available for {identifier}", fg="red")
+        else:
+            click.echo(species)
 
 
 @lookup.command()
