@@ -13,7 +13,6 @@ __all__ = [
     "RAW_DIRECTORY",
     "DATABASE_DIRECTORY",
     "SPECIES_REMAPPING",
-    "get_sqlalchemy_uri",
     "version_getter",
 ]
 
@@ -76,20 +75,6 @@ DEFINITIONS_FILE = "definitions.tsv.gz"
 
 TYPEDEFS_RECORD = "4644013"
 TYPEDEFS_FILE = "typedefs.tzv.gz"
-
-REFS_TABLE_NAME = "obo_reference"
-ALTS_TABLE_NAME = "obo_alt"
-DEFS_TABLE_NAME = "obo_def"
-
-
-def get_sqlalchemy_uri() -> str:
-    """Get the SQLAlchemy URI."""
-    rv = pystow.get_config("pyobo", "sqlalchemy_uri")
-    if rv is not None:
-        return rv
-
-    # Default value
-    return PYOBO_MODULE.joinpath_sqlite(name="pyobo.db")
 
 
 def version_getter(name: str) -> Callable[[], str]:

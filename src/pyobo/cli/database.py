@@ -19,7 +19,6 @@ from ..constants import (
     SYNONYMS_RECORD,
     TYPEDEFS_RECORD,
 )
-from ..database.sql.cli import database_sql
 from ..getters import db_output_helper
 from ..xrefdb.xrefs_pipeline import (
     _iter_alts,
@@ -41,9 +40,6 @@ __all__ = [
 @click.group(name="database")
 def main():
     """Build the PyOBO Database."""
-
-
-main.add_command(database_sql)
 
 
 @main.command()
