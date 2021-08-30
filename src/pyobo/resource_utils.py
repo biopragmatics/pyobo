@@ -23,6 +23,8 @@ from .constants import (
     PROPERTIES_RECORD,
     RELATIONS_FILE,
     RELATIONS_RECORD,
+    SPECIES_FILE,
+    SPECIES_RECORD,
     SYNONYMS_FILE,
     SYNONYMS_RECORD,
 )
@@ -36,6 +38,7 @@ __all__ = [
     "ensure_definitions",
     "ensure_properties",
     "ensure_relations",
+    "ensure_species",
 ]
 
 
@@ -96,6 +99,14 @@ def ensure_alts(force: bool = False) -> str:
     .. seealso:: :data:`pyobo.constants.ALTS_DATA_RECORD`
     """
     return _ensure(record_id=ALTS_DATA_RECORD, path=ALTS_FILE, force=force)
+
+
+def ensure_species(force: bool = False) -> str:
+    """Ensure that the species data is downloaded/built.
+
+    .. seealso:: :data:`pyobo.constants.SPECIES_RECORD`
+    """
+    return _ensure(record_id=SPECIES_RECORD, path=SPECIES_FILE, force=force)
 
 
 def ensure_definitions(force: bool = False) -> str:

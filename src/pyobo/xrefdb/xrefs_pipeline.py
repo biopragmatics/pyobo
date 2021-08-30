@@ -16,6 +16,7 @@ from .. import get_xrefs_df
 from ..api import (
     get_id_definition_mapping,
     get_id_name_mapping,
+    get_id_species_mapping,
     get_id_synonyms_mapping,
     get_id_to_alts,
     get_metadata,
@@ -96,6 +97,12 @@ def _iter_ooh_na_na(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, s
         ):
             identifier, name = line.strip().split("\t", 1)
             yield pubchem.PREFIX, identifier, name
+
+
+def _iter_species(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, str]]:
+    """Iterate over all prefix-identifier-species triples we can get."""
+    yield from iter_helper(get_id_species_mapping, leave=leave, **kwargs)
+    # TODO ncbigene
 
 
 def _iter_definitions(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, str]]:

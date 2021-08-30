@@ -16,6 +16,7 @@ from ..constants import (
     OOH_NA_NA_RECORD,
     PROPERTIES_RECORD,
     RELATIONS_RECORD,
+    SPECIES_RECORD,
     SYNONYMS_RECORD,
     TYPEDEFS_RECORD,
 )
@@ -27,6 +28,7 @@ from ..xrefdb.xrefs_pipeline import (
     _iter_ooh_na_na,
     _iter_properties,
     _iter_relations,
+    _iter_species,
     _iter_synonyms,
     _iter_typedefs,
     _iter_xrefs,
@@ -74,6 +76,8 @@ def build(ctx: click.Context, directory: str, zenodo: bool, no_strict: bool, for
     ctx.invoke(relations, directory=directory, zenodo=zenodo, no_strict=no_strict)
     click.secho("Typedefs", fg="cyan", bold=True)
     ctx.invoke(typedefs, directory=directory, zenodo=zenodo, no_strict=no_strict)
+    click.secho("Species", fg="cyan", bold=True)
+    ctx.invoke(species, directory=directory, zenodo=zenodo, no_strict=no_strict)
 
 
 @main.command()
@@ -113,6 +117,27 @@ def names(directory: str, zenodo: bool, no_strict: bool, force: bool):
     if zenodo:
         # see https://zenodo.org/record/4020486
         update_zenodo(OOH_NA_NA_RECORD, paths)
+
+
+@main.command()
+@verbose_option
+@directory_option
+@zenodo_option
+@force_option
+@no_strict_option
+def species(directory: str, zenodo: bool, no_strict: bool, force: bool):
+    """Make the prefix-identifier-species dump."""
+    paths = db_output_helper(
+        _iter_species,
+        "species",
+        ("prefix", "identifier", "species"),
+        strict=not no_strict,
+        force=force,
+        directory=directory,
+    )
+    if zenodo:
+        # see https://zenodo.org/record/5334738
+        update_zenodo(SPECIES_RECORD, paths)
 
 
 @main.command()

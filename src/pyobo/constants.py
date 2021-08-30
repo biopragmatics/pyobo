@@ -74,7 +74,10 @@ DEFINITIONS_RECORD = "4637061"
 DEFINITIONS_FILE = "definitions.tsv.gz"
 
 TYPEDEFS_RECORD = "4644013"
-TYPEDEFS_FILE = "typedefs.tzv.gz"
+TYPEDEFS_FILE = "typedefs.tsv.gz"
+
+SPECIES_RECORD = "5334738"
+SPECIES_FILE = "species.tsv.gz"
 
 
 def version_getter(name: str) -> Callable[[], str]:
