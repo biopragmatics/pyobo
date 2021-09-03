@@ -9,8 +9,8 @@ import click
 import pandas as pd
 from more_click import verbose_option
 
-from ..struct import Obo, Reference, Synonym, Term, from_species
-from ..utils.path import ensure_df
+from pyobo.struct import Obo, Reference, Term, from_species
+from pyobo.utils.path import ensure_df
 
 PREFIX = "cgnc"
 URL = "http://birdgenenames.org/cgnc/downloads.jsp?file=standard"
@@ -43,28 +43,25 @@ def get_terms() -> Iterable[Term]:
             logger.warning("CGNC ID is not int-like: %s", cgnc_id)
             continue
 
-        xrefs = []
-        if entrez_id and pd.notna(entrez_id):
-            xrefs.append(Reference(prefix="ncbigene", identifier=entrez_id))
-        if ensembl_id and pd.notna(ensembl_id):
-            xrefs.append(Reference(prefix="ensembl", identifier=ensembl_id))
-
-        if synonyms and pd.notna(synonyms):
-            synonyms = [Synonym(name=synonym) for synonym in synonyms.split("|")]
-        else:
-            synonyms = []
-
         term = Term(
             reference=Reference(
                 prefix=PREFIX,
                 identifier=cgnc_id,
                 name=symbol if pd.notna(symbol) else None,
             ),
-            xrefs=xrefs,
-            synonyms=synonyms,
             definition=name if pd.notna(name) else None,
         )
         term.set_species(identifier="9031", name="Gallus gallus")
+        if entrez_id and pd.notna(entrez_id):
+            term.append_xref(Reference(prefix="ncbigene", identifier=entrez_id))
+        if ensembl_id and pd.notna(ensembl_id):
+            term.append_xref(Reference(prefix="ensembl", identifier=ensembl_id))
+        if synonyms and pd.notna(synonyms):
+            for synonym in synonyms.split("|"):
+                synonym = synonym.strip()
+                if not synonym:
+                    continue
+                term.append_synonym(synonym)
         yield term
 
 
