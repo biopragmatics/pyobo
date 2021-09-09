@@ -26,22 +26,22 @@ logger = logging.getLogger(__name__)
 PREFIX = "drugbank.salt"
 
 
-def get_obo() -> Obo:
+def get_obo(force: bool = False) -> Obo:
     """Get DrugBank Salts as OBO."""
     version = bioversions.get_version("drugbank")
     return Obo(
         ontology=PREFIX,
         name="DrugBank Salts",
         iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
+        iter_terms_kwargs=dict(version=version, force=force),
         data_version=version,
         auto_generated_by=f"bio2obo:{PREFIX}",
     )
 
 
-def iter_terms(version: str) -> Iterable[Term]:
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over DrugBank Salt terms in OBO."""
-    for drug_info in iterate_drug_info(version):
+    for drug_info in iterate_drug_info(version, force=force):
         for salt in drug_info.get("salts", []):
             xrefs = []
             for key in ["unii", "cas", "inchikey"]:
@@ -61,4 +61,4 @@ def iter_terms(version: str) -> Iterable[Term]:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    get_obo().write_default()
+    get_obo().write_default(write_obo=True)

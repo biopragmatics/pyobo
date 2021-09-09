@@ -5,7 +5,6 @@
 from dataclasses import dataclass, field
 from typing import Mapping, Optional, Tuple
 
-from .registry import Registry, miriam
 from .utils import obo_escape
 from ..identifier_utils import normalize_curie
 
@@ -29,9 +28,6 @@ class Reference:
 
     #: The namespace's identifier in the registry
     registry_id: Optional[str] = field(default=None, repr=False)
-
-    #: The registry in which the namespace can be looked up
-    registry: Registry = field(default=miriam, repr=False)
 
     @property
     def curie(self) -> str:

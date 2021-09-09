@@ -2,7 +2,7 @@
 
 """Get Wikidata xrefs.
 
-Run with python -m pyobo.xrefdb.sources.wikidata
+Run with ``python -m pyobo.xrefdb.sources.wikidata``.
 """
 
 import json
@@ -36,16 +36,16 @@ def get_wikidata_xrefs_df(*, use_tqdm: bool = True) -> pd.DataFrame:
 def iterate_wikidata_dfs(*, use_tqdm: bool = True) -> Iterable[pd.DataFrame]:
     """Iterate over WikiData xref dataframes."""
     wikidata_properties = {
-        prefix: entry["wikidata"]["property"]
+        prefix: entry.wikidata["prefix"]
         for prefix, entry in bioregistry.read_registry().items()
-        if "wikidata" in entry and "property" in entry["wikidata"]
+        if entry.wikidata and "prefix" in entry.wikidata
     }
     # wikidata_properties.update(get_wikidata_properties())
 
     it = sorted(wikidata_properties.items())
     it = tqdm(it, disable=not use_tqdm, desc="Wikidata properties")
     for prefix, wikidata_property in it:
-        if prefix in {"pubmed", "pmc", "orcid"}:
+        if prefix in {"pubmed", "pmc", "orcid", "inchi", "smiles"}:
             continue  # too many
         it.set_postfix({"prefix": prefix})
         try:

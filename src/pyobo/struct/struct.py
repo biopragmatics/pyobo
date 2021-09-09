@@ -519,11 +519,13 @@ class Obo:
         """Write the OBO to the default path."""
         metadata = self.get_metadata()
         for path in (self._root_metadata_path, self._versioned_metadata_path):
-            logger.info("[%s] caching metadata to %s", self.ontology, path)
+            logger.info("[%s v%s] caching metadata to %s", self.ontology, self.data_version, path)
             with path.open("w") as file:
                 json.dump(metadata, file, indent=2)
 
-        logger.info("[%s] caching typedefs to %s", self.ontology, self._typedefs_path)
+        logger.info(
+            "[%s v%s] caching typedefs to %s", self.ontology, self.data_version, self._typedefs_path
+        )
         typedef_df: pd.DataFrame = self.get_typedef_df()
         typedef_df.sort_values(list(typedef_df.columns), inplace=True)
         typedef_df.to_csv(self._typedefs_path, sep="\t", index=False)
@@ -555,7 +557,7 @@ class Obo:
         ]:
             if path.exists() and not force:
                 continue
-            logger.info("[%s] caching %s to %s", self.ontology, label, path)
+            logger.info("[%s v%s] caching %s to %s", self.ontology, self.data_version, label, path)
             write_iterable_tsv(
                 path=path,
                 header=header,
@@ -569,7 +571,11 @@ class Obo:
             if relations_path.exists() and not force:
                 continue
             logger.info(
-                "[%s] caching relation %s ! %s", self.ontology, relation.curie, relation.name
+                "[%s v%s] caching relation %s ! %s",
+                self.ontology,
+                self.data_version,
+                relation.curie,
+                relation.name,
             )
             relation_df = self.get_filtered_relations_df(relation)
             if not len(relation_df.index):
@@ -689,7 +695,12 @@ class Obo:
         for source, key, target in links:
             rv.add_edge(source, target, key=key)
 
-        logger.info("[%s] exported graph with %d nodes", self.ontology, rv.number_of_nodes())
+        logger.info(
+            "[%s v%s] exported graph with %d nodes",
+            self.ontology,
+            self.data_version,
+            rv.number_of_nodes(),
+        )
         return rv
 
     @staticmethod

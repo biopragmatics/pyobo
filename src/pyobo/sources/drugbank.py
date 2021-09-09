@@ -90,7 +90,14 @@ DRUG_XREF_MAPPING = {
 
 
 def _make_term(drug_info: Mapping[str, Any]) -> Term:
-    xrefs = []
+    term = Term(
+        reference=Reference(
+            prefix=PREFIX, identifier=drug_info["drugbank_id"], name=drug_info["name"]
+        ),
+        definition=drug_info["description"],
+        synonyms=[Synonym(name=alias) for alias in drug_info["aliases"]],
+    )
+
     for xref in drug_info["xrefs"]:
         xref_prefix, xref_identifier = xref["resource"], xref["identifier"]
         if xref_prefix in DRUG_XREF_SKIP:
@@ -99,23 +106,17 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
         if xref_prefix_norm is None:
             logger.warning("unhandled xref: %s:%s", xref_prefix, xref_identifier)
             continue
-        xrefs.append(Reference(prefix=xref_prefix_norm, identifier=xref_identifier))
+        term.append_xref(Reference(prefix=xref_prefix_norm, identifier=xref_identifier))
 
-    xrefs.append(Reference(prefix="cas", identifier=drug_info["cas_number"]))
+    for xref_prefix in ["cas", "inchikey"]:
+        identifier = drug_info.get(xref_prefix)
+        if identifier:
+            term.append_xref(Reference(prefix=xref_prefix, identifier=identifier))
 
-    for k in ["inchi", "inchikey", "smiles"]:
-        identifier = drug_info.get(k)
-        if identifier is not None:
-            xrefs.append(Reference(prefix=k, identifier=identifier))
-
-    term = Term(
-        reference=Reference(
-            prefix=PREFIX, identifier=drug_info["drugbank_id"], name=drug_info["name"]
-        ),
-        definition=drug_info["description"],
-        xrefs=xrefs,
-        synonyms=[Synonym(name=alias) for alias in drug_info["aliases"]],
-    )
+    for prop in ["smiles", "inchi"]:
+        identifier = drug_info.get(xref_prefix)
+        if identifier:
+            term.append_property(prop, identifier)
 
     for salt in drug_info.get("salts", []):
         term.append_relationship(
@@ -138,11 +139,12 @@ def get_xml_root(version: Optional[str] = None) -> ElementTree.Element:
     """
     from drugbank_downloader import parse_drugbank
 
-    return parse_drugbank(
+    element = parse_drugbank(
         version=version,
         username=pystow.get_config("pyobo", "drugbank_username"),
         password=pystow.get_config("pyobo", "drugbank_password"),
     )
+    return element.getroot()
 
 
 ns = "{http://www.drugbank.ca}"
@@ -157,7 +159,7 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
     row = {
         "type": drug_xml.get("type"),
         "drugbank_id": drug_xml.findtext(f"{ns}drugbank-id[@primary='true']"),
-        "cas_number": drug_xml.findtext(f"{ns}cas-number"),
+        "cas": drug_xml.findtext(f"{ns}cas-number"),
         "name": drug_xml.findtext(f"{ns}name"),
         "description": drug_xml.findtext(f"{ns}description").replace("\r", "").replace("\n", "\\n"),
         "groups": [group.text for group in drug_xml.findall(f"{ns}groups/{ns}group")],
@@ -303,4 +305,4 @@ def _iter_polypeptides(polypeptides) -> Iterable[Mapping[str, Any]]:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    get_obo().write_default()
+    get_obo(force=True).write_default(write_obo=True)

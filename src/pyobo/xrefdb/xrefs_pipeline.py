@@ -168,8 +168,10 @@ def _iter_xrefs(
     )
     for prefix, df in it:
         df.dropna(inplace=True)
-        for t in df.values:
-            yield (prefix, *t, prefix)
+        for row in df.values:
+            if any(not element for element in row):
+                continue
+            yield (prefix, *row, prefix)
     for df in iter_xref_plugins(skip_below=skip_below):
         df.dropna(inplace=True)
-        yield from df.values
+        yield from tqdm(df.values, leave=False, total=len(df.index), unit_scale=True)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Get the biomapping manually curated equivalences."""
+"""Get the Biomappings manually curated equivalences."""
 
 import pandas as pd
 from pystow.utils import get_commit
@@ -21,8 +21,8 @@ __all__ = [
 
 def get_biomappings_df() -> pd.DataFrame:
     """Get biomappings equivalences."""
-    sha = get_commit("biomappings", "biomappings")
-    url = f"https://raw.githubusercontent.com/biomappings/biomappings/{sha}/src/biomappings/resources/mappings.tsv"
+    sha = get_commit("biopragmatics", "biomappings")
+    url = f"https://raw.githubusercontent.com/biopragmatics/biomappings/{sha}/src/biomappings/resources/mappings.tsv"
     df = pd.read_csv(url, sep="\t")
     df[PROVENANCE] = url
     df.rename(

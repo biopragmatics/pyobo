@@ -2,10 +2,12 @@
 
 """CLI for PyOBO Database Generation."""
 
+import logging
 import sys
 
 import click
 from more_click import verbose_option
+from tqdm.contrib.logging import logging_redirect_tqdm
 from zenodo_client import update_zenodo
 
 from .utils import directory_option, force_option, no_strict_option, zenodo_option
@@ -288,15 +290,17 @@ def properties(directory: str, zenodo: bool, force: bool, no_strict: bool):
 @no_strict_option
 def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool):  # noqa: D202
     """Make the prefix-identifier-xref dump."""
-    paths = db_output_helper(
-        _iter_xrefs,
-        "xrefs",
-        ("prefix", "identifier", "xref_prefix", "xref_identifier", "provenance"),
-        directory=directory,
-        force=force,
-        strict=not no_strict,
-        summary_detailed=(0, 2),  # second column corresponds to xref prefix
-    )
+    logging.captureWarnings(True)
+    with logging_redirect_tqdm():
+        paths = db_output_helper(
+            _iter_xrefs,
+            "xrefs",
+            ("prefix", "identifier", "xref_prefix", "xref_identifier", "provenance"),
+            directory=directory,
+            force=force,
+            strict=not no_strict,
+            summary_detailed=(0, 2),  # second column corresponds to xref prefix
+        )
     if zenodo:
         # see https://zenodo.org/record/4021477
         update_zenodo(JAVERT_RECORD, paths)

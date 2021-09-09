@@ -129,7 +129,7 @@ has_part = TypeDef(
     inverse=Reference(prefix="bfo", identifier="0000050", name="part of"),
 )
 is_a = TypeDef(
-    reference=Reference.default(identifier="is_a", name="is a"),
+    reference=Reference(prefix="rdfs", identifier="subClassOf", name="subclass of"),
     inverse=Reference.default(identifier="subclass", name="subclass"),
 )
 has_member = TypeDef(
@@ -138,7 +138,7 @@ has_member = TypeDef(
 subclass = TypeDef(
     reference=Reference.default(identifier="subclass", name="subclass"),
     comment="Inverse of isA",
-    inverse=Reference.default(identifier="is_a", name="is a"),
+    inverse=is_a.reference,
 )
 
 develops_from = TypeDef.from_triple(prefix="ro", identifier="0002202", name="develops from")
@@ -171,10 +171,6 @@ has_mature = TypeDef(
     reference=Reference(prefix="mirbase", identifier="has_mature", name="has mature miRNA"),
 )
 
-has_gene_product = TypeDef(
-    reference=Reference(prefix="ro", identifier="0002205", name="has gene product"),
-    inverse=Reference(prefix="ro", identifier="0002204", name="gene product of"),
-)
 transcribes_to = TypeDef(
     reference=Reference.default(identifier="transcribes_to", name="transcribes to"),
     definition="Relation between a gene and a transcript",
@@ -183,6 +179,10 @@ translates_to = TypeDef(
     reference=Reference.default(identifier="translates_to", name="translates to"),
     definition="Relation between a transcript and a protein",
 )
+has_gene_product = TypeDef(
+    reference=Reference(prefix="ro", identifier="0002205", name="has gene product"),
+    inverse=Reference(prefix="ro", identifier="0002204", name="gene product of"),
+)  # holds over chain (transcribes_to, translates_to)
 gene_product_is_a = TypeDef(
     reference=Reference.default(identifier="gene_product_is_a", name="gene product is a"),
 )

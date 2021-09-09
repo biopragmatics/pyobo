@@ -40,11 +40,12 @@ def get_chembl_compound_equivalences(version: Optional[str] = None) -> pd.DataFr
 
     df = get_chembl_compound_equivalences_raw(version=version)
     rows = []
-    for chembl, smiles, inchi, inchi_key in df.values:
+    for chembl, _smiles, _inchi, inchi_key in df.values:
         rows.extend(
             [
-                ("chembl.compound", chembl, "smiles", smiles, f"chembl{version}"),
-                ("chembl.compound", chembl, "inchi", inchi, f"chembl{version}"),
+                # No smiles/inchi since they can have variable length
+                # ("chembl.compound", chembl, "smiles", smiles, f"chembl{version}"),
+                # ("chembl.compound", chembl, "inchi", inchi, f"chembl{version}"),
                 ("chembl.compound", chembl, "inchikey", inchi_key, f"chembl{version}"),
             ]
         )
