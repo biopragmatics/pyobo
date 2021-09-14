@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Mapping, Optional, Tuple
 
 from .utils import obo_escape
+from ..constants import DEFAULT_PREFIX
 from ..identifier_utils import normalize_curie
 
 __all__ = [
@@ -57,7 +58,7 @@ class Reference:
     @staticmethod
     def default(identifier: str, name: Optional[str] = None) -> "Reference":
         """Return a reference from the PyOBO namespace."""
-        return Reference(prefix="obo", identifier=identifier, name=name)
+        return Reference(prefix=DEFAULT_PREFIX, identifier=identifier, name=name)
 
     @property
     def _escaped_identifier(self):

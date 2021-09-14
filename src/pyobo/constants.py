@@ -35,6 +35,9 @@ GLOBAL_SKIP = {
     "adw",  # deprecated
 }
 
+#: Default prefix
+DEFAULT_PREFIX = "obo"
+
 SOURCE_PREFIX = "source_ns"
 SOURCE_ID = "source_id"
 RELATION_PREFIX = "relation_ns"
