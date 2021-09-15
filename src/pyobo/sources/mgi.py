@@ -2,14 +2,17 @@
 
 """Converter for MGI."""
 
+import logging
 from collections import defaultdict
 from typing import Iterable
 
 import pandas as pd
 from tqdm import tqdm
 
-from ..struct import Obo, Reference, Synonym, Term, from_species
+from ..struct import Obo, Reference, Synonym, Term, from_species, has_gene_product, transcribes_to
 from ..utils.path import ensure_df
+
+logger = logging.getLogger(__name__)
 
 PREFIX = "mgi"
 MARKERS_URL = "http://www.informatics.jax.org/downloads/reports/MRK_List2.rpt"
@@ -17,13 +20,14 @@ ENTREZ_XREFS_URL = "http://www.informatics.jax.org/downloads/reports/MGI_EntrezG
 ENSEMBL_XREFS_URL = "http://www.informatics.jax.org/downloads/reports/MRK_ENSEMBL.rpt"
 
 
-def get_obo() -> Obo:
+def get_obo(force: bool = False) -> Obo:
     """Get MGI as OBO."""
     return Obo(
         ontology=PREFIX,
         name="Mouse Genome Database",
         iter_terms=get_terms,
-        typedefs=[from_species],
+        iter_terms_kwargs=dict(force=force),
+        typedefs=[from_species, has_gene_product, transcribes_to],
         auto_generated_by=f"bio2obo:{PREFIX}",
     )
 
@@ -31,7 +35,7 @@ def get_obo() -> Obo:
 COLUMNS = ["MGI Accession ID", "Marker Symbol", "Marker Name"]
 
 
-def get_ensembl_df() -> pd.DataFrame:
+def get_ensembl_df(force: bool = False) -> pd.DataFrame:
     """Get the Ensembl mappings dataframe."""
     return ensure_df(
         PREFIX,
@@ -52,10 +56,13 @@ def get_ensembl_df() -> pd.DataFrame:
             "strand",
             "biotypes",
         ],
+        force=force,
     )
 
 
-def get_entrez_df() -> pd.DataFrame:
+def get_entrez_df(
+    force: bool = False,
+) -> pd.DataFrame:
     """Get the Entrez mappings dataframe."""
     return ensure_df(
         PREFIX,
@@ -81,25 +88,28 @@ def get_entrez_df() -> pd.DataFrame:
         dtype={
             "entrez_id": str,
         },
+        force=force,
     )
 
 
-def get_terms() -> Iterable[Term]:
+def get_terms(force: bool = False) -> Iterable[Term]:
     """Get the MGI terms."""
-    df = ensure_df(PREFIX, url=MARKERS_URL, sep="\t")
+    df = ensure_df(PREFIX, url=MARKERS_URL, sep="\t", force=force)
 
-    entrez_df = get_entrez_df()
+    entrez_df = get_entrez_df(force=force)
     mgi_to_entrez_id, mgi_to_synonyms = {}, {}
-    for mgi_id, synonyms, entrez_id in entrez_df[["mgi_id", "synonyms", "entrez_id"]].values:
-        mgi_id = mgi_id[len("MGI:") :]
+    for mgi_curie, synonyms, entrez_id in entrez_df[["mgi_id", "synonyms", "entrez_id"]].values:
+        mgi_id = mgi_curie[len("MGI:") :]
         if synonyms and pd.notna(synonyms):
             mgi_to_synonyms[mgi_id] = synonyms.split("|")
         if entrez_id and pd.notna(entrez_id):
             mgi_to_entrez_id[mgi_id] = entrez_id
 
-    ensembl_df = get_ensembl_df()
+    ensembl_df = get_ensembl_df(force=force)
     # ensembl_df.to_csv('test.tsv', sep='\t', index=False)
-    mgi_to_ensemble_ids = defaultdict(list)
+    mgi_to_ensemble_accession_ids = defaultdict(list)
+    mgi_to_ensemble_transcript_ids = defaultdict(list)
+    mgi_to_ensemble_protein_ids = defaultdict(list)
     ensembl_columns = [
         "mgi_id",
         "ensembl_accession_id",
@@ -107,43 +117,48 @@ def get_terms() -> Iterable[Term]:
         "ensembl_protein_id",
     ]
     ensembl_it = ensembl_df[ensembl_columns].values
-    for mgi_id, ensemble_accession_id, ensemble_transcript_ids, ensemble_protein_ids in ensembl_it:
-        mgi_id = mgi_id[len("MGI:") :]
+    for (
+        mgi_curie,
+        ensemble_accession_id,
+        ensemble_transcript_ids,
+        ensemble_protein_ids,
+    ) in ensembl_it:
+        mgi_id = mgi_curie[len("MGI:") :]
         if ensemble_accession_id and pd.notna(ensemble_accession_id):
-            mgi_to_ensemble_ids[mgi_id].append(ensemble_accession_id)
+            mgi_to_ensemble_accession_ids[mgi_id].append(ensemble_accession_id)
         if ensemble_transcript_ids and pd.notna(ensemble_transcript_ids):
             for ensemble_transcript_id in ensemble_transcript_ids.split():
-                mgi_to_ensemble_ids[mgi_id].append(ensemble_transcript_id)
+                mgi_to_ensemble_transcript_ids[mgi_id].append(ensemble_transcript_id)
         if ensemble_protein_ids and pd.notna(ensemble_protein_ids):
             for ensemble_protein_id in ensemble_protein_ids.split():
-                mgi_to_ensemble_ids[mgi_id].append(ensemble_protein_id)
+                mgi_to_ensemble_protein_ids[mgi_id].append(ensemble_protein_id)
 
-    for identifier, name, definition in tqdm(
+    for mgi_curie, name, definition in tqdm(
         df[COLUMNS].values, total=len(df.index), desc=f"Mapping {PREFIX}"
     ):
-        identifier = identifier[len("MGI:") :]
-
-        synonyms = []
-        if identifier in mgi_to_synonyms:
-            for synonym in mgi_to_synonyms[identifier]:
-                synonyms.append(Synonym(name=synonym))
-
-        xrefs = []
-        if identifier in mgi_to_entrez_id:
-            xrefs.append(Reference(prefix="ncbigene", identifier=mgi_to_entrez_id[identifier]))
-        if identifier in mgi_to_ensemble_ids:
-            for ensembl_id in mgi_to_ensemble_ids[identifier]:
-                xrefs.append(Reference(prefix="ensembl", identifier=ensembl_id))
-
+        identifier = mgi_curie[len("MGI:") :]
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
             definition=definition,
-            xrefs=xrefs,
-            synonyms=synonyms,
         )
+        if identifier in mgi_to_synonyms:
+            for synonym in mgi_to_synonyms[identifier]:
+                term.append_synonym(Synonym(name=synonym))
+        if identifier in mgi_to_entrez_id:
+            term.append_xref(Reference(prefix="ncbigene", identifier=mgi_to_entrez_id[identifier]))
+        for ensembl_id in mgi_to_ensemble_accession_ids[identifier]:
+            term.append_xref(Reference(prefix="ensembl", identifier=ensembl_id))
+        for ensembl_id in mgi_to_ensemble_transcript_ids[identifier]:
+            term.append_relationship(
+                transcribes_to, Reference(prefix="ensembl", identifier=ensembl_id)
+            )
+        for ensembl_id in mgi_to_ensemble_protein_ids[identifier]:
+            term.append_relationship(
+                has_gene_product, Reference(prefix="ensembl", identifier=ensembl_id)
+            )
         term.set_species(identifier="10090", name="Mus musculus")
         yield term
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    get_obo(force=True).write_default(write_obo=True)

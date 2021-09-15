@@ -2,14 +2,25 @@
 
 """Converter for RGD."""
 
+import logging
 from typing import Iterable
 
 import pandas as pd
 from tqdm import tqdm
 
-from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
+from ..struct import (
+    Obo,
+    Reference,
+    Synonym,
+    SynonymTypeDef,
+    Term,
+    from_species,
+    has_gene_product,
+    transcribes_to,
+)
 from ..utils.path import ensure_df
 
+logger = logging.getLogger(__name__)
 PREFIX = "rgd"
 
 old_symbol_type = SynonymTypeDef(id="old_symbol", name="old symbol")
@@ -59,13 +70,14 @@ GENES_HEADER = [
 ]
 
 
-def get_obo() -> Obo:
+def get_obo(force: bool = False) -> Obo:
     """Get RGD as OBO."""
     return Obo(
         ontology=PREFIX,
         name="Rat Genome Database",
         iter_terms=get_terms,
-        typedefs=[from_species],
+        iter_terms_kwargs=dict(force=force),
+        typedefs=[from_species, transcribes_to, has_gene_product],
         synonym_typedefs=[old_name_type, old_symbol_type],
         auto_generated_by=f"bio2obo:{PREFIX}",
     )
@@ -78,7 +90,7 @@ namespace_to_column = [
 ]
 
 
-def get_terms() -> Iterable[Term]:
+def get_terms(force: bool = False) -> Iterable[Term]:
     """Get RGD terms."""
     df = ensure_df(
         PREFIX,
@@ -90,42 +102,56 @@ def get_terms() -> Iterable[Term]:
             "NCBI_GENE_ID": str,
             "GENE_RGD_ID": str,
         },
+        force=force,
     )
     for _, row in tqdm(df.iterrows(), total=len(df.index), desc=f"Mapping {PREFIX}"):
-        synonyms = []
-
+        term = Term(
+            reference=Reference(prefix=PREFIX, identifier=row["GENE_RGD_ID"], name=row["SYMBOL"]),
+            definition=row["NAME"] or row["GENE_DESC"],
+        )
         old_names = row["OLD_NAME"]
         if old_names and pd.notna(old_names):
             for old_name in old_names.split(";"):
-                synonyms.append(Synonym(name=old_name, type=old_name_type))
+                term.append_synonym(Synonym(name=old_name, type=old_name_type))
         old_symbols = row["OLD_SYMBOL"]
         if old_symbols and pd.notna(old_symbols):
             for old_symbol in old_symbols.split(";"):
-                synonyms.append(Synonym(name=old_symbol, type=old_symbol_type))
-
-        xrefs = []
+                term.append_synonym(Synonym(name=old_symbol, type=old_symbol_type))
         for prefix, key in namespace_to_column:
             xref_ids = str(row[key])
             if xref_ids and pd.notna(xref_ids):
                 for xref_id in xref_ids.split(";"):
-                    xrefs.append(Reference(prefix=prefix, identifier=xref_id))
+                    if xref_id == "nan":
+                        continue
+                    if prefix == "uniprot":
+                        term.append_relationship(
+                            has_gene_product, Reference.auto(prefix=prefix, identifier=xref_id)
+                        )
+                    elif prefix == "ensembl":
+                        if xref_id.startswith("ENSMUSG") or xref_id.startswith("ENSRNOG"):
+                            # second one is reverse strand
+                            term.append_xref(Reference(prefix=prefix, identifier=xref_id))
+                        elif xref_id.startswith("ENSMUST"):
+                            term.append_relationship(
+                                transcribes_to, Reference(prefix=prefix, identifier=xref_id)
+                            )
+                        elif xref_id.startswith("ENSMUSP"):
+                            term.append_relationship(
+                                has_gene_product, Reference(prefix=prefix, identifier=xref_id)
+                            )
+                        else:
+                            logger.warning("[%s] unhandled xref ensembl:%s", PREFIX, xref_id)
+                    else:
+                        term.append_xref(Reference(prefix=prefix, identifier=xref_id))
 
-        provenance = []
         pubmed_ids = row["CURATED_REF_PUBMED_ID"]
         if pubmed_ids and pd.notna(pubmed_ids):
             for pubmed_id in str(pubmed_ids).split(";"):
-                provenance.append(Reference(prefix="pubmed", identifier=pubmed_id))
+                term.append_provenance(Reference(prefix="pubmed", identifier=pubmed_id))
 
-        term = Term(
-            reference=Reference(prefix=PREFIX, identifier=row["GENE_RGD_ID"], name=row["SYMBOL"]),
-            definition=row["NAME"] or row["GENE_DESC"],
-            synonyms=synonyms,
-            xrefs=xrefs,
-            provenance=provenance,
-        )
         term.set_species(identifier="10116", name="Rattus norvegicus")
         yield term
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    get_obo(force=True).write_default(write_obo=True)

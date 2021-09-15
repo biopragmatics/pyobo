@@ -30,6 +30,14 @@ class Reference:
     #: The namespace's identifier in the registry
     registry_id: Optional[str] = field(default=None, repr=False)
 
+    @classmethod
+    def auto(cls, prefix: str, identifier: str) -> "Reference":
+        """Create a reference and auto-populate its name."""
+        from ..api import get_name
+
+        name = get_name(prefix, identifier)
+        return cls(prefix=prefix, identifier=identifier, name=name)
+
     @property
     def curie(self) -> str:
         """The CURIE for this reference."""  # noqa: D401
