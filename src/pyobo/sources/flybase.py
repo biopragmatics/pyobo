@@ -74,7 +74,14 @@ def _get_human_orthologs(
         f"orthologs/dmel_human_orthologs_disease_fb_{version}.tsv.gz"
     )
     df = ensure_df(
-        PREFIX, url=url, force=force, version=version, skiprows=2, header=None, usecols=[0, 2]
+        PREFIX,
+        url=url,
+        force=force,
+        version=version,
+        skiprows=2,
+        header=None,
+        usecols=[0, 2],
+        names=["flybase_id", "hgnc_id"],
     )
     return multisetdict(df.values)
 
@@ -140,6 +147,8 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
         if pd.notna(name):
             term.append_synonym(name)
         for hgnc_curie in human_orthologs.get(identifier, []):
+            if not hgnc_curie or pd.isna(hgnc_curie):
+                continue
             term.append_relationship(orthologous, Reference.from_curie(hgnc_curie, auto=True))
         taxonomy_id = abbr_to_taxonomy.get(organism)
         if taxonomy_id is not None:
