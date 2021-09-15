@@ -134,10 +134,11 @@ def ensure_tar_df(
     inner_path: str,
     version: VersionHint = None,
     path: Optional[str] = None,
+    force: bool = False,
     **kwargs,
 ) -> pd.DataFrame:
     """Download a tar file and open as a dataframe."""
-    path = ensure_path(prefix, *parts, url=url, version=version, name=path)
+    path = ensure_path(prefix, *parts, url=url, version=version, name=path, force=force)
     with tarfile.open(path) as tar_file:
         with tar_file.extractfile(inner_path) as file:
             return pd.read_csv(file, **kwargs)

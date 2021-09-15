@@ -20,19 +20,20 @@ INNER_PATH = "S288C_reference_genome_R64-2-1_20150113/saccharomyces_cerevisiae_R
 alias_type = SynonymTypeDef(id="alias", name="alias")
 
 
-def get_obo() -> Obo:
+def get_obo(force: bool = False) -> Obo:
     """Get SGD as OBO."""
     return Obo(
         ontology=PREFIX,
         name="Saccharomyces Genome Database",
         iter_terms=get_terms,
+        iter_terms_kwargs=dict(force=force),
         typedefs=[from_species],
         synonym_typedefs=[alias_type],
         auto_generated_by=f"bio2obo:{PREFIX}",
     )
 
 
-def get_terms() -> Iterable[Term]:
+def get_terms(force: bool = False) -> Iterable[Term]:
     """Get SGD terms."""
     df = ensure_tar_df(
         prefix=PREFIX,
@@ -42,6 +43,7 @@ def get_terms() -> Iterable[Term]:
         skiprows=18,
         header=None,
         names=HEADER,
+        force=force,
     )
     df = df[df["feature"] == "gene"]
     for data in df["data"]:
@@ -68,4 +70,4 @@ def get_terms() -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    get_obo(force=True).write_default(write_obo=True)
