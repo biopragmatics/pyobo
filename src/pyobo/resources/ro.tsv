@@ -1,7 +1,6 @@
 bfo	0000002	continuant
 bfo	0000003	occurrent
 bfo	0000004	independent continuant
-bfo	0000005	obsolete dependent continuant
 bfo	0000006	spatial region
 bfo	0000015	process
 bfo	0000016	disposition
@@ -22,8 +21,8 @@ bfo	0000063	precedes
 bfo	0000066	occurs in
 bfo	0000067	contains process
 bfo	0000141	immaterial entity
-ro	0000052	inheres in
-ro	0000053	bearer of
+ro	0000052	characteristic of
+ro	0000053	has characteristic
 ro	0000056	participates in
 ro	0000057	has participant
 ro	0000058	is concretized as
@@ -174,6 +173,7 @@ ro	0002234	has output
 ro	0002235	stem parasite of
 ro	0002236	root parasite of
 ro	0002237	hemiparasite of
+ro	0002238	has component participant
 ro	0002240	has exposure receptor
 ro	0002241	has exposure stressor
 ro	0002242	has exposure route
@@ -217,7 +217,7 @@ ro	0002309	has exposure stimulus
 ro	0002310	exposure event or process
 ro	0002312	evolutionary variant of
 ro	0002313	transports or maintains localization of
-ro	0002314	inheres in part of
+ro	0002314	characteristic of part of
 ro	0002315	results in acquisition of features of
 ro	0002320	evolutionarily related to
 ro	0002321	ecologically related to
@@ -565,6 +565,8 @@ ro	0004047	causally upstream of or within, positive effect
 ro	0004048	is directional form of
 ro	0004049	is positive form of
 ro	0004050	is negative form of
+ro	0004096	DEPRECATED inheres in
+ro	0004097	DEPRECATED bearer of
 ro	0008501	epiphyte of
 ro	0008502	has epiphyte
 ro	0008503	kleptoparasite of
@@ -605,13 +607,15 @@ ro	0012005	is small molecule activator
 ro	0012006	is small molecule inhibitor
 ro	0012007	results in adhesion of
 ro	0012008	results in fusion of
-ro	0013001	has synaptic IO in
-ro	0013002	receives synaptic input in
-ro	0013003	sends synaptic output to
+ro	0013001	has synaptic IO in region
+ro	0013002	receives synaptic input in region
+ro	0013003	sends synaptic output to region
 ro	0013004	has synaptic IO throughout
 ro	0013005	receives synaptic input throughout
 ro	0013006	sends synaptic output throughout
 ro	0013007	has sensory dendrite in
+ro	0013008	receives synaptic input from neuron
+ro	0013009	sends synaptic output to cell
 ro	0014001	disease has infectious agent
 ro	0040035	disease relationship
 ro	0040036	has anatomical participant

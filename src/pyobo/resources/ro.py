@@ -50,3 +50,7 @@ def download():
     with open(PATH, "w") as file:
         writer = csv.writer(file, delimiter="\t")
         writer.writerows(sorted(rows))
+
+
+if __name__ == "__main__":
+    download()
