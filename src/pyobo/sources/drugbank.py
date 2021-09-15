@@ -16,7 +16,7 @@ import bioversions
 import pystow
 from tqdm import tqdm
 
-from ..struct import Obo, Reference, Synonym, Term, TypeDef
+from ..struct import Obo, Reference, Term, TypeDef
 from ..utils.cache import cached_pickle
 from ..utils.path import prefix_directory_join
 
@@ -90,13 +90,14 @@ DRUG_XREF_MAPPING = {
 
 
 def _make_term(drug_info: Mapping[str, Any]) -> Term:
-    term = Term(
-        reference=Reference(
-            prefix=PREFIX, identifier=drug_info["drugbank_id"], name=drug_info["name"]
-        ),
+    term = Term.from_triple(
+        prefix=PREFIX,
+        identifier=drug_info["drugbank_id"],
+        name=drug_info["name"],
         definition=drug_info["description"],
-        synonyms=[Synonym(name=alias) for alias in drug_info["aliases"]],
     )
+    for alias in drug_info["aliases"]:
+        term.append_synonym(alias)
 
     for xref in drug_info["xrefs"]:
         xref_prefix, xref_identifier = xref["resource"], xref["identifier"]

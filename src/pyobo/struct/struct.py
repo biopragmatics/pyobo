@@ -188,9 +188,18 @@ class Term(Referenced):
     is_obsolete: Optional[bool] = None
 
     @classmethod
-    def from_triple(cls, prefix: str, identifier: str, name: Optional[str] = None) -> "Term":
+    def from_triple(
+        cls,
+        prefix: str,
+        identifier: str,
+        name: Optional[str] = None,
+        definition: Optional[str] = None,
+    ) -> "Term":
         """Create a term from a reference."""
-        return cls(reference=Reference(prefix=prefix, identifier=identifier, name=name))
+        return cls(
+            reference=Reference(prefix=prefix, identifier=identifier, name=name),
+            definition=definition,
+        )
 
     @classmethod
     def from_curie(cls, curie: str, name: Optional[str] = None) -> "Term":
