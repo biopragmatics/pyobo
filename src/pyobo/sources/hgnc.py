@@ -202,12 +202,12 @@ def get_terms(force: bool = False) -> Iterable[Term]:
 
         gene_group_ids = entry.pop("gene_group_id", [])
         gene_groups = entry.pop("gene_group", [])
-        for hgncgenefamily_id, gene_group_label in zip(gene_group_ids, gene_groups):
+        for gene_group_id, gene_group_label in zip(gene_group_ids, gene_groups):
             term.append_relationship(
                 member_of,
                 Reference(
-                    prefix="hgnc.genefamily",
-                    identifier=str(hgncgenefamily_id),
+                    prefix="hgnc.genegroup",
+                    identifier=str(gene_group_id),
                     name=gene_group_label,
                 ),
             )

@@ -11,8 +11,9 @@ from tqdm import tqdm
 from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
 from ..utils.path import ensure_path
 
-PREFIX = "hgnc.genefamily"
+PREFIX = "hgnc.genegroup"
 FAMILIES_URL = "ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/csv/genefamily_db_tables/family.csv"
+# TODO use family_alias.csv
 HIERARCHY_URL = (
     "ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/csv/genefamily_db_tables/hierarchy.csv"
 )
@@ -21,10 +22,10 @@ symbol_type = SynonymTypeDef(id="symbol", name="symbol")
 
 
 def get_obo(force: bool = False) -> Obo:
-    """Get HGNC Gene Families as OBO."""
+    """Get HGNC Gene Groups as OBO."""
     return Obo(
         ontology=PREFIX,
-        name="HGNC Gene Families",
+        name="HGNC Gene Groups",
         iter_terms=get_terms,
         iter_terms_kwargs=dict(force=force),
         synonym_typedefs=[symbol_type],
@@ -47,7 +48,7 @@ COLUMNS = ["id", "abbreviation", "name", "pubmed_ids", "desc_comment", "desc_go"
 
 
 def get_terms(force: bool = False) -> Iterable[Term]:
-    """Get the HGNC Gene Family terms."""
+    """Get the HGNC Gene Group terms."""
     terms = list(_get_terms_helper(force=force))
     hierarchy = get_hierarchy(force=force)
 
@@ -71,11 +72,11 @@ def _get_terms_helper(force: bool = False) -> Iterable[Term]:
     df = pd.read_csv(path, dtype={"id": str})
 
     it = tqdm(df[COLUMNS].values, desc=f"Mapping {PREFIX}")
-    for hgncgenefamily_id, symbol, name, pubmed_ids, definition, desc_go in it:
+    for gene_group_id, symbol, name, pubmed_ids, definition, desc_go in it:
         if not definition or pd.isna(definition):
             definition = None
         term = Term(
-            reference=Reference(prefix=PREFIX, identifier=hgncgenefamily_id, name=name),
+            reference=Reference(prefix=PREFIX, identifier=gene_group_id, name=name),
             definition=definition,
         )
         if pubmed_ids and pd.notna(pubmed_ids):
