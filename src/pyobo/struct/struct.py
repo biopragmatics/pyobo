@@ -102,10 +102,14 @@ class Synonym:
         return f"synonym: {self._fp()}"
 
     def _fp(self) -> str:
-        x = f'"{self.name}" {self.specificity}'
+        x = f'"{self._escape(self.name)}" {self.specificity}'
         if self.type:
             x = f"{x} {self.type.id}"
         return f"{x} [{comma_separate(self.provenance)}]"
+
+    @staticmethod
+    def _escape(s: str) -> str:
+        return s.replace('"', '\\"')
 
 
 @dataclass
@@ -299,7 +303,7 @@ class Term(Referenced):
         self.properties[prop].append(value)
 
     def _definition_fp(self) -> str:
-        return f'"{self.definition}" [{comma_separate(self.provenance)}]'
+        return f'"{self._escape(self.definition)}" [{comma_separate(self.provenance)}]'
 
     def iterate_relations(self) -> Iterable[Tuple[TypeDef, Reference]]:
         """Iterate over pairs of typedefs and targets."""
@@ -352,6 +356,10 @@ class Term(Referenced):
 
         for synonym in sorted(self.synonyms, key=attrgetter("name")):
             yield synonym.to_obo()
+
+    @staticmethod
+    def _escape(s) -> str:
+        return s.replace('"', '\\"')
 
 
 def _sort_relations(r):
