@@ -219,6 +219,12 @@ class Term(Referenced):
             synonym = Synonym(synonym, type=type)
         self.synonyms.append(synonym)
 
+    def append_alt(self, alt: Union[str, Reference]) -> None:
+        """Add an alternative identifier."""
+        if isinstance(alt, str):
+            alt = Reference(prefix=self.prefix, identifier=alt)
+        self.alt_ids.append(alt)
+
     def append_parent(self, reference: ReferenceHint) -> None:
         """Add a parent to this entity."""
         self.parents.append(_ensure_ref(reference))
