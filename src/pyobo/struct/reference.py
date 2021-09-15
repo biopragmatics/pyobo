@@ -50,17 +50,24 @@ class Reference:
 
     @staticmethod
     def from_curie(
-        curie: str, name: Optional[str] = None, *, strict: bool = True
+        curie: str,
+        name: Optional[str] = None,
+        *,
+        strict: bool = True,
+        auto: bool = False,
     ) -> Optional["Reference"]:
         """Get a reference from a CURIE.
 
         :param curie: The compact URI (CURIE) to parse in the form of `<prefix>:<identifier>`
         :param name: The name associated with the CURIE
         :param strict: If true, raises an error if the CURIE can not be parsed.
+        :param auto: Automatically look up name
         """
         prefix, identifier = normalize_curie(curie, strict=strict)
         if prefix is None and identifier is None:
             return
+        if name is None and auto:
+            return Reference.auto(prefix=prefix, identifier=identifier)
         return Reference(prefix=prefix, identifier=identifier, name=name)
 
     @staticmethod
