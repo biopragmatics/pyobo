@@ -5,14 +5,13 @@
 import logging
 import os
 import shutil
-import tarfile
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional, Union
 from urllib.request import urlretrieve
 
 import pandas as pd
 import requests
-from pystow.utils import name_from_url
+from pystow.utils import name_from_url, read_tarfile_csv
 
 from pyobo.constants import RAW_MODULE
 
@@ -139,9 +138,7 @@ def ensure_tar_df(
 ) -> pd.DataFrame:
     """Download a tar file and open as a dataframe."""
     path = ensure_path(prefix, *parts, url=url, version=version, name=path, force=force)
-    with tarfile.open(path) as tar_file:
-        with tar_file.extractfile(inner_path) as file:
-            return pd.read_csv(file, **kwargs)
+    return read_tarfile_csv(path, inner_path=inner_path, **kwargs)
 
 
 def prefix_cache_join(prefix: str, *parts, name: Optional[str], version: VersionHint) -> Path:
