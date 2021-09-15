@@ -3,7 +3,7 @@
 """Default typedefs, references, and other structures."""
 
 from dataclasses import dataclass, field
-from typing import Iterable, List, Mapping, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 from .reference import Reference, Referenced
 from ..identifier_utils import normalize_curie
@@ -20,7 +20,8 @@ __all__ = [
     "part_of",
     "is_a",
     "has_member",
-    "subclass",
+    "member_of",
+    "superclass_of",
     "orthologous",
     "has_role",
     "role_of",
@@ -108,8 +109,13 @@ def get_reference_tuple(relation: RelationHint) -> Tuple[str, str]:
         raise TypeError(f"Relation is invalid type: {relation}")
 
 
+RO_PREFIX = "RO"
+BFO_PREFIX = "BFO"
+IAO_PREFIX = "IAO"
+SIO_PREFIX = "SIO"
+
 from_species = TypeDef(
-    reference=Reference(prefix="ro", identifier="0002162", name="in taxon"),
+    reference=Reference(prefix=RO_PREFIX, identifier="0002162", name="in taxon"),
 )
 species_specific = TypeDef(
     reference=Reference.default("speciesSpecific", "Species Specific"),
@@ -119,80 +125,84 @@ species_specific = TypeDef(
 )
 
 part_of = TypeDef(
-    reference=Reference(prefix="bfo", identifier="0000050", name="part of"),
+    reference=Reference(prefix=BFO_PREFIX, identifier="0000050", name="part of"),
     comment="Inverse of has_part",
-    inverse=Reference(prefix="bfo", identifier="0000051", name="has part"),
+    inverse=Reference(prefix=BFO_PREFIX, identifier="0000051", name="has part"),
 )
 has_part = TypeDef(
-    reference=Reference(prefix="bfo", identifier="0000051", name="has part"),
+    reference=Reference(prefix=BFO_PREFIX, identifier="0000051", name="has part"),
     comment="Inverse of part_of",
-    inverse=Reference(prefix="bfo", identifier="0000050", name="part of"),
+    inverse=Reference(prefix=BFO_PREFIX, identifier="0000050", name="part of"),
 )
 is_a = TypeDef(
     reference=Reference(prefix="rdfs", identifier="subClassOf", name="subclass of"),
-    inverse=Reference.default(identifier="subclass", name="subclass"),
 )
 has_member = TypeDef(
-    reference=Reference.default(identifier="has_member", name="has member"),
+    reference=Reference(prefix=RO_PREFIX, identifier="0002351", name="has member"),
 )
-subclass = TypeDef(
-    reference=Reference.default(identifier="subclass", name="subclass"),
-    comment="Inverse of isA",
+member_of = TypeDef(
+    reference=Reference(prefix=RO_PREFIX, identifier="0002350", name="member of"),
+    inverse=has_member.reference,
+)
+superclass_of = TypeDef(
+    reference=Reference(prefix="sssom", identifier="superClassOf", name="super class of"),
+    comment="Inverse of subClassOf",
     inverse=is_a.reference,
 )
 
-develops_from = TypeDef.from_triple(prefix="ro", identifier="0002202", name="develops from")
+develops_from = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002202", name="develops from")
 orthologous = TypeDef(
     reference=Reference(
-        prefix="ro", identifier="HOM0000017", name="in orthology relationship with"
+        prefix=RO_PREFIX, identifier="HOM0000017", name="in orthology relationship with"
     ),
     is_symmetric=True,
 )
 
 has_role = TypeDef(
-    reference=Reference(prefix="ro", identifier="0000087", name="has role"),
+    reference=Reference(prefix=RO_PREFIX, identifier="0000087", name="has role"),
     definition="a relation between an independent continuant (the bearer) and a role,"
     " in which the role specifically depends on the bearer for its existence",
-    domain=Reference(prefix="bfo", identifier="0000004", name="independent continuant"),
-    range=Reference(prefix="bfo", identifier="0000023", name="role"),
-    parents=[Reference(prefix="ro", identifier="0000053", name="bearer of")],
-    inverse=Reference(prefix="ro", identifier="0000081", name="role of"),
+    domain=Reference(prefix=BFO_PREFIX, identifier="0000004", name="independent continuant"),
+    range=Reference(prefix=BFO_PREFIX, identifier="0000023", name="role"),
+    parents=[Reference(prefix=RO_PREFIX, identifier="0000053", name="bearer of")],
+    inverse=Reference(prefix=RO_PREFIX, identifier="0000081", name="role of"),
 )
 
 role_of = TypeDef(
-    reference=Reference(prefix="ro", identifier="0000081", name="role of"),
+    reference=Reference(prefix=RO_PREFIX, identifier="0000081", name="role of"),
     definition="a relation between a role and an independent continuant (the bearer),"
     " in which the role specifically depends on the bearer for its existence",
-    parents=[Reference(prefix="ro", identifier="0000052", name="inheres in")],
+    parents=[Reference(prefix=RO_PREFIX, identifier="0000052", name="inheres in")],
     inverse=has_role.reference,
 )
 
 has_mature = TypeDef(
-    reference=Reference(prefix="mirbase", identifier="has_mature", name="has mature miRNA"),
+    reference=Reference.default(identifier="has_mature", name="has mature miRNA"),
 )
 
 transcribes_to = TypeDef(
-    reference=Reference.default(identifier="transcribes_to", name="transcribes to"),
-    definition="Relation between a gene and a transcript",
+    reference=Reference(prefix=RO_PREFIX, identifier="0002511", name="transcribed to"),
 )
 translates_to = TypeDef(
-    reference=Reference.default(identifier="translates_to", name="translates to"),
-    definition="Relation between a transcript and a protein",
+    reference=Reference(prefix=RO_PREFIX, identifier="0002513", name="ribosomally translates to"),
+)
+gene_product_of = TypeDef.from_triple(
+    prefix=RO_PREFIX, identifier="0002204", name="gene product of"
 )
 has_gene_product = TypeDef(
-    reference=Reference(prefix="ro", identifier="0002205", name="has gene product"),
-    inverse=Reference(prefix="ro", identifier="0002204", name="gene product of"),
+    reference=Reference(prefix=RO_PREFIX, identifier="0002205", name="has gene product"),
+    inverse=gene_product_of.reference,
 )  # holds over chain (transcribes_to, translates_to)
 gene_product_is_a = TypeDef(
     reference=Reference.default(identifier="gene_product_is_a", name="gene product is a"),
 )
 
-example_of_usage = Reference(prefix="iao", identifier="0000112", name="example of usage")
-alternative_term = Reference(prefix="iao", identifier="0000118", name="alternative term")
-editor_note = Reference(prefix="iao", identifier="0000116", name="editor note")
+example_of_usage = Reference(prefix=IAO_PREFIX, identifier="0000112", name="example of usage")
+alternative_term = Reference(prefix=IAO_PREFIX, identifier="0000118", name="alternative term")
+editor_note = Reference(prefix=IAO_PREFIX, identifier="0000116", name="editor note")
 
-is_immediately_transformed_from = TypeDef.from_curie(
-    "sio:000658", name="is immediately transformed from"
+is_immediately_transformed_from = TypeDef.from_triple(
+    prefix=SIO_PREFIX, identifier="000658", name="is immediately transformed from"
 )
 
 """ChEBI"""
@@ -227,7 +237,7 @@ has_functional_parent = TypeDef(
     ),
 )
 
-default_typedefs: Mapping[Tuple[str, str], TypeDef] = {
+default_typedefs: Dict[Tuple[str, str], TypeDef] = {
     v.pair: v for k, v in locals().items() if isinstance(v, TypeDef)
 }
 

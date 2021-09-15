@@ -14,10 +14,11 @@ from .typedef import (  # noqa: F401
     has_member,
     has_part,
     is_a,
+    member_of,
     orthologous,
     part_of,
     species_specific,
-    subclass,
+    superclass_of,
     transcribes_to,
     translates_to,
 )
