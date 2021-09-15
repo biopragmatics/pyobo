@@ -51,6 +51,7 @@ from ..identifier_utils import MissingPrefix, normalize_curie, normalize_prefix
 from ..registries import get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist
 from ..utils.cache import get_gzipped_graph
 from ..utils.io import multidict, write_iterable_tsv
+from ..utils.misc import obo_to_obograph
 from ..utils.path import get_prefix_obo_path, prefix_directory_join
 
 __all__ = [
@@ -529,6 +530,10 @@ class Obo:
         return get_prefix_obo_path(self.ontology, version=self.data_version)
 
     @property
+    def _obograph_path(self) -> Path:
+        return self._path(name=f"{self.ontology}.json.gz")
+
+    @property
     def _obonet_gz_path(self) -> Path:
         return self._path(name=f"{self.ontology}.obonet.json.gz")
 
@@ -538,6 +543,7 @@ class Obo:
         force: bool = False,
         write_obo: bool = False,
         write_obonet: bool = False,
+        write_obograph: bool = False,
     ) -> None:
         """Write the OBO to the default path."""
         metadata = self.get_metadata()
@@ -606,8 +612,11 @@ class Obo:
             relation_df.sort_values(list(relation_df.columns), inplace=True)
             relation_df.to_csv(relations_path, sep="\t", index=False)
 
-        if write_obo and (not self._obo_path.exists() or force):
+        if (write_obo or write_obograph) and (not self._obo_path.exists() or force):
             self.write_obo(self._obo_path, use_tqdm=use_tqdm)
+
+        if write_obograph:
+            obo_to_obograph(self._obo_path, self._obograph_path)
 
         if write_obonet and (not self._obonet_gz_path.exists() or force):
             logger.info("writing obonet to %s", self._obonet_gz_path)
