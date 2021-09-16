@@ -6,6 +6,7 @@ import logging
 from collections import defaultdict
 from typing import Iterable
 
+import bioversions
 import click
 import pandas as pd
 from more_click import verbose_option
@@ -26,6 +27,7 @@ ORTHOLOGS_URL = "https://www.pombase.org/data/orthologs/human-orthologs.txt.gz"
 
 def get_obo(force: bool = False) -> Obo:
     """Get OBO."""
+    version = bioversions.get_version("pombase")
     return Obo(
         iter_terms=get_terms,
         iter_terms_kwargs=dict(force=force),
@@ -33,6 +35,7 @@ def get_obo(force: bool = False) -> Obo:
         ontology=PREFIX,
         typedefs=[from_species, has_gene_product],
         auto_generated_by=f"bio2obo:{PREFIX}",
+        data_version=version,
     )
 
 

@@ -6,6 +6,7 @@ import logging
 from collections import defaultdict
 from typing import Iterable
 
+import bioversions
 import click
 from more_click import verbose_option
 from tqdm import tqdm
@@ -29,6 +30,7 @@ UNIPROT_MAPPINGS = "https://zfin.org/downloads/uniprot.txt"
 
 def get_obo(force: bool = False) -> Obo:
     """Get ZFIN OBO."""
+    version = bioversions.get_version("zfin")
     return Obo(
         iter_terms=get_terms,
         iter_terms_kwargs=dict(force=force),
@@ -36,6 +38,7 @@ def get_obo(force: bool = False) -> Obo:
         ontology=PREFIX,
         typedefs=[from_species, has_gene_product, orthologous],
         auto_generated_by=f"bio2obo:{PREFIX}",
+        data_version=version,
     )
 
 

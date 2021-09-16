@@ -103,6 +103,7 @@ def get_obo(version: Optional[str] = None, force: bool = False) -> Obo:
         ontology=PREFIX,
         typedefs=[from_species, orthologous],
         auto_generated_by=f"bio2obo:{PREFIX}",
+        data_version=version,
     )
 
 

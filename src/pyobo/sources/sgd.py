@@ -5,6 +5,8 @@
 from typing import Iterable
 from urllib.parse import unquote_plus
 
+import bioversions
+
 from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
 from ..utils.path import ensure_tar_df
 
@@ -22,6 +24,7 @@ alias_type = SynonymTypeDef(id="alias", name="alias")
 
 def get_obo(force: bool = False) -> Obo:
     """Get SGD as OBO."""
+    version = bioversions.get_version("sgd")
     return Obo(
         ontology=PREFIX,
         name="Saccharomyces Genome Database",
@@ -30,6 +33,7 @@ def get_obo(force: bool = False) -> Obo:
         typedefs=[from_species],
         synonym_typedefs=[alias_type],
         auto_generated_by=f"bio2obo:{PREFIX}",
+        data_version=version,
     )
 
 
