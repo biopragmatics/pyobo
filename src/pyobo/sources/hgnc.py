@@ -102,23 +102,23 @@ LOCUS_TYPE_TO_SO = {
     # protein-coding gene
     "gene with protein product": "0001217",
     # non-coding RNA
-    "RNA, Y": "",  # TODO
+    "RNA, Y": "",  # TODO, HGNC uses 0000405 but that's a transcript, not a gene
     "RNA, cluster": "",  # TODO
-    "RNA, long non-coding": "0002127",
+    "RNA, long non-coding": "0002127",  # HGNC links to wrong one
     "RNA, micro": "0001265",
     "RNA, misc": "0001266",
     "RNA, ribosomal": "0001637",
-    "RNA, small cytoplasmic": "",
+    "RNA, small cytoplasmic": "0001266",
     "RNA, small nuclear": "0001268",
     "RNA, small nucleolar": "0001267",
     "RNA, transfer": "0001272",
     "RNA, vault": "",  # see RNA analog SO:0000404
     # phenotype
-    "phenotype only": "",  # TODO
+    "phenotype only": "0001500",  # FIXME doesn't come under gene hierarchy
     # pseudogene
     "T cell receptor pseudogene": "0002099",
     "immunoglobulin pseudogene": "0002098",
-    "immunoglobulin gene": "0002122",
+    "immunoglobulin gene": "0002122",  # HGNC links to wrong one
     "pseudogene": "0000336",
     # other
     "T cell receptor gene": "0002133",
@@ -128,7 +128,7 @@ LOCUS_TYPE_TO_SO = {
     "protocadherin": "",  # TODO
     "readthrough": "0000697",  # maybe not right
     "region": "",
-    "transposable element": "0000111",
+    "transposable element": "0000111",  # HGNC links to wrong one
     "virus integration site": "",  # TODO
     "unknown": "0000704",  # gene
     None: "0000704",  # gene
