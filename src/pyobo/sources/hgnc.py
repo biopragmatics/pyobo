@@ -130,6 +130,8 @@ SO = {
     "region": "",
     "transposable element": "0000111",
     "virus integration site": "",  # TODO
+    "unknown": "0000704",  # gene
+    None: "0000704",  # gene
 }
 
 
@@ -194,6 +196,8 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
                 ),
             )
         for ec_code in entry.pop("enzyme_id", []):
+            if "-" in ec_code:
+                continue  # only add concrete annotations
             term.append_relationship(
                 gene_product_is_a,
                 Reference(prefix="ec-code", identifier=ec_code, name=get_name("ec-code", ec_code)),
@@ -271,11 +275,10 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
 
         locus_type = entry.pop("locus_type")
         so_id = SO.get(locus_type)
-        if locus_type == "unknown":
-            pass
-        elif so_id:
+        if so_id:
             term.append_parent(Reference.auto("SO", so_id))
         else:
+            term.append_parent(Reference.auto("SO", "0000704"))  # gene
             unhandle_locus_types[locus_type] += 1
             term.append_property("locus_type", locus_type)
 
