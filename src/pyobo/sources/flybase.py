@@ -109,7 +109,7 @@ def get_obo(version: Optional[str] = None, force: bool = False) -> Obo:
 GTYPE_TO_SO = {
     "SRP_RNA_gene": "0001269",
     "protein_coding_gene": "0001217",
-    "pseudogene": "0001217",
+    "pseudogene": "0000336",
     "lncRNA_gene": "0002127",
     "snRNA_gene": "0001268",
     "antisense_lncRNA_gene": "0002182",
@@ -135,6 +135,13 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
     names_df = _get_names(version=version, force=force)
     human_orthologs = _get_human_orthologs(version=version, force=force)
     missing_taxonomies = set()
+
+    so = {
+        gtype: Reference.auto("SO", GTYPE_TO_SO[gtype])
+        for gtype in names_df[names_df.columns[1]].unique()
+    }
+    for _, reference in sorted(so.items()):
+        yield Term(reference=reference)
     for organism, gtype, identifier, symbol, name in tqdm(names_df.values):
         term = Term.from_triple(
             prefix=PREFIX,
@@ -143,7 +150,7 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
             definition=definitions.get(identifier),
         )
         if gtype and pd.notna(gtype):
-            term.append_parent(Reference.auto("SO", GTYPE_TO_SO[gtype]))
+            term.append_parent(so[gtype])
         if pd.notna(name):
             term.append_synonym(name)
         for hgnc_curie in human_orthologs.get(identifier, []):
@@ -166,7 +173,7 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
 @verbose_option
 def _main():
     obo = get_obo(force=True)
-    obo.write_default(force=True, write_obo=True)
+    obo.write_default(force=True, write_obo=True, write_obograph=True)
 
 
 if __name__ == "__main__":

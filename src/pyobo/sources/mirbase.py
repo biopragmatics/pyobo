@@ -27,24 +27,24 @@ xref_mapping = {
 }
 
 
-def get_obo() -> Obo:
+def get_obo(force: bool = False) -> Obo:
     """Get miRBase as OBO."""
     version = bioversions.get_version(PREFIX)
     return Obo(
         ontology=PREFIX,
         name="miRBase",
         iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version),
+        iter_terms_kwargs=dict(version=version, force=force),
         typedefs=[from_species, has_mature],
         data_version=version,
         auto_generated_by=f"bio2obo:{PREFIX}",
     )
 
 
-def get_terms(version: str) -> List[Term]:
+def get_terms(version: str, force: bool = False) -> List[Term]:
     """Parse miRNA data from filepath and convert it to dictionary."""
     url = f"ftp://mirbase.org/pub/mirbase/{version}/miRNA.dat.gz"
-    definitions_path = ensure_path(PREFIX, url=url, version=version)
+    definitions_path = ensure_path(PREFIX, url=url, version=version, force=force)
 
     file_handle = (
         gzip.open(definitions_path, "rt")
@@ -52,16 +52,16 @@ def get_terms(version: str) -> List[Term]:
         else open(definitions_path)
     )
     with file_handle as file:
-        return list(_process_definitions_lines(file, version=version))
+        return list(_process_definitions_lines(file, version=version, force=force))
 
 
-def _prepare_organisms(version: str):
+def _prepare_organisms(version: str, force: bool = False):
     url = f"ftp://mirbase.org/pub/mirbase/{version}/organisms.txt.gz"
     df = ensure_df(PREFIX, url=url, sep="\t", dtype={"#NCBI-taxid": str}, version=version)
     return {division: (taxonomy_id, name) for _, division, name, _tree, taxonomy_id in df.values}
 
 
-def _prepare_aliases(version: str) -> Mapping[str, List[str]]:
+def _prepare_aliases(version: str, force: bool = False) -> Mapping[str, List[str]]:
     url = f"ftp://mirbase.org/pub/mirbase/{version}/aliases.txt.gz"
     df = ensure_df(PREFIX, url=url, sep="\t", version=version)
     return {
@@ -70,10 +70,12 @@ def _prepare_aliases(version: str) -> Mapping[str, List[str]]:
     }
 
 
-def _process_definitions_lines(lines: Iterable[str], version: str) -> Iterable[Term]:
+def _process_definitions_lines(
+    lines: Iterable[str], version: str, force: bool = False
+) -> Iterable[Term]:
     """Process the lines of the definitions file."""
-    organisms = _prepare_organisms(version)
-    aliases = _prepare_aliases(version)
+    organisms = _prepare_organisms(version, force=force)
+    aliases = _prepare_aliases(version, force=force)
 
     groups = []
 
@@ -175,4 +177,4 @@ def get_mature_id_to_name(version: str) -> Mapping[str, str]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    get_obo(force=True).write_default(force=True, write_obograph=True, write_obo=True)

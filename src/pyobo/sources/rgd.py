@@ -105,9 +105,16 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         force=force,
     )
     for _, row in tqdm(df.iterrows(), total=len(df.index), desc=f"Mapping {PREFIX}"):
+        if pd.notna(row["NAME"]):
+            definition = row["NAME"]
+        elif pd.notna(row["GENE_DESC"]):
+            definition = row["GENE_DESC"]
+        else:
+            definition = None
+
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=row["GENE_RGD_ID"], name=row["SYMBOL"]),
-            definition=row["NAME"] or row["GENE_DESC"],
+            definition=definition,
         )
         old_names = row["OLD_NAME"]
         if old_names and pd.notna(old_names):

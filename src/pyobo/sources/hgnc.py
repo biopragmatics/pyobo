@@ -4,8 +4,10 @@
 
 import json
 import logging
+from collections import Counter
 from typing import Iterable
 
+from tabulate import tabulate
 from tqdm import tqdm
 
 from ..api import get_name
@@ -47,9 +49,9 @@ gene_xrefs = [
     ("pseudogene", "pseudogene.org"),
     ("ena", "ena"),
     ("refseq", "refseq_accession"),
-    ("mgi", "mgd_id"),
+    # ("mgi", "mgd_id"),
     ("ccds", "ccds_id"),
-    ("rgd", "rgd_id"),
+    # ("rgd", "rgd_id"),
     ("omim", "omim_id"),
     # ('uniprot', 'uniprot_ids'),
     # ('ec-code', 'enzyme_id'),
@@ -95,6 +97,41 @@ ENCODINGS = {
     "unknown": "GRP",
 }
 
+# TODO
+SO = {
+    # protein-coding gene
+    "gene with protein product": "0001217",
+    # non-coding RNA
+    "RNA, Y": "",  # TODO
+    "RNA, cluster": "",  # TODO
+    "RNA, long non-coding": "0002127",
+    "RNA, micro": "0001265",
+    "RNA, misc": "0001266",
+    "RNA, ribosomal": "0001637",
+    "RNA, small cytoplasmic": "",
+    "RNA, small nuclear": "0001268",
+    "RNA, small nucleolar": "0001267",
+    "RNA, transfer": "0001272",
+    "RNA, vault": "",  # see RNA analog SO:0000404
+    # phenotype
+    "phenotype only": "",  # TODO
+    # pseudogene
+    "T cell receptor pseudogene": "0002099",
+    "immunoglobulin pseudogene": "0002098",
+    "immunoglobulin gene": "0002122",
+    "pseudogene": "0000336",
+    # other
+    "T cell receptor gene": "0002133",
+    "complex locus constituent": "",
+    "endogenous retrovirus": "0000100",
+    "fragile site": "",  # TODO
+    "protocadherin": "",  # TODO
+    "readthrough": "0000697",  # maybe not right
+    "region": "",
+    "transposable element": "0000111",
+    "virus integration site": "",  # TODO
+}
+
 
 def get_obo(force: bool = False) -> Obo:
     """Get HGNC as OBO."""
@@ -121,13 +158,17 @@ def get_obo(force: bool = False) -> Obo:
     )
 
 
-def get_terms(force: bool = False) -> Iterable[Term]:
+def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
     """Get HGNC terms."""
-    unhandled = set()
+    unhandled_entry_keys = Counter()
+    unhandle_locus_types = Counter()
     path = ensure_path(PREFIX, url=DEFINITIONS_URL, force=force)
     with open(path) as file:
         entries = json.load(file)["response"]["docs"]
 
+    for so_id in sorted(SO.values()):
+        if so_id:
+            yield Term(reference=Reference.auto("SO", so_id))
     for entry in tqdm(entries, desc=f"Mapping {PREFIX}"):
         name, symbol, identifier = (
             entry.pop("name"),
@@ -157,10 +198,12 @@ def get_terms(force: bool = False) -> Iterable[Term]:
                 gene_product_is_a,
                 Reference(prefix="ec-code", identifier=ec_code, name=get_name("ec-code", ec_code)),
             )
-        for rna_central_id in entry.pop("rna_central_id", []):
-            term.append_relationship(
-                transcribes_to, Reference(prefix="rnacentral", identifier=rna_central_id)
-            )
+        for rna_central_ids in entry.pop("rna_central_id", []):
+            for rna_central_id in rna_central_ids.split(","):
+                term.append_relationship(
+                    transcribes_to,
+                    Reference(prefix="rnacentral", identifier=rna_central_id.strip()),
+                )
         mirbase_id = entry.pop("mirbase", None)
         if mirbase_id:
             term.append_relationship(
@@ -221,19 +264,30 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         for previous_name in entry.pop("prev_name", []):
             term.append_synonym(Synonym(name=previous_name, type=previous_name_type))
 
-        for prop in ["locus_group", "locus_type", "location"]:
-            value = entry.get(prop)
+        for prop in ["locus_group", "location"]:
+            value = entry.pop(prop, None)
             if value:
                 term.append_property(prop, value)
+
+        locus_type = entry.pop("locus_type")
+        so_id = SO.get(locus_type)
+        if locus_type == "unknown":
+            pass
+        elif so_id:
+            term.append_parent(Reference.auto("SO", so_id))
+        else:
+            unhandle_locus_types[locus_type] += 1
+            term.append_property("locus_type", locus_type)
+
         term.set_species(identifier="9606", name="Homo sapiens")
 
-        unhandled.update(set(entry))
+        for key in entry:
+            unhandled_entry_keys[key] += 1
         yield term
 
-    # logger.warning('Unhandled:')
-    # for u in sorted(unhandled):
-    #     logger.warning(u)
+    logger.warning("Unhandled locus types:\n%s", tabulate(unhandle_locus_types.most_common()))
+    logger.warning("Unhandled keys:\n%s", tabulate(unhandled_entry_keys.most_common()))
 
 
 if __name__ == "__main__":
-    get_obo(force=True).write_default(write_obo=True, force=True)
+    get_obo(force=True).write_default(write_obo=True, write_obograph=True, force=True)

@@ -77,6 +77,12 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         PREFIX, url=URL, name="markers.tsv", force=force, header=None, names=MARKERS_COLUMNS
     )
     df["sequence_ontology_id"] = df["sequence_ontology_id"].map(lambda x: x[len("SO:") :])
+    so = {
+        sequence_ontology_id: Reference.auto(prefix="SO", identifier=sequence_ontology_id)
+        for sequence_ontology_id in df["sequence_ontology_id"].unique()
+    }
+    for _, reference in sorted(so.items()):
+        yield Term(reference=reference)
     for identifier, name, definition, _entity_type, sequence_ontology_id in tqdm(df.values):
         term = Term.from_triple(
             prefix=PREFIX,
@@ -85,7 +91,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
             definition=definition if definition != name else None,
         )
         term.set_species(identifier="7955", name="Danio rerio")
-        term.append_parent(Reference.auto(prefix="SO", identifier=sequence_ontology_id))
+        term.append_parent(so[sequence_ontology_id])
         # Entity type is redundant of identifier
         # term.append_property("type", entity_type)
         for alt_id in primary_to_alt_ids[identifier]:

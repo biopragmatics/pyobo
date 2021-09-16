@@ -39,7 +39,7 @@ def get_obo(force: bool = False) -> Obo:
 #: A mapping from PomBase gene type to sequence ontology terms
 POMBASE_TO_SO = {
     "protein coding gene": "0001217",
-    "pseudogene": "0001217",
+    "pseudogene": "0000336",
     "tRNA gene": "0001272",
     "ncRNA gene": "0001263",
     "snRNA gene": "0001268",
@@ -62,6 +62,12 @@ def get_terms(force: bool = False) -> Iterable[Term]:
                 identifier_to_hgnc_ids[identifier].add(hgnc_id)
 
     df = ensure_df(PREFIX, url=URL, force=force, header=None)
+    so = {
+        gtype: Reference.auto("SO", POMBASE_TO_SO[gtype])
+        for gtype in sorted(df[df.columns[6]].unique())
+    }
+    for _, reference in sorted(so.items()):
+        yield Term(reference=reference)
     for identifier, _, symbol, chromosome, name, uniprot_id, gtype, synonyms in tqdm(df.values):
         term = Term.from_triple(
             prefix=PREFIX,
@@ -70,7 +76,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
             definition=name if pd.notna(name) else None,
         )
         term.append_property("chromosome", chromosome[len("chromosome_") :])
-        term.append_parent(Reference.auto("SO", POMBASE_TO_SO[gtype]))
+        term.append_parent(so[gtype])
         term.set_species(identifier="4896", name="Schizosaccharomyces pombe")
         for hgnc_id in identifier_to_hgnc_ids.get(identifier, []):
             term.append_relationship(orthologous, Reference.auto("hgnc", hgnc_id))
@@ -79,9 +85,6 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         if synonyms and pd.notna(synonyms):
             for synonym in synonyms.split(","):
                 term.append_synonym(Synonym(synonym))
-        # xrefs = ...
-        # for xprefix, xidentifier in xrefs:
-        #     term.append_xref(Reference(prefix=xprefix, identifier=xidentifier))
         yield term
 
 
@@ -89,7 +92,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
 @verbose_option
 def _main():
     obo = get_obo(force=True)
-    obo.write_default(force=True, write_obo=True)
+    obo.write_default(force=True, write_obo=True, write_obograph=True)
 
 
 if __name__ == "__main__":
