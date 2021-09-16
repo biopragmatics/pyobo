@@ -293,4 +293,6 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
 
 
 if __name__ == "__main__":
-    get_obo(force=True).write_default(write_obo=True, write_obograph=True, force=True)
+    get_obo(force=True).write_default(
+        write_obo=True, write_obograph=True, write_owl=True, force=True
+    )
