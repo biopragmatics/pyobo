@@ -97,8 +97,8 @@ ENCODINGS = {
     "unknown": "GRP",
 }
 
-# TODO
-SO = {
+#: A mapping from HGNC's locus_type annotations to sequence ontology identifiers
+LOCUS_TYPE_TO_SO = {
     # protein-coding gene
     "gene with protein product": "0001217",
     # non-coding RNA
@@ -168,7 +168,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
     with open(path) as file:
         entries = json.load(file)["response"]["docs"]
 
-    for so_id in sorted(SO.values()):
+    for so_id in sorted(LOCUS_TYPE_TO_SO.values()):
         if so_id:
             yield Term(reference=Reference.auto("SO", so_id))
     for entry in tqdm(entries, desc=f"Mapping {PREFIX}"):
@@ -274,7 +274,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
                 term.append_property(prop, value)
 
         locus_type = entry.pop("locus_type")
-        so_id = SO.get(locus_type)
+        so_id = LOCUS_TYPE_TO_SO.get(locus_type)
         if so_id:
             term.append_parent(Reference.auto("SO", so_id))
         else:
