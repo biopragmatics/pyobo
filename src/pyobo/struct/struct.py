@@ -80,6 +80,7 @@ PROVENANCE_PREFIXES = {
     "isbn",
     "issn",
 }
+NCBITAXON_PREFIX = "ncbitaxon"
 
 
 @dataclass
@@ -279,12 +280,12 @@ class Term(Referenced):
         if name is None:
             import pyobo
 
-            name = pyobo.get_name("ncbitaxon", identifier)
+            name = pyobo.get_name(NCBITAXON_PREFIX, identifier)
         self.append_relationship(
-            from_species, Reference(prefix="ncbitaxon", identifier=identifier, name=name)
+            from_species, Reference(prefix=NCBITAXON_PREFIX, identifier=identifier, name=name)
         )
 
-    def get_species(self, prefix: str = "ncbitaxon") -> Optional[Reference]:
+    def get_species(self, prefix: str = NCBITAXON_PREFIX) -> Optional[Reference]:
         """Get the species if it exists.
 
         :param prefix: The prefix to use in case the term has several species annotations.
@@ -1020,7 +1021,7 @@ class Obo:
     ) -> Iterable[Tuple[str, str]]:
         """Iterate over terms' identifiers and respective species (if available)."""
         if prefix is None:
-            prefix = "ncbitaxon"
+            prefix = NCBITAXON_PREFIX
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting species"):
             species = term.get_species(prefix=prefix)
             if species:
