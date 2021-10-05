@@ -24,12 +24,8 @@ def obo_to_obograph(obo_path, obograph_path) -> None:
 def obo_to_owl(obo_path, owl_path, owl_format: str = "ofn"):
     """Convert an OBO file to an OWL file with ROBOT."""
     args = ["robot", "convert", "-i", obo_path, "-o", owl_path, "--format", owl_format]
-    try:
-        ret = check_output(  # noqa:S603
-            args,
-            cwd=os.path.dirname(__file__),
-        )
-    except Exception:
-        return None
-    else:
-        return ret.decode()
+    ret = check_output(  # noqa:S603
+        args,
+        cwd=os.path.dirname(__file__),
+    )
+    return ret.decode()
