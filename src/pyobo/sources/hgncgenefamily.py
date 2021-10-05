@@ -54,17 +54,22 @@ def get_terms(force: bool = False) -> Iterable[Term]:
 
     id_to_term = {term.reference.identifier: term for term in terms}
     for child_id, parent_ids in hierarchy.items():
-        child = id_to_term[child_id]
+        child: Term = id_to_term[child_id]
         for parent_id in parent_ids:
             parent: Term = id_to_term[parent_id]
-            child.parents.append(
+            child.append_parent(
                 Reference(
                     prefix=PREFIX,
                     identifier=parent_id,
                     name=parent.name,
                 )
             )
-    return terms
+    gene_group = Reference.auto("SO", "0005855")
+    yield Term(reference=gene_group)
+    for term in terms:
+        if not term.parents:
+            term.append_parent(gene_group)
+    yield from terms
 
 
 def _get_terms_helper(force: bool = False) -> Iterable[Term]:
@@ -84,7 +89,7 @@ def _get_terms_helper(force: bool = False) -> Iterable[Term]:
                 term.append_provenance(Reference(prefix="pubmed", identifier=s.strip()))
         if desc_go and pd.notna(desc_go):
             go_id = desc_go[len("http://purl.uniprot.org/go/") :]
-            term.append_xref(Reference(prefix="go", identifier=go_id))
+            term.append_xref(Reference(prefix="GO", identifier=go_id))
         if symbol and pd.notna(symbol):
             term.append_synonym(Synonym(name=symbol, type=symbol_type))
         term.set_species(identifier="9606", name="Homo sapiens")
@@ -92,4 +97,4 @@ def _get_terms_helper(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).write_default(force=True, write_obo=True)
+    get_obo().write_default(force=True, write_obo=True, write_owl=True)
