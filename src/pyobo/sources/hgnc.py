@@ -150,6 +150,20 @@ def get_obo(force: bool = False) -> Obo:
             orthologous,
             member_of,
         ],
+        idspaces={
+            prefix: f"https://bioregistry.io/{prefix}:"
+            for prefix in [
+                "rgd",
+                "mgi",
+                "eccode",
+                "rnacentral",
+                "pubmed",
+                "ncbitaxon" "uniprot",
+                "mirbase",
+                "snornabase",
+                "hgnc.genegroup",
+            ]
+        },
         synonym_typedefs=[
             previous_name_type,
             previous_symbol_type,

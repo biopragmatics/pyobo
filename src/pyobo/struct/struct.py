@@ -408,6 +408,9 @@ class Obo:
     #: The date the ontology was generated
     date: datetime = field(default_factory=datetime.today)
 
+    #: The idspaces used in the document
+    idspaces: Dict[str, str] = field(default_factory=dict)
+
     #: The hierarchy of terms
     _hierarchy: Optional[nx.DiGraph] = field(init=False, default=None)
 
@@ -441,6 +444,9 @@ class Obo:
 
         if self.data_version is not None:
             yield f"data-version: {self.data_version}"
+
+        for prefix, url in sorted(self.idspaces.items()):
+            yield f"idspace: {prefix} {url}"
 
         for synonym_typedef in sorted(self.synonym_typedefs, key=attrgetter("id")):
             yield synonym_typedef.to_obo()
