@@ -5,6 +5,8 @@
 from dataclasses import dataclass, field
 from typing import Mapping, Optional, Tuple
 
+import bioregistry
+
 from .utils import obo_escape
 from ..constants import DEFAULT_PREFIX
 from ..identifier_utils import normalize_curie
@@ -42,6 +44,11 @@ class Reference:
     def curie(self) -> str:
         """The CURIE for this reference."""  # noqa: D401
         return f"{self.prefix}:{self.identifier}"
+
+    @property
+    def link(self) -> Optional[str]:
+        """Get a link for this term."""
+        return bioregistry.get_iri(self.prefix, self.identifier)
 
     @property
     def pair(self) -> Tuple[str, str]:
@@ -132,3 +139,8 @@ class Referenced:
     def pair(self) -> Tuple[str, str]:
         """The pair of namespace/identifier."""  # noqa: D401
         return self.reference.pair
+
+    @property
+    def link(self) -> Optional[str]:
+        """Get the link to the reference."""
+        return self.reference.link
