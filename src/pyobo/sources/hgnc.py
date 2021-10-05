@@ -4,7 +4,7 @@
 
 import json
 import logging
-from collections import Counter
+from collections import Counter, defaultdict
 from typing import Iterable
 
 from tabulate import tabulate
@@ -24,7 +24,7 @@ from ..struct import (
     orthologous,
     transcribes_to,
 )
-from ..utils.path import ensure_path
+from ..utils.path import ensure_path, prefix_directory_join
 
 logger = logging.getLogger(__name__)
 
@@ -177,7 +177,7 @@ def get_obo(force: bool = False) -> Obo:
 def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
     """Get HGNC terms."""
     unhandled_entry_keys = Counter()
-    unhandle_locus_types = Counter()
+    unhandle_locus_types = defaultdict(dict)
     path = ensure_path(PREFIX, url=DEFINITIONS_URL, force=force)
     with open(path) as file:
         entries = json.load(file)["response"]["docs"]
@@ -185,16 +185,25 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
     for so_id in sorted(LOCUS_TYPE_TO_SO.values()):
         if so_id:
             yield Term(reference=Reference.auto("SO", so_id))
+    statuses = set()
     for entry in tqdm(entries, desc=f"Mapping {PREFIX}"):
         name, symbol, identifier = (
             entry.pop("name"),
             entry.pop("symbol"),
             entry.pop("hgnc_id")[len("HGNC:") :],
         )
+        status = entry.pop("status")
+        if status == "Approved":
+            is_obsolete = False
+        elif status not in statuses:
+            statuses.add(status)
+            logger.warning("UNHANDLED %s", status)
+            is_obsolete = True
 
         term = Term(
             definition=name,
             reference=Reference(prefix=PREFIX, identifier=identifier, name=symbol),
+            is_obsolete=is_obsolete,
         )
 
         for uniprot_id in entry.pop("uniprot_ids", []):
@@ -214,7 +223,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
                 continue  # only add concrete annotations
             term.append_relationship(
                 gene_product_is_a,
-                Reference(prefix="ec-code", identifier=ec_code, name=get_name("ec-code", ec_code)),
+                Reference(prefix="eccode", identifier=ec_code, name=get_name("eccode", ec_code)),
             )
         for rna_central_ids in entry.pop("rna_central_id", []):
             for rna_central_id in rna_central_ids.split(","):
@@ -293,7 +302,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
             term.append_parent(Reference.auto("SO", so_id))
         else:
             term.append_parent(Reference.auto("SO", "0000704"))  # gene
-            unhandle_locus_types[locus_type] += 1
+            unhandle_locus_types[locus_type][identifier] = term
             term.append_property("locus_type", locus_type)
 
         term.set_species(identifier="9606", name="Homo sapiens")
@@ -302,11 +311,47 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
             unhandled_entry_keys[key] += 1
         yield term
 
-    logger.warning("Unhandled locus types:\n%s", tabulate(unhandle_locus_types.most_common()))
+    with open(prefix_directory_join(PREFIX, name="unhandled.json"), "w") as file:
+        json.dump(
+            {
+                k: {hgnc_id: term.name for hgnc_id, term in v.items()}
+                for k, v in unhandle_locus_types.items()
+            },
+            file,
+            indent=2,
+        )
+
+    with open(prefix_directory_join(PREFIX, name="unhandled.md"), "w") as file:
+        for k, v in sorted(unhandle_locus_types.items()):
+            t = tabulate(
+                [
+                    (
+                        hgnc_id,
+                        term.name,
+                        term.is_obsolete,
+                        term.link,
+                        ", ".join(p.link for p in term.provenance),
+                    )
+                    for hgnc_id, term in sorted(v.ENTRIES())
+                ],
+                headers=["hgnc_id", "name", "obsolete", "link", "provenance"],
+                tablefmt="github",
+            )
+            print(f"## {k} ({len(v)})", file=file)  # noqa:T001
+            print(t, "\n", file=file)  # noqa:T001
+
+    unhandle_locus_type_counter = Counter(
+        {locus_type: len(d) for locus_type, d in unhandle_locus_types.items()}
+    )
+    logger.warning(
+        "Unhandled locus types:\n%s", tabulate(unhandle_locus_type_counter.most_common())
+    )
     logger.warning("Unhandled keys:\n%s", tabulate(unhandled_entry_keys.most_common()))
 
 
 if __name__ == "__main__":
-    get_obo(force=True).write_default(
-        write_obo=True, write_obograph=True, write_owl=True, force=True
+    get_obo().write_default(
+        force=True,
+        write_obo=True,
+        write_owl=True,  # write_obograph=True,
     )
