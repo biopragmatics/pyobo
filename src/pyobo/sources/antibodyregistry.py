@@ -70,7 +70,9 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
     it = tqdm(chunks, desc=f"{PREFIX}, chunkssize={CHUNKSIZE}")
     for chunk in it:
         for identifier, name, vendor, catalog_number, defining_citation in chunk.values:
-            term = Term.from_triple(PREFIX, identifier, name)
+            if pd.isna(identifier):
+                continue
+            term = Term.from_triple(PREFIX, identifier, name if pd.notna(name) else None)
             if vendor not in MAPPING:
                 if vendor not in needs_curating:
                     needs_curating.add(vendor)
@@ -78,7 +80,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
                         it.write(f"! vendor {vendor} for {identifier}")
             elif MAPPING[vendor] is not None and pd.notna(catalog_number) and catalog_number:
                 term.append_xref((MAPPING[vendor], catalog_number))
-            if pd.notna(defining_citation):
+            if defining_citation and pd.notna(defining_citation):
                 for pubmed_id in defining_citation.split(","):
                     pubmed_id = pubmed_id.strip()
                     if not pubmed_id:
