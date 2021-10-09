@@ -25,6 +25,7 @@ def get_chunks(force: bool = False) -> pd.DataFrame:
     df = ensure_df(
         PREFIX,
         url=URL,
+        name="results.csv",
         force=force,
         version=version,
         sep=",",
