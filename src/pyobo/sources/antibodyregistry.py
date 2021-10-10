@@ -2,7 +2,7 @@
 
 """Converter for the Antibody Registry."""
 
-from typing import Iterable, Optional
+from typing import Iterable
 
 import click
 import pandas as pd
@@ -48,9 +48,12 @@ def get_obo(*, force: bool = False) -> Obo:
 
 
 MAPPING = {
-    "AMERICAN DIAGNOSTICA": None,
-    "Biolegend": "biolegend.antibody",
-    "Enzo Life Sciences": "enzo.antibody",
+    "AMERICAN DIAGNOSTICA": None, #No website
+    "Biolegend": "biolegend",
+    "Enzo Life Sciences": "enzo",
+    "Novus": "novus",
+    "LifeSpan": "biozil",
+    "Creative Diagnostics": None, # This site doesn't have a provider for IDs
 }
 
 SKIP = {
