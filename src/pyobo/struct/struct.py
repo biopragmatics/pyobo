@@ -634,7 +634,7 @@ class Obo:
             logger.info("writing obonet to %s", self._obonet_gz_path)
             self.write_obonet_gz(self._obonet_gz_path)
 
-    def __iter__(self):  # noqa: D105
+    def __iter__(self) -> Iterable["Term"]:  # noqa: D105
         if self.iter_only:
             return iter(self.iter_terms(**(self.iter_terms_kwargs or {})))
         if self._items is None:
