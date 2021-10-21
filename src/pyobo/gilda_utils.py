@@ -26,6 +26,7 @@ __all__ = [
 def iter_gilda_prediction_tuples(
     prefix: str,
     relation: str,
+    *,
     grounder: Optional[Grounder] = None,
     identifiers_are_names: bool = False,
 ) -> Iterable[Tuple[str, str, str, str, str, str, str, str, float]]:
@@ -41,7 +42,7 @@ def iter_gilda_prediction_tuples(
             target_prefix = scored_match.term.db.lower()
             yield (
                 prefix,
-                identifier,
+                normalize_identifier(prefix, identifier),
                 name,
                 relation,
                 target_prefix,
@@ -58,7 +59,7 @@ def iter_gilda_prediction_tuples(
                 target_prefix = scored_match.term.db.lower()
                 yield (
                     prefix,
-                    identifier,
+                    normalize_identifier(prefix, identifier),
                     identifier,
                     relation,
                     target_prefix,
