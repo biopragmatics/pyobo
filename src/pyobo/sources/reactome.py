@@ -3,13 +3,15 @@
 """Converter for Reactome."""
 
 import logging
-from typing import Iterable
+from collections import defaultdict
+from functools import lru_cache
+from typing import Iterable, Mapping, Set
 
 import bioversions
 import pandas as pd
 from tqdm import tqdm
 
-from ..api import get_name_id_mapping
+from ..api import get_id_multirelations_mapping, get_name_id_mapping
 from ..constants import SPECIES_REMAPPING
 from ..struct import Obo, Reference, Term, from_species, has_part
 from ..utils.io import multidict
@@ -96,6 +98,19 @@ def iter_terms(version: str) -> Iterable[Term]:
     #     terms[reactome_id].append_relationship(has_part, Reference('ncbigene', ncbigene_id))
 
     yield from terms.values()
+
+
+@lru_cache(maxsize=1)
+def get_protein_to_pathways() -> Mapping[str, Set[str]]:
+    """Get a mapping from proteins to the pathways they're in."""
+    protein_to_pathways = defaultdict(set)
+    x = get_id_multirelations_mapping("reactome", has_part)
+    for reactome_id, proteins in x.items():
+        for protein in proteins:
+            if protein.prefix != "uniprot":
+                continue
+            protein_to_pathways[protein.identifier].add(reactome_id)
+    return dict(protein_to_pathways)
 
 
 if __name__ == "__main__":
