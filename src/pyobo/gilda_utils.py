@@ -76,7 +76,7 @@ def normalize_identifier(prefix: str, identifier: str) -> str:
     if banana:
         if not identifier.startswith(banana):
             return f"{banana}:{identifier}"
-    elif bioregistry.namespace_in_lui(prefix):
+    elif bioregistry.get_namespace_in_lui(prefix):
         banana = f"{prefix.upper()}:"
         if not identifier.startswith(banana):
             return f"{banana}{identifier}"
