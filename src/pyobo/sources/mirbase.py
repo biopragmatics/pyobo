@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 PREFIX = "mirbase"
 MIRBASE_MATURE_PREFIX = "mirbase.mature"
+BASE_URL = "https://www.mirbase.org/ftp"
 
 xref_mapping = {
     "entrezgene": "ncbigene",
@@ -43,7 +44,7 @@ def get_obo(force: bool = False) -> Obo:
 
 def get_terms(version: str, force: bool = False) -> List[Term]:
     """Parse miRNA data from filepath and convert it to dictionary."""
-    url = f"ftp://mirbase.org/pub/mirbase/{version}/miRNA.dat.gz"
+    url = f"{BASE_URL}/{version}/miRNA.dat.gz"
     definitions_path = ensure_path(PREFIX, url=url, version=version, force=force)
 
     file_handle = (
@@ -56,13 +57,13 @@ def get_terms(version: str, force: bool = False) -> List[Term]:
 
 
 def _prepare_organisms(version: str, force: bool = False):
-    url = f"ftp://mirbase.org/pub/mirbase/{version}/organisms.txt.gz"
+    url = f"{BASE_URL}/{version}/organisms.txt.gz"
     df = ensure_df(PREFIX, url=url, sep="\t", dtype={"#NCBI-taxid": str}, version=version)
     return {division: (taxonomy_id, name) for _, division, name, _tree, taxonomy_id in df.values}
 
 
 def _prepare_aliases(version: str, force: bool = False) -> Mapping[str, List[str]]:
-    url = f"ftp://mirbase.org/pub/mirbase/{version}/aliases.txt.gz"
+    url = f"{BASE_URL}/{version}/aliases.txt.gz"
     df = ensure_df(PREFIX, url=url, sep="\t", version=version)
     return {
         mirbase_id: [s.strip() for s in synonyms.split(";") if s and s.strip()]
