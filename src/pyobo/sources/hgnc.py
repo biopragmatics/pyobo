@@ -333,7 +333,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
                         term.link,
                         ", ".join(p.link for p in term.provenance),
                     )
-                    for hgnc_id, term in sorted(v.ENTRIES())
+                    for hgnc_id, term in sorted(v.items())
                 ],
                 headers=["hgnc_id", "name", "obsolete", "link", "provenance"],
                 tablefmt="github",
