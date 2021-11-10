@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """Converter for bigg."""
-import click
+
 import bioversions
 from typing import Iterable
-from more_click import verbose_option
 from pyobo.path_utils import ensure_df, ensure_tar_df
 from pyobo.struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species, TypeDef
 
@@ -56,13 +55,5 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         yield term
 
 
-@click.command()
-@verbose_option
-def _main():
-    obo = get_obo(force=True)
-    obo.write_default(force=True, write_obo=True)
-
-
 if __name__ == "__main__":
-    #get_obo(force=True).write_default(write_obo=True, write_obograph=True, force=True)
-    _main()
+    get_obo(force=True).cli()
