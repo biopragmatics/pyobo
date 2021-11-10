@@ -5,9 +5,7 @@
 import logging
 from typing import Iterable
 
-import click
 import pandas as pd
-from more_click import verbose_option
 
 from pyobo.struct import Obo, Reference, Term, from_species
 from pyobo.utils.path import ensure_df
@@ -75,12 +73,5 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         yield term
 
 
-@click.command()
-@verbose_option
-def _main():
-    obo = get_obo(force=False)
-    obo.write_default(force=True, write_obonet=True, write_obo=True)
-
-
 if __name__ == "__main__":
-    _main()
+    get_obo().cli()

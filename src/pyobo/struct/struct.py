@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
+from textwrap import dedent
 from typing import (
     Any,
     Callable,
@@ -26,8 +27,11 @@ from typing import (
     Union,
 )
 
+import bioregistry
+import click
 import networkx as nx
 import pandas as pd
+from more_click import force_option, verbose_option
 from more_itertools import pairwise
 from networkx.utils import open_file
 from tqdm import tqdm
@@ -48,7 +52,11 @@ from .typedef import (
 from .utils import comma_separate
 from ..constants import RELATION_ID, RELATION_PREFIX, TARGET_ID, TARGET_PREFIX
 from ..identifier_utils import MissingPrefix, normalize_curie, normalize_prefix
-from ..registries import get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist
+from ..registries import (
+    get_remappings_prefix,
+    get_xrefs_blacklist,
+    get_xrefs_prefix_blacklist,
+)
 from ..utils.cache import get_gzipped_graph
 from ..utils.io import multidict, write_iterable_tsv
 from ..utils.misc import obo_to_obograph, obo_to_owl
@@ -369,6 +377,19 @@ def _sort_relations(r):
     return typedef.reference.name or typedef.reference.identifier
 
 
+class BioregistryError(ValueError):
+    def __str__(self) -> str:
+        return dedent(
+            f"""
+        The value you gave for Obo.ontology field ({self.args[0]}) is not a canonical
+        Bioregistry prefix in the Obo.ontology field.
+
+        Please see https://bioregistry.io for valid prefixes or feel free to open an issue
+        on the PyOBO issue tracker for support.
+        """
+        )
+
+
 @dataclass
 class Obo:
     """An OBO document."""
@@ -419,6 +440,35 @@ class Obo:
     iter_only: bool = False
 
     _items: Optional[List[Term]] = field(init=False, default=None)
+
+    def __post_init__(self) -> None:
+        """Run post-init checks."""
+        if self.ontology != bioregistry.normalize_prefix(self.ontology):
+            raise BioregistryError(self.ontology)
+
+    def cli(self) -> None:
+        """Run the CLI for this instance."""
+        _cli = self.get_cli()
+        _cli()
+
+    def get_cli(self) -> click.Command:
+        """Get a CLI for this instance."""
+
+        @click.command()
+        @verbose_option
+        @force_option
+        @click.option("--owl", is_flag=True)
+        @click.option("--graph", is_flag=True)
+        def _main(force: bool, owl: bool, graph: bool):
+            self.write_default(
+                write_obograph=graph,
+                write_obo=True,
+                write_owl=owl,
+                force=force,
+                use_tqdm=True,
+            )
+
+        return _main
 
     @property
     def date_formatted(self) -> str:

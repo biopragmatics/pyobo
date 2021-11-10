@@ -12,7 +12,7 @@ from typing import Iterable, List, Mapping, Optional, Union
 import pandas as pd
 from flasgger import Swagger
 from flask import Blueprint, Flask, current_app, jsonify, render_template, url_for
-from flask_bootstrap import Bootstrap, VERSION_BOOTSTRAP
+from flask_bootstrap import VERSION_BOOTSTRAP, Bootstrap
 from werkzeug.local import LocalProxy
 
 from pyobo import Canonicalizer
