@@ -14,9 +14,9 @@ from more_click import verbose_option
 from tqdm import tqdm
 
 from .api import (
-    KEGGGenome,
     KEGG_GENES_PREFIX,
     SKIP,
+    KEGGGenome,
     ensure_conv_genome_ncbigene,
     ensure_conv_genome_uniprot,
     ensure_list_genome,

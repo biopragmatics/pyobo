@@ -10,7 +10,12 @@ from .alts import get_primary_identifier
 from .utils import get_version
 from ..getters import NoBuild, get_ontology
 from ..identifier_utils import normalize_curie, wrap_norm_prefix
-from ..utils.cache import cached_collection, cached_mapping, cached_multidict, reverse_mapping
+from ..utils.cache import (
+    cached_collection,
+    cached_mapping,
+    cached_multidict,
+    reverse_mapping,
+)
 from ..utils.path import prefix_cache_join
 
 __all__ = [

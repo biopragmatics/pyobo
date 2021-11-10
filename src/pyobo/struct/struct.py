@@ -50,7 +50,11 @@ from .typedef import (
 from .utils import comma_separate
 from ..constants import RELATION_ID, RELATION_PREFIX, TARGET_ID, TARGET_PREFIX
 from ..identifier_utils import MissingPrefix, normalize_curie, normalize_prefix
-from ..registries import get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist
+from ..registries import (
+    get_remappings_prefix,
+    get_xrefs_blacklist,
+    get_xrefs_prefix_blacklist,
+)
 from ..utils.cache import get_gzipped_graph
 from ..utils.io import multidict, write_iterable_tsv
 from ..utils.misc import obo_to_obograph, obo_to_owl

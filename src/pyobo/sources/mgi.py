@@ -9,7 +9,15 @@ from typing import Iterable
 import pandas as pd
 from tqdm import tqdm
 
-from ..struct import Obo, Reference, Synonym, Term, from_species, has_gene_product, transcribes_to
+from ..struct import (
+    Obo,
+    Reference,
+    Synonym,
+    Term,
+    from_species,
+    has_gene_product,
+    transcribes_to,
+)
 from ..utils.path import ensure_df
 
 logger = logging.getLogger(__name__)

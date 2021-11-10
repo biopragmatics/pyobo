@@ -11,7 +11,14 @@ import click
 from more_click import verbose_option
 from tqdm import tqdm
 
-from pyobo.struct import Obo, Reference, Term, from_species, has_gene_product, orthologous
+from pyobo.struct import (
+    Obo,
+    Reference,
+    Term,
+    from_species,
+    has_gene_product,
+    orthologous,
+)
 from pyobo.utils.io import multidict, multisetdict
 from pyobo.utils.path import ensure_df
 
