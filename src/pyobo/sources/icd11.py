@@ -14,7 +14,12 @@ import click
 from more_click import verbose_option
 from tqdm import tqdm
 
-from ..sources.icd_utils import ICD11_TOP_LEVEL_URL, get_child_identifiers, get_icd, visiter
+from ..sources.icd_utils import (
+    ICD11_TOP_LEVEL_URL,
+    get_child_identifiers,
+    get_icd,
+    visiter,
+)
 from ..struct import Obo, Reference, Synonym, Term
 from ..utils.path import prefix_directory_join
 

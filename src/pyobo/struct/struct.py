@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
+from textwrap import dedent
 from typing import (
     Any,
     Callable,
@@ -26,6 +27,7 @@ from typing import (
     Union,
 )
 
+import bioregistry
 import networkx as nx
 import pandas as pd
 from more_itertools import pairwise
@@ -48,7 +50,11 @@ from .typedef import (
 from .utils import comma_separate
 from ..constants import RELATION_ID, RELATION_PREFIX, TARGET_ID, TARGET_PREFIX
 from ..identifier_utils import MissingPrefix, normalize_curie, normalize_prefix
-from ..registries import get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist
+from ..registries import (
+    get_remappings_prefix,
+    get_xrefs_blacklist,
+    get_xrefs_prefix_blacklist,
+)
 from ..utils.cache import get_gzipped_graph
 from ..utils.io import multidict, write_iterable_tsv
 from ..utils.misc import obo_to_obograph, obo_to_owl
@@ -369,6 +375,19 @@ def _sort_relations(r):
     return typedef.reference.name or typedef.reference.identifier
 
 
+class BioregistryError(ValueError):
+    def __str__(self) -> str:
+        return dedent(
+            f"""
+        The value you gave for Obo.ontology field ({self.args[0]}) is not a canonical
+        Bioregistry prefix in the Obo.ontology field.
+
+        Please see https://bioregistry.io for valid prefixes or feel free to open an issue
+        on the PyOBO issue tracker for support.
+        """
+        )
+
+
 @dataclass
 class Obo:
     """An OBO document."""
@@ -419,6 +438,11 @@ class Obo:
     iter_only: bool = False
 
     _items: Optional[List[Term]] = field(init=False, default=None)
+
+    def __post_init__(self) -> None:
+        """Run post-init checks."""
+        if self.ontology != bioregistry.normalize_prefix(self.ontology):
+            raise BioregistryError(self.ontology)
 
     @property
     def date_formatted(self) -> str:

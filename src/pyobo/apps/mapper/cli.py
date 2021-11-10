@@ -6,7 +6,13 @@ Run with ``python -m pyobo.apps.mapper``.
 """
 
 import click
-from more_click import host_option, port_option, run_app, verbose_option, with_gunicorn_option
+from more_click import (
+    host_option,
+    port_option,
+    run_app,
+    verbose_option,
+    with_gunicorn_option,
+)
 
 __all__ = [
     "main",

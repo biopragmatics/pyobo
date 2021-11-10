@@ -16,9 +16,9 @@ from more_click import verbose_option
 from tqdm import tqdm
 
 from pyobo.sources.kegg.api import (
-    KEGGGenome,
     KEGG_GENES_PREFIX,
     KEGG_PATHWAY_PREFIX,
+    KEGGGenome,
     ensure_link_pathway_genome,
     ensure_list_pathway_genome,
     ensure_list_pathways,
