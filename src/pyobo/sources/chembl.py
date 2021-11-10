@@ -11,8 +11,6 @@ from typing import Iterable
 
 import bioversions
 import chembl_downloader
-import click
-from more_click import verbose_option
 
 from pyobo.struct import Obo, Reference, Term
 
@@ -70,12 +68,5 @@ def iter_terms(version: str) -> Iterable[Term]:
                 yield term
 
 
-@click.command()
-@verbose_option
-def main():
-    """Write the default OBO."""
-    get_obo().write_default(force=True, use_tqdm=True)
-
-
 if __name__ == "__main__":
-    main()
+    get_obo().cli()

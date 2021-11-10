@@ -28,8 +28,10 @@ from typing import (
 )
 
 import bioregistry
+import click
 import networkx as nx
 import pandas as pd
+from more_click import force_option, verbose_option
 from more_itertools import pairwise
 from networkx.utils import open_file
 from tqdm import tqdm
@@ -443,6 +445,30 @@ class Obo:
         """Run post-init checks."""
         if self.ontology != bioregistry.normalize_prefix(self.ontology):
             raise BioregistryError(self.ontology)
+
+    def cli(self) -> None:
+        """Run the CLI for this instance."""
+        _cli = self.get_cli()
+        _cli()
+
+    def get_cli(self) -> click.Command:
+        """Get a CLI for this instance."""
+
+        @click.command()
+        @verbose_option
+        @force_option
+        @click.option("--owl", is_flag=True)
+        @click.option("--graph", is_flag=True)
+        def _main(force: bool, owl: bool, graph: bool):
+            self.write_default(
+                write_obograph=graph,
+                write_obo=True,
+                write_owl=owl,
+                force=force,
+                use_tqdm=True,
+            )
+
+        return _main
 
     @property
     def date_formatted(self) -> str:
