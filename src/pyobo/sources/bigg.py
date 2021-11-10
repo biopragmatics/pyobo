@@ -5,8 +5,10 @@ import click
 import bioversions
 from typing import Iterable
 from more_click import verbose_option
-from pyobo.path_utils import ensure_df, ensure_tar_df
+from pyobo.path.utils import ensure_df, ensure_tar_df
 from pyobo.struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species, TypeDef
+from ..utils.path import ensure_df, ensure_tar_df
+
 
 HEADER = ['bigg_id', 'universal_bigg_id', 'name', 'model_list', 'database_links',
           'old_bigg_ids']
