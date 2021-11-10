@@ -14,19 +14,19 @@ from pyobo.utils.path import ensure_path
 PREFIX = "gwascentral.phenotype"
 
 
-def get_obo() -> Obo:
+def get_obo(force: bool = False) -> Obo:
     """Get GWAS Central Studies as OBO."""
     return Obo(
         name="GWAS Central Phenotype",
         ontology=PREFIX,
         iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=VERSION),
+        iter_terms_kwargs=dict(version=VERSION, force=force),
         data_version=VERSION,
         auto_generated_by=f"bio2obo:{PREFIX}",
     )
 
 
-def iter_terms(version: str) -> Iterable[Term]:
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over terms from GWAS Central Phenotype."""
     for n in trange(1, 11000, desc=f"{PREFIX} download"):
         try:
@@ -36,6 +36,7 @@ def iter_terms(version: str) -> Iterable[Term]:
                 version=version,
                 url=f"https://www.gwascentral.org/phenotype/HGVPM{n}?format=json",
                 name=f"HGVPM{n}.json",
+                force=force,
             )
         except OSError as e:
             tqdm.write(f"{n}: {e}")
@@ -50,4 +51,4 @@ def iter_terms(version: str) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    get_obo().cli()

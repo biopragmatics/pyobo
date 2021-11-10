@@ -6,8 +6,6 @@ import logging
 from collections import defaultdict
 from typing import Iterable, List, Mapping
 
-import click
-from more_click import verbose_option
 from pystow.utils import get_commit
 
 from pyobo import get_name_id_mapping
@@ -156,11 +154,5 @@ def _get_xref_df(version: str) -> Mapping[str, List[Reference]]:
     )
 
 
-@click.command()
-@verbose_option
-def _main():
-    get_obo(force=True).write_default(use_tqdm=True, write_obo=True)
-
-
 if __name__ == "__main__":
-    _main()
+    get_obo(force=True).cli()

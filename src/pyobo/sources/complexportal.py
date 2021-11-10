@@ -198,4 +198,4 @@ def get_terms(version: str) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    get_obo().cli()
