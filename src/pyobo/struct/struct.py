@@ -221,6 +221,10 @@ class Term(Referenced):
         prefix, identifier = normalize_curie(curie)
         return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
 
+    def get_url(self) -> Optional[str]:
+        """Return a URL for this term's reference, if possible."""
+        return self.reference.get_url()
+
     def append_provenance(self, reference: ReferenceHint) -> None:
         """Add a provenance reference."""
         self.provenance.append(_ensure_ref(reference))
