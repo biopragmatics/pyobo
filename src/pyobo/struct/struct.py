@@ -144,11 +144,6 @@ def _ensure_ref(reference: ReferenceHint) -> Reference:
     raise TypeError
 
 
-def _sort_relations(r):
-    typedef, _references = r
-    return typedef.reference.name or typedef.reference.identifier
-
-
 @dataclass
 class Term(Referenced):
     """A term in OBO."""
@@ -376,6 +371,11 @@ class Term(Referenced):
     @staticmethod
     def _escape(s) -> str:
         return s.replace('"', '\\"')
+
+
+def _sort_relations(r):
+    typedef, _references = r
+    return typedef.reference.name or typedef.reference.identifier
 
 
 class BioregistryError(ValueError):
