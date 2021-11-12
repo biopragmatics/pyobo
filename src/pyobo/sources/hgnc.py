@@ -5,12 +5,12 @@
 import json
 import logging
 from collections import Counter, defaultdict
+from operator import attrgetter
 from typing import Iterable
 
 from tabulate import tabulate
 from tqdm import tqdm
 
-from ..api import get_name
 from ..struct import (
     Obo,
     Reference,
@@ -137,6 +137,22 @@ LOCUS_TYPE_TO_SO = {
 
 def get_obo(force: bool = False) -> Obo:
     """Get HGNC as OBO."""
+    idspaces = {
+        prefix: f"https://bioregistry.io/{prefix}:"
+        for prefix in [
+            "rgd",
+            "mgi",
+            "eccode",
+            "rnacentral",
+            "pubmed",
+            "uniprot",
+            "mirbase",
+            "snornabase",
+            "hgnc.genegroup",
+        ]
+    }
+    idspaces["NCBITaxon"] = "http://purl.obolibrary.org/obo/NCBITaxon_"
+
     return Obo(
         ontology=PREFIX,
         name="HGNC",
@@ -145,26 +161,12 @@ def get_obo(force: bool = False) -> Obo:
         typedefs=[
             from_species,
             has_gene_product,
-            gene_product_is_a,
+            gene_product_member_of,
             transcribes_to,
             orthologous,
             member_of,
         ],
-        idspaces={
-            prefix: f"https://bioregistry.io/{prefix}:"
-            for prefix in [
-                "rgd",
-                "mgi",
-                "eccode",
-                "rnacentral",
-                "pubmed",
-                "ncbitaxon",
-                "uniprot",
-                "mirbase",
-                "snornabase",
-                "hgnc.genegroup",
-            ]
-        },
+        idspaces=idspaces,
         synonym_typedefs=[
             previous_name_type,
             previous_symbol_type,
@@ -183,9 +185,15 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
     with open(path) as file:
         entries = json.load(file)["response"]["docs"]
 
-    for so_id in sorted(LOCUS_TYPE_TO_SO.values()):
-        if so_id:
-            yield Term(reference=Reference.auto("SO", so_id))
+    yield from sorted(
+        {
+            Term(reference=Reference.auto("SO", so_id))
+            for so_id in sorted(LOCUS_TYPE_TO_SO.values())
+            if so_id
+        },
+        key=attrgetter("identifier"),
+    )
+
     statuses = set()
     for entry in tqdm(entries, desc=f"Mapping {PREFIX}"):
         name, symbol, identifier = (
@@ -200,6 +208,8 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
             statuses.add(status)
             logger.warning("UNHANDLED %s", status)
             is_obsolete = True
+        else:
+            raise ValueError
 
         term = Term(
             definition=name,
@@ -210,21 +220,14 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
         for uniprot_id in entry.pop("uniprot_ids", []):
             term.append_relationship(
                 has_gene_product,
-                Reference(
-                    prefix="uniprot",
-                    identifier=uniprot_id,
-                    name=get_name(
-                        "uniprot",
-                        uniprot_id,
-                    ),
-                ),
+                Reference.auto("uniprot", uniprot_id),
             )
         for ec_code in entry.pop("enzyme_id", []):
             if "-" in ec_code:
                 continue  # only add concrete annotations
             term.append_relationship(
-                Reference(prefix="eccode", identifier=ec_code, name=get_name("eccode", ec_code)),
                 gene_product_member_of,
+                Reference.auto("eccode", ec_code),
             )
         for rna_central_ids in entry.pop("rna_central_id", []):
             for rna_central_id in rna_central_ids.split(","):
@@ -236,8 +239,9 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
         if mirbase_id:
             term.append_relationship(
                 transcribes_to,
-                Reference(
-                    prefix="mirbase", identifier=mirbase_id, name=get_name("mirbase", mirbase_id)
+                Reference.auto(
+                    "mirbase",
+                    mirbase_id,
                 ),
             )
         snornabase_id = entry.pop("snornabase", None)
@@ -250,13 +254,13 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
             rgd_id = rgd_curie[len("RGD:") :]
             term.append_relationship(
                 orthologous,
-                Reference(prefix="rgd", identifier=rgd_id, name=get_name("rgd", rgd_id)),
+                Reference.auto(prefix="rgd", identifier=rgd_id),
             )
         for mgi_curie in entry.pop("mgd_id", []):
             mgi_id = mgi_curie[len("MGI:") :]
             term.append_relationship(
                 orthologous,
-                Reference(prefix="mgi", identifier=mgi_id, name=get_name("mgi", mgi_id)),
+                Reference.auto(prefix="mgi", identifier=mgi_id),
             )
 
         for xref_prefix, key in gene_xrefs:
@@ -292,12 +296,13 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
         for previous_name in entry.pop("prev_name", []):
             term.append_synonym(Synonym(name=previous_name, type=previous_name_type))
 
-        for prop in ["locus_group", "location"]:
+        for prop in ["location"]:
             value = entry.pop(prop, None)
             if value:
                 term.append_property(prop, value)
 
         locus_type = entry.pop("locus_type")
+        locus_group = entry.pop("locus_group")
         so_id = LOCUS_TYPE_TO_SO.get(locus_type)
         if so_id:
             term.append_parent(Reference.auto("SO", so_id))
@@ -305,6 +310,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
             term.append_parent(Reference.auto("SO", "0000704"))  # gene
             unhandle_locus_types[locus_type][identifier] = term
             term.append_property("locus_type", locus_type)
+            term.append_property("locus_group", locus_group)
 
         term.set_species(identifier="9606", name="Homo sapiens")
 
