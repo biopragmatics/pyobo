@@ -282,4 +282,4 @@ def get_ec2go() -> Mapping[str, Set[Tuple[str, str]]]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    get_obo().cli()

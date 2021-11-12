@@ -14,7 +14,12 @@ from more_click import verbose_option
 from tqdm import tqdm
 
 import pyobo
-from pyobo.sources.kegg.api import KEGGGenome, KEGG_GENOME_PREFIX, SKIP, ensure_list_genomes
+from pyobo.sources.kegg.api import (
+    KEGG_GENOME_PREFIX,
+    SKIP,
+    KEGGGenome,
+    ensure_list_genomes,
+)
 from pyobo.struct import Obo, Reference, Term
 
 logger = logging.getLogger(__name__)

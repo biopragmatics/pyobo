@@ -8,7 +8,6 @@ import bioversions
 import pandas as pd
 from tqdm import tqdm
 
-
 from .mirbase_constants import (
     get_premature_df,
     get_premature_family_df,

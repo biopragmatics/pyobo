@@ -4,10 +4,8 @@
 
 from typing import Iterable, Optional
 
-import click
 import pandas as pd
 import pystow
-from more_click import verbose_option
 
 from pyobo import Obo, Reference, Term
 
@@ -119,12 +117,5 @@ def ensure(version: Optional[str] = None, force: bool = False) -> pd.DataFrame:
     )
 
 
-@click.command()
-@verbose_option
-def main():
-    """Run the DepMap Cell Line CLI."""
-    get_obo().write_default(write_obo=True)
-
-
 if __name__ == "__main__":
-    main()
+    get_obo().cli()

@@ -7,7 +7,13 @@
 
 import pandas as pd
 
-from pyobo.constants import PROVENANCE, SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
+from pyobo.constants import (
+    PROVENANCE,
+    SOURCE_ID,
+    SOURCE_PREFIX,
+    TARGET_ID,
+    TARGET_PREFIX,
+)
 from pyobo.identifier_utils import normalize_prefix
 
 __all__ = [

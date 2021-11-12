@@ -306,4 +306,4 @@ def _iter_polypeptides(polypeptides) -> Iterable[Mapping[str, Any]]:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    get_obo(force=True).write_default(write_obo=True, write_obograph=True, force=True)
+    get_obo(force=True).cli()

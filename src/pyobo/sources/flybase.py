@@ -5,9 +5,7 @@
 import logging
 from typing import Iterable, Mapping, Optional, Set
 
-import click
 import pandas as pd
-from more_click import verbose_option
 from tqdm import tqdm
 
 from pyobo import Reference
@@ -170,12 +168,5 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
         tqdm.write(f"there were {len(missing_taxonomies)} missing taxa in flybase genes")
 
 
-@click.command()
-@verbose_option
-def _main():
-    obo = get_obo(force=True)
-    obo.write_default(force=True, write_obo=True, write_obograph=True)
-
-
 if __name__ == "__main__":
-    _main()
+    get_obo(force=True).cli()

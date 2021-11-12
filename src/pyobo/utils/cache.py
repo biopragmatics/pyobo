@@ -9,7 +9,17 @@ import logging
 import os
 import pickle
 from pathlib import Path
-from typing import Any, Callable, Collection, Dict, Iterable, List, Mapping, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    TypeVar,
+    Union,
+)
 
 import networkx as nx
 import pandas as pd
