@@ -102,7 +102,7 @@ LOCUS_TYPE_TO_SO = {
     # protein-coding gene
     "gene with protein product": "0001217",
     # non-coding RNA
-    "RNA, Y": "",  # TODO, HGNC uses 0000405 but that's a transcript, not a gene
+    "RNA, Y": "0002359",
     "RNA, cluster": "",  # TODO
     "RNA, long non-coding": "0002127",  # HGNC links to wrong one
     "RNA, micro": "0001265",
@@ -112,7 +112,7 @@ LOCUS_TYPE_TO_SO = {
     "RNA, small nuclear": "0001268",
     "RNA, small nucleolar": "0001267",
     "RNA, transfer": "0001272",
-    "RNA, vault": "",  # see RNA analog SO:0000404
+    "RNA, vault": "0002358",
     # phenotype
     "phenotype only": "0001500",  # FIXME doesn't come under gene hierarchy
     # pseudogene
@@ -124,7 +124,7 @@ LOCUS_TYPE_TO_SO = {
     "T cell receptor gene": "0002133",
     "complex locus constituent": "",
     "endogenous retrovirus": "0000100",
-    "fragile site": "",  # TODO
+    "fragile site": "0002349",
     "protocadherin": "",  # TODO
     "readthrough": "0000697",  # maybe not right
     "region": "",
