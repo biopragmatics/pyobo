@@ -10,12 +10,7 @@ from .alts import get_primary_identifier
 from .utils import get_version
 from ..getters import NoBuild, get_ontology
 from ..identifier_utils import normalize_curie, wrap_norm_prefix
-from ..utils.cache import (
-    cached_collection,
-    cached_mapping,
-    cached_multidict,
-    reverse_mapping,
-)
+from ..utils.cache import cached_collection, cached_mapping, cached_multidict
 from ..utils.path import prefix_cache_join
 
 __all__ = [
@@ -121,7 +116,7 @@ def get_id_name_mapping(prefix: str, force: bool = False, strict: bool = True) -
 def get_name_id_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
     """Get a name to identifier mapping for the OBO file."""
     id_name = get_id_name_mapping(prefix=prefix, force=force)
-    return reverse_mapping(id_name)
+    return {v: k for k, v in id_name.items()}
 
 
 @wrap_norm_prefix
