@@ -100,8 +100,9 @@ def get_grounder(
     terms = filter_out_duplicates(terms)
     terms = multidict((term.norm_text, term) for term in terms)
     if grounder_cls is None:
-        grounder_cls = Grounder
-    return grounder_cls(terms)
+        return Grounder(terms)
+    else:
+        return grounder_cls(terms)
 
 
 def get_gilda_terms(prefix: str, identifiers_are_names: bool = False) -> Iterable[gilda.term.Term]:
