@@ -219,6 +219,20 @@ class Term(Referenced):
         )
 
     @classmethod
+    def auto(
+        cls,
+        prefix: str,
+        identifier: str,
+    ) -> "Term":
+        """Create a term from a reference."""
+        from ..api import get_definition
+
+        return cls(
+            reference=Reference.auto(prefix=prefix, identifier=identifier),
+            definition=get_definition(prefix, identifier),
+        )
+
+    @classmethod
     def from_curie(cls, curie: str, name: Optional[str] = None) -> "Term":
         """Create a term directly from a CURIE and optional name."""
         prefix, identifier = normalize_curie(curie)
