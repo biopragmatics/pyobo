@@ -51,10 +51,8 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
     for v in bigg_df.values:
         bigg_id = v[0]
         name = v[1]
-        synonyms = []
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=bigg_id, name=name),
-            synonyms=synonyms,
         )
         yield term
 
