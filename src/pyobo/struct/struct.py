@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
+from textwrap import dedent
 from typing import (
     Any,
     Callable,
@@ -26,8 +27,11 @@ from typing import (
     Union,
 )
 
+import bioregistry
+import click
 import networkx as nx
 import pandas as pd
+from more_click import force_option, verbose_option
 from more_itertools import pairwise
 from networkx.utils import open_file
 from tqdm import tqdm
@@ -48,7 +52,11 @@ from .typedef import (
 from .utils import comma_separate
 from ..constants import RELATION_ID, RELATION_PREFIX, TARGET_ID, TARGET_PREFIX
 from ..identifier_utils import MissingPrefix, normalize_curie, normalize_prefix
-from ..registries import get_remappings_prefix, get_xrefs_blacklist, get_xrefs_prefix_blacklist
+from ..registries import (
+    get_remappings_prefix,
+    get_xrefs_blacklist,
+    get_xrefs_prefix_blacklist,
+)
 from ..utils.cache import get_gzipped_graph
 from ..utils.io import multidict, write_iterable_tsv
 from ..utils.misc import obo_to_obograph, obo_to_owl
@@ -80,7 +88,7 @@ PROVENANCE_PREFIXES = {
     "isbn",
     "issn",
 }
-NCBITAXON_PREFIX = "ncbitaxon"
+NCBITAXON_PREFIX = "NCBITaxon"
 
 
 @dataclass
@@ -193,6 +201,9 @@ class Term(Referenced):
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: Optional[bool] = None
 
+    def __hash__(self):  # noqa: D105
+        return hash((self.__class__, self.prefix, self.identifier))
+
     @classmethod
     def from_triple(
         cls,
@@ -208,10 +219,28 @@ class Term(Referenced):
         )
 
     @classmethod
+    def auto(
+        cls,
+        prefix: str,
+        identifier: str,
+    ) -> "Term":
+        """Create a term from a reference."""
+        from ..api import get_definition
+
+        return cls(
+            reference=Reference.auto(prefix=prefix, identifier=identifier),
+            definition=get_definition(prefix, identifier),
+        )
+
+    @classmethod
     def from_curie(cls, curie: str, name: Optional[str] = None) -> "Term":
         """Create a term directly from a CURIE and optional name."""
         prefix, identifier = normalize_curie(curie)
         return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
+
+    def get_url(self) -> Optional[str]:
+        """Return a URL for this term's reference, if possible."""
+        return self.reference.get_url()
 
     def append_provenance(self, reference: ReferenceHint) -> None:
         """Add a provenance reference."""
@@ -319,7 +348,7 @@ class Term(Referenced):
             for value in values:
                 yield prop, value
 
-    def iterate_obo_lines(self, write_relation_comments: bool = False) -> Iterable[str]:
+    def iterate_obo_lines(self, write_relation_comments: bool = True) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield "\n[Term]"
         yield f"id: {self.curie}"
@@ -367,6 +396,19 @@ class Term(Referenced):
 def _sort_relations(r):
     typedef, _references = r
     return typedef.reference.name or typedef.reference.identifier
+
+
+class BioregistryError(ValueError):
+    def __str__(self) -> str:
+        return dedent(
+            f"""
+        The value you gave for Obo.ontology field ({self.args[0]}) is not a canonical
+        Bioregistry prefix in the Obo.ontology field.
+
+        Please see https://bioregistry.io for valid prefixes or feel free to open an issue
+        on the PyOBO issue tracker for support.
+        """
+        )
 
 
 @dataclass
@@ -419,6 +461,35 @@ class Obo:
     iter_only: bool = False
 
     _items: Optional[List[Term]] = field(init=False, default=None)
+
+    def __post_init__(self) -> None:
+        """Run post-init checks."""
+        if self.ontology != bioregistry.normalize_prefix(self.ontology):
+            raise BioregistryError(self.ontology)
+
+    def cli(self) -> None:
+        """Run the CLI for this instance."""
+        _cli = self.get_cli()
+        _cli()
+
+    def get_cli(self) -> click.Command:
+        """Get a CLI for this instance."""
+
+        @click.command()
+        @verbose_option
+        @force_option
+        @click.option("--owl", is_flag=True)
+        @click.option("--graph", is_flag=True)
+        def _main(force: bool, owl: bool, graph: bool):
+            self.write_default(
+                write_obograph=graph,
+                write_obo=True,
+                write_owl=owl,
+                force=force,
+                use_tqdm=True,
+            )
+
+        return _main
 
     @property
     def date_formatted(self) -> str:
@@ -634,7 +705,7 @@ class Obo:
             logger.info("writing obonet to %s", self._obonet_gz_path)
             self.write_obonet_gz(self._obonet_gz_path)
 
-    def __iter__(self):  # noqa: D105
+    def __iter__(self) -> Iterable["Term"]:  # noqa: D105
         if self.iter_only:
             return iter(self.iter_terms(**(self.iter_terms_kwargs or {})))
         if self._items is None:
