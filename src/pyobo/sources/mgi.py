@@ -28,16 +28,17 @@ ENTREZ_XREFS_URL = "http://www.informatics.jax.org/downloads/reports/MGI_EntrezG
 ENSEMBL_XREFS_URL = "http://www.informatics.jax.org/downloads/reports/MRK_ENSEMBL.rpt"
 
 
+class MGIGetter(Obo):
+    ontology = PREFIX
+    typedefs = [from_species, has_gene_product, transcribes_to]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return get_terms(force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get MGI as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="Mouse Genome Database",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        typedefs=[from_species, has_gene_product, transcribes_to],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return MGIGetter(force=force)
 
 
 COLUMNS = ["MGI Accession ID", "Marker Symbol", "Marker Name"]

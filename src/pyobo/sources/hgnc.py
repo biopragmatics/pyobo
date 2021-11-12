@@ -134,47 +134,48 @@ LOCUS_TYPE_TO_SO = {
     None: "0000704",  # gene
 }
 
+IDSPACES = {
+    prefix: f"https://bioregistry.io/{prefix}:"
+    for prefix in [
+        "rgd",
+        "mgi",
+        "eccode",
+        "rnacentral",
+        "pubmed",
+        "uniprot",
+        "mirbase",
+        "snornabase",
+        "hgnc.genegroup",
+    ]
+}
+IDSPACES["NCBITaxon"] = "http://purl.obolibrary.org/obo/NCBITaxon_"
+
+
+class HGNCGetter(Obo):
+    ontology = PREFIX
+    typedefs = [
+        from_species,
+        has_gene_product,
+        gene_product_member_of,
+        transcribes_to,
+        orthologous,
+        member_of,
+    ]
+    idspaces = IDSPACES
+    synonym_typedefs = [
+        previous_name_type,
+        previous_symbol_type,
+        alias_name_type,
+        alias_symbol_type,
+    ]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return get_terms(force=force)
+
 
 def get_obo(force: bool = False) -> Obo:
     """Get HGNC as OBO."""
-    idspaces = {
-        prefix: f"https://bioregistry.io/{prefix}:"
-        for prefix in [
-            "rgd",
-            "mgi",
-            "eccode",
-            "rnacentral",
-            "pubmed",
-            "uniprot",
-            "mirbase",
-            "snornabase",
-            "hgnc.genegroup",
-        ]
-    }
-    idspaces["NCBITaxon"] = "http://purl.obolibrary.org/obo/NCBITaxon_"
-
-    return Obo(
-        ontology=PREFIX,
-        name="HGNC",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        typedefs=[
-            from_species,
-            has_gene_product,
-            gene_product_member_of,
-            transcribes_to,
-            orthologous,
-            member_of,
-        ],
-        idspaces=idspaces,
-        synonym_typedefs=[
-            previous_name_type,
-            previous_symbol_type,
-            alias_name_type,
-            alias_symbol_type,
-        ],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return HGNCGetter(force=force)
 
 
 def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901

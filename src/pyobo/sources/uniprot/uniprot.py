@@ -20,19 +20,17 @@ REVIEWED_URL = (
 )
 
 
+class UniProtGetter(Obo):
+    bioversions_key = ontology = PREFIX
+    typedefs = [from_species]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        yield from iter_terms(force=force, version=self.data_version)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get UniProt as OBO."""
-    # Just throw out force
-    version = bioversions.get_version("uniprot")
-    return Obo(
-        ontology=PREFIX,
-        name="UniProt",
-        data_version=version,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        typedefs=[from_species],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return UniProtGetter(force=force)
 
 
 def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:

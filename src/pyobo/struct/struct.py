@@ -13,7 +13,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import (
     Any,
-    Callable,
+    ClassVar,
     Collection,
     Dict,
     Iterable,
@@ -396,56 +396,88 @@ class Obo:
     """An OBO document."""
 
     #: The prefix for the ontology
-    ontology: str
+    ontology: ClassVar[str]
 
-    #: The name of the ontology
-    name: str
-
-    #: A function that iterates over terms
-    iter_terms: Callable[..., Iterable[Term]] = field(repr=False)
+    #: The name of the ontology. If not given, tries looking up with the Bioregistry.
+    name: ClassVar[Optional[str]] = None
 
     #: The OBO format
-    format_version: str = "1.2"
+    format_version: ClassVar[str] = "1.2"
 
     #: Type definitions
-    typedefs: List[TypeDef] = field(default_factory=list)
+    typedefs: ClassVar[Optional[List[TypeDef]]] = None
 
     #: Synonym type definitions
-    synonym_typedefs: List[SynonymTypeDef] = field(default_factory=list)
-
-    #: Kwargs to add to the iter_items when called
-    iter_terms_kwargs: Optional[Mapping[str, Any]] = None
+    synonym_typedefs: ClassVar[Optional[List[SynonymTypeDef]]] = None
 
     #: Regular expression pattern describing the local unique identifiers
-    pattern: Optional[str] = None
+    pattern: ClassVar[Optional[str]] = None
 
     #: Is the prefix at the begging of each local unique identifier
-    namespace_in_pattern: Optional[bool] = None
+    namespace_in_pattern: ClassVar[Optional[bool]] = None
+
+    #: An annotation about how an ontology was generated
+    auto_generated_by: ClassVar[Optional[str]] = None
+
+    #: The idspaces used in the document
+    idspaces: ClassVar[Optional[Mapping[str, str]]] = None
+
+    #: For super-sized datasets that shouldn't be read into memory
+    iter_only: ClassVar[bool] = False
+
+    bioversions_key: ClassVar[Optional[str]] = None
+
+    #: The date the ontology was generated
+    date: Optional[datetime] = field(default_factory=datetime.today)
 
     #: The ontology version
     data_version: Optional[str] = None
 
-    #: An annotation about how an ontology was generated
-    auto_generated_by: Optional[str] = None
-
-    #: The date the ontology was generated
-    date: datetime = field(default_factory=datetime.today)
-
-    #: The idspaces used in the document
-    idspaces: Dict[str, str] = field(default_factory=dict)
+    #: Should this ontology be reloaded?
+    force: bool = False
 
     #: The hierarchy of terms
     _hierarchy: Optional[nx.DiGraph] = field(init=False, default=None)
-
-    #: For super-sized datasets that shouldn't be read into memory
-    iter_only: bool = False
-
+    #: A cache of terms
     _items: Optional[List[Term]] = field(init=False, default=None)
 
     def __post_init__(self) -> None:
         """Run post-init checks."""
         if self.ontology != bioregistry.normalize_prefix(self.ontology):
             raise BioregistryError(self.ontology)
+        if self.name is None:
+            self.name = bioregistry.get_name(self.ontology)
+        if self.bioversions_key and not self.data_version:
+            import bioversions
+
+            self.data_version = bioversions.get_version(self.bioversions_key)
+        if self.auto_generated_by is None:
+            self.auto_generated_by = f"bio2obo:{self.ontology}"
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in this ontology."""
+        raise NotImplementedError
+
+    @classmethod
+    def cls_cli(cls) -> click.Command:
+        """Run the CLI for this class."""
+
+        @click.command()
+        @verbose_option
+        @force_option
+        @click.option("--owl", is_flag=True)
+        @click.option("--graph", is_flag=True)
+        def _main(force: bool, owl: bool, graph: bool):
+            inst = cls(force=force)
+            inst.write_default(
+                write_obograph=graph,
+                write_obo=True,
+                write_owl=owl,
+                force=force,
+                use_tqdm=True,
+            )
+
+        return _main
 
     def cli(self) -> None:
         """Run the CLI for this instance."""
@@ -497,15 +529,19 @@ class Obo:
         if self.data_version is not None:
             yield f"data-version: {self.data_version}"
 
-        for prefix, url in sorted(self.idspaces.items()):
+        for prefix, url in sorted((self.idspaces or {}).items()):
             yield f"idspace: {prefix} {url}"
 
-        for synonym_typedef in sorted(self.synonym_typedefs, key=attrgetter("id")):
+        for synonym_typedef in sorted((self.synonym_typedefs or []), key=attrgetter("id")):
             yield synonym_typedef.to_obo()
 
         yield f"ontology: {self.ontology}"
 
-        for typedef in self.typedefs:
+        if self.name is None:
+            raise ValueError
+        yield f"remark: {self.name}"
+
+        for typedef in self.typedefs or []:
             yield from typedef.iterate_obo_lines()
 
         for term in self:
@@ -682,9 +718,9 @@ class Obo:
 
     def __iter__(self) -> Iterable["Term"]:  # noqa: D105
         if self.iter_only:
-            return iter(self.iter_terms(**(self.iter_terms_kwargs or {})))
+            return iter(self.iter_terms(force=self.force))
         if self._items is None:
-            self._items = list(self.iter_terms(**(self.iter_terms_kwargs or {})))
+            self._items = list(self.iter_terms(force=self.force))
         return iter(self._items)
 
     def ancestors(self, identifier: str) -> Set[str]:

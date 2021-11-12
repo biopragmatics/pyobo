@@ -70,17 +70,18 @@ GENES_HEADER = [
 ]
 
 
+class RGDGetter(Obo):
+    ontology = PREFIX
+    typedefs = [from_species, transcribes_to, has_gene_product]
+    synonym_typedefs = [old_name_type, old_symbol_type]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return get_terms(force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get RGD as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="Rat Genome Database",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        typedefs=[from_species, transcribes_to, has_gene_product],
-        synonym_typedefs=[old_name_type, old_symbol_type],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return RGDGetter(force=force)
 
 
 namespace_to_column = [
