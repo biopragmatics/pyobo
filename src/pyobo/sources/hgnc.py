@@ -101,9 +101,11 @@ ENCODINGS = {
 LOCUS_TYPE_TO_SO = {
     # protein-coding gene
     "gene with protein product": "0001217",
+    "complex locus constituent": "0001217",  # this is a nonsensical annotation for genes encoding complex members
+    "protocadherin": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/562
     # non-coding RNA
     "RNA, Y": "0002359",
-    "RNA, cluster": "",  # TODO
+    "RNA, cluster": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/564
     "RNA, long non-coding": "0002127",  # HGNC links to wrong one
     "RNA, micro": "0001265",
     "RNA, misc": "0001266",
@@ -122,14 +124,12 @@ LOCUS_TYPE_TO_SO = {
     "pseudogene": "0000336",
     # other
     "T cell receptor gene": "0002133",
-    "complex locus constituent": "",
     "endogenous retrovirus": "0000100",
     "fragile site": "0002349",
-    "protocadherin": "",  # TODO
     "readthrough": "0000697",  # maybe not right
-    "region": "",
     "transposable element": "0000111",  # HGNC links to wrong one
-    "virus integration site": "",  # TODO
+    "virus integration site": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/551
+    "region": "0001411",  # a small bucket for things that need a better annotation, even higher than "gene"
     "unknown": "0000704",  # gene
     None: "0000704",  # gene
 }
