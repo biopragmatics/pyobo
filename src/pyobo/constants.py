@@ -86,3 +86,6 @@ SPECIES_FILE = "species.tsv.gz"
 def version_getter(name: str) -> Callable[[], str]:
     """Make a function appropriate for getting versions."""
     return partial(bioversions.get_version, name)
+
+
+NCBITAXON_PREFIX = "NCBITaxon"
