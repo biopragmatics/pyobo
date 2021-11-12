@@ -88,7 +88,7 @@ PROVENANCE_PREFIXES = {
     "isbn",
     "issn",
 }
-NCBITAXON_PREFIX = "ncbitaxon"
+NCBITAXON_PREFIX = "NCBITaxon"
 
 
 @dataclass
