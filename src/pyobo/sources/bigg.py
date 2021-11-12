@@ -10,8 +10,7 @@ from pyobo.struct import Obo, Reference, SynonymTypeDef, Term, TypeDef
 
 from ..utils.path import ensure_df
 
-# HEADER = ["bigg_id", "universal_bigg_id", "name", "model_list", "database_links", "old_bigg_ids"]
-HEADER = ["bigg_id", "name"]
+HEADER = ["bigg_id", "universal_bigg_id", "name", "model_list", "database_links", "old_bigg_ids"]
 PREFIX = "bigg.metabolite"
 
 URL = "http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt"
@@ -44,6 +43,7 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
         skiprows=18,
         header=None,
         names=HEADER,
+        usecols=['bigg_id', 'name'],
         force=force,
         version=version,
     )
