@@ -334,7 +334,7 @@ class Term(Referenced):
             for value in values:
                 yield prop, value
 
-    def iterate_obo_lines(self, write_relation_comments: bool = False) -> Iterable[str]:
+    def iterate_obo_lines(self, write_relation_comments: bool = True) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield "\n[Term]"
         yield f"id: {self.curie}"
