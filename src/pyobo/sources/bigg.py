@@ -6,17 +6,12 @@ from typing import Iterable, Optional
 
 import bioversions
 
-from pyobo.struct import (
-    Obo,
-    Reference,
-    SynonymTypeDef,
-    Term,
-    TypeDef
-)
+from pyobo.struct import Obo, Reference, SynonymTypeDef, Term, TypeDef
 
 from ..utils.path import ensure_df
 
-HEADER = ["bigg_id", "universal_bigg_id", "name", "model_list", "database_links", "old_bigg_ids"]
+# HEADER = ["bigg_id", "universal_bigg_id", "name", "model_list", "database_links", "old_bigg_ids"]
+HEADER = ["bigg_id", "name"]
 PREFIX = "bigg.metabolite"
 
 URL = "http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt"
@@ -53,9 +48,9 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
         version=version,
     )
 
-    for r, c in bigg_df.iterrows():
-        bigg_id = c[0]
-        name = c[2]
+    for v in bigg_df.values:
+        bigg_id = v[0]
+        name = v[1]
         synonyms = []
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=bigg_id, name=name),
