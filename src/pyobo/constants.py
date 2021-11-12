@@ -86,3 +86,23 @@ SPECIES_FILE = "species.tsv.gz"
 def version_getter(name: str) -> Callable[[], str]:
     """Make a function appropriate for getting versions."""
     return partial(bioversions.get_version, name)
+
+
+NCBITAXON_PREFIX = "NCBITaxon"
+DATE_FORMAT = "%d:%m:%Y %H:%M"
+PROVENANCE_PREFIXES = {
+    "pubmed",
+    "pmc",
+    "doi",
+    "biorxiv",
+    "chemrxiv",
+    "wikipedia",
+    "google.patent",
+    "agricola",
+    "cba",
+    "ppr",
+    "citexplore",
+    "goc",
+    "isbn",
+    "issn",
+}

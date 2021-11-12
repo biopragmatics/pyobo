@@ -43,6 +43,7 @@ from .api import (  # noqa: F401
 from .getters import get_ontology  # noqa: F401
 from .identifier_utils import normalize_curie, normalize_prefix  # noqa: F401
 from .normalizer import OboNormalizer, ground  # noqa: F401
+from .reader import from_obo_path, from_obonet  # noqa: F401
 from .sources import (  # noqa: F401
     has_nomenclature_plugin,
     iter_nomenclature_plugins,

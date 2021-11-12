@@ -7,9 +7,8 @@ from operator import attrgetter
 
 import obonet
 
-from pyobo import SynonymTypeDef, get_ontology
-from pyobo.struct import Reference, Synonym
-from pyobo.struct.struct import (
+from pyobo import Reference, Synonym, SynonymTypeDef, get_ontology
+from pyobo.reader import (
     _extract_definition,
     _extract_synonym,
     iterate_graph_synonym_typedefs,
