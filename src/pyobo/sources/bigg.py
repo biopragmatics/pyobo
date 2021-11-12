@@ -2,17 +2,24 @@
 
 """Converter for bigg."""
 
+from typing import Iterable, Optional
+
 import bioversions
-from typing import Iterable
-from pyobo.path_utils import ensure_df, ensure_tar_df
-from pyobo.struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species, TypeDef
 
+from pyobo.struct import (
+    Obo,
+    Reference,
+    SynonymTypeDef,
+    Term,
+    TypeDef
+)
 
-HEADER = ['bigg_id', 'universal_bigg_id', 'name', 'model_list', 'database_links',
-          'old_bigg_ids']
-PREFIX = 'bigg'
+from ..utils.path import ensure_df
 
-URL = 'http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt'
+HEADER = ["bigg_id", "universal_bigg_id", "name", "model_list", "database_links", "old_bigg_ids"]
+PREFIX = "bigg.metabolite"
+
+URL = "http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt"
 
 alias_type = SynonymTypeDef(id="alias", name="alias")
 has_role = TypeDef(reference=Reference(prefix="bigg", identifier="has_role"))
@@ -21,12 +28,12 @@ has_role = TypeDef(reference=Reference(prefix="bigg", identifier="has_role"))
 def get_obo(force: bool = False) -> Obo:
     """Get bigg as OBO."""
     version = bioversions.get_version("bigg")
-    #version = '1.2'
+    # version = '1.2'
     return Obo(
         ontology=PREFIX,
         name="bigg models metabolites database",
         iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=False),
+        iter_terms_kwargs=dict(force=force, version=version),
         typedefs=[has_role],
         synonym_typedefs=[alias_type],
         auto_generated_by=f"bio2obo:{PREFIX}",
@@ -34,7 +41,7 @@ def get_obo(force: bool = False) -> Obo:
     )
 
 
-def get_terms(force: bool = False) -> Iterable[Term]:
+def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Term]:
     bigg_df = ensure_df(
         prefix=PREFIX,
         url=URL,
@@ -42,7 +49,9 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         skiprows=18,
         header=None,
         names=HEADER,
-        )
+        force=force,
+        version=version,
+    )
 
     for r, c in bigg_df.iterrows():
         bigg_id = c[0]
@@ -50,7 +59,6 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         synonyms = []
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=bigg_id, name=name),
-            definition=[],
             synonyms=synonyms,
         )
         yield term
