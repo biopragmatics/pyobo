@@ -4,13 +4,13 @@
 
 from typing import Iterable
 
+import bioregistry
+import bioversions
 import click
 import pandas as pd
 from more_click import verbose_option
 from tqdm import tqdm
 
-import bioregistry
-import bioversions
 from pyobo import Obo, Term
 from pyobo.utils.path import ensure_df
 
@@ -47,13 +47,14 @@ def get_obo(*, force: bool = False) -> Obo:
     )
 
 
+# TODO there are tonnnnsss of mappings to be curated
 MAPPING = {
-    "AMERICAN DIAGNOSTICA": None, #No website
+    "AMERICAN DIAGNOSTICA": None,  # No website
     "Biolegend": "biolegend",
     "Enzo Life Sciences": "enzo",
     "Novus": "novus",
     "LifeSpan": "biozil",
-    "Creative Diagnostics": None, # This site doesn't have a provider for IDs
+    "Creative Diagnostics": None,  # This site doesn't have a provider for IDs
 }
 
 SKIP = {
