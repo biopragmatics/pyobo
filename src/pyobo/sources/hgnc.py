@@ -18,7 +18,7 @@ from ..struct import (
     SynonymTypeDef,
     Term,
     from_species,
-    gene_product_is_a,
+    gene_product_member_of,
     has_gene_product,
     member_of,
     orthologous,
@@ -223,8 +223,8 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
             if "-" in ec_code:
                 continue  # only add concrete annotations
             term.append_relationship(
-                gene_product_is_a,
                 Reference(prefix="eccode", identifier=ec_code, name=get_name("eccode", ec_code)),
+                gene_product_member_of,
             )
         for rna_central_ids in entry.pop("rna_central_id", []):
             for rna_central_id in rna_central_ids.split(","):
