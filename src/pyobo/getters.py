@@ -28,8 +28,10 @@ from tqdm import tqdm
 
 from .constants import DATABASE_DIRECTORY
 from .identifier_utils import MissingPrefix, wrap_norm_prefix
+from .reader import from_obo_path, from_obonet
 from .sources import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
+from .utils.cache import get_gzipped_graph
 from .utils.io import get_writer
 from .utils.path import ensure_path, get_prefix_obo_path, prefix_directory_join
 from .version import get_git_hash, get_version
@@ -73,11 +75,11 @@ def get_ontology(
     Alternate usage if you have a custom url::
 
     >>> from pystow.utils import download
-    >>> from pyobo import Obo
+    >>> from pyobo import Obo, from_obo_path
     >>> url = ...
     >>> obo_path = ...
     >>> download(url=url, path=path)
-    >>> obo = Obo.from_obo_path(path)
+    >>> obo = from_obo_path(path)
     """
     if force:
         rewrite = True
@@ -90,7 +92,7 @@ def get_ontology(
     )
     if obonet_json_gz_path.exists() and not force:
         logger.debug("[%s] using obonet cache at %s", prefix, obonet_json_gz_path)
-        return Obo.from_obonet_gz(obonet_json_gz_path)
+        return from_obonet(get_gzipped_graph(obonet_json_gz_path))
 
     if has_nomenclature_plugin(prefix):
         obo = run_nomenclature_plugin(prefix)
@@ -117,7 +119,7 @@ def get_ontology(
             prontology.dump(file, format="obo")
     else:
         raise UnhandledFormat(f"[{prefix}] unhandled ontology file format: {path.suffix}")
-    obo = Obo.from_obo_path(path, prefix=prefix, strict=strict)
+    obo = from_obo_path(path, prefix=prefix, strict=strict)
     obo.write_default(force=rewrite)
     return obo
 

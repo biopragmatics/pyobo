@@ -5,7 +5,7 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
 from operator import attrgetter
-from typing import Any, Collection, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Collection, Dict, Iterable, List, Optional, Tuple, Union
 
 from .extra import Synonym, SynonymTypeDef
 from .reference import Reference, Referenced

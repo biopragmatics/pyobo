@@ -2,7 +2,6 @@
 
 """A python package for handling and generating OBO."""
 
-from . import Term
 from .api import (  # noqa: F401
     get_alts_to_id,
     get_ancestors,
@@ -44,12 +43,13 @@ from .api import (  # noqa: F401
 from .getters import get_ontology  # noqa: F401
 from .identifier_utils import normalize_curie, normalize_prefix  # noqa: F401
 from .normalizer import OboNormalizer, ground  # noqa: F401
+from .reader import from_obo_path, from_obonet  # noqa: F401
 from .sources import (  # noqa: F401
     has_nomenclature_plugin,
     iter_nomenclature_plugins,
     run_nomenclature_plugin,
 )
-from .struct import Obo, Reference, Synonym, SynonymTypeDef, TypeDef  # noqa: F401
+from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef  # noqa: F401
 from .utils.path import ensure_path  # noqa: F401
 from .version import get_version  # noqa: F401
 from .xrefdb.canonicalizer import (  # noqa: F401
