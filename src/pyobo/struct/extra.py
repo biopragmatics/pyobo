@@ -30,11 +30,11 @@ class SynonymTypeDef:
         """Get a type definition from text that's normalized."""
         return cls(
             id=text.lower()
-                .replace("-", "_")
-                .replace(" ", "_")
-                .replace('"', "")
-                .replace(")", "")
-                .replace("(", ""),
+            .replace("-", "_")
+            .replace(" ", "_")
+            .replace('"', "")
+            .replace(")", "")
+            .replace("(", ""),
             name=text.replace('"', ""),
         )
 
