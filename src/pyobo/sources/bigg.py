@@ -43,7 +43,7 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
         skiprows=18,
         header=None,
         names=HEADER,
-        usecols=['bigg_id', 'name'],
+        usecols=["bigg_id", "name"],
         force=force,
         version=version,
     )
