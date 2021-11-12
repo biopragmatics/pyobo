@@ -201,6 +201,9 @@ class Term(Referenced):
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: Optional[bool] = None
 
+    def __hash__(self):  # noqa: D105
+        return hash((self.__class__, self.prefix, self.identifier))
+
     @classmethod
     def from_triple(
         cls,
