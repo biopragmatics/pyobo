@@ -88,7 +88,7 @@ PROVENANCE_PREFIXES = {
     "isbn",
     "issn",
 }
-NCBITAXON_PREFIX = "ncbitaxon"
+NCBITAXON_PREFIX = "NCBITaxon"
 
 
 @dataclass
@@ -201,6 +201,9 @@ class Term(Referenced):
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: Optional[bool] = None
 
+    def __hash__(self):  # noqa: D105
+        return hash((self.__class__, self.prefix, self.identifier))
+
     @classmethod
     def from_triple(
         cls,
@@ -216,10 +219,28 @@ class Term(Referenced):
         )
 
     @classmethod
+    def auto(
+        cls,
+        prefix: str,
+        identifier: str,
+    ) -> "Term":
+        """Create a term from a reference."""
+        from ..api import get_definition
+
+        return cls(
+            reference=Reference.auto(prefix=prefix, identifier=identifier),
+            definition=get_definition(prefix, identifier),
+        )
+
+    @classmethod
     def from_curie(cls, curie: str, name: Optional[str] = None) -> "Term":
         """Create a term directly from a CURIE and optional name."""
         prefix, identifier = normalize_curie(curie)
         return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
+
+    def get_url(self) -> Optional[str]:
+        """Return a URL for this term's reference, if possible."""
+        return self.reference.get_url()
 
     def append_provenance(self, reference: ReferenceHint) -> None:
         """Add a provenance reference."""
@@ -327,7 +348,7 @@ class Term(Referenced):
             for value in values:
                 yield prop, value
 
-    def iterate_obo_lines(self, write_relation_comments: bool = False) -> Iterable[str]:
+    def iterate_obo_lines(self, write_relation_comments: bool = True) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield "\n[Term]"
         yield f"id: {self.curie}"

@@ -96,6 +96,10 @@ class Reference:
             rv["name"] = self.name
         return rv
 
+    def get_url(self) -> Optional[str]:
+        """Return a URL for this reference, if possible."""
+        return bioregistry.get_iri(self.prefix, self.identifier)
+
     def __str__(self):  # noqa: D105
         identifier_lower = self.identifier.lower()
         if identifier_lower.startswith(f"{self.prefix.lower()}:"):

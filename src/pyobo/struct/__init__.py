@@ -8,7 +8,7 @@ from .typedef import (  # noqa: F401
     RelationHint,
     TypeDef,
     from_species,
-    gene_product_is_a,
+    gene_product_member_of,
     get_reference_tuple,
     has_gene_product,
     has_member,
