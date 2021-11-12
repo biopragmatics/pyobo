@@ -2,7 +2,7 @@
 
 """PyOBO's Gilda utilities."""
 
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, Optional, Tuple, Type, Union
 
 import bioregistry
 import gilda.api
@@ -84,7 +84,9 @@ def normalize_identifier(prefix: str, identifier: str) -> str:
 
 
 def get_grounder(
-    prefix: Union[str, Iterable[str]], unnamed: Optional[Iterable[str]] = None
+    prefix: Union[str, Iterable[str]],
+    unnamed: Optional[Iterable[str]] = None,
+    grounder_cls: Optional[Type[Grounder]] = None,
 ) -> Grounder:
     """Get a Gilda grounder for the given namespace."""
     unnamed = set() if unnamed is None else set(unnamed)
@@ -101,7 +103,10 @@ def get_grounder(
             terms.extend(p_terms)
     terms = filter_out_duplicates(terms)
     terms = multidict((term.norm_text, term) for term in terms)
-    return Grounder(terms)
+    if grounder_cls is None:
+        return Grounder(terms)
+    else:
+        return grounder_cls(terms)
 
 
 def get_gilda_terms(prefix: str, identifiers_are_names: bool = False) -> Iterable[gilda.term.Term]:
