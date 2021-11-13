@@ -12,10 +12,10 @@ from functools import lru_cache
 from typing import Any, Dict, Iterable, Mapping, Optional
 from xml.etree import ElementTree
 
+import bioversions
 import pystow
 from tqdm import tqdm
 
-import bioversions
 from ..struct import Obo, Reference, Term, TypeDef
 from ..utils.cache import cached_pickle
 from ..utils.path import prefix_directory_join
@@ -196,7 +196,7 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
 
     description = drug_xml.findtext(f"{ns}description")
     if description:
-        row["description"] = description.replace("\r", "").replace("\n", "\\n"),
+        row["description"] = description.replace("\r", "").replace("\n", "\\n")
 
     # Add drug aliases
     aliases = {
@@ -307,7 +307,7 @@ def _iter_polypeptides(polypeptides) -> Iterable[Mapping[str, Any]]:
             f"[{ns}resource='HUGO Gene Nomenclature Committee (HGNC)']/{ns}identifier",
         )
         if hgnc_id is not None:
-            hgnc_id = hgnc_id[len("HGNC:"):]
+            hgnc_id = hgnc_id[len("HGNC:") :]
             yv["hgnc_id"] = hgnc_id
             yv["hgnc_symbol"] = polypeptide.findtext(f"{ns}gene-name")
 

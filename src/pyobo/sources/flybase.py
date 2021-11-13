@@ -155,7 +155,11 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
         for hgnc_curie in human_orthologs.get(identifier, []):
             if not hgnc_curie or pd.isna(hgnc_curie):
                 continue
-            term.append_relationship(orthologous, Reference.from_curie(hgnc_curie, auto=True))
+            hgnc_ortholog = Reference.from_curie(hgnc_curie, auto=True)
+            if hgnc_ortholog is None:
+                tqdm.write(f"fb:{identifier} had invalid ortholog: {hgnc_curie}")
+            else:
+                term.append_relationship(orthologous, hgnc_ortholog)
         taxonomy_id = abbr_to_taxonomy.get(organism)
         if taxonomy_id is not None:
             term.append_relationship(from_species, Reference.auto("ncbitaxon", taxonomy_id))

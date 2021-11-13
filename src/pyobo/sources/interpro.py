@@ -115,7 +115,7 @@ def _parse_tree_helper(lines: Iterable[str]):
                 del stack[-1]
 
             child_id = stack[-1]
-            rv1[child_id].append(parent_id)
+            rv1[child_id].append(parent_id)  # type:ignore
 
         previous_depth, previous_id = depth, parent_id
 
