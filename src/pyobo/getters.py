@@ -130,7 +130,7 @@ def get_ontology(
 
 
 def _ensure_ontology_path(
-    *, prefix: str, url: Optional[str] = None, force: bool = False, version: Optional[str] = None
+    prefix: str, *, url: Optional[str] = None, force: bool = False, version: Optional[str] = None
 ) -> pathlib.Path:
     """Get the path to the ontology file and download if missing."""
     if url is not None:
