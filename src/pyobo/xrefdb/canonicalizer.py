@@ -69,7 +69,7 @@ class Canonicalizer:
         if curie not in self.graph:
             return curie
         priority_dict = self._get_priority_dict(curie)
-        return max(priority_dict, key=priority_dict.get)
+        return max(priority_dict, key=priority_dict.get)  # type:ignore
 
     @classmethod
     def get_default(cls, priority: Optional[Iterable[str]] = None) -> "Canonicalizer":

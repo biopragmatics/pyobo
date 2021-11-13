@@ -111,12 +111,12 @@ def _iter_genome_terms(
         )
 
     for pathway_id, protein_ids in _get_link_pathway_map(link_pathway_path).items():
-        term = terms.get(pathway_id)
-        if term is None:
+        pathway_term = terms.get(pathway_id)
+        if pathway_term is None:
             tqdm.write(f"could not find kegg.pathway:{pathway_id} for {kegg_genome.name}")
             continue
         for protein_id in protein_ids:
-            term.append_relationship(
+            pathway_term.append_relationship(
                 has_part,
                 Reference(
                     prefix=KEGG_GENES_PREFIX,

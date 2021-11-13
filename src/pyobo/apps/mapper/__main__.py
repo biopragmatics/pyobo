@@ -5,7 +5,7 @@
 Run with ``python -m pyobo.apps.mapper``
 """
 
-from .mapper import main
+from .cli import main
 
 if __name__ == "__main__":
     main()

@@ -33,6 +33,7 @@ def get_name_by_curie(curie: str) -> Optional[str]:
     prefix, identifier = normalize_curie(curie)
     if prefix and identifier:
         return get_name(prefix, identifier)
+    return None
 
 
 X = TypeVar("X")
@@ -43,11 +44,12 @@ def _help_get(f: Callable[[str], Mapping[str, X]], prefix: str, identifier: str)
     try:
         mapping = f(prefix)
     except NoBuild:
-        mapping = None
+        logger.warning("unable to look up results for prefix %s with %s", prefix, f)
+        return None
 
     if not mapping:
-        logger.warning("unable to look up results for prefix %s with %s", prefix, f)
-        return
+        logger.warning("no results produced for prefix %s with %s", prefix, f)
+        return None
 
     primary_id = get_primary_identifier(prefix, identifier)
     return mapping.get(primary_id)

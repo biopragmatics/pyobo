@@ -75,7 +75,7 @@ def iter_terms(version: str) -> Iterable[Term]:
         term = Term(
             reference=Reference(PREFIX, identifier, name),
             definition=_get_definition(attrib),
-            provenance=reference and [reference],
+            provenance=[] if reference is None else [reference],
             is_obsolete=is_obsolete,
         )
         for key in [
@@ -135,6 +135,7 @@ def _get_definition(attrib) -> Optional[str]:
     rv = attrib["DESCRIPTION_FULL"].strip() or attrib["DESCRIPTION_BRIEF"].strip() or None
     if rv is not None:
         return rv.replace("\d", "").replace("\s", "")  # noqa: W605
+    return None
 
 
 @click.command()

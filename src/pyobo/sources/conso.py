@@ -2,7 +2,7 @@
 
 """Converter for CONSO."""
 
-from typing import Iterable
+from typing import Iterable, List
 
 import pandas as pd
 
@@ -58,13 +58,14 @@ def iter_terms() -> Iterable[Term]:
     for _, row in terms_df.iterrows():
         if row["Name"] == "WITHDRAWN":
             continue
-        provenance = []
+        provenance: List[Reference] = []
         for curie in row["References"].split(","):
             curie = curie.strip()
             if not curie:
                 continue
             reference = Reference.from_curie(curie)
-            provenance.append(reference)
+            if reference is not None:
+                provenance.append(reference)
         identifier = row["Identifier"]
         yield Term(
             reference=Reference(PREFIX, identifier, row["Name"]),

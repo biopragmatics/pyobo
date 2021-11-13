@@ -29,9 +29,7 @@ def bens_magical_ontology(use_tqdm: bool = True) -> nx.DiGraph:
         )
 
     logger.info("getting hierarchies")
-    it = sorted(bioregistry.read_registry())
-    if use_tqdm:
-        it = tqdm(it, desc="Entries")
+    it = tqdm(sorted(bioregistry.read_registry()), desc="Entries", disable=not use_tqdm)
     for prefix in it:
         if bioregistry.is_deprecated(prefix) or prefix in SKIP:
             continue

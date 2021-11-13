@@ -63,7 +63,7 @@ class Normalizer(ABC):
         self.norm_name_to_name = self._get_norm_name_to_names(self.synonym_to_identifiers_mapping)
 
     @classmethod
-    def _get_norm_name_to_names(cls, synonyms: Iterable[str]) -> Mapping[str, Set[str]]:
+    def _get_norm_name_to_names(cls, synonyms: Iterable[str]) -> Dict[str, Set[str]]:
         return multisetdict((cls._normalize_text(synonym), synonym) for synonym in synonyms)
 
     @staticmethod

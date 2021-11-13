@@ -26,7 +26,7 @@ SKIP = {
 
 from_kegg_species = TypeDef(
     reference=Reference.default("inKeggTaxon", "in KEGG taxon"),
-    parents=from_species.reference,
+    parents=[from_species.reference],
 )
 
 
@@ -129,18 +129,16 @@ def _ensure_conv_genome_helper(
             error_on_missing=error_on_missing,
             version=version,
         )
-    except KeyboardInterrupt:
-        pass
     except urllib.error.HTTPError:
-        rv = prefix_directory_join(
+        path_rv = prefix_directory_join(
             KEGG_GENES_PREFIX,
             f"conv_{target_database}",
             name=name,
             version=version,
         )
-        with rv.open("w") as file:
+        with path_rv.open("w") as file:
             print(file=file)  # noqa:T001
-        return rv.as_posix()
+        return path_rv.as_posix()
     except FileNotFoundError:
         return None
     else:

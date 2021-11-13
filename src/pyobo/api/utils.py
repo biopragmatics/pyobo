@@ -31,3 +31,5 @@ def get_version(prefix: str) -> Optional[str]:
     if metadata_json_path.exists():
         data = json.loads(metadata_json_path.read_text())
         return data["version"]
+
+    return None

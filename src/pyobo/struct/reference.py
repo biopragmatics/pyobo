@@ -71,8 +71,8 @@ class Reference:
         :param auto: Automatically look up name
         """
         prefix, identifier = normalize_curie(curie, strict=strict)
-        if prefix is None and identifier is None:
-            return
+        if prefix is None or identifier is None:
+            return None
         if name is None and auto:
             return Reference.auto(prefix=prefix, identifier=identifier)
         return Reference(prefix=prefix, identifier=identifier, name=name)

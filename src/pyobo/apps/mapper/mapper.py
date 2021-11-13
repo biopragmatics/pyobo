@@ -7,11 +7,19 @@ Run with ``python -m pyobo.apps.mapper``.
 
 import logging
 from functools import lru_cache
-from typing import Iterable, List, Mapping, Optional, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Union
 
 import pandas as pd
 from flasgger import Swagger
-from flask import Blueprint, Flask, current_app, jsonify, render_template, url_for
+from flask import (
+    Blueprint,
+    Flask,
+    abort,
+    current_app,
+    jsonify,
+    render_template,
+    url_for,
+)
 from flask_bootstrap import VERSION_BOOTSTRAP, Bootstrap
 from werkzeug.local import LocalProxy
 
@@ -90,13 +98,15 @@ def summarize():
 @search_blueprint.route("/mappings/summarize_by/<prefix>")
 def summarize_one(prefix: str):
     """Summarize the mappings."""
-    prefix = normalize_prefix(prefix)
-    in_df = summary_df.loc[summary_df[TARGET_PREFIX] == prefix, [SOURCE_PREFIX, "count"]]
-    out_df = summary_df.loc[summary_df[SOURCE_PREFIX] == prefix, [TARGET_PREFIX, "count"]]
+    norm_prefix = normalize_prefix(prefix)
+    if norm_prefix is None:
+        return abort(500, f"invalid prefix: {prefix}")
+    in_df = summary_df.loc[summary_df[TARGET_PREFIX] == norm_prefix, [SOURCE_PREFIX, "count"]]
+    out_df = summary_df.loc[summary_df[SOURCE_PREFIX] == norm_prefix, [TARGET_PREFIX, "count"]]
     return f"""
-    <h1>Incoming Mappings to {prefix}</h1>
+    <h1>Incoming Mappings to {norm_prefix}</h1>
     {in_df.to_html(index=False)}
-    <h1>Outgoing Mappings from {prefix}</h1>
+    <h1>Outgoing Mappings from {norm_prefix}</h1>
     {out_df.to_html(index=False)}
     """
 
@@ -114,7 +124,7 @@ def canonicalize(curie: str):
 
     norm_curie = f"{norm_prefix}:{norm_identifier}"
 
-    rv = dict(query=curie)
+    rv: Dict[str, Any] = dict(query=curie)
     if norm_curie != curie:
         rv["norm_curie"] = norm_curie
 

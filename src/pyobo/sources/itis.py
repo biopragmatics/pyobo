@@ -67,7 +67,7 @@ def iter_terms() -> Iterable[Term]:
     if not os.path.exists(sqlite_path):
         raise FileNotFoundError(f"file missing: {sqlite_path}")
 
-    conn = sqlite3.connect(sqlite_path)
+    conn = sqlite3.connect(sqlite_path.as_posix())
 
     with closing(conn.cursor()) as cursor:
         cursor.execute(LONGNAMES_QUERY)
