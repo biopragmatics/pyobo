@@ -211,17 +211,27 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
         f" {n_relations} relations, and {n_properties} properties",
     )
 
-    return Obo(
-        ontology=ontology,
-        name=name,
-        auto_generated_by=graph.graph.get("auto-generated-by"),
-        format_version=graph.graph.get("format-version"),
-        data_version=data_version,
-        date=date,
-        typedefs=list(typedefs.values()),
-        synonym_typedefs=list(synonym_typedefs.values()),
-        iter_terms=lambda: iter(terms),
-    )
+    _ontology = ontology
+    _name = name
+    _date = date
+    _data_version = data_version
+    _typedefs = typedefs
+    _synonym_typedefs = synonym_typedefs
+
+    class _adhoc(Obo):
+        ontology = _ontology
+        name = _name
+        auto_generated_by = graph.graph.get("auto-generated-by")
+        format_version = graph.graph.get("format-version")
+        data_version = _data_version
+        date = _date
+        typedefs = list(_typedefs.values())
+        synonym_typedefs = list(_synonym_typedefs.values())
+
+        def iter_terms(self, force: bool = False) -> Iterable[Term]:
+            return terms
+
+    return _adhoc()
 
 
 def _clean_graph_ontology(graph, prefix: str) -> None:
