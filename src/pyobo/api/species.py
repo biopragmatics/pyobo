@@ -30,11 +30,12 @@ def get_species(prefix: str, identifier: str) -> Optional[str]:
     try:
         id_species = get_id_species_mapping(prefix)
     except NoBuild:
-        id_species = None
+        logger.warning("unable to look up species for prefix %s", prefix)
+        return None
 
     if not id_species:
-        logger.warning("unable to look up species for prefix %s", prefix)
-        return
+        logger.warning("no results produced for prefix %s", prefix)
+        return None
 
     primary_id = get_primary_identifier(prefix, identifier)
     return id_species.get(primary_id)

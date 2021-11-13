@@ -65,6 +65,7 @@ def get_primary_curie(curie: str) -> Optional[str]:
     primary_identifier = get_primary_identifier(prefix, identifier)
     if primary_identifier is not None:
         return f"{prefix}:{primary_identifier}"
+    return None
 
 
 @wrap_norm_prefix

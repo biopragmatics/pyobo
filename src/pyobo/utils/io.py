@@ -9,7 +9,18 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterable, List, Mapping, Optional, Set, Tuple, TypeVar, Union, cast
+from typing import (
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+    cast,
+)
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
@@ -103,7 +114,7 @@ def multidict(pairs: Iterable[Tuple[X, Y]]) -> Mapping[X, List[Y]]:
     return dict(rv)
 
 
-def multisetdict(pairs: Iterable[Tuple[X, Y]]) -> Mapping[X, Set[Y]]:
+def multisetdict(pairs: Iterable[Tuple[X, Y]]) -> Dict[X, Set[Y]]:
     """Accumulate a multisetdict from a list of pairs."""
     rv = defaultdict(set)
     for key, value in pairs:

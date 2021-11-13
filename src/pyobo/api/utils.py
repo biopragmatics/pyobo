@@ -28,3 +28,5 @@ def get_version(prefix: str) -> Optional[str]:
         rv = data["version"]
         logger.debug("using pre-cached metadata version %s v%s", prefix, rv)
         return rv
+
+    return None

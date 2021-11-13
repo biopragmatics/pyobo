@@ -357,6 +357,7 @@ def _get_first_nonquoted(s: str) -> Optional[int]:
     for i, (a, b) in enumerate(pairwise(s), start=1):
         if b == '"' and a != "\\":
             return i
+    return None
 
 
 def _quote_split(s: str) -> Tuple[str, str]:
@@ -388,7 +389,7 @@ def _extract_synonym(
         name, rest = _quote_split(s)
     except ValueError:
         logger.warning("[%s:%s] invalid synonym: %s", prefix, identifier, s)
-        return
+        return None
 
     specificity = None
     for skos in "RELATED", "EXACT", "BROAD", "NARROW":
@@ -407,7 +408,7 @@ def _extract_synonym(
 
     if not rest.startswith("[") or not rest.endswith("]"):
         logger.warning("[%s:%s] problem with synonym: %s", prefix, identifier, s)
-        return
+        return None
 
     provenance = _parse_trailing_ref_list(rest, strict=strict)
     return Synonym(name=name, specificity=specificity or "EXACT", type=stype, provenance=provenance)
@@ -514,6 +515,8 @@ def iterate_node_relationships(
     """Extract relationships from a :mod:`obonet` node's data."""
     for s in data.get("relationship", []):
         relation_curie, target_curie = s.split(" ")
+        relation_prefix: Optional[str]
+        relation_identifier: Optional[str]
         if relation_curie in RELATION_REMAPPINGS:
             relation_prefix, relation_identifier = RELATION_REMAPPINGS[relation_curie]
         else:
