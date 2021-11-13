@@ -70,14 +70,15 @@ def get_filtered_relations_df(
 ) -> pd.DataFrame:
     """Get all of the given relation."""
     relation_prefix, relation_identifier = relation = get_reference_tuple(relation)
+    version = get_version(prefix)
     path = prefix_cache_join(
         prefix,
         "relations",
         name=f"{relation_prefix}:{relation_identifier}.tsv",
-        version=get_version(prefix),
+        version=version,
     )
     all_relations_path = prefix_cache_join(
-        prefix, name="relations.tsv", version=get_version(prefix)
+        prefix, name="relations.tsv", version=version
     )
 
     @cached_df(path=path, dtype=str, force=force)
@@ -92,7 +93,7 @@ def get_filtered_relations_df(
             return df.loc[idx, columns]
 
         logger.info("[%s] no cached relations found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+        ontology = get_ontology(prefix, force=force, version=version)
         return ontology.get_filtered_relations_df(relation, use_tqdm=use_tqdm)
 
     return _df_getter()

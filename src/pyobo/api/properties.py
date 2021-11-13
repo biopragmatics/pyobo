@@ -35,7 +35,8 @@ def get_properties_df(prefix: str, *, force: bool = False) -> pd.DataFrame:
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A dataframe with the properties
     """
-    path = prefix_cache_join(prefix, name="properties.tsv", version=get_version(prefix))
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
@@ -43,7 +44,7 @@ def get_properties_df(prefix: str, *, force: bool = False) -> pd.DataFrame:
             logger.info("[%s] forcing reload for properties", prefix)
         else:
             logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+        ontology = get_ontology(prefix, force=force, version=version)
         df = ontology.get_properties_df()
         df.dropna(inplace=True)
         return df

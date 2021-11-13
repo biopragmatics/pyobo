@@ -24,12 +24,13 @@ logger = logging.getLogger(__name__)
 @wrap_norm_prefix
 def get_typedef_df(prefix: str, force: bool = False) -> pd.DataFrame:
     """Get an identifier to name mapping for the typedefs in an OBO file."""
-    path = prefix_cache_join(prefix, name="typedefs.tsv", version=get_version(prefix))
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="typedefs.tsv", version=version)
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         logger.debug("[%s] no cached typedefs found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+        ontology = get_ontology(prefix, force=force, version=version)
         logger.debug("[%s] loading typedef mappings", prefix)
         return ontology.get_typedef_df()
 

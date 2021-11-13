@@ -67,11 +67,12 @@ def get_ontology(
     """Get the OBO for a given graph.
 
     :param prefix: The prefix of the ontology to look up
+    :param version: The pre-looked-up version of the ontology
     :param force: Download the data again
     :param rewrite: Should the OBO cache be rewritten? Automatically set to true if ``force`` is true
     :param url: A URL to give if the OBOfoundry can not be used to look up the given prefix. This option is deprecated,
         you should make a PR to the bioregistry or use other code if you have a custom URL, like:
-    :param version: The pre-looked-up version of the ontology
+    :param strict: Should CURIEs be treated strictly? If true, raises exceptions on invalid/malformed
     :returns: An OBO object
 
     :raises OnlyOWLError: If the OBO foundry only has an OWL document for this resource.
@@ -115,7 +116,7 @@ def get_ontology(
         try:
             prontology = pronto.Ontology(path)
         except KeyError:
-            raise NoBuild(f"[{prefix}] could not parse OWL with pronto")
+            raise NoBuild(f"[{prefix}] could not parse OWL with pronto") from None
         version = prontology.metadata.data_version
         # prefix = prontology.metadata.ontology
         path = get_prefix_obo_path(prefix=prefix, version=version)
@@ -129,7 +130,7 @@ def get_ontology(
 
 
 def _ensure_ontology_path(
-    prefix: str, url: Optional[str] = None, force: bool = False, version: Optional[str] = None
+    *, prefix: str, url: Optional[str] = None, force: bool = False, version: Optional[str] = None
 ) -> pathlib.Path:
     """Get the path to the ontology file and download if missing."""
     if url is not None:

@@ -44,10 +44,11 @@ def get_filtered_xrefs(
     strict: bool = False,
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
+    version = get_version(prefix)
     path = prefix_cache_join(
-        prefix, "xrefs", name=f"{xref_prefix}.tsv", version=get_version(prefix)
+        prefix, "xrefs", name=f"{xref_prefix}.tsv", version=version
     )
-    all_xrefs_path = prefix_cache_join(prefix, name="xrefs.tsv", version=get_version(prefix))
+    all_xrefs_path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
     header = [f"{prefix}_id", f"{xref_prefix}_id"]
 
     @cached_mapping(path=path, header=header, use_tqdm=use_tqdm, force=force)
@@ -60,7 +61,7 @@ def get_filtered_xrefs(
             return dict(df.values)
 
         logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, strict=strict)
+        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_filtered_xrefs_mapping(xref_prefix, use_tqdm=use_tqdm)
 
     rv = _get_mapping()
