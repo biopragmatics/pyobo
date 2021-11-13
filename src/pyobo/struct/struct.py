@@ -527,6 +527,10 @@ class Obo:
         it = self.iterate_obo_lines()
         if use_tqdm:
             it = tqdm(it, desc=f"writing {self.ontology}", unit_scale=True, unit="line")
+        self._write_lines(it, file)
+
+    @staticmethod
+    def _write_lines(it, file):
         for line in it:
             print(line, file=file)  # noqa:T001
 
@@ -722,7 +726,7 @@ class Obo:
         return ancestor in self.ancestors(descendant)
 
     @property
-    def hierarchy(self, *, use_tqdm: bool = False) -> nx.DiGraph:
+    def hierarchy(self) -> nx.DiGraph:
         """A graph representing the parent/child relationships between the entities.
 
         To get all children of a given entity, do:
@@ -737,9 +741,7 @@ class Obo:
         """  # noqa:D401
         if self._hierarchy is None:
             self._hierarchy = nx.DiGraph()
-            for term in self._iter_terms(
-                use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting hierarchy"
-            ):
+            for term in self._iter_terms(desc=f"[{self.ontology}] getting hierarchy"):
                 for parent in term.parents:
                     self._hierarchy.add_edge(term.identifier, parent.identifier)
         return self._hierarchy

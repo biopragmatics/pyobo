@@ -5,7 +5,7 @@
 .. seealso:: https://github.com/pyobo/pyobo/issues/27
 """
 
-from typing import Iterable, Optional
+from typing import Iterable
 
 import pandas as pd
 

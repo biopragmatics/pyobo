@@ -11,8 +11,9 @@ import networkx as nx
 from .names import get_name
 from .properties import get_filtered_properties_mapping
 from .relations import get_filtered_relations_df
+from .. import TypeDef
 from ..identifier_utils import wrap_norm_prefix
-from ..struct import RelationHint, has_member, is_a, part_of
+from ..struct import has_member, is_a, part_of
 
 __all__ = [
     "get_hierarchy",
@@ -23,6 +24,8 @@ __all__ = [
     "is_descendent",
 ]
 
+from ..struct.reference import Reference
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +34,7 @@ def get_hierarchy(
     *,
     include_part_of: bool = True,
     include_has_member: bool = False,
-    extra_relations: Optional[Iterable[RelationHint]] = None,
+    extra_relations: Optional[Iterable[TypeDef]] = None,
     properties: Optional[Iterable[str]] = None,
     use_tqdm: bool = False,
     force: bool = False,
@@ -58,7 +61,7 @@ def get_hierarchy(
         prefix=prefix,
         include_part_of=include_part_of,
         include_has_member=include_has_member,
-        extra_relations=tuple(sorted(extra_relations or [])),
+        extra_relations=tuple(sorted(extra_relations or [], key=lambda t: t.curie)),
         properties=tuple(sorted(properties or [])),
         use_tqdm=use_tqdm,
         force=force,
@@ -70,7 +73,7 @@ def get_hierarchy(
 def _get_hierarchy_helper(
     prefix: str,
     *,
-    extra_relations: Tuple[RelationHint, ...],
+    extra_relations: Tuple[TypeDef, ...],
     properties: Tuple[str, ...],
     include_part_of: bool,
     include_has_member: bool,
@@ -118,6 +121,8 @@ def _get_hierarchy_helper(
             rv.add_edge(f"{source_ns}:{source_id}", f"{prefix}:{target_id}", relation="part_of")
 
     for relation in extra_relations:
+        if not isinstance(relation, (TypeDef, Reference)):
+            raise TypeError
         relation_df = get_filtered_relations_df(
             prefix=prefix,
             relation=relation,

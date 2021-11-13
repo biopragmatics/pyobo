@@ -10,17 +10,7 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
-from typing import (
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Set,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, TypeVar, Union
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 

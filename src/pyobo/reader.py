@@ -245,12 +245,13 @@ def _iter_obo_graph(
     graph: nx.MultiDiGraph,
     *,
     strict: bool = True,
-) -> Iterable[Tuple[Optional[str], str, Mapping[str, Any]]]:
+) -> Iterable[Tuple[str, str, Mapping[str, Any]]]:
     """Iterate over the nodes in the graph with the prefix stripped (if it's there)."""
     for node, data in graph.nodes(data=True):
         prefix, identifier = normalize_curie(node, strict=strict)
-        if prefix and identifier:
-            yield prefix, identifier, data
+        if prefix is None or identifier is None:
+            continue
+        yield prefix, identifier, data
 
 
 def _get_date(graph, ontology: str) -> Optional[datetime]:
@@ -320,7 +321,11 @@ def iterate_graph_typedefs(
             logger.warning("[%s] unable to parse typedef CURIE %s", graph.graph["ontology"], curie)
             continue
 
-        xrefs = [Reference.from_curie(curie, strict=strict) for curie in typedef.get("xref", [])]
+        xrefs = []
+        for curie in typedef.get("xref", []):
+            _xref = Reference.from_curie(curie, strict=strict)
+            if _xref:
+                xrefs.append(_xref)
         yield TypeDef(reference=reference, xrefs=xrefs)
 
 
