@@ -5,7 +5,6 @@
 import unittest
 from operator import attrgetter
 
-import bioversions
 import obonet
 
 from pyobo import Reference, Synonym, SynonymTypeDef, get_ontology
