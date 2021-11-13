@@ -11,9 +11,8 @@ import networkx as nx
 from .names import get_name
 from .properties import get_filtered_properties_mapping
 from .relations import get_filtered_relations_df
-from .. import TypeDef
 from ..identifier_utils import wrap_norm_prefix
-from ..struct import has_member, is_a, part_of
+from ..struct import TypeDef, has_member, is_a, part_of
 
 __all__ = [
     "get_hierarchy",
