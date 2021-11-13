@@ -9,13 +9,13 @@ import datetime
 import itertools as itt
 import logging
 from functools import lru_cache
-from typing import Any, Iterable, Mapping, Optional
+from typing import Any, Dict, Iterable, Mapping, Optional
 from xml.etree import ElementTree
 
-import bioversions
 import pystow
 from tqdm import tqdm
 
+import bioversions
 from ..struct import Obo, Reference, Term, TypeDef
 from ..utils.cache import cached_pickle
 from ..utils.path import prefix_directory_join
@@ -157,12 +157,11 @@ smiles_template = f"{ns}calculated-properties/{ns}property[{ns}kind='SMILES']/{n
 def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
     """Extract information from an XML element representing a drug."""
     # assert drug_xml.tag == f'{ns}drug'
-    row = {
+    row: Dict[str, Any] = {
         "type": drug_xml.get("type"),
         "drugbank_id": drug_xml.findtext(f"{ns}drugbank-id[@primary='true']"),
         "cas": drug_xml.findtext(f"{ns}cas-number"),
         "name": drug_xml.findtext(f"{ns}name"),
-        "description": drug_xml.findtext(f"{ns}description").replace("\r", "").replace("\n", "\\n"),
         "groups": [group.text for group in drug_xml.findall(f"{ns}groups/{ns}group")],
         "atc_codes": [code.get("code") for code in drug_xml.findall(f"{ns}atc-codes/{ns}atc-code")],
         "categories": [
@@ -172,16 +171,7 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
             }
             for x in drug_xml.findall(f"{ns}categories/{ns}category")
         ],
-        "patents": [
-            {
-                "patent_id": x.findtext(f"{ns}number"),
-                "country": x.findtext(f"{ns}country"),
-                "approved": datetime.datetime.strptime(x.findtext(f"{ns}approved"), "%Y-%m-%d"),
-                "expires": datetime.datetime.strptime(x.findtext(f"{ns}expires"), "%Y-%m-%d"),
-                "pediatric_extension": x.findtext(f"{ns}pediatric-extension") != "false",
-            }
-            for x in drug_xml.findall(f"{ns}patents/{ns}patent")
-        ],
+        "patents": list(_get_patents(drug_xml)),
         "salts": [
             {
                 "identifier": x.findtext(f"{ns}drugbank-id"),
@@ -204,6 +194,10 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
         "smiles": drug_xml.findtext(smiles_template),
     }
 
+    description = drug_xml.findtext(f"{ns}description")
+    if description:
+        row["description"] = description.replace("\r", "").replace("\n", "\\n"),
+
     # Add drug aliases
     aliases = {
         elem.text.strip()
@@ -213,7 +207,7 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
             drug_xml.findall(f"{ns}international-brands/{ns}international-brand"),
             drug_xml.findall(f"{ns}products/{ns}product/{ns}name"),
         )
-        if elem.text.strip()
+        if elem.text and elem.text.strip()
     }
     aliases.add(row["name"])
     row["aliases"] = aliases
@@ -228,6 +222,22 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
         row["protein_interactions"].append(target_row)
 
     return row
+
+
+def _get_patents(drug_element):
+    for patent_element in drug_element.findall(f"{ns}patents/{ns}patent"):
+        rv = {
+            "patent_id": patent_element.findtext(f"{ns}number"),
+            "country": patent_element.findtext(f"{ns}country"),
+            "pediatric_extension": patent_element.findtext(f"{ns}pediatric-extension") != "false",
+        }
+        approved = patent_element.findtext(f"{ns}approved")
+        if approved is not None:
+            rv["approved"] = datetime.datetime.strptime(approved, "%Y-%m-%d")
+        expires = patent_element.findtext(f"{ns}expires")
+        if expires:
+            rv["expires"] = datetime.datetime.strptime(expires, "%Y-%m-%d")
+        yield rv
 
 
 _categories = ["target", "enzyme", "carrier", "transporter"]
@@ -297,7 +307,7 @@ def _iter_polypeptides(polypeptides) -> Iterable[Mapping[str, Any]]:
             f"[{ns}resource='HUGO Gene Nomenclature Committee (HGNC)']/{ns}identifier",
         )
         if hgnc_id is not None:
-            hgnc_id = hgnc_id[len("HGNC:") :]
+            hgnc_id = hgnc_id[len("HGNC:"):]
             yv["hgnc_id"] = hgnc_id
             yv["hgnc_symbol"] = polypeptide.findtext(f"{ns}gene-name")
 

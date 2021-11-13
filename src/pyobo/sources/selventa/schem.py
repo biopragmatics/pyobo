@@ -28,7 +28,7 @@ def get_obo(*, force: bool = False) -> Obo:
     )
 
 
-def iter_terms(force: Optional[bool] = False) -> Iterable[Term]:
+def iter_terms(force: bool = False) -> Iterable[Term]:
     """Iterate over selventa chemical terms."""
     df = ensure_df(PREFIX, url=URL, skiprows=8, force=force)
     for identifier, label, xrefs in df[["ID", "LABEL", "XREF"]].values:

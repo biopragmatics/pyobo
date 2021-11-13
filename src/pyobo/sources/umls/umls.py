@@ -9,6 +9,7 @@ import itertools as itt
 import operator
 import os
 import zipfile
+from pathlib import Path
 from typing import Iterable
 
 import click
@@ -75,7 +76,7 @@ def iter_terms(version: str, synonym_abb, autodownload: bool = False) -> Iterabl
     url = f"https://download.nlm.nih.gov/umls/kss/{version}/{name}"
     if autodownload:
         # FIXME needs automated scrapy step where you put in user/password
-        path = ensure_path(PREFIX, url=url, version=version)
+        path = Path(ensure_path(PREFIX, url=url, version=version))
     else:
         path = RAW_MODULE.get(PREFIX, version, name=name)
         if not path.exists():

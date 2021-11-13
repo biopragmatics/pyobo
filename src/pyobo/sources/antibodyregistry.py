@@ -2,7 +2,7 @@
 
 """Converter for the Antibody Registry."""
 
-from typing import Iterable
+from typing import Iterable, Mapping, Optional
 
 import bioregistry
 import bioversions
@@ -46,7 +46,7 @@ def get_obo(*, force: bool = False) -> Obo:
 
 
 # TODO there are tonnnnsss of mappings to be curated
-MAPPING = {
+MAPPING: Mapping[str, Optional[str]] = {
     "AMERICAN DIAGNOSTICA": None,  # No website
     "Biolegend": "biolegend",
     "Enzo Life Sciences": "enzo",
@@ -81,7 +81,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
                     if all(x not in vendor for x in SKIP):
                         it.write(f"! vendor {vendor} for {identifier}")
             elif MAPPING[vendor] is not None and pd.notna(catalog_number) and catalog_number:
-                term.append_xref((MAPPING[vendor], catalog_number))
+                term.append_xref((MAPPING[vendor], catalog_number))  # type:ignore
             if defining_citation and pd.notna(defining_citation):
                 for pubmed_id in defining_citation.split(","):
                     pubmed_id = pubmed_id.strip()
