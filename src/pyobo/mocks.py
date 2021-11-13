@@ -44,8 +44,8 @@ def get_mock_id_alts_mapping(data: Mapping[str, Mapping[str, List[str]]]) -> moc
 X = TypeVar("X")
 
 
-def _replace_mapping_getter(name: str, data: Mapping[str, X]) -> mock._patch:
-    def _mock_get_data(prefix: str, **_kwargs) -> X:
+def _replace_mapping_getter(name: str, data: Mapping[str, Mapping[str, X]]) -> mock._patch:
+    def _mock_get_data(prefix: str, **_kwargs) -> Mapping[str, X]:
         return data.get(prefix, {})
 
     return mock.patch(name, side_effect=_mock_get_data)

@@ -220,6 +220,8 @@ class Term(Referenced):
     def from_curie(cls, curie: str, name: Optional[str] = None) -> "Term":
         """Create a term directly from a CURIE and optional name."""
         prefix, identifier = normalize_curie(curie)
+        if prefix is None or identifier is None:
+            raise ValueError
         return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
 
     def get_url(self) -> Optional[str]:
@@ -483,8 +485,9 @@ class Obo:
 
     def _iter_terms(self, use_tqdm: bool = False, desc: str = "terms") -> Iterable[Term]:
         if use_tqdm:
+            total: Optional[int]
             try:
-                total = len(self._items)
+                total = len(self._items_accessor)
             except TypeError:
                 total = None
             yield from tqdm(self, desc=desc, unit_scale=True, unit="term", total=total)
@@ -653,7 +656,7 @@ class Obo:
             write_iterable_tsv(
                 path=path,
                 header=header,
-                it=fn(),
+                it=fn(),  # type:ignore
             )
 
         for relation in (is_a, has_part, part_of, from_species, orthologous):
@@ -685,12 +688,16 @@ class Obo:
             logger.info("writing obonet to %s", self._obonet_gz_path)
             self.write_obonet_gz(self._obonet_gz_path)
 
+    @property
+    def _items_accessor(self):
+        if self._items is None:
+            self._items = list(self.iter_terms(**(self.iter_terms_kwargs or {})))
+        return self._items
+
     def __iter__(self) -> Iterator["Term"]:  # noqa: D105
         if self.iter_only:
             return iter(self.iter_terms(**(self.iter_terms_kwargs or {})))
-        if self._items is None:
-            self._items = list(self.iter_terms(**(self.iter_terms_kwargs or {})))
-        return iter(self._items)
+        return iter(self._items_accessor)
 
     def ancestors(self, identifier: str) -> Set[str]:
         """Return a set of identifiers for parents of the given identifier."""
@@ -787,8 +794,8 @@ class Obo:
             nodes[term.curie] = {k: v for k, v in d.items() if v}
 
         rv.add_nodes_from(nodes.items())
-        for source, key, target in links:
-            rv.add_edge(source, target, key=key)
+        for _source, _key, _target in links:
+            rv.add_edge(_source, _target, key=_key)
 
         logger.info(
             "[%s v%s] exported graph with %d nodes",

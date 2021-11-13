@@ -20,7 +20,6 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
-    cast,
 )
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
