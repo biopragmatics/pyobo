@@ -35,7 +35,8 @@ def get_properties_df(prefix: str, *, force: bool = False) -> pd.DataFrame:
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A dataframe with the properties
     """
-    path = prefix_cache_join(prefix, name="properties.tsv", version=get_version(prefix))
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
@@ -43,7 +44,7 @@ def get_properties_df(prefix: str, *, force: bool = False) -> pd.DataFrame:
             logger.info("[%s] forcing reload for properties", prefix)
         else:
             logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+        ontology = get_ontology(prefix, force=force, version=version)
         df = ontology.get_properties_df()
         df.dropna(inplace=True)
         return df
@@ -67,10 +68,9 @@ def get_filtered_properties_mapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property value
     """
-    path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=get_version(prefix))
-    all_properties_path = prefix_cache_join(
-        prefix, name="properties.tsv", version=get_version(prefix)
-    )
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
+    all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
     @cached_mapping(path=path, header=[f"{prefix}_id", prop], force=force)
     def _mapping_getter() -> Mapping[str, str]:
@@ -82,7 +82,7 @@ def get_filtered_properties_mapping(
             return dict(df.values)
 
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+        ontology = get_ontology(prefix, force=force, version=version)
         return ontology.get_filtered_properties_mapping(prop, use_tqdm=use_tqdm)
 
     return _mapping_getter()
@@ -104,10 +104,9 @@ def get_filtered_properties_multimapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property values
     """
-    path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=get_version(prefix))
-    all_properties_path = prefix_cache_join(
-        prefix, name="properties.tsv", version=get_version(prefix)
-    )
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
+    all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
     @cached_multidict(path=path, header=[f"{prefix}_id", prop], force=force)
     def _mapping_getter() -> Mapping[str, List[str]]:
@@ -119,7 +118,7 @@ def get_filtered_properties_multimapping(
             return multidict(df.values)
 
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+        ontology = get_ontology(prefix, force=force, version=version)
         return ontology.get_filtered_properties_multimapping(prop, use_tqdm=use_tqdm)
 
     return _mapping_getter()
@@ -171,10 +170,9 @@ def get_filtered_properties_df(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A dataframe from identifier to property value. Columns are [<prefix>_id, value].
     """
-    path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=get_version(prefix))
-    all_properties_path = prefix_cache_join(
-        prefix, name="properties.tsv", version=get_version(prefix)
-    )
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
+    all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
@@ -188,7 +186,7 @@ def get_filtered_properties_df(
             logger.info("[%s] forcing reload for properties", prefix)
         else:
             logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+        ontology = get_ontology(prefix, force=force, version=version)
         return ontology.get_filtered_properties_df(prop, use_tqdm=use_tqdm)
 
     return _df_getter()

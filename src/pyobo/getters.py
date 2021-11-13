@@ -62,14 +62,17 @@ def get_ontology(
     rewrite: bool = False,
     url: Optional[str] = None,
     strict: bool = True,
+    version: Optional[str] = None,
 ) -> Obo:
     """Get the OBO for a given graph.
 
     :param prefix: The prefix of the ontology to look up
+    :param version: The pre-looked-up version of the ontology
     :param force: Download the data again
     :param rewrite: Should the OBO cache be rewritten? Automatically set to true if ``force`` is true
     :param url: A URL to give if the OBOfoundry can not be used to look up the given prefix. This option is deprecated,
         you should make a PR to the bioregistry or use other code if you have a custom URL, like:
+    :param strict: Should CURIEs be treated strictly? If true, raises exceptions on invalid/malformed
     :returns: An OBO object
 
     :raises OnlyOWLError: If the OBO foundry only has an OWL document for this resource.
@@ -90,7 +93,7 @@ def get_ontology(
         strict = False
 
     obonet_json_gz_path = prefix_directory_join(
-        prefix, name=f"{prefix}.obonet.json.gz", ensure_exists=False
+        prefix, name=f"{prefix}.obonet.json.gz", ensure_exists=False, version=version
     )
     if obonet_json_gz_path.exists() and not force:
         logger.debug("[%s] using obonet cache at %s", prefix, obonet_json_gz_path)
@@ -103,7 +106,7 @@ def get_ontology(
         return obo
 
     logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
-    path = _ensure_ontology_path(prefix, url=url, force=force)
+    path = _ensure_ontology_path(prefix, url=url, force=force, version=version)
 
     if path.suffix == ".obo":
         pass  # all gucci
@@ -113,7 +116,7 @@ def get_ontology(
         try:
             prontology = pronto.Ontology(path)
         except KeyError:
-            raise NoBuild(f"[{prefix}] could not parse OWL with pronto")
+            raise NoBuild(f"[{prefix}] could not parse OWL with pronto") from None
         version = prontology.metadata.data_version
         # prefix = prontology.metadata.ontology
         path = get_prefix_obo_path(prefix=prefix, version=version)
@@ -127,16 +130,16 @@ def get_ontology(
 
 
 def _ensure_ontology_path(
-    prefix: str, url: Optional[str] = None, force: bool = False
+    prefix: str, *, url: Optional[str] = None, force: bool = False, version: Optional[str] = None
 ) -> pathlib.Path:
     """Get the path to the ontology file and download if missing."""
     if url is not None:
         warnings.warn("Should make curations in the bioregistry instead", DeprecationWarning)
-        path = get_prefix_obo_path(prefix)
+        path = get_prefix_obo_path(prefix, version=version)
         download(url=url, path=path, force=force)
         return path
 
-    path = get_prefix_obo_path(prefix)
+    path = get_prefix_obo_path(prefix, version=version)
     if path.is_file():
         logger.debug("[%s] OBO already exists at %s", prefix, path)
         return path
@@ -147,7 +150,7 @@ def _ensure_ontology_path(
         bioregistry.get_json_download(prefix),
     ]:
         if url is not None:
-            return pathlib.Path(ensure_path(prefix, url=url, force=force))
+            return pathlib.Path(ensure_path(prefix, url=url, force=force, version=version))
 
     raise NoBuild(f"could not find a download link for {prefix}")
 
