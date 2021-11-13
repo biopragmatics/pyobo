@@ -18,7 +18,9 @@ logger = logging.getLogger(__name__)
 PREFIX = "pubchem.compound"
 
 
-def _get_pubchem_extras_url(version: str, end: str) -> str:
+def _get_pubchem_extras_url(version: Optional[str], end: str) -> str:
+    if version is None:
+        version = _get_version()
     return f"ftp://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Monthly/{version}/Extras/{end}"
 
 

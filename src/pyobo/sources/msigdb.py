@@ -75,7 +75,7 @@ def iter_terms(version: str) -> Iterable[Term]:
         term = Term(
             reference=Reference(PREFIX, identifier, name),
             definition=_get_definition(attrib),
-            provenance=reference and [reference],
+            provenance=[] if reference is None else [reference],
             is_obsolete=is_obsolete,
         )
         for key in [

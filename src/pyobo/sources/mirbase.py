@@ -78,12 +78,11 @@ def _process_definitions_lines(
     organisms = _prepare_organisms(version, force=force)
     aliases = _prepare_aliases(version, force=force)
 
-    groups = []
+    groups: List[List[str]] = []
 
     for line in lines:  # TODO replace with itertools.groupby
         if line.startswith("ID"):
-            listnew = []
-            groups.append(listnew)
+            groups.append([])
         groups[-1].append(line)
 
     for group in tqdm(groups, desc=f"mapping {PREFIX}"):
