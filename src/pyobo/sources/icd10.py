@@ -6,7 +6,7 @@ Run with python -m pyobo.sources.icd10 -v
 """
 
 import logging
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, Set
 
 import click
 from more_click import verbose_option
@@ -47,7 +47,7 @@ def iter_terms() -> Iterable[Term]:
     chapter_urls = res_json["child"]
     tqdm.write(f"there are {len(chapter_urls)} chapters")
 
-    visited_identifiers = set()
+    visited_identifiers: Set[str] = set()
     for identifier in get_child_identifiers(ICD10_TOP_LEVEL_URL, res_json):
         yield from visiter(
             identifier,

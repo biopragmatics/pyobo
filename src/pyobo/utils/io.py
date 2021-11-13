@@ -9,7 +9,7 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterable, List, Mapping, Optional, Set, Tuple, TypeVar, Union
+from typing import Iterable, List, Mapping, Optional, Set, Tuple, TypeVar, Union, cast
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
@@ -120,7 +120,7 @@ def write_map_tsv(
 ) -> None:
     """Write a mapping dictionary to a TSV file."""
     if isinstance(rv, dict):
-        rv = rv.items()
+        rv = cast(Iterable[Tuple[str, str]], rv.items())
     write_iterable_tsv(path=path, header=header, it=rv, sep=sep)
 
 

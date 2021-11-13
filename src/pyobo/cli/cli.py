@@ -107,21 +107,6 @@ def ls():
 
 
 @main.command()
-@click.argument("text")
-@click.option("--name", is_flag=True)
-def normalize(text: str, name: bool):
-    """Normalize a prefix or CURIE."""
-    if ":" in text:  # it's a curie
-        s = ":".join(normalize_curie(text))
-    else:
-        s = normalize_prefix(text)
-    if name:
-        name = get_name_by_curie(s)
-        s = f"{s} ! {name}"
-    click.echo(s)
-
-
-@main.command()
 @verbose_option
 @click.option("-f", "--file", type=click.File("w"))
 def remapping(file):

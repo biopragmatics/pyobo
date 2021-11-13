@@ -38,15 +38,15 @@ def iterate_together(
     - Both are indexed with the same numbers and in sorted order.
     - Each key in the index is present within both files
     """
-    b = peekable(b)
-    b_index, _ = b.peek()
+    b_peekable = peekable(b)
+    b_index, _ = b_peekable.peek()
 
     for a_index, a_value in a:
         zs = []
         while a_index == b_index:
-            _, b_value = next(b)
+            _, b_value = next(b_peekable)
             zs.append(b_value)
-            b_index, _ = b.peek((_Done, _Done))
+            b_index, _ = b_peekable.peek((_Done, _Done))
         yield a_index, a_value, zs
 
 
