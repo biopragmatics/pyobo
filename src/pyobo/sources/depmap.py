@@ -51,7 +51,7 @@ def get_url(version: Optional[str] = None) -> str:
     return url
 
 
-def _fix_mangled_int(x: str) -> str:
+def _fix_mangled_int(x: str) -> Optional[str]:
     return str(int(float(x))) if pd.notna(x) else None
 
 

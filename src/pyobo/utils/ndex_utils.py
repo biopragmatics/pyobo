@@ -24,7 +24,7 @@ NETWORKSET_ENDPOINT = f"{NDEX_BASE_URL}/networkset"
 CX = List[Mapping[str, Any]]
 
 
-def iterate_aspect(cx: CX, aspect: str) -> List[Any]:
+def iterate_aspect(cx: CX, aspect: str) -> Iterable[Any]:
     """Iterate over a given aspect."""
     for element in cx:
         if aspect in element:

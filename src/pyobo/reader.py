@@ -51,7 +51,10 @@ def from_obo_path(
 
 def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
     """Get all of the terms from a OBO graph."""
-    ontology = normalize_prefix(graph.graph["ontology"])  # probably always okay
+    _ontology = graph.graph["ontology"]
+    ontology = normalize_prefix(_ontology)  # probably always okay
+    if ontology is None:
+        raise ValueError(f"unknown prefix: {_ontology}")
     logger.info("[%s] extracting OBO using obonet", ontology)
 
     date = _get_date(graph=graph, ontology=ontology)
@@ -252,12 +255,13 @@ def _iter_obo_graph(
     graph: nx.MultiDiGraph,
     *,
     strict: bool = True,
-) -> Iterable[Tuple[Optional[str], str, Mapping[str, Any]]]:
+) -> Iterable[Tuple[str, str, Mapping[str, Any]]]:
     """Iterate over the nodes in the graph with the prefix stripped (if it's there)."""
     for node, data in graph.nodes(data=True):
         prefix, identifier = normalize_curie(node, strict=strict)
-        if prefix and identifier:
-            yield prefix, identifier, data
+        if prefix is None or identifier is None:
+            continue
+        yield prefix, identifier, data
 
 
 def _get_date(graph, ontology: str) -> Optional[datetime]:
@@ -265,8 +269,9 @@ def _get_date(graph, ontology: str) -> Optional[datetime]:
         rv = datetime.strptime(graph.graph["date"], DATE_FORMAT)
     except KeyError:
         logger.info("[%s] does not report a date", ontology)
-        rv = None
-    return rv
+        return None
+    else:
+        return rv
 
 
 def _get_name(graph, ontology: str) -> str:
@@ -291,6 +296,7 @@ def _cleanup_version(data_version: str) -> Optional[str]:
             continue
         else:
             return v
+    return None
 
 
 def iterate_graph_synonym_typedefs(graph: nx.MultiDiGraph) -> Iterable[SynonymTypeDef]:
@@ -325,7 +331,11 @@ def iterate_graph_typedefs(
             logger.warning("[%s] unable to parse typedef CURIE %s", graph.graph["ontology"], curie)
             continue
 
-        xrefs = [Reference.from_curie(curie, strict=strict) for curie in typedef.get("xref", [])]
+        xrefs = []
+        for curie in typedef.get("xref", []):
+            _xref = Reference.from_curie(curie, strict=strict)
+            if _xref:
+                xrefs.append(_xref)
         yield TypeDef(reference=reference, xrefs=xrefs)
 
 
@@ -367,6 +377,7 @@ def _get_first_nonquoted(s: str) -> Optional[int]:
     for i, (a, b) in enumerate(pairwise(s), start=1):
         if b == '"' and a != "\\":
             return i
+    return None
 
 
 def _quote_split(s: str) -> Tuple[str, str]:
@@ -398,7 +409,7 @@ def _extract_synonym(
         name, rest = _quote_split(s)
     except ValueError:
         logger.warning("[%s:%s] invalid synonym: %s", prefix, identifier, s)
-        return
+        return None
 
     specificity = None
     for skos in "RELATED", "EXACT", "BROAD", "NARROW":
@@ -417,7 +428,7 @@ def _extract_synonym(
 
     if not rest.startswith("[") or not rest.endswith("]"):
         logger.warning("[%s:%s] problem with synonym: %s", prefix, identifier, s)
-        return
+        return None
 
     provenance = _parse_trailing_ref_list(rest, strict=strict)
     return Synonym(name=name, specificity=specificity or "EXACT", type=stype, provenance=provenance)
@@ -524,6 +535,8 @@ def iterate_node_relationships(
     """Extract relationships from a :mod:`obonet` node's data."""
     for s in data.get("relationship", []):
         relation_curie, target_curie = s.split(" ")
+        relation_prefix: Optional[str]
+        relation_identifier: Optional[str]
         if relation_curie in RELATION_REMAPPINGS:
             relation_prefix, relation_identifier = RELATION_REMAPPINGS[relation_curie]
         else:

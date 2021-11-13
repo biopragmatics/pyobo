@@ -93,6 +93,8 @@ class TypeDef(Referenced):
     def from_curie(cls, curie: str, name: Optional[str] = None) -> "TypeDef":
         """Create a TypeDef directly from a CURIE and optional name."""
         prefix, identifier = normalize_curie(curie)
+        if prefix is None or identifier is None:
+            raise ValueError
         return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
 
 
@@ -107,7 +109,7 @@ def get_reference_tuple(relation: RelationHint) -> Tuple[str, str]:
         return relation
     elif isinstance(relation, str):
         prefix, identifier = normalize_curie(relation)
-        if prefix is None:
+        if prefix is None or identifier is None:
             raise ValueError(f"string given is not valid curie: {relation}")
         return prefix, identifier
     else:

@@ -17,6 +17,7 @@ from typing import (
     Collection,
     Dict,
     Iterable,
+    Iterator,
     List,
     Mapping,
     Optional,
@@ -136,7 +137,10 @@ def _ensure_ref(reference: ReferenceHint) -> Reference:
     if isinstance(reference, Term):
         return reference.reference
     if isinstance(reference, str):
-        return Reference.from_curie(reference)
+        _rv = Reference.from_curie(reference)
+        if _rv is None:
+            raise ValueError
+        return _rv
     if isinstance(reference, tuple):
         return Reference(*reference)
     if isinstance(reference, Reference):
@@ -216,6 +220,8 @@ class Term(Referenced):
     def from_curie(cls, curie: str, name: Optional[str] = None) -> "Term":
         """Create a term directly from a CURIE and optional name."""
         prefix, identifier = normalize_curie(curie)
+        if prefix is None or identifier is None:
+            raise ValueError
         return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
 
     def get_url(self) -> Optional[str]:
@@ -258,18 +264,18 @@ class Term(Referenced):
         """Get a single property of the given key."""
         r = self.get_properties(prop)
         if not r:
-            return
+            return None
         if len(r) != 1:
-            raise
+            raise ValueError
         return r[0]
 
     def get_relationship(self, typedef: TypeDef) -> Optional[Reference]:
         """Get a single relationship of the given type."""
         r = self.get_relationships(typedef)
         if not r:
-            return
+            return None
         if len(r) != 1:
-            raise
+            raise ValueError
         return r[0]
 
     def get_relationships(self, typedef: TypeDef) -> List[Reference]:
@@ -302,6 +308,7 @@ class Term(Referenced):
         for species in self.relationships.get(from_species, []):
             if species.prefix == prefix:
                 return species
+        return None
 
     def extend_relationship(self, typedef: TypeDef, references: Iterable[Reference]) -> None:
         """Append several relationships."""
@@ -510,8 +517,9 @@ class Obo:
 
     def _iter_terms(self, use_tqdm: bool = False, desc: str = "terms") -> Iterable[Term]:
         if use_tqdm:
+            total: Optional[int]
             try:
-                total = len(self._items)
+                total = len(self._items_accessor)
             except TypeError:
                 total = None
             yield from tqdm(self, desc=desc, unit_scale=True, unit="term", total=total)
@@ -555,6 +563,10 @@ class Obo:
         it = self.iterate_obo_lines()
         if use_tqdm:
             it = tqdm(it, desc=f"writing {self.ontology}", unit_scale=True, unit="line")
+        self._write_lines(it, file)
+
+    @staticmethod
+    def _write_lines(it, file):
         for line in it:
             print(line, file=file)  # noqa:T001
 
@@ -684,7 +696,7 @@ class Obo:
             write_iterable_tsv(
                 path=path,
                 header=header,
-                it=fn(),
+                it=fn(),  # type:ignore
             )
 
         for relation in (is_a, has_part, part_of, from_species, orthologous):
@@ -716,12 +728,16 @@ class Obo:
             logger.info("writing obonet to %s", self._obonet_gz_path)
             self.write_obonet_gz(self._obonet_gz_path)
 
-    def __iter__(self) -> Iterable["Term"]:  # noqa: D105
-        if self.iter_only:
-            return iter(self.iter_terms(force=self.force))
+    @property
+    def _items_accessor(self):
         if self._items is None:
             self._items = list(self.iter_terms(force=self.force))
-        return iter(self._items)
+        return self._items
+
+    def __iter__(self) -> Iterator["Term"]:  # noqa: D105
+        if self.iter_only:
+            return iter(self.iter_terms(force=self.force))
+        return iter(self._items_accessor)
 
     def ancestors(self, identifier: str) -> Set[str]:
         """Return a set of identifiers for parents of the given identifier."""
@@ -746,7 +762,7 @@ class Obo:
         return ancestor in self.ancestors(descendant)
 
     @property
-    def hierarchy(self, *, use_tqdm: bool = False) -> nx.DiGraph:
+    def hierarchy(self) -> nx.DiGraph:
         """A graph representing the parent/child relationships between the entities.
 
         To get all children of a given entity, do:
@@ -761,9 +777,7 @@ class Obo:
         """  # noqa:D401
         if self._hierarchy is None:
             self._hierarchy = nx.DiGraph()
-            for term in self._iter_terms(
-                use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting hierarchy"
-            ):
+            for term in self._iter_terms(desc=f"[{self.ontology}] getting hierarchy"):
                 for parent in term.parents:
                     self._hierarchy.add_edge(term.identifier, parent.identifier)
         return self._hierarchy
@@ -818,8 +832,8 @@ class Obo:
             nodes[term.curie] = {k: v for k, v in d.items() if v}
 
         rv.add_nodes_from(nodes.items())
-        for source, key, target in links:
-            rv.add_edge(source, target, key=key)
+        for _source, _key, _target in links:
+            rv.add_edge(_source, _target, key=_key)
 
         logger.info(
             "[%s v%s] exported graph with %d nodes",
@@ -997,7 +1011,7 @@ class Obo:
 
     def iter_relation_rows(
         self, use_tqdm: bool = False
-    ) -> Iterable[Tuple[str, str, str, str, str, str]]:
+    ) -> Iterable[Tuple[str, str, str, str, str]]:
         """Iterate the relations' rows."""
         for term, typedef, reference in self.iterate_relations(use_tqdm=use_tqdm):
             yield term.identifier, typedef.prefix, typedef.identifier, reference.prefix, reference.identifier

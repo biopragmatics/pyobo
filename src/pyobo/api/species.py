@@ -30,11 +30,12 @@ def get_species(prefix: str, identifier: str) -> Optional[str]:
     try:
         id_species = get_id_species_mapping(prefix)
     except NoBuild:
-        id_species = None
+        logger.warning("unable to look up species for prefix %s", prefix)
+        return None
 
     if not id_species:
-        logger.warning("unable to look up species for prefix %s", prefix)
-        return
+        logger.warning("no results produced for prefix %s", prefix)
+        return None
 
     primary_id = get_primary_identifier(prefix, identifier)
     return id_species.get(primary_id)
@@ -54,12 +55,13 @@ def get_id_species_mapping(
         logger.info("[%s] done loading species mappings", prefix)
         return rv
 
-    path = prefix_cache_join(prefix, name="species.tsv", version=get_version(prefix))
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="species.tsv", version=version)
 
     @cached_mapping(path=path, header=[f"{prefix}_id", "species"], force=force)
     def _get_id_species_mapping() -> Mapping[str, str]:
         logger.info("[%s] no cached species found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, strict=strict)
+        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         logger.info("[%s] loading species mappings", prefix)
         return ontology.get_id_species_mapping()
 

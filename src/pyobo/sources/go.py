@@ -40,7 +40,8 @@ def _is_descendant(identifier: str, ancestor: str) -> bool:
     identifier = identifier.lower()
     if not identifier.startswith("go:"):
         identifier = f"go:{identifier}"
-    return identifier in get_descendants("go", ancestor)
+    descendants = get_descendants("go", ancestor)
+    return descendants is not None and identifier in descendants
 
 
 if __name__ == "__main__":

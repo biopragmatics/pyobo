@@ -33,7 +33,8 @@ def get_id_to_alts(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
     if prefix in NO_ALTS:
         return {}
 
-    path = prefix_cache_join(prefix, name="alt_ids.tsv", version=get_version(prefix))
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="alt_ids.tsv", version=version)
     header = [f"{prefix}_id", "alt_id"]
 
     @cached_multidict(path=path, header=header, force=force)
@@ -42,7 +43,7 @@ def get_id_to_alts(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
             logger.info(f"[{prefix}] forcing reload for alts")
         else:
             logger.info("[%s] no cached alts found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+        ontology = get_ontology(prefix, force=force, version=version)
         return ontology.get_id_alts_mapping()
 
     return _get_mapping()
@@ -65,6 +66,7 @@ def get_primary_curie(curie: str) -> Optional[str]:
     primary_identifier = get_primary_identifier(prefix, identifier)
     if primary_identifier is not None:
         return f"{prefix}:{primary_identifier}"
+    return None
 
 
 @wrap_norm_prefix

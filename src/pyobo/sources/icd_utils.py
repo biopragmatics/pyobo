@@ -11,7 +11,8 @@ Want to get your own API cliend ID and client secret?
 import datetime
 import json
 import os
-from typing import Any, Callable, Iterable, List, Mapping, Set
+from pathlib import Path
+from typing import Any, Callable, Iterable, List, Mapping, Set, Union
 
 import pystow
 import requests
@@ -68,13 +69,13 @@ def get_icd_api_headers() -> Mapping[str, str]:
 def visiter(
     identifier: str,
     visited_identifiers: Set[str],
-    directory: str,
+    directory: Union[str, Path],
     *,
     endpoint: str,
     converter: Callable[[Mapping[str, Any]], Term],
 ) -> Iterable[Term]:
     """Iterate over all terms from the ICD endpoint."""
-    path = os.path.join(directory, f"{identifier}.json")
+    path = Path(directory).joinpath(identifier).with_suffix(".json")
     if identifier in visited_identifiers:
         return
     visited_identifiers.add(identifier)

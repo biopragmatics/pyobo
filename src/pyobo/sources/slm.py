@@ -107,7 +107,7 @@ def iter_terms(version: str):
             term.append_xref(("hmdb", hmdb_id))
         if pd.notna(pmids):
             for pmid in pmids.split("|"):
-                term.provenance.append(("pubmed", pmid))
+                term.append_provenance(("pubmed", pmid))
         # TODO how to handle class, parents, and components?
         yield term
 

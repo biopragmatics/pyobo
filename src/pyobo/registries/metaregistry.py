@@ -6,7 +6,7 @@ import itertools as itt
 import json
 import os
 from functools import lru_cache
-from typing import List, Mapping, Set, Tuple
+from typing import Iterable, List, Mapping, Set, Tuple
 
 import bioregistry
 
@@ -101,7 +101,7 @@ def get_remappings_prefix() -> Mapping[str, str]:
     return _get_curated_registry()["remappings"]["prefix"]
 
 
-def iter_cached_obo() -> List[Tuple[str, str]]:
+def iter_cached_obo() -> Iterable[Tuple[str, str]]:
     """Iterate over cached OBO paths."""
     for prefix in os.listdir(RAW_DIRECTORY):
         if prefix in GLOBAL_SKIP or has_no_download(prefix) or bioregistry.is_deprecated(prefix):

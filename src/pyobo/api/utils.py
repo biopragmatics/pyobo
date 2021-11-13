@@ -3,13 +3,15 @@
 """Utilities for high-level API."""
 
 import json
-import logging
 from typing import Optional
 
-from ..sources import has_nomenclature_plugin, run_nomenclature_plugin
+import bioversions
+
 from ..utils.path import prefix_directory_join
 
-logger = logging.getLogger(__name__)
+__all__ = [
+    "get_version",
+]
 
 
 def get_version(prefix: str) -> Optional[str]:
@@ -18,13 +20,16 @@ def get_version(prefix: str) -> Optional[str]:
     :param prefix: the resource name
     :return: The version if available else None
     """
-    if has_nomenclature_plugin(prefix):
-        return run_nomenclature_plugin(prefix).data_version
+    try:
+        version = bioversions.get_version(prefix)
+    except IOError:
+        raise IOError(f"[{prefix}] could not get version") from None
+    if version:
+        return version
 
     metadata_json_path = prefix_directory_join(prefix, name="metadata.json", ensure_exists=False)
     if metadata_json_path.exists():
-        with metadata_json_path.open() as file:
-            data = json.load(file)
-        rv = data["version"]
-        logger.debug("using pre-cached metadata version %s v%s", prefix, rv)
-        return rv
+        data = json.loads(metadata_json_path.read_text())
+        return data["version"]
+
+    return None

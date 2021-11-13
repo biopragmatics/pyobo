@@ -2,6 +2,7 @@
 
 """I/O utilities."""
 
+import collections.abc
 import csv
 import gzip
 import logging
@@ -9,7 +10,7 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterable, List, Mapping, Optional, Set, Tuple, TypeVar, Union
+from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, TypeVar, Union
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
@@ -103,7 +104,7 @@ def multidict(pairs: Iterable[Tuple[X, Y]]) -> Mapping[X, List[Y]]:
     return dict(rv)
 
 
-def multisetdict(pairs: Iterable[Tuple[X, Y]]) -> Mapping[X, Set[Y]]:
+def multisetdict(pairs: Iterable[Tuple[X, Y]]) -> Dict[X, Set[Y]]:
     """Accumulate a multisetdict from a list of pairs."""
     rv = defaultdict(set)
     for key, value in pairs:
@@ -119,9 +120,10 @@ def write_map_tsv(
     sep: str = "\t",
 ) -> None:
     """Write a mapping dictionary to a TSV file."""
-    if isinstance(rv, dict):
-        rv = rv.items()
-    write_iterable_tsv(path=path, header=header, it=rv, sep=sep)
+    if isinstance(rv, collections.abc.Mapping):
+        write_iterable_tsv(path=path, header=header, it=rv.items(), sep=sep)
+    else:
+        write_iterable_tsv(path=path, header=header, it=rv, sep=sep)
 
 
 def write_multimap_tsv(
@@ -158,6 +160,6 @@ def parse_xml_gz(path: Union[str, Path]) -> Element:
     t = time.time()
     logger.info("parsing xml from %s", path)
     with gzip.open(path) as file:
-        tree = ElementTree.parse(file)
+        tree = ElementTree.parse(file)  # type:ignore
     logger.info("parsed xml in %.2f seconds", time.time() - t)
     return tree.getroot()
