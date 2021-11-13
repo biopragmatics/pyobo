@@ -42,8 +42,7 @@ def iterate_wikidata_dfs(*, use_tqdm: bool = True) -> Iterable[pd.DataFrame]:
     }
     # wikidata_properties.update(get_wikidata_properties())
 
-    it = sorted(wikidata_properties.items())
-    it = tqdm(it, disable=not use_tqdm, desc="Wikidata properties")
+    it = tqdm(sorted(wikidata_properties.items()), disable=not use_tqdm, desc="Wikidata properties")
     for prefix, wikidata_property in it:
         if prefix in {"pubmed", "pmc", "orcid", "inchi", "smiles"}:
             continue  # too many

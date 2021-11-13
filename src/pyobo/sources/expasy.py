@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# type:ignore
 
 """Convert ExPASy to OBO."""
 

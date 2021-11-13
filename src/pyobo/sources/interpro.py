@@ -3,7 +3,7 @@
 """Converter for InterPro."""
 
 from collections import defaultdict
-from typing import Iterable, Mapping, Set, Tuple
+from typing import DefaultDict, Iterable, List, Mapping, Set, Tuple
 
 import bioversions
 from tqdm import tqdm
@@ -96,7 +96,7 @@ def get_interpro_tree(version: str, force: bool = False):
 
 
 def _parse_tree_helper(lines: Iterable[str]):
-    rv1 = defaultdict(list)
+    rv1: DefaultDict[str, List[str]] = defaultdict(list)
     previous_depth, previous_id = 0, None
     stack = [previous_id]
 
@@ -115,7 +115,7 @@ def _parse_tree_helper(lines: Iterable[str]):
                 del stack[-1]
 
             child_id = stack[-1]
-            rv1[child_id].append(parent_id)
+            rv1[child_id].append(parent_id)  # type:ignore
 
         previous_depth, previous_id = depth, parent_id
 
@@ -131,6 +131,7 @@ def _count_front(s: str) -> int:
     for position, element in enumerate(s):
         if element != "-":
             return position
+    raise ValueError
 
 
 def get_interpro_to_proteins_df(version: str, force: bool = False):

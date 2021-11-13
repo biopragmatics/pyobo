@@ -4,7 +4,7 @@
 
 import logging
 import tarfile
-from typing import Iterable
+from typing import Iterable, Optional
 from xml.etree import ElementTree
 
 from pyobo.struct import Obo, Reference, Term, has_part
@@ -30,24 +30,35 @@ def get_obo(force: bool = False):
     )
 
 
+def _find_text(element, name: str) -> Optional[str]:
+    x = element.find(name)
+    if x is not None:
+        return x.text
+    return None
+
+
 def _get_term_from_tree(tree: ElementTree.ElementTree) -> Term:
-    name = tree.find("name").text
-    description = tree.find("description").text
+    name = _find_text(tree, "name")
+    description = _find_text(tree, "description")
     if description:
         description = description.strip().replace("\n", " ")
-    identifier = tree.find("identifier").text
+    identifier = _find_text(tree, "identifier")
+    if identifier is None:
+        raise ValueError
     term = Term(
         reference=Reference(PREFIX, identifier, name),
         definition=description,
     )
     for experiment in tree.findall("experiments"):
-        experiment_name = experiment.find("name").text
-        experiment_id = experiment.find("identifier").text
+        experiment_name = _find_text(experiment, "name")
+        experiment_identifier = _find_text(experiment, "identifier")
+        if experiment_identifier is None:
+            continue
         term.append_relationship(
             has_part,
             Reference(
                 "gwascentral.experiment",
-                identifier=experiment_id,
+                identifier=experiment_identifier,
                 name=experiment_name,
             ),
         )
@@ -61,7 +72,7 @@ def iterate_terms(version: str, force: bool = False) -> Iterable[Term]:
         for tar_info in tar_file:
             if not tar_info.path.endswith(".xml"):
                 continue
-            with tar_file.extractfile(tar_info) as file:
+            with tar_file.extractfile(tar_info) as file:  # type:ignore
                 try:
                     tree = ElementTree.parse(file)
                 except ElementTree.ParseError:

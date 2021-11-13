@@ -147,7 +147,10 @@ def main(force: bool):
         ensure_properties,
         ensure_relations,
     ]:
-        click.secho(f.__doc__.splitlines()[0], fg="green", bold=True)
+        doc = f.__doc__
+        if doc is None:
+            continue
+        click.secho(doc.splitlines()[0], fg="green", bold=True)
         path = f(force=force)
         click.echo(path)
 

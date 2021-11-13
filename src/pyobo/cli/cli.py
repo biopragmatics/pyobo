@@ -15,10 +15,8 @@ from tabulate import tabulate
 from .aws import main as aws_main
 from .database import main as database_main
 from .lookup import lookup
-from ..api import get_name_by_curie
 from ..apps.cli import main as apps_main
 from ..constants import RAW_DIRECTORY
-from ..identifier_utils import normalize_curie, normalize_prefix
 from ..registries import iter_cached_obo
 from ..sources import has_nomenclature_plugin, iter_nomenclature_plugins
 from ..utils.io import get_writer
@@ -104,21 +102,6 @@ def ls():
         for prefix, size in sorted(entries, key=itemgetter(1), reverse=True)
     ]
     click.echo(tabulate(entries, headers=["Source", "Size", "OBO"]))
-
-
-@main.command()
-@click.argument("text")
-@click.option("--name", is_flag=True)
-def normalize(text: str, name: bool):
-    """Normalize a prefix or CURIE."""
-    if ":" in text:  # it's a curie
-        s = ":".join(normalize_curie(text))
-    else:
-        s = normalize_prefix(text)
-    if name:
-        name = get_name_by_curie(s)
-        s = f"{s} ! {name}"
-    click.echo(s)
 
 
 @main.command()

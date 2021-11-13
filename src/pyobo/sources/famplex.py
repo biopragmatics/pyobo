@@ -4,7 +4,7 @@
 
 import logging
 from collections import defaultdict
-from typing import Iterable, List, Mapping
+from typing import Iterable, List, Mapping, Tuple
 
 from pystow.utils import get_commit
 
@@ -56,7 +56,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         dtype=str,
         force=force,
     )
-    id_to_definition = {
+    id_to_definition: Mapping[str, Tuple[str, str]] = {
         identifier: (definition, provenance)
         for identifier, provenance, definition in definitions_df.values
     }
@@ -101,10 +101,11 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     for (entity,) in entities_df.values:
         reference = Reference(prefix=PREFIX, identifier=entity, name=entity)
         definition, provenance = id_to_definition.get(entity, (None, None))
+        provenance_reference = None if provenance is None else Reference.from_curie(provenance)
         term = Term(
             reference=reference,
             definition=definition,
-            provenance=[Reference.from_curie(provenance)] if definition is not None else None,
+            provenance=[] if provenance_reference is None else [provenance_reference],
         )
 
         for xref_reference in id_xrefs.get(entity, []):

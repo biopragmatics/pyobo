@@ -44,9 +44,7 @@ def iter_xref_plugins(
     use_tqdm: bool = True, skip_below: Optional[str] = None
 ) -> Iterable[pd.DataFrame]:
     """Get all modules in the PyOBO sources."""
-    it = sorted(_get_xref_plugins().items())
-    if use_tqdm:
-        it = tqdm(it, desc="Mapping Plugins")
+    it = tqdm(sorted(_get_xref_plugins().items()), desc="Mapping Plugins", disable=not use_tqdm)
     for prefix, get_df in it:
         if skip_below and prefix < skip_below:
             continue

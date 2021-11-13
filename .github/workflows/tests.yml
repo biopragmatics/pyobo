@@ -23,8 +23,8 @@ jobs:
         run: tox -e flake8
       - name: Check package metadata with Pyroma
         run: tox -e pyroma
-      # - name: Check static typing with MyPy
-      #  run: tox -e mypy
+      - name: Check static typing with MyPy
+        run: tox -e mypy
   docs:
     name: Documentation
     runs-on: ubuntu-latest

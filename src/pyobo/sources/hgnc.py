@@ -4,9 +4,10 @@
 
 import json
 import logging
+import typing
 from collections import Counter, defaultdict
 from operator import attrgetter
-from typing import Iterable
+from typing import DefaultDict, Dict, Iterable
 
 from tabulate import tabulate
 from tqdm import tqdm
@@ -179,8 +180,8 @@ def get_obo(force: bool = False) -> Obo:
 
 def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
     """Get HGNC terms."""
-    unhandled_entry_keys = Counter()
-    unhandle_locus_types = defaultdict(dict)
+    unhandled_entry_keys: typing.Counter[str] = Counter()
+    unhandle_locus_types: DefaultDict[str, Dict[str, Term]] = defaultdict(dict)
     path = ensure_path(PREFIX, url=DEFINITIONS_URL, force=force)
     with open(path) as file:
         entries = json.load(file)["response"]["docs"]
@@ -337,7 +338,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
                         term.name,
                         term.is_obsolete,
                         term.link,
-                        ", ".join(p.link for p in term.provenance),
+                        ", ".join(p.link for p in term.provenance if p.link),
                     )
                     for hgnc_id, term in sorted(v.items())
                 ],

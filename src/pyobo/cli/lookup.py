@@ -3,6 +3,7 @@
 """CLI for PyOBO lookups."""
 
 import json
+import sys
 from typing import Optional
 
 import bioregistry
@@ -160,10 +161,13 @@ def _help_page_mapping(id_to_name):
 def synonyms(prefix: str, force: bool):
     """Page through the synonyms for entities in the given namespace."""
     if ":" in prefix:
-        prefix, identifier = normalize_curie(prefix)
-        name = get_name(prefix, identifier)
-        id_to_synonyms = get_id_synonyms_mapping(prefix, force=force)
-        click.echo(f"Synonyms for {prefix}:{identifier} ! {name}")
+        _prefix, identifier = normalize_curie(prefix)
+        if _prefix is None or identifier is None:
+            click.secho(f"could not normalize {prefix}")
+            return sys.exit(1)
+        name = get_name(_prefix, identifier)
+        id_to_synonyms = get_id_synonyms_mapping(_prefix, force=force)
+        click.echo(f"Synonyms for {_prefix}:{identifier} ! {name}")
         for synonym in id_to_synonyms.get(identifier, []):
             click.echo(synonym)
     else:  # it's a prefix
@@ -232,7 +236,7 @@ def hierarchy(prefix: str, include_part_of: bool, include_has_member: bool, forc
 def ancestors(prefix: str, identifier: str, force: bool):
     """Look up ancestors."""
     curies = get_ancestors(prefix=prefix, identifier=identifier, force=force)
-    for curie in curies:
+    for curie in sorted(curies or []):
         click.echo(f"{curie}\t{get_name_by_curie(curie)}")
 
 
@@ -244,7 +248,7 @@ def ancestors(prefix: str, identifier: str, force: bool):
 def descendants(prefix: str, identifier: str, force: bool):
     """Look up descendants."""
     curies = get_descendants(prefix=prefix, identifier=identifier, force=force)
-    for curie in curies:
+    for curie in sorted(curies or []):
         click.echo(f"{curie}\t{get_name_by_curie(curie)}")
 
 
