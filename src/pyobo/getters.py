@@ -58,11 +58,11 @@ class UnhandledFormat(NoBuild):
 def get_ontology(
     prefix: str,
     *,
-    version: Optional[str],
     force: bool = False,
     rewrite: bool = False,
     url: Optional[str] = None,
     strict: bool = True,
+    version: Optional[str] = None,
 ) -> Obo:
     """Get the OBO for a given graph.
 
