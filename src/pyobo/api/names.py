@@ -71,7 +71,8 @@ def get_ids(prefix: str, force: bool = False, strict: bool = True) -> Set[str]:
         logger.info("[%s] done loading name mappings", prefix)
         return rv
 
-    path = prefix_cache_join(prefix, name="ids.tsv", version=get_version(prefix))
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="ids.tsv", version=version)
 
     @cached_collection(path=path, force=force)
     def _get_ids() -> Set[str]:
@@ -79,7 +80,7 @@ def get_ids(prefix: str, force: bool = False, strict: bool = True) -> Set[str]:
             logger.info("[%s] forcing reload for names", prefix)
         else:
             logger.info("[%s] no cached names found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, strict=strict)
+        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_ids()
 
     return set(_get_ids())
@@ -97,7 +98,8 @@ def get_id_name_mapping(prefix: str, force: bool = False, strict: bool = True) -
         logger.info("[%s] done loading name mappings", prefix)
         return rv
 
-    path = prefix_cache_join(prefix, name="names.tsv", version=get_version(prefix))
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="names.tsv", version=version)
 
     @cached_mapping(path=path, header=[f"{prefix}_id", "name"], force=force)
     def _get_id_name_mapping() -> Mapping[str, str]:
@@ -105,7 +107,7 @@ def get_id_name_mapping(prefix: str, force: bool = False, strict: bool = True) -
             logger.info("[%s] forcing reload for names", prefix)
         else:
             logger.info("[%s] no cached names found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, strict=strict)
+        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_id_name_mapping()
 
     return _get_id_name_mapping()
@@ -127,12 +129,13 @@ def get_definition(prefix: str, identifier: str) -> Optional[str]:
 
 def get_id_definition_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
     """Get a mapping of descriptions."""
-    path = prefix_cache_join(prefix, name="definitions.tsv", version=get_version(prefix))
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="definitions.tsv", version=version)
 
     @cached_mapping(path=path, header=[f"{prefix}_id", "definition"], force=force)
     def _get_mapping() -> Mapping[str, str]:
         logger.info("[%s] no cached descriptions found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+        ontology = get_ontology(prefix, force=force, version=version)
         return ontology.get_id_definition_mapping()
 
     return _get_mapping()
@@ -147,12 +150,13 @@ def get_synonyms(prefix: str, identifier: str) -> Optional[List[str]]:
 @wrap_norm_prefix
 def get_id_synonyms_mapping(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
     """Get the OBO file and output a synonym dictionary."""
-    path = prefix_cache_join(prefix, name="synonyms.tsv", version=get_version(prefix))
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="synonyms.tsv", version=version)
 
     @cached_multidict(path=path, header=[f"{prefix}_id", "synonym"], force=force)
     def _get_multidict() -> Mapping[str, List[str]]:
         logger.info("[%s] no cached synonyms found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+        ontology = get_ontology(prefix, force=force, version=version)
         return ontology.get_id_synonyms_mapping()
 
     return _get_multidict()
