@@ -51,7 +51,10 @@ def from_obo_path(
 
 def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
     """Get all of the terms from a OBO graph."""
-    ontology = normalize_prefix(graph.graph["ontology"])  # probably always okay
+    _ontology = graph.graph["ontology"]
+    ontology = normalize_prefix(_ontology)  # probably always okay
+    if ontology is None:
+        raise ValueError(f"unknown prefix: {_ontology}")
     logger.info("[%s] extracting OBO using obonet", ontology)
 
     date = _get_date(graph=graph, ontology=ontology)
@@ -255,8 +258,9 @@ def _get_date(graph, ontology: str) -> Optional[datetime]:
         rv = datetime.strptime(graph.graph["date"], DATE_FORMAT)
     except KeyError:
         logger.info("[%s] does not report a date", ontology)
-        rv = None
-    return rv
+        return None
+    else:
+        return rv
 
 
 def _get_name(graph, ontology: str) -> str:
@@ -281,6 +285,7 @@ def _cleanup_version(data_version: str) -> Optional[str]:
             continue
         else:
             return v
+    return None
 
 
 def iterate_graph_synonym_typedefs(graph: nx.MultiDiGraph) -> Iterable[SynonymTypeDef]:

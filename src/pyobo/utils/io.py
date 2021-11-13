@@ -2,6 +2,7 @@
 
 """I/O utilities."""
 
+import collections.abc
 import csv
 import gzip
 import logging
@@ -130,9 +131,10 @@ def write_map_tsv(
     sep: str = "\t",
 ) -> None:
     """Write a mapping dictionary to a TSV file."""
-    if isinstance(rv, dict):
-        rv = cast(Iterable[Tuple[str, str]], rv.items())
-    write_iterable_tsv(path=path, header=header, it=rv, sep=sep)
+    if isinstance(rv, collections.abc.Mapping):
+        write_iterable_tsv(path=path, header=header, it=rv.items(), sep=sep)
+    else:
+        write_iterable_tsv(path=path, header=header, it=rv, sep=sep)
 
 
 def write_multimap_tsv(
@@ -169,6 +171,6 @@ def parse_xml_gz(path: Union[str, Path]) -> Element:
     t = time.time()
     logger.info("parsing xml from %s", path)
     with gzip.open(path) as file:
-        tree = ElementTree.parse(file)
+        tree = ElementTree.parse(file)  # type:ignore
     logger.info("parsed xml in %.2f seconds", time.time() - t)
     return tree.getroot()

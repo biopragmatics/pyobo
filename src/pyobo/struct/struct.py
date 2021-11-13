@@ -17,6 +17,7 @@ from typing import (
     Collection,
     Dict,
     Iterable,
+    Iterator,
     List,
     Mapping,
     Optional,
@@ -136,7 +137,10 @@ def _ensure_ref(reference: ReferenceHint) -> Reference:
     if isinstance(reference, Term):
         return reference.reference
     if isinstance(reference, str):
-        return Reference.from_curie(reference)
+        _rv = Reference.from_curie(reference)
+        if _rv is None:
+            raise ValueError
+        return _rv
     if isinstance(reference, tuple):
         return Reference(*reference)
     if isinstance(reference, Reference):
@@ -258,18 +262,18 @@ class Term(Referenced):
         """Get a single property of the given key."""
         r = self.get_properties(prop)
         if not r:
-            return
+            return None
         if len(r) != 1:
-            raise
+            raise ValueError
         return r[0]
 
     def get_relationship(self, typedef: TypeDef) -> Optional[Reference]:
         """Get a single relationship of the given type."""
         r = self.get_relationships(typedef)
         if not r:
-            return
+            return None
         if len(r) != 1:
-            raise
+            raise ValueError
         return r[0]
 
     def get_relationships(self, typedef: TypeDef) -> List[Reference]:
@@ -302,6 +306,7 @@ class Term(Referenced):
         for species in self.relationships.get(from_species, []):
             if species.prefix == prefix:
                 return species
+        return None
 
     def extend_relationship(self, typedef: TypeDef, references: Iterable[Reference]) -> None:
         """Append several relationships."""
@@ -429,7 +434,7 @@ class Obo:
     auto_generated_by: Optional[str] = None
 
     #: The date the ontology was generated
-    date: datetime = field(default_factory=datetime.today)
+    date: Optional[datetime] = field(default_factory=datetime.today)
 
     #: The idspaces used in the document
     idspaces: Dict[str, str] = field(default_factory=dict)
@@ -680,7 +685,7 @@ class Obo:
             logger.info("writing obonet to %s", self._obonet_gz_path)
             self.write_obonet_gz(self._obonet_gz_path)
 
-    def __iter__(self) -> Iterable["Term"]:  # noqa: D105
+    def __iter__(self) -> Iterator["Term"]:  # noqa: D105
         if self.iter_only:
             return iter(self.iter_terms(**(self.iter_terms_kwargs or {})))
         if self._items is None:
@@ -961,7 +966,7 @@ class Obo:
 
     def iter_relation_rows(
         self, use_tqdm: bool = False
-    ) -> Iterable[Tuple[str, str, str, str, str, str]]:
+    ) -> Iterable[Tuple[str, str, str, str, str]]:
         """Iterate the relations' rows."""
         for term, typedef, reference in self.iterate_relations(use_tqdm=use_tqdm):
             yield term.identifier, typedef.prefix, typedef.identifier, reference.prefix, reference.identifier

@@ -65,13 +65,14 @@ def normalize_prefix(prefix: str, *, curie=None, xref=None, strict: bool = True)
         return norm_prefix
 
     if curie is None or curie.startswith("obo:"):
-        return
+        return None
     if curie.startswith("UBERON:"):  # uberon has tons of xrefs to anatomical features. skip them
         UBERON_UNHANDLED[prefix].append((curie, xref))
     elif strict:
         raise MissingPrefix(prefix=prefix, curie=curie, xref=xref)
     # if prefix.replace(':', '').replace("'", '').replace('-', '').replace('%27', '').isalpha():
     #     return  # skip if its just text
+    return None
 
 
 BAD_CURIES = set()
