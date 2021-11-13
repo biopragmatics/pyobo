@@ -129,7 +129,9 @@ def get_definition(prefix: str, identifier: str) -> Optional[str]:
     return _help_get(get_id_definition_mapping, prefix, identifier)
 
 
-def get_id_definition_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
+def get_id_definition_mapping(
+    prefix: str, force: bool = False, strict: bool = True
+) -> Mapping[str, str]:
     """Get a mapping of descriptions."""
     version = get_version(prefix)
     path = prefix_cache_join(prefix, name="definitions.tsv", version=version)
@@ -137,7 +139,7 @@ def get_id_definition_mapping(prefix: str, force: bool = False) -> Mapping[str, 
     @cached_mapping(path=path, header=[f"{prefix}_id", "definition"], force=force)
     def _get_mapping() -> Mapping[str, str]:
         logger.info("[%s] no cached descriptions found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, version=version)
+        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_id_definition_mapping()
 
     return _get_mapping()
@@ -150,7 +152,9 @@ def get_synonyms(prefix: str, identifier: str) -> Optional[List[str]]:
 
 
 @wrap_norm_prefix
-def get_id_synonyms_mapping(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
+def get_id_synonyms_mapping(
+    prefix: str, force: bool = False, strict: bool = True
+) -> Mapping[str, List[str]]:
     """Get the OBO file and output a synonym dictionary."""
     version = get_version(prefix)
     path = prefix_cache_join(prefix, name="synonyms.tsv", version=version)
@@ -158,7 +162,7 @@ def get_id_synonyms_mapping(prefix: str, force: bool = False) -> Mapping[str, Li
     @cached_multidict(path=path, header=[f"{prefix}_id", "synonym"], force=force)
     def _get_multidict() -> Mapping[str, List[str]]:
         logger.info("[%s] no cached synonyms found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, version=version)
+        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_id_synonyms_mapping()
 
     return _get_multidict()

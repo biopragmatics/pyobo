@@ -5,6 +5,7 @@
 import unittest
 from operator import attrgetter
 
+import bioversions
 import obonet
 
 from pyobo import Reference, Synonym, SynonymTypeDef, get_ontology
@@ -202,7 +203,7 @@ class TestGet(unittest.TestCase):
     def setUp(self) -> None:
         """Set up the test with the mock ChEBI OBO file."""
         with chebi_patch:
-            self.ontology = get_ontology("chebi")
+            self.ontology = get_ontology("chebi", version=bioversions.get_version("chebi"))
 
     def test_get_terms(self):
         """Test getting an OBO document."""
