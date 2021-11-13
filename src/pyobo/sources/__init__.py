@@ -5,25 +5,15 @@
 from functools import lru_cache
 from typing import Callable, Iterable, Mapping
 
-from class_resolver import Resolver
 from pkg_resources import iter_entry_points
 
-from .hgnc import HGNCGetter
-from .mgi import MGIGetter
-from .rgd import RGDGetter
-from .sgd import SGDGetter
-from .uniprot import UniProtGetter
-from .zfin import ZFINGetter
 from ..struct import Obo
 
 __all__ = [
     "has_nomenclature_plugin",
     "run_nomenclature_plugin",
     "iter_nomenclature_plugins",
-    "obo_resolver",
 ]
-
-obo_resolver = Resolver.from_subclasses(base=Obo)
 
 
 @lru_cache()
