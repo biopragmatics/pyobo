@@ -33,45 +33,50 @@ class SGDGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms for SGD."""
-        df = ensure_tar_df(
-            prefix=PREFIX,
-            url=URL,
-            inner_path=INNER_PATH,
-            sep="\t",
-            skiprows=18,
-            header=None,
-            names=HEADER,
-            force=force,
-            dtype=str,
-            version=self.data_version,
-        )
-        df = df[df["feature"] == "gene"]
-        for data in df["data"]:
-            d = dict(entry.split("=") for entry in data.split(";"))
-
-            identifier = d["dbxref"][len("SGD:") :]
-            name = d["Name"]
-            definition = unquote_plus(d["Note"])
-
-            synonyms = []
-
-            aliases = d.get("Alias")
-            if aliases:
-                for alias in aliases.split(","):
-                    synonyms.append(Synonym(name=unquote_plus(alias), type=alias_type))
-
-            term = Term(
-                reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
-                definition=definition,
-                synonyms=synonyms,
-            )
-            term.set_species(identifier="4932", name="Saccharomyces cerevisiae")
-            yield term
+        yield from get_terms(self, force=force)
 
 
 def get_obo(force: bool = False) -> Obo:
     """Get SGD as OBO."""
     return SGDGetter(force=force)
+
+
+def get_terms(ontology: Obo, force: bool = False) -> Iterable[Term]:
+    """Get SGD terms."""
+    df = ensure_tar_df(
+        prefix=PREFIX,
+        url=URL,
+        inner_path=INNER_PATH,
+        sep="\t",
+        skiprows=18,
+        header=None,
+        names=HEADER,
+        force=force,
+        dtype=str,
+        version=ontology.data_version,
+    )
+    df = df[df["feature"] == "gene"]
+    for data in df["data"]:
+        d = dict(entry.split("=") for entry in data.split(";"))
+
+        identifier = d["dbxref"][len("SGD:"):]
+        name = d["Name"]
+        definition = unquote_plus(d["Note"])
+
+        synonyms = []
+
+        aliases = d.get("Alias")
+        if aliases:
+            for alias in aliases.split(","):
+                synonyms.append(Synonym(name=unquote_plus(alias), type=alias_type))
+
+        term = Term(
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
+            definition=definition,
+            synonyms=synonyms,
+        )
+        term.set_species(identifier="4932", name="Saccharomyces cerevisiae")
+        yield term
 
 
 if __name__ == "__main__":
