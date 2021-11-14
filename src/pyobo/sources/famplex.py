@@ -20,18 +20,20 @@ logger = logging.getLogger(__name__)
 PREFIX = "fplx"
 
 
+class FamPlexGetter(Obo):
+    ontology = PREFIX
+    typedefs = [has_member, has_part, is_a, part_of]
+
+    def _get_version(self) -> str:
+        return get_commit("sorgerlab", "famplex")
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return get_terms(force=force, version=self.data_version)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get FamPlex as OBO."""
-    version = get_commit("sorgerlab", "famplex")
-    return Obo(
-        ontology=PREFIX,
-        name="FamPlex",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        data_version=version,
-        typedefs=[has_member, has_part, is_a, part_of],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return FamPlexGetter(force=force)
 
 
 def get_terms(version: str, force: bool = False) -> Iterable[Term]:

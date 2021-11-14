@@ -16,6 +16,7 @@ from .drugbank import DrugBankGetter
 from .drugbank_salt import DrugBankSaltGetter
 from .drugcentral import DrugCentralGetter
 from .expasy import ExpasyGetter
+from .famplex import FamPlexGetter
 from .flybase import FlyBaseGetter
 from .gwascentral_phenotype import GWASCentralPhenotypeGetter
 from .gwascentral_study import GWASCentralStudyGetter
@@ -40,6 +41,7 @@ __all__ = [
     "DrugBankSaltGetter",
     "DrugCentralGetter",
     "ExpasyGetter",
+    "FamPlexGetter",
     "FlyBaseGetter",
     "GWASCentralPhenotypeGetter",
     "GWASCentralStudyGetter",

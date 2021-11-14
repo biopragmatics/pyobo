@@ -454,12 +454,16 @@ class Obo:
             raise BioregistryError(self.ontology)
         if self.name is None:
             self.name = bioregistry.get_name(self.ontology)
-        if self.bioversions_key and not self.data_version:
-            import bioversions
-
-            self.data_version = bioversions.get_version(self.bioversions_key)
+        if not self.data_version:
+            self.data_version = self._get_version()
         if self.auto_generated_by is None:
             self.auto_generated_by = f"bio2obo:{self.ontology}"
+
+    def _get_version(self) -> Optional[str]:
+        if self.bioversions_key:
+            import bioversions
+
+            return bioversions.get_version(self.bioversions_key)
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in this ontology."""
