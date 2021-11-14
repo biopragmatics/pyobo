@@ -21,6 +21,7 @@ from .flybase import FlyBaseGetter
 from .gwascentral_phenotype import GWASCentralPhenotypeGetter
 from .gwascentral_study import GWASCentralStudyGetter
 from .hgnc import HGNCGetter
+from .interpro import InterProGetter
 from .mgi import MGIGetter
 from .umls import UMLSGetter
 from .uniprot import UniProtGetter
@@ -46,6 +47,7 @@ __all__ = [
     "GWASCentralPhenotypeGetter",
     "GWASCentralStudyGetter",
     "HGNCGetter",
+    "InterProGetter",
     "MGIGetter",
     "UMLSGetter",
     "UniProtGetter",
