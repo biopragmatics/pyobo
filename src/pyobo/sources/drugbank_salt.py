@@ -21,22 +21,29 @@ import bioversions
 from .drugbank import iterate_drug_info
 from ..struct import Obo, Reference, Term
 
+__all__ = [
+    "DrugBankSaltGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "drugbank.salt"
 
 
+class DrugBankSaltGetter(Obo):
+    """A getter for DrugBank Salts."""
+
+    ontology = PREFIX
+    bioversions_key = "drugbank"
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return iter_terms(version=self.data_version, force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get DrugBank Salts as OBO."""
     version = bioversions.get_version("drugbank")
-    return Obo(
-        ontology=PREFIX,
-        name="DrugBank Salts",
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return Obo(force=force)
 
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:

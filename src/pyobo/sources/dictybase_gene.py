@@ -15,6 +15,10 @@ from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_gene_p
 from pyobo.utils.io import multisetdict
 from pyobo.utils.path import ensure_df
 
+__all__ = [
+    "DictybaseGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "dictybase.gene"
@@ -29,16 +33,17 @@ UNIPROT_MAPPING = (
 )
 
 
+class DictybaseGetter(Obo):
+    ontology = PREFIX
+    typedefs = [from_species, has_gene_product]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return get_terms(force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get dictyBase Gene as OBO."""
-    return Obo(
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        name=NAME,
-        ontology=PREFIX,
-        typedefs=[from_species, has_gene_product],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return DictybaseGetter(force=force)
 
 
 def get_terms(force: bool = False) -> Iterable[Term]:

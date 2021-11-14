@@ -5,11 +5,14 @@
 import logging
 from typing import Iterable
 
-import bioversions
 import pandas as pd
 
 from pyobo.struct import Obo, Reference, Term
 from pyobo.utils.path import ensure_df
+
+__all__ = [
+    "DrugCentralGetter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -17,17 +20,16 @@ PREFIX = "drugcentral"
 URL = "http://unmtid-shinyapps.net/download/structures.smiles.tsv"
 
 
+class DrugCentralGetter(Obo):
+    ontology = bioversions_key = PREFIX
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return iter_terms(version=self.data_version, force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get DrugCentral OBO."""
-    version = bioversions.get_version(PREFIX)
-    return Obo(
-        ontology=PREFIX,
-        name="DrugCentral",
-        data_version=version,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return DrugCentralGetter(force=force)
 
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:

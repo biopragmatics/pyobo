@@ -7,12 +7,14 @@ import logging
 from collections import defaultdict
 from typing import Dict, Iterable, Mapping, Optional, Set, Tuple
 
-import bioversions
-
 from .utils import get_go_mapping
 from ..struct import Obo, Reference, Synonym, Term, TypeDef
 from ..struct.typedef import has_member
 from ..utils.path import ensure_path
+
+__all__ = [
+    "ExpasyGetter",
+]
 
 PREFIX = "eccode"
 EXPASY_DATABASE_URL = "ftp://ftp.expasy.org/databases/enzyme/enzyme.dat"
@@ -44,23 +46,24 @@ has_molecular_function = TypeDef(
 )
 
 
-def get_obo() -> Obo:
+class ExpasyGetter(Obo):
+    """A getter for ExPASy Enzyme Classes."""
+
+    bioversions_key = ontology = PREFIX
+    typedefs = [has_member, has_molecular_function]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return get_terms(version=self.data_version, force=force)
+
+
+def get_obo(force: bool = False) -> Obo:
     """Get ExPASy as OBO."""
-    version = bioversions.get_version("expasy")
-    return Obo(
-        ontology=PREFIX,
-        name="ExPASy Enzyme Nomenclature",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version),
-        data_version=version,
-        typedefs=[has_member, has_molecular_function],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return ExpasyGetter(force=force)
 
 
-def get_terms(version: str) -> Iterable[Term]:
+def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get the ExPASy terms."""
-    tree_path = ensure_path(PREFIX, url=EXPASY_TREE_URL, version=version)
+    tree_path = ensure_path(PREFIX, url=EXPASY_TREE_URL, version=version, force=force)
     with open(tree_path) as file:
         tree = get_tree(file)
 
