@@ -30,8 +30,8 @@ from tqdm import tqdm
 
 from .constants import DATABASE_DIRECTORY
 from .identifier_utils import MissingPrefix, wrap_norm_prefix
+from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .reader import from_obo_path, from_obonet
-from .sources import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
 from .utils.cache import get_gzipped_graph
 from .utils.io import get_writer
