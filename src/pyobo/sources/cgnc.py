@@ -25,6 +25,7 @@ class CGNCGetter(Obo):
     typedefs = [from_species]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return get_terms(force=force)
 
 

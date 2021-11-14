@@ -99,6 +99,7 @@ class ComplexPortalGetter(Obo):
     typedefs = [from_species, has_part]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return get_terms(version=self.data_version)
 
 

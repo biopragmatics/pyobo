@@ -221,7 +221,9 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
     _typedefs = typedefs
     _synonym_typedefs = synonym_typedefs
 
-    class _adhoc(Obo):
+    class AdHocOntology(Obo):
+        """An ad hoc ontology created from an OBO file."""
+
         ontology = _ontology
         name = _name
         auto_generated_by = graph.graph.get("auto-generated-by")
@@ -232,9 +234,10 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
         synonym_typedefs = list(_synonym_typedefs.values())
 
         def iter_terms(self, force: bool = False) -> Iterable[Term]:
+            """Iterate over terms in the ad hoc ontology."""
             return terms
 
-    return _adhoc()
+    return AdHocOntology()
 
 
 def _clean_graph_ontology(graph, prefix: str) -> None:

@@ -53,6 +53,7 @@ class ExpasyGetter(Obo):
     typedefs = [has_member, has_molecular_function]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return get_terms(version=self.data_version, force=force)
 
 
