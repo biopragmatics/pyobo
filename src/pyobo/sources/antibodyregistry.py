@@ -12,6 +12,10 @@ from tqdm import tqdm
 from pyobo import Obo, Term
 from pyobo.utils.path import ensure_df
 
+__all__ = [
+    "AntibodyRegistryGetter",
+]
+
 PREFIX = "antibodyregistry"
 URL = "http://antibodyregistry.org/php/fileHandler.php"
 CHUNKSIZE = 20_000
@@ -33,16 +37,16 @@ def get_chunks(force: bool = False) -> pd.DataFrame:
     return df
 
 
+class AntibodyRegistryGetter(Obo):
+    ontology = bioregistry_key = PREFIX
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return iter_terms(force=force)
+
+
 def get_obo(*, force: bool = False) -> Obo:
     """Get the Antibody Registry as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name=bioregistry.get_name(PREFIX),
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(force=force),
-        data_version=bioversions.get_version(PREFIX),
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return AntibodyRegistryGetter(force=force)
 
 
 # TODO there are tonnnnsss of mappings to be curated

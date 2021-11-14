@@ -13,23 +13,22 @@ from pyobo import Obo, Reference, Term
 
 __all__ = [
     "get_obo",
+    "CCLEGetter",
 ]
 
 PREFIX = "ccle"
 
 
-def get_obo(*, version: Optional[str] = None, force: bool = False) -> Obo:
+class CCLEGetter(Obo):
+    ontology = bioregistry_key = PREFIX
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return iter_terms(version=self.data_version, force=force)
+
+
+def get_obo(*, force: bool = False) -> Obo:
     """Get CCLE Cells as OBO."""
-    if version is None:
-        version = get_version()
-    return Obo(
-        ontology=PREFIX,
-        name="CCLE Cell Lines",
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return CCLEGetter(force=force)
 
 
 def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:

@@ -4,9 +4,13 @@
 
 from class_resolver import Resolver
 
+from .antibodyregistry import AntibodyRegistryGetter
+from .ccle import CCLEGetter
 from .cgnc import CGNCGetter
 from .chembl import ChEBMLGetter
 from .complexportal import ComplexPortalGetter
+from .conso import CONSOGetter
+from .depmap import DepMapGetter
 from .flybase import FlyBaseGetter
 from .gwascentral_phenotype import GWASCentralPhenotypeGetter
 from .gwascentral_study import GWASCentralStudyGetter
@@ -19,9 +23,13 @@ from ..struct import Obo
 __all__ = [
     "ontology_resolver",
     # Getters
+    "AntibodyRegistryGetter",
+    "CCLEGetter",
     "CGNCGetter",
     "ChEBMLGetter",
     "ComplexPortalGetter",
+    "CONSOGetter",
+    "DepMapGetter",
     "FlyBaseGetter",
     "GWASCentralPhenotypeGetter",
     "GWASCentralStudyGetter",

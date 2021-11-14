@@ -10,6 +10,10 @@ from ..struct import Obo, Reference, Synonym, Term
 from ..utils.io import multidict
 from ..utils.path import ensure_df
 
+__all__ = [
+    "CONSOGetter",
+]
+
 PREFIX = "conso"
 BASE_URL = "https://raw.githubusercontent.com/pharmacome/conso/master/src/conso/resources"
 TERMS_URL = f"{BASE_URL}/terms.tsv"
@@ -18,14 +22,16 @@ TYPEDEFS_URL = f"{BASE_URL}/typedefs.tsv"
 SYNONYMS_URL = f"{BASE_URL}/synonyms.tsv"
 
 
+class CONSOGetter(Obo):
+    ontology = PREFIX
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return iter_terms()
+
+
 def get_obo() -> Obo:
     """Get CONSO as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="Curation of Neurodegeneration Supporting Ontology",
-        iter_terms=iter_terms,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return CONSOGetter()
 
 
 def iter_terms() -> Iterable[Term]:
