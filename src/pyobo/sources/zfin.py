@@ -19,7 +19,9 @@ from pyobo.struct import (
 from pyobo.utils.io import multidict, multisetdict
 from pyobo.utils.path import ensure_df
 
-__all__ = ["ZFINGetter"]
+__all__ = [
+    "ZFINGetter",
+]
 
 logger = logging.getLogger(__name__)
 
