@@ -17,8 +17,8 @@ from .database import main as database_main
 from .lookup import lookup
 from ..apps.cli import main as apps_main
 from ..constants import RAW_DIRECTORY
+from ..plugins import has_nomenclature_plugin, iter_nomenclature_plugins
 from ..registries import iter_cached_obo
-from ..sources import has_nomenclature_plugin, iter_nomenclature_plugins
 from ..utils.io import get_writer
 from ..xrefdb.canonicalizer import Canonicalizer, get_priority_curie, remap_file_stream
 from ..xrefdb.priority import DEFAULT_PRIORITY_LIST
