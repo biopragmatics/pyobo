@@ -59,7 +59,7 @@ def get_terms(ontology: Obo, force: bool = False) -> Iterable[Term]:
     for data in df["data"]:
         d = dict(entry.split("=") for entry in data.split(";"))
 
-        identifier = d["dbxref"][len("SGD:"):]
+        identifier = d["dbxref"][len("SGD:") :]
         name = d["Name"]
         definition = unquote_plus(d["Note"])
 
