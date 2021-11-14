@@ -12,7 +12,6 @@ import zipfile
 from pathlib import Path
 from typing import Iterable
 
-import click
 import pandas as pd
 from tqdm import tqdm
 
@@ -20,6 +19,10 @@ from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term, normalize_prefi
 from pyobo.constants import RAW_MODULE
 from pyobo.utils.io import open_map_tsv
 from pyobo.utils.path import ensure_path
+
+__all__ = [
+    "UMLSGetter",
+]
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 SYNONYM_TYPE_PATH = os.path.join(HERE, "synonym_types.tsv")
@@ -55,22 +58,23 @@ def _get_version() -> str:
     return "2020AB"
 
 
+SYNONYM_ABB = open_map_tsv(SYNONYM_TYPE_PATH)
+
+
+class UMLSGetter(Obo):
+    ontology = PREFIX
+    synonym_typedefs = [SynonymTypeDef.from_text(v) for v in SYNONYM_ABB.values()]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return iter_terms(_get_version())
+
+
 def get_obo() -> Obo:
     """Get UMLS as OBO."""
-    version = _get_version()
-    synonym_abb = open_map_tsv(SYNONYM_TYPE_PATH)
-    return Obo(
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version, synonym_abb=synonym_abb),
-        name="Unified Medical Language System",
-        ontology=PREFIX,
-        synonym_typedefs=[SynonymTypeDef.from_text(v) for v in synonym_abb.values()],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        data_version=version,
-    )
+    return UMLSGetter()
 
 
-def iter_terms(version: str, synonym_abb, autodownload: bool = False) -> Iterable[Term]:
+def iter_terms(version: str, autodownload: bool = False) -> Iterable[Term]:
     """Iterate over UMLS terms."""
     name = f"umls-{version}-mrconso.zip"
     url = f"https://download.nlm.nih.gov/umls/kss/{version}/{name}"
@@ -103,7 +107,7 @@ def iter_terms(version: str, synonym_abb, autodownload: bool = False) -> Iterabl
                     continue
 
                 df["TTY - Term Type in Source"] = df["TTY - Term Type in Source"].map(
-                    synonym_abb.__getitem__
+                    SYNONYM_ABB.__getitem__
                 )
 
                 _r = pref_rows_df.iloc[0]
@@ -139,11 +143,5 @@ def iter_terms(version: str, synonym_abb, autodownload: bool = False) -> Iterabl
                 yield term
 
 
-@click.command()
-def main():
-    """Cache the OBO content."""
-    get_obo().write_default()
-
-
 if __name__ == "__main__":
-    main()
+    UMLSGetter.cls_cli()
