@@ -27,6 +27,10 @@ from ..struct import (
 )
 from ..utils.path import ensure_path, prefix_directory_join
 
+__all__ = [
+    "HGNCGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "hgnc"

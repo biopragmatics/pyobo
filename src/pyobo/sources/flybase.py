@@ -3,7 +3,7 @@
 """Converter for FlyBase Genes."""
 
 import logging
-from typing import Iterable, Mapping, Optional, Set
+from typing import Iterable, Mapping, Set
 
 import pandas as pd
 from tqdm import tqdm
@@ -13,6 +13,10 @@ from pyobo.struct import Obo, Term, from_species, orthologous
 from pyobo.utils.io import multisetdict
 from pyobo.utils.path import ensure_df
 
+__all__ = [
+    "FlyBaseGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 BASE_URL = "http://ftp.flybase.net/releases"
@@ -20,16 +24,15 @@ PREFIX = "flybase"
 NAME = "FlyBase"
 
 
-def _get_version(version: Optional[str] = None) -> str:
-    if version is not None:
-        return version
-    import bioversions
+class FlyBaseGetter(Obo):
+    ontology = bioregistry_key = PREFIX
+    typedefs = [from_species, orthologous]
 
-    return bioversions.get_version("flybase")
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return get_terms(force=force, version=self.data_version)
 
 
-def _get_names(version: Optional[str] = None, force: bool = False) -> pd.DataFrame:
-    version = _get_version(version)
+def _get_names(version: str, force: bool = False) -> pd.DataFrame:
     url = f"{BASE_URL}/FB{version}/precomputed_files/genes/fbgn_fbtr_fbpp_expanded_fb_{version}.tsv.gz"
     df = ensure_df(
         PREFIX,
@@ -43,9 +46,8 @@ def _get_names(version: Optional[str] = None, force: bool = False) -> pd.DataFra
     return df
 
 
-def _get_organisms(version: Optional[str] = None, force: bool = False) -> Mapping[str, str]:
+def _get_organisms(version: str, force: bool = False) -> Mapping[str, str]:
     """Get mapping from abbreviation column to NCBI taxonomy ID column."""
-    version = _get_version(version)
     url = f"http://ftp.flybase.net/releases/FB{version}/precomputed_files/species/organism_list_fb_{version}.tsv.gz"
     df = ensure_df(
         PREFIX, url=url, force=force, version=version, skiprows=4, header=None, usecols=[2, 4]
@@ -54,8 +56,7 @@ def _get_organisms(version: Optional[str] = None, force: bool = False) -> Mappin
     return dict(df.values)
 
 
-def _get_definitions(version: Optional[str] = None, force: bool = False) -> Mapping[str, str]:
-    version = _get_version(version)
+def _get_definitions(version: str, force: bool = False) -> Mapping[str, str]:
     url = f"http://ftp.flybase.net/releases/FB{version}/precomputed_files/genes/automated_gene_summaries.tsv.gz"
     df = ensure_df(
         PREFIX, url=url, force=force, version=version, skiprows=2, header=None, usecols=[0, 1]
@@ -63,10 +64,7 @@ def _get_definitions(version: Optional[str] = None, force: bool = False) -> Mapp
     return dict(df.values)
 
 
-def _get_human_orthologs(
-    version: Optional[str] = None, force: bool = False
-) -> Mapping[str, Set[str]]:
-    version = _get_version(version)
+def _get_human_orthologs(version: str, force: bool = False) -> Mapping[str, Set[str]]:
     url = (
         f"http://ftp.flybase.net/releases/FB{version}/precomputed_files/"
         f"orthologs/dmel_human_orthologs_disease_fb_{version}.tsv.gz"
@@ -85,24 +83,14 @@ def _get_human_orthologs(
 
 
 def _get_synonyms(version, force):
-    version = _get_version(version)
     url = f"http://ftp.flybase.net/releases/FB{version}/precomputed_files/synonyms/fb_synonym_fb_{version}.tsv.gz"
     df = ensure_df(PREFIX, url=url, force=force, version=version, skiprows=4, usecols=[0, 2])
     return df  # TODO use this
 
 
-def get_obo(version: Optional[str] = None, force: bool = False) -> Obo:
+def get_obo(force: bool = False) -> Obo:
     """Get OBO."""
-    version = _get_version(version)
-    return Obo(
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force, version=version),
-        name=NAME,
-        ontology=PREFIX,
-        typedefs=[from_species, orthologous],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        data_version=version,
-    )
+    return FlyBaseGetter(force=force)
 
 
 GTYPE_TO_SO = {
@@ -126,9 +114,8 @@ GTYPE_TO_SO = {
 }
 
 
-def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
+def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get terms."""
-    version = _get_version(version)
     definitions = _get_definitions(version=version, force=force)
     abbr_to_taxonomy = _get_organisms(version=version, force=force)
     names_df = _get_names(version=version, force=force)

@@ -7,9 +7,12 @@ from class_resolver import Resolver
 from .cgnc import CGNCGetter
 from .chembl import ChEBMLGetter
 from .complexportal import ComplexPortalGetter
-from .umls import UMLSGetter
+from .flybase import FlyBaseGetter
 from .gwascentral_phenotype import GWASCentralPhenotypeGetter
-from. gwascentral_study import GWASCentralStudyGetter
+from .gwascentral_study import GWASCentralStudyGetter
+from .hgnc import HGNCGetter
+from .mgi import MGIGetter
+from .umls import UMLSGetter
 from .uniprot import UniProtGetter
 from ..struct import Obo
 
@@ -19,8 +22,11 @@ __all__ = [
     "CGNCGetter",
     "ChEBMLGetter",
     "ComplexPortalGetter",
+    "FlyBaseGetter",
     "GWASCentralPhenotypeGetter",
     "GWASCentralStudyGetter",
+    "HGNCGetter",
+    "MGIGetter",
     "UMLSGetter",
     "UniProtGetter",
 ]

@@ -20,6 +20,10 @@ from ..struct import (
 )
 from ..utils.path import ensure_df
 
+__all__ = [
+    "MGIGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "mgi"
