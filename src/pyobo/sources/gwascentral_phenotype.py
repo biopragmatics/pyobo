@@ -23,6 +23,7 @@ class GWASCentralPhenotypeGetter(Obo):
     data_version = VERSION
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms(force=force, version=self.data_version)
 
 

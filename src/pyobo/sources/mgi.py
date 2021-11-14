@@ -37,6 +37,7 @@ class MGIGetter(Obo):
     typedefs = [from_species, has_gene_product, transcribes_to]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return get_terms(force=force)
 
 
