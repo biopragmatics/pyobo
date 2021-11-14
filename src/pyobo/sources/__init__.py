@@ -8,6 +8,8 @@ from .cgnc import CGNCGetter
 from .chembl import ChEBMLGetter
 from .complexportal import ComplexPortalGetter
 from .umls import UMLSGetter
+from .gwascentral_phenotype import GWASCentralPhenotypeGetter
+from. gwascentral_study import GWASCentralStudyGetter
 from .uniprot import UniProtGetter
 from ..struct import Obo
 
@@ -17,6 +19,8 @@ __all__ = [
     "CGNCGetter",
     "ChEBMLGetter",
     "ComplexPortalGetter",
+    "GWASCentralPhenotypeGetter",
+    "GWASCentralStudyGetter",
     "UMLSGetter",
     "UniProtGetter",
 ]

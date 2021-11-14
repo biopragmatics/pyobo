@@ -11,19 +11,24 @@ from pyobo.sources.gwascentral_study import VERSION
 from pyobo.struct import Obo, Reference, Term
 from pyobo.utils.path import ensure_path
 
+__all__ = [
+    "GWASCentralPhenotypeGetter",
+]
+
 PREFIX = "gwascentral.phenotype"
+
+
+class GWASCentralPhenotypeGetter(Obo):
+    ontology = PREFIX
+    data_version = VERSION
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return iter_terms(force=force, version=self.data_version)
 
 
 def get_obo(force: bool = False) -> Obo:
     """Get GWAS Central Studies as OBO."""
-    return Obo(
-        name="GWAS Central Phenotype",
-        ontology=PREFIX,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=VERSION, force=force),
-        data_version=VERSION,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return GWASCentralPhenotypeGetter(force=force)
 
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:

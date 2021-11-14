@@ -10,6 +10,10 @@ from xml.etree import ElementTree
 from pyobo.struct import Obo, Reference, Term, has_part
 from pyobo.utils.path import ensure_path
 
+__all__ = [
+    "GWASCentralStudyGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 VERSION = "jan2021"
@@ -17,17 +21,18 @@ URL = f"http://www.gwascentral.org/docs/GC_{VERSION}.tar.gz"
 PREFIX = "gwascentral.study"
 
 
+class GWASCentralStudyGetter(Obo):
+    ontology = PREFIX
+    data_version = VERSION
+    typedefs = [has_part]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return iterate_terms(force=force, version=self.data_version)
+
+
 def get_obo(force: bool = False):
     """Get GWAS Central Studies as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="GWAS Central Study",
-        iter_terms=iterate_terms,
-        iter_terms_kwargs=dict(version=VERSION, force=force),
-        data_version=VERSION,
-        typedefs=[has_part],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return GWASCentralStudyGetter(force=force)
 
 
 def _find_text(element, name: str) -> Optional[str]:
