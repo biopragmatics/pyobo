@@ -28,6 +28,7 @@ from typing import (
     Union,
 )
 
+import bioregistry
 import click
 import networkx as nx
 import pandas as pd
@@ -35,7 +36,6 @@ from more_click import force_option, verbose_option
 from networkx.utils import open_file
 from tqdm import tqdm
 
-import bioregistry
 from .reference import Reference, Referenced
 from .typedef import (
     RelationHint,
@@ -119,11 +119,11 @@ class SynonymTypeDef:
         """Get a type definition from text that's normalized."""
         return cls(
             id=text.lower()
-                .replace("-", "_")
-                .replace(" ", "_")
-                .replace('"', "")
-                .replace(")", "")
-                .replace("(", ""),
+            .replace("-", "_")
+            .replace(" ", "_")
+            .replace('"', "")
+            .replace(")", "")
+            .replace("(", ""),
             name=text.replace('"', ""),
         )
 
@@ -1020,10 +1020,10 @@ class Obo:
             for parent in term.parents:
                 yield term, is_a, parent
             for typedef, reference in term.iterate_relations():
-                if (
-                    (self.typedefs is None or typedef not in self.typedefs)
-                    and (typedef.prefix, typedef.identifier) not in default_typedefs
-                ):
+                if (self.typedefs is None or typedef not in self.typedefs) and (
+                    typedef.prefix,
+                    typedef.identifier,
+                ) not in default_typedefs:
                     raise ValueError(f"Undefined typedef: {typedef.curie} ! {typedef.name}")
                 yield term, typedef, reference
 

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# type:ignore
 
 """Convert ExPASy to OBO."""
 
@@ -188,7 +187,7 @@ def get_tree(lines: Iterable[str]):
                 "namespace": "ec-code",
                 "identifier": parent_expasy_id,
             }
-            rv[parent_expasy_id]["children"].append(rv[expasy_id]["concept"])
+            rv[parent_expasy_id]["children"].append(rv[expasy_id]["concept"])  # type:ignore
 
     return rv
 
@@ -227,12 +226,12 @@ def get_database(lines: Iterable[str]) -> Mapping:
                 value = value[len("Transferred entry: ") :].rstrip()
                 ec_data_entry["transfer_id"] = value
             elif descriptor == DE:
-                ec_data_entry["concept"]["name"] = value.rstrip(".")
+                ec_data_entry["concept"]["name"] = value.rstrip(".")  # type:ignore
             elif descriptor == AN:
-                ec_data_entry["synonyms"].append(value.rstrip("."))
+                ec_data_entry["synonyms"].append(value.rstrip("."))  # type:ignore
             elif descriptor == PR:
                 value = value[len("PROSITE; ") : -1]  # remove trailing comma
-                ec_data_entry["domains"].append(
+                ec_data_entry["domains"].append(  # type:ignore
                     {
                         "namespace": "prosite",
                         "identifier": value,
@@ -243,7 +242,7 @@ def get_database(lines: Iterable[str]) -> Mapping:
                     if not uniprot_entry:
                         continue
                     uniprot_id, uniprot_accession = uniprot_entry.split(",")
-                    ec_data_entry["proteins"].append(
+                    ec_data_entry["proteins"].append(  # type:ignore
                         dict(
                             namespace="uniprot",
                             name=uniprot_accession,
@@ -254,7 +253,7 @@ def get_database(lines: Iterable[str]) -> Mapping:
     for expasy_id, data in rv.items():
         transfer_id = data.pop("transfer_id", None)
         if transfer_id is not None:
-            rv[expasy_id]["alt_ids"].append(transfer_id)
+            rv[expasy_id]["alt_ids"].append(transfer_id)  # type:ignore
 
     return rv
 
