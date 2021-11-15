@@ -19,6 +19,8 @@ PREFIX = "gwascentral.phenotype"
 
 
 class GWASCentralPhenotypeGetter(Obo):
+    """An ontology representation of GWAS Central's phenotype nomenclature."""
+
     ontology = PREFIX
     data_version = VERSION
 

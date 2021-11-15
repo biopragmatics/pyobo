@@ -8,7 +8,6 @@ Run with ``python -m pyobo.sources.kegg.genes``
 import logging
 from typing import Iterable, Optional
 
-import bioversions
 import click
 from more_click import verbose_option
 from tqdm import tqdm
@@ -34,11 +33,14 @@ logger = logging.getLogger(__name__)
 
 
 class KEGGGeneGetter(Obo):
+    """An ontology representation of KEGG Genes."""
+
     ontology = KEGG_GENES_PREFIX
     bioversions_key = "kegg"
     typedefs = [from_species, from_kegg_species, has_gene_product]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms(version=self.data_version)
 
 

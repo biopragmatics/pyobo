@@ -34,6 +34,8 @@ UNIPROT_MAPPING = (
 
 
 class DictybaseGetter(Obo):
+    """An ontology representation of Dictybase's gene nomenclature."""
+
     ontology = PREFIX
     typedefs = [from_species, has_gene_product]
 

@@ -29,10 +29,13 @@ PREFIX = "reactome"
 
 
 class ReactomeGetter(Obo):
+    """An ontology representation of the Reactome pathway database."""
+
     ontology = bioversions_key = PREFIX
     typedefs = [from_species, has_part]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms(version=self.data_version, force=force)
 
 

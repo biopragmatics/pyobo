@@ -35,12 +35,15 @@ FROM hierarchy
 
 
 class ITISGetter(Obo):
+    """An ontology representation of the ITIS taxonomy."""
+
     ontology = PREFIX
 
     def _get_version(self) -> str:
         return _get_version(force=self.force)
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         # don't add force since the version getter already will
         return iter_terms()
 

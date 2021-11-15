@@ -21,6 +21,8 @@ PREFIX = "fplx"
 
 
 class FamPlexGetter(Obo):
+    """An ontology representation of FamPlex."""
+
     ontology = PREFIX
     typedefs = [has_member, has_part, is_a, part_of]
 

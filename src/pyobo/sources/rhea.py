@@ -23,10 +23,13 @@ has_bi = TypeDef(Reference(PREFIX, "has_bi_reaction"))
 
 
 class RheaGetter(Obo):
+    """An ontology representation of Rhea's chemical reaction database."""
+
     ontology = bioversions_key = PREFIX
     typedefs = [has_lr, has_bi, has_rl]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms(version=self.data_version, force=force)
 
 

@@ -14,7 +14,7 @@ import chembl_downloader
 from pyobo.struct import Obo, Reference, Term
 
 __all__ = [
-    "ChEMBLGetter",
+    "ChEMBLCompoundGetter",
 ]
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,9 @@ WHERE
 # TODO molecule_hierarchy table
 
 
-class ChEMBLGetter(Obo):
+class ChEMBLCompoundGetter(Obo):
+    """An ontology representation of ChEMBL compounds."""
+
     ontology = "chembl.compound"
     bioversions_key = "chembl"
 
@@ -49,8 +51,8 @@ class ChEMBLGetter(Obo):
 
 
 def get_obo(force: bool = False) -> Obo:
-    """Return ChEMBL as OBO."""
-    return ChEMBLGetter(force=force)
+    """Return ChEMBL Compounds as OBO."""
+    return ChEMBLCompoundGetter(force=force)
 
 
 def iter_terms(version: str) -> Iterable[Term]:

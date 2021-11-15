@@ -17,10 +17,13 @@ PREFIX = "pfam.clan"
 
 
 class PfamClanGetter(Obo):
+    """An ontology representation of Pfam's protein clan nomenclature."""
+
     ontology = PREFIX
     bioversions_key = "pfam"
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms(version=self.data_version, force=force)
 
 

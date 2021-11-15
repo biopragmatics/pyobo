@@ -23,9 +23,23 @@ from ..sources.icd_utils import (
 from ..struct import Obo, Reference, Synonym, Term
 from ..utils.path import prefix_directory_join
 
+__all__ = [
+    "ICD11Getter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "icd11"
+
+
+class ICD11Getter(Obo):
+    """An ontology representation of ICD-11."""
+
+    ontology = PREFIX
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iterate_icd11()
 
 
 def get_obo() -> Obo:

@@ -17,10 +17,13 @@ PREFIX = "mirbase.mature"
 
 
 class MiRBaseMatureGetter(Obo):
+    """An ontology representation of miRBase's mature miRNA nomenclature."""
+
     ontology = PREFIX
     bioversions_key = "mirbase"
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms(version=self.data_version, force=force)
 
 

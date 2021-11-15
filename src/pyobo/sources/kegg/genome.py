@@ -33,10 +33,13 @@ def _s(line: str, sep: str):
 
 
 class KEGGGenomeGetter(Obo):
+    """An ontology representation of KEGG Genomes."""
+
     ontology = KEGG_GENOME_PREFIX
     bioversions_key = "kegg"
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms(version=self.data_version)
 
 

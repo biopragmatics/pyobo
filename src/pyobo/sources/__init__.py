@@ -7,7 +7,7 @@ from class_resolver import Resolver
 from .antibodyregistry import AntibodyRegistryGetter
 from .ccle import CCLEGetter
 from .cgnc import CGNCGetter
-from .chembl import ChEMBLGetter
+from .chembl import ChEMBLCompoundGetter
 from .complexportal import ComplexPortalGetter
 from .conso import CONSOGetter
 from .depmap import DepMapGetter
@@ -22,6 +22,8 @@ from .gwascentral_phenotype import GWASCentralPhenotypeGetter
 from .gwascentral_study import GWASCentralStudyGetter
 from .hgnc import HGNCGetter
 from .hgncgenefamily import HGNCGroupGetter
+from .icd10 import ICD10Getter
+from .icd11 import ICD11Getter
 from .interpro import InterProGetter
 from .itis import ITISGetter
 from .kegg import KEGGGeneGetter, KEGGGenomeGetter, KEGGPathwayGetter
@@ -53,7 +55,7 @@ __all__ = [
     "CCLEGetter",
     "CGNCGetter",
     "CONSOGetter",
-    "ChEMBLGetter",
+    "ChEMBLCompoundGetter",
     "ComplexPortalGetter",
     "DepMapGetter",
     "DictybaseGetter",
@@ -67,6 +69,8 @@ __all__ = [
     "GWASCentralStudyGetter",
     "HGNCGetter",
     "HGNCGroupGetter",
+    "ICD10Getter",
+    "ICD11Getter",
     "ITISGetter",
     "InterProGetter",
     "KEGGGeneGetter",

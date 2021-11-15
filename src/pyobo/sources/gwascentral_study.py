@@ -22,6 +22,8 @@ PREFIX = "gwascentral.study"
 
 
 class GWASCentralStudyGetter(Obo):
+    """An ontology representation of GWAS Central's study nomenclature."""
+
     ontology = PREFIX
     data_version = VERSION
     typedefs = [has_part]

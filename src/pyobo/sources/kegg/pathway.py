@@ -10,7 +10,6 @@ import urllib.error
 from collections import defaultdict
 from typing import Iterable, List, Mapping, Tuple
 
-import bioversions
 import click
 from more_click import verbose_option
 from tqdm import tqdm
@@ -35,11 +34,14 @@ logger = logging.getLogger(__name__)
 
 
 class KEGGPathwayGetter(Obo):
+    """An ontology representation of KEGG Pathways."""
+
     ontology = KEGG_PATHWAY_PREFIX
     bioversions_key = "kegg"
     typedefs = [from_kegg_species, from_species, species_specific, has_part]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms(version=self.data_version)
 
 

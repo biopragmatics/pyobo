@@ -19,6 +19,8 @@ VERSION = "21Q2"
 
 
 class DepMapGetter(Obo):
+    """An ontology representation of the Cancer Dependency Map's cell lines."""
+
     ontology = PREFIX
     data_version = VERSION
 

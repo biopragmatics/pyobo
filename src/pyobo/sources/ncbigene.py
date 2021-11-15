@@ -84,10 +84,13 @@ def _get_ncbigene_subset(usecols: List[str]) -> pd.DataFrame:
 
 
 class NCBIGeneGetter(Obo):
+    """An ontology representation of NCBI's Entrez Gene database."""
+
     ontology = PREFIX
     typedefs = [from_species]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return get_terms(force=force)
 
 

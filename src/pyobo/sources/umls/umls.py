@@ -62,10 +62,13 @@ SYNONYM_ABB = open_map_tsv(SYNONYM_TYPE_PATH)
 
 
 class UMLSGetter(Obo):
+    """An ontology representation of UMLS."""
+
     ontology = PREFIX
     synonym_typedefs = [SynonymTypeDef.from_text(v) for v in SYNONYM_ABB.values()]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms(_get_version())
 
 

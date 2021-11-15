@@ -25,6 +25,8 @@ PREFIX = "npass"
 
 
 class NPASSGetter(Obo):
+    """An ontology representation of NPASS's chemical nomenclature."""
+
     ontology = bioversions_key = PREFIX
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

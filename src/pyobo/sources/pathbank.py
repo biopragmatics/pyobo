@@ -67,10 +67,13 @@ METABOLITE_COLUMNS = [
 
 
 class PathBankGetter(Obo):
+    """An ontology representation of PathBank's pathway nomenclature."""
+
     ontology = bioversions_key = PREFIX
     typedefs = [has_part]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms(force=force, version=self.data_version)
 
 

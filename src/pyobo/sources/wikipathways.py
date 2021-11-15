@@ -41,10 +41,13 @@ _PATHWAY_INFO = [
 
 
 class WikiPathwaysGetter(Obo):
+    """An ontology representation of WikiPathways' pathway database."""
+
     ontology = bioversions_key = PREFIX
     typedefs = [has_part, from_species]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms(version=self.data_version)
 
 

@@ -25,7 +25,7 @@ alias_type = SynonymTypeDef(id="alias", name="alias")
 
 
 class SGDGetter(Obo):
-    """A getter for SGD."""
+    """An ontology representation of SGD's yeast gene nomenclature."""
 
     bioversions_key = ontology = PREFIX
     typedefs = [from_species]

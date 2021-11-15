@@ -157,6 +157,8 @@ IDSPACES["NCBITaxon"] = "http://purl.obolibrary.org/obo/NCBITaxon_"
 
 
 class HGNCGetter(Obo):
+    """An ontology representation of HGNC's gene nomenclature."""
+
     ontology = PREFIX
     typedefs = [
         from_species,

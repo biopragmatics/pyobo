@@ -71,11 +71,14 @@ GENES_HEADER = [
 
 
 class RGDGetter(Obo):
+    """An ontology representation of RGD's rat gene nomenclature."""
+
     ontology = PREFIX
     typedefs = [from_species, transcribes_to, has_gene_product]
     synonym_typedefs = [old_name_type, old_symbol_type]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return get_terms(force=force)
 
 

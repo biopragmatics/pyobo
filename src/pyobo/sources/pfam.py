@@ -40,9 +40,12 @@ def get_pfam_clan_df(version: str, force: bool = False) -> pd.DataFrame:
 
 
 class PfamGetter(Obo):
+    """An ontology representation of Pfam's protein family nomenclature."""
+
     ontology = bioversions_key = PREFIX
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms(self.data_version, force=force)
 
 

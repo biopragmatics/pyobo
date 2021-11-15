@@ -30,10 +30,13 @@ URL = (
 
 
 class PIDGetter(Obo):
+    """An ontology representation of the NCI's Pathway Interaction Database."""
+
     ontology = PREFIX
     typedefs = [has_part]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms()
 
 

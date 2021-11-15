@@ -32,10 +32,13 @@ xref_mapping = {
 
 
 class MiRBaseGetter(Obo):
+    """An ontology representation of miRBase's miRNA nomenclature."""
+
     ontology = bioversions_key = PREFIX
     typedefs = [from_species, has_mature]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return get_terms(version=self.data_version, force=force)
 
 

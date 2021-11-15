@@ -26,12 +26,15 @@ NOW_YEAR = str(datetime.datetime.now().year)
 
 
 class MeSHGetter(Obo):
+    """An ontology representation of the Medical Subject Headings."""
+
     ontology = bioversions_key = PREFIX
 
     def _get_version(self) -> Optional[str]:
         return NOW_YEAR
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return get_terms(version=self.data_version, force=force)
 
 

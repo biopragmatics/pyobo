@@ -21,6 +21,8 @@ URL = "http://unmtid-shinyapps.net/download/structures.smiles.tsv"
 
 
 class DrugCentralGetter(Obo):
+    """An ontology representation of the DrugCentral database."""
+
     ontology = bioversions_key = PREFIX
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

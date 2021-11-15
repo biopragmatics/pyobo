@@ -23,6 +23,8 @@ SYNONYMS_URL = f"{BASE_URL}/synonyms.tsv"
 
 
 class CONSOGetter(Obo):
+    """An ontology representation of CONSO vocabulary."""
+
     ontology = PREFIX
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

@@ -470,7 +470,6 @@ class Obo:
             except IOError:
                 logger.warning(f"error while looking up {self.bioversions_key}")
 
-
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in this ontology."""
         raise NotImplementedError

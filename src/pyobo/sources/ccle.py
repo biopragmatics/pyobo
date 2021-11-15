@@ -20,6 +20,8 @@ PREFIX = "ccle"
 
 
 class CCLEGetter(Obo):
+    """An ontology representation of the Cancer Cell Line Encyclopedia's cell lines."""
+
     ontology = bioregistry_key = PREFIX
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

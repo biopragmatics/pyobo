@@ -37,7 +37,7 @@ UNIPROT_MAPPINGS = "https://zfin.org/downloads/uniprot.txt"
 
 
 class ZFINGetter(Obo):
-    """Get ZFIN."""
+    """An ontology representation of ZFIN's zebrafish database."""
 
     bioversions_key = ontology = PREFIX
     typedefs = [from_species, has_gene_product, orthologous]

@@ -4,7 +4,6 @@
 
 from typing import Iterable, Mapping, Optional
 
-import bioregistry
 import bioversions
 import pandas as pd
 from tqdm import tqdm
@@ -38,9 +37,12 @@ def get_chunks(force: bool = False) -> pd.DataFrame:
 
 
 class AntibodyRegistryGetter(Obo):
+    """An ontology representation of the Antibody Registry."""
+
     ontology = bioregistry_key = PREFIX
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms(force=force)
 
 

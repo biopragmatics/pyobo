@@ -16,8 +16,6 @@ Get relations between drugbank salts and drugbank parents with
 import logging
 from typing import Iterable
 
-import bioversions
-
 from .drugbank import iterate_drug_info
 from ..struct import Obo, Reference, Term
 

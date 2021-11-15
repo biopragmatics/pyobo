@@ -21,10 +21,13 @@ REVIEWED_URL = (
 
 
 class UniProtGetter(Obo):
+    """An ontology representation of the UniProt database."""
+
     bioversions_key = ontology = PREFIX
     typedefs = [from_species]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         yield from iter_terms(force=force, version=self.data_version)
 
 

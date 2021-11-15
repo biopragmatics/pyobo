@@ -21,6 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 class CGNCGetter(Obo):
+    """An ontology representation of the Chicken Genome Nomenclature Consortium's gene nomenclature."""
+
     bioversions_key = ontology = PREFIX
     typedefs = [from_species]
 

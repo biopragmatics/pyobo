@@ -95,6 +95,8 @@ def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
 
 
 class ComplexPortalGetter(Obo):
+    """An ontology representation of the Complex Portal."""
+
     bioversions_key = ontology = PREFIX
     typedefs = [from_species, has_part]
 

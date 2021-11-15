@@ -31,7 +31,7 @@ INTERPRO_PROTEIN_COLUMNS = [
 
 
 class InterProGetter(Obo):
-    """Getter for InterPro."""
+    """An ontology representation of InterPro."""
 
     ontology = bioversions_key = PREFIX
 

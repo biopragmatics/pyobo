@@ -26,12 +26,15 @@ symbol_type = SynonymTypeDef(id="symbol", name="symbol")
 
 
 class HGNCGroupGetter(Obo):
+    """An ontology representation of HGNC's gene group nomenclature."""
+
     ontology = PREFIX
     bioversions_key = "hgnc"
     synonym_typedefs = [symbol_type]
     typedefs = [from_species]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return get_terms(force=force)
 
 

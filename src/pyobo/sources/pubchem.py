@@ -30,10 +30,13 @@ def _get_pubchem_extras_url(version: Optional[str], end: str) -> str:
 
 
 class PubChemCompoundGetter(Obo):
+    """An ontology representation of the PubChem Compound database."""
+
     ontology = PREFIX
     bioversions_key = "pubchem"
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return get_terms(version=self.data_version, force=force)
 
 

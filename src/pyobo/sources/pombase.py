@@ -26,10 +26,13 @@ ORTHOLOGS_URL = "https://www.pombase.org/data/orthologs/human-orthologs.txt.gz"
 
 
 class PomBaseGetter(Obo):
+    """An ontology representation of PomBase's fission yeast gene nomenclature."""
+
     ontology = bioversions_key = PREFIX
     typedefs = [from_species, has_gene_product]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return get_terms(force=force, version=self.data_version)
 
 

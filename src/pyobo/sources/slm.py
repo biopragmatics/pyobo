@@ -41,10 +41,13 @@ abreviation_type = SynonymTypeDef(id="abbreviation", name="Abbreviation")
 
 
 class SwissLipidsGetter(Obo):
+    """An ontology representation of SwissLipid's lipid nomenclature."""
+
     ontology = bioversions_key = PREFIX
     synonym_typedefs = [abreviation_type]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
         return iter_terms(force=force, version=self.data_version)
 
 
