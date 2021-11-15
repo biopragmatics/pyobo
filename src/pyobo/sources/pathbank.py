@@ -13,6 +13,10 @@ from ..struct import Obo, Reference, Term
 from ..struct.typedef import has_part
 from ..utils.path import ensure_df
 
+__all__ = [
+    "PathBankGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "pathbank"
@@ -62,24 +66,28 @@ METABOLITE_COLUMNS = [
 ]
 
 
-def get_obo() -> Obo:
+class PathBankGetter(Obo):
+    ontology = bioversions_key = PREFIX
+    typedefs = [has_part]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return iter_terms(force=force, version=self.data_version)
+
+
+def get_obo(force: bool = False) -> Obo:
     """Get PathBank as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="PathBank",
-        typedefs=[has_part],
-        iter_terms=iter_terms,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return PathBankGetter(force=force)
 
 
-def get_proteins_df() -> pd.DataFrame:
+def get_proteins_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get the proteins dataframe."""
     proteins_df = ensure_df(
         PREFIX,
         url=PROTEINS_URL,
         sep=",",
         usecols=["PathBank ID", "Uniprot ID"],
+        version=version,
+        force=force,
     )
     proteins_df = proteins_df[proteins_df["Uniprot ID"].notna()]
     proteins_df = proteins_df[proteins_df["Uniprot ID"] != "Unknown"]
@@ -87,9 +95,9 @@ def get_proteins_df() -> pd.DataFrame:
     return proteins_df
 
 
-def get_protein_mapping() -> Mapping[str, Set[Reference]]:
+def get_protein_mapping(version: str, force: bool = False) -> Mapping[str, Set[Reference]]:
     """Make the protein mapping."""
-    proteins_df = get_proteins_df()
+    proteins_df = get_proteins_df(version=version, force=force)
     smpdb_id_to_proteins = defaultdict(set)
     for pathway_id, protein_id in tqdm(
         proteins_df.values, desc=f"[{PREFIX}] mapping proteins", unit_scale=True
@@ -99,19 +107,21 @@ def get_protein_mapping() -> Mapping[str, Set[Reference]]:
     return smpdb_id_to_proteins
 
 
-def get_metabolite_df() -> pd.DataFrame:
+def get_metabolite_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get the metabolites dataframe."""
     return ensure_df(
         PREFIX,
         url=METABOLITE_URL,
         sep=",",
         usecols=["PathBank ID", "Metabolite ID", "Metabolite Name"],
+        force=force,
+        version=version,
     )
 
 
-def get_metabolite_mapping() -> Mapping[str, Set[Reference]]:
+def get_metabolite_mapping(version: str, force: bool = False) -> Mapping[str, Set[Reference]]:
     """Make the metabolite mapping."""
-    metabolites_df = get_metabolite_df()
+    metabolites_df = get_metabolite_df(version=version, force=force)
     smpdb_id_to_metabolites = defaultdict(set)
     it = tqdm(metabolites_df.values, desc=f"[{PREFIX}] mapping metabolites", unit_scale=True)
     for pathway_id, metabolite_id, metabolite_name in it:
@@ -125,12 +135,12 @@ def get_metabolite_mapping() -> Mapping[str, Set[Reference]]:
     return smpdb_id_to_metabolites
 
 
-def iter_terms() -> Iterable[Term]:
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get PathBank's terms."""
-    smpdb_id_to_proteins = get_protein_mapping()
-    smpdb_id_to_metabolites = get_metabolite_mapping()
+    smpdb_id_to_proteins = get_protein_mapping(version=version, force=force)
+    smpdb_id_to_metabolites = get_metabolite_mapping(version=version, force=force)
 
-    pathways_df = ensure_df(PREFIX, url=PATHWAY_URL, sep=",")
+    pathways_df = ensure_df(PREFIX, url=PATHWAY_URL, sep=",", version=version, force=force)
     it = tqdm(pathways_df.values, total=len(pathways_df.index), desc=f"mapping {PREFIX}")
     for smpdb_id, pathbank_id, name, subject, _description in it:
         reference = Reference(prefix=PREFIX, identifier=pathbank_id, name=name)
@@ -152,4 +162,4 @@ def iter_terms() -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    PathBankGetter.cls_cli()

@@ -4,34 +4,37 @@
 
 from typing import Iterable
 
-import bioversions
 from tqdm import tqdm
 
 from .pfam import get_pfam_clan_df
 from ..struct import Obo, Reference, Term
 
+__all__ = [
+    "PfamClanGetter",
+]
+
 PREFIX = "pfam.clan"
 
 
-def get_obo() -> Obo:
+class PfamClanGetter(Obo):
+    ontology = PREFIX
+    bioversions_key = "pfam"
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return iter_terms(version=self.data_version, force=force)
+
+
+def get_obo(force: bool = False) -> Obo:
     """Get PFAM Clans as OBO."""
-    version = bioversions.get_version("pfam")
-    return Obo(
-        ontology=PREFIX,
-        name="PFAM Clans",
-        data_version=version,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return PfamClanGetter(force=force)
 
 
 # TODO could get definitions from ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam33.0/Pfam-C.gz
 
 
-def iter_terms(version: str) -> Iterable[Term]:
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate PFAM clan terms."""
-    df = get_pfam_clan_df(version=version)
+    df = get_pfam_clan_df(version=version, force=force)
     df = df[["clan_id", "clan_name"]].drop_duplicates()
     it = tqdm(df.values, total=len(df.index), desc=f"mapping {PREFIX}")
     for identifier, name in it:

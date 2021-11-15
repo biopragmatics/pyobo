@@ -6,10 +6,7 @@ import logging
 from collections import defaultdict
 from typing import Iterable
 
-import bioversions
-import click
 import pandas as pd
-from more_click import verbose_option
 from tqdm import tqdm
 
 import pyobo
@@ -17,26 +14,28 @@ from pyobo import Reference
 from pyobo.struct import Obo, Synonym, Term, from_species, has_gene_product, orthologous
 from pyobo.utils.path import ensure_df
 
+__all__ = [
+    "PomBaseGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "pombase"
-NAME = "PomBase"
 URL = "https://www.pombase.org/data/names_and_identifiers/gene_IDs_names_products.tsv"
 ORTHOLOGS_URL = "https://www.pombase.org/data/orthologs/human-orthologs.txt.gz"
 
 
+class PomBaseGetter(Obo):
+    ontology = bioversions_key = PREFIX
+    typedefs = [from_species, has_gene_product]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return get_terms(force=force, version=self.data_version)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get OBO."""
-    version = bioversions.get_version("pombase")
-    return Obo(
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        name=NAME,
-        ontology=PREFIX,
-        typedefs=[from_species, has_gene_product],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        data_version=version,
-    )
+    return PomBaseGetter(force=force)
 
 
 #: A mapping from PomBase gene type to sequence ontology terms
@@ -51,9 +50,9 @@ POMBASE_TO_SO = {
 }
 
 
-def get_terms(force: bool = False) -> Iterable[Term]:
+def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get terms."""
-    orthologs_df = ensure_df(PREFIX, url=ORTHOLOGS_URL, force=force, header=None)
+    orthologs_df = ensure_df(PREFIX, url=ORTHOLOGS_URL, force=force, header=None, version=version)
     identifier_to_hgnc_ids = defaultdict(set)
     hgnc_symbol_to_id = pyobo.get_name_id_mapping("hgnc")
     for identifier, hgnc_symbols in orthologs_df.values:
@@ -64,7 +63,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
             if hgnc_id is not None:
                 identifier_to_hgnc_ids[identifier].add(hgnc_id)
 
-    df = ensure_df(PREFIX, url=URL, force=force, header=None)
+    df = ensure_df(PREFIX, url=URL, force=force, header=None, version=version)
     so = {
         gtype: Reference.auto("SO", POMBASE_TO_SO[gtype])
         for gtype in sorted(df[df.columns[6]].unique())
@@ -91,12 +90,5 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         yield term
 
 
-@click.command()
-@verbose_option
-def _main():
-    obo = get_obo(force=True)
-    obo.write_default(force=True, write_obo=True, write_obograph=True)
-
-
 if __name__ == "__main__":
-    _main()
+    PomBaseGetter.cls_cli()

@@ -32,10 +32,19 @@ from .mirbase_family import MiRBaseFamilyGetter
 from .mirbase_mature import MiRBaseMatureGetter
 from .msigdb import MSigDBGetter
 from .ncbigene import NCBIGeneGetter
+from .pathbank import PathBankGetter
+from .pfam import PfamGetter
+from .pfam_clan import PfamClanGetter
+from .pombase import PomBaseGetter
+from .pubchem import PubChemCompoundGetter
+from .reactome import ReactomeGetter
 from .rgd import RGDGetter
+from .rhea import RheaGetter
 from .slm import SwissLipidsGetter
 from .umls import UMLSGetter
 from .uniprot import UniProtGetter
+from .wikipathways import WikiPathwaysGetter
+from .zfin import ZFINGetter
 from ..struct import Obo
 
 __all__ = [
@@ -69,10 +78,19 @@ __all__ = [
     "MiRBaseGetter",
     "MiRBaseMatureGetter",
     "NCBIGeneGetter",
+    "PathBankGetter",
+    "PfamGetter",
+    "PfamClanGetter",
+    "PomBaseGetter",
+    "PubChemCompoundGetter",
     "RGDGetter",
+    "ReactomeGetter",
+    "RheaGetter",
     "SwissLipidsGetter",
     "UMLSGetter",
     "UniProtGetter",
+    "WikiPathwaysGetter",
+    "ZFINGetter",
     "ontology_resolver",
 ]
 
