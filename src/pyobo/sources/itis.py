@@ -37,15 +37,12 @@ FROM hierarchy
 class ITISGetter(Obo):
     """An ontology representation of the ITIS taxonomy."""
 
-    ontology = PREFIX
-
-    def _get_version(self) -> str:
-        return _get_version(force=self.force)
+    ontology = bioversions_key = PREFIX
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         # don't add force since the version getter already will
-        return iter_terms()
+        return iter_terms(force=force, version=self.data_version)
 
 
 def get_obo() -> Obo:
@@ -53,20 +50,9 @@ def get_obo() -> Obo:
     return ITISGetter()
 
 
-def _get_version(force: bool = False) -> str:
-    """Get the version of the current data."""
-    zip_path = ensure_path(PREFIX, url=URL, force=force)
-    with zipfile.ZipFile(zip_path) as zip_file:
-        for x in zip_file.filelist:
-            if x.filename.endswith(".sqlite"):
-                return x.filename[len("itisSqlite") : -len("/ITIS.sqlite")]
-    raise ValueError("could not find a file with the version in it")
-
-
-def iter_terms(force: bool = False) -> Iterable[Term]:
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get ITIS terms."""
     zip_path = ensure_path(PREFIX, url=URL, force=force)
-    version = _get_version()
     sqlite_dir = prefix_directory_join(PREFIX, version=version)
     sqlite_path = prefix_directory_join(PREFIX, name="ITIS.sqlite", version=version)
     if not os.path.exists(sqlite_path):
