@@ -12,6 +12,10 @@ from ..api import get_id_name_mapping
 from ..struct import Obo, Reference, Term, from_species
 from ..utils.path import ensure_df
 
+__all__ = [
+    "NCBIGeneGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "ncbigene"
@@ -79,18 +83,20 @@ def _get_ncbigene_subset(usecols: List[str]) -> pd.DataFrame:
     return df
 
 
-def get_obo() -> Obo:
+class NCBIGeneGetter(Obo):
+    ontology = PREFIX
+    typedefs = [from_species]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return get_terms(force=force)
+
+
+def get_obo(force: bool = False) -> Obo:
     """Get Entrez as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="Entrez Gene",
-        iter_terms=get_terms,
-        typedefs=[from_species],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return NCBIGeneGetter(force=force)
 
 
-def get_gene_info_df() -> pd.DataFrame:
+def get_gene_info_df(force: bool = False) -> pd.DataFrame:
     """Get the gene info dataframe."""
     return ensure_df(
         PREFIX,
@@ -99,6 +105,7 @@ def get_gene_info_df() -> pd.DataFrame:
         na_values=["-", "NEWENTRY"],
         usecols=GENE_INFO_COLUMNS,
         dtype={"#tax_id": str, "GeneID": str},
+        force=force,
     )
 
 
@@ -147,9 +154,9 @@ xref_mapping = {
 xref_mapping = {x.lower() for x in xref_mapping}
 
 
-def get_terms() -> Iterable[Term]:
+def get_terms(force: bool = False) -> Iterable[Term]:
     """Get Entrez terms."""
-    df = get_gene_info_df()
+    df = get_gene_info_df(force=force)
 
     taxonomy_id_to_name = get_id_name_mapping("ncbitaxon")
 

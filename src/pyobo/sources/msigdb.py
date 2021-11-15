@@ -6,7 +6,6 @@ import logging
 from typing import Iterable, Optional
 from xml.etree import ElementTree
 
-import bioversions
 import click
 from more_click import verbose_option
 from tqdm import tqdm
@@ -16,22 +15,25 @@ from ..utils.path import ensure_path
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "MSigDBGetter",
+]
+
 PREFIX = "msigdb"
 BASE_URL = "https://data.broadinstitute.org/gsea-msigdb/msigdb/release"
 
 
-def get_obo() -> Obo:
+class MSigDBGetter(Obo):
+    ontology = bioregistry_key = PREFIX
+    typedefs = [has_part]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return iter_terms(version=self.data_version, force=force)
+
+
+def get_obo(force: bool = False) -> Obo:
     """Get MSIG as Obo."""
-    version = bioversions.get_version(PREFIX)
-    return Obo(
-        ontology=PREFIX,
-        name="Molecular Signatures Database",
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        typedefs=[has_part],
-    )
+    return MSigDBGetter(force=force)
 
 
 _SPECIES = {
@@ -47,10 +49,10 @@ GO_URL_PREFIX = "http://amigo.geneontology.org/amigo/term/GO:"
 KEGG_URL_PREFIX = "http://www.genome.jp/kegg/pathway/hsa/"
 
 
-def iter_terms(version: str) -> Iterable[Term]:
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get MSigDb terms."""
     xml_url = f"{BASE_URL}/{version}/msigdb_v{version}.xml"
-    path = ensure_path(prefix=PREFIX, url=xml_url, version=version)
+    path = ensure_path(prefix=PREFIX, url=xml_url, version=version, force=force)
     tree = ElementTree.parse(path)
 
     for entry in tqdm(tree.getroot(), desc=f"{PREFIX} v{version}"):

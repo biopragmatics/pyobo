@@ -27,25 +27,31 @@ from pyobo.sources.kegg.api import (
 from pyobo.sources.kegg.genome import iter_kegg_genomes
 from pyobo.struct import Obo, Reference, Term, from_species, has_part, species_specific
 
+__all__ = [
+    "KEGGPathwayGetter",
+]
+
 logger = logging.getLogger(__name__)
+
+
+class KEGGPathwayGetter(Obo):
+    ontology = KEGG_PATHWAY_PREFIX
+    bioversions_key = "kegg"
+    typedefs = [from_kegg_species, from_species, species_specific, has_part]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return iter_terms(version=self.data_version)
 
 
 def get_obo(skip_missing: bool = True) -> Obo:
     """Get KEGG Pathways as OBO."""
-    version = bioversions.get_version("kegg")
-    return Obo(
-        ontology=KEGG_PATHWAY_PREFIX,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(skip_missing=skip_missing, version=version),
-        name="KEGG Pathways",
-        typedefs=[from_kegg_species, from_species, species_specific, has_part],
-        auto_generated_by=f"bio2obo:{KEGG_PATHWAY_PREFIX}",
-        data_version=version,
-    )
+    # since old kegg versions go away forever, do NOT add a force option
+    return KEGGPathwayGetter()
 
 
 def iter_terms(version: str, skip_missing: bool = True) -> Iterable[Term]:
     """Iterate over terms for KEGG Pathway."""
+    # since old kegg versions go away forever, do NOT add a force option
     yield from _iter_map_terms(version=version)
     it = iter_kegg_pathway_paths(version=version, skip_missing=skip_missing)
     for kegg_genome, list_pathway_path, link_pathway_path in it:

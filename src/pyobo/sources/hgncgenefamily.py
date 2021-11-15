@@ -24,14 +24,16 @@ HIERARCHY_URL = (
 
 symbol_type = SynonymTypeDef(id="symbol", name="symbol")
 
+
 class HGNCGroupGetter(Obo):
     ontology = PREFIX
     bioversions_key = "hgnc"
-    synonym_typedefs=[symbol_type]
-    typedefs=[from_species]
+    synonym_typedefs = [symbol_type]
+    typedefs = [from_species]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         return get_terms(force=force)
+
 
 def get_obo(force: bool = False) -> Obo:
     """Get HGNC Gene Groups as OBO."""

@@ -81,7 +81,7 @@ def iter_terms(version: str, force: bool = False):
         pmids,
     ) in tqdm(df[COLUMNS].values):
         if identifier.startswith("SLM:"):
-            identifier = identifier[len("SLM:"):]
+            identifier = identifier[len("SLM:") :]
         else:
             raise ValueError(identifier)
         term = Term.from_triple(PREFIX, identifier, name)
@@ -95,11 +95,11 @@ def iter_terms(version: str, force: bool = False):
             term.append_property("smiles", smiles)
         if pd.notna(inchi) and inchi != "InChI=none":
             if inchi.startswith("InChI="):
-                inchi = inchi[len("InChI="):]
+                inchi = inchi[len("InChI=") :]
             term.append_property("inchi", inchi)
         if pd.notna(inchikey):
             if inchikey.startswith("InChIKey="):
-                inchikey = inchikey[len("InChIKey="):]
+                inchikey = inchikey[len("InChIKey=") :]
             term.append_property("inchikey", inchikey)
         if pd.notna(chebi_id):
             term.append_xref(("chebi", chebi_id))

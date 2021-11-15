@@ -13,6 +13,10 @@ from pyobo.struct import Obo, Reference, Term
 from pyobo.utils.io import multidict
 from pyobo.utils.path import ensure_path, prefix_directory_join
 
+__all__ = [
+    "ITISGetter",
+]
+
 PREFIX = "itis"
 URL = "https://www.itis.gov/downloads/itisSqlite.zip"
 
@@ -27,20 +31,28 @@ FROM hierarchy
 """
 
 
+# TODO confusing logic since you need to download the data first to get the version
+
+
+class ITISGetter(Obo):
+    ontology = PREFIX
+
+    def _get_version(self) -> str:
+        return _get_version(force=self.force)
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        # don't add force since the version getter already will
+        return iter_terms()
+
+
 def get_obo() -> Obo:
     """Get ITIS as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="Integrated Taxonomic Information System",
-        iter_terms=iter_terms,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        data_version=_get_version(),
-    )
+    return ITISGetter()
 
 
-def _get_version() -> str:
+def _get_version(force: bool = False) -> str:
     """Get the version of the current data."""
-    zip_path = ensure_path(PREFIX, url=URL)
+    zip_path = ensure_path(PREFIX, url=URL, force=force)
     with zipfile.ZipFile(zip_path) as zip_file:
         for x in zip_file.filelist:
             if x.filename.endswith(".sqlite"):
@@ -48,9 +60,9 @@ def _get_version() -> str:
     raise ValueError("could not find a file with the version in it")
 
 
-def iter_terms() -> Iterable[Term]:
+def iter_terms(force: bool = False) -> Iterable[Term]:
     """Get ITIS terms."""
-    zip_path = ensure_path(PREFIX, url=URL)
+    zip_path = ensure_path(PREFIX, url=URL, force=force)
     version = _get_version()
     sqlite_dir = prefix_directory_join(PREFIX, version=version)
     sqlite_path = prefix_directory_join(PREFIX, name="ITIS.sqlite", version=version)

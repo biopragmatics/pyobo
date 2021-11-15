@@ -43,8 +43,7 @@ class DrugBankSaltGetter(Obo):
 
 def get_obo(force: bool = False) -> Obo:
     """Get DrugBank Salts as OBO."""
-    version = bioversions.get_version("drugbank")
-    return Obo(force=force)
+    return DrugBankSaltGetter(force=force)
 
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:

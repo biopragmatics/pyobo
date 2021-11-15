@@ -26,21 +26,25 @@ from .genome import iter_kegg_genomes
 from ...struct import Obo, Reference, Term, from_species, has_gene_product
 from ...utils.io import open_map_tsv
 
+__all__ = [
+    "KEGGGeneGetter",
+]
+
 logger = logging.getLogger(__name__)
+
+
+class KEGGGeneGetter(Obo):
+    ontology = KEGG_GENES_PREFIX
+    bioversions_key = "kegg"
+    typedefs = [from_species, from_kegg_species, has_gene_product]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return iter_terms(version=self.data_version)
 
 
 def get_obo() -> Obo:
     """Get KEGG Genes as OBO."""
-    version = bioversions.get_version("kegg")
-    return Obo(
-        ontology=KEGG_GENES_PREFIX,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        typedefs=[from_species, from_kegg_species, has_gene_product],
-        name="KEGG Genes",
-        data_version=version,
-        auto_generated_by=f"bio2obo:{KEGG_GENES_PREFIX}",
-    )
+    return KEGGGeneGetter()
 
 
 def iter_terms(version: str) -> Iterable[Term]:

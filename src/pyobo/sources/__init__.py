@@ -7,7 +7,7 @@ from class_resolver import Resolver
 from .antibodyregistry import AntibodyRegistryGetter
 from .ccle import CCLEGetter
 from .cgnc import CGNCGetter
-from .chembl import ChEBMLGetter
+from .chembl import ChEMBLGetter
 from .complexportal import ComplexPortalGetter
 from .conso import CONSOGetter
 from .depmap import DepMapGetter
@@ -23,8 +23,15 @@ from .gwascentral_study import GWASCentralStudyGetter
 from .hgnc import HGNCGetter
 from .hgncgenefamily import HGNCGroupGetter
 from .interpro import InterProGetter
+from .itis import ITISGetter
+from .kegg import KEGGGeneGetter, KEGGGenomeGetter, KEGGPathwayGetter
 from .mesh import MeSHGetter
 from .mgi import MGIGetter
+from .mirbase import MiRBaseGetter
+from .mirbase_family import MiRBaseFamilyGetter
+from .mirbase_mature import MiRBaseMatureGetter
+from .msigdb import MSigDBGetter
+from .ncbigene import NCBIGeneGetter
 from .rgd import RGDGetter
 from .slm import SwissLipidsGetter
 from .umls import UMLSGetter
@@ -32,14 +39,12 @@ from .uniprot import UniProtGetter
 from ..struct import Obo
 
 __all__ = [
-    "ontology_resolver",
-    # Getters
     "AntibodyRegistryGetter",
     "CCLEGetter",
     "CGNCGetter",
-    "ChEBMLGetter",
-    "ComplexPortalGetter",
     "CONSOGetter",
+    "ChEMBLGetter",
+    "ComplexPortalGetter",
     "DepMapGetter",
     "DictybaseGetter",
     "DrugBankGetter",
@@ -52,13 +57,33 @@ __all__ = [
     "GWASCentralStudyGetter",
     "HGNCGetter",
     "HGNCGroupGetter",
+    "ITISGetter",
     "InterProGetter",
-    "MeSHGetter",
+    "KEGGGeneGetter",
+    "KEGGGenomeGetter",
+    "KEGGPathwayGetter",
     "MGIGetter",
+    "MSigDBGetter",
+    "MeSHGetter",
+    "MiRBaseFamilyGetter",
+    "MiRBaseGetter",
+    "MiRBaseMatureGetter",
+    "NCBIGeneGetter",
     "RGDGetter",
     "SwissLipidsGetter",
     "UMLSGetter",
     "UniProtGetter",
+    "ontology_resolver",
 ]
+
+
+def _assert_sorted():
+    _sorted = sorted(__all__)
+    if _sorted != __all__:
+        raise ValueError(f"unsorted. should be:\n{_sorted}")
+
+
+_assert_sorted()
+del _assert_sorted
 
 ontology_resolver = Resolver.from_subclasses(base=Obo, suffix="Getter")
