@@ -463,7 +463,10 @@ class Obo:
         if self.bioversions_key:
             import bioversions
 
-            return bioversions.get_version(self.bioversions_key)
+            try:
+                return bioversions.get_version(self.bioversions_key)
+            except KeyError:
+                logger.warning(f"could not look up version for {self.bioversions_key}")
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in this ontology."""
