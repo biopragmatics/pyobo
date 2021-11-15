@@ -44,7 +44,7 @@ class ZFINGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in ZFIN."""
-        return get_terms(force=force, version=self.data_version)
+        return get_terms(force=force, version=self._version_or_raise)
 
 
 def get_obo(force: bool = False) -> Obo:

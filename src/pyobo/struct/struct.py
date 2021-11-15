@@ -28,7 +28,6 @@ from typing import (
     Union,
 )
 
-import bioregistry
 import click
 import networkx as nx
 import pandas as pd
@@ -36,6 +35,7 @@ from more_click import force_option, verbose_option
 from networkx.utils import open_file
 from tqdm import tqdm
 
+import bioregistry
 from .reference import Reference, Referenced
 from .typedef import (
     RelationHint,
@@ -119,11 +119,11 @@ class SynonymTypeDef:
         """Get a type definition from text that's normalized."""
         return cls(
             id=text.lower()
-            .replace("-", "_")
-            .replace(" ", "_")
-            .replace('"', "")
-            .replace(")", "")
-            .replace("(", ""),
+                .replace("-", "_")
+                .replace(" ", "_")
+                .replace('"', "")
+                .replace(")", "")
+                .replace("(", ""),
             name=text.replace('"', ""),
         )
 
@@ -448,16 +448,18 @@ class Obo:
     #: A cache of terms
     _items: Optional[List[Term]] = field(init=False, default=None, repr=False)
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         """Run post-init checks."""
         if self.ontology != bioregistry.normalize_prefix(self.ontology):
             raise BioregistryError(self.ontology)
+        # The type ignores are because of the hack where we override the
+        # class variables in the instance
         if self.name is None:
-            self.name = bioregistry.get_name(self.ontology)
+            self.name = bioregistry.get_name(self.ontology)  # type:ignore
         if not self.data_version:
             self.data_version = self._get_version()
         if self.auto_generated_by is None:
-            self.auto_generated_by = f"bio2obo:{self.ontology}"
+            self.auto_generated_by = f"bio2obo:{self.ontology}"  # type:ignore
 
     def _get_version(self) -> Optional[str]:
         if self.bioversions_key:
@@ -469,6 +471,13 @@ class Obo:
                 logger.warning(f"no way to look up {self.bioversions_key}")
             except IOError:
                 logger.warning(f"error while looking up {self.bioversions_key}")
+        return None
+
+    @property
+    def _version_or_raise(self) -> str:
+        if not self.data_version:
+            raise ValueError
+        return self.data_version
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in this ontology."""
@@ -709,7 +718,7 @@ class Obo:
             )
 
         for relation in (is_a, has_part, part_of, from_species, orthologous):
-            if relation is not is_a and relation not in self.typedefs:
+            if relation is not is_a and self.typedefs is not None and relation not in self.typedefs:
                 continue
             relations_path = self._cache("relations", name=f"{relation.curie}.tsv")
             if relations_path.exists() and not force:
@@ -923,7 +932,7 @@ class Obo:
 
     def iter_typedef_id_name(self) -> Iterable[Tuple[str, str]]:
         """Iterate over typedefs' identifiers and their respective names."""
-        for typedef in self.typedefs:
+        for typedef in self.typedefs or []:
             yield typedef.identifier, typedef.name
 
     def get_typedef_id_name_mapping(self) -> Mapping[str, str]:
@@ -1012,7 +1021,7 @@ class Obo:
                 yield term, is_a, parent
             for typedef, reference in term.iterate_relations():
                 if (
-                    typedef not in self.typedefs
+                    (self.typedefs is None or typedef not in self.typedefs)
                     and (typedef.prefix, typedef.identifier) not in default_typedefs
                 ):
                     raise ValueError(f"Undefined typedef: {typedef.curie} ! {typedef.name}")
@@ -1252,8 +1261,10 @@ class Obo:
         return multidict((term.identifier, alt.identifier) for term, alt in self.iterate_alts())
 
 
-def _convert_typedefs(typedefs: Iterable[TypeDef]) -> List[Mapping[str, Any]]:
+def _convert_typedefs(typedefs: Optional[Iterable[TypeDef]]) -> List[Mapping[str, Any]]:
     """Convert the type defs."""
+    if not typedefs:
+        return []
     return [_convert_typedef(typedef) for typedef in typedefs]
 
 
@@ -1263,8 +1274,10 @@ def _convert_typedef(typedef: TypeDef) -> Mapping[str, Any]:
     return typedef.reference.to_dict()
 
 
-def _convert_synonym_typedefs(synonym_typedefs: Iterable[SynonymTypeDef]) -> List[str]:
+def _convert_synonym_typedefs(synonym_typedefs: Optional[Iterable[SynonymTypeDef]]) -> List[str]:
     """Convert the synonym type defs."""
+    if not synonym_typedefs:
+        return []
     return [_convert_synonym_typedef(synonym_typedef) for synonym_typedef in synonym_typedefs]
 
 

@@ -7,6 +7,7 @@ import itertools as itt
 import logging
 from typing import Iterable, Optional, Tuple, cast
 
+import bioversions
 import networkx as nx
 import pandas as pd
 from tqdm import tqdm

@@ -37,7 +37,7 @@ class PubChemCompoundGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return get_terms(version=self.data_version, force=force)
+        return get_terms(version=self._version_or_raise, force=force)
 
 
 def get_obo(force: bool = False) -> Obo:
@@ -97,7 +97,9 @@ def get_pubchem_id_to_mesh_id(version: str) -> Mapping[str, str]:
     return dict(df.values)
 
 
-def _ensure_cid_name_path(*, version: str, force: bool = False) -> str:
+def _ensure_cid_name_path(*, version: Optional[str] = None, force: bool = False) -> str:
+    if version is None:
+        version = bioversions.get_version("pubchem")
     # 2 tab-separated columns: compound_id, name
     cid_name_url = _get_pubchem_extras_url(version, "CID-Title.gz")
     cid_name_path = ensure_path(PREFIX, url=cid_name_url, version=version, force=force)

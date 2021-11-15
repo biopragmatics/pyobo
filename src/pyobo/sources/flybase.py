@@ -32,7 +32,7 @@ class FlyBaseGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return get_terms(force=force, version=self.data_version)
+        return get_terms(force=force, version=self._version_or_raise)
 
 
 def _get_names(version: str, force: bool = False) -> pd.DataFrame:

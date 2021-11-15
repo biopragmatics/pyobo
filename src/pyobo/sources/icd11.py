@@ -44,12 +44,7 @@ class ICD11Getter(Obo):
 
 def get_obo() -> Obo:
     """Get ICD11 as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="International Statistical Classification of Diseases and Related Health Problems 11th Revision",
-        iter_terms=iterate_icd11,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return ICD11Getter()
 
 
 def iterate_icd11() -> Iterable[Term]:

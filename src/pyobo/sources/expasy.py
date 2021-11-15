@@ -54,7 +54,7 @@ class ExpasyGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return get_terms(version=self.data_version, force=force)
+        return get_terms(version=self._version_or_raise, force=force)
 
 
 def get_obo(force: bool = False) -> Obo:

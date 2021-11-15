@@ -53,7 +53,7 @@ def get_terms(ontology: Obo, force: bool = False) -> Iterable[Term]:
         names=HEADER,
         force=force,
         dtype=str,
-        version=ontology.data_version,
+        version=ontology._version_or_raise,
     )
     df = df[df["feature"] == "gene"]
     for data in df["data"]:

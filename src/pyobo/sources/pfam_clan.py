@@ -24,7 +24,7 @@ class PfamClanGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return iter_terms(version=self.data_version, force=force)
+        return iter_terms(version=self._version_or_raise, force=force)
 
 
 def get_obo(force: bool = False) -> Obo:

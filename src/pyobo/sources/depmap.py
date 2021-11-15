@@ -26,7 +26,7 @@ class DepMapGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return iter_terms(version=self.data_version, force=force)
+        return iter_terms(version=self._version_or_raise, force=force)
 
 
 def get_obo(*, force: bool = False) -> Obo:
@@ -54,7 +54,7 @@ def _fix_mangled_int(x: str) -> Optional[str]:
     return str(int(float(x))) if pd.notna(x) else None
 
 
-def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over DepMap cell line terms."""
     df = ensure(force=force, version=version)
     columns = [

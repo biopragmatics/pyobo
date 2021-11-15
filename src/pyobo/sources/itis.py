@@ -42,7 +42,7 @@ class ITISGetter(Obo):
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         # don't add force since the version getter already will
-        return iter_terms(force=force, version=self.data_version)
+        return iter_terms(force=force, version=self._version_or_raise)
 
 
 def get_obo() -> Obo:
