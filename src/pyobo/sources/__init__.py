@@ -21,8 +21,12 @@ from .flybase import FlyBaseGetter
 from .gwascentral_phenotype import GWASCentralPhenotypeGetter
 from .gwascentral_study import GWASCentralStudyGetter
 from .hgnc import HGNCGetter
+from .hgncgenefamily import HGNCGroupGetter
 from .interpro import InterProGetter
+from .mesh import MeSHGetter
 from .mgi import MGIGetter
+from .rgd import RGDGetter
+from .slm import SwissLipidsGetter
 from .umls import UMLSGetter
 from .uniprot import UniProtGetter
 from ..struct import Obo
@@ -47,8 +51,12 @@ __all__ = [
     "GWASCentralPhenotypeGetter",
     "GWASCentralStudyGetter",
     "HGNCGetter",
+    "HGNCGroupGetter",
     "InterProGetter",
+    "MeSHGetter",
     "MGIGetter",
+    "RGDGetter",
+    "SwissLipidsGetter",
     "UMLSGetter",
     "UniProtGetter",
 ]

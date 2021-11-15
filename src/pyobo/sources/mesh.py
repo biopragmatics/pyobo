@@ -15,23 +15,29 @@ from ..utils.cache import cached_json, cached_mapping
 from ..utils.io import parse_xml_gz
 from ..utils.path import ensure_path, prefix_directory_join
 
+__all__ = [
+    "MeSHGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "mesh"
 NOW_YEAR = str(datetime.datetime.now().year)
 
 
+class MeSHGetter(Obo):
+    ontology = bioversions_key = PREFIX
+
+    def _get_version(self) -> Optional[str]:
+        return NOW_YEAR
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return get_terms(version=self.data_version, force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get MeSH as OBO."""
-    version = NOW_YEAR  # bioversions.get_version("mesh")
-    return Obo(
-        ontology=PREFIX,
-        name="Medical Subject Headings",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return MeSHGetter(force=force)
 
 
 def get_tree_to_mesh_id(version: str) -> Mapping[str, str]:
