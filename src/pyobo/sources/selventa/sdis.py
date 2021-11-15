@@ -12,20 +12,28 @@ import pandas as pd
 from pyobo import Obo, Term
 from pyobo.utils.path import ensure_df
 
+__all__ = [
+    "SDISGetter",
+]
+
 PREFIX = "sdis"
 URL = "https://raw.githubusercontent.com/OpenBEL/resource-generator/master/datasets/selventa-legacy-diseases.txt"
 
 
+class SDISGetter(Obo):
+    """An ontology representation of the Selventa disease nomenclature."""
+
+    ontology = PREFIX
+    data_version = "1.0.0"  # frozen
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(force=force)
+
+
 def get_obo(*, force: bool = False) -> Obo:
     """Get Selventa Diseases as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="Selventa Diseases",
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(force=force),
-        data_version="1.0.0",
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return SDISGetter(force=force)
 
 
 def iter_terms(force: bool = False) -> Iterable[Term]:

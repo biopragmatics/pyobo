@@ -43,6 +43,7 @@ from .pubchem import PubChemCompoundGetter
 from .reactome import ReactomeGetter
 from .rgd import RGDGetter
 from .rhea import RheaGetter
+from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
 from .slm import SwissLipidsGetter
 from .umls import UMLSGetter
 from .uniprot import UniProtGetter
@@ -92,6 +93,10 @@ __all__ = [
     "RGDGetter",
     "ReactomeGetter",
     "RheaGetter",
+    "SCHEMGetter",
+    "SCOMPGetter",
+    "SDISGetter",
+    "SFAMGetter",
     "SwissLipidsGetter",
     "UMLSGetter",
     "UniProtGetter",
