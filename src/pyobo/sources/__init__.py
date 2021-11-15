@@ -35,6 +35,7 @@ from .ncbigene import NCBIGeneGetter
 from .pathbank import PathBankGetter
 from .pfam import PfamGetter
 from .pfam_clan import PfamClanGetter
+from .pid import PIDGetter
 from .pombase import PomBaseGetter
 from .pubchem import PubChemCompoundGetter
 from .reactome import ReactomeGetter
@@ -78,9 +79,10 @@ __all__ = [
     "MiRBaseGetter",
     "MiRBaseMatureGetter",
     "NCBIGeneGetter",
+    "PIDGetter",
     "PathBankGetter",
-    "PfamGetter",
     "PfamClanGetter",
+    "PfamGetter",
     "PomBaseGetter",
     "PubChemCompoundGetter",
     "RGDGetter",

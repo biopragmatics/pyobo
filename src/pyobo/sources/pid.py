@@ -14,6 +14,10 @@ from ..struct import Obo, Reference, Term
 from ..struct.typedef import has_part
 from ..utils.ndex_utils import CX, ensure_ndex_network_set, iterate_aspect
 
+__all__ = [
+    "PIDGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "pid.pathway"
@@ -25,28 +29,32 @@ URL = (
 )
 
 
+class PIDGetter(Obo):
+    ontology = PREFIX
+    typedefs = [has_part]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        return iter_terms()
+
+
 def get_obo() -> Obo:
     """Get NCI PID as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="NCI Pathway Interaction Database",
-        typedefs=[has_part],
-        iter_terms=iter_terms,
-        auto_generated_by=f"bio2obo:{PREFIX}",
+    return PIDGetter()
+
+
+def iter_networks(use_tqdm: bool = False, force: bool = False) -> Iterable[Tuple[str, CX]]:
+    """Iterate over NCI PID networks."""
+    yield from ensure_ndex_network_set(
+        PREFIX, NDEX_NETWORK_SET_UUID, use_tqdm=use_tqdm, force=force
     )
 
 
-def iter_networks(use_tqdm: bool = False) -> Iterable[Tuple[str, CX]]:
-    """Iterate over NCI PID networks."""
-    yield from ensure_ndex_network_set(PREFIX, NDEX_NETWORK_SET_UUID, use_tqdm=use_tqdm)
-
-
-def iter_terms() -> Iterable[Term]:
+def iter_terms(force: bool = False) -> Iterable[Term]:
     """Iterate over NCI PID terms."""
     hgnc_id_to_name = get_id_name_mapping("hgnc")
     hgnc_name_to_id = {v: k for k, v in hgnc_id_to_name.items()}
 
-    for uuid, cx in iter_networks(use_tqdm=True):
+    for uuid, cx in iter_networks(force=force, use_tqdm=True):
         name = None
         for node in iterate_aspect(cx, "networkAttributes"):
             if node["n"] == "name":

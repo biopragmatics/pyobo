@@ -14,7 +14,7 @@ __all__ = [
     "SwissLipidsGetter",
 ]
 
-PREFIX = "slm"
+PREFIX = "swisslipid"
 COLUMNS = [
     "Lipid ID",
     "Level",

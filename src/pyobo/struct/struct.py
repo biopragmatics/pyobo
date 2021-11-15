@@ -444,9 +444,9 @@ class Obo:
     force: bool = False
 
     #: The hierarchy of terms
-    _hierarchy: Optional[nx.DiGraph] = field(init=False, default=None)
+    _hierarchy: Optional[nx.DiGraph] = field(init=False, default=None, repr=False)
     #: A cache of terms
-    _items: Optional[List[Term]] = field(init=False, default=None)
+    _items: Optional[List[Term]] = field(init=False, default=None, repr=False)
 
     def __post_init__(self) -> None:
         """Run post-init checks."""
@@ -466,7 +466,10 @@ class Obo:
             try:
                 return bioversions.get_version(self.bioversions_key)
             except KeyError:
-                logger.warning(f"could not look up version for {self.bioversions_key}")
+                logger.warning(f"no way to look up {self.bioversions_key}")
+            except IOError:
+                logger.warning(f"error while looking up {self.bioversions_key}")
+
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in this ontology."""
