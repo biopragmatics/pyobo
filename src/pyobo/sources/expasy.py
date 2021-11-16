@@ -86,7 +86,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     with open(database_path) as file:
         data = get_database(file)
 
-    ec2go = get_ec2go()
+    ec2go = get_ec2go(version=version)
 
     ec_code_to_alt_ids = {}
     for ec_code, data in data.items():
@@ -278,10 +278,10 @@ def _group_by_id(lines):
     return groups
 
 
-def get_ec2go() -> Mapping[str, Set[Tuple[str, str]]]:
+def get_ec2go(version: str) -> Mapping[str, Set[Tuple[str, str]]]:
     """Get the EC mapping to GO activities."""
     url = "http://current.geneontology.org/ontology/external2go/ec2go"
-    path = ensure_path(PREFIX, url=url, name="ec2go.tsv")
+    path = ensure_path(PREFIX, url=url, name="ec2go.tsv", version=version)
     return get_go_mapping(path, "EC")
 
 
