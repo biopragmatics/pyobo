@@ -125,6 +125,13 @@ def get_ontology(
     else:
         raise UnhandledFormat(f"[{prefix}] unhandled ontology file format: {path.suffix}")
     obo = from_obo_path(path, prefix=prefix, strict=strict)
+    if version is not None:
+        if obo.data_version is None:
+            logger.warning("[%s] did not have a version, overriding with %s", obo.ontology, version)
+            obo.data_version = version
+        elif obo.data_version != version:
+            logger.warning("[%s] had version %s, overriding with %s", obo.ontology, obo.data_version, version)
+            obo.data_version = version
     obo.write_default(force=rewrite)
     return obo
 
