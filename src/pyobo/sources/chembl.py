@@ -75,4 +75,4 @@ def iter_terms(version: str) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().cli()
+    ChEMBLCompoundGetter.cli()

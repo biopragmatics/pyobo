@@ -52,4 +52,4 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).cli()
+    DrugCentralGetter.cli()

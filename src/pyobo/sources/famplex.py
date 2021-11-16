@@ -161,4 +161,4 @@ def _get_xref_df(version: str) -> Mapping[str, List[Reference]]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).cli()
+    FamPlexGetter.cli()

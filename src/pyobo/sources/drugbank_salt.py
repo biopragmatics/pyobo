@@ -65,5 +65,4 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    get_obo().cli()
+    DrugBankSaltGetter.cli()

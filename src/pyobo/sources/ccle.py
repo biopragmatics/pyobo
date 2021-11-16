@@ -95,4 +95,4 @@ def ensure_df(version: Optional[str] = None, force: bool = False) -> pd.DataFram
 
 
 if __name__ == "__main__":
-    get_obo().cli()
+    CCLEGetter.cli()

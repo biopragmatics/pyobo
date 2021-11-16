@@ -147,4 +147,4 @@ def iter_terms(version: str, autodownload: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    UMLSGetter.cls_cli()
+    UMLSGetter.cli()

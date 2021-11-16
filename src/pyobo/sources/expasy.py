@@ -286,4 +286,4 @@ def get_ec2go(version: str) -> Mapping[str, Set[Tuple[str, str]]]:
 
 
 if __name__ == "__main__":
-    get_obo().cli()
+    ExpasyGetter.cli()

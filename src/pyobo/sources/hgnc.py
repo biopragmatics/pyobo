@@ -366,4 +366,4 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
 
 
 if __name__ == "__main__":
-    get_obo(force=True).cli()
+    HGNCGetter.cli()

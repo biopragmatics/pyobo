@@ -320,5 +320,4 @@ def _iter_polypeptides(polypeptides) -> Iterable[Mapping[str, Any]]:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    get_obo(force=True).cli()
+    DrugBankGetter.cli()

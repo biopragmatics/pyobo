@@ -56,4 +56,4 @@ def ensure(version: Optional[str] = None, force: bool = False) -> Path:
 
 
 if __name__ == "__main__":
-    get_obo().write_default(force=True, write_obo=True, write_obograph=True)
+    UniProtGetter.cli()

@@ -98,4 +98,4 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).cli()
+    AntibodyRegistryGetter.cli()

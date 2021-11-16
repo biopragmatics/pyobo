@@ -484,41 +484,26 @@ class Obo:
         raise NotImplementedError
 
     @classmethod
-    def cls_cli(cls) -> click.Command:
+    def cli(cls) -> None:
         """Run the CLI for this class."""
+        cli = cls.get_cls_cli()
+        cli()
+
+    @classmethod
+    def get_cls_cli(cls) -> click.Command:
+        """Get the CLI for this class."""
 
         @click.command()
         @verbose_option
         @force_option
         @click.option("--owl", is_flag=True)
         @click.option("--graph", is_flag=True)
-        def _main(force: bool, owl: bool, graph: bool):
-            inst = cls(force=force)
+        @click.option(
+            "--version", help="Specify data version to get. Use this if bioversions is acting up."
+        )
+        def _main(force: bool, owl: bool, graph: bool, version: Optional[str]):
+            inst = cls(force=force, data_version=version)
             inst.write_default(
-                write_obograph=graph,
-                write_obo=True,
-                write_owl=owl,
-                force=force,
-                use_tqdm=True,
-            )
-
-        return _main
-
-    def cli(self) -> None:
-        """Run the CLI for this instance."""
-        _cli = self.get_cli()
-        _cli()
-
-    def get_cli(self) -> click.Command:
-        """Get a CLI for this instance."""
-
-        @click.command()
-        @verbose_option
-        @force_option
-        @click.option("--owl", is_flag=True)
-        @click.option("--graph", is_flag=True)
-        def _main(force: bool, owl: bool, graph: bool):
-            self.write_default(
                 write_obograph=graph,
                 write_obo=True,
                 write_owl=owl,

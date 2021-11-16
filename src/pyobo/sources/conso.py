@@ -85,4 +85,4 @@ def iter_terms() -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().cli()
+    CONSOGetter.cli()

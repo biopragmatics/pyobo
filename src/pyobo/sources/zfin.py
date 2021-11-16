@@ -149,4 +149,4 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
 
 
 if __name__ == "__main__":
-    get_obo(force=True).cli()
+    ZFINGetter.cli()

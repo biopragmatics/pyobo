@@ -114,4 +114,4 @@ def ensure(version: str, force: bool = False) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    get_obo().cli()
+    DepMapGetter.cli()

@@ -80,4 +80,4 @@ def get_terms(ontology: Obo, force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).cli()
+    SGDGetter.cli()
