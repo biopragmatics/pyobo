@@ -20,7 +20,6 @@ def get_premature_family_df(version: str, force: bool = False) -> pd.DataFrame:
         version=version,
         names=["prefamily_key", "family_id", "family_name"],
         usecols=[0, 1, 2],
-        index_col=0,
         dtype=str,
         force=force,
     )
@@ -48,7 +47,6 @@ def get_premature_df(version: str, force: bool = False) -> pd.DataFrame:
         version=version,
         names=["premature_key", "mirbase_id", "mirna_name"],
         usecols=[0, 1, 2],
-        index_col=0,
         dtype=str,
         force=force,
     )
@@ -68,7 +66,6 @@ def get_mature_df(version: str, force: bool = False) -> pd.DataFrame:
             "mirbase.mature_id",
         ],
         usecols=[0, 1, 2, 3],
-        index_col=0,
         dtype=str,
         force=force,
     )

@@ -55,9 +55,10 @@ def get_df(version: str, force: bool = False) -> pd.DataFrame:
     mirna_prefamily_df = get_premature_to_prefamily_df(version, force=force)
     prefamily_df = get_premature_family_df(version, force=force)
     premature_df = get_premature_df(version, force=force)
-    rv = mirna_prefamily_df.join(prefamily_df, on="prefamily_key").join(
-        premature_df, on="premature_key"
+    intermediate_df = pd.merge(
+        mirna_prefamily_df, prefamily_df, left_on="prefamily_key", right_on="prefamily_key"
     )
+    rv = pd.merge(intermediate_df, premature_df, left_on="premature_key", right_on="premature_key")
     del rv["premature_key"]
     del rv["prefamily_key"]
     return rv
