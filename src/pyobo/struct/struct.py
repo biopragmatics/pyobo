@@ -476,7 +476,7 @@ class Obo:
     @property
     def _version_or_raise(self) -> str:
         if not self.data_version:
-            raise ValueError
+            raise ValueError(f"There is no version available for {self.ontology}")
         return self.data_version
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
