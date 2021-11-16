@@ -926,7 +926,7 @@ class Obo:
         """Get a typedef dataframe."""
         rows = [
             (typedef.prefix, typedef.identifier, typedef.name)
-            for typedef in tqdm(self.typedefs, disable=not use_tqdm)
+            for typedef in tqdm(self.typedefs or [], disable=not use_tqdm)
         ]
         return pd.DataFrame(rows, columns=["prefix", "identifier", "name"])
 

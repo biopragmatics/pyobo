@@ -204,7 +204,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
     )
 
     statuses = set()
-    for entry in tqdm(entries, desc=f"Mapping {PREFIX}"):
+    for entry in tqdm(entries, desc=f"Mapping {PREFIX}", unit="gene", unit_scale=True):
         name, symbol, identifier = (
             entry.pop("name"),
             entry.pop("symbol"),

@@ -82,7 +82,9 @@ def iter_terms(version: str, force: bool = False):
         lipidmaps_id,
         hmdb_id,
         pmids,
-    ) in tqdm(df[COLUMNS].values):
+    ) in tqdm(
+        df[COLUMNS].values, desc=f"[{PREFIX}] generating terms", unit_scale=True, unit="lipid"
+    ):
         if identifier.startswith("SLM:"):
             identifier = identifier[len("SLM:") :]
         else:

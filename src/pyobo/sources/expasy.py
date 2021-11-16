@@ -175,7 +175,7 @@ def get_tree(lines: Iterable[str]):
 
         rv[expasy_id] = {
             "concept": {
-                "namespace": "ec-code",
+                "namespace": PREFIX,
                 "identifier": expasy_id,
             },
             "name": name,
@@ -184,7 +184,7 @@ def get_tree(lines: Iterable[str]):
         }
         if parent_expasy_id is not None:
             rv[expasy_id]["parent"] = {
-                "namespace": "ec-code",
+                "namespace": PREFIX,
                 "identifier": parent_expasy_id,
             }
             rv[parent_expasy_id]["children"].append(rv[expasy_id]["concept"])  # type:ignore
@@ -203,11 +203,11 @@ def get_database(lines: Iterable[str]) -> Mapping:
 
         rv[expasy_id] = ec_data_entry = {
             "concept": {
-                "namespace": "ec-code",
+                "namespace": PREFIX,
                 "identifier": expasy_id,
             },
             "parent": {
-                "namespace": "ec-code",
+                "namespace": PREFIX,
                 "identifier": expasy_id.rsplit(".", 1)[0],
             },
             "synonyms": [],

@@ -162,15 +162,20 @@ def get_terms(force: bool = False) -> Iterable[Term]:
     df = get_gene_info_df(force=force)
 
     taxonomy_id_to_name = get_id_name_mapping("ncbitaxon")
+    missing_taxa = set()
 
-    it = tqdm(df.values, total=len(df.index), desc=f"mapping {PREFIX}")
+    it = tqdm(
+        df.values, total=len(df.index), desc=f"mapping {PREFIX}", unit_scale=True, unit="gene"
+    )
     for tax_id, gene_id, symbol, dbxrfs, description, _gene_type in it:
         if pd.isna(symbol):
             continue
         try:
             tax_name = taxonomy_id_to_name[tax_id]
         except KeyError:
-            logger.warning(f"Could not look up tax_id={tax_id}")
+            if tax_id not in missing_taxa:
+                logger.warning(f"Could not look up name for NCBITaxon:{tax_id}")
+                missing_taxa.add(tax_id)
             tax_name = None
 
         xrefs = []
