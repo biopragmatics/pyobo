@@ -17,7 +17,6 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 VERSION = "jan2021"
-URL = f"http://www.gwascentral.org/docs/GC_{VERSION}.tar.gz"
 PREFIX = "gwascentral.study"
 
 
@@ -75,7 +74,8 @@ def _get_term_from_tree(tree: ElementTree.ElementTree) -> Term:
 
 def iterate_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over GWAS Central Study terms."""
-    path = ensure_path(PREFIX, url=URL, version=version, force=force)
+    url = f"http://www.gwascentral.org/docs/GC_{version}.tar.gz"
+    path = ensure_path(PREFIX, url=url, version=version, force=force)
     with tarfile.open(path) as tar_file:
         for tar_info in tar_file:
             if not tar_info.path.endswith(".xml"):
