@@ -17,12 +17,16 @@ __all__ = [
 ]
 
 PREFIX = "ccle"
+VERSION = "2019"
 
 
 class CCLEGetter(Obo):
     """An ontology representation of the Cancer Cell Line Encyclopedia's cell lines."""
 
     ontology = bioregistry_key = PREFIX
+
+    def __post_init__(self):
+        self.data_version = VERSION
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
