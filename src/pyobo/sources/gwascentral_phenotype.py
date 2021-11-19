@@ -51,9 +51,13 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             continue
         with open(path) as file:
             j = json.load(file)
+
+        description = j.get("description")
+        if description is not None:
+            description = description.strip().replace("\n", " ")
         term = Term(
             reference=Reference(PREFIX, j["identifier"], j["name"]),
-            definition=j["description"].strip().replace("\n", " "),
+            definition=description,
         )
         yield term
 
