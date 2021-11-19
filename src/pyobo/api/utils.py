@@ -24,8 +24,11 @@ def get_version(prefix: str) -> Optional[str]:
         version = bioversions.get_version(prefix)
     except IOError:
         raise IOError(f"[{prefix}] could not get version") from None
-    if version:
-        return version
+    except KeyError:
+        pass  # this prefix isn't available from bioversions
+    else:
+        if version:
+            return version
 
     metadata_json_path = prefix_directory_join(prefix, name="metadata.json", ensure_exists=False)
     if metadata_json_path.exists():
