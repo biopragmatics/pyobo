@@ -76,7 +76,9 @@ def iter_terms(version: str) -> Iterable[Term]:
             term.append_relationship(from_species, species_reference)
             for ncbigene_id in genes:
                 term.append_relationship(
-                    has_part, Reference(prefix="ncbigene", identifier=ncbigene_id)
+                    # Should be participates in!!!
+                    has_part,
+                    Reference(prefix="ncbigene", identifier=ncbigene_id),
                 )
             yield term
 
