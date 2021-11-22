@@ -27,7 +27,7 @@ NAME = "FlyBase"
 class FlyBaseGetter(Obo):
     """An ontology representation of FlyBase's gene nomenclature."""
 
-    ontology = bioregistry_key = PREFIX
+    ontology = bioversions_key = PREFIX
     typedefs = [from_species, orthologous]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
