@@ -2,6 +2,7 @@
 
 """Converter for the Antibody Registry."""
 
+import logging
 from typing import Iterable, Mapping, Optional
 
 import bioversions
@@ -14,6 +15,8 @@ from pyobo.utils.path import ensure_df
 __all__ = [
     "AntibodyRegistryGetter",
 ]
+
+logger = logging.getLogger(__name__)
 
 PREFIX = "antibodyregistry"
 URL = "http://antibodyregistry.org/php/fileHandler.php"
@@ -85,7 +88,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
                 if vendor not in needs_curating:
                     needs_curating.add(vendor)
                     if all(x not in vendor for x in SKIP):
-                        it.write(f"! vendor {vendor} for {identifier}")
+                        logger.debug(f"! vendor {vendor} for {identifier}")
             elif MAPPING[vendor] is not None and pd.notna(catalog_number) and catalog_number:
                 term.append_xref((MAPPING[vendor], catalog_number))  # type:ignore
             if defining_citation and pd.notna(defining_citation):

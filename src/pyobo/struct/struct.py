@@ -468,9 +468,9 @@ class Obo:
             try:
                 return bioversions.get_version(self.bioversions_key)
             except KeyError:
-                logger.warning(f"no way to look up {self.bioversions_key}")
+                logger.warning(f"[{self.bioversions_key}] bioversions doesn't list this resource ")
             except IOError:
-                logger.warning(f"error while looking up {self.bioversions_key}")
+                logger.warning(f"[{self.bioversions_key}] error while looking up version")
         return None
 
     @property

@@ -87,7 +87,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         )
         for rhea_id, _, _, xref_id in xref_df.values:
             if rhea_id not in terms:
-                logger.warning(
+                logger.debug(
                     "[%s] could not find %s:%s for xref %s:%s",
                     PREFIX,
                     PREFIX,
@@ -117,7 +117,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     for _, identifier, name in result:
         identifier = str(identifier)
         if identifier not in terms:
-            logger.warning("isolated element in rdf: rhea:%s ! %s", identifier, name)
+            logger.debug("isolated element in rdf: rhea:%s ! %s", identifier, name)
             continue
         terms[identifier].reference.name = name
 

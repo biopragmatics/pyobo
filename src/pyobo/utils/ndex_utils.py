@@ -51,7 +51,7 @@ def ensure_ndex_network_set(
     """Ensure the list of networks that goes with NCI PID on NDEx."""
     it = _help_ensure_ndex_network_set(prefix, uuid, force=force)
     if use_tqdm:
-        it = tqdm(it, desc=f"ensuring networks from {uuid}")
+        it = tqdm(it, desc=f"Downloading ndex:{uuid}")
     for network_uuid in it:
         yield network_uuid, ensure_ndex_network(prefix, network_uuid, force=force)
 
