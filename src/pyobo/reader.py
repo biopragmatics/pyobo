@@ -216,8 +216,6 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
 
     _ontology = ontology
     _name = name
-    _date = date
-    _data_version = data_version
     _typedefs = typedefs
     _synonym_typedefs = synonym_typedefs
 
@@ -232,6 +230,10 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
         date = _date
         typedefs = list(_typedefs.values())
         synonym_typedefs = list(_synonym_typedefs.values())
+
+        def __post_init__(self):
+            self.date = date
+            self.data_version = data_version
 
         def iter_terms(self, force: bool = False) -> Iterable[Term]:
             """Iterate over terms in the ad hoc ontology."""
