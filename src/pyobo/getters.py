@@ -289,6 +289,8 @@ def _prep_dir(directory: Union[None, str, pathlib.Path]) -> pathlib.Path:
         rv = DATABASE_DIRECTORY
     elif isinstance(directory, str):
         rv = pathlib.Path(directory)
+    elif isinstance(directory, pathlib.Path):
+        rv = directory
     else:
         raise TypeError
     rv.mkdir(parents=True, exist_ok=True)
