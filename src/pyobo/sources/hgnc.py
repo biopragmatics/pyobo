@@ -160,6 +160,7 @@ class HGNCGetter(Obo):
     """An ontology representation of HGNC's gene nomenclature."""
 
     ontology = PREFIX
+    dynamic_version = True
     typedefs = [
         from_species,
         has_gene_product,

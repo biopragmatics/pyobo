@@ -23,7 +23,8 @@ logger = logging.getLogger(__name__)
 class CGNCGetter(Obo):
     """An ontology representation of the Chicken Genome Nomenclature Consortium's gene nomenclature."""
 
-    bioversions_key = ontology = PREFIX
+    ontology = PREFIX
+    dynamic_version = True
     typedefs = [from_species]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

@@ -26,7 +26,7 @@ BASE_URL = "https://data.broadinstitute.org/gsea-msigdb/msigdb/release"
 class MSigDBGetter(Obo):
     """An ontology representation of MMSigDB's gene set nomenclature."""
 
-    ontology = bioregistry_key = PREFIX
+    ontology = bioversions_key = PREFIX
     typedefs = [has_part]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

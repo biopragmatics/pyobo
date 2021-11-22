@@ -36,6 +36,7 @@ class MGIGetter(Obo):
     """An ontology representation of MGI's mouse gene nomenclature."""
 
     ontology = PREFIX
+    dynamic_version = True
     typedefs = [from_species, has_gene_product, transcribes_to]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

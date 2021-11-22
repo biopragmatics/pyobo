@@ -21,7 +21,7 @@ VERSION = "21Q2"
 class DepMapGetter(Obo):
     """An ontology representation of the Cancer Dependency Map's cell lines."""
 
-    ontology = PREFIX
+    ontology = bioversions_key = PREFIX
     data_version = VERSION
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

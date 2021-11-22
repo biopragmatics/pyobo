@@ -42,7 +42,7 @@ def get_chunks(force: bool = False) -> pd.DataFrame:
 class AntibodyRegistryGetter(Obo):
     """An ontology representation of the Antibody Registry."""
 
-    ontology = bioregistry_key = PREFIX
+    ontology = bioversions_key = PREFIX
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

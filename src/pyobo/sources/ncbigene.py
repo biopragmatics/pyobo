@@ -87,6 +87,7 @@ class NCBIGeneGetter(Obo):
     """An ontology representation of NCBI's Entrez Gene database."""
 
     ontology = PREFIX
+    dynamic_version = True
     typedefs = [from_species]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

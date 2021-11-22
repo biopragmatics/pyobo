@@ -432,6 +432,9 @@ class Obo:
     #: For super-sized datasets that shouldn't be read into memory
     iter_only: ClassVar[bool] = False
 
+    #: Set to true for resources that are unversioned/very dynamic, like HGNC
+    dynamic_version: ClassVar[bool] = False
+
     bioversions_key: ClassVar[Optional[str]] = None
 
     #: The date the ontology was generated
@@ -458,6 +461,8 @@ class Obo:
             self.name = bioregistry.get_name(self.ontology)  # type:ignore
         if not self.data_version:
             self.data_version = self._get_version()
+        if not self.dynamic_version and self.data_version is None:
+            raise ValueError(f"{self.ontology} is missing data_version")
         if self.auto_generated_by is None:
             self.auto_generated_by = f"bio2obo:{self.ontology}"  # type:ignore
 
