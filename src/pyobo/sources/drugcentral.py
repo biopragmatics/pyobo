@@ -17,7 +17,6 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 PREFIX = "drugcentral"
-URL = "http://unmtid-shinyapps.net/download/structures.smiles.tsv"
 
 
 class DrugCentralGetter(Obo):
@@ -37,7 +36,8 @@ def get_obo(force: bool = False) -> Obo:
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over DrugCentral terms."""
-    df = ensure_df(PREFIX, url=URL, version=version, force=force)
+    url = f"https://unmtid-shinyapps.net/download/DrugCentral/{version}/structures.smiles.tsv"
+    df = ensure_df(PREFIX, url=url, version=version, force=force)
     for smiles, inchi, inchi_key, drugcentral_id, drugcentral_name, cas in df.values:
         if pd.isna(smiles) or pd.isna(inchi) or pd.isna(inchi_key):
             logger.warning("missing data for drugcentral:%s", drugcentral_id)
