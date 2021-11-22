@@ -230,6 +230,8 @@ def iter_helper_helper(
     for prefix in it:
         if use_tqdm:
             it.set_postfix({"prefix": prefix})
+        if bioregistry.has_no_terms(prefix):
+            continue
         if prefix in SKIP:
             tqdm.write(f"skipping {prefix} because in default skip set")
             continue
