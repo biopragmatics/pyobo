@@ -52,18 +52,16 @@ def get_obo() -> Obo:
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get ITIS terms."""
-    zip_path = ensure_path(PREFIX, url=URL, force=force)
+    zip_path = ensure_path(PREFIX, url=URL, force=force, version=version)
     sqlite_dir = prefix_directory_join(PREFIX, version=version)
-    sqlite_path = prefix_directory_join(PREFIX, name="ITIS.sqlite", version=version)
+    sqlite_path = prefix_directory_join(PREFIX, name="itis.sqlite", version=version)
     if not os.path.exists(sqlite_path):
         with zipfile.ZipFile(zip_path) as zip_file:
-            for x in zip_file.filelist:
-                if x.filename.endswith(".sqlite"):
-                    zip_file.extract(x, sqlite_dir)
-                    shutil.move(
-                        os.path.join(sqlite_dir, f"itisSqlite{version}", "ITIS.sqlite"), sqlite_path
-                    )
-                    os.rmdir(os.path.join(sqlite_dir, f"itisSqlite{version}"))
+            for file in zip_file.filelist:
+                if file.filename.endswith(".sqlite") and not file.is_dir():
+                    zip_file.extract(file, sqlite_dir)
+                    shutil.move(os.path.join(sqlite_dir, file.filename), sqlite_path)
+                    os.rmdir(os.path.join(sqlite_dir, os.path.dirname(file.filename)))
 
     if not os.path.exists(sqlite_path):
         raise FileNotFoundError(f"file missing: {sqlite_path}")
@@ -95,4 +93,4 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    ITISGetter.cli()
