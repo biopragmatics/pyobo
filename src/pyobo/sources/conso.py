@@ -26,6 +26,7 @@ class CONSOGetter(Obo):
     """An ontology representation of CONSO vocabulary."""
 
     ontology = PREFIX
+    dynamic_version = True
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

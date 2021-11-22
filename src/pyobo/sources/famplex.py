@@ -24,6 +24,7 @@ class FamPlexGetter(Obo):
     """An ontology representation of FamPlex."""
 
     ontology = PREFIX
+    dynamic_version = True
     typedefs = [has_member, has_part, is_a, part_of]
 
     def _get_version(self) -> str:
