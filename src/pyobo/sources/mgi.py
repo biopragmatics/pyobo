@@ -74,6 +74,7 @@ def get_ensembl_df(force: bool = False) -> pd.DataFrame:
             "biotypes",
         ],
         force=force,
+        dtype=str,
     )
 
 
@@ -102,9 +103,7 @@ def get_entrez_df(
             "strand",
             "biotypes",
         ],
-        dtype={
-            "entrez_id": str,
-        },
+        dtype=str,
         force=force,
     )
 

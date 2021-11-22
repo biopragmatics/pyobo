@@ -108,7 +108,7 @@ def get_gene_info_df(force: bool = False) -> pd.DataFrame:
         sep="\t",
         na_values=["-", "NEWENTRY"],
         usecols=GENE_INFO_COLUMNS,
-        dtype={"#tax_id": str, "GeneID": str},
+        dtype=str,
         force=force,
     )
 

@@ -102,10 +102,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         sep="\t",
         header=0,
         comment="#",
-        dtype={
-            "NCBI_GENE_ID": str,
-            "GENE_RGD_ID": str,
-        },
+        dtype=str,
         force=force,
     )
     for _, row in tqdm(df.iterrows(), total=len(df.index), desc=f"Mapping {PREFIX}"):
