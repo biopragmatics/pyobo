@@ -417,12 +417,6 @@ class Obo:
     #: Synonym type definitions
     synonym_typedefs: ClassVar[Optional[List[SynonymTypeDef]]] = None
 
-    #: Regular expression pattern describing the local unique identifiers
-    pattern: ClassVar[Optional[str]] = None
-
-    #: Is the prefix at the begging of each local unique identifier
-    namespace_in_pattern: ClassVar[Optional[bool]] = None
-
     #: An annotation about how an ontology was generated
     auto_generated_by: ClassVar[Optional[str]] = None
 
