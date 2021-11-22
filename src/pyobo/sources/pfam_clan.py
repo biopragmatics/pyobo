@@ -38,6 +38,7 @@ def get_obo(force: bool = False) -> Obo:
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate PFAM clan terms."""
     df = get_pfam_clan_df(version=version, force=force)
+    df = df[df["clan_id"].notna()]
     df = df[["clan_id", "clan_name"]].drop_duplicates()
     it = tqdm(df.values, total=len(df.index), desc=f"mapping {PREFIX}")
     for identifier, name in it:

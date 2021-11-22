@@ -21,7 +21,7 @@ class SFAMGetter(Obo):
     """An ontology representation of the Selventa protein family nomenclature."""
 
     ontology = PREFIX
-    data_version = "1.0.0"  # frozen
+    static_version = "1.0.0"
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

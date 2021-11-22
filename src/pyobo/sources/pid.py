@@ -33,6 +33,7 @@ class PIDGetter(Obo):
     """An ontology representation of the NCI's Pathway Interaction Database."""
 
     ontology = PREFIX
+    static_version = "1.0.0"
     typedefs = [has_part]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

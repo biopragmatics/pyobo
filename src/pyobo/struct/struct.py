@@ -429,6 +429,9 @@ class Obo:
     #: Set to true for resources that are unversioned/very dynamic, like HGNC
     dynamic_version: ClassVar[bool] = False
 
+    #: Set to a static version for the resource (i.e., the resource is not itself versioned)
+    static_version: ClassVar[Optional[str]] = None
+
     bioversions_key: ClassVar[Optional[str]] = None
 
     #: The date the ontology was generated
@@ -454,7 +457,10 @@ class Obo:
         if self.name is None:
             self.name = bioregistry.get_name(self.ontology)  # type:ignore
         if not self.data_version:
-            self.data_version = self._get_version()
+            if self.static_version:
+                self.data_version = self.static_version
+            else:
+                self.data_version = self._get_version()
         if not self.dynamic_version and self.data_version is None:
             raise ValueError(f"{self.ontology} is missing data_version")
         if self.auto_generated_by is None:
