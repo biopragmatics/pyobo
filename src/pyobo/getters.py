@@ -173,8 +173,6 @@ SKIP = {
     # Only OWL
     "gorel",
     # FIXME below
-    "mirbase.family",
-    "pfam.clan",
     "emapa",  # recently changed with EMAP... not sure what the difference is anymore
     "kegg.genes",
     "kegg.genome",
