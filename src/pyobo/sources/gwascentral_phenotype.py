@@ -22,10 +22,7 @@ class GWASCentralPhenotypeGetter(Obo):
     """An ontology representation of GWAS Central's phenotype nomenclature."""
 
     ontology = PREFIX
-
-    def __post_init__(self):
-        if self.data_version is None:
-            self.data_version = VERSION
+    static_version = VERSION
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

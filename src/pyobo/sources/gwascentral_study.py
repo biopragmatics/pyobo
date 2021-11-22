@@ -24,7 +24,7 @@ class GWASCentralStudyGetter(Obo):
     """An ontology representation of GWAS Central's study nomenclature."""
 
     ontology = PREFIX
-    data_version = VERSION
+    static_version = VERSION
     typedefs = [has_part]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
