@@ -36,6 +36,7 @@ class ICD11Getter(Obo):
     """An ontology representation of ICD-11."""
 
     ontology = PREFIX
+    dynamic_version = True
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

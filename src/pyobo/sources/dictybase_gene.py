@@ -22,7 +22,6 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 PREFIX = "dictybase.gene"
-NAME = "dictyBase Gene"
 URL = (
     "http://dictybase.org/db/cgi-bin/dictyBase/download/"
     "download.pl?area=general&ID=gene_information.txt"
@@ -37,6 +36,7 @@ class DictybaseGetter(Obo):
     """An ontology representation of Dictybase's gene nomenclature."""
 
     ontology = PREFIX
+    dynamic_version = True
     typedefs = [from_species, has_gene_product]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
