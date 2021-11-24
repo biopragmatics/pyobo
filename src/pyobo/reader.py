@@ -226,8 +226,6 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
         name = _name
         auto_generated_by = graph.graph.get("auto-generated-by")
         format_version = graph.graph.get("format-version")
-        data_version = _data_version
-        date = _date
         typedefs = list(_typedefs.values())
         synonym_typedefs = list(_synonym_typedefs.values())
 
