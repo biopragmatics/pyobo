@@ -164,6 +164,59 @@ def _ensure_ontology_path(
     raise NoBuild(f"could not find a download link for {prefix}")
 
 
+#: Obonet/Pronto can't parse these (consider converting to OBO with ROBOT?)
+CANT_PARSE = {
+    "agro",
+    "aro",
+    "caro",
+    "cco",
+    "chmo",
+    "cido",
+    "covoc",
+    "cto",
+    "cvdo",
+    "dicom",
+    "dinto",
+    "emap",
+    "epso",
+    "fbbi",
+    "fma",
+    "fobi",
+    "foodon",
+    "genepio",
+    "hancestro",
+    "hom",
+    "hso",
+    "htn",  # Unknown string format: creation: 16MAY2017
+    "ico",
+    "idocovid19",
+    "labo",
+    "mamo",
+    "mfmo",
+    "mfo",
+    "mfomd",
+    "miapa",
+    "mo",
+    "oae",
+    "ogms",  # Unknown string format: creation: 16MAY2017
+    "ohd",
+    "ons",
+    "oostt",
+    "opmi",
+    "ornaseq",
+    "pdro",
+    "probonto",
+    "psdo",
+    "rex",
+    "rnao",
+    "sepio",
+    "sio",
+    "spd",
+    "txpo",
+    "vido",
+    "vt",
+    "xl",
+}
 SKIP = {
     "ncbigene",  # too big, refs acquired from other dbs
     "pubchem.compound",  # to big, can't deal with this now
@@ -177,6 +230,9 @@ SKIP = {
     "kegg.genes",
     "kegg.genome",
     "kegg.pathway",
+    # URL is wrong
+    "ensemblglossary",
+    *CANT_PARSE,
 }
 
 X = TypeVar("X")
