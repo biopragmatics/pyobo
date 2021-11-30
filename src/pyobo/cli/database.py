@@ -92,7 +92,7 @@ def metadata(directory: str, no_strict: bool, force: bool):
     db_output_helper(
         _iter_metadata,
         "metadata",
-        ("prefix", "version", "date"),
+        ("prefix", "version", "date", "deprecated"),
         strict=not no_strict,
         force=force,
         directory=directory,
