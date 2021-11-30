@@ -168,6 +168,7 @@ def _ensure_ontology_path(
 CANT_PARSE = {
     "agro",
     "aro",
+    "bco",
     "caro",
     "cco",
     "chmo",
