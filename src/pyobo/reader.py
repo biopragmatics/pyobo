@@ -26,6 +26,8 @@ __all__ = [
     "from_obonet",
 ]
 
+from .utils.misc import cleanup_version
+
 logger = logging.getLogger(__name__)
 
 
@@ -72,7 +74,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
         else:
             logger.warning("[%s] does not report a version nor a date", ontology)
     else:
-        data_version = _cleanup_version(data_version=data_version, prefix=ontology)
+        data_version = cleanup_version(data_version=data_version, prefix=ontology)
         if data_version is not None:
             logger.info("[%s] using version %s", ontology, data_version)
         elif date is not None:
@@ -86,6 +88,9 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
             logger.warning(
                 "[%s] UNRECOGNIZED VERSION FORMAT AND MISSING DATE: %s", ontology, data_version
             )
+
+    if data_version and "/" in data_version:
+        raise ValueError("Will not accept slash in data version")
 
     #: Parsed CURIEs to references (even external ones)
     references: Mapping[Tuple[str, str], Reference] = {
@@ -284,31 +289,6 @@ def _get_name(graph, ontology: str) -> str:
         logger.info("[%s] does not report a name", ontology)
         rv = ontology
     return rv
-
-
-def _cleanup_version(data_version: str, prefix: str) -> Optional[str]:
-    if data_version.endswith(".owl"):
-        data_version = data_version[: -len(".owl")]
-    if data_version.endswith(prefix):
-        data_version = data_version[: -len(prefix)]
-    if data_version.startswith("releases/"):
-        data_version = data_version[len("releases/") :]
-    if data_version.startswith("http://www.ebi.ac.uk/efo/releases/v"):
-        return data_version[len("http://www.ebi.ac.uk/efo/releases/v") :].split("/")[0]
-    if data_version.startswith("http://www.ebi.ac.uk/swo/swo.owl/"):
-        return data_version[len("http://www.ebi.ac.uk/swo/swo.owl/") :].split("/")[0]
-    if data_version.replace(".", "").isnumeric():
-        return data_version  # consecutive, major.minor, or semantic versioning
-    for v in reversed(data_version.split("/")):
-        v = v.strip()
-        try:
-            datetime.strptime(v, "%Y-%m-%d")
-        except ValueError:
-            continue
-        else:
-            return v
-    logger.warning("unhandled version: %s", data_version)
-    return None
 
 
 def iterate_graph_synonym_typedefs(graph: nx.MultiDiGraph) -> Iterable[SynonymTypeDef]:
