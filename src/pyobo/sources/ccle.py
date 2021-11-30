@@ -25,7 +25,7 @@ class CCLEGetter(Obo):
 
     ontology = bioregistry_key = PREFIX
 
-    def __post_init__(self):
+    def __post_init__(self):  # noqa: D105
         self.data_version = VERSION
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
