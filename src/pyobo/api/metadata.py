@@ -29,9 +29,9 @@ def get_metadata(prefix: str, force: bool = False) -> Mapping[str, str]:
     @cached_json(path=path, force=force)
     def _get_json() -> Mapping[str, str]:
         if force:
-            logger.info("[%s] forcing reload for metadata", prefix)
+            logger.debug("[%s] forcing reload for metadata", prefix)
         else:
-            logger.info("[%s] no cached metadata found. getting from OBO loader", prefix)
+            logger.debug("[%s] no cached metadata found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, force=force, version=version)
         return ontology.get_metadata()
 
