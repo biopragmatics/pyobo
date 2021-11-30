@@ -44,6 +44,14 @@ def get_obo(force: bool = False) -> Obo:
     return ReactomeGetter(force=force)
 
 
+def ensure_participant_df(version: str, force: bool = False) -> pd.DataFrame:
+    """Get the pathway uniprot participant dataframe."""
+    uniprot_pathway_url = f"https://reactome.org/download/{version}/UniProt2Reactome_All_Levels.txt"
+    return ensure_df(
+        PREFIX, url=uniprot_pathway_url, header=None, usecols=[0, 1], version=version, force=force
+    )
+
+
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate Reactome terms."""
     ncbitaxon_name_to_id = get_name_id_mapping("ncbitaxon")
@@ -86,10 +94,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     for parent_id, child_id in hierarchy_df.values:
         terms[child_id].append_parent(terms[parent_id])
 
-    uniprot_pathway_url = f"https://reactome.org/download/{version}/UniProt2Reactome_All_Levels.txt"
-    uniprot_pathway_df = ensure_df(
-        PREFIX, url=uniprot_pathway_url, header=None, usecols=[0, 1], version=version, force=force
-    )
+    uniprot_pathway_df = ensure_participant_df(version=version, force=force)
     for uniprot_id, reactome_id in tqdm(uniprot_pathway_df.values, total=len(uniprot_pathway_df)):
         terms[reactome_id].append_relationship(has_part, Reference("uniprot", uniprot_id))
 
