@@ -112,6 +112,9 @@
       }
     ],
     "resource_prefix": {
+      "duo": [
+        "topic:"
+      ],
       "efo": [
         "Germplasm:",
         "BilaDO:",
@@ -157,10 +160,25 @@
         "MAP:"
       ],
       "cellosaurus": [
+        "FCDI",
+        "CCTCC:",
+        "CGH-DB:",
         "IARC_TP53:",
         "KCB:",
-        "CGH-DB:",
-        "CCTCC:"
+        "PharmacoDB:",
+        "MCCL:MCC:",
+        "TOKU-E:",
+        "IBRC",
+        "ISCR",
+        "IZSLER",
+        "MCCL",
+        "NCBI_Iran",
+        "NCI-DTP",
+        "NISES",
+        "RSCB",
+        "SKY/M-FISH/CGH",
+        "LINCS_HMS",
+        "CCLV"
       ]
     },
     "prefix": [
@@ -226,7 +244,8 @@
       "PMI:17498297": "PMID:17498297",
       "HPO:SKOEHLER": "orcid:0000-0002-5316-1399",
       "HPO:skoehler": "orcid:0000-0002-5316-1399",
-      "UBERON:cjm": "orcid:0000-0002-6601-2165"
+      "UBERON:cjm": "orcid:0000-0002-6601-2165",
+      "part:of": "BFO:0000050"
     },
     "prefix": {
       "ATCC number: ": "ATCC:",
@@ -266,6 +285,7 @@
       "URL:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
       "url: \"https://en.wikipedia.org/wiki/": "wikipedia.en:",
       "url:https\\://www.ncbi.nlm.nih.gov/pubmed/": "pubmed:",
+      "url:https\\://pubmed.ncbi.nlm.nih.gov/": "pubmed:",
       "URL:http\\://": "http://",
       "URL: http\\://": "http://",
       "url:http\\://": "http://",
