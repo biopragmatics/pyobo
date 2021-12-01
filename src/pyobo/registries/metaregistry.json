@@ -155,6 +155,12 @@
         "ABA:",
         "PBA:",
         "MAP:"
+      ],
+      "cellosaurus": [
+        "IARC_TP53:",
+        "KCB:",
+        "CGH-DB:",
+        "CCTCC:"
       ]
     },
     "prefix": [
@@ -195,7 +201,8 @@
       "DDB:",
       "http:www",
       "NCBITaxon_Union",
-      "PhenoScape:"
+      "PhenoScape:",
+      "INFOODs:"
     ],
     "suffix": [
       ".jpg",
