@@ -307,4 +307,5 @@ def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool):  # noqa: 
 
 
 if __name__ == "__main__":
-    main()
+    with logging_redirect_tqdm():
+        main()
