@@ -109,11 +109,80 @@
           "Organ:(anatomy)"
         ],
         "from": "uberon"
+      },
+      "TAIR:TED",
+      "CS:0",
+      "ADL:FTT",
+      "Getty:TGN",
+      {
+        "type": "group",
+        "text": [
+          "USGS:SDTS",
+          "NASA:earthrealm",
+          "Genomes:fissure",
+          "METAR:FZRA",
+          "INTERNAS:WS2",
+          "Uranium:mining"
+        ],
+        "from": "envo"
+      },
+      {
+        "type": "group",
+        "text": [
+          "FlyPNS:PNSdescription0.html",
+          "FlyPNS:PNSdescription.html#lbd",
+          "FlyPNS:PNSdescription.html#ltd",
+          "FlyPNS:PNSnomenclature.html",
+          "FlyPNS:PNSdescription.html#dh1"
+        ],
+        "from": "fbbt"
+      },
+      {
+        "type": "group",
+        "text": [
+          "LifO:0000005"
+        ],
+        "from": "ino",
+        "reason": "random ad-hoc term. should probably just skip this entire ontology"
+      },
+      {
+        "type": "group",
+        "text": [
+          "GeneReviews:NBK331",
+          "GeneReviews:NBK5191",
+          "GeneReveiws:NBK350"
+        ],
+        "from": "maxo",
+        "comment": "these actually correspond to NCBI books"
+      },
+      {
+        "type": "group",
+        "text": [
+          "value-type:xsd\\:string"
+        ],
+        "from": "ms"
       }
     ],
     "resource_prefix": {
+      "ogg": [
+        "IMGT/GENE-DB:"
+      ],
       "duo": [
         "topic:"
+      ],
+      "fbbt": [
+        "larvalbrain_axon_tract:",
+        "larvalbrain_neuropil:",
+        "FlyPNS:PNS"
+      ],
+      "envo": [
+        "SPIRE:",
+        "TODO^^^",
+        "IUCN-PACS:",
+        "http://www.britannica.com"
+      ],
+      "mco": [
+        "colombos:"
       ],
       "efo": [
         "Germplasm:",
@@ -139,6 +208,12 @@
         "Remap:",
         "UnMod:",
         "UniMo:"
+      ],
+      "hao": [
+        "DUMMY_TYPDEF:"
+      ],
+      "iceo": [
+        "OTCS:"
       ],
       "uberon": [
         "GAID:",
@@ -179,6 +254,9 @@
         "SKY/M-FISH/CGH",
         "LINCS_HMS",
         "CCLV"
+      ],
+      "oba": [
+        "AUTO:patterns"
       ]
     },
     "prefix": [
@@ -220,7 +298,9 @@
       "http:www",
       "NCBITaxon_Union",
       "PhenoScape:",
-      "INFOODs:"
+      "INFOODs:",
+      "NLCD:",
+      "TEMP:"
     ],
     "suffix": [
       ".jpg",
@@ -304,7 +384,15 @@
       "OMIMl:": "OMIM:",
       "CREDIT_00": "CREDIT:00",
       "CCLV:CCLV-RIE ": "CCLV:",
-      "APOLLO:SV_": "APOLLO_SV:"
+      "APOLLO:SV_": "APOLLO_SV:",
+      "GEMET:http\\://www.eionet.europa.eu/gemet/concept/": "GEMET:",
+      "FBdv_root:": "FBdv:",
+      "NCBI:NBK": "ncbibook:",
+      "MicrO.owl/MICRO:": "MICRO:",
+      "MicrO.owl/TEMP:": "MICRO:",
+      "MicrO.owl/Temp:": "MICRO:",
+      "MicrO.owl/temp:": "MICRO:",
+      "xsd\\:": "xsd:"
     }
   },
   "wikidata_property_types": [
