@@ -62,5 +62,5 @@ def cleanup_version(data_version: str, prefix: str) -> Optional[str]:
             continue
         else:
             return v
-    logger.warning("unhandled version: %s", data_version)
-    return None
+    logger.warning("[%s] bizarre version: %s", prefix, data_version)
+    return data_version
