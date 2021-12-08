@@ -283,7 +283,8 @@
         "RSCB",
         "SKY/M-FISH/CGH",
         "LINCS_HMS",
-        "CCLV"
+        "CCLV",
+        "Cosmic-CLP:"
       ],
       "oba": [
         "AUTO:patterns"
