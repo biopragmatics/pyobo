@@ -466,10 +466,7 @@ HANDLED_PROPERTY_TYPES = {
 
 
 def iterate_node_properties(
-    data: Mapping[str, Any],
-    *,
-    property_prefix: Optional[str] = None,
-    term=None
+    data: Mapping[str, Any], *, property_prefix: Optional[str] = None, term=None
 ) -> Iterable[Tuple[str, str]]:
     """Extract properties from a :mod:`obonet` node's data."""
     for prop_value_type in data.get("property_value", []):
