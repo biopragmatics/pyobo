@@ -7,11 +7,11 @@ import itertools as itt
 import logging
 from typing import Iterable, Optional, Tuple, cast
 
+import bioregistry
 import networkx as nx
 import pandas as pd
 from tqdm import tqdm
 
-import bioregistry
 from .sources import iter_xref_plugins
 from .. import get_xrefs_df
 from ..api import (
