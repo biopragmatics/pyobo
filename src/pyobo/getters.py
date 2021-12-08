@@ -315,7 +315,7 @@ def iter_helper_helper(
                 raise
         except MissingPrefix as e:
             logger.warning("[%s] missing prefix: %s", prefix, e)
-            if strict:
+            if strict and not bioregistry.is_deprecated(prefix):
                 raise e
         except ValueError as e:
             if _is_xml(e):
