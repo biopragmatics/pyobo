@@ -190,25 +190,30 @@ def synonyms(prefix: str, force: bool):
 @verbose_option
 @no_strict_option
 @force_option
-def relations(prefix: str, relation: str, target: str, force: bool, no_strict: bool):
+@click.option("--summarize", is_flag=True)
+def relations(
+    prefix: str, relation: str, target: str, force: bool, no_strict: bool, summarize: bool
+):
     """Page through the relations for entities in the given namespace."""
     if relation is None:
         relations_df = get_relations_df(prefix, force=force, strict=not no_strict)
+        if summarize:
+            click.echo(relations_df[relations_df.columns[2]].value_counts())
+        else:
+            echo_df(relations_df)
     else:
         curie = normalize_curie(relation)
         if curie[1] is None:  # that's the identifier
             click.secho(f"not valid curie, assuming local to {prefix}", fg="yellow")
             curie = prefix, relation
 
-        if target is None:
+        if target is not None:
             target = bioregistry.normalize_prefix(target)
             relations_df = get_filtered_relations_df(
-                prefix, relation=curie, force=force, strict=not no_strict
+                prefix, relation=curie, force=force, strict=not no_strict, target=target
             )
         else:
             raise NotImplementedError(f"can not filter by target prefix {target}")
-
-    echo_df(relations_df)
 
 
 @lookup.command()
