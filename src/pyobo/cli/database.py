@@ -97,7 +97,7 @@ def metadata(
     db_output_helper(
         _iter_metadata,
         "metadata",
-        ("prefix", "version", "date"),
+        ("prefix", "version", "date", "deprecated"),
         strict=not no_strict,
         force=force,
         directory=directory,

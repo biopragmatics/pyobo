@@ -11,6 +11,7 @@ import networkx as nx
 import pandas as pd
 from tqdm import tqdm
 
+import bioregistry
 from .sources import iter_xref_plugins
 from .. import get_xrefs_df
 from ..api import (
@@ -79,7 +80,7 @@ def _iter_metadata(**kwargs):
     for prefix, data in iter_helper_helper(get_metadata, **kwargs):
         version = data["version"]
         tqdm.write(f"[{prefix}] using version {version}")
-        yield prefix, version, data["date"]
+        yield prefix, version, data["date"], bioregistry.is_deprecated(prefix)
 
 
 def _iter_ooh_na_na(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, str]]:
