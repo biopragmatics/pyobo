@@ -48,7 +48,7 @@ def prefix_directory_join(
     elif not isinstance(version, str):
         raise TypeError(f"Invalid type: {version} ({type(version)})")
     version = cleanup_version(version, prefix=prefix)
-    if "/" in version:
+    if version is not None and "/" in version:
         raise ValueError(f"[{prefix}] Can not have slash in version: {version}")
     return RAW_MODULE.join(prefix, version, *parts, name=name, ensure_exists=ensure_exists)
 
