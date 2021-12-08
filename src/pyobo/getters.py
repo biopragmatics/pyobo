@@ -215,6 +215,7 @@ CANT_PARSE = {
     "sepio",
     "sio",
     "spd",
+    "sweetrealm",
     "txpo",
     "vido",
     "vt",

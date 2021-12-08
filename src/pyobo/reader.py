@@ -208,7 +208,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
                 continue
             n_relations += 1
             term.append_relationship(typedef, reference)
-        for prop, value in iterate_node_properties(data):
+        for prop, value in iterate_node_properties(data, term=term):
             n_properties += 1
             term.append_property(prop, value)
         terms.append(term)
@@ -467,11 +467,17 @@ HANDLED_PROPERTY_TYPES = {
 
 def iterate_node_properties(
     data: Mapping[str, Any],
+    *,
     property_prefix: Optional[str] = None,
+    term=None
 ) -> Iterable[Tuple[str, str]]:
     """Extract properties from a :mod:`obonet` node's data."""
     for prop_value_type in data.get("property_value", []):
-        prop, value_type = prop_value_type.split(" ", 1)
+        try:
+            prop, value_type = prop_value_type.split(" ", 1)
+        except ValueError:
+            logger.info("malformed property: %s on %s", prop_value_type, term and term.curie)
+            continue
         if property_prefix is not None and prop.startswith(property_prefix):
             prop = prop[len(property_prefix) :]
 

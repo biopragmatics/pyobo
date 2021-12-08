@@ -173,6 +173,24 @@
           "NYBG:Dario_Cavaliere"
         ],
         "from": "po"
+      },
+      {
+        "type": "group",
+        "text": [
+          "Gramene:pankaj_jaiswal",
+          "scale:6",
+          "Gramene:cwt6"
+        ],
+        "from": "to"
+      },
+      {
+        "type": "group",
+        "text": [
+          "TTOCurator:Conway_etal_2008",
+          "TTOCurator:CavenderAndCoburn1992",
+          "TTOCurator:Vari1995"
+        ],
+        "from": "tto"
       }
     ],
     "resource_prefix": {
@@ -282,7 +300,6 @@
       "po": [
         "FNA:",
         "PlantSystematics_image_archive:",
-
         "CO_125:",
         "SOY:",
         "TAIR:",
@@ -301,6 +318,19 @@
         "ImmPort:",
         "TLR:",
         "HIstome_ptm_Hs:"
+      ],
+      "to": [
+        "TO_GIT",
+        "GIT_TO",
+        "OBO_S2F_TO",
+        "GCP:GCP_"
+      ],
+      "tto": [
+        "CASSPC:",
+        "CASGEN:"
+      ],
+      "wb": [
+        "WBPaper:"
       ]
     },
     "prefix": [
@@ -373,6 +403,7 @@
       "part:of": "BFO:0000050",
       "bearer:of": "RO:0000053",
       "inheres:in": "RO:0000052",
+      "inheres:in-obso": "RO:0000052",
       "inheres:in_part_of": "RO:0002314",
       "role:of": "RO:0000081",
       "unfolds:in": "BFO:0000066",
@@ -446,7 +477,8 @@
       "MicrO.owl/temp:": "MICRO:",
       "xsd\\:": "xsd:",
       "OGI.owl:": "ogi:",
-      "PANTHER:PTHR": "panther.family:PTHR"
+      "PANTHER:PTHR": "panther.family:PTHR",
+      "vo/ontorat/PR:": "PR:"
     }
   },
   "wikidata_property_types": [
