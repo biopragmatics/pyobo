@@ -233,6 +233,7 @@ def iter_helper_helper(
         if use_tqdm:
             it.set_postfix({"prefix": prefix})
         if bioregistry.has_no_terms(prefix):
+            continue
         if prefix in SKIP:
             tqdm.write(f"skipping {prefix} because in default skip set")
             continue
@@ -290,6 +291,8 @@ def _prep_dir(directory: Union[None, str, pathlib.Path]) -> pathlib.Path:
         rv = DATABASE_DIRECTORY
     elif isinstance(directory, str):
         rv = pathlib.Path(directory)
+    elif isinstance(directory, pathlib.Path):
+        rv = directory
     else:
         raise TypeError
     rv.mkdir(parents=True, exist_ok=True)
