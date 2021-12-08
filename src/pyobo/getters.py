@@ -130,7 +130,9 @@ def get_ontology(
             logger.warning("[%s] did not have a version, overriding with %s", obo.ontology, version)
             obo.data_version = version
         elif obo.data_version != version:
-            logger.warning("[%s] had version %s, overriding with %s", obo.ontology, obo.data_version, version)
+            logger.warning(
+                "[%s] had version %s, overriding with %s", obo.ontology, obo.data_version, version
+            )
             obo.data_version = version
     obo.write_default(force=rewrite)
     return obo
