@@ -46,6 +46,11 @@ def cleanup_version(data_version: str, prefix: str) -> Optional[str]:
         data_version = data_version[: -len(prefix)]
     if data_version.startswith("releases/"):
         data_version = data_version[len("releases/") :]
+    if prefix == "orth":
+        # TODO add bioversions for this
+        return "2"
+    if data_version.startswith("http://www.orpha.net/version"):
+        return data_version[len("http://www.orpha.net/version") :]
     if data_version.startswith("http://humanbehaviourchange.org/ontology/bcio.owl/"):
         return data_version[len("http://humanbehaviourchange.org/ontology/bcio.owl/") :]
     if data_version.startswith("http://www.ebi.ac.uk/efo/releases/v"):

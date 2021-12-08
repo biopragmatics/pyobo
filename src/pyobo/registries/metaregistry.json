@@ -15,6 +15,8 @@
       "Codex:\\:260",
       "Europe:\\:260",
       "BioGRID:curators",
+      "POC:curators",
+      "CGP:curators",
       "DiffAvg:",
       "DiffFormula:",
       "DiffMono:",
@@ -161,6 +163,16 @@
           "value-type:xsd\\:string"
         ],
         "from": "ms"
+      },
+      {
+        "type": "group",
+        "text": [
+          "POC:Maria_Alejandra_Gandolfo",
+          "NIG:Yukiko_Yamazaki",
+          "NYBG:Brandon_Sinn",
+          "NYBG:Dario_Cavaliere"
+        ],
+        "from": "po"
       }
     ],
     "resource_prefix": {
@@ -257,6 +269,38 @@
       ],
       "oba": [
         "AUTO:patterns"
+      ],
+      "pato": [
+        "ilxtr:",
+        "nifext:"
+      ],
+      "plana": [
+        "nlx:",
+        "Optic:",
+        "NIF:Subcellular\\:sao"
+      ],
+      "po": [
+        "FNA:",
+        "PlantSystematics_image_archive:",
+
+        "CO_125:",
+        "SOY:",
+        "TAIR:",
+        "OB_SF2_PO:",
+        "OBO-SF2_PO:",
+        "OBO_SF3_PO:",
+        "OBOS_SF_PO:",
+        "OB_SF_PO:",
+        "OBO-SF_PO:",
+        "OBO_PO_SF:",
+        "PO_REF",
+        "Maize",
+        "GO_GIT"
+      ],
+      "pr": [
+        "ImmPort:",
+        "TLR:",
+        "HIstome_ptm_Hs:"
       ]
     },
     "prefix": [
@@ -300,7 +344,8 @@
       "PhenoScape:",
       "INFOODs:",
       "NLCD:",
-      "TEMP:"
+      "TEMP:",
+      "PO_GIT:"
     ],
     "suffix": [
       ".jpg",
@@ -325,7 +370,14 @@
       "HPO:SKOEHLER": "orcid:0000-0002-5316-1399",
       "HPO:skoehler": "orcid:0000-0002-5316-1399",
       "UBERON:cjm": "orcid:0000-0002-6601-2165",
-      "part:of": "BFO:0000050"
+      "part:of": "BFO:0000050",
+      "bearer:of": "RO:0000053",
+      "inheres:in": "RO:0000052",
+      "inheres:in_part_of": "RO:0002314",
+      "role:of": "RO:0000081",
+      "unfolds:in": "BFO:0000066",
+      "PATOC:MAH": "orcid:0000-0003-4148-4606",
+      "SBN:9780070316607": "ISBN:9780070316607"
     },
     "prefix": {
       "ATCC number: ": "ATCC:",
@@ -392,7 +444,9 @@
       "MicrO.owl/TEMP:": "MICRO:",
       "MicrO.owl/Temp:": "MICRO:",
       "MicrO.owl/temp:": "MICRO:",
-      "xsd\\:": "xsd:"
+      "xsd\\:": "xsd:",
+      "OGI.owl:": "ogi:",
+      "PANTHER:PTHR": "panther.family:PTHR"
     }
   },
   "wikidata_property_types": [
