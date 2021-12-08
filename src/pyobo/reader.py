@@ -20,13 +20,13 @@ from .registries import (
 )
 from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef
 from .struct.typedef import default_typedefs, develops_from, has_part, part_of
+from .utils.misc import cleanup_version
 
 __all__ = [
     "from_obo_path",
     "from_obonet",
 ]
 
-from .utils.misc import cleanup_version
 
 logger = logging.getLogger(__name__)
 
