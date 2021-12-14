@@ -461,10 +461,11 @@ class Obo:
                 self.data_version = self.static_version
             else:
                 self.data_version = self._get_version()
-        if not self.dynamic_version and self.data_version is None:
-            raise ValueError(f"{self.ontology} is missing data_version")
-        if "/" in self.data_version:
-            raise ValueError("Can not have slash in version")
+        if not self.dynamic_version:
+            if self.data_version is None:
+                raise ValueError(f"{self.ontology} is missing data_version")
+            elif "/" in self.data_version:
+                raise ValueError(f"{self.ontology} has a slash in version: {self.data_version}")
         if self.auto_generated_by is None:
             self.auto_generated_by = f"bio2obo:{self.ontology}"  # type:ignore
 
