@@ -210,6 +210,7 @@ CANT_PARSE = {
     "pdro",
     "probonto",
     "psdo",
+    "reo",
     "rex",
     "rnao",
     "sepio",
