@@ -36,6 +36,7 @@ def get_relations_df(
     *,
     use_tqdm: bool = False,
     force: bool = False,
+    rewrite: bool = False,
     wide: bool = False,
     strict: bool = True,
 ) -> pd.DataFrame:
@@ -46,10 +47,12 @@ def get_relations_df(
     @cached_df(path=path, dtype=str, force=force)
     def _df_getter() -> pd.DataFrame:
         if force:
-            logger.info("[%s] forcing reload for relations", prefix)
+            logger.debug("[%s] forcing reload for relations", prefix)
         else:
-            logger.info("[%s] no cached relations found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, version=version, strict=strict)
+            logger.debug("[%s] no cached relations found. getting from OBO loader", prefix)
+        ontology = get_ontology(
+            prefix, force=force, version=version, strict=strict, rewrite=rewrite
+        )
         return ontology.get_relations_df(use_tqdm=use_tqdm)
 
     rv = _df_getter()

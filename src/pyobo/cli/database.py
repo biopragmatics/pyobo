@@ -41,6 +41,8 @@ __all__ = [
     "main",
 ]
 
+rewrite_option = click.option("--rewrite", is_flag=True)
+
 
 @click.group(name="database")
 def main():
@@ -88,10 +90,16 @@ def build(ctx: click.Context, directory: str, zenodo: bool, no_strict: bool, for
 @directory_option
 @force_option
 @no_strict_option
+@rewrite_option
 @click.option("--skip-below")
 @click.option("--skip-pyobo")
 def metadata(
-    directory: str, no_strict: bool, force: bool, skip_below: Optional[str], skip_pyobo: bool
+    directory: str,
+    no_strict: bool,
+    force: bool,
+    rewrite: bool,
+    skip_below: Optional[str],
+    skip_pyobo: bool,
 ):
     """Make the prefix-metadata dump."""
     db_output_helper(
@@ -100,6 +108,7 @@ def metadata(
         ("prefix", "version", "date", "deprecated"),
         strict=not no_strict,
         force=force,
+        rewrite=rewrite,
         directory=directory,
         use_gzip=False,
         skip_below=skip_below,
@@ -112,8 +121,9 @@ def metadata(
 @directory_option
 @zenodo_option
 @force_option
+@rewrite_option
 @no_strict_option
-def names(directory: str, zenodo: bool, no_strict: bool, force: bool):
+def names(directory: str, zenodo: bool, no_strict: bool, force: bool, rewrite: bool):
     """Make the prefix-identifier-name dump."""
     paths = db_output_helper(
         _iter_ooh_na_na,
@@ -121,6 +131,7 @@ def names(directory: str, zenodo: bool, no_strict: bool, force: bool):
         ("prefix", "identifier", "name"),
         strict=not no_strict,
         force=force,
+        rewrite=rewrite,
         directory=directory,
     )
     if zenodo:
@@ -133,8 +144,9 @@ def names(directory: str, zenodo: bool, no_strict: bool, force: bool):
 @directory_option
 @zenodo_option
 @force_option
+@rewrite_option
 @no_strict_option
-def species(directory: str, zenodo: bool, no_strict: bool, force: bool):
+def species(directory: str, zenodo: bool, no_strict: bool, force: bool, rewrite: bool):
     """Make the prefix-identifier-species dump."""
     paths = db_output_helper(
         _iter_species,
@@ -142,6 +154,7 @@ def species(directory: str, zenodo: bool, no_strict: bool, force: bool):
         ("prefix", "identifier", "species"),
         strict=not no_strict,
         force=force,
+        rewrite=rewrite,
         directory=directory,
     )
     if zenodo:
@@ -154,8 +167,9 @@ def species(directory: str, zenodo: bool, no_strict: bool, force: bool):
 @directory_option
 @zenodo_option
 @force_option
+@rewrite_option
 @no_strict_option
-def definitions(directory: str, zenodo: bool, no_strict: bool, force: bool):
+def definitions(directory: str, zenodo: bool, no_strict: bool, force: bool, rewrite: bool):
     """Make the prefix-identifier-definition dump."""
     paths = db_output_helper(
         _iter_definitions,
@@ -163,6 +177,7 @@ def definitions(directory: str, zenodo: bool, no_strict: bool, force: bool):
         ("prefix", "identifier", "definition"),
         strict=not no_strict,
         force=force,
+        rewrite=rewrite,
         directory=directory,
         skip_set={"kegg.pathway", "kegg.genes", "kegg.genome", "umls"},
     )
@@ -176,8 +191,9 @@ def definitions(directory: str, zenodo: bool, no_strict: bool, force: bool):
 @directory_option
 @zenodo_option
 @force_option
+@rewrite_option
 @no_strict_option
-def typedefs(directory: str, zenodo: bool, no_strict: bool, force: bool):
+def typedefs(directory: str, zenodo: bool, no_strict: bool, force: bool, rewrite: bool):
     """Make the typedef prefix-identifier-name dump."""
     paths = db_output_helper(
         _iter_typedefs,
@@ -185,6 +201,7 @@ def typedefs(directory: str, zenodo: bool, no_strict: bool, force: bool):
         ("prefix", "typedef_prefix", "identifier", "name"),
         strict=not no_strict,
         force=force,
+        rewrite=rewrite,
         directory=directory,
         use_gzip=False,
         skip_set={"ncbigene", "kegg.pathway", "kegg.genes", "kegg.genome"},
@@ -199,8 +216,9 @@ def typedefs(directory: str, zenodo: bool, no_strict: bool, force: bool):
 @directory_option
 @zenodo_option
 @force_option
+@rewrite_option
 @no_strict_option
-def alts(directory: str, zenodo: bool, force: bool, no_strict: bool):
+def alts(directory: str, zenodo: bool, force: bool, rewrite: bool, no_strict: bool):
     """Make the prefix-alt-id dump."""
     paths = db_output_helper(
         _iter_alts,
@@ -208,6 +226,7 @@ def alts(directory: str, zenodo: bool, force: bool, no_strict: bool):
         ("prefix", "identifier", "alt"),
         directory=directory,
         force=force,
+        rewrite=rewrite,
         strict=not no_strict,
         skip_set={"kegg.pathway", "kegg.genes", "kegg.genome", "umls"},
     )
@@ -221,8 +240,9 @@ def alts(directory: str, zenodo: bool, force: bool, no_strict: bool):
 @directory_option
 @zenodo_option
 @force_option
+@rewrite_option
 @no_strict_option
-def synonyms(directory: str, zenodo: bool, force: bool, no_strict: bool):
+def synonyms(directory: str, zenodo: bool, force: bool, rewrite: bool, no_strict: bool):
     """Make the prefix-identifier-synonym dump."""
     paths = db_output_helper(
         _iter_synonyms,
@@ -230,6 +250,7 @@ def synonyms(directory: str, zenodo: bool, force: bool, no_strict: bool):
         ("prefix", "identifier", "synonym"),
         directory=directory,
         force=force,
+        rewrite=rewrite,
         strict=not no_strict,
         skip_set={"kegg.pathway", "kegg.genes", "kegg.genome"},
     )
@@ -244,7 +265,8 @@ def synonyms(directory: str, zenodo: bool, force: bool, no_strict: bool):
 @zenodo_option
 @force_option
 @no_strict_option
-def relations(directory: str, zenodo: bool, force: bool, no_strict: bool):
+@rewrite_option
+def relations(directory: str, zenodo: bool, force: bool, no_strict: bool, rewrite: bool):
     """Make the relation dump."""
     paths = db_output_helper(
         _iter_relations,
@@ -259,6 +281,7 @@ def relations(directory: str, zenodo: bool, force: bool, no_strict: bool):
         ),
         directory=directory,
         force=force,
+        rewrite=rewrite,
         strict=not no_strict,
         summary_detailed=(0, 2, 3),  # second column corresponds to relation type
     )
@@ -272,8 +295,9 @@ def relations(directory: str, zenodo: bool, force: bool, no_strict: bool):
 @directory_option
 @zenodo_option
 @force_option
+@rewrite_option
 @no_strict_option
-def properties(directory: str, zenodo: bool, force: bool, no_strict: bool):
+def properties(directory: str, zenodo: bool, force: bool, rewrite: bool, no_strict: bool):
     """Make the properties dump."""
     paths = db_output_helper(
         _iter_properties,
@@ -281,6 +305,7 @@ def properties(directory: str, zenodo: bool, force: bool, no_strict: bool):
         ("prefix", "identifier", "property", "value"),
         directory=directory,
         force=force,
+        rewrite=rewrite,
         strict=not no_strict,
         summary_detailed=(0, 2),  # second column corresponds to property type
     )
@@ -294,8 +319,9 @@ def properties(directory: str, zenodo: bool, force: bool, no_strict: bool):
 @directory_option
 @zenodo_option
 @force_option
+@rewrite_option
 @no_strict_option
-def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool):  # noqa: D202
+def xrefs(directory: str, zenodo: bool, force: bool, rewrite: bool, no_strict: bool):  # noqa: D202
     """Make the prefix-identifier-xref dump."""
     paths = db_output_helper(
         _iter_xrefs,
@@ -303,6 +329,7 @@ def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool):  # noqa: 
         ("prefix", "identifier", "xref_prefix", "xref_identifier", "provenance"),
         directory=directory,
         force=force,
+        rewrite=rewrite,
         strict=not no_strict,
         summary_detailed=(0, 2),  # second column corresponds to xref prefix
     )
