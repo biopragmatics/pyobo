@@ -10,22 +10,31 @@ import pandas as pd
 from pyobo.struct import Obo, Reference, Term, from_species
 from pyobo.utils.path import ensure_df
 
+__all__ = [
+    "CGNCGetter",
+]
+
 PREFIX = "cgnc"
 URL = "http://birdgenenames.org/cgnc/downloads.jsp?file=standard"
 
 logger = logging.getLogger(__name__)
 
 
+class CGNCGetter(Obo):
+    """An ontology representation of the Chicken Genome Nomenclature Consortium's gene nomenclature."""
+
+    ontology = PREFIX
+    dynamic_version = True
+    typedefs = [from_species]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get CGNC as OBO."""
-    return Obo(
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        name="CGNC",
-        ontology=PREFIX,
-        typedefs=[from_species],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return CGNCGetter(force=force)
 
 
 HEADER = [
@@ -74,4 +83,4 @@ def get_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().cli()
+    CGNCGetter.cli()

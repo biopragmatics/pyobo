@@ -5,13 +5,15 @@
 import logging
 from typing import Iterable
 
-import bioversions
-
 from .gmt_utils import parse_wikipathways_gmt
 from ..constants import SPECIES_REMAPPING
 from ..struct import Obo, Reference, Term, from_species
 from ..struct.typedef import has_part
 from ..utils.path import ensure_path
+
+__all__ = [
+    "WikiPathwaysGetter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -38,18 +40,20 @@ _PATHWAY_INFO = [
 ]
 
 
+class WikiPathwaysGetter(Obo):
+    """An ontology representation of WikiPathways' pathway database."""
+
+    ontology = bioversions_key = PREFIX
+    typedefs = [has_part, from_species]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise)
+
+
 def get_obo() -> Obo:
     """Get WikiPathways as OBO."""
-    version = bioversions.get_version("wikipathways")
-    return Obo(
-        ontology=PREFIX,
-        name="WikiPathways",
-        data_version=version,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        typedefs=[has_part, from_species],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return WikiPathwaysGetter()
 
 
 def iter_terms(version: str) -> Iterable[Term]:
@@ -72,7 +76,9 @@ def iter_terms(version: str) -> Iterable[Term]:
             term.append_relationship(from_species, species_reference)
             for ncbigene_id in genes:
                 term.append_relationship(
-                    has_part, Reference(prefix="ncbigene", identifier=ncbigene_id)
+                    # Should be participates in!!!
+                    has_part,
+                    Reference(prefix="ncbigene", identifier=ncbigene_id),
                 )
             yield term
 

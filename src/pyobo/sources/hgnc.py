@@ -27,6 +27,10 @@ from ..struct import (
 )
 from ..utils.path import ensure_path, prefix_directory_join
 
+__all__ = [
+    "HGNCGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "hgnc"
@@ -135,47 +139,52 @@ LOCUS_TYPE_TO_SO = {
     None: "0000704",  # gene
 }
 
+IDSPACES = {
+    prefix: f"https://bioregistry.io/{prefix}:"
+    for prefix in [
+        "rgd",
+        "mgi",
+        "eccode",
+        "rnacentral",
+        "pubmed",
+        "uniprot",
+        "mirbase",
+        "snornabase",
+        "hgnc.genegroup",
+    ]
+}
+IDSPACES["NCBITaxon"] = "http://purl.obolibrary.org/obo/NCBITaxon_"
+
+
+class HGNCGetter(Obo):
+    """An ontology representation of HGNC's gene nomenclature."""
+
+    ontology = PREFIX
+    dynamic_version = True
+    typedefs = [
+        from_species,
+        has_gene_product,
+        gene_product_member_of,
+        transcribes_to,
+        orthologous,
+        member_of,
+    ]
+    idspaces = IDSPACES
+    synonym_typedefs = [
+        previous_name_type,
+        previous_symbol_type,
+        alias_name_type,
+        alias_symbol_type,
+    ]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(force=force)
+
 
 def get_obo(force: bool = False) -> Obo:
     """Get HGNC as OBO."""
-    idspaces = {
-        prefix: f"https://bioregistry.io/{prefix}:"
-        for prefix in [
-            "rgd",
-            "mgi",
-            "eccode",
-            "rnacentral",
-            "pubmed",
-            "uniprot",
-            "mirbase",
-            "snornabase",
-            "hgnc.genegroup",
-        ]
-    }
-    idspaces["NCBITaxon"] = "http://purl.obolibrary.org/obo/NCBITaxon_"
-
-    return Obo(
-        ontology=PREFIX,
-        name="HGNC",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        typedefs=[
-            from_species,
-            has_gene_product,
-            gene_product_member_of,
-            transcribes_to,
-            orthologous,
-            member_of,
-        ],
-        idspaces=idspaces,
-        synonym_typedefs=[
-            previous_name_type,
-            previous_symbol_type,
-            alias_name_type,
-            alias_symbol_type,
-        ],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return HGNCGetter(force=force)
 
 
 def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
@@ -196,7 +205,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
     )
 
     statuses = set()
-    for entry in tqdm(entries, desc=f"Mapping {PREFIX}"):
+    for entry in tqdm(entries, desc=f"Mapping {PREFIX}", unit="gene", unit_scale=True):
         name, symbol, identifier = (
             entry.pop("name"),
             entry.pop("symbol"),
@@ -210,7 +219,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
             logger.warning("UNHANDLED %s", status)
             is_obsolete = True
         else:
-            raise ValueError
+            raise ValueError(f"Unhandled status for hgnc:{identifier}: {status}")
 
         term = Term(
             definition=name,
@@ -252,12 +261,18 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
             )
 
         for rgd_curie in entry.pop("rgd_id", []):
+            if not rgd_curie.startswith("RGD:"):
+                logger.warning(f"hgnc:{identifier} had bad RGD CURIE: {rgd_curie}")
+                continue
             rgd_id = rgd_curie[len("RGD:") :]
             term.append_relationship(
                 orthologous,
                 Reference.auto(prefix="rgd", identifier=rgd_id),
             )
         for mgi_curie in entry.pop("mgd_id", []):
+            if not mgi_curie.startswith("MGI:"):
+                logger.warning(f"hgnc:{identifier} had bad MGI CURIE: {mgi_curie}")
+                continue
             mgi_id = mgi_curie[len("MGI:") :]
             term.append_relationship(
                 orthologous,
@@ -358,4 +373,4 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
 
 
 if __name__ == "__main__":
-    get_obo(force=True).cli()
+    HGNCGetter.cli()

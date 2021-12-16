@@ -8,7 +8,6 @@ Run with ``python -m pyobo.sources.kegg.genome``
 import logging
 from typing import Iterable
 
-import bioversions
 import click
 from more_click import verbose_option
 from tqdm import tqdm
@@ -22,6 +21,10 @@ from pyobo.sources.kegg.api import (
 )
 from pyobo.struct import Obo, Reference, Term
 
+__all__ = [
+    "KEGGGenomeGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 
@@ -29,17 +32,21 @@ def _s(line: str, sep: str):
     return [part.strip() for part in line.strip().split(sep, 1)]
 
 
+class KEGGGenomeGetter(Obo):
+    """An ontology representation of KEGG Genomes."""
+
+    ontology = KEGG_GENOME_PREFIX
+    bioversions_key = "kegg"
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise)
+
+
 def get_obo() -> Obo:
     """Get KEGG Genome as OBO."""
-    version = bioversions.get_version("kegg")
-    return Obo(
-        ontology=KEGG_GENOME_PREFIX,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        name="KEGG Genome",
-        data_version=version,
-        auto_generated_by=f"bio2obo:{KEGG_GENOME_PREFIX}",
-    )
+    # since old kegg versions go away forever, do NOT add a force option
+    return KEGGGenomeGetter()
 
 
 def parse_genome_line(line: str) -> KEGGGenome:
@@ -79,6 +86,7 @@ def parse_genome_line(line: str) -> KEGGGenome:
 
 def iter_kegg_genomes(version: str, desc: str) -> Iterable[KEGGGenome]:
     """Iterate over all KEGG genomes."""
+    # since old kegg versions go away forever, do NOT add a force option
     path = ensure_list_genomes(version=version)
     with open(path) as file:
         lines = [line.strip() for line in file]
@@ -91,6 +99,7 @@ def iter_kegg_genomes(version: str, desc: str) -> Iterable[KEGGGenome]:
 
 def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over terms for KEGG Genome."""
+    # since old kegg versions go away forever, do NOT add a force option
     errors = 0
     for kegg_genome in iter_kegg_genomes(version=version, desc="KEGG Genomes"):
         if kegg_genome.identifier in SKIP:

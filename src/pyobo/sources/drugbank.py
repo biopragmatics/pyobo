@@ -12,13 +12,16 @@ from functools import lru_cache
 from typing import Any, Dict, Iterable, Mapping, Optional
 from xml.etree import ElementTree
 
-import bioversions
 import pystow
 from tqdm import tqdm
 
 from ..struct import Obo, Reference, Term, TypeDef
 from ..utils.cache import cached_pickle
 from ..utils.path import prefix_directory_join
+
+__all__ = [
+    "DrugBankGetter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -29,18 +32,20 @@ has_salt = TypeDef(
 )
 
 
+class DrugBankGetter(Obo):
+    """A getter for DrugBank."""
+
+    ontology = bioversions_key = PREFIX
+    typedefs = [has_salt]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise, force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get DrugBank as OBO."""
-    version = bioversions.get_version("drugbank")
-    return Obo(
-        ontology=PREFIX,
-        name="DrugBank",
-        data_version=version,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        typedefs=[has_salt],
-    )
+    return DrugBankGetter(force=force)
 
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
@@ -94,7 +99,7 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
         prefix=PREFIX,
         identifier=drug_info["drugbank_id"],
         name=drug_info["name"],
-        definition=drug_info["description"],
+        definition=drug_info.get("description"),
     )
     for alias in drug_info["aliases"]:
         term.append_synonym(alias)
@@ -315,5 +320,4 @@ def _iter_polypeptides(polypeptides) -> Iterable[Mapping[str, Any]]:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    get_obo(force=True).cli()
+    DrugBankGetter.cli()

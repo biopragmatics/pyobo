@@ -20,11 +20,13 @@ from .registries import (
 )
 from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef
 from .struct.typedef import default_typedefs, develops_from, has_part, part_of
+from .utils.misc import cleanup_version
 
 __all__ = [
     "from_obo_path",
     "from_obonet",
 ]
+
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +51,7 @@ def from_obo_path(
     return from_obonet(graph, strict=strict)
 
 
-def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
+def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noqa:C901
     """Get all of the terms from a OBO graph."""
     _ontology = graph.graph["ontology"]
     ontology = normalize_prefix(_ontology)  # probably always okay
@@ -72,7 +74,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
         else:
             logger.warning("[%s] does not report a version nor a date", ontology)
     else:
-        data_version = _cleanup_version(data_version)
+        data_version = cleanup_version(data_version=data_version, prefix=ontology)
         if data_version is not None:
             logger.info("[%s] using version %s", ontology, data_version)
         elif date is not None:
@@ -86,6 +88,9 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
             logger.warning(
                 "[%s] UNRECOGNIZED VERSION FORMAT AND MISSING DATE: %s", ontology, data_version
             )
+
+    if data_version and "/" in data_version:
+        raise ValueError("Will not accept slash in data version")
 
     #: Parsed CURIEs to references (even external ones)
     references: Mapping[Tuple[str, str], Reference] = {
@@ -203,7 +208,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
                 continue
             n_relations += 1
             term.append_relationship(typedef, reference)
-        for prop, value in iterate_node_properties(data):
+        for prop, value in iterate_node_properties(data, term=term):
             n_properties += 1
             term.append_property(prop, value)
         terms.append(term)
@@ -214,17 +219,30 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
         f" {n_relations} relations, and {n_properties} properties",
     )
 
-    return Obo(
-        ontology=ontology,
-        name=name,
-        auto_generated_by=graph.graph.get("auto-generated-by"),
-        format_version=graph.graph.get("format-version"),
-        data_version=data_version,
-        date=date,
-        typedefs=list(typedefs.values()),
-        synonym_typedefs=list(synonym_typedefs.values()),
-        iter_terms=lambda: iter(terms),
-    )
+    _ontology = ontology
+    _name = name
+    _typedefs = typedefs
+    _synonym_typedefs = synonym_typedefs
+
+    class AdHocOntology(Obo):
+        """An ad hoc ontology created from an OBO file."""
+
+        ontology = _ontology
+        name = _name
+        auto_generated_by = graph.graph.get("auto-generated-by")
+        format_version = graph.graph.get("format-version")
+        typedefs = list(_typedefs.values())
+        synonym_typedefs = list(_synonym_typedefs.values())
+
+        def __post_init__(self):
+            self.date = date
+            self.data_version = data_version
+
+        def iter_terms(self, force: bool = False) -> Iterable[Term]:
+            """Iterate over terms in the ad hoc ontology."""
+            return terms
+
+    return AdHocOntology()
 
 
 def _clean_graph_ontology(graph, prefix: str) -> None:
@@ -271,22 +289,6 @@ def _get_name(graph, ontology: str) -> str:
         logger.info("[%s] does not report a name", ontology)
         rv = ontology
     return rv
-
-
-def _cleanup_version(data_version: str) -> Optional[str]:
-    if data_version.replace(".", "").isnumeric():
-        return data_version  # consectuive, major.minor, or semantic versioning
-    if data_version.startswith("http://www.ebi.ac.uk/efo/releases/v"):
-        return data_version[len("http://www.ebi.ac.uk/efo/releases/v") :].split("/")[0]
-    for v in data_version.split("/"):
-        v = v.strip()
-        try:
-            datetime.strptime(v, "%Y-%m-%d")
-        except ValueError:
-            continue
-        else:
-            return v
-    return None
 
 
 def iterate_graph_synonym_typedefs(graph: nx.MultiDiGraph) -> Iterable[SynonymTypeDef]:
@@ -464,12 +466,15 @@ HANDLED_PROPERTY_TYPES = {
 
 
 def iterate_node_properties(
-    data: Mapping[str, Any],
-    property_prefix: Optional[str] = None,
+    data: Mapping[str, Any], *, property_prefix: Optional[str] = None, term=None
 ) -> Iterable[Tuple[str, str]]:
     """Extract properties from a :mod:`obonet` node's data."""
     for prop_value_type in data.get("property_value", []):
-        prop, value_type = prop_value_type.split(" ", 1)
+        try:
+            prop, value_type = prop_value_type.split(" ", 1)
+        except ValueError:
+            logger.info("malformed property: %s on %s", prop_value_type, term and term.curie)
+            continue
         if property_prefix is not None and prop.startswith(property_prefix):
             prop = prop[len(property_prefix) :]
 

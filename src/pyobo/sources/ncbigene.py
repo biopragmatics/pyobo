@@ -12,6 +12,10 @@ from ..api import get_id_name_mapping
 from ..struct import Obo, Reference, Term, from_species
 from ..utils.path import ensure_df
 
+__all__ = [
+    "NCBIGeneGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "ncbigene"
@@ -79,18 +83,24 @@ def _get_ncbigene_subset(usecols: List[str]) -> pd.DataFrame:
     return df
 
 
-def get_obo() -> Obo:
+class NCBIGeneGetter(Obo):
+    """An ontology representation of NCBI's Entrez Gene database."""
+
+    ontology = PREFIX
+    dynamic_version = True
+    typedefs = [from_species]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(force=force)
+
+
+def get_obo(force: bool = False) -> Obo:
     """Get Entrez as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="Entrez Gene",
-        iter_terms=get_terms,
-        typedefs=[from_species],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return NCBIGeneGetter(force=force)
 
 
-def get_gene_info_df() -> pd.DataFrame:
+def get_gene_info_df(force: bool = False) -> pd.DataFrame:
     """Get the gene info dataframe."""
     return ensure_df(
         PREFIX,
@@ -98,7 +108,8 @@ def get_gene_info_df() -> pd.DataFrame:
         sep="\t",
         na_values=["-", "NEWENTRY"],
         usecols=GENE_INFO_COLUMNS,
-        dtype={"#tax_id": str, "GeneID": str},
+        dtype=str,
+        force=force,
     )
 
 
@@ -147,20 +158,25 @@ xref_mapping = {
 xref_mapping = {x.lower() for x in xref_mapping}
 
 
-def get_terms() -> Iterable[Term]:
+def get_terms(force: bool = False) -> Iterable[Term]:
     """Get Entrez terms."""
-    df = get_gene_info_df()
+    df = get_gene_info_df(force=force)
 
     taxonomy_id_to_name = get_id_name_mapping("ncbitaxon")
+    missing_taxa = set()
 
-    it = tqdm(df.values, total=len(df.index), desc=f"mapping {PREFIX}")
+    it = tqdm(
+        df.values, total=len(df.index), desc=f"mapping {PREFIX}", unit_scale=True, unit="gene"
+    )
     for tax_id, gene_id, symbol, dbxrfs, description, _gene_type in it:
         if pd.isna(symbol):
             continue
         try:
             tax_name = taxonomy_id_to_name[tax_id]
         except KeyError:
-            logger.warning(f"Could not look up tax_id={tax_id}")
+            if tax_id not in missing_taxa:
+                logger.warning(f"Could not look up name for NCBITaxon:{tax_id}")
+                missing_taxa.add(tax_id)
             tax_name = None
 
         xrefs = []

@@ -13,23 +13,29 @@ from pyobo import Obo, Reference, Term
 
 __all__ = [
     "get_obo",
+    "CCLEGetter",
 ]
 
 PREFIX = "ccle"
+VERSION = "2019"
 
 
-def get_obo(*, version: Optional[str] = None, force: bool = False) -> Obo:
+class CCLEGetter(Obo):
+    """An ontology representation of the Cancer Cell Line Encyclopedia's cell lines."""
+
+    ontology = bioregistry_key = PREFIX
+
+    def __post_init__(self):  # noqa: D105
+        self.data_version = VERSION
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise, force=force)
+
+
+def get_obo(*, force: bool = False) -> Obo:
     """Get CCLE Cells as OBO."""
-    if version is None:
-        version = get_version()
-    return Obo(
-        ontology=PREFIX,
-        name="CCLE Cell Lines",
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return CCLEGetter(force=force)
 
 
 def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
@@ -93,4 +99,4 @@ def ensure_df(version: Optional[str] = None, force: bool = False) -> pd.DataFram
 
 
 if __name__ == "__main__":
-    get_obo().cli()
+    CCLEGetter.cli()

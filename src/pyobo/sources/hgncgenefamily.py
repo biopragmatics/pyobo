@@ -11,6 +11,10 @@ from tqdm import tqdm
 from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
 from ..utils.path import ensure_path
 
+__all__ = [
+    "HGNCGroupGetter",
+]
+
 PREFIX = "hgnc.genegroup"
 FAMILIES_URL = "ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/csv/genefamily_db_tables/family.csv"
 # TODO use family_alias.csv
@@ -21,17 +25,22 @@ HIERARCHY_URL = (
 symbol_type = SynonymTypeDef(id="symbol", name="symbol")
 
 
+class HGNCGroupGetter(Obo):
+    """An ontology representation of HGNC's gene group nomenclature."""
+
+    ontology = PREFIX
+    dynamic_version = True
+    synonym_typedefs = [symbol_type]
+    typedefs = [from_species]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get HGNC Gene Groups as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="HGNC Gene Groups",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        synonym_typedefs=[symbol_type],
-        typedefs=[from_species],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return HGNCGroupGetter(force=force)
 
 
 def get_hierarchy(force: bool = False) -> Mapping[str, List[str]]:

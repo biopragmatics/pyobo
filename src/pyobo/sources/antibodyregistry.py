@@ -2,15 +2,21 @@
 
 """Converter for the Antibody Registry."""
 
+import logging
 from typing import Iterable, Mapping, Optional
 
-import bioregistry
 import bioversions
 import pandas as pd
 from tqdm import tqdm
 
 from pyobo import Obo, Term
 from pyobo.utils.path import ensure_df
+
+__all__ = [
+    "AntibodyRegistryGetter",
+]
+
+logger = logging.getLogger(__name__)
 
 PREFIX = "antibodyregistry"
 URL = "http://antibodyregistry.org/php/fileHandler.php"
@@ -33,16 +39,19 @@ def get_chunks(force: bool = False) -> pd.DataFrame:
     return df
 
 
+class AntibodyRegistryGetter(Obo):
+    """An ontology representation of the Antibody Registry."""
+
+    ontology = bioversions_key = PREFIX
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(force=force)
+
+
 def get_obo(*, force: bool = False) -> Obo:
     """Get the Antibody Registry as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name=bioregistry.get_name(PREFIX),
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(force=force),
-        data_version=bioversions.get_version(PREFIX),
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return AntibodyRegistryGetter(force=force)
 
 
 # TODO there are tonnnnsss of mappings to be curated
@@ -79,7 +88,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
                 if vendor not in needs_curating:
                     needs_curating.add(vendor)
                     if all(x not in vendor for x in SKIP):
-                        it.write(f"! vendor {vendor} for {identifier}")
+                        logger.debug(f"! vendor {vendor} for {identifier}")
             elif MAPPING[vendor] is not None and pd.notna(catalog_number) and catalog_number:
                 term.append_xref((MAPPING[vendor], catalog_number))  # type:ignore
             if defining_citation and pd.notna(defining_citation):
@@ -92,4 +101,4 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).cli()
+    AntibodyRegistryGetter.cli()

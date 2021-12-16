@@ -6,13 +6,16 @@ import gzip
 import logging
 from typing import Iterable, List, Mapping
 
-import bioversions
 from tqdm import tqdm
 
 from ..struct import Obo, Reference, Synonym, Term, from_species
 from ..struct.typedef import has_mature
 from ..utils.cache import cached_mapping
 from ..utils.path import ensure_df, ensure_path, prefix_directory_join
+
+__all__ = [
+    "MiRBaseGetter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -28,18 +31,20 @@ xref_mapping = {
 }
 
 
+class MiRBaseGetter(Obo):
+    """An ontology representation of miRBase's miRNA nomenclature."""
+
+    ontology = bioversions_key = PREFIX
+    typedefs = [from_species, has_mature]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(version=self._version_or_raise, force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get miRBase as OBO."""
-    version = bioversions.get_version(PREFIX)
-    return Obo(
-        ontology=PREFIX,
-        name="miRBase",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        typedefs=[from_species, has_mature],
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return MiRBaseGetter(force=force)
 
 
 def get_terms(version: str, force: bool = False) -> List[Term]:

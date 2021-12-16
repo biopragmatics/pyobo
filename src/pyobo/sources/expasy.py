@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# type:ignore
 
 """Convert ExPASy to OBO."""
 
@@ -7,12 +6,14 @@ import logging
 from collections import defaultdict
 from typing import Dict, Iterable, Mapping, Optional, Set, Tuple
 
-import bioversions
-
 from .utils import get_go_mapping
 from ..struct import Obo, Reference, Synonym, Term, TypeDef
 from ..struct.typedef import has_member
 from ..utils.path import ensure_path
+
+__all__ = [
+    "ExpasyGetter",
+]
 
 PREFIX = "eccode"
 EXPASY_DATABASE_URL = "ftp://ftp.expasy.org/databases/enzyme/enzyme.dat"
@@ -44,23 +45,25 @@ has_molecular_function = TypeDef(
 )
 
 
-def get_obo() -> Obo:
+class ExpasyGetter(Obo):
+    """A getter for ExPASy Enzyme Classes."""
+
+    bioversions_key = ontology = PREFIX
+    typedefs = [has_member, has_molecular_function]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(version=self._version_or_raise, force=force)
+
+
+def get_obo(force: bool = False) -> Obo:
     """Get ExPASy as OBO."""
-    version = bioversions.get_version("expasy")
-    return Obo(
-        ontology=PREFIX,
-        name="ExPASy Enzyme Nomenclature",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version),
-        data_version=version,
-        typedefs=[has_member, has_molecular_function],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return ExpasyGetter(force=force)
 
 
-def get_terms(version: str) -> Iterable[Term]:
+def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get the ExPASy terms."""
-    tree_path = ensure_path(PREFIX, url=EXPASY_TREE_URL, version=version)
+    tree_path = ensure_path(PREFIX, url=EXPASY_TREE_URL, version=version, force=force)
     with open(tree_path) as file:
         tree = get_tree(file)
 
@@ -83,7 +86,7 @@ def get_terms(version: str) -> Iterable[Term]:
     with open(database_path) as file:
         data = get_database(file)
 
-    ec2go = get_ec2go()
+    ec2go = get_ec2go(version=version)
 
     ec_code_to_alt_ids = {}
     for ec_code, data in data.items():
@@ -172,7 +175,7 @@ def get_tree(lines: Iterable[str]):
 
         rv[expasy_id] = {
             "concept": {
-                "namespace": "ec-code",
+                "namespace": PREFIX,
                 "identifier": expasy_id,
             },
             "name": name,
@@ -181,10 +184,10 @@ def get_tree(lines: Iterable[str]):
         }
         if parent_expasy_id is not None:
             rv[expasy_id]["parent"] = {
-                "namespace": "ec-code",
+                "namespace": PREFIX,
                 "identifier": parent_expasy_id,
             }
-            rv[parent_expasy_id]["children"].append(rv[expasy_id]["concept"])
+            rv[parent_expasy_id]["children"].append(rv[expasy_id]["concept"])  # type:ignore
 
     return rv
 
@@ -200,11 +203,11 @@ def get_database(lines: Iterable[str]) -> Mapping:
 
         rv[expasy_id] = ec_data_entry = {
             "concept": {
-                "namespace": "ec-code",
+                "namespace": PREFIX,
                 "identifier": expasy_id,
             },
             "parent": {
-                "namespace": "ec-code",
+                "namespace": PREFIX,
                 "identifier": expasy_id.rsplit(".", 1)[0],
             },
             "synonyms": [],
@@ -223,12 +226,12 @@ def get_database(lines: Iterable[str]) -> Mapping:
                 value = value[len("Transferred entry: ") :].rstrip()
                 ec_data_entry["transfer_id"] = value
             elif descriptor == DE:
-                ec_data_entry["concept"]["name"] = value.rstrip(".")
+                ec_data_entry["concept"]["name"] = value.rstrip(".")  # type:ignore
             elif descriptor == AN:
-                ec_data_entry["synonyms"].append(value.rstrip("."))
+                ec_data_entry["synonyms"].append(value.rstrip("."))  # type:ignore
             elif descriptor == PR:
                 value = value[len("PROSITE; ") : -1]  # remove trailing comma
-                ec_data_entry["domains"].append(
+                ec_data_entry["domains"].append(  # type:ignore
                     {
                         "namespace": "prosite",
                         "identifier": value,
@@ -239,7 +242,7 @@ def get_database(lines: Iterable[str]) -> Mapping:
                     if not uniprot_entry:
                         continue
                     uniprot_id, uniprot_accession = uniprot_entry.split(",")
-                    ec_data_entry["proteins"].append(
+                    ec_data_entry["proteins"].append(  # type:ignore
                         dict(
                             namespace="uniprot",
                             name=uniprot_accession,
@@ -250,7 +253,7 @@ def get_database(lines: Iterable[str]) -> Mapping:
     for expasy_id, data in rv.items():
         transfer_id = data.pop("transfer_id", None)
         if transfer_id is not None:
-            rv[expasy_id]["alt_ids"].append(transfer_id)
+            rv[expasy_id]["alt_ids"].append(transfer_id)  # type:ignore
 
     return rv
 
@@ -275,12 +278,12 @@ def _group_by_id(lines):
     return groups
 
 
-def get_ec2go() -> Mapping[str, Set[Tuple[str, str]]]:
+def get_ec2go(version: str) -> Mapping[str, Set[Tuple[str, str]]]:
     """Get the EC mapping to GO activities."""
     url = "http://current.geneontology.org/ontology/external2go/ec2go"
-    path = ensure_path(PREFIX, url=url, name="ec2go.tsv")
+    path = ensure_path(PREFIX, url=url, name="ec2go.tsv", version=version)
     return get_go_mapping(path, "EC")
 
 
 if __name__ == "__main__":
-    get_obo().cli()
+    ExpasyGetter.cli()

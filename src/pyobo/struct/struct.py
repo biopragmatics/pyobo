@@ -13,7 +13,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import (
     Any,
-    Callable,
+    ClassVar,
     Collection,
     Dict,
     Iterable,
@@ -403,72 +403,115 @@ class Obo:
     """An OBO document."""
 
     #: The prefix for the ontology
-    ontology: str
+    ontology: ClassVar[str]
 
-    #: The name of the ontology
-    name: str
-
-    #: A function that iterates over terms
-    iter_terms: Callable[..., Iterable[Term]] = field(repr=False)
+    #: The name of the ontology. If not given, tries looking up with the Bioregistry.
+    name: ClassVar[Optional[str]] = None
 
     #: The OBO format
-    format_version: str = "1.2"
+    format_version: ClassVar[str] = "1.2"
 
     #: Type definitions
-    typedefs: List[TypeDef] = field(default_factory=list)
+    typedefs: ClassVar[Optional[List[TypeDef]]] = None
 
     #: Synonym type definitions
-    synonym_typedefs: List[SynonymTypeDef] = field(default_factory=list)
-
-    #: Kwargs to add to the iter_items when called
-    iter_terms_kwargs: Optional[Mapping[str, Any]] = None
-
-    #: Regular expression pattern describing the local unique identifiers
-    pattern: Optional[str] = None
-
-    #: Is the prefix at the begging of each local unique identifier
-    namespace_in_pattern: Optional[bool] = None
-
-    #: The ontology version
-    data_version: Optional[str] = None
+    synonym_typedefs: ClassVar[Optional[List[SynonymTypeDef]]] = None
 
     #: An annotation about how an ontology was generated
-    auto_generated_by: Optional[str] = None
+    auto_generated_by: ClassVar[Optional[str]] = None
+
+    #: The idspaces used in the document
+    idspaces: ClassVar[Optional[Mapping[str, str]]] = None
+
+    #: For super-sized datasets that shouldn't be read into memory
+    iter_only: ClassVar[bool] = False
+
+    #: Set to true for resources that are unversioned/very dynamic, like HGNC
+    dynamic_version: ClassVar[bool] = False
+
+    #: Set to a static version for the resource (i.e., the resource is not itself versioned)
+    static_version: ClassVar[Optional[str]] = None
+
+    bioversions_key: ClassVar[Optional[str]] = None
 
     #: The date the ontology was generated
     date: Optional[datetime] = field(default_factory=datetime.today)
 
-    #: The idspaces used in the document
-    idspaces: Dict[str, str] = field(default_factory=dict)
+    #: The ontology version
+    data_version: Optional[str] = None
+
+    #: Should this ontology be reloaded?
+    force: bool = False
 
     #: The hierarchy of terms
-    _hierarchy: Optional[nx.DiGraph] = field(init=False, default=None)
+    _hierarchy: Optional[nx.DiGraph] = field(init=False, default=None, repr=False)
+    #: A cache of terms
+    _items: Optional[List[Term]] = field(init=False, default=None, repr=False)
 
-    #: For super-sized datasets that shouldn't be read into memory
-    iter_only: bool = False
-
-    _items: Optional[List[Term]] = field(init=False, default=None)
-
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         """Run post-init checks."""
         if self.ontology != bioregistry.normalize_prefix(self.ontology):
             raise BioregistryError(self.ontology)
+        # The type ignores are because of the hack where we override the
+        # class variables in the instance
+        if self.name is None:
+            self.name = bioregistry.get_name(self.ontology)  # type:ignore
+        if not self.data_version:
+            if self.static_version:
+                self.data_version = self.static_version
+            else:
+                self.data_version = self._get_version()
+        if not self.dynamic_version:
+            if self.data_version is None:
+                raise ValueError(f"{self.ontology} is missing data_version")
+            elif "/" in self.data_version:
+                raise ValueError(f"{self.ontology} has a slash in version: {self.data_version}")
+        if self.auto_generated_by is None:
+            self.auto_generated_by = f"bio2obo:{self.ontology}"  # type:ignore
 
-    def cli(self) -> None:
-        """Run the CLI for this instance."""
-        _cli = self.get_cli()
-        _cli()
+    def _get_version(self) -> Optional[str]:
+        if self.bioversions_key:
+            import bioversions
 
-    def get_cli(self) -> click.Command:
-        """Get a CLI for this instance."""
+            try:
+                return bioversions.get_version(self.bioversions_key)
+            except KeyError:
+                logger.warning(f"[{self.bioversions_key}] bioversions doesn't list this resource ")
+            except IOError:
+                logger.warning(f"[{self.bioversions_key}] error while looking up version")
+        return None
+
+    @property
+    def _version_or_raise(self) -> str:
+        if not self.data_version:
+            raise ValueError(f"There is no version available for {self.ontology}")
+        return self.data_version
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in this ontology."""
+        raise NotImplementedError
+
+    @classmethod
+    def cli(cls) -> None:
+        """Run the CLI for this class."""
+        cli = cls.get_cls_cli()
+        cli()
+
+    @classmethod
+    def get_cls_cli(cls) -> click.Command:
+        """Get the CLI for this class."""
 
         @click.command()
         @verbose_option
         @force_option
         @click.option("--owl", is_flag=True)
         @click.option("--graph", is_flag=True)
-        def _main(force: bool, owl: bool, graph: bool):
-            self.write_default(
+        @click.option(
+            "--version", help="Specify data version to get. Use this if bioversions is acting up."
+        )
+        def _main(force: bool, owl: bool, graph: bool, version: Optional[str]):
+            inst = cls(force=force, data_version=version)
+            inst.write_default(
                 write_obograph=graph,
                 write_obo=True,
                 write_owl=owl,
@@ -505,15 +548,19 @@ class Obo:
         if self.data_version is not None:
             yield f"data-version: {self.data_version}"
 
-        for prefix, url in sorted(self.idspaces.items()):
+        for prefix, url in sorted((self.idspaces or {}).items()):
             yield f"idspace: {prefix} {url}"
 
-        for synonym_typedef in sorted(self.synonym_typedefs, key=attrgetter("id")):
+        for synonym_typedef in sorted((self.synonym_typedefs or []), key=attrgetter("id")):
             yield synonym_typedef.to_obo()
 
         yield f"ontology: {self.ontology}"
 
-        for typedef in self.typedefs:
+        if self.name is None:
+            raise ValueError
+        yield f"remark: {self.name}"
+
+        for typedef in self.typedefs or []:
             yield from typedef.iterate_obo_lines()
 
         for term in self:
@@ -664,7 +711,7 @@ class Obo:
             )
 
         for relation in (is_a, has_part, part_of, from_species, orthologous):
-            if relation is not is_a and relation not in self.typedefs:
+            if relation is not is_a and self.typedefs is not None and relation not in self.typedefs:
                 continue
             relations_path = self._cache("relations", name=f"{relation.curie}.tsv")
             if relations_path.exists() and not force:
@@ -695,12 +742,12 @@ class Obo:
     @property
     def _items_accessor(self):
         if self._items is None:
-            self._items = list(self.iter_terms(**(self.iter_terms_kwargs or {})))
+            self._items = list(self.iter_terms(force=self.force))
         return self._items
 
     def __iter__(self) -> Iterator["Term"]:  # noqa: D105
         if self.iter_only:
-            return iter(self.iter_terms(**(self.iter_terms_kwargs or {})))
+            return iter(self.iter_terms(force=self.force))
         return iter(self._items_accessor)
 
     def ancestors(self, identifier: str) -> Set[str]:
@@ -872,13 +919,13 @@ class Obo:
         """Get a typedef dataframe."""
         rows = [
             (typedef.prefix, typedef.identifier, typedef.name)
-            for typedef in tqdm(self.typedefs, disable=not use_tqdm)
+            for typedef in tqdm(self.typedefs or [], disable=not use_tqdm)
         ]
         return pd.DataFrame(rows, columns=["prefix", "identifier", "name"])
 
     def iter_typedef_id_name(self) -> Iterable[Tuple[str, str]]:
         """Iterate over typedefs' identifiers and their respective names."""
-        for typedef in self.typedefs:
+        for typedef in self.typedefs or []:
             yield typedef.identifier, typedef.name
 
     def get_typedef_id_name_mapping(self) -> Mapping[str, str]:
@@ -966,10 +1013,10 @@ class Obo:
             for parent in term.parents:
                 yield term, is_a, parent
             for typedef, reference in term.iterate_relations():
-                if (
-                    typedef not in self.typedefs
-                    and (typedef.prefix, typedef.identifier) not in default_typedefs
-                ):
+                if (self.typedefs is None or typedef not in self.typedefs) and (
+                    typedef.prefix,
+                    typedef.identifier,
+                ) not in default_typedefs:
                     raise ValueError(f"Undefined typedef: {typedef.curie} ! {typedef.name}")
                 yield term, typedef, reference
 
@@ -1207,8 +1254,10 @@ class Obo:
         return multidict((term.identifier, alt.identifier) for term, alt in self.iterate_alts())
 
 
-def _convert_typedefs(typedefs: Iterable[TypeDef]) -> List[Mapping[str, Any]]:
+def _convert_typedefs(typedefs: Optional[Iterable[TypeDef]]) -> List[Mapping[str, Any]]:
     """Convert the type defs."""
+    if not typedefs:
+        return []
     return [_convert_typedef(typedef) for typedef in typedefs]
 
 
@@ -1218,8 +1267,10 @@ def _convert_typedef(typedef: TypeDef) -> Mapping[str, Any]:
     return typedef.reference.to_dict()
 
 
-def _convert_synonym_typedefs(synonym_typedefs: Iterable[SynonymTypeDef]) -> List[str]:
+def _convert_synonym_typedefs(synonym_typedefs: Optional[Iterable[SynonymTypeDef]]) -> List[str]:
     """Convert the synonym type defs."""
+    if not synonym_typedefs:
+        return []
     return [_convert_synonym_typedef(synonym_typedef) for synonym_typedef in synonym_typedefs]
 
 

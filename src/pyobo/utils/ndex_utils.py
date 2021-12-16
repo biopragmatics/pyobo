@@ -31,10 +31,10 @@ def iterate_aspect(cx: CX, aspect: str) -> Iterable[Any]:
             yield from element[aspect]
 
 
-def ensure_ndex_network(prefix: str, uuid: str) -> CX:
+def ensure_ndex_network(prefix: str, uuid: str, force: bool = False) -> CX:
     """Ensure a network from NDEx is cached."""
     path = prefix_directory_join(prefix, "ndex", name=f"{uuid}.json")
-    if os.path.exists(path):
+    if os.path.exists(path) and not force:
         with open(path) as file:
             return json.load(file)
 
@@ -46,20 +46,20 @@ def ensure_ndex_network(prefix: str, uuid: str) -> CX:
 
 
 def ensure_ndex_network_set(
-    prefix: str, uuid: str, use_tqdm: bool = False
+    prefix: str, uuid: str, use_tqdm: bool = False, force: bool = False
 ) -> Iterable[Tuple[str, CX]]:
     """Ensure the list of networks that goes with NCI PID on NDEx."""
-    it = _help_ensure_ndex_network_set(prefix, uuid)
+    it = _help_ensure_ndex_network_set(prefix, uuid, force=force)
     if use_tqdm:
-        it = tqdm(it, desc=f"ensuring networks from {uuid}")
+        it = tqdm(it, desc=f"Downloading ndex:{uuid}")
     for network_uuid in it:
-        yield network_uuid, ensure_ndex_network(prefix, network_uuid)
+        yield network_uuid, ensure_ndex_network(prefix, network_uuid, force=force)
 
 
-def _help_ensure_ndex_network_set(prefix: str, uuid: str) -> List[str]:
+def _help_ensure_ndex_network_set(prefix: str, uuid: str, force: bool = False) -> List[str]:
     """Ensure the list of networks that goes with NCI PID on NDEx."""
     networkset_path = prefix_directory_join(prefix, name="networks.txt")
-    if os.path.exists(networkset_path):
+    if os.path.exists(networkset_path) and not force:
         with open(networkset_path) as file:
             return sorted(line.strip() for line in file)
 

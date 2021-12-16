@@ -23,19 +23,29 @@ from ..sources.icd_utils import (
 from ..struct import Obo, Reference, Synonym, Term
 from ..utils.path import prefix_directory_join
 
+__all__ = [
+    "ICD11Getter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "icd11"
 
 
+class ICD11Getter(Obo):
+    """An ontology representation of ICD-11."""
+
+    ontology = PREFIX
+    dynamic_version = True
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iterate_icd11()
+
+
 def get_obo() -> Obo:
     """Get ICD11 as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="International Statistical Classification of Diseases and Related Health Problems 11th Revision",
-        iter_terms=iterate_icd11,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return ICD11Getter()
 
 
 def iterate_icd11() -> Iterable[Term]:

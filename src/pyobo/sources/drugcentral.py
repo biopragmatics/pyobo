@@ -5,34 +5,39 @@
 import logging
 from typing import Iterable
 
-import bioversions
 import pandas as pd
 
 from pyobo.struct import Obo, Reference, Term
 from pyobo.utils.path import ensure_df
 
+__all__ = [
+    "DrugCentralGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "drugcentral"
-URL = "http://unmtid-shinyapps.net/download/structures.smiles.tsv"
+
+
+class DrugCentralGetter(Obo):
+    """An ontology representation of the DrugCentral database."""
+
+    ontology = bioversions_key = PREFIX
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise, force=force)
 
 
 def get_obo(force: bool = False) -> Obo:
     """Get DrugCentral OBO."""
-    version = bioversions.get_version(PREFIX)
-    return Obo(
-        ontology=PREFIX,
-        name="DrugCentral",
-        data_version=version,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return DrugCentralGetter(force=force)
 
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over DrugCentral terms."""
-    df = ensure_df(PREFIX, url=URL, version=version, force=force)
+    url = f"https://unmtid-shinyapps.net/download/DrugCentral/{version}/structures.smiles.tsv"
+    df = ensure_df(PREFIX, url=url, version=version, force=force)
     for smiles, inchi, inchi_key, drugcentral_id, drugcentral_name, cas in df.values:
         if pd.isna(smiles) or pd.isna(inchi) or pd.isna(inchi_key):
             logger.warning("missing data for drugcentral:%s", drugcentral_id)
@@ -47,4 +52,4 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).cli()
+    DrugCentralGetter.cli()

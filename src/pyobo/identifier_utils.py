@@ -66,6 +66,8 @@ def normalize_prefix(prefix: str, *, curie=None, xref=None, strict: bool = True)
 
     if curie is None or curie.startswith("obo:"):
         return None
+    if curie.startswith("http") or curie.startswith("urn:"):
+        return None
     if curie.startswith("UBERON:"):  # uberon has tons of xrefs to anatomical features. skip them
         UBERON_UNHANDLED[prefix].append((curie, xref))
     elif strict:

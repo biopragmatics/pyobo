@@ -4,11 +4,8 @@
 
 import logging
 from collections import defaultdict
-from typing import Iterable
+from typing import Iterable, Optional
 
-import bioversions
-import click
-from more_click import verbose_option
 from tqdm import tqdm
 
 from pyobo.struct import (
@@ -21,6 +18,10 @@ from pyobo.struct import (
 )
 from pyobo.utils.io import multidict, multisetdict
 from pyobo.utils.path import ensure_df
+
+__all__ = [
+    "ZFINGetter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -35,18 +36,20 @@ ENTREZ_MAPPINGS = "https://zfin.org/downloads/gene.txt"
 UNIPROT_MAPPINGS = "https://zfin.org/downloads/uniprot.txt"
 
 
+class ZFINGetter(Obo):
+    """An ontology representation of ZFIN's zebrafish database."""
+
+    bioversions_key = ontology = PREFIX
+    typedefs = [from_species, has_gene_product, orthologous]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in ZFIN."""
+        return get_terms(force=force, version=self._version_or_raise)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get ZFIN OBO."""
-    version = bioversions.get_version("zfin")
-    return Obo(
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        name=NAME,
-        ontology=PREFIX,
-        typedefs=[from_species, has_gene_product, orthologous],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        data_version=version,
-    )
+    return ZFINGetter(force=force)
 
 
 MARKERS_COLUMNS = [
@@ -58,33 +61,55 @@ MARKERS_COLUMNS = [
 ]
 
 
-def get_terms(force: bool = False) -> Iterable[Term]:
+def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Term]:
     """Get terms."""
     alt_ids_df = ensure_df(
-        PREFIX, url=ALTS_URL, name="alts.tsv", force=force, header=None, names=["alt", "zfin_id"]
+        PREFIX,
+        url=ALTS_URL,
+        name="alts.tsv",
+        force=force,
+        header=None,
+        names=["alt", "zfin_id"],
+        version=version,
     )
     primary_to_alt_ids = defaultdict(set)
     for alt_id, zfin_id in alt_ids_df.values:
         primary_to_alt_ids[zfin_id].add(alt_id)
 
     human_orthologs = multisetdict(
-        ensure_df(PREFIX, url=HUMAN_ORTHOLOGS, force=force, header=None, usecols=[0, 7]).values
+        ensure_df(
+            PREFIX, url=HUMAN_ORTHOLOGS, force=force, header=None, usecols=[0, 7], version=version
+        ).values
     )
     mouse_orthologs = multisetdict(
-        ensure_df(PREFIX, url=MOUSE_ORTHOLOGS, force=force, header=None, usecols=[0, 5]).values
+        ensure_df(
+            PREFIX, url=MOUSE_ORTHOLOGS, force=force, header=None, usecols=[0, 5], version=version
+        ).values
     )
     fly_orthologs = multisetdict(
-        ensure_df(PREFIX, url=FLY_ORTHOLOGS, force=force, header=None, usecols=[0, 5]).values
+        ensure_df(
+            PREFIX, url=FLY_ORTHOLOGS, force=force, header=None, usecols=[0, 5], version=version
+        ).values
     )
     entrez_mappings = dict(
-        ensure_df(PREFIX, url=ENTREZ_MAPPINGS, force=force, header=None, usecols=[0, 3]).values
+        ensure_df(
+            PREFIX, url=ENTREZ_MAPPINGS, force=force, header=None, usecols=[0, 3], version=version
+        ).values
     )
     uniprot_mappings = multidict(
-        ensure_df(PREFIX, url=UNIPROT_MAPPINGS, force=force, header=None, usecols=[0, 3]).values
+        ensure_df(
+            PREFIX, url=UNIPROT_MAPPINGS, force=force, header=None, usecols=[0, 3], version=version
+        ).values
     )
 
     df = ensure_df(
-        PREFIX, url=URL, name="markers.tsv", force=force, header=None, names=MARKERS_COLUMNS
+        PREFIX,
+        url=URL,
+        name="markers.tsv",
+        force=force,
+        header=None,
+        names=MARKERS_COLUMNS,
+        version=version,
     )
     df["sequence_ontology_id"] = df["sequence_ontology_id"].map(lambda x: x[len("SO:") :])
     so = {
@@ -123,12 +148,5 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         yield term
 
 
-@click.command()
-@verbose_option
-def _main():
-    obo = get_obo(force=True)
-    obo.write_default(force=True, write_obo=True)
-
-
 if __name__ == "__main__":
-    _main()
+    ZFINGetter.cli()
