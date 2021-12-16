@@ -219,7 +219,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
             logger.warning("UNHANDLED %s", status)
             is_obsolete = True
         else:
-            raise ValueError
+            raise ValueError(f"Unhandled status for hgnc:{identifier}: {status}")
 
         term = Term(
             definition=name,
@@ -261,12 +261,18 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
             )
 
         for rgd_curie in entry.pop("rgd_id", []):
+            if not rgd_curie.startswith("RGD:"):
+                logger.warning(f"hgnc:{identifier} had bad RGD CURIE: {rgd_curie}")
+                continue
             rgd_id = rgd_curie[len("RGD:") :]
             term.append_relationship(
                 orthologous,
                 Reference.auto(prefix="rgd", identifier=rgd_id),
             )
         for mgi_curie in entry.pop("mgd_id", []):
+            if not mgi_curie.startswith("MGI:"):
+                logger.warning(f"hgnc:{identifier} had bad MGI CURIE: {mgi_curie}")
+                continue
             mgi_id = mgi_curie[len("MGI:") :]
             term.append_relationship(
                 orthologous,
