@@ -23,7 +23,7 @@ def get_version(prefix: str) -> Optional[str]:
     try:
         version = bioversions.get_version(prefix)
     except IOError:
-        raise IOError(f"[{prefix}] could not get version") from None
+        raise IOError(f"[{prefix}] could not get version from bioversions")
     except KeyError:
         pass  # this prefix isn't available from bioversions
     else:
