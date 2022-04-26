@@ -70,7 +70,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     terms: Dict[str, Term] = {}
     child_to_parents = defaultdict(list)
     for ec_code, data in tree.items():
-        term = terms[ec_code] = Term(
+        terms[ec_code] = Term(
             reference=Reference(prefix=PREFIX, identifier=ec_code, name=data["name"]),
         )
         for child_data in data.get("children", []):
@@ -84,12 +84,12 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     database_path = ensure_path(PREFIX, url=EXPASY_DATABASE_URL, version=version)
     with open(database_path) as file:
-        data = get_database(file)
+        _data = get_database(file)
 
     ec2go = get_ec2go(version=version)
 
     ec_code_to_alt_ids = {}
-    for ec_code, data in data.items():
+    for ec_code, data in _data.items():
         parent_ec_code = data["parent"]["identifier"]
         parent_term = terms[parent_ec_code]
 
