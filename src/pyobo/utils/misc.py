@@ -38,6 +38,9 @@ def obo_to_owl(obo_path, owl_path, owl_format: str = "ofn"):
     return ret.decode()
 
 
+BIZARRE_LOGGED = set()
+
+
 def cleanup_version(data_version: str, prefix: str) -> Optional[str]:
     """Clean the version information."""
     if data_version.endswith(".owl"):
@@ -67,5 +70,7 @@ def cleanup_version(data_version: str, prefix: str) -> Optional[str]:
             continue
         else:
             return v
-    logger.warning("[%s] bizarre version: %s", prefix, data_version)
+    if (prefix, data_version) not in BIZARRE_LOGGED:
+        logger.warning("[%s] bizarre version: %s", prefix, data_version)
+        BIZARRE_LOGGED.add((prefix, data_version))
     return data_version
