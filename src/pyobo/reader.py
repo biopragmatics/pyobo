@@ -513,10 +513,11 @@ def iterate_node_alt_ids(data: Mapping[str, Any], *, strict: bool = True) -> Ite
             yield reference
 
 
-RELATION_REMAPPINGS = {
+RELATION_REMAPPINGS: Mapping[str, Tuple[str, str]] = {
     "part_of": part_of.pair,
     "has_part": has_part.pair,
     "develops_from": develops_from.pair,
+    "seeAlso": ("rdf", "seeAlso"),
 }
 
 
