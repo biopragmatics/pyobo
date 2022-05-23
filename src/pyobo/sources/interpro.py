@@ -3,9 +3,8 @@
 """Converter for InterPro."""
 
 from collections import defaultdict
-from typing import Iterable, Mapping, Set, Tuple
+from typing import DefaultDict, Iterable, List, Mapping, Set, Tuple
 
-import bioversions
 from tqdm import tqdm
 
 from .utils import get_go_mapping
@@ -13,6 +12,10 @@ from ..struct import Obo, Reference, Term
 from ..struct.typedef import has_member
 from ..utils.io import multisetdict
 from ..utils.path import ensure_df, ensure_path
+
+__all__ = [
+    "InterProGetter",
+]
 
 PREFIX = "interpro"
 
@@ -27,18 +30,19 @@ INTERPRO_PROTEIN_COLUMNS = [
 ]
 
 
+class InterProGetter(Obo):
+    """An ontology representation of InterPro."""
+
+    ontology = bioversions_key = PREFIX
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over InterPro terms."""
+        return iter_terms(version=self._version_or_raise, force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get InterPro as OBO."""
-    version = bioversions.get_version(PREFIX)
-
-    return Obo(
-        ontology=PREFIX,
-        name="InterPro",
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-    )
+    return InterProGetter(force=force)
 
 
 def iter_terms(*, version: str, proteins: bool = False, force: bool = False) -> Iterable[Term]:
@@ -56,6 +60,7 @@ def iter_terms(*, version: str, proteins: bool = False, force: bool = False) -> 
         skiprows=1,
         names=("ENTRY_AC", "ENTRY_TYPE", "ENTRY_NAME"),
         version=version,
+        force=force,
     )
 
     references = {
@@ -96,7 +101,7 @@ def get_interpro_tree(version: str, force: bool = False):
 
 
 def _parse_tree_helper(lines: Iterable[str]):
-    rv1 = defaultdict(list)
+    rv1: DefaultDict[str, List[str]] = defaultdict(list)
     previous_depth, previous_id = 0, None
     stack = [previous_id]
 
@@ -115,7 +120,7 @@ def _parse_tree_helper(lines: Iterable[str]):
                 del stack[-1]
 
             child_id = stack[-1]
-            rv1[child_id].append(parent_id)
+            rv1[child_id].append(parent_id)  # type:ignore
 
         previous_depth, previous_id = depth, parent_id
 
@@ -131,6 +136,7 @@ def _count_front(s: str) -> int:
     for position, element in enumerate(s):
         if element != "-":
             return position
+    raise ValueError
 
 
 def get_interpro_to_proteins_df(version: str, force: bool = False):

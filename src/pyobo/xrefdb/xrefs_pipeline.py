@@ -5,8 +5,9 @@
 import gzip
 import itertools as itt
 import logging
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional, Tuple, cast
 
+import bioregistry
 import networkx as nx
 import pandas as pd
 from tqdm import tqdm
@@ -79,7 +80,7 @@ def _iter_metadata(**kwargs):
     for prefix, data in iter_helper_helper(get_metadata, **kwargs):
         version = data["version"]
         tqdm.write(f"[{prefix}] using version {version}")
-        yield prefix, version, data["date"]
+        yield prefix, version, data["date"], bioregistry.is_deprecated(prefix)
 
 
 def _iter_ooh_na_na(leave: bool = False, **kwargs) -> Iterable[Tuple[str, str, str]]:
@@ -135,19 +136,19 @@ def _iter_typedefs(**kwargs) -> Iterable[Tuple[str, str, str, str]]:
     """Iterate over all prefix-identifier-name triples we can get."""
     for prefix, df in iter_helper_helper(get_typedef_df, **kwargs):
         for t in df.values:
-            yield (prefix, *t)
+            yield cast(Tuple[str, str, str, str], (prefix, *t))
 
 
 def _iter_relations(**kwargs) -> Iterable[Tuple[str, str, str, str, str, str]]:
     for prefix, df in iter_helper_helper(get_relations_df, **kwargs):
         for t in df.values:
-            yield (prefix, *t)
+            yield cast(Tuple[str, str, str, str, str, str], (prefix, *t))
 
 
 def _iter_properties(**kwargs) -> Iterable[Tuple[str, str, str, str]]:
     for prefix, df in iter_helper_helper(get_properties_df, **kwargs):
         for t in df.values:
-            yield (prefix, *t)
+            yield cast(Tuple[str, str, str, str], (prefix, *t))
 
 
 def _iter_xrefs(
@@ -171,7 +172,7 @@ def _iter_xrefs(
         for row in df.values:
             if any(not element for element in row):
                 continue
-            yield (prefix, *row, prefix)
+            yield cast(Tuple[str, str, str, str, str], (prefix, *row, prefix))
     for df in iter_xref_plugins(skip_below=skip_below):
         df.dropna(inplace=True)
         yield from tqdm(df.values, leave=False, total=len(df.index), unit_scale=True)

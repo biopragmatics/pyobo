@@ -5,13 +5,17 @@
 import logging
 from typing import Iterable, List, Tuple
 
-import bioversions
 import pandas as pd
 from tqdm import tqdm
 
 from pyobo import get_id_name_mapping
+from pyobo.constants import NCBITAXON_PREFIX
 from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_part
 from pyobo.utils.path import ensure_df
+
+__all__ = [
+    "ComplexPortalGetter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -91,22 +95,23 @@ def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
     return rv
 
 
-def get_obo() -> Obo:
+class ComplexPortalGetter(Obo):
+    """An ontology representation of the Complex Portal."""
+
+    bioversions_key = ontology = PREFIX
+    typedefs = [from_species, has_part]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(version=self._version_or_raise)
+
+
+def get_obo(force: bool = False) -> Obo:
     """Get the ComplexPortal OBO."""
-    version = bioversions.get_version(PREFIX)
-
-    return Obo(
-        ontology=PREFIX,
-        name="Complex Portal",
-        data_version=version,
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version),
-        typedefs=[from_species, has_part],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return ComplexPortalGetter(force=force)
 
 
-def get_df(version: str) -> pd.DataFrame:
+def get_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get a combine ComplexPortal dataframe."""
     url_base = f"ftp://ftp.ebi.ac.uk/pub/databases/intact/complex/{version}/complextab"
     dfs = [
@@ -117,15 +122,16 @@ def get_df(version: str) -> pd.DataFrame:
             na_values={"-"},
             header=0,
             dtype=str,
+            force=force,
         )
         for ncbitaxonomy_id in SPECIES
     ]
     return pd.concat(dfs)
 
 
-def get_terms(version: str) -> Iterable[Term]:
+def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get ComplexPortal terms."""
-    df = get_df(version=version)
+    df = get_df(version=version, force=force)
     df.rename(
         inplace=True,
         columns={
@@ -143,8 +149,8 @@ def get_terms(version: str) -> Iterable[Term]:
     df["members"] = df["members"].map(_parse_members)
     df["xrefs"] = df["xrefs"].map(_parse_xrefs)
 
-    taxnomy_id_to_name = get_id_name_mapping("ncbitaxon")
-    df["taxonomy_name"] = df["taxonomy_id"].map(taxnomy_id_to_name.get)
+    taxonomy_id_to_name = get_id_name_mapping(NCBITAXON_PREFIX)
+    df["taxonomy_name"] = df["taxonomy_id"].map(taxonomy_id_to_name.get)
 
     slim_df = df[
         [
@@ -198,4 +204,4 @@ def get_terms(version: str) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    ComplexPortalGetter.cli()

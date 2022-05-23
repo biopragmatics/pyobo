@@ -71,8 +71,8 @@ class Reference:
         :param auto: Automatically look up name
         """
         prefix, identifier = normalize_curie(curie, strict=strict)
-        if prefix is None and identifier is None:
-            return
+        if prefix is None or identifier is None:
+            return None
         if name is None and auto:
             return Reference.auto(prefix=prefix, identifier=identifier)
         return Reference(prefix=prefix, identifier=identifier, name=name)
@@ -95,6 +95,10 @@ class Reference:
         if self.name:
             rv["name"] = self.name
         return rv
+
+    def get_url(self) -> Optional[str]:
+        """Return a URL for this reference, if possible."""
+        return bioregistry.get_iri(self.prefix, self.identifier)
 
     def __str__(self):  # noqa: D105
         identifier_lower = self.identifier.lower()

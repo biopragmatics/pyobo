@@ -2,16 +2,19 @@
 
 """Swisslipids."""
 
-import datetime
+from typing import Iterable
 
 import pandas as pd
-import requests
 from tqdm import tqdm
 
 from pyobo import Obo, SynonymTypeDef, Term
 from pyobo.utils.path import ensure_df
 
-PREFIX = "slm"
+__all__ = [
+    "SwissLipidsGetter",
+]
+
+PREFIX = "swisslipid"
 COLUMNS = [
     "Lipid ID",
     "Level",
@@ -37,22 +40,23 @@ COLUMNS = [
 abreviation_type = SynonymTypeDef(id="abbreviation", name="Abbreviation")
 
 
-def get_obo() -> Obo:
+class SwissLipidsGetter(Obo):
+    """An ontology representation of SwissLipid's lipid nomenclature."""
+
+    ontology = bioversions_key = PREFIX
+    synonym_typedefs = [abreviation_type]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(force=force, version=self._version_or_raise)
+
+
+def get_obo(force: bool = False) -> Obo:
     """Get SwissLipids as OBO."""
-    version = get_version()
-
-    return Obo(
-        ontology=PREFIX,
-        name="SwissLipids",
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        synonym_typedefs=[abreviation_type],
-    )
+    return SwissLipidsGetter(force=force)
 
 
-def iter_terms(version: str):
+def iter_terms(version: str, force: bool = False):
     """Iterate over SwissLipids terms."""
     df = ensure_df(
         prefix=PREFIX,
@@ -60,6 +64,7 @@ def iter_terms(version: str):
         version=version,
         name="lipids.tsv.gz",
         encoding="cp1252",
+        force=force,
     )
     for (
         identifier,
@@ -77,7 +82,9 @@ def iter_terms(version: str):
         lipidmaps_id,
         hmdb_id,
         pmids,
-    ) in tqdm(df[COLUMNS].values):
+    ) in tqdm(
+        df[COLUMNS].values, desc=f"[{PREFIX}] generating terms", unit_scale=True, unit="lipid"
+    ):
         if identifier.startswith("SLM:"):
             identifier = identifier[len("SLM:") :]
         else:
@@ -107,17 +114,9 @@ def iter_terms(version: str):
             term.append_xref(("hmdb", hmdb_id))
         if pd.notna(pmids):
             for pmid in pmids.split("|"):
-                term.provenance.append(("pubmed", pmid))
+                term.append_provenance(("pubmed", pmid))
         # TODO how to handle class, parents, and components?
         yield term
-
-
-def get_version():
-    """Get the SwissLipids version number."""
-    # TODO move to bioversions.
-    res = requests.get("https://www.swisslipids.org/api/downloadData").json()
-    record = next(record for record in res if record["file"] == "lipids.tsv")
-    return datetime.datetime.strptime(record["date"], "%B %d %Y").strftime("%Y-%m-%d")
 
 
 if __name__ == "__main__":

@@ -9,12 +9,13 @@ import logging
 from contextlib import closing
 from typing import Iterable
 
-import bioversions
 import chembl_downloader
-import click
-from more_click import verbose_option
 
 from pyobo.struct import Obo, Reference, Term
+
+__all__ = [
+    "ChEMBLCompoundGetter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -38,17 +39,20 @@ WHERE
 # TODO molecule_hierarchy table
 
 
-def get_obo() -> Obo:
-    """Return ChEMBL as OBO."""
-    version = bioversions.get_version("chembl")
-    return Obo(
-        ontology="chembl.compound",
-        name="ChEMBL",
-        data_version=version,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+class ChEMBLCompoundGetter(Obo):
+    """An ontology representation of ChEMBL compounds."""
+
+    ontology = "chembl.compound"
+    bioversions_key = "chembl"
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise)
+
+
+def get_obo(force: bool = False) -> Obo:
+    """Return ChEMBL Compounds as OBO."""
+    return ChEMBLCompoundGetter(force=force)
 
 
 def iter_terms(version: str) -> Iterable[Term]:
@@ -70,12 +74,5 @@ def iter_terms(version: str) -> Iterable[Term]:
                 yield term
 
 
-@click.command()
-@verbose_option
-def main():
-    """Write the default OBO."""
-    get_obo().write_default(force=True, use_tqdm=True)
-
-
 if __name__ == "__main__":
-    main()
+    ChEMBLCompoundGetter.cli()

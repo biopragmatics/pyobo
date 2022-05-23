@@ -43,13 +43,22 @@ from .api import (  # noqa: F401
 from .getters import get_ontology  # noqa: F401
 from .identifier_utils import normalize_curie, normalize_prefix  # noqa: F401
 from .normalizer import OboNormalizer, ground  # noqa: F401
-from .sources import (  # noqa: F401
+from .plugins import (  # noqa: F401
     has_nomenclature_plugin,
     iter_nomenclature_plugins,
     run_nomenclature_plugin,
 )
+from .reader import from_obo_path, from_obonet  # noqa: F401
 from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef  # noqa: F401
 from .utils.path import ensure_path  # noqa: F401
 from .version import get_version  # noqa: F401
-from .xrefdb.canonicalizer import Canonicalizer, get_equivalent, get_priority_curie  # noqa: F401
-from .xrefdb.sources import has_xref_plugin, iter_xref_plugins, run_xref_plugin  # noqa: F401
+from .xrefdb.canonicalizer import (  # noqa: F401
+    Canonicalizer,
+    get_equivalent,
+    get_priority_curie,
+)
+from .xrefdb.sources import (  # noqa: F401
+    has_xref_plugin,
+    iter_xref_plugins,
+    run_xref_plugin,
+)

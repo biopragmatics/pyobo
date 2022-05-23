@@ -4,6 +4,7 @@
 
 from typing import Optional
 
+import bioversions
 import pandas as pd
 
 from ...constants import XREF_COLUMNS
@@ -16,6 +17,8 @@ __all__ = [
 
 def get_pubchem_mesh_df(version: Optional[str] = None) -> pd.DataFrame:
     """Get PubChem Compound-MeSH xrefs."""
+    if version is None:
+        version = bioversions.get_version("pubchem")
     cid_mesh_url = _get_pubchem_extras_url(version, "CID-MeSH")
     return pd.DataFrame(
         [

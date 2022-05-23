@@ -4,6 +4,7 @@
 
 import logging
 import sys
+from typing import Optional
 
 import click
 from more_click import verbose_option
@@ -87,16 +88,22 @@ def build(ctx: click.Context, directory: str, zenodo: bool, no_strict: bool, for
 @directory_option
 @force_option
 @no_strict_option
-def metadata(directory: str, no_strict: bool, force: bool):
+@click.option("--skip-below")
+@click.option("--skip-pyobo")
+def metadata(
+    directory: str, no_strict: bool, force: bool, skip_below: Optional[str], skip_pyobo: bool
+):
     """Make the prefix-metadata dump."""
     db_output_helper(
         _iter_metadata,
         "metadata",
-        ("prefix", "version", "date"),
+        ("prefix", "version", "date", "deprecated"),
         strict=not no_strict,
         force=force,
         directory=directory,
         use_gzip=False,
+        skip_below=skip_below,
+        skip_pyobo=skip_pyobo,
     )
 
 
@@ -290,21 +297,21 @@ def properties(directory: str, zenodo: bool, force: bool, no_strict: bool):
 @no_strict_option
 def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool):  # noqa: D202
     """Make the prefix-identifier-xref dump."""
-    logging.captureWarnings(True)
-    with logging_redirect_tqdm():
-        paths = db_output_helper(
-            _iter_xrefs,
-            "xrefs",
-            ("prefix", "identifier", "xref_prefix", "xref_identifier", "provenance"),
-            directory=directory,
-            force=force,
-            strict=not no_strict,
-            summary_detailed=(0, 2),  # second column corresponds to xref prefix
-        )
+    paths = db_output_helper(
+        _iter_xrefs,
+        "xrefs",
+        ("prefix", "identifier", "xref_prefix", "xref_identifier", "provenance"),
+        directory=directory,
+        force=force,
+        strict=not no_strict,
+        summary_detailed=(0, 2),  # second column corresponds to xref prefix
+    )
     if zenodo:
         # see https://zenodo.org/record/4021477
         update_zenodo(JAVERT_RECORD, paths)
 
 
 if __name__ == "__main__":
-    main()
+    logging.captureWarnings(True)
+    with logging_redirect_tqdm():
+        main()

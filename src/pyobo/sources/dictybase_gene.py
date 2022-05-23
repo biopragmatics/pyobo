@@ -8,19 +8,20 @@ Note that normal dictybase idenififers are for sequences
 import logging
 from typing import Iterable
 
-import click
 import pandas as pd
-from more_click import verbose_option
 from tqdm import tqdm
 
 from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_gene_product
 from pyobo.utils.io import multisetdict
 from pyobo.utils.path import ensure_df
 
+__all__ = [
+    "DictybaseGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "dictybase.gene"
-NAME = "dictyBase Gene"
 URL = (
     "http://dictybase.org/db/cgi-bin/dictyBase/download/"
     "download.pl?area=general&ID=gene_information.txt"
@@ -31,16 +32,21 @@ UNIPROT_MAPPING = (
 )
 
 
+class DictybaseGetter(Obo):
+    """An ontology representation of Dictybase's gene nomenclature."""
+
+    ontology = PREFIX
+    dynamic_version = True
+    typedefs = [from_species, has_gene_product]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get dictyBase Gene as OBO."""
-    return Obo(
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        name=NAME,
-        ontology=PREFIX,
-        typedefs=[from_species, has_gene_product],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return DictybaseGetter(force=force)
 
 
 def get_terms(force: bool = False) -> Iterable[Term]:
@@ -73,12 +79,5 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         yield term
 
 
-@click.command()
-@verbose_option
-def _main():
-    obo = get_obo(force=True)
-    obo.write_default(force=True, write_obo=True)
-
-
 if __name__ == "__main__":
-    _main()
+    DictybaseGetter.cli()

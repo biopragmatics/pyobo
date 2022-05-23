@@ -16,27 +16,32 @@ Get relations between drugbank salts and drugbank parents with
 import logging
 from typing import Iterable
 
-import bioversions
-
 from .drugbank import iterate_drug_info
 from ..struct import Obo, Reference, Term
+
+__all__ = [
+    "DrugBankSaltGetter",
+]
 
 logger = logging.getLogger(__name__)
 
 PREFIX = "drugbank.salt"
 
 
+class DrugBankSaltGetter(Obo):
+    """A getter for DrugBank Salts."""
+
+    ontology = PREFIX
+    bioversions_key = "drugbank"
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise, force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get DrugBank Salts as OBO."""
-    version = bioversions.get_version("drugbank")
-    return Obo(
-        ontology=PREFIX,
-        name="DrugBank Salts",
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return DrugBankSaltGetter(force=force)
 
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
@@ -60,5 +65,4 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    get_obo().write_default(write_obo=True)
+    DrugBankSaltGetter.cli()

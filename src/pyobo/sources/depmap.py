@@ -4,37 +4,34 @@
 
 from typing import Iterable, Optional
 
-import click
 import pandas as pd
 import pystow
-from more_click import verbose_option
 
 from pyobo import Obo, Reference, Term
 
 __all__ = [
     "get_obo",
+    "DepMapGetter",
 ]
 
 PREFIX = "depmap"
+VERSION = "21Q2"
 
 
-def get_obo(*, version: Optional[str] = None, force: bool = False) -> Obo:
+class DepMapGetter(Obo):
+    """An ontology representation of the Cancer Dependency Map's cell lines."""
+
+    ontology = bioversions_key = PREFIX
+    data_version = VERSION
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise, force=force)
+
+
+def get_obo(*, force: bool = False) -> Obo:
     """Get DepMap cell lines as OBO."""
-    if version is None:
-        version = get_version()
-    return Obo(
-        ontology=PREFIX,
-        name="DepMap Cell Lines",
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
-
-
-def get_version() -> str:
-    """Get the latest version of the DepMap cell line metadata."""
-    return "21Q2"
+    return DepMapGetter(force=force)
 
 
 def get_url(version: Optional[str] = None) -> str:
@@ -53,11 +50,11 @@ def get_url(version: Optional[str] = None) -> str:
     return url
 
 
-def _fix_mangled_int(x: str) -> str:
+def _fix_mangled_int(x: str) -> Optional[str]:
     return str(int(float(x))) if pd.notna(x) else None
 
 
-def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over DepMap cell line terms."""
     df = ensure(force=force, version=version)
     columns = [
@@ -102,11 +99,8 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
         yield term
 
 
-def ensure(version: Optional[str] = None, force: bool = False) -> pd.DataFrame:
+def ensure(version: str, force: bool = False) -> pd.DataFrame:
     """Ensure and parse the given version of the DepMap cell line metadata."""
-    if version is None:
-        version = get_version()
-
     return pystow.ensure_csv(
         "pyobo",
         "raw",
@@ -119,12 +113,5 @@ def ensure(version: Optional[str] = None, force: bool = False) -> pd.DataFrame:
     )
 
 
-@click.command()
-@verbose_option
-def main():
-    """Run the DepMap Cell Line CLI."""
-    get_obo().write_default(write_obo=True)
-
-
 if __name__ == "__main__":
-    main()
+    DepMapGetter.cli()

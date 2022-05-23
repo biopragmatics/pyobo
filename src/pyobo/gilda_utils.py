@@ -2,7 +2,7 @@
 
 """PyOBO's Gilda utilities."""
 
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, List, Optional, Tuple, Type, Union
 
 import bioregistry
 import gilda.api
@@ -77,7 +77,7 @@ def normalize_identifier(prefix: str, identifier: str) -> str:
     if banana:
         if not identifier.startswith(banana):
             return f"{banana}:{identifier}"
-    elif bioregistry.namespace_in_lui(prefix):
+    elif bioregistry.get_namespace_in_lui(prefix):
         banana = f"{prefix.upper()}:"
         if not identifier.startswith(banana):
             return f"{banana}{identifier}"
@@ -85,14 +85,16 @@ def normalize_identifier(prefix: str, identifier: str) -> str:
 
 
 def get_grounder(
-    prefix: Union[str, Iterable[str]], unnamed: Optional[Iterable[str]] = None
+    prefix: Union[str, Iterable[str]],
+    unnamed: Optional[Iterable[str]] = None,
+    grounder_cls: Optional[Type[Grounder]] = None,
 ) -> Grounder:
     """Get a Gilda grounder for the given namespace."""
     unnamed = set() if unnamed is None else set(unnamed)
     if isinstance(prefix, str):
         prefix = [prefix]
 
-    terms = []
+    terms: List[gilda.term.Term] = []
     for p in prefix:
         try:
             p_terms = list(get_gilda_terms(p, identifiers_are_names=p in unnamed))
@@ -101,8 +103,11 @@ def get_grounder(
         else:
             terms.extend(p_terms)
     terms = filter_out_duplicates(terms)
-    terms = multidict((term.norm_text, term) for term in terms)
-    return Grounder(terms)
+    terms_dict = multidict((term.norm_text, term) for term in terms)
+    if grounder_cls is None:
+        return Grounder(terms_dict)
+    else:
+        return grounder_cls(terms_dict)
 
 
 def get_gilda_terms(prefix: str, identifiers_are_names: bool = False) -> Iterable[gilda.term.Term]:

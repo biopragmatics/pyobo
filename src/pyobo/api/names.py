@@ -10,7 +10,7 @@ from .alts import get_primary_identifier
 from .utils import get_version
 from ..getters import NoBuild, get_ontology
 from ..identifier_utils import normalize_curie, wrap_norm_prefix
-from ..utils.cache import cached_collection, cached_mapping, cached_multidict, reverse_mapping
+from ..utils.cache import cached_collection, cached_mapping, cached_multidict
 from ..utils.path import prefix_cache_join
 
 __all__ = [
@@ -33,6 +33,7 @@ def get_name_by_curie(curie: str) -> Optional[str]:
     prefix, identifier = normalize_curie(curie)
     if prefix and identifier:
         return get_name(prefix, identifier)
+    return None
 
 
 X = TypeVar("X")
@@ -43,11 +44,12 @@ def _help_get(f: Callable[[str], Mapping[str, X]], prefix: str, identifier: str)
     try:
         mapping = f(prefix)
     except NoBuild:
-        mapping = None
+        logger.warning("unable to look up results for prefix %s with %s", prefix, f)
+        return None
 
     if not mapping:
-        logger.warning("unable to look up results for prefix %s with %s", prefix, f)
-        return
+        logger.warning("no results produced for prefix %s with %s", prefix, f)
+        return None
 
     primary_id = get_primary_identifier(prefix, identifier)
     return mapping.get(primary_id)
@@ -71,7 +73,8 @@ def get_ids(prefix: str, force: bool = False, strict: bool = True) -> Set[str]:
         logger.info("[%s] done loading name mappings", prefix)
         return rv
 
-    path = prefix_cache_join(prefix, name="ids.tsv", version=get_version(prefix))
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="ids.tsv", version=version)
 
     @cached_collection(path=path, force=force)
     def _get_ids() -> Set[str]:
@@ -79,7 +82,7 @@ def get_ids(prefix: str, force: bool = False, strict: bool = True) -> Set[str]:
             logger.info("[%s] forcing reload for names", prefix)
         else:
             logger.info("[%s] no cached names found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, strict=strict)
+        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_ids()
 
     return set(_get_ids())
@@ -87,7 +90,9 @@ def get_ids(prefix: str, force: bool = False, strict: bool = True) -> Set[str]:
 
 @lru_cache()
 @wrap_norm_prefix
-def get_id_name_mapping(prefix: str, force: bool = False, strict: bool = True) -> Mapping[str, str]:
+def get_id_name_mapping(
+    prefix: str, force: bool = False, strict: bool = True, version: Optional[str] = None
+) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == "ncbigene":
         from ..sources.ncbigene import get_ncbigene_id_to_name_mapping
@@ -97,7 +102,9 @@ def get_id_name_mapping(prefix: str, force: bool = False, strict: bool = True) -
         logger.info("[%s] done loading name mappings", prefix)
         return rv
 
-    path = prefix_cache_join(prefix, name="names.tsv", version=get_version(prefix))
+    if version is None:
+        version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="names.tsv", version=version)
 
     @cached_mapping(path=path, header=[f"{prefix}_id", "name"], force=force)
     def _get_id_name_mapping() -> Mapping[str, str]:
@@ -105,7 +112,7 @@ def get_id_name_mapping(prefix: str, force: bool = False, strict: bool = True) -
             logger.info("[%s] forcing reload for names", prefix)
         else:
             logger.info("[%s] no cached names found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, strict=strict)
+        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_id_name_mapping()
 
     return _get_id_name_mapping()
@@ -116,7 +123,7 @@ def get_id_name_mapping(prefix: str, force: bool = False, strict: bool = True) -
 def get_name_id_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
     """Get a name to identifier mapping for the OBO file."""
     id_name = get_id_name_mapping(prefix=prefix, force=force)
-    return reverse_mapping(id_name)
+    return {v: k for k, v in id_name.items()}
 
 
 @wrap_norm_prefix
@@ -125,14 +132,17 @@ def get_definition(prefix: str, identifier: str) -> Optional[str]:
     return _help_get(get_id_definition_mapping, prefix, identifier)
 
 
-def get_id_definition_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
+def get_id_definition_mapping(
+    prefix: str, force: bool = False, strict: bool = True
+) -> Mapping[str, str]:
     """Get a mapping of descriptions."""
-    path = prefix_cache_join(prefix, name="definitions.tsv", version=get_version(prefix))
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="definitions.tsv", version=version)
 
     @cached_mapping(path=path, header=[f"{prefix}_id", "definition"], force=force)
     def _get_mapping() -> Mapping[str, str]:
         logger.info("[%s] no cached descriptions found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_id_definition_mapping()
 
     return _get_mapping()
@@ -145,14 +155,17 @@ def get_synonyms(prefix: str, identifier: str) -> Optional[List[str]]:
 
 
 @wrap_norm_prefix
-def get_id_synonyms_mapping(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
+def get_id_synonyms_mapping(
+    prefix: str, force: bool = False, strict: bool = True
+) -> Mapping[str, List[str]]:
     """Get the OBO file and output a synonym dictionary."""
-    path = prefix_cache_join(prefix, name="synonyms.tsv", version=get_version(prefix))
+    version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="synonyms.tsv", version=version)
 
     @cached_multidict(path=path, header=[f"{prefix}_id", "synonym"], force=force)
     def _get_multidict() -> Mapping[str, List[str]]:
         logger.info("[%s] no cached synonyms found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_id_synonyms_mapping()
 
     return _get_multidict()

@@ -6,15 +6,24 @@ Run with python -m pyobo.sources.icd10 -v
 """
 
 import logging
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, Set
 
 import click
 from more_click import verbose_option
 from tqdm import tqdm
 
-from ..sources.icd_utils import ICD10_TOP_LEVEL_URL, get_child_identifiers, get_icd, visiter
+from ..sources.icd_utils import (
+    ICD10_TOP_LEVEL_URL,
+    get_child_identifiers,
+    get_icd,
+    visiter,
+)
 from ..struct import Obo, Reference, Synonym, Term
 from ..utils.path import prefix_directory_join
+
+__all__ = [
+    "ICD10Getter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -22,14 +31,20 @@ PREFIX = "icd10"
 VERSION = "2016"
 
 
+class ICD10Getter(Obo):
+    """An ontology representation of ICD-10."""
+
+    ontology = PREFIX
+    dynamic_version = True
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms()
+
+
 def get_obo() -> Obo:
     """Get ICD-10 as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="International Statistical Classification of Diseases and Related Health Problems 10th Revision",
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        iter_terms=iter_terms,
-    )
+    return ICD10Getter()
 
 
 def iter_terms() -> Iterable[Term]:
@@ -42,7 +57,7 @@ def iter_terms() -> Iterable[Term]:
     chapter_urls = res_json["child"]
     tqdm.write(f"there are {len(chapter_urls)} chapters")
 
-    visited_identifiers = set()
+    visited_identifiers: Set[str] = set()
     for identifier in get_child_identifiers(ICD10_TOP_LEVEL_URL, res_json):
         yield from visiter(
             identifier,

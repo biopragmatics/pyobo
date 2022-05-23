@@ -4,10 +4,8 @@
 
 import logging
 from collections import defaultdict
-from typing import Iterable, List, Mapping
+from typing import Iterable, List, Mapping, Tuple
 
-import click
-from more_click import verbose_option
 from pystow.utils import get_commit
 
 from pyobo import get_name_id_mapping
@@ -22,18 +20,24 @@ logger = logging.getLogger(__name__)
 PREFIX = "fplx"
 
 
+class FamPlexGetter(Obo):
+    """An ontology representation of FamPlex."""
+
+    ontology = PREFIX
+    dynamic_version = True
+    typedefs = [has_member, has_part, is_a, part_of]
+
+    def _get_version(self) -> str:
+        return get_commit("sorgerlab", "famplex")
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(force=force, version=self._version_or_raise)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get FamPlex as OBO."""
-    version = get_commit("sorgerlab", "famplex")
-    return Obo(
-        ontology=PREFIX,
-        name="FamPlex",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        data_version=version,
-        typedefs=[has_member, has_part, is_a, part_of],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return FamPlexGetter(force=force)
 
 
 def get_terms(version: str, force: bool = False) -> Iterable[Term]:
@@ -58,7 +62,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         dtype=str,
         force=force,
     )
-    id_to_definition = {
+    id_to_definition: Mapping[str, Tuple[str, str]] = {
         identifier: (definition, provenance)
         for identifier, provenance, definition in definitions_df.values
     }
@@ -103,10 +107,11 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     for (entity,) in entities_df.values:
         reference = Reference(prefix=PREFIX, identifier=entity, name=entity)
         definition, provenance = id_to_definition.get(entity, (None, None))
+        provenance_reference = None if provenance is None else Reference.from_curie(provenance)
         term = Term(
             reference=reference,
             definition=definition,
-            provenance=[Reference.from_curie(provenance)] if definition is not None else None,
+            provenance=[] if provenance_reference is None else [provenance_reference],
         )
 
         for xref_reference in id_xrefs.get(entity, []):
@@ -156,11 +161,5 @@ def _get_xref_df(version: str) -> Mapping[str, List[Reference]]:
     )
 
 
-@click.command()
-@verbose_option
-def _main():
-    get_obo(force=True).write_default(use_tqdm=True, write_obo=True)
-
-
 if __name__ == "__main__":
-    _main()
+    FamPlexGetter.cli()

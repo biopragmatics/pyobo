@@ -28,7 +28,7 @@ old_name_type = SynonymTypeDef(id="old_name", name="old name")
 
 # NOTE unigene id was discontinue in January 18th, 2021 dump
 
-GENES_URL = "ftp://ftp.rgd.mcw.edu/pub/data_release/GENES_RAT.txt"
+GENES_URL = "https://download.rgd.mcw.edu/data_release/GENES.RAT.txt"
 GENES_HEADER = [
     "GENE_RGD_ID",
     "SYMBOL",
@@ -70,17 +70,22 @@ GENES_HEADER = [
 ]
 
 
+class RGDGetter(Obo):
+    """An ontology representation of RGD's rat gene nomenclature."""
+
+    ontology = PREFIX
+    dynamic_version = True
+    typedefs = [from_species, transcribes_to, has_gene_product]
+    synonym_typedefs = [old_name_type, old_symbol_type]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get RGD as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="Rat Genome Database",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        typedefs=[from_species, transcribes_to, has_gene_product],
-        synonym_typedefs=[old_name_type, old_symbol_type],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return RGDGetter(force=force)
 
 
 namespace_to_column = [
@@ -98,10 +103,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         sep="\t",
         header=0,
         comment="#",
-        dtype={
-            "NCBI_GENE_ID": str,
-            "GENE_RGD_ID": str,
-        },
+        dtype=str,
         force=force,
     )
     for _, row in tqdm(df.iterrows(), total=len(df.index), desc=f"Mapping {PREFIX}"):

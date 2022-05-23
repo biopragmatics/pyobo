@@ -27,11 +27,11 @@ __all__ = [
     "role_of",
     "has_mature",
     "has_gene_product",
-    "gene_product_is_a",
+    "gene_product_member_of",
     "has_gene_product",
     "transcribes_to",
     "translates_to",
-    "gene_product_is_a",
+    "gene_product_member_of",
     "example_of_usage",
     "alternative_term",
     "editor_note",
@@ -53,6 +53,7 @@ class TypeDef(Referenced):
     parents: List[Reference] = field(default_factory=list)
     xrefs: List[Reference] = field(default_factory=list)
     inverse: Optional[Reference] = None
+    holds_over_chain: Optional[List[Reference]] = None
 
     def __hash__(self) -> int:  # noqa: D105
         return hash((self.__class__, self.prefix, self.identifier))
@@ -78,6 +79,10 @@ class TypeDef(Referenced):
 
         if self.is_symmetric is not None:
             yield f'is_symmetric: {"true" if self.is_symmetric else "false"}'
+        if self.holds_over_chain is not None:
+            _chain = " ".join(link.curie for link in self.holds_over_chain)
+            _names = " / ".join(link.name or "_" for link in self.holds_over_chain)
+            yield f"holds_over_chain: {_chain} ! {_names}"
 
     @classmethod
     def from_triple(cls, prefix: str, identifier: str, name: Optional[str] = None) -> "TypeDef":
@@ -88,6 +93,8 @@ class TypeDef(Referenced):
     def from_curie(cls, curie: str, name: Optional[str] = None) -> "TypeDef":
         """Create a TypeDef directly from a CURIE and optional name."""
         prefix, identifier = normalize_curie(curie)
+        if prefix is None or identifier is None:
+            raise ValueError
         return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
 
 
@@ -102,7 +109,7 @@ def get_reference_tuple(relation: RelationHint) -> Tuple[str, str]:
         return relation
     elif isinstance(relation, str):
         prefix, identifier = normalize_curie(relation)
-        if prefix is None:
+        if prefix is None or identifier is None:
             raise ValueError(f"string given is not valid curie: {relation}")
         return prefix, identifier
     else:
@@ -193,8 +200,14 @@ has_gene_product = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0002205", name="has gene product"),
     inverse=gene_product_of.reference,
 )  # holds over chain (transcribes_to, translates_to)
-gene_product_is_a = TypeDef(
-    reference=Reference.default(identifier="gene_product_is_a", name="gene product is a"),
+gene_product_member_of = TypeDef(
+    reference=Reference.default(
+        identifier="gene_product_member_of", name="gene product is a member of"
+    ),
+    holds_over_chain=[
+        has_gene_product.reference,
+        member_of.reference,
+    ],
 )
 
 example_of_usage = Reference(prefix=IAO_PREFIX, identifier="0000112", name="example of usage")

@@ -3,6 +3,7 @@
 """CLI for PyOBO lookups."""
 
 import json
+import sys
 from typing import Optional
 
 import bioregistry
@@ -160,10 +161,13 @@ def _help_page_mapping(id_to_name):
 def synonyms(prefix: str, force: bool):
     """Page through the synonyms for entities in the given namespace."""
     if ":" in prefix:
-        prefix, identifier = normalize_curie(prefix)
-        name = get_name(prefix, identifier)
-        id_to_synonyms = get_id_synonyms_mapping(prefix, force=force)
-        click.echo(f"Synonyms for {prefix}:{identifier} ! {name}")
+        _prefix, identifier = normalize_curie(prefix)
+        if _prefix is None or identifier is None:
+            click.secho(f"could not normalize {prefix}")
+            return sys.exit(1)
+        name = get_name(_prefix, identifier)
+        id_to_synonyms = get_id_synonyms_mapping(_prefix, force=force)
+        click.echo(f"Synonyms for {_prefix}:{identifier} ! {name}")
         for synonym in id_to_synonyms.get(identifier, []):
             click.echo(synonym)
     else:  # it's a prefix
@@ -186,25 +190,30 @@ def synonyms(prefix: str, force: bool):
 @verbose_option
 @no_strict_option
 @force_option
-def relations(prefix: str, relation: str, target: str, force: bool, no_strict: bool):
+@click.option("--summarize", is_flag=True)
+def relations(
+    prefix: str, relation: str, target: str, force: bool, no_strict: bool, summarize: bool
+):
     """Page through the relations for entities in the given namespace."""
     if relation is None:
         relations_df = get_relations_df(prefix, force=force, strict=not no_strict)
+        if summarize:
+            click.echo(relations_df[relations_df.columns[2]].value_counts())
+        else:
+            echo_df(relations_df)
     else:
         curie = normalize_curie(relation)
         if curie[1] is None:  # that's the identifier
             click.secho(f"not valid curie, assuming local to {prefix}", fg="yellow")
             curie = prefix, relation
 
-        if target is None:
+        if target is not None:
             target = bioregistry.normalize_prefix(target)
             relations_df = get_filtered_relations_df(
-                prefix, relation=curie, force=force, strict=not no_strict
+                prefix, relation=curie, force=force, strict=not no_strict, target=target
             )
         else:
             raise NotImplementedError(f"can not filter by target prefix {target}")
-
-    echo_df(relations_df)
 
 
 @lookup.command()
@@ -232,7 +241,7 @@ def hierarchy(prefix: str, include_part_of: bool, include_has_member: bool, forc
 def ancestors(prefix: str, identifier: str, force: bool):
     """Look up ancestors."""
     curies = get_ancestors(prefix=prefix, identifier=identifier, force=force)
-    for curie in curies:
+    for curie in sorted(curies or []):
         click.echo(f"{curie}\t{get_name_by_curie(curie)}")
 
 
@@ -244,7 +253,7 @@ def ancestors(prefix: str, identifier: str, force: bool):
 def descendants(prefix: str, identifier: str, force: bool):
     """Look up descendants."""
     curies = get_descendants(prefix=prefix, identifier=identifier, force=force)
-    for curie in curies:
+    for curie in sorted(curies or []):
         click.echo(f"{curie}\t{get_name_by_curie(curie)}")
 
 

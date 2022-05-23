@@ -13,7 +13,8 @@ import pandas as pd
 import requests
 from pystow.utils import name_from_url, read_tarfile_csv
 
-from pyobo.constants import RAW_MODULE
+from .misc import cleanup_version
+from ..constants import RAW_MODULE
 
 __all__ = [
     "prefix_directory_join",
@@ -46,6 +47,9 @@ def prefix_directory_join(
         logger.info("[%s] got version %s", version)
     elif not isinstance(version, str):
         raise TypeError(f"Invalid type: {version} ({type(version)})")
+    version = cleanup_version(version, prefix=prefix)
+    if version is not None and "/" in version:
+        raise ValueError(f"[{prefix}] Can not have slash in version: {version}")
     return RAW_MODULE.join(prefix, version, *parts, name=name, ensure_exists=ensure_exists)
 
 

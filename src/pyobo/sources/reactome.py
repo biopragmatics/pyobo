@@ -3,17 +3,22 @@
 """Converter for Reactome."""
 
 import logging
-from typing import Iterable
+from collections import defaultdict
+from functools import lru_cache
+from typing import Iterable, Mapping, Set
 
-import bioversions
 import pandas as pd
 from tqdm import tqdm
 
-from ..api import get_name_id_mapping
-from ..constants import SPECIES_REMAPPING
+from ..api import get_id_multirelations_mapping, get_name_id_mapping
+from ..constants import NCBITAXON_PREFIX, SPECIES_REMAPPING
 from ..struct import Obo, Reference, Term, from_species, has_part
 from ..utils.io import multidict
 from ..utils.path import ensure_df
+
+__all__ = [
+    "ReactomeGetter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -23,26 +28,36 @@ PREFIX = "reactome"
 # TODO alt ids https://reactome.org/download/current/reactome_stable_ids.txt
 
 
-def get_obo() -> Obo:
+class ReactomeGetter(Obo):
+    """An ontology representation of the Reactome pathway database."""
+
+    ontology = bioversions_key = PREFIX
+    typedefs = [from_species, has_part]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise, force=force)
+
+
+def get_obo(force: bool = False) -> Obo:
     """Get Reactome OBO."""
-    version = bioversions.get_version("reactome")
-    return Obo(
-        ontology=PREFIX,
-        name="Reactome",
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        typedefs=[from_species, has_part],
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
+    return ReactomeGetter(force=force)
+
+
+def ensure_participant_df(version: str, force: bool = False) -> pd.DataFrame:
+    """Get the pathway uniprot participant dataframe."""
+    uniprot_pathway_url = f"https://reactome.org/download/{version}/UniProt2Reactome_All_Levels.txt"
+    return ensure_df(
+        PREFIX, url=uniprot_pathway_url, header=None, usecols=[0, 1], version=version, force=force
     )
 
 
-def iter_terms(version: str) -> Iterable[Term]:
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate Reactome terms."""
-    ncbitaxon_name_to_id = get_name_id_mapping("ncbitaxon")
+    ncbitaxon_name_to_id = get_name_id_mapping(NCBITAXON_PREFIX)
 
     provenance_url = f"https://reactome.org/download/{version}/ReactionPMIDS.txt"
-    provenance_df = ensure_df(PREFIX, url=provenance_url, header=None, version=version)
+    provenance_df = ensure_df(PREFIX, url=provenance_url, header=None, version=version, force=force)
     provenance_d = multidict(provenance_df.values)
 
     pathway_names_url = f"https://reactome.org/download/{version}/ReactomePathways.txt"
@@ -52,6 +67,7 @@ def iter_terms(version: str) -> Iterable[Term]:
         header=None,
         names=["reactome_id", "name", "species"],
         version=version,
+        force=force,
     )
     df["species"] = df["species"].map(lambda x: SPECIES_REMAPPING.get(x) or x)
     df["taxonomy_id"] = df["species"].map(ncbitaxon_name_to_id.get)
@@ -72,20 +88,24 @@ def iter_terms(version: str) -> Iterable[Term]:
         term.set_species(identifier=taxonomy_id, name=species_name)
 
     pathways_hierarchy_url = f"https://reactome.org/download/{version}/ReactomePathwaysRelation.txt"
-    hierarchy_df = ensure_df(PREFIX, url=pathways_hierarchy_url, header=None, version=version)
+    hierarchy_df = ensure_df(
+        PREFIX, url=pathways_hierarchy_url, header=None, version=version, force=force
+    )
     for parent_id, child_id in hierarchy_df.values:
         terms[child_id].append_parent(terms[parent_id])
 
-    uniprot_pathway_url = f"https://reactome.org/download/{version}/UniProt2Reactome_All_Levels.txt"
-    uniprot_pathway_df = ensure_df(
-        PREFIX, url=uniprot_pathway_url, header=None, usecols=[0, 1], version=version
-    )
+    uniprot_pathway_df = ensure_participant_df(version=version, force=force)
     for uniprot_id, reactome_id in tqdm(uniprot_pathway_df.values, total=len(uniprot_pathway_df)):
         terms[reactome_id].append_relationship(has_part, Reference("uniprot", uniprot_id))
 
     chebi_pathway_url = f"https://reactome.org/download/{version}/ChEBI2Reactome_All_Levels.txt"
     chebi_pathway_df = ensure_df(
-        PREFIX, url=chebi_pathway_url, header=None, usecols=[0, 1], version=version
+        PREFIX,
+        url=chebi_pathway_url,
+        header=None,
+        usecols=[0, 1],
+        version=version,
+        force=force,
     )
     for chebi_id, reactome_id in tqdm(chebi_pathway_df.values, total=len(chebi_pathway_df)):
         terms[reactome_id].append_relationship(has_part, Reference("chebi", chebi_id))
@@ -96,6 +116,19 @@ def iter_terms(version: str) -> Iterable[Term]:
     #     terms[reactome_id].append_relationship(has_part, Reference('ncbigene', ncbigene_id))
 
     yield from terms.values()
+
+
+@lru_cache(maxsize=1)
+def get_protein_to_pathways() -> Mapping[str, Set[str]]:
+    """Get a mapping from proteins to the pathways they're in."""
+    protein_to_pathways = defaultdict(set)
+    x = get_id_multirelations_mapping("reactome", has_part)
+    for reactome_id, proteins in x.items():
+        for protein in proteins:
+            if protein.prefix != "uniprot":
+                continue
+            protein_to_pathways[protein.identifier].add(reactome_id)
+    return dict(protein_to_pathways)
 
 
 if __name__ == "__main__":

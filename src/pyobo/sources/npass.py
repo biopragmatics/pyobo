@@ -5,34 +5,41 @@
 import logging
 from typing import Iterable
 
-import bioversions
 import pandas as pd
 from tqdm import tqdm
 
 from ..struct import Obo, Reference, Synonym, Term
 from ..utils.path import ensure_df
 
+__all__ = [
+    "NPASSGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "npass"
+
+
 # TODO add InChI, InChI-key, and SMILES information from NPASS, if desired
 # METADATA_URL = f'{BASE_URL}_naturalProducts_properties.txt'
 
 
-def get_obo() -> Obo:
+class NPASSGetter(Obo):
+    """An ontology representation of NPASS's chemical nomenclature."""
+
+    ontology = bioversions_key = PREFIX
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(force=force, version=self._version_or_raise)
+
+
+def get_obo(force: bool = False) -> Obo:
     """Get NPASS as OBO."""
-    version = bioversions.get_version("npass")
-    return Obo(
-        ontology=PREFIX,
-        name="Natural Products Activity and Species Source Database",
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        pattern=r"NPC\d+",
-    )
+    return NPASSGetter()
 
 
-def get_df(version: str) -> pd.DataFrame:
+def get_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get the NPASS chemical nomenclature."""
     base_url = f"http://bidd.group/NPASS/downloadFiles/NPASSv{version}_download"
     url = f"{base_url}_naturalProducts_generalInfo.txt"
@@ -43,12 +50,13 @@ def get_df(version: str) -> pd.DataFrame:
         dtype=str,
         encoding="ISO-8859-1",
         na_values={"NA", "n.a.", "nan"},
+        force=force,
     )
 
 
-def iter_terms(version: str) -> Iterable[Term]:
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate NPASS terms."""
-    df = get_df(version=version)
+    df = get_df(version=version, force=force)
     it = tqdm(df.values, total=len(df.index), desc=f"mapping {PREFIX}")
     for identifier, name, iupac, chembl_id, pubchem_compound_ids, zinc_id in it:
         xrefs = [

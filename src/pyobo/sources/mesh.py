@@ -5,7 +5,7 @@
 import datetime
 import itertools as itt
 import logging
-from typing import Any, Dict, Iterable, List, Mapping, Optional
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Set
 from xml.etree.ElementTree import Element
 
 from tqdm import tqdm
@@ -15,23 +15,32 @@ from ..utils.cache import cached_json, cached_mapping
 from ..utils.io import parse_xml_gz
 from ..utils.path import ensure_path, prefix_directory_join
 
+__all__ = [
+    "MeSHGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "mesh"
 NOW_YEAR = str(datetime.datetime.now().year)
 
 
+class MeSHGetter(Obo):
+    """An ontology representation of the Medical Subject Headings."""
+
+    ontology = bioversions_key = PREFIX
+
+    def _get_version(self) -> Optional[str]:
+        return NOW_YEAR
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(version=self._version_or_raise, force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get MeSH as OBO."""
-    version = NOW_YEAR  # bioversions.get_version("mesh")
-    return Obo(
-        ontology=PREFIX,
-        name="Medical Subject Headings",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return MeSHGetter(force=force)
 
 
 def get_tree_to_mesh_id(version: str) -> Mapping[str, str]:
@@ -65,17 +74,16 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         name = entry["name"]
         definition = (get_scope_note(entry) or "").strip()
 
-        synonyms = set()
+        synonyms: Set[str] = set()
         for concept in entry["concepts"]:
             synonyms.add(concept["name"])
             for term in concept["terms"]:
                 synonyms.add(term["name"])
-        synonyms = [Synonym(name=synonym) for synonym in synonyms if synonym != name]
 
         mesh_id_to_term[identifier] = Term(
             definition=definition,
             reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
-            synonyms=synonyms,
+            synonyms=[Synonym(name=synonym) for synonym in synonyms if synonym != name],
         )
 
     for entry in descriptors:
@@ -127,11 +135,11 @@ def ensure_mesh_supplemental_records(version: str, force: bool = False) -> List[
     return _inner()
 
 
-def get_descriptor_records(element: Element, id_key: str, name_key) -> List[Mapping]:
+def get_descriptor_records(element: Element, id_key: str, name_key) -> List[Dict[str, Any]]:
     """Get MeSH descriptor records."""
     logger.info("extract MeSH descriptors, concepts, and terms")
 
-    rv = [
+    rv: List[Dict[str, Any]] = [
         get_descriptor_record(descriptor, id_key=id_key, name_key=name_key)
         for descriptor in tqdm(element, desc="Getting MeSH Descriptors")
     ]
@@ -243,11 +251,18 @@ def get_term_record(term):
     }
 
 
+def _text_or_bust(element, name):
+    n = element.findtext(name)
+    if n is None:
+        raise ValueError
+    return n
+
+
 def _get_descriptor_qualifiers(descriptor: Element) -> List[Mapping[str, str]]:
     return [
         {
-            "qualifier_ui": qualifier.findtext("QualifierUI"),
-            "name": qualifier.findtext("QualifierName/String"),
+            "qualifier_ui": _text_or_bust(qualifier, "QualifierUI"),
+            "name": _text_or_bust(qualifier, "QualifierName/String"),
         }
         for qualifier in descriptor.findall(
             "AllowableQualifiersList/AllowableQualifier/QualifierReferredTo"

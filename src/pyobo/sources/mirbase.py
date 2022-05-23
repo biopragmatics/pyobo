@@ -6,7 +6,6 @@ import gzip
 import logging
 from typing import Iterable, List, Mapping
 
-import bioversions
 from tqdm import tqdm
 
 from ..struct import Obo, Reference, Synonym, Term, from_species
@@ -14,10 +13,15 @@ from ..struct.typedef import has_mature
 from ..utils.cache import cached_mapping
 from ..utils.path import ensure_df, ensure_path, prefix_directory_join
 
+__all__ = [
+    "MiRBaseGetter",
+]
+
 logger = logging.getLogger(__name__)
 
 PREFIX = "mirbase"
 MIRBASE_MATURE_PREFIX = "mirbase.mature"
+BASE_URL = "https://www.mirbase.org/ftp"
 
 xref_mapping = {
     "entrezgene": "ncbigene",
@@ -27,23 +31,25 @@ xref_mapping = {
 }
 
 
+class MiRBaseGetter(Obo):
+    """An ontology representation of miRBase's miRNA nomenclature."""
+
+    ontology = bioversions_key = PREFIX
+    typedefs = [from_species, has_mature]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(version=self._version_or_raise, force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get miRBase as OBO."""
-    version = bioversions.get_version(PREFIX)
-    return Obo(
-        ontology=PREFIX,
-        name="miRBase",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        typedefs=[from_species, has_mature],
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return MiRBaseGetter(force=force)
 
 
 def get_terms(version: str, force: bool = False) -> List[Term]:
     """Parse miRNA data from filepath and convert it to dictionary."""
-    url = f"ftp://mirbase.org/pub/mirbase/{version}/miRNA.dat.gz"
+    url = f"{BASE_URL}/{version}/miRNA.dat.gz"
     definitions_path = ensure_path(PREFIX, url=url, version=version, force=force)
 
     file_handle = (
@@ -56,13 +62,13 @@ def get_terms(version: str, force: bool = False) -> List[Term]:
 
 
 def _prepare_organisms(version: str, force: bool = False):
-    url = f"ftp://mirbase.org/pub/mirbase/{version}/organisms.txt.gz"
+    url = f"{BASE_URL}/{version}/organisms.txt.gz"
     df = ensure_df(PREFIX, url=url, sep="\t", dtype={"#NCBI-taxid": str}, version=version)
     return {division: (taxonomy_id, name) for _, division, name, _tree, taxonomy_id in df.values}
 
 
 def _prepare_aliases(version: str, force: bool = False) -> Mapping[str, List[str]]:
-    url = f"ftp://mirbase.org/pub/mirbase/{version}/aliases.txt.gz"
+    url = f"{BASE_URL}/{version}/aliases.txt.gz"
     df = ensure_df(PREFIX, url=url, sep="\t", version=version)
     return {
         mirbase_id: [s.strip() for s in synonyms.split(";") if s and s.strip()]
@@ -77,12 +83,11 @@ def _process_definitions_lines(
     organisms = _prepare_organisms(version, force=force)
     aliases = _prepare_aliases(version, force=force)
 
-    groups = []
+    groups: List[List[str]] = []
 
     for line in lines:  # TODO replace with itertools.groupby
         if line.startswith("ID"):
-            listnew = []
-            groups.append(listnew)
+            groups.append([])
         groups[-1].append(line)
 
     for group in tqdm(groups, desc=f"mapping {PREFIX}"):
