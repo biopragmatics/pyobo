@@ -69,5 +69,5 @@ def _help_ensure_ndex_network_set(prefix: str, uuid: str, force: bool = False) -
     network_uuids = res_json["networks"]
     with open(networkset_path, "w") as file:
         for network_uuid in sorted(network_uuids):
-            print(network_uuid, file=file)  # noqa:T001
+            print(network_uuid, file=file)  # noqa: T201
     return network_uuids

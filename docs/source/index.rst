@@ -1,5 +1,6 @@
 PyOBO |release| Documentation
 =============================
+.. automodule:: pyobo
 
 Indices and Tables
 ------------------
