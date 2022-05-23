@@ -9,6 +9,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..api import get_id_name_mapping
+from ..constants import NCBITAXON_PREFIX
 from ..struct import Obo, Reference, Term, from_species
 from ..utils.path import ensure_df
 
@@ -162,7 +163,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
     """Get Entrez terms."""
     df = get_gene_info_df(force=force)
 
-    taxonomy_id_to_name = get_id_name_mapping("ncbitaxon")
+    taxonomy_id_to_name = get_id_name_mapping(NCBITAXON_PREFIX)
     missing_taxa = set()
 
     it = tqdm(
@@ -175,7 +176,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
             tax_name = taxonomy_id_to_name[tax_id]
         except KeyError:
             if tax_id not in missing_taxa:
-                logger.warning(f"Could not look up name for NCBITaxon:{tax_id}")
+                logger.warning(f"Could not look up name for {NCBITAXON_PREFIX}:{tax_id}")
                 missing_taxa.add(tax_id)
             tax_name = None
 

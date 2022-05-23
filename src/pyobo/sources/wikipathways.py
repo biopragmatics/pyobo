@@ -65,15 +65,11 @@ def iter_terms(version: str) -> Iterable[Term]:
         path = ensure_path(PREFIX, url=url, version=version)
 
         species_code = species_code.replace("_", " ")
-        species_reference = Reference(
-            prefix="ncbitaxon",
-            identifier=taxonomy_id,
-            name=SPECIES_REMAPPING.get(species_code, species_code),
-        )
+        taxonomy_name = SPECIES_REMAPPING.get(species_code, species_code)
 
         for identifier, _version, _revision, name, _species, genes in parse_wikipathways_gmt(path):
             term = Term(reference=Reference(prefix=PREFIX, identifier=identifier, name=name))
-            term.append_relationship(from_species, species_reference)
+            term.set_species(taxonomy_id, taxonomy_name)
             for ncbigene_id in genes:
                 term.append_relationship(
                     # Should be participates in!!!

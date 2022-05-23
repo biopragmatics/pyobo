@@ -11,7 +11,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from ..api import get_id_multirelations_mapping, get_name_id_mapping
-from ..constants import SPECIES_REMAPPING
+from ..constants import NCBITAXON_PREFIX, SPECIES_REMAPPING
 from ..struct import Obo, Reference, Term, from_species, has_part
 from ..utils.io import multidict
 from ..utils.path import ensure_df
@@ -54,7 +54,7 @@ def ensure_participant_df(version: str, force: bool = False) -> pd.DataFrame:
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate Reactome terms."""
-    ncbitaxon_name_to_id = get_name_id_mapping("ncbitaxon")
+    ncbitaxon_name_to_id = get_name_id_mapping(NCBITAXON_PREFIX)
 
     provenance_url = f"https://reactome.org/download/{version}/ReactionPMIDS.txt"
     provenance_df = ensure_df(PREFIX, url=provenance_url, header=None, version=version, force=force)

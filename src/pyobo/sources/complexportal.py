@@ -9,6 +9,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from pyobo import get_id_name_mapping
+from pyobo.constants import NCBITAXON_PREFIX
 from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_part
 from pyobo.utils.path import ensure_df
 
@@ -148,8 +149,8 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     df["members"] = df["members"].map(_parse_members)
     df["xrefs"] = df["xrefs"].map(_parse_xrefs)
 
-    taxnomy_id_to_name = get_id_name_mapping("ncbitaxon")
-    df["taxonomy_name"] = df["taxonomy_id"].map(taxnomy_id_to_name.get)
+    taxonomy_id_to_name = get_id_name_mapping(NCBITAXON_PREFIX)
+    df["taxonomy_name"] = df["taxonomy_id"].map(taxonomy_id_to_name.get)
 
     slim_df = df[
         [

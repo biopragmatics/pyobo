@@ -8,7 +8,7 @@ import bioversions
 import pandas as pd
 
 from pyobo import get_name_id_mapping
-from pyobo.constants import version_getter
+from pyobo.constants import NCBITAXON_PREFIX, version_getter
 from pyobo.utils.cache import cached_mapping
 from pyobo.utils.path import ensure_df, prefix_directory_join
 
@@ -47,7 +47,7 @@ taxonomy_remapping = {  # so much for official names
 def _lookup(name):
     if name in taxonomy_remapping:
         return taxonomy_remapping[name]
-    return get_name_id_mapping("ncbitaxon")[name]
+    return get_name_id_mapping(NCBITAXON_PREFIX)[name]
 
 
 def get_df() -> pd.DataFrame:

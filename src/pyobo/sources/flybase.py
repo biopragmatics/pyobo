@@ -9,6 +9,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from pyobo import Reference
+from pyobo.constants import NCBITAXON_PREFIX
 from pyobo.struct import Obo, Term, from_species, orthologous
 from pyobo.utils.io import multisetdict
 from pyobo.utils.path import ensure_df
@@ -152,7 +153,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
                 term.append_relationship(orthologous, hgnc_ortholog)
         taxonomy_id = abbr_to_taxonomy.get(organism)
         if taxonomy_id is not None:
-            term.append_relationship(from_species, Reference.auto("ncbitaxon", taxonomy_id))
+            term.append_relationship(from_species, Reference.auto(NCBITAXON_PREFIX, taxonomy_id))
         elif organism not in missing_taxonomies:
             tqdm.write(f"missing mapping for species abbreviation: {organism}")
             missing_taxonomies.add(organism)
