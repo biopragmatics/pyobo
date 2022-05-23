@@ -90,7 +90,9 @@ def get_ids(prefix: str, force: bool = False, strict: bool = True) -> Set[str]:
 
 @lru_cache()
 @wrap_norm_prefix
-def get_id_name_mapping(prefix: str, force: bool = False, strict: bool = True) -> Mapping[str, str]:
+def get_id_name_mapping(
+    prefix: str, force: bool = False, strict: bool = True, version: Optional[str] = None
+) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == "ncbigene":
         from ..sources.ncbigene import get_ncbigene_id_to_name_mapping
@@ -100,7 +102,8 @@ def get_id_name_mapping(prefix: str, force: bool = False, strict: bool = True) -
         logger.info("[%s] done loading name mappings", prefix)
         return rv
 
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(prefix, name="names.tsv", version=version)
 
     @cached_mapping(path=path, header=[f"{prefix}_id", "name"], force=force)

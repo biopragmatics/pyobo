@@ -44,7 +44,10 @@ def get_species(prefix: str, identifier: str) -> Optional[str]:
 @lru_cache()
 @wrap_norm_prefix
 def get_id_species_mapping(
-    prefix: str, force: bool = False, strict: bool = True
+    prefix: str,
+    force: bool = False,
+    strict: bool = True,
+    version: Optional[str] = None,
 ) -> Mapping[str, str]:
     """Get an identifier to species mapping."""
     if prefix == "ncbigene":
@@ -55,7 +58,8 @@ def get_id_species_mapping(
         logger.info("[%s] done loading species mappings", prefix)
         return rv
 
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(prefix, name="species.tsv", version=version)
 
     @cached_mapping(path=path, header=[f"{prefix}_id", "species"], force=force)
