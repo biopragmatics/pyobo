@@ -579,7 +579,7 @@ class Obo:
     @staticmethod
     def _write_lines(it, file):
         for line in it:
-            print(line, file=file)  # noqa:T001
+            print(line, file=file)  # noqa: T201
 
     def write_obonet_gz(self, path: Union[str, Path]) -> None:
         """Write the OBO to a gzipped dump in Obonet JSON."""

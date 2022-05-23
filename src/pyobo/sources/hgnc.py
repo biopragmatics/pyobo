@@ -360,8 +360,8 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
                 headers=["hgnc_id", "name", "obsolete", "link", "provenance"],
                 tablefmt="github",
             )
-            print(f"## {k} ({len(v)})", file=file)  # noqa:T001
-            print(t, "\n", file=file)  # noqa:T001
+            print(f"## {k} ({len(v)})", file=file)  # noqa: T201
+            print(t, "\n", file=file)  # noqa: T201
 
     unhandle_locus_type_counter = Counter(
         {locus_type: len(d) for locus_type, d in unhandle_locus_types.items()}
