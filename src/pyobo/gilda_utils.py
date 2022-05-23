@@ -26,6 +26,7 @@ __all__ = [
 def iter_gilda_prediction_tuples(
     prefix: str,
     relation: str,
+    *,
     grounder: Optional[Grounder] = None,
     identifiers_are_names: bool = False,
 ) -> Iterable[Tuple[str, str, str, str, str, str, str, str, float]]:
@@ -41,7 +42,7 @@ def iter_gilda_prediction_tuples(
             target_prefix = scored_match.term.db.lower()
             yield (
                 prefix,
-                identifier,
+                normalize_identifier(prefix, identifier),
                 name,
                 relation,
                 target_prefix,
@@ -58,7 +59,7 @@ def iter_gilda_prediction_tuples(
                 target_prefix = scored_match.term.db.lower()
                 yield (
                     prefix,
-                    identifier,
+                    normalize_identifier(prefix, identifier),
                     identifier,
                     relation,
                     target_prefix,
@@ -71,16 +72,10 @@ def iter_gilda_prediction_tuples(
 
 def normalize_identifier(prefix: str, identifier: str) -> str:
     """Normalize the identifier."""
-    # TODO in bioregistry.resolve_identifier there is similar code. just combine with that
-    banana = bioregistry.get_banana(prefix)
-    if banana:
-        if not identifier.startswith(banana):
-            return f"{banana}:{identifier}"
-    elif bioregistry.get_namespace_in_lui(prefix):
-        banana = f"{prefix.upper()}:"
-        if not identifier.startswith(banana):
-            return f"{banana}{identifier}"
-    return identifier
+    resource = bioregistry.get_resource(prefix)
+    if resource is None:
+        raise KeyError
+    return resource.miriam_standardize_identifier(identifier)
 
 
 def get_grounder(
