@@ -8,8 +8,8 @@ from typing import Iterable, Optional
 import bioversions
 from tqdm import tqdm
 
-from pyobo import Obo
-from pyobo.constants import RAW_MODULE
+from pyobo import Obo, Reference
+from pyobo.constants import NCBITAXON_PREFIX, RAW_MODULE
 from pyobo.struct import Term, from_species
 from pyobo.utils.io import open_reader
 
@@ -44,7 +44,9 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
             term = Term.from_triple(prefix=PREFIX, identifier=uniprot_id, name=name)
             # TODO add gene encodes from relationship
             # TODO add description
-            term.set_species(taxonomy_id)
+            term.append_relationship(
+                from_species, Reference(prefix=NCBITAXON_PREFIX, identifier=taxonomy_id)
+            )
             yield term
 
 

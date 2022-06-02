@@ -63,7 +63,7 @@ ro	0002008	coincident with
 ro	0002009	cell expresses
 ro	0002010	regulates in other organism
 ro	0002011	regulates transport of
-ro	0002012	occurent part of
+ro	0002012	occurrent part of
 ro	0002013	has regulatory component activity
 ro	0002014	has negative regulatory component activity
 ro	0002015	has positive regulatory component activity
@@ -554,12 +554,13 @@ ro	0004026	disease has location
 ro	0004027	disease has inflammation site
 ro	0004028	realized in response to stimulus
 ro	0004029	disease has feature
-ro	0004030	disease arises from structure
+ro	0004030	disease arises from alteration in structure
 ro	0004031	enables subfunction
 ro	0004032	acts upstream of or within, positive effect
 ro	0004033	acts upstream of or within, negative effect
 ro	0004034	acts upstream of, positive effect
 ro	0004035	acts upstream of, negative effect
+ro	0004036	nominally disjoint with
 ro	0004046	causally upstream of or within, negative effect
 ro	0004047	causally upstream of or within, positive effect
 ro	0004048	is directional form of
@@ -567,6 +568,8 @@ ro	0004049	is positive form of
 ro	0004050	is negative form of
 ro	0004096	DEPRECATED inheres in
 ro	0004097	DEPRECATED bearer of
+ro	0007000	has driver
+ro	0007001	has disease driver
 ro	0008501	epiphyte of
 ro	0008502	has epiphyte
 ro	0008503	kleptoparasite of
@@ -602,9 +605,9 @@ ro	0012000	has small molecule regulator
 ro	0012001	has small molecule activator
 ro	0012002	has small molecule inhibitor
 ro	0012003	acts on population of
-ro	0012004	is small molecule regulator
-ro	0012005	is small molecule activator
-ro	0012006	is small molecule inhibitor
+ro	0012004	is small molecule regulator of
+ro	0012005	is small molecule activator of
+ro	0012006	is small molecule inhibitor of
 ro	0012007	results in adhesion of
 ro	0012008	results in fusion of
 ro	0013001	has synaptic IO in region
@@ -617,8 +620,32 @@ ro	0013007	has sensory dendrite in
 ro	0013008	receives synaptic input from neuron
 ro	0013009	sends synaptic output to cell
 ro	0014001	disease has infectious agent
+ro	0015001	has exemplar data
+ro	0015002	exemplar data of
+ro	0015003	subcluster of
+ro	0015004	has characterizing marker set
+ro	0015006	different in magnitude relative to
+ro	0015007	increased in magnitude relative to
+ro	0015008	decreased in magnitude relative to
+ro	0015009	similar in magnitude relative to
+ro	0015010	has relative magnitude
+ro	0015011	has cross section
+ro	0015012	reciprocal of
+ro	0015015	has high plasma membrane amount
+ro	0015016	has low plasma membrane amount
+ro	0016001	has phenotype or disease
+ro	0016002	has disease
+ro	0016004	has exposure medium
+ro	0017001	device utilizes material
+ro	0018001	is myristoyltransferase activity
+ro	0018002	myristoylates
+ro	0018003	myristoylated by
+ro	0019000	regulates characteristic
+ro	0019001	positively regulates characteristic
+ro	0019002	negatively regulates characteristic
+ro	0019501	confers susceptibility to condition
 ro	0040035	disease relationship
-ro	0040036	has anatomical participant
+ro	0040036	results in changes to anatomical or cellular structure
 ro	0040042	is homeomorphic for
 ro	HOM0000000	in similarity relationship with
 ro	HOM0000001	in homology relationship with

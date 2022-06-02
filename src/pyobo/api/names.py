@@ -44,11 +44,11 @@ def _help_get(f: Callable[[str], Mapping[str, X]], prefix: str, identifier: str)
     try:
         mapping = f(prefix)
     except NoBuild:
-        logger.warning("unable to look up results for prefix %s with %s", prefix, f)
+        logger.warning("[%s] unable to look up results with %s", prefix, f)
         return None
 
     if not mapping:
-        logger.warning("no results produced for prefix %s with %s", prefix, f)
+        logger.warning("[%s] no results produced with %s", prefix, f)
         return None
 
     primary_id = get_primary_identifier(prefix, identifier)
@@ -63,7 +63,9 @@ def get_name(prefix: str, identifier: str) -> Optional[str]:
 
 @lru_cache()
 @wrap_norm_prefix
-def get_ids(prefix: str, force: bool = False, strict: bool = True) -> Set[str]:
+def get_ids(
+    prefix: str, force: bool = False, strict: bool = True, version: Optional[str] = None
+) -> Set[str]:
     """Get the set of identifiers for this prefix."""
     if prefix == "ncbigene":
         from ..sources.ncbigene import get_ncbigene_ids
@@ -73,15 +75,18 @@ def get_ids(prefix: str, force: bool = False, strict: bool = True) -> Set[str]:
         logger.info("[%s] done loading name mappings", prefix)
         return rv
 
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(prefix, name="ids.tsv", version=version)
 
     @cached_collection(path=path, force=force)
     def _get_ids() -> Set[str]:
         if force:
-            logger.info("[%s] forcing reload for names", prefix)
+            logger.info("[%s v%s] forcing reload for names", prefix, version)
         else:
-            logger.info("[%s] no cached names found. getting from OBO loader", prefix)
+            logger.info(
+                "[%s v%s] no cached identifiers found. getting from OBO loader", prefix, version
+            )
         ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_ids()
 
@@ -109,9 +114,9 @@ def get_id_name_mapping(
     @cached_mapping(path=path, header=[f"{prefix}_id", "name"], force=force)
     def _get_id_name_mapping() -> Mapping[str, str]:
         if force:
-            logger.info("[%s] forcing reload for names", prefix)
+            logger.info("[%s v%s] forcing reload for names", prefix, version)
         else:
-            logger.info("[%s] no cached names found. getting from OBO loader", prefix)
+            logger.info("[%s v%s] no cached names found. getting from OBO loader", prefix, version)
         ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_id_name_mapping()
 
@@ -133,15 +138,21 @@ def get_definition(prefix: str, identifier: str) -> Optional[str]:
 
 
 def get_id_definition_mapping(
-    prefix: str, force: bool = False, strict: bool = True
+    prefix: str,
+    force: bool = False,
+    strict: bool = True,
+    version: Optional[str] = None,
 ) -> Mapping[str, str]:
     """Get a mapping of descriptions."""
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(prefix, name="definitions.tsv", version=version)
 
     @cached_mapping(path=path, header=[f"{prefix}_id", "definition"], force=force)
     def _get_mapping() -> Mapping[str, str]:
-        logger.info("[%s] no cached descriptions found. getting from OBO loader", prefix)
+        logger.info(
+            "[%s v%s] no cached descriptions found. getting from OBO loader", prefix, version
+        )
         ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_id_definition_mapping()
 
@@ -156,15 +167,19 @@ def get_synonyms(prefix: str, identifier: str) -> Optional[List[str]]:
 
 @wrap_norm_prefix
 def get_id_synonyms_mapping(
-    prefix: str, force: bool = False, strict: bool = True
+    prefix: str,
+    force: bool = False,
+    strict: bool = True,
+    version: Optional[str] = None,
 ) -> Mapping[str, List[str]]:
     """Get the OBO file and output a synonym dictionary."""
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(prefix, name="synonyms.tsv", version=version)
 
     @cached_multidict(path=path, header=[f"{prefix}_id", "synonym"], force=force)
     def _get_multidict() -> Mapping[str, List[str]]:
-        logger.info("[%s] no cached synonyms found. getting from OBO loader", prefix)
+        logger.info("[%s v%s] no cached synonyms found. getting from OBO loader", prefix, version)
         ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_id_synonyms_mapping()
 
