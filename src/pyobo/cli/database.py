@@ -115,14 +115,15 @@ def metadata(
 @no_strict_option
 def names(directory: str, zenodo: bool, no_strict: bool, force: bool):
     """Make the prefix-identifier-name dump."""
-    paths = db_output_helper(
-        _iter_ooh_na_na,
-        "names",
-        ("prefix", "identifier", "name"),
-        strict=not no_strict,
-        force=force,
-        directory=directory,
-    )
+    with logging_redirect_tqdm():
+        paths = db_output_helper(
+            _iter_ooh_na_na,
+            "names",
+            ("prefix", "identifier", "name"),
+            strict=not no_strict,
+            force=force,
+            directory=directory,
+        )
     if zenodo:
         # see https://zenodo.org/record/4020486
         update_zenodo(OOH_NA_NA_RECORD, paths)
