@@ -5,8 +5,6 @@
 from functools import lru_cache
 from typing import Callable, Iterable, Mapping
 
-from pkg_resources import iter_entry_points
-
 from .struct import Obo
 
 __all__ = [
@@ -18,20 +16,33 @@ __all__ = [
 
 @lru_cache()
 def _get_nomenclature_plugins() -> Mapping[str, Callable[[], Obo]]:
-    return {entry.name: entry.load() for entry in iter_entry_points(group="pyobo.nomenclatures")}
+    from .sources import ontology_resolver
+
+    return ontology_resolver.lookup_dict
 
 
 def has_nomenclature_plugin(prefix: str) -> bool:
     """Check if there's a plugin for converting the prefix."""
-    return prefix in _get_nomenclature_plugins()
+    from .sources import ontology_resolver
+
+    try:
+        ontology_resolver.lookup(prefix)
+    except KeyError:
+        return False
+    else:
+        return True
 
 
 def run_nomenclature_plugin(prefix: str) -> Obo:
     """Get a converted PyOBO source."""
-    return _get_nomenclature_plugins()[prefix]()
+    from .sources import ontology_resolver
+
+    return ontology_resolver.make(prefix)
 
 
 def iter_nomenclature_plugins() -> Iterable[Obo]:
     """Get all modules in the PyOBO sources."""
-    for _prefix, get_obo in sorted(_get_nomenclature_plugins().items()):
-        yield get_obo()
+    from .sources import ontology_resolver
+
+    for _prefix, cls in sorted(ontology_resolver.lookup_dict.items()):
+        yield cls()
