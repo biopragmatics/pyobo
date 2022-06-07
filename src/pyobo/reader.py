@@ -18,7 +18,15 @@ from .registries import (
     get_xrefs_blacklist,
     get_xrefs_prefix_blacklist,
 )
-from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef
+from .struct import (
+    Obo,
+    Reference,
+    Synonym,
+    SynonymTypeDef,
+    Term,
+    TypeDef,
+    make_ad_hoc_ontology,
+)
 from .struct.typedef import default_typedefs, develops_from, has_part, part_of
 from .utils.misc import cleanup_version
 
@@ -26,7 +34,6 @@ __all__ = [
     "from_obo_path",
     "from_obonet",
 ]
-
 
 logger = logging.getLogger(__name__)
 
@@ -219,30 +226,17 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
         f" {n_relations} relations, and {n_properties} properties",
     )
 
-    _ontology = ontology
-    _name = name
-    _typedefs = typedefs
-    _synonym_typedefs = synonym_typedefs
-
-    class AdHocOntology(Obo):
-        """An ad hoc ontology created from an OBO file."""
-
-        ontology = _ontology
-        name = _name
-        auto_generated_by = graph.graph.get("auto-generated-by")
-        format_version = graph.graph.get("format-version")
-        typedefs = list(_typedefs.values())
-        synonym_typedefs = list(_synonym_typedefs.values())
-
-        def __post_init__(self):
-            self.date = date
-            self.data_version = data_version
-
-        def iter_terms(self, force: bool = False) -> Iterable[Term]:
-            """Iterate over terms in the ad hoc ontology."""
-            return terms
-
-    return AdHocOntology()
+    return make_ad_hoc_ontology(
+        ontology,
+        name,
+        graph.graph.get("auto-generated-by"),
+        graph.graph.get("format-version"),
+        list(typedefs.values()),
+        list(synonym_typedefs.values()),
+        date,
+        data_version,
+        terms,
+    )
 
 
 def _clean_graph_ontology(graph, prefix: str) -> None:

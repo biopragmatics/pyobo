@@ -3,7 +3,13 @@
 """Data structures for OBO."""
 
 from .reference import Reference  # noqa: F401
-from .struct import Obo, Synonym, SynonymTypeDef, Term  # noqa: F401
+from .struct import (  # noqa: F401
+    Obo,
+    Synonym,
+    SynonymTypeDef,
+    Term,
+    make_ad_hoc_ontology,
+)
 from .typedef import (  # noqa: F401
     RelationHint,
     TypeDef,

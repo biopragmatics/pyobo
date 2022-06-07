@@ -67,6 +67,7 @@ __all__ = [
     "SynonymTypeDef",
     "Term",
     "Obo",
+    "make_ad_hoc_ontology",
 ]
 
 logger = logging.getLogger(__name__)
@@ -1252,6 +1253,40 @@ class Obo:
     def get_id_alts_mapping(self) -> Mapping[str, List[str]]:
         """Get a mapping from identifiers to a list of alternative identifiers."""
         return multidict((term.identifier, alt.identifier) for term, alt in self.iterate_alts())
+
+
+def make_ad_hoc_ontology(
+    _ontology,
+    _name,
+    _auto_generated_by,
+    _format_version,
+    _typedefs,
+    _synonym_typedefs,
+    _date,
+    _data_version,
+    terms,
+) -> "Obo":
+    """Make an ad-hoc ontology."""
+
+    class AdHocOntology(Obo):
+        """An ad hoc ontology created from an OBO file."""
+
+        ontology = _ontology
+        name = _name
+        auto_generated_by = _auto_generated_by
+        format_version = _format_version
+        typedefs = _typedefs
+        synonym_typedefs = _synonym_typedefs
+
+        def __post_init__(self):
+            self.date = _date
+            self.data_version = _data_version
+
+        def iter_terms(self, force: bool = False) -> Iterable[Term]:
+            """Iterate over terms in the ad hoc ontology."""
+            return terms
+
+    return AdHocOntology()
 
 
 def _convert_typedefs(typedefs: Optional[Iterable[TypeDef]]) -> List[Mapping[str, Any]]:
