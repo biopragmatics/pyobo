@@ -103,7 +103,9 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     # TODO names?
 
     url = "ftp://ftp.expasy.org/databases/rhea/rdf/rhea.rdf.gz"
-    graph = pystow.ensure_rdf("pyobo", "raw", PREFIX, version, url=url, force=force)
+    graph = pystow.ensure_rdf(
+        "pyobo", "raw", PREFIX, version, url=url, force=force, parse_kwargs=dict(format="xml")
+    )
     result = graph.query(
         """
     PREFIX rh:<http://rdf.rhea-db.org/>
