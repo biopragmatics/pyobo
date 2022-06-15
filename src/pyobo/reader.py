@@ -129,7 +129,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
 
     missing_typedefs = set()
     terms = []
-    n_alt_ids, n_parents, n_synonyms, n_relations, n_properties = 0, 0, 0, 0, 0
+    n_alt_ids, n_parents, n_synonyms, n_relations, n_properties, n_xrefs = 0, 0, 0, 0, 0, 0
     for prefix, identifier, data in _iter_obo_graph(graph=graph):
         if prefix != ontology or not data:
             continue
@@ -147,6 +147,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
                 provenance.append(node_xref)
             else:
                 xrefs.append(node_xref)
+        n_xrefs += len(xrefs)
 
         definition, definition_references = get_definition(
             data, prefix=prefix, identifier=identifier
@@ -227,9 +228,9 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
         terms.append(term)
 
     logger.info(
-        f"[{ontology}] got {len(references)} references, {len(typedefs)} typedefs, {len(terms)} terms,"
-        f" {n_alt_ids} alt ids, {n_parents} parents, {n_synonyms} synonyms,"
-        f" {n_relations} relations, and {n_properties} properties",
+        f"[{ontology}] got {len(references):,} references, {len(typedefs):,} typedefs, {len(terms):,} terms,"
+        f" {n_alt_ids:,} alt ids, {n_parents:,} parents, {n_synonyms:,} synonyms, {n_xrefs:,} xrefs,"
+        f" {n_relations:,} relations, and {n_properties:,} properties",
     )
 
     return make_ad_hoc_ontology(
