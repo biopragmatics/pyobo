@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}{{ term.name or term.identifier }}{% endblock title %}
+
+{% block content -%}
+    <div class="card">
+        <div class="card-header">
+            {{ term.name or term.identifier }}
+        </div>
+        <div class="card-body">
+            {% if term.definition %}
+                <p>{{ term.definition }}</p>
+            {% endif %}
+            <dl>
+                <dt>Identifier</dt>
+                <dd><a href="https://bioregistry.io/{{ obo.ontology }}:{{ term.identifier }}">{{ term.identifier }}</a></dd>
+                {% for xref in term.xrefs %}
+                    <dt><span class="badge badge-primary">Xref</span> {{ bioregistry.get_name(xref.prefix) }}</dt>
+                    <dt>
+                        <a href="https://bioregistry.io/{{ xref.prefix }}:{{ xref.identifier }}">
+                            <code>{{ xref.prefix }}:{{ xref.identifier }}</code>
+                        </a>
+                    </dt>
+                {% endfor %}
+            </dl>
+
+
+            <span class="badge badge-warning">Term generation via PyOBO is currently under construction</span>
+            <blockquote>
+                {{ term }}
+            </blockquote>
+        </div>
+    </div>
+{%- endblock content %}
