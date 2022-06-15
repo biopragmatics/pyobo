@@ -115,6 +115,7 @@ GTYPE_TO_SO = {
     "rRNA_5_8S_gene": "0002240",
     "miRNA_gene": "0001265",
     "rRNA_28S_gene": "0002239",
+    "mt_LSU_rRNA_gene": None,
 }
 
 
@@ -126,10 +127,16 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     human_orthologs = _get_human_orthologs(version=version, force=force)
     missing_taxonomies = set()
 
-    so = {
-        gtype: Reference.auto("SO", GTYPE_TO_SO[gtype])
-        for gtype in names_df[names_df.columns[1]].unique()
-    }
+    so = {}
+    for gtype in names_df[names_df.columns[1]].unique():
+        so_id = GTYPE_TO_SO.get(gtype)
+        if so_id is None:
+            logger.warning(
+                "FlyBase gene type is missing mapping to Sequence Ontology (SO): %s", gtype
+            )
+        else:
+            so[gtype] = Reference.auto("SO", GTYPE_TO_SO[gtype])
+
     for _, reference in sorted(so.items()):
         yield Term(reference=reference)
     for organism, gtype, identifier, symbol, name in tqdm(names_df.values):
@@ -139,7 +146,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             name=symbol,
             definition=definitions.get(identifier),
         )
-        if gtype and pd.notna(gtype):
+        if gtype and pd.notna(gtype) and gtype in so:
             term.append_parent(so[gtype])
         if pd.notna(name):
             term.append_synonym(name)
