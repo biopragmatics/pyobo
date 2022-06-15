@@ -215,7 +215,7 @@ SKIP = {
     # URL is wrong
     "ensemblglossary",
     # Too much junk
-    "biolink"
+    "biolink",
 }
 
 X = TypeVar("X")
