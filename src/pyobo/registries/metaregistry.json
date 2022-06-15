@@ -186,6 +186,29 @@
       {
         "type": "group",
         "text": [
+          "active:in",
+          "actively:involves",
+          "aggregate:statistic",
+          "associated:with",
+          "affected:by",
+          "base:coordinate",
+          "biomarker:for",
+          "capable:of",
+          "caused:by",
+          "coexpressed:with",
+          "association:type",
+          "association:slot",
+          "close:match",
+          "completed:by",
+          "coexists:with",
+          "colocalizes:with",
+          "available:from"
+        ],
+        "from": "biolink"
+      },
+      {
+        "type": "group",
+        "text": [
           "TTOCurator:Conway_etal_2008",
           "TTOCurator:CavenderAndCoburn1992",
           "TTOCurator:Vari1995"

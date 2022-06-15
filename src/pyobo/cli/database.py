@@ -92,7 +92,7 @@ skip_below_exclusive_option = click.option("--skip-below-exclusive", is_flag=Tru
 @directory_option
 @force_option
 @no_strict_option
-@click.option("--skip-below")
+@skip_below_option
 @click.option("--skip-pyobo")
 def metadata(
     directory: str, no_strict: bool, force: bool, skip_below: Optional[str], skip_pyobo: bool
@@ -117,7 +117,16 @@ def metadata(
 @zenodo_option
 @force_option
 @no_strict_option
-def names(directory: str, zenodo: bool, no_strict: bool, force: bool):
+@skip_below_option
+@skip_below_exclusive_option
+def names(
+    directory: str,
+    zenodo: bool,
+    no_strict: bool,
+    force: bool,
+    skip_below: Optional[str],
+    skip_below_exclusive: bool,
+):
     """Make the prefix-identifier-name dump."""
     with logging_redirect_tqdm():
         paths = db_output_helper(
@@ -127,6 +136,8 @@ def names(directory: str, zenodo: bool, no_strict: bool, force: bool):
             strict=not no_strict,
             force=force,
             directory=directory,
+            skip_below=skip_below,
+            skip_below_inclusive=not skip_below_exclusive,
         )
     if zenodo:
         # see https://zenodo.org/record/4020486

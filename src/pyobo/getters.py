@@ -7,9 +7,9 @@ import gzip
 import json
 import logging
 import pathlib
+import subprocess
 import typing
 import urllib.error
-import warnings
 from collections import Counter
 from typing import (
     Callable,
@@ -25,17 +25,14 @@ from typing import (
 )
 
 import bioregistry
-from pystow.utils import download
 from tqdm import tqdm
 
 from .constants import DATABASE_DIRECTORY
 from .identifier_utils import MissingPrefix, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
-from .reader import from_obo_path, from_obonet
 from .struct import Obo
-from .utils.cache import get_gzipped_graph
 from .utils.io import get_writer
-from .utils.path import ensure_path, get_prefix_obo_path, prefix_directory_join
+from .utils.path import ensure_path, prefix_directory_join
 from .version import get_git_hash, get_version
 
 __all__ = [
@@ -60,7 +57,6 @@ def get_ontology(
     *,
     force: bool = False,
     rewrite: bool = False,
-    url: Optional[str] = None,
     strict: bool = True,
     version: Optional[str] = None,
 ) -> Obo:
@@ -70,8 +66,6 @@ def get_ontology(
     :param version: The pre-looked-up version of the ontology
     :param force: Download the data again
     :param rewrite: Should the OBO cache be rewritten? Automatically set to true if ``force`` is true
-    :param url: A URL to give if the OBOfoundry can not be used to look up the given prefix. This option is deprecated,
-        you should make a PR to the bioregistry or use other code if you have a custom URL, like:
     :param strict: Should CURIEs be treated strictly? If true, raises exceptions on invalid/malformed
     :returns: An OBO object
 
@@ -96,6 +90,9 @@ def get_ontology(
         prefix, name=f"{prefix}.obonet.json.gz", ensure_exists=False, version=version
     )
     if obonet_json_gz_path.exists() and not force:
+        from .reader import from_obonet
+        from .utils.cache import get_gzipped_graph
+
         logger.debug("[%s] using obonet cache at %s", prefix, obonet_json_gz_path)
         return from_obonet(get_gzipped_graph(obonet_json_gz_path))
 
@@ -106,24 +103,32 @@ def get_ontology(
         return obo
 
     logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
-    path = _ensure_ontology_path(prefix, url=url, force=force, version=version)
 
-    if path.suffix == ".obo":
+    path = None
+    for ontology_format, url in [
+        ("obo", bioregistry.get_obo_download(prefix)),
+        ("owl", bioregistry.get_owl_download(prefix)),
+        ("json", bioregistry.get_json_download(prefix)),
+    ]:
+        if url is not None:
+            path = pathlib.Path(ensure_path(prefix, url=url, force=force, version=version))
+            break
+
+    if path is None:
+        raise NoBuild
+    elif ontology_format == "obo":
         pass  # all gucci
-    elif path.suffix == ".owl":
-        import pronto
+    elif ontology_format == "owl":
+        from bioontologies import robot
 
-        try:
-            prontology = pronto.Ontology(path)
-        except KeyError:
-            raise NoBuild(f"[{prefix}] could not parse OWL with pronto") from None
-        version = prontology.metadata.data_version
-        # prefix = prontology.metadata.ontology
-        path = get_prefix_obo_path(prefix=prefix, version=version)
-        with path.open("wb") as file:
-            prontology.dump(file, format="obo")
+        _converted_obo_path = path.with_suffix(".obo")
+        robot.convert(path, _converted_obo_path)
+        path = _converted_obo_path
     else:
         raise UnhandledFormat(f"[{prefix}] unhandled ontology file format: {path.suffix}")
+
+    from .reader import from_obo_path
+
     obo = from_obo_path(path, prefix=prefix, strict=strict)
     if version is not None:
         if obo.data_version is None:
@@ -136,32 +141,6 @@ def get_ontology(
             obo.data_version = version
     obo.write_default(force=rewrite)
     return obo
-
-
-def _ensure_ontology_path(
-    prefix: str, *, url: Optional[str] = None, force: bool = False, version: Optional[str] = None
-) -> pathlib.Path:
-    """Get the path to the ontology file and download if missing."""
-    if url is not None:
-        warnings.warn("Should make curations in the bioregistry instead", DeprecationWarning)
-        path = get_prefix_obo_path(prefix, version=version)
-        download(url=url, path=path, force=force)
-        return path
-
-    path = get_prefix_obo_path(prefix, version=version)
-    if path.is_file():
-        logger.debug("[%s] OBO already exists at %s", prefix, path)
-        return path
-
-    for url in [
-        bioregistry.get_obo_download(prefix),
-        bioregistry.get_owl_download(prefix),
-        bioregistry.get_json_download(prefix),
-    ]:
-        if url is not None:
-            return pathlib.Path(ensure_path(prefix, url=url, force=force, version=version))
-
-    raise NoBuild(f"could not find a download link for {prefix}")
 
 
 #: Obonet/Pronto can't parse these (consider converting to OBO with ROBOT?)
@@ -228,8 +207,6 @@ SKIP = {
     "gaz",  # Gazetteer is irrelevant for biology
     "ma",  # yanked
     "bila",  # yanked
-    # Only OWL
-    "gorel",
     # FIXME below
     "emapa",  # recently changed with EMAP... not sure what the difference is anymore
     "kegg.genes",
@@ -237,7 +214,8 @@ SKIP = {
     "kegg.pathway",
     # URL is wrong
     "ensemblglossary",
-    *CANT_PARSE,
+    # Too much junk
+    "biolink"
 }
 
 X = TypeVar("X")
@@ -262,10 +240,42 @@ def iter_helper(
             yield prefix, key, value
 
 
+def _prefixes(
+    skip_below: Optional[str] = None,
+    skip_below_inclusive: bool = True,
+    skip_pyobo: bool = False,
+    skip_set: Optional[Set[str]] = None,
+) -> Iterable[str]:
+    for prefix, resource in sorted(bioregistry.read_registry().items()):
+        if resource.no_own_terms:
+            continue
+        if prefix in SKIP:
+            tqdm.write(f"skipping {prefix} because in default skip set")
+            continue
+        if skip_set and prefix in skip_set:
+            tqdm.write(f"skipping {prefix} because in skip set")
+            continue
+        if skip_below is not None:
+            if skip_below_inclusive:
+                if prefix < skip_below:
+                    continue
+            else:
+                if prefix <= skip_below:
+                    continue
+        has_pyobo = has_nomenclature_plugin(prefix)
+        has_download = resource.has_download()
+        if skip_pyobo and has_pyobo:
+            continue
+        if not has_pyobo and not has_download:
+            continue
+        yield prefix
+
+
 def iter_helper_helper(
     f: Callable[[str], X],
     use_tqdm: bool = True,
     skip_below: Optional[str] = None,
+    skip_below_inclusive: bool = True,
     skip_pyobo: bool = False,
     skip_set: Optional[Set[str]] = None,
     strict: bool = True,
@@ -287,26 +297,21 @@ def iter_helper_helper(
     :raises urllib.error.URLError: If another problem was encountered during download
     :raises ValueError: If the data was not in the format that was expected (e.g., OWL)
     """
-    it = tqdm(sorted(bioregistry.read_registry()), disable=not use_tqdm, desc="Resources")
-    for prefix in it:
-        if use_tqdm:
-            it.set_postfix({"prefix": prefix})
-        if bioregistry.has_no_terms(prefix):
-            continue
-        if prefix in SKIP:
-            tqdm.write(f"skipping {prefix} because in default skip set")
-            continue
-        if skip_set and prefix in skip_set:
-            tqdm.write(f"skipping {prefix} because in skip set")
-            continue
-        if skip_below is not None and prefix < skip_below:
-            continue
-        if skip_pyobo and has_nomenclature_plugin(prefix):
-            continue
+    prefixes = list(
+        _prefixes(
+            skip_set=skip_set,
+            skip_below=skip_below,
+            skip_pyobo=skip_pyobo,
+            skip_below_inclusive=skip_below_inclusive,
+        )
+    )
+    prefix_it = tqdm(
+        prefixes, disable=not use_tqdm, desc=f"Building with {f.__name__}()", unit="resource"
+    )
+    for prefix in prefix_it:
+        prefix_it.set_postfix(prefix=prefix)
         try:
             yv = f(prefix, **kwargs)  # type:ignore
-        except NoBuild:
-            continue
         except urllib.error.HTTPError as e:
             logger.warning("[%s] HTTP %s: unable to download %s", prefix, e.getcode(), e.geturl())
             if strict and not bioregistry.is_deprecated(prefix):
@@ -319,20 +324,24 @@ def iter_helper_helper(
             logger.warning("[%s] missing prefix: %s", prefix, e)
             if strict and not bioregistry.is_deprecated(prefix):
                 raise e
+        except subprocess.CalledProcessError:
+            logger.warning("[%s] ROBOT was unable to convert OWL to OBO", prefix)
+        except UnhandledFormat as e:
+            logger.warning("[%s] %s", prefix, e)
         except ValueError as e:
             if _is_xml(e):
-                # this means that it tried doing parsing on an xml page saying get the fuck out
+                # this means that it tried doing parsing on an xml page
                 logger.info(
                     "no resource available for %s. See http://www.obofoundry.org/ontology/%s",
                     prefix,
                     prefix,
                 )
             else:
-                logger.exception("[%s] error while parsing: %s", prefix, e.__class__)
-            if strict:
-                raise e
+                logger.exception(
+                    "[%s] got exception %s while parsing", prefix, e.__class__.__name__
+                )
         except TypeError as e:
-            logger.exception("TypeError on %s", prefix)
+            logger.exception("[%s] got exception %s while parsing", prefix, e.__class__.__name__)
             if strict:
                 raise e
         else:
