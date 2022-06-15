@@ -47,7 +47,13 @@ def from_obo_path(
     logger.info("[%s] parsing with obonet from %s", prefix or "", path)
     with open(path) as file:
         graph = obonet.read_obo(
-            tqdm(file, unit_scale=True, desc=f'[{prefix or ""}] parsing obo', disable=None)
+            tqdm(
+                file,
+                unit_scale=True,
+                desc=f'[{prefix or ""}] parsing obo',
+                disable=None,
+                leave=False,
+            )
         )
 
     if prefix:
@@ -97,7 +103,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
             )
 
     if data_version and "/" in data_version:
-        raise ValueError("Will not accept slash in data version")
+        raise ValueError(f"[{ontology}] will not accept slash in data version: {data_version}")
 
     #: Parsed CURIEs to references (even external ones)
     references: Mapping[Tuple[str, str], Reference] = {
@@ -271,6 +277,9 @@ def _get_date(graph, ontology: str) -> Optional[datetime]:
         rv = datetime.strptime(graph.graph["date"], DATE_FORMAT)
     except KeyError:
         logger.info("[%s] does not report a date", ontology)
+        return None
+    except ValueError:
+        logger.info("[%s] reports a date that can't be parsed: %s", ontology, graph.graph["date"])
         return None
     else:
         return rv

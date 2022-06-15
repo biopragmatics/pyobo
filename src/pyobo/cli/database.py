@@ -56,31 +56,35 @@ def main():
 @click.pass_context
 def build(ctx: click.Context, directory: str, zenodo: bool, no_strict: bool, force: bool):
     """Build all databases."""
-    if no_strict and zenodo:
-        click.secho("Must be strict before uploading", fg="red")
-        sys.exit(1)
+    # if no_strict and zenodo:
+    #    click.secho("Must be strict before uploading", fg="red")
+    #    sys.exit(1)
+    with logging_redirect_tqdm():
+        click.secho("Collecting metadata and building", fg="cyan", bold=True)
+        # note that this is the only one that needs a force=force
+        ctx.invoke(metadata, directory=directory, no_strict=no_strict, force=force)
+        click.secho("Alternate Identifiers", fg="cyan", bold=True)
+        ctx.invoke(alts, directory=directory, zenodo=zenodo, no_strict=no_strict)
+        click.secho("Synonyms", fg="cyan", bold=True)
+        ctx.invoke(synonyms, directory=directory, zenodo=zenodo, no_strict=no_strict)
+        click.secho("Xrefs", fg="cyan", bold=True)
+        ctx.invoke(xrefs, directory=directory, zenodo=zenodo, no_strict=no_strict)
+        click.secho("Names", fg="cyan", bold=True)
+        ctx.invoke(names, directory=directory, zenodo=zenodo, no_strict=no_strict)
+        click.secho("Definitions", fg="cyan", bold=True)
+        ctx.invoke(definitions, directory=directory, zenodo=zenodo, no_strict=no_strict)
+        click.secho("Properties", fg="cyan", bold=True)
+        ctx.invoke(properties, directory=directory, zenodo=zenodo, no_strict=no_strict)
+        click.secho("Relations", fg="cyan", bold=True)
+        ctx.invoke(relations, directory=directory, zenodo=zenodo, no_strict=no_strict)
+        click.secho("Typedefs", fg="cyan", bold=True)
+        ctx.invoke(typedefs, directory=directory, zenodo=zenodo, no_strict=no_strict)
+        click.secho("Species", fg="cyan", bold=True)
+        ctx.invoke(species, directory=directory, zenodo=zenodo, no_strict=no_strict)
 
-    click.secho("Collecting metadata and building", fg="cyan", bold=True)
-    # note that this is the only one that needs a force=force
-    ctx.invoke(metadata, directory=directory, no_strict=no_strict, force=force)
-    click.secho("Alternate Identifiers", fg="cyan", bold=True)
-    ctx.invoke(alts, directory=directory, zenodo=zenodo, no_strict=no_strict)
-    click.secho("Synonyms", fg="cyan", bold=True)
-    ctx.invoke(synonyms, directory=directory, zenodo=zenodo, no_strict=no_strict)
-    click.secho("Xrefs", fg="cyan", bold=True)
-    ctx.invoke(xrefs, directory=directory, zenodo=zenodo, no_strict=no_strict)
-    click.secho("Names", fg="cyan", bold=True)
-    ctx.invoke(names, directory=directory, zenodo=zenodo, no_strict=no_strict)
-    click.secho("Definitions", fg="cyan", bold=True)
-    ctx.invoke(definitions, directory=directory, zenodo=zenodo, no_strict=no_strict)
-    click.secho("Properties", fg="cyan", bold=True)
-    ctx.invoke(properties, directory=directory, zenodo=zenodo, no_strict=no_strict)
-    click.secho("Relations", fg="cyan", bold=True)
-    ctx.invoke(relations, directory=directory, zenodo=zenodo, no_strict=no_strict)
-    click.secho("Typedefs", fg="cyan", bold=True)
-    ctx.invoke(typedefs, directory=directory, zenodo=zenodo, no_strict=no_strict)
-    click.secho("Species", fg="cyan", bold=True)
-    ctx.invoke(species, directory=directory, zenodo=zenodo, no_strict=no_strict)
+
+skip_below_option = click.option("--skip-below")
+skip_below_exclusive_option = click.option("--skip-below-exclusive", is_flag=True)
 
 
 @main.command()

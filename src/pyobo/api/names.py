@@ -114,9 +114,9 @@ def get_id_name_mapping(
     @cached_mapping(path=path, header=[f"{prefix}_id", "name"], force=force)
     def _get_id_name_mapping() -> Mapping[str, str]:
         if force:
-            logger.info("[%s v%s] forcing reload for names", prefix, version)
+            logger.debug("[%s v%s] forcing reload for names", prefix, version)
         else:
-            logger.info("[%s v%s] no cached names found. getting from OBO loader", prefix, version)
+            logger.debug("[%s v%s] no cached names found. getting from OBO loader", prefix, version)
         ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_id_name_mapping()
 

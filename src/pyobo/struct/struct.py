@@ -666,11 +666,11 @@ class Obo:
         """Write the OBO to the default path."""
         metadata = self.get_metadata()
         for path in (self._root_metadata_path, self._versioned_metadata_path):
-            logger.info("[%s v%s] caching metadata to %s", self.ontology, self.data_version, path)
+            logger.debug("[%s v%s] caching metadata to %s", self.ontology, self.data_version, path)
             with path.open("w") as file:
                 json.dump(metadata, file, indent=2)
 
-        logger.info(
+        logger.debug(
             "[%s v%s] caching typedefs to %s", self.ontology, self.data_version, self._typedefs_path
         )
         typedef_df: pd.DataFrame = self.get_typedef_df()
@@ -704,7 +704,7 @@ class Obo:
         ]:
             if path.exists() and not force:
                 continue
-            logger.info("[%s v%s] caching %s to %s", self.ontology, self.data_version, label, path)
+            logger.debug("[%s v%s] caching %s to %s", self.ontology, self.data_version, label, path)
             write_iterable_tsv(
                 path=path,
                 header=header,
@@ -717,7 +717,7 @@ class Obo:
             relations_path = self._cache("relations", name=f"{relation.curie}.tsv")
             if relations_path.exists() and not force:
                 continue
-            logger.info(
+            logger.debug(
                 "[%s v%s] caching relation %s ! %s",
                 self.ontology,
                 self.data_version,
@@ -737,7 +737,7 @@ class Obo:
         if write_owl:
             obo_to_owl(self._obo_path, self._owl_path)
         if write_obonet and (not self._obonet_gz_path.exists() or force):
-            logger.info("writing obonet to %s", self._obonet_gz_path)
+            logger.debug("writing obonet to %s", self._obonet_gz_path)
             self.write_obonet_gz(self._obonet_gz_path)
 
     @property
