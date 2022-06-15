@@ -105,7 +105,7 @@ def get_ontology(
     logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
 
     path = None
-    for ontology_format, url in [
+    for ontology_format, url in [  # noqa:B007
         ("obo", bioregistry.get_obo_download(prefix)),
         ("owl", bioregistry.get_owl_download(prefix)),
         ("json", bioregistry.get_json_download(prefix)),

@@ -46,7 +46,7 @@ from .rhea import RheaGetter
 from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
 from .slm import SwissLipidsGetter
 from .umls import UMLSGetter
-from .uniprot import UniProtGetter
+from .uniprot import UniProtGetter, UniProtPtmGetter
 from .wikipathways import WikiPathwaysGetter
 from .zfin import ZFINGetter
 from ..struct import Obo
@@ -100,6 +100,7 @@ __all__ = [
     "SwissLipidsGetter",
     "UMLSGetter",
     "UniProtGetter",
+    "UniProtPtmGetter",
     "WikiPathwaysGetter",
     "ZFINGetter",
     "ontology_resolver",
@@ -115,4 +116,4 @@ def _assert_sorted():
 _assert_sorted()
 del _assert_sorted
 
-ontology_resolver = Resolver.from_subclasses(base=Obo, suffix="Getter")
+ontology_resolver: Resolver[Obo] = Resolver.from_subclasses(base=Obo, suffix="Getter")

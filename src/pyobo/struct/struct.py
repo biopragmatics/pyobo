@@ -505,8 +505,8 @@ class Obo:
         @click.command()
         @verbose_option
         @force_option
-        @click.option("--owl", is_flag=True)
-        @click.option("--graph", is_flag=True)
+        @click.option("--owl", is_flag=True, help="Write OWL via ROBOT")
+        @click.option("--graph", is_flag=True, help="Write OBO Graph JSON via ROBOT")
         @click.option(
             "--version", help="Specify data version to get. Use this if bioversions is acting up."
         )

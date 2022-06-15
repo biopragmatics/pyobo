@@ -3,7 +3,6 @@
 """CLI for PyOBO Database Generation."""
 
 import logging
-import sys
 from typing import Optional
 
 import click

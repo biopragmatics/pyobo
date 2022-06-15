@@ -135,7 +135,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
                 "FlyBase gene type is missing mapping to Sequence Ontology (SO): %s", gtype
             )
         else:
-            so[gtype] = Reference.auto("SO", GTYPE_TO_SO[gtype])
+            so[gtype] = Reference.auto("SO", so_id)
 
     for _, reference in sorted(so.items()):
         yield Term(reference=reference)
