@@ -51,6 +51,11 @@ class Reference:
         return bioregistry.get_iri(self.prefix, self.identifier)
 
     @property
+    def bioregistry_link(self) -> str:
+        """Get the bioregistry link."""
+        return f"https://bioregistry.io/{self.curie}"
+
+    @property
     def pair(self) -> Tuple[str, str]:
         """The pair of namespace/identifier."""  # noqa: D401
         return self.prefix, self.identifier
@@ -148,3 +153,8 @@ class Referenced:
     def link(self) -> Optional[str]:
         """Get the link to the reference."""
         return self.reference.link
+
+    @property
+    def bioregistry_link(self) -> str:
+        """Get the bioregistry link."""
+        return self.reference.bioregistry_link

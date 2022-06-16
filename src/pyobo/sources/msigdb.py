@@ -58,7 +58,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     path = ensure_path(prefix=PREFIX, url=xml_url, version=version, force=force)
     tree = ElementTree.parse(path)
 
-    for entry in tqdm(tree.getroot(), desc=f"{PREFIX} v{version}"):
+    for entry in tqdm(tree.getroot(), desc=f"{PREFIX} v{version}", unit_scale=True):
         attrib = dict(entry.attrib)
         tax_id = _SPECIES[attrib["ORGANISM"]]
 

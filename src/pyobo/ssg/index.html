@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}{{ resource.get_name() }}{% endblock title %}
+
+{% block content -%}
+    <div class="card">
+        <div class="card-header">
+            {{ resource.get_name() }}
+        </div>
+        <div class="card-body">
+            <p>{{ resource.get_description() }}</p>
+            <dl>
+                {% if obo.data_version %}
+                    <dt>Data Version</dt>
+                    <dd>{{ obo.data_version }}</dd>
+                {% endif %}
+                <dt>Bioregistry</dt>
+                <dd>
+                    <a href="https://bioregistry.io/{{ obo.ontology }}">
+                        <code>bioregistry:{{ obo.ontology }}</code>
+                    </a>
+                </dd>
+                <dt>Example Page</dt>
+                <dd><a href="{{ resource.get_example() }}">{{ resource.get_example() }}</a></dd>
+            </dl>
+            {% if obo.typedefs %}
+                <h3>Relation Definitions</h3>
+                <ul>
+                    {% for typedef in obo.typedefs %}
+                        <li>{{ typedef }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {% if obo.synonym_typedefs %}
+                <h3>Synonym Definitions</h3>
+                <ul>
+                    {% for typedef in obo.synonym_typedefs %}
+                        <li>{{ typedef }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {% if obo.idspaces %}
+                <h3>Prefix Map</h3>
+                <dl class="row">
+                    {% for k, v in obo.idspaces.items() %}
+                        <dt>{{ k }}</dt>
+                        <dd>{{ v }}</dd>
+                    {% endfor %}
+                </dl>
+            {% endif %}
+        </div>
+    </div>
+{%- endblock content %}
