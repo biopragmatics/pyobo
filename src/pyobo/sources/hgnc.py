@@ -2,17 +2,18 @@
 
 """Converter for HGNC."""
 
+import datetime
 import json
 import logging
 import typing
 from collections import Counter, defaultdict
 from operator import attrgetter
-from typing import DefaultDict, Dict, Iterable
+from typing import DefaultDict, Dict, Iterable, Optional
 
 from tabulate import tabulate
 from tqdm import tqdm
 
-from ..struct import (
+from pyobo.struct import (
     Obo,
     Reference,
     Synonym,
@@ -25,7 +26,7 @@ from ..struct import (
     orthologous,
     transcribes_to,
 )
-from ..utils.path import ensure_path, prefix_directory_join
+from pyobo.utils.path import ensure_path, prefix_directory_join
 
 __all__ = [
     "HGNCGetter",
@@ -34,7 +35,10 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 PREFIX = "hgnc"
-DEFINITIONS_URL = "ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/json/hgnc_complete_set.json"
+DEFINITIONS_URL_FMT = (
+    "https://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/"
+    "archive/monthly/json/hgnc_complete_set_{version}.json"
+)
 
 previous_symbol_type = SynonymTypeDef(id="previous_symbol", name="previous symbol")
 alias_symbol_type = SynonymTypeDef(id="alias_symbol", name="alias symbol")
@@ -159,7 +163,7 @@ IDSPACES["NCBITaxon"] = "http://purl.obolibrary.org/obo/NCBITaxon_"
 class HGNCGetter(Obo):
     """An ontology representation of HGNC's gene nomenclature."""
 
-    ontology = PREFIX
+    bioversions_key = ontology = PREFIX
     dynamic_version = True
     typedefs = [
         from_species,
@@ -182,16 +186,24 @@ class HGNCGetter(Obo):
         return get_terms(force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
+def get_obo(*, force: bool = False) -> Obo:
     """Get HGNC as OBO."""
     return HGNCGetter(force=force)
 
 
-def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
+def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:  # noqa:C901
     """Get HGNC terms."""
+    if version is None:
+        version = datetime.date.today().strftime("%Y-%m-01")
     unhandled_entry_keys: typing.Counter[str] = Counter()
     unhandle_locus_types: DefaultDict[str, Dict[str, Term]] = defaultdict(dict)
-    path = ensure_path(PREFIX, url=DEFINITIONS_URL, force=force)
+    path = ensure_path(
+        PREFIX,
+        url=DEFINITIONS_URL_FMT.format(version=version),
+        force=force,
+        version=version,
+        name="hgnc_complete_set.json",
+    )
     with open(path) as file:
         entries = json.load(file)["response"]["docs"]
 
