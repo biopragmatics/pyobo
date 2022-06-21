@@ -54,6 +54,12 @@ class TypeDef(Referenced):
     xrefs: List[Reference] = field(default_factory=list)
     inverse: Optional[Reference] = None
     holds_over_chain: Optional[List[Reference]] = None
+    #: Whether this relationship is a metadata tag. Properties that are marked as metadata tags are
+    #: used to record object metadata. Object metadata is additional information about an object
+    #: that is useful to track, but does not impact the definition of the object or how it should
+    #: be treated by a reasoner. Metadata tags might be used to record special term synonyms or
+    #: structured notes about a term, for example.
+    is_metadata_tag: Optional[bool] = None
 
     def __hash__(self) -> int:  # noqa: D105
         return hash((self.__class__, self.prefix, self.identifier))
@@ -64,6 +70,8 @@ class TypeDef(Referenced):
         yield f"id: {self.reference.curie}"
         if self.name:
             yield f"name: {self.reference.name}"
+        if self.is_metadata_tag is not None:
+            yield f'is_metadata_tag: {"true" if self.is_metadata_tag else "false"}'
 
         if self.namespace:
             yield f"namespace: {self.namespace}"
