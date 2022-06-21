@@ -87,7 +87,7 @@ class TypeDef(Referenced):
 
         if self.is_symmetric is not None:
             yield f'is_symmetric: {"true" if self.is_symmetric else "false"}'
-        if self.holds_over_chain is not None:
+        if self.holds_over_chain:
             _chain = " ".join(link.curie for link in self.holds_over_chain)
             _names = " / ".join(link.name or "_" for link in self.holds_over_chain)
             yield f"holds_over_chain: {_chain} ! {_names}"
