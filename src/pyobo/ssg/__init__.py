@@ -20,6 +20,7 @@ environment = Environment(
 )
 environment.globals["bioregistry"] = bioregistry
 term_template = environment.get_template("term.html")
+typedef_template = environment.get_template("typedef.html")
 index_template = environment.get_template("index.html")
 
 
@@ -43,6 +44,17 @@ def make_site(obo: Obo, directory: Union[str, Path], use_subdirectories: bool = 
         else:
             path = directory.joinpath(term.identifier).with_suffix(".html")
         path.write_text(term_template.render(term=term, obo=obo, resource=resource))
+
+    for typedef in obo.typedefs or []:
+        if typedef.prefix != obo.ontology:
+            continue
+        if use_subdirectories:
+            subdirectory = directory.joinpath(typedef.identifier)
+            subdirectory.mkdir(exist_ok=True, parents=True)
+            path = subdirectory.joinpath("index.html")
+        else:
+            path = directory.joinpath(typedef.identifier).with_suffix(".html")
+        path.write_text(typedef_template.render(typedef=typedef, obo=obo, resource=resource))
 
 
 def _main():

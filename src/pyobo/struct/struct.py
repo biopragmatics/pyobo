@@ -561,7 +561,7 @@ class Obo:
             raise ValueError
         yield f"remark: {self.name}"
 
-        for typedef in self.typedefs or []:
+        for typedef in sorted(self.typedefs or [], key=attrgetter("curie")):
             yield from typedef.iterate_obo_lines()
 
         for term in self:
@@ -743,7 +743,7 @@ class Obo:
     @property
     def _items_accessor(self):
         if self._items is None:
-            self._items = list(self.iter_terms(force=self.force))
+            self._items = sorted(self.iter_terms(force=self.force), key=attrgetter("curie"))
         return self._items
 
     def __iter__(self) -> Iterator["Term"]:  # noqa: D105

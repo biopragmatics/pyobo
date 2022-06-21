@@ -1,3 +1,26 @@
+{% macro link_reference(reference) %}
+<a href="{{ reference.bioregistry_link }}"><code>{{ reference.curie }}</code></a>
+{% endmacro %}
+
+{% macro list_references(references, title) %}
+    {% if references %}
+        <dt>
+            <span class="badge badge-primary">{{ title }}</span>
+        </dt>
+        <dt>
+            {% if references|length == 1 %}
+                {{ link_reference(references[0]) }}
+            {% else %}
+                <ul>
+                    {% for reference in references %}
+                        <li>{{ link_reference(reference) }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </dt>
+    {% endif %}
+{% endmacro %}
+
 <!DOCTYPE html>
 <html{% block html_attribs %} lang="en"{% endblock html_attribs %}>
 <head>{%- block head %}
