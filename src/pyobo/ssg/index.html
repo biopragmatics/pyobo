@@ -20,17 +20,12 @@
                         <code>bioregistry:{{ obo.ontology }}</code>
                     </a>
                 </dd>
-                <dt>Example Page</dt>
-                <dd><a href="{{ resource.get_example() }}">{{ resource.get_example() }}</a></dd>
+                {% if not manifest %}
+                    <dt>Example Page</dt>
+                    <dd><a href="{{ resource.get_example() }}">{{ resource.get_example() }}</a></dd>
+                {% endif %}
             </dl>
-            {% if obo.typedefs %}
-                <h3>Relation Definitions</h3>
-                <ul>
-                    {% for typedef in obo.typedefs %}
-                        <li>{{ typedef }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
+
             {% if obo.synonym_typedefs %}
                 <h3>Synonym Definitions</h3>
                 <ul>
@@ -47,6 +42,40 @@
                         <dd class="col-sm-9 text-left">{{ v }}</dd>
                     {% endfor %}
                 </dl>
+            {% endif %}
+            {% if manifest %}
+                <h3>Terms, Relations, and Properties</h3>
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <td>Type</td>
+                        <td>Local Identifier</td>
+                        <td>Name</td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for term in manifest %}
+                        <tr>
+                            <td>
+                                {% if term.is_metadata_tag %}
+                                    Property
+                                {% else %}
+                                    {{ term.__class__.__name__ }}
+                                {% endif %}
+                            </td>
+                            <td><a href="{{ term.identifier }}">{{ term.identifier }}</a></td>
+                            <td>{{ term.name }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% elif obo.typedefs %}
+                <h3>Relation Definitions</h3>
+                <ul>
+                    {% for typedef in obo.typedefs %}
+                        <li>{{ typedef }}</li>
+                    {% endfor %}
+                </ul>
             {% endif %}
         </div>
     </div>

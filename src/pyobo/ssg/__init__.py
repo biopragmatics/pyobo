@@ -4,9 +4,10 @@ from pathlib import Path
 from typing import Union
 
 import bioregistry
+from operator import attrgetter
 from jinja2 import Environment, FileSystemLoader
 from tqdm import tqdm
-
+import itertools as itt
 from pyobo import Obo
 
 __all__ = [
@@ -24,8 +25,15 @@ typedef_template = environment.get_template("typedef.html")
 index_template = environment.get_template("index.html")
 
 
-def make_site(obo: Obo, directory: Union[str, Path], use_subdirectories: bool = True):
-    """Make a website in the given directory."""
+def make_site(obo: Obo, directory: Union[str, Path], use_subdirectories: bool = True, manifest: bool = False):
+    """Make a website in the given directory.
+
+    :param obo: The ontology to generate a site for
+    :param directory: The directory in which to generate the site
+    :param use_subdirectories: If true, creates directories for each term/property/typedef with an index.html
+        inside. If false, creates HTML files named with the identifiers.
+    :param manifest: If true, lists all entries on the homepage.
+    """
     directory = Path(directory)
     directory.mkdir(exist_ok=True, parents=True)
 
@@ -33,7 +41,22 @@ def make_site(obo: Obo, directory: Union[str, Path], use_subdirectories: bool = 
     if resource is None:
         raise KeyError
 
-    directory.joinpath("index.html").write_text(index_template.render(obo=obo, resource=resource))
+    if not manifest:
+        _manifest = None
+    else:
+        _manifest = sorted(
+            (
+                term
+                for term in itt.chain(
+                obo,
+                obo.typedefs or []
+            )
+                if term.prefix == obo.ontology
+            ),
+            key=attrgetter("identifier"),
+        )
+
+    directory.joinpath("index.html").write_text(index_template.render(obo=obo, resource=resource, manifest=_manifest))
 
     terms = list(obo)
     for term in tqdm(terms, desc=f"{obo.ontology} website", unit="term", unit_scale=True):
