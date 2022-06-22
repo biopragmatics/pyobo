@@ -4,7 +4,7 @@
 
 {% block content -%}
     <div class="card">
-        <div class="card-header">
+        <h5 class="card-header">
             {% if typedef.is_metadata_tag %}
                 <span class="badge badge-info">Property</span>
             {% else %}
@@ -14,7 +14,7 @@
             {% if typedef.is_obsolete %}
                 <span class="badge badge-warning">Obsolete</span>
             {% endif %}
-        </div>
+        </h5>
         <div class="card-body">
             {% if typedef.definition %}
                 <p>{{ typedef.definition }}</p>

@@ -4,9 +4,9 @@
 
 {% block content -%}
     <div class="card">
-        <div class="card-header">
-            {{ resource.get_name() }}
-        </div>
+        <h5 class="card-header">
+            Metadata
+        </h5>
         <div class="card-body">
             <p>{{ resource.get_description() }}</p>
             <dl>
@@ -24,6 +24,12 @@
                     <dt>Example Page</dt>
                     <dd><a href="{{ resource.get_example() }}">{{ resource.get_example() }}</a></dd>
                 {% endif %}
+                {% if obo.idspaces %}
+                    {% for k, v in obo.idspaces.items() %}
+                        <dt><span class="badge badge-info">Prefix</span> {{ k }}</dt>
+                        <dd>{{ v }}</dd>
+                    {% endfor %}
+                {% endif %}
             </dl>
 
             {% if obo.synonym_typedefs %}
@@ -34,49 +40,48 @@
                     {% endfor %}
                 </ul>
             {% endif %}
-            {% if obo.idspaces %}
-                <h3>Prefix Map</h3>
-                <dl class="row">
-                    {% for k, v in obo.idspaces.items() %}
-                        <dt class="col-sm-3 text-right">{{ k }}</dt>
-                        <dd class="col-sm-9 text-left">{{ v }}</dd>
-                    {% endfor %}
-                </dl>
-            {% endif %}
-            {% if manifest %}
-                <h3>Terms, Relations, and Properties</h3>
-                <table class="table table-striped">
-                    <thead>
-                    <tr>
-                        <td>Type</td>
-                        <td>Local Identifier</td>
-                        <td>Name</td>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for term in manifest %}
-                        <tr>
-                            <td>
-                                {% if term.is_metadata_tag %}
-                                    Property
-                                {% else %}
-                                    {{ term.__class__.__name__ }}
-                                {% endif %}
-                            </td>
-                            <td><a href="{{ term.identifier }}">{{ term.identifier }}</a></td>
-                            <td>{{ term.name }}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            {% elif obo.typedefs %}
-                <h3>Relation Definitions</h3>
-                <ul>
-                    {% for typedef in obo.typedefs %}
-                        <li>{{ typedef }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
         </div>
     </div>
+    {% if manifest %}
+        <div class="card" style="margin-top: 1em;">
+            <h5 class="card-header">
+                Terms, Relations, and Properties
+            </h5>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Local Identifier</th>
+                    <th>Name</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for term in manifest %}
+                    <tr>
+                        <td>
+                            {% if term.is_metadata_tag %}
+                                Property
+                            {% else %}
+                                {{ term.__class__.__name__ }}
+                            {% endif %}
+                        </td>
+                        <td align="right"><a href="{{ term.identifier }}">{{ term.identifier }}</a></td>
+                        <td>{{ term.name }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% elif obo.typedefs %}
+        <div class="card" style="margin-top: 1em;">
+            <h5 class="card-header">
+                Relation Definitions
+            </h5>
+            <ul>
+                {% for typedef in obo.typedefs %}
+                    <li>{{ typedef }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
 {%- endblock content %}

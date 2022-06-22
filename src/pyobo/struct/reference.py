@@ -8,7 +8,7 @@ from typing import Mapping, Optional, Tuple
 import bioregistry
 
 from .utils import obo_escape
-from ..constants import DEFAULT_PREFIX
+from ..constants import DEFAULT_PATTERN, DEFAULT_PREFIX
 from ..identifier_utils import normalize_curie
 
 __all__ = [
@@ -85,6 +85,8 @@ class Reference:
     @staticmethod
     def default(identifier: str, name: Optional[str] = None) -> "Reference":
         """Return a reference from the PyOBO namespace."""
+        if not DEFAULT_PATTERN.match(identifier):
+            raise ValueError(f"identifier is invalid: {identifier}")
         return Reference(prefix=DEFAULT_PREFIX, identifier=identifier, name=name)
 
     @property

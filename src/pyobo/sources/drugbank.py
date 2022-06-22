@@ -15,7 +15,8 @@ from xml.etree import ElementTree
 import pystow
 from tqdm import tqdm
 
-from ..struct import Obo, Reference, Term, TypeDef
+from ..struct import Obo, Reference, Term
+from ..struct.typedef import has_salt
 from ..utils.cache import cached_pickle
 from ..utils.path import prefix_directory_join
 
@@ -26,10 +27,6 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 PREFIX = "drugbank"
-
-has_salt = TypeDef(
-    reference=Reference.default(identifier="has_salt", name="has salt"),
-)
 
 
 class DrugBankGetter(Obo):

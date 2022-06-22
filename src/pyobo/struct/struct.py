@@ -48,7 +48,7 @@ from .typedef import (
     orthologous,
     part_of,
 )
-from .utils import comma_separate
+from .utils import comma_separate, obo_escape_slim
 from ..constants import (
     DATE_FORMAT,
     NCBITAXON_PREFIX,
@@ -322,7 +322,8 @@ class Term(Referenced):
         self.properties[prop].append(value)
 
     def _definition_fp(self) -> str:
-        return f'"{self._escape(self.definition)}" [{comma_separate(self.provenance)}]'
+        assert self.definition is not None
+        return f'"{obo_escape_slim(self.definition)}" [{comma_separate(self.provenance)}]'
 
     def iterate_relations(self) -> Iterable[Tuple[TypeDef, Reference]]:
         """Iterate over pairs of typedefs and targets."""
@@ -341,7 +342,7 @@ class Term(Referenced):
         yield "\n[Term]"
         yield f"id: {self.curie}"
         if self.name:
-            yield f"name: {self.name}"
+            yield f"name: {obo_escape_slim(self.name)}"
         if self.namespace and self.namespace != "?":
             namespace_normalized = (
                 self.namespace.replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
@@ -360,14 +361,12 @@ class Term(Referenced):
         for typedef, references in sorted(self.relationships.items(), key=_sort_relations):
             for reference in references:
                 s = f"relationship: {typedef.curie} {reference.curie}"
-                if write_relation_comments:
-                    # TODO Obonet doesn't support this. re-enable later.
-                    if typedef.name or reference.name:
-                        s += " !"
-                    if typedef.name:
-                        s += f" {typedef.name}"
-                    if reference.name:
-                        s += f" {reference.name}"
+                if typedef.name or reference.name:
+                    s += " !"
+                if typedef.name:
+                    s += f" {typedef.name}"
+                if reference.name:
+                    s += f" {reference.name}"
                 yield s
 
         for prop, value in self.iterate_properties():
@@ -378,7 +377,7 @@ class Term(Referenced):
 
     @staticmethod
     def _escape(s) -> str:
-        return s.replace('"', '\\"')
+        return s.replace("\n", "\\n").replace('"', '\\"')
 
 
 def _sort_relations(r):

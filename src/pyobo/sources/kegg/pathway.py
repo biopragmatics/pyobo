@@ -21,7 +21,6 @@ from pyobo.sources.kegg.api import (
     ensure_link_pathway_genome,
     ensure_list_pathway_genome,
     ensure_list_pathways,
-    from_kegg_species,
 )
 from pyobo.sources.kegg.genome import iter_kegg_genomes
 from pyobo.struct import Obo, Reference, Term, from_species, has_part, species_specific
@@ -38,7 +37,7 @@ class KEGGPathwayGetter(Obo):
 
     ontology = KEGG_PATHWAY_PREFIX
     bioversions_key = "kegg"
-    typedefs = [from_kegg_species, from_species, species_specific, has_part]
+    typedefs = [from_species, species_specific, has_part]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

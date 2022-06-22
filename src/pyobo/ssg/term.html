@@ -4,13 +4,13 @@
 
 {% block content -%}
     <div class="card">
-        <div class="card-header">
+        <h5 class="card-header">
             <span class="badge badge-info">Term</span>
             {{ term.name or term.identifier }}
             {% if term.is_obsolete %}
                 <span class="badge badge-warning">Obsolete</span>
             {% endif %}
-        </div>
+        </h5>
         <div class="card-body">
             {% if term.definition %}
                 <p>{{ term.definition }}</p>

@@ -546,7 +546,8 @@ def iterate_node_relationships(
         elif prefix is not None:
             relation = Reference(prefix=prefix, identifier=relation_curie)
         else:
-            relation = Reference.default(identifier=relation_curie)
+            logger.debug("unhandled relation: %s", relation_curie)
+            relation = Reference(prefix="obo", identifier=relation_curie)
 
         target = Reference.from_curie(target_curie, strict=strict)
         if target is None:

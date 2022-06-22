@@ -3,6 +3,7 @@
 """Constants for PyOBO."""
 
 import logging
+import re
 from functools import partial
 from typing import Callable
 
@@ -36,7 +37,8 @@ GLOBAL_SKIP = {
 }
 
 #: Default prefix
-DEFAULT_PREFIX = "obo"
+DEFAULT_PREFIX = "debio"
+DEFAULT_PATTERN = re.compile("^\\d{7}$")
 
 SOURCE_PREFIX = "source_ns"
 SOURCE_ID = "source_id"

@@ -6,7 +6,7 @@ import urllib.error
 from dataclasses import dataclass
 from typing import Mapping, Optional
 
-from pyobo import Reference, Term, TypeDef, ensure_path
+from pyobo import Reference, Term, ensure_path
 from pyobo.struct import from_species
 from pyobo.utils.path import ensure_df, prefix_directory_join
 
@@ -24,11 +24,6 @@ SKIP = {
     "T03359",
 }
 
-from_kegg_species = TypeDef(
-    reference=Reference.default("inKeggTaxon", "in KEGG taxon"),
-    parents=[from_species.reference],
-)
-
 
 @dataclass
 class KEGGGenome:
@@ -43,7 +38,7 @@ class KEGGGenome:
     def annotate_term(self, term: Term) -> None:
         """Annotate the term with the species represented by this object."""
         term.append_relationship(
-            from_kegg_species,
+            from_species,
             self.get_reference(),
         )
         if self.taxonomy_id is not None:

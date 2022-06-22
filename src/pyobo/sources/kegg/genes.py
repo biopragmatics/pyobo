@@ -19,7 +19,6 @@ from .api import (
     ensure_conv_genome_ncbigene,
     ensure_conv_genome_uniprot,
     ensure_list_genome,
-    from_kegg_species,
 )
 from .genome import iter_kegg_genomes
 from ...struct import Obo, Reference, Term, from_species, has_gene_product
@@ -37,7 +36,7 @@ class KEGGGeneGetter(Obo):
 
     ontology = KEGG_GENES_PREFIX
     bioversions_key = "kegg"
-    typedefs = [from_species, from_kegg_species, has_gene_product]
+    typedefs = [from_species, has_gene_product]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

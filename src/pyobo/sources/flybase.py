@@ -143,7 +143,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         term = Term.from_triple(
             prefix=PREFIX,
             identifier=identifier,
-            name=symbol,
+            name=symbol if pd.notna(symbol) else None,
             definition=definitions.get(identifier),
         )
         if gtype and pd.notna(gtype) and gtype in so:
@@ -160,7 +160,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
                 term.append_relationship(orthologous, hgnc_ortholog)
         taxonomy_id = abbr_to_taxonomy.get(organism)
         if taxonomy_id is not None:
-            term.append_relationship(from_species, Reference.auto(NCBITAXON_PREFIX, taxonomy_id))
+            term.append_relationship(from_species, Reference(NCBITAXON_PREFIX, taxonomy_id))
         elif organism not in missing_taxonomies:
             tqdm.write(f"missing mapping for species abbreviation: {organism}")
             missing_taxonomies.add(organism)
