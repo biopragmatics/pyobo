@@ -573,7 +573,7 @@ class Obo:
         """Write the OBO to a file."""
         it = self.iterate_obo_lines()
         if use_tqdm:
-            it = tqdm(it, desc=f"writing {self.ontology}", unit_scale=True, unit="line")
+            it = tqdm(it, desc=f"Writing {self.ontology}", unit_scale=True, unit="line")
         self._write_lines(it, file)
 
     @staticmethod

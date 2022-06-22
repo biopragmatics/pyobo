@@ -108,7 +108,7 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
         quoting=3,
         error_bad_lines=False,
     )
-    for _, row in tqdm(df.iterrows(), total=len(df.index), desc=f"Mapping {PREFIX}"):
+    for _, row in tqdm(df.iterrows(), total=len(df.index), desc=f"Mapping {PREFIX}", unit_scale=True):
         if pd.notna(row["NAME"]):
             definition = row["NAME"]
         elif pd.notna(row["GENE_DESC"]):
