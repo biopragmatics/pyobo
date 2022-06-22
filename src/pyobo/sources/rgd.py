@@ -3,12 +3,12 @@
 """Converter for RGD."""
 
 import logging
-from typing import Iterable
+from typing import Iterable, Optional
 
 import pandas as pd
 from tqdm import tqdm
 
-from ..struct import (
+from pyobo.struct import (
     Obo,
     Reference,
     Synonym,
@@ -18,7 +18,7 @@ from ..struct import (
     has_gene_product,
     transcribes_to,
 )
-from ..utils.path import ensure_df
+from pyobo.utils.path import ensure_df
 
 logger = logging.getLogger(__name__)
 PREFIX = "rgd"
@@ -73,14 +73,13 @@ GENES_HEADER = [
 class RGDGetter(Obo):
     """An ontology representation of RGD's rat gene nomenclature."""
 
-    ontology = PREFIX
-    dynamic_version = True
+    bioversions_key = ontology = PREFIX
     typedefs = [from_species, transcribes_to, has_gene_product]
     synonym_typedefs = [old_name_type, old_symbol_type]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return get_terms(force=force)
+        return get_terms(force=force, version=self._version_or_raise)
 
 
 def get_obo(force: bool = False) -> Obo:
@@ -95,7 +94,7 @@ namespace_to_column = [
 ]
 
 
-def get_terms(force: bool = False) -> Iterable[Term]:
+def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Term]:
     """Get RGD terms."""
     df = ensure_df(
         PREFIX,
@@ -105,6 +104,9 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         comment="#",
         dtype=str,
         force=force,
+        version=version,
+        quoting=3,
+        error_bad_lines=False,
     )
     for _, row in tqdm(df.iterrows(), total=len(df.index), desc=f"Mapping {PREFIX}"):
         if pd.notna(row["NAME"]):
@@ -163,4 +165,4 @@ def get_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).write_default(write_obo=True)
+    RGDGetter.cli()
