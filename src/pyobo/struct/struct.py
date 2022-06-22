@@ -359,7 +359,7 @@ class Term(Referenced):
             yield f"is_a: {parent}"
 
         for typedef, references in sorted(self.relationships.items(), key=_sort_relations):
-            for reference in references:
+            for reference in sorted(references, key=attrgetter("prefix", "identifier")):
                 s = f"relationship: {typedef.curie} {reference.curie}"
                 if typedef.name or reference.name:
                     s += " !"
@@ -369,7 +369,7 @@ class Term(Referenced):
                     s += f" {reference.name}"
                 yield s
 
-        for prop, value in self.iterate_properties():
+        for prop, value in sorted(self.iterate_properties()):
             yield f'property_value: {prop} "{value}" xsd:string'  # TODO deal with types later
 
         for synonym in sorted(self.synonyms, key=attrgetter("name")):
