@@ -27,7 +27,7 @@ from ..xrefdb.xrefs_pipeline import (
     _iter_alts,
     _iter_definitions,
     _iter_metadata,
-    _iter_ooh_na_na,
+    _iter_names,
     _iter_properties,
     _iter_relations,
     _iter_species,
@@ -129,7 +129,7 @@ def names(
     """Make the prefix-identifier-name dump."""
     with logging_redirect_tqdm():
         paths = db_output_helper(
-            _iter_ooh_na_na,
+            _iter_names,
             "names",
             ("prefix", "identifier", "name"),
             strict=not no_strict,
@@ -151,14 +151,15 @@ def names(
 @no_strict_option
 def species(directory: str, zenodo: bool, no_strict: bool, force: bool):
     """Make the prefix-identifier-species dump."""
-    paths = db_output_helper(
-        _iter_species,
-        "species",
-        ("prefix", "identifier", "species"),
-        strict=not no_strict,
-        force=force,
-        directory=directory,
-    )
+    with logging_redirect_tqdm():
+        paths = db_output_helper(
+            _iter_species,
+            "species",
+            ("prefix", "identifier", "species"),
+            strict=not no_strict,
+            force=force,
+            directory=directory,
+        )
     if zenodo:
         # see https://zenodo.org/record/5334738
         update_zenodo(SPECIES_RECORD, paths)
@@ -172,15 +173,16 @@ def species(directory: str, zenodo: bool, no_strict: bool, force: bool):
 @no_strict_option
 def definitions(directory: str, zenodo: bool, no_strict: bool, force: bool):
     """Make the prefix-identifier-definition dump."""
-    paths = db_output_helper(
-        _iter_definitions,
-        "definitions",
-        ("prefix", "identifier", "definition"),
-        strict=not no_strict,
-        force=force,
-        directory=directory,
-        skip_set={"kegg.pathway", "kegg.genes", "kegg.genome", "umls"},
-    )
+    with logging_redirect_tqdm():
+        paths = db_output_helper(
+            _iter_definitions,
+            "definitions",
+            ("prefix", "identifier", "definition"),
+            strict=not no_strict,
+            force=force,
+            directory=directory,
+            skip_set={"kegg.pathway", "kegg.genes", "kegg.genome", "umls"},
+        )
     if zenodo:
         # see https://zenodo.org/record/4637061
         update_zenodo(DEFINITIONS_RECORD, paths)
@@ -194,16 +196,17 @@ def definitions(directory: str, zenodo: bool, no_strict: bool, force: bool):
 @no_strict_option
 def typedefs(directory: str, zenodo: bool, no_strict: bool, force: bool):
     """Make the typedef prefix-identifier-name dump."""
-    paths = db_output_helper(
-        _iter_typedefs,
-        "typedefs",
-        ("prefix", "typedef_prefix", "identifier", "name"),
-        strict=not no_strict,
-        force=force,
-        directory=directory,
-        use_gzip=False,
-        skip_set={"ncbigene", "kegg.pathway", "kegg.genes", "kegg.genome"},
-    )
+    with logging_redirect_tqdm():
+        paths = db_output_helper(
+            _iter_typedefs,
+            "typedefs",
+            ("prefix", "typedef_prefix", "identifier", "name"),
+            strict=not no_strict,
+            force=force,
+            directory=directory,
+            use_gzip=False,
+            skip_set={"ncbigene", "kegg.pathway", "kegg.genes", "kegg.genome"},
+        )
     if zenodo:
         # see https://zenodo.org/record/4644013
         update_zenodo(TYPEDEFS_RECORD, paths)
@@ -217,15 +220,16 @@ def typedefs(directory: str, zenodo: bool, no_strict: bool, force: bool):
 @no_strict_option
 def alts(directory: str, zenodo: bool, force: bool, no_strict: bool):
     """Make the prefix-alt-id dump."""
-    paths = db_output_helper(
-        _iter_alts,
-        "alts",
-        ("prefix", "identifier", "alt"),
-        directory=directory,
-        force=force,
-        strict=not no_strict,
-        skip_set={"kegg.pathway", "kegg.genes", "kegg.genome", "umls"},
-    )
+    with logging_redirect_tqdm():
+        paths = db_output_helper(
+            _iter_alts,
+            "alts",
+            ("prefix", "identifier", "alt"),
+            directory=directory,
+            force=force,
+            strict=not no_strict,
+            skip_set={"kegg.pathway", "kegg.genes", "kegg.genome", "umls"},
+        )
     if zenodo:
         # see https://zenodo.org/record/4021476
         update_zenodo(ALTS_DATA_RECORD, paths)
@@ -239,15 +243,16 @@ def alts(directory: str, zenodo: bool, force: bool, no_strict: bool):
 @no_strict_option
 def synonyms(directory: str, zenodo: bool, force: bool, no_strict: bool):
     """Make the prefix-identifier-synonym dump."""
-    paths = db_output_helper(
-        _iter_synonyms,
-        "synonyms",
-        ("prefix", "identifier", "synonym"),
-        directory=directory,
-        force=force,
-        strict=not no_strict,
-        skip_set={"kegg.pathway", "kegg.genes", "kegg.genome"},
-    )
+    with logging_redirect_tqdm():
+        paths = db_output_helper(
+            _iter_synonyms,
+            "synonyms",
+            ("prefix", "identifier", "synonym"),
+            directory=directory,
+            force=force,
+            strict=not no_strict,
+            skip_set={"kegg.pathway", "kegg.genes", "kegg.genome"},
+        )
     if zenodo:
         # see https://zenodo.org/record/4021482
         update_zenodo(SYNONYMS_RECORD, paths)
@@ -261,22 +266,23 @@ def synonyms(directory: str, zenodo: bool, force: bool, no_strict: bool):
 @no_strict_option
 def relations(directory: str, zenodo: bool, force: bool, no_strict: bool):
     """Make the relation dump."""
-    paths = db_output_helper(
-        _iter_relations,
-        "relations",
-        (
-            "source_prefix",
-            "source_identifier",
-            "relation_prefix",
-            "relation_identifier",
-            "target_prefix",
-            "target_identifier",
-        ),
-        directory=directory,
-        force=force,
-        strict=not no_strict,
-        summary_detailed=(0, 2, 3),  # second column corresponds to relation type
-    )
+    with logging_redirect_tqdm():
+        paths = db_output_helper(
+            _iter_relations,
+            "relations",
+            (
+                "source_prefix",
+                "source_identifier",
+                "relation_prefix",
+                "relation_identifier",
+                "target_prefix",
+                "target_identifier",
+            ),
+            directory=directory,
+            force=force,
+            strict=not no_strict,
+            summary_detailed=(0, 2, 3),  # second column corresponds to relation type
+        )
     if zenodo:
         # see https://zenodo.org/record/4625167
         update_zenodo(RELATIONS_RECORD, paths)
@@ -290,15 +296,16 @@ def relations(directory: str, zenodo: bool, force: bool, no_strict: bool):
 @no_strict_option
 def properties(directory: str, zenodo: bool, force: bool, no_strict: bool):
     """Make the properties dump."""
-    paths = db_output_helper(
-        _iter_properties,
-        "properties",
-        ("prefix", "identifier", "property", "value"),
-        directory=directory,
-        force=force,
-        strict=not no_strict,
-        summary_detailed=(0, 2),  # second column corresponds to property type
-    )
+    with logging_redirect_tqdm():
+        paths = db_output_helper(
+            _iter_properties,
+            "properties",
+            ("prefix", "identifier", "property", "value"),
+            directory=directory,
+            force=force,
+            strict=not no_strict,
+            summary_detailed=(0, 2),  # second column corresponds to property type
+        )
     if zenodo:
         # see https://zenodo.org/record/4625172
         update_zenodo(PROPERTIES_RECORD, paths)
@@ -312,15 +319,16 @@ def properties(directory: str, zenodo: bool, force: bool, no_strict: bool):
 @no_strict_option
 def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool):  # noqa: D202
     """Make the prefix-identifier-xref dump."""
-    paths = db_output_helper(
-        _iter_xrefs,
-        "xrefs",
-        ("prefix", "identifier", "xref_prefix", "xref_identifier", "provenance"),
-        directory=directory,
-        force=force,
-        strict=not no_strict,
-        summary_detailed=(0, 2),  # second column corresponds to xref prefix
-    )
+    with logging_redirect_tqdm():
+        paths = db_output_helper(
+            _iter_xrefs,
+            "xrefs",
+            ("prefix", "identifier", "xref_prefix", "xref_identifier", "provenance"),
+            directory=directory,
+            force=force,
+            strict=not no_strict,
+            summary_detailed=(0, 2),  # second column corresponds to xref prefix
+        )
     if zenodo:
         # see https://zenodo.org/record/4021477
         update_zenodo(JAVERT_RECORD, paths)

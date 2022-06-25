@@ -522,6 +522,8 @@ RELATION_REMAPPINGS: Mapping[str, Tuple[str, str]] = {
     "has_part": has_part.pair,
     "develops_from": develops_from.pair,
     "seeAlso": ("rdf", "seeAlso"),
+    "dc-contributor": ("dc", "contributor"),
+    "dc-creator": ("dc", "creator"),
 }
 
 

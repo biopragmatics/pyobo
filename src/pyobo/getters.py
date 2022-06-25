@@ -237,7 +237,9 @@ def iter_helper(
             disable=None,
         )
         for key, value in it:
-            yield prefix, key, value
+            value = value.strip('"').replace("\n", " ").replace("\t", " ").replace("  ", " ")
+            if value:
+                yield prefix, key, value
 
 
 def _prefixes(

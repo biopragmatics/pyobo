@@ -884,7 +884,9 @@ class Obo:
         """Iterate over pairs of terms' identifiers and their respective definitions."""
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"):
             if term.identifier and term.definition:
-                yield term.identifier, term.definition
+                yield term.identifier, term.definition.strip('"').replace("\n", " ").replace(
+                    "\t", " "
+                ).replace("  ", " ")
 
     def get_id_definition_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, str]:
         """Get a mapping from identifiers to definitions."""

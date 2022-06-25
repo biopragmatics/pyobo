@@ -60,6 +60,14 @@ def cleanup_version(data_version: str, prefix: str) -> Optional[str]:
         return data_version[len("http://www.ebi.ac.uk/efo/releases/v") :].split("/")[0]
     if data_version.startswith("http://www.ebi.ac.uk/swo/swo.owl/"):
         return data_version[len("http://www.ebi.ac.uk/swo/swo.owl/") :].split("/")[0]
+    if data_version.startswith("http://purl.org/pav/"):
+        return data_version[len("http://purl.org/pav/") :]
+    if data_version.startswith("http://semanticscience.org/ontology/sio/v"):
+        return data_version[len("http://semanticscience.org/ontology/sio/v")].split("/")[0]
+    if data_version.startswith("http://ontology.neuinfo.org/NIF/ttl/nif/version/"):
+        return data_version[len("http://ontology.neuinfo.org/NIF/ttl/nif/version/") :].split("/")[0]
+    if data_version.startswith("http://identifiers.org/combine.specifications/teddy.rel-"):
+        return data_version[len("http://identifiers.org/combine.specifications/teddy.rel-") :]
     if data_version.replace(".", "").isnumeric():
         return data_version  # consecutive, major.minor, or semantic versioning
     for v in reversed(data_version.split("/")):

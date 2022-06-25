@@ -286,6 +286,8 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
                 logger.warning(f"hgnc:{identifier} had bad MGI CURIE: {mgi_curie}")
                 continue
             mgi_id = mgi_curie[len("MGI:") :]
+            if not mgi_id:
+                continue
             term.append_relationship(
                 orthologous,
                 Reference.auto(prefix="mgi", identifier=mgi_id),

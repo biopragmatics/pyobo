@@ -96,8 +96,12 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
         prefix=PREFIX,
         identifier=drug_info["drugbank_id"],
         name=drug_info["name"],
-        definition=drug_info.get("description"),
     )
+    definition = drug_info.get("description")
+    if definition:
+        definition = definition.strip('"').replace("\t", " ").replace("  ", " ")
+        term.definition = definition
+
     for alias in drug_info["aliases"]:
         term.append_synonym(alias)
 
