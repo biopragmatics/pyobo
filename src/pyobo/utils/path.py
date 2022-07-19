@@ -11,7 +11,7 @@ from urllib.request import urlretrieve
 
 import pandas as pd
 import requests
-from pystow.utils import name_from_url, read_tarfile_csv
+from pystow.utils import download, name_from_url, read_tarfile_csv
 
 from .misc import cleanup_version
 from ..constants import RAW_MODULE
@@ -58,36 +58,6 @@ def get_prefix_obo_path(prefix: str, version: VersionHint = None, ext: str = "ob
     return prefix_directory_join(prefix, name=f"{prefix}.{ext}", version=version)
 
 
-# TODO replace with pystow.download
-def _urlretrieve(
-    url: str,
-    path: Union[str, Path],
-    clean_on_failure: bool = True,
-    stream: bool = True,
-    **kwargs,
-) -> None:
-    """Download a file from a given URL.
-
-    :param url: URL to download
-    :param path: Path to download the file to
-    :param clean_on_failure: If true, will delete the file on any exception raised during download
-    """
-    if not stream:
-        logger.info("downloading from %s to %s", url, path)
-        urlretrieve(url, path)  # noqa:S310
-    else:
-        # see https://requests.readthedocs.io/en/master/user/quickstart/#raw-response-content
-        # pattern from https://stackoverflow.com/a/39217788/5775947
-        try:
-            with requests.get(url, stream=True, **kwargs) as response, open(path, "wb") as file:
-                logger.info("downloading (streaming) from %s to %s", url, path)
-                shutil.copyfileobj(response.raw, file)
-        except (Exception, KeyboardInterrupt):
-            if clean_on_failure:
-                os.remove(path)
-            raise
-
-
 def ensure_path(
     prefix: str,
     *parts: str,
@@ -95,8 +65,6 @@ def ensure_path(
     version: VersionHint = None,
     name: Optional[str] = None,
     force: bool = False,
-    stream: bool = False,
-    urlretrieve_kwargs: Optional[Mapping[str, Any]] = None,
     error_on_missing: bool = False,
 ) -> str:
     """Download a file if it doesn't exist."""
@@ -108,9 +76,11 @@ def ensure_path(
     if not path.exists() and error_on_missing:
         raise FileNotFoundError
 
-    if not path.exists() or force:
-        _urlretrieve(url=url, path=path, stream=stream, **(urlretrieve_kwargs or {}))
-
+    download(
+        url=url,
+        path=path,
+        force=force,
+    )
     return path.as_posix()
 
 
