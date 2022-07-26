@@ -27,7 +27,7 @@ def has_nomenclature_plugin(prefix: str) -> bool:
 
     try:
         ontology_resolver.lookup(prefix)
-    except KeyError:
+    except (KeyError, ValueError, TypeError):
         return False
     else:
         return True
