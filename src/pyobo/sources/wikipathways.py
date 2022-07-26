@@ -3,6 +3,7 @@
 """Converter for WikiPathways."""
 
 import logging
+import urllib.error
 from typing import Iterable
 
 from .gmt_utils import parse_wikipathways_gmt
@@ -37,6 +38,7 @@ _PATHWAY_INFO = [
     ("Rattus_norvegicus", "10116"),
     ("Saccharomyces_cerevisiae", "4932"),
     ("Sus_scrofa", "9823"),
+    ("Solanum_lycopersicum", "4081"),
 ]
 
 
@@ -62,8 +64,11 @@ def iter_terms(version: str) -> Iterable[Term]:
 
     for species_code, taxonomy_id in _PATHWAY_INFO:
         url = f"{base_url}-{species_code}.gmt"
-        path = ensure_path(PREFIX, url=url, version=version)
-
+        try:
+            path = ensure_path(PREFIX, url=url, version=version)
+        except urllib.error.HTTPError as e:
+            logger.warning("HTTP %s error when downloading WikiPathways file %s", e.code, url)
+            continue
         species_code = species_code.replace("_", " ")
         taxonomy_name = SPECIES_REMAPPING.get(species_code, species_code)
 
