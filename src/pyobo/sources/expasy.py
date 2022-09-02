@@ -7,8 +7,8 @@ from collections import defaultdict
 from typing import Dict, Iterable, Mapping, Optional, Set, Tuple
 
 from .utils import get_go_mapping
-from ..struct import Obo, Reference, Synonym, Term, TypeDef
-from ..struct.typedef import has_member
+from ..struct import Obo, Reference, Synonym, Term
+from ..struct.typedef import enables, has_member
 from ..utils.path import ensure_path
 
 __all__ = [
@@ -38,18 +38,12 @@ PR = "PR"
 #: Reference to UniProt or SwissProt (Many)
 DR = "DR"
 
-has_molecular_function = TypeDef(
-    reference=Reference(
-        prefix="go", identifier="has_molecular_function", name="has molecular function"
-    ),
-)
-
 
 class ExpasyGetter(Obo):
     """A getter for ExPASy Enzyme Classes."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [has_member, has_molecular_function]
+    typedefs = [has_member, enables]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -133,7 +127,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             )
         for go_id, go_name in ec2go.get(ec_code, []):
             term.append_relationship(
-                has_molecular_function, Reference(prefix="go", identifier=go_id, name=go_name)
+                enables, Reference(prefix="go", identifier=go_id, name=go_name)
             )
 
     return terms.values()

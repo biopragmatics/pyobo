@@ -36,6 +36,7 @@ __all__ = [
     "alternative_term",
     "editor_note",
     "has_salt",
+    "enables",
 ]
 
 
@@ -231,6 +232,7 @@ editor_note = Reference(prefix=IAO_PREFIX, identifier="0000116", name="editor no
 is_immediately_transformed_from = TypeDef.from_triple(
     prefix=SIO_PREFIX, identifier="000658", name="is immediately transformed from"
 )
+enables = TypeDef.from_triple(prefix="RO", identifier="0002327", name="enables")
 
 """ChEBI"""
 
