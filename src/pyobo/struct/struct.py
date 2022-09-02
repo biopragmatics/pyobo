@@ -35,6 +35,7 @@ import pandas as pd
 from more_click import force_option, verbose_option
 from networkx.utils import open_file
 from tqdm import tqdm
+from typing_extensions import Self
 
 from .reference import Reference, Referenced
 from .typedef import (
@@ -247,9 +248,10 @@ class Term(Referenced):
             alt = Reference(prefix=self.prefix, identifier=alt)
         self.alt_ids.append(alt)
 
-    def append_parent(self, reference: ReferenceHint) -> None:
+    def append_parent(self, reference: ReferenceHint) -> Self:
         """Add a parent to this entity."""
         self.parents.append(_ensure_ref(reference))
+        return self
 
     def extend_parents(self, references: Collection[Reference]) -> None:
         """Add a collection of parents to this entity."""
