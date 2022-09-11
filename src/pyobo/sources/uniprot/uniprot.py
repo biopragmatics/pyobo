@@ -15,7 +15,7 @@ from pyobo.utils.io import open_reader
 
 PREFIX = "uniprot"
 REVIEWED_URL = (
-    "https://www.uniprot.org/uniprot/"
+    "https://legacy.uniprot.org/uniprot/"
     "?query=reviewed:yes&format=tab&force=true&columns=id,entry%20name,organism-id,context&sort=id&compress=yes"
 )
 
