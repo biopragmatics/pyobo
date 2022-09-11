@@ -3,7 +3,6 @@
 """Utilities for handling prefixes."""
 
 import logging
-from collections import defaultdict
 from functools import wraps
 from typing import Optional, Tuple, Union
 
@@ -31,9 +30,6 @@ def alternate_strip_prefix(s, prefix):
     if s.lower().startswith(_prefix_colon):
         s = s[len(_prefix_colon) :]
     return s
-
-
-UBERON_UNHANDLED = defaultdict(list)
 
 
 class MissingPrefix(ValueError):
