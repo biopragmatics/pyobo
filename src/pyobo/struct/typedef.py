@@ -55,6 +55,7 @@ class TypeDef(Referenced):
     parents: List[Reference] = field(default_factory=list)
     xrefs: List[Reference] = field(default_factory=list)
     inverse: Optional[Reference] = None
+    created_by: Optional[str] = None
     holds_over_chain: Optional[List[Reference]] = None
     #: Whether this relationship is a metadata tag. Properties that are marked as metadata tags are
     #: used to record object metadata. Object metadata is additional information about an object
@@ -80,6 +81,9 @@ class TypeDef(Referenced):
 
         if self.namespace:
             yield f"namespace: {self.namespace}"
+
+        if self.created_by:
+            yield f"created_by: {self.created_by}"
 
         if self.comment:
             yield f"comment: {self.comment}"
