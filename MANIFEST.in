@@ -1,6 +1,7 @@
 graft src
 graft tests
 prune benchmarking
+prune tests/.pytest_cache
 
 recursive-include docs/source *.py
 recursive-include docs/source *.rst
