@@ -17,7 +17,6 @@ from more_click import verbose_option
 from tqdm import tqdm
 
 from ...constants import RAW_MODULE, XREF_COLUMNS
-from ...registries import get_wikidata_property_types
 from ...version import get_version
 
 logger = logging.getLogger(__name__)
@@ -40,7 +39,6 @@ def iterate_wikidata_dfs(*, use_tqdm: bool = True) -> Iterable[pd.DataFrame]:
         for prefix, entry in bioregistry.read_registry().items()
         if entry.wikidata and "prefix" in entry.wikidata
     }
-    # wikidata_properties.update(get_wikidata_properties())
 
     it = tqdm(sorted(wikidata_properties.items()), disable=not use_tqdm, desc="Wikidata properties")
     for prefix, wikidata_property in it:
@@ -84,15 +82,6 @@ def iter_wikidata_mappings(wikidata_property: str) -> Iterable[Tuple[str, str]]:
         wikidata_id = row["wikidata_id"]["value"][len("http://wikidata.org/entity/") :]
         entity_id = row["id"]["value"]
         yield wikidata_id, entity_id
-
-
-def get_wikidata_properties() -> Iterable[str]:
-    """Get child wikidata properties."""
-    # TODO how to automatically assign prefixes?
-    for wdp in get_wikidata_property_types():
-        query = f"SELECT ?item WHERE {{ ?item wdt:P31 wd:{wdp} }}"
-        for d in _run_query(query):
-            yield d["item"]["value"][len("wd:") :]
 
 
 HEADERS = {

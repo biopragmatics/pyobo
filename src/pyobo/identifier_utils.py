@@ -10,16 +10,16 @@ from typing import Optional, Tuple, Union
 import bioregistry
 
 from .registries import (
-    get_remappings_prefix,
-    get_xrefs_blacklist,
-    get_xrefs_prefix_blacklist,
-    get_xrefs_suffix_blacklist,
+    curie_has_blacklisted_prefix,
+    curie_has_blacklisted_suffix,
+    curie_is_blacklisted,
     remap_full,
+    remap_prefix,
 )
 
 __all__ = [
     "normalize_curie",
-    "normalize_prefix",
+    "_normalize_prefix",
     "wrap_norm_prefix",
 ]
 
@@ -58,23 +58,15 @@ class MissingPrefix(ValueError):
         return s
 
 
-def normalize_prefix(prefix: str, *, curie=None, xref=None, strict: bool = True) -> Optional[str]:
+def _normalize_prefix(prefix: str, *, curie=None, xref=None, strict: bool = True) -> Optional[str]:
     """Normalize a namespace and return, if possible."""
     norm_prefix = bioregistry.normalize_prefix(prefix)
     if norm_prefix is not None:
         return norm_prefix
-
-    if curie is None or curie.startswith("obo:"):
-        return None
-    if curie.startswith("http") or curie.startswith("urn:"):
-        return None
-    if curie.startswith("UBERON:"):  # uberon has tons of xrefs to anatomical features. skip them
-        UBERON_UNHANDLED[prefix].append((curie, xref))
     elif strict:
         raise MissingPrefix(prefix=prefix, curie=curie, xref=xref)
-    # if prefix.replace(':', '').replace("'", '').replace('-', '').replace('%27', '').isalpha():
-    #     return  # skip if its just text
-    return None
+    else:
+        return None
 
 
 BAD_CURIES = set()
@@ -92,24 +84,18 @@ def normalize_curie(
     - Normalizes the namespace
     - Checks against a blacklist for the entire curie, for the namespace, and for suffixes.
     """
-    if curie in get_xrefs_blacklist():
+    if curie_is_blacklisted(curie):
         return None, None
-    # Skip node if it has a blacklisted prefix
-    for blacklisted_prefix in get_xrefs_prefix_blacklist():
-        if curie.startswith(blacklisted_prefix):
-            return None, None
-    # Skip node if it has a blacklisted suffix
-    for suffix in get_xrefs_suffix_blacklist():
-        if curie.endswith(suffix):
-            return None, None
+    if curie_has_blacklisted_prefix(curie):
+        return None, None
+    if curie_has_blacklisted_suffix(curie):
+        return None, None
 
     # Remap the curie with the full list
     curie = remap_full(curie)
 
     # Remap node's prefix (if necessary)
-    for old_prefix, new_prefix in get_remappings_prefix().items():
-        if curie.startswith(old_prefix):
-            curie = new_prefix + curie[len(old_prefix) :]
+    curie = remap_prefix(curie)
 
     try:
         head_ns, identifier = curie.split(":", 1)
@@ -123,7 +109,7 @@ def normalize_curie(
     if identifier.casefold().startswith(f"{head_ns.casefold()}:"):
         identifier = identifier[len(head_ns) + 1 :]
 
-    norm_node_prefix = normalize_prefix(head_ns, curie=curie, strict=strict)
+    norm_node_prefix = _normalize_prefix(head_ns, curie=curie, strict=strict)
     if not norm_node_prefix:
         return None, None
     return norm_node_prefix, identifier
@@ -134,7 +120,7 @@ def wrap_norm_prefix(f):
 
     @wraps(f)
     def _wrapped(prefix, *args, **kwargs):
-        norm_prefix = normalize_prefix(prefix, strict=True)
+        norm_prefix = bioregistry.normalize_prefix(prefix)
         if norm_prefix is None:
             raise ValueError(f"Invalid prefix: {prefix}")
         return f(norm_prefix, *args, **kwargs)

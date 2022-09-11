@@ -104,16 +104,7 @@ def get_ontology(
 
     logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
 
-    path = None
-    for ontology_format, url in [  # noqa:B007
-        ("obo", bioregistry.get_obo_download(prefix)),
-        ("owl", bioregistry.get_owl_download(prefix)),
-        ("json", bioregistry.get_json_download(prefix)),
-    ]:
-        if url is not None:
-            path = pathlib.Path(ensure_path(prefix, url=url, force=force, version=version))
-            break
-
+    ontology_format, path = _ensure_ontology_path(prefix, force=force, version=version)
     if path is None:
         raise NoBuild
     elif ontology_format == "obo":
@@ -141,6 +132,19 @@ def get_ontology(
             obo.data_version = version
     obo.write_default(force=rewrite)
     return obo
+
+
+def _ensure_ontology_path(prefix: str, force, version) -> Union[Tuple[str, pathlib.Path], Tuple[None, None]]:
+    for ontology_format, url in [  # noqa:B007
+        ("obo", bioregistry.get_obo_download(prefix)),
+        ("owl", bioregistry.get_owl_download(prefix)),
+        ("json", bioregistry.get_json_download(prefix)),
+    ]:
+        if url is not None:
+            return ontology_format, pathlib.Path(
+                ensure_path(prefix, url=url, force=force, version=version)
+            )
+    return None, None
 
 
 #: Obonet/Pronto can't parse these (consider converting to OBO with ROBOT?)

@@ -8,8 +8,9 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, Union
 
+import bioregistry
+
 from .api import names
-from .identifier_utils import normalize_prefix
 from .utils.io import multisetdict
 
 __all__ = [
@@ -114,7 +115,7 @@ class Normalizer(ABC):
 @lru_cache()
 def get_normalizer(prefix: str) -> Normalizer:
     """Get an OBO normalizer."""
-    norm_prefix = normalize_prefix(prefix)
+    norm_prefix = bioregistry.normalize_prefix(prefix)
     if norm_prefix is None:
         raise ValueError(f"unhandled prefix: {prefix}")
     logger.info("getting obo normalizer for %s", norm_prefix)

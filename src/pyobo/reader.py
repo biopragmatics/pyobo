@@ -7,17 +7,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable, List, Mapping, Optional, Tuple, Union
 
+import bioregistry
 import networkx as nx
 from more_itertools import pairwise
 from tqdm import tqdm
 
 from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
-from .identifier_utils import MissingPrefix, normalize_curie, normalize_prefix
-from .registries import (
-    get_remappings_prefix,
-    get_xrefs_blacklist,
-    get_xrefs_prefix_blacklist,
-)
+from .identifier_utils import MissingPrefix, normalize_curie
+from .registries import curie_has_blacklisted_prefix, curie_is_blacklisted, remap_prefix
 from .struct import (
     Obo,
     Reference,
@@ -36,6 +33,17 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+
+# FIXME use bioontologies
+# RELATION_REMAPPINGS: Mapping[str, Tuple[str, str]] = bioontologies.upgrade.load()
+RELATION_REMAPPINGS: Mapping[str, Tuple[str, str]] = {
+    "part_of": part_of.pair,
+    "has_part": has_part.pair,
+    "develops_from": develops_from.pair,
+    "seeAlso": ("rdf", "seeAlso"),
+    "dc-contributor": ("dc", "contributor"),
+    "dc-creator": ("dc", "creator"),
+}
 
 
 def from_obo_path(
@@ -67,7 +75,7 @@ def from_obo_path(
 def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noqa:C901
     """Get all of the terms from a OBO graph."""
     _ontology = graph.graph["ontology"]
-    ontology = normalize_prefix(_ontology)  # probably always okay
+    ontology = bioregistry.normalize_prefix(_ontology)  # probably always okay
     if ontology is None:
         raise ValueError(f"unknown prefix: {_ontology}")
     logger.info("[%s] extracting OBO using obonet", ontology)
@@ -517,16 +525,6 @@ def iterate_node_alt_ids(data: Mapping[str, Any], *, strict: bool = True) -> Ite
             yield reference
 
 
-RELATION_REMAPPINGS: Mapping[str, Tuple[str, str]] = {
-    "part_of": part_of.pair,
-    "has_part": has_part.pair,
-    "develops_from": develops_from.pair,
-    "seeAlso": ("rdf", "seeAlso"),
-    "dc-contributor": ("dc", "contributor"),
-    "dc-creator": ("dc", "creator"),
-}
-
-
 def iterate_node_relationships(
     data: Mapping[str, Any],
     *,
@@ -566,16 +564,10 @@ def iterate_node_xrefs(
     for xref in data.get("xref", []):
         xref = xref.strip()
 
-        if (
-            any(xref.startswith(x) for x in get_xrefs_prefix_blacklist())
-            or xref in get_xrefs_blacklist()
-            or ":" not in xref
-        ):
+        if curie_has_blacklisted_prefix(xref) or curie_is_blacklisted(xref) or ":" not in xref:
             continue  # sometimes xref to self... weird
 
-        for blacklisted_prefix, new_prefix in get_remappings_prefix().items():
-            if xref.startswith(blacklisted_prefix):
-                xref = new_prefix + xref[len(blacklisted_prefix) :]
+        xref = remap_prefix(xref)
 
         split_space = " " in xref
         if split_space:

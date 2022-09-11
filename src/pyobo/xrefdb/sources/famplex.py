@@ -6,8 +6,8 @@ import logging
 from functools import lru_cache
 from typing import Mapping, Tuple
 
+import bioregistry
 import pandas as pd
-from bioregistry import normalize_prefix
 
 from ...constants import (
     PROVENANCE,
@@ -42,7 +42,7 @@ def _get_famplex_df(force: bool = False) -> pd.DataFrame:
 def get_famplex_xrefs_df(force: bool = False) -> pd.DataFrame:
     """Get xrefs from FamPlex."""
     df = _get_famplex_df(force=force)
-    df[TARGET_PREFIX] = df[TARGET_PREFIX].map(normalize_prefix)
+    df[TARGET_PREFIX] = df[TARGET_PREFIX].map(bioregistry.normalize_prefix)
     df = df[df[TARGET_PREFIX].notna()]
     df[SOURCE_PREFIX] = "fplx"
     df[PROVENANCE] = "https://github.com/sorgerlab/famplex/raw/master/equivalences.csv"
@@ -58,7 +58,7 @@ def get_remapping(force: bool = False) -> Mapping[Tuple[str, str], Tuple[str, st
     for target_ns, target_id, source_id in df.values:
         if target_ns.lower() == "medscan":
             continue  # MEDSCAN is proprietary and Ben said to skip using these identifiers
-        remapped_prefix = normalize_prefix(target_ns)
+        remapped_prefix = bioregistry.normalize_prefix(target_ns)
         if remapped_prefix is None:
             logger.warning("could not remap %s", target_ns)
         else:

@@ -84,7 +84,7 @@ def get_ids(
         if force:
             logger.info("[%s v%s] forcing reload for names", prefix, version)
         else:
-            logger.info(
+            logger.debug(
                 "[%s v%s] no cached identifiers found. getting from OBO loader", prefix, version
             )
         ontology = get_ontology(prefix, force=force, strict=strict, version=version)

@@ -9,6 +9,7 @@ import logging
 from functools import lru_cache
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Union
 
+import bioregistry
 import pandas as pd
 from flasgger import Swagger
 from flask import (
@@ -25,7 +26,7 @@ from werkzeug.local import LocalProxy
 
 from pyobo import Canonicalizer
 from pyobo.constants import PROVENANCE, SOURCE_PREFIX, TARGET_PREFIX
-from pyobo.identifier_utils import normalize_curie, normalize_prefix
+from pyobo.identifier_utils import normalize_curie
 from pyobo.resource_utils import ensure_inspector_javert_df
 
 __all__ = [
@@ -98,7 +99,7 @@ def summarize():
 @search_blueprint.route("/mappings/summarize_by/<prefix>")
 def summarize_one(prefix: str):
     """Summarize the mappings."""
-    norm_prefix = normalize_prefix(prefix)
+    norm_prefix = bioregistry.normalize_prefix(prefix)
     if norm_prefix is None:
         return abort(500, f"invalid prefix: {prefix}")
     in_df = summary_df.loc[summary_df[TARGET_PREFIX] == norm_prefix, [SOURCE_PREFIX, "count"]]

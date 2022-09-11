@@ -15,5 +15,6 @@ TEST_GMT_PATH = RESOURCES / "test_msigdb.gmt"
 TEST_WP_GMT_PATH = RESOURCES / "test_wikipathways.gmt"
 
 chebi_patch = mock.patch(
-    "pyobo.getters._ensure_ontology_path", side_effect=lambda *args, **kwargs: TEST_CHEBI_OBO_PATH
+    "pyobo.getters._ensure_ontology_path",
+    side_effect=lambda *args, **kwargs: ("obo", TEST_CHEBI_OBO_PATH),
 )

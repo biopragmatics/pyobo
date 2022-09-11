@@ -10,11 +10,12 @@ import operator
 import os
 from typing import Iterable
 
+import bioregistry
 import pandas as pd
 from tqdm import tqdm
 from umls_downloader import open_umls
 
-from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term, normalize_prefix
+from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
 from pyobo.utils.io import open_map_tsv
 
 __all__ = [
@@ -97,7 +98,7 @@ def iter_terms(version: str) -> Iterable[Term]:
             synonyms = []
             xrefs = []
             for source, identifier, synonym_type, synonym in sdf.values:
-                norm_source = normalize_prefix(source)
+                norm_source = bioregistry.normalize_prefix(source)
                 if norm_source is None or not identifier:
                     provenance = []
                 else:

@@ -6,10 +6,10 @@ import logging
 from collections import defaultdict
 from typing import Iterable, List, Mapping, Tuple
 
+import bioregistry
 from pystow.utils import get_commit
 
 from pyobo import get_name_id_mapping
-from pyobo.identifier_utils import normalize_prefix
 from pyobo.struct import Obo, Reference, Term
 from pyobo.struct.typedef import has_member, has_part, is_a, part_of
 from pyobo.utils.io import multidict
@@ -152,7 +152,7 @@ def _get_xref_df(version: str) -> Mapping[str, List[Reference]]:
         for xref_prefix, xref_identifier in xrefs_df[[0, 1]].values
     ]
 
-    xrefs_df[0] = xrefs_df[0].map(normalize_prefix)
+    xrefs_df[0] = xrefs_df[0].map(bioregistry.normalize_prefix)
     xrefs_df = xrefs_df[xrefs_df[0].notna()]
     xrefs_df = xrefs_df[xrefs_df[0] != "bel"]
     return multidict(

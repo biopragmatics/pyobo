@@ -208,9 +208,11 @@ def relations(
             curie = prefix, relation
 
         if target is not None:
-            target = bioregistry.normalize_prefix(target)
+            norm_target = bioregistry.normalize_prefix(target)
+            if norm_target is None:
+                raise ValueError
             relations_df = get_filtered_relations_df(
-                prefix, relation=curie, force=force, strict=not no_strict, target=target
+                prefix, relation=curie, force=force, strict=not no_strict, target=norm_target
             )
         else:
             raise NotImplementedError(f"can not filter by target prefix {target}")

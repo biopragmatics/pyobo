@@ -6,27 +6,16 @@ import itertools as itt
 import json
 import os
 from functools import lru_cache
-from typing import Iterable, List, Mapping, Set, Tuple
+from pathlib import Path
+from typing import Iterable, Mapping, Set, Tuple
 
 import bioregistry
 
 from ..constants import GLOBAL_SKIP, RAW_DIRECTORY
 
-HERE = os.path.abspath(os.path.dirname(__file__))
-CURATED_REGISTRY_PATH = os.path.join(HERE, "metaregistry.json")
-
-
-@lru_cache()
-def _get_curated_registry():
-    """Get the metaregistry."""
-    with open(CURATED_REGISTRY_PATH) as file:
-        return json.load(file)
-
-
-@lru_cache(maxsize=1)
-def get_wikidata_property_types() -> List[str]:
-    """Get the wikidata property types."""
-    return _get_curated_registry()["wikidata_property_types"]
+HERE = Path(__file__).parent.resolve()
+CURATED_REGISTRY_PATH = HERE.joinpath("metaregistry.json")
+CURATED_REGISTRY = json.loads(CURATED_REGISTRY_PATH.read_text())
 
 
 def has_no_download(prefix: str) -> bool:
@@ -46,27 +35,42 @@ def _no_download() -> Set[str]:
     }
 
 
+def curie_has_blacklisted_prefix(curie: str) -> bool:
+    """Check if the CURIE string has a blacklisted prefix."""
+    return any(curie.startswith(x) for x in get_xrefs_prefix_blacklist())
+
+
 @lru_cache(maxsize=1)
 def get_xrefs_prefix_blacklist() -> Set[str]:
     """Get the set of blacklisted xref prefixes."""
     #: Xrefs starting with these prefixes will be ignored
     return set(
-        itt.chain.from_iterable(_get_curated_registry()["blacklists"]["resource_prefix"].values())
-    ) | set(_get_curated_registry()["blacklists"]["prefix"])
+        itt.chain.from_iterable(CURATED_REGISTRY["blacklists"]["resource_prefix"].values())
+    ) | set(CURATED_REGISTRY["blacklists"]["prefix"])
+
+
+def curie_has_blacklisted_suffix(curie: str) -> bool:
+    """Check if the CURIE string has a blacklisted suffix."""
+    return any(curie.endswith(suffix) for suffix in get_xrefs_suffix_blacklist())
 
 
 @lru_cache(maxsize=1)
 def get_xrefs_suffix_blacklist() -> Set[str]:
     """Get the set of blacklisted xref suffixes."""
     #: Xrefs ending with these suffixes will be ignored
-    return set(_get_curated_registry()["blacklists"]["suffix"])
+    return set(CURATED_REGISTRY["blacklists"]["suffix"])
+
+
+def curie_is_blacklisted(curie: str) -> bool:
+    """Check if the full CURIE string is blacklisted."""
+    return curie in get_xrefs_blacklist()
 
 
 @lru_cache(maxsize=1)
 def get_xrefs_blacklist() -> Set[str]:
     """Get the set of blacklisted xrefs."""
     rv = set()
-    for x in _get_curated_registry()["blacklists"]["full"]:
+    for x in CURATED_REGISTRY["blacklists"]["full"]:
         if isinstance(x, str):
             rv.add(x)
         elif isinstance(x, dict):
@@ -84,7 +88,7 @@ def get_xrefs_blacklist() -> Set[str]:
 @lru_cache(maxsize=1)
 def get_remappings_full() -> Mapping[str, str]:
     """Get the remappings for xrefs based on the entire xref database."""
-    return _get_curated_registry()["remappings"]["full"]
+    return CURATED_REGISTRY["remappings"]["full"]
 
 
 def remap_full(x: str) -> str:
@@ -98,7 +102,15 @@ def get_remappings_prefix() -> Mapping[str, str]:
 
     .. note:: Doesn't take into account the semicolon `:`
     """
-    return _get_curated_registry()["remappings"]["prefix"]
+    return CURATED_REGISTRY["remappings"]["prefix"]
+
+
+def remap_prefix(curie: str) -> str:
+    """Remap a prefix."""
+    for old_prefix, new_prefix in get_remappings_prefix().items():
+        if curie.startswith(old_prefix):
+            return new_prefix + curie[len(old_prefix) :]
+    return curie
 
 
 def iter_cached_obo() -> Iterable[Tuple[str, str]]:
@@ -106,7 +118,7 @@ def iter_cached_obo() -> Iterable[Tuple[str, str]]:
     for prefix in os.listdir(RAW_DIRECTORY):
         if prefix in GLOBAL_SKIP or has_no_download(prefix) or bioregistry.is_deprecated(prefix):
             continue
-        d = os.path.join(RAW_DIRECTORY, prefix)
+        d = RAW_DIRECTORY.joinpath(prefix)
         if not os.path.isdir(d):
             continue
         for x in os.listdir(d):

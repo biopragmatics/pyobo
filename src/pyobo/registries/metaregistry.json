@@ -432,7 +432,9 @@
       "role:of": "RO:0000081",
       "unfolds:in": "BFO:0000066",
       "PATOC:MAH": "orcid:0000-0003-4148-4606",
-      "SBN:9780070316607": "ISBN:9780070316607"
+      "SBN:9780070316607": "ISBN:9780070316607",
+      "dc-contributor": "dc:contributor",
+      "dc-license": "dc:license"
     },
     "prefix": {
       "ATCC number: ": "ATCC:",
@@ -505,8 +507,5 @@
       "vo/ontorat/PR:": "PR:",
       "DC:0000": "diseaseclass:0000"
     }
-  },
-  "wikidata_property_types": [
-    "Q42396390"
-  ]
+  }
 }

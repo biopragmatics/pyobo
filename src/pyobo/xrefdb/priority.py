@@ -2,7 +2,7 @@
 
 """Configuration for the default priority list."""
 
-from ..identifier_utils import normalize_prefix
+import bioregistry
 
 __all__ = [
     "DEFAULT_PRIORITY_LIST",
@@ -48,7 +48,7 @@ _DEFAULT_PRIORITY_LIST = [
 def _get_default_priority_list():
     rv = []
     for _entry in _DEFAULT_PRIORITY_LIST:
-        _prefix = normalize_prefix(_entry)
+        _prefix = bioregistry.normalize_prefix(_entry)
         if not _prefix:
             raise RuntimeError(f"unresolved prefix: {_entry}")
         if _prefix in rv:
