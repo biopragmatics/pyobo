@@ -134,7 +134,9 @@ def get_ontology(
     return obo
 
 
-def _ensure_ontology_path(prefix: str, force, version) -> Union[Tuple[str, pathlib.Path], Tuple[None, None]]:
+def _ensure_ontology_path(
+    prefix: str, force, version
+) -> Union[Tuple[str, pathlib.Path], Tuple[None, None]]:
     for ontology_format, url in [  # noqa:B007
         ("obo", bioregistry.get_obo_download(prefix)),
         ("owl", bioregistry.get_owl_download(prefix)),
