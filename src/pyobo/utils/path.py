@@ -3,14 +3,10 @@
 """Utilities for building paths."""
 
 import logging
-import os
-import shutil
 from pathlib import Path
-from typing import Any, Callable, Mapping, Optional, Union
-from urllib.request import urlretrieve
+from typing import Callable, Optional, Union
 
 import pandas as pd
-import requests
 from pystow.utils import download, name_from_url, read_tarfile_csv
 
 from .misc import cleanup_version
