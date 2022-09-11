@@ -558,7 +558,7 @@ class Obo:
         yield f"ontology: {self.ontology}"
 
         if self.name is None:
-            raise ValueError
+            raise ValueError("ontology is missing name")
         yield f"remark: {self.name}"
 
         for typedef in sorted(self.typedefs or [], key=attrgetter("curie")):
