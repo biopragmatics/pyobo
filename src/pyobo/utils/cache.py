@@ -6,7 +6,6 @@ import gzip
 import json
 import logging
 import os
-from abc import ABC
 from pathlib import Path
 from typing import Generic, Iterable, List, Mapping, TypeVar, Union
 
@@ -36,7 +35,7 @@ logger = logging.getLogger(__name__)
 X = TypeVar("X")
 
 
-class _CachedMapping(Cached, Generic[X], ABC):
+class _CachedMapping(Cached[X], Generic[X]):
     """A cache for simple mappings."""
 
     def __init__(
