@@ -379,7 +379,8 @@
       "INFOODs:",
       "NLCD:",
       "TEMP:",
-      "PO_GIT:"
+      "PO_GIT:",
+      "URL:http"
     ],
     "suffix": [
       ".jpg",
@@ -485,7 +486,8 @@
       "OGI.owl:": "ogi:",
       "PANTHER:PTHR": "panther.family:PTHR",
       "vo/ontorat/PR:": "PR:",
-      "DC:0000": "diseaseclass:0000"
+      "DC:0000": "diseaseclass:0000",
+      "TS-": "caloha:"
     }
   }
 }
