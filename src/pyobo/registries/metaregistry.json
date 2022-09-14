@@ -242,9 +242,6 @@
         "BilaDO:",
         "OGES:"
       ],
-      "hp": [
-        "ORPHA:"
-      ],
       "idomal": [
         "VSMO:",
         "IRAC:",
@@ -252,10 +249,6 @@
       ],
       "mondo": [
         "url:https\\://rarediseases.info.nih.gov"
-      ],
-      "symp": [
-        "SyOID",
-        "UMLS_ICD9CM_2005_AUI"
       ],
       "mod": [
         "Remap:",
@@ -272,30 +265,22 @@
         "GAID:",
         "OpenCyc:",
         "BM:",
-        "DHBA:",
-        "HBA:",
         "BSA:",
-        "DMBA:",
         "XtroDO:",
         "nlx_subcell",
         "OGEM:",
-        "MBA:",
         "ANISEED:",
-        "NLX:",
         "BILS:",
         "ABA:",
-        "PBA:",
         "MAP:"
       ],
       "cellosaurus": [
         "FCDI",
         "CCTCC:",
-        "CGH-DB:",
         "IARC_TP53:",
         "KCB:",
         "PharmacoDB:",
         "MCCL:MCC:",
-        "TOKU-E:",
         "IBRC",
         "ISCR",
         "IZSLER",
@@ -313,11 +298,9 @@
         "AUTO:patterns"
       ],
       "pato": [
-        "ilxtr:",
-        "nifext:"
+        "ilxtr:"
       ],
       "plana": [
-        "nlx:",
         "Optic:",
         "NIF:Subcellular\\:sao"
       ],
@@ -350,7 +333,6 @@
         "GCP:GCP_"
       ],
       "tto": [
-        "CASSPC:",
         "CASGEN:"
       ],
       "wb": [
@@ -367,12 +349,10 @@
       "PERSON",
       "similar to",
       "modelled on",
-      "Wikipedia",
       "SUBMITTER",
       "STRUCTURE_ChemicalName_IUPAC",
       "STRUCTURE_Formula",
       "stedman",
-      "WebElements",
       "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com",
       "value-type:",
       "binary-data-type:MS\\",

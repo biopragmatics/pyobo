@@ -44,9 +44,19 @@ def curie_has_blacklisted_prefix(curie: str) -> bool:
 def get_xrefs_prefix_blacklist() -> Set[str]:
     """Get the set of blacklisted xref prefixes."""
     #: Xrefs starting with these prefixes will be ignored
-    return set(
+    prefixes = set(
         itt.chain.from_iterable(CURATED_REGISTRY["blacklists"]["resource_prefix"].values())
     ) | set(CURATED_REGISTRY["blacklists"]["prefix"])
+    nonsense = {
+        prefix
+        for prefix in prefixes
+        if bioregistry.normalize_prefix(prefix.rstrip(":")) is not None
+    }
+    if nonsense:
+        raise ValueError(
+            f"The following prefixes were blacklisted but are in the bioregistry: {nonsense}"
+        )
+    return prefixes
 
 
 def curie_has_blacklisted_suffix(curie: str) -> bool:
