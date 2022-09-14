@@ -26,24 +26,27 @@
                 {% endif %}
 
                 {{ list_references(term.alt_ids, "Alt. IDs") }}
-                {% if term.synonym %}
+                {% if term.synonyms %}
                     <dt>
                         <span class="badge badge-primary">Synonym</span>
                     </dt>
-                    <dt>
+                    <dd>
                         <ul>
                             {% for synonym in term.synonyms %}
-                                <li>{{ synonym }}</li>
+                                <li>{{ synonym.name }} ({{ synonym.specificity }})</li>
                             {% endfor %}
                         </ul>
-                    </dt>
+                    </dd>
                 {% endif %}
                 {{ list_references(term.parents, "Parents") }}
+                {{ list_references(children, "Children") }}
+                {{ list_references(parts, "Parts") }}
                 {% for xref in term.xrefs %}
                     <dt><span class="badge badge-primary">Xref</span> {{ bioregistry.get_name(xref.prefix) }}</dt>
-                    <dt>{{ link_reference(xref) }}</dt>
+                    <dd>{{ link_reference(xref) }}</dd>
                 {% endfor %}
                 {% for typedef, relations in term.relationships.items() %}
+                    {% if relations|length > 0 %}
                     <dt>
                         <span class="badge badge-primary">Relation</span>
                         {% if typedef.name %}
@@ -52,20 +55,22 @@
                             {{ link_reference(typedef) }}
                         {% endif %}
                     </dt>
-                    <dt>
+                    <dd>
                         <ul>
                             {% for relation in relations %}
                                 <li>{{ link_reference(relation) }}</li>
                             {% endfor %}
                         </ul>
-                    </dt>
+                    </dd>
+                    {% endif %}
                 {% endfor %}
                 {% for property, values in term.properties.items() %}
+                    {% if values|length > 0 %}
                     <dt>
                         <span class="badge badge-primary">Property</span>
                         {{ property }}
                     </dt>
-                    <dt>
+                    <dd>
                         {% if values|length == 1 %}
                             {{ values[0] }}
                         {% else %}
@@ -75,7 +80,8 @@
                                 {% endfor %}
                             </ul>
                         {% endif %}
-                    </dt>
+                    </dd>
+                {% endif %}
                 {% endfor %}
             </dl>
         </div>

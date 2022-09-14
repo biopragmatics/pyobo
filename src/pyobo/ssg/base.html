@@ -1,5 +1,5 @@
 {% macro link_reference(reference) %}
-<a href="{{ reference.bioregistry_link }}"><code>{{ reference.curie }}</code></a>
+<a href="{{ reference.bioregistry_link }}"><code>{{ reference.curie }}</code></a>{% if reference.name %} <span>{{ reference.name }}</span>{% endif %}
 {% endmacro %}
 
 {% macro list_references(references, title) %}
@@ -7,9 +7,9 @@
         <dt>
             <span class="badge badge-primary">{{ title }}</span>
         </dt>
-        <dt>
+        <dd>
             {% if references|length == 1 %}
-                {{ link_reference(references[0]) }}
+            {{ link_reference(references[0]) }}
             {% else %}
                 <ul>
                     {% for reference in references %}
@@ -17,7 +17,7 @@
                     {% endfor %}
                 </ul>
             {% endif %}
-        </dt>
+        </dd>
     {% endif %}
 {% endmacro %}
 
@@ -64,7 +64,7 @@
 <body{% block body_attribs %}{% endblock body_attribs %}>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <span class="navbar-brand">
-        {{ obo.name }}
+        {{ bioregistry.get_name(obo.ontology) }}
     </span>
 </nav>
 

@@ -1,6 +1,7 @@
 """Static site generator."""
 
 import itertools as itt
+from collections import defaultdict
 from operator import attrgetter
 from pathlib import Path
 from typing import Union
@@ -10,6 +11,7 @@ from jinja2 import Environment, FileSystemLoader
 from tqdm import tqdm
 
 from pyobo import Obo
+from pyobo.struct import has_part, part_of
 
 __all__ = [
     "make_page",
@@ -52,11 +54,24 @@ def make_site(
             key=attrgetter("identifier"),
         )
 
+    terms = list(obo)
+
     directory.joinpath("index.html").write_text(
-        index_template.render(obo=obo, resource=resource, manifest=_manifest)
+        index_template.render(
+            obo=obo, resource=resource, manifest=_manifest, number_terms=len(terms)
+        )
     )
 
-    terms = list(obo)
+    parent_to_child = defaultdict(list)
+    for term in tqdm(terms, desc=f"{obo.ontology} caching parents", unit="term", unit_scale=True):
+        for parent in term.parents or []:
+            parent_to_child[parent.curie].append(term)
+
+    parts = defaultdict(list)
+    for term in tqdm(terms, desc=f"{obo.ontology} caching parents", unit="term", unit_scale=True):
+        for whole in term.get_relationships(part_of):
+            parts[whole.curie].append(term)
+
     for term in tqdm(terms, desc=f"{obo.ontology} website", unit="term", unit_scale=True):
         if use_subdirectories:
             subdirectory = directory.joinpath(term.identifier)
@@ -64,7 +79,15 @@ def make_site(
             path = subdirectory.joinpath("index.html")
         else:
             path = directory.joinpath(term.identifier).with_suffix(".html")
-        path.write_text(term_template.render(term=term, obo=obo, resource=resource))
+        path.write_text(
+            term_template.render(
+                term=term,
+                obo=obo,
+                resource=resource,
+                children=parent_to_child.get(term.curie),
+                parts=parts.get(term.curie),
+            )
+        )
 
     for typedef in obo.typedefs or []:
         if typedef.prefix != obo.ontology:

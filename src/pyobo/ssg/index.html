@@ -14,6 +14,8 @@
                     <dt>Data Version</dt>
                     <dd>{{ obo.data_version }}</dd>
                 {% endif %}
+                <dt>Number of Terms</dt>
+                <dd>{{ number_terms }}</dd>
                 <dt>Bioregistry</dt>
                 <dd>
                     <a href="https://bioregistry.io/{{ obo.ontology }}">
@@ -21,6 +23,8 @@
                     </a>
                 </dd>
                 {% if not manifest %}
+                    <dt>Regular Expression Pattern</dt>
+                    <dd><code>{{ resource.get_pattern() }}</code></dd>
                     <dt>Example Page</dt>
                     <dd><a href="{{ resource.get_example() }}">{{ resource.get_example() }}</a></dd>
                 {% endif %}
@@ -77,9 +81,9 @@
             <h5 class="card-header">
                 Relation Definitions
             </h5>
-            <ul>
+            <ul class="list-group list-group-flush">
                 {% for typedef in obo.typedefs %}
-                    <li>{{ typedef }}</li>
+                    <li class="list-group-item">{{ typedef }}</li>
                 {% endfor %}
             </ul>
         </div>
