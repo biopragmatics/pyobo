@@ -11,7 +11,7 @@ from jinja2 import Environment, FileSystemLoader
 from tqdm import tqdm
 
 from pyobo import Obo
-from pyobo.struct import has_part, part_of
+from pyobo.struct import part_of
 
 __all__ = [
     "make_page",

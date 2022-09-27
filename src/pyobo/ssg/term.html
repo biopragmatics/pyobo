@@ -31,38 +31,42 @@
                         <span class="badge badge-primary">Synonym</span>
                     </dt>
                     <dd>
-                        <ul>
-                            {% for synonym in term.synonyms %}
-                                <li>{{ synonym.name }} ({{ synonym.specificity }})</li>
-                            {% endfor %}
-                        </ul>
+                        {% if term.synonyms|length == 1 %}
+                            {{ term.synonyms[0].name }} (<span class="muted">{{ term.synonyms[0].specificity }}</span>)
+                        {% else %}
+                            <ul>
+                                {% for synonym in term.synonyms %}
+                                    <li>{{ synonym.name }} (<span class="muted">{{ synonym.specificity }}</span>)</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
                     </dd>
                 {% endif %}
                 {{ list_references(term.parents, "Parents") }}
                 {{ list_references(children, "Children") }}
                 {{ list_references(parts, "Parts") }}
-                {% for xref in term.xrefs %}
-                    <dt><span class="badge badge-primary">Xref</span> {{ bioregistry.get_name(xref.prefix) }}</dt>
-                    <dd>{{ link_reference(xref) }}</dd>
-                {% endfor %}
                 {% for typedef, relations in term.relationships.items() %}
                     {% if relations|length > 0 %}
                     <dt>
                         <span class="badge badge-primary">Relation</span>
-                        {% if typedef.name %}
-                            {{ typedef.name }} ({{ link_reference(typedef) }})
-                        {% else %}
-                            {{ link_reference(typedef) }}
-                        {% endif %}
+                        {{ link_reference(typedef) }}
                     </dt>
                     <dd>
-                        <ul>
-                            {% for relation in relations %}
-                                <li>{{ link_reference(relation) }}</li>
-                            {% endfor %}
-                        </ul>
+                        {% if relations|length == 1 %}
+                            {{ link_reference(relations[0]) }}
+                        {% else %}
+                            <ul>
+                                {% for relation in relations %}
+                                    <li>{{ link_reference(relation) }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
                     </dd>
                     {% endif %}
+                {% endfor %}
+                {% for xref in term.xrefs %}
+                    <dt><span class="badge badge-primary">Xref</span> {{ bioregistry.get_name(xref.prefix) }}</dt>
+                    <dd>{{ link_reference(xref) }}</dd>
                 {% endfor %}
                 {% for property, values in term.properties.items() %}
                     {% if values|length > 0 %}
