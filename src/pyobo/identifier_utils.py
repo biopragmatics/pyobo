@@ -18,18 +18,10 @@ from .registries import (
 
 __all__ = [
     "normalize_curie",
-    "_normalize_prefix",
     "wrap_norm_prefix",
 ]
 
 logger = logging.getLogger(__name__)
-
-
-def alternate_strip_prefix(s, prefix):
-    _prefix_colon = f"{prefix.lower()}:"
-    if s.lower().startswith(_prefix_colon):
-        s = s[len(_prefix_colon) :]
-    return s
 
 
 class MissingPrefix(ValueError):
