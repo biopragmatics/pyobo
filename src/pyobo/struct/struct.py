@@ -1259,15 +1259,16 @@ class Obo:
 
 
 def make_ad_hoc_ontology(
-    _ontology,
-    _name,
-    _auto_generated_by,
-    _format_version,
-    _typedefs,
-    _synonym_typedefs,
-    _date,
-    _data_version,
-    terms,
+    _ontology: str,
+    _name: str,
+    _auto_generated_by: Optional[str] = None,
+    _format_version: str = "1.2",
+    _typedefs: Optional[List[TypeDef]] = None,
+    _synonym_typedefs: Optional[List[SynonymTypeDef]] = None,
+    _date: Optional[datetime] = None,
+    _data_version: Optional[str] = None,
+    *,
+    terms: List[Term],
 ) -> "Obo":
     """Make an ad-hoc ontology."""
 

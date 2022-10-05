@@ -242,15 +242,15 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
     )
 
     return make_ad_hoc_ontology(
-        ontology,
-        name,
-        graph.graph.get("auto-generated-by"),
-        graph.graph.get("format-version"),
-        list(typedefs.values()),
-        list(synonym_typedefs.values()),
-        date,
-        data_version,
-        terms,
+        _ontology=ontology,
+        _name=name,
+        _auto_generated_by=graph.graph.get("auto-generated-by"),
+        _format_version=graph.graph.get("format-version"),
+        _typedefs=list(typedefs.values()),
+        _synonym_typedefs=list(synonym_typedefs.values()),
+        _date=date,
+        _data_version=data_version,
+        terms=terms,
     )
 
 
