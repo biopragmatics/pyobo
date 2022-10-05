@@ -4,7 +4,7 @@ import itertools as itt
 from collections import defaultdict
 from operator import attrgetter
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import bioregistry
 from jinja2 import Environment, FileSystemLoader
@@ -29,8 +29,12 @@ index_template = environment.get_template("index.html")
 
 
 def make_site(
-    obo: Obo, directory: Union[str, Path], use_subdirectories: bool = True, manifest: bool = False
-):
+    obo: Obo,
+    directory: Union[str, Path],
+    use_subdirectories: bool = True,
+    manifest: bool = False,
+    resource: Optional[bioregistry.Resource] = None,
+) -> None:
     """Make a website in the given directory.
 
     :param obo: The ontology to generate a site for
@@ -38,11 +42,13 @@ def make_site(
     :param use_subdirectories: If true, creates directories for each term/property/typedef with an index.html
         inside. If false, creates HTML files named with the identifiers.
     :param manifest: If true, lists all entries on the homepage.
+    :param resource: A custom resource
     """
     directory = Path(directory)
     directory.mkdir(exist_ok=True, parents=True)
 
-    resource = bioregistry.get_resource(obo.ontology)
+    if resource is None:
+        resource = bioregistry.get_resource(obo.ontology)
     if resource is None:
         raise KeyError
 
