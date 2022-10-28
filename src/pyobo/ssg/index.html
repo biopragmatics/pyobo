@@ -16,10 +16,10 @@
                 {% endif %}
                 <dt>Number of Terms</dt>
                 <dd>{{ number_terms }}</dd>
-                <dt>Bioregistry</dt>
+                <dt>{{ metaregistry_name }}</dt>
                 <dd>
-                    <a href="https://bioregistry.io/{{ obo.ontology }}">
-                        <code>bioregistry:{{ obo.ontology }}</code>
+                    <a href="{{ metaregistry_base_url }}/{{ obo.ontology }}">
+                        <code>{{ metaregistry_metaprefix }}:{{ obo.ontology }}</code>
                     </a>
                 </dd>
                 {% if not manifest %}

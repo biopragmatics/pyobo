@@ -18,7 +18,7 @@
             <dl>
                 <dt>Local Unique Identifier</dt>
                 <dd>
-                    <a href="{{ term.bioregistry_link }}">{{ term.identifier }}</a>
+                    <a href="{{ metaregistry_base_url }}/{{ term.curie }}">{{ term.identifier }}</a>
                 </dd>
                 {% if term.namespace %}
                     <dt>Namespace</dt>
@@ -65,7 +65,7 @@
                     {% endif %}
                 {% endfor %}
                 {% for xref in term.xrefs %}
-                    <dt><span class="badge badge-primary">Xref</span> {{ bioregistry.get_name(xref.prefix) }}</dt>
+                    <dt><span class="badge badge-primary">Xref</span> {{ manager.get_name(xref.prefix) }}</dt>
                     <dd>{{ link_reference(xref) }}</dd>
                 {% endfor %}
                 {% for property, values in term.properties.items() %}

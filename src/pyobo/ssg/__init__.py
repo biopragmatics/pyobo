@@ -4,7 +4,7 @@ import itertools as itt
 from collections import defaultdict
 from operator import attrgetter
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import bioregistry
 from jinja2 import Environment, FileSystemLoader
@@ -34,6 +34,10 @@ def make_site(
     use_subdirectories: bool = True,
     manifest: bool = False,
     resource: Optional[bioregistry.Resource] = None,
+    metaregistry_metaprefix: Optional[str] = None,
+    metaregistry_name: Optional[str] = None,
+    metaregistry_base_url: Optional[str] = None,
+    show_properties_in_manifest: Optional[Sequence[Tuple[str, str]]] = None,
 ) -> None:
     """Make a website in the given directory.
 
@@ -46,6 +50,14 @@ def make_site(
     """
     directory = Path(directory)
     directory.mkdir(exist_ok=True, parents=True)
+
+    if metaregistry_metaprefix is None:
+        metaregistry_metaprefix = "bioregistry"
+    if metaregistry_name is None:
+        metaregistry_name = "Bioregistry"
+    if metaregistry_base_url is None:
+        metaregistry_base_url = "https://bioregistry.io"
+    metaregistry_base_url = metaregistry_base_url.rstrip("/")
 
     if resource is None:
         resource = bioregistry.get_resource(obo.ontology)
@@ -64,7 +76,14 @@ def make_site(
 
     directory.joinpath("index.html").write_text(
         index_template.render(
-            obo=obo, resource=resource, manifest=_manifest, number_terms=len(terms)
+            obo=obo,
+            resource=resource,
+            manifest=_manifest,
+            number_terms=len(terms),
+            manager=bioregistry.manager,
+            metaregistry_metaprefix=metaregistry_metaprefix,
+            metaregistry_name=metaregistry_name,
+            metaregistry_base_url=metaregistry_base_url,
         )
     )
 
@@ -92,6 +111,10 @@ def make_site(
                 resource=resource,
                 children=parent_to_child.get(term.curie),
                 parts=parts.get(term.curie),
+                manager=bioregistry.manager,
+                metaregistry_metaprefix=metaregistry_metaprefix,
+                metaregistry_name=metaregistry_name,
+                metaregistry_base_url=metaregistry_base_url,
             )
         )
 
@@ -104,7 +127,17 @@ def make_site(
             path = subdirectory.joinpath("index.html")
         else:
             path = directory.joinpath(typedef.identifier).with_suffix(".html")
-        path.write_text(typedef_template.render(typedef=typedef, obo=obo, resource=resource))
+        path.write_text(
+            typedef_template.render(
+                typedef=typedef,
+                obo=obo,
+                resource=resource,
+                manager=bioregistry.manager,
+                metaregistry_metaprefix=metaregistry_metaprefix,
+                metaregistry_name=metaregistry_name,
+                metaregistry_base_url=metaregistry_base_url,
+            )
+        )
 
 
 def _main():
