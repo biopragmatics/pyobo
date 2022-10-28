@@ -11,7 +11,7 @@ import gilda.api
 import gilda.term
 from gilda.grounder import Grounder
 from gilda.process import normalize
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo import get_id_name_mapping, get_id_synonyms_mapping, get_ids
 from pyobo.getters import NoBuild
@@ -53,7 +53,7 @@ def _term_key(term: gilda.term.Term) -> Tuple[str, str, str]:
 
 def iter_gilda_prediction_tuples(
     prefix: str,
-    relation: str,
+    relation: str = "skos:exactMatch",
     *,
     grounder: Optional[Grounder] = None,
     identifiers_are_names: bool = False,
