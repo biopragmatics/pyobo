@@ -2,12 +2,13 @@
 
 """PyOBO's Gilda utilities."""
 
+import itertools as itt
+import logging
 from typing import Iterable, List, Optional, Tuple, Type, Union
 
 import bioregistry
 import gilda.api
 import gilda.term
-from gilda.generate_terms import filter_out_duplicates
 from gilda.grounder import Grounder
 from gilda.process import normalize
 from tqdm import tqdm
@@ -21,6 +22,33 @@ __all__ = [
     "get_grounder",
     "get_gilda_terms",
 ]
+
+logger = logging.getLogger(__name__)
+
+
+_STATUSES = {"curated": 1, "name": 2, "synonym": 3, "former_name": 4}
+
+
+def filter_out_duplicates(terms: List[gilda.term.Term]) -> List[gilda.term.Term]:
+    """Filter out duplicates."""
+    # TODO import from gilda.term import filter_out_duplicates when it gets moved
+    logger.info("filtering %d terms for uniqueness", len(terms))
+    new_terms: List[gilda.term.Term] = [
+        min(terms_group, key=_status_key)
+        for _, terms_group in itt.groupby(sorted(terms, key=_term_key), key=_term_key)
+    ]
+    # Re-sort the terms
+    new_terms = sorted(new_terms, key=lambda x: (x.text, x.db, x.id))
+    logger.info("got %d unique terms.", len(new_terms))
+    return new_terms
+
+
+def _status_key(term: gilda.term.Term) -> int:
+    return _STATUSES[term.status]
+
+
+def _term_key(term: gilda.term.Term) -> Tuple[str, str, str]:
+    return term.db, term.id, term.text
 
 
 def iter_gilda_prediction_tuples(
