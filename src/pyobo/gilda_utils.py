@@ -36,15 +36,16 @@ _STATUSES = {"curated": 1, "name": 2, "synonym": 3, "former_name": 4}
 
 def filter_out_duplicates(terms: List[gilda.term.Term]) -> List[gilda.term.Term]:
     """Filter out duplicates."""
-    # TODO import from gilda.term import filter_out_duplicates when it gets moved
-    logger.info("filtering %d terms for uniqueness", len(terms))
+    # TODO import from gilda.term import filter_out_duplicates when it gets moved,
+    #  see https://github.com/indralab/gilda/pull/103
+    logger.debug("filtering %d terms for uniqueness", len(terms))
     new_terms: List[gilda.term.Term] = [
         min(terms_group, key=_status_key)
         for _, terms_group in itt.groupby(sorted(terms, key=_term_key), key=_term_key)
     ]
     # Re-sort the terms
     new_terms = sorted(new_terms, key=lambda x: (x.text, x.db, x.id))
-    logger.info("got %d unique terms.", len(new_terms))
+    logger.debug("got %d unique terms.", len(new_terms))
     return new_terms
 
 
