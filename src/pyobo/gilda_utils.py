@@ -13,7 +13,12 @@ from gilda.grounder import Grounder
 from gilda.process import normalize
 from tqdm.auto import tqdm
 
-from pyobo import get_id_name_mapping, get_id_synonyms_mapping, get_ids
+from pyobo import (
+    get_id_name_mapping,
+    get_id_species_mapping,
+    get_id_synonyms_mapping,
+    get_ids,
+)
 from pyobo.getters import NoBuild
 from pyobo.utils.io import multidict
 
@@ -135,6 +140,8 @@ def get_grounder(
 def get_gilda_terms(prefix: str, identifiers_are_names: bool = False) -> Iterable[gilda.term.Term]:
     """Get gilda terms for the given namespace."""
     id_to_name = get_id_name_mapping(prefix)
+    id_to_species = get_id_species_mapping(prefix)
+
     it = tqdm(id_to_name.items(), desc=f"[{prefix}] mapping", unit_scale=True, unit="name")
     for identifier, name in it:
         yield gilda.term.Term(
@@ -145,22 +152,27 @@ def get_gilda_terms(prefix: str, identifiers_are_names: bool = False) -> Iterabl
             entry_name=name,
             status="name",
             source=prefix,
+            organism=id_to_species.get(identifier),
         )
 
     id_to_synonyms = get_id_synonyms_mapping(prefix)
-    it = tqdm(id_to_synonyms.items(), desc=f"[{prefix}] mapping", unit_scale=True, unit="synonym")
-    for identifier, synonyms in it:
-        name = id_to_name[identifier]
-        for synonym in synonyms:
-            yield gilda.term.Term(
-                norm_text=normalize(synonym),
-                text=synonym,
-                db=prefix,
-                id=identifier,
-                entry_name=name,
-                status="synonym",
-                source=prefix,
-            )
+    if id_to_synonyms:
+        it = tqdm(
+            id_to_synonyms.items(), desc=f"[{prefix}] mapping", unit_scale=True, unit="synonym"
+        )
+        for identifier, synonyms in it:
+            name = id_to_name[identifier]
+            for synonym in synonyms:
+                yield gilda.term.Term(
+                    norm_text=normalize(synonym),
+                    text=synonym,
+                    db=prefix,
+                    id=identifier,
+                    entry_name=name,
+                    status="synonym",
+                    source=prefix,
+                    organism=id_to_species.get(identifier),
+                )
 
     if identifiers_are_names:
         it = tqdm(get_ids(prefix), desc=f"[{prefix}] mapping", unit_scale=True, unit="id")
@@ -173,4 +185,5 @@ def get_gilda_terms(prefix: str, identifiers_are_names: bool = False) -> Iterabl
                 entry_name=None,
                 status="identifier",
                 source=prefix,
+                organism=id_to_species.get(identifier),
             )
