@@ -63,11 +63,12 @@ def iter_gilda_prediction_tuples(
     *,
     grounder: Optional[Grounder] = None,
     identifiers_are_names: bool = False,
+    strict: bool = False,
 ) -> Iterable[Tuple[str, str, str, str, str, str, str, str, float]]:
     """Iterate over prediction tuples for a given prefix."""
     if grounder is None:
         grounder = gilda.api.grounder
-    id_name_mapping = get_id_name_mapping(prefix)
+    id_name_mapping = get_id_name_mapping(prefix, strict=strict)
     it = tqdm(
         id_name_mapping.items(), desc=f"[{prefix}] gilda tuples", unit_scale=True, unit="name"
     )
@@ -113,19 +114,28 @@ def normalize_identifier(prefix: str, identifier: str) -> str:
 
 
 def get_grounder(
-    prefix: Union[str, Iterable[str]],
+    prefixes: Union[str, Iterable[str]],
     unnamed: Optional[Iterable[str]] = None,
     grounder_cls: Optional[Type[Grounder]] = None,
+    versions: Union[None, str, Iterable[Union[str, None]]] = None,
 ) -> Grounder:
-    """Get a Gilda grounder for the given namespace."""
+    """Get a Gilda grounder for the given prefix(es)."""
     unnamed = set() if unnamed is None else set(unnamed)
-    if isinstance(prefix, str):
-        prefix = [prefix]
+    if isinstance(prefixes, str):
+        prefixes = [prefixes]
+    if versions is None:
+        versions = [None] * len(prefixes)
+    elif isinstance(versions, str):
+        versions = [versions]
+    if len(prefixes) != len(versions):
+        raise ValueError
 
     terms: List[gilda.term.Term] = []
-    for p in prefix:
+    for prefix, version in zip(prefixes, versions):
         try:
-            p_terms = list(get_gilda_terms(p, identifiers_are_names=p in unnamed))
+            p_terms = list(
+                get_gilda_terms(prefix, identifiers_are_names=prefix in unnamed, version=version)
+            )
         except NoBuild:
             continue
         else:
@@ -138,10 +148,14 @@ def get_grounder(
         return grounder_cls(terms_dict)
 
 
-def get_gilda_terms(prefix: str, identifiers_are_names: bool = False) -> Iterable[gilda.term.Term]:
+def get_gilda_terms(
+    prefix: str,
+    identifiers_are_names: bool = False,
+    version: Optional[str] = None,
+) -> Iterable[gilda.term.Term]:
     """Get gilda terms for the given namespace."""
-    id_to_name = get_id_name_mapping(prefix)
-    id_to_species = get_id_species_mapping(prefix)
+    id_to_name = get_id_name_mapping(prefix, version=version)
+    id_to_species = get_id_species_mapping(prefix, version=version)
 
     it = tqdm(id_to_name.items(), desc=f"[{prefix}] mapping", unit_scale=True, unit="name")
     for identifier, name in it:
@@ -156,7 +170,7 @@ def get_gilda_terms(prefix: str, identifiers_are_names: bool = False) -> Iterabl
             organism=id_to_species.get(identifier),
         )
 
-    id_to_synonyms = get_id_synonyms_mapping(prefix)
+    id_to_synonyms = get_id_synonyms_mapping(prefix, version=version)
     if id_to_synonyms:
         it = tqdm(
             id_to_synonyms.items(), desc=f"[{prefix}] mapping", unit_scale=True, unit="synonym"
