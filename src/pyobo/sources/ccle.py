@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 PREFIX = "ccle"
-VERSION = "2019"
+VERSION = "2022"
 
 
 class CCLEGetter(Obo):
