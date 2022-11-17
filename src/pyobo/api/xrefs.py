@@ -70,10 +70,16 @@ def get_filtered_xrefs(
 
 @wrap_norm_prefix
 def get_xrefs_df(
-    prefix: str, *, use_tqdm: bool = False, force: bool = False, strict: bool = False
+    prefix: str,
+    *,
+    use_tqdm: bool = False,
+    force: bool = False,
+    strict: bool = False,
+    version: Optional[str] = None,
 ) -> pd.DataFrame:
     """Get all xrefs."""
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
 
     @cached_df(path=path, dtype=str, force=force)

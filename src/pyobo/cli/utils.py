@@ -44,3 +44,7 @@ no_strict_option = click.option(
 )
 prefix_argument = click.argument("prefix")
 force_option = click.option("-f", "--force", is_flag=True)
+version_option = click.option(
+    "--version",
+    help="Explicit version of the data. If not given, the most recent will be looked up.",
+)
