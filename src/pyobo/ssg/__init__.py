@@ -72,7 +72,7 @@ def make_site(
             key=attrgetter("identifier"),
         )
 
-    terms = list(obo)
+    terms = [term for term in obo if term.prefix == obo.ontology]
 
     directory.joinpath("index.html").write_text(
         index_template.render(
