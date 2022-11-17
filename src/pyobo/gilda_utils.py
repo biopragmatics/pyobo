@@ -129,6 +129,8 @@ def get_grounder(
         versions = [None] * len(prefixes)
     elif isinstance(versions, str):
         versions = [versions]
+    else:
+        versions = list(versions)
     if len(prefixes) != len(versions):
         raise ValueError
 
