@@ -123,6 +123,8 @@ def get_grounder(
     unnamed = set() if unnamed is None else set(unnamed)
     if isinstance(prefixes, str):
         prefixes = [prefixes]
+    else:
+        prefixes = list(prefixes)
     if versions is None:
         versions = [None] * len(prefixes)
     elif isinstance(versions, str):
