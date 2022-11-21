@@ -20,6 +20,7 @@ __all__ = [
     "get_xrefs_df",
     "get_filtered_xrefs",
     "get_xref",
+    "get_xrefs",
 ]
 
 logger = logging.getLogger(__name__)
@@ -66,6 +67,9 @@ def get_filtered_xrefs(
     if flip:
         return {v: k for k, v in rv.items()}
     return rv
+
+
+get_xrefs = get_filtered_xrefs
 
 
 @wrap_norm_prefix

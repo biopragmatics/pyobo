@@ -36,6 +36,7 @@ from .api import (  # noqa: F401
     get_synonyms,
     get_typedef_df,
     get_xref,
+    get_xrefs,
     get_xrefs_df,
     has_ancestor,
     is_descendent,
