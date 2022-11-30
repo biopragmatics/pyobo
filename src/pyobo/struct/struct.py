@@ -19,6 +19,7 @@ from typing import (
     Iterable,
     Iterator,
     List,
+    Literal,
     Mapping,
     Optional,
     Sequence,
@@ -65,12 +66,17 @@ from ..utils.path import get_prefix_obo_path, prefix_directory_join
 __all__ = [
     "Synonym",
     "SynonymTypeDef",
+    "SynonymSpecificity",
+    "SynonymSpecificities",
     "Term",
     "Obo",
     "make_ad_hoc_ontology",
 ]
 
 logger = logging.getLogger(__name__)
+
+SynonymSpecificity = Literal["EXACT", "NARROW", "BROAD", "RELATED"]
+SynonymSpecificities: Sequence[SynonymSpecificity] = ("EXACT", "NARROW", "BROAD", "RELATED")
 
 
 @dataclass
@@ -81,7 +87,7 @@ class Synonym:
     name: str
 
     #: The specificity of the synonym
-    specificity: str = "EXACT"
+    specificity: SynonymSpecificity = "EXACT"
 
     #: The type of synonym. Must be defined in OBO document!
     type: Optional["SynonymTypeDef"] = None
@@ -110,13 +116,19 @@ class SynonymTypeDef:
 
     id: str
     name: str
+    specificity: Optional[SynonymSpecificity] = None
 
     def to_obo(self) -> str:
         """Serialize to OBO."""
-        return f'synonymtypedef: {self.id} "{self.name}"'
+        if self.specificity:
+            return f'synonymtypedef: {self.id} "{self.name}" {self.specificity}'
+        else:
+            return f'synonymtypedef: {self.id} "{self.name}"'
 
     @classmethod
-    def from_text(cls, text) -> "SynonymTypeDef":
+    def from_text(
+        cls, text: str, specificity: Optional[SynonymSpecificity] = None
+    ) -> "SynonymTypeDef":
         """Get a type definition from text that's normalized."""
         return cls(
             id=text.lower()
@@ -126,6 +138,7 @@ class SynonymTypeDef:
             .replace(")", "")
             .replace("(", ""),
             name=text.replace('"', ""),
+            specificity=specificity,
         )
 
 
