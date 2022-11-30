@@ -97,7 +97,7 @@ def get_ontology(
         return from_obonet(get_gzipped_graph(obonet_json_gz_path))
 
     if has_nomenclature_plugin(prefix):
-        obo = run_nomenclature_plugin(prefix)
+        obo = run_nomenclature_plugin(prefix, version=version)
         logger.info("[%s] caching nomenclature plugin", prefix)
         obo.write_default(force=rewrite)
         return obo
