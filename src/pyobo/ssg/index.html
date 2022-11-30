@@ -35,17 +35,35 @@
                     {% endfor %}
                 {% endif %}
             </dl>
-
-            {% if obo.synonym_typedefs %}
-                <h3>Synonym Definitions</h3>
-                <ul>
-                    {% for typedef in obo.synonym_typedefs %}
-                        <li>{{ typedef }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
         </div>
     </div>
+
+    {% if obo.synonym_typedefs %}
+    <div class="card" style="margin-top: 1em;">
+            <h5 class="card-header">
+                Synonym Type Definitions
+            </h5>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Specificity</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for typedef in obo.synonym_typedefs %}
+                    <tr>
+                        <td>{{ typedef.id }}</td>
+                        <td>{{ typedef.name }}</td>
+                        <td>{{ typedef.specificity }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
     {% if manifest %}
         <div class="card" style="margin-top: 1em;">
             <h5 class="card-header">
@@ -57,6 +75,7 @@
                     <th>Type</th>
                     <th>Local Identifier</th>
                     <th>Name</th>
+                    <th>Definition</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -71,6 +90,7 @@
                         </td>
                         <td align="right"><a href="{{ term.identifier }}">{{ term.identifier }}</a></td>
                         <td>{{ term.name }}</td>
+                        <td>{{ term.definition }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>

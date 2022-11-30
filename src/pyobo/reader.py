@@ -19,6 +19,8 @@ from .struct import (
     Obo,
     Reference,
     Synonym,
+    SynonymSpecificities,
+    SynonymSpecificity,
     SynonymTypeDef,
     Term,
     TypeDef,
@@ -415,14 +417,14 @@ def _extract_synonym(
         logger.warning("[%s:%s] invalid synonym: %s", prefix, identifier, s)
         return None
 
-    specificity = None
-    for skos in "RELATED", "EXACT", "BROAD", "NARROW":
-        if rest.startswith(skos):
-            specificity = skos
-            rest = rest[len(skos) :].strip()
+    specificity: Optional[SynonymSpecificity] = None
+    for _specificity in SynonymSpecificities:
+        if rest.startswith(_specificity):
+            specificity = _specificity
+            rest = rest[len(_specificity) :].strip()
             break
 
-    stype = None
+    stype: Optional[SynonymTypeDef] = None
     if specificity is not None:  # go fishing for a synonym type definition
         for std in synonym_typedefs:
             if rest.startswith(std):
