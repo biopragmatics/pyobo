@@ -19,7 +19,6 @@ from typing import (
     Iterable,
     Iterator,
     List,
-    Literal,
     Mapping,
     Optional,
     Sequence,
@@ -36,6 +35,7 @@ import pandas as pd
 from more_click import force_option, verbose_option
 from networkx.utils import open_file
 from tqdm import tqdm
+from typing_extensions import Literal
 
 from .reference import Reference, Referenced
 from .typedef import (
