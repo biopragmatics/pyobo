@@ -1,5 +1,5 @@
 {% macro link_reference(reference) %}
-<a href="{{ reference.bioregistry_link }}"><code>{{ reference.curie }}</code></a>{% if reference.name %} <span>{{ reference.name }}</span>{% endif %}
+<a href="{{metaregistry_base_url}}/{{ reference.curie }}"><code>{{ reference.curie }}</code></a>{% if reference.name %} <span>{{ reference.name }}</span>{% endif %}
 {% endmacro %}
 
 {% macro list_references(references, title) %}

@@ -90,7 +90,7 @@
                         </td>
                         <td align="right"><a href="{{ term.identifier }}">{{ term.identifier }}</a></td>
                         <td>{{ term.name }}</td>
-                        <td>{{ term.definition }}</td>
+                        <td>{% if term.definition %}{{ term.definition }}{% endif %}</td>
                     </tr>
                 {% endfor %}
                 </tbody>
