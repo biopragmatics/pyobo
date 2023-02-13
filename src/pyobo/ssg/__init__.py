@@ -9,7 +9,7 @@ from typing import Optional, Sequence, Tuple, Union
 import bioregistry
 from bioregistry.constants import BIOREGISTRY_DEFAULT_BASE_URL
 from jinja2 import Environment, FileSystemLoader
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo import Obo
 from pyobo.struct import part_of

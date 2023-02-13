@@ -6,7 +6,7 @@ import logging
 
 import bioregistry
 import networkx as nx
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo import get_hierarchy
 from pyobo.getters import SKIP

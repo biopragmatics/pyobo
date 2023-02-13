@@ -11,7 +11,7 @@ from operator import attrgetter
 from typing import DefaultDict, Dict, Iterable, Optional
 
 from tabulate import tabulate
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo.struct import (
     Obo,

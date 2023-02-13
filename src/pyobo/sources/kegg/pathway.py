@@ -12,7 +12,7 @@ from typing import Iterable, List, Mapping, Tuple
 
 import click
 from more_click import verbose_option
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo.sources.kegg.api import (
     KEGG_GENES_PREFIX,

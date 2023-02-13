@@ -6,7 +6,7 @@ import logging
 from collections import defaultdict
 from typing import Iterable, Optional
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo.struct import (
     Obo,

@@ -10,7 +10,7 @@ from typing import Any, Iterable, List, Mapping, Optional, Tuple, Union
 import bioregistry
 import networkx as nx
 from more_itertools import pairwise
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
 from .identifier_utils import MissingPrefix, normalize_curie

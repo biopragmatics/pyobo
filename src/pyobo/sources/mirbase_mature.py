@@ -4,7 +4,7 @@
 
 from typing import Iterable
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .mirbase_constants import get_mature_df
 from ..struct import Obo, Reference, Synonym, Term

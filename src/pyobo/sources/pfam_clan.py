@@ -4,7 +4,7 @@
 
 from typing import Iterable
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .pfam import get_pfam_clan_df
 from ..struct import Obo, Reference, Term

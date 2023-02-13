@@ -14,7 +14,7 @@ import click
 import pandas as pd
 import requests
 from more_click import verbose_option
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ...constants import RAW_MODULE, XREF_COLUMNS
 from ...version import get_version

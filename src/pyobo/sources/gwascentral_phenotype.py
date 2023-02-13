@@ -5,7 +5,7 @@
 import json
 from typing import Iterable
 
-from tqdm import tqdm, trange
+from tqdm.auto import tqdm, trange
 
 from pyobo.sources.gwascentral_study import VERSION
 from pyobo.struct import Obo, Reference, Term

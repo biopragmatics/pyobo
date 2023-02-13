@@ -5,7 +5,7 @@
 from typing import Iterable
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo import Obo, SynonymTypeDef, Term
 from pyobo.utils.path import ensure_df

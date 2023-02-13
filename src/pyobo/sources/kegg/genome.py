@@ -10,7 +10,7 @@ from typing import Iterable
 
 import click
 from more_click import verbose_option
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 import pyobo
 from pyobo.constants import NCBITAXON_PREFIX

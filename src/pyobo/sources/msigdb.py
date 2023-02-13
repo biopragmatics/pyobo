@@ -8,7 +8,7 @@ from xml.etree import ElementTree
 
 import click
 from more_click import verbose_option
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..struct import Obo, Reference, Term, has_part
 from ..utils.path import ensure_path

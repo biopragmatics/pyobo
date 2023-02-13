@@ -14,7 +14,7 @@ from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, TypeVar,
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 __all__ = [
     "open_map_tsv",

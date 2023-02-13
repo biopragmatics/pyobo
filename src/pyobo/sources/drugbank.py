@@ -13,7 +13,7 @@ from typing import Any, Dict, Iterable, Mapping, Optional
 from xml.etree import ElementTree
 
 import pystow
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..struct import Obo, Reference, Term
 from ..struct.typedef import has_salt

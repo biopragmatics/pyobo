@@ -9,7 +9,7 @@ from typing import Iterable, List, Mapping, Optional, Set, Tuple
 import networkx as nx
 import pandas as pd
 from more_itertools import pairwise
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .priority import DEFAULT_PRIORITY_LIST
 from .xrefs_pipeline import get_graph_from_xref_df

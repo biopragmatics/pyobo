@@ -17,7 +17,7 @@ from typing import Any, Callable, Iterable, List, Mapping, Set, Union
 import pystow
 import requests
 from cachier import cachier
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..struct import Term
 

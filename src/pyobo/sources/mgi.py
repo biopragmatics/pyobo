@@ -7,7 +7,7 @@ from collections import defaultdict
 from typing import Iterable
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..struct import (
     Obo,

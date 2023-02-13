@@ -34,7 +34,7 @@ import networkx as nx
 import pandas as pd
 from more_click import force_option, verbose_option
 from networkx.utils import open_file
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from typing_extensions import Literal
 
 from .reference import Reference, Referenced

@@ -7,7 +7,7 @@ import os
 from typing import Any, Iterable, List, Mapping, Tuple
 
 import requests
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .path import prefix_directory_join
 
