@@ -551,9 +551,12 @@ def iterate_node_relationships(
             logger.debug("unhandled relation: %s", relation_curie)
             relation = Reference(prefix="obo", identifier=relation_curie)
 
+        # TODO replace with omni-parser from :mod:`curies`
         target = Reference.from_curie(target_curie, strict=strict)
         if target is None:
-            logger.warning("[%s:%s] could not parse relation %s", prefix, identifier, s)
+            logger.warning(
+                "[%s:%s] %s could not parse target %s", prefix, identifier, relation, target_curie
+            )
             continue
 
         yield relation, target
