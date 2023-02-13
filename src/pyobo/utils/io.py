@@ -40,7 +40,7 @@ Y = TypeVar("Y")
 def open_reader(path: Union[str, Path], sep: str = "\t"):
     """Open a file and get a reader for it."""
     path = Path(path)
-    with (gzip.open(path, "rt") if path.suffix == ".gz" else open(path)) as file:
+    with gzip.open(path, "rt") if path.suffix == ".gz" else open(path) as file:
         yield get_reader(file, sep=sep)
 
 
