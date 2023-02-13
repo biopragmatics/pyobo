@@ -189,6 +189,7 @@ class Term(Referenced):
 
     #: Equivalent references
     xrefs: List[Reference] = field(default_factory=list)
+    xref_types: List[Reference] = field(default_factory=list)
 
     #: Alternate Identifiers
     alt_ids: List[Reference] = field(default_factory=list)
