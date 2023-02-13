@@ -44,6 +44,7 @@ from .reactome import ReactomeGetter
 from .rgd import RGDGetter
 from .rhea import RheaGetter
 from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
+from .sgd import SGDGetter
 from .slm import SwissLipidsGetter
 from .umls import UMLSGetter
 from .uniprot import UniProtGetter, UniProtPtmGetter
@@ -97,6 +98,7 @@ __all__ = [
     "SCOMPGetter",
     "SDISGetter",
     "SFAMGetter",
+    "SGDGetter",
     "SwissLipidsGetter",
     "UMLSGetter",
     "UniProtGetter",
