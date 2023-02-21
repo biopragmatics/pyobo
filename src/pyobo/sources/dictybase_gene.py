@@ -9,7 +9,7 @@ import logging
 from typing import Iterable
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_gene_product
 from pyobo.utils.io import multisetdict

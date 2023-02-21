@@ -6,7 +6,7 @@ import logging
 from typing import Iterable, List, Mapping, Set
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..api import get_id_name_mapping
 from ..constants import NCBITAXON_PREFIX

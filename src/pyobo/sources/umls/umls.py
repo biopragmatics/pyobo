@@ -12,7 +12,7 @@ from typing import Iterable
 
 import bioregistry
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from umls_downloader import open_umls
 
 from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term

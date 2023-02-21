@@ -24,11 +24,12 @@ DR         Cross-reference to external     Optional; once or more
 //         Terminator                      Once; ends an entr
 
 """
+
 import itertools as itt
 from collections import defaultdict
 from typing import DefaultDict, Iterable, List, Mapping, Optional, Tuple
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo import Obo, Reference, Term
 from pyobo.utils.path import ensure_path

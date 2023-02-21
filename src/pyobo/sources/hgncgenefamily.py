@@ -6,7 +6,7 @@ from collections import defaultdict
 from typing import Iterable, List, Mapping
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
 from ..utils.path import ensure_path

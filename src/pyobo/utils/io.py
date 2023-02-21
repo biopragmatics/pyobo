@@ -14,7 +14,7 @@ from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, TypeVar,
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 __all__ = [
     "open_map_tsv",
@@ -40,7 +40,7 @@ Y = TypeVar("Y")
 def open_reader(path: Union[str, Path], sep: str = "\t"):
     """Open a file and get a reader for it."""
     path = Path(path)
-    with (gzip.open(path, "rt") if path.suffix == ".gz" else open(path)) as file:
+    with gzip.open(path, "rt") if path.suffix == ".gz" else open(path) as file:
         yield get_reader(file, sep=sep)
 
 

@@ -20,9 +20,9 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 PYOBO_MODULE = pystow.module("pyobo")
-RAW_MODULE = PYOBO_MODULE.submodule("raw")
+RAW_MODULE = PYOBO_MODULE.module("raw")
 RAW_DIRECTORY = RAW_MODULE.base
-DATABASE_MODULE = PYOBO_MODULE.submodule("database")
+DATABASE_MODULE = PYOBO_MODULE.module("database")
 DATABASE_DIRECTORY = DATABASE_MODULE.base
 
 SPECIES_REMAPPING = {

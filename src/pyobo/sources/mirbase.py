@@ -6,7 +6,7 @@ import gzip
 import logging
 from typing import Iterable, List, Mapping
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..struct import Obo, Reference, Synonym, Term, from_species
 from ..struct.typedef import has_mature

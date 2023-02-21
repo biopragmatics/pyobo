@@ -10,7 +10,7 @@ from typing import Any, Iterable, List, Mapping, Optional, Tuple, Union
 import bioregistry
 import networkx as nx
 from more_itertools import pairwise
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
 from .identifier_utils import MissingPrefix, normalize_curie
@@ -19,6 +19,8 @@ from .struct import (
     Obo,
     Reference,
     Synonym,
+    SynonymSpecificities,
+    SynonymSpecificity,
     SynonymTypeDef,
     Term,
     TypeDef,
@@ -415,14 +417,14 @@ def _extract_synonym(
         logger.warning("[%s:%s] invalid synonym: %s", prefix, identifier, s)
         return None
 
-    specificity = None
-    for skos in "RELATED", "EXACT", "BROAD", "NARROW":
-        if rest.startswith(skos):
-            specificity = skos
-            rest = rest[len(skos) :].strip()
+    specificity: Optional[SynonymSpecificity] = None
+    for _specificity in SynonymSpecificities:
+        if rest.startswith(_specificity):
+            specificity = _specificity
+            rest = rest[len(_specificity) :].strip()
             break
 
-    stype = None
+    stype: Optional[SynonymTypeDef] = None
     if specificity is not None:  # go fishing for a synonym type definition
         for std in synonym_typedefs:
             if rest.startswith(std):
@@ -549,9 +551,12 @@ def iterate_node_relationships(
             logger.debug("unhandled relation: %s", relation_curie)
             relation = Reference(prefix="obo", identifier=relation_curie)
 
+        # TODO replace with omni-parser from :mod:`curies`
         target = Reference.from_curie(target_curie, strict=strict)
         if target is None:
-            logger.warning("[%s:%s] could not parse relation %s", prefix, identifier, s)
+            logger.warning(
+                "[%s:%s] %s could not parse target %s", prefix, identifier, relation, target_curie
+            )
             continue
 
         yield relation, target

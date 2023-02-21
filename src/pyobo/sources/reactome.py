@@ -8,7 +8,7 @@ from functools import lru_cache
 from typing import Iterable, Mapping, Set
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..api import get_id_multirelations_mapping, get_name_id_mapping
 from ..constants import NCBITAXON_PREFIX, SPECIES_REMAPPING

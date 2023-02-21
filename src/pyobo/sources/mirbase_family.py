@@ -5,7 +5,7 @@
 from typing import Iterable
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .mirbase_constants import (
     get_premature_df,

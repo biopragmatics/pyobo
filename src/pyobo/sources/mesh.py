@@ -8,7 +8,7 @@ import logging
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Set
 from xml.etree.ElementTree import Element
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..struct import Obo, Reference, Synonym, Term
 from ..utils.cache import cached_json, cached_mapping

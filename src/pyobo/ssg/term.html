@@ -27,20 +27,13 @@
 
                 {{ list_references(term.alt_ids, "Alt. IDs") }}
                 {% if term.synonyms %}
+                    {% for synonym in term.synonyms %}
                     <dt>
                         <span class="badge badge-primary">Synonym</span>
+                        {{ synonym.specificity.title() }}{% if synonym.type %}({{ synonym.type.name }}){% endif %}
                     </dt>
-                    <dd>
-                        {% if term.synonyms|length == 1 %}
-                            {{ term.synonyms[0].name }} (<span class="muted">{{ term.synonyms[0].specificity }}</span>)
-                        {% else %}
-                            <ul>
-                                {% for synonym in term.synonyms %}
-                                    <li>{{ synonym.name }} (<span class="muted">{{ synonym.specificity }}</span>)</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </dd>
+                    <dd>{{ synonym.name }}</dd>
+                    {% endfor %}
                 {% endif %}
                 {{ list_references(term.parents, "Parents") }}
                 {{ list_references(children, "Children") }}

@@ -247,7 +247,8 @@
         "MOSBP"
       ],
       "mondo": [
-        "url:https\\://rarediseases.info.nih.gov"
+        "url:https\\://rarediseases.info.nih.gov",
+        "ICD10EXP:"
       ],
       "mod": [
         "Remap:",
@@ -336,6 +337,9 @@
       ],
       "wb": [
         "WBPaper:"
+      ],
+      "cl": [
+        "WikipediaVersioned"
       ]
     },
     "prefix": [
@@ -414,7 +418,8 @@
       "PATOC:MAH": "orcid:0000-0003-4148-4606",
       "SBN:9780070316607": "ISBN:9780070316607",
       "dc-contributor": "dc:contributor",
-      "dc-license": "dc:license"
+      "dc-license": "dc:license",
+      "seeAlso": "rdfs:seeAlso"
     },
     "prefix": {
       "ATCC number: ": "ATCC:",

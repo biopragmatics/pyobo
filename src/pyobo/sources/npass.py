@@ -6,7 +6,7 @@ import logging
 from typing import Iterable
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..struct import Obo, Reference, Synonym, Term
 from ..utils.path import ensure_df

@@ -6,6 +6,8 @@ from .reference import Reference  # noqa: F401
 from .struct import (  # noqa: F401
     Obo,
     Synonym,
+    SynonymSpecificities,
+    SynonymSpecificity,
     SynonymTypeDef,
     Term,
     make_ad_hoc_ontology,

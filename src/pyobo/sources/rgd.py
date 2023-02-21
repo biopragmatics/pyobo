@@ -6,7 +6,7 @@ import logging
 from typing import Iterable, Optional
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo.struct import (
     Obo,

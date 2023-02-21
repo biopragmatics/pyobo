@@ -2,7 +2,6 @@
 
 """Converter for HGNC."""
 
-import datetime
 import json
 import logging
 import typing
@@ -10,8 +9,9 @@ from collections import Counter, defaultdict
 from operator import attrgetter
 from typing import DefaultDict, Dict, Iterable, Optional
 
+import bioversions
 from tabulate import tabulate
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo.struct import (
     Obo,
@@ -194,7 +194,7 @@ def get_obo(*, force: bool = False) -> Obo:
 def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:  # noqa:C901
     """Get HGNC terms."""
     if version is None:
-        version = datetime.date.today().strftime("%Y-%m-01")
+        version = bioversions.get_version("hgnc")
     unhandled_entry_keys: typing.Counter[str] = Counter()
     unhandle_locus_types: DefaultDict[str, Dict[str, Term]] = defaultdict(dict)
     path = ensure_path(
@@ -228,7 +228,7 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
             is_obsolete = False
         elif status not in statuses:
             statuses.add(status)
-            logger.warning("UNHANDLED %s", status)
+            tqdm.write(f"[{PREFIX}] unhandled {status}")
             is_obsolete = True
         else:
             raise ValueError(f"Unhandled status for hgnc:{identifier}: {status}")

@@ -8,7 +8,7 @@ from typing import Callable, Iterable, Mapping, Optional
 
 import pandas as pd
 from pkg_resources import iter_entry_points
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 __all__ = [
     "iter_xref_plugins",

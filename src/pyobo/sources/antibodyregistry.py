@@ -7,7 +7,7 @@ from typing import Iterable, Mapping, Optional
 
 import bioversions
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo import Obo, Term
 from pyobo.utils.path import ensure_df

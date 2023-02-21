@@ -7,7 +7,7 @@ from typing import Iterable, Mapping, Optional
 
 import bioversions
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..api import get_name_id_mapping
 from ..struct import Obo, Reference, Synonym, Term

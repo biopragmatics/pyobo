@@ -10,7 +10,7 @@ from typing import Any, Iterable, Mapping, Set
 
 import click
 from more_click import verbose_option
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..sources.icd_utils import (
     ICD10_TOP_LEVEL_URL,

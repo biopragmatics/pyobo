@@ -25,7 +25,7 @@ from typing import (
 )
 
 import bioregistry
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .constants import DATABASE_DIRECTORY
 from .identifier_utils import MissingPrefix, wrap_norm_prefix

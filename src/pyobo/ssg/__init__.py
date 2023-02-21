@@ -7,14 +7,14 @@ from pathlib import Path
 from typing import Optional, Sequence, Tuple, Union
 
 import bioregistry
+from bioregistry.constants import BIOREGISTRY_DEFAULT_BASE_URL
 from jinja2 import Environment, FileSystemLoader
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo import Obo
 from pyobo.struct import part_of
 
 __all__ = [
-    "make_page",
     "make_site",
 ]
 
@@ -56,7 +56,7 @@ def make_site(
     if metaregistry_name is None:
         metaregistry_name = "Bioregistry"
     if metaregistry_base_url is None:
-        metaregistry_base_url = "https://bioregistry.io"
+        metaregistry_base_url = BIOREGISTRY_DEFAULT_BASE_URL
     metaregistry_base_url = metaregistry_base_url.rstrip("/")
 
     if resource is None:

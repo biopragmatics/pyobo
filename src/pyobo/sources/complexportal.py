@@ -6,7 +6,7 @@ import logging
 from typing import Iterable, List, Tuple
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo import get_id_name_mapping
 from pyobo.constants import NCBITAXON_PREFIX

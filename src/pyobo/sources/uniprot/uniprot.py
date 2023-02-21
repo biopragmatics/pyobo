@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Iterable, Optional
 
 import bioversions
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo import Obo, Reference
 from pyobo.constants import NCBITAXON_PREFIX, RAW_MODULE

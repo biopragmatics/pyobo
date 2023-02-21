@@ -7,7 +7,7 @@ from collections import defaultdict
 from typing import Iterable, Mapping, Set
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..struct import Obo, Reference, Term
 from ..struct.typedef import has_part
