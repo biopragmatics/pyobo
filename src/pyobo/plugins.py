@@ -37,7 +37,7 @@ def run_nomenclature_plugin(prefix: str, version: Optional[str] = None) -> Obo:
     """Get a converted PyOBO source."""
     from .sources import ontology_resolver
 
-    return ontology_resolver.make(prefix, version=version)
+    return ontology_resolver.make(prefix, data_version=version)
 
 
 def iter_nomenclature_plugins() -> Iterable[Obo]:
