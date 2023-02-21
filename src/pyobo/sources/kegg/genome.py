@@ -6,7 +6,7 @@ Run with ``python -m pyobo.sources.kegg.genome``
 """
 
 import logging
-from typing import Iterable
+from typing import Iterable, List
 
 import click
 from more_click import verbose_option
@@ -29,7 +29,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def _s(line: str, sep: str):
+def split(line: str, sep: str) -> List[str]:
     return [part.strip() for part in line.strip().split(sep, 1)]
 
 
@@ -53,10 +53,10 @@ def get_obo() -> Obo:
 def parse_genome_line(line: str) -> KEGGGenome:
     """Parse a line from the KEGG Genome database."""
     line = line.strip()
-    identifier, rest = _s(line, "\t")
+    identifier, rest = split(line, "\t")
     identifier = identifier[len("gn:") :]
     if ";" in rest:
-        rest, name = _s(rest, ";")
+        rest, name = split(rest, ";")
 
         rest = [part.strip() for part in rest.split(",")]
         if len(rest) == 3:
@@ -64,8 +64,10 @@ def parse_genome_line(line: str) -> KEGGGenome:
         elif len(rest) == 2:
             kegg_code, taxonomy_id = rest
             long_code = None
+        elif len(rest) == 1:
+            raise ValueError(f"Line did not have enough parts: {line}")
         else:
-            raise ValueError
+            raise ValueError(f"Line had too many parts: {line}")
     else:
         name = rest
         taxonomy_id = None
@@ -91,9 +93,12 @@ def iter_kegg_genomes(version: str, desc: str) -> Iterable[KEGGGenome]:
     path = ensure_list_genomes(version=version)
     with open(path) as file:
         lines = [line.strip() for line in file]
-    it = tqdm(lines, desc=desc)
+    it = tqdm(lines, desc=desc, unit_scale=True, unit="genome")
     for line in it:
-        yv = parse_genome_line(line)
+        try:
+            yv = parse_genome_line(line)
+        except ValueError:
+            continue
         it.set_postfix({"id": yv.identifier, "name": yv.name})
         yield yv
 

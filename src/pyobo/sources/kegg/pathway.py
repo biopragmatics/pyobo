@@ -24,6 +24,7 @@ from pyobo.sources.kegg.api import (
 )
 from pyobo.sources.kegg.genome import iter_kegg_genomes
 from pyobo.struct import Obo, Reference, Term, from_species, has_part, species_specific
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 __all__ = [
     "KEGGPathwayGetter",
@@ -139,32 +140,33 @@ def iter_kegg_pathway_paths(
 ) -> Iterable[Tuple[KEGGGenome, str, str]]:
     """Get paths for the KEGG Pathway files."""
     for kegg_genome in iter_kegg_genomes(version=version, desc="KEGG Pathways"):
-        try:
-            list_pathway_path = ensure_list_pathway_genome(
-                kegg_genome.identifier,
-                version=version,
-                error_on_missing=not skip_missing,
-            )
-            link_pathway_path = ensure_link_pathway_genome(
-                kegg_genome.identifier,
-                version=version,
-                error_on_missing=not skip_missing,
-            )
-        except urllib.error.HTTPError as e:
-            code = e.getcode()
-            if code != 404:
-                msg = (
-                    f"[HTTP {code}] Error downloading {kegg_genome.identifier} ({kegg_genome.name}"
+        with logging_redirect_tqdm():
+            try:
+                list_pathway_path = ensure_list_pathway_genome(
+                    kegg_genome.identifier,
+                    version=version,
+                    error_on_missing=not skip_missing,
                 )
-                if kegg_genome.taxonomy_id is None:
-                    msg = f"{msg}): {e.geturl()}"
-                else:
-                    msg = f"{msg}; taxonomy:{kegg_genome.taxonomy_id}): {e.geturl()}"
-                tqdm.write(msg)
-        except FileNotFoundError:
-            continue
-        else:
-            yield kegg_genome, list_pathway_path, link_pathway_path
+                link_pathway_path = ensure_link_pathway_genome(
+                    kegg_genome.identifier,
+                    version=version,
+                    error_on_missing=not skip_missing,
+                )
+            except urllib.error.HTTPError as e:
+                code = e.getcode()
+                if code != 404:
+                    msg = (
+                        f"[HTTP {code}] Error downloading {kegg_genome.identifier} ({kegg_genome.name}"
+                    )
+                    if kegg_genome.taxonomy_id is None:
+                        msg = f"{msg}): {e.geturl()}"
+                    else:
+                        msg = f"{msg}; taxonomy:{kegg_genome.taxonomy_id}): {e.geturl()}"
+                    tqdm.write(msg)
+            except FileNotFoundError:
+                continue
+            else:
+                yield kegg_genome, list_pathway_path, link_pathway_path
 
 
 @click.command()
