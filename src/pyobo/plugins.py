@@ -3,7 +3,7 @@
 """Tools for loading entry points."""
 
 from functools import lru_cache
-from typing import Callable, Iterable, Mapping
+from typing import Callable, Iterable, Mapping, Optional
 
 from .struct import Obo
 
@@ -33,11 +33,11 @@ def has_nomenclature_plugin(prefix: str) -> bool:
         return True
 
 
-def run_nomenclature_plugin(prefix: str) -> Obo:
+def run_nomenclature_plugin(prefix: str, version: Optional[str] = None) -> Obo:
     """Get a converted PyOBO source."""
     from .sources import ontology_resolver
 
-    return ontology_resolver.make(prefix)
+    return ontology_resolver.make(prefix, data_version=version)
 
 
 def iter_nomenclature_plugins() -> Iterable[Obo]:
