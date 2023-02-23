@@ -85,7 +85,8 @@ def iter_terms() -> Iterable[Term]:
             synonyms=synonyms.get(drugcentral_id, []),
             xrefs=xrefs.get(drugcentral_id, []),
         )
-        term.append_xref(Reference(prefix="inchikey", identifier=inchi_key))
+        if inchi_key:
+            term.append_xref(Reference(prefix="inchikey", identifier=inchi_key))
         term.append_property("smiles", smiles)
         term.append_property("inchi", inchi)
         if cas:
