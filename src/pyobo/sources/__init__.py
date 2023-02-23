@@ -2,7 +2,7 @@
 
 """Sources of OBO content."""
 
-from class_resolver import Resolver
+from class_resolver import ClassResolver
 
 from .antibodyregistry import AntibodyRegistryGetter
 from .ccle import CCLEGetter
@@ -118,4 +118,6 @@ def _assert_sorted():
 _assert_sorted()
 del _assert_sorted
 
-ontology_resolver: Resolver[Obo] = Resolver.from_subclasses(base=Obo, suffix="Getter")
+ontology_resolver: ClassResolver[Obo] = ClassResolver.from_subclasses(base=Obo, suffix="Getter")
+for getter in list(ontology_resolver):
+    ontology_resolver.synonyms[getter.ontology] = getter
