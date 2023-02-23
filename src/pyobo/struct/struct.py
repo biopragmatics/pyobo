@@ -5,6 +5,7 @@
 import gzip
 import json
 import logging
+import os
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -33,7 +34,6 @@ import click
 import networkx as nx
 import pandas as pd
 from more_click import force_option, verbose_option
-from networkx.utils import open_file
 from tqdm.auto import tqdm
 from typing_extensions import Literal
 
@@ -581,7 +581,6 @@ class Obo:
         for term in self:
             yield from term.iterate_obo_lines()
 
-    @open_file(1, mode="w")
     def write_obo(
         self, file: Union[None, str, TextIO, Path] = None, use_tqdm: bool = False
     ) -> None:
@@ -589,10 +588,14 @@ class Obo:
         it = self.iterate_obo_lines()
         if use_tqdm:
             it = tqdm(it, desc=f"Writing {self.ontology}", unit_scale=True, unit="line")
-        self._write_lines(it, file)
+        if isinstance(file, (str, Path, os.PathLike)):
+            with open(file, "w") as fh:
+                self._write_lines(it, fh)
+        else:
+            self._write_lines(it, file)
 
     @staticmethod
-    def _write_lines(it, file):
+    def _write_lines(it, file: Optional[TextIO]):
         for line in it:
             print(line, file=file)  # noqa: T201
 
