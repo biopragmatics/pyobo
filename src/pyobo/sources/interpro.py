@@ -9,7 +9,7 @@ from tqdm.auto import tqdm
 
 from .utils import get_go_mapping
 from ..struct import Obo, Reference, Term
-from ..struct.typedef import has_member
+from ..struct.typedef import enables, has_member
 from ..utils.io import multisetdict
 from ..utils.path import ensure_df, ensure_path
 
@@ -34,6 +34,7 @@ class InterProGetter(Obo):
     """An ontology representation of InterPro."""
 
     ontology = bioversions_key = PREFIX
+    typedefs = [enables, has_member]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over InterPro terms."""
@@ -55,7 +56,7 @@ def iter_terms(*, version: str, proteins: bool = False, force: bool = False) -> 
 
     entries_df = ensure_df(
         PREFIX,
-        url=f"ftp://ftp.ebi.ac.uk/pub/databases/interpro/{version}/entry.list",
+        url=f"https://ftp.ebi.ac.uk/pub/databases/interpro/releases/{version}/entry.list",
         name="entries.tsv",
         skiprows=1,
         names=("ENTRY_AC", "ENTRY_TYPE", "ENTRY_NAME"),
@@ -69,16 +70,12 @@ def iter_terms(*, version: str, proteins: bool = False, force: bool = False) -> 
     }
 
     for identifier, entry_type, _ in tqdm(entries_df.values):
-        xrefs = []
-        # TODO there should be a relation here and not an xref
-        for go_id, go_name in interpro_to_gos.get(identifier, []):
-            xrefs.append(Reference("go", go_id, go_name))
-
         term = Term(
             reference=references[identifier],
-            xrefs=xrefs,
             parents=[references[parent_id] for parent_id in parents.get(identifier, [])],
         )
+        for go_id, go_name in interpro_to_gos.get(identifier, []):
+            term.append_relationship(enables, Reference("go", go_id, go_name))
         term.append_property("type", entry_type)
         for uniprot_id in interpro_to_proteins.get(identifier, []):
             term.append_relationship(has_member, Reference("uniprot", uniprot_id))
@@ -87,14 +84,14 @@ def iter_terms(*, version: str, proteins: bool = False, force: bool = False) -> 
 
 def get_interpro_go_df(version: str, force: bool = False) -> Mapping[str, Set[Tuple[str, str]]]:
     """Get InterPro to Gene Ontology molecular function mapping."""
-    url = f"ftp://ftp.ebi.ac.uk/pub/databases/interpro/{version}/interpro2go"
+    url = f"https://ftp.ebi.ac.uk/pub/databases/interpro/releases/{version}/interpro2go"
     path = ensure_path(PREFIX, url=url, name="interpro2go.tsv", version=version, force=force)
     return get_go_mapping(path, prefix=PREFIX)
 
 
 def get_interpro_tree(version: str, force: bool = False):
     """Get InterPro Data source."""
-    url = f"ftp://ftp.ebi.ac.uk/pub/databases/interpro/{version}/ParentChildTreeFile.txt"
+    url = f"https://ftp.ebi.ac.uk/pub/databases/interpro/releases/{version}/ParentChildTreeFile.txt"
     path = ensure_path(PREFIX, url=url, version=version, force=force)
     with open(path) as f:
         return _parse_tree_helper(f)
@@ -141,7 +138,7 @@ def _count_front(s: str) -> int:
 
 def get_interpro_to_proteins_df(version: str, force: bool = False):
     """Get InterPro to Protein dataframe."""
-    url = f"ftp://ftp.ebi.ac.uk/pub/databases/interpro/{version}/protein2ipr.dat.gz"
+    url = f"https://ftp.ebi.ac.uk/pub/databases/interpro/releases/{version}/protein2ipr.dat.gz"
     df = ensure_df(
         PREFIX,
         url=url,
@@ -155,4 +152,4 @@ def get_interpro_to_proteins_df(version: str, force: bool = False):
 
 
 if __name__ == "__main__":
-    get_obo().write_default(force=True, write_obo=True)
+    InterProGetter.cli()

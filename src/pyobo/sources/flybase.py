@@ -46,6 +46,7 @@ def _get_names(version: str, force: bool = False) -> pd.DataFrame:
         skiprows=4,
         usecols=[0, 1, 2, 3, 4],
         skipfooter=1,
+        engine="python",
     )
     return df
 
@@ -139,7 +140,9 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     for _, reference in sorted(so.items()):
         yield Term(reference=reference)
-    for organism, gtype, identifier, symbol, name in tqdm(names_df.values):
+    for organism, gtype, identifier, symbol, name in tqdm(
+        names_df.values, unit_scale=True, unit="gene", desc="FlyBase genes"
+    ):
         term = Term.from_triple(
             prefix=PREFIX,
             identifier=identifier,
@@ -155,19 +158,19 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
                 continue
             hgnc_ortholog = Reference.from_curie(hgnc_curie, auto=True)
             if hgnc_ortholog is None:
-                tqdm.write(f"fb:{identifier} had invalid ortholog: {hgnc_curie}")
+                tqdm.write(f"[{PREFIX}] {identifier} had invalid ortholog: {hgnc_curie}")
             else:
                 term.append_relationship(orthologous, hgnc_ortholog)
         taxonomy_id = abbr_to_taxonomy.get(organism)
         if taxonomy_id is not None:
             term.append_relationship(from_species, Reference(NCBITAXON_PREFIX, taxonomy_id))
         elif organism not in missing_taxonomies:
-            tqdm.write(f"missing mapping for species abbreviation: {organism}")
+            tqdm.write(f"[{PREFIX}] missing mapping for species abbreviation: {organism}")
             missing_taxonomies.add(organism)
         yield term
 
     if missing_taxonomies:
-        tqdm.write(f"there were {len(missing_taxonomies)} missing taxa in flybase genes")
+        tqdm.write(f"[{PREFIX}] there were {len(missing_taxonomies)} missing taxa in flybase genes")
 
 
 if __name__ == "__main__":

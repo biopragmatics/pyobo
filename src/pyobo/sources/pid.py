@@ -11,7 +11,7 @@ from protmapper.uniprot_client import get_gene_name, get_hgnc_id
 
 from ..api import get_id_name_mapping
 from ..struct import Obo, Reference, Term
-from ..struct.typedef import has_part
+from ..struct.typedef import has_participant
 from ..utils.ndex_utils import CX, ensure_ndex_network_set, iterate_aspect
 
 __all__ = [
@@ -34,7 +34,7 @@ class PIDGetter(Obo):
 
     ontology = PREFIX
     static_version = "1.0.0"
-    typedefs = [has_part]
+    typedefs = [has_participant]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -94,7 +94,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
                 logger.debug(f"unmapped: {name}, {reference}")
 
         for hgnc_id, hgnc_symbol in genes:
-            term.append_relationship(has_part, Reference("hgnc", hgnc_id, hgnc_symbol))
+            term.append_relationship(has_participant, Reference("hgnc", hgnc_id, hgnc_symbol))
 
         yield term
 
@@ -137,4 +137,4 @@ def get_remapping() -> Mapping[str, List[Tuple[str, str]]]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    PIDGetter.cli()

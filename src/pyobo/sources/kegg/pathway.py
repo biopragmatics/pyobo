@@ -8,11 +8,12 @@ Run with ``python -m pyobo.sources.kegg.pathway``
 import logging
 import urllib.error
 from collections import defaultdict
+from functools import partial
 from typing import Iterable, List, Mapping, Tuple
 
-import click
-from more_click import verbose_option
 from tqdm.auto import tqdm
+from tqdm.contrib.concurrent import thread_map
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 from pyobo.sources.kegg.api import (
     KEGG_GENES_PREFIX,
@@ -23,7 +24,14 @@ from pyobo.sources.kegg.api import (
     ensure_list_pathways,
 )
 from pyobo.sources.kegg.genome import iter_kegg_genomes
-from pyobo.struct import Obo, Reference, Term, from_species, has_part, species_specific
+from pyobo.struct import (
+    Obo,
+    Reference,
+    Term,
+    from_species,
+    has_participant,
+    species_specific,
+)
 
 __all__ = [
     "KEGGPathwayGetter",
@@ -37,14 +45,14 @@ class KEGGPathwayGetter(Obo):
 
     ontology = KEGG_PATHWAY_PREFIX
     bioversions_key = "kegg"
-    typedefs = [from_species, species_specific, has_part]
+    typedefs = [from_species, species_specific, has_participant]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms(version=self._version_or_raise)
 
 
-def get_obo(skip_missing: bool = True) -> Obo:
+def get_obo() -> Obo:
     """Get KEGG Pathways as OBO."""
     # since old kegg versions go away forever, do NOT add a force option
     return KEGGPathwayGetter()
@@ -55,7 +63,9 @@ def iter_terms(version: str, skip_missing: bool = True) -> Iterable[Term]:
     # since old kegg versions go away forever, do NOT add a force option
     yield from _iter_map_terms(version=version)
     it = iter_kegg_pathway_paths(version=version, skip_missing=skip_missing)
-    for kegg_genome, list_pathway_path, link_pathway_path in it:
+    for kegg_genome, list_pathway_path, link_pathway_path in tqdm(
+        it, unit_scale=True, unit="genome"
+    ):
         yield from _iter_genome_terms(
             list_pathway_path=list_pathway_path,
             link_pathway_path=link_pathway_path,
@@ -124,7 +134,7 @@ def _iter_genome_terms(
             continue
         for protein_id in protein_ids:
             pathway_term.append_relationship(
-                has_part,
+                has_participant,
                 Reference(
                     prefix=KEGG_GENES_PREFIX,
                     identifier=protein_id,
@@ -138,7 +148,13 @@ def iter_kegg_pathway_paths(
     version: str, skip_missing: bool = True
 ) -> Iterable[Tuple[KEGGGenome, str, str]]:
     """Get paths for the KEGG Pathway files."""
-    for kegg_genome in iter_kegg_genomes(version=version, desc="KEGG Pathways"):
+    genomes = list(iter_kegg_genomes(version=version, desc="KEGG Pathways"))
+    func = partial(_process_genome, version=version, skip_missing=skip_missing)
+    return thread_map(func, genomes, unit="pathway", unit_scale=True)
+
+
+def _process_genome(kegg_genome, version, skip_missing):
+    with logging_redirect_tqdm():
         try:
             list_pathway_path = ensure_list_pathway_genome(
                 kegg_genome.identifier,
@@ -162,17 +178,10 @@ def iter_kegg_pathway_paths(
                     msg = f"{msg}; taxonomy:{kegg_genome.taxonomy_id}): {e.geturl()}"
                 tqdm.write(msg)
         except FileNotFoundError:
-            continue
+            return None, None, None
         else:
-            yield kegg_genome, list_pathway_path, link_pathway_path
-
-
-@click.command()
-@verbose_option
-@click.option("--skip-missing", is_flag=True)
-def _main(skip_missing: bool):
-    get_obo(skip_missing=skip_missing).write_default()
+            return kegg_genome, list_pathway_path, link_pathway_path
 
 
 if __name__ == "__main__":
-    _main()
+    KEGGPathwayGetter.cli()

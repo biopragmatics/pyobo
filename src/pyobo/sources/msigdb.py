@@ -6,11 +6,9 @@ import logging
 from typing import Iterable, Optional
 from xml.etree import ElementTree
 
-import click
-from more_click import verbose_option
 from tqdm.auto import tqdm
 
-from ..struct import Obo, Reference, Term, has_part
+from ..struct import Obo, Reference, Term, has_participant
 from ..utils.path import ensure_path
 
 logger = logging.getLogger(__name__)
@@ -27,7 +25,7 @@ class MSigDBGetter(Obo):
     """An ontology representation of MMSigDB's gene set nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_part]
+    typedefs = [has_participant]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -131,7 +129,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         for ncbigene_id in attrib["MEMBERS_EZID"].strip().split(","):
             if ncbigene_id:
                 term.append_relationship(
-                    has_part, Reference(prefix="ncbigene", identifier=ncbigene_id)
+                    has_participant, Reference(prefix="ncbigene", identifier=ncbigene_id)
                 )
         yield term
 
@@ -143,11 +141,5 @@ def _get_definition(attrib) -> Optional[str]:
     return None
 
 
-@click.command()
-@verbose_option
-def _main():
-    get_obo().write_default(force=True)
-
-
 if __name__ == "__main__":
-    _main()
+    MSigDBGetter.cli()

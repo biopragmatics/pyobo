@@ -29,9 +29,6 @@ class Reference:
 
     name: Optional[str] = field(default=None)
 
-    #: The namespace's identifier in the registry
-    registry_id: Optional[str] = field(default=None, repr=False)
-
     @classmethod
     def auto(cls, prefix: str, identifier: str) -> "Reference":
         """Create a reference and auto-populate its name."""
