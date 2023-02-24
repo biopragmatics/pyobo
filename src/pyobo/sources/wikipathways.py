@@ -9,7 +9,7 @@ from typing import Iterable
 from .gmt_utils import parse_wikipathways_gmt
 from ..constants import SPECIES_REMAPPING
 from ..struct import Obo, Reference, Term, from_species
-from ..struct.typedef import has_part
+from ..struct.typedef import has_participant
 from ..utils.path import ensure_path
 
 __all__ = [
@@ -46,7 +46,7 @@ class WikiPathwaysGetter(Obo):
     """An ontology representation of WikiPathways' pathway database."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_part, from_species]
+    typedefs = [from_species, has_participant]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -77,12 +77,11 @@ def iter_terms(version: str) -> Iterable[Term]:
             term.set_species(taxonomy_id, taxonomy_name)
             for ncbigene_id in genes:
                 term.append_relationship(
-                    # Should be participates in!!!
-                    has_part,
+                    has_participant,
                     Reference(prefix="ncbigene", identifier=ncbigene_id),
                 )
             yield term
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    WikiPathwaysGetter.cli()

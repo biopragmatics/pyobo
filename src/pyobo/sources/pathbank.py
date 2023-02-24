@@ -10,7 +10,7 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 from ..struct import Obo, Reference, Term
-from ..struct.typedef import has_part
+from ..struct.typedef import has_participant
 from ..utils.path import ensure_df
 
 __all__ = [
@@ -70,7 +70,7 @@ class PathBankGetter(Obo):
     """An ontology representation of PathBank's pathway nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_part]
+    typedefs = [has_participant]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -159,8 +159,8 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
                 name=subject,
             )
         )
-        term.extend_relationship(has_part, smpdb_id_to_proteins[smpdb_id])
-        term.extend_relationship(has_part, smpdb_id_to_metabolites[smpdb_id])
+        term.extend_relationship(has_participant, smpdb_id_to_proteins[smpdb_id])
+        term.extend_relationship(has_participant, smpdb_id_to_metabolites[smpdb_id])
         yield term
 
 

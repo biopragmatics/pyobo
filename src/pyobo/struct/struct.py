@@ -14,6 +14,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import (
     Any,
+    Callable,
     ClassVar,
     Collection,
     Dict,
@@ -48,6 +49,7 @@ from .typedef import (
     is_a,
     orthologous,
     part_of,
+    see_also,
 )
 from .utils import comma_separate, obo_escape_slim
 from ..constants import (
@@ -261,9 +263,16 @@ class Term(Referenced):
             alt = Reference(prefix=self.prefix, identifier=alt)
         self.alt_ids.append(alt)
 
+    def append_see_also(self, reference: ReferenceHint) -> "Term":
+        """Add a see also relationship."""
+        self.relationships[see_also].append(_ensure_ref(reference))
+        return self
+
     def append_parent(self, reference: ReferenceHint) -> "Term":
         """Add a parent to this entity."""
-        self.parents.append(_ensure_ref(reference))
+        reference = _ensure_ref(reference)
+        if reference not in self.parents:
+            self.parents.append(reference)
         return self
 
     def extend_parents(self, references: Collection[Reference]) -> None:
@@ -352,7 +361,7 @@ class Term(Referenced):
             for value in values:
                 yield prop, value
 
-    def iterate_obo_lines(self, write_relation_comments: bool = True) -> Iterable[str]:
+    def iterate_obo_lines(self) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield "\n[Term]"
         yield f"id: {self.curie}"
@@ -420,6 +429,9 @@ class Obo:
     #: The prefix for the ontology
     ontology: ClassVar[str]
 
+    #: Should the prefix be validated against the Bioregistry?
+    check_bioregistry_prefix: ClassVar[bool] = True
+
     #: The name of the ontology. If not given, tries looking up with the Bioregistry.
     name: ClassVar[Optional[str]] = None
 
@@ -463,9 +475,15 @@ class Obo:
     #: A cache of terms
     _items: Optional[List[Term]] = field(init=False, default=None, repr=False)
 
+    term_sort_key: ClassVar[Optional[Callable[["Obo", Term], ...]]] = None
+
     def __post_init__(self):
         """Run post-init checks."""
-        if self.ontology != bioregistry.normalize_prefix(self.ontology):
+        if self.ontology is None:
+            raise ValueError
+        if self.check_bioregistry_prefix and self.ontology != bioregistry.normalize_prefix(
+            self.ontology
+        ):
             raise BioregistryError(self.ontology)
         # The type ignores are because of the hack where we override the
         # class variables in the instance
@@ -760,7 +778,8 @@ class Obo:
     @property
     def _items_accessor(self):
         if self._items is None:
-            self._items = sorted(self.iter_terms(force=self.force), key=attrgetter("curie"))
+            key = self.term_sort_key or attrgetter("curie")
+            self._items = sorted(self.iter_terms(force=self.force), key=key)
         return self._items
 
     def __iter__(self) -> Iterator["Term"]:  # noqa: D105

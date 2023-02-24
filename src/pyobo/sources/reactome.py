@@ -12,7 +12,7 @@ from tqdm.auto import tqdm
 
 from ..api import get_id_multirelations_mapping, get_name_id_mapping
 from ..constants import NCBITAXON_PREFIX, SPECIES_REMAPPING
-from ..struct import Obo, Reference, Term, from_species, has_part
+from ..struct import Obo, Reference, Term, from_species, has_participant
 from ..utils.io import multidict
 from ..utils.path import ensure_df
 
@@ -32,7 +32,7 @@ class ReactomeGetter(Obo):
     """An ontology representation of the Reactome pathway database."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [from_species, has_part]
+    typedefs = [from_species, has_participant]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -96,7 +96,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     uniprot_pathway_df = ensure_participant_df(version=version, force=force)
     for uniprot_id, reactome_id in tqdm(uniprot_pathway_df.values, total=len(uniprot_pathway_df)):
-        terms[reactome_id].append_relationship(has_part, Reference("uniprot", uniprot_id))
+        terms[reactome_id].append_relationship(has_participant, Reference("uniprot", uniprot_id))
 
     chebi_pathway_url = f"https://reactome.org/download/{version}/ChEBI2Reactome_All_Levels.txt"
     chebi_pathway_df = ensure_df(
@@ -108,7 +108,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         force=force,
     )
     for chebi_id, reactome_id in tqdm(chebi_pathway_df.values, total=len(chebi_pathway_df)):
-        terms[reactome_id].append_relationship(has_part, Reference("chebi", chebi_id))
+        terms[reactome_id].append_relationship(has_participant, Reference("chebi", chebi_id))
 
     # ncbi_pathway_url = f'https://reactome.org/download/{version}/NCBI2Reactome_All_Levels.txt'
     # ncbi_pathway_df = ensure_df(PREFIX, url=ncbi_pathway_url, header=None, usecols=[0, 1], version=version)
@@ -122,7 +122,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 def get_protein_to_pathways() -> Mapping[str, Set[str]]:
     """Get a mapping from proteins to the pathways they're in."""
     protein_to_pathways = defaultdict(set)
-    x = get_id_multirelations_mapping("reactome", has_part)
+    x = get_id_multirelations_mapping("reactome", has_participant)
     for reactome_id, proteins in x.items():
         for protein in proteins:
             if protein.prefix != "uniprot":

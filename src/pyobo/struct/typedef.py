@@ -19,6 +19,7 @@ __all__ = [
     "has_part",
     "part_of",
     "is_a",
+    "see_also",
     "has_member",
     "member_of",
     "superclass_of",
@@ -37,6 +38,8 @@ __all__ = [
     "editor_note",
     "has_salt",
     "enables",
+    "participates_in",
+    "has_participant",
 ]
 
 
@@ -158,8 +161,21 @@ has_part = TypeDef(
     comment="Inverse of part_of",
     inverse=Reference(prefix=BFO_PREFIX, identifier="0000050", name="part of"),
 )
+participates_in = TypeDef(
+    reference=Reference(prefix=RO_PREFIX, identifier="0000056", name="participates in"),
+    comment="Inverse of has participant",
+    inverse=Reference(prefix=RO_PREFIX, identifier="0000057", name="has participant"),
+)
+has_participant = TypeDef(
+    reference=Reference(prefix=RO_PREFIX, identifier="0000057", name="has participant"),
+    comment="Inverse of has participant",
+    inverse=Reference(prefix=RO_PREFIX, identifier="0000056", name="participates in"),
+)
 is_a = TypeDef(
     reference=Reference(prefix="rdfs", identifier="subClassOf", name="subclass of"),
+)
+see_also = TypeDef(
+    reference=Reference(prefix="rdfs", identifier="seeAlso", name="see also"),
 )
 has_member = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0002351", name="has member"),

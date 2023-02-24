@@ -8,7 +8,15 @@ from typing import Iterable, List, Mapping
 import pandas as pd
 from tqdm.auto import tqdm
 
-from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
+from ..struct import (
+    Obo,
+    Reference,
+    Synonym,
+    SynonymTypeDef,
+    Term,
+    enables,
+    from_species,
+)
 from ..utils.path import ensure_path
 
 __all__ = [
@@ -31,7 +39,7 @@ class HGNCGroupGetter(Obo):
     ontology = PREFIX
     dynamic_version = True
     synonym_typedefs = [symbol_type]
-    typedefs = [from_species]
+    typedefs = [from_species, enables]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -98,7 +106,7 @@ def _get_terms_helper(force: bool = False) -> Iterable[Term]:
                 term.append_provenance(Reference(prefix="pubmed", identifier=s.strip()))
         if desc_go and pd.notna(desc_go):
             go_id = desc_go[len("http://purl.uniprot.org/go/") :]
-            term.append_xref(Reference(prefix="GO", identifier=go_id))
+            term.append_relationship(enables, Reference(prefix="GO", identifier=go_id))
         if symbol and pd.notna(symbol):
             term.append_synonym(Synonym(name=symbol, type=symbol_type))
         term.set_species(identifier="9606", name="Homo sapiens")
@@ -106,4 +114,4 @@ def _get_terms_helper(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default(force=True, write_obo=True, write_owl=True)
+    HGNCGroupGetter.cli()

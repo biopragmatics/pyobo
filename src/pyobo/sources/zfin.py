@@ -118,7 +118,9 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
     }
     for _, reference in sorted(so.items()):
         yield Term(reference=reference)
-    for identifier, name, definition, _entity_type, sequence_ontology_id in tqdm(df.values):
+    for identifier, name, definition, _entity_type, sequence_ontology_id in tqdm(
+        df.values, unit_scale=True, unit="gene", desc="zfin"
+    ):
         term = Term.from_triple(
             prefix=PREFIX,
             identifier=identifier,
@@ -143,7 +145,7 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
             if mouse_ortholog:
                 term.append_relationship(orthologous, mouse_ortholog)
         for flybase_id in fly_orthologs.get(identifier, []):
-            term.append_relationship(orthologous, Reference("flybase", flybase_id))
+            term.append_relationship(orthologous, Reference.auto("flybase", flybase_id))
 
         yield term
 

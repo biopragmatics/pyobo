@@ -8,8 +8,6 @@ Run with ``python -m pyobo.sources.kegg.genome``
 import logging
 from typing import Iterable
 
-import click
-from more_click import verbose_option
 from tqdm.auto import tqdm
 
 import pyobo
@@ -64,8 +62,11 @@ def parse_genome_line(line: str) -> KEGGGenome:
         elif len(rest) == 2:
             kegg_code, taxonomy_id = rest
             long_code = None
+        elif len(rest) == 1:
+            (kegg_code,) = rest
+            long_code, taxonomy_id = None, None
         else:
-            raise ValueError
+            raise ValueError(f"unexpected line: {line}")
     else:
         name = rest
         taxonomy_id = None
@@ -73,7 +74,8 @@ def parse_genome_line(line: str) -> KEGGGenome:
         kegg_code = None
 
     if "\t" in name:
-        logger.warning("[%s] tab in name: %s", KEGG_GENOME_PREFIX, name)
+        # TODO maybe throw this out?
+        tqdm.write(f"[{KEGG_GENOME_PREFIX}] tab in name: {name}")
         name = name.replace("\t", " ")
 
     return KEGGGenome(
@@ -91,7 +93,7 @@ def iter_kegg_genomes(version: str, desc: str) -> Iterable[KEGGGenome]:
     path = ensure_list_genomes(version=version)
     with open(path) as file:
         lines = [line.strip() for line in file]
-    it = tqdm(lines, desc=desc)
+    it = tqdm(lines, desc=desc, unit_scale=True, unit="genome")
     for line in it:
         yv = parse_genome_line(line)
         it.set_postfix({"id": yv.identifier, "name": yv.name})
@@ -126,14 +128,9 @@ def iter_terms(version: str) -> Iterable[Term]:
             )
         yield term
 
-    logger.info("[%s] unable to find %d taxonomy names in NCBI", KEGG_GENOME_PREFIX, errors)
-
-
-@click.command()
-@verbose_option
-def _main():
-    get_obo().write_default()
+    if errors:
+        logger.info("[%s] unable to find %d taxonomy names in NCBI", KEGG_GENOME_PREFIX, errors)
 
 
 if __name__ == "__main__":
-    _main()
+    KEGGGenomeGetter.cli()
