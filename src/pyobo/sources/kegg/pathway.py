@@ -8,9 +8,11 @@ Run with ``python -m pyobo.sources.kegg.pathway``
 import logging
 import urllib.error
 from collections import defaultdict
+from functools import partial
 from typing import Iterable, List, Mapping, Tuple
 
 from tqdm.auto import tqdm
+from tqdm.contrib.concurrent import thread_map
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 from pyobo.sources.kegg.api import (
@@ -61,7 +63,9 @@ def iter_terms(version: str, skip_missing: bool = True) -> Iterable[Term]:
     # since old kegg versions go away forever, do NOT add a force option
     yield from _iter_map_terms(version=version)
     it = iter_kegg_pathway_paths(version=version, skip_missing=skip_missing)
-    for kegg_genome, list_pathway_path, link_pathway_path in it:
+    for kegg_genome, list_pathway_path, link_pathway_path in tqdm(
+        it, unit_scale=True, unit="genome"
+    ):
         yield from _iter_genome_terms(
             list_pathway_path=list_pathway_path,
             link_pathway_path=link_pathway_path,
@@ -144,32 +148,39 @@ def iter_kegg_pathway_paths(
     version: str, skip_missing: bool = True
 ) -> Iterable[Tuple[KEGGGenome, str, str]]:
     """Get paths for the KEGG Pathway files."""
-    for kegg_genome in iter_kegg_genomes(version=version, desc="KEGG Pathways"):
-        with logging_redirect_tqdm():
-            try:
-                list_pathway_path = ensure_list_pathway_genome(
-                    kegg_genome.identifier,
-                    version=version,
-                    error_on_missing=not skip_missing,
+    genomes = list(iter_kegg_genomes(version=version, desc="KEGG Pathways"))
+    func = partial(_process_genome, version=version, skip_missing=skip_missing)
+    return thread_map(func, genomes, unit="pathway", unit_scale=True)
+
+
+def _process_genome(kegg_genome, version, skip_missing):
+    with logging_redirect_tqdm():
+        try:
+            list_pathway_path = ensure_list_pathway_genome(
+                kegg_genome.identifier,
+                version=version,
+                error_on_missing=not skip_missing,
+            )
+            link_pathway_path = ensure_link_pathway_genome(
+                kegg_genome.identifier,
+                version=version,
+                error_on_missing=not skip_missing,
+            )
+        except urllib.error.HTTPError as e:
+            code = e.getcode()
+            if code != 404:
+                msg = (
+                    f"[HTTP {code}] Error downloading {kegg_genome.identifier} ({kegg_genome.name}"
                 )
-                link_pathway_path = ensure_link_pathway_genome(
-                    kegg_genome.identifier,
-                    version=version,
-                    error_on_missing=not skip_missing,
-                )
-            except urllib.error.HTTPError as e:
-                code = e.getcode()
-                if code != 404:
-                    msg = f"[HTTP {code}] Error downloading {kegg_genome.identifier} ({kegg_genome.name}"
-                    if kegg_genome.taxonomy_id is None:
-                        msg = f"{msg}): {e.geturl()}"
-                    else:
-                        msg = f"{msg}; taxonomy:{kegg_genome.taxonomy_id}): {e.geturl()}"
-                    tqdm.write(msg)
-            except FileNotFoundError:
-                continue
-            else:
-                yield kegg_genome, list_pathway_path, link_pathway_path
+                if kegg_genome.taxonomy_id is None:
+                    msg = f"{msg}): {e.geturl()}"
+                else:
+                    msg = f"{msg}; taxonomy:{kegg_genome.taxonomy_id}): {e.geturl()}"
+                tqdm.write(msg)
+        except FileNotFoundError:
+            return None, None, None
+        else:
+            return kegg_genome, list_pathway_path, link_pathway_path
 
 
 if __name__ == "__main__":
