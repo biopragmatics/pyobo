@@ -30,5 +30,6 @@ from .typedef import (  # noqa: F401
     species_specific,
     superclass_of,
     transcribes_to,
+enables,
     translates_to,
 )
