@@ -475,7 +475,7 @@ class Obo:
     #: A cache of terms
     _items: Optional[List[Term]] = field(init=False, default=None, repr=False)
 
-    term_sort_key: ClassVar[Optional[Callable[["Obo", Term], ...]]] = None
+    term_sort_key: ClassVar[Optional[Callable[["Obo", Term], int]]] = None
 
     def __post_init__(self):
         """Run post-init checks."""

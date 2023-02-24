@@ -15,6 +15,7 @@ from .struct import (  # noqa: F401
 from .typedef import (  # noqa: F401
     RelationHint,
     TypeDef,
+    enables,
     from_species,
     gene_product_member_of,
     get_reference_tuple,
@@ -30,6 +31,5 @@ from .typedef import (  # noqa: F401
     species_specific,
     superclass_of,
     transcribes_to,
-enables,
     translates_to,
 )
