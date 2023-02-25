@@ -52,7 +52,7 @@ KEGG_URL_PREFIX = "http://www.genome.jp/kegg/pathway/hsa/"
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get MSigDb terms."""
-    xml_url = f"{BASE_URL}/{version}/msigdb_v{version}.xml"
+    xml_url = f"{BASE_URL}/{version}.Hs/msigdb_v{version}.Hs.xml"
     path = ensure_path(prefix=PREFIX, url=xml_url, version=version, force=force)
     tree = ElementTree.parse(path)
 
