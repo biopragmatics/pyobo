@@ -10,8 +10,8 @@ from typing import Iterable
 
 from tqdm.auto import tqdm
 
-import pyobo
 from pyobo.constants import NCBITAXON_PREFIX
+from pyobo.resources.ncbitaxon import get_ncbitaxon_name
 from pyobo.sources.kegg.api import (
     KEGG_GENOME_PREFIX,
     SKIP,
@@ -113,7 +113,7 @@ def iter_terms(version: str) -> Iterable[Term]:
             name=kegg_genome.name,
         )
         if kegg_genome.taxonomy_id is not None:
-            taxonomy_name = pyobo.get_name(NCBITAXON_PREFIX, kegg_genome.taxonomy_id)
+            taxonomy_name = get_ncbitaxon_name(kegg_genome.taxonomy_id)
             if taxonomy_name is None:
                 errors += 1
                 logger.debug(

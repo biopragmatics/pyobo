@@ -318,9 +318,9 @@ class Term(Referenced):
     def set_species(self, identifier: str, name: Optional[str] = None):
         """Append the from_species relation."""
         if name is None:
-            import pyobo
+            from pyobo.resources.ncbitaxon import get_ncbitaxon_name
 
-            name = pyobo.get_name(NCBITAXON_PREFIX, identifier)
+            name = get_ncbitaxon_name(identifier)
         self.append_relationship(
             from_species, Reference(prefix=NCBITAXON_PREFIX, identifier=identifier, name=name)
         )

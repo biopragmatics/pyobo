@@ -9,7 +9,7 @@ import logging
 import urllib.error
 from collections import defaultdict
 from functools import partial
-from typing import Iterable, List, Mapping, Tuple
+from typing import Iterable, List, Mapping, Tuple, Union
 
 from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import thread_map
@@ -63,9 +63,14 @@ def iter_terms(version: str, skip_missing: bool = True) -> Iterable[Term]:
     # since old kegg versions go away forever, do NOT add a force option
     yield from _iter_map_terms(version=version)
     it = iter_kegg_pathway_paths(version=version, skip_missing=skip_missing)
-    for kegg_genome, list_pathway_path, link_pathway_path in tqdm(
-        it, unit_scale=True, unit="genome"
+    for row in tqdm(
+        it, unit_scale=True, unit="genome", desc="Parsing genomes"
     ):
+        if not row:
+            continue
+        kegg_genome, list_pathway_path, link_pathway_path = row
+        if not kegg_genome or not list_pathway_path or not link_pathway_path:
+            continue
         yield from _iter_genome_terms(
             list_pathway_path=list_pathway_path,
             link_pathway_path=link_pathway_path,
@@ -146,7 +151,7 @@ def _iter_genome_terms(
 
 def iter_kegg_pathway_paths(
     version: str, skip_missing: bool = True
-) -> Iterable[Tuple[KEGGGenome, str, str]]:
+) -> Iterable[Union[Tuple[KEGGGenome, str, str], Tuple[None, None, None]]]:
     """Get paths for the KEGG Pathway files."""
     genomes = list(iter_kegg_genomes(version=version, desc="KEGG Pathways"))
     func = partial(_process_genome, version=version, skip_missing=skip_missing)

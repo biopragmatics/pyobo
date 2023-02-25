@@ -10,8 +10,9 @@ from typing import Iterable, Mapping, Set
 import pandas as pd
 from tqdm.auto import tqdm
 
-from ..api import get_id_multirelations_mapping, get_name_id_mapping
-from ..constants import NCBITAXON_PREFIX, SPECIES_REMAPPING
+from ..api import get_id_multirelations_mapping
+from ..constants import SPECIES_REMAPPING
+from ..resources.ncbitaxon import get_ncbitaxon_id
 from ..struct import Obo, Reference, Term, from_species, has_participant
 from ..utils.io import multidict
 from ..utils.path import ensure_df
@@ -54,8 +55,6 @@ def ensure_participant_df(version: str, force: bool = False) -> pd.DataFrame:
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate Reactome terms."""
-    ncbitaxon_name_to_id = get_name_id_mapping(NCBITAXON_PREFIX)
-
     provenance_url = f"https://reactome.org/download/{version}/ReactionPMIDS.txt"
     provenance_df = ensure_df(PREFIX, url=provenance_url, header=None, version=version, force=force)
     provenance_d = multidict(provenance_df.values)
@@ -70,7 +69,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         force=force,
     )
     df["species"] = df["species"].map(lambda x: SPECIES_REMAPPING.get(x) or x)
-    df["taxonomy_id"] = df["species"].map(ncbitaxon_name_to_id.get)
+    df["taxonomy_id"] = df["species"].map(get_ncbitaxon_id)
 
     terms = {}
     it = tqdm(df.values, total=len(df.index), desc=f"mapping {PREFIX}")
@@ -78,8 +77,8 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         terms[reactome_id] = term = Term(
             reference=Reference(prefix=PREFIX, identifier=reactome_id, name=name),
             provenance=[
-                Reference(prefix="pubmed", identifier=pmid)
-                for pmid in provenance_d.get(reactome_id, [])
+                Reference(prefix="pubmed", identifier=pubmed_id)
+                for pubmed_id in provenance_d.get(reactome_id, [])
             ],
         )
         if not taxonomy_id or pd.isna(taxonomy_id):

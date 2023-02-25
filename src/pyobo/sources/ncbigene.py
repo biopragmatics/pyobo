@@ -5,11 +5,10 @@
 import logging
 from typing import Iterable, List, Mapping, Set
 
+import bioregistry
 import pandas as pd
 from tqdm.auto import tqdm
 
-from ..api import get_id_name_mapping
-from ..constants import NCBITAXON_PREFIX
 from ..struct import Obo, Reference, Term, from_species
 from ..utils.path import ensure_df
 
@@ -163,36 +162,24 @@ def get_terms(force: bool = False) -> Iterable[Term]:
     """Get Entrez terms."""
     df = get_gene_info_df(force=force)
 
-    taxonomy_id_to_name = get_id_name_mapping(NCBITAXON_PREFIX)
-    missing_taxa = set()
-
     it = tqdm(
         df.values, total=len(df.index), desc=f"mapping {PREFIX}", unit_scale=True, unit="gene"
     )
-    for tax_id, gene_id, symbol, dbxrfs, description, _gene_type in it:
+    for tax_id, gene_id, symbol, xref_curies, description, _gene_type in it:
         if pd.isna(symbol):
             continue
-        try:
-            tax_name = taxonomy_id_to_name[tax_id]
-        except KeyError:
-            if tax_id not in missing_taxa:
-                logger.warning(f"Could not look up name for {NCBITAXON_PREFIX}:{tax_id}")
-                missing_taxa.add(tax_id)
-            tax_name = None
-
-        xrefs = []
-        if pd.notna(dbxrfs):
-            for xref in dbxrfs.split("|"):
-                xref_ns, xref_id = xref.split(":", 1)
-                xref_ns = xref_ns.lower()
-                xrefs.append(Reference(prefix=xref_ns, identifier=xref_id))
-
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=gene_id, name=symbol),
             definition=description,
-            xrefs=xrefs,
         )
-        term.set_species(identifier=tax_id, name=tax_name)
+        term.set_species(identifier=tax_id)
+        if pd.notna(xref_curies):
+            for xref_curie in xref_curies.split("|"):
+                xref_prefix, xref_id = bioregistry.parse_curie(xref_curie)
+                if xref_prefix and xref_id:
+                    term.append_xref(Reference(prefix=xref_prefix, identifier=xref_id))
+                else:
+                    tqdm.write(f"[{PREFIX}] unparsable xref CURIE: {xref_curie}")
         yield term
 
 
