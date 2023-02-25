@@ -63,9 +63,7 @@ def iter_terms(version: str, skip_missing: bool = True) -> Iterable[Term]:
     # since old kegg versions go away forever, do NOT add a force option
     yield from _iter_map_terms(version=version)
     it = iter_kegg_pathway_paths(version=version, skip_missing=skip_missing)
-    for row in tqdm(
-        it, unit_scale=True, unit="genome", desc="Parsing genomes"
-    ):
+    for row in tqdm(it, unit_scale=True, unit="genome", desc="Parsing genomes"):
         if not row:
             continue
         kegg_genome, list_pathway_path, link_pathway_path = row
