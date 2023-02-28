@@ -123,7 +123,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
             # if name isn't available, it means its external to this ontology
             name=data.get("name"),
         )
-        for prefix, identifier, data in _iter_obo_graph(graph=graph)
+        for prefix, identifier, data in _iter_obo_graph(graph=graph, strict=strict)
     }
 
     #: CURIEs to typedefs
@@ -140,7 +140,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
     missing_typedefs = set()
     terms = []
     n_alt_ids, n_parents, n_synonyms, n_relations, n_properties, n_xrefs = 0, 0, 0, 0, 0, 0
-    for prefix, identifier, data in _iter_obo_graph(graph=graph):
+    for prefix, identifier, data in _iter_obo_graph(graph=graph, strict=strict):
         if prefix != ontology or not data:
             continue
 
