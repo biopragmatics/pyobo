@@ -79,6 +79,6 @@ def cleanup_version(data_version: str, prefix: str) -> Optional[str]:
         else:
             return v
     if (prefix, data_version) not in BIZARRE_LOGGED:
-        logger.warning("[%s] bizarre version: %s", prefix, data_version)
+        logger.debug("[%s] bizarre version: %s", prefix, data_version)
         BIZARRE_LOGGED.add((prefix, data_version))
     return data_version
