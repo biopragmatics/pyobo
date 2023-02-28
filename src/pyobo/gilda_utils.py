@@ -118,6 +118,7 @@ def get_grounder(
     unnamed: Optional[Iterable[str]] = None,
     grounder_cls: Optional[Type[Grounder]] = None,
     versions: Union[None, str, Iterable[Union[str, None]]] = None,
+    strict: bool = True,
 ) -> Grounder:
     """Get a Gilda grounder for the given prefix(es)."""
     unnamed = set() if unnamed is None else set(unnamed)
@@ -138,7 +139,9 @@ def get_grounder(
     for prefix, version in zip(prefixes, versions):
         try:
             p_terms = list(
-                get_gilda_terms(prefix, identifiers_are_names=prefix in unnamed, version=version)
+                get_gilda_terms(
+                    prefix, identifiers_are_names=prefix in unnamed, version=version, strict=strict
+                )
             )
         except NoBuild:
             continue
@@ -156,10 +159,11 @@ def get_gilda_terms(
     prefix: str,
     identifiers_are_names: bool = False,
     version: Optional[str] = None,
+    strict: bool = True,
 ) -> Iterable[gilda.term.Term]:
     """Get gilda terms for the given namespace."""
-    id_to_name = get_id_name_mapping(prefix, version=version)
-    id_to_species = get_id_species_mapping(prefix, version=version)
+    id_to_name = get_id_name_mapping(prefix, version=version, strict=strict)
+    id_to_species = get_id_species_mapping(prefix, version=version, strict=strict)
 
     it = tqdm(id_to_name.items(), desc=f"[{prefix}] mapping", unit_scale=True, unit="name")
     for identifier, name in it:
