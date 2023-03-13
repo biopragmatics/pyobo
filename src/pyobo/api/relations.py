@@ -69,10 +69,12 @@ def get_filtered_relations_df(
     *,
     use_tqdm: bool = False,
     force: bool = False,
+    version: Optional[str] = None,
 ) -> pd.DataFrame:
     """Get all of the given relation."""
     relation_prefix, relation_identifier = relation = get_reference_tuple(relation)
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(
         prefix,
         "relations",
