@@ -155,6 +155,7 @@ IDSPACES = {
         "uniprot",
         "mirbase",
         "snornabase",
+        "hgnc",
         "hgnc.genegroup",
         "debio",
         "ensembl",
