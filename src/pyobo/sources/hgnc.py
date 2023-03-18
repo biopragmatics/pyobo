@@ -2,6 +2,7 @@
 
 """Converter for HGNC."""
 
+import itertools as itt
 import json
 import logging
 import typing
@@ -145,7 +146,7 @@ LOCUS_TYPE_TO_SO = {
 
 IDSPACES = {
     prefix: f"https://bioregistry.io/{prefix}:"
-    for prefix in [
+    for prefix in {
         "rgd",
         "mgi",
         "eccode",
@@ -154,17 +155,34 @@ IDSPACES = {
         "uniprot",
         "mirbase",
         "snornabase",
+        "hgnc",
         "hgnc.genegroup",
-    ]
+        "debio",
+        "ensembl",
+        "NCBIGene",
+        "vega",
+        "ucsc",
+        "ena",
+        "ccds",
+        "omim",
+        "cosmic",
+        "merops",
+        "orphanet",
+        "pseudogene",
+        "lncipedia",
+        "refseq",
+    }
 }
-IDSPACES["NCBITaxon"] = "http://purl.obolibrary.org/obo/NCBITaxon_"
+IDSPACES.update(
+    NCBITaxon="http://purl.obolibrary.org/obo/NCBITaxon_",
+    SO="http://purl.obolibrary.org/obo/SO_",
+)
 
 
 class HGNCGetter(Obo):
     """An ontology representation of HGNC's gene nomenclature."""
 
     bioversions_key = ontology = PREFIX
-    dynamic_version = True
     typedefs = [
         from_species,
         has_gene_product,
@@ -180,6 +198,7 @@ class HGNCGetter(Obo):
         alias_name_type,
         alias_symbol_type,
     ]
+    root_terms = [Reference("SO", so_id) for so_id in sorted(set(LOCUS_TYPE_TO_SO.values()))]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -207,6 +226,7 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
     with open(path) as file:
         entries = json.load(file)["response"]["docs"]
 
+    yield Term.from_triple("NCBITaxon", "9606", "Homo sapiens")
     yield from sorted(
         {
             Term(reference=Reference.auto("SO", so_id))
@@ -242,14 +262,14 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
         for uniprot_id in entry.pop("uniprot_ids", []):
             term.append_relationship(
                 has_gene_product,
-                Reference.auto("uniprot", uniprot_id),
+                Reference("uniprot", uniprot_id),
             )
         for ec_code in entry.pop("enzyme_id", []):
             if "-" in ec_code:
                 continue  # only add concrete annotations
             term.append_relationship(
                 gene_product_member_of,
-                Reference.auto("eccode", ec_code),
+                Reference("eccode", ec_code),
             )
         for rna_central_ids in entry.pop("rna_central_id", []):
             for rna_central_id in rna_central_ids.split(","):
@@ -261,7 +281,7 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
         if mirbase_id:
             term.append_relationship(
                 transcribes_to,
-                Reference.auto(
+                Reference(
                     "mirbase",
                     mirbase_id,
                 ),
@@ -279,7 +299,7 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
             rgd_id = rgd_curie[len("RGD:") :]
             term.append_relationship(
                 orthologous,
-                Reference.auto(prefix="rgd", identifier=rgd_id),
+                Reference(prefix="rgd", identifier=rgd_id),
             )
         for mgi_curie in entry.pop("mgd_id", []):
             if not mgi_curie.startswith("MGI:"):
@@ -290,7 +310,7 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
                 continue
             term.append_relationship(
                 orthologous,
-                Reference.auto(prefix="mgi", identifier=mgi_id),
+                Reference(prefix="mgi", identifier=mgi_id),
             )
 
         for xref_prefix, key in gene_xrefs:
@@ -321,7 +341,9 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
             term.append_synonym(Synonym(name=alias_symbol, type=alias_symbol_type))
         for alias_name in entry.pop("alias_name", []):
             term.append_synonym(Synonym(name=alias_name, type=alias_name_type))
-        for previous_symbol in entry.pop("previous_symbol", []):
+        for previous_symbol in itt.chain(
+            entry.pop("previous_symbol", []), entry.pop("prev_symbol", [])
+        ):
             term.append_synonym(Synonym(name=previous_symbol, type=previous_symbol_type))
         for previous_name in entry.pop("prev_name", []):
             term.append_synonym(Synonym(name=previous_name, type=previous_name_type))

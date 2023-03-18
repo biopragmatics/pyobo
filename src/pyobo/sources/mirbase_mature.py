@@ -4,6 +4,7 @@
 
 from typing import Iterable
 
+import pandas as pd
 from tqdm.auto import tqdm
 
 from .mirbase_constants import get_mature_df
@@ -35,9 +36,13 @@ def get_obo(force: bool = False) -> Obo:
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get miRBase mature terms."""
     df = get_mature_df(version, force=force)
-    for _, name, previous_name, mirbase_mature_id in tqdm(df.values, total=len(df.index)):
+    for _, name, previous_name, mirbase_mature_id in tqdm(
+        df.values, total=len(df.index), unit_scale=True
+    ):
         yield Term(
-            reference=Reference(prefix=PREFIX, identifier=mirbase_mature_id, name=name),
+            reference=Reference(
+                prefix=PREFIX, identifier=mirbase_mature_id, name=name if pd.notna(name) else None
+            ),
             synonyms=[
                 Synonym(name=previous_name),
             ],

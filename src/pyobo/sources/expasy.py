@@ -44,6 +44,20 @@ class ExpasyGetter(Obo):
 
     bioversions_key = ontology = PREFIX
     typedefs = [has_member, enables]
+    root_terms = [
+        Reference("eccode", "1"),
+        Reference("eccode", "2"),
+        Reference("eccode", "3"),
+        Reference("eccode", "4"),
+        Reference("eccode", "5"),
+        Reference("eccode", "6"),
+        Reference("eccode", "7"),
+    ]
+    idspaces = {
+        "uniprot": "https://bioregistry.io/uniprot:",
+        "eccode": "https://bioregistry.io/eccode:",
+        "go": "http://purl.obolibrary.org/obo/GO_",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

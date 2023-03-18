@@ -453,13 +453,16 @@ class Obo:
     #: For super-sized datasets that shouldn't be read into memory
     iter_only: ClassVar[bool] = False
 
-    #: Set to true for resources that are unversioned/very dynamic, like HGNC
+    #: Set to true for resources that are unversioned/very dynamic, like MGI
     dynamic_version: ClassVar[bool] = False
 
     #: Set to a static version for the resource (i.e., the resource is not itself versioned)
     static_version: ClassVar[Optional[str]] = None
 
     bioversions_key: ClassVar[Optional[str]] = None
+
+    #: Root terms to use for the ontology
+    root_terms: ClassVar[Optional[List[Reference]]] = None
 
     #: The date the ontology was generated
     date: Optional[datetime] = field(default_factory=datetime.today)
