@@ -599,6 +599,30 @@ class Obo:
         for term in self:
             yield from term.iterate_obo_lines()
 
+    def get_iri_stub(self) -> str:
+        return f"https://w3id.org/biopragmatics/resources/{self.ontology}/{self.ontology}"
+
+    def get_version_iri_stub(self) -> Optional[str]:
+        """Get the IRI stub (missing the file extension)."""
+        if not self.data_version:
+            return None
+        return f"https://w3id.org/biopragmatics/resources/{self.ontology}/{self.data_version}/{self.ontology}"
+
+    def to_funowl(self, *, extension: str = ".ofn"):
+        if not self.idspaces:
+            raise ValueError(f"must define idspaces")
+        from .ofn_converter import get_stuff
+
+        return get_stuff(self, extension=extension)
+
+    def write_funowl(self, file: Union[None, str, TextIO, Path] = None):
+        _, doc = self.to_funowl()
+        if isinstance(file, (str, Path, os.PathLike)):
+            with open(file, "w") as fh:
+                fh.write(str(doc))
+        else:
+            file.write(str(doc))
+
     def write_obo(
         self, file: Union[None, str, TextIO, Path] = None, use_tqdm: bool = False
     ) -> None:
