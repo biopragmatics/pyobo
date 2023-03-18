@@ -150,7 +150,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
                 mgi_to_ensemble_protein_ids[mgi_id].append(ensemble_protein_id)
 
     for mgi_curie, name, definition in tqdm(
-        df[COLUMNS].values, total=len(df.index), desc=f"Mapping {PREFIX}"
+        df[COLUMNS].values, total=len(df.index), desc=f"Mapping {PREFIX}", unit_scale=True
     ):
         identifier = mgi_curie[len("MGI:") :]
         term = Term(
