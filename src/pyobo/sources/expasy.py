@@ -45,16 +45,17 @@ class ExpasyGetter(Obo):
     bioversions_key = ontology = PREFIX
     typedefs = [has_member, enables]
     root_terms = [
-        Reference.from_curie("eccode:1"),
-        Reference.from_curie("eccode:2"),
-        Reference.from_curie("eccode:3"),
-        Reference.from_curie("eccode:4"),
-        Reference.from_curie("eccode:5"),
-        Reference.from_curie("eccode:6"),
-        Reference.from_curie("eccode:7"),
+        Reference("eccode", "1"),
+        Reference("eccode", "2"),
+        Reference("eccode", "3"),
+        Reference("eccode", "4"),
+        Reference("eccode", "5"),
+        Reference("eccode", "6"),
+        Reference("eccode", "7"),
     ]
     idspaces = {
         "uniprot": "https://bioregistry.io/uniprot:",
+        "eccode": "https://bioregistry.io/eccode:",
         "go": "http://purl.obolibrary.org/obo/GO_",
     }
 
