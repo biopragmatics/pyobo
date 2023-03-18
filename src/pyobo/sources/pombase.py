@@ -43,6 +43,8 @@ def get_obo(force: bool = False) -> Obo:
 
 #: A mapping from PomBase gene type to sequence ontology terms
 POMBASE_TO_SO = {
+    # None: "0000704",  # gene,
+    "gene_type": "0000704", # unannotated
     "protein coding gene": "0001217",
     "pseudogene": "0000336",
     "tRNA gene": "0001272",
@@ -74,6 +76,8 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     for _, reference in sorted(so.items()):
         yield Term(reference=reference)
     for identifier, _, symbol, chromosome, name, uniprot_id, gtype, synonyms in tqdm(df.values):
+        if pd.isna(identifier):
+            continue
         term = Term.from_triple(
             prefix=PREFIX,
             identifier=identifier,
@@ -84,12 +88,12 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         term.append_parent(so[gtype])
         term.set_species(identifier="4896", name="Schizosaccharomyces pombe")
         for hgnc_id in identifier_to_hgnc_ids.get(identifier, []):
-            term.append_relationship(orthologous, Reference.auto("hgnc", hgnc_id))
+            term.append_relationship(orthologous, Reference("hgnc", hgnc_id))
         if uniprot_id and pd.notna(uniprot_id):
-            term.append_relationship(has_gene_product, Reference.auto("uniprot", uniprot_id))
+            term.append_relationship(has_gene_product, Reference("uniprot", uniprot_id))
         if synonyms and pd.notna(synonyms):
             for synonym in synonyms.split(","):
-                term.append_synonym(Synonym(synonym))
+                term.append_synonym(synonym.strip())
         yield term
 
 
