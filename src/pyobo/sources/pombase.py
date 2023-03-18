@@ -11,7 +11,7 @@ from tqdm.auto import tqdm
 
 import pyobo
 from pyobo import Reference
-from pyobo.struct import Obo, Synonym, Term, from_species, has_gene_product, orthologous
+from pyobo.struct import Obo, Term, from_species, has_gene_product, orthologous
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -44,7 +44,7 @@ def get_obo(force: bool = False) -> Obo:
 #: A mapping from PomBase gene type to sequence ontology terms
 POMBASE_TO_SO = {
     # None: "0000704",  # gene,
-    "gene_type": "0000704", # unannotated
+    "gene_type": "0000704",  # unannotated
     "protein coding gene": "0001217",
     "pseudogene": "0000336",
     "tRNA gene": "0001272",
