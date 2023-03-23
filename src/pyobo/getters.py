@@ -104,23 +104,47 @@ def get_ontology(
 
     logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
 
-    ontology_format, path = _ensure_ontology_path(prefix, force=force, version=version)
-    if path is None:
-        raise NoBuild
-    elif ontology_format == "obo":
-        pass  # all gucci
-    elif ontology_format == "owl":
-        from bioontologies import robot
+    for ontology_format, url in [  # noqa:B007
+        ("obo", bioregistry.get_obo_download(prefix)),
+        ("owl", bioregistry.get_owl_download(prefix)),
+        ("json", bioregistry.get_json_download(prefix)),
+    ]:
+        if url is None:
+            continue
+        path = pathlib.Path(ensure_path(prefix, url=url, force=force, version=version))
 
-        _converted_obo_path = path.with_suffix(".obo")
-        robot.convert(path, _converted_obo_path)
-        path = _converted_obo_path
+        if ontology_format == "obo":
+            try:
+                from .reader import from_obo_path
+
+                obo = from_obo_path(path, prefix=prefix, strict=strict)
+                break
+            except Exception:
+                continue
+        if ontology_format == "owl":
+            try:
+                from bioontologies import robot
+
+                _converted_obo_path = path.with_suffix(".obo")
+                robot.convert(path, _converted_obo_path)
+                path = _converted_obo_path
+                from .reader import from_obo_path
+
+                obo = from_obo_path(path, prefix=prefix, strict=strict)
+                break
+            except Exception:
+                continue
+        if ontology_format == "json":
+            try:
+                from .reader_obograph import from_obo_json_path
+
+                obo = from_obo_json_path(path, prefix=prefix, strict=strict)
+                break
+            except Exception:
+                continue
     else:
-        raise UnhandledFormat(f"[{prefix}] unhandled ontology file format: {path.suffix}")
+        raise NoBuild
 
-    from .reader import from_obo_path
-
-    obo = from_obo_path(path, prefix=prefix, strict=strict)
     if version is not None:
         if obo.data_version is None:
             logger.warning("[%s] did not have a version, overriding with %s", obo.ontology, version)
@@ -132,21 +156,6 @@ def get_ontology(
             obo.data_version = version
     obo.write_default(force=rewrite)
     return obo
-
-
-def _ensure_ontology_path(
-    prefix: str, force, version
-) -> Union[Tuple[str, pathlib.Path], Tuple[None, None]]:
-    for ontology_format, url in [  # noqa:B007
-        ("obo", bioregistry.get_obo_download(prefix)),
-        ("owl", bioregistry.get_owl_download(prefix)),
-        ("json", bioregistry.get_json_download(prefix)),
-    ]:
-        if url is not None:
-            return ontology_format, pathlib.Path(
-                ensure_path(prefix, url=url, force=force, version=version)
-            )
-    return None, None
 
 
 #: Obonet/Pronto can't parse these (consider converting to OBO with ROBOT?)
