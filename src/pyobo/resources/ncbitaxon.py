@@ -4,7 +4,6 @@
 
 import csv
 import gzip
-import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Mapping, Optional, Union
@@ -17,15 +16,15 @@ __all__ = [
     "get_ncbitaxon_name",
 ]
 
-HERE = os.path.abspath(os.path.dirname(__file__))
-PATH = os.path.join(HERE, "ncbitaxon.tsv")
+HERE = Path(__file__).parent.resolve()
+PATH = HERE.joinpath("ncbitaxon.tsv.gz")
 URL = "http://purl.obolibrary.org/obo/ncbitaxon.json"
 URI_PREFIX = "http://purl.obolibrary.org/obo/NCBITaxon_"
 
 
 @lru_cache(maxsize=1)
 def load_ncbitaxon() -> Mapping[str, str]:
-    """Load the NCBI Taxonomy identifier to name map.."""
+    """Load the NCBI Taxonomy identifier to name map."""
     return ensure(url=URL, path=PATH, uri_prefix=URI_PREFIX)
 
 
