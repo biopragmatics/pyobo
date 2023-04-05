@@ -61,7 +61,7 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
                     term.append_provenance(Reference("pubmed", pubmed.strip()))
             for pdb in pdbs.split(";"):
                 if pdb:
-                    term.append_xref(Reference("pdb", pdb))
+                    term.append_xref(Reference("pdb", pdb.strip()))
             yield term
 
 
