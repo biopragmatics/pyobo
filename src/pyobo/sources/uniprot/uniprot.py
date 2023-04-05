@@ -8,15 +8,16 @@ from typing import Iterable, Optional
 import bioversions
 from tqdm.auto import tqdm
 
-from pyobo import Obo
+from pyobo import Obo, Reference
 from pyobo.constants import RAW_MODULE
-from pyobo.struct import Term, from_species
+from pyobo.struct import Term, enables, from_species
 from pyobo.utils.io import open_reader
 
 PREFIX = "uniprot"
 REVIEWED_URL = (
-    "https://legacy.uniprot.org/uniprot/"
-    "?query=reviewed:yes&format=tab&force=true&columns=id,entry%20name,organism-id,context&sort=id&compress=yes"
+    "https://rest.uniprot.org/uniprotkb/stream?compressed=true"
+    "&fields=accession%2Cid%2Corganism_id%2Cprotein_name%2Cec%2Clit_pubmed_id%2Cxref_pdb"
+    "&format=tsv&query=%28%2A%29%20AND%20%28reviewed%3Atrue%29"
 )
 
 
@@ -24,7 +25,7 @@ class UniProtGetter(Obo):
     """An ontology representation of the UniProt database."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [from_species]
+    typedefs = [from_species, enables]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -36,15 +37,31 @@ def get_obo(force: bool = False) -> Obo:
     return UniProtGetter(force=force)
 
 
+def _clean_ec(ec: str) -> str:
+    for _ in range(4):
+        ec = ec.rstrip("-").rstrip(".")
+    return ec
+
+
 def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
     """Iterate over UniProt Terms."""
     with open_reader(ensure(version=version, force=force)) as reader:
         _ = next(reader)  # header
-        for uniprot_id, name, taxonomy_id in tqdm(reader, desc="Mapping UniProt"):
+        for uniprot_id, name, taxonomy_id, synonyms, ec, pubmeds, pdbs in tqdm(
+            reader, desc="Mapping UniProt", unit_scale=True
+        ):
             term = Term.from_triple(prefix=PREFIX, identifier=uniprot_id, name=name)
             # TODO add gene encodes from relationship
             # TODO add description
             term.set_species(taxonomy_id)
+            if ec:
+                term.append_relationship(enables, Reference("eccode", _clean_ec(ec)))
+            for pubmed in pubmeds.split(";"):
+                if pubmed:
+                    term.append_provenance(Reference("pubmed", pubmed.strip()))
+            for pdb in pdbs.split(";"):
+                if pdb:
+                    term.append_xref(Reference("pdb", pdb))
             yield term
 
 
