@@ -59,6 +59,7 @@ def get_ontology(
     rewrite: bool = False,
     strict: bool = True,
     version: Optional[str] = None,
+    robot_check: bool = True,
 ) -> Obo:
     """Get the OBO for a given graph.
 
@@ -67,6 +68,9 @@ def get_ontology(
     :param force: Download the data again
     :param rewrite: Should the OBO cache be rewritten? Automatically set to true if ``force`` is true
     :param strict: Should CURIEs be treated strictly? If true, raises exceptions on invalid/malformed
+    :param robot_check:
+        If set to false, will send the ``--check=false`` command to ROBOT to disregard
+        malformed ontology components. Necessary to load some ontologies like VO.
     :returns: An OBO object
 
     :raises OnlyOWLError: If the OBO foundry only has an OWL document for this resource.
@@ -113,7 +117,7 @@ def get_ontology(
         from bioontologies import robot
 
         _converted_obo_path = path.with_suffix(".obo")
-        robot.convert(path, _converted_obo_path)
+        robot.convert(path, _converted_obo_path, check=robot_check)
         path = _converted_obo_path
     else:
         raise UnhandledFormat(f"[{prefix}] unhandled ontology file format: {path.suffix}")
