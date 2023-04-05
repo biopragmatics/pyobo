@@ -4,7 +4,6 @@
 
 import csv
 import gzip
-import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Mapping, Optional, Union
