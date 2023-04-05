@@ -47,7 +47,7 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
     """Iterate over UniProt Terms."""
     with open_reader(ensure(version=version, force=force)) as reader:
         _ = next(reader)  # header
-        for uniprot_id, name, taxonomy_id, synonyms, ec, pubmeds, pdbs in tqdm(
+        for uniprot_id, name, taxonomy_id, _synonyms, ec, pubmeds, pdbs in tqdm(
             reader, desc="Mapping UniProt", unit_scale=True
         ):
             term = Term.from_triple(prefix=PREFIX, identifier=uniprot_id, name=name)
