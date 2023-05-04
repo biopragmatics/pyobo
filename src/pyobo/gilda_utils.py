@@ -83,7 +83,7 @@ def iter_gilda_prediction_tuples(
                 target_prefix,
                 normalize_identifier(target_prefix, scored_match.term.id),
                 scored_match.term.entry_name,
-                "lexical",
+                "semapv:LexicalMatching",
                 scored_match.score,
             )
 
@@ -100,7 +100,7 @@ def iter_gilda_prediction_tuples(
                     target_prefix,
                     normalize_identifier(target_prefix, scored_match.term.id),
                     scored_match.term.entry_name,
-                    "lexical",
+                    "semapv:LexicalMatching",
                     scored_match.score,
                 )
 
