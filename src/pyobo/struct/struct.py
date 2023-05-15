@@ -116,7 +116,7 @@ class Synonym:
 class SynonymTypeDef:
     """A type definition for synonyms in OBO."""
 
-    id: str
+    id: str  # should be a CURIE
     name: str
     specificity: Optional[SynonymSpecificity] = None
 
