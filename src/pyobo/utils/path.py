@@ -40,7 +40,7 @@ def prefix_directory_join(
     if callable(version):
         logger.info("[%s] looking up version", prefix)
         version = version()
-        logger.info("[%s] got version %s", version)
+        logger.info("[%s] got version %s", prefix, version)
     elif not isinstance(version, str):
         raise TypeError(f"Invalid type: {version} ({type(version)})")
     version = cleanup_version(version, prefix=prefix)
