@@ -7,6 +7,7 @@ from typing import Iterable, Mapping, Optional
 
 import bioversions
 import pandas as pd
+from bioregistry.utils import removeprefix
 from tqdm.auto import tqdm
 
 from pyobo import Obo, Term
