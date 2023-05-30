@@ -3,7 +3,6 @@
 """High-level API for synonyms."""
 
 import logging
-import os
 from functools import lru_cache
 from typing import Mapping, Optional
 
@@ -43,16 +42,18 @@ def get_filtered_xrefs(
     use_tqdm: bool = False,
     force: bool = False,
     strict: bool = False,
+    version: Optional[str] = None,
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(prefix, "xrefs", name=f"{xref_prefix}.tsv", version=version)
     all_xrefs_path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
     header = [f"{prefix}_id", f"{xref_prefix}_id"]
 
     @cached_mapping(path=path, header=header, use_tqdm=use_tqdm, force=force)
     def _get_mapping() -> Mapping[str, str]:
-        if os.path.exists(all_xrefs_path):
+        if all_xrefs_path.is_file():
             logger.info("[%s] loading pre-cached xrefs", prefix)
             df = pd.read_csv(all_xrefs_path, sep="\t", dtype=str)
             logger.info("[%s] filtering pre-cached xrefs", prefix)
