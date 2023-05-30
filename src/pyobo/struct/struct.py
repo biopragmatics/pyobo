@@ -272,6 +272,7 @@ class Term(Referenced):
     def append_comment(self, value: str) -> "Term":
         """Add a comment relationship."""
         self.append_property(comment.curie, value)
+        return self
 
     def append_parent(self, reference: ReferenceHint) -> "Term":
         """Add a parent to this entity."""
