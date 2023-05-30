@@ -52,6 +52,8 @@ POMBASE_TO_SO = {
     "snRNA gene": "0001268",
     "snoRNA gene": "0001267",
     "rRNA gene": "0001637",
+    "lncRNA gene": "0002127",
+    "sncRNA gene": "0002342",
 }
 
 
@@ -75,7 +77,9 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     }
     for _, reference in sorted(so.items()):
         yield Term(reference=reference)
-    for identifier, _, symbol, chromosome, name, uniprot_id, gtype, synonyms in tqdm(df.values):
+    for identifier, _, symbol, chromosome, name, uniprot_id, gtype, synonyms in tqdm(
+        df.values, unit_scale=True
+    ):
         if pd.isna(identifier):
             continue
         term = Term.from_triple(
