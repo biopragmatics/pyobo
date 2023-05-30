@@ -68,6 +68,7 @@ def iter_terms() -> Iterable[Term]:
                 if xref_prefix_norm is None:
                     tqdm.write(f"did not normalize {prefix}:{identifier}")
                     continue
+                identifier = bioregistry.standardize_identifier(xref_prefix_norm, identifier)
                 xrefs[str(drugcentral_id)].append(
                     Reference(prefix=xref_prefix_norm, identifier=identifier)
                 )
