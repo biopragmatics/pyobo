@@ -53,7 +53,7 @@ def iter_terms() -> Iterable[Term]:
             definition=description,
         )
         if pd.notna(cvx):
-            term.append_exact_match(Reference("cvx", cvx))
+            term.append_xref(Reference("cvx", cvx))
         if pd.notna(comments):
             term.append_comment(comments)
         yield term
