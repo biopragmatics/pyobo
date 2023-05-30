@@ -42,6 +42,7 @@ from .reference import Reference, Referenced
 from .typedef import (
     RelationHint,
     TypeDef,
+    comment,
     default_typedefs,
     from_species,
     get_reference_tuple,
@@ -267,6 +268,10 @@ class Term(Referenced):
         """Add a see also relationship."""
         self.relationships[see_also].append(_ensure_ref(reference))
         return self
+
+    def append_comment(self, value: str) -> "Term":
+        """Add a comment relationship."""
+        self.append_property(comment.curie, value)
 
     def append_parent(self, reference: ReferenceHint) -> "Term":
         """Add a parent to this entity."""

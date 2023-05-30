@@ -177,6 +177,7 @@ is_a = TypeDef(
 see_also = TypeDef(
     reference=Reference(prefix="rdfs", identifier="seeAlso", name="see also"),
 )
+comment = TypeDef(reference=Reference(prefix="rdfs", identifier="comment", name="comment"))
 has_member = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0002351", name="has member"),
 )
