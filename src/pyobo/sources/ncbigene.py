@@ -165,6 +165,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
     it = tqdm(
         df.values, total=len(df.index), desc=f"mapping {PREFIX}", unit_scale=True, unit="gene"
     )
+    warning_prefixes = set()
     for tax_id, gene_id, symbol, xref_curies, description, _gene_type in it:
         if pd.isna(symbol):
             continue
@@ -175,11 +176,18 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         term.set_species(identifier=tax_id)
         if pd.notna(xref_curies):
             for xref_curie in xref_curies.split("|"):
+                if xref_curie.startswith("EnsemblRapid"):
+                    continue
+                if xref_curie.startswith("AllianceGenome"):
+                    xref_curie = xref_curie[len("xref_curie") :]
                 xref_prefix, xref_id = bioregistry.parse_curie(xref_curie)
                 if xref_prefix and xref_id:
                     term.append_xref(Reference(prefix=xref_prefix, identifier=xref_id))
                 else:
-                    tqdm.write(f"[{PREFIX}] unparsable xref CURIE: {xref_curie}")
+                    p = xref_curie.split(":")[0]
+                    if p not in warning_prefixes:
+                        warning_prefixes.add(p)
+                        tqdm.write(f"[{PREFIX}] unhandled xref prefix: {p}")
         yield term
 
 
