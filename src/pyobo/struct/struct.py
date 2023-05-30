@@ -44,6 +44,7 @@ from .typedef import (
     TypeDef,
     comment,
     default_typedefs,
+    exact_match,
     from_species,
     get_reference_tuple,
     has_part,
@@ -312,6 +313,13 @@ class Term(Referenced):
     def get_relationships(self, typedef: TypeDef) -> List[Reference]:
         """Get relationships from the given type."""
         return self.relationships[typedef]
+
+    def append_exact_match(self, reference):
+        """Append an exact match, also adding an xref."""
+        reference = _ensure_ref(reference)
+        self.append_relationship(exact_match, reference)
+        self.append_xref(reference)
+        return self
 
     def append_xref(self, reference: ReferenceHint) -> None:
         """Append an xref."""

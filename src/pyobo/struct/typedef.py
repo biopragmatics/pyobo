@@ -171,6 +171,9 @@ has_participant = TypeDef(
     comment="Inverse of has participant",
     inverse=Reference(prefix=RO_PREFIX, identifier="0000056", name="participates in"),
 )
+exact_match = TypeDef(
+    reference=Reference(prefix="skos", identifier="exactMatch", name="exact match"),
+)
 is_a = TypeDef(
     reference=Reference(prefix="rdfs", identifier="subClassOf", name="subclass of"),
 )
