@@ -10,6 +10,7 @@ from .cgnc import CGNCGetter
 from .chembl import ChEMBLCompoundGetter
 from .complexportal import ComplexPortalGetter
 from .conso import CONSOGetter
+from .cvx import CVXGetter
 from .depmap import DepMapGetter
 from .dictybase_gene import DictybaseGetter
 from .drugbank import DrugBankGetter
@@ -58,6 +59,7 @@ __all__ = [
     "CCLEGetter",
     "CGNCGetter",
     "CONSOGetter",
+    "CVXGetter",
     "ChEMBLCompoundGetter",
     "ComplexPortalGetter",
     "DepMapGetter",
