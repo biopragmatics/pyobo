@@ -83,6 +83,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
         for identifier, name, vendor, catalog_number, defining_citation in chunk.values:
             if pd.isna(identifier):
                 continue
+            identifier = removeprefix(identifier, "AB_")
             term = Term.from_triple(PREFIX, identifier, name if pd.notna(name) else None)
             if vendor not in MAPPING:
                 if vendor not in needs_curating:
