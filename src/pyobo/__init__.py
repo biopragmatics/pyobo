@@ -32,6 +32,7 @@ from .api import (  # noqa: F401
     get_relation_mapping,
     get_relations_df,
     get_species,
+    get_sssom_df,
     get_subhierarchy,
     get_synonyms,
     get_typedef_df,

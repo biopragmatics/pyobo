@@ -6,6 +6,7 @@ import logging
 from functools import lru_cache
 from typing import Mapping, Optional
 
+import bioregistry
 import pandas as pd
 
 from .utils import get_version
@@ -20,6 +21,7 @@ __all__ = [
     "get_filtered_xrefs",
     "get_xref",
     "get_xrefs",
+    "get_sssom_df",
 ]
 
 logger = logging.getLogger(__name__)
@@ -94,3 +96,44 @@ def get_xrefs_df(
         return ontology.get_xrefs_df(use_tqdm=use_tqdm)
 
     return _df_getter()
+
+
+@wrap_norm_prefix
+def get_sssom_df(
+    prefix: str,
+    *,
+    predicate_id: str = "oboinowl:hasDbXref",
+    justification: str = "sempav:UnspecifiedMatching",
+    **kwargs,
+) -> pd.DataFrame:
+    """Get xrefs from a source as an SSSOM dataframe.
+
+    :param prefix: The ontology to look in for xrefs
+    :param predicate_id: The predicate used in the SSSOM document. By default, ontologies
+        don't typically ascribe semantics to xrefs so ``oboinowl:hasDbXref`` is used
+    :param justification: The justification for the mapping. By default, ontologies
+        don't typically ascribe semantics, so this is left with `sempav:UnspecifiedMatching`
+    :returns: A SSSOM-compliant dataframe of xrefs
+
+    For example, if you want to get UMLS as an SSSOM dataframe, you can do
+
+    >>> import pyobo
+    >>> df = pyobo.get_sssom_df("umls")
+    >>> df.to_csv("umls.sssom.tsv")
+
+    .. note:: This assumes the Bioregistry as the prefix map
+    """
+    df = get_xrefs_df(prefix=prefix, **kwargs)
+    # TODO add source version annotation
+    rows = [
+        (
+            bioregistry.curie_to_str(prefix, source_id),
+            predicate_id,
+            bioregistry.curie_to_str(target_prefix, target_id),
+            justification,
+        )
+        for source_id, target_prefix, target_id in df.values
+    ]
+    return pd.DataFrame(
+        rows, columns=["subject_id", "predicate", "object_id", "mapping_justification"]
+    )

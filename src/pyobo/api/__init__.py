@@ -45,4 +45,10 @@ from .relations import (  # noqa: F401
 )
 from .species import get_id_species_mapping, get_species  # noqa: F401
 from .typedefs import get_typedef_df  # noqa: F401
-from .xrefs import get_filtered_xrefs, get_xref, get_xrefs, get_xrefs_df  # noqa: F401
+from .xrefs import (  # noqa: F401
+    get_filtered_xrefs,
+    get_sssom_df,
+    get_xref,
+    get_xrefs,
+    get_xrefs_df,
+)
