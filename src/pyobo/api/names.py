@@ -3,6 +3,8 @@
 """High-level API for nomenclature."""
 
 import logging
+import subprocess
+import zipfile
 from functools import lru_cache
 from typing import Callable, List, Mapping, Optional, Set, TypeVar
 
@@ -38,17 +40,23 @@ def get_name_by_curie(curie: str) -> Optional[str]:
 
 X = TypeVar("X")
 
+NO_BUILD_PREFIXES = set()
+
 
 def _help_get(f: Callable[[str], Mapping[str, X]], prefix: str, identifier: str) -> Optional[X]:
     """Get the result for an entity based on a mapping maker function ``f``."""
     try:
         mapping = f(prefix)
     except NoBuild:
-        logger.warning("[%s] unable to look up results with %s", prefix, f)
+        if prefix not in NO_BUILD_PREFIXES:
+            logger.warning("[%s] unable to look up results with %s", prefix, f)
+            NO_BUILD_PREFIXES.add(prefix)
         return None
 
     if not mapping:
-        logger.warning("[%s] no results produced with %s", prefix, f)
+        if prefix not in NO_BUILD_PREFIXES:
+            logger.warning("[%s] no results produced with %s", prefix, f)
+            NO_BUILD_PREFIXES.add(prefix)
         return None
 
     primary_id = get_primary_identifier(prefix, identifier)
@@ -120,7 +128,11 @@ def get_id_name_mapping(
         ontology = get_ontology(prefix, force=force, strict=strict, version=version)
         return ontology.get_id_name_mapping()
 
-    return _get_id_name_mapping()
+    try:
+        return _get_id_name_mapping()
+    except (zipfile.BadZipFile, subprocess.CalledProcessError):
+        logger.exception("[%s v%s] could not load", prefix, version)
+        return {}
 
 
 @lru_cache()

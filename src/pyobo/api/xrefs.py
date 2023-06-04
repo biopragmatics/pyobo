@@ -8,6 +8,8 @@ from typing import Mapping, Optional
 
 import bioregistry
 import pandas as pd
+from tqdm.auto import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 from .utils import get_version
 from ..constants import TARGET_ID, TARGET_PREFIX
@@ -123,17 +125,31 @@ def get_sssom_df(
 
     .. note:: This assumes the Bioregistry as the prefix map
     """
+    from .names import get_name
+
     df = get_xrefs_df(prefix=prefix, **kwargs)
-    # TODO add source version annotation
-    rows = [
-        (
-            bioregistry.curie_to_str(prefix, source_id),
-            predicate_id,
-            bioregistry.curie_to_str(target_prefix, target_id),
-            justification,
-        )
-        for source_id, target_prefix, target_id in df.values
-    ]
+    with logging_redirect_tqdm():
+        rows = [
+            (
+                bioregistry.curie_to_str(prefix, source_id),
+                get_name(prefix, source_id) or "",
+                bioregistry.curie_to_str(target_prefix, target_id),
+                get_name(target_prefix, target_id),
+                predicate_id,
+                justification,
+            )
+            for source_id, target_prefix, target_id in tqdm(
+                df.values, unit="mapping", unit_scale=True
+            )
+        ]
     return pd.DataFrame(
-        rows, columns=["subject_id", "predicate", "object_id", "mapping_justification"]
+        rows,
+        columns=[
+            "subject_id",
+            "subject_label",
+            "object_id",
+            "object_label",
+            "predicate_id",
+            "mapping_justification",
+        ],
     )

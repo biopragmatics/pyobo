@@ -11,6 +11,7 @@ import subprocess
 import typing
 import urllib.error
 from collections import Counter
+from pathlib import Path
 from typing import (
     Callable,
     Iterable,
@@ -140,16 +141,19 @@ def get_ontology(
 
 def _ensure_ontology_path(
     prefix: str, force, version
-) -> Union[Tuple[str, pathlib.Path], Tuple[None, None]]:
+) -> Union[Tuple[str, Path], Tuple[None, None]]:
     for ontology_format, url in [  # noqa:B007
         ("obo", bioregistry.get_obo_download(prefix)),
         ("owl", bioregistry.get_owl_download(prefix)),
         ("json", bioregistry.get_json_download(prefix)),
     ]:
         if url is not None:
-            return ontology_format, pathlib.Path(
-                ensure_path(prefix, url=url, force=force, version=version)
-            )
+            try:
+                path = Path(ensure_path(prefix, url=url, force=force, version=version))
+            except urllib.error.HTTPError:
+                continue
+            else:
+                return ontology_format, path
     return None, None
 
 
