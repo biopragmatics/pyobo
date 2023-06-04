@@ -119,7 +119,7 @@ def get_sssom_df(
 
     >>> import pyobo
     >>> df = pyobo.get_sssom_df("umls")
-    >>> df.to_csv("umls.sssom.tsv")
+    >>> df.to_csv("umls.sssom.tsv", sep="\t", index=False)
 
     .. note:: This assumes the Bioregistry as the prefix map
     """
