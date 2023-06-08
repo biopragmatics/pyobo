@@ -48,7 +48,7 @@ from .rgd import RGDGetter
 from .rhea import RheaGetter
 from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
 from .sgd import SGDGetter
-from .slm import SwissLipidsGetter
+from .slm import SLMGetter
 from .umls import UMLSGetter
 from .uniprot import UniProtGetter, UniProtPtmGetter
 from .wikipathways import WikiPathwaysGetter
@@ -105,7 +105,7 @@ __all__ = [
     "SDISGetter",
     "SFAMGetter",
     "SGDGetter",
-    "SwissLipidsGetter",
+    "SLMGetter",
     "UMLSGetter",
     "UniProtGetter",
     "UniProtPtmGetter",

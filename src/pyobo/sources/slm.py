@@ -11,10 +11,10 @@ from pyobo import Obo, SynonymTypeDef, Term
 from pyobo.utils.path import ensure_df
 
 __all__ = [
-    "SwissLipidsGetter",
+    "SLMGetter",
 ]
 
-PREFIX = "swisslipid"
+PREFIX = "slm"
 COLUMNS = [
     "Lipid ID",
     "Level",
@@ -40,7 +40,7 @@ COLUMNS = [
 abreviation_type = SynonymTypeDef(id="abbreviation", name="Abbreviation")
 
 
-class SwissLipidsGetter(Obo):
+class SLMGetter(Obo):
     """An ontology representation of SwissLipid's lipid nomenclature."""
 
     ontology = bioversions_key = PREFIX
@@ -53,7 +53,7 @@ class SwissLipidsGetter(Obo):
 
 def get_obo(force: bool = False) -> Obo:
     """Get SwissLipids as OBO."""
-    return SwissLipidsGetter(force=force)
+    return SLMGetter(force=force)
 
 
 def iter_terms(version: str, force: bool = False):
