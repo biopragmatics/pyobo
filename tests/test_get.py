@@ -60,10 +60,13 @@ class TestParseObonet(unittest.TestCase):
         for s, expected_references in [
             (f'"{expected_text}"', []),
             (f'"{expected_text}" []', []),
-            (f'"{expected_text}" [PMID:1234]', [Reference("pubmed", "1234")]),
+            (f'"{expected_text}" [PMID:1234]', [Reference(prefix="pubmed", identifier="1234")]),
             (
                 f'"{expected_text}" [PMID:1234, PMID:1235]',
-                [Reference("pubmed", "1234"), Reference("pubmed", "1235")],
+                [
+                    Reference(prefix="pubmed", identifier="1234"),
+                    Reference(prefix="pubmed", identifier="1235"),
+                ],
             ),
         ]:
             with self.subTest(s=s):
@@ -81,7 +84,7 @@ class TestParseObonet(unittest.TestCase):
             s, strict=True, prefix="chebi", identifier="XXX"
         )
         self.assertEqual(expected_text, actual_text)
-        self.assertEqual([Reference("pubmed", "1234")], actual_references)
+        self.assertEqual([Reference(prefix="pubmed", identifier="1234")], actual_references)
 
     def test_extract_synonym(self):
         """Test extracting synonym strings."""
@@ -96,19 +99,23 @@ class TestParseObonet(unittest.TestCase):
                     name="LTEC I",
                     specificity="EXACT",
                     type=iupac_name,
-                    provenance=[Reference("orphanet", "93938")],
+                    provenance=[Reference(prefix="orphanet", identifier="93938")],
                 ),
                 '"LTEC I" EXACT IUPAC_NAME [Orphanet:93938]',
             ),
             (
                 Synonym(
-                    name="LTEC I", specificity="EXACT", provenance=[Reference("orphanet", "93938")]
+                    name="LTEC I",
+                    specificity="EXACT",
+                    provenance=[Reference(prefix="orphanet", identifier="93938")],
                 ),
                 '"LTEC I" EXACT [Orphanet:93938]',
             ),
             (
                 Synonym(
-                    name="LTEC I", specificity="EXACT", provenance=[Reference("orphanet", "93938")]
+                    name="LTEC I",
+                    specificity="EXACT",
+                    provenance=[Reference(prefix="orphanet", identifier="93938")],
                 ),
                 '"LTEC I" [Orphanet:93938]',
             ),
