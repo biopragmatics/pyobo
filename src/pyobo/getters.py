@@ -103,7 +103,7 @@ def get_ontology(
 
     if has_nomenclature_plugin(prefix):
         obo = run_nomenclature_plugin(prefix, version=version)
-        logger.info("[%s] caching nomenclature plugin", prefix)
+        logger.debug("[%s] caching nomenclature plugin", prefix)
         obo.write_default(force=rewrite)
         return obo
 
