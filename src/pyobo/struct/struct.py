@@ -1316,6 +1316,7 @@ def make_ad_hoc_ontology(
     _synonym_typedefs: Optional[List[SynonymTypeDef]] = None,
     _date: Optional[datetime] = None,
     _data_version: Optional[str] = None,
+    _idspaces: Optional[Mapping[str, str]] = None,
     *,
     terms: List[Term],
 ) -> "Obo":
@@ -1330,6 +1331,7 @@ def make_ad_hoc_ontology(
         format_version = _format_version
         typedefs = _typedefs
         synonym_typedefs = _synonym_typedefs
+        idspaces = _idspaces
 
         def __post_init__(self):
             self.date = _date
