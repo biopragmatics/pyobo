@@ -79,13 +79,6 @@ class Reference:
             return Reference.auto(prefix=prefix, identifier=identifier)
         return Reference(prefix=prefix, identifier=identifier, name=name)
 
-    @staticmethod
-    def default(identifier: str, name: Optional[str] = None) -> "Reference":
-        """Return a reference from the PyOBO namespace."""
-        if not DEFAULT_PATTERN.match(identifier):
-            raise ValueError(f"identifier is invalid: {identifier}")
-        return Reference(prefix=DEFAULT_PREFIX, identifier=identifier, name=name)
-
     @property
     def _escaped_identifier(self):
         return obo_escape(self.identifier)

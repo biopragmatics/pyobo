@@ -145,7 +145,7 @@ from_species = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0002162", name="in taxon"),
 )
 species_specific = TypeDef(
-    reference=Reference.default(identifier="0000007", name="species specific"),
+    reference=Reference(prefix="debio", identifier="0000007", name="species specific"),
     definition="X speciesSpecific Y means that Y is a general phenomena, "
     "like a pathway, and X is the version that appears in a species. X should state which"
     "species with RO:0002162 (in taxon)",
@@ -221,7 +221,7 @@ role_of = TypeDef(
 )
 
 has_mature = TypeDef(
-    reference=Reference.default(identifier="0000002", name="has mature miRNA"),
+    reference=Reference(prefix="debio", identifier="0000002", name="has mature miRNA"),
 )
 
 transcribes_to = TypeDef(
@@ -238,7 +238,7 @@ has_gene_product = TypeDef(
     inverse=gene_product_of.reference,
 )  # holds over chain (transcribes_to, translates_to)
 gene_product_member_of = TypeDef(
-    reference=Reference.default(identifier="0000001", name="gene product is a member of"),
+    reference=Reference(prefix="debio", identifier="0000001", name="gene product is a member of"),
     holds_over_chain=[
         has_gene_product.reference,
         member_of.reference,
@@ -246,7 +246,7 @@ gene_product_member_of = TypeDef(
 )
 
 has_salt = TypeDef(
-    reference=Reference.default(identifier="0000006", name="has salt"),
+    reference=Reference(prefix="debio", identifier="0000006", name="has salt"),
 )
 
 example_of_usage = Reference(prefix=IAO_PREFIX, identifier="0000112", name="example of usage")
