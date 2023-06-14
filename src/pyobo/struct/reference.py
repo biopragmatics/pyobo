@@ -43,11 +43,6 @@ class Reference:
         return f"{self.prefix}:{self.identifier}"
 
     @property
-    def link(self) -> Optional[str]:
-        """Get a link for this term."""
-        return bioregistry.get_iri(self.prefix, self.identifier)
-
-    @property
     def bioregistry_link(self) -> str:
         """Get the bioregistry link."""
         return f"https://bioregistry.io/{self.curie}"
@@ -93,10 +88,6 @@ class Reference:
             rv["name"] = self.name
         return rv
 
-    def get_url(self) -> Optional[str]:
-        """Return a URL for this reference, if possible."""
-        return bioregistry.get_iri(self.prefix, self.identifier)
-
     def __str__(self):  # noqa: D105
         identifier_lower = self.identifier.lower()
         if identifier_lower.startswith(f"{self.prefix.lower()}:"):
@@ -140,11 +131,6 @@ class Referenced:
     def pair(self) -> Tuple[str, str]:
         """The pair of namespace/identifier."""  # noqa: D401
         return self.reference.pair
-
-    @property
-    def link(self) -> Optional[str]:
-        """Get the link to the reference."""
-        return self.reference.link
 
     @property
     def bioregistry_link(self) -> str:
