@@ -14,6 +14,7 @@ from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, TypeVar,
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
+from lxml import etree
 from tqdm.auto import tqdm
 
 __all__ = [
@@ -157,9 +158,9 @@ def write_iterable_tsv(
 
 def parse_xml_gz(path: Union[str, Path]) -> Element:
     """Parse an XML file from a path to a GZIP file."""
+    path = Path(path).resolve()
     t = time.time()
     logger.info("parsing xml from %s", path)
-    with gzip.open(path) as file:
-        tree = ElementTree.parse(file)  # type:ignore
+    tree = etree.parse(path.as_posix())  # type:ignore
     logger.info("parsed xml in %.2f seconds", time.time() - t)
     return tree.getroot()
