@@ -7,6 +7,7 @@ from collections import defaultdict
 from typing import Iterable, List, Mapping, Tuple
 
 import bioregistry
+import pandas as pd
 from pystow.utils import get_commit
 
 from pyobo import get_name_id_mapping
@@ -79,6 +80,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
                 logger.warning(
                     "[%s] could not look up HGNC identifier for gene: %s", PREFIX, h_name
                 )
+                continue
             h = Reference(prefix="hgnc", identifier=h_identifier, name=h_name)
         elif h_ns == "FPLX":
             h = Reference(prefix="fplx", identifier=h_name, name=h_name)
@@ -107,7 +109,9 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     for (entity,) in entities_df.values:
         reference = Reference(prefix=PREFIX, identifier=entity, name=entity)
         definition, provenance = id_to_definition.get(entity, (None, None))
-        provenance_reference = None if provenance is None else Reference.from_curie(provenance)
+        provenance_reference = (
+            Reference.from_curie(provenance) if isinstance(provenance, str) else None
+        )
         term = Term(
             reference=reference,
             definition=definition,

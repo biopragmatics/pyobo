@@ -6,7 +6,6 @@ from collections import defaultdict
 from typing import Iterable, List, Mapping
 
 import pandas as pd
-from tqdm.auto import tqdm
 
 from ..struct import (
     Obo,
@@ -93,8 +92,7 @@ def _get_terms_helper(force: bool = False) -> Iterable[Term]:
     path = ensure_path(PREFIX, url=FAMILIES_URL, force=force)
     df = pd.read_csv(path, dtype={"id": str})
 
-    it = tqdm(df[COLUMNS].values, desc=f"Mapping {PREFIX}")
-    for gene_group_id, symbol, name, pubmed_ids, definition, desc_go in it:
+    for gene_group_id, symbol, name, pubmed_ids, definition, desc_go in df[COLUMNS].values:
         if not definition or pd.isna(definition):
             definition = None
         term = Term(

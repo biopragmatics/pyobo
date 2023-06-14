@@ -5,15 +5,16 @@
 import datetime
 import itertools as itt
 import logging
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Set
+import re
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Tuple
 from xml.etree.ElementTree import Element
 
 from tqdm.auto import tqdm
 
-from ..struct import Obo, Reference, Synonym, Term
-from ..utils.cache import cached_json, cached_mapping
-from ..utils.io import parse_xml_gz
-from ..utils.path import ensure_path, prefix_directory_join
+from pyobo.struct import Obo, Reference, Synonym, Term
+from pyobo.utils.cache import cached_json, cached_mapping
+from pyobo.utils.io import parse_xml_gz
+from pyobo.utils.path import ensure_path, prefix_directory_join
 
 __all__ = [
     "MeSHGetter",
@@ -23,6 +24,8 @@ logger = logging.getLogger(__name__)
 
 PREFIX = "mesh"
 NOW_YEAR = str(datetime.datetime.now().year)
+CAS_RE = re.compile(r"^\d{1,7}\-\d{2}\-\d$")
+UNII_RE = re.compile(r"[0-9A-Za-z]{10}$")
 
 
 class MeSHGetter(Obo):
@@ -72,18 +75,22 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     for entry in itt.chain(descriptors, supplemental_records):
         identifier = entry["identifier"]
         name = entry["name"]
-        definition = (get_scope_note(entry) or "").strip()
+        definition = entry.get("scope_note")
 
+        xrefs: List[Reference] = []
         synonyms: Set[str] = set()
         for concept in entry["concepts"]:
             synonyms.add(concept["name"])
             for term in concept["terms"]:
                 synonyms.add(term["name"])
+            for xref_prefix, xref_identifier in concept.get("xrefs", []):
+                xrefs.append(Reference(prefix=xref_prefix, identifier=xref_identifier))
 
         mesh_id_to_term[identifier] = Term(
             definition=definition,
             reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
             synonyms=[Synonym(name=synonym) for synonym in synonyms if synonym != name],
+            xrefs=xrefs,
         )
 
     for entry in descriptors:
@@ -95,12 +102,14 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     return mesh_id_to_term.values()
 
 
-def ensure_mesh_descriptors(version: str, force: bool = False) -> List[Mapping[str, Any]]:
+def ensure_mesh_descriptors(
+    version: str, force: bool = False, force_process: bool = False
+) -> List[Mapping[str, Any]]:
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
 
-    @cached_json(path=prefix_directory_join(PREFIX, name="mesh.json", version=version), force=force)
+    @cached_json(path=prefix_directory_join(PREFIX, name="desc.json", version=version), force=force)
     def _inner():
-        path = ensure_path(PREFIX, url=get_descriptors_url(version), version=version, force=force)
+        path = ensure_path(PREFIX, url=get_descriptors_url(version), version=version)
         root = parse_xml_gz(path)
         return get_descriptor_records(root, id_key="DescriptorUI", name_key="DescriptorName/String")
 
@@ -126,7 +135,7 @@ def ensure_mesh_supplemental_records(version: str, force: bool = False) -> List[
 
     @cached_json(path=prefix_directory_join(PREFIX, name="supp.json", version=version), force=force)
     def _inner():
-        path = ensure_path(PREFIX, url=get_supplemental_url(version), version=version, force=force)
+        path = ensure_path(PREFIX, url=get_supplemental_url(version), version=version)
         root = parse_xml_gz(path)
         return get_descriptor_records(
             root, id_key="SupplementalRecordUI", name_key="SupplementalRecordName/String"
@@ -141,7 +150,7 @@ def get_descriptor_records(element: Element, id_key: str, name_key) -> List[Dict
 
     rv: List[Dict[str, Any]] = [
         get_descriptor_record(descriptor, id_key=id_key, name_key=name_key)
-        for descriptor in tqdm(element, desc="Getting MeSH Descriptors")
+        for descriptor in tqdm(element, desc="Getting MeSH Descriptors", unit_scale=True)
     ]
     logger.debug(f"got {len(rv)} descriptors")
 
@@ -174,9 +183,9 @@ def get_descriptor_records(element: Element, id_key: str, name_key) -> List[Dict
     return rv
 
 
-def get_scope_note(term) -> Optional[str]:
+def get_scope_note(descriptor_record) -> Optional[str]:
     """Get the scope note from the preferred concept in a term's record."""
-    for concept in term["concepts"]:
+    for concept in descriptor_record["concepts"]:
         scope_note = concept.get("ScopeNote")
         if scope_note is not None:
             return scope_note.replace("\\n", "\n").strip()
@@ -195,46 +204,76 @@ def get_descriptor_record(
     :param name_key: For descriptors, set to 'DescriptorName/String'.
      For supplement, set to 'SupplementalRecordName/String'
     """
-    return {
+    concepts = get_concept_records(element)
+    scope_note = get_scope_note(concepts)
+    rv = {
         "identifier": element.findtext(id_key),
         "name": element.findtext(name_key),
         "tree_numbers": sorted({x.text for x in element.findall("TreeNumberList/TreeNumber")}),
-        "concepts": get_concept_records(element),
+        "concepts": concepts,
         # TODO handle AllowableQualifiersList
-        # TODO add ScopeNote as description
     }
+    if scope_note:
+        rv["scope_note"] = scope_note
+    return rv
 
 
 def get_concept_records(element: Element) -> List[Mapping[str, Any]]:
     """Get concepts from a record."""
-    return [get_concept_record(concept) for concept in element.findall("ConceptList/Concept")]
+    return [get_concept_record(e) for e in element.findall("ConceptList/Concept")]
 
 
-def get_concept_record(concept):
-    """Get a single MeSH concept record."""
-    registry_numbers = list(
-        {x.text for x in concept.findall("RelatedRegistryNumberList/RelatedRegistryNumber")}
+def _get_xrefs(element: Element) -> List[Tuple[str, str]]:
+    raw_registry_numbers: List[str] = sorted(
+        {e.text for e in element.findall("RelatedRegistryNumberList/RegistryNumber")}
     )
-    registry_number = concept.findtext("RelatedRegistryNumber")
+    registry_number = element.findtext("RegistryNumber")
     if registry_number is not None:
-        registry_numbers.append(registry_number)
+        raw_registry_numbers.append(registry_number)
+    raw_registry_numbers = [x for x in raw_registry_numbers if x != "0"]
 
-    scope_note = concept.findtext("ScopeNote")
+    rv = []
+    for registry_number in raw_registry_numbers:
+        if registry_number == "0":
+            continue
+        elif registry_number.startswith("txid"):
+            rv.append(("NCBITaxon", registry_number[4:]))
+        elif registry_number.startswith("EC "):
+            rv.append(("eccode", registry_number[3:]))
+        elif CAS_RE.fullmatch(registry_number):
+            rv.append(("cas", registry_number))
+        elif UNII_RE.fullmatch(registry_number):
+            rv.append(("unii", registry_number))
+        else:
+            tqdm.write(f"Unhandled xref: {registry_number}")
+    return rv
+
+
+def get_concept_record(element: Element) -> Mapping[str, Any]:
+    """Get a single MeSH concept record."""
+    xrefs = _get_xrefs(element)
+
+    scope_note = element.findtext("ScopeNote")
     if scope_note is not None:
         scope_note = scope_note.replace("\\n", "\n").strip()
 
-    return {
-        "concept_ui": concept.findtext("ConceptUI"),
-        "name": concept.findtext("ConceptName/String"),
-        "semantic_types": list(
-            {x.text for x in concept.findall("SemanticTypeList/SemanticType/SemanticTypeUI")}
-        ),
-        "related_registries": registry_numbers,
-        "ScopeNote": scope_note,
-        "terms": get_term_records(concept),
+    rv = {
+        "concept_ui": element.findtext("ConceptUI"),
+        "name": element.findtext("ConceptName/String"),
+        "terms": get_term_records(element),
         # TODO handle ConceptRelationList
-        **concept.attrib,
+        **element.attrib,
     }
+    semantic_types = sorted(
+        {x.text for x in element.findall("SemanticTypeList/SemanticType/SemanticTypeUI")}
+    )
+    if semantic_types:
+        rv["semantic_types"] = semantic_types
+    if xrefs:
+        rv["xrefs"] = xrefs
+    if scope_note:
+        rv["ScopeNote"] = scope_note
+    return rv
 
 
 def get_term_records(element: Element) -> List[Mapping[str, Any]]:
@@ -242,16 +281,16 @@ def get_term_records(element: Element) -> List[Mapping[str, Any]]:
     return [get_term_record(term) for term in element.findall("TermList/Term")]
 
 
-def get_term_record(term):
+def get_term_record(element) -> Mapping[str, Any]:
     """Get a single MeSH term record."""
     return {
-        "term_ui": term.findtext("TermUI"),
-        "name": term.findtext("String"),
-        **term.attrib,
+        "term_ui": element.findtext("TermUI"),
+        "name": element.findtext("String"),
+        **element.attrib,
     }
 
 
-def _text_or_bust(element, name):
+def _text_or_bust(element: Element, name: str) -> str:
     n = element.findtext(name)
     if n is None:
         raise ValueError

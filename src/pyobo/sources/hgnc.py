@@ -111,7 +111,7 @@ ENCODINGS = {
 LOCUS_TYPE_TO_SO = {
     # protein-coding gene
     "gene with protein product": "0001217",
-    "complex locus constituent": "0001217",  # this is a nonsensical annotation for genes encoding complex members
+    "complex locus constituent": "0000997",  # https://github.com/pyobo/pyobo/issues/118#issuecomment-1564520052
     "protocadherin": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/562
     # non-coding RNA
     "RNA, Y": "0002359",
@@ -126,7 +126,7 @@ LOCUS_TYPE_TO_SO = {
     "RNA, transfer": "0001272",
     "RNA, vault": "0002358",
     # phenotype
-    "phenotype only": "0001500",  # FIXME doesn't come under gene hierarchy
+    "phenotype only": "0001500",  # https://github.com/pyobo/pyobo/issues/118#issuecomment-1564574892
     # pseudogene
     "T cell receptor pseudogene": "0002099",
     "immunoglobulin pseudogene": "0002098",
@@ -388,8 +388,10 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
                         hgnc_id,
                         term.name,
                         term.is_obsolete,
-                        term.link,
-                        ", ".join(p.link for p in term.provenance if p.link),
+                        term.bioregistry_link,
+                        ", ".join(
+                            p.bioregistry_link for p in term.provenance if p.bioregistry_link
+                        ),
                     )
                     for hgnc_id, term in sorted(v.items())
                 ],

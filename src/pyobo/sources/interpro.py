@@ -5,8 +5,6 @@
 from collections import defaultdict
 from typing import DefaultDict, Iterable, List, Mapping, Set, Tuple
 
-from tqdm.auto import tqdm
-
 from .utils import get_go_mapping
 from ..struct import Obo, Reference, Term
 from ..struct.typedef import enables, has_member
@@ -66,10 +64,10 @@ def iter_terms(*, version: str, proteins: bool = False, force: bool = False) -> 
 
     references = {
         identifier: Reference(prefix=PREFIX, identifier=identifier, name=name)
-        for identifier, _, name in tqdm(entries_df.values)
+        for identifier, _, name in entries_df.values
     }
 
-    for identifier, entry_type, _ in tqdm(entries_df.values):
+    for identifier, entry_type, _ in entries_df.values:
         term = Term(
             reference=references[identifier],
             parents=[references[parent_id] for parent_id in parents.get(identifier, [])],
@@ -102,7 +100,7 @@ def _parse_tree_helper(lines: Iterable[str]):
     previous_depth, previous_id = 0, None
     stack = [previous_id]
 
-    for line in tqdm(lines, desc="parsing InterPro tree"):
+    for line in lines:
         depth = _count_front(line)
         parent_id, _ = line[depth:].split("::", maxsplit=1)
 

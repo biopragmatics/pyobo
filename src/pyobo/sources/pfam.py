@@ -57,8 +57,7 @@ def get_obo(force: bool = False) -> Obo:
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate PFAM terms."""
     df = get_pfam_clan_df(version=version, force=force)
-    it = tqdm(df.values, total=len(df.index), desc=f"mapping {PREFIX}")
-    for family_identifier, clan_id, clan_name, family_name, definition in it:
+    for family_identifier, clan_id, clan_name, family_name, definition in df.values:
         parents = []
         if pd.notna(clan_id) and pd.notna(clan_name):
             parents.append(Reference("pfam.clan", identifier=clan_id, name=clan_name))
