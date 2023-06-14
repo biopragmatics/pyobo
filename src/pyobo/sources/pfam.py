@@ -5,7 +5,6 @@
 from typing import Iterable
 
 import pandas as pd
-from tqdm.auto import tqdm
 
 from ..struct import Obo, Reference, Term
 from ..utils.path import ensure_df
@@ -60,7 +59,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     for family_identifier, clan_id, clan_name, family_name, definition in df.values:
         parents = []
         if pd.notna(clan_id) and pd.notna(clan_name):
-            parents.append(Reference("pfam.clan", identifier=clan_id, name=clan_name))
+            parents.append(Reference(prefix="pfam.clan", identifier=clan_id, name=clan_name))
         yield Term(
             reference=Reference(PREFIX, identifier=family_identifier, name=family_name),
             definition=definition,

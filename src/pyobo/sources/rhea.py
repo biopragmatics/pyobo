@@ -17,9 +17,9 @@ __all__ = [
 logger = logging.getLogger(__name__)
 PREFIX = "rhea"
 
-has_lr = TypeDef(Reference(PREFIX, "has_lr_reaction"))
-has_rl = TypeDef(Reference(PREFIX, "has_rl_reaction"))
-has_bi = TypeDef(Reference(PREFIX, "has_bi_reaction"))
+has_lr = TypeDef(Reference(prefix=PREFIX, identifier="has_lr_reaction"))
+has_rl = TypeDef(Reference(prefix=PREFIX, identifier="has_rl_reaction"))
+has_bi = TypeDef(Reference(prefix=PREFIX, identifier="has_bi_reaction"))
 
 
 class RheaGetter(Obo):

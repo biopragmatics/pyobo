@@ -46,7 +46,7 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
             name = None
         term = Term.from_triple(PREFIX, identifier, name)
         if pd.notna(depmap_id):
-            term.append_xref(Reference("depmap", depmap_id))
+            term.append_xref(Reference(prefix="depmap", identifier=depmap_id))
         yield term
 
 

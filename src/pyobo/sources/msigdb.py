@@ -64,9 +64,9 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         if not reference_id:
             reference = None
         elif reference_id.startswith("GSE"):
-            reference = Reference("gse", reference_id)
+            reference = Reference(prefix="gse", identifier=reference_id)
         else:
-            reference = Reference("pubmed", reference_id)
+            reference = Reference(prefix="pubmed", identifier=reference_id)
 
         # NONE have the entry "HISTORICAL_NAME"
         # historical_name = thing.attrib['HISTORICAL_NAME']
@@ -76,7 +76,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         is_obsolete = attrib["CATEGORY_CODE"] == "ARCHIVED"
 
         term = Term(
-            reference=Reference(PREFIX, identifier, name),
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
             definition=_get_definition(attrib),
             provenance=[] if reference is None else [reference],
             is_obsolete=is_obsolete,
@@ -102,13 +102,13 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
                 logger.warning(
                     "missing %s source: msigdb:%s (%s)", contributor, identifier, external_details
                 )
-            term.append_xref(Reference("wikipathways", external_id))
+            term.append_xref(Reference(prefix="wikipathways", identifier=external_id))
         elif contributor == "Reactome":
             if not external_id:
                 logger.warning(
                     "missing %s source: msigdb:%s (%s)", contributor, identifier, external_details
                 )
-            term.append_xref(Reference("reactome", external_id))
+            term.append_xref(Reference(prefix="reactome", identifier=external_id))
         elif contributor == "Gene Ontology":
             if not external_id:
                 external_id = external_details[len(GO_URL_PREFIX) :]
@@ -116,7 +116,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
                 logger.warning(
                     "missing %s source: msigdb:%s (%s)", contributor, identifier, external_details
                 )
-            term.append_xref(Reference("go", external_id))
+            term.append_xref(Reference(prefix="go", identifier=external_id))
         elif contributor == "KEGG":
             if not external_id:
                 external_id = external_details[len(KEGG_URL_PREFIX) : len(".html")]
@@ -124,7 +124,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
                 logger.warning(
                     "missing %s source: msigdb:%s (%s)", contributor, identifier, external_details
                 )
-            term.append_xref(Reference("kegg.pathway", external_id))
+            term.append_xref(Reference(prefix="kegg.pathway", identifier=external_id))
 
         for ncbigene_id in attrib["MEMBERS_EZID"].strip().split(","):
             if ncbigene_id:

@@ -106,7 +106,7 @@ def _make_terms(
 
             ncbigene_xref = ncbigene_conv.get(identifier)
             if ncbigene_xref is not None:
-                term.append_xref(Reference("ncbigene", ncbigene_xref))
+                term.append_xref(Reference(prefix="ncbigene", identifier=ncbigene_xref))
 
             kegg_genome.annotate_term(term)
             yield term

@@ -56,7 +56,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         if description is not None:
             description = description.strip().replace("\n", " ")
         term = Term(
-            reference=Reference(PREFIX, j["identifier"], j["name"]),
+            reference=Reference(prefix=PREFIX, identifier=j["identifier"], name=j["name"]),
             definition=description,
         )
         yield term

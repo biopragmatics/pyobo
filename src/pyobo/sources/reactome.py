@@ -95,7 +95,9 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     uniprot_pathway_df = ensure_participant_df(version=version, force=force)
     for uniprot_id, reactome_id in tqdm(uniprot_pathway_df.values, total=len(uniprot_pathway_df)):
-        terms[reactome_id].append_relationship(has_participant, Reference("uniprot", uniprot_id))
+        terms[reactome_id].append_relationship(
+            has_participant, Reference(prefix="uniprot", identifier=uniprot_id)
+        )
 
     chebi_pathway_url = f"https://reactome.org/download/{version}/ChEBI2Reactome_All_Levels.txt"
     chebi_pathway_df = ensure_df(
@@ -107,7 +109,9 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         force=force,
     )
     for chebi_id, reactome_id in tqdm(chebi_pathway_df.values, total=len(chebi_pathway_df)):
-        terms[reactome_id].append_relationship(has_participant, Reference("chebi", chebi_id))
+        terms[reactome_id].append_relationship(
+            has_participant, Reference(prefix="chebi", identifier=chebi_id)
+        )
 
     # ncbi_pathway_url = f'https://reactome.org/download/{version}/NCBI2Reactome_All_Levels.txt'
     # ncbi_pathway_df = ensure_df(PREFIX, url=ncbi_pathway_url, header=None, usecols=[0, 1], version=version)

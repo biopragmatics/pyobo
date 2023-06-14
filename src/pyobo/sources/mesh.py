@@ -209,7 +209,9 @@ def get_descriptor_record(
     rv = {
         "identifier": element.findtext(id_key),
         "name": element.findtext(name_key),
-        "tree_numbers": sorted({x.text for x in element.findall("TreeNumberList/TreeNumber")}),
+        "tree_numbers": sorted(
+            {x.text for x in element.findall("TreeNumberList/TreeNumber") if x.text}
+        ),
         "concepts": concepts,
         # TODO handle AllowableQualifiersList
     }
@@ -225,7 +227,7 @@ def get_concept_records(element: Element) -> List[Mapping[str, Any]]:
 
 def _get_xrefs(element: Element) -> List[Tuple[str, str]]:
     raw_registry_numbers: List[str] = sorted(
-        {e.text for e in element.findall("RelatedRegistryNumberList/RegistryNumber")}
+        {e.text for e in element.findall("RelatedRegistryNumberList/RegistryNumber") if e.text}
     )
     registry_number = element.findtext("RegistryNumber")
     if registry_number is not None:
@@ -257,7 +259,7 @@ def get_concept_record(element: Element) -> Mapping[str, Any]:
     if scope_note is not None:
         scope_note = scope_note.replace("\\n", "\n").strip()
 
-    rv = {
+    rv: Dict[str, Any] = {
         "concept_ui": element.findtext("ConceptUI"),
         "name": element.findtext("ConceptName/String"),
         "terms": get_term_records(element),
@@ -265,7 +267,7 @@ def get_concept_record(element: Element) -> Mapping[str, Any]:
         **element.attrib,
     }
     semantic_types = sorted(
-        {x.text for x in element.findall("SemanticTypeList/SemanticType/SemanticTypeUI")}
+        {x.text for x in element.findall("SemanticTypeList/SemanticType/SemanticTypeUI") if x.text}
     )
     if semantic_types:
         rv["semantic_types"] = semantic_types

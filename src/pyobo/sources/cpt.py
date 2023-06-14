@@ -49,11 +49,11 @@ def iter_terms() -> Iterable[Term]:
         df[col] = df[col].map(lambda s: s.strip() if pd.notna(s) else s)
     for cpt_id, description, name, cvx, comments, _updated, _internal_id in df.values:
         term = Term(
-            reference=Reference(PREFIX, cpt_id, name),
+            reference=Reference(prefix=PREFIX, identifier=cpt_id, name=name),
             definition=description,
         )
         if pd.notna(cvx):
-            term.append_xref(Reference("cvx", cvx))
+            term.append_xref(Reference(prefix="cvx", identifier=cvx))
         if pd.notna(comments):
             term.append_comment(comments)
         yield term

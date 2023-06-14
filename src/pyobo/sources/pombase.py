@@ -92,9 +92,11 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         term.append_parent(so[gtype])
         term.set_species(identifier="4896", name="Schizosaccharomyces pombe")
         for hgnc_id in identifier_to_hgnc_ids.get(identifier, []):
-            term.append_relationship(orthologous, Reference("hgnc", hgnc_id))
+            term.append_relationship(orthologous, Reference(prefix="hgnc", identifier=hgnc_id))
         if uniprot_id and pd.notna(uniprot_id):
-            term.append_relationship(has_gene_product, Reference("uniprot", uniprot_id))
+            term.append_relationship(
+                has_gene_product, Reference(prefix="uniprot", identifier=uniprot_id)
+            )
         if synonyms and pd.notna(synonyms):
             for synonym in synonyms.split(","):
                 term.append_synonym(synonym.strip())

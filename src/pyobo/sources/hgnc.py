@@ -262,14 +262,14 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
         for uniprot_id in entry.pop("uniprot_ids", []):
             term.append_relationship(
                 has_gene_product,
-                Reference("uniprot", uniprot_id),
+                Reference("uniprot", identifier=uniprot_id),
             )
         for ec_code in entry.pop("enzyme_id", []):
             if "-" in ec_code:
                 continue  # only add concrete annotations
             term.append_relationship(
                 gene_product_member_of,
-                Reference("eccode", ec_code),
+                Reference(prefix="eccode", identifier=ec_code),
             )
         for rna_central_ids in entry.pop("rna_central_id", []):
             for rna_central_id in rna_central_ids.split(","):
@@ -282,8 +282,8 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
             term.append_relationship(
                 transcribes_to,
                 Reference(
-                    "mirbase",
-                    mirbase_id,
+                    prefix="mirbase",
+                    identifier=mirbase_id,
                 ),
             )
         snornabase_id = entry.pop("snornabase", None)

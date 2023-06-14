@@ -43,7 +43,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     it = tqdm(df.values, total=len(df.index), desc=f"mapping {PREFIX}")
     for identifier, name in it:
         yield Term(
-            reference=Reference(PREFIX, identifier=identifier, name=name),
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
         )
 
 

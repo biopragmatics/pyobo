@@ -53,7 +53,7 @@ def _get_term_from_tree(tree: ElementTree.ElementTree) -> Term:
     if identifier is None:
         raise ValueError
     term = Term(
-        reference=Reference(PREFIX, identifier, name),
+        reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
         definition=description,
     )
     for experiment in tree.findall("experiments"):
@@ -64,7 +64,7 @@ def _get_term_from_tree(tree: ElementTree.ElementTree) -> Term:
         term.append_relationship(
             has_part,
             Reference(
-                "gwascentral.experiment",
+                prefix="gwascentral.experiment",
                 identifier=experiment_identifier,
                 name=experiment_name,
             ),

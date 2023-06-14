@@ -55,13 +55,15 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
             # TODO add description
             term.set_species(taxonomy_id)
             if ec:
-                term.append_relationship(enables, Reference("eccode", _clean_ec(ec)))
+                term.append_relationship(
+                    enables, Reference(prefix="eccode", identifier=_clean_ec(ec))
+                )
             for pubmed in pubmeds.split(";"):
                 if pubmed:
-                    term.append_provenance(Reference("pubmed", pubmed.strip()))
+                    term.append_provenance(Reference(prefix="pubmed", identifier=pubmed.strip()))
             for pdb in pdbs.split(";"):
                 if pdb:
-                    term.append_xref(Reference("pdb", pdb.strip()))
+                    term.append_xref(Reference(prefix="pdb", identifier=pdb.strip()))
             yield term
 
 

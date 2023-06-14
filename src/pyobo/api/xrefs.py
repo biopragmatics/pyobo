@@ -108,7 +108,7 @@ def get_sssom_df(
     justification: str = "sempav:UnspecifiedMatching",
     **kwargs,
 ) -> pd.DataFrame:
-    """Get xrefs from a source as an SSSOM dataframe.
+    r"""Get xrefs from a source as an SSSOM dataframe.
 
     :param prefix: The ontology to look in for xrefs
     :param predicate_id: The predicate used in the SSSOM document. By default, ontologies

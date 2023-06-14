@@ -7,7 +7,6 @@ from collections import defaultdict
 from typing import Iterable, List, Mapping, Tuple
 
 import bioregistry
-import pandas as pd
 from pystow.utils import get_commit
 
 from pyobo import get_name_id_mapping
@@ -160,7 +159,7 @@ def _get_xref_df(version: str) -> Mapping[str, List[Reference]]:
     xrefs_df = xrefs_df[xrefs_df[0].notna()]
     xrefs_df = xrefs_df[xrefs_df[0] != "bel"]
     return multidict(
-        (identifier, Reference(xref_prefix, xref_identifier))
+        (identifier, Reference(prefix=xref_prefix, identifier=xref_identifier))
         for xref_prefix, xref_identifier, identifier in xrefs_df.values
     )
 

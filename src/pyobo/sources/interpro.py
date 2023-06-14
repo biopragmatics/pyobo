@@ -73,10 +73,12 @@ def iter_terms(*, version: str, proteins: bool = False, force: bool = False) -> 
             parents=[references[parent_id] for parent_id in parents.get(identifier, [])],
         )
         for go_id, go_name in interpro_to_gos.get(identifier, []):
-            term.append_relationship(enables, Reference("go", go_id, go_name))
+            term.append_relationship(
+                enables, Reference(prefix="go", identifier=go_id, name=go_name)
+            )
         term.append_property("type", entry_type)
         for uniprot_id in interpro_to_proteins.get(identifier, []):
-            term.append_relationship(has_member, Reference("uniprot", uniprot_id))
+            term.append_relationship(has_member, Reference(prefix="uniprot", identifier=uniprot_id))
         yield term
 
 
@@ -97,7 +99,7 @@ def get_interpro_tree(version: str, force: bool = False):
 
 def _parse_tree_helper(lines: Iterable[str]):
     rv1: DefaultDict[str, List[str]] = defaultdict(list)
-    previous_depth, previous_id = 0, None
+    previous_depth, previous_id = 0, ""
     stack = [previous_id]
 
     for line in lines:

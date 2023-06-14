@@ -70,7 +70,7 @@ def iter_terms(version: str) -> Iterable[Term]:
                 if inchi:
                     term.append_property("inchi", inchi)
                 if inchi_key:
-                    term.append_xref(Reference("inchikey", inchi_key))
+                    term.append_xref(Reference(prefix="inchikey", identifier=inchi_key))
                 yield term
 
 

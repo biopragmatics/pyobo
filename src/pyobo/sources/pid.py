@@ -94,7 +94,9 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
                 logger.debug(f"unmapped: {name}, {reference}")
 
         for hgnc_id, hgnc_symbol in genes:
-            term.append_relationship(has_participant, Reference("hgnc", hgnc_id, hgnc_symbol))
+            term.append_relationship(
+                has_participant, Reference(prefix="hgnc", identifier=hgnc_id, name=hgnc_symbol)
+            )
 
         yield term
 

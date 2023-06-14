@@ -78,7 +78,7 @@ def iter_terms() -> Iterable[Term]:
                 provenance.append(reference)
         identifier = row["Identifier"]
         yield Term(
-            reference=Reference(PREFIX, identifier, row["Name"]),
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=row["Name"]),
             definition=row["Description"],
             provenance=provenance,
             synonyms=synonyms.get(identifier, []),
