@@ -84,7 +84,7 @@ def iter_gilda_prediction_tuples(
                 normalize_identifier(target_prefix, scored_match.term.id),
                 scored_match.term.entry_name,
                 "semapv:LexicalMatching",
-                scored_match.score,
+                round(scored_match.score, 3),
             )
 
     if identifiers_are_names:
