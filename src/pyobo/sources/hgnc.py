@@ -41,10 +41,10 @@ DEFINITIONS_URL_FMT = (
     "archive/monthly/json/hgnc_complete_set_{version}.json"
 )
 
-previous_symbol_type = SynonymTypeDef(id="previous_symbol", name="previous symbol")
-alias_symbol_type = SynonymTypeDef(id="alias_symbol", name="alias symbol")
-previous_name_type = SynonymTypeDef(id="previous_name", name="previous name")
-alias_name_type = SynonymTypeDef(id="alias_name", name="alias name")
+previous_symbol_type = SynonymTypeDef.from_text("previous_symbol")
+alias_symbol_type = SynonymTypeDef.from_text("alias_symbol")
+previous_name_type = SynonymTypeDef.from_text("previous_name")
+alias_name_type = SynonymTypeDef.from_text("alias_name")
 
 #: First column is MIRIAM prefix, second column is HGNC key
 gene_xrefs = [
@@ -53,12 +53,13 @@ gene_xrefs = [
     ("cosmic", "cosmic"),
     ("vega", "vega_id"),
     ("ucsc", "ucsc_id"),
-    ("merops", "merops"),
+    ("merops.entry", "merops"),
     ("lncipedia", "lncipedia"),
     ("orphanet", "orphanet"),
     ("pseudogene", "pseudogene.org"),
     ("ena", "ena"),
     ("refseq", "refseq_accession"),
+    ("iuphar.receptor", "iuphar"),
     # ("mgi", "mgd_id"),
     ("ccds", "ccds_id"),
     # ("rgd", "rgd_id"),
@@ -198,7 +199,9 @@ class HGNCGetter(Obo):
         alias_name_type,
         alias_symbol_type,
     ]
-    root_terms = [Reference("SO", so_id) for so_id in sorted(set(LOCUS_TYPE_TO_SO.values()))]
+    root_terms = [
+        Reference(prefix="SO", identifier=so_id) for so_id in sorted(set(LOCUS_TYPE_TO_SO.values()))
+    ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -262,7 +265,7 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
         for uniprot_id in entry.pop("uniprot_ids", []):
             term.append_relationship(
                 has_gene_product,
-                Reference("uniprot", identifier=uniprot_id),
+                Reference(prefix="uniprot", identifier=uniprot_id),
             )
         for ec_code in entry.pop("enzyme_id", []):
             if "-" in ec_code:
@@ -294,7 +297,7 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
 
         for rgd_curie in entry.pop("rgd_id", []):
             if not rgd_curie.startswith("RGD:"):
-                logger.warning(f"hgnc:{identifier} had bad RGD CURIE: {rgd_curie}")
+                tqdm.write(f"hgnc:{identifier} had bad RGD CURIE: {rgd_curie}")
                 continue
             rgd_id = rgd_curie[len("RGD:") :]
             term.append_relationship(
@@ -303,7 +306,7 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
             )
         for mgi_curie in entry.pop("mgd_id", []):
             if not mgi_curie.startswith("MGI:"):
-                logger.warning(f"hgnc:{identifier} had bad MGI CURIE: {mgi_curie}")
+                tqdm.write(f"hgnc:{identifier} had bad MGI CURIE: {mgi_curie}")
                 continue
             mgi_id = mgi_curie[len("MGI:") :]
             if not mgi_id:
@@ -313,14 +316,40 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
                 Reference(prefix="mgi", identifier=mgi_id),
             )
 
+        iuphar = entry.pop("iuphar", None)
+        if iuphar:
+            if iuphar.startswith("objectId:"):
+                term.append_exact_match(
+                    Reference(prefix="iuphar.receptor", identifier=iuphar[len("objectId:") :])
+                )
+            elif iuphar.startswith("ligandId:"):
+                term.append_exact_match(
+                    Reference(prefix="iuphar.ligand", identifier=iuphar[len("ligandId:") :])
+                )
+            else:
+                tqdm.write(f"unhandled IUPHAR: {iuphar}")
+
         for xref_prefix, key in gene_xrefs:
             xref_identifiers = entry.pop(key, None)
             if xref_identifiers is None:
                 continue
-            if not isinstance(xref_identifiers, list):
-                xref_identifiers = [xref_identifiers]
-            for xref_identifier in xref_identifiers:
-                term.append_xref(Reference(prefix=xref_prefix, identifier=str(xref_identifier)))
+
+            if isinstance(xref_identifiers, (str, int)):
+                term.append_exact_match(
+                    Reference(prefix=xref_prefix, identifier=str(xref_identifiers))
+                )
+            elif isinstance(xref_identifiers, list):
+                if len(xref_identifiers) == 1:
+                    term.append_exact_match(
+                        Reference(prefix=xref_prefix, identifier=str(xref_identifiers[0]))
+                    )
+                else:
+                    for xref_identifier in xref_identifiers:
+                        term.append_xref(
+                            Reference(prefix=xref_prefix, identifier=str(xref_identifier))
+                        )
+            else:
+                raise TypeError
 
         for pubmed_id in entry.pop("pubmed_id", []):
             term.append_provenance(Reference(prefix="pubmed", identifier=str(pubmed_id)))

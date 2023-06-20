@@ -21,7 +21,7 @@ URL = (
 )
 INNER_PATH = "S288C_reference_genome_R64-2-1_20150113/saccharomyces_cerevisiae_R64-2-1_20150113.gff"
 
-alias_type = SynonymTypeDef(id="alias", name="alias")
+alias_type = SynonymTypeDef.from_text("alias")
 
 
 class SGDGetter(Obo):

@@ -10,6 +10,7 @@ from tqdm.auto import tqdm
 
 from pyobo import Obo, Reference
 from pyobo.constants import RAW_MODULE
+from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import Term, enables, from_species
 from pyobo.utils.io import open_reader
 
@@ -37,27 +38,22 @@ def get_obo(force: bool = False) -> Obo:
     return UniProtGetter(force=force)
 
 
-def _clean_ec(ec: str) -> str:
-    for _ in range(4):
-        ec = ec.rstrip("-").rstrip(".")
-    return ec
-
-
 def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
     """Iterate over UniProt Terms."""
     with open_reader(ensure(version=version, force=force)) as reader:
         _ = next(reader)  # header
-        for uniprot_id, name, taxonomy_id, _synonyms, ec, pubmeds, pdbs in tqdm(
+        for uniprot_id, name, taxonomy_id, _synonyms, ecs, pubmeds, pdbs in tqdm(
             reader, desc="Mapping UniProt", unit_scale=True
         ):
             term = Term.from_triple(prefix=PREFIX, identifier=uniprot_id, name=name)
             # TODO add gene encodes from relationship
             # TODO add description
             term.set_species(taxonomy_id)
-            if ec:
-                term.append_relationship(
-                    enables, Reference(prefix="eccode", identifier=_clean_ec(ec))
-                )
+            if ecs:
+                for ec in ecs.split(";"):
+                    term.append_relationship(
+                        enables, Reference(prefix="eccode", identifier=standardize_ec(ec))
+                    )
             for pubmed in pubmeds.split(";"):
                 if pubmed:
                     term.append_provenance(Reference(prefix="pubmed", identifier=pubmed.strip()))

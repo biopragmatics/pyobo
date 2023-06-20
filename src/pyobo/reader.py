@@ -133,8 +133,8 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
     }
 
     synonym_typedefs: Mapping[str, SynonymTypeDef] = {
-        synonym_typedef.id: synonym_typedef
-        for synonym_typedef in iterate_graph_synonym_typedefs(graph)
+        synonym_typedef.curie: synonym_typedef
+        for synonym_typedef in iterate_graph_synonym_typedefs(graph, ontology=ontology)
     }
 
     missing_typedefs = set()
@@ -305,12 +305,27 @@ def _get_name(graph, ontology: str) -> str:
     return rv
 
 
-def iterate_graph_synonym_typedefs(graph: nx.MultiDiGraph) -> Iterable[SynonymTypeDef]:
+def iterate_graph_synonym_typedefs(
+    graph: nx.MultiDiGraph, *, ontology: str, strict: bool = False
+) -> Iterable[SynonymTypeDef]:
     """Get synonym type definitions from an :mod:`obonet` graph."""
     for s in graph.graph.get("synonymtypedef", []):
         sid, name = s.split(" ", 1)
         name = name.strip().strip('"')
-        yield SynonymTypeDef(id=sid, name=name)
+        if sid.startswith("http://") or sid.startswith("https://"):
+            reference = Reference.from_iri(sid, name=name)
+        elif ":" not in sid:  # assume it's ad-hoc
+            reference = Reference(prefix=ontology, identifier=sid, name=name)
+        else:  # assume it's a curie
+            reference = Reference.from_curie(sid, name=name, strict=strict)
+
+        if reference is None:
+            if strict:
+                raise ValueError(f"Could not parse {sid}")
+            else:
+                continue
+
+        yield SynonymTypeDef(reference=reference)
 
 
 def iterate_graph_typedefs(
@@ -327,7 +342,7 @@ def iterate_graph_typedefs(
 
         name = typedef.get("name")
         if name is None:
-            logger.warning("[%s] typedef %s is missing a name", graph.graph["ontology"], curie)
+            logger.debug("[%s] typedef %s is missing a name", graph.graph["ontology"], curie)
 
         if ":" in curie:
             reference = Reference.from_curie(curie, name=name, strict=strict)
@@ -426,10 +441,18 @@ def _extract_synonym(
 
     stype: Optional[SynonymTypeDef] = None
     if specificity is not None:  # go fishing for a synonym type definition
-        for std in synonym_typedefs:
-            if rest.startswith(std):
-                stype = synonym_typedefs[std]
-                rest = rest[len(std) :].strip()
+        for _stype in synonym_typedefs.values():
+            # Since there aren't a lot of carefully defined synonym definitions, it
+            # can appear as a string or curie. Therefore, we might see temporary prefixes
+            # get added, so we should check against full curies as well as local unique
+            # identifiers
+            if rest.startswith(_stype.curie):
+                rest = rest[len(_stype.curie) :].strip()
+                stype = _stype
+                break
+            elif rest.startswith(_stype.identifier):
+                rest = rest[len(_stype.identifier) :].strip()
+                stype = _stype
                 break
 
     if not rest.startswith("[") or not rest.endswith("]"):

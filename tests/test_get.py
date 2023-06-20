@@ -44,9 +44,9 @@ class TestParseObonet(unittest.TestCase):
         self.assertEqual(
             sorted(
                 [
-                    SynonymTypeDef(id="IUPAC_NAME", name="IUPAC NAME"),
-                    SynonymTypeDef(id="BRAND_NAME", name="BRAND NAME"),
-                    SynonymTypeDef(id="INN", name="INN"),
+                    SynonymTypeDef.from_text("IUPAC NAME", lower=False),
+                    SynonymTypeDef.from_text("BRAND NAME", lower=False),
+                    SynonymTypeDef.from_text("INN", lower=False),
                 ],
                 key=attrgetter("id"),
             ),
@@ -88,7 +88,7 @@ class TestParseObonet(unittest.TestCase):
 
     def test_extract_synonym(self):
         """Test extracting synonym strings."""
-        iupac_name = SynonymTypeDef(id="IUPAC_NAME", name="IUPAC NAME")
+        iupac_name = SynonymTypeDef.from_text("IUPAC NAME", lower=False)
         synoynym_typedefs = {
             "IUPAC_NAME": iupac_name,
         }
@@ -132,7 +132,7 @@ class TestParseObonet(unittest.TestCase):
 
     def test_get_node_synonyms(self):
         """Test getting synonyms from a node in a :mod:`obonet` graph."""
-        iupac_name = SynonymTypeDef(id="IUPAC_NAME", name="IUPAC NAME")
+        iupac_name = SynonymTypeDef.from_text("IUPAC NAME", lower=False)
         synoynym_typedefs = {
             "IUPAC_NAME": iupac_name,
         }

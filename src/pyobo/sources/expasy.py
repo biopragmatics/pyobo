@@ -45,18 +45,19 @@ class ExpasyGetter(Obo):
     bioversions_key = ontology = PREFIX
     typedefs = [has_member, enables]
     root_terms = [
-        Reference("eccode", "1"),
-        Reference("eccode", "2"),
-        Reference("eccode", "3"),
-        Reference("eccode", "4"),
-        Reference("eccode", "5"),
-        Reference("eccode", "6"),
-        Reference("eccode", "7"),
+        Reference(prefix="eccode", identifier="1"),
+        Reference(prefix="eccode", identifier="2"),
+        Reference(prefix="eccode", identifier="3"),
+        Reference(prefix="eccode", identifier="4"),
+        Reference(prefix="eccode", identifier="5"),
+        Reference(prefix="eccode", identifier="6"),
+        Reference(prefix="eccode", identifier="7"),
     ]
     idspaces = {
         "uniprot": "https://bioregistry.io/uniprot:",
         "eccode": "https://bioregistry.io/eccode:",
-        "go": "http://purl.obolibrary.org/obo/GO_",
+        "GO": "http://purl.obolibrary.org/obo/GO_",
+        "RO": "http://purl.obolibrary.org/obo/RO_",
     }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -141,7 +142,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             )
         for go_id, go_name in ec2go.get(ec_code, []):
             term.append_relationship(
-                enables, Reference(prefix="go", identifier=go_id, name=go_name)
+                enables, Reference(prefix="GO", identifier=go_id, name=go_name)
             )
 
     return terms.values()

@@ -61,7 +61,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         if pd.notna(clan_id) and pd.notna(clan_name):
             parents.append(Reference(prefix="pfam.clan", identifier=clan_id, name=clan_name))
         yield Term(
-            reference=Reference(PREFIX, identifier=family_identifier, name=family_name),
+            reference=Reference(prefix=PREFIX, identifier=family_identifier, name=family_name),
             definition=definition,
             parents=parents,
         )

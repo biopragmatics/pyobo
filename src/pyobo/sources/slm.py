@@ -37,7 +37,7 @@ COLUMNS = [
     "PMID",
 ]
 
-abreviation_type = SynonymTypeDef(id="abbreviation", name="Abbreviation")
+abreviation_type = SynonymTypeDef.from_text("abbreviation")
 
 
 class SLMGetter(Obo):

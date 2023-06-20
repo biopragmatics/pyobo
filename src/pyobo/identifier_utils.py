@@ -19,6 +19,7 @@ from .registries import (
 __all__ = [
     "normalize_curie",
     "wrap_norm_prefix",
+    "standardize_ec",
 ]
 
 logger = logging.getLogger(__name__)
@@ -114,3 +115,11 @@ def wrap_norm_prefix(f):
         return f(norm_prefix, *args, **kwargs)
 
     return _wrapped
+
+
+def standardize_ec(ec: str) -> str:
+    """Standardize an EC code identifier by removing all trailing dashes and dots."""
+    ec = ec.strip()
+    for _ in range(4):
+        ec = ec.rstrip("-").rstrip(".")
+    return ec

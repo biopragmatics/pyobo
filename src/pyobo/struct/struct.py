@@ -64,7 +64,7 @@ from ..constants import (
 )
 from ..identifier_utils import normalize_curie
 from ..utils.io import multidict, write_iterable_tsv
-from ..utils.misc import obo_to_obograph, obo_to_owl
+from ..utils.misc import obo_to_owl
 from ..utils.path import get_prefix_obo_path, prefix_directory_join
 
 __all__ = [
@@ -94,7 +94,9 @@ class Synonym:
     specificity: SynonymSpecificity = "EXACT"
 
     #: The type of synonym. Must be defined in OBO document!
-    type: Optional["SynonymTypeDef"] = None
+    type: Optional["SynonymTypeDef"] = field(
+        default_factory=lambda: DEFAULT_SYNONYM_TYPE  # type:ignore
+    )
 
     #: References to articles where the synonym appears
     provenance: List[Reference] = field(default_factory=list)
@@ -106,7 +108,7 @@ class Synonym:
     def _fp(self) -> str:
         x = f'"{self._escape(self.name)}" {self.specificity}'
         if self.type:
-            x = f"{x} {self.type.id}"
+            x = f"{x} {self.type.curie}"
         return f"{x} [{comma_separate(self.provenance)}]"
 
     @staticmethod
@@ -115,36 +117,46 @@ class Synonym:
 
 
 @dataclass
-class SynonymTypeDef:
+class SynonymTypeDef(Referenced):
     """A type definition for synonyms in OBO."""
 
-    id: str  # should be a CURIE
-    name: str
+    reference: Reference
     specificity: Optional[SynonymSpecificity] = None
 
     def to_obo(self) -> str:
         """Serialize to OBO."""
+        rv = f'synonymtypedef: {self.curie} "{self.name}"'
         if self.specificity:
-            return f'synonymtypedef: {self.id} "{self.name}" {self.specificity}'
-        else:
-            return f'synonymtypedef: {self.id} "{self.name}"'
+            rv = f"{rv} {self.specificity}"
+        return rv
 
     @classmethod
     def from_text(
-        cls, text: str, specificity: Optional[SynonymSpecificity] = None
+        cls,
+        text: str,
+        specificity: Optional[SynonymSpecificity] = None,
+        *,
+        lower: bool = True,
     ) -> "SynonymTypeDef":
         """Get a type definition from text that's normalized."""
-        return cls(
-            id=text.lower()
-            .replace("-", "_")
+        identifier = (
+            text.replace("-", "_")
             .replace(" ", "_")
             .replace('"', "")
             .replace(")", "")
-            .replace("(", ""),
-            name=text.replace('"', ""),
+            .replace("(", "")
+        )
+        if lower:
+            identifier = identifier.lower()
+        return cls(
+            reference=Reference(prefix="obo", identifier=identifier, name=text.replace('"', "")),
             specificity=specificity,
         )
 
+
+DEFAULT_SYNONYM_TYPE = SynonymTypeDef(
+    reference=Reference(prefix="oboInOwl", identifier="SynonymType", name="Synonym"),
+)
 
 ReferenceHint = Union[Reference, "Term", Tuple[str, str], str]
 
@@ -537,6 +549,12 @@ class Obo:
         """Iterate over terms in this ontology."""
         raise NotImplementedError
 
+    def get_graph(self):
+        """Get an OBO Graph object."""
+        from ..obographs import graph_from_obo
+
+        return graph_from_obo(self)
+
     @classmethod
     def cli(cls) -> None:
         """Run the CLI for this class."""
@@ -552,15 +570,17 @@ class Obo:
         @force_option
         @click.option("--owl", is_flag=True, help="Write OWL via ROBOT")
         @click.option("--graph", is_flag=True, help="Write OBO Graph JSON via ROBOT")
+        @click.option("--nodes", is_flag=True, help="Write nodes file")
         @click.option(
             "--version", help="Specify data version to get. Use this if bioversions is acting up."
         )
-        def _main(force: bool, owl: bool, graph: bool, version: Optional[str]):
+        def _main(force: bool, owl: bool, graph: bool, nodes: bool, version: Optional[str]):
             inst = cls(force=force, data_version=version)
             inst.write_default(
                 write_obograph=graph,
                 write_obo=True,
                 write_owl=owl,
+                write_nodes=nodes,
                 force=force,
                 use_tqdm=True,
             )
@@ -692,7 +712,7 @@ class Obo:
 
     @property
     def _obograph_path(self) -> Path:
-        return self._path(name=f"{self.ontology}.json.gz")
+        return self._path(name=f"{self.ontology}.json")
 
     @property
     def _owl_path(self) -> Path:
@@ -702,6 +722,10 @@ class Obo:
     def _obonet_gz_path(self) -> Path:
         return self._path(name=f"{self.ontology}.obonet.json.gz")
 
+    @property
+    def _nodes_path(self) -> Path:
+        return self._path(name=f"{self.ontology}.nodes.tsv")
+
     def write_default(
         self,
         use_tqdm: bool = False,
@@ -710,6 +734,7 @@ class Obo:
         write_obonet: bool = False,
         write_obograph: bool = False,
         write_owl: bool = False,
+        write_nodes: bool = False,
     ) -> None:
         """Write the OBO to the default path."""
         metadata = self.get_metadata()
@@ -781,12 +806,19 @@ class Obo:
         if (write_obo or write_obograph or write_owl) and (not self._obo_path.exists() or force):
             self.write_obo(self._obo_path, use_tqdm=use_tqdm)
         if write_obograph:
-            obo_to_obograph(self._obo_path, self._obograph_path)
+            # obo_to_obograph(self._obo_path, self._obograph_path)
+            self._obograph_path.write_text(
+                self.get_graph().json(
+                    indent=2, ensure_ascii=False, exclude_none=True, exclude_unset=True
+                )
+            )
         if write_owl:
             obo_to_owl(self._obo_path, self._owl_path)
         if write_obonet and (not self._obonet_gz_path.exists() or force):
             logger.debug("writing obonet to %s", self._obonet_gz_path)
             self.write_obonet_gz(self._obonet_gz_path)
+        if write_nodes:
+            self.get_graph().get_nodes_df().to_csv(self._nodes_path, sep="\t", index=False)
 
     @property
     def _items_accessor(self):
@@ -1354,7 +1386,7 @@ def _convert_typedefs(typedefs: Optional[Iterable[TypeDef]]) -> List[Mapping[str
 def _convert_typedef(typedef: TypeDef) -> Mapping[str, Any]:
     """Convert a type def."""
     # TODO add more later
-    return typedef.reference.to_dict()
+    return typedef.reference.dict()
 
 
 def _convert_synonym_typedefs(synonym_typedefs: Optional[Iterable[SynonymTypeDef]]) -> List[str]:
@@ -1365,4 +1397,4 @@ def _convert_synonym_typedefs(synonym_typedefs: Optional[Iterable[SynonymTypeDef
 
 
 def _convert_synonym_typedef(synonym_typedef: SynonymTypeDef) -> str:
-    return f'{synonym_typedef.id} "{synonym_typedef.name}"'
+    return f'{synonym_typedef.curie} "{synonym_typedef.name}"'

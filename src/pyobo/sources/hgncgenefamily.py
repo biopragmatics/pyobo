@@ -29,7 +29,7 @@ HIERARCHY_URL = (
     "ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/csv/genefamily_db_tables/hierarchy.csv"
 )
 
-symbol_type = SynonymTypeDef(id="symbol", name="symbol")
+symbol_type = SynonymTypeDef.from_text("symbol")
 
 
 class HGNCGroupGetter(Obo):

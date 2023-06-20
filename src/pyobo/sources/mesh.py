@@ -11,6 +11,7 @@ from xml.etree.ElementTree import Element
 
 from tqdm.auto import tqdm
 
+from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import Obo, Reference, Synonym, Term
 from pyobo.utils.cache import cached_json, cached_mapping
 from pyobo.utils.io import parse_xml_gz
@@ -241,7 +242,7 @@ def _get_xrefs(element: Element) -> List[Tuple[str, str]]:
         elif registry_number.startswith("txid"):
             rv.append(("NCBITaxon", registry_number[4:]))
         elif registry_number.startswith("EC "):
-            rv.append(("eccode", registry_number[3:]))
+            rv.append(("eccode", standardize_ec(registry_number[3:])))
         elif CAS_RE.fullmatch(registry_number):
             rv.append(("cas", registry_number))
         elif UNII_RE.fullmatch(registry_number):

@@ -23,8 +23,8 @@ from pyobo.utils.path import ensure_df
 logger = logging.getLogger(__name__)
 PREFIX = "rgd"
 
-old_symbol_type = SynonymTypeDef(id="old_symbol", name="old symbol")
-old_name_type = SynonymTypeDef(id="old_name", name="old name")
+old_symbol_type = SynonymTypeDef.from_text("old_symbol")
+old_name_type = SynonymTypeDef.from_text("old_name")
 
 # NOTE unigene id was discontinue in January 18th, 2021 dump
 

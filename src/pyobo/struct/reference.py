@@ -2,13 +2,13 @@
 
 """Data structures for OBO."""
 
-from dataclasses import dataclass, field
-from typing import Mapping, Optional, Tuple
+from typing import Optional, Tuple
 
 import bioregistry
+import curies
+from pydantic import Field, validator
 
 from .utils import obo_escape
-from ..constants import DEFAULT_PATTERN, DEFAULT_PREFIX
 from ..identifier_utils import normalize_curie
 
 __all__ = [
@@ -17,17 +17,18 @@ __all__ = [
 ]
 
 
-@dataclass
-class Reference:
+class Reference(curies.Reference):
     """A namespace, identifier, and label."""
 
-    #: The namespace's keyword
-    prefix: str
+    name: Optional[str] = Field(description="the name of the reference")
 
-    #: The entity's identifier in the namespace
-    identifier: str
-
-    name: Optional[str] = field(default=None)
+    @validator("prefix")
+    def validate_prefix(cls, v):
+        """Validate the prefix for this reference."""
+        norm_prefix = bioregistry.normalize_prefix(v)
+        if norm_prefix is None:
+            raise ValueError(f"Unknown prefix: {v}")
+        return norm_prefix
 
     @classmethod
     def auto(cls, prefix: str, identifier: str) -> "Reference":
@@ -38,22 +39,13 @@ class Reference:
         return cls(prefix=prefix, identifier=identifier, name=name)
 
     @property
-    def curie(self) -> str:
-        """The CURIE for this reference."""  # noqa: D401
-        return f"{self.prefix}:{self.identifier}"
-
-    @property
     def bioregistry_link(self) -> str:
         """Get the bioregistry link."""
         return f"https://bioregistry.io/{self.curie}"
 
-    @property
-    def pair(self) -> Tuple[str, str]:
-        """The pair of namespace/identifier."""  # noqa: D401
-        return self.prefix, self.identifier
-
-    @staticmethod
+    @classmethod
     def from_curie(
+        cls,
         curie: str,
         name: Optional[str] = None,
         *,
@@ -68,25 +60,43 @@ class Reference:
         :param auto: Automatically look up name
         """
         prefix, identifier = normalize_curie(curie, strict=strict)
+        return cls._materialize(prefix=prefix, identifier=identifier, name=name, auto=auto)
+
+    @classmethod
+    def from_iri(
+        cls,
+        iri: str,
+        name: Optional[str] = None,
+        *,
+        auto: bool = False,
+    ) -> Optional["Reference"]:
+        """Get a reference from an IRI using the Bioregistry.
+
+        :param iri: The IRI to parse
+        :param name: The name associated with the CURIE
+        :param auto: Automatically look up name
+        """
+        prefix, identifier = bioregistry.parse_iri(iri)
+        return cls._materialize(prefix=prefix, identifier=identifier, name=name, auto=auto)
+
+    @classmethod
+    def _materialize(
+        cls,
+        prefix: Optional[str],
+        identifier: Optional[str],
+        name: Optional[str] = None,
+        *,
+        auto: bool = False,
+    ) -> Optional["Reference"]:
         if prefix is None or identifier is None:
             return None
         if name is None and auto:
-            return Reference.auto(prefix=prefix, identifier=identifier)
-        return Reference(prefix=prefix, identifier=identifier, name=name)
+            return cls.auto(prefix=prefix, identifier=identifier)
+        return cls(prefix=prefix, identifier=identifier, name=name)
 
     @property
     def _escaped_identifier(self):
         return obo_escape(self.identifier)
-
-    def to_dict(self) -> Mapping[str, str]:
-        """Return the reference as a dictionary."""
-        rv = {
-            "prefix": self.prefix,
-            "identifier": self.identifier,
-        }
-        if self.name:
-            rv["name"] = self.name
-        return rv
 
     def __str__(self):  # noqa: D105
         identifier_lower = self.identifier.lower()
