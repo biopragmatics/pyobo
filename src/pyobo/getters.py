@@ -51,6 +51,9 @@ class NoBuild(RuntimeError):
 class UnhandledFormat(NoBuild):
     """Only OWL is available."""
 
+#: The following prefixes can not be loaded through ROBOT without
+#: turning off integrity checks
+REQUIRES_NO_ROBOT_CHECK = {"clo"}
 
 @wrap_norm_prefix
 def get_ontology(
@@ -118,6 +121,8 @@ def get_ontology(
         from bioontologies import robot
 
         _converted_obo_path = path.with_suffix(".obo")
+        if prefix in REQUIRES_NO_ROBOT_CHECK:
+            robot_check = False
         robot.convert(path, _converted_obo_path, check=robot_check)
         path = _converted_obo_path
     else:
