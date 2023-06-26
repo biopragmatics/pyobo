@@ -23,7 +23,7 @@ class Reference(curies.Reference):
     name: Optional[str] = Field(description="the name of the reference")
 
     @validator("prefix")
-    def validate_prefix(cls, v):
+    def validate_prefix(cls, v):  # noqa
         """Validate the prefix for this reference."""
         norm_prefix = bioregistry.normalize_prefix(v)
         if norm_prefix is None:
