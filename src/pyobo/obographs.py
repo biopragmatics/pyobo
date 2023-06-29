@@ -1,6 +1,6 @@
 """Convert PyOBO into OBO Graph."""
 
-from typing import List
+from typing import Iterable, List
 
 import bioregistry
 import curies
@@ -111,7 +111,7 @@ def _get_class_node(term: Term) -> Node:
     )
 
 
-def _iter_edges(term: Term) -> List[Edge]:
+def _iter_edges(term: Term) -> Iterable[Edge]:
     for parent in term.parents:
         yield Edge.from_parsed(
             _rewire(term.reference),
