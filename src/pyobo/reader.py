@@ -26,6 +26,7 @@ from .struct import (
     TypeDef,
     make_ad_hoc_ontology,
 )
+from .struct.struct import DEFAULT_SYNONYM_TYPE
 from .struct.typedef import default_typedefs, develops_from, has_part, part_of
 from .utils.misc import cleanup_version
 
@@ -126,14 +127,12 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
         for prefix, identifier, data in _iter_obo_graph(graph=graph, strict=strict)
     )
     references: Mapping[Tuple[str, str], Reference] = {
-        reference.pair: reference
-        for reference in reference_it
+        reference.pair: reference for reference in reference_it
     }
 
     #: CURIEs to typedefs
     typedefs: Mapping[Tuple[str, str], TypeDef] = {
-        typedef.pair: typedef
-        for typedef in iterate_graph_typedefs(graph, ontology)
+        typedef.pair: typedef for typedef in iterate_graph_typedefs(graph, ontology)
     }
 
     synonym_typedefs: Mapping[str, SynonymTypeDef] = {
@@ -465,7 +464,12 @@ def _extract_synonym(
         return None
 
     provenance = _parse_trailing_ref_list(rest, strict=strict)
-    return Synonym(name=name, specificity=specificity or "EXACT", type=stype, provenance=provenance)
+    return Synonym(
+        name=name,
+        specificity=specificity or "EXACT",
+        type=stype or DEFAULT_SYNONYM_TYPE,
+        provenance=provenance,
+    )
 
 
 def _parse_trailing_ref_list(rest, *, strict: bool = True):

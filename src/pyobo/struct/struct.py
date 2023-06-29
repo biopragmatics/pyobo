@@ -94,7 +94,7 @@ class Synonym:
     specificity: SynonymSpecificity = "EXACT"
 
     #: The type of synonym. Must be defined in OBO document!
-    type: Optional["SynonymTypeDef"] = field(
+    type: "SynonymTypeDef" = field(
         default_factory=lambda: DEFAULT_SYNONYM_TYPE  # type:ignore
     )
 

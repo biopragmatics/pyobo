@@ -28,6 +28,7 @@ class TestParseObonet(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         """Set up the test case with a mock ChEBI OBO."""
+        cls.ontology = "chebi"
         cls.graph = obonet.read_obo(TEST_CHEBI_OBO_PATH)
 
     def test_get_graph_typedefs(self):
@@ -40,15 +41,18 @@ class TestParseObonet(unittest.TestCase):
 
     def test_get_graph_synonym_typedefs(self):
         """Test getting synonym type definitions from an :mod:`obonet` graph."""
-        synonym_typedefs = sorted(iterate_graph_synonym_typedefs(self.graph), key=attrgetter("id"))
+        synonym_typedefs = sorted(
+            iterate_graph_synonym_typedefs(self.graph, ontology=self.ontology),
+            key=attrgetter("curie"),
+        )
         self.assertEqual(
             sorted(
                 [
-                    SynonymTypeDef.from_text("IUPAC NAME", lower=False),
-                    SynonymTypeDef.from_text("BRAND NAME", lower=False),
-                    SynonymTypeDef.from_text("INN", lower=False),
+                    SynonymTypeDef(reference=Reference(prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME")),
+                    SynonymTypeDef(reference=Reference(prefix="chebi", identifier="BRAND_NAME", name="BRAND NAME")),
+                    SynonymTypeDef(reference=Reference(prefix="chebi", identifier="INN", name="INN")),
                 ],
-                key=attrgetter("id"),
+                key=attrgetter("curie"),
             ),
             synonym_typedefs,
         )
@@ -93,7 +97,7 @@ class TestParseObonet(unittest.TestCase):
             "IUPAC_NAME": iupac_name,
         }
 
-        for synonym, s in [
+        for expected_synonym, text in [
             (
                 Synonym(
                     name="LTEC I",
@@ -124,11 +128,12 @@ class TestParseObonet(unittest.TestCase):
                 '"LTEC I" []',
             ),
         ]:
-            with self.subTest(s=s):
-                self.assertEqual(
-                    synonym,
-                    _extract_synonym(s, synoynym_typedefs, prefix="chebi", identifier="XXX"),
+            with self.subTest(s=text):
+                actual_synonym = _extract_synonym(
+                    text, synoynym_typedefs, prefix="chebi", identifier="XXX"
                 )
+                self.assertIsInstance(actual_synonym, Synonym)
+                self.assertEqual(expected_synonym, actual_synonym)
 
     def test_get_node_synonyms(self):
         """Test getting synonyms from a node in a :mod:`obonet` graph."""

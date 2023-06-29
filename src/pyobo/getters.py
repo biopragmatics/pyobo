@@ -51,9 +51,11 @@ class NoBuild(RuntimeError):
 class UnhandledFormat(NoBuild):
     """Only OWL is available."""
 
+
 #: The following prefixes can not be loaded through ROBOT without
 #: turning off integrity checks
 REQUIRES_NO_ROBOT_CHECK = {"clo"}
+
 
 @wrap_norm_prefix
 def get_ontology(

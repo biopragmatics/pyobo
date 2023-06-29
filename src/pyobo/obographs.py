@@ -1,6 +1,6 @@
 """Convert PyOBO into OBO Graph."""
 
-from typing import List, Optional
+from typing import List
 
 import bioregistry
 import curies
@@ -19,6 +19,7 @@ from bioontologies.obograph import (
 from bioontologies.robot import ParseResults
 
 from pyobo.struct import Obo, Reference, Term
+from pyobo.struct.typedef import is_a
 
 __all__ = [
     "graph_from_obo",
@@ -38,7 +39,7 @@ def graph_from_obo(obo: Obo) -> Graph:
     edges: List[Edge] = []
     for term in obo:
         nodes.append(_get_class_node(term))
-        edges.extend(_get_edges(term))
+        edges.extend(_iter_edges(term))
     return Graph(
         id=bioregistry.get_bioregistry_iri("bioregistry", obo.ontology),
         prefix=obo.ontology,
@@ -63,7 +64,9 @@ def _get_class_node(term: Term) -> Node:
     if not term.definition:
         definition = None
     else:
-        definition = Definition(value=term.definition, xrefs=[p.curie for p in term.provenance])
+        definition = Definition.from_parsed(
+            value=term.definition, references=[_rewire(p) for p in term.provenance]
+        )
 
     if term.xrefs:
         if not term.xref_types:
@@ -74,25 +77,18 @@ def _get_class_node(term: Term) -> Node:
             raise ValueError
 
     xrefs = [
-        Xref(
-            val=xref.bioregistry_link,
-            value=_rewire(xref),
-            predicate_raw=xref_type.curie,
+        Xref.from_parsed(
             predicate=_rewire(xref_type),
-            standardized=True,
+            value=_rewire(xref),
         )
         for xref, xref_type in zip(term.xrefs, term.xref_types)
     ]
     default_st = Reference(prefix="oboInOwl", identifier="SynonymType")
     synonyms = [
-        Synonym(
-            val=synonym.name,
-            predicate_raw=OBO_SYNONYM_TO_OIO[synonym.specificity],
+        Synonym.from_parsed(
+            name=synonym.name,
             predicate=OIO_TO_REFERENCE[OBO_SYNONYM_TO_OIO[synonym.specificity]],
-            synonym_type_raw=synonym.type.curie if synonym.type else "oboInOwl:SynonymType",
             synonym_type=_rewire(synonym.type.reference) if synonym.type else default_st,
-            standardized=True,
-            xrefs_raw=[x.curie for x in synonym.provenance],
             references=[_rewire(x) for x in synonym.provenance],
         )
         for synonym in term.synonyms
@@ -110,23 +106,23 @@ def _get_class_node(term: Term) -> Node:
         lbl=term.name,
         meta=meta,
         type="CLASS",
-        reference=curies.Reference(
-            prefix=term.prefix,
-            identifier=term.identifier,
-        ),
+        reference=_rewire(term.reference),
         standardized=True,
     )
 
 
-def _get_edges(term: Term) -> List[Edge]:
-    rv = []
+def _iter_edges(term: Term) -> List[Edge]:
+    for parent in term.parents:
+        yield Edge.from_parsed(
+            _rewire(term.reference),
+            _rewire(is_a.reference),
+            _rewire(parent),
+        )
+
     for typedef, targets in term.relationships.items():
         for target in targets:
-            rv.append(
-                Edge(
-                    sub=term.curie,
-                    pred=typedef.curie,
-                    obj=target.curie,
-                )
+            yield Edge.from_parsed(
+                _rewire(term.reference),
+                _rewire(typedef.reference),
+                _rewire(target),
             )
-    return rv
