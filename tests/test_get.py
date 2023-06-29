@@ -48,9 +48,19 @@ class TestParseObonet(unittest.TestCase):
         self.assertEqual(
             sorted(
                 [
-                    SynonymTypeDef(reference=Reference(prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME")),
-                    SynonymTypeDef(reference=Reference(prefix="chebi", identifier="BRAND_NAME", name="BRAND NAME")),
-                    SynonymTypeDef(reference=Reference(prefix="chebi", identifier="INN", name="INN")),
+                    SynonymTypeDef(
+                        reference=Reference(
+                            prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME"
+                        )
+                    ),
+                    SynonymTypeDef(
+                        reference=Reference(
+                            prefix="chebi", identifier="BRAND_NAME", name="BRAND NAME"
+                        )
+                    ),
+                    SynonymTypeDef(
+                        reference=Reference(prefix="chebi", identifier="INN", name="INN")
+                    ),
                 ],
                 key=attrgetter("curie"),
             ),
