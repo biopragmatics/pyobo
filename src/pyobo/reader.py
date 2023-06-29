@@ -116,19 +116,23 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
         raise ValueError(f"[{ontology}] will not accept slash in data version: {data_version}")
 
     #: Parsed CURIEs to references (even external ones)
-    references: Mapping[Tuple[str, str], Reference] = {
-        (prefix, identifier): Reference(
+    reference_it = (
+        Reference(
             prefix=prefix,
-            identifier=identifier,
+            identifier=bioregistry.standardize_identifier(prefix, identifier),
             # if name isn't available, it means its external to this ontology
             name=data.get("name"),
         )
         for prefix, identifier, data in _iter_obo_graph(graph=graph, strict=strict)
+    )
+    references: Mapping[Tuple[str, str], Reference] = {
+        reference.pair: reference
+        for reference in reference_it
     }
 
     #: CURIEs to typedefs
     typedefs: Mapping[Tuple[str, str], TypeDef] = {
-        (typedef.prefix, typedef.identifier): typedef
+        typedef.pair: typedef
         for typedef in iterate_graph_typedefs(graph, ontology)
     }
 
@@ -144,6 +148,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
         if prefix != ontology or not data:
             continue
 
+        identifier = bioregistry.standardize_identifier(prefix, identifier)
         reference = references[ontology, identifier]
 
         try:
