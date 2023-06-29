@@ -264,7 +264,7 @@ class Term(Referenced):
     ) -> None:
         """Add a synonym."""
         if isinstance(synonym, str):
-            synonym = Synonym(synonym, type=type)
+            synonym = Synonym(synonym, type=type or DEFAULT_SYNONYM_TYPE)
         self.synonyms.append(synonym)
 
     def append_alt(self, alt: Union[str, Reference]) -> None:
