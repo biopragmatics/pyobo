@@ -292,7 +292,11 @@
         "SKY/M-FISH/CGH",
         "LINCS_HMS",
         "CCLV",
-        "Cosmic-CLP:"
+        "Cosmic-CLP:",
+        "PubChem_Cell_line:CVCL_",
+        "Rockland:",
+        "CancerTools:",
+        "Innoprot:"
       ],
       "oba": [
         "AUTO:patterns"
@@ -428,6 +432,9 @@
       "TKG:TKG ": "TKG:",
       "KCB:KCB ": "KCB:",
       "CVCL_": "cellosaurus:CVCL_",
+      "EGA:EGAS": "ega.study:EGAS",
+      "EGA:phs": "ega.study:phs",
+      "EGA:EGAD": "ega.study:EGAD",
       "KEGG COMPOUND": "KEGG.COMPOUND",
       "KEGG DRUG": "KEGG.DRUG",
       "LIPID MAPS:": "LIPIDMAPS:",
