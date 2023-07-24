@@ -110,7 +110,7 @@ def normalize_identifier(prefix: str, identifier: str) -> str:
     resource = bioregistry.get_resource(prefix)
     if resource is None:
         raise KeyError
-    return resource.miriam_standardize_identifier(identifier)
+    return resource.miriam_standardize_identifier(identifier) or identifier
 
 
 def get_grounder(
