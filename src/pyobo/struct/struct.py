@@ -107,7 +107,7 @@ class Synonym:
 
     def _fp(self) -> str:
         x = f'"{self._escape(self.name)}" {self.specificity}'
-        if self.type:
+        if self.type and self.type.pair != DEFAULT_SYNONYM_TYPE.pair:
             x = f"{x} {self.type.curie}"
         return f"{x} [{comma_separate(self.provenance)}]"
 
