@@ -617,7 +617,7 @@ class Obo:
         for prefix, url in sorted((self.idspaces or {}).items()):
             yield f"idspace: {prefix} {url}"
 
-        for synonym_typedef in sorted((self.synonym_typedefs or []), key=attrgetter("id")):
+        for synonym_typedef in sorted((self.synonym_typedefs or []), key=attrgetter("curie")):
             yield synonym_typedef.to_obo()
 
         yield f"ontology: {self.ontology}"
