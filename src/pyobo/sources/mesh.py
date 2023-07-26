@@ -186,7 +186,7 @@ def get_descriptor_records(element: Element, id_key: str, name_key) -> List[Dict
 
 def get_scope_note(descriptor_record) -> Optional[str]:
     """Get the scope note from the preferred concept in a term's record."""
-    for concept in descriptor_record["concepts"]:
+    for concept in descriptor_record:
         scope_note = concept.get("ScopeNote")
         if scope_note is not None:
             return scope_note.replace("\\n", "\n").strip()
