@@ -125,13 +125,13 @@ def get_terms(*, version: str, use_tqdm: bool = True, force: bool = False) -> It
         synonyms = []
         for synonym in raw_synonyms:
             if synonym.startswith("CHEBI:"):
-                xrefs.append(Reference(prefix="chebi", identifier=synonym))
+                xrefs.append(Reference(prefix="chebi", identifier=synonym.removeprefix("CHEBI:")))
             elif synonym.startswith("CHEMBL"):
                 xrefs.append(Reference(prefix="chembl", identifier=synonym))
             elif synonym.startswith("InChI="):
                 xrefs.append(Reference(prefix="inchi", identifier=synonym))
-            elif synonym.startswith("SCHEMBL"):
-                xrefs.append(Reference(prefix="schembl", identifier=synonym))
+            # elif synonym.startswith("SCHEMBL"):
+            #     xrefs.append(Reference(prefix="schembl", identifier=synonym))
             else:
                 synonyms.append(Synonym(name=synonym))
             # TODO check other xrefs
