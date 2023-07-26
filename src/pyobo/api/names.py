@@ -43,10 +43,17 @@ X = TypeVar("X")
 NO_BUILD_PREFIXES = set()
 
 
-def _help_get(f: Callable[[str], Mapping[str, X]], prefix: str, identifier: str) -> Optional[X]:
+def _help_get(
+    f: Callable[[str], Mapping[str, X]],
+    prefix: str,
+    identifier: str,
+    force: bool = False,
+    strict: bool = False,
+    version: Optional[str] = None,
+) -> Optional[X]:
     """Get the result for an entity based on a mapping maker function ``f``."""
     try:
-        mapping = f(prefix)
+        mapping = f(prefix, force=force, strict=strict, version=version)  # type:ignore
     except NoBuild:
         if prefix not in NO_BUILD_PREFIXES:
             logger.warning("[%s] unable to look up results with %s", prefix, f)
@@ -72,7 +79,7 @@ def get_name(prefix: str, identifier: str) -> Optional[str]:
 @lru_cache()
 @wrap_norm_prefix
 def get_ids(
-    prefix: str, force: bool = False, strict: bool = True, version: Optional[str] = None
+    prefix: str, force: bool = False, strict: bool = False, version: Optional[str] = None
 ) -> Set[str]:
     """Get the set of identifiers for this prefix."""
     if prefix == "ncbigene":
@@ -104,7 +111,7 @@ def get_ids(
 @lru_cache()
 @wrap_norm_prefix
 def get_id_name_mapping(
-    prefix: str, force: bool = False, strict: bool = True, version: Optional[str] = None
+    prefix: str, *, force: bool = False, strict: bool = False, version: Optional[str] = None
 ) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == "ncbigene":
@@ -151,8 +158,9 @@ def get_definition(prefix: str, identifier: str) -> Optional[str]:
 
 def get_id_definition_mapping(
     prefix: str,
+    *,
     force: bool = False,
-    strict: bool = True,
+    strict: bool = False,
     version: Optional[str] = None,
 ) -> Mapping[str, str]:
     """Get a mapping of descriptions."""
@@ -180,8 +188,9 @@ def get_synonyms(prefix: str, identifier: str) -> Optional[List[str]]:
 @wrap_norm_prefix
 def get_id_synonyms_mapping(
     prefix: str,
+    *,
     force: bool = False,
-    strict: bool = True,
+    strict: bool = False,
     version: Optional[str] = None,
 ) -> Mapping[str, List[str]]:
     """Get the OBO file and output a synonym dictionary."""
