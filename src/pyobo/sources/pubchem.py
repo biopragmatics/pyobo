@@ -7,6 +7,7 @@ from typing import Iterable, Mapping, Optional
 
 import bioversions
 import pandas as pd
+from bioregistry.utils import removeprefix
 from tqdm.auto import tqdm
 
 from ..api import get_name_id_mapping
@@ -125,7 +126,7 @@ def get_terms(*, version: str, use_tqdm: bool = True, force: bool = False) -> It
         synonyms = []
         for synonym in raw_synonyms:
             if synonym.startswith("CHEBI:"):
-                xrefs.append(Reference(prefix="chebi", identifier=synonym.removeprefix("CHEBI:")))
+                xrefs.append(Reference(prefix="chebi", identifier=removeprefix(synonym, "CHEBI:")))
             elif synonym.startswith("CHEMBL"):
                 xrefs.append(Reference(prefix="chembl", identifier=synonym))
             elif synonym.startswith("InChI="):
