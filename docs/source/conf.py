@@ -26,11 +26,9 @@ extensions = [
     "sphinx.ext.todo",
     # 'sphinx.ext.mathjax',
     "sphinx.ext.viewcode",
-    "sphinx_autodoc_typehints",
     "sphinx_click.ext",
     "sphinx_automodapi.automodapi",
     "sphinx_automodapi.smart_resolver",
-    # 'texext',
 ]
 
 # Add any paths that contain templates here, relative to this directory.

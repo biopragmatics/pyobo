@@ -20,7 +20,7 @@ __all__ = [
 class Reference(curies.Reference):
     """A namespace, identifier, and label."""
 
-    name: Optional[str] = Field(description="the name of the reference")
+    name: Optional[str] = Field(default=None, description="the name of the reference")
 
     @validator("prefix")
     def validate_prefix(cls, v):  # noqa
