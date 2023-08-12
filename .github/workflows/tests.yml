@@ -60,6 +60,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest ]
         python-version: [ "3.8", "3.11" ]
+        pydantic: [ "pydantic1", "pydantic2" ]
         exclude:
           - os: windows-latest
             python-version: 3.8
@@ -77,4 +78,4 @@ jobs:
           pip install tox
       - name: Test with pytest
         run:
-          tox -e py
+          tox -e py-${{ matrix.pydantic }}

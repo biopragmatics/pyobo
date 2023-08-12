@@ -26,11 +26,9 @@ extensions = [
     "sphinx.ext.todo",
     # 'sphinx.ext.mathjax',
     "sphinx.ext.viewcode",
-    "sphinx_autodoc_typehints",
     "sphinx_click.ext",
     "sphinx_automodapi.automodapi",
     "sphinx_automodapi.smart_resolver",
-    # 'texext',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -60,7 +58,7 @@ author = "Charles Tapley Hoyt"
 #
 
 # The full version, including alpha/beta/rc tags.
-release = "0.9.3-dev"
+release = "0.10.0-dev"
 
 # The short X.Y version.
 parsed_version = re.match(
