@@ -106,6 +106,7 @@ def get_sssom_df(
     *,
     predicate_id: str = "oboinowl:hasDbXref",
     justification: str = "sempav:UnspecifiedMatching",
+    names: bool = True,
     **kwargs,
 ) -> pd.DataFrame:
     r"""Get xrefs from a source as an SSSOM dataframe.
@@ -115,6 +116,7 @@ def get_sssom_df(
         don't typically ascribe semantics to xrefs so ``oboinowl:hasDbXref`` is used
     :param justification: The justification for the mapping. By default, ontologies
         don't typically ascribe semantics, so this is left with `sempav:UnspecifiedMatching`
+    :param names: Add name columns (``subject_label`` and ``object_label``)
     :returns: A SSSOM-compliant dataframe of xrefs
 
     For example, if you want to get UMLS as an SSSOM dataframe, you can do
@@ -128,28 +130,49 @@ def get_sssom_df(
     from .names import get_name
 
     df = get_xrefs_df(prefix=prefix, **kwargs)
+    rows = []
     with logging_redirect_tqdm():
-        rows = [
-            (
+        for source_id, target_prefix, target_id in tqdm(df.values, unit="mapping", unit_scale=True):
+            row = (
                 bioregistry.curie_to_str(prefix, source_id),
-                get_name(prefix, source_id) or "",
                 bioregistry.curie_to_str(target_prefix, target_id),
-                get_name(target_prefix, target_id),
                 predicate_id,
                 justification,
             )
-            for source_id, target_prefix, target_id in tqdm(
-                df.values, unit="mapping", unit_scale=True
-            )
-        ]
-    return pd.DataFrame(
+            if names:
+                row = (*row, get_name(prefix, source_id) or "", get_name(target_prefix, target_id))
+            rows.append(row)
+
+    if not names:
+        return pd.DataFrame(
+            rows,
+            columns=[
+                "subject_id",
+                "object_id",
+                "predicate_id",
+                "mapping_justification",
+            ],
+        )
+
+    df = pd.DataFrame(
         rows,
         columns=[
+            "subject_id",
+            "object_id",
+            "predicate_id",
+            "mapping_justification",
+            "subject_label",
+            "object_label",
+        ],
+    )
+    # reorder columns
+    return df[
+        [
             "subject_id",
             "subject_label",
             "object_id",
             "object_label",
             "predicate_id",
             "mapping_justification",
-        ],
-    )
+        ]
+    ]
