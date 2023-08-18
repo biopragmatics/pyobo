@@ -4,7 +4,7 @@
 
 import logging
 from functools import lru_cache
-from typing import Mapping, Optional, Tuple, List
+from typing import List, Mapping, Optional, Tuple
 
 import bioregistry
 import pandas as pd
