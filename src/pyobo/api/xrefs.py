@@ -4,7 +4,7 @@
 
 import logging
 from functools import lru_cache
-from typing import Mapping, Optional
+from typing import Mapping, Optional, Tuple, List
 
 import bioregistry
 import pandas as pd
@@ -137,7 +137,7 @@ def get_sssom_df(
     from .names import get_name
 
     df = get_xrefs_df(prefix=prefix, **kwargs)
-    rows = []
+    rows: List[Tuple[str, ...]] = []
     with logging_redirect_tqdm():
         for source_id, target_prefix, target_id in tqdm(df.values, unit="mapping", unit_scale=True):
             if names:
