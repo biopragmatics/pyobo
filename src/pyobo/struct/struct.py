@@ -624,11 +624,10 @@ class Obo:
 
         if self.name is None:
             raise ValueError("ontology is missing name")
-        yield f"property_value: http://purl.org/dc/elements/1.1/title \"{self.name}\" xsd:string"
+        yield f'property_value: http://purl.org/dc/elements/1.1/title "{self.name}" xsd:string'
 
         for root_term in self.root_terms or []:
             yield f"property_value: IAO:0000700 {root_term.curie}"
-
 
         for typedef in sorted(self.typedefs or [], key=attrgetter("curie")):
             yield from typedef.iterate_obo_lines()
