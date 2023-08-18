@@ -137,7 +137,9 @@ def get_sssom_df(
                 rows.append(
                     (
                         bioregistry.curie_to_str(prefix, source_id),
+                        get_name(prefix, source_id) or "",
                         bioregistry.curie_to_str(target_prefix, target_id),
+                        get_name(target_prefix, target_id),
                         predicate_id,
                         justification,
                     )
@@ -146,9 +148,7 @@ def get_sssom_df(
                 rows.append(
                     (
                         bioregistry.curie_to_str(prefix, source_id),
-                        get_name(prefix, source_id) or "",
                         bioregistry.curie_to_str(target_prefix, target_id),
-                        get_name(target_prefix, target_id),
                         predicate_id,
                         justification,
                     )
