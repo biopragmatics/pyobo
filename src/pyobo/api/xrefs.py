@@ -133,41 +133,29 @@ def get_sssom_df(
     rows = []
     with logging_redirect_tqdm():
         for source_id, target_prefix, target_id in tqdm(df.values, unit="mapping", unit_scale=True):
-            row = (
-                bioregistry.curie_to_str(prefix, source_id),
-                bioregistry.curie_to_str(target_prefix, target_id),
-                predicate_id,
-                justification,
-            )
             if names:
-                row = (*row, get_name(prefix, source_id) or "", get_name(target_prefix, target_id))
-            rows.append(row)
+                rows.append(
+                    (
+                        bioregistry.curie_to_str(prefix, source_id),
+                        bioregistry.curie_to_str(target_prefix, target_id),
+                        predicate_id,
+                        justification,
+                    )
+                )
+            else:
+                rows.append(
+                    (
+                        bioregistry.curie_to_str(prefix, source_id),
+                        get_name(prefix, source_id) or "",
+                        bioregistry.curie_to_str(target_prefix, target_id),
+                        get_name(target_prefix, target_id),
+                        predicate_id,
+                        justification,
+                    )
+                )
 
-    if not names:
-        return pd.DataFrame(
-            rows,
-            columns=[
-                "subject_id",
-                "object_id",
-                "predicate_id",
-                "mapping_justification",
-            ],
-        )
-
-    df = pd.DataFrame(
-        rows,
-        columns=[
-            "subject_id",
-            "object_id",
-            "predicate_id",
-            "mapping_justification",
-            "subject_label",
-            "object_label",
-        ],
-    )
-    # reorder columns
-    return df[
-        [
+    if names:
+        columns = [
             "subject_id",
             "subject_label",
             "object_id",
@@ -175,4 +163,11 @@ def get_sssom_df(
             "predicate_id",
             "mapping_justification",
         ]
-    ]
+    else:
+        columns = [
+            "subject_id",
+            "object_id",
+            "predicate_id",
+            "mapping_justification",
+        ]
+    return pd.DataFrame(rows, columns=columns)
