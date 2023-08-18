@@ -125,6 +125,13 @@ def get_sssom_df(
     >>> df = pyobo.get_sssom_df("umls")
     >>> df.to_csv("umls.sssom.tsv", sep="\t", index=False)
 
+    If you don't want to get all of the many resources required to add
+    names, you can pass ``names=False``
+
+    >>> import pyobo
+    >>> df = pyobo.get_sssom_df("umls", names=False)
+    >>> df.to_csv("umls.sssom.tsv", sep="\t", index=False)
+
     .. note:: This assumes the Bioregistry as the prefix map
     """
     from .names import get_name
