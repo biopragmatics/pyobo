@@ -4,7 +4,7 @@
 
 import logging
 from functools import lru_cache
-from typing import Mapping, Optional
+from typing import List, Mapping, Optional, Tuple
 
 import bioregistry
 import pandas as pd
@@ -106,6 +106,7 @@ def get_sssom_df(
     *,
     predicate_id: str = "oboinowl:hasDbXref",
     justification: str = "sempav:UnspecifiedMatching",
+    names: bool = True,
     **kwargs,
 ) -> pd.DataFrame:
     r"""Get xrefs from a source as an SSSOM dataframe.
@@ -115,6 +116,7 @@ def get_sssom_df(
         don't typically ascribe semantics to xrefs so ``oboinowl:hasDbXref`` is used
     :param justification: The justification for the mapping. By default, ontologies
         don't typically ascribe semantics, so this is left with `sempav:UnspecifiedMatching`
+    :param names: Add name columns (``subject_label`` and ``object_label``)
     :returns: A SSSOM-compliant dataframe of xrefs
 
     For example, if you want to get UMLS as an SSSOM dataframe, you can do
@@ -123,33 +125,56 @@ def get_sssom_df(
     >>> df = pyobo.get_sssom_df("umls")
     >>> df.to_csv("umls.sssom.tsv", sep="\t", index=False)
 
+    If you don't want to get all of the many resources required to add
+    names, you can pass ``names=False``
+
+    >>> import pyobo
+    >>> df = pyobo.get_sssom_df("umls", names=False)
+    >>> df.to_csv("umls.sssom.tsv", sep="\t", index=False)
+
     .. note:: This assumes the Bioregistry as the prefix map
     """
     from .names import get_name
 
     df = get_xrefs_df(prefix=prefix, **kwargs)
+    rows: List[Tuple[str, ...]] = []
     with logging_redirect_tqdm():
-        rows = [
-            (
-                bioregistry.curie_to_str(prefix, source_id),
-                get_name(prefix, source_id) or "",
-                bioregistry.curie_to_str(target_prefix, target_id),
-                get_name(target_prefix, target_id),
-                predicate_id,
-                justification,
-            )
-            for source_id, target_prefix, target_id in tqdm(
-                df.values, unit="mapping", unit_scale=True
-            )
-        ]
-    return pd.DataFrame(
-        rows,
-        columns=[
+        for source_id, target_prefix, target_id in tqdm(df.values, unit="mapping", unit_scale=True):
+            if names:
+                rows.append(
+                    (
+                        bioregistry.curie_to_str(prefix, source_id),
+                        get_name(prefix, source_id) or "",
+                        bioregistry.curie_to_str(target_prefix, target_id),
+                        get_name(target_prefix, target_id),
+                        predicate_id,
+                        justification,
+                    )
+                )
+            else:
+                rows.append(
+                    (
+                        bioregistry.curie_to_str(prefix, source_id),
+                        bioregistry.curie_to_str(target_prefix, target_id),
+                        predicate_id,
+                        justification,
+                    )
+                )
+
+    if names:
+        columns = [
             "subject_id",
             "subject_label",
             "object_id",
             "object_label",
             "predicate_id",
             "mapping_justification",
-        ],
-    )
+        ]
+    else:
+        columns = [
+            "subject_id",
+            "object_id",
+            "predicate_id",
+            "mapping_justification",
+        ]
+    return pd.DataFrame(rows, columns=columns)
