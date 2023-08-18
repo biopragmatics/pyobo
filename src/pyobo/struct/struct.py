@@ -624,7 +624,11 @@ class Obo:
 
         if self.name is None:
             raise ValueError("ontology is missing name")
-        yield f"remark: {self.name}"
+        yield f"property_value: http://purl.org/dc/elements/1.1/title \"{self.name}\" xsd:string"
+
+        for root_term in self.root_terms or []:
+            yield f"property_value: IAO:0000700 {root_term.curie}"
+
 
         for typedef in sorted(self.typedefs or [], key=attrgetter("curie")):
             yield from typedef.iterate_obo_lines()
@@ -1349,6 +1353,7 @@ def make_ad_hoc_ontology(
     _date: Optional[datetime] = None,
     _data_version: Optional[str] = None,
     _idspaces: Optional[Mapping[str, str]] = None,
+    _root_terms: Optional[List[Reference]] = None,
     *,
     terms: List[Term],
 ) -> "Obo":
@@ -1364,6 +1369,7 @@ def make_ad_hoc_ontology(
         typedefs = _typedefs
         synonym_typedefs = _synonym_typedefs
         idspaces = _idspaces
+        root_terms = _root_terms
 
         def __post_init__(self):
             self.date = _date
