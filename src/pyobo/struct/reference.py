@@ -31,7 +31,7 @@ class Reference(curies.Reference):
         return norm_prefix
 
     @root_validator(pre=True)
-    def validate_identifier(cls, values):
+    def validate_identifier(cls, values):  # noqa
         """Validate the identifier."""
         prefix, identifier = values.get("prefix"), values.get("identifier")
         if not prefix or not identifier:

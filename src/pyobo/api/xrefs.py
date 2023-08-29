@@ -6,7 +6,6 @@ import logging
 from functools import lru_cache
 from typing import List, Mapping, Optional, Tuple
 
-import bioregistry
 import pandas as pd
 from tqdm.auto import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
