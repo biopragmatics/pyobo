@@ -7,7 +7,12 @@ from typing import Iterable
 
 import pystow
 
-from pyobo.struct import Obo, Reference, Term, TypeDef
+from pyobo.struct import Obo, Reference, Term
+from pyobo.struct.typedef import (
+    has_bidirectional_reaction,
+    has_left_to_right_reaction,
+    has_right_to_left_reaction,
+)
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -17,16 +22,12 @@ __all__ = [
 logger = logging.getLogger(__name__)
 PREFIX = "rhea"
 
-has_lr = TypeDef(Reference(prefix=PREFIX, identifier="has_lr_reaction"))
-has_rl = TypeDef(Reference(prefix=PREFIX, identifier="has_rl_reaction"))
-has_bi = TypeDef(Reference(prefix=PREFIX, identifier="has_bi_reaction"))
-
 
 class RheaGetter(Obo):
     """An ontology representation of Rhea's chemical reaction database."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_lr, has_bi, has_rl]
+    typedefs = [has_left_to_right_reaction, has_bidirectional_reaction, has_right_to_left_reaction]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -54,9 +55,9 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         terms[rl] = Term(reference=Reference(PREFIX, rl))
         terms[bi] = Term(reference=Reference(PREFIX, bi))
 
-        terms[master].append_relationship(has_lr, terms[lr])
-        terms[master].append_relationship(has_rl, terms[rl])
-        terms[master].append_relationship(has_bi, terms[bi])
+        terms[master].append_relationship(has_left_to_right_reaction, terms[lr])
+        terms[master].append_relationship(has_right_to_left_reaction, terms[rl])
+        terms[master].append_relationship(has_bidirectional_reaction, terms[bi])
         terms[lr].append_parent(terms[master])
         terms[rl].append_parent(terms[master])
         terms[bi].append_parent(terms[master])

@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 
 import bioregistry
 import curies
-from pydantic import Field, validator
+from pydantic import Field, root_validator, validator
 
 from .utils import obo_escape
 from ..identifier_utils import normalize_curie
@@ -29,6 +29,21 @@ class Reference(curies.Reference):
         if norm_prefix is None:
             raise ValueError(f"Unknown prefix: {v}")
         return norm_prefix
+
+    @root_validator(pre=True)
+    def validate_identifier(cls, values):
+        """Validate the identifier."""
+        prefix, identifier = values.get("prefix"), values.get("identifier")
+        if not prefix or not identifier:
+            return values
+        norm_prefix = bioregistry.normalize_prefix(prefix)
+        if norm_prefix is None:
+            raise ValueError(f"Unknown prefix: {prefix}")
+        values["prefix"] = norm_prefix
+        values["identifier"] = norm_identifier = bioregistry.standardize_identifier(norm_prefix, identifier)
+        if not bioregistry.is_valid_identifier(norm_prefix, norm_identifier):
+            raise ValueError("non-standard identifier")
+        return values
 
     @classmethod
     def auto(cls, prefix: str, identifier: str) -> "Reference":

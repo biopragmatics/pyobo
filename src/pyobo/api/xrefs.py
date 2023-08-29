@@ -11,12 +11,11 @@ import pandas as pd
 from tqdm.auto import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
-from pyobo import Reference
-
 from .utils import get_version
 from ..constants import TARGET_ID, TARGET_PREFIX
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
+from ..struct import Reference
 from ..utils.cache import cached_df, cached_mapping
 from ..utils.path import prefix_cache_join
 
