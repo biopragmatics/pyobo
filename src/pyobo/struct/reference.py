@@ -40,7 +40,9 @@ class Reference(curies.Reference):
         if norm_prefix is None:
             raise ValueError(f"Unknown prefix: {prefix}")
         values["prefix"] = norm_prefix
-        values["identifier"] = norm_identifier = bioregistry.standardize_identifier(norm_prefix, identifier)
+        values["identifier"] = norm_identifier = bioregistry.standardize_identifier(
+            norm_prefix, identifier
+        )
         if not bioregistry.is_valid_identifier(norm_prefix, norm_identifier):
             raise ValueError("non-standard identifier")
         return values
