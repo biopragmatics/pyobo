@@ -54,7 +54,7 @@ class UnhandledFormat(NoBuild):
 
 #: The following prefixes can not be loaded through ROBOT without
 #: turning off integrity checks
-REQUIRES_NO_ROBOT_CHECK = {"clo"}
+REQUIRES_NO_ROBOT_CHECK = {"clo", "vo"}
 
 
 @wrap_norm_prefix

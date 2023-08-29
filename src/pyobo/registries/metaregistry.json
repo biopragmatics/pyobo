@@ -220,6 +220,9 @@
       "ogg": [
         "IMGT/GENE-DB:"
       ],
+      "vo": [
+        "NCBITaxon_VO"
+      ],
       "duo": [
         "topic:"
       ],
