@@ -27,8 +27,10 @@ class TestStruct(unittest.TestCase):
 
     def test_reference_validation(self):
         """Test validation of prefix."""
-        # with self.assertRaises(ValueError):
-        #     Reference(prefix="nope", identifier="...")
+        with self.assertRaises(ValueError):
+            Reference(prefix="nope", identifier="also_nope")
+
+        # For when we want to do regex checking
         # with self.assertRaises(ValueError):
         #     Reference(prefix="go", identifier="nope")
         # with self.assertRaises(ValueError):
