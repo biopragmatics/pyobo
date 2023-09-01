@@ -49,7 +49,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "PyOBO"
-copyright = "2022, Charles Tapley Hoyt"
+copyright = "2023, Charles Tapley Hoyt"
 author = "Charles Tapley Hoyt"
 
 # The version info for the project you're documenting, acts as replacement for
