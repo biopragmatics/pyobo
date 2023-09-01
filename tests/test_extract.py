@@ -26,11 +26,11 @@ class TestMapping(unittest.TestCase):
         """Test getting names."""
         with chebi_patch:
             id_to_name = get_id_name_mapping("chebi")
-        for identifier in id_to_name:
-            self.assertFalse(identifier.startswith("CHEBI"))
-            self.assertFalse(identifier.startswith("CHEBI:"))
-            self.assertFalse(identifier.startswith("chebi:"))
-            self.assertFalse(identifier.startswith("chebi"))
+            for identifier in id_to_name:
+                self.assertFalse(identifier.startswith("CHEBI"))
+                self.assertFalse(identifier.startswith("CHEBI:"))
+                self.assertFalse(identifier.startswith("chebi:"))
+                self.assertFalse(identifier.startswith("chebi"))
 
     def test_get_xrefs(self):
         """Test getting xrefs."""

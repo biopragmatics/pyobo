@@ -200,7 +200,9 @@ class HGNCGetter(Obo):
         alias_symbol_type,
     ]
     root_terms = [
-        Reference(prefix="SO", identifier=so_id) for so_id in sorted(set(LOCUS_TYPE_TO_SO.values()))
+        Reference(prefix="so", identifier=so_id)
+        for so_id in sorted(set(LOCUS_TYPE_TO_SO.values()))
+        if so_id
     ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

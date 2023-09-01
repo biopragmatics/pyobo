@@ -6,7 +6,6 @@ import logging
 from functools import lru_cache
 from typing import List, Mapping, Optional, Tuple
 
-import bioregistry
 import pandas as pd
 from tqdm.auto import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
@@ -15,6 +14,7 @@ from .utils import get_version
 from ..constants import TARGET_ID, TARGET_PREFIX
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
+from ..struct import Reference
 from ..utils.cache import cached_df, cached_mapping
 from ..utils.path import prefix_cache_join
 
@@ -140,26 +140,22 @@ def get_sssom_df(
     rows: List[Tuple[str, ...]] = []
     with logging_redirect_tqdm():
         for source_id, target_prefix, target_id in tqdm(df.values, unit="mapping", unit_scale=True):
+            source = Reference(prefix=prefix, identifier=source_id)
+            target = Reference(prefix=target_prefix, identifier=target_id)
+
             if names:
                 rows.append(
                     (
-                        bioregistry.curie_to_str(prefix, source_id),
+                        source.curie,
                         get_name(prefix, source_id) or "",
-                        bioregistry.curie_to_str(target_prefix, target_id),
+                        target.curie,
                         get_name(target_prefix, target_id),
                         predicate_id,
                         justification,
                     )
                 )
             else:
-                rows.append(
-                    (
-                        bioregistry.curie_to_str(prefix, source_id),
-                        bioregistry.curie_to_str(target_prefix, target_id),
-                        predicate_id,
-                        justification,
-                    )
-                )
+                rows.append((source.curie, target.curie, predicate_id, justification))
 
     if names:
         columns = [

@@ -150,6 +150,16 @@ species_specific = TypeDef(
     "like a pathway, and X is the version that appears in a species. X should state which"
     "species with RO:0002162 (in taxon)",
 )
+has_left_to_right_reaction = TypeDef(
+    Reference(prefix="debio", identifier="0000007", name="has left-to-right reaction")
+)
+has_right_to_left_reaction = TypeDef(
+    Reference(prefix="debio", identifier="0000008", name="has right-to-left reaction")
+)
+has_bidirectional_reaction = TypeDef(
+    Reference(prefix="debio", identifier="0000009", name="has bi-directional reaction")
+)
+
 
 part_of = TypeDef(
     reference=Reference(prefix=BFO_PREFIX, identifier="0000050", name="part of"),
@@ -261,33 +271,25 @@ enables = TypeDef.from_triple(prefix="RO", identifier="0002327", name="enables")
 """ChEBI"""
 
 is_conjugate_base_of = TypeDef(
-    reference=Reference(
-        prefix="chebi", identifier="is_conjugate_base_of", name="is conjugate base of"
-    ),
+    reference=Reference(prefix="ro", identifier="0018033", name="is conjugate base of"),
 )
 is_conjugate_acid_of = TypeDef(
-    reference=Reference(
-        prefix="chebi", identifier="is_conjugate_acid_of", name="is conjugate acid of"
-    ),
+    reference=Reference(prefix="ro", identifier="0018034", name="is conjugate acid of"),
 )
 is_enantiomer_of = TypeDef(
-    reference=Reference(prefix="chebi", identifier="is_enantiomer_of", name="is enantiomer of"),
+    reference=Reference(prefix="ro", identifier="0018039", name="is enantiomer of"),
 )
 is_tautomer_of = TypeDef(
-    reference=Reference(prefix="chebi", identifier="is_tautomer_of", name="is tautomer of"),
+    reference=Reference(prefix="ro", identifier="0018036", name="is tautomer of"),
 )
 has_parent_hydride = TypeDef(
-    reference=Reference(prefix="chebi", identifier="has_parent_hydride", name="has parent hydride"),
+    reference=Reference(prefix="ro", identifier="0018040", name="has parent hydride"),
 )
 is_substituent_group_from = TypeDef(
-    reference=Reference(
-        prefix="chebi", identifier="is_substituent_group_from", name="is substituent group from"
-    ),
+    reference=Reference(prefix="ro", identifier="0018037", name="is substituent group from"),
 )
 has_functional_parent = TypeDef(
-    reference=Reference(
-        prefix="chebi", identifier="has_functional_parent", name="has functional parent"
-    ),
+    reference=Reference(prefix="ro", identifier="0018038", name="has functional parent"),
 )
 
 default_typedefs: Dict[Tuple[str, str], TypeDef] = {
