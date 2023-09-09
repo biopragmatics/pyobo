@@ -4,7 +4,7 @@
 
 import logging
 from pathlib import Path
-from typing import Callable, Literal, Optional, Union
+from typing import Any, Callable, Dict, Literal, Optional, Union
 
 import pandas as pd
 import requests_ftp
@@ -77,6 +77,7 @@ def ensure_path(
     if not path.exists() and error_on_missing:
         raise FileNotFoundError
 
+    kwargs: Dict[str, Any]
     if verify:
         kwargs = {"backend": backend}
     else:

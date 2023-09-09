@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, TypeVar, Union
 from xml.etree.ElementTree import Element
 
+import pandas as pd
 from lxml import etree
 from tqdm.auto import tqdm
 
