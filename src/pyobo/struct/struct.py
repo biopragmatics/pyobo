@@ -172,7 +172,7 @@ def _ensure_ref(reference: ReferenceHint) -> Reference:
             raise ValueError
         return _rv
     if isinstance(reference, tuple):
-        return Reference(*reference)
+        return Reference(prefix=reference[0], identifier=reference[1])
     if isinstance(reference, Reference):
         return reference
     raise TypeError

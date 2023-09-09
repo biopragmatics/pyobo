@@ -108,7 +108,8 @@ def multisetdict(pairs: Iterable[Tuple[X, Y]]) -> Dict[X, Set[Y]]:
     """Accumulate a multisetdict from a list of pairs."""
     rv = defaultdict(set)
     for key, value in pairs:
-        rv[key].add(value)
+        if pd.notna(value):
+            rv[key].add(value)
     return dict(rv)
 
 

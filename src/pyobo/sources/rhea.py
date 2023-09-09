@@ -41,6 +41,22 @@ def get_obo(force: bool = False) -> Obo:
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over terms in Rhea."""
+    url = "ftp://ftp.expasy.org/databases/rhea/rdf/rhea.rdf.gz"
+    graph = pystow.ensure_rdf(
+        "pyobo", "raw", PREFIX, version, url=url, force=force, parse_kwargs=dict(format="xml")
+    )
+    result = graph.query(
+        """
+    PREFIX rh:<http://rdf.rhea-db.org/>
+    SELECT ?reaction ?reactionId ?reactionLabel WHERE {
+      ?reaction rdfs:subClassOf rh:Reaction .
+      ?reaction rh:id ?reactionId .
+      ?reaction rdfs:label ?reactionLabel .
+    }
+    """
+    )
+    names = {str(identifier): name for _, identifier, name in result}
+
     terms = {}
 
     directions = ensure_df(
@@ -50,10 +66,12 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         force=force,
     )
     for master, lr, rl, bi in directions.values:
-        terms[master] = Term(reference=Reference(PREFIX, master))
-        terms[lr] = Term(reference=Reference(PREFIX, lr))
-        terms[rl] = Term(reference=Reference(PREFIX, rl))
-        terms[bi] = Term(reference=Reference(PREFIX, bi))
+        terms[master] = Term(
+            reference=Reference(prefix=PREFIX, identifier=master, name=names.get(master))
+        )
+        terms[lr] = Term(reference=Reference(prefix=PREFIX, identifier=lr, name=names.get(lr)))
+        terms[rl] = Term(reference=Reference(prefix=PREFIX, identifier=rl, name=names.get(rl)))
+        terms[bi] = Term(reference=Reference(prefix=PREFIX, identifier=bi, name=names.get(bi)))
 
         terms[master].append_relationship(has_left_to_right_reaction, terms[lr])
         terms[master].append_relationship(has_right_to_left_reaction, terms[rl])
@@ -97,33 +115,11 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
                     xref_id,
                 )
                 continue
-            terms[rhea_id].append_xref(Reference(xref_prefix, xref_id))
+            terms[rhea_id].append_xref(Reference(prefix=xref_prefix, identifier=xref_id))
 
     # TODO are EC codes equivalent?
     # TODO uniprot enabled by (RO:0002333)
     # TODO names?
-
-    url = "ftp://ftp.expasy.org/databases/rhea/rdf/rhea.rdf.gz"
-    graph = pystow.ensure_rdf(
-        "pyobo", "raw", PREFIX, version, url=url, force=force, parse_kwargs=dict(format="xml")
-    )
-    result = graph.query(
-        """
-    PREFIX rh:<http://rdf.rhea-db.org/>
-    SELECT ?reaction ?reactionId ?reactionLabel WHERE {
-      ?reaction rdfs:subClassOf rh:Reaction .
-      ?reaction rh:id ?reactionId .
-      ?reaction rdfs:label ?reactionLabel .
-    }
-    """
-    )
-    for _, identifier, name in result:
-        identifier = str(identifier)
-        if identifier not in terms:
-            logger.debug("isolated element in rdf: rhea:%s ! %s", identifier, name)
-            continue
-        terms[identifier].reference.name = name
-
     # TODO participants?
 
     yield from terms.values()
