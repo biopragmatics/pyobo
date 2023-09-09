@@ -4,9 +4,10 @@
 
 import logging
 from pathlib import Path
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Dict, Literal, Optional, Union
 
 import pandas as pd
+import requests_ftp
 from pystow.utils import download, name_from_url, read_tarfile_csv
 
 from .misc import cleanup_version
@@ -25,6 +26,8 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 VersionHint = Union[None, str, Callable[[], str]]
+
+requests_ftp.monkeypatch_session()
 
 
 def prefix_directory_join(
@@ -62,6 +65,8 @@ def ensure_path(
     name: Optional[str] = None,
     force: bool = False,
     error_on_missing: bool = False,
+    backend: Literal["requests", "urllib"] = "urllib",
+    verify: bool = True,
 ) -> str:
     """Download a file if it doesn't exist."""
     if name is None:
@@ -72,10 +77,19 @@ def ensure_path(
     if not path.exists() and error_on_missing:
         raise FileNotFoundError
 
+    kwargs: Dict[str, Any]
+    if verify:
+        kwargs = {"backend": backend}
+    else:
+        if backend != "requests":
+            logger.warning("using requests since verify=False")
+        kwargs = {"backend": "requests", "verify": False}
+
     download(
         url=url,
         path=path,
         force=force,
+        **kwargs,
     )
     return path.as_posix()
 
@@ -89,10 +103,21 @@ def ensure_df(
     force: bool = False,
     sep: str = "\t",
     dtype=str,
+    verify: bool = True,
+    backend: Literal["requests", "urllib"] = "urllib",
     **kwargs,
 ) -> pd.DataFrame:
     """Download a file and open as a dataframe."""
-    _path = ensure_path(prefix, *parts, url=url, version=version, name=name, force=force)
+    _path = ensure_path(
+        prefix,
+        *parts,
+        url=url,
+        version=version,
+        name=name,
+        force=force,
+        verify=verify,
+        backend=backend,
+    )
     return pd.read_csv(_path, sep=sep, dtype=dtype, **kwargs)
 
 
