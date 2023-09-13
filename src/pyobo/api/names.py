@@ -4,7 +4,6 @@
 
 import logging
 import subprocess
-import zipfile
 from functools import lru_cache
 from typing import Callable, List, Mapping, Optional, Set, TypeVar
 
@@ -140,7 +139,7 @@ def get_id_name_mapping(
 
     try:
         return _get_id_name_mapping()
-    except Exception as e:
+    except (Exception, subprocess.CalledProcessError) as e:
         logger.exception("[%s v%s] could not load: %s", prefix, version, e)
         return {}
 
