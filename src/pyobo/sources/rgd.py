@@ -106,7 +106,7 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
         force=force,
         version=version,
         quoting=3,
-        error_bad_lines=False,
+        on_bad_lines="skip",
     )
     for _, row in tqdm(
         df.iterrows(), total=len(df.index), desc=f"Mapping {PREFIX}", unit_scale=True
