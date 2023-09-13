@@ -15,6 +15,7 @@ from xml.etree import ElementTree
 import pystow
 from tqdm.auto import tqdm
 
+from ..getters import NoBuild
 from ..struct import Obo, Reference, Term
 from ..struct.typedef import has_salt
 from ..utils.cache import cached_pickle
@@ -145,12 +146,15 @@ def get_xml_root(version: Optional[str] = None) -> ElementTree.Element:
     Takes between 35-60 seconds.
     """
     from drugbank_downloader import parse_drugbank
+    from pystow.config_api import ConfigError
 
-    element = parse_drugbank(
-        version=version,
-        username=pystow.get_config("pyobo", "drugbank_username"),
-        password=pystow.get_config("pyobo", "drugbank_password"),
-    )
+    try:
+        username = pystow.get_config("pyobo", "drugbank_username", raise_on_missing=True)
+        password = pystow.get_config("pyobo", "drugbank_password", raise_on_missing=True)
+    except ConfigError as e:
+        raise NoBuild from e
+
+    element = parse_drugbank(version=version, username=username, password=password)
     return element.getroot()
 
 
