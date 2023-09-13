@@ -140,7 +140,7 @@ def get_id_name_mapping(
 
     try:
         return _get_id_name_mapping()
-    except (zipfile.BadZipFile, subprocess.CalledProcessError, ValueError, OSError) as e:
+    except Exception as e:
         logger.exception("[%s v%s] could not load: %s", prefix, version, e)
         return {}
 
