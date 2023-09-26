@@ -75,10 +75,17 @@ def from_obo_path(
     return from_obonet(graph, strict=strict)
 
 
-def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noqa:C901
-    """Get all of the terms from a OBO graph."""
-    _ontology = graph.graph["ontology"]
-    ontology = bioregistry.normalize_prefix(_ontology)  # probably always okay
+def from_obonet(
+    graph: nx.MultiDiGraph,
+    *,
+    strict: bool = True,
+    ontology: Optional[str] = None,
+    default_prefix: Optional[str] = None,
+) -> "Obo":  # noqa:C901
+    """Get all the terms from an OBO graph."""
+    if ontology is None:
+        _ontology = graph.graph["ontology"]
+        ontology = bioregistry.normalize_prefix(_ontology)  # probably always okay
     if ontology is None:
         raise ValueError(f"unknown prefix: {_ontology}")
     logger.info("[%s] extracting OBO using obonet", ontology)
@@ -121,10 +128,12 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
         Reference(
             prefix=prefix,
             identifier=bioregistry.standardize_identifier(prefix, identifier),
-            # if name isn't available, it means its external to this ontology
+            # if name isn't available, it means it's external to this ontology
             name=data.get("name"),
         )
-        for prefix, identifier, data in _iter_obo_graph(graph=graph, strict=strict)
+        for prefix, identifier, data in _iter_obo_graph(
+            graph=graph, strict=strict, default_prefix=default_prefix
+        )
     )
     references: Mapping[Tuple[str, str], Reference] = {
         reference.pair: reference for reference in reference_it
@@ -143,7 +152,9 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
     missing_typedefs = set()
     terms = []
     n_alt_ids, n_parents, n_synonyms, n_relations, n_properties, n_xrefs = 0, 0, 0, 0, 0, 0
-    for prefix, identifier, data in _iter_obo_graph(graph=graph, strict=strict):
+    for prefix, identifier, data in _iter_obo_graph(
+        graph=graph, strict=strict, default_prefix=default_prefix
+    ):
         if prefix != ontology or not data:
             continue
 
@@ -278,13 +289,17 @@ def _iter_obo_graph(
     graph: nx.MultiDiGraph,
     *,
     strict: bool = True,
+    default_prefix: Optional[str] = None,
 ) -> Iterable[Tuple[str, str, Mapping[str, Any]]]:
     """Iterate over the nodes in the graph with the prefix stripped (if it's there)."""
     for node, data in graph.nodes(data=True):
-        prefix, identifier = normalize_curie(node, strict=strict)
-        if prefix is None or identifier is None:
-            continue
-        yield prefix, identifier, data
+        if ":" in node:
+            prefix, identifier = normalize_curie(node, strict=strict)
+            if prefix is None or identifier is None:
+                continue
+            yield prefix, identifier, data
+        elif default_prefix:
+            yield default_prefix, node, data
 
 
 def _get_date(graph, ontology: str) -> Optional[datetime]:
