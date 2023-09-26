@@ -4,7 +4,6 @@
 
 import logging
 import subprocess
-import zipfile
 from functools import lru_cache
 from typing import Callable, List, Mapping, Optional, Set, TypeVar
 
@@ -58,6 +57,9 @@ def _help_get(
         if prefix not in NO_BUILD_PREFIXES:
             logger.warning("[%s] unable to look up results with %s", prefix, f)
             NO_BUILD_PREFIXES.add(prefix)
+        return None
+    except ValueError:
+        logger.warning("[%s] unable to look up results with %s", prefix, f)
         return None
 
     if not mapping:
@@ -137,8 +139,8 @@ def get_id_name_mapping(
 
     try:
         return _get_id_name_mapping()
-    except (zipfile.BadZipFile, subprocess.CalledProcessError):
-        logger.exception("[%s v%s] could not load", prefix, version)
+    except (Exception, subprocess.CalledProcessError) as e:
+        logger.exception("[%s v%s] could not load: %s", prefix, version, e)
         return {}
 
 

@@ -7,7 +7,6 @@ from collections import defaultdict
 from typing import Iterable, List, Mapping, Tuple
 
 import pandas as pd
-from protmapper.uniprot_client import get_gene_name, get_hgnc_id
 
 from ..api import get_id_name_mapping
 from ..struct import Obo, Reference, Term
@@ -55,6 +54,8 @@ def iter_networks(use_tqdm: bool = False, force: bool = False) -> Iterable[Tuple
 
 def iter_terms(force: bool = False) -> Iterable[Term]:
     """Iterate over NCI PID terms."""
+    from protmapper.uniprot_client import get_gene_name, get_hgnc_id
+
     hgnc_id_to_name = get_id_name_mapping("hgnc")
     hgnc_name_to_id = {v: k for k, v in hgnc_id_to_name.items()}
 
