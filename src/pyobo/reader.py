@@ -574,7 +574,7 @@ def iterate_node_relationships(
         if relation_curie in RELATION_REMAPPINGS:
             relation_prefix, relation_identifier = RELATION_REMAPPINGS[relation_curie]
         else:
-            relation_prefix, relation_identifier = normalize_curie(relation_curie)
+            relation_prefix, relation_identifier = normalize_curie(relation_curie, strict=strict)
         if relation_prefix is not None and relation_identifier is not None:
             relation = Reference(prefix=relation_prefix, identifier=relation_identifier)
         elif prefix is not None:
