@@ -363,8 +363,10 @@ class Term(Referenced):
             raise ValueError("can not extend a collection that includes a null reference")
         self.relationships[typedef].extend(references)
 
-    def append_property(self, prop: str, value: str) -> None:
+    def append_property(self, prop: Union[str, TypeDef], value: str) -> None:
         """Append a property."""
+        if isinstance(prop, TypeDef):
+            prop = prop.curie
         self.properties[prop].append(value)
 
     def _definition_fp(self) -> str:
