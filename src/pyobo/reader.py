@@ -50,7 +50,7 @@ RELATION_REMAPPINGS: Mapping[str, Tuple[str, str]] = {
 
 
 def from_obo_path(
-    path: Union[str, Path], prefix: Optional[str] = None, *, strict: bool = True
+    path: Union[str, Path], prefix: Optional[str] = None, *, strict: bool = True, **kwargs
 ) -> Obo:
     """Get the OBO graph from a path."""
     import obonet
@@ -72,7 +72,7 @@ def from_obo_path(
         _clean_graph_ontology(graph, prefix)
 
     # Convert to an Obo instance and return
-    return from_obonet(graph, strict=strict)
+    return from_obonet(graph, strict=strict, **kwargs)
 
 
 def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noqa:C901
