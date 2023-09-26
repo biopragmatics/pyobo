@@ -9,7 +9,6 @@ from typing import List, Mapping, Optional
 
 import networkx as nx
 import pandas as pd
-from bioregistry import curie_to_str
 
 from .utils import get_version
 from ..constants import (
