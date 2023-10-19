@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 PREFIX = "hgnc"
 DEFINITIONS_URL_FMT = (
-    "https://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/"
+    "http://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/"
     "archive/monthly/json/hgnc_complete_set_{version}.json"
 )
 
@@ -113,7 +113,6 @@ LOCUS_TYPE_TO_SO = {
     # protein-coding gene
     "gene with protein product": "0001217",
     "complex locus constituent": "0000997",  # https://github.com/pyobo/pyobo/issues/118#issuecomment-1564520052
-    "protocadherin": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/562
     # non-coding RNA
     "RNA, Y": "0002359",
     "RNA, cluster": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/564

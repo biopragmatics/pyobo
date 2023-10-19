@@ -34,8 +34,10 @@ def _process_line(line: str) -> Tuple[str, str, Set[str]]:
 
 def parse_wikipathways_gmt(path: Union[str, Path]) -> Iterable[WikiPathwaysGMTSummary]:
     """Parse WikiPathways GMT."""
-    for name, info, entries in parse_gmt_file(path):
-        name, version, identifier, species = name.split("%")
-        version = version.split("_")[1]
-        revision = info.rsplit("_", 1)[1].lstrip("r")
-        yield identifier, version, revision, name, species, entries
+    for info, _uri, entries in parse_gmt_file(path):
+        info, version, identifier, species = info.split("%")
+        version = version.split("_")[1]  # removes the WikiPathways_
+        # Revision isn't given anymore in GMT files
+        # revision = uri.rsplit("_", 1)[1].lstrip("r")
+        revision = ""
+        yield identifier, version, revision, info, species, entries

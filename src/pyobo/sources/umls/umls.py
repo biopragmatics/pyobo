@@ -85,7 +85,7 @@ def iter_terms(version: str) -> Iterable[Term]:
             )
             pref_rows_df = df.loc[idx]
             if len(pref_rows_df.index) != 1:
-                it.write(f"no preferred term for umls:{cui}. got {len(pref_rows_df.index)}")
+                # it.write(f"no preferred term for umls:{cui}. got {len(pref_rows_df.index)}")
                 continue
 
             df["TTY - Term Type in Source"] = df["TTY - Term Type in Source"].map(

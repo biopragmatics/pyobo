@@ -72,6 +72,8 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     for identifier, name, sname, aliases, cosmic_id, cellosaurus_id, _wtsi_id, _sanger_id in df[
         columns
     ].values:
+        if pd.isna(name):
+            name = None
         term = Term.from_triple(PREFIX, identifier, name)
         if pd.notna(sname):
             term.append_synonym(sname)
