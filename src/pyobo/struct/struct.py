@@ -363,10 +363,12 @@ class Term(Referenced):
             raise ValueError("can not extend a collection that includes a null reference")
         self.relationships[typedef].extend(references)
 
-    def append_property(self, prop: Union[str, TypeDef], value: str) -> None:
+    def append_property(self, prop: Union[str, TypeDef], value: Union[str, Reference]) -> None:
         """Append a property."""
         if isinstance(prop, TypeDef):
             prop = prop.curie
+        if isinstance(value, Reference):
+            value = value.curie
         self.properties[prop].append(value)
 
     def _definition_fp(self) -> str:
@@ -417,7 +419,7 @@ class Term(Referenced):
                     s += f" {reference.name}"
                 yield s
 
-        for prop, value in sorted(self.iterate_properties()):
+        for prop, value in sorted(self.iterate_properties(), key=_sort_properties):
             yield f'property_value: {prop} "{value}" xsd:string'  # TODO deal with types later
 
         for synonym in sorted(self.synonyms, key=attrgetter("name")):
@@ -431,6 +433,16 @@ class Term(Referenced):
 def _sort_relations(r):
     typedef, _references = r
     return typedef.reference.name or typedef.reference.identifier
+
+
+def _sort_properties(r):
+    o = r[1]
+    if isinstance(o, str):
+        return o
+    elif isinstance(o, Term):
+        return o.curie
+    else:
+        raise TypeError(f"What {type(r)}: {r}")
 
 
 class BioregistryError(ValueError):
