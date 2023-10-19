@@ -7,12 +7,12 @@ from typing import Iterable
 import pandas as pd
 from tqdm.auto import tqdm
 
-from .mirbase_constants import (
+from pyobo.sources.mirbase_constants import (
     get_premature_df,
     get_premature_family_df,
     get_premature_to_prefamily_df,
 )
-from ..struct import Obo, Reference, Term, has_member
+from pyobo.struct import Obo, Reference, Term, has_member
 
 __all__ = [
     "MiRBaseFamilyGetter",
@@ -45,7 +45,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             reference=Reference(prefix=PREFIX, identifier=family_id, name=name),
         )
         term.append_relationship(
-            has_member, Reference(prefix="mirna", identifier=mirna_id, name=mirna_name)
+            has_member, Reference(prefix="mirbase", identifier=mirna_id, name=mirna_name)
         )
         yield term
 
