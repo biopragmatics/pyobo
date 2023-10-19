@@ -139,6 +139,9 @@ def get_id_name_mapping(
 
     try:
         return _get_id_name_mapping()
+    except NoBuild:
+        logger.debug("[%s] no build", prefix)
+        return {}
     except (Exception, subprocess.CalledProcessError) as e:
         logger.exception("[%s v%s] could not load: %s", prefix, version, e)
         return {}

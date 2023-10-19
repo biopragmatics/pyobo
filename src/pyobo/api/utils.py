@@ -11,7 +11,12 @@ from ..utils.path import prefix_directory_join
 
 __all__ = [
     "get_version",
+    "VersionError",
 ]
+
+
+class VersionError(ValueError):
+    """A catch-all for version getting failure."""
 
 
 def get_version(prefix: str) -> Optional[str]:
@@ -22,10 +27,10 @@ def get_version(prefix: str) -> Optional[str]:
     """
     try:
         version = bioversions.get_version(prefix)
-    except IOError:
-        raise IOError(f"[{prefix}] could not get version from bioversions")
     except KeyError:
         pass  # this prefix isn't available from bioversions
+    except Exception as e:
+        raise ValueError(f"[{prefix}] could not get version from bioversions") from e
     else:
         if version:
             return version

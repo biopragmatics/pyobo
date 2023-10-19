@@ -169,7 +169,7 @@ def _ensure_ref(reference: ReferenceHint) -> Reference:
     if isinstance(reference, str):
         _rv = Reference.from_curie(reference)
         if _rv is None:
-            raise ValueError
+            raise ValueError(f"could not parse CURIE from {reference}")
         return _rv
     if isinstance(reference, tuple):
         return Reference(prefix=reference[0], identifier=reference[1])
