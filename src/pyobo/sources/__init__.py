@@ -31,6 +31,9 @@ from .itis import ITISGetter
 from .kegg import KEGGGeneGetter, KEGGGenomeGetter, KEGGPathwayGetter
 from .mesh import MeSHGetter
 from .mgi import MGIGetter
+from .mirbase import MiRBaseGetter
+from .mirbase_family import MiRBaseFamilyGetter
+from .mirbase_mature import MiRBaseMatureGetter
 from .msigdb import MSigDBGetter
 from .ncbigene import NCBIGeneGetter
 from .npass import NPASSGetter
@@ -83,9 +86,9 @@ __all__ = [
     "MGIGetter",
     "MSigDBGetter",
     "MeSHGetter",
-    # "MiRBaseFamilyGetter",
-    # "MiRBaseGetter",
-    # "MiRBaseMatureGetter",
+    "MiRBaseFamilyGetter",
+    "MiRBaseGetter",
+    "MiRBaseMatureGetter",
     "NCBIGeneGetter",
     "NPASSGetter",
     "PIDGetter",
