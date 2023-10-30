@@ -84,9 +84,9 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
                     continue
                 term.append_synonym(alias)
         if pd.notna(cosmic_id):
-            term.append_xref(Reference(prefix="cosmic.cell", identifier=cosmic_id))
+            term.append_exact_match(Reference(prefix="cosmic.cell", identifier=cosmic_id))
         if pd.notna(cellosaurus_id):
-            term.append_xref(Reference(prefix="cellosaurus", identifier=cellosaurus_id))
+            term.append_exact_match(Reference(prefix="cellosaurus", identifier=cellosaurus_id))
 
         # WTSI stands for welcome trust sanger institute
         # Not sure where this prefix goes

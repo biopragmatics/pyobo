@@ -135,7 +135,7 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
             term.append_alt(alt_id)
         entrez_id = entrez_mappings.get(identifier)
         if entrez_id:
-            term.append_xref(Reference(prefix="ncbigene", identifier=entrez_id))
+            term.append_exact_match(Reference(prefix="ncbigene", identifier=entrez_id))
         for uniprot_id in uniprot_mappings.get(identifier, []):
             term.append_relationship(has_gene_product, Reference.auto("uniprot", uniprot_id))
         for hgnc_id in human_orthologs.get(identifier, []):

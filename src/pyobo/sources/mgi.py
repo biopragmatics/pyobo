@@ -161,7 +161,9 @@ def get_terms(force: bool = False) -> Iterable[Term]:
             for synonym in mgi_to_synonyms[identifier]:
                 term.append_synonym(Synonym(name=synonym))
         if identifier in mgi_to_entrez_id:
-            term.append_xref(Reference(prefix="ncbigene", identifier=mgi_to_entrez_id[identifier]))
+            term.append_exact_match(
+                Reference(prefix="ncbigene", identifier=mgi_to_entrez_id[identifier])
+            )
         for ensembl_id in mgi_to_ensemble_accession_ids[identifier]:
             term.append_xref(Reference(prefix="ensembl", identifier=ensembl_id))
         for ensembl_id in mgi_to_ensemble_transcript_ids[identifier]:

@@ -107,13 +107,13 @@ def iter_terms(version: str, force: bool = False):
         if pd.notna(inchikey):
             if inchikey.startswith("InChIKey="):
                 inchikey = inchikey[len("InChIKey=") :]
-            term.append_xref(Reference(prefix="inchikey", identifier=inchikey))
+            term.append_exact_match(Reference(prefix="inchikey", identifier=inchikey))
         if pd.notna(chebi_id):
-            term.append_xref(("chebi", chebi_id))
+            term.append_exact_match(("chebi", chebi_id))
         if pd.notna(lipidmaps_id):
-            term.append_xref(("lipidmaps", lipidmaps_id))
+            term.append_exact_match(("lipidmaps", lipidmaps_id))
         if pd.notna(hmdb_id):
-            term.append_xref(("hmdb", hmdb_id))
+            term.append_exact_match(("hmdb", hmdb_id))
         if pd.notna(pmids):
             for pmid in pmids.split("|"):
                 term.append_provenance(("pubmed", pmid))
