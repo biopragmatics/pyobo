@@ -4,7 +4,7 @@
 
 import logging
 from functools import lru_cache
-from typing import List, Mapping, Optional, Tuple
+from typing import List, Mapping, Optional, Tuple, Union
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -14,7 +14,7 @@ from .utils import get_version
 from ..constants import TARGET_ID, TARGET_PREFIX
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..struct import Reference
+from ..struct import Obo, Reference
 from ..utils.cache import cached_df, cached_mapping
 from ..utils.path import prefix_cache_join
 
@@ -100,9 +100,8 @@ def get_xrefs_df(
     return _df_getter()
 
 
-@wrap_norm_prefix
 def get_sssom_df(
-    prefix: str,
+    prefix: Union[str, Obo],
     *,
     predicate_id: str = "oboinowl:hasDbXref",
     justification: str = "sempav:UnspecifiedMatching",
@@ -136,7 +135,11 @@ def get_sssom_df(
     """
     from .names import get_name
 
-    df = get_xrefs_df(prefix=prefix, **kwargs)
+    if isinstance(prefix, Obo):
+        df = prefix.get_xrefs_df()
+        prefix = prefix.ontology
+    else:
+        df = get_xrefs_df(prefix=prefix, **kwargs)
     rows: List[Tuple[str, ...]] = []
     with logging_redirect_tqdm():
         for source_id, target_prefix, target_id in tqdm(df.values, unit="mapping", unit_scale=True):
