@@ -7,7 +7,8 @@ from typing import Iterable
 import pandas as pd
 from tqdm.auto import tqdm
 
-from pyobo import Obo, SynonymTypeDef, Term
+from pyobo import Obo, Reference, SynonymTypeDef, Term
+from pyobo.struct.typedef import has_inchi, has_smiles
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -90,22 +91,23 @@ def iter_terms(version: str, force: bool = False):
         else:
             raise ValueError(identifier)
         term = Term.from_triple(PREFIX, identifier, name)
-        term.append_property("level", level)
+        if pd.notna(level):
+            term.append_property("level", level)
         if pd.notna(abbreviation):
             term.append_synonym(abbreviation, type=abreviation_type)
         if pd.notna(synonyms):
             for synonym in synonyms.split("|"):
                 term.append_synonym(synonym.strip())
         if pd.notna(smiles):
-            term.append_property("smiles", smiles)
+            term.append_property(has_smiles, smiles)
         if pd.notna(inchi) and inchi != "InChI=none":
             if inchi.startswith("InChI="):
                 inchi = inchi[len("InChI=") :]
-            term.append_property("inchi", inchi)
+            term.append_property(has_inchi, inchi)
         if pd.notna(inchikey):
             if inchikey.startswith("InChIKey="):
                 inchikey = inchikey[len("InChIKey=") :]
-            term.append_property("inchikey", inchikey)
+            term.append_xref(Reference(prefix="inchikey", identifier=inchikey))
         if pd.notna(chebi_id):
             term.append_xref(("chebi", chebi_id))
         if pd.notna(lipidmaps_id):

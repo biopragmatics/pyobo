@@ -72,9 +72,9 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         )
         term.set_species(identifier="9031", name="Gallus gallus")
         if entrez_id and pd.notna(entrez_id):
-            term.append_xref(Reference(prefix="ncbigene", identifier=entrez_id))
+            term.append_exact_match(Reference(prefix="ncbigene", identifier=entrez_id))
         if pd.notna(ensembl_id):
-            term.append_xref(Reference(prefix="ensembl", identifier=ensembl_id))
+            term.append_exact_match(Reference(prefix="ensembl", identifier=ensembl_id))
         if synonym_1 and pd.notna(synonym_1):
             term.append_synonym(synonym_1)
         if synoynm_2 and pd.notna(synoynm_2):

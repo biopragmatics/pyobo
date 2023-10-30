@@ -175,7 +175,7 @@ def _ensure_ref(reference: ReferenceHint) -> Reference:
         return Reference(prefix=reference[0], identifier=reference[1])
     if isinstance(reference, Reference):
         return reference
-    raise TypeError
+    raise TypeError(f"invalid type given for a reference ({type(reference)}): {reference}")
 
 
 @dataclass

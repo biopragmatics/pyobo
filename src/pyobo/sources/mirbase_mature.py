@@ -39,15 +39,16 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     for _, name, previous_name, mirbase_mature_id in tqdm(
         df.values, total=len(df.index), unit_scale=True
     ):
+        synonyms = []
+        if pd.notna(previous_name):
+            synonyms.append(Synonym(name=previous_name))
         yield Term(
             reference=Reference(
                 prefix=PREFIX, identifier=mirbase_mature_id, name=name if pd.notna(name) else None
             ),
-            synonyms=[
-                Synonym(name=previous_name),
-            ],
+            synonyms=synonyms,
         )
 
 
 if __name__ == "__main__":
-    MiRBaseMatureGetter.cli()
+    get_obo().write_default(write_obo=True, write_obograph=True, use_tqdm=True)

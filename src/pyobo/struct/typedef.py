@@ -40,6 +40,8 @@ __all__ = [
     "enables",
     "participates_in",
     "has_participant",
+    "has_inchi",
+    "has_smiles",
 ]
 
 
@@ -291,6 +293,15 @@ is_substituent_group_from = TypeDef(
 has_functional_parent = TypeDef(
     reference=Reference(prefix="ro", identifier="0018038", name="has functional parent"),
 )
+
+has_smiles = TypeDef(
+    reference=Reference(prefix="debio", identifier="0000022", name="has SMILES"),
+)
+
+has_inchi = TypeDef(
+    reference=Reference(prefix="debio", identifier="0000020", name="has InChI"),
+)
+
 
 default_typedefs: Dict[Tuple[str, str], TypeDef] = {
     v.pair: v for k, v in locals().items() if isinstance(v, TypeDef)

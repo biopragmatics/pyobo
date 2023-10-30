@@ -12,6 +12,7 @@ import psycopg2
 from tqdm.auto import tqdm
 
 from pyobo.struct import Obo, Reference, Synonym, Term
+from pyobo.struct.typedef import has_inchi, has_smiles
 
 __all__ = [
     "DrugCentralGetter",
@@ -87,13 +88,15 @@ def iter_terms() -> Iterable[Term]:
             xrefs=xrefs.get(drugcentral_id, []),
         )
         if inchi_key:
-            term.append_xref(Reference(prefix="inchikey", identifier=inchi_key))
-        term.append_property("smiles", smiles)
-        term.append_property("inchi", inchi)
+            term.append_exact_match(Reference(prefix="inchikey", identifier=inchi_key))
+        if smiles:
+            term.append_property(has_smiles, smiles)
+        if inchi:
+            term.append_property(has_inchi, inchi)
         if cas:
-            term.append_xref(Reference(prefix="cas", identifier=cas))
+            term.append_exact_match(Reference(prefix="cas", identifier=cas))
         yield term
 
 
 if __name__ == "__main__":
-    DrugCentralGetter.cli()
+    get_obo().write_default(write_obo=True)
