@@ -322,7 +322,7 @@ class Term(Referenced):
         """Get relationships from the given type."""
         return self.relationships[typedef]
 
-    def append_exact_match(self, reference):
+    def append_exact_match(self, reference: ReferenceHint):
         """Append an exact match, also adding an xref."""
         reference = _ensure_ref(reference)
         self.append_relationship(exact_match, reference)
@@ -363,11 +363,11 @@ class Term(Referenced):
             raise ValueError("can not extend a collection that includes a null reference")
         self.relationships[typedef].extend(references)
 
-    def append_property(self, prop: Union[str, TypeDef], value: Union[str, Reference]) -> None:
+    def append_property(
+        self, prop: Union[str, TypeDef], value: Union[str, Reference, Referenced]
+    ) -> None:
         """Append a property."""
-        if isinstance(prop, TypeDef):
-            prop = prop.curie
-        if isinstance(value, Reference):
+        if isinstance(value, (Reference, Referenced)):
             value = value.curie
         self.properties[prop].append(value)
 
