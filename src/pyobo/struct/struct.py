@@ -364,9 +364,11 @@ class Term(Referenced):
         self.relationships[typedef].extend(references)
 
     def append_property(
-        self, prop: Union[str, TypeDef], value: Union[str, Reference, Referenced]
+        self, prop: Union[str, Reference, Referenced], value: Union[str, Reference, Referenced]
     ) -> None:
         """Append a property."""
+        if isinstance(prop, (Reference, Referenced)):
+            prop = prop.curie
         if isinstance(value, (Reference, Referenced)):
             value = value.curie
         self.properties[prop].append(value)
