@@ -108,6 +108,28 @@ ENCODINGS = {
     "unknown": "GRP",
 }
 
+SKIP_KEYS = {
+    "date_approved_reserved",
+    "_version_",
+    "uuid",
+    "date_modified",
+    "date_name_changed",
+    "date_symbol_changed",
+    "symbol_report_tag",
+    "location_sortable",
+    "curator_notes",
+    "agr",  # repeat of HGNC ID
+    "gencc",  # repeat of HGNC ID
+    "bioparadigms_slc",  # repeat of symbol
+    "lncrnadb",  # repeat of symbol
+    "gtrnadb",  # repeat of symbol
+    "horde_id",  # repeat of symbol
+    "imgt",  # repeat of symbol
+    "cd",  # symbol
+    "homeodb",  # TODO add to bioregistry, though this is defunct
+    "mamit-trnadb",  # TODO add to bioregistry, though this is defunct
+}
+
 #: A mapping from HGNC's locus_type annotations to sequence ontology identifiers
 LOCUS_TYPE_TO_SO = {
     # protein-coding gene
@@ -330,6 +352,12 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
             else:
                 tqdm.write(f"unhandled IUPHAR: {iuphar}")
 
+        for lrg_info in entry.pop("lsdb", []):
+            if lrg_info.startswith("LRG_"):
+                lrg_curie = lrg_info.split("|")[0]
+                _, lrg_id = lrg_curie.split("_")
+                term.append_xref(Reference(prefix="lrg", identifier=lrg_id))
+
         for xref_prefix, key in gene_xrefs:
             xref_identifiers = entry.pop(key, None)
             if xref_identifiers is None:
@@ -397,7 +425,8 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
         term.set_species(identifier="9606", name="Homo sapiens")
 
         for key in entry:
-            unhandled_entry_keys[key] += 1
+            if key not in SKIP_KEYS:
+                unhandled_entry_keys[key] += 1
         yield term
 
     with open(prefix_directory_join(PREFIX, name="unhandled.json"), "w") as file:
