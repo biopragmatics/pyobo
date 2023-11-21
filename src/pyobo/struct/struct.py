@@ -216,6 +216,8 @@ class Term(Referenced):
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: Optional[bool] = None
 
+    type: Literal["Term", "Instance"] = "Term"
+
     def __hash__(self):  # noqa: D105
         return hash((self.__class__, self.prefix, self.identifier))
 
@@ -399,7 +401,7 @@ class Term(Referenced):
 
     def iterate_obo_lines(self) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
-        yield "\n[Term]"
+        yield f"\n[{self.type}]"
         yield f"id: {self.curie}"
         if self.is_obsolete:
             yield "is_obsolete: true"
@@ -417,8 +419,9 @@ class Term(Referenced):
         for xref in sorted(self.xrefs, key=attrgetter("prefix", "identifier")):
             yield f"xref: {xref}"
 
+        parent_tag = "is_a" if self.type == "Term" else "instance_of"
         for parent in sorted(self.parents, key=attrgetter("prefix", "identifier")):
-            yield f"is_a: {parent}"
+            yield f"{parent_tag}: {parent}"
 
         for typedef, references in sorted(self.relationships.items(), key=_sort_relations):
             for reference in sorted(references, key=attrgetter("prefix", "identifier")):
