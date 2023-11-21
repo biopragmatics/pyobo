@@ -226,11 +226,13 @@ class Term(Referenced):
         identifier: str,
         name: Optional[str] = None,
         definition: Optional[str] = None,
+        **kwargs,
     ) -> "Term":
         """Create a term from a reference."""
         return cls(
             reference=Reference(prefix=prefix, identifier=identifier, name=name),
             definition=definition,
+            **kwargs,
         )
 
     @classmethod
@@ -260,11 +262,17 @@ class Term(Referenced):
         self.provenance.append(_ensure_ref(reference))
 
     def append_synonym(
-        self, synonym: Union[str, Synonym], type: Optional[SynonymTypeDef] = None
+        self,
+        synonym: Union[str, Synonym],
+        *,
+        type: Optional[SynonymTypeDef] = None,
+        specificity: Optional[SynonymSpecificity] = None,
     ) -> None:
         """Add a synonym."""
         if isinstance(synonym, str):
-            synonym = Synonym(synonym, type=type or DEFAULT_SYNONYM_TYPE)
+            synonym = Synonym(
+                synonym, type=type or DEFAULT_SYNONYM_TYPE, specificity=specificity or "EXACT"
+            )
         self.synonyms.append(synonym)
 
     def append_alt(self, alt: Union[str, Reference]) -> None:
