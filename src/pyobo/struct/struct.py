@@ -393,6 +393,8 @@ class Term(Referenced):
         """Iterate over the lines to write in an OBO file."""
         yield "\n[Term]"
         yield f"id: {self.curie}"
+        if self.is_obsolete:
+            yield "is_obsolete: true"
         if self.name:
             yield f"name: {obo_escape_slim(self.name)}"
         if self.namespace and self.namespace != "?":
