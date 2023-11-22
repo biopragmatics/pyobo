@@ -27,6 +27,7 @@ from .names import (  # noqa: F401
     get_name,
     get_name_by_curie,
     get_name_id_mapping,
+    get_obsolete,
     get_synonyms,
 )
 from .properties import (  # noqa: F401

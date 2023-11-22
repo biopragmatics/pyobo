@@ -24,6 +24,7 @@ __all__ = [
     "get_id_definition_mapping",
     "get_synonyms",
     "get_id_synonyms_mapping",
+    "get_obsolete",
 ]
 
 logger = logging.getLogger(__name__)
@@ -182,6 +183,25 @@ def get_id_definition_mapping(
         return ontology.get_id_definition_mapping()
 
     return _get_mapping()
+
+
+def get_obsolete(
+    prefix: str,
+    *,
+    force: bool = False,
+    strict: bool = False,
+    version: Optional[str] = None,
+) -> Set[str]:
+    """Get the set of obsolete local unique identifiers."""
+    if version is None:
+        version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="obsolete.tsv", version=version)
+    @cached_collection(path=path, force=force)
+    def _get_obsolete() -> Set[str]:
+        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
+        return ontology.get_obsolete()
+
+    return set(_get_obsolete())
 
 
 @wrap_norm_prefix

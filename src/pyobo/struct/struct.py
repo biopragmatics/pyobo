@@ -1007,6 +1007,16 @@ class Obo:
         """Get a mapping from identifiers to definitions."""
         return dict(self.iterate_id_definition(use_tqdm=use_tqdm))
 
+    def get_obsolete(self, *, use_tqdm: bool = False) -> Set[str]:
+        """Get the set of obsolete identifiers."""
+        return {
+            term.identifier
+            for term in self._iter_terms(
+                use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting obsolete"
+            )
+            if term.identifier and term.is_obsolete
+        }
+
     ############
     # TYPEDEFS #
     ############

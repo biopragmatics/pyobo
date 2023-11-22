@@ -25,6 +25,7 @@ from .api import (  # noqa: F401
     get_name,
     get_name_by_curie,
     get_name_id_mapping,
+    get_obsolete,
     get_primary_curie,
     get_primary_identifier,
     get_properties,
