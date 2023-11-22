@@ -6,7 +6,7 @@ from typing import Iterable
 
 import bioregistry
 import zenodo_client
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pyobo.struct import Obo, Reference, SynonymTypeDef, Term, TypeDef
 
@@ -80,6 +80,9 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
         )
         term.append_parent(ORG_CLASS)
 
+        if name.startswith("The "):
+            term.append_synonym(name.removeprefix("The "))
+
         for relationship in record.get("relationships", []):
             target_id = relationship["id"].removeprefix("https://ror.org/")
             term.append_relationship(
@@ -96,8 +99,16 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
                 RMAP["Located in"], Reference(prefix="geonames", identifier=str(city["id"]))
             )
 
+        for label in record.get("labels", []):
+            label = label["label"] # there's a language availabel in this dict too
+            term.append_synonym(label)
+            if label.startswith("The "):
+                term.append_synonym(label.removeprefix("The "))
+
         for synonym in record.get("aliases", []):
             term.append_synonym(synonym)
+            if synonym.startswith("The "):
+                term.append_synonym(synonym.removeprefix("The "))
 
         for acronym in record.get("acronyms", []):
             term.append_synonym(acronym, type=ACRONYM)
