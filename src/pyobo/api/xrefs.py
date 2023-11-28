@@ -103,7 +103,7 @@ def get_xrefs_df(
 def get_sssom_df(
     prefix: Union[str, Obo],
     *,
-    predicate_id: str = "oboinowl:hasDbXref",
+    predicate_id: str = "oboInOwl:hasDbXref",
     justification: str = "sempav:UnspecifiedMatching",
     names: bool = True,
     **kwargs,
@@ -112,7 +112,7 @@ def get_sssom_df(
 
     :param prefix: The ontology to look in for xrefs
     :param predicate_id: The predicate used in the SSSOM document. By default, ontologies
-        don't typically ascribe semantics to xrefs so ``oboinowl:hasDbXref`` is used
+        don't typically ascribe semantics to xrefs so ``oboInOwl:hasDbXref`` is used
     :param justification: The justification for the mapping. By default, ontologies
         don't typically ascribe semantics, so this is left with `sempav:UnspecifiedMatching`
     :param names: Add name columns (``subject_label`` and ``object_label``)
