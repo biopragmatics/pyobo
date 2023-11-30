@@ -9,6 +9,8 @@ from typing import Iterable
 import pandas as pd
 from tqdm.auto import tqdm
 
+from pyobo.struct.typedef import exact_match
+
 from ..struct import (
     Obo,
     Reference,
@@ -37,7 +39,7 @@ class MGIGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
-    typedefs = [from_species, has_gene_product, transcribes_to]
+    typedefs = [from_species, has_gene_product, transcribes_to, exact_match]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

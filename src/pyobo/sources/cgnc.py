@@ -8,6 +8,7 @@ from typing import Iterable
 import pandas as pd
 
 from pyobo.struct import Obo, Reference, Term, from_species
+from pyobo.struct.typedef import exact_match
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -25,7 +26,7 @@ class CGNCGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
-    typedefs = [from_species]
+    typedefs = [from_species, exact_match]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

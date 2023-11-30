@@ -40,6 +40,9 @@ __all__ = [
     "enables",
     "participates_in",
     "has_participant",
+    "exact_match",
+    "has_dbxref",
+    # Properties
     "has_inchi",
     "has_smiles",
 ]
@@ -266,6 +269,7 @@ alternative_term = Reference(prefix=IAO_PREFIX, identifier="0000118", name="alte
 has_ontology_root_term = TypeDef.from_triple(
     prefix=IAO_PREFIX, identifier="0000700", name="has ontology root term"
 )
+has_dbxref = TypeDef.from_curie("oboInOwl:hasDbXref", name="has database cross-reference")
 
 editor_note = Reference(prefix=IAO_PREFIX, identifier="0000116", name="editor note")
 

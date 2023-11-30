@@ -158,6 +158,11 @@ class SynonymTypeDef(Referenced):
 DEFAULT_SYNONYM_TYPE = SynonymTypeDef(
     reference=Reference(prefix="oboInOwl", identifier="SynonymType", name="Synonym"),
 )
+abbreviation = SynonymTypeDef(
+    reference=Reference(prefix="OMO", identifier="0003000", name="abbreviation")
+)
+acronym = SynonymTypeDef(reference=Reference(prefix="omo", identifier="0003012", name="acronym"))
+
 
 ReferenceHint = Union[Reference, "Term", Tuple[str, str], str]
 
@@ -425,8 +430,13 @@ class Term(Referenced):
             yield f"{parent_tag}: {parent}"
 
         for typedef, references in sorted(self.relationships.items(), key=_sort_relations):
-            if typedef not in typedefs:
-                logger.warning(f"[{ontology}] typedef not defined in OBO: {typedef}")
+            if (not typedefs or typedef not in typedefs) and (
+                ontology,
+                typedef.curie,
+            ) not in _TYPEDEF_WARNINGS:
+                logger.warning(f"[{ontology}] typedef not defined in OBO: {typedef.curie}")
+                _TYPEDEF_WARNINGS.add((ontology, typedef.curie))
+
             typedef_preferred_curie = typedef.preferred_curie
             for reference in sorted(references, key=attrgetter("prefix", "identifier")):
                 s = f"relationship: {typedef_preferred_curie} {reference.preferred_curie}"
@@ -448,6 +458,10 @@ class Term(Referenced):
     @staticmethod
     def _escape(s) -> str:
         return s.replace("\n", "\\n").replace('"', '\\"')
+
+
+#: A set of warnings, used to make sure we don't show the same one over and over
+_TYPEDEF_WARNINGS: Set[Tuple[str, str]] = set()
 
 
 def _sort_relations(r):
@@ -665,6 +679,7 @@ class Obo:
             yield f'property_value: http://purl.org/dc/terms/license "{license_spdx_id}" xsd:string'
         description = bioregistry.get_description(self.ontology)
         if description:
+            description = obo_escape_slim(description.strip())
             yield f'property_value: http://purl.org/dc/elements/1.1/description "{description}" xsd:string'
 
         for root_term in self.root_terms or []:

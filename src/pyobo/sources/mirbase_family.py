@@ -40,7 +40,9 @@ def get_obo(force: bool = False) -> Obo:
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get miRBase family terms."""
     df = get_df(version, force=force)
-    for family_id, name, mirna_id, mirna_name in tqdm(df.values, total=len(df.index)):
+    for family_id, name, mirna_id, mirna_name in tqdm(
+        df.values, total=len(df.index), unit_scale=True, desc="miRBase Family"
+    ):
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=family_id, name=name),
         )
@@ -65,4 +67,4 @@ def get_df(version: str, force: bool = False) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    get_obo().write_default(use_tqdm=True)
+    get_obo().write_default(use_tqdm=True, write_obo=True, force=True)

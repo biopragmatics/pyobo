@@ -12,7 +12,7 @@ import psycopg2
 from tqdm.auto import tqdm
 
 from pyobo.struct import Obo, Reference, Synonym, Term
-from pyobo.struct.typedef import has_inchi, has_smiles
+from pyobo.struct.typedef import exact_match, has_inchi, has_smiles
 
 __all__ = [
     "DrugCentralGetter",
@@ -34,6 +34,7 @@ class DrugCentralGetter(Obo):
     """An ontology representation of the DrugCentral database."""
 
     ontology = bioversions_key = PREFIX
+    typedefs = [exact_match]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
