@@ -21,7 +21,6 @@ from pyobo import (
     get_obsolete,
 )
 from pyobo.getters import NoBuild
-from pyobo.struct import Term
 from pyobo.utils.io import multidict
 
 __all__ = [
