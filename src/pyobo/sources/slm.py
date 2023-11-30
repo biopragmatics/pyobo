@@ -7,8 +7,9 @@ from typing import Iterable
 import pandas as pd
 from tqdm.auto import tqdm
 
-from pyobo import Obo, Reference, SynonymTypeDef, Term
-from pyobo.struct.typedef import has_inchi, has_smiles
+from pyobo import Obo, Reference, Term
+from pyobo.struct.struct import abbreviation as abbreviation_typedef
+from pyobo.struct.typedef import exact_match, has_inchi, has_smiles
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -38,14 +39,13 @@ COLUMNS = [
     "PMID",
 ]
 
-abreviation_type = SynonymTypeDef.from_text("abbreviation")
-
 
 class SLMGetter(Obo):
     """An ontology representation of SwissLipid's lipid nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    synonym_typedefs = [abreviation_type]
+    typedefs = [exact_match]
+    synonym_typedefs = [abbreviation_typedef]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -94,7 +94,7 @@ def iter_terms(version: str, force: bool = False):
         if pd.notna(level):
             term.append_property("level", level)
         if pd.notna(abbreviation):
-            term.append_synonym(abbreviation, type=abreviation_type)
+            term.append_synonym(abbreviation, type=abbreviation_typedef)
         if pd.notna(synonyms):
             for synonym in synonyms.split("|"):
                 term.append_synonym(synonym.strip())

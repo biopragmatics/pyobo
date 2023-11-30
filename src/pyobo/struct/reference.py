@@ -31,6 +31,12 @@ class Reference(curies.Reference):
             raise ExpansionError(f"Unknown prefix: {v}")
         return norm_prefix
 
+    @property
+    def preferred_curie(self) -> str:
+        """Get the preferred curie for this reference."""
+        pp = bioregistry.get_preferred_prefix(self.prefix) or self.prefix
+        return f"{pp}:{self.identifier}"
+
     @root_validator(pre=True)
     def validate_identifier(cls, values):  # noqa
         """Validate the identifier."""
@@ -152,6 +158,11 @@ class Referenced:
     def curie(self) -> str:
         """The CURIE for this typedef."""  # noqa: D401
         return self.reference.curie
+
+    @property
+    def preferred_curie(self) -> str:
+        """The preferred CURIE for this typedef."""  # noqa: D401
+        return self.reference.preferred_curie
 
     @property
     def pair(self) -> Tuple[str, str]:

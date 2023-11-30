@@ -47,6 +47,7 @@ from .typedef import (
     exact_match,
     from_species,
     get_reference_tuple,
+    has_ontology_root_term,
     has_part,
     is_a,
     orthologous,
@@ -108,7 +109,7 @@ class Synonym:
     def _fp(self) -> str:
         x = f'"{self._escape(self.name)}" {self.specificity}'
         if self.type and self.type.pair != DEFAULT_SYNONYM_TYPE.pair:
-            x = f"{x} {self.type.curie}"
+            x = f"{x} {self.type.preferred_curie}"
         return f"{x} [{comma_separate(self.provenance)}]"
 
     @staticmethod
@@ -125,7 +126,7 @@ class SynonymTypeDef(Referenced):
 
     def to_obo(self) -> str:
         """Serialize to OBO."""
-        rv = f'synonymtypedef: {self.curie} "{self.name}"'
+        rv = f'synonymtypedef: {self.preferred_curie} "{self.name}"'
         if self.specificity:
             rv = f"{rv} {self.specificity}"
         return rv
@@ -157,6 +158,11 @@ class SynonymTypeDef(Referenced):
 DEFAULT_SYNONYM_TYPE = SynonymTypeDef(
     reference=Reference(prefix="oboInOwl", identifier="SynonymType", name="Synonym"),
 )
+abbreviation = SynonymTypeDef(
+    reference=Reference(prefix="OMO", identifier="0003000", name="abbreviation")
+)
+acronym = SynonymTypeDef(reference=Reference(prefix="omo", identifier="0003012", name="acronym"))
+
 
 ReferenceHint = Union[Reference, "Term", Tuple[str, str], str]
 
@@ -399,10 +405,10 @@ class Term(Referenced):
             for value in values:
                 yield prop, value
 
-    def iterate_obo_lines(self) -> Iterable[str]:
+    def iterate_obo_lines(self, *, ontology, typedefs) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield f"\n[{self.type}]"
-        yield f"id: {self.curie}"
+        yield f"id: {self.preferred_curie}"
         if self.is_obsolete:
             yield "is_obsolete: true"
         if self.name:
@@ -417,15 +423,23 @@ class Term(Referenced):
             yield f"def: {self._definition_fp()}"
 
         for xref in sorted(self.xrefs, key=attrgetter("prefix", "identifier")):
-            yield f"xref: {xref}"
+            yield f"xref: {xref.preferred_curie}"
 
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
         for parent in sorted(self.parents, key=attrgetter("prefix", "identifier")):
             yield f"{parent_tag}: {parent}"
 
         for typedef, references in sorted(self.relationships.items(), key=_sort_relations):
+            if (not typedefs or typedef not in typedefs) and (
+                ontology,
+                typedef.curie,
+            ) not in _TYPEDEF_WARNINGS:
+                logger.warning(f"[{ontology}] typedef not defined in OBO: {typedef.curie}")
+                _TYPEDEF_WARNINGS.add((ontology, typedef.curie))
+
+            typedef_preferred_curie = typedef.preferred_curie
             for reference in sorted(references, key=attrgetter("prefix", "identifier")):
-                s = f"relationship: {typedef.curie} {reference.curie}"
+                s = f"relationship: {typedef_preferred_curie} {reference.preferred_curie}"
                 if typedef.name or reference.name:
                     s += " !"
                 if typedef.name:
@@ -435,6 +449,7 @@ class Term(Referenced):
                 yield s
 
         for prop, value in sorted(self.iterate_properties(), key=_sort_properties):
+            # TODO deal with typedefs for properties
             yield f'property_value: {prop} "{value}" xsd:string'  # TODO deal with types later
 
         for synonym in sorted(self.synonyms, key=attrgetter("name")):
@@ -443,6 +458,10 @@ class Term(Referenced):
     @staticmethod
     def _escape(s) -> str:
         return s.replace("\n", "\\n").replace('"', '\\"')
+
+
+#: A set of warnings, used to make sure we don't show the same one over and over
+_TYPEDEF_WARNINGS: Set[Tuple[str, str]] = set()
 
 
 def _sort_relations(r):
@@ -654,15 +673,23 @@ class Obo:
         if self.name is None:
             raise ValueError("ontology is missing name")
         yield f'property_value: http://purl.org/dc/elements/1.1/title "{self.name}" xsd:string'
+        license_spdx_id = bioregistry.get_license(self.ontology)
+        if license_spdx_id:
+            # TODO add SPDX to idspaces and use as a CURIE?
+            yield f'property_value: http://purl.org/dc/terms/license "{license_spdx_id}" xsd:string'
+        description = bioregistry.get_description(self.ontology)
+        if description:
+            description = obo_escape_slim(description.strip())
+            yield f'property_value: http://purl.org/dc/elements/1.1/description "{description}" xsd:string'
 
         for root_term in self.root_terms or []:
-            yield f"property_value: IAO:0000700 {root_term.curie}"
+            yield f"property_value: {has_ontology_root_term.preferred_curie} {root_term.preferred_curie}"
 
         for typedef in sorted(self.typedefs or [], key=attrgetter("curie")):
             yield from typedef.iterate_obo_lines()
 
         for term in self:
-            yield from term.iterate_obo_lines()
+            yield from term.iterate_obo_lines(ontology=self.ontology, typedefs=self.typedefs)
 
     def write_obo(
         self, file: Union[None, str, TextIO, Path] = None, use_tqdm: bool = False

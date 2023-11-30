@@ -8,6 +8,7 @@ import pandas as pd
 import pystow
 
 from pyobo import Obo, Reference, Term
+from pyobo.struct.typedef import exact_match
 
 __all__ = [
     "get_obo",
@@ -23,6 +24,7 @@ class DepMapGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     data_version = VERSION
+    typedefs = [exact_match]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

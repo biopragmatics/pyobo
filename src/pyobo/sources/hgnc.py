@@ -27,6 +27,7 @@ from pyobo.struct import (
     orthologous,
     transcribes_to,
 )
+from pyobo.struct.typedef import exact_match
 from pyobo.utils.path import ensure_path, prefix_directory_join
 
 __all__ = [
@@ -212,6 +213,7 @@ class HGNCGetter(Obo):
         transcribes_to,
         orthologous,
         member_of,
+        exact_match,
     ]
     idspaces = IDSPACES
     synonym_typedefs = [

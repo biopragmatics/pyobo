@@ -8,7 +8,8 @@ import bioregistry
 import zenodo_client
 from tqdm.auto import tqdm
 
-from pyobo.struct import Obo, Reference, SynonymTypeDef, Term, TypeDef
+from pyobo.struct import Obo, Reference, Term, TypeDef
+from pyobo.struct.struct import acronym
 
 PREFIX = "ror"
 ROR_ZENODO_RECORD_ID = "10086202"
@@ -20,8 +21,6 @@ PART_OF = Reference(prefix="BFO", identifier="0000050")
 HAS_PART = Reference(prefix="BFO", identifier="0000051")
 SUCCESSOR = Reference(prefix="BFO", identifier="0000063")
 PREDECESSOR = Reference(prefix="BFO", identifier="0000062")
-
-ACRONYM = SynonymTypeDef(reference=Reference(prefix="omo", identifier="0003000", name="acronym"))
 
 RMAP = {
     "Related": TypeDef.from_triple("rdfs", "seeAlso"),
@@ -45,7 +44,7 @@ class RORGetter(Obo):
 
     ontology = bioregistry_key = PREFIX
     typedefs = list(RMAP.values())
-    synonym_typedefs = [ACRONYM]
+    synonym_typedefs = [acronym]
     idspaces = {
         "ror": "https://ror.org/",
         "geonames": "https://www.geonames.org/",
@@ -110,8 +109,8 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
             if synonym.startswith("The "):
                 term.append_synonym(synonym.removeprefix("The "))
 
-        for acronym in record.get("acronyms", []):
-            term.append_synonym(acronym, type=ACRONYM)
+        for acronym_synonym in record.get("acronyms", []):
+            term.append_synonym(acronym_synonym, type=acronym)
 
         for prefix, xref_data in record.get("external_ids", {}).items():
             if prefix == "OrgRef":

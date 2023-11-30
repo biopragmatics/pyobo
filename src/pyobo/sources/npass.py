@@ -77,7 +77,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
                 logger.debug("multiple cids for %s: %s", identifier, pubchem_compound_ids)
             for pubchem_compound_id in pubchem_compound_ids:
                 term.append_xref(
-                    Reference(prefix="pubchem.compound", identifier=pubchem_compound_id)
+                    Reference(prefix="pubchem.compound", identifier=pubchem_compound_id.strip())
                 )
 
         for synonym in [iupac]:
