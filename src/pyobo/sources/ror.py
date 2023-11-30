@@ -100,7 +100,7 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
             )
 
         for label in record.get("labels", []):
-            label = label["label"] # there's a language availabel in this dict too
+            label = label["label"]  # there's a language availabel in this dict too
             term.append_synonym(label)
             if label.startswith("The "):
                 term.append_synonym(label.removeprefix("The "))

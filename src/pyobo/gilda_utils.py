@@ -138,7 +138,13 @@ def get_grounder(
 
 
 def _fast_term(
-    *, text: str, prefix: str, identifier: str, name: str, status: str, organism: Optional[str] = None
+    *,
+    text: str,
+    prefix: str,
+    identifier: str,
+    name: str,
+    status: str,
+    organism: Optional[str] = None,
 ) -> gilda.term.Term:
     return gilda.term.Term(
         norm_text=normalize(text),

@@ -48,7 +48,7 @@ class Reference(curies.Reference):
 
     @classmethod
     def auto(cls, prefix: str, identifier: str) -> "Reference":
-        """Create a reference and auto-populate its name."""
+        """Create a reference and autopopulate its name."""
         from ..api import get_name
 
         name = get_name(prefix, identifier)
