@@ -213,7 +213,7 @@ def get_gilda_terms(
                 text=identifier,
                 prefix=prefix,
                 identifier=identifier,
-                name=None,
+                name=identifier,
                 status="name",
                 organism=id_to_species.get(identifier),
             )
