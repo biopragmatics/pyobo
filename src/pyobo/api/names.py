@@ -196,6 +196,7 @@ def get_obsolete(
     if version is None:
         version = get_version(prefix)
     path = prefix_cache_join(prefix, name="obsolete.tsv", version=version)
+
     @cached_collection(path=path, force=force)
     def _get_obsolete() -> Set[str]:
         ontology = get_ontology(prefix, force=force, strict=strict, version=version)
