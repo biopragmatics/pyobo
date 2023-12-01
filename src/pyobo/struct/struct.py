@@ -427,7 +427,7 @@ class Term(Referenced):
 
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
         for parent in sorted(self.parents, key=attrgetter("prefix", "identifier")):
-            yield f"{parent_tag}: {parent}"
+            yield f"{parent_tag}: {parent.preferred_curie}"
 
         for typedef, references in sorted(self.relationships.items(), key=_sort_relations):
             if (not typedefs or typedef not in typedefs) and (
@@ -666,6 +666,8 @@ class Obo:
             yield f"idspace: {prefix} {url}"
 
         for synonym_typedef in sorted((self.synonym_typedefs or []), key=attrgetter("curie")):
+            if synonym_typedef.curie == DEFAULT_SYNONYM_TYPE.curie:
+                continue
             yield synonym_typedef.to_obo()
 
         yield f"ontology: {self.ontology}"
@@ -1468,4 +1470,4 @@ def _convert_synonym_typedefs(synonym_typedefs: Optional[Iterable[SynonymTypeDef
 
 
 def _convert_synonym_typedef(synonym_typedef: SynonymTypeDef) -> str:
-    return f'{synonym_typedef.curie} "{synonym_typedef.name}"'
+    return f'{synonym_typedef.preferred_curie} "{synonym_typedef.name}"'
