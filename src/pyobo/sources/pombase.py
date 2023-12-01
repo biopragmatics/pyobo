@@ -29,7 +29,7 @@ class PomBaseGetter(Obo):
     """An ontology representation of PomBase's fission yeast gene nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [from_species, has_gene_product]
+    typedefs = [from_species, has_gene_product, orthologous]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

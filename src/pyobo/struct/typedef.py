@@ -264,14 +264,21 @@ has_salt = TypeDef(
     reference=Reference(prefix="debio", identifier="0000006", name="has salt"),
 )
 
-example_of_usage = Reference(prefix=IAO_PREFIX, identifier="0000112", name="example of usage")
-alternative_term = Reference(prefix=IAO_PREFIX, identifier="0000118", name="alternative term")
+term_replaced_by = TypeDef.from_triple(
+    prefix=IAO_PREFIX, identifier="0100001", name="term replaced by"
+)
+example_of_usage = TypeDef.from_triple(
+    prefix=IAO_PREFIX, identifier="0000112", name="example of usage"
+)
+alternative_term = TypeDef.from_triple(
+    prefix=IAO_PREFIX, identifier="0000118", name="alternative term"
+)
 has_ontology_root_term = TypeDef.from_triple(
     prefix=IAO_PREFIX, identifier="0000700", name="has ontology root term"
 )
 has_dbxref = TypeDef.from_curie("oboInOwl:hasDbXref", name="has database cross-reference")
 
-editor_note = Reference(prefix=IAO_PREFIX, identifier="0000116", name="editor note")
+editor_note = TypeDef.from_triple(prefix=IAO_PREFIX, identifier="0000116", name="editor note")
 
 is_immediately_transformed_from = TypeDef.from_triple(
     prefix=SIO_PREFIX, identifier="000658", name="is immediately transformed from"
