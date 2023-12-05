@@ -7,6 +7,7 @@ import os
 from functools import lru_cache
 from typing import List, Mapping, Optional
 
+import networkx as nx
 import pandas as pd
 
 from .utils import get_version
@@ -24,6 +25,15 @@ from ..identifier_utils import wrap_norm_prefix
 from ..struct import Reference, RelationHint, TypeDef, get_reference_tuple
 from ..utils.cache import cached_df
 from ..utils.path import prefix_cache_join
+
+__all__ = [
+    "get_relations_df",
+    "get_filtered_relations_df",
+    "get_id_multirelations_mapping",
+    "get_relation_mapping",
+    "get_relation",
+    "get_graph",
+]
 
 # TODO get_relation, get_relations
 
@@ -71,7 +81,7 @@ def get_filtered_relations_df(
     force: bool = False,
     version: Optional[str] = None,
 ) -> pd.DataFrame:
-    """Get all of the given relation."""
+    """Get all the given relation."""
     relation_prefix, relation_identifier = relation = get_reference_tuple(relation)
     if version is None:
         version = get_version(prefix)
@@ -173,3 +183,16 @@ def get_relation(
         force=force,
     )
     return relation_mapping.get(source_identifier)
+
+
+def get_graph(prefix: str, **kwargs) -> nx.DiGraph:
+    """Get the relation graph."""
+    rv = nx.MultiDiGraph()
+    df = get_relations_df(prefix=prefix, **kwargs)
+    for source_id, relation_prefix, relation_id, target_ns, target_id in df.values:
+        rv.add_edge(
+            f"{prefix}:{source_id}",
+            f"{target_ns}:{target_id}",
+            key=f"{relation_prefix}:{relation_id}",
+        )
+    return rv

@@ -26,6 +26,7 @@ from typing import (
 )
 
 import bioregistry
+from bioontologies import robot
 from tqdm.auto import tqdm
 
 from .constants import DATABASE_DIRECTORY
@@ -120,8 +121,6 @@ def get_ontology(
     elif ontology_format == "obo":
         pass  # all gucci
     elif ontology_format == "owl":
-        from bioontologies import robot
-
         _converted_obo_path = path.with_suffix(".obo")
         if prefix in REQUIRES_NO_ROBOT_CHECK:
             robot_check = False

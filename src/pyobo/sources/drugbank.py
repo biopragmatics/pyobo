@@ -15,8 +15,9 @@ from xml.etree import ElementTree
 import pystow
 from tqdm.auto import tqdm
 
+from ..getters import NoBuild
 from ..struct import Obo, Reference, Term
-from ..struct.typedef import has_salt
+from ..struct.typedef import has_inchi, has_salt, has_smiles
 from ..utils.cache import cached_pickle
 from ..utils.path import prefix_directory_join
 
@@ -120,10 +121,10 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
         if identifier:
             term.append_xref(Reference(prefix=xref_prefix, identifier=identifier))
 
-    for prop in ["smiles", "inchi"]:
-        identifier = drug_info.get(xref_prefix)
+    for prop, debio_curie in [("smiles", has_smiles), ("inchi", has_inchi)]:
+        identifier = drug_info.get(prop)
         if identifier:
-            term.append_property(prop, identifier)
+            term.append_property(debio_curie, identifier)
 
     for salt in drug_info.get("salts", []):
         term.append_relationship(
@@ -145,12 +146,15 @@ def get_xml_root(version: Optional[str] = None) -> ElementTree.Element:
     Takes between 35-60 seconds.
     """
     from drugbank_downloader import parse_drugbank
+    from pystow.config_api import ConfigError
 
-    element = parse_drugbank(
-        version=version,
-        username=pystow.get_config("pyobo", "drugbank_username"),
-        password=pystow.get_config("pyobo", "drugbank_password"),
-    )
+    try:
+        username = pystow.get_config("pyobo", "drugbank_username", raise_on_missing=True)
+        password = pystow.get_config("pyobo", "drugbank_password", raise_on_missing=True)
+    except ConfigError as e:
+        raise NoBuild from e
+
+    element = parse_drugbank(version=version, username=username, password=password)
     return element.getroot()
 
 

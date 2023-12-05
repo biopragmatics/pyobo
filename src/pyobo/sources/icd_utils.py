@@ -17,12 +17,11 @@ from typing import Any, Callable, Iterable, List, Mapping, Set, Union
 import pystow
 import requests
 from cachier import cachier
+from pystow.config_api import ConfigError
 from tqdm.auto import tqdm
 
+from ..getters import NoBuild
 from ..struct import Term
-
-ICD_CLIENT_ID = pystow.get_config("pyobo", "icd_client_id")
-ICD_CLIENT_SECRET = pystow.get_config("pyobo", "icd_client_secret")
 
 TOKEN_URL = "https://icdaccessmanagement.who.int/connect/token"  # noqa:S105
 
@@ -52,10 +51,16 @@ def get_child_identifiers(endpoint: str, res_json: Mapping[str, Any]) -> List[st
 @cachier(stale_after=datetime.timedelta(minutes=45))
 def get_icd_api_headers() -> Mapping[str, str]:
     """Get the headers, and refresh every hour."""
+    try:
+        icd_client_id = pystow.get_config("pyobo", "icd_client_id", raise_on_missing=True)
+        icd_client_secret = pystow.get_config("pyobo", "icd_client_secret", raise_on_missing=True)
+    except ConfigError as e:
+        raise NoBuild from e
+
     grant_type = "client_credentials"
     body_params = {"grant_type": grant_type}
     tqdm.write("getting ICD API token")
-    res = requests.post(TOKEN_URL, data=body_params, auth=(ICD_CLIENT_ID, ICD_CLIENT_SECRET))
+    res = requests.post(TOKEN_URL, data=body_params, auth=(icd_client_id, icd_client_secret))
     res_json = res.json()
     access_type = res_json["token_type"]
     access_token = res_json["access_token"]

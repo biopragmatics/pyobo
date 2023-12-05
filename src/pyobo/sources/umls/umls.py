@@ -7,7 +7,6 @@ Run with ``python -m pyobo.sources.umls``
 
 import itertools as itt
 import operator
-import os
 from typing import Iterable
 
 import bioregistry
@@ -16,14 +15,13 @@ from tqdm.auto import tqdm
 from umls_downloader import open_umls
 
 from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
-from pyobo.utils.io import open_map_tsv
+
+from .get_synonym_types import get_umls_synonyms
 
 __all__ = [
     "UMLSGetter",
 ]
 
-HERE = os.path.abspath(os.path.dirname(__file__))
-SYNONYM_TYPE_PATH = os.path.join(HERE, "synonym_types.tsv")
 
 RRF_COLUMNS = [
     "CUI",
@@ -48,10 +46,8 @@ RRF_COLUMNS = [
 ]
 
 PREFIX = "umls"
-
 SOURCE_VOCAB_URL = "https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html"
-
-SYNONYM_ABB = open_map_tsv(SYNONYM_TYPE_PATH)
+SYNONYM_ABB = get_umls_synonyms()
 
 
 class UMLSGetter(Obo):
@@ -85,7 +81,7 @@ def iter_terms(version: str) -> Iterable[Term]:
             )
             pref_rows_df = df.loc[idx]
             if len(pref_rows_df.index) != 1:
-                it.write(f"no preferred term for umls:{cui}. got {len(pref_rows_df.index)}")
+                # it.write(f"no preferred term for umls:{cui}. got {len(pref_rows_df.index)}")
                 continue
 
             df["TTY - Term Type in Source"] = df["TTY - Term Type in Source"].map(

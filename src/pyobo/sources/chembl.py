@@ -12,6 +12,7 @@ from typing import Iterable
 import chembl_downloader
 
 from pyobo.struct import Obo, Reference, Term
+from pyobo.struct.typedef import exact_match, has_inchi, has_smiles
 
 __all__ = [
     "ChEMBLCompoundGetter",
@@ -44,6 +45,7 @@ class ChEMBLCompoundGetter(Obo):
 
     ontology = "chembl.compound"
     bioversions_key = "chembl"
+    typedefs = [exact_match]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -66,11 +68,11 @@ def iter_terms(version: str) -> Iterable[Term]:
                 # TODO add xrefs?
                 term = Term.from_triple(prefix=PREFIX, identifier=chembl_id, name=name)
                 if smiles:
-                    term.append_property("smiles", smiles)
+                    term.append_property(has_smiles, smiles)
                 if inchi:
-                    term.append_property("inchi", inchi)
+                    term.append_property(has_inchi, inchi)
                 if inchi_key:
-                    term.append_xref(Reference(prefix="inchikey", identifier=inchi_key))
+                    term.append_exact_match(Reference(prefix="inchikey", identifier=inchi_key))
                 yield term
 
 

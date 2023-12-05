@@ -16,6 +16,7 @@ from pyobo.struct import (
     has_gene_product,
     orthologous,
 )
+from pyobo.struct.typedef import exact_match
 from pyobo.utils.io import multidict, multisetdict
 from pyobo.utils.path import ensure_df
 
@@ -40,7 +41,7 @@ class ZFINGetter(Obo):
     """An ontology representation of ZFIN's zebrafish database."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [from_species, has_gene_product, orthologous]
+    typedefs = [from_species, has_gene_product, orthologous, exact_match]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in ZFIN."""
@@ -135,7 +136,7 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
             term.append_alt(alt_id)
         entrez_id = entrez_mappings.get(identifier)
         if entrez_id:
-            term.append_xref(Reference(prefix="ncbigene", identifier=entrez_id))
+            term.append_exact_match(Reference(prefix="ncbigene", identifier=entrez_id))
         for uniprot_id in uniprot_mappings.get(identifier, []):
             term.append_relationship(has_gene_product, Reference.auto("uniprot", uniprot_id))
         for hgnc_id in human_orthologs.get(identifier, []):

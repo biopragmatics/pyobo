@@ -36,7 +36,7 @@ class HGNCGroupGetter(Obo):
     """An ontology representation of HGNC's gene group nomenclature."""
 
     ontology = PREFIX
-    dynamic_version = True
+    bioversions_key = "hgnc"
     synonym_typedefs = [symbol_type]
     typedefs = [from_species, enables]
 

@@ -7,7 +7,9 @@ from typing import Iterable
 import pandas as pd
 from tqdm.auto import tqdm
 
-from pyobo import Obo, SynonymTypeDef, Term
+from pyobo import Obo, Reference, Term
+from pyobo.struct.struct import abbreviation as abbreviation_typedef
+from pyobo.struct.typedef import exact_match, has_inchi, has_smiles
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -37,14 +39,13 @@ COLUMNS = [
     "PMID",
 ]
 
-abreviation_type = SynonymTypeDef.from_text("abbreviation")
-
 
 class SLMGetter(Obo):
     """An ontology representation of SwissLipid's lipid nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    synonym_typedefs = [abreviation_type]
+    typedefs = [exact_match]
+    synonym_typedefs = [abbreviation_typedef]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -90,28 +91,29 @@ def iter_terms(version: str, force: bool = False):
         else:
             raise ValueError(identifier)
         term = Term.from_triple(PREFIX, identifier, name)
-        term.append_property("level", level)
+        if pd.notna(level):
+            term.append_property("level", level)
         if pd.notna(abbreviation):
-            term.append_synonym(abbreviation, type=abreviation_type)
+            term.append_synonym(abbreviation, type=abbreviation_typedef)
         if pd.notna(synonyms):
             for synonym in synonyms.split("|"):
                 term.append_synonym(synonym.strip())
         if pd.notna(smiles):
-            term.append_property("smiles", smiles)
+            term.append_property(has_smiles, smiles)
         if pd.notna(inchi) and inchi != "InChI=none":
             if inchi.startswith("InChI="):
                 inchi = inchi[len("InChI=") :]
-            term.append_property("inchi", inchi)
+            term.append_property(has_inchi, inchi)
         if pd.notna(inchikey):
             if inchikey.startswith("InChIKey="):
                 inchikey = inchikey[len("InChIKey=") :]
-            term.append_property("inchikey", inchikey)
+            term.append_exact_match(Reference(prefix="inchikey", identifier=inchikey))
         if pd.notna(chebi_id):
-            term.append_xref(("chebi", chebi_id))
+            term.append_exact_match(("chebi", chebi_id))
         if pd.notna(lipidmaps_id):
-            term.append_xref(("lipidmaps", lipidmaps_id))
+            term.append_exact_match(("lipidmaps", lipidmaps_id))
         if pd.notna(hmdb_id):
-            term.append_xref(("hmdb", hmdb_id))
+            term.append_exact_match(("hmdb", hmdb_id))
         if pd.notna(pmids):
             for pmid in pmids.split("|"):
                 term.append_provenance(("pubmed", pmid))

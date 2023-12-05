@@ -5,7 +5,7 @@
 from typing import Iterable
 from urllib.parse import unquote_plus
 
-from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
+from ..struct import Obo, Reference, Synonym, Term, from_species
 from ..utils.path import ensure_tar_df
 
 __all__ = [
@@ -21,15 +21,12 @@ URL = (
 )
 INNER_PATH = "S288C_reference_genome_R64-2-1_20150113/saccharomyces_cerevisiae_R64-2-1_20150113.gff"
 
-alias_type = SynonymTypeDef.from_text("alias")
-
 
 class SGDGetter(Obo):
     """An ontology representation of SGD's yeast gene nomenclature."""
 
     bioversions_key = ontology = PREFIX
     typedefs = [from_species]
-    synonym_typedefs = [alias_type]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms for SGD."""
@@ -68,7 +65,7 @@ def get_terms(ontology: Obo, force: bool = False) -> Iterable[Term]:
         aliases = d.get("Alias")
         if aliases:
             for alias in aliases.split(","):
-                synonyms.append(Synonym(name=unquote_plus(alias), type=alias_type))
+                synonyms.append(Synonym(name=unquote_plus(alias)))
 
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=identifier, name=name),

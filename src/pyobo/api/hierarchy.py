@@ -21,6 +21,7 @@ __all__ = [
     "get_ancestors",
     "has_ancestor",
     "is_descendent",
+    "get_children",
 ]
 
 from ..struct.reference import Reference
@@ -187,6 +188,31 @@ def get_descendants(
     if curie not in hierarchy:
         return None
     return nx.ancestors(hierarchy, curie)  # note this is backwards
+
+
+@lru_cache()
+def get_children(
+    prefix: str,
+    identifier: str,
+    include_part_of: bool = True,
+    include_has_member: bool = False,
+    use_tqdm: bool = False,
+    force: bool = False,
+    **kwargs,
+) -> Optional[Set[str]]:
+    """Get all of the descendants (children) of the term as CURIEs."""
+    hierarchy = get_hierarchy(
+        prefix=prefix,
+        include_has_member=include_has_member,
+        include_part_of=include_part_of,
+        use_tqdm=use_tqdm,
+        force=force,
+        **kwargs,
+    )
+    curie = f"{prefix}:{identifier}"
+    if curie not in hierarchy:
+        return None
+    return set(hierarchy.predecessors(curie))
 
 
 def has_ancestor(prefix, identifier, ancestor_prefix, ancestor_identifier) -> bool:

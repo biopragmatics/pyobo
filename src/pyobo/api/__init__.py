@@ -10,6 +10,7 @@ from .alts import (  # noqa: F401
 )
 from .hierarchy import (  # noqa: F401
     get_ancestors,
+    get_children,
     get_descendants,
     get_hierarchy,
     get_subhierarchy,
@@ -26,6 +27,7 @@ from .names import (  # noqa: F401
     get_name,
     get_name_by_curie,
     get_name_id_mapping,
+    get_obsolete,
     get_synonyms,
 )
 from .properties import (  # noqa: F401
@@ -38,6 +40,7 @@ from .properties import (  # noqa: F401
 )
 from .relations import (  # noqa: F401
     get_filtered_relations_df,
+    get_graph,
     get_id_multirelations_mapping,
     get_relation,
     get_relation_mapping,

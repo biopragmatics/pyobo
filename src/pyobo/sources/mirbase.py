@@ -8,10 +8,11 @@ from typing import Iterable, List, Mapping
 
 from tqdm.auto import tqdm
 
-from ..struct import Obo, Reference, Synonym, Term, from_species
-from ..struct.typedef import has_mature
-from ..utils.cache import cached_mapping
-from ..utils.path import ensure_df, ensure_path, prefix_directory_join
+from pyobo.sources.mirbase_constants import BASE_URL, _assert_frozen_version
+from pyobo.struct import Obo, Reference, Synonym, Term, from_species
+from pyobo.struct.typedef import has_mature
+from pyobo.utils.cache import cached_mapping
+from pyobo.utils.path import ensure_df, ensure_path, prefix_directory_join
 
 __all__ = [
     "MiRBaseGetter",
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 PREFIX = "mirbase"
 MIRBASE_MATURE_PREFIX = "mirbase.mature"
-BASE_URL = "https://www.mirbase.org/ftp"
+
 
 xref_mapping = {
     "entrezgene": "ncbigene",
@@ -49,8 +50,9 @@ def get_obo(force: bool = False) -> Obo:
 
 def get_terms(version: str, force: bool = False) -> List[Term]:
     """Parse miRNA data from filepath and convert it to dictionary."""
-    url = f"{BASE_URL}/{version}/miRNA.dat.gz"
-    definitions_path = ensure_path(PREFIX, url=url, version=version, force=force, verify=False)
+    _assert_frozen_version(version)
+    url = f"{BASE_URL}/miRNA.dat.gz"
+    definitions_path = ensure_path(PREFIX, url=url, version=version, force=force)
 
     file_handle = (
         gzip.open(definitions_path, "rt")
@@ -62,22 +64,23 @@ def get_terms(version: str, force: bool = False) -> List[Term]:
 
 
 def _prepare_organisms(version: str, force: bool = False):
-    url = f"{BASE_URL}/{version}/organisms.txt.gz"
+    _assert_frozen_version(version)
+    url = f"{BASE_URL}/organisms.txt.gz"
     df = ensure_df(
         PREFIX,
         url=url,
         sep="\t",
         dtype={"#NCBI-taxid": str},
         version=version,
-        verify=False,
         force=force,
     )
     return {division: (taxonomy_id, name) for _, division, name, _tree, taxonomy_id in df.values}
 
 
 def _prepare_aliases(version: str, force: bool = False) -> Mapping[str, List[str]]:
-    url = f"{BASE_URL}/{version}/aliases.txt.gz"
-    df = ensure_df(PREFIX, url=url, sep="\t", version=version, verify=False, force=force)
+    _assert_frozen_version(version)
+    url = f"{BASE_URL}/aliases.txt.gz"
+    df = ensure_df(PREFIX, url=url, sep="\t", version=version, force=force)
     return {
         mirbase_id: [s.strip() for s in synonyms.split(";") if s and s.strip()]
         for mirbase_id, synonyms in df.values
@@ -133,6 +136,8 @@ def _process_definitions_lines(
             xref_prefix, xref_identifier, xref_label = map(str.strip, line.split(";"))
             xref_prefix = xref_prefix.lower()
             xref_prefix = xref_mapping.get(xref_prefix, xref_prefix)
+            if xref_prefix == "pictar":
+                continue
             xrefs.append(
                 Reference(prefix=xref_prefix, identifier=xref_identifier, name=xref_label or None)
             )

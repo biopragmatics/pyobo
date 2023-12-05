@@ -4,7 +4,6 @@
 
 import logging
 import subprocess
-import zipfile
 from functools import lru_cache
 from typing import Callable, List, Mapping, Optional, Set, TypeVar
 
@@ -25,6 +24,7 @@ __all__ = [
     "get_id_definition_mapping",
     "get_synonyms",
     "get_id_synonyms_mapping",
+    "get_obsolete",
 ]
 
 logger = logging.getLogger(__name__)
@@ -58,6 +58,9 @@ def _help_get(
         if prefix not in NO_BUILD_PREFIXES:
             logger.warning("[%s] unable to look up results with %s", prefix, f)
             NO_BUILD_PREFIXES.add(prefix)
+        return None
+    except ValueError:
+        logger.warning("[%s] unable to look up results with %s", prefix, f)
         return None
 
     if not mapping:
@@ -137,8 +140,11 @@ def get_id_name_mapping(
 
     try:
         return _get_id_name_mapping()
-    except (zipfile.BadZipFile, subprocess.CalledProcessError):
-        logger.exception("[%s v%s] could not load", prefix, version)
+    except NoBuild:
+        logger.debug("[%s] no build", prefix)
+        return {}
+    except (Exception, subprocess.CalledProcessError) as e:
+        logger.exception("[%s v%s] could not load: %s", prefix, version, e)
         return {}
 
 
@@ -177,6 +183,26 @@ def get_id_definition_mapping(
         return ontology.get_id_definition_mapping()
 
     return _get_mapping()
+
+
+def get_obsolete(
+    prefix: str,
+    *,
+    force: bool = False,
+    strict: bool = False,
+    version: Optional[str] = None,
+) -> Set[str]:
+    """Get the set of obsolete local unique identifiers."""
+    if version is None:
+        version = get_version(prefix)
+    path = prefix_cache_join(prefix, name="obsolete.tsv", version=version)
+
+    @cached_collection(path=path, force=force)
+    def _get_obsolete() -> Set[str]:
+        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
+        return ontology.get_obsolete()
+
+    return set(_get_obsolete())
 
 
 @wrap_norm_prefix

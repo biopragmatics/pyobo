@@ -2,7 +2,6 @@
 
 """PyOBO's Gilda utilities."""
 
-import itertools as itt
 import logging
 from typing import Iterable, List, Optional, Tuple, Type, Union
 
@@ -11,6 +10,7 @@ import gilda.api
 import gilda.term
 from gilda.grounder import Grounder
 from gilda.process import normalize
+from gilda.term import filter_out_duplicates
 from tqdm.auto import tqdm
 
 from pyobo import (
@@ -18,6 +18,7 @@ from pyobo import (
     get_id_species_mapping,
     get_id_synonyms_mapping,
     get_ids,
+    get_obsolete,
 )
 from pyobo.getters import NoBuild
 from pyobo.utils.io import multidict
@@ -29,32 +30,6 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-
-
-_STATUSES = {"curated": 1, "name": 2, "synonym": 3, "former_name": 4}
-
-
-def filter_out_duplicates(terms: List[gilda.term.Term]) -> List[gilda.term.Term]:
-    """Filter out duplicates."""
-    # TODO import from gilda.term import filter_out_duplicates when it gets moved,
-    #  see https://github.com/indralab/gilda/pull/103
-    logger.debug("filtering %d terms for uniqueness", len(terms))
-    new_terms: List[gilda.term.Term] = [
-        min(terms_group, key=_status_key)
-        for _, terms_group in itt.groupby(sorted(terms, key=_term_key), key=_term_key)
-    ]
-    # Re-sort the terms
-    new_terms = sorted(new_terms, key=lambda x: (x.text, x.db, x.id))
-    logger.debug("got %d unique terms.", len(new_terms))
-    return new_terms
-
-
-def _status_key(term: gilda.term.Term) -> int:
-    return _STATUSES[term.status]
-
-
-def _term_key(term: gilda.term.Term) -> Tuple[str, str, str]:
-    return term.db, term.id, term.text
 
 
 def iter_gilda_prediction_tuples(
@@ -115,10 +90,12 @@ def normalize_identifier(prefix: str, identifier: str) -> str:
 
 def get_grounder(
     prefixes: Union[str, Iterable[str]],
+    *,
     unnamed: Optional[Iterable[str]] = None,
     grounder_cls: Optional[Type[Grounder]] = None,
     versions: Union[None, str, Iterable[Union[str, None]]] = None,
     strict: bool = True,
+    skip_obsolete: bool = False,
 ) -> Grounder:
     """Get a Gilda grounder for the given prefix(es)."""
     unnamed = set() if unnamed is None else set(unnamed)
@@ -140,7 +117,11 @@ def get_grounder(
         try:
             p_terms = list(
                 get_gilda_terms(
-                    prefix, identifiers_are_names=prefix in unnamed, version=version, strict=strict
+                    prefix,
+                    identifiers_are_names=prefix in unnamed,
+                    version=version,
+                    strict=strict,
+                    skip_obsolete=skip_obsolete,
                 )
             )
         except NoBuild:
@@ -155,26 +136,50 @@ def get_grounder(
         return grounder_cls(terms_dict)
 
 
+def _fast_term(
+    *,
+    text: str,
+    prefix: str,
+    identifier: str,
+    name: str,
+    status: str,
+    organism: Optional[str] = None,
+) -> gilda.term.Term:
+    return gilda.term.Term(
+        norm_text=normalize(text),
+        text=text,
+        db=prefix,
+        id=identifier,
+        entry_name=name,
+        status=status,
+        source=prefix,
+        organism=organism,
+    )
+
+
 def get_gilda_terms(
     prefix: str,
+    *,
     identifiers_are_names: bool = False,
     version: Optional[str] = None,
     strict: bool = True,
+    skip_obsolete: bool = False,
 ) -> Iterable[gilda.term.Term]:
     """Get gilda terms for the given namespace."""
     id_to_name = get_id_name_mapping(prefix, version=version, strict=strict)
     id_to_species = get_id_species_mapping(prefix, version=version, strict=strict)
+    obsoletes = get_obsolete(prefix, version=version, strict=strict) if skip_obsolete else set()
 
     it = tqdm(id_to_name.items(), desc=f"[{prefix}] mapping", unit_scale=True, unit="name")
     for identifier, name in it:
-        yield gilda.term.Term(
-            norm_text=normalize(name),
+        if identifier in obsoletes:
+            continue
+        yield _fast_term(
             text=name,
-            db=prefix,
-            id=identifier,
-            entry_name=name,
+            prefix=prefix,
+            identifier=identifier,
+            name=name,
             status="name",
-            source=prefix,
             organism=id_to_species.get(identifier),
         )
 
@@ -184,29 +189,31 @@ def get_gilda_terms(
             id_to_synonyms.items(), desc=f"[{prefix}] mapping", unit_scale=True, unit="synonym"
         )
         for identifier, synonyms in it:
+            if identifier in obsoletes:
+                continue
             name = id_to_name[identifier]
             for synonym in synonyms:
-                yield gilda.term.Term(
-                    norm_text=normalize(synonym),
+                if not synonym:
+                    continue
+                yield _fast_term(
                     text=synonym,
-                    db=prefix,
-                    id=identifier,
-                    entry_name=name,
+                    prefix=prefix,
+                    identifier=identifier,
+                    name=name,
                     status="synonym",
-                    source=prefix,
                     organism=id_to_species.get(identifier),
                 )
 
     if identifiers_are_names:
         it = tqdm(get_ids(prefix), desc=f"[{prefix}] mapping", unit_scale=True, unit="id")
         for identifier in it:
-            yield gilda.term.Term(
-                norm_text=normalize(identifier),
+            if identifier in obsoletes:
+                continue
+            yield _fast_term(
                 text=identifier,
-                db=prefix,
-                id=identifier,
-                entry_name=None,
-                status="identifier",
-                source=prefix,
+                prefix=prefix,
+                identifier=identifier,
+                name=identifier,
+                status="name",
                 organism=id_to_species.get(identifier),
             )

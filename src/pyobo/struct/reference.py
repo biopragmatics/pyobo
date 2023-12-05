@@ -31,6 +31,12 @@ class Reference(curies.Reference):
             raise ExpansionError(f"Unknown prefix: {v}")
         return norm_prefix
 
+    @property
+    def preferred_curie(self) -> str:
+        """Get the preferred curie for this reference."""
+        pp = bioregistry.get_preferred_prefix(self.prefix) or self.prefix
+        return f"{pp}:{self.identifier}"
+
     @root_validator(pre=True)
     def validate_identifier(cls, values):  # noqa
         """Validate the identifier."""
@@ -41,14 +47,14 @@ class Reference(curies.Reference):
         if norm_prefix is None:
             raise ExpansionError(f"Unknown prefix: {prefix}")
         values["prefix"] = norm_prefix
-        values["identifier"] = bioregistry.standardize_identifier(norm_prefix, identifier)
+        values["identifier"] = bioregistry.standardize_identifier(norm_prefix, identifier).strip()
         # if not bioregistry.is_valid_identifier(norm_prefix, values["identifier"]):
         #    raise ValueError(f"non-standard identifier: {norm_prefix}:{norm_identifier}")
         return values
 
     @classmethod
     def auto(cls, prefix: str, identifier: str) -> "Reference":
-        """Create a reference and auto-populate its name."""
+        """Create a reference and autopopulate its name."""
         from ..api import get_name
 
         name = get_name(prefix, identifier)
@@ -152,6 +158,11 @@ class Referenced:
     def curie(self) -> str:
         """The CURIE for this typedef."""  # noqa: D401
         return self.reference.curie
+
+    @property
+    def preferred_curie(self) -> str:
+        """The preferred CURIE for this typedef."""  # noqa: D401
+        return self.reference.preferred_curie
 
     @property
     def pair(self) -> Tuple[str, str]:

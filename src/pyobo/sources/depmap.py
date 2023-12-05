@@ -8,6 +8,7 @@ import pandas as pd
 import pystow
 
 from pyobo import Obo, Reference, Term
+from pyobo.struct.typedef import exact_match
 
 __all__ = [
     "get_obo",
@@ -23,6 +24,7 @@ class DepMapGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     data_version = VERSION
+    typedefs = [exact_match]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -72,6 +74,8 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     for identifier, name, sname, aliases, cosmic_id, cellosaurus_id, _wtsi_id, _sanger_id in df[
         columns
     ].values:
+        if pd.isna(name):
+            name = None
         term = Term.from_triple(PREFIX, identifier, name)
         if pd.notna(sname):
             term.append_synonym(sname)
@@ -82,9 +86,9 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
                     continue
                 term.append_synonym(alias)
         if pd.notna(cosmic_id):
-            term.append_xref(Reference(prefix="cosmic.cell", identifier=cosmic_id))
+            term.append_exact_match(Reference(prefix="cosmic.cell", identifier=cosmic_id))
         if pd.notna(cellosaurus_id):
-            term.append_xref(Reference(prefix="cellosaurus", identifier=cellosaurus_id))
+            term.append_exact_match(Reference(prefix="cellosaurus", identifier=cellosaurus_id))
 
         # WTSI stands for welcome trust sanger institute
         # Not sure where this prefix goes

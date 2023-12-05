@@ -55,6 +55,7 @@ def from_obo_path(
     *,
     strict: bool = True,
     default_prefix: Optional[str] = None,
+    **kwargs,
 ) -> Obo:
     """Get the OBO graph from a path."""
     import obonet
@@ -76,7 +77,7 @@ def from_obo_path(
         _clean_graph_ontology(graph, prefix)
 
     # Convert to an Obo instance and return
-    return from_obonet(graph, strict=strict, default_prefix=default_prefix)
+    return from_obonet(graph, strict=strict, default_prefix=default_prefix, **kwargs)
 
 
 def from_obonet(  # noqa:C901
@@ -593,7 +594,7 @@ def iterate_node_relationships(
         if relation_curie in RELATION_REMAPPINGS:
             relation_prefix, relation_identifier = RELATION_REMAPPINGS[relation_curie]
         else:
-            relation_prefix, relation_identifier = normalize_curie(relation_curie)
+            relation_prefix, relation_identifier = normalize_curie(relation_curie, strict=strict)
         if relation_prefix is not None and relation_identifier is not None:
             relation = Reference(prefix=relation_prefix, identifier=relation_identifier)
         elif prefix is not None:

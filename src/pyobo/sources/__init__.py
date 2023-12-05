@@ -20,6 +20,7 @@ from .drugcentral import DrugCentralGetter
 from .expasy import ExpasyGetter
 from .famplex import FamPlexGetter
 from .flybase import FlyBaseGetter
+from .geonames import GeonamesGetter
 from .gwascentral_phenotype import GWASCentralPhenotypeGetter
 from .gwascentral_study import GWASCentralStudyGetter
 from .hgnc import HGNCGetter
@@ -46,6 +47,7 @@ from .pubchem import PubChemCompoundGetter
 from .reactome import ReactomeGetter
 from .rgd import RGDGetter
 from .rhea import RheaGetter
+from .ror import RORGetter
 from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
 from .sgd import SGDGetter
 from .slm import SLMGetter
@@ -74,6 +76,7 @@ __all__ = [
     "FlyBaseGetter",
     "GWASCentralPhenotypeGetter",
     "GWASCentralStudyGetter",
+    "GeonamesGetter",
     "HGNCGetter",
     "HGNCGroupGetter",
     "ICD10Getter",
@@ -98,6 +101,7 @@ __all__ = [
     "PomBaseGetter",
     "PubChemCompoundGetter",
     "RGDGetter",
+    "RORGetter",
     "ReactomeGetter",
     "RheaGetter",
     "SCHEMGetter",

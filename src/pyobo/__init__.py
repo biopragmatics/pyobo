@@ -5,6 +5,7 @@
 from .api import (  # noqa: F401
     get_alts_to_id,
     get_ancestors,
+    get_children,
     get_definition,
     get_descendants,
     get_filtered_properties_df,
@@ -12,6 +13,7 @@ from .api import (  # noqa: F401
     get_filtered_properties_multimapping,
     get_filtered_relations_df,
     get_filtered_xrefs,
+    get_graph,
     get_hierarchy,
     get_id_definition_mapping,
     get_id_multirelations_mapping,
@@ -23,6 +25,7 @@ from .api import (  # noqa: F401
     get_name,
     get_name_by_curie,
     get_name_id_mapping,
+    get_obsolete,
     get_primary_curie,
     get_primary_identifier,
     get_properties,

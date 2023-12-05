@@ -7,13 +7,19 @@ import pandas as pd
 from pyobo.utils.path import ensure_df
 
 PREFIX = "mirbase"
+BASE_URL = "https://github.com/cthoyt/mirbase/raw/main/"
+FROZEN_VERSION = "22.1"
 
-# PREMATURE_TO_MATURE = f'https://mirbase.org/ftp/{VERSION}/database_files/mirna_pre_mature.txt.gz'
+
+def _assert_frozen_version(version: str):
+    if version != FROZEN_VERSION:
+        raise ValueError
 
 
 def get_premature_family_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get premature family dataframe."""
-    url = f"https://mirbase.org/ftp/{version}/database_files/mirna_prefam.txt.gz"
+    _assert_frozen_version(version)
+    url = f"{BASE_URL}/mirna_prefam.txt.gz"
     return ensure_df(
         PREFIX,
         url=url,
@@ -27,7 +33,8 @@ def get_premature_family_df(version: str, force: bool = False) -> pd.DataFrame:
 
 def get_premature_to_prefamily_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get premature miRNA to premature family dataframe."""
-    url = f"https://mirbase.org/ftp/{version}/database_files/mirna_2_prefam.txt.gz"
+    _assert_frozen_version(version)
+    url = f"{BASE_URL}/mirna_2_prefam.txt.gz"
     return ensure_df(
         PREFIX,
         url=url,
@@ -40,7 +47,8 @@ def get_premature_to_prefamily_df(version: str, force: bool = False) -> pd.DataF
 
 def get_premature_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get premature miRNA dataframe."""
-    url = f"https://mirbase.org/ftp/{version}/database_files/mirna.txt.gz"
+    _assert_frozen_version(version)
+    url = f"{BASE_URL}/mirna.txt.gz"
     return ensure_df(
         PREFIX,
         url=url,
@@ -54,7 +62,8 @@ def get_premature_df(version: str, force: bool = False) -> pd.DataFrame:
 
 def get_mature_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get mature miRNA dataframe."""
-    url = f"https://mirbase.org/ftp/{version}/database_files/mirna_mature.txt.gz"
+    _assert_frozen_version(version)
+    url = f"{BASE_URL}/mirna_mature.txt.gz"
     return ensure_df(
         PREFIX,
         url=url,

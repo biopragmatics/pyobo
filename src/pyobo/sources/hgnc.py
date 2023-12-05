@@ -27,6 +27,7 @@ from pyobo.struct import (
     orthologous,
     transcribes_to,
 )
+from pyobo.struct.typedef import exact_match
 from pyobo.utils.path import ensure_path, prefix_directory_join
 
 __all__ = [
@@ -37,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 PREFIX = "hgnc"
 DEFINITIONS_URL_FMT = (
-    "https://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/"
+    "http://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/"
     "archive/monthly/json/hgnc_complete_set_{version}.json"
 )
 
@@ -108,12 +109,33 @@ ENCODINGS = {
     "unknown": "GRP",
 }
 
+SKIP_KEYS = {
+    "date_approved_reserved",
+    "_version_",
+    "uuid",
+    "date_modified",
+    "date_name_changed",
+    "date_symbol_changed",
+    "symbol_report_tag",
+    "location_sortable",
+    "curator_notes",
+    "agr",  # repeat of HGNC ID
+    "gencc",  # repeat of HGNC ID
+    "bioparadigms_slc",  # repeat of symbol
+    "lncrnadb",  # repeat of symbol
+    "gtrnadb",  # repeat of symbol
+    "horde_id",  # repeat of symbol
+    "imgt",  # repeat of symbol
+    "cd",  # symbol
+    "homeodb",  # TODO add to bioregistry, though this is defunct
+    "mamit-trnadb",  # TODO add to bioregistry, though this is defunct
+}
+
 #: A mapping from HGNC's locus_type annotations to sequence ontology identifiers
 LOCUS_TYPE_TO_SO = {
     # protein-coding gene
     "gene with protein product": "0001217",
     "complex locus constituent": "0000997",  # https://github.com/pyobo/pyobo/issues/118#issuecomment-1564520052
-    "protocadherin": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/562
     # non-coding RNA
     "RNA, Y": "0002359",
     "RNA, cluster": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/564
@@ -191,6 +213,7 @@ class HGNCGetter(Obo):
         transcribes_to,
         orthologous,
         member_of,
+        exact_match,
     ]
     idspaces = IDSPACES
     synonym_typedefs = [
@@ -331,6 +354,12 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
             else:
                 tqdm.write(f"unhandled IUPHAR: {iuphar}")
 
+        for lrg_info in entry.pop("lsdb", []):
+            if lrg_info.startswith("LRG_"):
+                lrg_curie = lrg_info.split("|")[0]
+                _, lrg_id = lrg_curie.split("_")
+                term.append_xref(Reference(prefix="lrg", identifier=lrg_id))
+
         for xref_prefix, key in gene_xrefs:
             xref_identifiers = entry.pop(key, None)
             if xref_identifiers is None:
@@ -398,7 +427,8 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
         term.set_species(identifier="9606", name="Homo sapiens")
 
         for key in entry:
-            unhandled_entry_keys[key] += 1
+            if key not in SKIP_KEYS:
+                unhandled_entry_keys[key] += 1
         yield term
 
     with open(prefix_directory_join(PREFIX, name="unhandled.json"), "w") as file:

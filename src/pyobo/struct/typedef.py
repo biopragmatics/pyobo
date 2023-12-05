@@ -40,6 +40,11 @@ __all__ = [
     "enables",
     "participates_in",
     "has_participant",
+    "exact_match",
+    "has_dbxref",
+    # Properties
+    "has_inchi",
+    "has_smiles",
 ]
 
 
@@ -73,7 +78,7 @@ class TypeDef(Referenced):
     def iterate_obo_lines(self) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield "\n[Typedef]"
-        yield f"id: {self.reference.curie}"
+        yield f"id: {self.reference.preferred_curie}"
         if self.name:
             yield f"name: {self.reference.name}"
         if self.definition:
@@ -92,7 +97,7 @@ class TypeDef(Referenced):
             yield f"comment: {self.comment}"
 
         for xref in self.xrefs:
-            yield f"xref: {xref}"
+            yield f"xref: {xref.preferred_curie}"
 
         if self.is_transitive is not None:
             yield f'is_transitive: {"true" if self.is_transitive else "false"}'
@@ -100,7 +105,7 @@ class TypeDef(Referenced):
         if self.is_symmetric is not None:
             yield f'is_symmetric: {"true" if self.is_symmetric else "false"}'
         if self.holds_over_chain:
-            _chain = " ".join(link.curie for link in self.holds_over_chain)
+            _chain = " ".join(link.preferred_curie for link in self.holds_over_chain)
             _names = " / ".join(link.name or "_" for link in self.holds_over_chain)
             yield f"holds_over_chain: {_chain} ! {_names}"
 
@@ -259,9 +264,21 @@ has_salt = TypeDef(
     reference=Reference(prefix="debio", identifier="0000006", name="has salt"),
 )
 
-example_of_usage = Reference(prefix=IAO_PREFIX, identifier="0000112", name="example of usage")
-alternative_term = Reference(prefix=IAO_PREFIX, identifier="0000118", name="alternative term")
-editor_note = Reference(prefix=IAO_PREFIX, identifier="0000116", name="editor note")
+term_replaced_by = TypeDef.from_triple(
+    prefix=IAO_PREFIX, identifier="0100001", name="term replaced by"
+)
+example_of_usage = TypeDef.from_triple(
+    prefix=IAO_PREFIX, identifier="0000112", name="example of usage"
+)
+alternative_term = TypeDef.from_triple(
+    prefix=IAO_PREFIX, identifier="0000118", name="alternative term"
+)
+has_ontology_root_term = TypeDef.from_triple(
+    prefix=IAO_PREFIX, identifier="0000700", name="has ontology root term"
+)
+has_dbxref = TypeDef.from_curie("oboInOwl:hasDbXref", name="has database cross-reference")
+
+editor_note = TypeDef.from_triple(prefix=IAO_PREFIX, identifier="0000116", name="editor note")
 
 is_immediately_transformed_from = TypeDef.from_triple(
     prefix=SIO_PREFIX, identifier="000658", name="is immediately transformed from"
@@ -291,6 +308,15 @@ is_substituent_group_from = TypeDef(
 has_functional_parent = TypeDef(
     reference=Reference(prefix="ro", identifier="0018038", name="has functional parent"),
 )
+
+has_smiles = TypeDef(
+    reference=Reference(prefix="debio", identifier="0000022", name="has SMILES"),
+)
+
+has_inchi = TypeDef(
+    reference=Reference(prefix="debio", identifier="0000020", name="has InChI"),
+)
+
 
 default_typedefs: Dict[Tuple[str, str], TypeDef] = {
     v.pair: v for k, v in locals().items() if isinstance(v, TypeDef)

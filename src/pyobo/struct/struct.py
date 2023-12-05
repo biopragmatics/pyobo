@@ -47,6 +47,7 @@ from .typedef import (
     exact_match,
     from_species,
     get_reference_tuple,
+    has_ontology_root_term,
     has_part,
     is_a,
     orthologous,
@@ -108,7 +109,7 @@ class Synonym:
     def _fp(self) -> str:
         x = f'"{self._escape(self.name)}" {self.specificity}'
         if self.type and self.type.pair != DEFAULT_SYNONYM_TYPE.pair:
-            x = f"{x} {self.type.curie}"
+            x = f"{x} {self.type.preferred_curie}"
         return f"{x} [{comma_separate(self.provenance)}]"
 
     @staticmethod
@@ -125,7 +126,7 @@ class SynonymTypeDef(Referenced):
 
     def to_obo(self) -> str:
         """Serialize to OBO."""
-        rv = f'synonymtypedef: {self.curie} "{self.name}"'
+        rv = f'synonymtypedef: {self.preferred_curie} "{self.name}"'
         if self.specificity:
             rv = f"{rv} {self.specificity}"
         return rv
@@ -157,6 +158,11 @@ class SynonymTypeDef(Referenced):
 DEFAULT_SYNONYM_TYPE = SynonymTypeDef(
     reference=Reference(prefix="oboInOwl", identifier="SynonymType", name="Synonym"),
 )
+abbreviation = SynonymTypeDef(
+    reference=Reference(prefix="OMO", identifier="0003000", name="abbreviation")
+)
+acronym = SynonymTypeDef(reference=Reference(prefix="omo", identifier="0003012", name="acronym"))
+
 
 ReferenceHint = Union[Reference, "Term", Tuple[str, str], str]
 
@@ -169,13 +175,13 @@ def _ensure_ref(reference: ReferenceHint) -> Reference:
     if isinstance(reference, str):
         _rv = Reference.from_curie(reference)
         if _rv is None:
-            raise ValueError
+            raise ValueError(f"could not parse CURIE from {reference}")
         return _rv
     if isinstance(reference, tuple):
         return Reference(prefix=reference[0], identifier=reference[1])
     if isinstance(reference, Reference):
         return reference
-    raise TypeError
+    raise TypeError(f"invalid type given for a reference ({type(reference)}): {reference}")
 
 
 @dataclass
@@ -216,6 +222,8 @@ class Term(Referenced):
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: Optional[bool] = None
 
+    type: Literal["Term", "Instance"] = "Term"
+
     def __hash__(self):  # noqa: D105
         return hash((self.__class__, self.prefix, self.identifier))
 
@@ -226,11 +234,13 @@ class Term(Referenced):
         identifier: str,
         name: Optional[str] = None,
         definition: Optional[str] = None,
+        **kwargs,
     ) -> "Term":
         """Create a term from a reference."""
         return cls(
             reference=Reference(prefix=prefix, identifier=identifier, name=name),
             definition=definition,
+            **kwargs,
         )
 
     @classmethod
@@ -260,11 +270,17 @@ class Term(Referenced):
         self.provenance.append(_ensure_ref(reference))
 
     def append_synonym(
-        self, synonym: Union[str, Synonym], type: Optional[SynonymTypeDef] = None
+        self,
+        synonym: Union[str, Synonym],
+        *,
+        type: Optional[SynonymTypeDef] = None,
+        specificity: Optional[SynonymSpecificity] = None,
     ) -> None:
         """Add a synonym."""
         if isinstance(synonym, str):
-            synonym = Synonym(synonym, type=type or DEFAULT_SYNONYM_TYPE)
+            synonym = Synonym(
+                synonym, type=type or DEFAULT_SYNONYM_TYPE, specificity=specificity or "EXACT"
+            )
         self.synonyms.append(synonym)
 
     def append_alt(self, alt: Union[str, Reference]) -> None:
@@ -322,7 +338,7 @@ class Term(Referenced):
         """Get relationships from the given type."""
         return self.relationships[typedef]
 
-    def append_exact_match(self, reference):
+    def append_exact_match(self, reference: ReferenceHint):
         """Append an exact match, also adding an xref."""
         reference = _ensure_ref(reference)
         self.append_relationship(exact_match, reference)
@@ -363,8 +379,14 @@ class Term(Referenced):
             raise ValueError("can not extend a collection that includes a null reference")
         self.relationships[typedef].extend(references)
 
-    def append_property(self, prop: str, value: str) -> None:
+    def append_property(
+        self, prop: Union[str, Reference, Referenced], value: Union[str, Reference, Referenced]
+    ) -> None:
         """Append a property."""
+        if isinstance(prop, (Reference, Referenced)):
+            prop = prop.curie
+        if isinstance(value, (Reference, Referenced)):
+            value = value.curie
         self.properties[prop].append(value)
 
     def _definition_fp(self) -> str:
@@ -383,10 +405,12 @@ class Term(Referenced):
             for value in values:
                 yield prop, value
 
-    def iterate_obo_lines(self) -> Iterable[str]:
+    def iterate_obo_lines(self, *, ontology, typedefs) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
-        yield "\n[Term]"
-        yield f"id: {self.curie}"
+        yield f"\n[{self.type}]"
+        yield f"id: {self.preferred_curie}"
+        if self.is_obsolete:
+            yield "is_obsolete: true"
         if self.name:
             yield f"name: {obo_escape_slim(self.name)}"
         if self.namespace and self.namespace != "?":
@@ -399,14 +423,23 @@ class Term(Referenced):
             yield f"def: {self._definition_fp()}"
 
         for xref in sorted(self.xrefs, key=attrgetter("prefix", "identifier")):
-            yield f"xref: {xref}"
+            yield f"xref: {xref.preferred_curie}"
 
+        parent_tag = "is_a" if self.type == "Term" else "instance_of"
         for parent in sorted(self.parents, key=attrgetter("prefix", "identifier")):
-            yield f"is_a: {parent}"
+            yield f"{parent_tag}: {parent.preferred_curie}"
 
         for typedef, references in sorted(self.relationships.items(), key=_sort_relations):
+            if (not typedefs or typedef not in typedefs) and (
+                ontology,
+                typedef.curie,
+            ) not in _TYPEDEF_WARNINGS:
+                logger.warning(f"[{ontology}] typedef not defined in OBO: {typedef.curie}")
+                _TYPEDEF_WARNINGS.add((ontology, typedef.curie))
+
+            typedef_preferred_curie = typedef.preferred_curie
             for reference in sorted(references, key=attrgetter("prefix", "identifier")):
-                s = f"relationship: {typedef.curie} {reference.curie}"
+                s = f"relationship: {typedef_preferred_curie} {reference.preferred_curie}"
                 if typedef.name or reference.name:
                     s += " !"
                 if typedef.name:
@@ -415,7 +448,8 @@ class Term(Referenced):
                     s += f" {reference.name}"
                 yield s
 
-        for prop, value in sorted(self.iterate_properties()):
+        for prop, value in sorted(self.iterate_properties(), key=_sort_properties):
+            # TODO deal with typedefs for properties
             yield f'property_value: {prop} "{value}" xsd:string'  # TODO deal with types later
 
         for synonym in sorted(self.synonyms, key=attrgetter("name")):
@@ -426,9 +460,23 @@ class Term(Referenced):
         return s.replace("\n", "\\n").replace('"', '\\"')
 
 
+#: A set of warnings, used to make sure we don't show the same one over and over
+_TYPEDEF_WARNINGS: Set[Tuple[str, str]] = set()
+
+
 def _sort_relations(r):
     typedef, _references = r
     return typedef.reference.name or typedef.reference.identifier
+
+
+def _sort_properties(r):
+    o = r[1]
+    if isinstance(o, str):
+        return o
+    elif isinstance(o, Term):
+        return o.curie
+    else:
+        raise TypeError(f"What {type(r)}: {r}")
 
 
 class BioregistryError(ValueError):
@@ -618,6 +666,8 @@ class Obo:
             yield f"idspace: {prefix} {url}"
 
         for synonym_typedef in sorted((self.synonym_typedefs or []), key=attrgetter("curie")):
+            if synonym_typedef.curie == DEFAULT_SYNONYM_TYPE.curie:
+                continue
             yield synonym_typedef.to_obo()
 
         yield f"ontology: {self.ontology}"
@@ -625,15 +675,23 @@ class Obo:
         if self.name is None:
             raise ValueError("ontology is missing name")
         yield f'property_value: http://purl.org/dc/elements/1.1/title "{self.name}" xsd:string'
+        license_spdx_id = bioregistry.get_license(self.ontology)
+        if license_spdx_id:
+            # TODO add SPDX to idspaces and use as a CURIE?
+            yield f'property_value: http://purl.org/dc/terms/license "{license_spdx_id}" xsd:string'
+        description = bioregistry.get_description(self.ontology)
+        if description:
+            description = obo_escape_slim(description.strip())
+            yield f'property_value: http://purl.org/dc/elements/1.1/description "{description}" xsd:string'
 
         for root_term in self.root_terms or []:
-            yield f"property_value: IAO:0000700 {root_term.curie}"
+            yield f"property_value: {has_ontology_root_term.preferred_curie} {root_term.preferred_curie}"
 
         for typedef in sorted(self.typedefs or [], key=attrgetter("curie")):
             yield from typedef.iterate_obo_lines()
 
         for term in self:
-            yield from term.iterate_obo_lines()
+            yield from term.iterate_obo_lines(ontology=self.ontology, typedefs=self.typedefs)
 
     def write_obo(
         self, file: Union[None, str, TextIO, Path] = None, use_tqdm: bool = False
@@ -977,6 +1035,16 @@ class Obo:
     def get_id_definition_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, str]:
         """Get a mapping from identifiers to definitions."""
         return dict(self.iterate_id_definition(use_tqdm=use_tqdm))
+
+    def get_obsolete(self, *, use_tqdm: bool = False) -> Set[str]:
+        """Get the set of obsolete identifiers."""
+        return {
+            term.identifier
+            for term in self._iter_terms(
+                use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting obsolete"
+            )
+            if term.identifier and term.is_obsolete
+        }
 
     ############
     # TYPEDEFS #
@@ -1402,4 +1470,4 @@ def _convert_synonym_typedefs(synonym_typedefs: Optional[Iterable[SynonymTypeDef
 
 
 def _convert_synonym_typedef(synonym_typedef: SynonymTypeDef) -> str:
-    return f'{synonym_typedef.curie} "{synonym_typedef.name}"'
+    return f'{synonym_typedef.preferred_curie} "{synonym_typedef.name}"'
