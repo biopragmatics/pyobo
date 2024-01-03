@@ -50,7 +50,10 @@ __all__ = [
 
 @dataclass
 class TypeDef(Referenced):
-    """A type definition in OBO."""
+    """A type definition in OBO.
+
+    See the subsection of https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.2.2.
+    """
 
     reference: Reference
     comment: Optional[str] = None
@@ -108,6 +111,8 @@ class TypeDef(Referenced):
             _chain = " ".join(link.preferred_curie for link in self.holds_over_chain)
             _names = " / ".join(link.name or "_" for link in self.holds_over_chain)
             yield f"holds_over_chain: {_chain} ! {_names}"
+        if self.inverse:
+            yield f"inverse_of: {self.inverse}"
 
     @classmethod
     def from_triple(cls, prefix: str, identifier: str, name: Optional[str] = None) -> "TypeDef":
