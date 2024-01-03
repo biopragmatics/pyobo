@@ -72,7 +72,9 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
         # TODO check that the first is always the parent compound?
         if pd.notna(pubchem_compound_ids):
-            pubchem_compound_ids = pubchem_compound_ids.split(";")
+            pubchem_compound_ids = [
+                yy.strip() for xx in pubchem_compound_ids.split(";") for yy in xx.strip().split(",")
+            ]
             if len(pubchem_compound_ids) > 1:
                 logger.debug("multiple cids for %s: %s", identifier, pubchem_compound_ids)
             for pubchem_compound_id in pubchem_compound_ids:

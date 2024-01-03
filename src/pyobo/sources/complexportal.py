@@ -82,6 +82,10 @@ def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
             logger.warning("xref missing (: %s", xref)
             continue
         note = note.rstrip(")")
+        if note.lower().startswith("rhea "):
+            note = note[len("Rhea ") :]
+        if note.lower().startswith("EC:"):
+            note = note[len("EC:") :]
         try:
             reference = Reference.from_curie(xref_curie)
         except ValueError:

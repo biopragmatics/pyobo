@@ -119,7 +119,7 @@ def wrap_norm_prefix(f):
 
 def standardize_ec(ec: str) -> str:
     """Standardize an EC code identifier by removing all trailing dashes and dots."""
-    ec = ec.strip()
+    ec = ec.strip().replace(" ", "")
     for _ in range(4):
         ec = ec.rstrip("-").rstrip(".")
     return ec

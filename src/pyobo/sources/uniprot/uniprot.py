@@ -30,7 +30,7 @@ class UniProtGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        yield from iter_terms(force=force, version=self._version_or_raise)
+        yield from iter_terms(version=self._version_or_raise)
 
 
 def get_obo(force: bool = False) -> Obo:
@@ -38,9 +38,9 @@ def get_obo(force: bool = False) -> Obo:
     return UniProtGetter(force=force)
 
 
-def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
+def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
     """Iterate over UniProt Terms."""
-    with open_reader(ensure(version=version, force=force)) as reader:
+    with open_reader(ensure(version=version)) as reader:
         _ = next(reader)  # header
         for uniprot_id, name, taxonomy_id, _synonyms, ecs, pubmeds, pdbs in tqdm(
             reader, desc="Mapping UniProt", unit_scale=True
@@ -63,11 +63,11 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
             yield term
 
 
-def ensure(version: Optional[str] = None, force: bool = False) -> Path:
+def ensure(version: Optional[str] = None) -> Path:
     """Ensure the reviewed uniprot names are available."""
     if version is None:
         version = bioversions.get_version("uniprot")
-    return RAW_MODULE.ensure(PREFIX, version, name="reviewed.tsv.gz", url=REVIEWED_URL, force=force)
+    return RAW_MODULE.ensure(PREFIX, version, name="reviewed.tsv.gz", url=REVIEWED_URL)
 
 
 if __name__ == "__main__":
