@@ -32,10 +32,14 @@ class Reference(curies.Reference):
         return norm_prefix
 
     @property
+    def preferred_prefix(self) -> str:
+        """Get the preferred curie for this reference."""
+        return bioregistry.get_preferred_prefix(self.prefix) or self.prefix
+
+    @property
     def preferred_curie(self) -> str:
         """Get the preferred curie for this reference."""
-        pp = bioregistry.get_preferred_prefix(self.prefix) or self.prefix
-        return f"{pp}:{self.identifier}"
+        return f"{self.preferred_prefix}:{self.identifier}"
 
     @root_validator(pre=True)
     def validate_identifier(cls, values):  # noqa
@@ -125,7 +129,7 @@ class Reference(curies.Reference):
         if identifier_lower.startswith(f"{self.prefix.lower()}:"):
             rv = identifier_lower
         else:
-            rv = f"{self.prefix}:{self._escaped_identifier}"
+            rv = f"{self.preferred_prefix}:{self._escaped_identifier}"
         if self.name:
             rv = f"{rv} ! {self.name}"
         return rv

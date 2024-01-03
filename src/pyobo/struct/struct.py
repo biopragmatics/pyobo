@@ -384,9 +384,9 @@ class Term(Referenced):
     ) -> None:
         """Append a property."""
         if isinstance(prop, (Reference, Referenced)):
-            prop = prop.curie
+            prop = prop.preferred_curie
         if isinstance(value, (Reference, Referenced)):
-            value = value.curie
+            value = value.preferred_curie
         self.properties[prop].append(value)
 
     def _definition_fp(self) -> str:
@@ -423,11 +423,11 @@ class Term(Referenced):
             yield f"def: {self._definition_fp()}"
 
         for xref in sorted(self.xrefs, key=attrgetter("prefix", "identifier")):
-            yield f"xref: {xref.preferred_curie}"
+            yield f"xref: {xref}"  # __str__ bakes in the ! name
 
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
         for parent in sorted(self.parents, key=attrgetter("prefix", "identifier")):
-            yield f"{parent_tag}: {parent.preferred_curie}"
+            yield f"{parent_tag}: {parent}"  # __str__ bakes in the ! name
 
         for typedef, references in sorted(self.relationships.items(), key=_sort_relations):
             if (not typedefs or typedef not in typedefs) and (
