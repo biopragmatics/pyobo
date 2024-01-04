@@ -444,20 +444,23 @@ def _extract_synonym(
             break
 
     stype: Optional[SynonymTypeDef] = None
-    if specificity is not None:  # go fishing for a synonym type definition
-        for _stype in synonym_typedefs.values():
-            # Since there aren't a lot of carefully defined synonym definitions, it
-            # can appear as a string or curie. Therefore, we might see temporary prefixes
-            # get added, so we should check against full curies as well as local unique
-            # identifiers
-            if rest.startswith(_stype.curie):
-                rest = rest[len(_stype.curie) :].strip()
-                stype = _stype
-                break
-            elif rest.startswith(_stype.identifier):
-                rest = rest[len(_stype.identifier) :].strip()
-                stype = _stype
-                break
+    for _stype in synonym_typedefs.values():
+        # Since there aren't a lot of carefully defined synonym definitions, it
+        # can appear as a string or curie. Therefore, we might see temporary prefixes
+        # get added, so we should check against full curies as well as local unique
+        # identifiers
+        if rest.startswith(_stype.curie):
+            rest = rest[len(_stype.curie) :].strip()
+            stype = _stype
+            break
+        elif rest.startswith(_stype.preferred_curie):
+            rest = rest[len(_stype.preferred_curie) :].strip()
+            stype = _stype
+            break
+        elif rest.startswith(_stype.identifier):
+            rest = rest[len(_stype.identifier) :].strip()
+            stype = _stype
+            break
 
     if not rest.startswith("[") or not rest.endswith("]"):
         logger.warning("[%s:%s] problem with synonym: %s", prefix, identifier, s)
