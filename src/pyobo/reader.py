@@ -454,6 +454,10 @@ def _extract_synonym(
                 rest = rest[len(_stype.curie) :].strip()
                 stype = _stype
                 break
+            elif rest.startswith(_stype.preferred_curie):
+                rest = rest[len(_stype.preferred_curie) :].strip()
+                stype = _stype
+                break
             elif rest.startswith(_stype.identifier):
                 rest = rest[len(_stype.identifier) :].strip()
                 stype = _stype

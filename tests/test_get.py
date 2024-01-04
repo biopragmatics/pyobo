@@ -106,6 +106,7 @@ class TestParseObonet(unittest.TestCase):
         iupac_name = SynonymTypeDef.from_text("IUPAC NAME", lower=False)
         synoynym_typedefs = {
             "IUPAC_NAME": iupac_name,
+            acronym.curie: acronym,
         }
 
         for expected_synonym, text in [
@@ -141,6 +142,18 @@ class TestParseObonet(unittest.TestCase):
             (
                 Synonym(name="HAdV-A", specificity="BROAD", type=acronym),
                 '"HAdV-A" BROAD OMO:0003012 []',
+            ),
+            (
+                Synonym(name="HAdV-A", specificity="BROAD", type=acronym),
+                '"HAdV-A" BROAD omo:0003012 []',
+            ),
+            (
+                Synonym(name="HAdV-A", specificity="EXACT", type=acronym),
+                '"HAdV-A" OMO:0003012 []',
+            ),
+            (
+                Synonym(name="HAdV-A", specificity="EXACT", type=acronym),
+                '"HAdV-A" omo:0003012 []',
             ),
         ]:
             with self.subTest(s=text):
