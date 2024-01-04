@@ -19,6 +19,7 @@ from pyobo.reader import (
     iterate_node_synonyms,
     iterate_node_xrefs,
 )
+from pyobo.struct.struct import acronym
 from tests.constants import TEST_CHEBI_OBO_PATH, chebi_patch
 
 
@@ -136,6 +137,10 @@ class TestParseObonet(unittest.TestCase):
             (
                 Synonym(name="LTEC I", specificity="EXACT"),
                 '"LTEC I" []',
+            ),
+            (
+                Synonym(name="HAdV-A", specificity="BROAD", type=acronym),
+                '"HAdV-A" BROAD OMO:0003012 []',
             ),
         ]:
             with self.subTest(s=text):
