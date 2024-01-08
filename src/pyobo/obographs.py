@@ -19,7 +19,7 @@ from bioontologies.obograph import (
 from bioontologies.robot import ParseResults
 
 from pyobo.struct import Obo, Reference, Term
-from pyobo.struct.typedef import is_a
+from pyobo.struct.typedef import definition_source, is_a
 
 __all__ = [
     "graph_from_obo",
@@ -61,12 +61,12 @@ def _rewire(r: Reference) -> curies.Reference:
 
 
 def _get_class_node(term: Term) -> Node:
-    if not term.definition:
-        definition = None
-    else:
+    if term.definition or term.provenance:
         definition = Definition.from_parsed(
             value=term.definition, references=[_rewire(p) for p in term.provenance]
         )
+    else:
+        definition = None
 
     if term.xrefs:
         if not term.xref_types:
@@ -126,3 +126,11 @@ def _iter_edges(term: Term) -> Iterable[Edge]:
                 _rewire(typedef.reference),
                 _rewire(target),
             )
+
+    for provenance_reference in term.provenance:
+        yield Edge.from_parsed(
+            _rewire(term.reference),
+            _rewire(definition_source.reference),
+            _rewire(provenance_reference),
+        )
+    # TODO also look through xrefs and seealso to get provenance xrefs?
