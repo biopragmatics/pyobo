@@ -82,8 +82,15 @@ def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
             logger.warning("xref missing (: %s", xref)
             continue
         note = note.rstrip(")")
+        note.replace("rhea:rhea ", "rhea:")
+        note.replace("rhea:Rhea ", "rhea:")
+        note.replace("eccode::", "eccode:")
+        note.replace("eccode:EC:", "eccode:")
+        note.replace("eccode:RHEA:", "rhea:")
         if note.lower().startswith("rhea "):
             note = note[len("Rhea ") :]
+            if note.lower().startswith("rhea:rhea "):
+                note = note[len("rhea:rhea ") :]
         if note.lower().startswith("EC:"):
             note = note[len("EC:") :]
         try:
