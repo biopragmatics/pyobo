@@ -281,6 +281,9 @@ alternative_term = TypeDef.from_triple(
 has_ontology_root_term = TypeDef.from_triple(
     prefix=IAO_PREFIX, identifier="0000700", name="has ontology root term"
 )
+definition_source = TypeDef.from_triple(
+    prefix=IAO_PREFIX, identifier="0000119", name="definition source"
+)
 has_dbxref = TypeDef.from_curie("oboInOwl:hasDbXref", name="has database cross-reference")
 
 editor_note = TypeDef.from_triple(prefix=IAO_PREFIX, identifier="0000116", name="editor note")
