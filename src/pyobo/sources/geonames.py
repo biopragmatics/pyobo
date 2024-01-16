@@ -38,7 +38,9 @@ def get_terms(*, force: bool = False) -> Collection[Term]:
     """Get terms."""
     code_to_country = get_code_to_country(force=force)
     code_to_admin1 = get_code_to_admin1(code_to_country, force=force)
-    code_to_admin2 = get_code_to_admin2(code_to_admin1, force=force)
+    code_to_admin2 = get_code_to_admin2(
+        code_to_country=code_to_country, code_to_admin1=code_to_admin1, force=force
+    )
     id_to_term = get_cities(
         code_to_country=code_to_country,
         code_to_admin1=code_to_admin1,
@@ -113,7 +115,7 @@ def get_code_to_admin1(
 
 
 def get_code_to_admin2(
-    code_to_admin1: Mapping[str, Term], *, force: bool = False
+    *, code_to_country: Mapping[str, Term], code_to_admin1: Mapping[str, Term], force: bool = False
 ) -> Mapping[str, Term]:
     """Get a mapping from admin2 code to term."""
     admin2_df = ensure_df(
@@ -134,8 +136,13 @@ def get_code_to_admin2(
         term.append_property("code", code)
         code_to_admin2[code] = term
         admin1_code = code.rsplit(".", 1)[0]
-        admin1_term = code_to_admin1[admin1_code]
-        term.append_relationship(part_of, admin1_term)
+        admin1_term = code_to_admin1.get(admin1_code)
+        if admin1_term:
+            term.append_relationship(part_of, admin1_term)
+        else:
+            country_code = admin1_code.split(".", 1)[0]
+            country_term = code_to_country[country_code]
+            term.append_relationship(part_of, country_term)
     return code_to_admin2
 
 
@@ -197,7 +204,10 @@ def get_cities(
                     term.append_synonym(synonym)
 
         if pd.isna(admin1):
-            tqdm.write(f"[geonames:{identifier}] missing admin 1 code for {name} ({country})")
+            # TODO try to annotate these directly onto countries
+            tqdm.write(
+                f"[geonames:{identifier}] {name}, a city in {country}, is missing admin 1 code"
+            )
             continue
 
         admin1_full = f"{country}.{admin1}"
