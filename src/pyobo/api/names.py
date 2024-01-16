@@ -124,6 +124,9 @@ def get_id_name_mapping(
         rv = get_ncbigene_id_to_name_mapping()
         logger.info("[%s] done loading name mappings", prefix)
         return rv
+    if prefix == "ensembl":
+        # FIXME implement!
+        return {}
 
     if version is None:
         version = get_version(prefix)
