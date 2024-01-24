@@ -3,6 +3,7 @@
 """PyOBO's Gilda utilities."""
 
 import logging
+from subprocess import CalledProcessError
 from typing import Iterable, List, Optional, Tuple, Type, Union
 
 import bioregistry
@@ -96,6 +97,7 @@ def get_grounder(
     versions: Union[None, str, Iterable[Union[str, None]]] = None,
     strict: bool = True,
     skip_obsolete: bool = False,
+    progress: bool = True,
 ) -> Grounder:
     """Get a Gilda grounder for the given prefix(es)."""
     unnamed = set() if unnamed is None else set(unnamed)
@@ -113,7 +115,7 @@ def get_grounder(
         raise ValueError
 
     terms: List[gilda.term.Term] = []
-    for prefix, version in zip(prefixes, versions):
+    for prefix, version in zip(tqdm(prefixes, leave=False, disable=not progress), versions):
         try:
             p_terms = list(
                 get_gilda_terms(
@@ -122,9 +124,10 @@ def get_grounder(
                     version=version,
                     strict=strict,
                     skip_obsolete=skip_obsolete,
+                    progress=progress,
                 )
             )
-        except NoBuild:
+        except (NoBuild, CalledProcessError):
             continue
         else:
             terms.extend(p_terms)
@@ -164,13 +167,20 @@ def get_gilda_terms(
     version: Optional[str] = None,
     strict: bool = True,
     skip_obsolete: bool = False,
+    progress: bool = True,
 ) -> Iterable[gilda.term.Term]:
     """Get gilda terms for the given namespace."""
     id_to_name = get_id_name_mapping(prefix, version=version, strict=strict)
     id_to_species = get_id_species_mapping(prefix, version=version, strict=strict)
     obsoletes = get_obsolete(prefix, version=version, strict=strict) if skip_obsolete else set()
 
-    it = tqdm(id_to_name.items(), desc=f"[{prefix}] mapping", unit_scale=True, unit="name")
+    it = tqdm(
+        id_to_name.items(),
+        desc=f"[{prefix}] mapping",
+        unit_scale=True,
+        unit="name",
+        disable=not progress,
+    )
     for identifier, name in it:
         if identifier in obsoletes:
             continue
@@ -186,7 +196,11 @@ def get_gilda_terms(
     id_to_synonyms = get_id_synonyms_mapping(prefix, version=version)
     if id_to_synonyms:
         it = tqdm(
-            id_to_synonyms.items(), desc=f"[{prefix}] mapping", unit_scale=True, unit="synonym"
+            id_to_synonyms.items(),
+            desc=f"[{prefix}] mapping",
+            unit_scale=True,
+            unit="synonym",
+            disable=not progress,
         )
         for identifier, synonyms in it:
             if identifier in obsoletes:
@@ -205,7 +219,13 @@ def get_gilda_terms(
                 )
 
     if identifiers_are_names:
-        it = tqdm(get_ids(prefix), desc=f"[{prefix}] mapping", unit_scale=True, unit="id")
+        it = tqdm(
+            get_ids(prefix),
+            desc=f"[{prefix}] mapping",
+            unit_scale=True,
+            unit="id",
+            disable=not progress,
+        )
         for identifier in it:
             if identifier in obsoletes:
                 continue
