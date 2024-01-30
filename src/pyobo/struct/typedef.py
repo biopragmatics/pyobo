@@ -291,7 +291,14 @@ editor_note = TypeDef.from_triple(prefix=IAO_PREFIX, identifier="0000116", name=
 is_immediately_transformed_from = TypeDef.from_triple(
     prefix=SIO_PREFIX, identifier="000658", name="is immediately transformed from"
 )
-enables = TypeDef.from_triple(prefix="RO", identifier="0002327", name="enables")
+
+_enables_reference = Reference(prefix=RO_PREFIX, identifier="0002327", name="enables")
+_enabled_by_reference = Reference(prefix=RO_PREFIX, identifier="0002333", name="enabled by")
+enables = TypeDef(reference=_enables_reference, inverse=_enabled_by_reference)
+enabled_by = TypeDef(reference=_enabled_by_reference, inverse=_enables_reference)
+
+has_input = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002233", name="has input")
+has_output = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002234", name="has output")
 
 """ChEBI"""
 

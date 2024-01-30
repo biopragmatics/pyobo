@@ -3,14 +3,20 @@
 """Converter for Rhea."""
 
 import logging
-from typing import Iterable
+from typing import Dict, Iterable, Optional
 
+import bioversions
 import pystow
 
 from pyobo.struct import Obo, Reference, Term
 from pyobo.struct.typedef import (
+    TypeDef,
+    enabled_by,
     has_bidirectional_reaction,
+    has_input,
     has_left_to_right_reaction,
+    has_output,
+    has_participant,
     has_right_to_left_reaction,
 )
 from pyobo.utils.path import ensure_df
@@ -21,13 +27,22 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 PREFIX = "rhea"
+RHEA_RDF_GZ_URL = "ftp://ftp.expasy.org/databases/rhea/rdf/rhea.rdf.gz"
 
 
 class RheaGetter(Obo):
     """An ontology representation of Rhea's chemical reaction database."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_left_to_right_reaction, has_bidirectional_reaction, has_right_to_left_reaction]
+    typedefs = [
+        has_left_to_right_reaction,
+        has_bidirectional_reaction,
+        has_right_to_left_reaction,
+        enabled_by,
+        has_input,
+        has_output,
+        has_participant,
+    ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -39,25 +54,39 @@ def get_obo(force: bool = False) -> Obo:
     return RheaGetter(force=force)
 
 
+def ensure_rhea_rdf(version: Optional[str] = None, force: bool = False) -> "rdflib.Graph":
+    """Get the Rhea RDF graph."""
+    if version is None:
+        version = bioversions.get_version(PREFIX)
+    return pystow.ensure_rdf(
+        "pyobo",
+        "raw",
+        PREFIX,
+        version,
+        url=RHEA_RDF_GZ_URL,
+        force=force,
+        parse_kwargs=dict(format="xml"),
+    )
+
+
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over terms in Rhea."""
-    url = "ftp://ftp.expasy.org/databases/rhea/rdf/rhea.rdf.gz"
-    graph = pystow.ensure_rdf(
-        "pyobo", "raw", PREFIX, version, url=url, force=force, parse_kwargs=dict(format="xml")
-    )
+    graph = ensure_rhea_rdf(version=version, force=force)
     result = graph.query(
-        """
-    PREFIX rh:<http://rdf.rhea-db.org/>
-    SELECT ?reaction ?reactionId ?reactionLabel WHERE {
-      ?reaction rdfs:subClassOf rh:Reaction .
-      ?reaction rh:id ?reactionId .
-      ?reaction rdfs:label ?reactionLabel .
-    }
+        """\
+        PREFIX rh:<http://rdf.rhea-db.org/>
+        SELECT ?reaction ?reactionId ?reactionLabel WHERE {
+          ?reaction rdfs:subClassOf rh:Reaction ;
+                    rh:id ?reactionId ;
+                    rdfs:label ?reactionLabel .
+        }
     """
     )
     names = {str(identifier): name for _, identifier, name in result}
 
-    terms = {}
+    terms: Dict[str, Term] = {}
+    master_to_left: Dict[str, str] = {}
+    master_to_right: Dict[str, str] = {}
 
     directions = ensure_df(
         PREFIX,
@@ -66,6 +95,9 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         force=force,
     )
     for master, lr, rl, bi in directions.values:
+        master_to_left[master] = lr
+        master_to_right[master] = rl
+
         terms[master] = Term(
             reference=Reference(prefix=PREFIX, identifier=master, name=names.get(master))
         )
@@ -80,6 +112,37 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         terms[rl].append_parent(terms[master])
         terms[bi].append_parent(terms[master])
 
+    sparql = """\
+    PREFIX rh:<http://rdf.rhea-db.org/>
+    SELECT ?reactionId ?side ?chebi WHERE {
+      ?reaction rdfs:subClassOf rh:Reaction ;
+                rh:id ?reactionId .
+
+      ?reaction rh:side ?side .
+      ?side rh:contains ?participant .
+      ?participant rh:compound ?compound .
+      ?compound rh:chebi|rh:underlyingChebi|(rh:reactivePart/rh:chebi) ?chebi .
+    }
+    """
+    results = graph.query(sparql)
+    for master_rhea_id, side_uri, chebi_uri in results:
+        master_rhea_id = str(master_rhea_id)
+        chebi_reference = Reference(
+            prefix="chebi", identifier=chebi_uri[len("http://purl.obolibrary.org/obo/CHEBI_") :]
+        )
+        side = side_uri.split("_")[-1]  # L or R
+        if side == "L":
+            left_rhea_id = master_to_left[master_rhea_id]
+            right_rhea_id = master_to_right[master_rhea_id]
+        elif side == "R":
+            left_rhea_id = master_to_right[master_rhea_id]
+            right_rhea_id = master_to_left[master_rhea_id]
+        else:
+            raise ValueError(f"Invalid side: {side_uri}")
+        terms[master_rhea_id].append_relationship(has_participant, chebi_reference)
+        terms[left_rhea_id].append_relationship(has_input, chebi_reference)
+        terms[right_rhea_id].append_relationship(has_output, chebi_reference)
+
     hierarchy = ensure_df(
         PREFIX,
         url="ftp://ftp.expasy.org/databases/rhea/tsv/rhea-relationships.tsv",
@@ -91,12 +154,14 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             raise ValueError(f"RHEA unrecognized relation: {relation}")
         terms[source].append_parent(terms[target])
 
-    for xref_prefix, url in [
-        ("ecocyc", "rhea2ecocyc"),
-        ("kegg.reaction", "rhea2kegg_reaction"),
-        ("reactome", "rhea2reactome"),
-        ("macie", "rhea2macie"),
-        ("metacyc", "rhea2metacyc"),
+    for xref_prefix, url, relation in [
+        ("ecocyc", "rhea2ecocyc", None),
+        ("kegg.reaction", "rhea2kegg_reaction", None),
+        ("reactome", "rhea2reactome", None),
+        ("macie", "rhea2macie", None),
+        ("metacyc", "rhea2metacyc", None),
+        ("go", "rhea2go", None),  # TODO what is the relationship?
+        ("go", "rhea2uniprot", enabled_by),
     ]:
         xref_df = ensure_df(
             PREFIX,
@@ -104,26 +169,45 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             version=version,
             force=force,
         )
-        for rhea_id, _, _, xref_id in xref_df.values:
-            if rhea_id not in terms:
+        for directional_rhea_id, _direction, _master_rhea_id, xref_id in xref_df.values:
+            if directional_rhea_id not in terms:
                 logger.debug(
                     "[%s] could not find %s:%s for xref %s:%s",
                     PREFIX,
                     PREFIX,
-                    rhea_id,
+                    directional_rhea_id,
                     xref_prefix,
                     xref_id,
                 )
                 continue
-            terms[rhea_id].append_xref(Reference(prefix=xref_prefix, identifier=xref_id))
+            target_reference = Reference(prefix=xref_prefix, identifier=xref_id)
+            if isinstance(relation, TypeDef):
+                terms[directional_rhea_id].append_relationship(relation, target_reference)
+            else:
+                terms[directional_rhea_id].append_xref(target_reference)
 
-    # TODO are EC codes equivalent?
-    # TODO uniprot enabled by (RO:0002333)
+    ec_df = ensure_df(
+        PREFIX,
+        url=f"ftp://ftp.expasy.org/databases/rhea/tsv/rhea-ec-iubmb.tsv",
+        version=version,
+        force=force,
+    )
+    for (
+        directional_rhea_id,
+        _status,
+        _direction,
+        _master_id,
+        ec,
+        _enzyme_status,
+        _iubmb,
+    ) in ec_df.values:
+        terms[directional_rhea_id].append_relationship(
+            enabled_by, Reference(prefix="eccode", identifier=ec)
+        )
+
     # TODO names?
-    # TODO participants?
-
     yield from terms.values()
 
 
 if __name__ == "__main__":
-    RheaGetter.cli()
+    RheaGetter().write_default(write_obo=True, force=True)
