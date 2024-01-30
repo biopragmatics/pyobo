@@ -395,14 +395,16 @@ class Term(Referenced):
 
     def iterate_relations(self) -> Iterable[Tuple[TypeDef, Reference]]:
         """Iterate over pairs of typedefs and targets."""
-        for typedef, targets in self.relationships.items():
-            for target in targets:
+        for typedef, targets in sorted(
+            self.relationships.items(), key=lambda pair: pair[0].preferred_curie
+        ):
+            for target in sorted(targets, key=lambda ref: ref.preferred_curie):
                 yield typedef, target
 
     def iterate_properties(self) -> Iterable[Tuple[str, str]]:
         """Iterate over pairs of property and values."""
-        for prop, values in self.properties.items():
-            for value in values:
+        for prop, values in sorted(self.properties.items()):
+            for value in sorted(values):
                 yield prop, value
 
     def iterate_obo_lines(self, *, ontology, typedefs) -> Iterable[str]:

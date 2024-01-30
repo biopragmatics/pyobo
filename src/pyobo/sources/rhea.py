@@ -59,6 +59,7 @@ def get_obo(force: bool = False) -> Obo:
 
 def ensure_rhea_rdf(version: Optional[str] = None, force: bool = False) -> "rdflib.Graph":
     """Get the Rhea RDF graph."""
+    # see docs: https://ftp.expasy.org/databases/rhea/rdf/rhea_rdf_documentation.pdf
     if version is None:
         version = bioversions.get_version(PREFIX)
     return pystow.ensure_rdf(
@@ -90,6 +91,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     terms: Dict[str, Term] = {}
     master_to_left: Dict[str, str] = {}
     master_to_right: Dict[str, str] = {}
+    master_to_bi: Dict[str, str] = {}
 
     directions = ensure_df(
         PREFIX,
@@ -100,6 +102,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     for master, lr, rl, bi in directions.values:
         master_to_left[master] = lr
         master_to_right[master] = rl
+        master_to_bi[master] = bi
 
         terms[master] = Term(
             reference=Reference(prefix=PREFIX, identifier=master, name=names.get(master))
@@ -115,6 +118,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         terms[rl].append_parent(terms[master])
         terms[bi].append_parent(terms[master])
 
+    # inspired by https://github.com/geneontology/go-ontology/blob/master/src/sparql/construct-rhea-reactions.sparql
     sparql = """\
     PREFIX rh:<http://rdf.rhea-db.org/>
     SELECT ?reactionId ?side ?chebi WHERE {
@@ -142,6 +146,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         else:
             raise ValueError(f"Invalid side: {side_uri}")
         terms[master_rhea_id].append_relationship(has_participant, chebi_reference)
+        terms[master_to_bi[master_rhea_id]].append_relationship(has_participant, chebi_reference)
         terms[left_rhea_id].append_relationship(has_input, chebi_reference)
         terms[right_rhea_id].append_relationship(has_output, chebi_reference)
 
