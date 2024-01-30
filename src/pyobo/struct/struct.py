@@ -395,9 +395,7 @@ class Term(Referenced):
 
     def iterate_relations(self) -> Iterable[Tuple[TypeDef, Reference]]:
         """Iterate over pairs of typedefs and targets."""
-        for typedef, targets in sorted(
-            self.relationships.items(), key=lambda pair: pair[0].preferred_curie
-        ):
+        for typedef, targets in sorted(self.relationships.items(), key=_sort_relations):
             for target in sorted(targets, key=lambda ref: ref.preferred_curie):
                 yield typedef, target
 
@@ -468,7 +466,7 @@ _TYPEDEF_WARNINGS: Set[Tuple[str, str]] = set()
 
 def _sort_relations(r):
     typedef, _references = r
-    return typedef.reference.name or typedef.reference.identifier
+    return typedef.preferred_curie
 
 
 def _sort_properties(r):

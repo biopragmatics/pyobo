@@ -151,9 +151,11 @@ def _get_xref_df(version: str) -> Mapping[str, List[Reference]]:
     }
     xrefs_df[0] = xrefs_df[0].map(lambda s: ns_remapping.get(s, s))
     xrefs_df[1] = [
-        bioregistry.standardize_identifier(xref_prefix, xref_identifier)
-        if xref_prefix != "nextprot.family"
-        else xref_identifier[len("FA:") :]
+        (
+            bioregistry.standardize_identifier(xref_prefix, xref_identifier)
+            if xref_prefix != "nextprot.family"
+            else xref_identifier[len("FA:") :]
+        )
         for xref_prefix, xref_identifier in xrefs_df[[0, 1]].values
     ]
 
