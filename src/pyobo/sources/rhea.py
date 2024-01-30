@@ -3,7 +3,7 @@
 """Converter for Rhea."""
 
 import logging
-from typing import Dict, Iterable, Optional
+from typing import TYPE_CHECKING, Dict, Iterable, Optional
 
 import bioversions
 import pystow
@@ -20,6 +20,9 @@ from pyobo.struct.typedef import (
     has_right_to_left_reaction,
 )
 from pyobo.utils.path import ensure_df
+
+if TYPE_CHECKING:
+    import rdflib
 
 __all__ = [
     "RheaGetter",
@@ -124,8 +127,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
       ?compound rh:chebi|rh:underlyingChebi|(rh:reactivePart/rh:chebi) ?chebi .
     }
     """
-    results = graph.query(sparql)
-    for master_rhea_id, side_uri, chebi_uri in results:
+    for master_rhea_id, side_uri, chebi_uri in graph.query(sparql):
         master_rhea_id = str(master_rhea_id)
         chebi_reference = Reference(
             prefix="chebi", identifier=chebi_uri[len("http://purl.obolibrary.org/obo/CHEBI_") :]
@@ -161,7 +163,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         ("macie", "rhea2macie", None),
         ("metacyc", "rhea2metacyc", None),
         ("go", "rhea2go", None),  # TODO what is the relationship?
-        ("go", "rhea2uniprot", enabled_by),
+        ("uniprot", "rhea2uniprot", enabled_by),
     ]:
         xref_df = ensure_df(
             PREFIX,
@@ -188,7 +190,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     ec_df = ensure_df(
         PREFIX,
-        url=f"ftp://ftp.expasy.org/databases/rhea/tsv/rhea-ec-iubmb.tsv",
+        url="ftp://ftp.expasy.org/databases/rhea/tsv/rhea-ec-iubmb.tsv",
         version=version,
         force=force,
     )
