@@ -18,6 +18,7 @@ from pyobo.struct.typedef import (
     has_output,
     has_participant,
     has_right_to_left_reaction,
+    reaction_enabled_by_molecular_function,
 )
 from pyobo.utils.path import ensure_df
 
@@ -45,6 +46,7 @@ class RheaGetter(Obo):
         has_input,
         has_output,
         has_participant,
+        reaction_enabled_by_molecular_function,
     ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -180,7 +182,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         ("reactome", "rhea2reactome", None),
         ("macie", "rhea2macie", None),
         ("metacyc", "rhea2metacyc", None),
-        ("go", "rhea2go", None),  # TODO what is the relationship?
+        ("go", "rhea2go", reaction_enabled_by_molecular_function),
         ("uniprot", "rhea2uniprot", enabled_by),
     ]:
         xref_df = ensure_df(
