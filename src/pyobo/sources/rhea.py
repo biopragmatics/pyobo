@@ -73,6 +73,19 @@ def ensure_rhea_rdf(version: Optional[str] = None, force: bool = False) -> "rdfl
     )
 
 
+def _get_lr_name(name: str) -> str:
+    return name.replace(" = ", " => ")
+
+
+def _get_rl_name(name: str) -> str:
+    left, right = name.split(" = ", 1)
+    return f"{right} => {left}"
+
+
+def _get_bi_name(name: str) -> str:
+    return name.replace(" = ", " <=> ")
+
+
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over terms in Rhea."""
     graph = ensure_rhea_rdf(version=version, force=force)
@@ -86,7 +99,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         }
     """
     )
-    names = {str(identifier): name for _, identifier, name in result}
+    names = {str(identifier): str(name) for _, identifier, name in result}
 
     terms: Dict[str, Term] = {}
     master_to_left: Dict[str, str] = {}
@@ -104,12 +117,12 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         master_to_right[master] = rl
         master_to_bi[master] = bi
 
-        terms[master] = Term(
-            reference=Reference(prefix=PREFIX, identifier=master, name=names.get(master))
-        )
-        terms[lr] = Term(reference=Reference(prefix=PREFIX, identifier=lr, name=names.get(lr)))
-        terms[rl] = Term(reference=Reference(prefix=PREFIX, identifier=rl, name=names.get(rl)))
-        terms[bi] = Term(reference=Reference(prefix=PREFIX, identifier=bi, name=names.get(bi)))
+        name = names[master]
+
+        terms[master] = Term(reference=Reference(prefix=PREFIX, identifier=master, name=name))
+        terms[lr] = Term(reference=Reference(prefix=PREFIX, identifier=lr, name=_get_lr_name(name)))
+        terms[rl] = Term(reference=Reference(prefix=PREFIX, identifier=rl, name=_get_rl_name(name)))
+        terms[bi] = Term(reference=Reference(prefix=PREFIX, identifier=bi, name=_get_bi_name(name)))
 
         terms[master].append_relationship(has_left_to_right_reaction, terms[lr])
         terms[master].append_relationship(has_right_to_left_reaction, terms[rl])
@@ -212,7 +225,6 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             enabled_by, Reference(prefix="eccode", identifier=ec)
         )
 
-    # TODO names?
     yield from terms.values()
 
 
