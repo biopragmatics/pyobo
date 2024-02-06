@@ -147,17 +147,21 @@ def _fast_term(
     name: str,
     status: str,
     organism: Optional[str] = None,
-) -> gilda.term.Term:
-    return gilda.term.Term(
-        norm_text=normalize(text),
-        text=text,
-        db=prefix,
-        id=identifier,
-        entry_name=name,
-        status=status,
-        source=prefix,
-        organism=organism,
-    )
+) -> Optional[gilda.term.Term]:
+    try:
+        term = gilda.term.Term(
+            norm_text=normalize(text),
+            text=text,
+            db=prefix,
+            id=identifier,
+            entry_name=name,
+            status=status,
+            source=prefix,
+            organism=organism,
+        )
+    except ValueError:
+        return None
+    return term
 
 
 def get_gilda_terms(
@@ -184,7 +188,7 @@ def get_gilda_terms(
     for identifier, name in it:
         if identifier in obsoletes:
             continue
-        yield _fast_term(
+        term = _fast_term(
             text=name,
             prefix=prefix,
             identifier=identifier,
@@ -192,6 +196,8 @@ def get_gilda_terms(
             status="name",
             organism=id_to_species.get(identifier),
         )
+        if term is not None:
+            yield term
 
     id_to_synonyms = get_id_synonyms_mapping(prefix, version=version)
     if id_to_synonyms:
@@ -209,7 +215,7 @@ def get_gilda_terms(
             for synonym in synonyms:
                 if not synonym:
                     continue
-                yield _fast_term(
+                term = _fast_term(
                     text=synonym,
                     prefix=prefix,
                     identifier=identifier,
@@ -217,6 +223,8 @@ def get_gilda_terms(
                     status="synonym",
                     organism=id_to_species.get(identifier),
                 )
+                if term is not None:
+                    yield term
 
     if identifiers_are_names:
         it = tqdm(
@@ -229,7 +237,7 @@ def get_gilda_terms(
         for identifier in it:
             if identifier in obsoletes:
                 continue
-            yield _fast_term(
+            term = _fast_term(
                 text=identifier,
                 prefix=prefix,
                 identifier=identifier,
@@ -237,3 +245,5 @@ def get_gilda_terms(
                 status="name",
                 organism=id_to_species.get(identifier),
             )
+            if term is not None:
+                yield term
