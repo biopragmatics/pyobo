@@ -60,6 +60,13 @@ def iter_terms() -> Iterable[Term]:
         cvx_df[col] = cvx_df[col].map(lambda s: s.strip() if pd.notna(s) else s)
     terms = {}
     for cvx, short_name, full_name, notes, status, nonvaccine, _updated in cvx_df.values:
+        if cvx == "99":
+            continue  # this is a placeholder
+
+        is_obsolete = pd.notna(notes) and "do not use" in notes.lower()
+        if is_obsolete:
+            # there are some records that have been obsoleted/replaced
+            continue
         term = Term.from_triple(PREFIX, cvx, full_name)
         if short_name != full_name:
             term.append_synonym(short_name)
