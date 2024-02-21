@@ -53,6 +53,7 @@ from .typedef import (
     orthologous,
     part_of,
     see_also,
+    term_replaced_by,
 )
 from .utils import comma_separate, obo_escape_slim
 from ..constants import (
@@ -297,6 +298,11 @@ class Term(Referenced):
     def append_comment(self, value: str) -> "Term":
         """Add a comment relationship."""
         self.append_property(comment.curie, value)
+        return self
+
+    def append_replaced_by(self, reference: ReferenceHint) -> "Term":
+        """Add a replaced by relationship."""
+        self.append_relationship(term_replaced_by, reference)
         return self
 
     def append_parent(self, reference: ReferenceHint) -> "Term":
