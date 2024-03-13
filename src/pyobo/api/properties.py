@@ -28,14 +28,17 @@ logger = logging.getLogger(__name__)
 
 
 @wrap_norm_prefix
-def get_properties_df(prefix: str, *, force: bool = False) -> pd.DataFrame:
+def get_properties_df(
+    prefix: str, *, force: bool = False, version: Optional[str] = None
+) -> pd.DataFrame:
     """Extract properties.
 
     :param prefix: the resource to load
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A dataframe with the properties
     """
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
     @cached_df(path=path, dtype=str, force=force)
@@ -59,6 +62,7 @@ def get_filtered_properties_mapping(
     *,
     use_tqdm: bool = False,
     force: bool = False,
+    version: Optional[str] = None,
 ) -> Mapping[str, str]:
     """Extract a single property for each term as a dictionary.
 
@@ -68,7 +72,12 @@ def get_filtered_properties_mapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property value
     """
-    version = get_version(prefix)
+    df = get_properties_df(prefix=prefix, force=force, version=version)
+    df = df[df["property"] == prop]
+    return dict(df[[f"{prefix}_id", "value"]].values)
+
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
@@ -95,6 +104,7 @@ def get_filtered_properties_multimapping(
     *,
     use_tqdm: bool = False,
     force: bool = False,
+    version: Optional[str] = None,
 ) -> Mapping[str, List[str]]:
     """Extract multiple properties for each term as a dictionary.
 
@@ -104,7 +114,8 @@ def get_filtered_properties_multimapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property values
     """
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
@@ -124,7 +135,7 @@ def get_filtered_properties_multimapping(
     return _mapping_getter()
 
 
-def get_property(prefix: str, identifier: str, prop: str) -> Optional[str]:
+def get_property(prefix: str, identifier: str, prop: str, **kwargs) -> Optional[str]:
     """Extract a single property for the given entity.
 
     :param prefix: the resource to load
@@ -136,11 +147,13 @@ def get_property(prefix: str, identifier: str, prop: str) -> Optional[str]:
     >>> pyobo.get_property('chebi', '132964', 'http://purl.obolibrary.org/obo/chebi/smiles')
     "C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F"
     """
-    filtered_properties_mapping = get_filtered_properties_mapping(prefix=prefix, prop=prop)
+    filtered_properties_mapping = get_filtered_properties_mapping(
+        prefix=prefix, prop=prop, **kwargs
+    )
     return filtered_properties_mapping.get(identifier)
 
 
-def get_properties(prefix: str, identifier: str, prop: str) -> Optional[List[str]]:
+def get_properties(prefix: str, identifier: str, prop: str, **kwargs) -> Optional[List[str]]:
     """Extract a set of properties for the given entity.
 
     :param prefix: the resource to load
@@ -149,7 +162,7 @@ def get_properties(prefix: str, identifier: str, prop: str) -> Optional[List[str
     :returns: Multiple values for the property. If only one is expected, use :func:`get_property`
     """
     filtered_properties_multimapping = get_filtered_properties_multimapping(
-        prefix=prefix, prop=prop
+        prefix=prefix, prop=prop, **kwargs
     )
     return filtered_properties_multimapping.get(identifier)
 
@@ -161,6 +174,7 @@ def get_filtered_properties_df(
     *,
     use_tqdm: bool = False,
     force: bool = False,
+    version: Optional[str] = None,
 ) -> pd.DataFrame:
     """Extract a single property for each term.
 
@@ -170,7 +184,8 @@ def get_filtered_properties_df(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A dataframe from identifier to property value. Columns are [<prefix>_id, value].
     """
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
