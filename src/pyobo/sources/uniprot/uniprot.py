@@ -100,9 +100,9 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
                 term.append_relationship(participates_in, go_process_ref)
             for go_function_ref in _parse_go(go_functions):
                 term.append_relationship(enables, go_function_ref)
-            for _go_component_ref in _parse_go(go_components):
-                pass  # TODO what is the right relation?
-                # term.append_relationship(..., go_component_ref)
+            for go_component_ref in _parse_go(go_components):
+                # FIXME this needs a different relationship than participates_in
+                term.append_relationship(..., go_component_ref)
 
             if proteome:
                 uniprot_proteome_id = proteome.split(":")[0]
@@ -114,9 +114,9 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
             if rhea_curies:
                 for rhea_curie in rhea_curies.split(" "):
                     term.append_relationship(
-                        # FIXME this needs a different relation,
+                        # FIXME this needs a different relation than participates_in
                         #  see https://github.com/biopragmatics/pyobo/pull/168#issuecomment-1918680152
-                        participates_in,
+                        ...,
                         cast(Reference, Reference.from_curie(rhea_curie, strict=True)),
                     )
 
