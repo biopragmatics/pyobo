@@ -11,22 +11,41 @@ from tqdm.auto import tqdm
 from pyobo import Obo, Reference
 from pyobo.constants import RAW_MODULE
 from pyobo.identifier_utils import standardize_ec
-from pyobo.struct import Term, enables, from_species
+from pyobo.struct import Term, derives_from, enables, from_species, participates_in
 from pyobo.utils.io import open_reader
 
 PREFIX = "uniprot"
-REVIEWED_URL = (
-    "https://rest.uniprot.org/uniprotkb/stream?compressed=true"
-    "&fields=accession%2Cid%2Corganism_id%2Cprotein_name%2Cec%2Clit_pubmed_id%2Cxref_pdb"
-    "&format=tsv&query=%28%2A%29%20AND%20%28reviewed%3Atrue%29"
-)
+BASE_URL = "https://rest.uniprot.org/uniprotkb/stream"
+SEARCH_URL = "https://rest.uniprot.org/uniprotkb/search"
+QUERY = "(*) AND (reviewed:true)"
+FIELDS = [
+    "accession",
+    "id",
+    "organism_id",
+    "protein_name",
+    "ec",
+    "ft_binding",
+    "go",
+    "xref_proteomes",
+    "rhea",
+    "lit_pubmed_id",
+    "xref_pdb",
+    "cc_function",
+]
+PARAMS = {
+    "compressed": "true",
+    "format": "tsv",
+    # "size": 10,  # only used with search
+    "query": QUERY,
+    "fields": FIELDS,
+}
 
 
 class UniProtGetter(Obo):
     """An ontology representation of the UniProt database."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [from_species, enables]
+    typedefs = [from_species, enables, participates_in]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -49,6 +68,45 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
             # TODO add gene encodes from relationship
             # TODO add description
             term.set_species(taxonomy_id)
+            term.append_property(
+                "reviewed", "true"
+            )  # type=Reference(prefix="xsd", identifier="boolean")
+
+            binding_site = None
+            go_terms = ""
+            if go_terms:
+                for go_term in go_terms.split(";"):
+                    go_id = go_term.rsplit("[GO:")[1].rstrip("]")
+                    term.append_relationship(
+                        # This relationship isn't correct in general, e.g.,
+                        # a protein doesn't participate in a molecular function
+                        participates_in,
+                        Reference(prefix="go", identifier=go_id),
+                    )
+
+            proteomes = ""
+            if proteomes:
+                # TODO need example with multiple
+                for proteome in proteomes.split(";"):
+                    uniprot_proteome_id = proteome.split(":")[0]
+                    term.append_relationship(
+                        derives_from,
+                        Reference(prefix="uniprot.proteome", identifier=uniprot_proteome_id),
+                    )
+
+            rhea_curies = ""
+            if rhea_curies:
+                for rhea_curie in rhea_curies.split(" "):
+                    term.append_relationship(
+                        # FIXME this needs a different relation,
+                        #  see https://github.com/biopragmatics/pyobo/pull/168#issuecomment-1918680152
+                        participates_in,
+                        Reference.from_curie(rhea_curie),
+                    )
+
+            binding_sites = ""
+            # Example: BINDING 305; /ligand="Zn(2+)"; /ligand_id="ChEBI:CHEBI:29105"; /ligand_note="catalytic"; /evidence="ECO:0000255|PROSITE-ProRule:PRU10095"; BINDING 309; /ligand="Zn(2+)"; /ligand_id="ChEBI:CHEBI:29105"; /ligand_note="catalytic"; /evidence="ECO:0000255|PROSITE-ProRule:PRU10095"; BINDING 385; /ligand="Zn(2+)"; /ligand_id="ChEBI:CHEBI:29105"; /ligand_note="catalytic"; /evidence="ECO:0000255|PROSITE-ProRule:PRU10095"
+
             if ecs:
                 for ec in ecs.split(";"):
                     term.append_relationship(
@@ -63,11 +121,18 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
             yield term
 
 
-def ensure(version: Optional[str] = None) -> Path:
+def ensure(version: Optional[str] = None, force: bool = False) -> Path:
     """Ensure the reviewed uniprot names are available."""
     if version is None:
         version = bioversions.get_version("uniprot")
-    return RAW_MODULE.ensure(PREFIX, version, name="reviewed.tsv.gz", url=REVIEWED_URL)
+    return RAW_MODULE.ensure(
+        PREFIX,
+        version,
+        force=force,
+        name="reviewed.tsv.gz",
+        url=BASE_URL,  # switch to SEARCH_URL for debugging
+        download_kwargs={"backend": "requests", "params": PARAMS},
+    )
 
 
 if __name__ == "__main__":
