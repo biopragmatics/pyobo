@@ -50,7 +50,14 @@ class UniProtGetter(Obo):
     """An ontology representation of the UniProt database."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [from_species, enables, participates_in, gene_product_of, molecularly_interacts_with]
+    typedefs = [
+        from_species,
+        enables,
+        participates_in,
+        gene_product_of,
+        molecularly_interacts_with,
+        derives_from,
+    ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
