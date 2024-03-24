@@ -2,6 +2,7 @@
 
 """Converter for UniProt."""
 
+from operator import attrgetter
 from pathlib import Path
 from typing import Iterable, List, Optional
 
@@ -12,7 +13,7 @@ from pyobo import Obo, Reference
 from pyobo.constants import RAW_MODULE
 from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import Term, derives_from, enables, from_species, participates_in
-from pyobo.struct.typedef import gene_product_of
+from pyobo.struct.typedef import gene_product_of, molecularly_interacts_with
 from pyobo.utils.io import open_reader
 
 PREFIX = "uniprot"
@@ -49,7 +50,7 @@ class UniProtGetter(Obo):
     """An ontology representation of the UniProt database."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [from_species, enables, participates_in, gene_product_of]
+    typedefs = [from_species, enables, participates_in, gene_product_of, molecularly_interacts_with]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -119,8 +120,16 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
                         Reference.from_curie(rhea_curie),
                     )
 
-            binding_sites = ""
-            # Example: BINDING 305; /ligand="Zn(2+)"; /ligand_id="ChEBI:CHEBI:29105"; /ligand_note="catalytic"; /evidence="ECO:0000255|PROSITE-ProRule:PRU10095"; BINDING 309; /ligand="Zn(2+)"; /ligand_id="ChEBI:CHEBI:29105"; /ligand_note="catalytic"; /evidence="ECO:0000255|PROSITE-ProRule:PRU10095"; BINDING 385; /ligand="Zn(2+)"; /ligand_id="ChEBI:CHEBI:29105"; /ligand_note="catalytic"; /evidence="ECO:0000255|PROSITE-ProRule:PRU10095"
+            if bindings:
+                binding_references = set()
+                for part in bindings.split(";"):
+                    part = part.strip()
+                    if part.startswith("/ligand_id"):
+                        print(part)
+                        curie = part.removeprefix('/ligand_id="').rstrip('"')
+                        binding_references.add(Reference.from_curie(curie))
+                for binding_reference in sorted(binding_references, key=attrgetter("curie")):
+                    term.append_relationship(molecularly_interacts_with, binding_reference)
 
             if ecs:
                 for ec in ecs.split(";"):
