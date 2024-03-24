@@ -70,7 +70,7 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
             uniprot_id,
             accession,
             taxonomy_id,
-            name,
+            _name,  # this field should have the name, but it's a mismatch of random name annotations
             ecs,
             pubmeds,
             pdbs,
@@ -117,7 +117,7 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
                         # FIXME this needs a different relation,
                         #  see https://github.com/biopragmatics/pyobo/pull/168#issuecomment-1918680152
                         participates_in,
-                        Reference.from_curie(rhea_curie),
+                        Reference(prefix="rhea", identifier=rhea_curie.removeprefix("RHEA:")),
                     )
 
             if bindings:
