@@ -69,7 +69,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         term = Term.from_triple(
             prefix=PREFIX,
             identifier=cgnc_id,
-            name=name,
+            name=name if pd.notna(name) else None,
         )
         term.set_species(identifier="9031", name="Gallus gallus")
         if entrez_id and pd.notna(entrez_id):
