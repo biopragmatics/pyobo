@@ -90,6 +90,8 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
             bindings,
             description,
         ) in tqdm(reader, desc="Mapping UniProt", unit_scale=True):
+            if description:
+                description = description.removeprefix("FUNCTION: ")
             term = Term(
                 reference=Reference(prefix=PREFIX, identifier=uniprot_id, name=accession),
                 definition=description or None,
