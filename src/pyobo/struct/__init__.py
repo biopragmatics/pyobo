@@ -15,6 +15,7 @@ from .struct import (  # noqa: F401
 from .typedef import (  # noqa: F401
     RelationHint,
     TypeDef,
+    derives_from,
     enables,
     from_species,
     gene_product_member_of,
