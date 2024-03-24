@@ -4,7 +4,7 @@
 
 from operator import attrgetter
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, cast
 
 import bioversions
 from tqdm.auto import tqdm
@@ -117,7 +117,7 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
                         # FIXME this needs a different relation,
                         #  see https://github.com/biopragmatics/pyobo/pull/168#issuecomment-1918680152
                         participates_in,
-                        Reference(prefix="rhea", identifier=rhea_curie.removeprefix("RHEA:")),
+                        cast(Reference, Reference.from_curie(rhea_curie, strict=True)),
                     )
 
             if bindings:
@@ -125,9 +125,10 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
                 for part in bindings.split(";"):
                     part = part.strip()
                     if part.startswith("/ligand_id"):
-                        print(part)
                         curie = part.removeprefix('/ligand_id="').rstrip('"')
-                        binding_references.add(Reference.from_curie(curie))
+                        binding_references.add(
+                            cast(Reference, Reference.from_curie(curie, strict=True))
+                        )
                 for binding_reference in sorted(binding_references, key=attrgetter("curie")):
                     term.append_relationship(molecularly_interacts_with, binding_reference)
 
