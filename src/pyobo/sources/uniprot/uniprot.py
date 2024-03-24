@@ -3,7 +3,7 @@
 """Converter for UniProt."""
 
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable, List, Optional
 
 import bioversions
 from tqdm.auto import tqdm
@@ -12,6 +12,7 @@ from pyobo import Obo, Reference
 from pyobo.constants import RAW_MODULE
 from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import Term, derives_from, enables, from_species, participates_in
+from pyobo.struct.typedef import gene_product_of
 from pyobo.utils.io import open_reader
 
 PREFIX = "uniprot"
@@ -24,12 +25,15 @@ FIELDS = [
     "organism_id",
     "protein_name",
     "ec",
-    "ft_binding",
-    "go",
-    "xref_proteomes",
-    "rhea",
     "lit_pubmed_id",
     "xref_pdb",
+    "xref_proteomes",
+    "xref_geneid",
+    "rhea",
+    "go_c",
+    "go_f",
+    "go_p",
+    "ft_binding",
     "cc_function",
 ]
 PARAMS = {
@@ -45,7 +49,7 @@ class UniProtGetter(Obo):
     """An ontology representation of the UniProt database."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [from_species, enables, participates_in]
+    typedefs = [from_species, enables, participates_in, gene_product_of]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -61,40 +65,51 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
     """Iterate over UniProt Terms."""
     with open_reader(ensure(version=version)) as reader:
         _ = next(reader)  # header
-        for uniprot_id, name, taxonomy_id, _synonyms, ecs, pubmeds, pdbs in tqdm(
-            reader, desc="Mapping UniProt", unit_scale=True
-        ):
-            term = Term.from_triple(prefix=PREFIX, identifier=uniprot_id, name=name)
-            # TODO add gene encodes from relationship
-            # TODO add description
+        for (
+            uniprot_id,
+            accession,
+            taxonomy_id,
+            name,
+            ecs,
+            pubmeds,
+            pdbs,
+            proteome,
+            gene_id,
+            rhea_curies,
+            go_components,
+            go_functions,
+            go_processes,
+            bindings,
+            description,
+        ) in tqdm(reader, desc="Mapping UniProt", unit_scale=True):
+            term = Term(
+                reference=Reference(prefix=PREFIX, identifier=uniprot_id, name=accession),
+                definition=description or None,
+            )
             term.set_species(taxonomy_id)
-            term.append_property(
-                "reviewed", "true"
-            )  # type=Reference(prefix="xsd", identifier="boolean")
+            if gene_id:
+                term.append_relationship(
+                    gene_product_of, Reference(prefix="ncbigene", identifier=gene_id)
+                )
 
-            binding_site = None
-            go_terms = ""
-            if go_terms:
-                for go_term in go_terms.split(";"):
-                    go_id = go_term.rsplit("[GO:")[1].rstrip("]")
-                    term.append_relationship(
-                        # This relationship isn't correct in general, e.g.,
-                        # a protein doesn't participate in a molecular function
-                        participates_in,
-                        Reference(prefix="go", identifier=go_id),
-                    )
+            # TODO add type=Reference(prefix="xsd", identifier="boolean")
+            term.append_property("reviewed", "true")
 
-            proteomes = ""
-            if proteomes:
-                # TODO need example with multiple
-                for proteome in proteomes.split(";"):
-                    uniprot_proteome_id = proteome.split(":")[0]
-                    term.append_relationship(
-                        derives_from,
-                        Reference(prefix="uniprot.proteome", identifier=uniprot_proteome_id),
-                    )
+            for go_process_ref in _parse_go(go_processes):
+                term.append_relationship(participates_in, go_process_ref)
+            for go_function_ref in _parse_go(go_functions):
+                term.append_relationship(enables, go_function_ref)
+            for _go_component_ref in _parse_go(go_components):
+                pass  # TODO what is the right relation?
+                # term.append_relationship(..., go_component_ref)
 
-            rhea_curies = ""
+            if proteome:
+                uniprot_proteome_id = proteome.split(":")[0]
+                term.append_relationship(
+                    derives_from,
+                    Reference(prefix="uniprot.proteome", identifier=uniprot_proteome_id),
+                )
+
             if rhea_curies:
                 for rhea_curie in rhea_curies.split(" "):
                     term.append_relationship(
@@ -119,6 +134,15 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
                 if pdb:
                     term.append_xref(Reference(prefix="pdb", identifier=pdb.strip()))
             yield term
+
+
+def _parse_go(go_terms) -> List[Reference]:
+    rv = []
+    if go_terms:
+        for go_term in go_terms.split(";"):
+            go_id = go_term.rsplit("[GO:")[1].rstrip("]")
+            rv.append(Reference(prefix="go", identifier=go_id))
+    return rv
 
 
 def ensure(version: Optional[str] = None, force: bool = False) -> Path:
