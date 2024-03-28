@@ -53,6 +53,7 @@ from .typedef import (
     orthologous,
     part_of,
     see_also,
+    term_replaced_by,
 )
 from .utils import comma_separate, obo_escape_slim
 from ..constants import (
@@ -115,6 +116,14 @@ class Synonym:
     @staticmethod
     def _escape(s: str) -> str:
         return s.replace('"', '\\"')
+
+
+@dataclass
+class TypedLiteral:
+    """A typed literal value."""
+
+    value: str
+    type: Reference
 
 
 @dataclass
@@ -198,10 +207,14 @@ class Term(Referenced):
     provenance: List[Reference] = field(default_factory=list)
 
     #: Relationships defined by [Typedef] stanzas
-    relationships: Dict[TypeDef, List[Reference]] = field(default_factory=lambda: defaultdict(list))
+    relationships: Dict[Reference, List[Reference]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
 
     #: Properties, which are not defined with Typedef and have scalar values instead of references.
-    properties: Dict[str, List[str]] = field(default_factory=lambda: defaultdict(list))
+    properties: Dict[Reference, List[TypedLiteral]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
 
     #: Relationships with the default "is_a"
     parents: List[Reference] = field(default_factory=list)
@@ -299,6 +312,11 @@ class Term(Referenced):
         self.append_property(comment.curie, value)
         return self
 
+    def append_replaced_by(self, reference: ReferenceHint) -> "Term":
+        """Add a replaced by relationship."""
+        self.append_relationship(term_replaced_by, reference)
+        return self
+
     def append_parent(self, reference: ReferenceHint) -> "Term":
         """Add a parent to this entity."""
         reference = _ensure_ref(reference)
@@ -312,7 +330,7 @@ class Term(Referenced):
             raise ValueError("can not append a collection of parents containing a null parent")
         self.parents.extend(references)
 
-    def get_properties(self, prop) -> List[str]:
+    def get_properties(self, prop: TypeDef) -> List[str]:
         """Get properties from the given key."""
         return self.properties[prop]
 
@@ -380,14 +398,22 @@ class Term(Referenced):
         self.relationships[typedef].extend(references)
 
     def append_property(
-        self, prop: Union[str, Reference, Referenced], value: Union[str, Reference, Referenced]
+        self,
+        prop: Union[Reference, Referenced],
+        value: Union[str, Reference, Referenced, TypedLiteral],
+        type: Optional[Reference] = None,
     ) -> None:
         """Append a property."""
-        if isinstance(prop, (Reference, Referenced)):
-            prop = prop.preferred_curie
-        if isinstance(value, (Reference, Referenced)):
-            value = value.preferred_curie
-        self.properties[prop].append(value)
+        if isinstance(prop, Referenced):
+            prop = prop.reference
+        if type is None:
+            type = Reference(prefix="xsd", identifier="string")
+        if isinstance(value, TypedLiteral):
+            self.properties[prop].append(value)
+        elif isinstance(value, str):
+            self.properties[prop].append(TypedLiteral(value=value, type=type))
+        else:
+            raise NotImplementedError
 
     def _definition_fp(self) -> str:
         assert self.definition is not None
@@ -395,14 +421,14 @@ class Term(Referenced):
 
     def iterate_relations(self) -> Iterable[Tuple[TypeDef, Reference]]:
         """Iterate over pairs of typedefs and targets."""
-        for typedef, targets in self.relationships.items():
-            for target in targets:
+        for typedef, targets in sorted(self.relationships.items(), key=_sort_relations):
+            for target in sorted(targets, key=lambda ref: ref.preferred_curie):
                 yield typedef, target
 
-    def iterate_properties(self) -> Iterable[Tuple[str, str]]:
+    def iterate_properties(self) -> Iterable[Tuple[Reference, str]]:
         """Iterate over pairs of property and values."""
-        for prop, values in self.properties.items():
-            for value in values:
+        for prop, values in sorted(self.properties.items()):
+            for value in sorted(values):
                 yield prop, value
 
     def iterate_obo_lines(self, *, ontology, typedefs) -> Iterable[str]:
@@ -466,7 +492,7 @@ _TYPEDEF_WARNINGS: Set[Tuple[str, str]] = set()
 
 def _sort_relations(r):
     typedef, _references = r
-    return typedef.reference.name or typedef.reference.identifier
+    return typedef.preferred_curie
 
 
 def _sort_properties(r):
