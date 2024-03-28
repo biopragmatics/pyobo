@@ -208,6 +208,9 @@ has_participant = TypeDef(
 derives_from = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0001000", name="derives from"),
 )
+molecularly_interacts_with = TypeDef(
+    reference=Reference(prefix=RO_PREFIX, identifier="0002436", name="molecularly interacts with"),
+)
 exact_match = TypeDef(
     reference=Reference(prefix="skos", identifier="exactMatch", name="exact match"),
 )
