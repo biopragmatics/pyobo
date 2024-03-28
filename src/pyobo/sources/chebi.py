@@ -15,12 +15,14 @@ __all__ = [
 ]
 
 
-def get_chebi_id_smiles_mapping() -> Mapping[str, str]:
+def get_chebi_id_smiles_mapping(**kwargs) -> Mapping[str, str]:
     """Get a mapping from ChEBI identifiers to SMILES.
 
     This is common enough that it gets its own function :)
     """
-    return get_filtered_properties_mapping("chebi", "http://purl.obolibrary.org/obo/chebi/smiles")
+    return get_filtered_properties_mapping(
+        "chebi", "http://purl.obolibrary.org/obo/chebi/smiles", **kwargs
+    )
 
 
 def get_chebi_smiles_id_mapping() -> Mapping[str, str]:

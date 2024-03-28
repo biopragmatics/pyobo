@@ -142,7 +142,9 @@ def get_sssom_df(
         df = get_xrefs_df(prefix=prefix, **kwargs)
     rows: List[Tuple[str, ...]] = []
     with logging_redirect_tqdm():
-        for source_id, target_prefix, target_id in tqdm(df.values, unit="mapping", unit_scale=True):
+        for source_id, target_prefix, target_id in tqdm(
+            df.values, unit="mapping", unit_scale=True, desc=f"[{prefix}] SSSOM"
+        ):
             source = Reference(prefix=prefix, identifier=source_id)
             target = Reference(prefix=target_prefix, identifier=target_id)
 

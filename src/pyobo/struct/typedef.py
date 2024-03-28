@@ -48,6 +48,10 @@ __all__ = [
 ]
 
 
+def _bool_to_obo(v: bool) -> str:
+    return "true" if v else "false"
+
+
 @dataclass
 class TypeDef(Referenced):
     """A type definition in OBO.
@@ -88,7 +92,7 @@ class TypeDef(Referenced):
             yield f'def: "{self.definition}"'
 
         if self.is_metadata_tag is not None:
-            yield f'is_metadata_tag: {"true" if self.is_metadata_tag else "false"}'
+            yield f"is_metadata_tag: {_bool_to_obo(self.is_metadata_tag)}"
 
         if self.namespace:
             yield f"namespace: {self.namespace}"
@@ -113,6 +117,10 @@ class TypeDef(Referenced):
             yield f"holds_over_chain: {_chain} ! {_names}"
         if self.inverse:
             yield f"inverse_of: {self.inverse}"
+        if self.domain:
+            yield f"domain: {self.domain}"
+        if self.range:
+            yield f"range: {self.range}"
 
     @classmethod
     def from_triple(cls, prefix: str, identifier: str, name: Optional[str] = None) -> "TypeDef":
@@ -161,13 +169,19 @@ species_specific = TypeDef(
     "species with RO:0002162 (in taxon)",
 )
 has_left_to_right_reaction = TypeDef(
-    Reference(prefix="debio", identifier="0000007", name="has left-to-right reaction")
+    Reference(prefix="debio", identifier="0000007", name="has left-to-right reaction"),
+    is_metadata_tag=True,
 )
 has_right_to_left_reaction = TypeDef(
-    Reference(prefix="debio", identifier="0000008", name="has right-to-left reaction")
+    Reference(prefix="debio", identifier="0000008", name="has right-to-left reaction"),
+    is_metadata_tag=True,
 )
 has_bidirectional_reaction = TypeDef(
-    Reference(prefix="debio", identifier="0000009", name="has bi-directional reaction")
+    Reference(prefix="debio", identifier="0000009", name="has bi-directional reaction"),
+    is_metadata_tag=True,
+)
+reaction_enabled_by_molecular_function = TypeDef(
+    Reference(prefix="debio", identifier="0000047", name="reaction enabled by molecular function")
 )
 
 
@@ -190,6 +204,9 @@ has_participant = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0000057", name="has participant"),
     comment="Inverse of has participant",
     inverse=Reference(prefix=RO_PREFIX, identifier="0000056", name="participates in"),
+)
+derives_from = TypeDef(
+    reference=Reference(prefix=RO_PREFIX, identifier="0001000", name="derives from"),
 )
 exact_match = TypeDef(
     reference=Reference(prefix="skos", identifier="exactMatch", name="exact match"),
@@ -281,6 +298,9 @@ alternative_term = TypeDef.from_triple(
 has_ontology_root_term = TypeDef.from_triple(
     prefix=IAO_PREFIX, identifier="0000700", name="has ontology root term"
 )
+definition_source = TypeDef.from_triple(
+    prefix=IAO_PREFIX, identifier="0000119", name="definition source"
+)
 has_dbxref = TypeDef.from_curie("oboInOwl:hasDbXref", name="has database cross-reference")
 
 editor_note = TypeDef.from_triple(prefix=IAO_PREFIX, identifier="0000116", name="editor note")
@@ -288,7 +308,14 @@ editor_note = TypeDef.from_triple(prefix=IAO_PREFIX, identifier="0000116", name=
 is_immediately_transformed_from = TypeDef.from_triple(
     prefix=SIO_PREFIX, identifier="000658", name="is immediately transformed from"
 )
-enables = TypeDef.from_triple(prefix="RO", identifier="0002327", name="enables")
+
+_enables_reference = Reference(prefix=RO_PREFIX, identifier="0002327", name="enables")
+_enabled_by_reference = Reference(prefix=RO_PREFIX, identifier="0002333", name="enabled by")
+enables = TypeDef(reference=_enables_reference, inverse=_enabled_by_reference)
+enabled_by = TypeDef(reference=_enabled_by_reference, inverse=_enables_reference)
+
+has_input = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002233", name="has input")
+has_output = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002234", name="has output")
 
 """ChEBI"""
 

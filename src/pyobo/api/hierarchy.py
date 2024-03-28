@@ -168,14 +168,15 @@ def is_descendent(prefix, identifier, ancestor_prefix, ancestor_identifier) -> b
 @lru_cache()
 def get_descendants(
     prefix: str,
-    identifier: str,
+    identifier: Optional[str] = None,
     include_part_of: bool = True,
     include_has_member: bool = False,
     use_tqdm: bool = False,
     force: bool = False,
     **kwargs,
 ) -> Optional[Set[str]]:
-    """Get all of the descendants (children) of the term as CURIEs."""
+    """Get all the descendants (children) of the term as CURIEs."""
+    curie, prefix, identifier = _pic(prefix, identifier)
     hierarchy = get_hierarchy(
         prefix=prefix,
         include_has_member=include_has_member,
@@ -184,23 +185,32 @@ def get_descendants(
         force=force,
         **kwargs,
     )
-    curie = f"{prefix}:{identifier}"
     if curie not in hierarchy:
         return None
     return nx.ancestors(hierarchy, curie)  # note this is backwards
 
 
+def _pic(prefix, identifier=None) -> Tuple[str, str, str]:
+    if identifier is None:
+        curie = prefix
+        prefix, identifier = prefix.split(":")
+    else:
+        curie = f"{prefix}:{identifier}"
+    return curie, prefix, identifier
+
+
 @lru_cache()
 def get_children(
     prefix: str,
-    identifier: str,
+    identifier: Optional[str] = None,
     include_part_of: bool = True,
     include_has_member: bool = False,
     use_tqdm: bool = False,
     force: bool = False,
     **kwargs,
 ) -> Optional[Set[str]]:
-    """Get all of the descendants (children) of the term as CURIEs."""
+    """Get all the descendants (children) of the term as CURIEs."""
+    curie, prefix, identifier = _pic(prefix, identifier)
     hierarchy = get_hierarchy(
         prefix=prefix,
         include_has_member=include_has_member,
@@ -209,7 +219,6 @@ def get_children(
         force=force,
         **kwargs,
     )
-    curie = f"{prefix}:{identifier}"
     if curie not in hierarchy:
         return None
     return set(hierarchy.predecessors(curie))
@@ -228,14 +237,15 @@ def has_ancestor(prefix, identifier, ancestor_prefix, ancestor_identifier) -> bo
 @lru_cache()
 def get_ancestors(
     prefix: str,
-    identifier: str,
+    identifier: Optional[str] = None,
     include_part_of: bool = True,
     include_has_member: bool = False,
     use_tqdm: bool = False,
     force: bool = False,
     **kwargs,
 ) -> Optional[Set[str]]:
-    """Get all of the ancestors (parents) of the term as CURIEs."""
+    """Get all the ancestors (parents) of the term as CURIEs."""
+    curie, prefix, identifier = _pic(prefix, identifier)
     hierarchy = get_hierarchy(
         prefix=prefix,
         include_has_member=include_has_member,
@@ -244,7 +254,6 @@ def get_ancestors(
         force=force,
         **kwargs,
     )
-    curie = f"{prefix}:{identifier}"
     if curie not in hierarchy:
         return None
     return nx.descendants(hierarchy, curie)  # note this is backwards
@@ -252,7 +261,7 @@ def get_ancestors(
 
 def get_subhierarchy(
     prefix: str,
-    identifier: str,
+    identifier: Optional[str] = None,
     include_part_of: bool = True,
     include_has_member: bool = False,
     use_tqdm: bool = False,
@@ -260,6 +269,7 @@ def get_subhierarchy(
     **kwargs,
 ) -> nx.DiGraph:
     """Get the subhierarchy for a given node."""
+    curie, prefix, identifier = _pic(prefix, identifier)
     hierarchy = get_hierarchy(
         prefix=prefix,
         include_has_member=include_has_member,
@@ -271,7 +281,7 @@ def get_subhierarchy(
     logger.info(
         "getting descendants of %s:%s ! %s", prefix, identifier, get_name(prefix, identifier)
     )
-    curies = nx.ancestors(hierarchy, f"{prefix}:{identifier}")  # note this is backwards
+    curies = nx.ancestors(hierarchy, curie)  # note this is backwards
     logger.info("inducing subgraph")
     sg = hierarchy.subgraph(curies).copy()
     logger.info("subgraph has %d nodes/%d edges", sg.number_of_nodes(), sg.number_of_edges())

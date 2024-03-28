@@ -6,7 +6,7 @@ import datetime
 import itertools as itt
 import logging
 import re
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Tuple
+from typing import Any, Collection, Dict, Iterable, List, Mapping, Optional, Set, Tuple
 from xml.etree.ElementTree import Element
 
 from tqdm.auto import tqdm
@@ -315,6 +315,33 @@ def _get_descriptor_qualifiers(descriptor: Element) -> List[Mapping[str, str]]:
             "AllowableQualifiersList/AllowableQualifier/QualifierReferredTo"
         )
     ]
+
+
+def get_mesh_category_curies(letter: str, skip: Optional[Collection[str]] = None) -> List[str]:
+    """Get the MeSH LUIDs for a category, by letter (e.g., "A").
+
+    :param letter: The MeSH tree, A for anatomy, C for disease, etc.
+    :param skip: An optional collection of MeSH tree codes to skip, such as "A03"
+    :returns: A list of MeSH CURIE strings for the top level of each MeSH tree.
+
+    .. seealso:: https://meshb.nlm.nih.gov/treeView
+    """
+    import bioversions
+
+    mesh_version = bioversions.get_version("mesh")
+    if mesh_version is None:
+        raise ValueError
+    tree_to_mesh = get_tree_to_mesh_id(mesh_version)
+    rv = []
+    for i in range(1, 100):
+        key = f"{letter}{i:02}"
+        if skip and key in skip:
+            continue
+        mesh_id = tree_to_mesh.get(key)
+        if mesh_id is None:
+            break
+        rv.append(f"mesh:{mesh_id}")
+    return rv
 
 
 if __name__ == "__main__":
