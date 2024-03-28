@@ -386,9 +386,14 @@ class Term(Referenced):
         self.relationships[typedef].extend(references)
 
     def append_property(
-        self, prop: Union[str, Reference, Referenced], value: Union[str, Reference, Referenced]
+        self,
+        prop: Union[str, Reference, Referenced],
+        value: Union[str, Reference, Referenced],
+        ptype: Reference | None = None,
     ) -> None:
         """Append a property."""
+        if ptype is not None:
+            raise NotImplementedError("Need to implement property types")
         if isinstance(prop, (Reference, Referenced)):
             prop = prop.preferred_curie
         if isinstance(value, (Reference, Referenced)):
