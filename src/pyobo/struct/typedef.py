@@ -211,6 +211,9 @@ derives_from = TypeDef(
 molecularly_interacts_with = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0002436", name="molecularly interacts with"),
 )
+located_in = TypeDef(
+    reference=Reference(prefix=RO_PREFIX, identifier="0001025", name="located in"),
+)
 exact_match = TypeDef(
     reference=Reference(prefix="skos", identifier="exactMatch", name="exact match"),
 )

@@ -13,7 +13,7 @@ from pyobo import Obo, Reference
 from pyobo.constants import RAW_MODULE
 from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import Term, derives_from, enables, from_species, participates_in
-from pyobo.struct.typedef import gene_product_of, molecularly_interacts_with
+from pyobo.struct.typedef import gene_product_of, located_in, molecularly_interacts_with
 from pyobo.utils.io import open_reader
 
 PREFIX = "uniprot"
@@ -110,8 +110,7 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
             for go_function_ref in _parse_go(go_functions):
                 term.append_relationship(enables, go_function_ref)
             for go_component_ref in _parse_go(go_components):
-                # FIXME this needs a different relationship than participates_in
-                term.append_relationship(..., go_component_ref)
+                term.append_relationship(located_in, go_component_ref)
 
             if proteome:
                 uniprot_proteome_id = proteome.split(":")[0]
@@ -123,9 +122,9 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
             if rhea_curies:
                 for rhea_curie in rhea_curies.split(" "):
                     term.append_relationship(
-                        # FIXME this needs a different relation than participates_in
+                        # FIXME this needs a different relation than enables
                         #  see https://github.com/biopragmatics/pyobo/pull/168#issuecomment-1918680152
-                        ...,
+                        enables,
                         cast(Reference, Reference.from_curie(rhea_curie, strict=True)),
                     )
 
