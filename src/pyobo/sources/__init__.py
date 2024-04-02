@@ -8,6 +8,7 @@ from .antibodyregistry import AntibodyRegistryGetter
 from .ccle import CCLEGetter
 from .cgnc import CGNCGetter
 from .chembl import ChEMBLCompoundGetter
+from .civic_gene import CIVICGeneGetter
 from .complexportal import ComplexPortalGetter
 from .conso import CONSOGetter
 from .cpt import CPTGetter
@@ -38,6 +39,7 @@ from .mirbase_mature import MiRBaseMatureGetter
 from .msigdb import MSigDBGetter
 from .ncbigene import NCBIGeneGetter
 from .npass import NPASSGetter
+from .omim_ps import OMIMPSGetter
 from .pathbank import PathBankGetter
 from .pfam import PfamGetter
 from .pfam_clan import PfamClanGetter
@@ -61,6 +63,7 @@ __all__ = [
     "AntibodyRegistryGetter",
     "CCLEGetter",
     "CGNCGetter",
+    "CIVICGeneGetter",
     "CONSOGetter",
     "CPTGetter",
     "CVXGetter",
@@ -94,6 +97,7 @@ __all__ = [
     "MiRBaseMatureGetter",
     "NCBIGeneGetter",
     "NPASSGetter",
+    "OMIMPSGetter",
     "PIDGetter",
     "PathBankGetter",
     "PfamClanGetter",

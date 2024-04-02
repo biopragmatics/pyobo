@@ -117,7 +117,7 @@ def get_ontology(
 
     ontology_format, path = _ensure_ontology_path(prefix, force=force, version=version)
     if path is None:
-        raise NoBuild
+        raise NoBuild(prefix)
     elif ontology_format == "obo":
         pass  # all gucci
     elif ontology_format == "owl":
