@@ -12,7 +12,6 @@ from typing import Iterable, Mapping, Set
 
 import bioregistry
 import pandas as pd
-from tqdm import tqdm
 from tqdm.auto import tqdm
 from umls_downloader import open_umls, open_umls_semantic_types
 
@@ -69,7 +68,7 @@ def get_obo() -> Obo:
 
 
 def get_semantic_types() -> Mapping[str, Set[str]]:
-    """Get UMLS"""
+    """Get UMLS semantic types for each term."""
     dd = defaultdict(set)
     with open_umls_semantic_types() as file:
         for line in tqdm(file, unit_scale=True):
