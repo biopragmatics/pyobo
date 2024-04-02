@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 #: WikiData SPARQL endpoint. See https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service#Interfacing
 URL = "https://query.wikidata.org/bigdata/namespace/wdq/sparql"
 
-WIKIDATA_MAPPING_DIRECTORY = RAW_MODULE.submodule("wikidata", "mappings")
+WIKIDATA_MAPPING_DIRECTORY = RAW_MODULE.module("wikidata", "mappings")
 
 
 def get_wikidata_xrefs_df(*, use_tqdm: bool = True) -> pd.DataFrame:
