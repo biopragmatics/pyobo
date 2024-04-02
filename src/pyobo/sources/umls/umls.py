@@ -7,12 +7,14 @@ Run with ``python -m pyobo.sources.umls``
 
 import itertools as itt
 import operator
-from typing import Iterable
+from collections import defaultdict
+from typing import Iterable, Mapping, Set
 
 import bioregistry
 import pandas as pd
+from tqdm import tqdm
 from tqdm.auto import tqdm
-from umls_downloader import open_umls
+from umls_downloader import open_umls, open_umls_semantic_types
 
 from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
 
@@ -66,8 +68,20 @@ def get_obo() -> Obo:
     return UMLSGetter()
 
 
+def get_semantic_types() -> Mapping[str, Set[str]]:
+    """Get UMLS"""
+    dd = defaultdict(set)
+    with open_umls_semantic_types() as file:
+        for line in tqdm(file, unit_scale=True):
+            cui, sty, _ = line.decode("utf8").split("|", 2)
+            dd[cui].add(sty)
+    return dict(dd)
+
+
 def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over UMLS terms."""
+    semantic_types = get_semantic_types()
+
     with open_umls(version=version) as file:
         it = tqdm(file, unit_scale=True, desc="[umls] parsing")
         lines = (line.decode("utf-8").strip().split("|") for line in it)
@@ -118,6 +132,8 @@ def iter_terms(version: str) -> Iterable[Term]:
                 synonyms=synonyms,
                 xrefs=xrefs,
             )
+            for sty_id in semantic_types.get(cui, set()):
+                term.append_parent(Reference(prefix="sty", identifier=sty_id))
             yield term
 
 
