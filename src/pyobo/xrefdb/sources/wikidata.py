@@ -66,10 +66,12 @@ def get_wikidata_df(prefix: str, wikidata_property: str) -> pd.DataFrame:
     return df
 
 
-def iter_wikidata_mappings(wikidata_property: str) -> Iterable[Tuple[str, str]]:
+def iter_wikidata_mappings(
+    wikidata_property: str, *, cache: bool = True
+) -> Iterable[Tuple[str, str]]:
     """Iterate over Wikidata xrefs."""
     path = WIKIDATA_MAPPING_DIRECTORY.join(name=f"{wikidata_property}.json")
-    if path.exists():
+    if path.exists() and cache:
         with path.open() as file:
             rows = json.load(file)
     else:
