@@ -1023,7 +1023,7 @@ class Obo:
     def iterate_id_name(self, *, use_tqdm: bool = False) -> Iterable[Tuple[str, str]]:
         """Iterate identifier name pairs."""
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"):
-            if term.name:
+            if term.prefix == self.ontology and term.name:
                 yield term.identifier, term.name
 
     def get_id_name_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, str]:
