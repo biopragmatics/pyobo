@@ -171,15 +171,17 @@ def get_terms(force: bool = False) -> Iterable[Term]:
             continue
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=gene_id, name=symbol),
-            definition=description,
+            definition=description if pd.notna(description) else None,
         )
         term.set_species(identifier=tax_id)
         if pd.notna(xref_curies):
             for xref_curie in xref_curies.split("|"):
                 if xref_curie.startswith("EnsemblRapid"):
                     continue
-                if xref_curie.startswith("AllianceGenome"):
+                elif xref_curie.startswith("AllianceGenome"):
                     xref_curie = xref_curie[len("xref_curie") :]
+                elif xref_curie.startswith("nome:WB:"):
+                    xref_curie = xref_curie[len("nome:") :]
                 xref_prefix, xref_id = bioregistry.parse_curie(xref_curie)
                 if xref_prefix and xref_id:
                     term.append_xref(Reference(prefix=xref_prefix, identifier=xref_id))
@@ -187,7 +189,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
                     p = xref_curie.split(":")[0]
                     if p not in warning_prefixes:
                         warning_prefixes.add(p)
-                        tqdm.write(f"[{PREFIX}] unhandled xref prefix: {p}")
+                        tqdm.write(f"[{PREFIX}] unhandled prefix in xref: {xref_curie}")
         yield term
 
 
