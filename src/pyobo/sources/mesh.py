@@ -19,6 +19,7 @@ from pyobo.utils.path import ensure_path, prefix_directory_join
 
 __all__ = [
     "MeSHGetter",
+    "get_mesh_category_curies",
 ]
 
 logger = logging.getLogger(__name__)
