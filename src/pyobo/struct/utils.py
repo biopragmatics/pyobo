@@ -16,12 +16,12 @@ OBO_ESCAPE = {" ": "\\W", **OBO_ESCAPE_SLIM}
 
 def obo_escape(string: str) -> str:
     """Escape all funny characters for OBO."""
-    return "".join(OBO_ESCAPE.get(character, character) for character in string)
+    return "".join(OBO_ESCAPE.get(character, character) for character in str(string))
 
 
 def obo_escape_slim(string: str) -> str:
     """Escape all funny characters for OBO."""
-    rv = "".join(OBO_ESCAPE_SLIM.get(character, character) for character in string)
+    rv = "".join(OBO_ESCAPE_SLIM.get(character, character) for character in str(string))
     rv = rv.replace("\n", "\\n")
     return rv
 
