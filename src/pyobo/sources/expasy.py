@@ -93,7 +93,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     database_path = ensure_path(PREFIX, url=EXPASY_DATABASE_URL, version=version)
     with open(database_path) as file:
-        _data = get_database(file)
+        id_to_data = get_database(file)
 
     ec2go = get_ec2go(version=version)
 
