@@ -30,11 +30,11 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def get_name_by_curie(curie: str) -> Optional[str]:
+def get_name_by_curie(curie: str, *, version: Optional[str] = None) -> Optional[str]:
     """Get the name for a CURIE, if possible."""
     prefix, identifier = normalize_curie(curie)
     if prefix and identifier:
-        return get_name(prefix, identifier)
+        return get_name(prefix, identifier, version=version)
     return None
 
 
@@ -74,9 +74,9 @@ def _help_get(
 
 
 @wrap_norm_prefix
-def get_name(prefix: str, identifier: str) -> Optional[str]:
+def get_name(prefix: str, identifier: str, *, version: Optional[str] = None) -> Optional[str]:
     """Get the name for an entity."""
-    return _help_get(get_id_name_mapping, prefix, identifier)
+    return _help_get(get_id_name_mapping, prefix, identifier, version=version)
 
 
 @lru_cache()
