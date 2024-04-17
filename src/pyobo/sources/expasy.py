@@ -4,11 +4,11 @@
 
 import logging
 from collections import defaultdict
-from typing import Dict, Iterable, Mapping, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, Mapping, Optional, Set, Tuple
 
 from .utils import get_go_mapping
 from ..struct import Obo, Reference, Synonym, Term
-from ..struct.typedef import enables, has_member
+from ..struct.typedef import enables, has_member, term_replaced_by
 from ..utils.path import ensure_path
 
 __all__ = [
@@ -93,12 +93,29 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     database_path = ensure_path(PREFIX, url=EXPASY_DATABASE_URL, version=version)
     with open(database_path) as file:
-        _data = get_database(file)
+        id_to_data = get_database(file)
 
     ec2go = get_ec2go(version=version)
 
     ec_code_to_alt_ids = {}
-    for ec_code, data in _data.items():
+    for ec_code, data in id_to_data.items():
+        if data.get("deleted"):
+            terms[ec_code] = Term(
+                reference=Reference(prefix=PREFIX, identifier=ec_code), is_obsolete=True
+            )
+            continue
+
+        transfer_ids = data.get("transfer_id")
+        if transfer_ids:
+            term = terms[ec_code] = Term(
+                reference=Reference(prefix=PREFIX, identifier=ec_code), is_obsolete=True
+            )
+            for transfer_id in transfer_ids:
+                term.append_relationship(
+                    term_replaced_by, Reference(prefix=PREFIX, identifier=transfer_id)
+                )
+            continue
+
         parent_ec_code = data["parent"]["identifier"]
         parent_term = terms[parent_ec_code]
 
@@ -210,7 +227,7 @@ def get_database(lines: Iterable[str]) -> Mapping:
     for groups in _group_by_id(lines):
         _, expasy_id = groups[0]
 
-        rv[expasy_id] = ec_data_entry = {
+        ec_data_entry: Dict[str, Any] = {
             "concept": {
                 "namespace": PREFIX,
                 "identifier": expasy_id,
@@ -230,10 +247,10 @@ def get_database(lines: Iterable[str]) -> Mapping:
             if descriptor == "//":
                 continue
             elif descriptor == DE and value == "Deleted entry.":
-                continue
+                ec_data_entry["deleted"] = True
             elif descriptor == DE and value.startswith("Transferred entry: "):
-                value = value[len("Transferred entry: ") :].rstrip()
-                ec_data_entry["transfer_id"] = value
+                value = value[len("Transferred entry: ") :].rstrip().rstrip(".")
+                ec_data_entry["transfer_id"] = value.split(" and ")
             elif descriptor == DE:
                 ec_data_entry["concept"]["name"] = value.rstrip(".")  # type:ignore
             elif descriptor == AN:
@@ -259,11 +276,7 @@ def get_database(lines: Iterable[str]) -> Mapping:
                         )
                     )
 
-    for expasy_id, data in rv.items():
-        transfer_id = data.pop("transfer_id", None)
-        if transfer_id is not None:
-            rv[expasy_id]["alt_ids"].append(transfer_id)  # type:ignore
-
+        rv[expasy_id] = ec_data_entry
     return rv
 
 
