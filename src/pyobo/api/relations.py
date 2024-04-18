@@ -48,9 +48,11 @@ def get_relations_df(
     force: bool = False,
     wide: bool = False,
     strict: bool = True,
+    version: Optional[str] = None,
 ) -> pd.DataFrame:
     """Get all relations from the OBO."""
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(prefix, name="relations.tsv", version=version)
 
     @cached_df(path=path, dtype=str, force=force)
@@ -118,9 +120,11 @@ def get_id_multirelations_mapping(
     *,
     use_tqdm: bool = False,
     force: bool = False,
+    version: Optional[str] = None,
 ) -> Mapping[str, List[Reference]]:
     """Get the OBO file and output a synonym dictionary."""
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     ontology = get_ontology(prefix, force=force, version=version)
     return ontology.get_id_multirelations_mapping(typedef=typedef, use_tqdm=use_tqdm)
 
@@ -134,6 +138,7 @@ def get_relation_mapping(
     *,
     use_tqdm: bool = False,
     force: bool = False,
+    version: Optional[str] = None,
 ) -> Mapping[str, str]:
     """Get relations from identifiers in the source prefix to target prefix with the given relation.
 
@@ -147,7 +152,8 @@ def get_relation_mapping(
     >>> hgnc_mgi_orthology_mapping = pyobo.get_relation_mapping('hgnc', 'ro:HOM0000017', 'mgi')
     >>> assert mouse_mapt_mgi_id == hgnc_mgi_orthology_mapping[human_mapt_hgnc_id]
     """
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     ontology = get_ontology(prefix, force=force, version=version)
     return ontology.get_relation_mapping(
         relation=relation, target_prefix=target_prefix, use_tqdm=use_tqdm
@@ -163,6 +169,7 @@ def get_relation(
     *,
     use_tqdm: bool = False,
     force: bool = False,
+    **kwargs,
 ) -> Optional[str]:
     """Get the target identifier corresponding to the given relationship from the source prefix/identifier pair.
 
@@ -181,6 +188,7 @@ def get_relation(
         target_prefix=target_prefix,
         use_tqdm=use_tqdm,
         force=force,
+        **kwargs,
     )
     return relation_mapping.get(source_identifier)
 

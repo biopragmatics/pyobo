@@ -28,12 +28,15 @@ NO_ALTS = {
 
 @lru_cache()
 @wrap_norm_prefix
-def get_id_to_alts(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
+def get_id_to_alts(
+    prefix: str, *, force: bool = False, version: Optional[str] = None
+) -> Mapping[str, List[str]]:
     """Get alternate identifiers."""
     if prefix in NO_ALTS:
         return {}
 
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(prefix, name="alt_ids.tsv", version=version)
     header = [f"{prefix}_id", "alt_id"]
 
@@ -51,26 +54,28 @@ def get_id_to_alts(prefix: str, force: bool = False) -> Mapping[str, List[str]]:
 
 @lru_cache()
 @wrap_norm_prefix
-def get_alts_to_id(prefix: str, force: bool = False) -> Mapping[str, str]:
+def get_alts_to_id(
+    prefix: str, *, force: bool = False, version: Optional[str] = None
+) -> Mapping[str, str]:
     """Get alternative id to primary id mapping."""
     return {
         alt: primary
-        for primary, alts in get_id_to_alts(prefix, force=force).items()
+        for primary, alts in get_id_to_alts(prefix, force=force, version=version).items()
         for alt in alts
     }
 
 
-def get_primary_curie(curie: str) -> Optional[str]:
+def get_primary_curie(curie: str, *, version: Optional[str] = None) -> Optional[str]:
     """Get the primary curie for an entity."""
     prefix, identifier = normalize_curie(curie)
-    primary_identifier = get_primary_identifier(prefix, identifier)
+    primary_identifier = get_primary_identifier(prefix, identifier, version=version)
     if primary_identifier is not None:
         return f"{prefix}:{primary_identifier}"
     return None
 
 
 @wrap_norm_prefix
-def get_primary_identifier(prefix: str, identifier: str) -> str:
+def get_primary_identifier(prefix: str, identifier: str, *, version: Optional[str] = None) -> str:
     """Get the primary identifier for an entity.
 
     :param prefix: The name of the resource
@@ -82,7 +87,7 @@ def get_primary_identifier(prefix: str, identifier: str) -> str:
     if prefix in NO_ALTS:  # TODO later expand list to other namespaces with no alts
         return identifier
 
-    alts_to_id = get_alts_to_id(prefix)
+    alts_to_id = get_alts_to_id(prefix, version=version)
     if alts_to_id and identifier in alts_to_id:
         return alts_to_id[identifier]
     return identifier

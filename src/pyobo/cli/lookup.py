@@ -76,9 +76,10 @@ def xrefs(prefix: str, target: str, force: bool, no_strict: bool, version: Optio
 @prefix_argument
 @verbose_option
 @force_option
-def metadata(prefix: str, force: bool):
+@version_option
+def metadata(prefix: str, force: bool, version: Optional[str]):
     """Print the metadata for the given namespace."""
-    metadata = get_metadata(prefix, force=force)
+    metadata = get_metadata(prefix, force=force, version=version)
     click.echo(json.dumps(metadata, indent=2))
 
 

@@ -4,7 +4,7 @@
 
 import logging
 from functools import lru_cache
-from typing import Mapping
+from typing import Mapping, Optional
 
 from .utils import get_version
 from ..getters import get_ontology
@@ -21,9 +21,12 @@ logger = logging.getLogger(__name__)
 
 @lru_cache()
 @wrap_norm_prefix
-def get_metadata(prefix: str, force: bool = False) -> Mapping[str, str]:
+def get_metadata(
+    prefix: str, *, force: bool = False, version: Optional[str] = None
+) -> Mapping[str, str]:
     """Get metadata for the ontology."""
-    version = get_version(prefix)
+    if version is None:
+        version = get_version(prefix)
     path = prefix_cache_join(prefix, name="metadata.json", version=version)
 
     @cached_json(path=path, force=force)

@@ -69,7 +69,7 @@ def _help_get(
             NO_BUILD_PREFIXES.add(prefix)
         return None
 
-    primary_id = get_primary_identifier(prefix, identifier)
+    primary_id = get_primary_identifier(prefix, identifier, version=version)
     return mapping.get(primary_id)
 
 
@@ -82,7 +82,7 @@ def get_name(prefix: str, identifier: str, *, version: Optional[str] = None) -> 
 @lru_cache()
 @wrap_norm_prefix
 def get_ids(
-    prefix: str, force: bool = False, strict: bool = False, version: Optional[str] = None
+    prefix: str, *, force: bool = False, strict: bool = False, version: Optional[str] = None
 ) -> Set[str]:
     """Get the set of identifiers for this prefix."""
     if prefix == "ncbigene":
@@ -150,16 +150,18 @@ def get_id_name_mapping(
 
 @lru_cache()
 @wrap_norm_prefix
-def get_name_id_mapping(prefix: str, force: bool = False) -> Mapping[str, str]:
+def get_name_id_mapping(
+    prefix: str, *, force: bool = False, version: Optional[str] = None
+) -> Mapping[str, str]:
     """Get a name to identifier mapping for the OBO file."""
-    id_name = get_id_name_mapping(prefix=prefix, force=force)
+    id_name = get_id_name_mapping(prefix=prefix, force=force, version=version)
     return {v: k for k, v in id_name.items()}
 
 
 @wrap_norm_prefix
-def get_definition(prefix: str, identifier: str) -> Optional[str]:
+def get_definition(prefix: str, identifier: str, *, version: Optional[str] = None) -> Optional[str]:
     """Get the definition for an entity."""
-    return _help_get(get_id_definition_mapping, prefix, identifier)
+    return _help_get(get_id_definition_mapping, prefix, identifier, version=version)
 
 
 def get_id_definition_mapping(
