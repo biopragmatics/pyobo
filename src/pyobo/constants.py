@@ -4,17 +4,13 @@
 
 import logging
 import re
-from functools import partial
-from typing import Callable
 
-import bioversions
 import pystow
 
 __all__ = [
     "RAW_DIRECTORY",
     "DATABASE_DIRECTORY",
     "SPECIES_REMAPPING",
-    "version_getter",
 ]
 
 logger = logging.getLogger(__name__)
@@ -83,11 +79,6 @@ TYPEDEFS_FILE = "typedefs.tsv.gz"
 
 SPECIES_RECORD = "5334738"
 SPECIES_FILE = "species.tsv.gz"
-
-
-def version_getter(name: str) -> Callable[[], str]:
-    """Make a function appropriate for getting versions."""
-    return partial(bioversions.get_version, name)
 
 
 NCBITAXON_PREFIX = "NCBITaxon"

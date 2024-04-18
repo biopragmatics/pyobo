@@ -22,13 +22,13 @@ logger = logging.getLogger(__name__)
 
 
 @wrap_norm_prefix
-def get_species(prefix: str, identifier: str) -> Optional[str]:
+def get_species(prefix: str, identifier: str, *, version: Optional[str] = None) -> Optional[str]:
     """Get the species."""
     if prefix == "uniprot":
         raise NotImplementedError
 
     try:
-        id_species = get_id_species_mapping(prefix)
+        id_species = get_id_species_mapping(prefix, version=version)
     except NoBuild:
         logger.warning("unable to look up species for prefix %s", prefix)
         return None
@@ -37,7 +37,7 @@ def get_species(prefix: str, identifier: str) -> Optional[str]:
         logger.warning("no results produced for prefix %s", prefix)
         return None
 
-    primary_id = get_primary_identifier(prefix, identifier)
+    primary_id = get_primary_identifier(prefix, identifier, version=version)
     return id_species.get(primary_id)
 
 

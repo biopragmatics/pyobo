@@ -30,9 +30,16 @@ logger = logging.getLogger(__name__)
 
 
 @wrap_norm_prefix
-def get_xref(prefix: str, identifier: str, new_prefix: str, flip: bool = False) -> Optional[str]:
+def get_xref(
+    prefix: str,
+    identifier: str,
+    new_prefix: str,
+    *,
+    flip: bool = False,
+    version: Optional[str] = None,
+) -> Optional[str]:
     """Get the xref with the new prefix if a direct path exists."""
-    filtered_xrefs = get_filtered_xrefs(prefix, new_prefix, flip=flip)
+    filtered_xrefs = get_filtered_xrefs(prefix, new_prefix, flip=flip, version=version)
     return filtered_xrefs.get(identifier)
 
 
@@ -41,8 +48,8 @@ def get_xref(prefix: str, identifier: str, new_prefix: str, flip: bool = False) 
 def get_filtered_xrefs(
     prefix: str,
     xref_prefix: str,
-    flip: bool = False,
     *,
+    flip: bool = False,
     use_tqdm: bool = False,
     force: bool = False,
     strict: bool = False,

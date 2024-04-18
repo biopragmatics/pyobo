@@ -13,6 +13,7 @@ from .properties import get_filtered_properties_mapping
 from .relations import get_filtered_relations_df
 from ..identifier_utils import wrap_norm_prefix
 from ..struct import TypeDef, has_member, is_a, part_of
+from ..struct.reference import Reference
 
 __all__ = [
     "get_hierarchy",
@@ -24,7 +25,6 @@ __all__ = [
     "get_children",
 ]
 
-from ..struct.reference import Reference
 
 logger = logging.getLogger(__name__)
 
@@ -154,14 +154,16 @@ def _get_hierarchy_helper(
     return rv
 
 
-def is_descendent(prefix, identifier, ancestor_prefix, ancestor_identifier) -> bool:
+def is_descendent(
+    prefix, identifier, ancestor_prefix, ancestor_identifier, *, version: Optional[str] = None
+) -> bool:
     """Check that the first identifier has the second as a descendent.
 
     Check that go:0070246 ! natural killer cell apoptotic process is a
     descendant of go:0006915 ! apoptotic process::
     >>> assert is_descendent('go', '0070246', 'go', '0006915')
     """
-    descendants = get_descendants(ancestor_prefix, ancestor_identifier)
+    descendants = get_descendants(ancestor_prefix, ancestor_identifier, version=version)
     return descendants is not None and f"{prefix}:{identifier}" in descendants
 
 
@@ -224,13 +226,15 @@ def get_children(
     return set(hierarchy.predecessors(curie))
 
 
-def has_ancestor(prefix, identifier, ancestor_prefix, ancestor_identifier) -> bool:
+def has_ancestor(
+    prefix, identifier, ancestor_prefix, ancestor_identifier, *, version: Optional[str] = None
+) -> bool:
     """Check that the first identifier has the second as an ancestor.
 
     Check that go:0008219 ! cell death is an ancestor of go:0006915 ! apoptotic process::
     >>> assert has_ancestor('go', '0006915', 'go', '0008219')
     """
-    ancestors = get_ancestors(prefix, identifier)
+    ancestors = get_ancestors(prefix, identifier, version=version)
     return ancestors is not None and f"{ancestor_prefix}:{ancestor_identifier}" in ancestors
 
 
