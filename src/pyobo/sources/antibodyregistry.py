@@ -24,9 +24,10 @@ URL = "http://antibodyregistry.org/php/fileHandler.php"
 CHUNKSIZE = 20_000
 
 
-def get_chunks(force: bool = False) -> pd.DataFrame:
+def get_chunks(*, force: bool = False, version: Optional[str] = None) -> pd.DataFrame:
     """Get the BioGRID identifiers mapping dataframe."""
-    version = bioversions.get_version(PREFIX)
+    if version is None:
+        version = bioversions.get_version(PREFIX)
     df = ensure_df(
         PREFIX,
         url=URL,
@@ -47,7 +48,7 @@ class AntibodyRegistryGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return iter_terms(force=force)
+        return iter_terms(force=force, version=self._version_or_raise)
 
 
 def get_obo(*, force: bool = False) -> Obo:
@@ -74,9 +75,9 @@ SKIP = {
 }
 
 
-def iter_terms(force: bool = False) -> Iterable[Term]:
+def iter_terms(*, force: bool = False, version: Optional[str] = None) -> Iterable[Term]:
     """Iterate over antibodies."""
-    chunks = get_chunks(force=force)
+    chunks = get_chunks(force=force, version=version)
     needs_curating = set()
     # df['vendor'] = df['vendor'].map(bioregistry.normalize_prefix)
     it = tqdm(chunks, desc=f"{PREFIX}, chunkssize={CHUNKSIZE}")

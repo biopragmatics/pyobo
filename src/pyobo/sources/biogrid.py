@@ -2,12 +2,12 @@
 
 """Extract and convert BioGRID identifiers."""
 
+from functools import partial
 from typing import Mapping, Optional
 
 import bioversions
 import pandas as pd
 
-from pyobo.constants import version_getter
 from pyobo.resources.ncbitaxon import get_ncbitaxon_id
 from pyobo.utils.cache import cached_mapping
 from pyobo.utils.path import ensure_df, prefix_directory_join
@@ -61,7 +61,11 @@ def get_df() -> pd.DataFrame:
 
 @cached_mapping(
     path=prefix_directory_join(
-        PREFIX, "cache", "xrefs", name="ncbigene.tsv", version=version_getter(PREFIX)
+        PREFIX,
+        "cache",
+        "xrefs",
+        name="ncbigene.tsv",
+        version=partial(bioversions.get_version, PREFIX),
     ),
     header=["biogrid_id", "ncbigene_id"],
 )

@@ -318,21 +318,23 @@ def _get_descriptor_qualifiers(descriptor: Element) -> List[Mapping[str, str]]:
     ]
 
 
-def get_mesh_category_curies(letter: str, skip: Optional[Collection[str]] = None) -> List[str]:
+def get_mesh_category_curies(
+    letter: str, *, skip: Optional[Collection[str]] = None, version: Optional[str] = None
+) -> List[str]:
     """Get the MeSH LUIDs for a category, by letter (e.g., "A").
 
     :param letter: The MeSH tree, A for anatomy, C for disease, etc.
     :param skip: An optional collection of MeSH tree codes to skip, such as "A03"
+    :param version: The MeSH version to use. Defaults to latest
     :returns: A list of MeSH CURIE strings for the top level of each MeSH tree.
 
     .. seealso:: https://meshb.nlm.nih.gov/treeView
     """
-    import bioversions
+    if version is None:
+        import bioversions
 
-    mesh_version = bioversions.get_version("mesh")
-    if mesh_version is None:
-        raise ValueError
-    tree_to_mesh = get_tree_to_mesh_id(mesh_version)
+        version = bioversions.get_version("mesh")
+    tree_to_mesh = get_tree_to_mesh_id(version=version)
     rv = []
     for i in range(1, 100):
         key = f"{letter}{i:02}"
