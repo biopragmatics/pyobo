@@ -64,7 +64,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         )
 
         for xref_prefix, xref_id in [
-            ("chembl", chembl_id),
+            ("chembl.compound", chembl_id),
             # ("zinc", zinc_id),
         ]:
             if pd.notna(xref_id):
