@@ -41,6 +41,7 @@ def get_name_by_curie(curie: str, *, version: Optional[str] = None) -> Optional[
 X = TypeVar("X")
 
 NO_BUILD_PREFIXES = set()
+NO_BUILD_LOGGED = set()
 
 
 def _help_get(
@@ -59,8 +60,10 @@ def _help_get(
             logger.warning("[%s] unable to look up results with %s", prefix, f)
             NO_BUILD_PREFIXES.add(prefix)
         return None
-    except ValueError:
-        logger.warning("[%s] unable to look up results with %s", prefix, f)
+    except ValueError as e:
+        if prefix not in NO_BUILD_PREFIXES:
+            logger.warning("[%s] value error while looking up results with %s: %s", prefix, f, e)
+            NO_BUILD_PREFIXES.add(prefix)
         return None
 
     if not mapping:
