@@ -81,10 +81,16 @@ def iter_wikidata_mappings(
             json.dump(rows, file, indent=2)
 
     for row in rows:
-        wikidata_id = row["wikidata_id"]["value"][len("http://wikidata.org/entity/") :]
+        wikidata_id = _removeprefix(row["wikidata_id"]["value"], "http://www.wikidata.org/entity/")
+        wikidata_id = _removeprefix(wikidata_id, "http://wikidata.org/entity/")
         entity_id = row["id"]["value"]
         yield wikidata_id, entity_id
 
+
+def _removeprefix(s, prefix):
+    if s.startswith(prefix):
+        return s[len(prefix) :]
+    return s
 
 HEADERS = {
     "User-Agent": f"pyobo/{get_version()}",
