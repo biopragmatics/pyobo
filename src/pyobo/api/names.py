@@ -40,8 +40,8 @@ def get_name_by_curie(curie: str, *, version: Optional[str] = None) -> Optional[
 
 X = TypeVar("X")
 
-NO_BUILD_PREFIXES = set()
-NO_BUILD_LOGGED = set()
+NO_BUILD_PREFIXES: Set[str] = set()
+NO_BUILD_LOGGED: Set = set()
 
 
 def _help_get(
