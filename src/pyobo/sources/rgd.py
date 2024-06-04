@@ -28,7 +28,7 @@ old_name_type = SynonymTypeDef.from_text("old_name")
 
 # NOTE unigene id was discontinue in January 18th, 2021 dump
 
-GENES_URL = "https://download.rgd.mcw.edu/data_release/GENES.RAT.txt"
+GENES_URL = "https://download.rgd.mcw.edu/data_release/GENES_RAT.txt"
 GENES_HEADER = [
     "GENE_RGD_ID",
     "SYMBOL",

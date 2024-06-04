@@ -92,6 +92,7 @@ def _removeprefix(s, prefix):
         return s[len(prefix) :]
     return s
 
+
 HEADERS = {
     "User-Agent": f"pyobo/{get_version()}",
 }
