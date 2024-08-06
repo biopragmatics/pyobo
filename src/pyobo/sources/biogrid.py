@@ -5,12 +5,12 @@
 from functools import partial
 from typing import Mapping, Optional
 
-import bioversions
 import pandas as pd
 
 from pyobo.resources.ncbitaxon import get_ncbitaxon_id
 from pyobo.utils.cache import cached_mapping
 from pyobo.utils.path import ensure_df, prefix_directory_join
+from pyobo.api.utils import get_version
 
 PREFIX = "biogrid"
 BASE_URL = "https://downloads.thebiogrid.org/Download/BioGRID/Release-Archive"
@@ -52,7 +52,7 @@ def _lookup(name: str) -> Optional[str]:
 
 def get_df() -> pd.DataFrame:
     """Get the BioGRID identifiers mapping dataframe."""
-    version = bioversions.get_version("biogrid")
+    version = get_version("biogrid")
     url = f"{BASE_URL}/BIOGRID-{version}/BIOGRID-IDENTIFIERS-{version}.tab.zip"
     df = ensure_df(PREFIX, url=url, skiprows=28, dtype=str, version=version)
     df["taxonomy_id"] = df["ORGANISM_OFFICIAL_NAME"].map(_lookup)
@@ -65,7 +65,7 @@ def get_df() -> pd.DataFrame:
         "cache",
         "xrefs",
         name="ncbigene.tsv",
-        version=partial(bioversions.get_version, PREFIX),
+        version=partial(get_version, PREFIX),
     ),
     header=["biogrid_id", "ncbigene_id"],
 )

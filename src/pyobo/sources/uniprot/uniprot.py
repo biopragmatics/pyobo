@@ -6,7 +6,6 @@ from operator import attrgetter
 from pathlib import Path
 from typing import Iterable, List, Optional, cast
 
-import bioversions
 from tqdm.auto import tqdm
 
 from pyobo import Obo, Reference
@@ -15,6 +14,7 @@ from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import Term, derives_from, enables, from_species, participates_in
 from pyobo.struct.typedef import gene_product_of, located_in, molecularly_interacts_with
 from pyobo.utils.io import open_reader
+from pyobo.api.utils import get_version
 
 PREFIX = "uniprot"
 BASE_URL = "https://rest.uniprot.org/uniprotkb/stream"
@@ -166,7 +166,7 @@ def _parse_go(go_terms) -> List[Reference]:
 def ensure(version: Optional[str] = None, force: bool = False) -> Path:
     """Ensure the reviewed uniprot names are available."""
     if version is None:
-        version = bioversions.get_version("uniprot")
+        version = get_version("uniprot")
     return RAW_MODULE.ensure(
         PREFIX,
         version,

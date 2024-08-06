@@ -5,7 +5,6 @@
 import logging
 from typing import TYPE_CHECKING, Dict, Iterable, Optional
 
-import bioversions
 import pystow
 
 from pyobo.struct import Obo, Reference, Term
@@ -21,6 +20,7 @@ from pyobo.struct.typedef import (
     reaction_enabled_by_molecular_function,
 )
 from pyobo.utils.path import ensure_df
+from pyobo.api.utils import get_version
 
 if TYPE_CHECKING:
     import rdflib
@@ -63,7 +63,7 @@ def ensure_rhea_rdf(version: Optional[str] = None, force: bool = False) -> "rdfl
     """Get the Rhea RDF graph."""
     # see docs: https://ftp.expasy.org/databases/rhea/rdf/rhea_rdf_documentation.pdf
     if version is None:
-        version = bioversions.get_version(PREFIX)
+        version = get_version(PREFIX)
     return pystow.ensure_rdf(
         "pyobo",
         "raw",

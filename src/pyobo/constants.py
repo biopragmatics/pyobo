@@ -4,6 +4,8 @@
 
 import logging
 import re
+import os
+import json
 
 import pystow
 
@@ -11,6 +13,7 @@ __all__ = [
     "RAW_DIRECTORY",
     "DATABASE_DIRECTORY",
     "SPECIES_REMAPPING",
+    "VERSION_PINS"
 ]
 
 logger = logging.getLogger(__name__)
@@ -80,7 +83,6 @@ TYPEDEFS_FILE = "typedefs.tsv.gz"
 SPECIES_RECORD = "5334738"
 SPECIES_FILE = "species.tsv.gz"
 
-
 NCBITAXON_PREFIX = "NCBITaxon"
 DATE_FORMAT = "%d:%m:%Y %H:%M"
 PROVENANCE_PREFIXES = {
@@ -99,3 +101,18 @@ PROVENANCE_PREFIXES = {
     "isbn",
     "issn",
 }
+
+# Load version pin dictionary from the environmental variable VERSION_PINS
+try:
+    VERSION_PINS_STR = os.getenv("VERSION_PINS")
+    if not VERSION_PINS_STR:
+        VERSION_PINS = {}
+    else:
+        VERSION_PINS = json.loads(VERSION_PINS_STR)
+        for k, v in VERSION_PINS.items():
+            if not isinstance(k, str) or not isinstance(v, str):
+                raise ValueError("The prefix and version name must both be "
+                                 "strings")
+except Exception as e:
+    raise ValueError("The value for the environment variable VERSION_PINS"
+                     " must be a valid JSON string") from e

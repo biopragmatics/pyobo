@@ -68,6 +68,7 @@ from ..identifier_utils import normalize_curie
 from ..utils.io import multidict, write_iterable_tsv
 from ..utils.misc import obo_to_owl
 from ..utils.path import get_prefix_obo_path, prefix_directory_join
+from ..api.utils import get_version
 
 __all__ = [
     "Synonym",
@@ -583,10 +584,8 @@ class Obo:
 
     def _get_version(self) -> Optional[str]:
         if self.bioversions_key:
-            import bioversions
-
             try:
-                return bioversions.get_version(self.bioversions_key)
+                return get_version(self.bioversions_key)
             except KeyError:
                 logger.warning(f"[{self.bioversions_key}] bioversions doesn't list this resource ")
             except IOError:

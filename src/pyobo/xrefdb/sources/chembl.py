@@ -4,7 +4,6 @@
 
 from typing import Optional
 
-import bioversions
 import pandas as pd
 
 from pyobo.constants import (
@@ -16,6 +15,7 @@ from pyobo.constants import (
     XREF_COLUMNS,
 )
 from pyobo.utils.path import ensure_df
+from pyobo.api.utils import get_version
 
 CHEMBL_COMPOUND_PREFIX = "chembl.compound"
 CHEMBL_TARGET_PREFIX = "chembl.target"
@@ -26,7 +26,7 @@ def get_chembl_compound_equivalences_raw(
 ) -> pd.DataFrame:
     """Get the chemical representations raw dataframe."""
     if version is None:
-        version = bioversions.get_version("chembl")
+        version = get_version("chembl")
 
     base_url = f"ftp://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_{version}"
     url = f"{base_url}/chembl_{version}_chemreps.txt.gz"
@@ -36,7 +36,7 @@ def get_chembl_compound_equivalences_raw(
 def get_chembl_compound_equivalences(version: Optional[str] = None) -> pd.DataFrame:
     """Get ChEMBL chemical equivalences."""
     if version is None:
-        version = bioversions.get_version("chembl")
+        version = get_version("chembl")
 
     df = get_chembl_compound_equivalences_raw(version=version)
     rows = []
@@ -55,7 +55,7 @@ def get_chembl_compound_equivalences(version: Optional[str] = None) -> pd.DataFr
 def get_chembl_protein_equivalences(version: Optional[str] = None) -> pd.DataFrame:
     """Get ChEMBL protein equivalences."""
     if version is None:
-        version = bioversions.get_version("chembl")
+        version = get_version("chembl")
 
     url = f"ftp://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_{version}/chembl_uniprot_mapping.txt"
     df = ensure_df(
@@ -75,7 +75,7 @@ def get_chembl_protein_equivalences(version: Optional[str] = None) -> pd.DataFra
 def get_chembl_xrefs_df(version: Optional[str] = None) -> pd.DataFrame:
     """Get all ChEBML equivalences."""
     if version is None:
-        version = bioversions.get_version("chembl")
+        version = get_version("chembl")
 
     return pd.concat(
         [

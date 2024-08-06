@@ -5,13 +5,13 @@
 import logging
 from typing import Iterable, Mapping, Optional
 
-import bioversions
 import pandas as pd
 from bioregistry.utils import removeprefix
 from tqdm.auto import tqdm
 
 from pyobo import Obo, Term
 from pyobo.utils.path import ensure_df
+from pyobo.api.utils import get_version
 
 __all__ = [
     "AntibodyRegistryGetter",
@@ -27,7 +27,7 @@ CHUNKSIZE = 20_000
 def get_chunks(*, force: bool = False, version: Optional[str] = None) -> pd.DataFrame:
     """Get the BioGRID identifiers mapping dataframe."""
     if version is None:
-        version = bioversions.get_version(PREFIX)
+        version = get_version(PREFIX)
     df = ensure_df(
         PREFIX,
         url=URL,
