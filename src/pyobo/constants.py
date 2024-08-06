@@ -6,6 +6,7 @@ import logging
 import re
 import os
 import json
+import click
 
 import pystow
 
@@ -116,3 +117,10 @@ try:
 except Exception as e:
     raise ValueError("The value for the environment variable VERSION_PINS"
                      " must be a valid JSON string") from e
+
+click.echo(f"These are the resource versions that are pinned.\n{VERSION_PINS}. "
+           f"\nPyobo will download the latest version of a resource if it's "
+           f"not pinned.\nIf you want to use a specific version of a "
+           f"resource, edit your VERSION_PINS environmental "
+           f"variable which is a JSON string to include a prefix and version "
+           f"name.")
