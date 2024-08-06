@@ -7,7 +7,7 @@ from functools import lru_cache
 from typing import Callable, Iterable, Mapping, Optional
 
 import pandas as pd
-from pkg_resources import iter_entry_points
+from importlib.metadata import entry_points
 from tqdm.auto import tqdm
 
 __all__ = [
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 @lru_cache()
 def _get_xref_plugins() -> Mapping[str, Callable[[], pd.DataFrame]]:
-    return {entry.name: entry.load() for entry in iter_entry_points(group="pyobo.xrefs")}
+    return {entry.name: entry.load() for entry in entry_points(group="pyobo.xrefs")}
 
 
 def has_xref_plugin(prefix: str) -> bool:
