@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 
 def get_name_by_curie(curie: str, *, version: Optional[str] = None) -> Optional[str]:
     """Get the name for a CURIE, if possible."""
+    if version is None:
+        version = get_version(curie.split(":")[0])
     prefix, identifier = normalize_curie(curie)
     if prefix and identifier:
         return get_name(prefix, identifier, version=version)
