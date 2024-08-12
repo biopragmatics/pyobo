@@ -112,11 +112,14 @@ try:
         VERSION_PINS = json.loads(VERSION_PINS_STR)
         for k, v in VERSION_PINS.items():
             if not isinstance(k, str) or not isinstance(v, str):
-                raise ValueError("The prefix and version name must both be "
+                logger.error("The prefix and version name must both be "
                                  "strings")
-except Exception as e:
-    raise ValueError("The value for the environment variable VERSION_PINS"
-                     " must be a valid JSON string") from e
+            VERSION_PINS = {}
+            break
+except ValueError as e:
+    logger.error("The value for the environment variable VERSION_PINS"
+                     " must be a valid JSON string")
+    VERSION_PINS = {}
 
 click.echo(f"These are the resource versions that are pinned.\n{VERSION_PINS}. "
            f"\nPyobo will download the latest version of a resource if it's "
