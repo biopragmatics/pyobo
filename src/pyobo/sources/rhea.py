@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Dict, Iterable, Optional
 
 import pystow
 
+from pyobo.api.utils import get_version
 from pyobo.struct import Obo, Reference, Term
 from pyobo.struct.typedef import (
     TypeDef,
@@ -20,7 +21,6 @@ from pyobo.struct.typedef import (
     reaction_enabled_by_molecular_function,
 )
 from pyobo.utils.path import ensure_df
-from pyobo.api.utils import get_version
 
 if TYPE_CHECKING:
     import rdflib

@@ -10,10 +10,10 @@ from collections import Counter, defaultdict
 from operator import attrgetter
 from typing import DefaultDict, Dict, Iterable, Optional
 
-
 from tabulate import tabulate
 from tqdm.auto import tqdm
 
+from pyobo.api.utils import get_version
 from pyobo.struct import (
     Obo,
     Reference,
@@ -29,7 +29,6 @@ from pyobo.struct import (
 )
 from pyobo.struct.typedef import exact_match
 from pyobo.utils.path import ensure_path, prefix_directory_join
-from pyobo.api.utils import get_version
 
 __all__ = [
     "HGNCGetter",

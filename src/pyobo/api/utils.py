@@ -7,8 +7,8 @@ from typing import Optional
 
 import bioversions
 
-from ..utils.path import prefix_directory_join
 from ..constants import VERSION_PINS
+from ..utils.path import prefix_directory_join
 
 __all__ = [
     "get_version",

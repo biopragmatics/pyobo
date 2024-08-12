@@ -56,6 +56,7 @@ from .typedef import (
     term_replaced_by,
 )
 from .utils import comma_separate, obo_escape_slim
+from ..api.utils import get_version
 from ..constants import (
     DATE_FORMAT,
     NCBITAXON_PREFIX,
@@ -68,7 +69,6 @@ from ..identifier_utils import normalize_curie
 from ..utils.io import multidict, write_iterable_tsv
 from ..utils.misc import obo_to_owl
 from ..utils.path import get_prefix_obo_path, prefix_directory_join
-from ..api.utils import get_version
 
 __all__ = [
     "Synonym",

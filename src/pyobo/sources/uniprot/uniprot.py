@@ -9,12 +9,12 @@ from typing import Iterable, List, Optional, cast
 from tqdm.auto import tqdm
 
 from pyobo import Obo, Reference
+from pyobo.api.utils import get_version
 from pyobo.constants import RAW_MODULE
 from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import Term, derives_from, enables, from_species, participates_in
 from pyobo.struct.typedef import gene_product_of, located_in, molecularly_interacts_with
 from pyobo.utils.io import open_reader
-from pyobo.api.utils import get_version
 
 PREFIX = "uniprot"
 BASE_URL = "https://rest.uniprot.org/uniprotkb/stream"

@@ -11,12 +11,12 @@ from xml.etree.ElementTree import Element
 
 from tqdm.auto import tqdm
 
+from pyobo.api.utils import get_version
 from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import Obo, Reference, Synonym, Term
 from pyobo.utils.cache import cached_json, cached_mapping
 from pyobo.utils.io import parse_xml_gz
 from pyobo.utils.path import ensure_path, prefix_directory_join
-from pyobo.api.utils import get_version
 
 __all__ = [
     "MeSHGetter",

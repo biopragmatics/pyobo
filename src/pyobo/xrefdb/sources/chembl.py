@@ -6,6 +6,7 @@ from typing import Optional
 
 import pandas as pd
 
+from pyobo.api.utils import get_version
 from pyobo.constants import (
     PROVENANCE,
     SOURCE_ID,
@@ -15,7 +16,6 @@ from pyobo.constants import (
     XREF_COLUMNS,
 )
 from pyobo.utils.path import ensure_df
-from pyobo.api.utils import get_version
 
 CHEMBL_COMPOUND_PREFIX = "chembl.compound"
 CHEMBL_TARGET_PREFIX = "chembl.target"

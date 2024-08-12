@@ -6,9 +6,9 @@ from typing import Optional
 
 import pandas as pd
 
+from ...api.utils import get_version
 from ...constants import XREF_COLUMNS
 from ...sources.pubchem import _get_pubchem_extras_url, get_pubchem_id_to_mesh_id
-from ...api.utils import get_version
 
 __all__ = [
     "get_pubchem_mesh_df",

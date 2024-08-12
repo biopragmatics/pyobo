@@ -5,16 +5,15 @@
 import logging
 from typing import Iterable, Mapping, Optional
 
-
 import pandas as pd
 from bioregistry.utils import removeprefix
 from tqdm.auto import tqdm
 
 from ..api import get_name_id_mapping
+from ..api.utils import get_version
 from ..struct import Obo, Reference, Synonym, Term
 from ..utils.iter import iterate_gzips_together
 from ..utils.path import ensure_df, ensure_path
-from ..api.utils import get_version
 
 __all__ = [
     "PubChemCompoundGetter",

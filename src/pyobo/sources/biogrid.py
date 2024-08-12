@@ -7,10 +7,10 @@ from typing import Mapping, Optional
 
 import pandas as pd
 
+from pyobo.api.utils import get_version
 from pyobo.resources.ncbitaxon import get_ncbitaxon_id
 from pyobo.utils.cache import cached_mapping
 from pyobo.utils.path import ensure_df, prefix_directory_join
-from pyobo.api.utils import get_version
 
 PREFIX = "biogrid"
 BASE_URL = "https://downloads.thebiogrid.org/Download/BioGRID/Release-Archive"

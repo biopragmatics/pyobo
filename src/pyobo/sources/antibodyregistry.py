@@ -10,8 +10,8 @@ from bioregistry.utils import removeprefix
 from tqdm.auto import tqdm
 
 from pyobo import Obo, Term
-from pyobo.utils.path import ensure_df
 from pyobo.api.utils import get_version
+from pyobo.utils.path import ensure_df
 
 __all__ = [
     "AntibodyRegistryGetter",
