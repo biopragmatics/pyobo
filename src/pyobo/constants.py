@@ -112,7 +112,7 @@ try:
             break
 except ValueError as e:
     logger.error(
-        "The value for the environment variable VERSION_PINS" " must be a valid JSON string"
+        "The value for the environment variable VERSION_PINS must be a valid JSON string: %s" % e
     )
     VERSION_PINS = {}
 
