@@ -25,7 +25,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-VersionHint = Union[None, str, Callable[[], str]]
+VersionHint = Union[None, str, Callable[[], Optional[str]]]
 
 requests_ftp.monkeypatch_session()
 
@@ -46,6 +46,7 @@ def prefix_directory_join(
         logger.info("[%s] got version %s", prefix, version)
     elif not isinstance(version, str):
         raise TypeError(f"Invalid type: {version} ({type(version)})")
+    assert version is not None
     version = cleanup_version(version, prefix=prefix)
     if version is not None and "/" in version:
         raise ValueError(f"[{prefix}] Can not have slash in version: {version}")

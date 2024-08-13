@@ -19,6 +19,7 @@ def get_pubchem_mesh_df(version: Optional[str] = None) -> pd.DataFrame:
     """Get PubChem Compound-MeSH xrefs."""
     if version is None:
         version = get_version("pubchem")
+        assert version is not None
     cid_mesh_url = _get_pubchem_extras_url(version, "CID-MeSH")
     return pd.DataFrame(
         [

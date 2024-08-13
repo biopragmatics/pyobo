@@ -333,6 +333,7 @@ def get_mesh_category_curies(
     """
     if version is None:
         version = get_version("mesh")
+        assert version is not None
     tree_to_mesh = get_tree_to_mesh_id(version=version)
     rv = []
     for i in range(1, 100):

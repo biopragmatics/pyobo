@@ -282,7 +282,7 @@ def ancestors(prefix: str, identifier: str, force: bool, version: Optional[str])
     """Look up ancestors."""
     curies = get_ancestors(prefix=prefix, identifier=identifier, force=force, version=version)
     for curie in sorted(curies or []):
-        click.echo(f"{curie}\t{get_name_by_curie(curie, version)}")
+        click.echo(f"{curie}\t{get_name_by_curie(curie, version=version)}")
 
 
 @lookup.command()
@@ -295,7 +295,7 @@ def descendants(prefix: str, identifier: str, force: bool, version: Optional[str
     """Look up descendants."""
     curies = get_descendants(prefix=prefix, identifier=identifier, force=force, version=version)
     for curie in sorted(curies or []):
-        click.echo(f"{curie}\t{get_name_by_curie(curie, version)}")
+        click.echo(f"{curie}\t{get_name_by_curie(curie, version=version)}")
 
 
 @lookup.command()
