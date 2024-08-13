@@ -5,12 +5,12 @@
 import logging
 from typing import Iterable, Mapping, Optional
 
-import bioversions
 import pandas as pd
 from bioregistry.utils import removeprefix
 from tqdm.auto import tqdm
 
 from ..api import get_name_id_mapping
+from ..api.utils import get_version
 from ..struct import Obo, Reference, Synonym, Term
 from ..utils.iter import iterate_gzips_together
 from ..utils.path import ensure_df, ensure_path
@@ -26,7 +26,7 @@ PREFIX = "pubchem.compound"
 
 def _get_pubchem_extras_url(version: Optional[str], end: str) -> str:
     if version is None:
-        version = bioversions.get_version("pubchem")
+        version = get_version("pubchem")
     return f"ftp://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Monthly/{version}/Extras/{end}"
 
 
@@ -100,7 +100,7 @@ def get_pubchem_id_to_mesh_id(version: str) -> Mapping[str, str]:
 
 def _ensure_cid_name_path(*, version: Optional[str] = None, force: bool = False) -> str:
     if version is None:
-        version = bioversions.get_version("pubchem")
+        version = get_version("pubchem")
     # 2 tab-separated columns: compound_id, name
     cid_name_url = _get_pubchem_extras_url(version, "CID-Title.gz")
     cid_name_path = ensure_path(PREFIX, url=cid_name_url, version=version, force=force)

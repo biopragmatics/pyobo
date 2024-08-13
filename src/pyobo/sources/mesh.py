@@ -11,6 +11,7 @@ from xml.etree.ElementTree import Element
 
 from tqdm.auto import tqdm
 
+from pyobo.api.utils import get_version
 from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import Obo, Reference, Synonym, Term
 from pyobo.utils.cache import cached_json, cached_mapping
@@ -331,9 +332,8 @@ def get_mesh_category_curies(
     .. seealso:: https://meshb.nlm.nih.gov/treeView
     """
     if version is None:
-        import bioversions
-
-        version = bioversions.get_version("mesh")
+        version = get_version("mesh")
+        assert version is not None
     tree_to_mesh = get_tree_to_mesh_id(version=version)
     rv = []
     for i in range(1, 100):

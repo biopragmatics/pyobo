@@ -10,10 +10,10 @@ from collections import Counter, defaultdict
 from operator import attrgetter
 from typing import DefaultDict, Dict, Iterable, Optional
 
-import bioversions
 from tabulate import tabulate
 from tqdm.auto import tqdm
 
+from pyobo.api.utils import get_version
 from pyobo.struct import (
     Obo,
     Reference,
@@ -241,7 +241,7 @@ def get_obo(*, force: bool = False) -> Obo:
 def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:  # noqa:C901
     """Get HGNC terms."""
     if version is None:
-        version = bioversions.get_version("hgnc")
+        version = get_version("hgnc")
     unhandled_entry_keys: typing.Counter[str] = Counter()
     unhandle_locus_types: DefaultDict[str, Dict[str, Term]] = defaultdict(dict)
     path = ensure_path(

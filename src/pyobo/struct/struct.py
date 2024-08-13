@@ -56,6 +56,7 @@ from .typedef import (
     term_replaced_by,
 )
 from .utils import comma_separate, obo_escape_slim
+from ..api.utils import get_version
 from ..constants import (
     DATE_FORMAT,
     NCBITAXON_PREFIX,
@@ -583,10 +584,8 @@ class Obo:
 
     def _get_version(self) -> Optional[str]:
         if self.bioversions_key:
-            import bioversions
-
             try:
-                return bioversions.get_version(self.bioversions_key)
+                return get_version(self.bioversions_key)
             except KeyError:
                 logger.warning(f"[{self.bioversions_key}] bioversions doesn't list this resource ")
             except IOError:

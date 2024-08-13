@@ -7,6 +7,7 @@ from typing import Optional
 
 import bioversions
 
+from ..constants import VERSION_PINS
 from ..utils.path import prefix_directory_join
 
 __all__ = [
@@ -25,6 +26,10 @@ def get_version(prefix: str) -> Optional[str]:
     :param prefix: the resource name
     :return: The version if available else None
     """
+    # Prioritize loaded environmental variable VERSION_PINS dictionary
+    version = VERSION_PINS.get(prefix)
+    if version:
+        return version
     try:
         version = bioversions.get_version(prefix)
     except KeyError:

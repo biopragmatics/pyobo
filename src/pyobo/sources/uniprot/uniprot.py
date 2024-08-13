@@ -6,10 +6,10 @@ from operator import attrgetter
 from pathlib import Path
 from typing import Iterable, List, Optional, cast
 
-import bioversions
 from tqdm.auto import tqdm
 
 from pyobo import Obo, Reference
+from pyobo.api.utils import get_version
 from pyobo.constants import RAW_MODULE
 from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import Term, derives_from, enables, from_species, participates_in
@@ -166,7 +166,7 @@ def _parse_go(go_terms) -> List[Reference]:
 def ensure(version: Optional[str] = None, force: bool = False) -> Path:
     """Ensure the reviewed uniprot names are available."""
     if version is None:
-        version = bioversions.get_version("uniprot")
+        version = get_version("uniprot")
     return RAW_MODULE.ensure(
         PREFIX,
         version,
