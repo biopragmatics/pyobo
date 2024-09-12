@@ -109,11 +109,14 @@ try:
         VERSION_PINS = {}
     else:
         VERSION_PINS = json.loads(VERSION_PINS_STR)
-        for k, v in VERSION_PINS.items():
-            if not isinstance(k, str) or not isinstance(v, str):
+        invalid_prefixes = []
+        for prefix, version in VERSION_PINS.items():
+            if not isinstance(prefix, str) or not isinstance(version, str):
                 logger.error(
-                    f"The prefix: {k} and version: {v} name must both be strings")
-                VERSION_PINS.pop(k)
+                    f"The prefix:{prefix} and version:{version} name must both be strings")
+                invalid_prefixes.append(prefix)
+        for prefix in invalid_prefixes:
+            VERSION_PINS.pop(prefix)
 except ValueError as e:
     logger.error(
         "The value for the environment variable VERSION_PINS must be a valid JSON string: %s" % e
