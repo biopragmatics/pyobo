@@ -111,9 +111,9 @@ try:
         VERSION_PINS = json.loads(VERSION_PINS_STR)
         for k, v in VERSION_PINS.items():
             if not isinstance(k, str) or not isinstance(v, str):
-                logger.error("The prefix and version name must both be " "strings")
-            VERSION_PINS = {}
-            break
+                logger.error(
+                    f"The prefix: {k} and version: {v} name must both be strings")
+                VERSION_PINS.pop(k)
 except ValueError as e:
     logger.error(
         "The value for the environment variable VERSION_PINS must be a valid JSON string: %s" % e
