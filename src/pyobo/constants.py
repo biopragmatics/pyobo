@@ -16,6 +16,7 @@ __all__ = [
     "VERSION_PINS",
 ]
 
+
 logger = logging.getLogger(__name__)
 
 PYOBO_MODULE = pystow.module("pyobo")
@@ -112,8 +113,7 @@ try:
         invalid_prefixes = []
         for prefix, version in VERSION_PINS.items():
             if not isinstance(prefix, str) or not isinstance(version, str):
-                logger.error(
-                    f"The prefix:{prefix} and version:{version} name must both be strings")
+                logger.error(f"The prefix:{prefix} and version:{version} name must both be strings")
                 invalid_prefixes.append(prefix)
         for prefix in invalid_prefixes:
             VERSION_PINS.pop(prefix)
