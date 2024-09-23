@@ -2,6 +2,8 @@
 
 """High-level API for nomenclature."""
 
+from __future__ import annotations
+
 import logging
 import subprocess
 from functools import lru_cache

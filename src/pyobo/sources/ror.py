@@ -1,5 +1,7 @@
 """Convert the Research Organization Registry (ROR) into an ontology."""
 
+from __future__ import annotations
+
 import json
 import zipfile
 from typing import Any, Iterable

@@ -1,5 +1,7 @@
 """Get terms from geonames."""
 
+from __future__ import annotations
+
 import logging
 from typing import Collection, Iterable, Mapping
 
