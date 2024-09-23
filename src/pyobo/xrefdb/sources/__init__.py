@@ -7,7 +7,7 @@ from functools import lru_cache
 from typing import Callable, Iterable, Mapping, Optional
 
 import pandas as pd
-from pkg_resources import iter_entry_points
+from class_resolver import FunctionResolver
 from tqdm.auto import tqdm
 
 __all__ = [
@@ -19,10 +19,13 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
+XrefGetter = Callable[[], pd.DataFrame]
+
 
 @lru_cache()
-def _get_xref_plugins() -> Mapping[str, Callable[[], pd.DataFrame]]:
-    return {entry.name: entry.load() for entry in iter_entry_points(group="pyobo.xrefs")}
+def _get_xref_plugins() -> Mapping[str, XrefGetter]:
+    resolver: FunctionResolver[XrefGetter] = FunctionResolver.from_entrypoint("pyobo.xrefs")
+    return resolver.lookup_dict
 
 
 def has_xref_plugin(prefix: str) -> bool:

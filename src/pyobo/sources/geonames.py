@@ -146,15 +146,7 @@ def get_code_to_admin2(
     return code_to_admin2
 
 
-def get_cities(
-    code_to_country,
-    code_to_admin1,
-    code_to_admin2,
-    *,
-    minimum_population: int = 100_000,
-    force: bool = False,
-) -> Mapping[str, Term]:
-    """Get a mapping from city code to term."""
+def _get_cities_df(force: bool = False) -> pd.DataFrame:
     columns = [
         "geonames_id",
         "name",
@@ -184,7 +176,19 @@ def get_cities(
         names=columns,
         dtype=str,
     )
+    return cities_df
 
+
+def get_cities(
+    code_to_country,
+    code_to_admin1,
+    code_to_admin2,
+    *,
+    minimum_population: int = 100_000,
+    force: bool = False,
+) -> Mapping[str, Term]:
+    """Get a mapping from city code to term."""
+    cities_df = _get_cities_df(force=force)
     cities_df = cities_df[cities_df.population.astype(int) > minimum_population]
     cities_df.synonyms = cities_df.synonyms.str.split(",")
 
@@ -233,6 +237,18 @@ def get_cities(
             term.append_relationship(part_of, admin1_term)
 
     return terms
+
+
+def get_city_to_country() -> dict[str, str]:
+    """Get a mapping from city GeoNames to country GeoNames id."""
+    rv = {}
+    code_to_country = get_code_to_country()
+    cities_df = _get_cities_df()
+    for city_geonames_id, country_code in cities_df[["geonames_id", "country_code"]].values:
+        if pd.isna(city_geonames_id) or pd.isna(country_code):
+            continue
+        rv[city_geonames_id] = code_to_country[country_code].identifier
+    return rv
 
 
 if __name__ == "__main__":

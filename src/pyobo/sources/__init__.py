@@ -12,6 +12,7 @@ from .civic_gene import CIVICGeneGetter
 from .complexportal import ComplexPortalGetter
 from .conso import CONSOGetter
 from .cpt import CPTGetter
+from .credit import CreditGetter
 from .cvx import CVXGetter
 from .depmap import DepMapGetter
 from .dictybase_gene import DictybaseGetter
@@ -69,6 +70,7 @@ __all__ = [
     "CVXGetter",
     "ChEMBLCompoundGetter",
     "ComplexPortalGetter",
+    "CreditGetter",
     "DepMapGetter",
     "DictybaseGetter",
     "DrugBankGetter",
