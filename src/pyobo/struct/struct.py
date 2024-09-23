@@ -78,6 +78,8 @@ __all__ = [
     "Term",
     "Obo",
     "make_ad_hoc_ontology",
+    "abbreviation",
+    "acronym",
 ]
 
 logger = logging.getLogger(__name__)

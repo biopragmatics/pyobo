@@ -15,6 +15,7 @@ from gilda.term import filter_out_duplicates
 from tqdm.auto import tqdm
 
 from pyobo import (
+    get_descendants,
     get_id_name_mapping,
     get_id_species_mapping,
     get_id_synonyms_mapping,
@@ -247,3 +248,23 @@ def get_gilda_terms(
             )
             if term is not None:
                 yield term
+
+
+def get_gilda_term_subset(
+    source: str, ancestors: Union[str, List[str]], **kwargs
+) -> Iterable[gilda.term.Term]:
+    """Get a subset of terms."""
+    subset = {
+        descendant
+        for parent_curie in _ensure_list(ancestors)
+        for descendant in get_descendants(*parent_curie.split(":")) or []
+    }
+    for term in get_gilda_terms(source, **kwargs):
+        if bioregistry.curie_to_str(term.db, term.id) in subset:
+            yield term
+
+
+def _ensure_list(s: Union[str, List[str]]) -> List[str]:
+    if isinstance(s, str):
+        return [s]
+    return s

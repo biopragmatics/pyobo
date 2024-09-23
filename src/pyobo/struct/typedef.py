@@ -42,9 +42,13 @@ __all__ = [
     "has_participant",
     "exact_match",
     "has_dbxref",
+    "located_in",
+    "has_successor",
+    "has_predecessor",
     # Properties
     "has_inchi",
     "has_smiles",
+    "has_homepage",
 ]
 
 
@@ -323,6 +327,9 @@ enabled_by = TypeDef(reference=_enabled_by_reference, inverse=_enables_reference
 has_input = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002233", name="has input")
 has_output = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002234", name="has output")
 
+has_successor = TypeDef.from_triple(prefix="BFO", identifier="0000063", name="has successor")
+has_predecessor = TypeDef.from_triple(prefix="BFO", identifier="0000062", name="has predecessor")
+
 """ChEBI"""
 
 is_conjugate_base_of = TypeDef(
@@ -355,6 +362,9 @@ has_inchi = TypeDef(
     reference=Reference(prefix="debio", identifier="0000020", name="has InChI"),
 )
 
+has_homepage = TypeDef(
+    reference=Reference(prefix="foaf", identifier="homepage", name="homepage"), is_metadata_tag=True
+)
 
 default_typedefs: Dict[Tuple[str, str], TypeDef] = {
     v.pair: v for k, v in locals().items() if isinstance(v, TypeDef)

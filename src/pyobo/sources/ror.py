@@ -1,34 +1,40 @@
 """Convert the Research Organization Registry (ROR) into an ontology."""
 
+from __future__ import annotations
+
 import json
 import zipfile
-from typing import Iterable
+from typing import Any, Iterable
 
 import bioregistry
 import zenodo_client
 from tqdm.auto import tqdm
 
-from pyobo.struct import Obo, Reference, Term, TypeDef
+from pyobo.struct import Obo, Reference, Term
 from pyobo.struct.struct import acronym
+from pyobo.struct.typedef import (
+    has_homepage,
+    has_part,
+    has_predecessor,
+    has_successor,
+    located_in,
+    part_of,
+    see_also,
+)
 
 PREFIX = "ror"
 ROR_ZENODO_RECORD_ID = "10086202"
 
 # Constants
 ORG_CLASS = Reference(prefix="OBI", identifier="0000245")
-LOCATED_IN = Reference(prefix="RO", identifier="0001025")
-PART_OF = Reference(prefix="BFO", identifier="0000050")
-HAS_PART = Reference(prefix="BFO", identifier="0000051")
-SUCCESSOR = Reference(prefix="BFO", identifier="0000063")
-PREDECESSOR = Reference(prefix="BFO", identifier="0000062")
 
 RMAP = {
-    "Related": TypeDef.from_triple("rdfs", "seeAlso"),
-    "Child": TypeDef(HAS_PART),
-    "Parent": TypeDef(PART_OF),
-    "Predecessor": TypeDef(PREDECESSOR),
-    "Successor": TypeDef(SUCCESSOR),
-    "Located in": TypeDef(LOCATED_IN),
+    "Related": see_also,
+    "Child": has_part,
+    "Parent": part_of,
+    "Predecessor": has_predecessor,
+    "Successor": has_successor,
+    "Located in": located_in,
 }
 NAME_REMAPPING = {
     "'s-Hertogenbosch": "Den Bosch",  # SMH Netherlands, why u gotta be like this
@@ -43,16 +49,16 @@ class RORGetter(Obo):
     """An ontology representation of the ROR."""
 
     ontology = bioregistry_key = PREFIX
-    typedefs = list(RMAP.values())
+    typedefs = [has_homepage, *RMAP.values()]
     synonym_typedefs = [acronym]
     idspaces = {
         "ror": "https://ror.org/",
         "geonames": "https://www.geonames.org/",
-        "envo": "http://purl.obolibrary.org/obo/ENVO_",
-        "bfo": "http://purl.obolibrary.org/obo/BFO_",
-        "ro": "http://purl.obolibrary.org/obo/RO_",
-        "obi": "http://purl.obolibrary.org/obo/OBI_",
-        "omo": "http://purl.obolibrary.org/obo/OMO_",
+        "ENVO": "http://purl.obolibrary.org/obo/ENVO_",
+        "BFO": "http://purl.obolibrary.org/obo/BFO_",
+        "RO": "http://purl.obolibrary.org/obo/RO_",
+        "OBI": "http://purl.obolibrary.org/obo/OBI_",
+        "OMO": "http://purl.obolibrary.org/obo/OMO_",
         "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
     }
 
@@ -65,6 +71,18 @@ class RORGetter(Obo):
         return iterate_ror_terms(force=force)
 
 
+ROR_ORGANIZATION_TYPE_TO_OBI = {
+    "Education": ...,
+    "Facility": ...,
+    "Company": ...,
+    "Government": ...,
+    "Healthcare": ...,
+    "Other": ...,
+    "Archive": ...,
+}
+_MISSED_ORG_TYPES: set[str] = set()
+
+
 def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
     """Iterate over terms in ROR."""
     version, source_uri, records = get_latest(force=force)
@@ -74,10 +92,23 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
         name = record["name"]
         name = NAME_REMAPPING.get(name, name)
 
+        organization_types = record.get("types", [])
+        description = f"{organization_types[0]} in {record['country']['country_name']}"
+        if established := record["established"]:
+            description += f" established in {established}"
+
         term = Term(
-            reference=Reference(prefix=PREFIX, identifier=identifier, name=name), type="Instance"
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
+            type="Instance",
+            definition=description,
         )
         term.append_parent(ORG_CLASS)
+        # TODO replace term.append_parent(ORG_CLASS) with:
+        # for organization_type in organization_types:
+        #     term.append_parent(ORG_PARENTS[organization_type])
+
+        for link in record.get("links", []):
+            term.append_property(has_homepage, link)
 
         if name.startswith("The "):
             term.append_synonym(name.removeprefix("The "))
@@ -159,5 +190,20 @@ def get_latest(*, force: bool = False):
     raise FileNotFoundError
 
 
+def get_ror_to_country_geonames(**kwargs: Any) -> dict[str, str]:
+    """Get a mapping of ROR ids to GeoNames IDs for countries."""
+    from pyobo.sources.geonames import get_city_to_country
+
+    city_to_country = get_city_to_country()
+    rv = {}
+    for term in iterate_ror_terms(**kwargs):
+        city_geonames_reference = term.get_relationship(located_in)
+        if city_geonames_reference is None:
+            continue
+        if city_geonames_reference.identifier in city_to_country:
+            rv[term.identifier] = city_to_country[city_geonames_reference.identifier]
+    return rv
+
+
 if __name__ == "__main__":
-    RORGetter().write_default(write_obo=True, force=True)
+    RORGetter(force=True).write_default(write_obo=True, force=True)

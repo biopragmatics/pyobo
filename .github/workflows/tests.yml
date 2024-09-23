@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.8", "3.11" ]
+        python-version: [ "3.9", "3.12" ]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.8", "3.11" ]
+        python-version: [ "3.9", "3.12" ]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -59,11 +59,9 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
-        python-version: [ "3.8", "3.11" ]
+        python-version: [ "3.9", "3.12" ]
         pydantic: [ "pydantic1", "pydantic2" ]
         exclude:
-          - os: windows-latest
-            python-version: 3.8
           - os: windows-latest
             python-version: 3.9
     steps:

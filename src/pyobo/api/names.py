@@ -2,10 +2,14 @@
 
 """High-level API for nomenclature."""
 
+from __future__ import annotations
+
 import logging
 import subprocess
 from functools import lru_cache
 from typing import Callable, List, Mapping, Optional, Set, TypeVar
+
+from curies import Reference, ReferenceTuple
 
 from .alts import get_primary_identifier
 from .utils import get_version
@@ -79,9 +83,17 @@ def _help_get(
 
 
 @wrap_norm_prefix
-def get_name(prefix: str, identifier: str, *, version: Optional[str] = None) -> Optional[str]:
+def get_name(
+    prefix: str | Reference | ReferenceTuple,
+    identifier: Optional[str] = None,
+    /,
+    *,
+    version: Optional[str] = None,
+) -> Optional[str]:
     """Get the name for an entity."""
-    return _help_get(get_id_name_mapping, prefix, identifier, version=version)
+    if isinstance(prefix, (ReferenceTuple, Reference)):
+        prefix, identifier = prefix.prefix, prefix.identifier
+    return _help_get(get_id_name_mapping, prefix, identifier, version=version)  # type:ignore
 
 
 @lru_cache()
@@ -164,8 +176,12 @@ def get_name_id_mapping(
 
 
 @wrap_norm_prefix
-def get_definition(prefix: str, identifier: str, *, version: Optional[str] = None) -> Optional[str]:
+def get_definition(
+    prefix: str, identifier: str | None = None, *, version: Optional[str] = None
+) -> Optional[str]:
     """Get the definition for an entity."""
+    if identifier is None:
+        prefix, _, identifier = prefix.rpartition(":")
     return _help_get(get_id_definition_mapping, prefix, identifier, version=version)
 
 

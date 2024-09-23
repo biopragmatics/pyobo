@@ -4,6 +4,8 @@
 
 import unittest
 
+from curies import Reference, ReferenceTuple
+
 from pyobo import get_name, get_name_by_curie, get_primary_curie, get_primary_identifier
 from pyobo.mocks import get_mock_id_alts_mapping, get_mock_id_name_mapping
 
@@ -60,6 +62,14 @@ class TestAltIds(unittest.TestCase):
         self.assertIsNotNone(primary_id)
         self.assertEqual("0003700", primary_id)
         name = get_name("go", "0003700")
+        self.assertIsNotNone(name)
+        self.assertEqual("DNA-binding transcription factor activity", name)
+
+        name = get_name(ReferenceTuple("go", "0003700"))
+        self.assertIsNotNone(name)
+        self.assertEqual("DNA-binding transcription factor activity", name)
+
+        name = get_name(Reference(prefix="go", identifier="0003700"))
         self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
