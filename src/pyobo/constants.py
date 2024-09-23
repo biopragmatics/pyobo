@@ -10,7 +10,12 @@ import re
 import click
 import pystow
 
-__all__ = ["RAW_DIRECTORY", "DATABASE_DIRECTORY", "SPECIES_REMAPPING", "VERSION_PINS"]
+__all__ = [
+    "RAW_DIRECTORY",
+    "DATABASE_DIRECTORY",
+    "SPECIES_REMAPPING",
+    "VERSION_PINS",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -116,11 +121,12 @@ except ValueError as e:
     )
     VERSION_PINS = {}
 
-click.echo(
-    f"These are the resource versions that are pinned.\n{VERSION_PINS}. "
-    f"\nPyobo will download the latest version of a resource if it's "
-    f"not pinned.\nIf you want to use a specific version of a "
-    f"resource, edit your VERSION_PINS environmental "
-    f"variable which is a JSON string to include a prefix and version "
-    f"name."
-)
+if VERSION_PINS:
+    logger.debug(
+        f"These are the resource versions that are pinned.\n{VERSION_PINS}. "
+        f"\nPyobo will download the latest version of a resource if it's "
+        f"not pinned.\nIf you want to use a specific version of a "
+        f"resource, edit your VERSION_PINS environmental "
+        f"variable which is a JSON string to include a prefix and version "
+        f"name."
+    )
