@@ -137,7 +137,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 def _get_definition(attrib) -> Optional[str]:
     rv = attrib["DESCRIPTION_FULL"].strip() or attrib["DESCRIPTION_BRIEF"].strip() or None
     if rv is not None:
-        return rv.replace("\d", "").replace("\s", "")  # noqa: W605
+        return rv.replace(r"\d", "").replace(r"\s", "")  # noqa: W605
     return None
 
 

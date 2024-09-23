@@ -417,7 +417,7 @@ def _clean_definition(s: str) -> str:
     # if '\t' in s:
     #     logger.warning('has tab')
     return (
-        s.replace('\\"', '"').replace("\n", " ").replace("\t", " ").replace("\d", "")  # noqa:W605
+        s.replace('\\"', '"').replace("\n", " ").replace("\t", " ").replace(r"\d", "")  # noqa:W605
     )
 
 

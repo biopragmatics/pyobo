@@ -93,7 +93,7 @@ def get_name(
     """Get the name for an entity."""
     if isinstance(prefix, (ReferenceTuple, Reference)):
         prefix, identifier = prefix.prefix, prefix.identifier
-    return _help_get(get_id_name_mapping, prefix, identifier, version=version)
+    return _help_get(get_id_name_mapping, prefix, identifier, version=version)  # type:ignore
 
 
 @lru_cache()

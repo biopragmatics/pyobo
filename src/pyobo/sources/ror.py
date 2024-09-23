@@ -80,7 +80,7 @@ ROR_ORGANIZATION_TYPE_TO_OBI = {
     "Other": ...,
     "Archive": ...,
 }
-_MISSED_ORG_TYPES = set()
+_MISSED_ORG_TYPES: set[str] = set()
 
 
 def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
