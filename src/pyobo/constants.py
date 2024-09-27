@@ -14,8 +14,8 @@ __all__ = [
     "DATABASE_DIRECTORY",
     "SPECIES_REMAPPING",
     "VERSION_PINS",
+    "get_version_pins",
 ]
-
 
 logger = logging.getLogger(__name__)
 
@@ -103,32 +103,42 @@ PROVENANCE_PREFIXES = {
     "issn",
 }
 
-# Load version pin dictionary from the environmental variable VERSION_PINS
-try:
-    VERSION_PINS_STR = os.getenv("VERSION_PINS")
-    if not VERSION_PINS_STR:
-        VERSION_PINS = {}
-    else:
-        VERSION_PINS = json.loads(VERSION_PINS_STR)
-        invalid_prefixes = []
-        for prefix, version in VERSION_PINS.items():
-            if not isinstance(prefix, str) or not isinstance(version, str):
-                logger.error(f"The prefix:{prefix} and version:{version} name must both be strings")
-                invalid_prefixes.append(prefix)
-        for prefix in invalid_prefixes:
-            VERSION_PINS.pop(prefix)
-except ValueError as e:
-    logger.error(
-        "The value for the environment variable VERSION_PINS must be a valid JSON string: %s" % e
-    )
-    VERSION_PINS = {}
 
-if VERSION_PINS:
-    logger.debug(
-        f"These are the resource versions that are pinned.\n{VERSION_PINS}. "
-        f"\nPyobo will download the latest version of a resource if it's "
-        f"not pinned.\nIf you want to use a specific version of a "
-        f"resource, edit your VERSION_PINS environmental "
-        f"variable which is a JSON string to include a prefix and version "
-        f"name."
-    )
+def get_version_pins():
+    """Retrieve the resource version pins."""
+    try:
+        version_pins_str = os.getenv("VERSION_PINS")
+        if not version_pins_str:
+            version_pins = {}
+        else:
+            version_pins = json.loads(version_pins_str)
+            invalid_prefixes = []
+            for prefix, version in version_pins.items():
+                if not isinstance(prefix, str) or not isinstance(version, str):
+                    logger.error(
+                        f"The prefix:{prefix} and version:{version} name must both be strings"
+                    )
+                    invalid_prefixes.append(prefix)
+            for prefix in invalid_prefixes:
+                version_pins.pop(prefix)
+    except ValueError as e:
+        logger.error(
+            "The value for the environment variable VERSION_PINS must be a valid JSON string: %s"
+            % e
+        )
+        version_pins = {}
+
+    if version_pins:
+        logger.debug(
+            f"These are the resource versions that are pinned.\n"
+            f"{version_pins}. "
+            f"\nPyobo will download the latest version of a resource if it's "
+            f"not pinned.\nIf you want to use a specific version of a "
+            f"resource, edit your VERSION_PINS environmental "
+            f"variable which is a JSON string to include a prefix and version "
+            f"name."
+        )
+    return version_pins
+
+
+VERSION_PINS = get_version_pins()
