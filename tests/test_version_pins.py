@@ -5,10 +5,9 @@ import os
 import unittest
 from unittest import mock
 
-from pyobo.api.utils import get_version
-from pyobo.constants import get_version_pins
+from pyobo.api.utils import get_version, get_version_pins
 
-MOCK_VERSION_PINS = '{"ncbitaxon": "2024-05-08", "vo":"2024-04-09", ' '"chebi":"235", "bfo":5}'
+MOCK_VERSION_PINS = '{"ncbitaxon": "2024-07-03", "vo":"2024-04-09", ' '"chebi":"235", "bfo":5}'
 
 
 @mock.patch.dict(os.environ, {"VERSION_PINS": MOCK_VERSION_PINS})
