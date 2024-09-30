@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Tests for PyOBO VERSION_PINS."""
+"""Tests for PyOBO version pins."""
 import os
 import unittest
 from unittest import mock

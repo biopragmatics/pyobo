@@ -31,7 +31,7 @@ def get_version(prefix: str) -> Optional[str]:
     :param prefix: the resource name
     :return: The version if available else None
     """
-    # Prioritize loaded environmental variable VERSION_PINS dictionary
+    # Prioritize loaded environment variable PYOBO_VERSION_PINS dictionary
     version = get_version_pins().get(prefix)
     if version:
         return version
@@ -75,7 +75,8 @@ def get_version_pins() -> dict[str, str]:
             version_pins = json.loads(version_pins_str)
         except ValueError as e:
             logger.error(
-                "The value for the environment variable VERSION_PINS must be a valid JSON string: %s"
+                "The value for the environment variable PYOBO_VERSION_PINS "
+                "must be a valid JSON string: %s"
                 % e
             )
             version_pins = {}
