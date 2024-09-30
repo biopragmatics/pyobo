@@ -12,7 +12,7 @@ MOCK_PYOBO_VERSION_PINS = '{"ncbitaxon": "2024-07-03", "vo":"2024-04-09", "chebi
 
 @mock.patch.dict(os.environ, {"PYOBO_VERSION_PINS": MOCK_PYOBO_VERSION_PINS})
 class TestVersionPins(unittest.TestCase):
-    """Test using VERSION_PINS."""
+    """Test using user-defined version pins."""
 
     def test_correct_version_pin_types(self):
         """Test resource and version type."""
