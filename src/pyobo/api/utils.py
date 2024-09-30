@@ -76,8 +76,7 @@ def get_version_pins() -> dict[str, str]:
         except ValueError as e:
             logger.error(
                 "The value for the environment variable PYOBO_VERSION_PINS "
-                "must be a valid JSON string: %s"
-                % e
+                "must be a valid JSON string: %s" % e
             )
             version_pins = {}
         invalid_prefixes = []
