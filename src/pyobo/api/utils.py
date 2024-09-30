@@ -93,7 +93,7 @@ def get_version_pins() -> dict[str, str]:
             f"{version_pins}. "
             f"\nPyobo will download the latest version of a resource if it's "
             f"not pinned.\nIf you want to use a specific version of a "
-            f"resource, edit your VERSION_PINS environmental "
+            f"resource, edit your PYOBO_VERSION_PINS environmental "
             f"variable which is a JSON string to include a prefix and version "
             f"name."
         )
