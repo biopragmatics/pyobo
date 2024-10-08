@@ -8,6 +8,7 @@ from unittest import mock
 from pyobo.api.utils import get_version, get_version_pins
 
 MOCK_PYOBO_VERSION_PINS = '{"ncbitaxon": "2024-07-03", "vo":"2024-04-09", "chebi":"235", "bfo":5}'
+FAULTY_MOCK_PYOBO_VERSION_PINS = "{'ncbitaxon': '2024-07-03'}"
 
 
 @mock.patch.dict(os.environ, {"PYOBO_VERSION_PINS": MOCK_PYOBO_VERSION_PINS})
@@ -30,3 +31,15 @@ class TestVersionPins(unittest.TestCase):
         version_pins = get_version_pins()
         for resource_prefix, version in version_pins.items():
             self.assertEqual(get_version(resource_prefix), version)
+
+    @mock.patch.dict(os.environ, {"PYOBO_VERSION_PINS": ""})
+    def test_empty_version_pins(self):
+        """Test empty version pins are processed correctly."""
+        version_pins = get_version_pins()
+        self.assertFalse(version_pins)
+
+    @mock.patch.dict(os.environ, {"PYOBO_VERSION_PINS": FAULTY_MOCK_PYOBO_VERSION_PINS})
+    def test_incorrectly_set_version_pins(self):
+        """Test erroneously set version pins are processed correctly."""
+        version_pins = get_version_pins()
+        self.assertFalse(version_pins)
