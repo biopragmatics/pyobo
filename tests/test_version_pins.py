@@ -14,6 +14,10 @@ MOCK_PYOBO_VERSION_PINS = '{"ncbitaxon": "2024-07-03", "vo":"2024-04-09", "chebi
 class TestVersionPins(unittest.TestCase):
     """Test using user-defined version pins."""
 
+    def setUp(self):
+        """Clear the cache before each test case."""
+        get_version_pins.cache_clear()
+
     def test_correct_version_pin_types(self):
         """Test resource and version type."""
         version_pins = get_version_pins()
