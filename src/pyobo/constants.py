@@ -2,9 +2,7 @@
 
 """Constants for PyOBO."""
 
-import json
 import logging
-import os
 import re
 
 import pystow
@@ -13,7 +11,6 @@ __all__ = [
     "RAW_DIRECTORY",
     "DATABASE_DIRECTORY",
     "SPECIES_REMAPPING",
-    "VERSION_PINS",
 ]
 
 logger = logging.getLogger(__name__)
@@ -101,31 +98,3 @@ PROVENANCE_PREFIXES = {
     "isbn",
     "issn",
 }
-
-# Load version pin dictionary from the environmental variable VERSION_PINS
-try:
-    VERSION_PINS_STR = os.getenv("VERSION_PINS")
-    if not VERSION_PINS_STR:
-        VERSION_PINS = {}
-    else:
-        VERSION_PINS = json.loads(VERSION_PINS_STR)
-        for k, v in VERSION_PINS.items():
-            if not isinstance(k, str) or not isinstance(v, str):
-                logger.error("The prefix and version name must both be " "strings")
-            VERSION_PINS = {}
-            break
-except ValueError as e:
-    logger.error(
-        "The value for the environment variable VERSION_PINS must be a valid JSON string: %s" % e
-    )
-    VERSION_PINS = {}
-
-if VERSION_PINS:
-    logger.debug(
-        f"These are the resource versions that are pinned.\n{VERSION_PINS}. "
-        f"\nPyobo will download the latest version of a resource if it's "
-        f"not pinned.\nIf you want to use a specific version of a "
-        f"resource, edit your VERSION_PINS environmental "
-        f"variable which is a JSON string to include a prefix and version "
-        f"name."
-    )
