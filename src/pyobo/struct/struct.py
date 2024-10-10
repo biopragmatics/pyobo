@@ -1466,7 +1466,7 @@ def _convert_typedefs(typedefs: Optional[Iterable[TypeDef]]) -> List[Mapping[str
 def _convert_typedef(typedef: TypeDef) -> Mapping[str, Any]:
     """Convert a type def."""
     # TODO add more later
-    return typedef.reference.dict()
+    return typedef.reference.model_dump()
 
 
 def _convert_synonym_typedefs(synonym_typedefs: Optional[Iterable[SynonymTypeDef]]) -> List[str]:
