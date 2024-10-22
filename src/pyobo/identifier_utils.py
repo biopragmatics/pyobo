@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 class MissingPrefixError(ValueError):
     """Raised on a missing prefix."""
 
+    reference: Reference | None
+
     def __init__(
         self, prefix: str, curie: str, xref: str | None = None, ontology: str | None = None
     ):
