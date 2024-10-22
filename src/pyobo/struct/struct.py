@@ -661,13 +661,14 @@ class Obo:
     def iterate_obo_lines(self) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield f"format-version: {self.format_version}"
-        yield f"date: {self.date_formatted}"
 
         if self.auto_generated_by is not None:
             yield f"auto-generated-by: {self.auto_generated_by}"
 
         if self.data_version is not None:
             yield f"data-version: {self.data_version}"
+        else:
+            yield f"date: {self.date_formatted}"
 
         for prefix, url in sorted((self.idspaces or {}).items()):
             yield f"idspace: {prefix} {url}"

@@ -57,6 +57,7 @@ class UniProtGetter(Obo):
         gene_product_of,
         molecularly_interacts_with,
         derives_from,
+        located_in,
     ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
