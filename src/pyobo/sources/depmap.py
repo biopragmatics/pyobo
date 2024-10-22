@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """DepMap cell lines."""
 
-from typing import Iterable, Optional
+from collections.abc import Iterable
+from typing import Optional
 
 import pandas as pd
 import pystow
@@ -113,7 +112,7 @@ def ensure(version: str, force: bool = False) -> pd.DataFrame:
         url=get_url(version=version),
         name="sample_info.tsv",
         force=force,
-        read_csv_kwargs=dict(sep=",", dtype=str),
+        read_csv_kwargs={"sep": ",", "dtype": str},
     )
 
 

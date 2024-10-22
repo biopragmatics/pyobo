@@ -1,14 +1,11 @@
 graft src
 graft tests
-prune benchmarking
+prune scripts
+prune notebooks
 prune tests/.pytest_cache
-prune docs/source/api
+prune docs
 
-recursive-include docs/source *.py
-recursive-include docs/source *.rst
-recursive-include docs/source *.png
+global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle .idea/**
 
-global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle
-
-exclude .bumpversion.cfg Dockerfile docker-compose.yml
-include *.rst *.yml LICENSE tox.ini
+include README.md LICENSE
+exclude tox.ini .readthedocs.yml

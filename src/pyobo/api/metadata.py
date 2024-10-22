@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """High-level API for metadata."""
 
 import logging
+from collections.abc import Mapping
 from functools import lru_cache
-from typing import Mapping, Optional
+from typing import Optional
 
 from .utils import get_version
 from ..getters import get_ontology
@@ -19,7 +18,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-@lru_cache()
+@lru_cache
 @wrap_norm_prefix
 def get_metadata(
     prefix: str, *, force: bool = False, version: Optional[str] = None

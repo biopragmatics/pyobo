@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Converter for PathBank."""
 
 import logging
 from collections import defaultdict
-from typing import Iterable, Mapping, Set
+from collections.abc import Iterable, Mapping
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -98,7 +96,7 @@ def get_proteins_df(version: str, force: bool = False) -> pd.DataFrame:
     return proteins_df
 
 
-def get_protein_mapping(version: str, force: bool = False) -> Mapping[str, Set[Reference]]:
+def get_protein_mapping(version: str, force: bool = False) -> Mapping[str, set[Reference]]:
     """Make the protein mapping."""
     proteins_df = get_proteins_df(version=version, force=force)
     smpdb_id_to_proteins = defaultdict(set)
@@ -122,7 +120,7 @@ def get_metabolite_df(version: str, force: bool = False) -> pd.DataFrame:
     )
 
 
-def get_metabolite_mapping(version: str, force: bool = False) -> Mapping[str, Set[Reference]]:
+def get_metabolite_mapping(version: str, force: bool = False) -> Mapping[str, set[Reference]]:
     """Make the metabolite mapping."""
     metabolites_df = get_metabolite_df(version=version, force=force)
     smpdb_id_to_metabolites = defaultdict(set)

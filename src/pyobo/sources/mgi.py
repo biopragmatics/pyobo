@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Converter for MGI."""
 
 import logging
 from collections import defaultdict
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 from tqdm.auto import tqdm

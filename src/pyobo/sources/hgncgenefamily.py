@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Converter for HGNC Gene Families."""
 
 from collections import defaultdict
-from typing import Iterable, List, Mapping
+from collections.abc import Iterable, Mapping
 
 import pandas as pd
 
@@ -50,7 +48,7 @@ def get_obo(force: bool = False) -> Obo:
     return HGNCGroupGetter(force=force)
 
 
-def get_hierarchy(force: bool = False) -> Mapping[str, List[str]]:
+def get_hierarchy(force: bool = False) -> Mapping[str, list[str]]:
     """Get the HGNC Gene Families hierarchy as a dictionary."""
     path = ensure_path(PREFIX, url=HIERARCHY_URL, force=force)
     df = pd.read_csv(path, dtype={"parent_fam_id": str, "child_fam_id": str})

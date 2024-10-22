@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Convert ICD11 to OBO.
 
 Run with python -m pyobo.sources.icd11 -v
@@ -8,7 +6,8 @@ Run with python -m pyobo.sources.icd11 -v
 import json
 import logging
 import os
-from typing import Any, Iterable, Mapping, Set
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 import click
 from more_click import verbose_option
@@ -67,7 +66,7 @@ def iterate_icd11() -> Iterable[Term]:
 
     tqdm.write(f'There are {len(res_json["child"])} top level entities')
 
-    visited_identifiers: Set[str] = set()
+    visited_identifiers: set[str] = set()
     for identifier in get_child_identifiers(ICD11_TOP_LEVEL_URL, res_json):
         yield from visiter(
             identifier,

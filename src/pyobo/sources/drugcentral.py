@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Get DrugCentral as OBO."""
 
 import logging
 from collections import defaultdict
+from collections.abc import Iterable
 from contextlib import closing
-from typing import DefaultDict, Iterable, List
 
 import bioregistry
 import psycopg2
@@ -25,9 +23,9 @@ PREFIX = "drugcentral"
 HOST = "unmtid-dbs.net"
 PORT = 5433
 USER = "drugman"
-PASSWORD = "dosage"
+PASSWORD = "dosage"  # noqa:S105
 DBNAME = "drugcentral"
-PARAMS = dict(dbname=DBNAME, user=USER, password=PASSWORD, host=HOST, port=PORT)
+PARAMS = {"dbname": DBNAME, "user": USER, "password": PASSWORD, "host": HOST, "port": PORT}
 
 
 class DrugCentralGetter(Obo):
@@ -58,7 +56,7 @@ def iter_terms() -> Iterable[Term]:
         with closing(conn.cursor()) as cur:
             cur.execute("SELECT struct_id, id_type, identifier FROM public.identifier")
             rows = cur.fetchall()
-            xrefs: DefaultDict[str, List[Reference]] = defaultdict(list)
+            xrefs: defaultdict[str, list[Reference]] = defaultdict(list)
             for drugcentral_id, prefix, identifier in tqdm(
                 rows, unit_scale=True, desc="loading xrefs"
             ):
@@ -76,7 +74,7 @@ def iter_terms() -> Iterable[Term]:
                 )
         with closing(conn.cursor()) as cur:
             cur.execute("SELECT id, name FROM public.synonyms")
-            synonyms: DefaultDict[str, List[Synonym]] = defaultdict(list)
+            synonyms: defaultdict[str, list[Synonym]] = defaultdict(list)
             for drugcentral_id, synonym in cur.fetchall():
                 synonyms[str(drugcentral_id)].append(Synonym(name=synonym))
 

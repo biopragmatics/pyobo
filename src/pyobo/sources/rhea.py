@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Converter for Rhea."""
 
 import logging
-from typing import TYPE_CHECKING, Dict, Iterable, Optional
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Optional
 
 import pystow
 
@@ -71,7 +70,7 @@ def ensure_rhea_rdf(version: Optional[str] = None, force: bool = False) -> "rdfl
         version,
         url=RHEA_RDF_GZ_URL,
         force=force,
-        parse_kwargs=dict(format="xml"),
+        parse_kwargs={"format": "xml"},
     )
 
 
@@ -103,10 +102,10 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     )
     names = {str(identifier): str(name) for _, identifier, name in result}
 
-    terms: Dict[str, Term] = {}
-    master_to_left: Dict[str, str] = {}
-    master_to_right: Dict[str, str] = {}
-    master_to_bi: Dict[str, str] = {}
+    terms: dict[str, Term] = {}
+    master_to_left: dict[str, str] = {}
+    master_to_right: dict[str, str] = {}
+    master_to_bi: dict[str, str] = {}
 
     directions = ensure_df(
         PREFIX,

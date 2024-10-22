@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Constants for miRBase."""
 
 import pandas as pd

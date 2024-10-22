@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Converter for UMLS.
 
 Run with ``python -m pyobo.sources.umls``
@@ -8,7 +6,7 @@ Run with ``python -m pyobo.sources.umls``
 import itertools as itt
 import operator
 from collections import defaultdict
-from typing import Iterable, Mapping, Set
+from collections.abc import Iterable, Mapping
 
 import bioregistry
 import pandas as pd
@@ -67,7 +65,7 @@ def get_obo() -> Obo:
     return UMLSGetter()
 
 
-def get_semantic_types() -> Mapping[str, Set[str]]:
+def get_semantic_types() -> Mapping[str, set[str]]:
     """Get UMLS semantic types for each term."""
     dd = defaultdict(set)
     with open_umls_semantic_types() as file:

@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Converter for Entrez."""
 
 import logging
-from typing import Iterable, List, Mapping, Set
+from collections.abc import Iterable, Mapping
 
 import bioregistry
 import pandas as pd
@@ -47,7 +45,7 @@ GENE_INFO_COLUMNS = [
 ]
 
 
-def get_ncbigene_ids() -> Set[str]:
+def get_ncbigene_ids() -> set[str]:
     """Get the Entrez name mapping."""
     df = _get_ncbigene_subset(["GeneID"])
     return set(df["GeneID"])
@@ -68,7 +66,7 @@ def _get_ncbigene_info_subset(usecols) -> Mapping[str, str]:
     return dict(df.values)
 
 
-def _get_ncbigene_subset(usecols: List[str]) -> pd.DataFrame:
+def _get_ncbigene_subset(usecols: list[str]) -> pd.DataFrame:
     df = ensure_df(
         PREFIX,
         url=GENE_INFO_URL,

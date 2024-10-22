@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 import zipfile
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 import bioregistry
 import zenodo_client
@@ -62,7 +63,7 @@ class RORGetter(Obo):
         "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
     }
 
-    def __post_init__(self):  # noqa: D105
+    def __post_init__(self):
         self.data_version, _url, _path = _get_info()
         super().__post_init__()
 

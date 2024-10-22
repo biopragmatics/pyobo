@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Utilities for data structures for OBO."""
 
 __all__ = [

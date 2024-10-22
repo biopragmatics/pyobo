@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Tools for canonicalizing a CURIE based on a priority list."""
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import Iterable, List, Mapping, Optional, Set, Tuple
+from typing import Optional
 
 import networkx as nx
 import pandas as pd
@@ -34,7 +33,7 @@ class Canonicalizer:
     graph: nx.Graph
 
     #: A list of prefixes. The ones with the lower index are higher priority
-    priority: Optional[List[str]] = None
+    priority: Optional[list[str]] = None
 
     #: Longest length paths allowed
     cutoff: int = 5
@@ -54,7 +53,7 @@ class Canonicalizer:
     def _get_priority_dict(self, curie: str) -> Mapping[str, int]:
         return dict(self._iterate_priority_targets(curie))
 
-    def _iterate_priority_targets(self, curie: str) -> Iterable[Tuple[str, int]]:
+    def _iterate_priority_targets(self, curie: str) -> Iterable[tuple[str, int]]:
         for target in nx.single_source_shortest_path(self.graph, curie, cutoff=self.cutoff):
             priority = self._key(target)
             if priority is not None:
@@ -79,20 +78,20 @@ class Canonicalizer:
         return cls._get_default_helper(priority=priority)
 
     @classmethod
-    @lru_cache()
-    def _get_default_helper(cls, priority: Optional[Tuple[str, ...]] = None) -> "Canonicalizer":
+    @lru_cache
+    def _get_default_helper(cls, priority: Optional[tuple[str, ...]] = None) -> "Canonicalizer":
         """Help get the default canonicalizer."""
         graph = cls._get_default_graph()
         return cls(graph=graph, priority=list(priority) if priority else None)
 
     @staticmethod
-    @lru_cache()
+    @lru_cache
     def _get_default_graph() -> nx.Graph:
         df = resource_utils.ensure_inspector_javert_df()
         graph = get_graph_from_xref_df(df)
         return graph
 
-    def iterate_flat_mapping(self, use_tqdm: bool = True) -> Iterable[Tuple[str, str]]:
+    def iterate_flat_mapping(self, use_tqdm: bool = True) -> Iterable[tuple[str, str]]:
         """Iterate over the canonical mapping from all nodes to their canonical CURIEs."""
         nodes = self.graph.nodes()
         if use_tqdm:
@@ -114,13 +113,13 @@ class Canonicalizer:
         self,
         curie: str,
         cutoff: Optional[int] = None,
-    ) -> Optional[Mapping[str, List[Mapping[str, str]]]]:
+    ) -> Optional[Mapping[str, list[Mapping[str, str]]]]:
         """Get all shortest paths between given entity and its equivalent entities."""
         return single_source_shortest_path(graph=self.graph, curie=curie, cutoff=cutoff)
 
     def all_shortest_paths(
         self, source_curie: str, target_curie: str
-    ) -> List[List[Mapping[str, str]]]:
+    ) -> list[list[Mapping[str, str]]]:
         """Get all shortest paths between the two entities."""
         return all_shortest_paths(
             graph=self.graph, source_curie=source_curie, target_curie=target_curie
@@ -134,11 +133,14 @@ class Canonicalizer:
 
 def all_shortest_paths(
     graph: nx.Graph, source_curie: str, target_curie: str
-) -> List[List[Mapping[str, str]]]:
+) -> list[list[Mapping[str, str]]]:
     """Get all shortest paths between the two CURIEs."""
     _paths = nx.all_shortest_paths(graph, source=source_curie, target=target_curie)
     return [
-        [dict(source=s, target=t, provenance=graph[s][t]["source"]) for s, t in pairwise(_path)]
+        [
+            {"source": s, "target": t, "provenance": graph[s][t]["source"]}
+            for s, t in pairwise(_path)
+        ]
         for _path in _paths
     ]
 
@@ -147,7 +149,7 @@ def single_source_shortest_path(
     graph: nx.Graph,
     curie: str,
     cutoff: Optional[int] = None,
-) -> Optional[Mapping[str, List[Mapping[str, str]]]]:
+) -> Optional[Mapping[str, list[Mapping[str, str]]]]:
     """Get the shortest path from the CURIE to all elements of its equivalence class.
 
     Things that didn't work:
@@ -156,7 +158,9 @@ def single_source_shortest_path(
     ------------
     .. code-block:: python
 
-        for curies in tqdm(nx.connected_components(graph), desc='filling connected components', unit_scale=True):
+        for curies in tqdm(
+            nx.connected_components(graph), desc="filling connected components", unit_scale=True
+        ):
             for c1, c2 in itt.combinations(curies, r=2):
                 if not graph.has_edge(c1, c2):
                     graph.add_edge(c1, c2, inferred=True)
@@ -165,7 +169,9 @@ def single_source_shortest_path(
     ------------
     .. code-block:: python
 
-        for curie in tqdm(graph, total=graph.number_of_nodes(), desc='mapping connected components', unit_scale=True):
+        for curie in tqdm(
+            graph, total=graph.number_of_nodes(), desc="mapping connected components", unit_scale=True
+        ):
             for incident_curie in nx.node_connected_component(graph, curie):
                 if not graph.has_edge(curie, incident_curie):
                     graph.add_edge(curie, incident_curie, inferred=True)
@@ -177,13 +183,16 @@ def single_source_shortest_path(
         return None
     rv = nx.single_source_shortest_path(graph, curie, cutoff=cutoff)
     return {
-        k: [dict(source=s, target=t, provenance=graph[s][t]["provenance"]) for s, t in pairwise(v)]
+        k: [
+            {"source": s, "target": t, "provenance": graph[s][t]["provenance"]}
+            for s, t in pairwise(v)
+        ]
         for k, v in rv.items()
         if k != curie  # don't map to self
     }
 
 
-def get_equivalent(curie: str, cutoff: Optional[int] = None) -> Set[str]:
+def get_equivalent(curie: str, cutoff: Optional[int] = None) -> set[str]:
     """Get equivalent CURIEs."""
     canonicalizer = Canonicalizer.get_default()
     r = canonicalizer.single_source_shortest_path(curie=curie, cutoff=cutoff)

@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Get FamPlex xrefs."""
 
 import logging
+from collections.abc import Mapping
 from functools import lru_cache
-from typing import Mapping, Tuple
 
 import bioregistry
 import pandas as pd
@@ -50,8 +48,8 @@ def get_famplex_xrefs_df(force: bool = False) -> pd.DataFrame:
     return df
 
 
-@lru_cache()
-def get_remapping(force: bool = False) -> Mapping[Tuple[str, str], Tuple[str, str, str]]:
+@lru_cache
+def get_remapping(force: bool = False) -> Mapping[tuple[str, str], tuple[str, str, str]]:
     """Get a mapping from database/identifier pairs to famplex identifiers."""
     df = _get_famplex_df(force=force)
     rv = {}

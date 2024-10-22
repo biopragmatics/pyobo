@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Converter for ComplexPortal."""
 
 import logging
-from typing import Iterable, List, Tuple
+from collections.abc import Iterable
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -52,7 +50,7 @@ DTYPE = {
 }
 
 
-def _parse_members(s) -> List[Tuple[Reference, str]]:
+def _parse_members(s) -> list[tuple[Reference, str]]:
     if pd.isna(s):
         return []
 
@@ -68,7 +66,7 @@ def _parse_members(s) -> List[Tuple[Reference, str]]:
     return rv
 
 
-def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
+def _parse_xrefs(s) -> list[tuple[Reference, str]]:
     if pd.isna(s):
         return []
 

@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Converter for NCI PID."""
 
 import logging
 from collections import defaultdict
-from typing import Iterable, List, Mapping, Tuple
+from collections.abc import Iterable, Mapping
 
 import pandas as pd
 
@@ -45,7 +43,7 @@ def get_obo() -> Obo:
     return PIDGetter()
 
 
-def iter_networks(use_tqdm: bool = False, force: bool = False) -> Iterable[Tuple[str, CX]]:
+def iter_networks(use_tqdm: bool = False, force: bool = False) -> Iterable[tuple[str, CX]]:
     """Iterate over NCI PID networks."""
     yield from ensure_ndex_network_set(
         PREFIX, NDEX_NETWORK_SET_UUID, use_tqdm=use_tqdm, force=force
@@ -117,7 +115,7 @@ def get_curation_df() -> pd.DataFrame:
     return df[["Text from NDEx", "Type", "Namespace", "Identifier"]]
 
 
-def get_remapping() -> Mapping[str, List[Tuple[str, str]]]:
+def get_remapping() -> Mapping[str, list[tuple[str, str]]]:
     """Get a mapping from text to list of HGNC id/symbols."""
     curation_df = get_curation_df()
     rv = defaultdict(list)

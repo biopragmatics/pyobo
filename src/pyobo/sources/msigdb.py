@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
-
 """Parsers for MSig."""
 
 import logging
-from typing import Iterable, Optional
-from xml.etree import ElementTree
+from collections.abc import Iterable
+from typing import Optional
 
+from lxml.etree import ElementTree
 from tqdm.auto import tqdm
 
 from ..struct import Obo, Reference, Term, has_participant
@@ -137,7 +136,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 def _get_definition(attrib) -> Optional[str]:
     rv = attrib["DESCRIPTION_FULL"].strip() or attrib["DESCRIPTION_BRIEF"].strip() or None
     if rv is not None:
-        return rv.replace(r"\d", "").replace(r"\s", "")  # noqa: W605
+        return rv.replace(r"\d", "").replace(r"\s", "")
     return None
 
 

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Utilities for the CLI."""
 
 import datetime

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Tests for PyOBO caches."""
 
 import os
@@ -25,7 +23,7 @@ class TestCaches(unittest.TestCase):
             @cached_mapping(path=path, header=header)
             def _get_mapping():
                 time.sleep(sleep_time)
-                return dict(a="x", b="y", c="z")
+                return {"a": "x", "b": "y", "c": "z"}
 
             start_time = time.time()
             rv1 = _get_mapping()
@@ -50,7 +48,7 @@ class TestCaches(unittest.TestCase):
     def _help_test_mapping(self, d):
         self.assertIsNotNone(d)
         self.assertEqual(3, len(d))
-        self.assertEqual(dict(a="x", b="y", c="z"), d)
+        self.assertEqual({"a": "x", "b": "y", "c": "z"}, d)
 
     def test_multidict(self):
         """Test caching a multidict."""
@@ -61,7 +59,7 @@ class TestCaches(unittest.TestCase):
             @cached_multidict(path=path, header=header)
             def _get_multidict():
                 time.sleep(sleep_time)
-                return dict(a=["a1", "a2"], b=["b1"], c=["c1", "c2"])
+                return {"a": ["a1", "a2"], "b": ["b1"], "c": ["c1", "c2"]}
 
             start_time = time.time()
             rv1 = _get_multidict()
@@ -85,4 +83,4 @@ class TestCaches(unittest.TestCase):
     def _help_test_multidict(self, d):
         self.assertIsNotNone(d)
         self.assertEqual(3, len(d))
-        self.assertEqual(dict(a=["a1", "a2"], b=["b1"], c=["c1", "c2"]), d)
+        self.assertEqual({"a": ["a1", "a2"], "b": ["b1"], "c": ["c1", "c2"]}, d)

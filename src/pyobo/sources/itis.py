@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
-
 """Converter for the Integrated Taxonomic Information System (ITIS)."""
 
 import os
 import shutil
 import sqlite3
 import zipfile
+from collections.abc import Iterable
 from contextlib import closing
-from typing import Iterable
 
 from pyobo.struct import Obo, Reference, Term
 from pyobo.utils.io import multidict

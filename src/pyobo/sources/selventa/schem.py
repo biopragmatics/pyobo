@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Selventa chemicals.
 
 .. seealso:: https://github.com/pyobo/pyobo/issues/27
 """
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 

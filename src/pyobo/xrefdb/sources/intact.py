@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 """Get the xrefs from IntAct."""
 
-from typing import Mapping
+from collections.abc import Mapping
 
 import pandas as pd
 
@@ -49,7 +47,8 @@ def get_complexportal_mapping() -> Mapping[str, str]:
     .. code-block:: python
 
         from pyobo import get_filtered_xrefs
-        intact_complexportal_mapping = get_filtered_xrefs('intact', 'complexportal')
+
+        intact_complexportal_mapping = get_filtered_xrefs("intact", "complexportal")
     """
 
     @cached_mapping(
@@ -87,7 +86,8 @@ def get_reactome_mapping() -> Mapping[str, str]:
     .. code-block:: python
 
         from pyobo import get_filtered_xrefs
-        intact_complexportal_mapping = get_filtered_xrefs('intact', 'reactome')
+
+        intact_complexportal_mapping = get_filtered_xrefs("intact", "reactome")
     """
 
     @cached_mapping(

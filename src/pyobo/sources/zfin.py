@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Converter for ZFIN."""
 
 import logging
 from collections import defaultdict
-from typing import Iterable, Optional
+from collections.abc import Iterable
+from typing import Optional
 
 from tqdm.auto import tqdm
 

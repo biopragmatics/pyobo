@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """High-level API for properties."""
 
 import logging
 import os
-from typing import List, Mapping, Optional
+from collections.abc import Mapping
+from typing import Optional
 
 import pandas as pd
 
@@ -105,7 +104,7 @@ def get_filtered_properties_multimapping(
     use_tqdm: bool = False,
     force: bool = False,
     version: Optional[str] = None,
-) -> Mapping[str, List[str]]:
+) -> Mapping[str, list[str]]:
     """Extract multiple properties for each term as a dictionary.
 
     :param prefix: the resource to load
@@ -120,7 +119,7 @@ def get_filtered_properties_multimapping(
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
     @cached_multidict(path=path, header=[f"{prefix}_id", prop], force=force)
-    def _mapping_getter() -> Mapping[str, List[str]]:
+    def _mapping_getter() -> Mapping[str, list[str]]:
         if os.path.exists(all_properties_path):
             logger.info("[%s] loading pre-cached properties", prefix)
             df = pd.read_csv(all_properties_path, sep="\t")
@@ -144,7 +143,7 @@ def get_property(prefix: str, identifier: str, prop: str, **kwargs) -> Optional[
     :returns: The single value for the property. If multiple are expected, use :func:`get_properties`
 
     >>> import pyobo
-    >>> pyobo.get_property('chebi', '132964', 'http://purl.obolibrary.org/obo/chebi/smiles')
+    >>> pyobo.get_property("chebi", "132964", "http://purl.obolibrary.org/obo/chebi/smiles")
     "C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F"
     """
     filtered_properties_mapping = get_filtered_properties_mapping(
@@ -153,7 +152,7 @@ def get_property(prefix: str, identifier: str, prop: str, **kwargs) -> Optional[
     return filtered_properties_mapping.get(identifier)
 
 
-def get_properties(prefix: str, identifier: str, prop: str, **kwargs) -> Optional[List[str]]:
+def get_properties(prefix: str, identifier: str, prop: str, **kwargs) -> Optional[list[str]]:
     """Extract a set of properties for the given entity.
 
     :param prefix: the resource to load

@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Interface for caching data on AWS S3."""
 
 import logging
 import os
-from typing import Optional, Set
+from typing import Optional
 
 import boto3
 import humanize
@@ -57,8 +55,8 @@ def download_artifacts(bucket: str, suffix: Optional[str] = None) -> None:
 
 def upload_artifacts(
     bucket: str,
-    whitelist: Optional[Set[str]] = None,
-    blacklist: Optional[Set[str]] = None,
+    whitelist: Optional[set[str]] = None,
+    blacklist: Optional[set[str]] = None,
     s3_client=None,
 ) -> None:
     """Upload all artifacts to AWS."""

@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """API utilities for KEGG."""
 
 import urllib.error
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping, Optional
+from typing import Optional
 
 from pyobo import Reference, Term, ensure_path
 from pyobo.struct import from_species
@@ -132,7 +131,7 @@ def _ensure_conv_genome_helper(
             version=version,
         )
         with path_rv.open("w") as file:
-            print(file=file)  # noqa: T201
+            print(file=file)
         return path_rv.as_posix()
     except FileNotFoundError:
         return None

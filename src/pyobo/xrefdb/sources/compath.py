@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 """Import ComPath mappings between pathways."""
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 from pystow.utils import get_commit

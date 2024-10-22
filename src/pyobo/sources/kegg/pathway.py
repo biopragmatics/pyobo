@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Convert KEGG Pathways to OBO.
 
 Run with ``python -m pyobo.sources.kegg.pathway``
@@ -8,8 +6,9 @@ Run with ``python -m pyobo.sources.kegg.pathway``
 import logging
 import urllib.error
 from collections import defaultdict
+from collections.abc import Iterable, Mapping
 from functools import partial
-from typing import Iterable, List, Mapping, Tuple, Union
+from typing import Union
 
 from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import thread_map
@@ -76,7 +75,7 @@ def iter_terms(version: str, skip_missing: bool = True) -> Iterable[Term]:
         )
 
 
-def _get_link_pathway_map(path: str) -> Mapping[str, List[str]]:
+def _get_link_pathway_map(path: str) -> Mapping[str, list[str]]:
     rv = defaultdict(list)
     with open(path) as file:
         for line in file:
@@ -110,7 +109,7 @@ def _iter_genome_terms(
         list_pathway_lines = [line.strip() for line in file]
     for line in list_pathway_lines:
         line = line.strip()
-        pathway_id, name = [part.strip() for part in line.split("\t")]
+        pathway_id, name = (part.strip() for part in line.split("\t"))
         pathway_id = pathway_id[len("path:") :]
 
         terms[pathway_id] = term = Term.from_triple(
@@ -149,7 +148,7 @@ def _iter_genome_terms(
 
 def iter_kegg_pathway_paths(
     version: str, skip_missing: bool = True
-) -> Iterable[Union[Tuple[KEGGGenome, str, str], Tuple[None, None, None]]]:
+) -> Iterable[Union[tuple[KEGGGenome, str, str], tuple[None, None, None]]]:
     """Get paths for the KEGG Pathway files."""
     genomes = list(iter_kegg_genomes(version=version, desc="KEGG Pathways"))
     func = partial(_process_genome, version=version, skip_missing=skip_missing)

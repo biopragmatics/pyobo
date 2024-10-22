@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Tools for loading entry points."""
 
+from collections.abc import Iterable, Mapping
 from functools import lru_cache
-from typing import Callable, Iterable, Mapping, Optional
+from typing import Callable, Optional
 
 from .struct import Obo
 
@@ -14,7 +13,7 @@ __all__ = [
 ]
 
 
-@lru_cache()
+@lru_cache
 def _get_nomenclature_plugins() -> Mapping[str, Callable[[], Obo]]:
     from .sources import ontology_resolver
 

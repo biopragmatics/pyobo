@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Utilities for high-level API."""
 
 import json
@@ -13,6 +11,7 @@ import bioversions
 from ..utils.path import prefix_directory_join
 
 __all__ = [
+    "safe_get_version",
     "get_version",
     "get_version_pins",
     "VersionError",
@@ -51,6 +50,14 @@ def get_version(prefix: str) -> Optional[str]:
         return data["version"]
 
     return None
+
+
+def safe_get_version(prefix: str) -> str:
+    """Get the version."""
+    v = get_version(prefix)
+    if v is None:
+        raise ValueError
+    return v
 
 
 @lru_cache(1)

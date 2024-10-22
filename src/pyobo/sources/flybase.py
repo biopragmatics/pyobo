@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Converter for FlyBase Genes."""
 
 import logging
-from typing import Iterable, Mapping, Set
+from collections.abc import Iterable, Mapping
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -68,7 +66,7 @@ def _get_definitions(version: str, force: bool = False) -> Mapping[str, str]:
     return dict(df.values)
 
 
-def _get_human_orthologs(version: str, force: bool = False) -> Mapping[str, Set[str]]:
+def _get_human_orthologs(version: str, force: bool = False) -> Mapping[str, set[str]]:
     url = (
         f"http://ftp.flybase.net/releases/FB{version}/precomputed_files/"
         f"orthologs/dmel_human_orthologs_disease_fb_{version}.tsv.gz"

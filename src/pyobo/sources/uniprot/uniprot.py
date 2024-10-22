@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Converter for UniProt."""
 
+from collections.abc import Iterable
 from operator import attrgetter
 from pathlib import Path
-from typing import Iterable, List, Optional, cast
+from typing import Optional, cast
 
 from tqdm.auto import tqdm
 
@@ -155,7 +154,7 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
             yield term
 
 
-def _parse_go(go_terms) -> List[Reference]:
+def _parse_go(go_terms) -> list[Reference]:
     rv = []
     if go_terms:
         for go_term in go_terms.split(";"):

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Converter for HGNC."""
 
 import itertools as itt
@@ -7,8 +5,9 @@ import json
 import logging
 import typing
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 from operator import attrgetter
-from typing import DefaultDict, Dict, Iterable, Optional
+from typing import Optional
 
 from tabulate import tabulate
 from tqdm.auto import tqdm
@@ -238,12 +237,12 @@ def get_obo(*, force: bool = False) -> Obo:
     return HGNCGetter(force=force)
 
 
-def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:  # noqa:C901
+def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
     """Get HGNC terms."""
     if version is None:
         version = get_version("hgnc")
     unhandled_entry_keys: typing.Counter[str] = Counter()
-    unhandle_locus_types: DefaultDict[str, Dict[str, Term]] = defaultdict(dict)
+    unhandle_locus_types: defaultdict[str, dict[str, Term]] = defaultdict(dict)
     path = ensure_path(
         PREFIX,
         url=DEFINITIONS_URL_FMT.format(version=version),
@@ -459,8 +458,8 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
                 headers=["hgnc_id", "name", "obsolete", "link", "provenance"],
                 tablefmt="github",
             )
-            print(f"## {k} ({len(v)})", file=file)  # noqa: T201
-            print(t, "\n", file=file)  # noqa: T201
+            print(f"## {k} ({len(v)})", file=file)
+            print(t, "\n", file=file)
 
     unhandle_locus_type_counter = Counter(
         {locus_type: len(d) for locus_type, d in unhandle_locus_types.items()}

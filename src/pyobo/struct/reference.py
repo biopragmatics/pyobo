@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 """Data structures for OBO."""
 
-from typing import Optional, Tuple
+from typing import Optional
 
 import bioregistry
 import curies
@@ -124,7 +122,7 @@ class Reference(curies.Reference):
     def _escaped_identifier(self):
         return obo_escape(self.identifier)
 
-    def __str__(self):  # noqa: D105
+    def __str__(self):
         identifier_lower = self.identifier.lower()
         if identifier_lower.startswith(f"{self.prefix.lower()}:"):
             rv = identifier_lower
@@ -134,7 +132,7 @@ class Reference(curies.Reference):
             rv = f"{rv} ! {self.name}"
         return rv
 
-    def __hash__(self):  # noqa: D105
+    def __hash__(self):
         return hash((self.__class__, self.prefix, self.identifier))
 
 
@@ -145,32 +143,32 @@ class Referenced:
 
     @property
     def prefix(self):
-        """The prefix of the typedef."""  # noqa: D401
+        """The prefix of the typedef."""
         return self.reference.prefix
 
     @property
     def name(self):
-        """The name of the typedef."""  # noqa: D401
+        """The name of the typedef."""
         return self.reference.name
 
     @property
     def identifier(self) -> str:
-        """The local unique identifier for this typedef."""  # noqa: D401
+        """The local unique identifier for this typedef."""
         return self.reference.identifier
 
     @property
     def curie(self) -> str:
-        """The CURIE for this typedef."""  # noqa: D401
+        """The CURIE for this typedef."""
         return self.reference.curie
 
     @property
     def preferred_curie(self) -> str:
-        """The preferred CURIE for this typedef."""  # noqa: D401
+        """The preferred CURIE for this typedef."""
         return self.reference.preferred_curie
 
     @property
-    def pair(self) -> Tuple[str, str]:
-        """The pair of namespace/identifier."""  # noqa: D401
+    def pair(self) -> tuple[str, str]:
+        """The pair of namespace/identifier."""
         return self.reference.pair
 
     @property

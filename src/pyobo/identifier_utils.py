@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Utilities for handling prefixes."""
 
 from __future__ import annotations
 
 import logging
 from functools import wraps
-from typing import Optional, Tuple, Union
 
 import bioregistry
 from curies import Reference, ReferenceTuple
@@ -28,10 +25,11 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-class MissingPrefix(ValueError):
+class MissingPrefixError(ValueError):
     """Raised on a missing prefix."""
 
-    def __init__(self, prefix, curie, xref=None, ontology=None):
+    def __init__(self, prefix: str, curie: str, xref: str | None =None, ontology: str | None=None):
+        """Initialize the error."""
         self.prefix = prefix
         self.curie = curie
         self.xref = xref
@@ -50,13 +48,13 @@ class MissingPrefix(ValueError):
         return s
 
 
-def _normalize_prefix(prefix: str, *, curie=None, xref=None, strict: bool = True) -> Optional[str]:
+def _normalize_prefix(prefix: str, *, curie=None, xref=None, strict: bool = True) -> str | None:
     """Normalize a namespace and return, if possible."""
     norm_prefix = bioregistry.normalize_prefix(prefix)
     if norm_prefix is not None:
         return norm_prefix
     elif strict:
-        raise MissingPrefix(prefix=prefix, curie=curie, xref=xref)
+        raise MissingPrefixError(prefix=prefix, curie=curie, xref=xref)
     else:
         return None
 
@@ -64,9 +62,7 @@ def _normalize_prefix(prefix: str, *, curie=None, xref=None, strict: bool = True
 BAD_CURIES = set()
 
 
-def normalize_curie(
-    curie: str, *, strict: bool = True
-) -> Union[Tuple[str, str], Tuple[None, None]]:
+def normalize_curie(curie: str, *, strict: bool = True) -> tuple[str, str] | tuple[None, None]:
     """Parse a string that looks like a CURIE.
 
     :param curie: A compact uniform resource identifier (CURIE)

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """CLI for PyOBO's interface to S3."""
 
 import click

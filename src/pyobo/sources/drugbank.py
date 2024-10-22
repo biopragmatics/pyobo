@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Convert DrugBank to OBO.
 
 Run with ``python -m pyobo.sources.drugbank``
@@ -8,14 +6,15 @@ Run with ``python -m pyobo.sources.drugbank``
 import datetime
 import itertools as itt
 import logging
+from collections.abc import Iterable, Mapping
 from functools import lru_cache
-from typing import Any, Dict, Iterable, Mapping, Optional
+from typing import Any, Optional
 from xml.etree import ElementTree
 
 import pystow
 from tqdm.auto import tqdm
 
-from ..getters import NoBuild
+from ..getters import NoBuildError
 from ..struct import Obo, Reference, Term
 from ..struct.typedef import has_inchi, has_salt, has_smiles
 from ..utils.cache import cached_pickle
@@ -139,7 +138,7 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
     return term
 
 
-@lru_cache()
+@lru_cache
 def get_xml_root(version: Optional[str] = None) -> ElementTree.Element:
     """Get the DrugBank XML parser root.
 
@@ -152,7 +151,7 @@ def get_xml_root(version: Optional[str] = None) -> ElementTree.Element:
         username = pystow.get_config("pyobo", "drugbank_username", raise_on_missing=True)
         password = pystow.get_config("pyobo", "drugbank_password", raise_on_missing=True)
     except ConfigError as e:
-        raise NoBuild from e
+        raise NoBuildError from e
 
     element = parse_drugbank(version=version, username=username, password=password)
     return element.getroot()
@@ -167,7 +166,7 @@ smiles_template = f"{ns}calculated-properties/{ns}property[{ns}kind='SMILES']/{n
 def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
     """Extract information from an XML element representing a drug."""
     # assert drug_xml.tag == f'{ns}drug'
-    row: Dict[str, Any] = {
+    row: dict[str, Any] = {
         "type": drug_xml.get("type"),
         "drugbank_id": drug_xml.findtext(f"{ns}drugbank-id[@primary='true']"),
         "cas": drug_xml.findtext(f"{ns}cas-number"),

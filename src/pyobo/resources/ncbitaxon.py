@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-
 """Loading of the NCBI Taxonomy names."""
 
 import csv
 import gzip
+from collections.abc import Mapping
 from functools import lru_cache
 from pathlib import Path
-from typing import Mapping, Optional, Union
+from typing import Optional, Union
 
 import requests
 

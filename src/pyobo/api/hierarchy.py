@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """High-level API for hierarchies."""
 
 import logging
+from collections.abc import Iterable
 from functools import lru_cache
-from typing import Iterable, Optional, Set, Tuple
+from typing import Optional
 
 import networkx as nx
 
@@ -70,13 +69,13 @@ def get_hierarchy(
     )
 
 
-@lru_cache()
+@lru_cache
 @wrap_norm_prefix
 def _get_hierarchy_helper(
     prefix: str,
     *,
-    extra_relations: Tuple[TypeDef, ...],
-    properties: Tuple[str, ...],
+    extra_relations: tuple[TypeDef, ...],
+    properties: tuple[str, ...],
     include_part_of: bool,
     include_has_member: bool,
     use_tqdm: bool,
@@ -161,13 +160,13 @@ def is_descendent(
 
     Check that go:0070246 ! natural killer cell apoptotic process is a
     descendant of go:0006915 ! apoptotic process::
-    >>> assert is_descendent('go', '0070246', 'go', '0006915')
+    >>> assert is_descendent("go", "0070246", "go", "0006915")
     """
     descendants = get_descendants(ancestor_prefix, ancestor_identifier, version=version)
     return descendants is not None and f"{prefix}:{identifier}" in descendants
 
 
-@lru_cache()
+@lru_cache
 def get_descendants(
     prefix: str,
     identifier: Optional[str] = None,
@@ -176,7 +175,7 @@ def get_descendants(
     use_tqdm: bool = False,
     force: bool = False,
     **kwargs,
-) -> Optional[Set[str]]:
+) -> Optional[set[str]]:
     """Get all the descendants (children) of the term as CURIEs."""
     curie, prefix, identifier = _pic(prefix, identifier)
     hierarchy = get_hierarchy(
@@ -192,7 +191,7 @@ def get_descendants(
     return nx.ancestors(hierarchy, curie)  # note this is backwards
 
 
-def _pic(prefix, identifier=None) -> Tuple[str, str, str]:
+def _pic(prefix, identifier=None) -> tuple[str, str, str]:
     if identifier is None:
         curie = prefix
         prefix, identifier = prefix.split(":")
@@ -201,7 +200,7 @@ def _pic(prefix, identifier=None) -> Tuple[str, str, str]:
     return curie, prefix, identifier
 
 
-@lru_cache()
+@lru_cache
 def get_children(
     prefix: str,
     identifier: Optional[str] = None,
@@ -210,7 +209,7 @@ def get_children(
     use_tqdm: bool = False,
     force: bool = False,
     **kwargs,
-) -> Optional[Set[str]]:
+) -> Optional[set[str]]:
     """Get all the descendants (children) of the term as CURIEs."""
     curie, prefix, identifier = _pic(prefix, identifier)
     hierarchy = get_hierarchy(
@@ -232,13 +231,13 @@ def has_ancestor(
     """Check that the first identifier has the second as an ancestor.
 
     Check that go:0008219 ! cell death is an ancestor of go:0006915 ! apoptotic process::
-    >>> assert has_ancestor('go', '0006915', 'go', '0008219')
+    >>> assert has_ancestor("go", "0006915", "go", "0008219")
     """
     ancestors = get_ancestors(prefix, identifier, version=version)
     return ancestors is not None and f"{ancestor_prefix}:{ancestor_identifier}" in ancestors
 
 
-@lru_cache()
+@lru_cache
 def get_ancestors(
     prefix: str,
     identifier: Optional[str] = None,
@@ -247,7 +246,7 @@ def get_ancestors(
     use_tqdm: bool = False,
     force: bool = False,
     **kwargs,
-) -> Optional[Set[str]]:
+) -> Optional[set[str]]:
     """Get all the ancestors (parents) of the term as CURIEs."""
     curie, prefix, identifier = _pic(prefix, identifier)
     hierarchy = get_hierarchy(

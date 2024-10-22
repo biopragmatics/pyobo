@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """High-level API for typedefs."""
 
 import logging
@@ -21,7 +19,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-@lru_cache()
+@lru_cache
 @wrap_norm_prefix
 def get_typedef_df(
     prefix: str, *, force: bool = False, version: Optional[str] = None

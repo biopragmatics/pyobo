@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-
 """GMT utilities."""
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, Set, Tuple, Union
+from typing import Union
 
-GMTSummary = Tuple[str, str, Set[str]]
-WikiPathwaysGMTSummary = Tuple[str, str, str, str, str, Set[str]]
+GMTSummary = tuple[str, str, set[str]]
+WikiPathwaysGMTSummary = tuple[str, str, str, str, str, set[str]]
 
 
 def parse_gmt_file(path: Union[str, Path]) -> Iterable[GMTSummary]:
@@ -20,7 +19,7 @@ def parse_gmt_file(path: Union[str, Path]) -> Iterable[GMTSummary]:
             yield _process_line(line)
 
 
-def _process_line(line: str) -> Tuple[str, str, Set[str]]:
+def _process_line(line: str) -> tuple[str, str, set[str]]:
     """Return the pathway name, url, and gene sets associated.
 
     :param line: gmt file line

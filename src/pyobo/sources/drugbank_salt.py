@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Convert DrugBank Salts to OBO.
 
 Run with ``python -m pyobo.sources.drugbank_salt``
@@ -10,11 +8,12 @@ Get relations between drugbank salts and drugbank parents with
 .. code-block:: python
 
     import pyobo
-    df = pyobo.get_filtered_relations_df('drugbank', 'obo:has_salt')
+
+    df = pyobo.get_filtered_relations_df("drugbank", "obo:has_salt")
 """
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
 from .drugbank import iterate_drug_info
 from ..struct import Obo, Reference, Term

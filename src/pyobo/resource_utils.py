@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Resource utilities for PyOBO."""
 
+from collections.abc import Sequence
 from functools import lru_cache
-from typing import Sequence
 
 import click
 import pandas as pd

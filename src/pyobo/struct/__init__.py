@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Data structures for OBO."""
 
 from .reference import Reference  # noqa: F401

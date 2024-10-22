@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
-
 """High-level API for relations."""
 
 import logging
 import os
+from collections.abc import Mapping
 from functools import lru_cache
-from typing import List, Mapping, Optional
+from typing import Optional
 
 import networkx as nx
 import pandas as pd
@@ -121,7 +120,7 @@ def get_id_multirelations_mapping(
     use_tqdm: bool = False,
     force: bool = False,
     version: Optional[str] = None,
-) -> Mapping[str, List[Reference]]:
+) -> Mapping[str, list[Reference]]:
     """Get the OBO file and output a synonym dictionary."""
     if version is None:
         version = get_version(prefix)
@@ -129,7 +128,7 @@ def get_id_multirelations_mapping(
     return ontology.get_id_multirelations_mapping(typedef=typedef, use_tqdm=use_tqdm)
 
 
-@lru_cache()
+@lru_cache
 @wrap_norm_prefix
 def get_relation_mapping(
     prefix: str,
@@ -147,9 +146,9 @@ def get_relation_mapping(
      Example usage: get homology between HGNC and MGI:
 
     >>> import pyobo
-    >>> human_mapt_hgnc_id = '6893'
-    >>> mouse_mapt_mgi_id = '97180'
-    >>> hgnc_mgi_orthology_mapping = pyobo.get_relation_mapping('hgnc', 'ro:HOM0000017', 'mgi')
+    >>> human_mapt_hgnc_id = "6893"
+    >>> mouse_mapt_mgi_id = "97180"
+    >>> hgnc_mgi_orthology_mapping = pyobo.get_relation_mapping("hgnc", "ro:HOM0000017", "mgi")
     >>> assert mouse_mapt_mgi_id == hgnc_mgi_orthology_mapping[human_mapt_hgnc_id]
     """
     if version is None:
@@ -178,9 +177,11 @@ def get_relation(
      Example usage: get homology between MAPT in HGNC and MGI:
 
     >>> import pyobo
-    >>> human_mapt_hgnc_id = '6893'
-    >>> mouse_mapt_mgi_id = '97180'
-    >>> assert mouse_mapt_mgi_id == pyobo.get_relation('hgnc', human_mapt_hgnc_id, 'ro:HOM0000017', 'mgi')
+    >>> human_mapt_hgnc_id = "6893"
+    >>> mouse_mapt_mgi_id = "97180"
+    >>> assert mouse_mapt_mgi_id == pyobo.get_relation(
+    ...     "hgnc", human_mapt_hgnc_id, "ro:HOM0000017", "mgi"
+    ... )
     """
     relation_mapping = get_relation_mapping(
         prefix=prefix,

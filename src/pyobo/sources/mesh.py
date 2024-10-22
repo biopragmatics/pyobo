@@ -1,17 +1,16 @@
-# -*- coding: utf-8 -*-
-
 """Parser for the MeSH descriptors."""
 
 import datetime
 import itertools as itt
 import logging
 import re
-from typing import Any, Collection, Dict, Iterable, List, Mapping, Optional, Set, Tuple
+from collections.abc import Collection, Iterable, Mapping
+from typing import Any, Optional
 from xml.etree.ElementTree import Element
 
 from tqdm.auto import tqdm
 
-from pyobo.api.utils import get_version
+from pyobo.api.utils import safe_get_version
 from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import Obo, Reference, Synonym, Term
 from pyobo.utils.cache import cached_json, cached_mapping
@@ -70,7 +69,7 @@ def get_tree_to_mesh_id(version: str) -> Mapping[str, str]:
 
 def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get MeSH OBO terms."""
-    mesh_id_to_term: Dict[str, Term] = {}
+    mesh_id_to_term: dict[str, Term] = {}
 
     descriptors = ensure_mesh_descriptors(version=version, force=force)
     supplemental_records = ensure_mesh_supplemental_records(version=version, force=force)
@@ -80,8 +79,8 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         name = entry["name"]
         definition = entry.get("scope_note")
 
-        xrefs: List[Reference] = []
-        synonyms: Set[str] = set()
+        xrefs: list[Reference] = []
+        synonyms: set[str] = set()
         for concept in entry["concepts"]:
             synonyms.add(concept["name"])
             for term in concept["terms"]:
@@ -107,7 +106,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
 
 def ensure_mesh_descriptors(
     version: str, force: bool = False, force_process: bool = False
-) -> List[Mapping[str, Any]]:
+) -> list[Mapping[str, Any]]:
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
 
     @cached_json(path=prefix_directory_join(PREFIX, name="desc.json", version=version), force=force)
@@ -133,7 +132,7 @@ def get_supplemental_url(version: str) -> str:
     return f"https://nlmpubs.nlm.nih.gov/projects/mesh/{version}/xmlmesh/supp{version}.gz"
 
 
-def ensure_mesh_supplemental_records(version: str, force: bool = False) -> List[Mapping[str, Any]]:
+def ensure_mesh_supplemental_records(version: str, force: bool = False) -> list[Mapping[str, Any]]:
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
 
     @cached_json(path=prefix_directory_join(PREFIX, name="supp.json", version=version), force=force)
@@ -147,11 +146,11 @@ def ensure_mesh_supplemental_records(version: str, force: bool = False) -> List[
     return _inner()
 
 
-def get_descriptor_records(element: Element, id_key: str, name_key) -> List[Dict[str, Any]]:
+def get_descriptor_records(element: Element, id_key: str, name_key) -> list[dict[str, Any]]:
     """Get MeSH descriptor records."""
     logger.info("extract MeSH descriptors, concepts, and terms")
 
-    rv: List[Dict[str, Any]] = [
+    rv: list[dict[str, Any]] = [
         get_descriptor_record(descriptor, id_key=id_key, name_key=name_key)
         for descriptor in tqdm(element, desc="Getting MeSH Descriptors", unit_scale=True)
     ]
@@ -204,7 +203,7 @@ def get_descriptor_record(
     element: Element,
     id_key: str,
     name_key: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get descriptor records from the main element.
 
     :param element: An XML element
@@ -228,13 +227,13 @@ def get_descriptor_record(
     return rv
 
 
-def get_concept_records(element: Element) -> List[Mapping[str, Any]]:
+def get_concept_records(element: Element) -> list[Mapping[str, Any]]:
     """Get concepts from a record."""
     return [get_concept_record(e) for e in element.findall("ConceptList/Concept")]
 
 
-def _get_xrefs(element: Element) -> List[Tuple[str, str]]:
-    raw_registry_numbers: List[str] = sorted(
+def _get_xrefs(element: Element) -> list[tuple[str, str]]:
+    raw_registry_numbers: list[str] = sorted(
         {e.text for e in element.findall("RelatedRegistryNumberList/RegistryNumber") if e.text}
     )
     registry_number = element.findtext("RegistryNumber")
@@ -267,7 +266,7 @@ def get_concept_record(element: Element) -> Mapping[str, Any]:
     if scope_note is not None:
         scope_note = scope_note.replace("\\n", "\n").strip()
 
-    rv: Dict[str, Any] = {
+    rv: dict[str, Any] = {
         "concept_ui": element.findtext("ConceptUI"),
         "name": element.findtext("ConceptName/String"),
         "terms": get_term_records(element),
@@ -286,7 +285,7 @@ def get_concept_record(element: Element) -> Mapping[str, Any]:
     return rv
 
 
-def get_term_records(element: Element) -> List[Mapping[str, Any]]:
+def get_term_records(element: Element) -> list[Mapping[str, Any]]:
     """Get all of the terms for a concept."""
     return [get_term_record(term) for term in element.findall("TermList/Term")]
 
@@ -307,7 +306,7 @@ def _text_or_bust(element: Element, name: str) -> str:
     return n
 
 
-def _get_descriptor_qualifiers(descriptor: Element) -> List[Mapping[str, str]]:
+def _get_descriptor_qualifiers(descriptor: Element) -> list[Mapping[str, str]]:
     return [
         {
             "qualifier_ui": _text_or_bust(qualifier, "QualifierUI"),
@@ -321,7 +320,7 @@ def _get_descriptor_qualifiers(descriptor: Element) -> List[Mapping[str, str]]:
 
 def get_mesh_category_curies(
     letter: str, *, skip: Optional[Collection[str]] = None, version: Optional[str] = None
-) -> List[str]:
+) -> list[str]:
     """Get the MeSH LUIDs for a category, by letter (e.g., "A").
 
     :param letter: The MeSH tree, A for anatomy, C for disease, etc.
@@ -332,8 +331,7 @@ def get_mesh_category_curies(
     .. seealso:: https://meshb.nlm.nih.gov/treeView
     """
     if version is None:
-        version = get_version("mesh")
-        assert version is not None
+        version = safe_get_version("mesh")
     tree_to_mesh = get_tree_to_mesh_id(version=version)
     rv = []
     for i in range(1, 100):

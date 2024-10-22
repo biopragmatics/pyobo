@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Utilities for caching files from NDEx."""
 
 import json
 import os
-from typing import Any, Iterable, List, Mapping, Tuple
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 import requests
 from tqdm.auto import tqdm
@@ -21,7 +20,7 @@ __all__ = [
 NDEX_BASE_URL = "http://public.ndexbio.org/v2"
 NETWORK_ENDPOINT = f"{NDEX_BASE_URL}/network"
 NETWORKSET_ENDPOINT = f"{NDEX_BASE_URL}/networkset"
-CX = List[Mapping[str, Any]]
+CX = list[Mapping[str, Any]]
 
 
 def iterate_aspect(cx: CX, aspect: str) -> Iterable[Any]:
@@ -47,7 +46,7 @@ def ensure_ndex_network(prefix: str, uuid: str, force: bool = False) -> CX:
 
 def ensure_ndex_network_set(
     prefix: str, uuid: str, use_tqdm: bool = False, force: bool = False
-) -> Iterable[Tuple[str, CX]]:
+) -> Iterable[tuple[str, CX]]:
     """Ensure the list of networks that goes with NCI PID on NDEx."""
     it = _help_ensure_ndex_network_set(prefix, uuid, force=force)
     if use_tqdm:
@@ -56,7 +55,7 @@ def ensure_ndex_network_set(
         yield network_uuid, ensure_ndex_network(prefix, network_uuid, force=force)
 
 
-def _help_ensure_ndex_network_set(prefix: str, uuid: str, force: bool = False) -> List[str]:
+def _help_ensure_ndex_network_set(prefix: str, uuid: str, force: bool = False) -> list[str]:
     """Ensure the list of networks that goes with NCI PID on NDEx."""
     networkset_path = prefix_directory_join(prefix, name="networks.txt")
     if os.path.exists(networkset_path) and not force:
@@ -69,5 +68,5 @@ def _help_ensure_ndex_network_set(prefix: str, uuid: str, force: bool = False) -
     network_uuids = res_json["networks"]
     with open(networkset_path, "w") as file:
         for network_uuid in sorted(network_uuids):
-            print(network_uuid, file=file)  # noqa: T201
+            print(network_uuid, file=file)
     return network_uuids

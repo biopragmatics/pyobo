@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Converter for InterPro."""
 
 from collections import defaultdict
-from typing import DefaultDict, Iterable, List, Mapping, Set, Tuple
+from collections.abc import Iterable, Mapping
 
 from .utils import get_go_mapping
 from ..struct import Obo, Reference, Term
@@ -82,7 +80,7 @@ def iter_terms(*, version: str, proteins: bool = False, force: bool = False) -> 
         yield term
 
 
-def get_interpro_go_df(version: str, force: bool = False) -> Mapping[str, Set[Tuple[str, str]]]:
+def get_interpro_go_df(version: str, force: bool = False) -> Mapping[str, set[tuple[str, str]]]:
     """Get InterPro to Gene Ontology molecular function mapping."""
     url = f"https://ftp.ebi.ac.uk/pub/databases/interpro/releases/{version}/interpro2go"
     path = ensure_path(PREFIX, url=url, name="interpro2go.tsv", version=version, force=force)
@@ -98,7 +96,7 @@ def get_interpro_tree(version: str, force: bool = False):
 
 
 def _parse_tree_helper(lines: Iterable[str]):
-    rv1: DefaultDict[str, List[str]] = defaultdict(list)
+    rv1: defaultdict[str, list[str]] = defaultdict(list)
     previous_depth, previous_id = 0, ""
     stack = [previous_id]
 

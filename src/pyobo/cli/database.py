@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """CLI for PyOBO Database Generation."""
 
 import logging
@@ -317,7 +315,7 @@ def properties(directory: str, zenodo: bool, force: bool, no_strict: bool):
 @zenodo_option
 @force_option
 @no_strict_option
-def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool):  # noqa: D202
+def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool):
     """Make the prefix-identifier-xref dump."""
     with logging_redirect_tqdm():
         paths = db_output_helper(

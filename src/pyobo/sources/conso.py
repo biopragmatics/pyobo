@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 """Converter for CONSO."""
 
-from typing import Iterable, List
+from collections.abc import Iterable
 
 import pandas as pd
 
@@ -68,7 +66,7 @@ def iter_terms() -> Iterable[Term]:
     for _, row in terms_df.iterrows():
         if row["Name"] == "WITHDRAWN":
             continue
-        provenance: List[Reference] = []
+        provenance: list[Reference] = []
         for curie in row["References"].split(","):
             curie = curie.strip()
             if not curie:

@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Converter for CiVIC Genes."""
 
-from typing import Iterable, Optional
+from collections.abc import Iterable
+from typing import Optional
 
 import pandas as pd
 

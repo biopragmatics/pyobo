@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Converter for AGROVOC."""
 
 import pystow
