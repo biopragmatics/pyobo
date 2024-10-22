@@ -8,4 +8,4 @@ prune docs
 global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle .idea/**
 
 include README.md LICENSE
-exclude tox.ini .readthedocs.yml
+exclude tox.ini .readthedocs.yml .cruft.json
