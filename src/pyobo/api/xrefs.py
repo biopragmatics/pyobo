@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """High-level API for synonyms."""
 
 import logging
+from collections.abc import Mapping
 from functools import lru_cache
-from typing import List, Mapping, Optional, Tuple, Union
+from typing import Optional, Union
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -43,7 +42,7 @@ def get_xref(
     return filtered_xrefs.get(identifier)
 
 
-@lru_cache()
+@lru_cache
 @wrap_norm_prefix
 def get_filtered_xrefs(
     prefix: str,
@@ -147,7 +146,7 @@ def get_sssom_df(
         prefix = prefix.ontology
     else:
         df = get_xrefs_df(prefix=prefix, **kwargs)
-    rows: List[Tuple[str, ...]] = []
+    rows: list[tuple[str, ...]] = []
     with logging_redirect_tqdm():
         for source_id, target_prefix, target_id in tqdm(
             df.values, unit="mapping", unit_scale=True, desc=f"[{prefix}] SSSOM"

@@ -2,9 +2,10 @@
 
 import itertools as itt
 from collections import defaultdict
+from collections.abc import Sequence
 from operator import attrgetter
 from pathlib import Path
-from typing import Optional, Sequence, Tuple, Union
+from typing import Optional, Union
 
 import bioregistry
 from bioregistry.constants import BIOREGISTRY_DEFAULT_BASE_URL
@@ -37,7 +38,7 @@ def make_site(
     metaregistry_metaprefix: Optional[str] = None,
     metaregistry_name: Optional[str] = None,
     metaregistry_base_url: Optional[str] = None,
-    show_properties_in_manifest: Optional[Sequence[Tuple[str, str]]] = None,
+    show_properties_in_manifest: Optional[Sequence[tuple[str, str]]] = None,
 ) -> None:
     """Make a website in the given directory.
 

@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Converter for GWAS Central Phenotypes."""
 
 import json
-from typing import Iterable
+from collections.abc import Iterable
 
 from tqdm.auto import tqdm, trange
 

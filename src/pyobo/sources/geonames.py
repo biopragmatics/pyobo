@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Collection, Iterable, Mapping
+from collections.abc import Collection, Iterable, Mapping
 
 import pandas as pd
 from pystow.utils import read_zipfile_csv

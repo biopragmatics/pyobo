@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-
 """Convert KEGG Genes to OBO.
 
 Run with ``python -m pyobo.sources.kegg.genes``
 """
 
 import logging
-from typing import Iterable, Optional
+from collections.abc import Iterable
+from typing import Optional
 
 import click
 from more_click import verbose_option
@@ -90,7 +89,7 @@ def _make_terms(
                 )
                 continue
             if ";" in line:
-                *_extras, name = [part.strip() for part in extras.split(";")]
+                *_extras, name = (part.strip() for part in extras.split(";"))
             else:
                 name = extras
 

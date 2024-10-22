@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Selventa diseases.
 
 .. seealso:: https://github.com/pyobo/pyobo/issues/26
 """
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 

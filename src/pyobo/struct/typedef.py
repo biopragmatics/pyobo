@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Default typedefs, references, and other structures."""
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Optional, Union
 
 from .reference import Reference, Referenced
 from ..identifier_utils import normalize_curie
@@ -71,11 +70,11 @@ class TypeDef(Referenced):
     is_symmetric: Optional[bool] = None
     domain: Optional[Reference] = None
     range: Optional[Reference] = None
-    parents: List[Reference] = field(default_factory=list)
-    xrefs: List[Reference] = field(default_factory=list)
+    parents: list[Reference] = field(default_factory=list)
+    xrefs: list[Reference] = field(default_factory=list)
     inverse: Optional[Reference] = None
     created_by: Optional[str] = None
-    holds_over_chain: Optional[List[Reference]] = None
+    holds_over_chain: Optional[list[Reference]] = None
     #: Whether this relationship is a metadata tag. Properties that are marked as metadata tags are
     #: used to record object metadata. Object metadata is additional information about an object
     #: that is useful to track, but does not impact the definition of the object or how it should
@@ -83,7 +82,7 @@ class TypeDef(Referenced):
     #: structured notes about a term, for example.
     is_metadata_tag: Optional[bool] = None
 
-    def __hash__(self) -> int:  # noqa: D105
+    def __hash__(self) -> int:
         return hash((self.__class__, self.prefix, self.identifier))
 
     def iterate_obo_lines(self) -> Iterable[str]:
@@ -140,10 +139,10 @@ class TypeDef(Referenced):
         return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
 
 
-RelationHint = Union[Reference, TypeDef, Tuple[str, str], str]
+RelationHint = Union[Reference, TypeDef, tuple[str, str], str]
 
 
-def get_reference_tuple(relation: RelationHint) -> Tuple[str, str]:
+def get_reference_tuple(relation: RelationHint) -> tuple[str, str]:
     """Get tuple for typedef/reference."""
     if isinstance(relation, (Reference, TypeDef)):
         return relation.prefix, relation.identifier
@@ -366,7 +365,7 @@ has_homepage = TypeDef(
     reference=Reference(prefix="foaf", identifier="homepage", name="homepage"), is_metadata_tag=True
 )
 
-default_typedefs: Dict[Tuple[str, str], TypeDef] = {
+default_typedefs: dict[tuple[str, str], TypeDef] = {
     v.pair: v for k, v in locals().items() if isinstance(v, TypeDef)
 }
 

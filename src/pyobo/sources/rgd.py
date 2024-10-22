@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Converter for RGD."""
 
 import logging
-from typing import Iterable, Optional
+from collections.abc import Iterable
+from typing import Optional
 
 import pandas as pd
 from tqdm.auto import tqdm

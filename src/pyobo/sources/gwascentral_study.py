@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Converter for GWAS Central."""
 
 import logging
 import tarfile
-from typing import Iterable, Optional
+from collections.abc import Iterable
+from typing import Optional
 from xml.etree import ElementTree
 
 from pyobo.struct import Obo, Reference, Term, has_part

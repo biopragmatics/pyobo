@@ -27,7 +27,8 @@ DR         Cross-reference to external     Optional; once or more
 
 import itertools as itt
 from collections import defaultdict
-from typing import DefaultDict, Iterable, List, Mapping, Optional, Tuple
+from collections.abc import Iterable, Mapping
+from typing import Optional
 
 from tqdm.auto import tqdm
 
@@ -63,18 +64,18 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
     path = ensure_path(PREFIX, url=URL, force=force)
     with open(path) as file:
         lines = list(file)
-    it: Iterable[Tuple[str, str]] = ((line[:2], line[2:].strip()) for line in lines[47:-5])
+    it: Iterable[tuple[str, str]] = ((line[:2], line[2:].strip()) for line in lines[47:-5])
     for i, (_, term_lines) in enumerate(itt.groupby(it, key=lambda p: p[0] == "//")):
         term = _parse(i, term_lines)
         if term:
             yield term
 
 
-def _parse(i, lines: Iterable[Tuple[str, str]]) -> Optional[Term]:
-    dd_: DefaultDict[str, List[str]] = defaultdict(list)
+def _parse(i, lines: Iterable[tuple[str, str]]) -> Optional[Term]:
+    dd_: defaultdict[str, list[str]] = defaultdict(list)
     for key, value in lines:
         dd_[key].append(value)
-    dd: Mapping[str, List[str]] = dict(dd_)
+    dd: Mapping[str, list[str]] = dict(dd_)
 
     if "//" in dd:
         return None

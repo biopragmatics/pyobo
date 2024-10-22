@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
-
 """OBO Readers."""
 
 import logging
+from collections.abc import Iterable, Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable, List, Mapping, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import bioregistry
 import networkx as nx
@@ -13,7 +12,7 @@ from more_itertools import pairwise
 from tqdm.auto import tqdm
 
 from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
-from .identifier_utils import MissingPrefix, normalize_curie
+from .identifier_utils import MissingPrefixError, normalize_curie
 from .registries import curie_has_blacklisted_prefix, curie_is_blacklisted, remap_prefix
 from .struct import (
     Obo,
@@ -39,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 # FIXME use bioontologies
 # RELATION_REMAPPINGS: Mapping[str, Tuple[str, str]] = bioontologies.upgrade.load()
-RELATION_REMAPPINGS: Mapping[str, Tuple[str, str]] = {
+RELATION_REMAPPINGS: Mapping[str, tuple[str, str]] = {
     "part_of": part_of.pair,
     "has_part": has_part.pair,
     "develops_from": develops_from.pair,
@@ -75,7 +74,7 @@ def from_obo_path(
     return from_obonet(graph, strict=strict, **kwargs)
 
 
-def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noqa:C901
+def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
     """Get all of the terms from a OBO graph."""
     _ontology = graph.graph["ontology"]
     ontology = bioregistry.normalize_prefix(_ontology)  # probably always okay
@@ -126,12 +125,12 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
         )
         for prefix, identifier, data in _iter_obo_graph(graph=graph, strict=strict)
     )
-    references: Mapping[Tuple[str, str], Reference] = {
+    references: Mapping[tuple[str, str], Reference] = {
         reference.pair: reference for reference in reference_it
     }
 
     #: CURIEs to typedefs
-    typedefs: Mapping[Tuple[str, str], TypeDef] = {
+    typedefs: Mapping[tuple[str, str], TypeDef] = {
         typedef.pair: typedef for typedef in iterate_graph_typedefs(graph, ontology)
     }
 
@@ -152,7 +151,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
 
         try:
             node_xrefs = list(iterate_node_xrefs(prefix=prefix, data=data, strict=strict))
-        except MissingPrefix as e:
+        except MissingPrefixError as e:
             e.reference = reference
             raise e
         xrefs, provenance = [], []
@@ -171,7 +170,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
 
         try:
             alt_ids = list(iterate_node_alt_ids(data, strict=strict))
-        except MissingPrefix as e:
+        except MissingPrefixError as e:
             e.reference = reference
             raise e
         n_alt_ids += len(alt_ids)
@@ -185,7 +184,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
                     strict=strict,
                 )
             )
-        except MissingPrefix as e:
+        except MissingPrefixError as e:
             e.reference = reference
             raise e
         n_parents += len(parents)
@@ -220,7 +219,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":  # noq
                     strict=strict,
                 )
             )
-        except MissingPrefix as e:
+        except MissingPrefixError as e:
             e.reference = reference
             raise e
         for relation, reference in relations_references:
@@ -278,7 +277,7 @@ def _iter_obo_graph(
     graph: nx.MultiDiGraph,
     *,
     strict: bool = True,
-) -> Iterable[Tuple[str, str, Mapping[str, Any]]]:
+) -> Iterable[tuple[str, str, Mapping[str, Any]]]:
     """Iterate over the nodes in the graph with the prefix stripped (if it's there)."""
     for node, data in graph.nodes(data=True):
         prefix, identifier = normalize_curie(node, strict=strict)
@@ -366,7 +365,8 @@ def iterate_graph_typedefs(
 
 def get_definition(
     data, *, prefix: str, identifier: str
-) -> Union[Tuple[None, None], Tuple[str, List[Reference]]]:
+) -> Union[tuple[None, None], tuple[str, list[Reference]]]:
+    """Extract the definition from the data."""
     definition = data.get("def")  # it's allowed not to have a definition
     if not definition:
         return None, None
@@ -379,7 +379,7 @@ def _extract_definition(
     prefix: str,
     identifier: str,
     strict: bool = False,
-) -> Union[Tuple[None, None], Tuple[str, List[Reference]]]:
+) -> Union[tuple[None, None], tuple[str, list[Reference]]]:
     """Extract the definitions."""
     if not s.startswith('"'):
         raise ValueError("definition does not start with a quote")
@@ -405,7 +405,7 @@ def _get_first_nonquoted(s: str) -> Optional[int]:
     return None
 
 
-def _quote_split(s: str) -> Tuple[str, str]:
+def _quote_split(s: str) -> tuple[str, str]:
     s = s.lstrip('"')
     i = _get_first_nonquoted(s)
     if i is None:
@@ -416,9 +416,7 @@ def _quote_split(s: str) -> Tuple[str, str]:
 def _clean_definition(s: str) -> str:
     # if '\t' in s:
     #     logger.warning('has tab')
-    return (
-        s.replace('\\"', '"').replace("\n", " ").replace("\t", " ").replace(r"\d", "")  # noqa:W605
-    )
+    return s.replace('\\"', '"').replace("\n", " ").replace("\t", " ").replace(r"\d", "")
 
 
 def _extract_synonym(
@@ -516,7 +514,7 @@ HANDLED_PROPERTY_TYPES = {
 
 def iterate_node_properties(
     data: Mapping[str, Any], *, property_prefix: Optional[str] = None, term=None
-) -> Iterable[Tuple[str, str]]:
+) -> Iterable[tuple[str, str]]:
     """Extract properties from a :mod:`obonet` node's data."""
     for prop_value_type in data.get("property_value", []):
         try:
@@ -568,7 +566,7 @@ def iterate_node_relationships(
     prefix: str,
     identifier: str,
     strict: bool = True,
-) -> Iterable[Tuple[Reference, Reference]]:
+) -> Iterable[tuple[Reference, Reference]]:
     """Extract relationships from a :mod:`obonet` node's data."""
     for s in data.get("relationship", []):
         relation_curie, target_curie = s.split(" ")

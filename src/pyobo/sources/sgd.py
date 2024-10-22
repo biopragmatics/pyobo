@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 """Converter for SGD."""
 
-from typing import Iterable
+from collections.abc import Iterable
 from urllib.parse import unquote_plus
 
 from ..struct import Obo, Reference, Synonym, Term, from_species

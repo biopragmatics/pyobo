@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 """Convert PFAM Clans to OBO."""
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from tqdm.auto import tqdm
 

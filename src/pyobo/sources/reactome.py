@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Converter for Reactome."""
 
 import logging
 from collections import defaultdict
+from collections.abc import Iterable, Mapping
 from functools import lru_cache
-from typing import Iterable, Mapping, Set
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -122,7 +120,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
 
 @lru_cache(maxsize=1)
-def get_protein_to_pathways() -> Mapping[str, Set[str]]:
+def get_protein_to_pathways() -> Mapping[str, set[str]]:
     """Get a mapping from proteins to the pathways they're in."""
     protein_to_pathways = defaultdict(set)
     x = get_id_multirelations_mapping("reactome", has_participant)

@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Utilities for building paths."""
 
 import logging
 from pathlib import Path
-from typing import Any, Callable, Dict, Literal, Optional, Union
+from typing import Any, Callable, Literal, Optional, Union
 
 import pandas as pd
 import requests_ftp
@@ -46,7 +44,8 @@ def prefix_directory_join(
         logger.info("[%s] got version %s", prefix, version)
     elif not isinstance(version, str):
         raise TypeError(f"Invalid type: {version} ({type(version)})")
-    assert version is not None
+    if version is None:
+        raise AssertionError
     version = cleanup_version(version, prefix=prefix)
     if version is not None and "/" in version:
         raise ValueError(f"[{prefix}] Can not have slash in version: {version}")
@@ -78,7 +77,7 @@ def ensure_path(
     if not path.exists() and error_on_missing:
         raise FileNotFoundError
 
-    kwargs: Dict[str, Any]
+    kwargs: dict[str, Any]
     if verify:
         kwargs = {"backend": backend}
     else:

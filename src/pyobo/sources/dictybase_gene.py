@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-
 """Converter for dictyBase gene.
 
 Note that normal dictybase idenififers are for sequences
 """
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 from tqdm.auto import tqdm

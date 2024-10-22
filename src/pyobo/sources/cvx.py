@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Converter for CVX."""
 
 from collections import defaultdict
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 

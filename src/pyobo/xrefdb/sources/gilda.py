@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Cross references from Gilda.
 
 .. seealso:: https://github.com/indralabs/gilda

@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
-
 """Converter for ChEMBL.
 
 Run with ``python -m pyobo.sources.chembl -vv``.
 """
 
 import logging
+from collections.abc import Iterable
 from contextlib import closing
-from typing import Iterable
 
 import chembl_downloader
 

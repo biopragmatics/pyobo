@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """High-level API for alternative identifiers."""
 
 import logging
+from collections.abc import Mapping
 from functools import lru_cache
-from typing import List, Mapping, Optional
+from typing import Optional
 
 from .utils import get_version
 from ..getters import get_ontology
@@ -26,11 +25,11 @@ NO_ALTS = {
 }
 
 
-@lru_cache()
+@lru_cache
 @wrap_norm_prefix
 def get_id_to_alts(
     prefix: str, *, force: bool = False, version: Optional[str] = None
-) -> Mapping[str, List[str]]:
+) -> Mapping[str, list[str]]:
     """Get alternate identifiers."""
     if prefix in NO_ALTS:
         return {}
@@ -41,7 +40,7 @@ def get_id_to_alts(
     header = [f"{prefix}_id", "alt_id"]
 
     @cached_multidict(path=path, header=header, force=force)
-    def _get_mapping() -> Mapping[str, List[str]]:
+    def _get_mapping() -> Mapping[str, list[str]]:
         if force:
             logger.info(f"[{prefix}] forcing reload for alts")
         else:
@@ -52,7 +51,7 @@ def get_id_to_alts(
     return _get_mapping()
 
 
-@lru_cache()
+@lru_cache
 @wrap_norm_prefix
 def get_alts_to_id(
     prefix: str, *, force: bool = False, version: Optional[str] = None

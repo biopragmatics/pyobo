@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Extract registry information."""
 
 from .metaregistry import (  # noqa: F401

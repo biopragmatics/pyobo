@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Converter for WikiPathways."""
 
 import logging
 import urllib.error
-from typing import Iterable
+from collections.abc import Iterable
 
 from .gmt_utils import parse_wikipathways_gmt
 from ..constants import SPECIES_REMAPPING

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Get Wikidata xrefs.
 
 Run with ``python -m pyobo.xrefdb.sources.wikidata``.
@@ -7,7 +5,7 @@ Run with ``python -m pyobo.xrefdb.sources.wikidata``.
 
 import json
 import logging
-from typing import Iterable, Tuple
+from collections.abc import Iterable
 
 import bioregistry
 import click
@@ -68,7 +66,7 @@ def get_wikidata_df(prefix: str, wikidata_property: str) -> pd.DataFrame:
 
 def iter_wikidata_mappings(
     wikidata_property: str, *, cache: bool = True
-) -> Iterable[Tuple[str, str]]:
+) -> Iterable[tuple[str, str]]:
     """Iterate over Wikidata xrefs."""
     path = WIKIDATA_MAPPING_DIRECTORY.join(name=f"{wikidata_property}.json")
     if path.exists() and cache:

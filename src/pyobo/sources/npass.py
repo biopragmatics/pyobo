@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Converter for NPASS."""
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 from tqdm.auto import tqdm

@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """PyOBO's Gilda utilities."""
 
 import logging
+from collections.abc import Iterable
 from subprocess import CalledProcessError
-from typing import Iterable, List, Optional, Tuple, Type, Union
+from typing import Optional, Union
 
 import bioregistry
 import gilda.api
@@ -22,7 +21,7 @@ from pyobo import (
     get_ids,
     get_obsolete,
 )
-from pyobo.getters import NoBuild
+from pyobo.getters import NoBuildError
 from pyobo.utils.io import multidict
 
 __all__ = [
@@ -41,7 +40,7 @@ def iter_gilda_prediction_tuples(
     grounder: Optional[Grounder] = None,
     identifiers_are_names: bool = False,
     strict: bool = False,
-) -> Iterable[Tuple[str, str, str, str, str, str, str, str, float]]:
+) -> Iterable[tuple[str, str, str, str, str, str, str, str, float]]:
     """Iterate over prediction tuples for a given prefix."""
     if grounder is None:
         grounder = gilda.api.grounder
@@ -94,7 +93,7 @@ def get_grounder(
     prefixes: Union[str, Iterable[str]],
     *,
     unnamed: Optional[Iterable[str]] = None,
-    grounder_cls: Optional[Type[Grounder]] = None,
+    grounder_cls: Optional[type[Grounder]] = None,
     versions: Union[None, str, Iterable[Union[str, None]]] = None,
     strict: bool = True,
     skip_obsolete: bool = False,
@@ -115,7 +114,7 @@ def get_grounder(
     if len(prefixes) != len(versions):
         raise ValueError
 
-    terms: List[gilda.term.Term] = []
+    terms: list[gilda.term.Term] = []
     for prefix, version in zip(tqdm(prefixes, leave=False, disable=not progress), versions):
         try:
             p_terms = list(
@@ -128,7 +127,7 @@ def get_grounder(
                     progress=progress,
                 )
             )
-        except (NoBuild, CalledProcessError):
+        except (NoBuildError, CalledProcessError):
             continue
         else:
             terms.extend(p_terms)
@@ -251,7 +250,7 @@ def get_gilda_terms(
 
 
 def get_gilda_term_subset(
-    source: str, ancestors: Union[str, List[str]], **kwargs
+    source: str, ancestors: Union[str, list[str]], **kwargs
 ) -> Iterable[gilda.term.Term]:
     """Get a subset of terms."""
     subset = {
@@ -264,7 +263,7 @@ def get_gilda_term_subset(
             yield term
 
 
-def _ensure_list(s: Union[str, List[str]]) -> List[str]:
+def _ensure_list(s: Union[str, list[str]]) -> list[str]:
     if isinstance(s, str):
         return [s]
     return s

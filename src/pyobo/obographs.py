@@ -1,6 +1,6 @@
 """Convert PyOBO into OBO Graph."""
 
-from typing import Iterable, List
+from collections.abc import Iterable
 
 import bioregistry
 import curies
@@ -35,8 +35,8 @@ def parse_results_from_obo(obo: Obo) -> ParseResults:
 
 def graph_from_obo(obo: Obo) -> Graph:
     """Get an OBO Graph object from a PyOBO object."""
-    nodes: List[Node] = []
-    edges: List[Edge] = []
+    nodes: list[Node] = []
+    edges: list[Edge] = []
     for term in obo:
         nodes.append(_get_class_node(term))
         edges.extend(_iter_edges(term))

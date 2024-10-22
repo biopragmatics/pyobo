@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-
 """Convert ICD-10 to OBO.
 
 Run with python -m pyobo.sources.icd10 -v
 """
 
 import logging
-from typing import Any, Iterable, Mapping, Set
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 import click
 from more_click import verbose_option
@@ -57,7 +56,7 @@ def iter_terms() -> Iterable[Term]:
     chapter_urls = res_json["child"]
     tqdm.write(f"there are {len(chapter_urls)} chapters")
 
-    visited_identifiers: Set[str] = set()
+    visited_identifiers: set[str] = set()
     for identifier in get_child_identifiers(ICD10_TOP_LEVEL_URL, res_json):
         yield from visiter(
             identifier,

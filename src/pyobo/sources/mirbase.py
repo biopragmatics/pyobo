@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Converter for miRBase."""
 
 import gzip
 import logging
-from typing import Iterable, List, Mapping
+from collections.abc import Iterable, Mapping
 
 from tqdm.auto import tqdm
 
@@ -48,7 +46,7 @@ def get_obo(force: bool = False) -> Obo:
     return MiRBaseGetter(force=force)
 
 
-def get_terms(version: str, force: bool = False) -> List[Term]:
+def get_terms(version: str, force: bool = False) -> list[Term]:
     """Parse miRNA data from filepath and convert it to dictionary."""
     _assert_frozen_version(version)
     url = f"{BASE_URL}/miRNA.dat.gz"
@@ -77,7 +75,7 @@ def _prepare_organisms(version: str, force: bool = False):
     return {division: (taxonomy_id, name) for _, division, name, _tree, taxonomy_id in df.values}
 
 
-def _prepare_aliases(version: str, force: bool = False) -> Mapping[str, List[str]]:
+def _prepare_aliases(version: str, force: bool = False) -> Mapping[str, list[str]]:
     _assert_frozen_version(version)
     url = f"{BASE_URL}/aliases.txt.gz"
     df = ensure_df(PREFIX, url=url, sep="\t", version=version, force=force)
@@ -94,7 +92,7 @@ def _process_definitions_lines(
     organisms = _prepare_organisms(version, force=force)
     aliases = _prepare_aliases(version, force=force)
 
-    groups: List[List[str]] = []
+    groups: list[list[str]] = []
 
     for line in lines:  # TODO replace with itertools.groupby
         if line.startswith("ID"):

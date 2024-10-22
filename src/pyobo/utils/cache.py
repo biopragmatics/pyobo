@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """Utilities for caching files."""
 
 import gzip
 import json
 import logging
 import os
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Generic, Iterable, List, Mapping, TypeVar, Union
+from typing import Generic, TypeVar, Union
 
 import networkx as nx
 from pystow.cache import Cached
@@ -46,6 +45,7 @@ class _CachedMapping(Cached[X], Generic[X]):
         use_tqdm: bool = False,
         force: bool = False,
     ):
+        """Initialize the mapping cache."""
         super().__init__(path=path, force=force)
         self.header = header
         self.use_tqdm = use_tqdm
@@ -55,9 +55,11 @@ class CachedMapping(_CachedMapping[Mapping[str, str]]):
     """A cache for simple mappings."""
 
     def load(self) -> Mapping[str, str]:
+        """Load a TSV file."""
         return open_map_tsv(self.path, use_tqdm=self.use_tqdm)
 
     def dump(self, rv: Mapping[str, str]) -> None:
+        """Write a TSV file."""
         write_map_tsv(path=self.path, header=self.header, rv=rv)
 
 
@@ -77,23 +79,29 @@ def write_gzipped_graph(graph: nx.MultiDiGraph, path: Union[str, Path]) -> None:
 
 
 class CachedGraph(Cached[nx.MultiDiGraph]):
+    """A cache for multidigraphs."""
+
     def load(self) -> nx.MultiDiGraph:
+        """Load a graph file."""
         return get_gzipped_graph(self.path)
 
     def dump(self, rv: nx.MultiDiGraph) -> None:
+        """Write a graph file."""
         write_gzipped_graph(rv, self.path)
 
 
 cached_graph = CachedGraph
 
 
-class CachedMultidict(_CachedMapping[Mapping[str, List[str]]]):
+class CachedMultidict(_CachedMapping[Mapping[str, list[str]]]):
     """A cache for complex mappings."""
 
-    def load(self) -> Mapping[str, List[str]]:
+    def load(self) -> Mapping[str, list[str]]:
+        """Load a TSV file representing a multimap."""
         return open_multimap_tsv(self.path, use_tqdm=self.use_tqdm)
 
-    def dump(self, rv: Mapping[str, List[str]]) -> None:
+    def dump(self, rv: Mapping[str, list[str]]) -> None:
+        """Write a TSV file representing a multimap."""
         write_multimap_tsv(path=self.path, header=self.header, rv=rv)
 
 

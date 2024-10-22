@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Convert ExPASy to OBO."""
 
 import logging
 from collections import defaultdict
-from typing import Any, Dict, Iterable, Mapping, Optional, Set, Tuple
+from collections.abc import Iterable, Mapping
+from typing import Any, Optional
 
 from .utils import get_go_mapping
 from ..struct import Obo, Reference, Synonym, Term
@@ -76,7 +75,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     with open(tree_path) as file:
         tree = get_tree(file)
 
-    terms: Dict[str, Term] = {}
+    terms: dict[str, Term] = {}
     child_to_parents = defaultdict(list)
     for ec_code, data in tree.items():
         terms[ec_code] = Term(
@@ -176,7 +175,7 @@ def normalize_expasy_id(expasy_id: str) -> str:
     return expasy_id.replace(" ", "")
 
 
-def give_edge(unnormalized_ec_code: str) -> Tuple[int, Optional[str], str]:
+def give_edge(unnormalized_ec_code: str) -> tuple[int, Optional[str], str]:
     """Return a (parent, child) tuple for given id."""
     levels = [x for x in unnormalized_ec_code.replace(" ", "").replace("-", "").split(".") if x]
     level = len(levels)
@@ -227,7 +226,7 @@ def get_database(lines: Iterable[str]) -> Mapping:
     for groups in _group_by_id(lines):
         _, expasy_id = groups[0]
 
-        ec_data_entry: Dict[str, Any] = {
+        ec_data_entry: dict[str, Any] = {
             "concept": {
                 "namespace": PREFIX,
                 "identifier": expasy_id,
@@ -269,11 +268,11 @@ def get_database(lines: Iterable[str]) -> Mapping:
                         continue
                     uniprot_id, uniprot_accession = uniprot_entry.split(",")
                     ec_data_entry["proteins"].append(  # type:ignore
-                        dict(
-                            namespace="uniprot",
-                            name=uniprot_accession,
-                            identifier=uniprot_id,
-                        )
+                        {
+                            "namespace": "uniprot",
+                            "name": uniprot_accession,
+                            "identifier": uniprot_id,
+                        }
                     )
 
         rv[expasy_id] = ec_data_entry
@@ -300,7 +299,7 @@ def _group_by_id(lines):
     return groups
 
 
-def get_ec2go(version: str) -> Mapping[str, Set[Tuple[str, str]]]:
+def get_ec2go(version: str) -> Mapping[str, set[tuple[str, str]]]:
     """Get the EC mapping to GO activities."""
     url = "http://current.geneontology.org/ontology/external2go/ec2go"
     path = ensure_path(PREFIX, url=url, name="ec2go.tsv", version=version)

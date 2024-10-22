@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Sources of xrefs not from OBO."""
 
 import logging
+from collections.abc import Iterable, Mapping
 from functools import lru_cache
-from typing import Callable, Iterable, Mapping, Optional
+from typing import Callable, Optional
 
 import pandas as pd
 from class_resolver import FunctionResolver
@@ -22,7 +21,7 @@ logger = logging.getLogger(__name__)
 XrefGetter = Callable[[], pd.DataFrame]
 
 
-@lru_cache()
+@lru_cache
 def _get_xref_plugins() -> Mapping[str, XrefGetter]:
     resolver: FunctionResolver[XrefGetter] = FunctionResolver.from_entrypoint("pyobo.xrefs")
     return resolver.lookup_dict

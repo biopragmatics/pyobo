@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 """Selventa families."""
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 

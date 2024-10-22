@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """High-level API for accessing content."""
 
 from .alts import (  # noqa: F401

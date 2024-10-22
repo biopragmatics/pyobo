@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-
 """Miscellaneous utilities."""
 
 import gzip
 import logging
 import os
 from datetime import datetime
-from subprocess import check_output  # noqa:S404
+from subprocess import check_output
 from typing import Optional
 
 __all__ = [

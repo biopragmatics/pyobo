@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
-
 """High-level API for species."""
 
 import logging
+from collections.abc import Mapping
 from functools import lru_cache
-from typing import Mapping, Optional
+from typing import Optional
 
 from .alts import get_primary_identifier
 from .utils import get_version
-from ..getters import NoBuild, get_ontology
+from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_mapping
 from ..utils.path import prefix_cache_join
@@ -29,7 +28,7 @@ def get_species(prefix: str, identifier: str, *, version: Optional[str] = None) 
 
     try:
         id_species = get_id_species_mapping(prefix, version=version)
-    except NoBuild:
+    except NoBuildError:
         logger.warning("unable to look up species for prefix %s", prefix)
         return None
 
@@ -41,7 +40,7 @@ def get_species(prefix: str, identifier: str, *, version: Optional[str] = None) 
     return id_species.get(primary_id)
 
 
-@lru_cache()
+@lru_cache
 @wrap_norm_prefix
 def get_id_species_mapping(
     prefix: str,

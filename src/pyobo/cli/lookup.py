@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """CLI for PyOBO lookups."""
 
 import json

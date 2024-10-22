@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Mocks for PyOBO."""
 
-from typing import List, Mapping, Optional, Tuple, TypeVar, Union
+from collections.abc import Mapping
+from typing import Optional, TypeVar, Union
 from unittest import mock
 
 import pandas as pd
@@ -25,7 +24,7 @@ def get_mock_id_name_mapping(data: Mapping[str, Mapping[str, str]]) -> mock._pat
     return _replace_mapping_getter("pyobo.api.names.get_id_name_mapping", data)
 
 
-def get_mock_id_synonyms_mapping(data: Mapping[str, Mapping[str, List[str]]]) -> mock._patch:
+def get_mock_id_synonyms_mapping(data: Mapping[str, Mapping[str, list[str]]]) -> mock._patch:
     """Mock the :func:`pyobo.extract.get_id_synonyms_mapping` function.
 
     :param data: A mapping from prefix to mappings of identifier to lists of synonyms.
@@ -33,7 +32,7 @@ def get_mock_id_synonyms_mapping(data: Mapping[str, Mapping[str, List[str]]]) ->
     return _replace_mapping_getter("pyobo.api.names.get_id_synonyms_mapping", data)
 
 
-def get_mock_id_alts_mapping(data: Mapping[str, Mapping[str, List[str]]]) -> mock._patch:
+def get_mock_id_alts_mapping(data: Mapping[str, Mapping[str, list[str]]]) -> mock._patch:
     """Mock the :func:`pyobo.extract.get_id_to_alts` function.
 
     :param data: A mapping from prefix to mappings of identifier to lists of alternative identifiers.
@@ -52,7 +51,7 @@ def _replace_mapping_getter(name: str, data: Mapping[str, Mapping[str, X]]) -> m
 
 
 def get_mock_get_xrefs_df(
-    df: Union[List[Tuple[str, str, str, str, str]], pd.DataFrame]
+    df: Union[list[tuple[str, str, str, str, str]], pd.DataFrame],
 ) -> mock._patch:
     """Mock the :func:`pyobo.xrefsdb.xrefs_pipeline.get_xref_df` function.
 

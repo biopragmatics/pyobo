@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """I/O utilities."""
 
 import collections.abc
@@ -8,9 +6,10 @@ import gzip
 import logging
 import time
 from collections import defaultdict
+from collections.abc import Iterable, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, TypeVar, Union
+from typing import Optional, TypeVar, Union
 from xml.etree.ElementTree import Element
 
 import pandas as pd
@@ -78,7 +77,7 @@ def open_multimap_tsv(
     *,
     use_tqdm: bool = False,
     has_header: bool = True,
-) -> Mapping[str, List[str]]:
+) -> Mapping[str, list[str]]:
     """Load a mapping TSV file that has multiple mappings for each."""
     return multidict(_help_multimap_tsv(path=path, use_tqdm=use_tqdm, has_header=has_header))
 
@@ -88,7 +87,7 @@ def _help_multimap_tsv(
     *,
     use_tqdm: bool = False,
     has_header: bool = True,
-) -> Iterable[Tuple[str, str]]:
+) -> Iterable[tuple[str, str]]:
     with open(path) as file:
         if has_header:
             next(file)  # throw away header
@@ -97,7 +96,7 @@ def _help_multimap_tsv(
         yield from get_reader(file)
 
 
-def multidict(pairs: Iterable[Tuple[X, Y]]) -> Mapping[X, List[Y]]:
+def multidict(pairs: Iterable[tuple[X, Y]]) -> Mapping[X, list[Y]]:
     """Accumulate a multidict from a list of pairs."""
     rv = defaultdict(list)
     for key, value in pairs:
@@ -105,7 +104,7 @@ def multidict(pairs: Iterable[Tuple[X, Y]]) -> Mapping[X, List[Y]]:
     return dict(rv)
 
 
-def multisetdict(pairs: Iterable[Tuple[X, Y]]) -> Dict[X, Set[Y]]:
+def multisetdict(pairs: Iterable[tuple[X, Y]]) -> dict[X, set[Y]]:
     """Accumulate a multisetdict from a list of pairs."""
     rv = defaultdict(set)
     for key, value in pairs:
@@ -118,7 +117,7 @@ def write_map_tsv(
     *,
     path: Union[str, Path],
     header: Optional[Iterable[str]] = None,
-    rv: Union[Iterable[Tuple[str, str]], Mapping[str, str]],
+    rv: Union[Iterable[tuple[str, str]], Mapping[str, str]],
     sep: str = "\t",
 ) -> None:
     """Write a mapping dictionary to a TSV file."""
@@ -132,7 +131,7 @@ def write_multimap_tsv(
     *,
     path: Union[str, Path],
     header: Iterable[str],
-    rv: Mapping[str, List[str]],
+    rv: Mapping[str, list[str]],
     sep: str = "\t",
 ) -> None:
     """Write a multiple mapping dictionary to a TSV file."""
@@ -144,7 +143,7 @@ def write_iterable_tsv(
     *,
     path: Union[str, Path],
     header: Optional[Iterable[str]] = None,
-    it: Iterable[Tuple[str, ...]],
+    it: Iterable[tuple[str, ...]],
     sep: str = "\t",
 ) -> None:
     """Write a mapping dictionary to a TSV file."""

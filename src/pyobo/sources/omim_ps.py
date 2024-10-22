@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Converter for OMIM Phenotypic Series."""
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
 from bioversions.utils import get_soup
 

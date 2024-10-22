@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Converter for FamPlex."""
 
 import logging
 from collections import defaultdict
-from typing import Iterable, List, Mapping, Tuple
+from collections.abc import Iterable, Mapping
 
 import bioregistry
 from pystow.utils import get_commit
@@ -62,7 +60,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         dtype=str,
         force=force,
     )
-    id_to_definition: Mapping[str, Tuple[str, str]] = {
+    id_to_definition: Mapping[str, tuple[str, str]] = {
         identifier: (definition, provenance)
         for identifier, provenance, definition in definitions_df.values
     }
@@ -140,7 +138,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         yield term
 
 
-def _get_xref_df(version: str) -> Mapping[str, List[Reference]]:
+def _get_xref_df(version: str) -> Mapping[str, list[Reference]]:
     base_url = f"https://raw.githubusercontent.com/sorgerlab/famplex/{version}"
     xrefs_url = f"{base_url}/equivalences.csv"
     xrefs_df = ensure_df(PREFIX, url=xrefs_url, version=version, header=None, sep=",", dtype=str)

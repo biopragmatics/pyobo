@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Get ChEMBL xrefs."""
 
 from typing import Optional

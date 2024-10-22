@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Extract and convert BioGRID identifiers."""
 
+from collections.abc import Mapping
 from functools import partial
-from typing import Mapping, Optional
+from typing import Optional
 
 import pandas as pd
 
@@ -77,7 +76,8 @@ def get_ncbigene_mapping() -> Mapping[str, str]:
     .. code-block:: python
 
         from pyobo import get_filtered_xrefs
-        biogrid_ncbigene_mapping = get_filtered_xrefs('biogrid', 'ncbigene')
+
+        biogrid_ncbigene_mapping = get_filtered_xrefs("biogrid", "ncbigene")
     """
     df = get_df()
     df = df.loc[df["IDENTIFIER_TYPE"] == "ENTREZ_GENE", ["BIOGRID_ID", "IDENTIFIER_VALUE"]]

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Utilities for OBO files."""
 
 import datetime
@@ -11,16 +9,11 @@ import subprocess
 import typing
 import urllib.error
 from collections import Counter
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import (
     Callable,
-    Iterable,
-    List,
-    Mapping,
     Optional,
-    Sequence,
-    Set,
-    Tuple,
     TypeVar,
     Union,
 )
@@ -30,7 +23,7 @@ from bioontologies import robot
 from tqdm.auto import tqdm
 
 from .constants import DATABASE_DIRECTORY
-from .identifier_utils import MissingPrefix, wrap_norm_prefix
+from .identifier_utils import MissingPrefixError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
 from .utils.io import get_writer
@@ -39,17 +32,17 @@ from .version import get_git_hash, get_version
 
 __all__ = [
     "get_ontology",
-    "NoBuild",
+    "NoBuildError",
 ]
 
 logger = logging.getLogger(__name__)
 
 
-class NoBuild(RuntimeError):
+class NoBuildError(RuntimeError):
     """Base exception for being unable to build."""
 
 
-class UnhandledFormat(NoBuild):
+class UnhandledFormatError(NoBuildError):
     """Only OWL is available."""
 
 
@@ -117,7 +110,7 @@ def get_ontology(
 
     ontology_format, path = _ensure_ontology_path(prefix, force=force, version=version)
     if path is None:
-        raise NoBuild(prefix)
+        raise NoBuildError(prefix)
     elif ontology_format == "obo":
         pass  # all gucci
     elif ontology_format == "owl":
@@ -127,7 +120,7 @@ def get_ontology(
         robot.convert(path, _converted_obo_path, check=robot_check)
         path = _converted_obo_path
     else:
-        raise UnhandledFormat(f"[{prefix}] unhandled ontology file format: {path.suffix}")
+        raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
 
     from .reader import from_obo_path
 
@@ -147,8 +140,8 @@ def get_ontology(
 
 def _ensure_ontology_path(
     prefix: str, force, version
-) -> Union[Tuple[str, Path], Tuple[None, None]]:
-    for ontology_format, url in [  # noqa:B007
+) -> Union[tuple[str, Path], tuple[None, None]]:
+    for ontology_format, url in [
         ("obo", bioregistry.get_obo_download(prefix)),
         ("owl", bioregistry.get_owl_download(prefix)),
         ("json", bioregistry.get_json_download(prefix)),
@@ -246,7 +239,7 @@ def iter_helper(
     leave: bool = False,
     strict: bool = True,
     **kwargs,
-) -> Iterable[Tuple[str, str, X]]:
+) -> Iterable[tuple[str, str, X]]:
     """Yield all mappings extracted from each database given."""
     for prefix, mapping in iter_helper_helper(f, strict=strict, **kwargs):
         it = tqdm(
@@ -266,7 +259,7 @@ def _prefixes(
     skip_below: Optional[str] = None,
     skip_below_inclusive: bool = True,
     skip_pyobo: bool = False,
-    skip_set: Optional[Set[str]] = None,
+    skip_set: Optional[set[str]] = None,
 ) -> Iterable[str]:
     for prefix, resource in sorted(bioregistry.read_registry().items()):
         if resource.no_own_terms:
@@ -299,10 +292,10 @@ def iter_helper_helper(
     skip_below: Optional[str] = None,
     skip_below_inclusive: bool = True,
     skip_pyobo: bool = False,
-    skip_set: Optional[Set[str]] = None,
+    skip_set: Optional[set[str]] = None,
     strict: bool = True,
     **kwargs,
-) -> Iterable[Tuple[str, X]]:
+) -> Iterable[tuple[str, X]]:
     """Yield all mappings extracted from each database given.
 
     :param f: A function that takes a prefix and gives back something that will be used by an outer function.
@@ -342,13 +335,13 @@ def iter_helper_helper(
             logger.warning("[%s] unable to download", prefix)
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
-        except MissingPrefix as e:
+        except MissingPrefixError as e:
             logger.warning("[%s] missing prefix: %s", prefix, e)
             if strict and not bioregistry.is_deprecated(prefix):
                 raise e
         except subprocess.CalledProcessError:
             logger.warning("[%s] ROBOT was unable to convert OWL to OBO", prefix)
-        except UnhandledFormat as e:
+        except UnhandledFormatError as e:
             logger.warning("[%s] %s", prefix, e)
         except ValueError as e:
             if _is_xml(e):
@@ -390,7 +383,7 @@ def _prep_dir(directory: Union[None, str, pathlib.Path]) -> pathlib.Path:
 
 
 def db_output_helper(
-    f: Callable[..., Iterable[Tuple[str, ...]]],
+    f: Callable[..., Iterable[tuple[str, ...]]],
     db_name: str,
     columns: Sequence[str],
     *,
@@ -399,7 +392,7 @@ def db_output_helper(
     use_gzip: bool = True,
     summary_detailed: Optional[Sequence[int]] = None,
     **kwargs,
-) -> List[pathlib.Path]:
+) -> list[pathlib.Path]:
     """Help output database builds.
 
     :param f: A function that takes a prefix and gives back something that will be used by an outer function.
@@ -413,7 +406,7 @@ def db_output_helper(
     directory = _prep_dir(directory)
 
     c: typing.Counter[str] = Counter()
-    c_detailed: typing.Counter[Tuple[str, ...]] = Counter()
+    c_detailed: typing.Counter[tuple[str, ...]] = Counter()
 
     if use_gzip:
         db_path = directory.joinpath(f"{db_name}.tsv.gz")
@@ -475,7 +468,7 @@ def db_output_helper(
             indent=2,
         )
 
-    rv: List[pathlib.Path] = [
+    rv: list[pathlib.Path] = [
         db_metadata_path,
         db_path,
         db_sample_path,

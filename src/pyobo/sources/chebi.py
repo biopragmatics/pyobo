@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 """Converter for ChEBI."""
 
-from typing import Mapping, Set, Tuple
+from collections.abc import Mapping
 
 from ..api import get_filtered_properties_mapping, get_filtered_relations_df
 from ..struct import Reference, TypeDef
@@ -33,7 +31,7 @@ def get_chebi_smiles_id_mapping() -> Mapping[str, str]:
 has_role = TypeDef(reference=Reference(prefix="chebi", identifier="has_role"))
 
 
-def get_chebi_role_to_children() -> Mapping[str, Set[Tuple[str, str]]]:
+def get_chebi_role_to_children() -> Mapping[str, set[tuple[str, str]]]:
     """Get the ChEBI role to children mapping."""
     df = get_filtered_relations_df("chebi", relation=has_role)
     return multisetdict((role_id, ("chebi", chemical_id)) for chemical_id, _, role_id in df.values)

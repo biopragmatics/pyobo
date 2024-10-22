@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-
 """Convert KEGG Genome to OBO.
 
 Run with ``python -m pyobo.sources.kegg.genome``
 """
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
 from tqdm.auto import tqdm
 

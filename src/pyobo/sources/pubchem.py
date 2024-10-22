@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Converter for PubChem Compound."""
 
 import logging
-from typing import Iterable, Mapping, Optional
+from collections.abc import Iterable, Mapping
+from typing import Optional
 
 import pandas as pd
 from bioregistry.utils import removeprefix
