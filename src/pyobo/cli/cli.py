@@ -15,7 +15,6 @@ from tabulate import tabulate
 from .aws import main as aws_main
 from .database import main as database_main
 from .lookup import lookup
-from ..apps.cli import main as apps_main
 from ..constants import RAW_DIRECTORY
 from ..plugins import has_nomenclature_plugin, iter_nomenclature_plugins
 from ..registries import iter_cached_obo
@@ -116,7 +115,6 @@ def remapping(file):
 
 
 main.add_command(lookup)
-main.add_command(apps_main)
 main.add_command(aws_main)
 main.add_command(database_main)
 

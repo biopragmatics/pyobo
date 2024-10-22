@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 import bioregistry
 import curies
 from curies.api import ExpansionError
-from pydantic import Field, root_validator, validator
+from pydantic import Field, field_validator, model_validator
 
 from .utils import obo_escape
 from ..identifier_utils import normalize_curie
@@ -23,7 +23,7 @@ class Reference(curies.Reference):
 
     name: Optional[str] = Field(default=None, description="the name of the reference")
 
-    @validator("prefix")
+    @field_validator("prefix")
     def validate_prefix(cls, v):  # noqa
         """Validate the prefix for this reference."""
         norm_prefix = bioregistry.normalize_prefix(v)
@@ -41,7 +41,7 @@ class Reference(curies.Reference):
         """Get the preferred curie for this reference."""
         return f"{self.preferred_prefix}:{self.identifier}"
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def validate_identifier(cls, values):  # noqa
         """Validate the identifier."""
         prefix, identifier = values.get("prefix"), values.get("identifier")
