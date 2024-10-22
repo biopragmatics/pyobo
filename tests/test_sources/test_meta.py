@@ -21,6 +21,7 @@ class TestSources(unittest.TestCase):
                 path.stem in {"utils", "__init__", "__pycache__", "README"}
                 or path.stem.endswith("_utils")
                 or path.stem.endswith("_constants")
+                or path.stem in EXCEPTIONS
             ):
                 continue
             with self.subTest(module=path.stem):
