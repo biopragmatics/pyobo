@@ -80,6 +80,7 @@ def write_gzipped_graph(graph: nx.MultiDiGraph, path: Union[str, Path]) -> None:
 
 class CachedGraph(Cached[nx.MultiDiGraph]):
     """A cache for multidigraphs."""
+
     def load(self) -> nx.MultiDiGraph:
         """Load a graph file."""
         return get_gzipped_graph(self.path)

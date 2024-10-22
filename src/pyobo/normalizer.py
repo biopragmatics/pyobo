@@ -148,7 +148,7 @@ def ground(prefix: Union[str, Iterable[str]], query: str) -> NormalizationResult
 class OboNormalizer(Normalizer):
     """A utility for normalizing by names."""
 
-    def __init__(self, prefix: str) -> None:  # noqa: D107
+    def __init__(self, prefix: str) -> None:
         """Initialize the normalizer by an ontology's Bioregistry prefix."""
         self.prefix = prefix
         self._len_prefix = len(prefix)
