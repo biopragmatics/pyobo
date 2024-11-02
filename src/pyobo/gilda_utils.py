@@ -1,9 +1,10 @@
 """PyOBO's Gilda utilities."""
 
+from __future__ import annotations
+
 import logging
 from collections.abc import Iterable
 from subprocess import CalledProcessError
-from typing import Optional, Union
 
 import bioregistry
 import gilda.api
@@ -37,7 +38,7 @@ def iter_gilda_prediction_tuples(
     prefix: str,
     relation: str = "skos:exactMatch",
     *,
-    grounder: Optional[Grounder] = None,
+    grounder: Grounder | None = None,
     identifiers_are_names: bool = False,
     strict: bool = False,
 ) -> Iterable[tuple[str, str, str, str, str, str, str, str, float]]:
@@ -90,11 +91,11 @@ def normalize_identifier(prefix: str, identifier: str) -> str:
 
 
 def get_grounder(
-    prefixes: Union[str, Iterable[str]],
+    prefixes: str | Iterable[str],
     *,
-    unnamed: Optional[Iterable[str]] = None,
-    grounder_cls: Optional[type[Grounder]] = None,
-    versions: Union[None, str, Iterable[Union[str, None]]] = None,
+    unnamed: Iterable[str] | None = None,
+    grounder_cls: type[Grounder] | None = None,
+    versions: None | str | Iterable[str | None] | dict[str, str] = None,
     strict: bool = True,
     skip_obsolete: bool = False,
     progress: bool = True,
@@ -109,6 +110,8 @@ def get_grounder(
         versions = [None] * len(prefixes)
     elif isinstance(versions, str):
         versions = [versions]
+    elif isinstance(versions, dict):
+        versions = [versions.get(prefix) for prefix in prefixes]
     else:
         versions = list(versions)
     if len(prefixes) != len(versions):
@@ -146,8 +149,8 @@ def _fast_term(
     identifier: str,
     name: str,
     status: str,
-    organism: Optional[str] = None,
-) -> Optional[gilda.term.Term]:
+    organism: str | None = None,
+) -> gilda.term.Term | None:
     try:
         term = gilda.term.Term(
             norm_text=normalize(text),
@@ -168,7 +171,7 @@ def get_gilda_terms(
     prefix: str,
     *,
     identifiers_are_names: bool = False,
-    version: Optional[str] = None,
+    version: str | None = None,
     strict: bool = True,
     skip_obsolete: bool = False,
     progress: bool = True,
@@ -250,7 +253,7 @@ def get_gilda_terms(
 
 
 def get_gilda_term_subset(
-    source: str, ancestors: Union[str, list[str]], **kwargs
+    source: str, ancestors: str | list[str], **kwargs
 ) -> Iterable[gilda.term.Term]:
     """Get a subset of terms."""
     subset = {
@@ -263,7 +266,7 @@ def get_gilda_term_subset(
             yield term
 
 
-def _ensure_list(s: Union[str, list[str]]) -> list[str]:
+def _ensure_list(s: str | list[str]) -> list[str]:
     if isinstance(s, str):
         return [s]
     return s
