@@ -70,7 +70,9 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     df["taxonomy_id"] = df["species"].map(get_ncbitaxon_id)
 
     terms = {}
-    it = tqdm(df.values, total=len(df.index), desc=f"mapping {PREFIX}")
+    it = tqdm(
+        df.values, total=len(df.index), desc=f"mapping {PREFIX}", unit_scale=True, unit="pathway"
+    )
     for reactome_id, name, species_name, taxonomy_id in it:
         terms[reactome_id] = term = Term(
             reference=Reference(prefix=PREFIX, identifier=reactome_id, name=name),
@@ -92,10 +94,21 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         terms[child_id].append_parent(terms[parent_id])
 
     uniprot_pathway_df = ensure_participant_df(version=version, force=force)
-    for uniprot_id, reactome_id in tqdm(uniprot_pathway_df.values, total=len(uniprot_pathway_df)):
-        terms[reactome_id].append_relationship(
-            has_participant, Reference(prefix="uniprot", identifier=uniprot_id)
-        )
+    for uniprot_id, reactome_id in tqdm(
+        uniprot_pathway_df.values,
+        total=len(uniprot_pathway_df),
+        unit_scale=True,
+        unit="pathway-protein",
+    ):
+        if reactome_id not in terms:
+            tqdm.write(f"{reactome_id} appears in uniprot participants file but not pathways file")
+            continue
+
+        if "-" in uniprot_id:
+            reference = Reference(prefix="uniprot.isoform", identifier=uniprot_id)
+        else:
+            reference = Reference(prefix="uniprot", identifier=uniprot_id)
+        terms[reactome_id].append_relationship(has_participant, reference)
 
     chebi_pathway_url = f"https://reactome.org/download/{version}/ChEBI2Reactome_All_Levels.txt"
     chebi_pathway_df = ensure_df(
@@ -106,7 +119,15 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         version=version,
         force=force,
     )
-    for chebi_id, reactome_id in tqdm(chebi_pathway_df.values, total=len(chebi_pathway_df)):
+    for chebi_id, reactome_id in tqdm(
+        chebi_pathway_df.values,
+        total=len(chebi_pathway_df),
+        unit_scale=True,
+        unit="pathway-chemical",
+    ):
+        if reactome_id not in terms:
+            tqdm.write(f"{reactome_id} appears in chebi participants file but not pathways file")
+            continue
         terms[reactome_id].append_relationship(
             has_participant, Reference(prefix="chebi", identifier=chebi_id)
         )
@@ -133,4 +154,4 @@ def get_protein_to_pathways() -> Mapping[str, set[str]]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    ReactomeGetter.cli()

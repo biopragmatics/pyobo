@@ -153,7 +153,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         for hgnc_curie in human_orthologs.get(identifier, []):
             if not hgnc_curie or pd.isna(hgnc_curie):
                 continue
-            hgnc_ortholog = Reference.from_curie(hgnc_curie, auto=True)
+            hgnc_ortholog = Reference.from_curie(hgnc_curie)
             if hgnc_ortholog is None:
                 tqdm.write(f"[{PREFIX}] {identifier} had invalid ortholog: {hgnc_curie}")
             else:

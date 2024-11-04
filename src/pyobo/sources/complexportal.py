@@ -58,11 +58,31 @@ def _parse_members(s) -> list[tuple[Reference, str]]:
     for member in s.split("|"):
         entity_id, count = member.split("(")
         count = count.rstrip(")")
-        if ":" in entity_id:
-            prefix, identifier = entity_id.split(":", 1)
+        if entity_id.startswith("URS"):
+            prefix, identifier = "rnacentral", entity_id
+        elif entity_id.startswith("CPX"):
+            # TODO why self xref?
+            prefix, identifier = "complexportal", entity_id
+        elif entity_id.startswith("["):
+            continue  # this is a list of uniprot IDs, not sure what to do with this
+        elif entity_id.startswith("EBI-"):
+            continue
+        elif ":" not in entity_id:
+            if "PRO_" in entity_id:
+                prefix = "uniprot.chain"
+                identifier = entity_id.split("-")[1]
+            elif "-" in entity_id:
+                prefix, identifier = "uniprot.isoform", entity_id
+            else:
+                prefix, identifier = "uniprot", entity_id
         else:
-            prefix, identifier = "uniprot", entity_id
-        rv.append((Reference(prefix=prefix, identifier=identifier), count))
+            prefix, identifier = entity_id.split(":", 1)
+        try:
+            reference = Reference(prefix=prefix, identifier=identifier)
+        except ValueError:
+            tqdm.write(f"failed to validate reference: {entity_id}")
+        else:
+            rv.append((reference, count))
     return rv
 
 
@@ -74,33 +94,52 @@ def _parse_xrefs(s) -> list[tuple[Reference, str]]:
     for xref in s.split("|"):
         xref = xref.replace("protein ontology:PR:", "PR:")
         xref = xref.replace("protein ontology:PR_", "PR:")
+        xref = xref.replace("rhea:rhea ", "rhea:")
+        xref = xref.replace("rhea:Rhea ", "rhea:")
+        xref = xref.replace("rhea:RHEA:rhea", "rhea:")
+        xref = xref.replace("rhea:RHEA: ", "rhea:")
+        xref = xref.replace("rhea:RHEA:rhea ", "rhea:")
+        xref = xref.replace("intenz:RHEA:", "rhea:")
+        xref = xref.replace("eccode::", "eccode:")
+        xref = xref.replace("eccode:EC:", "eccode:")
+        xref = xref.replace("intenz:EC:", "eccode:")
+        xref = xref.replace("eccode:RHEA:", "rhea:")
+        xref = xref.replace("efo:MONDO:", "MONDO:")
+        xref = xref.replace("omim:MIM:", "omim:")
+        xref = xref.replace("efo:HP:", "HP:")
+        xref = xref.replace("efo:Orphanet:", "Orphanet:")
+        xref = xref.replace("orphanet:ORDO:", "Orphanet:")
+        xref = xref.replace("biorxiv:doi.org/", "doi:")
+        xref = xref.replace("emdb:EMDB-", "emdb:EMD-")
+        xref = xref.replace("wwpdb:EMD-", "emdb:EMD-")
+        xref = xref.replace("signor:CPX-", "complexportal:CPX-")
+
         try:
             xref_curie, note = xref.split("(")
         except ValueError:
             logger.warning("xref missing (: %s", xref)
             continue
         note = note.rstrip(")")
-        note.replace("rhea:rhea ", "rhea:")
-        note.replace("rhea:Rhea ", "rhea:")
-        note.replace("eccode::", "eccode:")
-        note.replace("eccode:EC:", "eccode:")
-        note.replace("eccode:RHEA:", "rhea:")
-        if note.lower().startswith("rhea "):
-            note = note[len("Rhea ") :]
-            if note.lower().startswith("rhea:rhea "):
-                note = note[len("rhea:rhea ") :]
-        if note.lower().startswith("EC:"):
-            note = note[len("EC:") :]
+
+        if xref_curie.startswith("intenz:"):
+            xref_curie = _clean_intenz(xref_curie)
+
         try:
             reference = Reference.from_curie(xref_curie)
         except ValueError:
-            logger.warning("can not parse CURIE: %s", xref)
+            logger.warning("can not parse CURIE: %s", xref_curie)
             continue
         if reference is None:
             logger.warning("reference is None after parsing: %s", xref)
             continue
         rv.append((reference, note))
     return rv
+
+
+def _clean_intenz(s: str) -> str:
+    for _ in range(3):
+        s = s.rstrip("-").rstrip(".")
+    return s
 
 
 class ComplexPortalGetter(Obo):

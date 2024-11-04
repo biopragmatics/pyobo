@@ -135,17 +135,26 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
             term.append_alt(alt_id)
         entrez_id = entrez_mappings.get(identifier)
         if entrez_id:
-            term.append_exact_match(Reference(prefix="ncbigene", identifier=entrez_id))
+            try:
+                ncbigene_ref = Reference(prefix="ncbigene", identifier=entrez_id)
+            except ValueError:
+                tqdm.write(f"[zfin] invalid NCBI gene: {entrez_id}")
+            else:
+                term.append_exact_match(ncbigene_ref)
         for uniprot_id in uniprot_mappings.get(identifier, []):
-            term.append_relationship(has_gene_product, Reference.auto("uniprot", uniprot_id))
+            term.append_relationship(
+                has_gene_product, Reference(prefix="uniprot", identifier=uniprot_id)
+            )
         for hgnc_id in human_orthologs.get(identifier, []):
-            term.append_relationship(orthologous, Reference.auto("hgnc", hgnc_id))
+            term.append_relationship(orthologous, Reference(prefix="hgnc", identifier=hgnc_id))
         for mgi_curie in mouse_orthologs.get(identifier, []):
-            mouse_ortholog = Reference.from_curie(mgi_curie, auto=True)
+            mouse_ortholog = Reference.from_curie(mgi_curie)
             if mouse_ortholog:
                 term.append_relationship(orthologous, mouse_ortholog)
         for flybase_id in fly_orthologs.get(identifier, []):
-            term.append_relationship(orthologous, Reference.auto("flybase", flybase_id))
+            term.append_relationship(
+                orthologous, Reference(prefix="flybase", identifier=flybase_id)
+            )
 
         yield term
 

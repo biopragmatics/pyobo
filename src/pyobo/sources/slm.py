@@ -77,10 +77,10 @@ def iter_terms(version: str, force: bool = False):
         smiles,
         inchi,
         inchikey,
-        chebi_id,
-        lipidmaps_id,
-        hmdb_id,
-        pmids,
+        chebi_ids,
+        lipidmaps_ids,
+        hmdb_ids,
+        pubmed_ids,
     ) in tqdm(
         df[COLUMNS].values, desc=f"[{PREFIX}] generating terms", unit_scale=True, unit="lipid"
     ):
@@ -103,20 +103,34 @@ def iter_terms(version: str, force: bool = False):
                 inchi = inchi[len("InChI=") :]
             term.append_property(has_inchi, inchi)
         if pd.notna(inchikey):
-            if inchikey.startswith("InChIKey="):
-                inchikey = inchikey[len("InChIKey=") :]
-            term.append_exact_match(Reference(prefix="inchikey", identifier=inchikey))
-        if pd.notna(chebi_id):
-            term.append_exact_match(("chebi", chebi_id))
-        if pd.notna(lipidmaps_id):
+            inchikey = inchikey.removeprefix("InChIKey=").strip()
+            if inchikey and inchikey != "none":
+                try:
+                    inchi_ref = Reference(prefix="inchikey", identifier=inchikey)
+                except ValueError:
+                    tqdm.write(
+                        f"[slm:{identifier}] had invalid inchikey reference: ({type(inchikey)}) {inchikey}"
+                    )
+                else:
+                    term.append_exact_match(inchi_ref)
+        for chebi_id in _split(chebi_ids):
+            term.append_xref(("chebi", chebi_id))
+        for lipidmaps_id in _split(lipidmaps_ids):
             term.append_exact_match(("lipidmaps", lipidmaps_id))
-        if pd.notna(hmdb_id):
+        for hmdb_id in _split(hmdb_ids):
             term.append_exact_match(("hmdb", hmdb_id))
-        if pd.notna(pmids):
-            for pmid in pmids.split("|"):
-                term.append_provenance(("pubmed", pmid))
+        for pubmed_id in _split(pubmed_ids):
+            term.append_provenance(("pubmed", pubmed_id))
         # TODO how to handle class, parents, and components?
         yield term
+
+
+def _split(s: str) -> Iterable[str]:
+    if pd.notna(s):
+        for x in s.split("|"):
+            x = x.strip()
+            if x:
+                yield x
 
 
 if __name__ == "__main__":

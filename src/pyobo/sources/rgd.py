@@ -137,7 +137,7 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
                         continue
                     if prefix == "uniprot":
                         term.append_relationship(
-                            has_gene_product, Reference.auto(prefix=prefix, identifier=xref_id)
+                            has_gene_product, Reference(prefix=prefix, identifier=xref_id)
                         )
                     elif prefix == "ensembl":
                         if xref_id.startswith("ENSMUSG") or xref_id.startswith("ENSRNOG"):

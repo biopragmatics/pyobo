@@ -19,7 +19,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 PREFIX = "pombase"
-URL = "https://www.pombase.org/data/names_and_identifiers/gene_IDs_names_products.tsv"
+GENE_NAMES_URL = "https://www.pombase.org/data/names_and_identifiers/gene_IDs_names_products.tsv"
 ORTHOLOGS_URL = "https://www.pombase.org/data/orthologs/human-orthologs.txt.gz"
 
 
@@ -68,7 +68,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             if hgnc_id is not None:
                 identifier_to_hgnc_ids[identifier].add(hgnc_id)
 
-    df = ensure_df(PREFIX, url=URL, force=force, header=None, version=version)
+    df = ensure_df(PREFIX, url=GENE_NAMES_URL, force=force, version=version)
     so = {
         gtype: Reference.auto("SO", POMBASE_TO_SO[gtype])
         for gtype in sorted(df[df.columns[6]].unique())

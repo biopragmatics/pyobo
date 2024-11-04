@@ -8,7 +8,7 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 from ..struct import Obo, Reference, Term
-from ..struct.typedef import has_participant
+from ..struct.typedef import has_category, has_participant
 from ..utils.path import ensure_df
 
 __all__ = [
@@ -68,7 +68,7 @@ class PathBankGetter(Obo):
     """An ontology representation of PathBank's pathway nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_participant]
+    typedefs = [has_participant, has_category]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -103,21 +103,30 @@ def get_protein_mapping(version: str, force: bool = False) -> Mapping[str, set[R
     for pathway_id, protein_id in tqdm(
         proteins_df.values, desc=f"[{PREFIX}] mapping proteins", unit_scale=True
     ):
-        # TODO get protein names
-        smpdb_id_to_proteins[pathway_id].add(Reference(prefix="uniprot", identifier=protein_id))
+        try:
+            if "-" in protein_id:
+                reference = Reference(prefix="uniprot.isoform", identifier=protein_id)
+            else:
+                reference = Reference(prefix="uniprot", identifier=protein_id)
+        except ValueError:
+            tqdm.write(f"[pathbank] invalid uniprot identifier: {protein_id}")
+        else:
+            smpdb_id_to_proteins[pathway_id].add(reference)
     return smpdb_id_to_proteins
 
 
 def get_metabolite_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get the metabolites dataframe."""
-    return ensure_df(
+    df = ensure_df(
         PREFIX,
         url=METABOLITE_URL,
         sep=",",
-        usecols=["PathBank ID", "Metabolite ID", "Metabolite Name"],
+        usecols=["PathBank ID", "ChEBI ID"],
         force=force,
         version=version,
     )
+    df = df[df["ChEBI ID"].notna()]
+    return df
 
 
 def get_metabolite_mapping(version: str, force: bool = False) -> Mapping[str, set[Reference]]:
@@ -125,14 +134,9 @@ def get_metabolite_mapping(version: str, force: bool = False) -> Mapping[str, se
     metabolites_df = get_metabolite_df(version=version, force=force)
     smpdb_id_to_metabolites = defaultdict(set)
     it = tqdm(metabolites_df.values, desc=f"[{PREFIX}] mapping metabolites", unit_scale=True)
-    for pathway_id, metabolite_id, metabolite_name in it:
-        smpdb_id_to_metabolites[pathway_id].add(
-            Reference(
-                prefix=PREFIX,
-                identifier=metabolite_id,
-                name=metabolite_name,
-            )
-        )
+    for pathway_id, metabolite_id in it:
+        reference = Reference(prefix="chebi", identifier=metabolite_id.strip())
+        smpdb_id_to_metabolites[pathway_id].add(reference)
     return smpdb_id_to_metabolites
 
 
@@ -143,20 +147,14 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     pathways_df = ensure_df(PREFIX, url=PATHWAY_URL, sep=",", version=version, force=force)
     it = tqdm(pathways_df.values, total=len(pathways_df.index), desc=f"mapping {PREFIX}")
-    for smpdb_id, pathbank_id, name, subject, _description in it:
+    for smpdb_id, pathbank_id, name, subject, description in it:
         reference = Reference(prefix=PREFIX, identifier=pathbank_id, name=name)
         term = Term(
             reference=reference,
-            # definition=description.replace('\n', ' '),
-            xrefs=[Reference(prefix="smpdb", identifier=smpdb_id)],
+            definition=description.replace("\n", " "),
         )
-        term.append_parent(
-            Reference(
-                prefix=PREFIX,
-                identifier=subject.lower().replace(" ", "_"),
-                name=subject,
-            )
-        )
+        term.append_exact_match(Reference(prefix="smpdb", identifier=smpdb_id))
+        term.append_property(has_category, subject.lower().replace(" ", "_"))
         term.extend_relationship(has_participant, smpdb_id_to_proteins[smpdb_id])
         term.extend_relationship(has_participant, smpdb_id_to_metabolites[smpdb_id])
         yield term

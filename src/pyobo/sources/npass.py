@@ -39,7 +39,7 @@ def get_obo(force: bool = False) -> Obo:
 
 def get_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get the NPASS chemical nomenclature."""
-    base_url = f"http://bidd.group/NPASS/downloadFiles/NPASSv{version}_download"
+    base_url = f"https://bidd.group/NPASS/downloadFiles/NPASSv{version}_download"
     url = f"{base_url}_naturalProducts_generalInfo.txt"
     return ensure_df(
         PREFIX,
