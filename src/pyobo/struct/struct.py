@@ -443,7 +443,6 @@ class Term(Referenced):
         for synonym in sorted(self.synonyms, key=attrgetter("name")):
             yield synonym.to_obo()
 
-
     def _emit_relations(
         self, ontology: str, typedefs: list[TypeDef] | None = None
     ) -> Iterable[str]:
@@ -470,7 +469,6 @@ class Term(Referenced):
         for prop, value in sorted(self.iterate_properties(), key=_sort_properties):
             # TODO deal with typedefs for properties
             yield f'property_value: {prop} "{value}" xsd:string'  # TODO deal with types later
-
 
     @staticmethod
     def _escape(s) -> str:
