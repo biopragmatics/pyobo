@@ -46,8 +46,11 @@ def get_obo() -> Obo:
     return KEGGGenomeGetter()
 
 
-def parse_genome_line(line: str) -> KEGGGenome:
+def parse_genome_line(line: str) -> KEGGGenome | None:
     """Parse a line from the KEGG Genome database."""
+    if not line.startswith("T"):
+        #  This is for an NCBI Taxonomy
+        return None
     line = line.strip()
     identifier, rest = _s(line, "\t")
     identifier = identifier[len("gn:") :]
@@ -94,6 +97,8 @@ def iter_kegg_genomes(version: str, desc: str) -> Iterable[KEGGGenome]:
     it = tqdm(lines, desc=desc, unit_scale=True, unit="genome")
     for line in it:
         yv = parse_genome_line(line)
+        if yv is None:
+            continue
         it.set_postfix({"id": yv.identifier, "name": yv.name})
         yield yv
 
@@ -105,11 +110,16 @@ def iter_terms(version: str) -> Iterable[Term]:
     for kegg_genome in iter_kegg_genomes(version=version, desc="KEGG Genomes"):
         if kegg_genome.identifier in SKIP:
             continue
-        term = Term.from_triple(
-            prefix=KEGG_GENOME_PREFIX,
-            identifier=kegg_genome.identifier,
-            name=kegg_genome.name,
-        )
+
+        try:
+            reference = Reference(
+                prefix=KEGG_GENOME_PREFIX, identifier=kegg_genome.identifier, name=kegg_genome.name
+            )
+        except ValueError:
+            tqdm.write(f"[{KEGG_GENOME_PREFIX}] invalid identifier: {kegg_genome}")
+            continue
+
+        term = Term(reference=reference)
         if kegg_genome.taxonomy_id is not None:
             taxonomy_name = get_ncbitaxon_name(kegg_genome.taxonomy_id)
             if taxonomy_name is None:

@@ -82,7 +82,7 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
             pubmeds,
             pdbs,
             proteome,
-            gene_id,
+            gene_ids,
             rhea_curies,
             go_components,
             go_functions,
@@ -97,10 +97,11 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
                 definition=description or None,
             )
             term.set_species(taxonomy_id)
-            if gene_id:
-                term.append_relationship(
-                    gene_product_of, Reference(prefix="ncbigene", identifier=gene_id)
-                )
+            if gene_ids:
+                for gene_id in gene_ids.split(";"):
+                    term.append_relationship(
+                        gene_product_of, Reference(prefix="ncbigene", identifier=gene_id.strip())
+                    )
 
             # TODO add type=Reference(prefix="xsd", identifier="boolean")
             term.append_property("reviewed", "true")

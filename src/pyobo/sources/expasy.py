@@ -1,6 +1,7 @@
 """Convert ExPASy to OBO."""
 
 import logging
+import re
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from typing import Any, Optional
@@ -42,7 +43,7 @@ class ExpasyGetter(Obo):
     """A getter for ExPASy Enzyme Classes."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [has_member, enables]
+    typedefs = [has_member, enables, term_replaced_by]
     root_terms = [
         Reference(prefix="eccode", identifier="1"),
         Reference(prefix="eccode", identifier="2"),
@@ -145,7 +146,9 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         for domain in data.get("domains", []):
             term.append_relationship(
                 has_member,
-                Reference(prefix=domain["namespace"], identifier=domain["identifier"]),
+                Reference.model_validate(
+                    {"prefix": domain["namespace"], "identifier": domain["identifier"]},
+                ),
             )
         for protein in data.get("proteins", []):
             term.append_relationship(
@@ -248,8 +251,10 @@ def get_database(lines: Iterable[str]) -> Mapping:
             elif descriptor == DE and value == "Deleted entry.":
                 ec_data_entry["deleted"] = True
             elif descriptor == DE and value.startswith("Transferred entry: "):
-                value = value[len("Transferred entry: ") :].rstrip().rstrip(".")
-                ec_data_entry["transfer_id"] = value.split(" and ")
+                # TODO There's a situation where there are enough transfers that it goes on to a second line
+                #  the following line just gives up on this one. or maybe I don't understand
+                value = value.strip().removesuffix("and").rstrip(",").strip()
+                ec_data_entry["transfer_id"] = _parse_transfer(value)
             elif descriptor == DE:
                 ec_data_entry["concept"]["name"] = value.rstrip(".")  # type:ignore
             elif descriptor == AN:
@@ -277,6 +282,19 @@ def get_database(lines: Iterable[str]) -> Mapping:
 
         rv[expasy_id] = ec_data_entry
     return rv
+
+
+TRANSFER_SPLIT_RE = re.compile(r",\s*|\s+and\s+")
+
+
+def _parse_transfer(value: str) -> list[str]:
+    """Parse transferred entry string.
+
+    >>> _parse_transfer("Transferred entry: 1.1.1.198, 1.1.1.227 and 1.1.1.228.")
+    ['1.1.1.198', '1.1.1.227', '1.1.1.228']
+    """
+    value = value[len("Transferred entry: ") :].rstrip().rstrip(".")
+    return sorted(x.strip().removeprefix("and").strip() for x in TRANSFER_SPLIT_RE.split(value))
 
 
 def _group_by_id(lines):

@@ -37,8 +37,8 @@ logger = logging.getLogger(__name__)
 
 PREFIX = "hgnc"
 DEFINITIONS_URL_FMT = (
-    "http://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/"
-    "archive/monthly/json/hgnc_complete_set_{version}.json"
+    "https://storage.googleapis.com/public-download-files/hgnc/archive/archive/monthly/json/"
+    "hgnc_complete_set_{version}.json"
 )
 
 previous_symbol_type = SynonymTypeDef.from_text("previous_symbol")
@@ -363,23 +363,25 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
             xref_identifiers = entry.pop(key, None)
             if xref_identifiers is None:
                 continue
-
             if isinstance(xref_identifiers, (str, int)):
+                xref_identifiers = [str(xref_identifiers)]
+
+            if xref_prefix == "merops.entry":
+                continue
+                # e.g., XM02-001 should be rewritten as XM02.001
+                xref_identifiers = [i.replace("-", ".") for i in xref_identifiers]
+
+            if xref_prefix == "refseq":
+                # e.g., strip off dots without substantiated record versions like in NM_021728.
+                xref_identifiers = [i.strip(".") for i in xref_identifiers]
+
+            if len(xref_identifiers) == 1:
                 term.append_exact_match(
-                    Reference(prefix=xref_prefix, identifier=str(xref_identifiers))
+                    Reference(prefix=xref_prefix, identifier=str(xref_identifiers[0]))
                 )
-            elif isinstance(xref_identifiers, list):
-                if len(xref_identifiers) == 1:
-                    term.append_exact_match(
-                        Reference(prefix=xref_prefix, identifier=str(xref_identifiers[0]))
-                    )
-                else:
-                    for xref_identifier in xref_identifiers:
-                        term.append_xref(
-                            Reference(prefix=xref_prefix, identifier=str(xref_identifier))
-                        )
             else:
-                raise TypeError
+                for xref_identifier in xref_identifiers:
+                    term.append_xref(Reference(prefix=xref_prefix, identifier=str(xref_identifier)))
 
         for pubmed_id in entry.pop("pubmed_id", []):
             term.append_provenance(Reference(prefix="pubmed", identifier=str(pubmed_id)))

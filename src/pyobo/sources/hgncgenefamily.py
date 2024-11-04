@@ -21,13 +21,13 @@ __all__ = [
 ]
 
 PREFIX = "hgnc.genegroup"
-FAMILIES_URL = "ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/csv/genefamily_db_tables/family.csv"
+FAMILIES_URL = "https://storage.googleapis.com/public-download-files/hgnc/csv/csv/genefamily_db_tables/family.csv"
 # TODO use family_alias.csv
-HIERARCHY_URL = (
-    "ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/csv/genefamily_db_tables/hierarchy.csv"
-)
+HIERARCHY_URL = "https://storage.googleapis.com/public-download-files/hgnc/csv/csv/genefamily_db_tables/hierarchy.csv"
 
-symbol_type = SynonymTypeDef.from_text("symbol")
+symbol_type = SynonymTypeDef(
+    reference=Reference(prefix="OMO", identifier="0004000", name="has symbol")
+)
 
 
 class HGNCGroupGetter(Obo):
@@ -78,7 +78,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
                     name=parent.name,
                 )
             )
-    gene_group = Reference.auto("SO", "0005855")
+    gene_group = Reference(prefix="SO", identifier="0005855", name="gene group")
     yield Term(reference=gene_group)
     for term in terms:
         if not term.parents:
@@ -98,7 +98,7 @@ def _get_terms_helper(force: bool = False) -> Iterable[Term]:
             definition=definition,
         )
         if pubmed_ids and pd.notna(pubmed_ids):
-            for s in pubmed_ids.split(","):
+            for s in pubmed_ids.replace(" ", ",").split(","):
                 term.append_provenance(Reference(prefix="pubmed", identifier=s.strip()))
         if desc_go and pd.notna(desc_go):
             go_id = desc_go[len("http://purl.uniprot.org/go/") :]

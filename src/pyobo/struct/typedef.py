@@ -365,6 +365,11 @@ has_homepage = TypeDef(
     reference=Reference(prefix="foaf", identifier="homepage", name="homepage"), is_metadata_tag=True
 )
 
+has_category = TypeDef(
+    reference=Reference(prefix="biolink", identifier="category", name="has category"),
+    is_metadata_tag=True,
+)
+
 default_typedefs: dict[tuple[str, str], TypeDef] = {
     v.pair: v for k, v in locals().items() if isinstance(v, TypeDef)
 }
