@@ -628,9 +628,7 @@ class Obo:
         @click.option(
             "--version", help="Specify data version to get. Use this if bioversions is acting up."
         )
-        def _main(
-            force: bool, owl: bool, graph: bool, nodes: bool, version: Optional[str], rewrite: bool
-        ):
+        def _main(force: bool, owl: bool, nodes: bool, version: Optional[str], rewrite: bool):
             try:
                 inst = cls(force=force, data_version=version)
             except Exception as e:
