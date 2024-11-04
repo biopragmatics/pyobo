@@ -1,5 +1,7 @@
 """Converter for PathBank."""
 
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
