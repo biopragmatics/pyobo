@@ -8,6 +8,7 @@ from curies.api import ExpansionError
 from pydantic import Field, field_validator, model_validator
 
 from .utils import obo_escape
+from ..constants import GLOBAL_CHECK_IDS
 from ..identifier_utils import normalize_curie
 
 __all__ = [
@@ -50,8 +51,8 @@ class Reference(curies.Reference):
             raise ExpansionError(f"Unknown prefix: {prefix}")
         values["prefix"] = resource.prefix
         values["identifier"] = resource.standardize_identifier(identifier)
-        # if not resource.is_valid_identifier(values["identifier"]):
-        #    raise ValueError(f"non-standard identifier: {resource.prefix}:{values['identifier']}")
+        if GLOBAL_CHECK_IDS and not resource.is_valid_identifier(values["identifier"]):
+            raise ValueError(f"non-standard identifier: {resource.prefix}:{values['identifier']}")
         return values
 
     @classmethod
