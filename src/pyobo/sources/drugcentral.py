@@ -68,6 +68,9 @@ def iter_terms() -> Iterable[Term]:
                 if xref_prefix_norm is None:
                     tqdm.write(f"did not normalize {prefix}:{identifier}")
                     continue
+                if xref_prefix_norm == "pdb.ligand":
+                    # there is a weird invalid escaped \W appearing in pdb ligand ids
+                    identifier = identifier.strip()
                 identifier = bioregistry.standardize_identifier(xref_prefix_norm, identifier)
                 xrefs[str(drugcentral_id)].append(
                     Reference(prefix=xref_prefix_norm, identifier=identifier)
@@ -98,4 +101,4 @@ def iter_terms() -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default(write_obo=True)
+    DrugCentralGetter.cli()
