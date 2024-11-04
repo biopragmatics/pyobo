@@ -411,6 +411,7 @@ class Term(Referenced):
         ontology: str,
         typedefs: list[TypeDef] | None = None,
         emit_object_properties: bool = True,
+        emit_annotation_properties: bool = True,
     ) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield f"\n[{self.type}]"
@@ -438,7 +439,8 @@ class Term(Referenced):
         if emit_object_properties:
             yield from self._emit_relations(ontology, typedefs)
 
-        yield from self._emit_properties()
+        if emit_annotation_properties:
+            yield from self._emit_properties()
 
         for synonym in sorted(self.synonyms, key=attrgetter("name")):
             yield synonym.to_obo()
@@ -680,7 +682,11 @@ class Obo:
         else:
             yield from self
 
-    def iterate_obo_lines(self, emit_object_properties: bool = True) -> Iterable[str]:
+    def iterate_obo_lines(
+        self,
+        emit_object_properties: bool = True,
+        emit_annotation_properties: bool = True,
+    ) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield f"format-version: {self.format_version}"
 
@@ -725,6 +731,7 @@ class Obo:
                 ontology=self.ontology,
                 typedefs=self.typedefs,
                 emit_object_properties=emit_object_properties,
+                emit_annotation_properties=emit_annotation_properties,
             )
 
     def write_obo(
@@ -732,9 +739,13 @@ class Obo:
         file: Union[None, str, TextIO, Path] = None,
         use_tqdm: bool = False,
         emit_object_properties: bool = True,
+        emit_annotation_properties: bool = True,
     ) -> None:
         """Write the OBO to a file."""
-        it = self.iterate_obo_lines(emit_object_properties=emit_object_properties)
+        it = self.iterate_obo_lines(
+            emit_object_properties=emit_object_properties,
+            emit_annotation_properties=emit_annotation_properties,
+        )
         if use_tqdm:
             it = tqdm(it, desc=f"Writing {self.ontology}", unit_scale=True, unit="line")
         if isinstance(file, (str, Path, os.PathLike)):
