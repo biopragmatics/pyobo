@@ -94,7 +94,7 @@ def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
                 description = description.removeprefix("FUNCTION: ")
             term = Term(
                 reference=Reference(prefix=PREFIX, identifier=uniprot_id, name=accession),
-                definition=description or None,
+                # definition=description or None,
             )
             term.set_species(taxonomy_id)
             if gene_ids:
