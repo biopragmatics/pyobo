@@ -737,6 +737,7 @@ class Obo:
     def write_obo(
         self,
         file: Union[None, str, TextIO, Path] = None,
+        *,
         use_tqdm: bool = False,
         emit_object_properties: bool = True,
         emit_annotation_properties: bool = True,
