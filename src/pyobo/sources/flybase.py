@@ -7,6 +7,7 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 from pyobo import Reference
+from pyobo.resources.so import get_so_name
 from pyobo.struct import Obo, Term, from_species, orthologous
 from pyobo.utils.io import multisetdict
 from pyobo.utils.path import ensure_df
@@ -133,7 +134,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
                 "FlyBase gene type is missing mapping to Sequence Ontology (SO): %s", gtype
             )
         else:
-            so[gtype] = Reference.auto("SO", so_id)
+            so[gtype] = Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id))
 
     for _, reference in sorted(so.items()):
         yield Term(reference=reference)

@@ -9,6 +9,7 @@ from tqdm.auto import tqdm
 
 import pyobo
 from pyobo import Reference
+from pyobo.resources.so import get_so_name
 from pyobo.struct import Obo, Term, from_species, has_gene_product, orthologous
 from pyobo.utils.path import ensure_df
 
@@ -70,7 +71,9 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     df = ensure_df(PREFIX, url=GENE_NAMES_URL, force=force, version=version)
     so = {
-        gtype: Reference.auto("SO", POMBASE_TO_SO[gtype])
+        gtype: Reference(
+            prefix="SO", identifier=POMBASE_TO_SO[gtype], name=get_so_name(POMBASE_TO_SO[gtype])
+        )
         for gtype in sorted(df[df.columns[6]].unique())
     }
     for _, reference in sorted(so.items()):
