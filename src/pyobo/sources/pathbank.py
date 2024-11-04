@@ -140,6 +140,14 @@ def get_metabolite_mapping(version: str, force: bool = False) -> Mapping[str, se
     return smpdb_id_to_metabolites
 
 
+def _clean_description(description: str) -> str | None:
+    """Clean the description."""
+    if pd.isna(description) or not description:
+        return None
+    parts = [part.strip() for part in description.strip().splitlines()]
+    return " ".join(parts)
+
+
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get PathBank's terms."""
     smpdb_id_to_proteins = get_protein_mapping(version=version, force=force)
@@ -147,11 +155,12 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     pathways_df = ensure_df(PREFIX, url=PATHWAY_URL, sep=",", version=version, force=force)
     it = tqdm(pathways_df.values, total=len(pathways_df.index), desc=f"mapping {PREFIX}")
-    for smpdb_id, pathbank_id, name, subject, description in it:
+    for smpdb_id, pathbank_id, name, subject, _description in it:
         reference = Reference(prefix=PREFIX, identifier=pathbank_id, name=name)
         term = Term(
             reference=reference,
-            definition=description.replace("\n", " "),
+            # TODO use _clean_description(description) to add a description,
+            #  but there are weird parser errors
         )
         term.append_exact_match(Reference(prefix="smpdb", identifier=smpdb_id))
         term.append_property(has_category, subject.lower().replace(" ", "_"))
