@@ -4,6 +4,7 @@ import gzip
 import json
 import logging
 import os
+import sys
 from collections import defaultdict
 from collections.abc import Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -603,6 +604,11 @@ class Obo:
 
         return graph_from_obo(self)
 
+    def write_obograph(self, path: Path) -> None:
+        """Write OBO Graph json."""
+        graph = self.get_graph()
+        path.write_text(graph.model_dump_json(indent=2, exclude_none=True, exclude_unset=True))
+
     @classmethod
     def cli(cls) -> None:
         """Run the CLI for this class."""
@@ -616,22 +622,33 @@ class Obo:
         @click.command()
         @verbose_option
         @force_option
+        @click.option("--rewrite", "-r", is_flag=True)
         @click.option("--owl", is_flag=True, help="Write OWL via ROBOT")
-        @click.option("--graph", is_flag=True, help="Write OBO Graph JSON via ROBOT")
         @click.option("--nodes", is_flag=True, help="Write nodes file")
         @click.option(
             "--version", help="Specify data version to get. Use this if bioversions is acting up."
         )
-        def _main(force: bool, owl: bool, graph: bool, nodes: bool, version: Optional[str]):
-            inst = cls(force=force, data_version=version)
-            inst.write_default(
-                write_obograph=graph,
-                write_obo=True,
-                write_owl=owl,
-                write_nodes=nodes,
-                force=force,
-                use_tqdm=True,
-            )
+        def _main(
+            force: bool, owl: bool, graph: bool, nodes: bool, version: Optional[str], rewrite: bool
+        ):
+            try:
+                inst = cls(force=force, data_version=version)
+            except Exception as e:
+                click.secho(f"[{cls.name}] Got an exception during instantiation - {type(e)}")
+                sys.exit(1)
+
+            try:
+                inst.write_default(
+                    write_obograph=True,
+                    write_obo=True,
+                    write_owl=owl,
+                    write_nodes=nodes,
+                    force=force or rewrite,
+                    use_tqdm=True,
+                )
+            except Exception as e:
+                click.secho(f"[{cls.name}] Got an exception during OBO writing {type(e)}")
+                sys.exit(1)
 
         return _main
 
@@ -865,16 +882,11 @@ class Obo:
             relation_df.sort_values(list(relation_df.columns), inplace=True)
             relation_df.to_csv(relations_path, sep="\t", index=False)
 
-        if (write_obo or write_obograph or write_owl) and (not self._obo_path.exists() or force):
+        if (write_obo or write_owl) and (not self._obo_path.exists() or force):
             self.write_obo(self._obo_path, use_tqdm=use_tqdm)
-        if write_obograph:
-            # obo_to_obograph(self._obo_path, self._obograph_path)
-            self._obograph_path.write_text(
-                self.get_graph().json(
-                    indent=2, ensure_ascii=False, exclude_none=True, exclude_unset=True
-                )
-            )
-        if write_owl:
+        if write_obograph and (not self._obograph_path.exists() or force):
+            self.write_obograph(self._obograph_path)
+        if write_owl and (not self._owl_path.exists() or force):
             obo_to_owl(self._obo_path, self._owl_path)
         if write_obonet and (not self._obonet_gz_path.exists() or force):
             logger.debug("writing obonet to %s", self._obonet_gz_path)
