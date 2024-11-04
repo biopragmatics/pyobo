@@ -26,14 +26,14 @@ def get_so_name(so_id: str) -> str | None:
 
 
 @lru_cache(maxsize=1)
-def load_so() -> Mapping[tuple[str, str], str]:
+def load_so() -> dict[str, str]:
     """Load the Sequence Ontology names."""
     if not os.path.exists(SO_PATH):
         download_so()
     with open(SO_PATH) as file:
         return {
-            (prefix, identifier): name
-            for prefix, identifier, name in csv.reader(file, delimiter="\t")
+            identifier: name
+            for identifier, name in csv.reader(file, delimiter="\t")
         }
 
 
@@ -48,11 +48,11 @@ def download_so():
         identifier = uri.removeprefix(SO_URI_PREFIX)
         name = node.get("lbl")
         if name:
-            rows.append(("so", identifier, name))
+            rows.append((identifier, name))
 
     with open(SO_PATH, "w") as file:
         writer = csv.writer(file, delimiter="\t")
-        writer.writerows(sorted(rows))
+        writer.writerows(sorted(rows, key=lambda x: int(x[0])))
 
 
 if __name__ == "__main__":
