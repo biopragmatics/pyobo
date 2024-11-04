@@ -7,6 +7,7 @@ from typing import Optional
 
 from tqdm.auto import tqdm
 
+from pyobo.resources.so import get_so_name
 from pyobo.struct import (
     Obo,
     Reference,
@@ -113,7 +114,9 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
     )
     df["sequence_ontology_id"] = df["sequence_ontology_id"].map(lambda x: x[len("SO:") :])
     so = {
-        sequence_ontology_id: Reference.auto(prefix="SO", identifier=sequence_ontology_id)
+        sequence_ontology_id: Reference(
+            prefix="SO", identifier=sequence_ontology_id, name=get_so_name(sequence_ontology_id)
+        )
         for sequence_ontology_id in df["sequence_ontology_id"].unique()
     }
     for _, reference in sorted(so.items()):

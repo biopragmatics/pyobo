@@ -13,6 +13,7 @@ from tabulate import tabulate
 from tqdm.auto import tqdm
 
 from pyobo.api.utils import get_version
+from pyobo.resources.so import get_so_name
 from pyobo.struct import (
     Obo,
     Reference,
@@ -222,7 +223,7 @@ class HGNCGetter(Obo):
         alias_symbol_type,
     ]
     root_terms = [
-        Reference(prefix="so", identifier=so_id)
+        Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id))
         for so_id in sorted(set(LOCUS_TYPE_TO_SO.values()))
         if so_id
     ]
@@ -256,7 +257,7 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
     yield Term.from_triple("NCBITaxon", "9606", "Homo sapiens")
     yield from sorted(
         {
-            Term(reference=Reference.auto("SO", so_id))
+            Term(reference=Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
             for so_id in sorted(LOCUS_TYPE_TO_SO.values())
             if so_id
         },
@@ -418,9 +419,11 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
         locus_group = entry.pop("locus_group")
         so_id = LOCUS_TYPE_TO_SO.get(locus_type)
         if so_id:
-            term.append_parent(Reference.auto("SO", so_id))
+            term.append_parent(Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
         else:
-            term.append_parent(Reference.auto("SO", "0000704"))  # gene
+            term.append_parent(
+                Reference(prefix="SO", identifier="0000704", name=get_so_name("0000704"))
+            )  # gene
             unhandle_locus_types[locus_type][identifier] = term
             term.append_property("locus_type", locus_type)
             term.append_property("locus_group", locus_group)
