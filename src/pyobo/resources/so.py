@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import csv
 import os
-from collections.abc import Mapping
 from functools import lru_cache
 
 import requests
@@ -31,10 +30,7 @@ def load_so() -> dict[str, str]:
     if not os.path.exists(SO_PATH):
         download_so()
     with open(SO_PATH) as file:
-        return {
-            identifier: name
-            for identifier, name in csv.reader(file, delimiter="\t")
-        }
+        return dict(csv.reader(file, delimiter="\t"))
 
 
 def download_so():
