@@ -45,13 +45,13 @@ class Reference(curies.Reference):
         prefix, identifier = values.get("prefix"), values.get("identifier")
         if not prefix or not identifier:
             return values
-        norm_prefix = bioregistry.normalize_prefix(prefix)
-        if norm_prefix is None:
+        resource = bioregistry.get_resource(prefix)
+        if resource is None:
             raise ExpansionError(f"Unknown prefix: {prefix}")
-        values["prefix"] = norm_prefix
-        values["identifier"] = bioregistry.standardize_identifier(norm_prefix, identifier).strip()
-        # if not bioregistry.is_valid_identifier(norm_prefix, values["identifier"]):
-        #    raise ValueError(f"non-standard identifier: {norm_prefix}:{norm_identifier}")
+        values["prefix"] = resource.prefix
+        values["identifier"] = resource.standardize_identifier(identifier)
+        # if not resource.is_valid_identifier(values["identifier"]):
+        #    raise ValueError(f"non-standard identifier: {resource.prefix}:{values['identifier']}")
         return values
 
     @classmethod
@@ -60,7 +60,7 @@ class Reference(curies.Reference):
         from ..api import get_name
 
         name = get_name(prefix, identifier)
-        return cls(prefix=prefix, identifier=identifier, name=name)
+        return cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
 
     @property
     def bioregistry_link(self) -> str:
@@ -116,7 +116,7 @@ class Reference(curies.Reference):
             return None
         if name is None and auto:
             return cls.auto(prefix=prefix, identifier=identifier)
-        return cls(prefix=prefix, identifier=identifier, name=name)
+        return cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
 
     @property
     def _escaped_identifier(self):
