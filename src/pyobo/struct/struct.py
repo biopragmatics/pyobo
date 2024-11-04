@@ -634,7 +634,7 @@ class Obo:
             try:
                 inst = cls(force=force, data_version=version)
             except Exception as e:
-                click.secho(f"[{cls.name}] Got an exception during instantiation - {type(e)}")
+                click.secho(f"[{cls.ontology}] Got an exception during instantiation - {type(e)}")
                 sys.exit(1)
 
             try:
@@ -647,7 +647,7 @@ class Obo:
                     use_tqdm=True,
                 )
             except Exception as e:
-                click.secho(f"[{cls.name}] Got an exception during OBO writing {type(e)}")
+                click.secho(f"[{cls.ontology}] Got an exception during OBO writing {type(e)}")
                 sys.exit(1)
 
         return _main

@@ -17,6 +17,7 @@ from bioontologies.obograph import (
     Xref,
 )
 from bioontologies.robot import ParseResults
+from tqdm import tqdm
 
 from pyobo.struct import Obo, Reference, Term
 from pyobo.struct.typedef import definition_source, is_a
@@ -33,11 +34,13 @@ def parse_results_from_obo(obo: Obo) -> ParseResults:
     return ParseResults(graph_document=GraphDocument(graphs=[graph]))
 
 
-def graph_from_obo(obo: Obo) -> Graph:
+def graph_from_obo(obo: Obo, use_tqdm: bool = True) -> Graph:
     """Get an OBO Graph object from a PyOBO object."""
     nodes: list[Node] = []
     edges: list[Edge] = []
-    for term in obo:
+    for term in tqdm(
+        obo, disable=not use_tqdm, unit="term", unit_scale=True, desc=f"[{obo.ontology}] to JSON"
+    ):
         nodes.append(_get_class_node(term))
         edges.extend(_iter_edges(term))
     return Graph(
