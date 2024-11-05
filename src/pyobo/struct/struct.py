@@ -399,7 +399,14 @@ class Term(Referenced):
             for value in sorted(values):
                 yield prop, value
 
-    def iterate_obo_lines(self, *, ontology, typedefs) -> Iterable[str]:
+    def iterate_obo_lines(
+        self,
+        *,
+        ontology: str,
+        typedefs: list[TypeDef] | None = None,
+        emit_object_properties: bool = True,
+        emit_annotation_properties: bool = True,
+    ) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield f"\n[{self.type}]"
         yield f"id: {self.preferred_curie}"
@@ -423,6 +430,18 @@ class Term(Referenced):
         for parent in sorted(self.parents, key=attrgetter("prefix", "identifier")):
             yield f"{parent_tag}: {parent}"  # __str__ bakes in the ! name
 
+        if emit_object_properties:
+            yield from self._emit_relations(ontology, typedefs)
+
+        if emit_annotation_properties:
+            yield from self._emit_properties()
+
+        for synonym in sorted(self.synonyms, key=attrgetter("name")):
+            yield synonym.to_obo()
+
+    def _emit_relations(
+        self, ontology: str, typedefs: list[TypeDef] | None = None
+    ) -> Iterable[str]:
         for typedef, references in sorted(self.relationships.items(), key=_sort_relations):
             if (not typedefs or typedef not in typedefs) and (
                 ontology,
@@ -442,12 +461,10 @@ class Term(Referenced):
                     s += f" {reference.name}"
                 yield s
 
+    def _emit_properties(self) -> Iterable[str]:
         for prop, value in sorted(self.iterate_properties(), key=_sort_properties):
             # TODO deal with typedefs for properties
             yield f'property_value: {prop} "{value}" xsd:string'  # TODO deal with types later
-
-        for synonym in sorted(self.synonyms, key=attrgetter("name")):
-            yield synonym.to_obo()
 
     @staticmethod
     def _escape(s) -> str:
@@ -659,7 +676,11 @@ class Obo:
         else:
             yield from self
 
-    def iterate_obo_lines(self) -> Iterable[str]:
+    def iterate_obo_lines(
+        self,
+        emit_object_properties: bool = True,
+        emit_annotation_properties: bool = True,
+    ) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield f"format-version: {self.format_version}"
 
@@ -700,11 +721,26 @@ class Obo:
             yield from typedef.iterate_obo_lines()
 
         for term in self:
-            yield from term.iterate_obo_lines(ontology=self.ontology, typedefs=self.typedefs)
+            yield from term.iterate_obo_lines(
+                ontology=self.ontology,
+                typedefs=self.typedefs,
+                emit_object_properties=emit_object_properties,
+                emit_annotation_properties=emit_annotation_properties,
+            )
 
-    def write_obo(self, file: None | str | TextIO | Path = None, use_tqdm: bool = False) -> None:
+    def write_obo(
+        self,
+        file: None | str | TextIO | Path = None,
+        *,
+        use_tqdm: bool = False,
+        emit_object_properties: bool = True,
+        emit_annotation_properties: bool = True,
+    ) -> None:
         """Write the OBO to a file."""
-        it = self.iterate_obo_lines()
+        it = self.iterate_obo_lines(
+            emit_object_properties=emit_object_properties,
+            emit_annotation_properties=emit_annotation_properties,
+        )
         if use_tqdm:
             it = tqdm(it, desc=f"Writing {self.ontology}", unit_scale=True, unit="line")
         if isinstance(file, str | Path | os.PathLike):
