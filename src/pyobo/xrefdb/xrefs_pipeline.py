@@ -1,5 +1,7 @@
 """Pipeline for extracting all xrefs from OBO documents available."""
 
+from __future__ import annotations
+
 import gzip
 import itertools as itt
 import logging

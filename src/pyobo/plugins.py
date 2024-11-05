@@ -1,5 +1,7 @@
 """Tools for loading entry points."""
 
+from __future__ import annotations
+
 from collections.abc import Callable, Iterable, Mapping
 from functools import lru_cache
 

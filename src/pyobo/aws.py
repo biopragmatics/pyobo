@@ -1,5 +1,7 @@
 """Interface for caching data on AWS S3."""
 
+from __future__ import annotations
+
 import logging
 import os
 

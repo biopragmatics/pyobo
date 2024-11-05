@@ -1,5 +1,7 @@
 """Resource utilities for PyOBO."""
 
+from __future__ import annotations
+
 from collections.abc import Sequence
 from functools import lru_cache
 

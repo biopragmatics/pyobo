@@ -1,6 +1,6 @@
 """Data structures for OBO."""
 
-from typing import Optional
+from __future__ import annotations
 
 import bioregistry
 import curies
@@ -56,7 +56,7 @@ class Reference(curies.Reference):
         return values
 
     @classmethod
-    def auto(cls, prefix: str, identifier: str) -> "Reference":
+    def auto(cls, prefix: str, identifier: str) -> Reference:
         """Create a reference and autopopulate its name."""
         from ..api import get_name
 
@@ -76,7 +76,7 @@ class Reference(curies.Reference):
         *,
         strict: bool = True,
         auto: bool = False,
-    ) -> Optional["Reference"]:
+    ) -> Reference | None:
         """Get a reference from a CURIE.
 
         :param curie: The compact URI (CURIE) to parse in the form of `<prefix>:<identifier>`
@@ -94,7 +94,7 @@ class Reference(curies.Reference):
         name: str | None = None,
         *,
         auto: bool = False,
-    ) -> Optional["Reference"]:
+    ) -> Reference | None:
         """Get a reference from an IRI using the Bioregistry.
 
         :param iri: The IRI to parse
@@ -112,7 +112,7 @@ class Reference(curies.Reference):
         name: str | None = None,
         *,
         auto: bool = False,
-    ) -> Optional["Reference"]:
+    ) -> Reference | None:
         if prefix is None or identifier is None:
             return None
         if name is None and auto:

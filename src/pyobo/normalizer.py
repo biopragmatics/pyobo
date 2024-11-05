@@ -1,5 +1,7 @@
 """Use synonyms from OBO to normalize names."""
 
+from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
@@ -200,7 +202,7 @@ class MultiNormalizer:
     normalizers: list[Normalizer]
 
     @staticmethod
-    def from_prefixes(prefixes: list[str]) -> "MultiNormalizer":
+    def from_prefixes(prefixes: list[str]) -> MultiNormalizer:
         """Instantiate normalizers based on the given prefixes, in preferred order.."""
         return MultiNormalizer([get_normalizer(prefix) for prefix in prefixes])
 

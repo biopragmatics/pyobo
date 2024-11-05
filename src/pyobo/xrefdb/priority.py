@@ -1,5 +1,7 @@
 """Configuration for the default priority list."""
 
+from __future__ import annotations
+
 import bioregistry
 
 __all__ = [

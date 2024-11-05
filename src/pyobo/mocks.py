@@ -1,5 +1,7 @@
 """Mocks for PyOBO."""
 
+from __future__ import annotations
+
 from collections.abc import Mapping
 from typing import TypeVar
 from unittest import mock
