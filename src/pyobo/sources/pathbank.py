@@ -165,7 +165,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             #  but there are weird parser errors
         )
         term.append_exact_match(Reference(prefix="smpdb", identifier=smpdb_id))
-        term.append_property(has_category, subject.lower().replace(" ", "_"))
+        term.annotate_literal(has_category, subject.lower().replace(" ", "_"))
         term.extend_relationship(has_participant, smpdb_id_to_proteins[smpdb_id])
         term.extend_relationship(has_participant, smpdb_id_to_metabolites[smpdb_id])
         yield term

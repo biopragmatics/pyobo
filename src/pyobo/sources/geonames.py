@@ -80,7 +80,7 @@ def get_code_to_country(*, force: bool = False) -> Mapping[str, Term]:
             term.append_synonym(fips)
         if pd.notna(iso3):
             term.append_synonym(iso3)
-        term.append_property("code", code)
+        term.annotate_literal("code", code)
         code_to_country[code] = term
     logger.info(f"got {len(code_to_country):,} country records")
     return code_to_country
@@ -107,7 +107,7 @@ def get_code_to_admin1(
         term = Term.from_triple(
             "geonames", identifier, name if pd.notna(name) else None, type="Instance"
         )
-        term.append_property("code", code)
+        term.annotate_literal("code", code)
         code_to_admin1[code] = term
 
         country_code = code.split(".")[0]
@@ -135,7 +135,7 @@ def get_code_to_admin2(
         term = Term.from_triple(
             "geonames", identifier, name if pd.notna(name) else None, type="Instance"
         )
-        term.append_property("code", code)
+        term.annotate_literal("code", code)
         code_to_admin2[code] = term
         admin1_code = code.rsplit(".", 1)[0]
         admin1_term = code_to_admin1.get(admin1_code)

@@ -16,13 +16,13 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any, ClassVar, Literal, TextIO, Union
 
-import bioregistry
 import click
 import networkx as nx
 import pandas as pd
 from more_click import force_option, verbose_option
 from tqdm.auto import tqdm
 
+import bioregistry
 from .reference import Reference, Referenced
 from .typedef import (
     RelationHint,
@@ -191,6 +191,9 @@ class Term(Referenced):
     #: Properties, which are not defined with Typedef and have scalar values instead of references.
     properties: dict[str, list[str]] = field(default_factory=lambda: defaultdict(list))
 
+    annotations_object: dict[Reference, list[Reference]] = field(default_factory=lambda: defaultdict(list))
+    annotations_literal: dict[Reference, list[tuple[str, Reference]]] = field(default_factory=lambda: defaultdict(list))
+
     #: Relationships with the default "is_a"
     parents: list[Reference] = field(default_factory=list)
 
@@ -284,12 +287,11 @@ class Term(Referenced):
 
     def append_comment(self, value: str) -> Term:
         """Add a comment relationship."""
-        self.append_property(comment.curie, value)
-        return self
+        return self.annotate_literal(comment, value)
 
     def append_replaced_by(self, reference: ReferenceHint) -> Term:
         """Add a replaced by relationship."""
-        self.append_relationship(term_replaced_by, reference)
+        self.annotate_object(term_replaced_by, reference)
         return self
 
     def append_parent(self, reference: ReferenceHint) -> Term:
@@ -334,7 +336,7 @@ class Term(Referenced):
     def append_exact_match(self, reference: ReferenceHint):
         """Append an exact match, also adding an xref."""
         reference = _ensure_ref(reference)
-        self.append_relationship(exact_match, reference)
+        self.annotate_object(exact_match, reference)
         self.append_xref(reference)
         return self
 
@@ -372,15 +374,36 @@ class Term(Referenced):
             raise ValueError("can not extend a collection that includes a null reference")
         self.relationships[typedef].extend(references)
 
+    def annotate_object(self, prop: Reference, value: Reference) -> None:
+        """Append an object annotation."""
+        self.annotations_object[prop].append(value)
+
+    def annotate_literal(self, prop: Reference, value: str, datatype: Reference | None = None) -> None:
+        """Append an object annotation."""
+        self.annotations_literal[prop].append((value, datatype or Reference(prefix="xsd", identifier="string")))
+
     def append_property(
         self, prop: str | Reference | Referenced, value: str | Reference | Referenced
-    ) -> None:
+    ) -> Self:
         """Append a property."""
-        if isinstance(prop, Reference | Referenced):
-            prop = prop.preferred_curie
-        if isinstance(value, Reference | Referenced):
-            value = value.preferred_curie
-        self.properties[prop].append(value)
+        warnings.warn("Stop using append_property! Use annotate_object or annotate_literal instead", DeprecationWarning,
+                      stacklevel=2)
+
+        if isinstance(prop, str):
+            if prop.startswith("http"):
+                raise NotImplementedError
+            elif ":" in prop:
+                prop = Reference.from_curie(prop)
+            else:  # assume this is some random string
+                prop = Reference(prefix="obo", identifier=f"{self.prefix}/{prop}")
+
+        if not isinstance(value, str):
+            return self.annotate_object(prop, value)
+
+        if ":" in value:
+            return self.annotate_object(prop, Reference.from_curie(value))
+
+        return self.annotate_literal(prop, value)
 
     def _definition_fp(self) -> str:
         if self.definition is None:

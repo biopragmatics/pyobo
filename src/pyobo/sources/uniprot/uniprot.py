@@ -103,8 +103,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                         gene_product_of, Reference(prefix="ncbigene", identifier=gene_id.strip())
                     )
 
-            # TODO add type=Reference(prefix="xsd", identifier="boolean")
-            term.append_property("reviewed", "true")
+            term.annotate_literal("reviewed", "true", Reference(prefix="xsd", identifier="boolean"))
 
             for go_process_ref in _parse_go(go_processes):
                 term.append_relationship(participates_in, go_process_ref)
