@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import sys
+import warnings
 from collections import defaultdict
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -14,15 +15,15 @@ from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, ClassVar, Literal, TextIO, Union
+from typing import Any, ClassVar, Literal, Self, TextIO, Union
 
+import bioregistry
 import click
 import networkx as nx
 import pandas as pd
 from more_click import force_option, verbose_option
 from tqdm.auto import tqdm
 
-import bioregistry
 from .reference import Reference, Referenced
 from .typedef import (
     RelationHint,
@@ -191,8 +192,12 @@ class Term(Referenced):
     #: Properties, which are not defined with Typedef and have scalar values instead of references.
     properties: dict[str, list[str]] = field(default_factory=lambda: defaultdict(list))
 
-    annotations_object: dict[Reference, list[Reference]] = field(default_factory=lambda: defaultdict(list))
-    annotations_literal: dict[Reference, list[tuple[str, Reference]]] = field(default_factory=lambda: defaultdict(list))
+    annotations_object: dict[Reference, list[Reference]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+    annotations_literal: dict[Reference, list[tuple[str, Reference]]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
 
     #: Relationships with the default "is_a"
     parents: list[Reference] = field(default_factory=list)
@@ -378,16 +383,23 @@ class Term(Referenced):
         """Append an object annotation."""
         self.annotations_object[prop].append(value)
 
-    def annotate_literal(self, prop: Reference, value: str, datatype: Reference | None = None) -> None:
+    def annotate_literal(
+        self, prop: Reference, value: str, datatype: Reference | None = None
+    ) -> None:
         """Append an object annotation."""
-        self.annotations_literal[prop].append((value, datatype or Reference(prefix="xsd", identifier="string")))
+        self.annotations_literal[prop].append(
+            (value, datatype or Reference(prefix="xsd", identifier="string"))
+        )
 
     def append_property(
         self, prop: str | Reference | Referenced, value: str | Reference | Referenced
     ) -> Self:
         """Append a property."""
-        warnings.warn("Stop using append_property! Use annotate_object or annotate_literal instead", DeprecationWarning,
-                      stacklevel=2)
+        warnings.warn(
+            "Stop using append_property! Use annotate_object or annotate_literal instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         if isinstance(prop, str):
             if prop.startswith("http"):
