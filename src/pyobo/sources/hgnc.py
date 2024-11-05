@@ -7,7 +7,6 @@ import typing
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 from operator import attrgetter
-from typing import Optional
 
 from tabulate import tabulate
 from tqdm.auto import tqdm
@@ -238,7 +237,7 @@ def get_obo(*, force: bool = False) -> Obo:
     return HGNCGetter(force=force)
 
 
-def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
+def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]:
     """Get HGNC terms."""
     if version is None:
         version = get_version("hgnc")
@@ -364,7 +363,7 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
             xref_identifiers = entry.pop(key, None)
             if xref_identifiers is None:
                 continue
-            if isinstance(xref_identifiers, (str, int)):
+            if isinstance(xref_identifiers, str | int):
                 xref_identifiers = [str(xref_identifiers)]
 
             if xref_prefix == "merops.entry":
@@ -389,7 +388,7 @@ def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Te
 
         gene_group_ids = entry.pop("gene_group_id", [])
         gene_groups = entry.pop("gene_group", [])
-        for gene_group_id, gene_group_label in zip(gene_group_ids, gene_groups):
+        for gene_group_id, gene_group_label in zip(gene_group_ids, gene_groups, strict=False):
             term.append_relationship(
                 member_of,
                 Reference(

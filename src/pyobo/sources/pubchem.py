@@ -2,7 +2,6 @@
 
 import logging
 from collections.abc import Iterable, Mapping
-from typing import Optional
 
 import pandas as pd
 from bioregistry.utils import removeprefix
@@ -23,7 +22,7 @@ logger = logging.getLogger(__name__)
 PREFIX = "pubchem.compound"
 
 
-def _get_pubchem_extras_url(version: Optional[str], end: str) -> str:
+def _get_pubchem_extras_url(version: str | None, end: str) -> str:
     if version is None:
         version = get_version("pubchem")
     return f"ftp://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Monthly/{version}/Extras/{end}"
@@ -97,7 +96,7 @@ def get_pubchem_id_to_mesh_id(version: str) -> Mapping[str, str]:
     return dict(df.values)
 
 
-def _ensure_cid_name_path(*, version: Optional[str] = None, force: bool = False) -> str:
+def _ensure_cid_name_path(*, version: str | None = None, force: bool = False) -> str:
     if version is None:
         version = get_version("pubchem")
     # 2 tab-separated columns: compound_id, name

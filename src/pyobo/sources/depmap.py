@@ -1,7 +1,6 @@
 """DepMap cell lines."""
 
 from collections.abc import Iterable
-from typing import Optional
 
 import pandas as pd
 import pystow
@@ -35,7 +34,7 @@ def get_obo(*, force: bool = False) -> Obo:
     return DepMapGetter(force=force)
 
 
-def get_url(version: Optional[str] = None) -> str:
+def get_url(version: str | None = None) -> str:
     """Get the URL for the given version of the DepMap cell line metadata file.
 
     :param version: The version of the data
@@ -51,7 +50,7 @@ def get_url(version: Optional[str] = None) -> str:
     return url
 
 
-def _fix_mangled_int(x: str) -> Optional[str]:
+def _fix_mangled_int(x: str) -> str | None:
     return str(int(float(x))) if pd.notna(x) else None
 
 

@@ -26,7 +26,7 @@ copyright = f"{date.today().year}, Charles Tapley Hoyt"
 author = "Charles Tapley Hoyt"
 
 # The full version, including alpha/beta/rc tags.
-release = "0.11.1-dev"
+release = "0.12.0-dev"
 
 # The short X.Y version.
 parsed_version = re.match(
@@ -36,7 +36,7 @@ parsed_version = re.match(
 version = parsed_version.expand(r"\g<major>.\g<minor>.\g<patch>")
 
 if parsed_version.group("release"):
-    tags.add("prerelease")  # noqa: F821
+    tags.add("prerelease")  # noqa:F821
 
 # See https://about.readthedocs.com/blog/2024/07/addons-by-default/
 # Define the canonical URL if you are using a custom domain on Read the Docs

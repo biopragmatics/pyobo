@@ -4,7 +4,6 @@ import json
 import logging
 import os
 from functools import lru_cache
-from typing import Optional
 
 import bioversions
 
@@ -24,7 +23,7 @@ class VersionError(ValueError):
     """A catch-all for version getting failure."""
 
 
-def get_version(prefix: str) -> Optional[str]:
+def get_version(prefix: str) -> str | None:
     """Get the version for the resource, if available.
 
     :param prefix: the resource name

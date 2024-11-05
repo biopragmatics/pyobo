@@ -28,7 +28,6 @@ DR         Cross-reference to external     Optional; once or more
 import itertools as itt
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
-from typing import Optional
 
 from tqdm.auto import tqdm
 
@@ -71,7 +70,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
             yield term
 
 
-def _parse(i, lines: Iterable[tuple[str, str]]) -> Optional[Term]:
+def _parse(i, lines: Iterable[tuple[str, str]]) -> Term | None:
     dd_: defaultdict[str, list[str]] = defaultdict(list)
     for key, value in lines:
         dd_[key].append(value)

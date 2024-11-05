@@ -2,7 +2,6 @@
 
 import logging
 from collections.abc import Iterable
-from typing import Optional
 
 from lxml.etree import ElementTree
 from tqdm.auto import tqdm
@@ -133,7 +132,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         yield term
 
 
-def _get_definition(attrib) -> Optional[str]:
+def _get_definition(attrib) -> str | None:
     rv = attrib["DESCRIPTION_FULL"].strip() or attrib["DESCRIPTION_BRIEF"].strip() or None
     if rv is not None:
         return rv.replace(r"\d", "").replace(r"\s", "")

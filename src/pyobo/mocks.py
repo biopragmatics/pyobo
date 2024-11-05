@@ -1,7 +1,7 @@
 """Mocks for PyOBO."""
 
 from collections.abc import Mapping
-from typing import Optional, TypeVar, Union
+from typing import TypeVar
 from unittest import mock
 
 import pandas as pd
@@ -51,7 +51,7 @@ def _replace_mapping_getter(name: str, data: Mapping[str, Mapping[str, X]]) -> m
 
 
 def get_mock_get_xrefs_df(
-    df: Union[list[tuple[str, str, str, str, str]], pd.DataFrame],
+    df: list[tuple[str, str, str, str, str]] | pd.DataFrame,
 ) -> mock._patch:
     """Mock the :func:`pyobo.xrefsdb.xrefs_pipeline.get_xref_df` function.
 
@@ -69,7 +69,7 @@ def get_mock_get_xrefs_df(
 
 
 def _make_mock_get_name(name: str, data: Mapping[str, Mapping[str, X]]) -> mock._patch:
-    def _get_name(prefix: str, identifier: str) -> Optional[X]:
+    def _get_name(prefix: str, identifier: str) -> X | None:
         return data.get(prefix, {}).get(identifier)
 
     return mock.patch(name, side_effect=_get_name)

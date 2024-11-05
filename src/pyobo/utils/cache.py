@@ -6,7 +6,7 @@ import logging
 import os
 from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Generic, TypeVar, Union
+from typing import Generic, TypeVar
 
 import networkx as nx
 from pystow.cache import Cached
@@ -39,7 +39,7 @@ class _CachedMapping(Cached[X], Generic[X]):
 
     def __init__(
         self,
-        path: Union[str, Path, os.PathLike],
+        path: str | Path | os.PathLike,
         header: Iterable[str],
         *,
         use_tqdm: bool = False,
@@ -66,13 +66,13 @@ class CachedMapping(_CachedMapping[Mapping[str, str]]):
 cached_mapping = CachedMapping
 
 
-def get_gzipped_graph(path: Union[str, Path]) -> nx.MultiDiGraph:
+def get_gzipped_graph(path: str | Path) -> nx.MultiDiGraph:
     """Read a graph that's gzipped nodelink."""
     with gzip.open(path, "rt") as file:
         return nx.node_link_graph(json.load(file))
 
 
-def write_gzipped_graph(graph: nx.MultiDiGraph, path: Union[str, Path]) -> None:
+def write_gzipped_graph(graph: nx.MultiDiGraph, path: str | Path) -> None:
     """Write a graph as gzipped nodelink."""
     with gzip.open(path, "wt") as file:
         json.dump(nx.node_link_data(graph), file)

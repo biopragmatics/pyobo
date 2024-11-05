@@ -1,8 +1,7 @@
 """Tools for loading entry points."""
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from functools import lru_cache
-from typing import Callable, Optional
 
 from .struct import Obo
 
@@ -32,7 +31,7 @@ def has_nomenclature_plugin(prefix: str) -> bool:
         return True
 
 
-def run_nomenclature_plugin(prefix: str, version: Optional[str] = None) -> Obo:
+def run_nomenclature_plugin(prefix: str, version: str | None = None) -> Obo:
     """Get a converted PyOBO source."""
     from .sources import ontology_resolver
 

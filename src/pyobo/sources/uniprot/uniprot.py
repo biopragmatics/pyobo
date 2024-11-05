@@ -3,7 +3,7 @@
 from collections.abc import Iterable
 from operator import attrgetter
 from pathlib import Path
-from typing import Optional, cast
+from typing import cast
 
 from tqdm.auto import tqdm
 
@@ -69,7 +69,7 @@ def get_obo(force: bool = False) -> Obo:
     return UniProtGetter(force=force)
 
 
-def iter_terms(version: Optional[str] = None) -> Iterable[Term]:
+def iter_terms(version: str | None = None) -> Iterable[Term]:
     """Iterate over UniProt Terms."""
     with open_reader(ensure(version=version)) as reader:
         _ = next(reader)  # header
@@ -164,7 +164,7 @@ def _parse_go(go_terms) -> list[Reference]:
     return rv
 
 
-def ensure(version: Optional[str] = None, force: bool = False) -> Path:
+def ensure(version: str | None = None, force: bool = False) -> Path:
     """Ensure the reviewed uniprot names are available."""
     if version is None:
         version = get_version("uniprot")

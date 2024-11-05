@@ -2,7 +2,6 @@
 
 import logging
 import os
-from typing import Optional
 
 import boto3
 import humanize
@@ -31,7 +30,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def download_artifacts(bucket: str, suffix: Optional[str] = None) -> None:
+def download_artifacts(bucket: str, suffix: str | None = None) -> None:
     """Download compiled parts from AWS.
 
     :param bucket: The name of the S3 bucket to download
@@ -55,8 +54,8 @@ def download_artifacts(bucket: str, suffix: Optional[str] = None) -> None:
 
 def upload_artifacts(
     bucket: str,
-    whitelist: Optional[set[str]] = None,
-    blacklist: Optional[set[str]] = None,
+    whitelist: set[str] | None = None,
+    blacklist: set[str] | None = None,
     s3_client=None,
 ) -> None:
     """Upload all artifacts to AWS."""
@@ -76,7 +75,7 @@ def upload_artifacts(
 
 
 def upload_artifacts_for_prefix(
-    *, prefix: str, bucket: str, s3_client=None, version: Optional[str] = None
+    *, prefix: str, bucket: str, s3_client=None, version: str | None = None
 ):
     """Upload compiled parts for the given prefix to AWS."""
     if s3_client is None:

@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Optional, Union
 
 import bioregistry
 
@@ -24,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 NormalizationSuccess = tuple[str, str, str]
 NormalizationFailure = tuple[None, None, str]
-NormalizationResult = Union[NormalizationSuccess, NormalizationFailure]
+NormalizationResult = NormalizationSuccess | NormalizationFailure
 
 
 class Normalizer(ABC):
@@ -43,7 +42,7 @@ class Normalizer(ABC):
         self,
         id_to_name: dict[str, str],
         id_to_synonyms: dict[str, list[str]],
-        remove_prefix: Optional[str] = None,
+        remove_prefix: str | None = None,
     ) -> None:
         """Initialize the normalizer.
 
@@ -79,7 +78,7 @@ class Normalizer(ABC):
         *,
         id_to_name: Mapping[str, str],
         id_to_synonyms: Mapping[str, Iterable[str]],
-        remove_prefix: Optional[str] = None,
+        remove_prefix: str | None = None,
     ) -> Iterable[tuple[str, str]]:
         if remove_prefix is not None:
             remove_prefix = f'{remove_prefix.lower().rstrip(":")}:'
@@ -127,7 +126,7 @@ def get_normalizer(prefix: str) -> Normalizer:
     return normalizer
 
 
-def ground(prefix: Union[str, Iterable[str]], query: str) -> NormalizationResult:
+def ground(prefix: str | Iterable[str], query: str) -> NormalizationResult:
     """Normalize a string given the prefix's labels and synonyms.
 
     :param prefix: If a string, only grounds against that namespace. If a list, will try grounding

@@ -3,7 +3,6 @@
 import logging
 from collections.abc import Iterable
 from functools import lru_cache
-from typing import Optional
 
 import networkx as nx
 
@@ -33,11 +32,11 @@ def get_hierarchy(
     *,
     include_part_of: bool = True,
     include_has_member: bool = False,
-    extra_relations: Optional[Iterable[TypeDef]] = None,
-    properties: Optional[Iterable[str]] = None,
+    extra_relations: Iterable[TypeDef] | None = None,
+    properties: Iterable[str] | None = None,
     use_tqdm: bool = False,
     force: bool = False,
-    version: Optional[str] = None,
+    version: str | None = None,
 ) -> nx.DiGraph:
     """Get hierarchy of parents as a directed graph.
 
@@ -80,7 +79,7 @@ def _get_hierarchy_helper(
     include_has_member: bool,
     use_tqdm: bool,
     force: bool = False,
-    version: Optional[str] = None,
+    version: str | None = None,
 ) -> nx.DiGraph:
     rv = nx.DiGraph()
 
@@ -127,7 +126,7 @@ def _get_hierarchy_helper(
             rv.add_edge(f"{source_ns}:{source_id}", f"{prefix}:{target_id}", relation="part_of")
 
     for relation in extra_relations:
-        if not isinstance(relation, (TypeDef, Reference)):
+        if not isinstance(relation, TypeDef | Reference):
             raise TypeError
         relation_df = get_filtered_relations_df(
             prefix=prefix,
@@ -154,7 +153,7 @@ def _get_hierarchy_helper(
 
 
 def is_descendent(
-    prefix, identifier, ancestor_prefix, ancestor_identifier, *, version: Optional[str] = None
+    prefix, identifier, ancestor_prefix, ancestor_identifier, *, version: str | None = None
 ) -> bool:
     """Check that the first identifier has the second as a descendent.
 
@@ -169,13 +168,13 @@ def is_descendent(
 @lru_cache
 def get_descendants(
     prefix: str,
-    identifier: Optional[str] = None,
+    identifier: str | None = None,
     include_part_of: bool = True,
     include_has_member: bool = False,
     use_tqdm: bool = False,
     force: bool = False,
     **kwargs,
-) -> Optional[set[str]]:
+) -> set[str] | None:
     """Get all the descendants (children) of the term as CURIEs."""
     curie, prefix, identifier = _pic(prefix, identifier)
     hierarchy = get_hierarchy(
@@ -203,13 +202,13 @@ def _pic(prefix, identifier=None) -> tuple[str, str, str]:
 @lru_cache
 def get_children(
     prefix: str,
-    identifier: Optional[str] = None,
+    identifier: str | None = None,
     include_part_of: bool = True,
     include_has_member: bool = False,
     use_tqdm: bool = False,
     force: bool = False,
     **kwargs,
-) -> Optional[set[str]]:
+) -> set[str] | None:
     """Get all the descendants (children) of the term as CURIEs."""
     curie, prefix, identifier = _pic(prefix, identifier)
     hierarchy = get_hierarchy(
@@ -226,7 +225,7 @@ def get_children(
 
 
 def has_ancestor(
-    prefix, identifier, ancestor_prefix, ancestor_identifier, *, version: Optional[str] = None
+    prefix, identifier, ancestor_prefix, ancestor_identifier, *, version: str | None = None
 ) -> bool:
     """Check that the first identifier has the second as an ancestor.
 
@@ -240,13 +239,13 @@ def has_ancestor(
 @lru_cache
 def get_ancestors(
     prefix: str,
-    identifier: Optional[str] = None,
+    identifier: str | None = None,
     include_part_of: bool = True,
     include_has_member: bool = False,
     use_tqdm: bool = False,
     force: bool = False,
     **kwargs,
-) -> Optional[set[str]]:
+) -> set[str] | None:
     """Get all the ancestors (parents) of the term as CURIEs."""
     curie, prefix, identifier = _pic(prefix, identifier)
     hierarchy = get_hierarchy(
@@ -264,7 +263,7 @@ def get_ancestors(
 
 def get_subhierarchy(
     prefix: str,
-    identifier: Optional[str] = None,
+    identifier: str | None = None,
     include_part_of: bool = True,
     include_has_member: bool = False,
     use_tqdm: bool = False,

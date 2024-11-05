@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 import subprocess
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from functools import lru_cache
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 from curies import Reference, ReferenceTuple
 
@@ -90,7 +90,7 @@ def get_name(
     version: str | None = None,
 ) -> str | None:
     """Get the name for an entity."""
-    if isinstance(prefix, (ReferenceTuple, Reference)):
+    if isinstance(prefix, ReferenceTuple | Reference):
         prefix, identifier = prefix.prefix, prefix.identifier
     return _help_get(get_id_name_mapping, prefix, identifier, version=version)  # type:ignore
 

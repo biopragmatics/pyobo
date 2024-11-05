@@ -2,7 +2,6 @@
 
 from collections.abc import Mapping
 from functools import partial
-from typing import Optional
 
 import pandas as pd
 
@@ -43,7 +42,7 @@ taxonomy_remapping = {  # so much for official names
 }
 
 
-def _lookup(name: str) -> Optional[str]:
+def _lookup(name: str) -> str | None:
     if name in taxonomy_remapping:
         return taxonomy_remapping[name]
     return get_ncbitaxon_id(name)

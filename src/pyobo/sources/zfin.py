@@ -3,7 +3,6 @@
 import logging
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Optional
 
 from tqdm.auto import tqdm
 
@@ -62,7 +61,7 @@ MARKERS_COLUMNS = [
 ]
 
 
-def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Term]:
+def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]:
     """Get terms."""
     alt_ids_df = ensure_df(
         PREFIX,

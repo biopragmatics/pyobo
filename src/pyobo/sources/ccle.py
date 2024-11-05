@@ -3,7 +3,6 @@
 import tarfile
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 import pystow
@@ -37,7 +36,7 @@ def get_obo(*, force: bool = False) -> Obo:
     return CCLEGetter(force=force)
 
 
-def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
+def iter_terms(version: str | None = None, force: bool = False) -> Iterable[Term]:
     """Iterate over CCLE Cells."""
     df = ensure_df(version=version, force=force)
     for identifier, depmap_id, name in df.values:
@@ -54,21 +53,21 @@ def get_ccle_static_version() -> str:
     return "2019"
 
 
-def get_url(version: Optional[str] = None) -> str:
+def get_url(version: str | None = None) -> str:
     """Get the cBioPortal URL for the given version of CCLE's cell lines."""
     if version is None:
         version = get_ccle_static_version()
     return f"https://cbioportal-datahub.s3.amazonaws.com/ccle_broad_{version}.tar.gz"
 
 
-def get_inner(version: Optional[str] = None) -> str:
+def get_inner(version: str | None = None) -> str:
     """Get the inner tarfile path."""
     if version is None:
         version = get_ccle_static_version()
     return f"ccle_broad_{version}/data_clinical_sample.txt"
 
 
-def ensure(version: Optional[str] = None, **kwargs) -> Path:
+def ensure(version: str | None = None, **kwargs) -> Path:
     """Ensure the given version is downloaded."""
     if version is None:
         version = get_ccle_static_version()
@@ -76,7 +75,7 @@ def ensure(version: Optional[str] = None, **kwargs) -> Path:
     return pystow.ensure("pyobo", "raw", PREFIX, version, url=url, **kwargs)
 
 
-def ensure_df(version: Optional[str] = None, force: bool = False) -> pd.DataFrame:
+def ensure_df(version: str | None = None, force: bool = False) -> pd.DataFrame:
     """Get the CCLE clinical sample dataframe."""
     if version is None:
         version = get_ccle_static_version()

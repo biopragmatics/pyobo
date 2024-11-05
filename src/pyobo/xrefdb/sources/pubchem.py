@@ -1,7 +1,5 @@
 """Get xrefs from PubChem Compound to MeSH."""
 
-from typing import Optional
-
 import pandas as pd
 
 from ...api.utils import safe_get_version
@@ -13,7 +11,7 @@ __all__ = [
 ]
 
 
-def get_pubchem_mesh_df(version: Optional[str] = None) -> pd.DataFrame:
+def get_pubchem_mesh_df(version: str | None = None) -> pd.DataFrame:
     """Get PubChem Compound-MeSH xrefs."""
     if version is None:
         version = safe_get_version("pubchem")

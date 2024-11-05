@@ -2,7 +2,6 @@
 
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Optional, Union
 
 from .reference import Reference, Referenced
 from ..identifier_utils import normalize_curie
@@ -63,24 +62,24 @@ class TypeDef(Referenced):
     """
 
     reference: Reference
-    comment: Optional[str] = None
-    namespace: Optional[str] = None
-    definition: Optional[str] = None
-    is_transitive: Optional[bool] = None
-    is_symmetric: Optional[bool] = None
-    domain: Optional[Reference] = None
-    range: Optional[Reference] = None
+    comment: str | None = None
+    namespace: str | None = None
+    definition: str | None = None
+    is_transitive: bool | None = None
+    is_symmetric: bool | None = None
+    domain: Reference | None = None
+    range: Reference | None = None
     parents: list[Reference] = field(default_factory=list)
     xrefs: list[Reference] = field(default_factory=list)
-    inverse: Optional[Reference] = None
-    created_by: Optional[str] = None
-    holds_over_chain: Optional[list[Reference]] = None
+    inverse: Reference | None = None
+    created_by: str | None = None
+    holds_over_chain: list[Reference] | None = None
     #: Whether this relationship is a metadata tag. Properties that are marked as metadata tags are
     #: used to record object metadata. Object metadata is additional information about an object
     #: that is useful to track, but does not impact the definition of the object or how it should
     #: be treated by a reasoner. Metadata tags might be used to record special term synonyms or
     #: structured notes about a term, for example.
-    is_metadata_tag: Optional[bool] = None
+    is_metadata_tag: bool | None = None
 
     def __hash__(self) -> int:
         return hash((self.__class__, self.prefix, self.identifier))
@@ -126,12 +125,12 @@ class TypeDef(Referenced):
             yield f"range: {self.range}"
 
     @classmethod
-    def from_triple(cls, prefix: str, identifier: str, name: Optional[str] = None) -> "TypeDef":
+    def from_triple(cls, prefix: str, identifier: str, name: str | None = None) -> "TypeDef":
         """Create a typedef from a reference."""
         return cls(reference=Reference(prefix=prefix, identifier=identifier, name=name))
 
     @classmethod
-    def from_curie(cls, curie: str, name: Optional[str] = None) -> "TypeDef":
+    def from_curie(cls, curie: str, name: str | None = None) -> "TypeDef":
         """Create a TypeDef directly from a CURIE and optional name."""
         prefix, identifier = normalize_curie(curie)
         if prefix is None or identifier is None:
@@ -139,12 +138,12 @@ class TypeDef(Referenced):
         return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
 
 
-RelationHint = Union[Reference, TypeDef, tuple[str, str], str]
+RelationHint = Reference | TypeDef | tuple[str, str] | str
 
 
 def get_reference_tuple(relation: RelationHint) -> tuple[str, str]:
     """Get tuple for typedef/reference."""
-    if isinstance(relation, (Reference, TypeDef)):
+    if isinstance(relation, Reference | TypeDef):
         return relation.prefix, relation.identifier
     elif isinstance(relation, tuple):
         return relation

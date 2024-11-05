@@ -3,7 +3,6 @@
 import logging
 import tarfile
 from collections.abc import Iterable
-from typing import Optional
 from xml.etree import ElementTree
 
 from pyobo.struct import Obo, Reference, Term, has_part
@@ -36,7 +35,7 @@ def get_obo(force: bool = False):
     return GWASCentralStudyGetter(force=force)
 
 
-def _find_text(element, name: str) -> Optional[str]:
+def _find_text(element, name: str) -> str | None:
     x = element.find(name)
     if x is not None:
         return x.text

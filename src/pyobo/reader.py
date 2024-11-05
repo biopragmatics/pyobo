@@ -4,7 +4,7 @@ import logging
 from collections.abc import Iterable, Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 import bioregistry
 import networkx as nx
@@ -49,7 +49,7 @@ RELATION_REMAPPINGS: Mapping[str, tuple[str, str]] = {
 
 
 def from_obo_path(
-    path: Union[str, Path], prefix: Optional[str] = None, *, strict: bool = True, **kwargs
+    path: str | Path, prefix: str | None = None, *, strict: bool = True, **kwargs
 ) -> Obo:
     """Get the OBO graph from a path."""
     import obonet
@@ -286,7 +286,7 @@ def _iter_obo_graph(
         yield prefix, identifier, data
 
 
-def _get_date(graph, ontology: str) -> Optional[datetime]:
+def _get_date(graph, ontology: str) -> datetime | None:
     try:
         rv = datetime.strptime(graph.graph["date"], DATE_FORMAT)
     except KeyError:
@@ -365,7 +365,7 @@ def iterate_graph_typedefs(
 
 def get_definition(
     data, *, prefix: str, identifier: str
-) -> Union[tuple[None, None], tuple[str, list[Reference]]]:
+) -> tuple[None, None] | tuple[str, list[Reference]]:
     """Extract the definition from the data."""
     definition = data.get("def")  # it's allowed not to have a definition
     if not definition:
@@ -379,7 +379,7 @@ def _extract_definition(
     prefix: str,
     identifier: str,
     strict: bool = False,
-) -> Union[tuple[None, None], tuple[str, list[Reference]]]:
+) -> tuple[None, None] | tuple[str, list[Reference]]:
     """Extract the definitions."""
     if not s.startswith('"'):
         raise ValueError("definition does not start with a quote")
@@ -398,7 +398,7 @@ def _extract_definition(
     return definition, provenance
 
 
-def _get_first_nonquoted(s: str) -> Optional[int]:
+def _get_first_nonquoted(s: str) -> int | None:
     for i, (a, b) in enumerate(pairwise(s), start=1):
         if b == '"' and a != "\\":
             return i
@@ -426,7 +426,7 @@ def _extract_synonym(
     prefix: str,
     identifier: str,
     strict: bool = True,
-) -> Optional[Synonym]:
+) -> Synonym | None:
     # TODO check if the synonym is written like a CURIE... it shouldn't but I've seen it happen
     try:
         name, rest = _quote_split(s)
@@ -434,14 +434,14 @@ def _extract_synonym(
         logger.warning("[%s:%s] invalid synonym: %s", prefix, identifier, s)
         return None
 
-    specificity: Optional[SynonymSpecificity] = None
+    specificity: SynonymSpecificity | None = None
     for _specificity in SynonymSpecificities:
         if rest.startswith(_specificity):
             specificity = _specificity
             rest = rest[len(_specificity) :].strip()
             break
 
-    stype: Optional[SynonymTypeDef] = None
+    stype: SynonymTypeDef | None = None
     for _stype in synonym_typedefs.values():
         # Since there aren't a lot of carefully defined synonym definitions, it
         # can appear as a string or curie. Therefore, we might see temporary prefixes
@@ -513,7 +513,7 @@ HANDLED_PROPERTY_TYPES = {
 
 
 def iterate_node_properties(
-    data: Mapping[str, Any], *, property_prefix: Optional[str] = None, term=None
+    data: Mapping[str, Any], *, property_prefix: str | None = None, term=None
 ) -> Iterable[tuple[str, str]]:
     """Extract properties from a :mod:`obonet` node's data."""
     for prop_value_type in data.get("property_value", []):
@@ -570,8 +570,8 @@ def iterate_node_relationships(
     """Extract relationships from a :mod:`obonet` node's data."""
     for s in data.get("relationship", []):
         relation_curie, target_curie = s.split(" ")
-        relation_prefix: Optional[str]
-        relation_identifier: Optional[str]
+        relation_prefix: str | None
+        relation_identifier: str | None
         if relation_curie in RELATION_REMAPPINGS:
             relation_prefix, relation_identifier = RELATION_REMAPPINGS[relation_curie]
         else:
