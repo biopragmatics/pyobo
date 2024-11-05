@@ -1,5 +1,7 @@
 """Convert PyOBO into OBO Graph."""
 
+from __future__ import annotations
+
 from collections.abc import Iterable
 
 import bioregistry

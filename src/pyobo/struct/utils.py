@@ -1,5 +1,7 @@
 """Utilities for data structures for OBO."""
 
+from __future__ import annotations
+
 __all__ = [
     "OBO_ESCAPE_SLIM",
     "OBO_ESCAPE",

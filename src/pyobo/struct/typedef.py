@@ -1,5 +1,7 @@
 """Default typedefs, references, and other structures."""
 
+from __future__ import annotations
+
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
@@ -125,12 +127,12 @@ class TypeDef(Referenced):
             yield f"range: {self.range}"
 
     @classmethod
-    def from_triple(cls, prefix: str, identifier: str, name: str | None = None) -> "TypeDef":
+    def from_triple(cls, prefix: str, identifier: str, name: str | None = None) -> TypeDef:
         """Create a typedef from a reference."""
         return cls(reference=Reference(prefix=prefix, identifier=identifier, name=name))
 
     @classmethod
-    def from_curie(cls, curie: str, name: str | None = None) -> "TypeDef":
+    def from_curie(cls, curie: str, name: str | None = None) -> TypeDef:
         """Create a TypeDef directly from a CURIE and optional name."""
         prefix, identifier = normalize_curie(curie)
         if prefix is None or identifier is None:

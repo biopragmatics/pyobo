@@ -1,5 +1,7 @@
 """OBO Readers."""
 
+from __future__ import annotations
+
 import logging
 from collections.abc import Iterable, Mapping
 from datetime import datetime
@@ -74,7 +76,7 @@ def from_obo_path(
     return from_obonet(graph, strict=strict, **kwargs)
 
 
-def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> "Obo":
+def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
     """Get all of the terms from a OBO graph."""
     _ontology = graph.graph["ontology"]
     ontology = bioregistry.normalize_prefix(_ontology)  # probably always okay

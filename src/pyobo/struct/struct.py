@@ -1,5 +1,7 @@
 """Data structures for OBO."""
 
+from __future__ import annotations
+
 import gzip
 import json
 import logging
@@ -82,7 +84,7 @@ class Synonym:
     specificity: SynonymSpecificity = "EXACT"
 
     #: The type of synonym. Must be defined in OBO document!
-    type: "SynonymTypeDef" = field(
+    type: SynonymTypeDef = field(
         default_factory=lambda: DEFAULT_SYNONYM_TYPE  # type:ignore
     )
 
@@ -125,7 +127,7 @@ class SynonymTypeDef(Referenced):
         specificity: SynonymSpecificity | None = None,
         *,
         lower: bool = True,
-    ) -> "SynonymTypeDef":
+    ) -> SynonymTypeDef:
         """Get a type definition from text that's normalized."""
         identifier = (
             text.replace("-", "_")
@@ -221,7 +223,7 @@ class Term(Referenced):
         name: str | None = None,
         definition: str | None = None,
         **kwargs,
-    ) -> "Term":
+    ) -> Term:
         """Create a term from a reference."""
         return cls(
             reference=Reference(prefix=prefix, identifier=identifier, name=name),
@@ -234,7 +236,7 @@ class Term(Referenced):
         cls,
         prefix: str,
         identifier: str,
-    ) -> "Term":
+    ) -> Term:
         """Create a term from a reference."""
         from ..api import get_definition
 
@@ -244,7 +246,7 @@ class Term(Referenced):
         )
 
     @classmethod
-    def from_curie(cls, curie: str, name: str | None = None) -> "Term":
+    def from_curie(cls, curie: str, name: str | None = None) -> Term:
         """Create a term directly from a CURIE and optional name."""
         prefix, identifier = normalize_curie(curie)
         if prefix is None or identifier is None:
@@ -275,22 +277,22 @@ class Term(Referenced):
             alt = Reference(prefix=self.prefix, identifier=alt)
         self.alt_ids.append(alt)
 
-    def append_see_also(self, reference: ReferenceHint) -> "Term":
+    def append_see_also(self, reference: ReferenceHint) -> Term:
         """Add a see also relationship."""
         self.relationships[see_also].append(_ensure_ref(reference))
         return self
 
-    def append_comment(self, value: str) -> "Term":
+    def append_comment(self, value: str) -> Term:
         """Add a comment relationship."""
         self.append_property(comment.curie, value)
         return self
 
-    def append_replaced_by(self, reference: ReferenceHint) -> "Term":
+    def append_replaced_by(self, reference: ReferenceHint) -> Term:
         """Add a replaced by relationship."""
         self.append_relationship(term_replaced_by, reference)
         return self
 
-    def append_parent(self, reference: ReferenceHint) -> "Term":
+    def append_parent(self, reference: ReferenceHint) -> Term:
         """Add a parent to this entity."""
         reference = _ensure_ref(reference)
         if reference not in self.parents:
@@ -542,7 +544,7 @@ class Obo:
     #: A cache of terms
     _items: list[Term] | None = field(init=False, default=None, repr=False)
 
-    term_sort_key: ClassVar[Callable[["Obo", Term], int] | None] = None
+    term_sort_key: ClassVar[Callable[[Obo, Term], int] | None] = None
 
     def __post_init__(self):
         """Run post-init checks."""
@@ -888,7 +890,7 @@ class Obo:
             self._items = sorted(self.iter_terms(force=self.force), key=key)
         return self._items
 
-    def __iter__(self) -> Iterator["Term"]:
+    def __iter__(self) -> Iterator[Term]:
         if self.iter_only:
             return iter(self.iter_terms(force=self.force))
         return iter(self._items_accessor)
@@ -938,7 +940,7 @@ class Obo:
                     self._hierarchy.add_edge(term.identifier, parent.identifier)
         return self._hierarchy
 
-    def to_obonet(self: "Obo", *, use_tqdm: bool = False) -> nx.MultiDiGraph:
+    def to_obonet(self: Obo, *, use_tqdm: bool = False) -> nx.MultiDiGraph:
         """Export as a :mod`obonet` style graph."""
         rv = nx.MultiDiGraph()
         rv.graph.update(
@@ -1435,7 +1437,7 @@ def make_ad_hoc_ontology(
     _root_terms: list[Reference] | None = None,
     *,
     terms: list[Term],
-) -> "Obo":
+) -> Obo:
     """Make an ad-hoc ontology."""
 
     class AdHocOntology(Obo):
