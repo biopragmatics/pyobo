@@ -8,7 +8,6 @@ import urllib.error
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from functools import partial
-from typing import Union
 
 from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import thread_map
@@ -148,7 +147,7 @@ def _iter_genome_terms(
 
 def iter_kegg_pathway_paths(
     version: str, skip_missing: bool = True
-) -> Iterable[Union[tuple[KEGGGenome, str, str], tuple[None, None, None]]]:
+) -> Iterable[tuple[KEGGGenome, str, str] | tuple[None, None, None]]:
     """Get paths for the KEGG Pathway files."""
     genomes = list(iter_kegg_genomes(version=version, desc="KEGG Pathways"))
     func = partial(_process_genome, version=version, skip_missing=skip_missing)

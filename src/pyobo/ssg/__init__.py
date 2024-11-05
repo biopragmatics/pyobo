@@ -5,7 +5,6 @@ from collections import defaultdict
 from collections.abc import Sequence
 from operator import attrgetter
 from pathlib import Path
-from typing import Optional, Union
 
 import bioregistry
 from bioregistry.constants import BIOREGISTRY_DEFAULT_BASE_URL
@@ -31,14 +30,14 @@ index_template = environment.get_template("index.html")
 
 def make_site(
     obo: Obo,
-    directory: Union[str, Path],
+    directory: str | Path,
     use_subdirectories: bool = True,
     manifest: bool = False,
-    resource: Optional[bioregistry.Resource] = None,
-    metaregistry_metaprefix: Optional[str] = None,
-    metaregistry_name: Optional[str] = None,
-    metaregistry_base_url: Optional[str] = None,
-    show_properties_in_manifest: Optional[Sequence[tuple[str, str]]] = None,
+    resource: bioregistry.Resource | None = None,
+    metaregistry_metaprefix: str | None = None,
+    metaregistry_name: str | None = None,
+    metaregistry_base_url: str | None = None,
+    show_properties_in_manifest: Sequence[tuple[str, str]] | None = None,
 ) -> None:
     """Make a website in the given directory.
 

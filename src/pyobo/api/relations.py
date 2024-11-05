@@ -4,7 +4,6 @@ import logging
 import os
 from collections.abc import Mapping
 from functools import lru_cache
-from typing import Optional
 
 import networkx as nx
 import pandas as pd
@@ -47,7 +46,7 @@ def get_relations_df(
     force: bool = False,
     wide: bool = False,
     strict: bool = True,
-    version: Optional[str] = None,
+    version: str | None = None,
 ) -> pd.DataFrame:
     """Get all relations from the OBO."""
     if version is None:
@@ -80,7 +79,7 @@ def get_filtered_relations_df(
     *,
     use_tqdm: bool = False,
     force: bool = False,
-    version: Optional[str] = None,
+    version: str | None = None,
 ) -> pd.DataFrame:
     """Get all the given relation."""
     relation_prefix, relation_identifier = relation = get_reference_tuple(relation)
@@ -119,7 +118,7 @@ def get_id_multirelations_mapping(
     *,
     use_tqdm: bool = False,
     force: bool = False,
-    version: Optional[str] = None,
+    version: str | None = None,
 ) -> Mapping[str, list[Reference]]:
     """Get the OBO file and output a synonym dictionary."""
     if version is None:
@@ -137,7 +136,7 @@ def get_relation_mapping(
     *,
     use_tqdm: bool = False,
     force: bool = False,
-    version: Optional[str] = None,
+    version: str | None = None,
 ) -> Mapping[str, str]:
     """Get relations from identifiers in the source prefix to target prefix with the given relation.
 
@@ -169,7 +168,7 @@ def get_relation(
     use_tqdm: bool = False,
     force: bool = False,
     **kwargs,
-) -> Optional[str]:
+) -> str | None:
     """Get the target identifier corresponding to the given relationship from the source prefix/identifier pair.
 
     .. warning:: Assumes there's only one version of the property for each term.

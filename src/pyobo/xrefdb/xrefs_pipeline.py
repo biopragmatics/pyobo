@@ -4,7 +4,7 @@ import gzip
 import itertools as itt
 import logging
 from collections.abc import Iterable
-from typing import Optional, cast
+from typing import cast
 
 import bioregistry
 import networkx as nx
@@ -157,7 +157,7 @@ def _iter_xrefs(
     *,
     force: bool = False,
     use_tqdm: bool = True,
-    skip_below: Optional[str] = None,
+    skip_below: str | None = None,
     strict: bool = True,
     **kwargs,
 ) -> Iterable[tuple[str, str, str, str, str]]:

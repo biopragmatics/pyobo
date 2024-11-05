@@ -8,7 +8,7 @@ import itertools as itt
 import logging
 from collections.abc import Iterable, Mapping
 from functools import lru_cache
-from typing import Any, Optional
+from typing import Any
 from xml.etree import ElementTree
 
 import pystow
@@ -139,7 +139,7 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
 
 
 @lru_cache
-def get_xml_root(version: Optional[str] = None) -> ElementTree.Element:
+def get_xml_root(version: str | None = None) -> ElementTree.Element:
     """Get the DrugBank XML parser root.
 
     Takes between 35-60 seconds.

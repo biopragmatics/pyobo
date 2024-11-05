@@ -9,9 +9,9 @@ Want to get your own API cliend ID and client secret?
 import datetime
 import json
 import os
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
-from typing import Any, Callable, Union
+from typing import Any
 
 import pystow
 import requests
@@ -73,7 +73,7 @@ def get_icd_api_headers() -> Mapping[str, str]:
 def visiter(
     identifier: str,
     visited_identifiers: set[str],
-    directory: Union[str, Path],
+    directory: str | Path,
     *,
     endpoint: str,
     converter: Callable[[Mapping[str, Any]], Term],

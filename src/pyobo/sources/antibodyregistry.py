@@ -2,7 +2,6 @@
 
 import logging
 from collections.abc import Iterable, Mapping
-from typing import Optional
 
 import pandas as pd
 from bioregistry.utils import removeprefix
@@ -23,7 +22,7 @@ URL = "http://antibodyregistry.org/php/fileHandler.php"
 CHUNKSIZE = 20_000
 
 
-def get_chunks(*, force: bool = False, version: Optional[str] = None) -> pd.DataFrame:
+def get_chunks(*, force: bool = False, version: str | None = None) -> pd.DataFrame:
     """Get the BioGRID identifiers mapping dataframe."""
     if version is None:
         version = get_version(PREFIX)
@@ -56,7 +55,7 @@ def get_obo(*, force: bool = False) -> Obo:
 
 
 # TODO there are tonnnnsss of mappings to be curated
-MAPPING: Mapping[str, Optional[str]] = {
+MAPPING: Mapping[str, str | None] = {
     "AMERICAN DIAGNOSTICA": None,  # No website
     "Biolegend": "biolegend",
     "Enzo Life Sciences": "enzo",
@@ -74,7 +73,7 @@ SKIP = {
 }
 
 
-def iter_terms(*, force: bool = False, version: Optional[str] = None) -> Iterable[Term]:
+def iter_terms(*, force: bool = False, version: str | None = None) -> Iterable[Term]:
     """Iterate over antibodies."""
     chunks = get_chunks(force=force, version=version)
     needs_curating = set()

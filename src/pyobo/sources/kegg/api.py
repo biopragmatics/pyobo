@@ -3,7 +3,6 @@
 import urllib.error
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Optional
 
 from pyobo import Reference, Term, ensure_path
 from pyobo.struct import from_species
@@ -30,9 +29,9 @@ class KEGGGenome:
 
     identifier: str
     name: str
-    code: Optional[str]
-    long_code: Optional[str]
-    taxonomy_id: Optional[str]
+    code: str | None
+    long_code: str | None
+    taxonomy_id: str | None
 
     def annotate_term(self, term: Term) -> None:
         """Annotate the term with the species represented by this object."""
@@ -89,7 +88,7 @@ def ensure_list_genome(kegg_genome_id: str, *, version: str) -> str:
 
 def ensure_conv_genome_uniprot(
     kegg_genome_id: str, *, version: str, error_on_missing: bool = False
-) -> Optional[str]:
+) -> str | None:
     """Get the KEGG-UniProt protein map for the given organism."""
     return _ensure_conv_genome_helper(
         kegg_genome_id, "uniprot", version=version, error_on_missing=error_on_missing
@@ -98,7 +97,7 @@ def ensure_conv_genome_uniprot(
 
 def ensure_conv_genome_ncbigene(
     kegg_genome_id: str, *, version: str, error_on_missing: bool = False
-) -> Optional[str]:
+) -> str | None:
     """Get the KEGG-NCBIGENE protein map for the given organism."""
     return _ensure_conv_genome_helper(
         kegg_genome_id, "ncbi-geneid", version=version, error_on_missing=error_on_missing
@@ -111,7 +110,7 @@ def _ensure_conv_genome_helper(
     *,
     version: str,
     error_on_missing: bool = False,
-) -> Optional[str]:
+) -> str | None:
     """Get the KEGG-external protein map for the given organism/database."""
     name = f"{kegg_genome_id}.tsv"
     try:

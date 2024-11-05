@@ -1,8 +1,9 @@
 """Utilities for building paths."""
 
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Literal, Optional, Union
+from typing import Any, Literal, TypeAlias
 
 import pandas as pd
 import requests_ftp
@@ -23,7 +24,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-VersionHint = Union[None, str, Callable[[], Optional[str]]]
+VersionHint: TypeAlias = None | str | Callable[[], str | None]
 
 requests_ftp.monkeypatch_session()
 
@@ -31,7 +32,7 @@ requests_ftp.monkeypatch_session()
 def prefix_directory_join(
     prefix: str,
     *parts: str,
-    name: Optional[str] = None,
+    name: str | None = None,
     version: VersionHint = None,
     ensure_exists: bool = True,
 ) -> Path:
@@ -62,7 +63,7 @@ def ensure_path(
     *parts: str,
     url: str,
     version: VersionHint = None,
-    name: Optional[str] = None,
+    name: str | None = None,
     force: bool = False,
     error_on_missing: bool = False,
     backend: Literal["requests", "urllib"] = "urllib",
@@ -99,7 +100,7 @@ def ensure_df(
     *parts: str,
     url: str,
     version: VersionHint = None,
-    name: Optional[str] = None,
+    name: str | None = None,
     force: bool = False,
     sep: str = "\t",
     dtype=str,
@@ -127,7 +128,7 @@ def ensure_tar_df(
     url: str,
     inner_path: str,
     version: VersionHint = None,
-    path: Optional[str] = None,
+    path: str | None = None,
     force: bool = False,
     **kwargs,
 ) -> pd.DataFrame:
@@ -136,6 +137,6 @@ def ensure_tar_df(
     return read_tarfile_csv(path, inner_path=inner_path, **kwargs)
 
 
-def prefix_cache_join(prefix: str, *parts, name: Optional[str], version: VersionHint) -> Path:
+def prefix_cache_join(prefix: str, *parts, name: str | None, version: VersionHint) -> Path:
     """Ensure the prefix cache is available."""
     return prefix_directory_join(prefix, "cache", *parts, name=name, version=version)

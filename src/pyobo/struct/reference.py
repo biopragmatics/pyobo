@@ -20,7 +20,7 @@ __all__ = [
 class Reference(curies.Reference):
     """A namespace, identifier, and label."""
 
-    name: Optional[str] = Field(default=None, description="the name of the reference")
+    name: str | None = Field(default=None, description="the name of the reference")
 
     @field_validator("prefix")
     def validate_prefix(cls, v):  # noqa
@@ -72,7 +72,7 @@ class Reference(curies.Reference):
     def from_curie(
         cls,
         curie: str,
-        name: Optional[str] = None,
+        name: str | None = None,
         *,
         strict: bool = True,
         auto: bool = False,
@@ -91,7 +91,7 @@ class Reference(curies.Reference):
     def from_iri(
         cls,
         iri: str,
-        name: Optional[str] = None,
+        name: str | None = None,
         *,
         auto: bool = False,
     ) -> Optional["Reference"]:
@@ -107,9 +107,9 @@ class Reference(curies.Reference):
     @classmethod
     def _materialize(
         cls,
-        prefix: Optional[str],
-        identifier: Optional[str],
-        name: Optional[str] = None,
+        prefix: str | None,
+        identifier: str | None,
+        name: str | None = None,
         *,
         auto: bool = False,
     ) -> Optional["Reference"]:

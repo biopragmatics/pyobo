@@ -3,7 +3,6 @@
 import logging
 import os
 from collections.abc import Mapping
-from typing import Optional
 
 import pandas as pd
 
@@ -28,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 @wrap_norm_prefix
 def get_properties_df(
-    prefix: str, *, force: bool = False, version: Optional[str] = None
+    prefix: str, *, force: bool = False, version: str | None = None
 ) -> pd.DataFrame:
     """Extract properties.
 
@@ -61,7 +60,7 @@ def get_filtered_properties_mapping(
     *,
     use_tqdm: bool = False,
     force: bool = False,
-    version: Optional[str] = None,
+    version: str | None = None,
 ) -> Mapping[str, str]:
     """Extract a single property for each term as a dictionary.
 
@@ -103,7 +102,7 @@ def get_filtered_properties_multimapping(
     *,
     use_tqdm: bool = False,
     force: bool = False,
-    version: Optional[str] = None,
+    version: str | None = None,
 ) -> Mapping[str, list[str]]:
     """Extract multiple properties for each term as a dictionary.
 
@@ -134,7 +133,7 @@ def get_filtered_properties_multimapping(
     return _mapping_getter()
 
 
-def get_property(prefix: str, identifier: str, prop: str, **kwargs) -> Optional[str]:
+def get_property(prefix: str, identifier: str, prop: str, **kwargs) -> str | None:
     """Extract a single property for the given entity.
 
     :param prefix: the resource to load
@@ -152,7 +151,7 @@ def get_property(prefix: str, identifier: str, prop: str, **kwargs) -> Optional[
     return filtered_properties_mapping.get(identifier)
 
 
-def get_properties(prefix: str, identifier: str, prop: str, **kwargs) -> Optional[list[str]]:
+def get_properties(prefix: str, identifier: str, prop: str, **kwargs) -> list[str] | None:
     """Extract a set of properties for the given entity.
 
     :param prefix: the resource to load
@@ -173,7 +172,7 @@ def get_filtered_properties_df(
     *,
     use_tqdm: bool = False,
     force: bool = False,
-    version: Optional[str] = None,
+    version: str | None = None,
 ) -> pd.DataFrame:
     """Extract a single property for each term.
 

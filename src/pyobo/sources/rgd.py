@@ -2,7 +2,6 @@
 
 import logging
 from collections.abc import Iterable
-from typing import Optional
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -93,7 +92,7 @@ namespace_to_column = [
 ]
 
 
-def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Term]:
+def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]:
     """Get RGD terms."""
     df = ensure_df(
         PREFIX,
