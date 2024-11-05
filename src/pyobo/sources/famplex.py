@@ -119,20 +119,21 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             term.append_xref(xref_reference)
 
         for r, t in out_edges.get(reference, []):
-            if r == "isa" and t.prefix == "fplx":
-                term.append_parent(t)
-            elif r == "isa":
-                term.append_relationship(is_a, t)
+            if r == "isa":
+                if t.prefix == "fplx":
+                    term.append_parent(t)
+                else:
+                    term.append_relationship(is_a, t)  # FIXME?
             elif r == "partof":
-                term.append_relationship(part_of, t)
+                term.annotate_object(part_of, t)
             else:
                 logging.warning("unhandled relation %s", r)
 
         for r, h in in_edges.get(reference, []):
             if r == "isa":
-                term.append_relationship(has_member, h)
+                term.annotate_object(has_member, h)
             elif r == "partof":
-                term.append_relationship(has_part, h)
+                term.annotate_object(has_part, h)
             else:
                 logging.warning("unhandled relation %s", r)
         yield term

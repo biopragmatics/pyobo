@@ -20,7 +20,8 @@ from ..constants import (
 )
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..struct import Reference, RelationHint, TypeDef, get_reference_tuple
+from ..struct import Reference, TypeDef
+from ..struct.struct import ReferenceHint, _ensure_ref
 from ..utils.cache import cached_df
 from ..utils.path import prefix_cache_join
 
@@ -75,20 +76,20 @@ def get_relations_df(
 @wrap_norm_prefix
 def get_filtered_relations_df(
     prefix: str,
-    relation: RelationHint,
+    relation: ReferenceHint,
     *,
     use_tqdm: bool = False,
     force: bool = False,
     version: str | None = None,
 ) -> pd.DataFrame:
     """Get all the given relation."""
-    relation_prefix, relation_identifier = relation = get_reference_tuple(relation)
+    relation = _ensure_ref(relation)
     if version is None:
         version = get_version(prefix)
     path = prefix_cache_join(
         prefix,
         "relations",
-        name=f"{relation_prefix}:{relation_identifier}.tsv",
+        name=f"{relation.curie}.tsv",
         version=version,
     )
     all_relations_path = prefix_cache_join(prefix, name="relations.tsv", version=version)
@@ -98,8 +99,8 @@ def get_filtered_relations_df(
         if os.path.exists(all_relations_path):
             logger.debug("[%] loading all relations from %s", prefix, all_relations_path)
             df = pd.read_csv(all_relations_path, sep="\t", dtype=str)
-            idx = (df[RELATION_PREFIX] == relation_prefix) & (
-                df[RELATION_ID] == relation_identifier
+            idx = (df[RELATION_PREFIX] == relation.prefix) & (
+                df[RELATION_ID] == relation.identifier
             )
             columns = [f"{prefix}_id", TARGET_PREFIX, TARGET_ID]
             return df.loc[idx, columns]
@@ -131,7 +132,7 @@ def get_id_multirelations_mapping(
 @wrap_norm_prefix
 def get_relation_mapping(
     prefix: str,
-    relation: RelationHint,
+    relation: ReferenceHint,
     target_prefix: str,
     *,
     use_tqdm: bool = False,
@@ -162,7 +163,7 @@ def get_relation_mapping(
 def get_relation(
     prefix: str,
     source_identifier: str,
-    relation: RelationHint,
+    relation: ReferenceHint,
     target_prefix: str,
     *,
     use_tqdm: bool = False,

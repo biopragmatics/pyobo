@@ -126,7 +126,7 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
             term.annotate_literal(debio_curie, identifier)
 
     for salt in drug_info.get("salts", []):
-        term.append_relationship(
+        term.annotate_object(
             has_salt,
             Reference(
                 prefix="drugbank.salt",

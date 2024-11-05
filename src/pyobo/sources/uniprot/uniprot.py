@@ -99,18 +99,18 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
             term.set_species(taxonomy_id)
             if gene_ids:
                 for gene_id in gene_ids.split(";"):
-                    term.append_relationship(
+                    term.annotate_object(
                         gene_product_of, Reference(prefix="ncbigene", identifier=gene_id.strip())
                     )
 
             term.annotate_literal("reviewed", "true", Reference(prefix="xsd", identifier="boolean"))
 
             for go_process_ref in _parse_go(go_processes):
-                term.append_relationship(participates_in, go_process_ref)
+                term.annotate_object(participates_in, go_process_ref)
             for go_function_ref in _parse_go(go_functions):
-                term.append_relationship(enables, go_function_ref)
+                term.annotate_object(enables, go_function_ref)
             for go_component_ref in _parse_go(go_components):
-                term.append_relationship(located_in, go_component_ref)
+                term.annotate_object(located_in, go_component_ref)
 
             if proteome:
                 uniprot_proteome_id = proteome.split(":")[0]
@@ -121,7 +121,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
 
             if rhea_curies:
                 for rhea_curie in rhea_curies.split(" "):
-                    term.append_relationship(
+                    term.annotate_object(
                         # FIXME this needs a different relation than enables
                         #  see https://github.com/biopragmatics/pyobo/pull/168#issuecomment-1918680152
                         enables,
@@ -138,11 +138,11 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                             cast(Reference, Reference.from_curie(curie, strict=True))
                         )
                 for binding_reference in sorted(binding_references, key=attrgetter("curie")):
-                    term.append_relationship(molecularly_interacts_with, binding_reference)
+                    term.annotate_object(molecularly_interacts_with, binding_reference)
 
             if ecs:
                 for ec in ecs.split(";"):
-                    term.append_relationship(
+                    term.annotate_object(
                         enables, Reference(prefix="eccode", identifier=standardize_ec(ec))
                     )
             for pubmed in pubmeds.split(";"):

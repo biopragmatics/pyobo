@@ -12,7 +12,6 @@ from ..resources.ro import load_ro
 __all__ = [
     "TypeDef",
     "RelationHint",
-    "get_reference_tuple",
     "default_typedefs",
     "from_species",
     "species_specific",
@@ -143,21 +142,6 @@ class TypeDef(Referenced):
 RelationHint = Reference | TypeDef | tuple[str, str] | str
 
 
-def get_reference_tuple(relation: RelationHint) -> tuple[str, str]:
-    """Get tuple for typedef/reference."""
-    if isinstance(relation, Reference | TypeDef):
-        return relation.prefix, relation.identifier
-    elif isinstance(relation, tuple):
-        return relation
-    elif isinstance(relation, str):
-        prefix, identifier = normalize_curie(relation)
-        if prefix is None or identifier is None:
-            raise ValueError(f"string given is not valid curie: {relation}")
-        return prefix, identifier
-    else:
-        raise TypeError(f"Relation is invalid type: {relation}")
-
-
 RO_PREFIX = "RO"
 BFO_PREFIX = "BFO"
 IAO_PREFIX = "IAO"
@@ -187,7 +171,6 @@ has_bidirectional_reaction = TypeDef(
 reaction_enabled_by_molecular_function = TypeDef(
     Reference(prefix="debio", identifier="0000047", name="reaction enabled by molecular function")
 )
-
 
 part_of = TypeDef(
     reference=Reference(prefix=BFO_PREFIX, identifier="0000050", name="part of"),

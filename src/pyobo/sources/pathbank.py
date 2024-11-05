@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
+from itertools import chain
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -166,8 +167,8 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         )
         term.append_exact_match(Reference(prefix="smpdb", identifier=smpdb_id))
         term.annotate_literal(has_category, subject.lower().replace(" ", "_"))
-        term.extend_relationship(has_participant, smpdb_id_to_proteins[smpdb_id])
-        term.extend_relationship(has_participant, smpdb_id_to_metabolites[smpdb_id])
+        for participant in chain(smpdb_id_to_proteins[smpdb_id], smpdb_id_to_metabolites[smpdb_id]):
+            term.append_relationship(has_participant, participant)
         yield term
 
 

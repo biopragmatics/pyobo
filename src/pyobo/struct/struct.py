@@ -9,13 +9,13 @@ import os
 import sys
 import warnings
 from collections import defaultdict
-from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, ClassVar, Literal, Self, TextIO, Union
+from typing import Any, ClassVar, Literal, Self, TextIO, TypeAlias
 
 import bioregistry
 import click
@@ -26,13 +26,11 @@ from tqdm.auto import tqdm
 
 from .reference import Reference, Referenced
 from .typedef import (
-    RelationHint,
     TypeDef,
     comment,
     default_typedefs,
     exact_match,
     from_species,
-    get_reference_tuple,
     has_ontology_root_term,
     has_part,
     is_a,
@@ -153,13 +151,13 @@ abbreviation = SynonymTypeDef(
 )
 acronym = SynonymTypeDef(reference=Reference(prefix="omo", identifier="0003012", name="acronym"))
 
-ReferenceHint = Union[Reference, "Term", tuple[str, str], str]
+ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
 
 
 def _ensure_ref(reference: ReferenceHint) -> Reference:
     if reference is None:
         raise ValueError("can not append null reference")
-    if isinstance(reference, Term):
+    if isinstance(reference, Referenced):
         return reference.reference
     if isinstance(reference, str):
         _rv = Reference.from_curie(reference)
@@ -188,9 +186,6 @@ class Term(Referenced):
 
     #: Relationships defined by [Typedef] stanzas
     relationships: dict[TypeDef, list[Reference]] = field(default_factory=lambda: defaultdict(list))
-
-    #: Properties, which are not defined with Typedef and have scalar values instead of references.
-    properties: dict[str, list[str]] = field(default_factory=lambda: defaultdict(list))
 
     annotations_object: dict[Reference, list[Reference]] = field(
         default_factory=lambda: defaultdict(list)
@@ -294,29 +289,28 @@ class Term(Referenced):
         """Add a comment relationship."""
         return self.annotate_literal(comment, value)
 
-    def append_replaced_by(self, reference: ReferenceHint) -> Term:
+    def append_replaced_by(self, reference: Reference) -> Term:
         """Add a replaced by relationship."""
         self.annotate_object(term_replaced_by, reference)
         return self
 
-    def append_parent(self, reference: ReferenceHint) -> Term:
+    def append_parent(self, reference: Reference | Referenced) -> Term:
         """Add a parent to this entity."""
         reference = _ensure_ref(reference)
         if reference not in self.parents:
             self.parents.append(reference)
         return self
 
-    def extend_parents(self, references: Collection[Reference]) -> None:
-        """Add a collection of parents to this entity."""
-        if any(x is None for x in references):
-            raise ValueError("can not append a collection of parents containing a null parent")
-        self.parents.extend(references)
-
-    def get_properties(self, prop) -> list[str]:
+    def get_properties(self, prop: str | Reference) -> list[str]:
         """Get properties from the given key."""
-        return self.properties[prop]
+        prop = _ensure_ref(prop)
+        if prop in self.annotations_object:
+            return [value.preferred_curie for value in self.annotations_object[prop]]
+        if prop in self.annotations_literal:
+            return [value for value, _datatype in self.annotations_object[prop]]
+        raise KeyError
 
-    def get_property(self, prop) -> str | None:
+    def get_property(self, prop: str | Reference) -> str | None:
         """Get a single property of the given key."""
         r = self.get_properties(prop)
         if not r:
@@ -373,23 +367,22 @@ class Term(Referenced):
                 return species
         return None
 
-    def extend_relationship(self, typedef: TypeDef, references: Iterable[Reference]) -> None:
-        """Append several relationships."""
-        if any(x is None for x in references):
-            raise ValueError("can not extend a collection that includes a null reference")
-        self.relationships[typedef].extend(references)
-
-    def annotate_object(self, prop: Reference, value: Reference) -> None:
+    def annotate_object(self, prop: ReferenceHint, value: ReferenceHint) -> Self:
         """Append an object annotation."""
+        prop = _ensure_ref(prop)
+        value = _ensure_ref(value)
         self.annotations_object[prop].append(value)
+        return self
 
     def annotate_literal(
-        self, prop: Reference, value: str, datatype: Reference | None = None
-    ) -> None:
+        self, prop: ReferenceHint, value: str, datatype: Reference | None = None
+    ) -> Self:
         """Append an object annotation."""
+        prop = _ensure_ref(prop)
         self.annotations_literal[prop].append(
             (value, datatype or Reference(prefix="xsd", identifier="string"))
         )
+        return self
 
     def append_property(
         self, prop: str | Reference | Referenced, value: str | Reference | Referenced
@@ -400,20 +393,29 @@ class Term(Referenced):
             DeprecationWarning,
             stacklevel=2,
         )
-
         if isinstance(prop, str):
-            if prop.startswith("http"):
-                raise NotImplementedError
+            if prop.startswith("http://purl.obolibrary.org/obo/"):
+                prop = Reference(
+                    prefix="obo", identifier=prop.removeprefix("http://purl.obolibrary.org/obo/")
+                )
+            elif prop.startswith("http"):
+                raise NotImplementedError(f"Not sure what to do with property: {prop}")
             elif ":" in prop:
-                prop = Reference.from_curie(prop)
+                _tmp_prop = Reference.from_curie(prop)
+                if _tmp_prop is None:
+                    raise ValueError(prop)
+                prop = _tmp_prop
             else:  # assume this is some random string
-                prop = Reference(prefix="obo", identifier=f"{self.prefix}/{prop}")
+                prop = Reference(prefix="obo", identifier=prop)
 
         if not isinstance(value, str):
             return self.annotate_object(prop, value)
 
         if ":" in value:
-            return self.annotate_object(prop, Reference.from_curie(value))
+            xx = Reference.from_curie(value)
+            if xx is None:
+                raise ValueError
+            return self.annotate_object(prop, xx)
 
         return self.annotate_literal(prop, value)
 
@@ -430,9 +432,12 @@ class Term(Referenced):
 
     def iterate_properties(self) -> Iterable[tuple[str, str]]:
         """Iterate over pairs of property and values."""
-        for prop, values in sorted(self.properties.items()):
+        for predicate, values in sorted(self.annotations_object.items()):
             for value in sorted(values):
-                yield prop, value
+                yield predicate.preferred_curie, value.preferred_curie
+        for predicate, value_datatype_pairs in sorted(self.annotations_literal.items()):
+            for svalue, _datatype in sorted(value_datatype_pairs):
+                yield predicate.preferred_curie, svalue
 
     def iterate_obo_lines(
         self,
@@ -469,7 +474,8 @@ class Term(Referenced):
             yield from self._emit_relations(ontology, typedefs)
 
         if emit_annotation_properties:
-            yield from self._emit_properties()
+            for line in self._emit_properties():
+                yield f"property_value: {line}"
 
         for synonym in sorted(self.synonyms, key=attrgetter("name")):
             yield synonym.to_obo()
@@ -497,9 +503,14 @@ class Term(Referenced):
                 yield s
 
     def _emit_properties(self) -> Iterable[str]:
-        for prop, value in sorted(self.iterate_properties(), key=_sort_properties):
-            # TODO deal with typedefs for properties
-            yield f'property_value: {prop} "{value}" xsd:string'  # TODO deal with types later
+        for predicate, values in sorted(self.annotations_object.items()):
+            for value in sorted(values):
+                yield f"{predicate.preferred_curie} {value.preferred_curie}"
+
+        for predicate, value_datatype_pairs in sorted(self.annotations_literal.items()):
+            for svalue, datatype in sorted(value_datatype_pairs):
+                # TODO clean/escape value?
+                yield f'{predicate.preferred_curie} "{svalue}" {datatype.preferred_curie}'
 
     @staticmethod
     def _escape(s) -> str:
@@ -1039,8 +1050,6 @@ class Obo:
 
             relations = []
             for typedef, target in term.iterate_relations():
-                if target is None:
-                    raise ValueError("target should not be none!")
                 relations.append(f"{typedef.curie} {target.curie}")
                 links.append((term.curie, typedef.curie, target.curie))
 
@@ -1052,11 +1061,7 @@ class Obo:
                 "is_a": parents,
                 "relationship": relations,
                 "synonym": [synonym._fp() for synonym in term.synonyms],
-                "property_value": [
-                    f"{prop} {value}"
-                    for prop, values in term.properties.items()
-                    for value in values
-                ],
+                "property_value": list(term._emit_properties()),
             }
             nodes[term.curie] = {k: v for k, v in d.items() if v}
 
@@ -1270,12 +1275,12 @@ class Obo:
 
     def iterate_filtered_relations(
         self,
-        relation: RelationHint,
+        relation: ReferenceHint,
         *,
         use_tqdm: bool = False,
     ) -> Iterable[tuple[Term, Reference]]:
         """Iterate over tuples of terms and ther targets for the given relation."""
-        _target_prefix, _target_identifier = get_reference_tuple(relation)
+        _target_prefix, _target_identifier = _ensure_ref(relation).pair
         for term, typedef, reference in self.iterate_relations(use_tqdm=use_tqdm):
             if typedef.prefix == _target_prefix and typedef.identifier == _target_identifier:
                 yield term, reference
@@ -1294,7 +1299,7 @@ class Obo:
 
     def get_filtered_relations_df(
         self,
-        relation: RelationHint,
+        relation: ReferenceHint,
         *,
         use_tqdm: bool = False,
     ) -> pd.DataFrame:
@@ -1309,7 +1314,7 @@ class Obo:
 
     def iterate_filtered_relations_filtered_targets(
         self,
-        relation: RelationHint,
+        relation: ReferenceHint,
         target_prefix: str,
         *,
         use_tqdm: bool = False,
@@ -1323,7 +1328,7 @@ class Obo:
 
     def get_relation_mapping(
         self,
-        relation: RelationHint,
+        relation: ReferenceHint,
         target_prefix: str,
         *,
         use_tqdm: bool = False,
@@ -1353,7 +1358,7 @@ class Obo:
     def get_relation(
         self,
         source_identifier: str,
-        relation: RelationHint,
+        relation: ReferenceHint,
         target_prefix: str,
         *,
         use_tqdm: bool = False,
@@ -1373,7 +1378,7 @@ class Obo:
 
     def get_relation_multimapping(
         self,
-        relation: RelationHint,
+        relation: ReferenceHint,
         target_prefix: str,
         *,
         use_tqdm: bool = False,

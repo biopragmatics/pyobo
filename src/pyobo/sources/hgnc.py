@@ -425,7 +425,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             )  # gene
             unhandle_locus_types[locus_type][identifier] = term
             term.annotate_literal("locus_type", locus_type)
-            term.annotations_literal("locus_group", locus_group)
+            term.annotate_literal("locus_group", locus_group)
 
         term.set_species(identifier="9606", name="Homo sapiens")
 

@@ -97,7 +97,7 @@ def iter_terms(version: str, force: bool = False):
             for synonym in synonyms.split("|"):
                 term.append_synonym(synonym.strip())
         if pd.notna(smiles):
-            term.annotations_literal(has_smiles, smiles)
+            term.annotate_literal(has_smiles, smiles)
         if pd.notna(inchi) and inchi != "InChI=none":
             if inchi.startswith("InChI="):
                 inchi = inchi[len("InChI=") :]

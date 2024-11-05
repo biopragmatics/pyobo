@@ -109,7 +109,7 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
         #     term.append_parent(ORG_PARENTS[organization_type])
 
         for link in record.get("links", []):
-            term.append_property(has_homepage, link)
+            term.annotate_literal(has_homepage, link, Reference(prefix="xsd", identifier="anyURI"))
 
         if name.startswith("The "):
             term.append_synonym(name.removeprefix("The "))

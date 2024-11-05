@@ -134,7 +134,7 @@ def _iter_genome_terms(
             tqdm.write(f"could not find kegg.pathway:{pathway_id} for {kegg_genome.name}")
             continue
         for protein_id in protein_ids:
-            pathway_term.append_relationship(
+            pathway_term.annotate_object(
                 has_participant,
                 Reference(
                     prefix=KEGG_GENES_PREFIX,

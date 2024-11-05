@@ -244,7 +244,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         term.set_species(identifier=taxonomy_id, name=taxonomy_name)
 
         for reference, _count in members:
-            term.append_relationship(has_part, reference)
+            term.annotate_object(has_part, reference)
 
         yield term
 

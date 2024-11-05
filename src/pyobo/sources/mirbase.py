@@ -157,7 +157,8 @@ def _process_definitions_lines(
 
         species_identifier, species_name = organisms[species_code]
         term.set_species(species_identifier, species_name)
-        term.extend_relationship(has_mature, matures)
+        for mature in matures:
+            term.append_relationship(has_mature, mature)
 
         yield term
 
