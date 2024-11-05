@@ -1,7 +1,6 @@
 """Converter for CiVIC Genes."""
 
 from collections.abc import Iterable
-from typing import Optional
 
 import pandas as pd
 
@@ -31,7 +30,7 @@ class CIVICGeneGetter(Obo):
         yield from get_terms(self.data_version, force=force)
 
 
-def get_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
+def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]:
     """Get CIVIC terms."""
     # if version is not None:
     #     version_dt: datetime.date = dateutil.parser.parse(version)

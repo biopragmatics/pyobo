@@ -2,7 +2,6 @@
 
 import json
 import sys
-from typing import Optional
 
 import bioregistry
 import click
@@ -55,7 +54,7 @@ def lookup():
 @force_option
 @no_strict_option
 @version_option
-def xrefs(prefix: str, target: str, force: bool, no_strict: bool, version: Optional[str]):
+def xrefs(prefix: str, target: str, force: bool, no_strict: bool, version: str | None):
     """Page through xrefs for the given namespace to the second given namespace."""
     if target:
         target = bioregistry.normalize_prefix(target)
@@ -75,7 +74,7 @@ def xrefs(prefix: str, target: str, force: bool, no_strict: bool, version: Optio
 @verbose_option
 @force_option
 @version_option
-def metadata(prefix: str, force: bool, version: Optional[str]):
+def metadata(prefix: str, force: bool, version: str | None):
     """Print the metadata for the given namespace."""
     metadata = get_metadata(prefix, force=force, version=version)
     click.echo(json.dumps(metadata, indent=2))
@@ -87,7 +86,7 @@ def metadata(prefix: str, force: bool, version: Optional[str]):
 @force_option
 @no_strict_option
 @version_option
-def ids(prefix: str, force: bool, no_strict: bool, version: Optional[str]):
+def ids(prefix: str, force: bool, no_strict: bool, version: str | None):
     """Page through the identifiers of entities in the given namespace."""
     id_list = get_ids(prefix, force=force, strict=not no_strict, version=version)
     click.echo_via_pager("\n".join(id_list))
@@ -100,9 +99,7 @@ def ids(prefix: str, force: bool, no_strict: bool, version: Optional[str]):
 @no_strict_option
 @click.option("-i", "--identifier")
 @version_option
-def names(
-    prefix: str, identifier: Optional[str], force: bool, no_strict: bool, version: Optional[str]
-):
+def names(prefix: str, identifier: str | None, force: bool, no_strict: bool, version: str | None):
     """Page through the identifiers and names of entities in the given namespace."""
     id_to_name = get_id_name_mapping(prefix, force=force, strict=not no_strict, version=version)
     if identifier is None:
@@ -122,9 +119,7 @@ def names(
 @no_strict_option
 @click.option("-i", "--identifier")
 @version_option
-def species(
-    prefix: str, identifier: Optional[str], force: bool, no_strict: bool, version: Optional[str]
-):
+def species(prefix: str, identifier: str | None, force: bool, no_strict: bool, version: str | None):
     """Page through the identifiers and species of entities in the given namespace."""
     id_to_species = get_id_species_mapping(
         prefix, force=force, strict=not no_strict, version=version
@@ -145,7 +140,7 @@ def species(
 @force_option
 @click.option("-i", "--identifier")
 @version_option
-def definitions(prefix: str, identifier: Optional[str], force: bool, version: Optional[str]):
+def definitions(prefix: str, identifier: str | None, force: bool, version: str | None):
     """Page through the identifiers and definitions of entities in the given namespace."""
     id_to_definition = get_id_definition_mapping(prefix, force=force, version=version)
     if identifier is None:
@@ -163,7 +158,7 @@ def definitions(prefix: str, identifier: Optional[str], force: bool, version: Op
 @verbose_option
 @force_option
 @version_option
-def typedefs(prefix: str, force: bool, version: Optional[str]):
+def typedefs(prefix: str, force: bool, version: str | None):
     """Page through the identifiers and names of typedefs in the given namespace."""
     df = get_typedef_df(prefix, force=force, version=version)
     echo_df(df)
@@ -178,7 +173,7 @@ def _help_page_mapping(id_to_name):
 @verbose_option
 @force_option
 @version_option
-def synonyms(prefix: str, force: bool, version: Optional[str]):
+def synonyms(prefix: str, force: bool, version: str | None):
     """Page through the synonyms for entities in the given namespace."""
     if ":" in prefix:
         _prefix, identifier = normalize_curie(prefix)
@@ -219,7 +214,7 @@ def relations(
     force: bool,
     no_strict: bool,
     summarize: bool,
-    version: Optional[str],
+    version: str | None,
 ):
     """Page through the relations for entities in the given namespace."""
     if relation is None:
@@ -257,7 +252,7 @@ def hierarchy(
     include_part_of: bool,
     include_has_member: bool,
     force: bool,
-    version: Optional[str],
+    version: str | None,
 ):
     """Page through the hierarchy for entities in the namespace."""
     h = get_hierarchy(
@@ -276,7 +271,7 @@ def hierarchy(
 @verbose_option
 @force_option
 @version_option
-def ancestors(prefix: str, identifier: str, force: bool, version: Optional[str]):
+def ancestors(prefix: str, identifier: str, force: bool, version: str | None):
     """Look up ancestors."""
     curies = get_ancestors(prefix=prefix, identifier=identifier, force=force, version=version)
     for curie in sorted(curies or []):
@@ -289,7 +284,7 @@ def ancestors(prefix: str, identifier: str, force: bool, version: Optional[str])
 @verbose_option
 @force_option
 @version_option
-def descendants(prefix: str, identifier: str, force: bool, version: Optional[str]):
+def descendants(prefix: str, identifier: str, force: bool, version: str | None):
     """Look up descendants."""
     curies = get_descendants(prefix=prefix, identifier=identifier, force=force, version=version)
     for curie in sorted(curies or []):
@@ -302,7 +297,7 @@ def descendants(prefix: str, identifier: str, force: bool, version: Optional[str
 @verbose_option
 @force_option
 @version_option
-def properties(prefix: str, key: Optional[str], force: bool, version: Optional[str]):
+def properties(prefix: str, key: str | None, force: bool, version: str | None):
     """Page through the properties for entities in the given namespace."""
     if key is None:
         properties_df = get_properties_df(prefix, force=force, version=version)
@@ -317,7 +312,7 @@ def properties(prefix: str, key: Optional[str], force: bool, version: Optional[s
 @force_option
 @click.option("-i", "--identifier")
 @version_option
-def alts(prefix: str, identifier: Optional[str], force: bool, version: Optional[str]):
+def alts(prefix: str, identifier: str | None, force: bool, version: str | None):
     """Page through alt ids in a namespace."""
     id_to_alts = get_id_to_alts(prefix, force=force, version=version)
     if identifier is None:

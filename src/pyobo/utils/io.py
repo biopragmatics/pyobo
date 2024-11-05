@@ -9,7 +9,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional, TypeVar, Union
+from typing import TypeVar
 from xml.etree.ElementTree import Element
 
 import pandas as pd
@@ -37,7 +37,7 @@ Y = TypeVar("Y")
 
 
 @contextmanager
-def open_reader(path: Union[str, Path], sep: str = "\t"):
+def open_reader(path: str | Path, sep: str = "\t"):
     """Open a file and get a reader for it."""
     path = Path(path)
     with gzip.open(path, "rt") if path.suffix == ".gz" else open(path) as file:
@@ -55,7 +55,7 @@ def get_writer(x, sep: str = "\t"):
 
 
 def open_map_tsv(
-    path: Union[str, Path], *, use_tqdm: bool = False, has_header: bool = True
+    path: str | Path, *, use_tqdm: bool = False, has_header: bool = True
 ) -> Mapping[str, str]:
     """Load a mapping TSV file into a dictionary."""
     with open(path) as file:
@@ -73,7 +73,7 @@ def open_map_tsv(
 
 
 def open_multimap_tsv(
-    path: Union[str, Path],
+    path: str | Path,
     *,
     use_tqdm: bool = False,
     has_header: bool = True,
@@ -83,7 +83,7 @@ def open_multimap_tsv(
 
 
 def _help_multimap_tsv(
-    path: Union[str, Path],
+    path: str | Path,
     *,
     use_tqdm: bool = False,
     has_header: bool = True,
@@ -115,9 +115,9 @@ def multisetdict(pairs: Iterable[tuple[X, Y]]) -> dict[X, set[Y]]:
 
 def write_map_tsv(
     *,
-    path: Union[str, Path],
-    header: Optional[Iterable[str]] = None,
-    rv: Union[Iterable[tuple[str, str]], Mapping[str, str]],
+    path: str | Path,
+    header: Iterable[str] | None = None,
+    rv: Iterable[tuple[str, str]] | Mapping[str, str],
     sep: str = "\t",
 ) -> None:
     """Write a mapping dictionary to a TSV file."""
@@ -129,7 +129,7 @@ def write_map_tsv(
 
 def write_multimap_tsv(
     *,
-    path: Union[str, Path],
+    path: str | Path,
     header: Iterable[str],
     rv: Mapping[str, list[str]],
     sep: str = "\t",
@@ -141,8 +141,8 @@ def write_multimap_tsv(
 
 def write_iterable_tsv(
     *,
-    path: Union[str, Path],
-    header: Optional[Iterable[str]] = None,
+    path: str | Path,
+    header: Iterable[str] | None = None,
     it: Iterable[tuple[str, ...]],
     sep: str = "\t",
 ) -> None:
@@ -156,7 +156,7 @@ def write_iterable_tsv(
         writer.writerows(it)
 
 
-def parse_xml_gz(path: Union[str, Path]) -> Element:
+def parse_xml_gz(path: str | Path) -> Element:
     """Parse an XML file from a path to a GZIP file."""
     path = Path(path).resolve()
     t = time.time()

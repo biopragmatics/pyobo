@@ -5,7 +5,6 @@ import logging
 import os
 from datetime import datetime
 from subprocess import check_output
-from typing import Optional
 
 __all__ = [
     "obo_to_obograph",
@@ -39,7 +38,7 @@ def obo_to_owl(obo_path, owl_path, owl_format: str = "ofn"):
 BIZARRE_LOGGED = set()
 
 
-def cleanup_version(data_version: str, prefix: str) -> Optional[str]:
+def cleanup_version(data_version: str, prefix: str) -> str | None:
     """Clean the version information."""
     if data_version.endswith(".owl"):
         data_version = data_version[: -len(".owl")]

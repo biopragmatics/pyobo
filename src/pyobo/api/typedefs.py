@@ -2,7 +2,6 @@
 
 import logging
 from functools import lru_cache
-from typing import Optional
 
 import pandas as pd
 
@@ -21,9 +20,7 @@ logger = logging.getLogger(__name__)
 
 @lru_cache
 @wrap_norm_prefix
-def get_typedef_df(
-    prefix: str, *, force: bool = False, version: Optional[str] = None
-) -> pd.DataFrame:
+def get_typedef_df(prefix: str, *, force: bool = False, version: str | None = None) -> pd.DataFrame:
     """Get an identifier to name mapping for the typedefs in an OBO file."""
     if version is None:
         version = get_version(prefix)

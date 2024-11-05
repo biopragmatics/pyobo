@@ -6,20 +6,13 @@ import logging
 import os
 import sys
 from collections import defaultdict
-from collections.abc import Collection, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
 from textwrap import dedent
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-    Optional,
-    TextIO,
-    Union,
-)
+from typing import Any, ClassVar, Literal, TextIO, Union
 
 import bioregistry
 import click
@@ -27,7 +20,6 @@ import networkx as nx
 import pandas as pd
 from more_click import force_option, verbose_option
 from tqdm.auto import tqdm
-from typing_extensions import Literal
 
 from .reference import Reference, Referenced
 from .typedef import (
@@ -117,7 +109,7 @@ class SynonymTypeDef(Referenced):
     """A type definition for synonyms in OBO."""
 
     reference: Reference
-    specificity: Optional[SynonymSpecificity] = None
+    specificity: SynonymSpecificity | None = None
 
     def to_obo(self) -> str:
         """Serialize to OBO."""
@@ -130,7 +122,7 @@ class SynonymTypeDef(Referenced):
     def from_text(
         cls,
         text: str,
-        specificity: Optional[SynonymSpecificity] = None,
+        specificity: SynonymSpecificity | None = None,
         *,
         lower: bool = True,
     ) -> "SynonymTypeDef":
@@ -157,7 +149,6 @@ abbreviation = SynonymTypeDef(
     reference=Reference(prefix="OMO", identifier="0003000", name="abbreviation")
 )
 acronym = SynonymTypeDef(reference=Reference(prefix="omo", identifier="0003012", name="acronym"))
-
 
 ReferenceHint = Union[Reference, "Term", tuple[str, str], str]
 
@@ -187,7 +178,7 @@ class Term(Referenced):
     reference: Reference
 
     #: A description of the entity
-    definition: Optional[str] = None
+    definition: str | None = None
 
     #: References to articles in which the term appears
     provenance: list[Reference] = field(default_factory=list)
@@ -212,10 +203,10 @@ class Term(Referenced):
     alt_ids: list[Reference] = field(default_factory=list)
 
     #: The sub-namespace within the ontology
-    namespace: Optional[str] = None
+    namespace: str | None = None
 
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
-    is_obsolete: Optional[bool] = None
+    is_obsolete: bool | None = None
 
     type: Literal["Term", "Instance"] = "Term"
 
@@ -227,8 +218,8 @@ class Term(Referenced):
         cls,
         prefix: str,
         identifier: str,
-        name: Optional[str] = None,
-        definition: Optional[str] = None,
+        name: str | None = None,
+        definition: str | None = None,
         **kwargs,
     ) -> "Term":
         """Create a term from a reference."""
@@ -253,7 +244,7 @@ class Term(Referenced):
         )
 
     @classmethod
-    def from_curie(cls, curie: str, name: Optional[str] = None) -> "Term":
+    def from_curie(cls, curie: str, name: str | None = None) -> "Term":
         """Create a term directly from a CURIE and optional name."""
         prefix, identifier = normalize_curie(curie)
         if prefix is None or identifier is None:
@@ -266,10 +257,10 @@ class Term(Referenced):
 
     def append_synonym(
         self,
-        synonym: Union[str, Synonym],
+        synonym: str | Synonym,
         *,
-        type: Optional[SynonymTypeDef] = None,
-        specificity: Optional[SynonymSpecificity] = None,
+        type: SynonymTypeDef | None = None,
+        specificity: SynonymSpecificity | None = None,
     ) -> None:
         """Add a synonym."""
         if isinstance(synonym, str):
@@ -278,7 +269,7 @@ class Term(Referenced):
             )
         self.synonyms.append(synonym)
 
-    def append_alt(self, alt: Union[str, Reference]) -> None:
+    def append_alt(self, alt: str | Reference) -> None:
         """Add an alternative identifier."""
         if isinstance(alt, str):
             alt = Reference(prefix=self.prefix, identifier=alt)
@@ -316,7 +307,7 @@ class Term(Referenced):
         """Get properties from the given key."""
         return self.properties[prop]
 
-    def get_property(self, prop) -> Optional[str]:
+    def get_property(self, prop) -> str | None:
         """Get a single property of the given key."""
         r = self.get_properties(prop)
         if not r:
@@ -325,7 +316,7 @@ class Term(Referenced):
             raise ValueError
         return r[0]
 
-    def get_relationship(self, typedef: TypeDef) -> Optional[Reference]:
+    def get_relationship(self, typedef: TypeDef) -> Reference | None:
         """Get a single relationship of the given type."""
         r = self.get_relationships(typedef)
         if not r:
@@ -353,7 +344,7 @@ class Term(Referenced):
         """Append a relationship."""
         self.relationships[typedef].append(_ensure_ref(reference))
 
-    def set_species(self, identifier: str, name: Optional[str] = None):
+    def set_species(self, identifier: str, name: str | None = None):
         """Append the from_species relation."""
         if name is None:
             from pyobo.resources.ncbitaxon import get_ncbitaxon_name
@@ -363,7 +354,7 @@ class Term(Referenced):
             from_species, Reference(prefix=NCBITAXON_PREFIX, identifier=identifier, name=name)
         )
 
-    def get_species(self, prefix: str = NCBITAXON_PREFIX) -> Optional[Reference]:
+    def get_species(self, prefix: str = NCBITAXON_PREFIX) -> Reference | None:
         """Get the species if it exists.
 
         :param prefix: The prefix to use in case the term has several species annotations.
@@ -380,12 +371,12 @@ class Term(Referenced):
         self.relationships[typedef].extend(references)
 
     def append_property(
-        self, prop: Union[str, Reference, Referenced], value: Union[str, Reference, Referenced]
+        self, prop: str | Reference | Referenced, value: str | Reference | Referenced
     ) -> None:
         """Append a property."""
-        if isinstance(prop, (Reference, Referenced)):
+        if isinstance(prop, Reference | Referenced):
             prop = prop.preferred_curie
-        if isinstance(value, (Reference, Referenced)):
+        if isinstance(value, Reference | Referenced):
             value = value.preferred_curie
         self.properties[prop].append(value)
 
@@ -506,22 +497,22 @@ class Obo:
     check_bioregistry_prefix: ClassVar[bool] = True
 
     #: The name of the ontology. If not given, tries looking up with the Bioregistry.
-    name: ClassVar[Optional[str]] = None
+    name: ClassVar[str | None] = None
 
     #: The OBO format
     format_version: ClassVar[str] = "1.2"
 
     #: Type definitions
-    typedefs: ClassVar[Optional[list[TypeDef]]] = None
+    typedefs: ClassVar[list[TypeDef] | None] = None
 
     #: Synonym type definitions
-    synonym_typedefs: ClassVar[Optional[list[SynonymTypeDef]]] = None
+    synonym_typedefs: ClassVar[list[SynonymTypeDef] | None] = None
 
     #: An annotation about how an ontology was generated
-    auto_generated_by: ClassVar[Optional[str]] = None
+    auto_generated_by: ClassVar[str | None] = None
 
     #: The idspaces used in the document
-    idspaces: ClassVar[Optional[Mapping[str, str]]] = None
+    idspaces: ClassVar[Mapping[str, str] | None] = None
 
     #: For super-sized datasets that shouldn't be read into memory
     iter_only: ClassVar[bool] = False
@@ -530,28 +521,28 @@ class Obo:
     dynamic_version: ClassVar[bool] = False
 
     #: Set to a static version for the resource (i.e., the resource is not itself versioned)
-    static_version: ClassVar[Optional[str]] = None
+    static_version: ClassVar[str | None] = None
 
-    bioversions_key: ClassVar[Optional[str]] = None
+    bioversions_key: ClassVar[str | None] = None
 
     #: Root terms to use for the ontology
-    root_terms: ClassVar[Optional[list[Reference]]] = None
+    root_terms: ClassVar[list[Reference] | None] = None
 
     #: The date the ontology was generated
-    date: Optional[datetime] = field(default_factory=datetime.today)
+    date: datetime | None = field(default_factory=datetime.today)
 
     #: The ontology version
-    data_version: Optional[str] = None
+    data_version: str | None = None
 
     #: Should this ontology be reloaded?
     force: bool = False
 
     #: The hierarchy of terms
-    _hierarchy: Optional[nx.DiGraph] = field(init=False, default=None, repr=False)
+    _hierarchy: nx.DiGraph | None = field(init=False, default=None, repr=False)
     #: A cache of terms
-    _items: Optional[list[Term]] = field(init=False, default=None, repr=False)
+    _items: list[Term] | None = field(init=False, default=None, repr=False)
 
-    term_sort_key: ClassVar[Optional[Callable[["Obo", Term], int]]] = None
+    term_sort_key: ClassVar[Callable[["Obo", Term], int] | None] = None
 
     def __post_init__(self):
         """Run post-init checks."""
@@ -578,7 +569,7 @@ class Obo:
         if self.auto_generated_by is None:
             self.auto_generated_by = f"bio2obo:{self.ontology}"  # type:ignore
 
-    def _get_version(self) -> Optional[str]:
+    def _get_version(self) -> str | None:
         if self.bioversions_key:
             try:
                 return get_version(self.bioversions_key)
@@ -628,7 +619,7 @@ class Obo:
         @click.option(
             "--version", help="Specify data version to get. Use this if bioversions is acting up."
         )
-        def _main(force: bool, owl: bool, nodes: bool, version: Optional[str], rewrite: bool):
+        def _main(force: bool, owl: bool, nodes: bool, version: str | None, rewrite: bool):
             try:
                 inst = cls(force=force, data_version=version)
             except Exception as e:
@@ -657,7 +648,7 @@ class Obo:
 
     def _iter_terms(self, use_tqdm: bool = False, desc: str = "terms") -> Iterable[Term]:
         if use_tqdm:
-            total: Optional[int]
+            total: int | None
             try:
                 total = len(self._items_accessor)
             except TypeError:
@@ -709,34 +700,32 @@ class Obo:
         for term in self:
             yield from term.iterate_obo_lines(ontology=self.ontology, typedefs=self.typedefs)
 
-    def write_obo(
-        self, file: Union[None, str, TextIO, Path] = None, use_tqdm: bool = False
-    ) -> None:
+    def write_obo(self, file: None | str | TextIO | Path = None, use_tqdm: bool = False) -> None:
         """Write the OBO to a file."""
         it = self.iterate_obo_lines()
         if use_tqdm:
             it = tqdm(it, desc=f"Writing {self.ontology}", unit_scale=True, unit="line")
-        if isinstance(file, (str, Path, os.PathLike)):
+        if isinstance(file, str | Path | os.PathLike):
             with open(file, "w") as fh:
                 self._write_lines(it, fh)
         else:
             self._write_lines(it, file)
 
     @staticmethod
-    def _write_lines(it, file: Optional[TextIO]):
+    def _write_lines(it, file: TextIO | None):
         for line in it:
             print(line, file=file)
 
-    def write_obonet_gz(self, path: Union[str, Path]) -> None:
+    def write_obonet_gz(self, path: str | Path) -> None:
         """Write the OBO to a gzipped dump in Obonet JSON."""
         graph = self.to_obonet()
         with gzip.open(path, "wt") as file:
             json.dump(nx.node_link_data(graph), file)
 
-    def _path(self, *parts: str, name: Optional[str] = None) -> Path:
+    def _path(self, *parts: str, name: str | None = None) -> Path:
         return prefix_directory_join(self.ontology, *parts, name=name, version=self.data_version)
 
-    def _cache(self, *parts: str, name: Optional[str] = None) -> Path:
+    def _cache(self, *parts: str, name: str | None = None) -> Path:
         return self._path("cache", *parts, name=name)
 
     @property
@@ -1068,7 +1057,7 @@ class Obo:
     ############
 
     def iterate_id_species(
-        self, *, prefix: Optional[str] = None, use_tqdm: bool = False
+        self, *, prefix: str | None = None, use_tqdm: bool = False
     ) -> Iterable[tuple[str, str]]:
         """Iterate over terms' identifiers and respective species (if available)."""
         if prefix is None:
@@ -1079,7 +1068,7 @@ class Obo:
                 yield term.identifier, species.identifier
 
     def get_id_species_mapping(
-        self, *, prefix: Optional[str] = None, use_tqdm: bool = False
+        self, *, prefix: str | None = None, use_tqdm: bool = False
     ) -> Mapping[str, str]:
         """Get a mapping from identifiers to species."""
         return dict(self.iterate_id_species(prefix=prefix, use_tqdm=use_tqdm))
@@ -1295,7 +1284,7 @@ class Obo:
         target_prefix: str,
         *,
         use_tqdm: bool = False,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Get the value for a bijective relation mapping between this resource and a target resource.
 
         >>> from pyobo.sources.hgnc import get_obo
@@ -1436,14 +1425,14 @@ class Obo:
 def make_ad_hoc_ontology(
     _ontology: str,
     _name: str,
-    _auto_generated_by: Optional[str] = None,
+    _auto_generated_by: str | None = None,
     _format_version: str = "1.2",
-    _typedefs: Optional[list[TypeDef]] = None,
-    _synonym_typedefs: Optional[list[SynonymTypeDef]] = None,
-    _date: Optional[datetime] = None,
-    _data_version: Optional[str] = None,
-    _idspaces: Optional[Mapping[str, str]] = None,
-    _root_terms: Optional[list[Reference]] = None,
+    _typedefs: list[TypeDef] | None = None,
+    _synonym_typedefs: list[SynonymTypeDef] | None = None,
+    _date: datetime | None = None,
+    _data_version: str | None = None,
+    _idspaces: Mapping[str, str] | None = None,
+    _root_terms: list[Reference] | None = None,
     *,
     terms: list[Term],
 ) -> "Obo":
@@ -1472,7 +1461,7 @@ def make_ad_hoc_ontology(
     return AdHocOntology()
 
 
-def _convert_typedefs(typedefs: Optional[Iterable[TypeDef]]) -> list[Mapping[str, Any]]:
+def _convert_typedefs(typedefs: Iterable[TypeDef] | None) -> list[Mapping[str, Any]]:
     """Convert the type defs."""
     if not typedefs:
         return []
@@ -1485,7 +1474,7 @@ def _convert_typedef(typedef: TypeDef) -> Mapping[str, Any]:
     return typedef.reference.model_dump()
 
 
-def _convert_synonym_typedefs(synonym_typedefs: Optional[Iterable[SynonymTypeDef]]) -> list[str]:
+def _convert_synonym_typedefs(synonym_typedefs: Iterable[SynonymTypeDef] | None) -> list[str]:
     """Convert the synonym type defs."""
     if not synonym_typedefs:
         return []

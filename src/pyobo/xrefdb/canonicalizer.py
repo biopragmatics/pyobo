@@ -3,7 +3,6 @@
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import Optional
 
 import networkx as nx
 import pandas as pd
@@ -33,7 +32,7 @@ class Canonicalizer:
     graph: nx.Graph
 
     #: A list of prefixes. The ones with the lower index are higher priority
-    priority: Optional[list[str]] = None
+    priority: list[str] | None = None
 
     #: Longest length paths allowed
     cutoff: int = 5
@@ -46,7 +45,7 @@ class Canonicalizer:
             self.priority = DEFAULT_PRIORITY_LIST
         self._priority = {entry: len(self.priority) - i for i, entry in enumerate(self.priority)}
 
-    def _key(self, curie: str) -> Optional[int]:
+    def _key(self, curie: str) -> int | None:
         prefix = self.graph.nodes[curie]["prefix"]
         return self._priority.get(prefix)
 
@@ -71,7 +70,7 @@ class Canonicalizer:
         return max(priority_dict, key=priority_dict.get)  # type:ignore
 
     @classmethod
-    def get_default(cls, priority: Optional[Iterable[str]] = None) -> "Canonicalizer":
+    def get_default(cls, priority: Iterable[str] | None = None) -> "Canonicalizer":
         """Get the default canonicalizer."""
         if priority is not None:
             priority = tuple(priority)
@@ -79,7 +78,7 @@ class Canonicalizer:
 
     @classmethod
     @lru_cache
-    def _get_default_helper(cls, priority: Optional[tuple[str, ...]] = None) -> "Canonicalizer":
+    def _get_default_helper(cls, priority: tuple[str, ...] | None = None) -> "Canonicalizer":
         """Help get the default canonicalizer."""
         graph = cls._get_default_graph()
         return cls(graph=graph, priority=list(priority) if priority else None)
@@ -112,8 +111,8 @@ class Canonicalizer:
     def single_source_shortest_path(
         self,
         curie: str,
-        cutoff: Optional[int] = None,
-    ) -> Optional[Mapping[str, list[Mapping[str, str]]]]:
+        cutoff: int | None = None,
+    ) -> Mapping[str, list[Mapping[str, str]]] | None:
         """Get all shortest paths between given entity and its equivalent entities."""
         return single_source_shortest_path(graph=self.graph, curie=curie, cutoff=cutoff)
 
@@ -148,8 +147,8 @@ def all_shortest_paths(
 def single_source_shortest_path(
     graph: nx.Graph,
     curie: str,
-    cutoff: Optional[int] = None,
-) -> Optional[Mapping[str, list[Mapping[str, str]]]]:
+    cutoff: int | None = None,
+) -> Mapping[str, list[Mapping[str, str]]] | None:
     """Get the shortest path from the CURIE to all elements of its equivalence class.
 
     Things that didn't work:
@@ -192,7 +191,7 @@ def single_source_shortest_path(
     }
 
 
-def get_equivalent(curie: str, cutoff: Optional[int] = None) -> set[str]:
+def get_equivalent(curie: str, cutoff: int | None = None) -> set[str]:
     """Get equivalent CURIEs."""
     canonicalizer = Canonicalizer.get_default()
     r = canonicalizer.single_source_shortest_path(curie=curie, cutoff=cutoff)

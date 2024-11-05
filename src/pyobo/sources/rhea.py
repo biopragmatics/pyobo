@@ -2,7 +2,7 @@
 
 import logging
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import pystow
 
@@ -58,7 +58,7 @@ def get_obo(force: bool = False) -> Obo:
     return RheaGetter(force=force)
 
 
-def ensure_rhea_rdf(version: Optional[str] = None, force: bool = False) -> "rdflib.Graph":
+def ensure_rhea_rdf(version: str | None = None, force: bool = False) -> "rdflib.Graph":
     """Get the Rhea RDF graph."""
     # see docs: https://ftp.expasy.org/databases/rhea/rdf/rhea_rdf_documentation.pdf
     if version is None:

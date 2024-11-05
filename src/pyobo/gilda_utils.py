@@ -118,7 +118,9 @@ def get_grounder(
         raise ValueError
 
     terms: list[gilda.term.Term] = []
-    for prefix, version in zip(tqdm(prefixes, leave=False, disable=not progress), versions):
+    for prefix, version in zip(
+        tqdm(prefixes, leave=False, disable=not progress), versions, strict=False
+    ):
         try:
             p_terms = list(
                 get_gilda_terms(

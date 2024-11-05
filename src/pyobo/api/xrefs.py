@@ -3,7 +3,6 @@
 import logging
 from collections.abc import Mapping
 from functools import lru_cache
-from typing import Optional, Union
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -35,8 +34,8 @@ def get_xref(
     new_prefix: str,
     *,
     flip: bool = False,
-    version: Optional[str] = None,
-) -> Optional[str]:
+    version: str | None = None,
+) -> str | None:
     """Get the xref with the new prefix if a direct path exists."""
     filtered_xrefs = get_filtered_xrefs(prefix, new_prefix, flip=flip, version=version)
     return filtered_xrefs.get(identifier)
@@ -52,7 +51,7 @@ def get_filtered_xrefs(
     use_tqdm: bool = False,
     force: bool = False,
     strict: bool = False,
-    version: Optional[str] = None,
+    version: str | None = None,
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
     if version is None:
@@ -90,7 +89,7 @@ def get_xrefs_df(
     use_tqdm: bool = False,
     force: bool = False,
     strict: bool = False,
-    version: Optional[str] = None,
+    version: str | None = None,
 ) -> pd.DataFrame:
     """Get all xrefs."""
     if version is None:
@@ -107,7 +106,7 @@ def get_xrefs_df(
 
 
 def get_sssom_df(
-    prefix: Union[str, Obo],
+    prefix: str | Obo,
     *,
     predicate_id: str = "oboinowl:hasDbXref",
     justification: str = "sempav:UnspecifiedMatching",

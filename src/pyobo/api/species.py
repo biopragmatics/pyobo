@@ -3,7 +3,6 @@
 import logging
 from collections.abc import Mapping
 from functools import lru_cache
-from typing import Optional
 
 from .alts import get_primary_identifier
 from .utils import get_version
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 @wrap_norm_prefix
-def get_species(prefix: str, identifier: str, *, version: Optional[str] = None) -> Optional[str]:
+def get_species(prefix: str, identifier: str, *, version: str | None = None) -> str | None:
     """Get the species."""
     if prefix == "uniprot":
         raise NotImplementedError
@@ -46,7 +45,7 @@ def get_id_species_mapping(
     prefix: str,
     force: bool = False,
     strict: bool = True,
-    version: Optional[str] = None,
+    version: str | None = None,
 ) -> Mapping[str, str]:
     """Get an identifier to species mapping."""
     if prefix == "ncbigene":

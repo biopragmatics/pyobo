@@ -3,7 +3,6 @@
 import logging
 from collections.abc import Mapping
 from functools import lru_cache
-from typing import Optional
 
 from .utils import get_version
 from ..getters import get_ontology
@@ -28,7 +27,7 @@ NO_ALTS = {
 @lru_cache
 @wrap_norm_prefix
 def get_id_to_alts(
-    prefix: str, *, force: bool = False, version: Optional[str] = None
+    prefix: str, *, force: bool = False, version: str | None = None
 ) -> Mapping[str, list[str]]:
     """Get alternate identifiers."""
     if prefix in NO_ALTS:
@@ -54,7 +53,7 @@ def get_id_to_alts(
 @lru_cache
 @wrap_norm_prefix
 def get_alts_to_id(
-    prefix: str, *, force: bool = False, version: Optional[str] = None
+    prefix: str, *, force: bool = False, version: str | None = None
 ) -> Mapping[str, str]:
     """Get alternative id to primary id mapping."""
     return {
@@ -64,7 +63,7 @@ def get_alts_to_id(
     }
 
 
-def get_primary_curie(curie: str, *, version: Optional[str] = None) -> Optional[str]:
+def get_primary_curie(curie: str, *, version: str | None = None) -> str | None:
     """Get the primary curie for an entity."""
     prefix, identifier = normalize_curie(curie)
     primary_identifier = get_primary_identifier(prefix, identifier, version=version)
@@ -74,7 +73,7 @@ def get_primary_curie(curie: str, *, version: Optional[str] = None) -> Optional[
 
 
 @wrap_norm_prefix
-def get_primary_identifier(prefix: str, identifier: str, *, version: Optional[str] = None) -> str:
+def get_primary_identifier(prefix: str, identifier: str, *, version: str | None = None) -> str:
     """Get the primary identifier for an entity.
 
     :param prefix: The name of the resource

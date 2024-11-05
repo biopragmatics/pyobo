@@ -2,13 +2,12 @@
 
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Union
 
 GMTSummary = tuple[str, str, set[str]]
 WikiPathwaysGMTSummary = tuple[str, str, str, str, str, set[str]]
 
 
-def parse_gmt_file(path: Union[str, Path]) -> Iterable[GMTSummary]:
+def parse_gmt_file(path: str | Path) -> Iterable[GMTSummary]:
     """Return file as list of pathway - gene sets (ENTREZ-identifiers).
 
     :param path: path to GMT file
@@ -31,7 +30,7 @@ def _process_line(line: str) -> tuple[str, str, set[str]]:
     return name, info, set(entries)
 
 
-def parse_wikipathways_gmt(path: Union[str, Path]) -> Iterable[WikiPathwaysGMTSummary]:
+def parse_wikipathways_gmt(path: str | Path) -> Iterable[WikiPathwaysGMTSummary]:
     """Parse WikiPathways GMT."""
     for info, _uri, entries in parse_gmt_file(path):
         info, version, identifier, species = info.split("%")

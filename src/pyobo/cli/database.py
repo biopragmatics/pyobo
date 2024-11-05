@@ -1,7 +1,6 @@
 """CLI for PyOBO Database Generation."""
 
 import logging
-from typing import Optional
 
 import click
 from more_click import verbose_option
@@ -92,7 +91,7 @@ skip_below_exclusive_option = click.option("--skip-below-exclusive", is_flag=Tru
 @skip_below_option
 @click.option("--skip-pyobo")
 def metadata(
-    directory: str, no_strict: bool, force: bool, skip_below: Optional[str], skip_pyobo: bool
+    directory: str, no_strict: bool, force: bool, skip_below: str | None, skip_pyobo: bool
 ):
     """Make the prefix-metadata dump."""
     db_output_helper(
@@ -121,7 +120,7 @@ def names(
     zenodo: bool,
     no_strict: bool,
     force: bool,
-    skip_below: Optional[str],
+    skip_below: str | None,
     skip_below_exclusive: bool,
 ):
     """Make the prefix-identifier-name dump."""

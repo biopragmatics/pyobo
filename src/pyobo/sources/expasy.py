@@ -4,7 +4,7 @@ import logging
 import re
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
-from typing import Any, Optional
+from typing import Any
 
 from .utils import get_go_mapping
 from ..struct import Obo, Reference, Synonym, Term
@@ -178,7 +178,7 @@ def normalize_expasy_id(expasy_id: str) -> str:
     return expasy_id.replace(" ", "")
 
 
-def give_edge(unnormalized_ec_code: str) -> tuple[int, Optional[str], str]:
+def give_edge(unnormalized_ec_code: str) -> tuple[int, str | None, str]:
     """Return a (parent, child) tuple for given id."""
     levels = [x for x in unnormalized_ec_code.replace(" ", "").replace("-", "").split(".") if x]
     level = len(levels)

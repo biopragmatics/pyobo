@@ -5,7 +5,7 @@ import itertools as itt
 import logging
 import re
 from collections.abc import Collection, Iterable, Mapping
-from typing import Any, Optional
+from typing import Any
 from xml.etree.ElementTree import Element
 
 from tqdm.auto import tqdm
@@ -35,7 +35,7 @@ class MeSHGetter(Obo):
 
     ontology = bioversions_key = PREFIX
 
-    def _get_version(self) -> Optional[str]:
+    def _get_version(self) -> str | None:
         return NOW_YEAR
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -185,7 +185,7 @@ def get_descriptor_records(element: Element, id_key: str, name_key) -> list[dict
     return rv
 
 
-def get_scope_note(descriptor_record) -> Optional[str]:
+def get_scope_note(descriptor_record) -> str | None:
     """Get the scope note from the preferred concept in a term's record."""
     if isinstance(descriptor_record, dict):
         # necessary for pre-2023 data
@@ -319,7 +319,7 @@ def _get_descriptor_qualifiers(descriptor: Element) -> list[Mapping[str, str]]:
 
 
 def get_mesh_category_curies(
-    letter: str, *, skip: Optional[Collection[str]] = None, version: Optional[str] = None
+    letter: str, *, skip: Collection[str] | None = None, version: str | None = None
 ) -> list[str]:
     """Get the MeSH LUIDs for a category, by letter (e.g., "A").
 

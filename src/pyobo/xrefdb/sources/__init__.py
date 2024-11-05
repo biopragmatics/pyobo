@@ -1,9 +1,8 @@
 """Sources of xrefs not from OBO."""
 
 import logging
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from functools import lru_cache
-from typing import Callable, Optional
 
 import pandas as pd
 from class_resolver import FunctionResolver
@@ -43,7 +42,7 @@ def run_xref_plugin(prefix: str) -> pd.DataFrame:
 
 
 def iter_xref_plugins(
-    use_tqdm: bool = True, skip_below: Optional[str] = None
+    use_tqdm: bool = True, skip_below: str | None = None
 ) -> Iterable[pd.DataFrame]:
     """Get all modules in the PyOBO sources."""
     it = tqdm(sorted(_get_xref_plugins().items()), desc="Mapping Plugins", disable=not use_tqdm)

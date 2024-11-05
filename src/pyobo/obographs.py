@@ -84,7 +84,7 @@ def _get_class_node(term: Term) -> Node:
             predicate=_rewire(xref_type),
             value=_rewire(xref),
         )
-        for xref, xref_type in zip(term.xrefs, term.xref_types)
+        for xref, xref_type in zip(term.xrefs, term.xref_types, strict=False)
     ]
     default_st = Reference(prefix="oboInOwl", identifier="SynonymType")
     synonyms = [

@@ -9,14 +9,9 @@ import subprocess
 import typing
 import urllib.error
 from collections import Counter
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import (
-    Callable,
-    Optional,
-    TypeVar,
-    Union,
-)
+from typing import TypeVar
 
 import bioregistry
 from bioontologies import robot
@@ -58,7 +53,7 @@ def get_ontology(
     force: bool = False,
     rewrite: bool = False,
     strict: bool = True,
-    version: Optional[str] = None,
+    version: str | None = None,
     robot_check: bool = True,
 ) -> Obo:
     """Get the OBO for a given graph.
@@ -138,9 +133,7 @@ def get_ontology(
     return obo
 
 
-def _ensure_ontology_path(
-    prefix: str, force, version
-) -> Union[tuple[str, Path], tuple[None, None]]:
+def _ensure_ontology_path(prefix: str, force, version) -> tuple[str, Path] | tuple[None, None]:
     for ontology_format, url in [
         ("obo", bioregistry.get_obo_download(prefix)),
         ("owl", bioregistry.get_owl_download(prefix)),
@@ -256,10 +249,10 @@ def iter_helper(
 
 
 def _prefixes(
-    skip_below: Optional[str] = None,
+    skip_below: str | None = None,
     skip_below_inclusive: bool = True,
     skip_pyobo: bool = False,
-    skip_set: Optional[set[str]] = None,
+    skip_set: set[str] | None = None,
 ) -> Iterable[str]:
     for prefix, resource in sorted(bioregistry.read_registry().items()):
         if resource.no_own_terms:
@@ -289,10 +282,10 @@ def _prefixes(
 def iter_helper_helper(
     f: Callable[[str], X],
     use_tqdm: bool = True,
-    skip_below: Optional[str] = None,
+    skip_below: str | None = None,
     skip_below_inclusive: bool = True,
     skip_pyobo: bool = False,
-    skip_set: Optional[set[str]] = None,
+    skip_set: set[str] | None = None,
     strict: bool = True,
     **kwargs,
 ) -> Iterable[tuple[str, X]]:
@@ -369,7 +362,7 @@ def _is_xml(e) -> bool:
     )
 
 
-def _prep_dir(directory: Union[None, str, pathlib.Path]) -> pathlib.Path:
+def _prep_dir(directory: None | str | pathlib.Path) -> pathlib.Path:
     if directory is None:
         rv = DATABASE_DIRECTORY
     elif isinstance(directory, str):
@@ -387,10 +380,10 @@ def db_output_helper(
     db_name: str,
     columns: Sequence[str],
     *,
-    directory: Union[None, str, pathlib.Path] = None,
+    directory: None | str | pathlib.Path = None,
     strict: bool = True,
     use_gzip: bool = True,
-    summary_detailed: Optional[Sequence[int]] = None,
+    summary_detailed: Sequence[int] | None = None,
     **kwargs,
 ) -> list[pathlib.Path]:
     """Help output database builds.
@@ -430,7 +423,7 @@ def db_output_helper(
             writer.writerow(columns)
             sample_writer.writerow(columns)
 
-            for row, _ in zip(it, range(10)):
+            for row, _ in zip(it, range(10), strict=False):
                 c[row[0]] += 1
                 if summary_detailed is not None:
                     c_detailed[tuple(row[i] for i in summary_detailed)] += 1
