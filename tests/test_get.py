@@ -41,7 +41,7 @@ class TestParseObonet(unittest.TestCase):
     def test_get_graph_synonym_typedefs(self):
         """Test getting synonym type definitions from an :mod:`obonet` graph."""
         synonym_typedefs = sorted(
-            iterate_graph_synonym_typedefs(self.graph, ontology=self.ontology),
+            iterate_graph_synonym_typedefs(self.graph, ontology_prefix=self.ontology),
             key=attrgetter("curie"),
         )
         self.assertEqual(

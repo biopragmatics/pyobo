@@ -98,10 +98,23 @@ def ids(prefix: str, force: bool, no_strict: bool, version: str | None):
 @force_option
 @no_strict_option
 @click.option("-i", "--identifier")
+@click.option("--force-process", is_flag=True)
 @version_option
-def names(prefix: str, identifier: str | None, force: bool, no_strict: bool, version: str | None):
+def names(
+    prefix: str,
+    identifier: str | None,
+    force: bool,
+    no_strict: bool,
+    version: str | None,
+    force_process: bool,
+):
     """Page through the identifiers and names of entities in the given namespace."""
-    id_to_name = get_id_name_mapping(prefix, force=force, strict=not no_strict, version=version)
+    id_to_name = get_id_name_mapping(
+        prefix, force=force, strict=not no_strict, version=version, force_process=force_process
+    )
+    if not id_to_name:
+        click.secho("no names found", fg="red")
+        return sys.exit(1)
     if identifier is None:
         _help_page_mapping(id_to_name)
     else:

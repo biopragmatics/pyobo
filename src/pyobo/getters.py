@@ -16,11 +16,12 @@ from pathlib import Path
 from typing import TypeVar
 
 import bioregistry
+import click
 from bioontologies import robot
 from tqdm.auto import tqdm
 
 from .constants import DATABASE_DIRECTORY
-from .identifier_utils import MissingPrefixError, wrap_norm_prefix
+from .identifier_utils import wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
 from .utils.io import get_writer
@@ -113,15 +114,15 @@ def get_ontology(
     elif ontology_format == "owl":
         _converted_obo_path = path.with_suffix(".obo")
         if prefix in REQUIRES_NO_ROBOT_CHECK:
-            robot_check = False
-        robot.convert(path, _converted_obo_path, check=robot_check)
+            pass
+        robot.convert(path, _converted_obo_path, check=False)
         path = _converted_obo_path
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
 
     from .reader import from_obo_path
 
-    obo = from_obo_path(path, prefix=prefix, strict=strict)
+    obo = from_obo_path(path, prefix=prefix, strict=strict, version=version)
     if version is not None:
         if obo.data_version is None:
             logger.warning("[%s] did not have a version, overriding with %s", obo.ontology, version)
@@ -210,20 +211,27 @@ CANT_PARSE = {
     "xl",
 }
 SKIP = {
-    "ncbigene",  # too big, refs acquired from other dbs
-    "pubchem.compound",  # to big, can't deal with this now
-    "gaz",  # Gazetteer is irrelevant for biology
-    "ma",  # yanked
-    "bila",  # yanked
-    # FIXME below
-    "emapa",  # recently changed with EMAP... not sure what the difference is anymore
-    "kegg.genes",
-    "kegg.genome",
-    "kegg.pathway",
-    # URL is wrong
-    "ensemblglossary",
-    # Too much junk
-    "biolink",
+    "ncbigene": "too big, refs acquired from other dbs",
+    "pubchem.compound": "top big, can't deal with this now",
+    "gaz": "Gazetteer is irrelevant for biology",
+    "ma": "yanked",
+    "bila": "yanked",
+    # Can't download",
+    "afpo": "unable to download",
+    "atol": "unable to download",
+    "eol": "unable to download, same source as atol",
+    "hog": "unable to download",
+    "ccf": "unable to download",
+    "gorel": "unable to download",
+    "dinto": "unable to download",
+    "gainesville.core": "unable to download",
+    "ato": "can't process",
+    "emapa": "recently changed with EMAP... not sure what the difference is anymore",
+    "kegg.genes": "needs fix",  # FIXME
+    "kegg.genome": "needs fix",  # FIXME
+    "kegg.pathway": "needs fix",  # FIXME
+    "ensemblglossary": "uri is wrong",
+    "biolink": "too much junk",
 }
 
 X = TypeVar("X")
@@ -260,7 +268,7 @@ def _prefixes(
         if resource.no_own_terms:
             continue
         if prefix in SKIP:
-            tqdm.write(f"skipping {prefix} because in default skip set")
+            tqdm.write(f"skipping {prefix} because {SKIP[prefix]}")
             continue
         if skip_set and prefix in skip_set:
             tqdm.write(f"skipping {prefix} because in skip set")
@@ -320,24 +328,28 @@ def iter_helper_helper(
     )
     for prefix in prefix_it:
         prefix_it.set_postfix(prefix=prefix)
+        if not use_tqdm:
+            click.secho(f"\n{prefix} - {bioregistry.get_name(prefix)}", fg="green", bold=True)
         try:
-            yv = f(prefix, **kwargs)  # type:ignore
+            yv = f(prefix, strict=strict, **kwargs)  # type:ignore
         except urllib.error.HTTPError as e:
             logger.warning("[%s] HTTP %s: unable to download %s", prefix, e.getcode(), e.geturl())
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
-        except urllib.error.URLError:
-            logger.warning("[%s] unable to download", prefix)
+        except urllib.error.URLError as e:
+            logger.warning("[%s] unable to download - %s", prefix, e.reason)
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
-        except MissingPrefixError as e:
-            logger.warning("[%s] missing prefix: %s", prefix, e)
-            if strict and not bioregistry.is_deprecated(prefix):
-                raise e
+        # except MissingPrefixError as e:
+        #     logger.warning("[%s] missing prefix: %s", prefix, e)
+        #     if strict and not bioregistry.is_deprecated(prefix):
+        #         raise e
         except subprocess.CalledProcessError:
             logger.warning("[%s] ROBOT was unable to convert OWL to OBO", prefix)
         except UnhandledFormatError as e:
             logger.warning("[%s] %s", prefix, e)
+        except NoBuildError:
+            logger.warning("[%s] unable to find ontology to download", prefix)
         except ValueError as e:
             if _is_xml(e):
                 # this means that it tried doing parsing on an xml page
@@ -350,10 +362,6 @@ def iter_helper_helper(
                 logger.exception(
                     "[%s] got exception %s while parsing", prefix, e.__class__.__name__
                 )
-        except TypeError as e:
-            logger.exception("[%s] got exception %s while parsing", prefix, e.__class__.__name__)
-            if strict:
-                raise e
         else:
             yield prefix, yv
 

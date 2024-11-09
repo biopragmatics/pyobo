@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import bioregistry
 import curies
+from curies import ReferenceTuple
 from curies.api import ExpansionError
 from pydantic import Field, field_validator, model_validator
 
@@ -21,6 +24,16 @@ class Reference(curies.Reference):
     """A namespace, identifier, and label."""
 
     name: str | None = Field(default=None, description="the name of the reference")
+
+    def __hash__(self) -> int:
+        return hash((self.prefix, self.identifier))
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            isinstance(other, curies.Reference)
+            and self.prefix == other.prefix
+            and self.identifier == other.identifier
+        )
 
     @field_validator("prefix")
     def validate_prefix(cls, v):  # noqa
@@ -76,6 +89,7 @@ class Reference(curies.Reference):
         *,
         strict: bool = True,
         auto: bool = False,
+        reference: Reference | None = None,
     ) -> Reference | None:
         """Get a reference from a CURIE.
 
@@ -84,7 +98,7 @@ class Reference(curies.Reference):
         :param strict: If true, raises an error if the CURIE can not be parsed.
         :param auto: Automatically look up name
         """
-        prefix, identifier = normalize_curie(curie, strict=strict)
+        prefix, identifier = normalize_curie(curie, strict=strict, reference_node=reference)
         return cls._materialize(prefix=prefix, identifier=identifier, name=name, auto=auto)
 
     @classmethod
@@ -133,14 +147,24 @@ class Reference(curies.Reference):
             rv = f"{rv} ! {self.name}"
         return rv
 
-    def __hash__(self):
-        return hash((self.__class__, self.prefix, self.identifier))
-
 
 class Referenced:
     """A class that contains a reference."""
 
     reference: Reference
+
+    def __hash__(self) -> int:
+        return self.reference.__hash__()
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, curies.Reference | Referenced):
+            return self.prefix == other.prefix and self.identifier == other.identifier
+        raise TypeError
+
+    def __lt__(self, other: Referenced) -> bool:
+        if not isinstance(other, Referenced):
+            raise TypeError
+        return self.reference < other.reference
 
     @property
     def prefix(self):
@@ -168,7 +192,7 @@ class Referenced:
         return self.reference.preferred_curie
 
     @property
-    def pair(self) -> tuple[str, str]:
+    def pair(self) -> ReferenceTuple:
         """The pair of namespace/identifier."""
         return self.reference.pair
 

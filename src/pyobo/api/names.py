@@ -130,7 +130,12 @@ def get_ids(
 @lru_cache
 @wrap_norm_prefix
 def get_id_name_mapping(
-    prefix: str, *, force: bool = False, strict: bool = False, version: str | None = None
+    prefix: str,
+    *,
+    force: bool = False,
+    force_process: bool = False,
+    strict: bool = False,
+    version: str | None = None,
 ) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == "ncbigene":
@@ -145,13 +150,17 @@ def get_id_name_mapping(
         version = get_version(prefix)
     path = prefix_cache_join(prefix, name="names.tsv", version=version)
 
-    @cached_mapping(path=path, header=[f"{prefix}_id", "name"], force=force)
+    @cached_mapping(path=path, header=[f"{prefix}_id", "name"], force=force or force_process)
     def _get_id_name_mapping() -> Mapping[str, str]:
         if force:
             logger.debug("[%s v%s] forcing reload for names", prefix, version)
+        elif force_process:
+            logger.debug("[%s v%s] forcing process for names", prefix, version)
         else:
             logger.debug("[%s v%s] no cached names found. getting from OBO loader", prefix, version)
-        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
+        ontology = get_ontology(
+            prefix, force=force, strict=strict, version=version, rewrite=force_process
+        )
         return ontology.get_id_name_mapping()
 
     try:

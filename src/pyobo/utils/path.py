@@ -49,7 +49,10 @@ def prefix_directory_join(
         raise AssertionError
     version = cleanup_version(version, prefix=prefix)
     if version is not None and "/" in version:
-        raise ValueError(f"[{prefix}] Can not have slash in version: {version}")
+        # FIXME make a regular expression for allowed characters in a version, and just normalize everything else
+        raise ValueError(
+            f"[{prefix}] Can not have slash in version because this gets used to create a directory structure in the filesystem: {version}"
+        )
     return RAW_MODULE.join(prefix, version, *parts, name=name, ensure_exists=ensure_exists)
 
 

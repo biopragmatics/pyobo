@@ -5,8 +5,9 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
+from curies import ReferenceTuple
+
 from .reference import Reference, Referenced
-from ..identifier_utils import normalize_curie
 from ..resources.ro import load_ro
 
 __all__ = [
@@ -82,9 +83,6 @@ class TypeDef(Referenced):
     #: structured notes about a term, for example.
     is_metadata_tag: bool | None = None
 
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.prefix, self.identifier))
-
     def iterate_obo_lines(self) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield "\n[Typedef]"
@@ -133,10 +131,10 @@ class TypeDef(Referenced):
     @classmethod
     def from_curie(cls, curie: str, name: str | None = None) -> TypeDef:
         """Create a TypeDef directly from a CURIE and optional name."""
-        prefix, identifier = normalize_curie(curie)
-        if prefix is None or identifier is None:
-            raise ValueError
-        return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
+        reference = Reference.from_curie(curie, strict=True)
+        if reference is None:
+            raise RuntimeError
+        return cls(reference=reference)
 
 
 RelationHint = Reference | TypeDef | tuple[str, str] | str
@@ -354,10 +352,12 @@ has_category = TypeDef(
     is_metadata_tag=True,
 )
 
-default_typedefs: dict[tuple[str, str], TypeDef] = {
-    v.pair: v for k, v in locals().items() if isinstance(v, TypeDef)
+default_typedefs: dict[ReferenceTuple, TypeDef] = {
+    v.pair: v for v in locals().values() if isinstance(v, TypeDef)
 }
 
-for pair, name in load_ro().items():
-    if pair not in default_typedefs:
-        default_typedefs[pair] = TypeDef.from_triple(pair[0], pair[1], name)
+for reference, name in load_ro().items():
+    if reference not in default_typedefs:
+        default_typedefs[reference.pair] = TypeDef.from_triple(
+            reference.prefix, reference.identifier, name
+        )

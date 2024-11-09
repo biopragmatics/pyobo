@@ -117,6 +117,7 @@ def _get_class_node(term: Term) -> Node:
 
 
 def _iter_edges(term: Term) -> Iterable[Edge]:
+    # TODO rewire probably isn't necessary since Edge.from_parsed takes anything reference-like
     for parent in term.parents:
         yield Edge.from_parsed(
             _rewire(term.reference),
@@ -124,11 +125,11 @@ def _iter_edges(term: Term) -> Iterable[Edge]:
             _rewire(parent),
         )
 
-    for typedef, targets in term.relationships.items():
+    for predicate, targets in term.relationships.items():
         for target in targets:
             yield Edge.from_parsed(
                 _rewire(term.reference),
-                _rewire(typedef.reference),
+                _rewire(predicate),
                 _rewire(target),
             )
 

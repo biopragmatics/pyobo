@@ -1,6 +1,6 @@
 """Data structures for OBO."""
 
-from .reference import Reference  # noqa: F401
+from .reference import Reference, Referenced  # noqa: F401
 from .struct import (  # noqa: F401
     Obo,
     Synonym,

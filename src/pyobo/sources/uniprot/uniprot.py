@@ -103,7 +103,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                         gene_product_of, Reference(prefix="ncbigene", identifier=gene_id.strip())
                     )
 
-            term.annotate_literal("reviewed", "true", Reference(prefix="xsd", identifier="boolean"))
+            term.annotate_boolean("reviewed", True)
 
             for go_process_ref in _parse_go(go_processes):
                 term.annotate_object(participates_in, go_process_ref)
