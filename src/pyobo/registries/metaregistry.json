@@ -431,7 +431,10 @@
       "seeAlso": "rdfs:seeAlso",
       "FOBI_050089": "FOBI:050089",
       "FOBI_050091": "FOBI:050091",
-      "Property:P1659": "wikidata:P1659"
+      "has:input": "RO:0002233",
+      "has:output": "RO:0002234",
+      "Property:P1659": "wikidata:P1659",
+      "vocab:crossSpeciesExactMatch": "semapv:crossSpeciesExactMatch"
     },
     "prefix": {
       "ATCC number: ": "ATCC:",
@@ -516,7 +519,11 @@
       "scipion:CRYOEM_": "cryoem:",
       "resource:CHEMINF_": "cheminf:",
       "FLOPO_": "flopo:",
-      "FOBI_": "fobi:"
+      "DrugNames:DB": "drugbank:DB:",
+      "FOBI_": "fobi:",
+      "detail?JGLOBAL:ID=": "iobc",
+      "ontology:ONTIE_": "ontie:",
+      "ontology:PMR.owl#": "pmr:"
     }
   }
 }

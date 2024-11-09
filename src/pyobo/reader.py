@@ -33,7 +33,7 @@ from .struct import (
     make_ad_hoc_ontology,
 )
 from .struct.struct import DEFAULT_SYNONYM_TYPE
-from .struct.typedef import default_typedefs
+from .struct.typedef import alternative_term, default_typedefs
 from .utils.misc import cleanup_version
 
 __all__ = [
@@ -288,13 +288,18 @@ def _append_property(
     if not isinstance(value, str):
         return term.annotate_object(prop, value)
 
+    if prop.prefix in ALWAYS_LITERAL:
+        return term.annotate_literal(prop, value)
+
     if value.startswith("http"):
         _pref, _id = bioregistry.parse_iri(value)
         if _pref and _id:
             return term.annotate_object(prop, Reference(prefix=_pref, identifier=_id))
         else:
             if value not in UNPARSED_IRIS:
-                logger.warning(f"[{term.curie}] could not parse target IRI: {value}")
+                logger.warning(
+                    f"[{term.curie} {prop.curie}] could not parse property target as IRI: {value}"
+                )
                 UNPARSED_IRIS.add(value)
             return term
 
@@ -315,7 +320,9 @@ def _append_property(
     if ":" in value:
         xx = Reference.from_curie(value, strict=strict)
         if xx is None:
-            logger.warning(f"[{term.curie}] {prop.curie} could not parse target curie: {value}")
+            logger.warning(
+                f"[{term.curie} {prop.curie}] could not parse property target as CURIE: {value}"
+            )
             return term
         return term.annotate_object(prop, xx)
 
@@ -353,13 +360,22 @@ def _iter_obo_graph(
         leave=True,
         desc=f"[{ontology_prefix}] processing graph",
     ):
-        # TODO add standardization into Reference.from_curie?
-        prefix, identifier = normalize_curie(curie, strict=strict, ontology=ontology_prefix)
-        if prefix is None or identifier is None:
-            logger.warning("[%s] could not parse node curie: %s", ontology_prefix, curie)
-            continue
-        identifier = bioregistry.standardize_identifier(prefix, identifier)
-        reference = Reference(prefix=prefix, identifier=identifier, name=data.get("name"))
+        if ":" not in curie:
+            reference = Reference(prefix=ontology_prefix, identifier=curie)
+        elif curie.startswith("http"):
+            prefix_2, identifier_2 = bioregistry.parse_iri(curie)
+            if prefix_2 is None or identifier_2 is None:
+                logger.warning("[%s] could not parse node IRI: %s", ontology_prefix, curie)
+                continue
+            reference = Reference(prefix=prefix_2, identifier=identifier_2, name=data.get("name"))
+        else:
+            # TODO add standardization into Reference.from_curie?
+            prefix_3, identifier_3 = normalize_curie(curie, strict=strict, ontology=ontology_prefix)
+            if prefix_3 is None or identifier_3 is None:
+                logger.warning("[%s] could not parse node curie: %s", ontology_prefix, curie)
+                continue
+            identifier_3 = bioregistry.standardize_identifier(prefix_3, identifier_3)
+            reference = Reference(prefix=prefix_3, identifier=identifier_3, name=data.get("name"))
         yield reference, data
 
 
@@ -456,7 +472,11 @@ def _handle_relation_curie(
     if curie.startswith("http"):
         _pref, _id = bioregistry.parse_iri(curie)
         if not _pref or not _id:
-            logger.warning("[%s] unable to contract URI %s", ontology_prefix, curie)
+            logger.warning(
+                "[%s] unable to contract relation URI %s",
+                node.curie if node else ontology_prefix,
+                curie,
+            )
             return None
         return Reference(prefix=_pref, identifier=_id)
     elif ":" in curie:
@@ -484,7 +504,7 @@ def _parse_object_curie(
     if curie.startswith("http"):
         _pref, _id = bioregistry.parse_iri(curie)
         if not _pref or not _id:
-            logger.warning("[%s] unable to contract URI %s", node.prefix, curie)
+            logger.warning("[%s] unable to contract target URI %s", node.curie, curie)
             return None
         return Reference(prefix=_pref, identifier=_id)
 
@@ -642,6 +662,10 @@ def iterate_node_synonyms(
     - "LTEC I" [Orphanet:93938]
     - "LTEC I" []
     """
+    # FIXME need to accept
+    #  "Brown-Pearce tumour" EXACT OMO:0003005 []
+    #  "COP" EXACT ABBREVIATION [https://orcid.org/0000-0003-0113-912X, Orphanet:1302]
+    #  "10*3.{copies}/mL" EXACT [] {http://purl.obolibrary.org/obo/NCIT_P383="AB", http://purl.obolibrary.org/obo/NCIT_P384="UCUM"}
     for s in data.get("synonym", []):
         s = _extract_synonym(
             s, synonym_typedefs, node=node, strict=strict, ontology_prefix=ontology_prefix
@@ -705,6 +729,9 @@ def iterate_node_alt_ids(
             logger.warning("[%s] could not parse alt curie: %s", node.curie, alt_curie)
             continue
         yield alt_reference
+
+
+ALWAYS_LITERAL: set[ReferenceTuple] = {alternative_term.pair}
 
 
 def iterate_node_relationships(
