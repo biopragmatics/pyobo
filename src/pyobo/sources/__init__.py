@@ -53,6 +53,7 @@ from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
 from .sgd import SGDGetter
 from .slm import SLMGetter
 from .umls import UMLSGetter
+from .unimod import UnimodGetter
 from .uniprot import UniProtGetter, UniProtPtmGetter
 from .wikipathways import WikiPathwaysGetter
 from .zfin import ZFINGetter
@@ -117,6 +118,7 @@ __all__ = [
     "UMLSGetter",
     "UniProtGetter",
     "UniProtPtmGetter",
+    "UnimodGetter",
     "WikiPathwaysGetter",
     "ZFINGetter",
     "ontology_resolver",

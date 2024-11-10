@@ -8,6 +8,7 @@ from .struct import (  # noqa: F401
     SynonymSpecificity,
     SynonymTypeDef,
     Term,
+    int_identifier_sort_key,
     make_ad_hoc_ontology,
 )
 from .typedef import (  # noqa: F401

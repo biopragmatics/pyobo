@@ -4,7 +4,7 @@ from collections.abc import Iterable
 
 import pandas as pd
 
-from pyobo.struct import Obo, Reference, Term
+from pyobo.struct import Obo, Reference, Term, int_identifier_sort_key
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -15,15 +15,11 @@ PREFIX = "civic.gid"
 URL = "https://civicdb.org/downloads/nightly/nightly-GeneSummaries.tsv"
 
 
-def _sort(_o, t):
-    return int(t.identifier)
-
-
 class CIVICGeneGetter(Obo):
     """An ontology representation of CiVIC's gene nomenclature."""
 
     bioversions_key = ontology = PREFIX
-    term_sort_key = _sort
+    term_sort_key = int_identifier_sort_key
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over gene terms for CiVIC."""
