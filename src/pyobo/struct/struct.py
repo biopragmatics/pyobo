@@ -913,7 +913,7 @@ class Obo:
         if write_owl and (not self._owl_path.exists() or force):
             import bioontologies.robot
 
-            bioontologies.robot.convert(self._obo_path, self._owl_path, fmt="ofn")
+            bioontologies.robot.convert(self._obo_path, self._owl_path)
         if write_obonet and (not self._obonet_gz_path.exists() or force):
             logger.debug("writing obonet to %s", self._obonet_gz_path)
             self.write_obonet_gz(self._obonet_gz_path)
