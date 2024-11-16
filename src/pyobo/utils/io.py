@@ -4,16 +4,13 @@ import collections.abc
 import csv
 import gzip
 import logging
-import time
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TypeVar
-from xml.etree.ElementTree import Element
 
 import pandas as pd
-from lxml import etree
 from tqdm.auto import tqdm
 
 __all__ = [
@@ -24,7 +21,6 @@ __all__ = [
     "write_map_tsv",
     "write_multimap_tsv",
     "write_iterable_tsv",
-    "parse_xml_gz",
     "get_writer",
     "open_reader",
     "get_reader",
@@ -154,13 +150,3 @@ def write_iterable_tsv(
         if header is not None:
             writer.writerow(header)
         writer.writerows(it)
-
-
-def parse_xml_gz(path: Path) -> Element:
-    """Parse an XML file from a path to a GZIP file."""
-    path = path.resolve()
-    t = time.time()
-    logger.info("parsing xml from %s", path)
-    tree = etree.parse(path.as_posix())  # type:ignore
-    logger.info("parsed xml in %.2f seconds", time.time() - t)
-    return tree.getroot()
