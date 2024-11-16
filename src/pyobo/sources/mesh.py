@@ -4,17 +4,19 @@ import datetime
 import itertools as itt
 import logging
 import re
+import time
 from collections.abc import Collection, Iterable, Mapping
+from pathlib import Path
 from typing import Any
 from xml.etree.ElementTree import Element
 
+from lxml import etree
 from tqdm.auto import tqdm
 
 from pyobo.api.utils import safe_get_version
 from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import Obo, Reference, Synonym, Term
 from pyobo.utils.cache import cached_json, cached_mapping
-from pyobo.utils.io import parse_xml_gz
 from pyobo.utils.path import ensure_path, prefix_directory_join
 
 __all__ = [
@@ -28,6 +30,15 @@ PREFIX = "mesh"
 NOW_YEAR = str(datetime.datetime.now().year)
 CAS_RE = re.compile(r"^\d{1,7}\-\d{2}\-\d$")
 UNII_RE = re.compile(r"[0-9A-Za-z]{10}$")
+
+
+def _get_xml_root(path: Path) -> Element:
+    """Parse an XML file from a path to a GZIP file."""
+    t = time.time()
+    logger.info("parsing xml from %s", path)
+    tree = etree.parse(path.as_posix())  # type:ignore
+    logger.info("parsed xml in %.2f seconds", time.time() - t)
+    return tree.getroot()
 
 
 class MeSHGetter(Obo):
@@ -112,7 +123,7 @@ def ensure_mesh_descriptors(
     @cached_json(path=prefix_directory_join(PREFIX, name="desc.json", version=version), force=force)
     def _inner():
         path = ensure_path(PREFIX, url=get_descriptors_url(version), version=version)
-        root = parse_xml_gz(path)
+        root = _get_xml_root(path)
         return get_descriptor_records(root, id_key="DescriptorUI", name_key="DescriptorName/String")
 
     return _inner()
@@ -138,7 +149,7 @@ def ensure_mesh_supplemental_records(version: str, force: bool = False) -> list[
     @cached_json(path=prefix_directory_join(PREFIX, name="supp.json", version=version), force=force)
     def _inner():
         path = ensure_path(PREFIX, url=get_supplemental_url(version), version=version)
-        root = parse_xml_gz(path)
+        root = _get_xml_root(path)
         return get_descriptor_records(
             root, id_key="SupplementalRecordUI", name_key="SupplementalRecordName/String"
         )

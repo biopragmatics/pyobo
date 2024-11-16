@@ -38,6 +38,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
+# FIXME KEGG API is not usable anymore
 class KEGGPathwayGetter(Obo):
     """An ontology representation of KEGG Pathways."""
 
@@ -149,24 +150,18 @@ def iter_kegg_pathway_paths(
     version: str, skip_missing: bool = True
 ) -> Iterable[tuple[KEGGGenome, str, str] | tuple[None, None, None]]:
     """Get paths for the KEGG Pathway files."""
-    genomes = list(iter_kegg_genomes(version=version, desc="KEGG Pathways"))
+    genomes = sorted(
+        iter_kegg_genomes(version=version, desc="KEGG Pathways"), key=lambda x: int(x.identifier)
+    )
     func = partial(_process_genome, version=version, skip_missing=skip_missing)
     return thread_map(func, genomes, unit="pathway", unit_scale=True)
 
 
-def _process_genome(kegg_genome, version, skip_missing):
+def _process_genome(kegg_genome: KEGGGenome, version: str, skip_missing: bool):
     with logging_redirect_tqdm():
         try:
-            list_pathway_path = ensure_list_pathway_genome(
-                kegg_genome.identifier,
-                version=version,
-                error_on_missing=not skip_missing,
-            )
-            link_pathway_path = ensure_link_pathway_genome(
-                kegg_genome.identifier,
-                version=version,
-                error_on_missing=not skip_missing,
-            )
+            list_pathway_path = ensure_list_pathway_genome(kegg_genome.identifier, version=version)
+            link_pathway_path = ensure_link_pathway_genome(kegg_genome.identifier, version=version)
         except urllib.error.HTTPError as e:
             code = e.getcode()
             if code != 404:

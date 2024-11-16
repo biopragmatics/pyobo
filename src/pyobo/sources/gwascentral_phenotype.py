@@ -43,11 +43,13 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
                 url=f"https://www.gwascentral.org/phenotype/HGVPM{n}?format=json",
                 name=f"HGVPM{n}.json",
                 force=force,
+                backend="requests",
+                timeout=1,
             )
         except OSError as e:
             tqdm.write(f"{n}: {e}")
             continue
-        with open(path) as file:
+        with path.open() as file:
             j = json.load(file)
 
         description = j.get("description")

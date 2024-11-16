@@ -52,7 +52,7 @@ from ..constants import (
 )
 from ..identifier_utils import normalize_curie
 from ..utils.io import multidict, write_iterable_tsv
-from ..utils.path import get_prefix_obo_path, prefix_directory_join
+from ..utils.path import prefix_directory_join
 
 __all__ = [
     "Synonym",
@@ -812,7 +812,7 @@ class Obo:
 
     @property
     def _obo_path(self) -> Path:
-        return get_prefix_obo_path(self.ontology, version=self.data_version)
+        return self._cache(name=f"{self.ontology}.obo")
 
     @property
     def _obograph_path(self) -> Path:

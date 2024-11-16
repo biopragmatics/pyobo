@@ -1,30 +1,23 @@
 """Utilities for building paths."""
 
 import logging
-from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal
 
 import pandas as pd
 import requests_ftp
-from pystow.utils import download, name_from_url, read_tarfile_csv
+from pystow import VersionHint
 
-from .misc import cleanup_version
 from ..constants import RAW_MODULE
 
 __all__ = [
     "prefix_directory_join",
-    "prefix_directory_join",
     "prefix_cache_join",
-    "get_prefix_obo_path",
     "ensure_path",
     "ensure_df",
-    "ensure_tar_df",
 ]
 
 logger = logging.getLogger(__name__)
-
-VersionHint: TypeAlias = None | str | Callable[[], str | None]
 
 requests_ftp.monkeypatch_session()
 
@@ -37,25 +30,12 @@ def prefix_directory_join(
     ensure_exists: bool = True,
 ) -> Path:
     """Join in the prefix directory."""
-    if version is None:
-        return RAW_MODULE.join(prefix, *parts, name=name, ensure_exists=ensure_exists)
-    if callable(version):
-        logger.info("[%s] looking up version", prefix)
-        version = version()
-        logger.info("[%s] got version %s", prefix, version)
-    elif not isinstance(version, str):
-        raise TypeError(f"Invalid type: {version} ({type(version)})")
-    if version is None:
-        raise AssertionError
-    version = cleanup_version(version, prefix=prefix)
-    if version is not None and "/" in version:
-        raise ValueError(f"[{prefix}] Can not have slash in version: {version}")
-    return RAW_MODULE.join(prefix, version, *parts, name=name, ensure_exists=ensure_exists)
-
-
-def get_prefix_obo_path(prefix: str, version: VersionHint = None, ext: str = "obo") -> Path:
-    """Get the canonical path to the OBO file."""
-    return prefix_directory_join(prefix, name=f"{prefix}.{ext}", version=version)
+    return RAW_MODULE.module(prefix).join(
+        *parts,
+        name=name,
+        ensure_exists=ensure_exists,
+        version=version,
+    )
 
 
 def ensure_path(
@@ -65,34 +45,27 @@ def ensure_path(
     version: VersionHint = None,
     name: str | None = None,
     force: bool = False,
-    error_on_missing: bool = False,
     backend: Literal["requests", "urllib"] = "urllib",
     verify: bool = True,
-) -> str:
+    **download_kwargs: Any,
+) -> Path:
     """Download a file if it doesn't exist."""
-    if name is None:
-        name = name_from_url(url)
-
-    path = prefix_directory_join(prefix, *parts, name=name, version=version)
-
-    if not path.exists() and error_on_missing:
-        raise FileNotFoundError
-
-    kwargs: dict[str, Any]
     if verify:
-        kwargs = {"backend": backend}
+        download_kwargs = {"backend": backend}
     else:
         if backend != "requests":
             logger.warning("using requests since verify=False")
-        kwargs = {"backend": "requests", "verify": False}
+        download_kwargs = {"backend": "requests", "verify": False}
 
-    download(
+    path = RAW_MODULE.module(prefix).ensure(
+        *parts,
         url=url,
-        path=path,
+        name=name,
         force=force,
-        **kwargs,
+        version=version,
+        download_kwargs=download_kwargs,
     )
-    return path.as_posix()
+    return path
 
 
 def ensure_df(
@@ -120,21 +93,6 @@ def ensure_df(
         backend=backend,
     )
     return pd.read_csv(_path, sep=sep, dtype=dtype, **kwargs)
-
-
-def ensure_tar_df(
-    prefix: str,
-    *parts: str,
-    url: str,
-    inner_path: str,
-    version: VersionHint = None,
-    path: str | None = None,
-    force: bool = False,
-    **kwargs,
-) -> pd.DataFrame:
-    """Download a tar file and open as a dataframe."""
-    path = ensure_path(prefix, *parts, url=url, version=version, name=path, force=force)
-    return read_tarfile_csv(path, inner_path=inner_path, **kwargs)
 
 
 def prefix_cache_join(prefix: str, *parts, name: str | None, version: VersionHint) -> Path:
