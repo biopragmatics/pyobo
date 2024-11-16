@@ -5,6 +5,7 @@ Run with ``python -m pyobo.sources.kegg.genes``
 
 import logging
 from collections.abc import Iterable
+from pathlib import Path
 
 import click
 from more_click import verbose_option
@@ -71,9 +72,9 @@ def iter_terms(version: str) -> Iterable[Term]:
 
 def _make_terms(
     kegg_genome: KEGGGenome,
-    list_genome_path: str,
-    conv_uniprot_path: str | None = None,
-    conv_ncbigene_path: str | None = None,
+    list_genome_path: Path,
+    conv_uniprot_path: Path | None = None,
+    conv_ncbigene_path: Path | None = None,
 ) -> Iterable[Term]:
     uniprot_conv = _load_conv(conv_uniprot_path, "up:") if conv_uniprot_path else {}
     ncbigene_conv = _load_conv(conv_ncbigene_path, "ncbi-geneid:") if conv_ncbigene_path else {}
@@ -110,7 +111,7 @@ def _make_terms(
             yield term
 
 
-def _load_conv(path, value_prefix):
+def _load_conv(path: Path, value_prefix):
     m = open_map_tsv(path)
     m = {k: v[len(value_prefix) :] for k, v in m.items()}
     return m

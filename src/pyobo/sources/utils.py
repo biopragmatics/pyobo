@@ -2,6 +2,7 @@
 
 import logging
 from collections.abc import Mapping
+from pathlib import Path
 
 from ..utils.io import multisetdict
 
@@ -13,9 +14,9 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def get_go_mapping(path: str, prefix: str) -> Mapping[str, set[tuple[str, str]]]:
+def get_go_mapping(path: Path, prefix: str) -> Mapping[str, set[tuple[str, str]]]:
     """Get a GO mapping file."""
-    with open(path) as file:
+    with path.open() as file:
         return multisetdict(
             process_go_mapping_line(line.strip(), prefix=prefix) for line in file if line[0] != "!"
         )

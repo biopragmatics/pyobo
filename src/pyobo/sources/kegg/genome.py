@@ -94,7 +94,7 @@ def iter_kegg_genomes(version: str, desc: str) -> Iterable[KEGGGenome]:
     """Iterate over all KEGG genomes."""
     # since old kegg versions go away forever, do NOT add a force option
     path = ensure_list_genomes(version=version)
-    with open(path) as file:
+    with path.open() as file:
         lines = [line.strip() for line in file]
     it = tqdm(lines, desc=desc, unit_scale=True, unit="genome")
     for line in it:

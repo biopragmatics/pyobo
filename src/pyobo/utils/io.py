@@ -156,9 +156,9 @@ def write_iterable_tsv(
         writer.writerows(it)
 
 
-def parse_xml_gz(path: str | Path) -> Element:
+def parse_xml_gz(path: Path) -> Element:
     """Parse an XML file from a path to a GZIP file."""
-    path = Path(path).resolve()
+    path = path.resolve()
     t = time.time()
     logger.info("parsing xml from %s", path)
     tree = etree.parse(path.as_posix())  # type:ignore

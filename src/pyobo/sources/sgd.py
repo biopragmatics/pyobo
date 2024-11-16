@@ -3,8 +3,10 @@
 from collections.abc import Iterable
 from urllib.parse import unquote_plus
 
+from pystow.utils import read_tarfile_csv
+
 from ..struct import Obo, Reference, Synonym, Term, from_species
-from ..utils.path import ensure_tar_df
+from ..utils.path import ensure_path
 
 __all__ = [
     "SGDGetter",
@@ -38,17 +40,15 @@ def get_obo(force: bool = False) -> Obo:
 
 def get_terms(ontology: Obo, force: bool = False) -> Iterable[Term]:
     """Get SGD terms."""
-    df = ensure_tar_df(
-        prefix=PREFIX,
-        url=URL,
+    path = ensure_path(PREFIX, url=URL, version=ontology._version_or_raise, force=force)
+    df = read_tarfile_csv(
+        path,
         inner_path=INNER_PATH,
         sep="\t",
         skiprows=18,
         header=None,
         names=HEADER,
-        force=force,
         dtype=str,
-        version=ontology._version_or_raise,
     )
     df = df[df["feature"] == "gene"]
     for data in df["data"]:

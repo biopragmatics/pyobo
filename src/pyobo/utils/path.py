@@ -7,7 +7,6 @@ from typing import Any, Literal
 import pandas as pd
 import requests_ftp
 from pystow import VersionHint
-from pystow.utils import read_tarfile_csv
 
 from ..constants import RAW_MODULE
 
@@ -16,7 +15,6 @@ __all__ = [
     "prefix_cache_join",
     "ensure_path",
     "ensure_df",
-    "ensure_tar_df",
 ]
 
 logger = logging.getLogger(__name__)
@@ -50,7 +48,7 @@ def ensure_path(
     backend: Literal["requests", "urllib"] = "urllib",
     verify: bool = True,
     **download_kwargs: Any,
-) -> str:
+) -> Path:
     """Download a file if it doesn't exist."""
     if verify:
         download_kwargs = {"backend": backend}
@@ -67,7 +65,7 @@ def ensure_path(
         version=version,
         download_kwargs=download_kwargs,
     )
-    return path.as_posix()
+    return path
 
 
 def ensure_df(
@@ -95,21 +93,6 @@ def ensure_df(
         backend=backend,
     )
     return pd.read_csv(_path, sep=sep, dtype=dtype, **kwargs)
-
-
-def ensure_tar_df(
-    prefix: str,
-    *parts: str,
-    url: str,
-    inner_path: str,
-    version: VersionHint = None,
-    path: str | None = None,
-    force: bool = False,
-    **kwargs,
-) -> pd.DataFrame:
-    """Download a tar file and open as a dataframe."""
-    path = ensure_path(prefix, *parts, url=url, version=version, name=path, force=force)
-    return read_tarfile_csv(path, inner_path=inner_path, **kwargs)
 
 
 def prefix_cache_join(prefix: str, *parts, name: str | None, version: VersionHint) -> Path:

@@ -49,7 +49,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         except OSError as e:
             tqdm.write(f"{n}: {e}")
             continue
-        with open(path) as file:
+        with path.open() as file:
             j = json.load(file)
 
         description = j.get("description")
