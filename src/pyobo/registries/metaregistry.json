@@ -502,6 +502,22 @@
       "vo/ontorat/PR:": "PR:",
       "DC:0000": "diseaseclass:0000",
       "TS-": "caloha:"
+    },
+    "resource_prefix": {
+      "enm": {
+        "Thesaurus:C": "NCIT:C"
+      },
+      "idocovid19": {"UniProtKN:":  "uniprot:"},
+      "ito": {
+        "format:": "edam.format:",
+        "topic:": "edam.topic:",
+        "operation:": "edam.operation:"
+      },
+      "mcro": {
+        "format:": "edam.format:",
+        "topic:": "edam.topic:",
+        "operation:": "edam.operation:"
+      }
     }
   }
 }
