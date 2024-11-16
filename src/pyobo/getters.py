@@ -136,7 +136,9 @@ def get_ontology(
     return obo
 
 
-def _ensure_ontology_path(prefix: str, force, version) -> tuple[str, Path] | tuple[None, None]:
+def _ensure_ontology_path(
+    prefix: str, force: bool, version: str | None
+) -> tuple[str, Path] | tuple[None, None]:
     for ontology_format, url in [
         ("obo", bioregistry.get_obo_download(prefix)),
         ("owl", bioregistry.get_owl_download(prefix)),
@@ -225,6 +227,7 @@ SKIP = {
     "gorel": "unable to download",
     "dinto": "unable to download",
     "gainesville.core": "unable to download",
+    "mamo": "unable to download",
     "ato": "can't process",
     "emapa": "recently changed with EMAP... not sure what the difference is anymore",
     "kegg.genes": "needs fix",  # FIXME
@@ -232,6 +235,10 @@ SKIP = {
     "kegg.pathway": "needs fix",  # FIXME
     "ensemblglossary": "uri is wrong",
     "biolink": "too much junk",
+    "epio": "content from fraunhofer is unreliable",
+    "epso": "content from fraunhofer is unreliable",
+    "gwascentral.phenotype": "website is down? or API changed?",  # FIXME
+    "gwascentral.study": "website is down? or API changed?",  # FIXME
 }
 
 X = TypeVar("X")
@@ -328,8 +335,9 @@ def iter_helper_helper(
     )
     for prefix in prefix_it:
         prefix_it.set_postfix(prefix=prefix)
-        if not use_tqdm:
-            click.secho(f"\n{prefix} - {bioregistry.get_name(prefix)}", fg="green", bold=True)
+        tqdm.write(
+            click.style(f"\n{prefix} - {bioregistry.get_name(prefix)}", fg="green", bold=True)
+        )
         try:
             yv = f(prefix, strict=strict, **kwargs)  # type:ignore
         except urllib.error.HTTPError as e:
@@ -344,6 +352,10 @@ def iter_helper_helper(
         #     logger.warning("[%s] missing prefix: %s", prefix, e)
         #     if strict and not bioregistry.is_deprecated(prefix):
         #         raise e
+        except RuntimeError as e:
+            if "DrugBank" not in str(e):
+                raise
+            logger.warning("[drugbank] invalid credentials")
         except subprocess.CalledProcessError:
             logger.warning("[%s] ROBOT was unable to convert OWL to OBO", prefix)
         except UnhandledFormatError as e:
