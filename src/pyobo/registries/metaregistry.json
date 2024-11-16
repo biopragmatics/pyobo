@@ -547,6 +547,22 @@
       "url:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
       "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com:http\\://www.merriam-webster.com/dictionary/": "merriamwebster:",
       "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com:http\\://www.m-w.com/cgi-bin/dictionary?book=Dictionary&va=": "merriamwebster:"
+    },
+    "resource_prefix": {
+      "enm": {
+        "Thesaurus:C": "NCIT:C"
+      },
+      "idocovid19": {"UniProtKN:":  "uniprot:"},
+      "ito": {
+        "format:": "edam.format:",
+        "topic:": "edam.topic:",
+        "operation:": "edam.operation:"
+      },
+      "mcro": {
+        "format:": "edam.format:",
+        "topic:": "edam.topic:",
+        "operation:": "edam.operation:"
+      }
     }
   }
 }

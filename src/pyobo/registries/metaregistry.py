@@ -10,6 +10,7 @@ from pathlib import Path
 import bioregistry
 
 from ..constants import GLOBAL_SKIP, RAW_DIRECTORY
+from ..resources.goc import load_goc_map
 
 HERE = Path(__file__).parent.resolve()
 CURATED_REGISTRY_PATH = HERE.joinpath("metaregistry.json")
@@ -96,7 +97,9 @@ def get_xrefs_blacklist() -> set[str]:
 @lru_cache(maxsize=1)
 def get_remappings_full() -> Mapping[str, str]:
     """Get the remappings for xrefs based on the entire xref database."""
-    return CURATED_REGISTRY["remappings"]["full"]
+    rv = CURATED_REGISTRY["remappings"]["full"]
+    rv.update(load_goc_map())
+    return rv
 
 
 def remap_full(x: str) -> str:
@@ -113,8 +116,17 @@ def get_remappings_prefix() -> Mapping[str, str]:
     return CURATED_REGISTRY["remappings"]["prefix"]
 
 
-def remap_prefix(curie: str) -> str:
+@lru_cache
+def _get_resource_specific_map(ontology_prefix: str) -> Mapping[str, str]:
+    return CURATED_REGISTRY["remappings"]["resource_prefix"].get(ontology_prefix, {})
+
+
+def remap_prefix(curie: str, ontology_prefix: str | None = None) -> str:
     """Remap a prefix."""
+    if ontology_prefix is not None:
+        for old_prefix, new_prefix in _get_resource_specific_map(ontology_prefix).items():
+            if curie.startswith(old_prefix):
+                return new_prefix + curie[len(old_prefix) :]
     for old_prefix, new_prefix in get_remappings_prefix().items():
         if curie.startswith(old_prefix):
             return new_prefix + curie[len(old_prefix) :]

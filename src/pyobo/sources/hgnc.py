@@ -250,7 +250,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         version=version,
         name="hgnc_complete_set.json",
     )
-    with open(path) as file:
+    with path.open() as file:
         entries = json.load(file)["response"]["docs"]
 
     yield Term.from_triple("NCBITaxon", "9606", "Homo sapiens")

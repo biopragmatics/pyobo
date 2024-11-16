@@ -23,6 +23,10 @@ class TestStringUtils(unittest.TestCase):
         self.assertEqual(("pubmed", "1234"), normalize_curie("pmid:1234"))
         self.assertEqual(("pubmed", "1234"), normalize_curie("PMID:1234"))
 
+        # Test resource-specific remapping
+        self.assertEqual((None, None), normalize_curie("Thesaurus:C1234", strict=False))
+        self.assertEqual(("ncit", "C1234"), normalize_curie("Thesaurus:C1234", ontology="enm"))
+
     def test_parse_eccode_transfer(self):
         """Test parse_eccode_transfer."""
         self.assertEqual(

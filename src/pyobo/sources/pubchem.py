@@ -2,6 +2,7 @@
 
 import logging
 from collections.abc import Iterable, Mapping
+from pathlib import Path
 
 import pandas as pd
 from bioregistry.utils import removeprefix
@@ -96,7 +97,7 @@ def get_pubchem_id_to_mesh_id(version: str) -> Mapping[str, str]:
     return dict(df.values)
 
 
-def _ensure_cid_name_path(*, version: str | None = None, force: bool = False) -> str:
+def _ensure_cid_name_path(*, version: str | None = None, force: bool = False) -> Path:
     if version is None:
         version = get_version("pubchem")
     # 2 tab-separated columns: compound_id, name

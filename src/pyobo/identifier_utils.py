@@ -66,6 +66,7 @@ def normalize_curie(
 
     :param curie: A compact uniform resource identifier (CURIE)
     :param strict: Should an exception be thrown if the CURIE can not be parsed w.r.t. the Bioregistry?
+    :param ontology: The ontology in which the CURIE appears
     :return: A parse tuple or a tuple of None, None if not able to parse and not strict
 
     - Normalizes the namespace
@@ -82,7 +83,7 @@ def normalize_curie(
     curie = remap_full(curie)
 
     # Remap node's prefix (if necessary)
-    curie = remap_prefix(curie)
+    curie = remap_prefix(curie, ontology_prefix=ontology)
 
     # TODO reuse bioregistry logic for standardizing and parsing CURIEs?
     try:

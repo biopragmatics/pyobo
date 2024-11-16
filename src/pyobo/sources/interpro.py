@@ -91,7 +91,7 @@ def get_interpro_tree(version: str, force: bool = False):
     """Get InterPro Data source."""
     url = f"https://ftp.ebi.ac.uk/pub/databases/interpro/releases/{version}/ParentChildTreeFile.txt"
     path = ensure_path(PREFIX, url=url, version=version, force=force)
-    with open(path) as f:
+    with path.open() as f:
         return _parse_tree_helper(f)
 
 

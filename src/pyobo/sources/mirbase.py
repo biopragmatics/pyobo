@@ -54,7 +54,7 @@ def get_terms(version: str, force: bool = False) -> list[Term]:
 
     file_handle = (
         gzip.open(definitions_path, "rt")
-        if definitions_path.endswith(".gz")
+        if definitions_path.suffix.endswith(".gz")
         else open(definitions_path)
     )
     with file_handle as file:

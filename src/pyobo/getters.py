@@ -17,6 +17,7 @@ from typing import TypeVar
 
 import bioregistry
 import click
+import pystow.utils
 from bioontologies import robot
 from tqdm.auto import tqdm
 
@@ -146,8 +147,8 @@ def _ensure_ontology_path(
     ]:
         if url is not None:
             try:
-                path = Path(ensure_path(prefix, url=url, force=force, version=version))
-            except urllib.error.HTTPError:
+                path = ensure_path(prefix, url=url, force=force, version=version)
+            except (urllib.error.HTTPError, pystow.utils.DownloadError):
                 continue
             else:
                 return ontology_format, path
