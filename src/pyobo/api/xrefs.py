@@ -89,6 +89,7 @@ def get_xrefs_df(
     use_tqdm: bool = False,
     force: bool = False,
     strict: bool = False,
+    force_process: bool = False,
     version: str | None = None,
 ) -> pd.DataFrame:
     """Get all xrefs."""
@@ -96,10 +97,12 @@ def get_xrefs_df(
         version = get_version(prefix)
     path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=force)
+    @cached_df(path=path, dtype=str, force=force or force_process)
     def _df_getter() -> pd.DataFrame:
         logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
+        ontology = get_ontology(
+            prefix, force=force, strict=strict, version=version, rewrite=force_process
+        )
         return ontology.get_xrefs_df(use_tqdm=use_tqdm)
 
     return _df_getter()

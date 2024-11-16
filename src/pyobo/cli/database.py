@@ -81,6 +81,8 @@ def build(ctx: click.Context, directory: str, zenodo: bool, no_strict: bool, for
 
 skip_below_option = click.option("--skip-below")
 skip_below_exclusive_option = click.option("--skip-below-exclusive", is_flag=True)
+skip_pyobo_option = click.option("--skip-pyobo", is_flag=True)
+force_process_option = click.option("--force-process", is_flag=True)
 
 
 @main.command()
@@ -89,8 +91,8 @@ skip_below_exclusive_option = click.option("--skip-below-exclusive", is_flag=Tru
 @force_option
 @no_strict_option
 @skip_below_option
-@click.option("--skip-pyobo", is_flag=True)
-@click.option("--force-process", is_flag=True)
+@skip_pyobo_option
+@force_process_option
 def metadata(
     directory: str,
     no_strict: bool,
@@ -322,7 +324,18 @@ def properties(directory: str, zenodo: bool, force: bool, no_strict: bool):
 @zenodo_option
 @force_option
 @no_strict_option
-def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool):
+@skip_pyobo_option
+@skip_below_option
+@force_process_option
+def xrefs(
+    directory: str,
+    zenodo: bool,
+    force: bool,
+    no_strict: bool,
+    skip_pyobo: bool,
+    force_process: bool,
+    skip_below: str | None,
+):
     """Make the prefix-identifier-xref dump."""
     with logging_redirect_tqdm():
         paths = db_output_helper(
@@ -332,6 +345,9 @@ def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool):
             directory=directory,
             force=force,
             strict=not no_strict,
+            skip_pyobo=skip_pyobo,
+            skip_below=skip_below,
+            force_process=force_process,
             summary_detailed=(0, 2),  # second column corresponds to xref prefix
         )
     if zenodo:
