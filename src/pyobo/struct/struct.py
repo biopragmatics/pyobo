@@ -64,6 +64,7 @@ __all__ = [
     "make_ad_hoc_ontology",
     "abbreviation",
     "acronym",
+    "default_reference",
 ]
 
 logger = logging.getLogger(__name__)
@@ -1522,3 +1523,19 @@ def _convert_synonym_typedefs(synonym_typedefs: Iterable[SynonymTypeDef] | None)
 
 def _convert_synonym_typedef(synonym_typedef: SynonymTypeDef) -> str:
     return f'{synonym_typedef.preferred_curie} "{synonym_typedef.name}"'
+
+
+def default_reference(prefix: str, part: str, name: str | None = None) -> Reference:
+    """Create a CURIE for an "unqualified" reference.
+
+    :param prefix: The prefix of the ontology in which the "unqualified" reference is made
+    :param part: The "unqualified" reference. For example, if you just write
+        "located_in" somewhere there is supposed to be a CURIE
+    :returns: A CURIE for the "unqualified" reference based on the OBO semantic space
+
+    >>> default_reference("chebi", "conjugate_base_of")
+    Reference(prefix="obo", identifier="chebi#conjugate_base_of")
+    """
+    if not part.strip():
+        raise ValueError("default identifier is empty")
+    return Reference(prefix="obo", identifier=f"{prefix}#{part}", name=name)
