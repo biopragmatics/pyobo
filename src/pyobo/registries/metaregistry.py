@@ -10,6 +10,7 @@ from pathlib import Path
 import bioregistry
 
 from ..constants import GLOBAL_SKIP, RAW_DIRECTORY
+from ..resources.goc import load_goc_map
 
 HERE = Path(__file__).parent.resolve()
 CURATED_REGISTRY_PATH = HERE.joinpath("metaregistry.json")
@@ -96,7 +97,9 @@ def get_xrefs_blacklist() -> set[str]:
 @lru_cache(maxsize=1)
 def get_remappings_full() -> Mapping[str, str]:
     """Get the remappings for xrefs based on the entire xref database."""
-    return CURATED_REGISTRY["remappings"]["full"]
+    rv = CURATED_REGISTRY["remappings"]["full"]
+    rv.update(load_goc_map())
+    return rv
 
 
 def remap_full(x: str) -> str:
