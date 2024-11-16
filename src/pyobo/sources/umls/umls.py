@@ -15,7 +15,7 @@ from umls_downloader import open_umls, open_umls_semantic_types
 
 from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
 
-from .get_synonym_types import get_umls_synonyms
+from .get_synonym_types import get_umls_typedefs
 
 __all__ = [
     "UMLSGetter",
@@ -46,14 +46,14 @@ RRF_COLUMNS = [
 
 PREFIX = "umls"
 SOURCE_VOCAB_URL = "https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html"
-SYNONYM_ABB = get_umls_synonyms()
+UMLS_TYPEDEFS: dict[str, SynonymTypeDef] = get_umls_typedefs()
 
 
 class UMLSGetter(Obo):
     """An ontology representation of UMLS."""
 
     ontology = bioversions_key = PREFIX
-    synonym_typedefs = [SynonymTypeDef.from_text(v) for v in SYNONYM_ABB.values()]
+    synonym_typedefs = list(UMLS_TYPEDEFS.values())
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -96,7 +96,7 @@ def iter_terms(version: str) -> Iterable[Term]:
                 continue
 
             df["TTY - Term Type in Source"] = df["TTY - Term Type in Source"].map(
-                SYNONYM_ABB.__getitem__
+                UMLS_TYPEDEFS.__getitem__
             )
 
             _r = pref_rows_df.iloc[0]
@@ -116,7 +116,7 @@ def iter_terms(version: str) -> Iterable[Term]:
                     Synonym(
                         name=synonym,
                         provenance=provenance,
-                        type=SynonymTypeDef.from_text(synonym_type),
+                        type=synonym_type,
                     )
                 )
 
