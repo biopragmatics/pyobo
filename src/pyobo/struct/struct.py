@@ -52,7 +52,6 @@ from ..constants import (
 )
 from ..identifier_utils import normalize_curie
 from ..utils.io import multidict, write_iterable_tsv
-from ..utils.misc import obo_to_owl
 from ..utils.path import get_prefix_obo_path, prefix_directory_join
 
 __all__ = [
@@ -912,7 +911,9 @@ class Obo:
         if write_obograph and (not self._obograph_path.exists() or force):
             self.write_obograph(self._obograph_path)
         if write_owl and (not self._owl_path.exists() or force):
-            obo_to_owl(self._obo_path, self._owl_path)
+            import bioontologies.robot
+
+            bioontologies.robot.convert(self._obo_path, self._owl_path)
         if write_obonet and (not self._obonet_gz_path.exists() or force):
             logger.debug("writing obonet to %s", self._obonet_gz_path)
             self.write_obonet_gz(self._obonet_gz_path)
