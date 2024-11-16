@@ -60,7 +60,7 @@ def main() -> None:
                     tqdm.write(f"Could not guess ORCID for {nickname}")
                     continue
 
-                tqdm.write(f'Check if https://orcid.org/{nn} is correct for {nickname}')
+                tqdm.write(f"Check if https://orcid.org/{orcid} is correct for {nickname}")
                 guessed = True
 
             print(goc_curie, nickname, orcid, guessed, sep="\t", file=file)
