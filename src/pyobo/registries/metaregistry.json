@@ -226,6 +226,9 @@
       "duo": [
         "topic:"
       ],
+      "cido": [
+        "https://www.nmpa.gov.cn"
+      ],
       "fbbt": [
         "larvalbrain_axon_tract:",
         "larvalbrain_neuropil:",
@@ -263,6 +266,9 @@
       ],
       "iceo": [
         "OTCS:"
+      ],
+      "iobc": [
+        "detail?JGLOBAL:ID="
       ],
       "uberon": [
         "GAID:",
@@ -390,8 +396,7 @@
       "NLCD:",
       "TEMP:",
       "PO_GIT:",
-      "URL:http",
-      "TEMP"
+      "URL:http"
     ],
     "suffix": [
       ".jpg",
@@ -418,6 +423,7 @@
       "SIB:PG": "orcid:0000-0003-1813-6857",
       "UBERON:cjm": "orcid:0000-0002-6601-2165",
       "part:of": "BFO:0000050",
+      "gro:partOf": "BFO:0000050",
       "bearer:of": "RO:0000053",
       "inheres:in": "RO:0000052",
       "inheres:in-obso": "RO:0000052",
@@ -434,7 +440,9 @@
       "has:input": "RO:0002233",
       "has:output": "RO:0002234",
       "Property:P1659": "wikidata:P1659",
-      "vocab:crossSpeciesExactMatch": "semapv:crossSpeciesExactMatch"
+      "vocab:crossSpeciesExactMatch": "semapv:crossSpeciesExactMatch",
+      "definition:citation": "obo:efo#definition_citation",
+      "gwas:trait": "obo:efo#gwas_trait"
     },
     "prefix": {
       "ATCC number: ": "ATCC:",
@@ -518,12 +526,27 @@
       "odo:MOSAIC_": "mosaic:",
       "scipion:CRYOEM_": "cryoem:",
       "resource:CHEMINF_": "cheminf:",
+      "PDR:PMID:": "pubmed:",
       "FLOPO_": "flopo:",
       "DrugNames:DB": "drugbank:DB:",
       "FOBI_": "fobi:",
       "detail?JGLOBAL:ID=": "iobc",
       "ontology:ONTIE_": "ontie:",
-      "ontology:PMR.owl#": "pmr:"
+      "ontology:PMR.owl#": "pmr:",
+      "NIF_Subcellular:nlx_subcell_": "nif.sub:",
+      "url:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "url:https\\://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "url:https\\://www.ncbi.nlm.nih.gov/pmc/articles/": "pmc:",
+      "url:https\\://www.ncbi.nlm.nih.gov/books/": "ncbibook",
+      "url:http\\://www.ncbi.nlm.nih.gov/sites/entrez/": "ncbigene",
+      "url:http\\://www.ncbi.nlm.nih.gov/gene/": "ncbigene",
+      "url:http\\://www.omim.org/entry/": "omim",
+      "url:https\\://www.omim.org/entry/": "omim",
+      "url:http\\://omim.org/entry/": "omim",
+      "ontologyIRI:/termsonlyOUT%20(5).owl#": "apaonto:",
+      "url:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com:http\\://www.merriam-webster.com/dictionary/": "merriamwebster:",
+      "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com:http\\://www.m-w.com/cgi-bin/dictionary?book=Dictionary&va=": "merriamwebster:"
     }
   }
 }
