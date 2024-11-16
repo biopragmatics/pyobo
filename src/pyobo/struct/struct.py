@@ -52,7 +52,6 @@ from ..constants import (
 )
 from ..identifier_utils import normalize_curie
 from ..utils.io import multidict, write_iterable_tsv
-from ..utils.misc import obo_to_owl
 from ..utils.path import prefix_directory_join
 
 __all__ = [
@@ -65,6 +64,7 @@ __all__ = [
     "make_ad_hoc_ontology",
     "abbreviation",
     "acronym",
+    "default_reference",
 ]
 
 logger = logging.getLogger(__name__)
@@ -912,7 +912,9 @@ class Obo:
         if write_obograph and (not self._obograph_path.exists() or force):
             self.write_obograph(self._obograph_path)
         if write_owl and (not self._owl_path.exists() or force):
-            obo_to_owl(self._obo_path, self._owl_path)
+            import bioontologies.robot
+
+            bioontologies.robot.convert(self._obo_path, self._owl_path)
         if write_obonet and (not self._obonet_gz_path.exists() or force):
             logger.debug("writing obonet to %s", self._obonet_gz_path)
             self.write_obonet_gz(self._obonet_gz_path)
@@ -1521,3 +1523,19 @@ def _convert_synonym_typedefs(synonym_typedefs: Iterable[SynonymTypeDef] | None)
 
 def _convert_synonym_typedef(synonym_typedef: SynonymTypeDef) -> str:
     return f'{synonym_typedef.preferred_curie} "{synonym_typedef.name}"'
+
+
+def default_reference(prefix: str, part: str, name: str | None = None) -> Reference:
+    """Create a CURIE for an "unqualified" reference.
+
+    :param prefix: The prefix of the ontology in which the "unqualified" reference is made
+    :param part: The "unqualified" reference. For example, if you just write
+        "located_in" somewhere there is supposed to be a CURIE
+    :returns: A CURIE for the "unqualified" reference based on the OBO semantic space
+
+    >>> default_reference("chebi", "conjugate_base_of")
+    Reference(prefix="obo", identifier="chebi#conjugate_base_of")
+    """
+    if not part.strip():
+        raise ValueError("default identifier is empty")
+    return Reference(prefix="obo", identifier=f"{prefix}#{part}", name=name)
