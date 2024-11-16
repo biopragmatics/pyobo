@@ -1,14 +1,16 @@
 """Tests for getting OBO."""
 
 import unittest
-from operator import attrgetter
 
 import obonet
+from curies import ReferenceTuple
 
 from pyobo import Reference, Synonym, SynonymTypeDef, get_ontology
 from pyobo.reader import (
+    _chomp_specificity,
     _extract_definition,
     _extract_synonym,
+    _quote_split,
     iterate_graph_synonym_typedefs,
     iterate_graph_typedefs,
     iterate_node_parents,
@@ -17,8 +19,55 @@ from pyobo.reader import (
     iterate_node_synonyms,
     iterate_node_xrefs,
 )
-from pyobo.struct.struct import acronym
+from pyobo.struct.struct import acronym, default_reference
+from pyobo.struct.typedef import is_conjugate_base_of
 from tests.constants import TEST_CHEBI_OBO_PATH, chebi_patch
+
+
+class TestUtils(unittest.TestCase):
+    """Tests for util funcs."""
+
+    def test_quote_split(self):
+        """Test splitting on first quote."""
+        cases = [
+            (
+                '"Brown-Pearce tumour" EXACT OMO:0003005 []',
+                ("Brown-Pearce tumour", "EXACT OMO:0003005 []"),
+            ),
+            (
+                '"DoguAnadoluKirmizisi" EXACT most_common_name []',
+                ("DoguAnadoluKirmizisi", "EXACT most_common_name []"),
+            ),
+            (
+                '"COP" EXACT ABBREVIATION [https://orcid.org/0000-0003-0113-912X, Orphanet:1302]',
+                (
+                    "COP",
+                    "EXACT ABBREVIATION [https://orcid.org/0000-0003-0113-912X, Orphanet:1302]",
+                ),
+            ),
+            (
+                '"10*3.{copies}/mL" EXACT [] {http://purl.obolibrary.org/obo/NCIT_P383="AB", http://purl.obolibrary.org/obo/NCIT_P384="UCUM"}',
+                (
+                    "10*3.{copies}/mL",
+                    'EXACT [] {http://purl.obolibrary.org/obo/NCIT_P383="AB", http://purl.obolibrary.org/obo/NCIT_P384="UCUM"}',
+                ),
+            ),
+        ]
+        for text, expected in cases:
+            with self.subTest(text=text):
+                self.assertEqual(expected, _quote_split(text))
+
+    def test_chomp_specificity(self):
+        """Test splitting on first quote."""
+        cases = [
+            ("EXACT OMO:0003005 []", ("EXACT", "OMO:0003005 []")),
+            ("EXACT most_common_name []", ("EXACT", "most_common_name []")),
+            ("NARROW OMO:0003005 []", ("NARROW", "OMO:0003005 []")),
+            ("NARROW most_common_name []", ("NARROW", "most_common_name []")),
+        ]
+        for text, expected in cases:
+            with self.subTest(text=text):
+                self.assertEqual(expected, _chomp_specificity(text))
 
 
 class TestParseObonet(unittest.TestCase):
@@ -34,34 +83,35 @@ class TestParseObonet(unittest.TestCase):
         """Test getting type definitions from an :mod:`obonet` graph."""
         pairs = {
             (typedef.prefix, typedef.identifier)
-            for typedef in iterate_graph_typedefs(self.graph, "chebi")
+            for typedef in iterate_graph_typedefs(self.graph, ontology_prefix="chebi")
         }
-        self.assertIn(("chebi", "has_part"), pairs)
+        self.assertNotIn(
+            ("chebi", "has_part"), pairs, msg="we're smarter than this now, gets ugpraded"
+        )
+        self.assertIn(("bfo", "0000051"), pairs)
 
     def test_get_graph_synonym_typedefs(self):
         """Test getting synonym type definitions from an :mod:`obonet` graph."""
         synonym_typedefs = sorted(
             iterate_graph_synonym_typedefs(self.graph, ontology_prefix=self.ontology),
-            key=attrgetter("curie"),
         )
         self.assertEqual(
             sorted(
                 [
                     SynonymTypeDef(
                         reference=Reference(
-                            prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME"
+                            prefix="obo", identifier="chebi#IUPAC_NAME", name="IUPAC NAME"
                         )
                     ),
                     SynonymTypeDef(
                         reference=Reference(
-                            prefix="chebi", identifier="BRAND_NAME", name="BRAND NAME"
+                            prefix="obo", identifier="chebi#BRAND_NAME", name="BRAND NAME"
                         )
                     ),
                     SynonymTypeDef(
-                        reference=Reference(prefix="chebi", identifier="INN", name="INN")
+                        reference=Reference(prefix="obo", identifier="chebi#INN", name="INN")
                     ),
                 ],
-                key=attrgetter("curie"),
             ),
             synonym_typedefs,
         )
@@ -84,7 +134,7 @@ class TestParseObonet(unittest.TestCase):
         ]:
             with self.subTest(s=s):
                 actual_text, actual_references = _extract_definition(
-                    s, prefix="chebi", identifier="XXX"
+                    s, node=Reference(prefix="chebi", identifier="XXX"), ontology_prefix="chebi"
                 )
                 self.assertEqual(expected_text, actual_text)
                 self.assertEqual(expected_references, actual_references)
@@ -94,17 +144,20 @@ class TestParseObonet(unittest.TestCase):
         expected_text = """The canonical 3' splice site has the sequence "AG"."""
         s = """"The canonical 3' splice site has the sequence \\"AG\\"." [PMID:1234]"""
         actual_text, actual_references = _extract_definition(
-            s, strict=True, prefix="chebi", identifier="XXX"
+            s,
+            strict=True,
+            node=Reference(prefix="chebi", identifier="XXX"),
+            ontology_prefix="chebi",
         )
         self.assertEqual(expected_text, actual_text)
         self.assertEqual([Reference(prefix="pubmed", identifier="1234")], actual_references)
 
     def test_extract_synonym(self):
         """Test extracting synonym strings."""
-        iupac_name = SynonymTypeDef.from_text("IUPAC NAME", lower=False)
-        synoynym_typedefs = {
-            "IUPAC_NAME": iupac_name,
-            acronym.curie: acronym,
+        iupac_typedef = SynonymTypeDef(reference=default_reference("chebi", "IUPAC_NAME"))
+        synoynym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
+            iupac_typedef.pair: iupac_typedef,
+            acronym.pair: acronym,
         }
 
         for expected_synonym, text in [
@@ -112,7 +165,7 @@ class TestParseObonet(unittest.TestCase):
                 Synonym(
                     name="LTEC I",
                     specificity="EXACT",
-                    type=iupac_name,
+                    type=iupac_typedef,
                     provenance=[Reference(prefix="orphanet", identifier="93938")],
                 ),
                 '"LTEC I" EXACT IUPAC_NAME [Orphanet:93938]',
@@ -138,12 +191,20 @@ class TestParseObonet(unittest.TestCase):
                 '"LTEC I" []',
             ),
             (
+                Synonym(name="LTEC I", specificity="EXACT"),
+                '"LTEC I"',
+            ),
+            (
                 Synonym(name="HAdV-A", specificity="BROAD", type=acronym),
                 '"HAdV-A" BROAD OMO:0003012 []',
             ),
             (
                 Synonym(name="HAdV-A", specificity="BROAD", type=acronym),
                 '"HAdV-A" BROAD omo:0003012 []',
+            ),
+            (
+                Synonym(name="HAdV-A", specificity="BROAD", type=acronym),
+                '"HAdV-A" BROAD omo:0003012',
             ),
             (
                 Synonym(name="HAdV-A", specificity="EXACT", type=acronym),
@@ -153,23 +214,70 @@ class TestParseObonet(unittest.TestCase):
                 Synonym(name="HAdV-A", specificity="EXACT", type=acronym),
                 '"HAdV-A" omo:0003012 []',
             ),
+            (
+                Synonym(name="HAdV-A", specificity="EXACT", type=acronym),
+                '"HAdV-A" omo:0003012',
+            ),
+            (
+                Synonym(name="HAdV-A", specificity="EXACT", type=acronym),
+                '"HAdV-A" OMO:0003012',
+            ),
+            (
+                Synonym(
+                    name="acne inversa",
+                    specificity="EXACT",
+                    provenance=[
+                        Reference(prefix="orcid", identifier="0000-0002-6601-2165"),
+                        Reference(prefix="orphanet", identifier="387"),
+                    ],
+                ),
+                '"acne inversa" EXACT [https://orcid.org/0000-0002-6601-2165, Orphanet:387]',
+            ),
+            (
+                Synonym(
+                    name="acne inversa",
+                    specificity="EXACT",
+                    provenance=[
+                        Reference(prefix="orphanet", identifier="387"),
+                        Reference(prefix="orcid", identifier="0000-0002-6601-2165"),
+                    ],
+                ),
+                '"acne inversa" EXACT [Orphanet:387,https://orcid.org/0000-0002-6601-2165]',
+            ),
         ]:
             with self.subTest(s=text):
                 actual_synonym = _extract_synonym(
-                    text, synoynym_typedefs, prefix="chebi", identifier="XXX"
+                    text,
+                    synoynym_typedefs,
+                    node=Reference(prefix="chebi", identifier="XXX"),
+                    ontology_prefix="chebi",
                 )
+                self.assertIsNotNone(actual_synonym)
                 self.assertIsInstance(actual_synonym, Synonym)
-                self.assertEqual(expected_synonym, actual_synonym)
+                self.assertEqual(expected_synonym.name, actual_synonym.name)
+                self.assertEqual(expected_synonym.specificity, actual_synonym.specificity)
+                self.assertEqual(expected_synonym.type.curie, actual_synonym.type.curie)
+                self.assertEqual(
+                    expected_synonym.provenance,
+                    actual_synonym.provenance,
+                    msg="different provenance",
+                )
+                self.assertEqual(expected_synonym.annotations, actual_synonym.annotations)
 
     def test_get_node_synonyms(self):
         """Test getting synonyms from a node in a :mod:`obonet` graph."""
-        iupac_name = SynonymTypeDef.from_text("IUPAC NAME", lower=False)
+        iupac_name = SynonymTypeDef(reference=default_reference("chebi", "IUPAC_NAME"))
         synoynym_typedefs = {
-            "IUPAC_NAME": iupac_name,
+            iupac_name.pair: iupac_name,
         }
         data = self.graph.nodes["CHEBI:51990"]
         synonyms = list(
-            iterate_node_synonyms(data, synoynym_typedefs, prefix="chebi", identifier="XXX")
+            iterate_node_synonyms(
+                data=data,
+                synonym_typedefs=synoynym_typedefs,
+                ontology_prefix="chebi",
+                node=Reference(prefix="chebi", identifier="XXX"),
+            )
         )
         self.assertEqual(1, len(synonyms))
         synonym = synonyms[0]
@@ -192,7 +300,11 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_parents(self):
         """Test getting parents from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:51990"]
-        parents = list(iterate_node_parents(data, prefix="chebi", identifier="XXX"))
+        parents = list(
+            iterate_node_parents(
+                data, node=Reference(prefix="chebi", identifier="XXX"), ontology_prefix="chebi"
+            )
+        )
         self.assertEqual(2, len(parents))
         self.assertEqual({"24060", "51992"}, {parent.identifier for parent in parents})
         self.assertEqual({"chebi"}, {parent.prefix for parent in parents})
@@ -200,7 +312,13 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_xrefs(self):
         """Test getting parents from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:51990"]
-        xrefs = list(iterate_node_xrefs(prefix="chebi", data=data))
+        xrefs = list(
+            iterate_node_xrefs(
+                ontology_prefix="chebi",
+                data=data,
+                node=Reference(prefix="chebi", identifier="51990"),
+            )
+        )
         self.assertEqual(7, len(xrefs))
         # NOTE the prefixes are remapped by Bioregistry
         self.assertEqual({"pubmed", "cas", "reaxys"}, {xref.prefix for xref in xrefs})
@@ -219,7 +337,11 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_relations(self):
         """Test getting relations from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:17051"]
-        relations = list(iterate_node_relationships(data, prefix="chebi", identifier="XXX"))
+        relations = list(
+            iterate_node_relationships(
+                data, node=Reference(prefix="chebi", identifier="XXX"), ontology_prefix="chebi"
+            )
+        )
         self.assertEqual(1, len(relations))
         typedef, target = relations[0]
 
@@ -230,8 +352,10 @@ class TestParseObonet(unittest.TestCase):
 
         self.assertIsNotNone(typedef)
         self.assertIsInstance(typedef, Reference)
-        self.assertEqual("chebi", typedef.prefix)
-        self.assertEqual("is_conjugate_base_of", typedef.identifier)
+        self.assertNotEqual(
+            ("chebi", "is_conjugate_base_of"), typedef.pair, msg="should get auto-upgraded to RO"
+        )
+        self.assertEqual(is_conjugate_base_of.pair, typedef.pair)
 
 
 class TestGet(unittest.TestCase):

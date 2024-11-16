@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections import Counter
 from collections.abc import Iterable, Mapping
 from datetime import datetime
 from pathlib import Path
@@ -11,6 +12,7 @@ from typing import Any
 import bioontologies.relations
 import bioontologies.upgrade
 import bioregistry
+import click
 import networkx as nx
 from curies import ReferenceTuple
 from more_itertools import pairwise
@@ -30,9 +32,10 @@ from .struct import (
     SynonymTypeDef,
     Term,
     TypeDef,
+    default_reference,
     make_ad_hoc_ontology,
 )
-from .struct.struct import DEFAULT_SYNONYM_TYPE
+from .struct.struct import DEFAULT_SYNONYM_TYPE, default_synonym_typedefs
 from .struct.typedef import alternative_term, default_typedefs
 from .utils.misc import cleanup_version
 
@@ -95,7 +98,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
     ontology_prefix_raw = graph.graph["ontology"]
     ontology_prefix = bioregistry.normalize_prefix(ontology_prefix_raw)  # probably always okay
     if ontology_prefix is None:
-        raise ValueError(f"unknown prefix: {ontology_prefix_raw}")
+        raise ValueError(f"OBO `ontology` key has prefix: {ontology_prefix_raw}")
 
     date = _get_date(graph=graph, ontology=ontology_prefix)
     name = _get_name(graph=graph, ontology=ontology_prefix)
@@ -138,8 +141,8 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
         for typedef in iterate_graph_typedefs(graph, strict=strict, ontology_prefix=ontology_prefix)
     }
 
-    synonym_typedefs: dict[str, SynonymTypeDef] = {
-        synonym_typedef.curie: synonym_typedef
+    synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
+        synonym_typedef.pair: synonym_typedef
         for synonym_typedef in iterate_graph_synonym_typedefs(
             graph, ontology_prefix=ontology_prefix, strict=strict
         )
@@ -167,7 +170,9 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
                     xrefs.append(node_xref)
             n_xrefs += len(xrefs)
 
-            definition, definition_references = get_definition(node=node, data=data)
+            definition, definition_references = get_definition(
+                node=node, data=data, strict=strict, ontology_prefix=ontology_prefix
+            )
             if definition_references:
                 provenance.extend(definition_references)
 
@@ -228,10 +233,13 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
 
             terms.append(term)
 
-    logger.info(
-        f"[{ontology_prefix}] got {n_nodes:,} references, {len(typedefs):,} typedefs, {len(terms):,} terms,"
-        f" {n_alt_ids:,} alt ids, {n_parents:,} parents, {n_synonyms:,} synonyms, {n_xrefs:,} xrefs,"
-        f" {n_relations:,} relations, and {n_properties:,} properties",
+    tqdm.write(
+        click.style(
+            f"[{ontology_prefix}] got {n_nodes:,} references, {len(typedefs):,} typedefs, {len(terms):,} terms,"
+            f" {n_alt_ids:,} alt ids, {n_parents:,} parents, {n_synonyms:,} synonyms, {n_xrefs:,} xrefs,"
+            f" {n_relations:,} relations, and {n_properties:,} properties",
+            fg="blue",
+        )
     )
 
     return make_ad_hoc_ontology(
@@ -296,7 +304,7 @@ def _append_property(
         if _pref and _id:
             return term.annotate_object(prop, Reference(prefix=_pref, identifier=_id))
         else:
-            if value not in UNPARSED_IRIS:
+            if value not in UNPARSED_IRIS and not _ends_with_extension(value):
                 logger.warning(
                     f"[{term.curie} {prop.curie}] could not parse property target as IRI: {value}"
                 )
@@ -329,6 +337,13 @@ def _append_property(
     return term.annotate_literal(prop, value)
 
 
+SKIP_SUFFIXES = {".aspx", ".png", ".jpg", ".html", ".htm", ".pdf", ".svg"}
+
+
+def _ends_with_extension(s: str) -> bool:
+    return any(s.endswith(suff) for suff in SKIP_SUFFIXES)
+
+
 def _clean_graph_ontology(graph, prefix: str) -> None:
     """Update the ontology entry in the graph's metadata, if necessary."""
     ontology = graph.graph.get("ontology")
@@ -338,6 +353,13 @@ def _clean_graph_ontology(graph, prefix: str) -> None:
     elif not ontology.isalpha():
         logger.debug(
             "[%s] ontology key `%s` has a strange format. replacing with prefix",
+            prefix,
+            ontology,
+        )
+        graph.graph["ontology"] = prefix
+    elif ontology != prefix:
+        logger.debug(
+            "[%s] ontology key `%s` is not the same as the prefix. replacing",
             prefix,
             ontology,
         )
@@ -365,7 +387,8 @@ def _iter_obo_graph(
         elif curie.startswith("http"):
             prefix_2, identifier_2 = bioregistry.parse_iri(curie)
             if prefix_2 is None or identifier_2 is None:
-                logger.warning("[%s] could not parse node IRI: %s", ontology_prefix, curie)
+                if not _ends_with_extension(curie):
+                    logger.warning("[%s] could not parse node IRI: %s", ontology_prefix, curie)
                 continue
             reference = Reference(prefix=prefix_2, identifier=identifier_2, name=data.get("name"))
         else:
@@ -405,23 +428,16 @@ def iterate_graph_synonym_typedefs(
     graph: nx.MultiDiGraph, *, ontology_prefix: str, strict: bool = False
 ) -> Iterable[SynonymTypeDef]:
     """Get synonym type definitions from an :mod:`obonet` graph."""
-    for s in graph.graph.get("synonymtypedef", []):
-        sid, name = s.split(" ", 1)
+    node = Reference(prefix="bioregistry", identifier=ontology_prefix)
+    for line in graph.graph.get("synonymtypedef", []):
+        curie_or_key, name = line.split(" ", 1)
         name = name.strip().strip('"')
-        if sid.startswith("http://") or sid.startswith("https://"):
-            reference = Reference.from_iri(sid, name=name)
-        elif ":" not in sid:  # assume it's ad-hoc
-            reference = Reference(prefix=ontology_prefix, identifier=sid, name=name)
-        else:  # assume it's a curie
-            reference = Reference.from_curie(sid, name=name, strict=strict)
-
+        reference = _parse_object_curie(
+            curie_or_key, strict=strict, ontology_prefix=ontology_prefix, node=node
+        )
         if reference is None:
-            if strict:
-                raise ValueError(f"Could not parse {sid}")
-            else:
-                logger.warning("[%s] issue parsing synoynm typedef: %s", ontology_prefix, s)
-                continue
-
+            logger.warning("[%s] issue parsing synoynm typedef: %s", ontology_prefix, line)
+            continue
         yield SynonymTypeDef(reference=reference)
 
 
@@ -491,11 +507,14 @@ def _handle_relation_curie(
         logger.warning("[%s] invalid typedef CURIE %s", ontology_prefix, curie)
         return None
     else:
-        reference = _default_reference(ontology_prefix, curie)
+        reference = default_reference(ontology_prefix, curie)
         logger.info(
             "[%s] massaging unqualified curie `%s` into %s", ontology_prefix, curie, reference.curie
         )
         return reference
+
+
+TARGET_URI_WARNINGS: Counter[tuple[str, str]] = Counter()
 
 
 def _parse_object_curie(
@@ -504,7 +523,9 @@ def _parse_object_curie(
     if curie.startswith("http"):
         _pref, _id = bioregistry.parse_iri(curie)
         if not _pref or not _id:
-            logger.warning("[%s] unable to contract target URI %s", node.curie, curie)
+            if not TARGET_URI_WARNINGS[ontology_prefix, curie]:
+                logger.warning("[%s] unable to contract target URI %s", node.curie, curie)
+            TARGET_URI_WARNINGS[ontology_prefix, curie] += 1
             return None
         return Reference(prefix=_pref, identifier=_id)
 
@@ -513,7 +534,7 @@ def _parse_object_curie(
         return Reference(prefix=xx.prefix, identifier=xx.identifier)
 
     if ":" not in curie:
-        reference = _default_reference(ontology_prefix, curie)
+        reference = default_reference(ontology_prefix, curie)
         logger.info(
             "[%s] massaging unqualified curie `%s` into %s", node.prefix, curie, reference.curie
         )
@@ -529,12 +550,16 @@ def _ground_rel_helper(curie) -> Reference | None:
     return Reference(prefix=a, identifier=b)
 
 
-def get_definition(*, node: Reference, data) -> tuple[None, None] | tuple[str, list[Reference]]:
+def get_definition(
+    *, node: Reference, data, ontology_prefix: str, strict: bool = True
+) -> tuple[None, None] | tuple[str, list[Reference]]:
     """Extract the definition from the data."""
     definition = data.get("def")  # it's allowed not to have a definition
     if not definition:
         return None, None
-    return _extract_definition(definition, node=node)
+    return _extract_definition(
+        definition, node=node, strict=strict, ontology_prefix=ontology_prefix
+    )
 
 
 def _extract_definition(
@@ -542,6 +567,7 @@ def _extract_definition(
     *,
     node: Reference,
     strict: bool = False,
+    ontology_prefix: str,
 ) -> tuple[None, None] | tuple[str, list[Reference]]:
     """Extract the definitions."""
     if not s.startswith('"'):
@@ -553,11 +579,10 @@ def _extract_definition(
         logger.warning("[%s] could not parse definition: %s", node.curie, s)
         return None, None
 
-    if not rest.startswith("[") or not rest.endswith("]"):
-        logger.warning("[%s] problem with definition: %s", node.curie, s)
-        provenance = []
-    else:
-        provenance = _parse_trailing_ref_list(rest, strict=strict)
+    provenance, rest = _chomp_references(
+        rest, strict=strict, node=node, ontology_prefix=ontology_prefix
+    )
+    # TODO enable axioms?
     return definition, provenance
 
 
@@ -577,6 +602,133 @@ def _quote_split(s: str) -> tuple[str, str]:
     return _clean_definition(s[:i].strip()), s[i + 1 :].strip()
 
 
+def _chomp_specificity(s: str) -> tuple[SynonymSpecificity | None, str]:
+    s = s.strip()
+    for _specificity in SynonymSpecificities:
+        if s.startswith(_specificity):
+            return _specificity, s[len(_specificity) :].strip()
+    return None, s
+
+
+SYNONYM_UNDEFINED_WARNING: Counter[tuple[str, str]] = Counter()
+
+
+def _chomp_typedef(
+    s: str,
+    *,
+    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
+    strict: bool = True,
+    node: Reference,
+    ontology_prefix: str,
+) -> tuple[SynonymTypeDef | None, str]:
+    if not s:
+        # This might happen if a synonym is just given as a string
+        return None, ""
+
+    if s.startswith("[") or s.startswith("{"):
+        # there's no typedef reference here, just return
+        return None, s
+
+    try:
+        stype_curie, rest = (x.strip() for x in s.split(" ", 1))
+    except ValueError as e:
+        if "not enough values to unpack" not in str(e):
+            raise
+
+        # let's just check if this might be a CURIE all by itself.
+        # if there's a space, we are out of luck, otherwise, let's
+        # try to parse it like a curie
+        if " " in s:
+            # if there
+            return None, s
+
+        reference = _parse_object_curie(
+            s, strict=strict, node=node, ontology_prefix=ontology_prefix
+        )
+        if reference is None:
+            logger.warning(
+                "[%s] unable to parse synonym type `%s` in line %s", node.curie, stype_curie, s
+            )
+            return None, rest
+        return reference, ""
+
+    reference = _parse_object_curie(
+        stype_curie, strict=strict, node=node, ontology_prefix=ontology_prefix
+    )
+    if reference is None:
+        logger.warning("[%s] unable to parse synonym type %s", node.curie, stype_curie)
+        return None, rest
+
+    if reference.pair not in synonym_typedefs:
+        if reference.pair in default_synonym_typedefs:
+            return default_synonym_typedefs[reference.pair], rest
+        if not SYNONYM_UNDEFINED_WARNING[ontology_prefix, reference.curie]:
+            logger.warning("[%s] undefined synonym type %s", node.curie, reference.curie)
+        SYNONYM_UNDEFINED_WARNING[ontology_prefix, reference.curie] += 1
+        return None, rest
+
+    return synonym_typedefs[reference.pair], rest
+
+
+SYNONYM_REFERENCE_WARNED: Counter[tuple[str, str]] = Counter()
+
+
+def _chomp_references(
+    s: str, *, strict: bool = True, node: Reference, ontology_prefix: str
+) -> tuple[list[Reference], str]:
+    if not s:
+        return [], ""
+    if not s.startswith("["):
+        if s.startswith("{"):
+            # This means there are no reference, but there are some qualifiers
+            return [], s
+        else:
+            logger.debug("[%s] synonym had no references: %s", node.curie, s)
+            return [], s
+
+    if "]" not in s:
+        logger.warning("[%s] missing closing square bracket in references: %s", node.curie, s)
+        return [], s
+
+    first, rest = s.lstrip("[").split("]", 1)
+    references = []
+    for curie in first.split(","):
+        curie = curie.strip()
+        if not curie:
+            continue
+        reference = _parse_object_curie(
+            curie, strict=strict, node=node, ontology_prefix=ontology_prefix
+        )
+        if reference is None:
+            if not SYNONYM_REFERENCE_WARNED[ontology_prefix, curie]:
+                logger.warning("[%s] unable to parse synonym reference: %s", node.curie, curie)
+            SYNONYM_REFERENCE_WARNED[ontology_prefix, curie] += 1
+            continue
+        references.append(reference)
+    return references, rest
+
+
+def _parse_trailing_ref_list(rest: str, *, strict: bool = True, node: Reference) -> list[Reference]:
+    rest = rest.lstrip("[").rstrip("]")  # FIXME this doesn't account for trailing annotations
+    rv = []
+    for curie in rest.split(","):
+        curie = curie.strip()
+        if not curie:
+            continue
+        reference = Reference.from_curie(curie, strict=strict, reference=node)
+        if reference is None:
+            logger.warning("[%s] could not parse provenance CURIE: %s", node.curie, curie)
+            continue
+        rv.append(reference)
+    return rv
+
+
+def _chomp_axioms(
+    s: str, *, strict: bool = True, node: Reference
+) -> list[tuple[Reference, Reference]]:
+    return []
+
+
 def _clean_definition(s: str) -> str:
     # if '\t' in s:
     #     logger.warning('has tab')
@@ -585,7 +737,7 @@ def _clean_definition(s: str) -> str:
 
 def _extract_synonym(
     s: str,
-    synonym_typedefs: Mapping[str, SynonymTypeDef],
+    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
     *,
     node: Reference,
     strict: bool = True,
@@ -598,59 +750,33 @@ def _extract_synonym(
         logger.warning("[%s] invalid synonym: %s", node.curie, s)
         return None
 
-    specificity: SynonymSpecificity | None = None
-    for _specificity in SynonymSpecificities:
-        if rest.startswith(_specificity):
-            specificity = _specificity
-            rest = rest[len(_specificity) :].strip()
-            break
+    specificity, rest = _chomp_specificity(rest)
+    stype, rest = _chomp_typedef(
+        rest,
+        synonym_typedefs=synonym_typedefs,
+        strict=strict,
+        node=node,
+        ontology_prefix=ontology_prefix,
+    )
+    provenance, rest = _chomp_references(
+        rest, strict=strict, node=node, ontology_prefix=ontology_prefix
+    )
+    annotations = _chomp_axioms(rest, node=node, strict=strict)
 
-    stype: SynonymTypeDef | None = None
-    for _stype in synonym_typedefs.values():
-        # Since there aren't a lot of carefully defined synonym definitions, it
-        # can appear as a string or curie. Therefore, we might see temporary prefixes
-        # get added, so we should check against full curies as well as local unique
-        # identifiers
-        if rest.startswith(_stype.curie):
-            rest = rest[len(_stype.curie) :].strip()
-            stype = _stype
-            break
-        elif rest.startswith(_stype.preferred_curie):
-            rest = rest[len(_stype.preferred_curie) :].strip()
-            stype = _stype
-            break
-        elif rest.startswith(_stype.identifier):
-            rest = rest[len(_stype.identifier) :].strip()
-            stype = _stype
-            break
-
-    if not rest.startswith("[") or not rest.endswith("]"):
-        logger.warning("[%s] problem with synonym: %s", node.curie, s)
-        return None
-
-    provenance = _parse_trailing_ref_list(rest, strict=strict)
     return Synonym(
         name=name,
         specificity=specificity or "EXACT",
         type=stype or DEFAULT_SYNONYM_TYPE,
         provenance=provenance,
+        annotations=annotations,
     )
-
-
-def _parse_trailing_ref_list(rest, *, strict: bool = True):
-    rest = rest.lstrip("[").rstrip("]")
-    return [
-        Reference.from_curie(curie.strip(), strict=strict)
-        for curie in rest.split(",")
-        if curie.strip()
-    ]
 
 
 def iterate_node_synonyms(
     *,
     node: Reference,
     data: Mapping[str, Any],
-    synonym_typedefs: Mapping[str, SynonymTypeDef],
+    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
     strict: bool = False,
     ontology_prefix: str,
 ) -> Iterable[Synonym]:
@@ -664,6 +790,7 @@ def iterate_node_synonyms(
     """
     # FIXME need to accept
     #  "Brown-Pearce tumour" EXACT OMO:0003005 []
+    #  "DoguAnadoluKirmizisi" EXACT most_common_name []
     #  "COP" EXACT ABBREVIATION [https://orcid.org/0000-0003-0113-912X, Orphanet:1302]
     #  "10*3.{copies}/mL" EXACT [] {http://purl.obolibrary.org/obo/NCIT_P383="AB", http://purl.obolibrary.org/obo/NCIT_P384="UCUM"}
     for s in data.get("synonym", []):
@@ -740,7 +867,7 @@ def iterate_node_relationships(
     node: Reference,
     strict: bool = True,
     ontology_prefix: str,
-) -> Iterable[tuple[Reference, Reference]]:
+) -> Iterable[tuple[Reference, Reference | str]]:
     """Extract relationships from a :mod:`obonet` node's data."""
     for s in data.get("relationship", []):
         relation_curie, target_curie = s.split(" ")
@@ -759,10 +886,6 @@ def iterate_node_relationships(
             continue
 
         yield relation, target
-
-
-def _default_reference(ontology_prefix: str, s: str) -> Reference:
-    return Reference(prefix="obo", identifier=f"{ontology_prefix}#{s}")
 
 
 def iterate_node_xrefs(

@@ -91,6 +91,9 @@ class Synonym:
     #: References to articles where the synonym appears
     provenance: list[Reference] = field(default_factory=list)
 
+    #: Extra annotations
+    annotations: list[tuple[Reference, Reference]] = field(default_factory=list)
+
     def to_obo(self) -> str:
         """Write this synonym as an OBO line to appear in a [Term] stanza."""
         return f"synonym: {self._fp()}"
@@ -115,42 +118,30 @@ class SynonymTypeDef(Referenced):
 
     def to_obo(self) -> str:
         """Serialize to OBO."""
-        rv = f'synonymtypedef: {self.preferred_curie} "{self.name}"'
+        rv = f'synonymtypedef: {self.preferred_curie}'
+        if self.name:
+            rv = f'{rv} "{self.name}"'
         if self.specificity:
             rv = f"{rv} {self.specificity}"
         return rv
 
-    @classmethod
-    def from_text(
-        cls,
-        text: str,
-        specificity: SynonymSpecificity | None = None,
-        *,
-        lower: bool = True,
-    ) -> SynonymTypeDef:
-        """Get a type definition from text that's normalized."""
-        identifier = (
-            text.replace("-", "_")
-            .replace(" ", "_")
-            .replace('"', "")
-            .replace(")", "")
-            .replace("(", "")
-        )
-        if lower:
-            identifier = identifier.lower()
-        return cls(
-            reference=Reference(prefix="obo", identifier=identifier, name=text.replace('"', "")),
-            specificity=specificity,
-        )
-
 
 DEFAULT_SYNONYM_TYPE = SynonymTypeDef(
-    reference=Reference(prefix="oboInOwl", identifier="SynonymType", name="Synonym"),
+    reference=Reference(prefix="oboInOwl", identifier="SynonymType", name="synonym type"),
 )
 abbreviation = SynonymTypeDef(
     reference=Reference(prefix="OMO", identifier="0003000", name="abbreviation")
 )
 acronym = SynonymTypeDef(reference=Reference(prefix="omo", identifier="0003012", name="acronym"))
+uk_spelling = SynonymTypeDef(
+    reference=Reference(prefix="omo", identifier="0003005", name="UK spelling synonym")
+)
+
+default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
+    abbreviation.pair: abbreviation,
+    acronym.pair: acronym,
+    uk_spelling.pair: uk_spelling,
+}
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
 
