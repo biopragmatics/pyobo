@@ -113,8 +113,17 @@ def get_remappings_prefix() -> Mapping[str, str]:
     return CURATED_REGISTRY["remappings"]["prefix"]
 
 
-def remap_prefix(curie: str) -> str:
+@lru_cache
+def _get_resource_specific_map(ontology_prefix: str) -> Mapping[str, str]:
+    return CURATED_REGISTRY["remappings"]["resource_prefix"].get(ontology_prefix, {})
+
+
+def remap_prefix(curie: str, ontology_prefix: str | None = None) -> str:
     """Remap a prefix."""
+    if ontology_prefix is not None:
+        for old_prefix, new_prefix in _get_resource_specific_map(ontology_prefix).items():
+            if curie.startswith(old_prefix):
+                return new_prefix + curie[len(old_prefix) :]
     for old_prefix, new_prefix in get_remappings_prefix().items():
         if curie.startswith(old_prefix):
             return new_prefix + curie[len(old_prefix) :]

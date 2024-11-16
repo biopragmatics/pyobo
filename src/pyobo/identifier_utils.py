@@ -66,11 +66,14 @@ def _normalize_prefix(prefix: str, *, curie=None, xref=None, strict: bool = True
 BAD_CURIES = set()
 
 
-def normalize_curie(curie: str, *, strict: bool = True) -> tuple[str, str] | tuple[None, None]:
+def normalize_curie(
+    curie: str, *, strict: bool = True, ontology: str | None = None
+) -> tuple[str, str] | tuple[None, None]:
     """Parse a string that looks like a CURIE.
 
     :param curie: A compact uniform resource identifier (CURIE)
     :param strict: Should an exception be thrown if the CURIE can not be parsed w.r.t. the Bioregistry?
+    :param ontology: The ontology in which the CURIE appears
     :return: A parse tuple or a tuple of None, None if not able to parse and not strict
 
     - Normalizes the namespace
@@ -87,7 +90,7 @@ def normalize_curie(curie: str, *, strict: bool = True) -> tuple[str, str] | tup
     curie = remap_full(curie)
 
     # Remap node's prefix (if necessary)
-    curie = remap_prefix(curie)
+    curie = remap_prefix(curie, ontology_prefix=ontology)
 
     try:
         head_ns, identifier = curie.split(":", 1)
