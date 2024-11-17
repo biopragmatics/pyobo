@@ -28,8 +28,6 @@ def get_metadata(
     """Get metadata for the ontology."""
     if version is None:
         version = get_version(prefix)
-    if force is None or force_process is None:
-        raise TypeError
     path = prefix_cache_join(prefix, name="metadata.json", version=version)
 
     @cached_json(path=path, force=force or force_process)
