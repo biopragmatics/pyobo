@@ -86,7 +86,7 @@ _MISSED_ORG_TYPES: set[str] = set()
 
 def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
     """Iterate over terms in ROR."""
-    version, source_uri, records = get_latest(force=force)
+    _version, _source_uri, records = get_latest(force=force)
     unhandled_xref_prefixes = set()
     for record in tqdm(records, unit_scale=True, unit="record", desc=PREFIX):
         identifier = record["id"].removeprefix("https://ror.org/")

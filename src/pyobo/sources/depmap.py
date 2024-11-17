@@ -9,8 +9,8 @@ from pyobo import Obo, Reference, Term
 from pyobo.struct.typedef import exact_match
 
 __all__ = [
-    "get_obo",
     "DepMapGetter",
+    "get_obo",
 ]
 
 PREFIX = "depmap"

@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 __all__ = [
-    "OBO_ESCAPE_SLIM",
     "OBO_ESCAPE",
+    "OBO_ESCAPE_SLIM",
+    "comma_separate",
     "obo_escape",
     "obo_escape_slim",
-    "comma_separate",
 ]
 
 OBO_ESCAPE_SLIM = {c: f"\\{c}" for c in ':,"\\()[]{}'}

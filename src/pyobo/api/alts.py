@@ -11,8 +11,8 @@ from ..utils.cache import cached_multidict
 from ..utils.path import prefix_cache_join
 
 __all__ = [
-    "get_id_to_alts",
     "get_alts_to_id",
+    "get_id_to_alts",
     "get_primary_curie",
     "get_primary_identifier",
 ]

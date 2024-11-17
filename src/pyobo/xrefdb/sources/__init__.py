@@ -9,10 +9,10 @@ from class_resolver import FunctionResolver
 from tqdm.auto import tqdm
 
 __all__ = [
-    "iter_xref_plugins",
     "has_xref_plugin",
-    "run_xref_plugin",
     "iter_xref_plugins",
+    "iter_xref_plugins",
+    "run_xref_plugin",
 ]
 
 logger = logging.getLogger(__name__)

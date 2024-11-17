@@ -18,16 +18,16 @@ from ..utils.cache import cached_collection, cached_mapping, cached_multidict
 from ..utils.path import prefix_cache_join
 
 __all__ = [
-    "get_name",
-    "get_name_by_curie",
-    "get_ids",
-    "get_id_name_mapping",
-    "get_name_id_mapping",
     "get_definition",
     "get_id_definition_mapping",
-    "get_synonyms",
+    "get_id_name_mapping",
     "get_id_synonyms_mapping",
+    "get_ids",
+    "get_name",
+    "get_name_by_curie",
+    "get_name_id_mapping",
     "get_obsolete",
+    "get_synonyms",
 ]
 
 logger = logging.getLogger(__name__)

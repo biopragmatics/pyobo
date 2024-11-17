@@ -10,8 +10,8 @@ import pystow
 from pyobo import Obo, Reference, Term
 
 __all__ = [
-    "get_obo",
     "CCLEGetter",
+    "get_obo",
 ]
 
 PREFIX = "ccle"

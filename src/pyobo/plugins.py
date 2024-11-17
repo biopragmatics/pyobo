@@ -9,8 +9,8 @@ from .struct import Obo
 
 __all__ = [
     "has_nomenclature_plugin",
-    "run_nomenclature_plugin",
     "iter_nomenclature_plugins",
+    "run_nomenclature_plugin",
 ]
 
 

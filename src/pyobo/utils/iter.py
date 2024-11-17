@@ -8,8 +8,8 @@ from typing import TypeVar
 from more_itertools import peekable
 
 __all__ = [
-    "iterate_together",
     "iterate_gzips_together",
+    "iterate_together",
 ]
 
 X = TypeVar("X")

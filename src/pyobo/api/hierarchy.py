@@ -14,13 +14,13 @@ from ..struct import TypeDef, has_member, is_a, part_of
 from ..struct.reference import Reference
 
 __all__ = [
+    "get_ancestors",
+    "get_children",
+    "get_descendants",
     "get_hierarchy",
     "get_subhierarchy",
-    "get_descendants",
-    "get_ancestors",
     "has_ancestor",
     "is_descendent",
-    "get_children",
 ]
 
 

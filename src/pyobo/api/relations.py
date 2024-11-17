@@ -25,12 +25,12 @@ from ..utils.cache import cached_df
 from ..utils.path import prefix_cache_join
 
 __all__ = [
-    "get_relations_df",
     "get_filtered_relations_df",
-    "get_id_multirelations_mapping",
-    "get_relation_mapping",
-    "get_relation",
     "get_graph",
+    "get_id_multirelations_mapping",
+    "get_relation",
+    "get_relation_mapping",
+    "get_relations_df",
 ]
 
 # TODO get_relation, get_relations

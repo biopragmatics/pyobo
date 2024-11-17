@@ -7,9 +7,9 @@ from ..struct import Reference, TypeDef
 from ..utils.io import multisetdict
 
 __all__ = [
-    "get_chebi_smiles_id_mapping",
     "get_chebi_id_smiles_mapping",
     "get_chebi_role_to_children",
+    "get_chebi_smiles_id_mapping",
 ]
 
 
