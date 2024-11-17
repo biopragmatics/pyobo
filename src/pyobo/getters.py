@@ -115,8 +115,8 @@ def get_ontology(
     elif ontology_format == "owl":
         _converted_obo_path = path.with_suffix(".obo")
         if prefix in REQUIRES_NO_ROBOT_CHECK:
-            pass
-        robot.convert(path, _converted_obo_path, check=False)
+            robot_check = False
+        robot.convert(path, _converted_obo_path, check=robot_check)
         path = _converted_obo_path
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
