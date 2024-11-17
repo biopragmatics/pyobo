@@ -11,8 +11,8 @@ from pyobo.utils.path import prefix_cache_join
 
 __all__ = [
     "COMPLEXPORTAL_MAPPINGS",
-    "get_intact_complex_portal_xrefs_df",
     "get_complexportal_mapping",
+    "get_intact_complex_portal_xrefs_df",
     "get_intact_reactome_xrefs_df",
     "get_reactome_mapping",
 ]

@@ -10,10 +10,10 @@ import bioversions
 from ..utils.path import prefix_directory_join
 
 __all__ = [
-    "safe_get_version",
+    "VersionError",
     "get_version",
     "get_version_pins",
-    "VersionError",
+    "safe_get_version",
 ]
 
 logger = logging.getLogger(__name__)

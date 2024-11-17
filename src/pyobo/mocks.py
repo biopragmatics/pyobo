@@ -11,10 +11,10 @@ import pandas as pd
 from pyobo.constants import XREF_COLUMNS
 
 __all__ = [
-    "get_mock_id_name_mapping",
-    "get_mock_id_synonyms_mapping",
     "get_mock_get_xrefs_df",
     "get_mock_id_alts_mapping",
+    "get_mock_id_name_mapping",
+    "get_mock_id_synonyms_mapping",
 ]
 
 

@@ -24,9 +24,9 @@ from pyobo.utils.path import prefix_cache_join
 
 __all__ = [
     "download_artifacts",
+    "list_artifacts",
     "upload_artifacts",
     "upload_artifacts_for_prefix",
-    "list_artifacts",
 ]
 
 logger = logging.getLogger(__name__)

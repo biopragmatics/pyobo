@@ -1,7 +1,7 @@
 """Data structures for OBO."""
 
-from .reference import Reference  # noqa: F401
-from .struct import (  # noqa: F401
+from .reference import Reference
+from .struct import (
     Obo,
     Synonym,
     SynonymSpecificities,
@@ -12,7 +12,7 @@ from .struct import (  # noqa: F401
     int_identifier_sort_key,
     make_ad_hoc_ontology,
 )
-from .typedef import (  # noqa: F401
+from .typedef import (
     RelationHint,
     TypeDef,
     derives_from,
@@ -34,3 +34,36 @@ from .typedef import (  # noqa: F401
     transcribes_to,
     translates_to,
 )
+
+__all__ = [
+    "Obo",
+    "Reference",
+    "RelationHint",
+    "Synonym",
+    "SynonymSpecificities",
+    "SynonymSpecificity",
+    "SynonymTypeDef",
+    "Term",
+    "TypeDef",
+    "default_reference",
+    "derives_from",
+    "enables",
+    "from_species",
+    "gene_product_member_of",
+    "get_reference_tuple",
+    "has_gene_product",
+    "has_member",
+    "has_part",
+    "has_participant",
+    "int_identifier_sort_key",
+    "is_a",
+    "make_ad_hoc_ontology",
+    "member_of",
+    "orthologous",
+    "part_of",
+    "participates_in",
+    "species_specific",
+    "superclass_of",
+    "transcribes_to",
+    "translates_to",
+]

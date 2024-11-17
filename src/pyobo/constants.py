@@ -8,8 +8,8 @@ import re
 import pystow
 
 __all__ = [
-    "RAW_DIRECTORY",
     "DATABASE_DIRECTORY",
+    "RAW_DIRECTORY",
     "SPECIES_REMAPPING",
 ]
 

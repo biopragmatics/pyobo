@@ -14,11 +14,11 @@ from .api import names
 from .utils.io import multisetdict
 
 __all__ = [
-    "ground",
-    "Normalizer",
-    "OboNormalizer",
     "MultiNormalizer",
     "NormalizationResult",
+    "Normalizer",
+    "OboNormalizer",
+    "ground",
 ]
 
 logger = logging.getLogger(__name__)
