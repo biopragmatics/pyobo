@@ -96,7 +96,12 @@ def get_name(
 @lru_cache
 @wrap_norm_prefix
 def get_ids(
-    prefix: str, *, force: bool = False, strict: bool = False, version: str | None = None
+    prefix: str,
+    *,
+    force: bool = False,
+    strict: bool = False,
+    version: str | None = None,
+    force_process: bool = False,
 ) -> set[str]:
     """Get the set of identifiers for this prefix."""
     if prefix == "ncbigene":
@@ -111,7 +116,7 @@ def get_ids(
         version = get_version(prefix)
     path = prefix_cache_join(prefix, name="ids.tsv", version=version)
 
-    @cached_collection(path=path, force=force)
+    @cached_collection(path=path, force=force or force_process)
     def _get_ids() -> set[str]:
         if force:
             logger.info("[%s v%s] forcing reload for names", prefix, version)
@@ -119,7 +124,9 @@ def get_ids(
             logger.debug(
                 "[%s v%s] no cached identifiers found. getting from OBO loader", prefix, version
             )
-        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
+        ontology = get_ontology(
+            prefix, force=force, strict=strict, version=version, rewrite=force_process
+        )
         return ontology.get_ids()
 
     return set(_get_ids())
@@ -131,9 +138,9 @@ def get_id_name_mapping(
     prefix: str,
     *,
     force: bool = False,
-    force_process: bool = False,
     strict: bool = False,
     version: str | None = None,
+    force_process: bool = False,
 ) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == "ncbigene":
@@ -174,10 +181,12 @@ def get_id_name_mapping(
 @lru_cache
 @wrap_norm_prefix
 def get_name_id_mapping(
-    prefix: str, *, force: bool = False, version: str | None = None
+    prefix: str, *, force: bool = False, version: str | None = None, force_process: bool = False
 ) -> Mapping[str, str]:
     """Get a name to identifier mapping for the OBO file."""
-    id_name = get_id_name_mapping(prefix=prefix, force=force, version=version)
+    id_name = get_id_name_mapping(
+        prefix=prefix, force=force, version=version, force_process=force_process
+    )
     return {v: k for k, v in id_name.items()}
 
 
@@ -197,18 +206,21 @@ def get_id_definition_mapping(
     force: bool = False,
     strict: bool = False,
     version: str | None = None,
+    force_process: bool = False,
 ) -> Mapping[str, str]:
     """Get a mapping of descriptions."""
     if version is None:
         version = get_version(prefix)
     path = prefix_cache_join(prefix, name="definitions.tsv", version=version)
 
-    @cached_mapping(path=path, header=[f"{prefix}_id", "definition"], force=force)
+    @cached_mapping(path=path, header=[f"{prefix}_id", "definition"], force=force or force_process)
     def _get_mapping() -> Mapping[str, str]:
         logger.info(
             "[%s v%s] no cached descriptions found. getting from OBO loader", prefix, version
         )
-        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
+        ontology = get_ontology(
+            prefix, force=force, strict=strict, version=version, rewrite=force_process
+        )
         return ontology.get_id_definition_mapping()
 
     return _get_mapping()
@@ -220,15 +232,18 @@ def get_obsolete(
     force: bool = False,
     strict: bool = False,
     version: str | None = None,
+    force_process: bool = False,
 ) -> set[str]:
     """Get the set of obsolete local unique identifiers."""
     if version is None:
         version = get_version(prefix)
     path = prefix_cache_join(prefix, name="obsolete.tsv", version=version)
 
-    @cached_collection(path=path, force=force)
+    @cached_collection(path=path, force=force or force_process)
     def _get_obsolete() -> set[str]:
-        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
+        ontology = get_ontology(
+            prefix, force=force, strict=strict, version=version, rewrite=force_process
+        )
         return ontology.get_obsolete()
 
     return set(_get_obsolete())
@@ -247,16 +262,19 @@ def get_id_synonyms_mapping(
     force: bool = False,
     strict: bool = False,
     version: str | None = None,
+    force_process: bool = False,
 ) -> Mapping[str, list[str]]:
     """Get the OBO file and output a synonym dictionary."""
     if version is None:
         version = get_version(prefix)
     path = prefix_cache_join(prefix, name="synonyms.tsv", version=version)
 
-    @cached_multidict(path=path, header=[f"{prefix}_id", "synonym"], force=force)
+    @cached_multidict(path=path, header=[f"{prefix}_id", "synonym"], force=force or force_process)
     def _get_multidict() -> Mapping[str, list[str]]:
         logger.info("[%s v%s] no cached synonyms found. getting from OBO loader", prefix, version)
-        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
+        ontology = get_ontology(
+            prefix, force=force, strict=strict, version=version, rewrite=force_process
+        )
         return ontology.get_id_synonyms_mapping()
 
     return _get_multidict()

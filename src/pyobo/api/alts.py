@@ -28,7 +28,7 @@ NO_ALTS = {
 @lru_cache
 @wrap_norm_prefix
 def get_id_to_alts(
-    prefix: str, *, force: bool = False, version: str | None = None
+    prefix: str, *, force: bool = False, version: str | None = None, force_process: bool = False
 ) -> Mapping[str, list[str]]:
     """Get alternate identifiers."""
     if prefix in NO_ALTS:
@@ -39,13 +39,13 @@ def get_id_to_alts(
     path = prefix_cache_join(prefix, name="alt_ids.tsv", version=version)
     header = [f"{prefix}_id", "alt_id"]
 
-    @cached_multidict(path=path, header=header, force=force)
+    @cached_multidict(path=path, header=header, force=force or force_process)
     def _get_mapping() -> Mapping[str, list[str]]:
         if force:
             logger.info(f"[{prefix}] forcing reload for alts")
         else:
             logger.info("[%s] no cached alts found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, version=version)
+        ontology = get_ontology(prefix, force=force, version=version, rewrite=force_process)
         return ontology.get_id_alts_mapping()
 
     return _get_mapping()
@@ -54,12 +54,14 @@ def get_id_to_alts(
 @lru_cache
 @wrap_norm_prefix
 def get_alts_to_id(
-    prefix: str, *, force: bool = False, version: str | None = None
+    prefix: str, *, force: bool = False, version: str | None = None, force_process: bool = False
 ) -> Mapping[str, str]:
     """Get alternative id to primary id mapping."""
     return {
         alt: primary
-        for primary, alts in get_id_to_alts(prefix, force=force, version=version).items()
+        for primary, alts in get_id_to_alts(
+            prefix, force=force, version=version, force_process=force_process
+        ).items()
         for alt in alts
     }
 

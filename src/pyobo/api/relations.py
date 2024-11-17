@@ -48,19 +48,22 @@ def get_relations_df(
     wide: bool = False,
     strict: bool = True,
     version: str | None = None,
+    force_process: bool = False,
 ) -> pd.DataFrame:
     """Get all relations from the OBO."""
     if version is None:
         version = get_version(prefix)
     path = prefix_cache_join(prefix, name="relations.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=force)
+    @cached_df(path=path, dtype=str, force=force or force_process)
     def _df_getter() -> pd.DataFrame:
         if force:
             logger.info("[%s] forcing reload for relations", prefix)
         else:
             logger.info("[%s] no cached relations found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, version=version, strict=strict)
+        ontology = get_ontology(
+            prefix, force=force, version=version, strict=strict, rewrite=force_process
+        )
         return ontology.get_relations_df(use_tqdm=use_tqdm)
 
     rv = _df_getter()
@@ -81,6 +84,7 @@ def get_filtered_relations_df(
     use_tqdm: bool = False,
     force: bool = False,
     version: str | None = None,
+    force_process: bool = False,
 ) -> pd.DataFrame:
     """Get all the given relation."""
     relation = _ensure_ref(relation)
@@ -94,7 +98,7 @@ def get_filtered_relations_df(
     )
     all_relations_path = prefix_cache_join(prefix, name="relations.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=force)
+    @cached_df(path=path, dtype=str, force=force or force_process)
     def _df_getter() -> pd.DataFrame:
         if os.path.exists(all_relations_path):
             logger.debug("[%] loading all relations from %s", prefix, all_relations_path)
@@ -106,7 +110,7 @@ def get_filtered_relations_df(
             return df.loc[idx, columns]
 
         logger.info("[%s] no cached relations found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, version=version)
+        ontology = get_ontology(prefix, force=force, version=version, rewrite=force_process)
         return ontology.get_filtered_relations_df(relation, use_tqdm=use_tqdm)
 
     return _df_getter()
@@ -120,11 +124,12 @@ def get_id_multirelations_mapping(
     use_tqdm: bool = False,
     force: bool = False,
     version: str | None = None,
+    force_process: bool = False,
 ) -> Mapping[str, list[Reference]]:
     """Get the OBO file and output a synonym dictionary."""
     if version is None:
         version = get_version(prefix)
-    ontology = get_ontology(prefix, force=force, version=version)
+    ontology = get_ontology(prefix, force=force, version=version, rewrite=force_process)
     return ontology.get_id_multirelations_mapping(typedef=typedef, use_tqdm=use_tqdm)
 
 
@@ -138,6 +143,7 @@ def get_relation_mapping(
     use_tqdm: bool = False,
     force: bool = False,
     version: str | None = None,
+    force_process: bool = False,
 ) -> Mapping[str, str]:
     """Get relations from identifiers in the source prefix to target prefix with the given relation.
 
@@ -153,7 +159,7 @@ def get_relation_mapping(
     """
     if version is None:
         version = get_version(prefix)
-    ontology = get_ontology(prefix, force=force, version=version)
+    ontology = get_ontology(prefix, force=force, version=version, rewrite=force_process)
     return ontology.get_relation_mapping(
         relation=relation, target_prefix=target_prefix, use_tqdm=use_tqdm
     )
