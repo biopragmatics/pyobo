@@ -120,10 +120,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
 
         for r, t in out_edges.get(reference, []):
             if r == "isa":
-                if t.prefix == "fplx":
-                    term.append_parent(t)
-                else:
-                    term.append_relationship(is_a, t)  # FIXME?
+                term.append_parent(t)
             elif r == "partof":
                 term.annotate_object(part_of, t)
             else:
