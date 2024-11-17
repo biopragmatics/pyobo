@@ -347,6 +347,10 @@ class Term(Referenced):
         """Append a relationship."""
         self.relationships[typedef].append(_ensure_ref(reference))
 
+    def annotate_object(self, typedef: TypeDef, reference: ReferenceHint) -> None:
+        """Append a relationship."""
+        self.append_relationship(typedef, reference)
+
     def set_species(self, identifier: str, name: str | None = None):
         """Append the from_species relation."""
         if name is None:
@@ -382,6 +386,16 @@ class Term(Referenced):
         if isinstance(value, Reference | Referenced):
             value = value.preferred_curie
         self.properties[prop].append(value)
+
+    def annotate_literal(
+        self, prop: str | Reference | Referenced, value: str, dtype: Any = None
+    ) -> None:
+        """Append a property."""
+        self.append_property(prop, value)
+
+    def annotate_boolean(self, prop: str | Reference | Referenced, value: bool) -> None:
+        """Append a property."""
+        self.annotate_literal(prop, str(value))
 
     def _definition_fp(self) -> str:
         if self.definition is None:

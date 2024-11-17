@@ -111,9 +111,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
                 reference=Reference(prefix=PREFIX, identifier=ec_code), is_obsolete=True
             )
             for transfer_id in transfer_ids:
-                term.append_relationship(
-                    term_replaced_by, Reference(prefix=PREFIX, identifier=transfer_id)
-                )
+                term.append_replaced_by(Reference(prefix=PREFIX, identifier=transfer_id))
             continue
 
         parent_ec_code = data["parent"]["identifier"]
@@ -144,14 +142,14 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             synonyms=synonyms,
         )
         for domain in data.get("domains", []):
-            term.append_relationship(
+            term.annotate_object(
                 has_member,
                 Reference.model_validate(
                     {"prefix": domain["namespace"], "identifier": domain["identifier"]},
                 ),
             )
         for protein in data.get("proteins", []):
-            term.append_relationship(
+            term.annotate_object(
                 has_member,
                 Reference(
                     prefix=protein["namespace"],
@@ -160,9 +158,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
                 ),
             )
         for go_id, go_name in ec2go.get(ec_code, []):
-            term.append_relationship(
-                enables, Reference(prefix="GO", identifier=go_id, name=go_name)
-            )
+            term.annotate_object(enables, Reference(prefix="GO", identifier=go_id, name=go_name))
 
     return terms.values()
 

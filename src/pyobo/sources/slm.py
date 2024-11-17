@@ -90,18 +90,18 @@ def iter_terms(version: str, force: bool = False):
             raise ValueError(identifier)
         term = Term.from_triple(PREFIX, identifier, name)
         if pd.notna(level):
-            term.append_property("level", level)
+            term.annotate_literal("level", level)
         if pd.notna(abbreviation):
             term.append_synonym(abbreviation, type=abbreviation_typedef)
         if pd.notna(synonyms):
             for synonym in synonyms.split("|"):
                 term.append_synonym(synonym.strip())
         if pd.notna(smiles):
-            term.append_property(has_smiles, smiles)
+            term.annotate_literal(has_smiles, smiles)
         if pd.notna(inchi) and inchi != "InChI=none":
             if inchi.startswith("InChI="):
                 inchi = inchi[len("InChI=") :]
-            term.append_property(has_inchi, inchi)
+            term.annotate_literal(has_inchi, inchi)
         if pd.notna(inchikey):
             inchikey = inchikey.removeprefix("InChIKey=").strip()
             if inchikey and inchikey != "none":
