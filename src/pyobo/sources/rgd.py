@@ -12,6 +12,7 @@ from pyobo.struct import (
     Synonym,
     SynonymTypeDef,
     Term,
+    default_reference,
     from_species,
     has_gene_product,
     transcribes_to,
@@ -21,8 +22,8 @@ from pyobo.utils.path import ensure_df
 logger = logging.getLogger(__name__)
 PREFIX = "rgd"
 
-old_symbol_type = SynonymTypeDef.from_text("old_symbol")
-old_name_type = SynonymTypeDef.from_text("old_name")
+old_symbol_type = SynonymTypeDef(reference=default_reference(PREFIX, "old_symbol"))
+old_name_type = SynonymTypeDef(reference=default_reference(PREFIX, "old_name"))
 
 # NOTE unigene id was discontinue in January 18th, 2021 dump
 

@@ -121,29 +121,6 @@ class SynonymTypeDef(Referenced):
             rv = f"{rv} {self.specificity}"
         return rv
 
-    @classmethod
-    def from_text(
-        cls,
-        text: str,
-        specificity: SynonymSpecificity | None = None,
-        *,
-        lower: bool = True,
-    ) -> SynonymTypeDef:
-        """Get a type definition from text that's normalized."""
-        identifier = (
-            text.replace("-", "_")
-            .replace(" ", "_")
-            .replace('"', "")
-            .replace(")", "")
-            .replace("(", "")
-        )
-        if lower:
-            identifier = identifier.lower()
-        return cls(
-            reference=Reference(prefix="obo", identifier=identifier, name=text.replace('"', "")),
-            specificity=specificity,
-        )
-
 
 DEFAULT_SYNONYM_TYPE = SynonymTypeDef(
     reference=Reference(prefix="oboInOwl", identifier="SynonymType", name="Synonym"),
