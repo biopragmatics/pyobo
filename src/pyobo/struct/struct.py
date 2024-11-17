@@ -64,6 +64,7 @@ __all__ = [
     "make_ad_hoc_ontology",
     "abbreviation",
     "acronym",
+    "int_identifier_sort_key",
     "default_reference",
 ]
 
@@ -503,6 +504,11 @@ class BioregistryError(ValueError):
         on the PyOBO issue tracker for support.
         """
         )
+
+
+def int_identifier_sort_key(obo: Obo, term: Term) -> int:
+    """Sort terms by integer identifiers."""
+    return int(term.identifier)
 
 
 @dataclass
