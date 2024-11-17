@@ -15,7 +15,7 @@ from itertools import chain
 from operator import attrgetter
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, ClassVar, Literal, Self, TextIO, TypeAlias
+from typing import Any, ClassVar, Literal, TextIO, TypeAlias
 
 import bioregistry
 import click
@@ -24,6 +24,7 @@ import pandas as pd
 from curies import ReferenceTuple
 from more_click import force_option, verbose_option
 from tqdm.auto import tqdm
+from typing_extensions import Self
 
 from .reference import Reference, Referenced
 from .typedef import (
