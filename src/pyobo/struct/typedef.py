@@ -358,6 +358,6 @@ default_typedefs: dict[ReferenceTuple, TypeDef] = {
 
 for reference, name in load_ro().items():
     if reference not in default_typedefs:
-        default_typedefs[reference.pair] = TypeDef.from_triple(
+        default_typedefs[reference] = TypeDef.from_triple(
             reference.prefix, reference.identifier, name
         )

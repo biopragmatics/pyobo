@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from functools import lru_cache
 
 import requests
-from curies import Reference
+from curies import ReferenceTuple
 
 __all__ = [
     "load_ro",
@@ -19,13 +19,13 @@ PREFIX = "http://purl.obolibrary.org/obo/"
 
 
 @lru_cache(maxsize=1)
-def load_ro() -> Mapping[Reference, str]:
+def load_ro() -> Mapping[ReferenceTuple, str]:
     """Load the relation ontology names."""
     if not os.path.exists(PATH):
         download()
     with open(PATH) as file:
         return {
-            Reference(prefix=prefix, identifier=identifier): name
+            ReferenceTuple(prefix=prefix, identifier=identifier): name
             for prefix, identifier, name in csv.reader(file, delimiter="\t")
         }
 
