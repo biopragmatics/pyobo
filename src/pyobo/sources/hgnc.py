@@ -6,7 +6,6 @@ import logging
 import typing
 from collections import Counter, defaultdict
 from collections.abc import Iterable
-from operator import attrgetter
 
 from tabulate import tabulate
 from tqdm.auto import tqdm
@@ -255,14 +254,11 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         entries = json.load(file)["response"]["docs"]
 
     yield Term.from_triple("NCBITaxon", "9606", "Homo sapiens")
-    yield from sorted(
-        {
-            Term(reference=Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
-            for so_id in sorted(LOCUS_TYPE_TO_SO.values())
-            if so_id
-        },
-        key=attrgetter("identifier"),
-    )
+    _so_ids: set[str] = {s for s in LOCUS_TYPE_TO_SO.values() if s}
+    yield from [
+        Term(reference=Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
+        for so_id in sorted(_so_ids)
+    ]
 
     statuses = set()
     for entry in tqdm(entries, desc=f"Mapping {PREFIX}", unit="gene", unit_scale=True):
