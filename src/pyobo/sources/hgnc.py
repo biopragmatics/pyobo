@@ -19,6 +19,7 @@ from pyobo.struct import (
     Synonym,
     SynonymTypeDef,
     Term,
+    default_reference,
     from_species,
     gene_product_member_of,
     has_gene_product,
@@ -41,10 +42,10 @@ DEFINITIONS_URL_FMT = (
     "hgnc_complete_set_{version}.json"
 )
 
-previous_symbol_type = SynonymTypeDef.from_text("previous_symbol")
-alias_symbol_type = SynonymTypeDef.from_text("alias_symbol")
-previous_name_type = SynonymTypeDef.from_text("previous_name")
-alias_name_type = SynonymTypeDef.from_text("alias_name")
+previous_symbol_type = SynonymTypeDef(reference=default_reference(PREFIX, "previous_symbol"))
+alias_symbol_type = SynonymTypeDef(reference=default_reference(PREFIX, "alias_symbol"))
+previous_name_type = SynonymTypeDef(reference=default_reference(PREFIX, "previous_name"))
+alias_name_type = SynonymTypeDef(reference=default_reference(PREFIX, "alias_name"))
 
 #: First column is MIRIAM prefix, second column is HGNC key
 gene_xrefs = [
