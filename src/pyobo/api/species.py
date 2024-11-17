@@ -46,6 +46,7 @@ def get_id_species_mapping(
     force: bool = False,
     strict: bool = True,
     version: str | None = None,
+    force_process: bool = False,
 ) -> Mapping[str, str]:
     """Get an identifier to species mapping."""
     if prefix == "ncbigene":
@@ -60,10 +61,12 @@ def get_id_species_mapping(
         version = get_version(prefix)
     path = prefix_cache_join(prefix, name="species.tsv", version=version)
 
-    @cached_mapping(path=path, header=[f"{prefix}_id", "species"], force=force)
+    @cached_mapping(path=path, header=[f"{prefix}_id", "species"], force=force or force_process)
     def _get_id_species_mapping() -> Mapping[str, str]:
         logger.info("[%s] no cached species found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
+        ontology = get_ontology(
+            prefix, force=force, strict=strict, version=version, rewrite=force_process
+        )
         logger.info("[%s] loading species mappings", prefix)
         return ontology.get_id_species_mapping()
 

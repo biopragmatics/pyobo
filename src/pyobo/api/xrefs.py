@@ -52,6 +52,7 @@ def get_filtered_xrefs(
     force: bool = False,
     strict: bool = False,
     version: str | None = None,
+    force_process: bool = False,
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
     if version is None:
@@ -60,7 +61,7 @@ def get_filtered_xrefs(
     all_xrefs_path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
     header = [f"{prefix}_id", f"{xref_prefix}_id"]
 
-    @cached_mapping(path=path, header=header, use_tqdm=use_tqdm, force=force)
+    @cached_mapping(path=path, header=header, use_tqdm=use_tqdm, force=force or force_process)
     def _get_mapping() -> Mapping[str, str]:
         if all_xrefs_path.is_file():
             logger.info("[%s] loading pre-cached xrefs", prefix)
@@ -70,7 +71,9 @@ def get_filtered_xrefs(
             return dict(df.values)
 
         logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
+        ontology = get_ontology(
+            prefix, force=force, strict=strict, version=version, rewrite=force_process
+        )
         return ontology.get_filtered_xrefs_mapping(xref_prefix, use_tqdm=use_tqdm)
 
     rv = _get_mapping()
@@ -90,16 +93,19 @@ def get_xrefs_df(
     force: bool = False,
     strict: bool = False,
     version: str | None = None,
+    force_process: bool = False,
 ) -> pd.DataFrame:
     """Get all xrefs."""
     if version is None:
         version = get_version(prefix)
     path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=force)
+    @cached_df(path=path, dtype=str, force=force or force_process)
     def _df_getter() -> pd.DataFrame:
         logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, strict=strict, version=version)
+        ontology = get_ontology(
+            prefix, force=force, strict=strict, version=version, rewrite=force_process
+        )
         return ontology.get_xrefs_df(use_tqdm=use_tqdm)
 
     return _df_getter()
