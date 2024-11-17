@@ -412,7 +412,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         for prop in ["location"]:
             value = entry.pop(prop, None)
             if value:
-                term.append_property(prop, value)
+                term.annotate_literal(prop, value)
 
         locus_type = entry.pop("locus_type")
         locus_group = entry.pop("locus_group")
@@ -424,8 +424,8 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 Reference(prefix="SO", identifier="0000704", name=get_so_name("0000704"))
             )  # gene
             unhandle_locus_types[locus_type][identifier] = term
-            term.append_property("locus_type", locus_type)
-            term.append_property("locus_group", locus_group)
+            term.annotate_literal("locus_type", locus_type)
+            term.annotate_literal("locus_group", locus_group)
 
         term.set_species(identifier="9606", name="Homo sapiens")
 

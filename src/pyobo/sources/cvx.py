@@ -80,9 +80,9 @@ def iter_terms() -> Iterable[Term]:
             if replacement_identifier:
                 term.append_replaced_by(Reference(prefix=PREFIX, identifier=replacement_identifier))
         if pd.notna(status):
-            term.append_property("status", status)
+            term.annotate_literal("status", status)
         if pd.notna(nonvaccine):
-            term.append_property("nonvaccine", nonvaccine)
+            term.annotate_literal("nonvaccine", nonvaccine)
         terms[cvx] = term
 
     for child, parents in dd.items():

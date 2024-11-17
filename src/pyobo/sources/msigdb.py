@@ -88,7 +88,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         ]:
             value = attrib[key].strip()
             if value:
-                term.append_property(key.lower(), value)
+                term.annotate_literal(key.lower(), value)
 
         term.set_species(tax_id)
 

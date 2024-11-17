@@ -82,7 +82,7 @@ def _extract_icd10(res_json: Mapping[str, Any]) -> Term:
         parents=parents,
     )
 
-    rv.append_property("class_kind", res_json["classKind"])
+    rv.annotate_literal("class_kind", res_json["classKind"])
 
     return rv
 

@@ -158,7 +158,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             if hgnc_ortholog is None:
                 tqdm.write(f"[{PREFIX}] {identifier} had invalid ortholog: {hgnc_curie}")
             else:
-                term.append_relationship(orthologous, hgnc_ortholog)
+                term.annotate_object(orthologous, hgnc_ortholog)
         taxonomy_id = abbr_to_taxonomy.get(organism)
         if taxonomy_id is not None:
             term.set_species(taxonomy_id)
