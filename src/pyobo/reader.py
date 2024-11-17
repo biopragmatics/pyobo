@@ -20,7 +20,6 @@ from tqdm.auto import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
-from .identifier_utils import normalize_curie
 from .registries import curie_has_blacklisted_prefix, curie_is_blacklisted, remap_prefix
 from .struct import (
     Obo,
@@ -392,13 +391,18 @@ def _iter_obo_graph(
                 continue
             reference = Reference(prefix=prefix_2, identifier=identifier_2, name=data.get("name"))
         else:
-            # TODO add standardization into Reference.from_curie?
-            prefix_3, identifier_3 = normalize_curie(curie, strict=strict, ontology=ontology_prefix)
-            if prefix_3 is None or identifier_3 is None:
+            reference_ = Reference.from_curie(
+                curie,
+                strict=strict,
+                ontology_prefix=ontology_prefix,
+                standardize=True,
+                name=data.get("name"),
+            )
+            if reference_ is None:
                 logger.warning("[%s] could not parse node curie: %s", ontology_prefix, curie)
                 continue
-            identifier_3 = bioregistry.standardize_identifier(prefix_3, identifier_3)
-            reference = Reference(prefix=prefix_3, identifier=identifier_3, name=data.get("name"))
+            reference = reference_
+
         yield reference, data
 
 

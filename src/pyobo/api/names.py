@@ -13,7 +13,7 @@ from curies import Reference, ReferenceTuple
 from .alts import get_primary_identifier
 from .utils import get_version
 from ..getters import NoBuildError, get_ontology
-from ..identifier_utils import normalize_curie, wrap_norm_prefix
+from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_collection, cached_mapping, cached_multidict
 from ..utils.path import prefix_cache_join
 
@@ -35,12 +35,10 @@ logger = logging.getLogger(__name__)
 
 def get_name_by_curie(curie: str, *, version: str | None = None) -> str | None:
     """Get the name for a CURIE, if possible."""
+    reference = Reference.from_curie(curie)
     if version is None:
-        version = get_version(curie.split(":")[0])
-    prefix, identifier = normalize_curie(curie)
-    if prefix and identifier:
-        return get_name(prefix, identifier, version=version)
-    return None
+        version = get_version(reference.prefix)
+    return get_name(reference, version=version)
 
 
 X = TypeVar("X")

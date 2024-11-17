@@ -44,7 +44,6 @@ from .api import (  # noqa: F401
     is_descendent,
 )
 from .getters import get_ontology  # noqa: F401
-from .identifier_utils import normalize_curie  # noqa: F401
 from .normalizer import OboNormalizer, ground  # noqa: F401
 from .obographs import parse_results_from_obo  # noqa: F401
 from .plugins import (  # noqa: F401

@@ -35,7 +35,7 @@ from ..api import (
     get_typedef_df,
     get_xrefs_df,
 )
-from ..identifier_utils import normalize_curie
+from ..struct import Reference
 
 __all__ = [
     "lookup",
@@ -189,14 +189,14 @@ def _help_page_mapping(id_to_name):
 def synonyms(prefix: str, force: bool, version: str | None):
     """Page through the synonyms for entities in the given namespace."""
     if ":" in prefix:
-        _prefix, identifier = normalize_curie(prefix)
-        if _prefix is None or identifier is None:
+        reference = Reference.from_curie(prefix, strict=False)
+        if reference is None:
             click.secho(f"could not normalize {prefix}")
             return sys.exit(1)
-        name = get_name(_prefix, identifier)
-        id_to_synonyms = get_id_synonyms_mapping(_prefix, force=force)
-        click.echo(f"Synonyms for {_prefix}:{identifier} ! {name}")
-        for synonym in id_to_synonyms.get(identifier, []):
+        name = get_name(reference)
+        id_to_synonyms = get_id_synonyms_mapping(reference.prefix, force=force)
+        click.echo(f"Synonyms for {reference.curie} ! {name}")
+        for synonym in id_to_synonyms.get(reference.identifier, []):
             click.echo(synonym)
     else:  # it's a prefix
         id_to_synonyms = get_id_synonyms_mapping(prefix, force=force, version=version)
@@ -237,17 +237,21 @@ def relations(
         else:
             echo_df(relations_df)
     else:
-        curie = normalize_curie(relation)
-        if curie[1] is None:  # that's the identifier
+        reference = Reference.from_curie(relation, strict=False)
+        if reference is None:  # that's the identifier
             click.secho(f"not valid curie, assuming local to {prefix}", fg="yellow")
-            curie = prefix, relation
+            raise sys.exit(1)
 
         if target is not None:
             norm_target = bioregistry.normalize_prefix(target)
             if norm_target is None:
                 raise ValueError
             relations_df = get_filtered_relations_df(
-                prefix, relation=curie, force=force, strict=not no_strict, target=norm_target
+                prefix,
+                relation=reference.curie,
+                force=force,
+                strict=not no_strict,
+                target=norm_target,
             )
         else:
             raise NotImplementedError(f"can not filter by target prefix {target}")

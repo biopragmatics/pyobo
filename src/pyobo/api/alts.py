@@ -6,7 +6,8 @@ from functools import lru_cache
 
 from .utils import get_version
 from ..getters import get_ontology
-from ..identifier_utils import normalize_curie, wrap_norm_prefix
+from ..identifier_utils import wrap_norm_prefix
+from ..struct import Reference
 from ..utils.cache import cached_multidict
 from ..utils.path import prefix_cache_join
 
@@ -63,12 +64,18 @@ def get_alts_to_id(
     }
 
 
-def get_primary_curie(curie: str, *, version: str | None = None) -> str | None:
+def get_primary_curie(
+    curie: str, *, version: str | None = None, strict: bool = False
+) -> str | None:
     """Get the primary curie for an entity."""
-    prefix, identifier = normalize_curie(curie)
-    primary_identifier = get_primary_identifier(prefix, identifier, version=version)
+    reference = Reference.from_curie(curie, strict=strict)
+    if reference is None:
+        return None
+    primary_identifier = get_primary_identifier(
+        reference.prefix, reference.identifier, version=version
+    )
     if primary_identifier is not None:
-        return f"{prefix}:{primary_identifier}"
+        return f"{reference.prefix}:{primary_identifier}"
     return None
 
 
