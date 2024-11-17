@@ -3,6 +3,7 @@
 import logging
 import os
 from collections.abc import Mapping
+from typing import Any
 
 import pandas as pd
 
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 @wrap_norm_prefix
 def get_properties_df(
-    prefix: str, *, force: bool = False, version: str | None = None
+    prefix: str, *, force: bool = False, version: str | None = None, force_process: bool = False
 ) -> pd.DataFrame:
     """Extract properties.
 
@@ -39,13 +40,13 @@ def get_properties_df(
         version = get_version(prefix)
     path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=force)
+    @cached_df(path=path, dtype=str, force=force or force_process)
     def _df_getter() -> pd.DataFrame:
         if force:
             logger.info("[%s] forcing reload for properties", prefix)
         else:
             logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, version=version)
+        ontology = get_ontology(prefix, force=force, version=version, rewrite=force_process)
         df = ontology.get_properties_df()
         df.dropna(inplace=True)
         return df
@@ -61,6 +62,7 @@ def get_filtered_properties_mapping(
     use_tqdm: bool = False,
     force: bool = False,
     version: str | None = None,
+    force_process: bool = False,
 ) -> Mapping[str, str]:
     """Extract a single property for each term as a dictionary.
 
@@ -79,7 +81,7 @@ def get_filtered_properties_mapping(
     path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
-    @cached_mapping(path=path, header=[f"{prefix}_id", prop], force=force)
+    @cached_mapping(path=path, header=[f"{prefix}_id", prop], force=force or force_process)
     def _mapping_getter() -> Mapping[str, str]:
         if os.path.exists(all_properties_path):
             logger.info("[%s] loading pre-cached properties", prefix)
@@ -89,7 +91,7 @@ def get_filtered_properties_mapping(
             return dict(df.values)
 
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, version=version)
+        ontology = get_ontology(prefix, force=force, version=version, rewrite=force_process)
         return ontology.get_filtered_properties_mapping(prop, use_tqdm=use_tqdm)
 
     return _mapping_getter()
@@ -103,6 +105,7 @@ def get_filtered_properties_multimapping(
     use_tqdm: bool = False,
     force: bool = False,
     version: str | None = None,
+    force_process: bool = False,
 ) -> Mapping[str, list[str]]:
     """Extract multiple properties for each term as a dictionary.
 
@@ -117,7 +120,7 @@ def get_filtered_properties_multimapping(
     path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
-    @cached_multidict(path=path, header=[f"{prefix}_id", prop], force=force)
+    @cached_multidict(path=path, header=[f"{prefix}_id", prop], force=force or force_process)
     def _mapping_getter() -> Mapping[str, list[str]]:
         if os.path.exists(all_properties_path):
             logger.info("[%s] loading pre-cached properties", prefix)
@@ -127,13 +130,13 @@ def get_filtered_properties_multimapping(
             return multidict(df.values)
 
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, version=version)
+        ontology = get_ontology(prefix, force=force, version=version, rewrite=force_process)
         return ontology.get_filtered_properties_multimapping(prop, use_tqdm=use_tqdm)
 
     return _mapping_getter()
 
 
-def get_property(prefix: str, identifier: str, prop: str, **kwargs) -> str | None:
+def get_property(prefix: str, identifier: str, prop: str, **kwargs: Any) -> str | None:
     """Extract a single property for the given entity.
 
     :param prefix: the resource to load
@@ -151,7 +154,7 @@ def get_property(prefix: str, identifier: str, prop: str, **kwargs) -> str | Non
     return filtered_properties_mapping.get(identifier)
 
 
-def get_properties(prefix: str, identifier: str, prop: str, **kwargs) -> list[str] | None:
+def get_properties(prefix: str, identifier: str, prop: str, **kwargs: Any) -> list[str] | None:
     """Extract a set of properties for the given entity.
 
     :param prefix: the resource to load
@@ -173,6 +176,7 @@ def get_filtered_properties_df(
     use_tqdm: bool = False,
     force: bool = False,
     version: str | None = None,
+    force_process: bool = False,
 ) -> pd.DataFrame:
     """Extract a single property for each term.
 
@@ -187,7 +191,7 @@ def get_filtered_properties_df(
     path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=force)
+    @cached_df(path=path, dtype=str, force=force or force_process)
     def _df_getter() -> pd.DataFrame:
         if os.path.exists(all_properties_path):
             logger.info("[%s] loading pre-cached properties", prefix)
@@ -199,7 +203,7 @@ def get_filtered_properties_df(
             logger.info("[%s] forcing reload for properties", prefix)
         else:
             logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, version=version)
+        ontology = get_ontology(prefix, force=force, version=version, rewrite=force_process)
         return ontology.get_filtered_properties_df(prop, use_tqdm=use_tqdm)
 
     return _df_getter()
