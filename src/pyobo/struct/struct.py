@@ -118,7 +118,7 @@ class SynonymTypeDef(Referenced):
 
     def to_obo(self) -> str:
         """Serialize to OBO."""
-        rv = f'synonymtypedef: {self.preferred_curie}'
+        rv = f"synonymtypedef: {self.preferred_curie}"
         if self.name:
             rv = f'{rv} "{self.name}"'
         if self.specificity:
