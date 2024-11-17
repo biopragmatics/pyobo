@@ -63,6 +63,8 @@ def ensure_rhea_rdf(version: str | None = None, force: bool = False) -> "rdflib.
     # see docs: https://ftp.expasy.org/databases/rhea/rdf/rhea_rdf_documentation.pdf
     if version is None:
         version = get_version(PREFIX)
+    if version is None:
+        raise ValueError
     return pystow.ensure_rdf(
         "pyobo",
         "raw",
