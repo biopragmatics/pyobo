@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import bioregistry
 import curies
+from curies import ReferenceTuple
 from curies.api import ExpansionError
 from pydantic import Field, field_validator, model_validator
 
@@ -168,7 +169,7 @@ class Referenced:
         return self.reference.preferred_curie
 
     @property
-    def pair(self) -> tuple[str, str]:
+    def pair(self) -> ReferenceTuple:
         """The pair of namespace/identifier."""
         return self.reference.pair
 

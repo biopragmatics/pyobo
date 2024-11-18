@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
+from curies import ReferenceTuple
+
 from .reference import Reference, Referenced
 from ..identifier_utils import normalize_curie
 from ..resources.ro import load_ro
@@ -371,10 +373,12 @@ has_category = TypeDef(
     is_metadata_tag=True,
 )
 
-default_typedefs: dict[tuple[str, str], TypeDef] = {
-    v.pair: v for k, v in locals().items() if isinstance(v, TypeDef)
+default_typedefs: dict[ReferenceTuple, TypeDef] = {
+    v.pair: v for v in locals().values() if isinstance(v, TypeDef)
 }
 
-for pair, name in load_ro().items():
-    if pair not in default_typedefs:
-        default_typedefs[pair] = TypeDef.from_triple(pair[0], pair[1], name)
+for reference, name in load_ro().items():
+    if reference not in default_typedefs:
+        default_typedefs[reference] = TypeDef.from_triple(
+            reference.prefix, reference.identifier, name
+        )
