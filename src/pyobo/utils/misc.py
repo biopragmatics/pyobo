@@ -11,9 +11,17 @@ logger = logging.getLogger(__name__)
 
 BIZARRE_LOGGED = set()
 
+#: Rewrites for mostly static resources that have weird quirks
+VERSION_REWRITES = {
+    "$Date: 2009/11/15 10:54:12 $": "2009-11-15",  # for owl
+    "http://www.w3.org/2006/time#2016": "2016",  # for time
+}
+
 
 def cleanup_version(data_version: str, prefix: str) -> str | None:
     """Clean the version information."""
+    if data_version in VERSION_REWRITES:
+        return VERSION_REWRITES[data_version]
     if data_version.endswith(".owl"):
         data_version = data_version[: -len(".owl")]
     if data_version.endswith(prefix):
@@ -30,6 +38,10 @@ def cleanup_version(data_version: str, prefix: str) -> str | None:
         "http://humanbehaviourchange.org/ontology/bcio.owl/",
         "http://purl.org/pav/",
         "http://identifiers.org/combine.specifications/teddy.rel-",
+        "https://purl.dataone.org/odo/MOSAIC/",
+        "http://purl.dataone.org/odo/SASAP/",  # like in http://purl.dataone.org/odo/SASAP/0.3.1
+        "http://purl.dataone.org/odo/SENSO/",  # like in http://purl.dataone.org/odo/SENSO/0.1.0
+        "https://purl.dataone.org/odo/ADCAD/",
     ]
     for version_prefix in version_prefixes:
         if data_version.startswith(version_prefix):
