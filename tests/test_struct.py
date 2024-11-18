@@ -3,7 +3,7 @@
 import unittest
 
 from pyobo import Obo, Reference
-from pyobo.struct.struct import BioregistryError
+from pyobo.struct.struct import BioregistryError, SynonymTypeDef
 
 
 class Nope(Obo):
@@ -49,3 +49,20 @@ class TestStruct(unittest.TestCase):
         r4 = Reference(prefix="GO", identifier="GO:1234567")
         self.assertEqual("go", r4.prefix)
         self.assertEqual("1234567", r4.identifier)
+
+    def test_synonym_typedef(self) -> None:
+        """Test synonym type definition serialization."""
+        r1 = Reference(prefix="OMO", identifier="0003012", name="acronym")
+        r2 = Reference(prefix="omo", identifier="0003012")
+
+        s1 = SynonymTypeDef(reference=r1)
+        self.assertEqual('synonymtypedef: OMO:0003012 "acronym"', s1.to_obo())
+
+        s2 = SynonymTypeDef(reference=r2)
+        self.assertEqual("synonymtypedef: OMO:0003012", s2.to_obo())
+
+        s3 = SynonymTypeDef(reference=r1, specificity="EXACT")
+        self.assertEqual('synonymtypedef: OMO:0003012 "acronym" EXACT', s3.to_obo())
+
+        s4 = SynonymTypeDef(reference=r2, specificity="EXACT")
+        self.assertEqual("synonymtypedef: OMO:0003012 EXACT", s4.to_obo())
