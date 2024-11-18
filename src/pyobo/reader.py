@@ -8,8 +8,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import bioontologies.upgrade
 import bioregistry
 import networkx as nx
+from curies import ReferenceTuple
 from more_itertools import pairwise
 from tqdm.auto import tqdm
 
@@ -28,7 +30,7 @@ from .struct import (
     make_ad_hoc_ontology,
 )
 from .struct.struct import DEFAULT_SYNONYM_TYPE
-from .struct.typedef import default_typedefs, develops_from, has_part, part_of
+from .struct.typedef import default_typedefs
 from .utils.misc import cleanup_version
 
 __all__ = [
@@ -38,16 +40,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-# FIXME use bioontologies
-# RELATION_REMAPPINGS: Mapping[str, Tuple[str, str]] = bioontologies.upgrade.load()
-RELATION_REMAPPINGS: Mapping[str, tuple[str, str]] = {
-    "part_of": part_of.pair,
-    "has_part": has_part.pair,
-    "develops_from": develops_from.pair,
-    "seeAlso": ("rdf", "seeAlso"),
-    "dc-contributor": ("dc", "contributor"),
-    "dc-creator": ("dc", "creator"),
-}
+RELATION_REMAPPINGS: Mapping[str, ReferenceTuple] = bioontologies.upgrade.load()
 
 
 def from_obo_path(
@@ -127,12 +120,12 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
         )
         for prefix, identifier, data in _iter_obo_graph(graph=graph, strict=strict)
     )
-    references: Mapping[tuple[str, str], Reference] = {
+    references: Mapping[ReferenceTuple, Reference] = {
         reference.pair: reference for reference in reference_it
     }
 
     #: CURIEs to typedefs
-    typedefs: Mapping[tuple[str, str], TypeDef] = {
+    typedefs: Mapping[ReferenceTuple, TypeDef] = {
         typedef.pair: typedef for typedef in iterate_graph_typedefs(graph, ontology)
     }
 
@@ -141,7 +134,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
         for synonym_typedef in iterate_graph_synonym_typedefs(graph, ontology=ontology)
     }
 
-    missing_typedefs = set()
+    missing_typedefs: set[ReferenceTuple] = set()
     terms = []
     n_alt_ids, n_parents, n_synonyms, n_relations, n_properties, n_xrefs = 0, 0, 0, 0, 0, 0
     for prefix, identifier, data in _iter_obo_graph(graph=graph, strict=strict):
@@ -149,7 +142,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
             continue
 
         identifier = bioregistry.standardize_identifier(prefix, identifier)
-        reference = references[ontology, identifier]
+        reference = references[ReferenceTuple(ontology, identifier)]
 
         try:
             node_xrefs = list(iterate_node_xrefs(prefix=prefix, data=data, strict=strict))
@@ -225,13 +218,13 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
             e.reference = reference
             raise e
         for relation, reference in relations_references:
-            if (relation.prefix, relation.identifier) in typedefs:
-                typedef = typedefs[relation.prefix, relation.identifier]
-            elif (relation.prefix, relation.identifier) in default_typedefs:
-                typedef = default_typedefs[relation.prefix, relation.identifier]
+            if relation.pair in typedefs:
+                typedef = typedefs[relation.pair]
+            elif relation.pair in default_typedefs:
+                typedef = default_typedefs[relation.pair]
             else:
-                if (relation.prefix, relation.identifier) not in missing_typedefs:
-                    missing_typedefs.add((relation.prefix, relation.identifier))
+                if relation.pair not in missing_typedefs:
+                    missing_typedefs.add(relation.pair)
                     logger.warning("[%s] has no typedef for %s", ontology, relation)
                     logger.debug("[%s] available typedefs: %s", ontology, set(typedefs))
                 continue
