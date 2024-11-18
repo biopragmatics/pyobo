@@ -4,10 +4,12 @@ import logging
 from collections.abc import Mapping
 from functools import lru_cache
 
+import curies
+
 from .utils import get_version
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..struct import Reference
+from ..struct.reference import Reference
 from ..utils.cache import cached_multidict
 from ..utils.path import prefix_cache_join
 
@@ -74,14 +76,12 @@ def get_primary_curie(
     if reference is None:
         return None
     primary_identifier = get_primary_identifier(reference, version=version)
-    if primary_identifier is not None:
-        return f"{reference.prefix}:{primary_identifier}"
-    return None
+    return f"{reference.prefix}:{primary_identifier}"
 
 
 @wrap_norm_prefix
 def get_primary_identifier(
-    prefix: str | Reference | ReferenceTuple,
+    prefix: str | curies.Reference | curies.ReferenceTuple,
     identifier: str | None = None,
     /,
     *,
@@ -95,14 +95,14 @@ def get_primary_identifier(
 
     Returns the original identifier if there are no alts available or if there's no mapping.
     """
-    if isinstance(prefix, ReferenceTuple | Reference):
+    if isinstance(prefix, curies.ReferenceTuple | curies.Reference):
         identifier = prefix.identifier
         prefix = prefix.prefix
+    elif identifier is None:
+        raise ValueError("passed a prefix but no local unique identifier")
 
     if prefix in NO_ALTS:  # TODO later expand list to other namespaces with no alts
         return identifier
 
     alts_to_id = get_alts_to_id(prefix, version=version)
-    if alts_to_id and identifier in alts_to_id:
-        return alts_to_id[identifier]
-    return identifier
+    return alts_to_id.get(identifier, identifier)
