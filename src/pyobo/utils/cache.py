@@ -3,7 +3,6 @@
 import gzip
 import json
 import logging
-import os
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Generic, TypeVar
@@ -39,7 +38,7 @@ class _CachedMapping(Cached[X], Generic[X]):
 
     def __init__(
         self,
-        path: str | Path | os.PathLike,
+        path: str | Path,
         header: Iterable[str],
         *,
         use_tqdm: bool = False,

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable
 
 import bioregistry
@@ -28,6 +29,8 @@ __all__ = [
     "graph_from_obo",
     "parse_results_from_obo",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 def parse_results_from_obo(obo: Obo) -> ParseResults:
@@ -66,9 +69,11 @@ def _rewire(r: Reference) -> curies.Reference:
 
 
 def _get_class_node(term: Term) -> Node:
-    if term.definition or term.provenance:
+    if term.provenance and not term.definition:
+        logger.warning("[%s] unhandled when provenance but no definition", term.curie)
+    elif term.definition:
         definition = Definition.from_parsed(
-            value=term.definition, references=[_rewire(p) for p in term.provenance]
+            value=term.definition, references=[_rewire(p) for p in term.provenance or []]
         )
     else:
         definition = None

@@ -4,6 +4,7 @@ import json
 import logging
 import os
 from functools import lru_cache
+from typing import Literal, overload
 
 import bioversions
 
@@ -23,11 +24,21 @@ class VersionError(ValueError):
     """A catch-all for version getting failure."""
 
 
-def get_version(prefix: str) -> str | None:
+@overload
+def get_version(prefix: str, *, strict: Literal[True] = True) -> str: ...
+
+
+@overload
+def get_version(prefix: str, *, strict: Literal[False] = False) -> str | None: ...
+
+
+def get_version(prefix: str, *, strict: bool = False) -> str | None:
     """Get the version for the resource, if available.
 
     :param prefix: the resource name
+    :param strict: Should an error be raised if no version is available?
     :return: The version if available else None
+    :raises VersionError: if the version is not available and strict mode is enabled
     """
     # Prioritize loaded environment variable PYOBO_VERSION_PINS dictionary
     version = get_version_pins().get(prefix)
@@ -46,7 +57,12 @@ def get_version(prefix: str) -> str | None:
     metadata_json_path = prefix_directory_join(prefix, name="metadata.json", ensure_exists=False)
     if metadata_json_path.exists():
         data = json.loads(metadata_json_path.read_text())
-        return data["version"]
+        version = data["version"]
+        if version:
+            return version
+
+    if strict:
+        raise ValueError
 
     return None
 
