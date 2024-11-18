@@ -160,8 +160,6 @@ def get_id_name_mapping(
     def _get_id_name_mapping() -> Mapping[str, str]:
         if force:
             logger.debug("[%s v%s] forcing reload for names", prefix, version)
-        elif force_process:
-            logger.debug("[%s v%s] forcing process for names", prefix, version)
         else:
             logger.debug("[%s v%s] no cached names found. getting from OBO loader", prefix, version)
         ontology = get_ontology(
