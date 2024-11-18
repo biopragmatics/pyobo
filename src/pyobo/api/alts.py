@@ -73,16 +73,20 @@ def get_primary_curie(
     reference = Reference.from_curie(curie, strict=strict)
     if reference is None:
         return None
-    primary_identifier = get_primary_identifier(
-        reference.prefix, reference.identifier, version=version
-    )
+    primary_identifier = get_primary_identifier(reference, version=version)
     if primary_identifier is not None:
         return f"{reference.prefix}:{primary_identifier}"
     return None
 
 
 @wrap_norm_prefix
-def get_primary_identifier(prefix: str, identifier: str, *, version: str | None = None) -> str:
+def get_primary_identifier(
+    prefix: str | Reference | ReferenceTuple,
+    identifier: str | None = None,
+    /,
+    *,
+    version: str | None = None,
+) -> str:
     """Get the primary identifier for an entity.
 
     :param prefix: The name of the resource
@@ -91,6 +95,10 @@ def get_primary_identifier(prefix: str, identifier: str, *, version: str | None 
 
     Returns the original identifier if there are no alts available or if there's no mapping.
     """
+    if isinstance(prefix, ReferenceTuple | Reference):
+        identifier = prefix.identifier
+        prefix = prefix.prefix
+
     if prefix in NO_ALTS:  # TODO later expand list to other namespaces with no alts
         return identifier
 
