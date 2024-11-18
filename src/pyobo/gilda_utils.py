@@ -26,9 +26,9 @@ from pyobo.getters import NoBuildError
 from pyobo.utils.io import multidict
 
 __all__ = [
-    "iter_gilda_prediction_tuples",
-    "get_grounder",
     "get_gilda_terms",
+    "get_grounder",
+    "iter_gilda_prediction_tuples",
 ]
 
 logger = logging.getLogger(__name__)

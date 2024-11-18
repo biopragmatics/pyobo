@@ -8,8 +8,8 @@ from subprocess import CalledProcessError, check_output
 
 __all__ = [
     "VERSION",
-    "get_version",
     "get_git_hash",
+    "get_version",
 ]
 
 VERSION = "0.12.0-dev"

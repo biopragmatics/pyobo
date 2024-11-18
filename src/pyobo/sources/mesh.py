@@ -180,7 +180,7 @@ def get_descriptor_records(element: Element, id_key: str, name_key) -> list[dict
         parents_descriptor_uis = set()
         for tree_number in descriptor["tree_numbers"]:
             try:
-                parent_tn, self_tn = tree_number.rsplit(".", 1)
+                parent_tn, _self_tn = tree_number.rsplit(".", 1)
             except ValueError:
                 logger.debug("No dot for %s", tree_number)
                 continue

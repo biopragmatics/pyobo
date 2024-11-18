@@ -30,15 +30,15 @@ from .constants import (
 )
 
 __all__ = [
+    "ensure_alts",
+    "ensure_definitions",
     "ensure_inspector_javert",
     "ensure_inspector_javert_df",
     "ensure_ooh_na_na",
-    "ensure_alts",
-    "ensure_synonyms",
-    "ensure_definitions",
     "ensure_properties",
     "ensure_relations",
     "ensure_species",
+    "ensure_synonyms",
 ]
 
 

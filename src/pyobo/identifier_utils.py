@@ -18,8 +18,8 @@ from .registries import (
 
 __all__ = [
     "normalize_curie",
-    "wrap_norm_prefix",
     "standardize_ec",
+    "wrap_norm_prefix",
 ]
 
 logger = logging.getLogger(__name__)

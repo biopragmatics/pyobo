@@ -9,9 +9,9 @@ from pathlib import Path
 import requests
 
 __all__ = [
-    "load_ncbitaxon",
     "get_ncbitaxon_id",
     "get_ncbitaxon_name",
+    "load_ncbitaxon",
 ]
 
 HERE = Path(__file__).parent.resolve()

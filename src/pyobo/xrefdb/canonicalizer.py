@@ -19,10 +19,10 @@ from ..utils.io import get_reader, get_writer
 __all__ = [
     "Canonicalizer",
     "all_shortest_paths",
-    "single_source_shortest_path",
     "get_equivalent",
     "get_priority_curie",
     "remap_file_stream",
+    "single_source_shortest_path",
 ]
 
 

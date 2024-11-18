@@ -18,15 +18,15 @@ from pystow.cache import CachedPickle as cached_pickle  # noqa:N813
 from .io import open_map_tsv, open_multimap_tsv, write_map_tsv, write_multimap_tsv
 
 __all__ = [
-    # from pystow
-    "cached_json",
     "cached_collection",
     "cached_df",
-    "cached_pickle",
     # implemented here
     "cached_graph",
+    # from pystow
+    "cached_json",
     "cached_mapping",
     "cached_multidict",
+    "cached_pickle",
 ]
 
 logger = logging.getLogger(__name__)
