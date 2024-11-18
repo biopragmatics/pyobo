@@ -24,10 +24,12 @@ class VersionError(ValueError):
     """A catch-all for version getting failure."""
 
 
+# docstr-coverage:excused `overload`
 @overload
 def get_version(prefix: str, *, strict: Literal[True] = True) -> str: ...
 
 
+# docstr-coverage:excused `overload`
 @overload
 def get_version(prefix: str, *, strict: Literal[False] = False) -> str | None: ...
 
