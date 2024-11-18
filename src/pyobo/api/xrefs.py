@@ -92,8 +92,8 @@ def get_xrefs_df(
     use_tqdm: bool = False,
     force: bool = False,
     strict: bool = False,
-    force_process: bool = False,
     version: str | None = None,
+    force_process: bool = False,
 ) -> pd.DataFrame:
     """Get all xrefs."""
     if version is None:
