@@ -8,6 +8,7 @@ from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_json
 from ..utils.path import prefix_cache_join
+from functools import lru_cache
 
 __all__ = [
     "get_metadata",
@@ -16,6 +17,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
+@lru_cache
 @wrap_norm_prefix
 def get_metadata(
     prefix: str,
