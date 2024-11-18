@@ -22,9 +22,9 @@ from ..registries import (
 )
 
 __all__ = [
+    "MissingPrefixError",
     "Reference",
     "Referenced",
-    "MissingPrefixError",
 ]
 
 logger = logging.getLogger(__name__)
