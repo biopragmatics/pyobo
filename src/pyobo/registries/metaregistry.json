@@ -226,6 +226,9 @@
       "duo": [
         "topic:"
       ],
+      "cido": [
+        "https://www.nmpa.gov.cn"
+      ],
       "fbbt": [
         "larvalbrain_axon_tract:",
         "larvalbrain_neuropil:",
@@ -263,6 +266,9 @@
       ],
       "iceo": [
         "OTCS:"
+      ],
+      "iobc": [
+        "detail?JGLOBAL:ID="
       ],
       "uberon": [
         "GAID:",
@@ -414,8 +420,10 @@
       "PMI:17498297": "PMID:17498297",
       "HPO:SKOEHLER": "orcid:0000-0002-5316-1399",
       "HPO:skoehler": "orcid:0000-0002-5316-1399",
+      "SIB:PG": "orcid:0000-0003-1813-6857",
       "UBERON:cjm": "orcid:0000-0002-6601-2165",
       "part:of": "BFO:0000050",
+      "gro:partOf": "BFO:0000050",
       "bearer:of": "RO:0000053",
       "inheres:in": "RO:0000052",
       "inheres:in-obso": "RO:0000052",
@@ -426,7 +434,15 @@
       "SBN:9780070316607": "ISBN:9780070316607",
       "dc-contributor": "dc:contributor",
       "dc-license": "dc:license",
-      "seeAlso": "rdfs:seeAlso"
+      "seeAlso": "rdfs:seeAlso",
+      "FOBI_050089": "FOBI:050089",
+      "FOBI_050091": "FOBI:050091",
+      "has:input": "RO:0002233",
+      "has:output": "RO:0002234",
+      "Property:P1659": "wikidata:P1659",
+      "vocab:crossSpeciesExactMatch": "semapv:crossSpeciesExactMatch",
+      "definition:citation": "obo:efo#definition_citation",
+      "gwas:trait": "obo:efo#gwas_trait"
     },
     "prefix": {
       "ATCC number: ": "ATCC:",
@@ -435,6 +451,7 @@
       "TKG:TKG ": "TKG:",
       "KCB:KCB ": "KCB:",
       "CVCL_": "cellosaurus:CVCL_",
+      "cancercelllines:CVCL_": "cellosaurus:CVCL_",
       "EGA:EGAS": "ega.study:EGAS",
       "EGA:phs": "ega.study:phs",
       "EGA:EGAD": "ega.study:EGAD",
@@ -501,7 +518,35 @@
       "PANTHER:PTHR": "panther.family:PTHR",
       "vo/ontorat/PR:": "PR:",
       "DC:0000": "diseaseclass:0000",
-      "TS-": "caloha:"
+      "TS-": "caloha:",
+      "terms1": "dcterms",
+      "urn:issn:": "issn:",
+      "resource:SIO_": "SIO:",
+      "odo:ADCAD_": "adcad:",
+      "odo:MOSAIC_": "mosaic:",
+      "scipion:CRYOEM_": "cryoem:",
+      "resource:CHEMINF_": "cheminf:",
+      "PDR:PMID:": "pubmed:",
+      "FLOPO_": "flopo:",
+      "DrugNames:DB": "drugbank:DB:",
+      "FOBI_": "fobi:",
+      "detail?JGLOBAL:ID=": "iobc",
+      "ontology:ONTIE_": "ontie:",
+      "ontology:PMR.owl#": "pmr:",
+      "NIF_Subcellular:nlx_subcell_": "nif.sub:",
+      "url:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "url:https\\://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "url:https\\://www.ncbi.nlm.nih.gov/pmc/articles/": "pmc:",
+      "url:https\\://www.ncbi.nlm.nih.gov/books/": "ncbibook",
+      "url:http\\://www.ncbi.nlm.nih.gov/sites/entrez/": "ncbigene",
+      "url:http\\://www.ncbi.nlm.nih.gov/gene/": "ncbigene",
+      "url:http\\://www.omim.org/entry/": "omim",
+      "url:https\\://www.omim.org/entry/": "omim",
+      "url:http\\://omim.org/entry/": "omim",
+      "ontologyIRI:/termsonlyOUT%20(5).owl#": "apaonto:",
+      "url:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com:http\\://www.merriam-webster.com/dictionary/": "merriamwebster:",
+      "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com:http\\://www.m-w.com/cgi-bin/dictionary?book=Dictionary&va=": "merriamwebster:"
     },
     "resource_prefix": {
       "enm": {

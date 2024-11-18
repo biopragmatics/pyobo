@@ -80,7 +80,7 @@ def _iter_ncbigene(left, right):
 def _iter_metadata(**kwargs):
     for prefix, data in iter_helper_helper(get_metadata, **kwargs):
         version = data["version"]
-        tqdm.write(f"[{prefix}] using version {version}")
+        logger.info(f"[{prefix}] using version {version}")
         yield prefix, version, data["date"], bioregistry.is_deprecated(prefix)
 
 
