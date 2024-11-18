@@ -25,7 +25,7 @@ def load_ro() -> Mapping[ReferenceTuple, str]:
         download()
     with open(PATH) as file:
         return {
-            ReferenceTuple(prefix=prefix, identifier=identifier): name
+            ReferenceTuple(prefix, identifier): name
             for prefix, identifier, name in csv.reader(file, delimiter="\t")
         }
 
