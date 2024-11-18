@@ -44,6 +44,9 @@ from .api import (
     has_ancestor,
     is_descendent,
 )
+from .getters import get_ontology
+from .normalizer import OboNormalizer, ground
+from .obographs import parse_results_from_obo
 from .plugins import (
     has_nomenclature_plugin,
     iter_nomenclature_plugins,
