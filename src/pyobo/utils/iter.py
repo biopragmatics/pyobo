@@ -8,8 +8,8 @@ from typing import TypeVar
 from more_itertools import peekable
 
 __all__ = [
-    "iterate_together",
     "iterate_gzips_together",
+    "iterate_together",
 ]
 
 X = TypeVar("X")
@@ -38,7 +38,7 @@ def iterate_together(
     - Each key in the index is present within both files
     """
     b_peekable = peekable(b)
-    b_index, _ = b_peekable.peek()
+    b_index: X | type[_Done] = b_peekable.peek()[0]
 
     for a_index, a_value in a:
         zs = []

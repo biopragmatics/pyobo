@@ -9,8 +9,8 @@ import bioregistry
 from curies import Reference, ReferenceTuple
 
 __all__ = [
-    "wrap_norm_prefix",
     "standardize_ec",
+    "wrap_norm_prefix",
 ]
 
 logger = logging.getLogger(__name__)

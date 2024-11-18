@@ -121,12 +121,12 @@ def ensure_mesh_descriptors(
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
 
     @cached_json(path=prefix_directory_join(PREFIX, name="desc.json", version=version), force=force)
-    def _inner():
+    def _inner() -> list[dict[str, Any]]:
         path = ensure_path(PREFIX, url=get_descriptors_url(version), version=version)
         root = _get_xml_root(path)
         return get_descriptor_records(root, id_key="DescriptorUI", name_key="DescriptorName/String")
 
-    return _inner()
+    return _inner()  # type:ignore
 
 
 def get_descriptors_url(version: str) -> str:
@@ -147,14 +147,14 @@ def ensure_mesh_supplemental_records(version: str, force: bool = False) -> list[
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
 
     @cached_json(path=prefix_directory_join(PREFIX, name="supp.json", version=version), force=force)
-    def _inner():
+    def _inner() -> list[dict[str, Any]]:
         path = ensure_path(PREFIX, url=get_supplemental_url(version), version=version)
         root = _get_xml_root(path)
         return get_descriptor_records(
             root, id_key="SupplementalRecordUI", name_key="SupplementalRecordName/String"
         )
 
-    return _inner()
+    return _inner()  # type:ignore
 
 
 def get_descriptor_records(element: Element, id_key: str, name_key) -> list[dict[str, Any]]:
@@ -180,7 +180,7 @@ def get_descriptor_records(element: Element, id_key: str, name_key) -> list[dict
         parents_descriptor_uis = set()
         for tree_number in descriptor["tree_numbers"]:
             try:
-                parent_tn, self_tn = tree_number.rsplit(".", 1)
+                parent_tn, _self_tn = tree_number.rsplit(".", 1)
             except ValueError:
                 logger.debug("No dot for %s", tree_number)
                 continue

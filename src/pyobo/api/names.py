@@ -18,16 +18,16 @@ from ..utils.cache import cached_collection, cached_mapping, cached_multidict
 from ..utils.path import prefix_cache_join
 
 __all__ = [
-    "get_name",
-    "get_name_by_curie",
-    "get_ids",
-    "get_id_name_mapping",
-    "get_name_id_mapping",
     "get_definition",
     "get_id_definition_mapping",
-    "get_synonyms",
+    "get_id_name_mapping",
     "get_id_synonyms_mapping",
+    "get_ids",
+    "get_name",
+    "get_name_by_curie",
+    "get_name_id_mapping",
     "get_obsolete",
+    "get_synonyms",
 ]
 
 logger = logging.getLogger(__name__)
@@ -89,7 +89,8 @@ def get_name(
 ) -> str | None:
     """Get the name for an entity."""
     if isinstance(prefix, ReferenceTuple | Reference):
-        prefix, identifier = prefix.prefix, prefix.identifier
+        identifier = prefix.identifier
+        prefix = prefix.prefix
     return _help_get(get_id_name_mapping, prefix, identifier, version=version)  # type:ignore
 
 
@@ -117,7 +118,7 @@ def get_ids(
     path = prefix_cache_join(prefix, name="ids.tsv", version=version)
 
     @cached_collection(path=path, force=force or force_process)
-    def _get_ids() -> set[str]:
+    def _get_ids() -> list[str]:
         if force:
             logger.info("[%s v%s] forcing reload for names", prefix, version)
         else:
@@ -127,7 +128,7 @@ def get_ids(
         ontology = get_ontology(
             prefix, force=force, strict=strict, version=version, rewrite=force_process
         )
-        return ontology.get_ids()
+        return sorted(ontology.get_ids())
 
     return set(_get_ids())
 
@@ -240,11 +241,11 @@ def get_obsolete(
     path = prefix_cache_join(prefix, name="obsolete.tsv", version=version)
 
     @cached_collection(path=path, force=force or force_process)
-    def _get_obsolete() -> set[str]:
+    def _get_obsolete() -> list[str]:
         ontology = get_ontology(
             prefix, force=force, strict=strict, version=version, rewrite=force_process
         )
-        return ontology.get_obsolete()
+        return sorted(ontology.get_obsolete())
 
     return set(_get_obsolete())
 

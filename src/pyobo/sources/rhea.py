@@ -2,7 +2,7 @@
 
 import logging
 from collections.abc import Iterable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import pystow
 
@@ -63,6 +63,8 @@ def ensure_rhea_rdf(version: str | None = None, force: bool = False) -> "rdflib.
     # see docs: https://ftp.expasy.org/databases/rhea/rdf/rhea_rdf_documentation.pdf
     if version is None:
         version = get_version(PREFIX)
+    if version is None:
+        raise ValueError
     return pystow.ensure_rdf(
         "pyobo",
         "raw",
@@ -100,7 +102,10 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         }
     """
     )
-    names = {str(identifier): str(name) for _, identifier, name in result}
+    names = {
+        str(identifier): str(name)
+        for _, identifier, name in cast(Iterable[tuple[Any, str, str]], result)
+    }
 
     terms: dict[str, Term] = {}
     master_to_left: dict[str, str] = {}
@@ -145,8 +150,9 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
       ?compound rh:chebi|rh:underlyingChebi|(rh:reactivePart/rh:chebi) ?chebi .
     }
     """
-    for master_rhea_id, side_uri, chebi_uri in graph.query(sparql):
-        master_rhea_id = str(master_rhea_id)
+    results = cast(Iterable[tuple[int, str, str]], graph.query(sparql))
+    for master_rhea_id_int, side_uri, chebi_uri in results:
+        master_rhea_id = str(master_rhea_id_int)
         chebi_reference = Reference(
             prefix="chebi", identifier=chebi_uri[len("http://purl.obolibrary.org/obo/CHEBI_") :]
         )

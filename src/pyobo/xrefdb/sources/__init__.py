@@ -3,16 +3,17 @@
 import logging
 from collections.abc import Callable, Iterable, Mapping
 from functools import lru_cache
+from typing import cast
 
 import pandas as pd
 from class_resolver import FunctionResolver
 from tqdm.auto import tqdm
 
 __all__ = [
-    "iter_xref_plugins",
     "has_xref_plugin",
-    "run_xref_plugin",
     "iter_xref_plugins",
+    "iter_xref_plugins",
+    "run_xref_plugin",
 ]
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ XrefGetter = Callable[[], pd.DataFrame]
 
 @lru_cache
 def _get_xref_plugins() -> Mapping[str, XrefGetter]:
-    resolver: FunctionResolver[XrefGetter] = FunctionResolver.from_entrypoint("pyobo.xrefs")
+    resolver = cast(FunctionResolver[XrefGetter], FunctionResolver.from_entrypoint("pyobo.xrefs"))
     return resolver.lookup_dict
 
 

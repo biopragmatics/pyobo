@@ -17,11 +17,11 @@ from ..utils.cache import cached_df, cached_mapping
 from ..utils.path import prefix_cache_join
 
 __all__ = [
-    "get_xrefs_df",
     "get_filtered_xrefs",
+    "get_sssom_df",
     "get_xref",
     "get_xrefs",
-    "get_sssom_df",
+    "get_xrefs_df",
 ]
 
 logger = logging.getLogger(__name__)

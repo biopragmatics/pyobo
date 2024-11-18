@@ -15,11 +15,11 @@ from ...constants import (
 from ...utils.path import ensure_df
 
 __all__ = [
-    "iter_ncit_dfs",
-    "get_ncit_go_df",
     "get_ncit_chebi_df",
+    "get_ncit_go_df",
     "get_ncit_hgnc_df",
     "get_ncit_uniprot_df",
+    "iter_ncit_dfs",
 ]
 
 PREFIX = "ncit"

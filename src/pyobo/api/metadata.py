@@ -1,7 +1,7 @@
 """High-level API for metadata."""
 
 import logging
-from collections.abc import Mapping
+from typing import Any, cast
 
 from .utils import get_version
 from ..getters import get_ontology
@@ -24,14 +24,14 @@ def get_metadata(
     version: str | None = None,
     force_process: bool = False,
     strict: bool = True,
-) -> Mapping[str, str]:
+) -> dict[str, Any]:
     """Get metadata for the ontology."""
     if version is None:
         version = get_version(prefix)
     path = prefix_cache_join(prefix, name="metadata.json", version=version)
 
     @cached_json(path=path, force=force or force_process)
-    def _get_json() -> Mapping[str, str]:
+    def _get_json() -> dict[str, Any]:
         if force:
             logger.debug("[%s] forcing reload for metadata", prefix)
         else:
@@ -41,4 +41,4 @@ def get_metadata(
         )
         return ontology.get_metadata()
 
-    return _get_json()
+    return cast(dict[str, Any], _get_json())

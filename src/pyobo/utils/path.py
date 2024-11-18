@@ -11,10 +11,10 @@ from pystow import VersionHint
 from ..constants import RAW_MODULE
 
 __all__ = [
-    "prefix_directory_join",
-    "prefix_cache_join",
-    "ensure_path",
     "ensure_df",
+    "ensure_path",
+    "prefix_cache_join",
+    "prefix_directory_join",
 ]
 
 logger = logging.getLogger(__name__)

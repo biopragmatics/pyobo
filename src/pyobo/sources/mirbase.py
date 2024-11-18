@@ -101,7 +101,7 @@ def _process_definitions_lines(
 
     for group in tqdm(groups, desc=f"mapping {PREFIX}"):
         name = group[0][5:23].strip()
-        qualifier, dtype, species_code, length = map(
+        _qualifier, _dtype, species_code, _length = map(
             str.strip, group[0][23:].strip().rstrip(".").split(";")
         )
         identifier = group[2][3:-2].strip()

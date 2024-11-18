@@ -30,8 +30,8 @@ from .utils.path import ensure_path, prefix_directory_join
 from .version import get_git_hash, get_version
 
 __all__ = [
-    "get_ontology",
     "NoBuildError",
+    "get_ontology",
 ]
 
 logger = logging.getLogger(__name__)

@@ -55,17 +55,17 @@ from ..utils.io import multidict, write_iterable_tsv
 from ..utils.path import prefix_directory_join
 
 __all__ = [
-    "Synonym",
-    "SynonymTypeDef",
-    "SynonymSpecificity",
-    "SynonymSpecificities",
-    "Term",
     "Obo",
-    "make_ad_hoc_ontology",
+    "Synonym",
+    "SynonymSpecificities",
+    "SynonymSpecificity",
+    "SynonymTypeDef",
+    "Term",
     "abbreviation",
     "acronym",
-    "int_identifier_sort_key",
     "default_reference",
+    "int_identifier_sort_key",
+    "make_ad_hoc_ontology",
 ]
 
 logger = logging.getLogger(__name__)

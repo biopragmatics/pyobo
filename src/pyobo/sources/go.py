@@ -4,8 +4,8 @@ from pyobo import get_descendants
 
 __all__ = [
     "is_biological_process",
-    "is_molecular_function",
     "is_cellular_component",
+    "is_molecular_function",
 ]
 
 

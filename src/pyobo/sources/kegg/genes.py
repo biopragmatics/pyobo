@@ -101,7 +101,9 @@ def _make_terms(
 
             uniprot_xref = uniprot_conv.get(identifier)
             if uniprot_xref is not None:
-                term.annotate_object(has_gene_product, Reference("uniprot", uniprot_xref))
+                term.annotate_object(
+                    has_gene_product, Reference(prefix="uniprot", identifier=uniprot_xref)
+                )
 
             ncbigene_xref = ncbigene_conv.get(identifier)
             if ncbigene_xref is not None:

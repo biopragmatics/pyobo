@@ -15,12 +15,12 @@ from ..utils.io import multidict
 from ..utils.path import prefix_cache_join
 
 __all__ = [
-    "get_properties_df",
     "get_filtered_properties_df",
     "get_filtered_properties_mapping",
     "get_filtered_properties_multimapping",
-    "get_property",
     "get_properties",
+    "get_properties_df",
+    "get_property",
 ]
 
 logger = logging.getLogger(__name__)
