@@ -166,7 +166,7 @@ def _parse_go(go_terms) -> list[Reference]:
 def ensure(version: str | None = None, force: bool = False) -> Path:
     """Ensure the reviewed uniprot names are available."""
     if version is None:
-        version = get_version("uniprot")
+        version = get_version("uniprot", strict=True)
     return RAW_MODULE.ensure(
         PREFIX,
         version,

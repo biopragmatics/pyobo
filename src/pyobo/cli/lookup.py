@@ -57,9 +57,9 @@ def lookup():
 def xrefs(prefix: str, target: str, force: bool, no_strict: bool, version: str | None):
     """Page through xrefs for the given namespace to the second given namespace."""
     if target:
-        target = bioregistry.normalize_prefix(target)
+        target_norm = bioregistry.normalize_prefix(target)
         filtered_xrefs = get_filtered_xrefs(
-            prefix, target, force=force, strict=not no_strict, version=version
+            prefix, target_norm, force=force, strict=not no_strict, version=version
         )
         click.echo_via_pager(
             "\n".join(f"{identifier}\t{_xref}" for identifier, _xref in filtered_xrefs.items())
