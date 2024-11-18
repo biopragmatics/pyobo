@@ -211,20 +211,32 @@ CANT_PARSE = {
     "xl",
 }
 SKIP = {
-    "ncbigene",  # too big, refs acquired from other dbs
-    "pubchem.compound",  # to big, can't deal with this now
-    "gaz",  # Gazetteer is irrelevant for biology
-    "ma",  # yanked
-    "bila",  # yanked
-    # FIXME below
-    "emapa",  # recently changed with EMAP... not sure what the difference is anymore
-    "kegg.genes",
-    "kegg.genome",
-    "kegg.pathway",
-    # URL is wrong
-    "ensemblglossary",
-    # Too much junk
-    "biolink",
+    "ncbigene": "too big, refs acquired from other dbs",
+    "pubchem.compound": "top big, can't deal with this now",
+    "gaz": "Gazetteer is irrelevant for biology",
+    "ma": "yanked",
+    "bila": "yanked",
+    # Can't download",
+    "afpo": "unable to download",
+    "atol": "unable to download",
+    "eol": "unable to download, same source as atol",
+    "hog": "unable to download",
+    "ccf": "unable to download",
+    "gorel": "unable to download",
+    "dinto": "unable to download",
+    "gainesville.core": "unable to download",
+    "mamo": "unable to download",
+    "ato": "can't process",
+    "emapa": "recently changed with EMAP... not sure what the difference is anymore",
+    "kegg.genes": "needs fix",  # FIXME
+    "kegg.genome": "needs fix",  # FIXME
+    "kegg.pathway": "needs fix",  # FIXME
+    "ensemblglossary": "uri is wrong",
+    "biolink": "too much junk",
+    "epio": "content from fraunhofer is unreliable",
+    "epso": "content from fraunhofer is unreliable",
+    "gwascentral.phenotype": "website is down? or API changed?",  # FIXME
+    "gwascentral.study": "website is down? or API changed?",  # FIXME
 }
 
 X = TypeVar("X")
@@ -261,7 +273,7 @@ def _prefixes(
         if resource.no_own_terms:
             continue
         if prefix in SKIP:
-            tqdm.write(f"skipping {prefix} because in default skip set")
+            tqdm.write(f"skipping {prefix} because {SKIP[prefix]}")
             continue
         if skip_set and prefix in skip_set:
             tqdm.write(f"skipping {prefix} because in skip set")
