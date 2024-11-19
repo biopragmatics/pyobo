@@ -50,7 +50,7 @@ NO_BUILD_LOGGED: set = set()
 
 
 def _help_get(
-    f: Callable[[str], Mapping[str, X]],
+    f: Callable[[str, Unpack[SlimLookupKwargs]], Mapping[str, X]],
     prefix: str,
     identifier: str,
     **kwargs: Unpack[SlimLookupKwargs],
@@ -90,7 +90,9 @@ def get_name(
     if isinstance(prefix, ReferenceTuple | Reference):
         identifier = prefix.identifier
         prefix = prefix.prefix
-    return _help_get(get_id_name_mapping, prefix, identifier, **kwargs)
+    if identifier is None:
+        raise ValueError("identifier is None")
+    return _help_get(get_id_name_mapping, prefix=prefix, identifier=identifier, **kwargs)
 
 
 @lru_cache
@@ -167,7 +169,9 @@ def get_definition(
     """Get the definition for an entity."""
     if identifier is None:
         prefix, _, identifier = prefix.rpartition(":")
-    return _help_get(get_id_definition_mapping, prefix, identifier, **kwargs)
+    if identifier is None:
+        raise ValueError
+    return _help_get(get_id_definition_mapping, prefix=prefix, identifier=identifier, **kwargs)
 
 
 def get_id_definition_mapping(
@@ -207,7 +211,7 @@ def get_synonyms(
     prefix: str, identifier: str, **kwargs: Unpack[SlimLookupKwargs]
 ) -> list[str] | None:
     """Get the synonyms for an entity."""
-    return _help_get(get_id_synonyms_mapping, prefix, identifier, **kwargs)
+    return _help_get(get_id_synonyms_mapping, prefix=prefix, identifier=identifier, **kwargs)
 
 
 @wrap_norm_prefix
