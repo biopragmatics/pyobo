@@ -1,6 +1,7 @@
 """High-level API for metadata."""
 
 import logging
+from functools import lru_cache
 from typing import Any, cast
 
 from .utils import get_version
@@ -8,7 +9,6 @@ from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_json
 from ..utils.path import prefix_cache_join
-from functools import lru_cache
 
 __all__ = [
     "get_metadata",

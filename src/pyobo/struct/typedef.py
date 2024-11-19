@@ -21,7 +21,6 @@ __all__ = [
     "example_of_usage",
     "from_species",
     "gene_product_member_of",
-    "get_reference_tuple",
     "has_dbxref",
     "has_gene_product",
     "has_homepage",
