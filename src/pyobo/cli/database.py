@@ -13,7 +13,7 @@ from .utils import (
     directory_option,
     force_option,
     force_process_option,
-    no_strict_option,
+    strict_option,
     zenodo_option,
 )
 from ..constants import (
@@ -51,9 +51,12 @@ def main():
     """Build the PyOBO Database."""
 
 
-skip_pyobo_option = click.option("--skip-pyobo")
-skip_below_option = click.option("--skip-below")
-skip_below_exclusive_option = click.option("--skip-below-exclusive", is_flag=True)
+skip_pyobo_option = click.option(
+    "--skip-pyobo", help="Skip prefixes whose ontologies are implemented as PyOBO sources"
+)
+skip_below_option = click.option(
+    "--skip-below", help="Skip prefixes lexically sorted below the given one"
+)
 
 
 def database_annotate(f: Clickable) -> Clickable:
@@ -65,7 +68,7 @@ def database_annotate(f: Clickable) -> Clickable:
         directory_option,
         force_option,
         force_process_option,
-        no_strict_option,
+        strict_option,
         skip_pyobo_option,
         skip_below_option,
     ]
@@ -75,25 +78,26 @@ def database_annotate(f: Clickable) -> Clickable:
 
 
 class DatabaseKwargs(TypedDict):
-    zenodo: bool
+    """Keyword arguments for database CLI functions."""
+
     directory: str
-    no_strict: bool
+    strict: bool
     force: bool
     force_process: bool
     skip_pyobo: bool
+    skip_below: str | None
 
-    @property
-    def strict(self) -> bool:
-        return not self.no_strict
+
+def _update_database_kwargs(kwargs: DatabaseKwargs) -> DatabaseKwargs:
+    updated_kwargs = dict(kwargs)
+    updated_kwargs.update(force=False, force_process=False)
+    # FIXME get typing right on next line
+    return updated_kwargs  # type:ignore
 
 
 @database_annotate
 @click.pass_context
-def build(
-    ctx: click.Context,
-    skip_below: str | None,
-    **kwargs: Unpack[DatabaseKwargs],
-) -> None:
+def build(ctx: click.Context, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Build all databases."""
     # if no_strict and zenodo:
     #    click.secho("Must be strict before uploading", fg="red")
@@ -102,74 +106,54 @@ def build(
         click.secho("Collecting metadata and building", fg="cyan", bold=True)
         # note that this is the only one that needs a force=force
         ctx.invoke(metadata, **kwargs)
+
+        # After running once, we don't want to force or re-process.
+        # All the other arguments come along for the ride!
+        updated_kwargs = _update_database_kwargs(kwargs)
+
         click.secho("Alternate Identifiers", fg="cyan", bold=True)
-        ctx.invoke(alts, directory=directory, zenodo=kwargs.zenodo, no_strict=kwargs.no_strict)
+        ctx.invoke(alts, **updated_kwargs)
         click.secho("Synonyms", fg="cyan", bold=True)
-        ctx.invoke(synonyms, directory=directory, zenodo=kwargs.zenodo, no_strict=kwargs.no_strict)
+        ctx.invoke(synonyms, **updated_kwargs)
         click.secho("Xrefs", fg="cyan", bold=True)
-        ctx.invoke(xrefs, directory=directory, zenodo=kwargs.zenodo, no_strict=kwargs.no_strict)
+        ctx.invoke(xrefs, **updated_kwargs)
         click.secho("Names", fg="cyan", bold=True)
-        ctx.invoke(names, directory=directory, zenodo=kwargs.zenodo, no_strict=kwargs.no_strict)
+        ctx.invoke(names, **updated_kwargs)
         click.secho("Definitions", fg="cyan", bold=True)
-        ctx.invoke(definitions, directory=directory, zenodo=kwargs.zenodo, no_strict=kwargs.no_strict)
+        ctx.invoke(definitions, **updated_kwargs)
         click.secho("Properties", fg="cyan", bold=True)
-        ctx.invoke(properties, directory=directory, zenodo=kwargs.zenodo, no_strict=kwargs.no_strict)
+        ctx.invoke(properties, **updated_kwargs)
         click.secho("Relations", fg="cyan", bold=True)
-        ctx.invoke(relations, directory=directory, zenodo=kwargs.zenodo, no_strict=kwargs.no_strict)
+        ctx.invoke(relations, **updated_kwargs)
         click.secho("Typedefs", fg="cyan", bold=True)
-        ctx.invoke(typedefs, directory=directory, zenodo=kwargs.zenodo, no_strict=kwargs.no_strict)
+        ctx.invoke(typedefs, **updated_kwargs)
         click.secho("Species", fg="cyan", bold=True)
-        ctx.invoke(species, directory=directory, zenodo=kwargs.zenodo, no_strict=kwargs.no_strict)
+        ctx.invoke(species, **updated_kwargs)
 
 
 @database_annotate
-@skip_below_option
-def metadata(
-    skip_below: str | None,
-    **kwargs: Unpack[DatabaseKwargs],
-) -> None:
+def metadata(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-metadata dump."""
     db_output_helper(
         _iter_metadata,
         "metadata",
         ("prefix", "version", "date", "deprecated"),
-        strict=not kwargs.no_strict,
-        force=kwargs.force,
-        force_process=kwargs.force_process,
-        directory=kwargs.directory,
         use_gzip=False,
-        skip_below=kwargs.skip_below,
-        skip_pyobo=kwargs.skip_pyobo,
+        **kwargs,
     )
     if zenodo:
         click.secho("No Zenodo record for metadata", fg="red")
 
 
 @database_annotate
-@skip_below_exclusive_option
-def names(
-    zenodo: bool,
-    directory: str,
-    no_strict: bool,
-    force: bool,
-    force_process: bool,
-    skip_pyobo: bool,
-    skip_below: str | None,
-    skip_below_exclusive: bool,
-) -> None:
+def names(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-identifier-name dump."""
     with logging_redirect_tqdm():
         paths = db_output_helper(
             _iter_names,
             "names",
             ("prefix", "identifier", "name"),
-            strict=not no_strict,
-            force=force,
-            force_process=force_process,
-            directory=directory,
-            skip_pyobo=skip_pyobo,
-            skip_below=skip_below,
-            skip_below_inclusive=not skip_below_exclusive,
+            **kwargs,
         )
     if zenodo:
         # see https://zenodo.org/record/4020486
@@ -177,25 +161,14 @@ def names(
 
 
 @database_annotate
-def species(
-    zenodo: bool,
-    directory: str,
-    no_strict: bool,
-    force: bool,
-    force_process: bool,
-    skip_pyobo: bool,
-) -> None:
+def species(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-identifier-species dump."""
     with logging_redirect_tqdm():
         paths = db_output_helper(
             _iter_species,
             "species",
             ("prefix", "identifier", "species"),
-            strict=not no_strict,
-            force=force,
-            force_process=force_process,
-            directory=directory,
-            skip_pyobo=skip_pyobo,
+            **kwargs,
         )
     if zenodo:
         # see https://zenodo.org/record/5334738
@@ -203,17 +176,15 @@ def species(
 
 
 @database_annotate
-def definitions(directory: str, zenodo: bool, no_strict: bool, force: bool) -> None:
+def definitions(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-identifier-definition dump."""
     with logging_redirect_tqdm():
         paths = db_output_helper(
             _iter_definitions,
             "definitions",
             ("prefix", "identifier", "definition"),
-            strict=not no_strict,
-            force=force,
-            directory=directory,
             skip_set={"kegg.pathway", "kegg.genes", "kegg.genome", "umls"},
+            **kwargs,
         )
     if zenodo:
         # see https://zenodo.org/record/4637061
@@ -221,18 +192,16 @@ def definitions(directory: str, zenodo: bool, no_strict: bool, force: bool) -> N
 
 
 @database_annotate
-def typedefs(directory: str, zenodo: bool, no_strict: bool, force: bool) -> None:
+def typedefs(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the typedef prefix-identifier-name dump."""
     with logging_redirect_tqdm():
         paths = db_output_helper(
             _iter_typedefs,
             "typedefs",
             ("prefix", "typedef_prefix", "identifier", "name"),
-            strict=not no_strict,
-            force=force,
-            directory=directory,
             use_gzip=False,
             skip_set={"ncbigene", "kegg.pathway", "kegg.genes", "kegg.genome"},
+            **kwargs,
         )
     if zenodo:
         # see https://zenodo.org/record/4644013
@@ -240,17 +209,15 @@ def typedefs(directory: str, zenodo: bool, no_strict: bool, force: bool) -> None
 
 
 @database_annotate
-def alts(directory: str, zenodo: bool, force: bool, no_strict: bool) -> None:
+def alts(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-alt-id dump."""
     with logging_redirect_tqdm():
         paths = db_output_helper(
             _iter_alts,
             "alts",
             ("prefix", "identifier", "alt"),
-            directory=directory,
-            force=force,
-            strict=not no_strict,
             skip_set={"kegg.pathway", "kegg.genes", "kegg.genome", "umls"},
+            **kwargs,
         )
     if zenodo:
         # see https://zenodo.org/record/4021476
@@ -258,17 +225,15 @@ def alts(directory: str, zenodo: bool, force: bool, no_strict: bool) -> None:
 
 
 @database_annotate
-def synonyms(directory: str, zenodo: bool, force: bool, no_strict: bool) -> None:
+def synonyms(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-identifier-synonym dump."""
     with logging_redirect_tqdm():
         paths = db_output_helper(
             _iter_synonyms,
             "synonyms",
             ("prefix", "identifier", "synonym"),
-            directory=directory,
-            force=force,
-            strict=not no_strict,
             skip_set={"kegg.pathway", "kegg.genes", "kegg.genome"},
+            **kwargs,
         )
     if zenodo:
         # see https://zenodo.org/record/4021482
@@ -276,7 +241,7 @@ def synonyms(directory: str, zenodo: bool, force: bool, no_strict: bool) -> None
 
 
 @database_annotate
-def relations(directory: str, zenodo: bool, force: bool, no_strict: bool) -> None:
+def relations(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the relation dump."""
     with logging_redirect_tqdm():
         paths = db_output_helper(
@@ -290,10 +255,8 @@ def relations(directory: str, zenodo: bool, force: bool, no_strict: bool) -> Non
                 "target_prefix",
                 "target_identifier",
             ),
-            directory=directory,
-            force=force,
-            strict=not no_strict,
             summary_detailed=(0, 2, 3),  # second column corresponds to relation type
+            **kwargs,
         )
     if zenodo:
         # see https://zenodo.org/record/4625167
@@ -301,17 +264,15 @@ def relations(directory: str, zenodo: bool, force: bool, no_strict: bool) -> Non
 
 
 @database_annotate
-def properties(directory: str, zenodo: bool, force: bool, no_strict: bool) -> None:
+def properties(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the properties dump."""
     with logging_redirect_tqdm():
         paths = db_output_helper(
             _iter_properties,
             "properties",
             ("prefix", "identifier", "property", "value"),
-            directory=directory,
-            force=force,
-            strict=not no_strict,
             summary_detailed=(0, 2),  # second column corresponds to property type
+            **kwargs,
         )
     if zenodo:
         # see https://zenodo.org/record/4625172
@@ -319,17 +280,15 @@ def properties(directory: str, zenodo: bool, force: bool, no_strict: bool) -> No
 
 
 @database_annotate
-def xrefs(directory: str, zenodo: bool, force: bool, no_strict: bool) -> None:
+def xrefs(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-identifier-xref dump."""
     with logging_redirect_tqdm():
         paths = db_output_helper(
             _iter_xrefs,
             "xrefs",
             ("prefix", "identifier", "xref_prefix", "xref_identifier", "provenance"),
-            directory=directory,
-            force=force,
-            strict=not no_strict,
             summary_detailed=(0, 2),  # second column corresponds to xref prefix
+            **kwargs,
         )
     if zenodo:
         # see https://zenodo.org/record/4021477
