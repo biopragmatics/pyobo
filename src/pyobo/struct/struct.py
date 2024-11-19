@@ -147,17 +147,23 @@ default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
 
 
-def _ensure_ref(reference: ReferenceHint) -> Reference:
+def _ensure_ref(
+    reference: ReferenceHint,
+    *,
+    ontology_prefix: str | None = None,
+) -> Reference:
     if reference is None:
         raise ValueError("can not append null reference")
     if isinstance(reference, Referenced):
         return reference.reference
     if isinstance(reference, str):
         if ":" not in reference:
-            return Reference(prefix="obo", identifier=reference)
-        _rv = Reference.from_curie(reference)
+            if not ontology_prefix:
+                raise ValueError
+            return default_reference(ontology_prefix, reference)
+        _rv = Reference.from_curie(reference, strict=True)
         if _rv is None:
-            raise ValueError(f"could not parse CURIE from {reference}")
+            raise RuntimeError  # not possible, need typing for Reference.from_curie
         return _rv
     if isinstance(reference, tuple):
         return Reference(prefix=reference[0], identifier=reference[1])
@@ -1280,7 +1286,7 @@ class Obo:
         use_tqdm: bool = False,
     ) -> Iterable[tuple[Term, Reference]]:
         """Iterate over tuples of terms and ther targets for the given relation."""
-        _pair = _ensure_ref(relation).pair
+        _pair = _ensure_ref(relation, ontology_prefix=self.ontology).pair
         for term, predicate, reference in self.iterate_relations(use_tqdm=use_tqdm):
             if predicate.pair == _pair:
                 yield term, reference

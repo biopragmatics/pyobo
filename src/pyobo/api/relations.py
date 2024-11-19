@@ -87,7 +87,7 @@ def get_filtered_relations_df(
     force_process: bool = False,
 ) -> pd.DataFrame:
     """Get all the given relation."""
-    relation = _ensure_ref(relation)
+    relation = _ensure_ref(relation, ontology_prefix=prefix)
     if version is None:
         version = get_version(prefix)
     path = prefix_cache_join(
