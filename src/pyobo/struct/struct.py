@@ -402,7 +402,8 @@ class Term(Referenced):
     def append_property(
         self, prop: str | Reference | Referenced, value: str | Reference | Referenced
     ) -> None:
-        raise NotImplementedError('this was removed')
+        """Append an arbitrary property."""
+        raise NotImplementedError("this was removed")
 
     def annotate_literal(
         self, prop: ReferenceHint, value: str, datatype: Reference | None = None
