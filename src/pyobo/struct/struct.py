@@ -56,6 +56,7 @@ from ..utils.path import prefix_directory_join
 
 __all__ = [
     "Obo",
+    "ReferenceHint",
     "Synonym",
     "SynonymSpecificities",
     "SynonymSpecificity",
@@ -161,7 +162,7 @@ def _ensure_ref(
             if not ontology_prefix:
                 raise ValueError
             return default_reference(ontology_prefix, reference)
-        _rv = Reference.from_curie(reference, strict=True)
+        _rv = Reference.from_curie(reference, strict=True, ontology_prefix=ontology_prefix)
         if _rv is None:
             raise RuntimeError  # not possible, need typing for Reference.from_curie
         return _rv
@@ -1288,7 +1289,7 @@ class Obo:
         """Iterate over tuples of terms and ther targets for the given relation."""
         _pair = _ensure_ref(relation, ontology_prefix=self.ontology).pair
         for term, predicate, reference in self.iterate_relations(use_tqdm=use_tqdm):
-            if predicate.pair == _pair:
+            if _pair == predicate.pair:
                 yield term, reference
 
     @property

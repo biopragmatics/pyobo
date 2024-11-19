@@ -1,7 +1,6 @@
 """High-level API for relations."""
 
 import logging
-import os
 from collections.abc import Mapping
 from functools import lru_cache
 
@@ -90,25 +89,24 @@ def get_filtered_relations_df(
     relation = _ensure_ref(relation, ontology_prefix=prefix)
     if version is None:
         version = get_version(prefix)
+
+    all_relations_path = prefix_cache_join(prefix, name="relations.tsv", version=version)
+    if all_relations_path.is_file():
+        logger.debug("[%] loading all relations from %s", prefix, all_relations_path)
+        df = pd.read_csv(all_relations_path, sep="\t", dtype=str)
+        idx = (df[RELATION_PREFIX] == relation.prefix) & (df[RELATION_ID] == relation.identifier)
+        columns = [f"{prefix}_id", TARGET_PREFIX, TARGET_ID]
+        return df.loc[idx, columns]
+
     path = prefix_cache_join(
         prefix,
         "relations",
         name=f"{relation.curie}.tsv",
         version=version,
     )
-    all_relations_path = prefix_cache_join(prefix, name="relations.tsv", version=version)
 
     @cached_df(path=path, dtype=str, force=force or force_process)
     def _df_getter() -> pd.DataFrame:
-        if os.path.exists(all_relations_path):
-            logger.debug("[%] loading all relations from %s", prefix, all_relations_path)
-            df = pd.read_csv(all_relations_path, sep="\t", dtype=str)
-            idx = (df[RELATION_PREFIX] == relation.prefix) & (
-                df[RELATION_ID] == relation.identifier
-            )
-            columns = [f"{prefix}_id", TARGET_PREFIX, TARGET_ID]
-            return df.loc[idx, columns]
-
         logger.info("[%s] no cached relations found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, force=force, version=version, rewrite=force_process)
         return ontology.get_filtered_relations_df(relation, use_tqdm=use_tqdm)

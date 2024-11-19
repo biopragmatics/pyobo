@@ -13,7 +13,6 @@ from .struct import (
     make_ad_hoc_ontology,
 )
 from .typedef import (
-    RelationHint,
     TypeDef,
     derives_from,
     enables,
@@ -38,7 +37,6 @@ __all__ = [
     "Obo",
     "Reference",
     "Referenced",
-    "RelationHint",
     "Synonym",
     "SynonymSpecificities",
     "SynonymSpecificity",
@@ -50,7 +48,6 @@ __all__ = [
     "enables",
     "from_species",
     "gene_product_member_of",
-    "get_reference_tuple",
     "has_gene_product",
     "has_member",
     "has_part",

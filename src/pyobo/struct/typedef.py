@@ -11,7 +11,6 @@ from .reference import Reference, Referenced
 from ..resources.ro import load_ro
 
 __all__ = [
-    "RelationHint",
     "TypeDef",
     "alternative_term",
     "default_typedefs",
@@ -134,8 +133,6 @@ class TypeDef(Referenced):
             raise RuntimeError
         return cls(reference=reference)
 
-
-RelationHint = Reference | TypeDef | tuple[str, str] | str
 
 RO_PREFIX = "RO"
 BFO_PREFIX = "BFO"
