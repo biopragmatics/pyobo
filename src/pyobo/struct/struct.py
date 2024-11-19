@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import sys
+import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -310,6 +311,13 @@ class Term(Referenced):
             self.parents.append(reference)
         return self
 
+    def extend_parents(self, references: Iterable[Reference]) -> None:
+        """Add a collection of parents to this entity."""
+        warnings.warn("use append_parent", DeprecationWarning, stacklevel=2)
+        if any(x is None for x in references):
+            raise ValueError("can not append a collection of parents containing a null parent")
+        self.parents.extend(references)
+
     def get_properties(self, prop: ReferenceHint) -> list[str]:
         """Get properties from the given key."""
         prop = _ensure_ref(prop)
@@ -337,9 +345,9 @@ class Term(Referenced):
             raise ValueError
         return r[0]
 
-    def get_relationships(self, predicate: ReferenceHint) -> list[Reference]:
+    def get_relationships(self, typedef: ReferenceHint) -> list[Reference]:
         """Get relationships from the given type."""
-        return self.relationships[_ensure_ref(predicate)]
+        return self.relationships[_ensure_ref(typedef)]
 
     def append_exact_match(self, reference: ReferenceHint):
         """Append an exact match, also adding an xref."""
@@ -352,9 +360,9 @@ class Term(Referenced):
         """Append an xref."""
         self.xrefs.append(_ensure_ref(reference))
 
-    def append_relationship(self, predicate: ReferenceHint, reference: ReferenceHint) -> None:
+    def append_relationship(self, typedef: ReferenceHint, reference: ReferenceHint) -> None:
         """Append a relationship."""
-        self.relationships[_ensure_ref(predicate)].append(_ensure_ref(reference))
+        self.relationships[_ensure_ref(typedef)].append(_ensure_ref(reference))
 
     def set_species(self, identifier: str, name: str | None = None):
         """Append the from_species relation."""
@@ -376,11 +384,19 @@ class Term(Referenced):
                 return species
         return None
 
-    def annotate_object(self, prop: ReferenceHint, value: ReferenceHint) -> Self:
+    def extend_relationship(self, typedef: ReferenceHint, references: Iterable[Reference]) -> None:
+        """Append several relationships."""
+        warnings.warn("use append_relationship", DeprecationWarning, stacklevel=2)
+        if any(x is None for x in references):
+            raise ValueError("can not extend a collection that includes a null reference")
+        typedef = _ensure_ref(typedef)
+        self.relationships[typedef].extend(references)
+
+    def annotate_object(self, typedef: ReferenceHint, value: ReferenceHint) -> Self:
         """Append an object annotation."""
-        prop = _ensure_ref(prop)
+        typedef = _ensure_ref(typedef)
         value = _ensure_ref(value)
-        self.annotations_object[prop].append(value)
+        self.annotations_object[typedef].append(value)
         return self
 
     def annotate_literal(
@@ -406,9 +422,9 @@ class Term(Referenced):
 
     def iterate_relations(self) -> Iterable[tuple[Reference, Reference]]:
         """Iterate over pairs of typedefs and targets."""
-        for predicate, targets in sorted(self.relationships.items()):
+        for typedef, targets in sorted(self.relationships.items()):
             for target in sorted(targets):
-                yield predicate, target
+                yield typedef, target
 
     def iterate_properties(self) -> Iterable[tuple[str, str]]:
         """Iterate over pairs of property and values."""
