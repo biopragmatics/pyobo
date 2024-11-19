@@ -52,7 +52,9 @@ def main():
 
 
 skip_pyobo_option = click.option(
-    "--skip-pyobo", is_flag=True, help="Skip prefixes whose ontologies are implemented as PyOBO sources"
+    "--skip-pyobo",
+    is_flag=True,
+    help="Skip prefixes whose ontologies are implemented as PyOBO sources",
 )
 skip_below_option = click.option(
     "--skip-below", help="Skip prefixes lexically sorted below the given one"
