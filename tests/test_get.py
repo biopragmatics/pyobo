@@ -4,8 +4,8 @@ import unittest
 from operator import attrgetter
 
 import obonet
-
-from pyobo import Reference, Synonym, SynonymTypeDef, get_ontology
+from curies import ReferenceTuple
+from pyobo import Reference, Synonym, SynonymTypeDef, TypeDef, get_ontology
 from pyobo.reader import (
     _extract_definition,
     _extract_synonym,
@@ -18,6 +18,8 @@ from pyobo.reader import (
     iterate_node_xrefs,
 )
 from pyobo.struct.struct import acronym
+from pyobo.utils.io import multidict
+
 from tests.constants import TEST_CHEBI_OBO_PATH, chebi_patch
 
 
@@ -266,3 +268,21 @@ class TestGet(unittest.TestCase):
         self.assertNotIn("C00462", id_alts_mapping)
         self.assertIn("16042", id_alts_mapping, msg="halide anion alt_id fields not parsed")
         self.assertEqual({"5605", "14384"}, set(id_alts_mapping["16042"]))
+
+    def test_iter_filtered_relations(self):
+        """Test getting filtered relations w/ upgrade."""
+        curie = "chebi:is_conjugate_base_of"
+        for inp in [
+            curie,
+            ReferenceTuple.from_curie(curie),
+            Reference.from_curie(curie),
+            TypeDef.from_curie(curie),
+        ]:
+            with self.subTest(inp=inp):
+                rr = multidict(
+                    (term.reference, target)
+                    for term, target in self.ontology.iterate_filtered_relations(inp)
+                )
+                term = Reference.from_curie("chebi:17051")
+                self.assertIn(term, rr)
+                self.assertIn(Reference.from_curie("chebi:29228"), rr[term])

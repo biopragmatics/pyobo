@@ -146,7 +146,7 @@ def _ensure_ref(
     if isinstance(reference, str):
         _rv = Reference.from_curie(reference, strict=True, ontology_prefix=ontology_prefix)
         if _rv is None:
-            raise RuntimeError  # not possible, need typing for Reference.from_curie
+            raise ValueError(f"could not parse CURIE from {reference}")
         return _rv
     if isinstance(reference, tuple):
         return Reference(prefix=reference[0], identifier=reference[1])
