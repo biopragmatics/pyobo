@@ -4,8 +4,8 @@ import unittest
 
 from curies import ReferenceTuple
 
+from pyobo.identifier_utils import normalize_curie
 from pyobo.sources.expasy import _parse_transfer
-from pyobo.struct.reference import normalize_curie
 from pyobo.utils.iter import iterate_together
 
 

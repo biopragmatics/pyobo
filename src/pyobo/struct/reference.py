@@ -13,16 +13,9 @@ from pydantic import Field, field_validator, model_validator
 
 from .utils import obo_escape
 from ..constants import GLOBAL_CHECK_IDS
-from ..registries import (
-    curie_has_blacklisted_prefix,
-    curie_has_blacklisted_suffix,
-    curie_is_blacklisted,
-    remap_full,
-    remap_prefix,
-)
+from ..identifier_utils import normalize_curie
 
 __all__ = [
-    "MissingPrefixError",
     "Reference",
     "Referenced",
 ]
@@ -222,87 +215,3 @@ class Referenced:
     def bioregistry_link(self) -> str:
         """Get the bioregistry link."""
         return self.reference.bioregistry_link
-
-
-class MissingPrefixError(ValueError):
-    """Raised on a missing prefix."""
-
-    def __init__(
-        self,
-        *,
-        curie: str,
-        ontology: str | None = None,
-        reference: Reference | None = None,
-    ):
-        """Initialize the error."""
-        self.curie = curie
-        self.ontology = ontology
-        self.reference = reference
-
-    def __str__(self) -> str:
-        s = ""
-        if self.ontology:
-            s += f"[{self.ontology}] "
-        s += f"curie contains unhandled prefix: `{self.curie}`"
-        if self.reference is not None:
-            s += f" from {self.reference.curie}"
-        return s
-
-
-BAD_CURIES: set[str] = set()
-
-
-def normalize_curie(
-    curie: str,
-    *,
-    strict: bool = True,
-    ontology: str | None = None,
-    reference_node: Reference | None = None,
-) -> ReferenceTuple | None:
-    """Parse a string that looks like a CURIE.
-
-    :param curie: A compact uniform resource identifier (CURIE)
-    :param strict: Should an exception be thrown if the CURIE can not be parsed w.r.t. the Bioregistry?
-    :param ontology: The ontology in which the CURIE appears
-    :return: A parse tuple or a tuple of None, None if not able to parse and not strict
-
-    - Normalizes the namespace
-    - Checks against a blacklist for the entire curie, for the namespace, and for suffixes.
-    """
-    if curie_is_blacklisted(curie):
-        return None
-    if curie_has_blacklisted_prefix(curie):
-        return None
-    if curie_has_blacklisted_suffix(curie):
-        return None
-
-    # Remap the curie with the full list
-    curie = remap_full(curie)
-
-    # Remap node's prefix (if necessary)
-    curie = remap_prefix(curie, ontology_prefix=ontology)
-
-    # TODO reuse bioregistry logic for standardizing and parsing CURIEs?
-    # prefix, identifier = bioregistry.parse_curie(curie)
-    # if prefix is None or identifier is None:
-    #     BAD_CURIES.add(curie)
-
-    try:
-        prefix, identifier = curie.split(":", 1)
-    except ValueError:  # skip nodes that don't look like normal CURIEs
-        if curie not in BAD_CURIES:
-            BAD_CURIES.add(curie)
-            logger.debug(f"could not split CURIE on colon: {curie}")
-        return None
-
-    # remove redundant prefix
-    if identifier.casefold().startswith(f"{prefix.casefold()}:"):
-        identifier = identifier[len(prefix) + 1 :]
-
-    norm_node_prefix = bioregistry.normalize_prefix(prefix)
-    if norm_node_prefix is not None:
-        return ReferenceTuple(prefix=norm_node_prefix, identifier=identifier)
-    elif strict:
-        raise MissingPrefixError(curie=curie, ontology=ontology, reference=reference_node)
-    else:
-        return None
