@@ -48,6 +48,7 @@ from ..constants import (
     TARGET_ID,
     TARGET_PREFIX,
 )
+from ..identifier_utils import normalize_curie
 from ..utils.io import multidict, write_iterable_tsv
 from ..utils.path import prefix_directory_join
 

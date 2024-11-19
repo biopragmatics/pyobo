@@ -1,7 +1,6 @@
 """High-level API for relations."""
 
 import logging
-import os
 from collections.abc import Mapping
 from functools import lru_cache
 
@@ -87,7 +86,7 @@ def get_filtered_relations_df(
     force_process: bool = False,
 ) -> pd.DataFrame:
     """Get all the given relation."""
-    relation_prefix, relation_identifier = relation = _ensure_ref(relation).pair
+    relation = _ensure_ref(relation)
     if version is None:
         version = get_version(prefix)
 
@@ -95,16 +94,14 @@ def get_filtered_relations_df(
     if all_relations_path.is_file():
         logger.debug("[%] loading all relations from %s", prefix, all_relations_path)
         df = pd.read_csv(all_relations_path, sep="\t", dtype=str)
-        idx = (df[RELATION_PREFIX] == relation_prefix) & (
-            df[RELATION_ID] == relation_identifier
-        )
+        idx = (df[RELATION_PREFIX] == relation.prefix) & (df[RELATION_ID] == relation.identifier)
         columns = [f"{prefix}_id", TARGET_PREFIX, TARGET_ID]
         return df.loc[idx, columns]
 
     path = prefix_cache_join(
         prefix,
         "relations",
-        name=f"{relation_prefix}:{relation_identifier}.tsv",
+        name=f"{relation.curie}.tsv",
         version=version,
     )
 
