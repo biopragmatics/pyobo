@@ -105,21 +105,34 @@ PROVENANCE_PREFIXES = {
 class DatabaseKwargs(TypedDict):
     """Keyword arguments for database CLI functions."""
 
-    directory: str
     strict: bool
     force: bool
     force_process: bool
     skip_pyobo: bool
     skip_below: str | None
+    skip_set: set[str] | None
+    use_tqdm: bool
 
 
-class SlimLookupKwargs(TypedDict):
+class SlimmerLookupKwargs(TypedDict):
     """Keyword arguments for database CLI functions."""
 
     strict: bool
     force: bool
     force_process: bool
+
+
+class SlimLookupKwargs(SlimmerLookupKwargs):
+    """Keyword arguments for database CLI functions."""
+
     version: str | None
+
+
+class IterHelperHelperDict(SlimmerLookupKwargs):
+    use_tqdm: bool
+    skip_below: str | None
+    skip_pyobo: bool
+    skip_set: set[str] | None
 
 
 class LookupKwargs(SlimLookupKwargs):

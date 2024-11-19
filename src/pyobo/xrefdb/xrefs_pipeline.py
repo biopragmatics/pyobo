@@ -102,25 +102,33 @@ def _iter_names(leave: bool = False, **kwargs) -> Iterable[tuple[str, str, str]]
             yield pubchem.PREFIX, identifier, name
 
 
-def _iter_species(leave: bool = False, **kwargs) -> Iterable[tuple[str, str, str]]:
+def _iter_species(
+    leave: bool = False, **kwargs: Unpack[IterHelperHelperDict]
+) -> Iterable[tuple[str, str, str]]:
     """Iterate over all prefix-identifier-species triples we can get."""
     yield from iter_helper(get_id_species_mapping, leave=leave, **kwargs)
     # TODO ncbigene
 
 
-def _iter_definitions(leave: bool = False, **kwargs) -> Iterable[tuple[str, str, str]]:
+def _iter_definitions(
+    leave: bool = False, **kwargs: Unpack[IterHelperHelperDict]
+) -> Iterable[tuple[str, str, str]]:
     """Iterate over all prefix-identifier-descriptions triples we can get."""
     yield from iter_helper(get_id_definition_mapping, leave=leave, **kwargs)
     yield from _iter_ncbigene(1, 8)
 
 
-def _iter_alts(leave: bool = False, **kwargs) -> Iterable[tuple[str, str, str]]:
+def _iter_alts(
+    leave: bool = False, **kwargs: Unpack[IterHelperHelperDict]
+) -> Iterable[tuple[str, str, str]]:
     for prefix, identifier, alts in iter_helper(get_id_to_alts, leave=leave, **kwargs):
         for alt in alts:
             yield prefix, identifier, alt
 
 
-def _iter_synonyms(leave: bool = False, **kwargs) -> Iterable[tuple[str, str, str]]:
+def _iter_synonyms(
+    leave: bool = False, **kwargs: Unpack[IterHelperHelperDict]
+) -> Iterable[tuple[str, str, str]]:
     """Iterate over all prefix-identifier-synonym triples we can get.
 
     :param leave: should the tqdm be left behind?

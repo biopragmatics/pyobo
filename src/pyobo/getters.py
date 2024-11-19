@@ -22,7 +22,12 @@ from bioontologies import robot
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
 
-from .constants import DATABASE_DIRECTORY, SlimLookupKwargs
+from .constants import (
+    DATABASE_DIRECTORY,
+    IterHelperHelperDict,
+    SlimLookupKwargs,
+    SlimmerLookupKwargs,
+)
 from .identifier_utils import MissingPrefixError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
@@ -247,7 +252,7 @@ X = TypeVar("X")
 
 
 def iter_helper(
-    f: Callable[[str], Mapping[str, X]],
+    f: Callable[[str, Unpack[SlimLookupKwargs]], Mapping[str, X]],
     leave: bool = False,
     **kwargs: Unpack[IterHelperHelperDict],
 ) -> Iterable[tuple[str, str, X]]:
@@ -299,20 +304,13 @@ def _prefixes(
         yield prefix
 
 
-class IterHelperHelperDict(SlimLookupKwargs):
-    use_tqdm: bool
-    skip_below: str | None
-    skip_pyobo: bool
-    skip_set: set[str]
-
-
 def iter_helper_helper(
-    f: Callable[[str], X],
+    f: Callable[[str, Unpack[SlimLookupKwargs]], X],
     use_tqdm: bool = True,
     skip_below: str | None = None,
     skip_pyobo: bool = False,
     skip_set: set[str] | None = None,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[SlimmerLookupKwargs],
 ) -> Iterable[tuple[str, X]]:
     """Yield all mappings extracted from each database given.
 
