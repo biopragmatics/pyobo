@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import TypeVar
 
 import bioregistry
+import click
 import pystow.utils
 from bioontologies import robot
 from tqdm.auto import tqdm
@@ -136,7 +137,9 @@ def get_ontology(
     return obo
 
 
-def _ensure_ontology_path(prefix: str, force, version) -> tuple[str, Path] | tuple[None, None]:
+def _ensure_ontology_path(
+    prefix: str, force: bool, version: str | None
+) -> tuple[str, Path] | tuple[None, None]:
     for ontology_format, url in [
         ("obo", bioregistry.get_obo_download(prefix)),
         ("owl", bioregistry.get_owl_download(prefix)),
@@ -333,20 +336,27 @@ def iter_helper_helper(
     )
     for prefix in prefix_it:
         prefix_it.set_postfix(prefix=prefix)
+        tqdm.write(
+            click.style(f"\n{prefix} - {bioregistry.get_name(prefix)}", fg="green", bold=True)
+        )
         try:
             yv = f(prefix, **kwargs)  # type:ignore
         except urllib.error.HTTPError as e:
             logger.warning("[%s] HTTP %s: unable to download %s", prefix, e.getcode(), e.geturl())
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
-        except urllib.error.URLError:
-            logger.warning("[%s] unable to download", prefix)
+        except urllib.error.URLError as e:
+            logger.warning("[%s] unable to download - %s", prefix, e.reason)
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
         except MissingPrefixError as e:
             logger.warning("[%s] missing prefix: %s", prefix, e)
             if strict and not bioregistry.is_deprecated(prefix):
                 raise e
+        except RuntimeError as e:
+            if "DrugBank" not in str(e):
+                raise
+            logger.warning("[drugbank] invalid credentials")
         except subprocess.CalledProcessError:
             logger.warning("[%s] ROBOT was unable to convert OWL to OBO", prefix)
         except UnhandledFormatError as e:
