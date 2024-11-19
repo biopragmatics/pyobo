@@ -24,7 +24,6 @@ __all__ = [
     "get_reference_tuple",
     "has_dbxref",
     "has_gene_product",
-    "has_gene_product",
     "has_homepage",
     # Properties
     "has_inchi",
