@@ -22,6 +22,7 @@ __all__ = [
     "from_species",
     "from_species",
     "gene_product_member_of",
+    "get_reference_tuple",
     "has_dbxref",
     "has_gene_product",
     "has_homepage",
@@ -131,14 +132,13 @@ class TypeDef(Referenced):
     @classmethod
     def from_curie(cls, curie: str, name: str | None = None) -> TypeDef:
         """Create a TypeDef directly from a CURIE and optional name."""
-        reference = Reference.from_curie(curie, strict=True)
+        reference = Reference.from_curie(curie, name=name, strict=True)
         if reference is None:
             raise RuntimeError
         return cls(reference=reference)
 
 
 RelationHint = Reference | TypeDef | tuple[str, str] | str
-
 
 RO_PREFIX = "RO"
 BFO_PREFIX = "BFO"
