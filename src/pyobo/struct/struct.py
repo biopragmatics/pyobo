@@ -309,7 +309,7 @@ class Term(Referenced):
         if prop in self.annotations_object:
             return [value.preferred_curie for value in self.annotations_object[prop]]
         if prop in self.annotations_literal:
-            return [value for value, _datatype in self.annotations_object[prop]]
+            return [value for value, _datatype in self.annotations_literal[prop]]
         raise KeyError
 
     def get_property(self, prop: ReferenceHint) -> str | None:
