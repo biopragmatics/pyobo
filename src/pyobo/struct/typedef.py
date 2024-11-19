@@ -11,7 +11,6 @@ from .reference import Reference, Referenced
 from ..resources.ro import load_ro
 
 __all__ = [
-    "RelationHint",
     "TypeDef",
     "alternative_term",
     "default_typedefs",
@@ -21,7 +20,6 @@ __all__ = [
     "example_of_usage",
     "from_species",
     "gene_product_member_of",
-    "get_reference_tuple",
     "has_dbxref",
     "has_gene_product",
     "has_homepage",
@@ -137,24 +135,6 @@ class TypeDef(Referenced):
         if reference is None:
             raise RuntimeError
         return cls(reference=reference)
-
-
-RelationHint = Reference | TypeDef | tuple[str, str] | str
-
-
-def get_reference_tuple(relation: RelationHint) -> tuple[str, str]:
-    """Get tuple for typedef/reference."""
-    if isinstance(relation, Reference | TypeDef):
-        return relation.pair
-    elif isinstance(relation, tuple):
-        return relation
-    elif isinstance(relation, str):
-        reference = Reference.from_curie(relation, strict=True)
-        if reference is None:
-            raise ValueError(f"string given is not valid curie: {relation}")
-        return reference.pair
-    else:
-        raise TypeError(f"Relation is invalid type: {relation}")
 
 
 RO_PREFIX = "RO"
