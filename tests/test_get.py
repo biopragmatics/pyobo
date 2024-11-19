@@ -5,6 +5,7 @@ from operator import attrgetter
 
 import obonet
 from curies import ReferenceTuple
+
 from pyobo import Reference, Synonym, SynonymTypeDef, TypeDef, get_ontology
 from pyobo.reader import (
     _extract_definition,
