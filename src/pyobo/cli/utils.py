@@ -2,6 +2,8 @@
 
 import datetime
 import pathlib
+from collections.abc import Callable
+from typing import TypeVar
 
 import click
 import pandas as pd
@@ -16,6 +18,7 @@ __all__ = [
     "prefix_argument",
     "zenodo_option",
     "force_process_option",
+    "Clickable",
 ]
 
 
@@ -52,3 +55,4 @@ version_option = click.option(
 force_process_option = click.option(
     "--force-process", is_flag=True, help="Force re-processing, but not necessarily re-downloading"
 )
+Clickable = TypeVar("Clickable", bound=Callable)

@@ -2,14 +2,14 @@
 
 import json
 import sys
-from collections.abc import Callable, Mapping
-from typing import TypeVar
+from collections.abc import Mapping
 
 import bioregistry
 import click
 from more_click import verbose_option
 
 from .utils import (
+    Clickable,
     echo_df,
     force_option,
     force_process_option,
@@ -50,10 +50,7 @@ def lookup():
     """Lookup resources."""
 
 
-C = TypeVar("C", bound=Callable)
-
-
-def lookup_annotate(f: C) -> C:
+def lookup_annotate(f: Clickable) -> Clickable:
     """Add appropriate decorators to lookup CLI functions."""
     for decorator in [
         lookup.command(),
