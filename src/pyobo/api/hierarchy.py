@@ -36,7 +36,9 @@ def get_hierarchy(
     properties: Iterable[str] | None = None,
     use_tqdm: bool = False,
     force: bool = False,
+    force_process: bool = False,
     version: str | None = None,
+    strict: bool = True,
 ) -> nx.DiGraph:
     """Get hierarchy of parents as a directed graph.
 
@@ -64,7 +66,9 @@ def get_hierarchy(
         properties=tuple(sorted(properties or [])),
         use_tqdm=use_tqdm,
         force=force,
+        force_process=force_process,
         version=version,
+        strict=strict,
     )
 
 
@@ -79,7 +83,9 @@ def _get_hierarchy_helper(
     include_has_member: bool,
     use_tqdm: bool,
     force: bool = False,
+    force_process: bool = False,
     version: str | None = None,
+    strict: bool = True,
 ) -> nx.DiGraph:
     rv = nx.DiGraph()
 
@@ -88,7 +94,9 @@ def _get_hierarchy_helper(
         relation=is_a,
         use_tqdm=use_tqdm,
         force=force,
+        force_process=force_process,
         version=version,
+        strict=strict,
     )
     for source_id, target_ns, target_id in is_a_df.values:
         rv.add_edge(f"{prefix}:{source_id}", f"{target_ns}:{target_id}", relation="is_a")
@@ -99,7 +107,9 @@ def _get_hierarchy_helper(
             relation=has_member,
             use_tqdm=use_tqdm,
             force=force,
+            force_process=force_process,
             version=version,
+            strict=strict,
         )
         for target_id, source_ns, source_id in has_member_df.values:
             rv.add_edge(f"{source_ns}:{source_id}", f"{prefix}:{target_id}", relation="is_a")
@@ -110,7 +120,9 @@ def _get_hierarchy_helper(
             relation=part_of,
             use_tqdm=use_tqdm,
             force=force,
+            force_process=force_process,
             version=version,
+            strict=strict,
         )
         for source_id, target_ns, target_id in part_of_df.values:
             rv.add_edge(f"{prefix}:{source_id}", f"{target_ns}:{target_id}", relation="part_of")
@@ -120,7 +132,9 @@ def _get_hierarchy_helper(
             relation=part_of,
             use_tqdm=use_tqdm,
             force=force,
+            force_process=force_process,
             version=version,
+            strict=strict,
         )
         for target_id, source_ns, source_id in has_part_df.values:
             rv.add_edge(f"{source_ns}:{source_id}", f"{prefix}:{target_id}", relation="part_of")
@@ -133,7 +147,9 @@ def _get_hierarchy_helper(
             relation=relation,
             use_tqdm=use_tqdm,
             force=force,
+            force_process=force_process,
             version=version,
+            strict=strict,
         )
         for source_id, target_ns, target_id in relation_df.values:
             rv.add_edge(
@@ -142,7 +158,13 @@ def _get_hierarchy_helper(
 
     for prop in properties:
         props = get_filtered_properties_mapping(
-            prefix=prefix, prop=prop, use_tqdm=use_tqdm, force=force
+            prefix=prefix,
+            prop=prop,
+            use_tqdm=use_tqdm,
+            force=force,
+            force_process=force_process,
+            strict=strict,
+            version=version,
         )
         for identifier, value in props.items():
             curie = f"{prefix}:{identifier}"

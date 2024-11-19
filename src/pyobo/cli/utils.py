@@ -2,6 +2,8 @@
 
 import datetime
 import pathlib
+from collections.abc import Callable
+from typing import TypeVar
 
 import click
 import pandas as pd
@@ -9,11 +11,13 @@ import pandas as pd
 from ..constants import DATABASE_DIRECTORY
 
 __all__ = [
+    "Clickable",
     "directory_option",
     "echo_df",
     "force_option",
-    "no_strict_option",
+    "force_process_option",
     "prefix_argument",
+    "strict_option",
     "zenodo_option",
 ]
 
@@ -37,12 +41,21 @@ directory_option = click.option(
     help=f"Build location. Defaults to {DATABASE_DIRECTORY}/<today>",
 )
 zenodo_option = click.option("--zenodo", is_flag=True, help="Automatically upload to zenodo")
-no_strict_option = click.option(
-    "-x", "--no-strict", is_flag=True, help="Turn off failure on bad CURIEs"
+strict_option = click.option(
+    "--strict/--no-strict",
+    default=True,
+    show_default=True,
+    help="Turn on or off failure on unparsable CURIEs",
 )
 prefix_argument = click.argument("prefix")
-force_option = click.option("-f", "--force", is_flag=True)
+force_option = click.option(
+    "-f", "--force", is_flag=True, help="Force re-downloading and re-processing"
+)
 version_option = click.option(
     "--version",
     help="Explicit version of the data. If not given, the most recent will be looked up.",
 )
+force_process_option = click.option(
+    "--force-process", is_flag=True, help="Force re-processing, but not necessarily re-downloading"
+)
+Clickable = TypeVar("Clickable", bound=Callable)

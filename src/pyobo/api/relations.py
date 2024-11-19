@@ -84,6 +84,7 @@ def get_filtered_relations_df(
     force: bool = False,
     version: str | None = None,
     force_process: bool = False,
+    strict: bool = True,
 ) -> pd.DataFrame:
     """Get all the given relation."""
     relation = _ensure_ref(relation, ontology_prefix=prefix)
@@ -108,7 +109,9 @@ def get_filtered_relations_df(
     @cached_df(path=path, dtype=str, force=force or force_process)
     def _df_getter() -> pd.DataFrame:
         logger.info("[%s] no cached relations found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, version=version, rewrite=force_process)
+        ontology = get_ontology(
+            prefix, force=force, version=version, rewrite=force_process, strict=strict
+        )
         return ontology.get_filtered_relations_df(relation, use_tqdm=use_tqdm)
 
     return _df_getter()

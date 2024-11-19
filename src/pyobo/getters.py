@@ -261,7 +261,9 @@ def iter_helper(
             disable=None,
         )
         for key, value in it:
-            value = value.strip('"').replace("\n", " ").replace("\t", " ").replace("  ", " ")
+            if isinstance(value, str):
+                value = value.strip('"').replace("\n", " ").replace("\t", " ").replace("  ", " ")
+            # TODO deal with when this is not a string?
             if value:
                 yield prefix, key, value
 
@@ -301,7 +303,6 @@ def iter_helper_helper(
     f: Callable[[str], X],
     use_tqdm: bool = True,
     skip_below: str | None = None,
-    skip_below_inclusive: bool = True,
     skip_pyobo: bool = False,
     skip_set: set[str] | None = None,
     strict: bool = True,
@@ -328,7 +329,6 @@ def iter_helper_helper(
             skip_set=skip_set,
             skip_below=skip_below,
             skip_pyobo=skip_pyobo,
-            skip_below_inclusive=skip_below_inclusive,
         )
     )
     prefix_it = tqdm(
