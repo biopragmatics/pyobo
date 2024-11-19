@@ -340,7 +340,7 @@ def iter_helper_helper(
             click.style(f"\n{prefix} - {bioregistry.get_name(prefix)}", fg="green", bold=True)
         )
         try:
-            yv = f(prefix, strict=strict, **kwargs)  # type:ignore
+            yv = f(prefix, **kwargs)  # type:ignore
         except urllib.error.HTTPError as e:
             logger.warning("[%s] HTTP %s: unable to download %s", prefix, e.getcode(), e.geturl())
             if strict and not bioregistry.is_deprecated(prefix):
