@@ -36,7 +36,6 @@ from .typedef import (
 __all__ = [
     "Obo",
     "Reference",
-    "RelationHint",
     "Synonym",
     "SynonymSpecificities",
     "SynonymSpecificity",

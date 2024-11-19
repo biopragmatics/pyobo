@@ -144,11 +144,7 @@ def _ensure_ref(
     if isinstance(reference, Referenced):
         return reference.reference
     if isinstance(reference, str):
-        if ":" not in reference:
-            if not ontology_prefix:
-                raise ValueError
-            return default_reference(ontology_prefix, reference)
-        _rv = Reference.from_curie(reference, strict=True)
+        _rv = Reference.from_curie(reference, strict=True, ontology_prefix=ontology_prefix)
         if _rv is None:
             raise RuntimeError  # not possible, need typing for Reference.from_curie
         return _rv
