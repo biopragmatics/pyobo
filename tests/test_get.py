@@ -20,7 +20,6 @@ from pyobo.reader import (
 )
 from pyobo.struct.struct import acronym
 from pyobo.utils.io import multidict
-
 from tests.constants import TEST_CHEBI_OBO_PATH, chebi_patch
 
 
