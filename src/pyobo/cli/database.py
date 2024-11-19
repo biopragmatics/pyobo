@@ -141,7 +141,6 @@ def metadata(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
         "metadata",
         ("prefix", "version", "date", "deprecated"),
         use_gzip=False,
-        use_tqdm=False,
         **kwargs,
     )
     if zenodo:
