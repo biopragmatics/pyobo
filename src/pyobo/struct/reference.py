@@ -110,7 +110,7 @@ class Reference(curies.Reference):
         :param strict: If true, raises an error if the CURIE can not be parsed.
         :param auto: Automatically look up name
         """
-        _rr = _pyobo_parse_curie(
+        _rr = normalize_curie(
             curie, strict=strict, reference_node=reference, ontology=ontology_prefix
         )
         if _rr is None:
@@ -252,7 +252,7 @@ class MissingPrefixError(ValueError):
 BAD_CURIES: set[str] = set()
 
 
-def _pyobo_parse_curie(
+def normalize_curie(
     curie: str,
     *,
     strict: bool = True,
