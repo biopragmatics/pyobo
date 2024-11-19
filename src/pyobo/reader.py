@@ -7,7 +7,7 @@ from collections import Counter
 from collections.abc import Iterable, Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import bioontologies.relations
 import bioontologies.upgrade
@@ -54,7 +54,6 @@ def from_obo_path(
     *,
     strict: bool = True,
     version: str | None = None,
-    **kwargs: Any,
 ) -> Obo:
     """Get the OBO graph from a path."""
     import obonet
@@ -80,16 +79,13 @@ def from_obo_path(
         # Make sure the graph is named properly
         _clean_graph_ontology(graph, prefix)
 
-    if not graph.graph.get("name"):
-        graph.graph["name"] = bioregistry.get_name(prefix)
-
     if version:
         data_version = graph.graph.get("data-version")
         if data_version is None:
             graph.graph["data-version"] = version
 
     # Convert to an Obo instance and return
-    return from_obonet(graph, strict=strict, **kwargs)
+    return from_obonet(graph, strict=strict)
 
 
 def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
@@ -424,7 +420,7 @@ def _get_name(graph, ontology: str) -> str:
         rv = graph.graph["name"]
     except KeyError:
         logger.info("[%s] does not report a name", ontology)
-        rv = ontology
+        rv = cast(str, bioregistry.get_name(ontology))
     return rv
 
 
@@ -504,9 +500,9 @@ def _handle_relation_curie(
     elif xx := bioontologies.upgrade.upgrade(curie):
         logger.debug(f"upgraded {curie} to {xx}")
         return Reference(prefix=xx.prefix, identifier=xx.identifier)
-    elif xx := _ground_rel_helper(curie):
-        logger.debug(f"grounded {curie} to {xx}")
-        return xx
+    elif yy := _ground_rel_helper(curie):
+        logger.debug(f"grounded {curie} to {yy}")
+        return yy
     elif " " in curie:
         logger.warning("[%s] invalid typedef CURIE %s", ontology_prefix, curie)
         return None
@@ -617,6 +613,24 @@ def _chomp_specificity(s: str) -> tuple[SynonymSpecificity | None, str]:
 SYNONYM_UNDEFINED_WARNING: Counter[tuple[str, str]] = Counter()
 
 
+def _lookup_sd(
+    reference: Reference,
+    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
+    node: Reference,
+    ontology_prefix: str,
+) -> SynonymTypeDef | None:
+    if reference.pair in synonym_typedefs:
+        return synonym_typedefs[reference.pair]
+
+    if reference.pair in default_synonym_typedefs:
+        return default_synonym_typedefs[reference.pair]
+
+    if not SYNONYM_UNDEFINED_WARNING[ontology_prefix, reference.curie]:
+        logger.warning("[%s] undefined synonym type %s", node.curie, reference.curie)
+    SYNONYM_UNDEFINED_WARNING[ontology_prefix, reference.curie] += 1
+    return None
+
+
 def _chomp_typedef(
     s: str,
     *,
@@ -646,32 +660,19 @@ def _chomp_typedef(
             # if there
             return None, s
 
-        reference = _parse_object_curie(
-            s, strict=strict, node=node, ontology_prefix=ontology_prefix
-        )
-        if reference is None:
-            logger.warning(
-                "[%s] unable to parse synonym type `%s` in line %s", node.curie, stype_curie, s
-            )
-            return None, rest
-        return reference, ""
+        stype_curie, rest = s, ""
 
     reference = _parse_object_curie(
         stype_curie, strict=strict, node=node, ontology_prefix=ontology_prefix
     )
     if reference is None:
-        logger.warning("[%s] unable to parse synonym type %s", node.curie, stype_curie)
+        logger.warning(
+            "[%s] unable to parse synonym type `%s` in line %s", node.curie, stype_curie, s
+        )
         return None, rest
 
-    if reference.pair not in synonym_typedefs:
-        if reference.pair in default_synonym_typedefs:
-            return default_synonym_typedefs[reference.pair], rest
-        if not SYNONYM_UNDEFINED_WARNING[ontology_prefix, reference.curie]:
-            logger.warning("[%s] undefined synonym type %s", node.curie, reference.curie)
-        SYNONYM_UNDEFINED_WARNING[ontology_prefix, reference.curie] += 1
-        return None, rest
-
-    return synonym_typedefs[reference.pair], rest
+    dd = _lookup_sd(reference, synonym_typedefs, node=node, ontology_prefix=ontology_prefix)
+    return dd, rest
 
 
 SYNONYM_REFERENCE_WARNED: Counter[tuple[str, str]] = Counter()
