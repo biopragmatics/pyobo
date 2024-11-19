@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from curies import ReferenceTuple
 
 from .reference import Reference, Referenced
-from ..identifier_utils import normalize_curie
 from ..resources.ro import load_ro
 
 __all__ = [
@@ -21,7 +20,6 @@ __all__ = [
     "exact_match",
     "example_of_usage",
     "from_species",
-    "gene_product_member_of",
     "gene_product_member_of",
     "get_reference_tuple",
     "has_dbxref",
@@ -136,10 +134,10 @@ class TypeDef(Referenced):
     @classmethod
     def from_curie(cls, curie: str, name: str | None = None) -> TypeDef:
         """Create a TypeDef directly from a CURIE and optional name."""
-        prefix, identifier = normalize_curie(curie)
-        if prefix is None or identifier is None:
-            raise ValueError
-        return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
+        reference = Reference.from_curie(curie, name=name, strict=True)
+        if reference is None:
+            raise RuntimeError
+        return cls(reference=reference)
 
 
 RelationHint = Reference | TypeDef | tuple[str, str] | str
@@ -148,14 +146,14 @@ RelationHint = Reference | TypeDef | tuple[str, str] | str
 def get_reference_tuple(relation: RelationHint) -> tuple[str, str]:
     """Get tuple for typedef/reference."""
     if isinstance(relation, Reference | TypeDef):
-        return relation.prefix, relation.identifier
+        return relation.pair
     elif isinstance(relation, tuple):
         return relation
     elif isinstance(relation, str):
-        prefix, identifier = normalize_curie(relation)
-        if prefix is None or identifier is None:
+        reference = Reference.from_curie(relation, strict=True)
+        if reference is None:
             raise ValueError(f"string given is not valid curie: {relation}")
-        return prefix, identifier
+        return reference.pair
     else:
         raise TypeError(f"Relation is invalid type: {relation}")
 
@@ -189,7 +187,6 @@ has_bidirectional_reaction = TypeDef(
 reaction_enabled_by_molecular_function = TypeDef(
     Reference(prefix="debio", identifier="0000047", name="reaction enabled by molecular function")
 )
-
 
 part_of = TypeDef(
     reference=Reference(prefix=BFO_PREFIX, identifier="0000050", name="part of"),
