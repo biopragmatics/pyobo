@@ -1,11 +1,11 @@
 """CLI for PyOBO Database Generation."""
 
 import logging
-from typing import TypedDict, Unpack
 
 import click
 from more_click import verbose_option
 from tqdm.contrib.logging import logging_redirect_tqdm
+from typing_extensions import TypedDict, Unpack
 from zenodo_client import update_zenodo
 
 from .utils import (
