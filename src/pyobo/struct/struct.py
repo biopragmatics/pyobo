@@ -228,10 +228,10 @@ class Term(Referenced):
     @classmethod
     def from_curie(cls, curie: str, name: str | None = None) -> Term:
         """Create a term directly from a CURIE and optional name."""
-        prefix, identifier = normalize_curie(curie)
-        if prefix is None or identifier is None:
-            raise ValueError
-        return cls.from_triple(prefix=prefix, identifier=identifier, name=name)
+        reference = Reference.from_curie(curie, name=name, strict=True)
+        if reference is None:
+            raise RuntimeError
+        return cls(reference=reference)
 
     def append_provenance(self, reference: ReferenceHint) -> None:
         """Add a provenance reference."""
