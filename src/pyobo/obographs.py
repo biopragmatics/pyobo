@@ -22,7 +22,7 @@ from bioontologies.obograph import (
 from bioontologies.robot import ParseResults
 from tqdm import tqdm
 
-from pyobo.struct import Obo, Reference, Term
+from pyobo.struct import Obo, Reference, Referenced, Term
 from pyobo.struct.typedef import definition_source, is_a
 
 __all__ = [
@@ -64,7 +64,7 @@ def _get_meta(obo: Obo) -> Meta:
     )
 
 
-def _rewire(r: Reference) -> curies.Reference:
+def _rewire(r: Reference | Referenced) -> curies.Reference:
     return curies.Reference(prefix=r.prefix, identifier=r.identifier)
 
 
@@ -130,11 +130,11 @@ def _iter_edges(term: Term) -> Iterable[Edge]:
             _rewire(parent),
         )
 
-    for predicate, targets in term.relationships.items():
+    for typedef, targets in term.relationships.items():
         for target in targets:
             yield Edge.from_parsed(
                 _rewire(term.reference),
-                _rewire(predicate),
+                _rewire(typedef),
                 _rewire(target),
             )
 
