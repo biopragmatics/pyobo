@@ -42,7 +42,10 @@ directory_option = click.option(
 )
 zenodo_option = click.option("--zenodo", is_flag=True, help="Automatically upload to zenodo")
 strict_option = click.option(
-    "--strict/--no-strict", default=True, help="Turn on or off failure on unparsable CURIEs"
+    "--strict/--no-strict",
+    default=True,
+    show_default=True,
+    help="Turn on or off failure on unparsable CURIEs",
 )
 prefix_argument = click.argument("prefix")
 force_option = click.option(
