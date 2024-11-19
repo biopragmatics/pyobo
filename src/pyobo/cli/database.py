@@ -171,13 +171,20 @@ def species(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> 
         update_zenodo(SPECIES_RECORD, paths)
 
 
+def _extend_skip_set(kwargs: DatabaseKwargs, skip_set: set[str]) -> None:
+    ss = kwargs.get("skip_set")
+    if ss is None:
+        kwargs["skip_set"] = skip_set
+    else:
+        ss.update(skip_set)
+
+
 @database_annotate
 def definitions(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-identifier-definition dump."""
     with logging_redirect_tqdm():
-        it = _iter_definitions(
-            **kwargs, skip_set={"kegg.pathway", "kegg.genes", "kegg.genome", "umls"}
-        )
+        _extend_skip_set(kwargs, {"kegg.pathway", "kegg.genes", "kegg.genome", "umls"})
+        it = _iter_definitions(**kwargs)
         paths = db_output_helper(
             it,
             "definitions",
@@ -193,9 +200,8 @@ def definitions(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs])
 def typedefs(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the typedef prefix-identifier-name dump."""
     with logging_redirect_tqdm():
-        it = _iter_typedefs(
-            **kwargs, skip_set={"ncbigene", "kegg.pathway", "kegg.genes", "kegg.genome"}
-        )
+        _extend_skip_set(kwargs, {"ncbigene", "kegg.pathway", "kegg.genes", "kegg.genome"})
+        it = _iter_typedefs(**kwargs)
         paths = db_output_helper(
             it,
             "typedefs",
@@ -212,7 +218,8 @@ def typedefs(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) ->
 def alts(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-alt-id dump."""
     with logging_redirect_tqdm():
-        it = _iter_alts(**kwargs, skip_set={"kegg.pathway", "kegg.genes", "kegg.genome", "umls"})
+        _extend_skip_set(kwargs, {"kegg.pathway", "kegg.genes", "kegg.genome", "umls"})
+        it = _iter_alts(**kwargs)
         paths = db_output_helper(
             it,
             "alts",
@@ -228,7 +235,8 @@ def alts(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> Non
 def synonyms(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-identifier-synonym dump."""
     with logging_redirect_tqdm():
-        it = _iter_synonyms(**kwargs, skip_set={"kegg.pathway", "kegg.genes", "kegg.genome"})
+        _extend_skip_set(kwargs, {"kegg.pathway", "kegg.genes", "kegg.genome"})
+        it = _iter_synonyms(**kwargs)
         paths = db_output_helper(
             it,
             "synonyms",
