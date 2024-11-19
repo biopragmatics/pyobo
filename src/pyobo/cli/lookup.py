@@ -2,6 +2,8 @@
 
 import json
 import sys
+from collections.abc import Callable, Mapping
+from typing import TypeVar
 
 import bioregistry
 import click
@@ -10,6 +12,7 @@ from more_click import verbose_option
 from .utils import (
     echo_df,
     force_option,
+    force_process_option,
     no_strict_option,
     prefix_argument,
     version_option,
@@ -47,61 +50,101 @@ def lookup():
     """Lookup resources."""
 
 
-@lookup.command()
-@prefix_argument
+C = TypeVar("C", bound=Callable)
+
+
+def lookup_annotate(f: C) -> C:
+    """Add appropriate decorators to lookup CLI functions."""
+    for decorator in [
+        lookup.command(),
+        prefix_argument,
+        verbose_option,
+        force_option,
+        force_process_option,
+        no_strict_option,
+        version_option,
+    ]:
+        f = decorator(f)
+    return f
+
+
+@lookup_annotate
 @click.option("-t", "--target")
-@verbose_option
-@force_option
-@no_strict_option
-@version_option
-def xrefs(prefix: str, target: str, force: bool, no_strict: bool, version: str | None):
+def xrefs(
+    prefix: str,
+    force: bool,
+    force_process: bool,
+    no_strict: bool,
+    version: str | None,
+    #
+    target: str,
+) -> None:
     """Page through xrefs for the given namespace to the second given namespace."""
     if target:
         target_norm = bioregistry.normalize_prefix(target)
         filtered_xrefs = get_filtered_xrefs(
-            prefix, target_norm, force=force, strict=not no_strict, version=version
+            prefix,
+            target_norm,
+            force=force,
+            strict=not no_strict,
+            version=version,
+            force_process=force_process,
         )
         click.echo_via_pager(
             "\n".join(f"{identifier}\t{_xref}" for identifier, _xref in filtered_xrefs.items())
         )
     else:
-        all_xrefs_df = get_xrefs_df(prefix, force=force, strict=not no_strict, version=version)
+        all_xrefs_df = get_xrefs_df(
+            prefix, force=force, force_process=force_process, strict=not no_strict, version=version
+        )
         echo_df(all_xrefs_df)
 
 
-@lookup.command()
-@prefix_argument
-@verbose_option
-@force_option
-@version_option
-def metadata(prefix: str, force: bool, version: str | None):
+@lookup_annotate
+def metadata(
+    prefix: str,
+    force: bool,
+    force_process: bool,
+    no_strict: bool,
+    version: str | None,
+) -> None:
     """Print the metadata for the given namespace."""
-    metadata = get_metadata(prefix, force=force, version=version)
+    metadata = get_metadata(
+        prefix, force=force, version=version, force_process=force_process, strict=not no_strict
+    )
     click.echo(json.dumps(metadata, indent=2))
 
 
-@lookup.command()
-@prefix_argument
-@verbose_option
-@force_option
-@no_strict_option
-@version_option
-def ids(prefix: str, force: bool, no_strict: bool, version: str | None):
+@lookup_annotate
+def ids(
+    prefix: str,
+    force: bool,
+    force_process: bool,
+    no_strict: bool,
+    version: str | None,
+) -> None:
     """Page through the identifiers of entities in the given namespace."""
-    id_list = get_ids(prefix, force=force, strict=not no_strict, version=version)
+    id_list = get_ids(
+        prefix, force=force, strict=not no_strict, version=version, force_process=force_process
+    )
     click.echo_via_pager("\n".join(id_list))
 
 
-@lookup.command()
-@prefix_argument
-@verbose_option
-@force_option
-@no_strict_option
+@lookup_annotate
 @click.option("-i", "--identifier")
-@version_option
-def names(prefix: str, identifier: str | None, force: bool, no_strict: bool, version: str | None):
+def names(
+    prefix: str,
+    force: bool,
+    force_process: bool,
+    no_strict: bool,
+    version: str | None,
+    #
+    identifier: str | None,
+) -> None:
     """Page through the identifiers and names of entities in the given namespace."""
-    id_to_name = get_id_name_mapping(prefix, force=force, strict=not no_strict, version=version)
+    id_to_name = get_id_name_mapping(
+        prefix, force=force, strict=not no_strict, version=version, force_process=force_process
+    )
     if identifier is None:
         _help_page_mapping(id_to_name)
     else:
@@ -112,17 +155,24 @@ def names(prefix: str, identifier: str | None, force: bool, no_strict: bool, ver
             click.echo(name)
 
 
-@lookup.command()
-@prefix_argument
-@verbose_option
-@force_option
-@no_strict_option
+@lookup_annotate
 @click.option("-i", "--identifier")
-@version_option
-def species(prefix: str, identifier: str | None, force: bool, no_strict: bool, version: str | None):
+def species(
+    prefix: str,
+    force: bool,
+    force_process: bool,
+    no_strict: bool,
+    version: str | None,
+    #
+    identifier: str | None,
+) -> None:
     """Page through the identifiers and species of entities in the given namespace."""
     id_to_species = get_id_species_mapping(
-        prefix, force=force, strict=not no_strict, version=version
+        prefix,
+        force=force,
+        strict=not no_strict,
+        version=version,
+        force_process=force_process,
     )
     if identifier is None:
         _help_page_mapping(id_to_species)
@@ -134,15 +184,21 @@ def species(prefix: str, identifier: str | None, force: bool, no_strict: bool, v
             click.echo(species)
 
 
-@lookup.command()
-@prefix_argument
-@verbose_option
-@force_option
+@lookup_annotate
 @click.option("-i", "--identifier")
-@version_option
-def definitions(prefix: str, identifier: str | None, force: bool, version: str | None):
+def definitions(
+    prefix: str,
+    force: bool,
+    force_process: bool,
+    no_strict: bool,
+    version: str | None,
+    #
+    identifier: str | None,
+) -> None:
     """Page through the identifiers and definitions of entities in the given namespace."""
-    id_to_definition = get_id_definition_mapping(prefix, force=force, version=version)
+    id_to_definition = get_id_definition_mapping(
+        prefix, force=force, version=version, force_process=force_process, strict=not no_strict
+    )
     if identifier is None:
         _help_page_mapping(id_to_definition)
     else:
@@ -153,40 +209,50 @@ def definitions(prefix: str, identifier: str | None, force: bool, version: str |
             click.echo(definition)
 
 
-@lookup.command()
-@prefix_argument
-@verbose_option
-@force_option
-@version_option
-def typedefs(prefix: str, force: bool, version: str | None):
+@lookup_annotate
+def typedefs(
+    prefix: str,
+    force: bool,
+    force_process: bool,
+    no_strict: bool,
+    version: str | None,
+) -> None:
     """Page through the identifiers and names of typedefs in the given namespace."""
-    df = get_typedef_df(prefix, force=force, version=version)
+    df = get_typedef_df(
+        prefix, force=force, version=version, force_process=force_process, strict=not no_strict
+    )
     echo_df(df)
 
 
-def _help_page_mapping(id_to_name):
+def _help_page_mapping(id_to_name: Mapping[str, str]) -> None:
     click.echo_via_pager("\n".join("\t".join(item) for item in id_to_name.items()))
 
 
-@lookup.command()
-@prefix_argument
-@verbose_option
-@force_option
-@version_option
-def synonyms(prefix: str, force: bool, version: str | None):
+@lookup_annotate
+def synonyms(
+    prefix: str,
+    force: bool,
+    force_process: bool,
+    no_strict: bool,
+    version: str | None,
+) -> None:
     """Page through the synonyms for entities in the given namespace."""
     if ":" in prefix:
         _prefix, identifier = normalize_curie(prefix)
         if _prefix is None or identifier is None:
             click.secho(f"could not normalize {prefix}")
-            return sys.exit(1)
+            raise sys.exit(1)
         name = get_name(_prefix, identifier)
-        id_to_synonyms = get_id_synonyms_mapping(_prefix, force=force)
+        id_to_synonyms = get_id_synonyms_mapping(
+            _prefix, force=force, force_process=force_process, version=version, strict=not no_strict
+        )
         click.echo(f"Synonyms for {_prefix}:{identifier} ! {name}")
         for synonym in id_to_synonyms.get(identifier, []):
             click.echo(synonym)
     else:  # it's a prefix
-        id_to_synonyms = get_id_synonyms_mapping(prefix, force=force, version=version)
+        id_to_synonyms = get_id_synonyms_mapping(
+            prefix, force=force, force_process=force_process, version=version, strict=not no_strict
+        )
         click.echo_via_pager(
             "\n".join(
                 f"{identifier}\t{_synonym}"
@@ -196,29 +262,28 @@ def synonyms(prefix: str, force: bool, version: str | None):
         )
 
 
-@lookup.command()
-@prefix_argument
+@lookup_annotate
 @click.option(
     "--relation", help="CURIE for the relationship or just the ID if local to the ontology"
 )
 @click.option("--target", help="Prefix for the target")
-@verbose_option
-@no_strict_option
-@force_option
 @click.option("--summarize", is_flag=True)
-@version_option
 def relations(
     prefix: str,
+    force: bool,
+    force_process: bool,
+    no_strict: bool,
+    version: str | None,
+    #
     relation: str,
     target: str,
-    force: bool,
-    no_strict: bool,
     summarize: bool,
-    version: str | None,
-):
+) -> None:
     """Page through the relations for entities in the given namespace."""
     if relation is None:
-        relations_df = get_relations_df(prefix, force=force, strict=not no_strict, version=version)
+        relations_df = get_relations_df(
+            prefix, force=force, strict=not no_strict, version=version, force_process=force_process
+        )
         if summarize:
             click.echo(relations_df[relations_df.columns[2]].value_counts())
         else:
@@ -234,87 +299,135 @@ def relations(
             if norm_target is None:
                 raise ValueError
             relations_df = get_filtered_relations_df(
-                prefix, relation=curie, force=force, strict=not no_strict, target=norm_target
+                prefix,
+                relation=curie,
+                force=force,
+                strict=not no_strict,
+                target=norm_target,
+                version=version,
+                force_process=force_process,
             )
         else:
             raise NotImplementedError(f"can not filter by target prefix {target}")
 
 
-@lookup.command()
-@prefix_argument
+@lookup_annotate
 @click.option("--include-part-of", is_flag=True)
 @click.option("--include-has-member", is_flag=True)
-@verbose_option
-@force_option
-@version_option
 def hierarchy(
     prefix: str,
+    force: bool,
+    force_process: bool,
+    no_strict: bool,
+    version: str | None,
+    #
     include_part_of: bool,
     include_has_member: bool,
-    force: bool,
-    version: str | None,
-):
+) -> None:
     """Page through the hierarchy for entities in the namespace."""
     h = get_hierarchy(
         prefix,
         include_part_of=include_part_of,
         include_has_member=include_has_member,
         force=force,
+        force_process=force_process,
+        strict=not no_strict,
         version=version,
     )
     click.echo_via_pager("\n".join("\t".join(row) for row in h.edges()))
 
 
-@lookup.command()
-@prefix_argument
+@lookup_annotate
 @click.argument("identifier")
-@verbose_option
-@force_option
-@version_option
-def ancestors(prefix: str, identifier: str, force: bool, version: str | None):
+def ancestors(
+    prefix: str,
+    force: bool,
+    force_process: bool,
+    no_strict: bool,
+    version: str | None,
+    #
+    identifier: str,
+) -> None:
     """Look up ancestors."""
-    curies = get_ancestors(prefix=prefix, identifier=identifier, force=force, version=version)
+    curies = get_ancestors(
+        prefix=prefix,
+        identifier=identifier,
+        force=force,
+        version=version,
+        force_process=force_process,
+        strict=not no_strict,
+    )
     for curie in sorted(curies or []):
         click.echo(f"{curie}\t{get_name_by_curie(curie, version=version)}")
 
 
-@lookup.command()
-@prefix_argument
+@lookup_annotate
 @click.argument("identifier")
-@verbose_option
-@force_option
-@version_option
-def descendants(prefix: str, identifier: str, force: bool, version: str | None):
+def descendants(
+    prefix: str,
+    force: bool,
+    force_process: bool,
+    no_strict: bool,
+    version: str | None,
+    #
+    identifier: str,
+) -> None:
     """Look up descendants."""
-    curies = get_descendants(prefix=prefix, identifier=identifier, force=force, version=version)
+    curies = get_descendants(
+        prefix=prefix,
+        identifier=identifier,
+        force=force,
+        force_process=force_process,
+        version=version,
+        strict=not no_strict,
+    )
     for curie in sorted(curies or []):
         click.echo(f"{curie}\t{get_name_by_curie(curie, version=version)}")
 
 
-@lookup.command()
-@prefix_argument
+@lookup_annotate
 @click.option("-k", "--key")
-@verbose_option
-@force_option
-@version_option
-def properties(prefix: str, key: str | None, force: bool, version: str | None):
+def properties(
+    prefix: str,
+    force: bool,
+    force_process: bool,
+    no_strict: bool,
+    version: str | None,
+    #
+    key: str | None,
+) -> None:
     """Page through the properties for entities in the given namespace."""
     if key is None:
-        properties_df = get_properties_df(prefix, force=force, version=version)
+        properties_df = get_properties_df(
+            prefix, force=force, version=version, strict=not no_strict, force_process=force_process
+        )
     else:
-        properties_df = get_filtered_properties_df(prefix, prop=key, force=force)
+        properties_df = get_filtered_properties_df(
+            prefix,
+            prop=key,
+            force=force,
+            version=version,
+            strict=not no_strict,
+            force_process=force_process,
+        )
     echo_df(properties_df)
 
 
-@lookup.command()
-@prefix_argument
-@verbose_option
-@force_option
+@lookup_annotate
 @click.option("-i", "--identifier")
-@version_option
-def alts(prefix: str, identifier: str | None, force: bool, version: str | None):
+def alts(
+    prefix: str,
+    force: bool,
+    force_process: bool,
+    no_strict: bool,
+    version: str | None,
+    #
+    identifier: str | None,
+) -> None:
     """Page through alt ids in a namespace."""
-    id_to_alts = get_id_to_alts(prefix, force=force, version=version)
+    id_to_alts = get_id_to_alts(
+        prefix, force=force, version=version, force_process=force_process, strict=not no_strict
+    )
     if identifier is None:
         click.echo_via_pager(
             "\n".join(

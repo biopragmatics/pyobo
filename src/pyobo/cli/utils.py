@@ -15,6 +15,7 @@ __all__ = [
     "no_strict_option",
     "prefix_argument",
     "zenodo_option",
+    "force_process_option",
 ]
 
 
@@ -38,11 +39,16 @@ directory_option = click.option(
 )
 zenodo_option = click.option("--zenodo", is_flag=True, help="Automatically upload to zenodo")
 no_strict_option = click.option(
-    "-x", "--no-strict", is_flag=True, help="Turn off failure on bad CURIEs"
+    "-x", "--no-strict", is_flag=True, help="Turn off failure on unparsable CURIEs"
 )
 prefix_argument = click.argument("prefix")
-force_option = click.option("-f", "--force", is_flag=True)
+force_option = click.option(
+    "-f", "--force", is_flag=True, help="Force re-downloading and re-processing"
+)
 version_option = click.option(
     "--version",
     help="Explicit version of the data. If not given, the most recent will be looked up.",
+)
+force_process_option = click.option(
+    "--force-process", is_flag=True, help="Force re-processing, but not necessarily re-downloading"
 )
