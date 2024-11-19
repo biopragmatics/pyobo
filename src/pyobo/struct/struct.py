@@ -364,6 +364,13 @@ class Term(Referenced):
         """Append a relationship."""
         self.relationships[_ensure_ref(typedef)].append(_ensure_ref(reference))
 
+    def annotate_object(self, typedef: ReferenceHint, value: ReferenceHint) -> Self:
+        """Append an object annotation."""
+        typedef = _ensure_ref(typedef)
+        value = _ensure_ref(value)
+        self.annotations_object[typedef].append(value)
+        return self
+
     def set_species(self, identifier: str, name: str | None = None):
         """Append the from_species relation."""
         if name is None:
@@ -391,13 +398,6 @@ class Term(Referenced):
             raise ValueError("can not extend a collection that includes a null reference")
         typedef = _ensure_ref(typedef)
         self.relationships[typedef].extend(references)
-
-    def annotate_object(self, typedef: ReferenceHint, value: ReferenceHint) -> Self:
-        """Append an object annotation."""
-        typedef = _ensure_ref(typedef)
-        value = _ensure_ref(value)
-        self.annotations_object[typedef].append(value)
-        return self
 
     def annotate_literal(
         self, prop: ReferenceHint, value: str, datatype: Reference | None = None
