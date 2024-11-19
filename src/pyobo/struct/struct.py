@@ -14,7 +14,7 @@ from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, ClassVar, Literal, TextIO, Union
+from typing import Any, ClassVar, Literal, TextIO, TypeAlias
 
 import bioregistry
 import click
@@ -25,13 +25,11 @@ from tqdm.auto import tqdm
 
 from .reference import Reference, Referenced
 from .typedef import (
-    RelationHint,
     TypeDef,
     comment,
     default_typedefs,
     exact_match,
     from_species,
-    get_reference_tuple,
     has_ontology_root_term,
     has_part,
     is_a,
@@ -50,12 +48,12 @@ from ..constants import (
     TARGET_ID,
     TARGET_PREFIX,
 )
-from ..identifier_utils import normalize_curie
 from ..utils.io import multidict, write_iterable_tsv
 from ..utils.path import prefix_directory_join
 
 __all__ = [
     "Obo",
+    "ReferenceHint",
     "Synonym",
     "SynonymSpecificities",
     "SynonymSpecificity",
@@ -132,18 +130,26 @@ abbreviation = SynonymTypeDef(
 )
 acronym = SynonymTypeDef(reference=Reference(prefix="omo", identifier="0003012", name="acronym"))
 
-ReferenceHint = Union[Reference, "Term", tuple[str, str], str]
+ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
 
 
-def _ensure_ref(reference: ReferenceHint) -> Reference:
+def _ensure_ref(
+    reference: ReferenceHint,
+    *,
+    ontology_prefix: str | None = None,
+) -> Reference:
     if reference is None:
         raise ValueError("can not append null reference")
-    if isinstance(reference, Term):
+    if isinstance(reference, Referenced):
         return reference.reference
     if isinstance(reference, str):
-        _rv = Reference.from_curie(reference)
+        if ":" not in reference:
+            if not ontology_prefix:
+                raise ValueError
+            return default_reference(ontology_prefix, reference)
+        _rv = Reference.from_curie(reference, strict=True)
         if _rv is None:
-            raise ValueError(f"could not parse CURIE from {reference}")
+            raise RuntimeError  # not possible, need typing for Reference.from_curie
         return _rv
     if isinstance(reference, tuple):
         return Reference(prefix=reference[0], identifier=reference[1])
@@ -1236,14 +1242,14 @@ class Obo:
 
     def iterate_filtered_relations(
         self,
-        relation: RelationHint,
+        relation: ReferenceHint,
         *,
         use_tqdm: bool = False,
     ) -> Iterable[tuple[Term, Reference]]:
         """Iterate over tuples of terms and ther targets for the given relation."""
-        _target_prefix, _target_identifier = get_reference_tuple(relation)
-        for term, typedef, reference in self.iterate_relations(use_tqdm=use_tqdm):
-            if typedef.prefix == _target_prefix and typedef.identifier == _target_identifier:
+        _pair = _ensure_ref(relation, ontology_prefix=self.ontology).pair
+        for term, predicate, reference in self.iterate_relations(use_tqdm=use_tqdm):
+            if _pair == predicate.pair:
                 yield term, reference
 
     @property
@@ -1260,7 +1266,7 @@ class Obo:
 
     def get_filtered_relations_df(
         self,
-        relation: RelationHint,
+        relation: ReferenceHint,
         *,
         use_tqdm: bool = False,
     ) -> pd.DataFrame:
@@ -1275,7 +1281,7 @@ class Obo:
 
     def iterate_filtered_relations_filtered_targets(
         self,
-        relation: RelationHint,
+        relation: ReferenceHint,
         target_prefix: str,
         *,
         use_tqdm: bool = False,
@@ -1289,7 +1295,7 @@ class Obo:
 
     def get_relation_mapping(
         self,
-        relation: RelationHint,
+        relation: ReferenceHint,
         target_prefix: str,
         *,
         use_tqdm: bool = False,
@@ -1319,7 +1325,7 @@ class Obo:
     def get_relation(
         self,
         source_identifier: str,
-        relation: RelationHint,
+        relation: ReferenceHint,
         target_prefix: str,
         *,
         use_tqdm: bool = False,
@@ -1339,7 +1345,7 @@ class Obo:
 
     def get_relation_multimapping(
         self,
-        relation: RelationHint,
+        relation: ReferenceHint,
         target_prefix: str,
         *,
         use_tqdm: bool = False,
