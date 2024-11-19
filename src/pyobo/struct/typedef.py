@@ -126,9 +126,13 @@ class TypeDef(Referenced):
         return cls(reference=Reference(prefix=prefix, identifier=identifier, name=name))
 
     @classmethod
-    def from_curie(cls, curie: str, name: str | None = None) -> TypeDef:
+    def from_curie(
+        cls, curie: str, name: str | None = None, ontology_prefix: str | None = None
+    ) -> TypeDef:
         """Create a TypeDef directly from a CURIE and optional name."""
-        reference = Reference.from_curie(curie, name=name, strict=True)
+        reference = Reference.from_curie(
+            curie, name=name, strict=True, ontology_prefix=ontology_prefix
+        )
         if reference is None:
             raise RuntimeError
         return cls(reference=reference)

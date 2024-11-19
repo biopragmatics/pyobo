@@ -390,7 +390,7 @@ class TestGet(unittest.TestCase):
 
     def test_iter_filtered_relations(self):
         """Test getting filtered relations w/ upgrade."""
-        curie = "chebi:is_conjugate_base_of"
+        curie = "ro:0018033"
         for inp in [
             curie,
             ReferenceTuple.from_curie(curie),
