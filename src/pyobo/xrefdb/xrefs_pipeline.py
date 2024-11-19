@@ -12,6 +12,7 @@ import bioregistry
 import networkx as nx
 import pandas as pd
 from tqdm.auto import tqdm
+from typing_extensions import Unpack
 
 from .sources import iter_xref_plugins
 from .. import get_xrefs_df
@@ -27,7 +28,7 @@ from ..api import (
     get_typedef_df,
 )
 from ..constants import SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
-from ..getters import iter_helper, iter_helper_helper
+from ..getters import IterHelperHelperDict, iter_helper, iter_helper_helper
 from ..sources import ncbigene, pubchem
 from ..utils.path import ensure_path
 
@@ -66,7 +67,7 @@ def _to_curie(prefix: str, identifier: str) -> str:
     return f"{prefix}:{identifier}"
 
 
-def _iter_ncbigene(left, right):
+def _iter_ncbigene(left: int, right: int) -> Iterable[tuple[str, str, str]]:
     ncbi_path = ensure_path(ncbigene.PREFIX, url=ncbigene.GENE_INFO_URL)
     with gzip.open(ncbi_path, "rt") as file:
         next(file)  # throw away the header
@@ -77,7 +78,7 @@ def _iter_ncbigene(left, right):
             yield ncbigene.PREFIX, line[left], line[right]
 
 
-def _iter_metadata(**kwargs):
+def _iter_metadata(**kwargs: Unpack[IterHelperHelperDict]):
     for prefix, data in iter_helper_helper(get_metadata, **kwargs):
         version = data["version"]
         logger.debug(f"[{prefix}] using version {version}")
@@ -113,12 +114,8 @@ def _iter_definitions(leave: bool = False, **kwargs) -> Iterable[tuple[str, str,
     yield from _iter_ncbigene(1, 8)
 
 
-def _iter_alts(
-    leave: bool = False, strict: bool = True, **kwargs
-) -> Iterable[tuple[str, str, str]]:
-    for prefix, identifier, alts in iter_helper(
-        get_id_to_alts, leave=leave, strict=strict, **kwargs
-    ):
+def _iter_alts(leave: bool = False, **kwargs) -> Iterable[tuple[str, str, str]]:
+    for prefix, identifier, alts in iter_helper(get_id_to_alts, leave=leave, **kwargs):
         for alt in alts:
             yield prefix, identifier, alt
 
@@ -133,7 +130,7 @@ def _iter_synonyms(leave: bool = False, **kwargs) -> Iterable[tuple[str, str, st
             yield prefix, identifier, synonym
 
 
-def _iter_typedefs(**kwargs) -> Iterable[tuple[str, str, str, str]]:
+def _iter_typedefs(**kwargs: Unpack[IterHelperHelperDict]) -> Iterable[tuple[str, str, str, str]]:
     """Iterate over all prefix-identifier-name triples we can get."""
     for prefix, df in iter_helper_helper(get_typedef_df, **kwargs):
         for t in df.values:
@@ -141,14 +138,16 @@ def _iter_typedefs(**kwargs) -> Iterable[tuple[str, str, str, str]]:
                 yield cast(tuple[str, str, str, str], (prefix, *t))
 
 
-def _iter_relations(**kwargs) -> Iterable[tuple[str, str, str, str, str, str]]:
+def _iter_relations(
+    **kwargs: Unpack[IterHelperHelperDict],
+) -> Iterable[tuple[str, str, str, str, str, str]]:
     for prefix, df in iter_helper_helper(get_relations_df, **kwargs):
         for t in df.values:
             if all(t):
                 yield cast(tuple[str, str, str, str, str, str], (prefix, *t))
 
 
-def _iter_properties(**kwargs) -> Iterable[tuple[str, str, str, str]]:
+def _iter_properties(**kwargs: Unpack[IterHelperHelperDict]) -> Iterable[tuple[str, str, str, str]]:
     for prefix, df in iter_helper_helper(get_properties_df, **kwargs):
         for t in df.values:
             if all(t):
@@ -156,27 +155,15 @@ def _iter_properties(**kwargs) -> Iterable[tuple[str, str, str, str]]:
 
 
 def _iter_xrefs(
-    *,
-    force: bool = False,
-    use_tqdm: bool = True,
-    skip_below: str | None = None,
-    strict: bool = True,
-    **kwargs,
+    **kwargs: Unpack[IterHelperHelperDict],
 ) -> Iterable[tuple[str, str, str, str, str]]:
-    it = iter_helper_helper(
-        get_xrefs_df,
-        use_tqdm=use_tqdm,
-        force=force,
-        skip_below=skip_below,
-        strict=strict,
-        **kwargs,
-    )
+    it = iter_helper_helper(get_xrefs_df, **kwargs)
     for prefix, df in it:
         df.dropna(inplace=True)
         for row in df.values:
             if any(not element for element in row):
                 continue
             yield cast(tuple[str, str, str, str, str], (prefix, *row, prefix))
-    for df in iter_xref_plugins(skip_below=skip_below):
+    for df in iter_xref_plugins(skip_below=kwargs.get("skip_below")):
         df.dropna(inplace=True)
         yield from tqdm(df.values, leave=False, total=len(df.index), unit_scale=True)

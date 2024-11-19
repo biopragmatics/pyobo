@@ -6,6 +6,7 @@ import logging
 import re
 
 import pystow
+from typing_extensions import TypedDict
 
 __all__ = [
     "DATABASE_DIRECTORY",
@@ -99,3 +100,29 @@ PROVENANCE_PREFIXES = {
     "isbn",
     "issn",
 }
+
+
+class DatabaseKwargs(TypedDict):
+    """Keyword arguments for database CLI functions."""
+
+    directory: str
+    strict: bool
+    force: bool
+    force_process: bool
+    skip_pyobo: bool
+    skip_below: str | None
+
+
+class SlimLookupKwargs(TypedDict):
+    """Keyword arguments for database CLI functions."""
+
+    strict: bool
+    force: bool
+    force_process: bool
+    version: str | None
+
+
+class LookupKwargs(SlimLookupKwargs):
+    """Keyword arguments for database CLI functions."""
+
+    prefix: str

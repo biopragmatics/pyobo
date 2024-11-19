@@ -7,9 +7,10 @@ from functools import lru_cache
 import pandas as pd
 from tqdm.auto import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
+from typing_extensions import Unpack
 
-from .utils import get_version
-from ..constants import TARGET_ID, TARGET_PREFIX
+from .utils import force_cache, kwargs_version
+from ..constants import TARGET_ID, TARGET_PREFIX, SlimLookupKwargs
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct import Obo, Reference
@@ -34,10 +35,10 @@ def get_xref(
     new_prefix: str,
     *,
     flip: bool = False,
-    version: str | None = None,
+    **kwargs: Unpack[SlimLookupKwargs],
 ) -> str | None:
     """Get the xref with the new prefix if a direct path exists."""
-    filtered_xrefs = get_filtered_xrefs(prefix, new_prefix, flip=flip, version=version)
+    filtered_xrefs = get_filtered_xrefs(prefix, new_prefix, flip=flip, **kwargs)
     return filtered_xrefs.get(identifier)
 
 
@@ -49,19 +50,15 @@ def get_filtered_xrefs(
     *,
     flip: bool = False,
     use_tqdm: bool = False,
-    force: bool = False,
-    strict: bool = False,
-    version: str | None = None,
-    force_process: bool = False,
+    **kwargs: Unpack[SlimLookupKwargs],
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
-    if version is None:
-        version = get_version(prefix)
+    version = kwargs_version(prefix, kwargs)
     path = prefix_cache_join(prefix, "xrefs", name=f"{xref_prefix}.tsv", version=version)
     all_xrefs_path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
     header = [f"{prefix}_id", f"{xref_prefix}_id"]
 
-    @cached_mapping(path=path, header=header, use_tqdm=use_tqdm, force=force or force_process)
+    @cached_mapping(path=path, header=header, use_tqdm=use_tqdm, force=force_cache(kwargs))
     def _get_mapping() -> Mapping[str, str]:
         if all_xrefs_path.is_file():
             logger.info("[%s] loading pre-cached xrefs", prefix)
@@ -71,9 +68,7 @@ def get_filtered_xrefs(
             return dict(df.values)
 
         logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
-        ontology = get_ontology(
-            prefix, force=force, strict=strict, version=version, rewrite=force_process
-        )
+        ontology = get_ontology(prefix, **kwargs)
         return ontology.get_filtered_xrefs_mapping(xref_prefix, use_tqdm=use_tqdm)
 
     rv = _get_mapping()
@@ -87,25 +82,16 @@ get_xrefs = get_filtered_xrefs
 
 @wrap_norm_prefix
 def get_xrefs_df(
-    prefix: str,
-    *,
-    use_tqdm: bool = False,
-    force: bool = False,
-    strict: bool = False,
-    version: str | None = None,
-    force_process: bool = False,
+    prefix: str, *, use_tqdm: bool = False, **kwargs: Unpack[SlimLookupKwargs]
 ) -> pd.DataFrame:
     """Get all xrefs."""
-    if version is None:
-        version = get_version(prefix)
+    version = kwargs_version(prefix, kwargs)
     path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=force or force_process)
+    @cached_df(path=path, dtype=str, force=force_cache(kwargs))
     def _df_getter() -> pd.DataFrame:
         logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
-        ontology = get_ontology(
-            prefix, force=force, strict=strict, version=version, rewrite=force_process
-        )
+        ontology = get_ontology(prefix, **kwargs)
         return ontology.get_xrefs_df(use_tqdm=use_tqdm)
 
     return _df_getter()
@@ -117,7 +103,7 @@ def get_sssom_df(
     predicate_id: str = "oboinowl:hasDbXref",
     justification: str = "sempav:UnspecifiedMatching",
     names: bool = True,
-    **kwargs,
+    **kwargs: Unpack[SlimLookupKwargs],
 ) -> pd.DataFrame:
     r"""Get xrefs from a source as an SSSOM dataframe.
 

@@ -13,6 +13,7 @@ from gilda.grounder import Grounder
 from gilda.process import normalize
 from gilda.term import filter_out_duplicates
 from tqdm.auto import tqdm
+from typing_extensions import Unpack
 
 from pyobo import (
     get_descendants,
@@ -24,6 +25,9 @@ from pyobo import (
 )
 from pyobo.getters import NoBuildError
 from pyobo.utils.io import multidict
+
+from ..api.utils import kwargs_version
+from ..constants import SlimLookupKwargs
 
 __all__ = [
     "get_gilda_terms",
@@ -173,15 +177,15 @@ def get_gilda_terms(
     prefix: str,
     *,
     identifiers_are_names: bool = False,
-    version: str | None = None,
-    strict: bool = True,
-    skip_obsolete: bool = False,
     progress: bool = True,
+    skip_obsolete: bool = False,
+    **kwargs: Unpack[SlimLookupKwargs],
 ) -> Iterable[gilda.term.Term]:
     """Get gilda terms for the given namespace."""
-    id_to_name = get_id_name_mapping(prefix, version=version, strict=strict)
-    id_to_species = get_id_species_mapping(prefix, version=version, strict=strict)
-    obsoletes = get_obsolete(prefix, version=version, strict=strict) if skip_obsolete else set()
+    kwargs["version"] = kwargs_version(prefix, kwargs)  # type:ignore
+    id_to_name = get_id_name_mapping(prefix, **kwargs)
+    id_to_species = get_id_species_mapping(prefix, **kwargs)
+    obsoletes = get_obsolete(prefix, **kwargs) if skip_obsolete else set()
 
     it = tqdm(
         id_to_name.items(),
@@ -204,7 +208,7 @@ def get_gilda_terms(
         if term is not None:
             yield term
 
-    id_to_synonyms = get_id_synonyms_mapping(prefix, version=version)
+    id_to_synonyms = get_id_synonyms_mapping(prefix, **kwargs)
     if id_to_synonyms:
         it = tqdm(
             id_to_synonyms.items(),
