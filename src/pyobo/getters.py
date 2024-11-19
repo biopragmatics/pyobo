@@ -261,7 +261,9 @@ def iter_helper(
             disable=None,
         )
         for key, value in it:
-            value = value.strip('"').replace("\n", " ").replace("\t", " ").replace("  ", " ")
+            if isinstance(value, str):
+                value = value.strip('"').replace("\n", " ").replace("\t", " ").replace("  ", " ")
+            # TODO deal with when this is not a string?
             if value:
                 yield prefix, key, value
 
