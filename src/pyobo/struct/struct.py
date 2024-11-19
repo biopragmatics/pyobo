@@ -412,12 +412,12 @@ class Term(Referenced):
 
     def iterate_properties(self) -> Iterable[tuple[str, str]]:
         """Iterate over pairs of property and values."""
-        for predicate, values in sorted(self.annotations_object.items()):
+        for prop, values in sorted(self.annotations_object.items()):
             for value in sorted(values):
-                yield predicate.preferred_curie, value.preferred_curie
-        for predicate, value_datatype_pairs in sorted(self.annotations_literal.items()):
+                yield prop.preferred_curie, value.preferred_curie
+        for prop, value_datatype_pairs in sorted(self.annotations_literal.items()):
             for svalue, _datatype in sorted(value_datatype_pairs):
-                yield predicate.preferred_curie, svalue
+                yield prop.preferred_curie, svalue
 
     def iterate_obo_lines(
         self,
@@ -467,14 +467,14 @@ class Term(Referenced):
             self.relationships.items(),
             self.annotations_object.items(),
         )
-        for predicate, references in sorted(pairs):
-            _typedef_warn(prefix=ontology, predicate=predicate, typedefs=typedefs)
+        for typedef, references in sorted(pairs):
+            _typedef_warn(prefix=ontology, predicate=typedef, typedefs=typedefs)
             for reference in sorted(references, key=attrgetter("prefix", "identifier")):
-                s = f"relationship: {predicate.preferred_curie} {reference.preferred_curie}"
-                if predicate.name or reference.name:
+                s = f"relationship: {typedef.preferred_curie} {reference.preferred_curie}"
+                if typedef.name or reference.name:
                     s += " !"
-                if predicate.name:
-                    s += f" {predicate.name}"
+                if typedef.name:
+                    s += f" {typedef.name}"
                 if reference.name:
                     s += f" {reference.name}"
                 yield s
@@ -1254,28 +1254,28 @@ class Obo:
         ):
             for parent in term.parents:
                 yield term, is_a.reference, parent
-            for predicate, reference in term.iterate_relations():
+            for typedef, reference in term.iterate_relations():
                 if not self.typedefs:
                     raise ValueError(f"[{self.ontology}] no typedefs defined")
-                if predicate.pair not in typedefs and predicate.pair not in default_typedefs:
-                    if predicate.pair not in _warned:
-                        _warn_string = f"[{term.curie}] undefined typedef: {predicate.pair}"
-                        if predicate.name:
-                            _warn_string += f" ({predicate.name})"
+                if typedef.pair not in typedefs and typedef.pair not in default_typedefs:
+                    if typedef.pair not in _warned:
+                        _warn_string = f"[{term.curie}] undefined typedef: {typedef.pair}"
+                        if typedef.name:
+                            _warn_string += f" ({typedef.name})"
                         logger.warning(_warn_string)
-                        _warned.add(predicate.pair)
+                        _warned.add(typedef.pair)
                     continue
-                yield term, predicate, reference
+                yield term, typedef, reference
 
     def iter_relation_rows(
         self, use_tqdm: bool = False
     ) -> Iterable[tuple[str, str, str, str, str]]:
         """Iterate the relations' rows."""
-        for term, predicate, reference in self.iterate_relations(use_tqdm=use_tqdm):
+        for term, typedef, reference in self.iterate_relations(use_tqdm=use_tqdm):
             yield (
                 term.identifier,
-                predicate.prefix,
-                predicate.identifier,
+                typedef.prefix,
+                typedef.identifier,
                 reference.prefix,
                 reference.identifier,
             )
