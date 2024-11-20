@@ -9,6 +9,18 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from typing_extensions import Unpack
 from zenodo_client import update_zenodo
 
+from .database_utils import (
+    _iter_alts,
+    _iter_definitions,
+    _iter_metadata,
+    _iter_names,
+    _iter_properties,
+    _iter_relations,
+    _iter_species,
+    _iter_synonyms,
+    _iter_typedefs,
+    _iter_xrefs,
+)
 from .utils import (
     Clickable,
     directory_option,
@@ -30,18 +42,6 @@ from ..constants import (
     DatabaseKwargs,
 )
 from ..getters import db_output_helper
-from ..xrefdb.xrefs_pipeline import (
-    _iter_alts,
-    _iter_definitions,
-    _iter_metadata,
-    _iter_names,
-    _iter_properties,
-    _iter_relations,
-    _iter_species,
-    _iter_synonyms,
-    _iter_typedefs,
-    _iter_xrefs,
-)
 
 __all__ = [
     "main",

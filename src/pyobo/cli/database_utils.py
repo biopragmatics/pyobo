@@ -3,19 +3,14 @@
 from __future__ import annotations
 
 import gzip
-import itertools as itt
 import logging
 from collections.abc import Iterable
 from typing import cast
 
 import bioregistry
-import networkx as nx
-import pandas as pd
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
 
-from .sources import iter_xref_plugins
-from .. import get_xrefs_df
 from ..api import (
     get_id_definition_mapping,
     get_id_name_mapping,
@@ -26,45 +21,14 @@ from ..api import (
     get_properties_df,
     get_relations_df,
     get_typedef_df,
+    get_xrefs_df,
 )
-from ..constants import SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
 from ..getters import IterHelperHelperDict, iter_helper, iter_helper_helper
 from ..sources import ncbigene, pubchem
 from ..utils.path import ensure_path
+from ..xrefdb.sources import iter_xref_plugins
 
 logger = logging.getLogger(__name__)
-
-
-# TODO a normal graph can easily be turned into a directed graph where each
-#  edge points from low priority to higher priority, then the graph can
-#  be reduced to a set of star graphs and ultimately to a single dictionary
-
-
-def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
-    """Generate a graph from the mappings dataframe."""
-    rv = nx.Graph()
-
-    it = itt.chain(
-        df[[SOURCE_PREFIX, SOURCE_ID]].drop_duplicates().values,
-        df[[TARGET_PREFIX, TARGET_ID]].drop_duplicates().values,
-    )
-    it = tqdm(it, desc="loading curies", unit_scale=True)
-    for prefix, identifier in it:
-        rv.add_node(_to_curie(prefix, identifier), prefix=prefix, identifier=identifier)
-
-    it = tqdm(df.values, total=len(df.index), desc="loading xrefs", unit_scale=True)
-    for source_ns, source_id, target_ns, target_id, provenance in it:
-        rv.add_edge(
-            _to_curie(source_ns, source_id),
-            _to_curie(target_ns, target_id),
-            provenance=provenance,
-        )
-
-    return rv
-
-
-def _to_curie(prefix: str, identifier: str) -> str:
-    return f"{prefix}:{identifier}"
 
 
 def _iter_ncbigene(left: int, right: int) -> Iterable[tuple[str, str, str]]:

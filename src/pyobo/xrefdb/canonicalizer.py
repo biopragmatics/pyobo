@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools as itt
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -12,8 +13,8 @@ from more_itertools import pairwise
 from tqdm.auto import tqdm
 
 from .priority import DEFAULT_PRIORITY_LIST
-from .xrefs_pipeline import get_graph_from_xref_df
 from .. import resource_utils
+from ..constants import SOURCE_ID, SOURCE_PREFIX, TARGET_ID, TARGET_PREFIX
 from ..utils.io import get_reader, get_writer
 
 __all__ = [
@@ -213,3 +214,33 @@ def remap_file_stream(file_in, file_out, column: int, sep="\t") -> None:
     for row in reader:
         row[column] = get_priority_curie(row[column])
         writer.writerow(row)
+
+
+def get_graph_from_xref_df(df: pd.DataFrame) -> nx.Graph:
+    """Generate a graph from the mappings dataframe."""
+    # TODO a normal graph can easily be turned into a directed graph where each
+    #  edge points from low priority to higher priority, then the graph can
+    #  be reduced to a set of star graphs and ultimately to a single dictionary
+    rv = nx.Graph()
+
+    it = itt.chain(
+        df[[SOURCE_PREFIX, SOURCE_ID]].drop_duplicates().values,
+        df[[TARGET_PREFIX, TARGET_ID]].drop_duplicates().values,
+    )
+    it = tqdm(it, desc="loading curies", unit_scale=True)
+    for prefix, identifier in it:
+        rv.add_node(_to_curie(prefix, identifier), prefix=prefix, identifier=identifier)
+
+    it = tqdm(df.values, total=len(df.index), desc="loading xrefs", unit_scale=True)
+    for source_ns, source_id, target_ns, target_id, provenance in it:
+        rv.add_edge(
+            _to_curie(source_ns, source_id),
+            _to_curie(target_ns, target_id),
+            provenance=provenance,
+        )
+
+    return rv
+
+
+def _to_curie(prefix: str, identifier: str) -> str:
+    return f"{prefix}:{identifier}"
