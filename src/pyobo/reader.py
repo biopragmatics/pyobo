@@ -154,32 +154,18 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
                 xrefs.append(node_xref)
         n_xrefs += len(xrefs)
 
-        definition, definition_references = get_definition(
-            data,
-            node=reference,
-        )
+        definition, definition_references = get_definition(data, node=reference)
         if definition_references:
             provenance.extend(definition_references)
 
         alt_ids = list(iterate_node_alt_ids(data, strict=strict))
         n_alt_ids += len(alt_ids)
 
-        parents = list(
-            iterate_node_parents(
-                data,
-                node=reference,
-                strict=strict,
-            )
-        )
+        parents = list(iterate_node_parents(data, node=reference, strict=strict))
         n_parents += len(parents)
 
         synonyms = list(
-            iterate_node_synonyms(
-                data,
-                synonym_typedefs,
-                node=reference,
-                strict=strict,
-            )
+            iterate_node_synonyms(data, synonym_typedefs, node=reference, strict=strict)
         )
         n_synonyms += len(synonyms)
 
