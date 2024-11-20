@@ -9,9 +9,11 @@ from functools import lru_cache
 from typing import TypeVar
 
 from curies import Reference, ReferenceTuple
+from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
-from .utils import get_version
+from .utils import get_version, get_version_from_kwargs
+from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_collection, cached_mapping, cached_multidict
@@ -48,16 +50,14 @@ NO_BUILD_LOGGED: set = set()
 
 
 def _help_get(
-    f: Callable[[str], Mapping[str, X]],
+    f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
     prefix: str,
     identifier: str,
-    force: bool = False,
-    strict: bool = False,
-    version: str | None = None,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> X | None:
     """Get the result for an entity based on a mapping maker function ``f``."""
     try:
-        mapping = f(prefix, force=force, strict=strict, version=version)  # type:ignore
+        mapping = f(prefix, **kwargs)  # type:ignore
     except NoBuildError:
         if prefix not in NO_BUILD_PREFIXES:
             logger.warning("[%s] unable to look up results with %s", prefix, f)
@@ -75,7 +75,7 @@ def _help_get(
             NO_BUILD_PREFIXES.add(prefix)
         return None
 
-    primary_id = get_primary_identifier(prefix, identifier, version=version)
+    primary_id = get_primary_identifier(prefix, identifier, **kwargs)
     return mapping.get(primary_id)
 
 
@@ -84,26 +84,20 @@ def get_name(
     prefix: str | Reference | ReferenceTuple,
     identifier: str | None = None,
     /,
-    *,
-    version: str | None = None,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the name for an entity."""
     if isinstance(prefix, ReferenceTuple | Reference):
         identifier = prefix.identifier
         prefix = prefix.prefix
-    return _help_get(get_id_name_mapping, prefix, identifier, version=version)  # type:ignore
+    if identifier is None:
+        raise ValueError("identifier is None")
+    return _help_get(get_id_name_mapping, prefix=prefix, identifier=identifier, **kwargs)
 
 
 @lru_cache
 @wrap_norm_prefix
-def get_ids(
-    prefix: str,
-    *,
-    force: bool = False,
-    strict: bool = False,
-    version: str | None = None,
-    force_process: bool = False,
-) -> set[str]:
+def get_ids(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
     """Get the set of identifiers for this prefix."""
     if prefix == "ncbigene":
         from ..sources.ncbigene import get_ncbigene_ids
@@ -113,21 +107,12 @@ def get_ids(
         logger.info("[%s] done loading name mappings", prefix)
         return rv
 
-    if version is None:
-        version = get_version(prefix)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="ids.tsv", version=version)
 
-    @cached_collection(path=path, force=force or force_process)
+    @cached_collection(path=path, force=check_should_force(kwargs))
     def _get_ids() -> list[str]:
-        if force:
-            logger.info("[%s v%s] forcing reload for names", prefix, version)
-        else:
-            logger.debug(
-                "[%s v%s] no cached identifiers found. getting from OBO loader", prefix, version
-            )
-        ontology = get_ontology(
-            prefix, force=force, strict=strict, version=version, rewrite=force_process
-        )
+        ontology = get_ontology(prefix, **kwargs)
         return sorted(ontology.get_ids())
 
     return set(_get_ids())
@@ -137,11 +122,7 @@ def get_ids(
 @wrap_norm_prefix
 def get_id_name_mapping(
     prefix: str,
-    *,
-    force: bool = False,
-    strict: bool = False,
-    version: str | None = None,
-    force_process: bool = False,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == "ncbigene":
@@ -152,19 +133,12 @@ def get_id_name_mapping(
         logger.info("[%s] done loading name mappings", prefix)
         return rv
 
-    if version is None:
-        version = get_version(prefix)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="names.tsv", version=version)
 
-    @cached_mapping(path=path, header=[f"{prefix}_id", "name"], force=force or force_process)
+    @cached_mapping(path=path, header=[f"{prefix}_id", "name"], force=check_should_force(kwargs))
     def _get_id_name_mapping() -> Mapping[str, str]:
-        if force:
-            logger.debug("[%s v%s] forcing reload for names", prefix, version)
-        else:
-            logger.debug("[%s v%s] no cached names found. getting from OBO loader", prefix, version)
-        ontology = get_ontology(
-            prefix, force=force, strict=strict, version=version, rewrite=force_process
-        )
+        ontology = get_ontology(prefix, **kwargs)
         return ontology.get_id_name_mapping()
 
     try:
@@ -180,100 +154,82 @@ def get_id_name_mapping(
 @lru_cache
 @wrap_norm_prefix
 def get_name_id_mapping(
-    prefix: str, *, force: bool = False, version: str | None = None, force_process: bool = False
+    prefix: str,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get a name to identifier mapping for the OBO file."""
-    id_name = get_id_name_mapping(
-        prefix=prefix, force=force, version=version, force_process=force_process
-    )
+    id_name = get_id_name_mapping(prefix, **kwargs)
     return {v: k for k, v in id_name.items()}
 
 
 @wrap_norm_prefix
 def get_definition(
-    prefix: str, identifier: str | None = None, *, version: str | None = None
+    prefix: str, identifier: str | None = None, **kwargs: Unpack[GetOntologyKwargs]
 ) -> str | None:
     """Get the definition for an entity."""
     if identifier is None:
         prefix, _, identifier = prefix.rpartition(":")
-    return _help_get(get_id_definition_mapping, prefix, identifier, version=version)
+    if identifier is None:
+        raise ValueError
+    return _help_get(get_id_definition_mapping, prefix=prefix, identifier=identifier, **kwargs)
 
 
 def get_id_definition_mapping(
     prefix: str,
-    *,
-    force: bool = False,
-    strict: bool = False,
-    version: str | None = None,
-    force_process: bool = False,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get a mapping of descriptions."""
-    if version is None:
-        version = get_version(prefix)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="definitions.tsv", version=version)
 
-    @cached_mapping(path=path, header=[f"{prefix}_id", "definition"], force=force or force_process)
+    @cached_mapping(
+        path=path, header=[f"{prefix}_id", "definition"], force=check_should_force(kwargs)
+    )
     def _get_mapping() -> Mapping[str, str]:
         logger.info(
             "[%s v%s] no cached descriptions found. getting from OBO loader", prefix, version
         )
-        ontology = get_ontology(
-            prefix, force=force, strict=strict, version=version, rewrite=force_process
-        )
+        ontology = get_ontology(prefix, **kwargs)
         return ontology.get_id_definition_mapping()
 
     return _get_mapping()
 
 
-def get_obsolete(
-    prefix: str,
-    *,
-    force: bool = False,
-    strict: bool = False,
-    version: str | None = None,
-    force_process: bool = False,
-) -> set[str]:
+def get_obsolete(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
     """Get the set of obsolete local unique identifiers."""
-    if version is None:
-        version = get_version(prefix)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="obsolete.tsv", version=version)
 
-    @cached_collection(path=path, force=force or force_process)
+    @cached_collection(path=path, force=check_should_force(kwargs))
     def _get_obsolete() -> list[str]:
-        ontology = get_ontology(
-            prefix, force=force, strict=strict, version=version, rewrite=force_process
-        )
+        ontology = get_ontology(prefix, **kwargs)
         return sorted(ontology.get_obsolete())
 
     return set(_get_obsolete())
 
 
 @wrap_norm_prefix
-def get_synonyms(prefix: str, identifier: str) -> list[str] | None:
+def get_synonyms(
+    prefix: str, identifier: str, **kwargs: Unpack[GetOntologyKwargs]
+) -> list[str] | None:
     """Get the synonyms for an entity."""
-    return _help_get(get_id_synonyms_mapping, prefix, identifier)
+    return _help_get(get_id_synonyms_mapping, prefix=prefix, identifier=identifier, **kwargs)
 
 
 @wrap_norm_prefix
 def get_id_synonyms_mapping(
-    prefix: str,
-    *,
-    force: bool = False,
-    strict: bool = False,
-    version: str | None = None,
-    force_process: bool = False,
+    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, list[str]]:
     """Get the OBO file and output a synonym dictionary."""
-    if version is None:
-        version = get_version(prefix)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="synonyms.tsv", version=version)
 
-    @cached_multidict(path=path, header=[f"{prefix}_id", "synonym"], force=force or force_process)
+    @cached_multidict(
+        path=path, header=[f"{prefix}_id", "synonym"], force=check_should_force(kwargs)
+    )
     def _get_multidict() -> Mapping[str, list[str]]:
         logger.info("[%s v%s] no cached synonyms found. getting from OBO loader", prefix, version)
-        ontology = get_ontology(
-            prefix, force=force, strict=strict, version=version, rewrite=force_process
-        )
+        ontology = get_ontology(prefix, **kwargs)
         return ontology.get_id_synonyms_mapping()
 
     return _get_multidict()
