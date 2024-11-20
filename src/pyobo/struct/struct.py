@@ -115,6 +115,10 @@ class SynonymTypeDef(Referenced):
     reference: Reference
     specificity: SynonymSpecificity | None = None
 
+    def __hash__(self) -> int:
+        # have to re-define hash because of the @dataclass
+        return self.reference.__hash__()
+
     def to_obo(self) -> str:
         """Serialize to OBO."""
         rv = f"synonymtypedef: {self.preferred_curie}"
@@ -197,8 +201,9 @@ class Term(Referenced):
 
     type: Literal["Term", "Instance"] = "Term"
 
-    def __hash__(self):
-        return hash((self.__class__, self.prefix, self.identifier))
+    def __hash__(self) -> int:
+        # have to re-define hash because of the @dataclass
+        return self.reference.__hash__()
 
     @classmethod
     def from_triple(

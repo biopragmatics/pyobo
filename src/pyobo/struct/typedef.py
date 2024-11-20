@@ -81,7 +81,8 @@ class TypeDef(Referenced):
     is_metadata_tag: bool | None = None
 
     def __hash__(self) -> int:
-        return hash((self.__class__, self.prefix, self.identifier))
+        # have to re-define hash because of the @dataclass
+        return self.reference.__hash__()
 
     def iterate_obo_lines(self) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
