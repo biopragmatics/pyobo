@@ -9,7 +9,7 @@ import os
 import sys
 import warnings
 from collections import defaultdict
-from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from itertools import chain
@@ -330,7 +330,7 @@ class Term(Referenced):
             self.parents.append(reference)
         return self
 
-    def extend_parents(self, references: Iterable[Reference]) -> None:
+    def extend_parents(self, references: Collection[Reference]) -> None:
         """Add a collection of parents to this entity."""
         warnings.warn("use append_parent", DeprecationWarning, stacklevel=2)
         if any(x is None for x in references):
