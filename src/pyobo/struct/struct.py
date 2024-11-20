@@ -773,7 +773,7 @@ class Obo:
         typedefs = self._index_typedefs()
         for term in self:
             yield from term.iterate_obo_lines(
-                ontology=self.ontology,
+                ontology_prefix=self.ontology,
                 typedefs=typedefs,
                 emit_object_properties=emit_object_properties,
                 emit_annotation_properties=emit_annotation_properties,

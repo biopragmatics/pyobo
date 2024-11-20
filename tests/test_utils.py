@@ -25,7 +25,7 @@ class TestStringUtils(unittest.TestCase):
 
         # Test resource-specific remapping
         self.assertEqual((None, None), normalize_curie("Thesaurus:C1234", strict=False))
-        self.assertEqual(("ncit", "C1234"), normalize_curie("Thesaurus:C1234", ontology="enm"))
+        self.assertEqual(("ncit", "C1234"), normalize_curie("Thesaurus:C1234", ontology_prefix="enm"))
 
     def test_parse_eccode_transfer(self):
         """Test parse_eccode_transfer."""

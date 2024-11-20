@@ -32,21 +32,21 @@ class MissingPrefixError(ValueError):
         self,
         *,
         curie: str,
-        ontology: str | None = None,
-        reference: Reference | None = None,
+        ontology_prefix: str | None = None,
+        node: Reference | None = None,
     ):
         """Initialize the error."""
         self.curie = curie
-        self.ontology = ontology
-        self.reference = reference
+        self.ontology_prefix = ontology_prefix
+        self.node = node
 
     def __str__(self) -> str:
         s = ""
-        if self.ontology:
-            s += f"[{self.ontology}] "
-        s += f"curie contains unhandled prefix: `{self.curie}`"
-        if self.reference is not None:
-            s += f" from {self.reference.curie}"
+        if self.ontology_prefix:
+            s += f"[{self.ontology_prefix}] "
+        s += f"CURIE contains unhandled prefix: `{self.curie}`"
+        if self.node is not None:
+            s += f" from {self.node.curie}"
         return s
 
 
@@ -57,14 +57,14 @@ def normalize_curie(
     curie: str,
     *,
     strict: bool = True,
-    ontology: str | None = None,
-    reference_node: Reference | None = None,
+    ontology_prefix: str | None = None,
+    node: Reference | None = None,
 ) -> tuple[str, str] | tuple[None, None]:
     """Parse a string that looks like a CURIE.
 
     :param curie: A compact uniform resource identifier (CURIE)
     :param strict: Should an exception be thrown if the CURIE can not be parsed w.r.t. the Bioregistry?
-    :param ontology: The ontology in which the CURIE appears
+    :param ontology_prefix: The ontology in which the CURIE appears
     :return: A parse tuple or a tuple of None, None if not able to parse and not strict
 
     - Normalizes the namespace
@@ -81,7 +81,7 @@ def normalize_curie(
     curie = remap_full(curie)
 
     # Remap node's prefix (if necessary)
-    curie = remap_prefix(curie, ontology_prefix=ontology)
+    curie = remap_prefix(curie, ontology_prefix=ontology_prefix)
 
     try:
         prefix, identifier = curie.split(":", 1)
@@ -99,7 +99,7 @@ def normalize_curie(
     if norm_node_prefix:
         return norm_node_prefix, identifier
     elif strict:
-        raise MissingPrefixError(curie=curie, ontology=ontology, reference=reference_node)
+        raise MissingPrefixError(curie=curie, ontology_prefix=ontology_prefix, node=node)
     else:
         return None, None
 
