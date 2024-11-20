@@ -28,16 +28,6 @@ class Reference(curies.Reference):
 
     name: str | None = Field(default=None, description="the name of the reference")
 
-    def __hash__(self) -> int:
-        return hash((self.prefix, self.identifier))
-
-    def __eq__(self, other: Any) -> bool:
-        return (
-            isinstance(other, curies.Reference)
-            and self.prefix == other.prefix
-            and self.identifier == other.identifier
-        )
-
     @field_validator("prefix")
     def validate_prefix(cls, v):  # noqa
         """Validate the prefix for this reference."""
