@@ -20,6 +20,7 @@ from typing import Any, ClassVar, Literal, TextIO, TypeAlias
 
 import bioregistry
 import click
+import curies
 import networkx as nx
 import pandas as pd
 from curies import ReferenceTuple
@@ -285,18 +286,22 @@ class Term(Referenced):
             alt = Reference(prefix=self.prefix, identifier=alt)
         self.alt_ids.append(alt)
 
-    def append_see_also(self, reference: ReferenceHint) -> Term:
+    def append_see_also(self, reference: ReferenceHint) -> Self:
         """Add a see also relationship."""
         try:
-            rr = _ensure_ref(reference)
-        except ValueError:  # can't parse?
+            _reference = _ensure_ref(reference)
+        # ValueError gets raised if _ensure_ref has an issue
+        # with parsing or standardizing
+        except ValueError:
+            # if it's a string, just give up and annotate it as
+            # a literal string. otherwise, raise the error again
             if isinstance(reference, str):
                 return self.annotate_literal(see_also, reference)
             raise
         else:
-            return self.annotate_object(see_also, rr)
+            return self.annotate_object(see_also, _reference)
 
-    def append_comment(self, value: str) -> Term:
+    def append_comment(self, value: str) -> Self:
         """Add a comment relationship."""
         return self.annotate_literal(comment, value)
 
@@ -304,7 +309,7 @@ class Term(Referenced):
         """Add a replaced by relationship."""
         return self.annotate_object(term_replaced_by, reference)
 
-    def append_parent(self, reference: ReferenceHint) -> Term:
+    def append_parent(self, reference: ReferenceHint) -> Self:
         """Add a parent to this entity."""
         reference = _ensure_ref(reference)
         if reference not in self.parents:
@@ -349,7 +354,7 @@ class Term(Referenced):
         """Get relationships from the given type."""
         return self.relationships[_ensure_ref(typedef)]
 
-    def append_exact_match(self, reference: ReferenceHint):
+    def append_exact_match(self, reference: ReferenceHint) -> Self:
         """Append an exact match, also adding an xref."""
         reference = _ensure_ref(reference)
         self.annotate_object(exact_match, reference)
