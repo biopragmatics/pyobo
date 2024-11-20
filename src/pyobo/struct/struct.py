@@ -473,9 +473,8 @@ class Term(Referenced):
     ) -> Iterable[str]:
         for typedef, references in sorted(self.relationships.items()):
             _typedef_warn(ontology, typedef.reference, typedefs)
-            typedef_preferred_curie = typedef.preferred_curie
             for reference in sorted(references):
-                s = f"relationship: {typedef_preferred_curie} {reference.preferred_curie}"
+                s = f"relationship: {typedef.preferred_curie} {reference.preferred_curie}"
                 if typedef.name or reference.name:
                     s += " !"
                 if typedef.name:
