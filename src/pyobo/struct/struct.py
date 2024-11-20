@@ -1054,8 +1054,6 @@ class Obo:
 
             relations = []
             for typedef, target in term.iterate_relations():
-                if target is None:
-                    raise ValueError("target should not be none!")
                 relations.append(f"{typedef.curie} {target.curie}")
                 links.append((term.curie, typedef.curie, target.curie))
 
