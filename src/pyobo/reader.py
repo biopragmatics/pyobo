@@ -17,10 +17,12 @@ from tqdm.auto import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 from pyobo.reader_utils import (
+    _append_property,
     _chomp_axioms,
     _chomp_references,
     _chomp_specificity,
     _chomp_typedef,
+    _ends_with_extension,
     _handle_relation_curie,
     _parse_object_curie,
 )
@@ -30,7 +32,6 @@ from .registries import curie_has_blacklisted_prefix, curie_is_blacklisted, rema
 from .struct import (
     Obo,
     Reference,
-    Referenced,
     Synonym,
     SynonymTypeDef,
     Term,
@@ -38,7 +39,7 @@ from .struct import (
     make_ad_hoc_ontology,
 )
 from .struct.struct import DEFAULT_SYNONYM_TYPE
-from .struct.typedef import alternative_term, default_typedefs
+from .struct.typedef import default_typedefs
 from .utils.misc import cleanup_version
 
 __all__ = [
@@ -249,95 +250,6 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
         _data_version=data_version,
         terms=terms,
     )
-
-
-UNPARSED_IRIS: set[str] = set()
-
-
-def _append_property(
-    term: Term,
-    prop: str | Reference | Referenced,
-    value: str | Reference | Referenced,
-    *,
-    strict: bool,
-    ontology_prefix: str,
-) -> Term:
-    """Append a property."""
-    if isinstance(prop, str):
-        # TODO do some relation upgrading here too!
-        if prop.startswith("http://purl.obolibrary.org/obo/"):
-            prop = Reference(
-                prefix="obo", identifier=prop.removeprefix("http://purl.obolibrary.org/obo/")
-            )
-        elif prop.startswith("http"):
-            # TODO upstream this into an omni-parser for references?
-            _pref, _id = bioregistry.parse_iri(prop)
-            if _pref and _id:
-                prop = Reference(prefix=_pref, identifier=_id)
-            else:
-                logger.warning(f"[{term.curie}] unable to handle property: {prop}")
-                return term
-        else:
-            _tmp_prop = _handle_relation_curie(
-                prop,
-                strict=strict,
-                node=term.reference,
-                ontology_prefix=ontology_prefix,
-            )
-            if _tmp_prop is None:
-                logger.warning(f"[{term.curie}] could not parse property: {prop}")
-                return term
-            prop = _tmp_prop
-
-    if not isinstance(value, str):
-        return term.annotate_object(prop, value)
-
-    if prop.prefix in ALWAYS_LITERAL:
-        return term.annotate_literal(prop, value)
-
-    if value.startswith("http"):
-        _pref, _id = bioregistry.parse_iri(value)
-        if _pref and _id:
-            return term.annotate_object(prop, Reference(prefix=_pref, identifier=_id))
-        else:
-            if value not in UNPARSED_IRIS and not _ends_with_extension(value):
-                logger.warning(
-                    f"[{term.curie} {prop.curie}] could not parse property target as IRI: {value}"
-                )
-                UNPARSED_IRIS.add(value)
-            return term
-
-    if len(value) > 8 and value[:4].isnumeric() and value[4] == "-" and value[5:7].isnumeric():
-        if len(value) == 10:  # it's YYYY-MM-DD
-            return term.annotate_literal(
-                prop, value, datatype=Reference(prefix="xsd", identifier="date")
-            )
-        # assume it's a full datetime
-        return term.annotate_literal(
-            prop, value, datatype=Reference(prefix="xsd", identifier="dateTime")
-        )
-
-    # assume if there's a string, then it's not a CURIE
-    if " " in value:
-        return term.annotate_literal(prop, value)
-
-    if ":" in value:
-        xx = Reference.from_curie(value, strict=strict)
-        if xx is None:
-            logger.warning(
-                f"[{term.curie} {prop.curie}] could not parse property target as CURIE: {value}"
-            )
-            return term
-        return term.annotate_object(prop, xx)
-
-    return term.annotate_literal(prop, value)
-
-
-SKIP_SUFFIXES = {".aspx", ".png", ".jpg", ".html", ".htm", ".pdf", ".svg"}
-
-
-def _ends_with_extension(s: str) -> bool:
-    return any(s.endswith(suff) for suff in SKIP_SUFFIXES)
 
 
 def _clean_graph_ontology(graph, prefix: str) -> None:
@@ -655,9 +567,6 @@ def iterate_node_alt_ids(
             logger.warning("[%s] could not parse alt curie: %s", node.curie, alt_curie)
             continue
         yield alt_reference
-
-
-ALWAYS_LITERAL: set[ReferenceTuple] = {alternative_term.pair}
 
 
 def iterate_node_relationships(
