@@ -95,8 +95,8 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
     if ontology_prefix is None:
         raise ValueError(f"OBO `ontology` key has prefix: {ontology_prefix_raw}")
 
-    date = _get_date(graph=graph, ontology=ontology_prefix)
-    name = _get_name(graph=graph, ontology=ontology_prefix)
+    date = _get_date(graph=graph, ontology_prefix=ontology_prefix)
+    name = _get_name(graph=graph, ontology_prefix=ontology_prefix)
 
     data_version = graph.graph.get("data-version")
     if not data_version:
@@ -341,22 +341,22 @@ def _ends_with_extension(s: str) -> bool:
 
 def _clean_graph_ontology(graph, prefix: str) -> None:
     """Update the ontology entry in the graph's metadata, if necessary."""
-    ontology = graph.graph.get("ontology")
-    if ontology is None:
+    ontology_prefix_raw = graph.graph.get("ontology")
+    if ontology_prefix_raw is None:
         logger.debug('[%s] missing "ontology" key', prefix)
         graph.graph["ontology"] = prefix
-    elif not ontology.isalpha():
+    elif not ontology_prefix_raw.isalpha():
         logger.debug(
             "[%s] ontology key `%s` has a strange format. replacing with prefix",
             prefix,
-            ontology,
+            ontology_prefix_raw,
         )
         graph.graph["ontology"] = prefix
-    elif ontology != prefix:
+    elif ontology_prefix_raw != prefix:
         logger.debug(
             "[%s] ontology key `%s` is not the same as the prefix. replacing",
             prefix,
-            ontology,
+            ontology_prefix_raw,
         )
         graph.graph["ontology"] = prefix
 
@@ -402,25 +402,27 @@ def _iter_obo_graph(
         yield reference, data
 
 
-def _get_date(graph, ontology: str) -> datetime | None:
+def _get_date(graph, ontology_prefix: str) -> datetime | None:
     try:
         rv = datetime.strptime(graph.graph["date"], DATE_FORMAT)
     except KeyError:
-        logger.info("[%s] does not report a date", ontology)
+        logger.info("[%s] does not report a date", ontology_prefix)
         return None
     except ValueError:
-        logger.info("[%s] reports a date that can't be parsed: %s", ontology, graph.graph["date"])
+        logger.info(
+            "[%s] reports a date that can't be parsed: %s", ontology_prefix, graph.graph["date"]
+        )
         return None
     else:
         return rv
 
 
-def _get_name(graph, ontology: str) -> str:
+def _get_name(graph, ontology_prefix: str) -> str:
     try:
         rv = graph.graph["name"]
     except KeyError:
-        logger.info("[%s] does not report a name", ontology)
-        rv = cast(str, bioregistry.get_name(ontology))
+        logger.info("[%s] does not report a name", ontology_prefix)
+        rv = cast(str, bioregistry.get_name(ontology_prefix))
     return rv
 
 

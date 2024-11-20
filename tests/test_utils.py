@@ -28,7 +28,8 @@ class TestStringUtils(unittest.TestCase):
         # Test resource-specific remapping
         self.assertIsNone(normalize_curie("Thesaurus:C1234", strict=False))
         self.assertEqual(
-            ReferenceTuple("ncit", "C1234"), normalize_curie("Thesaurus:C1234", ontology_prefix="enm")
+            ReferenceTuple("ncit", "C1234"),
+            normalize_curie("Thesaurus:C1234", ontology_prefix="enm"),
         )
 
     def test_parse_eccode_transfer(self):
