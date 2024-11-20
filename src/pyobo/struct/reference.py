@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import bioregistry
 import curies
 from curies import ReferenceTuple
@@ -135,14 +137,24 @@ class Reference(curies.Reference):
             rv = f"{rv} ! {self.name}"
         return rv
 
-    def __hash__(self):
-        return hash((self.__class__, self.prefix, self.identifier))
-
 
 class Referenced:
     """A class that contains a reference."""
 
     reference: Reference
+
+    def __hash__(self) -> int:
+        return self.reference.__hash__()
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, curies.Reference | Referenced):
+            return self.prefix == other.prefix and self.identifier == other.identifier
+        raise TypeError
+
+    def __lt__(self, other: Referenced) -> bool:
+        if not isinstance(other, curies.Reference | Referenced):
+            raise TypeError
+        return self.reference < other.reference
 
     @property
     def prefix(self):
