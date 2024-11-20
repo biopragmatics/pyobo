@@ -34,6 +34,7 @@ __all__ = [
     "has_salt",
     "has_smiles",
     "has_successor",
+    "has_taxonomy_rank",
     "is_a",
     "located_in",
     "member_of",
@@ -351,6 +352,11 @@ has_homepage = TypeDef(
 
 has_category = TypeDef(
     reference=Reference(prefix="biolink", identifier="category", name="has category"),
+    is_metadata_tag=True,
+)
+
+has_taxonomy_rank = TypeDef(
+    reference=Reference(prefix="taxrank", identifier="1000000", name="has rank"),
     is_metadata_tag=True,
 )
 
