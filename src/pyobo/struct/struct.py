@@ -13,7 +13,6 @@ from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, S
 from dataclasses import dataclass, field
 from datetime import datetime
 from itertools import chain
-from operator import attrgetter
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, ClassVar, Literal, TextIO, TypeAlias
@@ -545,6 +544,7 @@ class Term(Referenced):
 
 #: A set of warnings, used to make sure we don't show the same one over and over
 _TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
+
 
 def _typedef_warn(
     prefix: str, predicate: Reference, typedefs: dict[ReferenceTuple, TypeDef]
