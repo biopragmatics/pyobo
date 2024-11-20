@@ -279,11 +279,11 @@ class Term(Referenced):
 
     def append_comment(self, value: str) -> Self:
         """Add a comment relationship."""
-        return self.append_property(comment.curie, value)
+        return self.annotate_literal(comment.curie, value)
 
     def append_replaced_by(self, reference: ReferenceHint) -> Self:
         """Add a replaced by relationship."""
-        return self.append_relationship(term_replaced_by, reference)
+        return self.annotate_object(term_replaced_by, reference)
 
     def append_parent(self, reference: ReferenceHint) -> Self:
         """Add a parent to this entity."""
@@ -328,7 +328,7 @@ class Term(Referenced):
     def append_exact_match(self, reference: ReferenceHint) -> Self:
         """Append an exact match, also adding an xref."""
         reference = _ensure_ref(reference)
-        self.append_relationship(exact_match, reference)
+        self.annotate_object(exact_match, reference)
         self.append_xref(reference)
         return self
 
@@ -394,7 +394,9 @@ class Term(Referenced):
 
     def annotate_boolean(self, prop: str | Reference | Referenced, value: bool) -> Self:
         """Append a property."""
-        return self.annotate_literal(prop, str(value))
+        return self.annotate_literal(
+            prop, str(value).lower(), datatype=Reference(prefix="xsd", identifier="boolean")
+        )
 
     def _definition_fp(self) -> str:
         if self.definition is None:
