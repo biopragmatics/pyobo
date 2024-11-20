@@ -24,7 +24,7 @@ from pyobo import (
     get_obsolete,
 )
 from pyobo.api.utils import get_version_from_kwargs
-from pyobo.constants import SlimLookupKwargs
+from pyobo.constants import GetOntologyKwargs
 from pyobo.getters import NoBuildError
 from pyobo.utils.io import multidict
 
@@ -101,7 +101,7 @@ def get_grounder(
     versions: None | str | Iterable[str | None] | dict[str, str] = None,
     skip_obsolete: bool = False,
     progress: bool = True,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Grounder:
     """Get a Gilda grounder for the given prefix(es)."""
     unnamed = set() if unnamed is None else set(unnamed)
@@ -177,7 +177,7 @@ def get_gilda_terms(
     identifiers_are_names: bool = False,
     progress: bool = True,
     skip_obsolete: bool = False,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Iterable[gilda.term.Term]:
     """Get gilda terms for the given namespace."""
     kwargs["version"] = get_version_from_kwargs(prefix, kwargs)  # type:ignore
@@ -259,7 +259,7 @@ def get_gilda_terms(
 def get_gilda_term_subset(
     source: str,
     ancestors: str | list[str],
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Iterable[gilda.term.Term]:
     """Get a subset of terms."""
     subset = {

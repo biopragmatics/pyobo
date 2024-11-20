@@ -114,33 +114,57 @@ class DatabaseKwargs(TypedDict):
     use_tqdm: bool
 
 
-class SlimmerLookupKwargs(TypedDict):
-    """Keyword arguments for database CLI functions."""
+class SlimGetOntologyKwargs(TypedDict):
+    """Keyword arguments for database CLI functions.
+
+    These arguments are global during iteration over _all_
+    ontologies, whereas the additional ``version`` is added in the
+    subclass below for specific instances when only a single
+    ontology is requested.
+    """
 
     strict: bool
     force: bool
     force_process: bool
 
 
-def check_should_force(data: SlimmerLookupKwargs) -> bool:
-    """Determine whether caching should be forced based on generic keyword arguments."""
-    return data.get("force", False) or data.get("force_process", False)
+class GetOntologyKwargs(SlimGetOntologyKwargs):
+    """Represents the optional keyword arguments passed to :func:`pyobo.get_ontology`.
 
-
-class SlimLookupKwargs(SlimmerLookupKwargs):
-    """Keyword arguments for database CLI functions."""
+    This dictionary doesn't contain ``prefix`` since this is always explicitly handled.
+    """
 
     version: str | None
 
 
-class IterHelperHelperDict(SlimmerLookupKwargs):
+def check_should_force(data: GetOntologyKwargs) -> bool:
+    """Determine whether caching should be forced based on generic keyword arguments."""
+    # note that this could be applied to the superclass of GetOntologyKwargs
+    # but this function should only be used in the scope where GetOntologyKwargs
+    # is appropriate.
+    return data.get("force", False) or data.get("force_process", False)
+
+
+class LookupKwargs(GetOntologyKwargs):
+    """Represents all arguments passed to :func:`pyobo.get_ontology`.
+
+    This dictionary does contain the ``prefix`` since it's used in the scope
+    of CLI functions.
+    """
+
+    prefix: str
+
+
+class IterHelperHelperDict(SlimGetOntologyKwargs):
+    """Represents arguments needed when iterating over all ontologies.
+
+    The explicitly defind arguments in this typed dict are used for
+    the loop function :func:`iter_helper_helper` and the rest that
+    are inherited get passed to :func:`pyobo.get_ontology` in each
+    iteration.
+    """
+
     use_tqdm: bool
     skip_below: str | None
     skip_pyobo: bool
     skip_set: set[str] | None
-
-
-class LookupKwargs(SlimLookupKwargs):
-    """Keyword arguments for database CLI functions."""
-
-    prefix: str

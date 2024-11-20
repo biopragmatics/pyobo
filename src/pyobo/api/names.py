@@ -13,7 +13,7 @@ from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
 from .utils import get_version, get_version_from_kwargs
-from ..constants import SlimLookupKwargs, check_should_force
+from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_collection, cached_mapping, cached_multidict
@@ -50,10 +50,10 @@ NO_BUILD_LOGGED: set = set()
 
 
 def _help_get(
-    f: Callable[[str, Unpack[SlimLookupKwargs]], Mapping[str, X]],
+    f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
     prefix: str,
     identifier: str,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> X | None:
     """Get the result for an entity based on a mapping maker function ``f``."""
     try:
@@ -84,7 +84,7 @@ def get_name(
     prefix: str | Reference | ReferenceTuple,
     identifier: str | None = None,
     /,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the name for an entity."""
     if isinstance(prefix, ReferenceTuple | Reference):
@@ -97,7 +97,7 @@ def get_name(
 
 @lru_cache
 @wrap_norm_prefix
-def get_ids(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> set[str]:
+def get_ids(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
     """Get the set of identifiers for this prefix."""
     if prefix == "ncbigene":
         from ..sources.ncbigene import get_ncbigene_ids
@@ -122,7 +122,7 @@ def get_ids(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> set[str]:
 @wrap_norm_prefix
 def get_id_name_mapping(
     prefix: str,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == "ncbigene":
@@ -155,7 +155,7 @@ def get_id_name_mapping(
 @wrap_norm_prefix
 def get_name_id_mapping(
     prefix: str,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get a name to identifier mapping for the OBO file."""
     id_name = get_id_name_mapping(prefix, **kwargs)
@@ -164,7 +164,7 @@ def get_name_id_mapping(
 
 @wrap_norm_prefix
 def get_definition(
-    prefix: str, identifier: str | None = None, **kwargs: Unpack[SlimLookupKwargs]
+    prefix: str, identifier: str | None = None, **kwargs: Unpack[GetOntologyKwargs]
 ) -> str | None:
     """Get the definition for an entity."""
     if identifier is None:
@@ -176,7 +176,7 @@ def get_definition(
 
 def get_id_definition_mapping(
     prefix: str,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get a mapping of descriptions."""
     version = get_version_from_kwargs(prefix, kwargs)
@@ -195,7 +195,7 @@ def get_id_definition_mapping(
     return _get_mapping()
 
 
-def get_obsolete(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> set[str]:
+def get_obsolete(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
     """Get the set of obsolete local unique identifiers."""
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="obsolete.tsv", version=version)
@@ -210,7 +210,7 @@ def get_obsolete(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> set[str]:
 
 @wrap_norm_prefix
 def get_synonyms(
-    prefix: str, identifier: str, **kwargs: Unpack[SlimLookupKwargs]
+    prefix: str, identifier: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[str] | None:
     """Get the synonyms for an entity."""
     return _help_get(get_id_synonyms_mapping, prefix=prefix, identifier=identifier, **kwargs)
@@ -218,7 +218,7 @@ def get_synonyms(
 
 @wrap_norm_prefix
 def get_id_synonyms_mapping(
-    prefix: str, **kwargs: Unpack[SlimLookupKwargs]
+    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, list[str]]:
     """Get the OBO file and output a synonym dictionary."""
     version = get_version_from_kwargs(prefix, kwargs)

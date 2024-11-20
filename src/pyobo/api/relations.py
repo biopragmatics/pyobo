@@ -17,7 +17,7 @@ from ..constants import (
     SOURCE_PREFIX,
     TARGET_ID,
     TARGET_PREFIX,
-    SlimLookupKwargs,
+    GetOntologyKwargs,
     check_should_force,
 )
 from ..getters import get_ontology
@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 @wrap_norm_prefix
 def get_relations_df(
-    prefix: str, *, use_tqdm: bool = False, wide: bool = False, **kwargs: Unpack[SlimLookupKwargs]
+    prefix: str, *, use_tqdm: bool = False, wide: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> pd.DataFrame:
     """Get all relations from the OBO."""
     version = get_version_from_kwargs(prefix, kwargs)
@@ -71,7 +71,7 @@ def get_filtered_relations_df(
     relation: ReferenceHint,
     *,
     use_tqdm: bool = False,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
     """Get all the given relation."""
     relation = _ensure_ref(relation, ontology_prefix=prefix)
@@ -102,7 +102,7 @@ def get_filtered_relations_df(
 
 @wrap_norm_prefix
 def get_id_multirelations_mapping(
-    prefix: str, typedef: TypeDef, *, use_tqdm: bool = False, **kwargs: Unpack[SlimLookupKwargs]
+    prefix: str, typedef: TypeDef, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, list[Reference]]:
     """Get the OBO file and output a synonym dictionary."""
     kwargs["version"] = get_version_from_kwargs(prefix, kwargs)
@@ -118,7 +118,7 @@ def get_relation_mapping(
     target_prefix: str,
     *,
     use_tqdm: bool = False,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get relations from identifiers in the source prefix to target prefix with the given relation.
 
@@ -146,7 +146,7 @@ def get_relation(
     target_prefix: str,
     *,
     use_tqdm: bool = False,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the target identifier corresponding to the given relationship from the source prefix/identifier pair.
 
@@ -172,7 +172,7 @@ def get_relation(
 
 
 def get_graph(
-    prefix: str, use_tqdm: bool = False, wide: bool = False, **kwargs: Unpack[SlimLookupKwargs]
+    prefix: str, use_tqdm: bool = False, wide: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> nx.DiGraph:
     """Get the relation graph."""
     rv = nx.MultiDiGraph()

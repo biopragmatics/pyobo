@@ -10,7 +10,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
-from ..constants import TARGET_ID, TARGET_PREFIX, SlimLookupKwargs, check_should_force
+from ..constants import TARGET_ID, TARGET_PREFIX, GetOntologyKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct import Obo, Reference
@@ -35,7 +35,7 @@ def get_xref(
     new_prefix: str,
     *,
     flip: bool = False,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the xref with the new prefix if a direct path exists."""
     filtered_xrefs = get_filtered_xrefs(prefix, new_prefix, flip=flip, **kwargs)
@@ -50,7 +50,7 @@ def get_filtered_xrefs(
     *,
     flip: bool = False,
     use_tqdm: bool = False,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
     version = get_version_from_kwargs(prefix, kwargs)
@@ -82,7 +82,7 @@ get_xrefs = get_filtered_xrefs
 
 @wrap_norm_prefix
 def get_xrefs_df(
-    prefix: str, *, use_tqdm: bool = False, **kwargs: Unpack[SlimLookupKwargs]
+    prefix: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> pd.DataFrame:
     """Get all xrefs."""
     version = get_version_from_kwargs(prefix, kwargs)
@@ -103,7 +103,7 @@ def get_sssom_df(
     predicate_id: str = "oboinowl:hasDbXref",
     justification: str = "sempav:UnspecifiedMatching",
     names: bool = True,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
     r"""Get xrefs from a source as an SSSOM dataframe.
 

@@ -8,7 +8,7 @@ from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
 from .utils import get_version_from_kwargs
-from ..constants import SlimLookupKwargs, check_should_force
+from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_mapping
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 @wrap_norm_prefix
-def get_species(prefix: str, identifier: str, **kwargs: Unpack[SlimLookupKwargs]) -> str | None:
+def get_species(prefix: str, identifier: str, **kwargs: Unpack[GetOntologyKwargs]) -> str | None:
     """Get the species."""
     if prefix == "uniprot":
         raise NotImplementedError
@@ -44,7 +44,7 @@ def get_species(prefix: str, identifier: str, **kwargs: Unpack[SlimLookupKwargs]
 
 @lru_cache
 @wrap_norm_prefix
-def get_id_species_mapping(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> Mapping[str, str]:
+def get_id_species_mapping(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[str, str]:
     """Get an identifier to species mapping."""
     if prefix == "ncbigene":
         from ..sources.ncbigene import get_ncbigene_id_to_species_mapping

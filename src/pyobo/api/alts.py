@@ -8,7 +8,7 @@ import curies
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
-from ..constants import SlimLookupKwargs, check_should_force
+from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct.reference import Reference
@@ -31,7 +31,7 @@ NO_ALTS = {
 
 @lru_cache
 @wrap_norm_prefix
-def get_id_to_alts(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> Mapping[str, list[str]]:
+def get_id_to_alts(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[str, list[str]]:
     """Get alternate identifiers."""
     if prefix in NO_ALTS:
         return {}
@@ -51,7 +51,7 @@ def get_id_to_alts(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> Mapping[s
 
 @lru_cache
 @wrap_norm_prefix
-def get_alts_to_id(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> Mapping[str, str]:
+def get_alts_to_id(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[str, str]:
     """Get alternative id to primary id mapping."""
     return {
         alt: primary for primary, alts in get_id_to_alts(prefix, **kwargs).items() for alt in alts
@@ -60,7 +60,7 @@ def get_alts_to_id(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> Mapping[s
 
 def get_primary_curie(
     curie: str,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the primary curie for an entity."""
     reference = Reference.from_curie(curie, strict=kwargs.get("strict", True))
@@ -75,7 +75,7 @@ def get_primary_identifier(
     prefix: str | curies.Reference | curies.ReferenceTuple,
     identifier: str | None = None,
     /,
-    **kwargs: Unpack[SlimLookupKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> str:
     """Get the primary identifier for an entity.
 

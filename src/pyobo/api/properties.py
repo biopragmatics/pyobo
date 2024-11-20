@@ -7,7 +7,7 @@ import pandas as pd
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
-from ..constants import SlimLookupKwargs, check_should_force
+from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_df, cached_mapping, cached_multidict
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 @wrap_norm_prefix
-def get_properties_df(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> pd.DataFrame:
+def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Extract properties.
 
     :param prefix: the resource to load
@@ -49,7 +49,7 @@ def get_properties_df(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> pd.Dat
 
 @wrap_norm_prefix
 def get_filtered_properties_mapping(
-    prefix: str, prop: str, *, use_tqdm: bool = False, **kwargs: Unpack[SlimLookupKwargs]
+    prefix: str, prop: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, str]:
     """Extract a single property for each term as a dictionary.
 
@@ -85,7 +85,7 @@ def get_filtered_properties_mapping(
 
 @wrap_norm_prefix
 def get_filtered_properties_multimapping(
-    prefix: str, prop: str, *, use_tqdm: bool = False, **kwargs: Unpack[SlimLookupKwargs]
+    prefix: str, prop: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, list[str]]:
     """Extract multiple properties for each term as a dictionary.
 
@@ -116,7 +116,7 @@ def get_filtered_properties_multimapping(
 
 
 def get_property(
-    prefix: str, identifier: str, prop: str, **kwargs: Unpack[SlimLookupKwargs]
+    prefix: str, identifier: str, prop: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> str | None:
     """Extract a single property for the given entity.
 
@@ -136,7 +136,7 @@ def get_property(
 
 
 def get_properties(
-    prefix: str, identifier: str, prop: str, **kwargs: Unpack[SlimLookupKwargs]
+    prefix: str, identifier: str, prop: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[str] | None:
     """Extract a set of properties for the given entity.
 
@@ -153,7 +153,7 @@ def get_properties(
 
 @wrap_norm_prefix
 def get_filtered_properties_df(
-    prefix: str, prop: str, *, use_tqdm: bool = False, **kwargs: Unpack[SlimLookupKwargs]
+    prefix: str, prop: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> pd.DataFrame:
     """Extract a single property for each term.
 

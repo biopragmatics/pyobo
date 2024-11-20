@@ -24,9 +24,9 @@ from typing_extensions import Unpack
 
 from .constants import (
     DATABASE_DIRECTORY,
+    GetOntologyKwargs,
     IterHelperHelperDict,
-    SlimLookupKwargs,
-    SlimmerLookupKwargs,
+    SlimGetOntologyKwargs,
 )
 from .identifier_utils import MissingPrefixError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
@@ -252,7 +252,7 @@ X = TypeVar("X")
 
 
 def iter_helper(
-    f: Callable[[str, Unpack[SlimLookupKwargs]], Mapping[str, X]],
+    f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
     leave: bool = False,
     **kwargs: Unpack[IterHelperHelperDict],
 ) -> Iterable[tuple[str, str, X]]:
@@ -305,12 +305,12 @@ def _prefixes(
 
 
 def iter_helper_helper(
-    f: Callable[[str, Unpack[SlimLookupKwargs]], X],
+    f: Callable[[str, Unpack[GetOntologyKwargs]], X],
     use_tqdm: bool = True,
     skip_below: str | None = None,
     skip_pyobo: bool = False,
     skip_set: set[str] | None = None,
-    **kwargs: Unpack[SlimmerLookupKwargs],
+    **kwargs: Unpack[SlimGetOntologyKwargs],
 ) -> Iterable[tuple[str, X]]:
     """Yield all mappings extracted from each database given.
 
