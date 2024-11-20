@@ -76,7 +76,9 @@ class TestStruct(unittest.TestCase):
     def test_term(self):
         """Test emitting properties."""
         term = Term(
-            reference=Reference(prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"),
+            reference=Reference(
+                prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"
+            ),
         )
         self.assert_lines(
             """\
@@ -84,14 +86,16 @@ class TestStruct(unittest.TestCase):
             id: GO:0050069
             name: lysine dehydrogenase activity
             """,
-            term.iterate_obo_lines(ontology="GO", typedefs={})
+            term.iterate_obo_lines(ontology="GO", typedefs={}),
         )
 
         term = Term(
-            reference=Reference(prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"),
+            reference=Reference(
+                prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"
+            ),
             properties={
                 "key": ["value"],
-            }
+            },
         )
         self.assert_lines(
             """\
@@ -100,17 +104,17 @@ class TestStruct(unittest.TestCase):
             name: lysine dehydrogenase activity
             property_value: key "value" xsd:string
             """,
-            term.iterate_obo_lines(ontology="GO", typedefs={})
+            term.iterate_obo_lines(ontology="GO", typedefs={}),
         )
 
-        typedef = TypeDef(
-            reference=Reference.from_curie("RO:1234567")
-        )
+        typedef = TypeDef(reference=Reference.from_curie("RO:1234567"))
         term = Term(
-            reference=Reference(prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"),
+            reference=Reference(
+                prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"
+            ),
             relationships={
                 typedef: [Reference.from_curie("EC:1.1.1.1")],
-            }
+            },
         )
         self.assert_lines(
             """\
@@ -119,5 +123,5 @@ class TestStruct(unittest.TestCase):
             name: lysine dehydrogenase activity
             relationship: RO:1234567 eccode:1.1.1.1
             """,
-            term.iterate_obo_lines(ontology="GO", typedefs={typedef.pair: typedef})
+            term.iterate_obo_lines(ontology="GO", typedefs={typedef.pair: typedef}),
         )
