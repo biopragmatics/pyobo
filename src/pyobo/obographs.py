@@ -64,7 +64,7 @@ def _get_meta(obo: Obo) -> Meta:
     )
 
 
-def _rewire(r: Reference | Referenced) -> curies.Reference:
+def _rewire(r: curies.Reference | Referenced) -> curies.Reference:
     return curies.Reference(prefix=r.prefix, identifier=r.identifier)
 
 
@@ -122,7 +122,6 @@ def _get_class_node(term: Term) -> Node:
 
 
 def _iter_edges(term: Term) -> Iterable[Edge]:
-    # TODO rewire probably isn't necessary since Edge.from_parsed takes anything reference-like
     for parent in term.parents:
         yield Edge.from_parsed(
             _rewire(term.reference),
@@ -134,7 +133,7 @@ def _iter_edges(term: Term) -> Iterable[Edge]:
         for target in targets:
             yield Edge.from_parsed(
                 _rewire(term.reference),
-                _rewire(typedef),
+                _rewire(typedef.reference),
                 _rewire(target),
             )
 

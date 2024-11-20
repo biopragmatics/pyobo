@@ -149,7 +149,6 @@ acronym = SynonymTypeDef(reference=Reference(prefix="omo", identifier="0003012",
 uk_spelling = SynonymTypeDef(
     reference=Reference(prefix="omo", identifier="0003005", name="UK spelling synonym")
 )
-
 default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
     abbreviation.pair: abbreviation,
     acronym.pair: acronym,
