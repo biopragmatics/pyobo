@@ -32,12 +32,12 @@ class MissingPrefixError(ValueError):
         self,
         *,
         curie: str,
-        ontology: str | None = None,
+        ontology_prefix: str | None = None,
         reference: curies.Reference | None = None,
     ):
         """Initialize the error."""
         self.curie = curie
-        self.ontology = ontology
+        self.ontology = ontology_prefix
         self.reference = reference
 
     def __str__(self) -> str:
@@ -104,7 +104,7 @@ def normalize_curie(
     if norm_node_prefix is not None:
         return ReferenceTuple(prefix=norm_node_prefix, identifier=identifier)
     elif strict:
-        raise MissingPrefixError(curie=curie, ontology=ontology_prefix, reference=node)
+        raise MissingPrefixError(curie=curie, ontology_prefix=ontology_prefix, reference=node)
     else:
         return None
 
