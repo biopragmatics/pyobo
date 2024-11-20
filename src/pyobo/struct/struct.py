@@ -462,7 +462,7 @@ class Term(Referenced):
     def iterate_obo_lines(
         self,
         *,
-        ontology: str,
+        ontology_prefix: str,
         typedefs: dict[ReferenceTuple, TypeDef],
         emit_object_properties: bool = True,
         emit_annotation_properties: bool = True,
@@ -491,24 +491,24 @@ class Term(Referenced):
             yield f"{parent_tag}: {parent}"  # __str__ bakes in the ! name
 
         if emit_object_properties:
-            yield from self._emit_relations(ontology, typedefs)
+            yield from self._emit_relations(ontology_prefix, typedefs)
 
         if emit_annotation_properties:
-            for line in self._emit_properties(ontology, typedefs):
+            for line in self._emit_properties(ontology_prefix, typedefs):
                 yield f"property_value: {line}"
 
         for synonym in sorted(self.synonyms):
             yield synonym.to_obo()
 
     def _emit_relations(
-        self, ontology: str, typedefs: dict[ReferenceTuple, TypeDef]
+        self, ontology_prefix: str, typedefs: dict[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:
         pairs: Iterable[tuple[Reference, list[Reference]]] = chain(
             self.relationships.items(),
             self.annotations_object.items(),
         )
         for typedef, references in sorted(pairs):
-            _typedef_warn(prefix=ontology, predicate=typedef, typedefs=typedefs)
+            _typedef_warn(prefix=ontology_prefix, predicate=typedef, typedefs=typedefs)
             for reference in sorted(references):
                 s = f"relationship: {typedef.preferred_curie} {reference.preferred_curie}"
                 if typedef.name or reference.name:
@@ -520,14 +520,14 @@ class Term(Referenced):
                 yield s
 
     def _emit_properties(
-        self, ontology: str, typedefs: dict[ReferenceTuple, TypeDef]
+        self, ontology_prefix: str, typedefs: dict[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:
         # for predicate, values in sorted(self.annotations_object.items()):
         #     for value in sorted(values):
         #         yield f"{predicate.preferred_curie} {value.preferred_curie}"
 
         for predicate, value_datatype_pairs in sorted(self.annotations_literal.items()):
-            _typedef_warn(prefix=ontology, predicate=predicate, typedefs=typedefs)
+            _typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)
             if predicate.prefix == "obo":
                 pc = predicate.identifier
             else:
@@ -803,7 +803,7 @@ class Obo:
         typedefs = self._index_typedefs()
         for term in self:
             yield from term.iterate_obo_lines(
-                ontology=self.ontology,
+                ontology_prefix=self.ontology,
                 typedefs=typedefs,
                 emit_object_properties=emit_object_properties,
                 emit_annotation_properties=emit_annotation_properties,

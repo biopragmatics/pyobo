@@ -496,7 +496,7 @@ def _handle_relation_curie(
             return None
         return Reference(prefix=_pref, identifier=_id)
     elif ":" in curie:
-        return Reference.from_curie(curie, name=name, strict=strict, reference=node)
+        return Reference.from_curie(curie, name=name, strict=strict, node=node)
     elif xx := bioontologies.upgrade.upgrade(curie):
         logger.debug(f"upgraded {curie} to {xx}")
         return Reference(prefix=xx.prefix, identifier=xx.identifier)
@@ -540,7 +540,7 @@ def _parse_object_curie(
         )
         return reference
 
-    return Reference.from_curie(curie, strict=strict, reference=node)
+    return Reference.from_curie(curie, strict=strict, node=node)
 
 
 def _ground_rel_helper(curie) -> Reference | None:
@@ -720,7 +720,7 @@ def _parse_trailing_ref_list(rest: str, *, strict: bool = True, node: Reference)
         curie = curie.strip()
         if not curie:
             continue
-        reference = Reference.from_curie(curie, strict=strict, reference=node)
+        reference = Reference.from_curie(curie, strict=strict, node=node)
         if reference is None:
             logger.warning("[%s] could not parse provenance CURIE: %s", node.curie, curie)
             continue
@@ -913,6 +913,6 @@ def iterate_node_xrefs(
                 continue
             xref = _xref_split[0]
 
-        yv = Reference.from_curie(xref, strict=strict, reference=node)
+        yv = Reference.from_curie(xref, strict=strict, node=node)
         if yv is not None:
             yield yv
