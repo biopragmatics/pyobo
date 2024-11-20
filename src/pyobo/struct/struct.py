@@ -143,6 +143,14 @@ abbreviation = SynonymTypeDef(
     reference=Reference(prefix="OMO", identifier="0003000", name="abbreviation")
 )
 acronym = SynonymTypeDef(reference=Reference(prefix="omo", identifier="0003012", name="acronym"))
+uk_spelling = SynonymTypeDef(
+    reference=Reference(prefix="omo", identifier="0003005", name="UK spelling synonym")
+)
+default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
+    abbreviation.pair: abbreviation,
+    acronym.pair: acronym,
+    uk_spelling.pair: uk_spelling,
+}
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
 
