@@ -177,7 +177,7 @@ class Referenced:
         raise TypeError
 
     def __lt__(self, other: Referenced) -> bool:
-        if not isinstance(other, Referenced):
+        if not isinstance(other, curies.Reference | Referenced):
             raise TypeError
         return self.reference < other.reference
 

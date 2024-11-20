@@ -1,7 +1,6 @@
 """Converter for UniProt."""
 
 from collections.abc import Iterable
-from operator import attrgetter
 from pathlib import Path
 from typing import cast
 
@@ -137,7 +136,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                         binding_references.add(
                             cast(Reference, Reference.from_curie(curie, strict=True))
                         )
-                for binding_reference in sorted(binding_references, key=attrgetter("curie")):
+                for binding_reference in sorted(binding_references):
                     term.annotate_object(molecularly_interacts_with, binding_reference)
 
             if ecs:

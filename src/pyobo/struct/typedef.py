@@ -80,6 +80,10 @@ class TypeDef(Referenced):
     #: structured notes about a term, for example.
     is_metadata_tag: bool | None = None
 
+    def __hash__(self) -> int:
+        # have to re-define hash because of the @dataclass
+        return hash((self.__class__, self.prefix, self.identifier))
+
     def iterate_obo_lines(self) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield "\n[Typedef]"

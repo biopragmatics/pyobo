@@ -97,6 +97,13 @@ class Synonym:
     #: Extra annotations
     annotations: list[tuple[Reference, Reference]] = field(default_factory=list)
 
+    def __lt__(self, other: Synonym) -> bool:
+        """Sort lexically by name."""
+        return self._sort_key() < other._sort_key()
+
+    def _sort_key(self) -> tuple[str, str, SynonymTypeDef]:
+        return self.name, self.specificity, self.type
+
     def to_obo(self) -> str:
         """Write this synonym as an OBO line to appear in a [Term] stanza."""
         return f"synonym: {self._fp()}"
@@ -118,6 +125,10 @@ class SynonymTypeDef(Referenced):
 
     reference: Reference
     specificity: SynonymSpecificity | None = None
+
+    def __hash__(self) -> int:
+        # have to re-define hash because of the @dataclass
+        return hash((self.__class__, self.prefix, self.identifier))
 
     def to_obo(self) -> str:
         """Serialize to OBO."""
@@ -222,6 +233,10 @@ class Term(Referenced):
     is_obsolete: bool | None = None
 
     type: Literal["Term", "Instance"] = "Term"
+
+    def __hash__(self) -> int:
+        # have to re-define hash because of the @dataclass
+        return hash((self.__class__, self.prefix, self.identifier))
 
     @classmethod
     def from_triple(
@@ -470,11 +485,11 @@ class Term(Referenced):
         if self.definition:
             yield f"def: {self._definition_fp()}"
 
-        for xref in sorted(self.xrefs, key=attrgetter("prefix", "identifier")):
+        for xref in sorted(self.xrefs):
             yield f"xref: {xref}"  # __str__ bakes in the ! name
 
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
-        for parent in sorted(self.parents, key=attrgetter("prefix", "identifier")):
+        for parent in sorted(self.parents):
             yield f"{parent_tag}: {parent}"  # __str__ bakes in the ! name
 
         if emit_object_properties:
@@ -484,7 +499,7 @@ class Term(Referenced):
             for line in self._emit_properties(ontology, typedefs):
                 yield f"property_value: {line}"
 
-        for synonym in sorted(self.synonyms, key=attrgetter("name")):
+        for synonym in sorted(self.synonyms):
             yield synonym.to_obo()
 
     def _emit_relations(
@@ -763,7 +778,7 @@ class Obo:
         for prefix, url in sorted((self.idspaces or {}).items()):
             yield f"idspace: {prefix} {url}"
 
-        for synonym_typedef in sorted((self.synonym_typedefs or []), key=attrgetter("curie")):
+        for synonym_typedef in sorted(self.synonym_typedefs or []):
             if synonym_typedef.curie == DEFAULT_SYNONYM_TYPE.curie:
                 continue
             yield synonym_typedef.to_obo()
@@ -993,8 +1008,8 @@ class Obo:
     @property
     def _items_accessor(self):
         if self._items is None:
-            key = self.term_sort_key or attrgetter("curie")
-            self._items = sorted(self.iter_terms(force=self.force), key=key)
+            # if the term sort key is None, then the terms get sorted by their reference
+            self._items = sorted(self.iter_terms(force=self.force), key=self.term_sort_key)
         return self._items
 
     def __iter__(self) -> Iterator[Term]:
@@ -1449,7 +1464,7 @@ class Obo:
     def iterate_synonyms(self, *, use_tqdm: bool = False) -> Iterable[tuple[Term, Synonym]]:
         """Iterate over pairs of term and synonym object."""
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting synonyms"):
-            for synonym in sorted(term.synonyms, key=attrgetter("name")):
+            for synonym in sorted(term.synonyms):
                 yield term, synonym
 
     def iterate_synonym_rows(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str]]:
