@@ -304,7 +304,7 @@ class Term(Referenced):
         """Add a comment relationship."""
         return self.annotate_literal(comment, value)
 
-    def append_replaced_by(self, reference: Reference) -> Term:
+    def append_replaced_by(self, reference: Reference) -> Self:
         """Add a replaced by relationship."""
         return self.annotate_object(term_replaced_by, reference)
 
@@ -364,9 +364,10 @@ class Term(Referenced):
         """Append an xref."""
         self.xrefs.append(_ensure_ref(reference))
 
-    def append_relationship(self, typedef: ReferenceHint, reference: ReferenceHint) -> None:
+    def append_relationship(self, typedef: ReferenceHint, reference: ReferenceHint) -> Self:
         """Append a relationship."""
         self.relationships[_ensure_ref(typedef)].append(_ensure_ref(reference))
+        return self
 
     def annotate_object(self, typedef: ReferenceHint, value: ReferenceHint) -> Self:
         """Append an object annotation."""
