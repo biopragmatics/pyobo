@@ -7,7 +7,6 @@ from curies import ReferenceTuple
 
 from pyobo import Reference, Synonym, SynonymTypeDef, TypeDef, get_ontology
 from pyobo.reader import (
-    _chomp_specificity,
     _extract_definition,
     _extract_synonym,
     _quote_split,
@@ -19,6 +18,7 @@ from pyobo.reader import (
     iterate_node_synonyms,
     iterate_node_xrefs,
 )
+from pyobo.reader_utils import _chomp_specificity
 from pyobo.struct.struct import acronym, default_reference
 from pyobo.struct.typedef import is_conjugate_base_of
 from pyobo.utils.io import multidict
