@@ -1,6 +1,6 @@
 """Data structures for OBO."""
 
-from .reference import Reference
+from .reference import Reference, Referenced
 from .struct import (
     Obo,
     Synonym,
@@ -36,6 +36,7 @@ from .typedef import (
 __all__ = [
     "Obo",
     "Reference",
+    "Referenced",
     "Synonym",
     "SynonymSpecificities",
     "SynonymSpecificity",
