@@ -35,8 +35,7 @@ class TestParseObonet(unittest.TestCase):
     def test_get_graph_typedefs(self):
         """Test getting type definitions from an :mod:`obonet` graph."""
         pairs = {
-            typedef.pair
-            for typedef in iterate_graph_typedefs(self.graph, ontology_prefix="chebi")
+            typedef.pair for typedef in iterate_graph_typedefs(self.graph, ontology_prefix="chebi")
         }
         self.assertIn(ReferenceTuple("obo", "chebi#has_part"), pairs)
 
@@ -175,7 +174,9 @@ class TestParseObonet(unittest.TestCase):
         }
         data = self.graph.nodes["CHEBI:51990"]
         synonyms = list(
-            iterate_node_synonyms(data, synoynym_typedefs, node=Reference(prefix="chebi", identifier="XXX"))
+            iterate_node_synonyms(
+                data, synoynym_typedefs, node=Reference(prefix="chebi", identifier="XXX")
+            )
         )
         self.assertEqual(1, len(synonyms))
         synonym = synonyms[0]
@@ -226,7 +227,10 @@ class TestParseObonet(unittest.TestCase):
         """Test getting relations from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:17051"]
         relations = list(
-            iterate_node_relationships(data, node=Reference(prefix="chebi", identifier="XXX"), ontology_prefix="chebi"))
+            iterate_node_relationships(
+                data, node=Reference(prefix="chebi", identifier="XXX"), ontology_prefix="chebi"
+            )
+        )
         self.assertEqual(1, len(relations))
         typedef, target = relations[0]
 
@@ -278,9 +282,8 @@ class TestGet(unittest.TestCase):
 
     def test_iter_filtered_relations(self):
         """Test getting filtered relations w/ upgrade."""
-        all_relations = '\n'.join(
-            ' '.join((s.curie, p.curie, o.curie))
-            for s, p, o in self.ontology.iterate_relations()
+        all_relations = "\n".join(
+            " ".join((s.curie, p.curie, o.curie)) for s, p, o in self.ontology.iterate_relations()
         )
         curie = "obo:chebi#is_conjugate_base_of"
         for inp in [
