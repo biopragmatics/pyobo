@@ -557,7 +557,6 @@ def _typedef_warn(
         if predicate.prefix == "obo":
             # Throw our hands up in the air. By using `obo` as the prefix,
             # we already threw using "real" definitions out the window
-            return None
             logger.warning(
                 f"[{prefix}] predicate with obo prefix not defined: {predicate.curie}."
                 f"\n\tThis might be because you used an unqualified prefix in an OBO file, "
@@ -1083,7 +1082,7 @@ class Obo:
 
         nodes = {}
         links = []
-        typedefs = {t.pair: t for t in self.typedefs or []}
+        typedefs = self._index_typedefs()
         for term in self._iter_terms(use_tqdm=use_tqdm):
             parents = []
             for parent in term.parents:
