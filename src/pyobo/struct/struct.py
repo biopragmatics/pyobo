@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import sys
+import warnings
 from collections import defaultdict
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -22,6 +23,7 @@ import networkx as nx
 import pandas as pd
 from more_click import force_option, verbose_option
 from tqdm.auto import tqdm
+from typing_extensions import Self
 
 from .reference import Reference, Referenced
 from .typedef import (
@@ -259,22 +261,30 @@ class Term(Referenced):
             alt = Reference(prefix=self.prefix, identifier=alt)
         self.alt_ids.append(alt)
 
-    def append_see_also(self, reference: ReferenceHint) -> Term:
+    def append_see_also(self, reference: ReferenceHint) -> Self:
         """Add a see also relationship."""
-        self.relationships[see_also].append(_ensure_ref(reference))
-        return self
+        try:
+            _reference = _ensure_ref(reference)
+        # ValueError gets raised if _ensure_ref has an issue
+        # with parsing or standardizing
+        except ValueError:
+            # if it's a string, just give up and annotate it as
+            # a literal string. otherwise, raise the error again
+            if isinstance(reference, str):
+                return self.annotate_literal(see_also, reference)
+            raise
+        else:
+            return self.annotate_object(see_also, _reference)
 
-    def append_comment(self, value: str) -> Term:
+    def append_comment(self, value: str) -> Self:
         """Add a comment relationship."""
-        self.append_property(comment.curie, value)
-        return self
+        return self.append_property(comment.curie, value)
 
-    def append_replaced_by(self, reference: ReferenceHint) -> Term:
+    def append_replaced_by(self, reference: ReferenceHint) -> Self:
         """Add a replaced by relationship."""
-        self.append_relationship(term_replaced_by, reference)
-        return self
+        return self.append_relationship(term_replaced_by, reference)
 
-    def append_parent(self, reference: ReferenceHint) -> Term:
+    def append_parent(self, reference: ReferenceHint) -> Self:
         """Add a parent to this entity."""
         reference = _ensure_ref(reference)
         if reference not in self.parents:
@@ -283,6 +293,7 @@ class Term(Referenced):
 
     def extend_parents(self, references: Collection[Reference]) -> None:
         """Add a collection of parents to this entity."""
+        warnings.warn("use append_parent", DeprecationWarning, stacklevel=2)
         if any(x is None for x in references):
             raise ValueError("can not append a collection of parents containing a null parent")
         self.parents.extend(references)
@@ -313,7 +324,7 @@ class Term(Referenced):
         """Get relationships from the given type."""
         return self.relationships[typedef]
 
-    def append_exact_match(self, reference: ReferenceHint):
+    def append_exact_match(self, reference: ReferenceHint) -> Self:
         """Append an exact match, also adding an xref."""
         reference = _ensure_ref(reference)
         self.append_relationship(exact_match, reference)
@@ -324,13 +335,14 @@ class Term(Referenced):
         """Append an xref."""
         self.xrefs.append(_ensure_ref(reference))
 
-    def append_relationship(self, typedef: TypeDef, reference: ReferenceHint) -> None:
+    def append_relationship(self, typedef: TypeDef, reference: ReferenceHint) -> Self:
         """Append a relationship."""
         self.relationships[typedef].append(_ensure_ref(reference))
+        return self
 
-    def annotate_object(self, typedef: TypeDef, reference: ReferenceHint) -> None:
+    def annotate_object(self, typedef: TypeDef, reference: ReferenceHint) -> Self:
         """Append a relationship."""
-        self.append_relationship(typedef, reference)
+        return self.append_relationship(typedef, reference)
 
     def set_species(self, identifier: str, name: str | None = None):
         """Append the from_species relation."""
@@ -354,29 +366,31 @@ class Term(Referenced):
 
     def extend_relationship(self, typedef: TypeDef, references: Iterable[Reference]) -> None:
         """Append several relationships."""
+        warnings.warn("use append_relationship", DeprecationWarning, stacklevel=2)
         if any(x is None for x in references):
             raise ValueError("can not extend a collection that includes a null reference")
         self.relationships[typedef].extend(references)
 
     def append_property(
         self, prop: str | Reference | Referenced, value: str | Reference | Referenced
-    ) -> None:
+    ) -> Self:
         """Append a property."""
         if isinstance(prop, Reference | Referenced):
             prop = prop.preferred_curie
         if isinstance(value, Reference | Referenced):
             value = value.preferred_curie
         self.properties[prop].append(value)
+        return self
 
     def annotate_literal(
-        self, prop: str | Reference | Referenced, value: str, dtype: Any = None
-    ) -> None:
+        self, prop: str | Reference | Referenced, value: str, datatype: curies.Reference | None = None
+    ) -> Self:
         """Append a property."""
-        self.append_property(prop, value)
+        return self.append_property(prop, value)
 
-    def annotate_boolean(self, prop: str | Reference | Referenced, value: bool) -> None:
+    def annotate_boolean(self, prop: str | Reference | Referenced, value: bool) -> Self:
         """Append a property."""
-        self.annotate_literal(prop, str(value))
+        return self.annotate_literal(prop, str(value))
 
     def _definition_fp(self) -> str:
         if self.definition is None:
