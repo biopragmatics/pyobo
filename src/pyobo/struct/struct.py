@@ -935,7 +935,6 @@ class Obo:
                 it=fn(),  # type:ignore
             )
 
-
         typedefs = self._index_typedefs()
         for relation in (is_a, has_part, part_of, from_species, orthologous):
             if relation is not is_a and relation.pair not in typedefs:
