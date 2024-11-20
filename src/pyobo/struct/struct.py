@@ -20,7 +20,6 @@ from typing import Any, ClassVar, Literal, TextIO, TypeAlias
 
 import bioregistry
 import click
-import curies
 import networkx as nx
 import pandas as pd
 from curies import ReferenceTuple
