@@ -6,6 +6,7 @@ import logging
 from collections import Counter
 from collections.abc import Mapping
 
+import bioontologies.relations
 import bioontologies.upgrade
 import bioregistry
 from curies import ReferenceTuple
@@ -175,3 +176,54 @@ def _chomp_axioms(
     s: str, *, strict: bool = True, node: Reference
 ) -> list[tuple[Reference, Reference]]:
     return []
+
+
+RELATION_REMAPPINGS: Mapping[str, ReferenceTuple] = bioontologies.upgrade.load()
+
+
+def _handle_relation_curie(
+    curie: str,
+    *,
+    strict: bool = True,
+    name: str | None = None,
+    ontology_prefix: str,
+    node: Reference | None = None,
+) -> Reference | None:
+    if curie in RELATION_REMAPPINGS:
+        prefix, identifier = RELATION_REMAPPINGS[curie]
+        return Reference(prefix=prefix, identifier=identifier)
+
+    if curie.startswith("http"):
+        _pref, _id = bioregistry.parse_iri(curie)
+        if not _pref or not _id:
+            logger.warning(
+                "[%s] unable to contract relation URI %s",
+                node.curie if node else ontology_prefix,
+                curie,
+            )
+            return None
+        return Reference(prefix=_pref, identifier=_id)
+    elif ":" in curie:
+        return Reference.from_curie(curie, name=name, strict=strict, node=node)
+    elif xx := bioontologies.upgrade.upgrade(curie):
+        logger.debug(f"upgraded {curie} to {xx}")
+        return Reference(prefix=xx.prefix, identifier=xx.identifier)
+    elif yy := _ground_rel_helper(curie):
+        logger.debug(f"grounded {curie} to {yy}")
+        return yy
+    elif " " in curie:
+        logger.warning("[%s] invalid typedef CURIE %s", ontology_prefix, curie)
+        return None
+    else:
+        reference = default_reference(ontology_prefix, curie)
+        logger.info(
+            "[%s] massaging unqualified curie `%s` into %s", ontology_prefix, curie, reference.curie
+        )
+        return reference
+
+
+def _ground_rel_helper(curie) -> Reference | None:
+    a, b = bioontologies.relations.ground_relation(curie)
+    if a is None or b is None:
+        return None
+    return Reference(prefix=a, identifier=b)
