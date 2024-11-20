@@ -282,9 +282,6 @@ class TestGet(unittest.TestCase):
 
     def test_iter_filtered_relations(self):
         """Test getting filtered relations w/ upgrade."""
-        all_relations = "\n".join(
-            " ".join((s.curie, p.curie, o.curie)) for s, p, o in self.ontology.iterate_relations()
-        )
         curie = "obo:chebi#is_conjugate_base_of"
         for inp in [
             curie,
@@ -297,7 +294,7 @@ class TestGet(unittest.TestCase):
                     (term.reference, target)
                     for term, target in self.ontology.iterate_filtered_relations(inp)
                 )
-                self.assertNotEqual(0, len(rr), msg=f"all relations:\n{all_relations}")
+                self.assertNotEqual(0, len(rr))
                 term = Reference.from_curie("chebi:17051")
                 self.assertIn(term, rr)
                 self.assertIn(Reference.from_curie("chebi:29228"), rr[term])
