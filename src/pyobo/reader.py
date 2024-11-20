@@ -44,9 +44,7 @@ logger = logging.getLogger(__name__)
 RELATION_REMAPPINGS: Mapping[str, ReferenceTuple] = bioontologies.upgrade.load()
 
 
-def from_obo_path(
-    path: str | Path, prefix: str | None = None, *, strict: bool = True, **kwargs
-) -> Obo:
+def from_obo_path(path: str | Path, prefix: str | None = None, *, strict: bool = True) -> Obo:
     """Get the OBO graph from a path."""
     import obonet
 
@@ -67,7 +65,7 @@ def from_obo_path(
         _clean_graph_ontology(graph, prefix)
 
     # Convert to an Obo instance and return
-    return from_obonet(graph, strict=strict, **kwargs)
+    return from_obonet(graph, strict=strict)
 
 
 def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
@@ -315,7 +313,7 @@ def iterate_graph_typedefs(
         elif "identifier" in typedef:
             curie = typedef["identifier"]
         else:
-            raise KeyError
+            raise KeyError("typedef is missing an `id`")
 
         name = typedef.get("name")
         if name is None:
@@ -353,12 +351,12 @@ def _extract_definition(
 ) -> tuple[None, None] | tuple[str, list[Reference]]:
     """Extract the definitions."""
     if not s.startswith('"'):
-        raise ValueError("definition does not start with a quote")
+        raise ValueError(f"[{node.curie}] definition does not start with a quote")
 
     try:
         definition, rest = _quote_split(s)
-    except ValueError:
-        logger.warning("[%s] could not parse definition: %s", node.curie, s)
+    except ValueError as e:
+        logger.warning("[%s] failed to parse definition quotes: %s", node.curie, str(e))
         return None, None
 
     if not rest.startswith("[") or not rest.endswith("]"):
@@ -380,7 +378,7 @@ def _quote_split(s: str) -> tuple[str, str]:
     s = s.lstrip('"')
     i = _get_first_nonquoted(s)
     if i is None:
-        raise ValueError
+        raise ValueError(f"no closing quote found in `{s}`")
     return _clean_definition(s[:i].strip()), s[i + 1 :].strip()
 
 
