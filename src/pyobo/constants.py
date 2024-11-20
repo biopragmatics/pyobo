@@ -122,6 +122,11 @@ class SlimmerLookupKwargs(TypedDict):
     force_process: bool
 
 
+def check_should_force(data: SlimmerLookupKwargs) -> bool:
+    """Determine whether caching should be forced based on generic keyword arguments."""
+    return data.get("force", False) or data.get("force_process", False)
+
+
 class SlimLookupKwargs(SlimmerLookupKwargs):
     """Keyword arguments for database CLI functions."""
 

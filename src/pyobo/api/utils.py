@@ -8,7 +8,7 @@ from typing import Literal, overload
 
 import bioversions
 
-from ..constants import LookupKwargs, SlimLookupKwargs
+from ..constants import SlimLookupKwargs
 from ..utils.path import prefix_directory_join
 
 __all__ = [
@@ -70,16 +70,13 @@ def get_version(prefix: str, *, strict: bool = False) -> str | None:
     return None
 
 
-def kwargs_version(prefix: str, kwargs: SlimLookupKwargs):
+def get_version_from_kwargs(prefix: str, kwargs: SlimLookupKwargs) -> str | None:
+    """Get the version for the resource based on generic keyword arguments."""
     version = kwargs.get("version")
-    if version is None:
-        return get_version(prefix)
+    if not version:
+        return get_version(prefix, strict=False)
     else:
         return version
-
-
-def force_cache(d: SlimLookupKwargs | LookupKwargs) -> bool:
-    return d.get("force", False) or d.get("force_process", False)
 
 
 def safe_get_version(prefix: str) -> str:

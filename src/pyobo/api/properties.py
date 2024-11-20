@@ -6,8 +6,8 @@ from collections.abc import Mapping
 import pandas as pd
 from typing_extensions import Unpack
 
-from .utils import force_cache, kwargs_version
-from ..constants import SlimLookupKwargs
+from .utils import get_version_from_kwargs
+from ..constants import SlimLookupKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_df, cached_mapping, cached_multidict
@@ -34,10 +34,10 @@ def get_properties_df(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> pd.Dat
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A dataframe with the properties
     """
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=force_cache(kwargs))
+    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
     def _df_getter() -> pd.DataFrame:
         ontology = get_ontology(prefix, **kwargs)
         df = ontology.get_properties_df()
@@ -63,7 +63,7 @@ def get_filtered_properties_mapping(
     # df = df[df["property"] == prop]
     # return dict(df[[f"{prefix}_id", "value"]].values)
 
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
     if all_properties_path.is_file():
         logger.info("[%s] loading pre-cached properties", prefix)
@@ -74,7 +74,7 @@ def get_filtered_properties_mapping(
 
     path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
 
-    @cached_mapping(path=path, header=[f"{prefix}_id", prop], force=force_cache(kwargs))
+    @cached_mapping(path=path, header=[f"{prefix}_id", prop], force=check_should_force(kwargs))
     def _mapping_getter() -> Mapping[str, str]:
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
@@ -95,7 +95,7 @@ def get_filtered_properties_multimapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property values
     """
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
     if all_properties_path.is_file():
         logger.info("[%s] loading pre-cached properties", prefix)
@@ -106,7 +106,7 @@ def get_filtered_properties_multimapping(
 
     path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
 
-    @cached_multidict(path=path, header=[f"{prefix}_id", prop], force=force_cache(kwargs))
+    @cached_multidict(path=path, header=[f"{prefix}_id", prop], force=check_should_force(kwargs))
     def _mapping_getter() -> Mapping[str, list[str]]:
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
@@ -163,7 +163,7 @@ def get_filtered_properties_df(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A dataframe from identifier to property value. Columns are [<prefix>_id, value].
     """
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
     if all_properties_path.is_file():
         logger.info("[%s] loading pre-cached properties", prefix)
@@ -173,7 +173,7 @@ def get_filtered_properties_df(
 
     path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=force_cache(kwargs))
+    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
     def _df_getter() -> pd.DataFrame:
         ontology = get_ontology(prefix, **kwargs)
         return ontology.get_filtered_properties_df(prop, use_tqdm=use_tqdm)

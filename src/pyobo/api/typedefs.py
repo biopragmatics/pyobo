@@ -6,8 +6,8 @@ from functools import lru_cache
 import pandas as pd
 from typing_extensions import Unpack
 
-from .utils import force_cache, kwargs_version
-from ..constants import SlimLookupKwargs
+from .utils import get_version_from_kwargs
+from ..constants import SlimLookupKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_df
@@ -24,10 +24,10 @@ logger = logging.getLogger(__name__)
 @wrap_norm_prefix
 def get_typedef_df(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> pd.DataFrame:
     """Get an identifier to name mapping for the typedefs in an OBO file."""
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="typedefs.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=force_cache(kwargs))
+    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
     def _df_getter() -> pd.DataFrame:
         logger.debug("[%s] no cached typedefs found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)

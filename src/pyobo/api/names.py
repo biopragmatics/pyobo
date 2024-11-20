@@ -12,8 +12,8 @@ from curies import Reference, ReferenceTuple
 from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
-from .utils import force_cache, get_version, kwargs_version
-from ..constants import SlimLookupKwargs
+from .utils import get_version, get_version_from_kwargs
+from ..constants import SlimLookupKwargs, check_should_force
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_collection, cached_mapping, cached_multidict
@@ -107,10 +107,10 @@ def get_ids(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> set[str]:
         logger.info("[%s] done loading name mappings", prefix)
         return rv
 
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="ids.tsv", version=version)
 
-    @cached_collection(path=path, force=force_cache(kwargs))
+    @cached_collection(path=path, force=check_should_force(kwargs))
     def _get_ids() -> list[str]:
         ontology = get_ontology(prefix, **kwargs)
         return sorted(ontology.get_ids())
@@ -133,10 +133,10 @@ def get_id_name_mapping(
         logger.info("[%s] done loading name mappings", prefix)
         return rv
 
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="names.tsv", version=version)
 
-    @cached_mapping(path=path, header=[f"{prefix}_id", "name"], force=force_cache(kwargs))
+    @cached_mapping(path=path, header=[f"{prefix}_id", "name"], force=check_should_force(kwargs))
     def _get_id_name_mapping() -> Mapping[str, str]:
         ontology = get_ontology(prefix, **kwargs)
         return ontology.get_id_name_mapping()
@@ -179,10 +179,12 @@ def get_id_definition_mapping(
     **kwargs: Unpack[SlimLookupKwargs],
 ) -> Mapping[str, str]:
     """Get a mapping of descriptions."""
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="definitions.tsv", version=version)
 
-    @cached_mapping(path=path, header=[f"{prefix}_id", "definition"], force=force_cache(kwargs))
+    @cached_mapping(
+        path=path, header=[f"{prefix}_id", "definition"], force=check_should_force(kwargs)
+    )
     def _get_mapping() -> Mapping[str, str]:
         logger.info(
             "[%s v%s] no cached descriptions found. getting from OBO loader", prefix, version
@@ -195,10 +197,10 @@ def get_id_definition_mapping(
 
 def get_obsolete(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> set[str]:
     """Get the set of obsolete local unique identifiers."""
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="obsolete.tsv", version=version)
 
-    @cached_collection(path=path, force=force_cache(kwargs))
+    @cached_collection(path=path, force=check_should_force(kwargs))
     def _get_obsolete() -> list[str]:
         ontology = get_ontology(prefix, **kwargs)
         return sorted(ontology.get_obsolete())
@@ -219,10 +221,12 @@ def get_id_synonyms_mapping(
     prefix: str, **kwargs: Unpack[SlimLookupKwargs]
 ) -> Mapping[str, list[str]]:
     """Get the OBO file and output a synonym dictionary."""
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="synonyms.tsv", version=version)
 
-    @cached_multidict(path=path, header=[f"{prefix}_id", "synonym"], force=force_cache(kwargs))
+    @cached_multidict(
+        path=path, header=[f"{prefix}_id", "synonym"], force=check_should_force(kwargs)
+    )
     def _get_multidict() -> Mapping[str, list[str]]:
         logger.info("[%s v%s] no cached synonyms found. getting from OBO loader", prefix, version)
         ontology = get_ontology(prefix, **kwargs)

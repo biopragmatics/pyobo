@@ -7,8 +7,8 @@ from functools import lru_cache
 from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
-from .utils import force_cache, kwargs_version
-from ..constants import SlimLookupKwargs
+from .utils import get_version_from_kwargs
+from ..constants import SlimLookupKwargs, check_should_force
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_mapping
@@ -54,10 +54,10 @@ def get_id_species_mapping(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> M
         logger.info("[%s] done loading species mappings", prefix)
         return rv
 
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="species.tsv", version=version)
 
-    @cached_mapping(path=path, header=[f"{prefix}_id", "species"], force=force_cache(kwargs))
+    @cached_mapping(path=path, header=[f"{prefix}_id", "species"], force=check_should_force(kwargs))
     def _get_id_species_mapping() -> Mapping[str, str]:
         logger.info("[%s] no cached species found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)

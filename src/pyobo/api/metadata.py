@@ -6,8 +6,8 @@ from typing import Any, cast
 
 from typing_extensions import Unpack
 
-from .utils import force_cache, kwargs_version
-from ..constants import SlimLookupKwargs
+from .utils import get_version_from_kwargs
+from ..constants import SlimLookupKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_json
@@ -24,10 +24,10 @@ logger = logging.getLogger(__name__)
 @wrap_norm_prefix
 def get_metadata(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> dict[str, Any]:
     """Get metadata for the ontology."""
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="metadata.json", version=version)
 
-    @cached_json(path=path, force=force_cache(kwargs))
+    @cached_json(path=path, force=check_should_force(kwargs))
     def _get_json() -> dict[str, Any]:
         ontology = get_ontology(prefix, **kwargs)
         return ontology.get_metadata()

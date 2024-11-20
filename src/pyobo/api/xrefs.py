@@ -9,8 +9,8 @@ from tqdm.auto import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 from typing_extensions import Unpack
 
-from .utils import force_cache, kwargs_version
-from ..constants import TARGET_ID, TARGET_PREFIX, SlimLookupKwargs
+from .utils import get_version_from_kwargs
+from ..constants import TARGET_ID, TARGET_PREFIX, SlimLookupKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct import Obo, Reference
@@ -53,12 +53,12 @@ def get_filtered_xrefs(
     **kwargs: Unpack[SlimLookupKwargs],
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, "xrefs", name=f"{xref_prefix}.tsv", version=version)
     all_xrefs_path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
     header = [f"{prefix}_id", f"{xref_prefix}_id"]
 
-    @cached_mapping(path=path, header=header, use_tqdm=use_tqdm, force=force_cache(kwargs))
+    @cached_mapping(path=path, header=header, use_tqdm=use_tqdm, force=check_should_force(kwargs))
     def _get_mapping() -> Mapping[str, str]:
         if all_xrefs_path.is_file():
             logger.info("[%s] loading pre-cached xrefs", prefix)
@@ -85,10 +85,10 @@ def get_xrefs_df(
     prefix: str, *, use_tqdm: bool = False, **kwargs: Unpack[SlimLookupKwargs]
 ) -> pd.DataFrame:
     """Get all xrefs."""
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=force_cache(kwargs))
+    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
     def _df_getter() -> pd.DataFrame:
         logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)

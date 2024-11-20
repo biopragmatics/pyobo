@@ -8,7 +8,7 @@ import networkx as nx
 import pandas as pd
 from typing_extensions import Unpack
 
-from .utils import force_cache, kwargs_version
+from .utils import get_version_from_kwargs
 from ..constants import (
     RELATION_COLUMNS,
     RELATION_ID,
@@ -18,6 +18,7 @@ from ..constants import (
     TARGET_ID,
     TARGET_PREFIX,
     SlimLookupKwargs,
+    check_should_force,
 )
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
@@ -46,10 +47,10 @@ def get_relations_df(
     prefix: str, *, use_tqdm: bool = False, wide: bool = False, **kwargs: Unpack[SlimLookupKwargs]
 ) -> pd.DataFrame:
     """Get all relations from the OBO."""
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="relations.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=force_cache(kwargs))
+    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
     def _df_getter() -> pd.DataFrame:
         ontology = get_ontology(prefix, **kwargs)
         return ontology.get_relations_df(use_tqdm=use_tqdm)
@@ -74,7 +75,7 @@ def get_filtered_relations_df(
 ) -> pd.DataFrame:
     """Get all the given relation."""
     relation = _ensure_ref(relation, ontology_prefix=prefix)
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     all_relations_path = prefix_cache_join(prefix, name="relations.tsv", version=version)
     if all_relations_path.is_file():
         logger.debug("[%] loading all relations from %s", prefix, all_relations_path)
@@ -90,7 +91,7 @@ def get_filtered_relations_df(
         version=version,
     )
 
-    @cached_df(path=path, dtype=str, force=force_cache(kwargs))
+    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
     def _df_getter() -> pd.DataFrame:
         logger.info("[%s] no cached relations found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
@@ -104,7 +105,7 @@ def get_id_multirelations_mapping(
     prefix: str, typedef: TypeDef, *, use_tqdm: bool = False, **kwargs: Unpack[SlimLookupKwargs]
 ) -> Mapping[str, list[Reference]]:
     """Get the OBO file and output a synonym dictionary."""
-    kwargs["version"] = kwargs_version(prefix, kwargs)
+    kwargs["version"] = get_version_from_kwargs(prefix, kwargs)
     ontology = get_ontology(prefix, **kwargs)
     return ontology.get_id_multirelations_mapping(typedef=typedef, use_tqdm=use_tqdm)
 

@@ -23,7 +23,7 @@ from pyobo import (
     get_ids,
     get_obsolete,
 )
-from pyobo.api.utils import kwargs_version
+from pyobo.api.utils import get_version_from_kwargs
 from pyobo.constants import SlimLookupKwargs
 from pyobo.getters import NoBuildError
 from pyobo.utils.io import multidict
@@ -180,7 +180,7 @@ def get_gilda_terms(
     **kwargs: Unpack[SlimLookupKwargs],
 ) -> Iterable[gilda.term.Term]:
     """Get gilda terms for the given namespace."""
-    kwargs["version"] = kwargs_version(prefix, kwargs)  # type:ignore
+    kwargs["version"] = get_version_from_kwargs(prefix, kwargs)  # type:ignore
     id_to_name = get_id_name_mapping(prefix, **kwargs)
     id_to_species = get_id_species_mapping(prefix, **kwargs)
     obsoletes = get_obsolete(prefix, **kwargs) if skip_obsolete else set()

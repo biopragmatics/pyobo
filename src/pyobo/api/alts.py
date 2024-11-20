@@ -7,8 +7,8 @@ from functools import lru_cache
 import curies
 from typing_extensions import Unpack
 
-from .utils import force_cache, kwargs_version
-from ..constants import SlimLookupKwargs
+from .utils import get_version_from_kwargs
+from ..constants import SlimLookupKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct.reference import Reference
@@ -36,10 +36,12 @@ def get_id_to_alts(prefix: str, **kwargs: Unpack[SlimLookupKwargs]) -> Mapping[s
     if prefix in NO_ALTS:
         return {}
 
-    version = kwargs_version(prefix, kwargs)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="alt_ids.tsv", version=version)
 
-    @cached_multidict(path=path, header=[f"{prefix}_id", "alt_id"], force=force_cache(kwargs))
+    @cached_multidict(
+        path=path, header=[f"{prefix}_id", "alt_id"], force=check_should_force(kwargs)
+    )
     def _get_mapping() -> Mapping[str, list[str]]:
         ontology = get_ontology(prefix, **kwargs)
         return ontology.get_id_alts_mapping()
