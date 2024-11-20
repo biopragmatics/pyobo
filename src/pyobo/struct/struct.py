@@ -365,13 +365,13 @@ class Term(Referenced):
         """Append a relationship."""
         return self.append_relationship(typedef, reference)
 
-    def set_species(self, identifier: str, name: str | None = None):
+    def set_species(self, identifier: str, name: str | None = None) -> Self:
         """Append the from_species relation."""
         if name is None:
             from pyobo.resources.ncbitaxon import get_ncbitaxon_name
 
             name = get_ncbitaxon_name(identifier)
-        self.append_relationship(
+        return self.append_relationship(
             from_species, Reference(prefix=NCBITAXON_PREFIX, identifier=identifier, name=name)
         )
 
@@ -380,7 +380,7 @@ class Term(Referenced):
 
         :param prefix: The prefix to use in case the term has several species annotations.
         """
-        for species in self.relationships.get(from_species, []):
+        for species in self.get_relationships(from_species):
             if species.prefix == prefix:
                 return species
         return None

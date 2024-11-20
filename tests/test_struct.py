@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from textwrap import dedent
 
 from pyobo import Obo, Reference
+from pyobo.constants import NCBITAXON_PREFIX
 from pyobo.struct.struct import BioregistryError, SynonymTypeDef, Term, TypeDef
 
 
@@ -72,6 +73,15 @@ class TestStruct(unittest.TestCase):
     def assert_lines(self, text: str, lines: Iterable[str]) -> None:
         """Assert the lines are equal."""
         self.assertEqual(dedent(text).strip(), "\n".join(lines).strip())
+
+    def test_species(self):
+        """Test setting and getting species."""
+        term = Term(reference=Reference(prefix="hgnc", identifier="1234"))
+        term.set_species("9606", "Homo sapiens")
+        species = term.get_species()
+        self.assertIsNotNone(species)
+        self.assertEqual(NCBITAXON_PREFIX, species.prefix)
+        self.assertEqual("9606", species.identifier)
 
     def test_term(self):
         """Test emitting properties."""

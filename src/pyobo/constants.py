@@ -82,7 +82,7 @@ TYPEDEFS_FILE = "typedefs.tsv.gz"
 SPECIES_RECORD = "5334738"
 SPECIES_FILE = "species.tsv.gz"
 
-NCBITAXON_PREFIX = "NCBITaxon"
+NCBITAXON_PREFIX = "ncbitaxon"
 DATE_FORMAT = "%d:%m:%Y %H:%M"
 PROVENANCE_PREFIXES = {
     "pubmed",
