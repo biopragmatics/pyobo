@@ -12,7 +12,6 @@ from collections import defaultdict
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
-from operator import attrgetter
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, ClassVar, Literal, TextIO, TypeAlias
@@ -92,6 +91,13 @@ class Synonym:
 
     #: References to articles where the synonym appears
     provenance: list[Reference] = field(default_factory=list)
+
+    def __lt__(self, other: Synonym) -> bool:
+        """Sort lexically by name."""
+        return self._sort_key() < other._sort_key()
+
+    def _sort_key(self) -> tuple[str, str, SynonymTypeDef]:
+        return self.name, self.specificity, self.type
 
     def to_obo(self) -> str:
         """Write this synonym as an OBO line to appear in a [Term] stanza."""
@@ -457,7 +463,7 @@ class Term(Referenced):
         if emit_annotation_properties:
             yield from self._emit_properties()
 
-        for synonym in sorted(self.synonyms, key=attrgetter("name")):
+        for synonym in sorted(self.synonyms):
             yield synonym.to_obo()
 
     def _emit_relations(
@@ -1398,7 +1404,7 @@ class Obo:
     def iterate_synonyms(self, *, use_tqdm: bool = False) -> Iterable[tuple[Term, Synonym]]:
         """Iterate over pairs of term and synonym object."""
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting synonyms"):
-            for synonym in sorted(term.synonyms, key=attrgetter("name")):
+            for synonym in sorted(term.synonyms):
                 yield term, synonym
 
     def iterate_synonym_rows(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str]]:
