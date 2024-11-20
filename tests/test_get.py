@@ -18,7 +18,7 @@ from pyobo.reader import (
     iterate_node_synonyms,
     iterate_node_xrefs,
 )
-from pyobo.struct.struct import acronym
+from pyobo.struct.struct import acronym, default_reference
 from pyobo.utils.io import multidict
 from tests.constants import TEST_CHEBI_OBO_PATH, chebi_patch
 
@@ -35,10 +35,9 @@ class TestParseObonet(unittest.TestCase):
     def test_get_graph_typedefs(self):
         """Test getting type definitions from an :mod:`obonet` graph."""
         pairs = {
-            (typedef.prefix, typedef.identifier)
-            for typedef in iterate_graph_typedefs(self.graph, "chebi")
+            typedef.pair for typedef in iterate_graph_typedefs(self.graph, ontology_prefix="chebi")
         }
-        self.assertIn(("chebi", "has_part"), pairs)
+        self.assertIn(ReferenceTuple("obo", "chebi#has_part"), pairs)
 
     def test_get_graph_synonym_typedefs(self):
         """Test getting synonym type definitions from an :mod:`obonet` graph."""
@@ -86,7 +85,7 @@ class TestParseObonet(unittest.TestCase):
         ]:
             with self.subTest(s=s):
                 actual_text, actual_references = _extract_definition(
-                    s, prefix="chebi", identifier="XXX"
+                    s, node=Reference(prefix="chebi", identifier="XXX")
                 )
                 self.assertEqual(expected_text, actual_text)
                 self.assertEqual(expected_references, actual_references)
@@ -96,7 +95,7 @@ class TestParseObonet(unittest.TestCase):
         expected_text = """The canonical 3' splice site has the sequence "AG"."""
         s = """"The canonical 3' splice site has the sequence \\"AG\\"." [PMID:1234]"""
         actual_text, actual_references = _extract_definition(
-            s, strict=True, prefix="chebi", identifier="XXX"
+            s, strict=True, node=Reference(prefix="chebi", identifier="XXX")
         )
         self.assertEqual(expected_text, actual_text)
         self.assertEqual([Reference(prefix="pubmed", identifier="1234")], actual_references)
@@ -160,7 +159,7 @@ class TestParseObonet(unittest.TestCase):
         ]:
             with self.subTest(s=text):
                 actual_synonym = _extract_synonym(
-                    text, synoynym_typedefs, prefix="chebi", identifier="XXX"
+                    text, synoynym_typedefs, node=Reference(prefix="chebi", identifier="XXX")
                 )
                 self.assertIsInstance(actual_synonym, Synonym)
                 self.assertEqual(expected_synonym, actual_synonym)
@@ -175,7 +174,9 @@ class TestParseObonet(unittest.TestCase):
         }
         data = self.graph.nodes["CHEBI:51990"]
         synonyms = list(
-            iterate_node_synonyms(data, synoynym_typedefs, prefix="chebi", identifier="XXX")
+            iterate_node_synonyms(
+                data, synoynym_typedefs, node=Reference(prefix="chebi", identifier="XXX")
+            )
         )
         self.assertEqual(1, len(synonyms))
         synonym = synonyms[0]
@@ -198,7 +199,7 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_parents(self):
         """Test getting parents from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:51990"]
-        parents = list(iterate_node_parents(data, prefix="chebi", identifier="XXX"))
+        parents = list(iterate_node_parents(data, node=Reference(prefix="chebi", identifier="XXX")))
         self.assertEqual(2, len(parents))
         self.assertEqual({"24060", "51992"}, {parent.identifier for parent in parents})
         self.assertEqual({"chebi"}, {parent.prefix for parent in parents})
@@ -225,7 +226,11 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_relations(self):
         """Test getting relations from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:17051"]
-        relations = list(iterate_node_relationships(data, prefix="chebi", identifier="XXX"))
+        relations = list(
+            iterate_node_relationships(
+                data, node=Reference(prefix="chebi", identifier="XXX"), ontology_prefix="chebi"
+            )
+        )
         self.assertEqual(1, len(relations))
         typedef, target = relations[0]
 
@@ -236,8 +241,8 @@ class TestParseObonet(unittest.TestCase):
 
         self.assertIsNotNone(typedef)
         self.assertIsInstance(typedef, Reference)
-        self.assertEqual("chebi", typedef.prefix)
-        self.assertEqual("is_conjugate_base_of", typedef.identifier)
+        self.assertEqual("obo", typedef.prefix)
+        self.assertEqual("chebi#is_conjugate_base_of", typedef.identifier)
 
 
 class TestGet(unittest.TestCase):
@@ -269,9 +274,15 @@ class TestGet(unittest.TestCase):
         self.assertIn("16042", id_alts_mapping, msg="halide anion alt_id fields not parsed")
         self.assertEqual({"5605", "14384"}, set(id_alts_mapping["16042"]))
 
+    def test_typedefs(self):
+        """Test typedefs."""
+        xx = default_reference("chebi", "is_conjugate_base_of")
+        td = {t.pair for t in self.ontology.typedefs}
+        self.assertIn(xx.pair, td)
+
     def test_iter_filtered_relations(self):
         """Test getting filtered relations w/ upgrade."""
-        curie = "chebi:is_conjugate_base_of"
+        curie = "obo:chebi#is_conjugate_base_of"
         for inp in [
             curie,
             ReferenceTuple.from_curie(curie),
@@ -283,6 +294,7 @@ class TestGet(unittest.TestCase):
                     (term.reference, target)
                     for term, target in self.ontology.iterate_filtered_relations(inp)
                 )
+                self.assertNotEqual(0, len(rr))
                 term = Reference.from_curie("chebi:17051")
                 self.assertIn(term, rr)
                 self.assertIn(Reference.from_curie("chebi:29228"), rr[term])
