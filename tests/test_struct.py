@@ -89,12 +89,16 @@ class TestStruct(unittest.TestCase):
             term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
         )
 
+        def _str(value: str) -> tuple[str, Reference]:
+            return value, Reference(prefix="xsd", identifier="string")
+
+        typedef = TypeDef(reference=Reference.from_curie("RO:1234567"))
         term = Term(
             reference=Reference(
                 prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"
             ),
-            properties={
-                "key": ["value"],
+            annotations_literal={
+                typedef.reference: [_str("value")],
             },
         )
         self.assert_lines(
@@ -102,18 +106,17 @@ class TestStruct(unittest.TestCase):
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            property_value: key "value" xsd:string
+            property_value: RO:1234567 "value" xsd:string
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="GO", typedefs={typedef.pair: typedef}),
         )
 
-        typedef = TypeDef(reference=Reference.from_curie("RO:1234567"))
         term = Term(
             reference=Reference(
                 prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"
             ),
             relationships={
-                typedef: [Reference.from_curie("EC:1.1.1.1")],
+                typedef.reference: [Reference(prefix="eccode", identifier="1.1.1.1")],
             },
         )
         self.assert_lines(
