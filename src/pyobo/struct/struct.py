@@ -511,7 +511,7 @@ class Term(Referenced):
         )
         for typedef, references in sorted(pairs):
             _typedef_warn(prefix=ontology, predicate=typedef, typedefs=typedefs)
-            for reference in sorted(references, key=attrgetter("prefix", "identifier")):
+            for reference in sorted(references):
                 s = f"relationship: {typedef.preferred_curie} {reference.preferred_curie}"
                 if typedef.name or reference.name:
                     s += " !"
@@ -545,7 +545,6 @@ class Term(Referenced):
 
 #: A set of warnings, used to make sure we don't show the same one over and over
 _TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
-
 
 def _typedef_warn(
     prefix: str, predicate: Reference, typedefs: dict[ReferenceTuple, TypeDef]
@@ -803,7 +802,7 @@ class Obo:
         for typedef in sorted(self.typedefs or []):
             yield from typedef.iterate_obo_lines()
 
-        typedefs: dict[ReferenceTuple, TypeDef] = {t.pair: t for t in self.typedefs or []}
+        typedefs = self._index_typedefs()
         for term in self:
             yield from term.iterate_obo_lines(
                 ontology=self.ontology,
@@ -811,6 +810,9 @@ class Obo:
                 emit_object_properties=emit_object_properties,
                 emit_annotation_properties=emit_annotation_properties,
             )
+
+    def _index_typedefs(self) -> dict[ReferenceTuple, TypeDef]:
+        return {t.pair: t for t in self.typedefs or []}
 
     def write_obo(
         self,
@@ -972,8 +974,9 @@ class Obo:
                 it=fn(),  # type:ignore
             )
 
+        typedefs = self._index_typedefs()
         for relation in (is_a, has_part, part_of, from_species, orthologous):
-            if relation is not is_a and self.typedefs is not None and relation not in self.typedefs:
+            if relation is not is_a and relation.pair not in typedefs:
                 continue
             relations_path = self._cache("relations", name=f"{relation.curie}.tsv")
             if relations_path.exists() and not force:
@@ -1289,8 +1292,7 @@ class Obo:
     ) -> Iterable[tuple[Term, Reference, Reference]]:
         """Iterate over tuples of terms, relations, and their targets."""
         _warned = set()
-
-        typedefs: dict[ReferenceTuple, TypeDef] = {td.pair: td for td in self.typedefs or []}
+        typedefs = self._index_typedefs()
         for term in self._iter_terms(
             use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting relations"
         ):
