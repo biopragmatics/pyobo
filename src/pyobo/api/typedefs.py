@@ -4,8 +4,10 @@ import logging
 from functools import lru_cache
 
 import pandas as pd
+from typing_extensions import Unpack
 
-from .utils import get_version
+from .utils import get_version_from_kwargs
+from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_df
@@ -20,22 +22,15 @@ logger = logging.getLogger(__name__)
 
 @lru_cache
 @wrap_norm_prefix
-def get_typedef_df(
-    prefix: str,
-    *,
-    force: bool = False,
-    version: str | None = None,
-    force_process: bool = False,
-) -> pd.DataFrame:
+def get_typedef_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get an identifier to name mapping for the typedefs in an OBO file."""
-    if version is None:
-        version = get_version(prefix)
+    version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="typedefs.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=force or force_process)
+    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
     def _df_getter() -> pd.DataFrame:
         logger.debug("[%s] no cached typedefs found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force, version=version, rewrite=force_process)
+        ontology = get_ontology(prefix, **kwargs)
         logger.debug("[%s] loading typedef mappings", prefix)
         return ontology.get_typedef_df()
 

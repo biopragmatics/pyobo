@@ -1,13 +1,26 @@
 """CLI for PyOBO Database Generation."""
 
 import logging
+from pathlib import Path
 
 import click
 from more_click import verbose_option
 from tqdm.contrib.logging import logging_redirect_tqdm
-from typing_extensions import TypedDict, Unpack
+from typing_extensions import Unpack
 from zenodo_client import update_zenodo
 
+from .database_utils import (
+    _iter_alts,
+    _iter_definitions,
+    _iter_metadata,
+    _iter_names,
+    _iter_properties,
+    _iter_relations,
+    _iter_species,
+    _iter_synonyms,
+    _iter_typedefs,
+    _iter_xrefs,
+)
 from .utils import (
     Clickable,
     directory_option,
@@ -26,20 +39,9 @@ from ..constants import (
     SPECIES_RECORD,
     SYNONYMS_RECORD,
     TYPEDEFS_RECORD,
+    DatabaseKwargs,
 )
 from ..getters import db_output_helper
-from ..xrefdb.xrefs_pipeline import (
-    _iter_alts,
-    _iter_definitions,
-    _iter_metadata,
-    _iter_names,
-    _iter_properties,
-    _iter_relations,
-    _iter_species,
-    _iter_synonyms,
-    _iter_typedefs,
-    _iter_xrefs,
-)
 
 __all__ = [
     "main",
@@ -77,17 +79,6 @@ def database_annotate(f: Clickable) -> Clickable:
     for decorator in decorators:
         f = decorator(f)
     return f
-
-
-class DatabaseKwargs(TypedDict):
-    """Keyword arguments for database CLI functions."""
-
-    directory: str
-    strict: bool
-    force: bool
-    force_process: bool
-    skip_pyobo: bool
-    skip_below: str | None
 
 
 def _update_database_kwargs(kwargs: DatabaseKwargs) -> DatabaseKwargs:
@@ -134,28 +125,30 @@ def build(ctx: click.Context, **kwargs: Unpack[DatabaseKwargs]) -> None:
 
 
 @database_annotate
-def metadata(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
+def metadata(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-metadata dump."""
+    it = _iter_metadata(**kwargs)
     db_output_helper(
-        _iter_metadata,
+        it,
         "metadata",
         ("prefix", "version", "date", "deprecated"),
         use_gzip=False,
-        **kwargs,
+        directory=directory,
     )
     if zenodo:
         click.secho("No Zenodo record for metadata", fg="red")
 
 
 @database_annotate
-def names(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
+def names(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-identifier-name dump."""
+    it = _iter_names(**kwargs)
     with logging_redirect_tqdm():
         paths = db_output_helper(
-            _iter_names,
+            it,
             "names",
             ("prefix", "identifier", "name"),
-            **kwargs,
+            directory=directory,
         )
     if zenodo:
         # see https://zenodo.org/record/4020486
@@ -163,30 +156,40 @@ def names(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
 
 
 @database_annotate
-def species(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
+def species(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-identifier-species dump."""
     with logging_redirect_tqdm():
+        it = _iter_species(**kwargs)
         paths = db_output_helper(
-            _iter_species,
+            it,
             "species",
             ("prefix", "identifier", "species"),
-            **kwargs,
+            directory=directory,
         )
     if zenodo:
         # see https://zenodo.org/record/5334738
         update_zenodo(SPECIES_RECORD, paths)
 
 
+def _extend_skip_set(kwargs: DatabaseKwargs, skip_set: set[str]) -> None:
+    ss = kwargs.get("skip_set")
+    if ss is None:
+        kwargs["skip_set"] = skip_set
+    else:
+        ss.update(skip_set)
+
+
 @database_annotate
-def definitions(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
+def definitions(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-identifier-definition dump."""
     with logging_redirect_tqdm():
+        _extend_skip_set(kwargs, {"kegg.pathway", "kegg.genes", "kegg.genome", "umls"})
+        it = _iter_definitions(**kwargs)
         paths = db_output_helper(
-            _iter_definitions,
+            it,
             "definitions",
             ("prefix", "identifier", "definition"),
-            skip_set={"kegg.pathway", "kegg.genes", "kegg.genome", "umls"},
-            **kwargs,
+            directory=directory,
         )
     if zenodo:
         # see https://zenodo.org/record/4637061
@@ -194,16 +197,17 @@ def definitions(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
 
 
 @database_annotate
-def typedefs(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
+def typedefs(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the typedef prefix-identifier-name dump."""
     with logging_redirect_tqdm():
+        _extend_skip_set(kwargs, {"ncbigene", "kegg.pathway", "kegg.genes", "kegg.genome"})
+        it = _iter_typedefs(**kwargs)
         paths = db_output_helper(
-            _iter_typedefs,
+            it,
             "typedefs",
             ("prefix", "typedef_prefix", "identifier", "name"),
             use_gzip=False,
-            skip_set={"ncbigene", "kegg.pathway", "kegg.genes", "kegg.genome"},
-            **kwargs,
+            directory=directory,
         )
     if zenodo:
         # see https://zenodo.org/record/4644013
@@ -211,15 +215,16 @@ def typedefs(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
 
 
 @database_annotate
-def alts(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
+def alts(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-alt-id dump."""
     with logging_redirect_tqdm():
+        _extend_skip_set(kwargs, {"kegg.pathway", "kegg.genes", "kegg.genome", "umls"})
+        it = _iter_alts(**kwargs)
         paths = db_output_helper(
-            _iter_alts,
+            it,
             "alts",
             ("prefix", "identifier", "alt"),
-            skip_set={"kegg.pathway", "kegg.genes", "kegg.genome", "umls"},
-            **kwargs,
+            directory=directory,
         )
     if zenodo:
         # see https://zenodo.org/record/4021476
@@ -227,15 +232,16 @@ def alts(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
 
 
 @database_annotate
-def synonyms(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
+def synonyms(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-identifier-synonym dump."""
     with logging_redirect_tqdm():
+        _extend_skip_set(kwargs, {"kegg.pathway", "kegg.genes", "kegg.genome"})
+        it = _iter_synonyms(**kwargs)
         paths = db_output_helper(
-            _iter_synonyms,
+            it,
             "synonyms",
             ("prefix", "identifier", "synonym"),
-            skip_set={"kegg.pathway", "kegg.genes", "kegg.genome"},
-            **kwargs,
+            directory=directory,
         )
     if zenodo:
         # see https://zenodo.org/record/4021482
@@ -243,11 +249,12 @@ def synonyms(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
 
 
 @database_annotate
-def relations(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
+def relations(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the relation dump."""
     with logging_redirect_tqdm():
+        it = _iter_relations(**kwargs)
         paths = db_output_helper(
-            _iter_relations,
+            it,
             "relations",
             (
                 "source_prefix",
@@ -258,7 +265,7 @@ def relations(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
                 "target_identifier",
             ),
             summary_detailed=(0, 2, 3),  # second column corresponds to relation type
-            **kwargs,
+            directory=directory,
         )
     if zenodo:
         # see https://zenodo.org/record/4625167
@@ -266,15 +273,16 @@ def relations(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
 
 
 @database_annotate
-def properties(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
+def properties(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the properties dump."""
     with logging_redirect_tqdm():
+        it = _iter_properties(**kwargs)
         paths = db_output_helper(
-            _iter_properties,
+            it,
             "properties",
             ("prefix", "identifier", "property", "value"),
             summary_detailed=(0, 2),  # second column corresponds to property type
-            **kwargs,
+            directory=directory,
         )
     if zenodo:
         # see https://zenodo.org/record/4625172
@@ -282,15 +290,16 @@ def properties(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
 
 
 @database_annotate
-def xrefs(zenodo: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
+def xrefs(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-identifier-xref dump."""
     with logging_redirect_tqdm():
+        it = _iter_xrefs(**kwargs)
         paths = db_output_helper(
-            _iter_xrefs,
+            it,
             "xrefs",
             ("prefix", "identifier", "xref_prefix", "xref_identifier", "provenance"),
             summary_detailed=(0, 2),  # second column corresponds to xref prefix
-            **kwargs,
+            directory=directory,
         )
     if zenodo:
         # see https://zenodo.org/record/4021477

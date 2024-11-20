@@ -13,6 +13,7 @@ from gilda.grounder import Grounder
 from gilda.process import normalize
 from gilda.term import filter_out_duplicates
 from tqdm.auto import tqdm
+from typing_extensions import Unpack
 
 from pyobo import (
     get_descendants,
@@ -22,6 +23,8 @@ from pyobo import (
     get_ids,
     get_obsolete,
 )
+from pyobo.api.utils import get_version_from_kwargs
+from pyobo.constants import GetOntologyKwargs
 from pyobo.getters import NoBuildError
 from pyobo.utils.io import multidict
 
@@ -96,9 +99,9 @@ def get_grounder(
     unnamed: Iterable[str] | None = None,
     grounder_cls: type[Grounder] | None = None,
     versions: None | str | Iterable[str | None] | dict[str, str] = None,
-    strict: bool = True,
     skip_obsolete: bool = False,
     progress: bool = True,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Grounder:
     """Get a Gilda grounder for the given prefix(es)."""
     unnamed = set() if unnamed is None else set(unnamed)
@@ -118,7 +121,7 @@ def get_grounder(
         raise ValueError
 
     terms: list[gilda.term.Term] = []
-    for prefix, version in zip(
+    for prefix, kwargs["version"] in zip(
         tqdm(prefixes, leave=False, disable=not progress), versions, strict=False
     ):
         try:
@@ -126,10 +129,9 @@ def get_grounder(
                 get_gilda_terms(
                     prefix,
                     identifiers_are_names=prefix in unnamed,
-                    version=version,
-                    strict=strict,
                     skip_obsolete=skip_obsolete,
                     progress=progress,
+                    **kwargs,
                 )
             )
         except (NoBuildError, CalledProcessError):
@@ -173,15 +175,15 @@ def get_gilda_terms(
     prefix: str,
     *,
     identifiers_are_names: bool = False,
-    version: str | None = None,
-    strict: bool = True,
-    skip_obsolete: bool = False,
     progress: bool = True,
+    skip_obsolete: bool = False,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Iterable[gilda.term.Term]:
     """Get gilda terms for the given namespace."""
-    id_to_name = get_id_name_mapping(prefix, version=version, strict=strict)
-    id_to_species = get_id_species_mapping(prefix, version=version, strict=strict)
-    obsoletes = get_obsolete(prefix, version=version, strict=strict) if skip_obsolete else set()
+    kwargs["version"] = get_version_from_kwargs(prefix, kwargs)  # type:ignore
+    id_to_name = get_id_name_mapping(prefix, **kwargs)
+    id_to_species = get_id_species_mapping(prefix, **kwargs)
+    obsoletes = get_obsolete(prefix, **kwargs) if skip_obsolete else set()
 
     it = tqdm(
         id_to_name.items(),
@@ -204,7 +206,7 @@ def get_gilda_terms(
         if term is not None:
             yield term
 
-    id_to_synonyms = get_id_synonyms_mapping(prefix, version=version)
+    id_to_synonyms = get_id_synonyms_mapping(prefix, **kwargs)
     if id_to_synonyms:
         it = tqdm(
             id_to_synonyms.items(),
@@ -255,7 +257,9 @@ def get_gilda_terms(
 
 
 def get_gilda_term_subset(
-    source: str, ancestors: str | list[str], **kwargs
+    source: str,
+    ancestors: str | list[str],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Iterable[gilda.term.Term]:
     """Get a subset of terms."""
     subset = {

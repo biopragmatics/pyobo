@@ -20,8 +20,14 @@ import click
 import pystow.utils
 from bioontologies import robot
 from tqdm.auto import tqdm
+from typing_extensions import Unpack
 
-from .constants import DATABASE_DIRECTORY
+from .constants import (
+    DATABASE_DIRECTORY,
+    GetOntologyKwargs,
+    IterHelperHelperDict,
+    SlimGetOntologyKwargs,
+)
 from .identifier_utils import MissingPrefixError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
@@ -55,7 +61,7 @@ def get_ontology(
     prefix: str,
     *,
     force: bool = False,
-    rewrite: bool = False,
+    force_process: bool = False,
     strict: bool = True,
     version: str | None = None,
     robot_check: bool = True,
@@ -65,7 +71,7 @@ def get_ontology(
     :param prefix: The prefix of the ontology to look up
     :param version: The pre-looked-up version of the ontology
     :param force: Download the data again
-    :param rewrite: Should the OBO cache be rewritten? Automatically set to true if ``force`` is true
+    :param force_process: Should the OBO cache be rewritten? Automatically set to true if ``force`` is true
     :param strict: Should CURIEs be treated strictly? If true, raises exceptions on invalid/malformed
     :param robot_check:
         If set to false, will send the ``--check=false`` command to ROBOT to disregard
@@ -84,7 +90,7 @@ def get_ontology(
     >>> obo = from_obo_path(path)
     """
     if force:
-        rewrite = True
+        force_process = True
     if prefix == "uberon":
         logger.info("UBERON has so much garbage in it that defaulting to non-strict parsing")
         strict = False
@@ -102,7 +108,7 @@ def get_ontology(
     if has_nomenclature_plugin(prefix):
         obo = run_nomenclature_plugin(prefix, version=version)
         logger.debug("[%s] caching nomenclature plugin", prefix)
-        obo.write_default(force=rewrite)
+        obo.write_default(force=force_process)
         return obo
 
     logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
@@ -133,7 +139,7 @@ def get_ontology(
                 "[%s] had version %s, overriding with %s", obo.ontology, obo.data_version, version
             )
             obo.data_version = version
-    obo.write_default(force=rewrite)
+    obo.write_default(force=force_process)
     return obo
 
 
@@ -246,13 +252,12 @@ X = TypeVar("X")
 
 
 def iter_helper(
-    f: Callable[[str], Mapping[str, X]],
+    f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
     leave: bool = False,
-    strict: bool = True,
-    **kwargs,
+    **kwargs: Unpack[IterHelperHelperDict],
 ) -> Iterable[tuple[str, str, X]]:
     """Yield all mappings extracted from each database given."""
-    for prefix, mapping in iter_helper_helper(f, strict=strict, **kwargs):
+    for prefix, mapping in iter_helper_helper(f, **kwargs):
         it = tqdm(
             mapping.items(),
             desc=f"iterating {prefix}",
@@ -300,13 +305,12 @@ def _prefixes(
 
 
 def iter_helper_helper(
-    f: Callable[[str], X],
+    f: Callable[[str, Unpack[GetOntologyKwargs]], X],
     use_tqdm: bool = True,
     skip_below: str | None = None,
     skip_pyobo: bool = False,
     skip_set: set[str] | None = None,
-    strict: bool = True,
-    **kwargs,
+    **kwargs: Unpack[SlimGetOntologyKwargs],
 ) -> Iterable[tuple[str, X]]:
     """Yield all mappings extracted from each database given.
 
@@ -324,6 +328,7 @@ def iter_helper_helper(
     :raises urllib.error.URLError: If another problem was encountered during download
     :raises ValueError: If the data was not in the format that was expected (e.g., OWL)
     """
+    strict = kwargs.get("strict", True)
     prefixes = list(
         _prefixes(
             skip_set=skip_set,
@@ -401,7 +406,7 @@ def _prep_dir(directory: None | str | pathlib.Path) -> pathlib.Path:
 
 
 def db_output_helper(
-    f: Callable[..., Iterable[tuple[str, ...]]],
+    it: Iterable[tuple[str, ...]],
     db_name: str,
     columns: Sequence[str],
     *,
@@ -409,7 +414,6 @@ def db_output_helper(
     strict: bool = True,
     use_gzip: bool = True,
     summary_detailed: Sequence[int] | None = None,
-    **kwargs,
 ) -> list[pathlib.Path]:
     """Help output database builds.
 
@@ -418,7 +422,6 @@ def db_output_helper(
     :param columns: The names of the columns
     :param directory: The directory to output everything, or defaults to :data:`pyobo.constants.DATABASE_DIRECTORY`.
     :param strict: Passed to ``f`` by keyword
-    :param kwargs: Passed to ``f`` by splat
     :returns: A sequence of paths that got created.
     """
     directory = _prep_dir(directory)
@@ -436,7 +439,6 @@ def db_output_helper(
 
     logger.info("writing %s to %s", db_name, db_path)
     logger.info("writing %s sample to %s", db_name, db_sample_path)
-    it = f(strict=strict, **kwargs)
     with gzip.open(db_path, mode="wt") if use_gzip else open(db_path, "w") as gzipped_file:
         writer = get_writer(gzipped_file)
 

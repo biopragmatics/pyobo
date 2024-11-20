@@ -7,7 +7,9 @@ from collections.abc import Mapping
 import bioregistry
 import click
 from more_click import verbose_option
-from typing_extensions import TypedDict, Unpack
+from typing_extensions import Unpack
+
+from pyobo.constants import LookupKwargs
 
 from .utils import (
     Clickable,
@@ -66,16 +68,6 @@ def lookup_annotate(f: Clickable) -> Clickable:
 
 
 identifier_option = click.option("-i", "--identifier")
-
-
-class LookupKwargs(TypedDict):
-    """Keyword arguments for database CLI functions."""
-
-    prefix: str
-    strict: bool
-    force: bool
-    force_process: bool
-    version: str | None
 
 
 @lookup_annotate
