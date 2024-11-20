@@ -80,6 +80,7 @@ class Reference(curies.Reference):
         strict: bool = True,
         auto: bool = False,
         ontology_prefix: str | None = None,
+        reference_node: Reference | None = None,
     ) -> Reference | None:
         """Get a reference from a CURIE.
 
@@ -88,7 +89,9 @@ class Reference(curies.Reference):
         :param strict: If true, raises an error if the CURIE can not be parsed.
         :param auto: Automatically look up name
         """
-        prefix, identifier = normalize_curie(curie, strict=strict, ontology=ontology_prefix)
+        prefix, identifier = normalize_curie(
+            curie, strict=strict, ontology=ontology_prefix, reference_node=reference_node
+        )
         return cls._materialize(prefix=prefix, identifier=identifier, name=name, auto=auto)
 
     @classmethod
