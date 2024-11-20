@@ -7,17 +7,19 @@ from textwrap import dedent
 
 from obonet import read_obo
 
-from pyobo import Obo
+from pyobo import Obo, Term
 from pyobo.reader import from_obonet
+from pyobo.struct import default_reference
+from pyobo.struct.typedef import TypeDef, is_conjugate_base_of
 
 
-def _read(text: str) -> Obo:
+def _read(text: str, *, strict: bool = True) -> Obo:
     text = dedent(text).strip()
     io = StringIO()
     io.write(text)
     io.seek(0)
     graph = read_obo(io)
-    return from_obonet(graph)
+    return from_obonet(graph, strict=strict)
 
 
 class TestReader(unittest.TestCase):
@@ -69,6 +71,12 @@ class TestReader(unittest.TestCase):
         self.assertEqual(datetime.datetime(2024, 11, 20, 18, 44), ontology.date)
         self.assertEqual("2024-11-20", ontology.data_version)
 
+    def get_only_term(self, ontology: Obo) -> Term:
+        terms = list(ontology.iter_terms())
+        self.assertEqual(1, len(terms))
+        term = terms[0]
+        return term
+
     def test_minimal(self) -> None:
         """Test an ontology with a version but no date."""
         ontology = _read("""\
@@ -83,11 +91,130 @@ class TestReader(unittest.TestCase):
         """)
         self.assertEqual([], ontology.typedefs)
         self.assertEqual([], ontology.synonym_typedefs)
-        terms = list(ontology.iter_terms())
-        self.assertEqual(1, len(terms))
 
-        term = terms[0]
+        term = self.get_only_term(ontology)
         self.assertEqual("Test definition", term.definition)
         self.assertEqual(1, len(term.xrefs))
         xref = term.xrefs[0]
         self.assertEqual("drugbank:DB1234567", xref.curie)
+
+    def test_relationship_qualified_undefined(self) -> None:
+        """Test parsing a relationship that's loaded in the defaults."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            name: Test Name
+            relationship: RO:0018033 CHEBI:5678
+        """)
+        term = self.get_only_term(ontology)
+        reference = term.get_relationship(is_conjugate_base_of)
+        self.assertIsNotNone(reference)
+        self.assertEqual("chebi:5678", reference.curie)
+
+    def test_relationship_qualified_defined(self) -> None:
+        """Test relationship parsing that's defined."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            name: Test Name
+            relationship: RO:0018033 CHEBI:5678
+
+            [Typedef]
+            id: RO:0018033
+            name: is conjugate base of
+        """)
+        term = self.get_only_term(ontology)
+        reference = term.get_relationship(is_conjugate_base_of)
+        self.assertIsNotNone(reference)
+        self.assertEqual("chebi:5678", reference.curie)
+
+    def test_relationship_unqualified(self) -> None:
+        """Test relationship parsing that relies on default referencing."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            name: Test Name
+            relationship: is_conjugate_base_of CHEBI:5678
+
+            [Typedef]
+            id: is_conjugate_base_of
+        """)
+        term = self.get_only_term(ontology)
+        self.assertIsNone(term.get_relationship(is_conjugate_base_of))
+        r = default_reference("chebi", "is_conjugate_base_of")
+        td = TypeDef(reference=r)
+        reference = term.get_relationship(td)
+        self.assertIsNotNone(reference)
+        self.assertEqual("chebi:5678", reference.curie)
+
+    def test_node_unparsable(self) -> None:
+        """Test loading an ontology with unparsable nodes.."""
+        ontology = _read(
+            """\
+            ontology: chebi
+
+            [Term]
+            id: nope:1234
+        """,
+            strict=False,
+        )
+        self.assertEqual(0, len(list(ontology.iter_terms())))
+
+    def test_malformed_typedef(self) -> None:
+        """Test loading an ontology with unparsable nodes."""
+        with self.assertRaises(KeyError) as exc:
+            _read("""\
+                ontology: chebi
+
+                [Typedef]
+                name: nope
+            """)
+        self.assertEqual("typedef is missing an `id`", exc.exception.args[0])
+
+    def test_typedef_xref(self) -> None:
+        """Test loading an ontology with unparsable nodes."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Typedef]
+            id: RO:0018033
+            name: is conjugate base of
+            xref: debio:0000010
+        """)
+        self.assertEqual(1, len(ontology.typedefs))
+        self.assertEqual(is_conjugate_base_of.pair, ontology.typedefs[0].pair)
+
+    def test_malformed_definition(self) -> None:
+        with self.assertRaises(ValueError) as exc:
+            _read("""\
+                ontology: chebi
+
+                [Term]
+                id: CHEBI:1234
+                name: Test Name
+                def: malformed definition without quotes
+            """)
+        self.assertEqual(
+            "[chebi:1234] definition does not start with a quote", exc.exception.args[0]
+        )
+
+    def test_malformed_definition_2(self) -> None:
+        with self.assertRaises(ValueError) as exc:
+            _read("""\
+                ontology: chebi
+
+                [Term]
+                id: CHEBI:1234
+                name: Test Name
+                def: "malformed definition without quotes
+            """)
+        self.assertEqual(
+            '[chebi:1234] could not parse definition: "malformed definition without quotes',
+            exc.exception.args[0],
+        )
