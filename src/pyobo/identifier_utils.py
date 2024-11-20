@@ -67,7 +67,11 @@ BAD_CURIES = set()
 
 
 def normalize_curie(
-    curie: str, *, strict: bool = True, ontology: str | None = None
+    curie: str,
+    *,
+    strict: bool = True,
+    ontology: str | None = None,
+    reference_node: curies.Reference | None = None,
 ) -> tuple[str, str] | tuple[None, None]:
     """Parse a string that looks like a CURIE.
 
@@ -105,9 +109,13 @@ def normalize_curie(
         identifier = identifier[len(head_ns) + 1 :]
 
     norm_node_prefix = _normalize_prefix(head_ns, curie=curie, strict=strict)
-    if not norm_node_prefix:
+    if norm_node_prefix:
+        return norm_node_prefix, identifier
+    elif strict:
+        raise MissingPrefixError(curie=curie, ontology=ontology)
+    else:
         return None, None
-    return norm_node_prefix, identifier
+
 
 
 def wrap_norm_prefix(f):

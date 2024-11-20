@@ -9,8 +9,6 @@ import click
 from more_click import verbose_option
 from typing_extensions import Unpack
 
-from pyobo.constants import LookupKwargs
-
 from .utils import (
     Clickable,
     echo_df,
@@ -40,7 +38,8 @@ from ..api import (
     get_typedef_df,
     get_xrefs_df,
 )
-from ..identifier_utils import normalize_curie
+from ..constants import LookupKwargs
+from ..struct import Reference
 
 __all__ = [
     "lookup",
@@ -196,8 +195,9 @@ def relations(
         else:
             echo_df(relations_df)
     else:
-        curie = normalize_curie(relation)
-        if curie[1] is None:
+        relation_reference = Reference.from_curie(relation, strict=False)
+        if relation_reference is None:
+            click.secho(f"not a valid curie: {relation}", fg="red")
             raise sys.exit(1)
 
         if target is not None:
@@ -205,7 +205,7 @@ def relations(
             if norm_target is None:
                 raise ValueError
             relations_df = get_filtered_relations_df(
-                relation=curie,
+                relation=relation_reference,
                 target=norm_target,
                 **kwargs,
             )
