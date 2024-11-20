@@ -117,7 +117,7 @@ class SynonymTypeDef(Referenced):
 
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass
-        return self.reference.__hash__()
+        return hash((self.__class__, self.prefix, self.identifier))
 
     def to_obo(self) -> str:
         """Serialize to OBO."""
@@ -203,7 +203,7 @@ class Term(Referenced):
 
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass
-        return self.reference.__hash__()
+        return hash((self.__class__, self.prefix, self.identifier))
 
     @classmethod
     def from_triple(
