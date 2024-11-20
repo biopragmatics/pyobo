@@ -21,6 +21,7 @@ import click
 import curies
 import networkx as nx
 import pandas as pd
+from curies import ReferenceTuple
 from more_click import force_option, verbose_option
 from tqdm.auto import tqdm
 from typing_extensions import Self
@@ -430,7 +431,7 @@ class Term(Referenced):
         self,
         *,
         ontology: str,
-        typedefs: list[TypeDef] | None = None,
+        typedefs: dict[ReferenceTuple, TypeDef],
         emit_object_properties: bool = True,
         emit_annotation_properties: bool = True,
     ) -> Iterable[str]:
@@ -461,25 +462,19 @@ class Term(Referenced):
             yield from self._emit_relations(ontology, typedefs)
 
         if emit_annotation_properties:
-            yield from self._emit_properties()
+            for line in self._emit_properties(typedefs):
+                yield f"property_value: {line}"
 
         for synonym in sorted(self.synonyms):
             yield synonym.to_obo()
 
     def _emit_relations(
-        self, ontology: str, typedefs: list[TypeDef] | None = None
+        self, ontology: str, typedefs: dict[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:
         for typedef, references in sorted(self.relationships.items()):
-            if (not typedefs or typedef not in typedefs) and (
-                ontology,
-                typedef.curie,
-            ) not in _TYPEDEF_WARNINGS:
-                logger.warning(f"[{ontology}] typedef not defined in OBO: {typedef.curie}")
-                _TYPEDEF_WARNINGS.add((ontology, typedef.curie))
-
-            typedef_preferred_curie = typedef.preferred_curie
+            _typedef_warn(ontology, typedef.reference, typedefs)
             for reference in sorted(references):
-                s = f"relationship: {typedef_preferred_curie} {reference.preferred_curie}"
+                s = f"relationship: {typedef.preferred_curie} {reference.preferred_curie}"
                 if typedef.name or reference.name:
                     s += " !"
                 if typedef.name:
@@ -488,10 +483,10 @@ class Term(Referenced):
                     s += f" {reference.name}"
                 yield s
 
-    def _emit_properties(self) -> Iterable[str]:
+    def _emit_properties(self, typedefs: dict[ReferenceTuple, TypeDef]) -> Iterable[str]:
         for prop, value in sorted(self.iterate_properties(), key=_sort_properties):
             # TODO deal with typedefs for properties
-            yield f'property_value: {prop} "{value}" xsd:string'  # TODO deal with types later
+            yield f'{prop} "{value}" xsd:string'  # TODO deal with types later
 
     @staticmethod
     def _escape(s) -> str:
@@ -499,7 +494,27 @@ class Term(Referenced):
 
 
 #: A set of warnings, used to make sure we don't show the same one over and over
-_TYPEDEF_WARNINGS: set[tuple[str, str]] = set()
+_TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
+
+
+def _typedef_warn(
+    prefix: str, predicate: Reference, typedefs: dict[ReferenceTuple, TypeDef]
+) -> None:
+    if predicate.pair in default_typedefs or predicate.pair in typedefs:
+        return None
+    key = prefix, predicate
+    if key not in _TYPEDEF_WARNINGS:
+        _TYPEDEF_WARNINGS.add(key)
+        if predicate.prefix == "obo":
+            # Throw our hands up in the air. By using `obo` as the prefix,
+            # we already threw using "real" definitions out the window
+            logger.warning(
+                f"[{prefix}] predicate with obo prefix not defined: {predicate.curie}."
+                f"\n\tThis might be because you used an unqualified prefix in an OBO file, "
+                f"which automatically gets an OBO prefix."
+            )
+        else:
+            logger.warning(f"[{prefix}] typedef not defined: {predicate.curie}")
 
 
 def _sort_properties(r):
@@ -747,13 +762,17 @@ class Obo:
         for typedef in sorted(self.typedefs or []):
             yield from typedef.iterate_obo_lines()
 
+        typedefs = self._index_typedefs()
         for term in self:
             yield from term.iterate_obo_lines(
                 ontology=self.ontology,
-                typedefs=self.typedefs,
+                typedefs=typedefs,
                 emit_object_properties=emit_object_properties,
                 emit_annotation_properties=emit_annotation_properties,
             )
+
+    def _index_typedefs(self) -> dict[ReferenceTuple, TypeDef]:
+        return {t.pair: t for t in self.typedefs or []}
 
     def write_obo(
         self,
@@ -915,8 +934,9 @@ class Obo:
                 it=fn(),  # type:ignore
             )
 
+        typedefs = self._index_typedefs()
         for relation in (is_a, has_part, part_of, from_species, orthologous):
-            if relation is not is_a and self.typedefs is not None and relation not in self.typedefs:
+            if relation is not is_a and relation.pair not in typedefs:
                 continue
             relations_path = self._cache("relations", name=f"{relation.curie}.tsv")
             if relations_path.exists() and not force:
@@ -1023,6 +1043,7 @@ class Obo:
 
         nodes = {}
         links = []
+        typedefs = self._index_typedefs()
         for term in self._iter_terms(use_tqdm=use_tqdm):
             parents = []
             for parent in term.parents:
@@ -1046,11 +1067,7 @@ class Obo:
                 "is_a": parents,
                 "relationship": relations,
                 "synonym": [synonym._fp() for synonym in term.synonyms],
-                "property_value": [
-                    f"{prop} {value}"
-                    for prop, values in term.properties.items()
-                    for value in values
-                ],
+                "property_value": list(term._emit_properties(typedefs)),
             }
             nodes[term.curie] = {k: v for k, v in d.items() if v}
 
@@ -1236,16 +1253,14 @@ class Obo:
         self, *, use_tqdm: bool = False
     ) -> Iterable[tuple[Term, TypeDef, Reference]]:
         """Iterate over tuples of terms, relations, and their targets."""
+        typedefs = self._index_typedefs()
         for term in self._iter_terms(
             use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting relations"
         ):
             for parent in term.parents:
                 yield term, is_a, parent
             for typedef, reference in term.iterate_relations():
-                if (self.typedefs is None or typedef not in self.typedefs) and (
-                    typedef.prefix,
-                    typedef.identifier,
-                ) not in default_typedefs:
+                if typedef.pair not in typedefs and typedef.pair not in default_typedefs:
                     raise ValueError(f"Undefined typedef: {typedef.curie} ! {typedef.name}")
                 yield term, typedef, reference
 
