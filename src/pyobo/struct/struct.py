@@ -137,7 +137,7 @@ class SynonymTypeDef(Referenced):
 
 
 DEFAULT_SYNONYM_TYPE = SynonymTypeDef(
-    reference=Reference(prefix="oboInOwl", identifier="SynonymType", name="Synonym"),
+    reference=Reference(prefix="oboInOwl", identifier="SynonymType", name="synonym type"),
 )
 abbreviation = SynonymTypeDef(
     reference=Reference(prefix="OMO", identifier="0003000", name="abbreviation")
