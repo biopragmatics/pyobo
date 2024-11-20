@@ -438,7 +438,7 @@ class Term(Referenced):
     def iterate_obo_lines(
         self,
         *,
-        ontology: str,
+        ontology_prefix: str,
         typedefs: dict[ReferenceTuple, TypeDef],
         emit_object_properties: bool = True,
         emit_annotation_properties: bool = True,
@@ -467,7 +467,7 @@ class Term(Referenced):
             yield f"{parent_tag}: {parent}"  # __str__ bakes in the ! name
 
         if emit_object_properties:
-            yield from self._emit_relations(ontology, typedefs)
+            yield from self._emit_relations(ontology_prefix, typedefs)
 
         if emit_annotation_properties:
             for line in self._emit_properties(typedefs):
@@ -477,10 +477,10 @@ class Term(Referenced):
             yield synonym.to_obo()
 
     def _emit_relations(
-        self, ontology: str, typedefs: dict[ReferenceTuple, TypeDef]
+        self, ontology_prefix: str, typedefs: dict[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:
         for typedef, references in sorted(self.relationships.items()):
-            _typedef_warn(ontology, typedef.reference, typedefs)
+            _typedef_warn(ontology_prefix, typedef.reference, typedefs)
             for reference in sorted(references):
                 s = f"relationship: {typedef.preferred_curie} {reference.preferred_curie}"
                 if typedef.name or reference.name:

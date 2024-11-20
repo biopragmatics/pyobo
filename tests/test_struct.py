@@ -86,7 +86,7 @@ class TestStruct(unittest.TestCase):
             id: GO:0050069
             name: lysine dehydrogenase activity
             """,
-            term.iterate_obo_lines(ontology="GO", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
         )
 
         term = Term(
@@ -104,7 +104,7 @@ class TestStruct(unittest.TestCase):
             name: lysine dehydrogenase activity
             property_value: key "value" xsd:string
             """,
-            term.iterate_obo_lines(ontology="GO", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
         )
 
         typedef = TypeDef(reference=Reference.from_curie("RO:1234567"))
@@ -123,5 +123,5 @@ class TestStruct(unittest.TestCase):
             name: lysine dehydrogenase activity
             relationship: RO:1234567 eccode:1.1.1.1
             """,
-            term.iterate_obo_lines(ontology="GO", typedefs={typedef.pair: typedef}),
+            term.iterate_obo_lines(ontology_prefix="GO", typedefs={typedef.pair: typedef}),
         )

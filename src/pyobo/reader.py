@@ -105,11 +105,15 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
             data_version = date.strftime("%Y-%m-%d")
         else:
             logger.warning(
-                "[%s] UNRECOGNIZED VERSION FORMAT AND MISSING DATE: %s", ontology_prefix, data_version
+                "[%s] UNRECOGNIZED VERSION FORMAT AND MISSING DATE: %s",
+                ontology_prefix,
+                data_version,
             )
 
     if data_version and "/" in data_version:
-        raise ValueError(f"[{ontology_prefix}] will not accept slash in data version: {data_version}")
+        raise ValueError(
+            f"[{ontology_prefix}] will not accept slash in data version: {data_version}"
+        )
 
     #: Parsed CURIEs to references (even external ones)
     reference_it = (
@@ -127,12 +131,15 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
 
     #: CURIEs to typedefs
     typedefs: Mapping[ReferenceTuple, TypeDef] = {
-        typedef.pair: typedef for typedef in iterate_graph_typedefs(graph, ontology_prefix=ontology_prefix)
+        typedef.pair: typedef
+        for typedef in iterate_graph_typedefs(graph, ontology_prefix=ontology_prefix)
     }
 
     synonym_typedefs: Mapping[str, SynonymTypeDef] = {
         synonym_typedef.curie: synonym_typedef
-        for synonym_typedef in iterate_graph_synonym_typedefs(graph, ontology_prefix=ontology_prefix)
+        for synonym_typedef in iterate_graph_synonym_typedefs(
+            graph, ontology_prefix=ontology_prefix
+        )
     }
 
     missing_typedefs: set[ReferenceTuple] = set()
@@ -258,7 +265,9 @@ def _get_date(graph, ontology_prefix: str) -> datetime | None:
         logger.info("[%s] does not report a date", ontology_prefix)
         return None
     except ValueError:
-        logger.info("[%s] reports a date that can't be parsed: %s", ontology_prefix, graph.graph["date"])
+        logger.info(
+            "[%s] reports a date that can't be parsed: %s", ontology_prefix, graph.graph["date"]
+        )
         return None
     else:
         return rv
