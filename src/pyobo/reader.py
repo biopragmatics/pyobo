@@ -367,7 +367,11 @@ def _extract_definition(
     return definition, provenance
 
 
-def _get_first_nonquoted(s: str) -> int | None:
+def get_first_nonescaped_quote(s: str) -> int | None:
+    """Get the first non-escaped quote."""
+    if s[0] == '"':
+        # special case first position
+        return 0
     for i, (a, b) in enumerate(pairwise(s), start=1):
         if b == '"' and a != "\\":
             return i
@@ -376,7 +380,7 @@ def _get_first_nonquoted(s: str) -> int | None:
 
 def _quote_split(s: str) -> tuple[str, str]:
     s = s.lstrip('"')
-    i = _get_first_nonquoted(s)
+    i = get_first_nonescaped_quote(s)
     if i is None:
         raise ValueError(f"no closing quote found in `{s}`")
     return _clean_definition(s[:i].strip()), s[i + 1 :].strip()

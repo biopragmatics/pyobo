@@ -8,7 +8,7 @@ from textwrap import dedent
 from obonet import read_obo
 
 from pyobo import Obo, Term
-from pyobo.reader import from_obonet
+from pyobo.reader import from_obonet, get_first_nonescaped_quote
 from pyobo.struct import default_reference
 from pyobo.struct.typedef import TypeDef, is_conjugate_base_of
 
@@ -20,6 +20,22 @@ def _read(text: str, *, strict: bool = True) -> Obo:
     io.seek(0)
     graph = read_obo(io)
     return from_obonet(graph, strict=strict)
+
+
+class TestUtils(unittest.TestCase):
+    """Test utilities for the reader."""
+
+    def test_first_nonescaped_quote(self):
+        """Test finding the first non-escaped double quote."""
+        self.assertEqual(0, get_first_nonescaped_quote('"'))
+        self.assertEqual(0, get_first_nonescaped_quote('"abc'))
+        self.assertEqual(0, get_first_nonescaped_quote('"abc"'))
+        self.assertEqual(2, get_first_nonescaped_quote('\\""'))
+        self.assertEqual(3, get_first_nonescaped_quote('abc"'))
+        self.assertEqual(3, get_first_nonescaped_quote('abc""'))
+        self.assertIsNone(get_first_nonescaped_quote("abc"))
+        self.assertIsNone(get_first_nonescaped_quote('abc\\"'))
+        self.assertIsNone(get_first_nonescaped_quote('\\"hello\\"'))
 
 
 class TestReader(unittest.TestCase):
@@ -72,6 +88,7 @@ class TestReader(unittest.TestCase):
         self.assertEqual("2024-11-20", ontology.data_version)
 
     def get_only_term(self, ontology: Obo) -> Term:
+        """Assert there is only a single term in the ontology and return it."""
         terms = list(ontology.iter_terms())
         self.assertEqual(1, len(terms))
         term = terms[0]
@@ -190,7 +207,8 @@ class TestReader(unittest.TestCase):
         self.assertEqual(1, len(ontology.typedefs))
         self.assertEqual(is_conjugate_base_of.pair, ontology.typedefs[0].pair)
 
-    def test_malformed_definition(self) -> None:
+    def test_definition_missing_start_quote(self) -> None:
+        """Test parsing a definition missing a starting quote."""
         with self.assertRaises(ValueError) as exc:
             _read("""\
                 ontology: chebi
@@ -204,7 +222,8 @@ class TestReader(unittest.TestCase):
             "[chebi:1234] definition does not start with a quote", exc.exception.args[0]
         )
 
-    def test_malformed_definition_2(self) -> None:
+    def test_definition_missing_end_quote(self) -> None:
+        """Test parsing a definition missing an ending quote."""
         with self.assertRaises(ValueError) as exc:
             _read("""\
                 ontology: chebi
