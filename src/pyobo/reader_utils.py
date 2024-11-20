@@ -11,9 +11,8 @@ import bioontologies.upgrade
 import bioregistry
 from curies import ReferenceTuple
 
-from pyobo import Reference, SynonymTypeDef, Term
 from pyobo.struct import Referenced, SynonymSpecificities, SynonymSpecificity, default_reference
-from pyobo.struct.struct import default_synonym_typedefs
+from pyobo.struct.struct import Reference, SynonymTypeDef, Term, default_synonym_typedefs
 from pyobo.struct.typedef import alternative_term
 
 logger = logging.getLogger(__name__)
