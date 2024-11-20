@@ -19,6 +19,7 @@ from typing import Any, ClassVar, Literal, TextIO, TypeAlias
 
 import bioregistry
 import click
+import curies
 import networkx as nx
 import pandas as pd
 from more_click import force_option, verbose_option
@@ -383,7 +384,10 @@ class Term(Referenced):
         return self
 
     def annotate_literal(
-        self, prop: str | Reference | Referenced, value: str, datatype: curies.Reference | None = None
+        self,
+        prop: str | Reference | Referenced,
+        value: str,
+        datatype: curies.Reference | None = None,
     ) -> Self:
         """Append a property."""
         return self.append_property(prop, value)
