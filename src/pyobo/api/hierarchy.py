@@ -62,7 +62,7 @@ def get_hierarchy(
         prefix=prefix,
         include_part_of=include_part_of,
         include_has_member=include_has_member,
-        extra_relations=tuple(sorted(extra_relations or [], key=lambda t: t.curie)),
+        extra_relations=tuple(sorted(extra_relations or [])),
         properties=tuple(sorted(properties or [])),
         use_tqdm=use_tqdm,
         force=force,
