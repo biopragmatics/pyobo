@@ -143,15 +143,6 @@ abbreviation = SynonymTypeDef(
     reference=Reference(prefix="OMO", identifier="0003000", name="abbreviation")
 )
 acronym = SynonymTypeDef(reference=Reference(prefix="omo", identifier="0003012", name="acronym"))
-uk_spelling = SynonymTypeDef(
-    reference=Reference(prefix="omo", identifier="0003005", name="UK spelling synonym")
-)
-
-default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
-    abbreviation.pair: abbreviation,
-    acronym.pair: acronym,
-    uk_spelling.pair: uk_spelling,
-}
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
 
@@ -944,8 +935,10 @@ class Obo:
                 it=fn(),  # type:ignore
             )
 
+
+        typedefs = self._index_typedefs()
         for relation in (is_a, has_part, part_of, from_species, orthologous):
-            if relation is not is_a and self.typedefs is not None and relation not in self.typedefs:
+            if relation is not is_a and relation.pair not in typedefs:
                 continue
             relations_path = self._cache("relations", name=f"{relation.curie}.tsv")
             if relations_path.exists() and not force:
@@ -1262,16 +1255,14 @@ class Obo:
         self, *, use_tqdm: bool = False
     ) -> Iterable[tuple[Term, TypeDef, Reference]]:
         """Iterate over tuples of terms, relations, and their targets."""
+        typedefs = self._index_typedefs()
         for term in self._iter_terms(
             use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting relations"
         ):
             for parent in term.parents:
                 yield term, is_a, parent
             for typedef, reference in term.iterate_relations():
-                if (self.typedefs is None or typedef not in self.typedefs) and (
-                    typedef.prefix,
-                    typedef.identifier,
-                ) not in default_typedefs:
+                if typedef.pair not in typedefs and typedef.pair not in default_typedefs:
                     raise ValueError(f"Undefined typedef: {typedef.curie} ! {typedef.name}")
                 yield term, typedef, reference
 
