@@ -72,15 +72,15 @@ def get_version(prefix: str, *, strict: bool = False) -> str | None:
 
 def get_version_from_kwargs(prefix: str, kwargs: SlimLookupKwargs) -> str | None:
     """Get the version for the resource based on generic keyword arguments."""
-    version = kwargs.get("version")
-    if not version:
-        return get_version(prefix, strict=False)
-    else:
+    if version := kwargs.get("version"):
         return version
+    # it's okay if none gets returned after getting this far, we at least tried
+    return get_version(prefix, strict=False)
 
 
 def safe_get_version(prefix: str) -> str:
     """Get the version."""
+    # FIXME replace with get_version(prefix, strict=True)
     v = get_version(prefix)
     if v is None:
         raise ValueError
