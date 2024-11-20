@@ -28,39 +28,26 @@ logger = logging.getLogger(__name__)
 class MissingPrefixError(ValueError):
     """Raised on a missing prefix."""
 
-    reference: Reference | None
-
     def __init__(
-        self, prefix: str, curie: str, xref: str | None = None, ontology: str | None = None
+        self,
+        *,
+        curie: str,
+        ontology: str | None = None,
+        reference: Reference | None = None,
     ):
         """Initialize the error."""
-        self.prefix = prefix
         self.curie = curie
-        self.xref = xref
         self.ontology = ontology
-        self.reference = None
+        self.reference = reference
 
     def __str__(self) -> str:
         s = ""
         if self.ontology:
             s += f"[{self.ontology}] "
-        s += f"unhandled prefix {self.prefix} found in curie {self.curie}"
-        if self.xref:
-            s += f"/xref {self.xref}"
+        s += f"curie contains unhandled prefix: `{self.curie}`"
         if self.reference is not None:
             s += f" from {self.reference.curie}"
         return s
-
-
-def _normalize_prefix(prefix: str, *, curie=None, xref=None, strict: bool = True) -> str | None:
-    """Normalize a namespace and return, if possible."""
-    norm_prefix = bioregistry.normalize_prefix(prefix)
-    if norm_prefix is not None:
-        return norm_prefix
-    elif strict:
-        raise MissingPrefixError(prefix=prefix, curie=curie, xref=xref)
-    else:
-        return None
 
 
 BAD_CURIES = set()
@@ -71,7 +58,7 @@ def normalize_curie(
     *,
     strict: bool = True,
     ontology: str | None = None,
-    reference_node: curies.Reference | None = None,
+    reference_node: Reference | None = None,
 ) -> tuple[str, str] | tuple[None, None]:
     """Parse a string that looks like a CURIE.
 
@@ -97,7 +84,7 @@ def normalize_curie(
     curie = remap_prefix(curie, ontology_prefix=ontology)
 
     try:
-        head_ns, identifier = curie.split(":", 1)
+        prefix, identifier = curie.split(":", 1)
     except ValueError:  # skip nodes that don't look like normal CURIEs
         if curie not in BAD_CURIES:
             BAD_CURIES.add(curie)
@@ -105,17 +92,16 @@ def normalize_curie(
         return None, None
 
     # remove redundant prefix
-    if identifier.casefold().startswith(f"{head_ns.casefold()}:"):
-        identifier = identifier[len(head_ns) + 1 :]
+    if identifier.casefold().startswith(f"{prefix.casefold()}:"):
+        identifier = identifier[len(prefix) + 1 :]
 
-    norm_node_prefix = _normalize_prefix(head_ns, curie=curie, strict=strict)
+    norm_node_prefix = bioregistry.normalize_prefix(prefix)
     if norm_node_prefix:
         return norm_node_prefix, identifier
     elif strict:
-        raise MissingPrefixError(curie=curie, ontology=ontology)
+        raise MissingPrefixError(curie=curie, ontology=ontology, reference=reference_node)
     else:
         return None, None
-
 
 
 def wrap_norm_prefix(f):

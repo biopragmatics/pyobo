@@ -16,7 +16,7 @@ from more_itertools import pairwise
 from tqdm.auto import tqdm
 
 from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
-from .identifier_utils import MissingPrefixError, normalize_curie
+from .identifier_utils import normalize_curie
 from .registries import curie_has_blacklisted_prefix, curie_is_blacklisted, remap_prefix
 from .struct import (
     Obo,
@@ -144,11 +144,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
         identifier = bioregistry.standardize_identifier(prefix, identifier)
         reference = references[ReferenceTuple(ontology, identifier)]
 
-        try:
-            node_xrefs = list(iterate_node_xrefs(prefix=prefix, data=data, strict=strict))
-        except MissingPrefixError as e:
-            e.reference = reference
-            raise e
+        node_xrefs = list(iterate_node_xrefs(prefix=prefix, data=data, strict=strict))
         xrefs, provenance = [], []
         for node_xref in node_xrefs:
             if node_xref.prefix in PROVENANCE_PREFIXES:
@@ -163,25 +159,17 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
         if definition_references:
             provenance.extend(definition_references)
 
-        try:
-            alt_ids = list(iterate_node_alt_ids(data, strict=strict))
-        except MissingPrefixError as e:
-            e.reference = reference
-            raise e
+        alt_ids = list(iterate_node_alt_ids(data, strict=strict))
         n_alt_ids += len(alt_ids)
 
-        try:
-            parents = list(
-                iterate_node_parents(
-                    data,
-                    prefix=prefix,
-                    identifier=identifier,
-                    strict=strict,
-                )
+        parents = list(
+            iterate_node_parents(
+                data,
+                prefix=prefix,
+                identifier=identifier,
+                strict=strict,
             )
-        except MissingPrefixError as e:
-            e.reference = reference
-            raise e
+        )
         n_parents += len(parents)
 
         synonyms = list(
@@ -205,18 +193,14 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
             alt_ids=alt_ids,
         )
 
-        try:
-            relations_references = list(
-                iterate_node_relationships(
-                    data,
-                    prefix=ontology,
-                    identifier=identifier,
-                    strict=strict,
-                )
+        relations_references = list(
+            iterate_node_relationships(
+                data,
+                prefix=ontology,
+                identifier=identifier,
+                strict=strict,
             )
-        except MissingPrefixError as e:
-            e.reference = reference
-            raise e
+        )
         for relation, reference in relations_references:
             if relation.pair in typedefs:
                 typedef = typedefs[relation.pair]
