@@ -12,7 +12,6 @@ from collections import defaultdict
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
-from operator import attrgetter
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, ClassVar, Literal, TextIO, TypeAlias
@@ -93,6 +92,13 @@ class Synonym:
     #: References to articles where the synonym appears
     provenance: list[Reference] = field(default_factory=list)
 
+    def __lt__(self, other: Synonym) -> bool:
+        """Sort lexically by name."""
+        return self._sort_key() < other._sort_key()
+
+    def _sort_key(self) -> tuple[str, str, SynonymTypeDef]:
+        return self.name, self.specificity, self.type
+
     def to_obo(self) -> str:
         """Write this synonym as an OBO line to appear in a [Term] stanza."""
         return f"synonym: {self._fp()}"
@@ -114,6 +120,10 @@ class SynonymTypeDef(Referenced):
 
     reference: Reference
     specificity: SynonymSpecificity | None = None
+
+    def __hash__(self) -> int:
+        # have to re-define hash because of the @dataclass
+        return hash((self.__class__, self.prefix, self.identifier))
 
     def to_obo(self) -> str:
         """Serialize to OBO."""
@@ -197,7 +207,8 @@ class Term(Referenced):
 
     type: Literal["Term", "Instance"] = "Term"
 
-    def __hash__(self):
+    def __hash__(self) -> int:
+        # have to re-define hash because of the @dataclass
         return hash((self.__class__, self.prefix, self.identifier))
 
     @classmethod
@@ -405,8 +416,8 @@ class Term(Referenced):
 
     def iterate_relations(self) -> Iterable[tuple[TypeDef, Reference]]:
         """Iterate over pairs of typedefs and targets."""
-        for typedef, targets in sorted(self.relationships.items(), key=_sort_relations):
-            for target in sorted(targets, key=lambda ref: ref.preferred_curie):
+        for typedef, targets in sorted(self.relationships.items()):
+            for target in sorted(targets):
                 yield typedef, target
 
     def iterate_properties(self) -> Iterable[tuple[str, str]]:
@@ -439,11 +450,11 @@ class Term(Referenced):
         if self.definition:
             yield f"def: {self._definition_fp()}"
 
-        for xref in sorted(self.xrefs, key=attrgetter("prefix", "identifier")):
+        for xref in sorted(self.xrefs):
             yield f"xref: {xref}"  # __str__ bakes in the ! name
 
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
-        for parent in sorted(self.parents, key=attrgetter("prefix", "identifier")):
+        for parent in sorted(self.parents):
             yield f"{parent_tag}: {parent}"  # __str__ bakes in the ! name
 
         if emit_object_properties:
@@ -452,13 +463,13 @@ class Term(Referenced):
         if emit_annotation_properties:
             yield from self._emit_properties()
 
-        for synonym in sorted(self.synonyms, key=attrgetter("name")):
+        for synonym in sorted(self.synonyms):
             yield synonym.to_obo()
 
     def _emit_relations(
         self, ontology: str, typedefs: list[TypeDef] | None = None
     ) -> Iterable[str]:
-        for typedef, references in sorted(self.relationships.items(), key=_sort_relations):
+        for typedef, references in sorted(self.relationships.items()):
             if (not typedefs or typedef not in typedefs) and (
                 ontology,
                 typedef.curie,
@@ -467,7 +478,7 @@ class Term(Referenced):
                 _TYPEDEF_WARNINGS.add((ontology, typedef.curie))
 
             typedef_preferred_curie = typedef.preferred_curie
-            for reference in sorted(references, key=attrgetter("prefix", "identifier")):
+            for reference in sorted(references):
                 s = f"relationship: {typedef_preferred_curie} {reference.preferred_curie}"
                 if typedef.name or reference.name:
                     s += " !"
@@ -489,11 +500,6 @@ class Term(Referenced):
 
 #: A set of warnings, used to make sure we don't show the same one over and over
 _TYPEDEF_WARNINGS: set[tuple[str, str]] = set()
-
-
-def _sort_relations(r):
-    typedef, _references = r
-    return typedef.preferred_curie
 
 
 def _sort_properties(r):
@@ -716,7 +722,7 @@ class Obo:
         for prefix, url in sorted((self.idspaces or {}).items()):
             yield f"idspace: {prefix} {url}"
 
-        for synonym_typedef in sorted((self.synonym_typedefs or []), key=attrgetter("curie")):
+        for synonym_typedef in sorted(self.synonym_typedefs or []):
             if synonym_typedef.curie == DEFAULT_SYNONYM_TYPE.curie:
                 continue
             yield synonym_typedef.to_obo()
@@ -738,7 +744,7 @@ class Obo:
         for root_term in self.root_terms or []:
             yield f"property_value: {has_ontology_root_term.preferred_curie} {root_term.preferred_curie}"
 
-        for typedef in sorted(self.typedefs or [], key=attrgetter("curie")):
+        for typedef in sorted(self.typedefs or []):
             yield from typedef.iterate_obo_lines()
 
         for term in self:
@@ -945,8 +951,8 @@ class Obo:
     @property
     def _items_accessor(self):
         if self._items is None:
-            key = self.term_sort_key or attrgetter("curie")
-            self._items = sorted(self.iter_terms(force=self.force), key=key)
+            # if the term sort key is None, then the terms get sorted by their reference
+            self._items = sorted(self.iter_terms(force=self.force), key=self.term_sort_key)
         return self._items
 
     def __iter__(self) -> Iterator[Term]:
@@ -1398,7 +1404,7 @@ class Obo:
     def iterate_synonyms(self, *, use_tqdm: bool = False) -> Iterable[tuple[Term, Synonym]]:
         """Iterate over pairs of term and synonym object."""
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting synonyms"):
-            for synonym in sorted(term.synonyms, key=attrgetter("name")):
+            for synonym in sorted(term.synonyms):
                 yield term, synonym
 
     def iterate_synonym_rows(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str]]:
