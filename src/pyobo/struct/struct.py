@@ -268,17 +268,26 @@ class Term(Referenced):
         *,
         type: SynonymTypeDef | None = None,
         specificity: SynonymSpecificity | None = None,
+        provenance: list[Reference] | None = None,
     ) -> None:
         """Add a synonym."""
         if isinstance(synonym, str):
             synonym = Synonym(
-                synonym, type=type or DEFAULT_SYNONYM_TYPE, specificity=specificity or "EXACT"
+                synonym,
+                type=type or DEFAULT_SYNONYM_TYPE,
+                specificity=specificity or "EXACT",
+                provenance=provenance or [],
             )
         self.synonyms.append(synonym)
 
     def append_alt(self, alt: str | Reference) -> None:
         """Add an alternative identifier."""
         if isinstance(alt, str):
+            warnings.warn(
+                "use fully qualified reference when appending alts",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             alt = Reference(prefix=self.prefix, identifier=alt)
         self.alt_ids.append(alt)
 
@@ -293,7 +302,7 @@ class Term(Referenced):
             # a literal string. otherwise, raise the error again
             if isinstance(reference, str):
                 return self.annotate_literal(see_also, reference)
-            raise
+            raise RuntimeError from None  # this shouldn't/can't happen?
         else:
             return self.annotate_object(see_also, _reference)
 
@@ -321,6 +330,10 @@ class Term(Referenced):
 
     def get_properties(self, prop) -> list[str]:
         """Get properties from the given key."""
+        # FIXME this instance check should be removed when
+        # improving property handling
+        if isinstance(prop, curies.Reference | Referenced):
+            prop = prop.curie
         return self.properties[prop]
 
     def get_property(self, prop) -> str | None:
@@ -458,6 +471,11 @@ class Term(Referenced):
 
         if self.definition:
             yield f"def: {self._definition_fp()}"
+        elif self.provenance:
+            logger.warning("%s has provenance but no definition, can't write", self.curie)
+
+        for alt in sorted(self.alt_ids):
+            yield f"alt_id: {alt}"  # __str__ bakes in the ! name
 
         for xref in sorted(self.xrefs):
             yield f"xref: {xref}"  # __str__ bakes in the ! name
@@ -479,17 +497,16 @@ class Term(Referenced):
     def _emit_relations(
         self, ontology_prefix: str, typedefs: dict[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:
-        for typedef, references in sorted(self.relationships.items()):
+        for typedef, reference in self.iterate_relations():
             _typedef_warn(ontology_prefix, typedef.reference, typedefs)
-            for reference in sorted(references):
-                s = f"relationship: {typedef.preferred_curie} {reference.preferred_curie}"
-                if typedef.name or reference.name:
-                    s += " !"
+            s = f"relationship: {typedef.preferred_curie} {reference.preferred_curie}"
+            if typedef.name or reference.name:
+                s += " !"
                 if typedef.name:
                     s += f" {typedef.name}"
                 if reference.name:
                     s += f" {reference.name}"
-                yield s
+            yield s
 
     def _emit_properties(self, typedefs: dict[ReferenceTuple, TypeDef]) -> Iterable[str]:
         for prop, value in sorted(self.iterate_properties(), key=_sort_properties):
