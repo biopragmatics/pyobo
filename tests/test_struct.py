@@ -1,9 +1,11 @@
 """Tests for the OBO data structures."""
 
 import unittest
+from collections.abc import Iterable
+from textwrap import dedent
 
 from pyobo import Obo, Reference
-from pyobo.struct.struct import BioregistryError, SynonymTypeDef
+from pyobo.struct.struct import BioregistryError, SynonymTypeDef, Term, TypeDef
 
 
 class Nope(Obo):
@@ -66,3 +68,56 @@ class TestStruct(unittest.TestCase):
 
         s4 = SynonymTypeDef(reference=r2, specificity="EXACT")
         self.assertEqual("synonymtypedef: OMO:0003012 EXACT", s4.to_obo())
+
+    def assert_lines(self, text: str, lines: Iterable[str]) -> None:
+        """Assert the lines are equal."""
+        self.assertEqual(dedent(text).strip(), "\n".join(lines).strip())
+
+    def test_term(self):
+        """Test emitting properties."""
+        term = Term(
+            reference=Reference(prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"),
+        )
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            """,
+            term.iterate_obo_lines(ontology="GO", typedefs={})
+        )
+
+        term = Term(
+            reference=Reference(prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"),
+            properties={
+                "key": ["value"],
+            }
+        )
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: key "value" xsd:string
+            """,
+            term.iterate_obo_lines(ontology="GO", typedefs={})
+        )
+
+        typedef = TypeDef(
+            reference=Reference.from_curie("RO:1234567")
+        )
+        term = Term(
+            reference=Reference(prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"),
+            relationships={
+                typedef: [Reference.from_curie("EC:1.1.1.1")],
+            }
+        )
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            relationship: RO:1234567 eccode:1.1.1.1
+            """,
+            term.iterate_obo_lines(ontology="GO", typedefs={typedef.pair: typedef})
+        )
