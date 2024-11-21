@@ -179,12 +179,16 @@ def _ensure_ref(
 
 
 class ObjectProperty(NamedTuple):
+    """A tuple representing a propert with an object."""
+
     predicate: Reference
     object: Reference
     datatype: None
 
 
 class LiteralProperty(NamedTuple):
+    """A tuple representing a property with a literal value."""
+
     predicate: Reference
     value: str
     datatype: Reference
