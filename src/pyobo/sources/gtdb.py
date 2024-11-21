@@ -44,8 +44,8 @@ class GTDBGetter(Obo):
         PREFIX: "https://gtdb.ecogenomic.org/tree?r=",
     }
     root_terms = [
-        Reference(prefix=PREFIX, identifier="d_Archea", name="Archea"),
-        Reference(prefix=PREFIX, identifier="d_Bacteria", name="Bacteria"),
+        Reference(prefix=PREFIX, identifier="d__Archea", name="Archea"),
+        Reference(prefix=PREFIX, identifier="d__Bacteria", name="Bacteria"),
     ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
