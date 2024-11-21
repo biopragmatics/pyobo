@@ -223,7 +223,7 @@ class TestTerm(unittest.TestCase):
         )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_property(
+        term.annotate_object(
             exact_match,
             Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase"),
         )
