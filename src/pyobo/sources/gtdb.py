@@ -28,7 +28,9 @@ LEVEL_TO_TAXRANK = {
     "s__": Reference(prefix="TAXRANK", identifier="0000006", name="species"),
 }
 
+#: AR stands for archea
 GTDB_AR_URL = "https://data.gtdb.ecogenomic.org/releases/latest/ar53_metadata.tsv.gz"
+#: BAC stands for bacteria
 GTDB_BAC_URL = "https://data.gtdb.ecogenomic.org/releases/latest/bac120_metadata.tsv.gz"
 
 logger = logging.getLogger(__name__)
@@ -96,12 +98,13 @@ def _process_row(tax_string, ncbitaxon_id) -> Iterable[Term]:
             reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
         )
         if taxrank_reference := LEVEL_TO_TAXRANK.get(level):
-            term.append_property(has_taxonomy_rank, taxrank_reference)
+            term.annotations_object(has_taxonomy_rank, taxrank_reference)
 
         if parent_reference:
             term.append_parent(parent_reference)
         if ncbitaxon_id and level == "s__":
-            term.append_xref(Reference(prefix="ncbitaxon", identifier=ncbitaxon_id))
+            #
+            term.append_see_also(Reference(prefix="ncbitaxon", identifier=ncbitaxon_id))
 
         yield term
         parent_reference = term.reference
