@@ -30,7 +30,7 @@ from .struct import (
     default_reference,
     make_ad_hoc_ontology,
 )
-from .struct.struct import DEFAULT_SYNONYM_TYPE
+from .struct.struct import DEFAULT_SYNONYM_TYPE, LiteralProperty, ObjectProperty
 from .struct.typedef import default_typedefs
 from .utils.misc import cleanup_version
 
@@ -206,15 +206,15 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
             n_relations += 1
             term.append_relationship(typedef, reference)
 
-        for prop, value, is_literal in iterate_node_properties(
+        for t in iterate_node_properties(
             data, node=reference, strict=strict, ontology_prefix=ontology_prefix
         ):
             n_properties += 1
-            if is_literal:
-                term.annotate_literal(prop, value)
-            else:
-                # FIXME parse value
-                term.annotate_object(prop, value)
+            match t:
+                case LiteralProperty(predicate, value, datatype):
+                    term.annotate_literal(predicate, value, datatype)
+                case ObjectProperty(predicate, obj, _datatype):
+                    term.annotate_object(predicate, obj)
         terms.append(term)
 
     logger.info(
@@ -492,7 +492,7 @@ HANDLED_PROPERTY_TYPES = {
 
 def iterate_node_properties(
     data: Mapping[str, Any], *, node: Reference, strict: bool = True, ontology_prefix: str
-) -> Iterable[tuple[Reference, str, bool]]:
+) -> Iterable[ObjectProperty | LiteralProperty]:
     """Extract properties from a :mod:`obonet` node's data."""
     for prop_value_type in data.get("property_value", []):
         try:
@@ -507,17 +507,29 @@ def iterate_node_properties(
             continue
 
         try:
-            value, _ = value_type.rsplit(" ", 1)  # second entry is the value type
+            value, datatype = value_type.rsplit(" ", 1)  # second entry is the value type
         except ValueError:
-            # logger.debug(f'property missing datatype. defaulting to string - {prop_value_type}')
+            logger.warning(f"property missing datatype. defaulting to string - {prop_value_type}")
             value = value_type  # could assign type to be 'xsd:string' by default
+            datatype = None
+
+        if datatype:
+            datatype = Reference.from_curie(
+                datatype, strict=strict, ontology_prefix=ontology_prefix, node=node
+            )
 
         if value.startswith('"'):
             # this is a literal value
             value = value.strip('"')
-            yield prop_reference, value, True
+            yield LiteralProperty(prop_reference, value, datatype)
         else:
-            yield prop_reference, value, False
+            obj = Reference.from_curie(
+                value, strict=strict, ontology_prefix=ontology_prefix, node=node
+            )
+            if obj is None:
+                logger.warning("[%s] could not parse object: %s", node.curie, value)
+                continue
+            yield ObjectProperty(prop_reference, obj, datatype)
 
 
 def _get_prop(

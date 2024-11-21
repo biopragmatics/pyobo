@@ -227,6 +227,15 @@ class TestReader(unittest.TestCase):
         self.assertEqual(1, len(list(term.annotations_literal)))
         self.assertEqual("high", term.get_property(default_reference("chebi", "level")))
 
+        df = ontology.get_properties_df()
+        self.assertEqual(4, len(df.columns))
+        self.assertEqual(1, len(df))
+        row = dict(df.iloc[0])
+        self.assertEqual(
+            {"chebi_id": "1234", "property": "level", "value": "high", "datatype": "xsd:string"},
+            row,
+        )
+
     def test_property_literal_typed(self) -> None:
         """Test parsing a property with a literal object."""
         ontology = _read("""\
@@ -239,6 +248,15 @@ class TestReader(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(1, len(list(term.annotations_literal)))
         self.assertEqual("121.323", term.get_property(default_reference("chebi", "mass")))
+
+        df = ontology.get_properties_df()
+        self.assertEqual(4, len(df.columns))
+        self.assertEqual(1, len(df))
+        row = dict(df.iloc[0])
+        self.assertEqual("1234", row["chebi_id"])
+        self.assertEqual("mass", row["property"])
+        self.assertEqual("121.323", row["value"])
+        self.assertEqual("xsd:decimal", row["datatype"])
 
     def test_property_literal_url_questionable(self) -> None:
         """Test parsing a property with a literal object."""
@@ -253,6 +271,15 @@ class TestReader(unittest.TestCase):
         self.assertEqual(1, len(list(term.annotations_literal)))
         self.assertEqual("121.323", term.get_property(default_reference("chebi", "mass")))
 
+        df = ontology.get_properties_df()
+        self.assertEqual(4, len(df.columns))
+        self.assertEqual(1, len(df))
+        row = dict(df.iloc[0])
+        self.assertEqual("1234", row["chebi_id"])
+        self.assertEqual("mass", row["property"])
+        self.assertEqual("121.323", row["value"])
+        self.assertEqual("xsd:decimal", row["datatype"])
+
     def test_property_literal_url_default(self) -> None:
         """Test parsing a property with a literal object."""
         ontology = _read("""\
@@ -265,6 +292,15 @@ class TestReader(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(1, len(list(term.annotations_literal)))
         self.assertEqual("121.323", term.get_property(default_reference("chebi", "mass")))
+
+        df = ontology.get_properties_df()
+        self.assertEqual(4, len(df.columns))
+        self.assertEqual(1, len(df))
+        row = dict(df.iloc[0])
+        self.assertEqual("1234", row["chebi_id"])
+        self.assertEqual("mass", row["property"])
+        self.assertEqual("121.323", row["value"])
+        self.assertEqual("xsd:decimal", row["datatype"])
 
     def test_property_literal_obo_purl(self) -> None:
         """Test using a full OBO PURL as the property."""
@@ -279,6 +315,15 @@ class TestReader(unittest.TestCase):
         self.assertEqual(0, len(list(term.annotations_literal)))
         self.assertEqual(1, len(list(term.annotations_object)))
         self.assertEqual("CHEBI:5678", term.get_property(is_conjugate_base_of))
+
+        df = ontology.get_properties_df()
+        self.assertEqual(4, len(df.columns))
+        self.assertEqual(1, len(df))
+        row = dict(df.iloc[0])
+        self.assertEqual(
+            {"chebi_id": "1234", "property": "RO:0018033", "value": "CHEBI:5678", "datatype": ""},
+            row,
+        )
 
     def test_property_literal_url(self) -> None:
         """Test using a full OBO PURL as the property."""

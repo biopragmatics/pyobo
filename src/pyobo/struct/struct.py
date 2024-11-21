@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, ClassVar, Literal, TextIO, TypeAlias
+from typing import Any, ClassVar, Literal, NamedTuple, TextIO, TypeAlias
 
 import bioregistry
 import click
@@ -162,24 +162,32 @@ def _ensure_ref(
     *,
     ontology_prefix: str | None = None,
 ) -> Reference:
-    if reference is None:
-        raise ValueError("can not append null reference")
     if isinstance(reference, Referenced):
         return reference.reference
-    if isinstance(reference, str):
-        if ":" not in reference:
-            if not ontology_prefix:
-                raise ValueError(f"can't parse reference: {reference}")
-            return default_reference(ontology_prefix, reference)
-        _rv = Reference.from_curie(reference, strict=True, ontology_prefix=ontology_prefix)
-        if _rv is None:
-            raise ValueError(f"[{ontology_prefix}] unable to parse {reference}")
-        return _rv
     if isinstance(reference, tuple):
         return Reference(prefix=reference[0], identifier=reference[1])
     if isinstance(reference, Reference):
         return reference
-    raise TypeError(f"invalid type given for a reference ({type(reference)}): {reference}")
+    if ":" not in reference:
+        if not ontology_prefix:
+            raise ValueError(f"can't parse reference: {reference}")
+        return default_reference(ontology_prefix, reference)
+    _rv = Reference.from_curie(reference, strict=True, ontology_prefix=ontology_prefix)
+    if _rv is None:
+        raise ValueError(f"[{ontology_prefix}] unable to parse {reference}")
+    return _rv
+
+
+class ObjectProperty(NamedTuple):
+    predicate: Reference
+    object: Reference
+    datatype: None
+
+
+class LiteralProperty(NamedTuple):
+    predicate: Reference
+    value: str
+    datatype: Reference
 
 
 @dataclass
@@ -453,14 +461,16 @@ class Term(Referenced):
             for target in sorted(targets):
                 yield typedef, target
 
-    def iterate_properties(self) -> Iterable[tuple[str, str]]:
+    def iterate_properties(
+        self,
+    ) -> Iterable[ObjectProperty | LiteralProperty]:
         """Iterate over pairs of property and values."""
         for prop, values in sorted(self.annotations_object.items()):
             for value in sorted(values):
-                yield prop.preferred_curie, value.preferred_curie
+                yield ObjectProperty(prop, value, None)
         for prop, value_datatype_pairs in sorted(self.annotations_literal.items()):
-            for svalue, _datatype in sorted(value_datatype_pairs):
-                yield prop.preferred_curie, svalue
+            for svalue, datatype in sorted(value_datatype_pairs):
+                yield LiteralProperty(prop, svalue, datatype)
 
     def iterate_obo_lines(
         self,
@@ -1247,24 +1257,42 @@ class Obo:
     # PROPS #
     #########
 
-    def iterate_properties(self, *, use_tqdm: bool = False) -> Iterable[tuple[Term, str, str]]:
+    def iterate_properties(
+        self, *, use_tqdm: bool = False
+    ) -> Iterable[tuple[Term, ObjectProperty | LiteralProperty]]:
         """Iterate over tuples of terms, properties, and their values."""
-        # TODO if property_prefix is set, try removing that as a prefix from all prop strings.
         for term in self._iter_terms(
             use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting properties"
         ):
-            for prop, value in term.iterate_properties():
-                yield term, prop, value
+            for property_tuple in term.iterate_properties():
+                yield term, property_tuple
 
     @property
     def properties_header(self):
         """Property dataframe header."""
-        return [f"{self.ontology}_id", "property", "value"]
+        return [f"{self.ontology}_id", "property", "value", "datatype"]
 
-    def iter_property_rows(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str, str]]:
+    def iter_property_rows(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str, str, str]]:
         """Iterate property rows."""
-        for term, prop, value in self.iterate_properties(use_tqdm=use_tqdm):
-            yield term.identifier, prop, value
+        tuple[Term, Reference, Reference, None] | tuple[Term, Reference, str, Reference]
+        for term, t in self.iterate_properties(use_tqdm=use_tqdm):
+            match t:
+                case LiteralProperty(predicate, value, datatype):
+                    yield (
+                        term.identifier,
+                        term._reference(predicate, ontology_prefix=self.ontology),
+                        value,
+                        datatype.preferred_curie,
+                    )
+                case ObjectProperty(predicate, object, datatype):
+                    yield (
+                        term.identifier,
+                        term._reference(predicate, ontology_prefix=self.ontology),
+                        object.preferred_curie,
+                        "",
+                    )
+                case _:
+                    raise TypeError(f"got: {type(t)} - {t}")
 
     def get_properties_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get all properties as a dataframe."""
@@ -1274,13 +1302,19 @@ class Obo:
         )
 
     def iterate_filtered_properties(
-        self, prop: str, *, use_tqdm: bool = False
+        self, prop: ReferenceHint, *, use_tqdm: bool = False
     ) -> Iterable[tuple[Term, str]]:
         """Iterate over tuples of terms and the values for the given property."""
+        prop = _ensure_ref(prop)
         for term in self._iter_terms(use_tqdm=use_tqdm):
-            for _prop, value in term.iterate_properties():
-                if _prop == prop:
-                    yield term, value
+            for t in term.iterate_properties():
+                match t:
+                    case LiteralProperty(predicate, value, _datatype):
+                        if predicate == prop:
+                            yield term, value
+                    case ObjectProperty(predicate, object, _datatype):
+                        if predicate == prop:
+                            yield term, object.preferred_curie
 
     def get_filtered_properties_df(self, prop: str, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get a dataframe of terms' identifiers to the given property's values."""
