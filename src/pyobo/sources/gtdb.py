@@ -45,7 +45,7 @@ class GTDBGetter(Obo):
     }
     root_terms = [
         Reference(prefix=PREFIX, identifier="d_Archea", name="Archea"),
-        # TODO add bacteria
+        Reference(prefix=PREFIX, identifier="d_Bacteria", name="Bacteria"),
     ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
