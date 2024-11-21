@@ -203,7 +203,6 @@ class TestTerm(unittest.TestCase):
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            xref: eccode:1.4.1.15
             relationship: skos:exactMatch eccode:1.4.1.15 ! exact match
             """,
             term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
@@ -219,7 +218,6 @@ class TestTerm(unittest.TestCase):
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            xref: eccode:1.4.1.15 ! lysine dehydrogenase
             relationship: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
@@ -236,7 +234,6 @@ class TestTerm(unittest.TestCase):
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            xref: eccode:1.4.1.15 ! lysine dehydrogenase
             property_value: skos:exactMatch "eccode:1.4.1.15" xsd:string
             """,
             term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),

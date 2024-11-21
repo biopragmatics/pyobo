@@ -362,7 +362,6 @@ class Term(Referenced):
         """Append an exact match, also adding an xref."""
         reference = _ensure_ref(reference)
         self.annotate_object(exact_match, reference)
-        self.append_xref(reference)
         return self
 
     def append_xref(self, reference: ReferenceHint) -> None:
