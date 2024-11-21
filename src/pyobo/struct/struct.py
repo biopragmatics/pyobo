@@ -466,7 +466,7 @@ class Term(Referenced):
         self,
         *,
         ontology_prefix: str,
-        typedefs: dict[ReferenceTuple, TypeDef],
+        typedefs: Mapping[ReferenceTuple, TypeDef],
         emit_object_properties: bool = True,
         emit_annotation_properties: bool = True,
     ) -> Iterable[str]:
@@ -509,11 +509,12 @@ class Term(Referenced):
             yield synonym.to_obo()
 
     def _emit_relations(
-        self, ontology_prefix: str, typedefs: dict[ReferenceTuple, TypeDef]
+        self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:
         for typedef, reference in self.iterate_relations():
             _typedef_warn(prefix=ontology_prefix, predicate=typedef, typedefs=typedefs)
-            s = f"relationship: {typedef.preferred_curie} {reference.preferred_curie}"
+            predicate_reference = self._reference(typedef, ontology_prefix)
+            s = f"relationship: {predicate_reference} {reference.preferred_curie}"
             if typedef.name or reference.name:
                 s += " !"
                 if typedef.name:
@@ -523,23 +524,38 @@ class Term(Referenced):
             yield s
 
     def _emit_properties(
-        self, ontology_prefix: str, typedefs: dict[ReferenceTuple, TypeDef]
+        self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
+    ) -> Iterable[str]:
+        yield from self._emit_object_properties(ontology_prefix, typedefs)
+        yield from self._emit_literal_properties(ontology_prefix, typedefs)
+
+    def _emit_object_properties(
+        self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:
         for predicate, values in sorted(self.annotations_object.items()):
+            _typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)
+            predicate_curie = self._reference(predicate, ontology_prefix)
             for value in sorted(values):
-                yv = f"{predicate.preferred_curie} {value.preferred_curie}"
+                yv = f"{predicate_curie} {value.preferred_curie}"
                 if predicate.name and value.name:
                     yv += f" ! {predicate.name} {value.name}"
                 yield yv
+
+    def _emit_literal_properties(
+        self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
+    ) -> Iterable[str]:
         for predicate, value_datatype_pairs in sorted(self.annotations_literal.items()):
             _typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)
-            if predicate.prefix == "obo" and predicate.identifier.startswith(f"{ontology_prefix}#"):
-                pc = predicate.identifier.removeprefix(f"{ontology_prefix}#")
-            else:
-                pc = predicate.preferred_curie
-            for svalue, datatype in sorted(value_datatype_pairs):
+            predicate_curie = self._reference(predicate, ontology_prefix)
+            for value, datatype in sorted(value_datatype_pairs):
                 # TODO clean/escape value?
-                yield f'{pc} "{svalue}" {datatype.preferred_curie}'
+                yield f'{predicate_curie} "{value}" {datatype.preferred_curie}'
+
+    def _reference(self, predicate: Reference, ontology_prefix: str) -> str:
+        if predicate.prefix == "obo" and predicate.identifier.startswith(f"{ontology_prefix}#"):
+            return predicate.identifier.removeprefix(f"{ontology_prefix}#")
+        else:
+            return predicate.preferred_curie
 
     @staticmethod
     def _escape(s) -> str:
@@ -551,7 +567,7 @@ _TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
 
 
 def _typedef_warn(
-    prefix: str, predicate: Reference, typedefs: dict[ReferenceTuple, TypeDef]
+    prefix: str, predicate: Reference, typedefs: Mapping[ReferenceTuple, TypeDef]
 ) -> None:
     if predicate.pair in default_typedefs or predicate.pair in typedefs:
         return None
@@ -1088,6 +1104,7 @@ class Obo:
         )
 
         nodes = {}
+        #: a list of 3-tuples u,v,k
         links = []
         typedefs = self._index_typedefs()
         for term in self._iter_terms(use_tqdm=use_tqdm):
@@ -1102,6 +1119,10 @@ class Obo:
             for typedef, target in term.iterate_relations():
                 relations.append(f"{typedef.curie} {target.curie}")
                 links.append((term.curie, typedef.curie, target.curie))
+
+            for typedef, targets in term.annotations_object.items():
+                for target in sorted(targets):
+                    links.append((term.curie, typedef.curie, target.curie))
 
             d = {
                 "id": term.curie,

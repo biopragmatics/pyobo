@@ -6,7 +6,7 @@ from textwrap import dedent
 
 from pyobo import Obo, Reference
 from pyobo.constants import NCBITAXON_PREFIX
-from pyobo.struct.struct import BioregistryError, SynonymTypeDef, Term, TypeDef
+from pyobo.struct.struct import BioregistryError, SynonymTypeDef, Term, TypeDef, default_reference
 from pyobo.struct.typedef import exact_match, see_also
 
 LYSINE_DEHYDROGENASE_ACT = Reference(
@@ -107,7 +107,7 @@ class TestTerm(unittest.TestCase):
             [Term]
             id: GO:0050069
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
     def test_term_with_name(self) -> None:
@@ -119,7 +119,7 @@ class TestTerm(unittest.TestCase):
             id: GO:0050069
             name: lysine dehydrogenase activity
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
     def test_property_literal(self) -> None:
@@ -133,7 +133,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             property_value: RO:1234567 "value" xsd:string
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
     def test_property_object(self) -> None:
@@ -147,7 +147,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             property_value: RO:1234567 hgnc:123
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
     def test_relation(self) -> None:
@@ -161,7 +161,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             relationship: RO:1234567 eccode:1.4.1.15
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
     def test_xref(self) -> None:
@@ -175,7 +175,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             xref: eccode:1.4.1.15
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
     def test_parent(self) -> None:
@@ -189,7 +189,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             is_a: GO:1234568
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
     def test_append_exact_match(self) -> None:
@@ -205,7 +205,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -219,7 +219,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -234,7 +234,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
     def test_set_species(self) -> None:
@@ -248,7 +248,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             relationship: RO:0002162 NCBITaxon:9606 ! in taxon Homo sapiens
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
         species = term.get_species()
@@ -267,7 +267,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             property_value: rdfs:comment "I like this record" xsd:string
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
     def test_replaced_by(self) -> None:
@@ -281,7 +281,22 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             property_value: IAO:0100001 GO:1234569 ! term replaced by dummy
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+
+    def test_property_default_reference(self) -> None:
+        """Test adding a replaced by."""
+        r = default_reference("go", "hey")
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_object(r, Reference(prefix="GO", identifier="1234569", name="dummy"))
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: hey GO:1234569
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
     def test_alt(self) -> None:
@@ -295,7 +310,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             alt_id: GO:1234569 ! dummy
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -307,7 +322,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             alt_id: GO:1234569
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
     def test_append_synonym(self) -> None:
@@ -323,7 +338,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             synonym: "L-lysine:NAD+ oxidoreductase" EXACT []
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -338,7 +353,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             synonym: "L-lysine:NAD+ oxidoreductase" RELATED []
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -352,7 +367,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             synonym: "L-lysine:NAD+ oxidoreductase" RELATED [orcid:0000-0003-4423-4370]
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -369,7 +384,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             synonym: "L-lysine:NAD+ oxidoreductase" EXACT OMO:1234567 [orcid:0000-0003-4423-4370]
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
     def test_definition(self):
@@ -382,7 +397,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             def: "Something" []
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT, definition="Something")
@@ -394,7 +409,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             def: "Something" [orcid:0000-0003-4423-4370]
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
     def test_provenance_no_definition(self) -> None:
@@ -407,7 +422,7 @@ class TestTerm(unittest.TestCase):
             id: GO:0050069
             name: lysine dehydrogenase activity
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
     def test_obsolete(self) -> None:
@@ -420,7 +435,7 @@ class TestTerm(unittest.TestCase):
             is_obsolete: true
             name: lysine dehydrogenase activity
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT, is_obsolete=False)
@@ -430,7 +445,7 @@ class TestTerm(unittest.TestCase):
             id: GO:0050069
             name: lysine dehydrogenase activity
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
     def test_see_also_single(self) -> None:
@@ -444,7 +459,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             property_value: rdfs:seeAlso "https://example.org/test" xsd:anyURI
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
         self.assertEqual(
@@ -474,7 +489,7 @@ class TestTerm(unittest.TestCase):
             property_value: rdfs:seeAlso hgnc:1234 ! see also dummy 1
             property_value: rdfs:seeAlso hgnc:1235 ! see also dummy 2
             """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
         self.assertEqual(
