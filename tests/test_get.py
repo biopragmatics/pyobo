@@ -191,9 +191,9 @@ class TestParseObonet(unittest.TestCase):
         data = self.graph.nodes["CHEBI:51990"]
         properties = list(iterate_node_properties(data))
         t_prop = "http://purl.obolibrary.org/obo/chebi/monoisotopicmass"
-        self.assertIn(t_prop, {prop for prop, value in properties})
-        self.assertEqual(1, sum(prop == t_prop for prop, value in properties))
-        value = next(value for prop, value in properties if prop == t_prop)
+        self.assertIn(t_prop, {prop for prop, value, _ in properties})
+        self.assertEqual(1, sum(prop == t_prop for prop, value, _ in properties))
+        value = next(value for prop, value, _ in properties if prop == t_prop)
         self.assertEqual("261.28318", value)
 
     def test_get_node_parents(self):

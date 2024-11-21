@@ -44,9 +44,7 @@ logger = logging.getLogger(__name__)
 RELATION_REMAPPINGS: Mapping[str, ReferenceTuple] = bioontologies.upgrade.load()
 
 
-def from_obo_path(
-    path: str | Path, prefix: str | None = None, *, strict: bool = True, **kwargs
-) -> Obo:
+def from_obo_path(path: str | Path, prefix: str | None = None, *, strict: bool = True) -> Obo:
     """Get the OBO graph from a path."""
     import obonet
 
@@ -67,7 +65,7 @@ def from_obo_path(
         _clean_graph_ontology(graph, prefix)
 
     # Convert to an Obo instance and return
-    return from_obonet(graph, strict=strict, **kwargs)
+    return from_obonet(graph, strict=strict)
 
 
 def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
@@ -207,7 +205,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
                 continue
             n_relations += 1
             term.append_relationship(typedef, reference)
-        for prop, value in iterate_node_properties(data, term=term):
+        for prop, value, _is_literal in iterate_node_properties(data, term=term):
             n_properties += 1
             term.append_property(prop, value)
         terms.append(term)
@@ -315,7 +313,7 @@ def iterate_graph_typedefs(
         elif "identifier" in typedef:
             curie = typedef["identifier"]
         else:
-            raise KeyError
+            raise KeyError("typedef is missing an `id`")
 
         name = typedef.get("name")
         if name is None:
@@ -353,23 +351,30 @@ def _extract_definition(
 ) -> tuple[None, None] | tuple[str, list[Reference]]:
     """Extract the definitions."""
     if not s.startswith('"'):
-        raise ValueError("definition does not start with a quote")
+        logger.warning(f"[{node.curie}] definition does not start with a quote")
+        return None, None
 
     try:
         definition, rest = _quote_split(s)
-    except ValueError:
-        logger.warning("[%s] could not parse definition: %s", node.curie, s)
+    except ValueError as e:
+        logger.warning("[%s] failed to parse definition quotes: %s", node.curie, str(e))
         return None, None
 
     if not rest.startswith("[") or not rest.endswith("]"):
-        logger.warning("[%s] problem with definition: %s", node.curie, s)
+        logger.warning(
+            "[%s] missing square brackets in rest of: %s (rest = `%s`)", node.curie, s, rest
+        )
         provenance = []
     else:
         provenance = _parse_trailing_ref_list(rest, strict=strict, node=node)
     return definition, provenance
 
 
-def _get_first_nonquoted(s: str) -> int | None:
+def get_first_nonescaped_quote(s: str) -> int | None:
+    """Get the first non-escaped quote."""
+    if s[0] == '"':
+        # special case first position
+        return 0
     for i, (a, b) in enumerate(pairwise(s), start=1):
         if b == '"' and a != "\\":
             return i
@@ -378,9 +383,9 @@ def _get_first_nonquoted(s: str) -> int | None:
 
 def _quote_split(s: str) -> tuple[str, str]:
     s = s.lstrip('"')
-    i = _get_first_nonquoted(s)
+    i = get_first_nonescaped_quote(s)
     if i is None:
-        raise ValueError
+        raise ValueError(f"no closing quote found in `{s}`")
     return _clean_definition(s[:i].strip()), s[i + 1 :].strip()
 
 
@@ -431,10 +436,9 @@ def _extract_synonym(
             break
 
     if not rest.startswith("[") or not rest.endswith("]"):
-        logger.warning("[%s] problem with synonym: %s", node.curie, s)
-        return None
-
-    provenance = _parse_trailing_ref_list(rest, strict=strict, node=node)
+        provenance = []
+    else:
+        provenance = _parse_trailing_ref_list(rest, strict=strict, node=node)
     return Synonym(
         name=name,
         specificity=specificity or "EXACT",
@@ -480,8 +484,8 @@ HANDLED_PROPERTY_TYPES = {
 
 
 def iterate_node_properties(
-    data: Mapping[str, Any], *, property_prefix: str | None = None, term=None
-) -> Iterable[tuple[str, str]]:
+    data: Mapping[str, Any], *, term=None
+) -> Iterable[tuple[str, str, bool]]:
     """Extract properties from a :mod:`obonet` node's data."""
     for prop_value_type in data.get("property_value", []):
         try:
@@ -489,16 +493,18 @@ def iterate_node_properties(
         except ValueError:
             logger.info("malformed property: %s on %s", prop_value_type, term and term.curie)
             continue
-        if property_prefix is not None and prop.startswith(property_prefix):
-            prop = prop[len(property_prefix) :]
-
         try:
             value, _ = value_type.rsplit(" ", 1)  # second entry is the value type
         except ValueError:
             # logger.debug(f'property missing datatype. defaulting to string - {prop_value_type}')
             value = value_type  # could assign type to be 'xsd:string' by default
-        value = value.strip('"')
-        yield prop, value
+
+        if value.startswith('"'):
+            # this is a literal value
+            value = value.strip('"')
+            yield prop, value, True
+        else:
+            yield prop, value, False
 
 
 def iterate_node_parents(
