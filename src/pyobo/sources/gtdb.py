@@ -98,7 +98,7 @@ def _process_row(tax_string, ncbitaxon_id) -> Iterable[Term]:
             reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
         )
         if taxrank_reference := LEVEL_TO_TAXRANK.get(level):
-            term.annotations_object(has_taxonomy_rank, taxrank_reference)
+            term.annotate_object(has_taxonomy_rank, taxrank_reference)
 
         if parent_reference:
             term.append_parent(parent_reference)
