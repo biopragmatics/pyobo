@@ -8,7 +8,7 @@ import logging
 import os
 import sys
 import warnings
-from collections import defaultdict
+from collections import ChainMap, defaultdict
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -18,7 +18,6 @@ from typing import Any, ClassVar, Literal, TextIO, TypeAlias
 
 import bioregistry
 import click
-import curies
 import networkx as nx
 import pandas as pd
 from curies import ReferenceTuple
@@ -93,6 +92,9 @@ class Synonym:
     #: References to articles where the synonym appears
     provenance: list[Reference] = field(default_factory=list)
 
+    #: Extra annotations
+    annotations: list[tuple[Reference, Reference]] = field(default_factory=list)
+
     def __lt__(self, other: Synonym) -> bool:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
@@ -165,9 +167,13 @@ def _ensure_ref(
     if isinstance(reference, Referenced):
         return reference.reference
     if isinstance(reference, str):
+        if ":" not in reference:
+            if not ontology_prefix:
+                raise ValueError(f"can't parse reference: {reference}")
+            return default_reference(ontology_prefix, reference)
         _rv = Reference.from_curie(reference, strict=True, ontology_prefix=ontology_prefix)
         if _rv is None:
-            raise ValueError(f"could not parse CURIE from {reference}")
+            raise ValueError(f"[{ontology_prefix}] unable to parse {reference}")
         return _rv
     if isinstance(reference, tuple):
         return Reference(prefix=reference[0], identifier=reference[1])
@@ -189,11 +195,20 @@ class Term(Referenced):
     #: References to articles in which the term appears
     provenance: list[Reference] = field(default_factory=list)
 
-    #: Relationships defined by [Typedef] stanzas
-    relationships: dict[TypeDef, list[Reference]] = field(default_factory=lambda: defaultdict(list))
+    #: Object properties
+    relationships: dict[Reference, list[Reference]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
 
-    #: Properties, which are not defined with Typedef and have scalar values instead of references.
-    properties: dict[str, list[str]] = field(default_factory=lambda: defaultdict(list))
+    #: Annotation properties pointing to objects (i.e., references)
+    annotations_object: dict[Reference, list[Reference]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+
+    #: Annotation properties pointing to literals
+    annotations_literal: dict[Reference, list[tuple[str, Reference]]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
 
     #: Relationships with the default "is_a"
     parents: list[Reference] = field(default_factory=list)
@@ -292,26 +307,22 @@ class Term(Referenced):
         self.alt_ids.append(alt)
 
     def append_see_also(self, reference: ReferenceHint) -> Self:
-        """Add a see also relationship."""
-        try:
-            _reference = _ensure_ref(reference)
-        # ValueError gets raised if _ensure_ref has an issue
-        # with parsing or standardizing
-        except ValueError:
-            # if it's a string, just give up and annotate it as
-            # a literal string. otherwise, raise the error again
-            if isinstance(reference, str):
-                return self.annotate_literal(see_also, reference)
-            raise RuntimeError from None  # this shouldn't/can't happen?
-        else:
-            return self.annotate_object(see_also, _reference)
+        """Add a see also property."""
+        _reference = _ensure_ref(reference)
+        return self.annotate_object(see_also, _reference)
+
+    def append_see_also_url(self, url: str) -> Self:
+        """Add a see also property."""
+        return self.annotate_literal(
+            see_also, url, datatype=Reference(prefix="xsd", identifier="anyURI")
+        )
 
     def append_comment(self, value: str) -> Self:
-        """Add a comment relationship."""
-        return self.annotate_literal(comment.curie, value)
+        """Add a comment property."""
+        return self.annotate_literal(comment, value)
 
-    def append_replaced_by(self, reference: ReferenceHint) -> Self:
-        """Add a replaced by relationship."""
+    def append_replaced_by(self, reference: Reference) -> Self:
+        """Add a replaced by property."""
         return self.annotate_object(term_replaced_by, reference)
 
     def append_parent(self, reference: ReferenceHint) -> Self:
@@ -328,15 +339,16 @@ class Term(Referenced):
             raise ValueError("can not append a collection of parents containing a null parent")
         self.parents.extend(references)
 
-    def get_properties(self, prop) -> list[str]:
+    def get_properties(self, prop: ReferenceHint) -> list[str]:
         """Get properties from the given key."""
-        # FIXME this instance check should be removed when
-        # improving property handling
-        if isinstance(prop, curies.Reference | Referenced):
-            prop = prop.curie
-        return self.properties[prop]
+        prop = _ensure_ref(prop)
+        if prop in self.annotations_object:
+            return [value.preferred_curie for value in self.annotations_object[prop]]
+        if prop in self.annotations_literal:
+            return [value for value, _datatype in self.annotations_literal[prop]]
+        raise KeyError(f"property not found: {prop.curie}")
 
-    def get_property(self, prop) -> str | None:
+    def get_property(self, prop: ReferenceHint) -> str | None:
         """Get a single property of the given key."""
         r = self.get_properties(prop)
         if not r:
@@ -345,7 +357,7 @@ class Term(Referenced):
             raise ValueError
         return r[0]
 
-    def get_relationship(self, typedef: TypeDef) -> Reference | None:
+    def get_relationship(self, typedef: ReferenceHint) -> Reference | None:
         """Get a single relationship of the given type."""
         r = self.get_relationships(typedef)
         if not r:
@@ -354,9 +366,9 @@ class Term(Referenced):
             raise ValueError
         return r[0]
 
-    def get_relationships(self, typedef: TypeDef) -> list[Reference]:
+    def get_relationships(self, typedef: ReferenceHint) -> list[Reference]:
         """Get relationships from the given type."""
-        return self.relationships[typedef]
+        return self.relationships[_ensure_ref(typedef)]
 
     def append_exact_match(self, reference: ReferenceHint) -> Self:
         """Append an exact match, also adding an xref."""
@@ -368,14 +380,17 @@ class Term(Referenced):
         """Append an xref."""
         self.xrefs.append(_ensure_ref(reference))
 
-    def append_relationship(self, typedef: TypeDef, reference: ReferenceHint) -> Self:
+    def append_relationship(self, typedef: ReferenceHint, reference: ReferenceHint) -> Self:
         """Append a relationship."""
-        self.relationships[typedef].append(_ensure_ref(reference))
+        self.relationships[_ensure_ref(typedef)].append(_ensure_ref(reference))
         return self
 
-    def annotate_object(self, typedef: TypeDef, reference: ReferenceHint) -> Self:
-        """Append a relationship."""
-        return self.append_relationship(typedef, reference)
+    def annotate_object(self, typedef: ReferenceHint, value: ReferenceHint) -> Self:
+        """Append an object annotation."""
+        typedef = _ensure_ref(typedef)
+        value = _ensure_ref(value)
+        self.annotations_object[typedef].append(value)
+        return self
 
     def set_species(self, identifier: str, name: str | None = None) -> Self:
         """Append the from_species relation."""
@@ -397,37 +412,34 @@ class Term(Referenced):
                 return species
         return None
 
-    def extend_relationship(self, typedef: TypeDef, references: Iterable[Reference]) -> None:
+    def extend_relationship(self, typedef: ReferenceHint, references: Iterable[Reference]) -> None:
         """Append several relationships."""
         warnings.warn("use append_relationship", DeprecationWarning, stacklevel=2)
         if any(x is None for x in references):
             raise ValueError("can not extend a collection that includes a null reference")
+        typedef = _ensure_ref(typedef)
         self.relationships[typedef].extend(references)
 
     def append_property(
         self, prop: str | Reference | Referenced, value: str | Reference | Referenced
     ) -> Self:
-        """Append a property."""
-        if isinstance(prop, Reference | Referenced):
-            prop = prop.preferred_curie
-        if isinstance(value, Reference | Referenced):
-            value = value.preferred_curie
-        self.properties[prop].append(value)
-        return self
+        """Append an arbitrary property."""
+        raise NotImplementedError
 
     def annotate_literal(
-        self,
-        prop: str | Reference | Referenced,
-        value: str,
-        datatype: curies.Reference | None = None,
+        self, prop: ReferenceHint, value: str, datatype: Reference | None = None
     ) -> Self:
-        """Append a property."""
-        return self.append_property(prop, value)
+        """Append an object annotation."""
+        prop = _ensure_ref(prop)
+        self.annotations_literal[prop].append(
+            (value, datatype or Reference(prefix="xsd", identifier="string"))
+        )
+        return self
 
-    def annotate_boolean(self, prop: str | Reference | Referenced, value: bool) -> Self:
-        """Append a property."""
+    def annotate_boolean(self, prop: ReferenceHint, value: bool) -> Self:
+        """Append an object annotation."""
         return self.annotate_literal(
-            prop, str(value).lower(), datatype=Reference(prefix="xsd", identifier="boolean")
+            prop, str(value).lower(), Reference(prefix="xsd", identifier="boolean")
         )
 
     def _definition_fp(self) -> str:
@@ -435,7 +447,7 @@ class Term(Referenced):
             raise AssertionError
         return f'"{obo_escape_slim(self.definition)}" [{comma_separate(self.provenance)}]'
 
-    def iterate_relations(self) -> Iterable[tuple[TypeDef, Reference]]:
+    def iterate_relations(self) -> Iterable[tuple[Reference, Reference]]:
         """Iterate over pairs of typedefs and targets."""
         for typedef, targets in sorted(self.relationships.items()):
             for target in sorted(targets):
@@ -443,9 +455,12 @@ class Term(Referenced):
 
     def iterate_properties(self) -> Iterable[tuple[str, str]]:
         """Iterate over pairs of property and values."""
-        for prop, values in sorted(self.properties.items()):
+        for prop, values in sorted(self.annotations_object.items()):
             for value in sorted(values):
-                yield prop, value
+                yield prop.preferred_curie, value.preferred_curie
+        for prop, value_datatype_pairs in sorted(self.annotations_literal.items()):
+            for svalue, _datatype in sorted(value_datatype_pairs):
+                yield prop.preferred_curie, svalue
 
     def iterate_obo_lines(
         self,
@@ -487,7 +502,7 @@ class Term(Referenced):
             yield from self._emit_relations(ontology_prefix, typedefs)
 
         if emit_annotation_properties:
-            for line in self._emit_properties(typedefs):
+            for line in self._emit_properties(ontology_prefix, typedefs):
                 yield f"property_value: {line}"
 
         for synonym in sorted(self.synonyms):
@@ -497,7 +512,7 @@ class Term(Referenced):
         self, ontology_prefix: str, typedefs: dict[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:
         for typedef, reference in self.iterate_relations():
-            _typedef_warn(ontology_prefix, typedef.reference, typedefs)
+            _typedef_warn(prefix=ontology_prefix, predicate=typedef, typedefs=typedefs)
             s = f"relationship: {typedef.preferred_curie} {reference.preferred_curie}"
             if typedef.name or reference.name:
                 s += " !"
@@ -507,10 +522,24 @@ class Term(Referenced):
                     s += f" {reference.name}"
             yield s
 
-    def _emit_properties(self, typedefs: dict[ReferenceTuple, TypeDef]) -> Iterable[str]:
-        for prop, value in sorted(self.iterate_properties(), key=_sort_properties):
-            # TODO deal with typedefs for properties
-            yield f'{prop} "{value}" xsd:string'  # TODO deal with types later
+    def _emit_properties(
+        self, ontology_prefix: str, typedefs: dict[ReferenceTuple, TypeDef]
+    ) -> Iterable[str]:
+        for predicate, values in sorted(self.annotations_object.items()):
+            for value in sorted(values):
+                yv = f"{predicate.preferred_curie} {value.preferred_curie}"
+                if predicate.name and value.name:
+                    yv += f" ! {predicate.name} {value.name}"
+                yield yv
+        for predicate, value_datatype_pairs in sorted(self.annotations_literal.items()):
+            _typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)
+            if predicate.prefix == "obo" and predicate.identifier.startswith(f"{ontology_prefix}#"):
+                pc = predicate.identifier.removeprefix(f"{ontology_prefix}#")
+            else:
+                pc = predicate.preferred_curie
+            for svalue, datatype in sorted(value_datatype_pairs):
+                # TODO clean/escape value?
+                yield f'{pc} "{svalue}" {datatype.preferred_curie}'
 
     @staticmethod
     def _escape(s) -> str:
@@ -539,16 +568,6 @@ def _typedef_warn(
             )
         else:
             logger.warning(f"[{prefix}] typedef not defined: {predicate.curie}")
-
-
-def _sort_properties(r):
-    o = r[1]
-    if isinstance(o, str):
-        return o
-    elif isinstance(o, Term):
-        return o.curie
-    else:
-        raise TypeError(f"What {type(r)}: {r}")
 
 
 class BioregistryError(ValueError):
@@ -795,8 +814,11 @@ class Obo:
                 emit_annotation_properties=emit_annotation_properties,
             )
 
-    def _index_typedefs(self) -> dict[ReferenceTuple, TypeDef]:
-        return {t.pair: t for t in self.typedefs or []}
+    def _index_typedefs(self) -> Mapping[ReferenceTuple, TypeDef]:
+        return ChainMap(
+            {t.pair: t for t in self.typedefs or []},
+            default_typedefs,
+        )
 
     def write_obo(
         self,
@@ -1089,7 +1111,7 @@ class Obo:
                 "is_a": parents,
                 "relationship": relations,
                 "synonym": [synonym._fp() for synonym in term.synonyms],
-                "property_value": list(term._emit_properties(typedefs)),
+                "property_value": list(term._emit_properties(self.ontology, typedefs)),
             }
             nodes[term.curie] = {k: v for k, v in d.items() if v}
 
@@ -1275,6 +1297,7 @@ class Obo:
         self, *, use_tqdm: bool = False
     ) -> Iterable[tuple[Term, TypeDef, Reference]]:
         """Iterate over tuples of terms, relations, and their targets."""
+        _warned = set()
         typedefs = self._index_typedefs()
         for term in self._iter_terms(
             use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting relations"
@@ -1282,9 +1305,15 @@ class Obo:
             for parent in term.parents:
                 yield term, is_a, parent
             for typedef, reference in term.iterate_relations():
-                if typedef.pair not in typedefs and typedef.pair not in default_typedefs:
-                    raise ValueError(f"Undefined typedef: {typedef.curie} ! {typedef.name}")
-                yield term, typedef, reference
+                if typedef.pair not in typedefs:
+                    if typedef.pair not in _warned:
+                        _warn_string = f"[{term.curie}] undefined typedef: {typedef.pair}"
+                        if typedef.name:
+                            _warn_string += f" ({typedef.name})"
+                        logger.warning(_warn_string)
+                        _warned.add(typedef.pair)
+                    continue
+                yield term, typedefs[typedef.pair], reference
 
     def iter_relation_rows(
         self, use_tqdm: bool = False

@@ -11,7 +11,7 @@ from pyobo import Obo, Reference, Term
 from pyobo.reader import from_obonet, get_first_nonescaped_quote
 from pyobo.struct import default_reference
 from pyobo.struct.struct import DEFAULT_SYNONYM_TYPE
-from pyobo.struct.typedef import TypeDef, is_conjugate_base_of
+from pyobo.struct.typedef import TypeDef, is_conjugate_base_of, see_also
 
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
 
@@ -214,7 +214,7 @@ class TestReader(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(list(term.iterate_properties())))
 
-    def test_property_literal(self) -> None:
+    def test_property_literal_bare(self) -> None:
         """Test parsing a property with a literal object."""
         ontology = _read("""\
             ontology: chebi
@@ -224,7 +224,103 @@ class TestReader(unittest.TestCase):
             property_value: level "high"
         """)
         term = self.get_only_term(ontology)
-        self.assertEqual("high", term.get_property("level"))
+        self.assertEqual(1, len(list(term.annotations_literal)))
+        self.assertEqual("high", term.get_property(default_reference("chebi", "level")))
+
+    def test_property_literal_typed(self) -> None:
+        """Test parsing a property with a literal object."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: mass "121.323" xsd:decimal
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(list(term.annotations_literal)))
+        self.assertEqual("121.323", term.get_property(default_reference("chebi", "mass")))
+
+    def test_property_literal_url_questionable(self) -> None:
+        """Test parsing a property with a literal object."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: http://purl.obolibrary.org/obo/chebi/mass "121.323" xsd:decimal
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(list(term.annotations_literal)))
+        self.assertEqual("121.323", term.get_property(default_reference("chebi", "mass")))
+
+    def test_property_literal_url_default(self) -> None:
+        """Test parsing a property with a literal object."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: http://purl.obolibrary.org/obo/chebi#mass "121.323" xsd:decimal
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(list(term.annotations_literal)))
+        self.assertEqual("121.323", term.get_property(default_reference("chebi", "mass")))
+
+    def test_property_literal_obo_purl(self) -> None:
+        """Test using a full OBO PURL as the property."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: http://purl.obolibrary.org/obo/RO_0018033 CHEBI:5678
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(list(term.annotations_literal)))
+        self.assertEqual(1, len(list(term.annotations_object)))
+        self.assertEqual("CHEBI:5678", term.get_property(is_conjugate_base_of))
+
+    def test_property_literal_url(self) -> None:
+        """Test using a full OBO PURL as the property."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: https://w3id.org/biolink/vocab/something CHEBI:5678
+        """)
+        td = TypeDef.from_curie("biolink:something")
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(list(term.annotations_literal)))
+        self.assertEqual(1, len(list(term.annotations_object)))
+        self.assertEqual("CHEBI:5678", term.get_property(td))
+
+    def test_property_literal_url_unregistered(self) -> None:
+        """Test using a full OBO PURL as the property."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: https://example.com/nope/nope CHEBI:5678
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(list(term.annotations_literal)))
+        self.assertEqual(0, len(list(term.annotations_object)))
+
+    def test_property_literal_object(self) -> None:
+        """Test parsing a property with a literal object."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: rdfs:seeAlso hgnc:1234
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(list(term.annotations_literal)))
+        self.assertEqual(1, len(list(term.annotations_object)))
+        self.assertEqual("hgnc:1234", term.get_property(see_also))
 
     def test_node_unparsable(self) -> None:
         """Test loading an ontology with unparsable nodes.."""
@@ -266,12 +362,12 @@ class TestReader(unittest.TestCase):
     def test_definition_missing_start_quote(self) -> None:
         """Test parsing a definition missing a starting quote."""
         ontology = _read("""\
-                ontology: chebi
+            ontology: chebi
 
-                [Term]
-                id: CHEBI:1234
-                def: malformed definition without quotes
-            """)
+            [Term]
+            id: CHEBI:1234
+            def: malformed definition without quotes
+        """)
         term = self.get_only_term(ontology)
         self.assertIsNone(term.definition)
 

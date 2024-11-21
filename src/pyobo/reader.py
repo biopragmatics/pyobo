@@ -205,9 +205,16 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
                 continue
             n_relations += 1
             term.append_relationship(typedef, reference)
-        for prop, value, _is_literal in iterate_node_properties(data, term=term):
+
+        for prop, value, is_literal in iterate_node_properties(
+            data, node=reference, strict=strict, ontology_prefix=ontology_prefix
+        ):
             n_properties += 1
-            term.append_property(prop, value)
+            if is_literal:
+                term.annotate_literal(prop, value)
+            else:
+                # FIXME parse value
+                term.annotate_object(prop, value)
         terms.append(term)
 
     logger.info(
@@ -484,15 +491,21 @@ HANDLED_PROPERTY_TYPES = {
 
 
 def iterate_node_properties(
-    data: Mapping[str, Any], *, term=None
-) -> Iterable[tuple[str, str, bool]]:
+    data: Mapping[str, Any], *, node: Reference, strict: bool = True, ontology_prefix: str
+) -> Iterable[tuple[Reference, str, bool]]:
     """Extract properties from a :mod:`obonet` node's data."""
     for prop_value_type in data.get("property_value", []):
         try:
             prop, value_type = prop_value_type.split(" ", 1)
         except ValueError:
-            logger.info("malformed property: %s on %s", prop_value_type, term and term.curie)
+            logger.warning("[%s] malformed property_value: %s", node.curie, prop_value_type)
             continue
+
+        prop_reference = _get_prop(prop, node=node, strict=strict, ontology_prefix=ontology_prefix)
+        if prop_reference is None:
+            logger.warning("[%s] unparsable property: %s", node.curie, prop)
+            continue
+
         try:
             value, _ = value_type.rsplit(" ", 1)  # second entry is the value type
         except ValueError:
@@ -502,9 +515,31 @@ def iterate_node_properties(
         if value.startswith('"'):
             # this is a literal value
             value = value.strip('"')
-            yield prop, value, True
+            yield prop_reference, value, True
         else:
-            yield prop, value, False
+            yield prop_reference, value, False
+
+
+def _get_prop(
+    prop: str, *, node: Reference, strict: bool, ontology_prefix: str
+) -> Reference | None:
+    for delim in "#/":
+        sw = f"http://purl.obolibrary.org/obo/{ontology_prefix}{delim}"
+        if prop.startswith(sw):
+            identifier = prop.removeprefix(sw)
+            return default_reference(ontology_prefix, identifier)
+    if prop.startswith("http"):
+        # TODO upstream this into an omni-parser for references?
+        _pref, _id = bioregistry.parse_iri(prop)
+        if _pref and _id:
+            return Reference(prefix=_pref, identifier=_id)
+        else:
+            logger.warning("[%s] unable to handle property: %s", node.curie, prop)
+            return None
+    elif ":" not in prop:
+        return default_reference(ontology_prefix, prop)
+    else:
+        return Reference.from_curie(prop, strict=strict, node=node, ontology_prefix=ontology_prefix)
 
 
 def iterate_node_parents(

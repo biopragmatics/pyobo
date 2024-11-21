@@ -140,13 +140,12 @@ class TestTerm(unittest.TestCase):
         """Test emitting property literals."""
         term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
         term.annotate_object(RO_DUMMY, Reference(prefix="hgnc", identifier="123"))
-        # TODO make this work with properties!
         self.assert_lines(
             """\
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            relationship: RO:1234567 hgnc:123
+            property_value: RO:1234567 hgnc:123
             """,
             term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
         )
@@ -196,14 +195,15 @@ class TestTerm(unittest.TestCase):
     def test_append_exact_match(self) -> None:
         """Test emitting a relationship."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_exact_match(Reference(prefix="eccode", identifier="1.4.1.15"))
-        # FIXME exact match should be a property value
+        term.append_exact_match(
+            Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
+        )
         self.assert_lines(
             """\
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            relationship: skos:exactMatch eccode:1.4.1.15 ! exact match
+            property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
@@ -212,13 +212,12 @@ class TestTerm(unittest.TestCase):
         term.append_exact_match(
             Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
         )
-        # FIXME
         self.assert_lines(
             """\
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            relationship: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
+            property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
@@ -228,13 +227,12 @@ class TestTerm(unittest.TestCase):
             exact_match,
             Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase"),
         )
-        # FIXME
         self.assert_lines(
             """\
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            property_value: skos:exactMatch "eccode:1.4.1.15" xsd:string
+            property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
@@ -281,7 +279,7 @@ class TestTerm(unittest.TestCase):
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            relationship: IAO:0100001 GO:1234569 ! term replaced by dummy
+            property_value: IAO:0100001 GO:1234569 ! term replaced by dummy
             """,
             term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
@@ -308,20 +306,6 @@ class TestTerm(unittest.TestCase):
             id: GO:0050069
             name: lysine dehydrogenase activity
             alt_id: GO:1234569
-            """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-
-    def test_see_also(self) -> None:
-        """Test adding a replaced by."""
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_replaced_by(Reference(prefix="GO", identifier="1234569", name="dummy"))
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            relationship: IAO:0100001 GO:1234569 ! term replaced by dummy
             """,
             term.iterate_obo_lines(ontology_prefix="GO", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
@@ -449,68 +433,57 @@ class TestTerm(unittest.TestCase):
             term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
         )
 
-    def test_see_also_url(self) -> None:
+    def test_see_also_single(self) -> None:
         """Test appending see also."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_see_also("https://example.org/test")
+        term.append_see_also_url("https://example.org/test")
         self.assert_lines(
             """\
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            property_value: rdfs:seeAlso "https://example.org/test" xsd:string
-            """,
-            term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
-        )
-
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_see_also("something")
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            property_value: rdfs:seeAlso "something" xsd:string
+            property_value: rdfs:seeAlso "https://example.org/test" xsd:anyURI
             """,
             term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
         )
 
         self.assertEqual(
-            "something",
+            "https://example.org/test",
             term.get_property(see_also),
         )
+
         self.assertEqual(
-            ["something"],
+            ["https://example.org/test"],
             term.get_properties(see_also),
         )
 
+    def test_see_also_double(self) -> None:
+        """Test appending see also."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_see_also(Reference(prefix="hgnc", identifier="1234"))
-        term.append_see_also(Reference(prefix="hgnc", identifier="1235"))
-        # FIXME this should be a property_value
+        with self.assertRaises(ValueError):
+            term.append_see_also("something")
+
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_see_also(Reference(prefix="hgnc", identifier="1234", name="dummy 1"))
+        term.append_see_also(Reference(prefix="hgnc", identifier="1235", name="dummy 2"))
         self.assert_lines(
             """\
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            relationship: rdfs:seeAlso hgnc:1234 ! see also
-            relationship: rdfs:seeAlso hgnc:1235 ! see also
+            property_value: rdfs:seeAlso hgnc:1234 ! see also dummy 1
+            property_value: rdfs:seeAlso hgnc:1235 ! see also dummy 2
             """,
             term.iterate_obo_lines(ontology_prefix="GO", typedefs={}),
         )
 
         self.assertEqual(
             [
-                Reference(prefix="hgnc", identifier="1234"),
-                Reference(prefix="hgnc", identifier="1235"),
+                Reference(prefix="hgnc", identifier="1234", name="dummy 1").curie,
+                Reference(prefix="hgnc", identifier="1235", name="dummy 2").curie,
             ],
-            term.get_relationships(see_also),
+            term.get_properties(see_also),
         )
 
-        # because there can be only one
-        with self.assertRaises(ValueError):
-            term.get_relationship(see_also)
-
         self.assertIsNone(term.get_relationship(exact_match))
-        self.assertIsNone(term.get_property(exact_match))
         self.assertIsNone(term.get_species())

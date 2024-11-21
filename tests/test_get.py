@@ -189,8 +189,12 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_properties(self):
         """Test getting properties from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:51990"]
-        properties = list(iterate_node_properties(data))
-        t_prop = "http://purl.obolibrary.org/obo/chebi/monoisotopicmass"
+        properties = list(
+            iterate_node_properties(
+                data, node=Reference(prefix="chebi", identifier="51990"), ontology_prefix="chebi"
+            )
+        )
+        t_prop = default_reference("chebi", "monoisotopicmass")
         self.assertIn(t_prop, {prop for prop, value, _ in properties})
         self.assertEqual(1, sum(prop == t_prop for prop, value, _ in properties))
         value = next(value for prop, value, _ in properties if prop == t_prop)
