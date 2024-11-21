@@ -186,6 +186,22 @@ class TestReader(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(list(term.iterate_relations())))
 
+    def test_relationship_bad_target(self) -> None:
+        """Test an ontology with a version but no date."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            relationship: RO:0018033 missing
+
+            [Typedef]
+            id: RO:0018033
+            name: is conjugate base of
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(list(term.iterate_relations())))
+
     def test_property_malformed(self) -> None:
         """Test parsing a malformed property."""
         ontology = _read("""\
