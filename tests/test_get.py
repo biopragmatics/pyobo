@@ -193,7 +193,7 @@ class TestParseObonet(unittest.TestCase):
         t_prop = "http://purl.obolibrary.org/obo/chebi/monoisotopicmass"
         self.assertIn(t_prop, {prop for prop, value in properties})
         self.assertEqual(1, sum(prop == t_prop for prop, value in properties))
-        value = next(value for prop, value in properties if prop == t_prop)
+        value = next(value for prop, value, _ in properties if prop == t_prop)
         self.assertEqual("261.28318", value)
 
     def test_get_node_parents(self):

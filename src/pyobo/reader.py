@@ -205,7 +205,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
                 continue
             n_relations += 1
             term.append_relationship(typedef, reference)
-        for prop, value in iterate_node_properties(data, term=term):
+        for prop, value, _is_literal in iterate_node_properties(data, term=term):
             n_properties += 1
             term.append_property(prop, value)
         terms.append(term)
@@ -351,7 +351,8 @@ def _extract_definition(
 ) -> tuple[None, None] | tuple[str, list[Reference]]:
     """Extract the definitions."""
     if not s.startswith('"'):
-        raise ValueError(f"[{node.curie}] definition does not start with a quote")
+        logger.warning(f"[{node.curie}] definition does not start with a quote")
+        return None, None
 
     try:
         definition, rest = _quote_split(s)
@@ -360,7 +361,9 @@ def _extract_definition(
         return None, None
 
     if not rest.startswith("[") or not rest.endswith("]"):
-        logger.warning("[%s] problem with definition: %s", node.curie, s)
+        logger.warning(
+            "[%s] missing square brackets in rest of: %s (rest = `%s`)", node.curie, s, rest
+        )
         provenance = []
     else:
         provenance = _parse_trailing_ref_list(rest, strict=strict, node=node)
@@ -433,10 +436,9 @@ def _extract_synonym(
             break
 
     if not rest.startswith("[") or not rest.endswith("]"):
-        logger.warning("[%s] problem with synonym: %s", node.curie, s)
-        return None
-
-    provenance = _parse_trailing_ref_list(rest, strict=strict, node=node)
+        provenance = []
+    else:
+        provenance = _parse_trailing_ref_list(rest, strict=strict, node=node)
     return Synonym(
         name=name,
         specificity=specificity or "EXACT",
@@ -482,8 +484,8 @@ HANDLED_PROPERTY_TYPES = {
 
 
 def iterate_node_properties(
-    data: Mapping[str, Any], *, property_prefix: str | None = None, term=None
-) -> Iterable[tuple[str, str]]:
+    data: Mapping[str, Any], *, term=None
+) -> Iterable[tuple[str, str, bool]]:
     """Extract properties from a :mod:`obonet` node's data."""
     for prop_value_type in data.get("property_value", []):
         try:
@@ -491,16 +493,18 @@ def iterate_node_properties(
         except ValueError:
             logger.info("malformed property: %s on %s", prop_value_type, term and term.curie)
             continue
-        if property_prefix is not None and prop.startswith(property_prefix):
-            prop = prop[len(property_prefix) :]
-
         try:
             value, _ = value_type.rsplit(" ", 1)  # second entry is the value type
         except ValueError:
             # logger.debug(f'property missing datatype. defaulting to string - {prop_value_type}')
             value = value_type  # could assign type to be 'xsd:string' by default
-        value = value.strip('"')
-        yield prop, value
+
+        if value.startswith('"'):
+            # this is a literal value
+            value = value.strip('"')
+            yield prop, value, True
+        else:
+            yield prop, value, False
 
 
 def iterate_node_parents(
