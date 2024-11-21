@@ -133,7 +133,7 @@ def _iter_edges(term: Term) -> Iterable[Edge]:
         for target in targets:
             yield Edge.from_parsed(
                 _rewire(term.reference),
-                _rewire(typedef.reference),
+                _rewire(typedef),
                 _rewire(target),
             )
 
