@@ -21,6 +21,7 @@ from .expasy import ExpasyGetter
 from .famplex import FamPlexGetter
 from .flybase import FlyBaseGetter
 from .geonames import GeonamesGetter
+from .gtdb import GTDBGetter
 from .gwascentral_phenotype import GWASCentralPhenotypeGetter
 from .gwascentral_study import GWASCentralStudyGetter
 from .hgnc import HGNCGetter
@@ -78,6 +79,7 @@ __all__ = [
     "ExpasyGetter",
     "FamPlexGetter",
     "FlyBaseGetter",
+    "GTDBGetter",
     "GWASCentralPhenotypeGetter",
     "GWASCentralStudyGetter",
     "GeonamesGetter",
