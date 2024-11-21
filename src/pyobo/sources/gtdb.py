@@ -15,17 +15,16 @@ __all__ = [
 ]
 
 PREFIX = "gtdb"
-LEVEL_ORDER = ["d__", "p__", "c__", "o__", "f__", "g__", "s__"]
 
 #: A mapping from GTDB prefixes to TAXRANK ranks
 LEVEL_TO_TAXRANK = {
-    "d__": Reference(prefix="TAXRANK", identifier="0000037", name="domain"),
-    "p__": Reference(prefix="TAXRANK", identifier="0000001", name="phylum"),
-    "c__": Reference(prefix="TAXRANK", identifier="0000002", name="class"),
-    "o__": Reference(prefix="TAXRANK", identifier="0000003", name="order"),
-    "f__": Reference(prefix="TAXRANK", identifier="0000004", name="family"),
-    "g__": Reference(prefix="TAXRANK", identifier="0000005", name="genus"),
-    "s__": Reference(prefix="TAXRANK", identifier="0000006", name="species"),
+    "d": Reference(prefix="TAXRANK", identifier="0000037", name="domain"),
+    "p": Reference(prefix="TAXRANK", identifier="0000001", name="phylum"),
+    "c": Reference(prefix="TAXRANK", identifier="0000002", name="class"),
+    "o": Reference(prefix="TAXRANK", identifier="0000003", name="order"),
+    "f": Reference(prefix="TAXRANK", identifier="0000004", name="family"),
+    "g": Reference(prefix="TAXRANK", identifier="0000005", name="genus"),
+    "s": Reference(prefix="TAXRANK", identifier="0000006", name="species"),
 }
 
 #: AR stands for archea
@@ -41,32 +40,25 @@ class GTDBGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     typedefs = [has_taxonomy_rank]
+    idspaces = {
+        PREFIX: "https://gtdb.ecogenomic.org/tree?r=",
+    }
+    root_terms = [
+        Reference(prefix=PREFIX, identifier="d_Archea", name="Archea"),
+        # TODO add bacteria
+    ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms(version=self._version_or_raise, force=force)
 
 
-def _parse_gtdb_taxonomy(tax_string: str) -> list[tuple[str, str]]:
-    """Parse GTDB taxonomy string into (level, name) tuples."""
-    taxa = []
-    parts = [p.strip() for p in tax_string.split(";") if p.strip()]
-
-    for part in parts:
-        if len(part) < 4 or "__" not in part:
-            logger.warning(f"Malformed taxon string: {part}")
-            continue
-        level = part[:3]
-        name = part[3:].strip()
-        if level in LEVEL_ORDER and name:
-            taxa.append((level, name))
-        else:
-            logger.warning(f"Invalid taxonomic level or name in part: {part}")
-    return taxa
-
-
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over GTDB terms."""
+    # Add the taxrank terms so we get nice display in protege
+    for reference in LEVEL_TO_TAXRANK.values():
+        yield Term(reference=reference)
+
     ar_path = ensure_path(PREFIX, url=GTDB_AR_URL, version=version, force=force)
     bac_path = ensure_path(PREFIX, url=GTDB_BAC_URL, version=version, force=force)
     columns = ["gtdb_taxonomy", "ncbi_taxid"]
@@ -86,29 +78,77 @@ def _process_row(tax_string, ncbitaxon_id) -> Iterable[Term]:
         logger.warning(f"Invalid taxonomy string: {tax_string}")
         return None
 
-    taxa = _parse_gtdb_taxonomy(tax_string)
+    taxa = _parse_tax_string(tax_string)
     if not taxa:
         logger.warning(f"No valid taxa found in: {tax_string}")
         return None
 
     parent_reference = None
     for level, name in taxa:
-        identifier = f"{level}{name.replace(' ', '_')}"
+        identifier = f"{level}__{name.replace(' ', '_')}"
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
         )
-        if taxrank_reference := LEVEL_TO_TAXRANK.get(level):
-            term.annotate_object(has_taxonomy_rank, taxrank_reference)
+        term.annotate_object(has_taxonomy_rank, LEVEL_TO_TAXRANK[level])
 
         if parent_reference:
             term.append_parent(parent_reference)
-        if ncbitaxon_id and level == "s__":
-            #
+        if ncbitaxon_id and level == "s":
+            # if the level is "s", it's a species. There might be multiple
+            # mappings to NCBITaxon, so we only use "see also" as the predicate
             term.append_see_also(Reference(prefix="ncbitaxon", identifier=ncbitaxon_id))
 
         yield term
         parent_reference = term.reference
 
 
+def _parse_tax_string(tax_string: str) -> list[tuple[str, str]]:
+    """Parse GTDB taxonomy string into (level, name) tuples."""
+    return [
+        level_name for part in _split_tax_string(tax_string) if (level_name := _parse_name(part))
+    ]
+
+
+def _split_tax_string(tax_string: str) -> list[str]:
+    return [p.strip() for p in tax_string.split(";") if p.strip()]
+
+
+def _parse_name(part: str) -> tuple[str, str] | None:
+    """Parse a GTDB taxonomy identifier.
+
+    :param part: The string
+    :returns: A tuple with the level and name, if parsable
+
+    >>> _parse_name("f__Sulfolobaceae")
+    ('f', 'Sulfoobaceae')
+
+    The following is malformed because it is missing a double underscore
+
+    >>> _parse_name("f_Sulfolobaceae")
+
+    The following is malformed because it has an invalid taxonomic level
+
+    >>> _parse_name("x__Sulfolobaceae")
+
+    The following is malformed because it's missing a name'
+
+    >>> _parse_name("f__")
+    """
+    if len(part) < 4 or "__" not in part:
+        logger.warning(f"Malformed taxon string: {part}")
+        return None
+    level, delimiter, name = part.partition("__")
+    if not delimiter:
+        logger.warning(f"Missing double underscore delimiter: {part}")
+        return None
+    if level not in LEVEL_TO_TAXRANK or not name:
+        logger.warning(f"Invalid taxonomic level `{level}` in {part}")
+        return None
+    if not name:
+        logger.warning(f"Missing name: {part}")
+        return None
+    return level, name
+
+
 if __name__ == "__main__":
-    GTDBGetter().write_default(write_obo=True, force=True)
+    GTDBGetter().write_default(write_obo=True, force=True, use_tqdm=True)
