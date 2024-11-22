@@ -35,6 +35,7 @@ from .typedef import (
     has_ontology_root_term,
     has_part,
     is_a,
+    match_typedefs,
     orthologous,
     part_of,
     see_also,
@@ -1584,16 +1585,19 @@ class Obo:
         """Get a dataframe with SSSOM extracted from the OBO document."""
         dbxref_curie = "oboInOwl:hasDbXref"
         justification = "sempav:UnspecifiedMatching"
-        exact_match_curie = exact_match.curie
+        pred_curies = [(pred, pred.curie) for pred in sorted(match_typedefs)]
+
         rows: list[tuple[str, str, str, str, str]] = []
         for term in self._iter_terms(use_tqdm=use_tqdm):
             curie, name = term.curie, term.name
             for xref in term.xrefs:
                 rows.append((curie, name, xref.curie, dbxref_curie, justification))
-            for xref_curie in term.get_properties(exact_match):
-                rows.append((curie, name, xref_curie, exact_match_curie, justification))
-            for xref_ref in term.get_relationships(exact_match):
-                rows.append((curie, name, xref_ref.curie, exact_match_curie, justification))
+            for predicate, predicate_curie in pred_curies:
+                for xref_value in term.get_properties(predicate):
+                    rows.append((curie, name, xref_value, predicate_curie, justification))
+                for xref_reference in term.get_relationships(predicate):
+                    rows.append((curie, name, xref_reference.curie, predicate_curie, justification))
+
         df = pd.DataFrame(rows, columns=SSSOM_DF_COLUMNS)
         if not include_subject_labels:
             del df["subject_label"]
