@@ -32,6 +32,7 @@ from .typedef import (
     default_typedefs,
     exact_match,
     from_species,
+    has_dbxref,
     has_ontology_root_term,
     has_part,
     is_a,
@@ -390,6 +391,19 @@ class Term(Referenced):
     def get_relationships(self, typedef: ReferenceHint) -> list[Reference]:
         """Get relationships from the given type."""
         return self.relationships.get(_ensure_ref(typedef), [])
+
+    def get_mappings(self, include_xrefs: bool = True) -> list[tuple[Reference, str]]:
+        """Get mappings."""
+        rows = []
+        for predicate in match_typedefs:
+            for xref_value in self.get_properties(predicate):
+                rows.append((predicate.reference, xref_value))
+            for xref_reference in self.get_relationships(predicate):
+                rows.append((predicate.reference, xref_reference.curie))
+        if include_xrefs:
+            for xref in self.xrefs:
+                rows.append((has_dbxref.reference, xref.curie))
+        return rows
 
     def append_exact_match(self, reference: ReferenceHint) -> Self:
         """Append an exact match, also adding an xref."""
@@ -1583,21 +1597,12 @@ class Obo:
         self, *, use_tqdm: bool = False, include_subject_labels: bool = False
     ) -> pd.DataFrame:
         """Get a dataframe with SSSOM extracted from the OBO document."""
-        dbxref_curie = "oboInOwl:hasDbXref"
-        justification = "sempav:UnspecifiedMatching"
-        pred_curies = [(pred, pred.curie) for pred in sorted(match_typedefs)]
-
-        rows: list[tuple[str, str, str, str, str]] = []
-        for term in self._iter_terms(use_tqdm=use_tqdm):
-            curie, name = term.curie, term.name
-            for xref in term.xrefs:
-                rows.append((curie, name, xref.curie, dbxref_curie, justification))
-            for predicate, predicate_curie in pred_curies:
-                for xref_value in term.get_properties(predicate):
-                    rows.append((curie, name, xref_value, predicate_curie, justification))
-                for xref_reference in term.get_relationships(predicate):
-                    rows.append((curie, name, xref_reference.curie, predicate_curie, justification))
-
+        justification_curie = "sempav:UnspecifiedMatching"
+        rows = [
+            (term.curie, term.name, object_curie, predicate.curie, justification_curie)
+            for term in self._iter_terms(use_tqdm=use_tqdm)
+            for predicate, object_curie in term.get_mappings(include_xrefs=True)
+        ]
         df = pd.DataFrame(rows, columns=SSSOM_DF_COLUMNS)
         if not include_subject_labels:
             del df["subject_label"]
