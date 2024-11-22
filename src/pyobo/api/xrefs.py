@@ -5,15 +5,13 @@ from collections.abc import Mapping
 from functools import lru_cache
 
 import pandas as pd
-from tqdm.auto import tqdm
-from tqdm.contrib.logging import logging_redirect_tqdm
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
 from ..constants import TARGET_ID, TARGET_PREFIX, GetOntologyKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..struct import Obo, Reference
+from ..struct import Obo
 from ..utils.cache import cached_df, cached_mapping
 from ..utils.path import prefix_cache_join
 
@@ -100,18 +98,13 @@ def get_xrefs_df(
 def get_sssom_df(
     prefix: str | Obo,
     *,
-    predicate_id: str = "oboinowl:hasDbXref",
-    justification: str = "sempav:UnspecifiedMatching",
     names: bool = True,
+    use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
     r"""Get xrefs from a source as an SSSOM dataframe.
 
     :param prefix: The ontology to look in for xrefs
-    :param predicate_id: The predicate used in the SSSOM document. By default, ontologies
-        don't typically ascribe semantics to xrefs so ``oboinowl:hasDbXref`` is used
-    :param justification: The justification for the mapping. By default, ontologies
-        don't typically ascribe semantics, so this is left with `sempav:UnspecifiedMatching`
     :param names: Add name columns (``subject_label`` and ``object_label``)
     :returns: A SSSOM-compliant dataframe of xrefs
 
@@ -130,49 +123,26 @@ def get_sssom_df(
 
     .. note:: This assumes the Bioregistry as the prefix map
     """
-    from .names import get_name
-
     if isinstance(prefix, Obo):
-        df = prefix.get_xrefs_df()
+        df = prefix.get_sssom_df(use_tqdm=use_tqdm, include_subject_labels=names)
         prefix = prefix.ontology
-    else:
-        df = get_xrefs_df(prefix=prefix, **kwargs)
-    rows: list[tuple[str, ...]] = []
-    with logging_redirect_tqdm():
-        for source_id, target_prefix, target_id in tqdm(
-            df.values, unit="mapping", unit_scale=True, desc=f"[{prefix}] SSSOM"
-        ):
-            source = Reference(prefix=prefix, identifier=source_id)
-            target = Reference(prefix=target_prefix, identifier=target_id)
 
-            if names:
-                rows.append(
-                    (
-                        source.curie,
-                        get_name(prefix, source_id) or "",
-                        target.curie,
-                        get_name(target_prefix, target_id),
-                        predicate_id,
-                        justification,
-                    )
-                )
-            else:
-                rows.append((source.curie, target.curie, predicate_id, justification))
+    else:
+        version = get_version_from_kwargs(prefix, kwargs)
+        path = prefix_cache_join(prefix, name="sssom.tsv", version=version)
+
+        @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+        def _df_getter() -> pd.DataFrame:
+            logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
+            ontology = get_ontology(prefix, **kwargs)
+            return ontology.get_sssom_df(use_tqdm=use_tqdm, include_subject_labels=True)
+
+        df = _df_getter()
 
     if names:
-        columns = [
-            "subject_id",
-            "subject_label",
-            "object_id",
-            "object_label",
-            "predicate_id",
-            "mapping_justification",
-        ]
-    else:
-        columns = [
-            "subject_id",
-            "object_id",
-            "predicate_id",
-            "mapping_justification",
-        ]
-    return pd.DataFrame(rows, columns=columns)
+        from .names import get_name_by_curie
+
+        df["object_label"] = df["object_id"].map(get_name_by_curie)
+    elif "subject_label" in df.columns:
+        del df["subject_label"]
+    return df

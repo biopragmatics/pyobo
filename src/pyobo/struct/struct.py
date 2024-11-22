@@ -72,6 +72,15 @@ logger = logging.getLogger(__name__)
 SynonymSpecificity = Literal["EXACT", "NARROW", "BROAD", "RELATED"]
 SynonymSpecificities: Sequence[SynonymSpecificity] = ("EXACT", "NARROW", "BROAD", "RELATED")
 
+#: Columns in the SSSOM dataframe
+SSSOM_DF_COLUMNS = [
+    "subject_id",
+    "subject_label",
+    "object_id",
+    "predicate_id",
+    "mapping_justification",
+]
+
 
 @dataclass
 class Synonym:
@@ -357,7 +366,7 @@ class Term(Referenced):
             return [value.preferred_curie for value in self.annotations_object[prop]]
         if prop in self.annotations_literal:
             return [value for value, _datatype in self.annotations_literal[prop]]
-        raise KeyError(f"property not found: {prop.curie}")
+        return []
 
     def get_property(self, prop: ReferenceHint) -> str | None:
         """Get a single property of the given key."""
@@ -379,7 +388,7 @@ class Term(Referenced):
 
     def get_relationships(self, typedef: ReferenceHint) -> list[Reference]:
         """Get relationships from the given type."""
-        return self.relationships[_ensure_ref(typedef)]
+        return self.relationships.get(_ensure_ref(typedef), [])
 
     def append_exact_match(self, reference: ReferenceHint) -> Self:
         """Append an exact match, also adding an xref."""
@@ -1568,6 +1577,27 @@ class Obo:
         """Iterate over terms' identifiers, xref prefixes, and xref identifiers."""
         for term, xref in self.iterate_xrefs(use_tqdm=use_tqdm):
             yield term.identifier, xref.prefix, xref.identifier
+
+    def get_sssom_df(
+        self, *, use_tqdm: bool = False, include_subject_labels: bool = False
+    ) -> pd.DataFrame:
+        """Get a dataframe with SSSOM extracted from the OBO document."""
+        dbxref_curie = "oboInOwl:hasDbXref"
+        justification = "sempav:UnspecifiedMatching"
+        exact_match_curie = exact_match.curie
+        rows: list[tuple[str, str, str, str, str]] = []
+        for term in self._iter_terms(use_tqdm=use_tqdm):
+            curie, name = term.curie, term.name
+            for xref in term.xrefs:
+                rows.append((curie, name, xref.curie, dbxref_curie, justification))
+            for xref_curie in term.get_properties(exact_match):
+                rows.append((curie, name, xref_curie, exact_match_curie, justification))
+            for xref_ref in term.get_relationships(exact_match):
+                rows.append((curie, name, xref_ref.curie, exact_match_curie, justification))
+        df = pd.DataFrame(rows, columns=SSSOM_DF_COLUMNS)
+        if not include_subject_labels:
+            del df["subject_label"]
+        return df
 
     @property
     def xrefs_header(self):
