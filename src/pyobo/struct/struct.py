@@ -130,7 +130,8 @@ class SynonymTypeDef(Referenced):
     def to_obo(self, ontology_prefix: str) -> str:
         """Serialize to OBO."""
         rv = f"synonymtypedef: {reference_escape(self.reference, ontology_prefix=ontology_prefix)}"
-        rv = f'{rv} "{self.name or ''}"'
+        name = self.name or ""
+        rv = f'{rv} "{name}"'
         if self.specificity:
             rv = f"{rv} {self.specificity}"
         return rv
@@ -1147,7 +1148,9 @@ class Obo:
                 "xref": [xref.curie for xref in term.xrefs],
                 "is_a": parents,
                 "relationship": relations,
-                "synonym": [synonym._fp() for synonym in term.synonyms],
+                "synonym": [
+                    synonym._fp(ontology_prefix=self.ontology) for synonym in term.synonyms
+                ],
                 "property_value": list(term._emit_properties(self.ontology, typedefs)),
             }
             nodes[term.curie] = {k: v for k, v in d.items() if v}

@@ -212,7 +212,7 @@ def default_reference(prefix: str, part: str, name: str | None = None) -> Refere
     return Reference(prefix="obo", identifier=f"{prefix}#{part}", name=name)
 
 
-def reference_escape(predicate: Reference, *, ontology_prefix: str) -> str:
+def reference_escape(predicate: Reference | Referenced, *, ontology_prefix: str) -> str:
     """Write a reference with default namespace removed."""
     if predicate.prefix == "obo" and predicate.identifier.startswith(f"{ontology_prefix}#"):
         return predicate.identifier.removeprefix(f"{ontology_prefix}#")
