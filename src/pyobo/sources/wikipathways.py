@@ -1,8 +1,10 @@
 """Converter for WikiPathways."""
 
 import logging
-import urllib.error
 from collections.abc import Iterable
+
+from pystow.utils import DownloadError
+from tqdm import tqdm
 
 from .gmt_utils import parse_wikipathways_gmt
 from ..constants import SPECIES_REMAPPING
@@ -60,12 +62,12 @@ def iter_terms(version: str) -> Iterable[Term]:
     """Get WikiPathways terms."""
     base_url = f"http://data.wikipathways.org/{version}/gmt/wikipathways-{version}-gmt"
 
-    for species_code, taxonomy_id in _PATHWAY_INFO:
+    for species_code, taxonomy_id in tqdm(_PATHWAY_INFO, desc=f"[{PREFIX}]", unit="species"):
         url = f"{base_url}-{species_code}.gmt"
         try:
             path = ensure_path(PREFIX, url=url, version=version)
-        except urllib.error.HTTPError as e:
-            logger.warning("HTTP %s error when downloading WikiPathways file %s", e.code, url)
+        except DownloadError as e:
+            tqdm.write(f"[{PREFIX}] {e}")
             continue
         species_code = species_code.replace("_", " ")
         taxonomy_name = SPECIES_REMAPPING.get(species_code, species_code)
