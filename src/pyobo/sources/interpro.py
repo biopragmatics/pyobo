@@ -5,7 +5,7 @@ from collections.abc import Iterable, Mapping
 
 from .utils import get_go_mapping
 from ..struct import Obo, Reference, Term
-from ..struct.typedef import enables, has_member
+from ..struct.typedef import enables, has_category, has_member
 from ..utils.io import multisetdict
 from ..utils.path import ensure_df, ensure_path
 
@@ -30,7 +30,7 @@ class InterProGetter(Obo):
     """An ontology representation of InterPro."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [enables, has_member]
+    typedefs = [enables, has_member, has_category]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over InterPro terms."""
@@ -74,7 +74,7 @@ def iter_terms(*, version: str, proteins: bool = False, force: bool = False) -> 
             term.append_relationship(
                 enables, Reference(prefix="go", identifier=go_id, name=go_name)
             )
-        term.annotate_literal("type", entry_type)
+        term.annotate_literal(has_category, entry_type)
         for uniprot_id in interpro_to_proteins.get(identifier, []):
             term.append_relationship(has_member, Reference(prefix="uniprot", identifier=uniprot_id))
         yield term

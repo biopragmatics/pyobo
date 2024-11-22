@@ -158,7 +158,9 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
                 ),
             )
         for go_id, go_name in ec2go.get(ec_code, []):
-            term.annotate_object(enables, Reference(prefix="GO", identifier=go_id, name=go_name))
+            term.append_relationship(
+                enables, Reference(prefix="GO", identifier=go_id, name=go_name)
+            )
 
     return terms.values()
 

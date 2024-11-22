@@ -126,7 +126,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
         for ncbigene_id in attrib["MEMBERS_EZID"].strip().split(","):
             if ncbigene_id:
-                term.append_relationship(
+                term.annotate_object(
                     has_participant, Reference(prefix="ncbigene", identifier=ncbigene_id)
                 )
         yield term

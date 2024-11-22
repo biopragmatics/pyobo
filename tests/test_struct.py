@@ -4,9 +4,9 @@ import unittest
 from collections.abc import Iterable
 from textwrap import dedent
 
-from pyobo import Obo, Reference
+from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
-from pyobo.struct.struct import BioregistryError, SynonymTypeDef, Term, TypeDef, default_reference
+from pyobo.struct.struct import BioregistryError, SynonymTypeDef, Term, TypeDef
 from pyobo.struct.typedef import exact_match, see_also
 
 LYSINE_DEHYDROGENASE_ACT = Reference(

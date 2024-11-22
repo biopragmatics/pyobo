@@ -6,8 +6,9 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 
 from curies import ReferenceTuple
+from typing_extensions import Self
 
-from .reference import Reference, Referenced
+from .reference import Reference, Referenced, default_reference, reference_escape
 from ..resources.ro import load_ro
 
 __all__ = [
@@ -85,10 +86,10 @@ class TypeDef(Referenced):
         # have to re-define hash because of the @dataclass
         return hash((self.__class__, self.prefix, self.identifier))
 
-    def iterate_obo_lines(self) -> Iterable[str]:
+    def iterate_obo_lines(self, ontology_prefix: str) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield "\n[Typedef]"
-        yield f"id: {self.reference.preferred_curie}"
+        yield f"id: {reference_escape(self.reference, ontology_prefix=ontology_prefix)}"
         if self.name:
             yield f"name: {self.reference.name}"
         if self.definition:
@@ -141,6 +142,11 @@ class TypeDef(Referenced):
         if reference is None:
             raise RuntimeError
         return cls(reference=reference)
+
+    @classmethod
+    def default(cls, prefix: str, identifier: str, *, name: str | None = None) -> Self:
+        """Construct a default type definition from within the OBO namespace."""
+        return cls(reference=default_reference(prefix, identifier, name=name))
 
 
 RO_PREFIX = "RO"

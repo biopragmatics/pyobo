@@ -6,7 +6,7 @@ from operator import attrgetter
 import obonet
 from curies import ReferenceTuple
 
-from pyobo import Reference, Synonym, SynonymTypeDef, TypeDef, get_ontology
+from pyobo import Reference, Synonym, SynonymTypeDef, TypeDef, default_reference, get_ontology
 from pyobo.reader import (
     _extract_definition,
     _extract_synonym,
@@ -18,7 +18,7 @@ from pyobo.reader import (
     iterate_node_synonyms,
     iterate_node_xrefs,
 )
-from pyobo.struct.struct import acronym, default_reference
+from pyobo.struct.struct import acronym
 from pyobo.utils.io import multidict
 from tests.constants import TEST_CHEBI_OBO_PATH, chebi_patch
 

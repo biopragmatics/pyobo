@@ -108,7 +108,7 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
         on_bad_lines="skip",
     )
     for _, row in tqdm(
-        df.iterrows(), total=len(df.index), desc=f"Mapping {PREFIX}", unit_scale=True
+        df.head(500).iterrows(), total=len(df.index), desc=f"Mapping {PREFIX}", unit_scale=True
     ):
         if pd.notna(row["NAME"]):
             definition = row["NAME"]
@@ -136,7 +136,7 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
                     if xref_id == "nan":
                         continue
                     if prefix == "uniprot":
-                        term.append_relationship(
+                        term.annotate_object(
                             has_gene_product, Reference(prefix=prefix, identifier=xref_id)
                         )
                     elif prefix == "ensembl":
@@ -144,11 +144,11 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
                             # second one is reverse strand
                             term.append_xref(Reference(prefix=prefix, identifier=xref_id))
                         elif xref_id.startswith("ENSMUST"):
-                            term.append_relationship(
+                            term.annotate_object(
                                 transcribes_to, Reference(prefix=prefix, identifier=xref_id)
                             )
                         elif xref_id.startswith("ENSMUSP"):
-                            term.append_relationship(
+                            term.annotate_object(
                                 has_gene_product, Reference(prefix=prefix, identifier=xref_id)
                             )
                         else:

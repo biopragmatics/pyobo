@@ -165,8 +165,8 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             right_rhea_id = master_to_left[master_rhea_id]
         else:
             raise ValueError(f"Invalid side: {side_uri}")
-        terms[master_rhea_id].append_relationship(has_participant, chebi_reference)
-        terms[master_to_bi[master_rhea_id]].append_relationship(has_participant, chebi_reference)
+        terms[master_rhea_id].annotations_object(has_participant, chebi_reference)
+        terms[master_to_bi[master_rhea_id]].annotate_object(has_participant, chebi_reference)
         terms[left_rhea_id].append_relationship(has_input, chebi_reference)
         terms[right_rhea_id].append_relationship(has_output, chebi_reference)
 
