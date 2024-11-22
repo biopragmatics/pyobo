@@ -5,7 +5,7 @@ from collections.abc import Iterable
 
 import pandas as pd
 
-from pyobo import Obo, Reference, Term
+from pyobo import Obo, Reference, Term, TypeDef
 
 __all__ = [
     "CVXGetter",
@@ -13,6 +13,8 @@ __all__ = [
 
 cvx_url = "https://www2a.cdc.gov/vaccines/iis/iisstandards/downloads/cvx.txt"
 PREFIX = "cvx"
+STATUS = TypeDef.default(PREFIX, "status", name="has status")
+NONVACCINE = TypeDef.default(PREFIX, "nonvaccine")
 
 
 class CVXGetter(Obo):
@@ -20,6 +22,7 @@ class CVXGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
+    typedefs = [STATUS, NONVACCINE]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -80,9 +83,9 @@ def iter_terms() -> Iterable[Term]:
             if replacement_identifier:
                 term.append_replaced_by(Reference(prefix=PREFIX, identifier=replacement_identifier))
         if pd.notna(status):
-            term.annotate_literal("status", status)
+            term.annotate_literal(STATUS, status)
         if pd.notna(nonvaccine):
-            term.annotate_literal("nonvaccine", nonvaccine)
+            term.annotate_boolean(NONVACCINE, nonvaccine)
         terms[cvx] = term
 
     for child, parents in dd.items():

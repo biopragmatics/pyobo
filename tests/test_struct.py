@@ -4,9 +4,9 @@ import unittest
 from collections.abc import Iterable
 from textwrap import dedent
 
-from pyobo import Obo, Reference
+from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
-from pyobo.struct.struct import BioregistryError, SynonymTypeDef, Term, TypeDef, default_reference
+from pyobo.struct.struct import BioregistryError, SynonymTypeDef, Term, TypeDef
 from pyobo.struct.typedef import exact_match, see_also
 
 LYSINE_DEHYDROGENASE_ACT = Reference(
@@ -66,16 +66,20 @@ class TestStruct(unittest.TestCase):
         r2 = Reference(prefix="omo", identifier="0003012")
 
         s1 = SynonymTypeDef(reference=r1)
-        self.assertEqual('synonymtypedef: OMO:0003012 "acronym"', s1.to_obo())
+        self.assertEqual(
+            'synonymtypedef: OMO:0003012 "acronym"', s1.to_obo(ontology_prefix="chebi")
+        )
 
         s2 = SynonymTypeDef(reference=r2)
-        self.assertEqual("synonymtypedef: OMO:0003012", s2.to_obo())
+        self.assertEqual('synonymtypedef: OMO:0003012 ""', s2.to_obo(ontology_prefix="chebi"))
 
         s3 = SynonymTypeDef(reference=r1, specificity="EXACT")
-        self.assertEqual('synonymtypedef: OMO:0003012 "acronym" EXACT', s3.to_obo())
+        self.assertEqual(
+            'synonymtypedef: OMO:0003012 "acronym" EXACT', s3.to_obo(ontology_prefix="chebi")
+        )
 
         s4 = SynonymTypeDef(reference=r2, specificity="EXACT")
-        self.assertEqual("synonymtypedef: OMO:0003012 EXACT", s4.to_obo())
+        self.assertEqual('synonymtypedef: OMO:0003012 "" EXACT', s4.to_obo(ontology_prefix="chebi"))
 
 
 class TestTerm(unittest.TestCase):
@@ -421,6 +425,7 @@ class TestTerm(unittest.TestCase):
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
+            xref: orcid:0000-0003-4423-4370
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )

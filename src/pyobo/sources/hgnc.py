@@ -18,6 +18,7 @@ from pyobo.struct import (
     Synonym,
     SynonymTypeDef,
     Term,
+    TypeDef,
     default_reference,
     from_species,
     gene_product_member_of,
@@ -41,10 +42,22 @@ DEFINITIONS_URL_FMT = (
     "hgnc_complete_set_{version}.json"
 )
 
-previous_symbol_type = SynonymTypeDef(reference=default_reference(PREFIX, "previous_symbol"))
-alias_symbol_type = SynonymTypeDef(reference=default_reference(PREFIX, "alias_symbol"))
-previous_name_type = SynonymTypeDef(reference=default_reference(PREFIX, "previous_name"))
-alias_name_type = SynonymTypeDef(reference=default_reference(PREFIX, "alias_name"))
+previous_symbol_type = SynonymTypeDef(
+    reference=default_reference(PREFIX, "previous_symbol", name="previous symbol")
+)
+alias_symbol_type = SynonymTypeDef(
+    reference=default_reference(PREFIX, "alias_symbol", name="alias symbol")
+)
+previous_name_type = SynonymTypeDef(
+    reference=default_reference(PREFIX, "previous_name", name="previous name")
+)
+alias_name_type = SynonymTypeDef(
+    reference=default_reference(PREFIX, "alias_name", name="alias name")
+)
+HAS_LOCUS_TYPE = TypeDef.default(PREFIX, "locus_type", name="has locus type")
+HAS_LOCUS_GROUP = TypeDef.default(PREFIX, "locus_group", name="has locus group")
+HAS_LOCATION = TypeDef.default(PREFIX, "location", name="has location")
+
 
 #: First column is MIRIAM prefix, second column is HGNC key
 gene_xrefs = [
@@ -213,6 +226,9 @@ class HGNCGetter(Obo):
         orthologous,
         member_of,
         exact_match,
+        HAS_LOCUS_GROUP,
+        HAS_LOCUS_TYPE,
+        HAS_LOCATION,
     ]
     idspaces = IDSPACES
     synonym_typedefs = [
@@ -406,10 +422,10 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         for previous_name in entry.pop("prev_name", []):
             term.append_synonym(Synonym(name=previous_name, type=previous_name_type))
 
-        for prop in ["location"]:
+        for prop, td in [("location", HAS_LOCATION)]:
             value = entry.pop(prop, None)
             if value:
-                term.annotate_literal(prop, value)
+                term.annotate_literal(td, value)
 
         locus_type = entry.pop("locus_type")
         locus_group = entry.pop("locus_group")
@@ -421,8 +437,8 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 Reference(prefix="SO", identifier="0000704", name=get_so_name("0000704"))
             )  # gene
             unhandle_locus_types[locus_type][identifier] = term
-            term.annotate_literal("locus_type", locus_type)
-            term.annotate_literal("locus_group", locus_group)
+            term.annotate_literal(HAS_LOCUS_TYPE, locus_type)
+            term.annotate_literal(HAS_LOCUS_GROUP, locus_group)
 
         term.set_species(identifier="9606", name="Homo sapiens")
 

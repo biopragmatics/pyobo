@@ -10,7 +10,7 @@ from pyobo import Obo, Reference
 from pyobo.api.utils import get_version
 from pyobo.constants import RAW_MODULE
 from pyobo.identifier_utils import standardize_ec
-from pyobo.struct import Term, derives_from, enables, from_species, participates_in
+from pyobo.struct import Term, TypeDef, derives_from, enables, from_species, participates_in
 from pyobo.struct.typedef import gene_product_of, located_in, molecularly_interacts_with
 from pyobo.utils.io import open_reader
 
@@ -42,6 +42,7 @@ PARAMS = {
     "query": QUERY,
     "fields": FIELDS,
 }
+IS_REVIEWED = TypeDef.default(PREFIX, "reviewed")
 
 
 class UniProtGetter(Obo):
@@ -56,6 +57,7 @@ class UniProtGetter(Obo):
         molecularly_interacts_with,
         derives_from,
         located_in,
+        IS_REVIEWED,
     ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -102,7 +104,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                         gene_product_of, Reference(prefix="ncbigene", identifier=gene_id.strip())
                     )
 
-            term.annotate_boolean("reviewed", True)
+            term.annotate_boolean(IS_REVIEWED, True)
 
             for go_process_ref in _parse_go(go_processes):
                 term.annotate_object(participates_in, go_process_ref)

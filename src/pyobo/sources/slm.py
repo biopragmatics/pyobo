@@ -5,7 +5,7 @@ from collections.abc import Iterable
 import pandas as pd
 from tqdm.auto import tqdm
 
-from pyobo import Obo, Reference, Term
+from pyobo import Obo, Reference, Term, TypeDef
 from pyobo.struct.struct import abbreviation as abbreviation_typedef
 from pyobo.struct.typedef import exact_match, has_inchi, has_smiles
 from pyobo.utils.path import ensure_df
@@ -36,13 +36,14 @@ COLUMNS = [
     "HMDB",
     "PMID",
 ]
+LEVEL = TypeDef.default(PREFIX, "level")
 
 
 class SLMGetter(Obo):
     """An ontology representation of SwissLipid's lipid nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [exact_match]
+    typedefs = [exact_match, LEVEL, has_inchi, has_smiles]
     synonym_typedefs = [abbreviation_typedef]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -90,7 +91,7 @@ def iter_terms(version: str, force: bool = False):
             raise ValueError(identifier)
         term = Term.from_triple(PREFIX, identifier, name)
         if pd.notna(level):
-            term.annotate_literal("level", level)
+            term.annotate_literal(LEVEL, level)
         if pd.notna(abbreviation):
             term.append_synonym(abbreviation, type=abbreviation_typedef)
         if pd.notna(synonyms):

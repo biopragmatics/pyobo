@@ -1,6 +1,6 @@
 """Data structures for OBO."""
 
-from .reference import Reference, Referenced
+from .reference import Reference, Referenced, default_reference
 from .struct import (
     Obo,
     Synonym,
@@ -8,7 +8,6 @@ from .struct import (
     SynonymSpecificity,
     SynonymTypeDef,
     Term,
-    default_reference,
     int_identifier_sort_key,
     make_ad_hoc_ontology,
 )

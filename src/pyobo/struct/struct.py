@@ -25,7 +25,7 @@ from more_click import force_option, verbose_option
 from tqdm.auto import tqdm
 from typing_extensions import Self
 
-from .reference import Reference, Referenced
+from .reference import Reference, Referenced, default_reference, reference_escape
 from .typedef import (
     TypeDef,
     comment,
@@ -63,7 +63,6 @@ __all__ = [
     "Term",
     "abbreviation",
     "acronym",
-    "default_reference",
     "int_identifier_sort_key",
     "make_ad_hoc_ontology",
 ]
@@ -102,14 +101,14 @@ class Synonym:
     def _sort_key(self) -> tuple[str, str, SynonymTypeDef]:
         return self.name, self.specificity, self.type
 
-    def to_obo(self) -> str:
+    def to_obo(self, ontology_prefix: str) -> str:
         """Write this synonym as an OBO line to appear in a [Term] stanza."""
-        return f"synonym: {self._fp()}"
+        return f"synonym: {self._fp(ontology_prefix)}"
 
-    def _fp(self) -> str:
+    def _fp(self, ontology_prefix: str) -> str:
         x = f'"{self._escape(self.name)}" {self.specificity}'
         if self.type and self.type.pair != DEFAULT_SYNONYM_TYPE.pair:
-            x = f"{x} {self.type.preferred_curie}"
+            x = f"{x} {reference_escape(self.type, ontology_prefix=ontology_prefix)}"
         return f"{x} [{comma_separate(self.provenance)}]"
 
     @staticmethod
@@ -128,11 +127,11 @@ class SynonymTypeDef(Referenced):
         # have to re-define hash because of the @dataclass
         return hash((self.__class__, self.prefix, self.identifier))
 
-    def to_obo(self) -> str:
+    def to_obo(self, ontology_prefix: str) -> str:
         """Serialize to OBO."""
-        rv = f"synonymtypedef: {self.preferred_curie}"
-        if self.name:
-            rv = f'{rv} "{self.name}"'
+        rv = f"synonymtypedef: {reference_escape(self.reference, ontology_prefix=ontology_prefix)}"
+        name = self.name or ""
+        rv = f'{rv} "{name}"'
         if self.specificity:
             rv = f"{rv} {self.specificity}"
         return rv
@@ -497,15 +496,18 @@ class Term(Referenced):
             )
             yield f"namespace: {namespace_normalized}"
 
+        xrefs = list(self.xrefs)
+
         if self.definition:
             yield f"def: {self._definition_fp()}"
         elif self.provenance:
-            logger.warning("%s has provenance but no definition, can't write", self.curie)
+            # if no definition, just stick on xrefs
+            xrefs.extend(self.provenance)
 
         for alt in sorted(self.alt_ids):
             yield f"alt_id: {alt}"  # __str__ bakes in the ! name
 
-        for xref in sorted(self.xrefs):
+        for xref in sorted(xrefs):
             yield f"xref: {xref}"  # __str__ bakes in the ! name
 
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
@@ -520,7 +522,7 @@ class Term(Referenced):
                 yield f"property_value: {line}"
 
         for synonym in sorted(self.synonyms):
-            yield synonym.to_obo()
+            yield synonym.to_obo(ontology_prefix=ontology_prefix)
 
     def _emit_relations(
         self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
@@ -565,11 +567,9 @@ class Term(Referenced):
                 # TODO clean/escape value?
                 yield f'{predicate_curie} "{value}" {datatype.preferred_curie}'
 
-    def _reference(self, predicate: Reference, ontology_prefix: str) -> str:
-        if predicate.prefix == "obo" and predicate.identifier.startswith(f"{ontology_prefix}#"):
-            return predicate.identifier.removeprefix(f"{ontology_prefix}#")
-        else:
-            return predicate.preferred_curie
+    @staticmethod
+    def _reference(predicate: Reference, ontology_prefix: str) -> str:
+        return reference_escape(predicate, ontology_prefix=ontology_prefix)
 
     @staticmethod
     def _escape(s) -> str:
@@ -808,18 +808,21 @@ class Obo:
             yield f"date: {self.date_formatted}"
 
         for prefix, url in sorted((self.idspaces or {}).items()):
-            yield f"idspace: {prefix} {url}"
+            yv = f"idspace: {prefix} {url}"
+            if _yv_name := bioregistry.get_name(prefix):
+                yv += f' "{_yv_name}"'
+            yield yv
 
         for synonym_typedef in sorted(self.synonym_typedefs or []):
             if synonym_typedef.curie == DEFAULT_SYNONYM_TYPE.curie:
                 continue
-            yield synonym_typedef.to_obo()
+            yield synonym_typedef.to_obo(ontology_prefix=self.ontology)
 
         yield f"ontology: {self.ontology}"
 
         if self.name is None:
             raise ValueError("ontology is missing name")
-        yield f'property_value: http://purl.org/dc/elements/1.1/title "{self.name}" xsd:string'
+        yield f'property_value: http://purl.org/dc/terms/title "{self.name}" xsd:string'
         license_spdx_id = bioregistry.get_license(self.ontology)
         if license_spdx_id:
             # TODO add SPDX to idspaces and use as a CURIE?
@@ -827,13 +830,13 @@ class Obo:
         description = bioregistry.get_description(self.ontology)
         if description:
             description = obo_escape_slim(description.strip())
-            yield f'property_value: http://purl.org/dc/elements/1.1/description "{description}" xsd:string'
+            yield f'property_value: http://purl.org/dc/terms/description "{description}" xsd:string'
 
         for root_term in self.root_terms or []:
             yield f"property_value: {has_ontology_root_term.preferred_curie} {root_term.preferred_curie}"
 
         for typedef in sorted(self.typedefs or []):
-            yield from typedef.iterate_obo_lines()
+            yield from typedef.iterate_obo_lines(ontology_prefix=self.ontology)
 
         typedefs = self._index_typedefs()
         for term in self:
@@ -1145,7 +1148,9 @@ class Obo:
                 "xref": [xref.curie for xref in term.xrefs],
                 "is_a": parents,
                 "relationship": relations,
-                "synonym": [synonym._fp() for synonym in term.synonyms],
+                "synonym": [
+                    synonym._fp(ontology_prefix=self.ontology) for synonym in term.synonyms
+                ],
                 "property_value": list(term._emit_properties(self.ontology, typedefs)),
             }
             nodes[term.curie] = {k: v for k, v in d.items() if v}
@@ -1675,19 +1680,3 @@ def _convert_synonym_typedefs(synonym_typedefs: Iterable[SynonymTypeDef] | None)
 
 def _convert_synonym_typedef(synonym_typedef: SynonymTypeDef) -> str:
     return f'{synonym_typedef.preferred_curie} "{synonym_typedef.name}"'
-
-
-def default_reference(prefix: str, part: str, name: str | None = None) -> Reference:
-    """Create a CURIE for an "unqualified" reference.
-
-    :param prefix: The prefix of the ontology in which the "unqualified" reference is made
-    :param part: The "unqualified" reference. For example, if you just write
-        "located_in" somewhere there is supposed to be a CURIE
-    :returns: A CURIE for the "unqualified" reference based on the OBO semantic space
-
-    >>> default_reference("chebi", "conjugate_base_of")
-    Reference(prefix="obo", identifier="chebi#conjugate_base_of")
-    """
-    if not part.strip():
-        raise ValueError("default identifier is empty")
-    return Reference(prefix="obo", identifier=f"{prefix}#{part}", name=name)

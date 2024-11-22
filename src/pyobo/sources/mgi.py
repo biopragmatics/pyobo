@@ -35,8 +35,7 @@ ENSEMBL_XREFS_URL = "http://www.informatics.jax.org/downloads/reports/MRK_ENSEMB
 class MGIGetter(Obo):
     """An ontology representation of MGI's mouse gene nomenclature."""
 
-    ontology = PREFIX
-    dynamic_version = True
+    ontology = bioversions_key = PREFIX
     typedefs = [from_species, has_gene_product, transcribes_to, exact_match]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

@@ -17,6 +17,7 @@ from ..identifier_utils import normalize_curie
 __all__ = [
     "Reference",
     "Referenced",
+    "default_reference",
 ]
 
 
@@ -193,3 +194,27 @@ class Referenced:
     def bioregistry_link(self) -> str:
         """Get the bioregistry link."""
         return self.reference.bioregistry_link
+
+
+def default_reference(prefix: str, part: str, name: str | None = None) -> Reference:
+    """Create a CURIE for an "unqualified" reference.
+
+    :param prefix: The prefix of the ontology in which the "unqualified" reference is made
+    :param part: The "unqualified" reference. For example, if you just write
+        "located_in" somewhere there is supposed to be a CURIE
+    :returns: A CURIE for the "unqualified" reference based on the OBO semantic space
+
+    >>> default_reference("chebi", "conjugate_base_of")
+    Reference(prefix="obo", identifier="chebi#conjugate_base_of")
+    """
+    if not part.strip():
+        raise ValueError("default identifier is empty")
+    return Reference(prefix="obo", identifier=f"{prefix}#{part}", name=name)
+
+
+def reference_escape(predicate: Reference | Referenced, *, ontology_prefix: str) -> str:
+    """Write a reference with default namespace removed."""
+    if predicate.prefix == "obo" and predicate.identifier.startswith(f"{ontology_prefix}#"):
+        return predicate.identifier.removeprefix(f"{ontology_prefix}#")
+    else:
+        return predicate.preferred_curie
