@@ -258,6 +258,22 @@ class TestReader(unittest.TestCase):
         self.assertEqual("121.323", row["value"])
         self.assertEqual("xsd:decimal", row["datatype"])
 
+    def test_property_bad_datatype(self) -> None:
+        """Test parsing a property with an unparsable datatype."""
+        text = """\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: mass "121.323" NOPE:NOPE
+        """
+        with self.assertRaises(ValueError):
+            _read(text)
+        ontology = _read(text, strict=False)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(term.annotations_literal))
+        self.assertEqual(0, len(term.annotations_object))
+
     def test_property_literal_url_questionable(self) -> None:
         """Test parsing a property with a literal object."""
         ontology = _read("""\
@@ -325,6 +341,45 @@ class TestReader(unittest.TestCase):
             row,
         )
 
+    def test_property_object_url(self) -> None:
+        """Test parsing an object URI."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: http://purl.obolibrary.org/obo/RO_0018033 http://purl.obolibrary.org/obo/CHEBI_5678
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(list(term.annotations_literal)))
+        self.assertEqual(1, len(list(term.annotations_object)))
+        self.assertEqual("CHEBI:5678", term.get_property(is_conjugate_base_of))
+
+        df = ontology.get_properties_df()
+        self.assertEqual(4, len(df.columns))
+        self.assertEqual(1, len(df))
+        row = dict(df.iloc[0])
+        self.assertEqual(
+            {"chebi_id": "1234", "property": "RO:0018033", "value": "CHEBI:5678", "datatype": ""},
+            row,
+        )
+
+    def test_property_object_url_invalid(self) -> None:
+        """Test parsing an object URI."""
+        text = """\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: http://purl.obolibrary.org/obo/RO_0018033 http://example.org/nope:nope
+        """
+        with self.assertRaises(ValueError):
+            _read(text)
+        ontology = _read(text, strict=False)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(list(term.annotations_literal)))
+        self.assertEqual(0, len(list(term.annotations_object)))
+
     def test_property_literal_url(self) -> None:
         """Test using a full OBO PURL as the property."""
         ontology = _read("""\
@@ -339,6 +394,24 @@ class TestReader(unittest.TestCase):
         self.assertEqual(0, len(list(term.annotations_literal)))
         self.assertEqual(1, len(list(term.annotations_object)))
         self.assertEqual("CHEBI:5678", term.get_property(td))
+
+    def test_property_unparsable_object(self) -> None:
+        """Test when an object can't be parsed."""
+        text = """\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: https://w3id.org/biolink/vocab/something NOPE:NOPE
+            """
+
+        with self.assertRaises(ValueError):
+            _read(text)
+
+        ontology = _read(text, strict=False)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(list(term.annotations_literal)))
+        self.assertEqual(0, len(list(term.annotations_object)))
 
     def test_property_literal_url_unregistered(self) -> None:
         """Test using a full OBO PURL as the property."""
@@ -368,16 +441,16 @@ class TestReader(unittest.TestCase):
         self.assertEqual("hgnc:1234", term.get_property(see_also))
 
     def test_node_unparsable(self) -> None:
-        """Test loading an ontology with unparsable nodes.."""
-        ontology = _read(
-            """\
+        """Test loading an ontology with unparsable nodes."""
+        text = """\
             ontology: chebi
 
             [Term]
             id: nope:1234
-        """,
-            strict=False,
-        )
+        """
+        with self.assertRaises(ValueError):
+            _read(text)
+        ontology = _read(text, strict=False)
         self.assertEqual(0, len(list(ontology.iter_terms())))
 
     def test_malformed_typedef(self) -> None:
@@ -611,6 +684,30 @@ class TestReader(unittest.TestCase):
         ontology = _read(f"""\
             ontology: chebi
             synonymtypedef: OMO:1234567 ""
+
+            [Term]
+            id: CHEBI:1234
+            synonym: "LTEC I" EXACT OMO:1234567 [Orphanet:93938,{CHARLIE.curie}]
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("LTEC I", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type.reference)
+        self.assertEqual(
+            [
+                Reference(prefix="orphanet", identifier="93938"),
+                CHARLIE,
+            ],
+            synonym.provenance,
+        )
+
+    def test_synonym_url(self) -> None:
+        """Test parsing a synonym defined with a PURL."""
+        ontology = _read(f"""\
+            ontology: chebi
+            synonymtypedef: http://purl.obolibrary.org/obo/OMO_1234567 ""
 
             [Term]
             id: CHEBI:1234

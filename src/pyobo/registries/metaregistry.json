@@ -358,10 +358,6 @@
     "prefix": [
       "Image:",
       "Category",
-      "http://",
-      "https://",
-      "http://dbpedia.org",
-      "https://github.com",
       "PERSON",
       "similar to",
       "modelled on",
@@ -369,7 +365,6 @@
       "STRUCTURE_ChemicalName_IUPAC",
       "STRUCTURE_Formula",
       "stedman",
-      "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com",
       "value-type:",
       "binary-data-type:MS\\",
       "PECO_GIT",
@@ -381,8 +376,6 @@
       "Germplasm:",
       "IUPAC:",
       "IUPHAR:GPCRListForward?",
-      "GOC:",
-      "goc:",
       "GIOC:",
       "MONDORULE:",
       "MTH:",
@@ -395,8 +388,7 @@
       "INFOODs:",
       "NLCD:",
       "TEMP:",
-      "PO_GIT:",
-      "URL:http"
+      "PO_GIT:"
     ],
     "suffix": [
       ".jpg",

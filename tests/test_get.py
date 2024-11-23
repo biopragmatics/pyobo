@@ -49,17 +49,17 @@ class TestParseObonet(unittest.TestCase):
             sorted(
                 [
                     SynonymTypeDef(
-                        reference=Reference(
+                        reference=default_reference(
                             prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME"
                         )
                     ),
                     SynonymTypeDef(
-                        reference=Reference(
+                        reference=default_reference(
                             prefix="chebi", identifier="BRAND_NAME", name="BRAND NAME"
                         )
                     ),
                     SynonymTypeDef(
-                        reference=Reference(prefix="chebi", identifier="INN", name="INN")
+                        reference=default_reference(prefix="chebi", identifier="INN", name="INN")
                     ),
                 ],
                 key=attrgetter("curie"),

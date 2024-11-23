@@ -9,7 +9,7 @@ import pandas as pd
 from pystow.utils import read_zipfile_csv
 from tqdm import tqdm
 
-from pyobo import Obo, Term
+from pyobo import Obo, Term, TypeDef
 from pyobo.struct import Reference, part_of
 from pyobo.utils.path import ensure_df, ensure_path
 
@@ -22,6 +22,7 @@ COUNTRIES_URL = "https://download.geonames.org/export/dump/countryInfo.txt"
 ADMIN1_URL = "https://download.geonames.org/export/dump/admin1CodesASCII.txt"
 ADMIN2_URL = "https://download.geonames.org/export/dump/admin2Codes.txt"
 CITIES_URL = "https://download.geonames.org/export/dump/cities15000.zip"
+CODE_TYPEDEF = TypeDef.default(PREFIX, "code")
 
 
 class GeonamesGetter(Obo):
@@ -29,7 +30,7 @@ class GeonamesGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
-    typedefs = [part_of]
+    typedefs = [part_of, CODE_TYPEDEF]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -80,7 +81,7 @@ def get_code_to_country(*, force: bool = False) -> Mapping[str, Term]:
             term.append_synonym(fips)
         if pd.notna(iso3):
             term.append_synonym(iso3)
-        term.annotate_literal("code", code)
+        term.annotate_literal(CODE_TYPEDEF, code)
         code_to_country[code] = term
     logger.info(f"got {len(code_to_country):,} country records")
     return code_to_country
@@ -107,7 +108,7 @@ def get_code_to_admin1(
         term = Term.from_triple(
             "geonames", identifier, name if pd.notna(name) else None, type="Instance"
         )
-        term.annotate_literal("code", code)
+        term.annotate_literal(CODE_TYPEDEF, code)
         code_to_admin1[code] = term
 
         country_code = code.split(".")[0]
@@ -135,7 +136,7 @@ def get_code_to_admin2(
         term = Term.from_triple(
             "geonames", identifier, name if pd.notna(name) else None, type="Instance"
         )
-        term.annotate_literal("code", code)
+        term.annotate_literal(CODE_TYPEDEF, code)
         code_to_admin2[code] = term
         admin1_code = code.rsplit(".", 1)[0]
         admin1_term = code_to_admin1.get(admin1_code)

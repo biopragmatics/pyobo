@@ -10,8 +10,9 @@ from .names import get_name
 from .properties import get_filtered_properties_mapping
 from .relations import get_filtered_relations_df
 from ..identifier_utils import wrap_norm_prefix
-from ..struct import TypeDef, has_member, is_a, part_of
+from ..struct import has_member, is_a, part_of
 from ..struct.reference import Reference
+from ..struct.struct import ReferenceHint, _ensure_ref
 
 __all__ = [
     "get_ancestors",
@@ -32,8 +33,8 @@ def get_hierarchy(
     *,
     include_part_of: bool = True,
     include_has_member: bool = False,
-    extra_relations: Iterable[TypeDef] | None = None,
-    properties: Iterable[str] | None = None,
+    extra_relations: Iterable[ReferenceHint] | None = None,
+    properties: Iterable[ReferenceHint] | None = None,
     use_tqdm: bool = False,
     force: bool = False,
     force_process: bool = False,
@@ -58,12 +59,19 @@ def get_hierarchy(
 
     This function thinly wraps :func:`_get_hierarchy_helper` to make it easier to work with the lru_cache mechanism.
     """
+    extra_relations_ = tuple(
+        sorted(_ensure_ref(r, ontology_prefix=prefix) for r in extra_relations or [])
+    )
+    properties_ = tuple(
+        sorted(_ensure_ref(prop, ontology_prefix=prefix) for prop in properties or [])
+    )
+
     return _get_hierarchy_helper(
         prefix=prefix,
         include_part_of=include_part_of,
         include_has_member=include_has_member,
-        extra_relations=tuple(sorted(extra_relations or [])),
-        properties=tuple(sorted(properties or [])),
+        extra_relations=extra_relations_,
+        properties=properties_,
         use_tqdm=use_tqdm,
         force=force,
         force_process=force_process,
@@ -77,8 +85,8 @@ def get_hierarchy(
 def _get_hierarchy_helper(
     prefix: str,
     *,
-    extra_relations: tuple[TypeDef, ...],
-    properties: tuple[str, ...],
+    extra_relations: tuple[Reference, ...],
+    properties: tuple[Reference, ...],
     include_part_of: bool,
     include_has_member: bool,
     use_tqdm: bool,
@@ -140,8 +148,6 @@ def _get_hierarchy_helper(
             rv.add_edge(f"{source_ns}:{source_id}", f"{prefix}:{target_id}", relation="part_of")
 
     for relation in extra_relations:
-        if not isinstance(relation, TypeDef | Reference):
-            raise TypeError
         relation_df = get_filtered_relations_df(
             prefix=prefix,
             relation=relation,

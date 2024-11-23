@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from functools import wraps
+from typing import ClassVar
 
 import bioregistry
 from curies import Reference, ReferenceTuple
@@ -25,8 +26,10 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-class MissingPrefixError(ValueError):
+class ParseError(ValueError):
     """Raised on a missing prefix."""
+
+    text: ClassVar[str]
 
     def __init__(
         self,
@@ -34,7 +37,7 @@ class MissingPrefixError(ValueError):
         curie: str,
         ontology_prefix: str | None = None,
         node: Reference | None = None,
-    ):
+    ) -> None:
         """Initialize the error."""
         self.curie = curie
         self.ontology_prefix = ontology_prefix
@@ -44,10 +47,22 @@ class MissingPrefixError(ValueError):
         s = ""
         if self.ontology_prefix:
             s += f"[{self.ontology_prefix}] "
-        s += f"CURIE contains unhandled prefix: `{self.curie}`"
+        s += f"{self.text}: `{self.curie}`"
         if self.node is not None:
             s += f" from {self.node.curie}"
         return s
+
+
+class MissingPrefixError(ParseError):
+    """Raised on a missing prefix."""
+
+    text = "CURIE contains unhandled prefix"
+
+
+class UnparsableIRIError(ParseError):
+    """Raised on a an unparsable IRI."""
+
+    text = "IRI could not be parsed"
 
 
 BAD_CURIES = set()
@@ -70,6 +85,12 @@ def normalize_curie(
     - Normalizes the namespace
     - Checks against a blacklist for the entire curie, for the namespace, and for suffixes.
     """
+    # Remap the curie with the full list
+    curie = remap_full(curie)
+
+    # Remap node's prefix (if necessary)
+    curie = remap_prefix(curie, ontology_prefix=ontology_prefix)
+
     if curie_is_blacklisted(curie):
         return None, None
     if curie_has_blacklisted_prefix(curie):
@@ -77,11 +98,13 @@ def normalize_curie(
     if curie_has_blacklisted_suffix(curie):
         return None, None
 
-    # Remap the curie with the full list
-    curie = remap_full(curie)
-
-    # Remap node's prefix (if necessary)
-    curie = remap_prefix(curie, ontology_prefix=ontology_prefix)
+    if curie.startswith("http:") or curie.startswith("https:"):
+        if reference := parse_iri(curie):
+            return reference.pair
+        elif strict:
+            raise UnparsableIRIError(curie=curie, ontology_prefix=ontology_prefix, node=node)
+        else:
+            return None, None
 
     try:
         prefix, identifier = curie.split(":", 1)
@@ -102,6 +125,14 @@ def normalize_curie(
         raise MissingPrefixError(curie=curie, ontology_prefix=ontology_prefix, node=node)
     else:
         return None, None
+
+
+def parse_iri(iri: str) -> Reference | None:
+    """Parse an IRI into a reference, if possible."""
+    p, i = bioregistry.parse_iri(iri)
+    if p and i:
+        return Reference(prefix=p, identifier=i)
+    return None
 
 
 def wrap_norm_prefix(f):
