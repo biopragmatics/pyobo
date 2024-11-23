@@ -325,6 +325,28 @@ class TestReader(unittest.TestCase):
             row,
         )
 
+    def test_property_double_url(self) -> None:
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: http://purl.obolibrary.org/obo/RO_0018033 http://purl.obolibrary.org/obo/CHEBI_5678
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(list(term.annotations_literal)))
+        self.assertEqual(1, len(list(term.annotations_object)))
+        self.assertEqual("CHEBI:5678", term.get_property(is_conjugate_base_of))
+
+        df = ontology.get_properties_df()
+        self.assertEqual(4, len(df.columns))
+        self.assertEqual(1, len(df))
+        row = dict(df.iloc[0])
+        self.assertEqual(
+            {"chebi_id": "1234", "property": "RO:0018033", "value": "CHEBI:5678", "datatype": ""},
+            row,
+        )
+
     def test_property_literal_url(self) -> None:
         """Test using a full OBO PURL as the property."""
         ontology = _read("""\
