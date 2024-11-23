@@ -466,6 +466,20 @@ class TestReader(unittest.TestCase):
         self.assertEqual(1, len(term.provenance))
         self.assertEqual(CHARLIE, term.provenance[0])
 
+    def test_provenance_no_definition(self) -> None:
+        """Test parsing a term with provenance but no definition."""
+        ontology = _read(f"""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            def: "" [{CHARLIE.curie}]
+        """)
+        term = self.get_only_term(ontology)
+        self.assertIsNone(term.definition)
+        self.assertEqual(1, len(term.provenance))
+        self.assertEqual(CHARLIE, term.provenance[0])
+
     def test_synonym_minimal(self) -> None:
         """Test parsing a synonym just the text."""
         ontology = _read("""\

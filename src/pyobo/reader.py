@@ -160,8 +160,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
         n_xrefs += len(xrefs)
 
         definition, definition_references = get_definition(data, node=reference)
-        if definition_references:
-            provenance.extend(definition_references)
+        provenance.extend(definition_references)
 
         alt_ids = list(iterate_node_alt_ids(data, strict=strict))
         n_alt_ids += len(alt_ids)
@@ -342,11 +341,11 @@ def iterate_graph_typedefs(
         yield TypeDef(reference=reference, xrefs=xrefs)
 
 
-def get_definition(data, *, node: Reference) -> tuple[None, None] | tuple[str, list[Reference]]:
+def get_definition(data, *, node: Reference) -> tuple[None | str, list[Reference]]:
     """Extract the definition from the data."""
     definition = data.get("def")  # it's allowed not to have a definition
     if not definition:
-        return None, None
+        return None, []
     return _extract_definition(definition, node=node)
 
 
@@ -355,17 +354,17 @@ def _extract_definition(
     *,
     node: Reference,
     strict: bool = False,
-) -> tuple[None, None] | tuple[str, list[Reference]]:
+) -> tuple[None | str, list[Reference]]:
     """Extract the definitions."""
     if not s.startswith('"'):
         logger.warning(f"[{node.curie}] definition does not start with a quote")
-        return None, None
+        return None, []
 
     try:
         definition, rest = _quote_split(s)
     except ValueError as e:
         logger.warning("[%s] failed to parse definition quotes: %s", node.curie, str(e))
-        return None, None
+        return None, []
 
     if not rest.startswith("[") or not rest.endswith("]"):
         logger.warning(
@@ -374,7 +373,7 @@ def _extract_definition(
         provenance = []
     else:
         provenance = _parse_trailing_ref_list(rest, strict=strict, node=node)
-    return definition, provenance
+    return definition or None, provenance
 
 
 def get_first_nonescaped_quote(s: str) -> int | None:
@@ -389,7 +388,9 @@ def get_first_nonescaped_quote(s: str) -> int | None:
 
 
 def _quote_split(s: str) -> tuple[str, str]:
-    s = s.lstrip('"')
+    if not s.startswith('"'):
+        raise ValueError(f"'{s}' does not start with a quote")
+    s = s.removeprefix('"')
     i = get_first_nonescaped_quote(s)
     if i is None:
         raise ValueError(f"no closing quote found in `{s}`")

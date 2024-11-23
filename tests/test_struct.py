@@ -425,7 +425,7 @@ class TestTerm(unittest.TestCase):
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            xref: orcid:0000-0003-4423-4370
+            def: "" [orcid:0000-0003-4423-4370]
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )

@@ -69,7 +69,7 @@ dependencies = [
     "pystow>=0.6.0",
     "bioversions>=0.5.535",
     "bioregistry>=0.11.23",
-    "bioontologies>=0.4.0",
+    "bioontologies>=0.5.2",
     "zenodo-client>=0.0.5",
     "class_resolver",
     "psycopg2-binary",
