@@ -1,9 +1,10 @@
 """Parsers for MSig."""
 
 import logging
+import zipfile
 from collections.abc import Iterable
 
-from pystow.utils import read_zipfile_xml
+from lxml import etree
 from tqdm.auto import tqdm
 
 from ..struct import Obo, Reference, Term, TypeDef, has_participant
@@ -62,14 +63,33 @@ GO_URL_PREFIX = "http://amigo.geneontology.org/amigo/term/GO:"
 KEGG_URL_PREFIX = "http://www.genome.jp/kegg/pathway/hsa/"
 
 
-def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
-    """Get MSigDb terms."""
+def _iter_entries(version: str, force: bool = False):
     xml_url = f"{BASE_URL}/{version}.Hs/msigdb_v{version}.Hs.xml.zip"
     path = ensure_path(prefix=PREFIX, url=xml_url, version=version, force=force)
-    inner_path = f"msigdb_v{version}.Hs.xml"
-    tree = read_zipfile_xml(path, inner_path=inner_path)
+    with zipfile.ZipFile(path, "r") as zf:
+        with zf.open(f"msigdb_v{version}.Hs.xml") as file:
+            for _ in range(3):
+                next(file)
+            # from here on out, every row except the last is a GENESET
+            for i, line_bytes in enumerate(file, start=4):
+                line = line_bytes.decode("utf8").strip()
+                if not line.startswith("<GENESET"):
+                    continue
+                try:
+                    tree = etree.fromstring(line)
+                except etree.XMLSyntaxError as e:
+                    # this is the result of faulty encoding in XML - maybe they
+                    # wrote XML with their own string formatting instead of using a
+                    # library.
+                    tqdm.write(f"[{PREFIX}] failed on line {i}: {e}")
+                else:
+                    yield tree
 
-    for entry in tqdm(tree.getroot(), desc=f"{PREFIX} v{version}", unit_scale=True):
+
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
+    """Get MSigDb terms."""
+    entries = _iter_entries(version=version, force=force)
+    for entry in tqdm(entries, desc=f"{PREFIX} v{version}", unit_scale=True):
         attrib = dict(entry.attrib)
         tax_id = _SPECIES[attrib["ORGANISM"]]
 
@@ -148,4 +168,4 @@ def _get_definition(attrib) -> str | None:
 
 
 if __name__ == "__main__":
-    MSigDBGetter.cli()
+    MSigDBGetter().write_default(force=True, write_obo=True)
