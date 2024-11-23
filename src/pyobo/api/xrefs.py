@@ -160,6 +160,7 @@ def get_mappings_df(
             ontology = get_ontology(prefix, **kwargs)
             return ontology.get_mappings_df(
                 use_tqdm=use_tqdm,
+                include_subject_labels=True,
                 include_mapping_source_column=include_mapping_source_column,
             )
 
