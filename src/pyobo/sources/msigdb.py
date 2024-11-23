@@ -3,10 +3,10 @@
 import logging
 from collections.abc import Iterable
 
-from lxml.etree import ElementTree
+from pystow.utils import read_zipfile_xml
 from tqdm.auto import tqdm
 
-from ..struct import Obo, Reference, Term, has_participant
+from ..struct import Obo, Reference, Term, TypeDef, has_participant
 from ..utils.path import ensure_path
 
 logger = logging.getLogger(__name__)
@@ -17,6 +17,20 @@ __all__ = [
 
 PREFIX = "msigdb"
 BASE_URL = "https://data.broadinstitute.org/gsea-msigdb/msigdb/release"
+
+CATEGORY_CODE = TypeDef.default(PREFIX, "category_code", name="category code")
+SUB_CATEGORY_CODE = TypeDef.default(PREFIX, "sub_category_code", name="sub-category code")
+CONTRIBUTOR = TypeDef.default(PREFIX, "contributor", name="contributor")
+EXACT_SOURCE = TypeDef.default(PREFIX, "exact_source", name="exact source")
+EXTERNAL_DETAILS_URL = TypeDef.default(PREFIX, "external_details_url", name="external details URL")
+
+PROPERTIES = [
+    ("CATEGORY_CODE", CATEGORY_CODE),
+    ("SUB_CATEGORY_CODE", SUB_CATEGORY_CODE),
+    ("CONTRIBUTOR", CONTRIBUTOR),
+    ("EXACT_SOURCE", EXACT_SOURCE),
+    ("EXTERNAL_DETAILS_URL", EXTERNAL_DETAILS_URL),
+]
 
 
 class MSigDBGetter(Obo):
@@ -50,9 +64,10 @@ KEGG_URL_PREFIX = "http://www.genome.jp/kegg/pathway/hsa/"
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get MSigDb terms."""
-    xml_url = f"{BASE_URL}/{version}.Hs/msigdb_v{version}.Hs.xml"
+    xml_url = f"{BASE_URL}/{version}.Hs/msigdb_v{version}.Hs.xml.zip"
     path = ensure_path(prefix=PREFIX, url=xml_url, version=version, force=force)
-    tree = ElementTree.parse(path)
+    inner_path = f"msigdb_v{version}.Hs.xml"
+    tree = read_zipfile_xml(path, inner_path=inner_path)
 
     for entry in tqdm(tree.getroot(), desc=f"{PREFIX} v{version}", unit_scale=True):
         attrib = dict(entry.attrib)
@@ -79,16 +94,9 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             provenance=[] if reference is None else [reference],
             is_obsolete=is_obsolete,
         )
-        for key in [
-            "CATEGORY_CODE",
-            "SUB_CATEGORY_CODE",
-            "CONTRIBUTOR",
-            "EXACT_SOURCE",
-            "EXTERNAL_DETAILS_URL",
-        ]:
-            value = attrib[key].strip()
-            if value:
-                term.annotate_literal(key.lower(), value)
+        for key, typedef in PROPERTIES:
+            if value := attrib[key].strip():
+                term.annotate_literal(typedef, value)
 
         term.set_species(tax_id)
 
