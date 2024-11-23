@@ -60,7 +60,7 @@ def get_filtered_properties_mapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property value
     """
-    prop = _ensure_ref(ReferenceHint)
+    prop = _ensure_ref(prop)
     version = get_version_from_kwargs(prefix, kwargs)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
     if all_properties_path.is_file():
@@ -97,7 +97,7 @@ def get_filtered_properties_multimapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property values
     """
-    prop = _ensure_ref(ReferenceHint)
+    prop = _ensure_ref(prop)
     version = get_version_from_kwargs(prefix, kwargs)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
     if all_properties_path.is_file():
