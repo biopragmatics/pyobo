@@ -9,7 +9,6 @@ import pystow
 from pyobo.api.utils import get_version
 from pyobo.struct import Obo, Reference, Term
 from pyobo.struct.typedef import (
-    TypeDef,
     enabled_by,
     has_bidirectional_reaction,
     has_input,
@@ -208,7 +207,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
                 )
                 continue
             target_reference = Reference(prefix=xref_prefix, identifier=xref_id)
-            if isinstance(relation, TypeDef):
+            if relation is not None:
                 terms[directional_rhea_id].append_relationship(relation, target_reference)
             else:
                 terms[directional_rhea_id].append_xref(target_reference)
