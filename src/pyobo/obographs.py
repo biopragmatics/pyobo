@@ -69,9 +69,7 @@ def _rewire(r: curies.Reference | Referenced) -> curies.Reference:
 
 
 def _get_class_node(term: Term) -> Node:
-    if term.provenance and not term.definition:
-        logger.warning("[%s] unhandled when provenance but no definition", term.curie)
-    elif term.definition:
+    if term.provenance or term.definition:
         definition = Definition.from_parsed(
             value=term.definition, references=[_rewire(p) for p in term.provenance or []]
         )

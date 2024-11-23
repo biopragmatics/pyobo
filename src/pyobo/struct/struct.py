@@ -456,7 +456,8 @@ class Term(Referenced):
     def _definition_fp(self) -> str:
         if self.definition is None:
             raise AssertionError
-        return f'"{obo_escape_slim(self.definition)}" [{comma_separate(self.provenance)}]'
+        definition = obo_escape_slim(self.definition) if self.definition else ""
+        return f'"{definition}" [{comma_separate(self.provenance)}]'
 
     def iterate_relations(self) -> Iterable[tuple[Reference, Reference]]:
         """Iterate over pairs of typedefs and targets."""
@@ -500,9 +501,6 @@ class Term(Referenced):
 
         if self.definition:
             yield f"def: {self._definition_fp()}"
-        elif self.provenance:
-            # if no definition, just stick on xrefs
-            xrefs.extend(self.provenance)
 
         for alt in sorted(self.alt_ids):
             yield f"alt_id: {alt}"  # __str__ bakes in the ! name

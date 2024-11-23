@@ -416,6 +416,18 @@ class TestTerm(unittest.TestCase):
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_provenance(CHARLIE)
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            def: "" [orcid:0000-0003-4423-4370]
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+        )
+
     def test_provenance_no_definition(self) -> None:
         """Test when there's provenance but not definition."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)

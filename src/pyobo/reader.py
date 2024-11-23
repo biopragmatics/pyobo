@@ -355,7 +355,7 @@ def _extract_definition(
     *,
     node: Reference,
     strict: bool = False,
-) -> tuple[None, None] | tuple[str, list[Reference]]:
+) -> tuple[None | str, list[Reference]]:
     """Extract the definitions."""
     if not s.startswith('"'):
         logger.warning(f"[{node.curie}] definition does not start with a quote")
@@ -374,7 +374,7 @@ def _extract_definition(
         provenance = []
     else:
         provenance = _parse_trailing_ref_list(rest, strict=strict, node=node)
-    return definition, provenance
+    return definition or None, provenance
 
 
 def get_first_nonescaped_quote(s: str) -> int | None:
@@ -389,7 +389,9 @@ def get_first_nonescaped_quote(s: str) -> int | None:
 
 
 def _quote_split(s: str) -> tuple[str, str]:
-    s = s.lstrip('"')
+    if not s.startswith('"'):
+        raise ValueError(f"'{s}' does not start with a quote")
+    s = s.removeprefix('"')
     i = get_first_nonescaped_quote(s)
     if i is None:
         raise ValueError(f"no closing quote found in `{s}`")
