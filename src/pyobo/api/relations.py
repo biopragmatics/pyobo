@@ -22,7 +22,6 @@ from ..constants import (
 )
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..struct import TypeDef
 from ..struct.reference import Reference
 from ..struct.struct import ReferenceHint, _ensure_ref
 from ..utils.cache import cached_df
@@ -102,7 +101,11 @@ def get_filtered_relations_df(
 
 @wrap_norm_prefix
 def get_id_multirelations_mapping(
-    prefix: str, typedef: TypeDef, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str,
+    typedef: ReferenceHint,
+    *,
+    use_tqdm: bool = False,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, list[Reference]]:
     """Get the OBO file and output a synonym dictionary."""
     kwargs["version"] = get_version_from_kwargs(prefix, kwargs)
