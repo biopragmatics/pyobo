@@ -18,10 +18,10 @@ from ..api import (
     get_id_species_mapping,
     get_id_synonyms_mapping,
     get_id_to_alts,
+    get_mappings_df,
     get_metadata,
     get_properties_df,
     get_relations_df,
-    get_sssom_df,
     get_typedef_df,
     get_xrefs_df,
 )
@@ -146,13 +146,10 @@ def _iter_xrefs(
 def _iter_mappings(
     **kwargs: Unpack[IterHelperHelperDict],
 ) -> Iterable[tuple[str, str, str, str, str]]:
-    f = partial(get_sssom_df, names=False)
+    f = partial(get_mappings_df, names=False, include_mapping_source_column=True)
     # hack in a name to the partial function object since
     # it's used for the tqdm description in iter_helper_helper
-    f.__name__ = "get_mappings_df" #type:ignore
+    f.__name__ = "get_mappings_df"  # type:ignore
     it = iter_helper_helper(f, **kwargs)
-    for prefix, df in it:
-        for row in df.values:
-            # append on the mapping_source
-            # (https://mapping-commons.github.io/sssom/mapping_source/)
-            yield *row, prefix
+    for _prefix, df in it:
+        yield from df.values

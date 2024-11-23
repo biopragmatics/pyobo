@@ -1595,8 +1595,12 @@ class Obo:
         for term, xref in self.iterate_xrefs(use_tqdm=use_tqdm):
             yield term.identifier, xref.prefix, xref.identifier
 
-    def get_sssom_df(
-        self, *, use_tqdm: bool = False, include_subject_labels: bool = False
+    def get_mappings_df(
+        self,
+        *,
+        use_tqdm: bool = False,
+        include_subject_labels: bool = False,
+        include_mapping_source_column: bool = False,
     ) -> pd.DataFrame:
         """Get a dataframe with SSSOM extracted from the OBO document."""
         justification_curie = "sempav:UnspecifiedMatching"
@@ -1608,6 +1612,12 @@ class Obo:
         df = pd.DataFrame(rows, columns=SSSOM_DF_COLUMNS)
         if not include_subject_labels:
             del df["subject_label"]
+
+        # append on the mapping_source
+        # (https://mapping-commons.github.io/sssom/mapping_source/)
+        if include_mapping_source_column:
+            df["mapping_source"] = self.ontology
+
         return df
 
     @property

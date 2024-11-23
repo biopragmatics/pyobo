@@ -48,6 +48,7 @@ from .species import get_id_species_mapping, get_species
 from .typedefs import get_typedef_df
 from .xrefs import (
     get_filtered_xrefs,
+    get_mappings_df,
     get_sssom_df,
     get_xref,
     get_xrefs,
@@ -75,6 +76,7 @@ __all__ = [
     "get_id_synonyms_mapping",
     "get_id_to_alts",
     "get_ids",
+    "get_mappings_df",
     "get_metadata",
     "get_name",
     "get_name_by_curie",

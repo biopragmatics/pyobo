@@ -18,6 +18,7 @@ from ..utils.path import prefix_cache_join
 
 __all__ = [
     "get_filtered_xrefs",
+    "get_mappings_df",
     "get_sssom_df",
     "get_xref",
     "get_xrefs",
@@ -85,7 +86,7 @@ def get_xrefs_df(
 ) -> pd.DataFrame:
     """Get all xrefs."""
     warnings.warn(
-        "use pyobo.get_sssom_df instead of pyobo.get_xrefs_df", DeprecationWarning, stacklevel=2
+        "use pyobo.get_mappings_df instead of pyobo.get_xrefs_df", DeprecationWarning, stacklevel=2
     )
 
     version = get_version_from_kwargs(prefix, kwargs)
@@ -107,7 +108,20 @@ def get_sssom_df(
     use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
-    r"""Get xrefs from a source as an SSSOM dataframe.
+    """Get an SSSOM dataframe, replaced by :func:`get_mappings_df`."""
+    warnings.warn("get_sssom_df was renamed to get_mappings_df", DeprecationWarning, stacklevel=2)
+    return get_mappings_df(prefix=prefix, names=names, use_tqdm=use_tqdm, **kwargs)
+
+
+def get_mappings_df(
+    prefix: str | Obo,
+    *,
+    names: bool = True,
+    include_mapping_source_column: bool = False,
+    use_tqdm: bool = False,
+    **kwargs: Unpack[GetOntologyKwargs],
+) -> pd.DataFrame:
+    r"""Get semantic mappings from a source as an SSSOM dataframe.
 
     :param prefix: The ontology to look in for xrefs
     :param names: Add name columns (``subject_label`` and ``object_label``)
@@ -116,20 +130,24 @@ def get_sssom_df(
     For example, if you want to get UMLS as an SSSOM dataframe, you can do
 
     >>> import pyobo
-    >>> df = pyobo.get_sssom_df("umls")
+    >>> df = pyobo.get_mappings_df("umls")
     >>> df.to_csv("umls.sssom.tsv", sep="\t", index=False)
 
     If you don't want to get all of the many resources required to add
     names, you can pass ``names=False``
 
     >>> import pyobo
-    >>> df = pyobo.get_sssom_df("umls", names=False)
+    >>> df = pyobo.get_mappings_df("umls", names=False)
     >>> df.to_csv("umls.sssom.tsv", sep="\t", index=False)
 
     .. note:: This assumes the Bioregistry as the prefix map
     """
     if isinstance(prefix, Obo):
-        df = prefix.get_sssom_df(use_tqdm=use_tqdm, include_subject_labels=names)
+        df = prefix.get_mappings_df(
+            use_tqdm=use_tqdm,
+            include_subject_labels=names,
+            include_mapping_source_column=include_mapping_source_column,
+        )
         prefix = prefix.ontology
 
     else:
@@ -140,7 +158,10 @@ def get_sssom_df(
         def _df_getter() -> pd.DataFrame:
             logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
             ontology = get_ontology(prefix, **kwargs)
-            return ontology.get_sssom_df(use_tqdm=use_tqdm, include_subject_labels=True)
+            return ontology.get_mappings_df(
+                use_tqdm=use_tqdm,
+                include_mapping_source_column=include_mapping_source_column,
+            )
 
         df = _df_getter()
 
@@ -150,4 +171,5 @@ def get_sssom_df(
         df["object_label"] = df["object_id"].map(get_name_by_curie)
     elif "subject_label" in df.columns:
         del df["subject_label"]
+
     return df
