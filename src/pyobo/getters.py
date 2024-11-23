@@ -8,17 +8,20 @@ import json
 import logging
 import pathlib
 import subprocess
+import time
 import typing
 import urllib.error
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
+from textwrap import indent
 from typing import TypeVar
 
 import bioregistry
 import click
 import pystow.utils
 from bioontologies import robot
+from tabulate import tabulate
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
 
@@ -230,9 +233,12 @@ SKIP = {
     "atol": "unable to download",
     "eol": "unable to download, same source as atol",
     "hog": "unable to download",
+    "vhog": "unable to download",
     "ccf": "unable to download",
     "gorel": "unable to download",
     "dinto": "unable to download",
+    "mo": "unable to download",
+    "vario": "unable to download/build",
     "gainesville.core": "unable to download",
     "mamo": "unable to download",
     "ato": "can't process",
@@ -364,7 +370,7 @@ def iter_helper_helper(
             logger.warning("[drugbank] invalid credentials")
         except subprocess.CalledProcessError:
             logger.warning("[%s] ROBOT was unable to convert OWL to OBO", prefix)
-        except UnhandledFormatError as e:
+        except (UnhandledFormatError, NoBuildError) as e:
             logger.warning("[%s] %s", prefix, e)
         except ValueError as e:
             if _is_xml(e):
@@ -424,6 +430,7 @@ def db_output_helper(
     :param strict: Passed to ``f`` by keyword
     :returns: A sequence of paths that got created.
     """
+    start = time.time()
     directory = _prep_dir(directory)
 
     c: typing.Counter[str] = Counter()
@@ -436,9 +443,17 @@ def db_output_helper(
     db_sample_path = directory.joinpath(f"{db_name}_sample.tsv")
     db_summary_path = directory.joinpath(f"{db_name}_summary.tsv")
     db_summary_detailed_path = directory.joinpath(f"{db_name}_summary_detailed.tsv")
+    db_metadata_path = directory.joinpath(f"{db_name}_metadata.json")
+    rv: list[tuple[str, pathlib.Path]] = [
+        ("Metadata", db_metadata_path),
+        ("Data", db_path),
+        ("Sample", db_sample_path),
+        ("Summary", db_summary_path),
+    ]
 
     logger.info("writing %s to %s", db_name, db_path)
     logger.info("writing %s sample to %s", db_name, db_sample_path)
+    sample_rows = []
     with gzip.open(db_path, mode="wt") if use_gzip else open(db_path, "w") as gzipped_file:
         writer = get_writer(gzipped_file)
 
@@ -456,6 +471,7 @@ def db_output_helper(
                     c_detailed[tuple(row[i] for i in summary_detailed)] += 1
                 writer.writerow(row)
                 sample_writer.writerow(row)
+                sample_rows.append(row)
 
         # continue just in the gzipped one
         for row in it:
@@ -464,7 +480,6 @@ def db_output_helper(
                 c_detailed[tuple(row[i] for i in summary_detailed)] += 1
             writer.writerow(row)
 
-    logger.info(f"writing {db_name} summary to {db_summary_path}")
     with open(db_summary_path, "w") as file:
         writer = get_writer(file)
         writer.writerows(c.most_common())
@@ -474,8 +489,8 @@ def db_output_helper(
         with open(db_summary_detailed_path, "w") as file:
             writer = get_writer(file)
             writer.writerows((*keys, v) for keys, v in c_detailed.most_common())
+        rv.append(("Summary (Detailed)", db_summary_detailed_path))
 
-    db_metadata_path = directory.joinpath(f"{db_name}_metadata.json")
     with open(db_metadata_path, "w") as file:
         json.dump(
             {
@@ -488,12 +503,12 @@ def db_output_helper(
             indent=2,
         )
 
-    rv: list[pathlib.Path] = [
-        db_metadata_path,
-        db_path,
-        db_sample_path,
-        db_summary_path,
-    ]
-    if summary_detailed:
-        rv.append(db_summary_detailed_path)
-    return rv
+    elapsed = time.time() - start
+    click.secho(f"\nWrote the following files in {elapsed:.1f} seconds\n", fg="green")
+    click.secho(indent(tabulate(rv), " "), fg="green")
+
+    click.secho("\nSample rows:\n", fg="green")
+    click.secho(indent(tabulate(sample_rows, headers=columns), " "), fg="green")
+    click.echo()
+
+    return [path for _, path in rv]
