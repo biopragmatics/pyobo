@@ -228,6 +228,17 @@ close_match = TypeDef(
 related_match = TypeDef(
     reference=Reference(prefix="skos", identifier="relatedMatch", name="related match"),
 )
+owl_same_as = TypeDef(
+    reference=Reference(prefix="owl", identifier="sameAs", name="same as"),
+)
+equivalent_class = TypeDef(
+    reference=Reference(prefix="owl", identifier="equivalentClass", name="equivalent class"),
+)
+equivalent_property = TypeDef(
+    reference=Reference(prefix="owl", identifier="equivalentProperty", name="equivalent property"),
+)
+
+
 is_a = TypeDef(
     reference=Reference(prefix="rdfs", identifier="subClassOf", name="subclass of"),
 )
@@ -393,4 +404,16 @@ for reference, name in load_ro().items():
             reference.prefix, reference.identifier, name
         )
 
-match_typedefs: set[TypeDef] = {broad_match, close_match, exact_match, narrow_match, related_match}
+#: See https://mapping-commons.github.io/sssom/spec-model/
+match_typedefs: set[TypeDef] = {
+    broad_match,
+    close_match,
+    exact_match,
+    narrow_match,
+    related_match,
+    owl_same_as,
+    equivalent_class,
+    equivalent_property,
+    has_dbxref,
+    see_also,
+}

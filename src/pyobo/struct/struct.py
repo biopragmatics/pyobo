@@ -1627,7 +1627,7 @@ class Obo:
 
     def get_xrefs_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get a dataframe of all xrefs extracted from the OBO document."""
-        warnings.warn("Ontology.use get_sssom_df instead", DeprecationWarning, stacklevel=2)
+        warnings.warn("use ontology.get_mappings_df instead", DeprecationWarning, stacklevel=2)
 
         return pd.DataFrame(
             list(self.iterate_xref_rows(use_tqdm=use_tqdm)),
