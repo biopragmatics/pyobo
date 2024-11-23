@@ -5,6 +5,7 @@ from __future__ import annotations
 import gzip
 import logging
 from collections.abc import Iterable
+from functools import partial
 from typing import cast
 
 import bioregistry
@@ -20,6 +21,7 @@ from ..api import (
     get_metadata,
     get_properties_df,
     get_relations_df,
+    get_sssom_df,
     get_typedef_df,
     get_xrefs_df,
 )
@@ -139,3 +141,18 @@ def _iter_xrefs(
     for df in iter_xref_plugins(skip_below=kwargs.get("skip_below")):
         df.dropna(inplace=True)
         yield from tqdm(df.values, leave=False, total=len(df.index), unit_scale=True)
+
+
+def _iter_mappings(
+    **kwargs: Unpack[IterHelperHelperDict],
+) -> Iterable[tuple[str, str, str, str, str]]:
+    f = partial(get_sssom_df, names=False)
+    # hack in a name to the partial function object since
+    # it's used for the tqdm description in iter_helper_helper
+    f.__name__ = "get_mappings_df" #type:ignore
+    it = iter_helper_helper(f, **kwargs)
+    for prefix, df in it:
+        for row in df.values:
+            # append on the mapping_source
+            # (https://mapping-commons.github.io/sssom/mapping_source/)
+            yield *row, prefix

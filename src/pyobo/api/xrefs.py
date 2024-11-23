@@ -84,7 +84,9 @@ def get_xrefs_df(
     prefix: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> pd.DataFrame:
     """Get all xrefs."""
-    warnings.warn("use pyobo.get_sssom_df instead of pyobo.get_xrefs_df", DeprecationWarning, stacklevel=2)
+    warnings.warn(
+        "use pyobo.get_sssom_df instead of pyobo.get_xrefs_df", DeprecationWarning, stacklevel=2
+    )
 
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
