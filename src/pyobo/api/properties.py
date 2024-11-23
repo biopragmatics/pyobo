@@ -70,9 +70,13 @@ def get_filtered_properties_mapping(
         df = df.loc[df["property"] == prop.preferred_curie, [f"{prefix}_id", "value"]]
         return dict(df.values)
 
-    path = prefix_cache_join(prefix, "properties", name=f"{prop.preferred_curie}.tsv", version=version)
+    path = prefix_cache_join(
+        prefix, "properties", name=f"{prop.preferred_curie}.tsv", version=version
+    )
 
-    @cached_mapping(path=path, header=[f"{prefix}_id", prop.preferred_curie], force=check_should_force(kwargs))
+    @cached_mapping(
+        path=path, header=[f"{prefix}_id", prop.preferred_curie], force=check_should_force(kwargs)
+    )
     def _mapping_getter() -> Mapping[str, str]:
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
@@ -103,9 +107,13 @@ def get_filtered_properties_multimapping(
         df = df.loc[df["property"] == prop.preferred_curie, [f"{prefix}_id", "value"]]
         return multidict(df.values)
 
-    path = prefix_cache_join(prefix, "properties", name=f"{prop.preferred_curie}.tsv", version=version)
+    path = prefix_cache_join(
+        prefix, "properties", name=f"{prop.preferred_curie}.tsv", version=version
+    )
 
-    @cached_multidict(path=path, header=[f"{prefix}_id", prop.preferred_curie], force=check_should_force(kwargs))
+    @cached_multidict(
+        path=path, header=[f"{prefix}_id", prop.preferred_curie], force=check_should_force(kwargs)
+    )
     def _mapping_getter() -> Mapping[str, list[str]]:
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
