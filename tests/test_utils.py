@@ -29,6 +29,11 @@ class TestStringUtils(unittest.TestCase):
             ("ncit", "C1234"), normalize_curie("Thesaurus:C1234", ontology_prefix="enm")
         )
 
+        # parsing IRIs
+        self.assertEqual(
+            ("chebi", "1234"), normalize_curie("http://purl.obolibrary.org/obo/CHEBI_1234")
+        )
+
     def test_parse_eccode_transfer(self):
         """Test parse_eccode_transfer."""
         self.assertEqual(

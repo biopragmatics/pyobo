@@ -293,20 +293,19 @@ def iterate_graph_synonym_typedefs(
     for s in graph.graph.get("synonymtypedef", []):
         sid, name = s.split(" ", 1)
         name = name.strip().strip('"')
-        if sid.startswith("http://") or sid.startswith("https://"):
-            reference = Reference.from_iri(sid, name=name)
-        elif ":" not in sid:  # assume it's ad-hoc
-            reference = Reference(prefix=ontology_prefix, identifier=sid, name=name)
-        else:  # assume it's a curie
-            reference = Reference.from_curie(sid, name=name, strict=strict)
-
-        if reference is None:
-            if strict:
+        if ":" not in sid:
+            # assume it's a default reference
+            yield SynonymTypeDef(reference=default_reference(ontology_prefix, sid, name=name))
+        else:
+            reference = Reference.from_curie(
+                sid, name=name, strict=strict, ontology_prefix=ontology_prefix
+            )
+            if reference is not None:
+                yield SynonymTypeDef(reference=reference)
+            elif strict:
                 raise ValueError(f"Could not parse {sid}")
             else:
                 continue
-
-        yield SynonymTypeDef(reference=reference)
 
 
 def iterate_graph_typedefs(

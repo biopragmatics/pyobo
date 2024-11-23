@@ -93,38 +93,12 @@ class Reference(curies.Reference):
         prefix, identifier = normalize_curie(
             curie, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
-        return cls._materialize(prefix=prefix, identifier=identifier, name=name, auto=auto)
-
-    @classmethod
-    def from_iri(
-        cls,
-        iri: str,
-        name: str | None = None,
-        *,
-        auto: bool = False,
-    ) -> Reference | None:
-        """Get a reference from an IRI using the Bioregistry.
-
-        :param iri: The IRI to parse
-        :param name: The name associated with the CURIE
-        :param auto: Automatically look up name
-        """
-        prefix, identifier = bioregistry.parse_iri(iri)
-        return cls._materialize(prefix=prefix, identifier=identifier, name=name, auto=auto)
-
-    @classmethod
-    def _materialize(
-        cls,
-        prefix: str | None,
-        identifier: str | None,
-        name: str | None = None,
-        *,
-        auto: bool = False,
-    ) -> Reference | None:
         if prefix is None or identifier is None:
             return None
         if name is None and auto:
-            return cls.auto(prefix=prefix, identifier=identifier)
+            from ..api import get_name
+
+            name = get_name(prefix, identifier)
         return cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
 
     @property
@@ -196,20 +170,20 @@ class Referenced:
         return self.reference.bioregistry_link
 
 
-def default_reference(prefix: str, part: str, name: str | None = None) -> Reference:
+def default_reference(prefix: str, identifier: str, name: str | None = None) -> Reference:
     """Create a CURIE for an "unqualified" reference.
 
     :param prefix: The prefix of the ontology in which the "unqualified" reference is made
-    :param part: The "unqualified" reference. For example, if you just write
+    :param identifier: The "unqualified" reference. For example, if you just write
         "located_in" somewhere there is supposed to be a CURIE
     :returns: A CURIE for the "unqualified" reference based on the OBO semantic space
 
     >>> default_reference("chebi", "conjugate_base_of")
     Reference(prefix="obo", identifier="chebi#conjugate_base_of")
     """
-    if not part.strip():
+    if not identifier.strip():
         raise ValueError("default identifier is empty")
-    return Reference(prefix="obo", identifier=f"{prefix}#{part}", name=name)
+    return Reference(prefix="obo", identifier=f"{prefix}#{identifier}", name=name)
 
 
 def reference_escape(predicate: Reference | Referenced, *, ontology_prefix: str) -> str:
