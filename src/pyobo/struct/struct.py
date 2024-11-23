@@ -1327,7 +1327,9 @@ class Obo:
                         if predicate == prop:
                             yield term, object.preferred_curie
 
-    def get_filtered_properties_df(self, prop: str, *, use_tqdm: bool = False) -> pd.DataFrame:
+    def get_filtered_properties_df(
+        self, prop: ReferenceHint, *, use_tqdm: bool = False
+    ) -> pd.DataFrame:
         """Get a dataframe of terms' identifiers to the given property's values."""
         return pd.DataFrame(
             list(self.get_filtered_properties_mapping(prop, use_tqdm=use_tqdm).items()),
@@ -1335,7 +1337,7 @@ class Obo:
         )
 
     def get_filtered_properties_mapping(
-        self, prop: str, *, use_tqdm: bool = False
+        self, prop: ReferenceHint, *, use_tqdm: bool = False
     ) -> Mapping[str, str]:
         """Get a mapping from a term's identifier to the property.
 
@@ -1347,7 +1349,7 @@ class Obo:
         }
 
     def get_filtered_properties_multimapping(
-        self, prop: str, *, use_tqdm: bool = False
+        self, prop: ReferenceHint, *, use_tqdm: bool = False
     ) -> Mapping[str, list[str]]:
         """Get a mapping from a term's identifier to the property values."""
         return multidict(

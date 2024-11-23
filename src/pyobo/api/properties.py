@@ -10,6 +10,7 @@ from .utils import get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
+from ..struct.struct import ReferenceHint, _ensure_ref
 from ..utils.cache import cached_df, cached_mapping, cached_multidict
 from ..utils.io import multidict
 from ..utils.path import prefix_cache_join
@@ -49,7 +50,7 @@ def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.Da
 
 @wrap_norm_prefix
 def get_filtered_properties_mapping(
-    prefix: str, prop: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, prop: ReferenceHint, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, str]:
     """Extract a single property for each term as a dictionary.
 
@@ -59,22 +60,19 @@ def get_filtered_properties_mapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property value
     """
-    # df = get_properties_df(prefix=prefix, force=force, version=version)
-    # df = df[df["property"] == prop]
-    # return dict(df[[f"{prefix}_id", "value"]].values)
-
+    prop = _ensure_ref(ReferenceHint)
     version = get_version_from_kwargs(prefix, kwargs)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
     if all_properties_path.is_file():
         logger.info("[%s] loading pre-cached properties", prefix)
         df = pd.read_csv(all_properties_path, sep="\t")
         logger.info("[%s] filtering pre-cached properties", prefix)
-        df = df.loc[df["property"] == prop, [f"{prefix}_id", "value"]]
+        df = df.loc[df["property"] == prop.preferred_curie, [f"{prefix}_id", "value"]]
         return dict(df.values)
 
-    path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
+    path = prefix_cache_join(prefix, "properties", name=f"{prop.preferred_curie}.tsv", version=version)
 
-    @cached_mapping(path=path, header=[f"{prefix}_id", prop], force=check_should_force(kwargs))
+    @cached_mapping(path=path, header=[f"{prefix}_id", prop.preferred_curie], force=check_should_force(kwargs))
     def _mapping_getter() -> Mapping[str, str]:
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
@@ -85,7 +83,7 @@ def get_filtered_properties_mapping(
 
 @wrap_norm_prefix
 def get_filtered_properties_multimapping(
-    prefix: str, prop: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, prop: ReferenceHint, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, list[str]]:
     """Extract multiple properties for each term as a dictionary.
 
@@ -95,18 +93,19 @@ def get_filtered_properties_multimapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property values
     """
+    prop = _ensure_ref(ReferenceHint)
     version = get_version_from_kwargs(prefix, kwargs)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
     if all_properties_path.is_file():
         logger.info("[%s] loading pre-cached properties", prefix)
         df = pd.read_csv(all_properties_path, sep="\t")
         logger.info("[%s] filtering pre-cached properties", prefix)
-        df = df.loc[df["property"] == prop, [f"{prefix}_id", "value"]]
+        df = df.loc[df["property"] == prop.preferred_curie, [f"{prefix}_id", "value"]]
         return multidict(df.values)
 
-    path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
+    path = prefix_cache_join(prefix, "properties", name=f"{prop.preferred_curie}.tsv", version=version)
 
-    @cached_multidict(path=path, header=[f"{prefix}_id", prop], force=check_should_force(kwargs))
+    @cached_multidict(path=path, header=[f"{prefix}_id", prop.preferred_curie], force=check_should_force(kwargs))
     def _mapping_getter() -> Mapping[str, list[str]]:
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
@@ -116,7 +115,7 @@ def get_filtered_properties_multimapping(
 
 
 def get_property(
-    prefix: str, identifier: str, prop: str, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, identifier: str, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
 ) -> str | None:
     """Extract a single property for the given entity.
 
