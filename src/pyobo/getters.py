@@ -31,7 +31,7 @@ from .constants import (
     IterHelperHelperDict,
     SlimGetOntologyKwargs,
 )
-from .identifier_utils import MissingPrefixError, wrap_norm_prefix
+from .identifier_utils import ParseError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
 from .utils.io import get_writer
@@ -360,8 +360,8 @@ def iter_helper_helper(
             logger.warning("[%s] unable to download - %s", prefix, e.reason)
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
-        except MissingPrefixError as e:
-            logger.warning("[%s] missing prefix: %s", prefix, e)
+        except ParseError as e:
+            logger.warning("[%s] CURIE/IRI parse error: %s", prefix, e)
             if strict and not bioregistry.is_deprecated(prefix):
                 raise e
         except RuntimeError as e:
