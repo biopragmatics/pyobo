@@ -93,38 +93,12 @@ class Reference(curies.Reference):
         prefix, identifier = normalize_curie(
             curie, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
-        return cls._materialize(prefix=prefix, identifier=identifier, name=name, auto=auto)
-
-    @classmethod
-    def from_iri(
-        cls,
-        iri: str,
-        name: str | None = None,
-        *,
-        auto: bool = False,
-    ) -> Reference | None:
-        """Get a reference from an IRI using the Bioregistry.
-
-        :param iri: The IRI to parse
-        :param name: The name associated with the CURIE
-        :param auto: Automatically look up name
-        """
-        prefix, identifier = bioregistry.parse_iri(iri)
-        return cls._materialize(prefix=prefix, identifier=identifier, name=name, auto=auto)
-
-    @classmethod
-    def _materialize(
-        cls,
-        prefix: str | None,
-        identifier: str | None,
-        name: str | None = None,
-        *,
-        auto: bool = False,
-    ) -> Reference | None:
         if prefix is None or identifier is None:
             return None
         if name is None and auto:
-            return cls.auto(prefix=prefix, identifier=identifier)
+            from ..api import get_name
+
+            name = get_name(prefix, identifier)
         return cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
 
     @property

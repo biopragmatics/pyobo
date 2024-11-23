@@ -293,12 +293,12 @@ def iterate_graph_synonym_typedefs(
     for s in graph.graph.get("synonymtypedef", []):
         sid, name = s.split(" ", 1)
         name = name.strip().strip('"')
-        if ":" not in sid:  # assume it's ad-hoc
-            reference = Reference(prefix=ontology_prefix, identifier=sid, name=name)
-        else:  # assume it's a curie
+        if ":" in sid:  # assume it's a curie
             reference = Reference.from_curie(
                 sid, name=name, strict=strict, ontology_prefix=ontology_prefix
             )
+        else:
+            reference = default_reference(ontology_prefix, sid, name=name)
 
         if reference is None:
             if strict:
