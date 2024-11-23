@@ -496,41 +496,61 @@ def iterate_node_properties(
 ) -> Iterable[ObjectProperty | LiteralProperty]:
     """Extract properties from a :mod:`obonet` node's data."""
     for prop_value_type in data.get("property_value", []):
-        try:
-            prop, value_type = prop_value_type.split(" ", 1)
-        except ValueError:
-            logger.warning("[%s] malformed property_value: %s", node.curie, prop_value_type)
-            continue
+        if yv := _handle_prop(
+            prop_value_type, node=node, strict=strict, ontology_prefix=ontology_prefix
+        ):
+            yield yv
 
-        prop_reference = _get_prop(prop, node=node, strict=strict, ontology_prefix=ontology_prefix)
-        if prop_reference is None:
-            logger.warning("[%s] unparsable property: %s", node.curie, prop)
-            continue
 
-        try:
-            value, datatype = value_type.rsplit(" ", 1)  # second entry is the value type
-        except ValueError:
-            logger.warning(f"property missing datatype. defaulting to string - {prop_value_type}")
-            value = value_type  # could assign type to be 'xsd:string' by default
-            datatype = None
+def _handle_prop(
+    prop_value_type: str, *, node: Reference, strict: bool = True, ontology_prefix: str
+) -> ObjectProperty | LiteralProperty | None:
+    try:
+        prop, value_type = prop_value_type.split(" ", 1)
+    except ValueError:
+        logger.warning("[%s] property_value is missing a space: %s", node.curie, prop_value_type)
+        return None
 
-        if datatype:
-            datatype = Reference.from_curie(
-                datatype, strict=strict, ontology_prefix=ontology_prefix, node=node
+    prop_reference = _get_prop(prop, node=node, strict=strict, ontology_prefix=ontology_prefix)
+    if prop_reference is None:
+        logger.warning("[%s] unparsable property: %s", node.curie, prop)
+        return None
+
+    # if the value doesn't start with a quote, we're going to
+    # assume that it's a reference
+    if not value_type.startswith('"'):
+        obj_reference = Reference.from_curie(
+            value_type, strict=strict, ontology_prefix=ontology_prefix, node=node
+        )
+        if obj_reference is None:
+            logger.warning(
+                "[%s:%s] could not parse object: %s", node.curie, prop_reference.curie, value_type
             )
+            return None
+        # TODO can we drop datatype from this?
+        return ObjectProperty(prop_reference, obj_reference, None)
 
-        if value.startswith('"'):
-            # this is a literal value
-            value = value.strip('"')
-            yield LiteralProperty(prop_reference, value, datatype)
-        else:
-            obj = Reference.from_curie(
-                value, strict=strict, ontology_prefix=ontology_prefix, node=node
-            )
-            if obj is None:
-                logger.warning("[%s] could not parse object: %s", node.curie, value)
-                continue
-            yield ObjectProperty(prop_reference, obj, datatype)
+    try:
+        value, datatype = value_type.rsplit(" ", 1)  # second entry is the value type
+    except ValueError:
+        logger.warning(
+            "[%s] property missing datatype. defaulting to string - %s", node.curie, prop_value_type
+        )
+        value = value_type
+        datatype = ""
+
+    value = value.strip('"')
+
+    if not datatype:
+        return LiteralProperty(prop_reference, value, Reference(prefix="xsd", identifier="string"))
+
+    datatype_reference = Reference.from_curie(
+        datatype, strict=strict, ontology_prefix=ontology_prefix, node=node
+    )
+    if datatype_reference is None:
+        logger.warning("[%s] had unparsable datatype %s", node.curie, prop_value_type)
+        return None
+    return LiteralProperty(prop_reference, value, datatype_reference)
 
 
 def _get_prop(
