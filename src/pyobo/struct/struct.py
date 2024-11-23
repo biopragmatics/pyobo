@@ -460,8 +460,6 @@ class Term(Referenced):
         )
 
     def _definition_fp(self) -> str:
-        if self.definition is None:
-            raise AssertionError
         definition = obo_escape_slim(self.definition) if self.definition else ""
         return f'"{definition}" [{comma_separate_references(self.provenance)}]'
 
@@ -505,7 +503,7 @@ class Term(Referenced):
 
         xrefs = list(self.xrefs)
 
-        if self.definition:
+        if self.definition or self.provenance:
             yield f"def: {self._definition_fp()}"
 
         for alt in sorted(self.alt_ids):
@@ -1148,7 +1146,7 @@ class Obo:
             d = {
                 "id": term.curie,
                 "name": term.name,
-                "def": term.definition and term._definition_fp(),
+                "def": (term.definition or term.provenance) and term._definition_fp(),
                 "xref": [xref.curie for xref in term.xrefs],
                 "is_a": parents,
                 "relationship": relations,
