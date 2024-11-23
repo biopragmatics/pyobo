@@ -258,6 +258,22 @@ class TestReader(unittest.TestCase):
         self.assertEqual("121.323", row["value"])
         self.assertEqual("xsd:decimal", row["datatype"])
 
+    def test_property_bad_datatype(self) -> None:
+        """Test parsing a property with an unparsable datatype."""
+        text = """\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: mass "121.323" NOPE:NOPE
+        """
+        with self.assertRaises(ValueError):
+            _read(text)
+        ontology = _read(text, strict=False)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(term.annotations_literal))
+        self.assertEqual(0, len(term.annotations_object))
+
     def test_property_literal_url_questionable(self) -> None:
         """Test parsing a property with a literal object."""
         ontology = _read("""\
@@ -340,6 +356,24 @@ class TestReader(unittest.TestCase):
         self.assertEqual(1, len(list(term.annotations_object)))
         self.assertEqual("CHEBI:5678", term.get_property(td))
 
+    def test_property_unparsable_object(self) -> None:
+        """Test when an object can't be parsed."""
+        text = """\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: https://w3id.org/biolink/vocab/something NOPE:NOPE
+            """
+
+        with self.assertRaises(ValueError):
+            _read(text)
+
+        ontology = _read(text, strict=False)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(list(term.annotations_literal)))
+        self.assertEqual(0, len(list(term.annotations_object)))
+
     def test_property_literal_url_unregistered(self) -> None:
         """Test using a full OBO PURL as the property."""
         ontology = _read("""\
@@ -368,16 +402,16 @@ class TestReader(unittest.TestCase):
         self.assertEqual("hgnc:1234", term.get_property(see_also))
 
     def test_node_unparsable(self) -> None:
-        """Test loading an ontology with unparsable nodes.."""
-        ontology = _read(
-            """\
+        """Test loading an ontology with unparsable nodes."""
+        text = """\
             ontology: chebi
 
             [Term]
             id: nope:1234
-        """,
-            strict=False,
-        )
+        """
+        with self.assertRaises(ValueError):
+            _read(text)
+        ontology = _read(text, strict=False)
         self.assertEqual(0, len(list(ontology.iter_terms())))
 
     def test_malformed_typedef(self) -> None:
