@@ -17,7 +17,7 @@ from ..sources.icd_utils import (
     get_icd,
     visiter,
 )
-from ..struct import Obo, Reference, Synonym, Term
+from ..struct import Obo, Reference, Synonym, Term, has_category
 from ..utils.path import prefix_directory_join
 
 __all__ = [
@@ -35,6 +35,7 @@ class ICD10Getter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
+    typedefs = [has_category]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -81,8 +82,7 @@ def _extract_icd10(res_json: Mapping[str, Any]) -> Term:
         synonyms=synonyms,
         parents=parents,
     )
-
-    rv.annotate_literal("class_kind", res_json["classKind"])
+    rv.annotate_literal(has_category, res_json["classKind"])
 
     return rv
 
