@@ -1,12 +1,13 @@
 """Parsers for MSig."""
 
 import logging
+import zipfile
 from collections.abc import Iterable
 
-from lxml.etree import ElementTree
+from lxml import etree
 from tqdm.auto import tqdm
 
-from ..struct import Obo, Reference, Term, has_participant
+from ..struct import Obo, Reference, Term, TypeDef, has_participant
 from ..utils.path import ensure_path
 
 logger = logging.getLogger(__name__)
@@ -17,6 +18,20 @@ __all__ = [
 
 PREFIX = "msigdb"
 BASE_URL = "https://data.broadinstitute.org/gsea-msigdb/msigdb/release"
+
+CATEGORY_CODE = TypeDef.default(PREFIX, "category_code", name="category code")
+SUB_CATEGORY_CODE = TypeDef.default(PREFIX, "sub_category_code", name="sub-category code")
+CONTRIBUTOR = TypeDef.default(PREFIX, "contributor", name="contributor")
+EXACT_SOURCE = TypeDef.default(PREFIX, "exact_source", name="exact source")
+EXTERNAL_DETAILS_URL = TypeDef.default(PREFIX, "external_details_url", name="external details URL")
+
+PROPERTIES = [
+    ("CATEGORY_CODE", CATEGORY_CODE),
+    ("SUB_CATEGORY_CODE", SUB_CATEGORY_CODE),
+    ("CONTRIBUTOR", CONTRIBUTOR),
+    ("EXACT_SOURCE", EXACT_SOURCE),
+    ("EXTERNAL_DETAILS_URL", EXTERNAL_DETAILS_URL),
+]
 
 
 class MSigDBGetter(Obo):
@@ -48,13 +63,33 @@ GO_URL_PREFIX = "http://amigo.geneontology.org/amigo/term/GO:"
 KEGG_URL_PREFIX = "http://www.genome.jp/kegg/pathway/hsa/"
 
 
+def _iter_entries(version: str, force: bool = False):
+    xml_url = f"{BASE_URL}/{version}.Hs/msigdb_v{version}.Hs.xml.zip"
+    path = ensure_path(prefix=PREFIX, url=xml_url, version=version, force=force)
+    with zipfile.ZipFile(path, "r") as zf:
+        with zf.open(f"msigdb_v{version}.Hs.xml") as file:
+            for _ in range(3):
+                next(file)
+            # from here on out, every row except the last is a GENESET
+            for i, line_bytes in enumerate(file, start=4):
+                line = line_bytes.decode("utf8").strip()
+                if not line.startswith("<GENESET"):
+                    continue
+                try:
+                    tree = etree.fromstring(line)
+                except etree.XMLSyntaxError as e:
+                    # this is the result of faulty encoding in XML - maybe they
+                    # wrote XML with their own string formatting instead of using a
+                    # library.
+                    tqdm.write(f"[{PREFIX}] failed on line {i}: {e}")
+                else:
+                    yield tree
+
+
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get MSigDb terms."""
-    xml_url = f"{BASE_URL}/{version}.Hs/msigdb_v{version}.Hs.xml"
-    path = ensure_path(prefix=PREFIX, url=xml_url, version=version, force=force)
-    tree = ElementTree.parse(path)
-
-    for entry in tqdm(tree.getroot(), desc=f"{PREFIX} v{version}", unit_scale=True):
+    entries = _iter_entries(version=version, force=force)
+    for entry in tqdm(entries, desc=f"{PREFIX} v{version}", unit_scale=True):
         attrib = dict(entry.attrib)
         tax_id = _SPECIES[attrib["ORGANISM"]]
 
@@ -79,16 +114,9 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             provenance=[] if reference is None else [reference],
             is_obsolete=is_obsolete,
         )
-        for key in [
-            "CATEGORY_CODE",
-            "SUB_CATEGORY_CODE",
-            "CONTRIBUTOR",
-            "EXACT_SOURCE",
-            "EXTERNAL_DETAILS_URL",
-        ]:
-            value = attrib[key].strip()
-            if value:
-                term.annotate_literal(key.lower(), value)
+        for key, typedef in PROPERTIES:
+            if value := attrib[key].strip():
+                term.annotate_literal(typedef, value)
 
         term.set_species(tax_id)
 
@@ -140,4 +168,4 @@ def _get_definition(attrib) -> str | None:
 
 
 if __name__ == "__main__":
-    MSigDBGetter.cli()
+    MSigDBGetter().write_default(force=True, write_obo=True)
