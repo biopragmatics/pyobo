@@ -340,6 +340,22 @@ class TestReader(unittest.TestCase):
         self.assertEqual(1, len(list(term.annotations_object)))
         self.assertEqual("CHEBI:5678", term.get_property(td))
 
+    def test_property_unparsable_object(self) -> None:
+        """Test when an object can't be parsed."""
+        ontology = _read(
+            """\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: https://w3id.org/biolink/vocab/something NOPE:NOPE
+            """,
+            strict=False,
+        )
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(list(term.annotations_literal)))
+        self.assertEqual(0, len(list(term.annotations_object)))
+
     def test_property_literal_url_unregistered(self) -> None:
         """Test using a full OBO PURL as the property."""
         ontology = _read("""\
