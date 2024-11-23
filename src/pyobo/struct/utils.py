@@ -5,7 +5,6 @@ from __future__ import annotations
 __all__ = [
     "OBO_ESCAPE",
     "OBO_ESCAPE_SLIM",
-    "comma_separate",
     "obo_escape",
     "obo_escape_slim",
 ]
@@ -24,8 +23,3 @@ def obo_escape_slim(string: str) -> str:
     rv = "".join(OBO_ESCAPE_SLIM.get(character, character) for character in string)
     rv = rv.replace("\n", "\\n")
     return rv
-
-
-def comma_separate(elements) -> str:
-    """Map a list to strings and make comma separated."""
-    return ", ".join(map(str, elements))

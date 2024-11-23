@@ -218,3 +218,8 @@ def reference_escape(predicate: Reference | Referenced, *, ontology_prefix: str)
         return predicate.identifier.removeprefix(f"{ontology_prefix}#")
     else:
         return predicate.preferred_curie
+
+
+def comma_separate_references(references: list[Reference]) -> str:
+    """Map a list to strings and make comma separated."""
+    return ", ".join(r.preferred_curie for r in references)

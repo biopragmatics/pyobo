@@ -25,7 +25,13 @@ from more_click import force_option, verbose_option
 from tqdm.auto import tqdm
 from typing_extensions import Self
 
-from .reference import Reference, Referenced, default_reference, reference_escape
+from .reference import (
+    Reference,
+    Referenced,
+    comma_separate_references,
+    default_reference,
+    reference_escape,
+)
 from .typedef import (
     TypeDef,
     comment,
@@ -42,7 +48,7 @@ from .typedef import (
     see_also,
     term_replaced_by,
 )
-from .utils import comma_separate, obo_escape_slim
+from .utils import obo_escape_slim
 from ..api.utils import get_version
 from ..constants import (
     DATE_FORMAT,
@@ -120,7 +126,7 @@ class Synonym:
         x = f'"{self._escape(self.name)}" {self.specificity}'
         if self.type and self.type.pair != DEFAULT_SYNONYM_TYPE.pair:
             x = f"{x} {reference_escape(self.type, ontology_prefix=ontology_prefix)}"
-        return f"{x} [{comma_separate(self.provenance)}]"
+        return f"{x} [{comma_separate_references(self.provenance)}]"
 
     @staticmethod
     def _escape(s: str) -> str:
@@ -478,9 +484,8 @@ class Term(Referenced):
         )
 
     def _definition_fp(self) -> str:
-        if self.definition is None:
-            raise AssertionError
-        return f'"{obo_escape_slim(self.definition)}" [{comma_separate(self.provenance)}]'
+        definition = obo_escape_slim(self.definition) if self.definition else ""
+        return f'"{definition}" [{comma_separate_references(self.provenance)}]'
 
     def iterate_relations(self) -> Iterable[tuple[Reference, Reference]]:
         """Iterate over pairs of typedefs and targets."""
@@ -522,11 +527,8 @@ class Term(Referenced):
 
         xrefs = list(self.xrefs)
 
-        if self.definition:
+        if self.definition or self.provenance:
             yield f"def: {self._definition_fp()}"
-        elif self.provenance:
-            # if no definition, just stick on xrefs
-            xrefs.extend(self.provenance)
 
         for alt in sorted(self.alt_ids):
             yield f"alt_id: {alt}"  # __str__ bakes in the ! name
@@ -1168,7 +1170,7 @@ class Obo:
             d = {
                 "id": term.curie,
                 "name": term.name,
-                "def": term.definition and term._definition_fp(),
+                "def": (term.definition or term.provenance) and term._definition_fp(),
                 "xref": [xref.curie for xref in term.xrefs],
                 "is_a": parents,
                 "relationship": relations,
