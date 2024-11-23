@@ -108,7 +108,7 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
         on_bad_lines="skip",
     )
     for _, row in tqdm(
-        df.head(500).iterrows(), total=len(df.index), desc=f"Mapping {PREFIX}", unit_scale=True
+        df.iterrows(), total=len(df.index), desc=f"Mapping {PREFIX}", unit_scale=True
     ):
         if pd.notna(row["NAME"]):
             definition = row["NAME"]
