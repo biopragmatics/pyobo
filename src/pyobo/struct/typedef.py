@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 
 from curies import ReferenceTuple
@@ -405,7 +405,7 @@ for reference, name in load_ro().items():
         )
 
 #: See https://mapping-commons.github.io/sssom/spec-model/
-match_typedefs: set[TypeDef] = {
+match_typedefs: Sequence[TypeDef] = (
     broad_match,
     close_match,
     exact_match,
@@ -416,4 +416,4 @@ match_typedefs: set[TypeDef] = {
     equivalent_property,
     has_dbxref,
     see_also,
-}
+)
