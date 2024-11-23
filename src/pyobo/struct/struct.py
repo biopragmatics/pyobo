@@ -25,7 +25,13 @@ from more_click import force_option, verbose_option
 from tqdm.auto import tqdm
 from typing_extensions import Self
 
-from .reference import Reference, Referenced, default_reference, reference_escape
+from .reference import (
+    Reference,
+    Referenced,
+    comma_separate_references,
+    default_reference,
+    reference_escape,
+)
 from .typedef import (
     TypeDef,
     comment,
@@ -40,7 +46,7 @@ from .typedef import (
     see_also,
     term_replaced_by,
 )
-from .utils import comma_separate, obo_escape_slim
+from .utils import obo_escape_slim
 from ..api.utils import get_version
 from ..constants import (
     DATE_FORMAT,
@@ -109,7 +115,7 @@ class Synonym:
         x = f'"{self._escape(self.name)}" {self.specificity}'
         if self.type and self.type.pair != DEFAULT_SYNONYM_TYPE.pair:
             x = f"{x} {reference_escape(self.type, ontology_prefix=ontology_prefix)}"
-        return f"{x} [{comma_separate(self.provenance)}]"
+        return f"{x} [{comma_separate_references(self.provenance)}]"
 
     @staticmethod
     def _escape(s: str) -> str:
@@ -457,7 +463,7 @@ class Term(Referenced):
         if self.definition is None:
             raise AssertionError
         definition = obo_escape_slim(self.definition) if self.definition else ""
-        return f'"{definition}" [{comma_separate(self.provenance)}]'
+        return f'"{definition}" [{comma_separate_references(self.provenance)}]'
 
     def iterate_relations(self) -> Iterable[tuple[Reference, Reference]]:
         """Iterate over pairs of typedefs and targets."""
