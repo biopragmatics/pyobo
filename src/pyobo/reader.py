@@ -548,7 +548,8 @@ def _handle_prop(
         datatype, strict=strict, ontology_prefix=ontology_prefix, node=node
     )
     if datatype_reference is None:
-        raise ValueError
+        logger.warning("[%s] had unparsable datatype %s", node.curie, prop_value_type)
+        return None
     return LiteralProperty(prop_reference, value, datatype_reference)
 
 
