@@ -170,20 +170,20 @@ class Referenced:
         return self.reference.bioregistry_link
 
 
-def default_reference(prefix: str, part: str, name: str | None = None) -> Reference:
+def default_reference(prefix: str, identifier: str, name: str | None = None) -> Reference:
     """Create a CURIE for an "unqualified" reference.
 
     :param prefix: The prefix of the ontology in which the "unqualified" reference is made
-    :param part: The "unqualified" reference. For example, if you just write
+    :param identifier: The "unqualified" reference. For example, if you just write
         "located_in" somewhere there is supposed to be a CURIE
     :returns: A CURIE for the "unqualified" reference based on the OBO semantic space
 
     >>> default_reference("chebi", "conjugate_base_of")
     Reference(prefix="obo", identifier="chebi#conjugate_base_of")
     """
-    if not part.strip():
+    if not identifier.strip():
         raise ValueError("default identifier is empty")
-    return Reference(prefix="obo", identifier=f"{prefix}#{part}", name=name)
+    return Reference(prefix="obo", identifier=f"{prefix}#{identifier}", name=name)
 
 
 def reference_escape(predicate: Reference | Referenced, *, ontology_prefix: str) -> str:
