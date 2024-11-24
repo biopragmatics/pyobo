@@ -31,6 +31,7 @@ from ..api import (
     get_id_synonyms_mapping,
     get_id_to_alts,
     get_ids,
+    get_mappings_df,
     get_metadata,
     get_name_by_curie,
     get_properties_df,
@@ -82,6 +83,23 @@ def xrefs(target: str, **kwargs: Unpack[LookupKwargs]) -> None:
     else:
         all_xrefs_df = get_xrefs_df(**kwargs)
         echo_df(all_xrefs_df)
+
+
+@lookup_annotate
+@click.option("--include-names", is_flag=True)
+@click.option("-t", "--target")
+def mappings(include_names: bool, target: str | None, **kwargs: Unpack[LookupKwargs]) -> None:
+    """Page through mappings for the given namespace."""
+    mappings_df = get_mappings_df(names=include_names, **kwargs)
+    if target:
+        target_norm = bioregistry.normalize_prefix(target)
+        if target_norm is None:
+            raise ValueError
+        idx = mappings_df["object_id"].map(
+            lambda x: bioregistry.normalize_prefix(x.split(":")[0]) == target_norm
+        )
+        mappings_df = mappings_df[idx]
+    echo_df(mappings_df)
 
 
 @lookup_annotate

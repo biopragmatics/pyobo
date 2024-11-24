@@ -1,6 +1,7 @@
 """CLI for PyOBO Database Generation."""
 
 import logging
+import warnings
 from pathlib import Path
 
 import click
@@ -12,6 +13,7 @@ from zenodo_client import update_zenodo
 from .database_utils import (
     _iter_alts,
     _iter_definitions,
+    _iter_mappings,
     _iter_metadata,
     _iter_names,
     _iter_properties,
@@ -108,8 +110,8 @@ def build(ctx: click.Context, **kwargs: Unpack[DatabaseKwargs]) -> None:
         ctx.invoke(alts, **updated_kwargs)
         click.secho("Synonyms", fg="cyan", bold=True)
         ctx.invoke(synonyms, **updated_kwargs)
-        click.secho("Xrefs", fg="cyan", bold=True)
-        ctx.invoke(xrefs, **updated_kwargs)
+        click.secho("Mappings", fg="cyan", bold=True)
+        ctx.invoke(mappings, **updated_kwargs)
         click.secho("Names", fg="cyan", bold=True)
         ctx.invoke(names, **updated_kwargs)
         click.secho("Definitions", fg="cyan", bold=True)
@@ -292,6 +294,7 @@ def properties(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) 
 @database_annotate
 def xrefs(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-identifier-xref dump."""
+    warnings.warn("Use pyobo.database.mappings instead", DeprecationWarning, stacklevel=2)
     with logging_redirect_tqdm():
         it = _iter_xrefs(**kwargs)
         paths = db_output_helper(
@@ -304,6 +307,28 @@ def xrefs(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> No
     if zenodo:
         # see https://zenodo.org/record/4021477
         update_zenodo(JAVERT_RECORD, paths)
+
+
+@database_annotate
+def mappings(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
+    """Make the SSSOM dump."""
+    columns = [
+        "subject_id",
+        "object_id",
+        "predicate_id",
+        "mapping_justification",
+        "mapping_source",
+    ]
+    with logging_redirect_tqdm():
+        it = _iter_mappings(**kwargs)
+        db_output_helper(
+            it,
+            "mappings",
+            columns,
+            directory=directory,
+        )
+    if zenodo:
+        raise NotImplementedError("need to do initial manual upload of SSSOM build")
 
 
 if __name__ == "__main__":

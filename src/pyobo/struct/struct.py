@@ -12,6 +12,7 @@ from collections import ChainMap, defaultdict
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
+from itertools import chain
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, ClassVar, Literal, NamedTuple, TextIO, TypeAlias
@@ -38,9 +39,11 @@ from .typedef import (
     default_typedefs,
     exact_match,
     from_species,
+    has_dbxref,
     has_ontology_root_term,
     has_part,
     is_a,
+    match_typedefs,
     orthologous,
     part_of,
     see_also,
@@ -77,6 +80,16 @@ logger = logging.getLogger(__name__)
 
 SynonymSpecificity = Literal["EXACT", "NARROW", "BROAD", "RELATED"]
 SynonymSpecificities: Sequence[SynonymSpecificity] = ("EXACT", "NARROW", "BROAD", "RELATED")
+
+#: Columns in the SSSOM dataframe
+SSSOM_DF_COLUMNS = [
+    "subject_id",
+    "subject_label",
+    "object_id",
+    "predicate_id",
+    "mapping_justification",
+]
+UNSPECIFIED_MATCHING_CURIE = "sempav:UnspecifiedMatching"
 
 
 @dataclass
@@ -363,7 +376,12 @@ class Term(Referenced):
             return [value.preferred_curie for value in self.annotations_object[prop]]
         if prop in self.annotations_literal:
             return [value for value, _datatype in self.annotations_literal[prop]]
-        raise KeyError(f"property not found: {prop.curie}")
+        return []
+
+    def get_property_objects(self, prop: ReferenceHint) -> list[Reference]:
+        """Get properties from the given key."""
+        prop = _ensure_ref(prop)
+        return sorted(self.annotations_object.get(prop, []))
 
     def get_property(self, prop: ReferenceHint) -> str | None:
         """Get a single property of the given key."""
@@ -385,7 +403,20 @@ class Term(Referenced):
 
     def get_relationships(self, typedef: ReferenceHint) -> list[Reference]:
         """Get relationships from the given type."""
-        return self.relationships[_ensure_ref(typedef)]
+        return self.relationships.get(_ensure_ref(typedef), [])
+
+    def get_mappings(self, *, include_xrefs: bool = True) -> list[tuple[Reference, Reference]]:
+        """Get mappings with preferred curies."""
+        rows = []
+        for predicate in match_typedefs:
+            for xref_reference in chain(
+                self.get_property_objects(predicate), self.get_relationships(predicate)
+            ):
+                rows.append((predicate.reference, xref_reference))
+        if include_xrefs:
+            for xref_reference in self.xrefs:
+                rows.append((has_dbxref.reference, xref_reference))
+        return sorted(set(rows))
 
     def append_exact_match(self, reference: ReferenceHint) -> Self:
         """Append an exact match, also adding an xref."""
@@ -919,7 +950,12 @@ class Obo:
 
     @property
     def _xrefs_path(self) -> Path:
+        warnings.warn("use _mappings_path", DeprecationWarning, stacklevel=2)
         return self._cache(name="xrefs.tsv")
+
+    @property
+    def _mappings_path(self) -> Path:
+        return self._cache(name="mappings.tsv")
 
     @property
     def _relations_path(self) -> Path:
@@ -1002,7 +1038,7 @@ class Obo:
                 self.iterate_synonym_rows,
             ),
             ("alts", self._alts_path, [f"{self.ontology}_id", "alt_id"], self.iterate_alt_rows),
-            ("xrefs", self._xrefs_path, self.xrefs_header, self.iterate_xref_rows),
+            ("mappings", self._mappings_path, SSSOM_DF_COLUMNS, self.iterate_mapping_rows),
             ("relations", self._relations_path, self.relations_header, self.iter_relation_rows),
             ("properties", self._properties_path, self.properties_header, self.iter_property_rows),
         ]:
@@ -1573,13 +1609,49 @@ class Obo:
         for term, xref in self.iterate_xrefs(use_tqdm=use_tqdm):
             yield term.identifier, xref.prefix, xref.identifier
 
+    def iterate_mapping_rows(
+        self, *, use_tqdm: bool = False
+    ) -> Iterable[tuple[str, str, str, str, str]]:
+        """Iterate over SSSOM rows for mappings."""
+        for term in self._iter_terms(use_tqdm=use_tqdm):
+            for predicate, obj_ref in term.get_mappings(include_xrefs=True):
+                yield (
+                    term.preferred_curie,
+                    term.name,
+                    obj_ref.preferred_curie,
+                    predicate.preferred_curie,
+                    UNSPECIFIED_MATCHING_CURIE,
+                )
+
+    def get_mappings_df(
+        self,
+        *,
+        use_tqdm: bool = False,
+        include_subject_labels: bool = False,
+        include_mapping_source_column: bool = False,
+    ) -> pd.DataFrame:
+        """Get a dataframe with SSSOM extracted from the OBO document."""
+        df = pd.DataFrame(self.iterate_mapping_rows(use_tqdm=use_tqdm), columns=SSSOM_DF_COLUMNS)
+        if not include_subject_labels:
+            del df["subject_label"]
+
+        # append on the mapping_source
+        # (https://mapping-commons.github.io/sssom/mapping_source/)
+        if include_mapping_source_column:
+            df["mapping_source"] = self.ontology
+
+        return df
+
     @property
     def xrefs_header(self):
         """The header for the xref dataframe."""
+        warnings.warn("use SSSOM_DF_COLUMNS instead", DeprecationWarning, stacklevel=2)
         return [f"{self.ontology}_id", TARGET_PREFIX, TARGET_ID]
 
     def get_xrefs_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get a dataframe of all xrefs extracted from the OBO document."""
+        warnings.warn("use ontology.get_mappings_df instead", DeprecationWarning, stacklevel=2)
+
         return pd.DataFrame(
             list(self.iterate_xref_rows(use_tqdm=use_tqdm)),
             columns=[f"{self.ontology}_id", TARGET_PREFIX, TARGET_ID],

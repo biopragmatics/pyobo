@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 
 from curies import ReferenceTuple
@@ -14,6 +14,8 @@ from ..resources.ro import load_ro
 __all__ = [
     "TypeDef",
     "alternative_term",
+    "broad_match",
+    "close_match",
     "default_typedefs",
     "editor_note",
     "enables",
@@ -38,10 +40,13 @@ __all__ = [
     "has_taxonomy_rank",
     "is_a",
     "located_in",
+    "match_typedefs",
     "member_of",
+    "narrow_match",
     "orthologous",
     "part_of",
     "participates_in",
+    "related_match",
     "role_of",
     "see_also",
     "species_specific",
@@ -211,6 +216,29 @@ located_in = TypeDef(
 exact_match = TypeDef(
     reference=Reference(prefix="skos", identifier="exactMatch", name="exact match"),
 )
+narrow_match = TypeDef(
+    reference=Reference(prefix="skos", identifier="narrowMatch", name="narrow match"),
+)
+broad_match = TypeDef(
+    reference=Reference(prefix="skos", identifier="broadMatch", name="broad match"),
+)
+close_match = TypeDef(
+    reference=Reference(prefix="skos", identifier="closeMatch", name="close match"),
+)
+related_match = TypeDef(
+    reference=Reference(prefix="skos", identifier="relatedMatch", name="related match"),
+)
+owl_same_as = TypeDef(
+    reference=Reference(prefix="owl", identifier="sameAs", name="same as"),
+)
+equivalent_class = TypeDef(
+    reference=Reference(prefix="owl", identifier="equivalentClass", name="equivalent class"),
+)
+equivalent_property = TypeDef(
+    reference=Reference(prefix="owl", identifier="equivalentProperty", name="equivalent property"),
+)
+
+
 is_a = TypeDef(
     reference=Reference(prefix="rdfs", identifier="subClassOf", name="subclass of"),
 )
@@ -375,3 +403,17 @@ for reference, name in load_ro().items():
         default_typedefs[reference] = TypeDef.from_triple(
             reference.prefix, reference.identifier, name
         )
+
+#: See https://mapping-commons.github.io/sssom/spec-model/
+match_typedefs: Sequence[TypeDef] = (
+    broad_match,
+    close_match,
+    exact_match,
+    narrow_match,
+    related_match,
+    owl_same_as,
+    equivalent_class,
+    equivalent_property,
+    has_dbxref,
+    see_also,
+)

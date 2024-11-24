@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import gzip
 import logging
+import warnings
 from collections.abc import Iterable
+from functools import partial
 from typing import cast
 
 import bioregistry
@@ -17,6 +19,7 @@ from ..api import (
     get_id_species_mapping,
     get_id_synonyms_mapping,
     get_id_to_alts,
+    get_mappings_df,
     get_metadata,
     get_properties_df,
     get_relations_df,
@@ -129,6 +132,7 @@ def _iter_properties(**kwargs: Unpack[IterHelperHelperDict]) -> Iterable[tuple[s
 def _iter_xrefs(
     **kwargs: Unpack[IterHelperHelperDict],
 ) -> Iterable[tuple[str, str, str, str, str]]:
+    warnings.warn(f"use {_iter_mappings.__name__} instead", DeprecationWarning, stacklevel=2)
     it = iter_helper_helper(get_xrefs_df, **kwargs)
     for prefix, df in it:
         df.dropna(inplace=True)
@@ -139,3 +143,15 @@ def _iter_xrefs(
     for df in iter_xref_plugins(skip_below=kwargs.get("skip_below")):
         df.dropna(inplace=True)
         yield from tqdm(df.values, leave=False, total=len(df.index), unit_scale=True)
+
+
+def _iter_mappings(
+    **kwargs: Unpack[IterHelperHelperDict],
+) -> Iterable[tuple[str, str, str, str, str]]:
+    f = partial(get_mappings_df, names=False, include_mapping_source_column=True)
+    # hack in a name to the partial function object since
+    # it's used for the tqdm description in iter_helper_helper
+    f.__name__ = "get_mappings_df"  # type:ignore
+    it = iter_helper_helper(f, **kwargs)
+    for _prefix, df in it:
+        yield from df.values
