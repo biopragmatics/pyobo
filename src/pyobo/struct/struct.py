@@ -405,7 +405,7 @@ class Term(Referenced):
         """Get relationships from the given type."""
         return self.relationships.get(_ensure_ref(typedef), [])
 
-    def get_mappings(self, include_xrefs: bool = True) -> list[tuple[Reference, Reference]]:
+    def get_mappings(self, *, include_xrefs: bool = True) -> list[tuple[Reference, Reference]]:
         """Get mappings with preferred curies."""
         rows = []
         for predicate in match_typedefs:

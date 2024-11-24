@@ -11,7 +11,7 @@ from pyobo import Obo, Reference, Term
 from pyobo.reader import from_obonet, get_first_nonescaped_quote
 from pyobo.struct import default_reference
 from pyobo.struct.struct import DEFAULT_SYNONYM_TYPE
-from pyobo.struct.typedef import TypeDef, is_conjugate_base_of, see_also
+from pyobo.struct.typedef import TypeDef, exact_match, has_dbxref, is_conjugate_base_of, see_also
 
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
 
@@ -751,3 +751,43 @@ class TestReader(unittest.TestCase):
         """)
         term = self.get_only_term(ontology)
         self.assertEqual([Reference(prefix="CHEBI", identifier="5678")], term.parents)
+
+    def test_mappings(self) -> None:
+        """Test getting mappings."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:100147
+            xref: cas:389-08-2
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(
+            {(has_dbxref.pair, Reference(prefix="cas", identifier="389-08-2").pair)},
+            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
+        )
+        self.assertEqual(
+            set(),
+            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=False)},
+        )
+
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:100147
+            xref: cas:389-08-2
+            property_value: skos:exactMatch drugbank:DB00779
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(
+            {(exact_match.pair, Reference(prefix="drugbank", identifier="DB00779").pair)},
+            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=False)},
+        )
+        self.assertEqual(
+            {
+                (exact_match.pair, Reference(prefix="drugbank", identifier="DB00779").pair),
+                (has_dbxref.pair, Reference(prefix="cas", identifier="389-08-2").pair),
+            },
+            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
+        )
