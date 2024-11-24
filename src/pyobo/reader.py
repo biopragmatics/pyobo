@@ -165,7 +165,11 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
         alt_ids = list(iterate_node_alt_ids(data, strict=strict))
         n_alt_ids += len(alt_ids)
 
-        parents = list(iterate_node_parents(data, node=reference, strict=strict))
+        parents = list(
+            iterate_node_parents(
+                data, node=reference, strict=strict, ontology_prefix=ontology_prefix
+            )
+        )
         n_parents += len(parents)
 
         synonyms = list(
@@ -377,6 +381,8 @@ def _extract_definition(
 
 def get_first_nonescaped_quote(s: str) -> int | None:
     """Get the first non-escaped quote."""
+    if not s:
+        return None
     if s[0] == '"':
         # special case first position
         return 0
@@ -523,7 +529,7 @@ def _handle_prop(
         )
         if obj_reference is None:
             logger.warning(
-                "[%s:%s] could not parse object: %s", node.curie, prop_reference.curie, value_type
+                "[%s - %s] could not parse object: %s", node.curie, prop_reference.curie, value_type
             )
             return None
         # TODO can we drop datatype from this?
@@ -579,10 +585,13 @@ def iterate_node_parents(
     *,
     node: Reference,
     strict: bool = True,
+    ontology_prefix: str,
 ) -> Iterable[Reference]:
     """Extract parents from a :mod:`obonet` node's data."""
     for parent_curie in data.get("is_a", []):
-        reference = Reference.from_curie(parent_curie, strict=strict)
+        reference = Reference.from_curie(
+            parent_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
+        )
         if reference is None:
             logger.warning("[%s] could not parse parent curie: %s", node.curie, parent_curie)
             continue
@@ -612,7 +621,9 @@ def iterate_node_relationships(
         if relation_curie in RELATION_REMAPPINGS:
             relation_prefix, relation_identifier = RELATION_REMAPPINGS[relation_curie]
         else:
-            relation_prefix, relation_identifier = normalize_curie(relation_curie, strict=strict)
+            relation_prefix, relation_identifier = normalize_curie(
+                relation_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
+            )
         if relation_prefix is not None and relation_identifier is not None:
             relation = Reference(prefix=relation_prefix, identifier=relation_identifier)
         else:
@@ -623,8 +634,9 @@ def iterate_node_relationships(
                 relation.curie,
             )
 
-        # TODO replace with omni-parser from :mod:`curies`
-        target = Reference.from_curie(target_curie, strict=strict)
+        target = Reference.from_curie(
+            target_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
+        )
         if target is None:
             logger.warning("[%s] %s could not parse target %s", node.curie, relation, target_curie)
             continue

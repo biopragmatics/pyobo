@@ -203,7 +203,11 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_parents(self):
         """Test getting parents from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:51990"]
-        parents = list(iterate_node_parents(data, node=Reference(prefix="chebi", identifier="XXX")))
+        parents = list(
+            iterate_node_parents(
+                data, node=Reference(prefix="chebi", identifier="XXX"), ontology_prefix="chebi"
+            )
+        )
         self.assertEqual(2, len(parents))
         self.assertEqual({"24060", "51992"}, {parent.identifier for parent in parents})
         self.assertEqual({"chebi"}, {parent.prefix for parent in parents})

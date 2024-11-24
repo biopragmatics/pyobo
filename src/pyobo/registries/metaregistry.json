@@ -27,7 +27,6 @@
       "Source:",
       "TermSpec:",
       "FormalCharge:",
-      "snap:Quality",
       "depicted:by",
       "http:http\\://www.pacificbiosciences.com/pdf/WP_Detecting_DNA_Base_Modifications_Using_SMRT_Sequencing.pdf",
       "XX:www.ensembl.org/info/genome/variation/predicted_data.html#consequences",
@@ -37,17 +36,16 @@
       "DDB:pf",
       "TS:0",
       "CTD:curators",
-      "IEDB:RV",
       "Tail:fat",
       "Pituitary:gland",
       "Compound:eye",
       "Lymph:node",
       "Lamina:propria",
       "Follicular:fluid",
-      "dph:GOC",
-      "gOC:dph",
-      "gOC:dph",
+      "group:OBI",
+      "GROUP:OBI",
       "ftp://ftp.ncbi.nih.gov/snp/specs/docsum_3.1.xsd",
+      "https://www.researchgate.net/scientific-contributions/Simon-Reeve-2162827703",
       "HPO:PCS",
       "HPO:ICE",
       "IEDB:BP",
@@ -276,7 +274,6 @@
         "BM:",
         "BSA:",
         "XtroDO:",
-        "nlx_subcell",
         "OGEM:",
         "ANISEED:",
         "BILS:",
@@ -302,7 +299,6 @@
         "LINCS_HMS",
         "CCLV",
         "Cosmic-CLP:",
-        "PubChem_Cell_line:CVCL_",
         "Rockland:",
         "CancerTools:",
         "Innoprot:"
@@ -357,22 +353,13 @@
     },
     "prefix": [
       "Image:",
-      "Category",
       "PERSON",
-      "similar to",
-      "modelled on",
       "SUBMITTER",
       "STRUCTURE_ChemicalName_IUPAC",
       "STRUCTURE_Formula",
       "stedman",
-      "value-type:",
-      "binary-data-type:MS\\",
       "PECO_GIT",
       "OBO_SF2_PECO",
-      "id-validation-regexp: ",
-      "id-validation-regex: ",
-      "search-url: ",
-      "regexp: ",
       "Germplasm:",
       "IUPAC:",
       "IUPHAR:GPCRListForward?",
@@ -382,18 +369,16 @@
       "FBC:",
       "RSC:",
       "DDB:",
-      "http:www",
       "NCBITaxon_Union",
       "PhenoScape:",
-      "INFOODs:",
-      "NLCD:",
       "TEMP:",
       "PO_GIT:"
     ],
     "suffix": [
       ".jpg",
       ".svg",
-      ".png"
+      ".png",
+      ".pdf"
     ]
   },
   "remappings": {
@@ -408,11 +393,13 @@
       "SNOMEDCT274897005": "SNOMEDCT:274897005",
       "GIOC:vw": "GOC:vw",
       ":has_start_point": "has_start_point",
+      "has_start_point:": "has_start_point",
       "dc-creator": "dc:creator",
       "PMI:17498297": "PMID:17498297",
       "HPO:SKOEHLER": "orcid:0000-0002-5316-1399",
       "HPO:skoehler": "orcid:0000-0002-5316-1399",
       "SIB:PG": "orcid:0000-0003-1813-6857",
+      "SIB:PG xsd:string": "orcid:0000-0003-1813-6857",
       "UBERON:cjm": "orcid:0000-0002-6601-2165",
       "part:of": "BFO:0000050",
       "gro:partOf": "BFO:0000050",
@@ -431,6 +418,7 @@
       "FOBI_050091": "FOBI:050091",
       "has:input": "RO:0002233",
       "has:output": "RO:0002234",
+      "dph:GOC":  "orcid:0000-0001-7476-6306",
       "Property:P1659": "wikidata:P1659",
       "vocab:crossSpeciesExactMatch": "semapv:crossSpeciesExactMatch",
       "definition:citation": "obo:efo#definition_citation",
@@ -442,6 +430,9 @@
       "BAO_": "BAO:",
       "TKG:TKG ": "TKG:",
       "KCB:KCB ": "KCB:",
+      "IEDB:RV": "orcid:0000-0001-8957-7612",
+      "IEDB:RandiVita xsd:string": "orcid:0000-0001-8957-7612",
+      "IEDB:RandiVita": "orcid:0000-0001-8957-7612",
       "CVCL_": "cellosaurus:CVCL_",
       "cancercelllines:CVCL_": "cellosaurus:CVCL_",
       "EGA:EGAS": "ega.study:EGAS",
@@ -509,6 +500,7 @@
       "OGI.owl:": "ogi:",
       "PANTHER:PTHR": "panther.family:PTHR",
       "vo/ontorat/PR:": "PR:",
+      "snap#": "snap:",
       "DC:0000": "diseaseclass:0000",
       "TS-": "caloha:",
       "terms1": "dcterms",
@@ -544,11 +536,46 @@
       "enm": {
         "Thesaurus:C": "NCIT:C"
       },
+      "srao": {
+        "topic:": "edam.topic:"
+      },
       "idocovid19": {"UniProtKN:":  "uniprot:"},
       "ito": {
         "format:": "edam.format:",
         "topic:": "edam.topic:",
         "operation:": "edam.operation:"
+      },
+      "ehdaa2": {
+        "CS": "carnegie.stage:"
+      },
+      "sio": {
+        "ns2:": "skos:"
+      },
+      "phipo": {
+        "created:by": "dcterms:creator",
+        "created:date": "dcterms:created",
+        "creation:date": "dcterms:created"
+      },
+      "xlmod": {
+        "specificities:": "obo:xlmod#specificities",
+        "secondarySpecificities:": "obo:xlmod#secondarySpecificities",
+        "deadEndFormula:": "obo:xlmod#deadEndFormula",
+        "baseSpecificities:": "obo:xlmod#baseSpecificities",
+        "reactionSites:": "obo:xlmod#reactionSites",
+        "spacerLength:": "obo:xlmod#spacerLength",
+        "bridgeFormula:": "obo:xlmod#bridgeFormula",
+        "monoIsotopicMass:": "obo:xlmod#monoIsotopicMass",
+        "reporterMass:": "obo:xlmod#reporterMass",
+        "maxAbsorption:": "obo:xlmod#maxAbsorption",
+        "doubletDeltaMass:": "obo:xlmod#doubletDeltaMass",
+        "secondaryBaseSpecificities:": "obo:xlmod#secondaryBaseSpecificities",
+        "hydrophilicPEGchain:": "obo:xlmod#hydrophilicPEGchain",
+        "waveLengthRange:": "obo:xlmod#waveLengthRange",
+        "CID_Fragment:": "obo:xlmod#CID_Fragment"
+      },
+      "cellosaurus": {
+        "pgx:CVCL_": "cellosaurus:",
+        "PubChem_Cell_line:CVCL_": "cellosaurus:"
       },
       "mcro": {
         "format:": "edam.format:",
