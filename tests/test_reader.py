@@ -727,3 +727,27 @@ class TestReader(unittest.TestCase):
             ],
             synonym.provenance,
         )
+
+    def test_parent(self) -> None:
+        """Test parsing out a parent."""
+        ontology = _read("""\
+            ontology: chebi
+            date: 20:11:2024 18:44
+
+            [Term]
+            id: CHEBI:1234
+            is_a: CHEBI:5678
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual([Reference(prefix="CHEBI", identifier="5678")], term.parents)
+
+        ontology = _read("""\
+            ontology: chebi
+            date: 20:11:2024 18:44
+
+            [Term]
+            id: CHEBI:1234
+            is_a: http://purl.obolibrary.org/obo/CHEBI_5678
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual([Reference(prefix="CHEBI", identifier="5678")], term.parents)
