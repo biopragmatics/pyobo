@@ -11,6 +11,7 @@ import subprocess
 import time
 import typing
 import urllib.error
+import zipfile
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
@@ -234,20 +235,15 @@ SKIP = {
     "eol": "unable to download, same source as atol",
     "hog": "unable to download",
     "vhog": "unable to download",
-    "ccf": "unable to download",
     "gorel": "unable to download",
     "dinto": "unable to download",
-    "mo": "unable to download",
-    "vario": "unable to download/build",
     "gainesville.core": "unable to download",
-    "mamo": "unable to download",
     "ato": "can't process",
     "emapa": "recently changed with EMAP... not sure what the difference is anymore",
     "kegg.genes": "needs fix",  # FIXME
     "kegg.genome": "needs fix",  # FIXME
     "kegg.pathway": "needs fix",  # FIXME
     "ensemblglossary": "uri is wrong",
-    "biolink": "too much junk",
     "epio": "content from fraunhofer is unreliable",
     "epso": "content from fraunhofer is unreliable",
     "gwascentral.phenotype": "website is down? or API changed?",  # FIXME
@@ -352,6 +348,9 @@ def iter_helper_helper(
         )
         try:
             yv = f(prefix, **kwargs)  # type:ignore
+        except (UnhandledFormatError, NoBuildError) as e:
+            # make sure this comes before the other runtimeerror catch
+            logger.warning("[%s] %s", prefix, e)
         except urllib.error.HTTPError as e:
             logger.warning("[%s] HTTP %s: unable to download %s", prefix, e.getcode(), e.geturl())
             if strict and not bioregistry.is_deprecated(prefix):
@@ -370,8 +369,6 @@ def iter_helper_helper(
             logger.warning("[drugbank] invalid credentials")
         except subprocess.CalledProcessError:
             logger.warning("[%s] ROBOT was unable to convert OWL to OBO", prefix)
-        except (UnhandledFormatError, NoBuildError) as e:
-            logger.warning("[%s] %s", prefix, e)
         except ValueError as e:
             if _is_xml(e):
                 # this means that it tried doing parsing on an xml page
@@ -384,6 +381,9 @@ def iter_helper_helper(
                 logger.exception(
                     "[%s] got exception %s while parsing", prefix, e.__class__.__name__
                 )
+        except zipfile.BadZipFile as e:
+            # This can happen if there's an error on UMLS
+            logger.exception("[%s] got exception %s while parsing", prefix, e.__class__.__name__)
         except TypeError as e:
             logger.exception("[%s] got exception %s while parsing", prefix, e.__class__.__name__)
             if strict:
