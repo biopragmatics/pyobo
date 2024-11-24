@@ -12,6 +12,7 @@ from collections import ChainMap, defaultdict
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
+from itertools import chain
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, ClassVar, Literal, NamedTuple, TextIO, TypeAlias
@@ -377,6 +378,11 @@ class Term(Referenced):
             return [value for value, _datatype in self.annotations_literal[prop]]
         return []
 
+    def get_property_objects(self, prop: ReferenceHint) -> list[Reference]:
+        """Get properties from the given key."""
+        prop = _ensure_ref(prop)
+        return sorted(self.annotations_object.get(prop, []))
+
     def get_property(self, prop: ReferenceHint) -> str | None:
         """Get a single property of the given key."""
         r = self.get_properties(prop)
@@ -399,17 +405,17 @@ class Term(Referenced):
         """Get relationships from the given type."""
         return self.relationships.get(_ensure_ref(typedef), [])
 
-    def get_mappings(self, include_xrefs: bool = True) -> list[tuple[Reference, str]]:
-        """Get mappings."""
+    def get_mappings(self, include_xrefs: bool = True) -> list[tuple[Reference, Reference]]:
+        """Get mappings with preferred curies."""
         rows = []
         for predicate in match_typedefs:
-            for xref_value in self.get_properties(predicate):
-                rows.append((predicate.reference, xref_value))
-            for xref_reference in self.get_relationships(predicate):
-                rows.append((predicate.reference, xref_reference.curie))
+            for xref_reference in chain(
+                self.get_property_objects(predicate), self.get_relationships(predicate)
+            ):
+                rows.append((predicate.reference, xref_reference))
         if include_xrefs:
-            for xref in self.xrefs:
-                rows.append((has_dbxref.reference, xref.curie))
+            for xref_reference in self.xrefs:
+                rows.append((has_dbxref.reference, xref_reference))
         return sorted(set(rows))
 
     def append_exact_match(self, reference: ReferenceHint) -> Self:
@@ -1608,12 +1614,12 @@ class Obo:
     ) -> Iterable[tuple[str, str, str, str, str]]:
         """Iterate over SSSOM rows for mappings."""
         for term in self._iter_terms(use_tqdm=use_tqdm):
-            for predicate, object_curie in term.get_mappings(include_xrefs=True):
+            for predicate, obj_ref in term.get_mappings(include_xrefs=True):
                 yield (
-                    term.curie,
+                    term.preferred_curie,
                     term.name,
-                    object_curie,
-                    predicate.curie,
+                    obj_ref.preferred_curie,
+                    predicate.preferred_curie,
                     UNSPECIFIED_MATCHING_CURIE,
                 )
 
