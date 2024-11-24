@@ -30,7 +30,7 @@ class TestUtils(unittest.TestCase):
 
     def test_first_nonescaped_quote(self):
         """Test finding the first non-escaped double quote."""
-        self.assertIsNone(get_first_nonescaped_quote(''))
+        self.assertIsNone(get_first_nonescaped_quote(""))
         self.assertEqual(0, get_first_nonescaped_quote('"'))
         self.assertEqual(0, get_first_nonescaped_quote('"abc'))
         self.assertEqual(0, get_first_nonescaped_quote('"abc"'))
