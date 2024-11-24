@@ -88,6 +88,7 @@ SSSOM_DF_COLUMNS = [
     "predicate_id",
     "mapping_justification",
 ]
+UNSPECIFIED_MATCHING_CURIE = "sempav:UnspecifiedMatching"
 
 
 @dataclass
@@ -943,7 +944,12 @@ class Obo:
 
     @property
     def _xrefs_path(self) -> Path:
+        warnings.warn("use _mappings_path", DeprecationWarning, stacklevel=2)
         return self._cache(name="xrefs.tsv")
+
+    @property
+    def _mappings_path(self) -> Path:
+        return self._cache(name="mappings.tsv")
 
     @property
     def _relations_path(self) -> Path:
@@ -1026,7 +1032,7 @@ class Obo:
                 self.iterate_synonym_rows,
             ),
             ("alts", self._alts_path, [f"{self.ontology}_id", "alt_id"], self.iterate_alt_rows),
-            ("xrefs", self._xrefs_path, self.xrefs_header, self.iterate_xref_rows),
+            ("mappings", self._mappings_path, SSSOM_DF_COLUMNS, self.iterate_mapping_rows),
             ("relations", self._relations_path, self.relations_header, self.iter_relation_rows),
             ("properties", self._properties_path, self.properties_header, self.iter_property_rows),
         ]:
@@ -1597,6 +1603,20 @@ class Obo:
         for term, xref in self.iterate_xrefs(use_tqdm=use_tqdm):
             yield term.identifier, xref.prefix, xref.identifier
 
+    def iterate_mapping_rows(
+        self, *, use_tqdm: bool = False
+    ) -> Iterable[tuple[str, str, str, str, str]]:
+        """Iterate over SSSOM rows for mappings."""
+        for term in self._iter_terms(use_tqdm=use_tqdm):
+            for predicate, object_curie in term.get_mappings(include_xrefs=True):
+                yield (
+                    term.curie,
+                    term.name,
+                    object_curie,
+                    predicate.curie,
+                    UNSPECIFIED_MATCHING_CURIE,
+                )
+
     def get_mappings_df(
         self,
         *,
@@ -1605,13 +1625,7 @@ class Obo:
         include_mapping_source_column: bool = False,
     ) -> pd.DataFrame:
         """Get a dataframe with SSSOM extracted from the OBO document."""
-        justification_curie = "sempav:UnspecifiedMatching"
-        rows = [
-            (term.curie, term.name, object_curie, predicate.curie, justification_curie)
-            for term in self._iter_terms(use_tqdm=use_tqdm)
-            for predicate, object_curie in term.get_mappings(include_xrefs=True)
-        ]
-        df = pd.DataFrame(rows, columns=SSSOM_DF_COLUMNS)
+        df = pd.DataFrame(self.iterate_mapping_rows(use_tqdm=use_tqdm), columns=SSSOM_DF_COLUMNS)
         if not include_subject_labels:
             del df["subject_label"]
 
@@ -1625,6 +1639,7 @@ class Obo:
     @property
     def xrefs_header(self):
         """The header for the xref dataframe."""
+        warnings.warn("use SSSOM_DF_COLUMNS instead", DeprecationWarning, stacklevel=2)
         return [f"{self.ontology}_id", TARGET_PREFIX, TARGET_ID]
 
     def get_xrefs_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
