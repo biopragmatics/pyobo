@@ -95,7 +95,7 @@ def _get_class_node(term: Term) -> Node:
         Synonym.from_parsed(
             name=synonym.name,
             predicate=OIO_TO_REFERENCE[OBO_SYNONYM_TO_OIO[synonym.specificity]],
-            synonym_type=_rewire(synonym.type) if synonym.type else DEFAULT_SYNONYM_TYPE,
+            synonym_type=_rewire(synonym.type if synonym.type else DEFAULT_SYNONYM_TYPE),
             references=[_rewire(x) for x in synonym.provenance],
         )
         for synonym in term.synonyms
