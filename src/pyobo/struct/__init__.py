@@ -2,7 +2,6 @@
 
 from .reference import Reference, Referenced, default_reference
 from .struct import (
-    DEFAULT_SYNONYM_TYPE,
     Obo,
     Synonym,
     SynonymSpecificities,
@@ -35,7 +34,6 @@ from .typedef import (
 )
 
 __all__ = [
-    "DEFAULT_SYNONYM_TYPE",
     "Obo",
     "Reference",
     "Referenced",
