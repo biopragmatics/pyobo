@@ -704,6 +704,24 @@ class TestReader(unittest.TestCase):
             synonym.provenance,
         )
 
+    def test_synonym_dashed(self) -> None:
+        """Test parsing a synonym with specificity, type, and provenance."""
+        ontology = _read("""\
+            ontology: chebi
+            synonymtypedef: OMO:1234567 ""
+
+            [Term]
+            id: CHEBI:1234
+            synonym: "Brown-Pearce tumour" EXACT OMO:0003005 []
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("Brown-Pearce tumour", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(Reference(prefix="omo", identifier="0003005"), synonym.type.reference)
+        self.assertEqual([], synonym.provenance)
+
     def test_synonym_url(self) -> None:
         """Test parsing a synonym defined with a PURL."""
         ontology = _read(f"""\
@@ -727,6 +745,69 @@ class TestReader(unittest.TestCase):
             ],
             synonym.provenance,
         )
+
+    def test_synonym_casing(self) -> None:
+        """Test parsing a synonym when an alternate case is used."""
+        ontology = _read(f"""\
+            ontology: chebi
+            synonymtypedef: OMO:1234567 ""
+
+            [Term]
+            id: CHEBI:1234
+            synonym: "LTEC I" EXACT omo:1234567 [Orphanet:93938,{CHARLIE.curie}]
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("LTEC I", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type.reference)
+        self.assertEqual(
+            [
+                Reference(prefix="orphanet", identifier="93938"),
+                CHARLIE,
+            ],
+            synonym.provenance,
+        )
+
+    def test_synonym_default(self) -> None:
+        """Test parsing a synonym with specificity, type, and provenance."""
+        ontology = _read("""\
+            ontology: chebi
+            synonymtypedef: OMO:1234567 ""
+
+            [Term]
+            id: CHEBI:1234
+            synonym: "DoguAnadoluKirmizisi" EXACT most_common_name []
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("DoguAnadoluKirmizisi", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(default_reference("chebi", "most_common_name"), synonym.type.reference)
+
+    def test_synonym_with_annotations(self) -> None:
+        """Test parsing a synonym with annotations."""
+        ontology = _read("""\
+            ontology: chebi
+            synonymtypedef: OMO:0003005 ""
+
+            [Term]
+            id: CHEBI:1234
+            synonym: "10*3.{copies}/mL" EXACT [] {http://purl.obolibrary.org/obo/NCIT_P383="AB", http://purl.obolibrary.org/obo/NCIT_P384="UCUM"}
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("10*3.{copies}/mL", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type.reference)
+        self.assertEqual([], synonym.provenance)
+        # TODO update this when adding annotation parsing!
+        self.assertEqual([], synonym.annotations)
+
+
 
     def test_parent(self) -> None:
         """Test parsing out a parent."""
