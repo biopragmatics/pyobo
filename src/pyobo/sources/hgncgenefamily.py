@@ -8,7 +8,6 @@ import pandas as pd
 from ..struct import (
     Obo,
     Reference,
-    Synonym,
     SynonymTypeDef,
     Term,
     enables,
@@ -104,7 +103,7 @@ def _get_terms_helper(force: bool = False) -> Iterable[Term]:
             go_id = desc_go[len("http://purl.uniprot.org/go/") :]
             term.append_relationship(enables, Reference(prefix="GO", identifier=go_id))
         if symbol and pd.notna(symbol):
-            term.append_synonym(Synonym(name=symbol, type=symbol_type))
+            term.append_synonym(symbol, type=symbol_type)
         term.set_species(identifier="9606", name="Homo sapiens")
         yield term
 
