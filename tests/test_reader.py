@@ -10,7 +10,7 @@ from obonet import read_obo
 from pyobo import Obo, Reference, Term
 from pyobo.reader import from_obonet, get_first_nonescaped_quote
 from pyobo.struct import default_reference
-from pyobo.struct.struct import DEFAULT_SYNONYM_TYPE
+from pyobo.struct.struct import DEFAULT_SYNONYM_TYPE, abbreviation
 from pyobo.struct.typedef import TypeDef, exact_match, has_dbxref, is_conjugate_base_of, see_also
 
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
@@ -719,7 +719,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("Brown-Pearce tumour", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(Reference(prefix="omo", identifier="0003005"), synonym.type.reference)
+        self.assertEqual(Reference(prefix="omo", identifier="0003005"), synonym.type)
         self.assertEqual([], synonym.provenance)
 
     def test_synonym_url(self) -> None:
@@ -761,7 +761,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type.reference)
+        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type)
         self.assertEqual(
             [
                 Reference(prefix="orphanet", identifier="93938"),
@@ -785,7 +785,25 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("DoguAnadoluKirmizisi", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(default_reference("chebi", "most_common_name"), synonym.type.reference)
+        self.assertEqual(default_reference("chebi", "most_common_name"), synonym.type)
+
+    def test_synonym_builtin(self) -> None:
+        """Test parsing a synonym with specificity, type, and provenance."""
+        ontology = _read("""\
+            ontology: chebi
+            synonymtypedef: OMO:1234567 ""
+
+            [Term]
+            id: CHEBI:1234
+            synonym: "COP" EXACT ABBREVIATION []
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("COP", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(abbreviation.reference, synonym.type.reference)
+        self.assertEqual(default_reference("chebi", "most_common_name"), synonym.type)
 
     def test_synonym_with_annotations(self) -> None:
         """Test parsing a synonym with annotations."""
@@ -802,12 +820,10 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("10*3.{copies}/mL", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type.reference)
+        self.assertEqual(DEFAULT_SYNONYM_TYPE, synonym.type)
         self.assertEqual([], synonym.provenance)
         # TODO update this when adding annotation parsing!
         self.assertEqual([], synonym.annotations)
-
-
 
     def test_parent(self) -> None:
         """Test parsing out a parent."""
