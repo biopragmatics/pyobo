@@ -290,12 +290,12 @@ class TestGet(unittest.TestCase):
 
     def test_iter_filtered_relations(self):
         """Test getting filtered relations w/ upgrade."""
-        curie = "obo:chebi#is_conjugate_base_of"
+        reference = default_reference("chebi", "is_conjugate_base_of")
         for inp in [
-            curie,
-            ReferenceTuple.from_curie(curie),
-            Reference.from_curie(curie),
-            TypeDef.from_curie(curie),
+            reference.curie,
+            reference,
+            reference.pair,
+            TypeDef(reference=reference),
         ]:
             with self.subTest(inp=inp):
                 rr = multidict(

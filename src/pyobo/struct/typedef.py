@@ -137,18 +137,6 @@ class TypeDef(Referenced):
         return cls(reference=Reference(prefix=prefix, identifier=identifier, name=name))
 
     @classmethod
-    def from_curie(
-        cls, curie: str, *, name: str | None = None, ontology_prefix: str | None = None
-    ) -> TypeDef:
-        """Create a TypeDef directly from a CURIE and optional name."""
-        reference = Reference.from_curie(
-            curie, name=name, strict=True, ontology_prefix=ontology_prefix
-        )
-        if reference is None:
-            raise RuntimeError
-        return cls(reference=reference)
-
-    @classmethod
     def default(cls, prefix: str, identifier: str, *, name: str | None = None) -> Self:
         """Construct a default type definition from within the OBO namespace."""
         return cls(reference=default_reference(prefix, identifier, name=name))
@@ -329,7 +317,9 @@ has_ontology_root_term = TypeDef.from_triple(
 definition_source = TypeDef.from_triple(
     prefix=IAO_PREFIX, identifier="0000119", name="definition source"
 )
-has_dbxref = TypeDef.from_curie("oboInOwl:hasDbXref", name="has database cross-reference")
+has_dbxref = TypeDef.from_triple(
+    prefix="oboInOwl", identifier="hasDbXref", name="has database cross-reference"
+)
 
 editor_note = TypeDef.from_triple(prefix=IAO_PREFIX, identifier="0000116", name="editor note")
 

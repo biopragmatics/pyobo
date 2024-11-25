@@ -295,14 +295,6 @@ class Term(Referenced):
             definition=get_definition(prefix, identifier),
         )
 
-    @classmethod
-    def from_curie(cls, curie: str, name: str | None = None) -> Term:
-        """Create a term directly from a CURIE and optional name."""
-        reference = Reference.from_curie(curie, name=name, strict=True)
-        if reference is None:
-            raise RuntimeError
-        return cls(reference=reference)
-
     def append_provenance(self, reference: ReferenceHint) -> None:
         """Add a provenance reference."""
         self.provenance.append(_ensure_ref(reference))

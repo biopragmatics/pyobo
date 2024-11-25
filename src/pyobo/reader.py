@@ -121,7 +121,9 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
             # if name isn't available, it means its external to this ontology
             name=data.get("name"),
         )
-        for prefix, identifier, data in _iter_obo_graph(graph=graph, strict=strict)
+        for prefix, identifier, data in _iter_obo_graph(
+            graph=graph, strict=strict, ontology_prefix=ontology_prefix
+        )
     )
     references: Mapping[ReferenceTuple, Reference] = {
         reference.pair: reference for reference in reference_it
@@ -143,14 +145,20 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
     missing_typedefs: set[ReferenceTuple] = set()
     terms = []
     n_alt_ids, n_parents, n_synonyms, n_relations, n_properties, n_xrefs = 0, 0, 0, 0, 0, 0
-    for prefix, identifier, data in _iter_obo_graph(graph=graph, strict=strict):
+    for prefix, identifier, data in _iter_obo_graph(
+        graph=graph, strict=strict, ontology_prefix=ontology_prefix
+    ):
         if prefix != ontology_prefix or not data:
             continue
 
         identifier = bioregistry.standardize_identifier(prefix, identifier)
         reference = references[ReferenceTuple(ontology_prefix, identifier)]
 
-        node_xrefs = list(iterate_node_xrefs(prefix=prefix, data=data, strict=strict))
+        node_xrefs = list(
+            iterate_node_xrefs(
+                prefix=prefix, data=data, strict=strict, ontology_prefix=ontology_prefix
+            )
+        )
         xrefs, provenance = [], []
         for node_xref in node_xrefs:
             if node_xref.prefix in PROVENANCE_PREFIXES:
@@ -159,10 +167,16 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
                 xrefs.append(node_xref)
         n_xrefs += len(xrefs)
 
-        definition, definition_references = get_definition(data, node=reference)
+        definition, definition_references = get_definition(
+            data, node=reference, strict=strict, ontology_prefix=ontology_prefix
+        )
         provenance.extend(definition_references)
 
-        alt_ids = list(iterate_node_alt_ids(data, strict=strict))
+        alt_ids = list(
+            iterate_node_alt_ids(
+                data, node=reference, strict=strict, ontology_prefix=ontology_prefix
+            )
+        )
         n_alt_ids += len(alt_ids)
 
         parents = list(
@@ -173,7 +187,13 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
         n_parents += len(parents)
 
         synonyms = list(
-            iterate_node_synonyms(data, synonym_typedefs, node=reference, strict=strict)
+            iterate_node_synonyms(
+                data,
+                synonym_typedefs,
+                node=reference,
+                strict=strict,
+                ontology_prefix=ontology_prefix,
+            )
         )
         n_synonyms += len(synonyms)
 
@@ -257,10 +277,11 @@ def _iter_obo_graph(
     graph: nx.MultiDiGraph,
     *,
     strict: bool = True,
+    ontology_prefix: str | None = None,
 ) -> Iterable[tuple[str, str, Mapping[str, Any]]]:
     """Iterate over the nodes in the graph with the prefix stripped (if it's there)."""
     for node, data in graph.nodes(data=True):
-        prefix, identifier = normalize_curie(node, strict=strict)
+        prefix, identifier = normalize_curie(node, strict=strict, ontology_prefix=ontology_prefix)
         if prefix is None or identifier is None:
             continue
         yield prefix, identifier, data
@@ -329,7 +350,9 @@ def iterate_graph_typedefs(
             logger.debug("[%s] typedef %s is missing a name", graph.graph["ontology"], curie)
 
         if ":" in curie:
-            reference = Reference.from_curie(curie, name=name, strict=strict)
+            reference = Reference.from_curie(
+                curie, name=name, strict=strict, ontology_prefix=ontology_prefix
+            )
         else:
             reference = default_reference(ontology_prefix, curie, name=name)
         if reference is None:
@@ -338,18 +361,22 @@ def iterate_graph_typedefs(
 
         xrefs = []
         for curie in typedef.get("xref", []):
-            _xref = Reference.from_curie(curie, strict=strict)
+            _xref = Reference.from_curie(curie, strict=strict, ontology_prefix=ontology_prefix)
             if _xref:
                 xrefs.append(_xref)
         yield TypeDef(reference=reference, xrefs=xrefs)
 
 
-def get_definition(data, *, node: Reference) -> tuple[None | str, list[Reference]]:
+def get_definition(
+    data, *, node: Reference, ontology_prefix: str | None, strict: bool = True
+) -> tuple[None | str, list[Reference]]:
     """Extract the definition from the data."""
     definition = data.get("def")  # it's allowed not to have a definition
     if not definition:
         return None, []
-    return _extract_definition(definition, node=node)
+    return _extract_definition(
+        definition, node=node, strict=strict, ontology_prefix=ontology_prefix
+    )
 
 
 def _extract_definition(
@@ -357,6 +384,7 @@ def _extract_definition(
     *,
     node: Reference,
     strict: bool = False,
+    ontology_prefix: str | None,
 ) -> tuple[None | str, list[Reference]]:
     """Extract the definitions."""
     if not s.startswith('"'):
@@ -375,7 +403,9 @@ def _extract_definition(
         )
         provenance = []
     else:
-        provenance = _parse_trailing_ref_list(rest, strict=strict, node=node)
+        provenance = _parse_trailing_ref_list(
+            rest, strict=strict, node=node, ontology_prefix=ontology_prefix
+        )
     return definition or None, provenance
 
 
@@ -414,6 +444,7 @@ def _extract_synonym(
     *,
     node: Reference,
     strict: bool = True,
+    ontology_prefix: str | None,
 ) -> Synonym | None:
     # TODO check if the synonym is written like a CURIE... it shouldn't but I've seen it happen
     try:
@@ -451,7 +482,9 @@ def _extract_synonym(
     if not rest.startswith("[") or not rest.endswith("]"):
         provenance = []
     else:
-        provenance = _parse_trailing_ref_list(rest, strict=strict, node=node)
+        provenance = _parse_trailing_ref_list(
+            rest, strict=strict, node=node, ontology_prefix=ontology_prefix
+        )
     return Synonym(
         name=name,
         specificity=specificity or "EXACT",
@@ -460,10 +493,14 @@ def _extract_synonym(
     )
 
 
-def _parse_trailing_ref_list(rest, *, strict: bool = True, node: Reference):
+def _parse_trailing_ref_list(
+    rest, *, strict: bool = True, node: Reference, ontology_prefix: str | None
+):
     rest = rest.lstrip("[").rstrip("]")
     return [
-        Reference.from_curie(curie.strip(), strict=strict, node=node)
+        Reference.from_curie(
+            curie.strip(), strict=strict, node=node, ontology_prefix=ontology_prefix
+        )
         for curie in rest.split(",")
         if curie.strip()
     ]
@@ -475,6 +512,7 @@ def iterate_node_synonyms(
     *,
     node: Reference,
     strict: bool = False,
+    ontology_prefix: str | None,
 ) -> Iterable[Synonym]:
     """Extract synonyms from a :mod:`obonet` node's data.
 
@@ -485,7 +523,9 @@ def iterate_node_synonyms(
     - "LTEC I" []
     """
     for s in data.get("synonym", []):
-        s = _extract_synonym(s, synonym_typedefs, node=node, strict=strict)
+        s = _extract_synonym(
+            s, synonym_typedefs, node=node, strict=strict, ontology_prefix=ontology_prefix
+        )
         if s is not None:
             yield s
 
@@ -598,10 +638,14 @@ def iterate_node_parents(
         yield reference
 
 
-def iterate_node_alt_ids(data: Mapping[str, Any], *, strict: bool = True) -> Iterable[Reference]:
+def iterate_node_alt_ids(
+    data: Mapping[str, Any], *, node: Reference, strict: bool = True, ontology_prefix: str | None
+) -> Iterable[Reference]:
     """Extract alternate identifiers from a :mod:`obonet` node's data."""
     for curie in data.get("alt_id", []):
-        reference = Reference.from_curie(curie, strict=strict)
+        reference = Reference.from_curie(
+            curie, strict=strict, node=node, ontology_prefix=ontology_prefix
+        )
         if reference is not None:
             yield reference
 
@@ -645,7 +689,7 @@ def iterate_node_relationships(
 
 
 def iterate_node_xrefs(
-    *, prefix: str, data: Mapping[str, Any], strict: bool = True
+    *, prefix: str, data: Mapping[str, Any], strict: bool = True, ontology_prefix: str | None
 ) -> Iterable[Reference]:
     """Extract xrefs from a :mod:`obonet` node's data."""
     for xref in data.get("xref", []):
@@ -654,7 +698,7 @@ def iterate_node_xrefs(
         if curie_has_blacklisted_prefix(xref) or curie_is_blacklisted(xref) or ":" not in xref:
             continue  # sometimes xref to self... weird
 
-        xref = remap_prefix(xref)
+        xref = remap_prefix(xref, ontology_prefix=ontology_prefix)
 
         split_space = " " in xref
         if split_space:
@@ -664,6 +708,6 @@ def iterate_node_xrefs(
                 continue
             xref = _xref_split[0]
 
-        yv = Reference.from_curie(xref, strict=strict)
+        yv = Reference.from_curie(xref, strict=strict, ontology_prefix=ontology_prefix)
         if yv is not None:
             yield yv

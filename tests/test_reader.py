@@ -390,7 +390,7 @@ class TestReader(unittest.TestCase):
             id: CHEBI:1234
             property_value: https://w3id.org/biolink/vocab/something CHEBI:5678
         """)
-        td = TypeDef.from_curie("biolink:something")
+        td = TypeDef.from_triple(prefix="biolink", identifier="something")
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(list(term.annotations_literal)))
         self.assertEqual(1, len(list(term.annotations_object)))
