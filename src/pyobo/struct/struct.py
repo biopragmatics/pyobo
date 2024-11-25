@@ -190,7 +190,7 @@ def _ensure_ref(
         if not ontology_prefix:
             raise ValueError(f"can't parse reference: {reference}")
         return default_reference(ontology_prefix, reference)
-    _rv = Reference.from_curie(reference, strict=True, ontology_prefix=ontology_prefix)
+    _rv = Reference.from_curie_or_uri(reference, strict=True, ontology_prefix=ontology_prefix)
     if _rv is None:
         raise ValueError(f"[{ontology_prefix}] unable to parse {reference}")
     return _rv

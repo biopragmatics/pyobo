@@ -73,7 +73,7 @@ class Reference(curies.Reference):
         return f"https://bioregistry.io/{self.curie}"
 
     @classmethod
-    def from_curie(  # type:ignore[override]
+    def from_curie_or_uri(
         cls,
         curie: str,
         name: str | None = None,

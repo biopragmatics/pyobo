@@ -12,7 +12,7 @@ from pyobo.struct.typedef import exact_match, see_also
 LYSINE_DEHYDROGENASE_ACT = Reference(
     prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"
 )
-RO_DUMMY = TypeDef(reference=Reference.from_curie("RO:1234567"))
+RO_DUMMY = TypeDef(reference=Reference(prefix="RO", identifier="1234567"))
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
 
 

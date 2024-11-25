@@ -213,7 +213,7 @@ def relations(
         else:
             echo_df(relations_df)
     else:
-        relation_reference = Reference.from_curie(relation, strict=False)
+        relation_reference = Reference.from_curie_or_uri(relation, strict=False)
         if relation_reference is None:
             click.secho(f"not a valid curie: {relation}", fg="red")
             raise sys.exit(1)

@@ -63,7 +63,7 @@ def get_primary_curie(
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the primary curie for an entity."""
-    reference = Reference.from_curie(curie, strict=kwargs.get("strict", True))
+    reference = Reference.from_curie_or_uri(curie, strict=kwargs.get("strict", True))
     if reference is None:
         return None
     primary_identifier = get_primary_identifier(reference, **kwargs)

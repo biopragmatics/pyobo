@@ -42,7 +42,7 @@ def iter_terms() -> Iterable[Term]:
 
     synonyms_df = ensure_df(PREFIX, url=SYNONYMS_URL)
     synonyms_df["reference"] = synonyms_df["reference"].map(
-        lambda s: [Reference.from_curie(s)] if pd.notna(s) and s != "?" else [],
+        lambda s: [Reference.from_curie_or_uri(s)] if pd.notna(s) and s != "?" else [],
     )
     synonyms_df["specificity"] = synonyms_df["specificity"].map(
         lambda s: "EXACT" if pd.isna(s) or s == "?" else s
@@ -71,7 +71,7 @@ def iter_terms() -> Iterable[Term]:
             curie = curie.strip()
             if not curie:
                 continue
-            reference = Reference.from_curie(curie)
+            reference = Reference.from_curie_or_uri(curie)
             if reference is not None:
                 provenance.append(reference)
         identifier = row["Identifier"]

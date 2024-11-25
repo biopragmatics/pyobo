@@ -156,7 +156,11 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
 
         node_xrefs = list(
             iterate_node_xrefs(
-                prefix=prefix, data=data, strict=strict, ontology_prefix=ontology_prefix
+                prefix=prefix,
+                data=data,
+                strict=strict,
+                ontology_prefix=ontology_prefix,
+                node=reference,
             )
         )
         xrefs, provenance = [], []
@@ -322,7 +326,7 @@ def iterate_graph_synonym_typedefs(
             # assume it's a default reference
             yield SynonymTypeDef(reference=default_reference(ontology_prefix, sid, name=name))
         else:
-            reference = Reference.from_curie(
+            reference = Reference.from_curie_or_uri(
                 sid, name=name, strict=strict, ontology_prefix=ontology_prefix
             )
             if reference is not None:
@@ -350,7 +354,7 @@ def iterate_graph_typedefs(
             logger.debug("[%s] typedef %s is missing a name", graph.graph["ontology"], curie)
 
         if ":" in curie:
-            reference = Reference.from_curie(
+            reference = Reference.from_curie_or_uri(
                 curie, name=name, strict=strict, ontology_prefix=ontology_prefix
             )
         else:
@@ -361,7 +365,9 @@ def iterate_graph_typedefs(
 
         xrefs = []
         for curie in typedef.get("xref", []):
-            _xref = Reference.from_curie(curie, strict=strict, ontology_prefix=ontology_prefix)
+            _xref = Reference.from_curie_or_uri(
+                curie, strict=strict, ontology_prefix=ontology_prefix
+            )
             if _xref:
                 xrefs.append(_xref)
         yield TypeDef(reference=reference, xrefs=xrefs)
@@ -498,7 +504,7 @@ def _parse_trailing_ref_list(
 ):
     rest = rest.lstrip("[").rstrip("]")
     return [
-        Reference.from_curie(
+        Reference.from_curie_or_uri(
             curie.strip(), strict=strict, node=node, ontology_prefix=ontology_prefix
         )
         for curie in rest.split(",")
@@ -564,7 +570,7 @@ def _handle_prop(
     # if the value doesn't start with a quote, we're going to
     # assume that it's a reference
     if not value_type.startswith('"'):
-        obj_reference = Reference.from_curie(
+        obj_reference = Reference.from_curie_or_uri(
             value_type, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
         if obj_reference is None:
@@ -589,7 +595,7 @@ def _handle_prop(
     if not datatype:
         return LiteralProperty(prop_reference, value, Reference(prefix="xsd", identifier="string"))
 
-    datatype_reference = Reference.from_curie(
+    datatype_reference = Reference.from_curie_or_uri(
         datatype, strict=strict, ontology_prefix=ontology_prefix, node=node
     )
     if datatype_reference is None:
@@ -617,7 +623,9 @@ def _get_prop(
     elif ":" not in prop:
         return default_reference(ontology_prefix, prop)
     else:
-        return Reference.from_curie(prop, strict=strict, node=node, ontology_prefix=ontology_prefix)
+        return Reference.from_curie_or_uri(
+            prop, strict=strict, node=node, ontology_prefix=ontology_prefix
+        )
 
 
 def iterate_node_parents(
@@ -629,7 +637,7 @@ def iterate_node_parents(
 ) -> Iterable[Reference]:
     """Extract parents from a :mod:`obonet` node's data."""
     for parent_curie in data.get("is_a", []):
-        reference = Reference.from_curie(
+        reference = Reference.from_curie_or_uri(
             parent_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
         if reference is None:
@@ -643,7 +651,7 @@ def iterate_node_alt_ids(
 ) -> Iterable[Reference]:
     """Extract alternate identifiers from a :mod:`obonet` node's data."""
     for curie in data.get("alt_id", []):
-        reference = Reference.from_curie(
+        reference = Reference.from_curie_or_uri(
             curie, strict=strict, node=node, ontology_prefix=ontology_prefix
         )
         if reference is not None:
@@ -678,7 +686,7 @@ def iterate_node_relationships(
                 relation.curie,
             )
 
-        target = Reference.from_curie(
+        target = Reference.from_curie_or_uri(
             target_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
         if target is None:
@@ -689,7 +697,12 @@ def iterate_node_relationships(
 
 
 def iterate_node_xrefs(
-    *, prefix: str, data: Mapping[str, Any], strict: bool = True, ontology_prefix: str | None
+    *,
+    prefix: str,
+    data: Mapping[str, Any],
+    strict: bool = True,
+    ontology_prefix: str | None,
+    node: Reference,
 ) -> Iterable[Reference]:
     """Extract xrefs from a :mod:`obonet` node's data."""
     for xref in data.get("xref", []):
@@ -708,6 +721,8 @@ def iterate_node_xrefs(
                 continue
             xref = _xref_split[0]
 
-        yv = Reference.from_curie(xref, strict=strict, ontology_prefix=ontology_prefix)
+        yv = Reference.from_curie_or_uri(
+            xref, strict=strict, ontology_prefix=ontology_prefix, node=node
+        )
         if yv is not None:
             yield yv
