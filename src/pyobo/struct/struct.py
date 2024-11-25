@@ -103,8 +103,8 @@ class Synonym:
     specificity: SynonymSpecificity = "EXACT"
 
     #: The type of synonym. Must be defined in OBO document!
-    type: SynonymTypeDef = field(
-        default_factory=lambda: DEFAULT_SYNONYM_TYPE  # type:ignore
+    type: Reference = field(
+        default_factory=lambda: DEFAULT_SYNONYM_TYPE.reference  # type:ignore
     )
 
     #: References to articles where the synonym appears
@@ -117,14 +117,21 @@ class Synonym:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
 
-    def _sort_key(self) -> tuple[str, str, SynonymTypeDef]:
+    def _sort_key(self) -> tuple[str, str, Reference]:
         return self.name, self.specificity, self.type
 
-    def to_obo(self, ontology_prefix: str) -> str:
+    def to_obo(
+        self, ontology_prefix: str, synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef]
+    ) -> str:
         """Write this synonym as an OBO line to appear in a [Term] stanza."""
-        return f"synonym: {self._fp(ontology_prefix)}"
+        return f"synonym: {self._fp(ontology_prefix, synonym_typedefs)}"
 
-    def _fp(self, ontology_prefix: str) -> str:
+    def _fp(
+        self, ontology_prefix: str, synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef]
+    ) -> str:
+        _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
+        # TODO inherit specificity from typedef?
+        # TODO validation of specificity against typedef
         x = f'"{self._escape(self.name)}" {self.specificity}'
         if self.type and self.type.pair != DEFAULT_SYNONYM_TYPE.pair:
             x = f"{x} {reference_escape(self.type, ontology_prefix=ontology_prefix)}"
@@ -303,15 +310,19 @@ class Term(Referenced):
         self,
         synonym: str | Synonym,
         *,
-        type: SynonymTypeDef | None = None,
+        type: Reference | Referenced | None = None,
         specificity: SynonymSpecificity | None = None,
         provenance: list[Reference] | None = None,
     ) -> None:
         """Add a synonym."""
+        if type is None:
+            type = DEFAULT_SYNONYM_TYPE.reference
+        elif isinstance(type, Referenced):
+            type = type.reference
         if isinstance(synonym, str):
             synonym = Synonym(
                 synonym,
-                type=type or DEFAULT_SYNONYM_TYPE,
+                type=type,
                 specificity=specificity or "EXACT",
                 provenance=provenance or [],
             )
@@ -508,6 +519,7 @@ class Term(Referenced):
         *,
         ontology_prefix: str,
         typedefs: Mapping[ReferenceTuple, TypeDef],
+        synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] | None = None,
         emit_object_properties: bool = True,
         emit_annotation_properties: bool = True,
     ) -> Iterable[str]:
@@ -546,8 +558,10 @@ class Term(Referenced):
             for line in self._emit_properties(ontology_prefix, typedefs):
                 yield f"property_value: {line}"
 
+        if synonym_typedefs is None:
+            synonym_typedefs = {}
         for synonym in sorted(self.synonyms):
-            yield synonym.to_obo(ontology_prefix=ontology_prefix)
+            yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
 
     def _emit_relations(
         self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
@@ -617,12 +631,39 @@ def _typedef_warn(
             # Throw our hands up in the air. By using `obo` as the prefix,
             # we already threw using "real" definitions out the window
             logger.warning(
-                f"[{prefix}] predicate with obo prefix not defined: {predicate.curie}."
+                f"[{prefix}] predicate with OBO prefix not defined: {predicate.curie}."
                 f"\n\tThis might be because you used an unqualified prefix in an OBO file, "
                 f"which automatically gets an OBO prefix."
             )
         else:
             logger.warning(f"[{prefix}] typedef not defined: {predicate.curie}")
+
+
+#: A set of warnings, used to make sure we don't show the same one over and over
+_SYNONYM_TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
+
+
+def _synonym_typedef_warn(
+    prefix: str, predicate: Reference, synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef]
+) -> bool:
+    if predicate.pair == DEFAULT_SYNONYM_TYPE.pair:
+        return False
+    if predicate.pair in default_typedefs or predicate.pair in synonym_typedefs:
+        return False
+    key = prefix, predicate
+    if key not in _SYNONYM_TYPEDEF_WARNINGS:
+        _SYNONYM_TYPEDEF_WARNINGS.add(key)
+        if predicate.prefix == "obo":
+            # Throw our hands up in the air. By using `obo` as the prefix,
+            # we already threw using "real" definitions out the window
+            logger.warning(
+                f"[{prefix}] synonym typedef with OBO prefix not defined: {predicate.preferred_curie}."
+                f"\n\tThis might be because you used an unqualified prefix in an OBO file, "
+                f"which automatically gets an OBO prefix."
+            )
+        else:
+            logger.warning(f"[{prefix}] synonym typedef not defined: {predicate.preferred_curie}")
+    return True
 
 
 class BioregistryError(ValueError):
@@ -864,10 +905,12 @@ class Obo:
             yield from typedef.iterate_obo_lines(ontology_prefix=self.ontology)
 
         typedefs = self._index_typedefs()
+        synonym_typedefs = self._index_synonym_typedefs()
         for term in self:
             yield from term.iterate_obo_lines(
                 ontology_prefix=self.ontology,
                 typedefs=typedefs,
+                synonym_typedefs=synonym_typedefs,
                 emit_object_properties=emit_object_properties,
                 emit_annotation_properties=emit_annotation_properties,
             )
@@ -876,6 +919,12 @@ class Obo:
         return ChainMap(
             {t.pair: t for t in self.typedefs or []},
             default_typedefs,
+        )
+
+    def _index_synonym_typedefs(self) -> Mapping[ReferenceTuple, SynonymTypeDef]:
+        return ChainMap(
+            {t.pair: t for t in self.synonym_typedefs or []},
+            default_synonym_typedefs,
         )
 
     def write_obo(
@@ -1154,6 +1203,7 @@ class Obo:
         #: a list of 3-tuples u,v,k
         links = []
         typedefs = self._index_typedefs()
+        synonym_typedefs = self._index_synonym_typedefs()
         for term in self._iter_terms(use_tqdm=use_tqdm):
             parents = []
             for parent in term.parents:
@@ -1179,7 +1229,8 @@ class Obo:
                 "is_a": parents,
                 "relationship": relations,
                 "synonym": [
-                    synonym._fp(ontology_prefix=self.ontology) for synonym in term.synonyms
+                    synonym._fp(ontology_prefix=self.ontology, synonym_typedefs=synonym_typedefs)
+                    for synonym in term.synonyms
                 ],
                 "property_value": list(term._emit_properties(self.ontology, typedefs)),
             }

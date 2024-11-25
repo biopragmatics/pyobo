@@ -568,7 +568,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(DEFAULT_SYNONYM_TYPE, synonym.type)
+        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
         self.assertEqual([], synonym.provenance)
 
     def test_synonym_with_specificity(self) -> None:
@@ -585,7 +585,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
         self.assertEqual("NARROW", synonym.specificity)
-        self.assertEqual(DEFAULT_SYNONYM_TYPE, synonym.type)
+        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
         self.assertEqual([], synonym.provenance)
 
     def test_synonym_with_type_missing_def(self) -> None:
@@ -601,7 +601,7 @@ class TestReader(unittest.TestCase):
         self.assertEqual(1, len(term.synonyms))
         synonym = term.synonyms[0]
         #  this is because no typedef existed
-        self.assertEqual(DEFAULT_SYNONYM_TYPE, synonym.type)
+        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
 
     def test_synonym_with_type(self) -> None:
         """Test parsing a synonym with type."""
@@ -618,7 +618,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type.reference)
+        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type)
         self.assertEqual([], synonym.provenance)
 
     def test_synonym_with_type_and_specificity(self) -> None:
@@ -636,7 +636,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
         self.assertEqual("NARROW", synonym.specificity)
-        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type.reference)
+        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type)
         self.assertEqual([], synonym.provenance)
 
     def test_synonym_with_empty_prov(self) -> None:
@@ -654,7 +654,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
         self.assertEqual("NARROW", synonym.specificity)
-        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type.reference)
+        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type)
         self.assertEqual([], synonym.provenance)
 
     def test_synonym_no_type(self) -> None:
@@ -671,7 +671,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(DEFAULT_SYNONYM_TYPE, synonym.type)
+        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
         self.assertEqual(
             [
                 Reference(prefix="orphanet", identifier="93938"),
@@ -695,7 +695,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type.reference)
+        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type)
         self.assertEqual(
             [
                 Reference(prefix="orphanet", identifier="93938"),
@@ -737,7 +737,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type.reference)
+        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type)
         self.assertEqual(
             [
                 Reference(prefix="orphanet", identifier="93938"),

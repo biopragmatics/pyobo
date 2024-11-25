@@ -12,7 +12,6 @@ from pyobo.struct.typedef import exact_match
 from ..struct import (
     Obo,
     Reference,
-    Synonym,
     Term,
     from_species,
     has_gene_product,
@@ -158,7 +157,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         )
         if identifier in mgi_to_synonyms:
             for synonym in mgi_to_synonyms[identifier]:
-                term.append_synonym(Synonym(name=synonym))
+                term.append_synonym(synonym)
         if identifier in mgi_to_entrez_id:
             term.append_exact_match(
                 Reference(prefix="ncbigene", identifier=mgi_to_entrez_id[identifier])

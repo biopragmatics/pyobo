@@ -9,7 +9,7 @@ from collections.abc import Iterable
 import pandas as pd
 from tqdm.auto import tqdm
 
-from pyobo.struct import Obo, Synonym, Term, from_species, has_gene_product
+from pyobo.struct import Obo, Term, from_species, has_gene_product
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -67,7 +67,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
                 term.append_synonym(synonym.strip())
         if synonyms and pd.notna(synonyms):
             for synonym in synonyms.split(","):
-                term.append_synonym(Synonym(synonym.strip()))
+                term.append_synonym(synonym.strip())
         # for uniprot_id in uniprot_mappings.get(identifier, []):
         #     if not uniprot_id or pd.isna(uniprot_id) or uniprot_id in {"unknown", "pseudogene"}:
         #         continue

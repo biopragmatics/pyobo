@@ -118,7 +118,7 @@ class TestParseObonet(unittest.TestCase):
                 Synonym(
                     name="LTEC I",
                     specificity="EXACT",
-                    type=iupac_name,
+                    type=iupac_name.reference,
                     provenance=[Reference(prefix="orphanet", identifier="93938")],
                 ),
                 '"LTEC I" EXACT IUPAC_NAME [Orphanet:93938]',
@@ -144,19 +144,19 @@ class TestParseObonet(unittest.TestCase):
                 '"LTEC I" []',
             ),
             (
-                Synonym(name="HAdV-A", specificity="BROAD", type=acronym),
+                Synonym(name="HAdV-A", specificity="BROAD", type=acronym.reference),
                 '"HAdV-A" BROAD OMO:0003012 []',
             ),
             (
-                Synonym(name="HAdV-A", specificity="BROAD", type=acronym),
+                Synonym(name="HAdV-A", specificity="BROAD", type=acronym.reference),
                 '"HAdV-A" BROAD omo:0003012 []',
             ),
             (
-                Synonym(name="HAdV-A", specificity="EXACT", type=acronym),
+                Synonym(name="HAdV-A", specificity="EXACT", type=acronym.reference),
                 '"HAdV-A" OMO:0003012 []',
             ),
             (
-                Synonym(name="HAdV-A", specificity="EXACT", type=acronym),
+                Synonym(name="HAdV-A", specificity="EXACT", type=acronym.reference),
                 '"HAdV-A" omo:0003012 []',
             ),
         ]:
@@ -193,7 +193,7 @@ class TestParseObonet(unittest.TestCase):
             "N,N,N-tributylbutan-1-aminium fluoride", synonym.name, msg="name parsing failed"
         )
         self.assertEqual("EXACT", synonym.specificity, msg="specificity parsing failed")
-        self.assertEqual(iupac_name, synonym.type)
+        self.assertEqual(iupac_name.reference, synonym.type)
 
     def test_get_node_properties(self):
         """Test getting properties from a node in a :mod:`obonet` graph."""
