@@ -6,7 +6,7 @@ from collections.abc import Iterable
 import pandas as pd
 from tqdm.auto import tqdm
 
-from ..struct import Obo, Reference, Synonym, Term
+from ..struct import Obo, Reference, Term
 from ..utils.path import ensure_df
 
 __all__ = [
@@ -82,7 +82,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
         for synonym in [iupac]:
             if pd.notna(synonym):
-                term.append_synonym(Synonym(name=synonym))
+                term.append_synonym(synonym)
 
         yield term
 

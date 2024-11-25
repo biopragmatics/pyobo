@@ -15,7 +15,6 @@ from pyobo.resources.so import get_so_name
 from pyobo.struct import (
     Obo,
     Reference,
-    Synonym,
     SynonymTypeDef,
     Term,
     TypeDef,
@@ -412,15 +411,15 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             )
 
         for alias_symbol in entry.pop("alias_symbol", []):
-            term.append_synonym(Synonym(name=alias_symbol, type=alias_symbol_type))
+            term.append_synonym(alias_symbol, type=alias_symbol_type)
         for alias_name in entry.pop("alias_name", []):
-            term.append_synonym(Synonym(name=alias_name, type=alias_name_type))
+            term.append_synonym(alias_name, type=alias_name_type)
         for previous_symbol in itt.chain(
             entry.pop("previous_symbol", []), entry.pop("prev_symbol", [])
         ):
-            term.append_synonym(Synonym(name=previous_symbol, type=previous_symbol_type))
+            term.append_synonym(previous_symbol, type=previous_symbol_type)
         for previous_name in entry.pop("prev_name", []):
-            term.append_synonym(Synonym(name=previous_name, type=previous_name_type))
+            term.append_synonym(previous_name, type=previous_name_type)
 
         for prop, td in [("location", HAS_LOCATION)]:
             value = entry.pop(prop, None)

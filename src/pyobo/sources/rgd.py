@@ -9,7 +9,6 @@ from tqdm.auto import tqdm
 from pyobo.struct import (
     Obo,
     Reference,
-    Synonym,
     SynonymTypeDef,
     Term,
     default_reference,
@@ -124,11 +123,11 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
         old_names = row["OLD_NAME"]
         if old_names and pd.notna(old_names):
             for old_name in old_names.split(";"):
-                term.append_synonym(Synonym(name=old_name, type=old_name_type))
+                term.append_synonym(old_name, type=old_name_type)
         old_symbols = row["OLD_SYMBOL"]
         if old_symbols and pd.notna(old_symbols):
             for old_symbol in old_symbols.split(";"):
-                term.append_synonym(Synonym(name=old_symbol, type=old_symbol_type))
+                term.append_synonym(old_symbol, type=old_symbol_type)
         for prefix, key in namespace_to_column:
             xref_ids = str(row[key])
             if xref_ids and pd.notna(xref_ids):

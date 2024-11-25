@@ -22,7 +22,7 @@ from bioontologies.obograph import (
 from bioontologies.robot import ParseResults
 from tqdm import tqdm
 
-from pyobo.struct import Obo, Reference, Referenced, Term
+from pyobo.struct import DEFAULT_SYNONYM_TYPE, Obo, Reference, Referenced, Term
 from pyobo.struct.typedef import definition_source, is_a
 
 __all__ = [
@@ -91,12 +91,11 @@ def _get_class_node(term: Term) -> Node:
         )
         for xref, xref_type in zip(term.xrefs, term.xref_types, strict=False)
     ]
-    default_st = Reference(prefix="oboInOwl", identifier="SynonymType")
     synonyms = [
         Synonym.from_parsed(
             name=synonym.name,
             predicate=OIO_TO_REFERENCE[OBO_SYNONYM_TO_OIO[synonym.specificity]],
-            synonym_type=_rewire(synonym.type.reference) if synonym.type else default_st,
+            synonym_type=_rewire(synonym.type) if synonym.type else DEFAULT_SYNONYM_TYPE,
             references=[_rewire(x) for x in synonym.provenance],
         )
         for synonym in term.synonyms
