@@ -125,7 +125,7 @@ def _parse_xrefs(s) -> list[tuple[Reference, str]]:
             xref_curie = _clean_intenz(xref_curie)
 
         try:
-            reference = Reference.from_curie(xref_curie)
+            reference = Reference.from_curie_or_uri(xref_curie)
         except ValueError:
             logger.warning("can not parse CURIE: %s", xref_curie)
             continue

@@ -107,7 +107,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         reference = Reference(prefix=PREFIX, identifier=entity, name=entity)
         definition, provenance = id_to_definition.get(entity, (None, None))
         provenance_reference = (
-            Reference.from_curie(provenance) if isinstance(provenance, str) else None
+            Reference.from_curie_or_uri(provenance) if isinstance(provenance, str) else None
         )
         term = Term(
             reference=reference,

@@ -190,7 +190,7 @@ def _ensure_ref(
         if not ontology_prefix:
             raise ValueError(f"can't parse reference: {reference}")
         return default_reference(ontology_prefix, reference)
-    _rv = Reference.from_curie(reference, strict=True, ontology_prefix=ontology_prefix)
+    _rv = Reference.from_curie_or_uri(reference, strict=True, ontology_prefix=ontology_prefix)
     if _rv is None:
         raise ValueError(f"[{ontology_prefix}] unable to parse {reference}")
     return _rv
@@ -294,14 +294,6 @@ class Term(Referenced):
             reference=Reference.auto(prefix=prefix, identifier=identifier),
             definition=get_definition(prefix, identifier),
         )
-
-    @classmethod
-    def from_curie(cls, curie: str, name: str | None = None) -> Term:
-        """Create a term directly from a CURIE and optional name."""
-        reference = Reference.from_curie(curie, name=name, strict=True)
-        if reference is None:
-            raise RuntimeError
-        return cls(reference=reference)
 
     def append_provenance(self, reference: ReferenceHint) -> None:
         """Add a provenance reference."""
