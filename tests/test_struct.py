@@ -374,11 +374,11 @@ class TestTerm(unittest.TestCase):
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
+        omo_dummy = SynonymTypeDef(reference=Reference(prefix="OMO", identifier="1234567"))
         term = Term(LYSINE_DEHYDROGENASE_ACT)
         term.append_synonym(
             "L-lysine:NAD+ oxidoreductase",
-            # TODO switch to bare reference
-            type=SynonymTypeDef(reference=Reference(prefix="OMO", identifier="1234567")),
+            type=omo_dummy,
             provenance=[Reference(prefix="orcid", identifier="0000-0003-4423-4370")],
         )
         self.assert_lines(
@@ -388,7 +388,32 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             synonym: "L-lysine:NAD+ oxidoreductase" EXACT OMO:1234567 [orcid:0000-0003-4423-4370]
             """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(
+                ontology_prefix="go",
+                typedefs={RO_DUMMY.pair: RO_DUMMY},
+                synonym_typedefs={omo_dummy.pair: omo_dummy},
+            ),
+        )
+
+    def test_append_synonym_missing_typedef(self) -> None:
+        """Test appending a synonym."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_synonym(
+            "L-lysine:NAD+ oxidoreductase",
+            type=Reference(prefix="OMO", identifier="1234567"),
+        )
+        with self.assertLogs(level="INFO") as log:
+            self.assert_lines(
+                """\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                synonym: "L-lysine:NAD+ oxidoreductase" EXACT OMO:1234567 []
+                """,
+                term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            )
+        self.assertIn(
+            "WARNING:pyobo.struct.struct:[go] synonym typedef not defined: OMO:1234567", log.output
         )
 
     def test_definition(self):
