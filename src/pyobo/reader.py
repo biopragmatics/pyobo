@@ -113,22 +113,6 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
             f"[{ontology_prefix}] will not accept slash in data version: {data_version}"
         )
 
-    #: Parsed CURIEs to references (even external ones)
-    reference_it = (
-        Reference(
-            prefix=prefix,
-            identifier=bioregistry.standardize_identifier(prefix, identifier),
-            # if name isn't available, it means its external to this ontology
-            name=data.get("name"),
-        )
-        for prefix, identifier, data in _iter_obo_graph(
-            graph=graph, strict=strict, ontology_prefix=ontology_prefix
-        )
-    )
-    references: Mapping[ReferenceTuple, Reference] = {
-        reference.pair: reference for reference in reference_it
-    }
-
     #: CURIEs to typedefs
     typedefs: Mapping[ReferenceTuple, TypeDef] = {
         typedef.pair: typedef
@@ -145,18 +129,16 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
     missing_typedefs: set[ReferenceTuple] = set()
     terms = []
     n_alt_ids, n_parents, n_synonyms, n_relations, n_properties, n_xrefs = 0, 0, 0, 0, 0, 0
-    for prefix, identifier, data in _iter_obo_graph(
+    n_references = 0
+    for reference, data in _iter_obo_graph(
         graph=graph, strict=strict, ontology_prefix=ontology_prefix
     ):
-        if prefix != ontology_prefix or not data:
+        if reference.prefix != ontology_prefix or not data:
             continue
-
-        identifier = bioregistry.standardize_identifier(prefix, identifier)
-        reference = references[ReferenceTuple(ontology_prefix, identifier)]
+        n_references += 1
 
         node_xrefs = list(
             iterate_node_xrefs(
-                prefix=prefix,
                 data=data,
                 strict=strict,
                 ontology_prefix=ontology_prefix,
@@ -245,7 +227,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
         terms.append(term)
 
     logger.info(
-        f"[{ontology_prefix}] got {len(references):,} references, {len(typedefs):,} typedefs, {len(terms):,} terms,"
+        f"[{ontology_prefix}] got {n_references:,} references, {len(typedefs):,} typedefs, {len(terms):,} terms,"
         f" {n_alt_ids:,} alt ids, {n_parents:,} parents, {n_synonyms:,} synonyms, {n_xrefs:,} xrefs,"
         f" {n_relations:,} relations, and {n_properties:,} properties",
     )
@@ -282,13 +264,14 @@ def _iter_obo_graph(
     *,
     strict: bool = True,
     ontology_prefix: str | None = None,
-) -> Iterable[tuple[str, str, Mapping[str, Any]]]:
+) -> Iterable[tuple[Reference, Mapping[str, Any]]]:
     """Iterate over the nodes in the graph with the prefix stripped (if it's there)."""
     for node, data in graph.nodes(data=True):
-        prefix, identifier = normalize_curie(node, strict=strict, ontology_prefix=ontology_prefix)
-        if prefix is None or identifier is None:
-            continue
-        yield prefix, identifier, data
+        node = Reference.from_curie_or_uri(
+            node, strict=strict, ontology_prefix=ontology_prefix, name=data.get("name")
+        )
+        if node:
+            yield node, data
 
 
 def _get_date(graph, ontology_prefix: str) -> datetime | None:
@@ -698,7 +681,6 @@ def iterate_node_relationships(
 
 def iterate_node_xrefs(
     *,
-    prefix: str,
     data: Mapping[str, Any],
     strict: bool = True,
     ontology_prefix: str | None,
@@ -717,7 +699,7 @@ def iterate_node_xrefs(
         if split_space:
             _xref_split = xref.split(" ", 1)
             if _xref_split[1][0] not in {'"', "("}:
-                logger.debug("[%s] Problem with space in xref %s", prefix, xref)
+                logger.debug("[%s] Problem with space in xref %s", node.curie, xref)
                 continue
             xref = _xref_split[0]
 

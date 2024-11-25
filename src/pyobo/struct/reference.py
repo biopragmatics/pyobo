@@ -95,6 +95,9 @@ class Reference(curies.Reference):
         )
         if prefix is None or identifier is None:
             return None
+
+        identifier = bioregistry.standardize_identifier(prefix, identifier)
+
         if name is None and auto:
             from ..api import get_name
 

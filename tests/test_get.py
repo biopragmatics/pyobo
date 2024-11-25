@@ -85,7 +85,7 @@ class TestParseObonet(unittest.TestCase):
         ]:
             with self.subTest(s=s):
                 actual_text, actual_references = _extract_definition(
-                    s, node=Reference(prefix="chebi", identifier="XXX")
+                    s, node=Reference(prefix="chebi", identifier="XXX"), ontology_prefix="chebi"
                 )
                 self.assertEqual(expected_text, actual_text)
                 self.assertEqual(expected_references, actual_references)
@@ -95,7 +95,10 @@ class TestParseObonet(unittest.TestCase):
         expected_text = """The canonical 3' splice site has the sequence "AG"."""
         s = """"The canonical 3' splice site has the sequence \\"AG\\"." [PMID:1234]"""
         actual_text, actual_references = _extract_definition(
-            s, strict=True, node=Reference(prefix="chebi", identifier="XXX")
+            s,
+            strict=True,
+            node=Reference(prefix="chebi", identifier="XXX"),
+            ontology_prefix="chebi",
         )
         self.assertEqual(expected_text, actual_text)
         self.assertEqual([Reference(prefix="pubmed", identifier="1234")], actual_references)
@@ -159,7 +162,10 @@ class TestParseObonet(unittest.TestCase):
         ]:
             with self.subTest(s=text):
                 actual_synonym = _extract_synonym(
-                    text, synoynym_typedefs, node=Reference(prefix="chebi", identifier="XXX")
+                    text,
+                    synoynym_typedefs,
+                    node=Reference(prefix="chebi", identifier="XXX"),
+                    ontology_prefix="chebi",
                 )
                 self.assertIsInstance(actual_synonym, Synonym)
                 self.assertEqual(expected_synonym, actual_synonym)
@@ -175,7 +181,10 @@ class TestParseObonet(unittest.TestCase):
         data = self.graph.nodes["CHEBI:51990"]
         synonyms = list(
             iterate_node_synonyms(
-                data, synoynym_typedefs, node=Reference(prefix="chebi", identifier="XXX")
+                data,
+                synoynym_typedefs,
+                node=Reference(prefix="chebi", identifier="XXX"),
+                ontology_prefix="chebi",
             )
         )
         self.assertEqual(1, len(synonyms))
@@ -215,7 +224,13 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_xrefs(self):
         """Test getting parents from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:51990"]
-        xrefs = list(iterate_node_xrefs(prefix="chebi", data=data))
+        xrefs = list(
+            iterate_node_xrefs(
+                data=data,
+                ontology_prefix="chebi",
+                node=Reference(prefix="chebi", identifier="51990"),
+            )
+        )
         self.assertEqual(7, len(xrefs))
         # NOTE the prefixes are remapped by Bioregistry
         self.assertEqual({"pubmed", "cas", "reaxys"}, {xref.prefix for xref in xrefs})
