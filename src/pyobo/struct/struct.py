@@ -103,8 +103,8 @@ class Synonym:
     specificity: SynonymSpecificity = "EXACT"
 
     #: The type of synonym. Must be defined in OBO document!
-    type: SynonymTypeDef = field(
-        default_factory=lambda: DEFAULT_SYNONYM_TYPE  # type:ignore
+    type: Reference = field(
+        default_factory=lambda: DEFAULT_SYNONYM_TYPE.reference  # type:ignore
     )
 
     #: References to articles where the synonym appears
@@ -117,7 +117,7 @@ class Synonym:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
 
-    def _sort_key(self) -> tuple[str, str, SynonymTypeDef]:
+    def _sort_key(self) -> tuple[str, str, Reference]:
         return self.name, self.specificity, self.type
 
     def to_obo(self, ontology_prefix: str) -> str:
@@ -303,15 +303,19 @@ class Term(Referenced):
         self,
         synonym: str | Synonym,
         *,
-        type: SynonymTypeDef | None = None,
+        type: Reference | Referenced | None = None,
         specificity: SynonymSpecificity | None = None,
         provenance: list[Reference] | None = None,
     ) -> None:
         """Add a synonym."""
+        if type is None:
+            type = DEFAULT_SYNONYM_TYPE.reference
+        elif isinstance(type, Referenced):
+            type = type.reference
         if isinstance(synonym, str):
             synonym = Synonym(
                 synonym,
-                type=type or DEFAULT_SYNONYM_TYPE,
+                type=type,
                 specificity=specificity or "EXACT",
                 provenance=provenance or [],
             )

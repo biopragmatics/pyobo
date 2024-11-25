@@ -449,7 +449,7 @@ def _extract_synonym(
             rest = rest[len(_specificity) :].strip()
             break
 
-    stype: SynonymTypeDef | None = None
+    stype: Reference | None = None
     for _stype in synonym_typedefs.values():
         # Since there aren't a lot of carefully defined synonym definitions, it
         # can appear as a string or curie. Therefore, we might see temporary prefixes
@@ -457,15 +457,15 @@ def _extract_synonym(
         # identifiers
         if rest.startswith(_stype.curie):
             rest = rest[len(_stype.curie) :].strip()
-            stype = _stype
+            stype = _stype.reference
             break
         elif rest.startswith(_stype.preferred_curie):
             rest = rest[len(_stype.preferred_curie) :].strip()
-            stype = _stype
+            stype = _stype.reference
             break
         elif rest.startswith(_stype.identifier):
             rest = rest[len(_stype.identifier) :].strip()
-            stype = _stype
+            stype = _stype.reference
             break
 
     if not rest.startswith("[") or not rest.endswith("]"):
@@ -477,7 +477,7 @@ def _extract_synonym(
     return Synonym(
         name=name,
         specificity=specificity or "EXACT",
-        type=stype or DEFAULT_SYNONYM_TYPE,
+        type=stype or DEFAULT_SYNONYM_TYPE.reference,
         provenance=provenance,
     )
 
