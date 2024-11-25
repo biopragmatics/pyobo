@@ -106,11 +106,11 @@ class TestParseObonet(unittest.TestCase):
     def test_extract_synonym(self):
         """Test extracting synonym strings."""
         iupac_name = SynonymTypeDef(
-            reference=Reference(prefix="obo", identifier="IUPAC_NAME", name="IUPAC NAME")
+            reference=default_reference(prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME")
         )
         synoynym_typedefs = {
-            "IUPAC_NAME": iupac_name,
-            acronym.curie: acronym,
+            iupac_name.pair: iupac_name,
+            acronym.pair: acronym,
         }
 
         for expected_synonym, text in [
@@ -173,10 +173,10 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_synonyms(self):
         """Test getting synonyms from a node in a :mod:`obonet` graph."""
         iupac_name = SynonymTypeDef(
-            reference=Reference(prefix="obo", identifier="IUPAC_NAME", name="IUPAC NAME")
+            reference=default_reference(prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME")
         )
         synoynym_typedefs = {
-            "IUPAC_NAME": iupac_name,
+            iupac_name.pair: iupac_name,
         }
         data = self.graph.nodes["CHEBI:51990"]
         synonyms = list(

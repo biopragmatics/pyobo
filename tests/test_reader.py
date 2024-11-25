@@ -771,10 +771,25 @@ class TestReader(unittest.TestCase):
         )
 
     def test_synonym_default(self) -> None:
-        """Test parsing a synonym with specificity, type, and provenance."""
+        """Test parsing a synonym that has a built-in prefix."""
         ontology = _read("""\
             ontology: chebi
-            synonymtypedef: OMO:1234567 ""
+
+            [Term]
+            id: CHEBI:1234
+            synonym: "DoguAnadoluKirmizisi" EXACT most_common_name []
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("DoguAnadoluKirmizisi", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
+
+        # now, we define it properly
+        ontology = _read("""\
+            ontology: chebi
+            synonymtypedef: most_common_name "most common name"
 
             [Term]
             id: CHEBI:1234
@@ -791,7 +806,6 @@ class TestReader(unittest.TestCase):
         """Test parsing a synonym with specificity, type, and provenance."""
         ontology = _read("""\
             ontology: chebi
-            synonymtypedef: OMO:1234567 ""
 
             [Term]
             id: CHEBI:1234
@@ -802,14 +816,17 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("COP", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(abbreviation.reference, synonym.type.reference)
-        self.assertEqual(default_reference("chebi", "most_common_name"), synonym.type)
+        self.assertEqual(abbreviation.reference, synonym.type)
+        self.assertEqual(Reference(prefix="OMO", identifier="0003000"), synonym.type)
 
+    @unittest.skip(
+        reason="This needs to be fixed upstream, since obonet's "
+        "parser for synonyms fails on the open squiggly bracket {"
+    )
     def test_synonym_with_annotations(self) -> None:
         """Test parsing a synonym with annotations."""
         ontology = _read("""\
             ontology: chebi
-            synonymtypedef: OMO:0003005 ""
 
             [Term]
             id: CHEBI:1234

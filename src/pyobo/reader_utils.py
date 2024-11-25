@@ -6,10 +6,11 @@ import logging
 from collections import Counter
 from collections.abc import Mapping
 
+import bioontologies.upgrade
 from curies import ReferenceTuple
 
 from pyobo.struct import SynonymSpecificities, SynonymSpecificity
-from pyobo.struct.struct import Reference, SynonymTypeDef, _synonym_typedef_warn
+from pyobo.struct.struct import Reference, SynonymTypeDef, _synonym_typedef_warn, default_reference
 
 logger = logging.getLogger(__name__)
 
@@ -55,12 +56,20 @@ def _chomp_typedef(
 
         stype_curie, rest = s, ""
 
-    reference = Reference.from_curie_or_uri(
-        stype_curie,
-        strict=strict,
-        node=node,
-        ontology_prefix=ontology_prefix,
-    )
+    reference: Reference | None
+    if ":" not in stype_curie:
+        # this catches situation where it's "ABBREVIATION"
+        if xx := bioontologies.upgrade.upgrade(stype_curie):
+            reference = Reference(prefix=xx.prefix, identifier=xx.identifier)
+        else:
+            reference = default_reference(ontology_prefix, stype_curie)
+    else:
+        reference = Reference.from_curie_or_uri(
+            stype_curie,
+            strict=strict,
+            node=node,
+            ontology_prefix=ontology_prefix,
+        )
     if reference is None:
         logger.warning(
             "[%s] unable to parse synonym type `%s` in line %s", node.curie, stype_curie, s
