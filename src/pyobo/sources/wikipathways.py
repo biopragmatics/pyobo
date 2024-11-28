@@ -76,7 +76,7 @@ def iter_terms(version: str) -> Iterable[Term]:
             term = Term(reference=Reference(prefix=PREFIX, identifier=identifier, name=name))
             term.set_species(taxonomy_id, taxonomy_name)
             for ncbigene_id in genes:
-                term.append_relationship(
+                term.annotate_object(
                     has_participant,
                     Reference(prefix="ncbigene", identifier=ncbigene_id),
                 )
