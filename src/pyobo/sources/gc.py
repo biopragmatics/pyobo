@@ -79,6 +79,23 @@ def get_terms() -> Iterable[Term]:
         # TODO if symbol is available, what does it mean?
         terms.append(term)
 
+    terms.append(
+        Term(
+            reference=Reference(prefix=PREFIX, identifier="7"),
+            is_obsolete=True,
+        )
+        .append_replaced_by(Reference(prefix=PREFIX, identifier="4"))
+        .append_comment("Kinetoplast code now merged in code id 4, as of 1995.")
+    )
+    terms.append(
+        Term(
+            reference=Reference(prefix=PREFIX, identifier="8"),
+            is_obsolete=True,
+        )
+        .append_replaced_by(Reference(prefix=PREFIX, identifier="1"))
+        .append_comment("all plant chloroplast differences due to RNA edit, as of 1995.")
+    )
+
     return terms
 
 
