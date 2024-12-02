@@ -34,6 +34,7 @@ from .constants import (
 )
 from .identifier_utils import ParseError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
+from .reader import from_obo_path
 from .struct import Obo
 from .utils.io import get_writer
 from .utils.path import ensure_path, prefix_directory_join
@@ -131,18 +132,7 @@ def get_ontology(
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
 
-    from .reader import from_obo_path
-
-    obo = from_obo_path(path, prefix=prefix, strict=strict)
-    if version is not None:
-        if obo.data_version is None:
-            logger.warning("[%s] did not have a version, overriding with %s", obo.ontology, version)
-            obo.data_version = version
-        elif obo.data_version != version:
-            logger.warning(
-                "[%s] had version %s, overriding with %s", obo.ontology, obo.data_version, version
-            )
-            obo.data_version = version
+    obo = from_obo_path(path, prefix=prefix, strict=strict, version=version)
     obo.write_default(force=force_process)
     return obo
 

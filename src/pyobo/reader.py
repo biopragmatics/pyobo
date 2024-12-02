@@ -44,7 +44,13 @@ logger = logging.getLogger(__name__)
 RELATION_REMAPPINGS: Mapping[str, ReferenceTuple] = bioontologies.upgrade.load()
 
 
-def from_obo_path(path: str | Path, prefix: str | None = None, *, strict: bool = True) -> Obo:
+def from_obo_path(
+    path: str | Path,
+    prefix: str | None = None,
+    *,
+    strict: bool = True,
+    version: str | None,
+) -> Obo:
     """Get the OBO graph from a path."""
     import obonet
 
@@ -65,10 +71,10 @@ def from_obo_path(path: str | Path, prefix: str | None = None, *, strict: bool =
         _clean_graph_ontology(graph, prefix)
 
     # Convert to an Obo instance and return
-    return from_obonet(graph, strict=strict)
+    return from_obonet(graph, strict=strict, version=version)
 
 
-def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
+def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True, version: str | None = None) -> Obo:
     """Get all of the terms from a OBO graph."""
     ontology_prefix_raw = graph.graph["ontology"]
     ontology_prefix = bioregistry.normalize_prefix(ontology_prefix_raw)  # probably always okay
@@ -79,6 +85,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
     date = _get_date(graph=graph, ontology_prefix=ontology_prefix)
     name = _get_name(graph=graph, ontology_prefix=ontology_prefix)
 
+    _clean_graph_version(graph, version)
     data_version = graph.graph.get("data-version")
     if not data_version:
         if date is not None:
@@ -257,6 +264,22 @@ def _clean_graph_ontology(graph, prefix: str) -> None:
             graph.graph["ontology"],
         )
         graph.graph["ontology"] = prefix
+
+
+def _clean_graph_version(graph, version: str | None) -> None:
+    if version is None:
+        return
+    graph_prefix = graph.graph.get("ontology")
+    graph_version = graph.graph.get("data-version")
+    if not graph_version:
+        logger.debug("[%s] did not have a version, overriding with %s", graph_prefix, version)
+    elif graph_version != version:
+        # in this case, we're going to trust the one that's passed
+        # through explicitly more than the graph's content
+        logger.warning(
+            "[%s] had version %s, overriding with %s", graph_prefix, graph_version, version
+        )
+    graph.graph["data-version"] = version
 
 
 def _iter_obo_graph(
