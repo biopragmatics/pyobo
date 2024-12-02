@@ -16,7 +16,7 @@ VERSION_REWRITES = {
     "$Date: 2009/11/15 10:54:12 $": "2009-11-15",  # for owl
     "http://www.w3.org/2006/time#2016": "2016",  # for time
 }
-STATIC_REWRITES = {"orth": "2"}
+STATIC_VERSION_REWRITES = {"orth": "2"}
 VERSION_PREFIXES = [
     "http://www.orpha.net/version",
     "https://www.orphadata.com/data/ontologies/ordo/last_version/ORDO_en_",
@@ -28,39 +28,40 @@ VERSION_PREFIXES = [
     "http://purl.dataone.org/odo/SENSO/",  # like in http://purl.dataone.org/odo/SENSO/0.1.0
     "https://purl.dataone.org/odo/ADCAD/",
 ]
+VERSION_PREFIX_SPLITS = [
+    "http://www.ebi.ac.uk/efo/releases/v",
+    "http://www.ebi.ac.uk/swo/swo.owl/",
+    "http://semanticscience.org/ontology/sio/v",
+    "http://ontology.neuinfo.org/NIF/ttl/nif/version/",
+]
 
 
-def cleanup_version(data_version: str, prefix: str) -> str | None:
+def cleanup_version(data_version: str, prefix: str) -> str:
     """Clean the version information."""
-    if prefix in STATIC_REWRITES:
-        return STATIC_REWRITES[prefix]
     if data_version in VERSION_REWRITES:
         return VERSION_REWRITES[data_version]
 
     data_version = data_version.removesuffix(".owl")
-
     if data_version.endswith(prefix):
         data_version = data_version[: -len(prefix)]
+    data_version = data_version.removesuffix("/")
 
     data_version = data_version.removeprefix("releases/")
     data_version = data_version.removeprefix("release/")
 
     for version_prefix in VERSION_PREFIXES:
         if data_version.startswith(version_prefix):
-            return data_version[len(version_prefix) :]
+            return data_version.removeprefix(version_prefix)
 
-    version_prefixes_split = [
-        "http://www.ebi.ac.uk/efo/releases/v",
-        "http://www.ebi.ac.uk/swo/swo.owl/",
-        "http://semanticscience.org/ontology/sio/v",
-        "http://ontology.neuinfo.org/NIF/ttl/nif/version/",
-    ]
-    for version_prefix_split in version_prefixes_split:
+    for version_prefix_split in VERSION_PREFIX_SPLITS:
         if data_version.startswith(version_prefix_split):
-            return data_version[len(version_prefix_split) :].split("/")[0]
+            return data_version.removeprefix(version_prefix_split).split("/")[0]
 
+    # use a heuristic to determine if the version is one of
+    # consecutive, major.minor, or semantic versioning (i.e., major.minor.patch)
     if data_version.replace(".", "").isnumeric():
-        return data_version  # consecutive, major.minor, or semantic versioning
+        return data_version
+
     for v in reversed(data_version.split("/")):
         v = v.strip()
         try:

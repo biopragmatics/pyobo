@@ -797,18 +797,21 @@ class TestVersionHandling(unittest.TestCase):
     """Test version handling."""
 
     def test_no_version_no_data(self):
+        """Test when nothing is given."""
         ontology = _read("""\
             ontology: chebi
         """)
         self.assertIsNone(ontology.data_version)
 
     def test_static_rewrite(self):
+        """Test using custom configuration for version lookup."""
         ontology = _read("""\
             ontology: orth
         """)
         self.assertEqual("2", ontology.data_version, msg="The static rewrite wasn't applied")
 
     def test_simple_version(self):
+        """Test handling a simple version."""
         ontology = _read("""\
             ontology: chebi
             data-version: 123
@@ -816,6 +819,7 @@ class TestVersionHandling(unittest.TestCase):
         self.assertEqual("123", ontology.data_version)
 
     def test_releases_prefix_simple(self):
+        """Test a parsing a simple version starting with `releases/`."""
         ontology = _read("""\
             ontology: chebi
             data-version: releases/123
@@ -827,6 +831,7 @@ class TestVersionHandling(unittest.TestCase):
         )
 
     def test_releases_prefix_complex(self):
+        """Test parsing a complex string starting with `releases/`."""
         ontology = _read("""\
             ontology: chebi
             data-version: releases/123/chebi.owl
@@ -838,13 +843,23 @@ class TestVersionHandling(unittest.TestCase):
         )
 
     def test_no_version_with_date(self):
+        """Test when the date is substituted for a missing version."""
         ontology = _read("""\
             ontology: chebi
             date: 20:11:2024 18:44
         """)
         self.assertEqual("2024-11-20", ontology.data_version)
 
+    def test_bad_version(self):
+        """Test that a version with slashes raises an error."""
+        with self.assertRaises(ValueError):
+            _read("""\
+                ontology: chebi
+                data-version: /////
+            """)
+
     def test_data_prefix_strip(self):
+        """Test when a prefix gets stripped from the beginning of a version."""
         ontology = _read("""\
             ontology: sasap
             data-version: http://purl.dataone.org/odo/SASAP/0.3.1
@@ -853,7 +868,8 @@ class TestVersionHandling(unittest.TestCase):
             "0.3.1", ontology.data_version, msg="The custom defined prefix wasn't stripped"
         )
 
-    def test_data_prefix_strip(self):
+    def test_version_full_rewrite(self):
+        """Test when a version gets fully replaced from a custom configuration."""
         ontology = _read("""\
             ontology: owl
             data-version: $Date: 2009/11/15 10:54:12 $

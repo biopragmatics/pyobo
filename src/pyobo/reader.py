@@ -32,7 +32,7 @@ from .struct import (
 )
 from .struct.struct import DEFAULT_SYNONYM_TYPE, LiteralProperty, ObjectProperty
 from .struct.typedef import default_typedefs
-from .utils.misc import cleanup_version
+from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
 
 __all__ = [
     "from_obo_path",
@@ -242,39 +242,31 @@ def _clean_graph_ontology(graph, prefix: str) -> None:
 def _clean_graph_version(
     graph, ontology_prefix: str, version: str | None, date: datetime | None
 ) -> str | None:
+    if ontology_prefix in STATIC_VERSION_REWRITES:
+        return STATIC_VERSION_REWRITES[ontology_prefix]
+
     data_version: str | None = graph.graph.get("data-version") or None
     if version:
+        version = cleanup_version(version, prefix=ontology_prefix)
         if not data_version:
             logger.debug(
                 "[%s] did not have a version, overriding with %s", ontology_prefix, version
             )
-        elif data_version != version:
+            return version
+
+        data_version = cleanup_version(data_version, prefix=ontology_prefix)
+        if data_version != version:
             # in this case, we're going to trust the one that's passed
             # through explicitly more than the graph's content
             logger.warning(
                 "[%s] had version %s, overriding with %s", ontology_prefix, data_version, version
             )
-        return cleanup_version(version, prefix=ontology_prefix)
+        return version
 
     if data_version:
         data_version = cleanup_version(data_version, prefix=ontology_prefix)
-        if data_version is not None:
-            logger.info("[%s] using version %s", ontology_prefix, data_version)
-            return data_version
-        elif date is not None:
-            logger.info(
-                "[%s] unrecognized version format, falling back to date: %s",
-                ontology_prefix,
-                data_version,
-            )
-            return date.strftime("%Y-%m-%d")
-        else:
-            logger.warning(
-                "[%s] UNRECOGNIZED VERSION FORMAT AND MISSING DATE: %s",
-                ontology_prefix,
-                data_version,
-            )
-            return None
+        logger.info("[%s] using version %s", ontology_prefix, data_version)
+        return data_version
 
     if date is not None:
         data_version = date.strftime("%Y-%m-%d")
