@@ -791,3 +791,73 @@ class TestReader(unittest.TestCase):
             },
             {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
         )
+
+
+class TestVersionHandling(unittest.TestCase):
+    """Test version handling."""
+
+    def test_no_version_no_data(self):
+        ontology = _read("""\
+            ontology: chebi
+        """)
+        self.assertIsNone(ontology.data_version)
+
+    def test_static_rewrite(self):
+        ontology = _read("""\
+            ontology: orth
+        """)
+        self.assertEqual("2", ontology.data_version, msg="The static rewrite wasn't applied")
+
+    def test_simple_version(self):
+        ontology = _read("""\
+            ontology: chebi
+            data-version: 123
+        """)
+        self.assertEqual("123", ontology.data_version)
+
+    def test_releases_prefix_simple(self):
+        ontology = _read("""\
+            ontology: chebi
+            data-version: releases/123
+        """)
+        self.assertEqual(
+            "123",
+            ontology.data_version,
+            msg="The prefix `releases/` wasn't properly automatically stripped",
+        )
+
+    def test_releases_prefix_complex(self):
+        ontology = _read("""\
+            ontology: chebi
+            data-version: releases/123/chebi.owl
+        """)
+        self.assertEqual(
+            "123",
+            ontology.data_version,
+            msg="The prefix `releases/` wasn't properly automatically stripped",
+        )
+
+    def test_no_version_with_date(self):
+        ontology = _read("""\
+            ontology: chebi
+            date: 20:11:2024 18:44
+        """)
+        self.assertEqual("2024-11-20", ontology.data_version)
+
+    def test_data_prefix_strip(self):
+        ontology = _read("""\
+            ontology: sasap
+            data-version: http://purl.dataone.org/odo/SASAP/0.3.1
+        """)
+        self.assertEqual(
+            "0.3.1", ontology.data_version, msg="The custom defined prefix wasn't stripped"
+        )
+
+    def test_data_prefix_strip(self):
+        ontology = _read("""\
+            ontology: owl
+            data-version: $Date: 2009/11/15 10:54:12 $
+        """)
+        self.assertEqual(
+            "2009-11-15", ontology.data_version, msg="The custom rewrite wasn't invooked"
+        )

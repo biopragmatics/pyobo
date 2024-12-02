@@ -16,34 +16,36 @@ VERSION_REWRITES = {
     "$Date: 2009/11/15 10:54:12 $": "2009-11-15",  # for owl
     "http://www.w3.org/2006/time#2016": "2016",  # for time
 }
+STATIC_REWRITES = {"orth": "2"}
+VERSION_PREFIXES = [
+    "http://www.orpha.net/version",
+    "https://www.orphadata.com/data/ontologies/ordo/last_version/ORDO_en_",
+    "http://humanbehaviourchange.org/ontology/bcio.owl/",
+    "http://purl.org/pav/",
+    "http://identifiers.org/combine.specifications/teddy.rel-",
+    "https://purl.dataone.org/odo/MOSAIC/",
+    "http://purl.dataone.org/odo/SASAP/",  # like in http://purl.dataone.org/odo/SASAP/0.3.1
+    "http://purl.dataone.org/odo/SENSO/",  # like in http://purl.dataone.org/odo/SENSO/0.1.0
+    "https://purl.dataone.org/odo/ADCAD/",
+]
 
 
 def cleanup_version(data_version: str, prefix: str) -> str | None:
     """Clean the version information."""
+    if prefix in STATIC_REWRITES:
+        return STATIC_REWRITES[prefix]
     if data_version in VERSION_REWRITES:
         return VERSION_REWRITES[data_version]
-    if data_version.endswith(".owl"):
-        data_version = data_version[: -len(".owl")]
+
+    data_version = data_version.removesuffix(".owl")
+
     if data_version.endswith(prefix):
         data_version = data_version[: -len(prefix)]
-    if data_version.startswith("releases/"):
-        data_version = data_version[len("releases/") :]
-    if prefix == "orth":
-        # TODO add bioversions for this
-        return "2"
 
-    version_prefixes = [
-        "http://www.orpha.net/version",
-        "https://www.orphadata.com/data/ontologies/ordo/last_version/ORDO_en_",
-        "http://humanbehaviourchange.org/ontology/bcio.owl/",
-        "http://purl.org/pav/",
-        "http://identifiers.org/combine.specifications/teddy.rel-",
-        "https://purl.dataone.org/odo/MOSAIC/",
-        "http://purl.dataone.org/odo/SASAP/",  # like in http://purl.dataone.org/odo/SASAP/0.3.1
-        "http://purl.dataone.org/odo/SENSO/",  # like in http://purl.dataone.org/odo/SENSO/0.1.0
-        "https://purl.dataone.org/odo/ADCAD/",
-    ]
-    for version_prefix in version_prefixes:
+    data_version = data_version.removeprefix("releases/")
+    data_version = data_version.removeprefix("release/")
+
+    for version_prefix in VERSION_PREFIXES:
         if data_version.startswith(version_prefix):
             return data_version[len(version_prefix) :]
 
