@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections import Counter
 from collections.abc import Iterable, Mapping
 from datetime import datetime
 from pathlib import Path
@@ -583,6 +584,13 @@ def iterate_node_properties(
             yield yv
 
 
+#: Keep track of property-value pairs for which the value couldn't be parsed,
+#: such as `dc:conformsTo autoimmune:inflammation.yaml` in MONDO
+UNHANDLED_PROP_OBJECTS: Counter[tuple[Reference, str]] = Counter()
+
+UNHANDLED_PROPS: Counter[str] = Counter()
+
+
 def _handle_prop(
     prop_value_type: str, *, node: Reference, strict: bool = True, ontology_prefix: str
 ) -> ObjectProperty | LiteralProperty | None:
@@ -594,7 +602,9 @@ def _handle_prop(
 
     prop_reference = _get_prop(prop, node=node, strict=strict, ontology_prefix=ontology_prefix)
     if prop_reference is None:
-        logger.warning("[%s] unparsable property: %s", node.curie, prop)
+        if not UNHANDLED_PROPS[prop]:
+            logger.warning("[%s] unparsable property: %s", node.curie, prop)
+        UNHANDLED_PROPS[prop] += 1
         return None
 
     # if the value doesn't start with a quote, we're going to
@@ -604,9 +614,14 @@ def _handle_prop(
             value_type, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
         if obj_reference is None:
-            logger.warning(
-                "[%s - %s] could not parse object: %s", node.curie, prop_reference.curie, value_type
-            )
+            if not UNHANDLED_PROP_OBJECTS[prop_reference, value_type]:
+                logger.warning(
+                    "[%s - %s] could not parse object: %s",
+                    node.curie,
+                    prop_reference.curie,
+                    value_type,
+                )
+            UNHANDLED_PROP_OBJECTS[prop_reference, value_type] += 1
             return None
         # TODO can we drop datatype from this?
         return ObjectProperty(prop_reference, obj_reference, None)
