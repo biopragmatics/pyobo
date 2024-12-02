@@ -57,11 +57,6 @@ from .reader import from_obo_path, from_obonet
 from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef, default_reference
 from .utils.path import ensure_path
 from .version import get_version
-from .xrefdb.canonicalizer import (
-    Canonicalizer,
-    get_equivalent,
-    get_priority_curie,
-)
 from .xrefdb.sources import (
     has_xref_plugin,
     iter_xref_plugins,
@@ -69,7 +64,6 @@ from .xrefdb.sources import (
 )
 
 __all__ = [
-    "Canonicalizer",
     "Obo",
     "OboNormalizer",
     "Reference",
@@ -86,7 +80,6 @@ __all__ = [
     "get_children",
     "get_definition",
     "get_descendants",
-    "get_equivalent",
     "get_filtered_properties_df",
     "get_filtered_properties_mapping",
     "get_filtered_properties_multimapping",
@@ -110,7 +103,6 @@ __all__ = [
     "get_ontology",
     "get_primary_curie",
     "get_primary_identifier",
-    "get_priority_curie",
     "get_properties",
     "get_properties_df",
     "get_property",
