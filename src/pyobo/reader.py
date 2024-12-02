@@ -247,35 +247,37 @@ def _clean_graph_version(
 
     data_version: str | None = graph.graph.get("data-version") or None
     if version:
-        version = cleanup_version(version, prefix=ontology_prefix)
+        clean_injected_version = cleanup_version(version, prefix=ontology_prefix)
         if not data_version:
             logger.debug(
-                "[%s] did not have a version, overriding with %s", ontology_prefix, version
+                "[%s] did not have a version, overriding with %s",
+                ontology_prefix,
+                clean_injected_version,
             )
-            return version
+            return clean_injected_version
 
-        data_version = cleanup_version(data_version, prefix=ontology_prefix)
-        if data_version != version:
+        clean_data_version = cleanup_version(data_version, prefix=ontology_prefix)
+        if clean_data_version != clean_injected_version:
             # in this case, we're going to trust the one that's passed
             # through explicitly more than the graph's content
             logger.warning(
                 "[%s] had version %s, overriding with %s", ontology_prefix, data_version, version
             )
-        return version
+        return clean_injected_version
 
     if data_version:
-        data_version = cleanup_version(data_version, prefix=ontology_prefix)
-        logger.info("[%s] using version %s", ontology_prefix, data_version)
-        return data_version
+        clean_data_version = cleanup_version(data_version, prefix=ontology_prefix)
+        logger.info("[%s] using version %s", ontology_prefix, clean_data_version)
+        return clean_data_version
 
     if date is not None:
-        data_version = date.strftime("%Y-%m-%d")
+        derived_date_version = date.strftime("%Y-%m-%d")
         logger.info(
             "[%s] does not report a version. falling back to date: %s",
             ontology_prefix,
-            data_version,
+            derived_date_version,
         )
-        return data_version
+        return derived_date_version
 
     logger.warning("[%s] does not report a version nor a date", ontology_prefix)
     return None
