@@ -32,7 +32,7 @@ from .struct import (
 )
 from .struct.struct import DEFAULT_SYNONYM_TYPE, LiteralProperty, ObjectProperty
 from .struct.typedef import default_typedefs
-from .utils.misc import cleanup_version
+from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
 
 __all__ = [
     "from_obo_path",
@@ -44,7 +44,13 @@ logger = logging.getLogger(__name__)
 RELATION_REMAPPINGS: Mapping[str, ReferenceTuple] = bioontologies.upgrade.load()
 
 
-def from_obo_path(path: str | Path, prefix: str | None = None, *, strict: bool = True) -> Obo:
+def from_obo_path(
+    path: str | Path,
+    prefix: str | None = None,
+    *,
+    strict: bool = True,
+    version: str | None,
+) -> Obo:
     """Get the OBO graph from a path."""
     import obonet
 
@@ -65,10 +71,10 @@ def from_obo_path(path: str | Path, prefix: str | None = None, *, strict: bool =
         _clean_graph_ontology(graph, prefix)
 
     # Convert to an Obo instance and return
-    return from_obonet(graph, strict=strict)
+    return from_obonet(graph, strict=strict, version=version)
 
 
-def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
+def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True, version: str | None = None) -> Obo:
     """Get all of the terms from a OBO graph."""
     ontology_prefix_raw = graph.graph["ontology"]
     ontology_prefix = bioregistry.normalize_prefix(ontology_prefix_raw)  # probably always okay
@@ -79,38 +85,12 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
     date = _get_date(graph=graph, ontology_prefix=ontology_prefix)
     name = _get_name(graph=graph, ontology_prefix=ontology_prefix)
 
-    data_version = graph.graph.get("data-version")
-    if not data_version:
-        if date is not None:
-            data_version = date.strftime("%Y-%m-%d")
-            logger.info(
-                "[%s] does not report a version. falling back to date: %s",
-                ontology_prefix,
-                data_version,
-            )
-        else:
-            logger.warning("[%s] does not report a version nor a date", ontology_prefix)
-    else:
-        data_version = cleanup_version(data_version=data_version, prefix=ontology_prefix)
-        if data_version is not None:
-            logger.info("[%s] using version %s", ontology_prefix, data_version)
-        elif date is not None:
-            logger.info(
-                "[%s] unrecognized version format, falling back to date: %s",
-                ontology_prefix,
-                data_version,
-            )
-            data_version = date.strftime("%Y-%m-%d")
-        else:
-            logger.warning(
-                "[%s] UNRECOGNIZED VERSION FORMAT AND MISSING DATE: %s",
-                ontology_prefix,
-                data_version,
-            )
-
+    data_version = _clean_graph_version(
+        graph, ontology_prefix=ontology_prefix, version=version, date=date
+    )
     if data_version and "/" in data_version:
         raise ValueError(
-            f"[{ontology_prefix}] will not accept slash in data version: {data_version}"
+            f"[{ontology_prefix}] slashes not allowed in data versions because of filesystem usage: {data_version}"
         )
 
     #: CURIEs to typedefs
@@ -257,6 +237,50 @@ def _clean_graph_ontology(graph, prefix: str) -> None:
             graph.graph["ontology"],
         )
         graph.graph["ontology"] = prefix
+
+
+def _clean_graph_version(
+    graph, ontology_prefix: str, version: str | None, date: datetime | None
+) -> str | None:
+    if ontology_prefix in STATIC_VERSION_REWRITES:
+        return STATIC_VERSION_REWRITES[ontology_prefix]
+
+    data_version: str | None = graph.graph.get("data-version") or None
+    if version:
+        clean_injected_version = cleanup_version(version, prefix=ontology_prefix)
+        if not data_version:
+            logger.debug(
+                "[%s] did not have a version, overriding with %s",
+                ontology_prefix,
+                clean_injected_version,
+            )
+            return clean_injected_version
+
+        clean_data_version = cleanup_version(data_version, prefix=ontology_prefix)
+        if clean_data_version != clean_injected_version:
+            # in this case, we're going to trust the one that's passed
+            # through explicitly more than the graph's content
+            logger.warning(
+                "[%s] had version %s, overriding with %s", ontology_prefix, data_version, version
+            )
+        return clean_injected_version
+
+    if data_version:
+        clean_data_version = cleanup_version(data_version, prefix=ontology_prefix)
+        logger.info("[%s] using version %s", ontology_prefix, clean_data_version)
+        return clean_data_version
+
+    if date is not None:
+        derived_date_version = date.strftime("%Y-%m-%d")
+        logger.info(
+            "[%s] does not report a version. falling back to date: %s",
+            ontology_prefix,
+            derived_date_version,
+        )
+        return derived_date_version
+
+    logger.warning("[%s] does not report a version nor a date", ontology_prefix)
+    return None
 
 
 def _iter_obo_graph(
