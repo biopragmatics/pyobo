@@ -18,8 +18,6 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-# requests_ftp.monkeypatch_session()
-
 
 def prefix_directory_join(
     prefix: str,
