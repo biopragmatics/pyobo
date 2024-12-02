@@ -241,7 +241,7 @@ def _clean_graph_ontology(graph, prefix: str) -> None:
 
 def _clean_graph_version(
     graph, ontology_prefix: str, version: str | None, date: datetime | None
-) -> None:
+) -> str | None:
     data_version: str | None = graph.graph.get("data-version") or None
     if version:
         if not data_version:
