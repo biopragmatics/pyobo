@@ -9,7 +9,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import bioontologies.upgrade
 import bioregistry
 import networkx as nx
 from curies import ReferenceTuple
@@ -17,7 +16,6 @@ from more_itertools import pairwise
 from tqdm.auto import tqdm
 
 from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
-from .identifier_utils import normalize_curie
 from .registries import curie_has_blacklisted_prefix, curie_is_blacklisted, remap_prefix
 from .struct import (
     Obo,
@@ -41,8 +39,6 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-
-RELATION_REMAPPINGS: Mapping[str, ReferenceTuple] = bioontologies.upgrade.load()
 
 
 def from_obo_path(
@@ -363,7 +359,9 @@ def iterate_graph_synonym_typedefs(
             if reference is not None:
                 yield SynonymTypeDef(reference=reference)
             elif strict:
-                raise ValueError(f"Could not parse {sid}")
+                raise ValueError(
+                    f"[{ontology_prefix}] could not parse synonym type definition: {sid}"
+                )
             else:
                 continue
 
@@ -657,15 +655,7 @@ def _get_prop(
         if prop.startswith(sw):
             identifier = prop.removeprefix(sw)
             return default_reference(ontology_prefix, identifier)
-    if prop.startswith("http"):
-        # TODO upstream this into an omni-parser for references?
-        _pref, _id = bioregistry.parse_iri(prop)
-        if _pref and _id:
-            return Reference(prefix=_pref, identifier=_id)
-        else:
-            logger.warning("[%s] unable to handle property: %s", node.curie, prop)
-            return None
-    elif ":" not in prop:
+    if ":" not in prop:
         return default_reference(ontology_prefix, prop)
     else:
         return Reference.from_curie_or_uri(
@@ -713,16 +703,11 @@ def iterate_node_relationships(
     """Extract relationships from a :mod:`obonet` node's data."""
     for s in data.get("relationship", []):
         relation_curie, target_curie = s.split(" ")
-        relation_prefix: str | None
-        relation_identifier: str | None
-        if relation_curie in RELATION_REMAPPINGS:
-            relation_prefix, relation_identifier = RELATION_REMAPPINGS[relation_curie]
-        else:
-            relation_prefix, relation_identifier = normalize_curie(
+
+        if ":" in relation_curie:
+            relation = Reference.from_curie_or_uri(
                 relation_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
             )
-        if relation_prefix is not None and relation_identifier is not None:
-            relation = Reference(prefix=relation_prefix, identifier=relation_identifier)
         else:
             relation = default_reference(ontology_prefix, relation_curie)
             logger.debug(
@@ -730,6 +715,9 @@ def iterate_node_relationships(
                 relation_curie,
                 relation.curie,
             )
+        if relation is None:
+            logger.warning("[%s] could not parse relation %s", node.curie, relation_curie)
+            continue
 
         target = Reference.from_curie_or_uri(
             target_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
