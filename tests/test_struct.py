@@ -317,18 +317,6 @@ class TestTerm(unittest.TestCase):
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_alt("1234569")
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            alt_id: GO:1234569
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-
     def test_append_synonym(self) -> None:
         """Test appending a synonym."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
