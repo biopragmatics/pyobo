@@ -2,7 +2,6 @@
 
 import logging
 import os
-import sys
 from operator import itemgetter
 
 import click
@@ -16,9 +15,6 @@ from .lookup import lookup
 from ..constants import RAW_DIRECTORY
 from ..plugins import has_nomenclature_plugin, iter_nomenclature_plugins
 from ..registries import iter_cached_obo
-from ..utils.io import get_writer
-from ..xrefdb.canonicalizer import Canonicalizer, get_priority_curie, remap_file_stream
-from ..xrefdb.priority import DEFAULT_PRIORITY_LIST
 
 __all__ = ["main"]
 
@@ -29,27 +25,6 @@ logger = logging.getLogger(__name__)
 @click.version_option()
 def main():
     """CLI for PyOBO."""
-
-
-_ORDERING_TEXT = ", ".join(f"{i}) {x}" for i, x in enumerate(DEFAULT_PRIORITY_LIST, start=1))
-
-
-@main.command(help=f"Prioritize a CURIE from ordering: {_ORDERING_TEXT}")
-@click.argument("curie")
-def prioritize(curie: str):
-    """Prioritize a CURIE."""
-    priority_curie = get_priority_curie(curie)
-    click.secho(priority_curie)
-
-
-@main.command()
-@click.option("-i", "--file-in", type=click.File("r"), default=sys.stdin)
-@click.option("-o", "--file-out", type=click.File("w"), default=sys.stdout)
-@click.option("--column", type=int, default=0, show_default=True)
-@click.option("--sep", default="\t", show_default=True)
-def recurify(file_in, file_out, column: int, sep: str):
-    """Remap a column in a given file stream."""
-    remap_file_stream(file_in=file_in, file_out=file_out, column=column, sep=sep)
 
 
 @main.command()
@@ -99,17 +74,6 @@ def ls():
         for prefix, size in sorted(entries, key=itemgetter(1), reverse=True)
     ]
     click.echo(tabulate(entries, headers=["Source", "Size", "OBO"]))
-
-
-@main.command()
-@verbose_option
-@click.option("-f", "--file", type=click.File("w"))
-def remapping(file):
-    """Make a canonical remapping."""
-    canonicalizer = Canonicalizer.get_default()
-    writer = get_writer(file)
-    writer.writerow(["input", "canonical"])
-    writer.writerows(canonicalizer.iterate_flat_mapping())
 
 
 main.add_command(lookup)
