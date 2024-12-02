@@ -52,19 +52,26 @@ def from_obo_path(
     version: str | None,
 ) -> Obo:
     """Get the OBO graph from a path."""
-    import obonet
+    path = Path(path).expanduser().resolve()
+    if path.suffix.endswith(".gz"):
+        import gzip
 
-    logger.info("[%s] parsing with obonet from %s", prefix or "", path)
-    with open(path) as file:
-        graph = obonet.read_obo(
-            tqdm(
-                file,
-                unit_scale=True,
-                desc=f'[{prefix or ""}] parsing obo',
-                disable=None,
-                leave=False,
-            )
-        )
+        logger.info("[%s] parsing gzipped OBO with obonet from %s", prefix or "<unknown>", path)
+        with gzip.open(path, "rt") as file:
+            graph = _read_obo(file, prefix)
+    elif path.suffix.endswith(".zip"):
+        import io
+        import zipfile
+
+        logger.info("[%s] parsing zipped OBO with obonet from %s", prefix or "<unknown>", path)
+        with zipfile.ZipFile(path) as zf:
+            with zf.open(path.name.removesuffix(".zip"), "r") as file:
+                content = file.read().decode("utf-8")
+                graph = _read_obo(io.StringIO(content), prefix)
+    else:
+        logger.info("[%s] parsing OBO with obonet from %s", prefix or "<unknown>", path)
+        with open(path) as file:
+            graph = _read_obo(file, prefix)
 
     if prefix:
         # Make sure the graph is named properly
@@ -72,6 +79,22 @@ def from_obo_path(
 
     # Convert to an Obo instance and return
     return from_obonet(graph, strict=strict, version=version)
+
+
+def _read_obo(filelike, prefix: str | None) -> nx.MultiDiGraph:
+    import obonet
+
+    return obonet.read_obo(
+        tqdm(
+            filelike,
+            unit_scale=True,
+            desc=f'[{prefix or ""}] parsing OBO',
+            disable=None,
+            leave=True,
+        ),
+        # TODO this is the default, turn it off and see what happens
+        ignore_obsolete=True,
+    )
 
 
 def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True, version: str | None = None) -> Obo:
