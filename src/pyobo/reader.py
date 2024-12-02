@@ -54,20 +54,22 @@ def from_obo_path(
     """Get the OBO graph from a path."""
     path = Path(path).expanduser().resolve()
     if path.suffix.endswith(".gz"):
-        import obonet
+        import gzip
 
-        logger.info("[%s] parsing zipped ontology with obonet from %s", prefix or "<unknown>", path)
-        graph = obonet.read_obo(path)
+        logger.info("[%s] parsing gzipped OBO with obonet from %s", prefix or "<unknown>", path)
+        with gzip.open(path, "rt") as file:
+            graph = _from_lines(file, prefix)
     elif path.suffix.endswith(".zip"):
         import io
         import zipfile
 
+        logger.info("[%s] parsing zipped OBO with obonet from %s", prefix or "<unknown>", path)
         with zipfile.ZipFile(path) as zf:
             with zf.open(path.name.removesuffix(".zip"), "r") as file:
                 content = file.read().decode("utf-8")
                 graph = _from_lines(io.StringIO(content), prefix)
     else:
-        logger.info("[%s] parsing with obonet from %s", prefix or "<unknown>", path)
+        logger.info("[%s] parsing OBO with obonet from %s", prefix or "<unknown>", path)
         with open(path) as file:
             graph = _from_lines(file, prefix)
 
