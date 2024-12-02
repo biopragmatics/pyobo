@@ -1021,19 +1021,19 @@ class Obo:
 
     @property
     def _obograph_path(self) -> Path:
-        return self._path(name=f"{self.ontology}.json")
+        return self._cache(name=f"{self.ontology}.json")
 
     @property
     def _owl_path(self) -> Path:
-        return self._path(name=f"{self.ontology}.owl")
+        return self._cache(name=f"{self.ontology}.owl")
 
     @property
     def _obonet_gz_path(self) -> Path:
-        return self._path(name=f"{self.ontology}.obonet.json.gz")
+        return self._cache(name=f"{self.ontology}.obonet.json.gz")
 
     @property
     def _nodes_path(self) -> Path:
-        return self._path(name=f"{self.ontology}.nodes.tsv")
+        return self._cache(name=f"{self.ontology}.nodes.tsv")
 
     def write_default(
         self,
