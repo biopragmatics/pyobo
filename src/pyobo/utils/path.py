@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, Literal
 
 import pandas as pd
-import requests_ftp
 from pystow import VersionHint
 
 from ..constants import RAW_MODULE
@@ -19,7 +18,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-requests_ftp.monkeypatch_session()
+# requests_ftp.monkeypatch_session()
 
 
 def prefix_directory_join(
