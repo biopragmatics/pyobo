@@ -58,7 +58,7 @@ def from_obo_path(
 
         logger.info("[%s] parsing gzipped OBO with obonet from %s", prefix or "<unknown>", path)
         with gzip.open(path, "rt") as file:
-            graph = _from_lines(file, prefix)
+            graph = _read_obo(file, prefix)
     elif path.suffix.endswith(".zip"):
         import io
         import zipfile
@@ -67,11 +67,11 @@ def from_obo_path(
         with zipfile.ZipFile(path) as zf:
             with zf.open(path.name.removesuffix(".zip"), "r") as file:
                 content = file.read().decode("utf-8")
-                graph = _from_lines(io.StringIO(content), prefix)
+                graph = _read_obo(io.StringIO(content), prefix)
     else:
         logger.info("[%s] parsing OBO with obonet from %s", prefix or "<unknown>", path)
         with open(path) as file:
-            graph = _from_lines(file, prefix)
+            graph = _read_obo(file, prefix)
 
     if prefix:
         # Make sure the graph is named properly
@@ -81,17 +81,19 @@ def from_obo_path(
     return from_obonet(graph, strict=strict, version=version)
 
 
-def _from_lines(filelike, prefix: str | None):
+def _read_obo(filelike, prefix: str | None) -> nx.MultiDiGraph:
     import obonet
 
     return obonet.read_obo(
         tqdm(
             filelike,
             unit_scale=True,
-            desc=f'[{prefix or ""}] parsing obo',
+            desc=f'[{prefix or ""}] parsing OBO',
             disable=None,
             leave=True,
-        )
+        ),
+        # TODO this is the default, turn it off and see what happens
+        ignore_obsolete=True,
     )
 
 
