@@ -85,40 +85,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True, version: str | N
     date = _get_date(graph=graph, ontology_prefix=ontology_prefix)
     name = _get_name(graph=graph, ontology_prefix=ontology_prefix)
 
-    _clean_graph_version(graph, version)
-    data_version = graph.graph.get("data-version")
-    if not data_version:
-        if date is not None:
-            data_version = date.strftime("%Y-%m-%d")
-            logger.info(
-                "[%s] does not report a version. falling back to date: %s",
-                ontology_prefix,
-                data_version,
-            )
-        else:
-            logger.warning("[%s] does not report a version nor a date", ontology_prefix)
-    else:
-        data_version = cleanup_version(data_version=data_version, prefix=ontology_prefix)
-        if data_version is not None:
-            logger.info("[%s] using version %s", ontology_prefix, data_version)
-        elif date is not None:
-            logger.info(
-                "[%s] unrecognized version format, falling back to date: %s",
-                ontology_prefix,
-                data_version,
-            )
-            data_version = date.strftime("%Y-%m-%d")
-        else:
-            logger.warning(
-                "[%s] UNRECOGNIZED VERSION FORMAT AND MISSING DATE: %s",
-                ontology_prefix,
-                data_version,
-            )
-
-    if data_version and "/" in data_version:
-        raise ValueError(
-            f"[{ontology_prefix}] will not accept slash in data version: {data_version}"
-        )
+    data_version = _clean_graph_version(graph, ontology_prefix=ontology_prefix, version=version)
 
     #: CURIEs to typedefs
     typedefs: Mapping[ReferenceTuple, TypeDef] = {
@@ -266,20 +233,56 @@ def _clean_graph_ontology(graph, prefix: str) -> None:
         graph.graph["ontology"] = prefix
 
 
-def _clean_graph_version(graph, version: str | None) -> None:
+def _clean_graph_version(graph, ontology_prefix: str, version: str | None) -> None:
     if version is None:
         return
-    graph_prefix = graph.graph.get("ontology")
     graph_version = graph.graph.get("data-version")
     if not graph_version:
-        logger.debug("[%s] did not have a version, overriding with %s", graph_prefix, version)
+        logger.debug("[%s] did not have a version, overriding with %s", ontology_prefix, version)
     elif graph_version != version:
         # in this case, we're going to trust the one that's passed
         # through explicitly more than the graph's content
         logger.warning(
-            "[%s] had version %s, overriding with %s", graph_prefix, graph_version, version
+            "[%s] had version %s, overriding with %s", ontology_prefix, graph_version, version
         )
     graph.graph["data-version"] = version
+
+    data_version = graph.graph.get("data-version")
+    if not data_version:
+        if date is not None:
+            data_version = date.strftime("%Y-%m-%d")
+            logger.info(
+                "[%s] does not report a version. falling back to date: %s",
+                ontology_prefix,
+                data_version,
+            )
+        else:
+            logger.warning("[%s] does not report a version nor a date", ontology_prefix)
+    else:
+        data_version = cleanup_version(data_version=data_version, prefix=ontology_prefix)
+        if data_version is not None:
+            logger.info("[%s] using version %s", ontology_prefix, data_version)
+        elif date is not None:
+            logger.info(
+                "[%s] unrecognized version format, falling back to date: %s",
+                ontology_prefix,
+                data_version,
+            )
+            data_version = date.strftime("%Y-%m-%d")
+        else:
+            logger.warning(
+                "[%s] UNRECOGNIZED VERSION FORMAT AND MISSING DATE: %s",
+                ontology_prefix,
+                data_version,
+            )
+
+    if data_version and "/" in data_version:
+        raise ValueError(
+            f"[{ontology_prefix}] will not accept slash in data version: {data_version}"
+        )
+
+
+
 
 
 def _iter_obo_graph(
