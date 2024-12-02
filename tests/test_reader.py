@@ -16,13 +16,13 @@ from pyobo.struct.typedef import TypeDef, exact_match, has_dbxref, is_conjugate_
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
 
 
-def _read(text: str, *, strict: bool = True) -> Obo:
+def _read(text: str, *, strict: bool = True, version: str | None = None) -> Obo:
     text = dedent(text).strip()
     io = StringIO()
     io.write(text)
     io.seek(0)
     graph = read_obo(io)
-    return from_obonet(graph, strict=strict)
+    return from_obonet(graph, strict=strict, version=version)
 
 
 class TestUtils(unittest.TestCase):
@@ -877,3 +877,24 @@ class TestVersionHandling(unittest.TestCase):
         self.assertEqual(
             "2009-11-15", ontology.data_version, msg="The custom rewrite wasn't invooked"
         )
+
+    def test_version_injected(self):
+        """Test when a missing version gets overwritten."""
+        ontology = _read(
+            """\
+            ontology: chebi
+        """,
+            version="123",
+        )
+        self.assertEqual("123", ontology.data_version)
+
+    def test_version_overwrite_mismatch(self):
+        """Test when a version gets overwritten, but it's not matching."""
+        ontology = _read(
+            """\
+            ontology: chebi
+            data-version: 122
+        """,
+            version="123",
+        )
+        self.assertEqual("123", ontology.data_version)
