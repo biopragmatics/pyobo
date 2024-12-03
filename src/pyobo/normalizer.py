@@ -82,20 +82,17 @@ class Normalizer(ABC):
         id_to_synonyms: Mapping[str, Iterable[str]],
         remove_prefix: str | None = None,
     ) -> Iterable[tuple[str, str]]:
-        if remove_prefix is not None:
-            remove_prefix = f'{remove_prefix.lower().rstrip(":")}:'
-
         # Add name
         for identifier, name in id_to_name.items():
-            if remove_prefix and identifier.lower().startswith(remove_prefix):
-                identifier = identifier[len(remove_prefix) :]
+            if remove_prefix:
+                identifier = bioregistry.standardize_identifier(remove_prefix, identifier)
 
             yield name, identifier
 
         # Add synonyms
         for identifier, synonyms in id_to_synonyms.items():
-            if remove_prefix and identifier.lower().startswith(remove_prefix):
-                identifier = identifier[len(remove_prefix) :]
+            if remove_prefix:
+                identifier = bioregistry.standardize_identifier(remove_prefix, identifier)
 
             for synonym in synonyms:
                 # it might overwrite but this is probably always due to alternate ids

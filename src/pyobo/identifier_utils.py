@@ -118,12 +118,9 @@ def normalize_curie(
             logger.debug(f"could not split CURIE on colon: {curie}")
         return None, None
 
-    # remove redundant prefix
-    if identifier.casefold().startswith(f"{prefix.casefold()}:"):
-        identifier = identifier[len(prefix) + 1 :]
-
     norm_node_prefix = bioregistry.normalize_prefix(prefix)
     if norm_node_prefix:
+        identifier = bioregistry.standardize_identifier(norm_node_prefix, identifier)
         return ReferenceTuple(norm_node_prefix, identifier)
     elif strict:
         raise MissingPrefixError(curie=curie, ontology_prefix=ontology_prefix, node=node)

@@ -96,8 +96,6 @@ class Reference(curies.Reference):
         if prefix is None or identifier is None:
             return None
 
-        identifier = bioregistry.standardize_identifier(prefix, identifier)
-
         if name is None and auto:
             from ..api import get_name
 
@@ -108,12 +106,8 @@ class Reference(curies.Reference):
     def _escaped_identifier(self):
         return obo_escape(self.identifier)
 
-    def __str__(self):
-        identifier_lower = self.identifier.lower()
-        if identifier_lower.startswith(f"{self.prefix.lower()}:"):
-            rv = identifier_lower
-        else:
-            rv = f"{self.preferred_prefix}:{self._escaped_identifier}"
+    def __str__(self) -> str:
+        rv = f"{self.preferred_prefix}:{self._escaped_identifier}"
         if self.name:
             rv = f"{rv} ! {self.name}"
         return rv
