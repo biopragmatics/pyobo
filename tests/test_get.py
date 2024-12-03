@@ -6,7 +6,7 @@ from operator import attrgetter
 import obonet
 from curies import ReferenceTuple
 
-from pyobo import Reference, Synonym, SynonymTypeDef, TypeDef, default_reference, get_ontology
+from pyobo import Reference, Synonym, SynonymTypeDef, default_reference, get_ontology
 from pyobo.reader import (
     _extract_definition,
     _extract_synonym,
@@ -19,7 +19,6 @@ from pyobo.reader import (
     iterate_node_xrefs,
 )
 from pyobo.struct.struct import acronym
-from pyobo.utils.io import multidict
 from tests.constants import TEST_CHEBI_OBO_PATH, chebi_patch
 
 
@@ -37,7 +36,7 @@ class TestParseObonet(unittest.TestCase):
         pairs = {
             typedef.pair for typedef in iterate_graph_typedefs(self.graph, ontology_prefix="chebi")
         }
-        self.assertIn(ReferenceTuple("obo", "chebi#has_part"), pairs)
+        self.assertIn(ReferenceTuple("obo", "chebi#has_major_microspecies_at_pH_7_3"), pairs)
 
     def test_get_graph_synonym_typedefs(self):
         """Test getting synonym type definitions from an :mod:`obonet` graph."""
@@ -251,7 +250,7 @@ class TestParseObonet(unittest.TestCase):
         data = self.graph.nodes["CHEBI:17051"]
         relations = list(
             iterate_node_relationships(
-                data, node=Reference(prefix="chebi", identifier="XXX"), ontology_prefix="chebi"
+                data, node=Reference(prefix="chebi", identifier="17051"), ontology_prefix="chebi"
             )
         )
         self.assertEqual(1, len(relations))
@@ -259,13 +258,11 @@ class TestParseObonet(unittest.TestCase):
 
         self.assertIsNotNone(target)
         self.assertIsInstance(target, Reference)
-        self.assertEqual("chebi", target.prefix)
-        self.assertEqual("29228", target.identifier)
+        self.assertEqual(("chebi", "29228"), target.pair)
 
         self.assertIsNotNone(typedef)
         self.assertIsInstance(typedef, Reference)
-        self.assertEqual("obo", typedef.prefix)
-        self.assertEqual("chebi#is_conjugate_base_of", typedef.identifier)
+        self.assertEqual(("ro", "0018033"), typedef.pair)
 
 
 class TestGet(unittest.TestCase):
@@ -299,26 +296,7 @@ class TestGet(unittest.TestCase):
 
     def test_typedefs(self):
         """Test typedefs."""
-        xx = default_reference("chebi", "is_conjugate_base_of")
-        td = {t.pair for t in self.ontology.typedefs}
+        xx = default_reference("chebi", "has_major_microspecies_at_pH_7_3")
+        td = self.ontology._index_typedefs()
         self.assertIn(xx.pair, td)
-
-    def test_iter_filtered_relations(self):
-        """Test getting filtered relations w/ upgrade."""
-        term_reference = Reference(prefix="chebi", identifier="17051")
-        reference = default_reference("chebi", "is_conjugate_base_of")
-        object_reference = Reference(prefix="chebi", identifier="29228")
-        for inp in [
-            reference.curie,
-            reference,
-            reference.pair,
-            TypeDef(reference=reference),
-        ]:
-            with self.subTest(inp=inp):
-                rr = multidict(
-                    (term.reference, target)
-                    for term, target in self.ontology.iterate_filtered_relations(inp)
-                )
-                self.assertNotEqual(0, len(rr))
-                self.assertIn(term_reference, rr)
-                self.assertIn(object_reference, rr[term_reference])
+        self.assertIn(ReferenceTuple("ro", "0018033"), td)

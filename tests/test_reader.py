@@ -162,18 +162,24 @@ class TestReader(unittest.TestCase):
             [Term]
             id: CHEBI:1234
             name: Test Name
-            relationship: is_conjugate_base_of CHEBI:5678
+            relationship: xyz CHEBI:5678
 
             [Typedef]
-            id: is_conjugate_base_of
+            id: xyz
         """)
         term = self.get_only_term(ontology)
         self.assertIsNone(term.get_relationship(is_conjugate_base_of))
-        r = default_reference("chebi", "is_conjugate_base_of")
+        r = default_reference("chebi", "xyz")
         td = TypeDef(reference=r)
         reference = term.get_relationship(td)
         self.assertIsNotNone(reference)
         self.assertEqual("chebi:5678", reference.curie)
+
+        rr = list(ontology.iterate_filtered_relations(td))
+        self.assertEqual(1, len(rr))
+
+        rr2 = list(ontology.iterate_filtered_relations(is_conjugate_base_of))
+        self.assertEqual(0, len(rr2))
 
     def test_relationship_missing(self) -> None:
         """Test parsing a relationship that isn't defined."""
@@ -922,6 +928,18 @@ class TestReader(unittest.TestCase):
             },
             {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
         )
+
+    def test_default_relation(self):
+        """Test parsing DO's weird url prefixing."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:100147
+            relationship: derives_from drugbank:DB00779
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.relationships))
 
 
 class TestVersionHandling(unittest.TestCase):

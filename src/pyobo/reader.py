@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import bioontologies.relations
 import bioregistry
 import networkx as nx
 from curies import ReferenceTuple
@@ -390,6 +391,8 @@ def iterate_graph_typedefs(
             reference = Reference.from_curie_or_uri(
                 curie, name=name, strict=strict, ontology_prefix=ontology_prefix
             )
+        elif reference := _ground_relation(curie):
+            pass
         else:
             reference = default_reference(ontology_prefix, curie, name=name)
         if reference is None:
@@ -700,6 +703,8 @@ def iterate_node_relationships(
             relation = Reference.from_curie_or_uri(
                 relation_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
             )
+        elif relation := _ground_relation(relation_curie):
+            pass
         else:
             relation = default_reference(ontology_prefix, relation_curie)
             logger.debug(
@@ -750,3 +755,10 @@ def iterate_node_xrefs(
         )
         if yv is not None:
             yield yv
+
+
+def _ground_relation(relation_str: str) -> Reference | None:
+    prefix, identifier = bioontologies.relations.ground_relation(relation_str)
+    if prefix and identifier:
+        return Reference(prefix=prefix, identifier=identifier)
+    return None
