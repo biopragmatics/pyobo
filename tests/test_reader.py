@@ -251,18 +251,23 @@ class TestReader(unittest.TestCase):
 
             [Term]
             id: CHEBI:1234
-            property_value: mass "121.323" xsd:decimal
+            property_value: xyz "121.323" xsd:decimal
+
+            [Typedef]
+            id: xyz
         """)
         term = self.get_only_term(ontology)
         self.assertEqual(1, len(list(term.annotations_literal)))
-        self.assertEqual("121.323", term.get_property(default_reference("chebi", "mass")))
+        ref = default_reference("chebi", "xyz")
+        self.assertIn(ref, term.annotations_literal)
+        self.assertEqual("121.323", term.get_property(ref))
 
         df = ontology.get_properties_df()
         self.assertEqual(4, len(df.columns))
         self.assertEqual(1, len(df))
         row = dict(df.iloc[0])
         self.assertEqual("1234", row["chebi_id"])
-        self.assertEqual("mass", row["property"])
+        self.assertEqual("xyz", row["property"])
         self.assertEqual("121.323", row["value"])
         self.assertEqual("xsd:decimal", row["datatype"])
 
