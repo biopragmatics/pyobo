@@ -211,13 +211,14 @@ def _parse_identifier(
     strict: bool = True,
     node: Reference | None = None,
     name: str | None = None,
+    upgrade: bool,
 ) -> Reference | None:
     """Parse from a CURIE, URI, or default string in the ontology prefix's IDspace."""
     if ":" in s:
         return Reference.from_curie_or_uri(
             s, ontology_prefix=ontology_prefix, name=name, strict=strict, node=node
         )
-    elif reference := _ground_relation(s):
+    elif upgrade and (reference := _ground_relation(s)):
         return reference
     else:
         return default_reference(ontology_prefix, s, name=name)

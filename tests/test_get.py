@@ -34,14 +34,19 @@ class TestParseObonet(unittest.TestCase):
     def test_get_graph_typedefs(self):
         """Test getting type definitions from an :mod:`obonet` graph."""
         pairs = {
-            typedef.pair for typedef in iterate_graph_typedefs(self.graph, ontology_prefix="chebi")
+            typedef.pair
+            for typedef in iterate_graph_typedefs(
+                self.graph, ontology_prefix="chebi", upgrade=False
+            )
         }
         self.assertIn(ReferenceTuple("obo", "chebi#has_major_microspecies_at_pH_7_3"), pairs)
 
     def test_get_graph_synonym_typedefs(self):
         """Test getting synonym type definitions from an :mod:`obonet` graph."""
         synonym_typedefs = sorted(
-            iterate_graph_synonym_typedefs(self.graph, ontology_prefix=self.ontology),
+            iterate_graph_synonym_typedefs(
+                self.graph, ontology_prefix=self.ontology, upgrade=False
+            ),
             key=attrgetter("curie"),
         )
         self.assertEqual(
@@ -165,6 +170,7 @@ class TestParseObonet(unittest.TestCase):
                     synoynym_typedefs,
                     node=Reference(prefix="chebi", identifier="XXX"),
                     ontology_prefix="chebi",
+                    upgrade=False,
                 )
                 self.assertIsInstance(actual_synonym, Synonym)
                 self.assertEqual(expected_synonym, actual_synonym)
@@ -184,6 +190,7 @@ class TestParseObonet(unittest.TestCase):
                 synoynym_typedefs,
                 node=Reference(prefix="chebi", identifier="XXX"),
                 ontology_prefix="chebi",
+                upgrade=False,
             )
         )
         self.assertEqual(1, len(synonyms))
@@ -199,7 +206,10 @@ class TestParseObonet(unittest.TestCase):
         data = self.graph.nodes["CHEBI:51990"]
         properties = list(
             iterate_node_properties(
-                data, node=Reference(prefix="chebi", identifier="51990"), ontology_prefix="chebi"
+                data,
+                node=Reference(prefix="chebi", identifier="51990"),
+                ontology_prefix="chebi",
+                upgrade=False,
             )
         )
         t_prop = default_reference("chebi", "monoisotopicmass")
@@ -250,7 +260,10 @@ class TestParseObonet(unittest.TestCase):
         data = self.graph.nodes["CHEBI:17051"]
         relations = list(
             iterate_node_relationships(
-                data, node=Reference(prefix="chebi", identifier="17051"), ontology_prefix="chebi"
+                data,
+                node=Reference(prefix="chebi", identifier="17051"),
+                ontology_prefix="chebi",
+                upgrade=False,
             )
         )
         self.assertEqual(1, len(relations))
@@ -262,7 +275,7 @@ class TestParseObonet(unittest.TestCase):
 
         self.assertIsNotNone(typedef)
         self.assertIsInstance(typedef, Reference)
-        self.assertEqual(("ro", "0018033"), typedef.pair)
+        self.assertEqual(("chebi", "chebi#is_conjugate_base_of"), typedef.pair)
 
 
 class TestGet(unittest.TestCase):
