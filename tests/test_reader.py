@@ -12,7 +12,14 @@ from pyobo.identifier_utils import UnparsableIRIError
 from pyobo.reader import from_obonet, get_first_nonescaped_quote
 from pyobo.struct import default_reference
 from pyobo.struct.struct import DEFAULT_SYNONYM_TYPE, abbreviation
-from pyobo.struct.typedef import TypeDef, exact_match, has_dbxref, is_conjugate_base_of, see_also
+from pyobo.struct.typedef import (
+    TypeDef,
+    derives_from,
+    exact_match,
+    has_dbxref,
+    is_conjugate_base_of,
+    see_also,
+)
 
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
 
@@ -946,7 +953,7 @@ class TestReader(unittest.TestCase):
         )
 
     def test_default_relation(self):
-        """Test parsing DO's weird url prefixing."""
+        """Test parsing a default relation."""
         ontology = _read("""\
             ontology: chebi
 
@@ -956,6 +963,7 @@ class TestReader(unittest.TestCase):
         """)
         term = self.get_only_term(ontology)
         self.assertEqual(1, len(term.relationships))
+        self.assertIn(derives_from.reference, term.relationships)
 
 
 class TestVersionHandling(unittest.TestCase):
