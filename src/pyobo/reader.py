@@ -9,7 +9,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import bioontologies.relations
 import bioregistry
 import networkx as nx
 from curies import ReferenceTuple
@@ -387,14 +386,9 @@ def iterate_graph_typedefs(
         if name is None:
             logger.debug("[%s] typedef %s is missing a name", graph.graph["ontology"], curie)
 
-        if ":" in curie:
-            reference = Reference.from_curie_or_uri(
-                curie, name=name, strict=strict, ontology_prefix=ontology_prefix
-            )
-        elif reference := _ground_relation(curie):
-            pass
-        else:
-            reference = default_reference(ontology_prefix, curie, name=name)
+        reference = Reference.from_curie_uri_or_default(
+            curie, strict=strict, ontology_prefix=ontology_prefix, name=name
+        )
         if reference is None:
             logger.warning("[%s] unable to parse typedef CURIE %s", graph.graph["ontology"], curie)
             continue
@@ -650,12 +644,9 @@ def _get_prop(
         if prop.startswith(sw):
             identifier = prop.removeprefix(sw)
             return default_reference(ontology_prefix, identifier)
-    if ":" not in prop:
-        return default_reference(ontology_prefix, prop)
-    else:
-        return Reference.from_curie_or_uri(
-            prop, strict=strict, node=node, ontology_prefix=ontology_prefix
-        )
+    return Reference.from_curie_uri_or_default(
+        prop, strict=strict, node=node, ontology_prefix=ontology_prefix
+    )
 
 
 def iterate_node_parents(
@@ -698,20 +689,9 @@ def iterate_node_relationships(
     """Extract relationships from a :mod:`obonet` node's data."""
     for s in data.get("relationship", []):
         relation_curie, target_curie = s.split(" ")
-
-        if ":" in relation_curie:
-            relation = Reference.from_curie_or_uri(
-                relation_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
-            )
-        elif relation := _ground_relation(relation_curie):
-            pass
-        else:
-            relation = default_reference(ontology_prefix, relation_curie)
-            logger.debug(
-                "unhandled relation: %s. Parsing as default relation: %s",
-                relation_curie,
-                relation.curie,
-            )
+        relation = Reference.from_curie_uri_or_default(
+            relation_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
+        )
         if relation is None:
             logger.warning("[%s] could not parse relation %s", node.curie, relation_curie)
             continue
@@ -755,10 +735,3 @@ def iterate_node_xrefs(
         )
         if yv is not None:
             yield yv
-
-
-def _ground_relation(relation_str: str) -> Reference | None:
-    prefix, identifier = bioontologies.relations.ground_relation(relation_str)
-    if prefix and identifier:
-        return Reference(prefix=prefix, identifier=identifier)
-    return None
