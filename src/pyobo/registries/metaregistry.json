@@ -418,7 +418,7 @@
       "FOBI_050091": "FOBI:050091",
       "has:input": "RO:0002233",
       "has:output": "RO:0002234",
-      "dph:GOC":  "orcid:0000-0001-7476-6306",
+      "dph:GOC": "orcid:0000-0001-7476-6306",
       "Property:P1659": "wikidata:P1659",
       "vocab:crossSpeciesExactMatch": "semapv:crossSpeciesExactMatch",
       "definition:citation": "obo:efo#definition_citation",
@@ -539,7 +539,9 @@
       "srao": {
         "topic:": "edam.topic:"
       },
-      "idocovid19": {"UniProtKN:":  "uniprot:"},
+      "idocovid19": {
+        "UniProtKN:": "uniprot:"
+      },
       "ito": {
         "format:": "edam.format:",
         "topic:": "edam.topic:",

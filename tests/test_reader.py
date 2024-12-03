@@ -8,6 +8,7 @@ from textwrap import dedent
 from obonet import read_obo
 
 from pyobo import Obo, Reference, Term
+from pyobo.identifier_utils import UnparsableIRIError
 from pyobo.reader import from_obonet, get_first_nonescaped_quote
 from pyobo.struct import default_reference
 from pyobo.struct.struct import DEFAULT_SYNONYM_TYPE, abbreviation
@@ -16,13 +17,13 @@ from pyobo.struct.typedef import TypeDef, exact_match, has_dbxref, is_conjugate_
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
 
 
-def _read(text: str, *, strict: bool = True) -> Obo:
+def _read(text: str, *, strict: bool = True, version: str | None = None) -> Obo:
     text = dedent(text).strip()
     io = StringIO()
     io.write(text)
     io.seek(0)
     graph = read_obo(io)
-    return from_obonet(graph, strict=strict)
+    return from_obonet(graph, strict=strict, version=version)
 
 
 class TestUtils(unittest.TestCase):
@@ -416,13 +417,29 @@ class TestReader(unittest.TestCase):
 
     def test_property_literal_url_unregistered(self) -> None:
         """Test using a full OBO PURL as the property."""
-        ontology = _read("""\
+        with self.assertRaises(UnparsableIRIError):
+            _read(
+                """\
+                ontology: chebi
+
+                [Term]
+                id: CHEBI:1234
+                property_value: https://example.com/nope/nope CHEBI:5678
+                """,
+                strict=True,
+            )
+
+        ontology = _read(
+            """\
             ontology: chebi
 
             [Term]
             id: CHEBI:1234
             property_value: https://example.com/nope/nope CHEBI:5678
-        """)
+            """,
+            strict=False,
+        )
+
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(list(term.annotations_literal)))
         self.assertEqual(0, len(list(term.annotations_object)))
@@ -905,3 +922,110 @@ class TestReader(unittest.TestCase):
             },
             {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
         )
+
+
+class TestVersionHandling(unittest.TestCase):
+    """Test version handling."""
+
+    def test_no_version_no_data(self):
+        """Test when nothing is given."""
+        ontology = _read("""\
+            ontology: chebi
+        """)
+        self.assertIsNone(ontology.data_version)
+
+    def test_static_rewrite(self):
+        """Test using custom configuration for version lookup."""
+        ontology = _read("""\
+            ontology: orth
+        """)
+        self.assertEqual("2", ontology.data_version, msg="The static rewrite wasn't applied")
+
+    def test_simple_version(self):
+        """Test handling a simple version."""
+        ontology = _read("""\
+            ontology: chebi
+            data-version: 123
+        """)
+        self.assertEqual("123", ontology.data_version)
+
+    def test_releases_prefix_simple(self):
+        """Test a parsing a simple version starting with `releases/`."""
+        ontology = _read("""\
+            ontology: chebi
+            data-version: releases/123
+        """)
+        self.assertEqual(
+            "123",
+            ontology.data_version,
+            msg="The prefix `releases/` wasn't properly automatically stripped",
+        )
+
+    def test_releases_prefix_complex(self):
+        """Test parsing a complex string starting with `releases/`."""
+        ontology = _read("""\
+            ontology: chebi
+            data-version: releases/123/chebi.owl
+        """)
+        self.assertEqual(
+            "123",
+            ontology.data_version,
+            msg="The prefix `releases/` wasn't properly automatically stripped",
+        )
+
+    def test_no_version_with_date(self):
+        """Test when the date is substituted for a missing version."""
+        ontology = _read("""\
+            ontology: chebi
+            date: 20:11:2024 18:44
+        """)
+        self.assertEqual("2024-11-20", ontology.data_version)
+
+    def test_bad_version(self):
+        """Test that a version with slashes raises an error."""
+        with self.assertRaises(ValueError):
+            _read("""\
+                ontology: chebi
+                data-version: /////
+            """)
+
+    def test_data_prefix_strip(self):
+        """Test when a prefix gets stripped from the beginning of a version."""
+        ontology = _read("""\
+            ontology: sasap
+            data-version: http://purl.dataone.org/odo/SASAP/0.3.1
+        """)
+        self.assertEqual(
+            "0.3.1", ontology.data_version, msg="The custom defined prefix wasn't stripped"
+        )
+
+    def test_version_full_rewrite(self):
+        """Test when a version gets fully replaced from a custom configuration."""
+        ontology = _read("""\
+            ontology: owl
+            data-version: $Date: 2009/11/15 10:54:12 $
+        """)
+        self.assertEqual(
+            "2009-11-15", ontology.data_version, msg="The custom rewrite wasn't invooked"
+        )
+
+    def test_version_injected(self):
+        """Test when a missing version gets overwritten."""
+        ontology = _read(
+            """\
+            ontology: chebi
+        """,
+            version="123",
+        )
+        self.assertEqual("123", ontology.data_version)
+
+    def test_version_overwrite_mismatch(self):
+        """Test when a version gets overwritten, but it's not matching."""
+        ontology = _read(
+            """\
+            ontology: chebi
+            data-version: 122
+        """,
+            version="123",
+        )
+        self.assertEqual("123", ontology.data_version)

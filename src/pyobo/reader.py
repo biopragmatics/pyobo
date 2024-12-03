@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import logging
+from collections import Counter
 from collections.abc import Iterable, Mapping
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import bioontologies.upgrade
 import bioregistry
 import networkx as nx
 from curies import ReferenceTuple
@@ -16,7 +16,6 @@ from more_itertools import pairwise
 from tqdm.auto import tqdm
 
 from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
-from .identifier_utils import normalize_curie
 from .reader_utils import (
     _chomp_axioms,
     _chomp_references,
@@ -36,7 +35,7 @@ from .struct import (
 )
 from .struct.struct import DEFAULT_SYNONYM_TYPE, LiteralProperty, ObjectProperty
 from .struct.typedef import default_typedefs
-from .utils.misc import cleanup_version
+from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
 
 __all__ = [
     "from_obo_path",
@@ -45,34 +44,61 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-RELATION_REMAPPINGS: Mapping[str, ReferenceTuple] = bioontologies.upgrade.load()
 
-
-def from_obo_path(path: str | Path, prefix: str | None = None, *, strict: bool = True) -> Obo:
+def from_obo_path(
+    path: str | Path,
+    prefix: str | None = None,
+    *,
+    strict: bool = True,
+    version: str | None,
+) -> Obo:
     """Get the OBO graph from a path."""
-    import obonet
+    path = Path(path).expanduser().resolve()
+    if path.suffix.endswith(".gz"):
+        import gzip
 
-    logger.info("[%s] parsing with obonet from %s", prefix or "", path)
-    with open(path) as file:
-        graph = obonet.read_obo(
-            tqdm(
-                file,
-                unit_scale=True,
-                desc=f'[{prefix or ""}] parsing obo',
-                disable=None,
-                leave=False,
-            )
-        )
+        logger.info("[%s] parsing gzipped OBO with obonet from %s", prefix or "<unknown>", path)
+        with gzip.open(path, "rt") as file:
+            graph = _read_obo(file, prefix)
+    elif path.suffix.endswith(".zip"):
+        import io
+        import zipfile
+
+        logger.info("[%s] parsing zipped OBO with obonet from %s", prefix or "<unknown>", path)
+        with zipfile.ZipFile(path) as zf:
+            with zf.open(path.name.removesuffix(".zip"), "r") as file:
+                content = file.read().decode("utf-8")
+                graph = _read_obo(io.StringIO(content), prefix)
+    else:
+        logger.info("[%s] parsing OBO with obonet from %s", prefix or "<unknown>", path)
+        with open(path) as file:
+            graph = _read_obo(file, prefix)
 
     if prefix:
         # Make sure the graph is named properly
         _clean_graph_ontology(graph, prefix)
 
     # Convert to an Obo instance and return
-    return from_obonet(graph, strict=strict)
+    return from_obonet(graph, strict=strict, version=version)
 
 
-def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
+def _read_obo(filelike, prefix: str | None) -> nx.MultiDiGraph:
+    import obonet
+
+    return obonet.read_obo(
+        tqdm(
+            filelike,
+            unit_scale=True,
+            desc=f'[{prefix or ""}] parsing OBO',
+            disable=None,
+            leave=True,
+        ),
+        # TODO this is the default, turn it off and see what happens
+        ignore_obsolete=True,
+    )
+
+
+def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True, version: str | None = None) -> Obo:
     """Get all of the terms from a OBO graph."""
     ontology_prefix_raw = graph.graph["ontology"]
     ontology_prefix = bioregistry.normalize_prefix(ontology_prefix_raw)  # probably always okay
@@ -83,38 +109,12 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True) -> Obo:
     date = _get_date(graph=graph, ontology_prefix=ontology_prefix)
     name = _get_name(graph=graph, ontology_prefix=ontology_prefix)
 
-    data_version = graph.graph.get("data-version")
-    if not data_version:
-        if date is not None:
-            data_version = date.strftime("%Y-%m-%d")
-            logger.info(
-                "[%s] does not report a version. falling back to date: %s",
-                ontology_prefix,
-                data_version,
-            )
-        else:
-            logger.warning("[%s] does not report a version nor a date", ontology_prefix)
-    else:
-        data_version = cleanup_version(data_version=data_version, prefix=ontology_prefix)
-        if data_version is not None:
-            logger.info("[%s] using version %s", ontology_prefix, data_version)
-        elif date is not None:
-            logger.info(
-                "[%s] unrecognized version format, falling back to date: %s",
-                ontology_prefix,
-                data_version,
-            )
-            data_version = date.strftime("%Y-%m-%d")
-        else:
-            logger.warning(
-                "[%s] UNRECOGNIZED VERSION FORMAT AND MISSING DATE: %s",
-                ontology_prefix,
-                data_version,
-            )
-
+    data_version = _clean_graph_version(
+        graph, ontology_prefix=ontology_prefix, version=version, date=date
+    )
     if data_version and "/" in data_version:
         raise ValueError(
-            f"[{ontology_prefix}] will not accept slash in data version: {data_version}"
+            f"[{ontology_prefix}] slashes not allowed in data versions because of filesystem usage: {data_version}"
         )
 
     #: CURIEs to typedefs
@@ -263,6 +263,50 @@ def _clean_graph_ontology(graph, prefix: str) -> None:
         graph.graph["ontology"] = prefix
 
 
+def _clean_graph_version(
+    graph, ontology_prefix: str, version: str | None, date: datetime | None
+) -> str | None:
+    if ontology_prefix in STATIC_VERSION_REWRITES:
+        return STATIC_VERSION_REWRITES[ontology_prefix]
+
+    data_version: str | None = graph.graph.get("data-version") or None
+    if version:
+        clean_injected_version = cleanup_version(version, prefix=ontology_prefix)
+        if not data_version:
+            logger.debug(
+                "[%s] did not have a version, overriding with %s",
+                ontology_prefix,
+                clean_injected_version,
+            )
+            return clean_injected_version
+
+        clean_data_version = cleanup_version(data_version, prefix=ontology_prefix)
+        if clean_data_version != clean_injected_version:
+            # in this case, we're going to trust the one that's passed
+            # through explicitly more than the graph's content
+            logger.warning(
+                "[%s] had version %s, overriding with %s", ontology_prefix, data_version, version
+            )
+        return clean_injected_version
+
+    if data_version:
+        clean_data_version = cleanup_version(data_version, prefix=ontology_prefix)
+        logger.info("[%s] using version %s", ontology_prefix, clean_data_version)
+        return clean_data_version
+
+    if date is not None:
+        derived_date_version = date.strftime("%Y-%m-%d")
+        logger.info(
+            "[%s] does not report a version. falling back to date: %s",
+            ontology_prefix,
+            derived_date_version,
+        )
+        return derived_date_version
+
+    logger.warning("[%s] does not report a version nor a date", ontology_prefix)
+    return None
+
+
 def _iter_obo_graph(
     graph: nx.MultiDiGraph,
     *,
@@ -319,7 +363,9 @@ def iterate_graph_synonym_typedefs(
             if reference is not None:
                 yield SynonymTypeDef(reference=reference)
             elif strict:
-                raise ValueError(f"Could not parse {sid}")
+                raise ValueError(
+                    f"[{ontology_prefix}] could not parse synonym type definition: {sid}"
+                )
             else:
                 continue
 
@@ -528,6 +574,13 @@ def iterate_node_properties(
             yield yv
 
 
+#: Keep track of property-value pairs for which the value couldn't be parsed,
+#: such as `dc:conformsTo autoimmune:inflammation.yaml` in MONDO
+UNHANDLED_PROP_OBJECTS: Counter[tuple[Reference, str]] = Counter()
+
+UNHANDLED_PROPS: Counter[str] = Counter()
+
+
 def _handle_prop(
     prop_value_type: str, *, node: Reference, strict: bool = True, ontology_prefix: str
 ) -> ObjectProperty | LiteralProperty | None:
@@ -539,7 +592,9 @@ def _handle_prop(
 
     prop_reference = _get_prop(prop, node=node, strict=strict, ontology_prefix=ontology_prefix)
     if prop_reference is None:
-        logger.warning("[%s] unparsable property: %s", node.curie, prop)
+        if not UNHANDLED_PROPS[prop]:
+            logger.warning("[%s] unparsable property: %s", node.curie, prop)
+        UNHANDLED_PROPS[prop] += 1
         return None
 
     # if the value doesn't start with a quote, we're going to
@@ -549,9 +604,14 @@ def _handle_prop(
             value_type, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
         if obj_reference is None:
-            logger.warning(
-                "[%s - %s] could not parse object: %s", node.curie, prop_reference.curie, value_type
-            )
+            if not UNHANDLED_PROP_OBJECTS[prop_reference, value_type]:
+                logger.warning(
+                    "[%s - %s] could not parse object: %s",
+                    node.curie,
+                    prop_reference.curie,
+                    value_type,
+                )
+            UNHANDLED_PROP_OBJECTS[prop_reference, value_type] += 1
             return None
         # TODO can we drop datatype from this?
         return ObjectProperty(prop_reference, obj_reference, None)
@@ -587,15 +647,7 @@ def _get_prop(
         if prop.startswith(sw):
             identifier = prop.removeprefix(sw)
             return default_reference(ontology_prefix, identifier)
-    if prop.startswith("http"):
-        # TODO upstream this into an omni-parser for references?
-        _pref, _id = bioregistry.parse_iri(prop)
-        if _pref and _id:
-            return Reference(prefix=_pref, identifier=_id)
-        else:
-            logger.warning("[%s] unable to handle property: %s", node.curie, prop)
-            return None
-    elif ":" not in prop:
+    if ":" not in prop:
         return default_reference(ontology_prefix, prop)
     else:
         return Reference.from_curie_or_uri(
@@ -643,16 +695,11 @@ def iterate_node_relationships(
     """Extract relationships from a :mod:`obonet` node's data."""
     for s in data.get("relationship", []):
         relation_curie, target_curie = s.split(" ")
-        relation_prefix: str | None
-        relation_identifier: str | None
-        if relation_curie in RELATION_REMAPPINGS:
-            relation_prefix, relation_identifier = RELATION_REMAPPINGS[relation_curie]
-        else:
-            relation_prefix, relation_identifier = normalize_curie(
+
+        if ":" in relation_curie:
+            relation = Reference.from_curie_or_uri(
                 relation_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
             )
-        if relation_prefix is not None and relation_identifier is not None:
-            relation = Reference(prefix=relation_prefix, identifier=relation_identifier)
         else:
             relation = default_reference(ontology_prefix, relation_curie)
             logger.debug(
@@ -660,6 +707,9 @@ def iterate_node_relationships(
                 relation_curie,
                 relation.curie,
             )
+        if relation is None:
+            logger.warning("[%s] could not parse relation %s", node.curie, relation_curie)
+            continue
 
         target = Reference.from_curie_or_uri(
             target_curie, strict=strict, ontology_prefix=ontology_prefix, node=node

@@ -302,9 +302,10 @@ class Term(Referenced):
             definition=get_definition(prefix, identifier),
         )
 
-    def append_provenance(self, reference: ReferenceHint) -> None:
+    def append_provenance(self, reference: ReferenceHint) -> Self:
         """Add a provenance reference."""
         self.provenance.append(_ensure_ref(reference))
+        return self
 
     def append_synonym(
         self,
