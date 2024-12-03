@@ -33,6 +33,7 @@ from .struct import (
     default_reference,
     make_ad_hoc_ontology,
 )
+from .struct.reference import _parse_identifier
 from .struct.struct import DEFAULT_SYNONYM_TYPE, LiteralProperty, ObjectProperty
 from .struct.typedef import default_typedefs
 from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
@@ -51,6 +52,7 @@ def from_obo_path(
     *,
     strict: bool = True,
     version: str | None,
+    upgrade: bool = True,
 ) -> Obo:
     """Get the OBO graph from a path."""
     path = Path(path).expanduser().resolve()
@@ -79,7 +81,7 @@ def from_obo_path(
         _clean_graph_ontology(graph, prefix)
 
     # Convert to an Obo instance and return
-    return from_obonet(graph, strict=strict, version=version)
+    return from_obonet(graph, strict=strict, version=version, upgrade=upgrade)
 
 
 def _read_obo(filelike, prefix: str | None) -> nx.MultiDiGraph:
@@ -98,7 +100,13 @@ def _read_obo(filelike, prefix: str | None) -> nx.MultiDiGraph:
     )
 
 
-def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True, version: str | None = None) -> Obo:
+def from_obonet(
+    graph: nx.MultiDiGraph,
+    *,
+    strict: bool = True,
+    version: str | None = None,
+    upgrade: bool = True,
+) -> Obo:
     """Get all of the terms from a OBO graph."""
     ontology_prefix_raw = graph.graph["ontology"]
     ontology_prefix = bioregistry.normalize_prefix(ontology_prefix_raw)  # probably always okay
@@ -120,13 +128,18 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True, version: str | N
     #: CURIEs to typedefs
     typedefs: Mapping[ReferenceTuple, TypeDef] = {
         typedef.pair: typedef
-        for typedef in iterate_graph_typedefs(graph, ontology_prefix=ontology_prefix)
+        for typedef in iterate_graph_typedefs(
+            graph, ontology_prefix=ontology_prefix, strict=strict, upgrade=upgrade
+        )
     }
 
     synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] = {
         synonym_typedef.pair: synonym_typedef
         for synonym_typedef in iterate_graph_synonym_typedefs(
-            graph, ontology_prefix=ontology_prefix
+            graph,
+            ontology_prefix=ontology_prefix,
+            strict=strict,
+            upgrade=upgrade,
         )
     }
 
@@ -183,6 +196,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True, version: str | N
                 node=reference,
                 strict=strict,
                 ontology_prefix=ontology_prefix,
+                upgrade=upgrade,
             )
         )
         n_synonyms += len(synonyms)
@@ -203,6 +217,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True, version: str | N
                 node=reference,
                 strict=strict,
                 ontology_prefix=ontology_prefix,
+                upgrade=upgrade,
             )
         )
         for relation, reference in relations_references:
@@ -220,7 +235,7 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True, version: str | N
             term.append_relationship(typedef, reference)
 
         for t in iterate_node_properties(
-            data, node=reference, strict=strict, ontology_prefix=ontology_prefix
+            data, node=reference, strict=strict, ontology_prefix=ontology_prefix, upgrade=upgrade
         ):
             n_properties += 1
             match t:
@@ -347,59 +362,58 @@ def _get_name(graph, ontology_prefix: str) -> str:
 
 
 def iterate_graph_synonym_typedefs(
-    graph: nx.MultiDiGraph, *, ontology_prefix: str, strict: bool = False
+    graph: nx.MultiDiGraph, *, ontology_prefix: str, strict: bool = False, upgrade: bool
 ) -> Iterable[SynonymTypeDef]:
     """Get synonym type definitions from an :mod:`obonet` graph."""
-    for s in graph.graph.get("synonymtypedef", []):
-        sid, name = s.split(" ", 1)
+    for line in graph.graph.get("synonymtypedef", []):
+        synonym_typedef_id, name = line.split(" ", 1)
         name = name.strip().strip('"')
-        if ":" not in sid:
-            # assume it's a default reference
-            yield SynonymTypeDef(reference=default_reference(ontology_prefix, sid, name=name))
-        else:
-            reference = Reference.from_curie_or_uri(
-                sid, name=name, strict=strict, ontology_prefix=ontology_prefix
+        reference = _parse_identifier(
+            synonym_typedef_id,
+            ontology_prefix=ontology_prefix,
+            name=name,
+            upgrade=upgrade,
+            strict=strict,
+        )
+        if reference is None:
+            logger.warning(
+                "[%s] unable to parse synonym typedef ID %s", ontology_prefix, synonym_typedef_id
             )
-            if reference is not None:
-                yield SynonymTypeDef(reference=reference)
-            elif strict:
-                raise ValueError(
-                    f"[{ontology_prefix}] could not parse synonym type definition: {sid}"
-                )
-            else:
-                continue
+            continue
+        # TODO handle specificity
+        yield SynonymTypeDef(reference=reference)
 
 
 def iterate_graph_typedefs(
-    graph: nx.MultiDiGraph, *, ontology_prefix: str, strict: bool = True
+    graph: nx.MultiDiGraph, *, ontology_prefix: str, strict: bool = True, upgrade: bool
 ) -> Iterable[TypeDef]:
     """Get type definitions from an :mod:`obonet` graph."""
     for typedef in graph.graph.get("typedefs", []):
         if "id" in typedef:
-            curie = typedef["id"]
+            typedef_id = typedef["id"]
         elif "identifier" in typedef:
-            curie = typedef["identifier"]
+            typedef_id = typedef["identifier"]
         else:
             raise KeyError("typedef is missing an `id`")
 
         name = typedef.get("name")
         if name is None:
-            logger.debug("[%s] typedef %s is missing a name", graph.graph["ontology"], curie)
+            logger.debug("[%s] typedef %s is missing a name", ontology_prefix, typedef_id)
 
-        if ":" in curie:
-            reference = Reference.from_curie_or_uri(
-                curie, name=name, strict=strict, ontology_prefix=ontology_prefix
-            )
-        else:
-            reference = default_reference(ontology_prefix, curie, name=name)
+        reference = _parse_identifier(
+            typedef_id, strict=strict, ontology_prefix=ontology_prefix, name=name, upgrade=upgrade
+        )
         if reference is None:
-            logger.warning("[%s] unable to parse typedef CURIE %s", graph.graph["ontology"], curie)
+            logger.warning("[%s] unable to parse typedef ID %s", ontology_prefix, typedef_id)
             continue
 
         xrefs = []
-        for curie in typedef.get("xref", []):
+        for xref_curie in typedef.get("xref", []):
             _xref = Reference.from_curie_or_uri(
-                curie, strict=strict, ontology_prefix=ontology_prefix
+                xref_curie,
+                strict=strict,
+                ontology_prefix=ontology_prefix,
+                node=reference,
             )
             if _xref:
                 xrefs.append(_xref)
@@ -484,6 +498,7 @@ def _extract_synonym(
     node: Reference,
     strict: bool = True,
     ontology_prefix: str,
+    upgrade: bool,
 ) -> Synonym | None:
     # TODO check if the synonym is written like a CURIE... it shouldn't but I've seen it happen
     try:
@@ -499,6 +514,7 @@ def _extract_synonym(
         strict=strict,
         node=node,
         ontology_prefix=ontology_prefix,
+        upgrade=upgrade,
     )
     provenance, rest = _chomp_references(
         rest, strict=strict, node=node, ontology_prefix=ontology_prefix
@@ -514,6 +530,10 @@ def _extract_synonym(
     )
 
 
+#: A counter for errors in parsing provenance
+PROVENANCE_COUNTER: Counter[str] = Counter()
+
+
 def _parse_trailing_ref_list(
     rest: str, *, strict: bool = True, node: Reference, ontology_prefix: str | None
 ) -> list[Reference]:
@@ -527,7 +547,9 @@ def _parse_trailing_ref_list(
             curie, strict=strict, node=node, ontology_prefix=ontology_prefix
         )
         if reference is None:
-            logger.warning("[%s] could not parse provenance CURIE: %s", node.curie, curie)
+            if not PROVENANCE_COUNTER[curie]:
+                logger.warning("[%s] could not parse provenance CURIE: %s", node.curie, curie)
+            PROVENANCE_COUNTER[curie] += 1
             continue
         rv.append(reference)
     return rv
@@ -540,6 +562,7 @@ def iterate_node_synonyms(
     node: Reference,
     strict: bool = False,
     ontology_prefix: str,
+    upgrade: bool,
 ) -> Iterable[Synonym]:
     """Extract synonyms from a :mod:`obonet` node's data.
 
@@ -551,7 +574,12 @@ def iterate_node_synonyms(
     """
     for s in data.get("synonym", []):
         s = _extract_synonym(
-            s, synonym_typedefs, node=node, strict=strict, ontology_prefix=ontology_prefix
+            s,
+            synonym_typedefs,
+            node=node,
+            strict=strict,
+            ontology_prefix=ontology_prefix,
+            upgrade=upgrade,
         )
         if s is not None:
             yield s
@@ -564,12 +592,21 @@ HANDLED_PROPERTY_TYPES = {
 
 
 def iterate_node_properties(
-    data: Mapping[str, Any], *, node: Reference, strict: bool = True, ontology_prefix: str
+    data: Mapping[str, Any],
+    *,
+    node: Reference,
+    strict: bool = True,
+    ontology_prefix: str,
+    upgrade: bool,
 ) -> Iterable[ObjectProperty | LiteralProperty]:
     """Extract properties from a :mod:`obonet` node's data."""
     for prop_value_type in data.get("property_value", []):
         if yv := _handle_prop(
-            prop_value_type, node=node, strict=strict, ontology_prefix=ontology_prefix
+            prop_value_type,
+            node=node,
+            strict=strict,
+            ontology_prefix=ontology_prefix,
+            upgrade=upgrade,
         ):
             yield yv
 
@@ -582,7 +619,12 @@ UNHANDLED_PROPS: Counter[str] = Counter()
 
 
 def _handle_prop(
-    prop_value_type: str, *, node: Reference, strict: bool = True, ontology_prefix: str
+    prop_value_type: str,
+    *,
+    node: Reference,
+    strict: bool = True,
+    ontology_prefix: str,
+    upgrade: bool,
 ) -> ObjectProperty | LiteralProperty | None:
     try:
         prop, value_type = prop_value_type.split(" ", 1)
@@ -590,7 +632,9 @@ def _handle_prop(
         logger.warning("[%s] property_value is missing a space: %s", node.curie, prop_value_type)
         return None
 
-    prop_reference = _get_prop(prop, node=node, strict=strict, ontology_prefix=ontology_prefix)
+    prop_reference = _get_prop(
+        prop, node=node, strict=strict, ontology_prefix=ontology_prefix, upgrade=upgrade
+    )
     if prop_reference is None:
         if not UNHANDLED_PROPS[prop]:
             logger.warning("[%s] unparsable property: %s", node.curie, prop)
@@ -640,19 +684,16 @@ def _handle_prop(
 
 
 def _get_prop(
-    prop: str, *, node: Reference, strict: bool, ontology_prefix: str
+    property_id: str, *, node: Reference, strict: bool, ontology_prefix: str, upgrade: bool
 ) -> Reference | None:
     for delim in "#/":
         sw = f"http://purl.obolibrary.org/obo/{ontology_prefix}{delim}"
-        if prop.startswith(sw):
-            identifier = prop.removeprefix(sw)
+        if property_id.startswith(sw):
+            identifier = property_id.removeprefix(sw)
             return default_reference(ontology_prefix, identifier)
-    if ":" not in prop:
-        return default_reference(ontology_prefix, prop)
-    else:
-        return Reference.from_curie_or_uri(
-            prop, strict=strict, node=node, ontology_prefix=ontology_prefix
-        )
+    return _parse_identifier(
+        property_id, strict=strict, node=node, ontology_prefix=ontology_prefix, upgrade=upgrade
+    )
 
 
 def iterate_node_parents(
@@ -691,22 +732,18 @@ def iterate_node_relationships(
     node: Reference,
     strict: bool = True,
     ontology_prefix: str,
+    upgrade: bool,
 ) -> Iterable[tuple[Reference, Reference]]:
     """Extract relationships from a :mod:`obonet` node's data."""
     for s in data.get("relationship", []):
         relation_curie, target_curie = s.split(" ")
-
-        if ":" in relation_curie:
-            relation = Reference.from_curie_or_uri(
-                relation_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
-            )
-        else:
-            relation = default_reference(ontology_prefix, relation_curie)
-            logger.debug(
-                "unhandled relation: %s. Parsing as default relation: %s",
-                relation_curie,
-                relation.curie,
-            )
+        relation = _parse_identifier(
+            relation_curie,
+            strict=strict,
+            ontology_prefix=ontology_prefix,
+            node=node,
+            upgrade=upgrade,
+        )
         if relation is None:
             logger.warning("[%s] could not parse relation %s", node.curie, relation_curie)
             continue

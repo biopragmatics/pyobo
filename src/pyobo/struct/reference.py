@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import bioontologies.relations
+import bioontologies.upgrade
 import bioregistry
 import curies
 from curies import ReferenceTuple
@@ -194,3 +196,32 @@ def reference_escape(predicate: Reference | Referenced, *, ontology_prefix: str)
 def comma_separate_references(references: list[Reference]) -> str:
     """Map a list to strings and make comma separated."""
     return ", ".join(r.preferred_curie for r in references)
+
+
+def _ground_relation(relation_str: str) -> Reference | None:
+    prefix, identifier = bioontologies.relations.ground_relation(relation_str)
+    if prefix and identifier:
+        return Reference(prefix=prefix, identifier=identifier)
+    return None
+
+
+def _parse_identifier(
+    s: str,
+    *,
+    ontology_prefix: str,
+    strict: bool = True,
+    node: Reference | None = None,
+    name: str | None = None,
+    upgrade: bool = True,
+) -> Reference | None:
+    """Parse from a CURIE, URI, or default string in the ontology prefix's IDspace."""
+    if ":" in s:
+        return Reference.from_curie_or_uri(
+            s, ontology_prefix=ontology_prefix, name=name, strict=strict, node=node
+        )
+    if upgrade:
+        if xx := bioontologies.upgrade.upgrade(s):
+            return Reference(prefix=xx.prefix, identifier=xx.identifier, name=name)
+        if yy := _ground_relation(s):
+            return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
+    return default_reference(ontology_prefix, s, name=name)

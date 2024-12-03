@@ -75,6 +75,7 @@ def normalize_curie(
     strict: bool = True,
     ontology_prefix: str | None = None,
     node: Reference | None = None,
+    upgrade: bool = True,
 ) -> ReferenceTuple | tuple[None, None]:
     """Parse a string that looks like a CURIE.
 
@@ -90,11 +91,12 @@ def normalize_curie(
     curie = curie.replace(r"https\://", "https://")
     curie = curie.replace(r"http\://", "http://")
 
-    # Remap the curie with the full list
-    curie = remap_full(curie)
+    if upgrade:
+        # Remap the curie with the full list
+        curie = remap_full(curie)
 
-    # Remap node's prefix (if necessary)
-    curie = remap_prefix(curie, ontology_prefix=ontology_prefix)
+        # Remap node's prefix (if necessary)
+        curie = remap_prefix(curie, ontology_prefix=ontology_prefix)
 
     if curie_is_blacklisted(curie):
         return None, None
@@ -103,7 +105,7 @@ def normalize_curie(
     if curie_has_blacklisted_suffix(curie):
         return None, None
 
-    if reference_t := bioontologies.upgrade.upgrade(curie):
+    if upgrade and (reference_t := bioontologies.upgrade.upgrade(curie)):
         return reference_t
 
     if curie.startswith("http:") or curie.startswith("https:"):
