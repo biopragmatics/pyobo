@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import bioontologies.relations
+import bioontologies.upgrade
 import bioregistry
 import curies
 from curies import ReferenceTuple
@@ -211,14 +212,16 @@ def _parse_identifier(
     strict: bool = True,
     node: Reference | None = None,
     name: str | None = None,
-    upgrade: bool,
+    upgrade: bool = True,
 ) -> Reference | None:
     """Parse from a CURIE, URI, or default string in the ontology prefix's IDspace."""
     if ":" in s:
         return Reference.from_curie_or_uri(
             s, ontology_prefix=ontology_prefix, name=name, strict=strict, node=node
         )
-    elif upgrade and (reference := _ground_relation(s)):
-        return reference
-    else:
-        return default_reference(ontology_prefix, s, name=name)
+    if upgrade:
+        if xx := bioontologies.upgrade.upgrade(s):
+            return Reference(prefix=xx.prefix, identifier=xx.identifier, name=name)
+        if yy := _ground_relation(s):
+            return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
+    return default_reference(ontology_prefix, s, name=name)

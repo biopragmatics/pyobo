@@ -17,13 +17,15 @@ from pyobo.struct.typedef import TypeDef, exact_match, has_dbxref, is_conjugate_
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
 
 
-def _read(text: str, *, strict: bool = True, version: str | None = None) -> Obo:
+def _read(
+    text: str, *, strict: bool = True, version: str | None = None, upgrade: bool = True
+) -> Obo:
     text = dedent(text).strip()
     io = StringIO()
     io.write(text)
     io.seek(0)
     graph = read_obo(io)
-    return from_obonet(graph, strict=strict, version=version)
+    return from_obonet(graph, strict=strict, version=version, upgrade=upgrade)
 
 
 class TestUtils(unittest.TestCase):
@@ -832,20 +834,29 @@ class TestReader(unittest.TestCase):
 
     def test_synonym_builtin(self) -> None:
         """Test parsing a synonym with specificity, type, and provenance."""
-        ontology = _read("""\
+        text = """\
             ontology: chebi
 
             [Term]
             id: CHEBI:1234
             synonym: "COP" EXACT ABBREVIATION []
-        """)
+        """
+
+        ontology = _read(text, upgrade=False)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("COP", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
+
+        ontology = _read(text, upgrade=True)
         term = self.get_only_term(ontology)
         self.assertEqual(1, len(term.synonyms))
         synonym = term.synonyms[0]
         self.assertEqual("COP", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
         self.assertEqual(abbreviation.reference, synonym.type)
-        self.assertEqual(Reference(prefix="OMO", identifier="0003000"), synonym.type)
 
     @unittest.skip(
         reason="This needs to be fixed upstream, since obonet's "

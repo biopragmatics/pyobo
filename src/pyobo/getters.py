@@ -70,7 +70,7 @@ def get_ontology(
     strict: bool = True,
     version: str | None = None,
     robot_check: bool = True,
-    upgrade: bool = False,
+    upgrade: bool = True,
 ) -> Obo:
     """Get the OBO for a given graph.
 

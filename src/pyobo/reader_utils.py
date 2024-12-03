@@ -43,7 +43,7 @@ def _chomp_typedef(
         return None, s
 
     try:
-        stype_curie, rest = (x.strip() for x in s.split(" ", 1))
+        synonym_typedef_id, rest = (x.strip() for x in s.split(" ", 1))
     except ValueError as e:
         if "not enough values to unpack" not in str(e):
             raise
@@ -55,14 +55,18 @@ def _chomp_typedef(
             # if there
             return None, s
 
-        stype_curie, rest = s, ""
+        synonym_typedef_id, rest = s, ""
 
     reference = _parse_identifier(
-        stype_curie, strict=strict, node=node, ontology_prefix=ontology_prefix, upgrade=upgrade
+        synonym_typedef_id,
+        strict=strict,
+        node=node,
+        ontology_prefix=ontology_prefix,
+        upgrade=upgrade,
     )
     if reference is None:
         logger.warning(
-            "[%s] unable to parse synonym type `%s` in line %s", node.curie, stype_curie, s
+            "[%s] unable to parse synonym type `%s` in line %s", node.curie, synonym_typedef_id, s
         )
         return None, rest
 

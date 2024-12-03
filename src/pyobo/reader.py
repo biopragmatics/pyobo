@@ -52,7 +52,7 @@ def from_obo_path(
     *,
     strict: bool = True,
     version: str | None,
-    upgrade: bool = False,
+    upgrade: bool = True,
 ) -> Obo:
     """Get the OBO graph from a path."""
     path = Path(path).expanduser().resolve()
@@ -105,7 +105,7 @@ def from_obonet(
     *,
     strict: bool = True,
     version: str | None = None,
-    upgrade: bool = False,
+    upgrade: bool = True,
 ) -> Obo:
     """Get all of the terms from a OBO graph."""
     ontology_prefix_raw = graph.graph["ontology"]
