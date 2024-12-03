@@ -16,6 +16,7 @@ __all__ = [
     "alternative_term",
     "broad_match",
     "close_match",
+    "contributor",
     "default_typedefs",
     "editor_note",
     "enables",
@@ -381,6 +382,11 @@ has_category = TypeDef(
 
 has_taxonomy_rank = TypeDef(
     reference=Reference(prefix="taxrank", identifier="1000000", name="has rank"),
+    is_metadata_tag=True,
+)
+
+contributor = TypeDef(
+    reference=Reference(prefix="dcterms", identifier="contributor", name="contributor"),
     is_metadata_tag=True,
 )
 
