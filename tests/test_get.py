@@ -275,7 +275,7 @@ class TestParseObonet(unittest.TestCase):
 
         self.assertIsNotNone(typedef)
         self.assertIsInstance(typedef, Reference)
-        self.assertEqual(("chebi", "chebi#is_conjugate_base_of"), typedef.pair)
+        self.assertEqual(("obo", "chebi#is_conjugate_base_of"), typedef.pair)
 
 
 class TestGet(unittest.TestCase):
