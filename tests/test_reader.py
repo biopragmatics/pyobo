@@ -923,6 +923,19 @@ class TestReader(unittest.TestCase):
             {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
         )
 
+    def test_doid_uri(self):
+        """Test parsing DO's weird url prefixing."""
+        ontology = _read("""\
+            ontology: doid
+
+            [Term]
+            id: DOID:0001816
+            def: "A something." [url:http\\://en.wikipedia.org/wiki/Hemangiosarcoma]
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.provenance))
+        self.assertEqual(("wikipedia.en", "Hemangiosarcoma"), term.provenance[0].pair)
+
 
 class TestVersionHandling(unittest.TestCase):
     """Test version handling."""

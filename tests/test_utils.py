@@ -34,6 +34,19 @@ class TestStringUtils(unittest.TestCase):
             ("chebi", "1234"), normalize_curie("http://purl.obolibrary.org/obo/CHEBI_1234")
         )
 
+        self.assertEqual(
+            ("pubmed", "15559952"),
+            normalize_curie("url:https://www.ncbi.nlm.nih.gov/pubmed/15559952"),
+        )
+        self.assertEqual(
+            ("pubmed", "15559952"),
+            normalize_curie(r"url:https\://www.ncbi.nlm.nih.gov/pubmed/15559952"),
+        )
+        self.assertEqual(
+            ("pubmed", "15559952"),
+            normalize_curie(r"url:https\://pubmed.ncbi.nlm.nih.gov/15559952/"),
+        )
+
     def test_parse_eccode_transfer(self):
         """Test parse_eccode_transfer."""
         self.assertEqual(

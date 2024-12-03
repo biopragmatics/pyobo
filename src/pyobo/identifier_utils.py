@@ -86,6 +86,10 @@ def normalize_curie(
     - Normalizes the namespace
     - Checks against a blacklist for the entire curie, for the namespace, and for suffixes.
     """
+    curie = curie.removeprefix("url:")
+    curie = curie.replace(r"https\://", "https://")
+    curie = curie.replace(r"http\://", "http://")
+
     # Remap the curie with the full list
     curie = remap_full(curie)
 
@@ -103,7 +107,9 @@ def normalize_curie(
         return reference_t
 
     if curie.startswith("http:") or curie.startswith("https:"):
-        if reference := parse_iri(curie):
+        # this rstrip might get us in trouble if there are real
+        # namespaces that have trailing slashes
+        if reference := parse_iri(curie.rstrip("/")):
             return reference.pair
         elif strict:
             raise UnparsableIRIError(curie=curie, ontology_prefix=ontology_prefix, node=node)
