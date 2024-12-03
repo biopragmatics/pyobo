@@ -376,27 +376,30 @@ def iterate_graph_typedefs(
     """Get type definitions from an :mod:`obonet` graph."""
     for typedef in graph.graph.get("typedefs", []):
         if "id" in typedef:
-            curie = typedef["id"]
+            typedef_id = typedef["id"]
         elif "identifier" in typedef:
-            curie = typedef["identifier"]
+            typedef_id = typedef["identifier"]
         else:
             raise KeyError("typedef is missing an `id`")
 
         name = typedef.get("name")
         if name is None:
-            logger.debug("[%s] typedef %s is missing a name", graph.graph["ontology"], curie)
+            logger.debug("[%s] typedef %s is missing a name", ontology_prefix, typedef_id)
 
         reference = Reference.from_curie_uri_or_default(
-            curie, strict=strict, ontology_prefix=ontology_prefix, name=name
+            typedef_id, strict=strict, ontology_prefix=ontology_prefix, name=name
         )
         if reference is None:
-            logger.warning("[%s] unable to parse typedef CURIE %s", graph.graph["ontology"], curie)
+            logger.warning("[%s] unable to parse typedef ID %s", ontology_prefix, typedef_id)
             continue
 
         xrefs = []
-        for curie in typedef.get("xref", []):
+        for xref_curie in typedef.get("xref", []):
             _xref = Reference.from_curie_or_uri(
-                curie, strict=strict, ontology_prefix=ontology_prefix
+                xref_curie,
+                strict=strict,
+                ontology_prefix=ontology_prefix,
+                node=reference,
             )
             if _xref:
                 xrefs.append(_xref)
@@ -511,6 +514,10 @@ def _extract_synonym(
     )
 
 
+#: A counter for errors in parsing provenance
+PROVENANCE_COUNTER: Counter[str] = Counter()
+
+
 def _parse_trailing_ref_list(
     rest: str, *, strict: bool = True, node: Reference, ontology_prefix: str | None
 ) -> list[Reference]:
@@ -524,7 +531,9 @@ def _parse_trailing_ref_list(
             curie, strict=strict, node=node, ontology_prefix=ontology_prefix
         )
         if reference is None:
-            logger.warning("[%s] could not parse provenance CURIE: %s", node.curie, curie)
+            if not PROVENANCE_COUNTER[curie]:
+                logger.warning("[%s] could not parse provenance CURIE: %s", node.curie, curie)
+            PROVENANCE_COUNTER[curie] += 1
             continue
         rv.append(reference)
     return rv
@@ -637,15 +646,15 @@ def _handle_prop(
 
 
 def _get_prop(
-    prop: str, *, node: Reference, strict: bool, ontology_prefix: str
+    property_id: str, *, node: Reference, strict: bool, ontology_prefix: str
 ) -> Reference | None:
     for delim in "#/":
         sw = f"http://purl.obolibrary.org/obo/{ontology_prefix}{delim}"
-        if prop.startswith(sw):
-            identifier = prop.removeprefix(sw)
+        if property_id.startswith(sw):
+            identifier = property_id.removeprefix(sw)
             return default_reference(ontology_prefix, identifier)
     return Reference.from_curie_uri_or_default(
-        prop, strict=strict, node=node, ontology_prefix=ontology_prefix
+        property_id, strict=strict, node=node, ontology_prefix=ontology_prefix
     )
 
 
