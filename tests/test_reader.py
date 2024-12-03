@@ -8,6 +8,7 @@ from textwrap import dedent
 from obonet import read_obo
 
 from pyobo import Obo, Reference, Term
+from pyobo.identifier_utils import UnparsableIRIError
 from pyobo.reader import from_obonet, get_first_nonescaped_quote
 from pyobo.struct import default_reference
 from pyobo.struct.struct import DEFAULT_SYNONYM_TYPE
@@ -416,13 +417,29 @@ class TestReader(unittest.TestCase):
 
     def test_property_literal_url_unregistered(self) -> None:
         """Test using a full OBO PURL as the property."""
-        ontology = _read("""\
+        with self.assertRaises(UnparsableIRIError):
+            _read(
+                """\
+                ontology: chebi
+
+                [Term]
+                id: CHEBI:1234
+                property_value: https://example.com/nope/nope CHEBI:5678
+                """,
+                strict=True,
+            )
+
+        ontology = _read(
+            """\
             ontology: chebi
 
             [Term]
             id: CHEBI:1234
             property_value: https://example.com/nope/nope CHEBI:5678
-        """)
+            """,
+            strict=False,
+        )
+
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(list(term.annotations_literal)))
         self.assertEqual(0, len(list(term.annotations_object)))

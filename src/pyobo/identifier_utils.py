@@ -6,6 +6,7 @@ import logging
 from functools import wraps
 from typing import ClassVar
 
+import bioontologies.upgrade
 import bioregistry
 from curies import Reference, ReferenceTuple
 
@@ -74,7 +75,7 @@ def normalize_curie(
     strict: bool = True,
     ontology_prefix: str | None = None,
     node: Reference | None = None,
-) -> tuple[str, str] | tuple[None, None]:
+) -> ReferenceTuple | tuple[None, None]:
     """Parse a string that looks like a CURIE.
 
     :param curie: A compact uniform resource identifier (CURIE)
@@ -98,6 +99,9 @@ def normalize_curie(
     if curie_has_blacklisted_suffix(curie):
         return None, None
 
+    if reference_t := bioontologies.upgrade.upgrade(curie):
+        return reference_t
+
     if curie.startswith("http:") or curie.startswith("https:"):
         if reference := parse_iri(curie):
             return reference.pair
@@ -120,7 +124,7 @@ def normalize_curie(
 
     norm_node_prefix = bioregistry.normalize_prefix(prefix)
     if norm_node_prefix:
-        return norm_node_prefix, identifier
+        return ReferenceTuple(norm_node_prefix, identifier)
     elif strict:
         raise MissingPrefixError(curie=curie, ontology_prefix=ontology_prefix, node=node)
     else:
