@@ -33,6 +33,7 @@ from .struct import (
     default_reference,
     make_ad_hoc_ontology,
 )
+from .struct.reference import _parse_identifier
 from .struct.struct import DEFAULT_SYNONYM_TYPE, LiteralProperty, ObjectProperty
 from .struct.typedef import default_typedefs
 from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
@@ -386,7 +387,7 @@ def iterate_graph_typedefs(
         if name is None:
             logger.debug("[%s] typedef %s is missing a name", ontology_prefix, typedef_id)
 
-        reference = Reference.from_curie_uri_or_default(
+        reference = _parse_identifier(
             typedef_id, strict=strict, ontology_prefix=ontology_prefix, name=name
         )
         if reference is None:
@@ -653,9 +654,7 @@ def _get_prop(
         if property_id.startswith(sw):
             identifier = property_id.removeprefix(sw)
             return default_reference(ontology_prefix, identifier)
-    return Reference.from_curie_uri_or_default(
-        property_id, strict=strict, node=node, ontology_prefix=ontology_prefix
-    )
+    return _parse_identifier(property_id, strict=strict, node=node, ontology_prefix=ontology_prefix)
 
 
 def iterate_node_parents(
@@ -698,7 +697,7 @@ def iterate_node_relationships(
     """Extract relationships from a :mod:`obonet` node's data."""
     for s in data.get("relationship", []):
         relation_curie, target_curie = s.split(" ")
-        relation = Reference.from_curie_uri_or_default(
+        relation = _parse_identifier(
             relation_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
         if relation is None:
