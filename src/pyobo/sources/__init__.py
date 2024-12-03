@@ -20,6 +20,7 @@ from .drugcentral import DrugCentralGetter
 from .expasy import ExpasyGetter
 from .famplex import FamPlexGetter
 from .flybase import FlyBaseGetter
+from .gard import GARDGetter
 from .geonames import GeonamesGetter
 from .gtdb import GTDBGetter
 from .gwascentral_phenotype import GWASCentralPhenotypeGetter
@@ -79,6 +80,7 @@ __all__ = [
     "ExpasyGetter",
     "FamPlexGetter",
     "FlyBaseGetter",
+    "GARDGetter",
     "GTDBGetter",
     "GWASCentralPhenotypeGetter",
     "GWASCentralStudyGetter",
