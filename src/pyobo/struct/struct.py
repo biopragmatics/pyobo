@@ -526,7 +526,7 @@ class Term(Referenced):
     ) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield f"\n[{self.type}]"
-        yield f"id: {self.preferred_curie}"
+        yield f"id: {self._reference(self.reference, ontology_prefix)}"
         if self.is_obsolete:
             yield "is_obsolete: true"
         if self.name:
@@ -543,14 +543,14 @@ class Term(Referenced):
             yield f"def: {self._definition_fp()}"
 
         for alt in sorted(self.alt_ids):
-            yield f"alt_id: {alt}"  # __str__ bakes in the ! name
+            yield f"alt_id: {self._reference(alt, ontology_prefix, add_name_comment=True)}"
 
         for xref in sorted(xrefs):
-            yield f"xref: {xref}"  # __str__ bakes in the ! name
+            yield f"xref: {self._reference(xref, ontology_prefix, add_name_comment=True)}"
 
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
         for parent in sorted(self.parents):
-            yield f"{parent_tag}: {parent}"  # __str__ bakes in the ! name
+            yield f"{parent_tag}: {self._reference(parent, ontology_prefix, add_name_comment=True)}"
 
         if emit_object_properties:
             yield from self._emit_relations(ontology_prefix, typedefs)
@@ -608,8 +608,12 @@ class Term(Referenced):
                 yield f'{predicate_curie} "{value}" {datatype.preferred_curie}'
 
     @staticmethod
-    def _reference(predicate: Reference, ontology_prefix: str) -> str:
-        return reference_escape(predicate, ontology_prefix=ontology_prefix)
+    def _reference(
+        predicate: Reference, ontology_prefix: str, add_name_comment: bool = False
+    ) -> str:
+        return reference_escape(
+            predicate, ontology_prefix=ontology_prefix, add_name_comment=add_name_comment
+        )
 
     @staticmethod
     def _escape(s) -> str:

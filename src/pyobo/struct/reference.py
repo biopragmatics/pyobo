@@ -185,12 +185,16 @@ def default_reference(prefix: str, identifier: str, name: str | None = None) -> 
     return Reference(prefix="obo", identifier=f"{prefix}#{identifier}", name=name)
 
 
-def reference_escape(predicate: Reference | Referenced, *, ontology_prefix: str) -> str:
+def reference_escape(
+    reference: Reference | Referenced, *, ontology_prefix: str, add_name_comment: bool = False
+) -> str:
     """Write a reference with default namespace removed."""
-    if predicate.prefix == "obo" and predicate.identifier.startswith(f"{ontology_prefix}#"):
-        return predicate.identifier.removeprefix(f"{ontology_prefix}#")
-    else:
-        return predicate.preferred_curie
+    if reference.prefix == "obo" and reference.identifier.startswith(f"{ontology_prefix}#"):
+        return reference.identifier.removeprefix(f"{ontology_prefix}#")
+    rv = reference.preferred_curie
+    if add_name_comment and reference.name:
+        rv += f" ! {reference.name}"
+    return rv
 
 
 def comma_separate_references(references: list[Reference]) -> str:
