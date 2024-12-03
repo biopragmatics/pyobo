@@ -646,11 +646,13 @@ _SYNONYM_TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
 
 def _synonym_typedef_warn(
     prefix: str, predicate: Reference, synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef]
-) -> bool:
+) -> SynonymTypeDef | None:
     if predicate.pair == DEFAULT_SYNONYM_TYPE.pair:
-        return False
-    if predicate.pair in default_typedefs or predicate.pair in synonym_typedefs:
-        return False
+        return DEFAULT_SYNONYM_TYPE
+    if predicate.pair in default_synonym_typedefs:
+        return default_synonym_typedefs[predicate.pair]
+    if predicate.pair in synonym_typedefs:
+        return synonym_typedefs[predicate.pair]
     key = prefix, predicate
     if key not in _SYNONYM_TYPEDEF_WARNINGS:
         _SYNONYM_TYPEDEF_WARNINGS.add(key)
@@ -664,7 +666,7 @@ def _synonym_typedef_warn(
             )
         else:
             logger.warning(f"[{prefix}] synonym typedef not defined: {predicate.preferred_curie}")
-    return True
+    return None
 
 
 class BioregistryError(ValueError):

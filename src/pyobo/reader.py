@@ -16,13 +16,17 @@ from more_itertools import pairwise
 from tqdm.auto import tqdm
 
 from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
+from .reader_utils import (
+    _chomp_axioms,
+    _chomp_references,
+    _chomp_specificity,
+    _chomp_typedef,
+)
 from .registries import curie_has_blacklisted_prefix, curie_is_blacklisted, remap_prefix
 from .struct import (
     Obo,
     Reference,
     Synonym,
-    SynonymSpecificities,
-    SynonymSpecificity,
     SynonymTypeDef,
     Term,
     TypeDef,
@@ -119,8 +123,8 @@ def from_obonet(graph: nx.MultiDiGraph, *, strict: bool = True, version: str | N
         for typedef in iterate_graph_typedefs(graph, ontology_prefix=ontology_prefix)
     }
 
-    synonym_typedefs: Mapping[str, SynonymTypeDef] = {
-        synonym_typedef.curie: synonym_typedef
+    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] = {
+        synonym_typedef.pair: synonym_typedef
         for synonym_typedef in iterate_graph_synonym_typedefs(
             graph, ontology_prefix=ontology_prefix
         )
@@ -475,11 +479,11 @@ def _clean_definition(s: str) -> str:
 
 def _extract_synonym(
     s: str,
-    synonym_typedefs: Mapping[str, SynonymTypeDef],
+    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
     *,
     node: Reference,
     strict: bool = True,
-    ontology_prefix: str | None,
+    ontology_prefix: str,
 ) -> Synonym | None:
     # TODO check if the synonym is written like a CURIE... it shouldn't but I've seen it happen
     try:
@@ -488,66 +492,54 @@ def _extract_synonym(
         logger.warning("[%s] invalid synonym: %s", node.curie, s)
         return None
 
-    specificity: SynonymSpecificity | None = None
-    for _specificity in SynonymSpecificities:
-        if rest.startswith(_specificity):
-            specificity = _specificity
-            rest = rest[len(_specificity) :].strip()
-            break
+    specificity, rest = _chomp_specificity(rest)
+    synonym_typedef, rest = _chomp_typedef(
+        rest,
+        synonym_typedefs=synonym_typedefs,
+        strict=strict,
+        node=node,
+        ontology_prefix=ontology_prefix,
+    )
+    provenance, rest = _chomp_references(
+        rest, strict=strict, node=node, ontology_prefix=ontology_prefix
+    )
+    annotations = _chomp_axioms(rest, node=node, strict=strict)
 
-    stype: Reference | None = None
-    for _stype in synonym_typedefs.values():
-        # Since there aren't a lot of carefully defined synonym definitions, it
-        # can appear as a string or curie. Therefore, we might see temporary prefixes
-        # get added, so we should check against full curies as well as local unique
-        # identifiers
-        if rest.startswith(_stype.curie):
-            rest = rest[len(_stype.curie) :].strip()
-            stype = _stype.reference
-            break
-        elif rest.startswith(_stype.preferred_curie):
-            rest = rest[len(_stype.preferred_curie) :].strip()
-            stype = _stype.reference
-            break
-        elif rest.startswith(_stype.identifier):
-            rest = rest[len(_stype.identifier) :].strip()
-            stype = _stype.reference
-            break
-
-    if not rest.startswith("[") or not rest.endswith("]"):
-        provenance = []
-    else:
-        provenance = _parse_trailing_ref_list(
-            rest, strict=strict, node=node, ontology_prefix=ontology_prefix
-        )
     return Synonym(
         name=name,
         specificity=specificity or "EXACT",
-        type=stype or DEFAULT_SYNONYM_TYPE.reference,
+        type=synonym_typedef.reference if synonym_typedef else DEFAULT_SYNONYM_TYPE.reference,
         provenance=provenance,
+        annotations=annotations,
     )
 
 
 def _parse_trailing_ref_list(
-    rest, *, strict: bool = True, node: Reference, ontology_prefix: str | None
-):
-    rest = rest.lstrip("[").rstrip("]")
-    return [
-        Reference.from_curie_or_uri(
-            curie.strip(), strict=strict, node=node, ontology_prefix=ontology_prefix
+    rest: str, *, strict: bool = True, node: Reference, ontology_prefix: str | None
+) -> list[Reference]:
+    rest = rest.lstrip("[").rstrip("]")  # FIXME this doesn't account for trailing annotations
+    rv = []
+    for curie in rest.split(","):
+        curie = curie.strip()
+        if not curie:
+            continue
+        reference = Reference.from_curie_or_uri(
+            curie, strict=strict, node=node, ontology_prefix=ontology_prefix
         )
-        for curie in rest.split(",")
-        if curie.strip()
-    ]
+        if reference is None:
+            logger.warning("[%s] could not parse provenance CURIE: %s", node.curie, curie)
+            continue
+        rv.append(reference)
+    return rv
 
 
 def iterate_node_synonyms(
     data: Mapping[str, Any],
-    synonym_typedefs: Mapping[str, SynonymTypeDef],
+    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
     *,
     node: Reference,
     strict: bool = False,
-    ontology_prefix: str | None,
+    ontology_prefix: str,
 ) -> Iterable[Synonym]:
     """Extract synonyms from a :mod:`obonet` node's data.
 
