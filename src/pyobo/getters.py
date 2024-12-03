@@ -299,6 +299,7 @@ def _prefixes(
 def iter_helper_helper(
     f: Callable[[str, Unpack[GetOntologyKwargs]], X],
     use_tqdm: bool = True,
+    robot_verbose: bool = False,
     skip_below: str | None = None,
     skip_pyobo: bool = False,
     skip_set: set[str] | None = None,
@@ -357,8 +358,16 @@ def iter_helper_helper(
             if "DrugBank" not in str(e):
                 raise
             logger.warning("[drugbank] invalid credentials")
-        except subprocess.CalledProcessError:
-            logger.warning("[%s] ROBOT was unable to convert OWL to OBO", prefix)
+        except subprocess.CalledProcessError as cpe:
+            if isinstance(cpe.output, bytes):
+                output = cpe.output.decode("utf-8")
+            else:
+                output = cpe.output
+            logger.warning(
+                "[%s] ROBOT was unable to convert OWL to OBO%s",
+                prefix,
+                ("\n\n" + indent(output or "", "  ")) if robot_verbose else "",
+            )
         except ValueError as e:
             if _is_xml(e):
                 # this means that it tried doing parsing on an xml page

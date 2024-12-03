@@ -63,6 +63,9 @@ skip_pyobo_option = click.option(
 skip_below_option = click.option(
     "--skip-below", help="Skip prefixes lexically sorted below the given one"
 )
+robot_verbose = click.option(
+    "--robot-verbose", is_flag=True, help="Show full Robot outputs on failure"
+)
 
 
 def database_annotate(f: Clickable) -> Clickable:
@@ -77,6 +80,7 @@ def database_annotate(f: Clickable) -> Clickable:
         strict_option,
         skip_pyobo_option,
         skip_below_option,
+        robot_verbose,
     ]
     for decorator in decorators:
         f = decorator(f)

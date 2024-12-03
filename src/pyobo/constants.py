@@ -108,6 +108,7 @@ class DatabaseKwargs(TypedDict):
     strict: bool
     force: bool
     force_process: bool
+    robot_verbose: bool
     skip_pyobo: bool
     skip_below: str | None
     skip_set: set[str] | None
@@ -165,6 +166,7 @@ class IterHelperHelperDict(SlimGetOntologyKwargs):
     """
 
     use_tqdm: bool
+    robot_verbose: bool
     skip_below: str | None
     skip_pyobo: bool
     skip_set: set[str] | None
