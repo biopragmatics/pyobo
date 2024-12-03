@@ -6,11 +6,11 @@ import logging
 from collections import Counter
 from collections.abc import Mapping
 
-import bioontologies.upgrade
 from curies import ReferenceTuple
 
 from pyobo.struct import SynonymSpecificities, SynonymSpecificity
-from pyobo.struct.struct import Reference, SynonymTypeDef, _synonym_typedef_warn, default_reference
+from pyobo.struct.reference import _parse_identifier
+from pyobo.struct.struct import Reference, SynonymTypeDef, _synonym_typedef_warn
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +32,7 @@ def _chomp_typedef(
     strict: bool = True,
     node: Reference,
     ontology_prefix: str,
+    upgrade: bool,
 ) -> tuple[SynonymTypeDef | None, str]:
     if not s:
         # This might happen if a synonym is just given as a string
@@ -42,7 +43,7 @@ def _chomp_typedef(
         return None, s
 
     try:
-        stype_curie, rest = (x.strip() for x in s.split(" ", 1))
+        synonym_typedef_id, rest = (x.strip() for x in s.split(" ", 1))
     except ValueError as e:
         if "not enough values to unpack" not in str(e):
             raise
@@ -54,25 +55,18 @@ def _chomp_typedef(
             # if there
             return None, s
 
-        stype_curie, rest = s, ""
+        synonym_typedef_id, rest = s, ""
 
-    reference: Reference | None
-    if ":" not in stype_curie:
-        # this catches situation where it's "ABBREVIATION"
-        if xx := bioontologies.upgrade.upgrade(stype_curie):
-            reference = Reference(prefix=xx.prefix, identifier=xx.identifier)
-        else:
-            reference = default_reference(ontology_prefix, stype_curie)
-    else:
-        reference = Reference.from_curie_or_uri(
-            stype_curie,
-            strict=strict,
-            node=node,
-            ontology_prefix=ontology_prefix,
-        )
+    reference = _parse_identifier(
+        synonym_typedef_id,
+        strict=strict,
+        node=node,
+        ontology_prefix=ontology_prefix,
+        upgrade=upgrade,
+    )
     if reference is None:
         logger.warning(
-            "[%s] unable to parse synonym type `%s` in line %s", node.curie, stype_curie, s
+            "[%s] unable to parse synonym type `%s` in line %s", node.curie, synonym_typedef_id, s
         )
         return None, rest
 

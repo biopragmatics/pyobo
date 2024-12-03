@@ -12,18 +12,27 @@ from pyobo.identifier_utils import UnparsableIRIError
 from pyobo.reader import from_obonet, get_first_nonescaped_quote
 from pyobo.struct import default_reference
 from pyobo.struct.struct import DEFAULT_SYNONYM_TYPE, abbreviation
-from pyobo.struct.typedef import TypeDef, exact_match, has_dbxref, is_conjugate_base_of, see_also
+from pyobo.struct.typedef import (
+    TypeDef,
+    derives_from,
+    exact_match,
+    has_dbxref,
+    is_conjugate_base_of,
+    see_also,
+)
 
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
 
 
-def _read(text: str, *, strict: bool = True, version: str | None = None) -> Obo:
+def _read(
+    text: str, *, strict: bool = True, version: str | None = None, upgrade: bool = True
+) -> Obo:
     text = dedent(text).strip()
     io = StringIO()
     io.write(text)
     io.seek(0)
     graph = read_obo(io)
-    return from_obonet(graph, strict=strict, version=version)
+    return from_obonet(graph, strict=strict, version=version, upgrade=upgrade)
 
 
 class TestUtils(unittest.TestCase):
@@ -162,18 +171,24 @@ class TestReader(unittest.TestCase):
             [Term]
             id: CHEBI:1234
             name: Test Name
-            relationship: is_conjugate_base_of CHEBI:5678
+            relationship: xyz CHEBI:5678
 
             [Typedef]
-            id: is_conjugate_base_of
+            id: xyz
         """)
         term = self.get_only_term(ontology)
         self.assertIsNone(term.get_relationship(is_conjugate_base_of))
-        r = default_reference("chebi", "is_conjugate_base_of")
+        r = default_reference("chebi", "xyz")
         td = TypeDef(reference=r)
         reference = term.get_relationship(td)
         self.assertIsNotNone(reference)
         self.assertEqual("chebi:5678", reference.curie)
+
+        rr = list(ontology.iterate_filtered_relations(td))
+        self.assertEqual(1, len(rr))
+
+        rr2 = list(ontology.iterate_filtered_relations(is_conjugate_base_of))
+        self.assertEqual(0, len(rr2))
 
     def test_relationship_missing(self) -> None:
         """Test parsing a relationship that isn't defined."""
@@ -245,18 +260,23 @@ class TestReader(unittest.TestCase):
 
             [Term]
             id: CHEBI:1234
-            property_value: mass "121.323" xsd:decimal
+            property_value: xyz "121.323" xsd:decimal
+
+            [Typedef]
+            id: xyz
         """)
         term = self.get_only_term(ontology)
         self.assertEqual(1, len(list(term.annotations_literal)))
-        self.assertEqual("121.323", term.get_property(default_reference("chebi", "mass")))
+        ref = default_reference("chebi", "xyz")
+        self.assertIn(ref, term.annotations_literal)
+        self.assertEqual("121.323", term.get_property(ref))
 
         df = ontology.get_properties_df()
         self.assertEqual(4, len(df.columns))
         self.assertEqual(1, len(df))
         row = dict(df.iloc[0])
         self.assertEqual("1234", row["chebi_id"])
-        self.assertEqual("mass", row["property"])
+        self.assertEqual("xyz", row["property"])
         self.assertEqual("121.323", row["value"])
         self.assertEqual("xsd:decimal", row["datatype"])
 
@@ -821,20 +841,29 @@ class TestReader(unittest.TestCase):
 
     def test_synonym_builtin(self) -> None:
         """Test parsing a synonym with specificity, type, and provenance."""
-        ontology = _read("""\
+        text = """\
             ontology: chebi
 
             [Term]
             id: CHEBI:1234
             synonym: "COP" EXACT ABBREVIATION []
-        """)
+        """
+
+        ontology = _read(text, upgrade=False)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("COP", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
+
+        ontology = _read(text, upgrade=True)
         term = self.get_only_term(ontology)
         self.assertEqual(1, len(term.synonyms))
         synonym = term.synonyms[0]
         self.assertEqual("COP", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
         self.assertEqual(abbreviation.reference, synonym.type)
-        self.assertEqual(Reference(prefix="OMO", identifier="0003000"), synonym.type)
 
     @unittest.skip(
         reason="This needs to be fixed upstream, since obonet's "
@@ -922,6 +951,19 @@ class TestReader(unittest.TestCase):
             },
             {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
         )
+
+    def test_default_relation(self):
+        """Test parsing a default relation."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:100147
+            relationship: derives_from drugbank:DB00779
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.relationships))
+        self.assertIn(derives_from.reference, term.relationships)
 
 
 class TestVersionHandling(unittest.TestCase):

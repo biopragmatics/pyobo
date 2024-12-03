@@ -70,6 +70,7 @@ def get_ontology(
     strict: bool = True,
     version: str | None = None,
     robot_check: bool = True,
+    upgrade: bool = True,
 ) -> Obo:
     """Get the OBO for a given graph.
 
@@ -81,6 +82,9 @@ def get_ontology(
     :param robot_check:
         If set to false, will send the ``--check=false`` command to ROBOT to disregard
         malformed ontology components. Necessary to load some ontologies like VO.
+    :param upgrade:
+        If set to true, will automatically upgrade relationships, such as
+        ``obo:chebi#part_of`` to ``BFO:0000051``
     :returns: An OBO object
 
     :raises OnlyOWLError: If the OBO foundry only has an OWL document for this resource.
@@ -132,7 +136,7 @@ def get_ontology(
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
 
-    obo = from_obo_path(path, prefix=prefix, strict=strict, version=version)
+    obo = from_obo_path(path, prefix=prefix, strict=strict, version=version, upgrade=upgrade)
     obo.write_default(force=force_process)
     return obo
 
