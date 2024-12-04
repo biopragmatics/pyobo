@@ -1,34 +1,32 @@
-# -*- coding: utf-8 -*-
-
 """Converter for RGD."""
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
-from ..struct import (
+from pyobo.struct import (
     Obo,
     Reference,
-    Synonym,
     SynonymTypeDef,
     Term,
+    default_reference,
     from_species,
     has_gene_product,
     transcribes_to,
 )
-from ..utils.path import ensure_df
+from pyobo.utils.path import ensure_df
 
 logger = logging.getLogger(__name__)
 PREFIX = "rgd"
 
-old_symbol_type = SynonymTypeDef(id="old_symbol", name="old symbol")
-old_name_type = SynonymTypeDef(id="old_name", name="old name")
+old_symbol_type = SynonymTypeDef(reference=default_reference(PREFIX, "old_symbol"))
+old_name_type = SynonymTypeDef(reference=default_reference(PREFIX, "old_name"))
 
 # NOTE unigene id was discontinue in January 18th, 2021 dump
 
-GENES_URL = "ftp://ftp.rgd.mcw.edu/pub/data_release/GENES_RAT.txt"
+GENES_URL = "https://download.rgd.mcw.edu/data_release/GENES_RAT.txt"
 GENES_HEADER = [
     "GENE_RGD_ID",
     "SYMBOL",
@@ -70,17 +68,21 @@ GENES_HEADER = [
 ]
 
 
+class RGDGetter(Obo):
+    """An ontology representation of RGD's rat gene nomenclature."""
+
+    bioversions_key = ontology = PREFIX
+    typedefs = [from_species, transcribes_to, has_gene_product]
+    synonym_typedefs = [old_name_type, old_symbol_type]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(force=force, version=self._version_or_raise)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get RGD as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="Rat Genome Database",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        typedefs=[from_species, transcribes_to, has_gene_product],
-        synonym_typedefs=[old_name_type, old_symbol_type],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return RGDGetter(force=force)
 
 
 namespace_to_column = [
@@ -90,7 +92,7 @@ namespace_to_column = [
 ]
 
 
-def get_terms(force: bool = False) -> Iterable[Term]:
+def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]:
     """Get RGD terms."""
     df = ensure_df(
         PREFIX,
@@ -98,13 +100,15 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         sep="\t",
         header=0,
         comment="#",
-        dtype={
-            "NCBI_GENE_ID": str,
-            "GENE_RGD_ID": str,
-        },
+        dtype=str,
         force=force,
+        version=version,
+        quoting=3,
+        on_bad_lines="skip",
     )
-    for _, row in tqdm(df.iterrows(), total=len(df.index), desc=f"Mapping {PREFIX}"):
+    for _, row in tqdm(
+        df.iterrows(), total=len(df.index), desc=f"Mapping {PREFIX}", unit_scale=True
+    ):
         if pd.notna(row["NAME"]):
             definition = row["NAME"]
         elif pd.notna(row["GENE_DESC"]):
@@ -119,11 +123,11 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         old_names = row["OLD_NAME"]
         if old_names and pd.notna(old_names):
             for old_name in old_names.split(";"):
-                term.append_synonym(Synonym(name=old_name, type=old_name_type))
+                term.append_synonym(old_name, type=old_name_type)
         old_symbols = row["OLD_SYMBOL"]
         if old_symbols and pd.notna(old_symbols):
             for old_symbol in old_symbols.split(";"):
-                term.append_synonym(Synonym(name=old_symbol, type=old_symbol_type))
+                term.append_synonym(old_symbol, type=old_symbol_type)
         for prefix, key in namespace_to_column:
             xref_ids = str(row[key])
             if xref_ids and pd.notna(xref_ids):
@@ -131,19 +135,19 @@ def get_terms(force: bool = False) -> Iterable[Term]:
                     if xref_id == "nan":
                         continue
                     if prefix == "uniprot":
-                        term.append_relationship(
-                            has_gene_product, Reference.auto(prefix=prefix, identifier=xref_id)
+                        term.annotate_object(
+                            has_gene_product, Reference(prefix=prefix, identifier=xref_id)
                         )
                     elif prefix == "ensembl":
                         if xref_id.startswith("ENSMUSG") or xref_id.startswith("ENSRNOG"):
                             # second one is reverse strand
                             term.append_xref(Reference(prefix=prefix, identifier=xref_id))
                         elif xref_id.startswith("ENSMUST"):
-                            term.append_relationship(
+                            term.annotate_object(
                                 transcribes_to, Reference(prefix=prefix, identifier=xref_id)
                             )
                         elif xref_id.startswith("ENSMUSP"):
-                            term.append_relationship(
+                            term.annotate_object(
                                 has_gene_product, Reference(prefix=prefix, identifier=xref_id)
                             )
                         else:
@@ -161,4 +165,4 @@ def get_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).write_default(write_obo=True)
+    RGDGetter.cli()

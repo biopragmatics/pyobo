@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ typedef.name or typedef.identifier }}{% endblock title %}
+
+{% block content -%}
+    <div class="card">
+        <h5 class="card-header">
+            {% if typedef.is_metadata_tag %}
+                <span class="badge badge-info">Property</span>
+            {% else %}
+                <span class="badge badge-info">Relation</span>
+            {% endif %}
+            {{ typedef.name or typedef.identifier }}
+            {% if typedef.is_obsolete %}
+                <span class="badge badge-warning">Obsolete</span>
+            {% endif %}
+        </h5>
+        <div class="card-body">
+            {% if typedef.definition %}
+                <p>{{ typedef.definition }}</p>
+            {% endif %}
+            <dl>
+                <dt>Local Unique Identifier</dt>
+                <dd>
+                    <a href="{{ metaregistry_base_url }}/{{ typedef.curie }}">{{ typedef.identifier }}</a>
+                </dd>
+                {% if typedef.namespace %}
+                    <dt>Namespace</dt>
+                    <dd>{{ typedef.namespace }}</dd>
+                {% endif %}
+
+                {{ list_references(typedef.alt_ids, "Alt. IDs") }}
+                {% if typedef.synonym %}
+                    <dt>
+                        <span class="badge badge-primary">Synonym</span>
+                    </dt>
+                    <dt>
+                        <ul>
+                            {% for synonym in typedef.synonyms %}
+                                <li>{{ synonym }}</li>
+                            {% endfor %}
+                        </ul>
+                    </dt>
+                {% endif %}
+                {{ list_references(typedef.parents, "Parents") }}
+                {% for xref in typedef.xrefs %}
+                    <dt><span class="badge badge-primary">Xref</span> {{ bioregistry.get_name(xref.prefix) }}</dt>
+                    <dt>{{ link_reference(xref) }}</dt>
+                {% endfor %}
+
+            </dl>
+        </div>
+    </div>
+{%- endblock content %}

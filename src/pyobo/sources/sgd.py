@@ -1,14 +1,16 @@
-# -*- coding: utf-8 -*-
-
 """Converter for SGD."""
 
-from typing import Iterable
+from collections.abc import Iterable
 from urllib.parse import unquote_plus
 
-import bioversions
+from pystow.utils import read_tarfile_csv
 
-from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
-from ..utils.path import ensure_tar_df
+from ..struct import Obo, Reference, Synonym, Term, from_species
+from ..utils.path import ensure_path
+
+__all__ = [
+    "SGDGetter",
+]
 
 HEADER = ["chromosome", "database", "feature", "start", "end", "a", "b", "c", "data"]
 PREFIX = "sgd"
@@ -19,35 +21,34 @@ URL = (
 )
 INNER_PATH = "S288C_reference_genome_R64-2-1_20150113/saccharomyces_cerevisiae_R64-2-1_20150113.gff"
 
-alias_type = SynonymTypeDef(id="alias", name="alias")
+
+class SGDGetter(Obo):
+    """An ontology representation of SGD's yeast gene nomenclature."""
+
+    bioversions_key = ontology = PREFIX
+    typedefs = [from_species]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms for SGD."""
+        yield from get_terms(self, force=force)
 
 
 def get_obo(force: bool = False) -> Obo:
     """Get SGD as OBO."""
-    version = bioversions.get_version("sgd")
-    return Obo(
-        ontology=PREFIX,
-        name="Saccharomyces Genome Database",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        typedefs=[from_species],
-        synonym_typedefs=[alias_type],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        data_version=version,
-    )
+    return SGDGetter(force=force)
 
 
-def get_terms(force: bool = False) -> Iterable[Term]:
+def get_terms(ontology: Obo, force: bool = False) -> Iterable[Term]:
     """Get SGD terms."""
-    df = ensure_tar_df(
-        prefix=PREFIX,
-        url=URL,
+    path = ensure_path(PREFIX, url=URL, version=ontology._version_or_raise, force=force)
+    df = read_tarfile_csv(
+        path,
         inner_path=INNER_PATH,
         sep="\t",
         skiprows=18,
         header=None,
         names=HEADER,
-        force=force,
+        dtype=str,
     )
     df = df[df["feature"] == "gene"]
     for data in df["data"]:
@@ -62,7 +63,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         aliases = d.get("Alias")
         if aliases:
             for alias in aliases.split(","):
-                synonyms.append(Synonym(name=unquote_plus(alias), type=alias_type))
+                synonyms.append(Synonym(name=unquote_plus(alias)))
 
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
@@ -74,4 +75,4 @@ def get_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).write_default(write_obo=True, write_obograph=True, force=True)
+    SGDGetter.cli()

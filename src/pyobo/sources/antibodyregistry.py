@@ -1,25 +1,31 @@
-# -*- coding: utf-8 -*-
-
 """Converter for the Antibody Registry."""
 
-from typing import Iterable
+import logging
+from collections.abc import Iterable, Mapping
 
-import bioregistry
-import bioversions
 import pandas as pd
-from tqdm import tqdm
+from bioregistry.utils import removeprefix
+from tqdm.auto import tqdm
 
 from pyobo import Obo, Term
+from pyobo.api.utils import get_version
 from pyobo.utils.path import ensure_df
+
+__all__ = [
+    "AntibodyRegistryGetter",
+]
+
+logger = logging.getLogger(__name__)
 
 PREFIX = "antibodyregistry"
 URL = "http://antibodyregistry.org/php/fileHandler.php"
 CHUNKSIZE = 20_000
 
 
-def get_chunks(force: bool = False) -> pd.DataFrame:
+def get_chunks(*, force: bool = False, version: str | None = None) -> pd.DataFrame:
     """Get the BioGRID identifiers mapping dataframe."""
-    version = bioversions.get_version(PREFIX)
+    if version is None:
+        version = get_version(PREFIX)
     df = ensure_df(
         PREFIX,
         url=URL,
@@ -33,20 +39,23 @@ def get_chunks(force: bool = False) -> pd.DataFrame:
     return df
 
 
+class AntibodyRegistryGetter(Obo):
+    """An ontology representation of the Antibody Registry."""
+
+    ontology = bioversions_key = PREFIX
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(force=force, version=self._version_or_raise)
+
+
 def get_obo(*, force: bool = False) -> Obo:
     """Get the Antibody Registry as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name=bioregistry.get_name(PREFIX),
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(force=force),
-        data_version=bioversions.get_version(PREFIX),
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return AntibodyRegistryGetter(force=force)
 
 
 # TODO there are tonnnnsss of mappings to be curated
-MAPPING = {
+MAPPING: Mapping[str, str | None] = {
     "AMERICAN DIAGNOSTICA": None,  # No website
     "Biolegend": "biolegend",
     "Enzo Life Sciences": "enzo",
@@ -64,9 +73,9 @@ SKIP = {
 }
 
 
-def iter_terms(force: bool = False) -> Iterable[Term]:
+def iter_terms(*, force: bool = False, version: str | None = None) -> Iterable[Term]:
     """Iterate over antibodies."""
-    chunks = get_chunks(force=force)
+    chunks = get_chunks(force=force, version=version)
     needs_curating = set()
     # df['vendor'] = df['vendor'].map(bioregistry.normalize_prefix)
     it = tqdm(chunks, desc=f"{PREFIX}, chunkssize={CHUNKSIZE}")
@@ -74,14 +83,15 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
         for identifier, name, vendor, catalog_number, defining_citation in chunk.values:
             if pd.isna(identifier):
                 continue
+            identifier = removeprefix(identifier, "AB_")
             term = Term.from_triple(PREFIX, identifier, name if pd.notna(name) else None)
             if vendor not in MAPPING:
                 if vendor not in needs_curating:
                     needs_curating.add(vendor)
                     if all(x not in vendor for x in SKIP):
-                        it.write(f"! vendor {vendor} for {identifier}")
+                        logger.debug(f"! vendor {vendor} for {identifier}")
             elif MAPPING[vendor] is not None and pd.notna(catalog_number) and catalog_number:
-                term.append_xref((MAPPING[vendor], catalog_number))
+                term.append_xref((MAPPING[vendor], catalog_number))  # type:ignore
             if defining_citation and pd.notna(defining_citation):
                 for pubmed_id in defining_citation.split(","):
                     pubmed_id = pubmed_id.strip()
@@ -92,4 +102,4 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).cli()
+    AntibodyRegistryGetter.cli()

@@ -1,0 +1,4 @@
+# see https://docs.codecov.com/v4.6/docs/codecov-yaml
+ignore:
+  - "src/pyobo/__main__.py"
+  - "src/pyobo/cli.py"

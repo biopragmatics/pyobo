@@ -1,18 +1,20 @@
-# -*- coding: utf-8 -*-
-
 """Converter for ChEMBL.
 
 Run with ``python -m pyobo.sources.chembl -vv``.
 """
 
 import logging
+from collections.abc import Iterable
 from contextlib import closing
-from typing import Iterable
 
-import bioversions
 import chembl_downloader
 
 from pyobo.struct import Obo, Reference, Term
+from pyobo.struct.typedef import exact_match, has_inchi, has_smiles
+
+__all__ = [
+    "ChEMBLCompoundGetter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -36,17 +38,21 @@ WHERE
 # TODO molecule_hierarchy table
 
 
-def get_obo() -> Obo:
-    """Return ChEMBL as OBO."""
-    version = bioversions.get_version("chembl")
-    return Obo(
-        ontology="chembl.compound",
-        name="ChEMBL",
-        data_version=version,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+class ChEMBLCompoundGetter(Obo):
+    """An ontology representation of ChEMBL compounds."""
+
+    ontology = "chembl.compound"
+    bioversions_key = "chembl"
+    typedefs = [exact_match]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise)
+
+
+def get_obo(force: bool = False) -> Obo:
+    """Return ChEMBL Compounds as OBO."""
+    return ChEMBLCompoundGetter(force=force)
 
 
 def iter_terms(version: str) -> Iterable[Term]:
@@ -60,13 +66,13 @@ def iter_terms(version: str) -> Iterable[Term]:
                 # TODO add xrefs?
                 term = Term.from_triple(prefix=PREFIX, identifier=chembl_id, name=name)
                 if smiles:
-                    term.append_property("smiles", smiles)
+                    term.annotate_literal(has_smiles, smiles)
                 if inchi:
-                    term.append_property("inchi", inchi)
+                    term.annotate_literal(has_inchi, inchi)
                 if inchi_key:
-                    term.append_xref(Reference("inchikey", inchi_key))
+                    term.append_exact_match(Reference(prefix="inchikey", identifier=inchi_key))
                 yield term
 
 
 if __name__ == "__main__":
-    get_obo().cli()
+    ChEMBLCompoundGetter.cli()

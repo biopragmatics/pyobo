@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """Loading of the relations ontology names."""
 
 import csv
 import os
+from collections.abc import Mapping
 from functools import lru_cache
-from typing import Mapping, Tuple
 
 import requests
+from curies import ReferenceTuple
 
 __all__ = [
     "load_ro",
@@ -20,13 +19,13 @@ PREFIX = "http://purl.obolibrary.org/obo/"
 
 
 @lru_cache(maxsize=1)
-def load_ro() -> Mapping[Tuple[str, str], str]:
+def load_ro() -> Mapping[ReferenceTuple, str]:
     """Load the relation ontology names."""
     if not os.path.exists(PATH):
         download()
     with open(PATH) as file:
         return {
-            (prefix, identifier): name
+            ReferenceTuple(prefix, identifier): name
             for prefix, identifier, name in csv.reader(file, delimiter="\t")
         }
 

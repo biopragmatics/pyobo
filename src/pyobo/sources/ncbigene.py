@@ -1,16 +1,18 @@
-# -*- coding: utf-8 -*-
-
 """Converter for Entrez."""
 
 import logging
-from typing import Iterable, List, Mapping, Set
+from collections.abc import Iterable, Mapping
 
+import bioregistry
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
-from ..api import get_id_name_mapping
 from ..struct import Obo, Reference, Term, from_species
 from ..utils.path import ensure_df
+
+__all__ = [
+    "NCBIGeneGetter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +45,7 @@ GENE_INFO_COLUMNS = [
 ]
 
 
-def get_ncbigene_ids() -> Set[str]:
+def get_ncbigene_ids() -> set[str]:
     """Get the Entrez name mapping."""
     df = _get_ncbigene_subset(["GeneID"])
     return set(df["GeneID"])
@@ -64,7 +66,7 @@ def _get_ncbigene_info_subset(usecols) -> Mapping[str, str]:
     return dict(df.values)
 
 
-def _get_ncbigene_subset(usecols: List[str]) -> pd.DataFrame:
+def _get_ncbigene_subset(usecols: list[str]) -> pd.DataFrame:
     df = ensure_df(
         PREFIX,
         url=GENE_INFO_URL,
@@ -79,18 +81,24 @@ def _get_ncbigene_subset(usecols: List[str]) -> pd.DataFrame:
     return df
 
 
-def get_obo() -> Obo:
+class NCBIGeneGetter(Obo):
+    """An ontology representation of NCBI's Entrez Gene database."""
+
+    ontology = PREFIX
+    dynamic_version = True
+    typedefs = [from_species]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(force=force)
+
+
+def get_obo(force: bool = False) -> Obo:
     """Get Entrez as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="Entrez Gene",
-        iter_terms=get_terms,
-        typedefs=[from_species],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return NCBIGeneGetter(force=force)
 
 
-def get_gene_info_df() -> pd.DataFrame:
+def get_gene_info_df(force: bool = False) -> pd.DataFrame:
     """Get the gene info dataframe."""
     return ensure_df(
         PREFIX,
@@ -98,7 +106,8 @@ def get_gene_info_df() -> pd.DataFrame:
         sep="\t",
         na_values=["-", "NEWENTRY"],
         usecols=GENE_INFO_COLUMNS,
-        dtype={"#tax_id": str, "GeneID": str},
+        dtype=str,
+        force=force,
     )
 
 
@@ -147,35 +156,38 @@ xref_mapping = {
 xref_mapping = {x.lower() for x in xref_mapping}
 
 
-def get_terms() -> Iterable[Term]:
+def get_terms(force: bool = False) -> Iterable[Term]:
     """Get Entrez terms."""
-    df = get_gene_info_df()
+    df = get_gene_info_df(force=force)
 
-    taxonomy_id_to_name = get_id_name_mapping("ncbitaxon")
-
-    it = tqdm(df.values, total=len(df.index), desc=f"mapping {PREFIX}")
-    for tax_id, gene_id, symbol, dbxrfs, description, _gene_type in it:
+    it = tqdm(
+        df.values, total=len(df.index), desc=f"mapping {PREFIX}", unit_scale=True, unit="gene"
+    )
+    warning_prefixes = set()
+    for tax_id, gene_id, symbol, xref_curies, description, _gene_type in it:
         if pd.isna(symbol):
             continue
-        try:
-            tax_name = taxonomy_id_to_name[tax_id]
-        except KeyError:
-            logger.warning(f"Could not look up tax_id={tax_id}")
-            tax_name = None
-
-        xrefs = []
-        if pd.notna(dbxrfs):
-            for xref in dbxrfs.split("|"):
-                xref_ns, xref_id = xref.split(":", 1)
-                xref_ns = xref_ns.lower()
-                xrefs.append(Reference(prefix=xref_ns, identifier=xref_id))
-
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=gene_id, name=symbol),
-            definition=description,
-            xrefs=xrefs,
+            definition=description if pd.notna(description) else None,
         )
-        term.set_species(identifier=tax_id, name=tax_name)
+        term.set_species(identifier=tax_id)
+        if pd.notna(xref_curies):
+            for xref_curie in xref_curies.split("|"):
+                if xref_curie.startswith("EnsemblRapid"):
+                    continue
+                elif xref_curie.startswith("AllianceGenome"):
+                    xref_curie = xref_curie[len("xref_curie") :]
+                elif xref_curie.startswith("nome:WB:"):
+                    xref_curie = xref_curie[len("nome:") :]
+                xref_prefix, xref_id = bioregistry.parse_curie(xref_curie)
+                if xref_prefix and xref_id:
+                    term.append_xref(Reference(prefix=xref_prefix, identifier=xref_id))
+                else:
+                    p = xref_curie.split(":")[0]
+                    if p not in warning_prefixes:
+                        warning_prefixes.add(p)
+                        tqdm.write(f"[{PREFIX}] unhandled prefix in xref: {xref_curie}")
         yield term
 
 

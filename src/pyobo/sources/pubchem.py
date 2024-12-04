@@ -1,44 +1,48 @@
-# -*- coding: utf-8 -*-
-
 """Converter for PubChem Compound."""
 
 import logging
-from typing import Iterable, Mapping, Optional
+from collections.abc import Iterable, Mapping
+from pathlib import Path
 
 import pandas as pd
-from tqdm import tqdm
+from bioregistry.utils import removeprefix
+from tqdm.auto import tqdm
 
 from ..api import get_name_id_mapping
+from ..api.utils import get_version
 from ..struct import Obo, Reference, Synonym, Term
 from ..utils.iter import iterate_gzips_together
 from ..utils.path import ensure_df, ensure_path
+
+__all__ = [
+    "PubChemCompoundGetter",
+]
 
 logger = logging.getLogger(__name__)
 
 PREFIX = "pubchem.compound"
 
 
-def _get_pubchem_extras_url(version: str, end: str) -> str:
+def _get_pubchem_extras_url(version: str | None, end: str) -> str:
+    if version is None:
+        version = get_version("pubchem")
     return f"ftp://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Monthly/{version}/Extras/{end}"
 
 
-def _get_version() -> str:
-    # TODO use bioversions
-    return "2020-12-01"
+class PubChemCompoundGetter(Obo):
+    """An ontology representation of the PubChem Compound database."""
+
+    ontology = PREFIX
+    bioversions_key = "pubchem"
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo() -> Obo:
+def get_obo(force: bool = False) -> Obo:
     """Get PubChem Compound OBO."""
-    version = _get_version()
-    obo = Obo(
-        ontology="pubchem.compound",
-        name="PubChem Compound",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version),
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
-    return obo
+    return PubChemCompoundGetter(force=force)
 
 
 def _get_cid_smiles_df(version: str) -> pd.DataFrame:
@@ -66,10 +70,8 @@ def get_pubchem_id_to_name(version: str) -> Mapping[str, str]:
     return dict(df.values)
 
 
-def get_pubchem_id_to_mesh_id(version: Optional[str] = None) -> Mapping[str, str]:
+def get_pubchem_id_to_mesh_id(version: str) -> Mapping[str, str]:
     """Get a mapping from PubChem compound identifiers to their equivalent MeSH terms."""
-    if version is None:
-        version = _get_version()
     url = _get_pubchem_extras_url(version, "CID-MeSH")
     df = ensure_df(
         PREFIX,
@@ -95,22 +97,22 @@ def get_pubchem_id_to_mesh_id(version: Optional[str] = None) -> Mapping[str, str
     return dict(df.values)
 
 
-def _ensure_cid_name_path(*, version: Optional[str] = None) -> str:
+def _ensure_cid_name_path(*, version: str | None = None, force: bool = False) -> Path:
     if version is None:
-        version = _get_version()
+        version = get_version("pubchem")
     # 2 tab-separated columns: compound_id, name
     cid_name_url = _get_pubchem_extras_url(version, "CID-Title.gz")
-    cid_name_path = ensure_path(PREFIX, url=cid_name_url, version=version)
+    cid_name_path = ensure_path(PREFIX, url=cid_name_url, version=version, force=force)
     return cid_name_path
 
 
-def get_terms(*, version: str, use_tqdm: bool = True) -> Iterable[Term]:
+def get_terms(*, version: str, use_tqdm: bool = True, force: bool = False) -> Iterable[Term]:
     """Get PubChem Compound terms."""
-    cid_name_path = _ensure_cid_name_path(version=version)
+    cid_name_path = _ensure_cid_name_path(version=version, force=force)
 
     # 2 tab-separated columns: compound_id, synonym
     cid_synonyms_url = _get_pubchem_extras_url(version, "CID-Synonym-filtered.gz")
-    cid_synonyms_path = ensure_path(PREFIX, url=cid_synonyms_url, version=version)
+    cid_synonyms_path = ensure_path(PREFIX, url=cid_synonyms_url, version=version, force=force)
 
     it = iterate_gzips_together(cid_name_path, cid_synonyms_path)
 
@@ -123,13 +125,13 @@ def get_terms(*, version: str, use_tqdm: bool = True) -> Iterable[Term]:
         synonyms = []
         for synonym in raw_synonyms:
             if synonym.startswith("CHEBI:"):
-                xrefs.append(Reference(prefix="chebi", identifier=synonym))
+                xrefs.append(Reference(prefix="chebi", identifier=removeprefix(synonym, "CHEBI:")))
             elif synonym.startswith("CHEMBL"):
                 xrefs.append(Reference(prefix="chembl", identifier=synonym))
             elif synonym.startswith("InChI="):
                 xrefs.append(Reference(prefix="inchi", identifier=synonym))
-            elif synonym.startswith("SCHEMBL"):
-                xrefs.append(Reference(prefix="schembl", identifier=synonym))
+            # elif synonym.startswith("SCHEMBL"):
+            #     xrefs.append(Reference(prefix="schembl", identifier=synonym))
             else:
                 synonyms.append(Synonym(name=synonym))
             # TODO check other xrefs

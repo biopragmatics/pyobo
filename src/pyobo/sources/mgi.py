@@ -1,24 +1,27 @@
-# -*- coding: utf-8 -*-
-
 """Converter for MGI."""
 
 import logging
 from collections import defaultdict
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
+
+from pyobo.struct.typedef import exact_match
 
 from ..struct import (
     Obo,
     Reference,
-    Synonym,
     Term,
     from_species,
     has_gene_product,
     transcribes_to,
 )
 from ..utils.path import ensure_df
+
+__all__ = [
+    "MGIGetter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -28,16 +31,20 @@ ENTREZ_XREFS_URL = "http://www.informatics.jax.org/downloads/reports/MGI_EntrezG
 ENSEMBL_XREFS_URL = "http://www.informatics.jax.org/downloads/reports/MRK_ENSEMBL.rpt"
 
 
+class MGIGetter(Obo):
+    """An ontology representation of MGI's mouse gene nomenclature."""
+
+    ontology = bioversions_key = PREFIX
+    typedefs = [from_species, has_gene_product, transcribes_to, exact_match]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get MGI as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="Mouse Genome Database",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        typedefs=[from_species, has_gene_product, transcribes_to],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return MGIGetter(force=force)
 
 
 COLUMNS = ["MGI Accession ID", "Marker Symbol", "Marker Name"]
@@ -65,6 +72,7 @@ def get_ensembl_df(force: bool = False) -> pd.DataFrame:
             "biotypes",
         ],
         force=force,
+        dtype=str,
     )
 
 
@@ -93,9 +101,7 @@ def get_entrez_df(
             "strand",
             "biotypes",
         ],
-        dtype={
-            "entrez_id": str,
-        },
+        dtype=str,
         force=force,
     )
 
@@ -142,7 +148,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
                 mgi_to_ensemble_protein_ids[mgi_id].append(ensemble_protein_id)
 
     for mgi_curie, name, definition in tqdm(
-        df[COLUMNS].values, total=len(df.index), desc=f"Mapping {PREFIX}"
+        df[COLUMNS].values, total=len(df.index), desc=f"Mapping {PREFIX}", unit_scale=True
     ):
         identifier = mgi_curie[len("MGI:") :]
         term = Term(
@@ -151,9 +157,11 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         )
         if identifier in mgi_to_synonyms:
             for synonym in mgi_to_synonyms[identifier]:
-                term.append_synonym(Synonym(name=synonym))
+                term.append_synonym(synonym)
         if identifier in mgi_to_entrez_id:
-            term.append_xref(Reference(prefix="ncbigene", identifier=mgi_to_entrez_id[identifier]))
+            term.append_exact_match(
+                Reference(prefix="ncbigene", identifier=mgi_to_entrez_id[identifier])
+            )
         for ensembl_id in mgi_to_ensemble_accession_ids[identifier]:
             term.append_xref(Reference(prefix="ensembl", identifier=ensembl_id))
         for ensembl_id in mgi_to_ensemble_transcript_ids[identifier]:

@@ -1,18 +1,19 @@
-# -*- coding: utf-8 -*-
-
 """Converter for NCI PID."""
 
 import logging
 from collections import defaultdict
-from typing import Iterable, List, Mapping, Tuple
+from collections.abc import Iterable, Mapping
 
 import pandas as pd
-from protmapper.uniprot_client import get_gene_name, get_hgnc_id
 
 from ..api import get_id_name_mapping
 from ..struct import Obo, Reference, Term
-from ..struct.typedef import has_part
+from ..struct.typedef import has_participant
 from ..utils.ndex_utils import CX, ensure_ndex_network_set, iterate_aspect
+
+__all__ = [
+    "PIDGetter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -25,28 +26,38 @@ URL = (
 )
 
 
+class PIDGetter(Obo):
+    """An ontology representation of the NCI's Pathway Interaction Database."""
+
+    ontology = PREFIX
+    static_version = "1.0.0"
+    typedefs = [has_participant]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms()
+
+
 def get_obo() -> Obo:
     """Get NCI PID as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="NCI Pathway Interaction Database",
-        typedefs=[has_part],
-        iter_terms=iter_terms,
-        auto_generated_by=f"bio2obo:{PREFIX}",
+    return PIDGetter()
+
+
+def iter_networks(use_tqdm: bool = False, force: bool = False) -> Iterable[tuple[str, CX]]:
+    """Iterate over NCI PID networks."""
+    yield from ensure_ndex_network_set(
+        PREFIX, NDEX_NETWORK_SET_UUID, use_tqdm=use_tqdm, force=force
     )
 
 
-def iter_networks(use_tqdm: bool = False) -> Iterable[Tuple[str, CX]]:
-    """Iterate over NCI PID networks."""
-    yield from ensure_ndex_network_set(PREFIX, NDEX_NETWORK_SET_UUID, use_tqdm=use_tqdm)
-
-
-def iter_terms() -> Iterable[Term]:
+def iter_terms(force: bool = False) -> Iterable[Term]:
     """Iterate over NCI PID terms."""
+    from protmapper.uniprot_client import get_gene_name, get_hgnc_id
+
     hgnc_id_to_name = get_id_name_mapping("hgnc")
     hgnc_name_to_id = {v: k for k, v in hgnc_id_to_name.items()}
 
-    for uuid, cx in iter_networks(use_tqdm=True):
+    for uuid, cx in iter_networks(force=force, use_tqdm=True):
         name = None
         for node in iterate_aspect(cx, "networkAttributes"):
             if node["n"] == "name":
@@ -82,7 +93,9 @@ def iter_terms() -> Iterable[Term]:
                 logger.debug(f"unmapped: {name}, {reference}")
 
         for hgnc_id, hgnc_symbol in genes:
-            term.append_relationship(has_part, Reference("hgnc", hgnc_id, hgnc_symbol))
+            term.append_relationship(
+                has_participant, Reference(prefix="hgnc", identifier=hgnc_id, name=hgnc_symbol)
+            )
 
         yield term
 
@@ -102,7 +115,7 @@ def get_curation_df() -> pd.DataFrame:
     return df[["Text from NDEx", "Type", "Namespace", "Identifier"]]
 
 
-def get_remapping() -> Mapping[str, List[Tuple[str, str]]]:
+def get_remapping() -> Mapping[str, list[tuple[str, str]]]:
     """Get a mapping from text to list of HGNC id/symbols."""
     curation_df = get_curation_df()
     rv = defaultdict(list)
@@ -125,4 +138,4 @@ def get_remapping() -> Mapping[str, List[Tuple[str, str]]]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    PIDGetter.cli()

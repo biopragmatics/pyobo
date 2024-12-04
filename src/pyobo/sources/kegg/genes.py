@@ -1,17 +1,15 @@
-# -*- coding: utf-8 -*-
-
 """Convert KEGG Genes to OBO.
 
 Run with ``python -m pyobo.sources.kegg.genes``
 """
 
 import logging
-from typing import Iterable, Optional
+from collections.abc import Iterable
+from pathlib import Path
 
-import bioversions
 import click
 from more_click import verbose_option
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .api import (
     KEGG_GENES_PREFIX,
@@ -20,27 +18,33 @@ from .api import (
     ensure_conv_genome_ncbigene,
     ensure_conv_genome_uniprot,
     ensure_list_genome,
-    from_kegg_species,
 )
 from .genome import iter_kegg_genomes
 from ...struct import Obo, Reference, Term, from_species, has_gene_product
 from ...utils.io import open_map_tsv
 
+__all__ = [
+    "KEGGGeneGetter",
+]
+
 logger = logging.getLogger(__name__)
+
+
+class KEGGGeneGetter(Obo):
+    """An ontology representation of KEGG Genes."""
+
+    ontology = KEGG_GENES_PREFIX
+    bioversions_key = "kegg"
+    typedefs = [from_species, has_gene_product]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise)
 
 
 def get_obo() -> Obo:
     """Get KEGG Genes as OBO."""
-    version = bioversions.get_version("kegg")
-    return Obo(
-        ontology=KEGG_GENES_PREFIX,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        typedefs=[from_species, from_kegg_species, has_gene_product],
-        name="KEGG Genes",
-        data_version=version,
-        auto_generated_by=f"bio2obo:{KEGG_GENES_PREFIX}",
-    )
+    return KEGGGeneGetter()
 
 
 def iter_terms(version: str) -> Iterable[Term]:
@@ -68,9 +72,9 @@ def iter_terms(version: str) -> Iterable[Term]:
 
 def _make_terms(
     kegg_genome: KEGGGenome,
-    list_genome_path: str,
-    conv_uniprot_path: Optional[str] = None,
-    conv_ncbigene_path: Optional[str] = None,
+    list_genome_path: Path,
+    conv_uniprot_path: Path | None = None,
+    conv_ncbigene_path: Path | None = None,
 ) -> Iterable[Term]:
     uniprot_conv = _load_conv(conv_uniprot_path, "up:") if conv_uniprot_path else {}
     ncbigene_conv = _load_conv(conv_ncbigene_path, "ncbi-geneid:") if conv_ncbigene_path else {}
@@ -85,7 +89,7 @@ def _make_terms(
                 )
                 continue
             if ";" in line:
-                *_extras, name = [part.strip() for part in extras.split(";")]
+                *_extras, name = (part.strip() for part in extras.split(";"))
             else:
                 name = extras
 
@@ -97,17 +101,19 @@ def _make_terms(
 
             uniprot_xref = uniprot_conv.get(identifier)
             if uniprot_xref is not None:
-                term.append_relationship(has_gene_product, Reference("uniprot", uniprot_xref))
+                term.annotate_object(
+                    has_gene_product, Reference(prefix="uniprot", identifier=uniprot_xref)
+                )
 
             ncbigene_xref = ncbigene_conv.get(identifier)
             if ncbigene_xref is not None:
-                term.append_xref(Reference("ncbigene", ncbigene_xref))
+                term.append_xref(Reference(prefix="ncbigene", identifier=ncbigene_xref))
 
             kegg_genome.annotate_term(term)
             yield term
 
 
-def _load_conv(path, value_prefix):
+def _load_conv(path: Path, value_prefix):
     m = open_map_tsv(path)
     m = {k: v[len(value_prefix) :] for k, v in m.items()}
     return m

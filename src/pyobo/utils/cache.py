@@ -1,234 +1,107 @@
-# -*- coding: utf-8 -*-
-
 """Utilities for caching files."""
 
-import functools
 import gzip
 import json
 import logging
-import os
-import pickle
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import (
-    Any,
-    Callable,
-    Collection,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    TypeVar,
-    Union,
-)
+from typing import Generic, TypeVar
 
 import networkx as nx
-import pandas as pd
+from pystow.cache import Cached
+from pystow.cache import CachedCollection as cached_collection  # noqa:N813
+from pystow.cache import CachedDataFrame as cached_df  # noqa:N813
+from pystow.cache import CachedJSON as cached_json  # noqa:N813
+from pystow.cache import CachedPickle as cached_pickle  # noqa:N813
 
 from .io import open_map_tsv, open_multimap_tsv, write_map_tsv, write_multimap_tsv
 
-logger = logging.getLogger(__name__)
-
-JSONType = Union[
-    Dict[str, Any],
-    List[Any],
+__all__ = [
+    "cached_collection",
+    "cached_df",
+    # implemented here
+    "cached_graph",
+    # from pystow
+    "cached_json",
+    "cached_mapping",
+    "cached_multidict",
+    "cached_pickle",
 ]
 
+logger = logging.getLogger(__name__)
+
 X = TypeVar("X")
-Getter = Callable[[], X]
-Modifier = Callable[[X], X]
-
-MappingGetter = Getter[Mapping[str, str]]
-MultiMappingGetter = Getter[Mapping[str, List[str]]]
-JSONGetter = Getter[JSONType]
-GraphGetter = Getter[nx.MultiDiGraph]
-DataFrameGetter = Getter[pd.DataFrame]
 
 
-def cached_mapping(
-    path: Union[str, Path],
-    header: Iterable[str],
-    *,
-    use_tqdm: bool = False,
-    force: bool = False,
-) -> Callable[[MappingGetter], MappingGetter]:  # noqa: D202
-    """Create a decorator to apply to a mapping getter."""
+class _CachedMapping(Cached[X], Generic[X]):
+    """A cache for simple mappings."""
 
-    def wrapped(f: MappingGetter) -> MappingGetter:  # noqa: D202
-        """Wrap a mapping getter so it can be auto-loaded from a cache."""
-
-        @functools.wraps(f)
-        def _wrapped() -> Mapping[str, str]:
-            if os.path.exists(path) and not force:
-                logger.debug("loading from cache at %s", path)
-                return open_map_tsv(path, use_tqdm=use_tqdm)
-            logger.debug("no cache found at %s", path)
-            rv = f()
-            logger.debug("writing cache to %s", path)
-            write_map_tsv(path=path, header=header, rv=rv)
-            return rv
-
-        return _wrapped
-
-    return wrapped
+    def __init__(
+        self,
+        path: str | Path,
+        header: Iterable[str],
+        *,
+        use_tqdm: bool = False,
+        force: bool = False,
+    ):
+        """Initialize the mapping cache."""
+        super().__init__(path=path, force=force)
+        self.header = header
+        self.use_tqdm = use_tqdm
 
 
-def cached_json(
-    path: Union[str, Path], force: bool = False
-) -> Callable[[JSONGetter], JSONGetter]:  # noqa: D202
-    """Create a decorator to apply to a mapping getter."""
+class CachedMapping(_CachedMapping[Mapping[str, str]]):
+    """A cache for simple mappings."""
 
-    def wrapped(f: JSONGetter) -> JSONGetter:  # noqa: D202
-        """Wrap a mapping getter so it can be auto-loaded from a cache."""
+    def load(self) -> Mapping[str, str]:
+        """Load a TSV file."""
+        return open_map_tsv(self.path, use_tqdm=self.use_tqdm)
 
-        @functools.wraps(f)
-        def _wrapped() -> JSONType:
-            if os.path.exists(path) and not force:
-                with open(path) as file:
-                    return json.load(file)
-            rv = f()
-            with open(path, "w") as file:
-                json.dump(rv, file, indent=2)
-            return rv
-
-        return _wrapped
-
-    return wrapped
+    def dump(self, rv: Mapping[str, str]) -> None:
+        """Write a TSV file."""
+        write_map_tsv(path=self.path, header=self.header, rv=rv)
 
 
-def cached_pickle(path: Union[str, Path], force: bool = False):
-    """Create a decorator to apply to a pickle getter."""
-
-    def wrapped(f):  # noqa: D202
-        """Wrap a mapping getter so it can be auto-loaded from a cache."""
-
-        @functools.wraps(f)
-        def _wrapped():
-            if os.path.exists(path) and not force:
-                with open(path, "rb") as file:
-                    return pickle.load(file)
-            rv = f()
-            with open(path, "wb") as file:
-                pickle.dump(rv, file, protocol=pickle.HIGHEST_PROTOCOL)
-            return rv
-
-        return _wrapped
-
-    return wrapped
+cached_mapping = CachedMapping
 
 
-def get_gzipped_graph(path: Union[str, Path]) -> nx.MultiDiGraph:
+def get_gzipped_graph(path: str | Path) -> nx.MultiDiGraph:
     """Read a graph that's gzipped nodelink."""
     with gzip.open(path, "rt") as file:
         return nx.node_link_graph(json.load(file))
 
 
-def write_gzipped_graph(graph: nx.MultiDiGraph, path: Union[str, Path]) -> None:
+def write_gzipped_graph(graph: nx.MultiDiGraph, path: str | Path) -> None:
     """Write a graph as gzipped nodelink."""
     with gzip.open(path, "wt") as file:
         json.dump(nx.node_link_data(graph), file)
 
 
-def cached_graph(
-    path: Union[str, Path], force: bool = False
-) -> Callable[[GraphGetter], GraphGetter]:  # noqa: D202
-    """Create a decorator to apply to a graph getter."""
+class CachedGraph(Cached[nx.MultiDiGraph]):
+    """A cache for multidigraphs."""
 
-    def wrapped(f: GraphGetter) -> GraphGetter:  # noqa: D202
-        """Wrap a mapping getter so it can be auto-loaded from a cache."""
+    def load(self) -> nx.MultiDiGraph:
+        """Load a graph file."""
+        return get_gzipped_graph(self.path)
 
-        @functools.wraps(f)
-        def _wrapped() -> nx.MultiDiGraph:
-            if os.path.exists(path) and not force:
-                logger.debug("loading pre-compiled graph from: %s", path)
-                return get_gzipped_graph(path)
-            graph = f()
-            write_gzipped_graph(graph, path)
-            return graph
-
-        return _wrapped
-
-    return wrapped
+    def dump(self, rv: nx.MultiDiGraph) -> None:
+        """Write a graph file."""
+        write_gzipped_graph(rv, self.path)
 
 
-def cached_df(path: Union[str, Path], sep: str = "\t", force: bool = False, **kwargs):  # noqa: D202
-    """Create a decorator to apply to a dataframe getter."""
-
-    def wrapped(f: DataFrameGetter) -> DataFrameGetter:  # noqa: D202
-        """Wrap a mapping getter so it can be auto-loaded from a cache."""
-
-        @functools.wraps(f)
-        def _wrapped() -> pd.DataFrame:
-            if os.path.exists(path) and not force:
-                logger.debug("loading cached dataframe from %s", path)
-                return pd.read_csv(
-                    path,
-                    sep=sep,
-                    keep_default_na=False,  # sometimes NA is actually a value
-                    **kwargs,
-                )
-            rv = f()
-            rv.to_csv(path, sep=sep, index=False)
-            return rv
-
-        return _wrapped
-
-    return wrapped
+cached_graph = CachedGraph
 
 
-def cached_multidict(
-    path: Union[str, Path],
-    header: Iterable[str],
-    *,
-    use_tqdm: bool = False,
-    force: bool = False,
-):  # noqa: D202
-    """Create a decorator to apply to a dataframe getter."""
+class CachedMultidict(_CachedMapping[Mapping[str, list[str]]]):
+    """A cache for complex mappings."""
 
-    def wrapped(f: MultiMappingGetter) -> MultiMappingGetter:  # noqa: D202
-        """Wrap a mapping getter so it can be auto-loaded from a cache."""
+    def load(self) -> Mapping[str, list[str]]:
+        """Load a TSV file representing a multimap."""
+        return open_multimap_tsv(self.path, use_tqdm=self.use_tqdm)
 
-        @functools.wraps(f)
-        def _wrapped() -> Mapping[str, List[str]]:
-            if os.path.exists(path) and not force:
-                return open_multimap_tsv(path, use_tqdm=use_tqdm)
-            rv = f()
-            write_multimap_tsv(path=path, header=header, rv=rv)
-            return rv
-
-        return _wrapped
-
-    return wrapped
+    def dump(self, rv: Mapping[str, list[str]]) -> None:
+        """Write a TSV file representing a multimap."""
+        write_multimap_tsv(path=self.path, header=self.header, rv=rv)
 
 
-def reverse_mapping(d):
-    """Reverse a mapping."""
-    return {v: k for k, v in d.items()}
-
-
-def cached_collection(
-    path: Union[str, Path],
-    *,
-    force: bool = False,
-) -> Modifier[Getter[Collection[str]]]:
-    """Create a decorator to apply to a mapping getter."""
-
-    def wrapped(f: Getter[Collection[str]]) -> Getter[Collection[str]]:  # noqa: D202
-        """Wrap a mapping getter so it can be auto-loaded from a cache."""
-
-        @functools.wraps(f)
-        def _wrapped() -> Collection[str]:
-            if os.path.exists(path) and not force:
-                logger.debug("loading from cache at %s", path)
-                with open(path) as file:
-                    return [line.strip() for line in file]
-            logger.debug("no cache found at %s", path)
-            rv = f()
-            logger.debug("writing cache to %s", path)
-            with open(path, "w") as file:
-                for line in rv:
-                    print(line, file=file)  # noqa:T001
-            return rv
-
-        return _wrapped
-
-    return wrapped
+cached_multidict = CachedMultidict

@@ -1,50 +1,51 @@
-# -*- coding: utf-8 -*-
-
 """Use synonyms from OBO to normalize names."""
+
+from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, Union
+
+import bioregistry
 
 from .api import names
-from .identifier_utils import normalize_prefix
 from .utils.io import multisetdict
 
 __all__ = [
-    "ground",
-    "Normalizer",
-    "OboNormalizer",
     "MultiNormalizer",
     "NormalizationResult",
+    "Normalizer",
+    "OboNormalizer",
+    "ground",
 ]
 
 logger = logging.getLogger(__name__)
 
-NormalizationSuccess = Tuple[str, str, str]
-NormalizationFailure = Tuple[None, None, str]
-NormalizationResult = Union[NormalizationSuccess, NormalizationFailure]
+NormalizationSuccess = tuple[str, str, str]
+NormalizationFailure = tuple[None, None, str]
+NormalizationResult = NormalizationSuccess | NormalizationFailure
 
 
 class Normalizer(ABC):
     """A normalizer."""
 
-    id_to_name: Dict[str, str]
-    id_to_synonyms: Dict[str, List[str]]
+    id_to_name: dict[str, str]
+    id_to_synonyms: dict[str, list[str]]
 
     #: A mapping from all synonyms to the set of identifiers that they point to.
     #: In a perfect world, each would only be a single element.
-    synonym_to_identifiers_mapping: Dict[str, Set[str]]
+    synonym_to_identifiers_mapping: dict[str, set[str]]
     #: A mapping from normalized names to the actual ones that they came from
-    norm_name_to_name: Dict[str, Set[str]]
+    norm_name_to_name: dict[str, set[str]]
 
     def __init__(
         self,
-        id_to_name: Dict[str, str],
-        id_to_synonyms: Dict[str, List[str]],
-        remove_prefix: Optional[str] = None,
-    ) -> None:  # noqa: D107
+        id_to_name: dict[str, str],
+        id_to_synonyms: dict[str, list[str]],
+        remove_prefix: str | None = None,
+    ) -> None:
         """Initialize the normalizer.
 
         :param id_to_name: An identifier to name dictionary.
@@ -63,7 +64,7 @@ class Normalizer(ABC):
         self.norm_name_to_name = self._get_norm_name_to_names(self.synonym_to_identifiers_mapping)
 
     @classmethod
-    def _get_norm_name_to_names(cls, synonyms: Iterable[str]) -> Mapping[str, Set[str]]:
+    def _get_norm_name_to_names(cls, synonyms: Iterable[str]) -> dict[str, set[str]]:
         return multisetdict((cls._normalize_text(synonym), synonym) for synonym in synonyms)
 
     @staticmethod
@@ -79,28 +80,25 @@ class Normalizer(ABC):
         *,
         id_to_name: Mapping[str, str],
         id_to_synonyms: Mapping[str, Iterable[str]],
-        remove_prefix: Optional[str] = None,
-    ) -> Iterable[Tuple[str, str]]:
-        if remove_prefix is not None:
-            remove_prefix = f'{remove_prefix.lower().rstrip(":")}:'
-
+        remove_prefix: str | None = None,
+    ) -> Iterable[tuple[str, str]]:
         # Add name
         for identifier, name in id_to_name.items():
-            if remove_prefix and identifier.lower().startswith(remove_prefix):
-                identifier = identifier[len(remove_prefix) :]
+            if remove_prefix:
+                identifier = bioregistry.standardize_identifier(remove_prefix, identifier)
 
             yield name, identifier
 
         # Add synonyms
         for identifier, synonyms in id_to_synonyms.items():
-            if remove_prefix and identifier.lower().startswith(remove_prefix):
-                identifier = identifier[len(remove_prefix) :]
+            if remove_prefix:
+                identifier = bioregistry.standardize_identifier(remove_prefix, identifier)
 
             for synonym in synonyms:
                 # it might overwrite but this is probably always due to alternate ids
                 yield synonym, identifier
 
-    def get_names(self, query: str) -> List[str]:
+    def get_names(self, query: str) -> list[str]:
         """Get all names to which the query text maps."""
         norm_text = self._normalize_text(query)
         return list(self.norm_name_to_name.get(norm_text, []))
@@ -111,10 +109,10 @@ class Normalizer(ABC):
         raise NotImplementedError
 
 
-@lru_cache()
+@lru_cache
 def get_normalizer(prefix: str) -> Normalizer:
     """Get an OBO normalizer."""
-    norm_prefix = normalize_prefix(prefix)
+    norm_prefix = bioregistry.normalize_prefix(prefix)
     if norm_prefix is None:
         raise ValueError(f"unhandled prefix: {prefix}")
     logger.info("getting obo normalizer for %s", norm_prefix)
@@ -127,7 +125,7 @@ def get_normalizer(prefix: str) -> Normalizer:
     return normalizer
 
 
-def ground(prefix: Union[str, Iterable[str]], query: str) -> NormalizationResult:
+def ground(prefix: str | Iterable[str], query: str) -> NormalizationResult:
     """Normalize a string given the prefix's labels and synonyms.
 
     :param prefix: If a string, only grounds against that namespace. If a list, will try grounding
@@ -148,7 +146,8 @@ def ground(prefix: Union[str, Iterable[str]], query: str) -> NormalizationResult
 class OboNormalizer(Normalizer):
     """A utility for normalizing by names."""
 
-    def __init__(self, prefix: str) -> None:  # noqa: D107
+    def __init__(self, prefix: str) -> None:
+        """Initialize the normalizer by an ontology's Bioregistry prefix."""
         self.prefix = prefix
         self._len_prefix = len(prefix)
         id_to_name = names.get_id_name_mapping(prefix)
@@ -159,7 +158,7 @@ class OboNormalizer(Normalizer):
             remove_prefix=prefix,
         )
 
-    def __repr__(self) -> str:  # noqa: D105
+    def __repr__(self) -> str:
         return f'OboNormalizer(prefix="{self.prefix}")'
 
     def normalize(self, query: str) -> NormalizationResult:
@@ -187,20 +186,20 @@ class MultiNormalizer:
     If you're looking for taxa of exotic plants, you might use:
 
     >>> from pyobo.normalizer import MultiNormalizer
-    >>> normalizer = MultiNormalizer(prefixes=['ncbitaxon', 'itis'])
-    >>> normalizer.normalize('Homo sapiens')
+    >>> normalizer = MultiNormalizer(prefixes=["ncbitaxon", "itis"])
+    >>> normalizer.normalize("Homo sapiens")
     ('ncbitaxon', '9606', 'Homo sapiens')
-    >>> normalizer.normalize('Abies bifolia')  # variety not listed in NCBI
+    >>> normalizer.normalize("Abies bifolia")  # variety not listed in NCBI
     ('itis', '507501', 'Abies bifolia')
-    >>> normalizer.normalize('vulcan')  # nice try, nerds
+    >>> normalizer.normalize("vulcan")  # nice try, nerds
     (None, None, None)
     """
 
     #: The normalizers for each prefix
-    normalizers: List[Normalizer]
+    normalizers: list[Normalizer]
 
     @staticmethod
-    def from_prefixes(prefixes: List[str]) -> "MultiNormalizer":
+    def from_prefixes(prefixes: list[str]) -> MultiNormalizer:
         """Instantiate normalizers based on the given prefixes, in preferred order.."""
         return MultiNormalizer([get_normalizer(prefix) for prefix in prefixes])
 

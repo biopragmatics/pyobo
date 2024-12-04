@@ -1,17 +1,20 @@
-# -*- coding: utf-8 -*-
-
 """Converter for WikiPathways."""
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
-import bioversions
+from pystow.utils import DownloadError
+from tqdm import tqdm
 
 from .gmt_utils import parse_wikipathways_gmt
 from ..constants import SPECIES_REMAPPING
 from ..struct import Obo, Reference, Term, from_species
-from ..struct.typedef import has_part
+from ..struct.typedef import has_participant
 from ..utils.path import ensure_path
+
+__all__ = [
+    "WikiPathwaysGetter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -35,47 +38,50 @@ _PATHWAY_INFO = [
     ("Rattus_norvegicus", "10116"),
     ("Saccharomyces_cerevisiae", "4932"),
     ("Sus_scrofa", "9823"),
+    ("Solanum_lycopersicum", "4081"),
 ]
+
+
+class WikiPathwaysGetter(Obo):
+    """An ontology representation of WikiPathways' pathway database."""
+
+    ontology = bioversions_key = PREFIX
+    typedefs = [from_species, has_participant]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise)
 
 
 def get_obo() -> Obo:
     """Get WikiPathways as OBO."""
-    version = bioversions.get_version("wikipathways")
-    return Obo(
-        ontology=PREFIX,
-        name="WikiPathways",
-        data_version=version,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        typedefs=[has_part, from_species],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return WikiPathwaysGetter()
 
 
 def iter_terms(version: str) -> Iterable[Term]:
     """Get WikiPathways terms."""
     base_url = f"http://data.wikipathways.org/{version}/gmt/wikipathways-{version}-gmt"
 
-    for species_code, taxonomy_id in _PATHWAY_INFO:
+    for species_code, taxonomy_id in tqdm(_PATHWAY_INFO, desc=f"[{PREFIX}]", unit="species"):
         url = f"{base_url}-{species_code}.gmt"
-        path = ensure_path(PREFIX, url=url, version=version)
-
+        try:
+            path = ensure_path(PREFIX, url=url, version=version)
+        except DownloadError as e:
+            tqdm.write(f"[{PREFIX}] {e}")
+            continue
         species_code = species_code.replace("_", " ")
-        species_reference = Reference(
-            prefix="ncbitaxon",
-            identifier=taxonomy_id,
-            name=SPECIES_REMAPPING.get(species_code, species_code),
-        )
+        taxonomy_name = SPECIES_REMAPPING.get(species_code, species_code)
 
         for identifier, _version, _revision, name, _species, genes in parse_wikipathways_gmt(path):
             term = Term(reference=Reference(prefix=PREFIX, identifier=identifier, name=name))
-            term.append_relationship(from_species, species_reference)
+            term.set_species(taxonomy_id, taxonomy_name)
             for ncbigene_id in genes:
-                term.append_relationship(
-                    has_part, Reference(prefix="ncbigene", identifier=ncbigene_id)
+                term.annotate_object(
+                    has_participant,
+                    Reference(prefix="ncbigene", identifier=ncbigene_id),
                 )
             yield term
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    WikiPathwaysGetter.cli()

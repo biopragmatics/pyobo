@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """Extract and convert BioGRID identifiers."""
 
-from typing import Mapping
+from collections.abc import Mapping
+from functools import partial
 
-import bioversions
 import pandas as pd
 
-from pyobo import get_name_id_mapping
-from pyobo.constants import version_getter
+from pyobo.api.utils import get_version
+from pyobo.resources.ncbitaxon import get_ncbitaxon_id
 from pyobo.utils.cache import cached_mapping
 from pyobo.utils.path import ensure_df, prefix_directory_join
 
@@ -44,15 +42,15 @@ taxonomy_remapping = {  # so much for official names
 }
 
 
-def _lookup(name):
+def _lookup(name: str) -> str | None:
     if name in taxonomy_remapping:
         return taxonomy_remapping[name]
-    return get_name_id_mapping("ncbitaxon")[name]
+    return get_ncbitaxon_id(name)
 
 
 def get_df() -> pd.DataFrame:
     """Get the BioGRID identifiers mapping dataframe."""
-    version = bioversions.get_version("biogrid")
+    version = get_version("biogrid")
     url = f"{BASE_URL}/BIOGRID-{version}/BIOGRID-IDENTIFIERS-{version}.tab.zip"
     df = ensure_df(PREFIX, url=url, skiprows=28, dtype=str, version=version)
     df["taxonomy_id"] = df["ORGANISM_OFFICIAL_NAME"].map(_lookup)
@@ -61,19 +59,24 @@ def get_df() -> pd.DataFrame:
 
 @cached_mapping(
     path=prefix_directory_join(
-        PREFIX, "cache", "xrefs", name="ncbigene.tsv", version=version_getter(PREFIX)
+        PREFIX,
+        "cache",
+        "xrefs",
+        name="ncbigene.tsv",
+        version=partial(get_version, PREFIX),
     ),
     header=["biogrid_id", "ncbigene_id"],
 )
 def get_ncbigene_mapping() -> Mapping[str, str]:
-    """Get BioGRID to NCBIGENE mapping.
+    """Get BioGRID to NCBIGene mapping.
 
     Is basically equivalent to:
 
     .. code-block:: python
 
         from pyobo import get_filtered_xrefs
-        biogrid_ncbigene_mapping = get_filtered_xrefs('biogrid', 'ncbigene')
+
+        biogrid_ncbigene_mapping = get_filtered_xrefs("biogrid", "ncbigene")
     """
     df = get_df()
     df = df.loc[df["IDENTIFIER_TYPE"] == "ENTREZ_GENE", ["BIOGRID_ID", "IDENTIFIER_VALUE"]]

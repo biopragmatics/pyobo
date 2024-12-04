@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Converter for UMLS.
 
 Run with ``python -m pyobo.sources.umls``
@@ -7,21 +5,22 @@ Run with ``python -m pyobo.sources.umls``
 
 import itertools as itt
 import operator
-import os
-import zipfile
-from typing import Iterable
+from collections import defaultdict
+from collections.abc import Iterable, Mapping
 
-import click
+import bioregistry
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
+from umls_downloader import open_umls, open_umls_semantic_types
 
-from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term, normalize_prefix
-from pyobo.constants import RAW_MODULE
-from pyobo.utils.io import open_map_tsv
-from pyobo.utils.path import ensure_path
+from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
 
-HERE = os.path.abspath(os.path.dirname(__file__))
-SYNONYM_TYPE_PATH = os.path.join(HERE, "synonym_types.tsv")
+from .get_synonym_types import get_umls_typedefs
+
+__all__ = [
+    "UMLSGetter",
+]
+
 
 RRF_COLUMNS = [
     "CUI",
@@ -46,103 +45,94 @@ RRF_COLUMNS = [
 ]
 
 PREFIX = "umls"
-
 SOURCE_VOCAB_URL = "https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html"
+UMLS_TYPEDEFS: dict[str, SynonymTypeDef] = get_umls_typedefs()
 
 
-def _get_version() -> str:
-    return "2020AB"
+class UMLSGetter(Obo):
+    """An ontology representation of UMLS."""
+
+    ontology = bioversions_key = PREFIX
+    synonym_typedefs = list(UMLS_TYPEDEFS.values())
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise)
 
 
 def get_obo() -> Obo:
     """Get UMLS as OBO."""
-    version = _get_version()
-    synonym_abb = open_map_tsv(SYNONYM_TYPE_PATH)
-    return Obo(
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version, synonym_abb=synonym_abb),
-        name="Unified Medical Language System",
-        ontology=PREFIX,
-        synonym_typedefs=[SynonymTypeDef.from_text(v) for v in synonym_abb.values()],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        data_version=version,
-    )
+    return UMLSGetter()
 
 
-def iter_terms(version: str, synonym_abb, autodownload: bool = False) -> Iterable[Term]:
+def get_semantic_types() -> Mapping[str, set[str]]:
+    """Get UMLS semantic types for each term."""
+    dd = defaultdict(set)
+    with open_umls_semantic_types() as file:
+        for line in tqdm(file, unit_scale=True):
+            cui, sty, _ = line.decode("utf8").split("|", 2)
+            dd[cui].add(sty)
+    return dict(dd)
+
+
+def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over UMLS terms."""
-    name = f"umls-{version}-mrconso.zip"
-    url = f"https://download.nlm.nih.gov/umls/kss/{version}/{name}"
-    if autodownload:
-        # FIXME needs automated scrapy step where you put in user/password
-        path = ensure_path(PREFIX, url=url, version=version)
-    else:
-        path = RAW_MODULE.get(PREFIX, version, name=name)
-        if not path.exists():
-            raise FileNotFoundError(
-                f"UMLS needs to be downloaded manually still and moved to  {path}. "
-                f"See https://www.nlm.nih.gov/research/umls/index.html",
+    semantic_types = get_semantic_types()
+
+    with open_umls(version=version) as file:
+        it = tqdm(file, unit_scale=True, desc="[umls] parsing")
+        lines = (line.decode("utf-8").strip().split("|") for line in it)
+        for cui, cui_lines in itt.groupby(lines, key=operator.itemgetter(0)):
+            df = pd.DataFrame(list(cui_lines), columns=RRF_COLUMNS)
+            df = df[df["LAT - Language"] == "ENG"]
+            idx = (
+                (df["ISPREF - is preferred"] == "Y")
+                & (df["TS - Term Status"] == "P")
+                & (df["STT - String Type"] == "PF"),
+            )
+            pref_rows_df = df.loc[idx]
+            if len(pref_rows_df.index) != 1:
+                # it.write(f"no preferred term for umls:{cui}. got {len(pref_rows_df.index)}")
+                continue
+
+            df["TTY - Term Type in Source"] = df["TTY - Term Type in Source"].map(
+                UMLS_TYPEDEFS.__getitem__
             )
 
-    with zipfile.ZipFile(path) as zip_file:
-        with zip_file.open("MRCONSO.RRF", mode="r") as file:
-            it = tqdm(file, unit_scale=True, desc="[umls] parsing")
-            lines = (line.decode("utf-8").strip().split("|") for line in it)
-            for cui, cui_lines in itt.groupby(lines, key=operator.itemgetter(0)):
-                df = pd.DataFrame(list(cui_lines), columns=RRF_COLUMNS)
-                df = df[df["LAT - Language"] == "ENG"]
-                idx = (
-                    (df["ISPREF - is preferred"] == "Y")
-                    & (df["TS - Term Status"] == "P")
-                    & (df["STT - String Type"] == "PF"),
-                )
-                pref_rows_df = df.loc[idx]
-                if len(pref_rows_df.index) != 1:
-                    it.write(f"no preferred term for umls:{cui}. got {len(pref_rows_df.index)}")
-                    continue
+            _r = pref_rows_df.iloc[0]
+            sdf = df[["SAB - source name", "CODE", "TTY - Term Type in Source", "STR"]]
 
-                df["TTY - Term Type in Source"] = df["TTY - Term Type in Source"].map(
-                    synonym_abb.__getitem__
-                )
-
-                _r = pref_rows_df.iloc[0]
-                sdf = df[["SAB - source name", "CODE", "TTY - Term Type in Source", "STR"]]
-
-                synonyms = []
-                xrefs = []
-                for source, identifier, synonym_type, synonym in sdf.values:
-                    norm_source = normalize_prefix(source)
-                    if norm_source is None or not identifier:
-                        provenance = []
-                    else:
-                        ref = Reference(prefix=norm_source, identifier=identifier)
-                        provenance = [ref]
-                        xrefs.append(ref)
-                    synonyms.append(
-                        Synonym(
-                            name=synonym,
-                            provenance=provenance,
-                            type=SynonymTypeDef.from_text(synonym_type),
-                        )
+            synonyms = []
+            xrefs = []
+            for source, identifier, synonym_type, synonym in sdf.values:
+                norm_source = bioregistry.normalize_prefix(source)
+                if norm_source is None or not identifier:
+                    provenance = []
+                else:
+                    ref = Reference(prefix=norm_source, identifier=identifier)
+                    provenance = [ref]
+                    xrefs.append(ref)
+                synonyms.append(
+                    Synonym(
+                        name=synonym,
+                        provenance=provenance,
+                        type=synonym_type,
                     )
-
-                xrefs = sorted(
-                    set(xrefs), key=lambda reference: (reference.prefix, reference.identifier)
                 )
 
-                term = Term(
-                    reference=Reference(prefix=PREFIX, identifier=cui, name=_r["STR"]),
-                    synonyms=synonyms,
-                    xrefs=xrefs,
-                )
-                yield term
+            xrefs = sorted(
+                set(xrefs), key=lambda reference: (reference.prefix, reference.identifier)
+            )
 
-
-@click.command()
-def main():
-    """Cache the OBO content."""
-    get_obo().write_default()
+            term = Term(
+                reference=Reference(prefix=PREFIX, identifier=cui, name=_r["STR"]),
+                synonyms=synonyms,
+                xrefs=xrefs,
+            )
+            for sty_id in semantic_types.get(cui, set()):
+                term.append_parent(Reference(prefix="sty", identifier=sty_id))
+            yield term
 
 
 if __name__ == "__main__":
-    main()
+    UMLSGetter.cli()

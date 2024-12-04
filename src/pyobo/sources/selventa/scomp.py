@@ -1,31 +1,37 @@
-# -*- coding: utf-8 -*-
-
 """Selventa complexes."""
 
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 import pandas as pd
 
 from pyobo import Obo, Term
 from pyobo.utils.path import ensure_df
 
+__all__ = [
+    "SCOMPGetter",
+]
+
 PREFIX = "scomp"
 URL = "https://raw.githubusercontent.com/OpenBEL/resource-generator/master/datasets/selventa-named-complexes.txt"
 
 
+class SCOMPGetter(Obo):
+    """An ontology representation of the Selventa protein complex nomenclature."""
+
+    ontology = PREFIX
+    static_version = "1.0.0"
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(force=force)
+
+
 def get_obo(*, force: bool = False) -> Obo:
     """Get Selventa Complexes as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="Selventa Complexes",
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(force=force),
-        data_version="1.0.0",
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return SCOMPGetter(force=force)
 
 
-def iter_terms(force: Optional[bool] = False) -> Iterable[Term]:
+def iter_terms(force: bool = False) -> Iterable[Term]:
     """Iterate over selventa complex terms."""
     df = ensure_df(PREFIX, url=URL, skiprows=9, force=force)
 

@@ -1,17 +1,18 @@
-# -*- coding: utf-8 -*-
-
 """Converter for ComplexPortal."""
 
 import logging
-from typing import Iterable, List, Tuple
+from collections.abc import Iterable
 
-import bioversions
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
-from pyobo import get_id_name_mapping
+from pyobo.resources.ncbitaxon import get_ncbitaxon_name
 from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_part
 from pyobo.utils.path import ensure_df
+
+__all__ = [
+    "ComplexPortalGetter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ DTYPE = {
 }
 
 
-def _parse_members(s) -> List[Tuple[Reference, str]]:
+def _parse_members(s) -> list[tuple[Reference, str]]:
     if pd.isna(s):
         return []
 
@@ -57,15 +58,35 @@ def _parse_members(s) -> List[Tuple[Reference, str]]:
     for member in s.split("|"):
         entity_id, count = member.split("(")
         count = count.rstrip(")")
-        if ":" in entity_id:
-            prefix, identifier = entity_id.split(":", 1)
+        if entity_id.startswith("URS"):
+            prefix, identifier = "rnacentral", entity_id
+        elif entity_id.startswith("CPX"):
+            # TODO why self xref?
+            prefix, identifier = "complexportal", entity_id
+        elif entity_id.startswith("["):
+            continue  # this is a list of uniprot IDs, not sure what to do with this
+        elif entity_id.startswith("EBI-"):
+            continue
+        elif ":" not in entity_id:
+            if "PRO_" in entity_id:
+                prefix = "uniprot.chain"
+                identifier = entity_id.split("-")[1]
+            elif "-" in entity_id:
+                prefix, identifier = "uniprot.isoform", entity_id
+            else:
+                prefix, identifier = "uniprot", entity_id
         else:
-            prefix, identifier = "uniprot", entity_id
-        rv.append((Reference(prefix=prefix, identifier=identifier), count))
+            prefix, identifier = entity_id.split(":", 1)
+        try:
+            reference = Reference(prefix=prefix, identifier=identifier)
+        except ValueError:
+            tqdm.write(f"failed to validate reference: {entity_id}")
+        else:
+            rv.append((reference, count))
     return rv
 
 
-def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
+def _parse_xrefs(s) -> list[tuple[Reference, str]]:
     if pd.isna(s):
         return []
 
@@ -73,16 +94,40 @@ def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
     for xref in s.split("|"):
         xref = xref.replace("protein ontology:PR:", "PR:")
         xref = xref.replace("protein ontology:PR_", "PR:")
+        xref = xref.replace("rhea:rhea ", "rhea:")
+        xref = xref.replace("rhea:Rhea ", "rhea:")
+        xref = xref.replace("rhea:RHEA:rhea", "rhea:")
+        xref = xref.replace("rhea:RHEA: ", "rhea:")
+        xref = xref.replace("rhea:RHEA:rhea ", "rhea:")
+        xref = xref.replace("intenz:RHEA:", "rhea:")
+        xref = xref.replace("eccode::", "eccode:")
+        xref = xref.replace("eccode:EC:", "eccode:")
+        xref = xref.replace("intenz:EC:", "eccode:")
+        xref = xref.replace("eccode:RHEA:", "rhea:")
+        xref = xref.replace("efo:MONDO:", "MONDO:")
+        xref = xref.replace("omim:MIM:", "omim:")
+        xref = xref.replace("efo:HP:", "HP:")
+        xref = xref.replace("efo:Orphanet:", "Orphanet:")
+        xref = xref.replace("orphanet:ORDO:", "Orphanet:")
+        xref = xref.replace("biorxiv:doi.org/", "doi:")
+        xref = xref.replace("emdb:EMDB-", "emdb:EMD-")
+        xref = xref.replace("wwpdb:EMD-", "emdb:EMD-")
+        xref = xref.replace("signor:CPX-", "complexportal:CPX-")
+
         try:
             xref_curie, note = xref.split("(")
         except ValueError:
             logger.warning("xref missing (: %s", xref)
             continue
         note = note.rstrip(")")
+
+        if xref_curie.startswith("intenz:"):
+            xref_curie = _clean_intenz(xref_curie)
+
         try:
-            reference = Reference.from_curie(xref_curie)
+            reference = Reference.from_curie_or_uri(xref_curie)
         except ValueError:
-            logger.warning("can not parse CURIE: %s", xref)
+            logger.warning("can not parse CURIE: %s", xref_curie)
             continue
         if reference is None:
             logger.warning("reference is None after parsing: %s", xref)
@@ -91,22 +136,29 @@ def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
     return rv
 
 
-def get_obo() -> Obo:
+def _clean_intenz(s: str) -> str:
+    for _ in range(3):
+        s = s.rstrip("-").rstrip(".")
+    return s
+
+
+class ComplexPortalGetter(Obo):
+    """An ontology representation of the Complex Portal."""
+
+    bioversions_key = ontology = PREFIX
+    typedefs = [from_species, has_part]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(version=self._version_or_raise)
+
+
+def get_obo(force: bool = False) -> Obo:
     """Get the ComplexPortal OBO."""
-    version = bioversions.get_version(PREFIX)
-
-    return Obo(
-        ontology=PREFIX,
-        name="Complex Portal",
-        data_version=version,
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version),
-        typedefs=[from_species, has_part],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return ComplexPortalGetter(force=force)
 
 
-def get_df(version: str) -> pd.DataFrame:
+def get_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get a combine ComplexPortal dataframe."""
     url_base = f"ftp://ftp.ebi.ac.uk/pub/databases/intact/complex/{version}/complextab"
     dfs = [
@@ -117,15 +169,16 @@ def get_df(version: str) -> pd.DataFrame:
             na_values={"-"},
             header=0,
             dtype=str,
+            force=force,
         )
         for ncbitaxonomy_id in SPECIES
     ]
     return pd.concat(dfs)
 
 
-def get_terms(version: str) -> Iterable[Term]:
+def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get ComplexPortal terms."""
-    df = get_df(version=version)
+    df = get_df(version=version, force=force)
     df.rename(
         inplace=True,
         columns={
@@ -143,8 +196,7 @@ def get_terms(version: str) -> Iterable[Term]:
     df["members"] = df["members"].map(_parse_members)
     df["xrefs"] = df["xrefs"].map(_parse_xrefs)
 
-    taxnomy_id_to_name = get_id_name_mapping("ncbitaxon")
-    df["taxonomy_name"] = df["taxonomy_id"].map(taxnomy_id_to_name.get)
+    df["taxonomy_name"] = df["taxonomy_id"].map(get_ncbitaxon_name)
 
     slim_df = df[
         [
@@ -192,10 +244,10 @@ def get_terms(version: str) -> Iterable[Term]:
         term.set_species(identifier=taxonomy_id, name=taxonomy_name)
 
         for reference, _count in members:
-            term.append_relationship(has_part, reference)
+            term.annotate_object(has_part, reference)
 
         yield term
 
 
 if __name__ == "__main__":
-    get_obo().cli()
+    ComplexPortalGetter.cli()

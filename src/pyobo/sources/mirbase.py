@@ -1,24 +1,26 @@
-# -*- coding: utf-8 -*-
-
 """Converter for miRBase."""
 
 import gzip
 import logging
-from typing import Iterable, List, Mapping
+from collections.abc import Iterable, Mapping
 
-import bioversions
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
-from ..struct import Obo, Reference, Synonym, Term, from_species
-from ..struct.typedef import has_mature
-from ..utils.cache import cached_mapping
-from ..utils.path import ensure_df, ensure_path, prefix_directory_join
+from pyobo.sources.mirbase_constants import BASE_URL, _assert_frozen_version
+from pyobo.struct import Obo, Reference, Synonym, Term, from_species
+from pyobo.struct.typedef import has_mature
+from pyobo.utils.cache import cached_mapping
+from pyobo.utils.path import ensure_df, ensure_path, prefix_directory_join
+
+__all__ = [
+    "MiRBaseGetter",
+]
 
 logger = logging.getLogger(__name__)
 
 PREFIX = "mirbase"
 MIRBASE_MATURE_PREFIX = "mirbase.mature"
-BASE_URL = "https://www.mirbase.org/ftp"
+
 
 xref_mapping = {
     "entrezgene": "ncbigene",
@@ -28,28 +30,31 @@ xref_mapping = {
 }
 
 
+class MiRBaseGetter(Obo):
+    """An ontology representation of miRBase's miRNA nomenclature."""
+
+    ontology = bioversions_key = PREFIX
+    typedefs = [from_species, has_mature]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(version=self._version_or_raise, force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get miRBase as OBO."""
-    version = bioversions.get_version(PREFIX)
-    return Obo(
-        ontology=PREFIX,
-        name="miRBase",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        typedefs=[from_species, has_mature],
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return MiRBaseGetter(force=force)
 
 
-def get_terms(version: str, force: bool = False) -> List[Term]:
+def get_terms(version: str, force: bool = False) -> list[Term]:
     """Parse miRNA data from filepath and convert it to dictionary."""
-    url = f"{BASE_URL}/{version}/miRNA.dat.gz"
+    _assert_frozen_version(version)
+    url = f"{BASE_URL}/miRNA.dat.gz"
     definitions_path = ensure_path(PREFIX, url=url, version=version, force=force)
 
     file_handle = (
         gzip.open(definitions_path, "rt")
-        if definitions_path.endswith(".gz")
+        if definitions_path.suffix.endswith(".gz")
         else open(definitions_path)
     )
     with file_handle as file:
@@ -57,14 +62,23 @@ def get_terms(version: str, force: bool = False) -> List[Term]:
 
 
 def _prepare_organisms(version: str, force: bool = False):
-    url = f"{BASE_URL}/{version}/organisms.txt.gz"
-    df = ensure_df(PREFIX, url=url, sep="\t", dtype={"#NCBI-taxid": str}, version=version)
+    _assert_frozen_version(version)
+    url = f"{BASE_URL}/organisms.txt.gz"
+    df = ensure_df(
+        PREFIX,
+        url=url,
+        sep="\t",
+        dtype={"#NCBI-taxid": str},
+        version=version,
+        force=force,
+    )
     return {division: (taxonomy_id, name) for _, division, name, _tree, taxonomy_id in df.values}
 
 
-def _prepare_aliases(version: str, force: bool = False) -> Mapping[str, List[str]]:
-    url = f"{BASE_URL}/{version}/aliases.txt.gz"
-    df = ensure_df(PREFIX, url=url, sep="\t", version=version)
+def _prepare_aliases(version: str, force: bool = False) -> Mapping[str, list[str]]:
+    _assert_frozen_version(version)
+    url = f"{BASE_URL}/aliases.txt.gz"
+    df = ensure_df(PREFIX, url=url, sep="\t", version=version, force=force)
     return {
         mirbase_id: [s.strip() for s in synonyms.split(";") if s and s.strip()]
         for mirbase_id, synonyms in df.values
@@ -78,17 +92,16 @@ def _process_definitions_lines(
     organisms = _prepare_organisms(version, force=force)
     aliases = _prepare_aliases(version, force=force)
 
-    groups = []
+    groups: list[list[str]] = []
 
     for line in lines:  # TODO replace with itertools.groupby
         if line.startswith("ID"):
-            listnew = []
-            groups.append(listnew)
+            groups.append([])
         groups[-1].append(line)
 
     for group in tqdm(groups, desc=f"mapping {PREFIX}"):
         name = group[0][5:23].strip()
-        qualifier, dtype, species_code, length = map(
+        _qualifier, _dtype, species_code, _length = map(
             str.strip, group[0][23:].strip().rstrip(".").split(";")
         )
         identifier = group[2][3:-2].strip()
@@ -121,9 +134,17 @@ def _process_definitions_lines(
             xref_prefix, xref_identifier, xref_label = map(str.strip, line.split(";"))
             xref_prefix = xref_prefix.lower()
             xref_prefix = xref_mapping.get(xref_prefix, xref_prefix)
-            xrefs.append(
-                Reference(prefix=xref_prefix, identifier=xref_identifier, name=xref_label or None)
-            )
+            if xref_prefix == "pictar":
+                continue
+
+            try:
+                xref = Reference(
+                    prefix=xref_prefix, identifier=xref_identifier, name=xref_label or None
+                )
+            except ValueError:
+                tqdm.write(f"invalid xref: {xref_prefix}:{xref_identifier}")
+            else:
+                xrefs.append(xref)
 
         # TODO add pubmed references
 
@@ -136,7 +157,8 @@ def _process_definitions_lines(
 
         species_identifier, species_name = organisms[species_code]
         term.set_species(species_identifier, species_name)
-        term.extend_relationship(has_mature, matures)
+        for mature in matures:
+            term.append_relationship(has_mature, mature)
 
         yield term
 

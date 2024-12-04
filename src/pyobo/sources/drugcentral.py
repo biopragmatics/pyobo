@@ -1,50 +1,104 @@
-# -*- coding: utf-8 -*-
-
 """Get DrugCentral as OBO."""
 
 import logging
-from typing import Iterable
+from collections import defaultdict
+from collections.abc import Iterable
+from contextlib import closing
 
-import bioversions
-import pandas as pd
+import bioregistry
+import psycopg2
+from tqdm.auto import tqdm
 
-from pyobo.struct import Obo, Reference, Term
-from pyobo.utils.path import ensure_df
+from pyobo.struct import Obo, Reference, Synonym, Term
+from pyobo.struct.typedef import exact_match, has_inchi, has_smiles
+
+__all__ = [
+    "DrugCentralGetter",
+]
 
 logger = logging.getLogger(__name__)
 
 PREFIX = "drugcentral"
-URL = "http://unmtid-shinyapps.net/download/structures.smiles.tsv"
+
+HOST = "unmtid-dbs.net"
+PORT = 5433
+USER = "drugman"
+PASSWORD = "dosage"  # noqa:S105
+DBNAME = "drugcentral"
+PARAMS = {"dbname": DBNAME, "user": USER, "password": PASSWORD, "host": HOST, "port": PORT}
+
+
+class DrugCentralGetter(Obo):
+    """An ontology representation of the DrugCentral database."""
+
+    ontology = bioversions_key = PREFIX
+    typedefs = [exact_match]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms()
 
 
 def get_obo(force: bool = False) -> Obo:
     """Get DrugCentral OBO."""
-    version = bioversions.get_version(PREFIX)
-    return Obo(
-        ontology=PREFIX,
-        name="DrugCentral",
-        data_version=version,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return DrugCentralGetter(force=force)
 
 
-def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
+def iter_terms() -> Iterable[Term]:
     """Iterate over DrugCentral terms."""
-    df = ensure_df(PREFIX, url=URL, version=version, force=force)
-    for smiles, inchi, inchi_key, drugcentral_id, drugcentral_name, cas in df.values:
-        if pd.isna(smiles) or pd.isna(inchi) or pd.isna(inchi_key):
-            logger.warning("missing data for drugcentral:%s", drugcentral_id)
-            continue
-        term = Term.from_triple(prefix=PREFIX, identifier=drugcentral_id, name=drugcentral_name)
-        term.append_xref(Reference(prefix="inchikey", identifier=inchi_key))
-        term.append_property("smiles", smiles)
-        term.append_property("inchi", inchi)
-        if pd.notna(cas):
-            term.append_xref(Reference(prefix="cas", identifier=cas))
+    with closing(psycopg2.connect(**PARAMS)) as conn:
+        with closing(conn.cursor()) as cur:
+            cur.execute(
+                "SELECT cd_id, name, cas_reg_no, mrdef, inchi, smiles, inchikey FROM public.structures"
+            )
+            structures = cur.fetchall()
+
+        with closing(conn.cursor()) as cur:
+            cur.execute("SELECT struct_id, id_type, identifier FROM public.identifier")
+            rows = cur.fetchall()
+            xrefs: defaultdict[str, list[Reference]] = defaultdict(list)
+            for drugcentral_id, prefix, identifier in tqdm(
+                rows, unit_scale=True, desc="loading xrefs"
+            ):
+                if not identifier or not prefix:
+                    continue
+                if prefix == "ChEMBL_ID":
+                    prefix = "chembl.compound"
+                xref_prefix_norm = bioregistry.normalize_prefix(prefix)
+                if xref_prefix_norm is None:
+                    tqdm.write(f"did not normalize {prefix}:{identifier}")
+                    continue
+                if xref_prefix_norm == "pdb.ligand":
+                    # there is a weird invalid escaped \W appearing in pdb ligand ids
+                    identifier = identifier.strip()
+                identifier = bioregistry.standardize_identifier(xref_prefix_norm, identifier)
+                xrefs[str(drugcentral_id)].append(
+                    Reference(prefix=xref_prefix_norm, identifier=identifier)
+                )
+        with closing(conn.cursor()) as cur:
+            cur.execute("SELECT id, name FROM public.synonyms")
+            synonyms: defaultdict[str, list[Synonym]] = defaultdict(list)
+            for drugcentral_id, synonym in cur.fetchall():
+                synonyms[str(drugcentral_id)].append(Synonym(name=synonym))
+
+    for drugcentral_id, name, cas, definition, inchi, smiles, inchi_key in structures:
+        drugcentral_id = str(drugcentral_id)
+        term = Term(
+            reference=Reference(prefix=PREFIX, identifier=drugcentral_id, name=name),
+            definition=definition,
+            synonyms=synonyms.get(drugcentral_id, []),
+            xrefs=xrefs.get(drugcentral_id, []),
+        )
+        if inchi_key:
+            term.append_exact_match(Reference(prefix="inchikey", identifier=inchi_key))
+        if smiles:
+            term.annotate_literal(has_smiles, smiles)
+        if inchi:
+            term.annotate_literal(has_inchi, inchi)
+        if cas:
+            term.append_exact_match(Reference(prefix="cas", identifier=cas))
         yield term
 
 
 if __name__ == "__main__":
-    get_obo(force=True).cli()
+    DrugCentralGetter.cli()

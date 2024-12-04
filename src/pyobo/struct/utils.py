@@ -1,9 +1,16 @@
-# -*- coding: utf-8 -*-
-
 """Utilities for data structures for OBO."""
 
-OBO_ESCAPE = {c: f"\\{c}" for c in ':,"\\()[]{}'}
-OBO_ESCAPE[" "] = "\\W"
+from __future__ import annotations
+
+__all__ = [
+    "OBO_ESCAPE",
+    "OBO_ESCAPE_SLIM",
+    "obo_escape",
+    "obo_escape_slim",
+]
+
+OBO_ESCAPE_SLIM = {c: f"\\{c}" for c in ':,"\\()[]{}'}
+OBO_ESCAPE = {" ": "\\W", **OBO_ESCAPE_SLIM}
 
 
 def obo_escape(string: str) -> str:
@@ -11,6 +18,8 @@ def obo_escape(string: str) -> str:
     return "".join(OBO_ESCAPE.get(character, character) for character in string)
 
 
-def comma_separate(elements) -> str:
-    """Map a list to strings and make comma separated."""
-    return ", ".join(map(str, elements))
+def obo_escape_slim(string: str) -> str:
+    """Escape all funny characters for OBO."""
+    rv = "".join(OBO_ESCAPE_SLIM.get(character, character) for character in string)
+    rv = rv.replace("\n", "\\n")
+    return rv

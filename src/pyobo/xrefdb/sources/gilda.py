@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Cross references from Gilda.
 
 .. seealso:: https://github.com/indralabs/gilda
 """
 
+import bioregistry
 import pandas as pd
 
 from pyobo.constants import (
@@ -14,7 +13,6 @@ from pyobo.constants import (
     TARGET_ID,
     TARGET_PREFIX,
 )
-from pyobo.identifier_utils import normalize_prefix
 
 __all__ = [
     "get_gilda_xrefs_df",
@@ -37,7 +35,7 @@ def get_gilda_xrefs_df() -> pd.DataFrame:
     df[PROVENANCE] = GILDA_MAPPINGS
 
     for k in SOURCE_PREFIX, TARGET_PREFIX:
-        df[k] = df[k].map(normalize_prefix)
+        df[k] = df[k].map(bioregistry.normalize_prefix)
 
     for k in SOURCE_ID, TARGET_ID:
         df[k] = df[k].map(_fix_gogo)

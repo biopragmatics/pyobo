@@ -1,41 +1,40 @@
-# -*- coding: utf-8 -*-
-
 """DepMap cell lines."""
 
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 import pandas as pd
 import pystow
 
 from pyobo import Obo, Reference, Term
+from pyobo.struct.typedef import exact_match
 
 __all__ = [
+    "DepMapGetter",
     "get_obo",
 ]
 
 PREFIX = "depmap"
+VERSION = "21Q2"
 
 
-def get_obo(*, version: Optional[str] = None, force: bool = False) -> Obo:
+class DepMapGetter(Obo):
+    """An ontology representation of the Cancer Dependency Map's cell lines."""
+
+    ontology = bioversions_key = PREFIX
+    data_version = VERSION
+    typedefs = [exact_match]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise, force=force)
+
+
+def get_obo(*, force: bool = False) -> Obo:
     """Get DepMap cell lines as OBO."""
-    if version is None:
-        version = get_version()
-    return Obo(
-        ontology=PREFIX,
-        name="DepMap Cell Lines",
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return DepMapGetter(force=force)
 
 
-def get_version() -> str:
-    """Get the latest version of the DepMap cell line metadata."""
-    return "21Q2"
-
-
-def get_url(version: Optional[str] = None) -> str:
+def get_url(version: str | None = None) -> str:
     """Get the URL for the given version of the DepMap cell line metadata file.
 
     :param version: The version of the data
@@ -51,11 +50,11 @@ def get_url(version: Optional[str] = None) -> str:
     return url
 
 
-def _fix_mangled_int(x: str) -> str:
+def _fix_mangled_int(x: str) -> str | None:
     return str(int(float(x))) if pd.notna(x) else None
 
 
-def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over DepMap cell line terms."""
     df = ensure(force=force, version=version)
     columns = [
@@ -73,6 +72,8 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
     for identifier, name, sname, aliases, cosmic_id, cellosaurus_id, _wtsi_id, _sanger_id in df[
         columns
     ].values:
+        if pd.isna(name):
+            name = None
         term = Term.from_triple(PREFIX, identifier, name)
         if pd.notna(sname):
             term.append_synonym(sname)
@@ -83,9 +84,9 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
                     continue
                 term.append_synonym(alias)
         if pd.notna(cosmic_id):
-            term.append_xref(Reference("cosmic.cell", cosmic_id))
+            term.append_exact_match(Reference(prefix="cosmic.cell", identifier=cosmic_id))
         if pd.notna(cellosaurus_id):
-            term.append_xref(Reference("cellosaurus", cellosaurus_id))
+            term.append_exact_match(Reference(prefix="cellosaurus", identifier=cellosaurus_id))
 
         # WTSI stands for welcome trust sanger institute
         # Not sure where this prefix goes
@@ -100,11 +101,8 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
         yield term
 
 
-def ensure(version: Optional[str] = None, force: bool = False) -> pd.DataFrame:
+def ensure(version: str, force: bool = False) -> pd.DataFrame:
     """Ensure and parse the given version of the DepMap cell line metadata."""
-    if version is None:
-        version = get_version()
-
     return pystow.ensure_csv(
         "pyobo",
         "raw",
@@ -113,9 +111,9 @@ def ensure(version: Optional[str] = None, force: bool = False) -> pd.DataFrame:
         url=get_url(version=version),
         name="sample_info.tsv",
         force=force,
-        read_csv_kwargs=dict(sep=",", dtype=str),
+        read_csv_kwargs={"sep": ",", "dtype": str},
     )
 
 
 if __name__ == "__main__":
-    get_obo().cli()
+    DepMapGetter.cli()

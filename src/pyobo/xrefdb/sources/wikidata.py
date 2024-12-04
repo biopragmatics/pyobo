@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Get Wikidata xrefs.
 
 Run with ``python -m pyobo.xrefdb.sources.wikidata``.
@@ -7,17 +5,16 @@ Run with ``python -m pyobo.xrefdb.sources.wikidata``.
 
 import json
 import logging
-from typing import Iterable, Tuple
+from collections.abc import Iterable
 
 import bioregistry
 import click
 import pandas as pd
 import requests
 from more_click import verbose_option
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ...constants import RAW_MODULE, XREF_COLUMNS
-from ...registries import get_wikidata_property_types
 from ...version import get_version
 
 logger = logging.getLogger(__name__)
@@ -25,7 +22,7 @@ logger = logging.getLogger(__name__)
 #: WikiData SPARQL endpoint. See https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service#Interfacing
 URL = "https://query.wikidata.org/bigdata/namespace/wdq/sparql"
 
-WIKIDATA_MAPPING_DIRECTORY = RAW_MODULE.submodule("wikidata", "mappings")
+WIKIDATA_MAPPING_DIRECTORY = RAW_MODULE.module("wikidata", "mappings")
 
 
 def get_wikidata_xrefs_df(*, use_tqdm: bool = True) -> pd.DataFrame:
@@ -40,10 +37,8 @@ def iterate_wikidata_dfs(*, use_tqdm: bool = True) -> Iterable[pd.DataFrame]:
         for prefix, entry in bioregistry.read_registry().items()
         if entry.wikidata and "prefix" in entry.wikidata
     }
-    # wikidata_properties.update(get_wikidata_properties())
 
-    it = sorted(wikidata_properties.items())
-    it = tqdm(it, disable=not use_tqdm, desc="Wikidata properties")
+    it = tqdm(sorted(wikidata_properties.items()), disable=not use_tqdm, desc="Wikidata properties")
     for prefix, wikidata_property in it:
         if prefix in {"pubmed", "pmc", "orcid", "inchi", "smiles"}:
             continue  # too many
@@ -69,10 +64,12 @@ def get_wikidata_df(prefix: str, wikidata_property: str) -> pd.DataFrame:
     return df
 
 
-def iter_wikidata_mappings(wikidata_property: str) -> Iterable[Tuple[str, str]]:
+def iter_wikidata_mappings(
+    wikidata_property: str, *, cache: bool = True
+) -> Iterable[tuple[str, str]]:
     """Iterate over Wikidata xrefs."""
     path = WIKIDATA_MAPPING_DIRECTORY.join(name=f"{wikidata_property}.json")
-    if path.exists():
+    if path.exists() and cache:
         with path.open() as file:
             rows = json.load(file)
     else:
@@ -82,18 +79,16 @@ def iter_wikidata_mappings(wikidata_property: str) -> Iterable[Tuple[str, str]]:
             json.dump(rows, file, indent=2)
 
     for row in rows:
-        wikidata_id = row["wikidata_id"]["value"][len("http://wikidata.org/entity/") :]
+        wikidata_id = _removeprefix(row["wikidata_id"]["value"], "http://www.wikidata.org/entity/")
+        wikidata_id = _removeprefix(wikidata_id, "http://wikidata.org/entity/")
         entity_id = row["id"]["value"]
         yield wikidata_id, entity_id
 
 
-def get_wikidata_properties() -> Iterable[str]:
-    """Get child wikidata properties."""
-    # TODO how to automatically assign prefixes?
-    for wdp in get_wikidata_property_types():
-        query = f"SELECT ?item WHERE {{ ?item wdt:P31 wd:{wdp} }}"
-        for d in _run_query(query):
-            yield d["item"]["value"][len("wd:") :]
+def _removeprefix(s, prefix):
+    if s.startswith(prefix):
+        return s[len(prefix) :]
+    return s
 
 
 HEADERS = {

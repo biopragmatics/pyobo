@@ -1,12 +1,13 @@
-# -*- coding: utf-8 -*-
-
 """High-level API for metadata."""
 
 import logging
 from functools import lru_cache
-from typing import Mapping
+from typing import Any, cast
 
-from .utils import get_version
+from typing_extensions import Unpack
+
+from .utils import get_version_from_kwargs
+from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_json
@@ -19,19 +20,16 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-@lru_cache()
+@lru_cache
 @wrap_norm_prefix
-def get_metadata(prefix: str, force: bool = False) -> Mapping[str, str]:
+def get_metadata(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> dict[str, Any]:
     """Get metadata for the ontology."""
-    path = prefix_cache_join(prefix, name="metadata.json", version=get_version(prefix))
+    version = get_version_from_kwargs(prefix, kwargs)
+    path = prefix_cache_join(prefix, name="metadata.json", version=version)
 
-    @cached_json(path=path, force=force)
-    def _get_json() -> Mapping[str, str]:
-        if force:
-            logger.info("[%s] forcing reload for metadata", prefix)
-        else:
-            logger.info("[%s] no cached metadata found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, force=force)
+    @cached_json(path=path, force=check_should_force(kwargs))
+    def _get_json() -> dict[str, Any]:
+        ontology = get_ontology(prefix, **kwargs)
         return ontology.get_metadata()
 
-    return _get_json()
+    return cast(dict[str, Any], _get_json())

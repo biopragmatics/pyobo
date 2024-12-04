@@ -1,22 +1,24 @@
-# -*- coding: utf-8 -*-
-
 """Converter for HGNC."""
 
+import itertools as itt
 import json
 import logging
+import typing
 from collections import Counter, defaultdict
-from operator import attrgetter
-from typing import Iterable
+from collections.abc import Iterable
 
 from tabulate import tabulate
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
-from ..struct import (
+from pyobo.api.utils import get_version
+from pyobo.resources.so import get_so_name
+from pyobo.struct import (
     Obo,
     Reference,
-    Synonym,
     SynonymTypeDef,
     Term,
+    TypeDef,
+    default_reference,
     from_species,
     gene_product_member_of,
     has_gene_product,
@@ -24,17 +26,37 @@ from ..struct import (
     orthologous,
     transcribes_to,
 )
-from ..utils.path import ensure_path, prefix_directory_join
+from pyobo.struct.typedef import exact_match
+from pyobo.utils.path import ensure_path, prefix_directory_join
+
+__all__ = [
+    "HGNCGetter",
+]
 
 logger = logging.getLogger(__name__)
 
 PREFIX = "hgnc"
-DEFINITIONS_URL = "ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/json/hgnc_complete_set.json"
+DEFINITIONS_URL_FMT = (
+    "https://storage.googleapis.com/public-download-files/hgnc/archive/archive/monthly/json/"
+    "hgnc_complete_set_{version}.json"
+)
 
-previous_symbol_type = SynonymTypeDef(id="previous_symbol", name="previous symbol")
-alias_symbol_type = SynonymTypeDef(id="alias_symbol", name="alias symbol")
-previous_name_type = SynonymTypeDef(id="previous_name", name="previous name")
-alias_name_type = SynonymTypeDef(id="alias_name", name="alias name")
+previous_symbol_type = SynonymTypeDef(
+    reference=default_reference(PREFIX, "previous_symbol", name="previous symbol")
+)
+alias_symbol_type = SynonymTypeDef(
+    reference=default_reference(PREFIX, "alias_symbol", name="alias symbol")
+)
+previous_name_type = SynonymTypeDef(
+    reference=default_reference(PREFIX, "previous_name", name="previous name")
+)
+alias_name_type = SynonymTypeDef(
+    reference=default_reference(PREFIX, "alias_name", name="alias name")
+)
+HAS_LOCUS_TYPE = TypeDef.default(PREFIX, "locus_type", name="has locus type")
+HAS_LOCUS_GROUP = TypeDef.default(PREFIX, "locus_group", name="has locus group")
+HAS_LOCATION = TypeDef.default(PREFIX, "location", name="has location")
+
 
 #: First column is MIRIAM prefix, second column is HGNC key
 gene_xrefs = [
@@ -43,12 +65,13 @@ gene_xrefs = [
     ("cosmic", "cosmic"),
     ("vega", "vega_id"),
     ("ucsc", "ucsc_id"),
-    ("merops", "merops"),
+    ("merops.entry", "merops"),
     ("lncipedia", "lncipedia"),
     ("orphanet", "orphanet"),
     ("pseudogene", "pseudogene.org"),
     ("ena", "ena"),
     ("refseq", "refseq_accession"),
+    ("iuphar.receptor", "iuphar"),
     # ("mgi", "mgd_id"),
     ("ccds", "ccds_id"),
     # ("rgd", "rgd_id"),
@@ -97,12 +120,33 @@ ENCODINGS = {
     "unknown": "GRP",
 }
 
+SKIP_KEYS = {
+    "date_approved_reserved",
+    "_version_",
+    "uuid",
+    "date_modified",
+    "date_name_changed",
+    "date_symbol_changed",
+    "symbol_report_tag",
+    "location_sortable",
+    "curator_notes",
+    "agr",  # repeat of HGNC ID
+    "gencc",  # repeat of HGNC ID
+    "bioparadigms_slc",  # repeat of symbol
+    "lncrnadb",  # repeat of symbol
+    "gtrnadb",  # repeat of symbol
+    "horde_id",  # repeat of symbol
+    "imgt",  # repeat of symbol
+    "cd",  # symbol
+    "homeodb",  # TODO add to bioregistry, though this is defunct
+    "mamit-trnadb",  # TODO add to bioregistry, though this is defunct
+}
+
 #: A mapping from HGNC's locus_type annotations to sequence ontology identifiers
 LOCUS_TYPE_TO_SO = {
     # protein-coding gene
     "gene with protein product": "0001217",
-    "complex locus constituent": "0001217",  # this is a nonsensical annotation for genes encoding complex members
-    "protocadherin": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/562
+    "complex locus constituent": "0000997",  # https://github.com/pyobo/pyobo/issues/118#issuecomment-1564520052
     # non-coding RNA
     "RNA, Y": "0002359",
     "RNA, cluster": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/564
@@ -116,7 +160,7 @@ LOCUS_TYPE_TO_SO = {
     "RNA, transfer": "0001272",
     "RNA, vault": "0002358",
     # phenotype
-    "phenotype only": "0001500",  # FIXME doesn't come under gene hierarchy
+    "phenotype only": "0001500",  # https://github.com/pyobo/pyobo/issues/118#issuecomment-1564574892
     # pseudogene
     "T cell receptor pseudogene": "0002099",
     "immunoglobulin pseudogene": "0002098",
@@ -134,68 +178,105 @@ LOCUS_TYPE_TO_SO = {
     None: "0000704",  # gene
 }
 
-
-def get_obo(force: bool = False) -> Obo:
-    """Get HGNC as OBO."""
-    idspaces = {
-        prefix: f"https://bioregistry.io/{prefix}:"
-        for prefix in [
-            "rgd",
-            "mgi",
-            "eccode",
-            "rnacentral",
-            "pubmed",
-            "uniprot",
-            "mirbase",
-            "snornabase",
-            "hgnc.genegroup",
-        ]
+IDSPACES = {
+    prefix: f"https://bioregistry.io/{prefix}:"
+    for prefix in {
+        "rgd",
+        "mgi",
+        "eccode",
+        "rnacentral",
+        "pubmed",
+        "uniprot",
+        "mirbase",
+        "snornabase",
+        "hgnc",
+        "hgnc.genegroup",
+        "debio",
+        "ensembl",
+        "NCBIGene",
+        "vega",
+        "ucsc",
+        "ena",
+        "ccds",
+        "omim",
+        "cosmic",
+        "merops",
+        "orphanet",
+        "pseudogene",
+        "lncipedia",
+        "refseq",
     }
-    idspaces["NCBITaxon"] = "http://purl.obolibrary.org/obo/NCBITaxon_"
-
-    return Obo(
-        ontology=PREFIX,
-        name="HGNC",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        typedefs=[
-            from_species,
-            has_gene_product,
-            gene_product_member_of,
-            transcribes_to,
-            orthologous,
-            member_of,
-        ],
-        idspaces=idspaces,
-        synonym_typedefs=[
-            previous_name_type,
-            previous_symbol_type,
-            alias_name_type,
-            alias_symbol_type,
-        ],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+}
+IDSPACES.update(
+    NCBITaxon="http://purl.obolibrary.org/obo/NCBITaxon_",
+    SO="http://purl.obolibrary.org/obo/SO_",
+)
 
 
-def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
+class HGNCGetter(Obo):
+    """An ontology representation of HGNC's gene nomenclature."""
+
+    bioversions_key = ontology = PREFIX
+    typedefs = [
+        from_species,
+        has_gene_product,
+        gene_product_member_of,
+        transcribes_to,
+        orthologous,
+        member_of,
+        exact_match,
+        HAS_LOCUS_GROUP,
+        HAS_LOCUS_TYPE,
+        HAS_LOCATION,
+    ]
+    idspaces = IDSPACES
+    synonym_typedefs = [
+        previous_name_type,
+        previous_symbol_type,
+        alias_name_type,
+        alias_symbol_type,
+    ]
+    root_terms = [
+        Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id))
+        for so_id in sorted(set(LOCUS_TYPE_TO_SO.values()))
+        if so_id
+    ]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(force=force, version=self.data_version)
+
+
+def get_obo(*, force: bool = False) -> Obo:
+    """Get HGNC as OBO."""
+    return HGNCGetter(force=force)
+
+
+def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]:
     """Get HGNC terms."""
-    unhandled_entry_keys = Counter()
-    unhandle_locus_types = defaultdict(dict)
-    path = ensure_path(PREFIX, url=DEFINITIONS_URL, force=force)
-    with open(path) as file:
+    if version is None:
+        version = get_version("hgnc")
+    unhandled_entry_keys: typing.Counter[str] = Counter()
+    unhandle_locus_types: defaultdict[str, dict[str, Term]] = defaultdict(dict)
+    path = ensure_path(
+        PREFIX,
+        url=DEFINITIONS_URL_FMT.format(version=version),
+        force=force,
+        version=version,
+        name="hgnc_complete_set.json",
+    )
+    with path.open() as file:
         entries = json.load(file)["response"]["docs"]
 
-    yield from sorted(
-        {
-            Term(reference=Reference.auto("SO", so_id))
-            for so_id in sorted(LOCUS_TYPE_TO_SO.values())
-            if so_id
-        },
-        key=attrgetter("identifier"),
-    )
+    yield Term.from_triple("NCBITaxon", "9606", "Homo sapiens")
+    _so_ids: set[str] = {s for s in LOCUS_TYPE_TO_SO.values() if s}
+    yield from [
+        Term(reference=Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
+        for so_id in sorted(_so_ids)
+    ]
 
     statuses = set()
-    for entry in tqdm(entries, desc=f"Mapping {PREFIX}"):
+    for entry in tqdm(entries, desc=f"Mapping {PREFIX}", unit="gene", unit_scale=True):
         name, symbol, identifier = (
             entry.pop("name"),
             entry.pop("symbol"),
@@ -206,10 +287,10 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
             is_obsolete = False
         elif status not in statuses:
             statuses.add(status)
-            logger.warning("UNHANDLED %s", status)
+            tqdm.write(f"[{PREFIX}] unhandled {status}")
             is_obsolete = True
         else:
-            raise ValueError
+            raise ValueError(f"Unhandled status for hgnc:{identifier}: {status}")
 
         term = Term(
             definition=name,
@@ -220,14 +301,14 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
         for uniprot_id in entry.pop("uniprot_ids", []):
             term.append_relationship(
                 has_gene_product,
-                Reference.auto("uniprot", uniprot_id),
+                Reference(prefix="uniprot", identifier=uniprot_id),
             )
         for ec_code in entry.pop("enzyme_id", []):
             if "-" in ec_code:
                 continue  # only add concrete annotations
             term.append_relationship(
                 gene_product_member_of,
-                Reference.auto("eccode", ec_code),
+                Reference(prefix="eccode", identifier=ec_code),
             )
         for rna_central_ids in entry.pop("rna_central_id", []):
             for rna_central_id in rna_central_ids.split(","):
@@ -239,9 +320,9 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
         if mirbase_id:
             term.append_relationship(
                 transcribes_to,
-                Reference.auto(
-                    "mirbase",
-                    mirbase_id,
+                Reference(
+                    prefix="mirbase",
+                    identifier=mirbase_id,
                 ),
             )
         snornabase_id = entry.pop("snornabase", None)
@@ -251,33 +332,75 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
             )
 
         for rgd_curie in entry.pop("rgd_id", []):
+            if not rgd_curie.startswith("RGD:"):
+                tqdm.write(f"hgnc:{identifier} had bad RGD CURIE: {rgd_curie}")
+                continue
             rgd_id = rgd_curie[len("RGD:") :]
             term.append_relationship(
                 orthologous,
-                Reference.auto(prefix="rgd", identifier=rgd_id),
+                Reference(prefix="rgd", identifier=rgd_id),
             )
         for mgi_curie in entry.pop("mgd_id", []):
+            if not mgi_curie.startswith("MGI:"):
+                tqdm.write(f"hgnc:{identifier} had bad MGI CURIE: {mgi_curie}")
+                continue
             mgi_id = mgi_curie[len("MGI:") :]
+            if not mgi_id:
+                continue
             term.append_relationship(
                 orthologous,
-                Reference.auto(prefix="mgi", identifier=mgi_id),
+                Reference(prefix="mgi", identifier=mgi_id),
             )
+
+        iuphar = entry.pop("iuphar", None)
+        if iuphar:
+            if iuphar.startswith("objectId:"):
+                term.append_exact_match(
+                    Reference(prefix="iuphar.receptor", identifier=iuphar[len("objectId:") :])
+                )
+            elif iuphar.startswith("ligandId:"):
+                term.append_exact_match(
+                    Reference(prefix="iuphar.ligand", identifier=iuphar[len("ligandId:") :])
+                )
+            else:
+                tqdm.write(f"unhandled IUPHAR: {iuphar}")
+
+        for lrg_info in entry.pop("lsdb", []):
+            if lrg_info.startswith("LRG_"):
+                lrg_curie = lrg_info.split("|")[0]
+                _, lrg_id = lrg_curie.split("_")
+                term.append_xref(Reference(prefix="lrg", identifier=lrg_id))
 
         for xref_prefix, key in gene_xrefs:
             xref_identifiers = entry.pop(key, None)
             if xref_identifiers is None:
                 continue
-            if not isinstance(xref_identifiers, list):
-                xref_identifiers = [xref_identifiers]
-            for xref_identifier in xref_identifiers:
-                term.append_xref(Reference(prefix=xref_prefix, identifier=str(xref_identifier)))
+            if isinstance(xref_identifiers, str | int):
+                xref_identifiers = [str(xref_identifiers)]
+
+            if xref_prefix == "merops.entry":
+                continue
+                # e.g., XM02-001 should be rewritten as XM02.001
+                xref_identifiers = [i.replace("-", ".") for i in xref_identifiers]
+
+            if xref_prefix == "refseq":
+                # e.g., strip off dots without substantiated record versions like in NM_021728.
+                xref_identifiers = [i.strip(".") for i in xref_identifiers]
+
+            if len(xref_identifiers) == 1:
+                term.append_exact_match(
+                    Reference(prefix=xref_prefix, identifier=str(xref_identifiers[0]))
+                )
+            else:
+                for xref_identifier in xref_identifiers:
+                    term.append_xref(Reference(prefix=xref_prefix, identifier=str(xref_identifier)))
 
         for pubmed_id in entry.pop("pubmed_id", []):
             term.append_provenance(Reference(prefix="pubmed", identifier=str(pubmed_id)))
 
         gene_group_ids = entry.pop("gene_group_id", [])
         gene_groups = entry.pop("gene_group", [])
-        for gene_group_id, gene_group_label in zip(gene_group_ids, gene_groups):
+        for gene_group_id, gene_group_label in zip(gene_group_ids, gene_groups, strict=False):
             term.append_relationship(
                 member_of,
                 Reference(
@@ -288,34 +411,39 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
             )
 
         for alias_symbol in entry.pop("alias_symbol", []):
-            term.append_synonym(Synonym(name=alias_symbol, type=alias_symbol_type))
+            term.append_synonym(alias_symbol, type=alias_symbol_type)
         for alias_name in entry.pop("alias_name", []):
-            term.append_synonym(Synonym(name=alias_name, type=alias_name_type))
-        for previous_symbol in entry.pop("previous_symbol", []):
-            term.append_synonym(Synonym(name=previous_symbol, type=previous_symbol_type))
+            term.append_synonym(alias_name, type=alias_name_type)
+        for previous_symbol in itt.chain(
+            entry.pop("previous_symbol", []), entry.pop("prev_symbol", [])
+        ):
+            term.append_synonym(previous_symbol, type=previous_symbol_type)
         for previous_name in entry.pop("prev_name", []):
-            term.append_synonym(Synonym(name=previous_name, type=previous_name_type))
+            term.append_synonym(previous_name, type=previous_name_type)
 
-        for prop in ["location"]:
+        for prop, td in [("location", HAS_LOCATION)]:
             value = entry.pop(prop, None)
             if value:
-                term.append_property(prop, value)
+                term.annotate_literal(td, value)
 
         locus_type = entry.pop("locus_type")
         locus_group = entry.pop("locus_group")
         so_id = LOCUS_TYPE_TO_SO.get(locus_type)
         if so_id:
-            term.append_parent(Reference.auto("SO", so_id))
+            term.append_parent(Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
         else:
-            term.append_parent(Reference.auto("SO", "0000704"))  # gene
+            term.append_parent(
+                Reference(prefix="SO", identifier="0000704", name=get_so_name("0000704"))
+            )  # gene
             unhandle_locus_types[locus_type][identifier] = term
-            term.append_property("locus_type", locus_type)
-            term.append_property("locus_group", locus_group)
+            term.annotate_literal(HAS_LOCUS_TYPE, locus_type)
+            term.annotate_literal(HAS_LOCUS_GROUP, locus_group)
 
         term.set_species(identifier="9606", name="Homo sapiens")
 
         for key in entry:
-            unhandled_entry_keys[key] += 1
+            if key not in SKIP_KEYS:
+                unhandled_entry_keys[key] += 1
         yield term
 
     with open(prefix_directory_join(PREFIX, name="unhandled.json"), "w") as file:
@@ -336,16 +464,18 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
                         hgnc_id,
                         term.name,
                         term.is_obsolete,
-                        term.link,
-                        ", ".join(p.link for p in term.provenance),
+                        term.bioregistry_link,
+                        ", ".join(
+                            p.bioregistry_link for p in term.provenance if p.bioregistry_link
+                        ),
                     )
                     for hgnc_id, term in sorted(v.items())
                 ],
                 headers=["hgnc_id", "name", "obsolete", "link", "provenance"],
                 tablefmt="github",
             )
-            print(f"## {k} ({len(v)})", file=file)  # noqa:T001
-            print(t, "\n", file=file)  # noqa:T001
+            print(f"## {k} ({len(v)})", file=file)
+            print(t, "\n", file=file)
 
     unhandle_locus_type_counter = Counter(
         {locus_type: len(d) for locus_type, d in unhandle_locus_types.items()}
@@ -357,4 +487,4 @@ def get_terms(force: bool = False) -> Iterable[Term]:  # noqa:C901
 
 
 if __name__ == "__main__":
-    get_obo(force=True).cli()
+    HGNCGetter.cli()

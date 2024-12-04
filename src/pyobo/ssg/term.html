@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}{{ term.name or term.identifier }}{% endblock title %}
+
+{% block content -%}
+    <div class="card">
+        <h5 class="card-header">
+            <span class="badge badge-info">Term</span>
+            {{ term.name or term.identifier }}
+            {% if term.is_obsolete %}
+                <span class="badge badge-warning">Obsolete</span>
+            {% endif %}
+        </h5>
+        <div class="card-body">
+            {% if term.definition %}
+                <p>{{ term.definition }}</p>
+            {% endif %}
+            <dl>
+                <dt>Local Unique Identifier</dt>
+                <dd>
+                    <a href="{{ metaregistry_base_url }}/{{ term.curie }}">{{ term.identifier }}</a>
+                </dd>
+                {% if term.namespace %}
+                    <dt>Namespace</dt>
+                    <dd>{{ term.namespace }}</dd>
+                {% endif %}
+
+                {{ list_references(term.alt_ids, "Alt. IDs") }}
+                {% if term.synonyms %}
+                    {% for synonym in term.synonyms %}
+                    <dt>
+                        <span class="badge badge-primary">Synonym</span>
+                        {{ synonym.specificity.title() }}{% if synonym.type %}({{ synonym.type.name }}){% endif %}
+                    </dt>
+                    <dd>{{ synonym.name }}</dd>
+                    {% endfor %}
+                {% endif %}
+                {{ list_references(term.parents, "Parents") }}
+                {{ list_references(children, "Children") }}
+                {{ list_references(parts, "Parts") }}
+                {% for typedef, relations in term.relationships.items() %}
+                    {% if relations|length > 0 %}
+                    <dt>
+                        <span class="badge badge-primary">Relation</span>
+                        {{ link_reference(typedef) }}
+                    </dt>
+                    <dd>
+                        {% if relations|length == 1 %}
+                            {{ link_reference(relations[0]) }}
+                        {% else %}
+                            <ul>
+                                {% for relation in relations %}
+                                    <li>{{ link_reference(relation) }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </dd>
+                    {% endif %}
+                {% endfor %}
+                {% for xref in term.xrefs %}
+                    <dt><span class="badge badge-primary">Xref</span> {{ manager.get_name(xref.prefix) }}</dt>
+                    <dd>{{ link_reference(xref) }}</dd>
+                {% endfor %}
+                {% for property, values in term.properties.items() %}
+                    {% if values|length > 0 %}
+                    <dt>
+                        <span class="badge badge-primary">Property</span>
+                        {{ property }}
+                    </dt>
+                    <dd>
+                        {% if values|length == 1 %}
+                            {{ values[0] }}
+                        {% else %}
+                            <ul>
+                                {% for value in values %}
+                                    <li>{{ value }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </dd>
+                {% endif %}
+                {% endfor %}
+            </dl>
+        </div>
+    </div>
+{%- endblock content %}

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Get the Biomappings manually curated equivalences."""
 
 import pandas as pd

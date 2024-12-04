@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
-
 """Test iteration tools."""
 
 import unittest
 
 from pyobo.identifier_utils import normalize_curie
+from pyobo.sources.expasy import _parse_transfer
 from pyobo.utils.iter import iterate_together
 
 
-class TestIdentifierUtils(unittest.TestCase):
-    """Test identifier utilities."""
+class TestStringUtils(unittest.TestCase):
+    """Test string utilities."""
 
     def test_strip_prefix(self):
         """Test stripping prefixes works."""
@@ -23,6 +22,36 @@ class TestIdentifierUtils(unittest.TestCase):
         # Test remapping
         self.assertEqual(("pubmed", "1234"), normalize_curie("pmid:1234"))
         self.assertEqual(("pubmed", "1234"), normalize_curie("PMID:1234"))
+
+        # Test resource-specific remapping
+        self.assertEqual((None, None), normalize_curie("Thesaurus:C1234", strict=False))
+        self.assertEqual(
+            ("ncit", "C1234"), normalize_curie("Thesaurus:C1234", ontology_prefix="enm")
+        )
+
+        # parsing IRIs
+        self.assertEqual(
+            ("chebi", "1234"), normalize_curie("http://purl.obolibrary.org/obo/CHEBI_1234")
+        )
+
+    def test_parse_eccode_transfer(self):
+        """Test parse_eccode_transfer."""
+        self.assertEqual(
+            ["1.1.1.198", "1.1.1.227", "1.1.1.228"],
+            _parse_transfer("Transferred entry: 1.1.1.198, 1.1.1.227 and 1.1.1.228."),
+        )
+        self.assertEqual(
+            ["1.1.1.198", "1.1.1.227", "1.1.1.228"],
+            _parse_transfer("Transferred entry: 1.1.1.198, 1.1.1.227 and 1.1.1.228"),
+        )
+        self.assertEqual(
+            ["1.1.1.198", "1.1.1.227", "1.1.1.228"],
+            _parse_transfer("Transferred entry: 1.1.1.198, 1.1.1.227, and 1.1.1.228"),
+        )
+        self.assertEqual(
+            ["1.1.1.198", "1.1.1.228"],
+            _parse_transfer("Transferred entry: 1.1.1.198 and 1.1.1.228."),
+        )
 
 
 class TestIterate(unittest.TestCase):

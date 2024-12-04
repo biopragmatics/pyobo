@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Utilities or interacting with the ICD API.
 
 Want to get your own API cliend ID and client secret?
@@ -11,17 +9,18 @@ Want to get your own API cliend ID and client secret?
 import datetime
 import json
 import os
-from typing import Any, Callable, Iterable, List, Mapping, Set
+from collections.abc import Callable, Iterable, Mapping
+from pathlib import Path
+from typing import Any
 
 import pystow
 import requests
 from cachier import cachier
-from tqdm import tqdm
+from pystow.config_api import ConfigError
+from tqdm.auto import tqdm
 
+from ..getters import NoBuildError
 from ..struct import Term
-
-ICD_CLIENT_ID = pystow.get_config("pyobo", "icd_client_id")
-ICD_CLIENT_SECRET = pystow.get_config("pyobo", "icd_client_secret")
 
 TOKEN_URL = "https://icdaccessmanagement.who.int/connect/token"  # noqa:S105
 
@@ -43,7 +42,7 @@ def _get_entity(endpoint: str, identifier: str):
     return res.json()
 
 
-def get_child_identifiers(endpoint: str, res_json: Mapping[str, Any]) -> List[str]:
+def get_child_identifiers(endpoint: str, res_json: Mapping[str, Any]) -> list[str]:
     """Ge the child identifiers."""
     return [url[len(endpoint) :].lstrip("/") for url in res_json.get("child", [])]
 
@@ -51,10 +50,16 @@ def get_child_identifiers(endpoint: str, res_json: Mapping[str, Any]) -> List[st
 @cachier(stale_after=datetime.timedelta(minutes=45))
 def get_icd_api_headers() -> Mapping[str, str]:
     """Get the headers, and refresh every hour."""
+    try:
+        icd_client_id = pystow.get_config("pyobo", "icd_client_id", raise_on_missing=True)
+        icd_client_secret = pystow.get_config("pyobo", "icd_client_secret", raise_on_missing=True)
+    except ConfigError as e:
+        raise NoBuildError from e
+
     grant_type = "client_credentials"
     body_params = {"grant_type": grant_type}
     tqdm.write("getting ICD API token")
-    res = requests.post(TOKEN_URL, data=body_params, auth=(ICD_CLIENT_ID, ICD_CLIENT_SECRET))
+    res = requests.post(TOKEN_URL, data=body_params, auth=(icd_client_id, icd_client_secret))
     res_json = res.json()
     access_type = res_json["token_type"]
     access_token = res_json["access_token"]
@@ -67,14 +72,14 @@ def get_icd_api_headers() -> Mapping[str, str]:
 
 def visiter(
     identifier: str,
-    visited_identifiers: Set[str],
-    directory: str,
+    visited_identifiers: set[str],
+    directory: str | Path,
     *,
     endpoint: str,
     converter: Callable[[Mapping[str, Any]], Term],
 ) -> Iterable[Term]:
     """Iterate over all terms from the ICD endpoint."""
-    path = os.path.join(directory, f"{identifier}.json")
+    path = Path(directory).joinpath(identifier).with_suffix(".json")
     if identifier in visited_identifiers:
         return
     visited_identifiers.add(identifier)

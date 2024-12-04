@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Convert DrugBank to OBO.
 
 Run with ``python -m pyobo.sources.drugbank``
@@ -8,39 +6,43 @@ Run with ``python -m pyobo.sources.drugbank``
 import datetime
 import itertools as itt
 import logging
+from collections.abc import Iterable, Mapping
 from functools import lru_cache
-from typing import Any, Iterable, Mapping, Optional
+from typing import Any
 from xml.etree import ElementTree
 
-import bioversions
 import pystow
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
-from ..struct import Obo, Reference, Term, TypeDef
+from ..getters import NoBuildError
+from ..struct import Obo, Reference, Term
+from ..struct.typedef import has_inchi, has_salt, has_smiles
 from ..utils.cache import cached_pickle
 from ..utils.path import prefix_directory_join
+
+__all__ = [
+    "DrugBankGetter",
+]
 
 logger = logging.getLogger(__name__)
 
 PREFIX = "drugbank"
 
-has_salt = TypeDef(
-    reference=Reference.default(identifier="has_salt", name="has salt"),
-)
+
+class DrugBankGetter(Obo):
+    """A getter for DrugBank."""
+
+    ontology = bioversions_key = PREFIX
+    typedefs = [has_salt]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(version=self._version_or_raise, force=force)
 
 
 def get_obo(force: bool = False) -> Obo:
     """Get DrugBank as OBO."""
-    version = bioversions.get_version("drugbank")
-    return Obo(
-        ontology=PREFIX,
-        name="DrugBank",
-        data_version=version,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version, force=force),
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        typedefs=[has_salt],
-    )
+    return DrugBankGetter(force=force)
 
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
@@ -94,8 +96,12 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
         prefix=PREFIX,
         identifier=drug_info["drugbank_id"],
         name=drug_info["name"],
-        definition=drug_info["description"],
     )
+    definition = drug_info.get("description")
+    if definition:
+        definition = definition.strip('"').replace("\t", " ").replace("  ", " ")
+        term.definition = definition
+
     for alias in drug_info["aliases"]:
         term.append_synonym(alias)
 
@@ -114,13 +120,13 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
         if identifier:
             term.append_xref(Reference(prefix=xref_prefix, identifier=identifier))
 
-    for prop in ["smiles", "inchi"]:
-        identifier = drug_info.get(xref_prefix)
+    for prop, debio_curie in [("smiles", has_smiles), ("inchi", has_inchi)]:
+        identifier = drug_info.get(prop)
         if identifier:
-            term.append_property(prop, identifier)
+            term.annotate_literal(debio_curie, identifier)
 
     for salt in drug_info.get("salts", []):
-        term.append_relationship(
+        term.annotate_object(
             has_salt,
             Reference(
                 prefix="drugbank.salt",
@@ -132,19 +138,22 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
     return term
 
 
-@lru_cache()
-def get_xml_root(version: Optional[str] = None) -> ElementTree.Element:
+@lru_cache
+def get_xml_root(version: str | None = None) -> ElementTree.Element:
     """Get the DrugBank XML parser root.
 
     Takes between 35-60 seconds.
     """
     from drugbank_downloader import parse_drugbank
+    from pystow.config_api import ConfigError
 
-    element = parse_drugbank(
-        version=version,
-        username=pystow.get_config("pyobo", "drugbank_username"),
-        password=pystow.get_config("pyobo", "drugbank_password"),
-    )
+    try:
+        username = pystow.get_config("pyobo", "drugbank_username", raise_on_missing=True)
+        password = pystow.get_config("pyobo", "drugbank_password", raise_on_missing=True)
+    except ConfigError as e:
+        raise NoBuildError from e
+
+    element = parse_drugbank(version=version, username=username, password=password)
     return element.getroot()
 
 
@@ -157,12 +166,11 @@ smiles_template = f"{ns}calculated-properties/{ns}property[{ns}kind='SMILES']/{n
 def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
     """Extract information from an XML element representing a drug."""
     # assert drug_xml.tag == f'{ns}drug'
-    row = {
+    row: dict[str, Any] = {
         "type": drug_xml.get("type"),
         "drugbank_id": drug_xml.findtext(f"{ns}drugbank-id[@primary='true']"),
         "cas": drug_xml.findtext(f"{ns}cas-number"),
         "name": drug_xml.findtext(f"{ns}name"),
-        "description": drug_xml.findtext(f"{ns}description").replace("\r", "").replace("\n", "\\n"),
         "groups": [group.text for group in drug_xml.findall(f"{ns}groups/{ns}group")],
         "atc_codes": [code.get("code") for code in drug_xml.findall(f"{ns}atc-codes/{ns}atc-code")],
         "categories": [
@@ -172,16 +180,7 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
             }
             for x in drug_xml.findall(f"{ns}categories/{ns}category")
         ],
-        "patents": [
-            {
-                "patent_id": x.findtext(f"{ns}number"),
-                "country": x.findtext(f"{ns}country"),
-                "approved": datetime.datetime.strptime(x.findtext(f"{ns}approved"), "%Y-%m-%d"),
-                "expires": datetime.datetime.strptime(x.findtext(f"{ns}expires"), "%Y-%m-%d"),
-                "pediatric_extension": x.findtext(f"{ns}pediatric-extension") != "false",
-            }
-            for x in drug_xml.findall(f"{ns}patents/{ns}patent")
-        ],
+        "patents": list(_get_patents(drug_xml)),
         "salts": [
             {
                 "identifier": x.findtext(f"{ns}drugbank-id"),
@@ -204,6 +203,10 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
         "smiles": drug_xml.findtext(smiles_template),
     }
 
+    description = drug_xml.findtext(f"{ns}description")
+    if description:
+        row["description"] = description.replace("\r", "").replace("\n", "\\n")
+
     # Add drug aliases
     aliases = {
         elem.text.strip()
@@ -213,7 +216,7 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
             drug_xml.findall(f"{ns}international-brands/{ns}international-brand"),
             drug_xml.findall(f"{ns}products/{ns}product/{ns}name"),
         )
-        if elem.text.strip()
+        if elem.text and elem.text.strip()
     }
     aliases.add(row["name"])
     row["aliases"] = aliases
@@ -228,6 +231,22 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
         row["protein_interactions"].append(target_row)
 
     return row
+
+
+def _get_patents(drug_element):
+    for patent_element in drug_element.findall(f"{ns}patents/{ns}patent"):
+        rv = {
+            "patent_id": patent_element.findtext(f"{ns}number"),
+            "country": patent_element.findtext(f"{ns}country"),
+            "pediatric_extension": patent_element.findtext(f"{ns}pediatric-extension") != "false",
+        }
+        approved = patent_element.findtext(f"{ns}approved")
+        if approved is not None:
+            rv["approved"] = datetime.datetime.strptime(approved, "%Y-%m-%d")
+        expires = patent_element.findtext(f"{ns}expires")
+        if expires:
+            rv["expires"] = datetime.datetime.strptime(expires, "%Y-%m-%d")
+        yield rv
 
 
 _categories = ["target", "enzyme", "carrier", "transporter"]
@@ -305,5 +324,4 @@ def _iter_polypeptides(polypeptides) -> Iterable[Mapping[str, Any]]:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    get_obo(force=True).cli()
+    DrugBankGetter.cli()

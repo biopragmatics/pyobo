@@ -1,37 +1,145 @@
-# -*- coding: utf-8 -*-
-
 """Sources of OBO content."""
 
-from functools import lru_cache
-from typing import Callable, Iterable, Mapping
+from class_resolver import ClassResolver
 
-from pkg_resources import iter_entry_points
-
+from .antibodyregistry import AntibodyRegistryGetter
+from .ccle import CCLEGetter
+from .cgnc import CGNCGetter
+from .chembl import ChEMBLCompoundGetter
+from .civic_gene import CIVICGeneGetter
+from .complexportal import ComplexPortalGetter
+from .conso import CONSOGetter
+from .cpt import CPTGetter
+from .credit import CreditGetter
+from .cvx import CVXGetter
+from .depmap import DepMapGetter
+from .dictybase_gene import DictybaseGetter
+from .drugbank import DrugBankGetter
+from .drugbank_salt import DrugBankSaltGetter
+from .drugcentral import DrugCentralGetter
+from .expasy import ExpasyGetter
+from .famplex import FamPlexGetter
+from .flybase import FlyBaseGetter
+from .gard import GARDGetter
+from .geonames import GeonamesGetter
+from .gtdb import GTDBGetter
+from .gwascentral_phenotype import GWASCentralPhenotypeGetter
+from .gwascentral_study import GWASCentralStudyGetter
+from .hgnc import HGNCGetter
+from .hgncgenefamily import HGNCGroupGetter
+from .icd10 import ICD10Getter
+from .icd11 import ICD11Getter
+from .interpro import InterProGetter
+from .itis import ITISGetter
+from .kegg import KEGGGeneGetter, KEGGGenomeGetter, KEGGPathwayGetter
+from .mesh import MeSHGetter
+from .mgi import MGIGetter
+from .mirbase import MiRBaseGetter
+from .mirbase_family import MiRBaseFamilyGetter
+from .mirbase_mature import MiRBaseMatureGetter
+from .msigdb import MSigDBGetter
+from .ncbigene import NCBIGeneGetter
+from .nlm_catalog import NLMCatalogGetter
+from .npass import NPASSGetter
+from .omim_ps import OMIMPSGetter
+from .pathbank import PathBankGetter
+from .pfam import PfamGetter
+from .pfam_clan import PfamClanGetter
+from .pid import PIDGetter
+from .pombase import PomBaseGetter
+from .pubchem import PubChemCompoundGetter
+from .reactome import ReactomeGetter
+from .rgd import RGDGetter
+from .rhea import RheaGetter
+from .ror import RORGetter
+from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
+from .sgd import SGDGetter
+from .slm import SLMGetter
+from .umls import UMLSGetter
+from .unimod import UnimodGetter
+from .uniprot import UniProtGetter, UniProtPtmGetter
+from .wikipathways import WikiPathwaysGetter
+from .zfin import ZFINGetter
 from ..struct import Obo
 
 __all__ = [
-    "has_nomenclature_plugin",
-    "run_nomenclature_plugin",
-    "iter_nomenclature_plugins",
+    "AntibodyRegistryGetter",
+    "CCLEGetter",
+    "CGNCGetter",
+    "CIVICGeneGetter",
+    "CONSOGetter",
+    "CPTGetter",
+    "CVXGetter",
+    "ChEMBLCompoundGetter",
+    "ComplexPortalGetter",
+    "CreditGetter",
+    "DepMapGetter",
+    "DictybaseGetter",
+    "DrugBankGetter",
+    "DrugBankSaltGetter",
+    "DrugCentralGetter",
+    "ExpasyGetter",
+    "FamPlexGetter",
+    "FlyBaseGetter",
+    "GARDGetter",
+    "GTDBGetter",
+    "GWASCentralPhenotypeGetter",
+    "GWASCentralStudyGetter",
+    "GeonamesGetter",
+    "HGNCGetter",
+    "HGNCGroupGetter",
+    "ICD10Getter",
+    "ICD11Getter",
+    "ITISGetter",
+    "InterProGetter",
+    "KEGGGeneGetter",
+    "KEGGGenomeGetter",
+    "KEGGPathwayGetter",
+    "MGIGetter",
+    "MSigDBGetter",
+    "MeSHGetter",
+    "MiRBaseFamilyGetter",
+    "MiRBaseGetter",
+    "MiRBaseMatureGetter",
+    "NCBIGeneGetter",
+    "NLMCatalogGetter",
+    "NPASSGetter",
+    "OMIMPSGetter",
+    "PIDGetter",
+    "PathBankGetter",
+    "PfamClanGetter",
+    "PfamGetter",
+    "PomBaseGetter",
+    "PubChemCompoundGetter",
+    "RGDGetter",
+    "RORGetter",
+    "ReactomeGetter",
+    "RheaGetter",
+    "SCHEMGetter",
+    "SCOMPGetter",
+    "SDISGetter",
+    "SFAMGetter",
+    "SGDGetter",
+    "SLMGetter",
+    "UMLSGetter",
+    "UniProtGetter",
+    "UniProtPtmGetter",
+    "UnimodGetter",
+    "WikiPathwaysGetter",
+    "ZFINGetter",
+    "ontology_resolver",
 ]
 
 
-@lru_cache()
-def _get_nomenclature_plugins() -> Mapping[str, Callable[[], Obo]]:
-    return {entry.name: entry.load() for entry in iter_entry_points(group="pyobo.nomenclatures")}
+def _assert_sorted():
+    _sorted = sorted(__all__)
+    if _sorted != __all__:
+        raise ValueError(f"unsorted. should be:\n{_sorted}")
 
 
-def has_nomenclature_plugin(prefix: str) -> bool:
-    """Check if there's a plugin for converting the prefix."""
-    return prefix in _get_nomenclature_plugins()
+_assert_sorted()
+del _assert_sorted
 
-
-def run_nomenclature_plugin(prefix: str) -> Obo:
-    """Get a converted PyOBO source."""
-    return _get_nomenclature_plugins()[prefix]()
-
-
-def iter_nomenclature_plugins() -> Iterable[Obo]:
-    """Get all modules in the PyOBO sources."""
-    for _prefix, get_obo in sorted(_get_nomenclature_plugins().items()):
-        yield get_obo()
+ontology_resolver: ClassResolver[Obo] = ClassResolver.from_subclasses(base=Obo, suffix="Getter")
+for getter in list(ontology_resolver):
+    ontology_resolver.synonyms[getter.ontology] = getter

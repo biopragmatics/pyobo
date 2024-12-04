@@ -1,40 +1,53 @@
-# -*- coding: utf-8 -*-
-
 """Converter for HGNC Gene Families."""
 
 from collections import defaultdict
-from typing import Iterable, List, Mapping
+from collections.abc import Iterable, Mapping
 
 import pandas as pd
-from tqdm import tqdm
 
-from ..struct import Obo, Reference, Synonym, SynonymTypeDef, Term, from_species
+from ..struct import (
+    Obo,
+    Reference,
+    SynonymTypeDef,
+    Term,
+    enables,
+    from_species,
+)
 from ..utils.path import ensure_path
 
+__all__ = [
+    "HGNCGroupGetter",
+]
+
 PREFIX = "hgnc.genegroup"
-FAMILIES_URL = "ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/csv/genefamily_db_tables/family.csv"
+FAMILIES_URL = "https://storage.googleapis.com/public-download-files/hgnc/csv/csv/genefamily_db_tables/family.csv"
 # TODO use family_alias.csv
-HIERARCHY_URL = (
-    "ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/csv/genefamily_db_tables/hierarchy.csv"
+HIERARCHY_URL = "https://storage.googleapis.com/public-download-files/hgnc/csv/csv/genefamily_db_tables/hierarchy.csv"
+
+symbol_type = SynonymTypeDef(
+    reference=Reference(prefix="OMO", identifier="0004000", name="has symbol")
 )
 
-symbol_type = SynonymTypeDef(id="symbol", name="symbol")
+
+class HGNCGroupGetter(Obo):
+    """An ontology representation of HGNC's gene group nomenclature."""
+
+    ontology = PREFIX
+    bioversions_key = "hgnc"
+    synonym_typedefs = [symbol_type]
+    typedefs = [from_species, enables]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(force=force)
 
 
 def get_obo(force: bool = False) -> Obo:
     """Get HGNC Gene Groups as OBO."""
-    return Obo(
-        ontology=PREFIX,
-        name="HGNC Gene Groups",
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        synonym_typedefs=[symbol_type],
-        typedefs=[from_species],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return HGNCGroupGetter(force=force)
 
 
-def get_hierarchy(force: bool = False) -> Mapping[str, List[str]]:
+def get_hierarchy(force: bool = False) -> Mapping[str, list[str]]:
     """Get the HGNC Gene Families hierarchy as a dictionary."""
     path = ensure_path(PREFIX, url=HIERARCHY_URL, force=force)
     df = pd.read_csv(path, dtype={"parent_fam_id": str, "child_fam_id": str})
@@ -64,7 +77,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
                     name=parent.name,
                 )
             )
-    gene_group = Reference.auto("SO", "0005855")
+    gene_group = Reference(prefix="SO", identifier="0005855", name="gene group")
     yield Term(reference=gene_group)
     for term in terms:
         if not term.parents:
@@ -76,8 +89,7 @@ def _get_terms_helper(force: bool = False) -> Iterable[Term]:
     path = ensure_path(PREFIX, url=FAMILIES_URL, force=force)
     df = pd.read_csv(path, dtype={"id": str})
 
-    it = tqdm(df[COLUMNS].values, desc=f"Mapping {PREFIX}")
-    for gene_group_id, symbol, name, pubmed_ids, definition, desc_go in it:
+    for gene_group_id, symbol, name, pubmed_ids, definition, desc_go in df[COLUMNS].values:
         if not definition or pd.isna(definition):
             definition = None
         term = Term(
@@ -85,16 +97,16 @@ def _get_terms_helper(force: bool = False) -> Iterable[Term]:
             definition=definition,
         )
         if pubmed_ids and pd.notna(pubmed_ids):
-            for s in pubmed_ids.split(","):
+            for s in pubmed_ids.replace(" ", ",").split(","):
                 term.append_provenance(Reference(prefix="pubmed", identifier=s.strip()))
         if desc_go and pd.notna(desc_go):
             go_id = desc_go[len("http://purl.uniprot.org/go/") :]
-            term.append_xref(Reference(prefix="GO", identifier=go_id))
+            term.append_relationship(enables, Reference(prefix="GO", identifier=go_id))
         if symbol and pd.notna(symbol):
-            term.append_synonym(Synonym(name=symbol, type=symbol_type))
+            term.append_synonym(symbol, type=symbol_type)
         term.set_species(identifier="9606", name="Homo sapiens")
         yield term
 
 
 if __name__ == "__main__":
-    get_obo().write_default(force=True, write_obo=True, write_owl=True)
+    HGNCGroupGetter.cli()

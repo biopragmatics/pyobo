@@ -1,15 +1,18 @@
-# -*- coding: utf-8 -*-
-
 """Swisslipids."""
 
-import datetime
+from collections.abc import Iterable
 
 import pandas as pd
-import requests
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
-from pyobo import Obo, SynonymTypeDef, Term
+from pyobo import Obo, Reference, Term, TypeDef
+from pyobo.struct.struct import abbreviation as abbreviation_typedef
+from pyobo.struct.typedef import exact_match, has_inchi, has_smiles
 from pyobo.utils.path import ensure_df
+
+__all__ = [
+    "SLMGetter",
+]
 
 PREFIX = "slm"
 COLUMNS = [
@@ -33,26 +36,27 @@ COLUMNS = [
     "HMDB",
     "PMID",
 ]
+LEVEL = TypeDef.default(PREFIX, "level")
 
-abreviation_type = SynonymTypeDef(id="abbreviation", name="Abbreviation")
+
+class SLMGetter(Obo):
+    """An ontology representation of SwissLipid's lipid nomenclature."""
+
+    ontology = bioversions_key = PREFIX
+    typedefs = [exact_match, LEVEL, has_inchi, has_smiles]
+    synonym_typedefs = [abbreviation_typedef]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo() -> Obo:
+def get_obo(force: bool = False) -> Obo:
     """Get SwissLipids as OBO."""
-    version = get_version()
-
-    return Obo(
-        ontology=PREFIX,
-        name="SwissLipids",
-        data_version=version,
-        auto_generated_by=f"bio2obo:{PREFIX}",
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        synonym_typedefs=[abreviation_type],
-    )
+    return SLMGetter(force=force)
 
 
-def iter_terms(version: str):
+def iter_terms(version: str, force: bool = False):
     """Iterate over SwissLipids terms."""
     df = ensure_df(
         prefix=PREFIX,
@@ -60,6 +64,7 @@ def iter_terms(version: str):
         version=version,
         name="lipids.tsv.gz",
         encoding="cp1252",
+        force=force,
     )
     for (
         identifier,
@@ -73,51 +78,60 @@ def iter_terms(version: str):
         smiles,
         inchi,
         inchikey,
-        chebi_id,
-        lipidmaps_id,
-        hmdb_id,
-        pmids,
-    ) in tqdm(df[COLUMNS].values):
+        chebi_ids,
+        lipidmaps_ids,
+        hmdb_ids,
+        pubmed_ids,
+    ) in tqdm(
+        df[COLUMNS].values, desc=f"[{PREFIX}] generating terms", unit_scale=True, unit="lipid"
+    ):
         if identifier.startswith("SLM:"):
             identifier = identifier[len("SLM:") :]
         else:
             raise ValueError(identifier)
         term = Term.from_triple(PREFIX, identifier, name)
-        term.append_property("level", level)
+        if pd.notna(level):
+            term.annotate_literal(LEVEL, level)
         if pd.notna(abbreviation):
-            term.append_synonym(abbreviation, type=abreviation_type)
+            term.append_synonym(abbreviation, type=abbreviation_typedef)
         if pd.notna(synonyms):
             for synonym in synonyms.split("|"):
                 term.append_synonym(synonym.strip())
         if pd.notna(smiles):
-            term.append_property("smiles", smiles)
+            term.annotate_literal(has_smiles, smiles)
         if pd.notna(inchi) and inchi != "InChI=none":
             if inchi.startswith("InChI="):
                 inchi = inchi[len("InChI=") :]
-            term.append_property("inchi", inchi)
+            term.annotate_literal(has_inchi, inchi)
         if pd.notna(inchikey):
-            if inchikey.startswith("InChIKey="):
-                inchikey = inchikey[len("InChIKey=") :]
-            term.append_property("inchikey", inchikey)
-        if pd.notna(chebi_id):
+            inchikey = inchikey.removeprefix("InChIKey=").strip()
+            if inchikey and inchikey != "none":
+                try:
+                    inchi_ref = Reference(prefix="inchikey", identifier=inchikey)
+                except ValueError:
+                    tqdm.write(
+                        f"[slm:{identifier}] had invalid inchikey reference: ({type(inchikey)}) {inchikey}"
+                    )
+                else:
+                    term.append_exact_match(inchi_ref)
+        for chebi_id in _split(chebi_ids):
             term.append_xref(("chebi", chebi_id))
-        if pd.notna(lipidmaps_id):
-            term.append_xref(("lipidmaps", lipidmaps_id))
-        if pd.notna(hmdb_id):
-            term.append_xref(("hmdb", hmdb_id))
-        if pd.notna(pmids):
-            for pmid in pmids.split("|"):
-                term.provenance.append(("pubmed", pmid))
+        for lipidmaps_id in _split(lipidmaps_ids):
+            term.append_exact_match(("lipidmaps", lipidmaps_id))
+        for hmdb_id in _split(hmdb_ids):
+            term.append_exact_match(("hmdb", hmdb_id))
+        for pubmed_id in _split(pubmed_ids):
+            term.append_provenance(("pubmed", pubmed_id))
         # TODO how to handle class, parents, and components?
         yield term
 
 
-def get_version():
-    """Get the SwissLipids version number."""
-    # TODO move to bioversions.
-    res = requests.get("https://www.swisslipids.org/api/downloadData").json()
-    record = next(record for record in res if record["file"] == "lipids.tsv")
-    return datetime.datetime.strptime(record["date"], "%B %d %Y").strftime("%Y-%m-%d")
+def _split(s: str) -> Iterable[str]:
+    if pd.notna(s):
+        for x in s.split("|"):
+            x = x.strip()
+            if x:
+                yield x
 
 
 if __name__ == "__main__":

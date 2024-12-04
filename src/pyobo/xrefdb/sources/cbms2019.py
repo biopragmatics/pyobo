@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Cross references from cbms2019.
 
 .. seealso:: https://github.com/pantapps/cbms2019

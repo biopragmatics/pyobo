@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}{{ resource.get_name() }}{% endblock title %}
+
+{% block content -%}
+    <div class="card">
+        <h5 class="card-header">
+            Metadata
+        </h5>
+        <div class="card-body">
+            <p>{{ resource.get_description() }}</p>
+            <dl>
+                {% if obo.data_version %}
+                    <dt>Data Version</dt>
+                    <dd>{{ obo.data_version }}</dd>
+                {% endif %}
+                <dt>Number of Terms</dt>
+                <dd>{{ number_terms }}</dd>
+                <dt>{{ metaregistry_name }}</dt>
+                <dd>
+                    <a href="{{ metaregistry_base_url }}/{{ obo.ontology }}">
+                        <code>{{ metaregistry_metaprefix }}:{{ obo.ontology }}</code>
+                    </a>
+                </dd>
+                {% if not manifest %}
+                    <dt>Regular Expression Pattern</dt>
+                    <dd><code>{{ resource.get_pattern() }}</code></dd>
+                    <dt>Example Page</dt>
+                    <dd><a href="{{ resource.get_example() }}">{{ resource.get_example() }}</a></dd>
+                {% endif %}
+                {% if obo.idspaces %}
+                    {% for k, v in obo.idspaces.items() %}
+                        <dt><span class="badge badge-info">Prefix</span> {{ k }}</dt>
+                        <dd>{{ v }}</dd>
+                    {% endfor %}
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+
+    {% if obo.synonym_typedefs %}
+    <div class="card" style="margin-top: 1em;">
+            <h5 class="card-header">
+                Synonym Type Definitions
+            </h5>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Specificity</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for typedef in obo.synonym_typedefs %}
+                    <tr>
+                        <td>{{ typedef.id }}</td>
+                        <td>{{ typedef.name }}</td>
+                        <td>{{ typedef.specificity }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    {% if manifest %}
+        <div class="card" style="margin-top: 1em;">
+            <h5 class="card-header">
+                Terms, Relations, and Properties
+            </h5>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Local Identifier</th>
+                    <th>Name</th>
+                    <th>Definition</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for term in manifest %}
+                    <tr>
+                        <td>
+                            {% if term.is_metadata_tag %}
+                                Property
+                            {% else %}
+                                {{ term.__class__.__name__ }}
+                            {% endif %}
+                        </td>
+                        <td align="right"><a href="{{ term.identifier }}">{{ term.identifier }}</a></td>
+                        <td>{{ term.name }}</td>
+                        <td>{% if term.definition %}{{ term.definition }}{% endif %}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% elif obo.typedefs %}
+        <div class="card" style="margin-top: 1em;">
+            <h5 class="card-header">
+                Relation Definitions
+            </h5>
+            <ul class="list-group list-group-flush">
+                {% for typedef in obo.typedefs %}
+                    <li class="list-group-item">{{ typedef }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+{%- endblock content %}

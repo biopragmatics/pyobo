@@ -1,15 +1,15 @@
-# -*- coding: utf-8 -*-
-
 """Convert PFAM to OBO."""
 
-from typing import Iterable
+from collections.abc import Iterable
 
-import bioversions
 import pandas as pd
-from tqdm import tqdm
 
 from ..struct import Obo, Reference, Term
 from ..utils.path import ensure_df
+
+__all__ = [
+    "PfamGetter",
+]
 
 PREFIX = "pfam"
 
@@ -22,7 +22,7 @@ CLAN_MAPPING_HEADER = [
 ]
 
 
-def get_pfam_clan_df(version: str) -> pd.DataFrame:
+def get_pfam_clan_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get PFAM + clans."""
     url = f"ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam{version}/Pfam-A.clans.tsv.gz"
     return ensure_df(
@@ -32,32 +32,35 @@ def get_pfam_clan_df(version: str) -> pd.DataFrame:
         names=CLAN_MAPPING_HEADER,
         version=version,
         dtype=str,
+        force=force,
+        backend="urllib",
     )
 
 
-def get_obo() -> Obo:
+class PfamGetter(Obo):
+    """An ontology representation of Pfam's protein family nomenclature."""
+
+    ontology = bioversions_key = PREFIX
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return iter_terms(self._version_or_raise, force=force)
+
+
+def get_obo(force: bool = False) -> Obo:
     """Get PFAM as OBO."""
-    version = bioversions.get_version("pfam")
-    return Obo(
-        ontology=PREFIX,
-        name="PFAM",
-        data_version=version,
-        iter_terms=iter_terms,
-        iter_terms_kwargs=dict(version=version),
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return PfamGetter(force=force)
 
 
-def iter_terms(version: str) -> Iterable[Term]:
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate PFAM terms."""
-    df = get_pfam_clan_df(version=version)
-    it = tqdm(df.values, total=len(df.index), desc=f"mapping {PREFIX}")
-    for family_identifier, clan_id, clan_name, family_name, definition in it:
+    df = get_pfam_clan_df(version=version, force=force)
+    for family_identifier, clan_id, clan_name, family_name, definition in df.values:
         parents = []
         if pd.notna(clan_id) and pd.notna(clan_name):
-            parents.append(Reference("pfam.clan", identifier=clan_id, name=clan_name))
+            parents.append(Reference(prefix="pfam.clan", identifier=clan_id, name=clan_name))
         yield Term(
-            reference=Reference(PREFIX, identifier=family_identifier, name=family_name),
+            reference=Reference(prefix=PREFIX, identifier=family_identifier, name=family_name),
             definition=definition,
             parents=parents,
         )

@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Interface for caching data on AWS S3."""
+
+from __future__ import annotations
 
 import logging
 import os
-from typing import Optional, Set
 
 import boto3
 import humanize
@@ -25,15 +24,15 @@ from pyobo.utils.path import prefix_cache_join
 
 __all__ = [
     "download_artifacts",
+    "list_artifacts",
     "upload_artifacts",
     "upload_artifacts_for_prefix",
-    "list_artifacts",
 ]
 
 logger = logging.getLogger(__name__)
 
 
-def download_artifacts(bucket: str, suffix: Optional[str] = None) -> None:
+def download_artifacts(bucket: str, suffix: str | None = None) -> None:
     """Download compiled parts from AWS.
 
     :param bucket: The name of the S3 bucket to download
@@ -57,8 +56,8 @@ def download_artifacts(bucket: str, suffix: Optional[str] = None) -> None:
 
 def upload_artifacts(
     bucket: str,
-    whitelist: Optional[Set[str]] = None,
-    blacklist: Optional[Set[str]] = None,
+    whitelist: set[str] | None = None,
+    blacklist: set[str] | None = None,
     s3_client=None,
 ) -> None:
     """Upload all artifacts to AWS."""
@@ -77,14 +76,19 @@ def upload_artifacts(
         upload_artifacts_for_prefix(prefix=prefix, bucket=bucket, s3_client=s3_client)
 
 
-def upload_artifacts_for_prefix(*, prefix: str, bucket: str, s3_client=None):
+def upload_artifacts_for_prefix(
+    *, prefix: str, bucket: str, s3_client=None, version: str | None = None
+):
     """Upload compiled parts for the given prefix to AWS."""
     if s3_client is None:
         s3_client = boto3.client("s3")
 
+    if version is None:
+        version = get_version(prefix)
+
     logger.info("[%s] getting id->name mapping", prefix)
     get_id_name_mapping(prefix)
-    id_name_path = prefix_cache_join(prefix, name="names.tsv", version=get_version(prefix))
+    id_name_path = prefix_cache_join(prefix, name="names.tsv", version=version)
     if not id_name_path.exists():
         raise FileNotFoundError
     id_name_key = os.path.join(prefix, "cache", "names.tsv")
@@ -93,7 +97,7 @@ def upload_artifacts_for_prefix(*, prefix: str, bucket: str, s3_client=None):
 
     logger.info("[%s] getting id->synonyms mapping", prefix)
     get_id_synonyms_mapping(prefix)
-    id_synonyms_path = prefix_cache_join(prefix, name="synonyms.tsv", version=get_version(prefix))
+    id_synonyms_path = prefix_cache_join(prefix, name="synonyms.tsv", version=version)
     if not id_synonyms_path.exists():
         raise FileNotFoundError
     id_synonyms_key = os.path.join(prefix, "cache", "synonyms.tsv")
@@ -102,7 +106,7 @@ def upload_artifacts_for_prefix(*, prefix: str, bucket: str, s3_client=None):
 
     logger.info("[%s] getting xrefs", prefix)
     get_xrefs_df(prefix)
-    xrefs_path = prefix_cache_join(prefix, name="xrefs.tsv", version=get_version(prefix))
+    xrefs_path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
     if not xrefs_path.exists():
         raise FileNotFoundError
     xrefs_key = os.path.join(prefix, "cache", "xrefs.tsv")
@@ -111,7 +115,7 @@ def upload_artifacts_for_prefix(*, prefix: str, bucket: str, s3_client=None):
 
     logger.info("[%s] getting relations", prefix)
     get_relations_df(prefix)
-    relations_path = prefix_cache_join(prefix, name="relations.tsv", version=get_version(prefix))
+    relations_path = prefix_cache_join(prefix, name="relations.tsv", version=version)
     if not relations_path.exists():
         raise FileNotFoundError
     relations_key = os.path.join(prefix, "cache", "relations.tsv")
@@ -120,7 +124,7 @@ def upload_artifacts_for_prefix(*, prefix: str, bucket: str, s3_client=None):
 
     logger.info("[%s] getting properties", prefix)
     get_properties_df(prefix)
-    properties_path = prefix_cache_join(prefix, name="properties.tsv", version=get_version(prefix))
+    properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
     if not properties_path.exists():
         raise FileNotFoundError
     properties_key = os.path.join(prefix, "cache", "properties.tsv")
@@ -129,7 +133,7 @@ def upload_artifacts_for_prefix(*, prefix: str, bucket: str, s3_client=None):
 
     logger.info("[%s] getting alternative identifiers", prefix)
     get_id_to_alts(prefix)
-    alts_path = prefix_cache_join(prefix, name="alt_ids.tsv", version=get_version(prefix))
+    alts_path = prefix_cache_join(prefix, name="alt_ids.tsv", version=version)
     if not alts_path.exists():
         raise FileNotFoundError
     alts_key = os.path.join(prefix, "cache", "alt_ids.tsv")

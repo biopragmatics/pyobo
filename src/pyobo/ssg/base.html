@@ -1,0 +1,93 @@
+{% macro link_reference(reference) %}
+<a href="{{metaregistry_base_url}}/{{ reference.curie }}"><code>{{ reference.curie }}</code></a>{% if reference.name %} <span>{{ reference.name }}</span>{% endif %}
+{% endmacro %}
+
+{% macro list_references(references, title) %}
+    {% if references %}
+        <dt>
+            <span class="badge badge-primary">{{ title }}</span>
+        </dt>
+        <dd>
+            {% if references|length == 1 %}
+            {{ link_reference(references[0]) }}
+            {% else %}
+                <ul>
+                    {% for reference in references %}
+                        <li>{{ link_reference(reference) }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </dd>
+    {% endif %}
+{% endmacro %}
+
+<!DOCTYPE html>
+<html{% block html_attribs %} lang="en"{% endblock html_attribs %}>
+<head>{%- block head %}
+    {%- block metas %}
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {%- endblock metas %}
+
+    {%- block styles %}
+    <link
+        rel="stylesheet"
+        href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.6.12/c3.min.css"/>
+    <style>
+        h2 {
+            margin-top: 35px;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-flow: column;
+        }
+
+        .footer {
+            margin-top: auto;
+            padding-top: 1em;
+            background-color: #f5f5f5;
+        }
+    </style>
+    {%- endblock styles %}
+    <title>{% block title %}{% endblock title %}</title>
+{%- endblock head %}</head>
+
+<body{% block body_attribs %}{% endblock body_attribs %}>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <span class="navbar-brand">
+        {{ manager.get_name(obo.ontology) }}
+    </span>
+</nav>
+
+{% block main %}
+<div class="container" style="margin-top: 50px; margin-bottom: 50px">
+    {% block content -%}
+    {%- endblock content %}
+</div>
+{% endblock %}
+
+<footer class="footer">
+    <p class="small text-center text-muted">
+        Generated with PyOBO
+    </p>
+</footer>
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+{%- endblock scripts %}
+</body>
+</html>

@@ -1,14 +1,17 @@
-# -*- coding: utf-8 -*-
-
 """Converter for CGNC."""
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 
 from pyobo.struct import Obo, Reference, Term, from_species
+from pyobo.struct.typedef import exact_match
 from pyobo.utils.path import ensure_df
+
+__all__ = [
+    "CGNCGetter",
+]
 
 PREFIX = "cgnc"
 URL = "http://birdgenenames.org/cgnc/downloads.jsp?file=standard"
@@ -16,16 +19,21 @@ URL = "http://birdgenenames.org/cgnc/downloads.jsp?file=standard"
 logger = logging.getLogger(__name__)
 
 
+class CGNCGetter(Obo):
+    """An ontology representation of the Chicken Genome Nomenclature Consortium's gene nomenclature."""
+
+    ontology = PREFIX
+    dynamic_version = True
+    typedefs = [from_species, exact_match]
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return get_terms(force=force)
+
+
 def get_obo(force: bool = False) -> Obo:
     """Get CGNC as OBO."""
-    return Obo(
-        iter_terms=get_terms,
-        iter_terms_kwargs=dict(force=force),
-        name="CGNC",
-        ontology=PREFIX,
-        typedefs=[from_species],
-        auto_generated_by=f"bio2obo:{PREFIX}",
-    )
+    return CGNCGetter(force=force)
 
 
 HEADER = [
@@ -59,13 +67,13 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         term = Term.from_triple(
             prefix=PREFIX,
             identifier=cgnc_id,
-            name=name,
+            name=name if pd.notna(name) else None,
         )
         term.set_species(identifier="9031", name="Gallus gallus")
         if entrez_id and pd.notna(entrez_id):
-            term.append_xref(Reference(prefix="ncbigene", identifier=entrez_id))
+            term.append_exact_match(Reference(prefix="ncbigene", identifier=entrez_id))
         if pd.notna(ensembl_id):
-            term.append_xref(Reference(prefix="ensembl", identifier=ensembl_id))
+            term.append_exact_match(Reference(prefix="ensembl", identifier=ensembl_id))
         if synonym_1 and pd.notna(synonym_1):
             term.append_synonym(synonym_1)
         if synoynm_2 and pd.notna(synoynm_2):
@@ -74,4 +82,4 @@ def get_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().cli()
+    CGNCGetter.cli()

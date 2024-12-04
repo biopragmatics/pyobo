@@ -1,27 +1,25 @@
-# -*- coding: utf-8 -*-
-
 """Constants for PyOBO."""
 
-import logging
-from functools import partial
-from typing import Callable
+from __future__ import annotations
 
-import bioversions
+import logging
+import re
+
 import pystow
+from typing_extensions import TypedDict
 
 __all__ = [
-    "RAW_DIRECTORY",
     "DATABASE_DIRECTORY",
+    "RAW_DIRECTORY",
     "SPECIES_REMAPPING",
-    "version_getter",
 ]
 
 logger = logging.getLogger(__name__)
 
 PYOBO_MODULE = pystow.module("pyobo")
-RAW_MODULE = PYOBO_MODULE.submodule("raw")
+RAW_MODULE = PYOBO_MODULE.module("raw")
 RAW_DIRECTORY = RAW_MODULE.base
-DATABASE_MODULE = PYOBO_MODULE.submodule("database")
+DATABASE_MODULE = PYOBO_MODULE.module("database")
 DATABASE_DIRECTORY = DATABASE_MODULE.base
 
 SPECIES_REMAPPING = {
@@ -34,9 +32,11 @@ GLOBAL_SKIP = {
     "resid",  # deprecated
     "adw",  # deprecated
 }
+GLOBAL_CHECK_IDS = False
 
 #: Default prefix
-DEFAULT_PREFIX = "obo"
+DEFAULT_PREFIX = "debio"
+DEFAULT_PATTERN = re.compile("^\\d{7}$")
 
 SOURCE_PREFIX = "source_ns"
 SOURCE_ID = "source_id"
@@ -82,13 +82,7 @@ TYPEDEFS_FILE = "typedefs.tsv.gz"
 SPECIES_RECORD = "5334738"
 SPECIES_FILE = "species.tsv.gz"
 
-
-def version_getter(name: str) -> Callable[[], str]:
-    """Make a function appropriate for getting versions."""
-    return partial(bioversions.get_version, name)
-
-
-NCBITAXON_PREFIX = "NCBITaxon"
+NCBITAXON_PREFIX = "ncbitaxon"
 DATE_FORMAT = "%d:%m:%Y %H:%M"
 PROVENANCE_PREFIXES = {
     "pubmed",
@@ -106,3 +100,71 @@ PROVENANCE_PREFIXES = {
     "isbn",
     "issn",
 }
+
+
+class DatabaseKwargs(TypedDict):
+    """Keyword arguments for database CLI functions."""
+
+    strict: bool
+    force: bool
+    force_process: bool
+    skip_pyobo: bool
+    skip_below: str | None
+    skip_set: set[str] | None
+    use_tqdm: bool
+
+
+class SlimGetOntologyKwargs(TypedDict):
+    """Keyword arguments for database CLI functions.
+
+    These arguments are global during iteration over _all_
+    ontologies, whereas the additional ``version`` is added in the
+    subclass below for specific instances when only a single
+    ontology is requested.
+    """
+
+    strict: bool
+    force: bool
+    force_process: bool
+
+
+class GetOntologyKwargs(SlimGetOntologyKwargs):
+    """Represents the optional keyword arguments passed to :func:`pyobo.get_ontology`.
+
+    This dictionary doesn't contain ``prefix`` since this is always explicitly handled.
+    """
+
+    version: str | None
+
+
+def check_should_force(data: GetOntologyKwargs) -> bool:
+    """Determine whether caching should be forced based on generic keyword arguments."""
+    # note that this could be applied to the superclass of GetOntologyKwargs
+    # but this function should only be used in the scope where GetOntologyKwargs
+    # is appropriate.
+    return data.get("force", False) or data.get("force_process", False)
+
+
+class LookupKwargs(GetOntologyKwargs):
+    """Represents all arguments passed to :func:`pyobo.get_ontology`.
+
+    This dictionary does contain the ``prefix`` since it's used in the scope
+    of CLI functions.
+    """
+
+    prefix: str
+
+
+class IterHelperHelperDict(SlimGetOntologyKwargs):
+    """Represents arguments needed when iterating over all ontologies.
+
+    The explicitly defind arguments in this typed dict are used for
+    the loop function :func:`iter_helper_helper` and the rest that
+    are inherited get passed to :func:`pyobo.get_ontology` in each
+    iteration.
+    """
+
+    use_tqdm: bool
+    skip_below: str | None
+    skip_pyobo: bool
+    skip_set: set[str] | None

@@ -1,28 +1,30 @@
-# -*- coding: utf-8 -*-
-
 """Sources of xrefs not from OBO."""
 
 import logging
+from collections.abc import Callable, Iterable, Mapping
 from functools import lru_cache
-from typing import Callable, Iterable, Mapping, Optional
+from typing import cast
 
 import pandas as pd
-from pkg_resources import iter_entry_points
-from tqdm import tqdm
+from class_resolver import FunctionResolver
+from tqdm.auto import tqdm
 
 __all__ = [
-    "iter_xref_plugins",
     "has_xref_plugin",
-    "run_xref_plugin",
     "iter_xref_plugins",
+    "iter_xref_plugins",
+    "run_xref_plugin",
 ]
 
 logger = logging.getLogger(__name__)
 
+XrefGetter = Callable[[], pd.DataFrame]
 
-@lru_cache()
-def _get_xref_plugins() -> Mapping[str, Callable[[], pd.DataFrame]]:
-    return {entry.name: entry.load() for entry in iter_entry_points(group="pyobo.xrefs")}
+
+@lru_cache
+def _get_xref_plugins() -> Mapping[str, XrefGetter]:
+    resolver = cast(FunctionResolver[XrefGetter], FunctionResolver.from_entrypoint("pyobo.xrefs"))
+    return resolver.lookup_dict
 
 
 def has_xref_plugin(prefix: str) -> bool:
@@ -41,12 +43,10 @@ def run_xref_plugin(prefix: str) -> pd.DataFrame:
 
 
 def iter_xref_plugins(
-    use_tqdm: bool = True, skip_below: Optional[str] = None
+    use_tqdm: bool = True, skip_below: str | None = None
 ) -> Iterable[pd.DataFrame]:
     """Get all modules in the PyOBO sources."""
-    it = sorted(_get_xref_plugins().items())
-    if use_tqdm:
-        it = tqdm(it, desc="Mapping Plugins")
+    it = tqdm(sorted(_get_xref_plugins().items()), desc="Mapping Plugins", disable=not use_tqdm)
     for prefix, get_df in it:
         if skip_below and prefix < skip_below:
             continue
