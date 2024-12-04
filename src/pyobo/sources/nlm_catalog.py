@@ -44,21 +44,18 @@ def get_terms(force: bool = False) -> Iterable[Term]:
     journal_to_publisher_df = ensure_df(
         PREFIX, url=CATALOG_TO_PUBLISHER, sep="|", force=force, dtype=str
     )
-    journal_id_to_publisher_key = {
+    journal_id_to_publisher_key: dict[str, Reference] = {
         # TODO change to external prefix later
         journal_id: default_reference(PREFIX, key, name)
         for journal_id, key, name in journal_to_publisher_df.values
     }
     for element in root.findall("Journal"):
-        term = _process_journal(element)
-        if pr := journal_id_to_publisher_key.get(term.identifier):
-            term.annotate_object(PUBLISHER, pr)
-        yield term
+        yield _process_journal(element, journal_id_to_publisher_key)
     for k in sorted(set(journal_id_to_publisher_key.values())):
         yield Term(reference=k)
 
 
-def _process_journal(element) -> Term:
+def _process_journal(element, journal_id_to_publisher_key: dict[str, Reference]) -> Term:
     nlm_id = element.findtext("NlmUniqueID")
     name = element.findtext("Name")
     issns = [(issn.text, issn.attrib["type"]) for issn in element.findall("Issn")]
@@ -76,6 +73,8 @@ def _process_journal(element) -> Term:
         term.annotate_integer(START_YEAR, start_year)
     if end_year := element.findtext("EndYear"):
         term.annotate_integer(END_YEAR, end_year)
+    if publisher_reference := journal_id_to_publisher_key.get(term.identifier):
+        term.annotate_object(PUBLISHER, publisher_reference)
     return term
 
 
