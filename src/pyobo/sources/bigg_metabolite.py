@@ -15,8 +15,6 @@ __all__ = [
 ]
 
 PREFIX = "bigg.metabolite"
-HEADER = ["bigg_id", "universal_bigg_id", "name", "model_list", "database_links", "old_bigg_ids"]
-
 URL = "http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt"
 
 
@@ -50,6 +48,7 @@ KEY_TO_PREFIX = {
     "KEGG Drug": "kegg.drug",
     "KEGG Glycan": "kegg.glycan",
 }
+EXACTS = {"inchikey"}
 
 
 def _split(x) -> list[str]:
@@ -62,10 +61,6 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
     bigg_df = ensure_df(
         prefix=PREFIX,
         url=URL,
-        sep="\t",
-        skiprows=18,
-        header=None,
-        names=HEADER,
         force=force,
         version=version,
     )
@@ -127,7 +122,11 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
             if prefix != KEY_TO_PREFIX.get(key):
                 tqdm.write(f"[{PREFIX}] mismatch between {prefix=} and {key=} - {identifier_url}")
                 continue
-            term.append_xref(Reference(prefix=prefix, identifier=identifier))
+            reference = Reference(prefix=prefix, identifier=identifier)
+            if prefix in EXACTS:
+                term.append_exact_match(reference)
+            else:
+                term.append_xref(reference)
 
         yield term
 
