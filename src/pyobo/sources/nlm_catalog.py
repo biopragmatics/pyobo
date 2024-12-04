@@ -69,6 +69,8 @@ def _process_journal(element) -> Term:
     for synonym in element.findall("Alias"):
         term.append_synonym(synonym.text)
     for issn, _issn_type in issns:
+        # TODO include ISSN type, this is important
+        #  to determine a "canonical" one
         term.append_xref(Reference(prefix="issn", identifier=issn))
     if start_year := element.findtext("StartYear"):
         term.annotate_integer(START_YEAR, start_year)

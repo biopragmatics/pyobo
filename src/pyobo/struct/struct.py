@@ -574,7 +574,7 @@ class Term(Referenced):
         for typedef, reference in self.iterate_relations():
             _typedef_warn(prefix=ontology_prefix, predicate=typedef, typedefs=typedefs)
             predicate_reference = self._reference(typedef, ontology_prefix)
-            s = f"relationship: {predicate_reference} {reference.preferred_curie}"
+            s = f"relationship: {predicate_reference} {self._reference(reference, ontology_prefix)}"
             if typedef.name or reference.name:
                 s += " !"
                 if typedef.name:
@@ -596,7 +596,7 @@ class Term(Referenced):
             _typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)
             predicate_curie = self._reference(predicate, ontology_prefix)
             for value in sorted(values):
-                yv = f"{predicate_curie} {value.preferred_curie}"
+                yv = f"{predicate_curie} {self._reference(value, ontology_prefix)}"
                 if predicate.name and value.name:
                     yv += f" ! {predicate.name} {value.name}"
                 yield yv
