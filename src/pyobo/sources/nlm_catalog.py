@@ -62,9 +62,9 @@ def _process_journal(element) -> Term:
     nlm_id = element.findtext("NlmUniqueID")
     name = element.findtext("Name")
     issns = [(issn.text, issn.attrib["type"]) for issn in element.findall("Issn")]
+    # ActivityFlag is either "0" or "1"
     term = Term(
         reference=Reference(prefix=PREFIX, identifier=nlm_id, name=name),
-        is_obsolete=element.findtext("ActivityFlag") == "0",
     )
     for synonym in element.findall("Alias"):
         term.append_synonym(synonym.text)
