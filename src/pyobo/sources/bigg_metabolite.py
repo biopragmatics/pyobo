@@ -32,7 +32,7 @@ class BIGGMetaboliteGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return get_terms(force=force)
+        return iterate_terms(force=force)
 
 
 KEY_TO_PREFIX = {
@@ -57,7 +57,8 @@ def _split(x) -> list[str]:
     return []
 
 
-def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]:
+def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[Term]:
+    """Iterate terms for BIGG Metabolite."""
     bigg_df = ensure_df(
         prefix=PREFIX,
         url=URL,
