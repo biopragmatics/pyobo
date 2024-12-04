@@ -1,4 +1,4 @@
-"""Converter for BIGG."""
+"""Converter for BiGG."""
 
 from collections.abc import Iterable
 
@@ -11,15 +11,15 @@ from pyobo.struct.typedef import participates_in
 from pyobo.utils.path import ensure_df
 
 __all__ = [
-    "BIGGMetaboliteGetter",
+    "BiGGMetaboliteGetter",
 ]
 
 PREFIX = "bigg.metabolite"
 URL = "http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt"
 
 
-class BIGGMetaboliteGetter(Obo):
-    """An ontology representation of BIGG Metabolites."""
+class BiGGMetaboliteGetter(Obo):
+    """An ontology representation of BiGG Metabolites."""
 
     ontology = PREFIX
     bioversions_key = "bigg"
@@ -58,7 +58,7 @@ def _split(x) -> list[str]:
 
 
 def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[Term]:
-    """Iterate terms for BIGG Metabolite."""
+    """Iterate terms for BiGG Metabolite."""
     bigg_df = ensure_df(
         prefix=PREFIX,
         url=URL,
@@ -133,4 +133,4 @@ def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[T
 
 
 if __name__ == "__main__":
-    BIGGMetaboliteGetter().write_default(force=True, write_obo=True)
+    BiGGMetaboliteGetter().cli()
