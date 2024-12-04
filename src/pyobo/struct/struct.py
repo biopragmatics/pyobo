@@ -494,6 +494,10 @@ class Term(Referenced):
             prop, str(value).lower(), Reference(prefix="xsd", identifier="boolean")
         )
 
+    def annotate_integer(self, prop: ReferenceHint, value: str) -> Self:
+        """Append an object annotation."""
+        return self.annotate_literal(prop, value, Reference(prefix="xsd", identifier="integer"))
+
     def _definition_fp(self) -> str:
         definition = obo_escape_slim(self.definition) if self.definition else ""
         return f'"{definition}" [{comma_separate_references(self.provenance)}]'
