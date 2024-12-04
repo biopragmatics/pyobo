@@ -6,6 +6,7 @@ import logging
 from functools import wraps
 from typing import ClassVar
 
+import bioontologies.upgrade
 import bioregistry
 from curies import Reference, ReferenceTuple
 
@@ -74,7 +75,8 @@ def normalize_curie(
     strict: bool = True,
     ontology_prefix: str | None = None,
     node: Reference | None = None,
-) -> tuple[str, str] | tuple[None, None]:
+    upgrade: bool = True,
+) -> ReferenceTuple | tuple[None, None]:
     """Parse a string that looks like a CURIE.
 
     :param curie: A compact uniform resource identifier (CURIE)
@@ -85,11 +87,12 @@ def normalize_curie(
     - Normalizes the namespace
     - Checks against a blacklist for the entire curie, for the namespace, and for suffixes.
     """
-    # Remap the curie with the full list
-    curie = remap_full(curie)
+    if upgrade:
+        # Remap the curie with the full list
+        curie = remap_full(curie)
 
-    # Remap node's prefix (if necessary)
-    curie = remap_prefix(curie, ontology_prefix=ontology_prefix)
+        # Remap node's prefix (if necessary)
+        curie = remap_prefix(curie, ontology_prefix=ontology_prefix)
 
     if curie_is_blacklisted(curie):
         return None, None
@@ -97,6 +100,9 @@ def normalize_curie(
         return None, None
     if curie_has_blacklisted_suffix(curie):
         return None, None
+
+    if upgrade and (reference_t := bioontologies.upgrade.upgrade(curie)):
+        return reference_t
 
     if curie.startswith("http:") or curie.startswith("https:"):
         if reference := parse_iri(curie):
@@ -114,13 +120,10 @@ def normalize_curie(
             logger.debug(f"could not split CURIE on colon: {curie}")
         return None, None
 
-    # remove redundant prefix
-    if identifier.casefold().startswith(f"{prefix.casefold()}:"):
-        identifier = identifier[len(prefix) + 1 :]
-
     norm_node_prefix = bioregistry.normalize_prefix(prefix)
     if norm_node_prefix:
-        return norm_node_prefix, identifier
+        identifier = bioregistry.standardize_identifier(norm_node_prefix, identifier)
+        return ReferenceTuple(norm_node_prefix, identifier)
     elif strict:
         raise MissingPrefixError(curie=curie, ontology_prefix=ontology_prefix, node=node)
     else:

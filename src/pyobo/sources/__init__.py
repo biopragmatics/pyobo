@@ -20,6 +20,7 @@ from .drugcentral import DrugCentralGetter
 from .expasy import ExpasyGetter
 from .famplex import FamPlexGetter
 from .flybase import FlyBaseGetter
+from .gard import GARDGetter
 from .geonames import GeonamesGetter
 from .gtdb import GTDBGetter
 from .gwascentral_phenotype import GWASCentralPhenotypeGetter
@@ -38,6 +39,7 @@ from .mirbase_family import MiRBaseFamilyGetter
 from .mirbase_mature import MiRBaseMatureGetter
 from .msigdb import MSigDBGetter
 from .ncbigene import NCBIGeneGetter
+from .nlm_catalog import NLMCatalogGetter
 from .npass import NPASSGetter
 from .omim_ps import OMIMPSGetter
 from .pathbank import PathBankGetter
@@ -79,6 +81,7 @@ __all__ = [
     "ExpasyGetter",
     "FamPlexGetter",
     "FlyBaseGetter",
+    "GARDGetter",
     "GTDBGetter",
     "GWASCentralPhenotypeGetter",
     "GWASCentralStudyGetter",
@@ -99,6 +102,7 @@ __all__ = [
     "MiRBaseGetter",
     "MiRBaseMatureGetter",
     "NCBIGeneGetter",
+    "NLMCatalogGetter",
     "NPASSGetter",
     "OMIMPSGetter",
     "PIDGetter",

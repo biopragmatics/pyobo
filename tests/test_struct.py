@@ -520,3 +520,15 @@ class TestTerm(unittest.TestCase):
 
         self.assertIsNone(term.get_relationship(exact_match))
         self.assertIsNone(term.get_species())
+
+    def test_default_term(self) -> None:
+        """Test when a term uses a default reference."""
+        term = Term(reference=default_reference("gard", identifier="genetics", name="Genetics"))
+        self.assert_lines(
+            """\
+            [Term]
+            id: genetics
+            name: Genetics
+            """,
+            term.iterate_obo_lines(ontology_prefix="gard", typedefs={}),
+        )

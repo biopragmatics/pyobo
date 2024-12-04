@@ -494,6 +494,10 @@ class Term(Referenced):
             prop, str(value).lower(), Reference(prefix="xsd", identifier="boolean")
         )
 
+    def annotate_integer(self, prop: ReferenceHint, value: str) -> Self:
+        """Append an object annotation."""
+        return self.annotate_literal(prop, value, Reference(prefix="xsd", identifier="integer"))
+
     def _definition_fp(self) -> str:
         definition = obo_escape_slim(self.definition) if self.definition else ""
         return f'"{definition}" [{comma_separate_references(self.provenance)}]'
@@ -526,7 +530,7 @@ class Term(Referenced):
     ) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield f"\n[{self.type}]"
-        yield f"id: {self.preferred_curie}"
+        yield f"id: {self._reference(self.reference, ontology_prefix)}"
         if self.is_obsolete:
             yield "is_obsolete: true"
         if self.name:
@@ -543,14 +547,14 @@ class Term(Referenced):
             yield f"def: {self._definition_fp()}"
 
         for alt in sorted(self.alt_ids):
-            yield f"alt_id: {alt}"  # __str__ bakes in the ! name
+            yield f"alt_id: {self._reference(alt, ontology_prefix, add_name_comment=True)}"
 
         for xref in sorted(xrefs):
-            yield f"xref: {xref}"  # __str__ bakes in the ! name
+            yield f"xref: {self._reference(xref, ontology_prefix, add_name_comment=True)}"
 
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
         for parent in sorted(self.parents):
-            yield f"{parent_tag}: {parent}"  # __str__ bakes in the ! name
+            yield f"{parent_tag}: {self._reference(parent, ontology_prefix, add_name_comment=True)}"
 
         if emit_object_properties:
             yield from self._emit_relations(ontology_prefix, typedefs)
@@ -570,7 +574,7 @@ class Term(Referenced):
         for typedef, reference in self.iterate_relations():
             _typedef_warn(prefix=ontology_prefix, predicate=typedef, typedefs=typedefs)
             predicate_reference = self._reference(typedef, ontology_prefix)
-            s = f"relationship: {predicate_reference} {reference.preferred_curie}"
+            s = f"relationship: {predicate_reference} {self._reference(reference, ontology_prefix)}"
             if typedef.name or reference.name:
                 s += " !"
                 if typedef.name:
@@ -592,7 +596,7 @@ class Term(Referenced):
             _typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)
             predicate_curie = self._reference(predicate, ontology_prefix)
             for value in sorted(values):
-                yv = f"{predicate_curie} {value.preferred_curie}"
+                yv = f"{predicate_curie} {self._reference(value, ontology_prefix)}"
                 if predicate.name and value.name:
                     yv += f" ! {predicate.name} {value.name}"
                 yield yv
@@ -608,8 +612,12 @@ class Term(Referenced):
                 yield f'{predicate_curie} "{value}" {datatype.preferred_curie}'
 
     @staticmethod
-    def _reference(predicate: Reference, ontology_prefix: str) -> str:
-        return reference_escape(predicate, ontology_prefix=ontology_prefix)
+    def _reference(
+        predicate: Reference, ontology_prefix: str, add_name_comment: bool = False
+    ) -> str:
+        return reference_escape(
+            predicate, ontology_prefix=ontology_prefix, add_name_comment=add_name_comment
+        )
 
     @staticmethod
     def _escape(s) -> str:
@@ -646,11 +654,13 @@ _SYNONYM_TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
 
 def _synonym_typedef_warn(
     prefix: str, predicate: Reference, synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef]
-) -> bool:
+) -> SynonymTypeDef | None:
     if predicate.pair == DEFAULT_SYNONYM_TYPE.pair:
-        return False
-    if predicate.pair in default_typedefs or predicate.pair in synonym_typedefs:
-        return False
+        return DEFAULT_SYNONYM_TYPE
+    if predicate.pair in default_synonym_typedefs:
+        return default_synonym_typedefs[predicate.pair]
+    if predicate.pair in synonym_typedefs:
+        return synonym_typedefs[predicate.pair]
     key = prefix, predicate
     if key not in _SYNONYM_TYPEDEF_WARNINGS:
         _SYNONYM_TYPEDEF_WARNINGS.add(key)
@@ -664,7 +674,7 @@ def _synonym_typedef_warn(
             )
         else:
             logger.warning(f"[{prefix}] synonym typedef not defined: {predicate.preferred_curie}")
-    return True
+    return None
 
 
 class BioregistryError(ValueError):

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import bioontologies.relations
+import bioontologies.upgrade
 import bioregistry
 import curies
 from curies import ReferenceTuple
@@ -96,8 +98,6 @@ class Reference(curies.Reference):
         if prefix is None or identifier is None:
             return None
 
-        identifier = bioregistry.standardize_identifier(prefix, identifier)
-
         if name is None and auto:
             from ..api import get_name
 
@@ -108,12 +108,8 @@ class Reference(curies.Reference):
     def _escaped_identifier(self):
         return obo_escape(self.identifier)
 
-    def __str__(self):
-        identifier_lower = self.identifier.lower()
-        if identifier_lower.startswith(f"{self.prefix.lower()}:"):
-            rv = identifier_lower
-        else:
-            rv = f"{self.preferred_prefix}:{self._escaped_identifier}"
+    def __str__(self) -> str:
+        rv = f"{self.preferred_prefix}:{self._escaped_identifier}"
         if self.name:
             rv = f"{rv} ! {self.name}"
         return rv
@@ -189,14 +185,47 @@ def default_reference(prefix: str, identifier: str, name: str | None = None) -> 
     return Reference(prefix="obo", identifier=f"{prefix}#{identifier}", name=name)
 
 
-def reference_escape(predicate: Reference | Referenced, *, ontology_prefix: str) -> str:
+def reference_escape(
+    reference: Reference | Referenced, *, ontology_prefix: str, add_name_comment: bool = False
+) -> str:
     """Write a reference with default namespace removed."""
-    if predicate.prefix == "obo" and predicate.identifier.startswith(f"{ontology_prefix}#"):
-        return predicate.identifier.removeprefix(f"{ontology_prefix}#")
-    else:
-        return predicate.preferred_curie
+    if reference.prefix == "obo" and reference.identifier.startswith(f"{ontology_prefix}#"):
+        return reference.identifier.removeprefix(f"{ontology_prefix}#")
+    rv = reference.preferred_curie
+    if add_name_comment and reference.name:
+        rv += f" ! {reference.name}"
+    return rv
 
 
 def comma_separate_references(references: list[Reference]) -> str:
     """Map a list to strings and make comma separated."""
     return ", ".join(r.preferred_curie for r in references)
+
+
+def _ground_relation(relation_str: str) -> Reference | None:
+    prefix, identifier = bioontologies.relations.ground_relation(relation_str)
+    if prefix and identifier:
+        return Reference(prefix=prefix, identifier=identifier)
+    return None
+
+
+def _parse_identifier(
+    s: str,
+    *,
+    ontology_prefix: str,
+    strict: bool = True,
+    node: Reference | None = None,
+    name: str | None = None,
+    upgrade: bool = True,
+) -> Reference | None:
+    """Parse from a CURIE, URI, or default string in the ontology prefix's IDspace."""
+    if ":" in s:
+        return Reference.from_curie_or_uri(
+            s, ontology_prefix=ontology_prefix, name=name, strict=strict, node=node
+        )
+    if upgrade:
+        if xx := bioontologies.upgrade.upgrade(s):
+            return Reference(prefix=xx.prefix, identifier=xx.identifier, name=name)
+        if yy := _ground_relation(s):
+            return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
+    return default_reference(ontology_prefix, s, name=name)

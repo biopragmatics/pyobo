@@ -8,21 +8,31 @@ from textwrap import dedent
 from obonet import read_obo
 
 from pyobo import Obo, Reference, Term
+from pyobo.identifier_utils import UnparsableIRIError
 from pyobo.reader import from_obonet, get_first_nonescaped_quote
 from pyobo.struct import default_reference
-from pyobo.struct.struct import DEFAULT_SYNONYM_TYPE
-from pyobo.struct.typedef import TypeDef, exact_match, has_dbxref, is_conjugate_base_of, see_also
+from pyobo.struct.struct import DEFAULT_SYNONYM_TYPE, abbreviation
+from pyobo.struct.typedef import (
+    TypeDef,
+    derives_from,
+    exact_match,
+    has_dbxref,
+    is_conjugate_base_of,
+    see_also,
+)
 
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
 
 
-def _read(text: str, *, strict: bool = True) -> Obo:
+def _read(
+    text: str, *, strict: bool = True, version: str | None = None, upgrade: bool = True
+) -> Obo:
     text = dedent(text).strip()
     io = StringIO()
     io.write(text)
     io.seek(0)
     graph = read_obo(io)
-    return from_obonet(graph, strict=strict)
+    return from_obonet(graph, strict=strict, version=version, upgrade=upgrade)
 
 
 class TestUtils(unittest.TestCase):
@@ -161,18 +171,24 @@ class TestReader(unittest.TestCase):
             [Term]
             id: CHEBI:1234
             name: Test Name
-            relationship: is_conjugate_base_of CHEBI:5678
+            relationship: xyz CHEBI:5678
 
             [Typedef]
-            id: is_conjugate_base_of
+            id: xyz
         """)
         term = self.get_only_term(ontology)
         self.assertIsNone(term.get_relationship(is_conjugate_base_of))
-        r = default_reference("chebi", "is_conjugate_base_of")
+        r = default_reference("chebi", "xyz")
         td = TypeDef(reference=r)
         reference = term.get_relationship(td)
         self.assertIsNotNone(reference)
         self.assertEqual("chebi:5678", reference.curie)
+
+        rr = list(ontology.iterate_filtered_relations(td))
+        self.assertEqual(1, len(rr))
+
+        rr2 = list(ontology.iterate_filtered_relations(is_conjugate_base_of))
+        self.assertEqual(0, len(rr2))
 
     def test_relationship_missing(self) -> None:
         """Test parsing a relationship that isn't defined."""
@@ -244,18 +260,23 @@ class TestReader(unittest.TestCase):
 
             [Term]
             id: CHEBI:1234
-            property_value: mass "121.323" xsd:decimal
+            property_value: xyz "121.323" xsd:decimal
+
+            [Typedef]
+            id: xyz
         """)
         term = self.get_only_term(ontology)
         self.assertEqual(1, len(list(term.annotations_literal)))
-        self.assertEqual("121.323", term.get_property(default_reference("chebi", "mass")))
+        ref = default_reference("chebi", "xyz")
+        self.assertIn(ref, term.annotations_literal)
+        self.assertEqual("121.323", term.get_property(ref))
 
         df = ontology.get_properties_df()
         self.assertEqual(4, len(df.columns))
         self.assertEqual(1, len(df))
         row = dict(df.iloc[0])
         self.assertEqual("1234", row["chebi_id"])
-        self.assertEqual("mass", row["property"])
+        self.assertEqual("xyz", row["property"])
         self.assertEqual("121.323", row["value"])
         self.assertEqual("xsd:decimal", row["datatype"])
 
@@ -416,13 +437,29 @@ class TestReader(unittest.TestCase):
 
     def test_property_literal_url_unregistered(self) -> None:
         """Test using a full OBO PURL as the property."""
-        ontology = _read("""\
+        with self.assertRaises(UnparsableIRIError):
+            _read(
+                """\
+                ontology: chebi
+
+                [Term]
+                id: CHEBI:1234
+                property_value: https://example.com/nope/nope CHEBI:5678
+                """,
+                strict=True,
+            )
+
+        ontology = _read(
+            """\
             ontology: chebi
 
             [Term]
             id: CHEBI:1234
             property_value: https://example.com/nope/nope CHEBI:5678
-        """)
+            """,
+            strict=False,
+        )
+
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(list(term.annotations_literal)))
         self.assertEqual(0, len(list(term.annotations_object)))
@@ -704,6 +741,24 @@ class TestReader(unittest.TestCase):
             synonym.provenance,
         )
 
+    def test_synonym_dashed(self) -> None:
+        """Test parsing a synonym with specificity, type, and provenance."""
+        ontology = _read("""\
+            ontology: chebi
+            synonymtypedef: OMO:1234567 ""
+
+            [Term]
+            id: CHEBI:1234
+            synonym: "Brown-Pearce tumour" EXACT OMO:0003005 []
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("Brown-Pearce tumour", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(Reference(prefix="omo", identifier="0003005"), synonym.type)
+        self.assertEqual([], synonym.provenance)
+
     def test_synonym_url(self) -> None:
         """Test parsing a synonym defined with a PURL."""
         ontology = _read(f"""\
@@ -727,6 +782,111 @@ class TestReader(unittest.TestCase):
             ],
             synonym.provenance,
         )
+
+    def test_synonym_casing(self) -> None:
+        """Test parsing a synonym when an alternate case is used."""
+        ontology = _read(f"""\
+            ontology: chebi
+            synonymtypedef: OMO:1234567 ""
+
+            [Term]
+            id: CHEBI:1234
+            synonym: "LTEC I" EXACT omo:1234567 [Orphanet:93938,{CHARLIE.curie}]
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("LTEC I", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type)
+        self.assertEqual(
+            [
+                Reference(prefix="orphanet", identifier="93938"),
+                CHARLIE,
+            ],
+            synonym.provenance,
+        )
+
+    def test_synonym_default(self) -> None:
+        """Test parsing a synonym that has a built-in prefix."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            synonym: "DoguAnadoluKirmizisi" EXACT most_common_name []
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("DoguAnadoluKirmizisi", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
+
+        # now, we define it properly
+        ontology = _read("""\
+            ontology: chebi
+            synonymtypedef: most_common_name "most common name"
+
+            [Term]
+            id: CHEBI:1234
+            synonym: "DoguAnadoluKirmizisi" EXACT most_common_name []
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("DoguAnadoluKirmizisi", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(default_reference("chebi", "most_common_name"), synonym.type)
+
+    def test_synonym_builtin(self) -> None:
+        """Test parsing a synonym with specificity, type, and provenance."""
+        text = """\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            synonym: "COP" EXACT ABBREVIATION []
+        """
+
+        ontology = _read(text, upgrade=False)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("COP", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
+
+        ontology = _read(text, upgrade=True)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("COP", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(abbreviation.reference, synonym.type)
+
+    @unittest.skip(
+        reason="This needs to be fixed upstream, since obonet's "
+        "parser for synonyms fails on the open squiggly bracket {"
+    )
+    def test_synonym_with_annotations(self) -> None:
+        """Test parsing a synonym with annotations."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            synonym: "10*3.{copies}/mL" EXACT [] {http://purl.obolibrary.org/obo/NCIT_P383="AB", http://purl.obolibrary.org/obo/NCIT_P384="UCUM"}
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("10*3.{copies}/mL", synonym.name)
+        self.assertEqual("EXACT", synonym.specificity)
+        self.assertEqual(DEFAULT_SYNONYM_TYPE, synonym.type)
+        self.assertEqual([], synonym.provenance)
+        # TODO update this when adding annotation parsing!
+        self.assertEqual([], synonym.annotations)
 
     def test_parent(self) -> None:
         """Test parsing out a parent."""
@@ -791,3 +951,123 @@ class TestReader(unittest.TestCase):
             },
             {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
         )
+
+    def test_default_relation(self):
+        """Test parsing a default relation."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:100147
+            relationship: derives_from drugbank:DB00779
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.relationships))
+        self.assertIn(derives_from.reference, term.relationships)
+
+
+class TestVersionHandling(unittest.TestCase):
+    """Test version handling."""
+
+    def test_no_version_no_data(self):
+        """Test when nothing is given."""
+        ontology = _read("""\
+            ontology: chebi
+        """)
+        self.assertIsNone(ontology.data_version)
+
+    def test_static_rewrite(self):
+        """Test using custom configuration for version lookup."""
+        ontology = _read("""\
+            ontology: orth
+        """)
+        self.assertEqual("2", ontology.data_version, msg="The static rewrite wasn't applied")
+
+    def test_simple_version(self):
+        """Test handling a simple version."""
+        ontology = _read("""\
+            ontology: chebi
+            data-version: 123
+        """)
+        self.assertEqual("123", ontology.data_version)
+
+    def test_releases_prefix_simple(self):
+        """Test a parsing a simple version starting with `releases/`."""
+        ontology = _read("""\
+            ontology: chebi
+            data-version: releases/123
+        """)
+        self.assertEqual(
+            "123",
+            ontology.data_version,
+            msg="The prefix `releases/` wasn't properly automatically stripped",
+        )
+
+    def test_releases_prefix_complex(self):
+        """Test parsing a complex string starting with `releases/`."""
+        ontology = _read("""\
+            ontology: chebi
+            data-version: releases/123/chebi.owl
+        """)
+        self.assertEqual(
+            "123",
+            ontology.data_version,
+            msg="The prefix `releases/` wasn't properly automatically stripped",
+        )
+
+    def test_no_version_with_date(self):
+        """Test when the date is substituted for a missing version."""
+        ontology = _read("""\
+            ontology: chebi
+            date: 20:11:2024 18:44
+        """)
+        self.assertEqual("2024-11-20", ontology.data_version)
+
+    def test_bad_version(self):
+        """Test that a version with slashes raises an error."""
+        with self.assertRaises(ValueError):
+            _read("""\
+                ontology: chebi
+                data-version: /////
+            """)
+
+    def test_data_prefix_strip(self):
+        """Test when a prefix gets stripped from the beginning of a version."""
+        ontology = _read("""\
+            ontology: sasap
+            data-version: http://purl.dataone.org/odo/SASAP/0.3.1
+        """)
+        self.assertEqual(
+            "0.3.1", ontology.data_version, msg="The custom defined prefix wasn't stripped"
+        )
+
+    def test_version_full_rewrite(self):
+        """Test when a version gets fully replaced from a custom configuration."""
+        ontology = _read("""\
+            ontology: owl
+            data-version: $Date: 2009/11/15 10:54:12 $
+        """)
+        self.assertEqual(
+            "2009-11-15", ontology.data_version, msg="The custom rewrite wasn't invooked"
+        )
+
+    def test_version_injected(self):
+        """Test when a missing version gets overwritten."""
+        ontology = _read(
+            """\
+            ontology: chebi
+        """,
+            version="123",
+        )
+        self.assertEqual("123", ontology.data_version)
+
+    def test_version_overwrite_mismatch(self):
+        """Test when a version gets overwritten, but it's not matching."""
+        ontology = _read(
+            """\
+            ontology: chebi
+            data-version: 122
+        """,
+            version="123",
+        )
+        self.assertEqual("123", ontology.data_version)

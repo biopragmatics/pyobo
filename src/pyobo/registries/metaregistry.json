@@ -1,66 +1,30 @@
 {
   "blacklists": {
     "full": [
-      "ClinGen:AminoacidopathyGeneCurationPanel",
-      "KEGG",
-      "NIST",
-      "ICD9CM_2005:<new dbxref>",
-      "XX:<new dbxref>",
-      "XX:<new xref>",
-      "STRUCTURE_Formula",
-      "United:Kingdom",
-      "United:States",
-      "Harvard-Oxford:Atlas",
-      "South:Korea",
-      "Codex:\\:260",
-      "Europe:\\:260",
-      "BioGRID:curators",
-      "POC:curators",
-      "CGP:curators",
-      "DiffAvg:",
-      "DiffFormula:",
-      "DiffMono:",
-      "Formula:",
-      "MassAvg:",
-      "MassMono:",
-      "Origin:",
-      "Source:",
-      "TermSpec:",
-      "FormalCharge:",
-      "depicted:by",
-      "http:http\\://www.pacificbiosciences.com/pdf/WP_Detecting_DNA_Base_Modifications_Using_SMRT_Sequencing.pdf",
-      "XX:www.ensembl.org/info/genome/variation/predicted_data.html#consequences",
-      "http:www.ensembl.org/info/genome/variation/predicted_data.html#consequences",
-      "EBI:www.ebi.ac.uk/mutations/recommendations/mutevent.html",
-      "\\:has_start_point",
-      "DDB:pf",
-      "TS:0",
-      "CTD:curators",
-      "Tail:fat",
-      "Pituitary:gland",
-      "Compound:eye",
-      "Lymph:node",
-      "Lamina:propria",
-      "Follicular:fluid",
-      "group:OBI",
-      "GROUP:OBI",
-      "ftp://ftp.ncbi.nih.gov/snp/specs/docsum_3.1.xsd",
-      "https://www.researchgate.net/scientific-contributions/Simon-Reeve-2162827703",
-      "HPO:PCS",
-      "HPO:ICE",
-      "IEDB:BP",
-      "PomBane:vw",
-      "PomBase\\:mah",
       {
-        "type": "group",
-        "from": "mpath",
+        "from": "envo",
         "text": [
-          "Pathbase: Curation",
-          "Pathbase: Pathology Committee"
-        ]
+          "USGS:SDTS",
+          "NASA:earthrealm",
+          "Genomes:fissure",
+          "METAR:FZRA",
+          "INTERNAS:WS2",
+          "Uranium:mining"
+        ],
+        "type": "group"
       },
       {
-        "type": "group",
+        "from": "fbbt",
+        "text": [
+          "FlyPNS:PNSdescription0.html",
+          "FlyPNS:PNSdescription.html#lbd",
+          "FlyPNS:PNSdescription.html#ltd",
+          "FlyPNS:PNSnomenclature.html",
+          "FlyPNS:PNSdescription.html#dh1"
+        ],
+        "type": "group"
+      },
+      {
         "from": "hp",
         "reason": "curator names appearing in definition and synonym provenance strings",
         "text": [
@@ -71,31 +35,90 @@
           "HPO:probinson",
           "UToronto:chum",
           "PhenoTips:CHum"
-        ]
+        ],
+        "type": "group"
       },
       {
-        "type": "group",
+        "from": "idomal",
+        "reason": "nonsense attribution",
         "text": [
           "KL:KL",
           "PT:PT",
           "EM:EM"
         ],
-        "reason": "nonsense attribution",
-        "from": "idomal"
+        "type": "group"
       },
       {
-        "type": "group",
+        "from": "ino",
+        "reason": "random ad-hoc term. should probably just skip this entire ontology",
+        "text": [
+          "LifO:0000005"
+        ],
+        "type": "group"
+      },
+      {
+        "comment": "these actually correspond to NCBI books",
+        "from": "maxo",
+        "text": [
+          "GeneReviews:NBK331",
+          "GeneReviews:NBK5191",
+          "GeneReveiws:NBK350"
+        ],
+        "type": "group"
+      },
+      {
+        "from": "miro",
         "text": [
           "NS:NS",
           "Walter_Reed:taxonomy"
         ],
-        "from": "miro"
+        "type": "group"
       },
-      "PLATY:A.H.L.Fischer",
-      "URL:http\\://digitalcommons.unl.edu/cgi/viewcontent.cgi?article=1007&context=onlinedictinvertzoology",
-      "NIFSTD:NeuroNames_abbrevSource",
       {
-        "type": "group",
+        "from": "mpath",
+        "text": [
+          "Pathbase: Curation",
+          "Pathbase: Pathology Committee"
+        ],
+        "type": "group"
+      },
+      {
+        "from": "ms",
+        "text": [
+          "value-type:xsd\\:string"
+        ],
+        "type": "group"
+      },
+      {
+        "from": "po",
+        "text": [
+          "POC:Maria_Alejandra_Gandolfo",
+          "NIG:Yukiko_Yamazaki",
+          "NYBG:Brandon_Sinn",
+          "NYBG:Dario_Cavaliere"
+        ],
+        "type": "group"
+      },
+      {
+        "from": "to",
+        "text": [
+          "Gramene:pankaj_jaiswal",
+          "scale:6",
+          "Gramene:cwt6"
+        ],
+        "type": "group"
+      },
+      {
+        "from": "tto",
+        "text": [
+          "TTOCurator:Conway_etal_2008",
+          "TTOCurator:CavenderAndCoburn1992",
+          "TTOCurator:Vari1995"
+        ],
+        "type": "group"
+      },
+      {
+        "from": "uberon",
         "text": [
           "OBOL:accepted",
           "OBOL:automatic",
@@ -108,156 +131,136 @@
           "Duct:(anatomy)",
           "Organ:(anatomy)"
         ],
-        "from": "uberon"
+        "type": "group"
       },
-      "TAIR:TED",
-      "CS:0",
+      ":",
       "ADL:FTT",
+      "Bgee:curator",
+      "BioGRID:curators",
+      "CGP:curators",
+      "CS:0",
+      "CTD:curators",
+      "ClinGen:AminoacidopathyGeneCurationPanel",
+      "Codex:\\:260",
+      "Compound:eye",
+      "DDB:pf",
+      "EBI:www.ebi.ac.uk/mutations/recommendations/mutevent.html",
+      "Europe:\\:260",
+      "FBC:Autogenerated",
+      "Follicular:fluid",
+      "GOC:TermGenie",
+      "GOC:go_curators",
+      "GOC:mtg_kidney_jan10",
+      "GOC:pamgo_curators",
+      "GROUP:OBI",
       "Getty:TGN",
-      {
-        "type": "group",
-        "text": [
-          "USGS:SDTS",
-          "NASA:earthrealm",
-          "Genomes:fissure",
-          "METAR:FZRA",
-          "INTERNAS:WS2",
-          "Uranium:mining"
-        ],
-        "from": "envo"
-      },
-      {
-        "type": "group",
-        "text": [
-          "FlyPNS:PNSdescription0.html",
-          "FlyPNS:PNSdescription.html#lbd",
-          "FlyPNS:PNSdescription.html#ltd",
-          "FlyPNS:PNSnomenclature.html",
-          "FlyPNS:PNSdescription.html#dh1"
-        ],
-        "from": "fbbt"
-      },
-      {
-        "type": "group",
-        "text": [
-          "LifO:0000005"
-        ],
-        "from": "ino",
-        "reason": "random ad-hoc term. should probably just skip this entire ontology"
-      },
-      {
-        "type": "group",
-        "text": [
-          "GeneReviews:NBK331",
-          "GeneReviews:NBK5191",
-          "GeneReveiws:NBK350"
-        ],
-        "from": "maxo",
-        "comment": "these actually correspond to NCBI books"
-      },
-      {
-        "type": "group",
-        "text": [
-          "value-type:xsd\\:string"
-        ],
-        "from": "ms"
-      },
-      {
-        "type": "group",
-        "text": [
-          "POC:Maria_Alejandra_Gandolfo",
-          "NIG:Yukiko_Yamazaki",
-          "NYBG:Brandon_Sinn",
-          "NYBG:Dario_Cavaliere"
-        ],
-        "from": "po"
-      },
-      {
-        "type": "group",
-        "text": [
-          "Gramene:pankaj_jaiswal",
-          "scale:6",
-          "Gramene:cwt6"
-        ],
-        "from": "to"
-      },
-      {
-        "type": "group",
-        "text": [
-          "active:in",
-          "actively:involves",
-          "aggregate:statistic",
-          "associated:with",
-          "affected:by",
-          "base:coordinate",
-          "biomarker:for",
-          "capable:of",
-          "caused:by",
-          "coexpressed:with",
-          "association:type",
-          "association:slot",
-          "close:match",
-          "completed:by",
-          "coexists:with",
-          "colocalizes:with",
-          "available:from"
-        ],
-        "from": "biolink"
-      },
-      {
-        "type": "group",
-        "text": [
-          "TTOCurator:Conway_etal_2008",
-          "TTOCurator:CavenderAndCoburn1992",
-          "TTOCurator:Vari1995"
-        ],
-        "from": "tto"
-      }
+      "HPO:ICE",
+      "HPO:PCS",
+      "Harvard-Oxford:Atlas",
+      "ICD9CM_2005:<new dbxref>",
+      "IEDB:BP",
+      "KEGG",
+      "Lamina:propria",
+      "Lymph:node",
+      "NIFSTD:NeuroNames_abbrevSource",
+      "NIST",
+      "PLATY:A.H.L.Fischer",
+      "POC:curators",
+      "Pituitary:gland",
+      "PomBane:vw",
+      "PomBase\\:mah",
+      "STRUCTURE_Formula",
+      "South:Korea",
+      "TAIR:TED",
+      "TS:0",
+      "Tail:fat",
+      "URL:http\\://digitalcommons.unl.edu/cgi/viewcontent.cgi?article=1007&context=onlinedictinvertzoology",
+      "United:Kingdom",
+      "United:States",
+      "XX:-new-dbxref-",
+      "XX:<new dbxref>",
+      "XX:<new dbxref>",
+      "XX:<new xref>",
+      "XX:newdbxref",
+      "XX:www.ensembl.org/info/genome/variation/predicted_data.html#consequences",
+      "ftp://ftp.ncbi.nih.gov/snp/specs/docsum_3.1.xsd",
+      "group:OBI",
+      "http://edamontology.org",
+      "http:http\\://www.pacificbiosciences.com/pdf/WP_Detecting_DNA_Base_Modifications_Using_SMRT_Sequencing.pdf",
+      "http:www.ensembl.org/info/genome/variation/predicted_data.html#consequences",
+      "https://www.researchgate.net/scientific-contributions/Simon-Reeve-2162827703"
+    ],
+    "prefix": [
+      "DDB:",
+      "FBC:",
+      "GIOC:",
+      "Germplasm:",
+      "IUPAC:",
+      "IUPHAR:GPCRListForward?",
+      "Image:",
+      "MONDORULE:",
+      "MTH:",
+      "NCBITaxon_Union",
+      "OBO_SF2_PECO",
+      "PECO_GIT",
+      "PERSON",
+      "PO_GIT:",
+      "PhenoScape:",
+      "RSC:",
+      "STRUCTURE_ChemicalName_IUPAC",
+      "STRUCTURE_Formula",
+      "SUBMITTER",
+      "TEMP:",
+      "stedman"
     ],
     "resource_prefix": {
-      "ogg": [
-        "IMGT/GENE-DB:"
-      ],
-      "vo": [
-        "NCBITaxon_VO"
-      ],
-      "duo": [
-        "topic:"
+      "cellosaurus": [
+        "CCLV",
+        "CCTCC:",
+        "CancerTools:",
+        "Cosmic-CLP:",
+        "FCDI",
+        "IARC_TP53:",
+        "IBRC",
+        "ISCR",
+        "IZSLER",
+        "Innoprot:",
+        "KCB:",
+        "LINCS_HMS",
+        "MCCL",
+        "MCCL:MCC:",
+        "NCBI_Iran",
+        "NCI-DTP",
+        "NISES",
+        "PharmacoDB:",
+        "RSCB",
+        "Rockland:",
+        "SKY/M-FISH/CGH"
       ],
       "cido": [
         "https://www.nmpa.gov.cn"
       ],
-      "fbbt": [
-        "larvalbrain_axon_tract:",
-        "larvalbrain_neuropil:",
-        "FlyPNS:PNS"
+      "cl": [
+        "WikipediaVersioned"
       ],
-      "envo": [
-        "SPIRE:",
-        "TODO^^^",
-        "IUCN-PACS:",
-        "http://www.britannica.com"
-      ],
-      "mco": [
-        "colombos:"
+      "duo": [
+        "topic:"
       ],
       "efo": [
-        "Germplasm:",
         "BilaDO:",
+        "Germplasm:",
         "OGES:"
       ],
-      "idomal": [
-        "IRAC:",
-        "MOSBP"
+      "envo": [
+        "IUCN-PACS:",
+        "SPIRE:",
+        "TODO^^^",
+        "http://www.britannica.com"
       ],
-      "mondo": [
-        "url:https\\://rarediseases.info.nih.gov",
-        "ICD10EXP:"
-      ],
-      "mod": [
-        "Remap:",
-        "UnMod:",
-        "UniMo:"
+      "fbbt": [
+        "FlyPNS:PNS",
+        "larvalbrain_axon_tract:",
+        "larvalbrain_neuropil:"
       ],
       "hao": [
         "DUMMY_TYPDEF:"
@@ -265,322 +268,323 @@
       "iceo": [
         "OTCS:"
       ],
+      "idomal": [
+        "IRAC:",
+        "MOSBP"
+      ],
       "iobc": [
         "detail?JGLOBAL:ID="
       ],
-      "uberon": [
-        "GAID:",
-        "OpenCyc:",
-        "BM:",
-        "BSA:",
-        "XtroDO:",
-        "OGEM:",
-        "ANISEED:",
-        "BILS:",
-        "ABA:",
-        "MAP:"
+      "mco": [
+        "colombos:"
       ],
-      "cellosaurus": [
-        "FCDI",
-        "CCTCC:",
-        "IARC_TP53:",
-        "KCB:",
-        "PharmacoDB:",
-        "MCCL:MCC:",
-        "IBRC",
-        "ISCR",
-        "IZSLER",
-        "MCCL",
-        "NCBI_Iran",
-        "NCI-DTP",
-        "NISES",
-        "RSCB",
-        "SKY/M-FISH/CGH",
-        "LINCS_HMS",
-        "CCLV",
-        "Cosmic-CLP:",
-        "Rockland:",
-        "CancerTools:",
-        "Innoprot:"
+      "mod": [
+        "Remap:",
+        "UnMod:",
+        "UniMo:"
+      ],
+      "mondo": [
+        "ICD10EXP:",
+        "url:https\\://rarediseases.info.nih.gov"
       ],
       "oba": [
         "AUTO:patterns"
+      ],
+      "ogg": [
+        "IMGT/GENE-DB:"
       ],
       "pato": [
         "ilxtr:"
       ],
       "plana": [
-        "Optic:",
-        "NIF:Subcellular\\:sao"
+        "NIF:Subcellular\\:sao",
+        "Optic:"
       ],
       "po": [
-        "FNA:",
-        "PlantSystematics_image_archive:",
         "CO_125:",
-        "SOY:",
-        "TAIR:",
-        "OB_SF2_PO:",
-        "OBO-SF2_PO:",
-        "OBO_SF3_PO:",
-        "OBOS_SF_PO:",
-        "OB_SF_PO:",
-        "OBO-SF_PO:",
-        "OBO_PO_SF:",
-        "PO_REF",
+        "FNA:",
+        "GO_GIT",
         "Maize",
-        "GO_GIT"
+        "OBO-SF2_PO:",
+        "OBO-SF_PO:",
+        "OBOS_SF_PO:",
+        "OBO_PO_SF:",
+        "OBO_SF3_PO:",
+        "OB_SF2_PO:",
+        "OB_SF_PO:",
+        "PO_REF",
+        "PlantSystematics_image_archive:",
+        "SOY:",
+        "TAIR:"
       ],
       "pr": [
+        "HIstome_ptm_Hs:",
         "ImmPort:",
-        "TLR:",
-        "HIstome_ptm_Hs:"
+        "TLR:"
       ],
       "to": [
-        "TO_GIT",
+        "GCP:GCP_",
         "GIT_TO",
         "OBO_S2F_TO",
-        "GCP:GCP_"
+        "TO_GIT"
       ],
       "tto": [
         "CASGEN:"
       ],
+      "uberon": [
+        "ABA:",
+        "ANISEED:",
+        "BILS:",
+        "BM:",
+        "BSA:",
+        "GAID:",
+        "MAP:",
+        "OGEM:",
+        "OpenCyc:",
+        "XtroDO:"
+      ],
+      "vo": [
+        "NCBITaxon_VO"
+      ],
       "wb": [
         "WBPaper:"
-      ],
-      "cl": [
-        "WikipediaVersioned"
       ]
     },
-    "prefix": [
-      "Image:",
-      "PERSON",
-      "SUBMITTER",
-      "STRUCTURE_ChemicalName_IUPAC",
-      "STRUCTURE_Formula",
-      "stedman",
-      "PECO_GIT",
-      "OBO_SF2_PECO",
-      "Germplasm:",
-      "IUPAC:",
-      "IUPHAR:GPCRListForward?",
-      "GIOC:",
-      "MONDORULE:",
-      "MTH:",
-      "FBC:",
-      "RSC:",
-      "DDB:",
-      "NCBITaxon_Union",
-      "PhenoScape:",
-      "TEMP:",
-      "PO_GIT:"
-    ],
     "suffix": [
       ".jpg",
-      ".svg",
+      ".pdf",
       ".png",
-      ".pdf"
+      ".svg"
     ]
   },
   "remappings": {
     "full": {
+      ":has_start_point": "has_start_point",
       "CHEBI:133245 MetaCyc:quercetin 3-rhamnoside-7-rhamnoside": "CHEBI:133245",
       "CHEBI:16531 MetaCyc:renillar luciferin": "CHEBI:16531",
       "CHEBI:49553 PDBeChem:Copper(II) chloride": "CHEBI:49553",
       "CHEBI:77450 MetaCyc:dicarboxylic acid monoamide \"SUBMITTER\"": "CHEBI:77450",
       "CHEBI:84990 MetaCyc:<locant>gamma</locant>-carboxy-<stereo>L</stereo>-glutamate residue \"SUBMITTER\"": "CHEBI:84990",
-      "LIPIDMAPSLMFA01030141": "LIPIDMAPS:LMFA01030141",
-      "LIPIDMAPSLMFA01030152": "LIPIDMAPS:LMFA01030152",
-      "SNOMEDCT274897005": "SNOMEDCT:274897005",
+      "FOBI_050089": "FOBI:050089",
+      "FOBI_050091": "FOBI:050091",
       "GIOC:vw": "GOC:vw",
-      ":has_start_point": "has_start_point",
-      "has_start_point:": "has_start_point",
-      "dc-creator": "dc:creator",
-      "PMI:17498297": "PMID:17498297",
       "HPO:SKOEHLER": "orcid:0000-0002-5316-1399",
       "HPO:skoehler": "orcid:0000-0002-5316-1399",
+      "LIPIDMAPSLMFA01030141": "LIPIDMAPS:LMFA01030141",
+      "LIPIDMAPSLMFA01030152": "LIPIDMAPS:LMFA01030152",
+      "PATOC:MAH": "orcid:0000-0003-4148-4606",
+      "PMI:17498297": "PMID:17498297",
+      "Property:P1659": "wikidata:P1659",
+      "SBN:9780070316607": "ISBN:9780070316607",
       "SIB:PG": "orcid:0000-0003-1813-6857",
       "SIB:PG xsd:string": "orcid:0000-0003-1813-6857",
+      "SNOMEDCT274897005": "SNOMEDCT:274897005",
       "UBERON:cjm": "orcid:0000-0002-6601-2165",
-      "part:of": "BFO:0000050",
-      "gro:partOf": "BFO:0000050",
+      "\\:has_start_point": "has_start_point",
       "bearer:of": "RO:0000053",
+      "dc-contributor": "dc:contributor",
+      "dc-creator": "dc:creator",
+      "dc-license": "dc:license",
+      "definition:citation": "obo:efo#definition_citation",
+      "depicted:by": "foaf:depicted_by",
+      "dph:GOC": "orcid:0000-0001-7476-6306",
+      "gro:partOf": "BFO:0000050",
+      "gwas:trait": "obo:efo#gwas_trait",
+      "has:input": "RO:0002233",
+      "has:output": "RO:0002234",
+      "has_start_point:": "has_start_point",
       "inheres:in": "RO:0000052",
       "inheres:in-obso": "RO:0000052",
       "inheres:in_part_of": "RO:0002314",
+      "part:of": "BFO:0000050",
       "role:of": "RO:0000081",
-      "unfolds:in": "BFO:0000066",
-      "PATOC:MAH": "orcid:0000-0003-4148-4606",
-      "SBN:9780070316607": "ISBN:9780070316607",
-      "dc-contributor": "dc:contributor",
-      "dc-license": "dc:license",
       "seeAlso": "rdfs:seeAlso",
-      "FOBI_050089": "FOBI:050089",
-      "FOBI_050091": "FOBI:050091",
-      "has:input": "RO:0002233",
-      "has:output": "RO:0002234",
-      "dph:GOC":  "orcid:0000-0001-7476-6306",
-      "Property:P1659": "wikidata:P1659",
-      "vocab:crossSpeciesExactMatch": "semapv:crossSpeciesExactMatch",
-      "definition:citation": "obo:efo#definition_citation",
-      "gwas:trait": "obo:efo#gwas_trait"
+      "unfolds:in": "BFO:0000066",
+      "vocab:crossSpeciesExactMatch": "semapv:crossSpeciesExactMatch"
     },
     "prefix": {
+      "APOLLO:SV_": "APOLLO_SV:",
       "ATCC number: ": "ATCC:",
       "ATTC: ": "ATCC:",
       "BAO_": "BAO:",
-      "TKG:TKG ": "TKG:",
-      "KCB:KCB ": "KCB:",
-      "IEDB:RV": "orcid:0000-0001-8957-7612",
-      "IEDB:RandiVita xsd:string": "orcid:0000-0001-8957-7612",
-      "IEDB:RandiVita": "orcid:0000-0001-8957-7612",
+      "BioRXiv:https\\://doi.org/": "doi:",
+      "CCLV:CCLV-RIE ": "CCLV:",
+      "CREDIT_00": "CREDIT:00",
       "CVCL_": "cellosaurus:CVCL_",
-      "cancercelllines:CVCL_": "cellosaurus:CVCL_",
+      "DC:0000": "diseaseclass:0000",
+      "DrugNames:DB": "drugbank:DB:",
+      "ECGOntology:<new dbxref> \"": "ECGOntology:",
+      "EGA:EGAD": "ega.study:EGAD",
       "EGA:EGAS": "ega.study:EGAS",
       "EGA:phs": "ega.study:phs",
-      "EGA:EGAD": "ega.study:EGAD",
+      "FBdv_root:": "FBdv:",
+      "FLOPO_": "flopo:",
+      "FOBI_": "fobi:",
+      "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com:http\\://www.m-w.com/cgi-bin/dictionary?book=Dictionary&va=": "merriamwebster:",
+      "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com:http\\://www.merriam-webster.com/dictionary/": "merriamwebster:",
+      "GEMET:http\\://www.eionet.europa.eu/gemet/concept/": "GEMET:",
+      "GNOme: \"GNO:": "glygen",
+      "IEDB:RV": "orcid:0000-0001-8957-7612",
+      "IEDB:RandiVita": "orcid:0000-0001-8957-7612",
+      "IEDB:RandiVita xsd:string": "orcid:0000-0001-8957-7612",
+      "KCB:KCB ": "KCB:",
       "KEGG COMPOUND": "KEGG.COMPOUND",
       "KEGG DRUG": "KEGG.DRUG",
       "LIPID MAPS:": "LIPIDMAPS:",
-      "MedlinePlus: ": "MedlinePlus:",
-      "NIST Chemistry WebBook": "NIST",
-      "PMID: ": "PMID:",
-      "SNOMEDCT: ": "SNOMEDCT:",
-      "UMLS CUI:": "UMLS:",
-      "http://linkedlifedata.com/resource/umls/id/": "UMLS:",
-      "URL: ": "URL:",
-      "VFB:FBbt_": "FBbt:",
-      "chembl target:CHEMBL": "chembl.target:CHEMBL",
-      "protein ontology:PR\\:": "PR:PR:",
-      "http://orcid.org/": "orcid:",
-      "http:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
-      "http://en.wikipedia.org/wiki/": "wikipedia.en:",
-      "http:en.wikipedia.org/wiki/": "wikipedia.en:",
-      "http:http\\:en.wikipedia.org/wiki/": "wikipedia.en:",
-      "WIKI:https\\://en.wikipedia.org/wiki/": "wikipedia.en:",
-      "BioRXiv:https\\://doi.org/": "doi:",
-      "NIF_Subcellular:sao": "SAO:",
-      "NIF_Subcellular:nlx_subcell_": "NLXANAT",
-      "NIF_Subcellular:birnlex": "neurolex:birnlex",
-      "NIFSTD:birnlex": "neurolex:birnlex",
-      "NIF_Subcellular:nlx": "neurolex:nlx",
-      "NIFSTD:nifext_": "neurolex:nifext_",
-      "NIFSTD:sao": "SAO:",
-      "NIFSTD:nlx_dys_": "NLXDYS:",
-      "URL:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
-      "url: \"https://en.wikipedia.org/wiki/": "wikipedia.en:",
-      "url:https\\://www.ncbi.nlm.nih.gov/pubmed/": "pubmed:",
-      "url:https\\://pubmed.ncbi.nlm.nih.gov/": "pubmed:",
-      "URL:http\\://": "http://",
-      "URL: http\\://": "http://",
-      "url:http\\://": "http://",
-      "url:https\\://ghr.nlm.nih.gov/condition/": "ghr:",
-      "NIF_Subcellular:FMA_": "FMA:",
-      "Wikipeda:": "wikipedia:",
-      "has:": "has_",
-      "NSH:D0": "MESH:D0",
       "MONDOLEX:": "MONDO:",
-      "unirot:": "uniprot:",
-      "http:www": "http://www",
-      "ECGOntology:<new dbxref> \"": "ECGOntology:",
-      "GNOme: \"GNO:": "glygen",
-      "UniProt: \"": "uniprot:",
-      "Unimod: \"Unimod:": "unimod:",
-      "OMIMl:": "OMIM:",
-      "CREDIT_00": "CREDIT:00",
-      "CCLV:CCLV-RIE ": "CCLV:",
-      "APOLLO:SV_": "APOLLO_SV:",
-      "GEMET:http\\://www.eionet.europa.eu/gemet/concept/": "GEMET:",
-      "FBdv_root:": "FBdv:",
-      "NCBI:NBK": "ncbibook:",
+      "MedlinePlus: ": "MedlinePlus:",
       "MicrO.owl/MICRO:": "MICRO:",
       "MicrO.owl/TEMP:": "MICRO:",
       "MicrO.owl/Temp:": "MICRO:",
       "MicrO.owl/temp:": "MICRO:",
-      "xsd\\:": "xsd:",
+      "NCBI:NBK": "ncbibook:",
+      "NIFSTD:birnlex": "neurolex:birnlex",
+      "NIFSTD:nifext_": "neurolex:nifext_",
+      "NIFSTD:nlx_dys_": "NLXDYS:",
+      "NIFSTD:sao": "SAO:",
+      "NIF_Subcellular:FMA_": "FMA:",
+      "NIF_Subcellular:birnlex": "neurolex:birnlex",
+      "NIF_Subcellular:nlx": "neurolex:nlx",
+      "NIF_Subcellular:nlx_subcell_": "nif.sub:",
+      "NIF_Subcellular:sao": "SAO:",
+      "NIST Chemistry WebBook": "NIST",
+      "NSH:D0": "MESH:D0",
       "OGI.owl:": "ogi:",
+      "OMIMl:": "OMIM:",
       "PANTHER:PTHR": "panther.family:PTHR",
-      "vo/ontorat/PR:": "PR:",
-      "snap#": "snap:",
-      "DC:0000": "diseaseclass:0000",
+      "PDR:PMID:": "pubmed:",
+      "PMID: ": "PMID:",
+      "SNOMEDCT: ": "SNOMEDCT:",
+      "TKG:TKG ": "TKG:",
       "TS-": "caloha:",
-      "terms1": "dcterms",
-      "urn:issn:": "issn:",
-      "resource:SIO_": "SIO:",
+      "UMLS CUI:": "UMLS:",
+      "URL: ": "URL:",
+      "URL: http\\://": "http://",
+      "URL:http\\://": "http://",
+      "URL:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "UniProt: \"": "uniprot:",
+      "Unimod: \"Unimod:": "unimod:",
+      "VFB:FBbt_": "FBbt:",
+      "WIKI:https\\://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "Wikipeda:": "wikipedia:",
+      "cancercelllines:CVCL_": "cellosaurus:CVCL_",
+      "chembl target:CHEMBL": "chembl.target:CHEMBL",
+      "detail?JGLOBAL:ID=": "iobc",
+      "has:": "has_",
+      "http://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "http://linkedlifedata.com/resource/umls/id/": "UMLS:",
+      "http://orcid.org/": "orcid:",
+      "http:en.wikipedia.org/wiki/": "wikipedia.en:",
+      "http:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "http:http\\:en.wikipedia.org/wiki/": "wikipedia.en:",
+      "http:www": "http://www",
       "odo:ADCAD_": "adcad:",
       "odo:MOSAIC_": "mosaic:",
-      "scipion:CRYOEM_": "cryoem:",
-      "resource:CHEMINF_": "cheminf:",
-      "PDR:PMID:": "pubmed:",
-      "FLOPO_": "flopo:",
-      "DrugNames:DB": "drugbank:DB:",
-      "FOBI_": "fobi:",
-      "detail?JGLOBAL:ID=": "iobc",
       "ontology:ONTIE_": "ontie:",
       "ontology:PMR.owl#": "pmr:",
-      "NIF_Subcellular:nlx_subcell_": "nif.sub:",
-      "url:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
-      "url:https\\://en.wikipedia.org/wiki/": "wikipedia.en:",
-      "url:https\\://www.ncbi.nlm.nih.gov/pmc/articles/": "pmc:",
-      "url:https\\://www.ncbi.nlm.nih.gov/books/": "ncbibook",
-      "url:http\\://www.ncbi.nlm.nih.gov/sites/entrez/": "ncbigene",
-      "url:http\\://www.ncbi.nlm.nih.gov/gene/": "ncbigene",
-      "url:http\\://www.omim.org/entry/": "omim",
-      "url:https\\://www.omim.org/entry/": "omim",
-      "url:http\\://omim.org/entry/": "omim",
       "ontologyIRI:/termsonlyOUT%20(5).owl#": "apaonto:",
+      "protein ontology:PR\\:": "PR:PR:",
+      "resource:CHEMINF_": "cheminf:",
+      "resource:SIO_": "SIO:",
+      "scipion:CRYOEM_": "cryoem:",
+      "snap#": "snap:",
+      "terms1": "dcterms",
+      "unirot:": "uniprot:",
+      "url: \"https://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "url:http\\://": "http://",
       "url:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
-      "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com:http\\://www.merriam-webster.com/dictionary/": "merriamwebster:",
-      "From_Merriam-Webster's_Online_Dictionary_at_www.Merriam-Webster.com:http\\://www.m-w.com/cgi-bin/dictionary?book=Dictionary&va=": "merriamwebster:"
+      "url:http\\://omim.org/entry/": "omim",
+      "url:http\\://www.ncbi.nlm.nih.gov/gene/": "ncbigene",
+      "url:http\\://www.ncbi.nlm.nih.gov/sites/entrez/": "ncbigene",
+      "url:http\\://www.omim.org/entry/": "omim",
+      "url:https\\://en.wikipedia.org/wiki/": "wikipedia.en:",
+      "url:https\\://ghr.nlm.nih.gov/condition/": "ghr:",
+      "url:https\\://pubmed.ncbi.nlm.nih.gov/": "pubmed:",
+      "url:https\\://www.ncbi.nlm.nih.gov/books/": "ncbibook",
+      "url:https\\://www.ncbi.nlm.nih.gov/pmc/articles/": "pmc:",
+      "url:https\\://www.ncbi.nlm.nih.gov/pubmed/": "pubmed:",
+      "url:https\\://www.omim.org/entry/": "omim",
+      "urn:issn:": "issn:",
+      "vo/ontorat/PR:": "PR:",
+      "xsd\\:": "xsd:"
     },
     "resource_prefix": {
-      "enm": {
-        "Thesaurus:C": "NCIT:C"
+      "biolink": {
+        "active:in": "biolink:active_in",
+        "actively:involves": "biolink:actively_involves",
+        "aggregate:statistic": "biolink:aggregate_statistic",
+        "associated:with": "biolink:associated_with",
+        "affected:by": "biolink:affected_by",
+        "base:coordinate": "biolink:base_coordinate",
+        "biomarker:for": "biolink:biomarker_for",
+        "capable:of": "biolink:capable_of",
+        "caused:by": "biolink:caused_by",
+        "coexpressed:with": "biolink:coexpressed_with",
+        "association:type": "biolink:association_type",
+        "association:slot": "biolink:association_slot",
+        "close:match": "biolink:close_match",
+        "completed:by": "biolink:completed_by",
+        "coexists:with": "biolink:coexists_with",
+        "colocalizes:with": "biolink:colocalizes_with",
+        "available:from": "biolink:available_from"
       },
-      "srao": {
-        "topic:": "edam.topic:"
-      },
-      "idocovid19": {"UniProtKN:":  "uniprot:"},
-      "ito": {
-        "format:": "edam.format:",
-        "topic:": "edam.topic:",
-        "operation:": "edam.operation:"
+      "cellosaurus": {
+        "PubChem_Cell_line:CVCL_": "cellosaurus:",
+        "pgx:CVCL_": "cellosaurus:"
       },
       "ehdaa2": {
         "CS": "carnegie.stage:"
       },
-      "sio": {
-        "ns2:": "skos:"
+      "enm": {
+        "Thesaurus:C": "NCIT:C"
+      },
+      "idocovid19": {
+        "UniProtKN:": "uniprot:"
+      },
+      "idomal": {
+        "http://purl.org/obo/owl/PO\\:PO_": "PO:"
+      },
+      "ito": {
+        "format:": "edam.format:",
+        "operation:": "edam.operation:",
+        "topic:": "edam.topic:"
+      },
+      "mcro": {
+        "format:": "edam.format:",
+        "operation:": "edam.operation:",
+        "topic:": "edam.topic:"
       },
       "phipo": {
         "created:by": "dcterms:creator",
         "created:date": "dcterms:created",
         "creation:date": "dcterms:created"
       },
+      "pr": {
+        "OMA:": "uniprot:",
+        "iPTMnet:": "uniprot:"
+      },
+      "sio": {
+        "ns2:": "skos:"
+      },
+      "srao": {
+        "topic:": "edam.topic:"
+      },
       "xlmod": {
-        "specificities:": "obo:xlmod#specificities",
-        "secondarySpecificities:": "obo:xlmod#secondarySpecificities",
-        "deadEndFormula:": "obo:xlmod#deadEndFormula",
+        "CID_Fragment:": "obo:xlmod#CID_Fragment",
         "baseSpecificities:": "obo:xlmod#baseSpecificities",
-        "reactionSites:": "obo:xlmod#reactionSites",
-        "spacerLength:": "obo:xlmod#spacerLength",
         "bridgeFormula:": "obo:xlmod#bridgeFormula",
-        "monoIsotopicMass:": "obo:xlmod#monoIsotopicMass",
-        "reporterMass:": "obo:xlmod#reporterMass",
-        "maxAbsorption:": "obo:xlmod#maxAbsorption",
+        "deadEndFormula:": "obo:xlmod#deadEndFormula",
         "doubletDeltaMass:": "obo:xlmod#doubletDeltaMass",
-        "secondaryBaseSpecificities:": "obo:xlmod#secondaryBaseSpecificities",
         "hydrophilicPEGchain:": "obo:xlmod#hydrophilicPEGchain",
-        "waveLengthRange:": "obo:xlmod#waveLengthRange",
-        "CID_Fragment:": "obo:xlmod#CID_Fragment"
-      },
-      "cellosaurus": {
-        "pgx:CVCL_": "cellosaurus:",
-        "PubChem_Cell_line:CVCL_": "cellosaurus:"
-      },
-      "mcro": {
-        "format:": "edam.format:",
-        "topic:": "edam.topic:",
-        "operation:": "edam.operation:"
+        "maxAbsorption:": "obo:xlmod#maxAbsorption",
+        "monoIsotopicMass:": "obo:xlmod#monoIsotopicMass",
+        "reactionSites:": "obo:xlmod#reactionSites",
+        "reporterMass:": "obo:xlmod#reporterMass",
+        "secondaryBaseSpecificities:": "obo:xlmod#secondaryBaseSpecificities",
+        "secondarySpecificities:": "obo:xlmod#secondarySpecificities",
+        "spacerLength:": "obo:xlmod#spacerLength",
+        "specificities:": "obo:xlmod#specificities",
+        "waveLengthRange:": "obo:xlmod#waveLengthRange"
       }
     }
   }
