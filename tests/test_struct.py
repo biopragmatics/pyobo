@@ -532,3 +532,20 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="gard", typedefs={}),
         )
+
+    def test_append_exact_match_axioms(self) -> None:
+        """Test emitting a relationship with axioms."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_exact_match(
+            Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase"),
+            mapping_justification=Reference(prefix="semapv", identifier="UnspecifiedMapping")
+        )
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: skos:exactMatch eccode:1.4.1.15 {sssom:mapping_justification=semapv:UnspecifiedMapping} ! exact match lysine dehydrogenase
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
