@@ -39,6 +39,7 @@ from .typedef import (
     default_typedefs,
     exact_match,
     from_species,
+    has_confidence,
     has_dbxref,
     has_mapping_justification,
     has_ontology_root_term,
@@ -239,7 +240,10 @@ class Term(Referenced):
         default_factory=lambda: defaultdict(list)
     )
 
-    axioms: dict[tuple[Reference, Reference], Axioms] = field(
+    _axioms: dict[tuple[Reference, Reference], list[tuple[Reference, Reference]]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+    _str_axioms: dict[tuple[Reference, Reference], list[tuple[Reference, str]]] = field(
         default_factory=lambda: defaultdict(list)
     )
 
@@ -432,18 +436,27 @@ class Term(Referenced):
         self,
         reference: ReferenceHint,
         mapping_justification: Reference | None = None,
+        confidence: float | None = None,
     ) -> Self:
         """Append an exact match, also adding an xref."""
         reference = _ensure_ref(reference)
         axioms: Axioms = []
+        axioms_str = []
         if mapping_justification:
             axioms.append(
                 (
-                    has_mapping_justification,
+                    has_mapping_justification.reference,
                     mapping_justification,
                 )
             )
-        self.annotate_object(exact_match, reference, axioms=axioms)
+        if confidence is not None:
+            axioms_str.append(
+                (
+                    has_confidence.reference,
+                    str(confidence),
+                )
+            )
+        self.annotate_object(exact_match, reference, axioms=axioms, axioms_str=axioms_str)
         return self
 
     def append_xref(self, reference: ReferenceHint) -> None:
@@ -460,13 +473,14 @@ class Term(Referenced):
         typedef: ReferenceHint,
         value: ReferenceHint,
         axioms: list[tuple[Reference, Reference]] | None = None,
+        axioms_str: list[tuple[Reference, str]] | None = None,
     ) -> Self:
         """Append an object annotation."""
         typedef = _ensure_ref(typedef)
         value = _ensure_ref(value)
         self.annotations_object[typedef].append(value)
-        if axioms:
-            self.axioms[typedef, value].extend(axioms)
+        self._axioms[typedef, value].extend(axioms or [])
+        self._str_axioms[typedef, value].extend(axioms_str or [])
         return self
 
     def set_species(self, identifier: str, name: str | None = None) -> Self:
@@ -600,7 +614,11 @@ class Term(Referenced):
             _typedef_warn(prefix=ontology_prefix, predicate=typedef, typedefs=typedefs)
             predicate_reference = self._reference(typedef, ontology_prefix)
             s = f"relationship: {predicate_reference} {self._reference(reference, ontology_prefix)}"
-            if axioms := self.axioms.get((typedef, reference), []):
+            axioms: list[tuple[Reference, Reference] | tuple[Reference, str]] = [
+                *self._axioms.get((typedef, reference), []),
+                *self._str_axioms.get((typedef, reference), []),
+            ]
+            if axioms:
                 aa = self._format_axioms(axioms, ontology_prefix)
                 s += f" {aa}"
             if typedef.name or reference.name:
@@ -612,10 +630,16 @@ class Term(Referenced):
             yield s
 
     @classmethod
-    def _format_axioms(cls, axioms: Axioms, ontology_prefix: str) -> str:
-        axioms = sorted(axioms)
+    def _format_axioms(
+        cls, axioms: list[tuple[Reference, Reference] | tuple[Reference, str]], ontology_prefix: str
+    ) -> str:
+        for _axiom in axioms:
+            pass
+        axioms = sorted(axioms, key=lambda p: (p[0], type(p[1]), p[1]))
         inner = ", ".join(
             f"{cls._reference(predicate, ontology_prefix)}={cls._reference(target, ontology_prefix)}"
+            if isinstance(target, Reference)
+            else f"{cls._reference(predicate, ontology_prefix)}={target}"
             for predicate, target in axioms
         )
         return f"{{{inner}}}"
@@ -634,7 +658,11 @@ class Term(Referenced):
             predicate_curie = self._reference(predicate, ontology_prefix)
             for value in sorted(values):
                 yv = f"{predicate_curie} {self._reference(value, ontology_prefix)}"
-                if axioms := self.axioms.get((predicate, value)):
+                axioms: list[tuple[Reference, Reference] | tuple[Reference, str]] = [
+                    *self._axioms.get((predicate, value), []),
+                    *self._str_axioms.get((predicate, value), []),
+                ]
+                if axioms:
                     yv += f" {self._format_axioms(axioms, ontology_prefix)}"
                 if predicate.name and value.name:
                     yv += f" ! {predicate.name} {value.name}"

@@ -11,7 +11,13 @@ from bioontologies import robot
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
 from pyobo.struct.struct import BioregistryError, SynonymTypeDef, Term, TypeDef
-from pyobo.struct.typedef import contributor, exact_match, has_mapping_justification, see_also
+from pyobo.struct.typedef import (
+    contributor,
+    exact_match,
+    has_confidence,
+    has_mapping_justification,
+    see_also,
+)
 
 LYSINE_DEHYDROGENASE_ACT = Reference(
     prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"
@@ -570,16 +576,22 @@ class TestTerm(unittest.TestCase):
         term.append_exact_match(
             target,
             mapping_justification=unsp,
+            confidence=0.99,
         )
         self.assertEqual(
-            {(exact_match.reference, target): [(has_mapping_justification, unsp)]},
-            dict(term.axioms),
+            {(exact_match.reference, target): [(has_mapping_justification.reference, unsp)]},
+            dict(term._axioms),
+        )
+        self.assertEqual(
+            {(exact_match.reference, target): [(has_confidence.reference, "0.99")]},
+            dict(term._str_axioms),
         )
         lines = dedent("""\
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            property_value: skos:exactMatch eccode:1.4.1.15 {sssom:mapping_justification=semapv:UnspecifiedMapping} ! exact match lysine dehydrogenase
+            property_value: skos:exactMatch eccode:1.4.1.15 {sssom:confidence=0.99, \
+sssom:mapping_justification=semapv:UnspecifiedMapping} ! exact match lysine dehydrogenase
         """)
         self.assert_lines(
             lines,

@@ -392,6 +392,11 @@ has_mapping_justification = TypeDef(
     ),
     is_metadata_tag=True,
 )
+has_confidence = TypeDef(
+    reference=Reference(prefix="sssom", identifier="confidence", name="has confidence"),
+    is_metadata_tag=True,
+)
+
 
 contributor = TypeDef(
     reference=Reference(prefix="dcterms", identifier="contributor", name="contributor"),
