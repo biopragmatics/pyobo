@@ -3,7 +3,7 @@
 from class_resolver import ClassResolver
 
 from .antibodyregistry import AntibodyRegistryGetter
-from .bigg_metabolite import BiGGMetaboliteGetter
+from .bigg import BiGGMetaboliteGetter, BiGGModelGetter, BiGGReactionGetter
 from .ccle import CCLEGetter
 from .cgnc import CGNCGetter
 from .chembl import ChEMBLCompoundGetter
@@ -66,6 +66,8 @@ from ..struct import Obo
 __all__ = [
     "AntibodyRegistryGetter",
     "BiGGMetaboliteGetter",
+    "BiGGModelGetter",
+    "BiGGReactionGetter",
     "CCLEGetter",
     "CGNCGetter",
     "CIVICGeneGetter",
