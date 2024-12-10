@@ -40,6 +40,7 @@ from .typedef import (
     exact_match,
     from_species,
     has_dbxref,
+    has_mapping_justification,
     has_ontology_root_term,
     has_part,
     is_a,
@@ -90,6 +91,7 @@ SSSOM_DF_COLUMNS = [
     "mapping_justification",
 ]
 UNSPECIFIED_MATCHING_CURIE = "sempav:UnspecifiedMatching"
+Axioms = list[tuple[Reference, Reference]]
 
 
 @dataclass
@@ -422,10 +424,22 @@ class Term(Referenced):
                 rows.append((has_dbxref.reference, xref_reference))
         return sorted(set(rows))
 
-    def append_exact_match(self, reference: ReferenceHint) -> Self:
+    def append_exact_match(
+        self,
+        reference: ReferenceHint,
+        mapping_justification: Reference | None = None,
+    ) -> Self:
         """Append an exact match, also adding an xref."""
         reference = _ensure_ref(reference)
-        self.annotate_object(exact_match, reference)
+        axioms: Axioms = []
+        if mapping_justification:
+            axioms.append(
+                (
+                    has_mapping_justification,
+                    mapping_justification,
+                )
+            )
+        self.annotate_object(exact_match, reference, axioms=axioms)
         return self
 
     def append_xref(self, reference: ReferenceHint) -> None:
@@ -437,11 +451,18 @@ class Term(Referenced):
         self.relationships[_ensure_ref(typedef)].append(_ensure_ref(reference))
         return self
 
-    def annotate_object(self, typedef: ReferenceHint, value: ReferenceHint) -> Self:
+    def annotate_object(
+        self,
+        typedef: ReferenceHint,
+        value: ReferenceHint,
+        axioms: list[tuple[Reference, Reference]] | None = None,
+    ) -> Self:
         """Append an object annotation."""
         typedef = _ensure_ref(typedef)
         value = _ensure_ref(value)
         self.annotations_object[typedef].append(value)
+        if axioms:
+            raise NotImplementedError
         return self
 
     def set_species(self, identifier: str, name: str | None = None) -> Self:

@@ -384,6 +384,14 @@ has_taxonomy_rank = TypeDef(
     is_metadata_tag=True,
 )
 
+has_mapping_justification = TypeDef(
+    reference=Reference(
+        prefix="sssom", identifier="mapping_justification", name="mapping justification"
+    ),
+    is_metadata_tag=True,
+)
+
+
 default_typedefs: dict[ReferenceTuple, TypeDef] = {
     v.pair: v for v in locals().values() if isinstance(v, TypeDef)
 }
