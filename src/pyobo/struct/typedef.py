@@ -16,6 +16,7 @@ __all__ = [
     "alternative_term",
     "broad_match",
     "close_match",
+    "contributor",
     "default_typedefs",
     "editor_note",
     "enables",
@@ -28,6 +29,7 @@ __all__ = [
     "has_homepage",
     # Properties
     "has_inchi",
+    "has_mapping_justification",
     "has_mature",
     "has_member",
     "has_part",
@@ -391,6 +393,10 @@ has_mapping_justification = TypeDef(
     is_metadata_tag=True,
 )
 
+contributor = TypeDef(
+    reference=Reference(prefix="dcterms", identifier="contributor", name="contributor"),
+    is_metadata_tag=True,
+)
 
 default_typedefs: dict[ReferenceTuple, TypeDef] = {
     v.pair: v for v in locals().values() if isinstance(v, TypeDef)

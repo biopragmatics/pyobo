@@ -1,13 +1,17 @@
 """Tests for the OBO data structures."""
 
+import tempfile
 import unittest
 from collections.abc import Iterable
+from pathlib import Path
 from textwrap import dedent
+
+from bioontologies import robot
 
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
 from pyobo.struct.struct import BioregistryError, SynonymTypeDef, Term, TypeDef
-from pyobo.struct.typedef import exact_match, see_also
+from pyobo.struct.typedef import contributor, exact_match, has_mapping_justification, see_also
 
 LYSINE_DEHYDROGENASE_ACT = Reference(
     prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"
@@ -533,19 +537,51 @@ class TestTerm(unittest.TestCase):
             term.iterate_obo_lines(ontology_prefix="gard", typedefs={}),
         )
 
+    def test_format_axioms(self) -> None:
+        """Test formatting axioms."""
+        axioms = [
+            (
+                has_mapping_justification,
+                Reference(prefix="semapv", identifier="UnspecifiedMapping"),
+            ),
+        ]
+        self.assertEqual(
+            "{sssom:mapping_justification=semapv:UnspecifiedMapping}",
+            Term._format_axioms(axioms, "chebi"),
+        )
+
+        axioms = [
+            (
+                has_mapping_justification,
+                Reference(prefix="semapv", identifier="UnspecifiedMapping"),
+            ),
+            (contributor, Reference(prefix="orcid", identifier="0000-0003-4423-4370")),
+        ]
+        self.assertEqual(
+            "{dcterms:contributor=orcid:0000-0003-4423-4370, sssom:mapping_justification=semapv:UnspecifiedMapping}",
+            Term._format_axioms(axioms, "chebi"),
+        )
+
     def test_append_exact_match_axioms(self) -> None:
         """Test emitting a relationship with axioms."""
+        unsp = Reference(prefix="semapv", identifier="UnspecifiedMapping")
+        target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
         term = Term(LYSINE_DEHYDROGENASE_ACT)
         term.append_exact_match(
-            Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase"),
-            mapping_justification=Reference(prefix="semapv", identifier="UnspecifiedMapping")
+            target,
+            mapping_justification=unsp,
         )
-        self.assert_lines(
-            """\
+        self.assertEqual(
+            {(exact_match.reference, target): [(has_mapping_justification, unsp)]},
+            dict(term.axioms),
+        )
+        lines = dedent("""\
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
             property_value: skos:exactMatch eccode:1.4.1.15 {sssom:mapping_justification=semapv:UnspecifiedMapping} ! exact match lysine dehydrogenase
-            """,
+        """)
+        self.assert_lines(
+            lines,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )

@@ -239,6 +239,10 @@ class Term(Referenced):
         default_factory=lambda: defaultdict(list)
     )
 
+    axioms: dict[tuple[Reference, Reference], Axioms] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+
     #: Annotation properties pointing to objects (i.e., references)
     annotations_object: dict[Reference, list[Reference]] = field(
         default_factory=lambda: defaultdict(list)
@@ -462,7 +466,7 @@ class Term(Referenced):
         value = _ensure_ref(value)
         self.annotations_object[typedef].append(value)
         if axioms:
-            raise NotImplementedError
+            self.axioms[typedef, value].extend(axioms)
         return self
 
     def set_species(self, identifier: str, name: str | None = None) -> Self:
@@ -596,6 +600,9 @@ class Term(Referenced):
             _typedef_warn(prefix=ontology_prefix, predicate=typedef, typedefs=typedefs)
             predicate_reference = self._reference(typedef, ontology_prefix)
             s = f"relationship: {predicate_reference} {self._reference(reference, ontology_prefix)}"
+            if axioms := self.axioms.get((typedef, reference), []):
+                aa = self._format_axioms(axioms, ontology_prefix)
+                s += f" {aa}"
             if typedef.name or reference.name:
                 s += " !"
                 if typedef.name:
@@ -603,6 +610,15 @@ class Term(Referenced):
                 if reference.name:
                     s += f" {reference.name}"
             yield s
+
+    @classmethod
+    def _format_axioms(cls, axioms: Axioms, ontology_prefix: str) -> str:
+        axioms = sorted(axioms)
+        inner = ", ".join(
+            f"{cls._reference(predicate, ontology_prefix)}={cls._reference(target, ontology_prefix)}"
+            for predicate, target in axioms
+        )
+        return f"{{{inner}}}"
 
     def _emit_properties(
         self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
@@ -618,6 +634,8 @@ class Term(Referenced):
             predicate_curie = self._reference(predicate, ontology_prefix)
             for value in sorted(values):
                 yv = f"{predicate_curie} {self._reference(value, ontology_prefix)}"
+                if axioms := self.axioms.get((predicate, value)):
+                    yv += f" {self._format_axioms(axioms, ontology_prefix)}"
                 if predicate.name and value.name:
                     yv += f" ! {predicate.name} {value.name}"
                 yield yv
