@@ -23,6 +23,7 @@ import networkx as nx
 import pandas as pd
 from curies import ReferenceTuple
 from more_click import force_option, verbose_option
+from pydantic import BaseModel
 from tqdm.auto import tqdm
 from typing_extensions import Self
 
@@ -32,19 +33,21 @@ from .reference import (
     comma_separate_references,
     default_reference,
     reference_escape,
+    unspecified_matching,
 )
 from .typedef import (
     TypeDef,
     comment,
+    contributor,
     default_typedefs,
     exact_match,
     from_species,
-    has_confidence,
     has_dbxref,
-    has_mapping_justification,
     has_ontology_root_term,
     has_part,
     is_a,
+    mapping_has_confidence,
+    mapping_has_justification,
     match_typedefs,
     orthologous,
     part_of,
@@ -220,6 +223,17 @@ class LiteralProperty(NamedTuple):
     predicate: Reference
     value: str
     datatype: Reference
+
+
+class MappingContext(BaseModel):
+    """Context for a mapping, corresponding to SSSOM."""
+
+    justification: Reference = unspecified_matching
+    contributor: Reference | None = None
+    confidence: float | None = None
+
+    class Config:
+        frozen = True  # Makes the model immutable and hashable
 
 
 @dataclass
@@ -419,18 +433,54 @@ class Term(Referenced):
         """Get relationships from the given type."""
         return self.relationships.get(_ensure_ref(typedef), [])
 
-    def get_mappings(self, *, include_xrefs: bool = True) -> list[tuple[Reference, Reference]]:
+    def get_mappings(
+        self, *, include_xrefs: bool = True
+    ) -> list[tuple[Reference, Reference, MappingContext]]:
         """Get mappings with preferred curies."""
         rows = []
         for predicate in match_typedefs:
             for xref_reference in chain(
                 self.get_property_objects(predicate), self.get_relationships(predicate)
             ):
-                rows.append((predicate.reference, xref_reference))
+                rows.append(
+                    (
+                        predicate.reference,
+                        xref_reference,
+                        self._get_mapping_context(predicate.reference, xref_reference),
+                    )
+                )
         if include_xrefs:
             for xref_reference in self.xrefs:
-                rows.append((has_dbxref.reference, xref_reference))
+                rows.append(
+                    (
+                        has_dbxref.reference,
+                        xref_reference,
+                        self._get_mapping_context(has_dbxref.reference, xref_reference),
+                    )
+                )
         return sorted(set(rows))
+
+    def _get_object_axiom_target(
+        self, p: Reference, o: Reference, ap: Reference
+    ) -> Reference | None:
+        for axiom_predicate, axiom_target in self._axioms.get((p, o), []):
+            if axiom_predicate == ap:
+                return axiom_target
+        return None
+
+    def _get_str_axiom_target(self, p: Reference, o: Reference, ap: Reference) -> str | None:
+        for axiom_predicate, axiom_target in self._str_axioms.get((p, o), []):
+            if axiom_predicate == ap:
+                return axiom_target
+        return None
+
+    def _get_mapping_context(self, p: Reference, o: Reference) -> MappingContext:
+        return MappingContext(
+            justification=self._get_object_axiom_target(p, o, mapping_has_justification.reference)
+            or unspecified_matching,
+            contributor=self._get_object_axiom_target(p, o, contributor.reference),
+            confidence=self._get_str_axiom_target(p, o, mapping_has_confidence.reference),
+        )
 
     def append_exact_match(
         self,
@@ -445,14 +495,14 @@ class Term(Referenced):
         if mapping_justification:
             axioms.append(
                 (
-                    has_mapping_justification.reference,
+                    mapping_has_justification.reference,
                     mapping_justification,
                 )
             )
         if confidence is not None:
             axioms_str.append(
                 (
-                    has_confidence.reference,
+                    mapping_has_confidence.reference,
                     str(confidence),
                 )
             )
@@ -1735,13 +1785,13 @@ class Obo:
     ) -> Iterable[tuple[str, str, str, str, str]]:
         """Iterate over SSSOM rows for mappings."""
         for term in self._iter_terms(use_tqdm=use_tqdm):
-            for predicate, obj_ref in term.get_mappings(include_xrefs=True):
+            for predicate, obj_ref, context in term.get_mappings(include_xrefs=True):
                 yield (
                     term.preferred_curie,
                     term.name,
                     obj_ref.preferred_curie,
                     predicate.preferred_curie,
-                    UNSPECIFIED_MATCHING_CURIE,
+                    context.justification.preferred_curie,
                 )
 
     def get_mappings_df(

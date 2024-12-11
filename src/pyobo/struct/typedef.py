@@ -27,9 +27,7 @@ __all__ = [
     "has_dbxref",
     "has_gene_product",
     "has_homepage",
-    # Properties
     "has_inchi",
-    "has_mapping_justification",
     "has_mature",
     "has_member",
     "has_part",
@@ -42,6 +40,8 @@ __all__ = [
     "has_taxonomy_rank",
     "is_a",
     "located_in",
+    "mapping_has_confidence",
+    "mapping_has_justification",
     "match_typedefs",
     "member_of",
     "narrow_match",
@@ -228,7 +228,6 @@ equivalent_property = TypeDef(
     reference=Reference(prefix="owl", identifier="equivalentProperty", name="equivalent property"),
 )
 
-
 is_a = TypeDef(
     reference=Reference(prefix="rdfs", identifier="subClassOf", name="subclass of"),
 )
@@ -386,18 +385,18 @@ has_taxonomy_rank = TypeDef(
     is_metadata_tag=True,
 )
 
-has_mapping_justification = TypeDef(
+mapping_has_justification = TypeDef(
     reference=Reference(
         prefix="sssom", identifier="mapping_justification", name="mapping justification"
     ),
     is_metadata_tag=True,
+    range=Reference(prefix="semapv", identifier="Matching", name="matching process"),
 )
-has_confidence = TypeDef(
+mapping_has_confidence = TypeDef(
     reference=Reference(prefix="sssom", identifier="confidence", name="has confidence"),
     is_metadata_tag=True,
+    range=Reference(prefix="xsd", identifier="float"),
 )
-
-
 contributor = TypeDef(
     reference=Reference(prefix="dcterms", identifier="contributor", name="contributor"),
     is_metadata_tag=True,

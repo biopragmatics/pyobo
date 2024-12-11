@@ -10,12 +10,13 @@ from bioontologies import robot
 
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
+from pyobo.struct.reference import unspecified_matching
 from pyobo.struct.struct import BioregistryError, SynonymTypeDef, Term, TypeDef
 from pyobo.struct.typedef import (
     contributor,
     exact_match,
-    has_confidence,
-    has_mapping_justification,
+    mapping_has_confidence,
+    mapping_has_justification,
     see_also,
 )
 
@@ -547,7 +548,7 @@ class TestTerm(unittest.TestCase):
         """Test formatting axioms."""
         axioms = [
             (
-                has_mapping_justification,
+                mapping_has_justification,
                 Reference(prefix="semapv", identifier="UnspecifiedMapping"),
             ),
         ]
@@ -558,7 +559,7 @@ class TestTerm(unittest.TestCase):
 
         axioms = [
             (
-                has_mapping_justification,
+                mapping_has_justification,
                 Reference(prefix="semapv", identifier="UnspecifiedMapping"),
             ),
             (contributor, Reference(prefix="orcid", identifier="0000-0003-4423-4370")),
@@ -570,20 +571,23 @@ class TestTerm(unittest.TestCase):
 
     def test_append_exact_match_axioms(self) -> None:
         """Test emitting a relationship with axioms."""
-        unsp = Reference(prefix="semapv", identifier="UnspecifiedMapping")
         target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
         term = Term(LYSINE_DEHYDROGENASE_ACT)
         term.append_exact_match(
             target,
-            mapping_justification=unsp,
+            mapping_justification=unspecified_matching,
             confidence=0.99,
         )
         self.assertEqual(
-            {(exact_match.reference, target): [(has_mapping_justification.reference, unsp)]},
+            {
+                (exact_match.reference, target): [
+                    (mapping_has_justification.reference, unspecified_matching)
+                ]
+            },
             dict(term._axioms),
         )
         self.assertEqual(
-            {(exact_match.reference, target): [(has_confidence.reference, "0.99")]},
+            {(exact_match.reference, target): [(mapping_has_confidence.reference, "0.99")]},
             dict(term._str_axioms),
         )
         lines = dedent("""\
@@ -591,9 +595,33 @@ class TestTerm(unittest.TestCase):
             id: GO:0050069
             name: lysine dehydrogenase activity
             property_value: skos:exactMatch eccode:1.4.1.15 {sssom:confidence=0.99, \
-sssom:mapping_justification=semapv:UnspecifiedMapping} ! exact match lysine dehydrogenase
+sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine dehydrogenase
         """)
         self.assert_lines(
             lines,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
+
+        mappings = list(term.get_mappings())
+        self.assertEqual(1, len(mappings))
+        predicate, target_, context = mappings[0]
+        self.assertEqual(exact_match.reference, predicate)
+        self.assertEqual(target, target_)
+        self.assertEqual(unspecified_matching, context.justification)
+        self.assertEqual(0.99, context.confidence)
+        self.assertIsNone(context.contributor)
+
+        if robot.is_available():
+            text = f"""\
+ontology: go
+idspace: skos http://www.w3.org/2004/02/skos/core#
+idspace: sssom https://w3id.org/sssom/
+idspace: semapv https://w3id.org/semapv/vocab/
+idspace: eccode https://enzyme.expasy.org/EC/
+
+{lines}"""
+            with tempfile.TemporaryDirectory() as tmpdir:
+                path = Path(tmpdir).joinpath("test_ontology.obo")
+                path.write_text(text)
+                out = Path(tmpdir).joinpath("test_ontology.owl")
+                robot.convert(path, out)

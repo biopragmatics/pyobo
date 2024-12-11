@@ -20,6 +20,7 @@ __all__ = [
     "Reference",
     "Referenced",
     "default_reference",
+    "unspecified_matching",
 ]
 
 
@@ -229,3 +230,8 @@ def _parse_identifier(
         if yy := _ground_relation(s):
             return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
     return default_reference(ontology_prefix, s, name=name)
+
+
+unspecified_matching = Reference(
+    prefix="semapv", identifier="UnspecifiedMatching", name="unspecified matching process"
+)
