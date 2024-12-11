@@ -1,17 +1,22 @@
 """Tests for the OBO data structures."""
 
-import tempfile
 import unittest
 from collections.abc import Iterable
-from pathlib import Path
 from textwrap import dedent
+from typing import cast
 
-from bioontologies import robot
+import bioregistry
 
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
 from pyobo.struct.reference import unspecified_matching
-from pyobo.struct.struct import BioregistryError, SynonymTypeDef, Term, TypeDef
+from pyobo.struct.struct import (
+    BioregistryError,
+    SynonymTypeDef,
+    Term,
+    TypeDef,
+    make_ad_hoc_ontology,
+)
 from pyobo.struct.typedef import (
     contributor,
     exact_match,
@@ -34,6 +39,15 @@ class Nope(Obo):
 
     def iter_terms(self, force: bool = False):
         """Do not do anything."""
+
+
+def _ontology_from_term(prefix: str, term: Term) -> Obo:
+    name = cast(str, bioregistry.get_name(prefix))
+    return make_ad_hoc_ontology(
+        _ontology=prefix,
+        _name=name,
+        terms=[term],
+    )
 
 
 class TestStruct(unittest.TestCase):
@@ -618,3 +632,10 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
         self.assertEqual(unspecified_matching, context.justification)
         self.assertEqual(0.99, context.confidence)
         self.assertIsNone(context.contributor)
+
+        ontology = _ontology_from_term("go", term)
+        mappings_df = ontology.get_mappings_df()
+        self.assertEqual(
+            ["subject_id", "object_id", "predicate_id", "mapping_justification", "confidence"],
+            list(mappings_df.columns),
+        )

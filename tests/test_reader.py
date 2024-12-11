@@ -22,6 +22,10 @@ from pyobo.struct.typedef import (
 )
 
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
+REASON_OBONET_IMPL = (
+    "This needs to be fixed upstream, since obonet's parser "
+    "for synonyms fails on the open squiggly bracket {"
+)
 
 
 def _read(
@@ -865,10 +869,7 @@ class TestReader(unittest.TestCase):
         self.assertEqual("EXACT", synonym.specificity)
         self.assertEqual(abbreviation.reference, synonym.type)
 
-    @unittest.skip(
-        reason="This needs to be fixed upstream, since obonet's "
-        "parser for synonyms fails on the open squiggly bracket {"
-    )
+    @unittest.skip(reason=REASON_OBONET_IMPL)
     def test_synonym_with_annotations(self) -> None:
         """Test parsing a synonym with annotations."""
         ontology = _read("""\
@@ -964,6 +965,24 @@ class TestReader(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(1, len(term.relationships))
         self.assertIn(derives_from.reference, term.relationships)
+
+    @unittest.skip(reason=REASON_OBONET_IMPL)
+    def test_sssom_axiom(self) -> None:
+        """Test SSSOM axioms."""
+        ontology = _read("""\
+            ontology: go
+
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: skos:exactMatch eccode:1.4.1.15 {dcterms:contributor=orcid:0000-0003-4423-4370}
+        """)
+        term = self.get_only_term(ontology)
+        mappings = term.get_mappings()
+        self.assertEqual(1, len(mappings))
+        context = mappings[0][2]
+        self.assertIsNotNone(context.contributor)
+        self.assertEqual("0000-0003-4423-4370", context.contributor.identifier)
 
 
 class TestVersionHandling(unittest.TestCase):
