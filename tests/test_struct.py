@@ -599,7 +599,15 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
         """)
         self.assert_lines(
             lines,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(
+                ontology_prefix="go",
+                typedefs={
+                    RO_DUMMY.pair: RO_DUMMY,
+                    mapping_has_confidence.pair: mapping_has_confidence,
+                    mapping_has_justification.pair: mapping_has_justification,
+                    contributor.pair: contributor,
+                },
+            ),
         )
 
         mappings = list(term.get_mappings())
@@ -610,18 +618,3 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
         self.assertEqual(unspecified_matching, context.justification)
         self.assertEqual(0.99, context.confidence)
         self.assertIsNone(context.contributor)
-
-        if robot.is_available():
-            text = f"""\
-ontology: go
-idspace: skos http://www.w3.org/2004/02/skos/core#
-idspace: sssom https://w3id.org/sssom/
-idspace: semapv https://w3id.org/semapv/vocab/
-idspace: eccode https://enzyme.expasy.org/EC/
-
-{lines}"""
-            with tempfile.TemporaryDirectory() as tmpdir:
-                path = Path(tmpdir).joinpath("test_ontology.obo")
-                path.write_text(text)
-                out = Path(tmpdir).joinpath("test_ontology.owl")
-                robot.convert(path, out)

@@ -924,11 +924,11 @@ class TestReader(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(
             {(has_dbxref.pair, Reference(prefix="cas", identifier="389-08-2").pair)},
-            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
+            {(a.pair, b.pair) for a, b, _ in term.get_mappings(include_xrefs=True)},
         )
         self.assertEqual(
             set(),
-            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=False)},
+            {(a.pair, b.pair) for a, b, _ in term.get_mappings(include_xrefs=False)},
         )
 
         ontology = _read("""\
@@ -942,14 +942,14 @@ class TestReader(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(
             {(exact_match.pair, Reference(prefix="drugbank", identifier="DB00779").pair)},
-            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=False)},
+            {(a.pair, b.pair) for a, b, _ in term.get_mappings(include_xrefs=False)},
         )
         self.assertEqual(
             {
                 (exact_match.pair, Reference(prefix="drugbank", identifier="DB00779").pair),
                 (has_dbxref.pair, Reference(prefix="cas", identifier="389-08-2").pair),
             },
-            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
+            {(a.pair, b.pair) for a, b, _ in term.get_mappings(include_xrefs=True)},
         )
 
     def test_default_relation(self):
