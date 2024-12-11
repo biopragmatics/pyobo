@@ -208,6 +208,17 @@ class TestTerm(unittest.TestCase):
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
+        ontology = _ontology_from_term("go", term)
+        mappings_df = ontology.get_mappings_df()
+        self.assertEqual(
+            ["subject_id", "object_id", "predicate_id", "mapping_justification"],
+            list(mappings_df.columns),
+        )
+        self.assertEqual(
+            ["GO:0050069", "eccode:1.4.1.15", "oboInOwl:hasDbXref", "semapv:UnspecifiedMatching"],
+            list(mappings_df.values[0]),
+        )
+
     def test_parent(self) -> None:
         """Test emitting a relationship."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -236,6 +247,17 @@ class TestTerm(unittest.TestCase):
             property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+
+        ontology = _ontology_from_term("go", term)
+        mappings_df = ontology.get_mappings_df()
+        self.assertEqual(
+            ["subject_id", "object_id", "predicate_id", "mapping_justification"],
+            list(mappings_df.columns),
+        )
+        self.assertEqual(
+            ["GO:0050069", "eccode:1.4.1.15", "skos:exactMatch", "semapv:UnspecifiedMatching"],
+            list(mappings_df.values[0]),
         )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -640,9 +662,19 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
             ["subject_id", "object_id", "predicate_id", "mapping_justification", "confidence"],
             list(mappings_df.columns),
         )
+        self.assertEqual(
+            [
+                "GO:0050069",
+                "eccode:1.4.1.15",
+                "skos:exactMatch",
+                "semapv:UnspecifiedMatching",
+                0.99,
+            ],
+            list(mappings_df.values[0]),
+        )
 
     def test_append_xref_with_axioms(self) -> None:
-        """Test emitting an xref with axioms."""
+        """Test emitting a xref with axioms."""
         target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
         term = Term(LYSINE_DEHYDROGENASE_ACT)
         term.append_xref(target, confidence=0.99)
@@ -667,4 +699,21 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
                     has_contributor.pair: has_contributor,
                 },
             ),
+        )
+
+        ontology = _ontology_from_term("go", term)
+        mappings_df = ontology.get_mappings_df()
+        self.assertEqual(
+            ["subject_id", "object_id", "predicate_id", "mapping_justification", "confidence"],
+            list(mappings_df.columns),
+        )
+        self.assertEqual(
+            [
+                "GO:0050069",
+                "eccode:1.4.1.15",
+                "oboInOwl:hasDbXref",
+                "semapv:UnspecifiedMatching",
+                0.99,
+            ],
+            list(mappings_df.values[0]),
         )

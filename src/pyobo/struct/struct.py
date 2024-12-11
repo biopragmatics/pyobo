@@ -93,6 +93,8 @@ SSSOM_DF_COLUMNS = [
     "object_id",
     "predicate_id",
     "mapping_justification",
+    "confidence",
+    "contributor",
 ]
 UNSPECIFIED_MATCHING_CURIE = "sempav:UnspecifiedMatching"
 
@@ -1815,7 +1817,7 @@ class Obo:
 
     def iterate_mapping_rows(
         self, *, use_tqdm: bool = False
-    ) -> Iterable[tuple[str, str, str, str, str]]:
+    ) -> Iterable[tuple[str, str, str, str, str, float | None, str | None]]:
         """Iterate over SSSOM rows for mappings."""
         for term in self._iter_terms(use_tqdm=use_tqdm):
             for predicate, obj_ref, context in term.get_mappings(include_xrefs=True):
@@ -1825,6 +1827,8 @@ class Obo:
                     obj_ref.preferred_curie,
                     predicate.preferred_curie,
                     context.justification.preferred_curie,
+                    context.confidence if context.confidence is not None else None,
+                    context.contributor.preferred_curie if context.contributor else None,
                 )
 
     def get_mappings_df(
@@ -1838,6 +1842,11 @@ class Obo:
         df = pd.DataFrame(self.iterate_mapping_rows(use_tqdm=use_tqdm), columns=SSSOM_DF_COLUMNS)
         if not include_subject_labels:
             del df["subject_label"]
+
+        # if no confidences/contributor, remove that column
+        for c in ["confidence", "contributor"]:
+            if df[c].isna().all():
+                del df[c]
 
         # append on the mapping_source
         # (https://mapping-commons.github.io/sssom/mapping_source/)
