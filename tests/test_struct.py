@@ -18,8 +18,9 @@ from pyobo.struct.struct import (
     make_ad_hoc_ontology,
 )
 from pyobo.struct.typedef import (
-    contributor,
     exact_match,
+    has_contributor,
+    has_dbxref,
     mapping_has_confidence,
     mapping_has_justification,
     see_also,
@@ -576,7 +577,7 @@ class TestTerm(unittest.TestCase):
                 mapping_has_justification,
                 Reference(prefix="semapv", identifier="UnspecifiedMapping"),
             ),
-            (contributor, Reference(prefix="orcid", identifier="0000-0003-4423-4370")),
+            (has_contributor, Reference(prefix="orcid", identifier="0000-0003-4423-4370")),
         ]
         self.assertEqual(
             "{dcterms:contributor=orcid:0000-0003-4423-4370, sssom:mapping_justification=semapv:UnspecifiedMapping}",
@@ -619,7 +620,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
                     RO_DUMMY.pair: RO_DUMMY,
                     mapping_has_confidence.pair: mapping_has_confidence,
                     mapping_has_justification.pair: mapping_has_justification,
-                    contributor.pair: contributor,
+                    has_contributor.pair: has_contributor,
                 },
             ),
         )
@@ -638,4 +639,32 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
         self.assertEqual(
             ["subject_id", "object_id", "predicate_id", "mapping_justification", "confidence"],
             list(mappings_df.columns),
+        )
+
+    def test_append_xref_with_axioms(self) -> None:
+        """Test emitting an xref with axioms."""
+        target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_xref(target, confidence=0.99)
+        self.assertEqual(
+            {(has_dbxref.reference, target): [(mapping_has_confidence.reference, "0.99")]},
+            dict(term._str_axioms),
+        )
+        lines = dedent("""\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            xref: eccode:1.4.1.15 {sssom:confidence=0.99} ! lysine dehydrogenase
+        """)
+        self.assert_lines(
+            lines,
+            term.iterate_obo_lines(
+                ontology_prefix="go",
+                typedefs={
+                    RO_DUMMY.pair: RO_DUMMY,
+                    mapping_has_confidence.pair: mapping_has_confidence,
+                    mapping_has_justification.pair: mapping_has_justification,
+                    has_contributor.pair: has_contributor,
+                },
+            ),
         )

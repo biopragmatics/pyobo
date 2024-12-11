@@ -96,7 +96,10 @@ def _process_row(tax_string, ncbitaxon_id) -> Iterable[Term]:
         if ncbitaxon_id and level == "s":
             # if the level is "s", it's a species. There might be multiple
             # mappings to NCBITaxon, so we only use "see also" as the predicate
-            term.append_xref(Reference(prefix="ncbitaxon", identifier=ncbitaxon_id))
+            term.append_xref(
+                Reference(prefix="ncbitaxon", identifier=ncbitaxon_id),
+                # TODO @jose use confidence=... keyword here
+            )
 
         yield term
         parent_reference = term.reference

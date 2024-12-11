@@ -16,7 +16,6 @@ __all__ = [
     "alternative_term",
     "broad_match",
     "close_match",
-    "contributor",
     "default_typedefs",
     "editor_note",
     "enables",
@@ -24,6 +23,7 @@ __all__ = [
     "example_of_usage",
     "from_species",
     "gene_product_member_of",
+    "has_contributor",
     "has_dbxref",
     "has_gene_product",
     "has_homepage",
@@ -397,7 +397,7 @@ mapping_has_confidence = TypeDef(
     is_metadata_tag=True,
     range=Reference(prefix="xsd", identifier="float"),
 )
-contributor = TypeDef(
+has_contributor = TypeDef(
     reference=Reference(prefix="dcterms", identifier="contributor", name="contributor"),
     is_metadata_tag=True,
 )
