@@ -12,6 +12,8 @@ from pyobo.constants import NCBITAXON_PREFIX
 from pyobo.struct.reference import unspecified_matching
 from pyobo.struct.struct import (
     BioregistryError,
+    LiteralProperty,
+    ObjectProperty,
     SynonymTypeDef,
     Term,
     TypeDef,
@@ -584,9 +586,10 @@ class TestTerm(unittest.TestCase):
     def test_format_axioms(self) -> None:
         """Test formatting axioms."""
         axioms = [
-            (
+            ObjectProperty(
                 mapping_has_justification,
                 Reference(prefix="semapv", identifier="UnspecifiedMapping"),
+                None,
             ),
         ]
         self.assertEqual(
@@ -595,11 +598,14 @@ class TestTerm(unittest.TestCase):
         )
 
         axioms = [
-            (
+            ObjectProperty(
                 mapping_has_justification,
                 Reference(prefix="semapv", identifier="UnspecifiedMapping"),
+                None,
             ),
-            (has_contributor, Reference(prefix="orcid", identifier="0000-0003-4423-4370")),
+            ObjectProperty(
+                has_contributor, Reference(prefix="orcid", identifier="0000-0003-4423-4370"), None
+            ),
         ]
         self.assertEqual(
             "{dcterms:contributor=orcid:0000-0003-4423-4370, sssom:mapping_justification=semapv:UnspecifiedMapping}",
@@ -618,13 +624,17 @@ class TestTerm(unittest.TestCase):
         self.assertEqual(
             {
                 (exact_match.reference, target): [
-                    (mapping_has_justification.reference, unspecified_matching)
+                    ObjectProperty(mapping_has_justification.reference, unspecified_matching, None)
                 ]
             },
             dict(term._axioms),
         )
         self.assertEqual(
-            {(exact_match.reference, target): [(mapping_has_confidence.reference, "0.99")]},
+            {
+                (exact_match.reference, target): [
+                    LiteralProperty.float(mapping_has_confidence.reference, 0.99)
+                ]
+            },
             dict(term._str_axioms),
         )
         lines = dedent("""\
@@ -679,7 +689,11 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
         term = Term(LYSINE_DEHYDROGENASE_ACT)
         term.append_xref(target, confidence=0.99)
         self.assertEqual(
-            {(has_dbxref.reference, target): [(mapping_has_confidence.reference, "0.99")]},
+            {
+                (has_dbxref.reference, target): [
+                    LiteralProperty.float(mapping_has_confidence.reference, 0.99)
+                ]
+            },
             dict(term._str_axioms),
         )
         lines = dedent("""\

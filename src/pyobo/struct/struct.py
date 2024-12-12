@@ -260,10 +260,10 @@ class Term(Referenced):
         default_factory=lambda: defaultdict(list)
     )
 
-    _axioms: dict[tuple[Reference, Reference], list[tuple[Reference, Reference]]] = field(
+    _axioms: dict[tuple[Reference, Reference], list[ObjectProperty]] = field(
         default_factory=lambda: defaultdict(list)
     )
-    _str_axioms: dict[tuple[Reference, Reference], list[tuple[Reference, str]]] = field(
+    _str_axioms: dict[tuple[Reference, Reference], list[LiteralProperty]] = field(
         default_factory=lambda: defaultdict(list)
     )
 
@@ -471,13 +471,13 @@ class Term(Referenced):
     def _get_object_axiom_target(
         self, p: Reference, o: Reference, ap: Reference
     ) -> Reference | None:
-        for axiom_predicate, axiom_target in self._axioms.get((p, o), []):
+        for axiom_predicate, axiom_target, _ in self._axioms.get((p, o), []):
             if axiom_predicate == ap:
                 return axiom_target
         return None
 
     def _get_str_axiom_target(self, p: Reference, o: Reference, ap: Reference) -> str | None:
-        for axiom_predicate, axiom_target in self._str_axioms.get((p, o), []):
+        for axiom_predicate, axiom_target, _ in self._str_axioms.get((p, o), []):
             if axiom_predicate == ap:
                 return axiom_target
         return None
@@ -578,12 +578,12 @@ class Term(Referenced):
     def _annotate_axiom(
         self, p: Reference, o: Reference, axiom: ObjectProperty | LiteralProperty
     ) -> None:
-        match axiom:
-            case ObjectProperty(predicate, target, _):
-                self._axioms[p, o].append((predicate, target))
-            case LiteralProperty(predicate, target, _datatype):
-                # TODO use datatype?
-                self._str_axioms[p, o].append((predicate, target))
+        if isinstance(axiom, ObjectProperty):
+            self._axioms[p, o].append(axiom)
+        elif isinstance(axiom, LiteralProperty):
+            self._str_axioms[p, o].append(axiom)
+        else:
+            raise TypeError
 
     def set_species(self, identifier: str, name: str | None = None) -> Self:
         """Append the from_species relation."""
@@ -733,21 +733,22 @@ class Term(Referenced):
 
     @classmethod
     def _format_trailing_modifiers(
-        cls, axioms: list[tuple[Reference, Reference] | tuple[Reference, str]], ontology_prefix: str
+        cls, axioms: list[ObjectProperty | LiteralProperty], ontology_prefix: str
     ) -> str:
         # See https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.1.4
         # trailing modifiers can be both axioms and some other implementation-specific
         # things, so split up the place where axioms are put in here
-        modifiers = []
+        modifiers: list[tuple[str, str]] = []
 
-        for predicate, target in sorted(axioms, key=lambda p: (p[0], type(p[1]), p[1])):
-            if isinstance(target, Reference):
-                right = cls._reference(target, ontology_prefix)
-            else:
-                right = target
+        for axiom in axioms:
+            match axiom:
+                case ObjectProperty(predicate, target, _):
+                    right = cls._reference(target, ontology_prefix)
+                case LiteralProperty(predicate, target, _datatype):
+                    right = target
             modifiers.append((cls._reference(predicate, ontology_prefix), right))
 
-        inner = ", ".join(f"{key}={value}" for key, value in modifiers)
+        inner = ", ".join(f"{key}={value}" for key, value in sorted(modifiers))
         return "{" + inner + "}"
 
     def _emit_properties(
@@ -772,7 +773,7 @@ class Term(Referenced):
     def _trailing_modifiers(
         self, predicate: Reference, value: Reference, *, ontology_prefix: str
     ) -> str:
-        axioms: list[tuple[Reference, Reference] | tuple[Reference, str]] = [
+        axioms: list[ObjectProperty | LiteralProperty] = [
             *self._axioms.get((predicate, value), []),
             *self._str_axioms.get((predicate, value), []),
         ]
