@@ -15,7 +15,7 @@ from datetime import datetime
 from itertools import chain
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, ClassVar, Literal, NamedTuple, TextIO, TypeAlias
+from typing import Any, ClassVar, Literal, NamedTuple, TextIO, TypeAlias, overload
 
 import bioregistry
 import click
@@ -23,6 +23,7 @@ import networkx as nx
 import pandas as pd
 from curies import ReferenceTuple
 from more_click import force_option, verbose_option
+from pydantic import BaseModel
 from tqdm.auto import tqdm
 from typing_extensions import Self
 
@@ -32,6 +33,7 @@ from .reference import (
     comma_separate_references,
     default_reference,
     reference_escape,
+    unspecified_matching,
 )
 from .typedef import (
     TypeDef,
@@ -39,10 +41,13 @@ from .typedef import (
     default_typedefs,
     exact_match,
     from_species,
+    has_contributor,
     has_dbxref,
     has_ontology_root_term,
     has_part,
     is_a,
+    mapping_has_confidence,
+    mapping_has_justification,
     match_typedefs,
     orthologous,
     part_of,
@@ -88,6 +93,8 @@ SSSOM_DF_COLUMNS = [
     "object_id",
     "predicate_id",
     "mapping_justification",
+    "confidence",
+    "contributor",
 ]
 UNSPECIFIED_MATCHING_CURIE = "sempav:UnspecifiedMatching"
 
@@ -218,6 +225,24 @@ class LiteralProperty(NamedTuple):
     value: str
     datatype: Reference
 
+    @classmethod
+    def float(cls, predicate: Reference, value: float) -> Self:
+        """Return a literal property for a float."""
+        return cls(predicate, str(value), Reference(prefix="xsd", identifier="float"))
+
+
+class MappingContext(BaseModel):
+    """Context for a mapping, corresponding to SSSOM."""
+
+    justification: Reference = unspecified_matching
+    contributor: Reference | None = None
+    confidence: float | None = None
+
+    class Config:
+        """Configuration for mapping context model."""
+
+        frozen = True  # Makes the model immutable and hashable
+
 
 @dataclass
 class Term(Referenced):
@@ -234,6 +259,13 @@ class Term(Referenced):
 
     #: Object properties
     relationships: dict[Reference, list[Reference]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+
+    _axioms: dict[tuple[Reference, Reference], list[ObjectProperty]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+    _str_axioms: dict[tuple[Reference, Reference], list[LiteralProperty]] = field(
         default_factory=lambda: defaultdict(list)
     )
 
@@ -409,7 +441,21 @@ class Term(Referenced):
         """Get relationships from the given type."""
         return self.relationships.get(_ensure_ref(typedef), [])
 
-    def get_mappings(self, *, include_xrefs: bool = True) -> list[tuple[Reference, Reference]]:
+    # docstr-coverage:excused `overload`
+    @overload
+    def get_mappings(
+        self, *, include_xrefs: bool = ..., add_context: Literal[True] = True
+    ) -> list[tuple[Reference, Reference, MappingContext]]: ...
+
+    # docstr-coverage:excused `overload`
+    @overload
+    def get_mappings(
+        self, *, include_xrefs: bool = ..., add_context: Literal[False] = False
+    ) -> list[tuple[Reference, Reference]]: ...
+
+    def get_mappings(
+        self, *, include_xrefs: bool = True, add_context: bool = False
+    ) -> list[tuple[Reference, Reference]] | list[tuple[Reference, Reference, MappingContext]]:
         """Get mappings with preferred curies."""
         rows = []
         for predicate in match_typedefs:
@@ -420,29 +466,138 @@ class Term(Referenced):
         if include_xrefs:
             for xref_reference in self.xrefs:
                 rows.append((has_dbxref.reference, xref_reference))
-        return sorted(set(rows))
 
-    def append_exact_match(self, reference: ReferenceHint) -> Self:
+        rv = sorted(set(rows))
+        if not add_context:
+            return rv
+        return [(k, v, self._get_mapping_context(k, v)) for k, v in rv]
+
+    def _get_object_axiom_target(
+        self, p: Reference, o: Reference, ap: Reference
+    ) -> Reference | None:
+        for axiom_predicate, axiom_target, _ in self._axioms.get((p, o), []):
+            if axiom_predicate == ap:
+                return axiom_target
+        return None
+
+    def _get_str_axiom_target(self, p: Reference, o: Reference, ap: Reference) -> str | None:
+        for axiom_predicate, axiom_target, _ in self._str_axioms.get((p, o), []):
+            if axiom_predicate == ap:
+                return axiom_target
+        return None
+
+    def _get_mapping_context(self, p: Reference, o: Reference) -> MappingContext:
+        return MappingContext(
+            justification=self._get_object_axiom_target(p, o, mapping_has_justification.reference)
+            or unspecified_matching,
+            contributor=self._get_object_axiom_target(p, o, has_contributor.reference),
+            confidence=self._get_str_axiom_target(p, o, mapping_has_confidence.reference),
+        )
+
+    def append_exact_match(
+        self,
+        reference: ReferenceHint,
+        *,
+        mapping_justification: Reference | None = None,
+        confidence: float | None = None,
+        contributor: Reference | None = None,
+    ) -> Self:
         """Append an exact match, also adding an xref."""
         reference = _ensure_ref(reference)
-        self.annotate_object(exact_match, reference)
+        axioms = self._prepare_mapping_axioms(
+            mapping_justification=mapping_justification,
+            confidence=confidence,
+            contributor=contributor,
+        )
+        self.annotate_object(exact_match.reference, reference, axioms=axioms)
         return self
 
-    def append_xref(self, reference: ReferenceHint) -> None:
+    def append_xref(
+        self,
+        reference: ReferenceHint,
+        *,
+        mapping_justification: Reference | None = None,
+        confidence: float | None = None,
+        contributor: Reference | None = None,
+    ) -> Self:
         """Append an xref."""
-        self.xrefs.append(_ensure_ref(reference))
-
-    def append_relationship(self, typedef: ReferenceHint, reference: ReferenceHint) -> Self:
-        """Append a relationship."""
-        self.relationships[_ensure_ref(typedef)].append(_ensure_ref(reference))
+        reference = _ensure_ref(reference)
+        self.xrefs.append(reference)
+        axioms = self._prepare_mapping_axioms(
+            mapping_justification=mapping_justification,
+            confidence=confidence,
+            contributor=contributor,
+        )
+        self._annotate_axioms(has_dbxref.reference, reference, axioms)
         return self
 
-    def annotate_object(self, typedef: ReferenceHint, value: ReferenceHint) -> Self:
+    def _prepare_mapping_axioms(
+        self,
+        *,
+        mapping_justification: Reference | None = None,
+        confidence: float | None = None,
+        contributor: Reference | None = None,
+    ) -> Iterable[ObjectProperty | LiteralProperty]:
+        if mapping_justification is not None:
+            yield ObjectProperty(
+                mapping_has_justification.reference,
+                mapping_justification,
+                None,
+            )
+        if contributor is not None:
+            yield ObjectProperty(
+                has_contributor.reference,
+                contributor,
+                None,
+            )
+        if confidence is not None:
+            yield LiteralProperty.float(mapping_has_confidence.reference, confidence)
+
+    def append_relationship(
+        self,
+        typedef: ReferenceHint,
+        reference: ReferenceHint,
+        *,
+        axioms: Iterable[ObjectProperty | LiteralProperty] | None = None,
+    ) -> Self:
+        """Append a relationship."""
+        typedef = _ensure_ref(typedef)
+        reference = _ensure_ref(reference)
+        self.relationships[typedef].append(reference)
+        self._annotate_axioms(typedef, reference, axioms)
+        return self
+
+    def annotate_object(
+        self,
+        typedef: ReferenceHint,
+        value: ReferenceHint,
+        *,
+        axioms: Iterable[ObjectProperty | LiteralProperty] | None = None,
+    ) -> Self:
         """Append an object annotation."""
         typedef = _ensure_ref(typedef)
         value = _ensure_ref(value)
         self.annotations_object[typedef].append(value)
+        self._annotate_axioms(typedef, value, axioms)
         return self
+
+    def _annotate_axioms(
+        self, p: Reference, o: Reference, axioms: Iterable[ObjectProperty | LiteralProperty] | None
+    ) -> None:
+        if axioms is None:
+            return
+        for axiom in axioms:
+            self._annotate_axiom(p, o, axiom)
+
+    def _annotate_axiom(
+        self, p: Reference, o: Reference, axiom: ObjectProperty | LiteralProperty
+    ) -> None:
+        if isinstance(axiom, ObjectProperty):
+            self._axioms[p, o].append(axiom)
+        elif isinstance(axiom, LiteralProperty):
+            self._str_axioms[p, o].append(axiom)
+        else:
+            raise TypeError
 
     def set_species(self, identifier: str, name: str | None = None) -> Self:
         """Append the from_species relation."""
@@ -550,7 +705,13 @@ class Term(Referenced):
             yield f"alt_id: {self._reference(alt, ontology_prefix, add_name_comment=True)}"
 
         for xref in sorted(xrefs):
-            yield f"xref: {self._reference(xref, ontology_prefix, add_name_comment=True)}"
+            xref_yv = f"xref: {self._reference(xref, ontology_prefix, add_name_comment=False)}"
+            xref_yv += self._trailing_modifiers(
+                has_dbxref.reference, xref, ontology_prefix=ontology_prefix
+            )
+            if xref.name:
+                xref_yv += f" ! {xref.name}"
+            yield xref_yv
 
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
         for parent in sorted(self.parents):
@@ -575,6 +736,7 @@ class Term(Referenced):
             _typedef_warn(prefix=ontology_prefix, predicate=typedef, typedefs=typedefs)
             predicate_reference = self._reference(typedef, ontology_prefix)
             s = f"relationship: {predicate_reference} {self._reference(reference, ontology_prefix)}"
+            s += self._trailing_modifiers(typedef, reference, ontology_prefix=ontology_prefix)
             if typedef.name or reference.name:
                 s += " !"
                 if typedef.name:
@@ -582,6 +744,26 @@ class Term(Referenced):
                 if reference.name:
                     s += f" {reference.name}"
             yield s
+
+    @classmethod
+    def _format_trailing_modifiers(
+        cls, axioms: list[ObjectProperty | LiteralProperty], ontology_prefix: str
+    ) -> str:
+        # See https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.1.4
+        # trailing modifiers can be both axioms and some other implementation-specific
+        # things, so split up the place where axioms are put in here
+        modifiers: list[tuple[str, str]] = []
+
+        for axiom in axioms:
+            match axiom:
+                case ObjectProperty(predicate, target, _):
+                    right = cls._reference(target, ontology_prefix)
+                case LiteralProperty(predicate, target, _datatype):
+                    right = target
+            modifiers.append((cls._reference(predicate, ontology_prefix), right))
+
+        inner = ", ".join(f"{key}={value}" for key, value in sorted(modifiers))
+        return "{" + inner + "}"
 
     def _emit_properties(
         self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
@@ -597,9 +779,21 @@ class Term(Referenced):
             predicate_curie = self._reference(predicate, ontology_prefix)
             for value in sorted(values):
                 yv = f"{predicate_curie} {self._reference(value, ontology_prefix)}"
+                yv += self._trailing_modifiers(predicate, value, ontology_prefix=ontology_prefix)
                 if predicate.name and value.name:
                     yv += f" ! {predicate.name} {value.name}"
                 yield yv
+
+    def _trailing_modifiers(
+        self, predicate: Reference, value: Reference, *, ontology_prefix: str
+    ) -> str:
+        axioms: list[ObjectProperty | LiteralProperty] = [
+            *self._axioms.get((predicate, value), []),
+            *self._str_axioms.get((predicate, value), []),
+        ]
+        if axioms:
+            return f" {self._format_trailing_modifiers(axioms, ontology_prefix)}"
+        return ""
 
     def _emit_literal_properties(
         self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
@@ -609,6 +803,7 @@ class Term(Referenced):
             predicate_curie = self._reference(predicate, ontology_prefix)
             for value, datatype in sorted(value_datatype_pairs):
                 # TODO clean/escape value?
+                # TODO what about axioms here?
                 yield f'{predicate_curie} "{value}" {datatype.preferred_curie}'
 
     @staticmethod
@@ -1665,16 +1860,20 @@ class Obo:
 
     def iterate_mapping_rows(
         self, *, use_tqdm: bool = False
-    ) -> Iterable[tuple[str, str, str, str, str]]:
+    ) -> Iterable[tuple[str, str, str, str, str, float | None, str | None]]:
         """Iterate over SSSOM rows for mappings."""
         for term in self._iter_terms(use_tqdm=use_tqdm):
-            for predicate, obj_ref in term.get_mappings(include_xrefs=True):
+            for predicate, obj_ref, context in term.get_mappings(
+                include_xrefs=True, add_context=True
+            ):
                 yield (
                     term.preferred_curie,
                     term.name,
                     obj_ref.preferred_curie,
                     predicate.preferred_curie,
-                    UNSPECIFIED_MATCHING_CURIE,
+                    context.justification.preferred_curie,
+                    context.confidence if context.confidence is not None else None,
+                    context.contributor.preferred_curie if context.contributor else None,
                 )
 
     def get_mappings_df(
@@ -1688,6 +1887,11 @@ class Obo:
         df = pd.DataFrame(self.iterate_mapping_rows(use_tqdm=use_tqdm), columns=SSSOM_DF_COLUMNS)
         if not include_subject_labels:
             del df["subject_label"]
+
+        # if no confidences/contributor, remove that column
+        for c in ["confidence", "contributor"]:
+            if df[c].isna().all():
+                del df[c]
 
         # append on the mapping_source
         # (https://mapping-commons.github.io/sssom/mapping_source/)

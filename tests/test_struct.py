@@ -3,11 +3,30 @@
 import unittest
 from collections.abc import Iterable
 from textwrap import dedent
+from typing import cast
+
+import bioregistry
 
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
-from pyobo.struct.struct import BioregistryError, SynonymTypeDef, Term, TypeDef
-from pyobo.struct.typedef import exact_match, see_also
+from pyobo.struct.reference import unspecified_matching
+from pyobo.struct.struct import (
+    BioregistryError,
+    LiteralProperty,
+    ObjectProperty,
+    SynonymTypeDef,
+    Term,
+    TypeDef,
+    make_ad_hoc_ontology,
+)
+from pyobo.struct.typedef import (
+    exact_match,
+    has_contributor,
+    has_dbxref,
+    mapping_has_confidence,
+    mapping_has_justification,
+    see_also,
+)
 
 LYSINE_DEHYDROGENASE_ACT = Reference(
     prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"
@@ -23,6 +42,15 @@ class Nope(Obo):
 
     def iter_terms(self, force: bool = False):
         """Do not do anything."""
+
+
+def _ontology_from_term(prefix: str, term: Term) -> Obo:
+    name = cast(str, bioregistry.get_name(prefix))
+    return make_ad_hoc_ontology(
+        _ontology=prefix,
+        _name=name,
+        terms=[term],
+    )
 
 
 class TestStruct(unittest.TestCase):
@@ -182,6 +210,17 @@ class TestTerm(unittest.TestCase):
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
+        ontology = _ontology_from_term("go", term)
+        mappings_df = ontology.get_mappings_df()
+        self.assertEqual(
+            ["subject_id", "object_id", "predicate_id", "mapping_justification"],
+            list(mappings_df.columns),
+        )
+        self.assertEqual(
+            ["GO:0050069", "eccode:1.4.1.15", "oboInOwl:hasDbXref", "semapv:UnspecifiedMatching"],
+            list(mappings_df.values[0]),
+        )
+
     def test_parent(self) -> None:
         """Test emitting a relationship."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -210,6 +249,17 @@ class TestTerm(unittest.TestCase):
             property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+
+        ontology = _ontology_from_term("go", term)
+        mappings_df = ontology.get_mappings_df()
+        self.assertEqual(
+            ["subject_id", "object_id", "predicate_id", "mapping_justification"],
+            list(mappings_df.columns),
+        )
+        self.assertEqual(
+            ["GO:0050069", "eccode:1.4.1.15", "skos:exactMatch", "semapv:UnspecifiedMatching"],
+            list(mappings_df.values[0]),
         )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -531,4 +581,153 @@ class TestTerm(unittest.TestCase):
             name: Genetics
             """,
             term.iterate_obo_lines(ontology_prefix="gard", typedefs={}),
+        )
+
+    def test_format_axioms(self) -> None:
+        """Test formatting axioms."""
+        axioms = [
+            ObjectProperty(
+                mapping_has_justification,
+                Reference(prefix="semapv", identifier="UnspecifiedMapping"),
+                None,
+            ),
+        ]
+        self.assertEqual(
+            "{sssom:mapping_justification=semapv:UnspecifiedMapping}",
+            Term._format_trailing_modifiers(axioms, "chebi"),
+        )
+
+        axioms = [
+            ObjectProperty(
+                mapping_has_justification,
+                Reference(prefix="semapv", identifier="UnspecifiedMapping"),
+                None,
+            ),
+            ObjectProperty(
+                has_contributor, Reference(prefix="orcid", identifier="0000-0003-4423-4370"), None
+            ),
+        ]
+        self.assertEqual(
+            "{dcterms:contributor=orcid:0000-0003-4423-4370, sssom:mapping_justification=semapv:UnspecifiedMapping}",
+            Term._format_trailing_modifiers(axioms, "chebi"),
+        )
+
+    def test_append_exact_match_axioms(self) -> None:
+        """Test emitting a relationship with axioms."""
+        target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_exact_match(
+            target,
+            mapping_justification=unspecified_matching,
+            confidence=0.99,
+        )
+        self.assertEqual(
+            {
+                (exact_match.reference, target): [
+                    ObjectProperty(mapping_has_justification.reference, unspecified_matching, None)
+                ]
+            },
+            dict(term._axioms),
+        )
+        self.assertEqual(
+            {
+                (exact_match.reference, target): [
+                    LiteralProperty.float(mapping_has_confidence.reference, 0.99)
+                ]
+            },
+            dict(term._str_axioms),
+        )
+        lines = dedent("""\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: skos:exactMatch eccode:1.4.1.15 {sssom:confidence=0.99, \
+sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine dehydrogenase
+        """)
+        self.assert_lines(
+            lines,
+            term.iterate_obo_lines(
+                ontology_prefix="go",
+                typedefs={
+                    RO_DUMMY.pair: RO_DUMMY,
+                    mapping_has_confidence.pair: mapping_has_confidence,
+                    mapping_has_justification.pair: mapping_has_justification,
+                    has_contributor.pair: has_contributor,
+                },
+            ),
+        )
+
+        mappings = list(term.get_mappings(add_context=True))
+        self.assertEqual(1, len(mappings))
+        predicate, target_, context = mappings[0]
+        self.assertEqual(exact_match.reference, predicate)
+        self.assertEqual(target, target_)
+        self.assertEqual(unspecified_matching, context.justification)
+        self.assertEqual(0.99, context.confidence)
+        self.assertIsNone(context.contributor)
+
+        ontology = _ontology_from_term("go", term)
+        mappings_df = ontology.get_mappings_df()
+        self.assertEqual(
+            ["subject_id", "object_id", "predicate_id", "mapping_justification", "confidence"],
+            list(mappings_df.columns),
+        )
+        self.assertEqual(
+            [
+                "GO:0050069",
+                "eccode:1.4.1.15",
+                "skos:exactMatch",
+                "semapv:UnspecifiedMatching",
+                0.99,
+            ],
+            list(mappings_df.values[0]),
+        )
+
+    def test_append_xref_with_axioms(self) -> None:
+        """Test emitting a xref with axioms."""
+        target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_xref(target, confidence=0.99)
+        self.assertEqual(
+            {
+                (has_dbxref.reference, target): [
+                    LiteralProperty.float(mapping_has_confidence.reference, 0.99)
+                ]
+            },
+            dict(term._str_axioms),
+        )
+        lines = dedent("""\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            xref: eccode:1.4.1.15 {sssom:confidence=0.99} ! lysine dehydrogenase
+        """)
+        self.assert_lines(
+            lines,
+            term.iterate_obo_lines(
+                ontology_prefix="go",
+                typedefs={
+                    RO_DUMMY.pair: RO_DUMMY,
+                    mapping_has_confidence.pair: mapping_has_confidence,
+                    mapping_has_justification.pair: mapping_has_justification,
+                    has_contributor.pair: has_contributor,
+                },
+            ),
+        )
+
+        ontology = _ontology_from_term("go", term)
+        mappings_df = ontology.get_mappings_df()
+        self.assertEqual(
+            ["subject_id", "object_id", "predicate_id", "mapping_justification", "confidence"],
+            list(mappings_df.columns),
+        )
+        self.assertEqual(
+            [
+                "GO:0050069",
+                "eccode:1.4.1.15",
+                "oboInOwl:hasDbXref",
+                "semapv:UnspecifiedMatching",
+                0.99,
+            ],
+            list(mappings_df.values[0]),
         )
