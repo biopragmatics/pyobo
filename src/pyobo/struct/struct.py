@@ -225,6 +225,11 @@ class LiteralProperty(NamedTuple):
     value: str
     datatype: Reference
 
+    @classmethod
+    def float(cls, predicate: Reference, value: float) -> Self:
+        """Return a literal property for a float."""
+        return cls(predicate, str(value), Reference(prefix="xsd", identifier="float"))
+
 
 class MappingContext(BaseModel):
     """Context for a mapping, corresponding to SSSOM."""
@@ -436,12 +441,12 @@ class Term(Referenced):
 
     @overload
     def get_mappings(
-        self, *, include_xrefs: bool = True, add_context: Literal[True] = True
+        self, *, include_xrefs: bool, add_context: Literal[True] = True
     ) -> list[tuple[Reference, Reference, MappingContext]]: ...
 
     @overload
     def get_mappings(
-        self, *, include_xrefs: bool = True, add_context: Literal[False] = False
+        self, *, include_xrefs: bool, add_context: Literal[False] = False
     ) -> list[tuple[Reference, Reference]]: ...
 
     def get_mappings(
@@ -495,30 +500,31 @@ class Term(Referenced):
     ) -> Self:
         """Append an exact match, also adding an xref."""
         reference = _ensure_ref(reference)
-        axioms_obj = []
-        axioms_str = []
+        axioms: list[ObjectProperty | LiteralProperty] = []
         if mapping_justification is not None:
-            axioms_obj.append(
-                (
+            axioms.append(
+                ObjectProperty(
                     mapping_has_justification.reference,
                     mapping_justification,
+                    None,
                 )
             )
         if contributor is not None:
-            axioms_obj.append(
-                (
+            axioms.append(
+                ObjectProperty(
                     has_contributor.reference,
                     contributor,
+                    None,
                 )
             )
         if confidence is not None:
-            axioms_str.append(
-                (
+            axioms.append(
+                LiteralProperty.float(
                     mapping_has_confidence.reference,
-                    str(confidence),
+                    confidence,
                 )
             )
-        self.annotate_object(exact_match, reference, axioms=axioms_obj, axioms_str=axioms_str)
+        self.annotate_object(exact_match, reference, axioms=axioms)
         return self
 
     def append_xref(
@@ -532,30 +538,52 @@ class Term(Referenced):
         reference = _ensure_ref(reference)
         self.xrefs.append(reference)
         if confidence is not None:
-            self._str_axioms[has_dbxref.reference, reference].append(
-                (mapping_has_confidence.reference, str(confidence))
+            self._annotate_axiom(
+                has_dbxref.reference,
+                reference,
+                LiteralProperty.float(mapping_has_confidence.reference, confidence),
             )
         return self
 
-    def append_relationship(self, typedef: ReferenceHint, reference: ReferenceHint) -> Self:
+    def append_relationship(
+        self,
+        typedef: ReferenceHint,
+        reference: ReferenceHint,
+        *,
+        axioms: list[ObjectProperty | LiteralProperty] | None = None,
+    ) -> Self:
         """Append a relationship."""
-        self.relationships[_ensure_ref(typedef)].append(_ensure_ref(reference))
+        typedef = _ensure_ref(typedef)
+        reference = _ensure_ref(reference)
+        self.relationships[typedef].append(reference)
+        for axiom in axioms or []:
+            self._annotate_axiom(typedef, reference, axiom)
         return self
 
     def annotate_object(
         self,
         typedef: ReferenceHint,
         value: ReferenceHint,
-        axioms: list[tuple[Reference, Reference]] | None = None,
-        axioms_str: list[tuple[Reference, str]] | None = None,
+        *,
+        axioms: list[ObjectProperty | LiteralProperty] | None = None,
     ) -> Self:
         """Append an object annotation."""
         typedef = _ensure_ref(typedef)
         value = _ensure_ref(value)
         self.annotations_object[typedef].append(value)
-        self._axioms[typedef, value].extend(axioms or [])
-        self._str_axioms[typedef, value].extend(axioms_str or [])
+        for axiom in axioms or []:
+            self._annotate_axiom(typedef, value, axiom)
         return self
+
+    def _annotate_axiom(
+        self, p: Reference, o: Reference, axiom: ObjectProperty | LiteralProperty
+    ) -> None:
+        match axiom:
+            case ObjectProperty(predicate, target, _):
+                self._axioms[p, o].append((predicate, target))
+            case LiteralProperty(predicate, target, _datatype):
+                # TODO use datatype?
+                self._str_axioms[p, o].append((predicate, target))
 
     def set_species(self, identifier: str, name: str | None = None) -> Self:
         """Append the from_species relation."""
