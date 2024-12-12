@@ -441,12 +441,12 @@ class Term(Referenced):
 
     @overload
     def get_mappings(
-        self, *, include_xrefs: bool, add_context: Literal[True] = True
+        self, *, include_xrefs: bool = ..., add_context: Literal[True] = True
     ) -> list[tuple[Reference, Reference, MappingContext]]: ...
 
     @overload
     def get_mappings(
-        self, *, include_xrefs: bool, add_context: Literal[False] = False
+        self, *, include_xrefs: bool = ..., add_context: Literal[False] = False
     ) -> list[tuple[Reference, Reference]]: ...
 
     def get_mappings(
@@ -500,64 +500,67 @@ class Term(Referenced):
     ) -> Self:
         """Append an exact match, also adding an xref."""
         reference = _ensure_ref(reference)
-        axioms: list[ObjectProperty | LiteralProperty] = []
-        if mapping_justification is not None:
-            axioms.append(
-                ObjectProperty(
-                    mapping_has_justification.reference,
-                    mapping_justification,
-                    None,
-                )
-            )
-        if contributor is not None:
-            axioms.append(
-                ObjectProperty(
-                    has_contributor.reference,
-                    contributor,
-                    None,
-                )
-            )
-        if confidence is not None:
-            axioms.append(
-                LiteralProperty.float(
-                    mapping_has_confidence.reference,
-                    confidence,
-                )
-            )
-        self.annotate_object(exact_match, reference, axioms=axioms)
+        axioms = self._prepare_mapping_axioms(
+            mapping_justification=mapping_justification,
+            confidence=confidence,
+            contributor=contributor,
+        )
+        self.annotate_object(exact_match.reference, reference, axioms=axioms)
         return self
 
     def append_xref(
         self,
         reference: ReferenceHint,
         *,
+        mapping_justification: Reference | None = None,
         confidence: float | None = None,
-        # TODO add other common mapping content
+        contributor: Reference | None = None,
     ) -> Self:
         """Append an xref."""
         reference = _ensure_ref(reference)
         self.xrefs.append(reference)
-        if confidence is not None:
-            self._annotate_axiom(
-                has_dbxref.reference,
-                reference,
-                LiteralProperty.float(mapping_has_confidence.reference, confidence),
-            )
+        axioms = self._prepare_mapping_axioms(
+            mapping_justification=mapping_justification,
+            confidence=confidence,
+            contributor=contributor,
+        )
+        self._annotate_axioms(has_dbxref.reference, reference, axioms)
         return self
+
+    def _prepare_mapping_axioms(
+        self,
+        *,
+        mapping_justification: Reference | None = None,
+        confidence: float | None = None,
+        contributor: Reference | None = None,
+    ) -> Iterable[ObjectProperty | LiteralProperty]:
+        if mapping_justification is not None:
+            yield ObjectProperty(
+                mapping_has_justification.reference,
+                mapping_justification,
+                None,
+            )
+        if contributor is not None:
+            yield ObjectProperty(
+                has_contributor.reference,
+                contributor,
+                None,
+            )
+        if confidence is not None:
+            yield LiteralProperty.float(mapping_has_confidence.reference, confidence)
 
     def append_relationship(
         self,
         typedef: ReferenceHint,
         reference: ReferenceHint,
         *,
-        axioms: list[ObjectProperty | LiteralProperty] | None = None,
+        axioms: Iterable[ObjectProperty | LiteralProperty] | None = None,
     ) -> Self:
         """Append a relationship."""
         typedef = _ensure_ref(typedef)
         reference = _ensure_ref(reference)
         self.relationships[typedef].append(reference)
-        for axiom in axioms or []:
-            self._annotate_axiom(typedef, reference, axiom)
+        self._annotate_axioms(typedef, reference, axioms)
         return self
 
     def annotate_object(
@@ -565,15 +568,22 @@ class Term(Referenced):
         typedef: ReferenceHint,
         value: ReferenceHint,
         *,
-        axioms: list[ObjectProperty | LiteralProperty] | None = None,
+        axioms: Iterable[ObjectProperty | LiteralProperty] | None = None,
     ) -> Self:
         """Append an object annotation."""
         typedef = _ensure_ref(typedef)
         value = _ensure_ref(value)
         self.annotations_object[typedef].append(value)
-        for axiom in axioms or []:
-            self._annotate_axiom(typedef, value, axiom)
+        self._annotate_axioms(typedef, value, axioms)
         return self
+
+    def _annotate_axioms(
+        self, p: Reference, o: Reference, axioms: Iterable[ObjectProperty | LiteralProperty] | None
+    ) -> None:
+        if axioms is None:
+            return
+        for axiom in axioms:
+            self._annotate_axiom(p, o, axiom)
 
     def _annotate_axiom(
         self, p: Reference, o: Reference, axiom: ObjectProperty | LiteralProperty
