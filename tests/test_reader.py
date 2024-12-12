@@ -925,11 +925,11 @@ class TestReader(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(
             {(has_dbxref.pair, Reference(prefix="cas", identifier="389-08-2").pair)},
-            {(a.pair, b.pair) for a, b, _ in term.get_mappings(include_xrefs=True)},
+            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
         )
         self.assertEqual(
             set(),
-            {(a.pair, b.pair) for a, b, _ in term.get_mappings(include_xrefs=False)},
+            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=False)},
         )
 
         ontology = _read("""\
@@ -943,14 +943,14 @@ class TestReader(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(
             {(exact_match.pair, Reference(prefix="drugbank", identifier="DB00779").pair)},
-            {(a.pair, b.pair) for a, b, _ in term.get_mappings(include_xrefs=False)},
+            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=False)},
         )
         self.assertEqual(
             {
                 (exact_match.pair, Reference(prefix="drugbank", identifier="DB00779").pair),
                 (has_dbxref.pair, Reference(prefix="cas", identifier="389-08-2").pair),
             },
-            {(a.pair, b.pair) for a, b, _ in term.get_mappings(include_xrefs=True)},
+            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
         )
 
     def test_default_relation(self):
@@ -978,7 +978,7 @@ class TestReader(unittest.TestCase):
             property_value: skos:exactMatch eccode:1.4.1.15 {dcterms:contributor=orcid:0000-0003-4423-4370}
         """)
         term = self.get_only_term(ontology)
-        mappings = term.get_mappings()
+        mappings = term.get_mappings(add_context=True)
         self.assertEqual(1, len(mappings))
         context = mappings[0][2]
         self.assertIsNotNone(context.contributor)

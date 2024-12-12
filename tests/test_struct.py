@@ -591,7 +591,7 @@ class TestTerm(unittest.TestCase):
         ]
         self.assertEqual(
             "{sssom:mapping_justification=semapv:UnspecifiedMapping}",
-            Term._format_axioms(axioms, "chebi"),
+            Term._format_trailing_modifiers(axioms, "chebi"),
         )
 
         axioms = [
@@ -603,7 +603,7 @@ class TestTerm(unittest.TestCase):
         ]
         self.assertEqual(
             "{dcterms:contributor=orcid:0000-0003-4423-4370, sssom:mapping_justification=semapv:UnspecifiedMapping}",
-            Term._format_axioms(axioms, "chebi"),
+            Term._format_trailing_modifiers(axioms, "chebi"),
         )
 
     def test_append_exact_match_axioms(self) -> None:
@@ -647,7 +647,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
             ),
         )
 
-        mappings = list(term.get_mappings())
+        mappings = list(term.get_mappings(add_context=True))
         self.assertEqual(1, len(mappings))
         predicate, target_, context = mappings[0]
         self.assertEqual(exact_match.reference, predicate)

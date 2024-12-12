@@ -15,7 +15,7 @@ from datetime import datetime
 from itertools import chain
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, ClassVar, Literal, NamedTuple, TextIO, TypeAlias
+from typing import Any, ClassVar, Literal, NamedTuple, TextIO, TypeAlias, overload
 
 import bioregistry
 import click
@@ -434,32 +434,34 @@ class Term(Referenced):
         """Get relationships from the given type."""
         return self.relationships.get(_ensure_ref(typedef), [])
 
+    @overload
     def get_mappings(
-        self, *, include_xrefs: bool = True
-    ) -> list[tuple[Reference, Reference, MappingContext]]:
+        self, *, include_xrefs: bool = True, add_context: Literal[True] = True
+    ) -> list[tuple[Reference, Reference, MappingContext]]: ...
+
+    @overload
+    def get_mappings(
+        self, *, include_xrefs: bool = True, add_context: Literal[False] = False
+    ) -> list[tuple[Reference, Reference]]: ...
+
+    def get_mappings(
+        self, *, include_xrefs: bool = True, add_context: bool = False
+    ) -> list[tuple[Reference, Reference]] | list[tuple[Reference, Reference, MappingContext]]:
         """Get mappings with preferred curies."""
         rows = []
         for predicate in match_typedefs:
             for xref_reference in chain(
                 self.get_property_objects(predicate), self.get_relationships(predicate)
             ):
-                rows.append(
-                    (
-                        predicate.reference,
-                        xref_reference,
-                        self._get_mapping_context(predicate.reference, xref_reference),
-                    )
-                )
+                rows.append((predicate.reference, xref_reference))
         if include_xrefs:
             for xref_reference in self.xrefs:
-                rows.append(
-                    (
-                        has_dbxref.reference,
-                        xref_reference,
-                        self._get_mapping_context(has_dbxref.reference, xref_reference),
-                    )
-                )
-        return sorted(set(rows))
+                rows.append((has_dbxref.reference, xref_reference))
+
+        rv = sorted(set(rows))
+        if not add_context:
+            return rv
+        return [(k, v, self._get_mapping_context(k, v)) for k, v in rv]
 
     def _get_object_axiom_target(
         self, p: Reference, o: Reference, ap: Reference
@@ -662,7 +664,7 @@ class Term(Referenced):
 
         for xref in sorted(xrefs):
             xref_yv = f"xref: {self._reference(xref, ontology_prefix, add_name_comment=False)}"
-            xref_yv += self._get_axioms_str(
+            xref_yv += self._trailing_modifiers(
                 has_dbxref.reference, xref, ontology_prefix=ontology_prefix
             )
             if xref.name:
@@ -692,13 +694,7 @@ class Term(Referenced):
             _typedef_warn(prefix=ontology_prefix, predicate=typedef, typedefs=typedefs)
             predicate_reference = self._reference(typedef, ontology_prefix)
             s = f"relationship: {predicate_reference} {self._reference(reference, ontology_prefix)}"
-            axioms: list[tuple[Reference, Reference] | tuple[Reference, str]] = [
-                *self._axioms.get((typedef, reference), []),
-                *self._str_axioms.get((typedef, reference), []),
-            ]
-            if axioms:
-                aa = self._format_axioms(axioms, ontology_prefix)
-                s += f" {aa}"
+            s += self._trailing_modifiers(typedef, reference, ontology_prefix=ontology_prefix)
             if typedef.name or reference.name:
                 s += " !"
                 if typedef.name:
@@ -708,19 +704,23 @@ class Term(Referenced):
             yield s
 
     @classmethod
-    def _format_axioms(
+    def _format_trailing_modifiers(
         cls, axioms: list[tuple[Reference, Reference] | tuple[Reference, str]], ontology_prefix: str
     ) -> str:
-        for _axiom in axioms:
-            pass
-        axioms = sorted(axioms, key=lambda p: (p[0], type(p[1]), p[1]))
-        inner = ", ".join(
-            f"{cls._reference(predicate, ontology_prefix)}={cls._reference(target, ontology_prefix)}"
-            if isinstance(target, Reference)
-            else f"{cls._reference(predicate, ontology_prefix)}={target}"
-            for predicate, target in axioms
-        )
-        return f"{{{inner}}}"
+        # See https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.1.4
+        # trailing modifiers can be both axioms and some other implementation-specific
+        # things, so split up the place where axioms are put in here
+        modifiers = []
+
+        for predicate, target in sorted(axioms, key=lambda p: (p[0], type(p[1]), p[1])):
+            if isinstance(target, Reference):
+                right = cls._reference(target, ontology_prefix)
+            else:
+                right = target
+            modifiers.append((cls._reference(predicate, ontology_prefix), right))
+
+        inner = ", ".join(f"{key}={value}" for key, value in modifiers)
+        return "{" + inner + "}"
 
     def _emit_properties(
         self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
@@ -736,12 +736,12 @@ class Term(Referenced):
             predicate_curie = self._reference(predicate, ontology_prefix)
             for value in sorted(values):
                 yv = f"{predicate_curie} {self._reference(value, ontology_prefix)}"
-                yv += self._get_axioms_str(predicate, value, ontology_prefix=ontology_prefix)
+                yv += self._trailing_modifiers(predicate, value, ontology_prefix=ontology_prefix)
                 if predicate.name and value.name:
                     yv += f" ! {predicate.name} {value.name}"
                 yield yv
 
-    def _get_axioms_str(
+    def _trailing_modifiers(
         self, predicate: Reference, value: Reference, *, ontology_prefix: str
     ) -> str:
         axioms: list[tuple[Reference, Reference] | tuple[Reference, str]] = [
@@ -749,7 +749,7 @@ class Term(Referenced):
             *self._str_axioms.get((predicate, value), []),
         ]
         if axioms:
-            return f" {self._format_axioms(axioms, ontology_prefix)}"
+            return f" {self._format_trailing_modifiers(axioms, ontology_prefix)}"
         return ""
 
     def _emit_literal_properties(
@@ -1820,7 +1820,9 @@ class Obo:
     ) -> Iterable[tuple[str, str, str, str, str, float | None, str | None]]:
         """Iterate over SSSOM rows for mappings."""
         for term in self._iter_terms(use_tqdm=use_tqdm):
-            for predicate, obj_ref, context in term.get_mappings(include_xrefs=True):
+            for predicate, obj_ref, context in term.get_mappings(
+                include_xrefs=True, add_context=True
+            ):
                 yield (
                     term.preferred_curie,
                     term.name,
