@@ -239,6 +239,8 @@ class MappingContext(BaseModel):
     confidence: float | None = None
 
     class Config:
+        """Configuration for mapping context model."""
+
         frozen = True  # Makes the model immutable and hashable
 
 
@@ -439,11 +441,13 @@ class Term(Referenced):
         """Get relationships from the given type."""
         return self.relationships.get(_ensure_ref(typedef), [])
 
+    # docstr-coverage:excused `overload`
     @overload
     def get_mappings(
         self, *, include_xrefs: bool = ..., add_context: Literal[True] = True
     ) -> list[tuple[Reference, Reference, MappingContext]]: ...
 
+    # docstr-coverage:excused `overload`
     @overload
     def get_mappings(
         self, *, include_xrefs: bool = ..., add_context: Literal[False] = False
