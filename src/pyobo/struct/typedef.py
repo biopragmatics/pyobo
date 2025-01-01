@@ -25,6 +25,7 @@ __all__ = [
     "gene_product_member_of",
     "has_contributor",
     "has_dbxref",
+    "has_end_date",
     "has_gene_product",
     "has_homepage",
     "has_inchi",
@@ -36,6 +37,7 @@ __all__ = [
     "has_role",
     "has_salt",
     "has_smiles",
+    "has_start_date",
     "has_successor",
     "has_taxonomy_rank",
     "is_a",
@@ -423,6 +425,15 @@ mapping_has_confidence = TypeDef(
 )
 has_contributor = TypeDef(
     reference=Reference(prefix="dcterms", identifier="contributor", name="contributor"),
+    is_metadata_tag=True,
+)
+
+has_start_date = TypeDef(
+    reference=Reference(prefix="dcat", identifier="startDate", name="has start date"),
+    is_metadata_tag=True,
+)
+has_end_date = TypeDef(
+    reference=Reference(prefix="dcat", identifier="endDate", name="has end date"),
     is_metadata_tag=True,
 )
 
