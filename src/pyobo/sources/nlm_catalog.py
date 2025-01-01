@@ -16,7 +16,7 @@ CATALOG_TO_PUBLISHER = "https://ftp.ncbi.nlm.nih.gov/pubmed/xmlprovidernames.txt
 JOURNAL_INFO_PATH = "https://ftp.ncbi.nlm.nih.gov/pubmed/jourcache.xml"
 
 # see also , https://w3id.org/biolink/vocab/published_in
-PUBLISHER = TypeDef(
+PUBLISHED_IN = TypeDef(
     reference=default_reference(PREFIX, "published_in", name="published in"),
     xrefs=[
         Reference(prefix="biolink", identifier="published_in"),
@@ -48,7 +48,7 @@ class NLMCatalogGetter(Obo):
 
     bioversions_key = ontology = PREFIX
     dynamic_version = True
-    typedefs = [PUBLISHER, has_end_date, has_start_date, exact_match]
+    typedefs = [PUBLISHED_IN, has_end_date, has_start_date, exact_match]
     root_terms = [JOURNAL_TERM.reference, PUBLISHER_TERM.reference]
     idspaces = {
         PREFIX: "https://www.ncbi.nlm.nih.gov/nlmcatalog/",
@@ -114,7 +114,7 @@ def _process_journal(element, journal_id_to_publisher_key: dict[str, Reference])
         term.annotate_year(has_end_date, end_year)
     # FIXME this whole thing needs reinvestigating
     if publisher_reference := journal_id_to_publisher_key.get(term.identifier):
-        term.annotate_object(PUBLISHER, publisher_reference)
+        term.annotate_object(PUBLISHED_IN, publisher_reference)
     return term
 
 
