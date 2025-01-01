@@ -1340,11 +1340,11 @@ class Obo:
         if self._items is None:
             if self.term_sort_key is None:
 
-                def _sort_key(self, term: Term):
+                def _sort_key(term: Term):
                     return TERM_STANZA_SORT_PRIORITY[term.type], term.preferred_curie
             else:
 
-                def _sort_key(self, term: Term):
+                def _sort_key(term: Term):
                     return TERM_STANZA_SORT_PRIORITY[term.type], self.term_sort_key(self, term)
 
             # if the term sort key is None, then the terms get sorted by their reference
