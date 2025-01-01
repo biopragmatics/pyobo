@@ -86,6 +86,8 @@ logger = logging.getLogger(__name__)
 SynonymSpecificity = Literal["EXACT", "NARROW", "BROAD", "RELATED"]
 SynonymSpecificities: Sequence[SynonymSpecificity] = ("EXACT", "NARROW", "BROAD", "RELATED")
 
+XYZQ = {"Instance": 1, "Term": 0}
+
 #: Columns in the SSSOM dataframe
 SSSOM_DF_COLUMNS = [
     "subject_id",
@@ -1335,9 +1337,21 @@ class Obo:
     @property
     def _items_accessor(self):
         if self._items is None:
+            if self.term_sort_key is None:
+                key = self._simple_sort_key
+            else:
+                key = self._complex_sort_key
             # if the term sort key is None, then the terms get sorted by their reference
-            self._items = sorted(self.iter_terms(force=self.force), key=self.term_sort_key)
+            self._items = sorted(self.iter_terms(force=self.force), key=key)
         return self._items
+
+    def _simple_sort_key(self, term: Term) -> tuple[int, str]:
+        return XYZQ[term.type], term.preferred_curie
+
+    def _complex_sort_key(self, term: Term):
+        if self.term_sort_key is None:
+            raise ValueError
+        return XYZQ[term.type], self.term_sort_key(self, term)
 
     def __iter__(self) -> Iterator[Term]:
         if self.iter_only:
