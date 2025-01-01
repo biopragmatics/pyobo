@@ -649,13 +649,17 @@ class Term(Referenced):
             prop, str(value).lower(), Reference(prefix="xsd", identifier="boolean")
         )
 
-    def annotate_integer(self, prop: ReferenceHint, value: str) -> Self:
+    def annotate_integer(self, prop: ReferenceHint, value: int | str) -> Self:
         """Append an object annotation."""
-        return self.annotate_literal(prop, value, Reference(prefix="xsd", identifier="integer"))
+        return self.annotate_literal(
+            prop, str(int(value)), Reference(prefix="xsd", identifier="integer")
+        )
 
-    def annotate_year(self, prop: ReferenceHint, value: str) -> Self:
+    def annotate_year(self, prop: ReferenceHint, value: int | str) -> Self:
         """Append a year annotation."""
-        return self.annotate_literal(prop, value, Reference(prefix="xsd", identifier="gYear"))
+        return self.annotate_literal(
+            prop, str(int(value)), Reference(prefix="xsd", identifier="gYear")
+        )
 
     def _definition_fp(self) -> str:
         definition = obo_escape_slim(self.definition) if self.definition else ""
