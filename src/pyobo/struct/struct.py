@@ -86,7 +86,8 @@ logger = logging.getLogger(__name__)
 SynonymSpecificity = Literal["EXACT", "NARROW", "BROAD", "RELATED"]
 SynonymSpecificities: Sequence[SynonymSpecificity] = ("EXACT", "NARROW", "BROAD", "RELATED")
 
-XYZQ = {"Instance": 1, "Term": 0}
+TermStanzaType: TypeAlias = Literal["Term", "Instance"]
+TERM_STANZA_SORT_PRIORITY: dict[TermStanzaType, int] = {"Instance": 2, "Term": 1}
 
 #: Columns in the SSSOM dataframe
 SSSOM_DF_COLUMNS = [
@@ -300,7 +301,7 @@ class Term(Referenced):
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: bool | None = None
 
-    type: Literal["Term", "Instance"] = "Term"
+    type: TermStanzaType = "Term"
 
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass
@@ -1346,12 +1347,12 @@ class Obo:
         return self._items
 
     def _simple_sort_key(self, term: Term) -> tuple[int, str]:
-        return XYZQ[term.type], term.preferred_curie
+        return TERM_STANZA_SORT_PRIORITY[term.type], term.preferred_curie
 
     def _complex_sort_key(self, term: Term):
         if self.term_sort_key is None:
             raise ValueError
-        return XYZQ[term.type], self.term_sort_key(self, term)
+        return TERM_STANZA_SORT_PRIORITY[term.type], self.term_sort_key(self, term)
 
     def __iter__(self) -> Iterator[Term]:
         if self.iter_only:
