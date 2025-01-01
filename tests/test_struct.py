@@ -168,6 +168,20 @@ class TestTerm(unittest.TestCase):
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
+    def test_property_year(self) -> None:
+        """Test emitting property literals that were annotated as a year."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_year(RO_DUMMY, "1993")
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: RO:1234567 "1993" xsd:gYear
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+        )
+
     def test_property_object(self) -> None:
         """Test emitting property literals."""
         term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
