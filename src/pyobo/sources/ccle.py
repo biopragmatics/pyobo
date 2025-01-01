@@ -22,6 +22,7 @@ class CCLEGetter(Obo):
     """An ontology representation of the Cancer Cell Line Encyclopedia's cell lines."""
 
     ontology = bioregistry_key = PREFIX
+    name = "Cancer Cell Line Encyclopedia Cell Line"
 
     def __post_init__(self):
         self.data_version = VERSION

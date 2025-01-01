@@ -196,6 +196,9 @@ has_participant = TypeDef(
     comment="Inverse of has participant",
     inverse=Reference(prefix=RO_PREFIX, identifier="0000056", name="participates in"),
 )
+has_component = TypeDef(
+    reference=Reference(prefix=RO_PREFIX, identifier="0002180", name="has component"),
+)
 derives_from = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0001000", name="derives from"),
 )
@@ -207,18 +210,23 @@ located_in = TypeDef(
 )
 exact_match = TypeDef(
     reference=Reference(prefix="skos", identifier="exactMatch", name="exact match"),
+    is_metadata_tag=True,
 )
 narrow_match = TypeDef(
     reference=Reference(prefix="skos", identifier="narrowMatch", name="narrow match"),
+    is_metadata_tag=True,
 )
 broad_match = TypeDef(
     reference=Reference(prefix="skos", identifier="broadMatch", name="broad match"),
+    is_metadata_tag=True,
 )
 close_match = TypeDef(
     reference=Reference(prefix="skos", identifier="closeMatch", name="close match"),
+    is_metadata_tag=True,
 )
 related_match = TypeDef(
     reference=Reference(prefix="skos", identifier="relatedMatch", name="related match"),
+    is_metadata_tag=True,
 )
 owl_same_as = TypeDef(
     reference=Reference(prefix="owl", identifier="sameAs", name="same as"),
@@ -235,8 +243,11 @@ is_a = TypeDef(
 )
 see_also = TypeDef(
     reference=Reference(prefix="rdfs", identifier="seeAlso", name="see also"),
+    is_metadata_tag=True,
 )
-comment = TypeDef(reference=Reference(prefix="rdfs", identifier="comment", name="comment"))
+comment = TypeDef(
+    reference=Reference(prefix="rdfs", identifier="comment", name="comment"), is_metadata_tag=True
+)
 has_member = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0002351", name="has member"),
 )
@@ -305,26 +316,37 @@ has_salt = TypeDef(
     reference=Reference(prefix="debio", identifier="0000006", name="has salt"),
 )
 
-term_replaced_by = TypeDef.from_triple(
-    prefix=IAO_PREFIX, identifier="0100001", name="term replaced by"
+term_replaced_by = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0100001", name="term replaced by"),
+    is_metadata_tag=True,
 )
-example_of_usage = TypeDef.from_triple(
-    prefix=IAO_PREFIX, identifier="0000112", name="example of usage"
+example_of_usage = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0000112", name="example of usage"),
+    is_metadata_tag=True,
 )
-alternative_term = TypeDef.from_triple(
-    prefix=IAO_PREFIX, identifier="0000118", name="alternative term"
+alternative_term = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0000118", name="alternative term"),
+    is_metadata_tag=True,
 )
-has_ontology_root_term = TypeDef.from_triple(
-    prefix=IAO_PREFIX, identifier="0000700", name="has ontology root term"
+has_ontology_root_term = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0000700", name="has ontology root term"),
+    is_metadata_tag=True,
 )
-definition_source = TypeDef.from_triple(
-    prefix=IAO_PREFIX, identifier="0000119", name="definition source"
+definition_source = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0000119", name="definition source"),
+    is_metadata_tag=True,
 )
-has_dbxref = TypeDef.from_triple(
-    prefix="oboInOwl", identifier="hasDbXref", name="has database cross-reference"
+has_dbxref = TypeDef(
+    reference=Reference(
+        prefix="oboInOwl", identifier="hasDbXref", name="has database cross-reference"
+    ),
+    is_metadata_tag=True,
 )
 
-editor_note = TypeDef.from_triple(prefix=IAO_PREFIX, identifier="0000116", name="editor note")
+editor_note = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0000116", name="editor note"),
+    is_metadata_tag=True,
+)
 
 is_immediately_transformed_from = TypeDef.from_triple(
     prefix=SIO_PREFIX, identifier="000658", name="is immediately transformed from"
@@ -367,10 +389,12 @@ has_functional_parent = TypeDef(
 
 has_smiles = TypeDef(
     reference=Reference(prefix="debio", identifier="0000022", name="has SMILES"),
+    is_metadata_tag=True,
 )
 
 has_inchi = TypeDef(
     reference=Reference(prefix="debio", identifier="0000020", name="has InChI"),
+    is_metadata_tag=True,
 )
 
 has_homepage = TypeDef(
