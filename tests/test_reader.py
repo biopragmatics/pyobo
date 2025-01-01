@@ -993,7 +993,11 @@ class TestReader(unittest.TestCase):
             [Term]
             id: GO:0050069
         """)
-        self.assertEqual([Reference(prefix="GO", identifier="0050069")], ontology.root_terms)
+        # FIXME support default reference, like property_value: IAO:0000700 adhoc
+        self.assertEqual(
+            [Reference(prefix="GO", identifier="0050069")],
+            ontology.root_terms,
+        )
 
 
 class TestVersionHandling(unittest.TestCase):
