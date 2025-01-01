@@ -35,7 +35,7 @@ from .struct import (
 )
 from .struct.reference import _parse_identifier
 from .struct.struct import DEFAULT_SYNONYM_TYPE, LiteralProperty, ObjectProperty
-from .struct.typedef import default_typedefs
+from .struct.typedef import default_typedefs, has_ontology_root_term
 from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
 
 __all__ = [
@@ -124,6 +124,21 @@ def from_obonet(
         raise ValueError(
             f"[{ontology_prefix}] slashes not allowed in data versions because of filesystem usage: {data_version}"
         )
+
+    root_terms: list[Reference] = []
+    for t in iterate_node_properties(
+        graph.graph,
+        ontology_prefix=ontology_prefix,
+        upgrade=upgrade,
+        node=Reference(prefix="obo", identifier=ontology_prefix),
+    ):
+        # TODO other custom handling can be put here
+        match t:
+            case LiteralProperty(predicate, value, datatype):
+                pass
+            case ObjectProperty(predicate, obj, _):
+                if predicate.pair == has_ontology_root_term.pair:
+                    root_terms.append(obj)
 
     #: CURIEs to typedefs
     typedefs: Mapping[ReferenceTuple, TypeDef] = {
@@ -241,7 +256,7 @@ def from_obonet(
             match t:
                 case LiteralProperty(predicate, value, datatype):
                     term.annotate_literal(predicate, value, datatype)
-                case ObjectProperty(predicate, obj, _datatype):
+                case ObjectProperty(predicate, obj, _):
                     term.annotate_object(predicate, obj)
         terms.append(term)
 
@@ -260,6 +275,7 @@ def from_obonet(
         _synonym_typedefs=list(synonym_typedefs.values()),
         _date=date,
         _data_version=data_version,
+        _root_terms=root_terms,
         terms=terms,
     )
 
