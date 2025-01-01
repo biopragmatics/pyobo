@@ -653,6 +653,10 @@ class Term(Referenced):
         """Append an object annotation."""
         return self.annotate_literal(prop, value, Reference(prefix="xsd", identifier="integer"))
 
+    def annotate_year(self, prop: ReferenceHint, value: str) -> Self:
+        """Append a year annotation."""
+        return self.annotate_literal(prop, value, Reference(prefix="xsd", identifier="gYear"))
+
     def _definition_fp(self) -> str:
         definition = obo_escape_slim(self.definition) if self.definition else ""
         return f'"{definition}" [{comma_separate_references(self.provenance)}]'
