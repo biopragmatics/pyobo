@@ -984,6 +984,21 @@ class TestReader(unittest.TestCase):
         self.assertIsNotNone(context.contributor)
         self.assertEqual("0000-0003-4423-4370", context.contributor.identifier)
 
+    def test_root(self) -> None:
+        """Test root terms."""
+        ontology = _read("""\
+            ontology: go
+            property_value: IAO:0000700 GO:0050069
+
+            [Term]
+            id: GO:0050069
+        """)
+        # FIXME support default reference, like property_value: IAO:0000700 adhoc
+        self.assertEqual(
+            [Reference(prefix="GO", identifier="0050069")],
+            ontology.root_terms,
+        )
+
 
 class TestVersionHandling(unittest.TestCase):
     """Test version handling."""
