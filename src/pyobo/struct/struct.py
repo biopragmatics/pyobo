@@ -1338,14 +1338,17 @@ class Obo:
     @property
     def _items_accessor(self):
         if self._items is None:
-            if self.term_sort_key is None:
+            if self.term_sort_key is not None:
 
                 def _sort_key(term: Term):
-                    return TERM_STANZA_SORT_PRIORITY[term.type], term.preferred_curie
+                    # it appears that mypy has a bug and isn't able to pull
+                    # the outer if statement's constraint into the definition,
+                    # that's why there's a type ignore
+                    return TERM_STANZA_SORT_PRIORITY[term.type], self.term_sort_key(self, term)  # type:ignore
             else:
 
                 def _sort_key(term: Term):
-                    return TERM_STANZA_SORT_PRIORITY[term.type], self.term_sort_key(self, term)
+                    return TERM_STANZA_SORT_PRIORITY[term.type], term.preferred_curie
 
             # if the term sort key is None, then the terms get sorted by their reference
             self._items = sorted(self.iter_terms(force=self.force), key=_sort_key)
