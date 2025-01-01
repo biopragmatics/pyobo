@@ -1113,7 +1113,7 @@ class Obo:
             yield f'property_value: http://purl.org/dc/terms/description "{description}" xsd:string'
 
         for root_term in self.root_terms or []:
-            yield f"property_value: {has_ontology_root_term.preferred_curie} {root_term.preferred_curie}"
+            yield f"property_value: {has_ontology_root_term.preferred_curie} {reference_escape(root_term, ontology_prefix=self.ontology)}"
 
         for typedef in sorted(self.typedefs or []):
             yield from typedef.iterate_obo_lines(ontology_prefix=self.ontology)
