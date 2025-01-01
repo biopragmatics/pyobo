@@ -55,6 +55,7 @@ from .rhea import RheaGetter
 from .ror import RORGetter
 from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
 from .sgd import SGDGetter
+from .signor import SignorGetter
 from .slm import SLMGetter
 from .umls import UMLSGetter
 from .unimod import UnimodGetter
@@ -126,6 +127,7 @@ __all__ = [
     "SFAMGetter",
     "SGDGetter",
     "SLMGetter",
+    "SignorGetter",
     "UMLSGetter",
     "UniProtGetter",
     "UniProtPtmGetter",
