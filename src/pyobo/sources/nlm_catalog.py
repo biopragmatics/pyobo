@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from xml.etree import ElementTree
 
 from pyobo.struct import Obo, Reference, Term, TypeDef, default_reference
+from pyobo.struct.typedef import exact_match, has_end_date, has_start_date
 from pyobo.utils.path import ensure_df, ensure_path
 
 __all__ = [
@@ -14,8 +15,6 @@ PREFIX = "nlm"
 CATALOG_TO_PUBLISHER = "https://ftp.ncbi.nlm.nih.gov/pubmed/xmlprovidernames.txt"
 JOURNAL_INFO_PATH = "https://ftp.ncbi.nlm.nih.gov/pubmed/jourcache.xml"
 PUBLISHER = TypeDef.default(PREFIX, "has_publisher", name="has publisher")
-START_YEAR = TypeDef.default(PREFIX, "has_start_year", name="has start year")
-END_YEAR = TypeDef.default(PREFIX, "has_end_year", name="has end year")
 
 
 # TODO enrich with context from https://ftp.ncbi.nlm.nih.gov/pubmed/J_Entrez.txt and https://ftp.ncbi.nlm.nih.gov/pubmed/J_Medline.txt
@@ -26,7 +25,7 @@ class NLMCatalogGetter(Obo):
 
     bioversions_key = ontology = PREFIX
     dynamic_version = True
-    typedefs = [PUBLISHER, START_YEAR, END_YEAR]
+    typedefs = [PUBLISHER, has_end_date, has_start_date, exact_match]
     idspaces = {
         PREFIX: "https://www.ncbi.nlm.nih.gov/nlmcatalog/",
     }
@@ -70,9 +69,9 @@ def _process_journal(element, journal_id_to_publisher_key: dict[str, Reference])
         #  to determine a "canonical" one
         term.append_xref(Reference(prefix="issn", identifier=issn))
     if start_year := element.findtext("StartYear"):
-        term.annotate_integer(START_YEAR, start_year)
+        term.annotate_year(has_start_date, start_year)
     if end_year := element.findtext("EndYear"):
-        term.annotate_integer(END_YEAR, end_year)
+        term.annotate_year(has_end_date, end_year)
     if publisher_reference := journal_id_to_publisher_key.get(term.identifier):
         term.annotate_object(PUBLISHER, publisher_reference)
     return term
