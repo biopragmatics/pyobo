@@ -235,3 +235,11 @@ def _parse_identifier(
 unspecified_matching = Reference(
     prefix="semapv", identifier="UnspecifiedMatching", name="unspecified matching process"
 )
+
+
+def turtle_reference_escape(reference: Reference) -> str:
+    """Escape a reference for writing in turtle."""
+    if reference.prefix == "obo":
+        return f"<http://purl.obolibrary.org/obo/{reference.identifier}>"
+    else:
+        return reference.preferred_curie
