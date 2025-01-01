@@ -33,6 +33,7 @@ from .reference import (
     comma_separate_references,
     default_reference,
     reference_escape,
+    turtle_reference_escape,
     unspecified_matching,
 )
 from .typedef import (
@@ -54,7 +55,12 @@ from .typedef import (
     see_also,
     term_replaced_by,
 )
-from .utils import obo_escape_slim
+from .utils import (
+    TurtlePredicates,
+    obo_escape_slim,
+    turtle_predicates_to_lines,
+    turtle_quote,
+)
 from ..api.utils import get_version
 from ..constants import (
     DATE_FORMAT,
@@ -674,6 +680,58 @@ class Term(Referenced):
             for svalue, datatype in sorted(value_datatype_pairs):
                 yield LiteralProperty(prop, svalue, datatype)
 
+    def iterate_turtle_lines(self, *, emit_annotation_properties: bool = True) -> Iterable[str]:
+        """Iterate over the lines to write in an RDF file."""
+        identifier = self._turtle_ref(self.reference)
+        ppp: TurtlePredicates = []
+        if self.type == "Instance":
+            if self.parents:
+                ppp.append(("a", [self._turtle_ref(parent) for parent in self.parents]))
+            else:
+                ppp.append(("a", "owl:NamedIndividual"))
+        elif self.type == "Term":
+            if self.parents:
+                ppp.append(
+                    ("rdfs:subClassOf", [self._turtle_ref(parent) for parent in self.parents])
+                )
+            else:
+                ppp.append(("a", "owl:Class"))
+        else:
+            raise TypeError
+        if self.name:
+            # TODO proper escaping
+            ppp.append(("rdfs:label", turtle_quote(self.name)))
+        if self.definition:
+            ppp.append(("terms:description", turtle_quote(self.definition)))
+
+        for k, values in self.annotations_object.items():
+            ppp.append((self._turtle_ref(k), [self._turtle_ref(v) for v in values]))
+        for k, dvalues in self.annotations_literal.items():
+            ppp.append(
+                (self._turtle_ref(k), [f'"{v}"^^{self._turtle_ref(dt)}' for v, dt in dvalues])
+            )
+        if self.xrefs:
+            ppp.append((has_dbxref.preferred_curie, [self._turtle_ref(k) for k in self.xrefs]))
+
+        for k, values in self.relationships.items():
+            if self.type == "Instance":
+                ppp.append(
+                    (self._turtle_ref(k), [self._turtle_ref(value) for value in sorted(values)])
+                )
+            elif self.type == "Term":
+                for value in values:
+                    ppp.append(
+                        (
+                            "rdfs:subClassOf",
+                            f"[ rdf:type owl:Restriction ; owl:onProperty {self._turtle_ref(k)} ; "
+                            f"owl:someValuesFrom {self._turtle_ref(value)} ]",
+                        )
+                    )
+            else:
+                raise TypeError(f"Invalid type: {self.type}")
+
+        yield from turtle_predicates_to_lines(identifier, ppp)
+
     def iterate_obo_lines(
         self,
         *,
@@ -813,6 +871,10 @@ class Term(Referenced):
         return reference_escape(
             predicate, ontology_prefix=ontology_prefix, add_name_comment=add_name_comment
         )
+
+    @staticmethod
+    def _turtle_ref(reference: Reference) -> str:
+        return turtle_reference_escape(reference)
 
     @staticmethod
     def _escape(s) -> str:
@@ -1063,6 +1125,57 @@ class Obo:
         else:
             yield from self
 
+    def iterate_turtle_lines(self) -> Iterable[str]:
+        """Iterate over the lines to write in a Turtle RDF file."""
+        if self.name is None:
+            raise ValueError("ontology is missing name")
+
+        default_prefix_map = {
+            "obo": "http://purl.obolibrary.org/obo/",
+            "owl": "http://www.w3.org/2002/07/owl#",
+            "terms": "http://purl.org/dc/terms/",
+            "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+            "oboInOwl": "http://www.geneontology.org/formats/oboInOwl#",
+        }
+        for k, v in sorted(
+            ChainMap(default_prefix_map, dict(self.idspaces or {})).items(),
+            key=lambda p: p[0].casefold(),
+        ):
+            yield f"@prefix {k}: <{v}> ."
+        yield ""
+
+        ontology_iri = f"<http://purl.obolibrary.org/obo/{self.ontology}.ttl>"
+        ontology_ppp: TurtlePredicates = [
+            ("a", "owl:Ontology"),
+            ("terms:title", turtle_quote(self.name)),
+        ]
+        if self.data_version:
+            ontology_ppp.append(("owl:VersionInfo", turtle_quote(self.data_version)))
+        if license_text := bioregistry.get_license(self.ontology):
+            ontology_ppp.append(("terms:license", turtle_quote(license_text)))
+        if description_text := bioregistry.get_description(self.ontology):
+            ontology_ppp.append(("terms:description", turtle_quote(description_text)))
+        if self.root_terms:
+            ontology_ppp.append(
+                (
+                    has_ontology_root_term.preferred_curie,
+                    [turtle_reference_escape(t) for t in self.root_terms],
+                )
+            )
+
+        # TODO add more ontology metadata
+        yield from turtle_predicates_to_lines(ontology_iri, ontology_ppp)
+        yield ""
+
+        for typedef in sorted(self.typedefs or []):
+            yield from typedef.iterate_turtle_lines()
+            yield ""
+
+        for term in self:
+            yield from term.iterate_turtle_lines()
+            yield ""
+
     def iterate_obo_lines(
         self,
         emit_object_properties: bool = True,
@@ -1148,14 +1261,30 @@ class Obo:
         )
         if use_tqdm:
             it = tqdm(it, desc=f"Writing {self.ontology}", unit_scale=True, unit="line")
+        self._safe_write_lines(it, file)
+
+    def write_turtle(
+        self,
+        file: None | str | TextIO | Path = None,
+        *,
+        use_tqdm: bool = False,
+    ) -> None:
+        """Write the RDF to a file."""
+        it = self.iterate_turtle_lines()
+        if use_tqdm:
+            it = tqdm(it, desc=f"Writing {self.ontology} RDF", unit_scale=True, unit="line")
+        self._safe_write_lines(it, file)
+
+    @classmethod
+    def _safe_write_lines(cls, it, file: None | str | TextIO | Path = None) -> None:
         if isinstance(file, str | Path | os.PathLike):
             with open(file, "w") as fh:
-                self._write_lines(it, fh)
+                cls._write_lines(it, fh)
         else:
-            self._write_lines(it, file)
+            cls._write_lines(it, file)
 
     @staticmethod
-    def _write_lines(it, file: TextIO | None):
+    def _write_lines(it, file: TextIO | None) -> None:
         for line in it:
             print(line, file=file)
 
@@ -1240,6 +1369,10 @@ class Obo:
     def _nodes_path(self) -> Path:
         return self._path(name=f"{self.ontology}.nodes.tsv")
 
+    @property
+    def _turtle_path(self) -> Path:
+        return self._cache(name=f"{self.ontology}.ttl")
+
     def write_default(
         self,
         use_tqdm: bool = False,
@@ -1248,6 +1381,7 @@ class Obo:
         write_obonet: bool = False,
         write_obograph: bool = False,
         write_owl: bool = False,
+        write_turtle: bool = False,
         write_nodes: bool = False,
     ) -> None:
         """Write the OBO to the default path."""
@@ -1319,16 +1453,32 @@ class Obo:
             relation_df.to_csv(relations_path, sep="\t", index=False)
 
         if (write_obo or write_owl) and (not self._obo_path.exists() or force):
+            click.echo(f"Writing OBO to {self._obo_path}")
             self.write_obo(self._obo_path, use_tqdm=use_tqdm)
         if write_obograph and (not self._obograph_path.exists() or force):
             self.write_obograph(self._obograph_path)
         if write_owl and (not self._owl_path.exists() or force):
             import bioontologies.robot
 
-            bioontologies.robot.convert(self._obo_path, self._owl_path)
+            if any(term.type == "Instance" for term in self):
+                logger.warning(
+                    "OWLAPI does not implement OBO instances. See https://github.com/owlcs/owlapi/issues/208. Outputting experimental Turtle RDF first, then converting"
+                )
+                self.write_turtle(self._turtle_path)
+                bioontologies.robot.convert(
+                    self._turtle_path, self._owl_path, debug=True, merge=False, reason=False
+                )
+            else:
+                bioontologies.robot.convert(
+                    self._obo_path, self._owl_path, merge=False, reason=False
+                )
         if write_obonet and (not self._obonet_gz_path.exists() or force):
             logger.debug("writing obonet to %s", self._obonet_gz_path)
             self.write_obonet_gz(self._obonet_gz_path)
+        if write_turtle and (not self._turtle_path.exists() or force):
+            click.echo(f"Writing Turtle to {self._turtle_path}")
+            logger.debug("writing turtle to %s", self._turtle_path)
+            self.write_turtle(self._turtle_path)
         if write_nodes:
             self.get_graph().get_nodes_df().to_csv(self._nodes_path, sep="\t", index=False)
 

@@ -153,6 +153,13 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
+        self.assert_lines(
+            """\
+            GO:0050069 a owl:Class ;
+                rdfs:label "lysine dehydrogenase activity"^^xsd:string .
+            """,
+            term.iterate_turtle_lines(),
+        )
 
     def test_property_literal(self) -> None:
         """Test emitting property literals."""
@@ -166,6 +173,14 @@ class TestTerm(unittest.TestCase):
             property_value: RO:1234567 "value" xsd:string
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+        )
+        self.assert_lines(
+            """\
+            GO:0050069 a owl:Class ;
+                rdfs:label "lysine dehydrogenase activity"^^xsd:string ;
+                RO:1234567 "value"^^xsd:string .
+            """,
+            term.iterate_turtle_lines(),
         )
 
     def test_property_object(self) -> None:
@@ -195,6 +210,37 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
+        self.assert_lines(
+            """\
+            GO:0050069 a owl:Class ;
+                rdfs:label "lysine dehydrogenase activity"^^xsd:string ;
+                rdfs:subClassOf [ rdf:type owl:Restriction ; owl:onProperty RO:1234567 ; owl:someValuesFrom eccode:1.4.1.15 ] .
+            """,
+            term.iterate_turtle_lines(),
+        )
+
+    def test_relation_instance(self) -> None:
+        """Test emitting a relationship from an instance."""
+        # note that this test isn't realistic since this should be a class
+        term = Term(LYSINE_DEHYDROGENASE_ACT, type="Instance")
+        term.append_relationship(RO_DUMMY, Reference(prefix="eccode", identifier="1.4.1.15"))
+        self.assert_lines(
+            """\
+            [Instance]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            relationship: RO:1234567 eccode:1.4.1.15
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_lines(
+            """\
+            GO:0050069 a owl:NamedIndividual ;
+                rdfs:label "lysine dehydrogenase activity"^^xsd:string ;
+                RO:1234567 eccode:1.4.1.15 .
+            """,
+            term.iterate_turtle_lines(),
+        )
 
     def test_xref(self) -> None:
         """Test emitting a relationship."""
@@ -208,6 +254,14 @@ class TestTerm(unittest.TestCase):
             xref: eccode:1.4.1.15
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_lines(
+            """\
+            GO:0050069 a owl:Class ;
+                rdfs:label "lysine dehydrogenase activity"^^xsd:string ;
+                oboInOwl:hasDbXref eccode:1.4.1.15 .
+            """,
+            term.iterate_turtle_lines(),
         )
 
         ontology = _ontology_from_term("go", term)
@@ -234,6 +288,13 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
+        self.assert_lines(
+            """\
+            GO:0050069 rdfs:subClassOf GO:1234568 ;
+                rdfs:label "lysine dehydrogenase activity"^^xsd:string .
+            """,
+            term.iterate_turtle_lines(),
+        )
 
     def test_append_exact_match(self) -> None:
         """Test emitting a relationship."""
@@ -249,6 +310,14 @@ class TestTerm(unittest.TestCase):
             property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_lines(
+            """\
+            GO:0050069 a owl:Class ;
+                rdfs:label "lysine dehydrogenase activity"^^xsd:string ;
+                skos:exactMatch eccode:1.4.1.15 .
+            """,
+            term.iterate_turtle_lines(),
         )
 
         ontology = _ontology_from_term("go", term)
@@ -275,6 +344,14 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
+        self.assert_lines(
+            """\
+            GO:0050069 a owl:Class ;
+                rdfs:label "lysine dehydrogenase activity"^^xsd:string ;
+                skos:exactMatch eccode:1.4.1.15 .
+            """,
+            term.iterate_turtle_lines(),
+        )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT)
         term.annotate_object(
@@ -290,6 +367,14 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
+        self.assert_lines(
+            """\
+            GO:0050069 a owl:Class ;
+                rdfs:label "lysine dehydrogenase activity"^^xsd:string ;
+                skos:exactMatch eccode:1.4.1.15 .
+            """,
+            term.iterate_turtle_lines(),
+        )
 
     def test_set_species(self) -> None:
         """Test emitting a relationship."""
@@ -303,6 +388,14 @@ class TestTerm(unittest.TestCase):
             relationship: RO:0002162 NCBITaxon:9606 ! in taxon Homo sapiens
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_lines(
+            """\
+            GO:0050069 a owl:Class ;
+                rdfs:label "lysine dehydrogenase activity"^^xsd:string ;
+                rdfs:subClassOf [ rdf:type owl:Restriction ; owl:onProperty RO:0002162 ; owl:someValuesFrom NCBITaxon:9606 ] .
+            """,
+            term.iterate_turtle_lines(),
         )
 
         species = term.get_species()

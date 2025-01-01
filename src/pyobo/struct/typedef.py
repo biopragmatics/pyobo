@@ -8,7 +8,18 @@ from dataclasses import dataclass, field
 from curies import ReferenceTuple
 from typing_extensions import Self
 
-from .reference import Reference, Referenced, default_reference, reference_escape
+from .reference import (
+    Reference,
+    Referenced,
+    default_reference,
+    reference_escape,
+    turtle_reference_escape,
+)
+from .utils import (
+    TurtlePredicates,
+    turtle_predicates_to_lines,
+    turtle_quote,
+)
 from ..resources.ro import load_ro
 
 __all__ = [
@@ -92,6 +103,24 @@ class TypeDef(Referenced):
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass
         return hash((self.__class__, self.prefix, self.identifier))
+
+    def iterate_turtle_lines(self) -> Iterable[str]:
+        """Iterate over the lines to write in a Turtle RDF file."""
+        identifier = turtle_reference_escape(self.reference)
+        ppp: TurtlePredicates = []
+        if self.is_metadata_tag:
+            ppp.append(("a", "owl:AnnotationProperty"))
+        else:
+            ppp.append(("a", "owl:ObjectProperty"))
+        if self.name:
+            ppp.append(("rdfs:label", turtle_quote(self.name)))
+
+        if self.xrefs:
+            ppp.append(
+                (has_dbxref.preferred_curie, [turtle_reference_escape(r) for r in self.xrefs])
+            )
+
+        yield from turtle_predicates_to_lines(identifier, ppp)
 
     def iterate_obo_lines(self, ontology_prefix: str) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
