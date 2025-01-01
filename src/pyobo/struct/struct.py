@@ -1339,20 +1339,17 @@ class Obo:
     def _items_accessor(self):
         if self._items is None:
             if self.term_sort_key is None:
-                key = self._simple_sort_key
+
+                def _sort_key(self, term: Term):
+                    return TERM_STANZA_SORT_PRIORITY[term.type], term.preferred_curie
             else:
-                key = self._complex_sort_key
+
+                def _sort_key(self, term: Term):
+                    return TERM_STANZA_SORT_PRIORITY[term.type], self.term_sort_key(self, term)
+
             # if the term sort key is None, then the terms get sorted by their reference
-            self._items = sorted(self.iter_terms(force=self.force), key=key)
+            self._items = sorted(self.iter_terms(force=self.force), key=_sort_key)
         return self._items
-
-    def _simple_sort_key(self, term: Term) -> tuple[int, str]:
-        return TERM_STANZA_SORT_PRIORITY[term.type], term.preferred_curie
-
-    def _complex_sort_key(self, term: Term):
-        if self.term_sort_key is None:
-            raise ValueError
-        return TERM_STANZA_SORT_PRIORITY[term.type], self.term_sort_key(self, term)
 
     def __iter__(self) -> Iterator[Term]:
         if self.iter_only:
