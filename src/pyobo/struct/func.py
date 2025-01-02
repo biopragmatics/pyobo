@@ -445,7 +445,7 @@ class DataOneOf(DataRange):
     def to_rdflib_node(self, graph: Graph) -> term.BNode:
         node = term.BNode()
         graph.add((node, RDF.type, RDFS.Datatype))
-        graph.add((node, OWL.oneOf, _make_sequence_nodes(graph, self.literals)))
+        graph.add((node, OWL.oneOf, _make_sequence_nodes(graph, list(self.literals))))
         return node
 
     def _funowl_inside(self) -> str:
@@ -557,8 +557,11 @@ def _owl_rdf_restriction(
     node = term.BNode()
     graph.add((node, RDF.type, OWL.Restriction))
     graph.add((node, OWL.onProperty, prop.to_rdflib_node(graph)))
-    target.to_rdflib_node(graph) if isinstance(target, Nodeable) else target
-    graph.add((node, target_property, target))
+    if isinstance(target, Nodeable):
+        graph.add((node, target_property, target.to_rdflib_node(graph)))
+    else:
+        graph.add((node, target_property, target))
+
     return node
 
 
@@ -729,7 +732,7 @@ class _DataValuesFrom(ClassExpression):
         self.data_property_expressions = [
             DataPropertyExpression.safe(dpe) for dpe in data_property_expressions
         ]
-        self.data_range_expression = DataRange.safe(data_range)
+        self.data_range = DataRange.safe(data_range)
 
     def to_rdflib_node(self, graph: Graph) -> term.BNode:
         node = term.BNode()
@@ -738,12 +741,12 @@ class _DataValuesFrom(ClassExpression):
             p_o = OWL.onProperties, _make_sequence(graph, self.data_property_expressions)
         else:
             p_o = OWL.onProperty, self.data_property_expressions[0].to_rdflib_node(graph)
-        graph.add((node, self.property_type, self.data_range_expression.to_rdflib_node(graph)))
+        graph.add((node, self.property_type, self.data_range.to_rdflib_node(graph)))
         graph.add((node, *p_o))
         return node
 
     def _funowl_inside(self) -> str:
-        return _list_to_funowl((*self.data_property_expressions, self.data_range_expression))
+        return _list_to_funowl((*self.data_property_expressions, self.data_range))
 
 
 class DataSomeValuesFrom(_DataValuesFrom):
@@ -765,17 +768,21 @@ class DataHasValue(_DataValuesFrom):
 
     def __init__(
         self,
-        data_property_expression: DataPropertyExpression | IdentifierHint,
+        data_property_expressions: list[DataPropertyExpression | IdentifierHint],
         literal: term.Literal,
     ) -> None:
-        super().__init__(
-            data_property_expressions=[DataPropertyExpression.safe(data_property_expression)],
-            data_range=literal,
-        )
+        self.data_property_expressions = [
+            DataPropertyExpression.safe(dpe) for dpe in data_property_expressions
+        ]
+        self.literal = literal
+
+    def to_rdflib_node(self, graph: Graph) -> term.BNode:
+        # TODO reuse from _DataValuesFrom
+        raise NotImplementedError
 
     def _funowl_inside(self) -> str:
         first = _list_to_funowl(self.data_property_expressions)
-        return f"{first} {_literal_to_funowl(self.data_range_expression)}"
+        return f"{first} {_literal_to_funowl(self.literal)}"
 
 
 class _DataCardinality(_Cardinality):
@@ -846,9 +853,9 @@ class ClassAxiom(Axiom):
 
 def _add_triple(
     graph: Graph, s: term.Node, p: term.Node, o: term.Node, annotations: Annotations | None = None
-) -> term.BNode | None:
+) -> term.BNode:
     graph.add((s, p, o))
-    return _add_triple_annotations(graph, s, p, o, annotations)
+    return _add_triple_annotations(graph, s, p, o, annotations=annotations)
 
 
 def _add_triple_annotations(
@@ -858,17 +865,15 @@ def _add_triple_annotations(
     o: term.Node,
     *,
     annotations: Annotations | None = None,
-    type=None,
-) -> term.BNode | None:
-    if not annotations:
-        return None
+    type: term.URIRef | None = None,
+) -> term.BNode:
     node = term.BNode()
     if type:
         graph.add((node, RDF.type, type))
     graph.add((node, OWL.annotatedSource, s))
     graph.add((node, OWL.annotatedProperty, p))
     graph.add((node, OWL.annotatedTarget, o))
-    for annotation in annotations:
+    for annotation in annotations or []:
         annotation._add_to_triple(graph, node)
     return node
 
@@ -895,6 +900,8 @@ class SubClassOf(ClassAxiom):  # 9.1.1
 
 
 class EquivalentClasses(ClassAxiom):  # 9.1.2
+    class_expression: Sequence[ClassExpression]
+
     def __init__(
         self,
         class_expressions: Sequence[ClassExpression | IdentifierHint],
@@ -906,10 +913,13 @@ class EquivalentClasses(ClassAxiom):  # 9.1.2
         self.class_expressions = [ClassExpression.safe(ce) for ce in class_expressions]
         super().__init__(annotations)
 
-    def to_rdflib_node(self, graph: Graph) -> None:
+    def to_rdflib_node(self, graph: Graph) -> term.BNode:
+        rv = term.BNode()
         nodes = [ce.to_rdflib_node(graph) for ce in self.class_expressions]
         for s, o in itt.combinations(nodes, 2):
             _add_triple(graph, s, OWL.equivalentClass, o, self.annotations)
+        # TODO connect all triples to this BNode?
+        return rv
 
     def _funowl_inside_2(self) -> str:
         return _list_to_funowl(self.class_expressions)
@@ -1042,15 +1052,18 @@ class _ObjectPropertyList(ObjectPropertyAxiom):
 
 
 def _equivalent_xxx(
-    graph: Graph, expressions: list[Nodeable], *, annotations: Annotations | None = None
-):
+    graph: Graph, expressions: Iterable[Nodeable], *, annotations: Annotations | None = None
+) -> term.BNode:
     nodes = [expression.to_rdflib_node(graph) for expression in expressions]
     for s, o in itt.combinations(nodes, 2):
         _add_triple(graph, s, OWL.equivalentProperty, o, annotations)
 
+    # TODO what to return here?
+    return term.BNode()
+
 
 class EquivalentObjectProperties(_ObjectPropertyList):  # 9.2.2
-    def to_rdflib_node(self, graph: Graph) -> None:
+    def to_rdflib_node(self, graph: Graph) -> term.BNode:
         return _equivalent_xxx(
             graph, self.object_property_expressions, annotations=self.annotations
         )
@@ -1058,7 +1071,7 @@ class EquivalentObjectProperties(_ObjectPropertyList):  # 9.2.2
 
 def _disjoint_xxx(
     graph: Graph, expressions: Iterable[Nodeable], *, annotations: Annotations | None = None
-) -> term.Node:
+) -> term.BNode:
     nodes = [expression.to_rdflib_node(graph) for expression in expressions]
     if len(nodes) == 2:
         return _add_triple(graph, nodes[0], OWL.propertyDisjointWith, nodes[1], annotations)
@@ -1210,6 +1223,8 @@ class SubDataPropertyOf(DataPropertyAxiom):  # 9.3.1
 
 
 class _DataPropertyList(DataPropertyAxiom):
+    data_property_expressions: Sequence[DataPropertyExpression]
+
     def __init__(
         self,
         data_property_expressions: Sequence[DataPropertyExpression | IdentifierHint],
@@ -1228,12 +1243,16 @@ class _DataPropertyList(DataPropertyAxiom):
 
 
 class EquivalentDataProperties(_DataPropertyList):  # 9.3.2
-    def to_rdflib_node(self, graph: Graph) -> None:
-        return _equivalent_xxx(graph, self.data_property_expressions, annotations=self.annotations)
+    def to_rdflib_node(self, graph: Graph) -> term.BNode:
+        return _equivalent_xxx(
+            graph,
+            self.data_property_expressions,
+            annotations=self.annotations,
+        )
 
 
 class DisjointDataProperties(_DataPropertyList):  # 9.3.2
-    def to_rdflib_node(self, graph: Graph) -> None:
+    def to_rdflib_node(self, graph: Graph) -> term.BNode:
         return _disjoint_xxx(graph, self.data_property_expressions, annotations=self.annotations)
 
 
@@ -1389,13 +1408,16 @@ class _IndividualListAssertion(Assertion):
 
 class SameIndividual(_IndividualListAssertion):  # 9.6.1
     def to_rdflib_node(self, graph: Graph) -> term.Node:
-        for s, o in itt.combinations(self.individuals, 2):
+        nodes = [i.to_rdflib_node(graph) for i in self.individuals]
+        for s, o in itt.combinations(nodes, 2):
             _add_triple(graph, s, OWL.sameAs, o, annotations=self.annotations)
+        # TODO connect this node to triples?
+        return term.BNode()
 
 
 class DifferentIndividuals(_IndividualListAssertion):  # 9.6.2
     def to_rdflib_node(self, graph: Graph) -> term.Node:
-        nodes = self.individuals
+        nodes = [i.to_rdflib_node(graph) for i in self.individuals]
         if len(nodes) == 2:
             return _add_triple(
                 graph, nodes[0], OWL.differentFrom, nodes[1], annotations=self.annotations
