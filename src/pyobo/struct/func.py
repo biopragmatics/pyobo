@@ -5,7 +5,7 @@ from __future__ import annotations
 import itertools as itt
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Sequence
-from typing import ClassVar, Literal, TypeAlias
+from typing import ClassVar, Literal, TypeAlias, TypeVar
 
 import bioregistry
 from curies import Reference
@@ -92,6 +92,9 @@ __all__ = [
     "l",
     "write_ontology",
 ]
+
+X = TypeVar("X")
+XorList: TypeAlias = X | list[X]
 
 NNode: TypeAlias = term.URIRef | Reference
 IdentifierHint = term.URIRef | Reference | str
@@ -770,9 +773,7 @@ class DataHasValue(_DataValuesFrom):
 
     def __init__(
         self,
-        data_property_expressions: DataPropertyExpression
-        | IdentifierHint
-        | list[DataPropertyExpression | IdentifierHint],
+        data_property_expressions: XorList[DataPropertyExpression | IdentifierHint],
         literal: term.Literal,
     ) -> None:
         if isinstance(data_property_expressions, DataPropertyExpression | IdentifierHint):
