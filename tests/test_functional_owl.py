@@ -6,17 +6,17 @@ from curies import Reference
 from rdflib import Graph, term
 
 from pyobo.struct import func as f
-from pyobo.struct.func import Nodeable
+from pyobo.struct.func import Box
 
 
-class FunctionalReference(Nodeable, Reference):
+class FunctionalReference(Box, Reference):
     def to_rdflib_node(self, graph: Graph) -> term.Node:
         return term.URIRef(self.bioregistry_link)
 
     def to_funowl(self) -> str:
         return self.curie
 
-    def _funowl_inside(self) -> str:
+    def to_funowl_args(self) -> str:
         raise NotImplementedError
 
 
@@ -70,17 +70,17 @@ class TestSection7(unittest.TestCase):
 
         expr = f.DataOneOf(
             [
-                term.Literal("Peter"),
-                term.Literal(1),
+                f.LiteralBox("Peter"),
+                f.LiteralBox(1),
             ]
         )
         self.assertEqual('DataOneOf( "Peter" "1"^^xsd:integer )', expr.to_funowl())
 
         expr = f.DatatypeRestriction(
-            _c("xsd:integer"),
+            "xsd:integer",
             [
-                (_c("xsd:minInclusive"), term.Literal(5)),
-                (_c("xsd:maxExclusive"), term.Literal(10)),
+                ("xsd:minInclusive", f.LiteralBox(5)),
+                ("xsd:maxExclusive", f.LiteralBox(10)),
             ],
         )
         self.assertEqual(
@@ -199,15 +199,15 @@ class TestSection10(unittest.TestCase):
         """Test AnnotationAssertion."""
         expected = 'AnnotationAssertion( rdfs:label a:Person "Represents the set of all people." )'
         expr = f.AnnotationAssertion(
-            _c("rdfs:label"), _c("a:Person"), term.Literal("Represents the set of all people.")
+            "rdfs:label", "a:Person", f.LiteralBox("Represents the set of all people.")
         )
         self.assertEqual(expected, expr.to_funowl())
 
         expected = 'AnnotationAssertion( Annotation( dc:terms orcid:0000-0003-4423-4370 ) rdfs:label a:Person "Represents the set of all people." )'
         expr = f.AnnotationAssertion(
-            _c("rdfs:label"),
-            _c("a:Person"),
-            term.Literal("Represents the set of all people."),
-            annotations=[f.Annotation(_c("dc:terms"), _c("orcid:0000-0003-4423-4370"))],
+            "rdfs:label",
+            "a:Person",
+            f.LiteralBox("Represents the set of all people."),
+            annotations=[f.Annotation("dc:terms", "orcid:0000-0003-4423-4370")],
         )
         self.assertEqual(expected, expr.to_funowl())
