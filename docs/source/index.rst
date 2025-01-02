@@ -11,6 +11,7 @@ Table of Contents
 
    installation
    cli
+   functional
 
 Indices and Tables
 ------------------
