@@ -256,3 +256,5 @@ autodoc_member_order = "bysource"
 
 todo_include_todos = True
 todo_emit_warnings = True
+
+graphviz_output_format = "svg"
