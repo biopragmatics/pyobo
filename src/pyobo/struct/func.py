@@ -453,8 +453,10 @@ class DataOneOf(DataRange):
 
 
 class DatatypeRestriction(DataRange):
-    def __init__(self, dtype: NNode, pairs: list[tuple[NNode, term.Literal]]) -> None:
-        self.dtype = dtype
+    def __init__(
+        self, dtype: Nodeable | IdentifierHint, pairs: list[tuple[NNode, term.Literal]]
+    ) -> None:
+        self.dtype = safe_nodable(dtype)
         self.pairs = pairs
 
     def to_rdflib_node(self, graph: Graph) -> term.Node:
@@ -464,7 +466,7 @@ class DatatypeRestriction(DataRange):
         y = " ".join(
             f"{_nnode_to_funowl(facet)} {_literal_to_funowl(value)}" for facet, value in self.pairs
         )
-        return f"{_nnode_to_funowl(self.dtype)} {y}"
+        return f"{self.dtype.to_funowl()} {y}"
 
 
 """
@@ -768,9 +770,13 @@ class DataHasValue(_DataValuesFrom):
 
     def __init__(
         self,
-        data_property_expressions: list[DataPropertyExpression | IdentifierHint],
+        data_property_expressions: DataPropertyExpression
+        | IdentifierHint
+        | list[DataPropertyExpression | IdentifierHint],
         literal: term.Literal,
     ) -> None:
+        if isinstance(data_property_expressions, DataPropertyExpression | IdentifierHint):
+            data_property_expressions = [data_property_expressions]
         self.data_property_expressions = [
             DataPropertyExpression.safe(dpe) for dpe in data_property_expressions
         ]
