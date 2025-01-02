@@ -10,6 +10,7 @@ from collections.abc import Iterable, Sequence
 from typing import ClassVar, TypeAlias, TypeVar
 
 import curies
+import rdflib
 from curies import Converter, Reference
 from rdflib import OWL, RDF, RDFS, XSD, Graph, collection, term
 
@@ -99,7 +100,11 @@ __all__ = [
     "write_ontology",
 ]
 
-EXAMPLE_PREFIX_MAP = {"a": "https://example.org/a:"}
+EXAMPLE_PREFIX_MAP = {
+    "a": "https://example.org/a:",
+    "dcterms": "http://purl.org/dc/terms/",
+    "orcid": "https://orcid.org",
+}
 
 
 def c(curie: str) -> Reference:
@@ -410,6 +415,15 @@ class ObjectPropertyExpression(Box):
 class SimpleObjectPropertyExpression(IdentifierBox, ObjectPropertyExpression):
     """A simple object property expression represented by an IRI/CURIE."""
 
+    _SKIP: ClassVar[set[term.Node]] = set()
+
+    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        node = super().to_rdflib_node(graph, converter)
+        if node in self._SKIP:
+            return node
+        graph.add((node, RDF.type, OWL.ObjectProperty))
+        return node
+
 
 class ObjectInverseOf(ObjectPropertyExpression):
     """A property expression defined in `6.1.1 "Inverse Object Properties" <https://www.w3.org/TR/owl2-syntax/#Inverse_Object_Properties>`_.
@@ -623,6 +637,16 @@ class ClassExpression(Box):
 
 class SimpleClassExpression(IdentifierBox, ClassExpression):
     """A simple class expression represented by an IRI/CURIE."""
+
+    _SKIP: ClassVar[set[term.Node]] = {OWL.Thing}
+
+    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        node = super().to_rdflib_node(graph, converter)
+        if node in self._SKIP:
+            # i.e., don't add extra annotations for these
+            return node
+        graph.add((node, RDF.type, OWL.Class))
+        return node
 
 
 class _ObjectList(ClassExpression):
@@ -858,6 +882,7 @@ class _Cardinality(ClassExpression):
     property_qualified: ClassVar[term.URIRef]
     property_unqualified: ClassVar[term.URIRef]
     property_type: ClassVar[term.URIRef]
+    property_expression_type: ClassVar[term.URIRef]  # the datatype for the target_expression
     n: int
 
     def __init__(
@@ -870,7 +895,9 @@ class _Cardinality(ClassExpression):
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
         node = term.BNode()
         graph.add((node, RDF.type, OWL.Restriction))
-        graph.add((node, OWL.onProperty, self.property_expression.to_rdflib_node(graph, converter)))
+        pe_node = self.property_expression.to_rdflib_node(graph, converter)
+        graph.add((pe_node, RDF.type, self.property_expression_type))
+        graph.add((node, OWL.onProperty, pe_node))
         literal = term.Literal(str(self.n), datatype=XSD.nonNegativeInteger)
         if self.target_expression is not None:
             graph.add((node, self.property_qualified, literal))
@@ -1018,6 +1045,7 @@ class _DataCardinality(_Cardinality):
     """
 
     property_type: ClassVar[term.URIRef] = OWL.onDataRange
+    property_expression_type: ClassVar[term.URIRef] = OWL.DatatypeProperty
     property_expression: DataPropertyExpression
     target_expression: DataRange | None
 
@@ -1111,11 +1139,11 @@ def _add_triple_annotations(
     # we need to "reify" the triple, which means to
     # represent it with a blank node
     reified_triple = term.BNode()
-    if not type and not annotations:
+    if not annotations:
         return reified_triple
-
-    if type:
-        graph.add((reified_triple, RDF.type, type))
+    if type is None:
+        type = OWL.Axiom
+    graph.add((reified_triple, RDF.type, type))
     graph.add((reified_triple, OWL.annotatedSource, s))
     graph.add((reified_triple, OWL.annotatedProperty, p))
     graph.add((reified_triple, OWL.annotatedTarget, o))
@@ -2063,13 +2091,9 @@ class Annotation(Box):  # 10.1
         raise RuntimeError
 
     def _add_to_triple(self, graph: Graph, node: term.BNode, converter: Converter) -> None:
-        graph.add(
-            (
-                node,
-                self.annotation_property.to_rdflib_node(graph, converter),
-                self.value.to_rdflib_node(graph, converter),
-            )
-        )
+        ap = self.annotation_property.to_rdflib_node(graph, converter)
+        graph.add((ap, RDF.type, OWL.AnnotationProperty))
+        graph.add((node, ap, self.value.to_rdflib_node(graph, converter)))
         # TODO recursive nested annotations
 
     def to_funowl_args(self) -> str:
@@ -2209,11 +2233,13 @@ class AnnotationPropertyRange(AnnotationPropertyTypingAxiom):  # 10.2.4
     property_type: ClassVar[term.URIRef] = RDFS.range
 
 
-def _serialize_turtle(
-    axioms: Axiom | list[Axiom], *, output_prefixes: bool = False, **prefix_map: str
-) -> str:
-    """Serialize axioms as turtle."""
+EXAMPLE_ONTOLOGY_IRI = "https://example.org/example.ofn"
+
+
+def _get_rdf_graph(axioms: Axiom | list[Axiom], prefix_map: str) -> rdflib.Graph:
+    """Serialize axioms as an RDF graph."""
     graph = Graph()
+    graph.add((term.URIRef(EXAMPLE_ONTOLOGY_IRI), RDF.type, OWL.Ontology))
     # chain these together so you don't have to worry about
     # default namespaces like owl
     converter = curies.chain(
@@ -2228,7 +2254,51 @@ def _serialize_turtle(
         axioms = [axioms]
     for axiom in axioms:
         axiom.to_rdflib_node(graph, converter)
+    return graph
+
+
+def _serialize_turtle(
+    axioms: Axiom | list[Axiom], *, output_prefixes: bool = False, prefix_map: str
+) -> str:
+    """Serialize axioms as turtle."""
+    graph = _get_rdf_graph(axioms=axioms, prefix_map=prefix_map)
     rv = graph.serialize()
     if output_prefixes:
         return rv.strip()
     return "\n".join(line for line in rv.splitlines() if not line.startswith("@prefix")).strip()
+
+
+def _get_rdf_graph_oracle(axioms: Axiom | list[Axiom], *, prefix_map: dict[str, str]) -> Graph:
+    """Serialize to turtle via OFN and conversion with ROBOT."""
+    import tempfile
+    from pathlib import Path
+
+    from bioontologies.robot import convert
+
+    if isinstance(axioms, Axiom):
+        axioms = [axioms]
+
+    ontology = Ontology(
+        iri=EXAMPLE_ONTOLOGY_IRI,
+        prefixes=prefix_map,
+        axioms=axioms,
+    )
+    graph = Graph()
+    with tempfile.TemporaryDirectory() as directory:
+        stub = Path(directory).joinpath("test")
+        ofn_path = stub.with_suffix(".ofn")
+        ofn_path.write_text(ontology.to_funowl())
+        ttl_path = stub.with_suffix(".ttl")
+        convert(ofn_path, ttl_path)
+        # turtle = ttl_path.read_text()
+        graph.parse(ttl_path)
+
+    return graph
+
+    # turtle = "\n".join(
+    #     line
+    #     for line in turtle.splitlines()
+    #     if line.strip() and not line.startswith("#") and not line.startswith("@prefix") and not line.startswith(
+    #         "@base") and "owl:Ontology" not in line
+    # )
+    # return turtle
