@@ -8,6 +8,7 @@
       "package_name_stylized": "PyOBO",
       "short_description": "A python package for handling and generating OBO",
       "author_name": "Charles Tapley Hoyt",
+      "author_github": "cthoyt",
       "author_email": "cthoyt@gmail.com",
       "github_organization_name": "biopragmatics",
       "github_repository_name": "pyobo",
