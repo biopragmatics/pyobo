@@ -2,26 +2,9 @@
 
 import unittest
 
-from curies import Reference
-from rdflib import Graph, term
+from rdflib import term
 
-from pyobo.struct import func as f
-from pyobo.struct.func import Box
-
-
-class FunctionalReference(Box, Reference):
-    def to_rdflib_node(self, graph: Graph) -> term.Node:
-        return term.URIRef(self.bioregistry_link)
-
-    def to_funowl(self) -> str:
-        return self.curie
-
-    def to_funowl_args(self) -> str:
-        raise NotImplementedError
-
-
-def _c(c) -> FunctionalReference:
-    return FunctionalReference.from_curie(c)
+from pyobo.struct.functional import dsl as f
 
 
 class TestSection5(unittest.TestCase):
@@ -29,22 +12,22 @@ class TestSection5(unittest.TestCase):
 
     def test_declarations(self):
         """Test declarations."""
-        decl = f.Declaration(_c("owl:Thing"), "Class")
+        decl = f.Declaration("owl:Thing", "Class")
         self.assertEqual("Declaration( Class( owl:Thing ) )", decl.to_funowl())
 
-        decl = f.Declaration(_c("owl:topObjectProperty"), "ObjectProperty")
+        decl = f.Declaration("owl:topObjectProperty", "ObjectProperty")
         self.assertEqual("Declaration( ObjectProperty( owl:topObjectProperty ) )", decl.to_funowl())
 
-        decl = f.Declaration(_c("owl:topDataProperty"), "DataProperty")
+        decl = f.Declaration("owl:topDataProperty", "DataProperty")
         self.assertEqual("Declaration( DataProperty( owl:topDataProperty ) )", decl.to_funowl())
 
-        decl = f.Declaration(_c("rdfs:Literal"), "Datatype")
+        decl = f.Declaration("rdfs:Literal", "Datatype")
         self.assertEqual("Declaration( Datatype( rdfs:Literal ) )", decl.to_funowl())
 
-        decl = f.Declaration(_c("rdfs:label"), "AnnotationProperty")
+        decl = f.Declaration("rdfs:label", "AnnotationProperty")
         self.assertEqual("Declaration( AnnotationProperty( rdfs:label ) )", decl.to_funowl())
 
-        decl = f.Declaration(_c("a:Peter"), "NamedIndividual")
+        decl = f.Declaration("a:Peter", "NamedIndividual")
         self.assertEqual("Declaration( NamedIndividual( a:Peter ) )", decl.to_funowl())
 
 
@@ -130,7 +113,7 @@ class TestSection8ClassExpressions(unittest.TestCase):
         """Test object restrictions."""
         expr = f.DataSomeValuesFrom(
             ["a:hasAge"],
-            f.DatatypeRestriction("xsd:integer", [(_c("xsd:maxExclusive"), term.Literal(20))]),
+            f.DatatypeRestriction("xsd:integer", [("xsd:maxExclusive", term.Literal(20))]),
         )
         self.assertEqual(
             'DataSomeValuesFrom( a:hasAge DatatypeRestriction( xsd:integer xsd:maxExclusive "20"^^xsd:integer ) )',
@@ -171,26 +154,24 @@ class TestSection9Axioms(unittest.TestCase):
 
     def test_equivalent_classes(self):
         """Test equivalent class axioms."""
-        expr = f.EquivalentClasses(
-            [_c("a:Boy"), f.ObjectIntersectionOf([_c("a:Child"), _c("a:Man")])]
-        )
+        expr = f.EquivalentClasses(["a:Boy", f.ObjectIntersectionOf(["a:Child", "a:Man"])])
         self.assertEqual(
             "EquivalentClasses( a:Boy ObjectIntersectionOf( a:Child a:Man ) )", expr.to_funowl()
         )
 
     def test_disjoint_classes(self):
         """Test disjoint class axioms."""
-        expr = f.EquivalentClasses([_c("a:Boy"), _c("a:Girl")])
+        expr = f.EquivalentClasses(["a:Boy", "a:Girl"])
         self.assertEqual("EquivalentClasses( a:Boy a:Girl )", expr.to_funowl())
 
     def test_disjoint_union(self):
         """Test disjoint union axioms."""
-        expr = f.DisjointUnion(_c("a:Child"), [_c("a:Boy"), _c("a:Girl")])
+        expr = f.DisjointUnion("a:Child", ["a:Boy", "a:Girl"])
         self.assertEqual("DisjointUnion( a:Child a:Boy a:Girl )", expr.to_funowl())
 
     def test_subproperties(self) -> None:
         """Test object sub-property."""
-        expr = f.SubObjectPropertyOf(_c("a:hasDog"), _c("a:hasPet"))
+        expr = f.SubObjectPropertyOf("a:hasDog", "a:hasPet")
         self.assertEqual("SubObjectPropertyOf( a:hasDog a:hasPet )", expr.to_funowl())
 
 

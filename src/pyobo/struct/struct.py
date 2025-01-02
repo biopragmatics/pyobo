@@ -747,7 +747,7 @@ class Term(Referenced):
         """Yield functional OWL axioms for this term."""
         from rdflib import term
 
-        from pyobo.struct import func as f
+        from pyobo.struct.functional import dsl as f
 
         r = self.reference
         if self.type == "Term":

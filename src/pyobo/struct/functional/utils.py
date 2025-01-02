@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
+from curies import Converter
 from rdflib import Graph, term
 
 __all__ = [
@@ -29,5 +30,5 @@ class RDFNodeSerializable(ABC):
     """An object that can be serialized to RDF as a node."""
 
     @abstractmethod
-    def to_rdflib_node(self, graph: Graph) -> term.Node:
+    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
         """Make RDF."""
