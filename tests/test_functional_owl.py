@@ -54,23 +54,18 @@ class TestSection7(unittest.TestCase):
     def test_it(self):
         expr = f.DataIntersectionOf(
             [
-                _c("xsd:nonNegativeInteger"),
-                _c("xsd:nonPositiveInteger"),
+                "xsd:nonNegativeInteger",
+                "xsd:nonPositiveInteger",
             ]
         )
         self.assertEqual(
             "DataIntersectionOf( xsd:nonNegativeInteger xsd:nonPositiveInteger )", expr.to_funowl()
         )
 
-        expr = f.DataUnionOf(
-            [
-                _c("xsd:string"),
-                _c("xsd:integer"),
-            ]
-        )
+        expr = f.DataUnionOf(["xsd:string", "xsd:integer"])
         self.assertEqual("DataUnionOf( xsd:string xsd:integer )", expr.to_funowl())
 
-        expr = f.DataComplementOf(_c("xsd:integer"))
+        expr = f.DataComplementOf("xsd:integer")
         self.assertEqual("DataComplementOf( xsd:integer )", expr.to_funowl())
 
         expr = f.DataOneOf(
@@ -99,58 +94,58 @@ class TestSection8ClassExpressions(unittest.TestCase):
 
     def test_object_propositional(self):
         """Test propositional lists."""
-        expr = f.ObjectIntersectionOf([_c("a:Dog"), _c("a:CanTalk")])
+        expr = f.ObjectIntersectionOf(["a:Dog", "a:CanTalk"])
         self.assertEqual("ObjectIntersectionOf( a:Dog a:CanTalk )", expr.to_funowl())
-        expr = f.ObjectUnionOf([_c("a:Man"), _c("a:Woman")])
+        expr = f.ObjectUnionOf(["a:Man", "a:Woman"])
         self.assertEqual("ObjectUnionOf( a:Man a:Woman )", expr.to_funowl())
-        expr = f.ObjectComplementOf(_c("a:Bird"))
+        expr = f.ObjectComplementOf("a:Bird")
         self.assertEqual("ObjectComplementOf( a:Bird )", expr.to_funowl())
 
     def test_object_restrictions(self):
         """Test object restrictions."""
-        expr = f.ObjectSomeValuesFrom(_c("a:hasPet"), _c("a:Mongrel"))
+        expr = f.ObjectSomeValuesFrom("a:hasPet", "a:Mongrel")
         self.assertEqual("ObjectSomeValuesFrom( a:hasPet a:Mongrel )", expr.to_funowl())
 
-        expr = f.ObjectAllValuesFrom(_c("a:hasPet"), _c("a:Dog"))
+        expr = f.ObjectAllValuesFrom("a:hasPet", "a:Dog")
         self.assertEqual("ObjectAllValuesFrom( a:hasPet a:Dog )", expr.to_funowl())
 
-        expr = f.ObjectHasValue(_c("a:fatherOf"), _c("a:Stewie"))
+        expr = f.ObjectHasValue("a:fatherOf", "a:Stewie")
         self.assertEqual("ObjectHasValue( a:fatherOf a:Stewie )", expr.to_funowl())
 
-        expr = f.ObjectHasSelf(_c("a:likes"))
+        expr = f.ObjectHasSelf("a:likes")
         self.assertEqual("ObjectHasSelf( a:likes )", expr.to_funowl())
 
     def test_object_cardinality(self):
         """Test object restrictions."""
-        expr = f.ObjectMinCardinality(2, _c("a:fatherOf"), _c("a:Man"))
+        expr = f.ObjectMinCardinality(2, "a:fatherOf", "a:Man")
         self.assertEqual("ObjectMinCardinality( 2 a:fatherOf a:Man )", expr.to_funowl())
 
-        expr = f.ObjectMaxCardinality(2, _c("a:hasPet"))
+        expr = f.ObjectMaxCardinality(2, "a:hasPet")
         self.assertEqual("ObjectMaxCardinality( 2 a:hasPet )", expr.to_funowl())
 
-        expr = f.ObjectExactCardinality(1, _c("a:hasPet"), _c("a:Dog"))
+        expr = f.ObjectExactCardinality(1, "a:hasPet", "a:Dog")
         self.assertEqual("ObjectExactCardinality( 1 a:hasPet a:Dog )", expr.to_funowl())
 
     def test_data_restrictions(self):
         """Test object restrictions."""
         expr = f.DataSomeValuesFrom(
-            [_c("a:hasAge")],
-            f.DatatypeRestriction(_c("xsd:integer"), [(_c("xsd:maxExclusive"), term.Literal(20))]),
+            ["a:hasAge"],
+            f.DatatypeRestriction("xsd:integer", [(_c("xsd:maxExclusive"), term.Literal(20))]),
         )
         self.assertEqual(
             'DataSomeValuesFrom( a:hasAge DatatypeRestriction( xsd:integer xsd:maxExclusive "20"^^xsd:integer ) )',
             expr.to_funowl(),
         )
 
-        expr = f.DataAllValuesFrom([_c("a:hasZIP")], _c("xsd:integer"))
+        expr = f.DataAllValuesFrom(["a:hasZIP"], "xsd:integer")
         self.assertEqual("DataAllValuesFrom( a:hasZIP xsd:integer )", expr.to_funowl())
 
-        expr = f.DataHasValue(_c("a:hasAge"), term.Literal(17))
+        expr = f.DataHasValue("a:hasAge", term.Literal(17))
         self.assertEqual('DataHasValue( a:hasAge "17"^^xsd:integer )', expr.to_funowl())
 
     def test_data_cardinality(self):
         """Test outputting data cardinality constraints."""
-        r = _c("rdfs:label")
+        r = "rdfs:label"
 
         expr = f.DataExactCardinality(1, r)
         self.assertEqual("DataExactCardinality( 1 rdfs:label )", expr.to_funowl())
@@ -166,10 +161,10 @@ class TestSection9Axioms(unittest.TestCase):
     """Test Section 9: Axioms."""
 
     def test_subclass_of(self):
-        expr = f.SubClassOf(_c("a:Baby"), _c("a:Child"))
+        expr = f.SubClassOf("a:Baby", "a:Child")
         self.assertEqual("SubClassOf( a:Baby a:Child )", expr.to_funowl())
 
-        expr = f.SubClassOf(f.ObjectSomeValuesFrom(_c("a:hasChild"), _c("a:Child")), _c("a:Parent"))
+        expr = f.SubClassOf(f.ObjectSomeValuesFrom("a:hasChild", "a:Child"), "a:Parent")
         self.assertEqual(
             "SubClassOf( ObjectSomeValuesFrom( a:hasChild a:Child ) a:Parent )", expr.to_funowl()
         )

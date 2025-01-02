@@ -54,10 +54,8 @@ __all__ = [
     "FunctionalDataProperty",
     "FunctionalObjectProperty",
     "HasKey",
-    "Individual",
     "InverseFunctionalObjectProperty",
     "InverseObjectProperties",
-    "InverseObjectProperty",
     "IrreflexiveObjectProperty",
     "NegativeDataPropertyAssertion",
     "NegativeObjectPropertyAssertion",
@@ -68,6 +66,7 @@ __all__ = [
     "ObjectHasSelf",
     "ObjectHasValue",
     "ObjectIntersectionOf",
+    "ObjectInverseOf",
     "ObjectMaxCardinality",
     "ObjectMinCardinality",
     "ObjectOneOf",
@@ -95,6 +94,14 @@ __all__ = [
 ]
 
 NNode: TypeAlias = term.URIRef | Reference
+IdentifierHint = term.URIRef | Reference | str
+
+Class: TypeAlias = NNode
+Datatype: TypeAlias = NNode
+ObjectProperty: TypeAlias = NNode
+DataProperty: TypeAlias = NNode
+AnnotationProperty: TypeAlias = NNode
+NamedIndividual: TypeAlias = NNode
 
 
 def c(curie: str) -> Reference:
@@ -140,8 +147,8 @@ class Nodeable(ABC):
         raise NotImplementedError
 
 
-def safe_nodable(nodeable: Nodeable | Reference) -> Nodeable:
-    if isinstance(nodeable, Reference):
+def safe_nodable(nodeable: Nodeable | IdentifierHint) -> Nodeable:
+    if isinstance(nodeable, IdentifierHint):
         return SimpleNodeable(nodeable)
     return nodeable
 
@@ -214,14 +221,25 @@ def _list_to_funowl(elements: Iterable[Nodeable | Reference]):
 
 
 class SimpleNodeable(Nodeable):
-    def __init__(self, nnode: NNode):
-        self.nnode = nnode
+    """A simple wrapper around CURIEs and IRIs."""
+
+    identifier: term.URIRef | Reference
+
+    def __init__(self, identifier: IdentifierHint):
+        if isinstance(identifier, str):
+            self.identifier = Reference.from_curie(identifier)
+        elif isinstance(identifier, Reference):
+            self.identifier = identifier
+        elif isinstance(identifier, term.URIRef):
+            self.identifier = identifier
+        else:
+            raise TypeError
 
     def to_rdflib_node(self, graph: Graph) -> term.Node:
-        return _nnode_to_uriref(self.nnode)
+        return _nnode_to_uriref(self.identifier)
 
     def to_funowl(self) -> str:
-        return _nnode_to_funowl(self.nnode)
+        return _nnode_to_funowl(self.identifier)
 
     def _funowl_inside(self) -> str:
         raise NotImplementedError
@@ -252,10 +270,6 @@ def _literal_to_funowl(literal: term.Literal):
     if literal.datatype == XSD.integer:
         return f'"{literal.toPython()}"^^xsd:integer'
     raise NotImplementedError(f"Not implemented for type: {literal.datatype}")
-
-
-class Individual(Nodeable):
-    """A model representing individuals."""
 
 
 """Section 5"""
@@ -303,19 +317,40 @@ Section 6: Property Expressions
 
 
 class ObjectPropertyExpression(Nodeable):
+    """A model representing `6.1 "Object Property Expressions" <https://www.w3.org/TR/owl2-syntax/#Object_Property_Expressions>`_.
+
+    .. image:: https://www.w3.org/TR/owl2-syntax/C_objectproperty.gif
+    """
+
     @classmethod
-    def safe(cls, ope: ObjectPropertyExpression | Reference) -> ObjectPropertyExpression:
-        if isinstance(ope, Reference):
+    def safe(cls, ope: ObjectPropertyExpression | IdentifierHint) -> ObjectPropertyExpression:
+        if isinstance(ope, IdentifierHint):
             return SimpleObjectPropertyExpression(ope)
         return ope
 
 
 class SimpleObjectPropertyExpression(SimpleNodeable, ObjectPropertyExpression):
-    pass
+    """A simple object property expression represented by an IRI/CURIE."""
 
 
-class InverseObjectProperty(ObjectPropertyExpression):
-    def __init__(self, object_property_expression: ObjectPropertyExpression | Reference) -> None:
+class ObjectInverseOf(ObjectPropertyExpression):
+    """A property expression defined in `6.1.1 "Inverse Object Properties" <https://www.w3.org/TR/owl2-syntax/#Inverse_Object_Properties>`_.
+
+    For example, ``ObjectPropertyAssertion( a:fatherOf a:Peter a:Stewie )`` implies
+    ``ObjectPropertyAssertion( ObjectInverseOf(a:fatherOf) a:Stewie a:Peter )``.
+
+    >>> ObjectInverseOf("a:fatherOf")
+
+    .. warning::
+
+        This is the only instance in the specification where the
+        name of the tag is not the same as the name of the element
+        in the spec, which is ``InverseObjectProperty``.
+    """
+
+    def __init__(
+        self, object_property_expression: ObjectPropertyExpression | IdentifierHint
+    ) -> None:
         self.object_property_expression = ObjectPropertyExpression.safe(object_property_expression)
 
     def to_rdflib_node(self, graph: Graph) -> term.Node:
@@ -324,7 +359,7 @@ class InverseObjectProperty(ObjectPropertyExpression):
         return node
 
     def _funowl_inside(self) -> str:
-        return _nnode_to_funowl(self.object_property_expression)
+        return self.object_property_expression.to_funowl()
 
 
 class DataPropertyExpression(Nodeable):  # 6.2
@@ -334,14 +369,14 @@ class DataPropertyExpression(Nodeable):  # 6.2
     """
 
     @classmethod
-    def safe(cls, dpe: DataPropertyExpression | Reference) -> DataPropertyExpression:
-        if isinstance(dpe, Reference):
+    def safe(cls, dpe: DataPropertyExpression | IdentifierHint) -> DataPropertyExpression:
+        if isinstance(dpe, IdentifierHint):
             return SimpleDataPropertyExpression(dpe)
         return dpe
 
 
 class SimpleDataPropertyExpression(SimpleNodeable, DataPropertyExpression):
-    pass
+    """A simple data property expression represented by an IRI/CURIE."""
 
 
 """
@@ -358,21 +393,20 @@ class DataRange(Nodeable):
     """
 
     @classmethod
-    def safe(cls, data_range: DataRange | Reference) -> DataRange:
-        # TODO make generic to RDFLib datatype too
-        if isinstance(data_range, Reference):
+    def safe(cls, data_range: DataRange | IdentifierHint) -> DataRange:
+        if isinstance(data_range, IdentifierHint):
             return SimpleDateRange(data_range)
         return data_range
 
 
 class SimpleDateRange(SimpleNodeable, DataRange):
-    pass
+    """A simple data range represented by an IRI/CURIE."""
 
 
 class _ListDataRange(DataRange):
     property_type: ClassVar[term.URIRef]
 
-    def __init__(self, data_ranges: Sequence[DataRange | Reference]):
+    def __init__(self, data_ranges: Sequence[DataRange | IdentifierHint]):
         self.data_ranges = [DataRange.safe(dr) for dr in data_ranges]
 
     def to_rdflib_node(self, graph: Graph) -> term.Node:
@@ -391,7 +425,7 @@ class DataUnionOf(_ListDataRange):
 
 
 class DataComplementOf(DataRange):
-    def __init__(self, data_range: DataRange | Reference):
+    def __init__(self, data_range: DataRange | IdentifierHint):
         self.data_range = DataRange.safe(data_range)
 
     def to_rdflib_node(self, graph: Graph) -> term.BNode:
@@ -442,14 +476,14 @@ class ClassExpression(Nodeable):
     """An abstract model representing class expressions."""
 
     @classmethod
-    def safe(cls, class_expresion: ClassExpression | Reference) -> ClassExpression:
-        if isinstance(class_expresion, Reference):
+    def safe(cls, class_expresion: ClassExpression | IdentifierHint) -> ClassExpression:
+        if isinstance(class_expresion, IdentifierHint):
             return SimpleClassExpression(class_expresion)
         return class_expresion
 
 
 class SimpleClassExpression(SimpleNodeable, ClassExpression):
-    pass
+    """A simple class expression represented by an IRI/CURIE."""
 
 
 class _ObjectList(ClassExpression):
@@ -463,7 +497,7 @@ class _ObjectList(ClassExpression):
 
     property_type: ClassVar[term.URIRef]
 
-    def __init__(self, class_expressions: Sequence[ClassExpression | Reference]) -> None:
+    def __init__(self, class_expressions: Sequence[ClassExpression | IdentifierHint]) -> None:
         """Initialize the model with a list of class expressions."""
         if len(class_expressions) < 2:
             raise ValueError("must have at least two class expressions")
@@ -494,7 +528,7 @@ class ObjectUnionOf(_ObjectList):
 class ObjectComplementOf(ClassExpression):
     """A class expression defined in `8.1.3 Complement of Class Expressions <https://www.w3.org/TR/owl2-syntax/#Complement_of_Class_Expressions>`_."""
 
-    def __init__(self, class_expression: ClassExpression | Reference) -> None:
+    def __init__(self, class_expression: ClassExpression | IdentifierHint) -> None:
         """Initialize the model with a single class expression."""
         self.class_expression = ClassExpression.safe(class_expression)
 
@@ -533,8 +567,8 @@ class _ObjectValuesFrom(ClassExpression):
 
     def __init__(
         self,
-        object_property_expression: ObjectPropertyExpression | Reference,
-        class_expression: ClassExpression | Reference,
+        object_property_expression: ObjectPropertyExpression | IdentifierHint,
+        class_expression: ClassExpression | IdentifierHint,
     ) -> None:
         self.object_property_expression = ObjectPropertyExpression.safe(object_property_expression)
         self.object_expression = ClassExpression.safe(class_expression)
@@ -566,13 +600,16 @@ class ObjectAllValuesFrom(_ObjectValuesFrom):
 class ObjectHasValue(ClassExpression):
     """A class expression defined in `8.2.3 Individual Value Restriction <https://www.w3.org/TR/owl2-syntax/#Individual_Value_Restriction>`_."""
 
+    object_property_expression: ObjectPropertyExpression
+    individual: Nodeable
+
     def __init__(
         self,
-        object_property_expression: ObjectPropertyExpression | Reference,
-        individual: Nodeable,
+        object_property_expression: ObjectPropertyExpression | IdentifierHint,
+        individual: Nodeable | IdentifierHint,
     ) -> None:
         self.object_property_expression = ObjectPropertyExpression.safe(object_property_expression)
-        self.individual = individual
+        self.individual = safe_nodable(individual)
 
     def to_rdflib_node(self, graph: Graph) -> term.BNode:
         return _owl_rdf_restriction(
@@ -586,7 +623,9 @@ class ObjectHasValue(ClassExpression):
 class ObjectHasSelf(ClassExpression):
     """A class expression defined in `8.2.4 Self-Restriction <https://www.w3.org/TR/owl2-syntax/#Self-Restriction>`_."""
 
-    def __init__(self, object_property_expression: ObjectPropertyExpression | Reference) -> None:
+    def __init__(
+        self, object_property_expression: ObjectPropertyExpression | IdentifierHint
+    ) -> None:
         """Initialize the model with a property expression."""
         self.object_property_expression = ObjectPropertyExpression.safe(object_property_expression)
 
@@ -644,12 +683,12 @@ class _ObjectCardinality(_Cardinality):
     def __init__(
         self,
         n: int,
-        property_expression: Nodeable,
-        class_expression: ClassExpression | Reference | None = None,
+        object_property_expression: ObjectPropertyExpression | IdentifierHint,
+        class_expression: ClassExpression | IdentifierHint | None = None,
     ) -> None:
         super().__init__(
             n=n,
-            property_expression=property_expression,
+            property_expression=ObjectPropertyExpression.safe(object_property_expression),
             object_expression=ClassExpression.safe(class_expression)
             if class_expression is not None
             else None,
@@ -684,11 +723,13 @@ class _DataValuesFrom(ClassExpression):
 
     def __init__(
         self,
-        data_property_expressions: list[Nodeable],
-        data_range_expression: Nodeable,
+        data_property_expressions: list[DataPropertyExpression | IdentifierHint],
+        data_range: DataRange | IdentifierHint,
     ) -> None:
-        self.data_property_expressions = data_property_expressions
-        self.data_range_expression = data_range_expression
+        self.data_property_expressions = [
+            DataPropertyExpression.safe(dpe) for dpe in data_property_expressions
+        ]
+        self.data_range_expression = DataRange.safe(data_range)
 
     def to_rdflib_node(self, graph: Graph) -> term.BNode:
         node = term.BNode()
@@ -722,9 +763,14 @@ class DataHasValue(_DataValuesFrom):
 
     property_type: ClassVar[term.URIRef] = OWL.hasValue
 
-    def __init__(self, data_property_expression: Nodeable, literal: term.Literal) -> None:
+    def __init__(
+        self,
+        data_property_expression: DataPropertyExpression | IdentifierHint,
+        literal: term.Literal,
+    ) -> None:
         super().__init__(
-            data_property_expressions=[data_property_expression], data_range_expression=literal
+            data_property_expressions=[DataPropertyExpression.safe(data_property_expression)],
+            data_range=literal,
         )
 
     def _funowl_inside(self) -> str:
@@ -744,12 +790,12 @@ class _DataCardinality(_Cardinality):
     def __init__(
         self,
         n: int,
-        data_property_expression: Nodeable,
-        data_range: DataRange | Reference | None = None,
+        data_property_expression: DataPropertyExpression | IdentifierHint,
+        data_range: DataRange | IdentifierHint | None = None,
     ) -> None:
         super().__init__(
             n,
-            data_property_expression,
+            DataPropertyExpression.safe(data_property_expression),
             DataRange.safe(data_range) if data_range is not None else None,
         )
 
@@ -830,8 +876,8 @@ def _add_triple_annotations(
 class SubClassOf(ClassAxiom):  # 9.1.1
     def __init__(
         self,
-        child: ClassExpression | Reference,
-        parent: ClassExpression | Reference,
+        child: ClassExpression | IdentifierHint,
+        parent: ClassExpression | IdentifierHint,
         *,
         annotations: Annotations | None = None,
     ) -> None:
@@ -851,7 +897,7 @@ class SubClassOf(ClassAxiom):  # 9.1.1
 class EquivalentClasses(ClassAxiom):  # 9.1.2
     def __init__(
         self,
-        class_expressions: Sequence[ClassExpression | Reference],
+        class_expressions: Sequence[ClassExpression | IdentifierHint],
         *,
         annotations: Annotations | None = None,
     ) -> None:
@@ -900,8 +946,8 @@ class DisjointClasses(ClassAxiom):  # 9.1.3
 class DisjointUnion(ClassAxiom):  # 9.1.4
     def __init__(
         self,
-        clazz: Nodeable | Reference,
-        class_expressions: Sequence[ClassExpression | Reference],
+        clazz: Nodeable | IdentifierHint,
+        class_expressions: Sequence[ClassExpression | IdentifierHint],
         *,
         annotations: Annotations | None = None,
     ) -> None:
@@ -931,7 +977,9 @@ class ObjectPropertyAxiom(Axiom):
 
 
 class ObjectPropertyChain(Nodeable):
-    def __init__(self, object_property_expressions: Sequence[ObjectPropertyExpression | Reference]):
+    def __init__(
+        self, object_property_expressions: Sequence[ObjectPropertyExpression | IdentifierHint]
+    ):
         self.object_property_expressions = [
             ObjectPropertyExpression.safe(ope) for ope in object_property_expressions
         ]
@@ -952,8 +1000,8 @@ class SubObjectPropertyOf(ObjectPropertyAxiom):  # 9.2.1
 
     def __init__(
         self,
-        child: SubObjectPropertyExpression | Reference,
-        parent: ObjectPropertyExpression | Reference,
+        child: SubObjectPropertyExpression | IdentifierHint,
+        parent: ObjectPropertyExpression | IdentifierHint,
         *,
         annotations: Annotations | None = None,
     ) -> None:
@@ -978,7 +1026,7 @@ class _ObjectPropertyList(ObjectPropertyAxiom):
 
     def __init__(
         self,
-        object_property_expressions: Sequence[ObjectPropertyExpression | Reference],
+        object_property_expressions: Sequence[ObjectPropertyExpression | IdentifierHint],
         *,
         annotations: Annotations | None = None,
     ) -> None:
@@ -1143,8 +1191,8 @@ class DataPropertyAxiom(Axiom):
 class SubDataPropertyOf(DataPropertyAxiom):  # 9.3.1
     def __init__(
         self,
-        child: DataPropertyExpression | Reference,
-        parent: DataPropertyExpression | Reference,
+        child: DataPropertyExpression | IdentifierHint,
+        parent: DataPropertyExpression | IdentifierHint,
         *,
         annotations: Annotations | None = None,
     ) -> None:
@@ -1164,7 +1212,7 @@ class SubDataPropertyOf(DataPropertyAxiom):  # 9.3.1
 class _DataPropertyList(DataPropertyAxiom):
     def __init__(
         self,
-        data_property_expressions: Sequence[DataPropertyExpression | Reference],
+        data_property_expressions: Sequence[DataPropertyExpression | IdentifierHint],
         *,
         annotations: Annotations | None = None,
     ) -> None:
@@ -1194,8 +1242,8 @@ class _BinaryDataPropertyAxiom(DataPropertyAxiom):  # 9.2.4
 
     def __init__(
         self,
-        left: DataPropertyExpression | Reference,
-        right: ClassExpression | Reference,
+        left: DataPropertyExpression | IdentifierHint,
+        right: ClassExpression | IdentifierHint,
         *,
         annotations: Annotations | None = None,
         property: term.Node,
@@ -1224,7 +1272,7 @@ class DataPropertyRange(_BinaryDataPropertyAxiom):  # 9.3.5
 class FunctionalDataProperty(DataPropertyAxiom):  # 9.3.6
     def __init__(
         self,
-        data_property_expression: DataPropertyExpression | Reference,
+        data_property_expression: DataPropertyExpression | IdentifierHint,
         *,
         annotations: Annotations | None = None,
     ):
@@ -1277,9 +1325,9 @@ class HasKey(Axiom):
 
     def __init__(
         self,
-        class_expression: ClassExpression | Reference,
-        object_property_expressions: Sequence[ObjectPropertyExpression | Reference],
-        data_property_expressions: Sequence[DataPropertyExpression | Reference],
+        class_expression: ClassExpression | IdentifierHint,
+        object_property_expressions: Sequence[ObjectPropertyExpression | IdentifierHint],
+        data_property_expressions: Sequence[DataPropertyExpression | IdentifierHint],
         *,
         annotations: Annotations | None = None,
     ) -> None:
@@ -1327,9 +1375,12 @@ class Assertion(Axiom):
 
 class _IndividualListAssertion(Assertion):
     def __init__(
-        self, individuals: Sequence[Individual], *, annotations: Annotations | None = None
+        self,
+        individuals: Sequence[Nodeable | IdentifierHint],
+        *,
+        annotations: Annotations | None = None,
     ) -> None:
-        self.individuals = individuals
+        self.individuals = [safe_nodable(i) for i in individuals]
         super().__init__(annotations)
 
     def _funowl_inside_2(self) -> str:
@@ -1338,14 +1389,13 @@ class _IndividualListAssertion(Assertion):
 
 class SameIndividual(_IndividualListAssertion):  # 9.6.1
     def to_rdflib_node(self, graph: Graph) -> term.Node:
-        nodes = [i.to_rdflib_node(graph) for i in self.individuals]
-        for s, o in itt.combinations(nodes, 2):
+        for s, o in itt.combinations(self.individuals, 2):
             _add_triple(graph, s, OWL.sameAs, o, annotations=self.annotations)
 
 
 class DifferentIndividuals(_IndividualListAssertion):  # 9.6.2
     def to_rdflib_node(self, graph: Graph) -> term.Node:
-        nodes = [i.to_rdflib_node(graph) for i in self.individuals]
+        nodes = self.individuals
         if len(nodes) == 2:
             return _add_triple(
                 graph, nodes[0], OWL.differentFrom, nodes[1], annotations=self.annotations
@@ -1361,13 +1411,13 @@ class DifferentIndividuals(_IndividualListAssertion):  # 9.6.2
 class ClassAssertion(Assertion):  # 9.6.3
     def __init__(
         self,
-        class_expression: ClassExpression | Reference,
-        individual: Individual,
+        class_expression: ClassExpression | IdentifierHint,
+        individual: Nodeable | IdentifierHint,
         *,
         annotations: Annotations | None = None,
     ) -> None:
         self.class_expression = ClassExpression.safe(class_expression)
-        self.individual = individual
+        self.individual = safe_nodable(individual)
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph) -> term.Node:
@@ -1386,15 +1436,15 @@ class ClassAssertion(Assertion):  # 9.6.3
 class _ObjectPropertyAssertion(Assertion):
     def __init__(
         self,
-        object_property_expression: ObjectPropertyExpression | Reference,
-        source_individual: Individual,
-        target_individual: Individual,
+        object_property_expression: ObjectPropertyExpression | IdentifierHint,
+        source_individual: Nodeable | IdentifierHint,
+        target_individual: Nodeable | IdentifierHint,
         *,
         annotations: Annotations | None = None,
     ) -> None:
         self.object_property_expression = ObjectPropertyExpression.safe(object_property_expression)
-        self.source_individual = source_individual
-        self.target_individual = target_individual
+        self.source_individual = safe_nodable(source_individual)
+        self.target_individual = safe_nodable(target_individual)
         super().__init__(annotations)
 
     def _funowl_inside_2(self) -> str:
@@ -1405,7 +1455,7 @@ class ObjectPropertyAssertion(_ObjectPropertyAssertion):  # 9.6.4
     def to_rdflib_node(self, graph: Graph) -> term.Node:
         s = self.source_individual.to_rdflib_node(graph)
         o = self.target_individual.to_rdflib_node(graph)
-        if isinstance(self.object_property_expression, InverseObjectProperty):
+        if isinstance(self.object_property_expression, ObjectInverseOf):
             # flip them around
             s, o = o, s
             # unpack the inverse property
@@ -1420,7 +1470,7 @@ class NegativeObjectPropertyAssertion(_ObjectPropertyAssertion):  # 9.6.5
     def to_rdflib_node(self, graph: Graph) -> term.Node:
         s = self.source_individual.to_rdflib_node(graph)
         o = self.target_individual.to_rdflib_node(graph)
-        if isinstance(self.object_property_expression, InverseObjectProperty):
+        if isinstance(self.object_property_expression, ObjectInverseOf):
             # flip them around
             s, o = o, s
             # unpack the inverse property
@@ -1435,14 +1485,14 @@ class NegativeObjectPropertyAssertion(_ObjectPropertyAssertion):  # 9.6.5
 class _DataPropertyAssertion(Assertion):
     def __init__(
         self,
-        data_property_expression: DataPropertyExpression | Reference,
-        source: Individual,
+        data_property_expression: DataPropertyExpression | IdentifierHint,
+        source: Nodeable | IdentifierHint,
         target: term.Literal,
         *,
         annotations: Annotations | None = None,
     ) -> None:
         self.data_property_expression = DataPropertyExpression.safe(data_property_expression)
-        self.source = source
+        self.source = safe_nodable(source)
         self.target = target
         super().__init__(annotations)
 
@@ -1479,7 +1529,6 @@ class NegativeDataPropertyAssertion(_DataPropertyAssertion):  # 9.6.7
 
 """Section 10: Annotations"""
 
-AnnotationProperty: TypeAlias = NNode
 AnnotationValue: TypeAlias = NNode | term.Literal  # TODO add anonmyous individual
 AnnotationSubject: TypeAlias = NNode  # TODO anonymous
 
@@ -1609,8 +1658,8 @@ class SubAnnotationPropertyOf(AnnotationAxiom):  # 10.2.2
 
     def __init__(
         self,
-        child: NNode,
-        parent: NNode,
+        child: AnnotationProperty,
+        parent: AnnotationProperty,
         *,
         annotations: Annotations | None = None,
     ) -> None:
