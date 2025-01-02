@@ -1019,15 +1019,18 @@ def _add_triple_annotations(
     annotations: Annotations | None = None,
     type: term.URIRef | None = None,
 ) -> term.BNode:
-    node = term.BNode()
+    # in order to represent annotations on a triple,
+    # we need to "reify" the triple, which means to
+    # represent it with a blank node
+    reified_triple = term.BNode()
     if type:
-        graph.add((node, RDF.type, type))
-    graph.add((node, OWL.annotatedSource, s))
-    graph.add((node, OWL.annotatedProperty, p))
-    graph.add((node, OWL.annotatedTarget, o))
+        graph.add((reified_triple, RDF.type, type))
+    graph.add((reified_triple, OWL.annotatedSource, s))
+    graph.add((reified_triple, OWL.annotatedProperty, p))
+    graph.add((reified_triple, OWL.annotatedTarget, o))
     for annotation in annotations or []:
-        annotation._add_to_triple(graph, node)
-    return node
+        annotation._add_to_triple(graph, reified_triple)
+    return reified_triple
 
 
 class SubClassOf(ClassAxiom):  # 9.1.1
