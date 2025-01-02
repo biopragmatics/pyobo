@@ -223,6 +223,14 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
+        self.assert_lines(
+            """\
+            Declaration( Class( go:0050069 ) )
+            AnnotationAssertion( rdfs:label go:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( ro:1234567 go:0050069 hgnc:123 )
+            """,
+            term.iterate_funowl_lines(),
+        )
 
     def test_relation(self) -> None:
         """Test emitting a relationship."""
