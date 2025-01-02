@@ -165,7 +165,49 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             property_value: RO:1234567 "value" xsd:string
             """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+
+    def test_property_integer(self) -> None:
+        """Test emitting property literals that were annotated as a boolean."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_integer(RO_DUMMY, 1234)
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: RO:1234567 "1234" xsd:integer
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+
+    def test_property_bool(self) -> None:
+        """Test emitting property literals that were annotated as a boolean."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_boolean(RO_DUMMY, True)
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: RO:1234567 "true" xsd:boolean
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+
+    def test_property_year(self) -> None:
+        """Test emitting property literals that were annotated as a year."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_year(RO_DUMMY, "1993")
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: RO:1234567 "1993" xsd:gYear
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
     def test_property_object(self) -> None:
@@ -179,7 +221,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             property_value: RO:1234567 hgnc:123
             """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
     def test_relation(self) -> None:
@@ -350,7 +392,7 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             property_value: hey GO:1234569
             """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={r.pair: r}),
         )
 
     def test_alt(self) -> None:

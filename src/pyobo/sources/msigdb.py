@@ -7,14 +7,14 @@ from collections.abc import Iterable
 from lxml import etree
 from tqdm.auto import tqdm
 
-from ..struct import Obo, Reference, Term, TypeDef, has_participant
-from ..utils.path import ensure_path
-
-logger = logging.getLogger(__name__)
+from pyobo.struct import Obo, Reference, Term, TypeDef, has_participant
+from pyobo.utils.path import ensure_path
 
 __all__ = [
     "MSigDBGetter",
 ]
+
+logger = logging.getLogger(__name__)
 
 PREFIX = "msigdb"
 BASE_URL = "https://data.broadinstitute.org/gsea-msigdb/msigdb/release"

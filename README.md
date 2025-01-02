@@ -481,9 +481,16 @@ The final section of the README is for if you want to get involved by making a c
 To install in development mode, use the following:
 
 ```console
-git clone git+https://github.com/biopragmatics/pyobo.git
-cd pyobo
-python3 -m pip install -e .
+$ git clone git+https://github.com/biopragmatics/pyobo.git
+$ cd pyobo
+$ uv --preview pip install -e .
+```
+
+Alternatively, install using legacy pip with `UV_PREVIEW` mode enabled
+until the uv build backend becomes a stable feature:
+
+```console
+$ UV_PREVIEW=1 python3 -m pip install -e .
 ```
 
 ### Updating Package Boilerplate
@@ -578,7 +585,7 @@ You only have to do the following steps once.
 
 #### Configuring your machine's connection to PyPI
 
-You have to do the following steps once per machine. 
+You have to do the following steps once per machine.
 
 ```console
 $ uv tool install keyring

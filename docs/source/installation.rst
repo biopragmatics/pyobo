@@ -5,13 +5,13 @@ The most recent release can be installed from
 
 .. code-block:: shell
 
-    pip install pyobo
+    python3 -m pip install pyobo
 
 The most recent code and data can be installed directly from GitHub with:
 
 .. code-block:: shell
 
-    pip install git+https://github.com/biopragmatics/pyobo.git
+    python3 -m pip install git+https://github.com/biopragmatics/pyobo.git
 
 To install in development mode, use the following:
 
@@ -19,4 +19,7 @@ To install in development mode, use the following:
 
     git clone git+https://github.com/biopragmatics/pyobo.git
     cd pyobo
-    pip install -e .
+    UV_PREVIEW=1 python3 -m pip install -e .
+
+Note that the ``UV_PREVIEW`` environment variable is required to be
+set until the uv build backend becomes a stable feature.

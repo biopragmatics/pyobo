@@ -27,7 +27,8 @@ PREFIX = "ror"
 ROR_ZENODO_RECORD_ID = "10086202"
 
 # Constants
-ORG_CLASS = Reference(prefix="OBI", identifier="0000245")
+ORG_CLASS = Reference(prefix="OBI", identifier="0000245", name="organization")
+CITY_CLASS = Reference(prefix="ENVO", identifier="00000856", name="city")
 
 RMAP = {
     "Related": see_also,
@@ -52,6 +53,7 @@ class RORGetter(Obo):
     ontology = bioregistry_key = PREFIX
     typedefs = [has_homepage, *RMAP.values()]
     synonym_typedefs = [acronym]
+    root_terms = [CITY_CLASS, ORG_CLASS]
     idspaces = {
         "ror": "https://ror.org/",
         "geonames": "https://www.geonames.org/",
@@ -61,6 +63,14 @@ class RORGetter(Obo):
         "OBI": "http://purl.obolibrary.org/obo/OBI_",
         "OMO": "http://purl.obolibrary.org/obo/OMO_",
         "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "isni": "http://www.isni.org/isni/",
+        "funderregistry": "http://data.crossref.org/fundingdata/funder/",
+        "wikidata": "http://www.wikidata.org/entity/",
+        "grid": "https://www.grid.ac/institutes/",
+        "hesa": "https://bioregistry.io/hesa:",
+        "ucas": "https://bioregistry.io/ucas:",
+        "ukprn": "https://bioregistry.io/ukprn:",
     }
 
     def __post_init__(self):
@@ -86,8 +96,13 @@ _MISSED_ORG_TYPES: set[str] = set()
 
 def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
     """Iterate over terms in ROR."""
+    yield Term(reference=ORG_CLASS)
+    yield Term(reference=CITY_CLASS)
+
     _version, _source_uri, records = get_latest(force=force)
     unhandled_xref_prefixes = set()
+
+    seen_geonames_references = set()
     for record in tqdm(records, unit_scale=True, unit="record", desc=PREFIX):
         identifier = record["id"].removeprefix("https://ror.org/")
         name = record["name"]
@@ -126,9 +141,11 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
             city = address.get("geonames_city")
             if not city:
                 continue
-            term.append_relationship(
-                RMAP["Located in"], Reference(prefix="geonames", identifier=str(city["id"]))
+            geonames_reference = Reference(
+                prefix="geonames", identifier=str(city["id"]), name=city["city"]
             )
+            seen_geonames_references.add(geonames_reference)
+            term.append_relationship(RMAP["Located in"], geonames_reference)
 
         for label in record.get("labels", []):
             label = label["label"]  # there's a language availabel in this dict too
@@ -165,6 +182,11 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
                 term.append_xref(Reference(prefix=norm_prefix, identifier=xref_id.replace(" ", "")))
 
         yield term
+
+    for geonames_ref in sorted(seen_geonames_references):
+        geonames_term = Term(reference=geonames_ref, type="Instance")
+        geonames_term.append_parent(CITY_CLASS)
+        yield geonames_term
 
 
 def _get_info(*, force: bool = False):

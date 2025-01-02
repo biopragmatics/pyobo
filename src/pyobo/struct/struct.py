@@ -649,9 +649,17 @@ class Term(Referenced):
             prop, str(value).lower(), Reference(prefix="xsd", identifier="boolean")
         )
 
-    def annotate_integer(self, prop: ReferenceHint, value: str) -> Self:
+    def annotate_integer(self, prop: ReferenceHint, value: int | str) -> Self:
         """Append an object annotation."""
-        return self.annotate_literal(prop, value, Reference(prefix="xsd", identifier="integer"))
+        return self.annotate_literal(
+            prop, str(int(value)), Reference(prefix="xsd", identifier="integer")
+        )
+
+    def annotate_year(self, prop: ReferenceHint, value: int | str) -> Self:
+        """Append a year annotation."""
+        return self.annotate_literal(
+            prop, str(int(value)), Reference(prefix="xsd", identifier="gYear")
+        )
 
     def _definition_fp(self) -> str:
         definition = obo_escape_slim(self.definition) if self.definition else ""
@@ -1105,7 +1113,7 @@ class Obo:
             yield f'property_value: http://purl.org/dc/terms/description "{description}" xsd:string'
 
         for root_term in self.root_terms or []:
-            yield f"property_value: {has_ontology_root_term.preferred_curie} {root_term.preferred_curie}"
+            yield f"property_value: {has_ontology_root_term.preferred_curie} {reference_escape(root_term, ontology_prefix=self.ontology)}"
 
         for typedef in sorted(self.typedefs or []):
             yield from typedef.iterate_obo_lines(ontology_prefix=self.ontology)
