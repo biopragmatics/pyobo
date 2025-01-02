@@ -216,7 +216,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Ignore security issues in the version.py, which are inconsistent
 "src/pyobo/version.py" = ["S603", "S607"]
-"src/pyobo/struct/func.py" = ["D101", "D102", "D107"]
+"src/pyobo/struct/functional/dsl.py" = ["D101", "D102", "D107"]
 "tests/test_functional_owl.py" = ["D101","D102", "D107"]
 # Ignore commented out code in Sphinx configuration file
 "docs/source/conf.py" = ["ERA001"]
