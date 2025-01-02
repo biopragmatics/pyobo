@@ -37,6 +37,7 @@ from .reference import (
 )
 from .typedef import (
     TypeDef,
+    alternative_term,
     comment,
     default_typedefs,
     exact_match,
@@ -736,6 +737,42 @@ class Term(Referenced):
             synonym_typedefs = {}
         for synonym in sorted(self.synonyms):
             yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
+
+    def iterate_funowl_lines(self) -> Iterable[str]:
+        """Iterate over the lines to write in an OFN file."""
+        for x in self.iterate_funowl_axioms():
+            yield x.to_funowl()
+
+    def iterate_funowl_axioms(self):
+        """Yield functional OWL axioms for this term."""
+        from rdflib import term
+
+        from pyobo.struct import func as f
+
+        r = self.reference
+        if self.type == "Term":
+            yield f.Declaration(r, dtype="Class")
+            for parent in self.parents:
+                yield f.SubClassOf(r, parent)
+        else:
+            yield f.Declaration(r, dtype="NamedIndividual")
+            for parent in self.parents:
+                yield f.ClassAssertion(r, parent)
+        if self.name:
+            yield f.AnnotationAssertion("rdfs:label", r, f.l(self.name))
+        if self.definition:
+            yield f.AnnotationAssertion("dcterms:description", r, f.l(self.definition))
+        for alt in self.alt_ids:
+            yield f.AnnotationAssertion(alternative_term.reference, r, alt)
+        for typedef, value in self.iterate_relations():
+            yield f.ObjectPropertyAssertion(typedef.reference, r, value)
+        for typedef, values in self.annotations_object.items():
+            for value in values:
+                yield f.AnnotationAssertion(typedef, r, value)
+        for typedef, values in self.annotations_literal.items():
+            for value, dtype in values:
+                literal = term.Literal(value, datatype=dtype.curie)
+                yield f.AnnotationAssertion(typedef, r, literal)
 
     def _emit_relations(
         self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
