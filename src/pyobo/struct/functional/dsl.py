@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import itertools as itt
+import subprocess
 import typing
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Sequence
@@ -471,6 +472,15 @@ class DataPropertyExpression(Box):  # 6.2
 
 class SimpleDataPropertyExpression(IdentifierBox, DataPropertyExpression):
     """A simple data property expression represented by an IRI/CURIE."""
+
+    _SKIP: ClassVar[set[term.URIRef]] = set()
+
+    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        node = super().to_rdflib_node(graph, converter)
+        if node in self._SKIP:
+            return node
+        graph.add((node, RDF.type, OWL.DatatypeProperty))
+        return node
 
 
 """
@@ -1101,7 +1111,7 @@ class Axiom(Box, ABC):
 
     @abstractmethod
     def _funowl_inside_2(self) -> str:
-        raise NotImplementedError
+        pass
 
     def to_ttl(self, prefix_map: dict[str, str], *, output_prefixes: bool = False) -> str:
         """Output terse Turtle statements."""
@@ -1134,19 +1144,23 @@ def _add_triple_annotations(
     annotations: Annotations | None = None,
     type: term.URIRef | None = None,
     converter: Converter,
+    force_for_negative_assertion: bool = False,
+    reified_s=OWL.annotatedSource,
+    reified_p=OWL.annotatedProperty,
+    reified_o=OWL.annotatedTarget,
 ) -> term.BNode:
     # in order to represent annotations on a triple,
     # we need to "reify" the triple, which means to
     # represent it with a blank node
     reified_triple = term.BNode()
-    if not annotations:
+    if not annotations and not force_for_negative_assertion:
         return reified_triple
     if type is None:
         type = OWL.Axiom
     graph.add((reified_triple, RDF.type, type))
-    graph.add((reified_triple, OWL.annotatedSource, s))
-    graph.add((reified_triple, OWL.annotatedProperty, p))
-    graph.add((reified_triple, OWL.annotatedTarget, o))
+    graph.add((reified_triple, reified_s, s))
+    graph.add((reified_triple, reified_p, p))
+    graph.add((reified_triple, reified_o, o))
     for annotation in annotations or []:
         annotation._add_to_triple(graph, reified_triple, converter)
     return reified_triple
@@ -1228,14 +1242,14 @@ class DisjointClasses(ClassAxiom):  # 9.1.3
 
     def __init__(
         self,
-        class_expressions: Sequence[ClassExpression],
+        class_expressions: Sequence[ClassExpression | IdentifierBoxOrHint],
         *,
         annotations: Annotations | None = None,
     ) -> None:
         """Initialize the axiom."""
         if len(class_expressions) < 2:
             raise ValueError
-        self.class_expressions = class_expressions
+        self.class_expressions = [ClassExpression.safe(ce) for ce in class_expressions]
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
@@ -1262,7 +1276,7 @@ class DisjointClasses(ClassAxiom):  # 9.1.3
 
 
 class DisjointUnion(ClassAxiom):  # 9.1.4
-    parent: IdentifierBox
+    parent: SimpleClassExpression
     class_expression: Sequence[ClassExpression]
 
     def __init__(
@@ -1272,7 +1286,7 @@ class DisjointUnion(ClassAxiom):  # 9.1.4
         *,
         annotations: Annotations | None = None,
     ) -> None:
-        self.parent = IdentifierBox(parent)
+        self.parent = SimpleClassExpression(parent)
         self.class_expressions = [ClassExpression.safe(ce) for ce in class_expressions]
         super().__init__(annotations)
 
@@ -1308,7 +1322,8 @@ class ObjectPropertyChain(Box):
         ]
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
-        raise NotImplementedError
+        nodes = [ope.to_rdflib_node(graph, converter) for ope in self.object_property_expressions]
+        return _make_sequence_nodes(graph, nodes)
 
     def to_funowl_args(self) -> str:
         return _list_to_funowl(self.object_property_expressions)
@@ -1338,7 +1353,14 @@ class SubObjectPropertyOf(ObjectPropertyAxiom):  # 9.2.1
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
         s = self.child.to_rdflib_node(graph, converter)
         o = self.parent.to_rdflib_node(graph, converter)
-        return _add_triple(graph, s, RDFS.subPropertyOf, o, self.annotations, converter=converter)
+        if isinstance(self.child, ObjectPropertyChain):
+            return _add_triple(
+                graph, o, OWL.propertyChainAxiom, s, self.annotations, converter=converter
+            )
+        else:
+            return _add_triple(
+                graph, s, RDFS.subPropertyOf, o, self.annotations, converter=converter
+            )
 
     def _funowl_inside_2(self) -> str:
         return f"{self.child.to_funowl()} {self.parent.to_funowl()}"
@@ -1397,6 +1419,7 @@ def _disjoint_xxx(
     converter: Converter,
 ) -> term.BNode:
     nodes = [expression.to_rdflib_node(graph, converter) for expression in expressions]
+    nodes = sorted(nodes, key=str)
     if len(nodes) == 2:
         return _add_triple(
             graph, nodes[0], OWL.propertyDisjointWith, nodes[1], annotations, converter=converter
@@ -1448,8 +1471,9 @@ class InverseObjectProperties(ObjectPropertyAxiom):  # 9.2.4
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
-        s = self.left.to_rdflib_node(graph, converter)
-        o = self.right.to_rdflib_node(graph, converter)
+        # note these are backwards, since everything is backwards in OFN :shrug:
+        s = self.right.to_rdflib_node(graph, converter)
+        o = self.left.to_rdflib_node(graph, converter)
         return _add_triple(graph, s, OWL.inverseOf, o, self.annotations, converter=converter)
 
     def _funowl_inside_2(self) -> str:
@@ -1519,14 +1543,15 @@ class ObjectPropertyRange(_ObjectPropertyTyping):  # 9.2.6
 
 class _UnaryObjectProperty(ObjectPropertyAxiom):  # 9.2.7
     property_type: ClassVar[term.Node]
+    object_property_expression: ObjectPropertyExpression
 
     def __init__(
         self,
-        object_property_expression: ObjectPropertyExpression,
+        object_property_expression: ObjectPropertyExpression | IdentifierBoxOrHint,
         *,
         annotations: Annotations | None = None,
     ) -> None:
-        self.object_property_expression = object_property_expression
+        self.object_property_expression = ObjectPropertyExpression.safe(object_property_expression)
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
@@ -1545,7 +1570,6 @@ class _UnaryObjectProperty(ObjectPropertyAxiom):  # 9.2.7
 
 class FunctionalObjectProperty(_UnaryObjectProperty):  # 9.2.7
     """
-
 
     Consider the ontology consisting of the following axioms.
 
@@ -1651,6 +1675,8 @@ class _DataPropertyList(DataPropertyAxiom):
 
 class EquivalentDataProperties(_DataPropertyList):  # 9.3.2
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
+        for dpe in self.data_property_expressions:
+            graph.add((dpe.to_rdflib_node(graph, converter), RDF.type, OWL.DatatypeProperty))
         return _equivalent_xxx(
             graph,
             self.data_property_expressions,
@@ -1661,6 +1687,8 @@ class EquivalentDataProperties(_DataPropertyList):  # 9.3.2
 
 class DisjointDataProperties(_DataPropertyList):  # 9.3.2
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
+        for dpe in self.data_property_expressions:
+            graph.add((dpe.to_rdflib_node(graph, converter), RDF.type, OWL.DatatypeProperty))
         return _disjoint_xxx(
             graph, self.data_property_expressions, annotations=self.annotations, converter=converter
         )
@@ -1668,36 +1696,47 @@ class DisjointDataProperties(_DataPropertyList):  # 9.3.2
 
 class _DataPropertyTyping(DataPropertyAxiom):  # 9.2.4
     property_type: ClassVar[term.Node]
-    left: DataPropertyExpression
-    right: ClassExpression
-
-    def __init__(
-        self,
-        left: DataPropertyExpression | IdentifierBoxOrHint,
-        right: ClassExpression | IdentifierBoxOrHint,
-        *,
-        annotations: Annotations | None = None,
-        property: term.Node,
-    ) -> None:
-        self.left = DataPropertyExpression.safe(left)
-        self.right = ClassExpression.safe(right)
-        super().__init__(annotations)
+    data_property_expression: DataPropertyExpression
+    target: Box
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
-        s = self.left.to_rdflib_node(graph, converter)
-        o = self.right.to_rdflib_node(graph, converter)
+        s = self.data_property_expression.to_rdflib_node(graph, converter)
+        graph.add((s, RDF.type, OWL.DatatypeProperty))
+        o = self.target.to_rdflib_node(graph, converter)
         return _add_triple(graph, s, self.property_type, o, self.annotations, converter=converter)
 
     def _funowl_inside_2(self) -> str:
-        return f"{self.left.to_funowl()} {self.right.to_funowl()}"
+        return f"{self.data_property_expression.to_funowl()} {self.target.to_funowl()}"
 
 
 class DataPropertyDomain(_DataPropertyTyping):  # 9.3.4
     property_type: ClassVar[term.Node] = RDFS.domain
 
+    def __init__(
+        self,
+        data_property_expression: DataPropertyExpression | IdentifierBoxOrHint,
+        class_expression: ClassExpression | IdentifierBoxOrHint,
+        *,
+        annotations: Annotations | None = None,
+    ) -> None:
+        self.data_property_expression = DataPropertyExpression.safe(data_property_expression)
+        self.target = ClassExpression.safe(class_expression)
+        super().__init__(annotations)
+
 
 class DataPropertyRange(_DataPropertyTyping):  # 9.3.5
     property_type: ClassVar[term.Node] = RDFS.range
+
+    def __init__(
+        self,
+        data_property_expression: DataPropertyExpression | IdentifierBoxOrHint,
+        data_range: DataRange | IdentifierBoxOrHint,
+        *,
+        annotations: Annotations | None = None,
+    ) -> None:
+        self.data_property_expression = DataPropertyExpression.safe(data_property_expression)
+        self.target = DataRange.safe(data_range)
+        super().__init__(annotations)
 
 
 class FunctionalDataProperty(DataPropertyAxiom):  # 9.3.6
@@ -1861,6 +1900,8 @@ class _IndividualListAssertion(Assertion):
 class SameIndividual(_IndividualListAssertion):  # 9.6.1
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
         nodes = [i.to_rdflib_node(graph, converter) for i in self.individuals]
+        for node in nodes:
+            graph.add((node, RDF.type, OWL.NamedIndividual))
         for s, o in itt.combinations(nodes, 2):
             _add_triple(graph, s, OWL.sameAs, o, annotations=self.annotations, converter=converter)
         # TODO connect this node to triples?
@@ -1870,6 +1911,8 @@ class SameIndividual(_IndividualListAssertion):  # 9.6.1
 class DifferentIndividuals(_IndividualListAssertion):  # 9.6.2
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
         nodes = [i.to_rdflib_node(graph, converter) for i in self.individuals]
+        for node in nodes:
+            graph.add((node, RDF.type, OWL.NamedIndividual))
         if len(nodes) == 2:
             return _add_triple(
                 graph,
@@ -1903,11 +1946,13 @@ class ClassAssertion(Assertion):  # 9.6.3
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        s = self.individual.to_rdflib_node(graph, converter)
+        graph.add((s, RDF.type, OWL.NamedIndividual))
         return _add_triple(
             graph,
-            self.class_expression.to_rdflib_node(graph, converter),
+            s,
             RDF.type,
-            self.individual.to_rdflib_node(graph, converter),
+            self.class_expression.to_rdflib_node(graph, converter),
             annotations=self.annotations,
             converter=converter,
         )
@@ -1942,6 +1987,8 @@ class ObjectPropertyAssertion(_ObjectPropertyAssertion):  # 9.6.4
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
         s = self.source_individual.to_rdflib_node(graph, converter)
         o = self.target_individual.to_rdflib_node(graph, converter)
+        graph.add((s, RDF.type, OWL.NamedIndividual))
+        graph.add((o, RDF.type, OWL.NamedIndividual))
         if isinstance(self.object_property_expression, ObjectInverseOf):
             # flip them around
             s, o = o, s
@@ -1959,6 +2006,8 @@ class NegativeObjectPropertyAssertion(_ObjectPropertyAssertion):  # 9.6.5
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
         s = self.source_individual.to_rdflib_node(graph, converter)
         o = self.target_individual.to_rdflib_node(graph, converter)
+        graph.add((s, RDF.type, OWL.NamedIndividual))
+        graph.add((o, RDF.type, OWL.NamedIndividual))
         if isinstance(self.object_property_expression, ObjectInverseOf):
             # flip them around
             s, o = o, s
@@ -1976,37 +2025,43 @@ class NegativeObjectPropertyAssertion(_ObjectPropertyAssertion):  # 9.6.5
             annotations=self.annotations,
             type=OWL.NegativePropertyAssertion,
             converter=converter,
+            force_for_negative_assertion=True,
+            reified_p=OWL.assertionProperty,
+            reified_s=OWL.sourceIndividual,
+            reified_o=OWL.targetIndividual,
         )
 
 
 class _DataPropertyAssertion(Assertion):
-    source: IdentifierBox
+    source_individual: IdentifierBox
     target: PrimitiveBox
 
     def __init__(
         self,
         data_property_expression: DataPropertyExpression | IdentifierBoxOrHint,
-        source: IdentifierBoxOrHint,
+        source_individual: IdentifierBoxOrHint,
         target: PrimitiveHint,
         *,
         annotations: Annotations | None = None,
     ) -> None:
         self.data_property_expression = DataPropertyExpression.safe(data_property_expression)
-        self.source = IdentifierBox(source)
+        self.source_individual = IdentifierBox(source_individual)
         self.target = _safe_primitive_box(target)
         super().__init__(annotations)
 
     def _funowl_inside_2(self) -> str:
-        return f"{self.data_property_expression.to_funowl()} {self.source.to_funowl()} {self.target.to_funowl()}"
+        return f"{self.data_property_expression.to_funowl()} {self.source_individual.to_funowl()} {self.target.to_funowl()}"
 
 
 class DataPropertyAssertion(_DataPropertyAssertion):  # 9.6.6
     """DataPropertyAssertion( a:hasAge a:Meg "17"^^xsd:integer )."""
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        s = self.source_individual.to_rdflib_node(graph, converter)
+        graph.add((s, RDF.type, OWL.NamedIndividual))
         return _add_triple(
             graph,
-            self.source.to_rdflib_node(graph, converter),
+            s,
             self.data_property_expression.to_rdflib_node(graph, converter),
             self.target.to_rdflib_node(graph, converter),
             annotations=self.annotations,
@@ -2018,14 +2073,20 @@ class NegativeDataPropertyAssertion(_DataPropertyAssertion):  # 9.6.7
     """NegativeDataPropertyAssertion( a:hasAge a:Meg "5"^^xsd:integer )."""
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        s = self.source_individual.to_rdflib_node(graph, converter)
+        graph.add((s, RDF.type, OWL.NamedIndividual))
         return _add_triple_annotations(
             graph,
-            self.source.to_rdflib_node(graph, converter),
+            s,
             self.data_property_expression.to_rdflib_node(graph, converter),
             self.target.to_rdflib_node(graph, converter),
             annotations=self.annotations,
             type=OWL.NegativePropertyAssertion,
             converter=converter,
+            force_for_negative_assertion=True,
+            reified_p=OWL.assertionProperty,
+            reified_s=OWL.sourceIndividual,
+            reified_o=OWL.targetValue,
         )
 
 
@@ -2173,6 +2234,8 @@ class SubAnnotationPropertyOf(AnnotationAxiom):  # 10.2.2
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
         s = self.child.to_rdflib_node(graph, converter)
         o = self.parent.to_rdflib_node(graph, converter)
+        graph.add((s, RDF.type, OWL.AnnotationProperty))
+        graph.add((o, RDF.type, OWL.AnnotationProperty))
         return _add_triple(graph, s, RDFS.subPropertyOf, o, self.annotations, converter=converter)
 
     def _funowl_inside_2(self) -> str:
@@ -2200,6 +2263,7 @@ class AnnotationPropertyTypingAxiom(AnnotationAxiom):
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
         s = self.annotation_property.to_rdflib_node(graph, converter)
         o = self.value.to_rdflib_node(graph, converter)
+        graph.add((s, RDF.type, OWL.AnnotationProperty))
         return _add_triple(graph, s, self.property_type, o, self.annotations, converter=converter)
 
     def _funowl_inside_2(self) -> str:
@@ -2287,9 +2351,13 @@ def _get_rdf_graph_oracle(axioms: Axiom | list[Axiom], *, prefix_map: dict[str, 
     with tempfile.TemporaryDirectory() as directory:
         stub = Path(directory).joinpath("test")
         ofn_path = stub.with_suffix(".ofn")
-        ofn_path.write_text(ontology.to_funowl())
+        text = ontology.to_funowl()
+        ofn_path.write_text(text)
         ttl_path = stub.with_suffix(".ttl")
-        convert(ofn_path, ttl_path)
+        try:
+            convert(ofn_path, ttl_path)
+        except subprocess.CalledProcessError:
+            raise RuntimeError(f"failed to convert axioms from:\n\n{text}") from None
         # turtle = ttl_path.read_text()
         graph.parse(ttl_path)
 
