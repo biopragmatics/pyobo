@@ -609,25 +609,42 @@ class DatatypeRestriction(DataRange):
     >>> DatatypeRestriction("xsd:integer", [("xsd:minInclusive", 5), ("xsd:maxExclusive", 10)])
     """
 
-    dtype: IdentifierBox
+    datatype: IdentifierBox
     pairs: list[tuple[IdentifierBox, LiteralBox]]
 
     def __init__(
         self,
-        dtype: IdentifierBoxOrHint,
+        datatype: IdentifierBoxOrHint,
         pairs: list[tuple[IdentifierBoxOrHint, LiteralBoxOrHint]],
     ) -> None:
-        self.dtype = IdentifierBox(dtype)
+        self.datatype = IdentifierBox(datatype)
         self.pairs = [(IdentifierBox(facet), LiteralBox(value)) for facet, value in pairs]
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
-        raise NotImplementedError
+        node = term.BNode()
+
+        restrictions: list[term.Node] = []
+        for facet, value in self.pairs:
+            restriction = term.BNode()
+            graph.add(
+                (
+                    restriction,
+                    facet.to_rdflib_node(graph, converter),
+                    value.to_rdflib_node(graph, converter),
+                )
+            )
+            restrictions.append(restriction)
+
+        graph.add((node, RDF.type, RDFS.Datatype))
+        graph.add((node, OWL.onDatatype, self.datatype.to_rdflib_node(graph, converter)))
+        graph.add((node, OWL.withRestrictions, _make_sequence_nodes(graph, restrictions)))
+        return node
 
     def to_funowl_args(self) -> str:
         pairs_funowl = " ".join(
             f"{facet.to_funowl()} {value.to_funowl()}" for facet, value in self.pairs
         )
-        return f"{self.dtype.to_funowl()} {pairs_funowl}"
+        return f"{self.datatype.to_funowl()} {pairs_funowl}"
 
 
 """
@@ -770,12 +787,30 @@ class ObjectComplementOf(ClassExpression):
         return self.class_expression.to_funowl()
 
 
-class ObjectOneOf(_ObjectList):
+class ObjectOneOf(ClassExpression):
     """A class expression defined in `8.1.4 Enumeration of Individuals <https://www.w3.org/TR/owl2-syntax/#Enumeration_of_Individuals>`_."""
 
-    # TODO restrict to individuals
-
     property_type: ClassVar[term.URIRef] = OWL.oneOf
+    individuals: Sequence[ClassExpression]
+
+    def __init__(self, individuals: Sequence[IdentifierBoxOrHint]) -> None:
+        """Initialize the model with a list of class expressions."""
+        if len(individuals) < 2:
+            raise ValueError("must have at least two class expressions")
+        self.individuals = [IdentifierBox(i) for i in individuals]
+
+    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        node = term.BNode()
+        graph.add((node, RDF.type, OWL.Class))
+        nodes = [i.to_rdflib_node(graph, converter) for i in self.individuals]
+        nodes = sorted(nodes, key=str)  # sort is very important to be consistent with OWLAPI!
+        for i in nodes:
+            graph.add((i, RDF.type, OWL.NamedIndividual))
+        graph.add((node, self.property_type, _make_sequence_nodes(graph, nodes)))
+        return node
+
+    def to_funowl_args(self) -> str:
+        return _list_to_funowl(self.individuals)
 
 
 def _owl_rdf_restriction(
@@ -1228,7 +1263,7 @@ class EquivalentClasses(ClassAxiom):  # 9.1.2
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
         rv = term.BNode()
         nodes = [ce.to_rdflib_node(graph, converter) for ce in self.class_expressions]
-        for s, o in itt.combinations(nodes, 2):
+        for s, o in itt.pairwise(nodes):
             _add_triple(graph, s, OWL.equivalentClass, o, self.annotations, converter=converter)
         # TODO connect all triples to this BNode?
         return rv
@@ -1807,9 +1842,11 @@ class DatatypeDefinition(Axiom):
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        s = self.datatype.to_rdflib_node(graph, converter)
+        graph.add((s, RDF.type, RDFS.Datatype))
         return _add_triple(
             graph,
-            self.datatype.to_rdflib_node(graph, converter),
+            s,
             OWL.equivalentClass,
             self.data_range.to_rdflib_node(graph, converter),
             annotations=self.annotations,
