@@ -1011,6 +1011,14 @@ class _DataValuesFrom(ClassExpression):
         data_property_expressions: list[DataPropertyExpression | IdentifierBoxOrHint],
         data_range: DataRange | IdentifierBoxOrHint,
     ) -> None:
+        if not data_property_expressions:
+            raise ValueError
+        if len(data_property_expressions) >= 2:
+            raise NotImplementedError(
+                "while the OWL 2 spec states that there can be multiple data property "
+                "expressions, there is no explanation on what should be done if many "
+                "appear. Therefore, it's left as unimplemented for now."
+            )
         self.data_property_expressions = [
             DataPropertyExpression.safe(dpe) for dpe in data_property_expressions
         ]
@@ -1019,13 +1027,7 @@ class _DataValuesFrom(ClassExpression):
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
         node = term.BNode()
         graph.add((node, RDF.type, OWL.Restriction))
-        if len(self.data_property_expressions) >= 2:
-            p_o = (
-                OWL.onProperties,
-                _make_sequence(graph, self.data_property_expressions, converter=converter),
-            )
-        else:
-            p_o = OWL.onProperty, self.data_property_expressions[0].to_rdflib_node(graph, converter)
+        p_o = _get_data_value_po(graph, converter, self.data_property_expressions)
         graph.add((node, self.property_type, self.data_range.to_rdflib_node(graph, converter)))
         graph.add((node, *p_o))
         return node
@@ -1033,6 +1035,16 @@ class _DataValuesFrom(ClassExpression):
     def to_funowl_args(self) -> str:
         """Get the inside of the functional OWL tag representing the existential quantification."""
         return _list_to_funowl((*self.data_property_expressions, self.data_range))
+
+
+def _get_data_value_po(
+    graph, converter, dpes: Sequence[DataPropertyExpression]
+) -> tuple[term.URIRef, term.Node]:
+    if len(dpes) >= 2:
+        # Note that this is currently not possible to get to with
+        return OWL.onProperties, _make_sequence(graph, dpes, converter=converter)
+    else:
+        return OWL.onProperty, dpes[0].to_rdflib_node(graph, converter)
 
 
 class DataSomeValuesFrom(_DataValuesFrom):
@@ -1134,14 +1146,14 @@ class Axiom(Box):
         self.annotations = annotations or []
 
     def to_funowl_args(self) -> str:
-        """Get the inside of the functional OWL tag representing the axiom."""
+        """Get the functional OWL tag representing the axiom."""
         if self.annotations:
             return _list_to_funowl(self.annotations) + " " + self._funowl_inside_2()
         return self._funowl_inside_2()
 
     @abstractmethod
     def _funowl_inside_2(self) -> str:
-        pass
+        """Get the inside of the functional OWL tag representing the axiom."""
 
 
 class ClassAxiom(Axiom):
