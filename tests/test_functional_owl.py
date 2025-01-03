@@ -202,6 +202,30 @@ class TestRDF(unittest.TestCase):
     def setUpClass(cls) -> None:
         """Set up the serialization test case."""
         cls.axiom_examples: list[f.Axiom] = [
+            f.SubClassOf(
+                f.ObjectSomeValuesFrom("a:ope1", "owl:Thing"), "a:ce1"
+            ),  # 9.2.5 object property domain
+            f.SubClassOf(
+                "owl:Thing", f.ObjectAllValuesFrom("a:ope1", "a:ce1")
+            ),  # 9.2.6 object property range
+            f.SubClassOf("owl:Thing", f.ObjectHasSelf("a:ope1")),  # reflexive
+            f.SubClassOf(f.ObjectHasSelf("a:ope1"), "owl:Nothing"),  # irreflexive
+            f.SubObjectPropertyOf("a:ope1", f.ObjectInverseOf("a:ope1")),  # symmetric
+            f.SubObjectPropertyOf(
+                f.ObjectPropertyChain(["a:ope1", "a:ope1"]), "a:op1"
+            ),  # transitive definition
+            f.ClassAssertion(f.ObjectMaxCardinality(1, "a:hasPet"), "a:Peter"),
+            f.ClassAssertion(f.ObjectMaxCardinality(1, "a:hasPet"), "a:Peter"),
+            f.ClassAssertion(f.ObjectMinCardinality(2, "a:fatherOf", "a:Man"), "a:Peter"),
+            f.SubClassOf(
+                "owl:Thing", f.ObjectMaxCardinality(1, f.ObjectInverseOf("a:ope1"))
+            ),  # inverse functional
+            f.SubClassOf("owl:Thing", f.ObjectMaxCardinality(1, "a:ope1")),  # functional
+            f.SubClassOf("owl:Thing", f.ObjectExactCardinality(1, f.ObjectInverseOf("a:ope1"))),
+            f.SubClassOf("owl:Thing", f.ObjectMinCardinality(1, f.ObjectInverseOf("a:ope1"))),
+            f.SubObjectPropertyOf("a:ope1", f.ObjectInverseOf("a:ope2")),
+            f.SubObjectPropertyOf(f.ObjectInverseOf("a:ope1"), "a:ope2"),
+            f.EquivalentObjectProperties(["a:ope1", f.ObjectInverseOf("a:ope2")]),
             f.ClassAssertion(f.DataHasValue("a:hasAge", 17), "a:Meg"),
             f.ClassAssertion(f.DataHasValue("a:hasHairColor", f.l("brown")), "a:Meg"),
             f.EquivalentClasses(["a:Boy", "a:Girl"]),
@@ -215,6 +239,8 @@ class TestRDF(unittest.TestCase):
                 ]
             ),
             f.SubClassOf("owl:Thing", f.DataMaxCardinality(1, "a:hasAge")),
+            f.SubClassOf("owl:Thing", f.DataExactCardinality(1, "a:hasAge")),
+            f.SubClassOf("owl:Thing", f.DataMinCardinality(1, "a:hasAge")),
             f.SubClassOf("a:Dog", "a:Pet"),
             f.SubClassOf("a:Dog", "owl:Thing"),
             f.SubObjectPropertyOf("a:hasDog", "a:hasPet"),
