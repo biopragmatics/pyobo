@@ -37,7 +37,6 @@ from .reference import (
 )
 from .typedef import (
     TypeDef,
-    alternative_term,
     comment,
     default_typedefs,
     exact_match,
@@ -745,34 +744,43 @@ class Term(Referenced):
 
     def iterate_funowl_axioms(self):
         """Yield functional OWL axioms for this term."""
-        from rdflib import term
+        from rdflib import XSD, term
 
         from pyobo.struct.functional import dsl as f
+        from pyobo.struct.functional import macros as m
 
-        r = self.reference
+        s = f.IdentifierBox(self.reference.preferred_curie)
         if self.type == "Term":
-            yield f.Declaration(r, type="Class")
+            yield f.Declaration(s, type="Class")
             for parent in self.parents:
-                yield f.SubClassOf(r, parent)
+                yield f.SubClassOf(s, parent.preferred_curie)
         else:
-            yield f.Declaration(r, type="NamedIndividual")
+            yield f.Declaration(s, type="NamedIndividual")
             for parent in self.parents:
-                yield f.ClassAssertion(r, parent)
+                yield f.ClassAssertion(s, parent.preferred_curie)
         if self.name:
-            yield f.AnnotationAssertion("rdfs:label", r, f.l(self.name))
+            yield m.LabelMacro(s, self.name)
         if self.definition:
-            yield f.AnnotationAssertion("dcterms:description", r, f.l(self.definition))
+            yield m.DescriptionMacro(s, self.definition)
         for alt in self.alt_ids:
-            yield f.AnnotationAssertion(alternative_term.reference, r, alt)
+            yield m.AltMacro(s, alt.preferred_curie)
+        # TODO add annotations for the following
+        for xref in self.xrefs:
+            yield m.XrefMacro(s, xref.preferred_curie)
         for typedef, value in self.iterate_relations():
-            yield f.ObjectPropertyAssertion(typedef.reference, r, value)
+            yield m.RelationshipMacro(s=s, p=typedef.preferred_curie, o=value.preferred_curie)
         for typedef, values in self.annotations_object.items():
             for value in values:
-                yield f.AnnotationAssertion(typedef, r, value)
+                yield f.AnnotationAssertion(typedef.preferred_curie, s, value.preferred_curie)
         for typedef, values in self.annotations_literal.items():
             for value, dtype in values:
-                literal = term.Literal(value, datatype=dtype.curie)
-                yield f.AnnotationAssertion(typedef, r, literal)
+                # make URIRef for datatype
+                if dtype.prefix == "xsd":
+                    datatype = XSD._NS.term(dtype.identifier)
+                else:
+                    raise NotImplementedError
+                literal = term.Literal(value, datatype=datatype)
+                yield f.AnnotationAssertion(typedef.preferred_curie, s, literal)
 
     def _emit_relations(
         self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]

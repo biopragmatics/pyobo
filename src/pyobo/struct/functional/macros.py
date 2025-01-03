@@ -9,7 +9,7 @@ from typing import TypeAlias
 
 import rdflib
 from curies import Converter, Reference
-from rdflib import DCTERMS, RDFS, Graph, term
+from rdflib import Graph, term
 
 from pyobo.struct.functional import dsl as f
 
@@ -109,7 +109,9 @@ class LabelMacro(StringMacro):
 class DescriptionMacro(StringMacro):
     """A macro for description assertion."""
 
-    annotation_property: t.ClassVar[Reference] = Reference(prefix="dcterms", identifier="description")
+    annotation_property: t.ClassVar[Reference] = Reference(
+        prefix="dcterms", identifier="description"
+    )
 
 
 class AltMacro(Macro):
