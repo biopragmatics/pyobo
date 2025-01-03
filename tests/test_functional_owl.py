@@ -63,6 +63,28 @@ class TestBox(unittest.TestCase):
 
     def test_literal_box(self) -> None:
         """Test the literal box."""
+        graph = Graph()
+        converter = Converter([])
+
+        b1 = f.LiteralBox(1)
+        self.assertEqual('"1"^^xsd:integer', b1.to_funowl())
+        self.assertEqual(term.Literal(1), b1.to_rdflib_node(graph, converter))
+
+        b2 = f.LiteralBox(term.Literal(1))
+        self.assertEqual('"1"^^xsd:integer', b2.to_funowl())
+        self.assertEqual(term.Literal(1), b2.to_rdflib_node(graph, converter))
+
+        b3 = f.LiteralBox(b1)
+        self.assertEqual('"1"^^xsd:integer', b3.to_funowl())
+        self.assertEqual(term.Literal(1), b3.to_rdflib_node(graph, converter))
+
+        b4 = f.LiteralBox(True)
+        self.assertEqual('"True"^^xsd:boolean', b4.to_funowl())
+        self.assertEqual(term.Literal(True), b4.to_rdflib_node(graph, converter))
+
+        b5 = f.LiteralBox(term.Literal("hallo", lang="de"))
+        self.assertEqual('"hallo"@de', b5.to_funowl())
+        self.assertEqual(term.Literal("hallo", lang="de"), b5.to_rdflib_node(graph, converter))
 
 
 class TestSection5(unittest.TestCase):

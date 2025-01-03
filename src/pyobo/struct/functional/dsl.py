@@ -187,9 +187,13 @@ class LiteralBox(Box):
     def to_funowl(self) -> str:
         literal = self.literal
         if literal.datatype is None or literal.datatype == XSD.string:
-            return f'"{literal.value}"'
-        if literal.datatype == XSD.integer:
-            return f'"{literal.toPython()}"^^xsd:integer'
+            if literal.language:
+                return f'"{literal.value}"@{literal.language}'
+            else:
+                return f'"{literal.value}"'
+        if literal.datatype.startswith(XSD._NS):
+            v = literal.datatype.removeprefix(XSD._NS)
+            return f'"{literal.value}"^^xsd:{v}'
         raise NotImplementedError(f"Not implemented for type: {literal.datatype}")
 
     def to_funowl_args(self) -> str:  # pragma: no cover
