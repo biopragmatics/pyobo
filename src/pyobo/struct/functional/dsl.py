@@ -791,7 +791,7 @@ class ObjectOneOf(ClassExpression):
     """A class expression defined in `8.1.4 Enumeration of Individuals <https://www.w3.org/TR/owl2-syntax/#Enumeration_of_Individuals>`_."""
 
     property_type: ClassVar[term.URIRef] = OWL.oneOf
-    individuals: Sequence[ClassExpression]
+    individuals: Sequence[IdentifierBox]
 
     def __init__(self, individuals: Sequence[IdentifierBoxOrHint]) -> None:
         """Initialize the model with a list of class expressions."""
