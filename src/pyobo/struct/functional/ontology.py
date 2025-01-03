@@ -9,7 +9,8 @@ from pathlib import Path
 from curies import Converter
 from rdflib import Graph, term
 
-from pyobo.struct.functional.dsl import EXAMPLE_ONTOLOGY_IRI, Annotations, Axiom, Box
+from pyobo.struct.functional.dsl import Annotations, Axiom, Box
+from pyobo.struct.functional.utils import EXAMPLE_ONTOLOGY_IRI
 
 __all__ = [
     "Import",

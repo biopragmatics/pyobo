@@ -16,6 +16,7 @@ from rdflib import RDF, Graph, compare, term
 
 from pyobo.struct.functional import dsl as f
 from pyobo.struct.functional.ontology import get_rdf_graph_oracle
+from pyobo.struct.functional.utils import get_rdf_graph
 
 
 class TestBox(unittest.TestCase):
@@ -361,7 +362,15 @@ class TestRDF(unittest.TestCase):
             f.ObjectPropertyDomain("a:hasDog", "a:Person"),
             f.ObjectPropertyRange("a:hasDog", "a:Dog"),
             f.SameIndividual(["a:Peter", "a:Peter_Griffin"]),
-            f.DifferentIndividuals(["a:Peter", "a:Peter_Griffin"]),
+            f.DifferentIndividuals(
+                [
+                    "a:Meg",
+                    "a:Peter",
+                ]
+            ),  # sort order matters to match ROBOT
+            f.DifferentIndividuals(
+                ["a:Lois", "a:Meg", "a:Peter"]
+            ),  # sort order matters to match ROBOT
             f.EquivalentDataProperties(["a:hasName", "a:seLlama"]),
             f.EquivalentObjectProperties(["a:hasBrother", "a:hasMaleSibling"]),
             f.FunctionalDataProperty("a:hasAge"),
@@ -377,14 +386,24 @@ class TestRDF(unittest.TestCase):
                 ),
             ),
             f.DisjointClasses(["a:Man", "a:Woman"]),
+            f.DisjointClasses(
+                ["a:Man", "a:Marsupial", "a:Woman"]
+            ),  # sort order matters to match ROBOT
             f.SubDataPropertyOf("a:hasLastName", "a:hasName"),
             f.SubAnnotationPropertyOf("a:brandName", "a:synonymType"),
             f.ObjectPropertyAssertion("a:parentOf", "a:Peter", "a:Chris"),
+            f.ObjectPropertyAssertion(f.ObjectInverseOf("a:hasParent"), "a:Peter", "a:Chris"),
             f.NegativeDataPropertyAssertion("a:hasAge", "a:Meg", 5),
             f.NegativeObjectPropertyAssertion("a:hasSon", "a:Peter", "a:Meg"),
+            f.NegativeObjectPropertyAssertion(f.ObjectInverseOf("a:sonOf"), "a:Meg", "a:Peter"),
             f.DisjointDataProperties(["a:hasName", "a:hasAddress"]),
+            f.DisjointDataProperties(["a:hasName", "a:hasAddress", "a:hasBankAccount"]),
             f.DisjointObjectProperties(["a:hasFather", "a:hasMother"]),
             f.HasKey("owl:Thing", [], ["a:hasSSN"]),
+            f.HasKey("owl:Thing", ["a:ope1"], ["a:dpe1"]),
+            f.HasKey("owl:Thing", ["a:ope1", "a:ope2"], ["a:dpe1"]),
+            f.HasKey("owl:Thing", ["a:ope1", "a:ope2"], []),
+            f.HasKey("owl:Thing", ["a:ope1", "a:ope2"], ["a:dpe1", "a:dpe2"]),
             f.SubObjectPropertyOf(
                 f.ObjectPropertyChain(["a:hasMother", "a:hasSister"]), "a:hasAunt"
             ),
@@ -419,7 +438,7 @@ class TestRDF(unittest.TestCase):
         for axiom in self.axiom_examples:
             with self.subTest(axiom=axiom.to_funowl()):
                 try:
-                    a = f._get_rdf_graph([axiom], prefix_map=f.EXAMPLE_PREFIX_MAP)
+                    a = get_rdf_graph([axiom], prefix_map=f.EXAMPLE_PREFIX_MAP)
                 except NotImplementedError:
                     a = rdflib.Graph()
                 b = get_rdf_graph_oracle([axiom], prefix_map=f.EXAMPLE_PREFIX_MAP)

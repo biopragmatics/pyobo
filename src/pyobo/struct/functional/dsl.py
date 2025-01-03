@@ -9,8 +9,6 @@ from abc import abstractmethod
 from collections.abc import Iterable, Sequence
 from typing import ClassVar, TypeAlias
 
-import curies
-import rdflib
 from curies import Converter, Reference
 from rdflib import OWL, RDF, RDFS, XSD, Graph, collection, term
 
@@ -93,7 +91,6 @@ __all__ = [
     "SubObjectPropertyOf",
     "SymmetricObjectProperty",
     "TransitiveObjectProperty",
-    "_serialize_turtle",
     "l",
 ]
 
@@ -132,7 +129,8 @@ class IdentifierBox(Box):
 
     identifier: term.URIRef | Reference
 
-    def __init__(self, identifier: IdentifierBoxOrHint):
+    def __init__(self, identifier: IdentifierBoxOrHint) -> None:
+        """Initialize the identifier box with a URIRef, Reference, or string representing a CURIE."""
         if isinstance(identifier, IdentifierBox):
             self.identifier = identifier.identifier
         # make sure to check for URIRef first,
@@ -147,6 +145,7 @@ class IdentifierBox(Box):
             raise TypeError
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent this identifier for RDF, using the converter to convert a CURIE if appropriate."""
         if isinstance(self.identifier, term.URIRef):
             return self.identifier
         # TODO make more efficient
@@ -154,12 +153,14 @@ class IdentifierBox(Box):
         return term.URIRef(iri)
 
     def to_funowl(self) -> str:
+        """Represent this identifier for functional OWL."""
         if isinstance(self.identifier, Reference):
             return self.identifier.curie
         else:
             return f"<{self.identifier}>"
 
     def to_funowl_args(self) -> str:  # pragma: no cover
+        """Get the inside of the functional OWL tag representing the identifier (unused)."""
         raise RuntimeError
 
 
@@ -192,6 +193,7 @@ class LiteralBox(Box):
         raise NotImplementedError(f"Not implemented for type: {literal.datatype}")
 
     def to_funowl_args(self) -> str:  # pragma: no cover
+        """Get the inside of the functional OWL tag representing the literal (unused)."""
         raise RuntimeError
 
 
@@ -303,11 +305,9 @@ class Declaration(Box):
         graph.add((node, RDF.type, type_to_uri[self.dtype]))
         return node
 
-    def to_funowl(self) -> str:
-        return f"Declaration( {self.dtype}( {self.node.to_funowl()} ) )"
-
-    def to_funowl_args(self) -> str:  # pragma: no cover
-        raise RuntimeError
+    def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the declaration."""
+        return f"{self.dtype}( {self.node.to_funowl()} )"
 
 
 """
@@ -376,7 +376,8 @@ class ObjectInverseOf(ObjectPropertyExpression):
         graph.add((node, OWL.inverseOf, self.object_property.to_rdflib_node(graph, converter)))
         return node
 
-    def _assert_internal_type(self, graph: Graph, converter: Converter) -> None:
+    def declare_wrapped_ope(self, graph: Graph, converter: Converter) -> None:
+        """Declare the wrapped object property."""
         graph.add(
             (self.object_property.to_rdflib_node(graph, converter), RDF.type, OWL.ObjectProperty)
         )
@@ -449,6 +450,7 @@ class _ListDataRange(DataRange):
     def __init__(self, data_ranges: Sequence[DataRange | IdentifierBoxOrHint]):
         self.data_ranges = [DataRange.safe(dr) for dr in data_ranges]
 
+    # docstr-coverage:inherited
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
         node = term.BNode()
         graph.add((node, RDF.type, RDFS.Datatype))
@@ -817,6 +819,7 @@ class _ObjectValuesFrom(ClassExpression):
         )
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the quantification."""
         return f"{self.object_property_expression.to_funowl()} {self.object_expression.to_funowl()}"
 
 
@@ -858,6 +861,7 @@ class ObjectHasValue(ClassExpression):
         )
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the individual value restriction."""
         return f"{self.object_property_expression.to_funowl()} {self.individual.to_funowl()}"
 
 
@@ -882,6 +886,7 @@ class ObjectHasSelf(ClassExpression):
         )
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the self-restriction."""
         return self.object_property_expression.to_funowl()
 
 
@@ -925,6 +930,7 @@ class _Cardinality(ClassExpression):
         return node
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the cardinality constraint."""
         inside = f"{self.cardinality} {self.property_expression.to_funowl()}"
         if self.target_expression is not None:
             inside += f" {self.target_expression.to_funowl()}"
@@ -963,7 +969,7 @@ class _ObjectCardinality(_Cardinality):
         # adds type assertions when using ObjectInverseOf (for some reason,
         # it doesn't generate them inside EquivalentClasses)
         if isinstance(self.property_expression, ObjectInverseOf):
-            self.property_expression._assert_internal_type(graph, converter)
+            self.property_expression.declare_wrapped_ope(graph, converter)
         return node
 
 
@@ -1020,6 +1026,7 @@ class _DataValuesFrom(ClassExpression):
         return node
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the existential quantification."""
         return _list_to_funowl((*self.data_property_expressions, self.data_range))
 
 
@@ -1060,6 +1067,7 @@ class DataHasValue(_DataValuesFrom):
         return node
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the literal value restriction."""
         return f"{self.data_property_expression.to_funowl()} {self.literal.to_funowl()}"
 
 
@@ -1121,6 +1129,7 @@ class Axiom(Box):
         self.annotations = annotations or []
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the axiom."""
         if self.annotations:
             return _list_to_funowl(self.annotations) + " " + self._funowl_inside_2()
         return self._funowl_inside_2()
@@ -1128,10 +1137,6 @@ class Axiom(Box):
     @abstractmethod
     def _funowl_inside_2(self) -> str:
         pass
-
-    def to_ttl(self, prefix_map: dict[str, str], *, output_prefixes: bool = False) -> str:
-        """Output terse Turtle statements."""
-        return _serialize_turtle([self], output_prefixes=output_prefixes, **prefix_map)
 
 
 class ClassAxiom(Axiom):
@@ -1344,6 +1349,7 @@ class ObjectPropertyChain(Box):
         return _make_sequence_nodes(graph, nodes)
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the object property chain."""
         return _list_to_funowl(self.object_property_expressions)
 
 
@@ -1372,9 +1378,9 @@ class SubObjectPropertyOf(ObjectPropertyAxiom):  # 9.2.1
         s = self.child.to_rdflib_node(graph, converter)
         o = self.parent.to_rdflib_node(graph, converter)
         if isinstance(self.child, ObjectInverseOf):
-            self.child._assert_internal_type(graph, converter)
+            self.child.declare_wrapped_ope(graph, converter)
         if isinstance(self.parent, ObjectInverseOf):
-            self.parent._assert_internal_type(graph, converter)
+            self.parent.declare_wrapped_ope(graph, converter)
         if isinstance(self.child, ObjectPropertyChain):
             return _add_triple(
                 graph, o, OWL.propertyChainAxiom, s, self.annotations, converter=converter
@@ -2018,6 +2024,8 @@ class ObjectPropertyAssertion(_ObjectPropertyAssertion):  # 9.6.4
             s, o = o, s
             # unpack the inverse property
             p = self.object_property_expression.object_property.to_rdflib_node(graph, converter)
+            # make sure the inverse property is declared
+            graph.add((p, RDF.type, OWL.ObjectProperty))
         else:
             p = self.object_property_expression.to_rdflib_node(graph, converter)
 
@@ -2031,16 +2039,16 @@ class NegativeObjectPropertyAssertion(_ObjectPropertyAssertion):  # 9.6.5
         graph.add((s, RDF.type, OWL.NamedIndividual))
         graph.add((o, RDF.type, OWL.NamedIndividual))
         if isinstance(self.object_property_expression, ObjectInverseOf):
-            # flip them around
-            s, o = o, s
-            # unpack the inverse property
-            p = self.object_property_expression.object_property.to_rdflib_node(graph, converter)
-        else:
-            p = self.object_property_expression.to_rdflib_node(graph, converter)
+            # TODO OWLAPI is not consistent with the way ObjectPropertyAssertion and
+            #  NegativeObjectPropertyAssertion work. For some reason, it doesn't
+            #  flip the subject and object / unpack the inverse OPE for
+            #  NegativeObjectPropertyAssertion. Therefore, it's implemented here
+            #  to reflect that. Need to make an issue on OWLAPI about this
+            self.object_property_expression.declare_wrapped_ope(graph, converter)
         return _add_triple_annotations(
             graph,
             s,
-            p,
+            self.object_property_expression.to_rdflib_node(graph, converter),
             o,
             annotations=self.annotations,
             type=OWL.NegativePropertyAssertion,
@@ -2178,6 +2186,7 @@ class Annotation(Box):  # 10.1
         # TODO recursive nested annotations
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the annotation."""
         end = f"{self.annotation_property.to_funowl()} {self.value.to_funowl()}"
         if self.annotations:
             return _list_to_funowl(self.annotations) + " " + end
@@ -2315,36 +2324,3 @@ class AnnotationPropertyRange(AnnotationPropertyTypingAxiom):  # 10.2.4
     """
 
     property_type: ClassVar[term.URIRef] = RDFS.range
-
-
-EXAMPLE_ONTOLOGY_IRI = "https://example.org/example.ofn"
-
-
-def _get_rdf_graph(axioms: Iterable[Box], prefix_map: str) -> rdflib.Graph:
-    """Serialize axioms as an RDF graph."""
-    graph = Graph()
-    graph.add((term.URIRef(EXAMPLE_ONTOLOGY_IRI), RDF.type, OWL.Ontology))
-    # chain these together so you don't have to worry about
-    # default namespaces like owl
-    converter = curies.chain(
-        [
-            Converter.from_rdflib(graph),
-            Converter.from_prefix_map(prefix_map),
-        ]
-    )
-    for prefix, uri_prefix in converter.bimap.items():
-        graph.namespace_manager.bind(prefix, uri_prefix)
-    for axiom in axioms:
-        axiom.to_rdflib_node(graph, converter)
-    return graph
-
-
-def _serialize_turtle(
-    axioms: Iterable[Box], *, output_prefixes: bool = False, prefix_map: str
-) -> str:
-    """Serialize axioms as turtle."""
-    graph = _get_rdf_graph(axioms, prefix_map=prefix_map)
-    rv = graph.serialize()
-    if output_prefixes:
-        return rv.strip()
-    return "\n".join(line for line in rv.splitlines() if not line.startswith("@prefix")).strip()
