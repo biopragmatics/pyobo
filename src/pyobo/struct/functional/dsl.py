@@ -2134,7 +2134,7 @@ class Annotation(Box):  # 10.1
     assertions
 
     >>> AnnotationAssertion(
-    ...     "skos:exactMach",
+    ...     "skos:exactMatch",
     ...     "agrovoc:0619dd9e",
     ...     "agro:00000137",
     ...     annotations=[
@@ -2149,7 +2149,7 @@ class Annotation(Box):  # 10.1
     predicate.
 
     >>> AnnotationAssertion(
-    ...     "skos:exactMach",
+    ...     "skos:exactMatch",
     ...     "agrovoc:0619dd9e",
     ...     "agro:00000137",
     ...     annotations=[
@@ -2183,11 +2183,26 @@ class Annotation(Box):  # 10.1
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:  # pragma: no cover
         raise RuntimeError
 
-    def _add_to_triple(self, graph: Graph, node: term.BNode, converter: Converter) -> None:
+    def _add_to_triple(
+        self,
+        graph: Graph,
+        reified_triple: term.BNode,
+        converter: Converter,
+    ) -> None:
         ap = self.annotation_property.to_rdflib_node(graph, converter)
+        ao = self.value.to_rdflib_node(graph, converter)
         graph.add((ap, RDF.type, OWL.AnnotationProperty))
-        graph.add((node, ap, self.value.to_rdflib_node(graph, converter)))
-        # TODO recursive nested annotations
+        graph.add((reified_triple, ap, ao))
+        if self.annotations:
+            _add_triple_annotations(
+                graph,
+                reified_triple,
+                ap,
+                ao,
+                converter=converter,
+                annotations=self.annotations,
+                type=OWL.Annotation,
+            )
 
     def to_funowl_args(self) -> str:
         """Get the inside of the functional OWL tag representing the annotation."""
@@ -2228,10 +2243,12 @@ class AnnotationAssertion(AnnotationAxiom):  # 10.2.1
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        p = self.annotation_property.to_rdflib_node(graph, converter)
+        graph.add((p, RDF.type, OWL.AnnotationProperty))
         return _add_triple(
             graph,
             self.subject.to_rdflib_node(graph, converter),
-            self.annotation_property.to_rdflib_node(graph, converter),
+            p,
             self.value.to_rdflib_node(graph, converter),
             annotations=self.annotations,
             converter=converter,
