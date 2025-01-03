@@ -202,6 +202,16 @@ class TestRDF(unittest.TestCase):
     def setUpClass(cls) -> None:
         """Set up the serialization test case."""
         cls.axiom_examples: list[f.Axiom] = [
+            f.EquivalentClasses(["a:Boy", "a:Girl"]),
+            # do the griffin parent both ways to see if sorting is happening in ROBOT
+            f.EquivalentClasses(["a:GriffinParent", f.ObjectOneOf(["a:Peter", "a:Lois"])]),
+            f.EquivalentClasses(["a:GriffinParent", f.ObjectOneOf(["a:Lois", "a:Peter"])]),
+            f.EquivalentClasses(
+                [
+                    "a:GriffinFamilyMember",
+                    f.ObjectOneOf("a:Peter a:Lois a:Stewie a:Meg a:Chris a:Brian".split()),
+                ]
+            ),
             f.SubClassOf("owl:Thing", f.DataMaxCardinality(1, "a:hasAge")),
             f.SubClassOf("a:Dog", "a:Pet"),
             f.SubClassOf("a:Dog", "owl:Thing"),
@@ -227,12 +237,6 @@ class TestRDF(unittest.TestCase):
             f.ObjectPropertyRange("a:hasDog", "a:Dog"),
             f.SameIndividual(["a:Peter", "a:Peter_Griffin"]),
             f.DifferentIndividuals(["a:Peter", "a:Peter_Griffin"]),
-            f.EquivalentClasses(
-                [
-                    "a:GriffinFamilyMember",
-                    f.ObjectOneOf("a:Peter a:Lois a:Stewie a:Meg a:Chris a:Brian".split()),
-                ]
-            ),
             f.EquivalentDataProperties(["a:hasName", "a:seLlama"]),
             f.EquivalentObjectProperties(["a:hasBrother", "a:hasMaleSibling"]),
             f.FunctionalDataProperty("a:hasAge"),
