@@ -12,9 +12,17 @@ import unittest
 
 import rdflib
 from curies import Converter, Reference
-from rdflib import RDF, Graph, compare, term
+from rdflib import OWL, RDF, Graph, Namespace, compare, term
 
 from pyobo.struct.functional import dsl as f
+from pyobo.struct.functional.dsl import (
+    IdentifierBox,
+    SimpleDataPropertyExpression,
+    _get_data_value_po,
+    _make_sequence_nodes,
+    _safe_primitive_box,
+    _yield_connector_nodes,
+)
 from pyobo.struct.functional.ontology import get_rdf_graph_oracle
 from pyobo.struct.functional.utils import get_rdf_graph
 
@@ -55,6 +63,14 @@ class TestBox(unittest.TestCase):
         self.assertEqual("<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>", b5.to_funowl())
         self.assertEqual(RDF.type, b5.to_rdflib_node(Graph(), converter))
 
+        b6 = _safe_primitive_box(Reference.from_curie("a:b"))
+        self.assertIsInstance(b6, IdentifierBox)
+        self.assertIsInstance(b6.identifier, Reference)
+
+        b7 = _safe_primitive_box(RDF.type)
+        self.assertIsInstance(b7, IdentifierBox)
+        self.assertIsInstance(b7.identifier, term.URIRef)
+
         with self.assertRaises(TypeError):
             f.IdentifierBox(5)
 
@@ -85,6 +101,9 @@ class TestBox(unittest.TestCase):
         b5 = f.LiteralBox(term.Literal("hallo", lang="de"))
         self.assertEqual('"hallo"@de', b5.to_funowl())
         self.assertEqual(term.Literal("hallo", lang="de"), b5.to_rdflib_node(graph, converter))
+
+        with self.assertRaises(TypeError):
+            f.LiteralBox(object())
 
 
 class TestSection5(unittest.TestCase):
@@ -159,8 +178,14 @@ class TestSection8ClassExpressions(unittest.TestCase):
         """Test propositional lists."""
         expr = f.ObjectIntersectionOf(["a:Dog", "a:CanTalk"])
         self.assertEqual("ObjectIntersectionOf( a:Dog a:CanTalk )", expr.to_funowl())
+        with self.assertRaises(ValueError):
+            f.ObjectIntersectionOf(["a:Dog"])
+
         expr = f.ObjectUnionOf(["a:Man", "a:Woman"])
         self.assertEqual("ObjectUnionOf( a:Man a:Woman )", expr.to_funowl())
+        with self.assertRaises(ValueError):
+            f.ObjectUnionOf(["a:Dog"])
+
         expr = f.ObjectComplementOf("a:Bird")
         self.assertEqual("ObjectComplementOf( a:Bird )", expr.to_funowl())
 
@@ -280,6 +305,61 @@ class TestSection10(unittest.TestCase):
         self.assertEqual(expected, expr.to_funowl())
 
 
+class TestMiscellaneous(unittest.TestCase):
+    """Test miscellaneous."""
+
+    def test_value_errors(self) -> None:
+        """Test misc. value errors for lists not long enough."""
+        with self.assertRaises(ValueError):
+            f.EquivalentDataProperties(["a:hasName"])
+        with self.assertRaises(ValueError):
+            f.EquivalentDataProperties([])
+        with self.assertRaises(ValueError):
+            f.EquivalentObjectProperties(["a:ope1"])
+        with self.assertRaises(ValueError):
+            f.EquivalentObjectProperties([])
+        with self.assertRaises(ValueError):
+            f.DisjointClasses(["a:Man"])
+        with self.assertRaises(ValueError):
+            f.DisjointClasses([])
+        with self.assertRaises(ValueError):
+            f.ObjectOneOf(["a:Peter"])
+        with self.assertRaises(ValueError):
+            f.ObjectOneOf([])
+        with self.assertRaises(NotImplementedError):
+            f.DataSomeValuesFrom(["a:hasAge", "a:dpe2"], "a:dr")
+        with self.assertRaises(ValueError):
+            f.DataSomeValuesFrom([], "a:dr")
+
+    def test_data_value_rdf(self) -> None:
+        """Test the data value RDF generation."""
+        graph = Graph()
+        converter = Converter.from_prefix_map(f.EXAMPLE_PREFIX_MAP)
+        dpes = [SimpleDataPropertyExpression("a:dpe1"), SimpleDataPropertyExpression("a:dpe2")]
+        rv = _get_data_value_po(graph=graph, converter=converter, dpes=dpes)
+        self.assertEqual(OWL.onProperties, rv[0])
+
+    def test_make_sequence_nodes(self) -> None:
+        """Test making a sequence."""
+        ex = Namespace("https://example.org/")
+
+        g1 = Graph()
+        rv1 = _make_sequence_nodes(g1, [])
+        self.assertEqual(RDF.nil, rv1)
+
+        g2 = Graph()
+        rv2 = _make_sequence_nodes(g2, [ex["1"]])
+        self.assertNotEqual(RDF.nil, rv2)
+
+        g3 = Graph()
+        rv3 = _make_sequence_nodes(g3, [ex["1"], ex["2"]], type_connector_nodes=True)
+        self.assertNotEqual(RDF.nil, rv3)
+        self.assertEqual(2, len(list(_yield_connector_nodes(g3, rv3))))
+
+    def test_creation_skip(self) -> None:
+        """Test."""
+
+
 class TestRDF(unittest.TestCase):
     """Test serialization to RDF."""
 
@@ -287,6 +367,12 @@ class TestRDF(unittest.TestCase):
     def setUpClass(cls) -> None:
         """Set up the serialization test case."""
         cls.axiom_examples: list[f.Axiom] = [
+            f.ClassAssertion(
+                f.DataSomeValuesFrom(
+                    ["a:hasAge"], f.DatatypeRestriction("xsd:integer", [("xsd:maxExclusive", 20)])
+                ),
+                "a:Meg",
+            ),
             f.Declaration("a:test", "Class"),
             f.Declaration("a:test", "ObjectProperty"),
             f.Declaration("a:test", "DataProperty"),
