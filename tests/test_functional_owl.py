@@ -455,26 +455,82 @@ class TestRDF(unittest.TestCase):
                 msg += f"\n- {missing_name}"
             self.fail(msg)
 
+    def test_nested(self) -> None:
+        """Test nested annotations."""
+        prefix_map = {
+            "agrovoc": "http://aims.fao.org/aos/agrovoc/",
+            "agro": "http://purl.obolibrary.org/obo/AGRO_",
+            "wd": "http://www.wikidata.org/entity/",
+            "orcid": "https://orcid.org/",
+            "sssom": "https://w3id.org/sssom/",
+            "semapv": "https://w3id.org/semapv/vocab/",
+            "dcterms": "http://purl.org/dc/terms/",
+            "skos": "http://www.w3.org/2004/02/skos/core#",
+            "a": "https://example.org/a:",
+        }
+        a = f.AnnotationAssertion(
+            "skos:exactMatch",
+            "agrovoc:0619dd9e",
+            "agro:00000137",
+            annotations=[
+                f.Annotation(
+                    "dcterms:contributor",
+                    "orcid:0000-0003-4423-4370",
+                    annotations=[
+                        f.Annotation("wd:P1416", "wd:Q126066280"),
+                    ],
+                ),
+            ],
+        )
+        self.assert_rdf_equal(a, prefix_map)
+
+        # test nesting 3 deep
+        b = f.AnnotationAssertion(
+            "skos:exactMatch",
+            "agrovoc:0619dd9e",
+            "agro:00000137",
+            annotations=[
+                f.Annotation(
+                    "dcterms:contributor",
+                    "orcid:0000-0003-4423-4370",
+                    annotations=[
+                        f.Annotation(
+                            "wd:P1416",
+                            "wd:Q126066280",
+                            annotations=[
+                                f.Annotation("a:ap1", "a:v1"),
+                            ],
+                        ),
+                    ],
+                ),
+            ],
+        )
+        self.assert_rdf_equal(b, prefix_map)
+
+    def assert_rdf_equal(self, axiom: f.Axiom, prefix_map) -> None:
+        """Assert the RDF generated is the same as the OFN converted via robot."""
+        try:
+            a = get_rdf_graph([axiom], prefix_map=prefix_map)
+        except NotImplementedError:
+            a = rdflib.Graph()
+        b = get_rdf_graph_oracle([axiom], prefix_map=prefix_map)
+        if not compare.isomorphic(a, b):
+            both, first, second = compare.graph_diff(a, b)
+            msg = "\nTriples in both:\n\n"
+            msg += dump_nt_sorted(both)
+            if first:
+                msg += "\n\nTriples generated _only_ by PyOBO:\n\n"
+                msg += dump_nt_sorted(first)
+            if second:
+                msg += "\n\nTriples generated _only_ by ROBOT:\n\n"
+                msg += dump_nt_sorted(second)
+            self.fail(msg)
+
     def test_rdf(self) -> None:
         """Test serialization to RDF."""
         for axiom in self.axiom_examples:
             with self.subTest(axiom=axiom.to_funowl()):
-                try:
-                    a = get_rdf_graph([axiom], prefix_map=f.EXAMPLE_PREFIX_MAP)
-                except NotImplementedError:
-                    a = rdflib.Graph()
-                b = get_rdf_graph_oracle([axiom], prefix_map=f.EXAMPLE_PREFIX_MAP)
-                if not compare.isomorphic(a, b):
-                    both, first, second = compare.graph_diff(a, b)
-                    msg = "\nTriples in both:\n\n"
-                    msg += dump_nt_sorted(both)
-                    if first:
-                        msg += "\n\nTriples generated _only_ by PyOBO:\n\n"
-                        msg += dump_nt_sorted(first)
-                    if second:
-                        msg += "\n\nTriples generated _only_ by ROBOT:\n\n"
-                        msg += dump_nt_sorted(second)
-                    self.fail(msg)
+                self.assert_rdf_equal(axiom, f.EXAMPLE_PREFIX_MAP)
 
 
 def dump_nt_sorted(g: Graph) -> str:
