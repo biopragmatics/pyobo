@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import datetime
 import itertools as itt
-import subprocess
 import typing
 from abc import abstractmethod
 from collections.abc import Iterable, Sequence
@@ -85,7 +84,6 @@ __all__ = [
     "ObjectPropertyRange",
     "ObjectSomeValuesFrom",
     "ObjectUnionOf",
-    "Ontology",
     "ReflexiveObjectProperty",
     "SameIndividual",
     "SubAnnotationPropertyOf",
@@ -96,9 +94,7 @@ __all__ = [
     "SymmetricObjectProperty",
     "TransitiveObjectProperty",
     "_serialize_turtle",
-    "c",
     "l",
-    "write_ontology",
 ]
 
 EXAMPLE_PREFIX_MAP = {
@@ -106,11 +102,6 @@ EXAMPLE_PREFIX_MAP = {
     "dcterms": "http://purl.org/dc/terms/",
     "orcid": "https://orcid.org",
 }
-
-
-def c(curie: str) -> Reference:
-    """Get a reference from a CURIE."""
-    return Reference.from_curie(curie)
 
 
 def l(value) -> term.Literal:  # noqa:E743
@@ -130,125 +121,10 @@ class Box(FunctionalOWLSerializable, RDFNodeSerializable):
     """A model for objects that can be represented as nodes in RDF and Functional OWL."""
 
 
-def write_ontology(
-    *,
-    prefixes: dict[str, str],
-    iri: str,
-    version_iri: str | None = None,
-    directly_imports_documents: list[Import] | None = None,
-    annotations: Annotations | None = None,
-    axioms: list[Axiom] | None = None,
-    file=None,
-) -> None:
-    """Write an ontology."""
-    ontology = Ontology(
-        prefixes=prefixes,
-        iri=iri,
-        version_iri=version_iri,
-        directly_imports_documents=directly_imports_documents,
-        annotations=annotations,
-        axioms=axioms,
-    )
-    print(ontology.to_funowl(), file=file)
-
-
-class Ontology(Box):
-    """Represents an OWL 2 ontology defined in `3 "Ontologies" <https://www.w3.org/TR/owl2-syntax/#Ontologies>`_."""
-
-    def __init__(
-        self,
-        prefixes: dict[str, str],
-        iri: str,
-        version_iri: str | None = None,
-        directly_imports_documents: list[Import] | None = None,
-        annotations: Annotations | None = None,
-        axioms: list[Axiom] | None = None,
-    ) -> None:
-        """Instantiate an ontology.
-
-        :param prefixes: A list of prefixes to define in the document
-
-            .. seealso:: `3.7 "Functional-Style Syntax" <https://www.w3.org/TR/owl2-syntax/#Functional-Style_Syntax>`_
-        :param iri: The ontology IRI.
-
-            .. seealso:: `3.1 "Ontology IRI and Version IRI" <https://www.w3.org/TR/owl2-syntax/#Ontology_IRI_and_Version_IRI>`_
-        :param version_iri: An optional version IRI
-        :param directly_imports_documents:
-
-            .. seealso:: `3.4 "Imports" <https://www.w3.org/TR/owl2-syntax/#Imports>`_
-        :param annotations:
-
-            .. seealso:: `3.5 "Ontology Annotations" <https://www.w3.org/TR/owl2-syntax/#Ontology_Annotations>`_
-        :param axioms: statements about what is true in the domain
-
-            .. seealso:: `9 "Axioms" <https://www.w3.org/TR/owl2-syntax/#Axioms>`_
-        """
-        self.prefixes = prefixes
-        self.iri = iri
-        self.version_iri = version_iri
-        self.directly_imports_documents = directly_imports_documents
-        self.annotations = annotations
-        self.axioms = axioms or []
-
-    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
-        """Add the ontology to the triple store."""
-        node = term.URIRef(self.iri)
-        for axiom in self.axioms:
-            axiom.to_rdflib_node(graph, converter)
-        return node
-
-    def to_funowl(self) -> str:
-        """Serialize the ontology to a string containing functional OWL."""
-        rv = "\n".join(
-            f"Prefix({prefix}:=<{uri_prefix}>)" for prefix, uri_prefix in self.prefixes.items()
-        )
-        rv += f"\n\nOntology(<{self.iri}>"
-        if self.version_iri:
-            rv += f" <{self.version_iri}>"
-        rv += "\n"
-        rv += "\n".join(annotation.to_funowl() for annotation in self.annotations or [])
-        rv += "\n"
-        rv += "\n".join(axiom.to_funowl() for axiom in self.axioms or [])
-        rv += "\n)"
-        return rv
-
-    def to_funowl_args(self) -> str:
-        raise RuntimeError
-
-
 def _list_to_funowl(elements: Iterable[Box | Reference]):
     return " ".join(
         element.to_funowl() if isinstance(element, Box) else element.curie for element in elements
     )
-
-
-class Prefix(Box):
-    """A model for imports, as defined by `3.7 "Functional-Style Syntax" <https://www.w3.org/TR/owl2-syntax/#Functional-Style_Syntax>`_"""
-
-    def __init__(self, prefix: str, uri_prefix: str) -> None:
-        """Initialize the definition with a CURIE prefix and URI prefix."""
-        self.prefix = prefix
-        self.uri_prefix = uri_prefix
-
-    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
-        graph.namespace_manager.bind(self.prefix, self.uri_prefix)
-        return term.BNode() # dummy
-
-    def to_funowl_args(self) -> str:
-        return f"{self.prefix}:={self.uri_prefix}"
-
-
-class Import(Box):
-    """A model for imports, as defined by `3.4 "Imports" <https://www.w3.org/TR/owl2-syntax/#Imports>`_."""
-
-    def __init__(self, iri: str) -> None:
-        self.iri = iri
-
-    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
-        raise NotImplementedError
-
-    def to_funowl_args(self) -> str:
-        return f" <{self.iri}> "
 
 
 class IdentifierBox(Box):
@@ -280,12 +156,10 @@ class IdentifierBox(Box):
     def to_funowl(self) -> str:
         if isinstance(self.identifier, Reference):
             return self.identifier.curie
-        elif isinstance(self.identifier, term.URIRef):
-            return f"<{self.identifier}>"
         else:
-            raise TypeError
+            return f"<{self.identifier}>"
 
-    def to_funowl_args(self) -> str:
+    def to_funowl_args(self) -> str:  # pragma: no cover
         raise RuntimeError
 
 
@@ -300,7 +174,7 @@ class LiteralBox(Box):
         elif isinstance(literal, term.Literal):
             self.literal = literal
         elif isinstance(literal, datetime.datetime | datetime.date):
-            raise NotImplementedError(f"not implemented for dates")
+            raise NotImplementedError("not implemented for dates")
         elif isinstance(literal, SupportedLiterals):
             self.literal = term.Literal(literal)
         else:
@@ -317,7 +191,7 @@ class LiteralBox(Box):
             return f'"{literal.toPython()}"^^xsd:integer'
         raise NotImplementedError(f"Not implemented for type: {literal.datatype}")
 
-    def to_funowl_args(self) -> str:
+    def to_funowl_args(self) -> str:  # pragma: no cover
         raise RuntimeError
 
 
@@ -346,23 +220,36 @@ def _safe_primitive_box(value: PrimitiveHint) -> PrimitiveBox:
     return IdentifierBox(value)
 
 
-def _make_sequence(graph: Graph, members: Iterable[Box], converter: Converter, *, type_connector_nodes: bool = False) -> term.Node:
+def _make_sequence(
+    graph: Graph,
+    members: Iterable[Box],
+    converter: Converter,
+    *,
+    type_connector_nodes: bool = False,
+) -> term.Node:
     """Make a sequence."""
-    return _make_sequence_nodes(graph, [m.to_rdflib_node(graph, converter) for m in members], type_connector_nodes=type_connector_nodes)
+    return _make_sequence_nodes(
+        graph,
+        [m.to_rdflib_node(graph, converter) for m in members],
+        type_connector_nodes=type_connector_nodes,
+    )
 
 
-def _make_sequence_nodes(graph: Graph, members: list[term.Node], *, type_connector_nodes: bool = False) -> term.Node:
+def _make_sequence_nodes(
+    graph: Graph, members: list[term.Node], *, type_connector_nodes: bool = False
+) -> term.Node:
     """Make a sequence."""
     if not members:
         return RDF.nil
     node = term.BNode()
-    c = collection.Collection(graph, node, members)
+    collection.Collection(graph, node, members)
     if type_connector_nodes:
         # This is a weird quirk required for DataOneOf, which for
         # some reason emits `rdf:type rdfs:List` for each element
         for connector_node in _yield_connector_nodes(graph, node):
             graph.add((connector_node, RDF.type, RDF.List))
     return node
+
 
 def _yield_connector_nodes(graph: Graph, start: term.Node) -> Iterable[term.Node]:
     """Yield all of the nodes representing parts of a collection.
@@ -419,7 +306,7 @@ class Declaration(Box):
     def to_funowl(self) -> str:
         return f"Declaration( {self.dtype}( {self.node.to_funowl()} ) )"
 
-    def to_funowl_args(self) -> str:
+    def to_funowl_args(self) -> str:  # pragma: no cover
         raise RuntimeError
 
 
@@ -436,6 +323,7 @@ class ObjectPropertyExpression(Box):
 
     @classmethod
     def safe(cls, ope: ObjectPropertyExpression | IdentifierBoxOrHint) -> ObjectPropertyExpression:
+        """Pass through a pre-instantiated object property expression, or create a simple one for an identifier."""
         if isinstance(ope, IdentifierBoxOrHint):
             return SimpleObjectPropertyExpression(ope)
         return ope
@@ -444,7 +332,9 @@ class ObjectPropertyExpression(Box):
 class SimpleObjectPropertyExpression(IdentifierBox, ObjectPropertyExpression):
     """A simple object property expression represented by an IRI/CURIE."""
 
-    _SKIP: ClassVar[set[term.Node]] = set()
+    #: A set of built-in object properties that shouldn't be re-defined, since they
+    #: appear in Table 3 of https://www.w3.org/TR/owl2-syntax/#IRIs.
+    _SKIP: ClassVar[set[term.Node]] = {OWL.topObjectProperty, OWL.bottomObjectProperty}
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
         node = super().to_rdflib_node(graph, converter)
@@ -477,9 +367,11 @@ class ObjectInverseOf(ObjectPropertyExpression):
         # we're trying to stay consistent with OWLAPI, and it sometimes doesn't
         # automatically assert the enclosed property as a owl:ObjectProperty,
         # e.g., inside ObjectMaxCardinality (not) and inside SubjectPropertyOf (does)
+        # see https://github.com/owlcs/owlapi/issues/1161
         self.object_property = IdentifierBox(object_property)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Get a node representing the inverse object property."""
         node = term.BNode()
         graph.add((node, OWL.inverseOf, self.object_property.to_rdflib_node(graph, converter)))
         return node
@@ -490,6 +382,7 @@ class ObjectInverseOf(ObjectPropertyExpression):
         )
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the inverse object property."""
         return self.object_property.to_funowl()
 
 
@@ -501,6 +394,7 @@ class DataPropertyExpression(Box):  # 6.2
 
     @classmethod
     def safe(cls, dpe: DataPropertyExpression | IdentifierBoxOrHint) -> DataPropertyExpression:
+        """Pass through a pre-instantiated data property expression, or create a simple one for an identifier."""
         if isinstance(dpe, IdentifierBoxOrHint):
             return SimpleDataPropertyExpression(dpe)
         return dpe
@@ -509,7 +403,9 @@ class DataPropertyExpression(Box):  # 6.2
 class SimpleDataPropertyExpression(IdentifierBox, DataPropertyExpression):
     """A simple data property expression represented by an IRI/CURIE."""
 
-    _SKIP: ClassVar[set[term.URIRef]] = set()
+    #: A set of built-in data properties that shouldn't be re-defined, since they
+    #: appear in Table 3 of https://www.w3.org/TR/owl2-syntax/#IRIs.
+    _SKIP: ClassVar[set[term.URIRef]] = {OWL.topDataProperty, OWL.bottomDataProperty}
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
         node = super().to_rdflib_node(graph, converter)
@@ -532,6 +428,7 @@ class DataRange(Box):
 
     @classmethod
     def safe(cls, data_range: DataRange | IdentifierBoxOrHint) -> DataRange:
+        """Pass through a pre-instantiated data range, or create a simple one for an identifier."""
         if isinstance(data_range, IdentifierBoxOrHint):
             return SimpleDateRange(data_range)
         return data_range
@@ -539,6 +436,8 @@ class DataRange(Box):
 
 class SimpleDateRange(IdentifierBox, DataRange):
     """A simple data range represented by an IRI/CURIE."""
+
+    # TODO add skip to RDF node output for builtin data types?
 
 
 class _ListDataRange(DataRange):
@@ -557,6 +456,7 @@ class _ListDataRange(DataRange):
         return node
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the data range."""
         return _list_to_funowl(self.data_ranges)
 
 
@@ -608,6 +508,7 @@ class DataComplementOf(DataRange):
         return node
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the complement of data range."""
         return self.data_range.to_funowl()
 
 
@@ -633,10 +534,13 @@ class DataOneOf(DataRange):
         node = term.BNode()
         literal_nodes = [literal.to_rdflib_node(graph, converter) for literal in self.literals]
         graph.add((node, RDF.type, RDFS.Datatype))
-        graph.add((node, OWL.oneOf, _make_sequence_nodes(graph, literal_nodes, type_connector_nodes=True)))
+        graph.add(
+            (node, OWL.oneOf, _make_sequence_nodes(graph, literal_nodes, type_connector_nodes=True))
+        )
         return node
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the enumeration of literals."""
         return _list_to_funowl(self.literals)
 
 
@@ -680,6 +584,7 @@ class DatatypeRestriction(DataRange):
         return node
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the datatype restriction."""
         pairs_funowl = " ".join(
             f"{facet.to_funowl()} {value.to_funowl()}" for facet, value in self.pairs
         )
@@ -696,6 +601,7 @@ class ClassExpression(Box):
 
     @classmethod
     def safe(cls, class_expresion: ClassExpression | IdentifierBoxOrHint) -> ClassExpression:
+        """Pass through a pre-instantiated class expression, or create a simple one for an identifier."""
         if isinstance(class_expresion, IdentifierBoxOrHint):
             return SimpleClassExpression(class_expresion)
         return class_expresion
@@ -704,6 +610,8 @@ class ClassExpression(Box):
 class SimpleClassExpression(IdentifierBox, ClassExpression):
     """A simple class expression represented by an IRI/CURIE."""
 
+    #: A set of built-in classes that shouldn't be re-defined, since they
+    #: appear in Table 3 of https://www.w3.org/TR/owl2-syntax/#IRIs.
     _SKIP: ClassVar[set[term.Node]] = {OWL.Thing, OWL.Nothing}
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
@@ -742,6 +650,7 @@ class _ObjectList(ClassExpression):
         return node
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the object list."""
         return _list_to_funowl(self.class_expressions)
 
 
@@ -823,6 +732,7 @@ class ObjectComplementOf(ClassExpression):
         return node
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the complement of class expression."""
         return self.class_expression.to_funowl()
 
 
@@ -849,30 +759,43 @@ class ObjectOneOf(ClassExpression):
         return node
 
     def to_funowl_args(self) -> str:
+        """Get the inside of the functional OWL tag representing the enumeration of individuals."""
         return _list_to_funowl(self.individuals)
 
 
-def _owl_rdf_restriction(
+def get_owl_restriction(
     graph: Graph,
-    prop: Box,
-    target_property: term.URIRef,
-    target: Box | term.Literal,
+    object_property_expression: ObjectPropertyExpression,
+    restriction_predicate: term.URIRef,
+    restriction_target: Box | term.Literal | term.Node,
     converter: Converter,
 ) -> term.BNode:
-    # this is shared between several class expressions
+    """Generate a blank node representing an OWL restriction.
+
+    :param graph: An RDFlib graph
+    :param object_property_expression: The object property expression that goes with ``owl:onProperty``
+    :param restriction_predicate: The predicate that connects the restriction to the target.
+        Can be one of ``owl:someValuesFrom``, ``owl:allValuesFrom``,
+        ``owl:hasValue``, ``owl:hasSelf``, or something more exotic
+    :param restriction_target: The target reference or literal
+    :param converter: The a converter for CURIEs to URIs
+    :return: A blank node representing an OWL restriction
+    """
     node = term.BNode()
     graph.add((node, RDF.type, OWL.Restriction))
-    graph.add((node, OWL.onProperty, prop.to_rdflib_node(graph, converter)))
-    if isinstance(target, Box):
-        graph.add((node, target_property, target.to_rdflib_node(graph, converter)))
+    graph.add((node, OWL.onProperty, object_property_expression.to_rdflib_node(graph, converter)))
+    if isinstance(restriction_target, Box):
+        graph.add(
+            (node, restriction_predicate, restriction_target.to_rdflib_node(graph, converter))
+        )
     else:
-        graph.add((node, target_property, target))
-
+        graph.add((node, restriction_predicate, restriction_target))
     return node
 
 
 class _ObjectValuesFrom(ClassExpression):
-    object_expression_predicate: ClassVar[term.URIRef]
+    #: The predicate used in the OWL restriction, either ``owl:someValuesFrom`` or ``owl:allValuesFrom``
+    restriction_predicate: ClassVar[term.URIRef]
     object_property_expression: ObjectPropertyExpression
     class_expression: ClassExpression
 
@@ -885,11 +808,11 @@ class _ObjectValuesFrom(ClassExpression):
         self.object_expression = ClassExpression.safe(class_expression)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
-        return _owl_rdf_restriction(
+        return get_owl_restriction(
             graph,
-            self.object_property_expression,
-            self.object_expression_predicate,
-            self.object_expression,
+            object_property_expression=self.object_property_expression,
+            restriction_predicate=self.restriction_predicate,
+            restriction_target=self.object_expression,
             converter=converter,
         )
 
@@ -900,13 +823,13 @@ class _ObjectValuesFrom(ClassExpression):
 class ObjectSomeValuesFrom(_ObjectValuesFrom):
     """A class expression defined in `8.2.1 Existential Quantification <https://www.w3.org/TR/owl2-syntax/#Existential_Quantification>`_."""
 
-    object_expression_predicate: ClassVar[term.URIRef] = OWL.someValuesFrom
+    restriction_predicate: ClassVar[term.URIRef] = OWL.someValuesFrom
 
 
 class ObjectAllValuesFrom(_ObjectValuesFrom):
     """A class expression defined in `8.2.2  Universal Quantification <https://www.w3.org/TR/owl2-syntax/# Universal_Quantification>`_."""
 
-    object_expression_predicate: ClassVar[term.URIRef] = OWL.allValuesFrom
+    restriction_predicate: ClassVar[term.URIRef] = OWL.allValuesFrom
 
 
 class ObjectHasValue(ClassExpression):
@@ -924,11 +847,13 @@ class ObjectHasValue(ClassExpression):
         self.individual = IdentifierBox(individual)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
-        return _owl_rdf_restriction(
+        individual = self.individual.to_rdflib_node(graph, converter)
+        graph.add((individual, RDF.type, OWL.NamedIndividual))
+        return get_owl_restriction(
             graph,
-            self.object_property_expression,
-            OWL.hasValue,
-            self.individual,
+            object_property_expression=self.object_property_expression,
+            restriction_predicate=OWL.hasValue,
+            restriction_target=individual,
             converter=converter,
         )
 
@@ -948,11 +873,11 @@ class ObjectHasSelf(ClassExpression):
         self.object_property_expression = ObjectPropertyExpression.safe(object_property_expression)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
-        return _owl_rdf_restriction(
+        return get_owl_restriction(
             graph,
-            self.object_property_expression,
-            OWL.hasSelf,
-            term.Literal(True),
+            object_property_expression=self.object_property_expression,
+            restriction_predicate=OWL.hasSelf,
+            restriction_target=term.Literal(True),
             converter=converter,
         )
 
@@ -967,16 +892,20 @@ class _Cardinality(ClassExpression):
     property_unqualified: ClassVar[term.URIRef]
     property_type: ClassVar[term.URIRef]
     property_expression_type: ClassVar[term.URIRef]  # the datatype for the target_expression
-    n: int
+
+    cardinality: int
+    property_expression: Box
+    target_expression: Box | None
 
     def __init__(
-        self, n: int, property_expression: Box, target_expression: Box | None = None
+        self, cardinality: int, property_expression: Box, target_expression: Box | None = None
     ) -> None:
-        self.n = n
+        self.cardinality = cardinality
         self.property_expression = property_expression
         self.target_expression = target_expression
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Get a node representing the object or data cardinality constraint."""
         node = term.BNode()
         graph.add((node, RDF.type, OWL.Restriction))
         pe_node = self.property_expression.to_rdflib_node(graph, converter)
@@ -985,7 +914,7 @@ class _Cardinality(ClassExpression):
         if not isinstance(pe_node, term.BNode):
             graph.add((pe_node, RDF.type, self.property_expression_type))
         graph.add((node, OWL.onProperty, pe_node))
-        literal = term.Literal(str(self.n), datatype=XSD.nonNegativeInteger)
+        literal = term.Literal(str(self.cardinality), datatype=XSD.nonNegativeInteger)
         if self.target_expression is not None:
             graph.add((node, self.property_qualified, literal))
             graph.add(
@@ -996,7 +925,7 @@ class _Cardinality(ClassExpression):
         return node
 
     def to_funowl_args(self) -> str:
-        inside = f"{self.n} {self.property_expression.to_funowl()}"
+        inside = f"{self.cardinality} {self.property_expression.to_funowl()}"
         if self.target_expression is not None:
             inside += f" {self.target_expression.to_funowl()}"
         return inside
@@ -1016,12 +945,12 @@ class _ObjectCardinality(_Cardinality):
 
     def __init__(
         self,
-        n: int,
+        cardinality: int,
         object_property_expression: ObjectPropertyExpression | IdentifierBoxOrHint,
         class_expression: ClassExpression | IdentifierBoxOrHint | None = None,
     ) -> None:
         super().__init__(
-            n=n,
+            cardinality=cardinality,
             property_expression=ObjectPropertyExpression.safe(object_property_expression),
             target_expression=ClassExpression.safe(class_expression)
             if class_expression is not None
@@ -1148,12 +1077,12 @@ class _DataCardinality(_Cardinality):
 
     def __init__(
         self,
-        n: int,
+        cardinality: int,
         data_property_expression: DataPropertyExpression | IdentifierBoxOrHint,
         data_range: DataRange | IdentifierBoxOrHint | None = None,
     ) -> None:
         super().__init__(
-            n,
+            cardinality,
             DataPropertyExpression.safe(data_property_expression),
             DataRange.safe(data_range) if data_range is not None else None,
         )
@@ -1202,7 +1131,7 @@ class Axiom(Box):
 
     def to_ttl(self, prefix_map: dict[str, str], *, output_prefixes: bool = False) -> str:
         """Output terse Turtle statements."""
-        return _serialize_turtle(self, output_prefixes=output_prefixes, **prefix_map)
+        return _serialize_turtle([self], output_prefixes=output_prefixes, **prefix_map)
 
 
 class ClassAxiom(Axiom):
@@ -1373,6 +1302,8 @@ class DisjointUnion(ClassAxiom):  # 9.1.4
         *,
         annotations: Annotations | None = None,
     ) -> None:
+        if len(class_expressions) < 2:
+            raise ValueError
         self.parent = SimpleClassExpression(parent)
         self.class_expressions = [ClassExpression.safe(ce) for ce in class_expressions]
         super().__init__(annotations)
@@ -2237,7 +2168,7 @@ class Annotation(Box):  # 10.1
         self.value = _safe_primitive_box(value)
         self.annotations = annotations or []
 
-    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:  # pragma: no cover
         raise RuntimeError
 
     def _add_to_triple(self, graph: Graph, node: term.BNode, converter: Converter) -> None:
@@ -2389,7 +2320,7 @@ class AnnotationPropertyRange(AnnotationPropertyTypingAxiom):  # 10.2.4
 EXAMPLE_ONTOLOGY_IRI = "https://example.org/example.ofn"
 
 
-def _get_rdf_graph(axioms: Axiom | list[Axiom], prefix_map: str) -> rdflib.Graph:
+def _get_rdf_graph(axioms: Iterable[Box], prefix_map: str) -> rdflib.Graph:
     """Serialize axioms as an RDF graph."""
     graph = Graph()
     graph.add((term.URIRef(EXAMPLE_ONTOLOGY_IRI), RDF.type, OWL.Ontology))
@@ -2403,59 +2334,17 @@ def _get_rdf_graph(axioms: Axiom | list[Axiom], prefix_map: str) -> rdflib.Graph
     )
     for prefix, uri_prefix in converter.bimap.items():
         graph.namespace_manager.bind(prefix, uri_prefix)
-    if isinstance(axioms, Axiom):
-        axioms = [axioms]
     for axiom in axioms:
         axiom.to_rdflib_node(graph, converter)
     return graph
 
 
 def _serialize_turtle(
-    axioms: Axiom | list[Axiom], *, output_prefixes: bool = False, prefix_map: str
+    axioms: Iterable[Box], *, output_prefixes: bool = False, prefix_map: str
 ) -> str:
     """Serialize axioms as turtle."""
-    graph = _get_rdf_graph(axioms=axioms, prefix_map=prefix_map)
+    graph = _get_rdf_graph(axioms, prefix_map=prefix_map)
     rv = graph.serialize()
     if output_prefixes:
         return rv.strip()
     return "\n".join(line for line in rv.splitlines() if not line.startswith("@prefix")).strip()
-
-
-def _get_rdf_graph_oracle(axioms: Axiom | list[Axiom], *, prefix_map: dict[str, str]) -> Graph:
-    """Serialize to turtle via OFN and conversion with ROBOT."""
-    import tempfile
-    from pathlib import Path
-
-    from bioontologies.robot import convert
-
-    if isinstance(axioms, Axiom):
-        axioms = [axioms]
-
-    ontology = Ontology(
-        iri=EXAMPLE_ONTOLOGY_IRI,
-        prefixes=prefix_map,
-        axioms=axioms,
-    )
-    graph = Graph()
-    with tempfile.TemporaryDirectory() as directory:
-        stub = Path(directory).joinpath("test")
-        ofn_path = stub.with_suffix(".ofn")
-        text = ontology.to_funowl()
-        ofn_path.write_text(text)
-        ttl_path = stub.with_suffix(".ttl")
-        try:
-            convert(ofn_path, ttl_path)
-        except subprocess.CalledProcessError:
-            raise RuntimeError(f"failed to convert axioms from:\n\n{text}") from None
-        # turtle = ttl_path.read_text()
-        graph.parse(ttl_path)
-
-    return graph
-
-    # turtle = "\n".join(
-    #     line
-    #     for line in turtle.splitlines()
-    #     if line.strip() and not line.startswith("#") and not line.startswith("@prefix") and not line.startswith(
-    #         "@base") and "owl:Ontology" not in line
-    # )
-    # return turtle
