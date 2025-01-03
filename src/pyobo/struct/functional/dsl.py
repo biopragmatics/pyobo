@@ -6,7 +6,7 @@ import datetime
 import itertools as itt
 import subprocess
 import typing
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from collections.abc import Iterable, Sequence
 from typing import ClassVar, TypeAlias
 
@@ -438,20 +438,28 @@ class ObjectInverseOf(ObjectPropertyExpression):
         in the spec, which is ``InverseObjectProperty``.
     """
 
-    def __init__(
-        self, object_property_expression: ObjectPropertyExpression | IdentifierBoxOrHint
-    ) -> None:
-        self.object_property_expression = ObjectPropertyExpression.safe(object_property_expression)
+    object_property: IdentifierBox
+
+    def __init__(self, object_property: IdentifierBoxOrHint) -> None:
+        # note that this can't be an expression - it has to be a defined thing.
+        # further, we can't use SimpleObjectPropertyExpression because
+        # we're trying to stay consistent with OWLAPI, and it sometimes doesn't
+        # automatically assert the enclosed property as a owl:ObjectProperty,
+        # e.g., inside ObjectMaxCardinality (not) and inside SubjectPropertyOf (does)
+        self.object_property = IdentifierBox(object_property)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
         node = term.BNode()
-        graph.add(
-            (node, OWL.inverseOf, self.object_property_expression.to_rdflib_node(graph, converter))
-        )
+        graph.add((node, OWL.inverseOf, self.object_property.to_rdflib_node(graph, converter)))
         return node
 
+    def _assert_internal_type(self, graph: Graph, converter: Converter) -> None:
+        graph.add(
+            (self.object_property.to_rdflib_node(graph, converter), RDF.type, OWL.ObjectProperty)
+        )
+
     def to_funowl_args(self) -> str:
-        return self.object_property_expression.to_funowl()
+        return self.object_property.to_funowl()
 
 
 class DataPropertyExpression(Box):  # 6.2
@@ -662,7 +670,7 @@ class ClassExpression(Box):
 class SimpleClassExpression(IdentifierBox, ClassExpression):
     """A simple class expression represented by an IRI/CURIE."""
 
-    _SKIP: ClassVar[set[term.Node]] = {OWL.Thing}
+    _SKIP: ClassVar[set[term.Node]] = {OWL.Thing, OWL.Nothing}
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
         node = super().to_rdflib_node(graph, converter)
@@ -938,7 +946,10 @@ class _Cardinality(ClassExpression):
         node = term.BNode()
         graph.add((node, RDF.type, OWL.Restriction))
         pe_node = self.property_expression.to_rdflib_node(graph, converter)
-        graph.add((pe_node, RDF.type, self.property_expression_type))
+        # don't annotate the expression type if it's a blank node
+        # (i.e., if the property expression is an ObjectInverseOf)
+        if not isinstance(pe_node, term.BNode):
+            graph.add((pe_node, RDF.type, self.property_expression_type))
         graph.add((node, OWL.onProperty, pe_node))
         literal = term.Literal(str(self.n), datatype=XSD.nonNegativeInteger)
         if self.target_expression is not None:
@@ -965,6 +976,7 @@ class _ObjectCardinality(_Cardinality):
     """
 
     property_type: ClassVar[term.URIRef] = OWL.onClass
+    property_expression_type: ClassVar[term.URIRef] = OWL.ObjectProperty
     property_expression: ObjectPropertyExpression
     target_expression: ClassExpression | None
 
@@ -982,19 +994,28 @@ class _ObjectCardinality(_Cardinality):
             else None,
         )
 
+    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        node = super().to_rdflib_node(graph, converter)
+        # we're special-casing this because of the inconsistent way that OWLAPI
+        # adds type assertions when using ObjectInverseOf (for some reason,
+        # it doesn't generate them inside EquivalentClasses)
+        if isinstance(self.property_expression, ObjectInverseOf):
+            self.property_expression._assert_internal_type(graph, converter)
+        return node
+
 
 class ObjectMinCardinality(_ObjectCardinality):
     """A class expression defined in `8.3.1 Minimum Cardinality <https://www.w3.org/TR/owl2-syntax/#Minimum_Cardinality>`_."""
 
-    property_qualified: ClassVar[term.URIRef] = OWL.maxQualifiedCardinality
-    property_unqualified: ClassVar[term.URIRef] = OWL.maxCardinality
+    property_qualified: ClassVar[term.URIRef] = OWL.minQualifiedCardinality
+    property_unqualified: ClassVar[term.URIRef] = OWL.minCardinality
 
 
 class ObjectMaxCardinality(_ObjectCardinality):
     """A class expression defined in `8.3.2 Maximum Cardinality <https://www.w3.org/TR/owl2-syntax/#Maximum_Cardinality>`_."""
 
-    property_qualified: ClassVar[term.URIRef] = OWL.minQualifiedCardinality
-    property_unqualified: ClassVar[term.URIRef] = OWL.minCardinality
+    property_qualified: ClassVar[term.URIRef] = OWL.maxQualifiedCardinality
+    property_unqualified: ClassVar[term.URIRef] = OWL.maxCardinality
 
 
 class ObjectExactCardinality(_ObjectCardinality):
@@ -1130,7 +1151,7 @@ class DataExactCardinality(_DataCardinality):
 """
 
 
-class Axiom(Box, ABC):
+class Axiom(Box):
     annotations: list[Annotation]
 
     def __init__(self, annotations: list[Annotation] | None = None):
@@ -1385,6 +1406,10 @@ class SubObjectPropertyOf(ObjectPropertyAxiom):  # 9.2.1
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
         s = self.child.to_rdflib_node(graph, converter)
         o = self.parent.to_rdflib_node(graph, converter)
+        if isinstance(self.child, ObjectInverseOf):
+            self.child._assert_internal_type(graph, converter)
+        if isinstance(self.parent, ObjectInverseOf):
+            self.parent._assert_internal_type(graph, converter)
         if isinstance(self.child, ObjectPropertyChain):
             return _add_triple(
                 graph, o, OWL.propertyChainAxiom, s, self.annotations, converter=converter
@@ -1428,8 +1453,8 @@ def _equivalent_xxx(
     nodes = [expression.to_rdflib_node(graph, converter) for expression in expressions]
     for s, o in itt.combinations(nodes, 2):
         _add_triple(graph, s, OWL.equivalentProperty, o, annotations, converter=converter)
-
-    # TODO what to return here?
+    # an unused blank node is returned here, since adding
+    # these relationship doesn't correspond to a node itself
     return term.BNode()
 
 
@@ -2027,9 +2052,7 @@ class ObjectPropertyAssertion(_ObjectPropertyAssertion):  # 9.6.4
             # flip them around
             s, o = o, s
             # unpack the inverse property
-            p = self.object_property_expression.object_property_expression.to_rdflib_node(
-                graph, converter
-            )
+            p = self.object_property_expression.object_property.to_rdflib_node(graph, converter)
         else:
             p = self.object_property_expression.to_rdflib_node(graph, converter)
 
@@ -2046,9 +2069,7 @@ class NegativeObjectPropertyAssertion(_ObjectPropertyAssertion):  # 9.6.5
             # flip them around
             s, o = o, s
             # unpack the inverse property
-            p = self.object_property_expression.object_property_expression.to_rdflib_node(
-                graph, converter
-            )
+            p = self.object_property_expression.object_property.to_rdflib_node(graph, converter)
         else:
             p = self.object_property_expression.to_rdflib_node(graph, converter)
         return _add_triple_annotations(
