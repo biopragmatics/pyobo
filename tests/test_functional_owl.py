@@ -2,6 +2,7 @@
 
 import unittest
 
+import rdflib
 from rdflib import Graph, compare, term
 
 from pyobo.struct.functional import dsl as f
@@ -197,9 +198,10 @@ class TestSection10(unittest.TestCase):
 class TestRDF(unittest.TestCase):
     """Test serialization to RDF."""
 
-    def test_rdf(self) -> None:
-        """Test serialization to RDF."""
-        axioms = [
+    @classmethod
+    def setUpClass(cls) -> None:
+        """Set up the serialization test case."""
+        cls.axiom_examples: list[f.Axiom] = [
             f.SubClassOf("owl:Thing", f.DataMaxCardinality(1, "a:hasAge")),
             f.SubClassOf("a:Dog", "a:Pet"),
             f.SubClassOf("a:Dog", "owl:Thing"),
@@ -209,22 +211,113 @@ class TestRDF(unittest.TestCase):
                 "a:hasPet",
                 annotations=[f.Annotation("dcterms:contributor", "orcid:0000-0003-4423-4370")],
             ),
+            f.AnnotationAssertion("rdfs:label", "a:Dog", f.l("dog")),
+            f.AnnotationPropertyRange("a:hasPet", "a:Pet"),
+            f.AnnotationPropertyDomain("a:hasPet", "a:Person"),
+            f.AsymmetricObjectProperty("a:hasParent"),
+            f.FunctionalObjectProperty("a:hasFather"),
+            f.InverseFunctionalObjectProperty("a:fatherOf"),
+            f.ReflexiveObjectProperty("a:knows"),
+            f.IrreflexiveObjectProperty("a:marriedTo"),
+            f.SymmetricObjectProperty("a:friend"),
+            f.TransitiveObjectProperty("a:ancestorOf"),
+            f.DataPropertyDomain("a:hasName", "a:Person"),
+            f.DataPropertyRange("a:hasName", "xsd:string"),
+            f.ObjectPropertyDomain("a:hasDog", "a:Person"),
+            f.ObjectPropertyRange("a:hasDog", "a:Dog"),
+            f.SameIndividual(["a:Peter", "a:Peter_Griffin"]),
+            f.DifferentIndividuals(["a:Peter", "a:Peter_Griffin"]),
+            f.EquivalentClasses(
+                [
+                    "a:GriffinFamilyMember",
+                    f.ObjectOneOf("a:Peter a:Lois a:Stewie a:Meg a:Chris a:Brian".split()),
+                ]
+            ),
+            f.EquivalentDataProperties(["a:hasName", "a:seLlama"]),
+            f.EquivalentObjectProperties(["a:hasBrother", "a:hasMaleSibling"]),
+            f.FunctionalDataProperty("a:hasAge"),
+            f.InverseObjectProperties("a:hasFather", "a:fatherOf"),
+            f.DisjointUnion("a:Child", ["a:Boy", "a:Girl"]),
+            f.ClassAssertion("a:Child", "a:Stewie"),
+            f.ClassAssertion(f.ObjectComplementOf("a:Girl"), "a:Stewie"),
+            f.DataPropertyAssertion("a:hasLastName", "a:Peter", f.l("Griffin")),
+            f.DatatypeDefinition(
+                "a:SSN",
+                f.DatatypeRestriction(
+                    "xsd:string", [("xsd:pattern", "[0-9]{3}-[0-9]{2}-[0-9]{4}")]
+                ),
+            ),
+            f.DisjointClasses(["a:Man", "a:Woman"]),
+            f.SubDataPropertyOf("a:hasLastName", "a:hasName"),
+            f.SubAnnotationPropertyOf("a:brandName", "a:synonymType"),
+            f.ObjectPropertyAssertion("a:parentOf", "a:Peter", "a:Chris"),
+            f.NegativeDataPropertyAssertion("a:hasAge", "a:Meg", 5),
+            f.NegativeObjectPropertyAssertion("a:hasSon", "a:Peter", "a:Meg"),
+            f.DisjointDataProperties(["a:hasName", "a:hasAddress"]),
+            f.DisjointObjectProperties(["a:hasFather", "a:hasMother"]),
+            f.HasKey("owl:Thing", [], ["a:hasSSN"]),
+            f.SubObjectPropertyOf(
+                f.ObjectPropertyChain(["a:hasMother", "a:hasSister"]), "a:hasAunt"
+            ),
         ]
-        for axiom in axioms:
+
+    def test_has_examples(self) -> None:
+        """Test all axiom types have at least one example."""
+        axioms_types_with_examples: set[type[f.Axiom]] = {
+            axiom.__class__ for axiom in self.axiom_examples
+        }
+        # these are intermediate classes and don't need examples
+        skips = {
+            f.Axiom,
+            f.ClassAxiom,
+            f.ObjectPropertyAxiom,
+            f.AnnotationAxiom,
+            f.DataPropertyAxiom,
+            f.AnnotationPropertyTypingAxiom,
+            f.Assertion,
+        }
+        missing_names = sorted(
+            cls.__name__ for cls in _get_all_axiom_types() - axioms_types_with_examples - skips
+        )
+        if missing_names:
+            msg = f"Missing {len(missing_names)} examples for the following axiom types:"
+            for missing_name in missing_names:
+                msg += f"\n- {missing_name}"
+            self.fail(msg)
+
+    def test_rdf(self) -> None:
+        """Test serialization to RDF."""
+        for axiom in self.axiom_examples:
             with self.subTest(axiom=axiom.to_funowl()):
-                a = f._get_rdf_graph(axiom, prefix_map=f.EXAMPLE_PREFIX_MAP)
+                try:
+                    a = f._get_rdf_graph(axiom, prefix_map=f.EXAMPLE_PREFIX_MAP)
+                except NotImplementedError:
+                    a = rdflib.Graph()
                 b = f._get_rdf_graph_oracle(axiom, prefix_map=f.EXAMPLE_PREFIX_MAP)
                 if not compare.isomorphic(a, b):
                     both, first, second = compare.graph_diff(a, b)
                     msg = "\nTriples in both:\n\n"
                     msg += dump_nt_sorted(both)
-                    msg += "\nTriples in PyOBO graph:\n\n"
-                    msg += dump_nt_sorted(first)
-                    msg += "\nTriples generated by ROBOT:\n\n"
-                    msg += dump_nt_sorted(second)
+                    if first:
+                        msg += "\n\nTriples generated _only_ by PyOBO:\n\n"
+                        msg += dump_nt_sorted(first)
+                    if second:
+                        msg += "\n\nTriples generated _only_ by ROBOT:\n\n"
+                        msg += dump_nt_sorted(second)
                     self.fail(msg)
 
 
 def dump_nt_sorted(g: Graph) -> str:
     """Write all triples in a canonical way."""
     return "\n".join(line for line in sorted(g.serialize(format="nt").splitlines()) if line)
+
+
+def _get_all_axiom_types() -> set[type[f.Axiom]]:
+    rv: set[type[f.Axiom]] = set()
+    for x in dir(f):
+        if x.startswith("_"):
+            continue
+        t = getattr(f, x)
+        if isinstance(t, type) and issubclass(t, f.Axiom):
+            rv.add(t)
+    return rv
