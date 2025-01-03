@@ -7,7 +7,7 @@ from collections.abc import Iterable
 
 import curies
 import rdflib
-from curies import Converter
+from curies import Converter, Reference
 from rdflib import OWL, RDF, Graph, term
 
 __all__ = [
@@ -73,3 +73,12 @@ def serialize_turtle(
     if output_prefixes:
         return rv.strip()
     return "\n".join(line for line in rv.splitlines() if not line.startswith("@prefix")).strip()
+
+
+def list_to_funowl(
+    elements: Iterable[FunctionalOWLSerializable | Reference], *, sep: str = " "
+) -> str:
+    return sep.join(
+        element.to_funowl() if isinstance(element, FunctionalOWLSerializable) else element.curie
+        for element in elements
+    )

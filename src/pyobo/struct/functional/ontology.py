@@ -4,15 +4,21 @@ from __future__ import annotations
 
 import subprocess
 import tempfile
+from collections.abc import Sequence
 from pathlib import Path
 
 from curies import Converter
-from rdflib import Graph, term
+from rdflib import OWL, RDF, Graph, term
 
-from pyobo.struct.functional.dsl import Annotations, Axiom, Box
-from pyobo.struct.functional.utils import EXAMPLE_ONTOLOGY_IRI
+from pyobo.struct.functional.dsl import Annotation, Annotations, Axiom, Box
+from pyobo.struct.functional.utils import (
+    EXAMPLE_ONTOLOGY_IRI,
+    FunctionalOWLSerializable,
+    list_to_funowl,
+)
 
 __all__ = [
+    "Document",
     "Import",
     "Ontology",
     "Prefix",
@@ -22,43 +28,99 @@ __all__ = [
 
 def write_ontology(
     *,
-    prefixes: dict[str, str],
-    iri: str,
+    prefixes: dict[str, str] | list[Prefix],
+    iri: str | None = None,
     version_iri: str | None = None,
-    directly_imports_documents: list[Import] | None = None,
+    directly_imports_documents: list[Import | str] | None = None,
     annotations: Annotations | None = None,
     axioms: list[Axiom] | None = None,
     file=None,
 ) -> None:
     """Print an ontology serialized as functional OWL."""
     ontology = Ontology(
-        prefixes=prefixes,
         iri=iri,
         version_iri=version_iri,
         directly_imports_documents=directly_imports_documents,
         annotations=annotations,
         axioms=axioms,
     )
-    print(ontology.to_funowl(), file=file)
+    document = Document(ontology, prefixes)
+    print(document.to_funowl(), file=file)
+
+
+class Document(FunctionalOWLSerializable):
+    """Represents a functional OWL document."""
+
+    prefixes: list[Prefix]
+    ontologies: list[Ontology]
+
+    def __init__(
+        self,
+        ontologies: Ontology | list[Ontology],
+        prefixes: dict[str, str] | list[Prefix],
+    ) -> None:
+        """Initialize a functional OWL document.
+
+        :param ontologies: An ontology or list of ontologies.
+
+            .. warning:: RDF export can only be used for a single ontology.
+        :param prefixes: A list of prefixes to define in the document
+
+            .. seealso:: `3.7 "Functional-Style Syntax" <https://www.w3.org/TR/owl2-syntax/#Functional-Style_Syntax>`_
+        """
+        self.ontologies = ontologies if isinstance(ontologies, list) else [ontologies]
+        if isinstance(prefixes, dict):
+            self.prefixes = [
+                Prefix(prefix, uri_prefix)
+                for prefix, uri_prefix in sorted(prefixes.items(), key=lambda kv: kv[0].casefold())
+            ]
+        else:
+            self.prefixes = prefixes
+
+    @property
+    def prefix_map(self) -> dict[str, str]:
+        """Get a simple dictionary representation of prefixes."""
+        return {
+            prefix.prefix: prefix.uri_prefix
+            for prefix in self.prefixes
+        }
+
+    def to_rdf(self) -> Graph:
+        """Get an RDFlib graph representing the ontology."""
+        if len(self.ontologies) != 1:
+            raise ValueError("Can only export one ontology to RDF")
+        graph = Graph()
+        for prefix_box in self.prefixes:
+            graph.namespace_manager.bind(prefix_box.prefix, prefix_box.uri_prefix)
+        converter = Converter.from_rdflib(graph)
+        for ontology in self.ontologies:
+            ontology.to_rdflib_node(graph, converter)
+        return graph
+
+    def to_funowl(self) -> str:
+        """Get the document as a functional OWL string."""
+        prefixes = list_to_funowl(self.prefixes, sep='\n')
+        ontologies = list_to_funowl(self.ontologies, sep='\n\n')
+        return prefixes + "\n\n" + ontologies
 
 
 class Ontology(Box):
     """Represents an OWL 2 ontology defined in `3 "Ontologies" <https://www.w3.org/TR/owl2-syntax/#Ontologies>`_."""
 
+    directly_imports_documents: Sequence[Import]
+    annotations: Sequence[Annotation]
+    axioms: Sequence[Axiom]
+
     def __init__(
         self,
-        prefixes: dict[str, str],
-        iri: str,
+        iri: str | None = None,
         version_iri: str | None = None,
-        directly_imports_documents: list[Import] | None = None,
+        directly_imports_documents: list[Import | str] | None = None,
         annotations: Annotations | None = None,
         axioms: list[Axiom] | None = None,
     ) -> None:
         """Instantiate an ontology.
 
-        :param prefixes: A list of prefixes to define in the document
-
-            .. seealso:: `3.7 "Functional-Style Syntax" <https://www.w3.org/TR/owl2-syntax/#Functional-Style_Syntax>`_
         :param iri: The ontology IRI.
 
             .. seealso:: `3.1 "Ontology IRI and Version IRI" <https://www.w3.org/TR/owl2-syntax/#Ontology_IRI_and_Version_IRI>`_
@@ -73,38 +135,57 @@ class Ontology(Box):
 
             .. seealso:: `9 "Axioms" <https://www.w3.org/TR/owl2-syntax/#Axioms>`_
         """
-        self.prefixes = prefixes
         self.iri = iri
         self.version_iri = version_iri
-        self.directly_imports_documents = directly_imports_documents
-        self.annotations = annotations
+        self.directly_imports_documents = [
+            Import(i) if isinstance(i, str) else i for i in directly_imports_documents or []
+        ]
+        self.annotations = annotations or []
         self.axioms = axioms or []
+        # this is the amount of leading whitespace on each
+        # when outputting to functional OWL
+        self._leading = "  "
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
         """Add the ontology to the triple store."""
-        node = term.URIRef(self.iri)
+        ontology_node = term.URIRef(self.iri) if self.iri is not None else term.BNode()
+        graph.add((ontology_node, RDF.type, OWL.Ontology))
+        if self.version_iri:
+            graph.add((ontology_node, OWL.versionIRI, term.URIRef(self.version_iri)))
+        for imp in self.directly_imports_documents:
+            graph.add((ontology_node, OWL.imports, term.URIRef(imp.iri)))
+        for annotation in self.annotations:
+            annotation._add_to_triple(graph, ontology_node, converter=converter)
         for axiom in self.axioms:
             axiom.to_rdflib_node(graph, converter)
-        return node
+        return ontology_node
 
     def to_funowl(self) -> str:
-        """Serialize the ontology to a string containing functional OWL."""
-        rv = "\n".join(
-            f"Prefix({prefix}:=<{uri_prefix}>)" for prefix, uri_prefix in self.prefixes.items()
-        )
-        rv += f"\n\nOntology(<{self.iri}>"
-        if self.version_iri:
-            rv += f" <{self.version_iri}>"
-        rv += "\n"
-        rv += "\n".join(annotation.to_funowl() for annotation in self.annotations or [])
-        rv += "\n"
-        rv += "\n".join(axiom.to_funowl() for axiom in self.axioms or [])
-        rv += "\n)"
-        return rv
+        """Make functional OWL."""
+        tag = self.__class__.__name__
+        return f"{tag}({self.to_funowl_args()}\n)"
 
     def to_funowl_args(self) -> str:
         """Get the inside of the functional OWL tag representing the ontology."""
-        raise RuntimeError
+        rv = ""
+        if self.iri:
+            rv += f"<{self.iri}>"
+            if self.version_iri:
+                rv += f" <{self.version_iri}>"
+        rv += f"\n{self._leading}"
+
+        parts: list[Sequence[FunctionalOWLSerializable]] = []
+        if self.directly_imports_documents:
+            parts.append(self.directly_imports_documents)
+        if self.annotations:
+            parts.append(self.annotations)
+        if self.axioms:
+            parts.append(self.axioms)
+
+        rv += f"\n\n{self._leading}".join(
+            list_to_funowl(part, sep=f"\n{self._leading}") for part in parts
+        )
+        return rv
 
 
 class Prefix(Box):
@@ -122,7 +203,7 @@ class Prefix(Box):
 
     def to_funowl_args(self) -> str:
         """Get the inside of the functional OWL tag representing the prefix."""
-        return f"{self.prefix}:={self.uri_prefix}"
+        return f"{self.prefix}:=<{self.uri_prefix}>"
 
 
 class Import(Box):
@@ -138,7 +219,7 @@ class Import(Box):
 
     def to_funowl_args(self) -> str:
         """Get the inside of the functional OWL tag representing the import."""
-        return f" <{self.iri}> "
+        return f"<{self.iri}>"
 
 
 def get_rdf_graph_oracle(axioms: list[Axiom], *, prefix_map: dict[str, str]) -> Graph:
@@ -147,29 +228,19 @@ def get_rdf_graph_oracle(axioms: list[Axiom], *, prefix_map: dict[str, str]) -> 
 
     ontology = Ontology(
         iri=EXAMPLE_ONTOLOGY_IRI,
-        prefixes=prefix_map,
         axioms=axioms,
     )
+    document = Document(ontology, prefix_map)
     graph = Graph()
     with tempfile.TemporaryDirectory() as directory:
         stub = Path(directory).joinpath("test")
         ofn_path = stub.with_suffix(".ofn")
-        text = ontology.to_funowl()
+        text = document.to_funowl()
         ofn_path.write_text(text)
         ttl_path = stub.with_suffix(".ttl")
         try:
             convert(ofn_path, ttl_path)
         except subprocess.CalledProcessError:
             raise RuntimeError(f"failed to convert axioms from:\n\n{text}") from None
-        # turtle = ttl_path.read_text()
         graph.parse(ttl_path)
-
     return graph
-
-    # turtle = "\n".join(
-    #     line
-    #     for line in turtle.splitlines()
-    #     if line.strip() and not line.startswith("#") and not line.startswith("@prefix") and not line.startswith(
-    #         "@base") and "owl:Ontology" not in line
-    # )
-    # return turtle

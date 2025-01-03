@@ -12,6 +12,8 @@ from typing import ClassVar, TypeAlias
 from curies import Converter, Reference
 from rdflib import OWL, RDF, RDFS, XSD, Graph, collection, term
 
+from pyobo.struct.functional.utils import list_to_funowl
+
 from .utils import FunctionalOWLSerializable, RDFNodeSerializable
 
 __all__ = [
@@ -119,12 +121,6 @@ class Box(FunctionalOWLSerializable, RDFNodeSerializable):
     """A model for objects that can be represented as nodes in RDF and Functional OWL."""
 
 
-def _list_to_funowl(elements: Iterable[Box | Reference]):
-    return " ".join(
-        element.to_funowl() if isinstance(element, Box) else element.curie for element in elements
-    )
-
-
 class IdentifierBox(Box):
     """A simple wrapper around CURIEs and IRIs."""
 
@@ -171,6 +167,7 @@ class LiteralBox(Box):
     literal: term.Literal
 
     def __init__(self, literal: LiteralBoxOrHint) -> None:
+        """Initialize the literal box with a RDFlib literal or Python primitive.."""
         if isinstance(literal, LiteralBox):
             self.literal = literal.literal
         elif isinstance(literal, term.Literal):
@@ -183,9 +180,11 @@ class LiteralBox(Box):
             raise TypeError(f"Unhandled type for literal: {literal}")
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent this literal for RDF."""
         return self.literal
 
     def to_funowl(self) -> str:
+        """Represent this literal for functional OWL."""
         literal = self.literal
         if literal.datatype is None or literal.datatype == XSD.string:
             if literal.language:
@@ -301,18 +300,20 @@ type_to_uri: dict[DeclarationType, term.URIRef] = {
 class Declaration(Box):
     """Declarations."""
 
-    def __init__(self, node: IdentifierBoxOrHint, dtype: DeclarationType) -> None:
+    def __init__(self, node: IdentifierBoxOrHint, type: DeclarationType) -> None:
+        """Initialize the declaration with a given identifier and type."""
         self.node = IdentifierBox(node)
-        self.dtype = dtype
+        self.type = type
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent this declaration for RDF."""
         node = self.node.to_rdflib_node(graph, converter)
-        graph.add((node, RDF.type, type_to_uri[self.dtype]))
+        graph.add((node, RDF.type, type_to_uri[self.type]))
         return node
 
     def to_funowl_args(self) -> str:
         """Get the inside of the functional OWL tag representing the declaration."""
-        return f"{self.dtype}( {self.node.to_funowl()} )"
+        return f"{self.type}( {self.node.to_funowl()} )"
 
 
 """
@@ -342,6 +343,7 @@ class SimpleObjectPropertyExpression(IdentifierBox, ObjectPropertyExpression):
     _SKIP: ClassVar[set[term.Node]] = {OWL.topObjectProperty, OWL.bottomObjectProperty}
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent this object property identifier for RDF."""
         node = super().to_rdflib_node(graph, converter)
         if node in self._SKIP:
             return node
@@ -414,6 +416,7 @@ class SimpleDataPropertyExpression(IdentifierBox, DataPropertyExpression):
     _SKIP: ClassVar[set[term.URIRef]] = {OWL.topDataProperty, OWL.bottomDataProperty}
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent this data property identifier for RDF."""
         node = super().to_rdflib_node(graph, converter)
         if node in self._SKIP:
             return node
@@ -452,11 +455,12 @@ class _ListDataRange(DataRange):
     property_type: ClassVar[term.URIRef]
     data_ranges: Sequence[DataRange]
 
-    def __init__(self, data_ranges: Sequence[DataRange | IdentifierBoxOrHint]):
+    def __init__(self, data_ranges: Sequence[DataRange | IdentifierBoxOrHint]) -> None:
+        """Initialize this list of data ranges."""
         self.data_ranges = [DataRange.safe(dr) for dr in data_ranges]
 
-    # docstr-coverage:inherited
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent this list of data range for RDF."""
         node = term.BNode()
         graph.add((node, RDF.type, RDFS.Datatype))
         graph.add((node, self.property_type, _make_sequence(graph, self.data_ranges, converter)))
@@ -464,7 +468,7 @@ class _ListDataRange(DataRange):
 
     def to_funowl_args(self) -> str:
         """Get the inside of the functional OWL tag representing the data range."""
-        return _list_to_funowl(self.data_ranges)
+        return list_to_funowl(self.data_ranges)
 
 
 class DataIntersectionOf(_ListDataRange):
@@ -504,9 +508,11 @@ class DataComplementOf(DataRange):
     data_range: DataRange
 
     def __init__(self, data_range: DataRange | IdentifierBoxOrHint):
+        """Initialize a complement of a data range using another data range."""
         self.data_range = DataRange.safe(data_range)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
+        """Represent this complement of a data range for RDF."""
         node = term.BNode()
         graph.add((node, RDF.type, RDFS.Datatype))
         graph.add(
@@ -535,9 +541,11 @@ class DataOneOf(DataRange):
     literals: Sequence[LiteralBox]
 
     def __init__(self, literals: Sequence[LiteralBoxOrHint]):
+        """Initialize an enumeration of literals."""
         self.literals = [LiteralBox(literal) for literal in literals]
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
+        """Represent this enumeration of literals for RDF."""
         node = term.BNode()
         literal_nodes = [literal.to_rdflib_node(graph, converter) for literal in self.literals]
         graph.add((node, RDF.type, RDFS.Datatype))
@@ -548,7 +556,7 @@ class DataOneOf(DataRange):
 
     def to_funowl_args(self) -> str:
         """Get the inside of the functional OWL tag representing the enumeration of literals."""
-        return _list_to_funowl(self.literals)
+        return list_to_funowl(self.literals)
 
 
 class DatatypeRestriction(DataRange):
@@ -567,10 +575,16 @@ class DatatypeRestriction(DataRange):
         datatype: IdentifierBoxOrHint,
         pairs: list[tuple[IdentifierBoxOrHint, LiteralBoxOrHint]],
     ) -> None:
+        """Initialize a datatype restriction.
+
+        :param datatype: The base datatype
+        :param pairs: A list of pairs of restrictions (e.g., ``xsd:minInclusive``) and literal values
+        """
         self.datatype = IdentifierBox(datatype)
         self.pairs = [(IdentifierBox(facet), LiteralBox(value)) for facet, value in pairs]
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent this datatype restriction for RDF."""
         node = term.BNode()
 
         restrictions: list[term.Node] = []
@@ -622,6 +636,7 @@ class SimpleClassExpression(IdentifierBox, ClassExpression):
     _SKIP: ClassVar[set[term.Node]] = {OWL.Thing, OWL.Nothing}
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent this class identifier for RDF."""
         node = super().to_rdflib_node(graph, converter)
         if node in self._SKIP:
             # i.e., don't add extra annotations for these
@@ -658,7 +673,7 @@ class _ObjectList(ClassExpression):
 
     def to_funowl_args(self) -> str:
         """Get the inside of the functional OWL tag representing the object list."""
-        return _list_to_funowl(self.class_expressions)
+        return list_to_funowl(self.class_expressions)
 
 
 class ObjectIntersectionOf(_ObjectList):
@@ -767,7 +782,7 @@ class ObjectOneOf(ClassExpression):
 
     def to_funowl_args(self) -> str:
         """Get the inside of the functional OWL tag representing the enumeration of individuals."""
-        return _list_to_funowl(self.individuals)
+        return list_to_funowl(self.individuals)
 
 
 def get_owl_restriction(
@@ -1034,7 +1049,7 @@ class _DataValuesFrom(ClassExpression):
 
     def to_funowl_args(self) -> str:
         """Get the inside of the functional OWL tag representing the existential quantification."""
-        return _list_to_funowl((*self.data_property_expressions, self.data_range))
+        return list_to_funowl((*self.data_property_expressions, self.data_range))
 
 
 def _get_data_value_po(
@@ -1148,7 +1163,7 @@ class Axiom(Box):
     def to_funowl_args(self) -> str:
         """Get the functional OWL tag representing the axiom."""
         if self.annotations:
-            return _list_to_funowl(self.annotations) + " " + self._funowl_inside_2()
+            return list_to_funowl(self.annotations) + " " + self._funowl_inside_2()
         return self._funowl_inside_2()
 
     @abstractmethod
@@ -1272,7 +1287,7 @@ class EquivalentClasses(ClassAxiom):  # 9.1.2
         return rv
 
     def _funowl_inside_2(self) -> str:
-        return _list_to_funowl(self.class_expressions)
+        return list_to_funowl(self.class_expressions)
 
 
 class DisjointClasses(ClassAxiom):  # 9.1.3
@@ -1310,7 +1325,7 @@ class DisjointClasses(ClassAxiom):  # 9.1.3
             return node
 
     def _funowl_inside_2(self) -> str:
-        return _list_to_funowl(self.class_expressions)
+        return list_to_funowl(self.class_expressions)
 
 
 class DisjointUnion(ClassAxiom):  # 9.1.4
@@ -1341,7 +1356,7 @@ class DisjointUnion(ClassAxiom):  # 9.1.4
         )
 
     def _funowl_inside_2(self) -> str:
-        return _list_to_funowl((self.parent, *self.class_expressions))
+        return list_to_funowl((self.parent, *self.class_expressions))
 
 
 """Section 9.2: Object Property Axioms"""
@@ -1367,7 +1382,7 @@ class ObjectPropertyChain(Box):
 
     def to_funowl_args(self) -> str:
         """Get the inside of the functional OWL tag representing the object property chain."""
-        return _list_to_funowl(self.object_property_expressions)
+        return list_to_funowl(self.object_property_expressions)
 
 
 SubObjectPropertyExpression: TypeAlias = ObjectPropertyExpression | ObjectPropertyChain
@@ -1428,7 +1443,7 @@ class _ObjectPropertyList(ObjectPropertyAxiom):
         super().__init__(annotations)
 
     def _funowl_inside_2(self) -> str:
-        return _list_to_funowl(self.object_property_expressions)
+        return list_to_funowl(self.object_property_expressions)
 
 
 def _equivalent_xxx(
@@ -1715,7 +1730,7 @@ class _DataPropertyList(DataPropertyAxiom):
         super().__init__(annotations)
 
     def _funowl_inside_2(self) -> str:
-        return _list_to_funowl(self.data_property_expressions)
+        return list_to_funowl(self.data_property_expressions)
 
 
 class EquivalentDataProperties(_DataPropertyList):  # 9.3.2
@@ -1911,11 +1926,11 @@ class HasKey(Axiom):
     def _funowl_inside_2(self) -> str:
         aa = f"{self.class_expression.to_funowl()}"
         if self.object_property_expressions:
-            aa += f" ( {_list_to_funowl(self.object_property_expressions)} )"
+            aa += f" ( {list_to_funowl(self.object_property_expressions)} )"
         else:
             aa += " ()"
         if self.data_property_expressions:
-            aa += f" ( {_list_to_funowl(self.data_property_expressions)} )"
+            aa += f" ( {list_to_funowl(self.data_property_expressions)} )"
         else:
             aa += " ()"
         return aa
@@ -1941,7 +1956,7 @@ class _IndividualListAssertion(Assertion):
         super().__init__(annotations)
 
     def _funowl_inside_2(self) -> str:
-        return _list_to_funowl(self.individuals)
+        return list_to_funowl(self.individuals)
 
 
 class SameIndividual(_IndividualListAssertion):  # 9.6.1
@@ -2199,19 +2214,19 @@ class Annotation(Box):  # 10.1
     def _add_to_triple(
         self,
         graph: Graph,
-        reified_triple: term.BNode,
+        subject: term.Node,
         converter: Converter,
     ) -> None:
-        ap = self.annotation_property.to_rdflib_node(graph, converter)
-        ao = self.value.to_rdflib_node(graph, converter)
-        graph.add((ap, RDF.type, OWL.AnnotationProperty))
-        graph.add((reified_triple, ap, ao))
+        annotation_property = self.annotation_property.to_rdflib_node(graph, converter)
+        annotation_object = self.value.to_rdflib_node(graph, converter)
+        graph.add((annotation_property, RDF.type, OWL.AnnotationProperty))
+        graph.add((subject, annotation_property, annotation_object))
         if self.annotations:
             _add_triple_annotations(
                 graph,
-                reified_triple,
-                ap,
-                ao,
+                subject,
+                annotation_property,
+                annotation_object,
                 converter=converter,
                 annotations=self.annotations,
                 type=OWL.Annotation,
@@ -2221,7 +2236,7 @@ class Annotation(Box):  # 10.1
         """Get the inside of the functional OWL tag representing the annotation."""
         end = f"{self.annotation_property.to_funowl()} {self.value.to_funowl()}"
         if self.annotations:
-            return _list_to_funowl(self.annotations) + " " + end
+            return list_to_funowl(self.annotations) + " " + end
         return end
 
 
