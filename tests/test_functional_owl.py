@@ -359,10 +359,21 @@ class TestMiscellaneous(unittest.TestCase):
 
     def test_passthrough(self) -> None:
         """Test passthrough."""
-        sdpe = SimpleDataPropertyExpression(OWL.topDataProperty)
-        sdpe2 = f.DataPropertyExpression.safe(sdpe)
-        self.assertIsInstance(sdpe2, SimpleDataPropertyExpression)
-        self.assertEqual(OWL.topDataProperty, sdpe2.identifier)
+
+        class CompoundDPE(f.DataPropertyExpression):
+            """A dummpy data property expression."""
+
+            def to_funowl_args(self) -> str:
+                """Return an empty string."""
+                return ""
+
+            def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+                """Return a blank node."""
+                return term.BNode()
+
+        dpe2 = CompoundDPE()
+        passthrough = f.DataPropertyExpression.safe(dpe2)
+        self.assertIsInstance(passthrough, CompoundDPE)
 
     def test_creation_skip(self) -> None:
         """Test skipping of declaration on builtins."""
