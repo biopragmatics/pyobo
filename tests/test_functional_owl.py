@@ -1,11 +1,67 @@
-"""Tests for functional OWL."""
+"""Tests for functional OWL.
+
+Run the following for coverage testing:
+
+coverage erase &&
+&& coverage run -p -m pytest tests/test_functional_owl.py
+&& coverage combine
+&& coverage report --include=src/pyobo/struct/functional/dsl.py
+"""
 
 import unittest
 
 import rdflib
-from rdflib import Graph, compare, term
+from curies import Converter, Reference
+from rdflib import RDF, Graph, compare, term
 
 from pyobo.struct.functional import dsl as f
+from pyobo.struct.functional.ontology import get_rdf_graph_oracle
+
+
+class TestBox(unittest.TestCase):
+    """Test boxes."""
+
+    def test_identifier_box(self) -> None:
+        """Test the identifier box."""
+        converter = Converter.from_prefix_map({"a": "https://example.org/a:"})
+        uri = term.URIRef("https://example.org/a:b")
+
+        b1 = f.IdentifierBox("a:b")
+        self.assertIsInstance(b1.identifier, Reference)
+        self.assertEqual("a:b", b1.identifier.curie)
+        self.assertEqual("a:b", b1.to_funowl())
+        self.assertEqual(uri, b1.to_rdflib_node(Graph(), converter))
+
+        b2 = f.IdentifierBox(Reference.from_curie("a:b"))
+        self.assertIsInstance(b2.identifier, Reference)
+        self.assertEqual("a:b", b2.identifier.curie)
+        self.assertEqual("a:b", b2.to_funowl())
+        self.assertEqual(uri, b2.to_rdflib_node(Graph(), converter))
+
+        b4 = f.IdentifierBox(b1)
+        self.assertIsInstance(b4.identifier, Reference)
+        self.assertEqual("a:b", b4.identifier.curie)
+        self.assertEqual("a:b", b4.to_funowl())
+        self.assertEqual(uri, b4.to_rdflib_node(Graph(), converter))
+
+        b3 = f.IdentifierBox(RDF.type)
+        self.assertIsInstance(b3.identifier, term.URIRef)
+        self.assertEqual("<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>", b3.to_funowl())
+        self.assertEqual(RDF.type, b3.to_rdflib_node(Graph(), converter))
+
+        b5 = f.IdentifierBox(b3)
+        self.assertIsInstance(b5.identifier, term.URIRef)
+        self.assertEqual("<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>", b5.to_funowl())
+        self.assertEqual(RDF.type, b5.to_rdflib_node(Graph(), converter))
+
+        with self.assertRaises(TypeError):
+            f.IdentifierBox(5)
+
+        with self.assertRaises(RuntimeError):
+            b1.to_funowl_args()
+
+    def test_literal_box(self) -> None:
+        """Test the literal box."""
 
 
 class TestSection5(unittest.TestCase):
@@ -160,6 +216,9 @@ class TestSection9Axioms(unittest.TestCase):
             "EquivalentClasses( a:Boy ObjectIntersectionOf( a:Child a:Man ) )", expr.to_funowl()
         )
 
+        with self.assertRaises(ValueError):
+            f.EquivalentClasses(["a:Boy"])
+
     def test_disjoint_classes(self):
         """Test disjoint class axioms."""
         expr = f.EquivalentClasses(["a:Boy", "a:Girl"])
@@ -169,6 +228,9 @@ class TestSection9Axioms(unittest.TestCase):
         """Test disjoint union axioms."""
         expr = f.DisjointUnion("a:Child", ["a:Boy", "a:Girl"])
         self.assertEqual("DisjointUnion( a:Child a:Boy a:Girl )", expr.to_funowl())
+
+        with self.assertRaises(ValueError):
+            f.DisjointUnion("a:Child", ["a:Boy"])
 
     def test_subproperties(self) -> None:
         """Test object sub-property."""
@@ -202,10 +264,22 @@ class TestRDF(unittest.TestCase):
     def setUpClass(cls) -> None:
         """Set up the serialization test case."""
         cls.axiom_examples: list[f.Axiom] = [
+            f.Declaration("a:test", "Class"),
+            f.Declaration("a:test", "ObjectProperty"),
+            f.Declaration("a:test", "DataProperty"),
+            f.Declaration("a:test", "AnnotationProperty"),
+            f.Declaration("a:test", "Datatype"),
+            f.Declaration("a:test", "NamedIndividual"),
             f.DatatypeDefinition("a:Test", f.DataOneOf(["Peter", 1])),
-            f.DatatypeDefinition("a:Test", f.DataIntersectionOf(["xsd:integer", "xsd:nonNegativeInteger"])),
-            f.DatatypeDefinition("a:Test", f.DataIntersectionOf(["xsd:integer", f.DataOneOf([1, 2, 3])])),
-            f.DatatypeDefinition("a:Test", f.DataUnionOf(["xsd:integer", f.DataOneOf([f.l("a"), f.l("b")])])),
+            f.DatatypeDefinition(
+                "a:Test", f.DataIntersectionOf(["xsd:integer", "xsd:nonNegativeInteger"])
+            ),
+            f.DatatypeDefinition(
+                "a:Test", f.DataIntersectionOf(["xsd:integer", f.DataOneOf([1, 2, 3])])
+            ),
+            f.DatatypeDefinition(
+                "a:Test", f.DataUnionOf(["xsd:integer", f.DataOneOf([f.l("a"), f.l("b")])])
+            ),
             f.DatatypeDefinition("a:Test", f.DataUnionOf(["xsd:integer", "xsd:string"])),
             f.DatatypeDefinition("a:Test", f.DataComplementOf("xsd:nonNegativeInteger")),
             f.SubClassOf(
@@ -221,6 +295,23 @@ class TestRDF(unittest.TestCase):
                 f.ObjectPropertyChain(["a:ope1", "a:ope1"]), "a:op1"
             ),  # transitive definition
             f.ClassAssertion(f.ObjectMaxCardinality(1, "a:hasPet"), "a:Peter"),
+            f.ClassAssertion(f.ObjectIntersectionOf(["a:Dog", "a:canTalk"]), "a:Brian"),
+            # FIXME this breaks if order is Dog, Cat
+            f.ClassAssertion(f.ObjectUnionOf(["a:Cat", "a:Dog"]), "a:Brian"),
+            f.ClassAssertion(
+                f.ObjectSomeValuesFrom(
+                    "a:hasChild",
+                    f.ObjectIntersectionOf(
+                        [
+                            # FIXME this breaks if these are out of sort order
+                            f.ObjectHasValue("a:hasChild", "a:Chris"),
+                            f.ObjectHasValue("a:hasChild", "a:Meg"),
+                            f.ObjectHasValue("a:hasChild", "a:Stewie"),
+                        ]
+                    ),
+                ),
+                "a:Francis",
+            ),
             f.ClassAssertion(f.ObjectMaxCardinality(1, "a:hasPet"), "a:Peter"),
             f.ClassAssertion(f.ObjectMinCardinality(2, "a:fatherOf", "a:Man"), "a:Peter"),
             f.SubClassOf(
@@ -328,10 +419,10 @@ class TestRDF(unittest.TestCase):
         for axiom in self.axiom_examples:
             with self.subTest(axiom=axiom.to_funowl()):
                 try:
-                    a = f._get_rdf_graph(axiom, prefix_map=f.EXAMPLE_PREFIX_MAP)
+                    a = f._get_rdf_graph([axiom], prefix_map=f.EXAMPLE_PREFIX_MAP)
                 except NotImplementedError:
                     a = rdflib.Graph()
-                b = f._get_rdf_graph_oracle(axiom, prefix_map=f.EXAMPLE_PREFIX_MAP)
+                b = get_rdf_graph_oracle([axiom], prefix_map=f.EXAMPLE_PREFIX_MAP)
                 if not compare.isomorphic(a, b):
                     both, first, second = compare.graph_diff(a, b)
                     msg = "\nTriples in both:\n\n"
