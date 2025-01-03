@@ -48,7 +48,7 @@ def write_ontology(
     print(document.to_funowl(), file=file)
 
 
-class Document(FunctionalOWLSerializable):
+class Document:
     """Represents a functional OWL document."""
 
     prefixes: list[Prefix]
@@ -80,10 +80,7 @@ class Document(FunctionalOWLSerializable):
     @property
     def prefix_map(self) -> dict[str, str]:
         """Get a simple dictionary representation of prefixes."""
-        return {
-            prefix.prefix: prefix.uri_prefix
-            for prefix in self.prefixes
-        }
+        return {prefix.prefix: prefix.uri_prefix for prefix in self.prefixes}
 
     def to_rdf(self) -> Graph:
         """Get an RDFlib graph representing the ontology."""
@@ -99,8 +96,8 @@ class Document(FunctionalOWLSerializable):
 
     def to_funowl(self) -> str:
         """Get the document as a functional OWL string."""
-        prefixes = list_to_funowl(self.prefixes, sep='\n')
-        ontologies = list_to_funowl(self.ontologies, sep='\n\n')
+        prefixes = list_to_funowl(self.prefixes, sep="\n")
+        ontologies = list_to_funowl(self.ontologies, sep="\n\n")
         return prefixes + "\n\n" + ontologies
 
 
