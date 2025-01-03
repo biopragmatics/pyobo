@@ -188,12 +188,17 @@ class Ontology(Box):
         self.version_iri = version_iri
         self.directly_imports_documents = directly_imports_documents
         self.annotations = annotations
-        self.axioms = axioms
+        self.axioms = axioms or []
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
-        raise NotImplementedError
+        """Add the ontology to the triple store."""
+        node = term.URIRef(self.iri)
+        for axiom in self.axioms:
+            axiom.to_rdflib_node(graph, converter)
+        return node
 
     def to_funowl(self) -> str:
+        """Serialize the ontology to a string containing functional OWL."""
         rv = "\n".join(
             f"Prefix({prefix}:=<{uri_prefix}>)" for prefix, uri_prefix in self.prefixes.items()
         )
@@ -218,14 +223,16 @@ def _list_to_funowl(elements: Iterable[Box | Reference]):
 
 
 class Prefix(Box):
-    """A model for imports, as defined by `3.4 "Imports" <https://www.w3.org/TR/owl2-syntax/#Imports>`_."""
+    """A model for imports, as defined by `3.7 "Functional-Style Syntax" <https://www.w3.org/TR/owl2-syntax/#Functional-Style_Syntax>`_"""
 
     def __init__(self, prefix: str, uri_prefix: str) -> None:
+        """Initialize the definition with a CURIE prefix and URI prefix."""
         self.prefix = prefix
         self.uri_prefix = uri_prefix
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
-        raise NotImplementedError
+        graph.namespace_manager.bind(self.prefix, self.uri_prefix)
+        return term.BNode() # dummy
 
     def to_funowl_args(self) -> str:
         return f"{self.prefix}:={self.uri_prefix}"
@@ -293,7 +300,7 @@ class LiteralBox(Box):
         elif isinstance(literal, term.Literal):
             self.literal = literal
         elif isinstance(literal, datetime.datetime | datetime.date):
-            raise NotImplementedError
+            raise NotImplementedError(f"not implemented for dates")
         elif isinstance(literal, SupportedLiterals):
             self.literal = term.Literal(literal)
         else:
@@ -339,18 +346,42 @@ def _safe_primitive_box(value: PrimitiveHint) -> PrimitiveBox:
     return IdentifierBox(value)
 
 
-def _make_sequence(graph: Graph, members: Iterable[Box], converter: Converter) -> term.Node:
+def _make_sequence(graph: Graph, members: Iterable[Box], converter: Converter, *, type_connector_nodes: bool = False) -> term.Node:
     """Make a sequence."""
-    return _make_sequence_nodes(graph, [m.to_rdflib_node(graph, converter) for m in members])
+    return _make_sequence_nodes(graph, [m.to_rdflib_node(graph, converter) for m in members], type_connector_nodes=type_connector_nodes)
 
 
-def _make_sequence_nodes(graph: Graph, members: list[term.Node]) -> term.Node:
+def _make_sequence_nodes(graph: Graph, members: list[term.Node], *, type_connector_nodes: bool = False) -> term.Node:
     """Make a sequence."""
     if not members:
         return RDF.nil
     node = term.BNode()
-    collection.Collection(graph, node, members)
+    c = collection.Collection(graph, node, members)
+    if type_connector_nodes:
+        # This is a weird quirk required for DataOneOf, which for
+        # some reason emits `rdf:type rdfs:List` for each element
+        for connector_node in _yield_connector_nodes(graph, node):
+            graph.add((connector_node, RDF.type, RDF.List))
     return node
+
+def _yield_connector_nodes(graph: Graph, start: term.Node) -> Iterable[term.Node]:
+    """Yield all of the nodes representing parts of a collection.
+
+    This is different than simply doing :meth:`rdflib.graph.items`,
+    because that function gets the "first" parts - this function
+    gets the blank nodes that are representing the prongs in the
+    list itself.
+
+    We have to do this because ROBOT implemenents RDF conversion for
+    :class:`DataOneOf` strangely, where each blank node in the collection
+    gets a triple typing it as a list ``<bnode> rdf:type rdfs:List``
+    """
+    yield start
+    item: term.Node | None = start
+    while item := graph.value(item, RDF.rest):
+        if item == RDF.nil:
+            break
+        yield item
 
 
 """Section 5"""
@@ -520,7 +551,10 @@ class _ListDataRange(DataRange):
         self.data_ranges = [DataRange.safe(dr) for dr in data_ranges]
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
-        raise NotImplementedError
+        node = term.BNode()
+        graph.add((node, RDF.type, RDFS.Datatype))
+        graph.add((node, self.property_type, _make_sequence(graph, self.data_ranges, converter)))
+        return node
 
     def to_funowl_args(self) -> str:
         return _list_to_funowl(self.data_ranges)
@@ -599,7 +633,7 @@ class DataOneOf(DataRange):
         node = term.BNode()
         literal_nodes = [literal.to_rdflib_node(graph, converter) for literal in self.literals]
         graph.add((node, RDF.type, RDFS.Datatype))
-        graph.add((node, OWL.oneOf, _make_sequence_nodes(graph, literal_nodes)))
+        graph.add((node, OWL.oneOf, _make_sequence_nodes(graph, literal_nodes, type_connector_nodes=True)))
         return node
 
     def to_funowl_args(self) -> str:

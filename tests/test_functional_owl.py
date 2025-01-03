@@ -202,6 +202,12 @@ class TestRDF(unittest.TestCase):
     def setUpClass(cls) -> None:
         """Set up the serialization test case."""
         cls.axiom_examples: list[f.Axiom] = [
+            f.DatatypeDefinition("a:Test", f.DataOneOf(["Peter", 1])),
+            f.DatatypeDefinition("a:Test", f.DataIntersectionOf(["xsd:integer", "xsd:nonNegativeInteger"])),
+            f.DatatypeDefinition("a:Test", f.DataIntersectionOf(["xsd:integer", f.DataOneOf([1, 2, 3])])),
+            f.DatatypeDefinition("a:Test", f.DataUnionOf(["xsd:integer", f.DataOneOf([f.l("a"), f.l("b")])])),
+            f.DatatypeDefinition("a:Test", f.DataUnionOf(["xsd:integer", "xsd:string"])),
+            f.DatatypeDefinition("a:Test", f.DataComplementOf("xsd:nonNegativeInteger")),
             f.SubClassOf(
                 f.ObjectSomeValuesFrom("a:ope1", "owl:Thing"), "a:ce1"
             ),  # 9.2.5 object property domain
