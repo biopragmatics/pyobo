@@ -133,7 +133,8 @@ class TestSection5(unittest.TestCase):
 class TestSection7(unittest.TestCase):
     """Test Section 7: Data Ranges."""
 
-    def test_it(self):
+    def test_data_ranges(self):
+        """Test data ranges."""
         expr = f.DataIntersectionOf(
             [
                 "xsd:nonNegativeInteger",
@@ -249,6 +250,7 @@ class TestSection9Axioms(unittest.TestCase):
     """Test Section 9: Axioms."""
 
     def test_subclass_of(self):
+        """Test subclass axioms."""
         expr = f.SubClassOf("a:Baby", "a:Child")
         self.assertEqual("SubClassOf( a:Baby a:Child )", expr.to_funowl())
 
@@ -264,13 +266,11 @@ class TestSection9Axioms(unittest.TestCase):
             "EquivalentClasses( a:Boy ObjectIntersectionOf( a:Child a:Man ) )", expr.to_funowl()
         )
 
-        with self.assertRaises(ValueError):
-            f.EquivalentClasses(["a:Boy"])
-
-    def test_disjoint_classes(self):
-        """Test disjoint class axioms."""
         expr = f.EquivalentClasses(["a:Boy", "a:Girl"])
         self.assertEqual("EquivalentClasses( a:Boy a:Girl )", expr.to_funowl())
+
+        with self.assertRaises(ValueError):
+            f.EquivalentClasses(["a:Boy"])
 
     def test_disjoint_union(self):
         """Test disjoint union axioms."""
@@ -287,6 +287,8 @@ class TestSection9Axioms(unittest.TestCase):
 
 
 class TestSection10(unittest.TestCase):
+    """Test Section 9: Annotations."""
+
     def test_annotation_assertion(self):
         """Test AnnotationAssertion."""
         expected = 'AnnotationAssertion( rdfs:label a:Person "Represents the set of all people." )'

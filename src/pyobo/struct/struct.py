@@ -751,11 +751,11 @@ class Term(Referenced):
 
         r = self.reference
         if self.type == "Term":
-            yield f.Declaration(r, dtype="Class")
+            yield f.Declaration(r, type="Class")
             for parent in self.parents:
                 yield f.SubClassOf(r, parent)
         else:
-            yield f.Declaration(r, dtype="NamedIndividual")
+            yield f.Declaration(r, type="NamedIndividual")
             for parent in self.parents:
                 yield f.ClassAssertion(r, parent)
         if self.name:
