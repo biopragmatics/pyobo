@@ -19,6 +19,7 @@ __all__ = [
     "Annotation",
     "AnnotationAssertion",
     "AnnotationAxiom",
+    "AnnotationProperty",
     "AnnotationPropertyDomain",
     "AnnotationPropertyRange",
     "Assertion",
@@ -2222,10 +2223,35 @@ class AnnotationAxiom(Axiom):  # 10.2
     """
 
 
+class AnnotationProperty(IdentifierBox):
+    """A wrapper around an identifier box with custom functionality."""
+
+    #: A set of built-in annotation properties that shouldn't be re-defined, since they
+    #: appear in Table 3 of https://www.w3.org/TR/owl2-syntax/#IRIs.
+    _SKIP: ClassVar[set[term.Node]] = {
+        OWL.backwardCompatibleWith,
+        OWL.deprecated,
+        OWL.incompatibleWith,
+        OWL.priorVersion,
+        OWL.versionInfo,
+        RDFS.comment,
+        RDFS.isDefinedBy,
+        RDFS.label,
+        RDFS.seeAlso,
+    }
+
+    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        node = super().to_rdflib_node(graph, converter)
+        if node in self._SKIP:
+            return node
+        graph.add((node, RDF.type, OWL.AnnotationProperty))
+        return node
+
+
 class AnnotationAssertion(AnnotationAxiom):  # 10.2.1
     """An annotation axiom defined in `10.2.1 Annotation Assertion <https://www.w3.org/TR/owl2-syntax/#Annotation_Assertion>`_."""
 
-    annotation_property: IdentifierBox
+    annotation_property: AnnotationProperty
     subject: IdentifierBox
     value: PrimitiveBox
 
@@ -2237,18 +2263,16 @@ class AnnotationAssertion(AnnotationAxiom):  # 10.2.1
         *,
         annotations: list[Annotation] | None = None,
     ) -> None:
-        self.annotation_property = IdentifierBox(annotation_property)
+        self.annotation_property = AnnotationProperty(annotation_property)
         self.subject = IdentifierBox(subject)
         self.value = _safe_primitive_box(value)
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
-        p = self.annotation_property.to_rdflib_node(graph, converter)
-        graph.add((p, RDF.type, OWL.AnnotationProperty))
         return _add_triple(
             graph,
             self.subject.to_rdflib_node(graph, converter),
-            p,
+            self.annotation_property.to_rdflib_node(graph, converter),
             self.value.to_rdflib_node(graph, converter),
             annotations=self.annotations,
             converter=converter,
@@ -2267,8 +2291,8 @@ class AnnotationAssertion(AnnotationAxiom):  # 10.2.1
 class SubAnnotationPropertyOf(AnnotationAxiom):  # 10.2.2
     """An annotation axiom defined in `10.2.2 Annotation Subproperties <https://www.w3.org/TR/owl2-syntax/#Annotation_Subproperties>`_."""
 
-    child: IdentifierBox
-    parent: IdentifierBox
+    child: AnnotationProperty
+    parent: AnnotationProperty
 
     def __init__(
         self,
@@ -2277,15 +2301,13 @@ class SubAnnotationPropertyOf(AnnotationAxiom):  # 10.2.2
         *,
         annotations: Annotations | None = None,
     ) -> None:
-        self.child = IdentifierBox(child)
-        self.parent = IdentifierBox(parent)
+        self.child = AnnotationProperty(child)
+        self.parent = AnnotationProperty(parent)
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
         s = self.child.to_rdflib_node(graph, converter)
         o = self.parent.to_rdflib_node(graph, converter)
-        graph.add((s, RDF.type, OWL.AnnotationProperty))
-        graph.add((o, RDF.type, OWL.AnnotationProperty))
         return _add_triple(graph, s, RDFS.subPropertyOf, o, self.annotations, converter=converter)
 
     def _funowl_inside_2(self) -> str:
@@ -2296,7 +2318,7 @@ class AnnotationPropertyTypingAxiom(AnnotationAxiom):
     """A helper class that defines shared functionality between annotation property domains and ranges."""
 
     property_type: ClassVar[term.URIRef]
-    annotation_property: IdentifierBox
+    annotation_property: AnnotationProperty
     value: PrimitiveBox
 
     def __init__(
@@ -2306,7 +2328,7 @@ class AnnotationPropertyTypingAxiom(AnnotationAxiom):
         *,
         annotations: Annotations | None = None,
     ) -> None:
-        self.annotation_property = IdentifierBox(annotation_property)
+        self.annotation_property = AnnotationProperty(annotation_property)
         self.value = _safe_primitive_box(value)
         super().__init__(annotations)
 

@@ -370,6 +370,7 @@ class TestRDF(unittest.TestCase):
                 annotations=[f.Annotation("dcterms:contributor", "orcid:0000-0003-4423-4370")],
             ),
             f.AnnotationAssertion("rdfs:label", "a:Dog", f.l("dog")),
+            f.AnnotationAssertion("a:ap1", "a:Dog", f.l("dog")),
             f.AnnotationPropertyRange("a:hasPet", "a:Pet"),
             f.AnnotationPropertyDomain("a:hasPet", "a:Person"),
             f.AsymmetricObjectProperty("a:hasParent"),
