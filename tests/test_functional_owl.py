@@ -202,6 +202,8 @@ class TestRDF(unittest.TestCase):
     def setUpClass(cls) -> None:
         """Set up the serialization test case."""
         cls.axiom_examples: list[f.Axiom] = [
+            f.ClassAssertion(f.DataHasValue("a:hasAge", 17), "a:Meg"),
+            f.ClassAssertion(f.DataHasValue("a:hasHairColor", f.l("brown")), "a:Meg"),
             f.EquivalentClasses(["a:Boy", "a:Girl"]),
             # do the griffin parent both ways to see if sorting is happening in ROBOT
             f.EquivalentClasses(["a:GriffinParent", f.ObjectOneOf(["a:Peter", "a:Lois"])]),

@@ -8,7 +8,7 @@ import subprocess
 import typing
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Sequence
-from typing import ClassVar, TypeAlias, TypeVar
+from typing import ClassVar, TypeAlias
 
 import curies
 import rdflib
@@ -117,9 +117,6 @@ def l(value) -> term.Literal:  # noqa:E743
     """Get a literal."""
     return term.Literal(value)
 
-
-X = TypeVar("X")
-XorList: TypeAlias = X | list[X]
 
 #: These are the literals that can be automatically converted to and from RDFLib
 SupportedLiterals: TypeAlias = int | float | bool | str | datetime.date | datetime.datetime
@@ -282,7 +279,7 @@ class IdentifierBox(Box):
             raise TypeError
 
     def to_funowl_args(self) -> str:
-        raise NotImplementedError
+        raise RuntimeError
 
 
 class LiteralBox(Box):
@@ -392,7 +389,7 @@ class Declaration(Box):
         return f"Declaration( {self.dtype}( {self.node.to_funowl()} ) )"
 
     def to_funowl_args(self) -> str:
-        raise NotImplementedError
+        raise RuntimeError
 
 
 """
@@ -1058,28 +1055,28 @@ class DataHasValue(_DataValuesFrom):
     """A class expression defined in `8.4.3 Literal Value Restriction <https://www.w3.org/TR/owl2-syntax/#Literal_Value_Restriction>`_."""
 
     property_type: ClassVar[term.URIRef] = OWL.hasValue
-    data_property_expressions: Sequence[DataPropertyExpression]
+    data_property_expression: DataPropertyExpression
     literal: LiteralBox
 
     def __init__(
         self,
-        data_property_expressions: XorList[DataPropertyExpression | IdentifierBoxOrHint],
-        literal: term.Literal,
+        data_property_expression: DataPropertyExpression | IdentifierBoxOrHint,
+        literal: LiteralBoxOrHint,
     ) -> None:
-        if isinstance(data_property_expressions, DataPropertyExpression | IdentifierBoxOrHint):
-            data_property_expressions = [data_property_expressions]
-        self.data_property_expressions = [
-            DataPropertyExpression.safe(dpe) for dpe in data_property_expressions
-        ]
+        self.data_property_expression = DataPropertyExpression.safe(data_property_expression)
         self.literal = LiteralBox(literal)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
-        # TODO reuse from _DataValuesFrom
-        raise NotImplementedError
+        node = term.BNode()
+        graph.add((node, RDF.type, OWL.Restriction))
+        graph.add((node, OWL.hasValue, self.literal.to_rdflib_node(graph, converter)))
+        graph.add(
+            (node, OWL.onProperty, self.data_property_expression.to_rdflib_node(graph, converter))
+        )
+        return node
 
     def to_funowl_args(self) -> str:
-        first = _list_to_funowl(self.data_property_expressions)
-        return f"{first} {self.literal.to_funowl()}"
+        return f"{self.data_property_expression.to_funowl()} {self.literal.to_funowl()}"
 
 
 class _DataCardinality(_Cardinality):
