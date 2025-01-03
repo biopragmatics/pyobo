@@ -12,7 +12,7 @@ import unittest
 
 import rdflib
 from curies import Converter, Reference
-from rdflib import OWL, RDF, Graph, Namespace, compare, term
+from rdflib import OWL, RDF, RDFS, Graph, Namespace, compare, term
 
 from pyobo.struct.functional import dsl as f
 from pyobo.struct.functional.dsl import (
@@ -352,12 +352,41 @@ class TestMiscellaneous(unittest.TestCase):
         self.assertNotEqual(RDF.nil, rv2)
 
         g3 = Graph()
-        rv3 = _make_sequence_nodes(g3, [ex["1"], ex["2"]], type_connector_nodes=True)
+        input_list = [ex["1"], ex["2"], ex["3"]]
+        rv3 = _make_sequence_nodes(g3, input_list, type_connector_nodes=True)
         self.assertNotEqual(RDF.nil, rv3)
-        self.assertEqual(2, len(list(_yield_connector_nodes(g3, rv3))))
+        self.assertEqual(len(input_list), len(list(_yield_connector_nodes(g3, rv3))))
+
+    def test_passthrough(self) -> None:
+        """Test passthrough."""
+        sdpe = SimpleDataPropertyExpression(OWL.topDataProperty)
+        sdpe2 = f.DataPropertyExpression.safe(sdpe)
+        self.assertIsInstance(sdpe2, SimpleDataPropertyExpression)
+        self.assertEqual(OWL.topDataProperty, sdpe2.identifier)
 
     def test_creation_skip(self) -> None:
-        """Test."""
+        """Test skipping of declaration on builtins."""
+        converter = Converter([])
+
+        graph = Graph()
+        spe = SimpleDataPropertyExpression(OWL.topDataProperty)
+        spe.to_rdflib_node(graph, converter)
+        self.assertNotIn((OWL.topDataProperty, RDF.type, OWL.DataRange), graph)
+
+        graph2 = Graph()
+        ope = f.SimpleObjectPropertyExpression(OWL.topObjectProperty)
+        ope.to_rdflib_node(graph2, converter)
+        self.assertNotIn((OWL.topObjectProperty, RDF.type, OWL.ObjectProperty), graph2)
+
+        graph3 = Graph()
+        ap = f.AnnotationProperty(RDFS.label)
+        ap.to_rdflib_node(graph3, converter)
+        self.assertNotIn((RDFS.label, RDF.type, OWL.AnnotationProperty), graph3)
+
+        graph4 = Graph()
+        ce = f.SimpleClassExpression(OWL.Thing)
+        ce.to_rdflib_node(graph4, converter)
+        self.assertNotIn((OWL.Thing, RDF.type, OWL.Class), graph4)
 
 
 class TestRDF(unittest.TestCase):
