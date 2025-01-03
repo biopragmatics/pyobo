@@ -168,6 +168,8 @@ class LiteralBox(Box):
 
     def __init__(self, literal: LiteralBoxOrHint) -> None:
         """Initialize the literal box with a RDFlib literal or Python primitive.."""
+        if literal is None:
+            raise ValueError
         if isinstance(literal, LiteralBox):
             self.literal = literal.literal
         elif isinstance(literal, term.Literal):
@@ -191,10 +193,13 @@ class LiteralBox(Box):
                 return f'"{literal.value}"@{literal.language}'
             else:
                 return f'"{literal.value}"'
-        if literal.datatype.startswith(XSD._NS):
+
+        # try to contract XSD URIs
+        if str(literal.datatype).startswith(str(XSD._NS)):
             v = literal.datatype.removeprefix(XSD._NS)
             return f'"{literal.value}"^^xsd:{v}'
-        raise NotImplementedError(f"Not implemented for type: {literal.datatype}")
+
+        return f'"{literal.value}"^^{literal.datatype}'
 
     def to_funowl_args(self) -> str:  # pragma: no cover
         """Get the inside of the functional OWL tag representing the literal (unused)."""

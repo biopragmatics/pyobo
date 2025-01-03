@@ -141,6 +141,12 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
+        self.assert_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            """,
+            term.iterate_funowl_lines(),
+        )
 
     def test_term_with_name(self) -> None:
         """Test emitting properties."""
@@ -152,6 +158,13 @@ class TestTerm(unittest.TestCase):
             name: lysine dehydrogenase activity
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+        )
+        self.assert_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            """,
+            term.iterate_funowl_lines(),
         )
 
     def test_property_literal(self) -> None:
@@ -167,6 +180,14 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
+        self.assert_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( RO:1234567 GO:0050069 "value" )
+            """,
+            term.iterate_funowl_lines(),
+        )
 
     def test_property_integer(self) -> None:
         """Test emitting property literals that were annotated as a boolean."""
@@ -180,6 +201,14 @@ class TestTerm(unittest.TestCase):
             property_value: RO:1234567 "1234" xsd:integer
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( RO:1234567 GO:0050069 "1234"^^xsd:integer )
+            """,
+            term.iterate_funowl_lines(),
         )
 
     def test_property_bool(self) -> None:
@@ -195,6 +224,14 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
+        self.assert_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( RO:1234567 GO:0050069 "True"^^xsd:boolean )
+            """,
+            term.iterate_funowl_lines(),
+        )
 
     def test_property_year(self) -> None:
         """Test emitting property literals that were annotated as a year."""
@@ -208,6 +245,15 @@ class TestTerm(unittest.TestCase):
             property_value: RO:1234567 "1993" xsd:gYear
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( RO:1234567 GO:0050069 "1993-01-01"^^xsd:gYear )
+            """,
+            term.iterate_funowl_lines(),
+            # FIXME gYear exported wrong, might be issue in rdflib itself
         )
 
     def test_property_object(self) -> None:
@@ -225,9 +271,9 @@ class TestTerm(unittest.TestCase):
         )
         self.assert_lines(
             """\
-            Declaration( Class( go:0050069 ) )
-            AnnotationAssertion( rdfs:label go:0050069 "lysine dehydrogenase activity" )
-            AnnotationAssertion( ro:1234567 go:0050069 hgnc:123 )
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( RO:1234567 GO:0050069 hgnc:123 )
             """,
             term.iterate_funowl_lines(),
         )
@@ -245,6 +291,14 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
+        self.assert_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            SubClassOf( GO:0050069 ObjectSomeValuesFrom( RO:1234567 eccode:1.4.1.15 ) )
+            """,
+            term.iterate_funowl_lines(),
+        )
 
     def test_xref(self) -> None:
         """Test emitting a relationship."""
@@ -258,6 +312,14 @@ class TestTerm(unittest.TestCase):
             xref: eccode:1.4.1.15
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( oboInOwl:hasDbXref GO:0050069 eccode:1.4.1.15 )
+            """,
+            term.iterate_funowl_lines(),
         )
 
         ontology = _ontology_from_term("go", term)
