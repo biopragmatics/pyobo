@@ -5,7 +5,8 @@ to functional OWL that reflect common usage.
 """
 
 import typing as t
-from typing import TypeAlias, Sequence
+from collections.abc import Sequence
+from typing import TypeAlias
 
 import rdflib
 from curies import Converter, Reference
@@ -125,7 +126,6 @@ class OBONamespaceMacro(StringMacro):
     annotation_property = Reference(prefix="oboInOwl", identifier="hasOBONamespace")
 
 
-
 class ObjectAnnotationMacro(Macro):
     """A macro for annotation properties."""
 
@@ -140,6 +140,7 @@ class AltMacro(ObjectAnnotationMacro):
     """A macro for alternate ID assertion."""
 
     annotation_property = Reference(prefix="IAO", identifier="0000118")
+
 
 class ReplacedByMacro(ObjectAnnotationMacro):
     """A macro for replaced by assertion."""
@@ -195,7 +196,6 @@ class OBOIsClassLevelMacro(TrueAnnotationMacro):
     """A macro for OBO "is class level" assertion."""
 
     annotation_property = Reference(prefix="oboInOwl", identifier="is_class_level")
-
 
 
 class IsObsoleteMacro(TrueAnnotationMacro):
@@ -320,6 +320,7 @@ class XrefMacro(MappingMacro):
 class HoldsOverChain(Macro):
     def __init__(self, predicate: f.IdentifierBoxOrHint, chain: Sequence[f.IdentifierBoxOrHint]):
         super().__init__(f.SubObjectPropertyOf(f.ObjectPropertyChain(chain), predicate))
+
 
 class TransitiveOver(HoldsOverChain):
     def __init__(self, predicate: f.IdentifierBoxOrHint, target: f.IdentifierBoxOrHint):
