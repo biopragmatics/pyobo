@@ -346,6 +346,34 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
+        self.assert_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            SubClassOf( GO:0050069 GO:1234568 )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            """,
+            term.iterate_funowl_lines(),
+        )
+
+    def test_instance_of(self) -> None:
+        """Test an instance with a class assertion."""
+        term = Term(reference=default_reference("go", "example"), type="Instance")
+        term.append_parent(LYSINE_DEHYDROGENASE_ACT)
+        self.assert_lines(
+            """\
+            [Instance]
+            id: example
+            instance_of: GO:0050069 ! lysine dehydrogenase activity
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_lines(
+            """\
+            Declaration( NamedIndividual( obo:go#example ) )
+            ClassAssertion( obo:go#example GO:0050069 )
+            """,
+            term.iterate_funowl_lines(),
+        )
 
     def test_append_exact_match(self) -> None:
         """Test emitting a relationship."""

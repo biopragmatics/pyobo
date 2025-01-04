@@ -5,7 +5,7 @@ to functional OWL that reflect common usage.
 """
 
 import typing as t
-from typing import TypeAlias
+from typing import TypeAlias, Sequence
 
 import rdflib
 from curies import Converter, Reference
@@ -16,6 +16,7 @@ from pyobo.struct.functional import dsl as f
 __all__ = [
     "AltMacro",
     "DescriptionMacro",
+    "IsAnonymousMacro",
     "IsObsoleteMacro",
     "LabelMacro",
     "MappingMacro",
@@ -103,33 +104,110 @@ class LabelMacro(StringMacro):
     'AnnotationAssertion( rdfs:label hgnc:16793 "RAET1E"@en )'
     """
 
-    annotation_property: t.ClassVar[Reference] = Reference(prefix="rdfs", identifier="label")
+    annotation_property = Reference(prefix="rdfs", identifier="label")
 
 
 class DescriptionMacro(StringMacro):
     """A macro for description assertion."""
 
-    annotation_property: t.ClassVar[Reference] = Reference(
-        prefix="dcterms", identifier="description"
-    )
+    annotation_property = Reference(prefix="dcterms", identifier="description")
 
 
-class AltMacro(Macro):
+class CommentMacro(StringMacro):
+    """A macro for description assertion."""
+
+    annotation_property = Reference(prefix="rdfs", identifier="comment")
+
+
+class OBONamespaceMacro(StringMacro):
+    """A macro for OBO namespace assertion."""
+
+    annotation_property = Reference(prefix="oboInOwl", identifier="hasOBONamespace")
+
+
+
+class ObjectAnnotationMacro(Macro):
+    """A macro for annotation properties."""
+
+    annotation_property: t.ClassVar[Reference]
+
+    def __init__(self, subject: f.IdentifierBoxOrHint, target: f.IdentifierBoxOrHint) -> None:
+        """Instatitate the annotation assertion macro."""
+        super().__init__(f.AnnotationAssertion(self.annotation_property, subject, target))
+
+
+class AltMacro(ObjectAnnotationMacro):
     """A macro for alternate ID assertion."""
 
-    predicate: t.ClassVar[Reference] = Reference(prefix="IAO", identifier="0000118")
+    annotation_property = Reference(prefix="IAO", identifier="0000118")
 
-    def __init__(self, s: f.IdentifierBoxOrHint, alt: f.IdentifierBoxOrHint) -> None:
-        """Instatitate the alternate identifier assertion macro."""
-        super().__init__(f.AnnotationAssertion(self.predicate, s, alt))
+class ReplacedByMacro(ObjectAnnotationMacro):
+    """A macro for replaced by assertion."""
+
+    annotation_property = Reference(prefix="IAO", identifier="0100001")
 
 
-class IsObsoleteMacro(Macro):
+class OBOConsiderMacro(ObjectAnnotationMacro):
+    """A macro for OBO consider assertion."""
+
+    annotation_property = Reference(prefix="oboInOwl", identifier="consider")
+
+
+class OBOIsSubsetMacro(ObjectAnnotationMacro):
+    """A macro for OBO "in subset" assertion."""
+
+    annotation_property = Reference(prefix="oboInOwl", identifier="inSubset")
+
+
+class BooleanAnnotationMacro(Macro):
+    """A macro for an annotation assertion with a boolean as its object."""
+
+    annotation_property: t.ClassVar[Reference]
+
+    def __init__(self, subject: f.IdentifierBoxOrHint, value: bool) -> None:
+        """Instatitate the annotation assertion macro."""
+        super().__init__(
+            f.AnnotationAssertion(self.annotation_property, subject, f.LiteralBox(value))
+        )
+
+
+class TrueAnnotationMacro(BooleanAnnotationMacro):
+    """A macro for an annotation assertion with a True boolean as its object."""
+
+    def __init__(self, subject: f.IdentifierBoxOrHint) -> None:
+        """Instatitate the is anonymous assertion macro."""
+        super().__init__(subject, True)
+
+
+class IsAnonymousMacro(TrueAnnotationMacro):
+    """A macro for an "is anonymous" assertion."""
+
+    annotation_property = Reference(prefix="oboInOwl", identifier="is_anonymous")
+
+
+class IsOBOBuiltinMacro(TrueAnnotationMacro):
+    """A macro for an "builtin" assertion."""
+
+    annotation_property = Reference(prefix="oboInOwl", identifier="builtin")
+
+
+class OBOIsClassLevelMacro(TrueAnnotationMacro):
+    """A macro for OBO "is class level" assertion."""
+
+    annotation_property = Reference(prefix="oboInOwl", identifier="is_class_level")
+
+
+
+class IsObsoleteMacro(TrueAnnotationMacro):
     """A macro for obsoletion assertion."""
 
-    def __init__(self, s: f.IdentifierBoxOrHint) -> None:
-        """Instatitate the is obsolete assertion macro."""
-        raise NotImplementedError
+    annotation_property = Reference(prefix="owl", identifier="deprecated")
+
+
+class IsCyclic(TrueAnnotationMacro):
+    """A macro for "is cyclic" assertion."""
+
+    annotation_property = Reference(prefix="oboInOwl", identifier="is_cyclic")
 
 
 SynonymScope: TypeAlias = t.Literal["exact", "broad", "narrow"]
@@ -237,3 +315,12 @@ class XrefMacro(MappingMacro):
     ) -> None:
         """Instatitate the database cross-reference annotation assertion macro."""
         super().__init__(subject=subject, predicate="oboInOwl:hasDbXref", target=target, **kwargs)
+
+
+class HoldsOverChain(Macro):
+    def __init__(self, predicate: f.IdentifierBoxOrHint, chain: Sequence[f.IdentifierBoxOrHint]):
+        super().__init__(f.SubObjectPropertyOf(f.ObjectPropertyChain(chain), predicate))
+
+class TransitiveOver(HoldsOverChain):
+    def __init__(self, predicate: f.IdentifierBoxOrHint, target: f.IdentifierBoxOrHint):
+        super().__init__(predicate, [predicate, target])
