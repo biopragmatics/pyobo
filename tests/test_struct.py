@@ -114,6 +114,15 @@ class TestTerm(unittest.TestCase):
         """Assert the lines are equal."""
         self.assertEqual(dedent(text).strip(), "\n".join(lines).strip())
 
+    def assert_funowl_lines(self, text: str, term: Term) -> None:
+        """Assert functional OWL lines are equal."""
+        from pyobo.struct.functional.obo_to_functional import get_term_axioms
+
+        self.assert_lines(
+            text,
+            (x.to_funowl() for x in get_term_axioms(term)),
+        )
+
     def test_species(self) -> None:
         """Test setting and getting species."""
         term = Term(reference=Reference(prefix="hgnc", identifier="1234"))
@@ -138,11 +147,11 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
             Declaration( Class( GO:0050069 ) )
             """,
-            term.iterate_funowl_lines(),
+            term,
         )
 
     def test_term_with_name(self) -> None:
@@ -156,12 +165,12 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
             Declaration( Class( GO:0050069 ) )
             AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
             """,
-            term.iterate_funowl_lines(),
+            term,
         )
 
     def test_property_literal(self) -> None:
@@ -177,13 +186,13 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
             Declaration( Class( GO:0050069 ) )
             AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
             AnnotationAssertion( RO:1234567 GO:0050069 "value" )
             """,
-            term.iterate_funowl_lines(),
+            term,
         )
 
     def test_property_integer(self) -> None:
@@ -199,13 +208,13 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
             Declaration( Class( GO:0050069 ) )
             AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
             AnnotationAssertion( RO:1234567 GO:0050069 "1234"^^xsd:integer )
             """,
-            term.iterate_funowl_lines(),
+            term,
         )
 
     def test_property_bool(self) -> None:
@@ -221,13 +230,13 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
             Declaration( Class( GO:0050069 ) )
             AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
             AnnotationAssertion( RO:1234567 GO:0050069 "True"^^xsd:boolean )
             """,
-            term.iterate_funowl_lines(),
+            term,
         )
 
     def test_property_year(self) -> None:
@@ -243,13 +252,13 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
             Declaration( Class( GO:0050069 ) )
             AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
             AnnotationAssertion( RO:1234567 GO:0050069 "1993-01-01"^^xsd:gYear )
             """,
-            term.iterate_funowl_lines(),
+            term,
             # FIXME gYear exported wrong, might be issue in rdflib itself
         )
 
@@ -266,13 +275,13 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
             Declaration( Class( GO:0050069 ) )
             AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
             AnnotationAssertion( RO:1234567 GO:0050069 hgnc:123 )
             """,
-            term.iterate_funowl_lines(),
+            term,
         )
 
     def test_relation(self) -> None:
@@ -288,13 +297,13 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
             Declaration( Class( GO:0050069 ) )
             AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
             SubClassOf( GO:0050069 ObjectSomeValuesFrom( RO:1234567 eccode:1.4.1.15 ) )
             """,
-            term.iterate_funowl_lines(),
+            term,
         )
 
     def test_xref(self) -> None:
@@ -310,13 +319,13 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
             Declaration( Class( GO:0050069 ) )
             AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
             AnnotationAssertion( oboInOwl:hasDbXref GO:0050069 eccode:1.4.1.15 )
             """,
-            term.iterate_funowl_lines(),
+            term,
         )
 
         ontology = _ontology_from_term("go", term)
@@ -343,13 +352,13 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
             Declaration( Class( GO:0050069 ) )
             SubClassOf( GO:0050069 GO:1234568 )
             AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
             """,
-            term.iterate_funowl_lines(),
+            term,
         )
 
     def test_instance_of(self) -> None:
@@ -364,12 +373,12 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
             Declaration( NamedIndividual( obo:go#example ) )
             ClassAssertion( obo:go#example GO:0050069 )
             """,
-            term.iterate_funowl_lines(),
+            term,
         )
 
     def test_append_exact_match(self) -> None:

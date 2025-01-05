@@ -746,51 +746,6 @@ class Term(Referenced):
         for synonym in sorted(self.synonyms):
             yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
 
-    def iterate_funowl_lines(self) -> Iterable[str]:
-        """Iterate over the lines to write in an OFN file."""
-        for x in self.iterate_funowl_axioms():
-            yield x.to_funowl()
-
-    def iterate_funowl_axioms(self):
-        """Yield functional OWL axioms for this term."""
-        from rdflib import XSD, term
-
-        from pyobo.struct.functional import dsl as f
-        from pyobo.struct.functional import macros as m
-
-        s = f.IdentifierBox(self.reference.preferred_curie)
-        if self.type == "Term":
-            yield f.Declaration(s, type="Class")
-            for parent in self.parents:
-                yield f.SubClassOf(s, parent.preferred_curie)
-        else:
-            yield f.Declaration(s, type="NamedIndividual")
-            for parent in self.parents:
-                yield f.ClassAssertion(s, parent.preferred_curie)
-        if self.name:
-            yield m.LabelMacro(s, self.name)
-        if self.definition:
-            yield m.DescriptionMacro(s, self.definition)
-        for alt in self.alt_ids:
-            yield m.AltMacro(s, alt.preferred_curie)
-        # TODO add annotations for the following
-        for xref in self.xrefs:
-            yield m.XrefMacro(s, xref.preferred_curie)
-        for typedef, value in self.iterate_relations():
-            yield m.RelationshipMacro(s=s, p=typedef.preferred_curie, o=value.preferred_curie)
-        for typedef, values in self.annotations_object.items():
-            for value in values:
-                yield f.AnnotationAssertion(typedef.preferred_curie, s, value.preferred_curie)
-        for typedef, values in self.annotations_literal.items():
-            for value, dtype in values:
-                # make URIRef for datatype
-                if dtype.prefix == "xsd":
-                    datatype = XSD._NS.term(dtype.identifier)
-                else:
-                    raise NotImplementedError
-                literal = term.Literal(value, datatype=datatype)
-                yield f.AnnotationAssertion(typedef.preferred_curie, s, literal)
-
     def _emit_properties(
         self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:

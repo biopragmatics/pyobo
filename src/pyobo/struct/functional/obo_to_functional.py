@@ -6,20 +6,59 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 import curies
+from rdflib import XSD, Literal
 
 from pyobo.struct.functional import dsl as f
 from pyobo.struct.functional import macros as m
 
 if TYPE_CHECKING:
+    from pyobo.struct.struct import Term
     from pyobo.struct.typedef import TypeDef
 
 __all__ = [
+    "get_term_axioms",
     "get_typedef_axioms",
 ]
 
 
+def get_term_axioms(term: Term) -> Iterable[f.Box]:
+    """Iterate over functional OWL axioms for a term."""
+    s = f.IdentifierBox(term.reference.preferred_curie)
+    if term.type == "Term":
+        yield f.Declaration(s, type="Class")
+        for parent in term.parents:
+            yield f.SubClassOf(s, parent.preferred_curie)
+    else:
+        yield f.Declaration(s, type="NamedIndividual")
+        for parent in term.parents:
+            yield f.ClassAssertion(s, parent.preferred_curie)
+    if term.name:
+        yield m.LabelMacro(s, term.name)
+    if term.definition:
+        yield m.DescriptionMacro(s, term.definition)
+    for alt in term.alt_ids:
+        yield m.AltMacro(s, alt.preferred_curie)
+    # TODO add annotations for the following
+    for xref in term.xrefs:
+        yield m.XrefMacro(s, xref.preferred_curie)
+    for typedef, value in term.iterate_relations():
+        yield m.RelationshipMacro(s=s, p=typedef.preferred_curie, o=value.preferred_curie)
+    for typedef, values in term.annotations_object.items():
+        for value in values:
+            yield f.AnnotationAssertion(typedef.preferred_curie, s, value.preferred_curie)
+    for typedef, literal_values in term.annotations_literal.items():
+        for str_value, dtype in literal_values:
+            # make URIRef for datatype
+            if dtype.prefix == "xsd":
+                datatype = XSD._NS.term(dtype.identifier)
+            else:
+                raise NotImplementedError
+            literal = Literal(str_value, datatype=datatype)
+            yield f.AnnotationAssertion(typedef.preferred_curie, s, literal)
+
+
 def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
-    """Iterate over functional OWL axioms."""
+    """Iterate over functional OWL axioms for a typedef."""
     r = f.IdentifierBox(typedef.preferred_curie)
     # 40
     if typedef.is_metadata_tag:
