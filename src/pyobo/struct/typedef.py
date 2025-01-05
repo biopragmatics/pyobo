@@ -153,13 +153,6 @@ class TypeDef(Referenced):
         # have to re-define hash because of the @dataclass
         return hash((self.__class__, self.prefix, self.identifier))
 
-    def iterate_funowl_lines(self) -> Iterable[str]:
-        """Iterate over lines to write in an OFN file."""
-        from pyobo.struct.functional.obo_to_functional import get_typedef_axioms
-
-        for axiom in get_typedef_axioms(self):
-            yield axiom.to_funowl()
-
     def iterate_obo_lines(
         self,
         ontology_prefix: str,
