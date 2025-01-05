@@ -990,6 +990,8 @@ class _ObjectCardinality(_Cardinality):
 
     The three subclasses only differ by the qualified and unqualified
     ranges used.
+
+    .. image:: https://www.w3.org/TR/owl2-syntax/C_objectcardinality.gif
     """
 
     property_type: ClassVar[term.URIRef] = OWL.onClass
