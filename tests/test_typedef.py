@@ -450,12 +450,79 @@ class TestTypeDef(unittest.TestCase):
 
     def test_21_is_functional(self) -> None:
         """Test the ``is_functional`` tag."""
+        typedef = TypeDef(
+            reference=Reference(prefix="GO", identifier="0000000"), is_functional=True
+        )
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:0000000
+            is_functional: true
+            """,
+            typedef,
+        )
 
     def test_22_is_inverse_functional(self) -> None:
         """Test the ``is_inverse_functional`` tag."""
+        typedef = TypeDef(
+            reference=Reference(prefix="GO", identifier="0000000"), is_inverse_functional=True
+        )
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:0000000
+            is_inverse_functional: true
+            """,
+            typedef,
+        )
 
     def test_23_is_a(self) -> None:
         """Test the ``is_a`` tag."""
+        typedef = TypeDef(
+            reference=Reference(prefix="BFO", identifier="0000050", name="part of"),
+            parents=[Reference(prefix="RO", identifier="0002131", name="overlaps")],
+        )
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: BFO:0000050
+            name: part of
+            is_a: RO:0002131 ! overlaps
+            """,
+            typedef,
+        )
+        self.assert_funowl_lines(
+            """
+            Declaration( ObjectProperty( BFO:0000050 ) )
+            AnnotationAssertion( rdfs:label BFO:0000050 "part of" )
+            SubObjectPropertyOf( BFO:0000050 ro:0002131 )
+            """,
+            typedef,
+        )
+
+        typedef = TypeDef(
+            reference=Reference(prefix="skos", identifier="exactMatch", name="exact match"),
+            parents=[Reference(prefix="skos", identifier="closeMatch", name="close match")],
+            is_metadata_tag=True,
+        )
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: skos:exactMatch
+            name: exact match
+            is_a: skos:closeMatch ! close match
+            is_metadata_tag: true
+            """,
+            typedef,
+        )
+        self.assert_funowl_lines(
+            """
+            Declaration( AnnotationProperty( skos:exactMatch ) )
+            AnnotationAssertion( rdfs:label skos:exactMatch "exact match" )
+            SubAnnotationPropertyOf( skos:exactMatch skos:closeMatch )
+            """,
+            typedef,
+        )
 
     def test_24_intersection_of(self) -> None:
         """Test the ``intersection_-f`` tag."""
