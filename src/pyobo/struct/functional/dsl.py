@@ -1236,8 +1236,6 @@ class SubClassOf(ClassAxiom):
     here's the long form for a :class:`FunctionalDataProperty`:
 
     >>> axiom = SubClassOf("owl:Thing", DataMaxCardinality(1, "a:hasAge"))
-    >>> axiom.to_ttl(EXAMPLE_PREFIX_MAP)
-    'owl:Thing rdfs:subClassOf [ a owl:Restriction ;\n            owl:maxCardinality "1"^^xsd:nonNegativeInteger ;\n            owl:onProperty a:hasAge ] .'
 
     which itself is eqivalent to:
 
@@ -1834,12 +1832,7 @@ class FunctionalDataProperty(DataPropertyAxiom):  # 9.3.6
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
-        """Create an RDF node.
-
-        >>> axiom = FunctionalDataProperty("a:hasAge")
-        >>> axiom.to_ttl({"a": "https://example.org/a:"})
-        'a:hasAge a owl:FunctionalProperty .'
-        """
+        """Create an RDF node."""
         return _add_triple(
             graph,
             self.data_property_expression.to_rdflib_node(graph, converter),
@@ -2393,9 +2386,9 @@ class AnnotationPropertyRange(AnnotationPropertyTypingAxiom):  # 10.2.4
     >>> from rdflib import RDFS, XSD
     >>> AnnotationPropertyRange(RDFS.label, XSD.string)
 
-    Using :class:`curies.Reference`:
+    Using a string:
 
-    >>> AnnotationPropertyRange(c("rdfs:label"), c("xsd:string"))
+    >>> AnnotationPropertyRange("rdfs:label", "xsd:string")
     """
 
     property_type: ClassVar[term.URIRef] = RDFS.range

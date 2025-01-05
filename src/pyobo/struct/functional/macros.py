@@ -338,7 +338,7 @@ class TransitiveOver(HoldsOverChain):
     ``BFO:0000050`` (part of). This means that if X occurs in Y,
     and Y is a part of Z, then X occurs in Z.
 
-    >>> TransitiveOver("BFO:0000066", "BFO:0000050")
+    >>> TransitiveOver("BFO:0000066", "BFO:0000050").to_funowl()
     'SubObjectPropertyOf( ObjectPropertyChain( BFO:0000066 BFO:0000050 ) BFO:0000066 )'
 
     .. note:: This is a special case of :class:`HoldsOverChain`
@@ -347,3 +347,28 @@ class TransitiveOver(HoldsOverChain):
     def __init__(self, predicate: f.IdentifierBoxOrHint, target: f.IdentifierBoxOrHint):
         """Instantiate a "transitive over" macro."""
         super().__init__(predicate, [predicate, target])
+
+
+class DataPropertyMaxCardinality(Macro):
+    r"""A macro over :class:`DataMaxCardinality` that adds an axiom.
+
+    For example, each person can be annotated with a maximum of one age.
+    This can be represented as:
+
+    >>> DataPropertyMaxCardinality("a:hasAge", 1).to_funowl()
+    'SubClassOf( owl:Thing DataMaxCardinality( 1 a:hasAge ) )'
+    """
+
+    def __init__(
+        self,
+        data_property_expression: f.DataPropertyExpression | f.IdentifierBoxOrHint,
+        cardinality: int,
+    ):
+        super().__init__(
+            f.SubClassOf(
+                "owl:Thing",
+                f.DataMaxCardinality(
+                    cardinality=cardinality, data_property_expression=data_property_expression
+                ),
+            )
+        )

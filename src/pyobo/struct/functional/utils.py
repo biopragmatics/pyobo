@@ -39,13 +39,15 @@ class RDFNodeSerializable(ABC):
 
     def to_ttl(self, prefix_map: dict[str, str], *, output_prefixes: bool = False) -> str:
         """Output terse Turtle statements."""
-        return serialize_turtle([self], output_prefixes=output_prefixes, **prefix_map)
+        return serialize_turtle([self], output_prefixes=output_prefixes, prefix_map=prefix_map)
 
 
 EXAMPLE_ONTOLOGY_IRI = "https://example.org/example.ofn"
 
 
-def get_rdf_graph(axioms: Iterable[RDFNodeSerializable], prefix_map: str) -> rdflib.Graph:
+def get_rdf_graph(
+    axioms: Iterable[RDFNodeSerializable], prefix_map: dict[str, str]
+) -> rdflib.Graph:
     """Serialize axioms as an RDF graph."""
     graph = Graph()
     graph.add((term.URIRef(EXAMPLE_ONTOLOGY_IRI), RDF.type, OWL.Ontology))
@@ -65,7 +67,10 @@ def get_rdf_graph(axioms: Iterable[RDFNodeSerializable], prefix_map: str) -> rdf
 
 
 def serialize_turtle(
-    axioms: Iterable[RDFNodeSerializable], *, output_prefixes: bool = False, prefix_map: str
+    axioms: Iterable[RDFNodeSerializable],
+    *,
+    output_prefixes: bool = False,
+    prefix_map: dict[str, str],
 ) -> str:
     """Serialize axioms as turtle."""
     graph = get_rdf_graph(axioms, prefix_map=prefix_map)
