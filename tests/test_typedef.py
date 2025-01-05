@@ -6,9 +6,10 @@ from textwrap import dedent
 from typing import cast
 
 import bioregistry
+from curies import vocabulary as v
 
 from pyobo import Obo, Reference, default_reference
-from pyobo.struct.reference import CHARLIE, OBOLiteral
+from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import (
     Synonym,
     make_ad_hoc_ontology,
@@ -246,7 +247,7 @@ class TestTypeDef(unittest.TestCase):
         typedef = TypeDef(
             reference=REF,
             properties={
-                has_contributor.reference: [CHARLIE],
+                has_contributor.reference: [v.charlie],
                 has_inchi: [OBOLiteral("abc", Reference(prefix="xsd", identifier="string"))],
             },
         )

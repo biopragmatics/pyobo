@@ -193,7 +193,9 @@ def reference_escape(
     """Write a reference with default namespace removed."""
     if reference.prefix == "obo" and reference.identifier.startswith(f"{ontology_prefix}#"):
         return reference.identifier.removeprefix(f"{ontology_prefix}#")
-    rv = reference.preferred_curie
+    # get sneaky, to allow a variety of the base class from curies.Reference to
+    # the extended version in pyobo.Reference
+    rv = getattr(reference, "preferred_curie", reference.curie)
     if add_name_comment and reference.name:
         rv += f" ! {reference.name}"
     return rv
@@ -236,8 +238,6 @@ def _parse_identifier(
 unspecified_matching = Reference(
     prefix="semapv", identifier="UnspecifiedMatching", name="unspecified matching process"
 )
-
-CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370", name="Charles Tapley Hoyt")
 
 
 class OBOLiteral(NamedTuple):
