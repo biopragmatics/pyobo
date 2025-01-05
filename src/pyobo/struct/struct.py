@@ -111,7 +111,7 @@ class Synonym:
     name: str
 
     #: The specificity of the synonym
-    specificity: SynonymSpecificity = "EXACT"
+    specificity: SynonymSpecificity | None = None
 
     #: The type of synonym. Must be defined in OBO document!
     type: Reference = field(
@@ -129,7 +129,7 @@ class Synonym:
         return self._sort_key() < other._sort_key()
 
     def _sort_key(self) -> tuple[str, str, Reference]:
-        return self.name, self.specificity, self.type
+        return self.name, self.specificity or "EXACT", self.type
 
     def to_obo(
         self,
@@ -149,7 +149,7 @@ class Synonym:
         _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
         # TODO inherit specificity from typedef?
         # TODO validation of specificity against typedef
-        x = f'"{self._escape(self.name)}" {self.specificity}'
+        x = f'"{self._escape(self.name)}" {self.specificity or "EXACT"}'
         if self.type and self.type.pair != DEFAULT_SYNONYM_TYPE.pair:
             x = f"{x} {reference_escape(self.type, ontology_prefix=ontology_prefix)}"
         return f"{x} [{comma_separate_references(self.provenance)}]"
@@ -367,7 +367,7 @@ class Term(Referenced):
             synonym = Synonym(
                 synonym,
                 type=type,
-                specificity=specificity or "EXACT",
+                specificity=specificity,
                 provenance=provenance or [],
             )
         self.synonyms.append(synonym)

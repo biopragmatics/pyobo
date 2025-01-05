@@ -44,17 +44,13 @@ def iter_terms() -> Iterable[Term]:
     synonyms_df["reference"] = synonyms_df["reference"].map(
         lambda s: [Reference.from_curie_or_uri(s)] if pd.notna(s) and s != "?" else [],
     )
-    synonyms_df["specificity"] = synonyms_df["specificity"].map(
-        lambda s: "EXACT" if pd.isna(s) or s == "?" else s
-    )
-
     synonyms = multidict(
         (
             identifier,
             Synonym(
                 name=synonym,
                 provenance=provenance,
-                specificity=specificity,
+                specificity=None if pd.isna(specificity) or specificity == "?" else specificity,
             ),
         )
         for identifier, synonym, provenance, specificity in synonyms_df.values
