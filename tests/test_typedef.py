@@ -46,6 +46,15 @@ class TestTypeDef(unittest.TestCase):
         """Assert the lines are equal."""
         self.assertEqual(dedent(text).strip(), "\n".join(lines).strip())
 
+    def assert_funowl_lines(self, text: str, typedef: TypeDef) -> None:
+        """Assert functional OWL lines are equal."""
+        from pyobo.struct.functional.obo_to_functional import get_typedef_axioms
+
+        self.assert_lines(
+            text,
+            (x.to_funowl() for x in get_typedef_axioms(typedef)),
+        )
+
     def assert_obo_stanza(
         self, text: str, typedef: TypeDef, *, ontology_prefix: str = ONTOLOGY_PREFIX
     ) -> None:
@@ -65,11 +74,11 @@ class TestTypeDef(unittest.TestCase):
             """,
             object_property,
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
             Declaration( ObjectProperty( RO:0000087 ) )
             """,
-            object_property.iterate_funowl_lines(),
+            object_property,
         )
 
         annotation_property = TypeDef(
@@ -84,11 +93,11 @@ class TestTypeDef(unittest.TestCase):
             """,
             annotation_property,
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
             Declaration( AnnotationProperty( skos:exactMatch ) )
             """,
-            annotation_property.iterate_funowl_lines(),
+            annotation_property,
         )
 
     def test_2_is_anonymous(self) -> None:
@@ -128,12 +137,12 @@ class TestTypeDef(unittest.TestCase):
             """,
             typedef,
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
             Declaration( ObjectProperty( RO:0000087 ) )
             AnnotationAssertion( rdfs:label RO:0000087 "has role" )
             """,
-            typedef.iterate_funowl_lines(),
+            typedef,
         )
 
     def test_4_namespace(self) -> None:
@@ -178,12 +187,12 @@ class TestTypeDef(unittest.TestCase):
             """,
             typedef,
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             f"""\
             Declaration( ObjectProperty( RO:0000087 ) )
             AnnotationAssertion( dcterms:description RO:0000087 "{has_role.definition}" )
             """,
-            typedef.iterate_funowl_lines(),
+            typedef,
         )
 
     def test_7_comment(self) -> None:
@@ -198,12 +207,12 @@ class TestTypeDef(unittest.TestCase):
             """,
             typedef,
         )
-        self.assert_lines(
+        self.assert_funowl_lines(
             f"""\
             Declaration( ObjectProperty( RO:0000087 ) )
             AnnotationAssertion( rdfs:comment RO:0000087 "{comment}" )
             """,
-            typedef.iterate_funowl_lines(),
+            typedef,
         )
 
     def test_8_subset(self) -> None:
