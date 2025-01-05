@@ -125,8 +125,12 @@ class Synonym:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
 
-    def _sort_key(self) -> tuple[str, v.SynonymScope, Reference]:
-        return self.name, self.specificity or DEFAULT_SPECIFICITY, self.type.curie if self.type else ""
+    def _sort_key(self) -> tuple[str, v.SynonymScope, str]:
+        return (
+            self.name,
+            self.specificity or DEFAULT_SPECIFICITY,
+            self.type.curie if self.type else "",
+        )
 
     @property
     def predicate(self) -> curies.NamedReference:
