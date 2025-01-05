@@ -219,15 +219,15 @@ HAS_MAPPING_JUSTIFICATION = Reference.from_curie("sssom:has_mapping_justificatio
 class SynonymMacro(Macro):
     """A macro for synonym assertion.
 
-    >>> SynonymMacro("hgnc:16793", "EXACT", "ULBP4", synonym_type="OMO:0003008").to_funowl()
+    >>> SynonymMacro("hgnc:16793", "ULBP4", "EXACT", synonym_type="OMO:0003008").to_funowl()
     'AnnotationAssertion( Annotation( oboInOwl:hasSynonymType OMO:0003008 ) oboInOwl:hasExactSynonym hgnc:16793 "ULBP4" )'
     """
 
     def __init__(
         self,
         subject: f.IdentifierBoxOrHint,
-        scope: v.SynonymScope | f.IdentifierBoxOrHint,
         value: str | rdflib.Literal,
+        scope: v.SynonymScope | f.IdentifierBoxOrHint | None = None,
         *,
         language: str | None = None,
         annotations: f.Annotations | None = None,
@@ -238,6 +238,8 @@ class SynonymMacro(Macro):
             annotations = []
         if synonym_type is not None:
             annotations.append(f.Annotation(HAS_SYNONYM_TYPE, synonym_type))
+        if scope is None:
+            scope = "EXACT"
         if isinstance(scope, str) and scope.upper() in t.get_args(v.SynonymScope):
             scope = v.synonym_scopes[scope.upper()]  # type:ignore[index]
         super().__init__(

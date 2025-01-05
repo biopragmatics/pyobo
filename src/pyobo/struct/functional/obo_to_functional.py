@@ -22,8 +22,6 @@ __all__ = [
 
 def get_term_axioms(term: Term) -> Iterable[f.Box]:
     """Iterate over functional OWL axioms for a term."""
-    from pyobo.struct.struct import DEFAULT_SYNONYM_TYPE
-
     s = f.IdentifierBox(term.reference.preferred_curie)
     # 1 and 13
     if term.type == "Term":
@@ -57,9 +55,9 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
     for synonym in term.synonyms:
         yield m.SynonymMacro(
             s,
-            synonym.specificity,
             synonym.name,
-            synonym_type=synonym.type if synonym.type != DEFAULT_SYNONYM_TYPE else None,
+            scope=synonym.specificity,
+            synonym_type=synonym.type,
         )
     # 10
     # TODO add annotations for the following
@@ -101,8 +99,6 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
 
 def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     """Iterate over functional OWL axioms for a typedef."""
-    from pyobo.struct.struct import DEFAULT_SYNONYM_TYPE
-
     r = f.IdentifierBox(typedef.preferred_curie)
     # 40
     if typedef.is_metadata_tag:
@@ -134,9 +130,9 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     for synonym in typedef.synonyms:
         yield m.SynonymMacro(
             r,
-            synonym.specificity,
             synonym.name,
-            synonym_type=synonym.type if synonym.type != DEFAULT_SYNONYM_TYPE else None,
+            scope=synonym.specificity,
+            synonym_type=synonym.type,
         )
     # 10
     for xref in typedef.xrefs:
