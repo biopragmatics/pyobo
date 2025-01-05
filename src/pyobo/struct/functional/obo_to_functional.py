@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
+import curies
+
 from pyobo.struct.functional import dsl as f
 from pyobo.struct.functional import macros as m
 
@@ -56,7 +58,13 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     # 10
     for xref in typedef.xrefs:
         yield m.XrefMacro(r, f.IdentifierBox(xref.preferred_curie))
-    # 11 TODO properties
+    # 11
+    for predicate, values in typedef.properties.items():
+        for value in values:
+            if isinstance(value, curies.Reference):
+                yield f.AnnotationAssertion(r, predicate, value)
+            else:
+                raise NotImplementedError(f"not implemented to convert {value}")
     # 12
     if typedef.domain:
         if typedef.is_metadata_tag:
