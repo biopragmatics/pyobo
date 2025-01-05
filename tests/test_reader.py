@@ -884,7 +884,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("10*3.{copies}/mL", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertIsNone( synonym.type)
+        self.assertIsNone(synonym.type)
         self.assertEqual([], synonym.provenance)
         # TODO update this when adding annotation parsing!
         self.assertEqual([], synonym.annotations)
