@@ -230,8 +230,7 @@ class TypeDef(Referenced):
         if self.comment:
             yield f"comment: {self.comment}"
         # 8
-        for subset in self.subsets:
-            yield f"subset: {reference_escape(subset, ontology_prefix=ontology_prefix)}"
+        yield from _reference_list_tag("subset", self.subsets, ontology_prefix)
         # 9
         for synonym in self.synonyms:
             yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)

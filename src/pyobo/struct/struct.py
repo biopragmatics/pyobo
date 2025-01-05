@@ -31,6 +31,7 @@ from .reference import (
     OBOLiteral,
     Reference,
     Referenced,
+    _reference_list_tag,
     comma_separate_references,
     default_reference,
     get_obo_trailing_modifiers,
@@ -308,6 +309,7 @@ class Term(Referenced):
 
     builtin: bool | None = None
     is_anonymous: bool | None = None
+    subsets: list[Reference] = field(default_factory=list)
 
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass
@@ -727,7 +729,7 @@ class Term(Referenced):
         if self.definition or self.provenance:
             yield f"def: {self._definition_fp()}"
         # 7 TODO comment
-        # 8 TODO subset
+        yield from _reference_list_tag("subset", self.subsets, ontology_prefix)
         # 9
         for synonym in sorted(self.synonyms):
             yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
