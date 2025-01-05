@@ -76,7 +76,7 @@ class RelationshipMacro(Macro):
 
 
 class StringMacro(Macro):
-    """A macro for label assertion."""
+    """A macro for string assertion."""
 
     annotation_property: t.ClassVar[rdflib.URIRef | Reference]
 
@@ -100,7 +100,7 @@ class StringMacro(Macro):
 
 
 class LabelMacro(StringMacro):
-    """A macro for label assertion.
+    """A macro for label string assertion.
 
     >>> LabelMacro("hgnc:16793", "RAET1E").to_funowl()
     'AnnotationAssertion( rdfs:label hgnc:16793 "RAET1E" )'
@@ -115,7 +115,7 @@ class LabelMacro(StringMacro):
 
 
 class DescriptionMacro(StringMacro):
-    """A macro for description assertion.
+    """A macro for description string assertion.
 
     >>> DescriptionMacro("hgnc:16793", "retinoic acid early transcript 1E").to_funowl()
     'AnnotationAssertion( dcterms:description hgnc:16793 "retinoic acid early transcript 1E" )'
@@ -125,13 +125,13 @@ class DescriptionMacro(StringMacro):
 
 
 class CommentMacro(StringMacro):
-    """A macro for description assertion."""
+    """A macro for comment string assertion."""
 
     annotation_property = Reference(prefix="rdfs", identifier="comment")
 
 
 class OBONamespaceMacro(StringMacro):
-    """A macro for OBO namespace assertion."""
+    """A macro for OBO namespace string assertion."""
 
     annotation_property = Reference(prefix="oboInOwl", identifier="hasOBONamespace")
 
@@ -219,6 +219,19 @@ HAS_MAPPING_JUSTIFICATION = Reference.from_curie("sssom:has_mapping_justificatio
 class SynonymMacro(Macro):
     """A macro for synonym assertion.
 
+    You can just make a quick assertion, which defaults to exact:
+
+    >>> SynonymMacro("hgnc:16793", "ULBP4").to_funowl()
+    'AnnotationAssertion( oboInOwl:hasExactSynonym hgnc:16793 "ULBP4" )'
+
+    You can make the predicate more explicit either with OBO-style
+    scoping (EXACT, BROAD, NARROW, CLOSE) or a CURIE/:class:`curies.Reference`/URIRef
+
+    >>> SynonymMacro("hgnc:16793", "ULBP4", "EXACT").to_funowl()
+    'AnnotationAssertion( oboInOwl:hasExactSynonym hgnc:16793 "ULBP4" )'
+
+    You can add a synonym type from OMO:
+
     >>> SynonymMacro("hgnc:16793", "ULBP4", "EXACT", synonym_type="OMO:0003008").to_funowl()
     'AnnotationAssertion( Annotation( oboInOwl:hasSynonymType OMO:0003008 ) oboInOwl:hasExactSynonym hgnc:16793 "ULBP4" )'
     """
@@ -239,8 +252,8 @@ class SynonymMacro(Macro):
         if synonym_type is not None:
             annotations.append(f.Annotation(HAS_SYNONYM_TYPE, synonym_type))
         if scope is None:
-            scope = "EXACT"
-        if isinstance(scope, str) and scope.upper() in t.get_args(v.SynonymScope):
+            scope = v.exact_match
+        elif isinstance(scope, str) and scope.upper() in t.get_args(v.SynonymScope):
             scope = v.synonym_scopes[scope.upper()]  # type:ignore[index]
         super().__init__(
             f.AnnotationAssertion(
@@ -340,14 +353,14 @@ class DataPropertyMaxCardinality(Macro):
     For example, each person can be annotated with a maximum of one age.
     This can be represented as:
 
-    >>> DataPropertyMaxCardinality("a:hasAge", 1).to_funowl()
+    >>> DataPropertyMaxCardinality(1, "a:hasAge").to_funowl()
     'SubClassOf( owl:Thing DataMaxCardinality( 1 a:hasAge ) )'
     """
 
     def __init__(
         self,
-        data_property_expression: f.DataPropertyExpression | f.IdentifierBoxOrHint,
         cardinality: int,
+        data_property_expression: f.DataPropertyExpression | f.IdentifierBoxOrHint,
     ):
         """Initialize a data property maximum cardinality macro."""
         super().__init__(

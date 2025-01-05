@@ -595,7 +595,7 @@ class TestRDF(unittest.TestCase):
             ),
             m.XrefMacro("a:0619dd9e", "a:00000137"),
             m.TransitiveOver("a:0000066", "a:0000050"),
-            m.DataPropertyMaxCardinality("a:hasAge", 1),
+            m.DataPropertyMaxCardinality(1, "a:hasAge"),
         ]
 
     def test_has_examples(self) -> None:
