@@ -190,7 +190,7 @@ class TestTerm(unittest.TestCase):
             """\
             Declaration( Class( GO:0050069 ) )
             AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-            AnnotationAssertion( RO:1234567 GO:0050069 "value" )
+            AnnotationAssertion( RO:1234567 GO:0050069 "value"^^xsd:string )
             """,
             term,
         )
@@ -234,7 +234,7 @@ class TestTerm(unittest.TestCase):
             """\
             Declaration( Class( GO:0050069 ) )
             AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-            AnnotationAssertion( RO:1234567 GO:0050069 "True"^^xsd:boolean )
+            AnnotationAssertion( RO:1234567 GO:0050069 "true"^^xsd:boolean )
             """,
             term,
         )
@@ -256,10 +256,9 @@ class TestTerm(unittest.TestCase):
             """\
             Declaration( Class( GO:0050069 ) )
             AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-            AnnotationAssertion( RO:1234567 GO:0050069 "1993-01-01"^^xsd:gYear )
+            AnnotationAssertion( RO:1234567 GO:0050069 "1993"^^xsd:gYear )
             """,
             term,
-            # FIXME gYear exported wrong, might be issue in rdflib itself
         )
 
     def test_property_object(self) -> None:
@@ -597,7 +596,7 @@ class TestTerm(unittest.TestCase):
                 term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
             )
         self.assertIn(
-            "WARNING:pyobo.struct.struct:[go] synonym typedef not defined: OMO:1234567", log.output
+            "WARNING:pyobo.struct.struct:[go] synonym typedef not defined: omo:1234567", log.output
         )
 
     def test_definition(self):

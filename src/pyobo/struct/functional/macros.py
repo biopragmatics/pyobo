@@ -175,48 +175,38 @@ class BooleanAnnotationMacro(Macro):
 
     annotation_property: t.ClassVar[Reference]
 
-    def __init__(self, subject: f.IdentifierBoxOrHint, value: bool) -> None:
-        """Instatitate the annotation assertion macro."""
+    def __init__(self, subject: f.IdentifierBoxOrHint, value: bool = True) -> None:
+        """Instatitate the annotation assertion macro, defaults to "true"."""
         super().__init__(
-            f.AnnotationAssertion(
-                self.annotation_property, subject, f.LiteralBox(str(value).lower())
-            )
+            f.AnnotationAssertion(self.annotation_property, subject, f.LiteralBox(value))
         )
 
 
-class TrueAnnotationMacro(BooleanAnnotationMacro):
-    """A macro for an annotation assertion with a True boolean as its object."""
-
-    def __init__(self, subject: f.IdentifierBoxOrHint) -> None:
-        """Instatitate the is anonymous assertion macro."""
-        super().__init__(subject, True)
-
-
-class IsAnonymousMacro(TrueAnnotationMacro):
+class IsAnonymousMacro(BooleanAnnotationMacro):
     """A macro for an "is anonymous" assertion."""
 
     annotation_property = Reference(prefix="oboInOwl", identifier="is_anonymous")
 
 
-class IsOBOBuiltinMacro(TrueAnnotationMacro):
+class IsOBOBuiltinMacro(BooleanAnnotationMacro):
     """A macro for an "builtin" assertion."""
 
     annotation_property = Reference(prefix="oboInOwl", identifier="builtin")
 
 
-class OBOIsClassLevelMacro(TrueAnnotationMacro):
+class OBOIsClassLevelMacro(BooleanAnnotationMacro):
     """A macro for OBO "is class level" assertion."""
 
     annotation_property = Reference(prefix="oboInOwl", identifier="is_class_level")
 
 
-class IsObsoleteMacro(TrueAnnotationMacro):
+class IsObsoleteMacro(BooleanAnnotationMacro):
     """A macro for obsoletion assertion."""
 
     annotation_property = Reference(prefix="owl", identifier="deprecated")
 
 
-class IsCyclic(TrueAnnotationMacro):
+class IsCyclic(BooleanAnnotationMacro):
     """A macro for "is cyclic" assertion."""
 
     annotation_property = Reference(prefix="oboInOwl", identifier="is_cyclic")

@@ -85,6 +85,8 @@ def list_to_funowl(
 ) -> str:
     """Serialize a list of objects as functional OWL, separated by space or other givne separator."""
     return sep.join(
-        element.to_funowl() if isinstance(element, FunctionalOWLSerializable) else element.curie
+        element.to_funowl()
+        if isinstance(element, FunctionalOWLSerializable)
+        else getattr(element, "preferred_curie", element.curie)
         for element in elements
     )

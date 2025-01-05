@@ -12,7 +12,7 @@ import unittest
 
 import rdflib
 from curies import Converter, Reference
-from rdflib import OWL, RDF, RDFS, Graph, Namespace, compare, term
+from rdflib import OWL, RDF, RDFS, XSD, Graph, Namespace, compare, term
 
 from pyobo.struct.functional import dsl as f
 from pyobo.struct.functional import macros as m
@@ -31,38 +31,42 @@ from pyobo.struct.functional.utils import get_rdf_graph
 class TestBox(unittest.TestCase):
     """Test boxes."""
 
+    @classmethod
+    def setUpClass(cls) -> None:
+        """Set up the class."""
+        cls.converter = Converter.from_prefix_map({"a": "https://example.org/a:"})
+
     def test_identifier_box(self) -> None:
         """Test the identifier box."""
-        converter = Converter.from_prefix_map({"a": "https://example.org/a:"})
         uri = term.URIRef("https://example.org/a:b")
 
         b1 = f.IdentifierBox("a:b")
         self.assertIsInstance(b1.identifier, Reference)
         self.assertEqual("a:b", b1.identifier.curie)
         self.assertEqual("a:b", b1.to_funowl())
-        self.assertEqual(uri, b1.to_rdflib_node(Graph(), converter))
+        self.assertEqual(uri, b1.to_rdflib_node(Graph(), self.converter))
 
         b2 = f.IdentifierBox(Reference.from_curie("a:b"))
         self.assertIsInstance(b2.identifier, Reference)
         self.assertEqual("a:b", b2.identifier.curie)
         self.assertEqual("a:b", b2.to_funowl())
-        self.assertEqual(uri, b2.to_rdflib_node(Graph(), converter))
+        self.assertEqual(uri, b2.to_rdflib_node(Graph(), self.converter))
 
         b4 = f.IdentifierBox(b1)
         self.assertIsInstance(b4.identifier, Reference)
         self.assertEqual("a:b", b4.identifier.curie)
         self.assertEqual("a:b", b4.to_funowl())
-        self.assertEqual(uri, b4.to_rdflib_node(Graph(), converter))
+        self.assertEqual(uri, b4.to_rdflib_node(Graph(), self.converter))
 
         b3 = f.IdentifierBox(RDF.type)
         self.assertIsInstance(b3.identifier, term.URIRef)
         self.assertEqual("<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>", b3.to_funowl())
-        self.assertEqual(RDF.type, b3.to_rdflib_node(Graph(), converter))
+        self.assertEqual(RDF.type, b3.to_rdflib_node(Graph(), self.converter))
 
         b5 = f.IdentifierBox(b3)
         self.assertIsInstance(b5.identifier, term.URIRef)
         self.assertEqual("<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>", b5.to_funowl())
-        self.assertEqual(RDF.type, b5.to_rdflib_node(Graph(), converter))
+        self.assertEqual(RDF.type, b5.to_rdflib_node(Graph(), self.converter))
 
         b6 = _safe_primitive_box(Reference.from_curie("a:b"))
         self.assertIsInstance(b6, IdentifierBox)
@@ -80,31 +84,47 @@ class TestBox(unittest.TestCase):
 
     def test_literal_box(self) -> None:
         """Test the literal box."""
-        graph = Graph()
-        converter = Converter([])
+        with self.assertRaises(TypeError):
+            f.LiteralBox(object())
 
         b1 = f.LiteralBox(1)
         self.assertEqual('"1"^^xsd:integer', b1.to_funowl())
-        self.assertEqual(term.Literal(1), b1.to_rdflib_node(graph, converter))
+        self.assertEqual(term.Literal(1), b1.to_rdflib_node(Graph(), self.converter))
 
         b2 = f.LiteralBox(term.Literal(1))
         self.assertEqual('"1"^^xsd:integer', b2.to_funowl())
-        self.assertEqual(term.Literal(1), b2.to_rdflib_node(graph, converter))
+        self.assertEqual(term.Literal(1), b2.to_rdflib_node(Graph(), self.converter))
 
         b3 = f.LiteralBox(b1)
         self.assertEqual('"1"^^xsd:integer', b3.to_funowl())
-        self.assertEqual(term.Literal(1), b3.to_rdflib_node(graph, converter))
+        self.assertEqual(term.Literal(1), b3.to_rdflib_node(Graph(), self.converter))
 
+    def test_literal_box_boolean(self) -> None:
+        """Test the literal box with booleans."""
         b4 = f.LiteralBox(True)
-        self.assertEqual('"True"^^xsd:boolean', b4.to_funowl())
-        self.assertEqual(term.Literal(True), b4.to_rdflib_node(graph, converter))
+        self.assertEqual('"true"^^xsd:boolean', b4.to_funowl())
+        literal = b4.to_rdflib_node(Graph(), self.converter)
+        self.assertIsInstance(literal, term.Literal)
+        self.assertEqual(XSD.boolean, literal.datatype)
+        self.assertEqual(term.Literal(True), literal)
 
+        b42 = f.LiteralBox(False)
+        self.assertEqual('"false"^^xsd:boolean', b42.to_funowl())
+        self.assertEqual(term.Literal(False), b42.to_rdflib_node(Graph(), self.converter))
+
+    def test_literal_box_with_language(self) -> None:
+        """Test the litereal box with language."""
         b5 = f.LiteralBox(term.Literal("hallo", lang="de"))
         self.assertEqual('"hallo"@de', b5.to_funowl())
-        self.assertEqual(term.Literal("hallo", lang="de"), b5.to_rdflib_node(graph, converter))
+        self.assertEqual(
+            term.Literal("hallo", lang="de"), b5.to_rdflib_node(Graph(), self.converter)
+        )
 
-        with self.assertRaises(TypeError):
-            f.LiteralBox(object())
+        b6 = f.LiteralBox("hallo", language="de")
+        self.assertEqual('"hallo"@de', b6.to_funowl())
+        self.assertEqual(
+            term.Literal("hallo", lang="de"), b6.to_rdflib_node(Graph(), self.converter)
+        )
 
 
 class TestSection5(unittest.TestCase):

@@ -19,6 +19,7 @@ from typing import Any, ClassVar, Literal, NamedTuple, TextIO, TypeAlias, overlo
 
 import bioregistry
 import click
+import curies
 import networkx as nx
 import pandas as pd
 from curies import ReferenceTuple
@@ -817,11 +818,13 @@ def _typedef_warn(
 
 
 #: A set of warnings, used to make sure we don't show the same one over and over
-_SYNONYM_TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
+_SYNONYM_TYPEDEF_WARNINGS: set[tuple[str, curies.Reference]] = set()
 
 
 def _synonym_typedef_warn(
-    prefix: str, predicate: Reference, synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef]
+    prefix: str,
+    predicate: curies.Reference,
+    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
 ) -> SynonymTypeDef | None:
     if predicate.pair == DEFAULT_SYNONYM_TYPE.pair:
         return DEFAULT_SYNONYM_TYPE
@@ -836,12 +839,12 @@ def _synonym_typedef_warn(
             # Throw our hands up in the air. By using `obo` as the prefix,
             # we already threw using "real" definitions out the window
             logger.warning(
-                f"[{prefix}] synonym typedef with OBO prefix not defined: {predicate.preferred_curie}."
+                f"[{prefix}] synonym typedef with OBO prefix not defined: {predicate.curie}."
                 f"\n\tThis might be because you used an unqualified prefix in an OBO file, "
                 f"which automatically gets an OBO prefix."
             )
         else:
-            logger.warning(f"[{prefix}] synonym typedef not defined: {predicate.preferred_curie}")
+            logger.warning(f"[{prefix}] synonym typedef not defined: {predicate.curie}")
     return None
 
 
