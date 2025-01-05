@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Any, NamedTuple
 
 import bioontologies.relations
 import bioontologies.upgrade
@@ -192,7 +193,9 @@ def reference_escape(
     """Write a reference with default namespace removed."""
     if reference.prefix == "obo" and reference.identifier.startswith(f"{ontology_prefix}#"):
         return reference.identifier.removeprefix(f"{ontology_prefix}#")
-    rv = reference.preferred_curie
+    # get sneaky, to allow a variety of the base class from curies.Reference to
+    # the extended version in pyobo.Reference
+    rv = getattr(reference, "preferred_curie", reference.curie)
     if add_name_comment and reference.name:
         rv += f" ! {reference.name}"
     return rv
@@ -235,3 +238,80 @@ def _parse_identifier(
 unspecified_matching = Reference(
     prefix="semapv", identifier="UnspecifiedMatching", name="unspecified matching process"
 )
+
+
+class OBOLiteral(NamedTuple):
+    """A tuple representing a property with a literal value."""
+
+    value: str
+    datatype: Reference
+
+
+AxiomsHint = Mapping[
+    tuple[Reference, Reference | OBOLiteral], Sequence[tuple[Reference, Reference | OBOLiteral]]
+]
+
+
+def iterate_obo_relations(
+    relations: Mapping[Reference, Sequence[Reference | OBOLiteral]],
+    annotations: AxiomsHint,
+    *,
+    ontology_prefix: str,
+) -> Iterable[str]:
+    """Iterate over relations/property values for OBO."""
+    for predicate, values in relations.items():
+        # TODO typedef warning: ``_typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)``
+        pc = reference_escape(predicate, ontology_prefix=ontology_prefix)
+        start = f"{pc} "
+        for value in values:
+            match value:
+                case OBOLiteral(dd, datatype):
+                    # TODO how to clean/escape value?
+                    end = f'"{dd}" {datatype.preferred_curie}'
+                    name = None
+                case curies.Reference():  # it's a reference
+                    end = reference_escape(value, ontology_prefix=ontology_prefix)
+                    name = value.name
+                case _:
+                    raise TypeError(f"got unexpected value: {values}")
+            end += get_obo_trailing_modifiers(
+                predicate, value, annotations, ontology_prefix=ontology_prefix
+            )
+            if predicate.name and name:
+                end += f" ! {predicate.name} {name}"
+            yield start + end
+
+
+def get_obo_trailing_modifiers(
+    p: Reference, o: Reference | OBOLiteral, axioms: AxiomsHint, *, ontology_prefix: str
+) -> str:
+    """Lookup then format a sequence of axioms for OBO trailing modifiers."""
+    if annotations := axioms.get((p, o), []):
+        return format_obo_trailing_modifiers(annotations, ontology_prefix=ontology_prefix)
+    return ""
+
+
+def format_obo_trailing_modifiers(
+    annotations: Sequence[tuple[Reference, Reference | OBOLiteral]], *, ontology_prefix: str
+) -> str:
+    """Format a sequence of axioms for OBO trailing modifiers.
+
+    :param annotations: A list of annnotations
+    :param ontology_prefix: The ontology prefix
+    :return: The trailing modifiers string
+
+    See https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.1.4
+    trailing modifiers can be both axioms and some other implementation-specific
+    things, so split up the place where axioms are put in here.
+    """
+    modifiers: list[tuple[str, str]] = []
+    for predicate, part in annotations:
+        ap_str = reference_escape(predicate, ontology_prefix=ontology_prefix)
+        match part:
+            case OBOLiteral(dd, _datatype):
+                ao_str = str(dd)
+            case _:  # it's a reference
+                ao_str = reference_escape(part, ontology_prefix=ontology_prefix)
+        modifiers.append((ap_str, ao_str))
+    inner = ", ".join(f"{key}={value}" for key, value in sorted(modifiers))
+    return " {" + inner + "}"
