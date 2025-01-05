@@ -138,13 +138,13 @@ class TestParseObonet(unittest.TestCase):
             (
                 Synonym(
                     name="LTEC I",
-                    specificity="EXACT",
+                    specificity=None,
                     provenance=[Reference(prefix="orphanet", identifier="93938")],
                 ),
                 '"LTEC I" [Orphanet:93938]',
             ),
             (
-                Synonym(name="LTEC I", specificity="EXACT"),
+                Synonym(name="LTEC I", specificity=None),
                 '"LTEC I" []',
             ),
             (
@@ -156,11 +156,11 @@ class TestParseObonet(unittest.TestCase):
                 '"HAdV-A" BROAD omo:0003012 []',
             ),
             (
-                Synonym(name="HAdV-A", specificity="EXACT", type=acronym.reference),
+                Synonym(name="HAdV-A", specificity=None, type=acronym.reference),
                 '"HAdV-A" OMO:0003012 []',
             ),
             (
-                Synonym(name="HAdV-A", specificity="EXACT", type=acronym.reference),
+                Synonym(name="HAdV-A", specificity=None, type=acronym.reference),
                 '"HAdV-A" omo:0003012 []',
             ),
         ]:
