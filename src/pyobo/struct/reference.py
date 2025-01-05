@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, NamedTuple
 
 import bioontologies.relations
@@ -240,39 +240,70 @@ unspecified_matching = Reference(
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370", name="Charles Tapley Hoyt")
 
 
-class LiteralX(NamedTuple):
+class OBOLiteral(NamedTuple):
     """A tuple representing a property with a literal value."""
 
     value: str
     datatype: Reference
 
 
+AxiomsHint = Mapping[
+    tuple[Reference, Reference | OBOLiteral], Sequence[tuple[Reference, Reference | OBOLiteral]]
+]
+
+
 def iterate_obo_relations(
-    tag: str,
-    relations: dict[Reference, list[Reference | LiteralX]],
-    annotations: dict[
-        tuple[Reference, Reference | LiteralX], list[tuple[Reference, Reference | LiteralX]]
-    ],
+    relations: Mapping[Reference, Sequence[Reference | OBOLiteral]],
+    annotations: AxiomsHint,
+    *,
     ontology_prefix: str,
 ) -> Iterable[str]:
     """Iterate over relations."""
     for predicate, values in relations.items():
+        # TODO typedef warning: ``_typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)``
         pc = reference_escape(predicate, ontology_prefix=ontology_prefix)
-        start = f"{tag}: {pc} "
+        start = f"{pc} "
         for value in values:
             match value:
-                case LiteralX(dd, datatype):
-                    end = f'"{obo_escape(dd)}" {datatype.curie}'
+                case OBOLiteral(dd, datatype):
+                    # TODO how to clean/escape value?
+                    end = f'"{dd}" {datatype.preferred_curie}'
                     name = None
-                case _:  # it's a reference
+                case curies.Reference():  # it's a reference
                     end = reference_escape(value, ontology_prefix=ontology_prefix)
                     name = value.name
-            if anns := annotations.get((predicate, value), []):
-                end += _format_axioms(anns)
+                case _:
+                    raise TypeError(f"got unexpected value: {values}")
+            end += get_trailing_modifiers(
+                predicate, value, annotations, ontology_prefix=ontology_prefix
+            )
             if predicate.name and name:
                 end += f" ! {predicate.name} {name}"
             yield start + end
 
 
-def _format_axioms(axioms: list[tuple[Reference, Reference | LiteralX]]) -> str:
-    raise NotImplementedError
+def get_trailing_modifiers(
+    p: Reference, o: Reference | OBOLiteral, axioms: AxiomsHint, *, ontology_prefix: str
+) -> str:
+    if annotations := axioms.get((p, o), []):
+        return format_axioms(annotations, ontology_prefix=ontology_prefix)
+    return ""
+
+
+def format_axioms(
+    annotations: Sequence[tuple[Reference, Reference | OBOLiteral]], *, ontology_prefix: str
+) -> str:
+    # See https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.1.4
+    # trailing modifiers can be both axioms and some other implementation-specific
+    # things, so split up the place where axioms are put in here
+    modifiers: list[tuple[str, str]] = []
+    for predicate, part in annotations:
+        ap_str = reference_escape(predicate, ontology_prefix=ontology_prefix)
+        match part:
+            case OBOLiteral(dd, _datatype):
+                ao_str = str(dd)
+            case _:  # it's a reference
+                ao_str = reference_escape(part, ontology_prefix=ontology_prefix)
+        modifiers.append((ap_str, ao_str))
+    inner = ", ".join(f"{key}={value}" for key, value in sorted(modifiers))
+    return " {" + inner + "}"

@@ -8,7 +8,7 @@ from typing import cast
 import bioregistry
 
 from pyobo import Obo, Reference, default_reference
-from pyobo.struct.reference import CHARLIE, LiteralX
+from pyobo.struct.reference import CHARLIE, OBOLiteral
 from pyobo.struct.struct import (
     Synonym,
     make_ad_hoc_ontology,
@@ -247,14 +247,14 @@ class TestTypeDef(unittest.TestCase):
             reference=REF,
             properties={
                 has_contributor.reference: [CHARLIE],
-                has_inchi: [LiteralX("abc", Reference(prefix="xsd", identifier="string"))],
+                has_inchi: [OBOLiteral("abc", Reference(prefix="xsd", identifier="string"))],
             },
         )
         self.assert_obo_stanza(
             """\
             [Typedef]
             id: RO:0000087
-            property_value: dcterms:contributor orcid:0000-0003-4423-4370
+            property_value: dcterms:contributor orcid:0000-0003-4423-4370 ! contributor Charles Tapley Hoyt
             property_value: debio:0000020 "abc" xsd:string
             """,
             typedef,

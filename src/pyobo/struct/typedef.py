@@ -12,7 +12,7 @@ from curies import ReferenceTuple
 from typing_extensions import Self
 
 from .reference import (
-    LiteralX,
+    OBOLiteral,
     Reference,
     Referenced,
     default_reference,
@@ -95,9 +95,9 @@ class TypeDef(Referenced):
     synonyms: Annotated[list[Synonym], 9] = field(default_factory=list)
     xrefs: Annotated[list[Reference], 10] = field(default_factory=list)
     annotations: dict[
-        tuple[Reference, Reference | LiteralX], list[tuple[Reference, Reference | LiteralX]]
+        tuple[Reference, Reference | OBOLiteral], list[tuple[Reference, Reference | OBOLiteral]]
     ] = field(default_factory=lambda: defaultdict(list))
-    properties: Annotated[dict[Reference, list[Reference | LiteralX]], 11] = field(
+    properties: Annotated[dict[Reference, list[Reference | OBOLiteral]], 11] = field(
         default_factory=lambda: defaultdict(list)
     )
     domain: Annotated[Reference | None, 12, "typedef-only"] = None
@@ -248,9 +248,15 @@ class TypeDef(Referenced):
         # 10
         yield from self._reference_list_tag("xref", self.xrefs, ontology_prefix)
         # 11
-        yield from iterate_obo_relations(
-            "property_value", self.properties, self.annotations, ontology_prefix=ontology_prefix
-        )
+        for line in iterate_obo_relations(
+            # the type checker seems to be a bit confused, this is an okay typing since we're
+            # passing a more explicit version. The issue is that list is used for the typing,
+            # which means it can't narrow properly
+            self.properties,  # type:ignore
+            self.annotations,
+            ontology_prefix=ontology_prefix,
+        ):
+            yield f"property_value: {line}"
         # 12
         if self.domain:
             yield f"domain: {reference_escape(self.domain, ontology_prefix=ontology_prefix, add_name_comment=True)}"
@@ -303,15 +309,15 @@ class TypeDef(Referenced):
         yield from self._chain_tag("equivalent_to_chain", self.equivalent_to_chain, ontology_prefix)
         # 31 TODO disjoint_over, see https://github.com/search?q=%22disjoint_over%3A%22+path%3A*.obo&type=code
         # 32
-        yield from iterate_obo_relations(
-            "relationship:",
+        for line in iterate_obo_relations(
             # the type checker seems to be a bit confused, this is an okay typing since we're
             # passing a more explicit version. The issue is that list is used for the typing,
             # which means it can't narrow properly
             self.relationships,  # type:ignore
             self.annotations,
             ontology_prefix=ontology_prefix,
-        )
+        ):
+            yield f"relationship: {line}"
         # 33
         yield from self._boolean_tag("is_obsolete", self.is_obsolete)
         # 34
