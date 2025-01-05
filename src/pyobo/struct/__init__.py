@@ -4,8 +4,6 @@ from .reference import Reference, Referenced, default_reference
 from .struct import (
     Obo,
     Synonym,
-    SynonymSpecificities,
-    SynonymSpecificity,
     SynonymTypeDef,
     Term,
     int_identifier_sort_key,
@@ -38,8 +36,6 @@ __all__ = [
     "Reference",
     "Referenced",
     "Synonym",
-    "SynonymSpecificities",
-    "SynonymSpecificity",
     "SynonymTypeDef",
     "Term",
     "TypeDef",

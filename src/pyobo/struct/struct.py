@@ -7,7 +7,6 @@ import json
 import logging
 import os
 import sys
-import typing
 import warnings
 from collections import ChainMap, defaultdict
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
@@ -24,7 +23,6 @@ import curies
 import networkx as nx
 import pandas as pd
 from curies import ReferenceTuple
-from curies.vocabulary import SynonymScope as SynonymSpecificity
 from curies import vocabulary as v
 from more_click import force_option, verbose_option
 from pydantic import BaseModel
@@ -79,8 +77,6 @@ __all__ = [
     "Obo",
     "ReferenceHint",
     "Synonym",
-    "SynonymSpecificities",
-    "SynonymSpecificity",
     "SynonymTypeDef",
     "Term",
     "abbreviation",
@@ -91,8 +87,6 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-#: .. warning:: This will be removed in a future version of PyOBO
-SynonymSpecificities: Sequence[v.SynonymScope] = typing.get_args(SynonymSpecificity)
 DEFAULT_SPECIFICITY: v.SynonymScope = "EXACT"
 
 #: Columns in the SSSOM dataframe
