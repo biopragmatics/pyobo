@@ -797,11 +797,11 @@ class Term(Referenced):
 
 
 #: A set of warnings, used to make sure we don't show the same one over and over
-_TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
+_TYPEDEF_WARNINGS: set[tuple[str, curies.Reference]] = set()
 
 
 def _typedef_warn(
-    prefix: str, predicate: Reference, typedefs: Mapping[ReferenceTuple, TypeDef]
+    prefix: str, predicate: curies.Reference, typedefs: Mapping[ReferenceTuple, TypeDef]
 ) -> None:
     if predicate.pair in default_typedefs or predicate.pair in typedefs:
         return None
@@ -839,16 +839,17 @@ def _synonym_typedef_warn(
     key = prefix, predicate
     if key not in _SYNONYM_TYPEDEF_WARNINGS:
         _SYNONYM_TYPEDEF_WARNINGS.add(key)
+        predicate_curie = getattr(predicate, "preferred_curie", predicate.curie)
         if predicate.prefix == "obo":
             # Throw our hands up in the air. By using `obo` as the prefix,
             # we already threw using "real" definitions out the window
             logger.warning(
-                f"[{prefix}] synonym typedef with OBO prefix not defined: {predicate.curie}."
+                f"[{prefix}] synonym typedef with OBO prefix not defined: {predicate_curie}."
                 f"\n\tThis might be because you used an unqualified prefix in an OBO file, "
                 f"which automatically gets an OBO prefix."
             )
         else:
-            logger.warning(f"[{prefix}] synonym typedef not defined: {predicate.curie}")
+            logger.warning(f"[{prefix}] synonym typedef not defined: {predicate_curie}")
     return None
 
 
