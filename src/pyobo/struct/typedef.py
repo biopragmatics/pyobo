@@ -15,10 +15,13 @@ from .reference import (
     OBOLiteral,
     Reference,
     Referenced,
+    _chain_tag,
+    _iterate_obo_relations,
+    _reference_list_tag,
     default_reference,
-    iterate_obo_relations,
     reference_escape,
 )
+from .utils import _boolean_tag
 from ..resources.ro import load_ro
 
 if TYPE_CHECKING:
@@ -71,10 +74,6 @@ __all__ = [
     "transcribes_to",
     "translates_to",
 ]
-
-
-def _bool_to_obo(v: bool) -> str:
-    return "true" if v else "false"
 
 
 @dataclass
@@ -153,13 +152,6 @@ class TypeDef(Referenced):
         # have to re-define hash because of the @dataclass
         return hash((self.__class__, self.prefix, self.identifier))
 
-    def iterate_funowl_lines(self) -> Iterable[str]:
-        """Iterate over lines to write in an OFN file."""
-        from pyobo.struct.functional.obo_to_functional import get_typedef_axioms
-
-        for axiom in get_typedef_axioms(self):
-            yield axiom.to_funowl()
-
     def iterate_obo_lines(
         self,
         ontology_prefix: str,
@@ -222,7 +214,7 @@ class TypeDef(Referenced):
         # 1
         yield f"id: {reference_escape(self.reference, ontology_prefix=ontology_prefix)}"
         # 2
-        yield from self._boolean_tag("is_anonymous", self.is_anonymous)
+        yield from _boolean_tag("is_anonymous", self.is_anonymous)
         # 3
         if self.name:
             yield f"name: {self.name}"
@@ -230,7 +222,7 @@ class TypeDef(Referenced):
         if self.namespace:
             yield f"namespace: {self.namespace}"
         # 5
-        yield from self._reference_list_tag("alt_id", self.alt_id, ontology_prefix)
+        yield from _reference_list_tag("alt_id", self.alt_id, ontology_prefix)
         # 6
         if self.definition:
             yield f'def: "{self.definition}"'
@@ -238,17 +230,14 @@ class TypeDef(Referenced):
         if self.comment:
             yield f"comment: {self.comment}"
         # 8
-        for subset in self.subsets:
-            yield f"subset: {reference_escape(subset, ontology_prefix=ontology_prefix)}"
+        yield from _reference_list_tag("subset", self.subsets, ontology_prefix)
         # 9
         for synonym in self.synonyms:
-            yield synonym.to_obo(
-                ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs or {}
-            )
+            yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
         # 10
-        yield from self._reference_list_tag("xref", self.xrefs, ontology_prefix)
+        yield from _reference_list_tag("xref", self.xrefs, ontology_prefix)
         # 11
-        for line in iterate_obo_relations(
+        for line in _iterate_obo_relations(
             # the type checker seems to be a bit confused, this is an okay typing since we're
             # passing a more explicit version. The issue is that list is used for the typing,
             # which means it can't narrow properly
@@ -264,25 +253,25 @@ class TypeDef(Referenced):
         if self.range:
             yield f"range: {reference_escape(self.range, ontology_prefix=ontology_prefix, add_name_comment=True)}"
         # 14
-        yield from self._boolean_tag("builtin", self.builtin)
+        yield from _boolean_tag("builtin", self.builtin)
         # 15
-        yield from self._chain_tag("holds_over_chain", self.holds_over_chain, ontology_prefix)
+        yield from _chain_tag("holds_over_chain", self.holds_over_chain, ontology_prefix)
         # 16
-        yield from self._boolean_tag("is_anti_symmetric", self.is_anti_symmetric)
+        yield from _boolean_tag("is_anti_symmetric", self.is_anti_symmetric)
         # 17
-        yield from self._boolean_tag("is_cyclic", self.is_cyclic)
+        yield from _boolean_tag("is_cyclic", self.is_cyclic)
         # 18
-        yield from self._boolean_tag("is_reflexive", self.is_reflexive)
+        yield from _boolean_tag("is_reflexive", self.is_reflexive)
         # 19
-        yield from self._boolean_tag("is_symmetric", self.is_symmetric)
+        yield from _boolean_tag("is_symmetric", self.is_symmetric)
         # 20
-        yield from self._boolean_tag("is_transitive", self.is_transitive)
+        yield from _boolean_tag("is_transitive", self.is_transitive)
         # 21
-        yield from self._boolean_tag("is_functional", self.is_functional)
+        yield from _boolean_tag("is_functional", self.is_functional)
         # 22
-        yield from self._boolean_tag("is_inverse_functional", self.is_inverse_functional)
+        yield from _boolean_tag("is_inverse_functional", self.is_inverse_functional)
         # 23
-        yield from self._reference_list_tag("is_a", self.parents, ontology_prefix)
+        yield from _reference_list_tag("is_a", self.parents, ontology_prefix)
         # 24
         for p in self.intersection_of:
             if isinstance(p, Reference):
@@ -293,23 +282,21 @@ class TypeDef(Referenced):
                     yv += " ! " + " ".join(x.name for x in p)  # type:ignore
             yield f"intersection_of: {yv}"
         # 25
-        yield from self._reference_list_tag("union_of", self.union_of, ontology_prefix)
+        yield from _reference_list_tag("union_of", self.union_of, ontology_prefix)
         # 26
-        yield from self._reference_list_tag("equivalent_to", self.equivalent_to, ontology_prefix)
+        yield from _reference_list_tag("equivalent_to", self.equivalent_to, ontology_prefix)
         # 27
-        yield from self._reference_list_tag("disjoint_from", self.disjoint_from, ontology_prefix)
+        yield from _reference_list_tag("disjoint_from", self.disjoint_from, ontology_prefix)
         # 28
         if self.inverse:
             yield f"inverse_of: {reference_escape(self.inverse, ontology_prefix=ontology_prefix, add_name_comment=True)}"
         # 29
-        yield from self._reference_list_tag(
-            "transitive_over", self.transitive_over, ontology_prefix
-        )
+        yield from _reference_list_tag("transitive_over", self.transitive_over, ontology_prefix)
         # 30
-        yield from self._chain_tag("equivalent_to_chain", self.equivalent_to_chain, ontology_prefix)
+        yield from _chain_tag("equivalent_to_chain", self.equivalent_to_chain, ontology_prefix)
         # 31 TODO disjoint_over, see https://github.com/search?q=%22disjoint_over%3A%22+path%3A*.obo&type=code
         # 32
-        for line in iterate_obo_relations(
+        for line in _iterate_obo_relations(
             # the type checker seems to be a bit confused, this is an okay typing since we're
             # passing a more explicit version. The issue is that list is used for the typing,
             # which means it can't narrow properly
@@ -319,7 +306,7 @@ class TypeDef(Referenced):
         ):
             yield f"relationship: {line}"
         # 33
-        yield from self._boolean_tag("is_obsolete", self.is_obsolete)
+        yield from _boolean_tag("is_obsolete", self.is_obsolete)
         # 34
         if self.created_by:
             yield f"created_by: {self.created_by}"
@@ -327,41 +314,15 @@ class TypeDef(Referenced):
         if self.creation_date is not None:
             yield f"creation_date: {self.creation_date.isoformat()}"
         # 36
-        yield from self._reference_list_tag("replaced_by", self.replaced_by, ontology_prefix)
+        yield from _reference_list_tag("replaced_by", self.replaced_by, ontology_prefix)
         # 37
-        yield from self._reference_list_tag(
-            "consider", self.consider, ontology_prefix=ontology_prefix
-        )
+        yield from _reference_list_tag("consider", self.consider, ontology_prefix=ontology_prefix)
         # 38 TODO expand_assertion_to
         # 39 TODO expand_expression_to
         # 40
-        yield from self._boolean_tag("is_metadata_tag", self.is_metadata_tag)
+        yield from _boolean_tag("is_metadata_tag", self.is_metadata_tag)
         # 41
-        yield from self._boolean_tag("is_class_level", self.is_class_level)
-
-    @staticmethod
-    def _chain_tag(tag: str, chain: list[Reference] | None, ontology_prefix: str) -> Iterable[str]:
-        if chain:
-            yv = f"{tag}: "
-            yv += " ".join(
-                reference_escape(reference, ontology_prefix=ontology_prefix) for reference in chain
-            )
-            if any(reference.name for reference in chain):
-                _names = " / ".join(link.name or "_" for link in chain)
-                yv += f" ! {_names}"
-            yield yv
-
-    @staticmethod
-    def _boolean_tag(tag: str, bv: bool | None) -> Iterable[str]:
-        if bv is not None:
-            yield f"{tag}: {_bool_to_obo(bv)}"
-
-    @staticmethod
-    def _reference_list_tag(
-        tag: str, references: list[Reference], ontology_prefix: str
-    ) -> Iterable[str]:
-        for reference in references:
-            yield f"{tag}: {reference_escape(reference, ontology_prefix=ontology_prefix, add_name_comment=True)}"
+        yield from _boolean_tag("is_class_level", self.is_class_level)
 
     @classmethod
     def from_triple(cls, prefix: str, identifier: str, name: str | None = None) -> TypeDef:

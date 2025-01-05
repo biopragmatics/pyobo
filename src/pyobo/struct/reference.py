@@ -252,7 +252,7 @@ AxiomsHint = Mapping[
 ]
 
 
-def iterate_obo_relations(
+def _iterate_obo_relations(
     relations: Mapping[Reference, Sequence[Reference | OBOLiteral]],
     annotations: AxiomsHint,
     *,
@@ -274,7 +274,7 @@ def iterate_obo_relations(
                     name = value.name
                 case _:
                     raise TypeError(f"got unexpected value: {values}")
-            end += get_obo_trailing_modifiers(
+            end += _get_obo_trailing_modifiers(
                 predicate, value, annotations, ontology_prefix=ontology_prefix
             )
             if predicate.name and name:
@@ -282,16 +282,16 @@ def iterate_obo_relations(
             yield start + end
 
 
-def get_obo_trailing_modifiers(
+def _get_obo_trailing_modifiers(
     p: Reference, o: Reference | OBOLiteral, axioms: AxiomsHint, *, ontology_prefix: str
 ) -> str:
     """Lookup then format a sequence of axioms for OBO trailing modifiers."""
     if annotations := axioms.get((p, o), []):
-        return format_obo_trailing_modifiers(annotations, ontology_prefix=ontology_prefix)
+        return _format_obo_trailing_modifiers(annotations, ontology_prefix=ontology_prefix)
     return ""
 
 
-def format_obo_trailing_modifiers(
+def _format_obo_trailing_modifiers(
     annotations: Sequence[tuple[Reference, Reference | OBOLiteral]], *, ontology_prefix: str
 ) -> str:
     """Format a sequence of axioms for OBO trailing modifiers.
@@ -315,3 +315,22 @@ def format_obo_trailing_modifiers(
         modifiers.append((ap_str, ao_str))
     inner = ", ".join(f"{key}={value}" for key, value in sorted(modifiers))
     return " {" + inner + "}"
+
+
+def _chain_tag(tag: str, chain: list[Reference] | None, ontology_prefix: str) -> Iterable[str]:
+    if chain:
+        yv = f"{tag}: "
+        yv += " ".join(
+            reference_escape(reference, ontology_prefix=ontology_prefix) for reference in chain
+        )
+        if any(reference.name for reference in chain):
+            _names = " / ".join(link.name or "_" for link in chain)
+            yv += f" ! {_names}"
+        yield yv
+
+
+def _reference_list_tag(
+    tag: str, references: list[Reference], ontology_prefix: str
+) -> Iterable[str]:
+    for reference in references:
+        yield f"{tag}: {reference_escape(reference, ontology_prefix=ontology_prefix, add_name_comment=True)}"
