@@ -23,6 +23,7 @@ import curies
 import networkx as nx
 import pandas as pd
 from curies import ReferenceTuple
+from curies import vocabulary as v
 from more_click import force_option, verbose_option
 from pydantic import BaseModel
 from tqdm.auto import tqdm
@@ -76,8 +77,6 @@ __all__ = [
     "Obo",
     "ReferenceHint",
     "Synonym",
-    "SynonymSpecificities",
-    "SynonymSpecificity",
     "SynonymTypeDef",
     "Term",
     "abbreviation",
@@ -88,8 +87,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-SynonymSpecificity = Literal["EXACT", "NARROW", "BROAD", "RELATED"]
-SynonymSpecificities: Sequence[SynonymSpecificity] = ("EXACT", "NARROW", "BROAD", "RELATED")
+DEFAULT_SPECIFICITY: v.SynonymScope = "EXACT"
 
 #: Columns in the SSSOM dataframe
 SSSOM_DF_COLUMNS = [
@@ -112,12 +110,10 @@ class Synonym:
     name: str
 
     #: The specificity of the synonym
-    specificity: SynonymSpecificity = "EXACT"
+    specificity: v.SynonymScope | None = None
 
     #: The type of synonym. Must be defined in OBO document!
-    type: Reference = field(
-        default_factory=lambda: DEFAULT_SYNONYM_TYPE.reference  # type:ignore
-    )
+    type: Reference | None = None
 
     #: References to articles where the synonym appears
     provenance: list[Reference] = field(default_factory=list)
@@ -129,8 +125,17 @@ class Synonym:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
 
-    def _sort_key(self) -> tuple[str, str, Reference]:
-        return self.name, self.specificity, self.type
+    def _sort_key(self) -> tuple[str, v.SynonymScope, str]:
+        return (
+            self.name,
+            self.specificity or DEFAULT_SPECIFICITY,
+            self.type.curie if self.type else "",
+        )
+
+    @property
+    def predicate(self) -> curies.NamedReference:
+        """Get the specificity reference."""
+        return v.synonym_scopes[self.specificity or DEFAULT_SPECIFICITY]
 
     def to_obo(
         self,
@@ -150,8 +155,8 @@ class Synonym:
         _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
         # TODO inherit specificity from typedef?
         # TODO validation of specificity against typedef
-        x = f'"{self._escape(self.name)}" {self.specificity}'
-        if self.type and self.type.pair != DEFAULT_SYNONYM_TYPE.pair:
+        x = f'"{self._escape(self.name)}" {self.specificity or DEFAULT_SPECIFICITY}'
+        if self.type is not None:
             x = f"{x} {reference_escape(self.type, ontology_prefix=ontology_prefix)}"
         return f"{x} [{comma_separate_references(self.provenance)}]"
 
@@ -165,7 +170,7 @@ class SynonymTypeDef(Referenced):
     """A type definition for synonyms in OBO."""
 
     reference: Reference
-    specificity: SynonymSpecificity | None = None
+    specificity: v.SynonymScope | None = None
 
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass
@@ -356,19 +361,17 @@ class Term(Referenced):
         synonym: str | Synonym,
         *,
         type: Reference | Referenced | None = None,
-        specificity: SynonymSpecificity | None = None,
+        specificity: v.SynonymScope | None = None,
         provenance: list[Reference] | None = None,
     ) -> None:
         """Add a synonym."""
-        if type is None:
-            type = DEFAULT_SYNONYM_TYPE.reference
-        elif isinstance(type, Referenced):
+        if isinstance(type, Referenced):
             type = type.reference
         if isinstance(synonym, str):
             synonym = Synonym(
                 synonym,
                 type=type,
-                specificity=specificity or "EXACT",
+                specificity=specificity,
                 provenance=provenance or [],
             )
         self.synonyms.append(synonym)
@@ -823,11 +826,11 @@ _SYNONYM_TYPEDEF_WARNINGS: set[tuple[str, curies.Reference]] = set()
 
 def _synonym_typedef_warn(
     prefix: str,
-    predicate: curies.Reference,
+    predicate: curies.Reference | None,
     synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
 ) -> SynonymTypeDef | None:
-    if predicate.pair == DEFAULT_SYNONYM_TYPE.pair:
-        return DEFAULT_SYNONYM_TYPE
+    if predicate is None or predicate.pair == DEFAULT_SYNONYM_TYPE.pair:
+        return None
     if predicate.pair in default_synonym_typedefs:
         return default_synonym_typedefs[predicate.pair]
     if predicate.pair in synonym_typedefs:

@@ -11,7 +11,7 @@ from pyobo import Obo, Reference, Term
 from pyobo.identifier_utils import UnparsableIRIError
 from pyobo.reader import from_obonet, get_first_nonescaped_quote
 from pyobo.struct import default_reference
-from pyobo.struct.struct import DEFAULT_SYNONYM_TYPE, abbreviation
+from pyobo.struct.struct import abbreviation
 from pyobo.struct.typedef import (
     TypeDef,
     derives_from,
@@ -608,8 +608,8 @@ class TestReader(unittest.TestCase):
         self.assertEqual(1, len(term.synonyms))
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
-        self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
+        self.assertIsNone(synonym.specificity)
+        self.assertIsNone(synonym.type)
         self.assertEqual([], synonym.provenance)
 
     def test_synonym_with_specificity(self) -> None:
@@ -626,7 +626,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
         self.assertEqual("NARROW", synonym.specificity)
-        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
+        self.assertIsNone(synonym.type)
         self.assertEqual([], synonym.provenance)
 
     def test_synonym_with_type_missing_def(self) -> None:
@@ -642,7 +642,7 @@ class TestReader(unittest.TestCase):
         self.assertEqual(1, len(term.synonyms))
         synonym = term.synonyms[0]
         #  this is because no typedef existed
-        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
+        self.assertIsNone(synonym.type)
 
     def test_synonym_with_type(self) -> None:
         """Test parsing a synonym with type."""
@@ -658,7 +658,7 @@ class TestReader(unittest.TestCase):
         self.assertEqual(1, len(term.synonyms))
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
-        self.assertEqual("EXACT", synonym.specificity)
+        self.assertIsNone(synonym.specificity)
         self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type)
         self.assertEqual([], synonym.provenance)
 
@@ -712,7 +712,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
+        self.assertIsNone(synonym.type)
         self.assertEqual(
             [
                 Reference(prefix="orphanet", identifier="93938"),
@@ -825,7 +825,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("DoguAnadoluKirmizisi", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
+        self.assertIsNone(synonym.type)
 
         # now, we define it properly
         ontology = _read("""\
@@ -859,7 +859,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("COP", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(DEFAULT_SYNONYM_TYPE.reference, synonym.type)
+        self.assertIsNone(synonym.type)
 
         ontology = _read(text, upgrade=True)
         term = self.get_only_term(ontology)
@@ -884,7 +884,7 @@ class TestReader(unittest.TestCase):
         synonym = term.synonyms[0]
         self.assertEqual("10*3.{copies}/mL", synonym.name)
         self.assertEqual("EXACT", synonym.specificity)
-        self.assertEqual(DEFAULT_SYNONYM_TYPE, synonym.type)
+        self.assertIsNone(synonym.type)
         self.assertEqual([], synonym.provenance)
         # TODO update this when adding annotation parsing!
         self.assertEqual([], synonym.annotations)
