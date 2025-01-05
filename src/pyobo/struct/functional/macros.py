@@ -252,7 +252,7 @@ class SynonymMacro(Macro):
         if synonym_type is not None:
             annotations.append(f.Annotation(HAS_SYNONYM_TYPE, synonym_type))
         if scope is None:
-            scope = v.exact_match
+            scope = v.has_exact_synonym
         elif isinstance(scope, str) and scope.upper() in t.get_args(v.SynonymScope):
             scope = v.synonym_scopes[scope.upper()]  # type:ignore[index]
         super().__init__(
