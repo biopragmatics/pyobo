@@ -24,6 +24,7 @@ __all__ = [
 def get_term_axioms(term: Term) -> Iterable[f.Box]:
     """Iterate over functional OWL axioms for a term."""
     s = f.IdentifierBox(term.reference.preferred_curie)
+    # 1 and 13
     if term.type == "Term":
         yield f.Declaration(s, type="Class")
         for parent in term.parents:
@@ -32,17 +33,41 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
         yield f.Declaration(s, type="NamedIndividual")
         for parent in term.parents:
             yield f.ClassAssertion(s, parent.preferred_curie)
+    # 2
+    if term.is_anonymous:
+        yield m.IsAnonymousMacro(s)
+    # 3
     if term.name:
         yield m.LabelMacro(s, term.name)
-    if term.definition:
-        yield m.DescriptionMacro(s, term.definition)
+    # 4
+    if term.namespace:
+        yield m.OBONamespaceMacro(s, term.namespace)
+    # 5
     for alt in term.alt_ids:
         yield m.AltMacro(s, alt.preferred_curie)
+    # 6
+    if term.definition:
+        yield m.DescriptionMacro(s, term.definition)
+    # 7 TODO comment
+    # 8
+    for subset in term.subsets:
+        yield m.OBOIsSubsetMacro(s, subset)
+    # 9
+    for synonym in term.synonyms:
+        yield m.SynonymMacro(
+            s,
+            synonym.specificity,
+            synonym.name,
+            synonym_type=synonym.type,
+        )
+    # 10
     # TODO add annotations for the following
     for xref in term.xrefs:
         yield m.XrefMacro(s, xref.preferred_curie)
-    for typedef, value in term.iterate_relations():
-        yield m.RelationshipMacro(s=s, p=typedef.preferred_curie, o=value.preferred_curie)
+    # 11
+    if term.builtin:
+        yield m.IsOBOBuiltinMacro(s)
+    # 12
     for typedef, values in term.annotations_object.items():
         for value in values:
             yield f.AnnotationAssertion(typedef.preferred_curie, s, value.preferred_curie)
@@ -55,6 +80,20 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
                 raise NotImplementedError
             literal = Literal(str_value, datatype=datatype)
             yield f.AnnotationAssertion(typedef.preferred_curie, s, literal)
+    # 14 intersection_of
+    # 15 union_of
+    # 16 equivalent_to
+    # 17 disjoint_from
+    # 18
+    for typedef, value in term.iterate_relations():
+        yield m.RelationshipMacro(s=s, p=typedef.preferred_curie, o=value.preferred_curie)
+    # 19 TODO created_by
+    # 20 TODO creation_date
+    # 21
+    if term.is_obsolete:
+        yield m.IsObsoleteMacro(s)
+    # 22 TODO replaced_by
+    # 23 TODO consider
 
 
 def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
