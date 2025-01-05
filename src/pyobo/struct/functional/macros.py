@@ -357,6 +357,7 @@ class DataPropertyMaxCardinality(Macro):
         data_property_expression: f.DataPropertyExpression | f.IdentifierBoxOrHint,
         cardinality: int,
     ):
+        """Initialize a data property maximum cardinality macro."""
         super().__init__(
             f.SubClassOf(
                 "owl:Thing",

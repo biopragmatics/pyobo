@@ -379,6 +379,7 @@ class ObjectInverseOf(ObjectPropertyExpression):
     object_property: IdentifierBox
 
     def __init__(self, object_property: IdentifierBoxOrHint) -> None:
+        """Instantiate an inverse object property."""
         # note that this can't be an expression - it has to be a defined thing.
         # further, we can't use SimpleObjectPropertyExpression because
         # we're trying to stay consistent with OWLAPI, and it sometimes doesn't
@@ -1276,7 +1277,7 @@ class SubClassOf(ClassAxiom):
         *,
         annotations: Annotations | None = None,
     ) -> None:
-        """Initialize the subclass axiom."""
+        """Initialize a subclass axiom."""
         self.child = ClassExpression.safe(child)
         self.parent = ClassExpression.safe(parent)
         super().__init__(annotations)
@@ -1291,7 +1292,15 @@ class SubClassOf(ClassAxiom):
         return f"{self.child.to_funowl()} {self.parent.to_funowl()}"
 
 
-class EquivalentClasses(ClassAxiom):  # 9.1.2
+class EquivalentClasses(ClassAxiom):
+    """A class axiom defined in `9.1.2 "Subclass Axioms" <https://www.w3.org/TR/owl2-syntax/#Equivalent_Classes>`_.
+
+    >>> EquivalentClasses(
+    ...     "a:GriffinFamilyMember",
+    ...     ObjectOneOf(*"a:Peter a:Lois a:Stewie a:Meg a:Chris a:Brian".split()),
+    ... )
+    """
+
     class_expression: Sequence[ClassExpression]
 
     def __init__(
@@ -1300,13 +1309,14 @@ class EquivalentClasses(ClassAxiom):  # 9.1.2
         *,
         annotations: Annotations | None = None,
     ) -> None:
-        """Initialize the axiom."""
+        """Initialize a equivalent class axiom."""
         if len(class_expressions) < 2:
             raise ValueError
         self.class_expressions = [ClassExpression.safe(ce) for ce in class_expressions]
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
+        """Represent the equivalent class axiom for RDF."""
         rv = term.BNode()
         nodes = [ce.to_rdflib_node(graph, converter) for ce in self.class_expressions]
         for s, o in itt.pairwise(nodes):
@@ -1318,7 +1328,12 @@ class EquivalentClasses(ClassAxiom):  # 9.1.2
         return list_to_funowl(self.class_expressions)
 
 
-class DisjointClasses(ClassAxiom):  # 9.1.3
+class DisjointClasses(ClassAxiom):
+    """A class axiom defined in `9.1.3 "Disjoint Classes" <https://www.w3.org/TR/owl2-syntax/#Disjoint_Classes>`_.
+
+    >>> DisjointClasses("a:Boy a:Girl".split())
+    """
+
     class_expression: Sequence[ClassExpression]
 
     def __init__(
@@ -1327,13 +1342,14 @@ class DisjointClasses(ClassAxiom):  # 9.1.3
         *,
         annotations: Annotations | None = None,
     ) -> None:
-        """Initialize the axiom."""
+        """Initialize a disjoint classes axiom."""
         if len(class_expressions) < 2:
             raise ValueError
         self.class_expressions = [ClassExpression.safe(ce) for ce in class_expressions]
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
+        """Represent the disjoint classes axiom for RDF."""
         nodes = [ce.to_rdflib_node(graph, converter) for ce in self.class_expressions]
         if len(nodes) == 2:
             return _add_triple(
@@ -1356,7 +1372,9 @@ class DisjointClasses(ClassAxiom):  # 9.1.3
         return list_to_funowl(self.class_expressions)
 
 
-class DisjointUnion(ClassAxiom):  # 9.1.4
+class DisjointUnion(ClassAxiom):
+    """A class axiom defined in `9.1.4 "Disjoint Union of Class Expressions" <https://www.w3.org/TR/owl2-syntax/#Disjoint_Union_of_Class_Expressions>`_."""
+
     parent: SimpleClassExpression
     class_expression: Sequence[ClassExpression]
 
@@ -1367,6 +1385,7 @@ class DisjointUnion(ClassAxiom):  # 9.1.4
         *,
         annotations: Annotations | None = None,
     ) -> None:
+        """Initialize a disjoint union of class expressions axiom."""
         if len(class_expressions) < 2:
             raise ValueError
         self.parent = SimpleClassExpression(parent)
@@ -1374,6 +1393,7 @@ class DisjointUnion(ClassAxiom):  # 9.1.4
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent the disjoint union of class expressions axiom as RDF."""
         return _add_triple(
             graph,
             self.parent.to_rdflib_node(graph, converter),
@@ -1391,20 +1411,27 @@ class DisjointUnion(ClassAxiom):  # 9.1.4
 
 
 class ObjectPropertyAxiom(Axiom):
-    pass
+    """A grouping class for `9.2 "Object Property Axioms" <https://www.w3.org/TR/owl2-syntax/#Object_Property_Axioms>`_.
+
+    .. image:: https://www.w3.org/TR/owl2-syntax/A_objectproperty2.gif
+    """
 
 
 class ObjectPropertyChain(Box):
+    """Represents a list of object properties."""
+
     object_property_expressions: Sequence[ObjectPropertyExpression]
 
     def __init__(
         self, object_property_expressions: Sequence[ObjectPropertyExpression | IdentifierBoxOrHint]
     ):
+        """Instantiate a list of object property expressions."""
         self.object_property_expressions = [
             ObjectPropertyExpression.safe(ope) for ope in object_property_expressions
         ]
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent the list of object property expressions for RDF."""
         nodes = [ope.to_rdflib_node(graph, converter) for ope in self.object_property_expressions]
         return _make_sequence_nodes(graph, nodes)
 
@@ -1417,6 +1444,8 @@ SubObjectPropertyExpression: TypeAlias = ObjectPropertyExpression | ObjectProper
 
 
 class SubObjectPropertyOf(ObjectPropertyAxiom):  # 9.2.1
+    """An object property axiom defined in `9.2.1 "Object Subproperties" <https://www.w3.org/TR/owl2-syntax/#Object_Subproperties>`_."""
+
     child: SubObjectPropertyExpression
     parent: ObjectPropertyExpression
 
@@ -1427,6 +1456,7 @@ class SubObjectPropertyOf(ObjectPropertyAxiom):  # 9.2.1
         *,
         annotations: Annotations | None = None,
     ) -> None:
+        """Instantiate an object subproperty axiom."""
         if isinstance(child, ObjectPropertyChain):
             self.child = child
         else:
@@ -1435,6 +1465,7 @@ class SubObjectPropertyOf(ObjectPropertyAxiom):  # 9.2.1
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
+        """Represent the object subproperty axiom for RDF."""
         s = self.child.to_rdflib_node(graph, converter)
         o = self.parent.to_rdflib_node(graph, converter)
         if isinstance(self.child, ObjectInverseOf):
@@ -1455,6 +1486,8 @@ class SubObjectPropertyOf(ObjectPropertyAxiom):  # 9.2.1
 
 
 class _ObjectPropertyList(ObjectPropertyAxiom):
+    """A model for an object property axiom that accepts a list of object property expressions."""
+
     object_property_expressions: Sequence[ObjectPropertyExpression]
 
     def __init__(
@@ -1463,6 +1496,7 @@ class _ObjectPropertyList(ObjectPropertyAxiom):
         *,
         annotations: Annotations | None = None,
     ) -> None:
+        """Instntiate an object property list."""
         if len(object_property_expressions) < 2:
             raise ValueError
         self.object_property_expressions = [
@@ -1489,8 +1523,11 @@ def _equivalent_xxx(
     return term.BNode()
 
 
-class EquivalentObjectProperties(_ObjectPropertyList):  # 9.2.2
+class EquivalentObjectProperties(_ObjectPropertyList):
+    """An object property axiom defined in `9.2.2 "Equivalent Object Subproperties" <https://www.w3.org/TR/owl2-syntax/#Equivalent_Object_Properties>`_."""
+
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
+        """Represent the equivalent object subproperties axiom for RDF."""
         return _equivalent_xxx(
             graph,
             self.object_property_expressions,
@@ -1527,7 +1564,10 @@ def _disjoint_xxx(
 
 
 class DisjointObjectProperties(_ObjectPropertyList):  # 9.2.3
+    """An object property axiom defined in `9.2.3 "Disjoint Object Properties" <https://www.w3.org/TR/owl2-syntax/#Disjoint_Object_Properties>`_."""
+
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent the disjoint object properties axiom for RDF."""
         return _disjoint_xxx(
             graph,
             self.object_property_expressions,
@@ -1667,7 +1707,7 @@ class _UnaryObjectProperty(ObjectPropertyAxiom):
 
 
 class FunctionalObjectProperty(_UnaryObjectProperty):  # 9.2.7
-    """
+    """An object property axiom defined in `9.2.7 "Functional Object Properties" <https://www.w3.org/TR/owl2-syntax/#Functional_Object_Properties>`_.
 
     Consider the ontology consisting of the following axioms.
 
@@ -1696,27 +1736,39 @@ class FunctionalObjectProperty(_UnaryObjectProperty):  # 9.2.7
     property_type: ClassVar[term.Node] = OWL.FunctionalProperty
 
 
-class InverseFunctionalObjectProperty(_UnaryObjectProperty):  # 9.2.8
+class InverseFunctionalObjectProperty(_UnaryObjectProperty):
+    """An object property axiom defined in `9.2.8 "Inverse-Functional Object Properties" <https://www.w3.org/TR/owl2-syntax/#Inverse-Functional_Object_Properties>`_."""
+
     property_type: ClassVar[term.Node] = OWL.InverseFunctionalProperty
 
 
-class ReflexiveObjectProperty(_UnaryObjectProperty):  # 9.2.9
+class ReflexiveObjectProperty(_UnaryObjectProperty):
+    """An object property axiom defined in `9.2.9 "Irreflexive Object Properties" <https://www.w3.org/TR/owl2-syntax/#Reflexive_Object_Properties>`_."""
+
     property_type: ClassVar[term.Node] = OWL.ReflexiveProperty
 
 
-class IrreflexiveObjectProperty(_UnaryObjectProperty):  # 9.2.10
+class IrreflexiveObjectProperty(_UnaryObjectProperty):
+    """An object property axiom defined in `9.2.10 "Reflexive Object Properties" <https://www.w3.org/TR/owl2-syntax/#Ireflexive_Object_Properties>`_."""
+
     property_type: ClassVar[term.Node] = OWL.IrreflexiveProperty
 
 
-class SymmetricObjectProperty(_UnaryObjectProperty):  # 9.2.11
+class SymmetricObjectProperty(_UnaryObjectProperty):
+    """An object property axiom defined in `9.2.11 "Symmetric Object Properties" <https://www.w3.org/TR/owl2-syntax/#Symmetric_Object_Properties>`_."""
+
     property_type: ClassVar[term.Node] = OWL.SymmetricProperty
 
 
 class AsymmetricObjectProperty(_UnaryObjectProperty):  # 9.2.12
+    """An object property axiom defined in `9.2.12 "Asymmetric Object Properties" <https://www.w3.org/TR/owl2-syntax/#Asymmetric_Object_Properties>`_."""
+
     property_type: ClassVar[term.Node] = OWL.AsymmetricProperty
 
 
 class TransitiveObjectProperty(_UnaryObjectProperty):  # 9.2.13
+    """An object property axiom defined in `9.2.13 "Transitive Object Properties" <https://www.w3.org/TR/owl2-syntax/#Transitive_Object_Properties>`_."""
+
     property_type: ClassVar[term.Node] = OWL.TransitiveProperty
 
 
@@ -1724,10 +1776,12 @@ class TransitiveObjectProperty(_UnaryObjectProperty):  # 9.2.13
 
 
 class DataPropertyAxiom(Axiom):
-    pass
+    """A model for `9.3 "Data Property Axioms" <https://www.w3.org/TR/owl2-syntax/#Data_Property_Axioms>`_."""
 
 
-class SubDataPropertyOf(DataPropertyAxiom):  # 9.3.1
+class SubDataPropertyOf(DataPropertyAxiom):
+    """A data property axiom for `9.3.1 "Data Subproperties" <https://www.w3.org/TR/owl2-syntax/#Data_Subproperties>`_."""
+
     child: DataPropertyExpression
     parent: DataPropertyExpression
 
@@ -1738,11 +1792,13 @@ class SubDataPropertyOf(DataPropertyAxiom):  # 9.3.1
         *,
         annotations: Annotations | None = None,
     ) -> None:
+        """Instantiate a data subproperties axiom."""
         self.child = DataPropertyExpression.safe(child)
         self.parent = DataPropertyExpression.safe(parent)
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
+        """Represent the data subproperties axiom for RDF."""
         s = self.child.to_rdflib_node(graph, converter)
         o = self.parent.to_rdflib_node(graph, converter)
         return _add_triple(graph, s, RDFS.subPropertyOf, o, self.annotations, converter=converter)
@@ -1752,6 +1808,8 @@ class SubDataPropertyOf(DataPropertyAxiom):  # 9.3.1
 
 
 class _DataPropertyList(DataPropertyAxiom):
+    """A model for a data property axiom that takes a list of data property expressions."""
+
     data_property_expressions: Sequence[DataPropertyExpression]
 
     def __init__(
@@ -1760,6 +1818,7 @@ class _DataPropertyList(DataPropertyAxiom):
         *,
         annotations: Annotations | None = None,
     ) -> None:
+        """Instantiate a data property list axiom."""
         if len(data_property_expressions) < 2:
             raise ValueError
         self.data_property_expressions = [
@@ -1771,8 +1830,11 @@ class _DataPropertyList(DataPropertyAxiom):
         return list_to_funowl(self.data_property_expressions)
 
 
-class EquivalentDataProperties(_DataPropertyList):  # 9.3.2
+class EquivalentDataProperties(_DataPropertyList):
+    """A data property axiom for `9.3.2 "Equivalent Data Properties" <https://www.w3.org/TR/owl2-syntax/#Equivalent_Data_Properties>`_."""
+
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
+        """Represent the equivalent data properties axiom for RDF."""
         for dpe in self.data_property_expressions:
             graph.add((dpe.to_rdflib_node(graph, converter), RDF.type, OWL.DatatypeProperty))
         return _equivalent_xxx(
@@ -1783,8 +1845,11 @@ class EquivalentDataProperties(_DataPropertyList):  # 9.3.2
         )
 
 
-class DisjointDataProperties(_DataPropertyList):  # 9.3.2
+class DisjointDataProperties(_DataPropertyList):
+    """A data property axiom for `9.3.3 "Disjoint Data Properties" <https://www.w3.org/TR/owl2-syntax/#Disjoint_Data_Properties>`_."""
+
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
+        """Represent the disjoint data properties axiom for RDF."""
         for dpe in self.data_property_expressions:
             graph.add((dpe.to_rdflib_node(graph, converter), RDF.type, OWL.DatatypeProperty))
         return _disjoint_xxx(
@@ -1793,11 +1858,14 @@ class DisjointDataProperties(_DataPropertyList):  # 9.3.2
 
 
 class _DataPropertyTyping(DataPropertyAxiom):  # 9.2.4
+    """An axiom that represents the range or domain of a data property."""
+
     property_type: ClassVar[term.Node]
     data_property_expression: DataPropertyExpression
     target: Box
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
+        """Represent the equivalent data properties axiom for RDF."""
         s = self.data_property_expression.to_rdflib_node(graph, converter)
         graph.add((s, RDF.type, OWL.DatatypeProperty))
         o = self.target.to_rdflib_node(graph, converter)
@@ -1808,6 +1876,8 @@ class _DataPropertyTyping(DataPropertyAxiom):  # 9.2.4
 
 
 class DataPropertyDomain(_DataPropertyTyping):  # 9.3.4
+    """A data property axiom for `9.3.4 "Data Property Domain" <https://www.w3.org/TR/owl2-syntax/#Data_Property_Domain>`_."""
+
     property_type: ClassVar[term.Node] = RDFS.domain
 
     def __init__(
@@ -1817,12 +1887,15 @@ class DataPropertyDomain(_DataPropertyTyping):  # 9.3.4
         *,
         annotations: Annotations | None = None,
     ) -> None:
+        """Instantiate a data property domain axiom."""
         self.data_property_expression = DataPropertyExpression.safe(data_property_expression)
         self.target = ClassExpression.safe(class_expression)
         super().__init__(annotations)
 
 
-class DataPropertyRange(_DataPropertyTyping):  # 9.3.5
+class DataPropertyRange(_DataPropertyTyping):
+    """A data property axiom for `9.3.5 "Data Property Range" <https://www.w3.org/TR/owl2-syntax/#Data_Property_Range>`_."""
+
     property_type: ClassVar[term.Node] = RDFS.range
 
     def __init__(
@@ -1832,13 +1905,14 @@ class DataPropertyRange(_DataPropertyTyping):  # 9.3.5
         *,
         annotations: Annotations | None = None,
     ) -> None:
+        """Instantiate a data property range axiom."""
         self.data_property_expression = DataPropertyExpression.safe(data_property_expression)
         self.target = DataRange.safe(data_range)
         super().__init__(annotations)
 
 
-class FunctionalDataProperty(DataPropertyAxiom):  # 9.3.6
-    """
+class FunctionalDataProperty(DataPropertyAxiom):
+    """A data property axiom for `9.3.6 "Functional Data Properties" <https://www.w3.org/TR/owl2-syntax/#Functional_Data_Properties>`_.
 
     Consider the ontology consisting of the following axioms.
 
@@ -1863,11 +1937,12 @@ class FunctionalDataProperty(DataPropertyAxiom):  # 9.3.6
         *,
         annotations: Annotations | None = None,
     ):
+        """Instantiate a functional data property axiom."""
         self.data_property_expression = DataPropertyExpression.safe(data_property_expression)
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
-        """Create an RDF node."""
+        """Represent the functional data property for RDF."""
         return _add_triple(
             graph,
             self.data_property_expression.to_rdflib_node(graph, converter),
@@ -1885,6 +1960,8 @@ class FunctionalDataProperty(DataPropertyAxiom):  # 9.3.6
 
 
 class DatatypeDefinition(Axiom):
+    """A model for `9.4 "Datatype Definitions" <https://www.w3.org/TR/owl2-syntax/#Datatype_Definitions>`_."""
+
     datatype: IdentifierBox
     data_range: DataRange
 
@@ -1895,11 +1972,13 @@ class DatatypeDefinition(Axiom):
         *,
         annotations: Annotations | None = None,
     ) -> None:
+        """Instantiate a datatype definition axiom."""
         self.datatype = IdentifierBox(datatype)
         self.data_range = DataRange.safe(data_range)
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent the datatype definition axiom for RDF."""
         s = self.datatype.to_rdflib_node(graph, converter)
         graph.add((s, RDF.type, RDFS.Datatype))
         return _add_triple(
@@ -1919,6 +1998,8 @@ class DatatypeDefinition(Axiom):
 
 
 class HasKey(Axiom):
+    """An axiom for `9.5 "Keys" <https://www.w3.org/TR/owl2-syntax/#Keys>`_."""
+
     class_expression: ClassExpression
     object_property_expressions: list[ObjectPropertyExpression]
     data_property_expressions: list[DataPropertyExpression]
@@ -1931,6 +2012,7 @@ class HasKey(Axiom):
         *,
         annotations: Annotations | None = None,
     ) -> None:
+        """Instantiate a "has key" axiom."""
         self.class_expression = ClassExpression.safe(class_expression)
         self.object_property_expressions = [
             ObjectPropertyExpression.safe(ope) for ope in object_property_expressions
@@ -1941,6 +2023,7 @@ class HasKey(Axiom):
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent the "has key" axiom for RDF."""
         object_and_data_property_expressions: list[
             ObjectPropertyExpression | DataPropertyExpression
         ] = []
@@ -1973,10 +2056,12 @@ class HasKey(Axiom):
 
 
 class Assertion(Axiom):
-    pass
+    """Axioms for `9.6 "Assertions" <https://www.w3.org/TR/owl2-syntax/#Assertions>`_."""
 
 
 class _IndividualListAssertion(Assertion):
+    """A grouping class for individual equality and inequality axioms."""
+
     individuals: Sequence[IdentifierBox]
 
     def __init__(
@@ -1985,6 +2070,7 @@ class _IndividualListAssertion(Assertion):
         *,
         annotations: Annotations | None = None,
     ) -> None:
+        """Instantiate an individual list axiom."""
         self.individuals = [IdentifierBox(i) for i in individuals]
         super().__init__(annotations)
 
@@ -1992,8 +2078,11 @@ class _IndividualListAssertion(Assertion):
         return list_to_funowl(self.individuals)
 
 
-class SameIndividual(_IndividualListAssertion):  # 9.6.1
+class SameIndividual(_IndividualListAssertion):
+    """An axiom for `9.6.1 "Individual Equality" <https://www.w3.org/TR/owl2-syntax/#Individual_Equality>`_."""
+
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent the individual equality axiom for RDF."""
         nodes = [i.to_rdflib_node(graph, converter) for i in self.individuals]
         for node in nodes:
             graph.add((node, RDF.type, OWL.NamedIndividual))
@@ -2003,8 +2092,11 @@ class SameIndividual(_IndividualListAssertion):  # 9.6.1
         return term.BNode()
 
 
-class DifferentIndividuals(_IndividualListAssertion):  # 9.6.2
+class DifferentIndividuals(_IndividualListAssertion):
+    """An axiom for `9.6.2 "Individual Inequality" <https://www.w3.org/TR/owl2-syntax/#Individual_Inequality>`_."""
+
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent the individual inequality axiom for RDF."""
         nodes = [i.to_rdflib_node(graph, converter) for i in self.individuals]
         for node in nodes:
             graph.add((node, RDF.type, OWL.NamedIndividual))
@@ -2025,7 +2117,9 @@ class DifferentIndividuals(_IndividualListAssertion):  # 9.6.2
             return node
 
 
-class ClassAssertion(Assertion):  # 9.6.3
+class ClassAssertion(Assertion):
+    """An axiom for `9.6.3 "Class Assertions" <https://www.w3.org/TR/owl2-syntax/#Class_Assertions>`_."""
+
     class_expression: ClassExpression
     individual: IdentifierBox
 
@@ -2036,11 +2130,13 @@ class ClassAssertion(Assertion):  # 9.6.3
         *,
         annotations: Annotations | None = None,
     ) -> None:
+        """Instantiate a class assertion axiom."""
         self.class_expression = ClassExpression.safe(class_expression)
         self.individual = IdentifierBox(individual)
         super().__init__(annotations)
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent the class assertion axiom for RDF."""
         s = self.individual.to_rdflib_node(graph, converter)
         graph.add((s, RDF.type, OWL.NamedIndividual))
         return _add_triple(
@@ -2081,8 +2177,11 @@ class _BaseObjectPropertyAssertion(Assertion):
         return f"{self.object_property_expression.to_funowl()} {self.source_individual.to_funowl()} {self.target_individual.to_funowl()}"
 
 
-class ObjectPropertyAssertion(_BaseObjectPropertyAssertion):  # 9.6.4
+class ObjectPropertyAssertion(_BaseObjectPropertyAssertion):
+    """An axiom for `9.6.4 "Positive Object Property Assertions" <https://www.w3.org/TR/owl2-syntax/#Positive_Object_Property_Assertions>`_."""
+
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent the positive object property assertion axiom for RDF."""
         s = self.source_individual.to_rdflib_node(graph, converter)
         o = self.target_individual.to_rdflib_node(graph, converter)
         graph.add((s, RDF.type, OWL.NamedIndividual))
@@ -2100,8 +2199,11 @@ class ObjectPropertyAssertion(_BaseObjectPropertyAssertion):  # 9.6.4
         return _add_triple(graph, s, p, o, annotations=self.annotations, converter=converter)
 
 
-class NegativeObjectPropertyAssertion(_BaseObjectPropertyAssertion):  # 9.6.5
+class NegativeObjectPropertyAssertion(_BaseObjectPropertyAssertion):
+    """An axiom for `9.6.5 "Negative Object Property Assertions" <https://www.w3.org/TR/owl2-syntax/#Negative_Object_Property_Assertions>`_."""
+
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent the negative object property assertion axiom for RDF."""
         s = self.source_individual.to_rdflib_node(graph, converter)
         o = self.target_individual.to_rdflib_node(graph, converter)
         graph.add((s, RDF.type, OWL.NamedIndividual))
@@ -2152,10 +2254,14 @@ class _BaseDataPropertyAssertion(Assertion):
         return f"{self.data_property_expression.to_funowl()} {self.source_individual.to_funowl()} {self.target.to_funowl()}"
 
 
-class DataPropertyAssertion(_BaseDataPropertyAssertion):  # 9.6.6
-    """>>> DataPropertyAssertion("a:hasAge", "a:Meg", 17)."""
+class DataPropertyAssertion(_BaseDataPropertyAssertion):
+    """An axiom for `9.6.6 "Positive Data Property Assertions" <https://www.w3.org/TR/owl2-syntax/#Positive_Data_Property_Assertions>`_.
+
+    >>> DataPropertyAssertion("a:hasAge", "a:Meg", 17).
+    """
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent the positive data property assertion axiom for RDF."""
         s = self.source_individual.to_rdflib_node(graph, converter)
         graph.add((s, RDF.type, OWL.NamedIndividual))
         return _add_triple(
@@ -2168,10 +2274,14 @@ class DataPropertyAssertion(_BaseDataPropertyAssertion):  # 9.6.6
         )
 
 
-class NegativeDataPropertyAssertion(_BaseDataPropertyAssertion):  # 9.6.7
-    """>>> NegativeDataPropertyAssertion("a:hasAge", "a:Meg", 5)."""
+class NegativeDataPropertyAssertion(_BaseDataPropertyAssertion):
+    """An axiom for `9.6.7 "Negative Data Property Assertions" <https://www.w3.org/TR/owl2-syntax/#Negative_Data_Property_Assertions>`_.
+
+    >>> NegativeDataPropertyAssertion("a:hasAge", "a:Meg", 5).
+    """
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Represent the negative data property assertion axiom for RDF."""
         s = self.source_individual.to_rdflib_node(graph, converter)
         graph.add((s, RDF.type, OWL.NamedIndividual))
         return _add_triple_annotations(
