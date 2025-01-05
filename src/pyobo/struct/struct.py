@@ -31,11 +31,11 @@ from .reference import (
     OBOLiteral,
     Reference,
     Referenced,
+    _get_obo_trailing_modifiers,
+    _iterate_obo_relations,
     _reference_list_tag,
     comma_separate_references,
     default_reference,
-    get_obo_trailing_modifiers,
-    iterate_obo_relations,
     reference_escape,
     unspecified_matching,
 )
@@ -736,7 +736,7 @@ class Term(Referenced):
         # 10
         for xref in sorted(self.xrefs):
             xref_yv = f"xref: {self._reference(xref, ontology_prefix, add_name_comment=False)}"
-            xref_yv += get_obo_trailing_modifiers(
+            xref_yv += _get_obo_trailing_modifiers(
                 has_dbxref.reference, xref, self._axioms, ontology_prefix=ontology_prefix
             )
             if xref.name:
@@ -757,7 +757,7 @@ class Term(Referenced):
         # 17 TODO disjoint_from
         # 18
         if emit_object_properties:
-            for part in iterate_obo_relations(
+            for part in _iterate_obo_relations(
                 self.relationships, self._axioms, ontology_prefix=ontology_prefix
             ):
                 yield f"relationship: {part}"
@@ -771,10 +771,10 @@ class Term(Referenced):
     def _emit_properties(
         self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:
-        yield from iterate_obo_relations(
+        yield from _iterate_obo_relations(
             self.annotations_object, self._axioms, ontology_prefix=ontology_prefix
         )
-        yield from iterate_obo_relations(
+        yield from _iterate_obo_relations(
             # the type checker seems to be a bit confused, this is an okay typing since we're
             # passing a more explicit version. The issue is that list is used for the typing,
             # which means it can't narrow properly

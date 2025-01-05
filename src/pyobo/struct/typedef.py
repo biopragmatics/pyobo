@@ -16,9 +16,9 @@ from .reference import (
     Reference,
     Referenced,
     _chain_tag,
+    _iterate_obo_relations,
     _reference_list_tag,
     default_reference,
-    iterate_obo_relations,
     reference_escape,
 )
 from .utils import _boolean_tag
@@ -237,7 +237,7 @@ class TypeDef(Referenced):
         # 10
         yield from _reference_list_tag("xref", self.xrefs, ontology_prefix)
         # 11
-        for line in iterate_obo_relations(
+        for line in _iterate_obo_relations(
             # the type checker seems to be a bit confused, this is an okay typing since we're
             # passing a more explicit version. The issue is that list is used for the typing,
             # which means it can't narrow properly
@@ -296,7 +296,7 @@ class TypeDef(Referenced):
         yield from _chain_tag("equivalent_to_chain", self.equivalent_to_chain, ontology_prefix)
         # 31 TODO disjoint_over, see https://github.com/search?q=%22disjoint_over%3A%22+path%3A*.obo&type=code
         # 32
-        for line in iterate_obo_relations(
+        for line in _iterate_obo_relations(
             # the type checker seems to be a bit confused, this is an okay typing since we're
             # passing a more explicit version. The issue is that list is used for the typing,
             # which means it can't narrow properly

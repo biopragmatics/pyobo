@@ -252,7 +252,7 @@ AxiomsHint = Mapping[
 ]
 
 
-def iterate_obo_relations(
+def _iterate_obo_relations(
     relations: Mapping[Reference, Sequence[Reference | OBOLiteral]],
     annotations: AxiomsHint,
     *,
@@ -274,7 +274,7 @@ def iterate_obo_relations(
                     name = value.name
                 case _:
                     raise TypeError(f"got unexpected value: {values}")
-            end += get_obo_trailing_modifiers(
+            end += _get_obo_trailing_modifiers(
                 predicate, value, annotations, ontology_prefix=ontology_prefix
             )
             if predicate.name and name:
@@ -282,16 +282,16 @@ def iterate_obo_relations(
             yield start + end
 
 
-def get_obo_trailing_modifiers(
+def _get_obo_trailing_modifiers(
     p: Reference, o: Reference | OBOLiteral, axioms: AxiomsHint, *, ontology_prefix: str
 ) -> str:
     """Lookup then format a sequence of axioms for OBO trailing modifiers."""
     if annotations := axioms.get((p, o), []):
-        return format_obo_trailing_modifiers(annotations, ontology_prefix=ontology_prefix)
+        return _format_obo_trailing_modifiers(annotations, ontology_prefix=ontology_prefix)
     return ""
 
 
-def format_obo_trailing_modifiers(
+def _format_obo_trailing_modifiers(
     annotations: Sequence[tuple[Reference, Reference | OBOLiteral]], *, ontology_prefix: str
 ) -> str:
     """Format a sequence of axioms for OBO trailing modifiers.
