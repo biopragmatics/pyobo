@@ -1296,8 +1296,10 @@ class EquivalentClasses(ClassAxiom):
     """A class axiom defined in `9.1.2 "Subclass Axioms" <https://www.w3.org/TR/owl2-syntax/#Equivalent_Classes>`_.
 
     >>> EquivalentClasses(
-    ...     "a:GriffinFamilyMember",
-    ...     ObjectOneOf(*"a:Peter a:Lois a:Stewie a:Meg a:Chris a:Brian".split()),
+    ...     [
+    ...         "a:GriffinFamilyMember",
+    ...         ObjectOneOf(["a:Peter", "a:Lois", "a:Stewie", "a:Meg", "a:Chris", "a:Brian"]),
+    ...     ]
     ... )
     """
 
@@ -2257,7 +2259,7 @@ class _BaseDataPropertyAssertion(Assertion):
 class DataPropertyAssertion(_BaseDataPropertyAssertion):
     """An axiom for `9.6.6 "Positive Data Property Assertions" <https://www.w3.org/TR/owl2-syntax/#Positive_Data_Property_Assertions>`_.
 
-    >>> DataPropertyAssertion("a:hasAge", "a:Meg", 17).
+    >>> DataPropertyAssertion("a:hasAge", "a:Meg", 17)
     """
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
@@ -2277,7 +2279,7 @@ class DataPropertyAssertion(_BaseDataPropertyAssertion):
 class NegativeDataPropertyAssertion(_BaseDataPropertyAssertion):
     """An axiom for `9.6.7 "Negative Data Property Assertions" <https://www.w3.org/TR/owl2-syntax/#Negative_Data_Property_Assertions>`_.
 
-    >>> NegativeDataPropertyAssertion("a:hasAge", "a:Meg", 5).
+    >>> NegativeDataPropertyAssertion("a:hasAge", "a:Meg", 5)
     """
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
