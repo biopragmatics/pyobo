@@ -28,8 +28,12 @@ from tqdm.auto import tqdm
 from typing_extensions import Self
 
 from .reference import (
+    OBOLiteral,
     Reference,
     Referenced,
+    _get_obo_trailing_modifiers,
+    _iterate_obo_relations,
+    _reference_list_tag,
     comma_separate_references,
     default_reference,
     reference_escape,
@@ -54,7 +58,7 @@ from .typedef import (
     see_also,
     term_replaced_by,
 )
-from .utils import obo_escape_slim
+from .utils import _boolean_tag, obo_escape_slim
 from ..api.utils import get_version
 from ..constants import (
     DATE_FORMAT,
@@ -128,14 +132,20 @@ class Synonym:
         return self.name, self.specificity, self.type
 
     def to_obo(
-        self, ontology_prefix: str, synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef]
+        self,
+        ontology_prefix: str,
+        synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] | None = None,
     ) -> str:
         """Write this synonym as an OBO line to appear in a [Term] stanza."""
         return f"synonym: {self._fp(ontology_prefix, synonym_typedefs)}"
 
     def _fp(
-        self, ontology_prefix: str, synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef]
+        self,
+        ontology_prefix: str,
+        synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] | None = None,
     ) -> str:
+        if synonym_typedefs is None:
+            synonym_typedefs = {}
         _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
         # TODO inherit specificity from typedef?
         # TODO validation of specificity against typedef
@@ -262,12 +272,9 @@ class Term(Referenced):
         default_factory=lambda: defaultdict(list)
     )
 
-    _axioms: dict[tuple[Reference, Reference], list[ObjectProperty]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
-    _str_axioms: dict[tuple[Reference, Reference], list[LiteralProperty]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+    _axioms: dict[
+        tuple[Reference, Reference | OBOLiteral], list[tuple[Reference, Reference | OBOLiteral]]
+    ] = field(default_factory=lambda: defaultdict(list))
 
     #: Annotation properties pointing to objects (i.e., references)
     annotations_object: dict[Reference, list[Reference]] = field(
@@ -275,7 +282,7 @@ class Term(Referenced):
     )
 
     #: Annotation properties pointing to literals
-    annotations_literal: dict[Reference, list[tuple[str, Reference]]] = field(
+    annotations_literal: dict[Reference, list[OBOLiteral]] = field(
         default_factory=lambda: defaultdict(list)
     )
 
@@ -299,6 +306,10 @@ class Term(Referenced):
     is_obsolete: bool | None = None
 
     type: Literal["Term", "Instance"] = "Term"
+
+    builtin: bool | None = None
+    is_anonymous: bool | None = None
+    subsets: list[Reference] = field(default_factory=list)
 
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass
@@ -475,15 +486,21 @@ class Term(Referenced):
     def _get_object_axiom_target(
         self, p: Reference, o: Reference, ap: Reference
     ) -> Reference | None:
-        for axiom_predicate, axiom_target, _ in self._axioms.get((p, o), []):
-            if axiom_predicate == ap:
-                return axiom_target
+        for axiom_predicate, axiom_target in self._axioms.get((p, o), []):
+            if axiom_predicate != ap:
+                continue
+            if isinstance(axiom_target, OBOLiteral):
+                raise TypeError
+            return axiom_target
         return None
 
     def _get_str_axiom_target(self, p: Reference, o: Reference, ap: Reference) -> str | None:
-        for axiom_predicate, axiom_target, _ in self._str_axioms.get((p, o), []):
-            if axiom_predicate == ap:
-                return axiom_target
+        for axiom_predicate, axiom_target in self._axioms.get((p, o), []):
+            if axiom_predicate != ap:
+                continue
+            if isinstance(axiom_target, Reference):
+                raise TypeError
+            return axiom_target.value
         return None
 
     def _get_mapping_context(self, p: Reference, o: Reference) -> MappingContext:
@@ -593,9 +610,9 @@ class Term(Referenced):
         self, p: Reference, o: Reference, axiom: ObjectProperty | LiteralProperty
     ) -> None:
         if isinstance(axiom, ObjectProperty):
-            self._axioms[p, o].append(axiom)
+            self._axioms[p, o].append((axiom.predicate, axiom.object))
         elif isinstance(axiom, LiteralProperty):
-            self._str_axioms[p, o].append(axiom)
+            self._axioms[p, o].append((axiom.predicate, OBOLiteral(axiom.value, axiom.datatype)))
         else:
             raise TypeError
 
@@ -639,7 +656,7 @@ class Term(Referenced):
         """Append an object annotation."""
         prop = _ensure_ref(prop)
         self.annotations_literal[prop].append(
-            (value, datatype or Reference(prefix="xsd", identifier="string"))
+            OBOLiteral(value, datatype or Reference(prefix="xsd", identifier="string"))
         )
         return self
 
@@ -694,125 +711,77 @@ class Term(Referenced):
         """Iterate over the lines to write in an OBO file."""
         yield f"\n[{self.type}]"
         yield f"id: {self._reference(self.reference, ontology_prefix)}"
-        if self.is_obsolete:
-            yield "is_obsolete: true"
+        # 2
+        yield from _boolean_tag("is_anonymous", self.is_anonymous)
+        # 3
         if self.name:
             yield f"name: {obo_escape_slim(self.name)}"
+        # 4
         if self.namespace and self.namespace != "?":
             namespace_normalized = (
                 self.namespace.replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
             )
             yield f"namespace: {namespace_normalized}"
-
-        xrefs = list(self.xrefs)
-
-        if self.definition or self.provenance:
-            yield f"def: {self._definition_fp()}"
-
+        # 5
         for alt in sorted(self.alt_ids):
             yield f"alt_id: {self._reference(alt, ontology_prefix, add_name_comment=True)}"
-
-        for xref in sorted(xrefs):
+        # 6
+        if self.definition or self.provenance:
+            yield f"def: {self._definition_fp()}"
+        # 7 TODO comment
+        yield from _reference_list_tag("subset", self.subsets, ontology_prefix)
+        # 9
+        for synonym in sorted(self.synonyms):
+            yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
+        # 10
+        for xref in sorted(self.xrefs):
             xref_yv = f"xref: {self._reference(xref, ontology_prefix, add_name_comment=False)}"
-            xref_yv += self._trailing_modifiers(
-                has_dbxref.reference, xref, ontology_prefix=ontology_prefix
+            xref_yv += _get_obo_trailing_modifiers(
+                has_dbxref.reference, xref, self._axioms, ontology_prefix=ontology_prefix
             )
             if xref.name:
                 xref_yv += f" ! {xref.name}"
             yield xref_yv
-
-        parent_tag = "is_a" if self.type == "Term" else "instance_of"
-        for parent in sorted(self.parents):
-            yield f"{parent_tag}: {self._reference(parent, ontology_prefix, add_name_comment=True)}"
-
-        if emit_object_properties:
-            yield from self._emit_relations(ontology_prefix, typedefs)
-
+        yield from _boolean_tag("builtin", self.builtin)
+        # 12
         if emit_annotation_properties:
             for line in self._emit_properties(ontology_prefix, typedefs):
                 yield f"property_value: {line}"
-
-        if synonym_typedefs is None:
-            synonym_typedefs = {}
-        for synonym in sorted(self.synonyms):
-            yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
-
-    def _emit_relations(
-        self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
-    ) -> Iterable[str]:
-        for typedef, reference in self.iterate_relations():
-            _typedef_warn(prefix=ontology_prefix, predicate=typedef, typedefs=typedefs)
-            predicate_reference = self._reference(typedef, ontology_prefix)
-            s = f"relationship: {predicate_reference} {self._reference(reference, ontology_prefix)}"
-            s += self._trailing_modifiers(typedef, reference, ontology_prefix=ontology_prefix)
-            if typedef.name or reference.name:
-                s += " !"
-                if typedef.name:
-                    s += f" {typedef.name}"
-                if reference.name:
-                    s += f" {reference.name}"
-            yield s
-
-    @classmethod
-    def _format_trailing_modifiers(
-        cls, axioms: list[ObjectProperty | LiteralProperty], ontology_prefix: str
-    ) -> str:
-        # See https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.1.4
-        # trailing modifiers can be both axioms and some other implementation-specific
-        # things, so split up the place where axioms are put in here
-        modifiers: list[tuple[str, str]] = []
-
-        for axiom in axioms:
-            match axiom:
-                case ObjectProperty(predicate, target, _):
-                    right = cls._reference(target, ontology_prefix)
-                case LiteralProperty(predicate, target, _datatype):
-                    right = target
-            modifiers.append((cls._reference(predicate, ontology_prefix), right))
-
-        inner = ", ".join(f"{key}={value}" for key, value in sorted(modifiers))
-        return "{" + inner + "}"
+        # 13
+        parent_tag = "is_a" if self.type == "Term" else "instance_of"
+        for parent in sorted(self.parents):
+            yield f"{parent_tag}: {self._reference(parent, ontology_prefix, add_name_comment=True)}"
+        # 14 TODO intersection_of
+        # 15 TODO union_of
+        # 16 TODO equivalent_to
+        # 17 TODO disjoint_from
+        # 18
+        if emit_object_properties:
+            for part in _iterate_obo_relations(
+                self.relationships, self._axioms, ontology_prefix=ontology_prefix
+            ):
+                yield f"relationship: {part}"
+        # 19 TODO created_by
+        # 20 TODO creation_date
+        # 21
+        yield from _boolean_tag("is_obsolete", self.is_obsolete)
+        # 22 TODO replaced_by, weird since this conflicts with other annotations
+        # 23 TODO consider
 
     def _emit_properties(
         self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:
-        yield from self._emit_object_properties(ontology_prefix, typedefs)
-        yield from self._emit_literal_properties(ontology_prefix, typedefs)
-
-    def _emit_object_properties(
-        self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
-    ) -> Iterable[str]:
-        for predicate, values in sorted(self.annotations_object.items()):
-            _typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)
-            predicate_curie = self._reference(predicate, ontology_prefix)
-            for value in sorted(values):
-                yv = f"{predicate_curie} {self._reference(value, ontology_prefix)}"
-                yv += self._trailing_modifiers(predicate, value, ontology_prefix=ontology_prefix)
-                if predicate.name and value.name:
-                    yv += f" ! {predicate.name} {value.name}"
-                yield yv
-
-    def _trailing_modifiers(
-        self, predicate: Reference, value: Reference, *, ontology_prefix: str
-    ) -> str:
-        axioms: list[ObjectProperty | LiteralProperty] = [
-            *self._axioms.get((predicate, value), []),
-            *self._str_axioms.get((predicate, value), []),
-        ]
-        if axioms:
-            return f" {self._format_trailing_modifiers(axioms, ontology_prefix)}"
-        return ""
-
-    def _emit_literal_properties(
-        self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
-    ) -> Iterable[str]:
-        for predicate, value_datatype_pairs in sorted(self.annotations_literal.items()):
-            _typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)
-            predicate_curie = self._reference(predicate, ontology_prefix)
-            for value, datatype in sorted(value_datatype_pairs):
-                # TODO clean/escape value?
-                # TODO what about axioms here?
-                yield f'{predicate_curie} "{value}" {datatype.preferred_curie}'
+        yield from _iterate_obo_relations(
+            self.annotations_object, self._axioms, ontology_prefix=ontology_prefix
+        )
+        yield from _iterate_obo_relations(
+            # the type checker seems to be a bit confused, this is an okay typing since we're
+            # passing a more explicit version. The issue is that list is used for the typing,
+            # which means it can't narrow properly
+            self.annotations_literal,  # type:ignore
+            self._axioms,
+            ontology_prefix=ontology_prefix,
+        )
 
     @staticmethod
     def _reference(
@@ -821,10 +790,6 @@ class Term(Referenced):
         return reference_escape(
             predicate, ontology_prefix=ontology_prefix, add_name_comment=add_name_comment
         )
-
-    @staticmethod
-    def _escape(s) -> str:
-        return s.replace("\n", "\\n").replace('"', '\\"')
 
 
 #: A set of warnings, used to make sure we don't show the same one over and over

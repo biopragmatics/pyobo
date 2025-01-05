@@ -12,8 +12,6 @@ from pyobo.constants import NCBITAXON_PREFIX
 from pyobo.struct.reference import unspecified_matching
 from pyobo.struct.struct import (
     BioregistryError,
-    LiteralProperty,
-    ObjectProperty,
     SynonymTypeDef,
     Term,
     TypeDef,
@@ -22,7 +20,6 @@ from pyobo.struct.struct import (
 from pyobo.struct.typedef import (
     exact_match,
     has_contributor,
-    has_dbxref,
     mapping_has_confidence,
     mapping_has_justification,
     see_also,
@@ -542,8 +539,8 @@ class TestTerm(unittest.TestCase):
             """\
             [Term]
             id: GO:0050069
-            is_obsolete: true
             name: lysine dehydrogenase activity
+            is_obsolete: true
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
@@ -554,6 +551,7 @@ class TestTerm(unittest.TestCase):
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
+            is_obsolete: false
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
@@ -625,35 +623,6 @@ class TestTerm(unittest.TestCase):
             term.iterate_obo_lines(ontology_prefix="gard", typedefs={}),
         )
 
-    def test_format_axioms(self) -> None:
-        """Test formatting axioms."""
-        axioms = [
-            ObjectProperty(
-                mapping_has_justification,
-                Reference(prefix="semapv", identifier="UnspecifiedMapping"),
-                None,
-            ),
-        ]
-        self.assertEqual(
-            "{sssom:mapping_justification=semapv:UnspecifiedMapping}",
-            Term._format_trailing_modifiers(axioms, "chebi"),
-        )
-
-        axioms = [
-            ObjectProperty(
-                mapping_has_justification,
-                Reference(prefix="semapv", identifier="UnspecifiedMapping"),
-                None,
-            ),
-            ObjectProperty(
-                has_contributor, Reference(prefix="orcid", identifier="0000-0003-4423-4370"), None
-            ),
-        ]
-        self.assertEqual(
-            "{dcterms:contributor=orcid:0000-0003-4423-4370, sssom:mapping_justification=semapv:UnspecifiedMapping}",
-            Term._format_trailing_modifiers(axioms, "chebi"),
-        )
-
     def test_append_exact_match_axioms(self) -> None:
         """Test emitting a relationship with axioms."""
         target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
@@ -662,22 +631,6 @@ class TestTerm(unittest.TestCase):
             target,
             mapping_justification=unspecified_matching,
             confidence=0.99,
-        )
-        self.assertEqual(
-            {
-                (exact_match.reference, target): [
-                    ObjectProperty(mapping_has_justification.reference, unspecified_matching, None)
-                ]
-            },
-            dict(term._axioms),
-        )
-        self.assertEqual(
-            {
-                (exact_match.reference, target): [
-                    LiteralProperty.float(mapping_has_confidence.reference, 0.99)
-                ]
-            },
-            dict(term._str_axioms),
         )
         lines = dedent("""\
             [Term]
@@ -730,14 +683,6 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
         target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
         term = Term(LYSINE_DEHYDROGENASE_ACT)
         term.append_xref(target, confidence=0.99)
-        self.assertEqual(
-            {
-                (has_dbxref.reference, target): [
-                    LiteralProperty.float(mapping_has_confidence.reference, 0.99)
-                ]
-            },
-            dict(term._str_axioms),
-        )
         lines = dedent("""\
             [Term]
             id: GO:0050069
