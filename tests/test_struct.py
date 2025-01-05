@@ -539,8 +539,8 @@ class TestTerm(unittest.TestCase):
             """\
             [Term]
             id: GO:0050069
-            is_obsolete: true
             name: lysine dehydrogenase activity
+            is_obsolete: true
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
@@ -551,6 +551,7 @@ class TestTerm(unittest.TestCase):
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
+            is_obsolete: false
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )

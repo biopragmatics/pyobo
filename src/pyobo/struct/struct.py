@@ -57,7 +57,7 @@ from .typedef import (
     see_also,
     term_replaced_by,
 )
-from .utils import obo_escape_slim
+from .utils import _boolean_tag, obo_escape_slim
 from ..api.utils import get_version
 from ..constants import (
     DATE_FORMAT,
@@ -131,14 +131,20 @@ class Synonym:
         return self.name, self.specificity, self.type
 
     def to_obo(
-        self, ontology_prefix: str, synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef]
+        self,
+        ontology_prefix: str,
+        synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] | None = None,
     ) -> str:
         """Write this synonym as an OBO line to appear in a [Term] stanza."""
         return f"synonym: {self._fp(ontology_prefix, synonym_typedefs)}"
 
     def _fp(
-        self, ontology_prefix: str, synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef]
+        self,
+        ontology_prefix: str,
+        synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] | None = None,
     ) -> str:
+        if synonym_typedefs is None:
+            synonym_typedefs = {}
         _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
         # TODO inherit specificity from typedef?
         # TODO validation of specificity against typedef
@@ -299,6 +305,9 @@ class Term(Referenced):
     is_obsolete: bool | None = None
 
     type: Literal["Term", "Instance"] = "Term"
+
+    builtin: bool | None = None
+    is_anonymous: bool | None = None
 
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass
@@ -700,25 +709,30 @@ class Term(Referenced):
         """Iterate over the lines to write in an OBO file."""
         yield f"\n[{self.type}]"
         yield f"id: {self._reference(self.reference, ontology_prefix)}"
-        if self.is_obsolete:
-            yield "is_obsolete: true"
+        # 2
+        yield from _boolean_tag("is_anonymous", self.is_anonymous)
+        # 3
         if self.name:
             yield f"name: {obo_escape_slim(self.name)}"
+        # 4
         if self.namespace and self.namespace != "?":
             namespace_normalized = (
                 self.namespace.replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
             )
             yield f"namespace: {namespace_normalized}"
-
-        xrefs = list(self.xrefs)
-
-        if self.definition or self.provenance:
-            yield f"def: {self._definition_fp()}"
-
+        # 5
         for alt in sorted(self.alt_ids):
             yield f"alt_id: {self._reference(alt, ontology_prefix, add_name_comment=True)}"
-
-        for xref in sorted(xrefs):
+        # 6
+        if self.definition or self.provenance:
+            yield f"def: {self._definition_fp()}"
+        # 7 TODO comment
+        # 8 TODO subset
+        # 9
+        for synonym in sorted(self.synonyms):
+            yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
+        # 10
+        for xref in sorted(self.xrefs):
             xref_yv = f"xref: {self._reference(xref, ontology_prefix, add_name_comment=False)}"
             xref_yv += get_obo_trailing_modifiers(
                 has_dbxref.reference, xref, self._axioms, ontology_prefix=ontology_prefix
@@ -726,25 +740,31 @@ class Term(Referenced):
             if xref.name:
                 xref_yv += f" ! {xref.name}"
             yield xref_yv
-
+        yield from _boolean_tag("builtin", self.builtin)
+        # 12
+        if emit_annotation_properties:
+            for line in self._emit_properties(ontology_prefix, typedefs):
+                yield f"property_value: {line}"
+        # 13
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
         for parent in sorted(self.parents):
             yield f"{parent_tag}: {self._reference(parent, ontology_prefix, add_name_comment=True)}"
-
+        # 14 TODO intersection_of
+        # 15 TODO union_of
+        # 16 TODO equivalent_to
+        # 17 TODO disjoint_from
+        # 18
         if emit_object_properties:
             for part in iterate_obo_relations(
                 self.relationships, self._axioms, ontology_prefix=ontology_prefix
             ):
                 yield f"relationship: {part}"
-
-        if emit_annotation_properties:
-            for line in self._emit_properties(ontology_prefix, typedefs):
-                yield f"property_value: {line}"
-
-        if synonym_typedefs is None:
-            synonym_typedefs = {}
-        for synonym in sorted(self.synonyms):
-            yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
+        # 19 TODO created_by
+        # 20 TODO creation_date
+        # 21
+        yield from _boolean_tag("is_obsolete", self.is_obsolete)
+        # 22 TODO replaced_by, weird since this conflicts with other annotations
+        # 23 TODO consider
 
     def _emit_properties(
         self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]

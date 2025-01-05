@@ -315,3 +315,22 @@ def format_obo_trailing_modifiers(
         modifiers.append((ap_str, ao_str))
     inner = ", ".join(f"{key}={value}" for key, value in sorted(modifiers))
     return " {" + inner + "}"
+
+
+def _chain_tag(tag: str, chain: list[Reference] | None, ontology_prefix: str) -> Iterable[str]:
+    if chain:
+        yv = f"{tag}: "
+        yv += " ".join(
+            reference_escape(reference, ontology_prefix=ontology_prefix) for reference in chain
+        )
+        if any(reference.name for reference in chain):
+            _names = " / ".join(link.name or "_" for link in chain)
+            yv += f" ! {_names}"
+        yield yv
+
+
+def _reference_list_tag(
+    tag: str, references: list[Reference], ontology_prefix: str
+) -> Iterable[str]:
+    for reference in references:
+        yield f"{tag}: {reference_escape(reference, ontology_prefix=ontology_prefix, add_name_comment=True)}"
