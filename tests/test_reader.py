@@ -608,7 +608,7 @@ class TestReader(unittest.TestCase):
         self.assertEqual(1, len(term.synonyms))
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
-        self.assertEqual("EXACT", synonym.specificity)
+        self.assertIsNone(synonym.specificity)
         self.assertIsNone(synonym.type)
         self.assertEqual([], synonym.provenance)
 
@@ -658,7 +658,7 @@ class TestReader(unittest.TestCase):
         self.assertEqual(1, len(term.synonyms))
         synonym = term.synonyms[0]
         self.assertEqual("LTEC I", synonym.name)
-        self.assertEqual("EXACT", synonym.specificity)
+        self.assertIsNone(synonym.specificity)
         self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type)
         self.assertEqual([], synonym.provenance)
 

@@ -539,7 +539,7 @@ def _extract_synonym(
 
     return Synonym(
         name=name,
-        specificity=specificity or "EXACT",
+        specificity=specificity,
         type=synonym_typedef.reference if synonym_typedef else None,
         provenance=provenance,
         annotations=annotations,
