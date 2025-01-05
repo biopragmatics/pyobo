@@ -596,7 +596,7 @@ class TestTerm(unittest.TestCase):
                 term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
             )
         self.assertIn(
-            "WARNING:pyobo.struct.struct:[go] synonym typedef not defined: omo:1234567", log.output
+            "WARNING:pyobo.struct.struct:[go] synonym typedef not defined: OMO:1234567", log.output
         )
 
     def test_definition(self):

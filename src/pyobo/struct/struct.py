@@ -808,16 +808,17 @@ def _typedef_warn(
     key = prefix, predicate
     if key not in _TYPEDEF_WARNINGS:
         _TYPEDEF_WARNINGS.add(key)
+        predicate_curie = getattr(predicate, "preferred_curie", predicate.curie)
         if predicate.prefix == "obo":
             # Throw our hands up in the air. By using `obo` as the prefix,
             # we already threw using "real" definitions out the window
             logger.warning(
-                f"[{prefix}] predicate with OBO prefix not defined: {predicate.curie}."
+                f"[{prefix}] predicate with OBO prefix not defined: {predicate_curie}."
                 f"\n\tThis might be because you used an unqualified prefix in an OBO file, "
                 f"which automatically gets an OBO prefix."
             )
         else:
-            logger.warning(f"[{prefix}] typedef not defined: {predicate.curie}")
+            logger.warning(f"[{prefix}] typedef not defined: {predicate_curie}")
 
 
 #: A set of warnings, used to make sure we don't show the same one over and over
