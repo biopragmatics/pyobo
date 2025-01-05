@@ -690,6 +690,9 @@ def _get_all_axiom_types() -> set[type[f.Axiom]]:
         if x.startswith("_"):
             continue
         t = getattr(f, x)
-        if isinstance(t, type) and issubclass(t, f.Axiom):
-            rv.add(t)
+        try:
+            if isinstance(t, type) and issubclass(t, f.Axiom):
+                rv.add(t)
+        except TypeError:
+            pass  # this happens on py310 where issubclass doesn't work properly
     return rv
