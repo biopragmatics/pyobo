@@ -19,9 +19,11 @@ from typing import Any, ClassVar, Literal, NamedTuple, TextIO, TypeAlias, overlo
 
 import bioregistry
 import click
+import curies
 import networkx as nx
 import pandas as pd
 from curies import ReferenceTuple
+from curies import vocabulary as v
 from more_click import force_option, verbose_option
 from pydantic import BaseModel
 from tqdm.auto import tqdm
@@ -75,8 +77,6 @@ __all__ = [
     "Obo",
     "ReferenceHint",
     "Synonym",
-    "SynonymSpecificities",
-    "SynonymSpecificity",
     "SynonymTypeDef",
     "Term",
     "abbreviation",
@@ -87,8 +87,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-SynonymSpecificity = Literal["EXACT", "NARROW", "BROAD", "RELATED"]
-SynonymSpecificities: Sequence[SynonymSpecificity] = ("EXACT", "NARROW", "BROAD", "RELATED")
+DEFAULT_SPECIFICITY: v.SynonymScope = "EXACT"
 
 #: Columns in the SSSOM dataframe
 SSSOM_DF_COLUMNS = [
@@ -111,7 +110,7 @@ class Synonym:
     name: str
 
     #: The specificity of the synonym
-    specificity: SynonymSpecificity | None = None
+    specificity: v.SynonymScope | None = None
 
     #: The type of synonym. Must be defined in OBO document!
     type: Reference = field(
@@ -128,8 +127,13 @@ class Synonym:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
 
-    def _sort_key(self) -> tuple[str, str, Reference]:
-        return self.name, self.specificity or "EXACT", self.type
+    def _sort_key(self) -> tuple[str, v.SynonymScope, Reference]:
+        return self.name, self.specificity or DEFAULT_SPECIFICITY, self.type
+
+    @property
+    def predicate(self) -> curies.NamedReference:
+        """Get the specificity reference."""
+        return v.synonym_scopes[self.specificity or DEFAULT_SPECIFICITY]
 
     def to_obo(
         self,
@@ -164,7 +168,7 @@ class SynonymTypeDef(Referenced):
     """A type definition for synonyms in OBO."""
 
     reference: Reference
-    specificity: SynonymSpecificity | None = None
+    specificity: v.SynonymScope | None = None
 
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass
@@ -355,7 +359,7 @@ class Term(Referenced):
         synonym: str | Synonym,
         *,
         type: Reference | Referenced | None = None,
-        specificity: SynonymSpecificity | None = None,
+        specificity: v.SynonymScope | None = None,
         provenance: list[Reference] | None = None,
     ) -> None:
         """Add a synonym."""
