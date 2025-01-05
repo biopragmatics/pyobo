@@ -34,7 +34,7 @@ from .struct import (
     make_ad_hoc_ontology,
 )
 from .struct.reference import _parse_identifier
-from .struct.struct import DEFAULT_SYNONYM_TYPE, LiteralProperty, ObjectProperty
+from .struct.struct import LiteralProperty, ObjectProperty
 from .struct.typedef import default_typedefs, has_ontology_root_term
 from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
 
@@ -540,7 +540,7 @@ def _extract_synonym(
     return Synonym(
         name=name,
         specificity=specificity or "EXACT",
-        type=synonym_typedef.reference if synonym_typedef else DEFAULT_SYNONYM_TYPE.reference,
+        type=synonym_typedef.reference if synonym_typedef else None,
         provenance=provenance,
         annotations=annotations,
     )
