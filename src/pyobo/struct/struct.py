@@ -113,9 +113,7 @@ class Synonym:
     specificity: v.SynonymScope | None = None
 
     #: The type of synonym. Must be defined in OBO document!
-    type: Reference = field(
-        default_factory=lambda: DEFAULT_SYNONYM_TYPE.reference  # type:ignore
-    )
+    type: Reference | None = None
 
     #: References to articles where the synonym appears
     provenance: list[Reference] = field(default_factory=list)
@@ -127,8 +125,12 @@ class Synonym:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
 
-    def _sort_key(self) -> tuple[str, v.SynonymScope, Reference]:
-        return self.name, self.specificity or DEFAULT_SPECIFICITY, self.type
+    def _sort_key(self) -> tuple[str, v.SynonymScope, str]:
+        return (
+            self.name,
+            self.specificity or DEFAULT_SPECIFICITY,
+            self.type.curie if self.type else "",
+        )
 
     @property
     def predicate(self) -> curies.NamedReference:
@@ -153,8 +155,8 @@ class Synonym:
         _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
         # TODO inherit specificity from typedef?
         # TODO validation of specificity against typedef
-        x = f'"{self._escape(self.name)}" {self.specificity or "EXACT"}'
-        if self.type and self.type.pair != DEFAULT_SYNONYM_TYPE.pair:
+        x = f'"{self._escape(self.name)}" {self.specificity or DEFAULT_SPECIFICITY}'
+        if self.type is not None:
             x = f"{x} {reference_escape(self.type, ontology_prefix=ontology_prefix)}"
         return f"{x} [{comma_separate_references(self.provenance)}]"
 
@@ -363,9 +365,7 @@ class Term(Referenced):
         provenance: list[Reference] | None = None,
     ) -> None:
         """Add a synonym."""
-        if type is None:
-            type = DEFAULT_SYNONYM_TYPE.reference
-        elif isinstance(type, Referenced):
+        if isinstance(type, Referenced):
             type = type.reference
         if isinstance(synonym, str):
             synonym = Synonym(
@@ -825,10 +825,12 @@ _SYNONYM_TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
 
 
 def _synonym_typedef_warn(
-    prefix: str, predicate: Reference, synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef]
+    prefix: str,
+    predicate: Reference | None,
+    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
 ) -> SynonymTypeDef | None:
-    if predicate.pair == DEFAULT_SYNONYM_TYPE.pair:
-        return DEFAULT_SYNONYM_TYPE
+    if predicate is None or predicate.pair == DEFAULT_SYNONYM_TYPE.pair:
+        return None
     if predicate.pair in default_synonym_typedefs:
         return default_synonym_typedefs[predicate.pair]
     if predicate.pair in synonym_typedefs:
