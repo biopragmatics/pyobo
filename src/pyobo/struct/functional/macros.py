@@ -34,16 +34,22 @@ def _safe_literal(value: str | rdflib.Literal, *, language: str | None = None) -
 
 
 class Macro(f.Box):
+    """A macro, which wraps a more complicated set of functional OWL axioms."""
+
     def __init__(self, box: f.Box):
+        """Initialize the macro with a given axiom."""
         self.box = box
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+        """Make an RDF node for the wrapped axiom."""
         return self.box.to_rdflib_node(graph, converter)
 
     def to_funowl(self) -> str:
+        """Serialize functional OWL for the wrapped axiom."""
         return self.box.to_funowl()
 
-    def to_funowl_args(self) -> str:
+    def to_funowl_args(self) -> str:  # pragma: no cover
+        """Get the inside of the functional OWL tag representing the wrapped axiom (unused)."""
         raise RuntimeError
 
 
@@ -318,10 +324,26 @@ class XrefMacro(MappingMacro):
 
 
 class HoldsOverChain(Macro):
+    """A macro for the OBO-style "holds over chain" annotation."""
+
     def __init__(self, predicate: f.IdentifierBoxOrHint, chain: Sequence[f.IdentifierBoxOrHint]):
+        """Instantiate a "holds over chain" macro."""
         super().__init__(f.SubObjectPropertyOf(f.ObjectPropertyChain(chain), predicate))
 
 
 class TransitiveOver(HoldsOverChain):
+    """A macro for the OBO-style "transitive over" annotation.
+
+    For example, ``BFO:0000066`` (occurs in) is transitive over
+    ``BFO:0000050`` (part of). This means that if X occurs in Y,
+    and Y is a part of Z, then X occurs in Z.
+
+    >>> TransitiveOver("BFO:0000066", "BFO:0000050")
+    'SubObjectPropertyOf( ObjectPropertyChain( BFO:0000066 BFO:0000050 ) BFO:0000066 )'
+
+    .. note:: This is a special case of :class:`HoldsOverChain`
+    """
+
     def __init__(self, predicate: f.IdentifierBoxOrHint, target: f.IdentifierBoxOrHint):
+        """Instantiate a "transitive over" macro."""
         super().__init__(predicate, [predicate, target])

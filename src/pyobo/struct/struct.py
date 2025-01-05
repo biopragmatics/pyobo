@@ -33,7 +33,7 @@ from .reference import (
     Referenced,
     comma_separate_references,
     default_reference,
-    get_trailing_modifiers,
+    get_obo_trailing_modifiers,
     iterate_obo_relations,
     reference_escape,
     unspecified_matching,
@@ -720,7 +720,7 @@ class Term(Referenced):
 
         for xref in sorted(xrefs):
             xref_yv = f"xref: {self._reference(xref, ontology_prefix, add_name_comment=False)}"
-            xref_yv += get_trailing_modifiers(
+            xref_yv += get_obo_trailing_modifiers(
                 has_dbxref.reference, xref, self._axioms, ontology_prefix=ontology_prefix
             )
             if xref.name:

@@ -78,6 +78,7 @@ def serialize_turtle(
 def list_to_funowl(
     elements: Iterable[FunctionalOWLSerializable | Reference], *, sep: str = " "
 ) -> str:
+    """Serialize a list of objects as functional OWL, separated by space or other givne separator."""
     return sep.join(
         element.to_funowl() if isinstance(element, FunctionalOWLSerializable) else element.curie
         for element in elements

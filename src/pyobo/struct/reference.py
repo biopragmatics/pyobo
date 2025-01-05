@@ -258,7 +258,7 @@ def iterate_obo_relations(
     *,
     ontology_prefix: str,
 ) -> Iterable[str]:
-    """Iterate over relations."""
+    """Iterate over relations/property values for OBO."""
     for predicate, values in relations.items():
         # TODO typedef warning: ``_typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)``
         pc = reference_escape(predicate, ontology_prefix=ontology_prefix)
@@ -274,7 +274,7 @@ def iterate_obo_relations(
                     name = value.name
                 case _:
                     raise TypeError(f"got unexpected value: {values}")
-            end += get_trailing_modifiers(
+            end += get_obo_trailing_modifiers(
                 predicate, value, annotations, ontology_prefix=ontology_prefix
             )
             if predicate.name and name:
@@ -282,20 +282,28 @@ def iterate_obo_relations(
             yield start + end
 
 
-def get_trailing_modifiers(
+def get_obo_trailing_modifiers(
     p: Reference, o: Reference | OBOLiteral, axioms: AxiomsHint, *, ontology_prefix: str
 ) -> str:
+    """Lookup then format a sequence of axioms for OBO trailing modifiers."""
     if annotations := axioms.get((p, o), []):
-        return format_axioms(annotations, ontology_prefix=ontology_prefix)
+        return format_obo_trailing_modifiers(annotations, ontology_prefix=ontology_prefix)
     return ""
 
 
-def format_axioms(
+def format_obo_trailing_modifiers(
     annotations: Sequence[tuple[Reference, Reference | OBOLiteral]], *, ontology_prefix: str
 ) -> str:
-    # See https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.1.4
-    # trailing modifiers can be both axioms and some other implementation-specific
-    # things, so split up the place where axioms are put in here
+    """Format a sequence of axioms for OBO trailing modifiers.
+
+    :param annotations: A list of annnotations
+    :param ontology_prefix: The ontology prefix
+    :return: The trailing modifiers string
+
+    See https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.1.4
+    trailing modifiers can be both axioms and some other implementation-specific
+    things, so split up the place where axioms are put in here.
+    """
     modifiers: list[tuple[str, str]] = []
     for predicate, part in annotations:
         ap_str = reference_escape(predicate, ontology_prefix=ontology_prefix)
