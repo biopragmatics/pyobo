@@ -8,11 +8,19 @@ from typing import cast
 import bioregistry
 
 from pyobo import Obo, Reference, default_reference
+from pyobo.struct.reference import CHARLIE, LiteralX
 from pyobo.struct.struct import (
     Synonym,
     make_ad_hoc_ontology,
 )
-from pyobo.struct.typedef import TypeDef, exact_match, has_role, part_of
+from pyobo.struct.typedef import (
+    TypeDef,
+    exact_match,
+    has_contributor,
+    has_inchi,
+    has_role,
+    part_of,
+)
 
 PREFIX = has_role.prefix
 IDENTIFIER = has_role.identifier
@@ -235,6 +243,22 @@ class TestTypeDef(unittest.TestCase):
 
     def test_11_property_value(self) -> None:
         """Test the ``property_value`` tag."""
+        typedef = TypeDef(
+            reference=REF,
+            properties={
+                has_contributor.reference: [CHARLIE],
+                has_inchi: [LiteralX("abc", Reference(prefix="xsd", identifier="string"))],
+            },
+        )
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: RO:0000087
+            property_value: dcterms:contributor orcid:0000-0003-4423-4370
+            property_value: debio:0000020 "abc" xsd:string
+            """,
+            typedef,
+        )
 
     def test_12_domain(self) -> None:
         """Test the ``domain`` tag.

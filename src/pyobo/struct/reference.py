@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Iterable
+from typing import Any, NamedTuple
 
 import bioontologies.relations
 import bioontologies.upgrade
@@ -235,3 +236,43 @@ def _parse_identifier(
 unspecified_matching = Reference(
     prefix="semapv", identifier="UnspecifiedMatching", name="unspecified matching process"
 )
+
+CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370", name="Charles Tapley Hoyt")
+
+
+class LiteralX(NamedTuple):
+    """A tuple representing a property with a literal value."""
+
+    value: str
+    datatype: Reference
+
+
+def iterate_obo_relations(
+    tag: str,
+    relations: dict[Reference, list[Reference | LiteralX]],
+    annotations: dict[
+        tuple[Reference, Reference | LiteralX], list[tuple[Reference, Reference | LiteralX]]
+    ],
+    ontology_prefix: str,
+) -> Iterable[str]:
+    """Iterate over relations."""
+    for predicate, values in relations.items():
+        pc = reference_escape(predicate, ontology_prefix=ontology_prefix)
+        start = f"{tag}: {pc} "
+        for value in values:
+            match value:
+                case LiteralX(dd, datatype):
+                    end = f'"{obo_escape(dd)}" {datatype.curie}'
+                    name = None
+                case _:  # it's a reference
+                    end = reference_escape(value, ontology_prefix=ontology_prefix)
+                    name = value.name
+            if anns := annotations.get((predicate, value), []):
+                end += _format_axioms(anns)
+            if predicate.name and name:
+                end += f" ! {predicate.name} {name}"
+            yield start + end
+
+
+def _format_axioms(axioms: list[tuple[Reference, Reference | LiteralX]]) -> str:
+    raise NotImplementedError

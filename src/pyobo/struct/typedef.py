@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated
@@ -10,7 +11,14 @@ from typing import TYPE_CHECKING, Annotated
 from curies import ReferenceTuple
 from typing_extensions import Self
 
-from .reference import Reference, Referenced, default_reference, reference_escape
+from .reference import (
+    LiteralX,
+    Reference,
+    Referenced,
+    default_reference,
+    iterate_obo_relations,
+    reference_escape,
+)
 from ..resources.ro import load_ro
 
 if TYPE_CHECKING:
@@ -86,7 +94,12 @@ class TypeDef(Referenced):
     subsets: Annotated[list[Reference], 8] = field(default_factory=list)
     synonyms: Annotated[list[Synonym], 9] = field(default_factory=list)
     xrefs: Annotated[list[Reference], 10] = field(default_factory=list)
-    # 11 TODO property_value
+    annotations: dict[
+        tuple[Reference, Reference | LiteralX], list[tuple[Reference, Reference | LiteralX]]
+    ] = field(default_factory=lambda: defaultdict(list))
+    properties: Annotated[dict[Reference, list[Reference | LiteralX]], 11] = field(
+        default_factory=lambda: defaultdict(list)
+    )
     domain: Annotated[Reference | None, 12, "typedef-only"] = None
     range: Annotated[Reference | None, 13, "typedef-only"] = None
     builtin: Annotated[bool | None, 14] = None
@@ -112,8 +125,15 @@ class TypeDef(Referenced):
     equivalent_to_chain: Annotated[list[Reference], 30, "typedef-only"] = field(
         default_factory=list
     )
-    # 31 TODO disjoint_over
-    # 32 TODO relationship
+    #: From the OBO spec:
+    #:
+    #:   For example: spatially_disconnected_from is disjoint_over part_of, in that two
+    #:   disconnected entities have no parts in common. This can be translated to OWL as:
+    #:   ``disjoint_over(R S), R(A B) ==> (S some A) disjointFrom (S some B)``
+    disjoint_over: Annotated[Reference | None, 31] = None
+    relationships: Annotated[dict[Reference, list[Reference]], 32] = field(
+        default_factory=lambda: defaultdict(list)
+    )
     is_obsolete: Annotated[bool | None, 33] = None
     created_by: Annotated[str | None, 34] = None
     creation_date: Annotated[datetime.datetime | None, 35] = None
@@ -227,7 +247,10 @@ class TypeDef(Referenced):
             )
         # 10
         yield from self._reference_list_tag("xref", self.xrefs, ontology_prefix)
-        # 11 TODO property_value
+        # 11
+        yield from iterate_obo_relations(
+            "property_value", self.properties, self.annotations, ontology_prefix=ontology_prefix
+        )
         # 12
         if self.domain:
             yield f"domain: {reference_escape(self.domain, ontology_prefix=ontology_prefix, add_name_comment=True)}"
@@ -279,7 +302,16 @@ class TypeDef(Referenced):
         # 30
         yield from self._chain_tag("equivalent_to_chain", self.equivalent_to_chain, ontology_prefix)
         # 31 TODO disjoint_over, see https://github.com/search?q=%22disjoint_over%3A%22+path%3A*.obo&type=code
-        # 32 TODO relationship
+        # 32
+        yield from iterate_obo_relations(
+            "relationship:",
+            # the type checker seems to be a bit confused, this is an okay typing since we're
+            # passing a more explicit version. The issue is that list is used for the typing,
+            # which means it can't narrow properly
+            self.relationships,  # type:ignore
+            self.annotations,
+            ontology_prefix=ontology_prefix,
+        )
         # 33
         yield from self._boolean_tag("is_obsolete", self.is_obsolete)
         # 34
