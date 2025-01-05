@@ -6,10 +6,10 @@ to functional OWL that reflect common usage.
 
 import typing as t
 from collections.abc import Sequence
-from typing import TypeAlias
 
 import rdflib
 from curies import Converter, Reference
+from curies import vocabulary as v
 from rdflib import Graph, term
 
 from pyobo.struct.functional import dsl as f
@@ -115,7 +115,11 @@ class LabelMacro(StringMacro):
 
 
 class DescriptionMacro(StringMacro):
-    """A macro for description assertion."""
+    """A macro for description assertion.
+
+    >>> DescriptionMacro("hgnc:16793", "retinoic acid early transcript 1E").to_funowl()
+    'AnnotationAssertion( dcterms:description hgnc:16793 "retinoic acid early transcript 1E" )'
+    """
 
     annotation_property = Reference(prefix="dcterms", identifier="description")
 
@@ -174,7 +178,9 @@ class BooleanAnnotationMacro(Macro):
     def __init__(self, subject: f.IdentifierBoxOrHint, value: bool) -> None:
         """Instatitate the annotation assertion macro."""
         super().__init__(
-            f.AnnotationAssertion(self.annotation_property, subject, f.LiteralBox(value))
+            f.AnnotationAssertion(
+                self.annotation_property, subject, f.LiteralBox(str(value).lower())
+            )
         )
 
 
@@ -216,34 +222,21 @@ class IsCyclic(TrueAnnotationMacro):
     annotation_property = Reference(prefix="oboInOwl", identifier="is_cyclic")
 
 
-SynonymScope: TypeAlias = t.Literal["exact", "broad", "narrow"]
-SYNONYM_SCOPES: dict[SynonymScope, Reference] = {
-    "exact": Reference(prefix="oboInOwl", identifier="hasExactSynonym"),
-    "broad": Reference(prefix="oboInOwl", identifier="hasBroadSynonym"),
-    "narrow": Reference(prefix="oboInOwl", identifier="hasNarrowSynonym"),
-}
 HAS_SYNONYM_TYPE = Reference.from_curie("oboInOwl:hasSynonymType")
-
-MappingScope: TypeAlias = t.Literal["exact", "broad", "narrow"]
-MAPPING_SCOPES: dict[MappingScope, Reference] = {
-    "exact": Reference(prefix="skos", identifier="exactMatch"),
-    "broad": Reference(prefix="skos", identifier="broadMatch"),
-    "narrow": Reference(prefix="skos", identifier="narrowMatch"),
-}
 HAS_MAPPING_JUSTIFICATION = Reference.from_curie("sssom:has_mapping_justification")
 
 
 class SynonymMacro(Macro):
     """A macro for synonym assertion.
 
-    >>> SynonymMacro("hgnc:16793", "exact", "ULBP4", synonym_type="OMO:0003008").to_funowl()
+    >>> SynonymMacro("hgnc:16793", "EXACT", "ULBP4", synonym_type="OMO:0003008").to_funowl()
     'AnnotationAssertion( Annotation( oboInOwl:hasSynonymType OMO:0003008 ) oboInOwl:hasExactSynonym hgnc:16793 "ULBP4" )'
     """
 
     def __init__(
         self,
         subject: f.IdentifierBoxOrHint,
-        scope: SynonymScope | f.IdentifierBoxOrHint,
+        scope: v.SynonymScope | f.IdentifierBoxOrHint,
         value: str | rdflib.Literal,
         *,
         language: str | None = None,
@@ -255,8 +248,8 @@ class SynonymMacro(Macro):
             annotations = []
         if synonym_type is not None:
             annotations.append(f.Annotation(HAS_SYNONYM_TYPE, synonym_type))
-        if scope in t.get_args(SynonymScope):
-            scope = SYNONYM_SCOPES[scope]  # type:ignore[index]
+        if isinstance(scope, str) and scope.upper() in t.get_args(v.SynonymScope):
+            scope = v.synonym_scopes[scope.upper()]  # type:ignore[index]
         super().__init__(
             f.AnnotationAssertion(
                 scope,
@@ -272,7 +265,7 @@ class MappingMacro(Macro):
 
     >>> MappingMacro(
     ...     "agrovoc:0619dd9e",
-    ...     "exact",
+    ...     "EXACT",
     ...     "agro:00000137",
     ...     mapping_justification="semapv:ManualMappingCuration",
     ... ).to_funowl()
@@ -282,7 +275,7 @@ class MappingMacro(Macro):
     def __init__(
         self,
         subject: f.IdentifierBoxOrHint,
-        predicate: MappingScope | f.IdentifierBoxOrHint,
+        predicate: v.SemanticMappingScope | f.IdentifierBoxOrHint,
         target: f.IdentifierBoxOrHint,
         *,
         annotations: f.Annotations | None = None,
@@ -294,8 +287,8 @@ class MappingMacro(Macro):
         if mapping_justification is not None:
             # FIXME check mapping justification is from semapv
             annotations.append(f.Annotation(HAS_MAPPING_JUSTIFICATION, mapping_justification))
-        if predicate in t.get_args(MappingScope):
-            predicate = MAPPING_SCOPES[predicate]  # type:ignore[index]
+        if isinstance(predicate, str) and predicate.upper() in t.get_args(v.SemanticMappingScope):
+            predicate = v.semantic_mapping_scopes[predicate.upper()]  # type:ignore[index]
         super().__init__(
             f.AnnotationAssertion(
                 predicate,

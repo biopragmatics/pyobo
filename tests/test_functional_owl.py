@@ -15,6 +15,7 @@ from curies import Converter, Reference
 from rdflib import OWL, RDF, RDFS, Graph, Namespace, compare, term
 
 from pyobo.struct.functional import dsl as f
+from pyobo.struct.functional import macros as m
 from pyobo.struct.functional.dsl import (
     IdentifierBox,
     SimpleDataPropertyExpression,
@@ -558,6 +559,22 @@ class TestRDF(unittest.TestCase):
             f.SubObjectPropertyOf(
                 f.ObjectPropertyChain(["a:hasMother", "a:hasSister"]), "a:hasAunt"
             ),
+            m.RelationshipMacro("a:16793", "a:0002160", "a:9606"),
+            m.LabelMacro("a:16793", "RAET1E"),
+            m.LabelMacro("a:16793", "RAET1E", language="en"),
+            m.DescriptionMacro("a:16793", "retinoic acid early transcript 1E"),
+            m.OBOConsiderMacro("a:16793", "a:16794"),
+            m.IsOBOBuiltinMacro("a:1234"),
+            m.SynonymMacro("a:16793", "EXACT", "ULBP4", synonym_type="OMO:0003008"),
+            m.MappingMacro(
+                "a:0619dd9e",
+                "EXACT",
+                "a:00000137",
+                mapping_justification="semapv:ManualMappingCuration",
+            ),
+            m.XrefMacro("a:0619dd9e", "a:00000137"),
+            m.TransitiveOver("a:0000066", "a:0000050"),
+            m.DataPropertyMaxCardinality("a:hasAge", 1),
         ]
 
     def test_has_examples(self) -> None:
