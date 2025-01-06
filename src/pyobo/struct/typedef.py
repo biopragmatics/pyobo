@@ -11,16 +11,17 @@ from typing import TYPE_CHECKING, Annotated
 from curies import ReferenceTuple
 from typing_extensions import Self
 
+from . import vocabulary as v
 from .reference import (
     OBOLiteral,
     Reference,
     Referenced,
-    _chain_tag,
     _iterate_obo_relations,
     _reference_list_tag,
     default_reference,
     reference_escape,
 )
+from .struct_utils import AxiomsHint, ObjectProperty, Stanza, _chain_tag
 from .utils import _boolean_tag
 from ..resources.ro import load_ro
 
@@ -77,7 +78,7 @@ __all__ = [
 
 
 @dataclass
-class TypeDef(Referenced):
+class TypeDef(Referenced, Stanza):
     """A type definition in OBO.
 
     See the subsection of https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.2.2.
@@ -93,9 +94,7 @@ class TypeDef(Referenced):
     subsets: Annotated[list[Reference], 8] = field(default_factory=list)
     synonyms: Annotated[list[Synonym], 9] = field(default_factory=list)
     xrefs: Annotated[list[Reference], 10] = field(default_factory=list)
-    annotations: dict[
-        tuple[Reference, Reference | OBOLiteral], list[tuple[Reference, Reference | OBOLiteral]]
-    ] = field(default_factory=lambda: defaultdict(list))
+    _axioms: AxiomsHint = field(default_factory=lambda: defaultdict(list))
     properties: Annotated[dict[Reference, list[Reference | OBOLiteral]], 11] = field(
         default_factory=lambda: defaultdict(list)
     )
@@ -111,9 +110,7 @@ class TypeDef(Referenced):
     is_functional: Annotated[bool | None, 21, "typedef-only"] = None
     is_inverse_functional: Annotated[bool | None, 22, "typedef-only"] = None
     parents: Annotated[list[Reference], 23] = field(default_factory=list)
-    intersection_of: Annotated[list[Reference | tuple[Reference, Reference]], 24] = field(
-        default_factory=list
-    )
+    intersection_of: Annotated[list[Reference | ObjectProperty], 24] = field(default_factory=list)
     union_of: Annotated[list[Reference], 25] = field(default_factory=list)
     equivalent_to: Annotated[list[Reference], 26] = field(default_factory=list)
     disjoint_from: Annotated[list[Reference], 27] = field(default_factory=list)
@@ -235,14 +232,14 @@ class TypeDef(Referenced):
         for synonym in self.synonyms:
             yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
         # 10
-        yield from _reference_list_tag("xref", self.xrefs, ontology_prefix)
+        yield from self._iterate_xref_obo(ontology_prefix=ontology_prefix)
         # 11
         for line in _iterate_obo_relations(
             # the type checker seems to be a bit confused, this is an okay typing since we're
             # passing a more explicit version. The issue is that list is used for the typing,
             # which means it can't narrow properly
             self.properties,  # type:ignore
-            self.annotations,
+            self._axioms,
             ontology_prefix=ontology_prefix,
         ):
             yield f"property_value: {line}"
@@ -273,14 +270,7 @@ class TypeDef(Referenced):
         # 23
         yield from _reference_list_tag("is_a", self.parents, ontology_prefix)
         # 24
-        for p in self.intersection_of:
-            if isinstance(p, Reference):
-                yv = reference_escape(p, ontology_prefix=ontology_prefix, add_name_comment=True)
-            else:  # this is a 2-tuple of references
-                yv = " ".join(reference_escape(x, ontology_prefix=ontology_prefix) for x in p)
-                if all(x.name for x in p):
-                    yv += " ! " + " ".join(x.name for x in p)  # type:ignore
-            yield f"intersection_of: {yv}"
+        yield from self._iterate_intersection_of_obo(ontology_prefix=ontology_prefix)
         # 25
         yield from _reference_list_tag("union_of", self.union_of, ontology_prefix)
         # 26
@@ -301,7 +291,7 @@ class TypeDef(Referenced):
             # passing a more explicit version. The issue is that list is used for the typing,
             # which means it can't narrow properly
             self.relationships,  # type:ignore
-            self.annotations,
+            self._axioms,
             ontology_prefix=ontology_prefix,
         ):
             yield f"relationship: {line}"
@@ -421,7 +411,7 @@ owl_same_as = TypeDef(
     reference=Reference(prefix="owl", identifier="sameAs", name="same as"),
 )
 equivalent_class = TypeDef(
-    reference=Reference(prefix="owl", identifier="equivalentClass", name="equivalent class"),
+    reference=v.equivalent_class,
 )
 equivalent_property = TypeDef(
     reference=Reference(prefix="owl", identifier="equivalentProperty", name="equivalent property"),
@@ -526,9 +516,7 @@ definition_source = TypeDef(
     is_metadata_tag=True,
 )
 has_dbxref = TypeDef(
-    reference=Reference(
-        prefix="oboInOwl", identifier="hasDbXref", name="has database cross-reference"
-    ),
+    reference=v.has_dbxref,
     is_metadata_tag=True,
 )
 
@@ -601,19 +589,17 @@ has_taxonomy_rank = TypeDef(
 )
 
 mapping_has_justification = TypeDef(
-    reference=Reference(
-        prefix="sssom", identifier="mapping_justification", name="mapping justification"
-    ),
+    reference=v.mapping_has_justification,
     is_metadata_tag=True,
     range=Reference(prefix="semapv", identifier="Matching", name="matching process"),
 )
 mapping_has_confidence = TypeDef(
-    reference=Reference(prefix="sssom", identifier="confidence", name="has confidence"),
+    reference=v.mapping_has_confidence,
     is_metadata_tag=True,
     range=Reference(prefix="xsd", identifier="float"),
 )
 has_contributor = TypeDef(
-    reference=Reference(prefix="dcterms", identifier="contributor", name="contributor"),
+    reference=v.has_contributor,
     is_metadata_tag=True,
 )
 
