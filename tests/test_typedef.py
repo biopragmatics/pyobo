@@ -9,11 +9,11 @@ import bioregistry
 from curies import vocabulary as v
 
 from pyobo import Obo, Reference, default_reference
-from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import (
     Synonym,
     make_ad_hoc_ontology,
 )
+from pyobo.struct.struct_utils import Annotation
 from pyobo.struct.typedef import (
     TypeDef,
     exact_match,
@@ -321,15 +321,19 @@ class TestTypeDef(unittest.TestCase):
 
     def test_11_property_value(self) -> None:
         """Test the ``property_value`` tag."""
-        typedef = TypeDef(
-            reference=REF,
-            properties={
-                has_contributor.reference: [v.charlie],
-                has_inchi.reference: [
-                    OBOLiteral("abc", Reference(prefix="xsd", identifier="string"))
-                ],
-            },
+        typedef = TypeDef(reference=REF)
+        typedef.append_property(
+            Annotation(
+                has_contributor,
+                Reference(
+                    prefix=v.charlie.prefix,
+                    identifier=v.charlie.identifier,
+                    name=v.charlie.name,
+                ),
+            )
         )
+        typedef.annotate_literal(has_inchi, "abc")
+
         self.assert_obo_stanza(
             """\
             [Typedef]
@@ -498,7 +502,7 @@ class TestTypeDef(unittest.TestCase):
             name: occurs in
             domain: BFO:0000003
             range: BFO:0000004
-            holds_over_chain: BFO:0000050 BFO:0000066 ! part of / occurs in
+            holds_over_chain: BFO:0000050 BFO:0000066 ! part of occurs in
             inverse_of: BFO:0000067 ! contains process
             transitive_over: BFO:0000050 ! part of
         """
@@ -513,7 +517,7 @@ class TestTypeDef(unittest.TestCase):
             """\
             [Typedef]
             id: BFO:0000066
-            holds_over_chain: BFO:0000050 BFO:0000066 ! part of / occurs in
+            holds_over_chain: BFO:0000050 BFO:0000066 ! part of occurs in
             """,
             typedef,
         )
@@ -679,12 +683,15 @@ class TestTypeDef(unittest.TestCase):
         typedef = TypeDef(
             reference=Reference(
                 prefix="GO", identifier="0000085", name="G2 phase of mitotic cell cycle"
-            ),
-            intersection_of=[
-                Reference(prefix="GO", identifier="0051319", name="G2 phase"),
-                (part_of, Reference(prefix="GO", identifier="0000278", name="mitotic cell cycle")),
-            ],
+            )
         )
+        typedef.append_intersection_of(
+            Reference(prefix="GO", identifier="0051319", name="G2 phase")
+        )
+        typedef.append_intersection_of(
+            part_of, Reference(prefix="GO", identifier="0000278", name="mitotic cell cycle")
+        )
+
         self.assert_obo_stanza(
             """\
             [Typedef]

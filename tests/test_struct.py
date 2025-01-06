@@ -22,6 +22,7 @@ from pyobo.struct.typedef import (
     has_contributor,
     mapping_has_confidence,
     mapping_has_justification,
+    part_of,
     see_also,
 )
 
@@ -824,3 +825,19 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
             ],
             list(mappings_df.values[0]),
         )
+
+    def test_intersection_of(self) -> None:
+        """Test emitting intersection of."""
+        term = Term(reference=Reference(prefix="ZFA", identifier="0000134"))
+        term.append_intersection_of(Reference(prefix="CL", identifier="0000540", name="neuron"))
+        term.append_intersection_of(
+            part_of.reference,
+            Reference(prefix="NCBITaxon", identifier="7955", name="zebrafish"),
+        )
+        lines = dedent("""\
+            [Term]
+            id: ZFA:0000134
+            intersection_of: CL:0000540 ! neuron
+            intersection_of: BFO:0000050 NCBITaxon:7955 ! part of zebrafish
+        """)
+        self.assert_lines(lines, term.iterate_obo_lines(ontology_prefix="zfa", typedefs={}))

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Sequence
 from typing import Any, NamedTuple
 
 import bioontologies.relations
@@ -21,6 +21,8 @@ __all__ = [
     "Reference",
     "Referenced",
     "default_reference",
+    "multi_reference_escape",
+    "reference_escape",
     "unspecified_matching",
 ]
 
@@ -201,6 +203,23 @@ def reference_escape(
     return rv
 
 
+def multi_reference_escape(
+    references: Sequence[Reference | Reference],
+    *,
+    ontology_prefix: str,
+    add_name_comment: bool = False,
+) -> str:
+    """Write multiple references with default namespace normalized."""
+    rv = " ".join(
+        reference_escape(r, ontology_prefix=ontology_prefix, add_name_comment=False)
+        for r in references
+    )
+    names = [r.name or "" for r in references]
+    if add_name_comment and all(names):
+        rv += " ! " + " ".join(names)
+    return rv
+
+
 def comma_separate_references(references: list[Reference]) -> str:
     """Map a list to strings and make comma separated."""
     return ", ".join(r.preferred_curie for r in references)
@@ -250,88 +269,6 @@ class OBOLiteral(NamedTuple):
     def string(cls, value: str) -> OBOLiteral:
         """Get a string literal."""
         return cls(value, Reference(prefix="xsd", identifier="string"))
-
-
-AxiomsHint = Mapping[
-    tuple[Reference, Reference | OBOLiteral], Sequence[tuple[Reference, Reference | OBOLiteral]]
-]
-
-
-def _iterate_obo_relations(
-    relations: Mapping[Reference, Sequence[Reference | OBOLiteral]],
-    annotations: AxiomsHint,
-    *,
-    ontology_prefix: str,
-) -> Iterable[str]:
-    """Iterate over relations/property values for OBO."""
-    for predicate, values in relations.items():
-        # TODO typedef warning: ``_typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)``
-        pc = reference_escape(predicate, ontology_prefix=ontology_prefix)
-        start = f"{pc} "
-        for value in values:
-            match value:
-                case OBOLiteral(dd, datatype):
-                    # TODO how to clean/escape value?
-                    end = f'"{dd}" {datatype.preferred_curie}'
-                    name = None
-                case curies.Reference():  # it's a reference
-                    end = reference_escape(value, ontology_prefix=ontology_prefix)
-                    name = value.name
-                case _:
-                    raise TypeError(f"got unexpected value: {values}")
-            end += _get_obo_trailing_modifiers(
-                predicate, value, annotations, ontology_prefix=ontology_prefix
-            )
-            if predicate.name and name:
-                end += f" ! {predicate.name} {name}"
-            yield start + end
-
-
-def _get_obo_trailing_modifiers(
-    p: Reference, o: Reference | OBOLiteral, axioms: AxiomsHint, *, ontology_prefix: str
-) -> str:
-    """Lookup then format a sequence of axioms for OBO trailing modifiers."""
-    if annotations := axioms.get((p, o), []):
-        return _format_obo_trailing_modifiers(annotations, ontology_prefix=ontology_prefix)
-    return ""
-
-
-def _format_obo_trailing_modifiers(
-    annotations: Sequence[tuple[Reference, Reference | OBOLiteral]], *, ontology_prefix: str
-) -> str:
-    """Format a sequence of axioms for OBO trailing modifiers.
-
-    :param annotations: A list of annnotations
-    :param ontology_prefix: The ontology prefix
-    :return: The trailing modifiers string
-
-    See https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.1.4
-    trailing modifiers can be both axioms and some other implementation-specific
-    things, so split up the place where axioms are put in here.
-    """
-    modifiers: list[tuple[str, str]] = []
-    for predicate, part in annotations:
-        ap_str = reference_escape(predicate, ontology_prefix=ontology_prefix)
-        match part:
-            case OBOLiteral(dd, _datatype):
-                ao_str = str(dd)
-            case _:  # it's a reference
-                ao_str = reference_escape(part, ontology_prefix=ontology_prefix)
-        modifiers.append((ap_str, ao_str))
-    inner = ", ".join(f"{key}={value}" for key, value in sorted(modifiers))
-    return " {" + inner + "}"
-
-
-def _chain_tag(tag: str, chain: list[Reference] | None, ontology_prefix: str) -> Iterable[str]:
-    if chain:
-        yv = f"{tag}: "
-        yv += " ".join(
-            reference_escape(reference, ontology_prefix=ontology_prefix) for reference in chain
-        )
-        if any(reference.name for reference in chain):
-            _names = " / ".join(link.name or "_" for link in chain)
-            yv += f" ! {_names}"
-        yield yv
 
 
 def _reference_list_tag(

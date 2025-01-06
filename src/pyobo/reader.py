@@ -34,7 +34,7 @@ from .struct import (
     make_ad_hoc_ontology,
 )
 from .struct.reference import OBOLiteral, _parse_identifier
-from .struct.struct import LiteralProperty, ObjectProperty
+from .struct.struct_utils import Annotation, Stanza
 from .struct.typedef import default_typedefs, has_ontology_root_term
 from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
 
@@ -100,6 +100,13 @@ def _read_obo(filelike, prefix: str | None) -> nx.MultiDiGraph:
     )
 
 
+def _normalize_prefix_strict(prefix: str) -> str:
+    n = bioregistry.normalize_prefix(prefix)
+    if n is None:
+        raise ValueError(f"unknown prefix: {prefix}")
+    return n
+
+
 def from_obonet(
     graph: nx.MultiDiGraph,
     *,
@@ -109,13 +116,13 @@ def from_obonet(
 ) -> Obo:
     """Get all of the terms from a OBO graph."""
     ontology_prefix_raw = graph.graph["ontology"]
-    ontology_prefix = bioregistry.normalize_prefix(ontology_prefix_raw)  # probably always okay
-    if ontology_prefix is None:
-        raise ValueError(f"unknown prefix: {ontology_prefix_raw}")
+    ontology_prefix = _normalize_prefix_strict(ontology_prefix_raw)
     logger.info("[%s] extracting OBO using obonet", ontology_prefix)
 
     date = _get_date(graph=graph, ontology_prefix=ontology_prefix)
     name = _get_name(graph=graph, ontology_prefix=ontology_prefix)
+
+    macro_config = MacroConfig(graph.graph, strict=strict, ontology_prefix=ontology_prefix)
 
     data_version = _clean_graph_version(
         graph, ontology_prefix=ontology_prefix, version=version, date=date
@@ -126,27 +133,31 @@ def from_obonet(
         )
 
     root_terms: list[Reference] = []
-    property_values: list[tuple[Reference, Reference | OBOLiteral]] = []
+    property_values: list[Annotation] = []
     for t in iterate_node_properties(
         graph.graph,
         ontology_prefix=ontology_prefix,
         upgrade=upgrade,
         node=Reference(prefix="obo", identifier=ontology_prefix),
     ):
-        match t:
-            case LiteralProperty(predicate, value, datatype):
-                property_values.append((predicate, OBOLiteral(value, datatype)))
-            case ObjectProperty(predicate, obj, _):
-                if predicate.pair == has_ontology_root_term.pair:
-                    root_terms.append(obj)
-                else:
-                    property_values.append((predicate, obj))
+        if t.predicate.pair == has_ontology_root_term.pair:
+            match t.value:
+                case OBOLiteral():
+                    raise RuntimeError
+                case Reference():
+                    root_terms.append(t.value)
+        else:
+            property_values.append(t)
 
     #: CURIEs to typedefs
     typedefs: Mapping[ReferenceTuple, TypeDef] = {
         typedef.pair: typedef
         for typedef in iterate_graph_typedefs(
-            graph, ontology_prefix=ontology_prefix, strict=strict, upgrade=upgrade
+            graph,
+            ontology_prefix=ontology_prefix,
+            strict=strict,
+            upgrade=upgrade,
+            macro_config=macro_config,
         )
     }
 
@@ -171,22 +182,7 @@ def from_obonet(
             continue
         n_references += 1
 
-        node_xrefs = list(
-            iterate_node_xrefs(
-                data=data,
-                strict=strict,
-                ontology_prefix=ontology_prefix,
-                node=reference,
-            )
-        )
-        xrefs, provenance = [], []
-        for node_xref in node_xrefs:
-            if node_xref.prefix in PROVENANCE_PREFIXES:
-                provenance.append(node_xref)
-            else:
-                xrefs.append(node_xref)
-        n_xrefs += len(xrefs)
-
+        provenance = []
         definition, definition_references = get_definition(
             data, node=reference, strict=strict, ontology_prefix=ontology_prefix
         )
@@ -223,10 +219,20 @@ def from_obonet(
             definition=definition,
             parents=parents,
             synonyms=synonyms,
-            xrefs=xrefs,
             provenance=provenance,
             alt_ids=alt_ids,
         )
+
+        node_xrefs: list[Reference] = list(
+            iterate_node_xrefs(
+                data=data,
+                strict=strict,
+                ontology_prefix=ontology_prefix,
+                node=reference,
+            )
+        )
+        for node_xref in node_xrefs:
+            _handle_xref(term, node_xref, macro_config=macro_config)
 
         relations_references = list(
             iterate_node_relationships(
@@ -255,11 +261,8 @@ def from_obonet(
             data, node=reference, strict=strict, ontology_prefix=ontology_prefix, upgrade=upgrade
         ):
             n_properties += 1
-            match t:
-                case LiteralProperty(predicate, value, datatype):
-                    term.annotate_literal(predicate, value, datatype)
-                case ObjectProperty(predicate, obj, _):
-                    term.annotate_object(predicate, obj)
+            term.append_property(t)
+
         terms.append(term)
 
     subset_typedefs = _get_subsetdefs(graph.graph, ontology_prefix=ontology_prefix)
@@ -283,6 +286,84 @@ def from_obonet(
         _property_values=property_values,
         _subsetdefs=subset_typedefs,
     )
+
+
+class MacroConfig:
+    """A configuration data class for reader macros."""
+
+    def __init__(
+        self, data: Mapping[str, list[str]] | None = None, *, strict: bool, ontology_prefix: str
+    ):
+        """Instantiate the configuration from obonet graph metadata."""
+        if data is None:
+            data = {}
+
+        self.treat_xrefs_as_equivalent: set[str] = set()
+        for prefix in data.get("treat-xrefs-as-equivalent", []):
+            prefix_norm = bioregistry.normalize_prefix(prefix)
+            if prefix_norm is None:
+                continue
+            self.treat_xrefs_as_equivalent.add(prefix_norm)
+
+        self.treat_xrefs_as_genus_differentia: dict[str, Annotation] = {}
+        for line in data.get("treat-xrefs-as-genus-differentia", []):
+            gd_prefix, gd_predicate, gd_target = line.split()
+            gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
+            if gd_prefix_norm is None:
+                continue
+            gd_predicate_re = _parse_identifier(
+                gd_predicate, ontology_prefix=ontology_prefix, strict=strict
+            )
+            if gd_predicate_re is None:
+                continue
+            gd_target_re = _parse_identifier(
+                gd_target, ontology_prefix=ontology_prefix, strict=strict
+            )
+            if gd_target_re is None:
+                continue
+            self.treat_xrefs_as_genus_differentia[gd_prefix_norm] = Annotation(
+                gd_predicate_re, gd_target_re
+            )
+
+        self.treat_xrefs_as_relationship: dict[str, Reference] = {}
+        for line in data.get("treat-xrefs-as-relationship", []):
+            gd_prefix, gd_predicate = line.split()
+            gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
+            if gd_prefix_norm is None:
+                continue
+            gd_predicate_re = _parse_identifier(
+                gd_predicate, ontology_prefix=ontology_prefix, strict=strict
+            )
+            if gd_predicate_re is None:
+                continue
+            self.treat_xrefs_as_relationship[gd_prefix_norm] = gd_predicate_re
+
+        self.treat_xrefs_as_is_a: set[str] = set()
+        for prefix in data.get("treat-xrefs-as-is_a", []):
+            gd_prefix_norm = bioregistry.normalize_prefix(prefix)
+            if gd_prefix_norm is None:
+                continue
+            self.treat_xrefs_as_is_a.add(gd_prefix_norm)
+
+
+def _handle_xref(
+    term: Stanza,
+    xref: Reference,
+    *,
+    macro_config: MacroConfig | None = None,
+) -> Stanza:
+    if macro_config is not None:
+        if xref.prefix in macro_config.treat_xrefs_as_equivalent:
+            return term.append_equivalent(xref)
+        elif object_property := macro_config.treat_xrefs_as_genus_differentia.get(xref.prefix):
+            return term.append_intersection_of(xref).append_intersection_of(object_property)
+        elif predicate := macro_config.treat_xrefs_as_relationship.get(xref.prefix):
+            return term.append_relationship(predicate, xref)
+        elif xref.prefix in macro_config.treat_xrefs_as_is_a:
+            return term.append_parent(xref)
+    if xref.prefix in PROVENANCE_PREFIXES:
+        return term.append_provenance(xref)
+    return term.append_xref(xref)
 
 
 def _get_subsetdefs(graph: nx.MultiDiGraph, ontology_prefix: str) -> list[tuple[Reference, str]]:
@@ -424,7 +505,12 @@ def iterate_graph_synonym_typedefs(
 
 
 def iterate_graph_typedefs(
-    graph: nx.MultiDiGraph, *, ontology_prefix: str, strict: bool = True, upgrade: bool
+    graph: nx.MultiDiGraph,
+    *,
+    ontology_prefix: str,
+    strict: bool = True,
+    upgrade: bool,
+    macro_config: MacroConfig | None = None,
 ) -> Iterable[TypeDef]:
     """Get type definitions from an :mod:`obonet` graph."""
     for typedef in graph.graph.get("typedefs", []):
@@ -446,7 +532,8 @@ def iterate_graph_typedefs(
             logger.warning("[%s] unable to parse typedef ID %s", ontology_prefix, typedef_id)
             continue
 
-        xrefs = []
+        yv = TypeDef(reference=reference)
+
         for xref_curie in typedef.get("xref", []):
             _xref = Reference.from_curie_or_uri(
                 xref_curie,
@@ -454,9 +541,15 @@ def iterate_graph_typedefs(
                 ontology_prefix=ontology_prefix,
                 node=reference,
             )
-            if _xref:
-                xrefs.append(_xref)
-        yield TypeDef(reference=reference, xrefs=xrefs)
+            if not _xref:
+                continue
+            _handle_xref(
+                yv,
+                _xref,
+                macro_config=macro_config,
+            )
+
+        yield yv
 
 
 def get_definition(
@@ -637,7 +730,7 @@ def iterate_node_properties(
     strict: bool = True,
     ontology_prefix: str,
     upgrade: bool,
-) -> Iterable[ObjectProperty | LiteralProperty]:
+) -> Iterable[Annotation]:
     """Extract properties from a :mod:`obonet` node's data."""
     for prop_value_type in data.get("property_value", []):
         if yv := _handle_prop(
@@ -664,7 +757,7 @@ def _handle_prop(
     strict: bool = True,
     ontology_prefix: str,
     upgrade: bool,
-) -> ObjectProperty | LiteralProperty | None:
+) -> Annotation | None:
     try:
         prop, value_type = prop_value_type.split(" ", 1)
     except ValueError:
@@ -696,8 +789,7 @@ def _handle_prop(
                 )
             UNHANDLED_PROP_OBJECTS[prop_reference, value_type] += 1
             return None
-        # TODO can we drop datatype from this?
-        return ObjectProperty(prop_reference, obj_reference, None)
+        return Annotation(prop_reference, obj_reference)
 
     try:
         value, datatype = value_type.rsplit(" ", 1)  # second entry is the value type
@@ -711,7 +803,7 @@ def _handle_prop(
     value = value.strip('"')
 
     if not datatype:
-        return LiteralProperty(prop_reference, value, Reference(prefix="xsd", identifier="string"))
+        return Annotation(prop_reference, OBOLiteral.string(value))
 
     datatype_reference = Reference.from_curie_or_uri(
         datatype, strict=strict, ontology_prefix=ontology_prefix, node=node
@@ -719,7 +811,7 @@ def _handle_prop(
     if datatype_reference is None:
         logger.warning("[%s] had unparsable datatype %s", node.curie, prop_value_type)
         return None
-    return LiteralProperty(prop_reference, value, datatype_reference)
+    return Annotation(prop_reference, OBOLiteral(value, datatype_reference))
 
 
 def _get_prop(
