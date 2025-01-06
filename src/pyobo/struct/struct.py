@@ -49,8 +49,11 @@ from .typedef import (
     from_species,
     has_contributor,
     has_dbxref,
+    has_description,
+    has_license,
     has_ontology_root_term,
     has_part,
+    has_title,
     is_a,
     mapping_has_confidence,
     mapping_has_justification,
@@ -885,7 +888,7 @@ class Obo:
     name: ClassVar[str | None] = None
 
     #: The OBO format
-    format_version: ClassVar[str] = "1.2"
+    format_version: ClassVar[str] = "1.4"
 
     #: Type definitions
     typedefs: ClassVar[list[TypeDef] | None] = None
@@ -928,6 +931,8 @@ class Obo:
     _items: list[Term] | None = field(init=False, default=None, repr=False)
 
     term_sort_key: ClassVar[Callable[[Obo, Term], int] | None] = None
+
+    subsetdefs: ClassVar[list[tuple[Reference, str]] | None] = None
 
     def __post_init__(self):
         """Run post-init checks."""
@@ -1047,48 +1052,74 @@ class Obo:
         emit_object_properties: bool = True,
         emit_annotation_properties: bool = True,
     ) -> Iterable[str]:
-        """Iterate over the lines to write in an OBO file."""
+        """Iterate over the lines to write in an OBO file.
+
+        Here's the order:
+
+        1. format-version
+        2. data-version
+        3. date
+        4. saved-by
+        5. auto-generated-by
+        6. import
+        7. subsetdef
+        8. synonymtypedef
+        9. default-namespace
+        10. namespace-id-rule
+        11. idspace
+        12. treat-xrefs-as-equivalent
+        13. treat-xrefs-as-genus-differentia
+        14. treat-xrefs-as-relationship
+        15. treat-xrefs-as-is_a
+        16. remark
+        17. ontology
+        """
+        # 1
         yield f"format-version: {self.format_version}"
-
-        if self.auto_generated_by is not None:
-            yield f"auto-generated-by: {self.auto_generated_by}"
-
+        # 2
         if self.data_version is not None:
             yield f"data-version: {self.data_version}"
-        else:
-            yield f"date: {self.date_formatted}"
-
+        # 3
+        if self.date:
+            f"date: {self.date_formatted}"
+        # 4 TODO saved-by
+        # 5
+        if self.auto_generated_by is not None:
+            yield f"auto-generated-by: {self.auto_generated_by}"
+        # 6 TODO import
+        # 7
+        for subset, subset_remark in self.subsetdefs or []:
+            yield f'subsetdef: {reference_escape(subset, ontology_prefix=self.ontology)} "{subset_remark}"'
+        # 8
+        for synonym_typedef in sorted(self.synonym_typedefs or []):
+            if synonym_typedef.curie == DEFAULT_SYNONYM_TYPE.curie:
+                continue
+            yield synonym_typedef.to_obo(ontology_prefix=self.ontology)
+        # 9 TODO default-namespace
+        # 10 TODO namespace-id-rule
+        # 11
         for prefix, url in sorted((self.idspaces or {}).items()):
             yv = f"idspace: {prefix} {url}"
             if _yv_name := bioregistry.get_name(prefix):
                 yv += f' "{_yv_name}"'
             yield yv
-
-        for synonym_typedef in sorted(self.synonym_typedefs or []):
-            if synonym_typedef.curie == DEFAULT_SYNONYM_TYPE.curie:
-                continue
-            yield synonym_typedef.to_obo(ontology_prefix=self.ontology)
-
+        # 12 TODO treat-xrefs-as-equivalent
+        # 13 TODO treat-xrefs-as-genus-differentia
+        # 14 TODO treat-xrefs-as-relationship
+        # 15 TODO treat-xrefs-as-is_a
+        # 16 TODO remark
+        # 17
         yield f"ontology: {self.ontology}"
+        # 18 (secret)
+        yield from self._iterate_properties()
 
-        if self.name is None:
-            raise ValueError("ontology is missing name")
-        yield f'property_value: http://purl.org/dc/terms/title "{self.name}" xsd:string'
-        license_spdx_id = bioregistry.get_license(self.ontology)
-        if license_spdx_id:
-            # TODO add SPDX to idspaces and use as a CURIE?
-            yield f'property_value: http://purl.org/dc/terms/license "{license_spdx_id}" xsd:string'
-        description = bioregistry.get_description(self.ontology)
-        if description:
-            description = obo_escape_slim(description.strip())
-            yield f'property_value: http://purl.org/dc/terms/description "{description}" xsd:string'
-
-        for root_term in self.root_terms or []:
-            yield f"property_value: {has_ontology_root_term.preferred_curie} {reference_escape(root_term, ontology_prefix=self.ontology)}"
-
+        # PROPERTIES
         for typedef in sorted(self.typedefs or []):
-            yield from typedef.iterate_obo_lines(ontology_prefix=self.ontology)
+            yield from typedef.iterate_obo_lines(
+                ontology_prefix=self.ontology,
+            )
 
+        # TERMS AND INSTANCES
         typedefs = self._index_typedefs()
         synonym_typedefs = self._index_synonym_typedefs()
         for term in self:
@@ -1099,6 +1130,43 @@ class Obo:
                 emit_object_properties=emit_object_properties,
                 emit_annotation_properties=emit_annotation_properties,
             )
+
+    def _iterate_properties(self) -> Iterable[str]:
+        for predicate, value in self._iterate_property_pairs():
+            match value:
+                case OBOLiteral():
+                    end = f"{obo_escape_slim(value.value)} {reference_escape(value.datatype, ontology_prefix=self.ontology)}"
+                case Reference():
+                    end = reference_escape(value, ontology_prefix=self.ontology)
+            yield f"property_value: {reference_escape(predicate, ontology_prefix=self.ontology)} {end}"
+
+    def _iterate_property_pairs(self) -> Iterable[tuple[Reference, Reference | OBOLiteral]]:
+        # Title
+        if self.name:
+            yield (
+                has_title.reference,
+                OBOLiteral(self.name, Reference(prefix="xsd", identifier="string")),
+            )
+
+        # License
+        # TODO add SPDX to idspaces and use as a CURIE?
+        if license_spdx_id := bioregistry.get_license(self.ontology):
+            yield (
+                has_license.reference,
+                OBOLiteral(license_spdx_id, Reference(prefix="xsd", identifier="string")),
+            )
+
+        # Description
+        if description := bioregistry.get_description(self.ontology):
+            description = obo_escape_slim(description.strip())
+            yield (
+                has_description.reference,
+                OBOLiteral(description.strip(), Reference(prefix="xsd", identifier="string")),
+            )
+
+        # Root terms
+        for root_term in self.root_terms or []:
+            yield has_ontology_root_term.reference, root_term
 
     def _index_typedefs(self) -> Mapping[ReferenceTuple, TypeDef]:
         return ChainMap(
@@ -1934,7 +2002,7 @@ class Obo:
 
 def make_ad_hoc_ontology(
     _ontology: str,
-    _name: str,
+    _name: str | None = None,
     _auto_generated_by: str | None = None,
     _format_version: str = "1.2",
     _typedefs: list[TypeDef] | None = None,
@@ -1943,8 +2011,9 @@ def make_ad_hoc_ontology(
     _data_version: str | None = None,
     _idspaces: Mapping[str, str] | None = None,
     _root_terms: list[Reference] | None = None,
+    _subsetdefs: list[tuple[Reference, str]] | None = None,
     *,
-    terms: list[Term],
+    terms: list[Term] | None = None,
 ) -> Obo:
     """Make an ad-hoc ontology."""
 
@@ -1959,6 +2028,7 @@ def make_ad_hoc_ontology(
         synonym_typedefs = _synonym_typedefs
         idspaces = _idspaces
         root_terms = _root_terms
+        subsetdefs = _subsetdefs
 
         def __post_init__(self):
             self.date = _date
@@ -1966,7 +2036,7 @@ def make_ad_hoc_ontology(
 
         def iter_terms(self, force: bool = False) -> Iterable[Term]:
             """Iterate over terms in the ad hoc ontology."""
-            return terms
+            return terms or []
 
     return AdHocOntology()
 

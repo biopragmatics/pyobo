@@ -626,6 +626,19 @@ has_end_date = TypeDef(
     is_metadata_tag=True,
 )
 
+has_title = TypeDef(
+    reference=Reference(prefix="dcterms", identifier="title", name="title"),
+    is_metadata_tag=True,
+)
+has_license = TypeDef(
+    reference=Reference(prefix="dcterms", identifier="license", name="license"),
+    is_metadata_tag=True,
+)
+has_description = TypeDef(
+    reference=Reference(prefix="dcterms", identifier="description", name="description"),
+    is_metadata_tag=True,
+)
+
 default_typedefs: dict[ReferenceTuple, TypeDef] = {
     v.pair: v for v in locals().values() if isinstance(v, TypeDef)
 }
