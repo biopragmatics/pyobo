@@ -160,7 +160,6 @@ class TestOBOHeader(unittest.TestCase):
             """\
             format-version: 1.2
             ontology: go
-            property_value: dcterms:title "Gene Ontology" xsd:string
             property_value: dcterms:license "CC-BY-4.0" xsd:string
             property_value: dcterms:description "The Gene Ontology project provides a controlled vocabulary to describe gene and gene product attributes in any organism." xsd:string
             """,

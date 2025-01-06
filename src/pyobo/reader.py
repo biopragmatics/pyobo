@@ -33,7 +33,7 @@ from .struct import (
     default_reference,
     make_ad_hoc_ontology,
 )
-from .struct.reference import _parse_identifier
+from .struct.reference import OBOLiteral, _parse_identifier
 from .struct.struct import LiteralProperty, ObjectProperty
 from .struct.typedef import default_typedefs, has_ontology_root_term
 from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
@@ -126,19 +126,21 @@ def from_obonet(
         )
 
     root_terms: list[Reference] = []
+    property_values: list[tuple[Reference, Reference | OBOLiteral]] = []
     for t in iterate_node_properties(
         graph.graph,
         ontology_prefix=ontology_prefix,
         upgrade=upgrade,
         node=Reference(prefix="obo", identifier=ontology_prefix),
     ):
-        # TODO other custom handling can be put here
         match t:
             case LiteralProperty(predicate, value, datatype):
-                pass
+                property_values.append((predicate, OBOLiteral(value, datatype)))
             case ObjectProperty(predicate, obj, _):
                 if predicate.pair == has_ontology_root_term.pair:
                     root_terms.append(obj)
+                else:
+                    property_values.append((predicate, obj))
 
     #: CURIEs to typedefs
     typedefs: Mapping[ReferenceTuple, TypeDef] = {
@@ -260,10 +262,12 @@ def from_obonet(
                     term.annotate_object(predicate, obj)
         terms.append(term)
 
+    subset_typedefs = _get_subsetdefs(graph.graph, ontology_prefix=ontology_prefix)
+
     logger.info(
         f"[{ontology_prefix}] got {n_references:,} references, {len(typedefs):,} typedefs, {len(terms):,} terms,"
         f" {n_alt_ids:,} alt ids, {n_parents:,} parents, {n_synonyms:,} synonyms, {n_xrefs:,} xrefs,"
-        f" {n_relations:,} relations, and {n_properties:,} properties",
+        f" {n_relations:,} relations, {n_properties:,} properties, and {len(subset_typedefs)} subset typedefs.",
     )
 
     return make_ad_hoc_ontology(
@@ -277,9 +281,27 @@ def from_obonet(
         _data_version=data_version,
         _root_terms=root_terms,
         terms=terms,
-        # TODO add subsetdefs
-        # TODO add extra properties
+        _property_values=property_values,
+        _subsetdefs=subset_typedefs,
     )
+
+
+def _get_subsetdefs(graph: nx.MultiDiGraph, ontology_prefix: str) -> list[tuple[Reference, str]]:
+    rv = []
+    for subsetdef in graph.get("subsetdef", []):
+        left, _, right = subsetdef.partition(" ")
+        if not right:
+            logger.warning("[%s] subsetdef did not have two parts", ontology_prefix, subsetdef)
+            continue
+        left_ref = _parse_identifier(left, ontology_prefix=ontology_prefix)
+        if left_ref is None:
+            logger.warning(
+                "[%s] subsetdef identifier could not be parsed", ontology_prefix, subsetdef
+            )
+            continue
+        right = right.strip('"')
+        rv.append((left_ref, right))
+    return rv
 
 
 def _clean_graph_ontology(graph, prefix: str) -> None:
@@ -662,7 +684,7 @@ def _handle_prop(
     # if the value doesn't start with a quote, we're going to
     # assume that it's a reference
     if not value_type.startswith('"'):
-        obj_reference = Reference.from_curie_or_uri(
+        obj_reference = _parse_identifier(
             value_type, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
         if obj_reference is None:

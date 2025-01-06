@@ -1137,7 +1137,7 @@ class Obo:
         for predicate, value in self._iterate_property_pairs():
             match value:
                 case OBOLiteral():
-                    end = f"\"{obo_escape_slim(value.value)}\" {reference_escape(value.datatype, ontology_prefix=self.ontology)}"
+                    end = f'"{obo_escape_slim(value.value)}" {reference_escape(value.datatype, ontology_prefix=self.ontology)}'
                 case Reference():
                     end = reference_escape(value, ontology_prefix=self.ontology)
             yield f"property_value: {reference_escape(predicate, ontology_prefix=self.ontology)} {end}"
