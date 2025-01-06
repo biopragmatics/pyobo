@@ -106,7 +106,7 @@ class Ontology(Box):
 
     directly_imports_documents: Sequence[Import]
     annotations: Sequence[Annotation]
-    axioms: Sequence[Axiom]
+    axioms: Sequence[Box]
 
     def __init__(
         self,
@@ -114,7 +114,7 @@ class Ontology(Box):
         version_iri: str | None = None,
         directly_imports_documents: list[Import | str] | None = None,
         annotations: Annotations | None = None,
-        axioms: list[Axiom] | None = None,
+        axioms: Sequence[Box] | None = None,
     ) -> None:
         """Instantiate an ontology.
 

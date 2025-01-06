@@ -5,19 +5,68 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
+from curies import vocabulary as v
 from rdflib import XSD, Literal
 
 from pyobo.struct.functional import dsl as f
 from pyobo.struct.functional import macros as m
+from pyobo.struct.functional.ontology import Ontology
 
 if TYPE_CHECKING:
-    from pyobo.struct.struct import Term
+    from pyobo.struct.struct import Obo, Term
     from pyobo.struct.typedef import TypeDef
 
 __all__ = [
     "get_term_axioms",
     "get_typedef_axioms",
 ]
+
+
+def get_ontology(ontology: Obo) -> Ontology:
+    """Convert an ontology."""
+    return Ontology(
+        iri=ontology.ontology,
+        # TODO is there a way to generate a version IRI?
+        annotations=list(get_ontology_annotations(ontology)),
+        axioms=list(get_ontology_axioms(ontology)),
+    )
+
+
+def get_ontology_axioms(ontology: Obo) -> Iterable[f.Box]:
+    """Get axioms from the ontology."""
+    if ontology.subsetdefs:
+        yield f.Declaration("oboInOwl:SubsetProperty", type="AnnotationProperty")
+        for subset_typedef, subset_label in ontology.subsetdefs:
+            yield f.Declaration(subset_typedef, type="AnnotationProperty")
+            yield m.LabelMacro(subset_typedef, subset_label)
+            yield f.SubAnnotationPropertyOf(subset_typedef, "oboInOwl:SubsetProperty")
+
+    if ontology.synonym_typedefs:
+        yield f.Declaration("oboInOwl:hasScope", type="AnnotationProperty")
+        for synonym_typedef in ontology.synonym_typedefs:
+            yield f.Declaration(synonym_typedef.reference, type="AnnotationProperty")
+            yield m.LabelMacro(synonym_typedef.reference, synonym_typedef.name)
+            yield f.SubAnnotationPropertyOf(
+                synonym_typedef.reference, "oboInOwl:SynonymTypeProperty"
+            )
+            if synonym_typedef.specificity:
+                yield f.AnnotationAssertion(
+                    "oboInOwl:hasScope",
+                    synonym_typedef.reference,
+                    v.synonym_scopes[synonym_typedef.specificity],
+                )
+
+    for typedef in ontology.typedefs or []:
+        yield from get_typedef_axioms(typedef)
+
+    for term in ontology:
+        yield from get_term_axioms(term)
+
+
+def get_ontology_annotations(ontology: Obo) -> Iterable[f.Annotation]:
+    """Get annotations from the ontology."""
+    for predicate, value in ontology._iterate_property_pairs():
+        yield f.Annotation(predicate, value)
 
 
 def get_term_axioms(term: Term) -> Iterable[f.Box]:
