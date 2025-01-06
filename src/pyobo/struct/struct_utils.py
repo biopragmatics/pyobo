@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import NamedTuple, Self, TypeAlias
+from typing import NamedTuple, TypeAlias
+
+from typing_extensions import Self
 
 from . import vocabulary as v
 from .reference import (
