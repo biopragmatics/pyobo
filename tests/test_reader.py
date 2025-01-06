@@ -12,6 +12,7 @@ from pyobo.identifier_utils import UnparsableIRIError
 from pyobo.reader import from_obonet, get_first_nonescaped_quote
 from pyobo.struct import default_reference
 from pyobo.struct.struct import abbreviation
+from pyobo.struct.struct_utils import ObjectProperty
 from pyobo.struct.typedef import (
     TypeDef,
     derives_from,
@@ -1141,7 +1142,9 @@ class TestReader(unittest.TestCase):
         self.assertEqual(
             [
                 Reference(prefix="CL", identifier="0000540"),
-                (part_of.reference, Reference(prefix="NCBITaxon", identifier="7955")),
+                ObjectProperty(
+                    part_of.reference, Reference(prefix="NCBITaxon", identifier="7955"), None
+                ),
             ],
             term.intersection_of,
         )

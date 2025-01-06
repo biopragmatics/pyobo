@@ -294,8 +294,13 @@ def from_obonet(
 class MacroConfig:
     """A configuration data class for reader macros."""
 
-    def __init__(self, data: Mapping[str, list[str]], *, strict: bool, ontology_prefix: str):
+    def __init__(
+        self, data: Mapping[str, list[str]] | None = None, *, strict: bool, ontology_prefix: str
+    ):
         """Instantiate the configuration from obonet graph metadata."""
+        if data is None:
+            data = {}
+
         self.treat_xrefs_as_equivalent: set[str] = set()
         for prefix in data.get("treat-xrefs-as-equivalent", []):
             prefix_norm = bioregistry.normalize_prefix(prefix)
@@ -348,21 +353,20 @@ def _handle_xref(
     term: Stanza,
     xref: Reference,
     *,
-    macro_config: MacroConfig,
-) -> None:
-    if xref.prefix in macro_config.treat_xrefs_as_equivalent:
-        term.append_equivalent(xref)
-    elif object_property := macro_config.treat_xrefs_as_genus_differentia.get(xref.prefix):
-        term.intersection_of.append(xref)
-        term.intersection_of.append(object_property)
-    elif predicate := macro_config.treat_xrefs_as_relationship.get(xref.prefix):
-        term.append_relationship(predicate, xref)
-    elif xref.prefix in macro_config.treat_xrefs_as_is_a:
-        term.append_parent(xref)
-    elif xref.prefix in PROVENANCE_PREFIXES:
-        term.append_provenance(xref)
-    else:
-        term.append_xref(xref)
+    macro_config: MacroConfig | None = None,
+) -> Stanza:
+    if macro_config is not None:
+        if xref.prefix in macro_config.treat_xrefs_as_equivalent:
+            return term.append_equivalent(xref)
+        elif object_property := macro_config.treat_xrefs_as_genus_differentia.get(xref.prefix):
+            return term.append_intersection_of(xref).append_intersection_of(object_property)
+        elif predicate := macro_config.treat_xrefs_as_relationship.get(xref.prefix):
+            return term.append_relationship(predicate, xref)
+        elif xref.prefix in macro_config.treat_xrefs_as_is_a:
+            return term.append_parent(xref)
+    if xref.prefix in PROVENANCE_PREFIXES:
+        return term.append_provenance(xref)
+    return term.append_xref(xref)
 
 
 def _get_subsetdefs(graph: nx.MultiDiGraph, ontology_prefix: str) -> list[tuple[Reference, str]]:
@@ -509,7 +513,7 @@ def iterate_graph_typedefs(
     ontology_prefix: str,
     strict: bool = True,
     upgrade: bool,
-    macro_config: MacroConfig,
+    macro_config: MacroConfig | None = None,
 ) -> Iterable[TypeDef]:
     """Get type definitions from an :mod:`obonet` graph."""
     for typedef in graph.graph.get("typedefs", []):

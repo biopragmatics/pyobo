@@ -6,7 +6,15 @@ from collections.abc import Iterable
 from typing import NamedTuple, Self, TypeAlias
 
 from . import vocabulary as v
-from .reference import OBOLiteral, Reference, Referenced, default_reference, multi_reference_escape
+from .reference import (
+    OBOLiteral,
+    Reference,
+    Referenced,
+    _get_obo_trailing_modifiers,
+    default_reference,
+    multi_reference_escape,
+    reference_escape,
+)
 
 __all__ = [
     "AxiomsHint",
@@ -145,6 +153,47 @@ class Stanza:
         """Add a provenance reference."""
         self.provenance.append(_ensure_ref(reference))
         return self
+
+    def append_intersection_of(
+        self, /, reference: ReferenceHint | ObjectProperty, r2: ReferenceHint | None = None
+    ) -> Self:
+        """Append an intersection of."""
+        if r2 is not None:
+            if isinstance(reference, ObjectProperty):
+                raise TypeError
+            self.intersection_of.append(
+                ObjectProperty(_ensure_ref(reference), _ensure_ref(r2), None)
+            )
+        elif isinstance(reference, ObjectProperty):
+            self.intersection_of.append(reference)
+        else:
+            self.intersection_of.append(_ensure_ref(reference))
+        return self
+
+    def _iterate_intersection_of_obo(self, *, ontology_prefix: str) -> Iterable[str]:
+        for element in self.intersection_of:
+            match element:
+                case Reference():
+                    end = reference_escape(
+                        element, ontology_prefix=ontology_prefix, add_name_comment=True
+                    )
+                case ObjectProperty(predicate, object, _):
+                    end = multi_reference_escape(
+                        [predicate, object], ontology_prefix=ontology_prefix, add_name_comment=True
+                    )
+                case _:
+                    raise TypeError
+            yield f"intersection_of: {end}"
+
+    def _iterate_xref_obo(self, *, ontology_prefix) -> Iterable[str]:
+        for xref in sorted(self.xrefs):
+            xref_yv = f"xref: {reference_escape(xref, ontology_prefix=ontology_prefix, add_name_comment=False)}"
+            xref_yv += _get_obo_trailing_modifiers(
+                v.has_dbxref, xref, self._axioms, ontology_prefix=ontology_prefix
+            )
+            if xref.name:
+                xref_yv += f" ! {xref.name}"
+            yield xref_yv
 
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str

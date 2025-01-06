@@ -313,7 +313,7 @@ class TestTypeDef(unittest.TestCase):
             name: occurs in
             domain: BFO:0000003
             range: BFO:0000004
-            holds_over_chain: BFO:0000050 BFO:0000066 ! part of / occurs in
+            holds_over_chain: BFO:0000050 BFO:0000066 ! part of occurs in
             inverse_of: BFO:0000067 ! contains process
             transitive_over: BFO:0000050 ! part of
         """
@@ -328,7 +328,7 @@ class TestTypeDef(unittest.TestCase):
             """\
             [Typedef]
             id: BFO:0000066
-            holds_over_chain: BFO:0000050 BFO:0000066 ! part of / occurs in
+            holds_over_chain: BFO:0000050 BFO:0000066 ! part of occurs in
             """,
             typedef,
         )
@@ -420,12 +420,15 @@ class TestTypeDef(unittest.TestCase):
         typedef = TypeDef(
             reference=Reference(
                 prefix="GO", identifier="0000085", name="G2 phase of mitotic cell cycle"
-            ),
-            intersection_of=[
-                Reference(prefix="GO", identifier="0051319", name="G2 phase"),
-                (part_of, Reference(prefix="GO", identifier="0000278", name="mitotic cell cycle")),
-            ],
+            )
         )
+        typedef.append_intersection_of(
+            Reference(prefix="GO", identifier="0051319", name="G2 phase")
+        )
+        typedef.append_intersection_of(
+            part_of, Reference(prefix="GO", identifier="0000278", name="mitotic cell cycle")
+        )
+
         self.assert_obo_stanza(
             """\
             [Typedef]

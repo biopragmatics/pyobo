@@ -33,11 +33,9 @@ from .reference import (
     OBOLiteral,
     Reference,
     Referenced,
-    _get_obo_trailing_modifiers,
     _iterate_obo_relations,
     _reference_list_tag,
     comma_separate_references,
-    multi_reference_escape,
     reference_escape,
     unspecified_matching,
 )
@@ -615,14 +613,8 @@ class Term(Referenced, Stanza):
         for synonym in sorted(self.synonyms):
             yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
         # 10
-        for xref in sorted(self.xrefs):
-            xref_yv = f"xref: {self._reference(xref, ontology_prefix, add_name_comment=False)}"
-            xref_yv += _get_obo_trailing_modifiers(
-                has_dbxref.reference, xref, self._axioms, ontology_prefix=ontology_prefix
-            )
-            if xref.name:
-                xref_yv += f" ! {xref.name}"
-            yield xref_yv
+        yield from self._iterate_xref_obo(ontology_prefix=ontology_prefix)
+        # 11
         yield from _boolean_tag("builtin", self.builtin)
         # 12
         if emit_annotation_properties:
@@ -630,15 +622,9 @@ class Term(Referenced, Stanza):
                 yield f"property_value: {line}"
         # 13
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
-        for parent in sorted(self.parents):
-            yield f"{parent_tag}: {self._reference(parent, ontology_prefix, add_name_comment=True)}"
+        yield from _reference_list_tag(parent_tag, self.parents, ontology_prefix)
         # 14
-        for intersection_of in self.intersection_of:
-            match intersection_of:
-                case Reference():
-                    yield f"intersection_of: {reference_escape(intersection_of, ontology_prefix=ontology_prefix, add_name_comment=True)}"
-                case ObjectProperty(predicate, object, _):
-                    yield f"intersection_of: {multi_reference_escape([predicate, object], ontology_prefix=ontology_prefix, add_name_comment=True)}"
+        yield from self._iterate_intersection_of_obo(ontology_prefix=ontology_prefix)
         # 15 TODO union_of
         # 16 TODO equivalent_to
         # 17 TODO disjoint_from

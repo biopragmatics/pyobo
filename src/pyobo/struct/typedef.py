@@ -19,7 +19,6 @@ from .reference import (
     _iterate_obo_relations,
     _reference_list_tag,
     default_reference,
-    multi_reference_escape,
     reference_escape,
 )
 from .struct_utils import AxiomsHint, ObjectProperty, Stanza, _chain_tag
@@ -233,7 +232,7 @@ class TypeDef(Referenced, Stanza):
         for synonym in self.synonyms:
             yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
         # 10
-        yield from _reference_list_tag("xref", self.xrefs, ontology_prefix)
+        yield from self._iterate_xref_obo(ontology_prefix=ontology_prefix)
         # 11
         for line in _iterate_obo_relations(
             # the type checker seems to be a bit confused, this is an okay typing since we're
@@ -271,15 +270,7 @@ class TypeDef(Referenced, Stanza):
         # 23
         yield from _reference_list_tag("is_a", self.parents, ontology_prefix)
         # 24
-        for p in self.intersection_of:
-            match p:
-                case Reference():
-                    yv = reference_escape(p, ontology_prefix=ontology_prefix, add_name_comment=True)
-                case ObjectProperty(predicate, object):  # this is a 2-tuple of references
-                    yv = multi_reference_escape(
-                        [predicate, object], ontology_prefix=ontology_prefix, add_name_comment=True
-                    )
-            yield f"intersection_of: {yv}"
+        yield from self._iterate_intersection_of_obo(ontology_prefix=ontology_prefix)
         # 25
         yield from _reference_list_tag("union_of", self.union_of, ontology_prefix)
         # 26

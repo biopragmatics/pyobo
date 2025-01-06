@@ -723,14 +723,10 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
     def test_intersection_of(self) -> None:
         """Test emitting intersection of."""
         term = Term(reference=Reference(prefix="ZFA", identifier="0000134"))
-        term.intersection_of.extend(
-            (
-                Reference(prefix="CL", identifier="0000540", name="neuron"),
-                (
-                    part_of.reference,
-                    Reference(prefix="NCBITaxon", identifier="7955", name="zebrafish"),
-                ),
-            )
+        term.append_intersection_of(Reference(prefix="CL", identifier="0000540", name="neuron"))
+        term.append_intersection_of(
+            part_of.reference,
+            Reference(prefix="NCBITaxon", identifier="7955", name="zebrafish"),
         )
         lines = dedent("""\
             [Term]
