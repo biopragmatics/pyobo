@@ -73,6 +73,7 @@ class Stanza:
     """A high-level class for stanzas."""
 
     relationships: RelationsHint
+    properties: PropertiesHint
     xrefs: list[Reference]
     parents: list[Reference]
     provenance: list[Reference]
@@ -217,6 +218,65 @@ class Stanza:
                     if predicate.pair == ap_norm.pair:
                         return axiom
         return None
+
+    def append_property(self, prop: ObjectProperty | LiteralProperty) -> Self:
+        """Annotate a property."""
+        match prop:
+            case LiteralProperty(predicate, literal):
+                self.properties[predicate].append(literal)
+            case ObjectProperty(predicate, obj):
+                self.properties[predicate].append(obj)
+        return self
+
+    def annotate_literal(
+        self, prop: ReferenceHint, value: str, datatype: Reference | None = None
+    ) -> Self:
+        """Append an object annotation."""
+        prop = _ensure_ref(prop)
+        self.properties[prop].append(
+            OBOLiteral(value, datatype or Reference(prefix="xsd", identifier="string"))
+        )
+        return self
+
+    def annotate_boolean(self, prop: ReferenceHint, value: bool) -> Self:
+        """Append an object annotation."""
+        return self.annotate_literal(
+            prop, str(value).lower(), Reference(prefix="xsd", identifier="boolean")
+        )
+
+    def annotate_integer(self, prop: ReferenceHint, value: int | str) -> Self:
+        """Append an object annotation."""
+        return self.annotate_literal(
+            prop, str(int(value)), Reference(prefix="xsd", identifier="integer")
+        )
+
+    def annotate_year(self, prop: ReferenceHint, value: int | str) -> Self:
+        """Append a year annotation."""
+        return self.annotate_literal(
+            prop, str(int(value)), Reference(prefix="xsd", identifier="gYear")
+        )
+
+    def _iterate_obo_properties(self, *, ontology_prefix: str) -> Iterable[str]:
+        for line in _iterate_obo_relations(
+            # the type checker seems to be a bit confused, this is an okay typing since we're
+            # passing a more explicit version. The issue is that list is used for the typing,
+            # which means it can't narrow properly
+            self.properties,  # type:ignore
+            self._axioms,
+            ontology_prefix=ontology_prefix,
+        ):
+            yield f"property_value: {line}"
+
+    def _iterate_obo_relations(self, *, ontology_prefix: str) -> Iterable[str]:
+        for line in _iterate_obo_relations(
+            # the type checker seems to be a bit confused, this is an okay typing since we're
+            # passing a more explicit version. The issue is that list is used for the typing,
+            # which means it can't narrow properly
+            self.relationships,  # type:ignore
+            self._axioms,
+            ontology_prefix=ontology_prefix,
+        ):
+            yield f"relationship: {line}"
 
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str

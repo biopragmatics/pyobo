@@ -47,7 +47,6 @@ from .struct_utils import (
     RelationsHint,
     Stanza,
     _ensure_ref,
-    _iterate_obo_relations,
 )
 from .typedef import (
     TypeDef,
@@ -529,49 +528,6 @@ class Term(Referenced, Stanza):
         typedef = _ensure_ref(typedef)
         self.relationships[typedef].extend(references)
 
-    def append_property(
-        self, prop: str | Reference | Referenced, value: str | Reference | Referenced
-    ) -> Self:
-        """Append an arbitrary property."""
-        raise NotImplementedError
-
-    def _annotate(self, prop: ObjectProperty | LiteralProperty) -> Self:
-        """Annotate a property."""
-        match prop:
-            case LiteralProperty(predicate, literal):
-                self.properties[predicate].append(literal)
-            case ObjectProperty(predicate, obj):
-                self.properties[predicate].append(obj)
-        return self
-
-    def annotate_literal(
-        self, prop: ReferenceHint, value: str, datatype: Reference | None = None
-    ) -> Self:
-        """Append an object annotation."""
-        prop = _ensure_ref(prop)
-        self.properties[prop].append(
-            OBOLiteral(value, datatype or Reference(prefix="xsd", identifier="string"))
-        )
-        return self
-
-    def annotate_boolean(self, prop: ReferenceHint, value: bool) -> Self:
-        """Append an object annotation."""
-        return self.annotate_literal(
-            prop, str(value).lower(), Reference(prefix="xsd", identifier="boolean")
-        )
-
-    def annotate_integer(self, prop: ReferenceHint, value: int | str) -> Self:
-        """Append an object annotation."""
-        return self.annotate_literal(
-            prop, str(int(value)), Reference(prefix="xsd", identifier="integer")
-        )
-
-    def annotate_year(self, prop: ReferenceHint, value: int | str) -> Self:
-        """Append a year annotation."""
-        return self.annotate_literal(
-            prop, str(int(value)), Reference(prefix="xsd", identifier="gYear")
-        )
-
     def _definition_fp(self) -> str:
         definition = obo_escape_slim(self.definition) if self.definition else ""
         return f'"{definition}" [{comma_separate_references(self.provenance)}]'
@@ -634,8 +590,7 @@ class Term(Referenced, Stanza):
         yield from _boolean_tag("builtin", self.builtin)
         # 12
         if emit_annotation_properties:
-            for line in self._emit_properties(ontology_prefix, typedefs):
-                yield f"property_value: {line}"
+            yield from self._iterate_obo_properties(ontology_prefix=ontology_prefix)
         # 13
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
         yield from _reference_list_tag(parent_tag, self.parents, ontology_prefix)
@@ -646,23 +601,13 @@ class Term(Referenced, Stanza):
         # 17 TODO disjoint_from
         # 18
         if emit_object_properties:
-            for part in _iterate_obo_relations(
-                self.relationships, self._axioms, ontology_prefix=ontology_prefix
-            ):
-                yield f"relationship: {part}"
+            yield from self._iterate_obo_relations(ontology_prefix=ontology_prefix)
         # 19 TODO created_by
         # 20 TODO creation_date
         # 21
         yield from _boolean_tag("is_obsolete", self.is_obsolete)
         # 22 TODO replaced_by, weird since this conflicts with other annotations
         # 23 TODO consider
-
-    def _emit_properties(
-        self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
-    ) -> Iterable[str]:
-        yield from _iterate_obo_relations(
-            self.properties, self._axioms, ontology_prefix=ontology_prefix
-        )
 
     @staticmethod
     def _reference(
@@ -1332,7 +1277,7 @@ class Obo:
         nodes = {}
         #: a list of 3-tuples u,v,k
         links = []
-        typedefs = self._index_typedefs()
+        self._index_typedefs()
         synonym_typedefs = self._index_synonym_typedefs()
         for term in self._iter_terms(use_tqdm=use_tqdm):
             parents = []
@@ -1348,7 +1293,7 @@ class Obo:
                 links.append((term.curie, typedef.curie, target.curie))
 
             for typedef, targets in sorted(term.properties.items()):
-                for target_or_literal in targets:  # FIXME need sort + key
+                for target_or_literal in targets:
                     if isinstance(target_or_literal, curies.Reference):
                         links.append((term.curie, typedef.curie, target_or_literal.curie))
 
@@ -1363,7 +1308,7 @@ class Obo:
                     synonym._fp(ontology_prefix=self.ontology, synonym_typedefs=synonym_typedefs)
                     for synonym in term.synonyms
                 ],
-                "property_value": list(term._emit_properties(self.ontology, typedefs)),
+                "property_value": list(term._iterate_obo_properties(ontology_prefix=self.ontology)),
             }
             nodes[term.curie] = {k: v for k, v in d.items() if v}
 

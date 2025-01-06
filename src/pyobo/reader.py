@@ -261,7 +261,7 @@ def from_obonet(
             data, node=reference, strict=strict, ontology_prefix=ontology_prefix, upgrade=upgrade
         ):
             n_properties += 1
-            term._annotate(t)
+            term.append_property(t)
 
         terms.append(term)
 

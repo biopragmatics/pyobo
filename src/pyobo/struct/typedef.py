@@ -26,7 +26,6 @@ from .struct_utils import (
     RelationsHint,
     Stanza,
     _chain_tag,
-    _iterate_obo_relations,
 )
 from .utils import _boolean_tag
 from ..resources.ro import load_ro
@@ -236,15 +235,7 @@ class TypeDef(Referenced, Stanza):
         # 10
         yield from self._iterate_xref_obo(ontology_prefix=ontology_prefix)
         # 11
-        for line in _iterate_obo_relations(
-            # the type checker seems to be a bit confused, this is an okay typing since we're
-            # passing a more explicit version. The issue is that list is used for the typing,
-            # which means it can't narrow properly
-            self.properties,  # type:ignore
-            self._axioms,
-            ontology_prefix=ontology_prefix,
-        ):
-            yield f"property_value: {line}"
+        yield from self._iterate_obo_properties(ontology_prefix=ontology_prefix)
         # 12
         if self.domain:
             yield f"domain: {reference_escape(self.domain, ontology_prefix=ontology_prefix, add_name_comment=True)}"
@@ -288,15 +279,7 @@ class TypeDef(Referenced, Stanza):
         yield from _chain_tag("equivalent_to_chain", self.equivalent_to_chain, ontology_prefix)
         # 31 TODO disjoint_over, see https://github.com/search?q=%22disjoint_over%3A%22+path%3A*.obo&type=code
         # 32
-        for line in _iterate_obo_relations(
-            # the type checker seems to be a bit confused, this is an okay typing since we're
-            # passing a more explicit version. The issue is that list is used for the typing,
-            # which means it can't narrow properly
-            self.relationships,  # type:ignore
-            self._axioms,
-            ontology_prefix=ontology_prefix,
-        ):
-            yield f"relationship: {line}"
+        yield from self._iterate_obo_relations(ontology_prefix=ontology_prefix)
         # 33
         yield from _boolean_tag("is_obsolete", self.is_obsolete)
         # 34
