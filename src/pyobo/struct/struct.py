@@ -576,7 +576,7 @@ class Term(Referenced, Stanza):
                 yield ObjectProperty(prop, value)
         for prop, value_datatype_pairs in sorted(self.annotations_literal.items()):
             for svalue, datatype in sorted(value_datatype_pairs):
-                yield LiteralProperty(prop, svalue, datatype)
+                yield LiteralProperty(prop, OBOLiteral(svalue, datatype))
 
     def iterate_obo_lines(
         self,
@@ -1489,7 +1489,7 @@ class Obo:
         tuple[Term, Reference, Reference, None] | tuple[Term, Reference, str, Reference]
         for term, t in self.iterate_properties(use_tqdm=use_tqdm):
             match t:
-                case LiteralProperty(predicate, value, datatype):
+                case LiteralProperty(predicate, OBOLiteral(value, datatype)):
                     yield (
                         term.identifier,
                         term._reference(predicate, ontology_prefix=self.ontology),
@@ -1521,7 +1521,7 @@ class Obo:
         for term in self._iter_terms(use_tqdm=use_tqdm):
             for t in term.iterate_properties():
                 match t:
-                    case LiteralProperty(predicate, value, _datatype):
+                    case LiteralProperty(predicate, OBOLiteral(value, _datatype)):
                         if predicate == prop:
                             yield term, value
                     case ObjectProperty(predicate, object):

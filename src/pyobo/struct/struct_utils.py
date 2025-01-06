@@ -42,13 +42,12 @@ class LiteralProperty(NamedTuple):
     """A tuple representing a property with a literal value."""
 
     predicate: Reference
-    value: str
-    datatype: Reference
+    literal: OBOLiteral
 
     @classmethod
     def float(cls, predicate: Reference, value: float) -> Self:
         """Return a literal property for a float."""
-        return cls(predicate, str(value), Reference(prefix="xsd", identifier="float"))
+        return cls(predicate, OBOLiteral(str(value), Reference(prefix="xsd", identifier="float")))
 
 
 class Stanza:
@@ -86,12 +85,11 @@ class Stanza:
     def _annotate_axiom(
         self, p: Reference, o: Reference, axiom: ObjectProperty | LiteralProperty
     ) -> None:
-        if isinstance(axiom, ObjectProperty):
-            self._axioms[p, o].append((axiom.predicate, axiom.object))
-        elif isinstance(axiom, LiteralProperty):
-            self._axioms[p, o].append((axiom.predicate, OBOLiteral(axiom.value, axiom.datatype)))
-        else:
-            raise TypeError
+        match axiom:
+            case ObjectProperty(predicate, object):
+                self._axioms[p, o].append((predicate, object))
+            case LiteralProperty(predicate, literal):
+                self._axioms[p, o].append((predicate, literal))
 
     def append_equivalent(
         self,

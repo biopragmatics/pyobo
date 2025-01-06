@@ -141,8 +141,8 @@ def from_obonet(
         node=Reference(prefix="obo", identifier=ontology_prefix),
     ):
         match t:
-            case LiteralProperty(predicate, value, datatype):
-                property_values.append((predicate, OBOLiteral(value, datatype)))
+            case LiteralProperty(predicate, literal):
+                property_values.append((predicate, literal))
             case ObjectProperty(predicate, obj):
                 if predicate.pair == has_ontology_root_term.pair:
                     root_terms.append(obj)
@@ -262,7 +262,7 @@ def from_obonet(
         ):
             n_properties += 1
             match t:
-                case LiteralProperty(predicate, value, datatype):
+                case LiteralProperty(predicate, OBOLiteral(value, datatype)):
                     term.annotate_literal(predicate, value, datatype)
                 case ObjectProperty(predicate, obj):
                     term.annotate_object(predicate, obj)
@@ -806,7 +806,7 @@ def _handle_prop(
     value = value.strip('"')
 
     if not datatype:
-        return LiteralProperty(prop_reference, value, Reference(prefix="xsd", identifier="string"))
+        return LiteralProperty(prop_reference, OBOLiteral.string(value))
 
     datatype_reference = Reference.from_curie_or_uri(
         datatype, strict=strict, ontology_prefix=ontology_prefix, node=node
@@ -814,7 +814,7 @@ def _handle_prop(
     if datatype_reference is None:
         logger.warning("[%s] had unparsable datatype %s", node.curie, prop_value_type)
         return None
-    return LiteralProperty(prop_reference, value, datatype_reference)
+    return LiteralProperty(prop_reference, OBOLiteral(value, datatype_reference))
 
 
 def _get_prop(
