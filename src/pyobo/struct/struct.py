@@ -39,6 +39,7 @@ from .reference import (
     unspecified_matching,
 )
 from .struct_utils import (
+    AxiomsHint,
     LiteralProperty,
     ObjectProperty,
     ReferenceHint,
@@ -242,9 +243,7 @@ class Term(Referenced, Stanza):
         default_factory=lambda: defaultdict(list)
     )
 
-    _axioms: dict[
-        tuple[Reference, Reference | OBOLiteral], list[tuple[Reference, Reference | OBOLiteral]]
-    ] = field(default_factory=lambda: defaultdict(list))
+    _axioms: AxiomsHint = field(default_factory=lambda: defaultdict(list))
 
     #: Annotation properties pointing to objects (i.e., references)
     annotations_object: dict[Reference, list[Reference]] = field(

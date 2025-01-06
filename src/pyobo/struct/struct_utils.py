@@ -26,10 +26,6 @@ __all__ = [
     "Stanza",
 ]
 
-AxiomsHint: TypeAlias = dict[
-    tuple[Reference, Reference | OBOLiteral], list[tuple[Reference, Reference | OBOLiteral]]
-]
-
 
 class ObjectProperty(NamedTuple):
     """A tuple representing a propert with an object."""
@@ -48,6 +44,11 @@ class LiteralProperty(NamedTuple):
     def float(cls, predicate: Reference, value: float) -> Self:
         """Return a literal property for a float."""
         return cls(predicate, OBOLiteral(str(value), Reference(prefix="xsd", identifier="float")))
+
+
+AxiomsHint: TypeAlias = dict[
+    tuple[Reference, Reference | OBOLiteral], list[ObjectProperty | LiteralProperty]
+]
 
 
 class Stanza:
@@ -85,11 +86,7 @@ class Stanza:
     def _annotate_axiom(
         self, p: Reference, o: Reference, axiom: ObjectProperty | LiteralProperty
     ) -> None:
-        match axiom:
-            case ObjectProperty(predicate, object):
-                self._axioms[p, o].append((predicate, object))
-            case LiteralProperty(predicate, literal):
-                self._axioms[p, o].append((predicate, literal))
+        self._axioms[p, o].append(axiom)
 
     def append_equivalent(
         self,
@@ -254,7 +251,7 @@ def _get_obo_trailing_modifiers(
 
 
 def _format_obo_trailing_modifiers(
-    annotations: Sequence[tuple[Reference, Reference | OBOLiteral]], *, ontology_prefix: str
+    annotations: Sequence[ObjectProperty | LiteralProperty], *, ontology_prefix: str
 ) -> str:
     """Format a sequence of axioms for OBO trailing modifiers.
 
@@ -267,13 +264,18 @@ def _format_obo_trailing_modifiers(
     things, so split up the place where axioms are put in here.
     """
     modifiers: list[tuple[str, str]] = []
-    for predicate, part in annotations:
-        ap_str = reference_escape(predicate, ontology_prefix=ontology_prefix)
-        match part:
-            case OBOLiteral(dd, _datatype):
-                ao_str = str(dd)
-            case _:  # it's a reference
-                ao_str = reference_escape(part, ontology_prefix=ontology_prefix)
-        modifiers.append((ap_str, ao_str))
+    for prop in annotations:
+        match prop:
+            case ObjectProperty(predicate, target):
+                modifiers.append(
+                    (
+                        reference_escape(predicate, ontology_prefix=ontology_prefix),
+                        reference_escape(target, ontology_prefix=ontology_prefix),
+                    )
+                )
+            case LiteralProperty(predicate, OBOLiteral(value, _datatype)):
+                modifiers.append(
+                    (reference_escape(predicate, ontology_prefix=ontology_prefix), value)
+                )
     inner = ", ".join(f"{key}={value}" for key, value in sorted(modifiers))
     return " {" + inner + "}"
