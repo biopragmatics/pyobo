@@ -261,11 +261,8 @@ def from_obonet(
             data, node=reference, strict=strict, ontology_prefix=ontology_prefix, upgrade=upgrade
         ):
             n_properties += 1
-            match t:
-                case LiteralProperty(predicate, OBOLiteral(value, datatype)):
-                    term.annotate_literal(predicate, value, datatype)
-                case ObjectProperty(predicate, obj):
-                    term.annotate_object(predicate, obj)
+            term._annotate(t)
+
         terms.append(term)
 
     subset_typedefs = _get_subsetdefs(graph.graph, ontology_prefix=ontology_prefix)

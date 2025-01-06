@@ -46,7 +46,6 @@ from .struct_utils import (
     Stanza,
     _ensure_ref,
     _iterate_obo_relations,
-    _property_resolve,
 )
 from .typedef import (
     TypeDef,
@@ -444,24 +443,28 @@ class Term(Referenced, Stanza):
     def _get_object_axiom_target(
         self, p: Reference, o: Reference | OBOLiteral, ap: Reference
     ) -> Reference | None:
-        for axiom_predicate, axiom_target in self._axioms.get(_property_resolve(p, o), []):
-            if axiom_predicate != ap:
-                continue
-            if isinstance(axiom_target, OBOLiteral):
+        match self._get_axiom(p, o, ap):
+            case ObjectProperty(_, target):
+                return target
+            case LiteralProperty():
                 raise TypeError
-            return axiom_target
-        return None
+            case None:
+                return None
+            case _:
+                raise TypeError
 
     def _get_str_axiom_target(
         self, p: Reference, o: Reference | OBOLiteral, ap: Reference
     ) -> str | None:
-        for axiom_predicate, axiom_target in self._axioms.get(_property_resolve(p, o), []):
-            if axiom_predicate != ap:
-                continue
-            if isinstance(axiom_target, Reference):
+        match self._get_axiom(p, o, ap):
+            case ObjectProperty():
                 raise TypeError
-            return axiom_target.value
-        return None
+            case LiteralProperty(_, OBOLiteral(value, _)):
+                return value
+            case None:
+                return None
+            case _:
+                raise TypeError
 
     def _get_mapping_context(self, p: Reference, o: Reference) -> MappingContext:
         return MappingContext(
@@ -536,6 +539,14 @@ class Term(Referenced, Stanza):
     ) -> Self:
         """Append an arbitrary property."""
         raise NotImplementedError
+
+    def _annotate(self, prop: ObjectProperty | LiteralProperty) -> Self:
+        """Annotate a property."""
+        match prop:
+            case LiteralProperty(predicate, OBOLiteral(value, datatype)):
+                return self.annotate_literal(predicate, value, datatype)
+            case ObjectProperty(predicate, obj):
+                return self.annotate_object(predicate, obj)
 
     def annotate_literal(
         self, prop: ReferenceHint, value: str, datatype: Reference | None = None

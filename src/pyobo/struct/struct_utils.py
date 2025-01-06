@@ -46,12 +46,20 @@ class LiteralProperty(NamedTuple):
         return cls(predicate, OBOLiteral(str(value), Reference(prefix="xsd", identifier="float")))
 
 
-def _property_resolve(p: Reference, o: Reference | OBOLiteral) -> ObjectProperty | LiteralProperty:
+def _property_resolve(
+    p: Reference | Referenced, o: Reference | Referenced | OBOLiteral
+) -> ObjectProperty | LiteralProperty:
+    if isinstance(p, Referenced):
+        p = p.reference
     match o:
+        case Referenced():
+            return ObjectProperty(p, o.reference)
         case Reference():
             return ObjectProperty(p, o)
         case OBOLiteral():
             return LiteralProperty(p, o)
+        case _:
+            raise TypeError(f"expected reference, referenced, or OBO literal. Got: {type(o)} {o}")
 
 
 AxiomsHint: TypeAlias = dict[
@@ -188,6 +196,25 @@ class Stanza:
             if xref.name:
                 xref_yv += f" ! {xref.name}"
             yield xref_yv
+
+    def _get_axioms(
+        self, p: Reference | Referenced, o: Reference | Referenced | OBOLiteral
+    ) -> list[ObjectProperty | LiteralProperty]:
+        return self._axioms.get(_property_resolve(p, o), [])
+
+    def _get_axiom(
+        self, p: Reference, o: Reference | OBOLiteral, ap: Reference
+    ) -> ObjectProperty | LiteralProperty | None:
+        ap_norm = _ensure_ref(ap)
+        for axiom in self._get_axioms(p, o):
+            match axiom:
+                case ObjectProperty(predicate, _):
+                    if predicate.pair == ap_norm.pair:
+                        return axiom
+                case LiteralProperty(predicate, _):
+                    if predicate.pair == ap_norm.pair:
+                        return axiom
+        return None
 
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
