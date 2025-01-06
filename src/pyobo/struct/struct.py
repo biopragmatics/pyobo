@@ -934,6 +934,8 @@ class Obo:
 
     subsetdefs: ClassVar[list[tuple[Reference, str]] | None] = None
 
+    property_values: ClassVar[list[tuple[Reference, Reference | OBOLiteral]] | None] = None
+
     def __post_init__(self):
         """Run post-init checks."""
         if self.ontology is None:
@@ -1135,7 +1137,7 @@ class Obo:
         for predicate, value in self._iterate_property_pairs():
             match value:
                 case OBOLiteral():
-                    end = f"{obo_escape_slim(value.value)} {reference_escape(value.datatype, ontology_prefix=self.ontology)}"
+                    end = f"\"{obo_escape_slim(value.value)}\" {reference_escape(value.datatype, ontology_prefix=self.ontology)}"
                 case Reference():
                     end = reference_escape(value, ontology_prefix=self.ontology)
             yield f"property_value: {reference_escape(predicate, ontology_prefix=self.ontology)} {end}"
@@ -1167,6 +1169,10 @@ class Obo:
         # Root terms
         for root_term in self.root_terms or []:
             yield has_ontology_root_term.reference, root_term
+
+        # Extras
+        if self.property_values:
+            yield from self.property_values
 
     def _index_typedefs(self) -> Mapping[ReferenceTuple, TypeDef]:
         return ChainMap(
@@ -2012,6 +2018,7 @@ def make_ad_hoc_ontology(
     _idspaces: Mapping[str, str] | None = None,
     _root_terms: list[Reference] | None = None,
     _subsetdefs: list[tuple[Reference, str]] | None = None,
+    _property_values: list[tuple[Reference, Reference | OBOLiteral]] | None = None,
     *,
     terms: list[Term] | None = None,
 ) -> Obo:
@@ -2029,6 +2036,7 @@ def make_ad_hoc_ontology(
         idspaces = _idspaces
         root_terms = _root_terms
         subsetdefs = _subsetdefs
+        property_values = _property_values
 
         def __post_init__(self):
             self.date = _date

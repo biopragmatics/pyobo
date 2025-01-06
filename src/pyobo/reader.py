@@ -277,6 +277,8 @@ def from_obonet(
         _data_version=data_version,
         _root_terms=root_terms,
         terms=terms,
+        # TODO add subsetdefs
+        # TODO add extra properties
     )
 
 

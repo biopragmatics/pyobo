@@ -5,7 +5,9 @@ from collections.abc import Iterable
 from textwrap import dedent
 
 from pyobo import default_reference
+from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import Obo, make_ad_hoc_ontology
+from pyobo.struct.typedef import has_license
 
 
 class TestOBOHeader(unittest.TestCase):
@@ -145,6 +147,39 @@ class TestOBOHeader(unittest.TestCase):
             format-version: 1.2
             ontology: xxx
             property_value: IAO:0000700 ROOT1
+            """,
+            ontology,
+        )
+
+    def test_18_properties_bioregistry(self) -> None:
+        """Test auto-populating."""
+        ontology = make_ad_hoc_ontology(
+            _ontology="go",
+        )
+        self.assert_obo_lines(
+            """\
+            format-version: 1.2
+            ontology: go
+            property_value: dcterms:title "Gene Ontology" xsd:string
+            property_value: dcterms:license "CC-BY-4.0" xsd:string
+            property_value: dcterms:description "The Gene Ontology project provides a controlled vocabulary to describe gene and gene product attributes in any organism." xsd:string
+            """,
+            ontology,
+        )
+
+    def test_18_properties_external(self) -> None:
+        """Test properties."""
+        ontology = make_ad_hoc_ontology(
+            _ontology="xxx",
+            _property_values=[
+                (has_license.reference, OBOLiteral.string("CC0")),
+            ],
+        )
+        self.assert_obo_lines(
+            """\
+            format-version: 1.2
+            ontology: xxx
+            property_value: dcterms:license "CC0" xsd:string
             """,
             ontology,
         )
