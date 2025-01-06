@@ -22,7 +22,7 @@ class TestOBOHeader(unittest.TestCase):
     def test_2_data_version(self) -> None:
         """Test ontology definition."""
         ontology = make_ad_hoc_ontology(
-            ontology="xxx",
+            _ontology="xxx",
             _data_version="1.0",
         )
         self.assert_obo_lines(
@@ -37,7 +37,7 @@ class TestOBOHeader(unittest.TestCase):
     def test_5_data_version(self) -> None:
         """Test ontology definition."""
         ontology = make_ad_hoc_ontology(
-            ontology="xxx",
+            _ontology="xxx",
             _auto_generated_by="test",
         )
         self.assert_obo_lines(
