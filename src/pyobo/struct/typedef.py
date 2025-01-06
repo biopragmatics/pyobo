@@ -21,7 +21,7 @@ from .reference import (
 )
 from .struct_utils import (
     AxiomsHint,
-    ObjectProperty,
+    IntersectionOfHint,
     PropertiesHint,
     RelationsHint,
     Stanza,
@@ -113,7 +113,7 @@ class TypeDef(Referenced, Stanza):
     is_functional: Annotated[bool | None, 21, "typedef-only"] = None
     is_inverse_functional: Annotated[bool | None, 22, "typedef-only"] = None
     parents: Annotated[list[Reference], 23] = field(default_factory=list)
-    intersection_of: Annotated[list[Reference | ObjectProperty], 24] = field(default_factory=list)
+    intersection_of: Annotated[IntersectionOfHint, 24] = field(default_factory=list)
     union_of: Annotated[list[Reference], 25] = field(default_factory=list)
     equivalent_to: Annotated[list[Reference], 26] = field(default_factory=list)
     disjoint_from: Annotated[list[Reference], 27] = field(default_factory=list)

@@ -20,25 +20,16 @@ from .reference import (
 
 __all__ = [
     "AxiomsHint",
-    "LiteralProperty",
-    "ObjectProperty",
     "ReferenceHint",
     "Stanza",
 ]
 
 
-class ObjectProperty(NamedTuple):
-    """A tuple representing a propert with an object."""
+class Annotation(NamedTuple):
+    """A tuple representing a predicate-object pair."""
 
     predicate: Reference
-    object: Reference
-
-
-class LiteralProperty(NamedTuple):
-    """A tuple representing a property with a literal value."""
-
-    predicate: Reference
-    literal: OBOLiteral
+    value: Reference | OBOLiteral
 
     @classmethod
     def float(cls, predicate: Reference, value: float) -> Self:
@@ -48,25 +39,18 @@ class LiteralProperty(NamedTuple):
 
 def _property_resolve(
     p: Reference | Referenced, o: Reference | Referenced | OBOLiteral
-) -> ObjectProperty | LiteralProperty:
+) -> Annotation:
     if isinstance(p, Referenced):
         p = p.reference
-    match o:
-        case Referenced():
-            return ObjectProperty(p, o.reference)
-        case Reference():
-            return ObjectProperty(p, o)
-        case OBOLiteral():
-            return LiteralProperty(p, o)
-        case _:
-            raise TypeError(f"expected reference, referenced, or OBO literal. Got: {type(o)} {o}")
+    if isinstance(o, Referenced):
+        o = o.reference
+    return Annotation(p, o)
 
 
 PropertiesHint: TypeAlias = dict[Reference, list[Reference | OBOLiteral]]
 RelationsHint: TypeAlias = dict[Reference, list[Reference]]
-AxiomsHint: TypeAlias = dict[
-    ObjectProperty | LiteralProperty, list[ObjectProperty | LiteralProperty]
-]
+AxiomsHint: TypeAlias = dict[Annotation, list[Annotation]]
+IntersectionOfHint: TypeAlias = list[Reference | Annotation]
 
 
 class Stanza:
@@ -77,7 +61,7 @@ class Stanza:
     xrefs: list[Reference]
     parents: list[Reference]
     provenance: list[Reference]
-    intersection_of: list[Reference | ObjectProperty]
+    intersection_of: IntersectionOfHint
     _axioms: AxiomsHint
 
     def append_relationship(
@@ -85,7 +69,7 @@ class Stanza:
         typedef: ReferenceHint,
         reference: ReferenceHint,
         *,
-        axioms: Iterable[ObjectProperty | LiteralProperty] | None = None,
+        axioms: Iterable[Annotation] | None = None,
     ) -> Self:
         """Append a relationship."""
         typedef = _ensure_ref(typedef)
@@ -95,16 +79,14 @@ class Stanza:
         return self
 
     def _annotate_axioms(
-        self, p: Reference, o: Reference, axioms: Iterable[ObjectProperty | LiteralProperty] | None
+        self, p: Reference, o: Reference, axioms: Iterable[Annotation] | None
     ) -> None:
         if axioms is None:
             return
         for axiom in axioms:
             self._annotate_axiom(p, o, axiom)
 
-    def _annotate_axiom(
-        self, p: Reference, o: Reference | OBOLiteral, axiom: ObjectProperty | LiteralProperty
-    ) -> None:
+    def _annotate_axiom(self, p: Reference, o: Reference | OBOLiteral, axiom: Annotation) -> None:
         self._axioms[_property_resolve(p, o)].append(axiom)
 
     def append_equivalent(
@@ -141,13 +123,13 @@ class Stanza:
         mapping_justification: Reference | None = None,
         confidence: float | None = None,
         contributor: Reference | None = None,
-    ) -> Iterable[ObjectProperty | LiteralProperty]:
+    ) -> Iterable[Annotation]:
         if mapping_justification is not None:
-            yield ObjectProperty(v.mapping_has_justification, mapping_justification)
+            yield Annotation(v.mapping_has_justification, mapping_justification)
         if contributor is not None:
-            yield ObjectProperty(v.has_contributor, contributor)
+            yield Annotation(v.has_contributor, contributor)
         if confidence is not None:
-            yield LiteralProperty.float(v.mapping_has_confidence, confidence)
+            yield Annotation.float(v.mapping_has_confidence, confidence)
 
     def append_parent(self, reference: ReferenceHint) -> Self:
         """Add a parent to this entity."""
@@ -162,14 +144,14 @@ class Stanza:
         return self
 
     def append_intersection_of(
-        self, /, reference: ReferenceHint | ObjectProperty, r2: ReferenceHint | None = None
+        self, /, reference: ReferenceHint | Annotation, r2: ReferenceHint | None = None
     ) -> Self:
         """Append an intersection of."""
         if r2 is not None:
-            if isinstance(reference, ObjectProperty):
+            if isinstance(reference, Annotation):
                 raise TypeError
-            self.intersection_of.append(ObjectProperty(_ensure_ref(reference), _ensure_ref(r2)))
-        elif isinstance(reference, ObjectProperty):
+            self.intersection_of.append(Annotation(_ensure_ref(reference), _ensure_ref(r2)))
+        elif isinstance(reference, Annotation):
             self.intersection_of.append(reference)
         else:
             self.intersection_of.append(_ensure_ref(reference))
@@ -182,10 +164,16 @@ class Stanza:
                     end = reference_escape(
                         element, ontology_prefix=ontology_prefix, add_name_comment=True
                     )
-                case ObjectProperty(predicate, object):
-                    end = multi_reference_escape(
-                        [predicate, object], ontology_prefix=ontology_prefix, add_name_comment=True
-                    )
+                case Annotation(predicate, object):
+                    match object:
+                        case Reference():
+                            end = multi_reference_escape(
+                                [predicate, object],
+                                ontology_prefix=ontology_prefix,
+                                add_name_comment=True,
+                            )
+                        case OBOLiteral():
+                            raise NotImplementedError
                 case _:
                     raise TypeError
             yield f"intersection_of: {end}"
@@ -202,30 +190,21 @@ class Stanza:
 
     def _get_axioms(
         self, p: Reference | Referenced, o: Reference | Referenced | OBOLiteral
-    ) -> list[ObjectProperty | LiteralProperty]:
+    ) -> list[Annotation]:
         return self._axioms.get(_property_resolve(p, o), [])
 
     def _get_axiom(
         self, p: Reference, o: Reference | OBOLiteral, ap: Reference
-    ) -> ObjectProperty | LiteralProperty | None:
+    ) -> Reference | OBOLiteral | None:
         ap_norm = _ensure_ref(ap)
         for axiom in self._get_axioms(p, o):
-            match axiom:
-                case ObjectProperty(predicate, _):
-                    if predicate.pair == ap_norm.pair:
-                        return axiom
-                case LiteralProperty(predicate, _):
-                    if predicate.pair == ap_norm.pair:
-                        return axiom
+            if axiom.predicate.pair == ap_norm.pair:
+                return axiom.value
         return None
 
-    def append_property(self, prop: ObjectProperty | LiteralProperty) -> Self:
+    def append_property(self, prop: Annotation) -> Self:
         """Annotate a property."""
-        match prop:
-            case LiteralProperty(predicate, literal):
-                self.properties[predicate].append(literal)
-            case ObjectProperty(predicate, obj):
-                self.properties[predicate].append(obj)
+        self.properties[prop.predicate].append(prop.value)
         return self
 
     def annotate_literal(
@@ -348,7 +327,7 @@ def _get_obo_trailing_modifiers(
 
 
 def _format_obo_trailing_modifiers(
-    annotations: Sequence[ObjectProperty | LiteralProperty], *, ontology_prefix: str
+    annotations: Sequence[Annotation], *, ontology_prefix: str
 ) -> str:
     """Format a sequence of axioms for OBO trailing modifiers.
 
@@ -362,17 +341,12 @@ def _format_obo_trailing_modifiers(
     """
     modifiers: list[tuple[str, str]] = []
     for prop in annotations:
-        match prop:
-            case ObjectProperty(predicate, target):
-                modifiers.append(
-                    (
-                        reference_escape(predicate, ontology_prefix=ontology_prefix),
-                        reference_escape(target, ontology_prefix=ontology_prefix),
-                    )
-                )
-            case LiteralProperty(predicate, OBOLiteral(value, _datatype)):
-                modifiers.append(
-                    (reference_escape(predicate, ontology_prefix=ontology_prefix), value)
-                )
+        left = reference_escape(prop.predicate, ontology_prefix=ontology_prefix)
+        match prop.value:
+            case Reference():
+                right = reference_escape(prop.value, ontology_prefix=ontology_prefix)
+            case OBOLiteral(value, _datatype):
+                right = value
+        modifiers.append((left, right))
     inner = ", ".join(f"{key}={value}" for key, value in sorted(modifiers))
     return " {" + inner + "}"
