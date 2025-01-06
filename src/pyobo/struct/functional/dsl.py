@@ -19,7 +19,6 @@ from pyobo.struct.struct import OBOLiteral
 from .utils import FunctionalOWLSerializable, RDFNodeSerializable
 
 __all__ = [
-    "EXAMPLE_PREFIX_MAP",
     "Annotation",
     "AnnotationAssertion",
     "AnnotationAxiom",
@@ -98,17 +97,6 @@ __all__ = [
     "TransitiveObjectProperty",
     "l",
 ]
-
-EXAMPLE_PREFIX_MAP = {
-    "a": "https://example.org/a:",
-    "dcterms": "http://purl.org/dc/terms/",
-    "orcid": "https://orcid.org",
-    "oboInOwl": "http://www.geneontology.org/formats/oboInOwl#",
-    "OMO": "http://purl.obolibrary.org/obo/OMO_",
-    "sssom": "https://w3id.org/sssom/",
-    "semapv": "https://w3id.org/semapv/vocab/",
-    "skos": "http://www.w3.org/2004/02/skos/core#",
-}
 
 
 def l(value) -> term.Literal:  # noqa:E743

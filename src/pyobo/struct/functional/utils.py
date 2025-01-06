@@ -16,6 +16,24 @@ __all__ = [
     "get_rdf_graph",
 ]
 
+DEFAULT_PREFIX_MAP = {
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "oboInOwl": "http://www.geneontology.org/formats/oboInOwl#",
+    "OMO": "http://purl.obolibrary.org/obo/OMO_",
+    "sssom": "https://w3id.org/sssom/",
+    "semapv": "https://w3id.org/semapv/vocab/",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+}
+EXAMPLE_PREFIX_MAP = {
+    **DEFAULT_PREFIX_MAP,
+    "a": "https://example.org/a:",
+    "orcid": "https://orcid.org",
+}
+
 
 class FunctionalOWLSerializable(ABC):
     """An object that can be serialized to functional OWL."""

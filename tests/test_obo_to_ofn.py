@@ -12,7 +12,6 @@ from pyobo.struct import (
     default_reference,
     make_ad_hoc_ontology,
 )
-from pyobo.struct.functional import ontology as fo
 from pyobo.struct.functional.obo_to_functional import get_ofn_from_obo
 
 
@@ -37,11 +36,25 @@ class TestConversion(unittest.TestCase):
             _subsetdefs=[(subset, "test subset 1")],
             _synonym_typedefs=[synonym_typedef],
             _root_terms=[term.reference],
+            _idspaces={
+                "GO": "http://purl.obolibrary.org/obo/GO_",
+            },
         )
         ofn_ontology = get_ofn_from_obo(obo_ontology)
-        document = fo.Document(ofn_ontology, {})
         self.assertEqual(
             dedent("""\
+                Prefix( dcterms:=<http://purl.org/dc/terms/> )
+                Prefix( GO:=<http://purl.obolibrary.org/obo/GO_> )
+                Prefix( oboInOwl:=<http://www.geneontology.org/formats/oboInOwl#> )
+                Prefix( OMO:=<http://purl.obolibrary.org/obo/OMO_> )
+                Prefix( owl:=<http://www.w3.org/2002/07/owl#> )
+                Prefix( rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#> )
+                Prefix( rdfs:=<http://www.w3.org/2000/01/rdf-schema#> )
+                Prefix( semapv:=<https://w3id.org/semapv/vocab/> )
+                Prefix( skos:=<http://www.w3.org/2004/02/skos/core#> )
+                Prefix( sssom:=<https://w3id.org/sssom/> )
+                Prefix( xsd:=<http://www.w3.org/2001/XMLSchema#> )
+
                 Ontology(<go>
                   Annotation( dcterms:title "Gene Ontology"^^xsd:string )
                   Annotation( dcterms:license "CC-BY-4.0"^^xsd:string )
@@ -65,5 +78,5 @@ class TestConversion(unittest.TestCase):
                   AnnotationAssertion( Annotation( oboInOwl:hasSynonymType OMO:0003008 ) oboInOwl:hasExactSynonym GO:1234567 "test-synonym-2" )
                 )
             """).strip(),
-            document.to_funowl().strip(),
+            ofn_ontology.to_funowl().strip(),
         )

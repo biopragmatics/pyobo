@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import ChainMap
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
@@ -10,7 +11,8 @@ from rdflib import XSD, Literal
 
 from pyobo.struct.functional import dsl as f
 from pyobo.struct.functional import macros as m
-from pyobo.struct.functional.ontology import Ontology
+from pyobo.struct.functional.ontology import Document, Ontology
+from pyobo.struct.functional.utils import DEFAULT_PREFIX_MAP
 
 if TYPE_CHECKING:
     from pyobo.struct.struct import Obo, Term
@@ -22,14 +24,24 @@ __all__ = [
 ]
 
 
-def get_ofn_from_obo(obo_ontology: Obo) -> Ontology:
+def get_ofn_from_obo(obo_ontology: Obo) -> Document:
     """Convert an ontology."""
-    return Ontology(
+    ofn_ontology = Ontology(
         iri=obo_ontology.ontology,
         # TODO is there a way to generate a version IRI?
         annotations=list(get_ontology_annotations(obo_ontology)),
         axioms=list(get_ontology_axioms(obo_ontology)),
     )
+    document = Document(
+        ofn_ontology,
+        dict(
+            ChainMap(
+                DEFAULT_PREFIX_MAP,
+                dict(obo_ontology.idspaces or {}),
+            )
+        ),
+    )
+    return document
 
 
 def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:

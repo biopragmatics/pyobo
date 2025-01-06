@@ -25,7 +25,7 @@ from pyobo.struct.functional.dsl import (
     _yield_connector_nodes,
 )
 from pyobo.struct.functional.ontology import get_rdf_graph_oracle
-from pyobo.struct.functional.utils import get_rdf_graph
+from pyobo.struct.functional.utils import EXAMPLE_PREFIX_MAP, get_rdf_graph
 
 
 class TestBox(unittest.TestCase):
@@ -357,7 +357,7 @@ class TestMiscellaneous(unittest.TestCase):
     def test_data_value_rdf(self) -> None:
         """Test the data value RDF generation."""
         graph = Graph()
-        converter = Converter.from_prefix_map(f.EXAMPLE_PREFIX_MAP)
+        converter = Converter.from_prefix_map(EXAMPLE_PREFIX_MAP)
         dpes = [SimpleDataPropertyExpression("a:dpe1"), SimpleDataPropertyExpression("a:dpe2")]
         rv = _get_data_value_po(graph=graph, converter=converter, dpes=dpes)
         self.assertEqual(OWL.onProperties, rv[0])
@@ -697,7 +697,7 @@ class TestRDF(unittest.TestCase):
         """Test serialization to RDF."""
         for axiom in self.axiom_examples:
             with self.subTest(axiom=axiom.to_funowl()):
-                self.assert_rdf_equal(axiom, f.EXAMPLE_PREFIX_MAP)
+                self.assert_rdf_equal(axiom, EXAMPLE_PREFIX_MAP)
 
 
 def dump_nt_sorted(g: Graph) -> str:
