@@ -62,6 +62,8 @@ def _property_resolve(
             raise TypeError(f"expected reference, referenced, or OBO literal. Got: {type(o)} {o}")
 
 
+PropertiesHint: TypeAlias = dict[Reference, list[Reference | OBOLiteral]]
+RelationsHint: TypeAlias = dict[Reference, list[Reference]]
 AxiomsHint: TypeAlias = dict[
     ObjectProperty | LiteralProperty, list[ObjectProperty | LiteralProperty]
 ]
@@ -70,7 +72,7 @@ AxiomsHint: TypeAlias = dict[
 class Stanza:
     """A high-level class for stanzas."""
 
-    relationships: dict[Reference, list[Reference]]
+    relationships: RelationsHint
     xrefs: list[Reference]
     parents: list[Reference]
     provenance: list[Reference]

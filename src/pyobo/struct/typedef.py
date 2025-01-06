@@ -13,14 +13,21 @@ from typing_extensions import Self
 
 from . import vocabulary as v
 from .reference import (
-    OBOLiteral,
     Reference,
     Referenced,
     _reference_list_tag,
     default_reference,
     reference_escape,
 )
-from .struct_utils import AxiomsHint, ObjectProperty, Stanza, _chain_tag, _iterate_obo_relations
+from .struct_utils import (
+    AxiomsHint,
+    ObjectProperty,
+    PropertiesHint,
+    RelationsHint,
+    Stanza,
+    _chain_tag,
+    _iterate_obo_relations,
+)
 from .utils import _boolean_tag
 from ..resources.ro import load_ro
 
@@ -94,9 +101,7 @@ class TypeDef(Referenced, Stanza):
     synonyms: Annotated[list[Synonym], 9] = field(default_factory=list)
     xrefs: Annotated[list[Reference], 10] = field(default_factory=list)
     _axioms: AxiomsHint = field(default_factory=lambda: defaultdict(list))
-    properties: Annotated[dict[Reference, list[Reference | OBOLiteral]], 11] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+    properties: Annotated[PropertiesHint, 11] = field(default_factory=lambda: defaultdict(list))
     domain: Annotated[Reference | None, 12, "typedef-only"] = None
     range: Annotated[Reference | None, 13, "typedef-only"] = None
     builtin: Annotated[bool | None, 14] = None
@@ -126,9 +131,7 @@ class TypeDef(Referenced, Stanza):
     #:   disconnected entities have no parts in common. This can be translated to OWL as:
     #:   ``disjoint_over(R S), R(A B) ==> (S some A) disjointFrom (S some B)``
     disjoint_over: Annotated[Reference | None, 31] = None
-    relationships: Annotated[dict[Reference, list[Reference]], 32] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+    relationships: Annotated[RelationsHint, 32] = field(default_factory=lambda: defaultdict(list))
     is_obsolete: Annotated[bool | None, 33] = None
     created_by: Annotated[str | None, 34] = None
     creation_date: Annotated[datetime.datetime | None, 35] = None

@@ -42,7 +42,9 @@ from .struct_utils import (
     AxiomsHint,
     LiteralProperty,
     ObjectProperty,
+    PropertiesHint,
     ReferenceHint,
+    RelationsHint,
     Stanza,
     _ensure_ref,
     _iterate_obo_relations,
@@ -239,21 +241,11 @@ class Term(Referenced, Stanza):
     provenance: list[Reference] = field(default_factory=list)
 
     #: Object properties
-    relationships: dict[Reference, list[Reference]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+    relationships: RelationsHint = field(default_factory=lambda: defaultdict(list))
 
     _axioms: AxiomsHint = field(default_factory=lambda: defaultdict(list))
 
-    #: Annotation properties pointing to objects (i.e., references)
-    annotations_object: dict[Reference, list[Reference]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
-
-    #: Annotation properties pointing to literals
-    annotations_literal: dict[Reference, list[OBOLiteral]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+    properties: PropertiesHint = field(default_factory=lambda: defaultdict(list))
 
     #: Relationships with the default "is_a"
     parents: list[Reference] = field(default_factory=list)
@@ -375,17 +367,20 @@ class Term(Referenced, Stanza):
 
     def get_properties(self, prop: ReferenceHint) -> list[str]:
         """Get properties from the given key."""
-        prop = _ensure_ref(prop)
-        if prop in self.annotations_object:
-            return [value.preferred_curie for value in self.annotations_object[prop]]
-        if prop in self.annotations_literal:
-            return [value for value, _datatype in self.annotations_literal[prop]]
-        return []
+        rv = []
+        for t in self.properties.get(_ensure_ref(prop), []):
+            match t:
+                case Reference():
+                    rv.append(t.preferred_curie)
+                case OBOLiteral(value, _):
+                    rv.append(value)
+        return rv
 
     def get_property_objects(self, prop: ReferenceHint) -> list[Reference]:
         """Get properties from the given key."""
-        prop = _ensure_ref(prop)
-        return sorted(self.annotations_object.get(prop, []))
+        return [
+            t for t in self.properties.get(_ensure_ref(prop), []) if isinstance(t, curies.Reference)
+        ]
 
     def get_property(self, prop: ReferenceHint) -> str | None:
         """Get a single property of the given key."""
@@ -502,7 +497,7 @@ class Term(Referenced, Stanza):
         """Append an object annotation."""
         typedef = _ensure_ref(typedef)
         value = _ensure_ref(value)
-        self.annotations_object[typedef].append(value)
+        self.properties[typedef].append(value)
         self._annotate_axioms(typedef, value, axioms)
         return self
 
@@ -543,17 +538,18 @@ class Term(Referenced, Stanza):
     def _annotate(self, prop: ObjectProperty | LiteralProperty) -> Self:
         """Annotate a property."""
         match prop:
-            case LiteralProperty(predicate, OBOLiteral(value, datatype)):
-                return self.annotate_literal(predicate, value, datatype)
+            case LiteralProperty(predicate, literal):
+                self.properties[predicate].append(literal)
             case ObjectProperty(predicate, obj):
-                return self.annotate_object(predicate, obj)
+                self.properties[predicate].append(obj)
+        return self
 
     def annotate_literal(
         self, prop: ReferenceHint, value: str, datatype: Reference | None = None
     ) -> Self:
         """Append an object annotation."""
         prop = _ensure_ref(prop)
-        self.annotations_literal[prop].append(
+        self.properties[prop].append(
             OBOLiteral(value, datatype or Reference(prefix="xsd", identifier="string"))
         )
         return self
@@ -590,12 +586,13 @@ class Term(Referenced, Stanza):
         self,
     ) -> Iterable[ObjectProperty | LiteralProperty]:
         """Iterate over pairs of property and values."""
-        for prop, values in sorted(self.annotations_object.items()):
-            for value in sorted(values):
-                yield ObjectProperty(prop, value)
-        for prop, value_datatype_pairs in sorted(self.annotations_literal.items()):
-            for svalue, datatype in sorted(value_datatype_pairs):
-                yield LiteralProperty(prop, OBOLiteral(svalue, datatype))
+        for prop, values in sorted(self.properties.items()):
+            for value in values:
+                match value:
+                    case Reference():
+                        yield ObjectProperty(prop, value)
+                    case OBOLiteral():
+                        yield LiteralProperty(prop, value)
 
     def iterate_obo_lines(
         self,
@@ -664,15 +661,7 @@ class Term(Referenced, Stanza):
         self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:
         yield from _iterate_obo_relations(
-            self.annotations_object, self._axioms, ontology_prefix=ontology_prefix
-        )
-        yield from _iterate_obo_relations(
-            # the type checker seems to be a bit confused, this is an okay typing since we're
-            # passing a more explicit version. The issue is that list is used for the typing,
-            # which means it can't narrow properly
-            self.annotations_literal,  # type:ignore
-            self._axioms,
-            ontology_prefix=ontology_prefix,
+            self.properties, self._axioms, ontology_prefix=ontology_prefix
         )
 
     @staticmethod
@@ -1358,9 +1347,10 @@ class Obo:
                 relations.append(f"{typedef.curie} {target.curie}")
                 links.append((term.curie, typedef.curie, target.curie))
 
-            for typedef, targets in term.annotations_object.items():
-                for target in sorted(targets):
-                    links.append((term.curie, typedef.curie, target.curie))
+            for typedef, targets in sorted(term.properties.items()):
+                for target_or_literal in targets:  # FIXME need sort + key
+                    if isinstance(target_or_literal, curies.Reference):
+                        links.append((term.curie, typedef.curie, target_or_literal.curie))
 
             d = {
                 "id": term.curie,
