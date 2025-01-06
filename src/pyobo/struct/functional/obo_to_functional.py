@@ -19,6 +19,9 @@ if TYPE_CHECKING:
     from pyobo.struct.typedef import TypeDef
 
 __all__ = [
+    "get_ofn_from_obo",
+    "get_ontology_axioms",
+    "get_ontology_annotations",
     "get_term_axioms",
     "get_typedef_axioms",
 ]
