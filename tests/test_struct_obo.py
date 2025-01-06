@@ -29,7 +29,7 @@ class TestOBOHeader(unittest.TestCase):
         )
         self.assert_obo_lines(
             """\
-            format-version: 1.2
+            format-version: 1.4
             data-version: 1.0
             ontology: xxx
             """,
@@ -44,7 +44,7 @@ class TestOBOHeader(unittest.TestCase):
         )
         self.assert_obo_lines(
             """\
-            format-version: 1.2
+            format-version: 1.4
             auto-generated-by: test
             ontology: xxx
             """,
@@ -62,7 +62,7 @@ class TestOBOHeader(unittest.TestCase):
         )
         self.assert_obo_lines(
             """\
-            format-version: 1.2
+            format-version: 1.4
             subsetdef: HELLO "test"
             ontology: xxx
             """,
@@ -75,7 +75,7 @@ class TestOBOHeader(unittest.TestCase):
         )
         self.assert_obo_lines(
             """\
-            format-version: 1.2
+            format-version: 1.4
             subsetdef: obo:go#HELLO "test"
             ontology: xxx
             """,
@@ -101,7 +101,7 @@ class TestOBOHeader(unittest.TestCase):
         )
         self.assert_obo_lines(
             """\
-            format-version: 1.2
+            format-version: 1.4
             idspace: go http://purl.obolibrary.org/obo/GO_ "Gene Ontology"
             ontology: xxx
             """,
@@ -130,7 +130,7 @@ class TestOBOHeader(unittest.TestCase):
         )
         self.assert_obo_lines(
             """\
-            format-version: 1.2
+            format-version: 1.4
             ontology: xxx
             """,
             ontology,
@@ -144,7 +144,7 @@ class TestOBOHeader(unittest.TestCase):
         )
         self.assert_obo_lines(
             """\
-            format-version: 1.2
+            format-version: 1.4
             ontology: xxx
             property_value: IAO:0000700 ROOT1
             """,
@@ -158,7 +158,7 @@ class TestOBOHeader(unittest.TestCase):
         )
         self.assert_obo_lines(
             """\
-            format-version: 1.2
+            format-version: 1.4
             ontology: go
             property_value: dcterms:license "CC-BY-4.0" xsd:string
             property_value: dcterms:description "The Gene Ontology project provides a controlled vocabulary to describe gene and gene product attributes in any organism." xsd:string
@@ -176,7 +176,7 @@ class TestOBOHeader(unittest.TestCase):
         )
         self.assert_obo_lines(
             """\
-            format-version: 1.2
+            format-version: 1.4
             ontology: xxx
             property_value: dcterms:license "CC0" xsd:string
             """,
