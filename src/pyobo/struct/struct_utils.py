@@ -46,8 +46,16 @@ class LiteralProperty(NamedTuple):
         return cls(predicate, OBOLiteral(str(value), Reference(prefix="xsd", identifier="float")))
 
 
+def _property_resolve(p: Reference, o: Reference | OBOLiteral) -> ObjectProperty | LiteralProperty:
+    match o:
+        case Reference():
+            return ObjectProperty(p, o)
+        case OBOLiteral():
+            return LiteralProperty(p, o)
+
+
 AxiomsHint: TypeAlias = dict[
-    tuple[Reference, Reference | OBOLiteral], list[ObjectProperty | LiteralProperty]
+    ObjectProperty | LiteralProperty, list[ObjectProperty | LiteralProperty]
 ]
 
 
@@ -84,9 +92,9 @@ class Stanza:
             self._annotate_axiom(p, o, axiom)
 
     def _annotate_axiom(
-        self, p: Reference, o: Reference, axiom: ObjectProperty | LiteralProperty
+        self, p: Reference, o: Reference | OBOLiteral, axiom: ObjectProperty | LiteralProperty
     ) -> None:
-        self._axioms[p, o].append(axiom)
+        self._axioms[_property_resolve(p, o)].append(axiom)
 
     def append_equivalent(
         self,
@@ -245,7 +253,7 @@ def _get_obo_trailing_modifiers(
     p: Reference, o: Reference | OBOLiteral, axioms: AxiomsHint, *, ontology_prefix: str
 ) -> str:
     """Lookup then format a sequence of axioms for OBO trailing modifiers."""
-    if annotations := axioms.get((p, o), []):
+    if annotations := axioms.get(_property_resolve(p, o), []):
         return _format_obo_trailing_modifiers(annotations, ontology_prefix=ontology_prefix)
     return ""
 

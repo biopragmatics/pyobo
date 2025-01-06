@@ -46,6 +46,7 @@ from .struct_utils import (
     Stanza,
     _ensure_ref,
     _iterate_obo_relations,
+    _property_resolve,
 )
 from .typedef import (
     TypeDef,
@@ -441,9 +442,9 @@ class Term(Referenced, Stanza):
         return [(k, v, self._get_mapping_context(k, v)) for k, v in rv]
 
     def _get_object_axiom_target(
-        self, p: Reference, o: Reference, ap: Reference
+        self, p: Reference, o: Reference | OBOLiteral, ap: Reference
     ) -> Reference | None:
-        for axiom_predicate, axiom_target in self._axioms.get((p, o), []):
+        for axiom_predicate, axiom_target in self._axioms.get(_property_resolve(p, o), []):
             if axiom_predicate != ap:
                 continue
             if isinstance(axiom_target, OBOLiteral):
@@ -451,8 +452,10 @@ class Term(Referenced, Stanza):
             return axiom_target
         return None
 
-    def _get_str_axiom_target(self, p: Reference, o: Reference, ap: Reference) -> str | None:
-        for axiom_predicate, axiom_target in self._axioms.get((p, o), []):
+    def _get_str_axiom_target(
+        self, p: Reference, o: Reference | OBOLiteral, ap: Reference
+    ) -> str | None:
+        for axiom_predicate, axiom_target in self._axioms.get(_property_resolve(p, o), []):
             if axiom_predicate != ap:
                 continue
             if isinstance(axiom_target, Reference):
