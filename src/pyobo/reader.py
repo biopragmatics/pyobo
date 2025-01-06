@@ -122,48 +122,7 @@ def from_obonet(
     date = _get_date(graph=graph, ontology_prefix=ontology_prefix)
     name = _get_name(graph=graph, ontology_prefix=ontology_prefix)
 
-    treat_xrefs_as_equivalent: set[str] = set()
-    for prefix in graph.graph.get("treat-xrefs-as-equivalent", []):
-        prefix_norm = bioregistry.normalize_prefix(prefix)
-        if prefix_norm is None:
-            continue
-        treat_xrefs_as_equivalent.add(prefix_norm)
-
-    treat_xrefs_as_genus_differentia: dict[str, tuple[Reference, Reference]] = {}
-    for line in graph.graph.get("treat-xrefs-as-genus-differentia", []):
-        gd_prefix, gd_predicate, gd_target = line.split()
-        gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
-        if gd_prefix_norm is None:
-            continue
-        gd_predicate_re = _parse_identifier(
-            gd_predicate, ontology_prefix=ontology_prefix, strict=strict
-        )
-        if gd_predicate_re is None:
-            continue
-        gd_target_re = _parse_identifier(gd_target, ontology_prefix=ontology_prefix, strict=strict)
-        if gd_target_re is None:
-            continue
-        treat_xrefs_as_genus_differentia[gd_prefix_norm] = gd_predicate_re, gd_target_re
-
-    treat_xrefs_as_relationship: dict[str, Reference] = {}
-    for line in graph.graph.get("treat-xrefs-as-relationship", []):
-        gd_prefix, gd_predicate = line.split()
-        gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
-        if gd_prefix_norm is None:
-            continue
-        gd_predicate_re = _parse_identifier(
-            gd_predicate, ontology_prefix=ontology_prefix, strict=strict
-        )
-        if gd_predicate_re is None:
-            continue
-        treat_xrefs_as_relationship[gd_prefix_norm] = gd_predicate_re
-
-    treat_xrefs_as_is_a: set[str] = set()
-    for prefix in graph.graph.get("treat-xrefs-as-is_a", []):
-        gd_prefix_norm = bioregistry.normalize_prefix(prefix)
-        if gd_prefix_norm is None:
-            continue
-        treat_xrefs_as_is_a.add(gd_prefix_norm)
+    macro_config = MacroConfig(graph.graph, strict=strict, ontology_prefix=ontology_prefix)
 
     data_version = _clean_graph_version(
         graph, ontology_prefix=ontology_prefix, version=version, date=date
@@ -198,10 +157,7 @@ def from_obonet(
             ontology_prefix=ontology_prefix,
             strict=strict,
             upgrade=upgrade,
-            treat_xrefs_as_equivalent=treat_xrefs_as_equivalent,
-            treat_xrefs_as_genus_differentia=treat_xrefs_as_genus_differentia,
-            treat_xrefs_as_relationship=treat_xrefs_as_relationship,
-            treat_xrefs_as_is_a=treat_xrefs_as_is_a,
+            macro_config=macro_config,
         )
     }
 
@@ -276,14 +232,7 @@ def from_obonet(
             )
         )
         for node_xref in node_xrefs:
-            _handle_xref(
-                term,
-                node_xref,
-                treat_xrefs_as_equivalent=treat_xrefs_as_equivalent,
-                treat_xrefs_as_genus_differentia=treat_xrefs_as_genus_differentia,
-                treat_xrefs_as_relationship=treat_xrefs_as_relationship,
-                treat_xrefs_as_is_a=treat_xrefs_as_is_a,
-            )
+            _handle_xref(term, node_xref, macro_config=macro_config)
 
         relations_references = list(
             iterate_node_relationships(
@@ -342,31 +291,78 @@ def from_obonet(
     )
 
 
+class MacroConfig:
+    """A configuration data class for reader macros."""
+
+    def __init__(self, data: Mapping[str, list[str]], *, strict: bool, ontology_prefix: str):
+        """Instantiate the configuration from obonet graph metadata."""
+        self.treat_xrefs_as_equivalent: set[str] = set()
+        for prefix in data.get("treat-xrefs-as-equivalent", []):
+            prefix_norm = bioregistry.normalize_prefix(prefix)
+            if prefix_norm is None:
+                continue
+            self.treat_xrefs_as_equivalent.add(prefix_norm)
+
+        self.treat_xrefs_as_genus_differentia: dict[str, ObjectProperty] = {}
+        for line in data.get("treat-xrefs-as-genus-differentia", []):
+            gd_prefix, gd_predicate, gd_target = line.split()
+            gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
+            if gd_prefix_norm is None:
+                continue
+            gd_predicate_re = _parse_identifier(
+                gd_predicate, ontology_prefix=ontology_prefix, strict=strict
+            )
+            if gd_predicate_re is None:
+                continue
+            gd_target_re = _parse_identifier(
+                gd_target, ontology_prefix=ontology_prefix, strict=strict
+            )
+            if gd_target_re is None:
+                continue
+            self.treat_xrefs_as_genus_differentia[gd_prefix_norm] = ObjectProperty(
+                gd_predicate_re, gd_target_re, None
+            )
+
+        self.treat_xrefs_as_relationship: dict[str, Reference] = {}
+        for line in data.get("treat-xrefs-as-relationship", []):
+            gd_prefix, gd_predicate = line.split()
+            gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
+            if gd_prefix_norm is None:
+                continue
+            gd_predicate_re = _parse_identifier(
+                gd_predicate, ontology_prefix=ontology_prefix, strict=strict
+            )
+            if gd_predicate_re is None:
+                continue
+            self.treat_xrefs_as_relationship[gd_prefix_norm] = gd_predicate_re
+
+        self.treat_xrefs_as_is_a: set[str] = set()
+        for prefix in data.get("treat-xrefs-as-is_a", []):
+            gd_prefix_norm = bioregistry.normalize_prefix(prefix)
+            if gd_prefix_norm is None:
+                continue
+            self.treat_xrefs_as_is_a.add(gd_prefix_norm)
+
+
 def _handle_xref(
     term: Stanza,
-    node_xref: Reference,
+    xref: Reference,
     *,
-    treat_xrefs_as_equivalent,
-    treat_xrefs_as_genus_differentia,
-    treat_xrefs_as_relationship,
-    treat_xrefs_as_is_a,
+    macro_config: MacroConfig,
 ) -> None:
-    if node_xref.prefix in treat_xrefs_as_equivalent:
-        term.append_equivalent(node_xref)
-    elif node_xref.prefix in treat_xrefs_as_genus_differentia:
-        term.intersection_of.append(node_xref)
-        term.intersection_of.append(treat_xrefs_as_genus_differentia[node_xref.prefix])
-    elif node_xref.prefix in treat_xrefs_as_relationship:
-        term.append_relationship(
-            treat_xrefs_as_relationship[node_xref.prefix],
-            node_xref,
-        )
-    elif node_xref.prefix in treat_xrefs_as_is_a:
-        term.append_parent(node_xref)
-    elif node_xref.prefix in PROVENANCE_PREFIXES:
-        term.append_provenance(node_xref)
+    if xref.prefix in macro_config.treat_xrefs_as_equivalent:
+        term.append_equivalent(xref)
+    elif object_property := macro_config.treat_xrefs_as_genus_differentia.get(xref.prefix):
+        term.intersection_of.append(xref)
+        term.intersection_of.append(object_property)
+    elif predicate := macro_config.treat_xrefs_as_relationship.get(xref.prefix):
+        term.append_relationship(predicate, xref)
+    elif xref.prefix in macro_config.treat_xrefs_as_is_a:
+        term.append_parent(xref)
+    elif xref.prefix in PROVENANCE_PREFIXES:
+        term.append_provenance(xref)
     else:
-        term.append_xref(node_xref)
+        term.append_xref(xref)
 
 
 def _get_subsetdefs(graph: nx.MultiDiGraph, ontology_prefix: str) -> list[tuple[Reference, str]]:
@@ -513,10 +509,7 @@ def iterate_graph_typedefs(
     ontology_prefix: str,
     strict: bool = True,
     upgrade: bool,
-    treat_xrefs_as_equivalent,
-    treat_xrefs_as_genus_differentia,
-    treat_xrefs_as_relationship,
-    treat_xrefs_as_is_a,
+    macro_config: MacroConfig,
 ) -> Iterable[TypeDef]:
     """Get type definitions from an :mod:`obonet` graph."""
     for typedef in graph.graph.get("typedefs", []):
@@ -552,10 +545,7 @@ def iterate_graph_typedefs(
             _handle_xref(
                 yv,
                 _xref,
-                treat_xrefs_as_equivalent=treat_xrefs_as_equivalent,
-                treat_xrefs_as_genus_differentia=treat_xrefs_as_genus_differentia,
-                treat_xrefs_as_relationship=treat_xrefs_as_relationship,
-                treat_xrefs_as_is_a=treat_xrefs_as_is_a,
+                macro_config=macro_config,
             )
 
         yield yv
