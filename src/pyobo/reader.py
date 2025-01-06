@@ -143,7 +143,7 @@ def from_obonet(
         match t:
             case LiteralProperty(predicate, value, datatype):
                 property_values.append((predicate, OBOLiteral(value, datatype)))
-            case ObjectProperty(predicate, obj, _):
+            case ObjectProperty(predicate, obj):
                 if predicate.pair == has_ontology_root_term.pair:
                     root_terms.append(obj)
                 else:
@@ -264,7 +264,7 @@ def from_obonet(
             match t:
                 case LiteralProperty(predicate, value, datatype):
                     term.annotate_literal(predicate, value, datatype)
-                case ObjectProperty(predicate, obj, _):
+                case ObjectProperty(predicate, obj):
                     term.annotate_object(predicate, obj)
         terms.append(term)
 
@@ -325,7 +325,7 @@ class MacroConfig:
             if gd_target_re is None:
                 continue
             self.treat_xrefs_as_genus_differentia[gd_prefix_norm] = ObjectProperty(
-                gd_predicate_re, gd_target_re, None
+                gd_predicate_re, gd_target_re
             )
 
         self.treat_xrefs_as_relationship: dict[str, Reference] = {}
@@ -792,8 +792,7 @@ def _handle_prop(
                 )
             UNHANDLED_PROP_OBJECTS[prop_reference, value_type] += 1
             return None
-        # TODO can we drop datatype from this?
-        return ObjectProperty(prop_reference, obj_reference, None)
+        return ObjectProperty(prop_reference, obj_reference)
 
     try:
         value, datatype = value_type.rsplit(" ", 1)  # second entry is the value type

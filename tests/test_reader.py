@@ -1142,9 +1142,7 @@ class TestReader(unittest.TestCase):
         self.assertEqual(
             [
                 Reference(prefix="CL", identifier="0000540"),
-                ObjectProperty(
-                    part_of.reference, Reference(prefix="NCBITaxon", identifier="7955"), None
-                ),
+                ObjectProperty(part_of.reference, Reference(prefix="NCBITaxon", identifier="7955")),
             ],
             term.intersection_of,
         )

@@ -36,7 +36,6 @@ class ObjectProperty(NamedTuple):
 
     predicate: Reference
     object: Reference
-    datatype: None
 
 
 class LiteralProperty(NamedTuple):
@@ -130,17 +129,9 @@ class Stanza:
         contributor: Reference | None = None,
     ) -> Iterable[ObjectProperty | LiteralProperty]:
         if mapping_justification is not None:
-            yield ObjectProperty(
-                v.mapping_has_justification,
-                mapping_justification,
-                None,
-            )
+            yield ObjectProperty(v.mapping_has_justification, mapping_justification)
         if contributor is not None:
-            yield ObjectProperty(
-                v.has_contributor,
-                contributor,
-                None,
-            )
+            yield ObjectProperty(v.has_contributor, contributor)
         if confidence is not None:
             yield LiteralProperty.float(v.mapping_has_confidence, confidence)
 
@@ -163,9 +154,7 @@ class Stanza:
         if r2 is not None:
             if isinstance(reference, ObjectProperty):
                 raise TypeError
-            self.intersection_of.append(
-                ObjectProperty(_ensure_ref(reference), _ensure_ref(r2), None)
-            )
+            self.intersection_of.append(ObjectProperty(_ensure_ref(reference), _ensure_ref(r2)))
         elif isinstance(reference, ObjectProperty):
             self.intersection_of.append(reference)
         else:
@@ -179,7 +168,7 @@ class Stanza:
                     end = reference_escape(
                         element, ontology_prefix=ontology_prefix, add_name_comment=True
                     )
-                case ObjectProperty(predicate, object, _):
+                case ObjectProperty(predicate, object):
                     end = multi_reference_escape(
                         [predicate, object], ontology_prefix=ontology_prefix, add_name_comment=True
                     )

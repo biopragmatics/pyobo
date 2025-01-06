@@ -573,7 +573,7 @@ class Term(Referenced, Stanza):
         """Iterate over pairs of property and values."""
         for prop, values in sorted(self.annotations_object.items()):
             for value in sorted(values):
-                yield ObjectProperty(prop, value, None)
+                yield ObjectProperty(prop, value)
         for prop, value_datatype_pairs in sorted(self.annotations_literal.items()):
             for svalue, datatype in sorted(value_datatype_pairs):
                 yield LiteralProperty(prop, svalue, datatype)
@@ -1496,7 +1496,7 @@ class Obo:
                         value,
                         datatype.preferred_curie,
                     )
-                case ObjectProperty(predicate, object, datatype):
+                case ObjectProperty(predicate, object):
                     yield (
                         term.identifier,
                         term._reference(predicate, ontology_prefix=self.ontology),
@@ -1524,7 +1524,7 @@ class Obo:
                     case LiteralProperty(predicate, value, _datatype):
                         if predicate == prop:
                             yield term, value
-                    case ObjectProperty(predicate, object, _datatype):
+                    case ObjectProperty(predicate, object):
                         if predicate == prop:
                             yield term, object.preferred_curie
 
