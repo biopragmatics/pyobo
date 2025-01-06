@@ -14,6 +14,7 @@ __all__ = [
     "FunctionalOWLSerializable",
     "RDFNodeSerializable",
     "get_rdf_graph",
+    "EXAMPLE_PREFIX_MAP",
 ]
 
 DEFAULT_PREFIX_MAP = {
