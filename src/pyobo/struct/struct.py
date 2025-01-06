@@ -1007,11 +1007,14 @@ class Obo:
         @force_option
         @click.option("--rewrite", "-r", is_flag=True)
         @click.option("--owl", is_flag=True, help="Write OWL via ROBOT")
+        @click.option("--ofn", is_flag=True, help="Write functional OWL (OFN)")
         @click.option("--nodes", is_flag=True, help="Write nodes file")
         @click.option(
             "--version", help="Specify data version to get. Use this if bioversions is acting up."
         )
-        def _main(force: bool, owl: bool, nodes: bool, version: str | None, rewrite: bool):
+        def _main(
+            force: bool, owl: bool, nodes: bool, ofn: bool, version: str | None, rewrite: bool
+        ):
             try:
                 inst = cls(force=force, data_version=version)
             except Exception as e:
@@ -1024,6 +1027,7 @@ class Obo:
                     write_obo=True,
                     write_owl=owl,
                     write_nodes=nodes,
+                    write_ofn=ofn,
                     force=force or rewrite,
                     use_tqdm=True,
                 )
@@ -1186,6 +1190,14 @@ class Obo:
             default_synonym_typedefs,
         )
 
+    def write_ofn(self, path: str | Path) -> None:
+        """Write OFN to a file."""
+        from pyobo.struct.functional.obo_to_functional import get_ofn_from_obo
+
+        path = Path(path).resolve()
+        text = get_ofn_from_obo(self).to_funowl()
+        path.write_text(text)
+
     def write_obo(
         self,
         file: None | str | TextIO | Path = None,
@@ -1293,6 +1305,10 @@ class Obo:
     def _nodes_path(self) -> Path:
         return self._path(name=f"{self.ontology}.nodes.tsv")
 
+    @property
+    def _ofn_path(self) -> Path:
+        return self._path(name=f"{self.ontology}.ofn")
+
     def write_default(
         self,
         use_tqdm: bool = False,
@@ -1301,6 +1317,7 @@ class Obo:
         write_obonet: bool = False,
         write_obograph: bool = False,
         write_owl: bool = False,
+        write_ofn: bool = False,
         write_nodes: bool = False,
     ) -> None:
         """Write the OBO to the default path."""
@@ -1384,6 +1401,8 @@ class Obo:
             self.write_obonet_gz(self._obonet_gz_path)
         if write_nodes:
             self.get_graph().get_nodes_df().to_csv(self._nodes_path, sep="\t", index=False)
+        if write_ofn and (not self._ofn_path.exists() or force):
+            self.write_ofn(self._ofn_path)
 
     @property
     def _items_accessor(self):
