@@ -999,6 +999,28 @@ class TestReader(unittest.TestCase):
             ontology.root_terms,
         )
 
+    def test_subset(self) -> None:
+        """Test parsing a subset definition."""
+        ontology = _read("""\
+            ontology: chebi
+            subsetdef: TEST "comment"
+        """)
+        self.assertEqual(
+            [(default_reference("chebi", "TEST"), "comment")],
+            ontology.subsetdefs,
+        )
+
+    def test_properties(self) -> None:
+        """Test parsing properties."""
+        ontology = _read("""\
+            ontology: chebi
+            property_value: heyo also_heyo
+        """)
+        self.assertEqual(
+            [(default_reference("chebi", "heyo"), default_reference("chebi", "also_heyo"))],
+            ontology.property_values,
+        )
+
 
 class TestVersionHandling(unittest.TestCase):
     """Test version handling."""
