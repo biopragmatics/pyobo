@@ -168,6 +168,8 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
                         annotations=_process_anns(anns),
                     )
     # 14 intersection_of
+    if term.intersection_of:
+        yield m.ClassIntersectionMacro(s, term.intersection_of)
     # 15 union_of
     # 16 equivalent_to
     # 17 disjoint_from
@@ -185,24 +187,23 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
 
 def _process_anns(annotations: list[OBOAnnotation]) -> list[f.Annotation]:
     """Convert OBO anotations to OFN annotations."""
-    rv = []
-    for annotation in annotations:
-        match annotation.value:
-            case OBOLiteral():
-                rv.append(
-                    f.Annotation(
-                        annotation.predicate,
-                        _oboliteral_to_literal(annotation.value),
-                    )
-                )
-            case Reference():
-                rv.append(
-                    f.Annotation(
-                        annotation.predicate,
-                        annotation.value,
-                    )
-                )
-    return rv
+    return [_convert_annotation(a) for a in annotations]
+
+
+def _convert_annotation(annotation: OBOAnnotation) -> f.Annotation:
+    """Convert OBO anotations to OFN annotations."""
+    match annotation.value:
+        case OBOLiteral():
+            return f.Annotation(
+                annotation.predicate,
+                _oboliteral_to_literal(annotation.value),
+            )
+        case Reference():
+            return f.Annotation(
+                annotation.predicate,
+                annotation.value,
+            )
+    raise TypeError
 
 
 def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:

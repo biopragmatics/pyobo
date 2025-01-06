@@ -841,3 +841,10 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
             intersection_of: BFO:0000050 NCBITaxon:7955 ! part of zebrafish
         """)
         self.assert_lines(lines, term.iterate_obo_lines(ontology_prefix="zfa", typedefs={}))
+        self.assert_funowl_lines(
+            """
+            Declaration( Class( ZFA:0000134 ) )
+            EquivalentClasses( ZFA:0000134 ObjectIntersectionOf( CL:0000540 ObjectSomeValuesFrom( BFO:0000050 NCBITaxon:7955 ) ) )
+            """,
+            term,
+        )

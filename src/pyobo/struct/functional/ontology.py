@@ -82,6 +82,12 @@ class Document:
         """Get a simple dictionary representation of prefixes."""
         return {prefix.prefix: prefix.uri_prefix for prefix in self.prefixes}
 
+    def write_rdf(self, path: str | Path) -> None:
+        """Write RDF to a file."""
+        path = Path(path).expanduser().resolve()
+        graph = self.to_rdf()
+        graph.serialize(path, format="ttl")
+
     def to_rdf(self) -> Graph:
         """Get an RDFlib graph representing the ontology."""
         if len(self.ontologies) != 1:
@@ -93,6 +99,11 @@ class Document:
         for ontology in self.ontologies:
             ontology.to_rdflib_node(graph, converter)
         return graph
+
+    def write_funowl(self, path: str | Path) -> None:
+        """Write functional OWL to a file.."""
+        path = Path(path).expanduser().resolve()
+        path.write_text(self.to_funowl())
 
     def to_funowl(self) -> str:
         """Get the document as a functional OWL string."""

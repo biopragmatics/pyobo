@@ -324,7 +324,7 @@ class TestTypeDef(unittest.TestCase):
         typedef = TypeDef(reference=REF)
         typedef.append_property(
             Annotation(
-                has_contributor,
+                has_contributor.reference,
                 Reference(
                     prefix=v.charlie.prefix,
                     identifier=v.charlie.identifier,
