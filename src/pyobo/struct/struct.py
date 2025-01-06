@@ -1311,6 +1311,7 @@ class Obo:
 
     def write_default(
         self,
+        *,
         use_tqdm: bool = False,
         force: bool = False,
         write_obo: bool = False,
