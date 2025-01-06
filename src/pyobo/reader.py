@@ -274,7 +274,6 @@ def from_obonet(
         _ontology=ontology_prefix,
         _name=name,
         _auto_generated_by=graph.graph.get("auto-generated-by"),
-        _format_version=graph.graph.get("format-version"),
         _typedefs=list(typedefs.values()),
         _synonym_typedefs=list(synonym_typedefs.values()),
         _date=date,

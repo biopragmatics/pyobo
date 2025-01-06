@@ -103,6 +103,7 @@ SSSOM_DF_COLUMNS = [
     "contributor",
 ]
 UNSPECIFIED_MATCHING_CURIE = "sempav:UnspecifiedMatching"
+FORMAT_VERSION = "1.4"
 
 
 @dataclass
@@ -887,9 +888,6 @@ class Obo:
     #: The name of the ontology. If not given, tries looking up with the Bioregistry.
     name: ClassVar[str | None] = None
 
-    #: The OBO format
-    format_version: ClassVar[str] = "1.4"
-
     #: Type definitions
     typedefs: ClassVar[list[TypeDef] | None] = None
 
@@ -1058,7 +1056,7 @@ class Obo:
 
         Here's the order:
 
-        1. format-version
+        1. format-version (technically, this is the only required field)
         2. data-version
         3. date
         4. saved-by
@@ -1077,16 +1075,16 @@ class Obo:
         17. ontology
         """
         # 1
-        yield f"format-version: {self.format_version}"
+        yield f"format-version: {FORMAT_VERSION}"
         # 2
-        if self.data_version is not None:
+        if self.data_version:
             yield f"data-version: {self.data_version}"
         # 3
         if self.date:
             f"date: {self.date_formatted}"
         # 4 TODO saved-by
         # 5
-        if self.auto_generated_by is not None:
+        if self.auto_generated_by:
             yield f"auto-generated-by: {self.auto_generated_by}"
         # 6 TODO import
         # 7
@@ -1451,7 +1449,7 @@ class Obo:
                 "ontology": self.ontology,
                 "auto-generated-by": self.auto_generated_by,
                 "typedefs": _convert_typedefs(self.typedefs),
-                "format-version": self.format_version,
+                "format-version": FORMAT_VERSION,
                 "data-version": self.data_version,
                 "synonymtypedef": _convert_synonym_typedefs(self.synonym_typedefs),
                 "date": self.date_formatted,
@@ -2010,7 +2008,6 @@ def make_ad_hoc_ontology(
     _ontology: str,
     _name: str | None = None,
     _auto_generated_by: str | None = None,
-    _format_version: str = "1.2",
     _typedefs: list[TypeDef] | None = None,
     _synonym_typedefs: list[SynonymTypeDef] | None = None,
     _date: datetime | None = None,
@@ -2030,7 +2027,6 @@ def make_ad_hoc_ontology(
         ontology = _ontology
         name = _name
         auto_generated_by = _auto_generated_by
-        format_version = _format_version
         typedefs = _typedefs
         synonym_typedefs = _synonym_typedefs
         idspaces = _idspaces
