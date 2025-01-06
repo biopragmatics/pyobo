@@ -38,6 +38,7 @@ from .reference import (
     _reference_list_tag,
     comma_separate_references,
     default_reference,
+    multi_reference_escape,
     reference_escape,
     unspecified_matching,
 )
@@ -45,6 +46,7 @@ from .typedef import (
     TypeDef,
     comment,
     default_typedefs,
+    equivalent_class,
     exact_match,
     from_species,
     has_contributor,
@@ -299,6 +301,8 @@ class Term(Referenced):
     #: Relationships with the default "is_a"
     parents: list[Reference] = field(default_factory=list)
 
+    intersection_of: list[Reference | tuple[Reference, Reference]] = field(default_factory=list)
+
     #: Synonyms of this term
     synonyms: list[Synonym] = field(default_factory=list)
 
@@ -518,6 +522,15 @@ class Term(Referenced):
             contributor=self._get_object_axiom_target(p, o, has_contributor.reference),
             confidence=self._get_str_axiom_target(p, o, mapping_has_confidence.reference),
         )
+
+    def append_equivalent(
+        self,
+        reference: ReferenceHint,
+    ) -> Self:
+        """Append an equivalent class axiom."""
+        reference = _ensure_ref(reference)
+        self.append_relationship(equivalent_class, reference)
+        return self
 
     def append_exact_match(
         self,
@@ -759,7 +772,13 @@ class Term(Referenced):
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
         for parent in sorted(self.parents):
             yield f"{parent_tag}: {self._reference(parent, ontology_prefix, add_name_comment=True)}"
-        # 14 TODO intersection_of
+        # 14
+        for intersection_of in self.intersection_of:
+            match intersection_of:
+                case Reference():
+                    yield f"intersection_of: {reference_escape(intersection_of, ontology_prefix=ontology_prefix, add_name_comment=True)}"
+                case tuple():
+                    yield f"intersection_of: {multi_reference_escape(intersection_of, ontology_prefix=ontology_prefix, add_name_comment=True)}"
         # 15 TODO union_of
         # 16 TODO equivalent_to
         # 17 TODO disjoint_from

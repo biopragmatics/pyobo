@@ -201,6 +201,22 @@ def reference_escape(
     return rv
 
 
+def multi_reference_escape(
+    references: Sequence[Reference | Reference],
+    *,
+    ontology_prefix: str,
+    add_name_comment: bool = False,
+) -> str:
+    rv = " ".join(
+        reference_escape(r, ontology_prefix=ontology_prefix, add_name_comment=False)
+        for r in references
+    )
+    names = [r.name for r in references]
+    if add_name_comment and all(names):
+        rv += " ! " + " ".join(names)
+    return rv
+
+
 def comma_separate_references(references: list[Reference]) -> str:
     """Map a list to strings and make comma separated."""
     return ", ".join(r.preferred_curie for r in references)

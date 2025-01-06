@@ -100,6 +100,13 @@ def _read_obo(filelike, prefix: str | None) -> nx.MultiDiGraph:
     )
 
 
+def _normalize_prefix_strict(prefix: str) -> str:
+    n = bioregistry.normalize_prefix(prefix)
+    if n is None:
+        raise ValueError(f"unknown prefix: {prefix}")
+    return n
+
+
 def from_obonet(
     graph: nx.MultiDiGraph,
     *,
@@ -109,13 +116,54 @@ def from_obonet(
 ) -> Obo:
     """Get all of the terms from a OBO graph."""
     ontology_prefix_raw = graph.graph["ontology"]
-    ontology_prefix = bioregistry.normalize_prefix(ontology_prefix_raw)  # probably always okay
-    if ontology_prefix is None:
-        raise ValueError(f"unknown prefix: {ontology_prefix_raw}")
+    ontology_prefix = _normalize_prefix_strict(ontology_prefix_raw)
     logger.info("[%s] extracting OBO using obonet", ontology_prefix)
 
     date = _get_date(graph=graph, ontology_prefix=ontology_prefix)
     name = _get_name(graph=graph, ontology_prefix=ontology_prefix)
+
+    treat_xrefs_as_equivalent: set[str] = set()
+    for prefix in graph.graph.get("treat-xrefs-as-equivalent", []):
+        prefix_norm = bioregistry.normalize_prefix(prefix)
+        if prefix_norm is None:
+            continue
+        treat_xrefs_as_equivalent.add(prefix_norm)
+
+    treat_xrefs_as_genus_differentia: dict[str, tuple[Reference, Reference]] = {}
+    for line in graph.graph.get("treat-xrefs-as-genus-differentia", []):
+        gd_prefix, gd_predicate, gd_target = line.split()
+        gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
+        if gd_prefix_norm is None:
+            continue
+        gd_predicate_re = _parse_identifier(
+            gd_predicate, ontology_prefix=ontology_prefix, strict=strict
+        )
+        if gd_predicate_re is None:
+            continue
+        gd_target_re = _parse_identifier(gd_target, ontology_prefix=ontology_prefix, strict=strict)
+        if gd_target_re is None:
+            continue
+        treat_xrefs_as_genus_differentia[gd_prefix_norm] = gd_predicate_re, gd_target_re
+
+    treat_xrefs_as_relationship: dict[str, Reference] = {}
+    for line in graph.graph.get("treat-xrefs-as-relationship", []):
+        gd_prefix, gd_predicate = line.split()
+        gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
+        if gd_prefix_norm is None:
+            continue
+        gd_predicate_re = _parse_identifier(
+            gd_predicate, ontology_prefix=ontology_prefix, strict=strict
+        )
+        if gd_predicate_re is None:
+            continue
+        treat_xrefs_as_relationship[gd_prefix_norm] = gd_predicate_re
+
+    treat_xrefs_as_is_a: set[str] = set()
+    for prefix in graph.graph.get("treat-xrefs-as-is_a", []):
+        gd_prefix_norm = bioregistry.normalize_prefix(prefix)
+        if gd_prefix_norm is None:
+            continue
+        treat_xrefs_as_is_a.add(gd_prefix_norm)
 
     data_version = _clean_graph_version(
         graph, ontology_prefix=ontology_prefix, version=version, date=date
@@ -171,22 +219,7 @@ def from_obonet(
             continue
         n_references += 1
 
-        node_xrefs = list(
-            iterate_node_xrefs(
-                data=data,
-                strict=strict,
-                ontology_prefix=ontology_prefix,
-                node=reference,
-            )
-        )
-        xrefs, provenance = [], []
-        for node_xref in node_xrefs:
-            if node_xref.prefix in PROVENANCE_PREFIXES:
-                provenance.append(node_xref)
-            else:
-                xrefs.append(node_xref)
-        n_xrefs += len(xrefs)
-
+        provenance = []
         definition, definition_references = get_definition(
             data, node=reference, strict=strict, ontology_prefix=ontology_prefix
         )
@@ -223,10 +256,40 @@ def from_obonet(
             definition=definition,
             parents=parents,
             synonyms=synonyms,
-            xrefs=xrefs,
             provenance=provenance,
             alt_ids=alt_ids,
         )
+
+        node_xrefs: list[Reference] = list(
+            iterate_node_xrefs(
+                data=data,
+                strict=strict,
+                ontology_prefix=ontology_prefix,
+                node=reference,
+            )
+        )
+        for node_xref in node_xrefs:
+            if node_xref.prefix in treat_xrefs_as_equivalent:
+                term.append_equivalent(node_xref)
+                n_relations += 1
+            elif node_xref.prefix in treat_xrefs_as_genus_differentia:
+                term.intersection_of.append(node_xref)
+                term.intersection_of.append(treat_xrefs_as_genus_differentia[node_xref.prefix])
+            elif node_xref.prefix in treat_xrefs_as_relationship:
+                term.append_relationship(
+                    treat_xrefs_as_relationship[node_xref.prefix],
+                    node_xref,
+                )
+                n_relations += 1
+            elif node_xref.prefix in treat_xrefs_as_is_a:
+                term.append_parent(node_xref)
+                n_parents += 1
+            elif node_xref.prefix in PROVENANCE_PREFIXES:
+                term.append_provenance(node_xref)
+                n_properties += 1
+            else:
+                term.append_xref(node_xref)
+                n_xrefs += 1
 
         relations_references = list(
             iterate_node_relationships(

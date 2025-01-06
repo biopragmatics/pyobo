@@ -15,9 +15,11 @@ from pyobo.struct.struct import abbreviation
 from pyobo.struct.typedef import (
     TypeDef,
     derives_from,
+    equivalent_class,
     exact_match,
     has_dbxref,
     is_conjugate_base_of,
+    part_of,
     see_also,
 )
 
@@ -1019,6 +1021,107 @@ class TestReader(unittest.TestCase):
         self.assertEqual(
             [(default_reference("chebi", "heyo"), default_reference("chebi", "also_heyo"))],
             ontology.property_values,
+        )
+
+    def test_xref_equivalent(self) -> None:
+        """Test the ``treat-xrefs-as-equivalent`` macro."""
+        ontology = _read("""\
+            ontology: go
+            treat-xrefs-as-equivalent: CL
+
+            [Term]
+            id: GO:0005623
+            name: cell
+            xref: CL:0000000
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(term.xrefs))
+        self.assertEqual(0, len(term.parents))
+        self.assertEqual(0, len(term.annotations_object))
+        self.assertEqual(0, len(term.annotations_literal))
+        self.assertEqual(1, len(term.relationships))
+        self.assertEqual(0, len(term.intersection_of))
+        self.assertIn(equivalent_class.reference, term.relationships)
+        self.assertEqual(
+            [Reference(prefix="CL", identifier="0000000")],
+            term.relationships[equivalent_class.reference],
+        )
+
+    def test_xref_is_a(self) -> None:
+        """Test the ``treat-xrefs-as-is_a `` macro."""
+        ontology = _read("""\
+            ontology: go
+            treat-xrefs-as-is_a: CL
+
+            [Term]
+            id: GO:0005623
+            name: cell
+            xref: CL:0000000
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(term.xrefs), msg=term.xrefs)
+        self.assertEqual(1, len(term.parents))
+        self.assertEqual(0, len(term.annotations_object))
+        self.assertEqual(0, len(term.annotations_literal))
+        self.assertEqual(0, len(term.relationships))
+        self.assertEqual(0, len(term.intersection_of))
+        self.assertEqual([Reference(prefix="CL", identifier="0000000")], term.parents)
+
+    def test_xref_relation(self) -> None:
+        """Test the ``treat-xrefs-as-relationship  `` macro."""
+        ontology = _read("""\
+            ontology: go
+            treat-xrefs-as-relationship: CL BFO:0000000
+
+            [Term]
+            id: GO:0005623
+            name: cell
+            xref: CL:0000000
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(term.xrefs))
+        self.assertEqual(0, len(term.parents))
+        self.assertEqual(0, len(term.annotations_object))
+        self.assertEqual(0, len(term.annotations_literal))
+        self.assertEqual(1, len(term.relationships))
+        self.assertEqual(0, len(term.intersection_of))
+        pred = Reference(prefix="BFO", identifier="0000000")
+        self.assertIn(pred, term.relationships)
+        self.assertEqual([Reference(prefix="CL", identifier="0000000")], term.relationships[pred])
+
+    def test_xref_genus_differentia(self) -> None:
+        """Test the ``treat-xrefs-as-is_a `` macro.
+
+        The test should become the same as:
+
+        .. code::
+
+            [Term]
+            id: ZFA:0000134
+            intersection_of: CL:0000540
+            intersection_of: BFO:0000050 NCBITaxon:7955
+        """
+        ontology = _read("""\
+            ontology: zfa
+            treat-xrefs-as-genus-differentia: CL BFO:0000050 NCBITaxon:7955
+
+            [Term]
+            id: ZFA:0000134
+            xref: CL:0000540
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(term.xrefs))
+        self.assertEqual(0, len(term.parents))
+        self.assertEqual(0, len(term.annotations_object))
+        self.assertEqual(0, len(term.annotations_literal))
+        self.assertEqual(0, len(term.relationships))
+        self.assertEqual(2, len(term.intersection_of))
+        self.assertEqual(
+            [
+                Reference(prefix="CL", identifier="0000540"),
+                (part_of.reference, Reference(prefix="NCBITaxon", identifier="7955")),
+            ],
+            term.intersection_of,
         )
 
 
