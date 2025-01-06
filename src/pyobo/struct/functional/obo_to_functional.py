@@ -22,28 +22,34 @@ __all__ = [
 ]
 
 
-def get_ontology(ontology: Obo) -> Ontology:
+def get_ofn_from_obo(obo_ontology: Obo) -> Ontology:
     """Convert an ontology."""
     return Ontology(
-        iri=ontology.ontology,
+        iri=obo_ontology.ontology,
         # TODO is there a way to generate a version IRI?
-        annotations=list(get_ontology_annotations(ontology)),
-        axioms=list(get_ontology_axioms(ontology)),
+        annotations=list(get_ontology_annotations(obo_ontology)),
+        axioms=list(get_ontology_axioms(obo_ontology)),
     )
 
 
-def get_ontology_axioms(ontology: Obo) -> Iterable[f.Box]:
+def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
     """Get axioms from the ontology."""
-    if ontology.subsetdefs:
+    from pyobo.struct.typedef import has_ontology_root_term
+
+    if obo_ontology.root_terms:
+        yield f.Declaration(has_ontology_root_term.reference, type="AnnotationProperty")
+        yield m.LabelMacro(has_ontology_root_term.reference, has_ontology_root_term.name)
+
+    if obo_ontology.subsetdefs:
         yield f.Declaration("oboInOwl:SubsetProperty", type="AnnotationProperty")
-        for subset_typedef, subset_label in ontology.subsetdefs:
+        for subset_typedef, subset_label in obo_ontology.subsetdefs:
             yield f.Declaration(subset_typedef, type="AnnotationProperty")
             yield m.LabelMacro(subset_typedef, subset_label)
             yield f.SubAnnotationPropertyOf(subset_typedef, "oboInOwl:SubsetProperty")
 
-    if ontology.synonym_typedefs:
+    if obo_ontology.synonym_typedefs:
         yield f.Declaration("oboInOwl:hasScope", type="AnnotationProperty")
-        for synonym_typedef in ontology.synonym_typedefs:
+        for synonym_typedef in obo_ontology.synonym_typedefs:
             yield f.Declaration(synonym_typedef.reference, type="AnnotationProperty")
             yield m.LabelMacro(synonym_typedef.reference, synonym_typedef.name)
             yield f.SubAnnotationPropertyOf(
@@ -56,16 +62,16 @@ def get_ontology_axioms(ontology: Obo) -> Iterable[f.Box]:
                     v.synonym_scopes[synonym_typedef.specificity],
                 )
 
-    for typedef in ontology.typedefs or []:
+    for typedef in obo_ontology.typedefs or []:
         yield from get_typedef_axioms(typedef)
 
-    for term in ontology:
+    for term in obo_ontology:
         yield from get_term_axioms(term)
 
 
-def get_ontology_annotations(ontology: Obo) -> Iterable[f.Annotation]:
+def get_ontology_annotations(obo_ontology: Obo) -> Iterable[f.Annotation]:
     """Get annotations from the ontology."""
-    for predicate, value in ontology._iterate_property_pairs():
+    for predicate, value in obo_ontology._iterate_property_pairs():
         yield f.Annotation(predicate, value)
 
 
