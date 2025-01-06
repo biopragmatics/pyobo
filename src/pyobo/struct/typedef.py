@@ -16,12 +16,11 @@ from .reference import (
     OBOLiteral,
     Reference,
     Referenced,
-    _iterate_obo_relations,
     _reference_list_tag,
     default_reference,
     reference_escape,
 )
-from .struct_utils import AxiomsHint, ObjectProperty, Stanza, _chain_tag
+from .struct_utils import AxiomsHint, ObjectProperty, Stanza, _chain_tag, _iterate_obo_relations
 from .utils import _boolean_tag
 from ..resources.ro import load_ro
 

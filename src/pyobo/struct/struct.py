@@ -33,13 +33,19 @@ from .reference import (
     OBOLiteral,
     Reference,
     Referenced,
-    _iterate_obo_relations,
     _reference_list_tag,
     comma_separate_references,
     reference_escape,
     unspecified_matching,
 )
-from .struct_utils import LiteralProperty, ObjectProperty, ReferenceHint, Stanza, _ensure_ref
+from .struct_utils import (
+    LiteralProperty,
+    ObjectProperty,
+    ReferenceHint,
+    Stanza,
+    _ensure_ref,
+    _iterate_obo_relations,
+)
 from .typedef import (
     TypeDef,
     comment,
