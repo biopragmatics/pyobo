@@ -12,7 +12,7 @@ from pyobo.identifier_utils import UnparsableIRIError
 from pyobo.reader import from_obonet, get_first_nonescaped_quote
 from pyobo.struct import default_reference
 from pyobo.struct.struct import abbreviation
-from pyobo.struct.struct_utils import ObjectProperty
+from pyobo.struct.struct_utils import Annotation
 from pyobo.struct.typedef import (
     TypeDef,
     derives_from,
@@ -253,7 +253,7 @@ class TestReader(unittest.TestCase):
             property_value: level "high"
         """)
         term = self.get_only_term(ontology)
-        self.assertEqual(1, len(list(term.annotations_literal)))
+        self.assertEqual(1, len(term.properties))
         self.assertEqual("high", term.get_property(default_reference("chebi", "level")))
 
         df = ontology.get_properties_df()
@@ -278,9 +278,9 @@ class TestReader(unittest.TestCase):
             id: xyz
         """)
         term = self.get_only_term(ontology)
-        self.assertEqual(1, len(list(term.annotations_literal)))
+        self.assertEqual(1, len(term.properties))
         ref = default_reference("chebi", "xyz")
-        self.assertIn(ref, term.annotations_literal)
+        self.assertIn(ref, term.properties)
         self.assertEqual("121.323", term.get_property(ref))
 
         df = ontology.get_properties_df()
@@ -305,8 +305,7 @@ class TestReader(unittest.TestCase):
             _read(text)
         ontology = _read(text, strict=False)
         term = self.get_only_term(ontology)
-        self.assertEqual(0, len(term.annotations_literal))
-        self.assertEqual(0, len(term.annotations_object))
+        self.assertEqual(0, len(term.properties))
 
     def test_property_literal_url_questionable(self) -> None:
         """Test parsing a property with a literal object."""
@@ -318,7 +317,7 @@ class TestReader(unittest.TestCase):
             property_value: http://purl.obolibrary.org/obo/chebi/mass "121.323" xsd:decimal
         """)
         term = self.get_only_term(ontology)
-        self.assertEqual(1, len(list(term.annotations_literal)))
+        self.assertEqual(1, len(term.properties))
         self.assertEqual("121.323", term.get_property(default_reference("chebi", "mass")))
 
         df = ontology.get_properties_df()
@@ -340,7 +339,7 @@ class TestReader(unittest.TestCase):
             property_value: http://purl.obolibrary.org/obo/chebi#mass "121.323" xsd:decimal
         """)
         term = self.get_only_term(ontology)
-        self.assertEqual(1, len(list(term.annotations_literal)))
+        self.assertEqual(1, len(term.properties))
         self.assertEqual("121.323", term.get_property(default_reference("chebi", "mass")))
 
         df = ontology.get_properties_df()
@@ -362,8 +361,8 @@ class TestReader(unittest.TestCase):
             property_value: http://purl.obolibrary.org/obo/RO_0018033 CHEBI:5678
         """)
         term = self.get_only_term(ontology)
-        self.assertEqual(0, len(list(term.annotations_literal)))
-        self.assertEqual(1, len(list(term.annotations_object)))
+        self.assertEqual(1, len(term.properties))
+        self.assertIn(Reference(prefix="RO", identifier="0018033"), term.properties)
         self.assertEqual("CHEBI:5678", term.get_property(is_conjugate_base_of))
 
         df = ontology.get_properties_df()
@@ -385,8 +384,7 @@ class TestReader(unittest.TestCase):
             property_value: http://purl.obolibrary.org/obo/RO_0018033 http://purl.obolibrary.org/obo/CHEBI_5678
         """)
         term = self.get_only_term(ontology)
-        self.assertEqual(0, len(list(term.annotations_literal)))
-        self.assertEqual(1, len(list(term.annotations_object)))
+        self.assertEqual(1, len(term.properties))
         self.assertEqual("CHEBI:5678", term.get_property(is_conjugate_base_of))
 
         df = ontology.get_properties_df()
@@ -411,8 +409,7 @@ class TestReader(unittest.TestCase):
             _read(text)
         ontology = _read(text, strict=False)
         term = self.get_only_term(ontology)
-        self.assertEqual(0, len(list(term.annotations_literal)))
-        self.assertEqual(0, len(list(term.annotations_object)))
+        self.assertEqual(0, len(term.properties))
 
     def test_property_literal_url(self) -> None:
         """Test using a full OBO PURL as the property."""
@@ -425,8 +422,7 @@ class TestReader(unittest.TestCase):
         """)
         td = TypeDef.from_triple(prefix="biolink", identifier="something")
         term = self.get_only_term(ontology)
-        self.assertEqual(0, len(list(term.annotations_literal)))
-        self.assertEqual(1, len(list(term.annotations_object)))
+        self.assertEqual(1, len(term.properties))
         self.assertEqual("CHEBI:5678", term.get_property(td))
 
     def test_property_unparsable_object(self) -> None:
@@ -444,8 +440,7 @@ class TestReader(unittest.TestCase):
 
         ontology = _read(text, strict=False)
         term = self.get_only_term(ontology)
-        self.assertEqual(0, len(list(term.annotations_literal)))
-        self.assertEqual(0, len(list(term.annotations_object)))
+        self.assertEqual(0, len(term.properties))
 
     def test_property_literal_url_unregistered(self) -> None:
         """Test using a full OBO PURL as the property."""
@@ -473,8 +468,7 @@ class TestReader(unittest.TestCase):
         )
 
         term = self.get_only_term(ontology)
-        self.assertEqual(0, len(list(term.annotations_literal)))
-        self.assertEqual(0, len(list(term.annotations_object)))
+        self.assertEqual(0, len(term.properties))
 
     def test_property_literal_object(self) -> None:
         """Test parsing a property with a literal object."""
@@ -486,8 +480,8 @@ class TestReader(unittest.TestCase):
             property_value: rdfs:seeAlso hgnc:1234
         """)
         term = self.get_only_term(ontology)
-        self.assertEqual(0, len(list(term.annotations_literal)))
-        self.assertEqual(1, len(list(term.annotations_object)))
+        self.assertEqual(1, len(list(term.properties)))
+        self.assertIn(see_also.reference, term.properties)
         self.assertEqual("hgnc:1234", term.get_property(see_also))
 
     def test_node_unparsable(self) -> None:
@@ -1043,8 +1037,7 @@ class TestReader(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(term.xrefs))
         self.assertEqual(0, len(term.parents))
-        self.assertEqual(0, len(term.annotations_object))
-        self.assertEqual(0, len(term.annotations_literal))
+        self.assertEqual(0, len(term.properties))
         self.assertEqual(1, len(term.relationships))
         self.assertEqual(0, len(term.intersection_of))
         self.assertIn(equivalent_class.reference, term.relationships)
@@ -1067,8 +1060,7 @@ class TestReader(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(term.xrefs), msg=term.xrefs)
         self.assertEqual(1, len(term.parents))
-        self.assertEqual(0, len(term.annotations_object))
-        self.assertEqual(0, len(term.annotations_literal))
+        self.assertEqual(0, len(term.properties))
         self.assertEqual(0, len(term.relationships))
         self.assertEqual(0, len(term.intersection_of))
         self.assertEqual([Reference(prefix="CL", identifier="0000000")], term.parents)
@@ -1104,8 +1096,7 @@ class TestReader(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(term.xrefs))
         self.assertEqual(0, len(term.parents))
-        self.assertEqual(0, len(term.annotations_object))
-        self.assertEqual(0, len(term.annotations_literal))
+        self.assertEqual(0, len(term.properties))
         self.assertEqual(1, len(term.relationships))
         self.assertEqual(0, len(term.intersection_of))
         pred = Reference(prefix="BFO", identifier="0000000")
@@ -1135,16 +1126,13 @@ class TestReader(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(term.xrefs))
         self.assertEqual(0, len(term.parents))
-        self.assertEqual(0, len(term.annotations_object))
-        self.assertEqual(0, len(term.annotations_literal))
+        self.assertEqual(0, len(term.properties))
         self.assertEqual(0, len(term.relationships))
         self.assertEqual(2, len(term.intersection_of))
         self.assertEqual(
             [
                 Reference(prefix="CL", identifier="0000540"),
-                ObjectProperty(
-                    part_of.reference, Reference(prefix="NCBITaxon", identifier="7955"), None
-                ),
+                Annotation(part_of.reference, Reference(prefix="NCBITaxon", identifier="7955")),
             ],
             term.intersection_of,
         )

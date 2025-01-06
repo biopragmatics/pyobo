@@ -13,15 +13,20 @@ from typing_extensions import Self
 
 from . import vocabulary as v
 from .reference import (
-    OBOLiteral,
     Reference,
     Referenced,
-    _iterate_obo_relations,
     _reference_list_tag,
     default_reference,
     reference_escape,
 )
-from .struct_utils import AxiomsHint, ObjectProperty, Stanza, _chain_tag
+from .struct_utils import (
+    AxiomsHint,
+    IntersectionOfHint,
+    PropertiesHint,
+    RelationsHint,
+    Stanza,
+    _chain_tag,
+)
 from .utils import _boolean_tag
 from ..resources.ro import load_ro
 
@@ -95,9 +100,7 @@ class TypeDef(Referenced, Stanza):
     synonyms: Annotated[list[Synonym], 9] = field(default_factory=list)
     xrefs: Annotated[list[Reference], 10] = field(default_factory=list)
     _axioms: AxiomsHint = field(default_factory=lambda: defaultdict(list))
-    properties: Annotated[dict[Reference, list[Reference | OBOLiteral]], 11] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+    properties: Annotated[PropertiesHint, 11] = field(default_factory=lambda: defaultdict(list))
     domain: Annotated[Reference | None, 12, "typedef-only"] = None
     range: Annotated[Reference | None, 13, "typedef-only"] = None
     builtin: Annotated[bool | None, 14] = None
@@ -110,7 +113,7 @@ class TypeDef(Referenced, Stanza):
     is_functional: Annotated[bool | None, 21, "typedef-only"] = None
     is_inverse_functional: Annotated[bool | None, 22, "typedef-only"] = None
     parents: Annotated[list[Reference], 23] = field(default_factory=list)
-    intersection_of: Annotated[list[Reference | ObjectProperty], 24] = field(default_factory=list)
+    intersection_of: Annotated[IntersectionOfHint, 24] = field(default_factory=list)
     union_of: Annotated[list[Reference], 25] = field(default_factory=list)
     equivalent_to: Annotated[list[Reference], 26] = field(default_factory=list)
     disjoint_from: Annotated[list[Reference], 27] = field(default_factory=list)
@@ -127,9 +130,7 @@ class TypeDef(Referenced, Stanza):
     #:   disconnected entities have no parts in common. This can be translated to OWL as:
     #:   ``disjoint_over(R S), R(A B) ==> (S some A) disjointFrom (S some B)``
     disjoint_over: Annotated[Reference | None, 31] = None
-    relationships: Annotated[dict[Reference, list[Reference]], 32] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+    relationships: Annotated[RelationsHint, 32] = field(default_factory=lambda: defaultdict(list))
     is_obsolete: Annotated[bool | None, 33] = None
     created_by: Annotated[str | None, 34] = None
     creation_date: Annotated[datetime.datetime | None, 35] = None
@@ -234,15 +235,7 @@ class TypeDef(Referenced, Stanza):
         # 10
         yield from self._iterate_xref_obo(ontology_prefix=ontology_prefix)
         # 11
-        for line in _iterate_obo_relations(
-            # the type checker seems to be a bit confused, this is an okay typing since we're
-            # passing a more explicit version. The issue is that list is used for the typing,
-            # which means it can't narrow properly
-            self.properties,  # type:ignore
-            self._axioms,
-            ontology_prefix=ontology_prefix,
-        ):
-            yield f"property_value: {line}"
+        yield from self._iterate_obo_properties(ontology_prefix=ontology_prefix)
         # 12
         if self.domain:
             yield f"domain: {reference_escape(self.domain, ontology_prefix=ontology_prefix, add_name_comment=True)}"
@@ -286,15 +279,7 @@ class TypeDef(Referenced, Stanza):
         yield from _chain_tag("equivalent_to_chain", self.equivalent_to_chain, ontology_prefix)
         # 31 TODO disjoint_over, see https://github.com/search?q=%22disjoint_over%3A%22+path%3A*.obo&type=code
         # 32
-        for line in _iterate_obo_relations(
-            # the type checker seems to be a bit confused, this is an okay typing since we're
-            # passing a more explicit version. The issue is that list is used for the typing,
-            # which means it can't narrow properly
-            self.relationships,  # type:ignore
-            self._axioms,
-            ontology_prefix=ontology_prefix,
-        ):
-            yield f"relationship: {line}"
+        yield from self._iterate_obo_relations(ontology_prefix=ontology_prefix)
         # 33
         yield from _boolean_tag("is_obsolete", self.is_obsolete)
         # 34

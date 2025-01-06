@@ -33,13 +33,21 @@ from .reference import (
     OBOLiteral,
     Reference,
     Referenced,
-    _iterate_obo_relations,
     _reference_list_tag,
     comma_separate_references,
     reference_escape,
     unspecified_matching,
 )
-from .struct_utils import LiteralProperty, ObjectProperty, ReferenceHint, Stanza, _ensure_ref
+from .struct_utils import (
+    Annotation,
+    AxiomsHint,
+    IntersectionOfHint,
+    PropertiesHint,
+    ReferenceHint,
+    RelationsHint,
+    Stanza,
+    _ensure_ref,
+)
 from .typedef import (
     TypeDef,
     comment,
@@ -232,28 +240,16 @@ class Term(Referenced, Stanza):
     provenance: list[Reference] = field(default_factory=list)
 
     #: Object properties
-    relationships: dict[Reference, list[Reference]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+    relationships: RelationsHint = field(default_factory=lambda: defaultdict(list))
 
-    _axioms: dict[
-        tuple[Reference, Reference | OBOLiteral], list[tuple[Reference, Reference | OBOLiteral]]
-    ] = field(default_factory=lambda: defaultdict(list))
+    _axioms: AxiomsHint = field(default_factory=lambda: defaultdict(list))
 
-    #: Annotation properties pointing to objects (i.e., references)
-    annotations_object: dict[Reference, list[Reference]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
-
-    #: Annotation properties pointing to literals
-    annotations_literal: dict[Reference, list[OBOLiteral]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+    properties: PropertiesHint = field(default_factory=lambda: defaultdict(list))
 
     #: Relationships with the default "is_a"
     parents: list[Reference] = field(default_factory=list)
 
-    intersection_of: list[Reference | ObjectProperty] = field(default_factory=list)
+    intersection_of: IntersectionOfHint = field(default_factory=list)
 
     #: Synonyms of this term
     synonyms: list[Synonym] = field(default_factory=list)
@@ -370,17 +366,20 @@ class Term(Referenced, Stanza):
 
     def get_properties(self, prop: ReferenceHint) -> list[str]:
         """Get properties from the given key."""
-        prop = _ensure_ref(prop)
-        if prop in self.annotations_object:
-            return [value.preferred_curie for value in self.annotations_object[prop]]
-        if prop in self.annotations_literal:
-            return [value for value, _datatype in self.annotations_literal[prop]]
-        return []
+        rv = []
+        for t in self.properties.get(_ensure_ref(prop), []):
+            match t:
+                case Reference():
+                    rv.append(t.preferred_curie)
+                case OBOLiteral(value, _):
+                    rv.append(value)
+        return rv
 
     def get_property_objects(self, prop: ReferenceHint) -> list[Reference]:
         """Get properties from the given key."""
-        prop = _ensure_ref(prop)
-        return sorted(self.annotations_object.get(prop, []))
+        return [
+            t for t in self.properties.get(_ensure_ref(prop), []) if isinstance(t, curies.Reference)
+        ]
 
     def get_property(self, prop: ReferenceHint) -> str | None:
         """Get a single property of the given key."""
@@ -436,24 +435,30 @@ class Term(Referenced, Stanza):
         return [(k, v, self._get_mapping_context(k, v)) for k, v in rv]
 
     def _get_object_axiom_target(
-        self, p: Reference, o: Reference, ap: Reference
+        self, p: Reference, o: Reference | OBOLiteral, ap: Reference
     ) -> Reference | None:
-        for axiom_predicate, axiom_target in self._axioms.get((p, o), []):
-            if axiom_predicate != ap:
-                continue
-            if isinstance(axiom_target, OBOLiteral):
+        match self._get_axiom(p, o, ap):
+            case OBOLiteral():
                 raise TypeError
-            return axiom_target
-        return None
+            case Reference() as target:
+                return target
+            case None:
+                return None
+            case _:
+                raise TypeError
 
-    def _get_str_axiom_target(self, p: Reference, o: Reference, ap: Reference) -> str | None:
-        for axiom_predicate, axiom_target in self._axioms.get((p, o), []):
-            if axiom_predicate != ap:
-                continue
-            if isinstance(axiom_target, Reference):
+    def _get_str_axiom_target(
+        self, p: Reference, o: Reference | OBOLiteral, ap: Reference
+    ) -> str | None:
+        match self._get_axiom(p, o, ap):
+            case OBOLiteral(value, _):
+                return value
+            case Reference():
                 raise TypeError
-            return axiom_target.value
-        return None
+            case None:
+                return None
+            case _:
+                raise TypeError
 
     def _get_mapping_context(self, p: Reference, o: Reference) -> MappingContext:
         return MappingContext(
@@ -486,12 +491,12 @@ class Term(Referenced, Stanza):
         typedef: ReferenceHint,
         value: ReferenceHint,
         *,
-        axioms: Iterable[ObjectProperty | LiteralProperty] | None = None,
+        axioms: Iterable[Annotation] | None = None,
     ) -> Self:
         """Append an object annotation."""
         typedef = _ensure_ref(typedef)
         value = _ensure_ref(value)
-        self.annotations_object[typedef].append(value)
+        self.properties[typedef].append(value)
         self._annotate_axioms(typedef, value, axioms)
         return self
 
@@ -523,40 +528,6 @@ class Term(Referenced, Stanza):
         typedef = _ensure_ref(typedef)
         self.relationships[typedef].extend(references)
 
-    def append_property(
-        self, prop: str | Reference | Referenced, value: str | Reference | Referenced
-    ) -> Self:
-        """Append an arbitrary property."""
-        raise NotImplementedError
-
-    def annotate_literal(
-        self, prop: ReferenceHint, value: str, datatype: Reference | None = None
-    ) -> Self:
-        """Append an object annotation."""
-        prop = _ensure_ref(prop)
-        self.annotations_literal[prop].append(
-            OBOLiteral(value, datatype or Reference(prefix="xsd", identifier="string"))
-        )
-        return self
-
-    def annotate_boolean(self, prop: ReferenceHint, value: bool) -> Self:
-        """Append an object annotation."""
-        return self.annotate_literal(
-            prop, str(value).lower(), Reference(prefix="xsd", identifier="boolean")
-        )
-
-    def annotate_integer(self, prop: ReferenceHint, value: int | str) -> Self:
-        """Append an object annotation."""
-        return self.annotate_literal(
-            prop, str(int(value)), Reference(prefix="xsd", identifier="integer")
-        )
-
-    def annotate_year(self, prop: ReferenceHint, value: int | str) -> Self:
-        """Append a year annotation."""
-        return self.annotate_literal(
-            prop, str(int(value)), Reference(prefix="xsd", identifier="gYear")
-        )
-
     def _definition_fp(self) -> str:
         definition = obo_escape_slim(self.definition) if self.definition else ""
         return f'"{definition}" [{comma_separate_references(self.provenance)}]'
@@ -567,16 +538,11 @@ class Term(Referenced, Stanza):
             for target in sorted(targets):
                 yield typedef, target
 
-    def iterate_properties(
-        self,
-    ) -> Iterable[ObjectProperty | LiteralProperty]:
+    def iterate_properties(self) -> Iterable[Annotation]:
         """Iterate over pairs of property and values."""
-        for prop, values in sorted(self.annotations_object.items()):
-            for value in sorted(values):
-                yield ObjectProperty(prop, value, None)
-        for prop, value_datatype_pairs in sorted(self.annotations_literal.items()):
-            for svalue, datatype in sorted(value_datatype_pairs):
-                yield LiteralProperty(prop, svalue, datatype)
+        for prop, values in sorted(self.properties.items()):
+            for value in values:
+                yield Annotation(prop, value)
 
     def iterate_obo_lines(
         self,
@@ -618,8 +584,7 @@ class Term(Referenced, Stanza):
         yield from _boolean_tag("builtin", self.builtin)
         # 12
         if emit_annotation_properties:
-            for line in self._emit_properties(ontology_prefix, typedefs):
-                yield f"property_value: {line}"
+            yield from self._iterate_obo_properties(ontology_prefix=ontology_prefix)
         # 13
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
         yield from _reference_list_tag(parent_tag, self.parents, ontology_prefix)
@@ -630,31 +595,13 @@ class Term(Referenced, Stanza):
         # 17 TODO disjoint_from
         # 18
         if emit_object_properties:
-            for part in _iterate_obo_relations(
-                self.relationships, self._axioms, ontology_prefix=ontology_prefix
-            ):
-                yield f"relationship: {part}"
+            yield from self._iterate_obo_relations(ontology_prefix=ontology_prefix)
         # 19 TODO created_by
         # 20 TODO creation_date
         # 21
         yield from _boolean_tag("is_obsolete", self.is_obsolete)
         # 22 TODO replaced_by, weird since this conflicts with other annotations
         # 23 TODO consider
-
-    def _emit_properties(
-        self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
-    ) -> Iterable[str]:
-        yield from _iterate_obo_relations(
-            self.annotations_object, self._axioms, ontology_prefix=ontology_prefix
-        )
-        yield from _iterate_obo_relations(
-            # the type checker seems to be a bit confused, this is an okay typing since we're
-            # passing a more explicit version. The issue is that list is used for the typing,
-            # which means it can't narrow properly
-            self.annotations_literal,  # type:ignore
-            self._axioms,
-            ontology_prefix=ontology_prefix,
-        )
 
     @staticmethod
     def _reference(
@@ -797,7 +744,7 @@ class Obo:
 
     subsetdefs: ClassVar[list[tuple[Reference, str]] | None] = None
 
-    property_values: ClassVar[list[tuple[Reference, Reference | OBOLiteral]] | None] = None
+    property_values: ClassVar[list[Annotation] | None] = None
 
     def __post_init__(self):
         """Run post-init checks."""
@@ -1324,7 +1271,7 @@ class Obo:
         nodes = {}
         #: a list of 3-tuples u,v,k
         links = []
-        typedefs = self._index_typedefs()
+        self._index_typedefs()
         synonym_typedefs = self._index_synonym_typedefs()
         for term in self._iter_terms(use_tqdm=use_tqdm):
             parents = []
@@ -1339,9 +1286,10 @@ class Obo:
                 relations.append(f"{typedef.curie} {target.curie}")
                 links.append((term.curie, typedef.curie, target.curie))
 
-            for typedef, targets in term.annotations_object.items():
-                for target in sorted(targets):
-                    links.append((term.curie, typedef.curie, target.curie))
+            for typedef, targets in sorted(term.properties.items()):
+                for target_or_literal in targets:
+                    if isinstance(target_or_literal, curies.Reference):
+                        links.append((term.curie, typedef.curie, target_or_literal.curie))
 
             d = {
                 "id": term.curie,
@@ -1354,7 +1302,7 @@ class Obo:
                     synonym._fp(ontology_prefix=self.ontology, synonym_typedefs=synonym_typedefs)
                     for synonym in term.synonyms
                 ],
-                "property_value": list(term._emit_properties(self.ontology, typedefs)),
+                "property_value": list(term._iterate_obo_properties(ontology_prefix=self.ontology)),
             }
             nodes[term.curie] = {k: v for k, v in d.items() if v}
 
@@ -1469,9 +1417,7 @@ class Obo:
     # PROPS #
     #########
 
-    def iterate_properties(
-        self, *, use_tqdm: bool = False
-    ) -> Iterable[tuple[Term, ObjectProperty | LiteralProperty]]:
+    def iterate_properties(self, *, use_tqdm: bool = False) -> Iterable[tuple[Term, Annotation]]:
         """Iterate over tuples of terms, properties, and their values."""
         for term in self._iter_terms(
             use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting properties"
@@ -1488,21 +1434,12 @@ class Obo:
         """Iterate property rows."""
         tuple[Term, Reference, Reference, None] | tuple[Term, Reference, str, Reference]
         for term, t in self.iterate_properties(use_tqdm=use_tqdm):
-            match t:
-                case LiteralProperty(predicate, value, datatype):
-                    yield (
-                        term.identifier,
-                        term._reference(predicate, ontology_prefix=self.ontology),
-                        value,
-                        datatype.preferred_curie,
-                    )
-                case ObjectProperty(predicate, object, datatype):
-                    yield (
-                        term.identifier,
-                        term._reference(predicate, ontology_prefix=self.ontology),
-                        object.preferred_curie,
-                        "",
-                    )
+            pred = term._reference(t.predicate, ontology_prefix=self.ontology)
+            match t.value:
+                case OBOLiteral(value, datatype):
+                    yield (term.identifier, pred, value, datatype.preferred_curie)
+                case Reference() as obj:
+                    yield (term.identifier, pred, obj.preferred_curie, "")
                 case _:
                     raise TypeError(f"got: {type(t)} - {t}")
 
@@ -1520,13 +1457,13 @@ class Obo:
         prop = _ensure_ref(prop)
         for term in self._iter_terms(use_tqdm=use_tqdm):
             for t in term.iterate_properties():
-                match t:
-                    case LiteralProperty(predicate, value, _datatype):
-                        if predicate == prop:
-                            yield term, value
-                    case ObjectProperty(predicate, object, _datatype):
-                        if predicate == prop:
-                            yield term, object.preferred_curie
+                if t.predicate != prop:
+                    continue
+                match t.value:
+                    case OBOLiteral(value, _datatype):
+                        yield term, value
+                    case Reference():
+                        yield term, t.value.preferred_curie
 
     def get_filtered_properties_df(
         self, prop: ReferenceHint, *, use_tqdm: bool = False
@@ -1880,7 +1817,7 @@ def make_ad_hoc_ontology(
     _idspaces: Mapping[str, str] | None = None,
     _root_terms: list[Reference] | None = None,
     _subsetdefs: list[tuple[Reference, str]] | None = None,
-    _property_values: list[tuple[Reference, Reference | OBOLiteral]] | None = None,
+    _property_values: list[Annotation] | None = None,
     *,
     terms: list[Term] | None = None,
 ) -> Obo:

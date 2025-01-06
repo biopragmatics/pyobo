@@ -214,7 +214,13 @@ class TestTypeDef(unittest.TestCase):
         typedef = TypeDef(
             reference=REF,
             properties={
-                has_contributor.reference: [v.charlie],
+                has_contributor.reference: [
+                    Reference(
+                        prefix=v.charlie.prefix,
+                        identifier=v.charlie.identifier,
+                        name=v.charlie.name,
+                    )
+                ],
                 has_inchi: [OBOLiteral("abc", Reference(prefix="xsd", identifier="string"))],
             },
         )

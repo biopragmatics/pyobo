@@ -34,7 +34,7 @@ from .struct import (
     make_ad_hoc_ontology,
 )
 from .struct.reference import OBOLiteral, _parse_identifier
-from .struct.struct_utils import LiteralProperty, ObjectProperty, Stanza
+from .struct.struct_utils import Annotation, Stanza
 from .struct.typedef import default_typedefs, has_ontology_root_term
 from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
 
@@ -133,21 +133,21 @@ def from_obonet(
         )
 
     root_terms: list[Reference] = []
-    property_values: list[tuple[Reference, Reference | OBOLiteral]] = []
+    property_values: list[Annotation] = []
     for t in iterate_node_properties(
         graph.graph,
         ontology_prefix=ontology_prefix,
         upgrade=upgrade,
         node=Reference(prefix="obo", identifier=ontology_prefix),
     ):
-        match t:
-            case LiteralProperty(predicate, value, datatype):
-                property_values.append((predicate, OBOLiteral(value, datatype)))
-            case ObjectProperty(predicate, obj, _):
-                if predicate.pair == has_ontology_root_term.pair:
-                    root_terms.append(obj)
-                else:
-                    property_values.append((predicate, obj))
+        if t.predicate.pair == has_ontology_root_term.pair:
+            match t.value:
+                case OBOLiteral():
+                    raise RuntimeError
+                case Reference():
+                    root_terms.append(t.value)
+        else:
+            property_values.append(t)
 
     #: CURIEs to typedefs
     typedefs: Mapping[ReferenceTuple, TypeDef] = {
@@ -261,11 +261,8 @@ def from_obonet(
             data, node=reference, strict=strict, ontology_prefix=ontology_prefix, upgrade=upgrade
         ):
             n_properties += 1
-            match t:
-                case LiteralProperty(predicate, value, datatype):
-                    term.annotate_literal(predicate, value, datatype)
-                case ObjectProperty(predicate, obj, _):
-                    term.annotate_object(predicate, obj)
+            term.append_property(t)
+
         terms.append(term)
 
     subset_typedefs = _get_subsetdefs(graph.graph, ontology_prefix=ontology_prefix)
@@ -308,7 +305,7 @@ class MacroConfig:
                 continue
             self.treat_xrefs_as_equivalent.add(prefix_norm)
 
-        self.treat_xrefs_as_genus_differentia: dict[str, ObjectProperty] = {}
+        self.treat_xrefs_as_genus_differentia: dict[str, Annotation] = {}
         for line in data.get("treat-xrefs-as-genus-differentia", []):
             gd_prefix, gd_predicate, gd_target = line.split()
             gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
@@ -324,8 +321,8 @@ class MacroConfig:
             )
             if gd_target_re is None:
                 continue
-            self.treat_xrefs_as_genus_differentia[gd_prefix_norm] = ObjectProperty(
-                gd_predicate_re, gd_target_re, None
+            self.treat_xrefs_as_genus_differentia[gd_prefix_norm] = Annotation(
+                gd_predicate_re, gd_target_re
             )
 
         self.treat_xrefs_as_relationship: dict[str, Reference] = {}
@@ -733,7 +730,7 @@ def iterate_node_properties(
     strict: bool = True,
     ontology_prefix: str,
     upgrade: bool,
-) -> Iterable[ObjectProperty | LiteralProperty]:
+) -> Iterable[Annotation]:
     """Extract properties from a :mod:`obonet` node's data."""
     for prop_value_type in data.get("property_value", []):
         if yv := _handle_prop(
@@ -760,7 +757,7 @@ def _handle_prop(
     strict: bool = True,
     ontology_prefix: str,
     upgrade: bool,
-) -> ObjectProperty | LiteralProperty | None:
+) -> Annotation | None:
     try:
         prop, value_type = prop_value_type.split(" ", 1)
     except ValueError:
@@ -792,8 +789,7 @@ def _handle_prop(
                 )
             UNHANDLED_PROP_OBJECTS[prop_reference, value_type] += 1
             return None
-        # TODO can we drop datatype from this?
-        return ObjectProperty(prop_reference, obj_reference, None)
+        return Annotation(prop_reference, obj_reference)
 
     try:
         value, datatype = value_type.rsplit(" ", 1)  # second entry is the value type
@@ -807,7 +803,7 @@ def _handle_prop(
     value = value.strip('"')
 
     if not datatype:
-        return LiteralProperty(prop_reference, value, Reference(prefix="xsd", identifier="string"))
+        return Annotation(prop_reference, OBOLiteral.string(value))
 
     datatype_reference = Reference.from_curie_or_uri(
         datatype, strict=strict, ontology_prefix=ontology_prefix, node=node
@@ -815,7 +811,7 @@ def _handle_prop(
     if datatype_reference is None:
         logger.warning("[%s] had unparsable datatype %s", node.curie, prop_value_type)
         return None
-    return LiteralProperty(prop_reference, value, datatype_reference)
+    return Annotation(prop_reference, OBOLiteral(value, datatype_reference))
 
 
 def _get_prop(
