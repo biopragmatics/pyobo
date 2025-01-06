@@ -4,18 +4,22 @@ from __future__ import annotations
 
 from collections import ChainMap
 from collections.abc import Iterable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
+import rdflib
 from curies import vocabulary as v
-from rdflib import XSD, Literal
+from rdflib import XSD
 
 from pyobo.struct.functional import dsl as f
 from pyobo.struct.functional import macros as m
 from pyobo.struct.functional.ontology import Document, Ontology
 from pyobo.struct.functional.utils import DEFAULT_PREFIX_MAP
+from pyobo.struct.reference import OBOLiteral, Reference
+from pyobo.struct.vocabulary import has_ontology_root_term
 
 if TYPE_CHECKING:
     from pyobo.struct.struct import Obo, Term
+    from pyobo.struct.struct_utils import Annotation as OBOAnnotation
     from pyobo.struct.typedef import TypeDef
 
 __all__ = [
@@ -49,11 +53,9 @@ def get_ofn_from_obo(obo_ontology: Obo) -> Document:
 
 def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
     """Get axioms from the ontology."""
-    from pyobo.struct.typedef import has_ontology_root_term
-
     if obo_ontology.root_terms:
-        yield f.Declaration(has_ontology_root_term.reference, type="AnnotationProperty")
-        yield m.LabelMacro(has_ontology_root_term.reference, has_ontology_root_term.name)
+        yield f.Declaration(has_ontology_root_term, type="AnnotationProperty")
+        yield m.LabelMacro(has_ontology_root_term, cast(str, has_ontology_root_term.name))
 
     if obo_ontology.subsetdefs:
         yield f.Declaration("oboInOwl:SubsetProperty", type="AnnotationProperty")
@@ -88,6 +90,16 @@ def get_ontology_annotations(obo_ontology: Obo) -> Iterable[f.Annotation]:
     """Get annotations from the ontology."""
     for predicate, value in obo_ontology._iterate_property_pairs():
         yield f.Annotation(predicate, value)
+
+
+def _oboliteral_to_literal(obo_literal) -> rdflib.Literal:
+    if obo_literal.datatype.prefix == "xsd":
+        datatype = XSD._NS.term(obo_literal.datatype.identifier)
+    else:
+        raise NotImplementedError(
+            f"Automatic literal conversion is not implemented for prefix: {obo_literal.datatype.prefix}"
+        )
+    return rdflib.Literal(obo_literal.value, datatype=datatype)
 
 
 def get_term_axioms(term: Term) -> Iterable[f.Box]:
@@ -137,20 +149,24 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
     if term.builtin is not None:
         yield m.IsOBOBuiltinMacro(s, term.builtin)
     # 12
-    for typedef, values in term.annotations_object.items():
+    for typedef, values in term.properties.items():
         for value in values:
-            yield f.AnnotationAssertion(typedef.preferred_curie, s, value.preferred_curie)
-    for typedef, literal_values in term.annotations_literal.items():
-        for str_value, dtype in literal_values:
-            # make URIRef for datatype
-            if dtype.prefix == "xsd":
-                datatype = XSD._NS.term(dtype.identifier)
-            else:
-                raise NotImplementedError(
-                    f"Automatic literal conversion is not implemented for prefix: {dtype.prefix}"
-                )
-            literal = Literal(str_value, datatype=datatype)
-            yield f.AnnotationAssertion(typedef.preferred_curie, s, literal)
+            anns = term._get_axioms(typedef, value)
+            match value:
+                case OBOLiteral():
+                    yield f.AnnotationAssertion(
+                        typedef.preferred_curie,
+                        s,
+                        _oboliteral_to_literal(value),
+                        annotations=_process_anns(anns),
+                    )
+                case Reference():
+                    yield f.AnnotationAssertion(
+                        typedef.preferred_curie,
+                        s,
+                        value.preferred_curie,
+                        annotations=_process_anns(anns),
+                    )
     # 14 intersection_of
     # 15 union_of
     # 16 equivalent_to
@@ -165,6 +181,28 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
         yield m.IsObsoleteMacro(s, term.is_obsolete)
     # 22 TODO replaced_by
     # 23 TODO consider
+
+
+def _process_anns(annotations: list[OBOAnnotation]) -> list[f.Annotation]:
+    """Convert OBO anotations to OFN annotations."""
+    rv = []
+    for annotation in annotations:
+        match annotation.value:
+            case OBOLiteral():
+                rv.append(
+                    f.Annotation(
+                        annotation.predicate,
+                        _oboliteral_to_literal(annotation.value),
+                    )
+                )
+            case Reference():
+                rv.append(
+                    f.Annotation(
+                        annotation.predicate,
+                        annotation.value,
+                    )
+                )
+    return rv
 
 
 def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
