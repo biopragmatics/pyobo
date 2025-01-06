@@ -246,6 +246,11 @@ class OBOLiteral(NamedTuple):
     value: str
     datatype: Reference
 
+    @classmethod
+    def string(cls, value: str) -> OBOLiteral:
+        """Get a string literal."""
+        return cls(value, Reference(prefix="xsd", identifier="string"))
+
 
 AxiomsHint = Mapping[
     tuple[Reference, Reference | OBOLiteral], Sequence[tuple[Reference, Reference | OBOLiteral]]
