@@ -34,7 +34,7 @@ from .struct import (
     make_ad_hoc_ontology,
 )
 from .struct.reference import OBOLiteral, _parse_identifier
-from .struct.struct import LiteralProperty, ObjectProperty
+from .struct.struct_utils import LiteralProperty, ObjectProperty, Stanza
 from .struct.typedef import default_typedefs, has_ontology_root_term
 from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
 
@@ -194,7 +194,14 @@ def from_obonet(
     typedefs: Mapping[ReferenceTuple, TypeDef] = {
         typedef.pair: typedef
         for typedef in iterate_graph_typedefs(
-            graph, ontology_prefix=ontology_prefix, strict=strict, upgrade=upgrade
+            graph,
+            ontology_prefix=ontology_prefix,
+            strict=strict,
+            upgrade=upgrade,
+            treat_xrefs_as_equivalent=treat_xrefs_as_equivalent,
+            treat_xrefs_as_genus_differentia=treat_xrefs_as_genus_differentia,
+            treat_xrefs_as_relationship=treat_xrefs_as_relationship,
+            treat_xrefs_as_is_a=treat_xrefs_as_is_a,
         )
     }
 
@@ -269,27 +276,14 @@ def from_obonet(
             )
         )
         for node_xref in node_xrefs:
-            if node_xref.prefix in treat_xrefs_as_equivalent:
-                term.append_equivalent(node_xref)
-                n_relations += 1
-            elif node_xref.prefix in treat_xrefs_as_genus_differentia:
-                term.intersection_of.append(node_xref)
-                term.intersection_of.append(treat_xrefs_as_genus_differentia[node_xref.prefix])
-            elif node_xref.prefix in treat_xrefs_as_relationship:
-                term.append_relationship(
-                    treat_xrefs_as_relationship[node_xref.prefix],
-                    node_xref,
-                )
-                n_relations += 1
-            elif node_xref.prefix in treat_xrefs_as_is_a:
-                term.append_parent(node_xref)
-                n_parents += 1
-            elif node_xref.prefix in PROVENANCE_PREFIXES:
-                term.append_provenance(node_xref)
-                n_properties += 1
-            else:
-                term.append_xref(node_xref)
-                n_xrefs += 1
+            _handle_xref(
+                term,
+                node_xref,
+                treat_xrefs_as_equivalent=treat_xrefs_as_equivalent,
+                treat_xrefs_as_genus_differentia=treat_xrefs_as_genus_differentia,
+                treat_xrefs_as_relationship=treat_xrefs_as_relationship,
+                treat_xrefs_as_is_a=treat_xrefs_as_is_a,
+            )
 
         relations_references = list(
             iterate_node_relationships(
@@ -346,6 +340,33 @@ def from_obonet(
         _property_values=property_values,
         _subsetdefs=subset_typedefs,
     )
+
+
+def _handle_xref(
+    term: Stanza,
+    node_xref: Reference,
+    *,
+    treat_xrefs_as_equivalent,
+    treat_xrefs_as_genus_differentia,
+    treat_xrefs_as_relationship,
+    treat_xrefs_as_is_a,
+) -> None:
+    if node_xref.prefix in treat_xrefs_as_equivalent:
+        term.append_equivalent(node_xref)
+    elif node_xref.prefix in treat_xrefs_as_genus_differentia:
+        term.intersection_of.append(node_xref)
+        term.intersection_of.append(treat_xrefs_as_genus_differentia[node_xref.prefix])
+    elif node_xref.prefix in treat_xrefs_as_relationship:
+        term.append_relationship(
+            treat_xrefs_as_relationship[node_xref.prefix],
+            node_xref,
+        )
+    elif node_xref.prefix in treat_xrefs_as_is_a:
+        term.append_parent(node_xref)
+    elif node_xref.prefix in PROVENANCE_PREFIXES:
+        term.append_provenance(node_xref)
+    else:
+        term.append_xref(node_xref)
 
 
 def _get_subsetdefs(graph: nx.MultiDiGraph, ontology_prefix: str) -> list[tuple[Reference, str]]:
@@ -487,7 +508,15 @@ def iterate_graph_synonym_typedefs(
 
 
 def iterate_graph_typedefs(
-    graph: nx.MultiDiGraph, *, ontology_prefix: str, strict: bool = True, upgrade: bool
+    graph: nx.MultiDiGraph,
+    *,
+    ontology_prefix: str,
+    strict: bool = True,
+    upgrade: bool,
+    treat_xrefs_as_equivalent,
+    treat_xrefs_as_genus_differentia,
+    treat_xrefs_as_relationship,
+    treat_xrefs_as_is_a,
 ) -> Iterable[TypeDef]:
     """Get type definitions from an :mod:`obonet` graph."""
     for typedef in graph.graph.get("typedefs", []):
@@ -509,7 +538,8 @@ def iterate_graph_typedefs(
             logger.warning("[%s] unable to parse typedef ID %s", ontology_prefix, typedef_id)
             continue
 
-        xrefs = []
+        yv = TypeDef(reference=reference)
+
         for xref_curie in typedef.get("xref", []):
             _xref = Reference.from_curie_or_uri(
                 xref_curie,
@@ -517,9 +547,18 @@ def iterate_graph_typedefs(
                 ontology_prefix=ontology_prefix,
                 node=reference,
             )
-            if _xref:
-                xrefs.append(_xref)
-        yield TypeDef(reference=reference, xrefs=xrefs)
+            if not _xref:
+                continue
+            _handle_xref(
+                yv,
+                _xref,
+                treat_xrefs_as_equivalent=treat_xrefs_as_equivalent,
+                treat_xrefs_as_genus_differentia=treat_xrefs_as_genus_differentia,
+                treat_xrefs_as_relationship=treat_xrefs_as_relationship,
+                treat_xrefs_as_is_a=treat_xrefs_as_is_a,
+            )
+
+        yield yv
 
 
 def get_definition(

@@ -10,7 +10,7 @@ from .utils import get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..struct.struct import ReferenceHint, _ensure_ref
+from ..struct.struct_utils import ReferenceHint, _ensure_ref
 from ..utils.cache import cached_df, cached_mapping, cached_multidict
 from ..utils.io import multidict
 from ..utils.path import prefix_cache_join

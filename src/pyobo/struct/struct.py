@@ -15,7 +15,7 @@ from datetime import datetime
 from itertools import chain
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, ClassVar, Literal, NamedTuple, TextIO, TypeAlias, overload
+from typing import Any, ClassVar, Literal, TextIO, overload
 
 import bioregistry
 import click
@@ -37,16 +37,15 @@ from .reference import (
     _iterate_obo_relations,
     _reference_list_tag,
     comma_separate_references,
-    default_reference,
     multi_reference_escape,
     reference_escape,
     unspecified_matching,
 )
+from .struct_utils import LiteralProperty, ObjectProperty, ReferenceHint, Stanza, _ensure_ref
 from .typedef import (
     TypeDef,
     comment,
     default_typedefs,
-    equivalent_class,
     exact_match,
     from_species,
     has_contributor,
@@ -80,7 +79,6 @@ from ..utils.path import prefix_directory_join
 
 __all__ = [
     "Obo",
-    "ReferenceHint",
     "Synonym",
     "SynonymTypeDef",
     "Term",
@@ -208,50 +206,6 @@ default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
     uk_spelling.pair: uk_spelling,
 }
 
-ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
-
-
-def _ensure_ref(
-    reference: ReferenceHint,
-    *,
-    ontology_prefix: str | None = None,
-) -> Reference:
-    if isinstance(reference, Referenced):
-        return reference.reference
-    if isinstance(reference, tuple):
-        return Reference(prefix=reference[0], identifier=reference[1])
-    if isinstance(reference, Reference):
-        return reference
-    if ":" not in reference:
-        if not ontology_prefix:
-            raise ValueError(f"can't parse reference: {reference}")
-        return default_reference(ontology_prefix, reference)
-    _rv = Reference.from_curie_or_uri(reference, strict=True, ontology_prefix=ontology_prefix)
-    if _rv is None:
-        raise ValueError(f"[{ontology_prefix}] unable to parse {reference}")
-    return _rv
-
-
-class ObjectProperty(NamedTuple):
-    """A tuple representing a propert with an object."""
-
-    predicate: Reference
-    object: Reference
-    datatype: None
-
-
-class LiteralProperty(NamedTuple):
-    """A tuple representing a property with a literal value."""
-
-    predicate: Reference
-    value: str
-    datatype: Reference
-
-    @classmethod
-    def float(cls, predicate: Reference, value: float) -> Self:
-        """Return a literal property for a float."""
-        return cls(predicate, str(value), Reference(prefix="xsd", identifier="float"))
-
 
 class MappingContext(BaseModel):
     """Context for a mapping, corresponding to SSSOM."""
@@ -267,7 +221,7 @@ class MappingContext(BaseModel):
 
 
 @dataclass
-class Term(Referenced):
+class Term(Referenced, Stanza):
     """A term in OBO."""
 
     #: The primary reference for the entity
@@ -301,7 +255,7 @@ class Term(Referenced):
     #: Relationships with the default "is_a"
     parents: list[Reference] = field(default_factory=list)
 
-    intersection_of: list[Reference | tuple[Reference, Reference]] = field(default_factory=list)
+    intersection_of: list[Reference | ObjectProperty] = field(default_factory=list)
 
     #: Synonyms of this term
     synonyms: list[Synonym] = field(default_factory=list)
@@ -359,11 +313,6 @@ class Term(Referenced):
             definition=get_definition(prefix, identifier),
         )
 
-    def append_provenance(self, reference: ReferenceHint) -> Self:
-        """Add a provenance reference."""
-        self.provenance.append(_ensure_ref(reference))
-        return self
-
     def append_synonym(
         self,
         synonym: str | Synonym,
@@ -413,13 +362,6 @@ class Term(Referenced):
     def append_replaced_by(self, reference: Reference) -> Self:
         """Add a replaced by property."""
         return self.annotate_object(term_replaced_by, reference)
-
-    def append_parent(self, reference: ReferenceHint) -> Self:
-        """Add a parent to this entity."""
-        reference = _ensure_ref(reference)
-        if reference not in self.parents:
-            self.parents.append(reference)
-        return self
 
     def extend_parents(self, references: Collection[Reference]) -> None:
         """Add a collection of parents to this entity."""
@@ -523,15 +465,6 @@ class Term(Referenced):
             confidence=self._get_str_axiom_target(p, o, mapping_has_confidence.reference),
         )
 
-    def append_equivalent(
-        self,
-        reference: ReferenceHint,
-    ) -> Self:
-        """Append an equivalent class axiom."""
-        reference = _ensure_ref(reference)
-        self.append_relationship(equivalent_class, reference)
-        return self
-
     def append_exact_match(
         self,
         reference: ReferenceHint,
@@ -550,61 +483,6 @@ class Term(Referenced):
         self.annotate_object(exact_match.reference, reference, axioms=axioms)
         return self
 
-    def append_xref(
-        self,
-        reference: ReferenceHint,
-        *,
-        mapping_justification: Reference | None = None,
-        confidence: float | None = None,
-        contributor: Reference | None = None,
-    ) -> Self:
-        """Append an xref."""
-        reference = _ensure_ref(reference)
-        self.xrefs.append(reference)
-        axioms = self._prepare_mapping_axioms(
-            mapping_justification=mapping_justification,
-            confidence=confidence,
-            contributor=contributor,
-        )
-        self._annotate_axioms(has_dbxref.reference, reference, axioms)
-        return self
-
-    def _prepare_mapping_axioms(
-        self,
-        *,
-        mapping_justification: Reference | None = None,
-        confidence: float | None = None,
-        contributor: Reference | None = None,
-    ) -> Iterable[ObjectProperty | LiteralProperty]:
-        if mapping_justification is not None:
-            yield ObjectProperty(
-                mapping_has_justification.reference,
-                mapping_justification,
-                None,
-            )
-        if contributor is not None:
-            yield ObjectProperty(
-                has_contributor.reference,
-                contributor,
-                None,
-            )
-        if confidence is not None:
-            yield LiteralProperty.float(mapping_has_confidence.reference, confidence)
-
-    def append_relationship(
-        self,
-        typedef: ReferenceHint,
-        reference: ReferenceHint,
-        *,
-        axioms: Iterable[ObjectProperty | LiteralProperty] | None = None,
-    ) -> Self:
-        """Append a relationship."""
-        typedef = _ensure_ref(typedef)
-        reference = _ensure_ref(reference)
-        self.relationships[typedef].append(reference)
-        self._annotate_axioms(typedef, reference, axioms)
-        return self
-
     def annotate_object(
         self,
         typedef: ReferenceHint,
@@ -618,24 +496,6 @@ class Term(Referenced):
         self.annotations_object[typedef].append(value)
         self._annotate_axioms(typedef, value, axioms)
         return self
-
-    def _annotate_axioms(
-        self, p: Reference, o: Reference, axioms: Iterable[ObjectProperty | LiteralProperty] | None
-    ) -> None:
-        if axioms is None:
-            return
-        for axiom in axioms:
-            self._annotate_axiom(p, o, axiom)
-
-    def _annotate_axiom(
-        self, p: Reference, o: Reference, axiom: ObjectProperty | LiteralProperty
-    ) -> None:
-        if isinstance(axiom, ObjectProperty):
-            self._axioms[p, o].append((axiom.predicate, axiom.object))
-        elif isinstance(axiom, LiteralProperty):
-            self._axioms[p, o].append((axiom.predicate, OBOLiteral(axiom.value, axiom.datatype)))
-        else:
-            raise TypeError
 
     def set_species(self, identifier: str, name: str | None = None) -> Self:
         """Append the from_species relation."""
@@ -777,8 +637,8 @@ class Term(Referenced):
             match intersection_of:
                 case Reference():
                     yield f"intersection_of: {reference_escape(intersection_of, ontology_prefix=ontology_prefix, add_name_comment=True)}"
-                case tuple():
-                    yield f"intersection_of: {multi_reference_escape(intersection_of, ontology_prefix=ontology_prefix, add_name_comment=True)}"
+                case ObjectProperty(predicate, object, _):
+                    yield f"intersection_of: {multi_reference_escape([predicate, object], ontology_prefix=ontology_prefix, add_name_comment=True)}"
         # 15 TODO union_of
         # 16 TODO equivalent_to
         # 17 TODO disjoint_from

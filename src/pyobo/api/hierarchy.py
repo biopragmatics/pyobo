@@ -12,7 +12,7 @@ from .relations import get_filtered_relations_df
 from ..identifier_utils import wrap_norm_prefix
 from ..struct import has_member, is_a, part_of
 from ..struct.reference import Reference
-from ..struct.struct import ReferenceHint, _ensure_ref
+from ..struct_utils import ReferenceHint, _ensure_ref
 
 __all__ = [
     "get_ancestors",

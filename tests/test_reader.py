@@ -114,6 +114,11 @@ class TestReader(unittest.TestCase):
         term = terms[0]
         return term
 
+    def get_only_typedef(self, ontology: Obo) -> TypeDef:
+        """Assert there is only a single typedef in the ontology and return it."""
+        self.assertEqual(1, len(ontology.typedefs))
+        return ontology.typedefs[0]
+
     def test_minimal(self) -> None:
         """Test an ontology with a version but no date."""
         ontology = _read("""\
@@ -1047,7 +1052,7 @@ class TestReader(unittest.TestCase):
             term.relationships[equivalent_class.reference],
         )
 
-    def test_xref_is_a(self) -> None:
+    def test_xref_is_a_for_term(self) -> None:
         """Test the ``treat-xrefs-as-is_a `` macro."""
         ontology = _read("""\
             ontology: go
@@ -1066,6 +1071,23 @@ class TestReader(unittest.TestCase):
         self.assertEqual(0, len(term.relationships))
         self.assertEqual(0, len(term.intersection_of))
         self.assertEqual([Reference(prefix="CL", identifier="0000000")], term.parents)
+
+    def test_xref_is_a_for_typedef(self) -> None:
+        """Test the ``treat-xrefs-as-is_a `` macro."""
+        ontology = _read("""\
+            ontology: ro
+            treat-xrefs-as-is_a: skos
+
+            [Typedef]
+            id: RO:0000000
+            xref: skos:closeMatch
+        """)
+        typedef = self.get_only_typedef(ontology)
+        self.assertEqual(0, len(typedef.xrefs), msg=typedef.xrefs)
+        self.assertEqual(1, len(typedef.parents))
+        self.assertEqual(0, len(typedef.relationships))
+        self.assertEqual(0, len(typedef.intersection_of))
+        self.assertEqual([Reference(prefix="skos", identifier="closeMatch")], typedef.parents)
 
     def test_xref_relation(self) -> None:
         """Test the ``treat-xrefs-as-relationship  `` macro."""
