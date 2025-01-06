@@ -11,10 +11,10 @@ from curies import Converter, Reference
 from rdflib import OWL, RDF, Graph, term
 
 __all__ = [
+    "EXAMPLE_PREFIX_MAP",
     "FunctionalOWLSerializable",
     "RDFNodeSerializable",
     "get_rdf_graph",
-    "EXAMPLE_PREFIX_MAP",
 ]
 
 DEFAULT_PREFIX_MAP = {
