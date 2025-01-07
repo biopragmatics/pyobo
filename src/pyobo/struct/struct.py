@@ -46,6 +46,7 @@ from .struct_utils import (
     ReferenceHint,
     RelationsHint,
     Stanza,
+    UnionOfHint,
     _ensure_ref,
 )
 from .typedef import (
@@ -250,6 +251,10 @@ class Term(Referenced, Stanza):
     parents: list[Reference] = field(default_factory=list)
 
     intersection_of: IntersectionOfHint = field(default_factory=list)
+    union_of: UnionOfHint = field(default_factory=list)
+    equivalent_to: list[Reference] = field(default_factory=list)
+    disjoint_from: list[Reference] = field(default_factory=list)
+    replaced_by: list[Reference] = field(default_factory=list)
 
     #: Synonyms of this term
     synonyms: list[Synonym] = field(default_factory=list)
@@ -532,6 +537,10 @@ class Term(Referenced, Stanza):
         definition = obo_escape_slim(self.definition) if self.definition else ""
         return f'"{definition}" [{comma_separate_references(self.provenance)}]'
 
+    def iterate_objects(self, typedef: ReferenceHint) -> list[Reference]:
+        """Iterate over pairs of typedefs and targets."""
+        return sorted(self.relationships.get(_ensure_ref(typedef), []))
+
     def iterate_relations(self) -> Iterable[tuple[Reference, Reference]]:
         """Iterate over pairs of typedefs and targets."""
         for typedef, targets in sorted(self.relationships.items()):
@@ -555,6 +564,7 @@ class Term(Referenced, Stanza):
     ) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield f"\n[{self.type}]"
+        # 1
         yield f"id: {self._reference(self.reference, ontology_prefix)}"
         # 2
         yield from _boolean_tag("is_anonymous", self.is_anonymous)
@@ -575,6 +585,7 @@ class Term(Referenced, Stanza):
             yield f"def: {self._definition_fp()}"
         # 7 TODO comment
         yield from _reference_list_tag("subset", self.subsets, ontology_prefix)
+        # 8 TODO ???
         # 9
         for synonym in sorted(self.synonyms):
             yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
@@ -590,9 +601,12 @@ class Term(Referenced, Stanza):
         yield from _reference_list_tag(parent_tag, self.parents, ontology_prefix)
         # 14
         yield from self._iterate_intersection_of_obo(ontology_prefix=ontology_prefix)
-        # 15 TODO union_of
-        # 16 TODO equivalent_to
-        # 17 TODO disjoint_from
+        # 15
+        yield from _reference_list_tag("union_of", self.union_of, ontology_prefix=ontology_prefix)
+        # 16
+        yield from _reference_list_tag("equivalent_to", self.equivalent_to, ontology_prefix=ontology_prefix)
+        # 17
+        yield from _reference_list_tag("disjoint_from", self.disjoint_from, ontology_prefix=ontology_prefix)
         # 18
         if emit_object_properties:
             yield from self._iterate_obo_relations(ontology_prefix=ontology_prefix)
@@ -600,7 +614,8 @@ class Term(Referenced, Stanza):
         # 20 TODO creation_date
         # 21
         yield from _boolean_tag("is_obsolete", self.is_obsolete)
-        # 22 TODO replaced_by, weird since this conflicts with other annotations
+        # 22
+        yield from _reference_list_tag("replaced_by", self.iterate_objects(term_replaced_by), ontology_prefix=ontology_prefix)
         # 23 TODO consider
 
     @staticmethod

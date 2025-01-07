@@ -521,7 +521,30 @@ class TestTypeDef(unittest.TestCase):
 
         - https://github.com/geneontology/go-ontology/blob/ce41588cbdc05223f9cfd029985df3cadd1e0399/src/ontology/extensions/gorel.obo#L1277-L1285
         - https://github.com/cmungall/bioperl-owl/blob/0b52048975c078d3bc50f6611235e9f8cb9b9475/ont/interval_relations.obo~#L86-L103
+
+        This also works for the combination of gene-transribes-protein, protein-memberof-ec.
         """
+        typedef = TypeDef(
+            reference=Reference(prefix="GO", identifier="1"),
+            equivalent_to_chain=
+            [Reference(prefix="GO", identifier="2"), Reference(prefix="GO", identifier="3")],
+        )
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:1
+            equivalent_to_chain: GO:2 GO:3
+            """,
+            typedef,
+        )
+        self.assert_funowl_lines(
+            """
+            Declaration( ObjectProperty( GO:1 ) )
+            SubObjectPropertyOf( ObjectPropertyChain( GO:2 GO:3 ) GO:1 )
+            """,
+            typedef,
+        )
+
 
     def test_31_disjoint_over(self) -> None:
         """Test the ``disjoint_over`` tag."""

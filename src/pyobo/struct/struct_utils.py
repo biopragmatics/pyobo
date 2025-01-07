@@ -51,6 +51,7 @@ PropertiesHint: TypeAlias = dict[Reference, list[Reference | OBOLiteral]]
 RelationsHint: TypeAlias = dict[Reference, list[Reference]]
 AxiomsHint: TypeAlias = dict[Annotation, list[Annotation]]
 IntersectionOfHint: TypeAlias = list[Reference | Annotation]
+UnionOfHint: TypeAlias = list[Reference]
 
 
 class Stanza:
@@ -62,6 +63,8 @@ class Stanza:
     parents: list[Reference]
     provenance: list[Reference]
     intersection_of: IntersectionOfHint
+    equivalent_to: list[Reference]
+    union_of: UnionOfHint
     _axioms: AxiomsHint
 
     def append_relationship(
@@ -155,6 +158,16 @@ class Stanza:
             self.intersection_of.append(reference)
         else:
             self.intersection_of.append(_ensure_ref(reference))
+        return self
+
+    def append_union_of(self, reference: ReferenceHint) -> Self:
+        """Append to the "union of" list."""
+        self.union_of.append(_ensure_ref(reference))
+        return self
+
+    def append_equivalent_to(self, reference: ReferenceHint) -> Self:
+        """Append to the "equivalent to" list."""
+        self.equivalent_to.append(_ensure_ref(reference))
         return self
 
     def _iterate_intersection_of_obo(self, *, ontology_prefix: str) -> Iterable[str]:
