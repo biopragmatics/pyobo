@@ -15,7 +15,7 @@ from pyobo.struct.functional import macros as m
 from pyobo.struct.functional.ontology import Document, Ontology
 from pyobo.struct.functional.utils import DEFAULT_PREFIX_MAP
 from pyobo.struct.reference import OBOLiteral, Reference
-from pyobo.struct.vocabulary import has_ontology_root_term
+from pyobo.struct.vocabulary import has_ontology_root_term, has_dbxref
 
 if TYPE_CHECKING:
     from pyobo.struct.struct import Obo, Term
@@ -140,42 +140,49 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
             synonym.name,
             scope=synonym.specificity,
             synonym_type=synonym.type,
+            annotations=_process_anns(synonym.annotations),
         )
     # 10
     # TODO add annotations for the following
     for xref in term.xrefs:
-        yield m.XrefMacro(s, xref.preferred_curie)
+        yield m.XrefMacro(s, xref.preferred_curie, annotations=_get_annotations(term, has_dbxref, xref))
     # 11
     if term.builtin is not None:
         yield m.IsOBOBuiltinMacro(s, term.builtin)
     # 12
     for typedef, values in term.properties.items():
         for value in values:
-            anns = term._get_axioms(typedef, value)
+            annotations = _get_annotations(term, typedef, value)
             match value:
                 case OBOLiteral():
                     yield f.AnnotationAssertion(
                         typedef.preferred_curie,
                         s,
                         _oboliteral_to_literal(value),
-                        annotations=_process_anns(anns),
+                        annotations=annotations,
                     )
                 case Reference():
                     yield f.AnnotationAssertion(
                         typedef.preferred_curie,
                         s,
                         value.preferred_curie,
-                        annotations=_process_anns(anns),
+                        annotations=annotations,
                     )
-    # 14 intersection_of
+    # 14
     if term.intersection_of:
         yield m.ClassIntersectionMacro(s, term.intersection_of)
-    # 15 union_of
-    # 16 equivalent_to
-    # 17 disjoint_from
+    # 15
+    if term.union_of:
+        yield m.ClassUnionMacro(s, term.union_of)
+    # 16
+    if term.equivalent_to:
+        yield f.EquivalentClasses([s, *term.equivalent_to])
+    # 17
+    for x in term.disjoint_from:
+        yield f.DisjointClasses(x, s)
     # 18
     for typedef, value in term.iterate_relations():
-        yield m.RelationshipMacro(s=s, p=typedef.preferred_curie, o=value.preferred_curie)
+        yield m.RelationshipMacro(s=s, p=typedef.preferred_curie, o=value.preferred_curie, annotations=_get_annotations(term, typedef, value))
     # 19 TODO created_by
     # 20 TODO creation_date
     # 21
@@ -183,6 +190,10 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
         yield m.IsObsoleteMacro(s, term.is_obsolete)
     # 22 TODO replaced_by
     # 23 TODO consider
+
+
+def _get_annotations(term: Term, p, o) -> list[f.Annotation]:
+    return _process_anns(term._get_axioms(p, o))
 
 
 def _process_anns(annotations: list[OBOAnnotation]) -> list[f.Annotation]:
@@ -295,19 +306,25 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
             yield f.SubAnnotationPropertyOf(r, parent)
         else:
             yield f.SubObjectPropertyOf(r, parent)
-    # 24 TODO intersection_of
-    # 25 TODO union_of
-    # 26 TODO equivalent_to
-    # 27 TODO disjoint_from
+    # 24 TODO intersection_of, ROBOT does not create any output
+    # 25 TODO union_of, ROBOT does not create any output
+    # 26
+    if typedef.equivalent_to:
+        yield f.EquivalentObjectProperties([r, *typedef.equivalent_to])
+    # 27
+    for x in typedef.disjoint_from:
+        yield f.DisjointObjectProperties(x, r)
     # 28
     if typedef.inverse:
         yield f.InverseObjectProperties(r, typedef.inverse)
     # 29
     for to in typedef.transitive_over:
         yield m.TransitiveOver(r, to)
-    # 30 TODO equivalent_to_chain
-    # 31 TODO disjoint_over
-    # 32 TODO relationship
+    # 30
+    if typedef.equivalent_to_chain:
+        yield f.SubObjectPropertyOf(f.ObjectPropertyChain(typedef.equivalent_to_chain), r)
+    # 31 TODO disjoint_over, ROBOT does not create any output
+    # 32 TODO relationship, ROBOT does not create any output
     # 33
     if typedef.is_obsolete is not None:
         yield m.IsObsoleteMacro(r, typedef.is_obsolete)

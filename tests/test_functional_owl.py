@@ -596,7 +596,9 @@ class TestRDF(unittest.TestCase):
             m.XrefMacro("a:0619dd9e", "a:00000137"),
             m.TransitiveOver("a:0000066", "a:0000050"),
             m.DataPropertyMaxCardinality(1, "a:hasAge"),
-            m.ClassIntersectionMacro("ZFA:0000134", ["CL:0000540", ("BFO:0000050", "NCBITaxon:7955")]),
+            m.ClassIntersectionMacro(
+                "ZFA:0000134", ["CL:0000540", ("BFO:0000050", "NCBITaxon:7955")]
+            ),
         ]
 
     def test_has_examples(self) -> None:
