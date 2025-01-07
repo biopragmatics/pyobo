@@ -254,7 +254,6 @@ class Term(Referenced, Stanza):
     union_of: UnionOfHint = field(default_factory=list)
     equivalent_to: list[Reference] = field(default_factory=list)
     disjoint_from: list[Reference] = field(default_factory=list)
-    replaced_by: list[Reference] = field(default_factory=list)
 
     #: Synonyms of this term
     synonyms: list[Synonym] = field(default_factory=list)
@@ -547,6 +546,10 @@ class Term(Referenced, Stanza):
             for target in sorted(targets):
                 yield typedef, target
 
+    def iterate_property(self, typedef: ReferenceHint) -> list[Reference | OBOLiteral]:
+        """Iterate over references or values."""
+        return sorted(self.properties.get(_ensure_ref(typedef), []))
+
     def iterate_properties(self) -> Iterable[Annotation]:
         """Iterate over pairs of property and values."""
         for prop, values in sorted(self.properties.items()):
@@ -583,9 +586,12 @@ class Term(Referenced, Stanza):
         # 6
         if self.definition or self.provenance:
             yield f"def: {self._definition_fp()}"
-        # 7 TODO comment
+        # 7
+        for x in self.iterate_property(comment):
+            if isinstance(x, OBOLiteral):
+                yield f'comment: "{x.value}"'
+        # 8
         yield from _reference_list_tag("subset", self.subsets, ontology_prefix)
-        # 8 TODO ???
         # 9
         for synonym in sorted(self.synonyms):
             yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
@@ -604,9 +610,13 @@ class Term(Referenced, Stanza):
         # 15
         yield from _reference_list_tag("union_of", self.union_of, ontology_prefix=ontology_prefix)
         # 16
-        yield from _reference_list_tag("equivalent_to", self.equivalent_to, ontology_prefix=ontology_prefix)
+        yield from _reference_list_tag(
+            "equivalent_to", self.equivalent_to, ontology_prefix=ontology_prefix
+        )
         # 17
-        yield from _reference_list_tag("disjoint_from", self.disjoint_from, ontology_prefix=ontology_prefix)
+        yield from _reference_list_tag(
+            "disjoint_from", self.disjoint_from, ontology_prefix=ontology_prefix
+        )
         # 18
         if emit_object_properties:
             yield from self._iterate_obo_relations(ontology_prefix=ontology_prefix)
@@ -615,7 +625,9 @@ class Term(Referenced, Stanza):
         # 21
         yield from _boolean_tag("is_obsolete", self.is_obsolete)
         # 22
-        yield from _reference_list_tag("replaced_by", self.iterate_objects(term_replaced_by), ontology_prefix=ontology_prefix)
+        for x in self.iterate_property(term_replaced_by):
+            if isinstance(x, Reference):
+                yield f"replaced_by: {reference_escape(x, ontology_prefix=ontology_prefix, add_name_comment=True)}"
         # 23 TODO consider
 
     @staticmethod

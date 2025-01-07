@@ -258,10 +258,6 @@ class TestTerm(unittest.TestCase):
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
-    def test_7_comment_macro(self):
-        """"""
-        raise NotImplementedError
-
     def test_7_comment(self) -> None:
         """Test appending a comment."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -271,6 +267,7 @@ class TestTerm(unittest.TestCase):
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
+            comment: "I like this record"
             property_value: rdfs:comment "I like this record" xsd:string
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
@@ -604,10 +601,13 @@ class TestTerm(unittest.TestCase):
 
     def test_17_disjoint_from_namespace(self) -> None:
         """Test the ``disjoint_from`` tag."""
-        term = Term(reference=LYSINE_DEHYDROGENASE_ACT, disjoint_from=[
-            Reference(prefix="GO", identifier="0000000"),
-            Reference(prefix="GO", identifier="0000001"),
-        ])
+        term = Term(
+            reference=LYSINE_DEHYDROGENASE_ACT,
+            disjoint_from=[
+                Reference(prefix="GO", identifier="0000000"),
+                Reference(prefix="GO", identifier="0000001"),
+            ],
+        )
 
         self.assert_lines(
             """\
@@ -868,7 +868,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
             id: GO:0050069
             name: lysine dehydrogenase activity
             property_value: IAO:0100001 GO:1234569 ! term replaced by dummy
-            replaced_by: GO:1234569 ! term replaced by dummy
+            replaced_by: GO:1234569 ! dummy
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )

@@ -526,8 +526,10 @@ class TestTypeDef(unittest.TestCase):
         """
         typedef = TypeDef(
             reference=Reference(prefix="GO", identifier="1"),
-            equivalent_to_chain=
-            [Reference(prefix="GO", identifier="2"), Reference(prefix="GO", identifier="3")],
+            equivalent_to_chain=[
+                Reference(prefix="GO", identifier="2"),
+                Reference(prefix="GO", identifier="3"),
+            ],
         )
         self.assert_obo_stanza(
             """\
@@ -544,7 +546,6 @@ class TestTypeDef(unittest.TestCase):
             """,
             typedef,
         )
-
 
     def test_31_disjoint_over(self) -> None:
         """Test the ``disjoint_over`` tag."""

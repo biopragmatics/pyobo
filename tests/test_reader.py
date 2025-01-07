@@ -11,10 +11,12 @@ from pyobo import Obo, Reference, Term
 from pyobo.identifier_utils import UnparsableIRIError
 from pyobo.reader import from_obonet, get_first_nonescaped_quote
 from pyobo.struct import default_reference
+from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import abbreviation
 from pyobo.struct.struct_utils import Annotation
 from pyobo.struct.typedef import (
     TypeDef,
+    comment,
     derives_from,
     equivalent_class,
     exact_match,
@@ -22,6 +24,7 @@ from pyobo.struct.typedef import (
     is_conjugate_base_of,
     part_of,
     see_also,
+    term_replaced_by,
 )
 
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
@@ -60,7 +63,7 @@ class TestUtils(unittest.TestCase):
 
 
 class _Base(unittest.TestCase):
-    """"""
+    """Base test case."""
 
     def get_only_term(self, ontology: Obo) -> Term:
         """Assert there is only a single term in the ontology and return it."""
@@ -368,6 +371,21 @@ class TestReaderTerm(_Base):
         term = self.get_only_term(ontology)
         self.assertIsNone(term.definition)
 
+    def test_7_comment(self) -> None:
+        """Test parsing a definition missing a starting quote."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            comment: comment
+        """)
+        term = self.get_only_term(ontology)
+        comments = term.iterate_property(comment)
+        self.assertEqual(1, len(comments))
+        self.assertIsInstance(comments[0], OBOLiteral)
+        self.assertEqual("comment", comments[0].value)
+
     def test_10_xrefs(self) -> None:
         """Test getting mappings."""
         ontology = _read("""\
@@ -407,6 +425,43 @@ class TestReaderTerm(_Base):
             },
             {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
         )
+
+    def test_11_builtin_missing(self) -> None:
+        """Test the ``builtin`` tag."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+        """)
+        term = self.get_only_term(ontology)
+        self.assertIsNone(term.builtin)
+
+    def test_11_builtin_true(self) -> None:
+        """Test the ``builtin`` tag."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            builtin: true
+        """)
+        term = self.get_only_term(ontology)
+        self.assertIsNotNone(term.builtin)
+        self.assertTrue(term.builtin)
+
+    def test_11_builtin_false(self) -> None:
+        """Test the ``builtin`` tag."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            builtin: false
+        """)
+        term = self.get_only_term(ontology)
+        self.assertIsNotNone(term.builtin)
+        self.assertFalse(term.builtin)
 
     def test_12_property_malformed(self) -> None:
         """Test parsing a malformed property."""
@@ -772,6 +827,57 @@ class TestReaderTerm(_Base):
         """)
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(list(term.iterate_relations())))
+
+    def test_21_obsolete_missing(self) -> None:
+        """Test the ``is_obsolete`` tag."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+        """)
+        term = self.get_only_term(ontology)
+        self.assertIsNone(term.is_obsolete)
+
+    def test_21_obsolete_true(self) -> None:
+        """Test the ``builtin`` tag."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            is_obsolete: true
+        """)
+        term = self.get_only_term(ontology)
+        self.assertIsNotNone(term.is_obsolete)
+        self.assertTrue(term.is_obsolete)
+
+    def test_21_obsolete_false(self) -> None:
+        """Test the ``is_obsolete`` tag."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            is_obsolete: false
+        """)
+        term = self.get_only_term(ontology)
+        self.assertIsNotNone(term.is_obsolete)
+        self.assertFalse(term.is_obsolete)
+
+    def test_22_replaced_by(self) -> None:
+        """Test the ``replaced-by`` tag."""
+        ontology = _read("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            replaced_by: CHEBI:5678
+        """)
+        term = self.get_only_term(ontology)
+        replaced = term.iterate_property(term_replaced_by)
+        self.assertEqual(1, len(replaced))
+        self.assertEqual(Reference(prefix="CHEBI", identifier="5678"), replaced[0])
 
 
 class TestReaderTypedef(_Base):

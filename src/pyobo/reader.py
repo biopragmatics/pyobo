@@ -221,6 +221,9 @@ def from_obonet(
             synonyms=synonyms,
             provenance=provenance,
             alt_ids=alt_ids,
+            builtin=_get_boolean(data, "builtin"),
+            is_anonymous=_get_boolean(data, "is_anonymous"),
+            is_obsolete=_get_boolean(data, "is_obsolete"),
         )
 
         node_xrefs: list[Reference] = list(
@@ -263,6 +266,17 @@ def from_obonet(
             n_properties += 1
             term.append_property(t)
 
+        if comment := data.get("comment"):
+            term.append_comment(comment)
+
+        for replaced_by in data.get("replaced_by", []):
+            rr = _parse_identifier(
+                replaced_by, ontology_prefix=ontology_prefix, strict=strict, node=reference
+            )
+            if rr is None:
+                continue
+            term.append_replaced_by(rr)
+
         terms.append(term)
 
     subset_typedefs = _get_subsetdefs(graph.graph, ontology_prefix=ontology_prefix)
@@ -286,6 +300,17 @@ def from_obonet(
         _property_values=property_values,
         _subsetdefs=subset_typedefs,
     )
+
+
+def _get_boolean(data, tag) -> bool | None:
+    value = data.get(tag)
+    if value is None:
+        return None
+    if value == "false":
+        return False
+    if value == "true":
+        return True
+    raise ValueError(value)
 
 
 class MacroConfig:
