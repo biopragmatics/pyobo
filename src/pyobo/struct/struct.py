@@ -266,8 +266,6 @@ class Term(Referenced, Stanza):
 
     #: Equivalent references
     xrefs: list[Reference] = field(default_factory=list)
-    # TODO remove xref_types, this can be done with axioms now
-    xref_types: list[Reference] = field(default_factory=list)
 
     #: Alternate Identifiers
     alt_ids: list[Reference] = field(default_factory=list)
