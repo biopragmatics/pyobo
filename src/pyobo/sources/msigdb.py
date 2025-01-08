@@ -76,7 +76,7 @@ def _iter_entries(version: str, force: bool = False):
                     # this is the result of faulty encoding in XML - maybe they
                     # wrote XML with their own string formatting instead of using a
                     # library.
-                    tqdm.write(f"[{PREFIX}] failed on line {i}: {e}")
+                    logger.debug("[%s] failed on line %s: %s", PREFIX, i, e)
                 else:
                     yield tree
 

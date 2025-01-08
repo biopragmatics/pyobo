@@ -46,7 +46,9 @@ def get_terms() -> Iterable[Term]:
         term = Term.from_triple(PREFIX, identifier=str(row.pop("id")), name=row.pop("name"))
         _name = row.pop("encodedName", None)
         for synonym in row.pop("synonyms", []):
-            term.append_synonym(synonym)
+            synonym = synonym.strip()
+            if synonym:
+                term.append_synonym(synonym)
         for category in row.pop("diseaseCategories", ["uncategorized"]):
             term.append_parent(categories[category])
 

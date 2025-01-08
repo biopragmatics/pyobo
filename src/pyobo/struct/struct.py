@@ -86,6 +86,7 @@ from ..constants import (
 )
 from ..utils.io import multidict, write_iterable_tsv
 from ..utils.path import prefix_directory_join
+from ..version import get_version as get_pyobo_version
 
 __all__ = [
     "Obo",
@@ -695,7 +696,16 @@ class Obo:
             elif "/" in self.data_version:
                 raise ValueError(f"{self.ontology} has a slash in version: {self.data_version}")
         if self.auto_generated_by is None:
-            self.auto_generated_by = f"bio2obo:{self.ontology}"  # type:ignore
+            self.auto_generated_by = (
+                f"PyOBO v{get_pyobo_version(with_git_hash=True)} on {datetime.now().isoformat()}"  # type:ignore
+            )
+
+        if self.idspaces is None:
+            self.idspaces = {}
+        self.idspaces.update(
+            dcterms="http://purl.org/dc/terms/",
+            skos="http://www.w3.org/2004/02/skos/core#",
+        )
 
     def _get_version(self) -> str | None:
         if self.bioversions_key:
@@ -741,7 +751,12 @@ class Obo:
         @click.command()
         @verbose_option
         @force_option
-        @click.option("--rewrite", "-r", is_flag=True)
+        @click.option(
+            "--rewrite",
+            "-r",
+            is_flag=True,
+            help="Re-process the data, but don't download it again.",
+        )
         @click.option("--owl", is_flag=True, help="Write OWL via ROBOT")
         @click.option("--nodes", is_flag=True, help="Write nodes file")
         @click.option(
@@ -1115,6 +1130,7 @@ class Obo:
             relation_df.to_csv(relations_path, sep="\t", index=False)
 
         if (write_obo or write_owl) and (not self._obo_path.exists() or force):
+            tqdm.write(f"[{self.ontology}] writing to {self._obo_path}")
             self.write_obo(self._obo_path, use_tqdm=use_tqdm)
         if write_obograph and (not self._obograph_path.exists() or force):
             self.write_obograph(self._obograph_path)

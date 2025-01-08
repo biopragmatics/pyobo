@@ -72,7 +72,13 @@ def iterate_icd11() -> Iterable[Term]:
 
 def _extract_icd11(res_json: Mapping[str, Any]) -> Term:
     identifier = res_json["@id"][len(ICD11_TOP_LEVEL_URL) :].lstrip("/")
-    definition = res_json["definition"]["@value"] if "definition" in res_json else None
+    if "definition" in res_json:
+        definition = res_json["definition"]["@value"]
+        definition = definition.strip().replace("\r\n", " ")
+        definition = definition.strip().replace("\\n", " ")
+        definition = definition.strip().replace("\n", " ")
+    else:
+        definition = None
     name = res_json["title"]["@value"]
     synonyms = [Synonym(synonym["label"]["@value"]) for synonym in res_json.get("synonym", [])]
     parents = [

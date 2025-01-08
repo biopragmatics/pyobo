@@ -172,7 +172,12 @@ def from_obonet(
         if ann.predicate.pair == has_ontology_root_term.pair:
             match ann.value:
                 case OBOLiteral():
-                    raise RuntimeError
+                    logger.warning(
+                        "[%s] tried to use a literal as an ontology root: %s",
+                        ontology_prefix,
+                        ann.value.value,
+                    )
+                    continue
                 case Reference():
                     root_terms.append(ann.value)
         else:

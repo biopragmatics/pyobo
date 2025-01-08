@@ -25,6 +25,7 @@ class CCLEGetter(Obo):
 
     def __post_init__(self):
         self.data_version = VERSION
+        super().__post_init__()
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
