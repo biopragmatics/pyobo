@@ -26,6 +26,7 @@ from .struct_utils import (
     RelationsHint,
     Stanza,
     _chain_tag,
+    _tag_property_targets,
 )
 from .utils import _boolean_tag
 from ..resources.ro import load_ro
@@ -93,7 +94,7 @@ class TypeDef(Referenced, Stanza):
     is_anonymous: Annotated[bool | None, 2] = None
     # 3 - name is covered by reference
     namespace: Annotated[str | None, 4] = None
-    alt_id: Annotated[list[Reference], 5] = field(default_factory=list)
+    alt_ids: Annotated[list[Reference], 5] = field(default_factory=list)
     definition: Annotated[str | None, 6] = None
     comment: Annotated[str | None, 7] = None
     subsets: Annotated[list[Reference], 8] = field(default_factory=list)
@@ -104,7 +105,9 @@ class TypeDef(Referenced, Stanza):
     domain: Annotated[Reference | None, 12, "typedef-only"] = None
     range: Annotated[Reference | None, 13, "typedef-only"] = None
     builtin: Annotated[bool | None, 14] = None
-    holds_over_chain: Annotated[list[Reference] | None, 15, "typedef-only"] = None
+    holds_over_chain: Annotated[list[list[Reference]], 15, "typedef-only"] = field(
+        default_factory=list
+    )
     is_anti_symmetric: Annotated[bool | None, 16, "typedef-only"] = None
     is_cyclic: Annotated[bool | None, 17, "typedef-only"] = None
     is_reflexive: Annotated[bool | None, 18, "typedef-only"] = None
@@ -121,7 +124,7 @@ class TypeDef(Referenced, Stanza):
     inverse: Annotated[Reference | None, 28, "typedef-only"] = None
     # TODO check if there are any examples of this being multiple
     transitive_over: Annotated[list[Reference], 29, "typedef-only"] = field(default_factory=list)
-    equivalent_to_chain: Annotated[list[Reference], 30, "typedef-only"] = field(
+    equivalent_to_chain: Annotated[list[list[Reference]], 30, "typedef-only"] = field(
         default_factory=list
     )
     #: From the OBO spec:
@@ -129,13 +132,11 @@ class TypeDef(Referenced, Stanza):
     #:   For example: spatially_disconnected_from is disjoint_over part_of, in that two
     #:   disconnected entities have no parts in common. This can be translated to OWL as:
     #:   ``disjoint_over(R S), R(A B) ==> (S some A) disjointFrom (S some B)``
-    disjoint_over: Annotated[Reference | None, 31] = None
+    disjoint_over: Annotated[list[Reference], 31] = field(default_factory=list)
     relationships: Annotated[RelationsHint, 32] = field(default_factory=lambda: defaultdict(list))
     is_obsolete: Annotated[bool | None, 33] = None
     created_by: Annotated[str | None, 34] = None
     creation_date: Annotated[datetime.datetime | None, 35] = None
-    replaced_by: Annotated[list[Reference], 36] = field(default_factory=list)
-    consider: Annotated[list[Reference], 37] = field(default_factory=list)
     # TODO expand_assertion_to
     # TODO expand_expression_to
     #: Whether this relationship is a metadata tag. Properties that are marked as metadata tags are
@@ -154,6 +155,7 @@ class TypeDef(Referenced, Stanza):
         self,
         ontology_prefix: str,
         synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] | None = None,
+        typedefs: Mapping[ReferenceTuple, TypeDef] | None = None,
     ) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file.
 
@@ -208,6 +210,11 @@ class TypeDef(Referenced, Stanza):
         40. is_metadata_tag
         41. is_class_level
         """
+        if synonym_typedefs is None:
+            synonym_typedefs = {}
+        if typedefs is None:
+            typedefs = {}
+
         yield "\n[Typedef]"
         # 1
         yield f"id: {reference_escape(self.reference, ontology_prefix=ontology_prefix)}"
@@ -220,7 +227,7 @@ class TypeDef(Referenced, Stanza):
         if self.namespace:
             yield f"namespace: {self.namespace}"
         # 5
-        yield from _reference_list_tag("alt_id", self.alt_id, ontology_prefix)
+        yield from _reference_list_tag("alt_id", self.alt_ids, ontology_prefix)
         # 6
         if self.definition:
             yield f'def: "{self.definition}"'
@@ -235,7 +242,11 @@ class TypeDef(Referenced, Stanza):
         # 10
         yield from self._iterate_xref_obo(ontology_prefix=ontology_prefix)
         # 11
-        yield from self._iterate_obo_properties(ontology_prefix=ontology_prefix)
+        yield from self._iterate_obo_properties(
+            ontology_prefix=ontology_prefix,
+            skip_predicates={term_replaced_by.reference, see_also.reference},
+            typedefs=typedefs,
+        )
         # 12
         if self.domain:
             yield f"domain: {reference_escape(self.domain, ontology_prefix=ontology_prefix, add_name_comment=True)}"
@@ -277,9 +288,12 @@ class TypeDef(Referenced, Stanza):
         yield from _reference_list_tag("transitive_over", self.transitive_over, ontology_prefix)
         # 30
         yield from _chain_tag("equivalent_to_chain", self.equivalent_to_chain, ontology_prefix)
-        # 31 TODO disjoint_over, see https://github.com/search?q=%22disjoint_over%3A%22+path%3A*.obo&type=code
+        # 31 disjoint_over, see https://github.com/search?q=%22disjoint_over%3A%22+path%3A*.obo&type=code
+        yield from _reference_list_tag(
+            "disjoint_over", self.disjoint_over, ontology_prefix=ontology_prefix
+        )
         # 32
-        yield from self._iterate_obo_relations(ontology_prefix=ontology_prefix)
+        yield from self._iterate_obo_relations(ontology_prefix=ontology_prefix, typedefs=typedefs)
         # 33
         yield from _boolean_tag("is_obsolete", self.is_obsolete)
         # 34
@@ -289,9 +303,13 @@ class TypeDef(Referenced, Stanza):
         if self.creation_date is not None:
             yield f"creation_date: {self.creation_date.isoformat()}"
         # 36
-        yield from _reference_list_tag("replaced_by", self.replaced_by, ontology_prefix)
+        yield from _tag_property_targets(
+            "replaced_by", self, term_replaced_by, ontology_prefix=ontology_prefix
+        )
         # 37
-        yield from _reference_list_tag("consider", self.consider, ontology_prefix=ontology_prefix)
+        yield from _tag_property_targets(
+            "consider", self, see_also, ontology_prefix=ontology_prefix
+        )
         # 38 TODO expand_assertion_to
         # 39 TODO expand_expression_to
         # 40
@@ -350,6 +368,9 @@ has_part = TypeDef(
     comment="Inverse of part_of",
     inverse=Reference(prefix=BFO_PREFIX, identifier="0000050", name="part of"),
 )
+occurs_in = TypeDef(
+    reference=Reference(prefix=BFO_PREFIX, identifier="BFO:0000066", name="occurs in")
+)
 participates_in = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0000056", name="participates in"),
     comment="Inverse of has participant",
@@ -406,12 +427,10 @@ is_a = TypeDef(
     reference=Reference(prefix="rdfs", identifier="subClassOf", name="subclass of"),
 )
 see_also = TypeDef(
-    reference=Reference(prefix="rdfs", identifier="seeAlso", name="see also"),
+    reference=v.see_also,
     is_metadata_tag=True,
 )
-comment = TypeDef(
-    reference=Reference(prefix="rdfs", identifier="comment", name="comment"), is_metadata_tag=True
-)
+comment = TypeDef(reference=v.comment, is_metadata_tag=True)
 has_member = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0002351", name="has member"),
 )
@@ -471,8 +490,10 @@ has_gene_product = TypeDef(
 gene_product_member_of = TypeDef(
     reference=Reference(prefix="debio", identifier="0000001", name="gene product is a member of"),
     holds_over_chain=[
-        has_gene_product.reference,
-        member_of.reference,
+        [
+            has_gene_product.reference,
+            member_of.reference,
+        ]
     ],
 )
 
@@ -481,7 +502,7 @@ has_salt = TypeDef(
 )
 
 term_replaced_by = TypeDef(
-    reference=Reference(prefix=IAO_PREFIX, identifier="0100001", name="term replaced by"),
+    reference=v.term_replaced_by,
     is_metadata_tag=True,
 )
 example_of_usage = TypeDef(

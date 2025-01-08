@@ -11,12 +11,11 @@ from pyobo.reader import (
     _extract_definition,
     _extract_synonym,
     iterate_graph_synonym_typedefs,
-    iterate_graph_typedefs,
-    iterate_node_parents,
     iterate_node_properties,
     iterate_node_relationships,
     iterate_node_synonyms,
     iterate_node_xrefs,
+    iterate_typedefs,
 )
 from pyobo.struct.struct import acronym
 from tests.constants import TEST_CHEBI_OBO_PATH, chebi_patch
@@ -35,9 +34,7 @@ class TestParseObonet(unittest.TestCase):
         """Test getting type definitions from an :mod:`obonet` graph."""
         pairs = {
             typedef.pair
-            for typedef in iterate_graph_typedefs(
-                self.graph, ontology_prefix="chebi", upgrade=False
-            )
+            for typedef in iterate_typedefs(self.graph, ontology_prefix="chebi", upgrade=False)
         }
         self.assertIn(ReferenceTuple("obo", "chebi#has_major_microspecies_at_pH_7_3"), pairs)
 
@@ -219,18 +216,6 @@ class TestParseObonet(unittest.TestCase):
         self.assertIsInstance(value, str)
         self.assertEqual("261.28318", value)
 
-    def test_get_node_parents(self):
-        """Test getting parents from a node in a :mod:`obonet` graph."""
-        data = self.graph.nodes["CHEBI:51990"]
-        parents = list(
-            iterate_node_parents(
-                data, node=Reference(prefix="chebi", identifier="XXX"), ontology_prefix="chebi"
-            )
-        )
-        self.assertEqual(2, len(parents))
-        self.assertEqual({"24060", "51992"}, {parent.identifier for parent in parents})
-        self.assertEqual({"chebi"}, {parent.prefix for parent in parents})
-
     def test_get_node_xrefs(self):
         """Test getting parents from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:51990"]
@@ -286,11 +271,6 @@ class TestGet(unittest.TestCase):
         """Set up the test with the mock ChEBI OBO file."""
         with chebi_patch:
             self.ontology = get_ontology("chebi")
-
-    def test_get_terms(self):
-        """Test getting an OBO document."""
-        terms = list(self.ontology)
-        self.assertEqual(18, len(terms))
 
     def test_get_id_alts_mapping(self):
         """Make sure the alternative ids are mapped properly.

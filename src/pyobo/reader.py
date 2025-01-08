@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 import logging
+import typing as t
 from collections import Counter
 from collections.abc import Iterable, Mapping
 from datetime import datetime
+from io import StringIO
 from pathlib import Path
+from textwrap import dedent
 from typing import Any
 
 import bioregistry
 import networkx as nx
 from curies import ReferenceTuple
+from curies.vocabulary import SynonymScope
 from more_itertools import pairwise
 from tqdm.auto import tqdm
 
@@ -35,6 +39,7 @@ from .struct import (
 )
 from .struct.reference import OBOLiteral, _parse_identifier
 from .struct.struct_utils import Annotation, Stanza
+from .struct.typedef import comment as has_comment
 from .struct.typedef import default_typedefs, has_ontology_root_term
 from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
 
@@ -53,6 +58,7 @@ def from_obo_path(
     strict: bool = True,
     version: str | None,
     upgrade: bool = True,
+    ignore_obsolete: bool = False,
 ) -> Obo:
     """Get the OBO graph from a path."""
     path = Path(path).expanduser().resolve()
@@ -61,7 +67,7 @@ def from_obo_path(
 
         logger.info("[%s] parsing gzipped OBO with obonet from %s", prefix or "<unknown>", path)
         with gzip.open(path, "rt") as file:
-            graph = _read_obo(file, prefix)
+            graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete)
     elif path.suffix.endswith(".zip"):
         import io
         import zipfile
@@ -70,11 +76,11 @@ def from_obo_path(
         with zipfile.ZipFile(path) as zf:
             with zf.open(path.name.removesuffix(".zip"), "r") as file:
                 content = file.read().decode("utf-8")
-                graph = _read_obo(io.StringIO(content), prefix)
+                graph = _read_obo(io.StringIO(content), prefix, ignore_obsolete=ignore_obsolete)
     else:
         logger.info("[%s] parsing OBO with obonet from %s", prefix or "<unknown>", path)
         with open(path) as file:
-            graph = _read_obo(file, prefix)
+            graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete)
 
     if prefix:
         # Make sure the graph is named properly
@@ -84,7 +90,7 @@ def from_obo_path(
     return from_obonet(graph, strict=strict, version=version, upgrade=upgrade)
 
 
-def _read_obo(filelike, prefix: str | None) -> nx.MultiDiGraph:
+def _read_obo(filelike, prefix: str | None, ignore_obsolete: bool) -> nx.MultiDiGraph:
     import obonet
 
     return obonet.read_obo(
@@ -95,8 +101,7 @@ def _read_obo(filelike, prefix: str | None) -> nx.MultiDiGraph:
             disable=None,
             leave=True,
         ),
-        # TODO this is the default, turn it off and see what happens
-        ignore_obsolete=True,
+        ignore_obsolete=ignore_obsolete,
     )
 
 
@@ -105,6 +110,25 @@ def _normalize_prefix_strict(prefix: str) -> str:
     if n is None:
         raise ValueError(f"unknown prefix: {prefix}")
     return n
+
+
+def from_str(
+    text: str,
+    *,
+    strict: bool = True,
+    version: str | None = None,
+    upgrade: bool = True,
+    ignore_obsolete: bool = False,
+) -> Obo:
+    """Read an ontology from a string representation."""
+    import obonet
+
+    text = dedent(text).strip()
+    io = StringIO()
+    io.write(text)
+    io.seek(0)
+    graph = obonet.read_obo(io, ignore_obsolete=ignore_obsolete)
+    return from_obonet(graph, strict=strict, version=version, upgrade=upgrade)
 
 
 def from_obonet(
@@ -121,6 +145,7 @@ def from_obonet(
 
     date = _get_date(graph=graph, ontology_prefix=ontology_prefix)
     name = _get_name(graph=graph, ontology_prefix=ontology_prefix)
+    imports = graph.graph.get("import")
 
     macro_config = MacroConfig(graph.graph, strict=strict, ontology_prefix=ontology_prefix)
 
@@ -132,27 +157,39 @@ def from_obonet(
             f"[{ontology_prefix}] slashes not allowed in data versions because of filesystem usage: {data_version}"
         )
 
+    missing_typedefs: set[ReferenceTuple] = set()
+
+    subset_typedefs = _get_subsetdefs(graph.graph, ontology_prefix=ontology_prefix)
+
     root_terms: list[Reference] = []
     property_values: list[Annotation] = []
-    for t in iterate_node_properties(
+    for ann in iterate_node_properties(
         graph.graph,
         ontology_prefix=ontology_prefix,
         upgrade=upgrade,
         node=Reference(prefix="obo", identifier=ontology_prefix),
     ):
-        if t.predicate.pair == has_ontology_root_term.pair:
-            match t.value:
+        if ann.predicate.pair == has_ontology_root_term.pair:
+            match ann.value:
                 case OBOLiteral():
                     raise RuntimeError
                 case Reference():
-                    root_terms.append(t.value)
+                    root_terms.append(ann.value)
         else:
-            property_values.append(t)
+            property_values.append(ann)
+
+    for remark in graph.graph.get("remark", []):
+        property_values.append(Annotation(has_comment.reference, OBOLiteral.string(remark)))
+
+    idspaces: dict[str, str] = {}
+    for x in graph.graph.get("idspace", []):
+        prefix, uri_prefix, *_ = (y.strip() for y in x.split(" ", 2))
+        idspaces[prefix] = uri_prefix
 
     #: CURIEs to typedefs
     typedefs: Mapping[ReferenceTuple, TypeDef] = {
         typedef.pair: typedef
-        for typedef in iterate_graph_typedefs(
+        for typedef in iterate_typedefs(
             graph,
             ontology_prefix=ontology_prefix,
             strict=strict,
@@ -171,106 +208,16 @@ def from_obonet(
         )
     }
 
-    missing_typedefs: set[ReferenceTuple] = set()
-    terms = []
-    n_alt_ids, n_parents, n_synonyms, n_relations, n_properties, n_xrefs = 0, 0, 0, 0, 0, 0
-    n_references = 0
-    for reference, data in _iter_obo_graph(
-        graph=graph, strict=strict, ontology_prefix=ontology_prefix
-    ):
-        if reference.prefix != ontology_prefix or not data:
-            continue
-        n_references += 1
-
-        provenance = []
-        definition, definition_references = get_definition(
-            data, node=reference, strict=strict, ontology_prefix=ontology_prefix
-        )
-        provenance.extend(definition_references)
-
-        alt_ids = list(
-            iterate_node_alt_ids(
-                data, node=reference, strict=strict, ontology_prefix=ontology_prefix
-            )
-        )
-        n_alt_ids += len(alt_ids)
-
-        parents = list(
-            iterate_node_parents(
-                data, node=reference, strict=strict, ontology_prefix=ontology_prefix
-            )
-        )
-        n_parents += len(parents)
-
-        synonyms = list(
-            iterate_node_synonyms(
-                data,
-                synonym_typedefs,
-                node=reference,
-                strict=strict,
-                ontology_prefix=ontology_prefix,
-                upgrade=upgrade,
-            )
-        )
-        n_synonyms += len(synonyms)
-
-        term = Term(
-            reference=reference,
-            definition=definition,
-            parents=parents,
-            synonyms=synonyms,
-            provenance=provenance,
-            alt_ids=alt_ids,
-        )
-
-        node_xrefs: list[Reference] = list(
-            iterate_node_xrefs(
-                data=data,
-                strict=strict,
-                ontology_prefix=ontology_prefix,
-                node=reference,
-            )
-        )
-        for node_xref in node_xrefs:
-            _handle_xref(term, node_xref, macro_config=macro_config)
-
-        relations_references = list(
-            iterate_node_relationships(
-                data,
-                node=reference,
-                strict=strict,
-                ontology_prefix=ontology_prefix,
-                upgrade=upgrade,
-            )
-        )
-        for relation, reference in relations_references:
-            if relation.pair in typedefs:
-                typedef = typedefs[relation.pair]
-            elif relation.pair in default_typedefs:
-                typedef = default_typedefs[relation.pair]
-            else:
-                if relation.pair not in missing_typedefs:
-                    missing_typedefs.add(relation.pair)
-                    logger.warning("[%s] has no typedef for %s", ontology_prefix, relation)
-                    logger.debug("[%s] available typedefs: %s", ontology_prefix, set(typedefs))
-                continue
-            n_relations += 1
-            term.append_relationship(typedef, reference)
-
-        for t in iterate_node_properties(
-            data, node=reference, strict=strict, ontology_prefix=ontology_prefix, upgrade=upgrade
-        ):
-            n_properties += 1
-            term.append_property(t)
-
-        terms.append(term)
-
-    subset_typedefs = _get_subsetdefs(graph.graph, ontology_prefix=ontology_prefix)
-
-    logger.info(
-        f"[{ontology_prefix}] got {n_references:,} references, {len(typedefs):,} typedefs, {len(terms):,} terms,"
-        f" {n_alt_ids:,} alt ids, {n_parents:,} parents, {n_synonyms:,} synonyms, {n_xrefs:,} xrefs,"
-        f" {n_relations:,} relations, {n_properties:,} properties, and {len(subset_typedefs)} subset typedefs.",
+    terms = _get_terms(
+        graph,
+        strict=strict,
+        ontology_prefix=ontology_prefix,
+        upgrade=upgrade,
+        typedefs=typedefs,
+        missing_typedefs=missing_typedefs,
+        synonym_typedefs=synonym_typedefs,
+        subset_typedefs=subset_typedefs,
+        macro_config=macro_config,
     )
 
     return make_ad_hoc_ontology(
@@ -285,7 +232,260 @@ def from_obonet(
         terms=terms,
         _property_values=property_values,
         _subsetdefs=subset_typedefs,
+        _imports=imports,
+        _idspaces=idspaces,
     )
+
+
+def _get_terms(
+    graph,
+    *,
+    strict: bool,
+    ontology_prefix: str,
+    upgrade: bool,
+    typedefs: Mapping[ReferenceTuple, TypeDef],
+    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
+    subset_typedefs,
+    missing_typedefs: set[ReferenceTuple],
+    macro_config: MacroConfig,
+) -> list[Term]:
+    terms = []
+    for reference, data in _iter_obo_graph(
+        graph=graph, strict=strict, ontology_prefix=ontology_prefix
+    ):
+        if reference.prefix != ontology_prefix:
+            continue
+        if not data:
+            # this allows us to skip anything that isn't really defined
+            # caveat: this misses terms that are just defined with an ID
+            continue
+
+        provenance = []
+        definition, definition_references = get_definition(
+            data, node=reference, strict=strict, ontology_prefix=ontology_prefix
+        )
+        provenance.extend(definition_references)
+
+        term = Term(
+            reference=reference,
+            definition=definition,
+            provenance=provenance,
+            builtin=_get_boolean(data, "builtin"),
+            is_anonymous=_get_boolean(data, "is_anonymous"),
+            is_obsolete=_get_boolean(data, "is_obsolete"),
+            namespace=data.get("namespace"),
+        )
+        _process_alts(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_parents(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_synonyms(
+            term,
+            data,
+            ontology_prefix=ontology_prefix,
+            strict=strict,
+            upgrade=upgrade,
+            synonym_typedefs=synonym_typedefs,
+        )
+        _process_xrefs(
+            term, data, ontology_prefix=ontology_prefix, strict=strict, macro_config=macro_config
+        )
+        _process_properties(
+            term,
+            data,
+            ontology_prefix=ontology_prefix,
+            strict=strict,
+            upgrade=upgrade,
+            typedefs=typedefs,
+        )
+        _process_relations(
+            term,
+            data,
+            ontology_prefix=ontology_prefix,
+            strict=strict,
+            upgrade=upgrade,
+            typedefs=typedefs,
+            missing_typedefs=missing_typedefs,
+        )
+        _process_replaced_by(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_subsets(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_union_of(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_equivalent_to(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_disjoint_from(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_consider(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_intersection_of(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_comment(term, data, ontology_prefix=ontology_prefix, strict=strict)
+
+        terms.append(term)
+    return terms
+
+
+def _process_comment(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+    if comment := data.get("comment"):
+        term.append_comment(comment)
+
+
+def _process_union_of(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+    for reference in iterate_node_reference_tag(
+        "union_of", data=data, ontology_prefix=ontology_prefix, strict=strict, node=term.reference
+    ):
+        term.append_union_of(reference)
+
+
+def _process_equivalent_to(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+    for reference in iterate_node_reference_tag(
+        "equivalent_to",
+        data=data,
+        ontology_prefix=ontology_prefix,
+        strict=strict,
+        node=term.reference,
+    ):
+        term.append_equivalent_to(reference)
+
+
+def _process_disjoint_from(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+    for reference in iterate_node_reference_tag(
+        "disjoint_from",
+        data=data,
+        ontology_prefix=ontology_prefix,
+        strict=strict,
+        node=term.reference,
+    ):
+        term.append_disjoint_from(reference)
+
+
+def _process_alts(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+    for alt_reference in iterate_node_reference_tag(
+        "alt_id", data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix
+    ):
+        term.append_alt(alt_reference)
+
+
+def _process_parents(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+    for tag in ["is_a", "instance_of"]:
+        for parent in iterate_node_reference_tag(
+            tag, data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix
+        ):
+            term.append_parent(parent)
+
+
+def _process_synonyms(
+    term: Stanza,
+    data,
+    *,
+    ontology_prefix: str,
+    strict: bool,
+    upgrade: bool,
+    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
+) -> None:
+    synonyms = list(
+        iterate_node_synonyms(
+            data,
+            synonym_typedefs,
+            node=term.reference,
+            strict=strict,
+            ontology_prefix=ontology_prefix,
+            upgrade=upgrade,
+        )
+    )
+    for synonym in synonyms:
+        term.append_synonym(synonym)
+
+
+def _process_xrefs(
+    term: Stanza,
+    data,
+    *,
+    ontology_prefix: str,
+    strict: bool,
+    macro_config: MacroConfig,
+) -> None:
+    node_xrefs: list[Reference] = list(
+        iterate_node_xrefs(
+            data=data,
+            strict=strict,
+            ontology_prefix=ontology_prefix,
+            node=term.reference,
+        )
+    )
+    for node_xref in node_xrefs:
+        _handle_xref(term, node_xref, macro_config=macro_config)
+
+
+def _process_properties(
+    term: Stanza, data, *, ontology_prefix: str, strict: bool, upgrade: bool, typedefs
+) -> None:
+    for ann in iterate_node_properties(
+        data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix, upgrade=upgrade
+    ):
+        term.append_property(ann)
+
+
+def _process_relations(
+    term: Stanza,
+    data,
+    *,
+    ontology_prefix: str,
+    strict: bool,
+    upgrade: bool,
+    typedefs: Mapping[ReferenceTuple, TypeDef],
+    missing_typedefs: set[ReferenceTuple],
+) -> None:
+    relations_references = list(
+        iterate_node_relationships(
+            data,
+            node=term.reference,
+            strict=strict,
+            ontology_prefix=ontology_prefix,
+            upgrade=upgrade,
+        )
+    )
+    for relation, reference in relations_references:
+        if (
+            relation.pair not in typedefs
+            and relation.pair not in default_typedefs
+            and relation.pair not in missing_typedefs
+        ):
+            missing_typedefs.add(relation.pair)
+            logger.warning("[%s] has no typedef for %s", ontology_prefix, relation)
+            logger.debug("[%s] available typedefs: %s", ontology_prefix, set(typedefs))
+        term.append_relationship(relation, reference)
+
+
+def _process_replaced_by(stanza: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+    for reference in iterate_node_reference_tag(
+        "replaced_by", data, node=stanza.reference, strict=strict, ontology_prefix=ontology_prefix
+    ):
+        stanza.append_replaced_by(reference)
+
+
+def _process_subsets(stanza: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+    for reference in iterate_node_reference_tag(
+        "subset", data, node=stanza.reference, strict=strict, ontology_prefix=ontology_prefix
+    ):
+        stanza.append_subset(reference)
+
+
+def _get_boolean(data: Mapping[str, Any], tag: str) -> bool | None:
+    value = data.get(tag)
+    if value is None:
+        return None
+    if isinstance(value, list):
+        value = value[0]
+    if value == "false":
+        return False
+    if value == "true":
+        return True
+    raise ValueError(value)
+
+
+def _get_reference(
+    data: Mapping[str, Any], tag: str, *, ontology_prefix: str, strict: bool, **kwargs
+) -> Reference | None:
+    value = data.get(tag)
+    if value is None:
+        return None
+    if isinstance(value, list):
+        value = value[0]
+    return _parse_identifier(value, ontology_prefix=ontology_prefix, strict=strict, **kwargs)
 
 
 class MacroConfig:
@@ -305,7 +505,7 @@ class MacroConfig:
                 continue
             self.treat_xrefs_as_equivalent.add(prefix_norm)
 
-        self.treat_xrefs_as_genus_differentia: dict[str, Annotation] = {}
+        self.treat_xrefs_as_genus_differentia: dict[str, tuple[Reference, Reference]] = {}
         for line in data.get("treat-xrefs-as-genus-differentia", []):
             gd_prefix, gd_predicate, gd_target = line.split()
             gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
@@ -321,9 +521,7 @@ class MacroConfig:
             )
             if gd_target_re is None:
                 continue
-            self.treat_xrefs_as_genus_differentia[gd_prefix_norm] = Annotation(
-                gd_predicate_re, gd_target_re
-            )
+            self.treat_xrefs_as_genus_differentia[gd_prefix_norm] = (gd_predicate_re, gd_target_re)
 
         self.treat_xrefs_as_relationship: dict[str, Reference] = {}
         for line in data.get("treat-xrefs-as-relationship", []):
@@ -373,7 +571,7 @@ def _get_subsetdefs(graph: nx.MultiDiGraph, ontology_prefix: str) -> list[tuple[
         if not right:
             logger.warning("[%s] subsetdef did not have two parts", ontology_prefix, subsetdef)
             continue
-        left_ref = _parse_identifier(left, ontology_prefix=ontology_prefix)
+        left_ref = _parse_identifier(left, ontology_prefix=ontology_prefix, name=right)
         if left_ref is None:
             logger.warning(
                 "[%s] subsetdef identifier could not be parsed", ontology_prefix, subsetdef
@@ -486,25 +684,34 @@ def iterate_graph_synonym_typedefs(
 ) -> Iterable[SynonymTypeDef]:
     """Get synonym type definitions from an :mod:`obonet` graph."""
     for line in graph.graph.get("synonymtypedef", []):
-        synonym_typedef_id, name = line.split(" ", 1)
+        # TODO handle trailing comments
+        line, _, specificity = (x.strip() for x in line.rpartition('"'))
+        if not specificity:
+            specificity = None
+        elif specificity not in t.get_args(SynonymScope):
+            if strict:
+                raise ValueError(f"invalid synonym specificty: {specificity}")
+            logger.warning("[%s] invalid synonym specificty: %s", ontology_prefix, specificity)
+            specificity = None
+
+        curie, name = line.split(" ", 1)
+        # the name should be in quotes, so strip them out
         name = name.strip().strip('"')
+        # TODO unquote the string?
         reference = _parse_identifier(
-            synonym_typedef_id,
+            curie,
             ontology_prefix=ontology_prefix,
             name=name,
             upgrade=upgrade,
             strict=strict,
         )
         if reference is None:
-            logger.warning(
-                "[%s] unable to parse synonym typedef ID %s", ontology_prefix, synonym_typedef_id
-            )
+            logger.warning("[%s] unable to parse synonym typedef ID %s", ontology_prefix, curie)
             continue
-        # TODO handle specificity
-        yield SynonymTypeDef(reference=reference)
+        yield SynonymTypeDef(reference=reference, specificity=specificity)
 
 
-def iterate_graph_typedefs(
+def iterate_typedefs(
     graph: nx.MultiDiGraph,
     *,
     ontology_prefix: str,
@@ -513,15 +720,21 @@ def iterate_graph_typedefs(
     macro_config: MacroConfig | None = None,
 ) -> Iterable[TypeDef]:
     """Get type definitions from an :mod:`obonet` graph."""
-    for typedef in graph.graph.get("typedefs", []):
-        if "id" in typedef:
-            typedef_id = typedef["id"]
-        elif "identifier" in typedef:
-            typedef_id = typedef["identifier"]
+    if macro_config is None:
+        macro_config = MacroConfig(strict=strict, ontology_prefix=ontology_prefix)
+    # can't really have a pre-defined set of synonym typedefs here!
+    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] = {}
+    typedefs: Mapping[ReferenceTuple, TypeDef] = {}
+    missing_typedefs: set[ReferenceTuple] = set()
+    for data in graph.graph.get("typedefs", []):
+        if "id" in data:
+            typedef_id = data["id"]
+        elif "identifier" in data:
+            typedef_id = data["identifier"]
         else:
             raise KeyError("typedef is missing an `id`")
 
-        name = typedef.get("name")
+        name = data.get("name")
         if name is None:
             logger.debug("[%s] typedef %s is missing a name", ontology_prefix, typedef_id)
 
@@ -532,24 +745,151 @@ def iterate_graph_typedefs(
             logger.warning("[%s] unable to parse typedef ID %s", ontology_prefix, typedef_id)
             continue
 
-        yv = TypeDef(reference=reference)
+        typedef = TypeDef(
+            reference=reference,
+            namespace=data.get("namespace"),
+            is_metadata_tag=_get_boolean(data, "is_metadata_tag"),
+            is_class_level=_get_boolean(data, "is_class_level"),
+            builtin=_get_boolean(data, "builtin"),
+            is_obsolete=_get_boolean(data, "is_obsolete"),
+            is_anonymous=_get_boolean(data, "is_anonymous"),
+            is_anti_symmetric=_get_boolean(data, "is_anti_symmetric"),
+            is_symmetric=_get_boolean(data, "is_symmetric"),
+            is_reflexive=_get_boolean(data, "is_reflexive"),
+            is_cyclic=_get_boolean(data, "is_cyclic"),
+            is_transitive=_get_boolean(data, "is_transitive"),
+            is_functional=_get_boolean(data, "is_functional"),
+            is_inverse_functional=_get_boolean(data, "is_inverse_functional"),
+            domain=_get_reference(data, "domain", ontology_prefix=ontology_prefix, strict=strict),
+            range=_get_reference(data, "range", ontology_prefix=ontology_prefix, strict=strict),
+            inverse=_get_reference(
+                data, "inverse_of", ontology_prefix=ontology_prefix, strict=strict
+            ),
+        )
+        _process_alts(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_parents(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_synonyms(
+            typedef,
+            data,
+            ontology_prefix=ontology_prefix,
+            strict=strict,
+            upgrade=upgrade,
+            synonym_typedefs=synonym_typedefs,
+        )
+        _process_xrefs(
+            typedef, data, ontology_prefix=ontology_prefix, strict=strict, macro_config=macro_config
+        )
+        _process_properties(
+            typedef,
+            data,
+            ontology_prefix=ontology_prefix,
+            strict=strict,
+            upgrade=upgrade,
+            typedefs=typedefs,
+        )
+        _process_relations(
+            typedef,
+            data,
+            ontology_prefix=ontology_prefix,
+            strict=strict,
+            upgrade=upgrade,
+            typedefs=typedefs,
+            missing_typedefs=missing_typedefs,
+        )
+        _process_replaced_by(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_subsets(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_intersection_of(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_union_of(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_equivalent_to(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_parents(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_holds_over_chain(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_equivalent_to_chain(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_disjoint_from(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_consider(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_comment(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
 
-        for xref_curie in typedef.get("xref", []):
-            _xref = Reference.from_curie_or_uri(
-                xref_curie,
-                strict=strict,
+        typedef.disjoint_over.extend(
+            iterate_node_reference_tag(
+                "disjoint_over",
+                data,
+                node=typedef.reference,
                 ontology_prefix=ontology_prefix,
-                node=reference,
+                strict=strict,
             )
-            if not _xref:
-                continue
-            _handle_xref(
-                yv,
-                _xref,
-                macro_config=macro_config,
+        )
+        typedef.transitive_over.extend(
+            iterate_node_reference_tag(
+                "transitive_over",
+                data,
+                node=typedef.reference,
+                ontology_prefix=ontology_prefix,
+                strict=strict,
             )
+        )
 
-        yield yv
+        yield typedef
+
+
+def _process_consider(stanza: Stanza, data, *, ontology_prefix: str, strict: bool = True):
+    for reference in iterate_node_reference_tag(
+        "consider",
+        data,
+        node=stanza.reference,
+        ontology_prefix=ontology_prefix,
+        strict=strict,
+    ):
+        stanza.append_see_also(reference)
+
+
+def _process_equivalent_to_chain(
+    typedef: TypeDef, data, *, ontology_prefix: str, strict: bool = True
+) -> None:
+    for chain in _iterate_chain(
+        "equivalent_to_chain", typedef, data, ontology_prefix=ontology_prefix, strict=strict
+    ):
+        typedef.equivalent_to_chain.append(chain)
+
+
+def _process_holds_over_chain(
+    typedef: TypeDef, data, *, ontology_prefix: str, strict: bool = True
+) -> None:
+    for chain in _iterate_chain(
+        "holds_over_chain", typedef, data, ontology_prefix=ontology_prefix, strict=strict
+    ):
+        typedef.holds_over_chain.append(chain)
+
+
+def _iterate_chain(
+    tag: str, typedef: TypeDef, data, *, ontology_prefix: str, strict: bool = True
+) -> Iterable[list[Reference]]:
+    for chain in data.get(tag, []):
+        # chain is a list of CURIEs
+        predicate_chain = _process_chain_helper(typedef, chain, ontology_prefix=ontology_prefix)
+        if predicate_chain is None:
+            logger.warning(
+                "[%s - %s] could not parse line: %s: %s",
+                ontology_prefix,
+                typedef.preferred_curie,
+                tag,
+                chain,
+            )
+        else:
+            yield predicate_chain
+
+
+def _process_chain_helper(
+    term: Stanza, chain: str, ontology_prefix: str, strict: bool = True
+) -> list[Reference] | None:
+    rv = []
+    for curie in chain.split():
+        curie = curie.strip()
+        r = _parse_identifier(
+            curie, ontology_prefix=ontology_prefix, strict=strict, node=term.reference
+        )
+        if r is None:
+            return None
+        rv.append(r)
+    return rv
 
 
 def get_definition(
@@ -827,34 +1167,67 @@ def _get_prop(
     )
 
 
-def iterate_node_parents(
+def iterate_node_reference_tag(
+    tag: str,
     data: Mapping[str, Any],
     *,
     node: Reference,
     strict: bool = True,
     ontology_prefix: str,
+    upgrade: bool = True,
 ) -> Iterable[Reference]:
-    """Extract parents from a :mod:`obonet` node's data."""
-    for parent_curie in data.get("is_a", []):
-        reference = Reference.from_curie_or_uri(
-            parent_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
+    """Extract a list of CURIEs from the data."""
+    for identifier in data.get(tag, []):
+        reference = _parse_identifier(
+            identifier, strict=strict, node=node, ontology_prefix=ontology_prefix, upgrade=upgrade
         )
         if reference is None:
-            logger.warning("[%s] could not parse parent curie: %s", node.curie, parent_curie)
-            continue
-        yield reference
-
-
-def iterate_node_alt_ids(
-    data: Mapping[str, Any], *, node: Reference, strict: bool = True, ontology_prefix: str | None
-) -> Iterable[Reference]:
-    """Extract alternate identifiers from a :mod:`obonet` node's data."""
-    for curie in data.get("alt_id", []):
-        reference = Reference.from_curie_or_uri(
-            curie, strict=strict, node=node, ontology_prefix=ontology_prefix
-        )
-        if reference is not None:
+            logger.warning(
+                "[%] %s - could not parse identifier: %s", ontology_prefix, tag, identifier
+            )
+        else:
             yield reference
+
+
+def _process_intersection_of(
+    term: Stanza,
+    data: Mapping[str, Any],
+    *,
+    strict: bool = True,
+    ontology_prefix: str,
+    upgrade: bool = True,
+) -> None:
+    """Extract a list of CURIEs from the data."""
+    for line in data.get("intersection_of", []):
+        predicate_id, _, target_id = line.partition(" ")
+        predicate = _parse_identifier(
+            predicate_id,
+            strict=strict,
+            node=term.reference,
+            ontology_prefix=ontology_prefix,
+            upgrade=upgrade,
+        )
+        if predicate is None:
+            logger.warning("[%] %s - could not parse intersection_of: %s", ontology_prefix, line)
+            continue
+
+        if target_id:
+            # this means that there's a second part, so let's try parsing it
+            target = _parse_identifier(
+                target_id,
+                strict=strict,
+                node=term.reference,
+                ontology_prefix=ontology_prefix,
+                upgrade=upgrade,
+            )
+            if target is None:
+                logger.warning(
+                    "[%] could not parse intersection_of target: %s", ontology_prefix, line
+                )
+                continue
+            term.append_intersection_of(predicate, target)
+        else:
+            term.append_intersection_of(predicate)
 
 
 def iterate_node_relationships(
@@ -893,7 +1266,7 @@ def iterate_node_xrefs(
     *,
     data: Mapping[str, Any],
     strict: bool = True,
-    ontology_prefix: str | None,
+    ontology_prefix: str,
     node: Reference,
 ) -> Iterable[Reference]:
     """Extract xrefs from a :mod:`obonet` node's data."""

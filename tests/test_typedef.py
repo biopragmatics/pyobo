@@ -55,6 +55,37 @@ class TestTypeDef(unittest.TestCase):
             typedef.iterate_obo_lines(ontology_prefix),
         )
 
+    def assert_boolean_tag(self, name: str) -> None:
+        """Assert the boolean tag parses properly."""
+        reference = Reference(prefix="GO", identifier="0000001")
+        typedef = TypeDef(reference=reference, **{name: True})
+        self.assert_obo_stanza(
+            f"""\
+            [Typedef]
+            id: GO:0000001
+            {name}: true
+            """,
+            typedef,
+        )
+        self.assertTrue(hasattr(typedef, name))
+        value = getattr(typedef, name)
+        self.assertIsNotNone(value)
+        self.assertTrue(value)
+
+        typedef = TypeDef(reference=reference, **{name: False})
+        self.assert_obo_stanza(
+            f"""\
+            [Typedef]
+            id: GO:0000001
+            {name}: false
+            """,
+            typedef,
+        )
+        self.assertTrue(hasattr(typedef, name))
+        value = getattr(typedef, name)
+        self.assertIsNotNone(value)
+        self.assertFalse(value)
+
     def test_1_declaration(self) -> None:
         """Test the declaration."""
         object_property = TypeDef(reference=REF)
@@ -81,25 +112,7 @@ class TestTypeDef(unittest.TestCase):
 
     def test_2_is_anonymous(self) -> None:
         """Test the ``is_anonymous`` tag."""
-        typedef = TypeDef(reference=REF, is_anonymous=True)
-        self.assert_obo_stanza(
-            """\
-            [Typedef]
-            id: RO:0000087
-            is_anonymous: true
-            """,
-            typedef,
-        )
-
-        typedef = TypeDef(reference=REF, is_anonymous=False)
-        self.assert_obo_stanza(
-            """\
-            [Typedef]
-            id: RO:0000087
-            is_anonymous: false
-            """,
-            typedef,
-        )
+        self.assert_boolean_tag("is_anonymous")
 
     def test_3_name(self) -> None:
         """Test outputting a name."""
@@ -133,7 +146,7 @@ class TestTypeDef(unittest.TestCase):
         """Test the ``alt_id`` tag."""
         typedef = TypeDef(
             reference=REF,
-            alt_id=[
+            alt_ids=[
                 Reference(prefix="RO", identifier="1234567"),
                 Reference(prefix="RO", identifier="1234568", name="test"),
             ],
@@ -294,18 +307,7 @@ class TestTypeDef(unittest.TestCase):
 
     def test_14_builtin(self) -> None:
         """Test the ``builtin`` tag."""
-        typedef = TypeDef(
-            reference=Reference(prefix="rdfs", identifier="subClassOf"),
-            builtin=True,
-        )
-        self.assert_obo_stanza(
-            """\
-           [Typedef]
-           id: rdfs:subClassOf
-           builtin: true
-           """,
-            typedef,
-        )
+        self.assert_boolean_tag("builtin")
 
     def test_15_holds_over_chain(self) -> None:
         """Test the ``holds_over_chain`` tag.
@@ -326,8 +328,10 @@ class TestTypeDef(unittest.TestCase):
         typedef = TypeDef(
             reference=Reference(prefix="BFO", identifier="0000066"),
             holds_over_chain=[
-                Reference(prefix="BFO", identifier="0000050", name="part of"),
-                Reference(prefix="BFO", identifier="0000066", name="occurs in"),
+                [
+                    Reference(prefix="BFO", identifier="0000050", name="part of"),
+                    Reference(prefix="BFO", identifier="0000066", name="occurs in"),
+                ]
             ],
         )
         self.assert_obo_stanza(
@@ -341,85 +345,45 @@ class TestTypeDef(unittest.TestCase):
 
     def test_16_is_anti_symmetric(self) -> None:
         """Test the ``anti_symmetric`` tag."""
-        typedef = TypeDef(
-            reference=Reference(prefix="rdfs", identifier="subClassOf"), is_anti_symmetric=True
-        )
-        self.assert_obo_stanza(
-            """\
-            [Typedef]
-            id: rdfs:subClassOf
-            is_anti_symmetric: true
-            """,
-            typedef,
-        )
+        self.assert_boolean_tag("is_anti_symmetric")
 
     def test_17_is_cyclic(self) -> None:
         """Test the ``is_cyclic`` tag."""
-        typedef = TypeDef(
-            reference=default_reference(prefix="chebi", identifier="is_conjugate_acid_of"),
-            is_cyclic=True,
-        )
-        self.assert_obo_stanza(
-            """\
-            [Typedef]
-            id: is_conjugate_acid_of
-            is_cyclic: true
-            """,
-            typedef,
-            ontology_prefix="chebi",
-        )
+        self.assert_boolean_tag("is_cyclic")
 
     def test_18_is_reflexive(self) -> None:
         """Test the ``is_reflexive`` tag."""
-        typedef = TypeDef(
-            reference=Reference(prefix="rdfs", identifier="subClassOf"), is_reflexive=True
-        )
-        self.assert_obo_stanza(
-            """\
-            [Typedef]
-            id: rdfs:subClassOf
-            is_reflexive: true
-            """,
-            typedef,
-        )
+        self.assert_boolean_tag("is_reflexive")
 
     def test_19_is_symmetric(self) -> None:
         """Test the ``is_symmetric`` tag."""
-        typedef = TypeDef(
-            reference=default_reference(prefix="ro", identifier="attached_to"), is_symmetric=True
-        )
-        self.assert_obo_stanza(
-            """\
-            [Typedef]
-            id: attached_to
-            is_symmetric: true
-            """,
-            typedef,
-            ontology_prefix="ro",
-        )
+        self.assert_boolean_tag("is_symmetric")
 
     def test_20_is_transitive(self) -> None:
         """Test the ``is_transitive`` tag."""
-        typedef = TypeDef(
-            reference=Reference(prefix="rdfs", identifier="subClassOf"), is_transitive=True
-        )
-        self.assert_obo_stanza(
-            """\
-            [Typedef]
-            id: rdfs:subClassOf
-            is_transitive: true
-            """,
-            typedef,
-        )
+        self.assert_boolean_tag("is_transitive")
 
     def test_21_is_functional(self) -> None:
         """Test the ``is_functional`` tag."""
+        self.assert_boolean_tag("is_functional")
 
     def test_22_is_inverse_functional(self) -> None:
         """Test the ``is_inverse_functional`` tag."""
+        self.assert_boolean_tag("is_inverse_functional")
 
     def test_23_is_a(self) -> None:
         """Test the ``is_a`` tag."""
+        typedef = TypeDef(reference=Reference(prefix="BFO", identifier="0000050", name="part of"))
+        typedef.append_parent(Reference(prefix="RO", identifier="0002131", name="overlaps"))
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: BFO:0000050
+            name: part of
+            is_a: RO:0002131 ! overlaps
+            """,
+            typedef,
+        )
 
     def test_24_intersection_of(self) -> None:
         """Test the ``intersection_-f`` tag."""
@@ -448,12 +412,44 @@ class TestTypeDef(unittest.TestCase):
 
     def test_25_union_of(self) -> None:
         """Test the ``union_of`` tag."""
+        typedef = TypeDef(reference=Reference(prefix="GO", identifier="0000001"))
+        typedef.append_union_of(Reference(prefix="GO", identifier="0000002"))
+        typedef.append_union_of(Reference(prefix="GO", identifier="0000003"))
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:0000001
+            union_of: GO:0000002
+            union_of: GO:0000003
+            """,
+            typedef,
+        )
 
     def test_26_equivalent_to(self) -> None:
         """Test the ``equivalent_to`` tag."""
+        typedef = TypeDef(reference=Reference(prefix="GO", identifier="0000001"))
+        typedef.append_equivalent_to(Reference(prefix="GO", identifier="0000002"))
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:0000001
+            equivalent_to: GO:0000002
+            """,
+            typedef,
+        )
 
     def test_27_disjoint_from(self) -> None:
         """Test the ``disjoint_from`` tag."""
+        typedef = TypeDef(reference=Reference(prefix="GO", identifier="0000001"))
+        typedef.append_disjoint_from(Reference(prefix="GO", identifier="0000002"))
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:0000001
+            disjoint_from: GO:0000002
+            """,
+            typedef,
+        )
 
     def test_28_inverse_of(self) -> None:
         """Test the ``inverse_of`` tag.
@@ -521,16 +517,61 @@ class TestTypeDef(unittest.TestCase):
 
         - https://github.com/geneontology/go-ontology/blob/ce41588cbdc05223f9cfd029985df3cadd1e0399/src/ontology/extensions/gorel.obo#L1277-L1285
         - https://github.com/cmungall/bioperl-owl/blob/0b52048975c078d3bc50f6611235e9f8cb9b9475/ont/interval_relations.obo~#L86-L103
+
+        This also works for the combination of gene-transribes-protein, protein-memberof-ec.
         """
+        typedef = TypeDef(
+            reference=Reference(prefix="GO", identifier="1"),
+            equivalent_to_chain=[
+                [
+                    Reference(prefix="GO", identifier="2"),
+                    Reference(prefix="GO", identifier="3"),
+                ]
+            ],
+        )
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:1
+            equivalent_to_chain: GO:2 GO:3
+            """,
+            typedef,
+        )
 
     def test_31_disjoint_over(self) -> None:
         """Test the ``disjoint_over`` tag."""
+        typedef = TypeDef(
+            reference=Reference(prefix="GO", identifier="0000001"),
+            disjoint_over=[Reference(prefix="GO", identifier="0000002")],
+        )
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:0000001
+            disjoint_over: GO:0000002
+            """,
+            typedef,
+        )
 
     def test_32_relationship(self) -> None:
         """Test the ``relationship`` tag."""
+        typedef = TypeDef(reference=Reference(prefix="GO", identifier="0000001"))
+        typedef.append_relationship(
+            Reference(prefix="GO", identifier="0000002"),
+            Reference(prefix="GO", identifier="0000003"),
+        )
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:0000001
+            relationship: GO:0000002 GO:0000003
+            """,
+            typedef,
+        )
 
     def test_33_is_obsolete(self) -> None:
         """Test the ``is_obsolete`` tag."""
+        self.assert_boolean_tag("is_obsolete")
 
     def test_34_created_by(self) -> None:
         """Test the ``created_by`` tag."""
@@ -540,12 +581,34 @@ class TestTypeDef(unittest.TestCase):
 
     def test_36_replaced_by(self) -> None:
         """Test the ``replaced_by`` tag."""
+        typedef = TypeDef(reference=Reference(prefix="GO", identifier="0000001"))
+        typedef.append_replaced_by(Reference(prefix="GO", identifier="0000002"))
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:0000001
+            replaced_by: GO:0000002
+            """,
+            typedef,
+        )
 
     def test_37_consider(self) -> None:
         """Test the ``consider`` tag."""
+        typedef = TypeDef(reference=Reference(prefix="GO", identifier="0000001"))
+        typedef.append_see_also(Reference(prefix="GO", identifier="0000002"))
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:0000001
+            consider: GO:0000002
+            """,
+            typedef,
+        )
 
     def test_40_is_metadata_tag(self) -> None:
         """Test the ``is_metadata_tag`` tag."""
+        self.assert_boolean_tag("is_metadata_tag")
 
     def test_41_is_class_level(self) -> None:
         """Test the ``is_class_level`` tag."""
+        self.assert_boolean_tag("is_class_level")
