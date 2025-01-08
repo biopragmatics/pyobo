@@ -48,6 +48,7 @@ from .struct_utils import (
     Stanza,
     UnionOfHint,
     _ensure_ref,
+    _tag_property_targets,
 )
 from .typedef import (
     TypeDef,
@@ -311,55 +312,11 @@ class Term(Referenced, Stanza):
             definition=get_definition(prefix, identifier),
         )
 
-    def append_synonym(
-        self,
-        synonym: str | Synonym,
-        *,
-        type: Reference | Referenced | None = None,
-        specificity: v.SynonymScope | None = None,
-        provenance: list[Reference] | None = None,
-    ) -> None:
-        """Add a synonym."""
-        if isinstance(type, Referenced):
-            type = type.reference
-        if isinstance(synonym, str):
-            synonym = Synonym(
-                synonym,
-                type=type,
-                specificity=specificity,
-                provenance=provenance or [],
-            )
-        self.synonyms.append(synonym)
-
-    def append_alt(self, alt: str | Reference) -> None:
-        """Add an alternative identifier."""
-        if isinstance(alt, str):
-            warnings.warn(
-                "use fully qualified reference when appending alts",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            alt = Reference(prefix=self.prefix, identifier=alt)
-        self.alt_ids.append(alt)
-
-    def append_see_also(self, reference: ReferenceHint) -> Self:
-        """Add a see also property."""
-        _reference = _ensure_ref(reference)
-        return self.annotate_object(see_also, _reference)
-
     def append_see_also_url(self, url: str) -> Self:
         """Add a see also property."""
         return self.annotate_literal(
             see_also, url, datatype=Reference(prefix="xsd", identifier="anyURI")
         )
-
-    def append_comment(self, value: str) -> Self:
-        """Add a comment property."""
-        return self.annotate_literal(comment, value)
-
-    def append_replaced_by(self, reference: Reference) -> Self:
-        """Add a replaced by property."""
-        return self.annotate_object(term_replaced_by, reference)
 
     def extend_parents(self, references: Collection[Reference]) -> None:
         """Add a collection of parents to this entity."""
@@ -368,7 +325,7 @@ class Term(Referenced, Stanza):
             raise ValueError("can not append a collection of parents containing a null parent")
         self.parents.extend(references)
 
-    def get_properties(self, prop: ReferenceHint) -> list[str]:
+    def get_properties_as_str(self, prop: ReferenceHint) -> list[str]:
         """Get properties from the given key."""
         rv = []
         for t in self.properties.get(_ensure_ref(prop), []):
@@ -387,7 +344,7 @@ class Term(Referenced, Stanza):
 
     def get_property(self, prop: ReferenceHint) -> str | None:
         """Get a single property of the given key."""
-        r = self.get_properties(prop)
+        r = self.get_properties_as_str(prop)
         if not r:
             return None
         if len(r) != 1:
@@ -490,20 +447,6 @@ class Term(Referenced, Stanza):
         self.annotate_object(exact_match.reference, reference, axioms=axioms)
         return self
 
-    def annotate_object(
-        self,
-        typedef: ReferenceHint,
-        value: ReferenceHint,
-        *,
-        axioms: Iterable[Annotation] | None = None,
-    ) -> Self:
-        """Append an object annotation."""
-        typedef = _ensure_ref(typedef)
-        value = _ensure_ref(value)
-        self.properties[typedef].append(value)
-        self._annotate_axioms(typedef, value, axioms)
-        return self
-
     def set_species(self, identifier: str, name: str | None = None) -> Self:
         """Append the from_species relation."""
         if name is None:
@@ -536,26 +479,6 @@ class Term(Referenced, Stanza):
         definition = obo_escape_slim(self.definition) if self.definition else ""
         return f'"{definition}" [{comma_separate_references(self.provenance)}]'
 
-    def iterate_objects(self, typedef: ReferenceHint) -> list[Reference]:
-        """Iterate over pairs of typedefs and targets."""
-        return sorted(self.relationships.get(_ensure_ref(typedef), []))
-
-    def iterate_relations(self) -> Iterable[tuple[Reference, Reference]]:
-        """Iterate over pairs of typedefs and targets."""
-        for typedef, targets in sorted(self.relationships.items()):
-            for target in sorted(targets):
-                yield typedef, target
-
-    def iterate_property(self, typedef: ReferenceHint) -> list[Reference | OBOLiteral]:
-        """Iterate over references or values."""
-        return sorted(self.properties.get(_ensure_ref(typedef), []))
-
-    def iterate_properties(self) -> Iterable[Annotation]:
-        """Iterate over pairs of property and values."""
-        for prop, values in sorted(self.properties.items()):
-            for value in values:
-                yield Annotation(prop, value)
-
     def iterate_obo_lines(
         self,
         *,
@@ -587,7 +510,7 @@ class Term(Referenced, Stanza):
         if self.definition or self.provenance:
             yield f"def: {self._definition_fp()}"
         # 7
-        for x in self.iterate_property(comment):
+        for x in self.iterate_property_targets(comment):
             if isinstance(x, OBOLiteral):
                 yield f'comment: "{x.value}"'
         # 8
@@ -601,7 +524,10 @@ class Term(Referenced, Stanza):
         yield from _boolean_tag("builtin", self.builtin)
         # 12
         if emit_annotation_properties:
-            yield from self._iterate_obo_properties(ontology_prefix=ontology_prefix)
+            yield from self._iterate_obo_properties(
+                ontology_prefix=ontology_prefix,
+                skip_predicates=[term_replaced_by.reference, see_also.reference],
+            )
         # 13
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
         yield from _reference_list_tag(parent_tag, self.parents, ontology_prefix)
@@ -625,10 +551,13 @@ class Term(Referenced, Stanza):
         # 21
         yield from _boolean_tag("is_obsolete", self.is_obsolete)
         # 22
-        for x in self.iterate_property(term_replaced_by):
-            if isinstance(x, Reference):
-                yield f"replaced_by: {reference_escape(x, ontology_prefix=ontology_prefix, add_name_comment=True)}"
-        # 23 TODO consider
+        yield from _tag_property_targets(
+            "replaced_by", self, term_replaced_by, ontology_prefix=ontology_prefix
+        )
+        # 23
+        yield from _tag_property_targets(
+            "consider", self, see_also, ontology_prefix=ontology_prefix
+        )
 
     @staticmethod
     def _reference(
@@ -772,6 +701,8 @@ class Obo:
     subsetdefs: ClassVar[list[tuple[Reference, str]] | None] = None
 
     property_values: ClassVar[list[Annotation] | None] = None
+
+    imports: ClassVar[list[str] | None] = None
 
     def __post_init__(self):
         """Run post-init checks."""
@@ -925,7 +856,9 @@ class Obo:
         # 5
         if self.auto_generated_by:
             yield f"auto-generated-by: {self.auto_generated_by}"
-        # 6 TODO import
+        # 6
+        for imp in self.imports or []:
+            yield f"import: {imp}"
         # 7
         for subset, subset_remark in self.subsetdefs or []:
             yield f'subsetdef: {reference_escape(subset, ontology_prefix=self.ontology)} "{subset_remark}"'
@@ -1845,6 +1778,7 @@ def make_ad_hoc_ontology(
     _root_terms: list[Reference] | None = None,
     _subsetdefs: list[tuple[Reference, str]] | None = None,
     _property_values: list[Annotation] | None = None,
+    _imports: list[str] | None = None,
     *,
     terms: list[Term] | None = None,
 ) -> Obo:
@@ -1862,6 +1796,7 @@ def make_ad_hoc_ontology(
         root_terms = _root_terms
         subsetdefs = _subsetdefs
         property_values = _property_values
+        imports = _imports
 
         def __post_init__(self):
             self.date = _date

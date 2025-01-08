@@ -31,6 +31,7 @@ LYSINE_DEHYDROGENASE_ACT = Reference(
 )
 RO_DUMMY = TypeDef(reference=Reference(prefix="RO", identifier="1234567"))
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
+ONTOLOGY_PREFIX = "GO"
 
 
 class Nope(Obo):
@@ -115,6 +116,46 @@ class TestTerm(unittest.TestCase):
         """Assert the lines are equal."""
         self.assertEqual(dedent(text).strip(), "\n".join(lines).strip())
 
+    def assert_obo_stanza(
+        self, text: str, term: Term, *, ontology_prefix: str = ONTOLOGY_PREFIX
+    ) -> None:
+        """Assert the typedef text."""
+        self.assert_lines(
+            text,
+            term.iterate_obo_lines(ontology_prefix=ontology_prefix, typedefs={}),
+        )
+
+    def assert_boolean_tag(self, name: str) -> None:
+        """Assert the boolean tag parses properly."""
+        reference = Reference(prefix="GO", identifier="0000001")
+        term = Term(reference=reference, **{name: True})
+        self.assert_obo_stanza(
+            f"""\
+            [Term]
+            id: GO:0000001
+            {name}: true
+            """,
+            term,
+        )
+        self.assertTrue(hasattr(term, name))
+        value = getattr(term, name)
+        self.assertIsNotNone(value)
+        self.assertTrue(value)
+
+        term = Term(reference=reference, **{name: False})
+        self.assert_obo_stanza(
+            f"""\
+            [Term]
+            id: GO:0000001
+            {name}: false
+            """,
+            term,
+        )
+        self.assertTrue(hasattr(term, name))
+        value = getattr(term, name)
+        self.assertIsNotNone(value)
+        self.assertFalse(value)
+
     def test_1_term_minimal(self) -> None:
         """Test emitting properties."""
         term = Term(
@@ -145,37 +186,7 @@ class TestTerm(unittest.TestCase):
 
     def test_2_is_anonymous(self) -> None:
         """Test the ``is_anonymous`` tag."""
-        term = Term(
-            reference=Reference(
-                prefix=LYSINE_DEHYDROGENASE_ACT.prefix,
-                identifier=LYSINE_DEHYDROGENASE_ACT.identifier,
-            ),
-            is_anonymous=True,
-        )
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            is_anonymous: true
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
-        )
-
-        term2 = Term(
-            reference=Reference(
-                prefix=LYSINE_DEHYDROGENASE_ACT.prefix,
-                identifier=LYSINE_DEHYDROGENASE_ACT.identifier,
-            ),
-            is_anonymous=False,
-        )
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            is_anonymous: false
-            """,
-            term2.iterate_obo_lines(ontology_prefix="go", typedefs={}),
-        )
+        self.assert_boolean_tag("is_anonymous")
 
     def test_3_term_with_name(self) -> None:
         """Test emitting properties."""
@@ -273,9 +284,19 @@ class TestTerm(unittest.TestCase):
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
-    def test_8(self) -> None:
-        """Test the XXX tag."""
-        raise NotImplementedError
+    def test_8_subset(self) -> None:
+        """Test the ``subset`` tag."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_subset(default_reference("go", "TESTSET"))
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            subset: TESTSET
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
 
     def test_9_append_synonym(self) -> None:
         """Test appending a synonym."""
@@ -432,33 +453,7 @@ class TestTerm(unittest.TestCase):
 
     def test_11_builtin(self) -> None:
         """Test the builting tag."""
-        term = Term(
-            reference=LYSINE_DEHYDROGENASE_ACT,
-            builtin=True,
-        )
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            builtin: true
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
-        )
-
-        term2 = Term(
-            reference=LYSINE_DEHYDROGENASE_ACT,
-            builtin=False,
-        )
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            builtin: false
-            """,
-            term2.iterate_obo_lines(ontology_prefix="go", typedefs={}),
-        )
+        self.assert_boolean_tag("builtin")
 
     def test_12_property_default_reference(self) -> None:
         """Test adding a replaced by."""
@@ -794,7 +789,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
 
         self.assertEqual(
             ["https://example.org/test"],
-            term.get_properties(see_also),
+            term.get_properties_as_str(see_also),
         )
 
     def test_18_see_also_double(self) -> None:
@@ -811,8 +806,8 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            property_value: rdfs:seeAlso hgnc:1234 ! see also dummy 1
-            property_value: rdfs:seeAlso hgnc:1235 ! see also dummy 2
+            consider: hgnc:1234 ! dummy 1
+            consider: hgnc:1235 ! dummy 2
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
@@ -822,7 +817,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
                 Reference(prefix="hgnc", identifier="1234", name="dummy 1").curie,
                 Reference(prefix="hgnc", identifier="1235", name="dummy 2").curie,
             ],
-            term.get_properties(see_also),
+            term.get_properties_as_str(see_also),
         )
 
         self.assertIsNone(term.get_relationship(exact_match))
@@ -836,27 +831,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
 
     def test_21_obsolete(self) -> None:
         """Test obsolete definition."""
-        term = Term(LYSINE_DEHYDROGENASE_ACT, is_obsolete=True)
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            is_obsolete: true
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
-        )
-
-        term = Term(LYSINE_DEHYDROGENASE_ACT, is_obsolete=False)
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            is_obsolete: false
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
-        )
+        self.assert_boolean_tag("is_obsolete")
 
     def test_22_replaced_by(self) -> None:
         """Test adding a replaced by."""
@@ -867,7 +842,6 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            property_value: IAO:0100001 GO:1234569 ! term replaced by dummy
             replaced_by: GO:1234569 ! dummy
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),

@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Iterable, Mapping, Sequence
-from typing import NamedTuple, TypeAlias
+from typing import TYPE_CHECKING, NamedTuple, TypeAlias
 
 import curies
+from curies.vocabulary import SynonymScope
 from typing_extensions import Self
 
 from . import vocabulary as v
@@ -17,6 +19,9 @@ from .reference import (
     multi_reference_escape,
     reference_escape,
 )
+
+if TYPE_CHECKING:
+    from pyobo.struct.struct import Synonym
 
 __all__ = [
     "AxiomsHint",
@@ -50,13 +55,15 @@ def _property_resolve(
 PropertiesHint: TypeAlias = dict[Reference, list[Reference | OBOLiteral]]
 RelationsHint: TypeAlias = dict[Reference, list[Reference]]
 AxiomsHint: TypeAlias = dict[Annotation, list[Annotation]]
-IntersectionOfHint: TypeAlias = list[Reference | Annotation]
+# note that an intersection is not valid in ROBOT with a literal, even though this _might_ make sense.
+IntersectionOfHint: TypeAlias = list[Reference | tuple[Reference, Reference]]
 UnionOfHint: TypeAlias = list[Reference]
 
 
 class Stanza:
     """A high-level class for stanzas."""
 
+    reference: Reference
     relationships: RelationsHint
     properties: PropertiesHint
     xrefs: list[Reference]
@@ -65,6 +72,11 @@ class Stanza:
     intersection_of: IntersectionOfHint
     equivalent_to: list[Reference]
     union_of: UnionOfHint
+    subsets: list[Reference]
+    disjoint_from: list[Reference]
+    synonyms: list[Synonym]
+    alt_ids: list[Reference]
+
     _axioms: AxiomsHint
 
     def append_relationship(
@@ -147,15 +159,18 @@ class Stanza:
         return self
 
     def append_intersection_of(
-        self, /, reference: ReferenceHint | Annotation, r2: ReferenceHint | None = None
+        self,
+        /,
+        reference: ReferenceHint | tuple[ReferenceHint, ReferenceHint],
+        r2: ReferenceHint | None = None,
     ) -> Self:
         """Append an intersection of."""
         if r2 is not None:
-            if isinstance(reference, Annotation):
+            if isinstance(reference, tuple):
                 raise TypeError
-            self.intersection_of.append(Annotation(_ensure_ref(reference), _ensure_ref(r2)))
-        elif isinstance(reference, Annotation):
-            self.intersection_of.append(reference)
+            self.intersection_of.append((_ensure_ref(reference), _ensure_ref(r2)))
+        elif isinstance(reference, tuple):
+            self.intersection_of.append((_ensure_ref(reference[0]), _ensure_ref(reference[1])))
         else:
             self.intersection_of.append(_ensure_ref(reference))
         return self
@@ -177,7 +192,7 @@ class Stanza:
                     end = reference_escape(
                         element, ontology_prefix=ontology_prefix, add_name_comment=True
                     )
-                case Annotation(predicate, object):
+                case (predicate, object):
                     match object:
                         case Reference():
                             end = multi_reference_escape(
@@ -248,7 +263,12 @@ class Stanza:
             prop, str(int(value)), Reference(prefix="xsd", identifier="gYear")
         )
 
-    def _iterate_obo_properties(self, *, ontology_prefix: str) -> Iterable[str]:
+    def _iterate_obo_properties(
+        self, *, ontology_prefix: str, skip_predicates: Iterable[Reference] | None = None
+    ) -> Iterable[str]:
+        if skip_predicates:
+            # set for faster membership testing
+            skip_predicates = set(skip_predicates)
         for line in _iterate_obo_relations(
             # the type checker seems to be a bit confused, this is an okay typing since we're
             # passing a more explicit version. The issue is that list is used for the typing,
@@ -256,6 +276,7 @@ class Stanza:
             self.properties,  # type:ignore
             self._axioms,
             ontology_prefix=ontology_prefix,
+            skip_predicate_objects=skip_predicates,
         ):
             yield f"property_value: {line}"
 
@@ -269,6 +290,105 @@ class Stanza:
             ontology_prefix=ontology_prefix,
         ):
             yield f"relationship: {line}"
+
+    def append_subset(self, subset: ReferenceHint) -> Self:
+        """Add a subset."""
+        self.subsets.append(_ensure_ref(subset))
+        return self
+
+    def append_disjoint_from(self, reference: ReferenceHint) -> Self:
+        """Add a disjoint from."""
+        self.disjoint_from.append(_ensure_ref(reference))
+        return self
+
+    def annotate_object(
+        self,
+        typedef: ReferenceHint,
+        value: ReferenceHint,
+        *,
+        axioms: Iterable[Annotation] | None = None,
+    ) -> Self:
+        """Append an object annotation."""
+        typedef = _ensure_ref(typedef)
+        value = _ensure_ref(value)
+        self.properties[typedef].append(value)
+        self._annotate_axioms(typedef, value, axioms)
+        return self
+
+    def get_replaced_by(self) -> list[Reference]:
+        """Get all replaced by."""
+        return self.iterate_property_targets_references(v.term_replaced_by)
+
+    def append_replaced_by(self, reference: Reference) -> Self:
+        """Add a replaced by property."""
+        return self.annotate_object(v.term_replaced_by, reference)
+
+    def iterate_relations(self) -> Iterable[tuple[Reference, Reference]]:
+        """Iterate over pairs of typedefs and targets."""
+        for typedef, targets in sorted(self.relationships.items()):
+            for target in sorted(targets):
+                yield typedef, target
+
+    def iterate_relation_targets(self, typedef: ReferenceHint) -> list[Reference]:
+        """Iterate over pairs of typedefs and targets."""
+        return sorted(self.relationships.get(_ensure_ref(typedef), []))
+
+    def iterate_properties(self) -> Iterable[Annotation]:
+        """Iterate over pairs of property and values."""
+        for prop, values in sorted(self.properties.items()):
+            for value in values:
+                yield Annotation(prop, value)
+
+    def iterate_property_targets(self, typedef: ReferenceHint) -> list[Reference | OBOLiteral]:
+        """Iterate over references or values."""
+        return sorted(self.properties.get(_ensure_ref(typedef), []))
+
+    def iterate_property_targets_references(self, typedef: ReferenceHint) -> list[Reference]:
+        """Iterate over references or values."""
+        return [f for f in self.iterate_property_targets(typedef) if isinstance(f, Reference)]
+
+    def append_synonym(
+        self,
+        synonym: str | Synonym,
+        *,
+        type: Reference | Referenced | None = None,
+        specificity: SynonymScope | None = None,
+        provenance: list[Reference] | None = None,
+    ) -> None:
+        """Add a synonym."""
+        if isinstance(type, Referenced):
+            type = type.reference
+        if isinstance(synonym, str):
+            # FIXME resolve circular dep
+            from pyobo.struct.struct import Synonym
+
+            synonym = Synonym(
+                synonym,
+                type=type,
+                specificity=specificity,
+                provenance=provenance or [],
+            )
+        self.synonyms.append(synonym)
+
+    def append_alt(self, alt: str | Reference) -> None:
+        """Add an alternative identifier."""
+        if isinstance(alt, str):
+            warnings.warn(
+                "use fully qualified reference when appending alts",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            alt = Reference(prefix=self.reference.prefix, identifier=alt)
+        self.alt_ids.append(alt)
+
+    def append_see_also(self, reference: ReferenceHint) -> Self:
+        """Add a see also property."""
+        _reference = _ensure_ref(reference)
+        return self.annotate_object(v.see_also, _reference)
+
+    def append_comment(self, value: str) -> Self:
+        """Add a comment property."""
+        return self.annotate_literal(v.comment, value)
 
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
@@ -295,9 +415,19 @@ def _ensure_ref(
     return _rv
 
 
-def _chain_tag(tag: str, chain: list[Reference] | None, ontology_prefix: str) -> Iterable[str]:
-    if chain:
+def _chain_tag(
+    tag: str, chains: list[list[Reference]] | None, ontology_prefix: str
+) -> Iterable[str]:
+    for chain in chains or []:
         yield f"{tag}: {multi_reference_escape(chain, ontology_prefix=ontology_prefix, add_name_comment=True)}"
+
+
+def _tag_property_targets(
+    tag: str, stanza: Stanza, prod: ReferenceHint, *, ontology_prefix: str
+) -> Iterable[str]:
+    for x in stanza.iterate_property_targets(_ensure_ref(prod)):
+        if isinstance(x, Reference):
+            yield f"{tag}: {reference_escape(x, ontology_prefix=ontology_prefix, add_name_comment=True)}"
 
 
 def _iterate_obo_relations(
@@ -305,8 +435,13 @@ def _iterate_obo_relations(
     annotations: AxiomsHint,
     *,
     ontology_prefix: str,
+    skip_predicate_objects: Iterable[Reference] | None = None,
 ) -> Iterable[str]:
     """Iterate over relations/property values for OBO."""
+    if skip_predicate_objects is None:
+        skip_predicate_objects = set()
+    else:
+        skip_predicate_objects = set(skip_predicate_objects)
     for predicate, values in relations.items():
         # TODO typedef warning: ``_typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)``
         pc = reference_escape(predicate, ontology_prefix=ontology_prefix)
@@ -318,6 +453,10 @@ def _iterate_obo_relations(
                     end = f'"{dd}" {datatype.preferred_curie}'
                     name = None
                 case curies.Reference():  # it's a reference
+                    if predicate in skip_predicate_objects:
+                        # this allows us to special case out iterating over
+                        # ones that are configured with their own tags
+                        continue
                     end = reference_escape(value, ontology_prefix=ontology_prefix)
                     name = value.name
                 case _:
