@@ -78,7 +78,6 @@ class Stanza:
     subsets: list[Reference]
     disjoint_from: list[Reference]
     synonyms: list[Synonym]
-    alt_ids: list[Reference]
 
     _axioms: AxiomsHint
 
@@ -384,7 +383,7 @@ class Stanza:
         type: Reference | Referenced | None = None,
         specificity: SynonymScope | None = None,
         provenance: list[Reference] | None = None,
-    ) -> None:
+    ) -> Self:
         """Add a synonym."""
         if isinstance(type, Referenced):
             type = type.reference
@@ -398,11 +397,11 @@ class Stanza:
                 provenance=provenance or [],
             )
         self.synonyms.append(synonym)
+        return self
 
     def append_alt(self, alt: Reference) -> Self:
         """Add an alternative identifier."""
-        self.alt_ids.append(alt)
-        return self
+        return self.annotate_object(v.alternative_term, alt)
 
     def append_see_also(self, reference: ReferenceHint) -> Self:
         """Add a see also property."""
@@ -412,6 +411,11 @@ class Stanza:
     def append_comment(self, value: str) -> Self:
         """Add a comment property."""
         return self.annotate_literal(v.comment, value)
+
+    @property
+    def alt_ids(self) -> Sequence[Reference]:
+        """Get alternative terms."""
+        return tuple(self.get_property_objects(v.alternative_term))
 
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str

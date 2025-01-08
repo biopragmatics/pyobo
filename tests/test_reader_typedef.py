@@ -102,7 +102,7 @@ class TestReaderTypedef(unittest.TestCase):
         typedef = self.get_only_typedef(ontology)
         self.assertEqual(
             [Reference(prefix="RO", identifier="2")],
-            typedef.alt_ids,
+            list(typedef.alt_ids),
         )
 
     def test_7_comment(self) -> None:
