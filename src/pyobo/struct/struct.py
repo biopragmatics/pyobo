@@ -264,7 +264,8 @@ class Term(Referenced, Stanza):
     #: Synonyms of this term
     synonyms: list[Synonym] = field(default_factory=list)
 
-    #: Equivalent references
+    #: Database cross-references, see :func:`get_mappings` for
+    #: access to all mappings in an SSSOM-like interface
     xrefs: list[Reference] = field(default_factory=list)
 
     #: Alternate Identifiers
