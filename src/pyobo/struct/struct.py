@@ -514,6 +514,7 @@ class Term(Referenced, Stanza):
             yield from self._iterate_obo_properties(
                 ontology_prefix=ontology_prefix,
                 skip_predicates=[term_replaced_by.reference, see_also.reference],
+                typedefs=typedefs,
             )
         # 13
         parent_tag = "is_a" if self.type == "Term" else "instance_of"
@@ -532,7 +533,9 @@ class Term(Referenced, Stanza):
         )
         # 18
         if emit_object_properties:
-            yield from self._iterate_obo_relations(ontology_prefix=ontology_prefix)
+            yield from self._iterate_obo_relations(
+                ontology_prefix=ontology_prefix, typedefs=typedefs
+            )
         # 19 TODO created_by
         # 20 TODO creation_date
         # 21
@@ -553,30 +556,6 @@ class Term(Referenced, Stanza):
         return reference_escape(
             predicate, ontology_prefix=ontology_prefix, add_name_comment=add_name_comment
         )
-
-
-#: A set of warnings, used to make sure we don't show the same one over and over
-_TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
-
-
-def _typedef_warn(
-    prefix: str, predicate: Reference, typedefs: Mapping[ReferenceTuple, TypeDef]
-) -> None:
-    if predicate.pair in default_typedefs or predicate.pair in typedefs:
-        return None
-    key = prefix, predicate
-    if key not in _TYPEDEF_WARNINGS:
-        _TYPEDEF_WARNINGS.add(key)
-        if predicate.prefix == "obo":
-            # Throw our hands up in the air. By using `obo` as the prefix,
-            # we already threw using "real" definitions out the window
-            logger.warning(
-                f"[{prefix}] predicate with OBO prefix not defined: {predicate.curie}."
-                f"\n\tThis might be because you used an unqualified prefix in an OBO file, "
-                f"which automatically gets an OBO prefix."
-            )
-        else:
-            logger.warning(f"[{prefix}] typedef not defined: {predicate.curie}")
 
 
 #: A set of warnings, used to make sure we don't show the same one over and over
@@ -874,15 +853,18 @@ class Obo:
         # 18 (secret)
         yield from self._iterate_properties()
 
+        typedefs = self._index_typedefs()
+        synonym_typedefs = self._index_synonym_typedefs()
+
         # PROPERTIES
         for typedef in sorted(self.typedefs or []):
             yield from typedef.iterate_obo_lines(
                 ontology_prefix=self.ontology,
+                typedefs=typedefs,
+                synonym_typedefs=synonym_typedefs,
             )
 
         # TERMS AND INSTANCES
-        typedefs = self._index_typedefs()
-        synonym_typedefs = self._index_synonym_typedefs()
         for term in self:
             yield from term.iterate_obo_lines(
                 ontology_prefix=self.ontology,
@@ -1220,7 +1202,7 @@ class Obo:
         nodes = {}
         #: a list of 3-tuples u,v,k
         links = []
-        self._index_typedefs()
+        typedefs = self._index_typedefs()
         synonym_typedefs = self._index_synonym_typedefs()
         for term in self._iter_terms(use_tqdm=use_tqdm):
             parents = []
@@ -1251,7 +1233,9 @@ class Obo:
                     synonym._fp(ontology_prefix=self.ontology, synonym_typedefs=synonym_typedefs)
                     for synonym in term.synonyms
                 ],
-                "property_value": list(term._iterate_obo_properties(ontology_prefix=self.ontology)),
+                "property_value": list(
+                    term._iterate_obo_properties(ontology_prefix=self.ontology, typedefs=typedefs)
+                ),
             }
             nodes[term.curie] = {k: v for k, v in d.items() if v}
 

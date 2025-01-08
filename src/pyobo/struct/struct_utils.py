@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, NamedTuple, TypeAlias
 
 import curies
+from curies import ReferenceTuple
 from curies.vocabulary import SynonymScope
 from typing_extensions import Self
 
@@ -20,13 +22,15 @@ from .reference import (
 )
 
 if TYPE_CHECKING:
-    from pyobo.struct.struct import Synonym
+    from pyobo.struct.struct import Synonym, TypeDef
 
 __all__ = [
     "AxiomsHint",
     "ReferenceHint",
     "Stanza",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 class Annotation(NamedTuple):
@@ -263,7 +267,11 @@ class Stanza:
         )
 
     def _iterate_obo_properties(
-        self, *, ontology_prefix: str, skip_predicates: Iterable[Reference] | None = None
+        self,
+        *,
+        ontology_prefix: str,
+        skip_predicates: Iterable[Reference] | None = None,
+        typedefs: Mapping[ReferenceTuple, TypeDef],
     ) -> Iterable[str]:
         if skip_predicates:
             # set for faster membership testing
@@ -276,10 +284,13 @@ class Stanza:
             self._axioms,
             ontology_prefix=ontology_prefix,
             skip_predicate_objects=skip_predicates,
+            typedefs=typedefs,
         ):
             yield f"property_value: {line}"
 
-    def _iterate_obo_relations(self, *, ontology_prefix: str) -> Iterable[str]:
+    def _iterate_obo_relations(
+        self, *, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
+    ) -> Iterable[str]:
         for line in _iterate_obo_relations(
             # the type checker seems to be a bit confused, this is an okay typing since we're
             # passing a more explicit version. The issue is that list is used for the typing,
@@ -287,6 +298,7 @@ class Stanza:
             self.relationships,  # type:ignore
             self._axioms,
             ontology_prefix=ontology_prefix,
+            typedefs=typedefs,
         ):
             yield f"relationship: {line}"
 
@@ -447,6 +459,7 @@ def _iterate_obo_relations(
     *,
     ontology_prefix: str,
     skip_predicate_objects: Iterable[Reference] | None = None,
+    typedefs: Mapping[ReferenceTuple, TypeDef],
 ) -> Iterable[str]:
     """Iterate over relations/property values for OBO."""
     if skip_predicate_objects is None:
@@ -454,7 +467,7 @@ def _iterate_obo_relations(
     else:
         skip_predicate_objects = set(skip_predicate_objects)
     for predicate, values in relations.items():
-        # TODO typedef warning: ``_typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)``
+        _typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)
         pc = reference_escape(predicate, ontology_prefix=ontology_prefix)
         start = f"{pc} "
         for value in values:
@@ -513,3 +526,29 @@ def _format_obo_trailing_modifiers(
         modifiers.append((left, right))
     inner = ", ".join(f"{key}={value}" for key, value in sorted(modifiers))
     return " {" + inner + "}"
+
+
+#: A set of warnings, used to make sure we don't show the same one over and over
+_TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
+
+
+def _typedef_warn(
+    prefix: str, predicate: Reference, typedefs: Mapping[ReferenceTuple, TypeDef]
+) -> None:
+    from pyobo.struct.typedef import default_typedefs
+
+    if predicate.pair in default_typedefs or predicate.pair in typedefs:
+        return None
+    key = prefix, predicate
+    if key not in _TYPEDEF_WARNINGS:
+        _TYPEDEF_WARNINGS.add(key)
+        if predicate.prefix == "obo":
+            # Throw our hands up in the air. By using `obo` as the prefix,
+            # we already threw using "real" definitions out the window
+            logger.warning(
+                f"[{prefix}] predicate with OBO prefix not defined: {predicate.curie}."
+                f"\n\tThis might be because you used an unqualified prefix in an OBO file, "
+                f"which automatically gets an OBO prefix."
+            )
+        else:
+            logger.warning(f"[{prefix}] typedef not defined: {predicate.curie}")

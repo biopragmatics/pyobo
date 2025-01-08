@@ -155,6 +155,7 @@ class TypeDef(Referenced, Stanza):
         self,
         ontology_prefix: str,
         synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] | None = None,
+        typedefs: Mapping[ReferenceTuple, TypeDef] | None = None,
     ) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file.
 
@@ -209,6 +210,11 @@ class TypeDef(Referenced, Stanza):
         40. is_metadata_tag
         41. is_class_level
         """
+        if synonym_typedefs is None:
+            synonym_typedefs = {}
+        if typedefs is None:
+            typedefs = {}
+
         yield "\n[Typedef]"
         # 1
         yield f"id: {reference_escape(self.reference, ontology_prefix=ontology_prefix)}"
@@ -239,6 +245,7 @@ class TypeDef(Referenced, Stanza):
         yield from self._iterate_obo_properties(
             ontology_prefix=ontology_prefix,
             skip_predicates={term_replaced_by.reference, see_also.reference},
+            typedefs=typedefs,
         )
         # 12
         if self.domain:
@@ -286,7 +293,7 @@ class TypeDef(Referenced, Stanza):
             "disjoint_over", self.disjoint_over, ontology_prefix=ontology_prefix
         )
         # 32
-        yield from self._iterate_obo_relations(ontology_prefix=ontology_prefix)
+        yield from self._iterate_obo_relations(ontology_prefix=ontology_prefix, typedefs=typedefs)
         # 33
         yield from _boolean_tag("is_obsolete", self.is_obsolete)
         # 34
