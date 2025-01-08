@@ -175,7 +175,7 @@ class TestReaderTerm(unittest.TestCase):
                 Reference(prefix="CHEBI", identifier="1"),
                 Reference(prefix="CHEBI", identifier="2"),
             ],
-            term.alt_ids,
+            list(term.alt_ids),
         )
 
     def test_6_definition_missing_start_quote(self) -> None:

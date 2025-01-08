@@ -25,7 +25,7 @@ import pandas as pd
 from curies import ReferenceTuple
 from curies import vocabulary as v
 from more_click import force_option, verbose_option
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from tqdm.auto import tqdm
 from typing_extensions import Self
 
@@ -228,10 +228,9 @@ class MappingContext(BaseModel):
     contributor: Reference | None = None
     confidence: float | None = None
 
-    class Config:
-        """Configuration for mapping context model."""
-
-        frozen = True  # Makes the model immutable and hashable
+    model_config = ConfigDict(
+        frozen=True,  # Makes the model immutable and hashable
+    )
 
 
 @dataclass
