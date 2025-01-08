@@ -49,11 +49,6 @@ class AntibodyRegistryGetter(Obo):
         return iter_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo(*, force: bool = False) -> Obo:
-    """Get the Antibody Registry as OBO."""
-    return AntibodyRegistryGetter(force=force)
-
-
 # TODO there are tonnnnsss of mappings to be curated
 MAPPING: Mapping[str, str | None] = {
     "AMERICAN DIAGNOSTICA": None,  # No website
