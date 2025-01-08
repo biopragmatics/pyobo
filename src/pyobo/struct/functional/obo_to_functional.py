@@ -15,7 +15,7 @@ from pyobo.struct.functional import macros as m
 from pyobo.struct.functional.ontology import Document, Ontology
 from pyobo.struct.functional.utils import DEFAULT_PREFIX_MAP
 from pyobo.struct.reference import OBOLiteral, Reference
-from pyobo.struct.vocabulary import has_ontology_root_term, has_dbxref
+from pyobo.struct.vocabulary import has_dbxref, has_ontology_root_term
 
 if TYPE_CHECKING:
     from pyobo.struct.struct import Obo, Term
@@ -145,7 +145,9 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
     # 10
     # TODO add annotations for the following
     for xref in term.xrefs:
-        yield m.XrefMacro(s, xref.preferred_curie, annotations=_get_annotations(term, has_dbxref, xref))
+        yield m.XrefMacro(
+            s, xref.preferred_curie, annotations=_get_annotations(term, has_dbxref, xref)
+        )
     # 11
     if term.builtin is not None:
         yield m.IsOBOBuiltinMacro(s, term.builtin)
@@ -182,7 +184,12 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
         yield f.DisjointClasses(x, s)
     # 18
     for typedef, value in term.iterate_relations():
-        yield m.RelationshipMacro(s=s, p=typedef.preferred_curie, o=value.preferred_curie, annotations=_get_annotations(term, typedef, value))
+        yield m.RelationshipMacro(
+            s=s,
+            p=typedef.preferred_curie,
+            o=value.preferred_curie,
+            annotations=_get_annotations(term, typedef, value),
+        )
     # 19 TODO created_by
     # 20 TODO creation_date
     # 21
