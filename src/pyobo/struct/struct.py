@@ -52,9 +52,11 @@ from .struct_utils import (
 )
 from .typedef import (
     TypeDef,
+    alternative_term,
     comment,
     default_typedefs,
     exact_match,
+    extended_match_typedefs,
     from_species,
     has_contributor,
     has_dbxref,
@@ -66,7 +68,6 @@ from .typedef import (
     is_a,
     mapping_has_confidence,
     mapping_has_justification,
-    match_typedefs,
     orthologous,
     part_of,
     see_also,
@@ -268,9 +269,6 @@ class Term(Referenced, Stanza):
     #: access to all mappings in an SSSOM-like interface
     xrefs: list[Reference] = field(default_factory=list)
 
-    #: Alternate Identifiers
-    alt_ids: list[Reference] = field(default_factory=list)
-
     #: The sub-namespace within the ontology
     namespace: str | None = None
 
@@ -367,7 +365,7 @@ class Term(Referenced, Stanza):
     ) -> list[tuple[Reference, Reference]] | list[tuple[Reference, Reference, MappingContext]]:
         """Get mappings with preferred curies."""
         rows = []
-        for predicate in match_typedefs:
+        for predicate in extended_match_typedefs:
             for xref_reference in chain(
                 self.get_property_objects(predicate), self.get_relationships(predicate)
             ):
@@ -512,7 +510,11 @@ class Term(Referenced, Stanza):
         if emit_annotation_properties:
             yield from self._iterate_obo_properties(
                 ontology_prefix=ontology_prefix,
-                skip_predicates=[term_replaced_by.reference, see_also.reference],
+                skip_predicates=[
+                    term_replaced_by.reference,
+                    see_also.reference,
+                    alternative_term.reference,
+                ],
                 typedefs=typedefs,
             )
         # 13

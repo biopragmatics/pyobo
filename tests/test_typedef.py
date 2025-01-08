@@ -144,13 +144,9 @@ class TestTypeDef(unittest.TestCase):
 
     def test_5_alt_id(self) -> None:
         """Test the ``alt_id`` tag."""
-        typedef = TypeDef(
-            reference=REF,
-            alt_ids=[
-                Reference(prefix="RO", identifier="1234567"),
-                Reference(prefix="RO", identifier="1234568", name="test"),
-            ],
-        )
+        typedef = TypeDef(reference=REF)
+        typedef.append_alt(Reference(prefix="RO", identifier="1234567"))
+        typedef.append_alt(Reference(prefix="RO", identifier="1234568", name="test"))
         self.assert_obo_stanza(
             """\
             [Typedef]

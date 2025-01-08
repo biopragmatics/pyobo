@@ -94,7 +94,7 @@ class TypeDef(Referenced, Stanza):
     is_anonymous: Annotated[bool | None, 2] = None
     # 3 - name is covered by reference
     namespace: Annotated[str | None, 4] = None
-    alt_ids: Annotated[list[Reference], 5] = field(default_factory=list)
+    # 5 alt_id is part of proerties
     definition: Annotated[str | None, 6] = None
     comment: Annotated[str | None, 7] = None
     subsets: Annotated[list[Reference], 8] = field(default_factory=list)
@@ -244,7 +244,11 @@ class TypeDef(Referenced, Stanza):
         # 11
         yield from self._iterate_obo_properties(
             ontology_prefix=ontology_prefix,
-            skip_predicates={term_replaced_by.reference, see_also.reference},
+            skip_predicates={
+                term_replaced_by.reference,
+                see_also.reference,
+                alternative_term.reference,
+            },
             typedefs=typedefs,
         )
         # 12
@@ -510,7 +514,7 @@ example_of_usage = TypeDef(
     is_metadata_tag=True,
 )
 alternative_term = TypeDef(
-    reference=Reference(prefix=IAO_PREFIX, identifier="0000118", name="alternative term"),
+    reference=v.alternative_term,
     is_metadata_tag=True,
 )
 has_ontology_root_term = TypeDef(
@@ -653,4 +657,11 @@ match_typedefs: Sequence[TypeDef] = (
     equivalent_property,
     has_dbxref,
     see_also,
+)
+
+# Extension past the SSSOM spec
+extended_match_typedefs = (
+    *match_typedefs,
+    alternative_term,
+    term_replaced_by,
 )
