@@ -54,11 +54,6 @@ class MeSHGetter(Obo):
         return get_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get MeSH as OBO."""
-    return MeSHGetter(force=force)
-
-
 def get_tree_to_mesh_id(version: str) -> Mapping[str, str]:
     """Get a mapping from MeSH tree numbers to their MeSH identifiers."""
 
@@ -357,4 +352,4 @@ def get_mesh_category_curies(
 
 
 if __name__ == "__main__":
-    get_obo(force=True).write_default(force=True, write_obo=True)
+    MeSHGetter.cli()

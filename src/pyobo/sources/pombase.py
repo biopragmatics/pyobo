@@ -36,11 +36,6 @@ class PomBaseGetter(Obo):
         return get_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get OBO."""
-    return PomBaseGetter(force=force)
-
-
 #: A mapping from PomBase gene type to sequence ontology terms
 POMBASE_TO_SO = {
     # None: "0000704",  # gene,

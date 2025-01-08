@@ -45,11 +45,6 @@ class MSigDBGetter(Obo):
         return iter_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get MSIG as Obo."""
-    return MSigDBGetter(force=force)
-
-
 _SPECIES = {
     "Homo sapiens": "9606",
     "Mus musculus": "10090",
@@ -168,4 +163,4 @@ def _get_definition(attrib) -> str | None:
 
 
 if __name__ == "__main__":
-    MSigDBGetter().write_default(force=True, write_obo=True)
+    MSigDBGetter.cli()

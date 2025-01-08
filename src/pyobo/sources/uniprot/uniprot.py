@@ -65,11 +65,6 @@ class UniProtGetter(Obo):
         yield from iter_terms(version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get UniProt as OBO."""
-    return UniProtGetter(force=force)
-
-
 def iter_terms(version: str | None = None) -> Iterable[Term]:
     """Iterate over UniProt Terms."""
     with open_reader(ensure(version=version)) as reader:

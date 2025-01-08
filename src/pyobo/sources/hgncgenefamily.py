@@ -42,11 +42,6 @@ class HGNCGroupGetter(Obo):
         return get_terms(force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get HGNC Gene Groups as OBO."""
-    return HGNCGroupGetter(force=force)
-
-
 def get_hierarchy(force: bool = False) -> Mapping[str, list[str]]:
     """Get the HGNC Gene Families hierarchy as a dictionary."""
     path = ensure_path(PREFIX, url=HIERARCHY_URL, force=force)

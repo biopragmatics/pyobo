@@ -154,4 +154,4 @@ def _parse_name(part: str) -> tuple[str, str] | None:
 
 
 if __name__ == "__main__":
-    GTDBGetter().write_default(write_obo=True, force=True, use_tqdm=True)
+    GTDBGetter().cli()

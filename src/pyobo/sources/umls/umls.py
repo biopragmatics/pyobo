@@ -60,11 +60,6 @@ class UMLSGetter(Obo):
         return iter_terms(version=self._version_or_raise)
 
 
-def get_obo() -> Obo:
-    """Get UMLS as OBO."""
-    return UMLSGetter()
-
-
 def get_semantic_types() -> Mapping[str, set[str]]:
     """Get UMLS semantic types for each term."""
     dd = defaultdict(set)

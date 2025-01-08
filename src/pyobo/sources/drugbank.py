@@ -40,11 +40,6 @@ class DrugBankGetter(Obo):
         return iter_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get DrugBank as OBO."""
-    return DrugBankGetter(force=force)
-
-
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over DrugBank terms in OBO."""
     for drug_info in iterate_drug_info(version, force=force):

@@ -33,11 +33,6 @@ class FamPlexGetter(Obo):
         return get_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get FamPlex as OBO."""
-    return FamPlexGetter(force=force)
-
-
 def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get the FamPlex terms."""
     base_url = f"https://raw.githubusercontent.com/sorgerlab/famplex/{version}"

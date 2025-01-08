@@ -229,4 +229,4 @@ def get_ror_to_country_geonames(**kwargs: Any) -> dict[str, str]:
 
 
 if __name__ == "__main__":
-    RORGetter(force=True).write_default(write_obo=True, force=True)
+    RORGetter.cli()

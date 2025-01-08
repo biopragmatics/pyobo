@@ -38,11 +38,6 @@ class ReactomeGetter(Obo):
         return iter_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get Reactome OBO."""
-    return ReactomeGetter(force=force)
-
-
 def ensure_participant_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get the pathway uniprot participant dataframe."""
     uniprot_pathway_url = f"https://reactome.org/download/{version}/UniProt2Reactome_All_Levels.txt"

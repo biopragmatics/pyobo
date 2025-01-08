@@ -80,11 +80,6 @@ class RGDGetter(Obo):
         return get_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get RGD as OBO."""
-    return RGDGetter(force=force)
-
-
 namespace_to_column = [
     ("ensembl", "ENSEMBL_ID"),
     ("uniprot", "UNIPROT_ID"),

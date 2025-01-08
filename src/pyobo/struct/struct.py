@@ -1153,9 +1153,9 @@ class Obo:
 
         .. code-block:: python
 
-            from pyobo import get_obo
+            from pyobo import get_ontology
 
-            obo = get_obo("go")
+            obo = get_ontology("go")
 
             interleukin_10_complex = "1905571"  # interleukin-10 receptor complex
             all_complexes = "0032991"
@@ -1171,9 +1171,9 @@ class Obo:
 
         .. code-block:: python
 
-            from pyobo import get_obo
+            from pyobo import get_ontology
 
-            obo = get_obo("go")
+            obo = get_ontology("go")
 
             identifier = "1905571"  # interleukin-10 receptor complex
             is_complex = "0032991" in nx.descendants(obo.hierarchy, identifier)  # should be true
@@ -1535,8 +1535,8 @@ class Obo:
 
          Example usage: get homology between HGNC and MGI:
 
-        >>> from pyobo.sources.hgnc import get_obo
-        >>> obo = get_obo()
+        >>> from pyobo.sources.hgnc import HGNCGetter
+        >>> obo = HGNCGetter()
         >>> human_mapt_hgnc_id = "6893"
         >>> mouse_mapt_mgi_id = "97180"
         >>> hgnc_mgi_orthology_mapping = obo.get_relation_mapping("ro:HOM0000017", "mgi")
@@ -1561,8 +1561,8 @@ class Obo:
     ) -> str | None:
         """Get the value for a bijective relation mapping between this resource and a target resource.
 
-        >>> from pyobo.sources.hgnc import get_obo
-        >>> obo = get_obo()
+        >>> from pyobo.sources.hgnc import HGNCGetter
+        >>> obo = HGNCGetter()
         >>> human_mapt_hgnc_id = "6893"
         >>> mouse_mapt_mgi_id = "97180"
         >>> assert mouse_mapt_mgi_id == obo.get_relation(human_mapt_hgnc_id, "ro:HOM0000017", "mgi")

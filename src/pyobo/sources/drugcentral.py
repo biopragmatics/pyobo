@@ -39,11 +39,6 @@ class DrugCentralGetter(Obo):
         return iter_terms()
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get DrugCentral OBO."""
-    return DrugCentralGetter(force=force)
-
-
 def iter_terms() -> Iterable[Term]:
     """Iterate over DrugCentral terms."""
     with closing(psycopg2.connect(**PARAMS)) as conn:

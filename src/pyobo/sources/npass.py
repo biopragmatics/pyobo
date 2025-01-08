@@ -32,11 +32,6 @@ class NPASSGetter(Obo):
         return iter_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get NPASS as OBO."""
-    return NPASSGetter()
-
-
 def get_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get the NPASS chemical nomenclature."""
     base_url = f"https://bidd.group/NPASS/downloadFiles/NPASSv{version}_download"

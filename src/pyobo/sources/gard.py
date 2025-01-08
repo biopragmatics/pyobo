@@ -57,4 +57,4 @@ def get_terms() -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    GARDGetter().write_default(write_obo=True, write_owl=True, force=True)
+    GARDGetter().cli()
