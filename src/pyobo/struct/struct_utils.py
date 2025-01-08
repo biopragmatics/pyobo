@@ -377,7 +377,6 @@ class Stanza:
         if isinstance(type, Referenced):
             type = type.reference
         if isinstance(synonym, str):
-            # FIXME resolve circular dep
             from pyobo.struct.struct import Synonym
 
             synonym = Synonym(

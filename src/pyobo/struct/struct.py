@@ -862,10 +862,12 @@ class Obo:
             if _yv_name := bioregistry.get_name(prefix):
                 yv += f' "{_yv_name}"'
             yield yv
-        # 12 TODO treat-xrefs-as-equivalent
-        # 13 TODO treat-xrefs-as-genus-differentia
-        # 14 TODO treat-xrefs-as-relationship
-        # 15 TODO treat-xrefs-as-is_a
+        # 12-15 are handled only during reading, and
+        # PyOBO unmacros things before outputting
+        # 12 treat-xrefs-as-equivalent
+        # 13 treat-xrefs-as-genus-differentia
+        # 14 treat-xrefs-as-relationship
+        # 15 treat-xrefs-as-is_a
         # 16 TODO remark
         # 17
         yield f"ontology: {self.ontology}"
