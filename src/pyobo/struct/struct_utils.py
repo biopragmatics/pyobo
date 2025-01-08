@@ -370,16 +370,10 @@ class Stanza:
             )
         self.synonyms.append(synonym)
 
-    def append_alt(self, alt: str | Reference) -> None:
+    def append_alt(self, alt: Reference) -> Self:
         """Add an alternative identifier."""
-        if isinstance(alt, str):
-            warnings.warn(
-                "use fully qualified reference when appending alts",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            alt = Reference(prefix=self.reference.prefix, identifier=alt)
         self.alt_ids.append(alt)
+        return self
 
     def append_see_also(self, reference: ReferenceHint) -> Self:
         """Add a see also property."""
