@@ -76,9 +76,11 @@ def _get_class_node(term: Term) -> Node:
     xrefs = [
         Xref.from_parsed(
             predicate=_rewire(mapping_predicate),
-            value=_rewire(mapping_objext),
+            value=_rewire(mapping_object),
         )
-        for mapping_predicate, mapping_objext in term.get_mappings(include_xrefs=True)
+        for mapping_predicate, mapping_object in term.get_mappings(
+            include_xrefs=True, add_context=False
+        )
     ]
     synonyms = [
         Synonym.from_parsed(
