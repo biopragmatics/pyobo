@@ -264,7 +264,7 @@ class TestReaderTerm(unittest.TestCase):
             comment: comment
         """)
         term = self.get_only_term(ontology)
-        comments = term.iterate_property_targets(comment)
+        comments = term.get_property_values(comment)
         self.assertEqual(1, len(comments))
         self.assertIsInstance(comments[0], OBOLiteral)
         self.assertEqual("comment", comments[0].value)
@@ -630,7 +630,7 @@ class TestReaderTerm(unittest.TestCase):
             property_value: nope
         """)
         term = self.get_only_term(ontology)
-        self.assertEqual(0, len(list(term.iterate_properties())))
+        self.assertEqual(0, len(list(term.get_property_annotations())))
 
     def test_12_property_literal_bare(self) -> None:
         """Test parsing a property with a literal object."""
@@ -1096,7 +1096,7 @@ class TestReaderTerm(unittest.TestCase):
             replaced_by: CHEBI:5678
         """)
         term = self.get_only_term(ontology)
-        replaced = term.iterate_property_targets(term_replaced_by)
+        replaced = term.get_property_values(term_replaced_by)
         self.assertEqual(1, len(replaced))
         self.assertEqual(Reference(prefix="CHEBI", identifier="5678"), replaced[0])
 
@@ -1110,7 +1110,7 @@ class TestReaderTerm(unittest.TestCase):
             consider: CHEBI:5678
         """)
         term = self.get_only_term(ontology)
-        consider = term.iterate_property_targets(see_also)
+        consider = term.get_property_values(see_also)
         self.assertEqual(1, len(consider))
         self.assertEqual(
             Reference(prefix="CHEBI", identifier="5678"),

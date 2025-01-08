@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, NamedTuple, TypeAlias
 
@@ -317,7 +316,7 @@ class Stanza:
 
     def get_replaced_by(self) -> list[Reference]:
         """Get all replaced by."""
-        return self.iterate_property_targets_references(v.term_replaced_by)
+        return self.get_property_objects(v.term_replaced_by)
 
     def append_replaced_by(self, reference: Reference) -> Self:
         """Add a replaced by property."""
@@ -329,23 +328,42 @@ class Stanza:
             for target in sorted(targets):
                 yield typedef, target
 
+    def get_relationships(self, typedef: ReferenceHint) -> list[Reference]:
+        """Get relationships from the given type."""
+        return self.relationships.get(_ensure_ref(typedef), [])
+
+    def get_relationship(self, typedef: ReferenceHint) -> Reference | None:
+        """Get a single relationship of the given type."""
+        r = self.get_relationships(typedef)
+        if not r:
+            return None
+        if len(r) > 1:
+            raise ValueError
+        return r[0]
+
     def iterate_relation_targets(self, typedef: ReferenceHint) -> list[Reference]:
         """Iterate over pairs of typedefs and targets."""
         return sorted(self.relationships.get(_ensure_ref(typedef), []))
 
-    def iterate_properties(self) -> Iterable[Annotation]:
+    def get_property_annotations(self) -> list[Annotation]:
         """Iterate over pairs of property and values."""
-        for prop, values in sorted(self.properties.items()):
-            for value in values:
-                yield Annotation(prop, value)
+        return [
+            Annotation(prop, value)
+            for prop, values in sorted(self.properties.items())
+            for value in values
+        ]
 
-    def iterate_property_targets(self, typedef: ReferenceHint) -> list[Reference | OBOLiteral]:
+    def get_property_values(self, typedef: ReferenceHint) -> list[Reference | OBOLiteral]:
         """Iterate over references or values."""
         return sorted(self.properties.get(_ensure_ref(typedef), []))
 
-    def iterate_property_targets_references(self, typedef: ReferenceHint) -> list[Reference]:
-        """Iterate over references or values."""
-        return [f for f in self.iterate_property_targets(typedef) if isinstance(f, Reference)]
+    def get_property_objects(self, prop: ReferenceHint) -> list[Reference]:
+        """Get properties from the given key."""
+        return [
+            reference
+            for reference in self.properties.get(_ensure_ref(prop), [])
+            if isinstance(reference, curies.Reference)
+        ]
 
     def append_synonym(
         self,
@@ -419,7 +437,7 @@ def _chain_tag(
 def _tag_property_targets(
     tag: str, stanza: Stanza, prod: ReferenceHint, *, ontology_prefix: str
 ) -> Iterable[str]:
-    for x in stanza.iterate_property_targets(_ensure_ref(prod)):
+    for x in stanza.get_property_values(_ensure_ref(prod)):
         if isinstance(x, Reference):
             yield f"{tag}: {reference_escape(x, ontology_prefix=ontology_prefix, add_name_comment=True)}"
 

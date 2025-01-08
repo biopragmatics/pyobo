@@ -436,7 +436,7 @@ class TestReaderTypedef(unittest.TestCase):
             consider: RO:1
         """)
         typedef = self.get_only_typedef(ontology)
-        r = typedef.iterate_property_targets_references(see_also)
+        r = typedef.get_property_objects(see_also)
         self.assertEqual(1, len(r))
         self.assertEqual(Reference(prefix="RO", identifier="1"), r[0])
 

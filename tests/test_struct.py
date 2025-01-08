@@ -789,7 +789,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
 
         self.assertEqual(
             ["https://example.org/test"],
-            term.get_properties_as_str(see_also),
+            term.get_property_literals(see_also),
         )
 
     def test_18_see_also_double(self) -> None:
@@ -817,7 +817,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
                 Reference(prefix="hgnc", identifier="1234", name="dummy 1").curie,
                 Reference(prefix="hgnc", identifier="1235", name="dummy 2").curie,
             ],
-            term.get_properties_as_str(see_also),
+            term.get_property_literals(see_also),
         )
 
         self.assertIsNone(term.get_relationship(exact_match))

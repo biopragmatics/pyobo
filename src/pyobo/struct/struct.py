@@ -251,6 +251,7 @@ class Term(Referenced, Stanza):
     #: Relationships with the default "is_a"
     parents: list[Reference] = field(default_factory=list)
 
+    # TODO add intersection and union to relation output
     intersection_of: IntersectionOfHint = field(default_factory=list)
     union_of: UnionOfHint = field(default_factory=list)
     equivalent_to: list[Reference] = field(default_factory=list)
@@ -261,6 +262,7 @@ class Term(Referenced, Stanza):
 
     #: Equivalent references
     xrefs: list[Reference] = field(default_factory=list)
+    # TODO remove xref_types, this can be done with axioms now
     xref_types: list[Reference] = field(default_factory=list)
 
     #: Alternate Identifiers
@@ -325,7 +327,7 @@ class Term(Referenced, Stanza):
             raise ValueError("can not append a collection of parents containing a null parent")
         self.parents.extend(references)
 
-    def get_properties_as_str(self, prop: ReferenceHint) -> list[str]:
+    def get_property_literals(self, prop: ReferenceHint) -> list[str]:
         """Get properties from the given key."""
         rv = []
         for t in self.properties.get(_ensure_ref(prop), []):
@@ -336,33 +338,14 @@ class Term(Referenced, Stanza):
                     rv.append(value)
         return rv
 
-    def get_property_objects(self, prop: ReferenceHint) -> list[Reference]:
-        """Get properties from the given key."""
-        return [
-            t for t in self.properties.get(_ensure_ref(prop), []) if isinstance(t, curies.Reference)
-        ]
-
     def get_property(self, prop: ReferenceHint) -> str | None:
         """Get a single property of the given key."""
-        r = self.get_properties_as_str(prop)
+        r = self.get_property_literals(prop)
         if not r:
             return None
         if len(r) != 1:
             raise ValueError
         return r[0]
-
-    def get_relationship(self, typedef: ReferenceHint) -> Reference | None:
-        """Get a single relationship of the given type."""
-        r = self.get_relationships(typedef)
-        if not r:
-            return None
-        if len(r) != 1:
-            raise ValueError
-        return r[0]
-
-    def get_relationships(self, typedef: ReferenceHint) -> list[Reference]:
-        """Get relationships from the given type."""
-        return self.relationships.get(_ensure_ref(typedef), [])
 
     # docstr-coverage:excused `overload`
     @overload
@@ -510,7 +493,7 @@ class Term(Referenced, Stanza):
         if self.definition or self.provenance:
             yield f"def: {self._definition_fp()}"
         # 7
-        for x in self.iterate_property_targets(comment):
+        for x in self.get_property_values(comment):
             if isinstance(x, OBOLiteral):
                 yield f'comment: "{x.value}"'
         # 8
@@ -1382,7 +1365,7 @@ class Obo:
         for term in self._iter_terms(
             use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting properties"
         ):
-            for property_tuple in term.iterate_properties():
+            for property_tuple in term.get_property_annotations():
                 yield term, property_tuple
 
     @property
@@ -1416,7 +1399,7 @@ class Obo:
         """Iterate over tuples of terms and the values for the given property."""
         prop = _ensure_ref(prop)
         for term in self._iter_terms(use_tqdm=use_tqdm):
-            for t in term.iterate_properties():
+            for t in term.get_property_annotations():
                 if t.predicate != prop:
                     continue
                 match t.value:
