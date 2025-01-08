@@ -652,9 +652,9 @@ match_typedefs: Sequence[TypeDef] = (
     exact_match,
     narrow_match,
     related_match,
-    owl_same_as,
-    equivalent_class,
-    equivalent_property,
+    owl_same_as,  # for instances
+    equivalent_class,  # for classes
+    equivalent_property,  # for properties
     has_dbxref,
     see_also,
 )

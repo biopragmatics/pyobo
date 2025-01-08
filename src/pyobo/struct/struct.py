@@ -55,6 +55,7 @@ from .typedef import (
     alternative_term,
     comment,
     default_typedefs,
+    equivalent_class,
     exact_match,
     extended_match_typedefs,
     from_species,
@@ -373,7 +374,8 @@ class Term(Referenced, Stanza):
         if include_xrefs:
             for xref_reference in self.xrefs:
                 rows.append((has_dbxref.reference, xref_reference))
-
+        for equivalent_to in self.equivalent_to:
+            rows.append((equivalent_class.reference, equivalent_to))
         rv = sorted(set(rows))
         if not add_context:
             return rv
