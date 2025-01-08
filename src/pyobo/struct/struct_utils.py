@@ -413,9 +413,9 @@ class Stanza:
         return self.annotate_literal(v.comment, value)
 
     @property
-    def alt_ids(self) -> list[Reference]:
+    def alt_ids(self) -> Sequence[Reference]:
         """Get alternative terms."""
-        return self.get_property_objects(v.alternative_term)
+        return tuple(self.get_property_objects(v.alternative_term))
 
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str

@@ -272,7 +272,7 @@ class OBOLiteral(NamedTuple):
 
 
 def _reference_list_tag(
-    tag: str, references: list[Reference], ontology_prefix: str
+    tag: str, references: Iterable[Reference], ontology_prefix: str
 ) -> Iterable[str]:
     for reference in references:
         yield f"{tag}: {reference_escape(reference, ontology_prefix=ontology_prefix, add_name_comment=True)}"
