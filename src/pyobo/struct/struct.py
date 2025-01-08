@@ -264,10 +264,9 @@ class Term(Referenced, Stanza):
     #: Synonyms of this term
     synonyms: list[Synonym] = field(default_factory=list)
 
-    #: Equivalent references
+    #: Database cross-references, see :func:`get_mappings` for
+    #: access to all mappings in an SSSOM-like interface
     xrefs: list[Reference] = field(default_factory=list)
-    # TODO remove xref_types, this can be done with axioms now
-    xref_types: list[Reference] = field(default_factory=list)
 
     #: Alternate Identifiers
     alt_ids: list[Reference] = field(default_factory=list)
