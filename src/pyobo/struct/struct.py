@@ -164,10 +164,14 @@ class Synonym:
     ) -> str:
         if synonym_typedefs is None:
             synonym_typedefs = {}
-        _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
-        # TODO inherit specificity from typedef?
-        # TODO validation of specificity against typedef
-        x = f'"{self._escape(self.name)}" {self.specificity or DEFAULT_SPECIFICITY}'
+        std = _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
+        if std is not None and std.specificity is not None:
+            specificity = std.specificity
+        elif self.specificity:
+            specificity = self.specificity
+        else:
+            specificity = DEFAULT_SPECIFICITY
+        x = f'"{self._escape(self.name)}" {specificity}'
         if self.type is not None:
             x = f"{x} {reference_escape(self.type, ontology_prefix=ontology_prefix)}"
         return f"{x} [{comma_separate_references(self.provenance)}]"
