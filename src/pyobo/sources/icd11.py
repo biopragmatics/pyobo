@@ -15,6 +15,7 @@ from ..sources.icd_utils import (
     ICD11_TOP_LEVEL_URL,
     get_child_identifiers,
     get_icd,
+    get_icd_11_mms,
     visiter,
 )
 from ..struct import Obo, Reference, Synonym, Term
@@ -41,6 +42,27 @@ class ICD11Getter(Obo):
 
 
 def iterate_icd11() -> Iterable[Term]:
+    """Iterate over the terms in ICD11 and enrich them with MMS."""
+    res = get_icd(ICD11_TOP_LEVEL_URL)
+    res_json = res.json()
+    version = res_json["releaseId"]
+    mms_directory = prefix_directory_join(PREFIX, "mms", version=version)
+    for term in iterate_icd11_helper(res_json, version):
+        path = mms_directory.joinpath(term.identifier).with_suffix(".json")
+        if path.exists():
+            mms_data = json.loads(path.read_text())
+        else:
+            mms_data = get_icd_11_mms(term.identifier)
+            path.write_text(json.dumps(mms_data))
+
+        if code := mms_data.get("code"):
+            # TODO decide on ICD code prefix, then append this as a mapping
+            term.annotate_literal("icd_mms_code", code)
+
+        yield term
+
+
+def iterate_icd11_helper(res_json, version) -> Iterable[Term]:
     """Iterate over the terms in ICD11.
 
     The API doesn't seem to have a rate limit, but returns pretty slow.
@@ -48,13 +70,9 @@ def iterate_icd11() -> Iterable[Term]:
     Get ready to be patient - the API token expires every hour so there's
     a caching mechanism with :mod:`cachier` that gets a new one every hour.
     """
-    res = get_icd(ICD11_TOP_LEVEL_URL)
-    res_json = res.json()
-
-    version = res_json["releaseId"]
-    directory = prefix_directory_join(PREFIX, version=version)
-
-    with open(os.path.join(directory, "top.json"), "w") as file:
+    directory = prefix_directory_join(PREFIX, "base", version=version)
+    top_path = directory.joinpath("top.json")
+    with top_path.open("w") as file:
         json.dump(res_json, file, indent=2)
 
     tqdm.write(f'There are {len(res_json["child"])} top level entities')
