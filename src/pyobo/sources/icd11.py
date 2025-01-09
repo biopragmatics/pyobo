@@ -10,7 +10,7 @@ from typing import Any
 
 from tqdm.auto import tqdm
 
-from ..sources.icd_utils import (
+from ..icd_utils import (
     ICD11_TOP_LEVEL_URL,
     ICDError,
     get_child_identifiers,
@@ -18,7 +18,7 @@ from ..sources.icd_utils import (
     get_icd_11_mms,
     visiter,
 )
-from ..struct import Obo, Reference, Synonym, Term
+from ..struct import Obo, Reference, Synonym, Term, TypeDef, default_reference
 from ..utils.path import prefix_directory_join
 
 __all__ = [
