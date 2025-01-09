@@ -35,6 +35,7 @@ from .reference import (
     Referenced,
     _reference_list_tag,
     comma_separate_references,
+    get_preferred_curie,
     reference_escape,
     unspecified_matching,
 )
@@ -335,7 +336,7 @@ class Term(Referenced, Stanza):
         for t in self.properties.get(_ensure_ref(prop), []):
             match t:
                 case Reference():
-                    rv.append(t.preferred_curie)
+                    rv.append(get_preferred_curie(t))
                 case OBOLiteral(value, _):
                     rv.append(value)
         return rv
@@ -579,16 +580,17 @@ def _synonym_typedef_warn(
     key = prefix, predicate
     if key not in _SYNONYM_TYPEDEF_WARNINGS:
         _SYNONYM_TYPEDEF_WARNINGS.add(key)
+        predicate_preferred_curie = get_preferred_curie(predicate)
         if predicate.prefix == "obo":
             # Throw our hands up in the air. By using `obo` as the prefix,
             # we already threw using "real" definitions out the window
             logger.warning(
-                f"[{prefix}] synonym typedef with OBO prefix not defined: {predicate.preferred_curie}."
+                f"[{prefix}] synonym typedef with OBO prefix not defined: {predicate_preferred_curie}."
                 f"\n\tThis might be because you used an unqualified prefix in an OBO file, "
                 f"which automatically gets an OBO prefix."
             )
         else:
-            logger.warning(f"[{prefix}] synonym typedef not defined: {predicate.preferred_curie}")
+            logger.warning(f"[{prefix}] synonym typedef not defined: {predicate_preferred_curie}")
     return None
 
 
@@ -1209,11 +1211,14 @@ class Obo:
                 "name": self.name,
                 "ontology": self.ontology,
                 "auto-generated-by": self.auto_generated_by,
-                "typedefs": _convert_typedefs(self.typedefs),
                 "format-version": FORMAT_VERSION,
                 "data-version": self.data_version,
-                "synonymtypedef": _convert_synonym_typedefs(self.synonym_typedefs),
                 "date": self.date_formatted,
+                "typedefs": [typedef.reference.model_dump() for typedef in self.typedefs or []],
+                "synonymtypedef": [
+                    synonym_typedef.to_obo(ontology_prefix=self.ontology)
+                    for synonym_typedef in self.synonym_typedefs or []
+                ],
             }
         )
 
@@ -1388,9 +1393,9 @@ class Obo:
             pred = term._reference(t.predicate, ontology_prefix=self.ontology)
             match t.value:
                 case OBOLiteral(value, datatype):
-                    yield (term.identifier, pred, value, datatype.preferred_curie)
+                    yield (term.identifier, pred, value, get_preferred_curie(datatype))
                 case Reference() as obj:
-                    yield (term.identifier, pred, obj.preferred_curie, "")
+                    yield (term.identifier, pred, get_preferred_curie(obj), "")
                 case _:
                     raise TypeError(f"got: {type(t)} - {t}")
 
@@ -1414,7 +1419,7 @@ class Obo:
                     case OBOLiteral(value, _datatype):
                         yield term, value
                     case Reference():
-                        yield term, t.value.preferred_curie
+                        yield term, get_preferred_curie(t.value)
 
     def get_filtered_properties_df(
         self, prop: ReferenceHint, *, use_tqdm: bool = False
@@ -1671,13 +1676,13 @@ class Obo:
                 include_xrefs=True, add_context=True
             ):
                 yield (
-                    term.preferred_curie,
+                    get_preferred_curie(term),
                     term.name,
-                    obj_ref.preferred_curie,
-                    predicate.preferred_curie,
-                    context.justification.preferred_curie,
+                    get_preferred_curie(obj_ref),
+                    get_preferred_curie(predicate),
+                    get_preferred_curie(context.justification),
                     context.confidence if context.confidence is not None else None,
-                    context.contributor.preferred_curie if context.contributor else None,
+                    get_preferred_curie(context.contributor) if context.contributor else None,
                 )
 
     def get_mappings_df(
@@ -1798,27 +1803,3 @@ def make_ad_hoc_ontology(
             return terms or []
 
     return AdHocOntology()
-
-
-def _convert_typedefs(typedefs: Iterable[TypeDef] | None) -> list[Mapping[str, Any]]:
-    """Convert the type defs."""
-    if not typedefs:
-        return []
-    return [_convert_typedef(typedef) for typedef in typedefs]
-
-
-def _convert_typedef(typedef: TypeDef) -> Mapping[str, Any]:
-    """Convert a type def."""
-    # TODO add more later
-    return typedef.reference.model_dump()
-
-
-def _convert_synonym_typedefs(synonym_typedefs: Iterable[SynonymTypeDef] | None) -> list[str]:
-    """Convert the synonym type defs."""
-    if not synonym_typedefs:
-        return []
-    return [_convert_synonym_typedef(synonym_typedef) for synonym_typedef in synonym_typedefs]
-
-
-def _convert_synonym_typedef(synonym_typedef: SynonymTypeDef) -> str:
-    return f'{synonym_typedef.preferred_curie} "{synonym_typedef.name}"'

@@ -874,7 +874,7 @@ def _iterate_chain(
             logger.warning(
                 "[%s - %s] could not parse line: %s: %s",
                 ontology_prefix,
-                typedef.preferred_curie,
+                typedef.curie,
                 tag,
                 chain,
             )

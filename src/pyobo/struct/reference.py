@@ -21,6 +21,7 @@ __all__ = [
     "Reference",
     "Referenced",
     "default_reference",
+    "get_preferred_curie",
     "multi_reference_escape",
     "reference_escape",
     "unspecified_matching",
@@ -173,6 +174,17 @@ class Referenced:
         return self.reference.bioregistry_link
 
 
+def get_preferred_curie(
+    ref: curies.Reference | curies.NamedReference | Reference | Referenced,
+) -> str:
+    """Get the preferred CURIE from a variety of types."""
+    match ref:
+        case Referenced() | Reference():
+            return ref.preferred_curie
+        case curies.Reference() | curies.NamedReference():
+            return ref.curie
+
+
 def default_reference(prefix: str, identifier: str, name: str | None = None) -> Reference:
     """Create a CURIE for an "unqualified" reference.
 
@@ -195,9 +207,7 @@ def reference_escape(
     """Write a reference with default namespace removed."""
     if reference.prefix == "obo" and reference.identifier.startswith(f"{ontology_prefix}#"):
         return reference.identifier.removeprefix(f"{ontology_prefix}#")
-    # get sneaky, to allow a variety of the base class from curies.Reference to
-    # the extended version in pyobo.Reference
-    rv = getattr(reference, "preferred_curie", reference.curie)
+    rv = get_preferred_curie(reference)
     if add_name_comment and reference.name:
         rv += f" ! {reference.name}"
     return rv
@@ -222,7 +232,7 @@ def multi_reference_escape(
 
 def comma_separate_references(references: list[Reference]) -> str:
     """Map a list to strings and make comma separated."""
-    return ", ".join(r.preferred_curie for r in references)
+    return ", ".join(get_preferred_curie(r) for r in references)
 
 
 def _ground_relation(relation_str: str) -> Reference | None:

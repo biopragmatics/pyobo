@@ -17,6 +17,7 @@ from .reference import (
     Reference,
     Referenced,
     default_reference,
+    get_preferred_curie,
     multi_reference_escape,
     reference_escape,
 )
@@ -478,7 +479,7 @@ def _iterate_obo_relations(
             match value:
                 case OBOLiteral(dd, datatype):
                     # TODO how to clean/escape value?
-                    end = f'"{dd}" {datatype.preferred_curie}'
+                    end = f'"{dd}" {get_preferred_curie(datatype)}'
                     name = None
                 case curies.Reference():  # it's a reference
                     if predicate in skip_predicate_objects:
