@@ -207,8 +207,6 @@ def reference_escape(
     """Write a reference with default namespace removed."""
     if reference.prefix == "obo" and reference.identifier.startswith(f"{ontology_prefix}#"):
         return reference.identifier.removeprefix(f"{ontology_prefix}#")
-    # get sneaky, to allow a variety of the base class from curies.Reference to
-    # the extended version in pyobo.Reference
     rv = get_preferred_curie(reference)
     if add_name_comment and reference.name:
         rv += f" ! {reference.name}"
