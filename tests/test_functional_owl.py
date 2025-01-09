@@ -596,10 +596,15 @@ class TestRDF(unittest.TestCase):
             m.XrefMacro("a:0619dd9e", "a:00000137"),
             m.TransitiveOver("a:0000066", "a:0000050"),
             m.DataPropertyMaxCardinality(1, "a:hasAge"),
+        ]
+
+    def test_class_intersection(self) -> None:
+        """Test class intersection macro."""
+        self.assert_rdf_equal(
             m.ClassIntersectionMacro(
                 "ZFA:0000134", ["CL:0000540", ("BFO:0000050", "NCBITaxon:7955")]
-            ),
-        ]
+            )
+        )
 
     def test_has_examples(self) -> None:
         """Test all axiom types have at least one example."""
@@ -677,8 +682,10 @@ class TestRDF(unittest.TestCase):
         )
         self.assert_rdf_equal(b, prefix_map)
 
-    def assert_rdf_equal(self, box: f.Box, prefix_map) -> None:
+    def assert_rdf_equal(self, box: f.Box, prefix_map: dict[str, str] | None = None) -> None:
         """Assert the RDF generated is the same as the OFN converted via robot."""
+        if prefix_map is None:
+            prefix_map = EXAMPLE_PREFIX_MAP
         try:
             a = get_rdf_graph([box], prefix_map=prefix_map)
         except NotImplementedError:
