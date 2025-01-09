@@ -517,18 +517,12 @@ alternative_term = TypeDef(
     reference=v.alternative_term,
     is_metadata_tag=True,
 )
-has_ontology_root_term = TypeDef(
-    reference=Reference(prefix=IAO_PREFIX, identifier="0000700", name="has ontology root term"),
-    is_metadata_tag=True,
-)
+has_ontology_root_term = TypeDef(reference=v.has_ontology_root_term, is_metadata_tag=True)
 definition_source = TypeDef(
     reference=Reference(prefix=IAO_PREFIX, identifier="0000119", name="definition source"),
     is_metadata_tag=True,
 )
-has_dbxref = TypeDef(
-    reference=v.has_dbxref,
-    is_metadata_tag=True,
-)
+has_dbxref = TypeDef(reference=v.has_dbxref, is_metadata_tag=True)
 
 editor_note = TypeDef(
     reference=Reference(prefix=IAO_PREFIX, identifier="0000116", name="editor note"),

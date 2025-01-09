@@ -20,6 +20,9 @@ has_dbxref = Reference(
 equivalent_class = Reference(prefix="owl", identifier="equivalentClass", name="equivalent class")
 term_replaced_by = Reference(prefix="IAO", identifier="0100001", name="term replaced by")
 alternative_term = Reference(prefix="IAO", identifier="0000118", name="alternative term")
+has_ontology_root_term = Reference(
+    prefix="IAO", identifier="0000700", name="has ontology root term"
+)
 see_also = Reference(prefix="rdfs", identifier="seeAlso", name="see also")
 comment = Reference(prefix="rdfs", identifier="comment", name="comment")
 
