@@ -9,13 +9,13 @@ import bioregistry
 from curies import vocabulary as v
 
 from pyobo import Obo, Reference, default_reference
+from pyobo.struct import TypeDef
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import (
     Synonym,
     make_ad_hoc_ontology,
 )
 from pyobo.struct.typedef import (
-    TypeDef,
     exact_match,
     has_contributor,
     has_inchi,

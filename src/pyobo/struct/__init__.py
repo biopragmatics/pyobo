@@ -9,6 +9,7 @@ from .struct import (
     int_identifier_sort_key,
     make_ad_hoc_ontology,
 )
+from .struct_utils import Stanza
 from .typedef import (
     TypeDef,
     derives_from,
@@ -35,6 +36,7 @@ __all__ = [
     "Obo",
     "Reference",
     "Referenced",
+    "Stanza",
     "Synonym",
     "SynonymTypeDef",
     "Term",
