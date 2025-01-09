@@ -97,7 +97,7 @@ def _read_obo(filelike, prefix: str | None, ignore_obsolete: bool) -> nx.MultiDi
         tqdm(
             filelike,
             unit_scale=True,
-            desc=f'[{prefix or ""}] parsing OBO',
+            desc=f"[{prefix or ''}] parsing OBO",
             disable=None,
             leave=True,
         ),

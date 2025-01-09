@@ -86,7 +86,7 @@ def iterate_icd11_helper(res_json, version) -> Iterable[Term]:
     with top_path.open("w") as file:
         json.dump(res_json, file, indent=2)
 
-    tqdm.write(f'There are {len(res_json["child"])} top level entities')
+    tqdm.write(f"There are {len(res_json['child'])} top level entities")
 
     visited_identifiers: set[str] = set()
     for identifier in get_child_identifiers(ICD11_TOP_LEVEL_URL, res_json):
