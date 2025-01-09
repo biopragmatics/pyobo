@@ -373,31 +373,34 @@ class DataPropertyMaxCardinality(Macro):
         )
 
 
-class ListOfMacro(Macro):
-    object_list_cls: t.ClassVar[f._ObjectList]
+class ObjectListOfMacro(Macro):
+    """An object list macro."""
+
+    object_list_cls: t.ClassVar[type[f._ObjectList]]
 
     def __init__(
         self,
         term: f.IdentifierBoxOrHint,
-        list_parts: Sequence[
+        elements: Sequence[
             f.IdentifierBoxOrHint | tuple[f.IdentifierBoxOrHint, f.IdentifierBoxOrHint]
         ],
     ) -> None:
         """Instantiate an "intersection of" macro."""
-        expressions = []
-        for x in list_parts:
-            match x:
-                case (predicate, target):
-                    vv = f.ObjectSomeValuesFrom(f.IdentifierBox(predicate), f.IdentifierBox(target))
-                case _:
-                    vv = f.IdentifierBox(x)
-            expressions.append(vv)
+        expressions: list[f.ClassExpression | f.IdentifierBoxOrHint] = []
+        for element in elements:
+            if isinstance(element, tuple):
+                expressions.append(
+                    f.ObjectSomeValuesFrom(f.IdentifierBox(element[0]), f.IdentifierBox(element[1]))
+                )
+            else:
+                expressions.append(element)
+
         super().__init__(
             f.EquivalentClasses([f.IdentifierBox(term), self.object_list_cls(expressions)])
         )
 
 
-class ClassIntersectionMacro(ListOfMacro):
+class ClassIntersectionMacro(ObjectListOfMacro):
     """A macro that represents a class intersection.
 
     >>> ClassIntersectionMacro("ZFA:0000134", ["CL:0000540", ("BFO:0000050", "NCBITaxon:7955")])
@@ -407,7 +410,7 @@ class ClassIntersectionMacro(ListOfMacro):
     object_list_cls = f.ObjectIntersectionOf
 
 
-class ClassUnionMacro(ListOfMacro):
+class ClassUnionMacro(ObjectListOfMacro):
     """A macro that represents a class union."""
 
     object_list_cls = f.ObjectUnionOf

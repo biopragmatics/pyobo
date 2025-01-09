@@ -64,50 +64,72 @@ class TestTypeDef(unittest.TestCase):
             (x.to_funowl() for x in get_typedef_axioms(typedef)),
         )
 
-    def assert_boolean_tag(self, name: str) -> None:
+    def assert_boolean_tag(
+        self,
+        name: str,
+        *,
+        test_funowl: bool = True,
+        funowl_func: str | None = None,
+        funowl_curie: str | None = None,
+    ):
         """Assert the boolean tag parses properly."""
         reference = Reference(prefix="GO", identifier="0000001")
-        typedef = TypeDef(reference=reference, **{name: True})
+        typedef_true = TypeDef(reference=reference, **{name: True})
+        if funowl_curie is None:
+            funowl_curie = f"oboInOwl:{name}"
         self.assert_obo_stanza(
             f"""\
             [Typedef]
             id: GO:0000001
             {name}: true
             """,
-            typedef,
+            typedef_true,
         )
-        self.assert_funowl_lines(
-            f"""
-            Declaration( ObjectProperty( GO:0000001 ) )
-            AnnotationAssertion( oboInOwl:{name} GO:0000001 "true"^^xsd:boolean )
-            """,
-            typedef,
-        )
-        self.assertTrue(hasattr(typedef, name))
-        value = getattr(typedef, name)
+        if test_funowl:
+            if funowl_func:
+                self.assert_funowl_lines(
+                    f"""
+                        Declaration( ObjectProperty( GO:0000001 ) )
+                        {funowl_func}( GO:0000001 )
+                        """,
+                    typedef_true,
+                )
+            else:
+                self.assert_funowl_lines(
+                    f"""
+                    Declaration( ObjectProperty( GO:0000001 ) )
+                    AnnotationAssertion( {funowl_curie} GO:0000001 "true"^^xsd:boolean )
+                    """,
+                    typedef_true,
+                )
+
+        self.assertTrue(hasattr(typedef_true, name))
+        value = getattr(typedef_true, name)
         self.assertIsNotNone(value)
         self.assertTrue(value)
 
-        typedef = TypeDef(reference=reference, **{name: False})
+        typedef_false = TypeDef(reference=reference, **{name: False})
         self.assert_obo_stanza(
             f"""\
             [Typedef]
             id: GO:0000001
             {name}: false
             """,
-            typedef,
+            typedef_false,
         )
-        self.assert_funowl_lines(
-            f"""
-            Declaration( ObjectProperty( GO:0000001 ) )
-            AnnotationAssertion( oboInOwl:{name} GO:0000001 "false"^^xsd:boolean )
-            """,
-            typedef,
-        )
-        self.assertTrue(hasattr(typedef, name))
-        value = getattr(typedef, name)
+        if test_funowl and not funowl_func:
+            self.assert_funowl_lines(
+                f"""
+                Declaration( ObjectProperty( GO:0000001 ) )
+                AnnotationAssertion( {funowl_curie} GO:0000001 "false"^^xsd:boolean )
+                """,
+                typedef_false,
+            )
+        self.assertTrue(hasattr(typedef_false, name))
+        value = getattr(typedef_false, name)
         self.assertIsNotNone(value)
         self.assertFalse(value)
+        return typedef_true, typedef_false
 
     def test_1_declaration(self) -> None:
         """Test the declaration."""
@@ -208,8 +230,8 @@ class TestTypeDef(unittest.TestCase):
         self.assert_funowl_lines(
             """\
             Declaration( ObjectProperty( RO:0000087 ) )
-            AnnotationAssertion( IAO:0000118 RO:0000087 RO:1234567 )
-            AnnotationAssertion( IAO:0000118 RO:0000087 RO:1234568 )
+            AnnotationAssertion( IAO:0100001 RO:1234567 RO:0000087 )
+            AnnotationAssertion( IAO:0100001 RO:1234568 RO:0000087 )
             """,
             typedef,
         )
@@ -340,7 +362,9 @@ class TestTypeDef(unittest.TestCase):
                         name=v.charlie.name,
                     )
                 ],
-                has_inchi: [OBOLiteral("abc", Reference(prefix="xsd", identifier="string"))],
+                has_inchi.reference: [
+                    OBOLiteral("abc", Reference(prefix="xsd", identifier="string"))
+                ],
             },
         )
         self.assert_obo_stanza(
@@ -355,8 +379,8 @@ class TestTypeDef(unittest.TestCase):
         self.assert_funowl_lines(
             """\
             Declaration( ObjectProperty( RO:0000087 ) )
-            AnnotationAssertion( RO:0000087 dcterms:contributor orcid:0000-0003-4423-4370 )
-            AnnotationAssertion( RO:0000087 debio:0000020 "abc"^^xsd:string )
+            AnnotationAssertion( dcterms:contributor RO:0000087 orcid:0000-0003-4423-4370 )
+            AnnotationAssertion( debio:0000020 RO:0000087 "abc"^^xsd:string )
             """,
             typedef,
         )
@@ -524,7 +548,7 @@ class TestTypeDef(unittest.TestCase):
 
     def test_16_is_anti_symmetric(self) -> None:
         """Test the ``anti_symmetric`` tag."""
-        self.assert_boolean_tag("is_anti_symmetric")
+        self.assert_boolean_tag("is_anti_symmetric", funowl_func="AsymmetricObjectProperty")
 
     def test_17_is_cyclic(self) -> None:
         """Test the ``is_cyclic`` tag."""
@@ -532,23 +556,25 @@ class TestTypeDef(unittest.TestCase):
 
     def test_18_is_reflexive(self) -> None:
         """Test the ``is_reflexive`` tag."""
-        self.assert_boolean_tag("is_reflexive")
+        self.assert_boolean_tag("is_reflexive", funowl_func="ReflexiveObjectProperty")
 
     def test_19_is_symmetric(self) -> None:
         """Test the ``is_symmetric`` tag."""
-        self.assert_boolean_tag("is_symmetric")
+        self.assert_boolean_tag("is_symmetric", funowl_func="SymmetricObjectProperty")
 
     def test_20_is_transitive(self) -> None:
         """Test the ``is_transitive`` tag."""
-        self.assert_boolean_tag("is_transitive")
+        self.assert_boolean_tag("is_transitive", funowl_func="TransitiveObjectProperty")
 
     def test_21_is_functional(self) -> None:
         """Test the ``is_functional`` tag."""
-        self.assert_boolean_tag("is_functional")
+        self.assert_boolean_tag("is_functional", funowl_func="FunctionalObjectProperty")
 
     def test_22_is_inverse_functional(self) -> None:
         """Test the ``is_inverse_functional`` tag."""
-        self.assert_boolean_tag("is_inverse_functional")
+        self.assert_boolean_tag(
+            "is_inverse_functional", funowl_func="InverseFunctionalObjectProperty"
+        )
 
     def test_23_is_a(self) -> None:
         """Test the ``is_a`` tag."""
@@ -789,7 +815,7 @@ class TestTypeDef(unittest.TestCase):
 
     def test_33_is_obsolete(self) -> None:
         """Test the ``is_obsolete`` tag."""
-        self.assert_boolean_tag("is_obsolete")
+        td_true, td_false = self.assert_boolean_tag("is_obsolete", funowl_curie="owl:deprecated")
 
     def test_34_created_by(self) -> None:
         """Test the ``created_by`` tag."""
@@ -825,7 +851,19 @@ class TestTypeDef(unittest.TestCase):
 
     def test_40_is_metadata_tag(self) -> None:
         """Test the ``is_metadata_tag`` tag."""
-        self.assert_boolean_tag("is_metadata_tag")
+        td_true, td_false = self.assert_boolean_tag("is_metadata_tag", test_funowl=False)
+        self.assert_funowl_lines(
+            """
+            Declaration( AnnotationProperty( GO:0000001 ) )
+            """,
+            td_true,
+        )
+        self.assert_funowl_lines(
+            """
+            Declaration( ObjectProperty( GO:0000001 ) )
+            """,
+            td_false,
+        )
 
     def test_41_is_class_level(self) -> None:
         """Test the ``is_class_level`` tag."""

@@ -418,6 +418,16 @@ class Stanza:
         """Get alternative terms."""
         return tuple(self.get_property_objects(v.alternative_term))
 
+    @property
+    def replaced_by(self) -> Sequence[Reference]:
+        """Get ``term replaced by`` objects.."""
+        return tuple(self.get_property_objects(v.term_replaced_by))
+
+    @property
+    def consider(self) -> Sequence[Reference]:
+        """Get rdfs:seeAlso objects."""
+        return tuple(self.get_property_objects(v.see_also))
+
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
 

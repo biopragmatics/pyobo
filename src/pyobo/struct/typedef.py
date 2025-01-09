@@ -244,11 +244,7 @@ class TypeDef(Referenced, Stanza):
         # 11
         yield from self._iterate_obo_properties(
             ontology_prefix=ontology_prefix,
-            skip_predicates={
-                term_replaced_by.reference,
-                see_also.reference,
-                alternative_term.reference,
-            },
+            skip_predicates=v.SKIP_PROPERTY_PREDICATES,
             typedefs=typedefs,
         )
         # 12

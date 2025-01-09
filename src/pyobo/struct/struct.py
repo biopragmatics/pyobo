@@ -53,7 +53,6 @@ from .struct_utils import (
 )
 from .typedef import (
     TypeDef,
-    alternative_term,
     comment,
     default_typedefs,
     equivalent_class,
@@ -76,6 +75,7 @@ from .typedef import (
     term_replaced_by,
 )
 from .utils import _boolean_tag, obo_escape_slim
+from .vocabulary import SKIP_PROPERTY_PREDICATES
 from ..api.utils import get_version
 from ..constants import (
     DATE_FORMAT,
@@ -135,7 +135,7 @@ class Synonym:
     provenance: list[Reference] = field(default_factory=list)
 
     #: Extra annotations
-    annotations: list[tuple[Reference, Reference]] = field(default_factory=list)
+    annotations: list[Annotation] = field(default_factory=list)
 
     def __lt__(self, other: Synonym) -> bool:
         """Sort lexically by name."""
@@ -513,11 +513,7 @@ class Term(Referenced, Stanza):
         if emit_annotation_properties:
             yield from self._iterate_obo_properties(
                 ontology_prefix=ontology_prefix,
-                skip_predicates=[
-                    term_replaced_by.reference,
-                    see_also.reference,
-                    alternative_term.reference,
-                ],
+                skip_predicates=SKIP_PROPERTY_PREDICATES,
                 typedefs=typedefs,
             )
         # 13

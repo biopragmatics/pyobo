@@ -21,6 +21,7 @@ DEFAULT_PREFIX_MAP = {
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "oboInOwl": "http://www.geneontology.org/formats/oboInOwl#",
+    "obo": "http://purl.obolibrary.org/obo/",
     "OMO": "http://purl.obolibrary.org/obo/OMO_",
     "sssom": "https://w3id.org/sssom/",
     "semapv": "https://w3id.org/semapv/vocab/",
@@ -33,6 +34,10 @@ EXAMPLE_PREFIX_MAP = {
     **DEFAULT_PREFIX_MAP,
     "a": "https://example.org/a:",
     "orcid": "https://orcid.org",
+    "ZFA": "http://purl.obolibrary.org/obo/ZFA_",
+    "CL": "http://purl.obolibrary.org/obo/CL_",
+    "BFO": "http://purl.obolibrary.org/obo/BFO_",
+    "NCBITaxon": "http://purl.obolibrary.org/obo/NCBITaxon_",
 }
 
 
@@ -104,8 +109,6 @@ def list_to_funowl(
 ) -> str:
     """Serialize a list of objects as functional OWL, separated by space or other givne separator."""
     return sep.join(
-        element.to_funowl()
-        if isinstance(element, FunctionalOWLSerializable)
-        else getattr(element, "preferred_curie", element.curie)
+        element.to_funowl() if isinstance(element, FunctionalOWLSerializable) else element.curie
         for element in elements
     )

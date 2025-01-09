@@ -15,7 +15,7 @@ from pyobo.struct.functional import macros as m
 from pyobo.struct.functional.ontology import Document, Ontology
 from pyobo.struct.functional.utils import DEFAULT_PREFIX_MAP
 from pyobo.struct.reference import OBOLiteral, Reference
-from pyobo.struct.vocabulary import has_dbxref, has_ontology_root_term
+from pyobo.struct.vocabulary import SKIP_PROPERTY_PREDICATES, has_dbxref, has_ontology_root_term
 
 if TYPE_CHECKING:
     from pyobo.struct.struct import Obo, Term
@@ -181,7 +181,7 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
         yield f.EquivalentClasses([s, *term.equivalent_to])
     # 17
     for x in term.disjoint_from:
-        yield f.DisjointClasses(x, s)
+        yield f.DisjointClasses([x, s])
     # 18
     for typedef, value in term.iterate_relations():
         yield m.RelationshipMacro(
@@ -241,9 +241,10 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     # 4
     if typedef.namespace:
         yield m.OBONamespaceMacro(r, typedef.namespace)
-    # 5
-    for alt_id in typedef.alt_id:
-        yield m.AltMacro(r, alt_id)
+    # 5 the way this one works is that all of the alts get a term-replaced-by,
+    #   as well as getting their own deprecation axioms
+    for alt_id in typedef.alt_ids:
+        yield m.ReplacedByMacro(alt_id, r)
     # 6
     if typedef.definition:
         yield m.DescriptionMacro(r, typedef.definition)
@@ -266,8 +267,10 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         yield m.XrefMacro(r, f.IdentifierBox(xref.preferred_curie))
     # 11
     for predicate, values in typedef.properties.items():
+        if predicate in SKIP_PROPERTY_PREDICATES:
+            continue
         for value in values:
-            yield f.AnnotationAssertion(r, predicate, value)
+            yield f.AnnotationAssertion(predicate, r, value)
     # 12
     if typedef.domain:
         if typedef.is_metadata_tag:
@@ -284,8 +287,8 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     if typedef.builtin is not None:
         yield m.IsOBOBuiltinMacro(r, typedef.builtin)
     # 15
-    if typedef.holds_over_chain:
-        yield m.HoldsOverChain(r, typedef.holds_over_chain)
+    for chain in typedef.holds_over_chain:
+        yield m.HoldsOverChain(r, chain)
     # 16
     if typedef.is_anti_symmetric:
         yield f.AsymmetricObjectProperty(r)
@@ -320,7 +323,7 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         yield f.EquivalentObjectProperties([r, *typedef.equivalent_to])
     # 27
     for x in typedef.disjoint_from:
-        yield f.DisjointObjectProperties(x, r)
+        yield f.DisjointObjectProperties([x, r])
     # 28
     if typedef.inverse:
         yield f.InverseObjectProperties(r, typedef.inverse)
@@ -328,8 +331,8 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     for to in typedef.transitive_over:
         yield m.TransitiveOver(r, to)
     # 30
-    if typedef.equivalent_to_chain:
-        yield f.SubObjectPropertyOf(f.ObjectPropertyChain(typedef.equivalent_to_chain), r)
+    for chain in typedef.equivalent_to_chain:
+        yield f.SubObjectPropertyOf(f.ObjectPropertyChain(chain), r)
     # 31 TODO disjoint_over, ROBOT does not create any output
     # 32 TODO relationship, ROBOT does not create any output
     # 33
@@ -339,7 +342,7 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     # 35 TODO creation_date
     # 36
     for rep in typedef.replaced_by:
-        yield m.ReplacedByMacro(r, rep)
+        yield m.ReplacedByMacro(rep, r)
     # 37
     for ref in typedef.consider:
         yield m.OBOConsiderMacro(r, ref)

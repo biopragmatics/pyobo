@@ -230,13 +230,13 @@ class Import(Box):
         return f"<{self.iri}>"
 
 
-def get_rdf_graph_oracle(axioms: list[Axiom], *, prefix_map: dict[str, str]) -> Graph:
+def get_rdf_graph_oracle(boxes: list[Box], *, prefix_map: dict[str, str]) -> Graph:
     """Serialize to turtle via OFN and conversion with ROBOT."""
     from bioontologies.robot import convert
 
     ontology = Ontology(
         iri=EXAMPLE_ONTOLOGY_IRI,
-        axioms=axioms,
+        axioms=boxes,
     )
     document = Document(ontology, prefix_map)
     graph = Graph()

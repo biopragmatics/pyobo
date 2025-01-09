@@ -1,5 +1,7 @@
 """Reusable vocabulary."""
 
+from __future__ import annotations
+
 from .reference import Reference
 
 __all__ = [
@@ -27,3 +29,11 @@ see_also = Reference(prefix="rdfs", identifier="seeAlso", name="see also")
 comment = Reference(prefix="rdfs", identifier="comment", name="comment")
 
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
+
+#: These are predicates that have their own dedicated fields
+#: in OBO and FunOWL output
+SKIP_PROPERTY_PREDICATES = {
+    term_replaced_by,
+    see_also,
+    alternative_term,
+}

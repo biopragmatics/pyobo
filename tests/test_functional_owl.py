@@ -677,13 +677,13 @@ class TestRDF(unittest.TestCase):
         )
         self.assert_rdf_equal(b, prefix_map)
 
-    def assert_rdf_equal(self, axiom: f.Axiom, prefix_map) -> None:
+    def assert_rdf_equal(self, box: f.Box, prefix_map) -> None:
         """Assert the RDF generated is the same as the OFN converted via robot."""
         try:
-            a = get_rdf_graph([axiom], prefix_map=prefix_map)
+            a = get_rdf_graph([box], prefix_map=prefix_map)
         except NotImplementedError:
             a = rdflib.Graph()
-        b = get_rdf_graph_oracle([axiom], prefix_map=prefix_map)
+        b = get_rdf_graph_oracle([box], prefix_map=prefix_map)
         if not compare.isomorphic(a, b):
             both, first, second = compare.graph_diff(a, b)
             msg = "\nTriples in both:\n\n"
