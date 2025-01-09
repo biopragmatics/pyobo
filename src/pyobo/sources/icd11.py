@@ -10,7 +10,7 @@ from typing import Any
 
 from tqdm.auto import tqdm
 
-from ..icd_utils import (
+from .icd_utils import (
     ICD11_TOP_LEVEL_URL,
     ICDError,
     get_child_identifiers,
@@ -51,6 +51,7 @@ def iterate_icd11() -> Iterable[Term]:
     version = res_json["releaseId"]
     mms_directory = prefix_directory_join(PREFIX, "mms", version=version)
     terms = list(iterate_icd11_helper(res_json, version))
+    # this takes a bit more than 2 hours
     for term in tqdm(terms, desc="Getting MMS", unit_scale=True):
         path = mms_directory.joinpath(term.identifier).with_suffix(".json")
         if path.exists():
