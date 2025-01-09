@@ -66,4 +66,4 @@ def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[T
 
 
 if __name__ == "__main__":
-    BiGGReactionGetter().write_default(force=True, write_obo=True)
+    BiGGReactionGetter.cli()

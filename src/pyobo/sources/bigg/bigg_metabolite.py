@@ -172,4 +172,4 @@ def _parse_dblinks(term: Term, database_links: str, property_map=None) -> None:
 
 
 if __name__ == "__main__":
-    BiGGMetaboliteGetter().write_default(force=True, write_owl=True, write_obo=True)
+    BiGGMetaboliteGetter.cli()
