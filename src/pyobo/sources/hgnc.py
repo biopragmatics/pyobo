@@ -247,11 +247,6 @@ class HGNCGetter(Obo):
         return get_terms(force=force, version=self.data_version)
 
 
-def get_obo(*, force: bool = False) -> Obo:
-    """Get HGNC as OBO."""
-    return HGNCGetter(force=force)
-
-
 def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]:
     """Get HGNC terms."""
     if version is None:

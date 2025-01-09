@@ -40,11 +40,6 @@ class PubChemCompoundGetter(Obo):
         return get_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get PubChem Compound OBO."""
-    return PubChemCompoundGetter(force=force)
-
-
 def _get_cid_smiles_df(version: str) -> pd.DataFrame:
     url = _get_pubchem_extras_url(version, "CID-SMILES.gz")
     return ensure_df(PREFIX, url=url, version=version, dtype=str)
@@ -145,4 +140,4 @@ def get_terms(*, version: str, use_tqdm: bool = True, force: bool = False) -> It
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    PubChemCompoundGetter.cli()

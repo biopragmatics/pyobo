@@ -50,11 +50,6 @@ class ChEMBLCompoundGetter(Obo):
         return iter_terms(version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Return ChEMBL Compounds as OBO."""
-    return ChEMBLCompoundGetter(force=force)
-
-
 def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over ChEMBL compounds."""
     with chembl_downloader.connect(version=version) as conn:

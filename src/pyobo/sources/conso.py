@@ -31,11 +31,6 @@ class CONSOGetter(Obo):
         return iter_terms()
 
 
-def get_obo() -> Obo:
-    """Get CONSO as OBO."""
-    return CONSOGetter()
-
-
 def iter_terms() -> Iterable[Term]:
     """Get CONSO terms."""
     terms_df = ensure_df(PREFIX, url=TERMS_URL)

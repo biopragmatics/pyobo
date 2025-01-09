@@ -26,11 +26,6 @@ class MiRBaseMatureGetter(Obo):
         return iter_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get miRBase mature as OBO."""
-    return MiRBaseMatureGetter(force=force)
-
-
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get miRBase mature terms."""
     df = get_mature_df(version, force=force)
@@ -49,4 +44,4 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default(write_obo=True, write_obograph=True, use_tqdm=True)
+    MiRBaseMatureGetter.cli()

@@ -255,4 +255,4 @@ def get_city_to_country() -> dict[str, str]:
 
 
 if __name__ == "__main__":
-    GeonamesGetter().write_default(write_obo=True, force=True)
+    GeonamesGetter().cli()

@@ -78,11 +78,6 @@ class PathBankGetter(Obo):
         return iter_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get PathBank as OBO."""
-    return PathBankGetter(force=force)
-
-
 def get_proteins_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get the proteins dataframe."""
     proteins_df = ensure_df(

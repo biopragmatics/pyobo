@@ -53,11 +53,6 @@ class WikiPathwaysGetter(Obo):
         return iter_terms(version=self._version_or_raise)
 
 
-def get_obo() -> Obo:
-    """Get WikiPathways as OBO."""
-    return WikiPathwaysGetter()
-
-
 def iter_terms(version: str) -> Iterable[Term]:
     """Get WikiPathways terms."""
     base_url = f"http://data.wikipathways.org/{version}/gmt/wikipathways-{version}-gmt"

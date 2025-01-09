@@ -9,8 +9,6 @@ import os
 from collections.abc import Iterable, Mapping
 from typing import Any
 
-import click
-from more_click import verbose_option
 from tqdm.auto import tqdm
 
 from ..sources.icd_utils import (
@@ -40,11 +38,6 @@ class ICD11Getter(Obo):
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iterate_icd11()
-
-
-def get_obo() -> Obo:
-    """Get ICD11 as OBO."""
-    return ICD11Getter()
 
 
 def iterate_icd11() -> Iterable[Term]:
@@ -79,7 +72,13 @@ def iterate_icd11() -> Iterable[Term]:
 
 def _extract_icd11(res_json: Mapping[str, Any]) -> Term:
     identifier = res_json["@id"][len(ICD11_TOP_LEVEL_URL) :].lstrip("/")
-    definition = res_json["definition"]["@value"] if "definition" in res_json else None
+    if "definition" in res_json:
+        definition = res_json["definition"]["@value"]
+        definition = definition.strip().replace("\r\n", " ")
+        definition = definition.strip().replace("\\n", " ")
+        definition = definition.strip().replace("\n", " ")
+    else:
+        definition = None
     name = res_json["title"]["@value"]
     synonyms = [Synonym(synonym["label"]["@value"]) for synonym in res_json.get("synonym", [])]
     parents = [
@@ -95,11 +94,5 @@ def _extract_icd11(res_json: Mapping[str, Any]) -> Term:
     )
 
 
-@click.command()
-@verbose_option
-def _main():
-    get_obo().write_default(use_tqdm=True)
-
-
 if __name__ == "__main__":
-    _main()
+    ICD11Getter.cli()

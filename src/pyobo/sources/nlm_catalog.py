@@ -119,4 +119,4 @@ def _process_journal(element, journal_id_to_publisher_key: dict[str, Reference])
 
 
 if __name__ == "__main__":
-    NLMCatalogGetter().cli()
+    NLMCatalogGetter.cli()

@@ -5,7 +5,6 @@ from .reference import Reference
 __all__ = [
     "equivalent_class",
     "has_contributor",
-    "has_ontology_root_term",
     "mapping_has_confidence",
     "mapping_has_justification",
 ]
@@ -19,6 +18,12 @@ has_dbxref = Reference(
     prefix="oboInOwl", identifier="hasDbXref", name="has database cross-reference"
 )
 equivalent_class = Reference(prefix="owl", identifier="equivalentClass", name="equivalent class")
+term_replaced_by = Reference(prefix="IAO", identifier="0100001", name="term replaced by")
+alternative_term = Reference(prefix="IAO", identifier="0000118", name="alternative term")
 has_ontology_root_term = Reference(
     prefix="IAO", identifier="0000700", name="has ontology root term"
 )
+see_also = Reference(prefix="rdfs", identifier="seeAlso", name="see also")
+comment = Reference(prefix="rdfs", identifier="comment", name="comment")
+
+CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")

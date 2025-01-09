@@ -51,11 +51,6 @@ class SLMGetter(Obo):
         return iter_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get SwissLipids as OBO."""
-    return SLMGetter(force=force)
-
-
 def iter_terms(version: str, force: bool = False):
     """Iterate over SwissLipids terms."""
     df = ensure_df(
@@ -135,4 +130,4 @@ def _split(s: str) -> Iterable[str]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default(write_obo=True, use_tqdm=True)
+    SLMGetter.cli()

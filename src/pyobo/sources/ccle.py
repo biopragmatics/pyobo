@@ -11,7 +11,6 @@ from pyobo import Obo, Reference, Term
 
 __all__ = [
     "CCLEGetter",
-    "get_obo",
 ]
 
 PREFIX = "ccle"
@@ -26,15 +25,11 @@ class CCLEGetter(Obo):
 
     def __post_init__(self):
         self.data_version = VERSION
+        super().__post_init__()
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms(version=self._version_or_raise, force=force)
-
-
-def get_obo(*, force: bool = False) -> Obo:
-    """Get CCLE Cells as OBO."""
-    return CCLEGetter(force=force)
 
 
 def iter_terms(version: str | None = None, force: bool = False) -> Iterable[Term]:

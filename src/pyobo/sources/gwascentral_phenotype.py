@@ -27,11 +27,6 @@ class GWASCentralPhenotypeGetter(Obo):
         return iter_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get GWAS Central Studies as OBO."""
-    return GWASCentralPhenotypeGetter(force=force)
-
-
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over terms from GWAS Central Phenotype."""
     for n in trange(1, 11000, desc=f"{PREFIX} download"):

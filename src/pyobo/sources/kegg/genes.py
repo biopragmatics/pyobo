@@ -7,8 +7,6 @@ import logging
 from collections.abc import Iterable
 from pathlib import Path
 
-import click
-from more_click import verbose_option
 from tqdm.auto import tqdm
 
 from .api import (
@@ -40,11 +38,6 @@ class KEGGGeneGetter(Obo):
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms(version=self._version_or_raise)
-
-
-def get_obo() -> Obo:
-    """Get KEGG Genes as OBO."""
-    return KEGGGeneGetter()
 
 
 def iter_terms(version: str) -> Iterable[Term]:
@@ -119,11 +112,5 @@ def _load_conv(path: Path, value_prefix):
     return m
 
 
-@click.command()
-@verbose_option
-def _main():
-    get_obo().write_default()
-
-
 if __name__ == "__main__":
-    _main()
+    KEGGGeneGetter.cli()

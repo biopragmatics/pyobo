@@ -153,11 +153,6 @@ class ComplexPortalGetter(Obo):
         return get_terms(version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get the ComplexPortal OBO."""
-    return ComplexPortalGetter(force=force)
-
-
 def get_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get a combine ComplexPortal dataframe."""
     url_base = f"ftp://ftp.ebi.ac.uk/pub/databases/intact/complex/{version}/complextab"

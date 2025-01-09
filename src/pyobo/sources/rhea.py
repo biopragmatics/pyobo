@@ -52,11 +52,6 @@ class RheaGetter(Obo):
         return iter_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get Rhea as OBO."""
-    return RheaGetter(force=force)
-
-
 def ensure_rhea_rdf(version: str | None = None, force: bool = False) -> "rdflib.Graph":
     """Get the Rhea RDF graph."""
     # see docs: https://ftp.expasy.org/databases/rhea/rdf/rhea_rdf_documentation.pdf
@@ -235,4 +230,4 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    RheaGetter().write_default(write_obo=True, force=True)
+    RheaGetter.cli()
