@@ -77,7 +77,7 @@ def iterate_icd11() -> Iterable[Term]:
                 path.write_text(json.dumps(mms_data))
 
         if code := mms_data.get("code"):
-            term.append_xref(Reference(prefix=CODE_PREFIX, identifier=code))
+            term.append_exact_match(Reference(prefix=CODE_PREFIX, identifier=code))
 
         yield term
 
