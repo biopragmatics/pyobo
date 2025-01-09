@@ -8,6 +8,7 @@ import logging
 from collections.abc import Iterable, Mapping
 from typing import Any
 
+import bioregistry
 from tqdm.auto import tqdm
 
 from .icd_utils import (
@@ -28,8 +29,17 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 PREFIX = "icd11"
+CODE_PREFIX = "icd11.code"
 
 CODE_PROP = TypeDef(reference=default_reference(PREFIX, "icd_mms_code"), is_metadata_tag=True)
+
+# This hacks a non-sanctioned prefix into the bioregistry
+# for demonstration purposes. Do not merge with this!
+bioregistry.manager.synonyms[CODE_PREFIX] = CODE_PREFIX
+bioregistry.manager.registry[CODE_PREFIX] = bioregistry.Resource(
+    prefix=CODE_PREFIX,
+    name="ICD11 Code",
+)
 
 
 class ICD11Getter(Obo):
@@ -67,8 +77,7 @@ def iterate_icd11() -> Iterable[Term]:
                 path.write_text(json.dumps(mms_data))
 
         if code := mms_data.get("code"):
-            # TODO decide on ICD code prefix, then append this as a mapping
-            term.annotate_literal(CODE_PROP, code)
+            term.append_xref(Reference(prefix=CODE_PREFIX, identifier=code))
 
         yield term
 
