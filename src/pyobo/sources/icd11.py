@@ -13,10 +13,8 @@ from tqdm.auto import tqdm
 
 from .icd_utils import (
     ICD11_TOP_LEVEL_URL,
-    ICDError,
     get_child_identifiers,
     get_icd,
-    get_icd_11_mms,
     visiter,
 )
 from ..struct import Obo, Reference, Synonym, Term, TypeDef, default_reference
@@ -73,8 +71,7 @@ def iterate_icd11() -> Iterable[Term]:
                 # writing this isn't necessary since not all terms have MMS entries
                 # tqdm.write(str(e))
                 mms_data = {}
-            else:
-                path.write_text(json.dumps(mms_data))
+            path.write_text(json.dumps(mms_data))
 
         if code := mms_data.get("code"):
             term.append_exact_match(Reference(prefix=CODE_PREFIX, identifier=code))
