@@ -46,11 +46,29 @@ def get_icd_11_mms(identifier: str):
     return _get_entity(ICD_11_MMS_URL, identifier)
 
 
+class ICDError(ValueError):
+    """An error on getting data from ICD."""
+
+    def __init__(self, identifier: str, url: str, text: str) -> None:
+        """Instantiate an ICD error."""
+        self.identifier = identifier
+        self.url = url
+        self.text = text
+
+    def __str__(self) -> str:
+        """Make a string for the ICD error."""
+        return f"[icd11:{self.identifier}] Error getting {self.url} - {self.text}. Try {ICD11_TOP_LEVEL_URL}/{self.identifier}"
+
+
 def _get_entity(endpoint: str, identifier: str):
     url = f"{endpoint}/{identifier}"
     # tqdm.write(f'query {identifier} at {url}')
     res = get_icd(url)
-    return res.json()
+    try:
+        rv = res.json()
+    except OSError:
+        raise ICDError(identifier, url, res.text) from None
+    return rv
 
 
 def get_child_identifiers(endpoint: str, res_json: Mapping[str, Any]) -> list[str]:

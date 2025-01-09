@@ -5,7 +5,6 @@ Run with python -m pyobo.sources.icd11 -v
 
 import json
 import logging
-import os
 from collections.abc import Iterable, Mapping
 from typing import Any
 
@@ -13,6 +12,7 @@ from tqdm.auto import tqdm
 
 from ..sources.icd_utils import (
     ICD11_TOP_LEVEL_URL,
+    ICDError,
     get_child_identifiers,
     get_icd,
     get_icd_11_mms,
@@ -29,11 +29,14 @@ logger = logging.getLogger(__name__)
 
 PREFIX = "icd11"
 
+CODE_PROP = TypeDef(reference=default_reference(PREFIX, "icd_mms_code"), is_metadata_tag=True)
+
 
 class ICD11Getter(Obo):
     """An ontology representation of ICD-11."""
 
     ontology = PREFIX
+    typedefs = [CODE_PROP]
     dynamic_version = True
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -47,17 +50,24 @@ def iterate_icd11() -> Iterable[Term]:
     res_json = res.json()
     version = res_json["releaseId"]
     mms_directory = prefix_directory_join(PREFIX, "mms", version=version)
-    for term in iterate_icd11_helper(res_json, version):
+    terms = list(iterate_icd11_helper(res_json, version))
+    for term in tqdm(terms, desc="Getting MMS", unit_scale=True):
         path = mms_directory.joinpath(term.identifier).with_suffix(".json")
         if path.exists():
             mms_data = json.loads(path.read_text())
         else:
-            mms_data = get_icd_11_mms(term.identifier)
-            path.write_text(json.dumps(mms_data))
+            try:
+                mms_data = get_icd_11_mms(term.identifier)
+            except ICDError:
+                # writing this isn't necessary since not all terms have MMS entries
+                # tqdm.write(str(e))
+                mms_data = {}
+            else:
+                path.write_text(json.dumps(mms_data))
 
         if code := mms_data.get("code"):
             # TODO decide on ICD code prefix, then append this as a mapping
-            term.annotate_literal("icd_mms_code", code)
+            term.annotate_literal(CODE_PROP, code)
 
         yield term
 
