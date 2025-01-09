@@ -31,6 +31,7 @@ LYSINE_DEHYDROGENASE_ACT = Reference(
 )
 RO_DUMMY = TypeDef(reference=Reference(prefix="RO", identifier="1234567"))
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
+ONTOLOGY_PREFIX = "GO"
 
 
 class Nope(Obo):
@@ -115,6 +116,15 @@ class TestTerm(unittest.TestCase):
         """Assert the lines are equal."""
         self.assertEqual(dedent(text).strip(), "\n".join(lines).strip())
 
+    def assert_obo_stanza(
+        self, text: str, term: Term, *, ontology_prefix: str = ONTOLOGY_PREFIX
+    ) -> None:
+        """Assert the typedef text."""
+        self.assert_lines(
+            text,
+            term.iterate_obo_lines(ontology_prefix=ontology_prefix, typedefs={}),
+        )
+
     def assert_funowl_lines(self, text: str, term: Term) -> None:
         """Assert functional OWL lines are equal."""
         from pyobo.struct.functional.obo_to_functional import get_term_axioms
@@ -124,242 +134,36 @@ class TestTerm(unittest.TestCase):
             (x.to_funowl() for x in get_term_axioms(term)),
         )
 
-    def test_species(self) -> None:
-        """Test setting and getting species."""
-        term = Term(reference=Reference(prefix="hgnc", identifier="1234"))
-        term.set_species("9606", "Homo sapiens")
-        species = term.get_species()
-        self.assertIsNotNone(species)
-        self.assertEqual(NCBITAXON_PREFIX, species.prefix)
-        self.assertEqual("9606", species.identifier)
-
-    def test_term_minimal(self) -> None:
-        """Test emitting properties."""
-        term = Term(
-            reference=Reference(
-                prefix=LYSINE_DEHYDROGENASE_ACT.prefix,
-                identifier=LYSINE_DEHYDROGENASE_ACT.identifier,
-            )
-        )
-        self.assert_lines(
-            """\
+    def assert_boolean_tag(self, name: str) -> None:
+        """Assert the boolean tag parses properly."""
+        reference = Reference(prefix="GO", identifier="0000001")
+        term = Term(reference=reference, **{name: True})
+        self.assert_obo_stanza(
+            f"""\
             [Term]
-            id: GO:0050069
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
-        )
-        self.assert_funowl_lines(
-            """\
-            Declaration( Class( GO:0050069 ) )
+            id: GO:0000001
+            {name}: true
             """,
             term,
         )
+        self.assertTrue(hasattr(term, name))
+        value = getattr(term, name)
+        self.assertIsNotNone(value)
+        self.assertTrue(value)
 
-    def test_term_with_name(self) -> None:
-        """Test emitting properties."""
-        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
-        self.assert_lines(
-            """\
+        term = Term(reference=reference, **{name: False})
+        self.assert_obo_stanza(
+            f"""\
             [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
-        )
-        self.assert_funowl_lines(
-            """\
-            Declaration( Class( GO:0050069 ) )
-            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            id: GO:0000001
+            {name}: false
             """,
             term,
         )
-
-    def test_property_literal(self) -> None:
-        """Test emitting property literals."""
-        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
-        term.annotate_literal(RO_DUMMY, "value")
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            property_value: RO:1234567 "value" xsd:string
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-        self.assert_funowl_lines(
-            """\
-            Declaration( Class( GO:0050069 ) )
-            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-            AnnotationAssertion( RO:1234567 GO:0050069 "value"^^xsd:string )
-            """,
-            term,
-        )
-
-    def test_property_integer(self) -> None:
-        """Test emitting property literals that were annotated as a boolean."""
-        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
-        term.annotate_integer(RO_DUMMY, 1234)
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            property_value: RO:1234567 "1234" xsd:integer
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-        self.assert_funowl_lines(
-            """\
-            Declaration( Class( GO:0050069 ) )
-            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-            AnnotationAssertion( RO:1234567 GO:0050069 "1234"^^xsd:integer )
-            """,
-            term,
-        )
-
-    def test_property_bool(self) -> None:
-        """Test emitting property literals that were annotated as a boolean."""
-        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
-        term.annotate_boolean(RO_DUMMY, True)
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            property_value: RO:1234567 "true" xsd:boolean
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-        self.assert_funowl_lines(
-            """\
-            Declaration( Class( GO:0050069 ) )
-            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-            AnnotationAssertion( RO:1234567 GO:0050069 "true"^^xsd:boolean )
-            """,
-            term,
-        )
-
-    def test_property_year(self) -> None:
-        """Test emitting property literals that were annotated as a year."""
-        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
-        term.annotate_year(RO_DUMMY, "1993")
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            property_value: RO:1234567 "1993" xsd:gYear
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-        self.assert_funowl_lines(
-            """\
-            Declaration( Class( GO:0050069 ) )
-            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-            AnnotationAssertion( RO:1234567 GO:0050069 "1993"^^xsd:gYear )
-            """,
-            term,
-        )
-
-    def test_property_object(self) -> None:
-        """Test emitting property literals."""
-        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
-        term.annotate_object(RO_DUMMY, Reference(prefix="hgnc", identifier="123"))
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            property_value: RO:1234567 hgnc:123
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-        self.assert_funowl_lines(
-            """\
-            Declaration( Class( GO:0050069 ) )
-            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-            AnnotationAssertion( RO:1234567 GO:0050069 hgnc:123 )
-            """,
-            term,
-        )
-
-    def test_relation(self) -> None:
-        """Test emitting a relationship."""
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_relationship(RO_DUMMY, Reference(prefix="eccode", identifier="1.4.1.15"))
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            relationship: RO:1234567 eccode:1.4.1.15
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-        self.assert_funowl_lines(
-            """\
-            Declaration( Class( GO:0050069 ) )
-            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-            SubClassOf( GO:0050069 ObjectSomeValuesFrom( RO:1234567 eccode:1.4.1.15 ) )
-            """,
-            term,
-        )
-
-    def test_xref(self) -> None:
-        """Test emitting a relationship."""
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_xref(Reference(prefix="eccode", identifier="1.4.1.15"))
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            xref: eccode:1.4.1.15
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-        self.assert_funowl_lines(
-            """\
-            Declaration( Class( GO:0050069 ) )
-            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-            AnnotationAssertion( oboInOwl:hasDbXref GO:0050069 eccode:1.4.1.15 )
-            """,
-            term,
-        )
-
-        ontology = _ontology_from_term("go", term)
-        mappings_df = ontology.get_mappings_df()
-        self.assertEqual(
-            ["subject_id", "object_id", "predicate_id", "mapping_justification"],
-            list(mappings_df.columns),
-        )
-        self.assertEqual(
-            ["GO:0050069", "eccode:1.4.1.15", "oboInOwl:hasDbXref", "semapv:UnspecifiedMatching"],
-            list(mappings_df.values[0]),
-        )
-
-    def test_parent(self) -> None:
-        """Test emitting a relationship."""
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_parent(Reference(prefix="GO", identifier="1234568"))
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            is_a: GO:1234568
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-        self.assert_funowl_lines(
-            """\
-            Declaration( Class( GO:0050069 ) )
-            SubClassOf( GO:0050069 GO:1234568 )
-            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-            """,
-            term,
-        )
+        self.assertTrue(hasattr(term, name))
+        value = getattr(term, name)
+        self.assertIsNotNone(value)
+        self.assertFalse(value)
 
     def test_instance_of(self) -> None:
         """Test an instance with a class assertion."""
@@ -381,125 +185,80 @@ class TestTerm(unittest.TestCase):
             term,
         )
 
-    def test_append_exact_match(self) -> None:
-        """Test emitting a relationship."""
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_exact_match(
-            Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
+    def test_1_term_minimal(self) -> None:
+        """Test emitting properties."""
+        term = Term(
+            reference=Reference(
+                prefix=LYSINE_DEHYDROGENASE_ACT.prefix,
+                identifier=LYSINE_DEHYDROGENASE_ACT.identifier,
+            )
+        )
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+        )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            """,
+            term,
+        )
+
+    def test_1_default_term(self) -> None:
+        """Test when a term uses a default reference."""
+        term = Term(reference=default_reference("gard", identifier="genetics", name="Genetics"))
+        self.assert_lines(
+            """\
+            [Term]
+            id: genetics
+            name: Genetics
+            """,
+            term.iterate_obo_lines(ontology_prefix="gard", typedefs={}),
+        )
+
+    def test_2_is_anonymous(self) -> None:
+        """Test the ``is_anonymous`` tag."""
+        self.assert_boolean_tag("is_anonymous")
+
+    def test_3_term_with_name(self) -> None:
+        """Test emitting properties."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+        )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            """,
+            term,
+        )
+
+    def test_4_namespace(self) -> None:
+        """Test the ``namespace`` tag."""
+        term = Term(
+            reference=LYSINE_DEHYDROGENASE_ACT,
+            namespace="gomf",
         )
         self.assert_lines(
             """\
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
+            namespace: gomf
             """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
-        ontology = _ontology_from_term("go", term)
-        mappings_df = ontology.get_mappings_df()
-        self.assertEqual(
-            ["subject_id", "object_id", "predicate_id", "mapping_justification"],
-            list(mappings_df.columns),
-        )
-        self.assertEqual(
-            ["GO:0050069", "eccode:1.4.1.15", "skos:exactMatch", "semapv:UnspecifiedMatching"],
-            list(mappings_df.values[0]),
-        )
-
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_exact_match(
-            Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
-        )
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.annotate_object(
-            exact_match,
-            Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase"),
-        )
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-
-    def test_set_species(self) -> None:
-        """Test emitting a relationship."""
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.set_species("9606", "Homo sapiens")
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            relationship: RO:0002162 NCBITaxon:9606 ! in taxon Homo sapiens
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-
-        species = term.get_species()
-        self.assertIsNotNone(species)
-        self.assertEqual("ncbitaxon", species.prefix)
-        self.assertEqual("9606", species.identifier)
-
-    def test_comment(self) -> None:
-        """Test appending a comment."""
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_comment("I like this record")
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            property_value: rdfs:comment "I like this record" xsd:string
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-
-    def test_replaced_by(self) -> None:
-        """Test adding a replaced by."""
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_replaced_by(Reference(prefix="GO", identifier="1234569", name="dummy"))
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            property_value: IAO:0100001 GO:1234569 ! term replaced by dummy
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
-        )
-
-    def test_property_default_reference(self) -> None:
-        """Test adding a replaced by."""
-        r = default_reference("go", "hey")
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.annotate_object(r, Reference(prefix="GO", identifier="1234569", name="dummy"))
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            property_value: hey GO:1234569
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={r.pair: r}),
-        )
-
-    def test_alt(self) -> None:
+    def test_5_alt(self) -> None:
         """Test adding an alternate ID."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
         term.append_alt(Reference(prefix="GO", identifier="1234569", name="dummy"))
@@ -513,7 +272,75 @@ class TestTerm(unittest.TestCase):
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
 
-    def test_append_synonym(self) -> None:
+    def test_6_provenance_no_definition(self) -> None:
+        """Test when there's provenance but not definition."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_provenance(CHARLIE)
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            def: "" [orcid:0000-0003-4423-4370]
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+        )
+
+    def test_6_definition(self):
+        """Test adding a definition."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT, definition="Something")
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            def: "Something" []
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+        )
+
+        term = Term(LYSINE_DEHYDROGENASE_ACT, definition="Something")
+        term.append_provenance(CHARLIE)
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            def: "Something" [orcid:0000-0003-4423-4370]
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+        )
+
+    def test_7_comment(self) -> None:
+        """Test appending a comment."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_comment("I like this record")
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            comment: "I like this record"
+            property_value: rdfs:comment "I like this record" xsd:string
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+
+    def test_8_subset(self) -> None:
+        """Test the ``subset`` tag."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_subset(default_reference("go", "TESTSET"))
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            subset: TESTSET
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+
+    def test_9_append_synonym(self) -> None:
         """Test appending a synonym."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
         term.append_synonym(
@@ -579,7 +406,7 @@ class TestTerm(unittest.TestCase):
             ),
         )
 
-    def test_append_synonym_missing_typedef(self) -> None:
+    def test_9_append_synonym_missing_typedef(self) -> None:
         """Test appending a synonym."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
         term.append_synonym(
@@ -600,137 +427,406 @@ class TestTerm(unittest.TestCase):
             "WARNING:pyobo.struct.struct:[go] synonym typedef not defined: OMO:1234567", log.output
         )
 
-    def test_definition(self):
-        """Test adding a definition."""
-        term = Term(LYSINE_DEHYDROGENASE_ACT, definition="Something")
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            def: "Something" []
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
-        )
-
-        term = Term(LYSINE_DEHYDROGENASE_ACT, definition="Something")
-        term.append_provenance(CHARLIE)
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            def: "Something" [orcid:0000-0003-4423-4370]
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
-        )
-
-    def test_provenance_no_definition(self) -> None:
-        """Test when there's provenance but not definition."""
+    def test_10_xref(self) -> None:
+        """Test emitting a relationship."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_provenance(CHARLIE)
+        term.append_xref(Reference(prefix="eccode", identifier="1.4.1.15"))
         self.assert_lines(
             """\
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            def: "" [orcid:0000-0003-4423-4370]
+            xref: eccode:1.4.1.15
             """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
-
-    def test_obsolete(self) -> None:
-        """Test obsolete definition."""
-        term = Term(LYSINE_DEHYDROGENASE_ACT, is_obsolete=True)
-        self.assert_lines(
+        self.assert_funowl_lines(
             """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            is_obsolete: true
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( oboInOwl:hasDbXref GO:0050069 eccode:1.4.1.15 )
             """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+            term,
         )
 
-        term = Term(LYSINE_DEHYDROGENASE_ACT, is_obsolete=False)
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            is_obsolete: false
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
-        )
-
-    def test_see_also_single(self) -> None:
-        """Test appending see also."""
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_see_also_url("https://example.org/test")
-        self.assert_lines(
-            """\
-            [Term]
-            id: GO:0050069
-            name: lysine dehydrogenase activity
-            property_value: rdfs:seeAlso "https://example.org/test" xsd:anyURI
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
-        )
-
+        ontology = _ontology_from_term("go", term)
+        mappings_df = ontology.get_mappings_df()
         self.assertEqual(
-            "https://example.org/test",
-            term.get_property(see_also),
+            ["subject_id", "object_id", "predicate_id", "mapping_justification"],
+            list(mappings_df.columns),
         )
-
         self.assertEqual(
-            ["https://example.org/test"],
-            term.get_properties(see_also),
+            ["GO:0050069", "eccode:1.4.1.15", "oboInOwl:hasDbXref", "semapv:UnspecifiedMatching"],
+            list(mappings_df.values[0]),
         )
 
-    def test_see_also_double(self) -> None:
-        """Test appending see also."""
+    def test_10_append_xref_with_axioms(self) -> None:
+        """Test emitting a xref with axioms."""
+        target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
         term = Term(LYSINE_DEHYDROGENASE_ACT)
-        with self.assertRaises(ValueError):
-            term.append_see_also("something")
-
-        term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_see_also(Reference(prefix="hgnc", identifier="1234", name="dummy 1"))
-        term.append_see_also(Reference(prefix="hgnc", identifier="1235", name="dummy 2"))
-        self.assert_lines(
-            """\
+        term.append_xref(target, confidence=0.99)
+        lines = dedent("""\
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            property_value: rdfs:seeAlso hgnc:1234 ! see also dummy 1
-            property_value: rdfs:seeAlso hgnc:1235 ! see also dummy 2
-            """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+            xref: eccode:1.4.1.15 {sssom:confidence=0.99} ! lysine dehydrogenase
+        """)
+        self.assert_lines(
+            lines,
+            term.iterate_obo_lines(
+                ontology_prefix="go",
+                typedefs={
+                    RO_DUMMY.pair: RO_DUMMY,
+                    mapping_has_confidence.pair: mapping_has_confidence,
+                    mapping_has_justification.pair: mapping_has_justification,
+                    has_contributor.pair: has_contributor,
+                },
+            ),
         )
 
+        ontology = _ontology_from_term("go", term)
+        mappings_df = ontology.get_mappings_df()
+        self.assertEqual(
+            ["subject_id", "object_id", "predicate_id", "mapping_justification", "confidence"],
+            list(mappings_df.columns),
+        )
         self.assertEqual(
             [
-                Reference(prefix="hgnc", identifier="1234", name="dummy 1").curie,
-                Reference(prefix="hgnc", identifier="1235", name="dummy 2").curie,
+                "GO:0050069",
+                "eccode:1.4.1.15",
+                "oboInOwl:hasDbXref",
+                "semapv:UnspecifiedMatching",
+                0.99,
             ],
-            term.get_properties(see_also),
+            list(mappings_df.values[0]),
         )
 
-        self.assertIsNone(term.get_relationship(exact_match))
-        self.assertIsNone(term.get_species())
+    def test_11_builtin(self) -> None:
+        """Test the builting tag."""
+        self.assert_boolean_tag("builtin")
 
-    def test_default_term(self) -> None:
-        """Test when a term uses a default reference."""
-        term = Term(reference=default_reference("gard", identifier="genetics", name="Genetics"))
+    def test_12_property_default_reference(self) -> None:
+        """Test adding a replaced by."""
+        r = default_reference("go", "hey")
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_object(r, Reference(prefix="GO", identifier="1234569", name="dummy"))
         self.assert_lines(
             """\
             [Term]
-            id: genetics
-            name: Genetics
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: hey GO:1234569
             """,
-            term.iterate_obo_lines(ontology_prefix="gard", typedefs={}),
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={r.pair: r}),
         )
 
-    def test_append_exact_match_axioms(self) -> None:
+    def test_12_property_literal(self) -> None:
+        """Test emitting property literals."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_literal(RO_DUMMY, "value")
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: RO:1234567 "value" xsd:string
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( RO:1234567 GO:0050069 "value"^^xsd:string )
+            """,
+            term,
+        )
+
+    def test_12_property_integer(self) -> None:
+        """Test emitting property literals that were annotated as a boolean."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_integer(RO_DUMMY, 1234)
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: RO:1234567 "1234" xsd:integer
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( RO:1234567 GO:0050069 "1234"^^xsd:integer )
+            """,
+            term,
+        )
+
+    def test_12_property_bool(self) -> None:
+        """Test emitting property literals that were annotated as a boolean."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_boolean(RO_DUMMY, True)
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: RO:1234567 "true" xsd:boolean
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( RO:1234567 GO:0050069 "true"^^xsd:boolean )
+            """,
+            term,
+        )
+
+    def test_12_property_year(self) -> None:
+        """Test emitting property literals that were annotated as a year."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_year(RO_DUMMY, "1993")
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: RO:1234567 "1993" xsd:gYear
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( RO:1234567 GO:0050069 "1993"^^xsd:gYear )
+            """,
+            term,
+        )
+
+    def test_12_property_object(self) -> None:
+        """Test emitting property literals."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_object(RO_DUMMY, Reference(prefix="hgnc", identifier="123"))
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: RO:1234567 hgnc:123
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( RO:1234567 GO:0050069 hgnc:123 )
+            """,
+            term,
+        )
+
+    def test_13_parent(self) -> None:
+        """Test emitting a relationship."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_parent(Reference(prefix="GO", identifier="1234568"))
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            is_a: GO:1234568
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            SubClassOf( GO:0050069 GO:1234568 )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            """,
+            term,
+        )
+
+    def test_14_intersection_of(self) -> None:
+        """Test emitting intersection of."""
+        term = Term(reference=Reference(prefix="ZFA", identifier="0000134"))
+        term.append_intersection_of(Reference(prefix="CL", identifier="0000540", name="neuron"))
+        term.append_intersection_of(
+            part_of.reference,
+            Reference(prefix="NCBITaxon", identifier="7955", name="zebrafish"),
+        )
+        lines = dedent("""\
+            [Term]
+            id: ZFA:0000134
+            intersection_of: CL:0000540 ! neuron
+            intersection_of: BFO:0000050 NCBITaxon:7955 ! part of zebrafish
+        """)
+        self.assert_lines(lines, term.iterate_obo_lines(ontology_prefix="zfa", typedefs={}))
+        self.assert_funowl_lines(
+            """
+            Declaration( Class( ZFA:0000134 ) )
+            EquivalentClasses( ZFA:0000134 ObjectIntersectionOf( CL:0000540 ObjectSomeValuesFrom( BFO:0000050 NCBITaxon:7955 ) ) )
+            """,
+            term,
+        )
+
+    def test_15_union_of(self) -> None:
+        """Test emitting union of."""
+        term = Term(reference=Reference(prefix="ZFA", identifier="0000134"))
+        term.append_union_of(Reference(prefix="GO", identifier="0"))
+        term.append_union_of(Reference(prefix="GO", identifier="1"))
+        lines = dedent("""\
+            [Term]
+            id: ZFA:0000134
+            union_of: GO:0
+            union_of: GO:1
+        """)
+        self.assert_lines(lines, term.iterate_obo_lines(ontology_prefix="zfa", typedefs={}))
+
+    def test_16_equivalent_classes(self) -> None:
+        """Test emitting equivalent classes."""
+        term = Term(reference=Reference(prefix="ZFA", identifier="0000134"))
+        term.append_equivalent_to(Reference(prefix="GO", identifier="0"))
+        lines = dedent("""\
+            [Term]
+            id: ZFA:0000134
+            equivalent_to: GO:0
+        """)
+        self.assert_lines(lines, term.iterate_obo_lines(ontology_prefix="zfa", typedefs={}))
+
+    def test_17_disjoint_from_namespace(self) -> None:
+        """Test the ``disjoint_from`` tag."""
+        term = Term(
+            reference=LYSINE_DEHYDROGENASE_ACT,
+            disjoint_from=[
+                Reference(prefix="GO", identifier="0000000"),
+                Reference(prefix="GO", identifier="0000001"),
+            ],
+        )
+
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            disjoint_from: GO:0000000
+            disjoint_from: GO:0000001
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+        )
+
+    def test_18_relation(self) -> None:
+        """Test emitting a relationship."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_relationship(RO_DUMMY, Reference(prefix="eccode", identifier="1.4.1.15"))
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            relationship: RO:1234567 eccode:1.4.1.15
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            SubClassOf( GO:0050069 ObjectSomeValuesFrom( RO:1234567 eccode:1.4.1.15 ) )
+            """,
+            term,
+        )
+
+    def test_18_append_exact_match(self) -> None:
+        """Test emitting a relationship."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_exact_match(
+            Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
+        )
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+
+        ontology = _ontology_from_term("go", term)
+        mappings_df = ontology.get_mappings_df()
+        self.assertEqual(
+            ["subject_id", "object_id", "predicate_id", "mapping_justification"],
+            list(mappings_df.columns),
+        )
+        self.assertEqual(
+            ["GO:0050069", "eccode:1.4.1.15", "skos:exactMatch", "semapv:UnspecifiedMatching"],
+            list(mappings_df.values[0]),
+        )
+
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_exact_match(
+            Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
+        )
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_object(
+            exact_match,
+            Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase"),
+        )
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+
+    def test_18_set_species(self) -> None:
+        """Test emitting a relationship."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.set_species("9606", "Homo sapiens")
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            relationship: RO:0002162 NCBITaxon:9606 ! in taxon Homo sapiens
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+
+        species = term.get_species()
+        self.assertIsNotNone(species)
+        self.assertEqual("ncbitaxon", species.prefix)
+        self.assertEqual("9606", species.identifier)
+
+    def test_18_species(self) -> None:
+        """Test setting and getting species."""
+        term = Term(reference=Reference(prefix="hgnc", identifier="1234"))
+        term.set_species("9606", "Homo sapiens")
+        species = term.get_species()
+        self.assertIsNotNone(species)
+        self.assertEqual(NCBITAXON_PREFIX, species.prefix)
+        self.assertEqual("9606", species.identifier)
+
+    def test_18_append_exact_match_axioms(self) -> None:
         """Test emitting a relationship with axioms."""
         target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -785,66 +881,81 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
             list(mappings_df.values[0]),
         )
 
-    def test_append_xref_with_axioms(self) -> None:
-        """Test emitting a xref with axioms."""
-        target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
+    def test_18_see_also_single(self) -> None:
+        """Test appending see also."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_xref(target, confidence=0.99)
-        lines = dedent("""\
+        term.append_see_also_url("https://example.org/test")
+        self.assert_lines(
+            """\
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
-            xref: eccode:1.4.1.15 {sssom:confidence=0.99} ! lysine dehydrogenase
-        """)
-        self.assert_lines(
-            lines,
-            term.iterate_obo_lines(
-                ontology_prefix="go",
-                typedefs={
-                    RO_DUMMY.pair: RO_DUMMY,
-                    mapping_has_confidence.pair: mapping_has_confidence,
-                    mapping_has_justification.pair: mapping_has_justification,
-                    has_contributor.pair: has_contributor,
-                },
-            ),
+            property_value: rdfs:seeAlso "https://example.org/test" xsd:anyURI
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
 
-        ontology = _ontology_from_term("go", term)
-        mappings_df = ontology.get_mappings_df()
         self.assertEqual(
-            ["subject_id", "object_id", "predicate_id", "mapping_justification", "confidence"],
-            list(mappings_df.columns),
+            "https://example.org/test",
+            term.get_property(see_also),
         )
+
+        self.assertEqual(
+            ["https://example.org/test"],
+            term.get_property_literals(see_also),
+        )
+
+    def test_18_see_also_double(self) -> None:
+        """Test appending see also."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        with self.assertRaises(ValueError):
+            term.append_see_also("something")
+
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_see_also(Reference(prefix="hgnc", identifier="1234", name="dummy 1"))
+        term.append_see_also(Reference(prefix="hgnc", identifier="1235", name="dummy 2"))
+        self.assert_lines(
+            """\
+            [Term]
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            consider: hgnc:1234 ! dummy 1
+            consider: hgnc:1235 ! dummy 2
+            """,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+        )
+
         self.assertEqual(
             [
-                "GO:0050069",
-                "eccode:1.4.1.15",
-                "oboInOwl:hasDbXref",
-                "semapv:UnspecifiedMatching",
-                0.99,
+                Reference(prefix="hgnc", identifier="1234", name="dummy 1").curie,
+                Reference(prefix="hgnc", identifier="1235", name="dummy 2").curie,
             ],
-            list(mappings_df.values[0]),
+            term.get_property_literals(see_also),
         )
 
-    def test_intersection_of(self) -> None:
-        """Test emitting intersection of."""
-        term = Term(reference=Reference(prefix="ZFA", identifier="0000134"))
-        term.append_intersection_of(Reference(prefix="CL", identifier="0000540", name="neuron"))
-        term.append_intersection_of(
-            part_of.reference,
-            Reference(prefix="NCBITaxon", identifier="7955", name="zebrafish"),
-        )
-        lines = dedent("""\
+        self.assertIsNone(term.get_relationship(exact_match))
+        self.assertIsNone(term.get_species())
+
+    def test_19_created_by(self) -> None:
+        """Test the ``created_by`` tag."""
+
+    def test_20_creation_date(self) -> None:
+        """Test the ``creation_date`` tag."""
+
+    def test_21_obsolete(self) -> None:
+        """Test obsolete definition."""
+        self.assert_boolean_tag("is_obsolete")
+
+    def test_22_replaced_by(self) -> None:
+        """Test adding a replaced by."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_replaced_by(Reference(prefix="GO", identifier="1234569", name="dummy"))
+        self.assert_lines(
+            """\
             [Term]
-            id: ZFA:0000134
-            intersection_of: CL:0000540 ! neuron
-            intersection_of: BFO:0000050 NCBITaxon:7955 ! part of zebrafish
-        """)
-        self.assert_lines(lines, term.iterate_obo_lines(ontology_prefix="zfa", typedefs={}))
-        self.assert_funowl_lines(
-            """
-            Declaration( Class( ZFA:0000134 ) )
-            EquivalentClasses( ZFA:0000134 ObjectIntersectionOf( CL:0000540 ObjectSomeValuesFrom( BFO:0000050 NCBITaxon:7955 ) ) )
+            id: GO:0050069
+            name: lysine dehydrogenase activity
+            replaced_by: GO:1234569 ! dummy
             """,
-            term,
+            term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
