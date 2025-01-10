@@ -22,6 +22,7 @@ from pyobo.struct.typedef import (
     has_role,
     part_of,
 )
+from pyobo.struct.utils import obo_escape_slim
 
 PREFIX = has_role.prefix
 IDENTIFIER = has_role.identifier
@@ -164,7 +165,7 @@ class TestTypeDef(unittest.TestCase):
             f"""\
             [Typedef]
             id: RO:0000087
-            def: "{has_role.definition}"
+            def: "{obo_escape_slim(has_role.definition)}" []
             """,
             typedef,
         )

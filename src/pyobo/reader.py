@@ -574,8 +574,11 @@ def _handle_xref(
             return term.append_relationship(predicate, xref)
         elif xref.prefix in macro_config.treat_xrefs_as_is_a:
             return term.append_parent(xref)
+
+    # TODO this is not what spec calls for, maybe
+    #  need a flag in macro config for this
     if xref.prefix in PROVENANCE_PREFIXES:
-        return term.append_provenance(xref)
+        return term.append_citation(xref)
     return term.append_xref(xref)
 
 
