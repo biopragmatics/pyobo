@@ -18,12 +18,14 @@ from .reference import (
     OBOLiteral,
     Reference,
     Referenced,
+    comma_separate_references,
     default_reference,
     get_preferred_curie,
     multi_reference_escape,
     reference_escape,
     unspecified_matching,
 )
+from .utils import obo_escape_slim
 
 if TYPE_CHECKING:
     from pyobo.struct.struct import Synonym, TypeDef
@@ -75,8 +77,6 @@ class Stanza:
     properties: PropertiesHint
     xrefs: list[Reference]
     parents: list[Reference]
-    # TODO this should be axiom on description
-    provenance: list[Reference]
     intersection_of: IntersectionOfHint
     equivalent_to: list[Reference]
     union_of: UnionOfHint
@@ -164,11 +164,6 @@ class Stanza:
         reference = _ensure_ref(reference)
         if reference not in self.parents:
             self.parents.append(reference)
-        return self
-
-    def append_provenance(self, reference: ReferenceHint) -> Self:
-        """Add a provenance reference."""
-        self.provenance.append(_ensure_ref(reference))
         return self
 
     def append_intersection_of(
@@ -516,6 +511,37 @@ class Stanza:
             contributor=self._get_object_axiom_target(p, o, v.has_contributor),
             confidence=self._get_str_axiom_target(p, o, v.mapping_has_confidence),
         )
+
+    def _definition_fp(self) -> str:
+        definition = obo_escape_slim(self.definition) if self.definition else ""
+        return f'"{definition}" [{comma_separate_references(self._get_definition_provenance())}]'
+
+    def _get_definition_provenance(self) -> list[Reference]:
+        if not self.definition:
+            return []
+        return [
+            ax.value
+            for ax in self._get_axioms(v.has_description, OBOLiteral.string(self.definition))
+            if ax.predicate.pair == v.has_dbxref.pair and isinstance(ax.value, Reference)
+        ]
+
+    @property
+    def provenance(self) -> Sequence[Reference]:
+        """Get definition provenance."""
+        # return as a tuple to make sure nobody is appending on it
+        return tuple(self._get_definition_provenance())
+
+    def append_provenance(self, reference: ReferenceHint) -> Self:
+        """Add a provenance reference."""
+        if not self.definition:
+            raise ValueError
+        reference = _ensure_ref(reference)
+        self._annotate_axiom(
+            v.has_description,
+            OBOLiteral.string(self.definition),
+            Annotation(v.has_dbxref, reference),
+        )
+        return self
 
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str

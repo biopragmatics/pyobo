@@ -211,9 +211,6 @@ class Term(Referenced, Stanza):
     #: A description of the entity
     definition: str | None = None
 
-    #: References to articles in which the term appears
-    provenance: list[Reference] = field(default_factory=list)
-
     #: Object properties
     relationships: RelationsHint = field(default_factory=lambda: defaultdict(list))
 
@@ -361,10 +358,6 @@ class Term(Referenced, Stanza):
             raise ValueError("can not extend a collection that includes a null reference")
         typedef = _ensure_ref(typedef)
         self.relationships[typedef].extend(references)
-
-    def _definition_fp(self) -> str:
-        definition = obo_escape_slim(self.definition) if self.definition else ""
-        return f'"{definition}" [{comma_separate_references(self.provenance)}]'
 
     def iterate_obo_lines(
         self,
@@ -1759,9 +1752,6 @@ class TypeDef(Referenced, Stanza):
     is_metadata_tag: Annotated[bool | None, 40, "typedef-only"] = None
     is_class_level: Annotated[bool | None, 41] = None
 
-    # TODO delete this when fixing provenance for terms
-    provenance: list[Reference] = field(default_factory=list)
-
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass
         return hash((self.__class__, self.prefix, self.identifier))
@@ -1845,7 +1835,7 @@ class TypeDef(Referenced, Stanza):
         yield from _reference_list_tag("alt_id", self.alt_ids, ontology_prefix)
         # 6
         if self.definition:
-            yield f'def: "{self.definition}"'
+            yield f"def: {self._definition_fp()}"
         # 7
         if self.comment:
             yield f"comment: {self.comment}"

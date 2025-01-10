@@ -106,9 +106,10 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
             definition=_get_definition(attrib),
-            provenance=[] if reference is None else [reference],
             is_obsolete=is_obsolete,
         )
+        if term.definition and reference is not None:
+            term.append_provenance(reference=reference)
         for key, typedef in PROPERTIES:
             if value := attrib[key].strip():
                 term.annotate_literal(typedef, value)

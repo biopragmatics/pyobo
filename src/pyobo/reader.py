@@ -37,6 +37,7 @@ from .struct import (
     default_reference,
     make_ad_hoc_ontology,
 )
+from .struct import vocabulary as v
 from .struct.reference import OBOLiteral, _parse_identifier
 from .struct.struct_utils import Annotation, Stanza
 from .struct.typedef import comment as has_comment
@@ -266,21 +267,14 @@ def _get_terms(
             # caveat: this misses terms that are just defined with an ID
             continue
 
-        provenance = []
-        definition, definition_references = get_definition(
-            data, node=reference, strict=strict, ontology_prefix=ontology_prefix
-        )
-        provenance.extend(definition_references)
-
         term = Term(
             reference=reference,
-            definition=definition,
-            provenance=provenance,
             builtin=_get_boolean(data, "builtin"),
             is_anonymous=_get_boolean(data, "is_anonymous"),
             is_obsolete=_get_boolean(data, "is_obsolete"),
             namespace=data.get("namespace"),
         )
+
         _process_alts(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_parents(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_synonyms(
@@ -319,9 +313,24 @@ def _get_terms(
         _process_consider(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_intersection_of(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_comment(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_description(term, data, ontology_prefix=ontology_prefix, strict=strict)
 
         terms.append(term)
     return terms
+
+
+def _process_description(term: Stanza, data, *, ontology_prefix: str, strict: bool):
+    definition, definition_references = get_definition(
+        data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix
+    )
+    term.definition = definition
+    if term.definition:
+        for definition_reference in definition_references:
+            term._annotate_axiom(
+                v.has_description,
+                OBOLiteral.string(term.definition),
+                Annotation(v.has_dbxref, definition_reference),
+            )
 
 
 def _process_comment(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
@@ -813,6 +822,7 @@ def iterate_typedefs(
         _process_disjoint_from(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_consider(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_comment(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_description(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
 
         typedef.disjoint_over.extend(
             iterate_node_reference_tag(
