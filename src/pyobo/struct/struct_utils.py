@@ -536,16 +536,14 @@ class Stanza:
         return tuple(rr)
 
     def append_provenance(self, reference: ReferenceHint) -> Self:
-        """Add a provenance reference."""
-        if self.definition:
-            reference = _ensure_ref(reference)
-            self._annotate_axiom(
-                v.has_description,
-                OBOLiteral.string(self.definition),
-                Annotation(v.has_dbxref, reference),
-            )
-        else:
-            raise NotImplementedError("not sure what to do with provenance outside of definition")
+        """Add a reference to this term's definition."""
+        if not self.definition:
+            raise ValueError("can not append definition provenance if no definition is set")
+        self._annotate_axiom(
+            v.has_description,
+            OBOLiteral.string(self.definition),
+            Annotation(v.has_dbxref, _ensure_ref(reference)),
+        )
         return self
 
     def append_citation(self, reference: Reference) -> Self:

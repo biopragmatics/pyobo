@@ -153,7 +153,7 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
         pubmed_ids = row["CURATED_REF_PUBMED_ID"]
         if pubmed_ids and pd.notna(pubmed_ids):
             for pubmed_id in str(pubmed_ids).split(";"):
-                term.append_provenance(Reference(prefix="pubmed", identifier=pubmed_id))
+                term.append_citation(Reference(prefix="pubmed", identifier=pubmed_id))
 
         term.set_species(identifier="10116", name="Rattus norvegicus")
         yield term

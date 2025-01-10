@@ -109,8 +109,8 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         provenance_reference = (
             Reference.from_curie_or_uri(provenance) if isinstance(provenance, str) else None
         )
-        if term.definition and provenance_reference:
-            term.append_provenance(provenance_reference)
+        if provenance_reference:
+            term.append_citation(provenance_reference)
 
         for xref_reference in id_xrefs.get(entity, []):
             term.append_xref(xref_reference)

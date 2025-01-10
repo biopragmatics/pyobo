@@ -116,7 +116,7 @@ def iter_terms(version: str, force: bool = False):
         for hmdb_id in _split(hmdb_ids):
             term.append_exact_match(("hmdb", hmdb_id))
         for pubmed_id in _split(pubmed_ids):
-            term.append_provenance(("pubmed", pubmed_id))
+            term.append_citation(("pubmed", pubmed_id))
         # TODO how to handle class, parents, and components?
         yield term
 
