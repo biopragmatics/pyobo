@@ -72,9 +72,8 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         terms[reactome_id] = term = Term(
             reference=Reference(prefix=PREFIX, identifier=reactome_id, name=name),
         )
-        # TODO what's a better way to add references?
         for pubmed_id in provenance_d.get(reactome_id, []):
-            term.append_xref(Reference(prefix="pubmed", identifier=pubmed_id))
+            term.append_citation(Reference(prefix="pubmed", identifier=pubmed_id))
 
         if not taxonomy_id or pd.isna(taxonomy_id):
             raise ValueError(f"unmapped species: {species_name}")

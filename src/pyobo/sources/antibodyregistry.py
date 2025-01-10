@@ -7,7 +7,7 @@ import pandas as pd
 from bioregistry.utils import removeprefix
 from tqdm.auto import tqdm
 
-from pyobo import Obo, Term
+from pyobo import Obo, Reference, Term
 from pyobo.api.utils import get_version
 from pyobo.utils.path import ensure_df
 
@@ -92,7 +92,7 @@ def iter_terms(*, force: bool = False, version: str | None = None) -> Iterable[T
                     pubmed_id = pubmed_id.strip()
                     if not pubmed_id:
                         continue
-                    term.append_provenance(("pubmed", pubmed_id))
+                    term.append_citation(Reference(prefix="pubmed", identifier=pubmed_id))
             yield term
 
 

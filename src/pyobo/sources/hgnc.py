@@ -391,7 +391,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                     term.append_xref(Reference(prefix=xref_prefix, identifier=str(xref_identifier)))
 
         for pubmed_id in entry.pop("pubmed_id", []):
-            term.append_provenance(Reference(prefix="pubmed", identifier=str(pubmed_id)))
+            term.append_citation(Reference(prefix="pubmed", identifier=str(pubmed_id)))
 
         gene_group_ids = entry.pop("gene_group_id", [])
         gene_groups = entry.pop("gene_group", [])

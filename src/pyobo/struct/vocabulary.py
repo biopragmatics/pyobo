@@ -62,6 +62,7 @@ has_left_to_right_reaction = Reference(
 has_right_to_left_reaction = Reference(
     prefix="debio", identifier="0000008", name="has right-to-left reaction"
 )
+has_citation = Reference(prefix="debio", identifier="0000029", name="has citation")
 has_description = Reference(prefix="dcterms", identifier="description", name="description")
 has_license = Reference(prefix="dcterms", identifier="license", name="license")
 has_title = Reference(prefix="dcterms", identifier="title", name="title")
