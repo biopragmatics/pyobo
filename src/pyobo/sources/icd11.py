@@ -28,6 +28,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 PREFIX = "icd11"
+CODE_PREFIX = "icd11.code"
 
 CODE_PROP = TypeDef(reference=default_reference(PREFIX, "icd_mms_code"), is_metadata_tag=True)
 
@@ -49,8 +50,13 @@ def iterate_icd11() -> Iterable[Term]:
     res = get_icd(ICD11_TOP_LEVEL_URL)
     res_json = res.json()
     version = res_json["releaseId"]
-    mms_directory = prefix_directory_join(PREFIX, "mms", version=version)
+
+    # Get all terms from the ICD foundation API
     terms = list(iterate_icd11_helper(res_json, version))
+
+    # prepare a directory for enriching from MMS
+    mms_directory = prefix_directory_join(PREFIX, "mms", version=version)
+
     # this takes a bit more than 2 hours
     for term in tqdm(terms, desc="Getting MMS", unit_scale=True):
         path = mms_directory.joinpath(term.identifier).with_suffix(".json")
@@ -63,12 +69,10 @@ def iterate_icd11() -> Iterable[Term]:
                 # writing this isn't necessary since not all terms have MMS entries
                 # tqdm.write(str(e))
                 mms_data = {}
-            else:
-                path.write_text(json.dumps(mms_data))
+            path.write_text(json.dumps(mms_data))
 
         if code := mms_data.get("code"):
-            # TODO decide on ICD code prefix, then append this as a mapping
-            term.annotate_literal(CODE_PROP, code)
+            term.append_exact_match(Reference(prefix=CODE_PREFIX, identifier=code))
 
         yield term
 
