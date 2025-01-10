@@ -6,14 +6,13 @@ from operator import itemgetter
 
 import click
 import humanize
-from more_click import verbose_option
 from tabulate import tabulate
 
 from .aws import main as aws_main
 from .database import main as database_main
 from .lookup import lookup
 from ..constants import RAW_DIRECTORY
-from ..plugins import has_nomenclature_plugin, iter_nomenclature_plugins
+from ..plugins import has_nomenclature_plugin
 from ..registries import iter_cached_obo
 
 __all__ = ["main"]
@@ -25,15 +24,6 @@ logger = logging.getLogger(__name__)
 @click.version_option()
 def main():
     """CLI for PyOBO."""
-
-
-@main.command()
-@verbose_option
-def cache():
-    """Cache all resources."""
-    for obo in iter_nomenclature_plugins():
-        click.secho(f"Caching {obo.ontology}", bold=True, fg="green")
-        obo.write_default()
 
 
 @main.command()

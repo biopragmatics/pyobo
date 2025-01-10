@@ -5,11 +5,10 @@ import unittest
 from pyobo import Obo, Reference, Term
 from pyobo.identifier_utils import UnparsableIRIError
 from pyobo.reader import from_str, get_first_nonescaped_quote
-from pyobo.struct import default_reference
+from pyobo.struct import TypeDef, default_reference
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import abbreviation
 from pyobo.struct.typedef import (
-    TypeDef,
     comment,
     derives_from,
     exact_match,
