@@ -2,10 +2,12 @@
 
 import unittest
 from collections.abc import Iterable
+from pathlib import Path
 from textwrap import dedent
 from typing import cast
 
 import bioregistry
+from bioontologies.obograph import Graph
 
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
@@ -31,7 +33,7 @@ LYSINE_DEHYDROGENASE_ACT = Reference(
 )
 RO_DUMMY = TypeDef(reference=Reference(prefix="RO", identifier="1234567"))
 CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370")
-ONTOLOGY_PREFIX = "GO"
+ONTOLOGY_PREFIX = "go"
 
 
 class Nope(Obo):
@@ -48,6 +50,10 @@ def _ontology_from_term(prefix: str, term: Term) -> Obo:
     return make_ad_hoc_ontology(
         _ontology=prefix,
         _name=name,
+        _idspaces={
+            "dcterms": bioregistry.get_uri_prefix("dcterms"),
+            prefix: bioregistry.get_uri_prefix(prefix),
+        },
         terms=[term],
     )
 
@@ -120,10 +126,30 @@ class TestTerm(unittest.TestCase):
         self, text: str, term: Term, *, ontology_prefix: str = ONTOLOGY_PREFIX
     ) -> None:
         """Assert the typedef text."""
-        self.assert_lines(
-            text,
-            term.iterate_obo_lines(ontology_prefix=ontology_prefix, typedefs={}),
-        )
+        obo_lines = list(term.iterate_obo_lines(ontology_prefix=ontology_prefix, typedefs={}))
+        self.assert_lines(text, obo_lines)
+
+        import tempfile
+        from bioontologies.robot import convert
+
+        obo_ontology = _ontology_from_term(ontology_prefix, term)
+        obo_ontology_text = "\n".join(obo_ontology.iterate_obo_lines())
+        with tempfile.TemporaryDirectory() as directory:
+            stub = Path(directory).joinpath("test")
+            obo_path = stub.with_suffix(".obo")
+            obo_path.write_text(obo_ontology_text)
+            obograph_path = stub.with_suffix(".json")
+            convert(obo_path, obograph_path)
+            obograph_text = obograph_path.read_text()
+            print(obograph_text)
+        expected_graph = Graph.model_validate_json(obograph_text)
+        actual_graph = obo_ontology.get_graph()
+        self.assert_obograph_equal(expected_graph, actual_graph)
+
+    def assert_obograph_equal(self, expected: Graph, actual: Graph) -> None:
+        """Check that two OBO graphs are mostly equal."""
+        self.assertEqual(expected.id, actual.id, msg="graph IDs do not match")
+        # self.assertEqual(expected, actual)
 
     def assert_boolean_tag(self, name: str) -> None:
         """Assert the boolean tag parses properly."""
@@ -164,12 +190,12 @@ class TestTerm(unittest.TestCase):
                 identifier=LYSINE_DEHYDROGENASE_ACT.identifier,
             )
         )
-        self.assert_lines(
+        self.assert_obo_stanza(
             """\
             [Term]
             id: GO:0050069
             """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+            term,
         )
 
     def test_1_default_term(self) -> None:
@@ -191,13 +217,13 @@ class TestTerm(unittest.TestCase):
     def test_3_term_with_name(self) -> None:
         """Test emitting properties."""
         term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
-        self.assert_lines(
+        self.assert_obo_stanza(
             """\
             [Term]
             id: GO:0050069
             name: lysine dehydrogenase activity
             """,
-            term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+            term,
         )
 
     def test_4_namespace(self) -> None:
