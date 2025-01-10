@@ -8,13 +8,14 @@ import logging
 from collections.abc import Iterable, Mapping
 from typing import Any
 
-import bioregistry
 from tqdm.auto import tqdm
 
 from .icd_utils import (
     ICD11_TOP_LEVEL_URL,
+    ICDError,
     get_child_identifiers,
     get_icd,
+    get_icd_11_mms,
     visiter,
 )
 from ..struct import Obo, Reference, Synonym, Term, TypeDef, default_reference
@@ -30,14 +31,6 @@ PREFIX = "icd11"
 CODE_PREFIX = "icd11.code"
 
 CODE_PROP = TypeDef(reference=default_reference(PREFIX, "icd_mms_code"), is_metadata_tag=True)
-
-# This hacks a non-sanctioned prefix into the bioregistry
-# for demonstration purposes. Do not merge with this!
-bioregistry.manager.synonyms[CODE_PREFIX] = CODE_PREFIX
-bioregistry.manager.registry[CODE_PREFIX] = bioregistry.Resource(
-    prefix=CODE_PREFIX,
-    name="ICD11 Code",
-)
 
 
 class ICD11Getter(Obo):
@@ -57,8 +50,13 @@ def iterate_icd11() -> Iterable[Term]:
     res = get_icd(ICD11_TOP_LEVEL_URL)
     res_json = res.json()
     version = res_json["releaseId"]
-    mms_directory = prefix_directory_join(PREFIX, "mms", version=version)
+
+    # Get all terms from the ICD foundation API
     terms = list(iterate_icd11_helper(res_json, version))
+
+    # prepare a directory for enriching from MMS
+    mms_directory = prefix_directory_join(PREFIX, "mms", version=version)
+
     # this takes a bit more than 2 hours
     for term in tqdm(terms, desc="Getting MMS", unit_scale=True):
         path = mms_directory.joinpath(term.identifier).with_suffix(".json")
