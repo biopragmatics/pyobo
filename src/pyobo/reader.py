@@ -168,6 +168,7 @@ def from_obonet(
         ontology_prefix=ontology_prefix,
         upgrade=upgrade,
         node=Reference(prefix="obo", identifier=ontology_prefix),
+        strict=strict,
     ):
         if ann.predicate.pair == has_ontology_root_term.pair:
             match ann.value:

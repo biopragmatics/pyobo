@@ -9,12 +9,18 @@ import pandas as pd
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
-from ..constants import TARGET_ID, TARGET_PREFIX, GetOntologyKwargs, check_should_force
+from ..constants import (
+    BUILD_SUBDIRECTORY_NAME,
+    TARGET_ID,
+    TARGET_PREFIX,
+    GetOntologyKwargs,
+    check_should_force,
+)
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct import Obo
 from ..utils.cache import cached_df, cached_mapping
-from ..utils.path import prefix_cache_join
+from ..utils.path import prefix_cache_join, prefix_directory_join
 
 __all__ = [
     "get_filtered_xrefs",
@@ -152,7 +158,9 @@ def get_mappings_df(
 
     else:
         version = get_version_from_kwargs(prefix, kwargs)
-        path = prefix_cache_join(prefix, name="sssom.tsv", version=version)
+        path = prefix_directory_join(
+            prefix, BUILD_SUBDIRECTORY_NAME, name="sssom.tsv", version=version
+        )
 
         @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
         def _df_getter() -> pd.DataFrame:
