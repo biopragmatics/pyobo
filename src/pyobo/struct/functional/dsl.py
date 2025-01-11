@@ -319,7 +319,7 @@ class Declaration(Box):
 
     def to_funowl_args(self) -> str:
         """Get the inside of the functional OWL tag representing the declaration."""
-        return f"{self.type}( {self.node.to_funowl()} )"
+        return f"{self.type}({self.node.to_funowl()})"
 
 
 """

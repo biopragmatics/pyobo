@@ -163,8 +163,8 @@ class TestTerm(unittest.TestCase):
                 {name}: true
             """,
             ofn=f"""
-                Declaration( Class( GO:0000001 ) )
-                AnnotationAssertion( {curie} GO:0000001 "true"^^xsd:boolean )
+                Declaration(Class(GO:0000001))
+                AnnotationAssertion({curie} GO:0000001 "true"^^xsd:boolean)
             """,
         )
         self.assertTrue(hasattr(term, name))
@@ -181,8 +181,8 @@ class TestTerm(unittest.TestCase):
                 {name}: false
             """,
             ofn=f"""
-                Declaration( Class( GO:0000001 ) )
-                AnnotationAssertion( {curie} GO:0000001 "false"^^xsd:boolean )
+                Declaration(Class(GO:0000001))
+                AnnotationAssertion({curie} GO:0000001 "false"^^xsd:boolean)
             """,
         )
         self.assertTrue(hasattr(term, name))
@@ -202,8 +202,8 @@ class TestTerm(unittest.TestCase):
                 instance_of: GO:0050069 ! lysine dehydrogenase activity
             """,
             ofn="""\
-                Declaration( NamedIndividual( obo:go#example ) )
-                ClassAssertion( obo:go#example GO:0050069 )
+                Declaration(NamedIndividual(obo:go#example))
+                ClassAssertion(obo:go#example GO:0050069)
             """,
             # iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
@@ -223,7 +223,7 @@ class TestTerm(unittest.TestCase):
                 id: GO:0050069
             """,
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
+                Declaration(Class(GO:0050069))
             """,
         )
 
@@ -238,8 +238,8 @@ class TestTerm(unittest.TestCase):
                 name: Genetics
             """,
             ofn="""\
-                Declaration( Class( obo:gard#genetics ) )
-                AnnotationAssertion( rdfs:label obo:gard#genetics "Genetics" )
+                Declaration(Class(obo:gard#genetics))
+                AnnotationAssertion(rdfs:label obo:gard#genetics "Genetics")
             """,
             ontology_prefix="gard",
         )
@@ -259,8 +259,8 @@ class TestTerm(unittest.TestCase):
                 name: lysine dehydrogenase activity
             """,
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
             """,
         )
 
@@ -279,9 +279,9 @@ class TestTerm(unittest.TestCase):
                 namespace: gomf
             """,
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( oboInOwl:hasOBONamespace GO:0050069 "gomf" )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(oboInOwl:hasOBONamespace GO:0050069 "gomf")
             """,
         )
 
@@ -298,9 +298,9 @@ class TestTerm(unittest.TestCase):
                 alt_id: GO:1234569 ! dummy
             """,
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( IAO:0100001 GO:1234569 GO:0050069 )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(IAO:0100001 GO:1234569 GO:0050069)
             """,
         )
 
@@ -316,9 +316,9 @@ class TestTerm(unittest.TestCase):
                 def: "Something" []
             """,
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( dcterms:description GO:0050069 "Something" )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(dcterms:description GO:0050069 "Something")
             """,
         )
 
@@ -333,9 +333,9 @@ class TestTerm(unittest.TestCase):
                 def: "Something" [orcid:0000-0003-4423-4370]
             """,
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( Annotation( oboInOwl:hasDbXref orcid:0000-0003-4423-4370 ) dcterms:description GO:0050069 "Something" )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(Annotation(oboInOwl:hasDbXref orcid:0000-0003-4423-4370) dcterms:description GO:0050069 "Something")
             """,
         )
 
@@ -352,9 +352,9 @@ class TestTerm(unittest.TestCase):
                 comment: "I like this record"
             """,
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( rdfs:comment GO:0050069 "I like this record"^^xsd:string )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(rdfs:comment GO:0050069 "I like this record"^^xsd:string)
             """,
         )
 
@@ -371,9 +371,9 @@ class TestTerm(unittest.TestCase):
                 subset: TESTSET
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( oboInOwl:inSubset GO:0050069 obo:go#TESTSET )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(oboInOwl:inSubset GO:0050069 obo:go#TESTSET)
             """,
         )
 
@@ -392,9 +392,9 @@ class TestTerm(unittest.TestCase):
                 synonym: "L-lysine:NAD+ oxidoreductase" EXACT []
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( oboInOwl:hasExactSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase" )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(oboInOwl:hasExactSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
             """,
         )
 
@@ -414,9 +414,9 @@ class TestTerm(unittest.TestCase):
                 synonym: "L-lysine:NAD+ oxidoreductase" RELATED []
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( oboInOwl:hasRelatedSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase" )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(oboInOwl:hasRelatedSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
             """,
         )
 
@@ -435,9 +435,9 @@ class TestTerm(unittest.TestCase):
                 synonym: "L-lysine:NAD+ oxidoreductase" RELATED [orcid:0000-0003-4423-4370]
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( Annotation( oboInOwl:hasDbXref orcid:0000-0003-4423-4370 ) oboInOwl:hasRelatedSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase" )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(Annotation(oboInOwl:hasDbXref orcid:0000-0003-4423-4370) oboInOwl:hasRelatedSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
             """,
         )
 
@@ -460,9 +460,9 @@ class TestTerm(unittest.TestCase):
                 synonym: "L-lysine:NAD+ oxidoreductase" EXACT OMO:1234567 [orcid:0000-0003-4423-4370]
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( Annotation( oboInOwl:hasSynoynmType OMO:1234567 ) Annotation( oboInOwl:hasDbXref orcid:0000-0003-4423-4370 ) oboInOwl:hasRelatedSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase" )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(Annotation(oboInOwl:hasDbXref orcid:0000-0003-4423-4370) Annotation(oboInOwl:hasSynonymType OMO:1234567) oboInOwl:hasExactSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
             """,
         )
 
@@ -483,9 +483,9 @@ class TestTerm(unittest.TestCase):
                     synonym: "L-lysine:NAD+ oxidoreductase" EXACT OMO:1234567 []
                 """,
                 ofn="""
-                    Declaration( Class( GO:0050069 ) )
-                    AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                    AnnotationAssertion( Annotation( oboInOwl:hasSynonymType OMO:1234567 ) oboInOwl:hasExactSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase" )
+                    Declaration(Class(GO:0050069))
+                    AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                    AnnotationAssertion(Annotation(oboInOwl:hasSynonymType OMO:1234567) oboInOwl:hasExactSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
                 """,
             )
         self.assertIn(
@@ -505,9 +505,9 @@ class TestTerm(unittest.TestCase):
                 xref: eccode:1.4.1.15
             """,
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( oboInOwl:hasDbXref GO:0050069 eccode:1.4.1.15 )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(oboInOwl:hasDbXref GO:0050069 eccode:1.4.1.15)
             """,
         )
 
@@ -536,9 +536,9 @@ class TestTerm(unittest.TestCase):
                 xref: eccode:1.4.1.15 {sssom:confidence=0.99} ! lysine dehydrogenase
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( Annotation( sssom:confidence "0.99"^^xsd:float ) oboInOwl:hasDbXref GO:0050069 eccode:1.4.1.15 )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(Annotation(sssom:confidence "0.99"^^xsd:float) oboInOwl:hasDbXref GO:0050069 eccode:1.4.1.15)
             """,
             typedefs={
                 mapping_has_confidence.pair: mapping_has_confidence,
@@ -583,9 +583,9 @@ class TestTerm(unittest.TestCase):
                 property_value: hey GO:1234569
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( obo:go#hey GO:0050069 GO:1234569 )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(obo:go#hey GO:0050069 GO:1234569)
             """,
         )
 
@@ -603,9 +603,9 @@ class TestTerm(unittest.TestCase):
             """,
             typedefs={RO_DUMMY.pair: RO_DUMMY},
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( RO:1234567 GO:0050069 "value"^^xsd:string )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(RO:1234567 GO:0050069 "value"^^xsd:string)
             """,
         )
 
@@ -622,9 +622,9 @@ class TestTerm(unittest.TestCase):
                 property_value: RO:1234567 "1234" xsd:integer
             """,
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( RO:1234567 GO:0050069 "1234"^^xsd:integer )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(RO:1234567 GO:0050069 "1234"^^xsd:integer)
             """,
             typedefs={RO_DUMMY.pair: RO_DUMMY},
         )
@@ -643,9 +643,9 @@ class TestTerm(unittest.TestCase):
             """,
             typedefs={RO_DUMMY.pair: RO_DUMMY},
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( RO:1234567 GO:0050069 "true"^^xsd:boolean )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(RO:1234567 GO:0050069 "true"^^xsd:boolean)
             """,
         )
 
@@ -662,9 +662,9 @@ class TestTerm(unittest.TestCase):
                 property_value: RO:1234567 "1993" xsd:gYear
             """,
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( RO:1234567 GO:0050069 "1993"^^xsd:gYear )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(RO:1234567 GO:0050069 "1993"^^xsd:gYear)
             """,
             typedefs={RO_DUMMY.pair: RO_DUMMY},
         )
@@ -682,9 +682,9 @@ class TestTerm(unittest.TestCase):
                 property_value: RO:1234567 hgnc:123
             """,
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( RO:1234567 GO:0050069 hgnc:123 )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(RO:1234567 GO:0050069 hgnc:123)
             """,
             typedefs={RO_DUMMY.pair: RO_DUMMY},
         )
@@ -703,9 +703,9 @@ class TestTerm(unittest.TestCase):
                 is_a: GO:1234568
             """,
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
-                SubClassOf( GO:0050069 GO:1234568 )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+                Declaration(Class(GO:0050069))
+                SubClassOf(GO:0050069 GO:1234568)
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
             """,
         )
 
@@ -727,8 +727,8 @@ class TestTerm(unittest.TestCase):
                 intersection_of: BFO:0000050 NCBITaxon:7955 ! part of zebrafish
             """,
             ofn="""\
-                Declaration( Class( ZFA:0000134 ) )
-                EquivalentClasses( ZFA:0000134 ObjectIntersectionOf( CL:0000540 ObjectSomeValuesFrom( BFO:0000050 NCBITaxon:7955 ) ) )
+                Declaration(Class(ZFA:0000134))
+                EquivalentClasses(ZFA:0000134 ObjectIntersectionOf(CL:0000540 ObjectSomeValuesFrom(BFO:0000050 NCBITaxon:7955)))
             """,
         )
 
@@ -746,8 +746,8 @@ class TestTerm(unittest.TestCase):
                 union_of: GO:3
             """,
             ofn="""
-                Declaration( Class( GO:1 ) )
-                EquivalentClasses( GO:1 ObjectUnionOf( GO:2 GO:3 ) )
+                Declaration(Class(GO:1))
+                EquivalentClasses(GO:1 ObjectUnionOf(GO:2 GO:3))
             """,
         )
 
@@ -765,8 +765,8 @@ class TestTerm(unittest.TestCase):
                 union_of: GO:4
             """,
             ofn="""
-                Declaration( Class( GO:1 ) )
-                EquivalentClasses( GO:1 ObjectUnionOf( GO:2 GO:3 GO:4 ) )
+                Declaration(Class(GO:1))
+                EquivalentClasses(GO:1 ObjectUnionOf(GO:2 GO:3 GO:4))
             """,
         )
 
@@ -783,8 +783,8 @@ class TestTerm(unittest.TestCase):
                 equivalent_to: GO:0
             """,
             ofn="""
-                Declaration( Class( ZFA:0000134 ) )
-                EquivalentClasses( ZFA:0000134 GO:0 )
+                Declaration(Class(ZFA:0000134))
+                EquivalentClasses(ZFA:0000134 GO:0)
             """,
         )
 
@@ -801,8 +801,8 @@ class TestTerm(unittest.TestCase):
                 equivalent_to: GO:1
             """,
             ofn="""
-                Declaration( Class( ZFA:0000134 ) )
-                EquivalentClasses( ZFA:0000134 GO:0 GO:1 )
+                Declaration(Class(ZFA:0000134))
+                EquivalentClasses(ZFA:0000134 GO:0 GO:1)
             """,
         )
 
@@ -825,9 +825,9 @@ class TestTerm(unittest.TestCase):
                 disjoint_from: GO:0000001
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                DisjointClasses( GO:0050069 GO:0000000 GO:0000001 )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                DisjointClasses(GO:0050069 GO:0000000 GO:0000001)
             """,
         )
 
@@ -845,9 +845,9 @@ class TestTerm(unittest.TestCase):
                 relationship: RO:1234567 eccode:1.4.1.15
             """,
             ofn="""\
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                SubClassOf( GO:0050069 ObjectSomeValuesFrom( RO:1234567 eccode:1.4.1.15 ) )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                SubClassOf(GO:0050069 ObjectSomeValuesFrom(RO:1234567 eccode:1.4.1.15))
             """,
         )
 
@@ -867,9 +867,9 @@ class TestTerm(unittest.TestCase):
                 property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( skos:exactMatch GO:0050069 eccode:1.4.1.15 )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(skos:exactMatch GO:0050069 eccode:1.4.1.15)
             """,
         )
 
@@ -898,9 +898,9 @@ class TestTerm(unittest.TestCase):
                 property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( skos:exactMatch GO:0050069 eccode:1.4.1.15 )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(skos:exactMatch GO:0050069 eccode:1.4.1.15)
             """,
         )
 
@@ -919,9 +919,9 @@ class TestTerm(unittest.TestCase):
                 property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( skos:exactMatch GO:0050069 eccode:1.4.1.15 )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(skos:exactMatch GO:0050069 eccode:1.4.1.15)
             """,
         )
 
@@ -938,9 +938,9 @@ class TestTerm(unittest.TestCase):
                 relationship: RO:0002162 NCBITaxon:9606 ! in taxon Homo sapiens
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                SubClassOf( GO:0050069 ObjectSomeValuesFrom( RO:0002162 NCBITaxon:9606 ) )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                SubClassOf(GO:0050069 ObjectSomeValuesFrom(RO:0002162 NCBITaxon:9606))
             """,
         )
 
@@ -983,9 +983,9 @@ class TestTerm(unittest.TestCase):
 sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine dehydrogenase
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( Annotation( sssom:mapping_justification semapv:UnspecifiedMatching ) Annotation( sssom:confidence "0.99"^^xsd:float ) skos:exactMatch GO:0050069 eccode:1.4.1.15 )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(Annotation(sssom:mapping_justification semapv:UnspecifiedMatching) Annotation(sssom:confidence "0.99"^^xsd:float) skos:exactMatch GO:0050069 eccode:1.4.1.15)
             """,
         )
 
@@ -1028,9 +1028,9 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
                 property_value: rdfs:seeAlso "https://example.org/test" xsd:anyURI
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( rdfs:seeAlso GO:0050069 "https://example.org/test"^^xsd:anyURI )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(rdfs:seeAlso GO:0050069 "https://example.org/test"^^xsd:anyURI)
             """,
         )
 
@@ -1063,10 +1063,10 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
                 consider: hgnc:1235 ! dummy 2
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( rdfs:seeAlso GO:0050069 hgnc:1234 )
-                AnnotationAssertion( rdfs:seeAlso GO:0050069 hgnc:1235 )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(rdfs:seeAlso GO:0050069 hgnc:1234)
+                AnnotationAssertion(rdfs:seeAlso GO:0050069 hgnc:1235)
             """,
         )
 
@@ -1104,8 +1104,8 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
                 replaced_by: GO:1234569 ! dummy
             """,
             ofn="""
-                Declaration( Class( GO:0050069 ) )
-                AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
-                AnnotationAssertion( IAO:0100001 GO:0050069 GO:1234569 )
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(IAO:0100001 GO:0050069 GO:1234569)
             """,
         )

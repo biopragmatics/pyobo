@@ -47,7 +47,7 @@ class FunctionalOWLSerializable(ABC):
     def to_funowl(self) -> str:
         """Make functional OWL."""
         tag = self.__class__.__name__
-        return f"{tag}( {self.to_funowl_args()} )"
+        return f"{tag}({self.to_funowl_args()})"
 
     @abstractmethod
     def to_funowl_args(self) -> str:

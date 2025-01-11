@@ -152,7 +152,7 @@ class Ontology(Box):
         self.axioms = axioms or []
         # this is the amount of leading whitespace on each
         # when outputting to functional OWL
-        self._leading = "  "
+        self._leading = ""
 
     def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
         """Add the ontology to the triple store."""

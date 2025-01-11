@@ -344,6 +344,13 @@ def _yield_xrefs(term: Stanza, s) -> Iterable[m.XrefMacro]:
         )
 
 
+_SKIP = {
+    # we skip alt terms since OFN
+    # prefers to flip the triple and use term-replaced-by instead
+    pv.alternative_term,
+}
+
+
 def _yield_properties(term: Stanza, s) -> Iterable[f.AnnotationAssertion]:
     for typedef, values in term.properties.items():
         ty_pc = typedef.preferred_curie
@@ -351,8 +358,6 @@ def _yield_properties(term: Stanza, s) -> Iterable[f.AnnotationAssertion]:
             annotations = _get_annotations(term, typedef, value)
             match value:
                 case OBOLiteral():
-                    if typedef in pv.SKIP_PROPERTY_PREDICATES_LITERAL:
-                        continue
                     yield f.AnnotationAssertion(
                         ty_pc,
                         s,
@@ -360,7 +365,7 @@ def _yield_properties(term: Stanza, s) -> Iterable[f.AnnotationAssertion]:
                         annotations=annotations,
                     )
                 case Reference():
-                    if typedef in pv.SKIP_PROPERTY_PREDICATES_OBJECTS:
+                    if typedef in _SKIP:
                         continue
                     yield f.AnnotationAssertion(
                         ty_pc,

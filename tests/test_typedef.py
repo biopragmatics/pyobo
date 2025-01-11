@@ -90,16 +90,16 @@ class TestTypeDef(unittest.TestCase):
             if funowl_func:
                 self.assert_funowl_lines(
                     f"""
-                        Declaration( ObjectProperty( GO:0000001 ) )
-                        {funowl_func}( GO:0000001 )
+                        Declaration(ObjectProperty(GO:0000001))
+                        {funowl_func}(GO:0000001)
                         """,
                     typedef_true,
                 )
             else:
                 self.assert_funowl_lines(
                     f"""
-                    Declaration( ObjectProperty( GO:0000001 ) )
-                    AnnotationAssertion( {funowl_curie} GO:0000001 "true"^^xsd:boolean )
+                    Declaration(ObjectProperty(GO:0000001))
+                    AnnotationAssertion({funowl_curie} GO:0000001 "true"^^xsd:boolean)
                     """,
                     typedef_true,
                 )
@@ -121,8 +121,8 @@ class TestTypeDef(unittest.TestCase):
         if test_funowl and not funowl_func:
             self.assert_funowl_lines(
                 f"""
-                Declaration( ObjectProperty( GO:0000001 ) )
-                AnnotationAssertion( {funowl_curie} GO:0000001 "false"^^xsd:boolean )
+                Declaration(ObjectProperty(GO:0000001))
+                AnnotationAssertion({funowl_curie} GO:0000001 "false"^^xsd:boolean)
                 """,
                 typedef_false,
             )
@@ -144,7 +144,7 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( ObjectProperty( RO:0000087 ) )
+            Declaration(ObjectProperty(RO:0000087))
             """,
             object_property,
         )
@@ -163,7 +163,7 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( AnnotationProperty( skos:exactMatch ) )
+            Declaration(AnnotationProperty(skos:exactMatch))
             """,
             annotation_property,
         )
@@ -189,8 +189,8 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( ObjectProperty( RO:0000087 ) )
-            AnnotationAssertion( rdfs:label RO:0000087 "has role" )
+            Declaration(ObjectProperty(RO:0000087))
+            AnnotationAssertion(rdfs:label RO:0000087 "has role")
             """,
             typedef,
         )
@@ -208,8 +208,8 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( ObjectProperty( RO:0000087 ) )
-            AnnotationAssertion( oboInOwl:hasOBONamespace RO:0000087 "NS" )
+            Declaration(ObjectProperty(RO:0000087))
+            AnnotationAssertion(oboInOwl:hasOBONamespace RO:0000087 "NS")
             """,
             typedef,
         )
@@ -230,9 +230,9 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( ObjectProperty( RO:0000087 ) )
-            AnnotationAssertion( IAO:0100001 RO:1234567 RO:0000087 )
-            AnnotationAssertion( IAO:0100001 RO:1234568 RO:0000087 )
+            Declaration(ObjectProperty(RO:0000087))
+            AnnotationAssertion(IAO:0100001 RO:1234567 RO:0000087)
+            AnnotationAssertion(IAO:0100001 RO:1234568 RO:0000087)
             """,
             typedef,
         )
@@ -250,8 +250,8 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             f"""\
-            Declaration( ObjectProperty( RO:0000087 ) )
-            AnnotationAssertion( dcterms:description RO:0000087 "{has_role.definition}" )
+            Declaration(ObjectProperty(RO:0000087))
+            AnnotationAssertion(dcterms:description RO:0000087 "{has_role.definition}")
             """,
             typedef,
         )
@@ -270,8 +270,8 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             f"""\
-             Declaration( ObjectProperty( RO:0000087 ) )
-             AnnotationAssertion( rdfs:comment RO:0000087 "{comment}" )
+             Declaration(ObjectProperty(RO:0000087))
+             AnnotationAssertion(rdfs:comment RO:0000087 "{comment}")
              """,
             typedef,
         )
@@ -290,8 +290,8 @@ class TestTypeDef(unittest.TestCase):
         # note that the default ontology is "go", which is why it gets this CURIE
         self.assert_funowl_lines(
             """\
-            Declaration( ObjectProperty( RO:0000087 ) )
-            AnnotationAssertion( oboInOwl:inSubset RO:0000087 obo:go#SUBSET_1 )
+            Declaration(ObjectProperty(RO:0000087))
+            AnnotationAssertion(oboInOwl:inSubset RO:0000087 obo:go#SUBSET_1)
             """,
             typedef,
         )
@@ -309,8 +309,8 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( ObjectProperty( RO:0000087 ) )
-            AnnotationAssertion( oboInOwl:hasExactSynonym RO:0000087 "bears role" )
+            Declaration(ObjectProperty(RO:0000087))
+            AnnotationAssertion(oboInOwl:hasExactSynonym RO:0000087 "bears role")
             """,
             typedef,
         )
@@ -326,8 +326,8 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( ObjectProperty( RO:0000087 ) )
-            AnnotationAssertion( Annotation( oboInOwl:hasSynonymType OMO:0003008 ) oboInOwl:hasExactSynonym RO:0000087 "bears role" )
+            Declaration(ObjectProperty(RO:0000087))
+            AnnotationAssertion(Annotation(oboInOwl:hasSynonymType OMO:0003008) oboInOwl:hasExactSynonym RO:0000087 "bears role")
             """,
             typedef,
         )
@@ -345,8 +345,8 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( ObjectProperty( RO:0000087 ) )
-            AnnotationAssertion( oboInOwl:hasDbXref RO:0000087 obo:chebi#has_role )
+            Declaration(ObjectProperty(RO:0000087))
+            AnnotationAssertion(oboInOwl:hasDbXref RO:0000087 obo:chebi#has_role)
             """,
             typedef,
         )
@@ -379,9 +379,9 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( ObjectProperty( RO:0000087 ) )
-            AnnotationAssertion( dcterms:contributor RO:0000087 orcid:0000-0003-4423-4370 )
-            AnnotationAssertion( debio:0000020 RO:0000087 "abc"^^xsd:string )
+            Declaration(ObjectProperty(RO:0000087))
+            AnnotationAssertion(dcterms:contributor RO:0000087 orcid:0000-0003-4423-4370)
+            AnnotationAssertion(debio:0000020 RO:0000087 "abc"^^xsd:string)
             """,
             typedef,
         )
@@ -416,8 +416,8 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( ObjectProperty( BFO:0000066 ) )
-            ObjectPropertyDomain( BFO:0000066 BFO:0000003 )
+            Declaration(ObjectProperty(BFO:0000066))
+            ObjectPropertyDomain(BFO:0000066 BFO:0000003)
             """,
             typedef,
         )
@@ -438,8 +438,8 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( AnnotationProperty( BFO:0000066 ) )
-            AnnotationPropertyDomain( BFO:0000066 BFO:0000003 )
+            Declaration(AnnotationProperty(BFO:0000066))
+            AnnotationPropertyDomain(BFO:0000066 BFO:0000003)
             """,
             typedef_annotation,
         )
@@ -474,8 +474,8 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( ObjectProperty( BFO:0000066 ) )
-            ObjectPropertyRange( BFO:0000066 BFO:0000004 )
+            Declaration(ObjectProperty(BFO:0000066))
+            ObjectPropertyRange(BFO:0000066 BFO:0000004)
             """,
             typedef,
         )
@@ -496,8 +496,8 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( AnnotationProperty( BFO:0000066 ) )
-            AnnotationPropertyRange( BFO:0000066 BFO:0000004 )
+            Declaration(AnnotationProperty(BFO:0000066))
+            AnnotationPropertyRange(BFO:0000066 BFO:0000004)
             """,
             typedef_annotation,
         )
@@ -541,8 +541,8 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( ObjectProperty( BFO:0000066 ) )
-            SubObjectPropertyOf( ObjectPropertyChain( BFO:0000050 BFO:0000066 ) BFO:0000066 )
+            Declaration(ObjectProperty(BFO:0000066))
+            SubObjectPropertyOf(ObjectPropertyChain(BFO:0000050 BFO:0000066) BFO:0000066)
             """,
             typedef,
         )
@@ -592,9 +592,9 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """
-            Declaration( ObjectProperty( BFO:0000050 ) )
-            AnnotationAssertion( rdfs:label BFO:0000050 "part of" )
-            SubObjectPropertyOf( BFO:0000050 RO:0002131 )
+            Declaration(ObjectProperty(BFO:0000050))
+            AnnotationAssertion(rdfs:label BFO:0000050 "part of")
+            SubObjectPropertyOf(BFO:0000050 RO:0002131)
             """,
             typedef,
         )
@@ -616,9 +616,9 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """
-            Declaration( AnnotationProperty( skos:exactMatch ) )
-            AnnotationAssertion( rdfs:label skos:exactMatch "exact match" )
-            SubAnnotationPropertyOf( skos:exactMatch skos:closeMatch )
+            Declaration(AnnotationProperty(skos:exactMatch))
+            AnnotationAssertion(rdfs:label skos:exactMatch "exact match")
+            SubAnnotationPropertyOf(skos:exactMatch skos:closeMatch)
             """,
             typedef,
         )
@@ -748,8 +748,8 @@ class TestTypeDef(unittest.TestCase):
         )
         self.assert_funowl_lines(
             """\
-            Declaration( ObjectProperty( BFO:0000066 ) )
-            SubObjectPropertyOf( ObjectPropertyChain( BFO:0000066 BFO:0000050 ) BFO:0000066 )
+            Declaration(ObjectProperty(BFO:0000066))
+            SubObjectPropertyOf(ObjectPropertyChain(BFO:0000066 BFO:0000050) BFO:0000066)
             """,
             typedef,
         )
@@ -855,13 +855,13 @@ class TestTypeDef(unittest.TestCase):
         td_true, td_false = self.assert_boolean_tag("is_metadata_tag", test_funowl=False)
         self.assert_funowl_lines(
             """
-            Declaration( AnnotationProperty( GO:0000001 ) )
+            Declaration(AnnotationProperty(GO:0000001))
             """,
             td_true,
         )
         self.assert_funowl_lines(
             """
-            Declaration( ObjectProperty( GO:0000001 ) )
+            Declaration(ObjectProperty(GO:0000001))
             """,
             td_false,
         )
