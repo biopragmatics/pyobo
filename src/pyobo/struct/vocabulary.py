@@ -72,6 +72,14 @@ orthologous = Reference(
 )
 is_a = Reference(prefix="rdfs", identifier="subClassOf", name="subclass of")
 
+xsd_string = Reference(prefix="xsd", identifier="string", name="string")
+xsd_float = Reference(prefix="xsd", identifier="float", name="float")
+xsd_integer = Reference(prefix="xsd", identifier="integer", name="integer")
+xsd_boolean = Reference(prefix="xsd", identifier="boolean", name="boolean")
+xsd_year = Reference(prefix="xsd", identifier="gYear", name="year")
+xsd_uri = Reference(prefix="xsd", identifier="anyURI", name="URI")
+
+
 CHARLIE = _c(_v.charlie)
 
 #: See https://mapping-commons.github.io/sssom/spec-model/
@@ -97,8 +105,12 @@ extended_match_typedefs: Sequence[Reference] = (
 
 #: These are predicates that have their own dedicated fields
 #: in OBO and FunOWL output
-SKIP_PROPERTY_PREDICATES = [
-    term_replaced_by,
-    see_also,
-    alternative_term,
+SKIP_PROPERTY_PREDICATES_OBJECTS = [
+    term_replaced_by,  # maps to "replaced_by:" line
+    see_also,  # maps to "consider:" line
+    alternative_term,  # maps to "alt_id:" line
+]
+
+SKIP_PROPERTY_PREDICATES_LITERAL = [
+    comment,  # maps to "comment:" line with strings
 ]

@@ -40,7 +40,7 @@ from .reference import (
 )
 from .struct_utils import (
     Annotation,
-    AxiomsHint,
+    AnnotationsDict,
     IntersectionOfHint,
     PropertiesHint,
     ReferenceHint,
@@ -214,7 +214,7 @@ class Term(Referenced, Stanza):
     #: Object properties
     relationships: RelationsHint = field(default_factory=lambda: defaultdict(list))
 
-    _axioms: AxiomsHint = field(default_factory=lambda: defaultdict(list))
+    _axioms: AnnotationsDict = field(default_factory=lambda: defaultdict(list))
 
     properties: PropertiesHint = field(default_factory=lambda: defaultdict(list))
 
@@ -279,11 +279,9 @@ class Term(Referenced, Stanza):
             definition=get_definition(prefix, identifier),
         )
 
-    def append_see_also_url(self, url: str) -> Self:
+    def append_see_also_uri(self, uri: str) -> Self:
         """Add a see also property."""
-        return self.annotate_literal(
-            v.see_also, url, datatype=Reference(prefix="xsd", identifier="anyURI")
-        )
+        return self.annotate_uri(v.see_also, uri)
 
     def extend_parents(self, references: Collection[Reference]) -> None:
         """Add a collection of parents to this entity."""
@@ -322,12 +320,12 @@ class Term(Referenced, Stanza):
     ) -> Self:
         """Append an exact match, also adding an xref."""
         reference = _ensure_ref(reference)
-        axioms = self._prepare_mapping_axioms(
+        axioms = self._prepare_mapping_annotations(
             mapping_justification=mapping_justification,
             confidence=confidence,
             contributor=contributor,
         )
-        self.annotate_object(v.exact_match, reference, axioms=axioms)
+        self.annotate_object(v.exact_match, reference, annotations=axioms)
         return self
 
     def set_species(self, identifier: str, name: str | None = None) -> Self:
@@ -405,7 +403,8 @@ class Term(Referenced, Stanza):
         if emit_annotation_properties:
             yield from self._iterate_obo_properties(
                 ontology_prefix=ontology_prefix,
-                skip_predicates=v.SKIP_PROPERTY_PREDICATES,
+                skip_predicate_objects=v.SKIP_PROPERTY_PREDICATES_OBJECTS,
+                skip_predicate_literals=v.SKIP_PROPERTY_PREDICATES_LITERAL,
                 typedefs=typedefs,
             )
         # 13
@@ -788,26 +787,17 @@ class Obo:
     def _iterate_property_pairs(self) -> Iterable[tuple[Reference, Reference | OBOLiteral]]:
         # Title
         if self.name:
-            yield (
-                v.has_title,
-                OBOLiteral(self.name, Reference(prefix="xsd", identifier="string")),
-            )
+            yield v.has_title, OBOLiteral.string(self.name)
 
         # License
         # TODO add SPDX to idspaces and use as a CURIE?
         if license_spdx_id := bioregistry.get_license(self.ontology):
-            yield (
-                v.has_license,
-                OBOLiteral(license_spdx_id, Reference(prefix="xsd", identifier="string")),
-            )
+            yield v.has_license, OBOLiteral.string(license_spdx_id)
 
         # Description
         if description := bioregistry.get_description(self.ontology):
             description = obo_escape_slim(description.strip())
-            yield (
-                v.has_description,
-                OBOLiteral(description.strip(), Reference(prefix="xsd", identifier="string")),
-            )
+            yield v.has_description, OBOLiteral.string(description.strip())
 
         # Root terms
         for root_term in self.root_terms or []:
@@ -1700,7 +1690,7 @@ class TypeDef(Referenced, Stanza):
     subsets: Annotated[list[Reference], 8] = field(default_factory=list)
     synonyms: Annotated[list[Synonym], 9] = field(default_factory=list)
     xrefs: Annotated[list[Reference], 10] = field(default_factory=list)
-    _axioms: AxiomsHint = field(default_factory=lambda: defaultdict(list))
+    _axioms: AnnotationsDict = field(default_factory=lambda: defaultdict(list))
     properties: Annotated[PropertiesHint, 11] = field(default_factory=lambda: defaultdict(list))
     domain: Annotated[Reference | None, 12, "typedef-only"] = None
     range: Annotated[Reference | None, 13, "typedef-only"] = None
@@ -1844,7 +1834,8 @@ class TypeDef(Referenced, Stanza):
         # 11
         yield from self._iterate_obo_properties(
             ontology_prefix=ontology_prefix,
-            skip_predicates=v.SKIP_PROPERTY_PREDICATES,
+            skip_predicate_objects=v.SKIP_PROPERTY_PREDICATES_OBJECTS,
+            skip_predicate_literals=v.SKIP_PROPERTY_PREDICATES_LITERAL,
             typedefs=typedefs,
         )
         # 12

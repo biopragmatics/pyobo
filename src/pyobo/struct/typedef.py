@@ -273,9 +273,7 @@ mapping_has_justification = TypeDef(
     range=Reference(prefix="semapv", identifier="Matching", name="matching process"),
 )
 mapping_has_confidence = TypeDef(
-    reference=v.mapping_has_confidence,
-    is_metadata_tag=True,
-    range=Reference(prefix="xsd", identifier="float"),
+    reference=v.mapping_has_confidence, is_metadata_tag=True, range=v.xsd_float
 )
 has_contributor = TypeDef(reference=v.has_contributor, is_metadata_tag=True)
 

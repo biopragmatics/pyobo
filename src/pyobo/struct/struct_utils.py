@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from pyobo.struct.struct import Synonym, TypeDef
 
 __all__ = [
-    "AxiomsHint",
+    "AnnotationsDict",
     "ReferenceHint",
     "Stanza",
 ]
@@ -48,7 +48,7 @@ class Annotation(NamedTuple):
     @classmethod
     def float(cls, predicate: Reference, value: float) -> Self:
         """Return a literal property for a float."""
-        return cls(predicate, OBOLiteral(str(value), Reference(prefix="xsd", identifier="float")))
+        return cls(predicate, OBOLiteral(str(value), v.xsd_float))
 
 
 def _property_resolve(
@@ -63,7 +63,7 @@ def _property_resolve(
 
 PropertiesHint: TypeAlias = dict[Reference, list[Reference | OBOLiteral]]
 RelationsHint: TypeAlias = dict[Reference, list[Reference]]
-AxiomsHint: TypeAlias = dict[Annotation, list[Annotation]]
+AnnotationsDict: TypeAlias = dict[Annotation, list[Annotation]]
 # note that an intersection is not valid in ROBOT with a literal, even though this _might_ make sense.
 IntersectionOfHint: TypeAlias = list[Reference | tuple[Reference, Reference]]
 UnionOfHint: TypeAlias = list[Reference]
@@ -84,7 +84,7 @@ class Stanza:
     disjoint_from: list[Reference]
     synonyms: list[Synonym]
 
-    _axioms: AxiomsHint
+    _axioms: AnnotationsDict
 
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: bool | None
@@ -97,25 +97,27 @@ class Stanza:
         typedef: ReferenceHint,
         reference: ReferenceHint,
         *,
-        axioms: Iterable[Annotation] | None = None,
+        annotations: Iterable[Annotation] | None = None,
     ) -> Self:
         """Append a relationship."""
         typedef = _ensure_ref(typedef)
         reference = _ensure_ref(reference)
         self.relationships[typedef].append(reference)
-        self._annotate_axioms(typedef, reference, axioms)
+        self._extend_annotations(typedef, reference, annotations)
         return self
 
-    def _annotate_axioms(
-        self, p: Reference, o: Reference, axioms: Iterable[Annotation] | None
+    def _extend_annotations(
+        self, p: Reference, o: Reference | OBOLiteral, annotations: Iterable[Annotation] | None
     ) -> None:
-        if axioms is None:
+        if annotations is None:
             return
-        for axiom in axioms:
-            self._annotate_axiom(p, o, axiom)
+        for annotation in annotations:
+            self._append_annotation(p, o, annotation)
 
-    def _annotate_axiom(self, p: Reference, o: Reference | OBOLiteral, axiom: Annotation) -> None:
-        self._axioms[_property_resolve(p, o)].append(axiom)
+    def _append_annotation(
+        self, p: Reference, o: Reference | OBOLiteral, annotation: Annotation
+    ) -> None:
+        self._axioms[_property_resolve(p, o)].append(annotation)
 
     def append_equivalent(
         self,
@@ -137,15 +139,15 @@ class Stanza:
         """Append an xref."""
         reference = _ensure_ref(reference)
         self.xrefs.append(reference)
-        axioms = self._prepare_mapping_axioms(
+        annotations = self._prepare_mapping_annotations(
             mapping_justification=mapping_justification,
             confidence=confidence,
             contributor=contributor,
         )
-        self._annotate_axioms(v.has_dbxref, reference, axioms)
+        self._extend_annotations(v.has_dbxref, reference, annotations)
         return self
 
-    def _prepare_mapping_axioms(
+    def _prepare_mapping_annotations(
         self,
         *,
         mapping_justification: Reference | None = None,
@@ -224,63 +226,69 @@ class Stanza:
                 xref_yv += f" ! {xref.name}"
             yield xref_yv
 
-    def _get_axioms(
-        self, p: Reference | Referenced, o: Reference | Referenced | OBOLiteral
+    def _get_annotations(
+        self, p: Reference | Referenced, o: Reference | Referenced | OBOLiteral | str
     ) -> list[Annotation]:
+        if isinstance(o, str):
+            o = OBOLiteral.string(o)
         return self._axioms.get(_property_resolve(p, o), [])
 
-    def _get_axiom(
+    def _get_annotation(
         self, p: Reference, o: Reference | OBOLiteral, ap: Reference
     ) -> Reference | OBOLiteral | None:
         ap_norm = _ensure_ref(ap)
-        for axiom in self._get_axioms(p, o):
-            if axiom.predicate.pair == ap_norm.pair:
-                return axiom.value
+        for annotation in self._get_annotations(p, o):
+            if annotation.predicate.pair == ap_norm.pair:
+                return annotation.value
         return None
 
-    def append_property(self, prop: Annotation) -> Self:
+    def append_property(
+        self, prop: Annotation, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
         """Annotate a property."""
         self.properties[prop.predicate].append(prop.value)
+        self._extend_annotations(prop.predicate, prop.value, annotations)
         return self
 
     def annotate_literal(
-        self, prop: ReferenceHint, value: str, datatype: Reference | None = None
+        self,
+        prop: ReferenceHint,
+        value: str,
+        datatype: Reference | None = None,
+        *,
+        annotations: Iterable[Annotation] | None = None,
     ) -> Self:
         """Append an object annotation."""
         prop = _ensure_ref(prop)
-        self.properties[prop].append(
-            OBOLiteral(value, datatype or Reference(prefix="xsd", identifier="string"))
-        )
+        literal = OBOLiteral(value, datatype or v.xsd_string)
+        self.properties[prop].append(literal)
+        self._extend_annotations(prop, literal, annotations)
         return self
 
     def annotate_boolean(self, prop: ReferenceHint, value: bool) -> Self:
         """Append an object annotation."""
-        return self.annotate_literal(
-            prop, str(value).lower(), Reference(prefix="xsd", identifier="boolean")
-        )
+        return self.annotate_literal(prop, str(value).lower(), v.xsd_boolean)
 
     def annotate_integer(self, prop: ReferenceHint, value: int | str) -> Self:
         """Append an object annotation."""
-        return self.annotate_literal(
-            prop, str(int(value)), Reference(prefix="xsd", identifier="integer")
-        )
+        return self.annotate_literal(prop, str(int(value)), v.xsd_integer)
 
     def annotate_year(self, prop: ReferenceHint, value: int | str) -> Self:
         """Append a year annotation."""
-        return self.annotate_literal(
-            prop, str(int(value)), Reference(prefix="xsd", identifier="gYear")
-        )
+        return self.annotate_literal(prop, str(int(value)), v.xsd_year)
+
+    def annotate_uri(self, prop: ReferenceHint, value: str) -> Self:
+        """Append a URI annotation."""
+        return self.annotate_literal(prop, value, v.xsd_uri)
 
     def _iterate_obo_properties(
         self,
         *,
         ontology_prefix: str,
-        skip_predicates: Iterable[Reference] | None = None,
+        skip_predicate_objects: Iterable[Reference] | None = None,
+        skip_predicate_literals: Iterable[Reference] | None = None,
         typedefs: Mapping[ReferenceTuple, TypeDef],
     ) -> Iterable[str]:
-        if skip_predicates:
-            # set for faster membership testing
-            skip_predicates = set(skip_predicates)
         for line in _iterate_obo_relations(
             # the type checker seems to be a bit confused, this is an okay typing since we're
             # passing a more explicit version. The issue is that list is used for the typing,
@@ -288,7 +296,8 @@ class Stanza:
             self.properties,  # type:ignore
             self._axioms,
             ontology_prefix=ontology_prefix,
-            skip_predicate_objects=skip_predicates,
+            skip_predicate_objects=skip_predicate_objects,
+            skip_predicate_literals=skip_predicate_literals,
             typedefs=typedefs,
         ):
             yield f"property_value: {line}"
@@ -322,13 +331,13 @@ class Stanza:
         typedef: ReferenceHint,
         value: ReferenceHint,
         *,
-        axioms: Iterable[Annotation] | None = None,
+        annotations: Iterable[Annotation] | None = None,
     ) -> Self:
         """Append an object annotation."""
         typedef = _ensure_ref(typedef)
         value = _ensure_ref(value)
         self.properties[typedef].append(value)
-        self._annotate_axioms(typedef, value, axioms)
+        self._extend_annotations(typedef, value, annotations)
         return self
 
     def get_see_also(self) -> list[Reference]:
@@ -339,9 +348,11 @@ class Stanza:
         """Get all replaced by."""
         return self.get_property_objects(v.term_replaced_by)
 
-    def append_replaced_by(self, reference: Reference) -> Self:
+    def append_replaced_by(
+        self, reference: Reference, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
         """Add a replaced by property."""
-        return self.annotate_object(v.term_replaced_by, reference)
+        return self.annotate_object(v.term_replaced_by, reference, annotations=annotations)
 
     def iterate_relations(self) -> Iterable[tuple[Reference, Reference]]:
         """Iterate over pairs of typedefs and targets."""
@@ -393,6 +404,7 @@ class Stanza:
         type: Reference | Referenced | None = None,
         specificity: SynonymScope | None = None,
         provenance: list[Reference] | None = None,
+        annotations: Iterable[Annotation] | None = None,
     ) -> Self:
         """Add a synonym."""
         if isinstance(type, Referenced):
@@ -405,22 +417,29 @@ class Stanza:
                 type=type,
                 specificity=specificity,
                 provenance=provenance or [],
+                annotations=list(annotations or []),
             )
         self.synonyms.append(synonym)
         return self
 
-    def append_alt(self, alt: Reference) -> Self:
+    def append_alt(
+        self, alt: Reference, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
         """Add an alternative identifier."""
-        return self.annotate_object(v.alternative_term, alt)
+        return self.annotate_object(v.alternative_term, alt, annotations=annotations)
 
-    def append_see_also(self, reference: ReferenceHint) -> Self:
+    def append_see_also(
+        self, reference: ReferenceHint, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
         """Add a see also property."""
         _reference = _ensure_ref(reference)
-        return self.annotate_object(v.see_also, _reference)
+        return self.annotate_object(v.see_also, _reference, annotations=annotations)
 
-    def append_comment(self, value: str) -> Self:
+    def append_comment(
+        self, value: str, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
         """Add a comment property."""
-        return self.annotate_literal(v.comment, value)
+        return self.annotate_literal(v.comment, value, annotations=annotations)
 
     @property
     def alt_ids(self) -> Sequence[Reference]:
@@ -482,10 +501,10 @@ class Stanza:
             return rv
         return [(k, v, self._get_mapping_context(k, v)) for k, v in rv]
 
-    def _get_object_axiom_target(
+    def _get_object_annotation_target(
         self, p: Reference, o: Reference | OBOLiteral, ap: Reference
     ) -> Reference | None:
-        match self._get_axiom(p, o, ap):
+        match self._get_annotation(p, o, ap):
             case OBOLiteral():
                 raise TypeError
             case Reference() as target:
@@ -495,10 +514,10 @@ class Stanza:
             case _:
                 raise TypeError
 
-    def _get_str_axiom_target(
+    def _get_str_annotation_target(
         self, p: Reference, o: Reference | OBOLiteral, ap: Reference
     ) -> str | None:
-        match self._get_axiom(p, o, ap):
+        match self._get_annotation(p, o, ap):
             case OBOLiteral(value, _):
                 return value
             case Reference():
@@ -510,10 +529,10 @@ class Stanza:
 
     def _get_mapping_context(self, p: Reference, o: Reference) -> MappingContext:
         return MappingContext(
-            justification=self._get_object_axiom_target(p, o, v.mapping_has_justification)
+            justification=self._get_object_annotation_target(p, o, v.mapping_has_justification)
             or unspecified_matching,
-            contributor=self._get_object_axiom_target(p, o, v.has_contributor),
-            confidence=self._get_str_axiom_target(p, o, v.mapping_has_confidence),
+            contributor=self._get_object_annotation_target(p, o, v.has_contributor),
+            confidence=self._get_str_annotation_target(p, o, v.mapping_has_confidence),
         )
 
     def _definition_fp(self) -> str:
@@ -525,7 +544,7 @@ class Stanza:
             return []
         return [
             ax.value
-            for ax in self._get_axioms(v.has_description, OBOLiteral.string(self.definition))
+            for ax in self._get_annotations(v.has_description, self.definition)
             if ax.predicate.pair == v.has_dbxref.pair and isinstance(ax.value, Reference)
         ]
 
@@ -542,7 +561,7 @@ class Stanza:
         """Add a reference to this term's definition."""
         if not self.definition:
             raise ValueError("can not append definition provenance if no definition is set")
-        self._annotate_axiom(
+        self._append_annotation(
             v.has_description,
             OBOLiteral.string(self.definition),
             Annotation(v.has_dbxref, _ensure_ref(reference)),
@@ -595,17 +614,16 @@ def _tag_property_targets(
 
 def _iterate_obo_relations(
     relations: Mapping[Reference, Sequence[Reference | OBOLiteral]],
-    annotations: AxiomsHint,
+    annotations: AnnotationsDict,
     *,
     ontology_prefix: str,
     skip_predicate_objects: Iterable[Reference] | None = None,
+    skip_predicate_literals: Iterable[Reference] | None = None,
     typedefs: Mapping[ReferenceTuple, TypeDef],
 ) -> Iterable[str]:
     """Iterate over relations/property values for OBO."""
-    if skip_predicate_objects is None:
-        skip_predicate_objects = set()
-    else:
-        skip_predicate_objects = set(skip_predicate_objects)
+    skip_predicate_objects = set(skip_predicate_objects or [])
+    skip_predicate_literals = set(skip_predicate_literals or [])
     for predicate, values in relations.items():
         _typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)
         pc = reference_escape(predicate, ontology_prefix=ontology_prefix)
@@ -613,6 +631,8 @@ def _iterate_obo_relations(
         for value in values:
             match value:
                 case OBOLiteral(dd, datatype):
+                    if predicate in skip_predicate_literals:
+                        continue
                     # TODO how to clean/escape value?
                     end = f'"{dd}" {get_preferred_curie(datatype)}'
                     name = None
@@ -634,10 +654,14 @@ def _iterate_obo_relations(
 
 
 def _get_obo_trailing_modifiers(
-    p: Reference, o: Reference | OBOLiteral, axioms: AxiomsHint, *, ontology_prefix: str
+    p: Reference,
+    o: Reference | OBOLiteral,
+    annotations_dict: AnnotationsDict,
+    *,
+    ontology_prefix: str,
 ) -> str:
-    """Lookup then format a sequence of axioms for OBO trailing modifiers."""
-    if annotations := axioms.get(_property_resolve(p, o), []):
+    """Lookup then format a sequence of annotations for OBO trailing modifiers."""
+    if annotations := annotations_dict.get(_property_resolve(p, o), []):
         return _format_obo_trailing_modifiers(annotations, ontology_prefix=ontology_prefix)
     return ""
 
@@ -645,15 +669,15 @@ def _get_obo_trailing_modifiers(
 def _format_obo_trailing_modifiers(
     annotations: Sequence[Annotation], *, ontology_prefix: str
 ) -> str:
-    """Format a sequence of axioms for OBO trailing modifiers.
+    """Format a sequence of annotations for OBO trailing modifiers.
 
     :param annotations: A list of annnotations
     :param ontology_prefix: The ontology prefix
     :return: The trailing modifiers string
 
     See https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.1.4
-    trailing modifiers can be both axioms and some other implementation-specific
-    things, so split up the place where axioms are put in here.
+    trailing modifiers can be both annotations and some other implementation-specific
+    things, so split up the place where annotations are put in here.
     """
     modifiers: list[tuple[str, str]] = []
     for prop in annotations:
