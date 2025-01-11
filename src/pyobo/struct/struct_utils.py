@@ -529,11 +529,10 @@ class Stanza:
     def provenance(self) -> Sequence[Reference]:
         """Get definition provenance."""
         # return as a tuple to make sure nobody is appending on it
-        rr = []
-        rr.extend(self._get_definition_provenance())
-        rr.extend(self.get_property_objects(v.has_citation))
-        # extend with whatever the append_citations does
-        return tuple(rr)
+        return (
+            *self._get_definition_provenance(),
+            *self.get_property_objects(v.has_citation),
+        )
 
     def append_provenance(self, reference: ReferenceHint) -> Self:
         """Add a reference to this term's definition."""
