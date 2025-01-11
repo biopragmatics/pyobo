@@ -1,5 +1,6 @@
 """Tests for the OBO data structures."""
 
+import tempfile
 import unittest
 from collections.abc import Iterable
 from pathlib import Path
@@ -7,7 +8,8 @@ from textwrap import dedent
 from typing import cast
 
 import bioregistry
-from bioontologies.obograph import Graph
+from bioontologies.obograph import Graph, GraphDocument
+from bioontologies.robot import convert
 
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
@@ -56,6 +58,19 @@ def _ontology_from_term(prefix: str, term: Term) -> Obo:
         },
         terms=[term],
     )
+
+
+def _term_oracle(prefix: str, term: Term, extension) -> str:
+    obo_ontology = _ontology_from_term(prefix, term)
+    obo_ontology_text = "\n".join(obo_ontology.iterate_obo_lines())
+    with tempfile.TemporaryDirectory() as directory:
+        stub = Path(directory).joinpath("test")
+        obo_path = stub.with_suffix(".obo")
+        obo_path.write_text(obo_ontology_text)
+        output_path = stub.with_suffix(extension)
+        convert(obo_path, output_path)
+        output_text = output_path.read_text()
+    return output_text
 
 
 class TestStruct(unittest.TestCase):
@@ -123,33 +138,31 @@ class TestTerm(unittest.TestCase):
         self.assertEqual(dedent(text).strip(), "\n".join(lines).strip())
 
     def assert_obo_stanza(
-        self, text: str, term: Term, *, ontology_prefix: str = ONTOLOGY_PREFIX
+        self,
+        text: str,
+        term: Term,
+        *,
+        ontology_prefix: str = ONTOLOGY_PREFIX,
+        obograph_oracle: bool = True
     ) -> None:
         """Assert the typedef text."""
         obo_lines = list(term.iterate_obo_lines(ontology_prefix=ontology_prefix, typedefs={}))
         self.assert_lines(text, obo_lines)
 
-        import tempfile
-        from bioontologies.robot import convert
-
-        obo_ontology = _ontology_from_term(ontology_prefix, term)
-        obo_ontology_text = "\n".join(obo_ontology.iterate_obo_lines())
-        with tempfile.TemporaryDirectory() as directory:
-            stub = Path(directory).joinpath("test")
-            obo_path = stub.with_suffix(".obo")
-            obo_path.write_text(obo_ontology_text)
-            obograph_path = stub.with_suffix(".json")
-            convert(obo_path, obograph_path)
-            obograph_text = obograph_path.read_text()
-            print(obograph_text)
-        expected_graph = Graph.model_validate_json(obograph_text)
-        actual_graph = obo_ontology.get_graph()
-        self.assert_obograph_equal(expected_graph, actual_graph)
+        if obograph_oracle:
+            obo_ontology = _ontology_from_term(ontology_prefix, term)
+            obograph_text = _term_oracle(ontology_prefix, term, ".json")
+            document = GraphDocument.model_validate_json(obograph_text)
+            self.assertEqual(1, len(document.graphs))
+            expected_graph = document.graphs[0]
+            actual_graph = obo_ontology.get_graph()
+            self.assert_obograph_equal(expected_graph, actual_graph)
 
     def assert_obograph_equal(self, expected: Graph, actual: Graph) -> None:
         """Check that two OBO graphs are mostly equal."""
+        self.assertIsNotNone(actual.id, msg="was expecting a graph ID")
         self.assertEqual(expected.id, actual.id, msg="graph IDs do not match")
-        # self.assertEqual(expected, actual)
+        self.assertEqual(expected, actual)
 
     def assert_boolean_tag(self, name: str) -> None:
         """Assert the boolean tag parses properly."""
