@@ -39,6 +39,8 @@ has_dbxref = Reference(
     prefix="oboInOwl", identifier="hasDbXref", name="has database cross-reference"
 )
 in_subset = Reference(prefix="oboInOwl", identifier="inSubset", name="in subset")
+has_obo_namespace = Reference(prefix="oboInOwl", identifier="hasOBONamespace")
+
 equivalent_class = Reference(prefix="owl", identifier="equivalentClass", name="equivalent class")
 equivalent_property = Reference(
     prefix="owl", identifier="equivalentProperty", name="equivalent property"
@@ -51,6 +53,7 @@ has_ontology_root_term = Reference(
 )
 see_also = Reference(prefix="rdfs", identifier="seeAlso", name="see also")
 comment = Reference(prefix="rdfs", identifier="comment", name="comment")
+label = Reference(prefix="rdfs", identifier="label", name="has label")
 
 from_species = Reference(prefix=RO_PREFIX, identifier="0002162", name="in taxon")
 species_specific = Reference(prefix="debio", identifier="0000007", name="species specific")
