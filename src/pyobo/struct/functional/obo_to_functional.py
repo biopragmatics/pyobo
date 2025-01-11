@@ -125,7 +125,7 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
         yield m.OBONamespaceMacro(s, term.namespace)
     # 5
     for alt in term.alt_ids:
-        yield m.AltMacro(s, alt.preferred_curie)
+        yield m.ReplacedByMacro(alt.preferred_curie, s)
     # 6
     if term.definition:
         yield m.DescriptionMacro(
@@ -161,6 +161,8 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
             annotations = _get_annotations(term, typedef, value)
             match value:
                 case OBOLiteral():
+                    if typedef in pv.SKIP_PROPERTY_PREDICATES_LITERAL:
+                        continue
                     yield f.AnnotationAssertion(
                         typedef.preferred_curie,
                         s,
@@ -168,6 +170,8 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
                         annotations=annotations,
                     )
                 case Reference():
+                    if typedef in pv.SKIP_PROPERTY_PREDICATES_OBJECTS:
+                        continue
                     yield f.AnnotationAssertion(
                         typedef.preferred_curie,
                         s,

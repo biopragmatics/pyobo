@@ -112,7 +112,7 @@ class LabelMacro(StringMacro):
     'AnnotationAssertion( rdfs:label hgnc:16793 "RAET1E"@en )'
     """
 
-    annotation_property = Reference(prefix="rdfs", identifier="label")
+    annotation_property = pv.label
 
 
 class DescriptionMacro(StringMacro):
@@ -122,19 +122,19 @@ class DescriptionMacro(StringMacro):
     'AnnotationAssertion( dcterms:description hgnc:16793 "retinoic acid early transcript 1E" )'
     """
 
-    annotation_property = Reference(prefix="dcterms", identifier="description")
+    annotation_property = pv.has_description
 
 
 class CommentMacro(StringMacro):
     """A macro for comment string assertion."""
 
-    annotation_property = Reference(prefix="rdfs", identifier="comment")
+    annotation_property = pv.comment
 
 
 class OBONamespaceMacro(StringMacro):
     """A macro for OBO namespace string assertion."""
 
-    annotation_property = Reference(prefix="oboInOwl", identifier="hasOBONamespace")
+    annotation_property = pv.has_obo_namespace
 
 
 class ObjectAnnotationMacro(Macro):
@@ -150,25 +150,26 @@ class ObjectAnnotationMacro(Macro):
 class AltMacro(ObjectAnnotationMacro):
     """A macro for alternate ID assertion."""
 
-    annotation_property = Reference(prefix="IAO", identifier="0000118")
+    annotation_property = pv.alternative_term
 
 
 class ReplacedByMacro(ObjectAnnotationMacro):
     """A macro for replaced by assertion."""
 
-    annotation_property = Reference(prefix="IAO", identifier="0100001")
+    annotation_property = pv.term_replaced_by
 
 
 class OBOConsiderMacro(ObjectAnnotationMacro):
     """A macro for OBO consider assertion."""
 
+    # FIXME replace with see also
     annotation_property = Reference(prefix="oboInOwl", identifier="consider")
 
 
 class OBOIsSubsetMacro(ObjectAnnotationMacro):
     """A macro for OBO "in subset" assertion."""
 
-    annotation_property = Reference(prefix="oboInOwl", identifier="inSubset")
+    annotation_property = pv.in_subset
 
 
 class BooleanAnnotationMacro(Macro):
