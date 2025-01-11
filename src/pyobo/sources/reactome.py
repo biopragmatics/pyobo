@@ -71,11 +71,10 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     for reactome_id, name, species_name, taxonomy_id in it:
         terms[reactome_id] = term = Term(
             reference=Reference(prefix=PREFIX, identifier=reactome_id, name=name),
-            provenance=[
-                Reference(prefix="pubmed", identifier=pubmed_id)
-                for pubmed_id in provenance_d.get(reactome_id, [])
-            ],
         )
+        for pubmed_id in provenance_d.get(reactome_id, []):
+            term.append_provenance(Reference(prefix="pubmed", identifier=pubmed_id))
+
         if not taxonomy_id or pd.isna(taxonomy_id):
             raise ValueError(f"unmapped species: {species_name}")
 

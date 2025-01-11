@@ -250,8 +250,7 @@ class TestReaderTerm(unittest.TestCase):
         """)
         term = self.get_only_term(ontology)
         self.assertIsNone(term.definition)
-        self.assertEqual(1, len(term.provenance))
-        self.assertEqual(CHARLIE, term.provenance[0])
+        self.assertEqual(0, len(term.provenance))
 
     def test_7_comment(self) -> None:
         """Test parsing a definition missing a starting quote."""

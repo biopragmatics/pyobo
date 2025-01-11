@@ -6,12 +6,12 @@ from .struct import (
     Synonym,
     SynonymTypeDef,
     Term,
+    TypeDef,
     int_identifier_sort_key,
     make_ad_hoc_ontology,
 )
 from .struct_utils import Stanza
 from .typedef import (
-    TypeDef,
     derives_from,
     enables,
     from_species,

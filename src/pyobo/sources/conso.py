@@ -57,21 +57,21 @@ def iter_terms() -> Iterable[Term]:
     for _, row in terms_df.iterrows():
         if row["Name"] == "WITHDRAWN":
             continue
-        provenance: list[Reference] = []
+
+        identifier = row["Identifier"]
+        term = Term(
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=row["Name"]),
+            definition=row["Description"],
+            synonyms=synonyms.get(identifier, []),
+        )
         for curie in row["References"].split(","):
             curie = curie.strip()
             if not curie:
                 continue
             reference = Reference.from_curie_or_uri(curie)
             if reference is not None:
-                provenance.append(reference)
-        identifier = row["Identifier"]
-        yield Term(
-            reference=Reference(prefix=PREFIX, identifier=identifier, name=row["Name"]),
-            definition=row["Description"],
-            provenance=provenance,
-            synonyms=synonyms.get(identifier, []),
-        )
+                term.append_provenance(reference)
+        yield term
 
 
 if __name__ == "__main__":

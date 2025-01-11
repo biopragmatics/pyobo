@@ -7,7 +7,7 @@ from typing import Any, Literal
 import pandas as pd
 from pystow import VersionHint
 
-from ..constants import RAW_MODULE
+from ..constants import CACHE_SUBDIRECTORY_NAME, RAW_MODULE
 
 __all__ = [
     "ensure_df",
@@ -94,4 +94,6 @@ def ensure_df(
 
 def prefix_cache_join(prefix: str, *parts, name: str | None, version: VersionHint) -> Path:
     """Ensure the prefix cache is available."""
-    return prefix_directory_join(prefix, "cache", *parts, name=name, version=version)
+    return prefix_directory_join(
+        prefix, CACHE_SUBDIRECTORY_NAME, *parts, name=name, version=version
+    )

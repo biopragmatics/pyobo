@@ -22,6 +22,13 @@ RAW_DIRECTORY = RAW_MODULE.base
 DATABASE_MODULE = PYOBO_MODULE.module("database")
 DATABASE_DIRECTORY = DATABASE_MODULE.base
 
+#: The directory inside an ontology cache where
+#: large artifacts like OBO, OWL, JSON, etc. go
+BUILD_SUBDIRECTORY_NAME = "build"
+#: The directory inside an ontology cache where
+#: small caches for alts, xrefs, names, etc. go
+CACHE_SUBDIRECTORY_NAME = "cache"
+
 SPECIES_REMAPPING = {
     "Canis familiaris": "Canis lupus familiaris",
 }

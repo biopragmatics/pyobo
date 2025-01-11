@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import itertools as itt
 import logging
 from collections.abc import Iterable, Mapping, Sequence
-from typing import TYPE_CHECKING, NamedTuple, TypeAlias
+from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias, overload
 
 import curies
 from curies import ReferenceTuple
 from curies.vocabulary import SynonymScope
+from pydantic import BaseModel, ConfigDict
 from typing_extensions import Self
 
 from . import vocabulary as v
@@ -16,11 +18,14 @@ from .reference import (
     OBOLiteral,
     Reference,
     Referenced,
+    comma_separate_references,
     default_reference,
     get_preferred_curie,
     multi_reference_escape,
     reference_escape,
+    unspecified_matching,
 )
+from .utils import obo_escape_slim
 
 if TYPE_CHECKING:
     from pyobo.struct.struct import Synonym, TypeDef
@@ -72,7 +77,6 @@ class Stanza:
     properties: PropertiesHint
     xrefs: list[Reference]
     parents: list[Reference]
-    provenance: list[Reference]
     intersection_of: IntersectionOfHint
     equivalent_to: list[Reference]
     union_of: UnionOfHint
@@ -81,6 +85,12 @@ class Stanza:
     synonyms: list[Synonym]
 
     _axioms: AxiomsHint
+
+    #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
+    is_obsolete: bool | None
+
+    #: A description of the entity
+    definition: str | None = None
 
     def append_relationship(
         self,
@@ -154,11 +164,6 @@ class Stanza:
         reference = _ensure_ref(reference)
         if reference not in self.parents:
             self.parents.append(reference)
-        return self
-
-    def append_provenance(self, reference: ReferenceHint) -> Self:
-        """Add a provenance reference."""
-        self.provenance.append(_ensure_ref(reference))
         return self
 
     def append_intersection_of(
@@ -418,6 +423,132 @@ class Stanza:
         """Get alternative terms."""
         return tuple(self.get_property_objects(v.alternative_term))
 
+    def get_edges(self) -> list[tuple[Reference, Reference]]:
+        """Get edges."""
+        return list(self._iter_edges())
+
+    def _iter_edges(self) -> Iterable[tuple[Reference, Reference]]:
+        yield from self.iterate_relations()
+        for parent in itt.chain(self.parents, self.union_of):
+            yield v.is_a, parent
+        for subset in self.subsets:
+            yield v.in_subset, subset
+        for k, values in self.properties.items():
+            for value in values:
+                if isinstance(value, Reference):
+                    yield k, value
+        for intersection_of in self.intersection_of:
+            match intersection_of:
+                case Reference():
+                    yield v.is_a, intersection_of
+                case (predicate, target):
+                    yield predicate, target
+        # TODO disjoint_from
+        yield from self.get_mappings(include_xrefs=True, add_context=False)
+
+    # docstr-coverage:excused `overload`
+    @overload
+    def get_mappings(
+        self, *, include_xrefs: bool = ..., add_context: Literal[True] = True
+    ) -> list[tuple[Reference, Reference, MappingContext]]: ...
+
+    # docstr-coverage:excused `overload`
+    @overload
+    def get_mappings(
+        self, *, include_xrefs: bool = ..., add_context: Literal[False] = False
+    ) -> list[tuple[Reference, Reference]]: ...
+
+    def get_mappings(
+        self, *, include_xrefs: bool = True, add_context: bool = False
+    ) -> list[tuple[Reference, Reference]] | list[tuple[Reference, Reference, MappingContext]]:
+        """Get mappings with preferred curies."""
+        rows = []
+        for predicate in v.extended_match_typedefs:
+            for xref_reference in itt.chain(
+                self.get_property_objects(predicate), self.get_relationships(predicate)
+            ):
+                rows.append((predicate, xref_reference))
+        if include_xrefs:
+            for xref_reference in self.xrefs:
+                rows.append((v.has_dbxref, xref_reference))
+        for equivalent_to in self.equivalent_to:
+            rows.append((v.equivalent_class, equivalent_to))
+        rv = sorted(set(rows))
+        if not add_context:
+            return rv
+        return [(k, v, self._get_mapping_context(k, v)) for k, v in rv]
+
+    def _get_object_axiom_target(
+        self, p: Reference, o: Reference | OBOLiteral, ap: Reference
+    ) -> Reference | None:
+        match self._get_axiom(p, o, ap):
+            case OBOLiteral():
+                raise TypeError
+            case Reference() as target:
+                return target
+            case None:
+                return None
+            case _:
+                raise TypeError
+
+    def _get_str_axiom_target(
+        self, p: Reference, o: Reference | OBOLiteral, ap: Reference
+    ) -> str | None:
+        match self._get_axiom(p, o, ap):
+            case OBOLiteral(value, _):
+                return value
+            case Reference():
+                raise TypeError
+            case None:
+                return None
+            case _:
+                raise TypeError
+
+    def _get_mapping_context(self, p: Reference, o: Reference) -> MappingContext:
+        return MappingContext(
+            justification=self._get_object_axiom_target(p, o, v.mapping_has_justification)
+            or unspecified_matching,
+            contributor=self._get_object_axiom_target(p, o, v.has_contributor),
+            confidence=self._get_str_axiom_target(p, o, v.mapping_has_confidence),
+        )
+
+    def _definition_fp(self) -> str:
+        definition = obo_escape_slim(self.definition) if self.definition else ""
+        return f'"{definition}" [{comma_separate_references(self._get_definition_provenance())}]'
+
+    def _get_definition_provenance(self) -> list[Reference]:
+        if not self.definition:
+            return []
+        return [
+            ax.value
+            for ax in self._get_axioms(v.has_description, OBOLiteral.string(self.definition))
+            if ax.predicate.pair == v.has_dbxref.pair and isinstance(ax.value, Reference)
+        ]
+
+    @property
+    def provenance(self) -> Sequence[Reference]:
+        """Get definition provenance."""
+        # return as a tuple to make sure nobody is appending on it
+        return (
+            *self._get_definition_provenance(),
+            *self.get_property_objects(v.has_citation),
+        )
+
+    def append_definition_xref(self, reference: ReferenceHint) -> Self:
+        """Add a reference to this term's definition."""
+        if not self.definition:
+            raise ValueError("can not append definition provenance if no definition is set")
+        self._annotate_axiom(
+            v.has_description,
+            OBOLiteral.string(self.definition),
+            Annotation(v.has_dbxref, _ensure_ref(reference)),
+        )
+        return self
+
+    def append_provenance(self, reference: Reference) -> Self:
+        """Append a citation."""
+        return self.annotate_object(v.has_citation, reference)
+
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
 
@@ -557,3 +688,15 @@ def _typedef_warn(
             )
         else:
             logger.warning(f"[{prefix}] typedef not defined: {predicate.curie}")
+
+
+class MappingContext(BaseModel):
+    """Context for a mapping, corresponding to SSSOM."""
+
+    justification: Reference = unspecified_matching
+    contributor: Reference | None = None
+    confidence: float | None = None
+
+    model_config = ConfigDict(
+        frozen=True,  # Makes the model immutable and hashable
+    )

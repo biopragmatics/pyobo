@@ -217,25 +217,20 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         taxonomy_name,
         members,
     ) in it:
-        synonyms = [Synonym(name=alias) for alias in aliases]
-        _xrefs = []
-        provenance = []
+        term = Term(
+            reference=Reference(prefix=PREFIX, identifier=complexportal_id, name=name),
+            definition=definition.strip() if pd.notna(definition) else None,
+            synonyms=[Synonym(name=alias) for alias in aliases],
+        )
         for reference, note in xrefs:
             if note == "identity":
-                _xrefs.append(reference)
+                term.append_xref(reference)
             elif note == "see-also" and reference.prefix == "pubmed":
-                provenance.append(reference)
+                term.append_provenance(reference)
             elif (note, reference.prefix) not in unhandled_xref_type:
                 logger.debug(f"unhandled xref type: {note} / {reference.prefix}")
                 unhandled_xref_type.add((note, reference.prefix))
 
-        term = Term(
-            reference=Reference(prefix=PREFIX, identifier=complexportal_id, name=name),
-            definition=definition.strip() if pd.notna(definition) else None,
-            synonyms=synonyms,
-            xrefs=_xrefs,
-            provenance=provenance,
-        )
         term.set_species(identifier=taxonomy_id, name=taxonomy_name)
 
         for reference, _count in members:

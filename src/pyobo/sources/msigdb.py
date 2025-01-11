@@ -88,14 +88,6 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         attrib = dict(entry.attrib)
         tax_id = _SPECIES[attrib["ORGANISM"]]
 
-        reference_id = attrib["PMID"].strip()
-        if not reference_id:
-            reference = None
-        elif reference_id.startswith("GSE"):
-            reference = Reference(prefix="gse", identifier=reference_id)
-        else:
-            reference = Reference(prefix="pubmed", identifier=reference_id)
-
         # NONE have the entry "HISTORICAL_NAME"
         # historical_name = thing.attrib['HISTORICAL_NAME']
 
@@ -106,9 +98,17 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
             definition=_get_definition(attrib),
-            provenance=[] if reference is None else [reference],
             is_obsolete=is_obsolete,
         )
+
+        reference_id = attrib["PMID"].strip()
+        if not reference_id:
+            pass
+        elif reference_id.startswith("GSE"):
+            term.append_see_also(Reference(prefix="gse", identifier=reference_id))
+        else:
+            term.append_provenance(Reference(prefix="pubmed", identifier=reference_id))
+
         for key, typedef in PROPERTIES:
             if value := attrib[key].strip():
                 term.annotate_literal(typedef, value)
