@@ -534,7 +534,7 @@ class Stanza:
             *self.get_property_objects(v.has_citation),
         )
 
-    def append_provenance(self, reference: ReferenceHint) -> Self:
+    def append_definition_xref(self, reference: ReferenceHint) -> Self:
         """Add a reference to this term's definition."""
         if not self.definition:
             raise ValueError("can not append definition provenance if no definition is set")
@@ -545,7 +545,7 @@ class Stanza:
         )
         return self
 
-    def append_citation(self, reference: Reference) -> Self:
+    def append_provenance(self, reference: Reference) -> Self:
         """Append a citation."""
         return self.annotate_object(v.has_citation, reference)
 

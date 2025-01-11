@@ -92,7 +92,7 @@ def iter_terms(*, force: bool = False, version: str | None = None) -> Iterable[T
                     pubmed_id = pubmed_id.strip()
                     if not pubmed_id:
                         continue
-                    term.append_citation(Reference(prefix="pubmed", identifier=pubmed_id))
+                    term.append_provenance(Reference(prefix="pubmed", identifier=pubmed_id))
             yield term
 
 

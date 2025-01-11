@@ -244,7 +244,7 @@ class TestTerm(unittest.TestCase):
         )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT, definition="Something")
-        term.append_provenance(CHARLIE)
+        term.append_definition_xref(CHARLIE)
         self.assert_lines(
             """\
             [Term]

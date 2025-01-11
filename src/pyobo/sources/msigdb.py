@@ -107,7 +107,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         elif reference_id.startswith("GSE"):
             term.append_see_also(Reference(prefix="gse", identifier=reference_id))
         else:
-            term.append_citation(Reference(prefix="pubmed", identifier=reference_id))
+            term.append_provenance(Reference(prefix="pubmed", identifier=reference_id))
 
         for key, typedef in PROPERTIES:
             if value := attrib[key].strip():

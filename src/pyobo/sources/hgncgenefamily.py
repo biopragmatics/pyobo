@@ -93,7 +93,7 @@ def _get_terms_helper(force: bool = False) -> Iterable[Term]:
         )
         if pubmed_ids and pd.notna(pubmed_ids):
             for s in pubmed_ids.replace(" ", ",").split(","):
-                term.append_citation(Reference(prefix="pubmed", identifier=s.strip()))
+                term.append_provenance(Reference(prefix="pubmed", identifier=s.strip()))
         if desc_go and pd.notna(desc_go):
             go_id = desc_go[len("http://purl.uniprot.org/go/") :]
             term.append_relationship(enables, Reference(prefix="GO", identifier=go_id))

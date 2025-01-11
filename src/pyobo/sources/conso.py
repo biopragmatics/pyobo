@@ -70,7 +70,7 @@ def iter_terms() -> Iterable[Term]:
                 continue
             reference = Reference.from_curie_or_uri(curie)
             if reference is not None:
-                term.append_citation(reference)
+                term.append_provenance(reference)
         yield term
 
 

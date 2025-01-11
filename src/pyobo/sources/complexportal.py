@@ -226,7 +226,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             if note == "identity":
                 term.append_xref(reference)
             elif note == "see-also" and reference.prefix == "pubmed":
-                term.append_citation(reference)
+                term.append_provenance(reference)
             elif (note, reference.prefix) not in unhandled_xref_type:
                 logger.debug(f"unhandled xref type: {note} / {reference.prefix}")
                 unhandled_xref_type.add((note, reference.prefix))
