@@ -12,6 +12,7 @@ from curies import Converter, Reference
 from curies import vocabulary as v
 from rdflib import Graph, term
 
+from pyobo.struct import vocabulary as pv
 from pyobo.struct.functional import dsl as f
 
 __all__ = [
@@ -245,10 +246,13 @@ class SynonymMacro(Macro):
         language: str | None = None,
         annotations: f.Annotations | None = None,
         synonym_type: f.IdentifierBoxOrHint | None = None,
+        provenance: Sequence[f.IdentifierBoxOrHint] | None = None,
     ) -> None:
         """Instatitate the synonym annotation assertion macro."""
         if annotations is None:
             annotations = []
+        if provenance:
+            annotations.extend(f.Annotation(pv.has_dbxref, r) for r in provenance)
         if synonym_type is not None:
             annotations.append(f.Annotation(HAS_SYNONYM_TYPE, synonym_type))
         if scope is None:

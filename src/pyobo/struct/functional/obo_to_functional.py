@@ -184,8 +184,8 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
     if term.equivalent_to:
         yield f.EquivalentClasses([s, *term.equivalent_to])
     # 17
-    for x in term.disjoint_from:
-        yield f.DisjointClasses([x, s])
+    if term.disjoint_from:
+        yield f.DisjointClasses([s, *term.disjoint_from])
     # 18
     for typedef, value in term.iterate_relations():
         yield m.RelationshipMacro(
@@ -267,6 +267,8 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
             synonym.name,
             scope=synonym.specificity,
             synonym_type=synonym.type,
+            provenance=synonym.provenance,
+            annotations=_process_anns(synonym.annotations),
         )
     # 10
     for xref in typedef.xrefs:
