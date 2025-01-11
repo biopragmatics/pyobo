@@ -377,7 +377,7 @@ class TestTerm(unittest.TestCase):
             """,
         )
 
-    def test_9_append_synonym(self) -> None:
+    def test_9_append_exact_synonym(self) -> None:
         """Test appending a synonym."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
         term.append_synonym(
@@ -398,6 +398,8 @@ class TestTerm(unittest.TestCase):
             """,
         )
 
+    def test_9_append_related_synonym(self) -> None:
+        """Test appending a synonym."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
         term.append_synonym(
             "L-lysine:NAD+ oxidoreductase",
@@ -418,6 +420,8 @@ class TestTerm(unittest.TestCase):
             """,
         )
 
+    def test_9_provenance(self) -> None:
+        """Test appending a synonym."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
         term.append_synonym(
             "L-lysine:NAD+ oxidoreductase", specificity="RELATED", provenance=[CHARLIE]
@@ -437,6 +441,8 @@ class TestTerm(unittest.TestCase):
             """,
         )
 
+    def test_9_provenance_and_type(self) -> None:
+        """Test appending a synonym."""
         omo_dummy = SynonymTypeDef(reference=Reference(prefix="OMO", identifier="1234567"))
         term = Term(LYSINE_DEHYDROGENASE_ACT)
         term.append_synonym(
