@@ -408,7 +408,9 @@ class ObjectListOfMacro(Macro):
 class ClassIntersectionMacro(ObjectListOfMacro):
     """A macro that represents a class intersection.
 
-    >>> ClassIntersectionMacro("ZFA:0000134", ["CL:0000540", ("BFO:0000050", "NCBITaxon:7955")]).to_funowl()
+    >>> ClassIntersectionMacro(
+    ...     "ZFA:0000134", ["CL:0000540", ("BFO:0000050", "NCBITaxon:7955")]
+    ... ).to_funowl()
     'EquivalentClasses(ZFA:0000134 ObjectIntersectionOf(CL:0000540 ObjectSomeValuesFrom(BFO:0000050 NCBITaxon:7955)))'
     """
 
