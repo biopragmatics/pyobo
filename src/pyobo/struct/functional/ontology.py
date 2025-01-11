@@ -154,7 +154,7 @@ class Ontology(Box):
         # when outputting to functional OWL
         self._leading = ""
 
-    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.URIRef | term.BNode:
         """Add the ontology to the triple store."""
         ontology_node = term.URIRef(self.iri) if self.iri is not None else term.BNode()
         graph.add((ontology_node, RDF.type, OWL.Ontology))
@@ -204,7 +204,7 @@ class Prefix(Box):
         self.prefix = prefix
         self.uri_prefix = uri_prefix
 
-    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
         """Add the prefix to an RDF graph."""
         graph.namespace_manager.bind(self.prefix, self.uri_prefix)
         return term.BNode()  # dummy
@@ -221,7 +221,7 @@ class Import(Box):
         """Initialize the import."""
         self.iri = iri
 
-    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.BNode:
         """Add the import to an RDF graph."""
         raise NotImplementedError
 

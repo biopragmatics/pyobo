@@ -41,7 +41,7 @@ class Macro(f.Box):
         """Initialize the macro with a given axiom."""
         self.box = box
 
-    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.IdentifiedNode:
         """Make an RDF node for the wrapped axiom."""
         return self.box.to_rdflib_node(graph, converter)
 
