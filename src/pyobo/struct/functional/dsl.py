@@ -248,7 +248,10 @@ def _make_sequence(
 
 
 def _make_sequence_nodes(
-    graph: Graph, members: Sequence[term.IdentifiedNode | term.Literal], *, type_connector_nodes: bool = False
+    graph: Graph,
+    members: Sequence[term.IdentifiedNode | term.Literal],
+    *,
+    type_connector_nodes: bool = False,
 ) -> term.IdentifiedNode:
     """Make a sequence."""
     if not members:
@@ -263,7 +266,9 @@ def _make_sequence_nodes(
     return node
 
 
-def _yield_connector_nodes(graph: Graph, start: term.IdentifiedNode) -> Iterable[term.IdentifiedNode]:
+def _yield_connector_nodes(
+    graph: Graph, start: term.IdentifiedNode
+) -> Iterable[term.IdentifiedNode]:
     """Yield all of the nodes representing parts of a collection.
 
     This is different than simply doing :meth:`rdflib.graph.items`,
@@ -277,7 +282,7 @@ def _yield_connector_nodes(graph: Graph, start: term.IdentifiedNode) -> Iterable
     """
     yield start
     item: term.IdentifiedNode | None = start
-    while item := graph.value(item, RDF.rest): # type:ignore
+    while item := graph.value(item, RDF.rest):  # type:ignore
         if item == RDF.nil:
             break
         yield item
@@ -2358,7 +2363,9 @@ class Annotation(Box):  # 10.1
         self.value = _safe_primitive_box(value)
         self.annotations = annotations or []
 
-    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.IdentifiedNode:  # pragma: no cover
+    def to_rdflib_node(
+        self, graph: Graph, converter: Converter
+    ) -> term.IdentifiedNode:  # pragma: no cover
         """Represent the annotation as an RDF node (unused)."""
         raise RuntimeError
 

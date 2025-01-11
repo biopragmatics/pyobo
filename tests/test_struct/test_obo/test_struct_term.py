@@ -122,7 +122,7 @@ class TestTerm(unittest.TestCase):
         term: Term,
         *,
         obo: str,
-        ofn: str | None = None,
+        ofn: str,
         ontology_prefix: str = ONTOLOGY_PREFIX,
         typedefs=None,
         synonym_typedefs=None,
@@ -136,14 +136,7 @@ class TestTerm(unittest.TestCase):
                 synonym_typedefs=synonym_typedefs or {},
             ),
         )
-        actual_ofn_lines = (x.to_funowl() for x in get_term_axioms(term))
-        if ofn:
-            self._assert_lines(
-                ofn,
-                actual_ofn_lines,
-            )
-        else:
-            self.fail(msg=f"No OFN fest found for OFN lines:\n\n{'\n'.join(actual_ofn_lines)}")
+        self._assert_lines(ofn, (x.to_funowl() for x in get_term_axioms(term)))
 
     def assert_funowl_lines(self, text: str, term: Term) -> None:
         """Assert functional OWL lines are equal."""
