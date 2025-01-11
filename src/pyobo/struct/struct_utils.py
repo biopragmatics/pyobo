@@ -331,6 +331,10 @@ class Stanza:
         self._annotate_axioms(typedef, value, axioms)
         return self
 
+    def get_see_also(self) -> list[Reference]:
+        """Get all see also objects."""
+        return self.get_property_objects(v.see_also)
+
     def get_replaced_by(self) -> list[Reference]:
         """Get all replaced by."""
         return self.get_property_objects(v.term_replaced_by)

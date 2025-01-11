@@ -113,7 +113,7 @@ class Synonym:
     provenance: list[Reference] = field(default_factory=list)
 
     #: Extra annotations
-    annotations: list[tuple[Reference, Reference]] = field(default_factory=list)
+    annotations: list[Annotation] = field(default_factory=list)
 
     def __lt__(self, other: Synonym) -> bool:
         """Sort lexically by name."""
@@ -405,11 +405,7 @@ class Term(Referenced, Stanza):
         if emit_annotation_properties:
             yield from self._iterate_obo_properties(
                 ontology_prefix=ontology_prefix,
-                skip_predicates=[
-                    v.term_replaced_by,
-                    v.see_also,
-                    v.alternative_term,
-                ],
+                skip_predicates=v.SKIP_PROPERTY_PREDICATES,
                 typedefs=typedefs,
             )
         # 13
@@ -1848,11 +1844,7 @@ class TypeDef(Referenced, Stanza):
         # 11
         yield from self._iterate_obo_properties(
             ontology_prefix=ontology_prefix,
-            skip_predicates={
-                v.term_replaced_by,
-                v.see_also,
-                v.alternative_term,
-            },
+            skip_predicates=v.SKIP_PROPERTY_PREDICATES,
             typedefs=typedefs,
         )
         # 12

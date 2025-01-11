@@ -14,7 +14,6 @@ __all__ = [
     "mapping_has_justification",
 ]
 
-
 RO_PREFIX = "RO"
 BFO_PREFIX = "BFO"
 IAO_PREFIX = "IAO"
@@ -52,7 +51,6 @@ has_ontology_root_term = Reference(
 )
 see_also = Reference(prefix="rdfs", identifier="seeAlso", name="see also")
 comment = Reference(prefix="rdfs", identifier="comment", name="comment")
-
 
 from_species = Reference(prefix=RO_PREFIX, identifier="0002162", name="in taxon")
 species_specific = Reference(prefix="debio", identifier="0000007", name="species specific")
@@ -96,3 +94,11 @@ extended_match_typedefs: Sequence[Reference] = (
     alternative_term,
     term_replaced_by,
 )
+
+#: These are predicates that have their own dedicated fields
+#: in OBO and FunOWL output
+SKIP_PROPERTY_PREDICATES = [
+    term_replaced_by,
+    see_also,
+    alternative_term,
+]
