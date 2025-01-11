@@ -10,6 +10,7 @@ import rdflib
 from curies import vocabulary as v
 from rdflib import XSD
 
+from pyobo.struct import Stanza
 from pyobo.struct import vocabulary as pv
 from pyobo.struct.functional import dsl as f
 from pyobo.struct.functional import macros as m
@@ -127,57 +128,21 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
     for alt in term.alt_ids:
         yield m.ReplacedByMacro(alt.preferred_curie, s)
     # 6
-    if term.definition:
-        yield m.DescriptionMacro(
-            s,
-            term.definition,
-            annotations=_get_annotations(term, pv.has_description, term.definition),
-        )
+    yield from _yield_definition(term, s)
     # 7 TODO comment
     # 8
     for subset in term.subsets:
         yield m.OBOIsSubsetMacro(s, subset)
     # 9
-    for synonym in term.synonyms:
-        yield m.SynonymMacro(
-            s,
-            synonym.name,
-            scope=synonym.specificity,
-            synonym_type=synonym.type,
-            annotations=_process_anns(synonym.annotations),
-        )
+    yield from _yield_synonyms(term, s)
     # 10
-    # TODO add annotations for the following
-    for xref in term.xrefs:
-        yield m.XrefMacro(
-            s, xref.preferred_curie, annotations=_get_annotations(term, pv.has_dbxref, xref)
-        )
+    yield from _yield_xrefs(term, s)
     # 11
     if term.builtin is not None:
         yield m.IsOBOBuiltinMacro(s, term.builtin)
     # 12
-    for typedef, values in term.properties.items():
-        for value in values:
-            annotations = _get_annotations(term, typedef, value)
-            match value:
-                case OBOLiteral():
-                    if typedef in pv.SKIP_PROPERTY_PREDICATES_LITERAL:
-                        continue
-                    yield f.AnnotationAssertion(
-                        typedef.preferred_curie,
-                        s,
-                        _oboliteral_to_literal(value),
-                        annotations=annotations,
-                    )
-                case Reference():
-                    if typedef in pv.SKIP_PROPERTY_PREDICATES_OBJECTS:
-                        continue
-                    yield f.AnnotationAssertion(
-                        typedef.preferred_curie,
-                        s,
-                        value.preferred_curie,
-                        annotations=annotations,
-                    )
+    yield from _yield_properties(term, s)
+    # 13 parents - see top
     # 14
     if term.intersection_of:
         yield m.ClassIntersectionMacro(s, term.intersection_of)
@@ -208,7 +173,7 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
 
 
 def _get_annotations(
-    term: Term, p: Reference | Referenced, o: Reference | Referenced | OBOLiteral | str
+    term: Stanza, p: Reference | Referenced, o: Reference | Referenced | OBOLiteral | str
 ) -> list[f.Annotation]:
     return _process_anns(term._get_annotations(p, o))
 
@@ -256,8 +221,7 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     for alt_id in typedef.alt_ids:
         yield m.ReplacedByMacro(alt_id, r)
     # 6
-    if typedef.definition:
-        yield m.DescriptionMacro(r, typedef.definition)
+    yield from _yield_definition(typedef, r)
     # 7
     if typedef.comment:
         yield m.CommentMacro(r, typedef.comment)
@@ -265,24 +229,11 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     for subset in typedef.subsets:
         yield m.OBOIsSubsetMacro(r, subset)
     # 9
-    for synonym in typedef.synonyms:
-        yield m.SynonymMacro(
-            r,
-            synonym.name,
-            scope=synonym.specificity,
-            synonym_type=synonym.type,
-            provenance=synonym.provenance,
-            annotations=_process_anns(synonym.annotations),
-        )
+    yield from _yield_synonyms(typedef, r)
     # 10
-    for xref in typedef.xrefs:
-        yield m.XrefMacro(r, f.IdentifierBox(xref.preferred_curie))
+    yield from _yield_xrefs(typedef, r)
     # 11
-    for predicate, values in typedef.properties.items():
-        if predicate in pv.SKIP_PROPERTY_PREDICATES_OBJECTS:
-            continue
-        for value in values:
-            yield f.AnnotationAssertion(predicate, r, value)
+    yield from _yield_properties(typedef, r)
     # 12
     if typedef.domain:
         if typedef.is_metadata_tag:
@@ -363,3 +314,57 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     # 41
     if typedef.is_class_level is not None:
         yield m.OBOIsClassLevelMacro(r, typedef.is_class_level)
+
+
+def _yield_definition(term: Stanza, s) -> Iterable[m.DescriptionMacro]:
+    if term.definition:
+        yield m.DescriptionMacro(
+            s,
+            term.definition,
+            annotations=_get_annotations(term, pv.has_description, term.definition),
+        )
+
+
+def _yield_synonyms(stanza: Stanza, r) -> Iterable[m.SynonymMacro]:
+    for synonym in stanza.synonyms:
+        yield m.SynonymMacro(
+            r,
+            synonym.name,
+            scope=synonym.specificity,
+            synonym_type=synonym.type,
+            provenance=synonym.provenance,
+            annotations=_process_anns(synonym.annotations),
+        )
+
+
+def _yield_xrefs(term: Stanza, s) -> Iterable[m.XrefMacro]:
+    for xref in term.xrefs:
+        yield m.XrefMacro(
+            s, xref.preferred_curie, annotations=_get_annotations(term, pv.has_dbxref, xref)
+        )
+
+
+def _yield_properties(term: Stanza, s) -> Iterable[f.AnnotationAssertion]:
+    for typedef, values in term.properties.items():
+        ty_pc = typedef.preferred_curie
+        for value in values:
+            annotations = _get_annotations(term, typedef, value)
+            match value:
+                case OBOLiteral():
+                    if typedef in pv.SKIP_PROPERTY_PREDICATES_LITERAL:
+                        continue
+                    yield f.AnnotationAssertion(
+                        ty_pc,
+                        s,
+                        _oboliteral_to_literal(value),
+                        annotations=annotations,
+                    )
+                case Reference():
+                    if typedef in pv.SKIP_PROPERTY_PREDICATES_OBJECTS:
+                        continue
+                    yield f.AnnotationAssertion(
+                        ty_pc,
+                        s,
+                        value.preferred_curie,
+                        annotations=annotations,
+                    )
