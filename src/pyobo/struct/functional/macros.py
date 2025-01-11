@@ -61,7 +61,7 @@ class RelationshipMacro(Macro):
     only in the human taxon (9606)
 
     >>> RelationshipMacro("hgnc:16793", "RO:0002160", "NCBITaxon:9606").to_funowl()
-    'SubClassOf( hgnc:16793 ObjectSomeValuesFrom( RO:0002160 NCBITaxon:9606 ) )'
+    'SubClassOf(hgnc:16793 ObjectSomeValuesFrom(RO:0002160 NCBITaxon:9606))'
     """
 
     def __init__(
@@ -104,12 +104,12 @@ class LabelMacro(StringMacro):
     """A macro for label string assertion.
 
     >>> LabelMacro("hgnc:16793", "RAET1E").to_funowl()
-    'AnnotationAssertion( rdfs:label hgnc:16793 "RAET1E" )'
+    'AnnotationAssertion(rdfs:label hgnc:16793 "RAET1E")'
 
     Assert the language:
 
     >>> LabelMacro("hgnc:16793", "RAET1E", language="en").to_funowl()
-    'AnnotationAssertion( rdfs:label hgnc:16793 "RAET1E"@en )'
+    'AnnotationAssertion(rdfs:label hgnc:16793 "RAET1E"@en)'
     """
 
     annotation_property = pv.label
@@ -119,7 +119,7 @@ class DescriptionMacro(StringMacro):
     """A macro for description string assertion.
 
     >>> DescriptionMacro("hgnc:16793", "retinoic acid early transcript 1E").to_funowl()
-    'AnnotationAssertion( dcterms:description hgnc:16793 "retinoic acid early transcript 1E" )'
+    'AnnotationAssertion(dcterms:description hgnc:16793 "retinoic acid early transcript 1E")'
     """
 
     annotation_property = pv.has_description
@@ -224,18 +224,18 @@ class SynonymMacro(Macro):
     You can just make a quick assertion, which defaults to exact:
 
     >>> SynonymMacro("hgnc:16793", "ULBP4").to_funowl()
-    'AnnotationAssertion( oboInOwl:hasExactSynonym hgnc:16793 "ULBP4" )'
+    'AnnotationAssertion(oboInOwl:hasExactSynonym hgnc:16793 "ULBP4")'
 
     You can make the predicate more explicit either with OBO-style
     scoping (EXACT, BROAD, NARROW, CLOSE) or a CURIE/:class:`curies.Reference`/URIRef
 
     >>> SynonymMacro("hgnc:16793", "ULBP4", "EXACT").to_funowl()
-    'AnnotationAssertion( oboInOwl:hasExactSynonym hgnc:16793 "ULBP4" )'
+    'AnnotationAssertion(oboInOwl:hasExactSynonym hgnc:16793 "ULBP4")'
 
     You can add a synonym type from OMO:
 
     >>> SynonymMacro("hgnc:16793", "ULBP4", "EXACT", synonym_type="OMO:0003008").to_funowl()
-    'AnnotationAssertion( Annotation( oboInOwl:hasSynonymType OMO:0003008 ) oboInOwl:hasExactSynonym hgnc:16793 "ULBP4" )'
+    'AnnotationAssertion(Annotation(oboInOwl:hasSynonymType OMO:0003008) oboInOwl:hasExactSynonym hgnc:16793 "ULBP4")'
     """
 
     def __init__(
@@ -279,7 +279,7 @@ class MappingMacro(Macro):
     ...     "agro:00000137",
     ...     mapping_justification="semapv:ManualMappingCuration",
     ... ).to_funowl()
-    'AnnotationAssertion( Annotation( sssom:has_mapping_justification semapv:ManualMappingCuration ) skos:exactMatch agrovoc:0619dd9e agro:00000137 )'
+    'AnnotationAssertion(Annotation(sssom:has_mapping_justification semapv:ManualMappingCuration) skos:exactMatch agrovoc:0619dd9e agro:00000137)'
     """
 
     def __init__(
@@ -313,7 +313,7 @@ class XrefMacro(MappingMacro):
     """A macro for database cross-reference assertion, based on the more generic Mapping macro.
 
     >>> XrefMacro("agrovoc:0619dd9e", "agro:00000137").to_funowl()
-    'AnnotationAssertion( oboInOwl:hasDbXref agrovoc:0619dd9e agro:00000137 )'
+    'AnnotationAssertion(oboInOwl:hasDbXref agrovoc:0619dd9e agro:00000137)'
     """
 
     def __init__(
@@ -342,7 +342,7 @@ class TransitiveOver(HoldsOverChain):
     and Y is a part of Z, then X occurs in Z.
 
     >>> TransitiveOver("BFO:0000066", "BFO:0000050").to_funowl()
-    'SubObjectPropertyOf( ObjectPropertyChain( BFO:0000066 BFO:0000050 ) BFO:0000066 )'
+    'SubObjectPropertyOf(ObjectPropertyChain(BFO:0000066 BFO:0000050) BFO:0000066)'
 
     .. note:: This is a special case of :class:`HoldsOverChain`
     """
@@ -359,7 +359,7 @@ class DataPropertyMaxCardinality(Macro):
     This can be represented as:
 
     >>> DataPropertyMaxCardinality(1, "a:hasAge").to_funowl()
-    'SubClassOf( owl:Thing DataMaxCardinality( 1 a:hasAge ) )'
+    'SubClassOf(owl:Thing DataMaxCardinality(1 a:hasAge))'
     """
 
     def __init__(
@@ -408,8 +408,10 @@ class ObjectListOfMacro(Macro):
 class ClassIntersectionMacro(ObjectListOfMacro):
     """A macro that represents a class intersection.
 
-    >>> ClassIntersectionMacro("ZFA:0000134", ["CL:0000540", ("BFO:0000050", "NCBITaxon:7955")])
-    'EquivalentClasses( ZFA:0000134 ObjectIntersectionOf( CL:0000540 ObjectSomeValuesFrom( BFO:0000050 NCBITaxon:7955 ) ) )'
+    >>> ClassIntersectionMacro(
+    ...     "ZFA:0000134", ["CL:0000540", ("BFO:0000050", "NCBITaxon:7955")]
+    ... ).to_funowl()
+    'EquivalentClasses(ZFA:0000134 ObjectIntersectionOf(CL:0000540 ObjectSomeValuesFrom(BFO:0000050 NCBITaxon:7955)))'
     """
 
     object_list_cls = f.ObjectIntersectionOf
