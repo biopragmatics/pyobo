@@ -221,7 +221,6 @@ class Term(Referenced, Stanza):
     #: Relationships with the default "is_a"
     parents: list[Reference] = field(default_factory=list)
 
-    # TODO add intersection and union to relation output
     intersection_of: IntersectionOfHint = field(default_factory=list)
     union_of: UnionOfHint = field(default_factory=list)
     equivalent_to: list[Reference] = field(default_factory=list)

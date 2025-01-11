@@ -307,11 +307,11 @@ def _get_terms(
         )
         _process_replaced_by(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_subsets(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_intersection_of(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_union_of(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_equivalent_to(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_disjoint_from(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_consider(term, data, ontology_prefix=ontology_prefix, strict=strict)
-        _process_intersection_of(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_comment(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_description(term, data, ontology_prefix=ontology_prefix, strict=strict)
 
@@ -819,14 +819,14 @@ def iterate_typedefs(
         _process_intersection_of(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_union_of(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_equivalent_to(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
-        _process_parents(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
-        _process_holds_over_chain(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
-        _process_equivalent_to_chain(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_disjoint_from(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_consider(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_comment(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_description(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
 
+        # the next 4 are typedef-specific
+        _process_equivalent_to_chain(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_holds_over_chain(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         typedef.disjoint_over.extend(
             iterate_node_reference_tag(
                 "disjoint_over",
