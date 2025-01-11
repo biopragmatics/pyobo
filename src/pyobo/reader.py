@@ -326,7 +326,7 @@ def _process_description(term: Stanza, data, *, ontology_prefix: str, strict: bo
     term.definition = definition
     if term.definition:
         for definition_reference in definition_references:
-            term._annotate_axiom(
+            term._append_annotation(
                 v.has_description,
                 OBOLiteral.string(term.definition),
                 Annotation(v.has_dbxref, definition_reference),
@@ -431,6 +431,7 @@ def _process_properties(
     for ann in iterate_node_properties(
         data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix, upgrade=upgrade
     ):
+        # TODO parse axioms
         term.append_property(ann)
 
 
@@ -462,6 +463,7 @@ def _process_relations(
             missing_typedefs.add(relation.pair)
             logger.warning("[%s] has no typedef for %s", ontology_prefix, relation)
             logger.debug("[%s] available typedefs: %s", ontology_prefix, set(typedefs))
+        # TODO parse axioms
         term.append_relationship(relation, reference)
 
 
@@ -1074,12 +1076,6 @@ def iterate_node_synonyms(
         )
         if s is not None:
             yield s
-
-
-HANDLED_PROPERTY_TYPES = {
-    "xsd:string": str,
-    "xsd:dateTime": datetime,
-}
 
 
 def iterate_node_properties(

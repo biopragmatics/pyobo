@@ -265,7 +265,6 @@ class TestTerm(unittest.TestCase):
             id: GO:0050069
             name: lysine dehydrogenase activity
             comment: "I like this record"
-            property_value: rdfs:comment "I like this record" xsd:string
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
@@ -757,7 +756,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
     def test_18_see_also_single(self) -> None:
         """Test appending see also."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_see_also_url("https://example.org/test")
+        term.append_see_also_uri("https://example.org/test")
         self.assert_lines(
             """\
             [Term]
