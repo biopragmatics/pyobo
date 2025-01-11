@@ -5,11 +5,10 @@ import unittest
 from pyobo import Obo, Reference, Term
 from pyobo.identifier_utils import UnparsableIRIError
 from pyobo.reader import from_str, get_first_nonescaped_quote
-from pyobo.struct import default_reference
+from pyobo.struct import TypeDef, default_reference
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import abbreviation
 from pyobo.struct.typedef import (
-    TypeDef,
     comment,
     derives_from,
     exact_match,
@@ -251,8 +250,7 @@ class TestReaderTerm(unittest.TestCase):
         """)
         term = self.get_only_term(ontology)
         self.assertIsNone(term.definition)
-        self.assertEqual(1, len(term.provenance))
-        self.assertEqual(CHARLIE, term.provenance[0])
+        self.assertEqual(0, len(term.provenance))
 
     def test_7_comment(self) -> None:
         """Test parsing a definition missing a starting quote."""

@@ -46,4 +46,4 @@ def iterate_terms(version: str) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    BiGGModelGetter().write_default(force=True, write_obo=True, write_owl=True)
+    BiGGModelGetter.cli()

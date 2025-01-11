@@ -9,19 +9,20 @@ import bioregistry
 from curies import vocabulary as v
 
 from pyobo import Obo, Reference, default_reference
+from pyobo.struct import TypeDef
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import (
     Synonym,
     make_ad_hoc_ontology,
 )
 from pyobo.struct.typedef import (
-    TypeDef,
     exact_match,
     has_contributor,
     has_inchi,
     has_role,
     part_of,
 )
+from pyobo.struct.utils import obo_escape_slim
 
 PREFIX = has_role.prefix
 IDENTIFIER = has_role.identifier
@@ -243,7 +244,7 @@ class TestTypeDef(unittest.TestCase):
             f"""\
             [Typedef]
             id: RO:0000087
-            def: "{has_role.definition}"
+            def: "{obo_escape_slim(has_role.definition)}" []
             """,
             typedef,
         )

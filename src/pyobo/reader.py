@@ -37,6 +37,7 @@ from .struct import (
     default_reference,
     make_ad_hoc_ontology,
 )
+from .struct import vocabulary as v
 from .struct.reference import OBOLiteral, _parse_identifier
 from .struct.struct_utils import Annotation, Stanza
 from .struct.typedef import comment as has_comment
@@ -97,7 +98,7 @@ def _read_obo(filelike, prefix: str | None, ignore_obsolete: bool) -> nx.MultiDi
         tqdm(
             filelike,
             unit_scale=True,
-            desc=f'[{prefix or ""}] parsing OBO',
+            desc=f"[{prefix or ''}] parsing OBO",
             disable=None,
             leave=True,
         ),
@@ -168,6 +169,7 @@ def from_obonet(
         ontology_prefix=ontology_prefix,
         upgrade=upgrade,
         node=Reference(prefix="obo", identifier=ontology_prefix),
+        strict=strict,
     ):
         if ann.predicate.pair == has_ontology_root_term.pair:
             match ann.value:
@@ -265,21 +267,14 @@ def _get_terms(
             # caveat: this misses terms that are just defined with an ID
             continue
 
-        provenance = []
-        definition, definition_references = get_definition(
-            data, node=reference, strict=strict, ontology_prefix=ontology_prefix
-        )
-        provenance.extend(definition_references)
-
         term = Term(
             reference=reference,
-            definition=definition,
-            provenance=provenance,
             builtin=_get_boolean(data, "builtin"),
             is_anonymous=_get_boolean(data, "is_anonymous"),
             is_obsolete=_get_boolean(data, "is_obsolete"),
             namespace=data.get("namespace"),
         )
+
         _process_alts(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_parents(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_synonyms(
@@ -312,15 +307,30 @@ def _get_terms(
         )
         _process_replaced_by(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_subsets(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_intersection_of(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_union_of(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_equivalent_to(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_disjoint_from(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_consider(term, data, ontology_prefix=ontology_prefix, strict=strict)
-        _process_intersection_of(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_comment(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_description(term, data, ontology_prefix=ontology_prefix, strict=strict)
 
         terms.append(term)
     return terms
+
+
+def _process_description(term: Stanza, data, *, ontology_prefix: str, strict: bool):
+    definition, definition_references = get_definition(
+        data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix
+    )
+    term.definition = definition
+    if term.definition:
+        for definition_reference in definition_references:
+            term._annotate_axiom(
+                v.has_description,
+                OBOLiteral.string(term.definition),
+                Annotation(v.has_dbxref, definition_reference),
+            )
 
 
 def _process_comment(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
@@ -564,6 +574,9 @@ def _handle_xref(
             return term.append_relationship(predicate, xref)
         elif xref.prefix in macro_config.treat_xrefs_as_is_a:
             return term.append_parent(xref)
+
+    # TODO this is not what spec calls for, maybe
+    #  need a flag in macro config for this
     if xref.prefix in PROVENANCE_PREFIXES:
         return term.append_provenance(xref)
     return term.append_xref(xref)
@@ -806,13 +819,14 @@ def iterate_typedefs(
         _process_intersection_of(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_union_of(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_equivalent_to(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
-        _process_parents(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
-        _process_holds_over_chain(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
-        _process_equivalent_to_chain(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_disjoint_from(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_consider(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_comment(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_description(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
 
+        # the next 4 are typedef-specific
+        _process_equivalent_to_chain(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_holds_over_chain(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         typedef.disjoint_over.extend(
             iterate_node_reference_tag(
                 "disjoint_over",
