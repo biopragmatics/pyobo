@@ -9,6 +9,7 @@ import bioregistry
 
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
+from pyobo.struct.functional.obo_to_functional import get_term_axioms
 from pyobo.struct.reference import unspecified_matching
 from pyobo.struct.struct import (
     BioregistryError,
@@ -127,8 +128,6 @@ class TestTerm(unittest.TestCase):
 
     def assert_funowl_lines(self, text: str, term: Term) -> None:
         """Assert functional OWL lines are equal."""
-        from pyobo.struct.functional.obo_to_functional import get_term_axioms
-
         self.assert_lines(
             text,
             (x.to_funowl() for x in get_term_axioms(term)),
@@ -218,6 +217,13 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="gard", typedefs={}),
         )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( obo:gard#genetics ) )
+            AnnotationAssertion( rdfs:label obo:gard#genetics "Genetics" )
+            """,
+            term,
+        )
 
     def test_2_is_anonymous(self) -> None:
         """Test the ``is_anonymous`` tag."""
@@ -257,6 +263,14 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( oboInOwl:hasOBONamespace GO:0050069 "gomf" )
+            """,
+            term,
+        )
 
     def test_5_alt(self) -> None:
         """Test adding an alternate ID."""
@@ -271,6 +285,14 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( IAO:0100001 GO:1234569 GO:0050069 )
+            """,
+            term,
+        )
 
     def test_6_definition(self):
         """Test adding a definition."""
@@ -284,6 +306,14 @@ class TestTerm(unittest.TestCase):
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
         )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( dcterms:description GO:0050069 "Something" )
+            """,
+            term,
+        )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT, definition="Something")
         term.append_definition_xref(CHARLIE)
@@ -295,6 +325,14 @@ class TestTerm(unittest.TestCase):
             def: "Something" [orcid:0000-0003-4423-4370]
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={}),
+        )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( Annotation( oboInOwl:hasDbXref orcid:0000-0003-4423-4370 ) dcterms:description GO:0050069 "Something" )
+            """,
+            term,
         )
 
     def test_7_comment(self) -> None:
@@ -309,6 +347,14 @@ class TestTerm(unittest.TestCase):
             comment: "I like this record"
             """,
             term.iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+        )
+        self.assert_funowl_lines(
+            """\
+            Declaration( Class( GO:0050069 ) )
+            AnnotationAssertion( rdfs:label GO:0050069 "lysine dehydrogenase activity" )
+            AnnotationAssertion( rdfs:comment GO:0050069 "I like this record"^^xsd:string )
+            """,
+            term,
         )
 
     def test_8_subset(self) -> None:

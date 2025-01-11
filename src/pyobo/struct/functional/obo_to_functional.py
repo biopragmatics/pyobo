@@ -10,15 +10,15 @@ import rdflib
 from curies import vocabulary as v
 from rdflib import XSD
 
+from pyobo.struct import vocabulary as pv
 from pyobo.struct.functional import dsl as f
 from pyobo.struct.functional import macros as m
 from pyobo.struct.functional.ontology import Document, Ontology
 from pyobo.struct.functional.utils import DEFAULT_PREFIX_MAP
 from pyobo.struct.reference import OBOLiteral, Reference
-from pyobo.struct.vocabulary import SKIP_PROPERTY_PREDICATES, has_dbxref, has_ontology_root_term
 
 if TYPE_CHECKING:
-    from pyobo.struct.struct import Obo, Term
+    from pyobo.struct.struct import Obo, Referenced, Term
     from pyobo.struct.struct_utils import Annotation as OBOAnnotation
     from pyobo.struct.typedef import TypeDef
 
@@ -54,8 +54,8 @@ def get_ofn_from_obo(obo_ontology: Obo) -> Document:
 def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
     """Get axioms from the ontology."""
     if obo_ontology.root_terms:
-        yield f.Declaration(has_ontology_root_term, type="AnnotationProperty")
-        yield m.LabelMacro(has_ontology_root_term, cast(str, has_ontology_root_term.name))
+        yield f.Declaration(pv.has_ontology_root_term, type="AnnotationProperty")
+        yield m.LabelMacro(pv.has_ontology_root_term, cast(str, pv.has_ontology_root_term.name))
 
     if obo_ontology.subsetdefs:
         yield f.Declaration("oboInOwl:SubsetProperty", type="AnnotationProperty")
@@ -128,7 +128,11 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
         yield m.AltMacro(s, alt.preferred_curie)
     # 6
     if term.definition:
-        yield m.DescriptionMacro(s, term.definition)
+        yield m.DescriptionMacro(
+            s,
+            term.definition,
+            annotations=_get_annotations(term, pv.has_description, term.definition),
+        )
     # 7 TODO comment
     # 8
     for subset in term.subsets:
@@ -146,7 +150,7 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
     # TODO add annotations for the following
     for xref in term.xrefs:
         yield m.XrefMacro(
-            s, xref.preferred_curie, annotations=_get_annotations(term, has_dbxref, xref)
+            s, xref.preferred_curie, annotations=_get_annotations(term, pv.has_dbxref, xref)
         )
     # 11
     if term.builtin is not None:
@@ -199,8 +203,10 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
     # 23 TODO consider
 
 
-def _get_annotations(term: Term, p, o) -> list[f.Annotation]:
-    return _process_anns(term._get_axioms(p, o))
+def _get_annotations(
+    term: Term, p: Reference | Referenced, o: Reference | Referenced | OBOLiteral | str
+) -> list[f.Annotation]:
+    return _process_anns(term._get_annotations(p, o))
 
 
 def _process_anns(annotations: list[OBOAnnotation]) -> list[f.Annotation]:
@@ -267,7 +273,7 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         yield m.XrefMacro(r, f.IdentifierBox(xref.preferred_curie))
     # 11
     for predicate, values in typedef.properties.items():
-        if predicate in SKIP_PROPERTY_PREDICATES:
+        if predicate in pv.SKIP_PROPERTY_PREDICATES_OBJECTS:
             continue
         for value in values:
             yield f.AnnotationAssertion(predicate, r, value)
@@ -341,10 +347,10 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     # 34 TODO created_by
     # 35 TODO creation_date
     # 36
-    for rep in typedef.replaced_by:
+    for rep in typedef.get_replaced_by():
         yield m.ReplacedByMacro(rep, r)
     # 37
-    for ref in typedef.consider:
+    for ref in typedef.get_see_also():
         yield m.OBOConsiderMacro(r, ref)
     # 38 TODO expand_assertion_to
     # 39 TODO expand_expression_to
