@@ -3,6 +3,7 @@
 from class_resolver import ClassResolver
 
 from .antibodyregistry import AntibodyRegistryGetter
+from .bigg import BiGGCompartmentGetter, BiGGMetaboliteGetter, BiGGModelGetter, BiGGReactionGetter
 from .ccle import CCLEGetter
 from .cgnc import CGNCGetter
 from .chembl import ChEMBLCompoundGetter
@@ -21,7 +22,8 @@ from .expasy import ExpasyGetter
 from .famplex import FamPlexGetter
 from .flybase import FlyBaseGetter
 from .gc import GCGetter
-from .geonames import GeonamesGetter
+from .gard import GARDGetter
+from .geonames import GeonamesFeatureGetter, GeonamesGetter
 from .gtdb import GTDBGetter
 from .gwascentral_phenotype import GWASCentralPhenotypeGetter
 from .gwascentral_study import GWASCentralStudyGetter
@@ -39,6 +41,7 @@ from .mirbase_family import MiRBaseFamilyGetter
 from .mirbase_mature import MiRBaseMatureGetter
 from .msigdb import MSigDBGetter
 from .ncbigene import NCBIGeneGetter
+from .nlm import NLMCatalogGetter, NLMPublisherGetter
 from .npass import NPASSGetter
 from .omim_ps import OMIMPSGetter
 from .pathbank import PathBankGetter
@@ -63,6 +66,10 @@ from ..struct import Obo
 
 __all__ = [
     "AntibodyRegistryGetter",
+    "BiGGCompartmentGetter",
+    "BiGGMetaboliteGetter",
+    "BiGGModelGetter",
+    "BiGGReactionGetter",
     "CCLEGetter",
     "CGNCGetter",
     "CIVICGeneGetter",
@@ -80,10 +87,12 @@ __all__ = [
     "ExpasyGetter",
     "FamPlexGetter",
     "FlyBaseGetter",
+    "GARDGetter",
     "GCGetter",
     "GTDBGetter",
     "GWASCentralPhenotypeGetter",
     "GWASCentralStudyGetter",
+    "GeonamesFeatureGetter",
     "GeonamesGetter",
     "HGNCGetter",
     "HGNCGroupGetter",
@@ -101,6 +110,8 @@ __all__ = [
     "MiRBaseGetter",
     "MiRBaseMatureGetter",
     "NCBIGeneGetter",
+    "NLMCatalogGetter",
+    "NLMPublisherGetter",
     "NPASSGetter",
     "OMIMPSGetter",
     "PIDGetter",

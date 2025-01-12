@@ -1,7 +1,8 @@
-# See https://setuptools.readthedocs.io/en/latest/build_meta.html
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["uv>=0.5.13,<0.6.0"]
+# The uv backend entered preview mode in https://github.com/astral-sh/uv/pull/8886/files
+# with the 0.5.0 release. See also https://github.com/astral-sh/uv/issues/3957 for tracking.
+build-backend = "uv"
 
 [project]
 name = "pyobo"
@@ -26,11 +27,14 @@ classifiers = [
     "Framework :: Pytest",
     "Framework :: tox",
     "Framework :: Sphinx",
+    "Natural Language :: English",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
+    "Typing :: Typed",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Chemistry",
 ]
@@ -47,10 +51,11 @@ keywords = [
     "OBO",
 ]
 
-# License Information. This can be any valid SPDX identifiers that can be resolved
-# with URLs like https://spdx.org/licenses/MIT
-# See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license
-license = { file = "LICENSE" }
+# License Information.
+# See PEP-639 at https://peps.python.org/pep-0639/#add-license-files-key
+license-files = [
+    "LICENSE",
+]
 
 requires-python = ">=3.10"
 dependencies = [
@@ -74,7 +79,7 @@ dependencies = [
     "class_resolver",
     "psycopg2-binary",
     "pydantic>=2.0",
-    "curies>=0.9.0",
+    "curies>=0.10.2",
     # Resource Downloaders
     "drugbank_downloader",
     "chembl_downloader",
@@ -86,7 +91,7 @@ dependencies = [
 [project.optional-dependencies]
 tests = [
     "pytest",
-    "coverage",
+    "coverage[toml]",
 ]
 docs = [
     "sphinx>=8",
@@ -96,22 +101,13 @@ docs = [
 ]
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
+# and also https://packaging.python.org/en/latest/specifications/well-known-project-urls/
 [project.urls]
 "Bug Tracker" = "https://github.com/biopragmatics/pyobo/issues"
 Homepage = "https://github.com/biopragmatics/pyobo"
 Repository = "https://github.com/biopragmatics/pyobo.git"
 Documentation = "https://pyobo.readthedocs.io"
-
-[tool.setuptools]
-package-dir = { "" = "src" }
-
-[tool.setuptools.packages.find]
-# this implicitly sets `packages = ":find"`
-where = ["src"]  # list of folders that contain the packages (["."] by default)
-
-# See https://setuptools.pypa.io/en/latest/userguide/datafiles.html
-[tool.setuptools.package-data]
-"*" = ["*.*"]
+Funding = "https://github.com/sponsors/cthoyt"
 
 [project.scripts]
 pyobo = "pyobo.cli:main"

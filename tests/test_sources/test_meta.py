@@ -4,6 +4,8 @@ import importlib
 import unittest
 from pathlib import Path
 
+import bioregistry
+
 import pyobo.sources
 from pyobo import Obo
 
@@ -36,3 +38,19 @@ class TestSources(unittest.TestCase):
                 self.assertNotEqual(
                     0, len(getters), msg=f"forgot to create Obo subclass in {module.__name__}"
                 )
+                for getter in getters:
+                    if getter.idspaces:
+                        for prefix, _uri_prefix in getter.idspaces.items():
+                            with self.subTest(ontology=getter.ontology, prefix=prefix):
+                                norm_prefix = bioregistry.normalize_prefix(prefix)
+                                self.assertIsNotNone(
+                                    norm_prefix,
+                                    msg=f"{getter.ontology} defined with a non-Bioregistry prefix: {prefix}",
+                                )
+
+                                pp = bioregistry.get_preferred_prefix(norm_prefix) or norm_prefix
+                                self.assertEqual(
+                                    pp,
+                                    prefix,
+                                    msg=f"{getter.ontology} defined with a non-preferred prefix: {prefix}. Should be {pp}, because we're in OBO world",
+                                )

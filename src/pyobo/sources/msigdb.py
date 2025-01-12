@@ -7,14 +7,14 @@ from collections.abc import Iterable
 from lxml import etree
 from tqdm.auto import tqdm
 
-from ..struct import Obo, Reference, Term, TypeDef, has_participant
-from ..utils.path import ensure_path
-
-logger = logging.getLogger(__name__)
+from pyobo.struct import Obo, Reference, Term, TypeDef, has_citation, has_participant
+from pyobo.utils.path import ensure_path
 
 __all__ = [
     "MSigDBGetter",
 ]
+
+logger = logging.getLogger(__name__)
 
 PREFIX = "msigdb"
 BASE_URL = "https://data.broadinstitute.org/gsea-msigdb/msigdb/release"
@@ -38,16 +38,11 @@ class MSigDBGetter(Obo):
     """An ontology representation of MMSigDB's gene set nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_participant, *(p for _, p in PROPERTIES)]
+    typedefs = [has_participant, has_citation, *(p for _, p in PROPERTIES)]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms(version=self._version_or_raise, force=force)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get MSIG as Obo."""
-    return MSigDBGetter(force=force)
 
 
 _SPECIES = {
@@ -81,7 +76,7 @@ def _iter_entries(version: str, force: bool = False):
                     # this is the result of faulty encoding in XML - maybe they
                     # wrote XML with their own string formatting instead of using a
                     # library.
-                    tqdm.write(f"[{PREFIX}] failed on line {i}: {e}")
+                    logger.debug("[%s] failed on line %s: %s", PREFIX, i, e)
                 else:
                     yield tree
 
@@ -93,14 +88,6 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         attrib = dict(entry.attrib)
         tax_id = _SPECIES[attrib["ORGANISM"]]
 
-        reference_id = attrib["PMID"].strip()
-        if not reference_id:
-            reference = None
-        elif reference_id.startswith("GSE"):
-            reference = Reference(prefix="gse", identifier=reference_id)
-        else:
-            reference = Reference(prefix="pubmed", identifier=reference_id)
-
         # NONE have the entry "HISTORICAL_NAME"
         # historical_name = thing.attrib['HISTORICAL_NAME']
 
@@ -111,9 +98,17 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
             definition=_get_definition(attrib),
-            provenance=[] if reference is None else [reference],
             is_obsolete=is_obsolete,
         )
+
+        reference_id = attrib["PMID"].strip()
+        if not reference_id:
+            pass
+        elif reference_id.startswith("GSE"):
+            term.append_see_also(Reference(prefix="gse", identifier=reference_id))
+        else:
+            term.append_provenance(Reference(prefix="pubmed", identifier=reference_id))
+
         for key, typedef in PROPERTIES:
             if value := attrib[key].strip():
                 term.annotate_literal(typedef, value)
@@ -168,4 +163,4 @@ def _get_definition(attrib) -> str | None:
 
 
 if __name__ == "__main__":
-    MSigDBGetter().write_default(force=True, write_obo=True)
+    MSigDBGetter.cli()

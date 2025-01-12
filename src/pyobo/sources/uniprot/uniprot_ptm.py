@@ -53,11 +53,6 @@ class UniProtPtmGetter(Obo):
         yield from iter_terms(force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get UniProt PTMs as OBO."""
-    return UniProtPtmGetter(force=force)
-
-
 def iter_terms(force: bool = False) -> Iterable[Term]:
     """Iterate over UniProt PTM Terms."""
     path = ensure_path(PREFIX, url=URL, force=force)

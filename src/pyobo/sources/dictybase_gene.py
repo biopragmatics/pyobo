@@ -41,11 +41,6 @@ class DictybaseGetter(Obo):
         return get_terms(force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get dictyBase Gene as OBO."""
-    return DictybaseGetter(force=force)
-
-
 def get_terms(force: bool = False) -> Iterable[Term]:
     """Get terms."""
     # TODO the mappings file has actually no uniprot at all, and requires text mining

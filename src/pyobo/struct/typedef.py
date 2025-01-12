@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
-from dataclasses import dataclass, field
+from collections.abc import Sequence
 
 from curies import ReferenceTuple
-from typing_extensions import Self
 
-from .reference import Reference, Referenced, default_reference, reference_escape
+from . import vocabulary as v
+from .reference import Reference
+from .struct import TypeDef
 from ..resources.ro import load_ro
 
 __all__ = [
-    "TypeDef",
     "alternative_term",
     "broad_match",
     "close_match",
@@ -24,10 +23,11 @@ __all__ = [
     "example_of_usage",
     "from_species",
     "gene_product_member_of",
+    "has_contributor",
     "has_dbxref",
+    "has_end_date",
     "has_gene_product",
     "has_homepage",
-    # Properties
     "has_inchi",
     "has_mature",
     "has_member",
@@ -37,10 +37,13 @@ __all__ = [
     "has_role",
     "has_salt",
     "has_smiles",
+    "has_start_date",
     "has_successor",
     "has_taxonomy_rank",
     "is_a",
     "located_in",
+    "mapping_has_confidence",
+    "mapping_has_justification",
     "match_typedefs",
     "member_of",
     "narrow_match",
@@ -56,115 +59,20 @@ __all__ = [
     "translates_to",
 ]
 
-
-def _bool_to_obo(v: bool) -> str:
-    return "true" if v else "false"
-
-
-@dataclass
-class TypeDef(Referenced):
-    """A type definition in OBO.
-
-    See the subsection of https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.2.2.
-    """
-
-    reference: Reference
-    comment: str | None = None
-    namespace: str | None = None
-    definition: str | None = None
-    is_transitive: bool | None = None
-    is_symmetric: bool | None = None
-    domain: Reference | None = None
-    range: Reference | None = None
-    parents: list[Reference] = field(default_factory=list)
-    xrefs: list[Reference] = field(default_factory=list)
-    inverse: Reference | None = None
-    created_by: str | None = None
-    holds_over_chain: list[Reference] | None = None
-    #: Whether this relationship is a metadata tag. Properties that are marked as metadata tags are
-    #: used to record object metadata. Object metadata is additional information about an object
-    #: that is useful to track, but does not impact the definition of the object or how it should
-    #: be treated by a reasoner. Metadata tags might be used to record special term synonyms or
-    #: structured notes about a term, for example.
-    is_metadata_tag: bool | None = None
-
-    def __hash__(self) -> int:
-        # have to re-define hash because of the @dataclass
-        return hash((self.__class__, self.prefix, self.identifier))
-
-    def iterate_obo_lines(self, ontology_prefix: str) -> Iterable[str]:
-        """Iterate over the lines to write in an OBO file."""
-        yield "\n[Typedef]"
-        yield f"id: {reference_escape(self.reference, ontology_prefix=ontology_prefix)}"
-        if self.name:
-            yield f"name: {self.reference.name}"
-        if self.definition:
-            yield f'def: "{self.definition}"'
-
-        if self.is_metadata_tag is not None:
-            yield f"is_metadata_tag: {_bool_to_obo(self.is_metadata_tag)}"
-
-        if self.namespace:
-            yield f"namespace: {self.namespace}"
-
-        if self.created_by:
-            yield f"created_by: {self.created_by}"
-
-        if self.comment:
-            yield f"comment: {self.comment}"
-
-        for xref in self.xrefs:
-            yield f"xref: {xref.preferred_curie}"
-
-        if self.is_transitive is not None:
-            yield f'is_transitive: {"true" if self.is_transitive else "false"}'
-
-        if self.is_symmetric is not None:
-            yield f'is_symmetric: {"true" if self.is_symmetric else "false"}'
-        if self.holds_over_chain:
-            _chain = " ".join(link.preferred_curie for link in self.holds_over_chain)
-            _names = " / ".join(link.name or "_" for link in self.holds_over_chain)
-            yield f"holds_over_chain: {_chain} ! {_names}"
-        if self.inverse:
-            yield f"inverse_of: {self.inverse}"
-        if self.domain:
-            yield f"domain: {self.domain}"
-        if self.range:
-            yield f"range: {self.range}"
-
-    @classmethod
-    def from_triple(cls, prefix: str, identifier: str, name: str | None = None) -> TypeDef:
-        """Create a typedef from a reference."""
-        return cls(reference=Reference(prefix=prefix, identifier=identifier, name=name))
-
-    @classmethod
-    def default(cls, prefix: str, identifier: str, *, name: str | None = None) -> Self:
-        """Construct a default type definition from within the OBO namespace."""
-        return cls(reference=default_reference(prefix, identifier, name=name))
-
-
 RO_PREFIX = "RO"
 BFO_PREFIX = "BFO"
 IAO_PREFIX = "IAO"
 SIO_PREFIX = "SIO"
 
-from_species = TypeDef(
-    reference=Reference(prefix=RO_PREFIX, identifier="0002162", name="in taxon"),
-)
+from_species = TypeDef(reference=v.from_species)
 species_specific = TypeDef(
-    reference=Reference(prefix="debio", identifier="0000007", name="species specific"),
+    reference=v.species_specific,
     definition="X speciesSpecific Y means that Y is a general phenomena, "
     "like a pathway, and X is the version that appears in a species. X should state which"
     "species with RO:0002162 (in taxon)",
 )
-has_left_to_right_reaction = TypeDef(
-    Reference(prefix="debio", identifier="0000007", name="has left-to-right reaction"),
-    is_metadata_tag=True,
-)
-has_right_to_left_reaction = TypeDef(
-    Reference(prefix="debio", identifier="0000008", name="has right-to-left reaction"),
-    is_metadata_tag=True,
-)
+has_left_to_right_reaction = TypeDef(v.has_left_to_right_reaction, is_metadata_tag=True)
+has_right_to_left_reaction = TypeDef(v.has_right_to_left_reaction, is_metadata_tag=True)
 has_bidirectional_reaction = TypeDef(
     Reference(prefix="debio", identifier="0000009", name="has bi-directional reaction"),
     is_metadata_tag=True,
@@ -173,15 +81,10 @@ reaction_enabled_by_molecular_function = TypeDef(
     Reference(prefix="debio", identifier="0000047", name="reaction enabled by molecular function")
 )
 
-part_of = TypeDef(
-    reference=Reference(prefix=BFO_PREFIX, identifier="0000050", name="part of"),
-    comment="Inverse of has_part",
-    inverse=Reference(prefix=BFO_PREFIX, identifier="0000051", name="has part"),
-)
-has_part = TypeDef(
-    reference=Reference(prefix=BFO_PREFIX, identifier="0000051", name="has part"),
-    comment="Inverse of part_of",
-    inverse=Reference(prefix=BFO_PREFIX, identifier="0000050", name="part of"),
+part_of = TypeDef(reference=v.part_of, comment="Inverse of has_part", inverse=v.has_part)
+has_part = TypeDef(reference=v.has_part, comment="Inverse of part_of", inverse=v.part_of)
+occurs_in = TypeDef(
+    reference=Reference(prefix=BFO_PREFIX, identifier="BFO:0000066", name="occurs in")
 )
 participates_in = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0000056", name="participates in"),
@@ -193,6 +96,9 @@ has_participant = TypeDef(
     comment="Inverse of has participant",
     inverse=Reference(prefix=RO_PREFIX, identifier="0000056", name="participates in"),
 )
+has_component = TypeDef(
+    reference=Reference(prefix=RO_PREFIX, identifier="0002180", name="has component"),
+)
 derives_from = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0001000", name="derives from"),
 )
@@ -202,39 +108,20 @@ molecularly_interacts_with = TypeDef(
 located_in = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0001025", name="located in"),
 )
-exact_match = TypeDef(
-    reference=Reference(prefix="skos", identifier="exactMatch", name="exact match"),
-)
-narrow_match = TypeDef(
-    reference=Reference(prefix="skos", identifier="narrowMatch", name="narrow match"),
-)
-broad_match = TypeDef(
-    reference=Reference(prefix="skos", identifier="broadMatch", name="broad match"),
-)
-close_match = TypeDef(
-    reference=Reference(prefix="skos", identifier="closeMatch", name="close match"),
-)
-related_match = TypeDef(
-    reference=Reference(prefix="skos", identifier="relatedMatch", name="related match"),
-)
+exact_match = TypeDef(reference=v.exact_match, is_metadata_tag=True)
+narrow_match = TypeDef(reference=v.narrow_match, is_metadata_tag=True)
+broad_match = TypeDef(reference=v.broad_match, is_metadata_tag=True)
+close_match = TypeDef(reference=v.close_match, is_metadata_tag=True)
+related_match = TypeDef(reference=v.related_match, is_metadata_tag=True)
 owl_same_as = TypeDef(
-    reference=Reference(prefix="owl", identifier="sameAs", name="same as"),
+    reference=v.owl_same_as,
 )
-equivalent_class = TypeDef(
-    reference=Reference(prefix="owl", identifier="equivalentClass", name="equivalent class"),
-)
-equivalent_property = TypeDef(
-    reference=Reference(prefix="owl", identifier="equivalentProperty", name="equivalent property"),
-)
+equivalent_class = TypeDef(reference=v.equivalent_class)
+equivalent_property = TypeDef(reference=v.equivalent_property)
 
-
-is_a = TypeDef(
-    reference=Reference(prefix="rdfs", identifier="subClassOf", name="subclass of"),
-)
-see_also = TypeDef(
-    reference=Reference(prefix="rdfs", identifier="seeAlso", name="see also"),
-)
-comment = TypeDef(reference=Reference(prefix="rdfs", identifier="comment", name="comment"))
+is_a = TypeDef(reference=v.is_a)
+see_also = TypeDef(reference=v.see_also, is_metadata_tag=True)
+comment = TypeDef(reference=v.comment, is_metadata_tag=True)
 has_member = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0002351", name="has member"),
 )
@@ -249,12 +136,7 @@ superclass_of = TypeDef(
 )
 
 develops_from = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002202", name="develops from")
-orthologous = TypeDef(
-    reference=Reference(
-        prefix=RO_PREFIX, identifier="HOM0000017", name="in orthology relationship with"
-    ),
-    is_symmetric=True,
-)
+orthologous = TypeDef(reference=v.orthologous, is_symmetric=True)
 
 has_role = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0000087", name="has role"),
@@ -294,8 +176,10 @@ has_gene_product = TypeDef(
 gene_product_member_of = TypeDef(
     reference=Reference(prefix="debio", identifier="0000001", name="gene product is a member of"),
     holds_over_chain=[
-        has_gene_product.reference,
-        member_of.reference,
+        [
+            has_gene_product.reference,
+            member_of.reference,
+        ]
     ],
 )
 
@@ -303,26 +187,23 @@ has_salt = TypeDef(
     reference=Reference(prefix="debio", identifier="0000006", name="has salt"),
 )
 
-term_replaced_by = TypeDef.from_triple(
-    prefix=IAO_PREFIX, identifier="0100001", name="term replaced by"
+term_replaced_by = TypeDef(reference=v.term_replaced_by, is_metadata_tag=True)
+example_of_usage = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0000112", name="example of usage"),
+    is_metadata_tag=True,
 )
-example_of_usage = TypeDef.from_triple(
-    prefix=IAO_PREFIX, identifier="0000112", name="example of usage"
+alternative_term = TypeDef(reference=v.alternative_term, is_metadata_tag=True)
+has_ontology_root_term = TypeDef(reference=v.has_ontology_root_term, is_metadata_tag=True)
+definition_source = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0000119", name="definition source"),
+    is_metadata_tag=True,
 )
-alternative_term = TypeDef.from_triple(
-    prefix=IAO_PREFIX, identifier="0000118", name="alternative term"
-)
-has_ontology_root_term = TypeDef.from_triple(
-    prefix=IAO_PREFIX, identifier="0000700", name="has ontology root term"
-)
-definition_source = TypeDef.from_triple(
-    prefix=IAO_PREFIX, identifier="0000119", name="definition source"
-)
-has_dbxref = TypeDef.from_triple(
-    prefix="oboInOwl", identifier="hasDbXref", name="has database cross-reference"
-)
+has_dbxref = TypeDef(reference=v.has_dbxref, is_metadata_tag=True)
 
-editor_note = TypeDef.from_triple(prefix=IAO_PREFIX, identifier="0000116", name="editor note")
+editor_note = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0000116", name="editor note"),
+    is_metadata_tag=True,
+)
 
 is_immediately_transformed_from = TypeDef.from_triple(
     prefix=SIO_PREFIX, identifier="000658", name="is immediately transformed from"
@@ -363,12 +244,16 @@ has_functional_parent = TypeDef(
     reference=Reference(prefix="ro", identifier="0018038", name="has functional parent"),
 )
 
+has_citation = TypeDef(reference=v.has_citation, is_metadata_tag=True)
+
 has_smiles = TypeDef(
     reference=Reference(prefix="debio", identifier="0000022", name="has SMILES"),
+    is_metadata_tag=True,
 )
 
 has_inchi = TypeDef(
     reference=Reference(prefix="debio", identifier="0000020", name="has InChI"),
+    is_metadata_tag=True,
 )
 
 has_homepage = TypeDef(
@@ -390,6 +275,29 @@ contributor = TypeDef(
     is_metadata_tag=True,
 )
 
+mapping_has_justification = TypeDef(
+    reference=v.mapping_has_justification,
+    is_metadata_tag=True,
+    range=Reference(prefix="semapv", identifier="Matching", name="matching process"),
+)
+mapping_has_confidence = TypeDef(
+    reference=v.mapping_has_confidence, is_metadata_tag=True, range=v.xsd_float
+)
+has_contributor = TypeDef(reference=v.has_contributor, is_metadata_tag=True)
+
+has_start_date = TypeDef(
+    reference=Reference(prefix="dcat", identifier="startDate", name="has start date"),
+    is_metadata_tag=True,
+)
+has_end_date = TypeDef(
+    reference=Reference(prefix="dcat", identifier="endDate", name="has end date"),
+    is_metadata_tag=True,
+)
+
+has_title = TypeDef(reference=v.has_title, is_metadata_tag=True)
+has_license = TypeDef(reference=v.has_license, is_metadata_tag=True)
+has_description = TypeDef(reference=v.has_description, is_metadata_tag=True)
+
 default_typedefs: dict[ReferenceTuple, TypeDef] = {
     v.pair: v for v in locals().values() if isinstance(v, TypeDef)
 }
@@ -407,9 +315,16 @@ match_typedefs: Sequence[TypeDef] = (
     exact_match,
     narrow_match,
     related_match,
-    owl_same_as,
-    equivalent_class,
-    equivalent_property,
+    owl_same_as,  # for instances
+    equivalent_class,  # for classes
+    equivalent_property,  # for properties
     has_dbxref,
     see_also,
+)
+
+# Extension past the SSSOM spec
+extended_match_typedefs = (
+    *match_typedefs,
+    alternative_term,
+    term_replaced_by,
 )

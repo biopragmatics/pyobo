@@ -34,6 +34,7 @@ from .constants import (
 )
 from .identifier_utils import ParseError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
+from .reader import from_obo_path
 from .struct import Obo
 from .utils.io import get_writer
 from .utils.path import ensure_path, prefix_directory_join
@@ -69,6 +70,7 @@ def get_ontology(
     strict: bool = True,
     version: str | None = None,
     robot_check: bool = True,
+    upgrade: bool = True,
 ) -> Obo:
     """Get the OBO for a given graph.
 
@@ -80,18 +82,24 @@ def get_ontology(
     :param robot_check:
         If set to false, will send the ``--check=false`` command to ROBOT to disregard
         malformed ontology components. Necessary to load some ontologies like VO.
+    :param upgrade:
+        If set to true, will automatically upgrade relationships, such as
+        ``obo:chebi#part_of`` to ``BFO:0000051``
     :returns: An OBO object
 
     :raises OnlyOWLError: If the OBO foundry only has an OWL document for this resource.
 
     Alternate usage if you have a custom url::
 
-    >>> from pystow.utils import download
-    >>> from pyobo import Obo, from_obo_path
-    >>> url = ...
-    >>> obo_path = ...
-    >>> download(url=url, path=path)
-    >>> obo = from_obo_path(path)
+    .. code-block:: python
+
+        from pystow.utils import download
+        from pyobo import Obo, from_obo_path
+
+        url = ...
+        obo_path = ...
+        download(url=url, path=path)
+        obo = from_obo_path(path)
     """
     if force:
         force_process = True
@@ -131,18 +139,7 @@ def get_ontology(
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
 
-    from .reader import from_obo_path
-
-    obo = from_obo_path(path, prefix=prefix, strict=strict)
-    if version is not None:
-        if obo.data_version is None:
-            logger.warning("[%s] did not have a version, overriding with %s", obo.ontology, version)
-            obo.data_version = version
-        elif obo.data_version != version:
-            logger.warning(
-                "[%s] had version %s, overriding with %s", obo.ontology, obo.data_version, version
-            )
-            obo.data_version = version
+    obo = from_obo_path(path, prefix=prefix, strict=strict, version=version, upgrade=upgrade)
     obo.write_default(force=force_process)
     return obo
 

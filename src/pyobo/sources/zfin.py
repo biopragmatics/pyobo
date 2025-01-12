@@ -47,11 +47,6 @@ class ZFINGetter(Obo):
         return get_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get ZFIN OBO."""
-    return ZFINGetter(force=force)
-
-
 MARKERS_COLUMNS = [
     "zfin_id",
     "name",

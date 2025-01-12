@@ -93,11 +93,6 @@ class NCBIGeneGetter(Obo):
         return get_terms(force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get Entrez as OBO."""
-    return NCBIGeneGetter(force=force)
-
-
 def get_gene_info_df(force: bool = False) -> pd.DataFrame:
     """Get the gene info dataframe."""
     return ensure_df(
@@ -192,4 +187,4 @@ def get_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    NCBIGeneGetter.cli()

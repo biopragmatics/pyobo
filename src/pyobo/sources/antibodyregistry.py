@@ -1,4 +1,7 @@
-"""Converter for the Antibody Registry."""
+"""Converter for the Antibody Registry.
+
+TODO use API https://www.antibodyregistry.org/api/antibodies?page=1&size=100
+"""
 
 import logging
 from collections.abc import Iterable, Mapping
@@ -7,8 +10,9 @@ import pandas as pd
 from bioregistry.utils import removeprefix
 from tqdm.auto import tqdm
 
-from pyobo import Obo, Term
+from pyobo import Obo, Reference, Term
 from pyobo.api.utils import get_version
+from pyobo.struct.typedef import has_citation
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -43,15 +47,11 @@ class AntibodyRegistryGetter(Obo):
     """An ontology representation of the Antibody Registry."""
 
     ontology = bioversions_key = PREFIX
+    typedefs = [has_citation]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms(force=force, version=self._version_or_raise)
-
-
-def get_obo(*, force: bool = False) -> Obo:
-    """Get the Antibody Registry as OBO."""
-    return AntibodyRegistryGetter(force=force)
 
 
 # TODO there are tonnnnsss of mappings to be curated
@@ -97,7 +97,7 @@ def iter_terms(*, force: bool = False, version: str | None = None) -> Iterable[T
                     pubmed_id = pubmed_id.strip()
                     if not pubmed_id:
                         continue
-                    term.append_provenance(("pubmed", pubmed_id))
+                    term.append_provenance(Reference(prefix="pubmed", identifier=pubmed_id))
             yield term
 
 

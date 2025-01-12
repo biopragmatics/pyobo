@@ -31,11 +31,6 @@ class MiRBaseFamilyGetter(Obo):
         return iter_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get miRBase family as OBO."""
-    return MiRBaseFamilyGetter(force=force)
-
-
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get miRBase family terms."""
     df = get_df(version, force=force)
@@ -66,4 +61,4 @@ def get_df(version: str, force: bool = False) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    get_obo().write_default(use_tqdm=True, write_obo=True, force=True)
+    MiRBaseFamilyGetter.cli()

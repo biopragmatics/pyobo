@@ -3,26 +3,37 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Collection, Iterable, Mapping
+from collections.abc import Iterable, Mapping
 
 import pandas as pd
 from pystow.utils import read_zipfile_csv
 from tqdm import tqdm
 
-from pyobo import Obo, Term, TypeDef
-from pyobo.struct import Reference, part_of
+from pyobo import Obo, Term
+from pyobo.sources.geonames.utils import (
+    ADMIN1_URL,
+    ADMIN2_URL,
+    ADMIN_1,
+    ADMIN_2,
+    CITIES_URL,
+    CITY,
+    CODE_TYPEDEF,
+    COUNTRIES_URL,
+    FEATURE_TERM,
+    NATION,
+    P_CATEGORY,
+    PREFIX,
+    PREFIX_FEATURE,
+    SYNONYMS_DF_COLUMNS,
+    SYNONYMS_URL,
+    get_feature_terms,
+)
+from pyobo.struct import Reference, has_part, part_of
 from pyobo.utils.path import ensure_df, ensure_path
 
 __all__ = ["GeonamesGetter"]
 
 logger = logging.getLogger(__name__)
-
-PREFIX = "geonames"
-COUNTRIES_URL = "https://download.geonames.org/export/dump/countryInfo.txt"
-ADMIN1_URL = "https://download.geonames.org/export/dump/admin1CodesASCII.txt"
-ADMIN2_URL = "https://download.geonames.org/export/dump/admin2Codes.txt"
-CITIES_URL = "https://download.geonames.org/export/dump/cities15000.zip"
-CODE_TYPEDEF = TypeDef.default(PREFIX, "code")
 
 
 class GeonamesGetter(Obo):
@@ -30,27 +41,51 @@ class GeonamesGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
-    typedefs = [part_of, CODE_TYPEDEF]
+    typedefs = [part_of, CODE_TYPEDEF, has_part]
+    idspaces = {
+        PREFIX: "https://www.geonames.org/",
+        PREFIX_FEATURE: "https://www.geonames.org/recent-changes/featurecode/",
+        "BFO": "http://purl.obolibrary.org/obo/BFO_",
+        "ENVO": "http://purl.obolibrary.org/obo/ENVO_",
+        "NCBITaxon": "http://purl.obolibrary.org/obo/NCBITaxon_",
+        "orcid": "https://orcid.org/",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return get_terms(force=force)
 
 
-def get_terms(*, force: bool = False) -> Collection[Term]:
+def get_terms(*, force: bool = False) -> Iterable[Term]:
     """Get terms."""
+    yield Term(reference=NATION)
+    yield Term(reference=ADMIN_1).append_relationship(part_of, NATION)
+    yield Term(reference=ADMIN_2).append_relationship(part_of, ADMIN_1)
+    yield Term(reference=CITY)
+
+    # since the output here is only cities, we can slice this down
+    for term in get_feature_terms(force=force):
+        if term.identifier.startswith("P.") or term.pair == P_CATEGORY.pair or term == FEATURE_TERM:
+            yield term
+
     code_to_country = get_code_to_country(force=force)
+    yield from code_to_country.values()
+
     code_to_admin1 = get_code_to_admin1(code_to_country, force=force)
+    yield from code_to_admin1.values()
+
     code_to_admin2 = get_code_to_admin2(
         code_to_country=code_to_country, code_to_admin1=code_to_admin1, force=force
     )
+    yield from code_to_admin2.values()
+
     id_to_term = get_cities(
         code_to_country=code_to_country,
         code_to_admin1=code_to_admin1,
         code_to_admin2=code_to_admin2,
         force=force,
     )
-    return id_to_term.values()
+    yield from list(id_to_term.values())
 
 
 def get_code_to_country(*, force: bool = False) -> Mapping[str, Term]:
@@ -71,9 +106,13 @@ def get_code_to_country(*, force: bool = False) -> Mapping[str, Term]:
     for identifier, name, code, fips, iso3 in countries_df[cols].values:
         if pd.isna(code):
             continue
-        term = Term.from_triple(
-            "geonames", identifier, name if pd.notna(name) else None, type="Instance"
+        term = Term(
+            reference=Reference(
+                prefix=PREFIX, identifier=identifier, name=name if pd.notna(name) else None
+            ),
+            type="Instance",
         )
+        term.append_parent(NATION)
         term.append_synonym(code)
         if name.startswith("The "):
             term.append_synonym(name.removeprefix("The "))
@@ -105,9 +144,13 @@ def get_code_to_admin1(
             tqdm.write(f"Missing info for  {name} / {asciiname} / {code=} / {identifier=}")
             continue
 
-        term = Term.from_triple(
-            "geonames", identifier, name if pd.notna(name) else None, type="Instance"
+        term = Term(
+            reference=Reference(
+                prefix=PREFIX, identifier=identifier, name=name if pd.notna(name) else None
+            ),
+            type="Instance",
         )
+        term.append_parent(ADMIN_1)
         term.annotate_literal(CODE_TYPEDEF, code)
         code_to_admin1[code] = term
 
@@ -133,9 +176,13 @@ def get_code_to_admin2(
     for identifier, name, code in admin2_df[["geonames_id", "name", "code"]].values:
         if pd.isna(identifier) or pd.isna(code):
             continue
-        term = Term.from_triple(
-            "geonames", identifier, name if pd.notna(name) else None, type="Instance"
+        term = Term(
+            reference=Reference(
+                prefix=PREFIX, identifier=identifier, name=name if pd.notna(name) else None
+            ),
+            type="Instance",
         )
+        term.append_parent(ADMIN_2)
         term.annotate_literal(CODE_TYPEDEF, code)
         code_to_admin2[code] = term
         admin1_code = code.rsplit(".", 1)[0]
@@ -182,6 +229,19 @@ def _get_cities_df(force: bool = False) -> pd.DataFrame:
     return cities_df
 
 
+def _get_synonyms_df(force: bool = False) -> pd.DataFrame:
+    """Get the synonyms dataframe."""
+    path = ensure_path(PREFIX, url=SYNONYMS_URL, force=force)
+    synonyms_df = read_zipfile_csv(
+        path=path,
+        inner_path="alternateNamesV2.txt",
+        header=None,
+        names=SYNONYMS_DF_COLUMNS,
+        dtype=str,
+    )
+    return synonyms_df
+
+
 def get_cities(
     code_to_country,
     code_to_admin1,
@@ -189,7 +249,8 @@ def get_cities(
     *,
     minimum_population: int = 100_000,
     force: bool = False,
-) -> Mapping[str, Term]:
+    include_synonyms: bool = False,
+) -> dict[str, Term]:
     """Get a mapping from city code to term."""
     cities_df = _get_cities_df(force=force)
     cities_df = cities_df[cities_df.population.astype(int) > minimum_population]
@@ -201,11 +262,18 @@ def get_cities(
 
     cols = ["geonames_id", "name", "synonyms", "country_code", "admin1", "admin2", "feature_code"]
     for identifier, name, synonyms, country, admin1, admin2, feature_code in cities_df[cols].values:
-        terms[identifier] = term = Term.from_triple(
-            "geonames", identifier, name if pd.notna(name) else None, type="Instance"
+        terms[identifier] = term = Term(
+            reference=Reference(
+                prefix=PREFIX, identifier=identifier, name=name if pd.notna(name) else None
+            ),
+            type="Instance",
         )
-        term.append_parent(Reference(prefix="geonames.feature", identifier=feature_code))
-        if synonyms and not isinstance(synonyms, float):
+        # All cities are under the P branch, but the prefix is omitted for brevity in the TSV
+        term.append_parent(Reference(prefix=PREFIX_FEATURE, identifier=f"P.{feature_code}"))
+        term.append_parent(CITY)
+
+        if include_synonyms and synonyms and not isinstance(synonyms, float):
+            # TODO include language codes
             for synonym in synonyms:
                 if pd.notna(synonym):
                     term.append_synonym(synonym)
@@ -255,4 +323,4 @@ def get_city_to_country() -> dict[str, str]:
 
 
 if __name__ == "__main__":
-    GeonamesGetter().write_default(write_obo=True, force=True)
+    GeonamesGetter.cli()

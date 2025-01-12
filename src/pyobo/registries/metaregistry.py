@@ -145,3 +145,23 @@ def iter_cached_obo() -> Iterable[tuple[str, str]]:
             if x.endswith(".obo"):
                 p = os.path.join(d, x)
                 yield prefix, p
+
+
+def _sort_dict(d):
+    if isinstance(d, str):
+        return d
+    if isinstance(d, list):
+        return sorted(d, key=lambda t: (type(t).__name__, t["from"] if isinstance(t, dict) else t))
+    if isinstance(d, dict):
+        return {k: _sort_dict(v) for k, v in d.items()}
+    raise TypeError
+
+
+def _lint():
+    CURATED_REGISTRY_PATH.write_text(
+        json.dumps(_sort_dict(CURATED_REGISTRY), sort_keys=True, indent=2)
+    )
+
+
+if __name__ == "__main__":
+    _lint()

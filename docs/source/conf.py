@@ -256,3 +256,6 @@ autodoc_member_order = "bysource"
 
 todo_include_todos = True
 todo_emit_warnings = True
+
+# Output SVG inheritance diagrams
+graphviz_output_format = "svg"

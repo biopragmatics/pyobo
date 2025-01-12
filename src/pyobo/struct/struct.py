@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import gzip
 import json
 import logging
@@ -11,48 +12,53 @@ import warnings
 from collections import ChainMap, defaultdict
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime
-from itertools import chain
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, ClassVar, Literal, NamedTuple, TextIO, TypeAlias
+from typing import Annotated, Any, ClassVar, Literal, TextIO
 
 import bioregistry
 import click
+import curies
 import networkx as nx
 import pandas as pd
 from curies import ReferenceTuple
+from curies import vocabulary as _cv
 from more_click import force_option, verbose_option
 from tqdm.auto import tqdm
 from typing_extensions import Self
 
+from . import vocabulary as v
 from .reference import (
+    OBOLiteral,
     Reference,
     Referenced,
+    _reference_list_tag,
     comma_separate_references,
     default_reference,
+    get_preferred_curie,
     reference_escape,
 )
-from .typedef import (
-    TypeDef,
-    comment,
-    default_typedefs,
-    exact_match,
-    from_species,
-    has_dbxref,
-    has_ontology_root_term,
-    has_part,
-    is_a,
-    match_typedefs,
-    orthologous,
-    part_of,
-    see_also,
-    term_replaced_by,
+from .struct_utils import (
+    Annotation,
+    AnnotationsDict,
+    IntersectionOfHint,
+    PropertiesHint,
+    ReferenceHint,
+    RelationsHint,
+    Stanza,
+    UnionOfHint,
+    _chain_tag,
+    _ensure_ref,
+    _get_prefixes_from_annotations,
+    _tag_property_targets,
 )
-from .utils import obo_escape_slim
+from .utils import _boolean_tag, obo_escape_slim
 from ..api.utils import get_version
 from ..constants import (
+    BUILD_SUBDIRECTORY_NAME,
+    CACHE_SUBDIRECTORY_NAME,
     DATE_FORMAT,
+    DEFAULT_PREFIX_MAP,
     NCBITAXON_PREFIX,
     RELATION_ID,
     RELATION_PREFIX,
@@ -61,13 +67,11 @@ from ..constants import (
 )
 from ..utils.io import multidict, write_iterable_tsv
 from ..utils.path import prefix_directory_join
+from ..version import get_version as get_pyobo_version
 
 __all__ = [
     "Obo",
-    "ReferenceHint",
     "Synonym",
-    "SynonymSpecificities",
-    "SynonymSpecificity",
     "SynonymTypeDef",
     "Term",
     "abbreviation",
@@ -78,8 +82,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-SynonymSpecificity = Literal["EXACT", "NARROW", "BROAD", "RELATED"]
-SynonymSpecificities: Sequence[SynonymSpecificity] = ("EXACT", "NARROW", "BROAD", "RELATED")
+DEFAULT_SPECIFICITY: _cv.SynonymScope = "EXACT"
 
 #: Columns in the SSSOM dataframe
 SSSOM_DF_COLUMNS = [
@@ -88,8 +91,11 @@ SSSOM_DF_COLUMNS = [
     "object_id",
     "predicate_id",
     "mapping_justification",
+    "confidence",
+    "contributor",
 ]
 UNSPECIFIED_MATCHING_CURIE = "sempav:UnspecifiedMatching"
+FORMAT_VERSION = "1.4"
 
 
 @dataclass
@@ -100,40 +106,68 @@ class Synonym:
     name: str
 
     #: The specificity of the synonym
-    specificity: SynonymSpecificity = "EXACT"
+    specificity: _cv.SynonymScope | None = None
 
     #: The type of synonym. Must be defined in OBO document!
-    type: Reference = field(
-        default_factory=lambda: DEFAULT_SYNONYM_TYPE.reference  # type:ignore
-    )
+    type: Reference | None = None
 
     #: References to articles where the synonym appears
     provenance: list[Reference] = field(default_factory=list)
 
     #: Extra annotations
-    annotations: list[tuple[Reference, Reference]] = field(default_factory=list)
+    annotations: list[Annotation] = field(default_factory=list)
 
     def __lt__(self, other: Synonym) -> bool:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
 
-    def _sort_key(self) -> tuple[str, str, Reference]:
-        return self.name, self.specificity, self.type
+    def _get_prefixes(self) -> set[str]:
+        """Get all prefixes used by the typedef."""
+        rv: set[str] = set()
+        if self.specificity is not None:
+            rv.add("oboInOwl")
+        if self.type is not None:
+            rv.add(self.type.prefix)
+        rv.update(p.prefix for p in self.provenance)
+        rv.update(_get_prefixes_from_annotations(self.annotations))
+        return rv
+
+    def _sort_key(self) -> tuple[str, _cv.SynonymScope, str]:
+        return (
+            self.name,
+            self.specificity or DEFAULT_SPECIFICITY,
+            self.type.curie if self.type else "",
+        )
+
+    @property
+    def predicate(self) -> curies.NamedReference:
+        """Get the specificity reference."""
+        return _cv.synonym_scopes[self.specificity or DEFAULT_SPECIFICITY]
 
     def to_obo(
-        self, ontology_prefix: str, synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef]
+        self,
+        ontology_prefix: str,
+        synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] | None = None,
     ) -> str:
         """Write this synonym as an OBO line to appear in a [Term] stanza."""
         return f"synonym: {self._fp(ontology_prefix, synonym_typedefs)}"
 
     def _fp(
-        self, ontology_prefix: str, synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef]
+        self,
+        ontology_prefix: str,
+        synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] | None = None,
     ) -> str:
-        _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
-        # TODO inherit specificity from typedef?
-        # TODO validation of specificity against typedef
-        x = f'"{self._escape(self.name)}" {self.specificity}'
-        if self.type and self.type.pair != DEFAULT_SYNONYM_TYPE.pair:
+        if synonym_typedefs is None:
+            synonym_typedefs = {}
+        std = _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
+        if std is not None and std.specificity is not None:
+            specificity = std.specificity
+        elif self.specificity:
+            specificity = self.specificity
+        else:
+            specificity = DEFAULT_SPECIFICITY
+        x = f'"{self._escape(self.name)}" {specificity}'
+        if self.type is not None:
             x = f"{x} {reference_escape(self.type, ontology_prefix=ontology_prefix)}"
         return f"{x} [{comma_separate_references(self.provenance)}]"
 
@@ -147,7 +181,7 @@ class SynonymTypeDef(Referenced):
     """A type definition for synonyms in OBO."""
 
     reference: Reference
-    specificity: SynonymSpecificity | None = None
+    specificity: _cv.SynonymScope | None = None
 
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass
@@ -160,6 +194,13 @@ class SynonymTypeDef(Referenced):
         rv = f'{rv} "{name}"'
         if self.specificity:
             rv = f"{rv} {self.specificity}"
+        return rv
+
+    def _get_prefixes(self) -> set[str]:
+        """Get all prefixes used by the typedef."""
+        rv: set[str] = {self.reference.prefix}
+        if self.specificity is not None:
+            rv.add("oboInOwl")
         return rv
 
 
@@ -179,48 +220,9 @@ default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
     uk_spelling.pair: uk_spelling,
 }
 
-ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
-
-
-def _ensure_ref(
-    reference: ReferenceHint,
-    *,
-    ontology_prefix: str | None = None,
-) -> Reference:
-    if isinstance(reference, Referenced):
-        return reference.reference
-    if isinstance(reference, tuple):
-        return Reference(prefix=reference[0], identifier=reference[1])
-    if isinstance(reference, Reference):
-        return reference
-    if ":" not in reference:
-        if not ontology_prefix:
-            raise ValueError(f"can't parse reference: {reference}")
-        return default_reference(ontology_prefix, reference)
-    _rv = Reference.from_curie_or_uri(reference, strict=True, ontology_prefix=ontology_prefix)
-    if _rv is None:
-        raise ValueError(f"[{ontology_prefix}] unable to parse {reference}")
-    return _rv
-
-
-class ObjectProperty(NamedTuple):
-    """A tuple representing a propert with an object."""
-
-    predicate: Reference
-    object: Reference
-    datatype: None
-
-
-class LiteralProperty(NamedTuple):
-    """A tuple representing a property with a literal value."""
-
-    predicate: Reference
-    value: str
-    datatype: Reference
-
 
 @dataclass
-class Term(Referenced):
+class Term(Referenced, Stanza):
     """A term in OBO."""
 
     #: The primary reference for the entity
@@ -229,36 +231,27 @@ class Term(Referenced):
     #: A description of the entity
     definition: str | None = None
 
-    #: References to articles in which the term appears
-    provenance: list[Reference] = field(default_factory=list)
-
     #: Object properties
-    relationships: dict[Reference, list[Reference]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+    relationships: RelationsHint = field(default_factory=lambda: defaultdict(list))
 
-    #: Annotation properties pointing to objects (i.e., references)
-    annotations_object: dict[Reference, list[Reference]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+    _axioms: AnnotationsDict = field(default_factory=lambda: defaultdict(list))
 
-    #: Annotation properties pointing to literals
-    annotations_literal: dict[Reference, list[tuple[str, Reference]]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+    properties: PropertiesHint = field(default_factory=lambda: defaultdict(list))
 
     #: Relationships with the default "is_a"
     parents: list[Reference] = field(default_factory=list)
 
+    intersection_of: IntersectionOfHint = field(default_factory=list)
+    union_of: UnionOfHint = field(default_factory=list)
+    equivalent_to: list[Reference] = field(default_factory=list)
+    disjoint_from: list[Reference] = field(default_factory=list)
+
     #: Synonyms of this term
     synonyms: list[Synonym] = field(default_factory=list)
 
-    #: Equivalent references
+    #: Database cross-references, see :func:`get_mappings` for
+    #: access to all mappings in an SSSOM-like interface
     xrefs: list[Reference] = field(default_factory=list)
-    xref_types: list[Reference] = field(default_factory=list)
-
-    #: Alternate Identifiers
-    alt_ids: list[Reference] = field(default_factory=list)
 
     #: The sub-namespace within the ontology
     namespace: str | None = None
@@ -267,6 +260,10 @@ class Term(Referenced):
     is_obsolete: bool | None = None
 
     type: Literal["Term", "Instance"] = "Term"
+
+    builtin: bool | None = None
+    is_anonymous: bool | None = None
+    subsets: list[Reference] = field(default_factory=list)
 
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass
@@ -302,69 +299,9 @@ class Term(Referenced):
             definition=get_definition(prefix, identifier),
         )
 
-    def append_provenance(self, reference: ReferenceHint) -> Self:
-        """Add a provenance reference."""
-        self.provenance.append(_ensure_ref(reference))
-        return self
-
-    def append_synonym(
-        self,
-        synonym: str | Synonym,
-        *,
-        type: Reference | Referenced | None = None,
-        specificity: SynonymSpecificity | None = None,
-        provenance: list[Reference] | None = None,
-    ) -> None:
-        """Add a synonym."""
-        if type is None:
-            type = DEFAULT_SYNONYM_TYPE.reference
-        elif isinstance(type, Referenced):
-            type = type.reference
-        if isinstance(synonym, str):
-            synonym = Synonym(
-                synonym,
-                type=type,
-                specificity=specificity or "EXACT",
-                provenance=provenance or [],
-            )
-        self.synonyms.append(synonym)
-
-    def append_alt(self, alt: str | Reference) -> None:
-        """Add an alternative identifier."""
-        if isinstance(alt, str):
-            warnings.warn(
-                "use fully qualified reference when appending alts",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            alt = Reference(prefix=self.prefix, identifier=alt)
-        self.alt_ids.append(alt)
-
-    def append_see_also(self, reference: ReferenceHint) -> Self:
+    def append_see_also_uri(self, uri: str) -> Self:
         """Add a see also property."""
-        _reference = _ensure_ref(reference)
-        return self.annotate_object(see_also, _reference)
-
-    def append_see_also_url(self, url: str) -> Self:
-        """Add a see also property."""
-        return self.annotate_literal(
-            see_also, url, datatype=Reference(prefix="xsd", identifier="anyURI")
-        )
-
-    def append_comment(self, value: str) -> Self:
-        """Add a comment property."""
-        return self.annotate_literal(comment, value)
-
-    def append_replaced_by(self, reference: Reference) -> Self:
-        """Add a replaced by property."""
-        return self.annotate_object(term_replaced_by, reference)
-
-    def append_parent(self, reference: ReferenceHint) -> Self:
-        """Add a parent to this entity."""
-        reference = _ensure_ref(reference)
-        if reference not in self.parents:
-            self.parents.append(reference)
-        return self
+        return self.annotate_uri(v.see_also, uri)
 
     def extend_parents(self, references: Collection[Reference]) -> None:
         """Add a collection of parents to this entity."""
@@ -373,75 +310,42 @@ class Term(Referenced):
             raise ValueError("can not append a collection of parents containing a null parent")
         self.parents.extend(references)
 
-    def get_properties(self, prop: ReferenceHint) -> list[str]:
+    def get_property_literals(self, prop: ReferenceHint) -> list[str]:
         """Get properties from the given key."""
-        prop = _ensure_ref(prop)
-        if prop in self.annotations_object:
-            return [value.preferred_curie for value in self.annotations_object[prop]]
-        if prop in self.annotations_literal:
-            return [value for value, _datatype in self.annotations_literal[prop]]
-        return []
-
-    def get_property_objects(self, prop: ReferenceHint) -> list[Reference]:
-        """Get properties from the given key."""
-        prop = _ensure_ref(prop)
-        return sorted(self.annotations_object.get(prop, []))
+        rv = []
+        for t in self.properties.get(_ensure_ref(prop), []):
+            match t:
+                case Reference():
+                    rv.append(get_preferred_curie(t))
+                case OBOLiteral(value, _):
+                    rv.append(value)
+        return rv
 
     def get_property(self, prop: ReferenceHint) -> str | None:
         """Get a single property of the given key."""
-        r = self.get_properties(prop)
+        r = self.get_property_literals(prop)
         if not r:
             return None
         if len(r) != 1:
             raise ValueError
         return r[0]
 
-    def get_relationship(self, typedef: ReferenceHint) -> Reference | None:
-        """Get a single relationship of the given type."""
-        r = self.get_relationships(typedef)
-        if not r:
-            return None
-        if len(r) != 1:
-            raise ValueError
-        return r[0]
-
-    def get_relationships(self, typedef: ReferenceHint) -> list[Reference]:
-        """Get relationships from the given type."""
-        return self.relationships.get(_ensure_ref(typedef), [])
-
-    def get_mappings(self, *, include_xrefs: bool = True) -> list[tuple[Reference, Reference]]:
-        """Get mappings with preferred curies."""
-        rows = []
-        for predicate in match_typedefs:
-            for xref_reference in chain(
-                self.get_property_objects(predicate), self.get_relationships(predicate)
-            ):
-                rows.append((predicate.reference, xref_reference))
-        if include_xrefs:
-            for xref_reference in self.xrefs:
-                rows.append((has_dbxref.reference, xref_reference))
-        return sorted(set(rows))
-
-    def append_exact_match(self, reference: ReferenceHint) -> Self:
+    def append_exact_match(
+        self,
+        reference: ReferenceHint,
+        *,
+        mapping_justification: Reference | None = None,
+        confidence: float | None = None,
+        contributor: Reference | None = None,
+    ) -> Self:
         """Append an exact match, also adding an xref."""
         reference = _ensure_ref(reference)
-        self.annotate_object(exact_match, reference)
-        return self
-
-    def append_xref(self, reference: ReferenceHint) -> None:
-        """Append an xref."""
-        self.xrefs.append(_ensure_ref(reference))
-
-    def append_relationship(self, typedef: ReferenceHint, reference: ReferenceHint) -> Self:
-        """Append a relationship."""
-        self.relationships[_ensure_ref(typedef)].append(_ensure_ref(reference))
-        return self
-
-    def annotate_object(self, typedef: ReferenceHint, value: ReferenceHint) -> Self:
-        """Append an object annotation."""
-        typedef = _ensure_ref(typedef)
-        value = _ensure_ref(value)
-        self.annotations_object[typedef].append(value)
+        axioms = self._prepare_mapping_annotations(
+            mapping_justification=mapping_justification,
+            confidence=confidence,
+            contributor=contributor,
+        )
+        self.annotate_object(v.exact_match, reference, annotations=axioms)
         return self
 
     def set_species(self, identifier: str, name: str | None = None) -> Self:
@@ -451,7 +355,7 @@ class Term(Referenced):
 
             name = get_ncbitaxon_name(identifier)
         return self.append_relationship(
-            from_species, Reference(prefix=NCBITAXON_PREFIX, identifier=identifier, name=name)
+            v.from_species, Reference(prefix=NCBITAXON_PREFIX, identifier=identifier, name=name)
         )
 
     def get_species(self, prefix: str = NCBITAXON_PREFIX) -> Reference | None:
@@ -459,7 +363,7 @@ class Term(Referenced):
 
         :param prefix: The prefix to use in case the term has several species annotations.
         """
-        for species in self.get_relationships(from_species):
+        for species in self.get_relationships(v.from_species):
             if species.prefix == prefix:
                 return species
         return None
@@ -472,49 +376,6 @@ class Term(Referenced):
         typedef = _ensure_ref(typedef)
         self.relationships[typedef].extend(references)
 
-    def append_property(
-        self, prop: str | Reference | Referenced, value: str | Reference | Referenced
-    ) -> Self:
-        """Append an arbitrary property."""
-        raise NotImplementedError
-
-    def annotate_literal(
-        self, prop: ReferenceHint, value: str, datatype: Reference | None = None
-    ) -> Self:
-        """Append an object annotation."""
-        prop = _ensure_ref(prop)
-        self.annotations_literal[prop].append(
-            (value, datatype or Reference(prefix="xsd", identifier="string"))
-        )
-        return self
-
-    def annotate_boolean(self, prop: ReferenceHint, value: bool) -> Self:
-        """Append an object annotation."""
-        return self.annotate_literal(
-            prop, str(value).lower(), Reference(prefix="xsd", identifier="boolean")
-        )
-
-    def _definition_fp(self) -> str:
-        definition = obo_escape_slim(self.definition) if self.definition else ""
-        return f'"{definition}" [{comma_separate_references(self.provenance)}]'
-
-    def iterate_relations(self) -> Iterable[tuple[Reference, Reference]]:
-        """Iterate over pairs of typedefs and targets."""
-        for typedef, targets in sorted(self.relationships.items()):
-            for target in sorted(targets):
-                yield typedef, target
-
-    def iterate_properties(
-        self,
-    ) -> Iterable[ObjectProperty | LiteralProperty]:
-        """Iterate over pairs of property and values."""
-        for prop, values in sorted(self.annotations_object.items()):
-            for value in sorted(values):
-                yield ObjectProperty(prop, value, None)
-        for prop, value_datatype_pairs in sorted(self.annotations_literal.items()):
-            for svalue, datatype in sorted(value_datatype_pairs):
-                yield LiteralProperty(prop, svalue, datatype)
-
     def iterate_obo_lines(
         self,
         *,
@@ -526,118 +387,86 @@ class Term(Referenced):
     ) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file."""
         yield f"\n[{self.type}]"
-        yield f"id: {self.preferred_curie}"
-        if self.is_obsolete:
-            yield "is_obsolete: true"
+        # 1
+        yield f"id: {self._reference(self.reference, ontology_prefix)}"
+        # 2
+        yield from _boolean_tag("is_anonymous", self.is_anonymous)
+        # 3
         if self.name:
             yield f"name: {obo_escape_slim(self.name)}"
+        # 4
         if self.namespace and self.namespace != "?":
             namespace_normalized = (
                 self.namespace.replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "")
             )
             yield f"namespace: {namespace_normalized}"
-
-        xrefs = list(self.xrefs)
-
+        # 5
+        for alt in sorted(self.alt_ids):
+            yield f"alt_id: {self._reference(alt, ontology_prefix, add_name_comment=True)}"
+        # 6
         if self.definition or self.provenance:
             yield f"def: {self._definition_fp()}"
-
-        for alt in sorted(self.alt_ids):
-            yield f"alt_id: {alt}"  # __str__ bakes in the ! name
-
-        for xref in sorted(xrefs):
-            yield f"xref: {xref}"  # __str__ bakes in the ! name
-
-        parent_tag = "is_a" if self.type == "Term" else "instance_of"
-        for parent in sorted(self.parents):
-            yield f"{parent_tag}: {parent}"  # __str__ bakes in the ! name
-
-        if emit_object_properties:
-            yield from self._emit_relations(ontology_prefix, typedefs)
-
-        if emit_annotation_properties:
-            for line in self._emit_properties(ontology_prefix, typedefs):
-                yield f"property_value: {line}"
-
-        if synonym_typedefs is None:
-            synonym_typedefs = {}
+        # 7
+        for x in self.get_property_values(v.comment):
+            if isinstance(x, OBOLiteral):
+                yield f'comment: "{x.value}"'
+        # 8
+        yield from _reference_list_tag("subset", self.subsets, ontology_prefix)
+        # 9
         for synonym in sorted(self.synonyms):
             yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
-
-    def _emit_relations(
-        self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
-    ) -> Iterable[str]:
-        for typedef, reference in self.iterate_relations():
-            _typedef_warn(prefix=ontology_prefix, predicate=typedef, typedefs=typedefs)
-            predicate_reference = self._reference(typedef, ontology_prefix)
-            s = f"relationship: {predicate_reference} {reference.preferred_curie}"
-            if typedef.name or reference.name:
-                s += " !"
-                if typedef.name:
-                    s += f" {typedef.name}"
-                if reference.name:
-                    s += f" {reference.name}"
-            yield s
-
-    def _emit_properties(
-        self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
-    ) -> Iterable[str]:
-        yield from self._emit_object_properties(ontology_prefix, typedefs)
-        yield from self._emit_literal_properties(ontology_prefix, typedefs)
-
-    def _emit_object_properties(
-        self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
-    ) -> Iterable[str]:
-        for predicate, values in sorted(self.annotations_object.items()):
-            _typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)
-            predicate_curie = self._reference(predicate, ontology_prefix)
-            for value in sorted(values):
-                yv = f"{predicate_curie} {value.preferred_curie}"
-                if predicate.name and value.name:
-                    yv += f" ! {predicate.name} {value.name}"
-                yield yv
-
-    def _emit_literal_properties(
-        self, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
-    ) -> Iterable[str]:
-        for predicate, value_datatype_pairs in sorted(self.annotations_literal.items()):
-            _typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)
-            predicate_curie = self._reference(predicate, ontology_prefix)
-            for value, datatype in sorted(value_datatype_pairs):
-                # TODO clean/escape value?
-                yield f'{predicate_curie} "{value}" {datatype.preferred_curie}'
-
-    @staticmethod
-    def _reference(predicate: Reference, ontology_prefix: str) -> str:
-        return reference_escape(predicate, ontology_prefix=ontology_prefix)
-
-    @staticmethod
-    def _escape(s) -> str:
-        return s.replace("\n", "\\n").replace('"', '\\"')
-
-
-#: A set of warnings, used to make sure we don't show the same one over and over
-_TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
-
-
-def _typedef_warn(
-    prefix: str, predicate: Reference, typedefs: Mapping[ReferenceTuple, TypeDef]
-) -> None:
-    if predicate.pair in default_typedefs or predicate.pair in typedefs:
-        return None
-    key = prefix, predicate
-    if key not in _TYPEDEF_WARNINGS:
-        _TYPEDEF_WARNINGS.add(key)
-        if predicate.prefix == "obo":
-            # Throw our hands up in the air. By using `obo` as the prefix,
-            # we already threw using "real" definitions out the window
-            logger.warning(
-                f"[{prefix}] predicate with OBO prefix not defined: {predicate.curie}."
-                f"\n\tThis might be because you used an unqualified prefix in an OBO file, "
-                f"which automatically gets an OBO prefix."
+        # 10
+        yield from self._iterate_xref_obo(ontology_prefix=ontology_prefix)
+        # 11
+        yield from _boolean_tag("builtin", self.builtin)
+        # 12
+        if emit_annotation_properties:
+            yield from self._iterate_obo_properties(
+                ontology_prefix=ontology_prefix,
+                skip_predicate_objects=v.SKIP_PROPERTY_PREDICATES_OBJECTS,
+                skip_predicate_literals=v.SKIP_PROPERTY_PREDICATES_LITERAL,
+                typedefs=typedefs,
             )
-        else:
-            logger.warning(f"[{prefix}] typedef not defined: {predicate.curie}")
+        # 13
+        parent_tag = "is_a" if self.type == "Term" else "instance_of"
+        yield from _reference_list_tag(parent_tag, self.parents, ontology_prefix)
+        # 14
+        yield from self._iterate_intersection_of_obo(ontology_prefix=ontology_prefix)
+        # 15
+        yield from _reference_list_tag("union_of", self.union_of, ontology_prefix=ontology_prefix)
+        # 16
+        yield from _reference_list_tag(
+            "equivalent_to", self.equivalent_to, ontology_prefix=ontology_prefix
+        )
+        # 17
+        yield from _reference_list_tag(
+            "disjoint_from", self.disjoint_from, ontology_prefix=ontology_prefix
+        )
+        # 18
+        if emit_object_properties:
+            yield from self._iterate_obo_relations(
+                ontology_prefix=ontology_prefix, typedefs=typedefs
+            )
+        # 19 TODO created_by
+        # 20 TODO creation_date
+        # 21
+        yield from _boolean_tag("is_obsolete", self.is_obsolete)
+        # 22
+        yield from _tag_property_targets(
+            "replaced_by", self, v.term_replaced_by, ontology_prefix=ontology_prefix
+        )
+        # 23
+        yield from _tag_property_targets(
+            "consider", self, v.see_also, ontology_prefix=ontology_prefix
+        )
+
+    @staticmethod
+    def _reference(
+        predicate: Reference, ontology_prefix: str, add_name_comment: bool = False
+    ) -> str:
+        return reference_escape(
+            predicate, ontology_prefix=ontology_prefix, add_name_comment=add_name_comment
+        )
 
 
 #: A set of warnings, used to make sure we don't show the same one over and over
@@ -645,26 +474,31 @@ _SYNONYM_TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
 
 
 def _synonym_typedef_warn(
-    prefix: str, predicate: Reference, synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef]
-) -> bool:
-    if predicate.pair == DEFAULT_SYNONYM_TYPE.pair:
-        return False
-    if predicate.pair in default_typedefs or predicate.pair in synonym_typedefs:
-        return False
+    prefix: str,
+    predicate: Reference | None,
+    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
+) -> SynonymTypeDef | None:
+    if predicate is None or predicate.pair == DEFAULT_SYNONYM_TYPE.pair:
+        return None
+    if predicate.pair in default_synonym_typedefs:
+        return default_synonym_typedefs[predicate.pair]
+    if predicate.pair in synonym_typedefs:
+        return synonym_typedefs[predicate.pair]
     key = prefix, predicate
     if key not in _SYNONYM_TYPEDEF_WARNINGS:
         _SYNONYM_TYPEDEF_WARNINGS.add(key)
+        predicate_preferred_curie = get_preferred_curie(predicate)
         if predicate.prefix == "obo":
             # Throw our hands up in the air. By using `obo` as the prefix,
             # we already threw using "real" definitions out the window
             logger.warning(
-                f"[{prefix}] synonym typedef with OBO prefix not defined: {predicate.preferred_curie}."
+                f"[{prefix}] synonym typedef with OBO prefix not defined: {predicate_preferred_curie}."
                 f"\n\tThis might be because you used an unqualified prefix in an OBO file, "
                 f"which automatically gets an OBO prefix."
             )
         else:
-            logger.warning(f"[{prefix}] synonym typedef not defined: {predicate.preferred_curie}")
-    return True
+            logger.warning(f"[{prefix}] synonym typedef not defined: {predicate_preferred_curie}")
+    return None
 
 
 class BioregistryError(ValueError):
@@ -700,9 +534,6 @@ class Obo:
     #: The name of the ontology. If not given, tries looking up with the Bioregistry.
     name: ClassVar[str | None] = None
 
-    #: The OBO format
-    format_version: ClassVar[str] = "1.2"
-
     #: Type definitions
     typedefs: ClassVar[list[TypeDef] | None] = None
 
@@ -730,7 +561,7 @@ class Obo:
     root_terms: ClassVar[list[Reference] | None] = None
 
     #: The date the ontology was generated
-    date: datetime | None = field(default_factory=datetime.today)
+    date: datetime.datetime | None = field(default_factory=datetime.datetime.today)
 
     #: The ontology version
     data_version: str | None = None
@@ -744,6 +575,12 @@ class Obo:
     _items: list[Term] | None = field(init=False, default=None, repr=False)
 
     term_sort_key: ClassVar[Callable[[Obo, Term], int] | None] = None
+
+    subsetdefs: ClassVar[list[tuple[Reference, str]] | None] = None
+
+    property_values: ClassVar[list[Annotation] | None] = None
+
+    imports: ClassVar[list[str] | None] = None
 
     def __post_init__(self):
         """Run post-init checks."""
@@ -768,7 +605,50 @@ class Obo:
             elif "/" in self.data_version:
                 raise ValueError(f"{self.ontology} has a slash in version: {self.data_version}")
         if self.auto_generated_by is None:
-            self.auto_generated_by = f"bio2obo:{self.ontology}"  # type:ignore
+            self.auto_generated_by = f"PyOBO v{get_pyobo_version(with_git_hash=True)} on {datetime.datetime.now().isoformat()}"  # type:ignore
+
+    def _get_clean_idspaces(self) -> dict[str, str]:
+        """Get normalized idspace dictionary."""
+        rv = dict(
+            ChainMap(
+                # Add reasonable defaults, most of which are
+                # mandated by the OWL spec anyway (except skos?)
+                DEFAULT_PREFIX_MAP,
+                dict(self.idspaces or {}),
+                # automatically detect all prefixes in reference in the ontology,
+                # then look up Bioregistry-approved URI prefixes
+                self._infer_prefix_map(),
+            )
+        )
+        return rv
+
+    def _infer_prefix_map(self) -> dict[str, str]:
+        """Get a prefix map including all prefixes used in the ontology."""
+        rv = {}
+        for prefix in self._get_prefixes():
+            uri_prefix = bioregistry.get_uri_prefix(prefix)
+            if uri_prefix is None:
+                # This allows us an escape hatch, since some
+                # prefixes don't have an associated URI prefix
+                uri_prefix = f"https://bioregistry.io/{prefix}:"
+            pp = bioregistry.get_preferred_prefix(prefix) or prefix
+            rv[pp] = uri_prefix
+        return rv
+
+    def _get_prefixes(self) -> set[str]:
+        """Get all prefixes used by the ontology."""
+        prefixes: set[str] = set(DEFAULT_PREFIX_MAP)
+        for term in self:
+            prefixes.update(term._get_prefixes())
+        for typedef in self.typedefs or []:
+            prefixes.update(typedef._get_prefixes())
+        for synonym_typedef in self.synonym_typedefs or []:
+            prefixes.update(synonym_typedef._get_prefixes())
+        prefixes.update(subset.prefix for subset, _ in self.subsetdefs or [])
+        # _iterate_property_pairs covers metadata, root terms,
+        # and properties in self.property_values
+        prefixes.update(_get_prefixes_from_annotations(self._iterate_property_pairs() or []))
+        return prefixes
 
     def _get_version(self) -> str | None:
         if self.bioversions_key:
@@ -802,50 +682,56 @@ class Obo:
         path.write_text(graph.model_dump_json(indent=2, exclude_none=True, exclude_unset=True))
 
     @classmethod
-    def cli(cls) -> None:
+    def cli(cls, *args, default_rewrite: bool = False) -> Any:
         """Run the CLI for this class."""
-        cli = cls.get_cls_cli()
-        cli()
+        cli = cls.get_cls_cli(default_rewrite=default_rewrite)
+        return cli(*args)
 
     @classmethod
-    def get_cls_cli(cls) -> click.Command:
+    def get_cls_cli(cls, *, default_rewrite: bool = False) -> click.Command:
         """Get the CLI for this class."""
 
         @click.command()
         @verbose_option
         @force_option
-        @click.option("--rewrite", "-r", is_flag=True)
+        @click.option(
+            "--rewrite/--no-rewrite",
+            "-r",
+            default=False,
+            is_flag=True,
+            help="Re-process the data, but don't download it again.",
+        )
         @click.option("--owl", is_flag=True, help="Write OWL via ROBOT")
-        @click.option("--nodes", is_flag=True, help="Write nodes file")
+        @click.option("--ofn", is_flag=True, help="Write Functional OWL (OFN)")
+        @click.option("--ttl", is_flag=True, help="Write turtle RDF via OFN")
         @click.option(
             "--version", help="Specify data version to get. Use this if bioversions is acting up."
         )
-        def _main(force: bool, owl: bool, nodes: bool, version: str | None, rewrite: bool):
+        def _main(force: bool, owl: bool, ofn: bool, ttl: bool, version: str | None, rewrite: bool):
+            rewrite = True
             try:
                 inst = cls(force=force, data_version=version)
             except Exception as e:
                 click.secho(f"[{cls.ontology}] Got an exception during instantiation - {type(e)}")
                 sys.exit(1)
-
-            try:
-                inst.write_default(
-                    write_obograph=True,
-                    write_obo=True,
-                    write_owl=owl,
-                    write_nodes=nodes,
-                    force=force or rewrite,
-                    use_tqdm=True,
-                )
-            except Exception as e:
-                click.secho(f"[{cls.ontology}] Got an exception during OBO writing {type(e)}")
-                sys.exit(1)
+            inst.write_default(
+                write_obograph=True,
+                write_obo=True,
+                write_owl=owl,
+                write_ofn=ofn,
+                write_ttl=ttl,
+                write_nodes=True,
+                write_edges=True,
+                force=force or rewrite,
+                use_tqdm=True,
+            )
 
         return _main
 
     @property
     def date_formatted(self) -> str:
         """Get the date as a formatted string."""
-        return (self.date if self.date else datetime.now()).strftime(DATE_FORMAT)
+        return (self.date if self.date else datetime.datetime.now()).strftime(DATE_FORMAT)
 
     def _iter_terms(self, use_tqdm: bool = False, desc: str = "terms") -> Iterable[Term]:
         if use_tqdm:
@@ -863,50 +749,89 @@ class Obo:
         emit_object_properties: bool = True,
         emit_annotation_properties: bool = True,
     ) -> Iterable[str]:
-        """Iterate over the lines to write in an OBO file."""
-        yield f"format-version: {self.format_version}"
+        """Iterate over the lines to write in an OBO file.
 
-        if self.auto_generated_by is not None:
-            yield f"auto-generated-by: {self.auto_generated_by}"
+        Here's the order:
 
-        if self.data_version is not None:
+        1. format-version (technically, this is the only required field)
+        2. data-version
+        3. date
+        4. saved-by
+        5. auto-generated-by
+        6. import
+        7. subsetdef
+        8. synonymtypedef
+        9. default-namespace
+        10. namespace-id-rule
+        11. idspace
+        12. treat-xrefs-as-equivalent
+        13. treat-xrefs-as-genus-differentia
+        14. treat-xrefs-as-relationship
+        15. treat-xrefs-as-is_a
+        16. remark
+        17. ontology
+        """
+        # 1
+        yield f"format-version: {FORMAT_VERSION}"
+        # 2
+        if self.data_version:
             yield f"data-version: {self.data_version}"
-        else:
-            yield f"date: {self.date_formatted}"
-
-        for prefix, url in sorted((self.idspaces or {}).items()):
-            yv = f"idspace: {prefix} {url}"
-            if _yv_name := bioregistry.get_name(prefix):
-                yv += f' "{_yv_name}"'
-            yield yv
-
+        # 3
+        if self.date:
+            f"date: {self.date_formatted}"
+        # 4 TODO saved-by
+        # 5
+        if self.auto_generated_by:
+            yield f"auto-generated-by: {self.auto_generated_by}"
+        # 6
+        for imp in self.imports or []:
+            yield f"import: {imp}"
+        # 7
+        for subset, subset_remark in self.subsetdefs or []:
+            yield f'subsetdef: {reference_escape(subset, ontology_prefix=self.ontology)} "{subset_remark}"'
+        # 8
         for synonym_typedef in sorted(self.synonym_typedefs or []):
             if synonym_typedef.curie == DEFAULT_SYNONYM_TYPE.curie:
                 continue
             yield synonym_typedef.to_obo(ontology_prefix=self.ontology)
+        # 9 TODO default-namespace
+        # 10 TODO namespace-id-rule
+        # 11
+        for prefix, url in sorted(self._get_clean_idspaces().items()):
+            if prefix in DEFAULT_PREFIX_MAP:
+                # we don't need to write out the 4 default prefixes from
+                # table 2 in https://www.w3.org/TR/owl2-syntax/#IRIs since
+                # they're considered to always be builtin
+                continue
 
+            yv = f"idspace: {prefix} {url}"
+            if _yv_name := bioregistry.get_name(prefix):
+                yv += f' "{_yv_name}"'
+            yield yv
+        # 12-15 are handled only during reading, and
+        # PyOBO unmacros things before outputting
+        # 12 treat-xrefs-as-equivalent
+        # 13 treat-xrefs-as-genus-differentia
+        # 14 treat-xrefs-as-relationship
+        # 15 treat-xrefs-as-is_a
+        # 16 TODO remark
+        # 17
         yield f"ontology: {self.ontology}"
-
-        if self.name is None:
-            raise ValueError("ontology is missing name")
-        yield f'property_value: http://purl.org/dc/terms/title "{self.name}" xsd:string'
-        license_spdx_id = bioregistry.get_license(self.ontology)
-        if license_spdx_id:
-            # TODO add SPDX to idspaces and use as a CURIE?
-            yield f'property_value: http://purl.org/dc/terms/license "{license_spdx_id}" xsd:string'
-        description = bioregistry.get_description(self.ontology)
-        if description:
-            description = obo_escape_slim(description.strip())
-            yield f'property_value: http://purl.org/dc/terms/description "{description}" xsd:string'
-
-        for root_term in self.root_terms or []:
-            yield f"property_value: {has_ontology_root_term.preferred_curie} {root_term.preferred_curie}"
-
-        for typedef in sorted(self.typedefs or []):
-            yield from typedef.iterate_obo_lines(ontology_prefix=self.ontology)
+        # 18 (secret)
+        yield from self._iterate_properties()
 
         typedefs = self._index_typedefs()
         synonym_typedefs = self._index_synonym_typedefs()
+
+        # PROPERTIES
+        for typedef in sorted(self.typedefs or []):
+            yield from typedef.iterate_obo_lines(
+                ontology_prefix=self.ontology,
+                typedefs=typedefs,
+                synonym_typedefs=synonym_typedefs,
+            )
+
+        # TERMS AND INSTANCES
         for term in self:
             yield from term.iterate_obo_lines(
                 ontology_prefix=self.ontology,
@@ -916,7 +841,41 @@ class Obo:
                 emit_annotation_properties=emit_annotation_properties,
             )
 
+    def _iterate_properties(self) -> Iterable[str]:
+        for predicate, value in self._iterate_property_pairs():
+            match value:
+                case OBOLiteral():
+                    end = f'"{obo_escape_slim(value.value)}" {reference_escape(value.datatype, ontology_prefix=self.ontology)}'
+                case Reference():
+                    end = reference_escape(value, ontology_prefix=self.ontology)
+            yield f"property_value: {reference_escape(predicate, ontology_prefix=self.ontology)} {end}"
+
+    def _iterate_property_pairs(self) -> Iterable[Annotation]:
+        # Title
+        if self.name:
+            yield Annotation(v.has_title, OBOLiteral.string(self.name))
+
+        # License
+        # TODO add SPDX to idspaces and use as a CURIE?
+        if license_spdx_id := bioregistry.get_license(self.ontology):
+            yield Annotation(v.has_license, OBOLiteral.string(license_spdx_id))
+
+        # Description
+        if description := bioregistry.get_description(self.ontology):
+            description = obo_escape_slim(description.strip())
+            yield Annotation(v.has_description, OBOLiteral.string(description.strip()))
+
+        # Root terms
+        for root_term in self.root_terms or []:
+            yield Annotation(v.has_ontology_root_term, root_term)
+
+        # Extras
+        if self.property_values:
+            yield from self.property_values
+
     def _index_typedefs(self) -> Mapping[ReferenceTuple, TypeDef]:
+        from .typedef import default_typedefs
+
         return ChainMap(
             {t.pair: t for t in self.typedefs or []},
             default_typedefs,
@@ -960,11 +919,25 @@ class Obo:
         with gzip.open(path, "wt") as file:
             json.dump(nx.node_link_data(graph), file)
 
+    def write_ofn(self, path: str | Path) -> None:
+        """Write as Functional OWL (OFN)."""
+        from .functional.obo_to_functional import get_ofn_from_obo
+
+        ofn = get_ofn_from_obo(self)
+        ofn.write_funowl(path)
+
+    def write_rdf(self, path: str | Path) -> None:
+        """Write as Turtle RDF."""
+        from .functional.obo_to_functional import get_ofn_from_obo
+
+        ofn = get_ofn_from_obo(self)
+        ofn.write_rdf(path)
+
     def _path(self, *parts: str, name: str | None = None) -> Path:
         return prefix_directory_join(self.ontology, *parts, name=name, version=self.data_version)
 
     def _cache(self, *parts: str, name: str | None = None) -> Path:
-        return self._path("cache", *parts, name=name)
+        return self._path(CACHE_SUBDIRECTORY_NAME, *parts, name=name)
 
     @property
     def _names_path(self) -> Path:
@@ -1017,49 +990,38 @@ class Obo:
 
     @property
     def _obo_path(self) -> Path:
-        return self._cache(name=f"{self.ontology}.obo")
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.obo")
 
     @property
     def _obograph_path(self) -> Path:
-        return self._path(name=f"{self.ontology}.json")
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.json")
 
     @property
     def _owl_path(self) -> Path:
-        return self._path(name=f"{self.ontology}.owl")
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.owl")
 
     @property
     def _obonet_gz_path(self) -> Path:
-        return self._path(name=f"{self.ontology}.obonet.json.gz")
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.obonet.json.gz")
+
+    @property
+    def _ofn_path(self) -> Path:
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.ofn")
+
+    @property
+    def _ttl_path(self) -> Path:
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.ttl")
 
     @property
     def _nodes_path(self) -> Path:
-        return self._path(name=f"{self.ontology}.nodes.tsv")
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.nodes.tsv")
 
-    def write_default(
-        self,
-        use_tqdm: bool = False,
-        force: bool = False,
-        write_obo: bool = False,
-        write_obonet: bool = False,
-        write_obograph: bool = False,
-        write_owl: bool = False,
-        write_nodes: bool = False,
-    ) -> None:
-        """Write the OBO to the default path."""
-        metadata = self.get_metadata()
-        for path in (self._root_metadata_path, self._versioned_metadata_path):
-            logger.debug("[%s v%s] caching metadata to %s", self.ontology, self.data_version, path)
-            with path.open("w") as file:
-                json.dump(metadata, file, indent=2)
+    @property
+    def _edges_path(self) -> Path:
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.edges.tsv")
 
-        logger.debug(
-            "[%s v%s] caching typedefs to %s", self.ontology, self.data_version, self._typedefs_path
-        )
-        typedef_df: pd.DataFrame = self.get_typedef_df()
-        typedef_df.sort_values(list(typedef_df.columns), inplace=True)
-        typedef_df.to_csv(self._typedefs_path, sep="\t", index=False)
-
-        for label, path, header, fn in [
+    def _get_cache_config(self) -> list[tuple[str, Path, Sequence[str], Callable]]:
+        return [
             ("names", self._names_path, [f"{self.ontology}_id", "name"], self.iterate_id_name),
             (
                 "definitions",
@@ -1082,49 +1044,107 @@ class Obo:
             ("alts", self._alts_path, [f"{self.ontology}_id", "alt_id"], self.iterate_alt_rows),
             ("mappings", self._mappings_path, SSSOM_DF_COLUMNS, self.iterate_mapping_rows),
             ("relations", self._relations_path, self.relations_header, self.iter_relation_rows),
-            ("properties", self._properties_path, self.properties_header, self.iter_property_rows),
-        ]:
-            if path.exists() and not force:
-                continue
-            logger.debug("[%s v%s] caching %s to %s", self.ontology, self.data_version, label, path)
-            write_iterable_tsv(
-                path=path,
-                header=header,
-                it=fn(),  # type:ignore
-            )
+            ("edges", self._edges_path, self.edges_header, self.iterate_edge_rows),
+            (
+                "properties",
+                self._properties_path,
+                self.properties_header,
+                self.iter_property_rows,
+            ),
+        ]
 
-        typedefs = self._index_typedefs()
-        for relation in (is_a, has_part, part_of, from_species, orthologous):
-            if relation is not is_a and relation.pair not in typedefs:
-                continue
-            relations_path = self._cache("relations", name=f"{relation.curie}.tsv")
-            if relations_path.exists() and not force:
-                continue
+    def write_default(
+        self,
+        use_tqdm: bool = False,
+        force: bool = False,
+        write_obo: bool = False,
+        write_obonet: bool = False,
+        write_obograph: bool = False,
+        write_owl: bool = False,
+        write_ofn: bool = False,
+        write_ttl: bool = False,
+        write_nodes: bool = True,
+        write_edges: bool = True,
+        obograph_use_internal: bool = False,
+        write_cache: bool = True,
+    ) -> None:
+        """Write the OBO to the default path."""
+        metadata = self.get_metadata()
+        for path in (self._root_metadata_path, self._versioned_metadata_path):
+            logger.debug("[%s v%s] caching metadata to %s", self.ontology, self.data_version, path)
+            with path.open("w") as file:
+                json.dump(metadata, file, indent=2)
+
+        if write_cache:
             logger.debug(
-                "[%s v%s] caching relation %s ! %s",
+                "[%s v%s] caching typedefs to %s",
                 self.ontology,
                 self.data_version,
-                relation.curie,
-                relation.name,
+                self._typedefs_path,
             )
-            relation_df = self.get_filtered_relations_df(relation)
-            if not len(relation_df.index):
-                continue
-            relation_df.sort_values(list(relation_df.columns), inplace=True)
-            relation_df.to_csv(relations_path, sep="\t", index=False)
+            typedef_df: pd.DataFrame = self.get_typedef_df()
+            typedef_df.sort_values(list(typedef_df.columns), inplace=True)
+            typedef_df.to_csv(self._typedefs_path, sep="\t", index=False)
 
-        if (write_obo or write_owl) and (not self._obo_path.exists() or force):
+            for label, path, header, fn in self._get_cache_config():
+                if path.exists() and not force:
+                    continue
+                logger.debug(
+                    "[%s v%s] caching %s to %s", self.ontology, self.data_version, label, path
+                )
+                write_iterable_tsv(
+                    path=path,
+                    header=header,
+                    it=fn(),  # type:ignore
+                )
+
+            typedefs = self._index_typedefs()
+            for relation in (v.is_a, v.has_part, v.part_of, v.from_species, v.orthologous):
+                if relation is not v.is_a and relation.pair not in typedefs:
+                    continue
+                relations_path = self._cache("relations", name=f"{relation.curie}.tsv")
+                if relations_path.exists() and not force:
+                    continue
+                logger.debug(
+                    "[%s v%s] caching relation %s ! %s",
+                    self.ontology,
+                    self.data_version,
+                    relation.curie,
+                    relation.name,
+                )
+                relation_df = self.get_filtered_relations_df(relation)
+                if not len(relation_df.index):
+                    continue
+                relation_df.sort_values(list(relation_df.columns), inplace=True)
+                relation_df.to_csv(relations_path, sep="\t", index=False)
+
+        if write_obo and (not self._obo_path.exists() or force):
+            tqdm.write(f"[{self.ontology}] writing OBO to {self._obo_path}")
             self.write_obo(self._obo_path, use_tqdm=use_tqdm)
+        if (write_ofn or write_owl or write_obograph) and (not self._ofn_path.exists() or force):
+            tqdm.write(f"[{self.ontology}] writing OFN to {self._ofn_path}")
+            self.write_ofn(self._ofn_path)
         if write_obograph and (not self._obograph_path.exists() or force):
-            self.write_obograph(self._obograph_path)
+            tqdm.write(f"[{self.ontology}] writing OBO Graph to {self._obograph_path}")
+            if obograph_use_internal:
+                self.write_obograph(self._obograph_path)
+            else:
+                import bioontologies.robot
+
+                bioontologies.robot.convert(self._ofn_path, self._obograph_path)
         if write_owl and (not self._owl_path.exists() or force):
+            tqdm.write(f"[{self.ontology}] writing OWL to {self._owl_path}")
             import bioontologies.robot
 
-            bioontologies.robot.convert(self._obo_path, self._owl_path)
+            bioontologies.robot.convert(self._ofn_path, self._owl_path)
+        if write_ttl and (not self._ttl_path.exists() or force):
+            tqdm.write(f"[{self.ontology}] writing Turtle to {self._ttl_path}")
+            self.write_rdf(self._ttl_path)
         if write_obonet and (not self._obonet_gz_path.exists() or force):
-            logger.debug("writing obonet to %s", self._obonet_gz_path)
+            tqdm.write(f"[{self.ontology}] writing obonet to {self._obonet_gz_path}")
             self.write_obonet_gz(self._obonet_gz_path)
         if write_nodes:
+            tqdm.write(f"[{self.ontology}] writing notes to {self._nodes_path}")
             self.get_graph().get_nodes_df().to_csv(self._nodes_path, sep="\t", index=False)
 
     @property
@@ -1152,9 +1172,9 @@ class Obo:
 
         .. code-block:: python
 
-            from pyobo import get_obo
+            from pyobo import get_ontology
 
-            obo = get_obo("go")
+            obo = get_ontology("go")
 
             interleukin_10_complex = "1905571"  # interleukin-10 receptor complex
             all_complexes = "0032991"
@@ -1170,9 +1190,9 @@ class Obo:
 
         .. code-block:: python
 
-            from pyobo import get_obo
+            from pyobo import get_ontology
 
-            obo = get_obo("go")
+            obo = get_ontology("go")
 
             identifier = "1905571"  # interleukin-10 receptor complex
             is_complex = "0032991" in nx.descendants(obo.hierarchy, identifier)  # should be true
@@ -1192,11 +1212,14 @@ class Obo:
                 "name": self.name,
                 "ontology": self.ontology,
                 "auto-generated-by": self.auto_generated_by,
-                "typedefs": _convert_typedefs(self.typedefs),
-                "format-version": self.format_version,
+                "format-version": FORMAT_VERSION,
                 "data-version": self.data_version,
-                "synonymtypedef": _convert_synonym_typedefs(self.synonym_typedefs),
                 "date": self.date_formatted,
+                "typedefs": [typedef.reference.model_dump() for typedef in self.typedefs or []],
+                "synonymtypedef": [
+                    synonym_typedef.to_obo(ontology_prefix=self.ontology)
+                    for synonym_typedef in self.synonym_typedefs or []
+                ],
             }
         )
 
@@ -1218,9 +1241,10 @@ class Obo:
                 relations.append(f"{typedef.curie} {target.curie}")
                 links.append((term.curie, typedef.curie, target.curie))
 
-            for typedef, targets in term.annotations_object.items():
-                for target in sorted(targets):
-                    links.append((term.curie, typedef.curie, target.curie))
+            for typedef, targets in sorted(term.properties.items()):
+                for target_or_literal in targets:
+                    if isinstance(target_or_literal, curies.Reference):
+                        links.append((term.curie, typedef.curie, target_or_literal.curie))
 
             d = {
                 "id": term.curie,
@@ -1233,7 +1257,9 @@ class Obo:
                     synonym._fp(ontology_prefix=self.ontology, synonym_typedefs=synonym_typedefs)
                     for synonym in term.synonyms
                 ],
-                "property_value": list(term._emit_properties(self.ontology, typedefs)),
+                "property_value": list(
+                    term._iterate_obo_properties(ontology_prefix=self.ontology, typedefs=typedefs)
+                ),
             }
             nodes[term.curie] = {k: v for k, v in d.items() if v}
 
@@ -1348,14 +1374,12 @@ class Obo:
     # PROPS #
     #########
 
-    def iterate_properties(
-        self, *, use_tqdm: bool = False
-    ) -> Iterable[tuple[Term, ObjectProperty | LiteralProperty]]:
+    def iterate_properties(self, *, use_tqdm: bool = False) -> Iterable[tuple[Term, Annotation]]:
         """Iterate over tuples of terms, properties, and their values."""
         for term in self._iter_terms(
             use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting properties"
         ):
-            for property_tuple in term.iterate_properties():
+            for property_tuple in term.get_property_annotations():
                 yield term, property_tuple
 
     @property
@@ -1367,21 +1391,12 @@ class Obo:
         """Iterate property rows."""
         tuple[Term, Reference, Reference, None] | tuple[Term, Reference, str, Reference]
         for term, t in self.iterate_properties(use_tqdm=use_tqdm):
-            match t:
-                case LiteralProperty(predicate, value, datatype):
-                    yield (
-                        term.identifier,
-                        term._reference(predicate, ontology_prefix=self.ontology),
-                        value,
-                        datatype.preferred_curie,
-                    )
-                case ObjectProperty(predicate, object, datatype):
-                    yield (
-                        term.identifier,
-                        term._reference(predicate, ontology_prefix=self.ontology),
-                        object.preferred_curie,
-                        "",
-                    )
+            pred = term._reference(t.predicate, ontology_prefix=self.ontology)
+            match t.value:
+                case OBOLiteral(value, datatype):
+                    yield (term.identifier, pred, value, get_preferred_curie(datatype))
+                case Reference() as obj:
+                    yield (term.identifier, pred, get_preferred_curie(obj), "")
                 case _:
                     raise TypeError(f"got: {type(t)} - {t}")
 
@@ -1398,14 +1413,14 @@ class Obo:
         """Iterate over tuples of terms and the values for the given property."""
         prop = _ensure_ref(prop)
         for term in self._iter_terms(use_tqdm=use_tqdm):
-            for t in term.iterate_properties():
-                match t:
-                    case LiteralProperty(predicate, value, _datatype):
-                        if predicate == prop:
-                            yield term, value
-                    case ObjectProperty(predicate, object, _datatype):
-                        if predicate == prop:
-                            yield term, object.preferred_curie
+            for t in term.get_property_annotations():
+                if t.predicate != prop:
+                    continue
+                match t.value:
+                    case OBOLiteral(value, _datatype):
+                        yield term, value
+                    case Reference():
+                        yield term, get_preferred_curie(t.value)
 
     def get_filtered_properties_df(
         self, prop: ReferenceHint, *, use_tqdm: bool = False
@@ -1441,27 +1456,57 @@ class Obo:
     # RELATIONS #
     #############
 
+    def iterate_edges(self, *, use_tqdm: bool = False) -> Iterable[tuple[Term, TypeDef, Reference]]:
+        """Iterate over triples of terms, relations, and their targets."""
+        _warned: set[ReferenceTuple] = set()
+        typedefs = self._index_typedefs()
+        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] edge"):
+            for predicate, reference in term._iter_edges():
+                if td := self._get_typedef(term, predicate, _warned, typedefs):
+                    yield term, td, reference
+
+    @property
+    def edges_header(self) -> Sequence[str]:
+        """Header for the edges dataframe."""
+        return [":START_ID", ":TYPE", ":END_ID"]
+
     def iterate_relations(
         self, *, use_tqdm: bool = False
     ) -> Iterable[tuple[Term, TypeDef, Reference]]:
-        """Iterate over tuples of terms, relations, and their targets."""
-        _warned = set()
+        """Iterate over tuples of terms, relations, and their targets.
+
+        This only outputs stuff from the `relationship:` tag, not
+        all possible triples. For that, see :func:`iterate_edges`.
+        """
+        _warned: set[ReferenceTuple] = set()
         typedefs = self._index_typedefs()
-        for term in self._iter_terms(
-            use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting relations"
-        ):
-            for parent in term.parents:
-                yield term, is_a, parent
-            for typedef, reference in term.iterate_relations():
-                if typedef.pair not in typedefs:
-                    if typedef.pair not in _warned:
-                        _warn_string = f"[{term.curie}] undefined typedef: {typedef.pair}"
-                        if typedef.name:
-                            _warn_string += f" ({typedef.name})"
-                        logger.warning(_warn_string)
-                        _warned.add(typedef.pair)
-                    continue
-                yield term, typedefs[typedef.pair], reference
+        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] relation"):
+            for predicate, reference in term.iterate_relations():
+                if td := self._get_typedef(term, predicate, _warned, typedefs):
+                    yield term, td, reference
+
+    def iterate_edge_rows(self, use_tqdm: bool = False) -> Iterable[tuple[str, str, str]]:
+        """Iterate the edge rows."""
+        for term, typedef, reference in self.iterate_edges(use_tqdm=use_tqdm):
+            yield (term.curie, typedef.curie, reference.curie)
+
+    def _get_typedef(
+        self,
+        term: Term,
+        predicate: Reference,
+        _warned: set[ReferenceTuple],
+        typedefs: Mapping[ReferenceTuple, TypeDef],
+    ) -> TypeDef | None:
+        pp = predicate.pair
+        if pp in typedefs:
+            return typedefs[pp]
+        if pp not in _warned:
+            _warn_string = f"[{term.curie}] undefined typedef: {pp}"
+            if predicate.name:
+                _warn_string += f" ({predicate.name})"
+            logger.warning(_warn_string)
+            _warned.add(pp)
+        return None
 
     def iter_relation_rows(
         self, use_tqdm: bool = False
@@ -1542,8 +1587,8 @@ class Obo:
 
          Example usage: get homology between HGNC and MGI:
 
-        >>> from pyobo.sources.hgnc import get_obo
-        >>> obo = get_obo()
+        >>> from pyobo.sources.hgnc import HGNCGetter
+        >>> obo = HGNCGetter()
         >>> human_mapt_hgnc_id = "6893"
         >>> mouse_mapt_mgi_id = "97180"
         >>> hgnc_mgi_orthology_mapping = obo.get_relation_mapping("ro:HOM0000017", "mgi")
@@ -1568,8 +1613,8 @@ class Obo:
     ) -> str | None:
         """Get the value for a bijective relation mapping between this resource and a target resource.
 
-        >>> from pyobo.sources.hgnc import get_obo
-        >>> obo = get_obo()
+        >>> from pyobo.sources.hgnc import HGNCGetter
+        >>> obo = HGNCGetter()
         >>> human_mapt_hgnc_id = "6893"
         >>> mouse_mapt_mgi_id = "97180"
         >>> assert mouse_mapt_mgi_id == obo.get_relation(human_mapt_hgnc_id, "ro:HOM0000017", "mgi")
@@ -1655,16 +1700,20 @@ class Obo:
 
     def iterate_mapping_rows(
         self, *, use_tqdm: bool = False
-    ) -> Iterable[tuple[str, str, str, str, str]]:
+    ) -> Iterable[tuple[str, str, str, str, str, float | None, str | None]]:
         """Iterate over SSSOM rows for mappings."""
         for term in self._iter_terms(use_tqdm=use_tqdm):
-            for predicate, obj_ref in term.get_mappings(include_xrefs=True):
+            for predicate, obj_ref, context in term.get_mappings(
+                include_xrefs=True, add_context=True
+            ):
                 yield (
-                    term.preferred_curie,
+                    get_preferred_curie(term),
                     term.name,
-                    obj_ref.preferred_curie,
-                    predicate.preferred_curie,
-                    UNSPECIFIED_MATCHING_CURIE,
+                    get_preferred_curie(obj_ref),
+                    get_preferred_curie(predicate),
+                    get_preferred_curie(context.justification),
+                    context.confidence if context.confidence is not None else None,
+                    get_preferred_curie(context.contributor) if context.contributor else None,
                 )
 
     def get_mappings_df(
@@ -1678,6 +1727,11 @@ class Obo:
         df = pd.DataFrame(self.iterate_mapping_rows(use_tqdm=use_tqdm), columns=SSSOM_DF_COLUMNS)
         if not include_subject_labels:
             del df["subject_label"]
+
+        # if no confidences/contributor, remove that column
+        for c in ["confidence", "contributor"]:
+            if df[c].isna().all():
+                del df[c]
 
         # append on the mapping_source
         # (https://mapping-commons.github.io/sssom/mapping_source/)
@@ -1739,19 +1793,283 @@ class Obo:
         return multidict((term.identifier, alt.identifier) for term, alt in self.iterate_alts())
 
 
+@dataclass
+class TypeDef(Referenced, Stanza):
+    """A type definition in OBO.
+
+    See the subsection of https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.2.2.
+    """
+
+    reference: Annotated[Reference, 1]
+    is_anonymous: Annotated[bool | None, 2] = None
+    # 3 - name is covered by reference
+    namespace: Annotated[str | None, 4] = None
+    # 5 alt_id is part of proerties
+    definition: Annotated[str | None, 6] = None
+    comment: Annotated[str | None, 7] = None
+    subsets: Annotated[list[Reference], 8] = field(default_factory=list)
+    synonyms: Annotated[list[Synonym], 9] = field(default_factory=list)
+    xrefs: Annotated[list[Reference], 10] = field(default_factory=list)
+    _axioms: AnnotationsDict = field(default_factory=lambda: defaultdict(list))
+    properties: Annotated[PropertiesHint, 11] = field(default_factory=lambda: defaultdict(list))
+    domain: Annotated[Reference | None, 12, "typedef-only"] = None
+    range: Annotated[Reference | None, 13, "typedef-only"] = None
+    builtin: Annotated[bool | None, 14] = None
+    holds_over_chain: Annotated[list[list[Reference]], 15, "typedef-only"] = field(
+        default_factory=list
+    )
+    is_anti_symmetric: Annotated[bool | None, 16, "typedef-only"] = None
+    is_cyclic: Annotated[bool | None, 17, "typedef-only"] = None
+    is_reflexive: Annotated[bool | None, 18, "typedef-only"] = None
+    is_symmetric: Annotated[bool | None, 19, "typedef-only"] = None
+    is_transitive: Annotated[bool | None, 20, "typedef-only"] = None
+    is_functional: Annotated[bool | None, 21, "typedef-only"] = None
+    is_inverse_functional: Annotated[bool | None, 22, "typedef-only"] = None
+    parents: Annotated[list[Reference], 23] = field(default_factory=list)
+    intersection_of: Annotated[IntersectionOfHint, 24] = field(default_factory=list)
+    union_of: Annotated[list[Reference], 25] = field(default_factory=list)
+    equivalent_to: Annotated[list[Reference], 26] = field(default_factory=list)
+    disjoint_from: Annotated[list[Reference], 27] = field(default_factory=list)
+    # TODO inverse should be inverse_of, cardinality any
+    inverse: Annotated[Reference | None, 28, "typedef-only"] = None
+    # TODO check if there are any examples of this being multiple
+    transitive_over: Annotated[list[Reference], 29, "typedef-only"] = field(default_factory=list)
+    equivalent_to_chain: Annotated[list[list[Reference]], 30, "typedef-only"] = field(
+        default_factory=list
+    )
+    #: From the OBO spec:
+    #:
+    #:   For example: spatially_disconnected_from is disjoint_over part_of, in that two
+    #:   disconnected entities have no parts in common. This can be translated to OWL as:
+    #:   ``disjoint_over(R S), R(A B) ==> (S some A) disjointFrom (S some B)``
+    disjoint_over: Annotated[list[Reference], 31] = field(default_factory=list)
+    relationships: Annotated[RelationsHint, 32] = field(default_factory=lambda: defaultdict(list))
+    is_obsolete: Annotated[bool | None, 33] = None
+    created_by: Annotated[str | None, 34] = None
+    creation_date: Annotated[datetime.datetime | None, 35] = None
+    # TODO expand_assertion_to
+    # TODO expand_expression_to
+    #: Whether this relationship is a metadata tag. Properties that are marked as metadata tags are
+    #: used to record object metadata. Object metadata is additional information about an object
+    #: that is useful to track, but does not impact the definition of the object or how it should
+    #: be treated by a reasoner. Metadata tags might be used to record special term synonyms or
+    #: structured notes about a term, for example.
+    is_metadata_tag: Annotated[bool | None, 40, "typedef-only"] = None
+    is_class_level: Annotated[bool | None, 41] = None
+
+    def __hash__(self) -> int:
+        # have to re-define hash because of the @dataclass
+        return hash((self.__class__, self.prefix, self.identifier))
+
+    def _get_prefixes(self) -> set[str]:
+        rv = super()._get_prefixes()
+        if self.domain:
+            rv.update(self.domain.prefix)
+        if self.range:
+            rv.update(self.range.prefix)
+        for chain in self.holds_over_chain:
+            rv.update(a.prefix for a in chain)
+        if self.inverse:
+            rv.update(self.inverse.prefix)
+        rv.update(a.prefix for a in self.transitive_over)
+        rv.update(a.prefix for a in self.disjoint_over)
+        for chain in self.equivalent_to_chain:
+            rv.update(a.prefix for a in chain)
+        return rv
+
+    def iterate_obo_lines(
+        self,
+        ontology_prefix: str,
+        synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] | None = None,
+        typedefs: Mapping[ReferenceTuple, TypeDef] | None = None,
+    ) -> Iterable[str]:
+        """Iterate over the lines to write in an OBO file.
+
+        :param ontology_prefix:
+            The prefix of the ontology into which the type definition is being written.
+            This is used for compressing builtin identifiers
+        :yield:
+            The lines to write to an OBO file
+
+        `S.3.5.5 <https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.3.5.5>`_
+        of the OBO Flat File Specification v1.4 says tags should appear in the following order:
+
+        1. id
+        2. is_anonymous
+        3. name
+        4. namespace
+        5. alt_id
+        6. def
+        7. comment
+        8. subset
+        9. synonym
+        10. xref
+        11. property_value
+        12. domain
+        13. range
+        14. builtin
+        15. holds_over_chain
+        16. is_anti_symmetric
+        17. is_cyclic
+        18. is_reflexive
+        19. is_symmetric
+        20. is_transitive
+        21. is_functional
+        22. is_inverse_functional
+        23. is_a
+        24. intersection_of
+        25. union_of
+        26. equivalent_to
+        27. disjoint_from
+        28. inverse_of
+        29. transitive_over
+        30. equivalent_to_chain
+        31. disjoint_over
+        32. relationship
+        33. is_obsolete
+        34. created_by
+        35. creation_date
+        36. replaced_by
+        37. consider
+        38. expand_assertion_to
+        39. expand_expression_to
+        40. is_metadata_tag
+        41. is_class_level
+        """
+        if synonym_typedefs is None:
+            synonym_typedefs = {}
+        if typedefs is None:
+            typedefs = {}
+
+        yield "\n[Typedef]"
+        # 1
+        yield f"id: {reference_escape(self.reference, ontology_prefix=ontology_prefix)}"
+        # 2
+        yield from _boolean_tag("is_anonymous", self.is_anonymous)
+        # 3
+        if self.name:
+            yield f"name: {self.name}"
+        # 4
+        if self.namespace:
+            yield f"namespace: {self.namespace}"
+        # 5
+        yield from _reference_list_tag("alt_id", self.alt_ids, ontology_prefix)
+        # 6
+        if self.definition:
+            yield f"def: {self._definition_fp()}"
+        # 7
+        if self.comment:
+            yield f"comment: {self.comment}"
+        # 8
+        yield from _reference_list_tag("subset", self.subsets, ontology_prefix)
+        # 9
+        for synonym in self.synonyms:
+            yield synonym.to_obo(ontology_prefix=ontology_prefix, synonym_typedefs=synonym_typedefs)
+        # 10
+        yield from self._iterate_xref_obo(ontology_prefix=ontology_prefix)
+        # 11
+        yield from self._iterate_obo_properties(
+            ontology_prefix=ontology_prefix,
+            skip_predicate_objects=v.SKIP_PROPERTY_PREDICATES_OBJECTS,
+            skip_predicate_literals=v.SKIP_PROPERTY_PREDICATES_LITERAL,
+            typedefs=typedefs,
+        )
+        # 12
+        if self.domain:
+            yield f"domain: {reference_escape(self.domain, ontology_prefix=ontology_prefix, add_name_comment=True)}"
+        # 13
+        if self.range:
+            yield f"range: {reference_escape(self.range, ontology_prefix=ontology_prefix, add_name_comment=True)}"
+        # 14
+        yield from _boolean_tag("builtin", self.builtin)
+        # 15
+        yield from _chain_tag("holds_over_chain", self.holds_over_chain, ontology_prefix)
+        # 16
+        yield from _boolean_tag("is_anti_symmetric", self.is_anti_symmetric)
+        # 17
+        yield from _boolean_tag("is_cyclic", self.is_cyclic)
+        # 18
+        yield from _boolean_tag("is_reflexive", self.is_reflexive)
+        # 19
+        yield from _boolean_tag("is_symmetric", self.is_symmetric)
+        # 20
+        yield from _boolean_tag("is_transitive", self.is_transitive)
+        # 21
+        yield from _boolean_tag("is_functional", self.is_functional)
+        # 22
+        yield from _boolean_tag("is_inverse_functional", self.is_inverse_functional)
+        # 23
+        yield from _reference_list_tag("is_a", self.parents, ontology_prefix)
+        # 24
+        yield from self._iterate_intersection_of_obo(ontology_prefix=ontology_prefix)
+        # 25
+        yield from _reference_list_tag("union_of", self.union_of, ontology_prefix)
+        # 26
+        yield from _reference_list_tag("equivalent_to", self.equivalent_to, ontology_prefix)
+        # 27
+        yield from _reference_list_tag("disjoint_from", self.disjoint_from, ontology_prefix)
+        # 28
+        if self.inverse:
+            yield f"inverse_of: {reference_escape(self.inverse, ontology_prefix=ontology_prefix, add_name_comment=True)}"
+        # 29
+        yield from _reference_list_tag("transitive_over", self.transitive_over, ontology_prefix)
+        # 30
+        yield from _chain_tag("equivalent_to_chain", self.equivalent_to_chain, ontology_prefix)
+        # 31 disjoint_over, see https://github.com/search?q=%22disjoint_over%3A%22+path%3A*.obo&type=code
+        yield from _reference_list_tag(
+            "disjoint_over", self.disjoint_over, ontology_prefix=ontology_prefix
+        )
+        # 32
+        yield from self._iterate_obo_relations(ontology_prefix=ontology_prefix, typedefs=typedefs)
+        # 33
+        yield from _boolean_tag("is_obsolete", self.is_obsolete)
+        # 34
+        if self.created_by:
+            yield f"created_by: {self.created_by}"
+        # 35
+        if self.creation_date is not None:
+            yield f"creation_date: {self.creation_date.isoformat()}"
+        # 36
+        yield from _tag_property_targets(
+            "replaced_by", self, v.term_replaced_by, ontology_prefix=ontology_prefix
+        )
+        # 37
+        yield from _tag_property_targets(
+            "consider", self, v.see_also, ontology_prefix=ontology_prefix
+        )
+        # 38 TODO expand_assertion_to
+        # 39 TODO expand_expression_to
+        # 40
+        yield from _boolean_tag("is_metadata_tag", self.is_metadata_tag)
+        # 41
+        yield from _boolean_tag("is_class_level", self.is_class_level)
+
+    @classmethod
+    def from_triple(cls, prefix: str, identifier: str, name: str | None = None) -> TypeDef:
+        """Create a typedef from a reference."""
+        return cls(reference=Reference(prefix=prefix, identifier=identifier, name=name))
+
+    @classmethod
+    def default(cls, prefix: str, identifier: str, *, name: str | None = None) -> Self:
+        """Construct a default type definition from within the OBO namespace."""
+        return cls(reference=default_reference(prefix, identifier, name=name))
+
+
 def make_ad_hoc_ontology(
     _ontology: str,
-    _name: str,
+    _name: str | None = None,
     _auto_generated_by: str | None = None,
-    _format_version: str = "1.2",
     _typedefs: list[TypeDef] | None = None,
     _synonym_typedefs: list[SynonymTypeDef] | None = None,
-    _date: datetime | None = None,
+    _date: datetime.datetime | None = None,
     _data_version: str | None = None,
     _idspaces: Mapping[str, str] | None = None,
     _root_terms: list[Reference] | None = None,
+    _subsetdefs: list[tuple[Reference, str]] | None = None,
+    _property_values: list[Annotation] | None = None,
+    _imports: list[str] | None = None,
     *,
-    terms: list[Term],
+    terms: list[Term] | None = None,
 ) -> Obo:
     """Make an ad-hoc ontology."""
 
@@ -1761,11 +2079,13 @@ def make_ad_hoc_ontology(
         ontology = _ontology
         name = _name
         auto_generated_by = _auto_generated_by
-        format_version = _format_version
         typedefs = _typedefs
         synonym_typedefs = _synonym_typedefs
         idspaces = _idspaces
         root_terms = _root_terms
+        subsetdefs = _subsetdefs
+        property_values = _property_values
+        imports = _imports
 
         def __post_init__(self):
             self.date = _date
@@ -1773,30 +2093,10 @@ def make_ad_hoc_ontology(
 
         def iter_terms(self, force: bool = False) -> Iterable[Term]:
             """Iterate over terms in the ad hoc ontology."""
-            return terms
+            return terms or []
 
     return AdHocOntology()
 
 
-def _convert_typedefs(typedefs: Iterable[TypeDef] | None) -> list[Mapping[str, Any]]:
-    """Convert the type defs."""
-    if not typedefs:
-        return []
-    return [_convert_typedef(typedef) for typedef in typedefs]
-
-
-def _convert_typedef(typedef: TypeDef) -> Mapping[str, Any]:
-    """Convert a type def."""
-    # TODO add more later
-    return typedef.reference.model_dump()
-
-
-def _convert_synonym_typedefs(synonym_typedefs: Iterable[SynonymTypeDef] | None) -> list[str]:
-    """Convert the synonym type defs."""
-    if not synonym_typedefs:
-        return []
-    return [_convert_synonym_typedef(synonym_typedef) for synonym_typedef in synonym_typedefs]
-
-
-def _convert_synonym_typedef(synonym_typedef: SynonymTypeDef) -> str:
-    return f'{synonym_typedef.preferred_curie} "{synonym_typedef.name}"'
+HUMAN_TERM = Term(reference=v.HUMAN)
+CHARLIE_TERM = Term(reference=v.CHARLIE, type="Instance").append_parent(HUMAN_TERM)

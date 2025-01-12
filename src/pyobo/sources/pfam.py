@@ -47,11 +47,6 @@ class PfamGetter(Obo):
         return iter_terms(self._version_or_raise, force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get PFAM as OBO."""
-    return PfamGetter(force=force)
-
-
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate PFAM terms."""
     df = get_pfam_clan_df(version=version, force=force)
@@ -67,4 +62,4 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    PfamGetter.cli()

@@ -55,7 +55,7 @@ class GTDBGetter(Obo):
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over GTDB terms."""
-    # Add the taxrank terms so we get nice display in protege
+    # Add the taxrank terms so we get nice display in Protege
     for reference in LEVEL_TO_TAXRANK.values():
         yield Term(reference=reference)
 
@@ -96,7 +96,10 @@ def _process_row(tax_string, ncbitaxon_id) -> Iterable[Term]:
         if ncbitaxon_id and level == "s":
             # if the level is "s", it's a species. There might be multiple
             # mappings to NCBITaxon, so we only use "see also" as the predicate
-            term.append_xref(Reference(prefix="ncbitaxon", identifier=ncbitaxon_id))
+            term.append_xref(
+                Reference(prefix="ncbitaxon", identifier=ncbitaxon_id),
+                # TODO @jose use confidence=... keyword here
+            )
 
         yield term
         parent_reference = term.reference
@@ -151,4 +154,4 @@ def _parse_name(part: str) -> tuple[str, str] | None:
 
 
 if __name__ == "__main__":
-    GTDBGetter().write_default(write_obo=True, force=True, use_tqdm=True)
+    GTDBGetter().cli()

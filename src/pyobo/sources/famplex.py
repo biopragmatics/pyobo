@@ -9,7 +9,7 @@ from pystow.utils import get_commit
 
 from pyobo import get_name_id_mapping
 from pyobo.struct import Obo, Reference, Term
-from pyobo.struct.typedef import has_member, has_part, is_a, part_of
+from pyobo.struct.typedef import has_citation, has_member, has_part, is_a, part_of
 from pyobo.utils.io import multidict
 from pyobo.utils.path import ensure_df
 
@@ -23,7 +23,7 @@ class FamPlexGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
-    typedefs = [has_member, has_part, is_a, part_of]
+    typedefs = [has_member, has_part, is_a, part_of, has_citation]
 
     def _get_version(self) -> str:
         return get_commit("sorgerlab", "famplex")
@@ -31,11 +31,6 @@ class FamPlexGetter(Obo):
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return get_terms(force=force, version=self._version_or_raise)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get FamPlex as OBO."""
-    return FamPlexGetter(force=force)
 
 
 def get_terms(version: str, force: bool = False) -> Iterable[Term]:
@@ -106,14 +101,16 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     for (entity,) in entities_df.values:
         reference = Reference(prefix=PREFIX, identifier=entity, name=entity)
         definition, provenance = id_to_definition.get(entity, (None, None))
-        provenance_reference = (
-            Reference.from_curie_or_uri(provenance) if isinstance(provenance, str) else None
-        )
         term = Term(
             reference=reference,
             definition=definition,
-            provenance=[] if provenance_reference is None else [provenance_reference],
         )
+
+        provenance_reference = (
+            Reference.from_curie_or_uri(provenance) if isinstance(provenance, str) else None
+        )
+        if provenance_reference:
+            term.append_provenance(provenance_reference)
 
         for xref_reference in id_xrefs.get(entity, []):
             term.append_xref(xref_reference)

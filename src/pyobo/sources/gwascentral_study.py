@@ -30,11 +30,6 @@ class GWASCentralStudyGetter(Obo):
         return iterate_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo(force: bool = False):
-    """Get GWAS Central Studies as OBO."""
-    return GWASCentralStudyGetter(force=force)
-
-
 def _find_text(element, name: str) -> str | None:
     x = element.find(name)
     if x is not None:

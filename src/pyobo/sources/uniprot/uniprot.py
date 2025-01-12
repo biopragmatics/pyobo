@@ -10,7 +10,15 @@ from pyobo import Obo, Reference
 from pyobo.api.utils import get_version
 from pyobo.constants import RAW_MODULE
 from pyobo.identifier_utils import standardize_ec
-from pyobo.struct import Term, TypeDef, derives_from, enables, from_species, participates_in
+from pyobo.struct import (
+    Term,
+    TypeDef,
+    derives_from,
+    enables,
+    from_species,
+    has_citation,
+    participates_in,
+)
 from pyobo.struct.typedef import gene_product_of, located_in, molecularly_interacts_with
 from pyobo.utils.io import open_reader
 
@@ -58,16 +66,12 @@ class UniProtGetter(Obo):
         derives_from,
         located_in,
         IS_REVIEWED,
+        has_citation,
     ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         yield from iter_terms(version=self._version_or_raise)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get UniProt as OBO."""
-    return UniProtGetter(force=force)
 
 
 def iter_terms(version: str | None = None) -> Iterable[Term]:

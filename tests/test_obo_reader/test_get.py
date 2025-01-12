@@ -6,20 +6,18 @@ from operator import attrgetter
 import obonet
 from curies import ReferenceTuple
 
-from pyobo import Reference, Synonym, SynonymTypeDef, TypeDef, default_reference, get_ontology
+from pyobo import Reference, Synonym, SynonymTypeDef, default_reference, get_ontology
 from pyobo.reader import (
     _extract_definition,
     _extract_synonym,
     iterate_graph_synonym_typedefs,
-    iterate_graph_typedefs,
-    iterate_node_parents,
     iterate_node_properties,
     iterate_node_relationships,
     iterate_node_synonyms,
     iterate_node_xrefs,
+    iterate_typedefs,
 )
 from pyobo.struct.struct import acronym
-from pyobo.utils.io import multidict
 from tests.constants import TEST_CHEBI_OBO_PATH, chebi_patch
 
 
@@ -35,14 +33,17 @@ class TestParseObonet(unittest.TestCase):
     def test_get_graph_typedefs(self):
         """Test getting type definitions from an :mod:`obonet` graph."""
         pairs = {
-            typedef.pair for typedef in iterate_graph_typedefs(self.graph, ontology_prefix="chebi")
+            typedef.pair
+            for typedef in iterate_typedefs(self.graph, ontology_prefix="chebi", upgrade=False)
         }
-        self.assertIn(ReferenceTuple("obo", "chebi#has_part"), pairs)
+        self.assertIn(ReferenceTuple("obo", "chebi#has_major_microspecies_at_pH_7_3"), pairs)
 
     def test_get_graph_synonym_typedefs(self):
         """Test getting synonym type definitions from an :mod:`obonet` graph."""
         synonym_typedefs = sorted(
-            iterate_graph_synonym_typedefs(self.graph, ontology_prefix=self.ontology),
+            iterate_graph_synonym_typedefs(
+                self.graph, ontology_prefix=self.ontology, upgrade=False
+            ),
             key=attrgetter("curie"),
         )
         self.assertEqual(
@@ -106,11 +107,11 @@ class TestParseObonet(unittest.TestCase):
     def test_extract_synonym(self):
         """Test extracting synonym strings."""
         iupac_name = SynonymTypeDef(
-            reference=Reference(prefix="obo", identifier="IUPAC_NAME", name="IUPAC NAME")
+            reference=default_reference(prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME")
         )
         synoynym_typedefs = {
-            "IUPAC_NAME": iupac_name,
-            acronym.curie: acronym,
+            iupac_name.pair: iupac_name,
+            acronym.pair: acronym,
         }
 
         for expected_synonym, text in [
@@ -134,13 +135,13 @@ class TestParseObonet(unittest.TestCase):
             (
                 Synonym(
                     name="LTEC I",
-                    specificity="EXACT",
+                    specificity=None,
                     provenance=[Reference(prefix="orphanet", identifier="93938")],
                 ),
                 '"LTEC I" [Orphanet:93938]',
             ),
             (
-                Synonym(name="LTEC I", specificity="EXACT"),
+                Synonym(name="LTEC I", specificity=None),
                 '"LTEC I" []',
             ),
             (
@@ -152,11 +153,11 @@ class TestParseObonet(unittest.TestCase):
                 '"HAdV-A" BROAD omo:0003012 []',
             ),
             (
-                Synonym(name="HAdV-A", specificity="EXACT", type=acronym.reference),
+                Synonym(name="HAdV-A", specificity=None, type=acronym.reference),
                 '"HAdV-A" OMO:0003012 []',
             ),
             (
-                Synonym(name="HAdV-A", specificity="EXACT", type=acronym.reference),
+                Synonym(name="HAdV-A", specificity=None, type=acronym.reference),
                 '"HAdV-A" omo:0003012 []',
             ),
         ]:
@@ -166,6 +167,7 @@ class TestParseObonet(unittest.TestCase):
                     synoynym_typedefs,
                     node=Reference(prefix="chebi", identifier="XXX"),
                     ontology_prefix="chebi",
+                    upgrade=False,
                 )
                 self.assertIsInstance(actual_synonym, Synonym)
                 self.assertEqual(expected_synonym, actual_synonym)
@@ -173,10 +175,10 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_synonyms(self):
         """Test getting synonyms from a node in a :mod:`obonet` graph."""
         iupac_name = SynonymTypeDef(
-            reference=Reference(prefix="obo", identifier="IUPAC_NAME", name="IUPAC NAME")
+            reference=default_reference(prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME")
         )
         synoynym_typedefs = {
-            "IUPAC_NAME": iupac_name,
+            iupac_name.pair: iupac_name,
         }
         data = self.graph.nodes["CHEBI:51990"]
         synonyms = list(
@@ -185,6 +187,7 @@ class TestParseObonet(unittest.TestCase):
                 synoynym_typedefs,
                 node=Reference(prefix="chebi", identifier="XXX"),
                 ontology_prefix="chebi",
+                upgrade=False,
             )
         )
         self.assertEqual(1, len(synonyms))
@@ -200,26 +203,18 @@ class TestParseObonet(unittest.TestCase):
         data = self.graph.nodes["CHEBI:51990"]
         properties = list(
             iterate_node_properties(
-                data, node=Reference(prefix="chebi", identifier="51990"), ontology_prefix="chebi"
+                data,
+                node=Reference(prefix="chebi", identifier="51990"),
+                ontology_prefix="chebi",
+                upgrade=False,
             )
         )
         t_prop = default_reference("chebi", "monoisotopicmass")
-        self.assertIn(t_prop, {prop for prop, value, _ in properties})
-        self.assertEqual(1, sum(prop == t_prop for prop, value, _ in properties))
-        value = next(value for prop, value, _ in properties if prop == t_prop)
+        self.assertIn(t_prop, {prop for prop, value in properties})
+        self.assertEqual(1, sum(prop == t_prop for prop, value in properties))
+        value = next(value.value for prop, value in properties if prop == t_prop)
+        self.assertIsInstance(value, str)
         self.assertEqual("261.28318", value)
-
-    def test_get_node_parents(self):
-        """Test getting parents from a node in a :mod:`obonet` graph."""
-        data = self.graph.nodes["CHEBI:51990"]
-        parents = list(
-            iterate_node_parents(
-                data, node=Reference(prefix="chebi", identifier="XXX"), ontology_prefix="chebi"
-            )
-        )
-        self.assertEqual(2, len(parents))
-        self.assertEqual({"24060", "51992"}, {parent.identifier for parent in parents})
-        self.assertEqual({"chebi"}, {parent.prefix for parent in parents})
 
     def test_get_node_xrefs(self):
         """Test getting parents from a node in a :mod:`obonet` graph."""
@@ -251,7 +246,10 @@ class TestParseObonet(unittest.TestCase):
         data = self.graph.nodes["CHEBI:17051"]
         relations = list(
             iterate_node_relationships(
-                data, node=Reference(prefix="chebi", identifier="XXX"), ontology_prefix="chebi"
+                data,
+                node=Reference(prefix="chebi", identifier="17051"),
+                ontology_prefix="chebi",
+                upgrade=False,
             )
         )
         self.assertEqual(1, len(relations))
@@ -259,13 +257,11 @@ class TestParseObonet(unittest.TestCase):
 
         self.assertIsNotNone(target)
         self.assertIsInstance(target, Reference)
-        self.assertEqual("chebi", target.prefix)
-        self.assertEqual("29228", target.identifier)
+        self.assertEqual(("chebi", "29228"), target.pair)
 
         self.assertIsNotNone(typedef)
         self.assertIsInstance(typedef, Reference)
-        self.assertEqual("obo", typedef.prefix)
-        self.assertEqual("chebi#is_conjugate_base_of", typedef.identifier)
+        self.assertEqual(("obo", "chebi#is_conjugate_base_of"), typedef.pair)
 
 
 class TestGet(unittest.TestCase):
@@ -275,11 +271,6 @@ class TestGet(unittest.TestCase):
         """Set up the test with the mock ChEBI OBO file."""
         with chebi_patch:
             self.ontology = get_ontology("chebi")
-
-    def test_get_terms(self):
-        """Test getting an OBO document."""
-        terms = list(self.ontology)
-        self.assertEqual(18, len(terms))
 
     def test_get_id_alts_mapping(self):
         """Make sure the alternative ids are mapped properly.
@@ -299,26 +290,7 @@ class TestGet(unittest.TestCase):
 
     def test_typedefs(self):
         """Test typedefs."""
-        xx = default_reference("chebi", "is_conjugate_base_of")
-        td = {t.pair for t in self.ontology.typedefs}
+        xx = default_reference("chebi", "has_major_microspecies_at_pH_7_3")
+        td = self.ontology._index_typedefs()
         self.assertIn(xx.pair, td)
-
-    def test_iter_filtered_relations(self):
-        """Test getting filtered relations w/ upgrade."""
-        term_reference = Reference(prefix="chebi", identifier="17051")
-        reference = default_reference("chebi", "is_conjugate_base_of")
-        object_reference = Reference(prefix="chebi", identifier="29228")
-        for inp in [
-            reference.curie,
-            reference,
-            reference.pair,
-            TypeDef(reference=reference),
-        ]:
-            with self.subTest(inp=inp):
-                rr = multidict(
-                    (term.reference, target)
-                    for term, target in self.ontology.iterate_filtered_relations(inp)
-                )
-                self.assertNotEqual(0, len(rr))
-                self.assertIn(term_reference, rr)
-                self.assertIn(object_reference, rr[term_reference])
+        self.assertIn(ReferenceTuple("ro", "0018033"), td)
