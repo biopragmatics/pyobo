@@ -807,10 +807,6 @@ class Obo:
         for root_term in self.root_terms or []:
             yield v.has_ontology_root_term, root_term
 
-        # Version
-        if self.data_version:
-            yield v.version_info, OBOLiteral.string(self.data_version)
-
         # Extras
         if self.property_values:
             yield from self.property_values

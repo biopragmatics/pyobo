@@ -102,6 +102,8 @@ def get_ontology_annotations(obo_ontology: Obo) -> Iterable[f.Annotation]:
     """Get annotations from the ontology."""
     for predicate, value in obo_ontology._iterate_property_pairs():
         yield f.Annotation(predicate, value)
+    if obo_ontology.data_version:
+        yield f.Annotation(pv.version_info, obo_ontology.data_version)
 
 
 def _oboliteral_to_literal(obo_literal) -> rdflib.Literal:
