@@ -157,12 +157,19 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
         yield f.DisjointClasses([s, *term.disjoint_from])
     # 18
     for typedef, value in term.iterate_relations():
-        yield m.RelationshipMacro(
-            s=s,
-            p=typedef.preferred_curie,
-            o=value.preferred_curie,
-            annotations=_get_annotations(term, typedef, value),
-        )
+        rel_annotations = _get_annotations(term, typedef, value)
+        if term.type == "Term":
+            yield m.RelationshipMacro(
+                s=s,
+                p=typedef.preferred_curie,
+                o=value.preferred_curie,
+                annotations=rel_annotations,
+            )
+        else:
+            yield f.ObjectPropertyAssertion(
+                typedef.preferred_curie, s, value.preferred_curie, annotations=rel_annotations
+            )
+
     # 19 TODO created_by
     # 20 TODO creation_date
     # 21
