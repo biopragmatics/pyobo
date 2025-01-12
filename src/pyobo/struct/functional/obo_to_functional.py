@@ -32,15 +32,19 @@ __all__ = [
 ]
 
 
-def get_ofn_from_obo(obo_ontology: Obo) -> Document:
+_BASE = "https://w3id.org/biopragmatics/resources"
+
+
+def get_ofn_from_obo(
+    obo_ontology: Obo, iri: str | None = None, version_iri: str | None = None
+) -> Document:
     """Convert an ontology."""
     prefix = obo_ontology.ontology
-    base = f"https://w3id.org/biopragmatics/resources/{prefix}"
-    iri = f"{base}/{prefix}.ofn"
-    if obo_ontology.data_version:
+    base = f"{_BASE}/{prefix}"
+    if iri is None:
+        iri = f"{base}/{prefix}.ofn"
+    if version_iri is None and obo_ontology.data_version:
         version_iri = f"{base}/{obo_ontology.data_version}/{prefix}.ofn"
-    else:
-        version_iri = None
     ofn_ontology = Ontology(
         iri=iri,
         version_iri=version_iri,
