@@ -29,6 +29,20 @@ class BiGGMetaboliteGetter(Obo):
     idspaces = {
         PREFIX: "http://bigg.ucsd.edu/models/universal/metabolites/",
         "bigg.model": "http://bigg.ucsd.edu/models/",
+        "CHEBI": "",
+        "hmdb": "",
+        "lipidmaps": "",
+        "biocyc": "",
+        "kegg.compound": "",
+        "metanetx.chemical": "",
+        "inchikey": "",
+        "kegg.drug": "",
+        "kegg.glycan": "",
+        "seed.compound": "",
+        "reactome": "",
+        "eccode": "",
+        "metanetx.reaction": "",
+        "kegg.reaction": "",
     }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

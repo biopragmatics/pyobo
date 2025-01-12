@@ -25,6 +25,10 @@ class CGNCGetter(Obo):
     ontology = PREFIX
     dynamic_version = True
     typedefs = [from_species, exact_match]
+    idspaces = {
+        "NCBIGene": "https://www.ncbi.nlm.nih.gov/gene/",
+        "ensembl": "http://rdf.ebi.ac.uk/resource/ensembl/",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

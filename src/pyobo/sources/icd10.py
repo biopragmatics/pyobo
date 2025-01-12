@@ -33,6 +33,10 @@ class ICD10Getter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
+    idspaces = {
+        PREFIX: "https://icd.who.int/browse10/2019/en#/",
+        "biolink": "https://w3id.org/biolink/vocab/",
+    }
     typedefs = [has_category]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

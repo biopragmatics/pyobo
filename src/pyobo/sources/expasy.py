@@ -54,7 +54,7 @@ class ExpasyGetter(Obo):
         Reference(prefix="eccode", identifier="7"),
     ]
     idspaces = {
-        "uniprot": "https://bioregistry.io/uniprot:",
+        "uniprot": " http://purl.uniprot.org/uniprot/",
         "eccode": "https://bioregistry.io/eccode:",
         "GO": "http://purl.obolibrary.org/obo/GO_",
         "RO": "http://purl.obolibrary.org/obo/RO_",

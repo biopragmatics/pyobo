@@ -47,6 +47,12 @@ class UniProtPtmGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
+    idspaces = {
+        "RESID": "",
+        "CHEBI": "",
+        "MOD": "",
+        "unimod": "",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

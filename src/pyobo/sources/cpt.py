@@ -19,6 +19,9 @@ class CPTGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
+    idspaces = {
+        "cvx": "",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

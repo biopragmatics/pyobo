@@ -22,6 +22,9 @@ class CCLEGetter(Obo):
 
     ontology = bioregistry_key = PREFIX
     name = "Cancer Cell Line Encyclopedia Cell Line"
+    idspaces = {
+        "depmap": "https://depmap.org/portal/cell_line/",
+    }
 
     def __post_init__(self):
         self.data_version = VERSION

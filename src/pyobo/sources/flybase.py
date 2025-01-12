@@ -28,6 +28,9 @@ class FlyBaseGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     typedefs = [from_species, orthologous]
+    idspaces = {
+        "SO": "http://purl.obolibrary.org/obo/SO_",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

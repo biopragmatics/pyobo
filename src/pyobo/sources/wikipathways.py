@@ -47,6 +47,9 @@ class WikiPathwaysGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     typedefs = [from_species, has_participant]
+    idspaces = {
+        "NCBIGene": "https://www.ncbi.nlm.nih.gov/gene/",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

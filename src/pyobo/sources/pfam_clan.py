@@ -19,6 +19,9 @@ class PfamClanGetter(Obo):
 
     ontology = PREFIX
     bioversions_key = "pfam"
+    idspaces = {
+        "pfam": "https://www.ebi.ac.uk/interpro/entry/pfam/",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

@@ -28,6 +28,21 @@ class BiGGReactionGetter(Obo):
     idspaces = {
         PREFIX: "http://bigg.ucsd.edu/models/universal/reactions/",
         "bigg.model": "http://bigg.ucsd.edu/models/",
+        "metanetx.reaction": "",
+        "kegg.glycan": "",
+        "kegg.drug": "",
+        "kegg.reaction": "",
+        "kegg.compound": "",
+        "inchikey": "",
+        "eccode": "",
+        "reactome": "",
+        "biocyc": "",
+        "lipidmaps": "",
+        "hmdb": "",
+        "seed.compound": "",
+        "seed.reaction": "",
+        "rhea": "",
+        "chebi": "",
     }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

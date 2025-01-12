@@ -51,6 +51,7 @@ class BiGGCompartmentGetter(Obo):
     bioversions_key = "bigg"
     idspaces = {
         PREFIX: "http://bigg.ucsd.edu/compartments/",
+        "GO": "http://purl.obolibrary.org/obo/GO_",
     }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

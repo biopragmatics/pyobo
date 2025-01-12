@@ -20,6 +20,7 @@ class MiRBaseMatureGetter(Obo):
 
     ontology = PREFIX
     bioversions_key = "mirbase"
+    idspaces = {"mirbase": ""}
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

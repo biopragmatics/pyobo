@@ -31,6 +31,10 @@ class InterProGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     typedefs = [enables, has_member, has_category]
+    idspaces = {
+        "GO": "http://purl.obolibrary.org/obo/GO_",
+        "uniprot": "",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over InterPro terms."""

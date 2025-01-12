@@ -39,6 +39,9 @@ class ICD11Getter(Obo):
     ontology = PREFIX
     typedefs = [CODE_PROP]
     dynamic_version = True
+    idspaces = {
+        CODE_PREFIX: f"https://bioregistry.io/{CODE_PREFIX}:",  # nothing exists
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

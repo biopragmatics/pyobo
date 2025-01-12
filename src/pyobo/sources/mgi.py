@@ -36,6 +36,11 @@ class MGIGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     typedefs = [from_species, has_gene_product, transcribes_to, exact_match]
+    idspaces = {
+        "SO": "http://purl.obolibrary.org/obo/SO_",
+        "NCBIGene": "https://www.ncbi.nlm.nih.gov/gene/",
+        "ensembl": "http://rdf.ebi.ac.uk/resource/ensembl/",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

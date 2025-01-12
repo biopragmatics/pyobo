@@ -30,6 +30,11 @@ class PomBaseGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     typedefs = [from_species, has_gene_product, orthologous, CHROMOSOME]
+    idspaces = {
+        "SO": "http://purl.obolibrary.org/obo/SO_",
+        "hgnc": "",
+        "uniprot": "",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

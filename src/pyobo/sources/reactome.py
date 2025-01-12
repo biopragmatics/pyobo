@@ -31,7 +31,12 @@ class ReactomeGetter(Obo):
     """An ontology representation of the Reactome pathway database."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [from_species, has_participant]
+    typedefs = [from_species, has_participant, has_citation]
+    idspaces = {
+        "CHEBI": "http://purl.obolibrary.org/obo/CHEBI_",
+        "uniprot": "",
+        "uniprot.isoform": "",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

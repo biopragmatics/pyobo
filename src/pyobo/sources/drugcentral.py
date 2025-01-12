@@ -32,7 +32,30 @@ class DrugCentralGetter(Obo):
     """An ontology representation of the DrugCentral database."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [exact_match]
+    typedefs = [exact_match, has_inchi, has_smiles]
+    idspaces = {
+        "inchikey": "",
+        "chembl.compound": "https://www.ebi.ac.uk/chembl/entity/",
+        "pdb.ligand": "",
+        "unii": "",
+        "cas": "",
+        "CHEBI": "",
+        "ndfrt": "",
+        "mesh": "",
+        "pubchem.compound": "",
+        "vandf": "",
+        "kegg.drug": "",
+        "drugbank": "",
+        "drugbank.salt": "",
+        "rxnorm": "",
+        "umls": "",
+        "snomedct": "",
+        "inn": "",
+        "iuphar.ligand": "",
+        "nddf": "",
+        "vuid": "",
+        "mmsl": "",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

@@ -147,6 +147,31 @@ class ComplexPortalGetter(Obo):
 
     bioversions_key = ontology = PREFIX
     typedefs = [from_species, has_part]
+    idspaces = {
+        "reactome": "",
+        "uniprot": "",
+        "PR": "",
+        "rhea": "",
+        "MONDO": "",
+        "CHEBI": "",
+        "omim": "",
+        "HP": "",
+        "orphanet": "",
+        "doi": "",
+        "chembl.target": "",
+        "pdb": "",
+        "uniprot.chain": "",
+        "rnacentral": "",
+        "emdb": "",
+        "chembl": "",
+        "FlyBase": "",
+        "matrixdb": "",
+        "uniprot.isoform": "",
+        "eccode": "",
+        "humap": "",
+        "signor": "",
+        "intact": "",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

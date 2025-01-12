@@ -35,7 +35,11 @@ class HGNCGroupGetter(Obo):
     ontology = PREFIX
     bioversions_key = "hgnc"
     synonym_typedefs = [symbol_type]
-    typedefs = [from_species, enables]
+    typedefs = [from_species, enables, exact_match, has_citation]
+    idspaces = {
+        "SO": "http://purl.obolibrary.org/obo/SO_",
+        "GO": "http://purl.obolibrary.org/obo/GO_",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

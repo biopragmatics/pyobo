@@ -179,7 +179,7 @@ LOCUS_TYPE_TO_SO = {
 }
 
 IDSPACES = {
-    prefix: f"https://bioregistry.io/{prefix}:"
+    prefix: ""
     for prefix in {
         "rgd",
         "mgi",
@@ -191,6 +191,8 @@ IDSPACES = {
         "snornabase",
         "hgnc",
         "hgnc.genegroup",
+        "MGI",
+        "cgnc",
         "debio",
         "ensembl",
         "NCBIGene",
@@ -200,17 +202,16 @@ IDSPACES = {
         "ccds",
         "omim",
         "cosmic",
-        "merops",
         "orphanet",
         "pseudogene",
         "lncipedia",
         "refseq",
+        "iuphar.receptor",
+        "ena.embl",
+        "SO",
+        "lrg",
     }
 }
-IDSPACES.update(
-    NCBITaxon="http://purl.obolibrary.org/obo/NCBITaxon_",
-    SO="http://purl.obolibrary.org/obo/SO_",
-)
 
 
 class HGNCGetter(Obo):

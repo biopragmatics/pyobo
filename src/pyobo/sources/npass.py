@@ -26,6 +26,10 @@ class NPASSGetter(Obo):
     """An ontology representation of NPASS's chemical nomenclature."""
 
     ontology = bioversions_key = PREFIX
+    idspaces = {
+        "pubchem.compound": "",
+        "chembl.compound": "",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

@@ -41,6 +41,9 @@ class PfamGetter(Obo):
     """An ontology representation of Pfam's protein family nomenclature."""
 
     ontology = bioversions_key = PREFIX
+    idspaces = {
+        "pfam.clan": "https://www.ebi.ac.uk/interpro/set/pfam/",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

@@ -42,6 +42,8 @@ class GTDBGetter(Obo):
     typedefs = [has_taxonomy_rank]
     idspaces = {
         PREFIX: "https://gtdb.ecogenomic.org/tree?r=",
+        "TAXRANK": "http://purl.obolibrary.org/obo/TAXRANK_",
+        "NCBITaxon": "http://purl.obolibrary.org/obo/NCBITaxon_",
     }
     root_terms = [
         Reference(prefix=PREFIX, identifier="d__Archea", name="Archea"),

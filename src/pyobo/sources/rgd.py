@@ -74,6 +74,11 @@ class RGDGetter(Obo):
     bioversions_key = ontology = PREFIX
     typedefs = [from_species, transcribes_to, has_gene_product]
     synonym_typedefs = [old_name_type, old_symbol_type]
+    idspaces = {
+        "NCBIGene": "https://www.ncbi.nlm.nih.gov/gene/",
+        "ensembl": "http://rdf.ebi.ac.uk/resource/ensembl/",
+        "uniprot": " http://purl.uniprot.org/uniprot/",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

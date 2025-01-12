@@ -35,6 +35,15 @@ class MiRBaseGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     typedefs = [from_species, has_mature]
+    idspaces = {
+        "rfam": "https://rfam.org/family/",
+        "WormBase": "",
+        "mirbase.mature": "",
+        "NCBIGene": "",
+        "hgnc": "",
+        "MGI": "",
+        "asrp": "",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

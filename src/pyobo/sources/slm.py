@@ -45,6 +45,12 @@ class SLMGetter(Obo):
     ontology = bioversions_key = PREFIX
     typedefs = [exact_match, LEVEL, has_inchi, has_smiles]
     synonym_typedefs = [abbreviation_typedef]
+    idspaces = {
+        "CHEBI": "http://purl.obolibrary.org/obo/CHEBI_",
+        "inchikey": "https://bioregistry.io/inchikey:",
+        "lipidmaps": "",
+        "hmdb": "",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

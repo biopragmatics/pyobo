@@ -46,6 +46,18 @@ class RheaGetter(Obo):
         has_participant,
         reaction_enabled_by_molecular_function,
     ]
+    idspaces = {
+        "CHEBI": "http://purl.obolibrary.org/obo/CHEBI_",
+        "GO": "http://purl.obolibrary.org/obo/GO_",
+        "eccode": "",
+        "kegg.reaction": "",
+        "macie": "",
+        "metacyc": "",
+        "uniprot": "",
+        "ecocyc": "",
+        "reactome": "",
+        "metacyc.compound": "https://bioregistry.io/metacyc.compound:",
+    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
