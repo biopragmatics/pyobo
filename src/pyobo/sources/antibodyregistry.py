@@ -1,4 +1,7 @@
-"""Converter for the Antibody Registry."""
+"""Converter for the Antibody Registry.
+
+TODO use API https://www.antibodyregistry.org/api/antibodies?page=1&size=100
+"""
 
 import logging
 from collections.abc import Iterable, Mapping
