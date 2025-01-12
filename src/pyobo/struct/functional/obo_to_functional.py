@@ -34,9 +34,16 @@ __all__ = [
 
 def get_ofn_from_obo(obo_ontology: Obo) -> Document:
     """Convert an ontology."""
+    prefix = obo_ontology.ontology
+    base = f"https://w3id.org/biopragmatics/resources/{prefix}"
+    iri = f"{base}/{prefix}.ofn"
+    if obo_ontology.data_version:
+        version_iri = f"{base}/{obo_ontology.data_version}/{prefix}.ofn"
+    else:
+        version_iri = None
     ofn_ontology = Ontology(
-        iri=obo_ontology.ontology,
-        # TODO is there a way to generate a version IRI?
+        iri=iri,
+        version_iri=version_iri,
         annotations=list(get_ontology_annotations(obo_ontology)),
         axioms=list(get_ontology_axioms(obo_ontology)),
     )
