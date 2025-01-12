@@ -114,7 +114,7 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
     else:
         yield f.Declaration(s, type="NamedIndividual")
         for parent in term.parents:
-            yield f.ClassAssertion(s, parent.preferred_curie)
+            yield f.ClassAssertion(parent.preferred_curie, s)
     # 2
     if term.is_anonymous is not None:
         yield m.IsAnonymousMacro(s, term.is_anonymous)
