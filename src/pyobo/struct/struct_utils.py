@@ -606,10 +606,6 @@ class Stanza:
         """Append a citation."""
         return self.annotate_object(v.has_citation, reference)
 
-    def infer_prefix_map(self) -> dict[str, str]:
-        """Get all prefixes used by this stanza."""
-        raise NotImplementedError
-
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
 
