@@ -49,6 +49,7 @@ from .struct_utils import (
     UnionOfHint,
     _chain_tag,
     _ensure_ref,
+    _get_prefixes_from_annotations,
     _tag_property_targets,
 )
 from .utils import _boolean_tag, obo_escape_slim
@@ -57,6 +58,7 @@ from ..constants import (
     BUILD_SUBDIRECTORY_NAME,
     CACHE_SUBDIRECTORY_NAME,
     DATE_FORMAT,
+    DEFAULT_PREFIX_MAP,
     NCBITAXON_PREFIX,
     RELATION_ID,
     RELATION_PREFIX,
@@ -118,6 +120,17 @@ class Synonym:
     def __lt__(self, other: Synonym) -> bool:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
+
+    def _get_prefixes(self) -> set[str]:
+        """Get all prefixes used by the typedef."""
+        rv: set[str] = set()
+        if self.specificity is not None:
+            rv.add("oboInOwl")
+        if self.type is not None:
+            rv.add(self.type.prefix)
+        rv.update(p.prefix for p in self.provenance)
+        rv.update(_get_prefixes_from_annotations(self.annotations))
+        return rv
 
     def _sort_key(self) -> tuple[str, _cv.SynonymScope, str]:
         return (
@@ -181,6 +194,13 @@ class SynonymTypeDef(Referenced):
         rv = f'{rv} "{name}"'
         if self.specificity:
             rv = f"{rv} {self.specificity}"
+        return rv
+
+    def _get_prefixes(self) -> set[str]:
+        """Get all prefixes used by the typedef."""
+        rv: set[str] = {self.reference.prefix}
+        if self.specificity is not None:
+            rv.add("oboInOwl")
         return rv
 
 
@@ -587,12 +607,48 @@ class Obo:
         if self.auto_generated_by is None:
             self.auto_generated_by = f"PyOBO v{get_pyobo_version(with_git_hash=True)} on {datetime.datetime.now().isoformat()}"  # type:ignore
 
-        if self.idspaces is None:
-            self.idspaces = {}
-        self.idspaces.update(
-            dcterms="http://purl.org/dc/terms/",
-            skos="http://www.w3.org/2004/02/skos/core#",
+    def _get_clean_idspaces(self) -> dict[str, str]:
+        """Get normalized idspace dictionary."""
+        rv = dict(
+            ChainMap(
+                # Add reasonable defaults, most of which are
+                # mandated by the OWL spec anyway (except skos?)
+                DEFAULT_PREFIX_MAP,
+                dict(self.idspaces or {}),
+                # automatically detect all prefixes in reference in the ontology,
+                # then look up Bioregistry-approved URI prefixes
+                self._infer_prefix_map(),
+            )
         )
+        return rv
+
+    def _infer_prefix_map(self) -> dict[str, str]:
+        """Get a prefix map including all prefixes used in the ontology."""
+        rv = {}
+        for prefix in self._get_prefixes():
+            uri_prefix = bioregistry.get_uri_prefix(prefix)
+            if uri_prefix is None:
+                # This allows us an escape hatch, since some
+                # prefixes don't have an associated URI prefix
+                uri_prefix = f"https://bioregistry.io/{prefix}:"
+            pp = bioregistry.get_preferred_prefix(prefix) or prefix
+            rv[pp] = uri_prefix
+        return rv
+
+    def _get_prefixes(self) -> set[str]:
+        """Get all prefixes used by the ontology."""
+        prefixes: set[str] = set(DEFAULT_PREFIX_MAP)
+        for term in self:
+            prefixes.update(term._get_prefixes())
+        for typedef in self.typedefs or []:
+            prefixes.update(typedef._get_prefixes())
+        for synonym_typedef in self.synonym_typedefs or []:
+            prefixes.update(synonym_typedef._get_prefixes())
+        prefixes.update(subset.prefix for subset, _ in self.subsetdefs or [])
+        # _iterate_property_pairs covers metadata, root terms,
+        # and properties in self.property_values
+        prefixes.update(_get_prefixes_from_annotations(self._iterate_property_pairs() or []))
+        return prefixes
 
     def _get_version(self) -> str | None:
         if self.bioversions_key:
@@ -741,7 +797,13 @@ class Obo:
         # 9 TODO default-namespace
         # 10 TODO namespace-id-rule
         # 11
-        for prefix, url in sorted((self.idspaces or {}).items()):
+        for prefix, url in sorted(self._get_clean_idspaces().items()):
+            if prefix in DEFAULT_PREFIX_MAP:
+                # we don't need to write out the 4 default prefixes from
+                # table 2 in https://www.w3.org/TR/owl2-syntax/#IRIs since
+                # they're considered to always be builtin
+                continue
+
             yv = f"idspace: {prefix} {url}"
             if _yv_name := bioregistry.get_name(prefix):
                 yv += f' "{_yv_name}"'
@@ -788,24 +850,24 @@ class Obo:
                     end = reference_escape(value, ontology_prefix=self.ontology)
             yield f"property_value: {reference_escape(predicate, ontology_prefix=self.ontology)} {end}"
 
-    def _iterate_property_pairs(self) -> Iterable[tuple[Reference, Reference | OBOLiteral]]:
+    def _iterate_property_pairs(self) -> Iterable[Annotation]:
         # Title
         if self.name:
-            yield v.has_title, OBOLiteral.string(self.name)
+            yield Annotation(v.has_title, OBOLiteral.string(self.name))
 
         # License
         # TODO add SPDX to idspaces and use as a CURIE?
         if license_spdx_id := bioregistry.get_license(self.ontology):
-            yield v.has_license, OBOLiteral.string(license_spdx_id)
+            yield Annotation(v.has_license, OBOLiteral.string(license_spdx_id))
 
         # Description
         if description := bioregistry.get_description(self.ontology):
             description = obo_escape_slim(description.strip())
-            yield v.has_description, OBOLiteral.string(description.strip())
+            yield Annotation(v.has_description, OBOLiteral.string(description.strip()))
 
         # Root terms
         for root_term in self.root_terms or []:
-            yield v.has_ontology_root_term, root_term
+            yield Annotation(v.has_ontology_root_term, root_term)
 
         # Extras
         if self.property_values:
@@ -1798,6 +1860,22 @@ class TypeDef(Referenced, Stanza):
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass
         return hash((self.__class__, self.prefix, self.identifier))
+
+    def _get_prefixes(self) -> set[str]:
+        rv = super()._get_prefixes()
+        if self.domain:
+            rv.update(self.domain.prefix)
+        if self.range:
+            rv.update(self.range.prefix)
+        for chain in self.holds_over_chain:
+            rv.update(a.prefix for a in chain)
+        if self.inverse:
+            rv.update(self.inverse.prefix)
+        rv.update(a.prefix for a in self.transitive_over)
+        rv.update(a.prefix for a in self.disjoint_over)
+        for chain in self.equivalent_to_chain:
+            rv.update(a.prefix for a in chain)
+        return rv
 
     def iterate_obo_lines(
         self,

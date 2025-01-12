@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections import ChainMap
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, cast
 
@@ -15,7 +14,6 @@ from pyobo.struct import vocabulary as pv
 from pyobo.struct.functional import dsl as f
 from pyobo.struct.functional import macros as m
 from pyobo.struct.functional.ontology import Document, Ontology
-from pyobo.struct.functional.utils import DEFAULT_PREFIX_MAP
 from pyobo.struct.reference import OBOLiteral, Reference
 
 if TYPE_CHECKING:
@@ -53,12 +51,7 @@ def get_ofn_from_obo(
     )
     document = Document(
         ofn_ontology,
-        dict(
-            ChainMap(
-                DEFAULT_PREFIX_MAP,
-                dict(obo_ontology.idspaces or {}),
-            )
-        ),
+        obo_ontology._get_clean_idspaces(),
     )
     return document
 

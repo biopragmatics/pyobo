@@ -7,6 +7,7 @@ from textwrap import dedent
 from pyobo import default_reference
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import Obo, make_ad_hoc_ontology
+from pyobo.struct.struct_utils import Annotation
 from pyobo.struct.typedef import has_license
 
 
@@ -64,6 +65,7 @@ class TestOBOHeader(unittest.TestCase):
             """\
             format-version: 1.4
             subsetdef: HELLO "test"
+            idspace: obo http://purl.obolibrary.org/obo/ "Open Biological and Biomedical Ontologies"
             ontology: xxx
             """,
             ontology,
@@ -77,6 +79,7 @@ class TestOBOHeader(unittest.TestCase):
             """\
             format-version: 1.4
             subsetdef: obo:go#HELLO "test"
+            idspace: obo http://purl.obolibrary.org/obo/ "Open Biological and Biomedical Ontologies"
             ontology: xxx
             """,
             ontology,
@@ -145,6 +148,8 @@ class TestOBOHeader(unittest.TestCase):
         self.assert_obo_lines(
             """\
             format-version: 1.4
+            idspace: IAO http://purl.obolibrary.org/obo/IAO_ "Information Artifact Ontology"
+            idspace: obo http://purl.obolibrary.org/obo/ "Open Biological and Biomedical Ontologies"
             ontology: xxx
             property_value: IAO:0000700 ROOT1
             """,
@@ -159,6 +164,7 @@ class TestOBOHeader(unittest.TestCase):
         self.assert_obo_lines(
             """\
             format-version: 1.4
+            idspace: dcterms http://purl.org/dc/terms/ "Dublin Core Metadata Initiative Terms"
             ontology: go
             property_value: dcterms:license "CC-BY-4.0" xsd:string
             property_value: dcterms:description "The Gene Ontology project provides a controlled vocabulary to describe gene and gene product attributes in any organism." xsd:string
@@ -171,12 +177,13 @@ class TestOBOHeader(unittest.TestCase):
         ontology = make_ad_hoc_ontology(
             _ontology="xxx",
             _property_values=[
-                (has_license.reference, OBOLiteral.string("CC0")),
+                Annotation(has_license.reference, OBOLiteral.string("CC0")),
             ],
         )
         self.assert_obo_lines(
             """\
             format-version: 1.4
+            idspace: dcterms http://purl.org/dc/terms/ "Dublin Core Metadata Initiative Terms"
             ontology: xxx
             property_value: dcterms:license "CC0" xsd:string
             """,

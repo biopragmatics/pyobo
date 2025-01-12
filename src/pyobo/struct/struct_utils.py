@@ -92,6 +92,40 @@ class Stanza:
     #: A description of the entity
     definition: str | None = None
 
+    def _get_prefixes(self) -> set[str]:
+        """Get all prefixes used by the typedef."""
+        rv: set[str] = {self.reference.prefix}
+        rv.update(a.prefix for a in self.subsets)
+        for synonym in self.synonyms:
+            rv.update(synonym._get_prefixes())
+        rv.update(a.prefix for a in self.xrefs)
+        for predicate, values in self.properties.items():
+            rv.add(predicate.prefix)
+            for value in values:
+                if isinstance(value, Reference):
+                    rv.add(value.prefix)
+        rv.update(a.prefix for a in self.parents)
+        for intersection_of in self.intersection_of:
+            match intersection_of:
+                case Reference():
+                    rv.add(intersection_of.prefix)
+                case (intersection_predicate, intersection_value):
+                    rv.add(intersection_predicate.prefix)
+                    rv.add(intersection_value.prefix)
+
+        rv.update(a.prefix for a in self.union_of)
+        rv.update(a.prefix for a in self.equivalent_to)
+        rv.update(a.prefix for a in self.disjoint_from)
+        for rel_predicate, rel_values in self.relationships.items():
+            rv.add(rel_predicate.prefix)
+            rv.update(a.prefix for a in rel_values)
+        for p_o, annotations_ in self._axioms.items():
+            rv.add(p_o.predicate.prefix)
+            if isinstance(p_o.value, Reference):
+                rv.add(p_o.value.prefix)
+            rv.update(_get_prefixes_from_annotations(annotations_))
+        return rv
+
     def append_relationship(
         self,
         typedef: ReferenceHint,
@@ -728,3 +762,12 @@ class MappingContext(BaseModel):
     model_config = ConfigDict(
         frozen=True,  # Makes the model immutable and hashable
     )
+
+
+def _get_prefixes_from_annotations(annotations: Iterable[Annotation]) -> set[str]:
+    prefixes: set[str] = set()
+    for left, right in annotations:
+        prefixes.add(left.prefix)
+        if isinstance(right, Reference):
+            prefixes.add(right.prefix)
+    return prefixes
