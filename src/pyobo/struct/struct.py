@@ -99,9 +99,13 @@ FORMAT_VERSION = "1.4"
 DEFAULT_PREFIXES = (
     "rdfs",
     "rdf",
+    "xsd",
     "dcterms",
     "oboInOwl",
     "owl",
+    # not required by OWL, but still important
+    "skos",
+    "obo",
 )
 
 
@@ -617,60 +621,19 @@ class Obo:
         if self.idspaces is None:
             self.idspaces = {}
 
-        if self.ontology not in self.idspaces:
-            uri_prefix = bioregistry.get_uri_prefix(self.ontology)
-            if uri_prefix is None:
-                raise ValueError(f"can't look up URI prefix for {self.ontology}")
-            prefix = bioregistry.get_preferred_prefix(self.ontology) or self.ontology
-            self.idspaces[prefix] = uri_prefix
-
-        for prefix, uri_prefix in list(self.idspaces.items()):
-            norm_k = bioregistry.normalize_prefix(prefix)
-            if norm_k is None:
-                raise ValueError(
-                    f"{self.ontology} has invalid prefix defined in idspaces: {prefix}"
-                )
-
-            # Replace the pre-existing one with the preferred one
-            pref_k = bioregistry.get_preferred_prefix(norm_k) or norm_k
-            if norm_k != prefix:
-                del self.idspaces[prefix]
-                prefix = pref_k
-                self.idspaces[prefix] = uri_prefix
-
-            # automatically look up
-            if not uri_prefix:
-                uri_prefix = bioregistry.get_uri_prefix(prefix)
-                if uri_prefix is None:
-                    logger.warning(
-                        "[%s] no URI prefix available for %s, auto-assigning from Bioregistry",
-                        self.ontology,
-                        prefix,
-                    )
-                    uri_prefix = f"https://bioregistry.io/{prefix}:"
-                self.idspaces[prefix] = uri_prefix
-
+        # Add reasonable defaults, most of which are
+        # mandated by the OWL spec anyway (except skos?)
         self.idspaces.update(
+            rdfs="http://www.w3.org/2000/01/rdf-schema#",
+            rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+            xsd="http://www.w3.org/2001/XMLSchema#",
             dcterms="http://purl.org/dc/terms/",
             oboInOwl="http://www.geneontology.org/formats/oboInOwl#",
+            owl="http://www.w3.org/2002/07/owl#",
+            # not required by OWL, but still important
             skos="http://www.w3.org/2004/02/skos/core#",
-            orcid="https://orcid.org/",
-            biolink="https://w3id.org/biolink/vocab/",
-            NCBITaxon="http://purl.obolibrary.org/obo/NCBITaxon_",
-            RO="http://purl.obolibrary.org/obo/RO_",
-            IAO="http://purl.obolibrary.org/obo/IAO_",
-            BFO="http://purl.obolibrary.org/obo/BFO_",
-            OMO="http://purl.obolibrary.org/obo/OMO_",
             obo="http://purl.obolibrary.org/obo/",
-            pubmed="http://rdf.ncbi.nlm.nih.gov/pubchem/reference/",
-            debio="https://biopragmatics.github.io/debio/",
         )
-
-        for prefix, uri_prefix in self.idspaces.items():
-            if " " in prefix:
-                raise ValueError(f"invalid CURIE prefix: {prefix}")
-            if " " in uri_prefix:
-                raise ValueError(f"invalid URI prefix: {uri_prefix}")
 
     def infer_prefix_map(self) -> dict[str, str]:
         """Get a prefix map including all prefixes used in the ontology."""
@@ -678,6 +641,8 @@ class Obo:
         for prefix in self.get_prefixes():
             uri_prefix = bioregistry.get_uri_prefix(prefix)
             if uri_prefix is None:
+                # This allows us an escape hatch, since some
+                # prefixes don't have an associated URI prefix
                 uri_prefix = f"https://bioregistry.io/{prefix}:"
             pp = bioregistry.get_preferred_prefix(prefix) or prefix
             rv[pp] = uri_prefix
