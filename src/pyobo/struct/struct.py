@@ -27,8 +27,6 @@ from more_click import force_option, verbose_option
 from tqdm.auto import tqdm
 from typing_extensions import Self
 
-from pyobo.constants import DEFAULT_PREFIX_MAP
-
 from . import vocabulary as v
 from .reference import (
     OBOLiteral,
@@ -60,6 +58,7 @@ from ..constants import (
     BUILD_SUBDIRECTORY_NAME,
     CACHE_SUBDIRECTORY_NAME,
     DATE_FORMAT,
+    DEFAULT_PREFIX_MAP,
     NCBITAXON_PREFIX,
     RELATION_ID,
     RELATION_PREFIX,
@@ -610,7 +609,7 @@ class Obo:
 
     def get_norm_idspaces(self) -> dict[str, str]:
         """Get normalized idspace dictionary."""
-        return dict(
+        rv = dict(
             ChainMap(
                 # Add reasonable defaults, most of which are
                 # mandated by the OWL spec anyway (except skos?)
@@ -621,6 +620,7 @@ class Obo:
                 self._infer_prefix_map(),
             )
         )
+        return rv
 
     def _infer_prefix_map(self) -> dict[str, str]:
         """Get a prefix map including all prefixes used in the ontology."""
@@ -644,9 +644,10 @@ class Obo:
             prefixes.update(typedef._get_prefixes())
         for synonym_typedef in self.synonym_typedefs or []:
             prefixes.update(synonym_typedef._get_prefixes())
-        prefixes.update(root.prefix for root in self.root_terms or [])
         prefixes.update(subset.prefix for subset, _ in self.subsetdefs or [])
-        prefixes.update(_get_prefixes_from_annotations(self.property_values or []))
+        # _iterate_property_pairs covers metadata, root terms,
+        # and properties in self.property_values
+        prefixes.update(_get_prefixes_from_annotations(self._iterate_property_pairs() or []))
         return prefixes
 
     def _get_version(self) -> str | None:
@@ -849,24 +850,24 @@ class Obo:
                     end = reference_escape(value, ontology_prefix=self.ontology)
             yield f"property_value: {reference_escape(predicate, ontology_prefix=self.ontology)} {end}"
 
-    def _iterate_property_pairs(self) -> Iterable[tuple[Reference, Reference | OBOLiteral]]:
+    def _iterate_property_pairs(self) -> Iterable[Annotation]:
         # Title
         if self.name:
-            yield v.has_title, OBOLiteral.string(self.name)
+            yield Annotation(v.has_title, OBOLiteral.string(self.name))
 
         # License
         # TODO add SPDX to idspaces and use as a CURIE?
         if license_spdx_id := bioregistry.get_license(self.ontology):
-            yield v.has_license, OBOLiteral.string(license_spdx_id)
+            yield Annotation(v.has_license, OBOLiteral.string(license_spdx_id))
 
         # Description
         if description := bioregistry.get_description(self.ontology):
             description = obo_escape_slim(description.strip())
-            yield v.has_description, OBOLiteral.string(description.strip())
+            yield Annotation(v.has_description, OBOLiteral.string(description.strip()))
 
         # Root terms
         for root_term in self.root_terms or []:
-            yield v.has_ontology_root_term, root_term
+            yield Annotation(v.has_ontology_root_term, root_term)
 
         # Extras
         if self.property_values:

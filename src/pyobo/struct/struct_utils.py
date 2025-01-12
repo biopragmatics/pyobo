@@ -764,10 +764,10 @@ class MappingContext(BaseModel):
     )
 
 
-def _get_prefixes_from_annotations(annotations: list[Annotation]) -> set[str]:
+def _get_prefixes_from_annotations(annotations: Iterable[Annotation]) -> set[str]:
     prefixes: set[str] = set()
-    for annotation in annotations:
-        prefixes.add(annotation.predicate.prefix)
-        if isinstance(annotation.value, Reference):
-            prefixes.add(annotation.value.prefix)
+    for left, right in annotations:
+        prefixes.add(left.prefix)
+        if isinstance(right, Reference):
+            prefixes.add(right.prefix)
     return prefixes
