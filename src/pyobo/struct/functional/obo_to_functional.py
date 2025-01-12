@@ -32,11 +32,22 @@ __all__ = [
 ]
 
 
-def get_ofn_from_obo(obo_ontology: Obo) -> Document:
+_BASE = "https://w3id.org/biopragmatics/resources"
+
+
+def get_ofn_from_obo(
+    obo_ontology: Obo, *, iri: str | None = None, version_iri: str | None = None
+) -> Document:
     """Convert an ontology."""
+    prefix = obo_ontology.ontology
+    base = f"{_BASE}/{prefix}"
+    if iri is None:
+        iri = f"{base}/{prefix}.ofn"
+    if version_iri is None and obo_ontology.data_version:
+        version_iri = f"{base}/{obo_ontology.data_version}/{prefix}.ofn"
     ofn_ontology = Ontology(
-        iri=obo_ontology.ontology,
-        # TODO is there a way to generate a version IRI?
+        iri=iri,
+        version_iri=version_iri,
         annotations=list(get_ontology_annotations(obo_ontology)),
         axioms=list(get_ontology_axioms(obo_ontology)),
     )
@@ -91,6 +102,8 @@ def get_ontology_annotations(obo_ontology: Obo) -> Iterable[f.Annotation]:
     """Get annotations from the ontology."""
     for predicate, value in obo_ontology._iterate_property_pairs():
         yield f.Annotation(predicate, value)
+    if obo_ontology.data_version:
+        yield f.Annotation(pv.version_info, OBOLiteral.string(obo_ontology.data_version))
 
 
 def _oboliteral_to_literal(obo_literal) -> rdflib.Literal:
