@@ -36,7 +36,7 @@ _BASE = "https://w3id.org/biopragmatics/resources"
 
 
 def get_ofn_from_obo(
-    obo_ontology: Obo, iri: str | None = None, version_iri: str | None = None
+    obo_ontology: Obo, *, iri: str | None = None, version_iri: str | None = None
 ) -> Document:
     """Convert an ontology."""
     prefix = obo_ontology.ontology
