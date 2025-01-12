@@ -196,7 +196,7 @@ class TestTerm(unittest.TestCase):
             """,
             ofn="""\
                 Declaration(NamedIndividual(obo:go#example))
-                ClassAssertion(obo:go#example GO:0050069)
+                ClassAssertion(GO:0050069 obo:go#example)
             """,
             # iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
         )
