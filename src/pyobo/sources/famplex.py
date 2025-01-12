@@ -9,7 +9,7 @@ from pystow.utils import get_commit
 
 from pyobo import get_name_id_mapping
 from pyobo.struct import Obo, Reference, Term
-from pyobo.struct.typedef import has_member, has_part, is_a, part_of
+from pyobo.struct.typedef import has_citation, has_member, has_part, is_a, part_of
 from pyobo.utils.io import multidict
 from pyobo.utils.path import ensure_df
 
@@ -23,7 +23,7 @@ class FamPlexGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
-    typedefs = [has_member, has_part, is_a, part_of]
+    typedefs = [has_member, has_part, is_a, part_of, has_citation]
 
     def _get_version(self) -> str:
         return get_commit("sorgerlab", "famplex")
