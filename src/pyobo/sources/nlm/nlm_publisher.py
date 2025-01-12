@@ -3,7 +3,7 @@
 from collections.abc import Iterable
 
 from pyobo.sources.nlm.utils import PREFIX_CATALOG, PREFIX_PUBLISHER, PUBLISHER_TERM, get_publishers
-from pyobo.struct import Obo, Term
+from pyobo.struct import CHARLIE_TERM, HUMAN_TERM, Obo, Term
 
 __all__ = [
     "NLMPublisherGetter",
@@ -29,6 +29,8 @@ class NLMPublisherGetter(Obo):
         "issn": "https://portal.issn.org/resource/ISSN/",
         "skos": "http://www.w3.org/2004/02/skos/core#",
         "uniprot.core": "http://purl.uniprot.org/core/",
+        "orcid": "https://orcid.org/",
+        "NCBITaxon": "http://purl.obolibrary.org/obo/NCBITaxon_",
     }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -39,6 +41,8 @@ class NLMPublisherGetter(Obo):
 def get_terms(*, force: bool = False) -> Iterable[Term]:
     """Get NLM publisher terms."""
     yield PUBLISHER_TERM
+    yield CHARLIE_TERM
+    yield HUMAN_TERM
 
     journal_id_to_publisher_key = get_publishers(force=force)
     yield from sorted(set(journal_id_to_publisher_key.values()))

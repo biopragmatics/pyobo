@@ -3,8 +3,11 @@
 from collections.abc import Iterable
 from xml.etree import ElementTree
 
+from tqdm import tqdm
+
 from pyobo import Reference, Term, TypeDef, default_reference, ensure_path
-from pyobo.struct.typedef import has_end_date, has_start_date
+from pyobo.struct.struct import CHARLIE_TERM
+from pyobo.struct.typedef import has_contributor, has_end_date, has_start_date
 from pyobo.utils.path import ensure_df
 
 PREFIX_CATALOG = "nlm"
@@ -26,12 +29,16 @@ JOURNAL_TERM = (
     .append_exact_match(Reference(prefix="MI", identifier="0885"))
     .append_exact_match(Reference(prefix="bibo", identifier="Journal"))
     .append_exact_match(Reference(prefix="uniprot.core", identifier="Journal"))
+    .annotate_object(has_contributor, CHARLIE_TERM)
+    .append_comment("injected by PyOBO source")
 )
 PUBLISHER_TERM = (
     Term(reference=default_reference(PREFIX_CATALOG, "publisher", name="publisher"))
     .append_exact_match(Reference(prefix="biolink", identifier="publisher"))
     .append_exact_match(Reference(prefix="schema", identifier="publisher"))
     .append_exact_match(Reference(prefix="uniprot.core", identifier="publisher"))
+    .annotate_object(has_contributor, CHARLIE_TERM)
+    .append_comment("injected by PyOBO source")
 )
 
 
@@ -83,9 +90,15 @@ def _process_journal(element, journal_id_to_publisher_key: dict[str, Term]) -> T
         #  to determine a "canonical" one
         term.append_xref(Reference(prefix="issn", identifier=issn))
     if start_year := element.findtext("StartYear"):
-        term.annotate_year(has_start_date, start_year)
+        if len(start_year) != 4:
+            tqdm.write(f"[{term.curie}] invalid start year: {start_year}")
+        else:
+            term.annotate_year(has_start_date, start_year)
     if end_year := element.findtext("EndYear"):
-        term.annotate_year(has_end_date, end_year)
+        if len(end_year) != 4:
+            tqdm.write(f"[{term.curie}] invalid end year: {end_year}")
+        else:
+            term.annotate_year(has_end_date, end_year)
     # FIXME this whole thing needs reinvestigating
     if publisher_reference := journal_id_to_publisher_key.get(term.identifier):
         term.annotate_object(PUBLISHED_IN, publisher_reference.reference)

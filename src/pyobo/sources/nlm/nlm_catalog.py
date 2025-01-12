@@ -11,7 +11,7 @@ from pyobo.sources.nlm.utils import (
     get_journals,
     get_publishers,
 )
-from pyobo.struct import Obo, Term
+from pyobo.struct import CHARLIE_TERM, HUMAN_TERM, Obo, Term
 from pyobo.struct.typedef import exact_match, has_end_date, has_start_date
 
 __all__ = [
@@ -39,6 +39,9 @@ class NLMCatalogGetter(Obo):
         "issn": "https://portal.issn.org/resource/ISSN/",
         "skos": "http://www.w3.org/2004/02/skos/core#",
         "uniprot.core": "http://purl.uniprot.org/core/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "orcid": "https://orcid.org/",
+        "NCBITaxon": "http://purl.obolibrary.org/obo/NCBITaxon_",
     }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -50,6 +53,8 @@ def get_terms(*, force: bool = False) -> Iterable[Term]:
     """Get NLM catalog terms."""
     yield JOURNAL_TERM
     yield PUBLISHER_TERM
+    yield CHARLIE_TERM
+    yield HUMAN_TERM
 
     journal_id_to_publisher_key = get_publishers(force=force)
     yield from sorted(set(journal_id_to_publisher_key.values()))
