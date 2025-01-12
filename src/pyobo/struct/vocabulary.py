@@ -46,6 +46,7 @@ equivalent_property = Reference(
     prefix="owl", identifier="equivalentProperty", name="equivalent property"
 )
 owl_same_as = Reference(prefix="owl", identifier="sameAs", name="same as")
+version_info = Reference(prefix="owl", identifier="versionInfo", name="has version")
 term_replaced_by = Reference(prefix="IAO", identifier="0100001", name="term replaced by")
 alternative_term = Reference(prefix="IAO", identifier="0000118", name="alternative term")
 has_ontology_root_term = Reference(

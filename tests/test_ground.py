@@ -29,10 +29,8 @@ class TestGround(unittest.TestCase):
         """Test grounding a ChEBI entry by name and synonym."""
         for query in ("Fusilade II", "fluazifop-P-butyl"):
             with self.subTest(query=query), mock_id_name_mapping, mock_id_synonyms_mapping:
-                prefix, identifier, name = pyobo.ground("chebi", query)
-                self.assertIsNotNone(prefix)
-                self.assertIsNotNone(identifier)
-                self.assertIsNotNone(name)
-                self.assertEqual("chebi", prefix)
-                self.assertEqual("132964", identifier)
-                self.assertEqual("fluazifop-P-butyl", name)
+                result = pyobo.ground("chebi", query)
+                self.assertIsNotNone(result)
+                self.assertEqual("chebi", result.prefix)
+                self.assertEqual("132964", result.identifier)
+                self.assertEqual("fluazifop-P-butyl", result.name)

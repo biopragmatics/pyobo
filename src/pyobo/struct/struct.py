@@ -727,10 +727,10 @@ class Obo:
         path.write_text(graph.model_dump_json(indent=2, exclude_none=True, exclude_unset=True))
 
     @classmethod
-    def cli(cls, *, default_rewrite: bool = False) -> Any:
+    def cli(cls, *args, default_rewrite: bool = False) -> Any:
         """Run the CLI for this class."""
         cli = cls.get_cls_cli(default_rewrite=default_rewrite)
-        return cli()
+        return cli(*args)
 
     @classmethod
     def get_cls_cli(cls, *, default_rewrite: bool = False) -> click.Command:
@@ -1059,35 +1059,8 @@ class Obo:
     def _edges_path(self) -> Path:
         return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.edges.tsv")
 
-    def write_default(
-        self,
-        use_tqdm: bool = False,
-        force: bool = False,
-        write_obo: bool = False,
-        write_obonet: bool = False,
-        write_obograph: bool = False,
-        write_owl: bool = False,
-        write_ofn: bool = False,
-        write_ttl: bool = False,
-        write_nodes: bool = True,
-        write_edges: bool = True,
-        obograph_use_internal: bool = False,
-    ) -> None:
-        """Write the OBO to the default path."""
-        metadata = self.get_metadata()
-        for path in (self._root_metadata_path, self._versioned_metadata_path):
-            logger.debug("[%s v%s] caching metadata to %s", self.ontology, self.data_version, path)
-            with path.open("w") as file:
-                json.dump(metadata, file, indent=2)
-
-        logger.debug(
-            "[%s v%s] caching typedefs to %s", self.ontology, self.data_version, self._typedefs_path
-        )
-        typedef_df: pd.DataFrame = self.get_typedef_df()
-        typedef_df.sort_values(list(typedef_df.columns), inplace=True)
-        typedef_df.to_csv(self._typedefs_path, sep="\t", index=False)
-
-        for label, path, header, fn in [
+    def _get_cache_config(self) -> list[tuple[str, Path, Sequence[str], Callable]]:
+        return [
             ("names", self._names_path, [f"{self.ontology}_id", "name"], self.iterate_id_name),
             (
                 "definitions",
@@ -1111,36 +1084,78 @@ class Obo:
             ("mappings", self._mappings_path, SSSOM_DF_COLUMNS, self.iterate_mapping_rows),
             ("relations", self._relations_path, self.relations_header, self.iter_relation_rows),
             ("edges", self._edges_path, self.edges_header, self.iterate_edge_rows),
-            ("properties", self._properties_path, self.properties_header, self.iter_property_rows),
-        ]:
-            if path.exists() and not force:
-                continue
-            logger.debug("[%s v%s] caching %s to %s", self.ontology, self.data_version, label, path)
-            write_iterable_tsv(
-                path=path,
-                header=header,
-                it=fn(),  # type:ignore
-            )
+            (
+                "properties",
+                self._properties_path,
+                self.properties_header,
+                self.iter_property_rows,
+            ),
+        ]
 
-        typedefs = self._index_typedefs()
-        for relation in (v.is_a, v.has_part, v.part_of, v.from_species, v.orthologous):
-            if relation is not v.is_a and relation.pair not in typedefs:
-                continue
-            relations_path = self._cache("relations", name=f"{relation.curie}.tsv")
-            if relations_path.exists() and not force:
-                continue
+    def write_default(
+        self,
+        use_tqdm: bool = False,
+        force: bool = False,
+        write_obo: bool = False,
+        write_obonet: bool = False,
+        write_obograph: bool = False,
+        write_owl: bool = False,
+        write_ofn: bool = False,
+        write_ttl: bool = False,
+        write_nodes: bool = True,
+        write_edges: bool = True,
+        obograph_use_internal: bool = False,
+        write_cache: bool = True,
+    ) -> None:
+        """Write the OBO to the default path."""
+        metadata = self.get_metadata()
+        for path in (self._root_metadata_path, self._versioned_metadata_path):
+            logger.debug("[%s v%s] caching metadata to %s", self.ontology, self.data_version, path)
+            with path.open("w") as file:
+                json.dump(metadata, file, indent=2)
+
+        if write_cache:
             logger.debug(
-                "[%s v%s] caching relation %s ! %s",
+                "[%s v%s] caching typedefs to %s",
                 self.ontology,
                 self.data_version,
-                relation.curie,
-                relation.name,
+                self._typedefs_path,
             )
-            relation_df = self.get_filtered_relations_df(relation)
-            if not len(relation_df.index):
-                continue
-            relation_df.sort_values(list(relation_df.columns), inplace=True)
-            relation_df.to_csv(relations_path, sep="\t", index=False)
+            typedef_df: pd.DataFrame = self.get_typedef_df()
+            typedef_df.sort_values(list(typedef_df.columns), inplace=True)
+            typedef_df.to_csv(self._typedefs_path, sep="\t", index=False)
+
+            for label, path, header, fn in self._get_cache_config():
+                if path.exists() and not force:
+                    continue
+                logger.debug(
+                    "[%s v%s] caching %s to %s", self.ontology, self.data_version, label, path
+                )
+                write_iterable_tsv(
+                    path=path,
+                    header=header,
+                    it=fn(),  # type:ignore
+                )
+
+            typedefs = self._index_typedefs()
+            for relation in (v.is_a, v.has_part, v.part_of, v.from_species, v.orthologous):
+                if relation is not v.is_a and relation.pair not in typedefs:
+                    continue
+                relations_path = self._cache("relations", name=f"{relation.curie}.tsv")
+                if relations_path.exists() and not force:
+                    continue
+                logger.debug(
+                    "[%s v%s] caching relation %s ! %s",
+                    self.ontology,
+                    self.data_version,
+                    relation.curie,
+                    relation.name,
+                )
+                relation_df = self.get_filtered_relations_df(relation)
+                if not len(relation_df.index):
+                    continue
+                relation_df.sort_values(list(relation_df.columns), inplace=True)
+                relation_df.to_csv(relations_path, sep="\t", index=False)
 
         if write_obo and (not self._obo_path.exists() or force):
             tqdm.write(f"[{self.ontology}] writing OBO to {self._obo_path}")

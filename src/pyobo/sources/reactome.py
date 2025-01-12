@@ -11,7 +11,7 @@ from tqdm.auto import tqdm
 from ..api import get_id_multirelations_mapping
 from ..constants import SPECIES_REMAPPING
 from ..resources.ncbitaxon import get_ncbitaxon_id
-from ..struct import Obo, Reference, Term, from_species, has_participant
+from ..struct import Obo, Reference, Term, from_species, has_citation, has_participant
 from ..utils.io import multidict
 from ..utils.path import ensure_df
 
@@ -31,7 +31,7 @@ class ReactomeGetter(Obo):
     """An ontology representation of the Reactome pathway database."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [from_species, has_participant]
+    typedefs = [from_species, has_participant, has_citation]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

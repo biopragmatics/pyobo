@@ -4,7 +4,7 @@ from collections.abc import Iterable
 
 import pandas as pd
 
-from ..struct import Obo, Reference, Synonym, Term
+from ..struct import Obo, Reference, Synonym, Term, has_citation
 from ..utils.io import multidict
 from ..utils.path import ensure_df
 
@@ -25,6 +25,7 @@ class CONSOGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
+    typedefs = [has_citation]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

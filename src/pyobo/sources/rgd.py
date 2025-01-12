@@ -13,6 +13,7 @@ from pyobo.struct import (
     Term,
     default_reference,
     from_species,
+    has_citation,
     has_gene_product,
     transcribes_to,
 )
@@ -72,7 +73,7 @@ class RGDGetter(Obo):
     """An ontology representation of RGD's rat gene nomenclature."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [from_species, transcribes_to, has_gene_product]
+    typedefs = [from_species, transcribes_to, has_gene_product, has_citation]
     synonym_typedefs = [old_name_type, old_symbol_type]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

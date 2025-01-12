@@ -5,14 +5,8 @@ from collections.abc import Iterable, Mapping
 
 import pandas as pd
 
-from ..struct import (
-    Obo,
-    Reference,
-    SynonymTypeDef,
-    Term,
-    enables,
-    from_species,
-)
+from ..struct import Obo, Reference, SynonymTypeDef, Term, has_citation
+from ..struct.typedef import enables, exact_match, from_species
 from ..utils.path import ensure_path
 
 __all__ = [
@@ -35,7 +29,7 @@ class HGNCGroupGetter(Obo):
     ontology = PREFIX
     bioversions_key = "hgnc"
     synonym_typedefs = [symbol_type]
-    typedefs = [from_species, enables]
+    typedefs = [from_species, enables, exact_match, has_citation]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -93,7 +87,9 @@ def _get_terms_helper(force: bool = False) -> Iterable[Term]:
         )
         if pubmed_ids and pd.notna(pubmed_ids):
             for s in pubmed_ids.replace(" ", ",").split(","):
-                term.append_provenance(Reference(prefix="pubmed", identifier=s.strip()))
+                s = s.strip()
+                if s:
+                    term.append_provenance(Reference(prefix="pubmed", identifier=s))
         if desc_go and pd.notna(desc_go):
             go_id = desc_go[len("http://purl.uniprot.org/go/") :]
             term.append_relationship(enables, Reference(prefix="GO", identifier=go_id))

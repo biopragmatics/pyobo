@@ -32,6 +32,7 @@ class TestConversion(unittest.TestCase):
         obo_ontology = make_ad_hoc_ontology(
             _ontology="go",
             _name="Gene Ontology",
+            _data_version="30",
             terms=[term],
             _subsetdefs=[(subset, "test subset 1")],
             _synonym_typedefs=[synonym_typedef],
@@ -56,11 +57,12 @@ class TestConversion(unittest.TestCase):
                 Prefix(sssom:=<https://w3id.org/sssom/>)
                 Prefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)
 
-                Ontology(<go>
+                Ontology(<https://w3id.org/biopragmatics/resources/go/go.ofn> <https://w3id.org/biopragmatics/resources/go/30/go.ofn>
                 Annotation(dcterms:title "Gene Ontology"^^xsd:string)
                 Annotation(dcterms:license "CC-BY-4.0"^^xsd:string)
                 Annotation(dcterms:description "The Gene Ontology project provides a controlled vocabulary to describe gene and gene product attributes in any organism."^^xsd:string)
                 Annotation(IAO:0000700 GO:1234567)
+                Annotation(owl:versionInfo "30"^^xsd:string)
 
                 Declaration(AnnotationProperty(IAO:0000700))
                 AnnotationAssertion(rdfs:label IAO:0000700 "has ontology root term")
