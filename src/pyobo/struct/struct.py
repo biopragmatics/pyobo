@@ -646,10 +646,12 @@ class Obo:
             help="Re-process the data, but don't download it again.",
         )
         @click.option("--owl", is_flag=True, help="Write OWL via ROBOT")
+        @click.option("--ofn", is_flag=True, help="Write Functional OWL (OFN)")
+        @click.option("--ttl", is_flag=True, help="Write turtle RDF via OFN")
         @click.option(
             "--version", help="Specify data version to get. Use this if bioversions is acting up."
         )
-        def _main(force: bool, owl: bool, version: str | None, rewrite: bool):
+        def _main(force: bool, owl: bool, ofn: bool, ttl: bool, version: str | None, rewrite: bool):
             rewrite = True
             try:
                 inst = cls(force=force, data_version=version)
@@ -660,6 +662,8 @@ class Obo:
                 write_obograph=True,
                 write_obo=True,
                 write_owl=owl,
+                write_ofn=ofn,
+                write_ttl=ttl,
                 write_nodes=True,
                 write_edges=True,
                 force=force or rewrite,
@@ -853,6 +857,20 @@ class Obo:
         with gzip.open(path, "wt") as file:
             json.dump(nx.node_link_data(graph), file)
 
+    def write_ofn(self, path: str | Path) -> None:
+        """Write as Functional OWL (OFN)."""
+        from .functional.obo_to_functional import get_ofn_from_obo
+
+        ofn = get_ofn_from_obo(self)
+        ofn.write_funowl(path)
+
+    def write_rdf(self, path: str | Path) -> None:
+        """Write as Turtle RDF."""
+        from .functional.obo_to_functional import get_ofn_from_obo
+
+        ofn = get_ofn_from_obo(self)
+        ofn.write_rdf(path)
+
     def _path(self, *parts: str, name: str | None = None) -> Path:
         return prefix_directory_join(self.ontology, *parts, name=name, version=self.data_version)
 
@@ -925,6 +943,14 @@ class Obo:
         return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.obonet.json.gz")
 
     @property
+    def _ofn_path(self) -> Path:
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.ofn")
+
+    @property
+    def _ttl_path(self) -> Path:
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.ttl")
+
+    @property
     def _nodes_path(self) -> Path:
         return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.nodes.tsv")
 
@@ -940,8 +966,11 @@ class Obo:
         write_obonet: bool = False,
         write_obograph: bool = False,
         write_owl: bool = False,
+        write_ofn: bool = False,
+        write_ttl: bool = False,
         write_nodes: bool = True,
         write_edges: bool = True,
+        obograph_use_internal: bool = False,
     ) -> None:
         """Write the OBO to the default path."""
         metadata = self.get_metadata()
@@ -1012,19 +1041,33 @@ class Obo:
             relation_df.sort_values(list(relation_df.columns), inplace=True)
             relation_df.to_csv(relations_path, sep="\t", index=False)
 
-        if (write_obo or write_owl) and (not self._obo_path.exists() or force):
-            tqdm.write(f"[{self.ontology}] writing to {self._obo_path}")
+        if write_obo and (not self._obo_path.exists() or force):
+            tqdm.write(f"[{self.ontology}] writing OBO to {self._obo_path}")
             self.write_obo(self._obo_path, use_tqdm=use_tqdm)
+        if (write_ofn or write_owl or write_obograph) and (not self._ofn_path.exists() or force):
+            tqdm.write(f"[{self.ontology}] writing OFN to {self._ofn_path}")
+            self.write_ofn(self._ofn_path)
         if write_obograph and (not self._obograph_path.exists() or force):
-            self.write_obograph(self._obograph_path)
+            tqdm.write(f"[{self.ontology}] writing OBO Graph to {self._obograph_path}")
+            if obograph_use_internal:
+                self.write_obograph(self._obograph_path)
+            else:
+                import bioontologies.robot
+
+                bioontologies.robot.convert(self._ofn_path, self._obograph_path)
         if write_owl and (not self._owl_path.exists() or force):
+            tqdm.write(f"[{self.ontology}] writing OWL to {self._owl_path}")
             import bioontologies.robot
 
-            bioontologies.robot.convert(self._obo_path, self._owl_path)
+            bioontologies.robot.convert(self._ofn_path, self._owl_path)
+        if write_ttl and (not self._ttl_path.exists() or force):
+            tqdm.write(f"[{self.ontology}] writing Turtle to {self._ttl_path}")
+            self.write_rdf(self._ttl_path)
         if write_obonet and (not self._obonet_gz_path.exists() or force):
-            logger.debug("writing obonet to %s", self._obonet_gz_path)
+            tqdm.write(f"[{self.ontology}] writing obonet to {self._obonet_gz_path}")
             self.write_obonet_gz(self._obonet_gz_path)
         if write_nodes:
+            tqdm.write(f"[{self.ontology}] writing notes to {self._nodes_path}")
             self.get_graph().get_nodes_df().to_csv(self._nodes_path, sep="\t", index=False)
 
     @property
