@@ -10,7 +10,7 @@ from pyobo.struct import CHARLIE_TERM, HUMAN_TERM, Obo, Reference, Term, TypeDef
 from pyobo.struct.typedef import comment, has_contributor, see_also, term_replaced_by
 from pyobo.utils.path import ensure_path
 
-PREFIX = "gc"
+PREFIX = "ncbi.gc"
 URI_PREFIX = (
     "https://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/index.cgi?chapter=cgencodes#SG"
 )
@@ -57,7 +57,7 @@ TABLE_TO_CATEGORY = {
 }
 
 
-class GCGetter(Obo):
+class NCBIGCGetter(Obo):
     """Get terms in GC."""
 
     ontology = PREFIX
@@ -158,4 +158,4 @@ def get_terms() -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    GCGetter.cli(["--owl"])
+    NCBIGCGetter.cli()
