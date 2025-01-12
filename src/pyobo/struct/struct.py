@@ -96,6 +96,14 @@ SSSOM_DF_COLUMNS = [
 UNSPECIFIED_MATCHING_CURIE = "sempav:UnspecifiedMatching"
 FORMAT_VERSION = "1.4"
 
+DEFAULT_PREFIXES = (
+    "rdfs",
+    "rdf",
+    "dcterms",
+    "oboInOwl",
+    "owl",
+)
+
 
 @dataclass
 class Synonym:
@@ -677,13 +685,7 @@ class Obo:
 
     def get_prefixes(self) -> set[str]:
         """Get all prefixes used by the ontology."""
-        prefixes: set[str] = {
-            "rdfs",
-            "rdf",
-            "dcterms",
-            "oboInOwl",
-            "owl",
-        }
+        prefixes: set[str] = set(DEFAULT_PREFIXES)
         for term in self:
             prefixes.update(term._get_prefixes())
         for typedef in self.typedefs or []:
