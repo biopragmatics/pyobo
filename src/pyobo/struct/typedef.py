@@ -243,6 +243,8 @@ has_functional_parent = TypeDef(
     reference=Reference(prefix="ro", identifier="0018038", name="has functional parent"),
 )
 
+has_citation = TypeDef(reference=v.has_citation, is_metadata_tag=True)
+
 has_smiles = TypeDef(
     reference=Reference(prefix="debio", identifier="0000022", name="has SMILES"),
     is_metadata_tag=True,

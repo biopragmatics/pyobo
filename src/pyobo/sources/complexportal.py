@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 from pyobo.resources.ncbitaxon import get_ncbitaxon_name
-from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_part
+from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_citation, has_part
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -96,6 +96,7 @@ def _parse_xrefs(s) -> list[tuple[Reference, str]]:
         xref = xref.replace("protein ontology:PR_", "PR:")
         xref = xref.replace("rhea:rhea ", "rhea:")
         xref = xref.replace("rhea:Rhea ", "rhea:")
+        xref = xref.replace("rhea:RHEA ", "rhea:")
         xref = xref.replace("rhea:RHEA:rhea", "rhea:")
         xref = xref.replace("rhea:RHEA: ", "rhea:")
         xref = xref.replace("rhea:RHEA:rhea ", "rhea:")
@@ -146,7 +147,7 @@ class ComplexPortalGetter(Obo):
     """An ontology representation of the Complex Portal."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [from_species, has_part]
+    typedefs = [from_species, has_part, has_citation]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

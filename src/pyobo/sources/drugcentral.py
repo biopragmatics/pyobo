@@ -32,7 +32,7 @@ class DrugCentralGetter(Obo):
     """An ontology representation of the DrugCentral database."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [exact_match]
+    typedefs = [exact_match, has_inchi, has_smiles]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -80,7 +80,7 @@ def iter_terms() -> Iterable[Term]:
         drugcentral_id = str(drugcentral_id)
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=drugcentral_id, name=name),
-            definition=definition,
+            definition=definition.replace("\n", " ") if definition else None,
             synonyms=synonyms.get(drugcentral_id, []),
             xrefs=xrefs.get(drugcentral_id, []),
         )

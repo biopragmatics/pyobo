@@ -7,7 +7,7 @@ from collections.abc import Iterable
 from lxml import etree
 from tqdm.auto import tqdm
 
-from pyobo.struct import Obo, Reference, Term, TypeDef, has_participant
+from pyobo.struct import Obo, Reference, Term, TypeDef, has_citation, has_participant
 from pyobo.utils.path import ensure_path
 
 __all__ = [
@@ -38,7 +38,7 @@ class MSigDBGetter(Obo):
     """An ontology representation of MMSigDB's gene set nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_participant, *(p for _, p in PROPERTIES)]
+    typedefs = [has_participant, has_citation, *(p for _, p in PROPERTIES)]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

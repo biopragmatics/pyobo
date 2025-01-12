@@ -83,4 +83,4 @@ def iterate_terms(*, force: bool = False, version: str | None = None) -> Iterabl
 
 
 if __name__ == "__main__":
-    BiGGCompartmentGetter().cli()
+    BiGGCompartmentGetter.cli()

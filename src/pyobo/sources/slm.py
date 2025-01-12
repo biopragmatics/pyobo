@@ -7,7 +7,7 @@ from tqdm.auto import tqdm
 
 from pyobo import Obo, Reference, Term, TypeDef
 from pyobo.struct.struct import abbreviation as abbreviation_typedef
-from pyobo.struct.typedef import exact_match, has_inchi, has_smiles
+from pyobo.struct.typedef import exact_match, has_citation, has_inchi, has_smiles
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -43,7 +43,7 @@ class SLMGetter(Obo):
     """An ontology representation of SwissLipid's lipid nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [exact_match, LEVEL, has_inchi, has_smiles]
+    typedefs = [exact_match, LEVEL, has_inchi, has_smiles, has_citation]
     synonym_typedefs = [abbreviation_typedef]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
