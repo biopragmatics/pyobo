@@ -55,7 +55,7 @@ class GTDBGetter(Obo):
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over GTDB terms."""
-    # Add the taxrank terms so we get nice display in protege
+    # Add the taxrank terms so we get nice display in Protege
     for reference in LEVEL_TO_TAXRANK.values():
         yield Term(reference=reference)
 
