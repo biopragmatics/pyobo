@@ -22,9 +22,11 @@ NCBITAXON_ROOT = Reference(prefix="NCBITaxon", identifier="1", name="root")
 
 has_gc_code = TypeDef(
     reference=default_reference(
-        prefix=PREFIX, identifier="hasGeneticCodeTranslationTable", name="has GC code"
+        prefix=PREFIX,
+        identifier="hasGeneticCodeTranslationTable",
+        name="has genetic code translation table",
     ),
-    definition="Connects a taxonomy term to a GC code",
+    definition="Connects a taxonomy term to a genetic code translation table",
     domain=NCBITAXON_ROOT,
     range=GC_ROOT,
 ).annotate_object(has_contributor, CHARLIE_TERM)
