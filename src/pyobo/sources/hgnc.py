@@ -183,7 +183,7 @@ IDSPACES = {
     prefix: f"https://bioregistry.io/{prefix}:"
     for prefix in {
         "rgd",
-        "mgi",
+        "MGI",
         "eccode",
         "rnacentral",
         "pubmed",
@@ -197,11 +197,10 @@ IDSPACES = {
         "NCBIGene",
         "vega",
         "ucsc",
-        "ena",
+        "ena.embl",
         "ccds",
         "omim",
         "cosmic",
-        "merops",
         "orphanet",
         "pseudogene",
         "lncipedia",
