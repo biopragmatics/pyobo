@@ -1864,13 +1864,13 @@ class TypeDef(Referenced, Stanza):
     def _get_prefixes(self) -> set[str]:
         rv = super()._get_prefixes()
         if self.domain:
-            rv.update(self.domain.prefix)
+            rv.add(self.domain.prefix)
         if self.range:
-            rv.update(self.range.prefix)
+            rv.add(self.range.prefix)
         for chain in self.holds_over_chain:
             rv.update(a.prefix for a in chain)
         if self.inverse:
-            rv.update(self.inverse.prefix)
+            rv.add(self.inverse.prefix)
         rv.update(a.prefix for a in self.transitive_over)
         rv.update(a.prefix for a in self.disjoint_over)
         for chain in self.equivalent_to_chain:
