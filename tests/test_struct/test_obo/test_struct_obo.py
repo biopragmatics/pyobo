@@ -148,7 +148,7 @@ class TestOBOHeader(unittest.TestCase):
         self.assert_obo_lines(
             """\
             format-version: 1.4
-            idspace: IAO http://purl.obolibrary.org/obo/IAO_ "Information Artifact Ontology "
+            idspace: IAO http://purl.obolibrary.org/obo/IAO_ "Information Artifact Ontology"
             idspace: obo http://purl.obolibrary.org/obo/ "Open Biological and Biomedical Ontologies"
             ontology: xxx
             property_value: IAO:0000700 ROOT1
@@ -164,6 +164,7 @@ class TestOBOHeader(unittest.TestCase):
         self.assert_obo_lines(
             """\
             format-version: 1.4
+            idspace: dcterms http://purl.org/dc/terms/ "Dublin Core Metadata Initiative Terms"
             ontology: go
             property_value: dcterms:license "CC-BY-4.0" xsd:string
             property_value: dcterms:description "The Gene Ontology project provides a controlled vocabulary to describe gene and gene product attributes in any organism." xsd:string

@@ -46,6 +46,7 @@ class TestConversion(unittest.TestCase):
             dedent("""\
                 Prefix(dcterms:=<http://purl.org/dc/terms/>)
                 Prefix(GO:=<http://purl.obolibrary.org/obo/GO_>)
+                Prefix(IAO:=<http://purl.obolibrary.org/obo/IAO_>)
                 Prefix(obo:=<http://purl.obolibrary.org/obo/>)
                 Prefix(OMO:=<http://purl.obolibrary.org/obo/OMO_>)
                 Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
