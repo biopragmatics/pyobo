@@ -49,6 +49,7 @@ from .struct_utils import (
     UnionOfHint,
     _chain_tag,
     _ensure_ref,
+    _get_prefixes_from_annotations,
     _tag_property_targets,
 )
 from .utils import _boolean_tag, obo_escape_slim
@@ -119,6 +120,17 @@ class Synonym:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
 
+    def _get_prefixes(self) -> set[str]:
+        """Get all prefixes used by the typedef."""
+        rv: set[str] = set()
+        if self.specificity is not None:
+            rv.add("oboInOwl")
+        if self.type is not None:
+            rv.add(self.type.prefix)
+        rv.update(p.prefix for p in self.provenance)
+        rv.update(_get_prefixes_from_annotations(self.annotations))
+        return rv
+
     def _sort_key(self) -> tuple[str, _cv.SynonymScope, str]:
         return (
             self.name,
@@ -181,6 +193,13 @@ class SynonymTypeDef(Referenced):
         rv = f'{rv} "{name}"'
         if self.specificity:
             rv = f"{rv} {self.specificity}"
+        return rv
+
+    def _get_prefixes(self) -> set[str]:
+        """Get all prefixes used by the typedef."""
+        rv: set[str] = {self.reference.prefix}
+        if self.specificity is not None:
+            rv.add("oboInOwl")
         return rv
 
 
@@ -589,10 +608,92 @@ class Obo:
 
         if self.idspaces is None:
             self.idspaces = {}
+
+        if self.ontology not in self.idspaces:
+            uri_prefix = bioregistry.get_uri_prefix(self.ontology)
+            if uri_prefix is None:
+                raise ValueError(f"can't look up URI prefix for {self.ontology}")
+            prefix = bioregistry.get_preferred_prefix(self.ontology) or self.ontology
+            self.idspaces[prefix] = uri_prefix
+
+        for prefix, uri_prefix in list(self.idspaces.items()):
+            norm_k = bioregistry.normalize_prefix(prefix)
+            if norm_k is None:
+                raise ValueError(
+                    f"{self.ontology} has invalid prefix defined in idspaces: {prefix}"
+                )
+
+            # Replace the pre-existing one with the preferred one
+            pref_k = bioregistry.get_preferred_prefix(norm_k) or norm_k
+            if norm_k != prefix:
+                del self.idspaces[prefix]
+                prefix = pref_k
+                self.idspaces[prefix] = uri_prefix
+
+            # automatically look up
+            if not uri_prefix:
+                uri_prefix = bioregistry.get_uri_prefix(prefix)
+                if uri_prefix is None:
+                    logger.warning(
+                        "[%s] no URI prefix available for %s, auto-assigning from Bioregistry",
+                        self.ontology,
+                        prefix,
+                    )
+                    uri_prefix = f"https://bioregistry.io/{prefix}:"
+                self.idspaces[prefix] = uri_prefix
+
         self.idspaces.update(
             dcterms="http://purl.org/dc/terms/",
+            oboInOwl="http://www.geneontology.org/formats/oboInOwl#",
             skos="http://www.w3.org/2004/02/skos/core#",
+            orcid="https://orcid.org/",
+            biolink="https://w3id.org/biolink/vocab/",
+            NCBITaxon="http://purl.obolibrary.org/obo/NCBITaxon_",
+            RO="http://purl.obolibrary.org/obo/RO_",
+            IAO="http://purl.obolibrary.org/obo/IAO_",
+            BFO="http://purl.obolibrary.org/obo/BFO_",
+            OMO="http://purl.obolibrary.org/obo/OMO_",
+            obo="http://purl.obolibrary.org/obo/",
+            pubmed="http://rdf.ncbi.nlm.nih.gov/pubchem/reference/",
+            debio="https://biopragmatics.github.io/debio/",
         )
+
+        for prefix, uri_prefix in self.idspaces.items():
+            if " " in prefix:
+                raise ValueError(f"invalid CURIE prefix: {prefix}")
+            if " " in uri_prefix:
+                raise ValueError(f"invalid URI prefix: {uri_prefix}")
+
+    def infer_prefix_map(self) -> dict[str, str]:
+        """Get a prefix map including all prefixes used in the ontology."""
+        rv = {}
+        for prefix in self.get_prefixes():
+            uri_prefix = bioregistry.get_uri_prefix(prefix)
+            if uri_prefix is None:
+                uri_prefix = f"https://bioregistry.io/{prefix}:"
+            pp = bioregistry.get_preferred_prefix(prefix) or prefix
+            rv[pp] = uri_prefix
+        return rv
+
+    def get_prefixes(self) -> set[str]:
+        """Get all prefixes used by the ontology."""
+        prefixes: set[str] = {
+            "rdfs",
+            "rdf",
+            "dcterms",
+            "oboInOwl",
+            "owl",
+        }
+        for term in self:
+            prefixes.update(term._get_prefixes())
+        for typedef in self.typedefs or []:
+            prefixes.update(typedef._get_prefixes())
+        for synonym_typedef in self.synonym_typedefs or []:
+            prefixes.update(synonym_typedef._get_prefixes())
+        prefixes.update(root.prefix for root in self.root_terms or [])
+        prefixes.update(subset.prefix for subset, _ in self.subsetdefs or [])
+        prefixes.update(_get_prefixes_from_annotations(self.property_values or []))
+        return prefixes
 
     def _get_version(self) -> str | None:
         if self.bioversions_key:
@@ -1783,6 +1884,22 @@ class TypeDef(Referenced, Stanza):
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass
         return hash((self.__class__, self.prefix, self.identifier))
+
+    def _get_prefixes(self) -> set[str]:
+        rv = super()._get_prefixes()
+        if self.domain:
+            rv.update(self.domain.prefix)
+        if self.range:
+            rv.update(self.range.prefix)
+        for chain in self.holds_over_chain:
+            rv.update(a.prefix for a in chain)
+        if self.inverse:
+            rv.update(self.inverse.prefix)
+        rv.update(a.prefix for a in self.transitive_over)
+        rv.update(a.prefix for a in self.disjoint_over)
+        for chain in self.equivalent_to_chain:
+            rv.update(a.prefix for a in chain)
+        return rv
 
     def iterate_obo_lines(
         self,
