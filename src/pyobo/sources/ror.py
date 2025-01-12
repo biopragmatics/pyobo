@@ -60,6 +60,7 @@ class RORGetter(Obo):
         "ENVO": "http://purl.obolibrary.org/obo/ENVO_",
         "BFO": "http://purl.obolibrary.org/obo/BFO_",
         "RO": "http://purl.obolibrary.org/obo/RO_",
+        "IAO": "http://purl.obolibrary.org/obo/IAO_",
         "OBI": "http://purl.obolibrary.org/obo/OBI_",
         "OMO": "http://purl.obolibrary.org/obo/OMO_",
         "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
@@ -71,6 +72,7 @@ class RORGetter(Obo):
         "hesa": "https://bioregistry.io/hesa:",
         "ucas": "https://bioregistry.io/ucas:",
         "ukprn": "https://bioregistry.io/ukprn:",
+        "cnrs": "https://bioregistry.io/cnrs:",
     }
 
     def __post_init__(self):
@@ -135,7 +137,8 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
                 RMAP[relationship["type"]], Reference(prefix=PREFIX, identifier=target_id)
             )
 
-        term.is_obsolete = record.get("status") != "active"
+        if record.get("status") != "active":
+            term.is_obsolete = True
 
         for address in record.get("addresses", []):
             city = address.get("geonames_city")
@@ -148,12 +151,15 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
             term.append_relationship(RMAP["Located in"], geonames_reference)
 
         for label in record.get("labels", []):
-            label = label["label"]  # there's a language availabel in this dict too
+            # TODO get language code from `label` dictionary, then use in synonym
+            label = label["label"]
+            label = label.strip().replace("\n", " ")
             term.append_synonym(label)
             if label.startswith("The "):
                 term.append_synonym(label.removeprefix("The "))
 
         for synonym in record.get("aliases", []):
+            synonym = synonym.strip().replace("\n", " ")
             term.append_synonym(synonym)
             if synonym.startswith("The "):
                 term.append_synonym(synonym.removeprefix("The "))
