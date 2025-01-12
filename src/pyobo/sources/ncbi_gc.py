@@ -17,11 +17,13 @@ URI_PREFIX = (
 URL = "ftp://ftp.ncbi.nih.gov/entrez/misc/data/gc.prt"
 VERSION = "4.6"
 
-GC_ROOT = Reference(prefix=PREFIX, identifier="0", name="genetic code translation table")
+GC_ROOT = default_reference(prefix=PREFIX, identifier="root", name="genetic code translation table")
 NCBITAXON_ROOT = Reference(prefix="NCBITaxon", identifier="1", name="root")
 
 has_gc_code = TypeDef(
-    reference=default_reference(prefix=PREFIX, identifier="1000000", name="has GC code"),
+    reference=default_reference(
+        prefix=PREFIX, identifier="hasGeneticCodeTranslationTable", name="has GC code"
+    ),
     definition="Connects a taxonomy term to a GC code",
     domain=NCBITAXON_ROOT,
     range=GC_ROOT,

@@ -22,7 +22,6 @@ from .expasy import ExpasyGetter
 from .famplex import FamPlexGetter
 from .flybase import FlyBaseGetter
 from .gard import GARDGetter
-from .gc import GCGetter
 from .geonames import GeonamesFeatureGetter, GeonamesGetter
 from .gtdb import GTDBGetter
 from .gwascentral_phenotype import GWASCentralPhenotypeGetter
@@ -40,6 +39,7 @@ from .mirbase import MiRBaseGetter
 from .mirbase_family import MiRBaseFamilyGetter
 from .mirbase_mature import MiRBaseMatureGetter
 from .msigdb import MSigDBGetter
+from .ncbi_gc import NCBIGCGetter
 from .ncbigene import NCBIGeneGetter
 from .nlm import NLMCatalogGetter, NLMPublisherGetter
 from .npass import NPASSGetter
@@ -88,7 +88,6 @@ __all__ = [
     "FamPlexGetter",
     "FlyBaseGetter",
     "GARDGetter",
-    "GCGetter",
     "GTDBGetter",
     "GWASCentralPhenotypeGetter",
     "GWASCentralStudyGetter",
@@ -109,6 +108,7 @@ __all__ = [
     "MiRBaseFamilyGetter",
     "MiRBaseGetter",
     "MiRBaseMatureGetter",
+    "NCBIGCGetter",
     "NCBIGeneGetter",
     "NLMCatalogGetter",
     "NLMPublisherGetter",
