@@ -5,8 +5,9 @@
 
 from collections.abc import Iterable
 
-from pyobo.struct import Obo, Reference, Term, TypeDef, int_identifier_sort_key
-from pyobo.struct.typedef import contributor
+from pyobo import default_reference
+from pyobo.struct import CHARLIE_TERM, HUMAN_TERM, Obo, Reference, Term, TypeDef
+from pyobo.struct.typedef import comment, has_contributor, see_also, term_replaced_by
 from pyobo.utils.path import ensure_path
 
 PREFIX = "gc"
@@ -20,21 +21,22 @@ GC_ROOT = Reference(prefix=PREFIX, identifier="0", name="genetic code translatio
 NCBITAXON_ROOT = Reference(prefix="NCBITaxon", identifier="1", name="root")
 
 has_gc_code = TypeDef(
-    reference=Reference(prefix=PREFIX, identifier="1000000", name="has GC code"),
+    reference=default_reference(prefix=PREFIX, identifier="1000000", name="has GC code"),
     definition="Connects a taxonomy term to a GC code",
     domain=NCBITAXON_ROOT,
     range=GC_ROOT,
-)
-CHARLIE = Reference(prefix="orcid", identifier="0000-0003-4423-4370", name="Charles Tapley Hoyt")
+).annotate_object(has_contributor, CHARLIE_TERM)
 
-NUCLEAR_GENETIC_CODE = Reference(
-    prefix=PREFIX, identifier="2000001", name="nuclear genetic code translation table"
+NUCLEAR_GENETIC_CODE = default_reference(
+    prefix=PREFIX, identifier="nuclear-genetic-code", name="nuclear genetic code translation table"
 )
-MITOCHONDRIAL_GENETIC_CODE = Reference(
-    prefix=PREFIX, identifier="2000002", name="mitochondrial genetic code translation table"
+MITOCHONDRIAL_GENETIC_CODE = default_reference(
+    prefix=PREFIX,
+    identifier="mitochondrial-genetic-code",
+    name="mitochondrial genetic code translation table",
 )
-PLASTID_GENETIC_CODE = Reference(
-    prefix=PREFIX, identifier="2000003", name="plastid genetic code translation table"
+PLASTID_GENETIC_CODE = default_reference(
+    prefix=PREFIX, identifier="plastid-genetic-code", name="plastid genetic code translation table"
 )
 NUCLEUS = Reference(prefix="GO", identifier="0005634", name="nucleus")
 MITOCHONDIA = Reference(prefix="GO", identifier="0005739", name="mitochondrion")
@@ -60,9 +62,8 @@ class GCGetter(Obo):
 
     ontology = PREFIX
     static_version = VERSION
-    term_sort_key = int_identifier_sort_key
     root_terms = [GC_ROOT]
-    typedefs = [has_gc_code]
+    typedefs = [has_gc_code, has_contributor, see_also, comment, term_replaced_by]
     idspaces = {
         PREFIX: URI_PREFIX,
         "orcid": "https://orcid.org/",
@@ -76,6 +77,10 @@ class GCGetter(Obo):
 
 def get_terms() -> Iterable[Term]:
     """Get terms for GC."""
+    yield CHARLIE_TERM
+    yield Term(reference=NCBITAXON_ROOT)
+    yield HUMAN_TERM
+
     path = ensure_path(PREFIX, url=URL)
     # first, remove comment lines
     lines = [
@@ -105,30 +110,33 @@ def get_terms() -> Iterable[Term]:
             elif key == "id":
                 entry["identifier"] = data.rstrip(",").rstrip()
 
-    terms = [
+    yield (
         Term(
             reference=GC_ROOT,
             definition="A table for translating codons into amino acids. This can change for "
             "different taxa, or be different in different organelles that include genetic information.",
-        ).append_provenance(CHARLIE),
-        Term(reference=NCBITAXON_ROOT),
-    ]
+        )
+        .annotate_object(has_contributor, CHARLIE_TERM)
+        .append_comment("injected by PyOBO")
+    )
+
     for reference in CATEGORY_TO_TABLES:
         term = Term(reference=reference)
         term.append_parent(GC_ROOT)
-        term.annotate_object(contributor, CHARLIE)
+        term.annotate_object(has_contributor, CHARLIE_TERM)
+        term.append_comment("injected by PyOBO")
         if substructure := CATEGORY_TO_CELLULAR_COMPONENT.get(reference):
             term.append_see_also(substructure)
-        terms.append(term)
+        yield term
 
     for entry in entries:
         identifier = entry["identifier"]
         term = Term.from_triple(PREFIX, identifier, entry["name"])
         term.append_parent(TABLE_TO_CATEGORY.get(identifier, GC_ROOT))
         # TODO if symbol is available, what does it mean?
-        terms.append(term)
+        yield term
 
-    terms.append(
+    yield (
         Term(
             reference=Reference(prefix=PREFIX, identifier="7"),
             is_obsolete=True,
@@ -136,7 +144,7 @@ def get_terms() -> Iterable[Term]:
         .append_replaced_by(Reference(prefix=PREFIX, identifier="4"))
         .append_comment("Kinetoplast code now merged in code id 4, as of 1995.")
     )
-    terms.append(
+    yield (
         Term(
             reference=Reference(prefix=PREFIX, identifier="8"),
             is_obsolete=True,
@@ -146,10 +154,8 @@ def get_terms() -> Iterable[Term]:
     )
 
     for cellular_component in CATEGORY_TO_CELLULAR_COMPONENT.values():
-        terms.append(Term(reference=cellular_component))
-
-    return terms
+        yield Term(reference=cellular_component)
 
 
 if __name__ == "__main__":
-    GCGetter().write_default(write_obo=True, write_owl=True, force=True)
+    GCGetter.cli(["--owl"])

@@ -21,8 +21,8 @@ from .drugcentral import DrugCentralGetter
 from .expasy import ExpasyGetter
 from .famplex import FamPlexGetter
 from .flybase import FlyBaseGetter
-from .gc import GCGetter
 from .gard import GARDGetter
+from .gc import GCGetter
 from .geonames import GeonamesFeatureGetter, GeonamesGetter
 from .gtdb import GTDBGetter
 from .gwascentral_phenotype import GWASCentralPhenotypeGetter
