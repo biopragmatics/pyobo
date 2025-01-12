@@ -135,16 +135,22 @@ def get_mappings_df(
 
     For example, if you want to get UMLS as an SSSOM dataframe, you can do
 
-    >>> import pyobo
-    >>> df = pyobo.get_mappings_df("umls")
-    >>> df.to_csv("umls.sssom.tsv", sep="\t", index=False)
+    .. code-block:: python
+
+        import pyobo
+
+        df = pyobo.get_mappings_df("umls")
+        df.to_csv("umls.sssom.tsv", sep="\t", index=False)
 
     If you don't want to get all of the many resources required to add
     names, you can pass ``names=False``
 
-    >>> import pyobo
-    >>> df = pyobo.get_mappings_df("umls", names=False)
-    >>> df.to_csv("umls.sssom.tsv", sep="\t", index=False)
+    .. code-block:: python
+
+        import pyobo
+
+        df = pyobo.get_mappings_df("umls", names=False)
+        df.to_csv("umls.sssom.tsv", sep="\t", index=False)
 
     .. note:: This assumes the Bioregistry as the prefix map
     """
