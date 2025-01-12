@@ -1,4 +1,7 @@
-"""Converter for the Antibody Registry."""
+"""Converter for the Antibody Registry.
+
+TODO use API https://www.antibodyregistry.org/api/antibodies?page=1&size=100
+"""
 
 import logging
 from collections.abc import Iterable, Mapping
@@ -9,6 +12,7 @@ from tqdm.auto import tqdm
 
 from pyobo import Obo, Reference, Term
 from pyobo.api.utils import get_version
+from pyobo.struct.typedef import has_citation
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -43,6 +47,7 @@ class AntibodyRegistryGetter(Obo):
     """An ontology representation of the Antibody Registry."""
 
     ontology = bioversions_key = PREFIX
+    typedefs = [has_citation]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

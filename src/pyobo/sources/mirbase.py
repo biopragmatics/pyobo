@@ -129,7 +129,7 @@ def _process_definitions_lines(
             xref_prefix, xref_identifier, xref_label = map(str.strip, line.split(";"))
             xref_prefix = xref_prefix.lower()
             xref_prefix = xref_mapping.get(xref_prefix, xref_prefix)
-            if xref_prefix == "pictar":
+            if xref_prefix in {"pictar", "mir", "mirte"}:
                 continue
 
             try:

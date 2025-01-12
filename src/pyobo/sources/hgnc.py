@@ -21,6 +21,7 @@ from pyobo.struct import (
     default_reference,
     from_species,
     gene_product_member_of,
+    has_citation,
     has_gene_product,
     member_of,
     orthologous,
@@ -56,7 +57,6 @@ alias_name_type = SynonymTypeDef(
 HAS_LOCUS_TYPE = TypeDef.default(PREFIX, "locus_type", name="has locus type")
 HAS_LOCUS_GROUP = TypeDef.default(PREFIX, "locus_group", name="has locus group")
 HAS_LOCATION = TypeDef.default(PREFIX, "location", name="has location")
-
 
 #: First column is MIRIAM prefix, second column is HGNC key
 gene_xrefs = [
@@ -140,6 +140,7 @@ SKIP_KEYS = {
     "cd",  # symbol
     "homeodb",  # TODO add to bioregistry, though this is defunct
     "mamit-trnadb",  # TODO add to bioregistry, though this is defunct
+    "mane_select",  # TODO
 }
 
 #: A mapping from HGNC's locus_type annotations to sequence ontology identifiers
@@ -228,6 +229,7 @@ class HGNCGetter(Obo):
         HAS_LOCUS_GROUP,
         HAS_LOCUS_TYPE,
         HAS_LOCATION,
+        has_citation,
     ]
     idspaces = IDSPACES
     synonym_typedefs = [
