@@ -22,7 +22,7 @@ from .expasy import ExpasyGetter
 from .famplex import FamPlexGetter
 from .flybase import FlyBaseGetter
 from .gard import GARDGetter
-from .geonames import GeonamesGetter
+from .geonames import GeonamesFeatureGetter, GeonamesGetter
 from .gtdb import GTDBGetter
 from .gwascentral_phenotype import GWASCentralPhenotypeGetter
 from .gwascentral_study import GWASCentralStudyGetter
@@ -90,6 +90,7 @@ __all__ = [
     "GTDBGetter",
     "GWASCentralPhenotypeGetter",
     "GWASCentralStudyGetter",
+    "GeonamesFeatureGetter",
     "GeonamesGetter",
     "HGNCGetter",
     "HGNCGroupGetter",

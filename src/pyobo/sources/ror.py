@@ -221,7 +221,7 @@ def get_latest(*, force: bool = False):
 
 def get_ror_to_country_geonames(**kwargs: Any) -> dict[str, str]:
     """Get a mapping of ROR ids to GeoNames IDs for countries."""
-    from pyobo.sources.geonames import get_city_to_country
+    from pyobo.sources.geonames.geonames import get_city_to_country
 
     city_to_country = get_city_to_country()
     rv = {}

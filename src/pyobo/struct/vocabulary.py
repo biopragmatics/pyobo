@@ -84,6 +84,7 @@ xsd_uri = Reference(prefix="xsd", identifier="anyURI", name="URI")
 
 
 CHARLIE = _c(_v.charlie)
+HUMAN = Reference(prefix="NCBITaxon", identifier="9606", name="Homo sapiens")
 
 #: See https://mapping-commons.github.io/sssom/spec-model/
 match_typedefs: Sequence[Reference] = (

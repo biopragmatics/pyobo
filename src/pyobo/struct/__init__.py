@@ -2,6 +2,8 @@
 
 from .reference import Reference, Referenced, default_reference
 from .struct import (
+    CHARLIE_TERM,
+    HUMAN_TERM,
     Obo,
     Synonym,
     SynonymTypeDef,
@@ -33,6 +35,8 @@ from .typedef import (
 )
 
 __all__ = [
+    "CHARLIE_TERM",
+    "HUMAN_TERM",
     "Obo",
     "Reference",
     "Referenced",
