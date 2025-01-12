@@ -129,7 +129,7 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
         yield m.ReplacedByMacro(alt.preferred_curie, s)
     # 6
     yield from _yield_definition(term, s)
-    # 7 TODO comment
+    # 7 comment is covered by properties
     # 8
     for subset in term.subsets:
         yield m.OBOIsSubsetMacro(s, subset)
@@ -175,8 +175,8 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
     # 21
     if term.is_obsolete is not None:
         yield m.IsObsoleteMacro(s, term.is_obsolete)
-    # 22 TODO replaced_by
-    # 23 TODO consider
+    # 22 replaced_by is covered by properties
+    # 23 consider is covered by properties
 
 
 def _get_annotations(
