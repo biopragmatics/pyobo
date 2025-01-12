@@ -27,6 +27,8 @@ from more_click import force_option, verbose_option
 from tqdm.auto import tqdm
 from typing_extensions import Self
 
+from pyobo.constants import DEFAULT_PREFIX_MAP
+
 from . import vocabulary as v
 from .reference import (
     OBOLiteral,
@@ -95,18 +97,6 @@ SSSOM_DF_COLUMNS = [
 ]
 UNSPECIFIED_MATCHING_CURIE = "sempav:UnspecifiedMatching"
 FORMAT_VERSION = "1.4"
-
-DEFAULT_PREFIXES = (
-    "rdfs",
-    "rdf",
-    "xsd",
-    "dcterms",
-    "oboInOwl",
-    "owl",
-    # not required by OWL, but still important
-    "skos",
-    "obo",
-)
 
 
 @dataclass
@@ -618,27 +608,24 @@ class Obo:
         if self.auto_generated_by is None:
             self.auto_generated_by = f"PyOBO v{get_pyobo_version(with_git_hash=True)} on {datetime.datetime.now().isoformat()}"  # type:ignore
 
-        if self.idspaces is None:
-            self.idspaces = {}
-
-        # Add reasonable defaults, most of which are
-        # mandated by the OWL spec anyway (except skos?)
-        self.idspaces.update(
-            rdfs="http://www.w3.org/2000/01/rdf-schema#",
-            rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-            xsd="http://www.w3.org/2001/XMLSchema#",
-            dcterms="http://purl.org/dc/terms/",
-            oboInOwl="http://www.geneontology.org/formats/oboInOwl#",
-            owl="http://www.w3.org/2002/07/owl#",
-            # not required by OWL, but still important
-            skos="http://www.w3.org/2004/02/skos/core#",
-            obo="http://purl.obolibrary.org/obo/",
+    def get_norm_idspaces(self) -> dict[str, str]:
+        """Get normalized idspace dictionary."""
+        return dict(
+            ChainMap(
+                # Add reasonable defaults, most of which are
+                # mandated by the OWL spec anyway (except skos?)
+                DEFAULT_PREFIX_MAP,
+                dict(self.idspaces or {}),
+                # automatically detect all prefixes in reference in the ontology,
+                # then look up Bioregistry-approved URI prefixes
+                self._infer_prefix_map(),
+            )
         )
 
-    def infer_prefix_map(self) -> dict[str, str]:
+    def _infer_prefix_map(self) -> dict[str, str]:
         """Get a prefix map including all prefixes used in the ontology."""
         rv = {}
-        for prefix in self.get_prefixes():
+        for prefix in self._get_prefixes():
             uri_prefix = bioregistry.get_uri_prefix(prefix)
             if uri_prefix is None:
                 # This allows us an escape hatch, since some
@@ -648,9 +635,9 @@ class Obo:
             rv[pp] = uri_prefix
         return rv
 
-    def get_prefixes(self) -> set[str]:
+    def _get_prefixes(self) -> set[str]:
         """Get all prefixes used by the ontology."""
-        prefixes: set[str] = set(DEFAULT_PREFIXES)
+        prefixes: set[str] = set(DEFAULT_PREFIX_MAP)
         for term in self:
             prefixes.update(term._get_prefixes())
         for typedef in self.typedefs or []:
@@ -809,7 +796,13 @@ class Obo:
         # 9 TODO default-namespace
         # 10 TODO namespace-id-rule
         # 11
-        for prefix, url in sorted((self.idspaces or {}).items()):
+        for prefix, url in sorted(self.get_norm_idspaces().items()):
+            if prefix in DEFAULT_PREFIX_MAP:
+                # we don't need to write out the 4 default prefixes from
+                # table 2 in https://www.w3.org/TR/owl2-syntax/#IRIs since
+                # they're considered to always be builtin
+                continue
+
             yv = f"idspace: {prefix} {url}"
             if _yv_name := bioregistry.get_name(prefix):
                 yv += f' "{_yv_name}"'

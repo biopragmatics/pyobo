@@ -47,14 +47,10 @@ class TestConversion(unittest.TestCase):
                 Prefix(dcterms:=<http://purl.org/dc/terms/>)
                 Prefix(GO:=<http://purl.obolibrary.org/obo/GO_>)
                 Prefix(obo:=<http://purl.obolibrary.org/obo/>)
-                Prefix(oboInOwl:=<http://www.geneontology.org/formats/oboInOwl#>)
                 Prefix(OMO:=<http://purl.obolibrary.org/obo/OMO_>)
                 Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
                 Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
                 Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
-                Prefix(semapv:=<https://w3id.org/semapv/vocab/>)
-                Prefix(skos:=<http://www.w3.org/2004/02/skos/core#>)
-                Prefix(sssom:=<https://w3id.org/sssom/>)
                 Prefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)
 
                 Ontology(<https://w3id.org/biopragmatics/resources/go/go.ofn> <https://w3id.org/biopragmatics/resources/go/30/go.ofn>
