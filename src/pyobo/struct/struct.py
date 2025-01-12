@@ -607,7 +607,7 @@ class Obo:
         if self.auto_generated_by is None:
             self.auto_generated_by = f"PyOBO v{get_pyobo_version(with_git_hash=True)} on {datetime.datetime.now().isoformat()}"  # type:ignore
 
-    def get_norm_idspaces(self) -> dict[str, str]:
+    def _get_clean_idspaces(self) -> dict[str, str]:
         """Get normalized idspace dictionary."""
         rv = dict(
             ChainMap(
@@ -797,7 +797,7 @@ class Obo:
         # 9 TODO default-namespace
         # 10 TODO namespace-id-rule
         # 11
-        for prefix, url in sorted(self.get_norm_idspaces().items()):
+        for prefix, url in sorted(self._get_clean_idspaces().items()):
             if prefix in DEFAULT_PREFIX_MAP:
                 # we don't need to write out the 4 default prefixes from
                 # table 2 in https://www.w3.org/TR/owl2-syntax/#IRIs since
