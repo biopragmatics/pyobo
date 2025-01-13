@@ -67,7 +67,7 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
         names=["alt", "zfin_id"],
         version=version,
     )
-    primary_to_alt_ids = defaultdict(set)
+    primary_to_alt_ids: defaultdict[str, set[str]] = defaultdict(set)
     for alt_id, zfin_id in alt_ids_df.values:
         primary_to_alt_ids[zfin_id].add(alt_id)
 
@@ -129,7 +129,7 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
         # Entity type is redundant of identifier
         # term.append_property("type", entity_type)
         for alt_id in primary_to_alt_ids[identifier]:
-            term.append_alt(alt_id)
+            term.append_alt(Reference(prefix=PREFIX, identifier=alt_id))
         entrez_id = entrez_mappings.get(identifier)
         if entrez_id:
             try:
