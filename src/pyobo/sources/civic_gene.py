@@ -1,5 +1,6 @@
 """Converter for CiVIC Genes."""
 
+import datetime
 from collections.abc import Iterable
 
 import pandas as pd
@@ -23,18 +24,15 @@ class CIVICGeneGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over gene terms for CiVIC."""
-        yield from get_terms(self.data_version, force=force)
+        yield from get_terms(self._version_or_raise, force=force)
 
 
-def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]:
+def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get CIVIC terms."""
-    # if version is not None:
-    #     version_dt: datetime.date = dateutil.parser.parse(version)
-    # else:
-    #     version_dt: datetime.date = datetime.today()
-    # version = version_dt.strftime("01-%b-%Y")
+    dt = datetime.datetime.strptime(version, "%Y-%m-%d")
     # version is like 01-Feb-2024
-    url = f"https://civicdb.org/downloads/{version}/{version}-GeneSummaries.tsv"
+    dt2 = datetime.datetime.strftime(dt, "%d-%b-%Y")
+    url = f"https://civicdb.org/downloads/{dt2}/{dt2}-GeneSummaries.tsv"
     df = ensure_df(prefix=PREFIX, url=url, sep="\t", force=force, dtype=str, version=version)
     for identifier, _, name, entrez_id, description, _last_review, _flag in df.values:
         term = Term(
