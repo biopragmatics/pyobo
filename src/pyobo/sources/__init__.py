@@ -39,6 +39,7 @@ from .mirbase import MiRBaseGetter
 from .mirbase_family import MiRBaseFamilyGetter
 from .mirbase_mature import MiRBaseMatureGetter
 from .msigdb import MSigDBGetter
+from .ncbi_gc import NCBIGCGetter
 from .ncbigene import NCBIGeneGetter
 from .nlm import NLMCatalogGetter, NLMPublisherGetter
 from .npass import NPASSGetter
@@ -107,6 +108,7 @@ __all__ = [
     "MiRBaseFamilyGetter",
     "MiRBaseGetter",
     "MiRBaseMatureGetter",
+    "NCBIGCGetter",
     "NCBIGeneGetter",
     "NLMCatalogGetter",
     "NLMPublisherGetter",
