@@ -519,7 +519,7 @@ def int_identifier_sort_key(obo: Obo, term: Term) -> int:
     return int(term.identifier)
 
 
-LOGGED_MISSING_URI: set[str] = set()
+LOGGED_MISSING_URI: set[tuple[str, str]] = set()
 
 
 @dataclass
