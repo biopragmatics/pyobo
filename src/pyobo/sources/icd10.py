@@ -7,8 +7,6 @@ import logging
 from collections.abc import Iterable, Mapping
 from typing import Any
 
-import click
-from more_click import verbose_option
 from tqdm.auto import tqdm
 
 from ..sources.icd_utils import (
@@ -40,11 +38,6 @@ class ICD10Getter(Obo):
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms()
-
-
-def get_obo() -> Obo:
-    """Get ICD-10 as OBO."""
-    return ICD10Getter()
 
 
 def iter_terms() -> Iterable[Term]:
@@ -87,11 +80,5 @@ def _extract_icd10(res_json: Mapping[str, Any]) -> Term:
     return rv
 
 
-@click.command()
-@verbose_option
-def _main():
-    get_obo().write_default(use_tqdm=True)
-
-
 if __name__ == "__main__":
-    _main()
+    ICD10Getter.cli()

@@ -38,11 +38,6 @@ class PIDGetter(Obo):
         return iter_terms()
 
 
-def get_obo() -> Obo:
-    """Get NCI PID as OBO."""
-    return PIDGetter()
-
-
 def iter_networks(use_tqdm: bool = False, force: bool = False) -> Iterable[tuple[str, CX]]:
     """Iterate over NCI PID networks."""
     yield from ensure_ndex_network_set(

@@ -1,6 +1,6 @@
 """Utilities or interacting with the ICD API.
 
-Want to get your own API cliend ID and client secret?
+Want to get your own API client ID and client secret?
 
 1. Register at https://icdapihome.azurewebsites.net/icdapi/Account/Register
 2. Sell your soul to the American government
@@ -27,6 +27,7 @@ TOKEN_URL = "https://icdaccessmanagement.who.int/connect/token"  # noqa:S105
 ICD_BASE_URL = "https://id.who.int/icd"
 
 ICD11_TOP_LEVEL_URL = f"{ICD_BASE_URL}/entity"
+ICD_11_MMS_URL = f"{ICD_BASE_URL}/release/11/2024-01/mms"
 ICD10_TOP_LEVEL_URL = f"{ICD_BASE_URL}/release/10/2016"
 
 
@@ -35,11 +36,39 @@ def get_icd(url: str) -> requests.Response:
     return requests.get(url, headers=get_icd_api_headers())
 
 
+def get_icd_11(identifier: str):
+    """Get from ICD11."""
+    return _get_entity(ICD11_TOP_LEVEL_URL, identifier)
+
+
+def get_icd_11_mms(identifier: str):
+    """Get from ICD11 MMS."""
+    return _get_entity(ICD_11_MMS_URL, identifier)
+
+
+class ICDError(ValueError):
+    """An error on getting data from ICD."""
+
+    def __init__(self, identifier: str, url: str, text: str) -> None:
+        """Instantiate an ICD error."""
+        self.identifier = identifier
+        self.url = url
+        self.text = text
+
+    def __str__(self) -> str:
+        """Make a string for the ICD error."""
+        return f"[icd11:{self.identifier}] Error getting {self.url} - {self.text}. Try {ICD11_TOP_LEVEL_URL}/{self.identifier}"
+
+
 def _get_entity(endpoint: str, identifier: str):
     url = f"{endpoint}/{identifier}"
     # tqdm.write(f'query {identifier} at {url}')
     res = get_icd(url)
-    return res.json()
+    try:
+        rv = res.json()
+    except OSError:
+        raise ICDError(identifier, url, res.text) from None
+    return rv
 
 
 def get_child_identifiers(endpoint: str, res_json: Mapping[str, Any]) -> list[str]:

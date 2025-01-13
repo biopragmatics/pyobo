@@ -10,7 +10,6 @@ from pyobo.struct.typedef import exact_match
 
 __all__ = [
     "DepMapGetter",
-    "get_obo",
 ]
 
 PREFIX = "depmap"
@@ -27,11 +26,6 @@ class DepMapGetter(Obo):
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms(version=self._version_or_raise, force=force)
-
-
-def get_obo(*, force: bool = False) -> Obo:
-    """Get DepMap cell lines as OBO."""
-    return DepMapGetter(force=force)
 
 
 def get_url(version: str | None = None) -> str:

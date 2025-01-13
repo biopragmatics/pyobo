@@ -4,7 +4,7 @@ from collections.abc import Iterable
 
 import pandas as pd
 
-from ..struct import Obo, Reference, Synonym, Term
+from ..struct import Obo, Reference, Synonym, Term, has_citation
 from ..utils.io import multidict
 from ..utils.path import ensure_df
 
@@ -25,15 +25,11 @@ class CONSOGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
+    typedefs = [has_citation]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms()
-
-
-def get_obo() -> Obo:
-    """Get CONSO as OBO."""
-    return CONSOGetter()
 
 
 def iter_terms() -> Iterable[Term]:
@@ -44,17 +40,13 @@ def iter_terms() -> Iterable[Term]:
     synonyms_df["reference"] = synonyms_df["reference"].map(
         lambda s: [Reference.from_curie_or_uri(s)] if pd.notna(s) and s != "?" else [],
     )
-    synonyms_df["specificity"] = synonyms_df["specificity"].map(
-        lambda s: "EXACT" if pd.isna(s) or s == "?" else s
-    )
-
     synonyms = multidict(
         (
             identifier,
             Synonym(
                 name=synonym,
                 provenance=provenance,
-                specificity=specificity,
+                specificity=None if pd.isna(specificity) or specificity == "?" else specificity,
             ),
         )
         for identifier, synonym, provenance, specificity in synonyms_df.values
@@ -66,21 +58,21 @@ def iter_terms() -> Iterable[Term]:
     for _, row in terms_df.iterrows():
         if row["Name"] == "WITHDRAWN":
             continue
-        provenance: list[Reference] = []
+
+        identifier = row["Identifier"]
+        term = Term(
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=row["Name"]),
+            definition=row["Description"],
+            synonyms=synonyms.get(identifier, []),
+        )
         for curie in row["References"].split(","):
             curie = curie.strip()
             if not curie:
                 continue
             reference = Reference.from_curie_or_uri(curie)
             if reference is not None:
-                provenance.append(reference)
-        identifier = row["Identifier"]
-        yield Term(
-            reference=Reference(prefix=PREFIX, identifier=identifier, name=row["Name"]),
-            definition=row["Description"],
-            provenance=provenance,
-            synonyms=synonyms.get(identifier, []),
-        )
+                term.append_provenance(reference)
+        yield term
 
 
 if __name__ == "__main__":

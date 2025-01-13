@@ -8,8 +8,6 @@ from collections.abc import Iterable
 import bioregistry
 import curies
 from bioontologies.obograph import (
-    OBO_SYNONYM_TO_OIO,
-    OIO_TO_REFERENCE,
     Definition,
     Edge,
     Graph,
@@ -22,7 +20,7 @@ from bioontologies.obograph import (
 from bioontologies.robot import ParseResults
 from tqdm import tqdm
 
-from pyobo.struct import Obo, Reference, Referenced, Term
+from pyobo.struct import Obo, Referenced, Term
 from pyobo.struct.typedef import definition_source, is_a
 
 __all__ = [
@@ -75,26 +73,19 @@ def _get_class_node(term: Term) -> Node:
         )
     else:
         definition = None
-
-    if term.xrefs:
-        if not term.xref_types:
-            term.xref_types = [
-                Reference(prefix="oboInOwl", identifier="hasDbXref") for _ in term.xrefs
-            ]
-        elif len(term.xrefs) != len(term.xref_types):
-            raise ValueError
-
     xrefs = [
         Xref.from_parsed(
-            predicate=_rewire(xref_type),
-            value=_rewire(xref),
+            predicate=_rewire(mapping_predicate),
+            value=_rewire(mapping_object),
         )
-        for xref, xref_type in zip(term.xrefs, term.xref_types, strict=False)
+        for mapping_predicate, mapping_object in term.get_mappings(
+            include_xrefs=True, add_context=False
+        )
     ]
     synonyms = [
         Synonym.from_parsed(
             name=synonym.name,
-            predicate=OIO_TO_REFERENCE[OBO_SYNONYM_TO_OIO[synonym.specificity]],
+            predicate=synonym.predicate,
             synonym_type=_rewire(synonym.type) if synonym.type else None,
             references=[_rewire(x) for x in synonym.provenance],
         )

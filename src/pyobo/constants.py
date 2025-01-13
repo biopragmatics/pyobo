@@ -22,6 +22,13 @@ RAW_DIRECTORY = RAW_MODULE.base
 DATABASE_MODULE = PYOBO_MODULE.module("database")
 DATABASE_DIRECTORY = DATABASE_MODULE.base
 
+#: The directory inside an ontology cache where
+#: large artifacts like OBO, OWL, JSON, etc. go
+BUILD_SUBDIRECTORY_NAME = "build"
+#: The directory inside an ontology cache where
+#: small caches for alts, xrefs, names, etc. go
+CACHE_SUBDIRECTORY_NAME = "cache"
+
 SPECIES_REMAPPING = {
     "Canis familiaris": "Canis lupus familiaris",
 }
@@ -168,3 +175,13 @@ class IterHelperHelperDict(SlimGetOntologyKwargs):
     skip_below: str | None
     skip_pyobo: bool
     skip_set: set[str] | None
+
+
+#: from table 2 of the Functional OWL syntax definition
+#: at https://www.w3.org/TR/owl2-syntax/#IRIs
+DEFAULT_PREFIX_MAP = {
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+}

@@ -42,12 +42,6 @@ class KEGGGenomeGetter(Obo):
         return iter_terms(version=self._version_or_raise)
 
 
-def get_obo() -> Obo:
-    """Get KEGG Genome as OBO."""
-    # since old kegg versions go away forever, do NOT add a force option
-    return KEGGGenomeGetter()
-
-
 def parse_genome_line(line: str) -> KEGGGenome | None:
     """Parse a line from the KEGG Genome database."""
     if not line.startswith("T"):

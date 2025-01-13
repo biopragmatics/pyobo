@@ -3,23 +3,25 @@
 from __future__ import annotations
 
 import logging
+import typing as t
 from collections import Counter
 from collections.abc import Mapping
 
 from curies import ReferenceTuple
+from curies import vocabulary as v
 
-from pyobo.struct import SynonymSpecificities, SynonymSpecificity
 from pyobo.struct.reference import _parse_identifier
 from pyobo.struct.struct import Reference, SynonymTypeDef, _synonym_typedef_warn
+from pyobo.struct.struct_utils import Annotation
 
 logger = logging.getLogger(__name__)
 
 TARGET_URI_WARNINGS: Counter[tuple[str, str]] = Counter()
 
 
-def _chomp_specificity(s: str) -> tuple[SynonymSpecificity | None, str]:
+def _chomp_specificity(s: str) -> tuple[v.SynonymScope | None, str]:
     s = s.strip()
-    for _specificity in SynonymSpecificities:
+    for _specificity in t.get_args(v.SynonymScope):
         if s.startswith(_specificity):
             return _specificity, s[len(_specificity) :].strip()
     return None, s
@@ -114,7 +116,5 @@ def _chomp_references(
     return references, rest
 
 
-def _chomp_axioms(
-    s: str, *, strict: bool = True, node: Reference
-) -> list[tuple[Reference, Reference]]:
+def _chomp_axioms(s: str, *, strict: bool = True, node: Reference) -> list[Annotation]:
     return []

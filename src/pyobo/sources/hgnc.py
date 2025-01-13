@@ -21,6 +21,7 @@ from pyobo.struct import (
     default_reference,
     from_species,
     gene_product_member_of,
+    has_citation,
     has_gene_product,
     member_of,
     orthologous,
@@ -53,10 +54,15 @@ previous_name_type = SynonymTypeDef(
 alias_name_type = SynonymTypeDef(
     reference=default_reference(PREFIX, "alias_name", name="alias name")
 )
-HAS_LOCUS_TYPE = TypeDef.default(PREFIX, "locus_type", name="has locus type")
-HAS_LOCUS_GROUP = TypeDef.default(PREFIX, "locus_group", name="has locus group")
-HAS_LOCATION = TypeDef.default(PREFIX, "location", name="has location")
-
+HAS_LOCUS_TYPE = TypeDef(
+    reference=default_reference(PREFIX, "locus_type", name="has locus type"), is_metadata_tag=True
+)
+HAS_LOCUS_GROUP = TypeDef(
+    reference=default_reference(PREFIX, "locus_group", name="has locus group"), is_metadata_tag=True
+)
+HAS_LOCATION = TypeDef(
+    reference=default_reference(PREFIX, "location", name="has location"), is_metadata_tag=True
+)
 
 #: First column is MIRIAM prefix, second column is HGNC key
 gene_xrefs = [
@@ -140,6 +146,7 @@ SKIP_KEYS = {
     "cd",  # symbol
     "homeodb",  # TODO add to bioregistry, though this is defunct
     "mamit-trnadb",  # TODO add to bioregistry, though this is defunct
+    "mane_select",  # TODO
 }
 
 #: A mapping from HGNC's locus_type annotations to sequence ontology identifiers
@@ -178,38 +185,8 @@ LOCUS_TYPE_TO_SO = {
     None: "0000704",  # gene
 }
 
-IDSPACES = {
-    prefix: f"https://bioregistry.io/{prefix}:"
-    for prefix in {
-        "rgd",
-        "mgi",
-        "eccode",
-        "rnacentral",
-        "pubmed",
-        "uniprot",
-        "mirbase",
-        "snornabase",
-        "hgnc",
-        "hgnc.genegroup",
-        "debio",
-        "ensembl",
-        "NCBIGene",
-        "vega",
-        "ucsc",
-        "ena",
-        "ccds",
-        "omim",
-        "cosmic",
-        "merops",
-        "orphanet",
-        "pseudogene",
-        "lncipedia",
-        "refseq",
-    }
-}
-IDSPACES.update(
-    NCBITaxon="http://purl.obolibrary.org/obo/NCBITaxon_",
-    SO="http://purl.obolibrary.org/obo/SO_",
+PUBLICATION_TERM = Term(
+    reference=Reference(prefix="IAO", identifier="0000013", name="journal article")
 )
 
 
@@ -225,11 +202,11 @@ class HGNCGetter(Obo):
         orthologous,
         member_of,
         exact_match,
+        has_citation,
         HAS_LOCUS_GROUP,
         HAS_LOCUS_TYPE,
         HAS_LOCATION,
     ]
-    idspaces = IDSPACES
     synonym_typedefs = [
         previous_name_type,
         previous_symbol_type,
@@ -245,11 +222,6 @@ class HGNCGetter(Obo):
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return get_terms(force=force, version=self.data_version)
-
-
-def get_obo(*, force: bool = False) -> Obo:
-    """Get HGNC as OBO."""
-    return HGNCGetter(force=force)
 
 
 def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]:
@@ -284,7 +256,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         )
         status = entry.pop("status")
         if status == "Approved":
-            is_obsolete = False
+            is_obsolete = None
         elif status not in statuses:
             statuses.add(status)
             tqdm.write(f"[{PREFIX}] unhandled {status}")
@@ -483,7 +455,8 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
     logger.warning(
         "Unhandled locus types:\n%s", tabulate(unhandle_locus_type_counter.most_common())
     )
-    logger.warning("Unhandled keys:\n%s", tabulate(unhandled_entry_keys.most_common()))
+    if unhandled_entry_keys:
+        logger.warning("Unhandled keys:\n%s", tabulate(unhandled_entry_keys.most_common()))
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ from .utils import get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..struct.struct import ReferenceHint, _ensure_ref
+from ..struct.struct_utils import ReferenceHint, _ensure_ref
 from ..utils.cache import cached_df, cached_mapping, cached_multidict
 from ..utils.io import multidict
 from ..utils.path import prefix_cache_join
@@ -60,22 +60,21 @@ def get_filtered_properties_mapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property value
     """
-    prop = _ensure_ref(prop)
+    prop = _ensure_ref(prop, ontology_prefix=prefix)
+    prop_curie = prop.curie
     version = get_version_from_kwargs(prefix, kwargs)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
     if all_properties_path.is_file():
         logger.info("[%s] loading pre-cached properties", prefix)
         df = pd.read_csv(all_properties_path, sep="\t")
         logger.info("[%s] filtering pre-cached properties", prefix)
-        df = df.loc[df["property"] == prop.preferred_curie, [f"{prefix}_id", "value"]]
+        df = df.loc[df["property"] == prop_curie, [f"{prefix}_id", "value"]]
         return dict(df.values)
 
-    path = prefix_cache_join(
-        prefix, "properties", name=f"{prop.preferred_curie}.tsv", version=version
-    )
+    path = prefix_cache_join(prefix, "properties", name=f"{prop_curie}.tsv", version=version)
 
     @cached_mapping(
-        path=path, header=[f"{prefix}_id", prop.preferred_curie], force=check_should_force(kwargs)
+        path=path, header=[f"{prefix}_id", prop_curie], force=check_should_force(kwargs)
     )
     def _mapping_getter() -> Mapping[str, str]:
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
@@ -97,22 +96,22 @@ def get_filtered_properties_multimapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property values
     """
-    prop = _ensure_ref(prop)
+    prop = _ensure_ref(prop, ontology_prefix=prefix)
+    prop_curie = prop.curie
     version = get_version_from_kwargs(prefix, kwargs)
     all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
+
     if all_properties_path.is_file():
         logger.info("[%s] loading pre-cached properties", prefix)
         df = pd.read_csv(all_properties_path, sep="\t")
         logger.info("[%s] filtering pre-cached properties", prefix)
-        df = df.loc[df["property"] == prop.preferred_curie, [f"{prefix}_id", "value"]]
+        df = df.loc[df["property"] == prop_curie, [f"{prefix}_id", "value"]]
         return multidict(df.values)
 
-    path = prefix_cache_join(
-        prefix, "properties", name=f"{prop.preferred_curie}.tsv", version=version
-    )
+    path = prefix_cache_join(prefix, "properties", name=f"{prop_curie}.tsv", version=version)
 
     @cached_multidict(
-        path=path, header=[f"{prefix}_id", prop.preferred_curie], force=check_should_force(kwargs)
+        path=path, header=[f"{prefix}_id", prop_curie], force=check_should_force(kwargs)
     )
     def _mapping_getter() -> Mapping[str, list[str]]:
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)

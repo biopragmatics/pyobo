@@ -11,7 +11,7 @@ from tqdm.auto import tqdm
 from ..api import get_id_multirelations_mapping
 from ..constants import SPECIES_REMAPPING
 from ..resources.ncbitaxon import get_ncbitaxon_id
-from ..struct import Obo, Reference, Term, from_species, has_participant
+from ..struct import Obo, Reference, Term, from_species, has_citation, has_participant
 from ..utils.io import multidict
 from ..utils.path import ensure_df
 
@@ -31,16 +31,11 @@ class ReactomeGetter(Obo):
     """An ontology representation of the Reactome pathway database."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [from_species, has_participant]
+    typedefs = [from_species, has_participant, has_citation]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms(version=self._version_or_raise, force=force)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get Reactome OBO."""
-    return ReactomeGetter(force=force)
 
 
 def ensure_participant_df(version: str, force: bool = False) -> pd.DataFrame:
@@ -76,11 +71,10 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     for reactome_id, name, species_name, taxonomy_id in it:
         terms[reactome_id] = term = Term(
             reference=Reference(prefix=PREFIX, identifier=reactome_id, name=name),
-            provenance=[
-                Reference(prefix="pubmed", identifier=pubmed_id)
-                for pubmed_id in provenance_d.get(reactome_id, [])
-            ],
         )
+        for pubmed_id in provenance_d.get(reactome_id, []):
+            term.append_provenance(Reference(prefix="pubmed", identifier=pubmed_id))
+
         if not taxonomy_id or pd.isna(taxonomy_id):
             raise ValueError(f"unmapped species: {species_name}")
 

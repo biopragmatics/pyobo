@@ -41,11 +41,6 @@ class MiRBaseGetter(Obo):
         return get_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get miRBase as OBO."""
-    return MiRBaseGetter(force=force)
-
-
 def get_terms(version: str, force: bool = False) -> list[Term]:
     """Parse miRNA data from filepath and convert it to dictionary."""
     _assert_frozen_version(version)
@@ -134,7 +129,7 @@ def _process_definitions_lines(
             xref_prefix, xref_identifier, xref_label = map(str.strip, line.split(";"))
             xref_prefix = xref_prefix.lower()
             xref_prefix = xref_mapping.get(xref_prefix, xref_prefix)
-            if xref_prefix == "pictar":
+            if xref_prefix in {"pictar", "mir", "mirte"}:
                 continue
 
             try:
@@ -200,4 +195,4 @@ def get_mature_id_to_name(version: str) -> Mapping[str, str]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).write_default(force=True, write_obograph=True, write_obo=True)
+    MiRBaseGetter.cli()

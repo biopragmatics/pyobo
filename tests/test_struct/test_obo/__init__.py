@@ -1,0 +1,1 @@
+"""Test OBO data structure."""

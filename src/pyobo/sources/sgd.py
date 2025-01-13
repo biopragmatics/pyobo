@@ -33,11 +33,6 @@ class SGDGetter(Obo):
         yield from get_terms(self, force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get SGD as OBO."""
-    return SGDGetter(force=force)
-
-
 def get_terms(ontology: Obo, force: bool = False) -> Iterable[Term]:
     """Get SGD terms."""
     path = ensure_path(PREFIX, url=URL, version=ontology._version_or_raise, force=force)

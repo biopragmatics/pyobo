@@ -25,11 +25,6 @@ class PfamClanGetter(Obo):
         return iter_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get PFAM Clans as OBO."""
-    return PfamClanGetter(force=force)
-
-
 # TODO could get definitions from ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam33.0/Pfam-C.gz
 
 
@@ -46,4 +41,4 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    PfamClanGetter.cli()

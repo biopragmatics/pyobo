@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 from pyobo.resources.ncbitaxon import get_ncbitaxon_name
-from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_part
+from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_citation, has_part
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -96,6 +96,7 @@ def _parse_xrefs(s) -> list[tuple[Reference, str]]:
         xref = xref.replace("protein ontology:PR_", "PR:")
         xref = xref.replace("rhea:rhea ", "rhea:")
         xref = xref.replace("rhea:Rhea ", "rhea:")
+        xref = xref.replace("rhea:RHEA ", "rhea:")
         xref = xref.replace("rhea:RHEA:rhea", "rhea:")
         xref = xref.replace("rhea:RHEA: ", "rhea:")
         xref = xref.replace("rhea:RHEA:rhea ", "rhea:")
@@ -146,16 +147,11 @@ class ComplexPortalGetter(Obo):
     """An ontology representation of the Complex Portal."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [from_species, has_part]
+    typedefs = [from_species, has_part, has_citation]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return get_terms(version=self._version_or_raise)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get the ComplexPortal OBO."""
-    return ComplexPortalGetter(force=force)
 
 
 def get_df(version: str, force: bool = False) -> pd.DataFrame:
@@ -222,25 +218,20 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         taxonomy_name,
         members,
     ) in it:
-        synonyms = [Synonym(name=alias) for alias in aliases]
-        _xrefs = []
-        provenance = []
+        term = Term(
+            reference=Reference(prefix=PREFIX, identifier=complexportal_id, name=name),
+            definition=definition.strip() if pd.notna(definition) else None,
+            synonyms=[Synonym(name=alias) for alias in aliases],
+        )
         for reference, note in xrefs:
             if note == "identity":
-                _xrefs.append(reference)
+                term.append_xref(reference)
             elif note == "see-also" and reference.prefix == "pubmed":
-                provenance.append(reference)
+                term.append_provenance(reference)
             elif (note, reference.prefix) not in unhandled_xref_type:
                 logger.debug(f"unhandled xref type: {note} / {reference.prefix}")
                 unhandled_xref_type.add((note, reference.prefix))
 
-        term = Term(
-            reference=Reference(prefix=PREFIX, identifier=complexportal_id, name=name),
-            definition=definition.strip() if pd.notna(definition) else None,
-            synonyms=synonyms,
-            xrefs=_xrefs,
-            provenance=provenance,
-        )
         term.set_species(identifier=taxonomy_id, name=taxonomy_name)
 
         for reference, _count in members:

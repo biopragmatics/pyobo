@@ -42,11 +42,6 @@ class MGIGetter(Obo):
         return get_terms(force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get MGI as OBO."""
-    return MGIGetter(force=force)
-
-
 COLUMNS = ["MGI Accession ID", "Marker Symbol", "Marker Name"]
 
 
@@ -177,4 +172,4 @@ def get_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).write_default(write_obo=True, write_obograph=True, use_tqdm=True)
+    MGIGetter.cli()

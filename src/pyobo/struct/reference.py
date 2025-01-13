@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Iterable, Sequence
+from typing import Any, NamedTuple
 
 import bioontologies.relations
 import bioontologies.upgrade
@@ -20,6 +21,9 @@ __all__ = [
     "Reference",
     "Referenced",
     "default_reference",
+    "get_preferred_curie",
+    "multi_reference_escape",
+    "reference_escape",
     "unspecified_matching",
 ]
 
@@ -170,6 +174,17 @@ class Referenced:
         return self.reference.bioregistry_link
 
 
+def get_preferred_curie(
+    ref: curies.Reference | curies.NamedReference | Reference | Referenced,
+) -> str:
+    """Get the preferred CURIE from a variety of types."""
+    match ref:
+        case Referenced() | Reference():
+            return ref.preferred_curie
+        case curies.Reference() | curies.NamedReference():
+            return ref.curie
+
+
 def default_reference(prefix: str, identifier: str, name: str | None = None) -> Reference:
     """Create a CURIE for an "unqualified" reference.
 
@@ -179,7 +194,7 @@ def default_reference(prefix: str, identifier: str, name: str | None = None) -> 
     :returns: A CURIE for the "unqualified" reference based on the OBO semantic space
 
     >>> default_reference("chebi", "conjugate_base_of")
-    Reference(prefix="obo", identifier="chebi#conjugate_base_of")
+    Reference(prefix="obo", identifier="chebi#conjugate_base_of", name=None)
     """
     if not identifier.strip():
         raise ValueError("default identifier is empty")
@@ -192,15 +207,32 @@ def reference_escape(
     """Write a reference with default namespace removed."""
     if reference.prefix == "obo" and reference.identifier.startswith(f"{ontology_prefix}#"):
         return reference.identifier.removeprefix(f"{ontology_prefix}#")
-    rv = reference.preferred_curie
+    rv = get_preferred_curie(reference)
     if add_name_comment and reference.name:
         rv += f" ! {reference.name}"
     return rv
 
 
+def multi_reference_escape(
+    references: Sequence[Reference | Reference],
+    *,
+    ontology_prefix: str,
+    add_name_comment: bool = False,
+) -> str:
+    """Write multiple references with default namespace normalized."""
+    rv = " ".join(
+        reference_escape(r, ontology_prefix=ontology_prefix, add_name_comment=False)
+        for r in references
+    )
+    names = [r.name or "" for r in references]
+    if add_name_comment and all(names):
+        rv += " ! " + " ".join(names)
+    return rv
+
+
 def comma_separate_references(references: list[Reference]) -> str:
     """Map a list to strings and make comma separated."""
-    return ", ".join(r.preferred_curie for r in references)
+    return ", ".join(get_preferred_curie(r) for r in references)
 
 
 def _ground_relation(relation_str: str) -> Reference | None:
@@ -235,3 +267,22 @@ def _parse_identifier(
 unspecified_matching = Reference(
     prefix="semapv", identifier="UnspecifiedMatching", name="unspecified matching process"
 )
+
+
+class OBOLiteral(NamedTuple):
+    """A tuple representing a property with a literal value."""
+
+    value: str
+    datatype: Reference
+
+    @classmethod
+    def string(cls, value: str) -> OBOLiteral:
+        """Get a string literal."""
+        return cls(value, Reference(prefix="xsd", identifier="string"))
+
+
+def _reference_list_tag(
+    tag: str, references: Iterable[Reference], ontology_prefix: str
+) -> Iterable[str]:
+    for reference in references:
+        yield f"{tag}: {reference_escape(reference, ontology_prefix=ontology_prefix, add_name_comment=True)}"

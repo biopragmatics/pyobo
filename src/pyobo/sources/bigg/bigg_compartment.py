@@ -29,16 +29,17 @@ GO_MAPPING: dict[str, Reference] = {
     "s": Reference(prefix="go", identifier="1990413", name="eyespot apparatus"),
     "um": Reference(prefix="go", identifier="0042651", name="thylakoid membrane"),
     "y": Reference(prefix="go", identifier="0070069", name="cytochrome complex"),
+    # note that glyoxysome is a child class of peroxisome in GO
+    "x": Reference(prefix="go", identifier="0005777", name="peroxisome"),
+    "mm": Reference(prefix="go", identifier="0005743", name="mitochondrial inner membrane"),
+    "im": Reference(prefix="go", identifier="0005758", name="mitochondrial intermembrane space"),
 }
 """
 MISSING:
 
-x peroxisome/glyoxysome
-im intermembrane space of mitochondria
 cx carboxyzome
 cm cytosolic membrane
 i inner mitochondrial compartment
-mm mitochondrial intermembrane
 w wildtype staph aureus
 """
 
@@ -82,4 +83,4 @@ def iterate_terms(*, force: bool = False, version: str | None = None) -> Iterabl
 
 
 if __name__ == "__main__":
-    BiGGCompartmentGetter().cli()
+    BiGGCompartmentGetter.cli()

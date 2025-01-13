@@ -2,22 +2,24 @@
 
 from .reference import Reference, Referenced, default_reference
 from .struct import (
+    CHARLIE_TERM,
+    HUMAN_TERM,
     Obo,
     Synonym,
-    SynonymSpecificities,
-    SynonymSpecificity,
     SynonymTypeDef,
     Term,
+    TypeDef,
     int_identifier_sort_key,
     make_ad_hoc_ontology,
 )
+from .struct_utils import Stanza
 from .typedef import (
-    TypeDef,
     derives_from,
     enables,
     from_species,
     gene_product_member_of,
     has_category,
+    has_citation,
     has_gene_product,
     has_member,
     has_part,
@@ -34,12 +36,13 @@ from .typedef import (
 )
 
 __all__ = [
+    "CHARLIE_TERM",
+    "HUMAN_TERM",
     "Obo",
     "Reference",
     "Referenced",
+    "Stanza",
     "Synonym",
-    "SynonymSpecificities",
-    "SynonymSpecificity",
     "SynonymTypeDef",
     "Term",
     "TypeDef",
@@ -49,6 +52,7 @@ __all__ = [
     "from_species",
     "gene_product_member_of",
     "has_category",
+    "has_citation",
     "has_gene_product",
     "has_member",
     "has_part",

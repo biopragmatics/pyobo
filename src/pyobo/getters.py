@@ -91,12 +91,15 @@ def get_ontology(
 
     Alternate usage if you have a custom url::
 
-    >>> from pystow.utils import download
-    >>> from pyobo import Obo, from_obo_path
-    >>> url = ...
-    >>> obo_path = ...
-    >>> download(url=url, path=path)
-    >>> obo = from_obo_path(path)
+    .. code-block:: python
+
+        from pystow.utils import download
+        from pyobo import Obo, from_obo_path
+
+        url = ...
+        obo_path = ...
+        download(url=url, path=path)
+        obo = from_obo_path(path)
     """
     if force:
         force_process = True

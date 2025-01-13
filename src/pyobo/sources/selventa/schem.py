@@ -29,11 +29,6 @@ class SCHEMGetter(Obo):
         return iter_terms(force=force)
 
 
-def get_obo(*, force: bool = False) -> Obo:
-    """Get Selventa chemical as OBO."""
-    return SCHEMGetter(force=force)
-
-
 def iter_terms(force: bool = False) -> Iterable[Term]:
     """Iterate over selventa chemical terms."""
     df = ensure_df(PREFIX, url=URL, skiprows=8, force=force)
@@ -45,4 +40,4 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default(write_obo=True, force=True)
+    SCHEMGetter.cli()
