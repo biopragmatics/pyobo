@@ -5,7 +5,7 @@ from collections.abc import Iterable
 
 import pandas as pd
 
-from pyobo import Obo, Reference, Term, TypeDef
+from pyobo import Obo, Reference, Term, TypeDef, default_reference
 
 __all__ = [
     "CVXGetter",
@@ -13,8 +13,10 @@ __all__ = [
 
 cvx_url = "https://www2a.cdc.gov/vaccines/iis/iisstandards/downloads/cvx.txt"
 PREFIX = "cvx"
-STATUS = TypeDef.default(PREFIX, "status", name="has status")
-NONVACCINE = TypeDef.default(PREFIX, "nonvaccine")
+STATUS = TypeDef(
+    reference=default_reference(PREFIX, "status", name="has status"), is_metadata_tag=True
+)
+NONVACCINE = TypeDef(reference=default_reference(PREFIX, "nonvaccine"), is_metadata_tag=True)
 
 
 class CVXGetter(Obo):

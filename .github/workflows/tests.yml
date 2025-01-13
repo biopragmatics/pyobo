@@ -65,6 +65,13 @@ jobs:
         run: uvx -p ${{ matrix.python-version }} --with tox-uv tox -e docstr-coverage
       - name: Check documentation build with Sphinx
         run: uvx -p ${{ matrix.python-version }} --with tox-uv tox -e docs-test
+
+      # Check all markdown files are properly formatted
+      # inspired by https://github.com/astral-sh/uv/blob/98523e2014e9a5c69706623344026d76296e178f/.github/workflows/ci.yml#L67C1-L70C61
+      - name: Check markdown formatting
+        run: |
+          npx --yes prettier --prose-wrap always --check "**/*.md"
+
   tests:
     name: Tests
     permissions:

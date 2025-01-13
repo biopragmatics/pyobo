@@ -98,7 +98,9 @@ class Stanza:
         rv.update(a.prefix for a in self.subsets)
         for synonym in self.synonyms:
             rv.update(synonym._get_prefixes())
-        rv.update(a.prefix for a in self.xrefs)
+        if self.xrefs:
+            rv.add("oboInOwl")
+            rv.update(a.prefix for a in self.xrefs)
         for predicate, values in self.properties.items():
             rv.add(predicate.prefix)
             for value in values:
