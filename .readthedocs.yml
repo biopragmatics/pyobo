@@ -4,6 +4,11 @@
 
 version: 2
 
+sphinx:
+  # Path to your Sphinx configuration file, required as of
+  # https://about.readthedocs.com/blog/2024/12/deprecate-config-files-without-sphinx-or-mkdocs-config/
+  configuration: docs/source/conf.py
+
 # Set the version of Python and other tools you might need
 build:
   os: ubuntu-22.04
