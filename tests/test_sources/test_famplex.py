@@ -2,7 +2,6 @@
 
 import unittest
 
-from pyobo.sources.gc import GCGetter
 from pyobo.xrefdb.sources.famplex import _get_famplex_df
 
 
@@ -17,7 +16,9 @@ class TestFamplex(unittest.TestCase):
     @unittest.skip(reason="only run locally since this uses live data")
     def test_gc_prefixes(self) -> None:
         """Test GC returns the right prefixes."""
-        prefix_map = GCGetter()._infer_prefix_map()
+        from pyobo.sources.ncbi_gc import NCBIGCGetter
+
+        prefix_map = NCBIGCGetter()._infer_prefix_map()
         self.assertEqual(
             sorted(
                 {
