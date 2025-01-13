@@ -14,7 +14,9 @@ from curies import Converter, Reference
 from rdflib import OWL, RDF, RDFS, XSD, Graph, collection, term
 
 from pyobo.struct.functional.utils import list_to_funowl
-from pyobo.struct.struct import OBOLiteral
+from pyobo.struct.reference import Reference as PyOBOReference
+from pyobo.struct.reference import Referenced
+from pyobo.struct.struct_utils import OBOLiteral
 
 from .utils import FunctionalOWLSerializable, RDFNodeSerializable
 
@@ -109,7 +111,7 @@ SupportedLiterals: TypeAlias = int | float | bool | str | datetime.date | dateti
 
 #: A partial hint for something that can be turned into an :class:`IdentifierBox`.
 #: Here, a string gets interpreted into a CURIE using :meth:`curies.Reference.from_curie`
-IdentifierHint = term.URIRef | Reference | str
+IdentifierHint = term.URIRef | Reference | Referenced | str
 
 
 class Box(FunctionalOWLSerializable, RDFNodeSerializable):
@@ -129,6 +131,8 @@ class IdentifierBox(Box):
 
     def __init__(self, identifier: IdentifierBoxOrHint) -> None:
         """Initialize the identifier box with a URIRef, Reference, or string representing a CURIE."""
+        if isinstance(identifier, Referenced):
+            identifier = identifier.reference
         if isinstance(identifier, IdentifierBox):
             self.identifier = identifier.identifier
         # make sure to check for URIRef first,
@@ -137,6 +141,12 @@ class IdentifierBox(Box):
             self.identifier = identifier
         elif isinstance(identifier, str):
             self.identifier = Reference.from_curie(identifier)
+        elif isinstance(identifier, PyOBOReference):
+            # it doesn't matter we're potentially throwing away the name,
+            # since this annotation gets put in OFN in a different place
+            self.identifier = Reference(
+                prefix=identifier.preferred_prefix, identifier=identifier.identifier
+            )
         elif isinstance(identifier, Reference):
             self.identifier = identifier
         else:
@@ -152,10 +162,9 @@ class IdentifierBox(Box):
 
     def to_funowl(self) -> str:
         """Represent this identifier for functional OWL."""
-        if isinstance(self.identifier, Reference):
-            return getattr(self.identifier, "preferred_curie", self.identifier.curie)
-        else:
+        if isinstance(self.identifier, term.URIRef):
             return f"<{self.identifier}>"
+        return self.identifier.curie
 
     def to_funowl_args(self) -> str:  # pragma: no cover
         """Get the inside of the functional OWL tag representing the identifier (unused)."""
