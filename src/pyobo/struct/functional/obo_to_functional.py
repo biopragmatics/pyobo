@@ -14,6 +14,7 @@ from pyobo.struct import vocabulary as pv
 from pyobo.struct.functional import dsl as f
 from pyobo.struct.functional import macros as m
 from pyobo.struct.functional.ontology import Document, Ontology
+from pyobo.struct.functional.utils import FunctionalOWLSerializable
 from pyobo.struct.reference import OBOLiteral, Reference
 
 if TYPE_CHECKING:
@@ -28,7 +29,6 @@ __all__ = [
     "get_term_axioms",
     "get_typedef_axioms",
 ]
-
 
 _BASE = "https://w3id.org/biopragmatics/resources"
 
@@ -56,7 +56,7 @@ def get_ofn_from_obo(
     return document
 
 
-def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
+def get_ontology_axioms(obo_ontology: Obo, *, spacers: bool = False) -> Iterable[f.Box]:
     """Get axioms from the ontology."""
     if obo_ontology.root_terms:
         yield f.Declaration(pv.has_ontology_root_term, type="AnnotationProperty")
@@ -65,6 +65,8 @@ def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
     if obo_ontology.subsetdefs:
         yield f.Declaration("oboInOwl:SubsetProperty", type="AnnotationProperty")
         for subset_typedef, subset_label in obo_ontology.subsetdefs:
+            if spacers:
+                yield _Spacer(f"Subset TypeDef: {subset_typedef.curie} ! {subset_typedef.name}")
             yield f.Declaration(subset_typedef, type="AnnotationProperty")
             yield m.LabelMacro(subset_typedef, subset_label)
             yield f.SubAnnotationPropertyOf(subset_typedef, "oboInOwl:SubsetProperty")
@@ -72,6 +74,8 @@ def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
     if obo_ontology.synonym_typedefs:
         yield f.Declaration("oboInOwl:hasScope", type="AnnotationProperty")
         for synonym_typedef in obo_ontology.synonym_typedefs:
+            if spacers:
+                yield _Spacer(f"Synonym TypeDef: {synonym_typedef.curie} ! {synonym_typedef.name}")
             yield f.Declaration(synonym_typedef.reference, type="AnnotationProperty")
             yield m.LabelMacro(synonym_typedef.reference, synonym_typedef.name)
             yield f.SubAnnotationPropertyOf(
@@ -85,10 +89,26 @@ def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
                 )
 
     for typedef in obo_ontology.typedefs or []:
+        if spacers:
+            yield _Spacer(f"TypeDef: {typedef.curie} ! {typedef.name}")
         yield from get_typedef_axioms(typedef)
 
     for term in obo_ontology:
+        if spacers:
+            yield _Spacer(f"Class: {term.curie} ! {term.name}")
         yield from get_term_axioms(term)
+
+
+
+class _Spacer(FunctionalOWLSerializable):
+    def __init__(self, comment):
+        self.comment = comment
+
+    def to_funowl(self):
+        return f"\n# {self.comment}\n"
+
+    def to_funowl_args(self) -> str:
+        raise RuntimeError
 
 
 def get_ontology_annotations(obo_ontology: Obo) -> Iterable[f.Annotation]:
