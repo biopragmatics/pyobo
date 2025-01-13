@@ -1164,7 +1164,7 @@ class Obo:
             tqdm.write(f"[{self.ontology}] writing obonet to {self._obonet_gz_path}")
             self.write_obonet_gz(self._obonet_gz_path)
         if write_nodes:
-            tqdm.write(f"[{self.ontology}] writing notes to {self._nodes_path}")
+            tqdm.write(f"[{self.ontology}] writing nodes TSV to {self._nodes_path}")
             self.get_graph().get_nodes_df().to_csv(self._nodes_path, sep="\t", index=False)
 
     @property
