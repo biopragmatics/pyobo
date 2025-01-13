@@ -1,7 +1,4 @@
-"""Converter for ChEMBL.
-
-Run with ``python -m pyobo.sources.chembl -vv``.
-"""
+"""Converter for ChEMBL Compounds."""
 
 import logging
 from collections.abc import Iterable

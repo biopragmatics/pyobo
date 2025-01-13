@@ -27,7 +27,8 @@ from ..api import (
     get_xrefs_df,
 )
 from ..getters import IterHelperHelperDict, iter_helper, iter_helper_helper
-from ..sources import ncbigene, pubchem
+from ..sources import pubchem
+from ..sources.ncbi import ncbigene
 from ..utils.path import ensure_path
 from ..xrefdb.sources import iter_xref_plugins
 

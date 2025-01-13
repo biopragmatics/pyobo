@@ -5,9 +5,9 @@ from collections.abc import Iterable, Mapping
 
 import pandas as pd
 
-from ..struct import Obo, Reference, SynonymTypeDef, Term, has_citation
-from ..struct.typedef import enables, exact_match, from_species
-from ..utils.path import ensure_path
+from ...struct import Obo, Reference, SynonymTypeDef, Term, has_citation
+from ...struct.typedef import enables, exact_match, from_species
+from ...utils.path import ensure_path
 
 __all__ = [
     "HGNCGroupGetter",

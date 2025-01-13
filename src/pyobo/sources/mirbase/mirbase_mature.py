@@ -5,8 +5,9 @@ from collections.abc import Iterable
 import pandas as pd
 from tqdm.auto import tqdm
 
-from pyobo.sources.mirbase_constants import get_mature_df
 from pyobo.struct import Obo, Reference, Synonym, Term
+
+from .mirbase_constants import get_mature_df
 
 __all__ = [
     "MiRBaseMatureGetter",

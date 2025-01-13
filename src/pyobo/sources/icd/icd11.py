@@ -18,8 +18,8 @@ from .icd_utils import (
     get_icd_11_mms,
     visiter,
 )
-from ..struct import Obo, Reference, Synonym, Term, TypeDef, default_reference
-from ..utils.path import prefix_directory_join
+from ...struct import Obo, Reference, Synonym, Term, TypeDef, default_reference
+from ...utils.path import prefix_directory_join
 
 __all__ = [
     "ICD11Getter",

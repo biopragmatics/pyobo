@@ -19,8 +19,8 @@ from cachier import cachier
 from pystow.config_api import ConfigError
 from tqdm.auto import tqdm
 
-from ..getters import NoBuildError
-from ..struct import Term
+from ...getters import NoBuildError
+from ...struct import Term
 
 TOKEN_URL = "https://icdaccessmanagement.who.int/connect/token"  # noqa:S105
 

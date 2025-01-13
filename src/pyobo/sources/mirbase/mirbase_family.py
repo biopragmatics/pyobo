@@ -5,12 +5,13 @@ from collections.abc import Iterable
 import pandas as pd
 from tqdm.auto import tqdm
 
-from pyobo.sources.mirbase_constants import (
+from pyobo.struct import Obo, Reference, Term, has_member
+
+from .mirbase_constants import (
     get_premature_df,
     get_premature_family_df,
     get_premature_to_prefamily_df,
 )
-from pyobo.struct import Obo, Reference, Term, has_member
 
 __all__ = [
     "MiRBaseFamilyGetter",

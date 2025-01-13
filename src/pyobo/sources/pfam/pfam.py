@@ -4,8 +4,8 @@ from collections.abc import Iterable
 
 import pandas as pd
 
-from ..struct import Obo, Reference, Term
-from ..utils.path import ensure_df
+from ...struct import Obo, Reference, Term
+from ...utils.path import ensure_df
 
 __all__ = [
     "PfamGetter",

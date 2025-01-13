@@ -7,8 +7,8 @@ import bioregistry
 import pandas as pd
 from tqdm.auto import tqdm
 
-from ..struct import Obo, Reference, Term, from_species
-from ..utils.path import ensure_df
+from ...struct import Obo, Reference, Term, from_species
+from ...utils.path import ensure_df
 
 __all__ = [
     "NCBIGeneGetter",
