@@ -33,6 +33,7 @@ class TestConversion(unittest.TestCase):
             _ontology="go",
             _name="Gene Ontology",
             _data_version="30",
+            _auto_generated_by="PyOBO",
             terms=[term],
             _subsetdefs=[(subset, "test subset 1")],
             _synonym_typedefs=[synonym_typedef],
@@ -61,6 +62,7 @@ class TestConversion(unittest.TestCase):
                 Annotation(dcterms:description "The Gene Ontology project provides a controlled vocabulary to describe gene and gene product attributes in any organism."^^xsd:string)
                 Annotation(IAO:0000700 GO:1234567)
                 Annotation(owl:versionInfo "30"^^xsd:string)
+                Annotation(oboInOwl:auto-generated-by "PyOBO"^^xsd:string)
 
                 Declaration(AnnotationProperty(IAO:0000700))
                 AnnotationAssertion(rdfs:label IAO:0000700 "has ontology root term")
