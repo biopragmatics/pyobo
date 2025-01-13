@@ -6,11 +6,12 @@ from collections.abc import Iterable, Mapping
 
 from tqdm.auto import tqdm
 
-from pyobo.sources.mirbase_constants import BASE_URL, _assert_frozen_version
 from pyobo.struct import Obo, Reference, Synonym, Term, from_species
 from pyobo.struct.typedef import has_mature
 from pyobo.utils.cache import cached_mapping
 from pyobo.utils.path import ensure_df, ensure_path, prefix_directory_join
+
+from .mirbase_constants import BASE_URL, _assert_frozen_version
 
 __all__ = [
     "MiRBaseGetter",

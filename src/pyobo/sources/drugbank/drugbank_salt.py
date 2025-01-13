@@ -16,7 +16,7 @@ import logging
 from collections.abc import Iterable
 
 from .drugbank import iterate_drug_info
-from ..struct import Obo, Reference, Term
+from ...struct import Obo, Reference, Term
 
 __all__ = [
     "DrugBankSaltGetter",

@@ -15,8 +15,7 @@ from .credit import CreditGetter
 from .cvx import CVXGetter
 from .depmap import DepMapGetter
 from .dictybase_gene import DictybaseGetter
-from .drugbank import DrugBankGetter
-from .drugbank_salt import DrugBankSaltGetter
+from .drugbank import DrugBankGetter, DrugBankSaltGetter
 from .drugcentral import DrugCentralGetter
 from .expasy import ExpasyGetter
 from .famplex import FamPlexGetter
@@ -24,29 +23,22 @@ from .flybase import FlyBaseGetter
 from .gard import GARDGetter
 from .geonames import GeonamesFeatureGetter, GeonamesGetter
 from .gtdb import GTDBGetter
-from .gwascentral_phenotype import GWASCentralPhenotypeGetter
-from .gwascentral_study import GWASCentralStudyGetter
-from .hgnc import HGNCGetter
-from .hgncgenefamily import HGNCGroupGetter
-from .icd10 import ICD10Getter
-from .icd11 import ICD11Getter
+from .gwascentral import GWASCentralPhenotypeGetter, GWASCentralStudyGetter
+from .hgnc import HGNCGetter, HGNCGroupGetter
+from .icd import ICD10Getter, ICD11Getter
 from .interpro import InterProGetter
 from .itis import ITISGetter
 from .kegg import KEGGGeneGetter, KEGGGenomeGetter, KEGGPathwayGetter
 from .mesh import MeSHGetter
 from .mgi import MGIGetter
-from .mirbase import MiRBaseGetter
-from .mirbase_family import MiRBaseFamilyGetter
-from .mirbase_mature import MiRBaseMatureGetter
+from .mirbase import MiRBaseFamilyGetter, MiRBaseGetter, MiRBaseMatureGetter
 from .msigdb import MSigDBGetter
-from .ncbi_gc import NCBIGCGetter
-from .ncbigene import NCBIGeneGetter
+from .ncbi import NCBIGCGetter, NCBIGeneGetter
 from .nlm import NLMCatalogGetter, NLMPublisherGetter
 from .npass import NPASSGetter
 from .omim_ps import OMIMPSGetter
 from .pathbank import PathBankGetter
-from .pfam import PfamGetter
-from .pfam_clan import PfamClanGetter
+from .pfam import PfamClanGetter, PfamGetter
 from .pid import PIDGetter
 from .pombase import PomBaseGetter
 from .pubchem import PubChemCompoundGetter
