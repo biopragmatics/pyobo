@@ -210,7 +210,7 @@ def _convert_annotation(annotation: OBOAnnotation) -> f.Annotation:
 
 def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     """Iterate over functional OWL axioms for a typedef."""
-    r = f.IdentifierBox(typedef.preferred_curie)
+    r = f.IdentifierBox(typedef)
     # 40
     if typedef.is_metadata_tag:
         yield f.Declaration(r, type="AnnotationProperty")
@@ -348,9 +348,7 @@ def _yield_synonyms(stanza: Stanza, r) -> Iterable[m.SynonymMacro]:
 
 def _yield_xrefs(term: Stanza, s) -> Iterable[m.XrefMacro]:
     for xref in term.xrefs:
-        yield m.XrefMacro(
-            s, xref.preferred_curie, annotations=_get_annotations(term, pv.has_dbxref, xref)
-        )
+        yield m.XrefMacro(s, xref, annotations=_get_annotations(term, pv.has_dbxref, xref))
 
 
 _SKIP = {
@@ -362,13 +360,12 @@ _SKIP = {
 
 def _yield_properties(term: Stanza, s) -> Iterable[f.AnnotationAssertion]:
     for typedef, values in term.properties.items():
-        ty_pc = typedef.preferred_curie
         for value in values:
             annotations = _get_annotations(term, typedef, value)
             match value:
                 case OBOLiteral():
                     yield f.AnnotationAssertion(
-                        ty_pc,
+                        typedef,
                         s,
                         _oboliteral_to_literal(value),
                         annotations=annotations,
@@ -377,8 +374,8 @@ def _yield_properties(term: Stanza, s) -> Iterable[f.AnnotationAssertion]:
                     if typedef in _SKIP:
                         continue
                     yield f.AnnotationAssertion(
-                        ty_pc,
+                        typedef,
                         s,
-                        value.preferred_curie,
+                        value,
                         annotations=annotations,
                     )
