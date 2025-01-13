@@ -8,12 +8,10 @@ This project uses the [GitHub Flow](https://guides.github.com/introduction/flow)
 model for code contributions. Follow these steps:
 
 1. [Create a fork](https://help.github.com/articles/fork-a-repo) of the upstream
-   repository at
-   [`biopragmatics/pyobo`](https://github.com/biopragmatics/pyobo)
+   repository at [`biopragmatics/pyobo`](https://github.com/biopragmatics/pyobo)
    on your GitHub account (or in one of your organizations)
 2. [Clone your fork](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository)
-   with
-   `git clone https://github.com/<your namespace here>/pyobo.git`
+   with `git clone https://github.com/<your namespace here>/pyobo.git`
 3. Make and commit changes to your fork with `git commit`
 4. Push changes to your fork with `git push`
 5. Repeat steps 3 and 4 as needed
@@ -33,8 +31,8 @@ acceptance and merge into the main branch. This has several benefits:
 
 ### Code Style
 
-This project uses `tox` for running code quality checks.
-Start by installing it with `pip install tox tox-uv`.
+This project uses `tox` for running code quality checks. Start by installing it
+with `pip install tox tox-uv`.
 
 This project encourages the use of optional static typing. It uses
 [`mypy`](http://mypy-lang.org/) as a type checker. You can check if your code
@@ -47,8 +45,7 @@ pre-configured formatters with `tox -e format`.
 This project uses [`ruff`](https://docs.astral.sh/ruff/) and several plugins for
 additional checks of documentation style, security issues, good variable
 nomenclature, and more (see `pyproject.toml` for a list of Ruff plugins). You
-can check if your code passes `ruff check` with
-`tox -e lint`.
+can check if your code passes `ruff check` with `tox -e lint`.
 
 Each of these checks are run on each commit using GitHub Actions as a continuous
 integration service. Passing all of them is required for accepting a
@@ -76,18 +73,16 @@ functions that are not fully documented.
 
 This project uses [`sphinx`](https://www.sphinx-doc.org) to automatically build
 documentation into a narrative structure. You can check that the documentation
-builds properly in an isolated environment with
-`tox -e docs-test` and actually build it locally with
-`tox -e docs`.
+builds properly in an isolated environment with `tox -e docs-test` and actually
+build it locally with `tox -e docs`.
 
 ### Testing
 
 Functions in this repository should be unit tested. These can either be written
 using the `unittest` framework in the `tests/` directory or as embedded
-doctests. You can check that the unit tests pass with
-`tox -e py` and that the
-doctests pass with `tox -e doctests`. These tests are
-required to pass for accepting a contribution.
+doctests. You can check that the unit tests pass with `tox -e py` and that the
+doctests pass with `tox -e doctests`. These tests are required to pass for
+accepting a contribution.
 
 ### Syncing your fork
 

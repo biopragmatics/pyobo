@@ -31,25 +31,24 @@
         <img src="https://zenodo.org/badge/DOI/10.5281/zenodo.3381961.svg" alt="DOI"></a>
 </p>
 
-Tools for biological identifiers, names, synonyms, xrefs, hierarchies, relations, and properties through the
-perspective of OBO.
+Tools for biological identifiers, names, synonyms, xrefs, hierarchies,
+relations, and properties through the perspective of OBO.
 
 ## Example Usage
 
-Note! PyOBO is no-nonsense. This means that there's no repetitive
-prefixes in identifiers. It also means all identifiers are strings,
-no exceptions.
+Note! PyOBO is no-nonsense. This means that there's no repetitive prefixes in
+identifiers. It also means all identifiers are strings, no exceptions.
 
-Note! The first time you run these, they have to download and cache
-all resources. We're not in the business of redistributing data,
-so all scripts should be completely reproducible. There's some
-AWS tools for hosting/downloading pre-compiled versions in
-`pyobo.aws` if you don't have time for that.
+Note! The first time you run these, they have to download and cache all
+resources. We're not in the business of redistributing data, so all scripts
+should be completely reproducible. There's some AWS tools for
+hosting/downloading pre-compiled versions in `pyobo.aws` if you don't have time
+for that.
 
-Note! PyOBO can perform grounding in a limited number of cases, but
-it is *not* a general solution for named entity recognition (NER) or grounding.
-It's suggested to check `Gilda <https://github.com/indralab/gilda>`_
-for a no-nonsense solution.
+Note! PyOBO can perform grounding in a limited number of cases, but it is _not_
+a general solution for named entity recognition (NER) or grounding. It's
+suggested to check `Gilda <https://github.com/indralab/gilda>`\_ for a
+no-nonsense solution.
 
 ### Mapping Identifiers and CURIEs
 
@@ -111,8 +110,8 @@ assert 'go:0003700' == pyobo.get_priority_curie('go:0003700')
 
 ### Mapping Species
 
-Some resources have species information for their term. Get a mapping of WikiPathway identifiers
-to species (as NCBI taxonomy identifiers):
+Some resources have species information for their term. Get a mapping of
+WikiPathway identifiers to species (as NCBI taxonomy identifiers):
 
 ```python
 import pyobo
@@ -155,9 +154,9 @@ assert identifier is None
 assert name is None
 ```
 
-If you're not really sure which namespace a name might belong to, you
-can try a few in a row (prioritize by ones that cover the appropriate
-entity type to avoid false positives in case of conflicts):
+If you're not really sure which namespace a name might belong to, you can try a
+few in a row (prioritize by ones that cover the appropriate entity type to avoid
+false positives in case of conflicts):
 
 ```python
 import pyobo
@@ -191,8 +190,8 @@ pubchem_compound_id = pyobo.get_xref('chebi', '132964', 'pubchem.compound')
 assert pubchem_compound_id == '3033674'
 ```
 
-Get xrefs from Entrez to HGNC, but they're only available through HGNC,
-so you need to flip them:
+Get xrefs from Entrez to HGNC, but they're only available through HGNC, so you
+need to flip them:
 
 ```python
 import pyobo
@@ -206,8 +205,8 @@ mapt_hgnc = ncbigene_id_to_hgnc_id['4137']
 assert mapt_hgnc == '6893'
 ```
 
-Since this is a common pattern, there's a keyword argument `flip`
-that does this for you:
+Since this is a common pattern, there's a keyword argument `flip` that does this
+for you:
 
 ```python
 import pyobo
@@ -227,8 +226,8 @@ hgnc_id = pyobo.get_xref('hgnc', '4137', 'ncbigene', flip=True)
 assert hgnc_id == '6893'
 ```
 
-Remap a CURIE based on pre-defined priority list and [Inspector Javert's Xref
-Database](https://cthoyt.com/2020/04/19/inspector-javerts-xref-database.html):
+Remap a CURIE based on pre-defined priority list and
+[Inspector Javert's Xref Database](https://cthoyt.com/2020/04/19/inspector-javerts-xref-database.html):
 
 ```python
 
@@ -253,9 +252,9 @@ assert 'ncbigene:4137' in mapt_curies
 assert 'ensembl:ENSG00000186868' in mapt_curies
 ```
 
-If you don't want to wait to build the database locally for the `pyobo.get_priority_curie` and
-`pyobo.get_equivalent`, you can use the following code to download a release from
-[Zenodo](https://zenodo.org/record/3757266):
+If you don't want to wait to build the database locally for the
+`pyobo.get_priority_curie` and `pyobo.get_equivalent`, you can use the following
+code to download a release from [Zenodo](https://zenodo.org/record/3757266):
 
 ```python
 import pyobo.resource_utils
@@ -265,7 +264,8 @@ pyobo.resource_utils.ensure_inspector_javert()
 
 ### Properties
 
-Get properties, like SMILES. The semantics of these are defined on an OBO-OBO basis.
+Get properties, like SMILES. The semantics of these are defined on an OBO-OBO
+basis.
 
 ```python
 import pyobo
@@ -332,7 +332,8 @@ assert chebi_hierarchy.nodes['chebi:132964'][prop] == 'C1(=CC=C(N=C1)OC2=CC=C(C=
 
 ### Relations
 
-Get all orthologies (`ro:HOM0000017`) between HGNC and MGI (note: this is one way)
+Get all orthologies (`ro:HOM0000017`) between HGNC and MGI (note: this is one
+way)
 
 ```python
 >>> import pyobo
@@ -354,11 +355,10 @@ If you want to do it in one line, use:
 
 ### Writings Tests that Use PyOBO
 
-If you're writing your own code that relies on PyOBO, and unit
-testing it (as you should) in a continuous integration setting,
-you've probably realized that loading all of the resources on each
-build is not so fast. In those scenarios, you can use some of the
-pre-build patches like in the following:
+If you're writing your own code that relies on PyOBO, and unit testing it (as
+you should) in a continuous integration setting, you've probably realized that
+loading all of the resources on each build is not so fast. In those scenarios,
+you can use some of the pre-build patches like in the following:
 
 ```python
 import unittest
@@ -378,38 +378,43 @@ class MyTestCase(unittest.TestCase):
           pyobo.get_name('chebi', '1234')
 ```
 
-
 ## Curation of the Bioregistry
 
 In order to normalize references and identify resources, PyOBO uses the
-[Bioregistry](https://github.com/bioregistry/bioregistry). It used to be a part of PyOBO, but has since
-been externalized for more general reuse.
+[Bioregistry](https://github.com/bioregistry/bioregistry). It used to be a part
+of PyOBO, but has since been externalized for more general reuse.
 
-At [src/pyobo/registries/metaregistry.json](https://github.com/pyobo/pyobo/blob/master/src/pyobo/registries/metaregistry.json)
-is the curated "metaregistry". This is a source of information that contains
-all sorts of fixes for missing/wrong information in MIRIAM, OLS, and OBO Foundry; entries that don't appear in
-any of them; additional synonym information for each namespace/prefix; rules for normalizing xrefs and CURIEs, etc.
+At
+[src/pyobo/registries/metaregistry.json](https://github.com/pyobo/pyobo/blob/master/src/pyobo/registries/metaregistry.json)
+is the curated "metaregistry". This is a source of information that contains all
+sorts of fixes for missing/wrong information in MIRIAM, OLS, and OBO Foundry;
+entries that don't appear in any of them; additional synonym information for
+each namespace/prefix; rules for normalizing xrefs and CURIEs, etc.
 
 Other entries in the metaregistry:
 
-- The `"remappings"->"full"` entry is a dictionary from strings that might follow `xref:`
-  in a given OBO file that need to be completely replaced, due to incorrect formatting
-- The `"remappings"->"prefix"` entry contains a dictionary of prefixes for xrefs that need
-  to be remapped. Several rules, for example, remove superfluous spaces that occur inside
-  CURIEs or and others address instances of the GOGO issue.
-- The `"blacklists"` entry contains rules for throwing out malformed xrefs based on
-  full string, just prefix, or just suffix.
+- The `"remappings"->"full"` entry is a dictionary from strings that might
+  follow `xref:` in a given OBO file that need to be completely replaced, due to
+  incorrect formatting
+- The `"remappings"->"prefix"` entry contains a dictionary of prefixes for xrefs
+  that need to be remapped. Several rules, for example, remove superfluous
+  spaces that occur inside CURIEs or and others address instances of the GOGO
+  issue.
+- The `"blacklists"` entry contains rules for throwing out malformed xrefs based
+  on full string, just prefix, or just suffix.
 
 ## Troubleshooting
 
-The OBO Foundry seems to be pretty unstable with respect to the URLs to OBO resources. If you get an error like:
+The OBO Foundry seems to be pretty unstable with respect to the URLs to OBO
+resources. If you get an error like:
 
 ```
 pyobo.getters.MissingOboBuild: OBO Foundry is missing a build for: mondo
 ```
 
-Then you should check the corresponding page on the OBO Foundry (in this case, http://www.obofoundry.org/ontology/mondo.html)
-and make update to the `url` entry for that namespace in the Bioregistry.
+Then you should check the corresponding page on the OBO Foundry (in this case,
+http://www.obofoundry.org/ontology/mondo.html) and make update to the `url`
+entry for that namespace in the Bioregistry.
 
 ## 🚀 Installation
 
@@ -515,8 +520,8 @@ More info on Cruft's update command is available
 ### 🥼 Testing
 
 After cloning the repository and installing `tox` with
-`python3 -m pip install tox tox-uv`, the unit tests in the
-`tests/` folder can be run reproducibly with:
+`python3 -m pip install tox tox-uv`, the unit tests in the `tests/` folder can
+be run reproducibly with:
 
 ```console
 tox -e py
@@ -579,8 +584,8 @@ to each release of your package.
 
 After these steps, you're ready to go! After you make "release" on GitHub (steps
 for this are below), you can navigate to
-https://zenodo.org/account/settings/github/repository/biopragmatics/pyobo
-to see the DOI for the release and link to the Zenodo record for it.
+https://zenodo.org/account/settings/github/repository/biopragmatics/pyobo to see
+the DOI for the release and link to the Zenodo record for it.
 
 #### Registering with the Python Package Index (PyPI)
 
@@ -612,10 +617,8 @@ Note that this deprecates previous workflows using `.pypirc`.
 
 #### Uploading to PyPI
 
-After installing the package in development mode and installing
-`tox` with
-`python3 -m pip install tox tox-uv`, run the following from
-the console:
+After installing the package in development mode and installing `tox` with
+`python3 -m pip install tox tox-uv`, run the following from the console:
 
 ```console
 tox -e finish
@@ -625,8 +628,8 @@ This script does the following:
 
 1. Uses [bump-my-version](https://github.com/callowayproject/bump-my-version) to
    switch the version number in the `pyproject.toml`, `CITATION.cff`,
-   `src/pyobo/version.py`, and
-   [`docs/source/conf.py`](docs/source/conf.py) to not have the `-dev` suffix
+   `src/pyobo/version.py`, and [`docs/source/conf.py`](docs/source/conf.py) to
+   not have the `-dev` suffix
 2. Packages the code in both a tar archive and a wheel using
    [`uv build`](https://docs.astral.sh/uv/guides/publish/#building-your-package)
 3. Uploads to PyPI using
@@ -638,9 +641,8 @@ This script does the following:
 
 #### Releasing on GitHub
 
-1. Navigate to
-   https://github.com/biopragmatics/pyobo/releases/new
-   to draft a new release
+1. Navigate to https://github.com/biopragmatics/pyobo/releases/new to draft a
+   new release
 2. Click the "Choose a Tag" dropdown and select the tag corresponding to the
    release you just made
 3. Click the "Generate Release Notes" button to get a quick outline of recent
