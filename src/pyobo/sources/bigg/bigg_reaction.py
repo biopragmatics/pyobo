@@ -60,6 +60,8 @@ def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[T
         for old_bigg_id in _split(old_bigg_ids):
             if old_bigg_id == bigg_id:
                 continue
+            if "(" in old_bigg_id:
+                continue
             term.append_alt(Reference(prefix=PREFIX, identifier=old_bigg_id))
         _parse_model_links(term, model_list)
 

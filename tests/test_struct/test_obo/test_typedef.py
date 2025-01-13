@@ -373,7 +373,7 @@ class TestTypeDef(unittest.TestCase):
             [Typedef]
             id: RO:0000087
             property_value: dcterms:contributor orcid:0000-0003-4423-4370 ! contributor Charles Tapley Hoyt
-            property_value: debio:0000020 "abc" xsd:string
+            property_value: ChEMROF:inchi_string "abc" xsd:string
             """,
             typedef,
         )
@@ -381,7 +381,7 @@ class TestTypeDef(unittest.TestCase):
             """\
             Declaration(ObjectProperty(RO:0000087))
             AnnotationAssertion(dcterms:contributor RO:0000087 orcid:0000-0003-4423-4370)
-            AnnotationAssertion(debio:0000020 RO:0000087 "abc"^^xsd:string)
+            AnnotationAssertion(ChEMROF:inchi_string RO:0000087 "abc"^^xsd:string)
             """,
             typedef,
         )
