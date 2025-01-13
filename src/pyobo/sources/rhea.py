@@ -7,17 +7,8 @@ from typing import TYPE_CHECKING, Any, cast
 import pystow
 
 from pyobo.api.utils import get_version
-from pyobo.struct import Obo, Reference, Term
-from pyobo.struct.typedef import (
-    enabled_by,
-    has_bidirectional_reaction,
-    has_input,
-    has_left_to_right_reaction,
-    has_output,
-    has_participant,
-    has_right_to_left_reaction,
-    reaction_enabled_by_molecular_function,
-)
+from pyobo.struct import Obo, Reference, Term, TypeDef
+from pyobo.struct import typedef as v
 from pyobo.utils.path import ensure_df
 
 if TYPE_CHECKING:
@@ -31,6 +22,16 @@ logger = logging.getLogger(__name__)
 PREFIX = "rhea"
 RHEA_RDF_GZ_URL = "ftp://ftp.expasy.org/databases/rhea/rdf/rhea.rdf.gz"
 
+has_left_to_right_reaction = TypeDef.default(
+    PREFIX, "hasLeftToRightReaction", name="has left to right reaction", is_metadata_tag=True
+).append_xref(v.has_left_to_right_reaction)
+has_right_to_left_reaction = TypeDef.default(
+    PREFIX, "hasRightToLeftReaction", name="has right to left reaction", is_metadata_tag=True
+).append_xref(v.has_right_to_left_reaction)
+has_bidirectional_reaction = TypeDef.default(
+    PREFIX, "hasBidirectionalReaction", name="has bidirectional reaction", is_metadata_tag=True
+).append_xref(v.has_bidirectional_reaction)
+
 
 class RheaGetter(Obo):
     """An ontology representation of Rhea's chemical reaction database."""
@@ -40,11 +41,11 @@ class RheaGetter(Obo):
         has_left_to_right_reaction,
         has_bidirectional_reaction,
         has_right_to_left_reaction,
-        enabled_by,
-        has_input,
-        has_output,
-        has_participant,
-        reaction_enabled_by_molecular_function,
+        v.enabled_by,
+        v.has_input,
+        v.has_output,
+        v.has_participant,
+        v.reaction_enabled_by_molecular_function,
     ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -159,10 +160,10 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             right_rhea_id = master_to_left[master_rhea_id]
         else:
             raise ValueError(f"Invalid side: {side_uri}")
-        terms[master_rhea_id].annotate_object(has_participant, chebi_reference)
-        terms[master_to_bi[master_rhea_id]].annotate_object(has_participant, chebi_reference)
-        terms[left_rhea_id].append_relationship(has_input, chebi_reference)
-        terms[right_rhea_id].append_relationship(has_output, chebi_reference)
+        terms[master_rhea_id].annotate_object(v.has_participant, chebi_reference)
+        terms[master_to_bi[master_rhea_id]].annotate_object(v.has_participant, chebi_reference)
+        terms[left_rhea_id].append_relationship(v.has_input, chebi_reference)
+        terms[right_rhea_id].append_relationship(v.has_output, chebi_reference)
 
     hierarchy = ensure_df(
         PREFIX,
@@ -181,8 +182,8 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         ("reactome", "rhea2reactome", None),
         ("macie", "rhea2macie", None),
         ("metacyc", "rhea2metacyc", None),
-        ("go", "rhea2go", reaction_enabled_by_molecular_function),
-        ("uniprot", "rhea2uniprot", enabled_by),
+        ("go", "rhea2go", v.reaction_enabled_by_molecular_function),
+        ("uniprot", "rhea2uniprot", v.enabled_by),
     ]:
         xref_df = ensure_df(
             PREFIX,
@@ -223,11 +224,11 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         _iubmb,
     ) in ec_df.values:
         terms[directional_rhea_id].append_relationship(
-            enabled_by, Reference(prefix="eccode", identifier=ec)
+            v.enabled_by, Reference(prefix="eccode", identifier=ec)
         )
 
     yield from terms.values()
 
 
 if __name__ == "__main__":
-    RheaGetter.cli()
+    RheaGetter.cli(["--owl"])
