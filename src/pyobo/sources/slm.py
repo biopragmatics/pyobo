@@ -36,7 +36,7 @@ COLUMNS = [
     "HMDB",
     "PMID",
 ]
-LEVEL = TypeDef.default(PREFIX, "level")
+LEVEL = TypeDef.default(PREFIX, "level", is_metadata_tag=True)
 
 
 class SLMGetter(Obo):

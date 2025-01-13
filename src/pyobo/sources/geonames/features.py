@@ -20,7 +20,7 @@ class GeonamesFeatureGetter(Obo):
     dynamic_version = True
     idspaces = {
         PREFIX_FEATURE: "https://www.geonames.org/recent-changes/featurecode/",
-        "dcterms": " http://purl.org/dc/terms/",
+        "dcterms": "http://purl.org/dc/terms/",
         "orcid": "https://orcid.org/",
         "NCBITaxon": "http://purl.obolibrary.org/obo/NCBITaxon_",
     }
