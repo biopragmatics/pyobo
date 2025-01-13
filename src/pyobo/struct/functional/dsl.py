@@ -10,11 +10,13 @@ from collections.abc import Iterable, Sequence
 from typing import ClassVar, TypeAlias
 
 import rdflib.namespace
-from curies import Converter, Reference
+from curies import Converter, NamedReference, Reference
 from rdflib import OWL, RDF, RDFS, XSD, Graph, collection, term
 
 from pyobo.struct.functional.utils import list_to_funowl
-from pyobo.struct.struct import OBOLiteral
+from pyobo.struct.reference import Reference as PyOBOReference
+from pyobo.struct.reference import get_preferred_curie
+from pyobo.struct.struct_utils import OBOLiteral
 
 from .utils import FunctionalOWLSerializable, RDFNodeSerializable
 
@@ -137,6 +139,12 @@ class IdentifierBox(Box):
             self.identifier = identifier
         elif isinstance(identifier, str):
             self.identifier = Reference.from_curie(identifier)
+        elif isinstance(identifier, PyOBOReference):
+            curie = get_preferred_curie(identifier)
+            if identifier.name:
+                self.identifier = NamedReference.from_curie(identifier.preferred_curie, name=identifier.name)
+            else:
+                self.identifier = Reference.from_curie(identifier.preferred_curie)
         elif isinstance(identifier, Reference):
             self.identifier = identifier
         else:
@@ -152,10 +160,9 @@ class IdentifierBox(Box):
 
     def to_funowl(self) -> str:
         """Represent this identifier for functional OWL."""
-        if isinstance(self.identifier, Reference):
-            return getattr(self.identifier, "preferred_curie", self.identifier.curie)
-        else:
+        if isinstance(self.identifier, term.URIRef):
             return f"<{self.identifier}>"
+        return self.identifier.curie
 
     def to_funowl_args(self) -> str:  # pragma: no cover
         """Get the inside of the functional OWL tag representing the identifier (unused)."""

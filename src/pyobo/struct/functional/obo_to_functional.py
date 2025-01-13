@@ -114,16 +114,16 @@ def _oboliteral_to_literal(obo_literal) -> rdflib.Literal:
 
 def get_term_axioms(term: Term) -> Iterable[f.Box]:
     """Iterate over functional OWL axioms for a term."""
-    s = f.IdentifierBox(term.reference.preferred_curie)
+    s = f.IdentifierBox(term.reference)
     # 1 and 13
     if term.type == "Term":
         yield f.Declaration(s, type="Class")
         for parent in term.parents:
-            yield f.SubClassOf(s, parent.preferred_curie)
+            yield f.SubClassOf(s, parent)
     else:
         yield f.Declaration(s, type="NamedIndividual")
         for parent in term.parents:
-            yield f.ClassAssertion(parent.preferred_curie, s)
+            yield f.ClassAssertion(parent, s)
     # 2
     if term.is_anonymous is not None:
         yield m.IsAnonymousMacro(s, term.is_anonymous)
@@ -135,7 +135,7 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
         yield m.OBONamespaceMacro(s, term.namespace)
     # 5
     for alt in term.alt_ids:
-        yield m.ReplacedByMacro(alt.preferred_curie, s)
+        yield m.ReplacedByMacro(alt, s)
     # 6
     yield from _yield_definition(term, s)
     # 7 comment is covered by properties
@@ -168,16 +168,9 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
     for typedef, value in term.iterate_relations():
         rel_annotations = _get_annotations(term, typedef, value)
         if term.type == "Term":
-            yield m.RelationshipMacro(
-                s=s,
-                p=typedef.preferred_curie,
-                o=value.preferred_curie,
-                annotations=rel_annotations,
-            )
+            yield m.RelationshipMacro(s=s, p=typedef, o=value, annotations=rel_annotations)
         else:
-            yield f.ObjectPropertyAssertion(
-                typedef.preferred_curie, s, value.preferred_curie, annotations=rel_annotations
-            )
+            yield f.ObjectPropertyAssertion(typedef, s, value, annotations=rel_annotations)
 
     # 19 TODO created_by
     # 20 TODO creation_date
