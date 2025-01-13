@@ -105,7 +105,6 @@ class TestOBOHeader(unittest.TestCase):
         self.assert_obo_lines(
             """\
             format-version: 1.4
-            idspace: go http://purl.obolibrary.org/obo/GO_ "Gene Ontology"
             ontology: xxx
             """,
             ontology,
@@ -148,8 +147,6 @@ class TestOBOHeader(unittest.TestCase):
         self.assert_obo_lines(
             """\
             format-version: 1.4
-            idspace: IAO http://purl.obolibrary.org/obo/IAO_ "Information Artifact Ontology"
-            idspace: obo http://purl.obolibrary.org/obo/ "Open Biological and Biomedical Ontologies"
             ontology: xxx
             property_value: IAO:0000700 ROOT1
             """,
