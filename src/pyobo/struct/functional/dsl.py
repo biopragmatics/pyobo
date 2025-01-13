@@ -15,7 +15,6 @@ from rdflib import OWL, RDF, RDFS, XSD, Graph, collection, term
 
 from pyobo.struct.functional.utils import list_to_funowl
 from pyobo.struct.reference import Reference as PyOBOReference
-from pyobo.struct.reference import get_preferred_curie
 from pyobo.struct.struct_utils import OBOLiteral
 
 from .utils import FunctionalOWLSerializable, RDFNodeSerializable
@@ -140,11 +139,16 @@ class IdentifierBox(Box):
         elif isinstance(identifier, str):
             self.identifier = Reference.from_curie(identifier)
         elif isinstance(identifier, PyOBOReference):
-            curie = get_preferred_curie(identifier)
             if identifier.name:
-                self.identifier = NamedReference.from_curie(identifier.preferred_curie, name=identifier.name)
+                self.identifier = NamedReference(
+                    prefix=identifier.preferred_prefix,
+                    identifier=identifier.identifier,
+                    name=identifier.name,
+                )
             else:
-                self.identifier = Reference.from_curie(identifier.preferred_curie)
+                self.identifier = Reference(
+                    prefix=identifier.preferred_prefix, identifier=identifier.identifier
+                )
         elif isinstance(identifier, Reference):
             self.identifier = identifier
         else:
