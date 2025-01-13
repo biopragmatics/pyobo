@@ -79,4 +79,4 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    SignorGetter().write_default(force=True, write_obo=True, write_owl=True)
+    SignorGetter.cli()

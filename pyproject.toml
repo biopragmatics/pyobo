@@ -72,7 +72,7 @@ dependencies = [
     "tabulate",
     "cachier",
     "pystow>=0.6.0",
-    "bioversions>=0.5.561",
+    "bioversions>=0.7.0",
     "bioregistry>=0.11.33",
     "bioontologies>=0.5.2",
     "zenodo-client>=0.3.6",
