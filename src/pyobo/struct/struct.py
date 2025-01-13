@@ -658,6 +658,8 @@ class Obo:
         # _iterate_property_pairs covers metadata, root terms,
         # and properties in self.property_values
         prefixes.update(_get_prefixes_from_annotations(self._iterate_property_pairs() or []))
+        if self.auto_generated_by:
+            prefixes.add("oboInOwl")
         return prefixes
 
     def _get_version(self) -> str | None:
@@ -808,10 +810,14 @@ class Obo:
         # 10 TODO namespace-id-rule
         # 11
         for prefix, url in sorted(self._get_clean_idspaces().items()):
-            if prefix in DEFAULT_PREFIX_MAP or prefix == "obo":
+            if prefix in DEFAULT_PREFIX_MAP:
                 # we don't need to write out the 4 default prefixes from
                 # table 2 in https://www.w3.org/TR/owl2-syntax/#IRIs since
                 # they're considered to always be builtin
+                continue
+
+            # additional assumptions about built in
+            if prefix in {"obo", "oboInOwl"}:
                 continue
 
             # ROBOT assumes that all OBO foundry prefixes are builtin,

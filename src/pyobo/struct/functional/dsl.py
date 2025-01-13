@@ -164,6 +164,8 @@ class IdentifierBox(Box):
         """Represent this identifier for functional OWL."""
         if isinstance(self.identifier, term.URIRef):
             return f"<{self.identifier}>"
+        if any(c in self.identifier.identifier for c in "()"):
+            raise ValueError(f"Can't encode CURIE with parentheses to OFN: {self.identifier}")
         return self.identifier.curie
 
     def to_funowl_args(self) -> str:  # pragma: no cover

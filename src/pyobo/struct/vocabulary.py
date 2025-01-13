@@ -69,6 +69,12 @@ has_left_to_right_reaction = Reference(
 has_right_to_left_reaction = Reference(
     prefix="debio", identifier="0000008", name="has right-to-left reaction"
 )
+debio_has_inchi = Reference(prefix="debio", identifier="0000020", name="has InChI")
+has_inchi = Reference(prefix="chemrof", identifier="inchi_string")
+
+debio_has_smiles = Reference(prefix="debio", identifier="0000022", name="has SMILES")
+has_smiles = Reference(prefix="chemrof", identifier="smiles_string")
+
 # TODO update to use debio, or put in RO
 has_citation = default_reference(prefix="RO", identifier="hasCitation", name="has citation")
 has_description = Reference(prefix="dcterms", identifier="description", name="description")
