@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from curies import ReferenceTuple
 
 from . import vocabulary as v
-from .reference import Reference
+from .reference import Reference, default_reference
 from .struct import TypeDef
 from ..resources.ro import load_ro
 
@@ -73,10 +73,12 @@ species_specific = TypeDef(
 has_left_to_right_reaction = TypeDef(v.has_left_to_right_reaction, is_metadata_tag=True)
 has_right_to_left_reaction = TypeDef(v.has_right_to_left_reaction, is_metadata_tag=True)
 has_bidirectional_reaction = TypeDef(
-    Reference(prefix="debio", identifier="0000009", name="has bi-directional reaction"),
+    reference=default_reference("RO", "hasBiDirectionalReaction"),
     is_metadata_tag=True,
-)
+).append_xref(Reference(prefix="debio", identifier="0000009", name="has bi-directional reaction"))
 reaction_enabled_by_molecular_function = TypeDef(
+    reference=default_reference("RO", "reactionEnabledByMolecularFunction")
+).append_xref(
     Reference(prefix="debio", identifier="0000047", name="reaction enabled by molecular function")
 )
 
@@ -249,15 +251,9 @@ has_citation = TypeDef(
     range=Reference(prefix="IAO", identifier="0000013", name="journal article"),
 )
 
-has_smiles = TypeDef(
-    reference=Reference(prefix="debio", identifier="0000022", name="has SMILES"),
-    is_metadata_tag=True,
-)
+has_smiles = TypeDef(reference=v.has_smiles, is_metadata_tag=True).append_xref(v.debio_has_smiles)
 
-has_inchi = TypeDef(
-    reference=Reference(prefix="debio", identifier="0000020", name="has InChI"),
-    is_metadata_tag=True,
-)
+has_inchi = TypeDef(reference=v.has_inchi, is_metadata_tag=True).append_xref(v.debio_has_inchi)
 
 has_homepage = TypeDef(
     reference=Reference(prefix="foaf", identifier="homepage", name="homepage"), is_metadata_tag=True
