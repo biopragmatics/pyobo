@@ -5,9 +5,10 @@ from collections.abc import Iterable
 
 from tqdm.auto import tqdm, trange
 
-from pyobo.sources.gwascentral_study import VERSION
 from pyobo.struct import Obo, Reference, Term
 from pyobo.utils.path import ensure_path
+
+from .gwascentral_study import VERSION
 
 __all__ = [
     "GWASCentralPhenotypeGetter",

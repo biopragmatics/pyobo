@@ -9,14 +9,14 @@ from typing import Any
 
 from tqdm.auto import tqdm
 
-from ..sources.icd_utils import (
+from .icd_utils import (
     ICD10_TOP_LEVEL_URL,
     get_child_identifiers,
     get_icd,
     visiter,
 )
-from ..struct import Obo, Reference, Synonym, Term, has_category
-from ..utils.path import prefix_directory_join
+from ...struct import Obo, Reference, Synonym, Term, has_category
+from ...utils.path import prefix_directory_join
 
 __all__ = [
     "ICD10Getter",

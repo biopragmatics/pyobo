@@ -5,7 +5,7 @@ from collections.abc import Iterable
 from tqdm.auto import tqdm
 
 from .pfam import get_pfam_clan_df
-from ..struct import Obo, Reference, Term
+from ...struct import Obo, Reference, Term
 
 __all__ = [
     "PfamClanGetter",

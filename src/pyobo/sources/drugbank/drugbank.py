@@ -14,11 +14,11 @@ from xml.etree import ElementTree
 import pystow
 from tqdm.auto import tqdm
 
-from ..getters import NoBuildError
-from ..struct import Obo, Reference, Term
-from ..struct.typedef import has_inchi, has_salt, has_smiles
-from ..utils.cache import cached_pickle
-from ..utils.path import prefix_directory_join
+from ...getters import NoBuildError
+from ...struct import Obo, Reference, Term
+from ...struct.typedef import has_inchi, has_salt, has_smiles
+from ...utils.cache import cached_pickle
+from ...utils.path import prefix_directory_join
 
 __all__ = [
     "DrugBankGetter",
