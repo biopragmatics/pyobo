@@ -1144,12 +1144,13 @@ class Obo:
             tqdm.write(f"[{self.ontology}] writing OFN to {self._ofn_path}")
             self.write_ofn(self._ofn_path)
         if write_obograph and (not self._obograph_path.exists() or force):
-            tqdm.write(f"[{self.ontology}] writing OBO Graph to {self._obograph_path}")
             if obograph_use_internal:
+                tqdm.write(f"[{self.ontology}] writing OBO Graph to {self._obograph_path}")
                 self.write_obograph(self._obograph_path)
             else:
                 import bioontologies.robot
 
+                tqdm.write(f"[{self.ontology}] converting OFN to OBO Graph at {self._obograph_path}")
                 bioontologies.robot.convert(self._ofn_path, self._obograph_path)
         if write_owl and (not self._owl_path.exists() or force):
             tqdm.write(f"[{self.ontology}] writing OWL to {self._owl_path}")

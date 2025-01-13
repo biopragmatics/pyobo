@@ -65,7 +65,6 @@ class TestOBOHeader(unittest.TestCase):
             """\
             format-version: 1.4
             subsetdef: HELLO "test"
-            idspace: obo http://purl.obolibrary.org/obo/ "Open Biological and Biomedical Ontologies"
             ontology: xxx
             """,
             ontology,
@@ -79,7 +78,6 @@ class TestOBOHeader(unittest.TestCase):
             """\
             format-version: 1.4
             subsetdef: obo:go#HELLO "test"
-            idspace: obo http://purl.obolibrary.org/obo/ "Open Biological and Biomedical Ontologies"
             ontology: xxx
             """,
             ontology,
