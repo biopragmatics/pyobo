@@ -2133,3 +2133,4 @@ def make_ad_hoc_ontology(
 
 HUMAN_TERM = Term(reference=v.HUMAN)
 CHARLIE_TERM = Term(reference=v.CHARLIE, type="Instance").append_parent(HUMAN_TERM)
+PYOBO_INJECTED = "Injected by PyOBO"
