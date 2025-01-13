@@ -6,7 +6,8 @@ import pandas as pd
 
 from pyobo import Obo, Reference, Term, default_reference
 from pyobo.sources.signor.download import DownloadKey, get_signor_df
-from pyobo.struct.typedef import exact_match, has_component, has_member
+from pyobo.struct import CHARLIE_TERM, HUMAN_TERM, PYOBO_INJECTED
+from pyobo.struct.typedef import exact_match, has_component, has_contributor, has_member
 
 __all__ = [
     "SignorGetter",
@@ -14,10 +15,26 @@ __all__ = [
 
 PREFIX = "signor"
 
-PROTEIN_FAMILY = Term(reference=default_reference(PREFIX, "protein-family"))
-PROTEIN_COMPLEX = Term(reference=default_reference(PREFIX, "protein-complex"))
-PHENOTYPE = Term(reference=default_reference(PREFIX, "phenotype"))
-STIMULUS = Term(reference=default_reference(PREFIX, "stimulus"))
+PROTEIN_FAMILY = (
+    Term(reference=default_reference(PREFIX, "protein-family"))
+    .annotate_object(has_contributor, CHARLIE_TERM)
+    .append_comment(PYOBO_INJECTED)
+)
+PROTEIN_COMPLEX = (
+    Term(reference=default_reference(PREFIX, "protein-complex"))
+    .annotate_object(has_contributor, CHARLIE_TERM)
+    .append_comment(PYOBO_INJECTED)
+)
+PHENOTYPE = (
+    Term(reference=default_reference(PREFIX, "phenotype"))
+    .annotate_object(has_contributor, CHARLIE_TERM)
+    .append_comment(PYOBO_INJECTED)
+)
+STIMULUS = (
+    Term(reference=default_reference(PREFIX, "stimulus"))
+    .annotate_object(has_contributor, CHARLIE_TERM)
+    .append_comment(PYOBO_INJECTED)
+)
 ROOT_TERMS = (PROTEIN_FAMILY, PROTEIN_COMPLEX, PHENOTYPE, STIMULUS)
 
 
@@ -35,6 +52,8 @@ class SignorGetter(Obo):
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over terms."""
+    yield CHARLIE_TERM
+    yield HUMAN_TERM
     yield from ROOT_TERMS
 
     complexes_df = get_signor_df(PREFIX, version=version, force=force, key=DownloadKey.complex)
@@ -63,19 +82,21 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     # for some reason, there are many duplicates in this file
     stimulus_df = stimulus_df.drop_duplicates()
     for identifier, name, description in stimulus_df.values:
-        term = Term.from_triple(
-            PREFIX, identifier, name, definition=description if pd.notna(description) else None
-        )
+        term = Term.from_triple(PREFIX, identifier, name, definition=_clean_descr(description))
         term.append_parent(STIMULUS)
         yield term
 
     phenotypes_df = get_signor_df(PREFIX, version=version, force=force, key=DownloadKey.phenotype)
     for identifier, name, description in phenotypes_df.values:
-        term = Term.from_triple(
-            PREFIX, identifier, name, definition=description if pd.notna(description) else None
-        )
+        term = Term.from_triple(PREFIX, identifier, name, definition=_clean_descr(description))
         term.append_parent(PHENOTYPE)
         yield term
+
+
+def _clean_descr(d) -> str | None:
+    if pd.isna(d):
+        return None
+    return d.replace("\n", " ")
 
 
 if __name__ == "__main__":
