@@ -84,6 +84,9 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_SPECIFICITY: _cv.SynonymScope = "EXACT"
 
+TermStanzaType: TypeAlias = Literal["Term", "Instance"]
+TERM_STANZA_SORT_PRIORITY: dict[TermStanzaType, int] = {"Instance": 2, "Term": 1}
+
 #: Columns in the SSSOM dataframe
 SSSOM_DF_COLUMNS = [
     "subject_id",
@@ -259,7 +262,7 @@ class Term(Referenced, Stanza):
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: bool | None = None
 
-    type: Literal["Term", "Instance"] = "Term"
+    type: TermStanzaType = "Term"
 
     builtin: bool | None = None
     is_anonymous: bool | None = None
@@ -1150,8 +1153,20 @@ class Obo:
     @property
     def _items_accessor(self):
         if self._items is None:
+            if self.term_sort_key is not None:
+
+                def _sort_key(term: Term):
+                    # it appears that mypy has a bug and isn't able to pull
+                    # the outer if statement's constraint into the definition,
+                    # that's why there's a type ignore
+                    return TERM_STANZA_SORT_PRIORITY[term.type], self.term_sort_key(self, term)  # type:ignore
+            else:
+
+                def _sort_key(term: Term):
+                    return TERM_STANZA_SORT_PRIORITY[term.type], term.preferred_curie
+
             # if the term sort key is None, then the terms get sorted by their reference
-            self._items = sorted(self.iter_terms(force=self.force), key=self.term_sort_key)
+            self._items = sorted(self.iter_terms(force=self.force), key=_sort_key)
         return self._items
 
     def __iter__(self) -> Iterator[Term]:
