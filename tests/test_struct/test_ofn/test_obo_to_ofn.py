@@ -60,9 +60,9 @@ class TestConversion(unittest.TestCase):
                 Annotation(dcterms:title "Gene Ontology"^^xsd:string)
                 Annotation(dcterms:license "CC-BY-4.0"^^xsd:string)
                 Annotation(dcterms:description "The Gene Ontology project provides a controlled vocabulary to describe gene and gene product attributes in any organism."^^xsd:string)
-                Annotation(oboInOwl:auto-generated-by "PyOBO"^^xsd:string)
                 Annotation(IAO:0000700 GO:1234567)
                 Annotation(owl:versionInfo "30"^^xsd:string)
+                Annotation(oboInOwl:auto-generated-by "PyOBO"^^xsd:string)
 
                 Declaration(AnnotationProperty(IAO:0000700))
                 AnnotationAssertion(rdfs:label IAO:0000700 "has ontology root term")
