@@ -808,10 +808,15 @@ class Obo:
         # 10 TODO namespace-id-rule
         # 11
         for prefix, url in sorted(self._get_clean_idspaces().items()):
-            if prefix in DEFAULT_PREFIX_MAP:
+            if prefix in DEFAULT_PREFIX_MAP or prefix == "obo":
                 # we don't need to write out the 4 default prefixes from
                 # table 2 in https://www.w3.org/TR/owl2-syntax/#IRIs since
                 # they're considered to always be builtin
+                continue
+
+            # ROBOT assumes that all OBO foundry prefixes are builtin,
+            # so don't re-declare them
+            if bioregistry.is_obo_foundry(prefix):
                 continue
 
             yv = f"idspace: {prefix} {url}"
@@ -1139,12 +1144,15 @@ class Obo:
             tqdm.write(f"[{self.ontology}] writing OFN to {self._ofn_path}")
             self.write_ofn(self._ofn_path)
         if write_obograph and (not self._obograph_path.exists() or force):
-            tqdm.write(f"[{self.ontology}] writing OBO Graph to {self._obograph_path}")
             if obograph_use_internal:
+                tqdm.write(f"[{self.ontology}] writing OBO Graph to {self._obograph_path}")
                 self.write_obograph(self._obograph_path)
             else:
                 import bioontologies.robot
 
+                tqdm.write(
+                    f"[{self.ontology}] converting OFN to OBO Graph at {self._obograph_path}"
+                )
                 bioontologies.robot.convert(self._ofn_path, self._obograph_path)
         if write_owl and (not self._owl_path.exists() or force):
             tqdm.write(f"[{self.ontology}] writing OWL to {self._owl_path}")
@@ -1158,7 +1166,7 @@ class Obo:
             tqdm.write(f"[{self.ontology}] writing obonet to {self._obonet_gz_path}")
             self.write_obonet_gz(self._obonet_gz_path)
         if write_nodes:
-            tqdm.write(f"[{self.ontology}] writing notes to {self._nodes_path}")
+            tqdm.write(f"[{self.ontology}] writing nodes TSV to {self._nodes_path}")
             self.get_graph().get_nodes_df().to_csv(self._nodes_path, sep="\t", index=False)
 
     @property
