@@ -798,10 +798,15 @@ class Obo:
         # 10 TODO namespace-id-rule
         # 11
         for prefix, url in sorted(self._get_clean_idspaces().items()):
-            if prefix in DEFAULT_PREFIX_MAP:
+            if prefix in DEFAULT_PREFIX_MAP or prefix == "obo":
                 # we don't need to write out the 4 default prefixes from
                 # table 2 in https://www.w3.org/TR/owl2-syntax/#IRIs since
                 # they're considered to always be builtin
+                continue
+
+            # ROBOT assumes that all OBO foundry prefixes are builtin,
+            # so don't re-declare them
+            if bioregistry.is_obo_foundry(prefix):
                 continue
 
             yv = f"idspace: {prefix} {url}"
