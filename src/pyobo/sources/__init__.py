@@ -50,7 +50,7 @@ from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
 from .sgd import SGDGetter
 from .signor import SignorGetter
 from .slm import SLMGetter
-from .umls import UMLSGetter
+from .umls import UMLSGetter, UMLSSTyGetter
 from .unimod import UnimodGetter
 from .uniprot import UniProtGetter, UniProtPtmGetter
 from .wikipathways import WikiPathwaysGetter
@@ -125,6 +125,7 @@ __all__ = [
     "SLMGetter",
     "SignorGetter",
     "UMLSGetter",
+    "UMLSSTyGetter",
     "UniProtGetter",
     "UniProtPtmGetter",
     "UnimodGetter",
