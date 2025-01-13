@@ -50,6 +50,10 @@ class Annotation(NamedTuple):
         """Return a literal property for a float."""
         return cls(predicate, OBOLiteral(str(value), v.xsd_float))
 
+    @staticmethod
+    def _sort_key(x: Annotation):
+        return x.predicate, _reference_or_literal_key(x.value)
+
 
 def _property_resolve(
     p: Reference | Referenced, o: Reference | Referenced | OBOLiteral
@@ -232,7 +236,7 @@ class Stanza:
         return self
 
     def _iterate_intersection_of_obo(self, *, ontology_prefix: str) -> Iterable[str]:
-        for element in self.intersection_of:
+        for element in sorted(self.intersection_of, key=self._intersection_of_key):
             match element:
                 case Reference():
                     end = reference_escape(
@@ -251,6 +255,13 @@ class Stanza:
                 case _:
                     raise TypeError
             yield f"intersection_of: {end}"
+
+    @staticmethod
+    def _intersection_of_key(io: Reference | tuple[Reference, Reference]):
+        if isinstance(io, Reference):
+            return 0, io
+        else:
+            return 1, io
 
     def _iterate_xref_obo(self, *, ontology_prefix) -> Iterable[str]:
         for xref in sorted(self.xrefs):
@@ -418,7 +429,7 @@ class Stanza:
         return [
             Annotation(prop, value)
             for prop, values in sorted(self.properties.items())
-            for value in values
+            for value in sorted(values, key=_reference_or_literal_key)
         ]
 
     def get_property_values(self, typedef: ReferenceHint) -> list[Reference | OBOLiteral]:
@@ -427,11 +438,11 @@ class Stanza:
 
     def get_property_objects(self, prop: ReferenceHint) -> list[Reference]:
         """Get properties from the given key."""
-        return [
+        return sorted(
             reference
             for reference in self.properties.get(_ensure_ref(prop), [])
             if isinstance(reference, curies.Reference)
-        ]
+        )
 
     def append_synonym(
         self,
@@ -660,11 +671,11 @@ def _iterate_obo_relations(
     """Iterate over relations/property values for OBO."""
     skip_predicate_objects = set(skip_predicate_objects or [])
     skip_predicate_literals = set(skip_predicate_literals or [])
-    for predicate, values in relations.items():
+    for predicate, values in sorted(relations.items()):
         _typedef_warn(prefix=ontology_prefix, predicate=predicate, typedefs=typedefs)
         pc = reference_escape(predicate, ontology_prefix=ontology_prefix)
         start = f"{pc} "
-        for value in values:
+        for value in sorted(values, key=_reference_or_literal_key):
             match value:
                 case OBOLiteral(dd, datatype):
                     if predicate in skip_predicate_literals:
@@ -687,6 +698,13 @@ def _iterate_obo_relations(
             if predicate.name and name:
                 end += f" ! {predicate.name} {name}"
             yield start + end
+
+
+def _reference_or_literal_key(x: Reference | OBOLiteral) -> tuple[int, Reference | OBOLiteral]:
+    if isinstance(x, Reference):
+        return 0, x
+    else:
+        return 1, x
 
 
 def _get_obo_trailing_modifiers(
@@ -716,7 +734,7 @@ def _format_obo_trailing_modifiers(
     things, so split up the place where annotations are put in here.
     """
     modifiers: list[tuple[str, str]] = []
-    for prop in annotations:
+    for prop in sorted(annotations, key=Annotation._sort_key):
         left = reference_escape(prop.predicate, ontology_prefix=ontology_prefix)
         match prop.value:
             case Reference():
@@ -724,7 +742,7 @@ def _format_obo_trailing_modifiers(
             case OBOLiteral(value, _datatype):
                 right = value
         modifiers.append((left, right))
-    inner = ", ".join(f"{key}={value}" for key, value in sorted(modifiers))
+    inner = ", ".join(f"{key}={value}" for key, value in modifiers)
     return " {" + inner + "}"
 
 

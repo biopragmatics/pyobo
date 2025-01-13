@@ -372,8 +372,8 @@ class TestTypeDef(unittest.TestCase):
             """\
             [Typedef]
             id: RO:0000087
-            property_value: dcterms:contributor orcid:0000-0003-4423-4370 ! contributor Charles Tapley Hoyt
             property_value: ChEMROF:inchi_string "abc" xsd:string
+            property_value: dcterms:contributor orcid:0000-0003-4423-4370 ! contributor Charles Tapley Hoyt
             """,
             typedef,
         )
