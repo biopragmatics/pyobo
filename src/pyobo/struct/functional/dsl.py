@@ -10,7 +10,7 @@ from collections.abc import Iterable, Sequence
 from typing import ClassVar, TypeAlias
 
 import rdflib.namespace
-from curies import Converter, NamedReference, Reference
+from curies import Converter, Reference
 from rdflib import OWL, RDF, RDFS, XSD, Graph, collection, term
 
 from pyobo.struct.functional.utils import list_to_funowl
@@ -139,16 +139,11 @@ class IdentifierBox(Box):
         elif isinstance(identifier, str):
             self.identifier = Reference.from_curie(identifier)
         elif isinstance(identifier, PyOBOReference):
-            if identifier.name:
-                self.identifier = NamedReference(
-                    prefix=identifier.preferred_prefix,
-                    identifier=identifier.identifier,
-                    name=identifier.name,
-                )
-            else:
-                self.identifier = Reference(
-                    prefix=identifier.preferred_prefix, identifier=identifier.identifier
-                )
+            # it doesn't matter we're potentially throwing away the name,
+            # since this annotation gets put in OFN in a different place
+            self.identifier = Reference(
+                prefix=identifier.preferred_prefix, identifier=identifier.identifier
+            )
         elif isinstance(identifier, Reference):
             self.identifier = identifier
         else:
