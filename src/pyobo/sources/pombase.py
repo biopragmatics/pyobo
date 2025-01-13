@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 PREFIX = "pombase"
 GENE_NAMES_URL = "https://www.pombase.org/data/names_and_identifiers/gene_IDs_names_products.tsv"
 ORTHOLOGS_URL = "https://www.pombase.org/data/orthologs/human-orthologs.txt.gz"
-CHROMOSOME = TypeDef.default(PREFIX, "chromosome")
+CHROMOSOME = TypeDef.default(PREFIX, "chromosome", is_metadata_tag=True)
 
 
 class PomBaseGetter(Obo):

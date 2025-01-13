@@ -19,11 +19,15 @@ logger = logging.getLogger(__name__)
 PREFIX = "msigdb"
 BASE_URL = "https://data.broadinstitute.org/gsea-msigdb/msigdb/release"
 
-CATEGORY_CODE = TypeDef.default(PREFIX, "category_code", name="category code")
-SUB_CATEGORY_CODE = TypeDef.default(PREFIX, "sub_category_code", name="sub-category code")
-CONTRIBUTOR = TypeDef.default(PREFIX, "contributor", name="contributor")
-EXACT_SOURCE = TypeDef.default(PREFIX, "exact_source", name="exact source")
-EXTERNAL_DETAILS_URL = TypeDef.default(PREFIX, "external_details_url", name="external details URL")
+CATEGORY_CODE = TypeDef.default(PREFIX, "category_code", name="category code", is_metadata_tag=True)
+SUB_CATEGORY_CODE = TypeDef.default(
+    PREFIX, "sub_category_code", name="sub-category code", is_metadata_tag=True
+)
+CONTRIBUTOR = TypeDef.default(PREFIX, "contributor", name="contributor", is_metadata_tag=True)
+EXACT_SOURCE = TypeDef.default(PREFIX, "exact_source", name="exact source", is_metadata_tag=True)
+EXTERNAL_DETAILS_URL = TypeDef.default(
+    PREFIX, "external_details_url", name="external details URL", is_metadata_tag=True
+)
 
 PROPERTIES = [
     ("CATEGORY_CODE", CATEGORY_CODE),

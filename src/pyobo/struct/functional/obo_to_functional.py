@@ -70,7 +70,7 @@ def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
             yield f.SubAnnotationPropertyOf(subset_typedef, "oboInOwl:SubsetProperty")
 
     if obo_ontology.synonym_typedefs:
-        yield f.Declaration("oboInOwl:hasScope", type="AnnotationProperty")
+        used_has_scope = False
         for synonym_typedef in obo_ontology.synonym_typedefs:
             yield f.Declaration(synonym_typedef.reference, type="AnnotationProperty")
             yield m.LabelMacro(synonym_typedef.reference, synonym_typedef.name)
@@ -78,11 +78,14 @@ def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
                 synonym_typedef.reference, "oboInOwl:SynonymTypeProperty"
             )
             if synonym_typedef.specificity:
+                used_has_scope = True
                 yield f.AnnotationAssertion(
                     "oboInOwl:hasScope",
                     synonym_typedef.reference,
                     v.synonym_scopes[synonym_typedef.specificity],
                 )
+        if used_has_scope:
+            yield f.Declaration("oboInOwl:hasScope", type="AnnotationProperty")
 
     for typedef in obo_ontology.typedefs or []:
         yield from get_typedef_axioms(typedef)

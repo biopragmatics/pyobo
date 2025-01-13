@@ -5,7 +5,7 @@ from collections.abc import Sequence
 import curies
 from curies import vocabulary as _v
 
-from .reference import Reference
+from .reference import Reference, default_reference
 
 __all__ = [
     "equivalent_class",
@@ -64,7 +64,8 @@ has_left_to_right_reaction = Reference(
 has_right_to_left_reaction = Reference(
     prefix="debio", identifier="0000008", name="has right-to-left reaction"
 )
-has_citation = Reference(prefix="debio", identifier="0000029", name="has citation")
+# TODO update to use debio, or put in RO
+has_citation = default_reference(prefix="RO", identifier="hasCitation", name="has citation")
 has_description = Reference(prefix="dcterms", identifier="description", name="description")
 has_license = Reference(prefix="dcterms", identifier="license", name="license")
 has_title = Reference(prefix="dcterms", identifier="title", name="title")
@@ -82,7 +83,6 @@ xsd_integer = Reference(prefix="xsd", identifier="integer", name="integer")
 xsd_boolean = Reference(prefix="xsd", identifier="boolean", name="boolean")
 xsd_year = Reference(prefix="xsd", identifier="gYear", name="year")
 xsd_uri = Reference(prefix="xsd", identifier="anyURI", name="URI")
-
 
 CHARLIE = _c(_v.charlie)
 HUMAN = Reference(prefix="NCBITaxon", identifier="9606", name="Homo sapiens")

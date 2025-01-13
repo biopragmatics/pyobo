@@ -123,9 +123,7 @@ class Synonym:
 
     def _get_prefixes(self) -> set[str]:
         """Get all prefixes used by the typedef."""
-        rv: set[str] = set()
-        if self.specificity is not None:
-            rv.add("oboInOwl")
+        rv: set[str] = {"oboInOwl"}
         if self.type is not None:
             rv.add(self.type.prefix)
         rv.update(p.prefix for p in self.provenance)
@@ -521,6 +519,9 @@ def int_identifier_sort_key(obo: Obo, term: Term) -> int:
     return int(term.identifier)
 
 
+LOGGED_MISSING_URI: set[str] = set()
+
+
 @dataclass
 class Obo:
     """An OBO document."""
@@ -625,12 +626,21 @@ class Obo:
     def _infer_prefix_map(self) -> dict[str, str]:
         """Get a prefix map including all prefixes used in the ontology."""
         rv = {}
-        for prefix in self._get_prefixes():
+        for prefix in sorted(self._get_prefixes(), key=str.casefold):
             uri_prefix = bioregistry.get_uri_prefix(prefix)
             if uri_prefix is None:
                 # This allows us an escape hatch, since some
                 # prefixes don't have an associated URI prefix
                 uri_prefix = f"https://bioregistry.io/{prefix}:"
+                if (self.ontology, prefix) not in LOGGED_MISSING_URI:
+                    LOGGED_MISSING_URI.add((self.ontology, prefix))
+                    logger.warning(
+                        "[%s] uses prefix with no URI format: %s. Auto-generating Bioregistry link: %s",
+                        self.ontology,
+                        prefix,
+                        uri_prefix,
+                    )
+
             pp = bioregistry.get_preferred_prefix(prefix) or prefix
             rv[pp] = uri_prefix
         return rv
@@ -858,7 +868,11 @@ class Obo:
         # License
         # TODO add SPDX to idspaces and use as a CURIE?
         if license_spdx_id := bioregistry.get_license(self.ontology):
-            yield Annotation(v.has_license, OBOLiteral.string(license_spdx_id))
+            if license_spdx_id.startswith("http"):
+                license_literal = OBOLiteral(license_spdx_id, v.xsd_uri)
+            else:
+                license_literal = OBOLiteral.string(license_spdx_id)
+            yield Annotation(v.has_license, license_literal)
 
         # Description
         if description := bioregistry.get_description(self.ontology):
@@ -2050,9 +2064,14 @@ class TypeDef(Referenced, Stanza):
         return cls(reference=Reference(prefix=prefix, identifier=identifier, name=name))
 
     @classmethod
-    def default(cls, prefix: str, identifier: str, *, name: str | None = None) -> Self:
+    def default(
+        cls, prefix: str, identifier: str, *, name: str | None = None, is_metadata_tag: bool
+    ) -> Self:
         """Construct a default type definition from within the OBO namespace."""
-        return cls(reference=default_reference(prefix, identifier, name=name))
+        return cls(
+            reference=default_reference(prefix, identifier, name=name),
+            is_metadata_tag=is_metadata_tag,
+        )
 
 
 def make_ad_hoc_ontology(
