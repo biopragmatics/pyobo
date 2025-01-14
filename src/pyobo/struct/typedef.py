@@ -121,6 +121,8 @@ equivalent_class = TypeDef(reference=v.equivalent_class)
 equivalent_property = TypeDef(reference=v.equivalent_property)
 
 is_a = TypeDef(reference=v.is_a)
+rdf_type = TypeDef(reference=v.rdf_type)
+subproperty_of = TypeDef(reference=v.subproperty_of)
 see_also = TypeDef(reference=v.see_also, is_metadata_tag=True)
 comment = TypeDef(reference=v.comment, is_metadata_tag=True)
 has_member = TypeDef(
