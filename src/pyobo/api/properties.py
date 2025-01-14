@@ -10,8 +10,9 @@ from .utils import get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..struct.struct_utils import ReferenceHint, _ensure_ref
-from ..utils.cache import cached_df, cached_mapping, cached_multidict
+from ..struct.reference import Reference
+from ..struct.struct_utils import OBOLiteral, ReferenceHint, _ensure_ref
+from ..utils.cache import cached_df
 from ..utils.io import multidict
 from ..utils.path import prefix_cache_join
 
@@ -19,6 +20,10 @@ __all__ = [
     "get_filtered_properties_df",
     "get_filtered_properties_mapping",
     "get_filtered_properties_multimapping",
+    "get_literal_properties",
+    "get_literal_properties_df",
+    "get_object_properties",
+    "get_object_properties_df",
     "get_properties",
     "get_properties_df",
     "get_property",
@@ -27,8 +32,68 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
+class PropertiesKwargs(GetOntologyKwargs):
+    use_tqdm: bool
+
+
+def get_object_properties_df(
+    prefix, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+) -> pd.DataFrame:
+    """Get a dataframe of object property triples."""
+    version = get_version_from_kwargs(prefix, kwargs)
+    path = prefix_cache_join(prefix, name="object_properties.tsv", version=version)
+
+    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    def _df_getter() -> pd.DataFrame:
+        return get_ontology(prefix, **kwargs).get_object_properties_df(use_tqdm=use_tqdm)
+
+    return _df_getter()
+
+
+def get_object_properties(
+    prefix, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+) -> list[tuple[Reference, Reference, Reference]]:
+    """Get a list of object property triples."""
+    df = get_object_properties_df(prefix, use_tqdm=use_tqdm, **kwargs)
+    return [
+        (Reference.from_curie(s), Reference.from_curie(p), Reference.from_curie(o))
+        for s, p, o in df.values
+    ]
+
+
+def get_literal_properties(
+    prefix: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+) -> list[tuple[Reference, Reference, OBOLiteral]]:
+    """Get a list of literal property triples."""
+    df = get_literal_properties_df(prefix, use_tqdm=use_tqdm, **kwargs)
+    return [
+        (
+            Reference.from_curie(s),
+            Reference.from_curie(p),
+            OBOLiteral(value, Reference.from_curie(datatype)),
+        )
+        for s, p, value, datatype in df.values
+    ]
+
+
+def get_literal_properties_df(
+    prefix: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+) -> pd.DataFrame:
+    """Get a dataframe of literal property quads."""
+    version = get_version_from_kwargs(prefix, kwargs)
+    path = prefix_cache_join(prefix, name="literal_properties.tsv", version=version)
+
+    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    def _df_getter() -> pd.DataFrame:
+        return get_ontology(prefix, **kwargs).get_literal_properties_df(use_tqdm=use_tqdm)
+
+    return _df_getter()
+
+
 @wrap_norm_prefix
-def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
+def get_properties_df(
+    prefix: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+) -> pd.DataFrame:
     """Extract properties.
 
     :param prefix: the resource to load
@@ -40,17 +105,14 @@ def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.Da
 
     @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
     def _df_getter() -> pd.DataFrame:
-        ontology = get_ontology(prefix, **kwargs)
-        df = ontology.get_properties_df()
-        df.dropna(inplace=True)
-        return df
+        return get_ontology(prefix, **kwargs).get_properties_df(use_tqdm=use_tqdm)
 
     return _df_getter()
 
 
 @wrap_norm_prefix
 def get_filtered_properties_mapping(
-    prefix: str, prop: ReferenceHint, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, prop: ReferenceHint, **kwargs: Unpack[PropertiesKwargs]
 ) -> Mapping[str, str]:
     """Extract a single property for each term as a dictionary.
 
@@ -60,65 +122,22 @@ def get_filtered_properties_mapping(
     :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property value
     """
-    prop = _ensure_ref(prop, ontology_prefix=prefix)
-    prop_curie = prop.curie
-    version = get_version_from_kwargs(prefix, kwargs)
-    all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
-    if all_properties_path.is_file():
-        logger.info("[%s] loading pre-cached properties", prefix)
-        df = pd.read_csv(all_properties_path, sep="\t")
-        logger.info("[%s] filtering pre-cached properties", prefix)
-        df = df.loc[df["property"] == prop_curie, [f"{prefix}_id", "value"]]
-        return dict(df.values)
-
-    path = prefix_cache_join(prefix, "properties", name=f"{prop_curie}.tsv", version=version)
-
-    @cached_mapping(
-        path=path, header=[f"{prefix}_id", prop_curie], force=check_should_force(kwargs)
-    )
-    def _mapping_getter() -> Mapping[str, str]:
-        logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_filtered_properties_mapping(prop, use_tqdm=use_tqdm)
-
-    return _mapping_getter()
+    df = get_filtered_properties_df(prefix, prop, **kwargs)
+    return dict(df.values)
 
 
 @wrap_norm_prefix
 def get_filtered_properties_multimapping(
-    prefix: str, prop: ReferenceHint, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, prop: ReferenceHint, **kwargs: Unpack[PropertiesKwargs]
 ) -> Mapping[str, list[str]]:
     """Extract multiple properties for each term as a dictionary.
 
     :param prefix: the resource to load
     :param prop: the property to extract
-    :param use_tqdm: should a progress bar be shown?
-    :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property values
     """
-    prop = _ensure_ref(prop, ontology_prefix=prefix)
-    prop_curie = prop.curie
-    version = get_version_from_kwargs(prefix, kwargs)
-    all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
-
-    if all_properties_path.is_file():
-        logger.info("[%s] loading pre-cached properties", prefix)
-        df = pd.read_csv(all_properties_path, sep="\t")
-        logger.info("[%s] filtering pre-cached properties", prefix)
-        df = df.loc[df["property"] == prop_curie, [f"{prefix}_id", "value"]]
-        return multidict(df.values)
-
-    path = prefix_cache_join(prefix, "properties", name=f"{prop_curie}.tsv", version=version)
-
-    @cached_multidict(
-        path=path, header=[f"{prefix}_id", prop_curie], force=check_should_force(kwargs)
-    )
-    def _mapping_getter() -> Mapping[str, list[str]]:
-        logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_filtered_properties_multimapping(prop, use_tqdm=use_tqdm)
-
-    return _mapping_getter()
+    df = get_filtered_properties_df(prefix, prop, **kwargs)
+    return multidict(df.values)
 
 
 def get_property(
@@ -142,7 +161,10 @@ def get_property(
 
 
 def get_properties(
-    prefix: str, identifier: str, prop: str, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str,
+    identifier: str,
+    prop: ReferenceHint,
+    **kwargs: Unpack[PropertiesKwargs],
 ) -> list[str] | None:
     """Extract a set of properties for the given entity.
 
@@ -159,29 +181,15 @@ def get_properties(
 
 @wrap_norm_prefix
 def get_filtered_properties_df(
-    prefix: str, prop: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, prop: ReferenceHint, **kwargs: Unpack[PropertiesKwargs]
 ) -> pd.DataFrame:
     """Extract a single property for each term.
 
     :param prefix: the resource to load
     :param prop: the property to extract
-    :param use_tqdm: should a progress bar be shown?
-    :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A dataframe from identifier to property value. Columns are [<prefix>_id, value].
     """
-    version = get_version_from_kwargs(prefix, kwargs)
-    all_properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
-    if all_properties_path.is_file():
-        logger.info("[%s] loading pre-cached properties", prefix)
-        df = pd.read_csv(all_properties_path, sep="\t")
-        logger.info("[%s] filtering pre-cached properties", prefix)
-        return df.loc[df["property"] == prop, [f"{prefix}_id", "value"]]
-
-    path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
-
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
-    def _df_getter() -> pd.DataFrame:
-        ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_filtered_properties_df(prop, use_tqdm=use_tqdm)
-
-    return _df_getter()
+    prop = _ensure_ref(prop, ontology_prefix=prefix)
+    df = get_properties_df(prefix, **kwargs)
+    df = df.loc[df["property"] == prop.curie, [f"{prefix}_id", "value"]]
+    return df

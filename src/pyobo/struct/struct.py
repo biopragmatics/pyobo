@@ -1007,6 +1007,14 @@ class Obo:
         return self._cache(name="properties.tsv")
 
     @property
+    def _literal_properties_path(self) -> Path:
+        return self._cache(name="literal_properties.tsv")
+
+    @property
+    def _object_properties_path(self) -> Path:
+        return self._cache(name="object_properties.tsv")
+
+    @property
     def _root_metadata_path(self) -> Path:
         return prefix_directory_join(self.ontology, name="metadata.json")
 
@@ -1075,7 +1083,19 @@ class Obo:
                 "properties",
                 self._properties_path,
                 self.properties_header,
-                self.iter_property_rows,
+                self._iter_property_rows,
+            ),
+            (
+                "object_properties",
+                self._object_properties_path,
+                self.object_properties_header,
+                self.iter_object_properties,
+            ),
+            (
+                "literal_properties",
+                self._literal_properties_path,
+                self.literal_properties_header,
+                self.iter_literal_properties,
             ),
         ]
 
@@ -1416,9 +1436,18 @@ class Obo:
         """Property dataframe header."""
         return [f"{self.ontology}_id", "property", "value", "datatype"]
 
-    def iter_property_rows(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str, str, str]]:
+    @property
+    def object_properties_header(self):
+        """Property dataframe header."""
+        return ["source", "predicate", "target"]
+
+    @property
+    def literal_properties_header(self):
+        """Property dataframe header."""
+        return ["source", "predicate", "target", "datatype"]
+
+    def _iter_property_rows(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str, str, str]]:
         """Iterate property rows."""
-        tuple[Term, Reference, Reference, None] | tuple[Term, Reference, str, Reference]
         for term, t in self.iterate_properties(use_tqdm=use_tqdm):
             pred = term._reference(t.predicate, ontology_prefix=self.ontology)
             match t.value:
@@ -1429,12 +1458,39 @@ class Obo:
                 case _:
                     raise TypeError(f"got: {type(t)} - {t}")
 
-    def get_properties_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
+    def get_properties_df(self, *, use_tqdm: bool = False, drop_na: bool = True) -> pd.DataFrame:
         """Get all properties as a dataframe."""
-        return pd.DataFrame(
-            list(self.iter_property_rows(use_tqdm=use_tqdm)),
+        df = pd.DataFrame(
+            self._iter_property_rows(use_tqdm=use_tqdm),
             columns=self.properties_header,
         )
+        if drop_na:
+            df.dropna(inplace=True)
+        return df
+
+    def iter_object_properties(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str, str]]:
+        """Iterate over object property triples."""
+        for term in self._iter_terms(use_tqdm=use_tqdm):
+            for predicate, target in term.iterate_object_properties():
+                yield term.curie, predicate.curie, target.curie
+
+    def get_object_properties_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
+        """Get all properties as a dataframe."""
+        return pd.DataFrame(
+            self.iter_object_properties(use_tqdm=use_tqdm), columns=self.object_properties_header
+        )
+
+    def iter_literal_properties(
+        self, *, use_tqdm: bool = False
+    ) -> Iterable[tuple[str, str, str, str]]:
+        """Iterate over literal properties quads."""
+        for term in self._iter_terms(use_tqdm=use_tqdm):
+            for predicate, target in term.iterate_literal_properties():
+                yield term.curie, predicate.curie, target.value, target.datatype.curie
+
+    def get_literal_properties_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
+        """Get all properties as a dataframe."""
+        return pd.DataFrame(self.iter_literal_properties(), columns=self.object_properties_header)
 
     def iterate_filtered_properties(
         self, prop: ReferenceHint, *, use_tqdm: bool = False

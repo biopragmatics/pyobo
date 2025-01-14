@@ -37,8 +37,6 @@ __all__ = [
     "get_relations_df",
 ]
 
-# TODO get_relation, get_relations
-
 logger = logging.getLogger(__name__)
 
 

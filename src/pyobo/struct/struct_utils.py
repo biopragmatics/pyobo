@@ -421,6 +421,20 @@ class Stanza:
             for target in sorted(targets):
                 yield typedef, target
 
+    def iterate_object_properties(self) -> Iterable[tuple[Reference, Reference]]:
+        """Iterate over properties with references as their targets."""
+        for predicate, values in self.properties.items():
+            for value in values:
+                if isinstance(value, Reference):
+                    yield predicate, value
+
+    def iterate_literal_properties(self) -> Iterable[tuple[Reference, OBOLiteral]]:
+        """Iterate over properties with literals as their targets."""
+        for predicate, values in self.properties.items():
+            for value in values:
+                if isinstance(value, OBOLiteral):
+                    yield predicate, value
+
     def get_relationships(self, typedef: ReferenceHint) -> list[Reference]:
         """Get relationships from the given type."""
         return self.relationships.get(_ensure_ref(typedef), [])

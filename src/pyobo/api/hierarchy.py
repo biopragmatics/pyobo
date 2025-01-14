@@ -1,5 +1,6 @@
 """High-level API for hierarchies."""
 
+import itertools as itt
 import logging
 from collections.abc import Iterable
 from functools import lru_cache
@@ -9,7 +10,7 @@ from curies import ReferenceTuple
 from typing_extensions import Unpack
 
 from .names import get_name
-from .properties import get_filtered_properties_mapping
+from .properties import get_literal_properties, get_object_properties
 from .relations import get_relations
 from .utils import _get_pi
 from ..constants import GetOntologyKwargs
@@ -64,14 +65,17 @@ def get_hierarchy(
 
     This function thinly wraps :func:`_get_hierarchy_helper` to make it easier to work with the lru_cache mechanism.
     """
-    extra_relations_ = tuple(
-        sorted(_ensure_ref(r, ontology_prefix=prefix) for r in extra_relations or [])
-    )
-    properties_ = tuple(
-        sorted(_ensure_ref(prop, ontology_prefix=prefix) for prop in properties or [])
-    )
     return _get_hierarchy_helper(
-        prefix=prefix, extra_relations=extra_relations_, properties=properties_, **kwargs
+        prefix=prefix,
+        extra_relations=_tp(prefix, extra_relations),
+        properties=_tp(prefix, properties),
+        **kwargs,
+    )
+
+
+def _tp(prefix: str, references: Iterable[ReferenceHint] | None) -> tuple[Reference, ...]:
+    return tuple(
+        sorted(_ensure_ref(reference, ontology_prefix=prefix) for reference in references or [])
     )
 
 
@@ -97,20 +101,19 @@ def _get_hierarchy_helper(
         reverse_predicates.add(member_of)
 
     rv = nx.DiGraph()
-    for s, p, o in get_relations(prefix, use_tqdm=use_tqdm, **kwargs):
+    for s, p, o in itt.chain(
+        get_relations(prefix, use_tqdm=use_tqdm, **kwargs),
+        get_object_properties(prefix, use_tqdm=use_tqdm, **kwargs),
+    ):
         if p in predicates:
             rv.add_edge(s.curie, o.curie, relation=p.curie)
         elif p in reverse_predicates:
             rv.add_edge(o.curie, s.curie, relation=p.curie)
 
-    for prop in properties:
-        props = get_filtered_properties_mapping(
-            prefix=prefix, prop=prop, use_tqdm=use_tqdm, **kwargs
-        )
-        for identifier, value in props.items():
-            curie = f"{prefix}:{identifier}"
-            if curie in rv:
-                rv.nodes[curie][prop] = value
+    properties_ = set(properties)
+    for s, p, op in get_literal_properties(prefix, use_tqdm=use_tqdm, **kwargs):
+        if s in rv and p in properties_:
+            rv.nodes[s.curie][p.curie] = op.value
 
     return rv
 
@@ -194,8 +197,8 @@ def get_subhierarchy(
     """Get the subhierarchy for a given node."""
     t = _get_pi(prefix, identifier)
     hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
-    logger.info("getting descendants of %s:%s ! %s", t.prefix, t.identifier, get_name(t))
-    curies = nx.ancestors(hierarchy, t.curie)  # note this is backwards
+    logger.info("getting descendants of %s ! %s", t.curie, get_name(t))
+    curies = set(nx.ancestors(hierarchy, t.curie)) | {t.curie}  # note this is backwards
     logger.info("inducing subgraph")
     sg = hierarchy.subgraph(curies).copy()
     logger.info("subgraph has %d nodes/%d edges", sg.number_of_nodes(), sg.number_of_edges())
