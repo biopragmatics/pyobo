@@ -33,12 +33,29 @@ __all__ = [
     "get_id_multirelations_mapping",
     "get_relation",
     "get_relation_mapping",
+    "get_relations",
     "get_relations_df",
 ]
 
 # TODO get_relation, get_relations
 
 logger = logging.getLogger(__name__)
+
+
+@wrap_norm_prefix
+def get_relations(
+    prefix: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+) -> list[tuple[Reference, Reference, Reference]]:
+    """Get relations."""
+    df = get_relations_df(prefix, wide=False, use_tqdm=use_tqdm, **kwargs)
+    return [
+        (
+            Reference(prefix=prefix, identifier=source_id),
+            Reference(prefix=relation_prefix, identifier=relation_id),
+            Reference(prefix=target_prefix, identifier=target_id),
+        )
+        for source_id, relation_prefix, relation_id, target_prefix, target_id in df.values
+    ]
 
 
 @wrap_norm_prefix

@@ -10,11 +10,11 @@ from typing_extensions import Unpack
 
 from .names import get_name
 from .properties import get_filtered_properties_mapping
-from .relations import get_filtered_relations_df
+from .relations import get_relations
 from .utils import _get_pi
 from ..constants import GetOntologyKwargs
 from ..identifier_utils import wrap_norm_prefix
-from ..struct import has_member, is_a, part_of
+from ..struct import has_member, has_part, is_a, member_of, part_of
 from ..struct.reference import Reference
 from ..struct.struct_utils import ReferenceHint, _ensure_ref
 
@@ -87,40 +87,21 @@ def _get_hierarchy_helper(
     use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> nx.DiGraph:
-    rv = nx.DiGraph()
-
-    is_a_df = get_filtered_relations_df(prefix=prefix, relation=is_a, use_tqdm=use_tqdm, **kwargs)
-    for source_id, target_ns, target_id in is_a_df.values:
-        rv.add_edge(f"{prefix}:{source_id}", f"{target_ns}:{target_id}", relation="is_a")
-
-    if include_has_member:
-        has_member_df = get_filtered_relations_df(
-            prefix=prefix, relation=has_member, use_tqdm=use_tqdm, **kwargs
-        )
-        for target_id, source_ns, source_id in has_member_df.values:
-            rv.add_edge(f"{source_ns}:{source_id}", f"{prefix}:{target_id}", relation="is_a")
-
+    predicates = {is_a, *extra_relations}
+    reverse_predicates = set()
     if include_part_of:
-        part_of_df = get_filtered_relations_df(
-            prefix=prefix, relation=part_of, use_tqdm=use_tqdm, **kwargs
-        )
-        for source_id, target_ns, target_id in part_of_df.values:
-            rv.add_edge(f"{prefix}:{source_id}", f"{target_ns}:{target_id}", relation="part_of")
+        predicates.add(part_of)
+        reverse_predicates.add(has_part)
+    if include_has_member:
+        predicates.add(has_member)
+        reverse_predicates.add(member_of)
 
-        has_part_df = get_filtered_relations_df(
-            prefix=prefix, relation=part_of, use_tqdm=use_tqdm, **kwargs
-        )
-        for target_id, source_ns, source_id in has_part_df.values:
-            rv.add_edge(f"{source_ns}:{source_id}", f"{prefix}:{target_id}", relation="part_of")
-
-    for relation in extra_relations:
-        relation_df = get_filtered_relations_df(
-            prefix=prefix, relation=relation, use_tqdm=use_tqdm, **kwargs
-        )
-        for source_id, target_ns, target_id in relation_df.values:
-            rv.add_edge(
-                f"{prefix}:{source_id}", f"{target_ns}:{target_id}", relation=relation.identifier
-            )
+    rv = nx.DiGraph()
+    for s, p, o in get_relations(prefix, use_tqdm=use_tqdm, **kwargs):
+        if p in predicates:
+            rv.add_edge(s.curie, o.curie, relation=p.curie)
+        elif p in reverse_predicates:
+            rv.add_edge(o.curie, s.curie, relation=p.curie)
 
     for prop in properties:
         props = get_filtered_properties_mapping(
