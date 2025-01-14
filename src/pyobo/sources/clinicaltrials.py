@@ -14,36 +14,44 @@ __all__ = [
 
 PREFIX = "clinicaltrials"
 
-STUDY = Term(reference=default_reference(PREFIX, "study", name="study"))
+STUDY_TERM = Term(reference=default_reference(PREFIX, "study", name="study"))
 
 CLINICAL_TRIAL_TERM = Term(
     reference=default_reference(PREFIX, "clinical-trial", name="clinical trial")
-).append_parent(STUDY)
+).append_parent(STUDY_TERM)
 
-INTERVENTIONAL = Term(
+INTERVENTIONAL_CLINICAL_TRIAL_TERM = Term(
     reference=default_reference(
         PREFIX, "interventional-clinical-trial", name="interventional clinical trial"
     )
 ).append_parent(CLINICAL_TRIAL_TERM)
 
-OBSERVATIONAL = Term(
+OBSERVATIONAL_CLINICAL_TRIAL_TERM = Term(
     reference=default_reference(
         PREFIX, "observational-clinical-trial", name="observational clinical trial"
     )
 ).append_parent(CLINICAL_TRIAL_TERM)
 
-EXPANDED_ACCESS = Term(
-    reference=default_reference(
-        PREFIX, "expanded-access-study", name="expanded access study"
-    )
-).append_parent(STUDY)
+EXPANDED_ACCESS_STUDY_TERM = Term(
+    reference=default_reference(PREFIX, "expanded-access-study", name="expanded access study")
+).append_parent(STUDY_TERM)
 
-TERMS = [STUDY, CLINICAL_TRIAL_TERM, OBSERVATIONAL, INTERVENTIONAL, EXPANDED_ACCESS]
+TERMS = [
+    STUDY_TERM,
+    CLINICAL_TRIAL_TERM,
+    OBSERVATIONAL_CLINICAL_TRIAL_TERM,
+    INTERVENTIONAL_CLINICAL_TRIAL_TERM,
+    EXPANDED_ACCESS_STUDY_TERM,
+]
+
+# These were identified as the 4 possibilities for study
+# types in ClinicalTrials.gov. See summary script at
+# https://gist.github.com/cthoyt/12a3cb3c63ad68d73fe5a2f0d506526f
 PARENTS: dict[str | None, Term] = {
-    "INTERVENTIONAL": INTERVENTIONAL,
-    "OBSERVATIONAL": OBSERVATIONAL,
-    "EXPANDED_ACCESS": EXPANDED_ACCESS,
-    None: STUDY,
+    "INTERVENTIONAL": INTERVENTIONAL_CLINICAL_TRIAL_TERM,
+    "OBSERVATIONAL": OBSERVATIONAL_CLINICAL_TRIAL_TERM,
+    "EXPANDED_ACCESS": EXPANDED_ACCESS_STUDY_TERM,
+    None: STUDY_TERM,
 }
 
 
@@ -53,14 +61,14 @@ class ClinicalTrialsGetter(Obo):
     ontology = PREFIX
     dynamic_version = True
     typedefs = [has_contributor]
-    root_terms = [STUDY]
+    root_terms = [STUDY_TERM]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms for studies."""
         yield CHARLIE_TERM
         yield HUMAN_TERM
         for term in TERMS:
-            term.annotate_object(has_contributor, CHARLIE_TERM)
+            term.append_contributor(CHARLIE_TERM)
             term.append_comment(PYOBO_INJECTED)
             yield term
         yield from iterate_studies()
