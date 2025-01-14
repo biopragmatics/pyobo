@@ -87,6 +87,8 @@ orthologous = Reference(
     prefix=RO_PREFIX, identifier="HOM0000017", name="in orthology relationship with"
 )
 is_a = Reference(prefix="rdfs", identifier="subClassOf", name="subclass of")
+subproperty_of = Reference(prefix="rdfs", identifier="subPropertyOf", name="subproperty of")
+rdf_type = Reference(prefix="rdf", identifier="type", name="subclass of")
 
 xsd_string = Reference(prefix="xsd", identifier="string", name="string")
 xsd_float = Reference(prefix="xsd", identifier="float", name="float")
