@@ -47,6 +47,11 @@ class ChEMBLTargetGetter(Obo):
     ontology = PREFIX
     bioversions_key = "chembl"
     typedefs = [exact_match, has_component, has_member, has_participant]
+    root_terms = [
+        default_reference(PREFIX, "undefined"),
+        default_reference(PREFIX, "molecular"),
+        default_reference(PREFIX, "non-molecular"),
+    ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
