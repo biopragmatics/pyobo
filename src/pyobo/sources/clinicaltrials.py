@@ -13,27 +13,6 @@ __all__ = [
 ]
 
 PREFIX = "clinicaltrials"
-DEFAULT_FIELDS = [
-    "NCTId",
-    "BriefTitle",
-    "Condition",
-    "ConditionMeshTerm",  # ConditionMeshTerm is the name of the disease
-    "ConditionMeshId",
-    "InterventionName",  # InterventionName is the name of the drug/vaccine
-    "InterventionType",
-    "InterventionMeshTerm",
-    "InterventionMeshId",
-    "StudyType",
-    "DesignAllocation",
-    "OverallStatus",
-    "Phase",
-    "WhyStopped",
-    "SecondaryIdType",
-    "SecondaryId",
-    "StartDate",  # Month [day], year: "November 1, 2023", "May 1984" or NaN
-    "StartDateType",  # "Actual" or "Anticipated" (or NaN)
-    "ReferencePMID",  # these are tagged as relevant by the author, but not necessarily about the trial
-]
 
 CLINICAL_TRIAL_TERM = (
     Term(reference=default_reference(PREFIX, "clinical-trial", name="clinical trial"))
@@ -60,21 +39,41 @@ class ClinicalTrialsGetter(Obo):
 
 def iterate_studies(*, force: bool = False) -> Iterable[Term]:
     """Iterate over terms for studies."""
-    for study in get_studies(force=force):
+    studies = get_studies(force=force)
+    for study in studies:
         yield _process_study(study)
+
+
+
+ENCOUNTERED_STUDY_TYPES = set()
 
 
 def _process_study(raw_study) -> Term:
     protocol_section = raw_study["protocolSection"]
     identification_module = protocol_section["identificationModule"]
     identifier = identification_module["nctId"]
-    name = identification_module["officialTitle"]
-    synonym = identification_module["briefTitle"]
-    design_module = protocol_section["design_module"]
-    study_type = design_module["studyType"]
-    term = Term(reference=Reference(prefix=PREFIX, identifier=identifier, name=name))
-    term.append_synonym(synonym)
-    # TODO make the study type into inheritance
-    term.annotate_literal(has_category, study_type)
+
+    name = identification_module.get("officialTitle")
+    synonym = identification_module.get("briefTitle")
+    if synonym and not name:
+        name, synonym = synonym, None
+
+    term = Term(
+        reference=Reference(prefix=PREFIX, identifier=identifier, name=name), type="Instance"
+    )
+    if synonym:
+        term.append_synonym(synonym)
+
+    # TODO make the study type into inheritance, when available
+    design_module = protocol_section.get("design_module", {})
+    study_type = design_module.get("studyType")
+    if study_type:
+        term.annotate_literal(has_category, study_type)
+        ENCOUNTERED_STUDY_TYPES.add(study_type)
     term.append_parent(CLINICAL_TRIAL_TERM)
+
     return term
+
+
+if __name__ == "__main__":
+    ClinicalTrialsGetter.cli()
