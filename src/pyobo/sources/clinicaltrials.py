@@ -61,7 +61,7 @@ class ClinicalTrialsGetter(Obo):
     ontology = PREFIX
     dynamic_version = True
     typedefs = [has_contributor]
-    root_terms = [STUDY_TERM]
+    root_terms = [STUDY_TERM.reference]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms for studies."""
