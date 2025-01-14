@@ -8,8 +8,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from pyobo import Reference, Term, TypeDef, default_reference
-from pyobo.struct.struct import CHARLIE_TERM, HUMAN_TERM
-from pyobo.struct.vocabulary import has_contributor
+from pyobo.struct.struct import CHARLIE_TERM, HUMAN_TERM, PYOBO_INJECTED
 from pyobo.utils.path import ensure_df
 
 PREFIX = "geonames"
@@ -108,8 +107,8 @@ def get_feature_terms(
         yield (
             Term(reference=cat)
             .append_parent(FEATURE_TERM)
-            .annotate_object(has_contributor, CHARLIE_TERM)
-            .append_comment("injected by PyOBO source")
+            .append_contributor(CHARLIE_TERM)
+            .append_comment(PYOBO_INJECTED)
         )
     if features is None:
         features = get_features(force=force)

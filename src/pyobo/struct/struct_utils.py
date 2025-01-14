@@ -397,6 +397,10 @@ class Stanza:
         self._extend_annotations(typedef, value, annotations)
         return self
 
+    def append_contributor(self, reference: ReferenceHint) -> Self:
+        """Append contributor."""
+        return self.annotate_object(v.has_contributor, reference)
+
     def get_see_also(self) -> list[Reference]:
         """Get all see also objects."""
         return self.get_property_objects(v.see_also)

@@ -6,8 +6,8 @@ from xml.etree import ElementTree
 from tqdm import tqdm
 
 from pyobo import Reference, Term, TypeDef, default_reference, ensure_path
-from pyobo.struct.struct import CHARLIE_TERM
-from pyobo.struct.typedef import has_contributor, has_end_date, has_start_date
+from pyobo.struct.struct import CHARLIE_TERM, PYOBO_INJECTED
+from pyobo.struct.typedef import has_end_date, has_start_date
 from pyobo.utils.path import ensure_df
 
 PREFIX_CATALOG = "nlm"
@@ -29,16 +29,16 @@ JOURNAL_TERM = (
     .append_exact_match(Reference(prefix="MI", identifier="0885"))
     .append_exact_match(Reference(prefix="bibo", identifier="Journal"))
     .append_exact_match(Reference(prefix="uniprot.core", identifier="Journal"))
-    .annotate_object(has_contributor, CHARLIE_TERM)
-    .append_comment("injected by PyOBO source")
+    .append_contributor(CHARLIE_TERM)
+    .append_comment(PYOBO_INJECTED)
 )
 PUBLISHER_TERM = (
     Term(reference=default_reference(PREFIX_CATALOG, "publisher", name="publisher"))
     .append_exact_match(Reference(prefix="biolink", identifier="publisher"))
     .append_exact_match(Reference(prefix="schema", identifier="publisher"))
     .append_exact_match(Reference(prefix="uniprot.core", identifier="publisher"))
-    .annotate_object(has_contributor, CHARLIE_TERM)
-    .append_comment("injected by PyOBO source")
+    .append_contributor(CHARLIE_TERM)
+    .append_comment(PYOBO_INJECTED)
 )
 
 
