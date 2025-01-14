@@ -2,7 +2,6 @@
 
 import logging
 from collections.abc import Iterable
-from contextlib import closing
 
 import chembl_downloader
 
@@ -49,21 +48,18 @@ class ChEMBLCompoundGetter(Obo):
 
 def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over ChEMBL compounds."""
-    with chembl_downloader.connect(version=version) as conn:
-        logger.info("using connection %s", conn)
-        with closing(conn.cursor()) as cursor:
-            logger.info("using cursor %s", cursor)
-            cursor.execute(QUERY)
-            for chembl_id, name, smiles, inchi, inchi_key in cursor.fetchall():
-                # TODO add xrefs?
-                term = Term.from_triple(prefix=PREFIX, identifier=chembl_id, name=name)
-                if smiles:
-                    term.annotate_literal(has_smiles, smiles)
-                if inchi:
-                    term.annotate_literal(has_inchi, inchi)
-                if inchi_key:
-                    term.append_exact_match(Reference(prefix="inchikey", identifier=inchi_key))
-                yield term
+    with chembl_downloader.cursor(version=version) as cursor:
+        cursor.execute(QUERY)
+        for chembl_id, name, smiles, inchi, inchi_key in cursor.fetchall():
+            # TODO add xrefs?
+            term = Term.from_triple(prefix=PREFIX, identifier=chembl_id, name=name)
+            if smiles:
+                term.annotate_literal(has_smiles, smiles)
+            if inchi:
+                term.annotate_literal(has_inchi, inchi)
+            if inchi_key:
+                term.append_exact_match(Reference(prefix="inchikey", identifier=inchi_key))
+            yield term
 
 
 if __name__ == "__main__":
