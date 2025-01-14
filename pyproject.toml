@@ -84,6 +84,7 @@ dependencies = [
     "drugbank_downloader",
     "chembl_downloader",
     "umls_downloader>=0.1.3",
+    "clinicaltrials_downloader>=0.0.2",
     "typing_extensions",
     "rdflib",
 ]

@@ -8,6 +8,7 @@ from .ccle import CCLEGetter
 from .cgnc import CGNCGetter
 from .chembl import ChEMBLCompoundGetter
 from .civic_gene import CIVICGeneGetter
+from .clinicaltrials import ClinicalTrialsGetter
 from .complexportal import ComplexPortalGetter
 from .conso import CONSOGetter
 from .cpt import CPTGetter
@@ -70,6 +71,7 @@ __all__ = [
     "CPTGetter",
     "CVXGetter",
     "ChEMBLCompoundGetter",
+    "ClinicalTrialsGetter",
     "ComplexPortalGetter",
     "CreditGetter",
     "DepMapGetter",
