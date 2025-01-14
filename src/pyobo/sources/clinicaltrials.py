@@ -2,11 +2,11 @@
 
 from collections.abc import Iterable
 
-from clinicaltrials_downloader import get_studies
+from clinicaltrials_downloader import get_studies_slim
 
 from pyobo import Obo, Reference, Term, default_reference
 from pyobo.struct.struct import CHARLIE_TERM, HUMAN_TERM, PYOBO_INJECTED
-from pyobo.struct.typedef import has_category, has_contributor
+from pyobo.struct.typedef import has_contributor
 
 __all__ = [
     "ClinicalTrialsGetter",
@@ -14,12 +14,37 @@ __all__ = [
 
 PREFIX = "clinicaltrials"
 
-CLINICAL_TRIAL_TERM = (
-    Term(reference=default_reference(PREFIX, "clinical-trial", name="clinical trial"))
-    .annotate_object(has_contributor, CHARLIE_TERM)
-    .append_comment(PYOBO_INJECTED)
-    .append_see_also_uri("https://github.com/obi-ontology/obi/issues/1831#issuecomment-2587810590")
-)
+STUDY = Term(reference=default_reference(PREFIX, "study", name="study"))
+
+CLINICAL_TRIAL_TERM = Term(
+    reference=default_reference(PREFIX, "clinical-trial", name="clinical trial")
+).append_parent(STUDY)
+
+INTERVENTIONAL = Term(
+    reference=default_reference(
+        PREFIX, "interventional-clinical-trial", name="interventional clinical trial"
+    )
+).append_parent(CLINICAL_TRIAL_TERM)
+
+OBSERVATIONAL = Term(
+    reference=default_reference(
+        PREFIX, "observational-clinical-trial", name="observational clinical trial"
+    )
+).append_parent(CLINICAL_TRIAL_TERM)
+
+EXPANDED_ACCESS = Term(
+    reference=default_reference(
+        PREFIX, "expanded-access-study", name="expanded access study"
+    )
+).append_parent(STUDY)
+
+TERMS = [STUDY, CLINICAL_TRIAL_TERM, OBSERVATIONAL, INTERVENTIONAL, EXPANDED_ACCESS]
+PARENTS: dict[str | None, Term] = {
+    "INTERVENTIONAL": INTERVENTIONAL,
+    "OBSERVATIONAL": OBSERVATIONAL,
+    "EXPANDED_ACCESS": EXPANDED_ACCESS,
+    None: STUDY,
+}
 
 
 class ClinicalTrialsGetter(Obo):
@@ -27,25 +52,25 @@ class ClinicalTrialsGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
-    typedefs = [has_contributor, has_category]
+    typedefs = [has_contributor]
+    root_terms = [STUDY]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms for studies."""
-        yield CLINICAL_TRIAL_TERM
         yield CHARLIE_TERM
         yield HUMAN_TERM
+        for term in TERMS:
+            term.annotate_object(has_contributor, CHARLIE_TERM)
+            term.append_comment(PYOBO_INJECTED)
+            yield term
         yield from iterate_studies()
 
 
 def iterate_studies(*, force: bool = False) -> Iterable[Term]:
     """Iterate over terms for studies."""
-    studies = get_studies(force=force)
+    studies = get_studies_slim(force=force)
     for study in studies:
         yield _process_study(study)
-
-
-
-ENCOUNTERED_STUDY_TYPES = set()
 
 
 def _process_study(raw_study) -> Term:
@@ -64,14 +89,9 @@ def _process_study(raw_study) -> Term:
     if synonym:
         term.append_synonym(synonym)
 
-    # TODO make the study type into inheritance, when available
-    design_module = protocol_section.get("design_module", {})
+    design_module = protocol_section.get("designModule", {})
     study_type = design_module.get("studyType")
-    if study_type:
-        term.annotate_literal(has_category, study_type)
-        ENCOUNTERED_STUDY_TYPES.add(study_type)
-    term.append_parent(CLINICAL_TRIAL_TERM)
-
+    term.append_parent(PARENTS[study_type])
     return term
 
 
