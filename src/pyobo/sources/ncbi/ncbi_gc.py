@@ -6,7 +6,7 @@
 from collections.abc import Iterable
 
 from pyobo import default_reference
-from pyobo.struct import CHARLIE_TERM, HUMAN_TERM, Obo, Reference, Term, TypeDef
+from pyobo.struct import CHARLIE_TERM, HUMAN_TERM, PYOBO_INJECTED, Obo, Reference, Term, TypeDef
 from pyobo.struct.typedef import comment, has_contributor, see_also, term_replaced_by
 from pyobo.utils.path import ensure_path
 
@@ -29,7 +29,7 @@ has_gc_code = TypeDef(
     definition="Connects a taxonomy term to a genetic code translation table",
     domain=NCBITAXON_ROOT,
     range=GC_ROOT,
-).annotate_object(has_contributor, CHARLIE_TERM)
+).append_contributor(CHARLIE_TERM)
 
 NUCLEAR_GENETIC_CODE = default_reference(
     prefix=PREFIX, identifier="nuclear-genetic-code", name="nuclear genetic code translation table"
@@ -120,15 +120,15 @@ def get_terms() -> Iterable[Term]:
             definition="A table for translating codons into amino acids. This can change for "
             "different taxa, or be different in different organelles that include genetic information.",
         )
-        .annotate_object(has_contributor, CHARLIE_TERM)
-        .append_comment("injected by PyOBO")
+        .append_contributor(CHARLIE_TERM)
+        .append_comment(PYOBO_INJECTED)
     )
 
     for reference in CATEGORY_TO_TABLES:
         term = Term(reference=reference)
         term.append_parent(GC_ROOT)
-        term.annotate_object(has_contributor, CHARLIE_TERM)
-        term.append_comment("injected by PyOBO")
+        term.append_contributor(CHARLIE_TERM)
+        term.append_comment(PYOBO_INJECTED)
         if substructure := CATEGORY_TO_CELLULAR_COMPONENT.get(reference):
             term.append_see_also(substructure)
         yield term

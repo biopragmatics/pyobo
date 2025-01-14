@@ -14,7 +14,7 @@ from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, S
 from dataclasses import dataclass, field
 from pathlib import Path
 from textwrap import dedent
-from typing import Annotated, Any, ClassVar, Literal, TextIO
+from typing import Annotated, Any, ClassVar, TextIO
 
 import bioregistry
 import click
@@ -46,6 +46,7 @@ from .struct_utils import (
     ReferenceHint,
     RelationsHint,
     Stanza,
+    StanzaType,
     UnionOfHint,
     _chain_tag,
     _ensure_ref,
@@ -257,7 +258,7 @@ class Term(Referenced, Stanza):
     #: An annotation for obsolescence. By default, is None, but this means that it is not obsolete.
     is_obsolete: bool | None = None
 
-    type: Literal["Term", "Instance"] = "Term"
+    type: StanzaType = "Term"
 
     builtin: bool | None = None
     is_anonymous: bool | None = None
@@ -1884,6 +1885,8 @@ class TypeDef(Referenced, Stanza):
     #: structured notes about a term, for example.
     is_metadata_tag: Annotated[bool | None, 40, "typedef-only"] = None
     is_class_level: Annotated[bool | None, 41] = None
+
+    type: StanzaType = "TypeDef"
 
     def __hash__(self) -> int:
         # have to re-define hash because of the @dataclass

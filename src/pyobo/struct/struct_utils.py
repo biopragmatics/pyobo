@@ -72,6 +72,14 @@ AnnotationsDict: TypeAlias = dict[Annotation, list[Annotation]]
 IntersectionOfHint: TypeAlias = list[Reference | tuple[Reference, Reference]]
 UnionOfHint: TypeAlias = list[Reference]
 
+StanzaType: TypeAlias = Literal["Term", "Instance", "TypeDef"]
+
+stanza_type_to_prop: dict[StanzaType, Reference] = {
+    "Term": v.is_a,
+    "Instance": v.rdf_type,
+    "TypeDef": v.subproperty_of,
+}
+
 
 class Stanza:
     """A high-level class for stanzas."""
@@ -87,6 +95,8 @@ class Stanza:
     subsets: list[Reference]
     disjoint_from: list[Reference]
     synonyms: list[Synonym]
+
+    type: StanzaType
 
     _axioms: AnnotationsDict
 
@@ -387,6 +397,10 @@ class Stanza:
         self._extend_annotations(typedef, value, annotations)
         return self
 
+    def append_contributor(self, reference: ReferenceHint) -> Self:
+        """Append contributor."""
+        return self.annotate_object(v.has_contributor, reference)
+
     def get_see_also(self) -> list[Reference]:
         """Get all see also objects."""
         return self.get_property_objects(v.see_also)
@@ -499,8 +513,9 @@ class Stanza:
 
     def _iter_edges(self) -> Iterable[tuple[Reference, Reference]]:
         yield from self.iterate_relations()
+        parent_prop = stanza_type_to_prop[self.type]
         for parent in itt.chain(self.parents, self.union_of):
-            yield v.is_a, parent
+            yield parent_prop, parent
         for subset in self.subsets:
             yield v.in_subset, subset
         for k, values in self.properties.items():
@@ -510,7 +525,7 @@ class Stanza:
         for intersection_of in self.intersection_of:
             match intersection_of:
                 case Reference():
-                    yield v.is_a, intersection_of
+                    yield parent_prop, intersection_of
                 case (predicate, target):
                     yield predicate, target
         # TODO disjoint_from

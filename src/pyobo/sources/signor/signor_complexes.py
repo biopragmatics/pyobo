@@ -7,7 +7,7 @@ import pandas as pd
 from pyobo import Obo, Reference, Term, default_reference
 from pyobo.sources.signor.download import DownloadKey, get_signor_df
 from pyobo.struct import CHARLIE_TERM, HUMAN_TERM, PYOBO_INJECTED
-from pyobo.struct.typedef import exact_match, has_component, has_contributor, has_member
+from pyobo.struct.typedef import exact_match, has_component, has_member
 
 __all__ = [
     "SignorGetter",
@@ -17,22 +17,22 @@ PREFIX = "signor"
 
 PROTEIN_FAMILY = (
     Term(reference=default_reference(PREFIX, "protein-family"))
-    .annotate_object(has_contributor, CHARLIE_TERM)
+    .append_contributor(CHARLIE_TERM)
     .append_comment(PYOBO_INJECTED)
 )
 PROTEIN_COMPLEX = (
     Term(reference=default_reference(PREFIX, "protein-complex"))
-    .annotate_object(has_contributor, CHARLIE_TERM)
+    .append_contributor(CHARLIE_TERM)
     .append_comment(PYOBO_INJECTED)
 )
 PHENOTYPE = (
     Term(reference=default_reference(PREFIX, "phenotype"))
-    .annotate_object(has_contributor, CHARLIE_TERM)
+    .append_contributor(CHARLIE_TERM)
     .append_comment(PYOBO_INJECTED)
 )
 STIMULUS = (
     Term(reference=default_reference(PREFIX, "stimulus"))
-    .annotate_object(has_contributor, CHARLIE_TERM)
+    .append_contributor(CHARLIE_TERM)
     .append_comment(PYOBO_INJECTED)
 )
 ROOT_TERMS = (PROTEIN_FAMILY, PROTEIN_COMPLEX, PHENOTYPE, STIMULUS)
