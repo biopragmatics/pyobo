@@ -1,10 +1,9 @@
 """High-level API for edges."""
 
-from typing import Unpack
-
 import networkx as nx
 import pandas as pd
 from tqdm import tqdm
+from typing_extensions import Unpack
 
 from pyobo.api.names import get_ids
 from pyobo.api.utils import get_version_from_kwargs
