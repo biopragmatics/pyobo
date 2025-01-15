@@ -4,10 +4,11 @@ import logging
 from collections.abc import Mapping
 from functools import lru_cache
 
+import curies
 from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
-from .utils import get_version_from_kwargs
+from .utils import _get_pi, get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
@@ -23,22 +24,29 @@ logger = logging.getLogger(__name__)
 
 
 @wrap_norm_prefix
-def get_species(prefix: str, identifier: str, **kwargs: Unpack[GetOntologyKwargs]) -> str | None:
+def get_species(
+    prefix: str | curies.Reference | curies.ReferenceTuple,
+    identifier: str | None = None,
+    /,
+    **kwargs: Unpack[GetOntologyKwargs],
+) -> str | None:
     """Get the species."""
-    if prefix == "uniprot":
+    t = _get_pi(prefix, identifier)
+
+    if t.prefix == "uniprot":
         raise NotImplementedError
 
     try:
-        id_species = get_id_species_mapping(prefix, **kwargs)
+        id_species = get_id_species_mapping(t.prefix, **kwargs)
     except NoBuildError:
-        logger.warning("unable to look up species for prefix %s", prefix)
+        logger.warning("unable to look up species for prefix %s", t.prefix)
         return None
 
     if not id_species:
-        logger.warning("no results produced for prefix %s", prefix)
+        logger.warning("no results produced for prefix %s", t.prefix)
         return None
 
-    primary_id = get_primary_identifier(prefix, identifier, **kwargs)
+    primary_id = get_primary_identifier(t, **kwargs)
     return id_species.get(primary_id)
 
 
