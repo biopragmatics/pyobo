@@ -8,7 +8,7 @@ import curies
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
-from ..constants import GetOntologyKwargs, check_should_force
+from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct.reference import Reference
@@ -40,7 +40,10 @@ def get_id_to_alts(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[
     path = prefix_cache_join(prefix, name="alt_ids.tsv", version=version)
 
     @cached_multidict(
-        path=path, header=[f"{prefix}_id", "alt_id"], force=check_should_force(kwargs)
+        path=path,
+        header=[f"{prefix}_id", "alt_id"],
+        cache=check_should_cache(kwargs),
+        force=check_should_force(kwargs),
     )
     def _get_mapping() -> Mapping[str, list[str]]:
         ontology = get_ontology(prefix, **kwargs)

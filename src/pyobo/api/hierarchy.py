@@ -12,7 +12,6 @@ from .names import get_name
 from .properties import get_edges_df, get_literal_properties
 from .utils import _get_pi
 from ..constants import GetOntologyKwargs
-from ..identifier_utils import wrap_norm_prefix
 from ..struct import has_member, has_part, is_a, member_of, part_of
 from ..struct.reference import Reference
 from ..struct.struct_utils import ReferenceHint, _ensure_ref
@@ -78,7 +77,6 @@ def _tp(prefix: str, references: Iterable[ReferenceHint] | None) -> tuple[Refere
 
 
 @lru_cache
-@wrap_norm_prefix
 def _get_hierarchy_helper(
     prefix: str,
     *,

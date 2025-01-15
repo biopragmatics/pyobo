@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import datetime
-import gzip
 import json
 import logging
 import os
@@ -66,6 +65,7 @@ from ..constants import (
     TARGET_ID,
     TARGET_PREFIX,
 )
+from ..utils.cache import write_gzipped_graph
 from ..utils.io import multidict, write_iterable_tsv
 from ..utils.path import prefix_directory_join
 from ..version import get_version as get_pyobo_version
@@ -942,8 +942,7 @@ class Obo:
     def write_obonet_gz(self, path: str | Path) -> None:
         """Write the OBO to a gzipped dump in Obonet JSON."""
         graph = self.to_obonet()
-        with gzip.open(path, "wt") as file:
-            json.dump(nx.node_link_data(graph), file)
+        write_gzipped_graph(path=path, graph=graph)
 
     def write_ofn(self, path: str | Path) -> None:
         """Write as Functional OWL (OFN)."""
