@@ -1,17 +1,16 @@
 """High-level API for hierarchies."""
 
-import itertools as itt
 import logging
 from collections.abc import Iterable
 from functools import lru_cache
+from pathlib import Path
 
 import networkx as nx
 from curies import ReferenceTuple
 from typing_extensions import Unpack
 
 from .names import get_name
-from .properties import get_literal_properties, get_object_properties
-from .relations import get_relations
+from .properties import get_edges_df, get_literal_properties
 from .utils import _get_pi
 from ..constants import GetOntologyKwargs
 from ..identifier_utils import wrap_norm_prefix
@@ -38,6 +37,8 @@ class HierarchyKwargs(GetOntologyKwargs):
     include_part_of: bool
     include_has_member: bool
     use_tqdm: bool
+    cache: bool
+    _base_directory: Path | None
 
 
 def get_hierarchy(
@@ -89,8 +90,34 @@ def _get_hierarchy_helper(
     include_part_of: bool = False,
     include_has_member: bool = False,
     use_tqdm: bool = False,
+    cache: bool = True,
+    _base_directory: Path | None = None,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> nx.DiGraph:
+    predicates, reverse_predicates = _get_predicate_sets(
+        extra_relations, include_part_of, include_has_member
+    )
+
+    edges_df = get_edges_df(
+        prefix, use_tqdm=use_tqdm, cache=cache, _base_directory=_base_directory, **kwargs
+    )
+
+    rv = nx.DiGraph()
+    for s, p, o in edges_df.values:
+        if p in predicates:
+            rv.add_edge(s, o, relation=p)
+        elif p in reverse_predicates:
+            rv.add_edge(o, s, relation=p)
+
+    properties_ = set(properties)
+    for s, p, op in get_literal_properties(prefix, use_tqdm=use_tqdm, **kwargs):
+        if s in rv and p in properties_:
+            rv.nodes[s][p] = op.value
+
+    return rv
+
+
+def _get_predicate_sets(extra_relations, include_part_of, include_has_member):
     predicates: set[Reference] = {is_a.reference, *extra_relations}
     reverse_predicates: set[Reference] = set()
     if include_part_of:
@@ -99,23 +126,7 @@ def _get_hierarchy_helper(
     if include_has_member:
         predicates.add(has_member.reference)
         reverse_predicates.add(member_of.reference)
-
-    rv = nx.DiGraph()
-    for s, p, o in itt.chain(
-        get_relations(prefix, use_tqdm=use_tqdm, **kwargs),
-        get_object_properties(prefix, use_tqdm=use_tqdm, **kwargs),
-    ):
-        if p in predicates:
-            rv.add_edge(s.curie, o.curie, relation=p.curie)
-        elif p in reverse_predicates:
-            rv.add_edge(o.curie, s.curie, relation=p.curie)
-
-    properties_ = set(properties)
-    for s, p, op in get_literal_properties(prefix, use_tqdm=use_tqdm, **kwargs):
-        if s in rv and p in properties_:
-            rv.nodes[s.curie][p.curie] = op.value
-
-    return rv
+    return {p.curie for p in predicates}, {p.curie for p in reverse_predicates}
 
 
 def is_descendent(

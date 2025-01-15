@@ -61,7 +61,11 @@ def get_edges(
     return [
         (Reference.from_curie(s), Reference.from_curie(p), Reference.from_curie(o))
         for s, p, o in tqdm(
-            df.values, desc=f"[{prefix}] parsing edges", unit="edge", unit_scale=True
+            df.values,
+            desc=f"[{prefix}] parsing edges",
+            unit="edge",
+            unit_scale=True,
+            disable=not use_tqdm,
         )
     ]
 
@@ -103,7 +107,11 @@ def get_literal_properties(
             OBOLiteral(value, Reference.from_curie(datatype)),
         )
         for s, p, value, datatype in tqdm(
-            df.values, desc=f"[{prefix}] parsing properties", unit_scale=True, unit="triple"
+            df.values,
+            desc=f"[{prefix}] parsing properties",
+            unit_scale=True,
+            unit="triple",
+            disable=not use_tqdm,
         )
     ]
 
