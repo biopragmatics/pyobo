@@ -1,11 +1,19 @@
 """Tests for alternative identifiers."""
 
 import unittest
+from unittest import mock
 
 from curies import Reference, ReferenceTuple
 
-from pyobo import get_name, get_name_by_curie, get_primary_curie, get_primary_identifier
+from pyobo import (
+    get_id_name_mapping,
+    get_name,
+    get_name_by_curie,
+    get_primary_curie,
+    get_primary_identifier,
+)
 from pyobo.mocks import get_mock_id_alts_mapping, get_mock_id_name_mapping
+from pyobo.struct.struct import Term, make_ad_hoc_ontology
 
 mock_id_alts_mapping = get_mock_id_alts_mapping(
     {
@@ -106,3 +114,17 @@ class TestAltIds(unittest.TestCase):
         primary_id = get_primary_identifier("ncbitaxon", "52818")
         self.assertEqual("52818", primary_id)
         self.assertEqual("Allamanda cathartica", get_name("ncbitaxon", "52818"))
+
+    def test_get_name_alternate(self) -> None:
+        """Test getting the hierarchy."""
+        t1 = Term.from_triple(
+            prefix="go", identifier="0001071", name="DNA-binding transcription factor activity"
+        )
+        ontology = make_ad_hoc_ontology(_ontology="go", terms=[t1])
+        with mock.patch("pyobo.api.names.get_ontology", return_value=ontology):
+            id_name = get_id_name_mapping("go", cache=False)
+            self.assertEqual({t1.identifier: t1.name}, id_name)
+
+            name = get_name(t1.prefix, t1.identifier, cache=False)
+            self.assertIsNotNone(name)
+            self.assertEqual(t1.name, name)

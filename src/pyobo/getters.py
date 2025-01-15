@@ -71,6 +71,7 @@ def get_ontology(
     version: str | None = None,
     robot_check: bool = True,
     upgrade: bool = True,
+    cache: bool = True,
 ) -> Obo:
     """Get the OBO for a given graph.
 
@@ -85,6 +86,8 @@ def get_ontology(
     :param upgrade:
         If set to true, will automatically upgrade relationships, such as
         ``obo:chebi#part_of`` to ``BFO:0000051``
+    :param cache:
+        Should cached objects be written? defaults to True
     :returns: An OBO object
 
     :raises OnlyOWLError: If the OBO foundry only has an OWL document for this resource.
@@ -107,20 +110,22 @@ def get_ontology(
         logger.info("UBERON has so much garbage in it that defaulting to non-strict parsing")
         strict = False
 
-    obonet_json_gz_path = prefix_directory_join(
-        prefix, name=f"{prefix}.obonet.json.gz", ensure_exists=False, version=version
-    )
-    if obonet_json_gz_path.exists() and not force:
-        from .reader import from_obonet
-        from .utils.cache import get_gzipped_graph
+    if cache:
+        obonet_json_gz_path = prefix_directory_join(
+            prefix, name=f"{prefix}.obonet.json.gz", ensure_exists=False, version=version
+        )
+        if obonet_json_gz_path.exists() and not force:
+            from .reader import from_obonet
+            from .utils.cache import get_gzipped_graph
 
-        logger.debug("[%s] using obonet cache at %s", prefix, obonet_json_gz_path)
-        return from_obonet(get_gzipped_graph(obonet_json_gz_path))
+            logger.debug("[%s] using obonet cache at %s", prefix, obonet_json_gz_path)
+            return from_obonet(get_gzipped_graph(obonet_json_gz_path))
 
     if has_nomenclature_plugin(prefix):
         obo = run_nomenclature_plugin(prefix, version=version)
-        logger.debug("[%s] caching nomenclature plugin", prefix)
-        obo.write_default(force=force_process)
+        if cache:
+            logger.debug("[%s] caching nomenclature plugin", prefix)
+            obo.write_default(force=force_process)
         return obo
 
     logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
@@ -140,7 +145,8 @@ def get_ontology(
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
 
     obo = from_obo_path(path, prefix=prefix, strict=strict, version=version, upgrade=upgrade)
-    obo.write_default(force=force_process)
+    if cache:
+        obo.write_default(force=force_process)
     return obo
 
 
