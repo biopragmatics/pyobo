@@ -72,6 +72,7 @@ def get_ontology(
     robot_check: bool = True,
     upgrade: bool = True,
     cache: bool = True,
+    use_tqdm: bool = True,
 ) -> Obo:
     """Get the OBO for a given graph.
 
@@ -131,6 +132,7 @@ def get_ontology(
                 strict=strict,
                 version=version,
                 upgrade=upgrade,
+                use_tqdm=use_tqdm,
             )
         else:
             logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
@@ -162,6 +164,7 @@ def get_ontology(
         strict=strict,
         version=version,
         upgrade=upgrade,
+        use_tqdm=use_tqdm,
         _cache_path=obonet_json_gz_path,
     )
     if cache:

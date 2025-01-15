@@ -7,7 +7,7 @@ import pandas as pd
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
-from ..constants import GetOntologyKwargs, check_should_force
+from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_df
@@ -27,7 +27,9 @@ def get_typedef_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataF
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="typedefs.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         logger.debug("[%s] no cached typedefs found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)

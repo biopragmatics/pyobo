@@ -7,7 +7,12 @@ import pandas as pd
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
-from ..constants import GetOntologyKwargs, check_should_force
+from ..constants import (
+    GetOntologyKwargs,
+    check_should_cache,
+    check_should_force,
+    check_should_use_tqdm,
+)
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct.struct_utils import ReferenceHint, _ensure_ref
@@ -32,13 +37,14 @@ def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.Da
     """Extract properties.
 
     :param prefix: the resource to load
-    :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A dataframe with the properties
     """
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         ontology = get_ontology(prefix, **kwargs)
         df = ontology.get_properties_df()
@@ -50,14 +56,12 @@ def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.Da
 
 @wrap_norm_prefix
 def get_filtered_properties_mapping(
-    prefix: str, prop: ReferenceHint, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, str]:
     """Extract a single property for each term as a dictionary.
 
     :param prefix: the resource to load
     :param prop: the property to extract
-    :param use_tqdm: should a progress bar be shown?
-    :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property value
     """
     prop = _ensure_ref(prop, ontology_prefix=prefix)
@@ -74,26 +78,29 @@ def get_filtered_properties_mapping(
     path = prefix_cache_join(prefix, "properties", name=f"{prop_curie}.tsv", version=version)
 
     @cached_mapping(
-        path=path, header=[f"{prefix}_id", prop_curie], force=check_should_force(kwargs)
+        path=path,
+        header=[f"{prefix}_id", prop_curie],
+        force=check_should_force(kwargs),
+        cache=check_should_cache(kwargs),
     )
     def _mapping_getter() -> Mapping[str, str]:
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_filtered_properties_mapping(prop, use_tqdm=use_tqdm)
+        return ontology.get_filtered_properties_mapping(
+            prop, use_tqdm=check_should_use_tqdm(kwargs)
+        )
 
     return _mapping_getter()
 
 
 @wrap_norm_prefix
 def get_filtered_properties_multimapping(
-    prefix: str, prop: ReferenceHint, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, list[str]]:
     """Extract multiple properties for each term as a dictionary.
 
     :param prefix: the resource to load
     :param prop: the property to extract
-    :param use_tqdm: should a progress bar be shown?
-    :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property values
     """
     prop = _ensure_ref(prop, ontology_prefix=prefix)
@@ -111,12 +118,17 @@ def get_filtered_properties_multimapping(
     path = prefix_cache_join(prefix, "properties", name=f"{prop_curie}.tsv", version=version)
 
     @cached_multidict(
-        path=path, header=[f"{prefix}_id", prop_curie], force=check_should_force(kwargs)
+        path=path,
+        header=[f"{prefix}_id", prop_curie],
+        force=check_should_force(kwargs),
+        cache=check_should_cache(kwargs),
     )
     def _mapping_getter() -> Mapping[str, list[str]]:
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_filtered_properties_multimapping(prop, use_tqdm=use_tqdm)
+        return ontology.get_filtered_properties_multimapping(
+            prop, use_tqdm=check_should_use_tqdm(kwargs)
+        )
 
     return _mapping_getter()
 
@@ -159,14 +171,12 @@ def get_properties(
 
 @wrap_norm_prefix
 def get_filtered_properties_df(
-    prefix: str, prop: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, prop: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> pd.DataFrame:
     """Extract a single property for each term.
 
     :param prefix: the resource to load
     :param prop: the property to extract
-    :param use_tqdm: should a progress bar be shown?
-    :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A dataframe from identifier to property value. Columns are [<prefix>_id, value].
     """
     version = get_version_from_kwargs(prefix, kwargs)
@@ -179,9 +189,11 @@ def get_filtered_properties_df(
 
     path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_filtered_properties_df(prop, use_tqdm=use_tqdm)
+        return ontology.get_filtered_properties_df(prop, use_tqdm=check_should_use_tqdm(kwargs))
 
     return _df_getter()
