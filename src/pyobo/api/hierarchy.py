@@ -91,14 +91,14 @@ def _get_hierarchy_helper(
     use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> nx.DiGraph:
-    predicates = {is_a, *extra_relations}
-    reverse_predicates = set()
+    predicates: set[Reference] = {is_a.reference, *extra_relations}
+    reverse_predicates: set[Reference] = set()
     if include_part_of:
-        predicates.add(part_of)
-        reverse_predicates.add(has_part)
+        predicates.add(part_of.reference)
+        reverse_predicates.add(has_part.reference)
     if include_has_member:
-        predicates.add(has_member)
-        reverse_predicates.add(member_of)
+        predicates.add(has_member.reference)
+        reverse_predicates.add(member_of.reference)
 
     rv = nx.DiGraph()
     for s, p, o in itt.chain(
