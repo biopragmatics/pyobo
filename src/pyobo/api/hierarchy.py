@@ -110,7 +110,9 @@ def _get_hierarchy_helper(
     return rv
 
 
-def _get_predicate_sets(extra_relations, include_part_of, include_has_member):
+def _get_predicate_sets(
+    extra_relations: Iterable[Reference], include_part_of: bool, include_has_member: bool
+) -> tuple[set[str], set[str]]:
     predicates: set[Reference] = {is_a.reference, *extra_relations}
     reverse_predicates: set[Reference] = set()
     if include_part_of:
