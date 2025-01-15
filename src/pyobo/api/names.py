@@ -111,7 +111,9 @@ def get_ids(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
     path = prefix_cache_join(prefix, name="ids.tsv", version=version)
 
     @cached_collection(
-        path=path, cache=check_should_cache(kwargs), force=check_should_force(kwargs)
+        path=path,
+        force=check_should_force(kwargs),
+        cache=check_should_cache(kwargs),
     )
     def _get_ids() -> list[str]:
         ontology = get_ontology(prefix, **kwargs)
@@ -140,9 +142,9 @@ def get_id_name_mapping(
 
     @cached_mapping(
         path=path,
-        cache=check_should_cache(kwargs),
         header=[f"{prefix}_id", "name"],
         force=check_should_force(kwargs),
+        cache=check_should_cache(kwargs),
     )
     def _get_id_name_mapping() -> Mapping[str, str]:
         ontology = get_ontology(prefix, **kwargs)
@@ -190,9 +192,9 @@ def get_id_definition_mapping(
 
     @cached_mapping(
         path=path,
-        cache=check_should_cache(kwargs),
         header=[f"{prefix}_id", "definition"],
         force=check_should_force(kwargs),
+        cache=check_should_cache(kwargs),
     )
     def _get_mapping() -> Mapping[str, str]:
         logger.info(
@@ -210,7 +212,9 @@ def get_obsolete(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
     path = prefix_cache_join(prefix, name="obsolete.tsv", version=version)
 
     @cached_collection(
-        path=path, cache=check_should_cache(kwargs), force=check_should_force(kwargs)
+        path=path,
+        force=check_should_force(kwargs),
+        cache=check_should_cache(kwargs),
     )
     def _get_obsolete() -> list[str]:
         ontology = get_ontology(prefix, **kwargs)
@@ -237,9 +241,9 @@ def get_id_synonyms_mapping(
 
     @cached_multidict(
         path=path,
-        cache=check_should_cache(kwargs),
         header=[f"{prefix}_id", "synonym"],
         force=check_should_force(kwargs),
+        cache=check_should_cache(kwargs),
     )
     def _get_multidict() -> Mapping[str, list[str]]:
         logger.info("[%s v%s] no cached synonyms found. getting from OBO loader", prefix, version)
