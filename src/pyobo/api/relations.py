@@ -19,6 +19,7 @@ from ..constants import (
     TARGET_PREFIX,
     GetOntologyKwargs,
     check_should_force,
+    check_should_use_tqdm,
 )
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
@@ -43,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 @wrap_norm_prefix
 def get_relations_df(
-    prefix: str, *, use_tqdm: bool = False, wide: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, *, wide: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> pd.DataFrame:
     """Get all relations from the OBO."""
     version = get_version_from_kwargs(prefix, kwargs)
@@ -52,7 +53,7 @@ def get_relations_df(
     @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
     def _df_getter() -> pd.DataFrame:
         ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_relations_df(use_tqdm=use_tqdm)
+        return ontology.get_relations_df(use_tqdm=check_should_use_tqdm(kwargs))
 
     rv = _df_getter()
 
@@ -68,8 +69,6 @@ def get_relations_df(
 def get_filtered_relations_df(
     prefix: str,
     relation: ReferenceHint,
-    *,
-    use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
     """Get all the given relation."""
@@ -94,7 +93,7 @@ def get_filtered_relations_df(
     def _df_getter() -> pd.DataFrame:
         logger.info("[%s] no cached relations found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_filtered_relations_df(relation, use_tqdm=use_tqdm)
+        return ontology.get_filtered_relations_df(relation, use_tqdm=check_should_use_tqdm(kwargs))
 
     return _df_getter()
 
@@ -103,14 +102,14 @@ def get_filtered_relations_df(
 def get_id_multirelations_mapping(
     prefix: str,
     typedef: ReferenceHint,
-    *,
-    use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, list[Reference]]:
     """Get the OBO file and output a synonym dictionary."""
     kwargs["version"] = get_version_from_kwargs(prefix, kwargs)
     ontology = get_ontology(prefix, **kwargs)
-    return ontology.get_id_multirelations_mapping(typedef=typedef, use_tqdm=use_tqdm)
+    return ontology.get_id_multirelations_mapping(
+        typedef=typedef, use_tqdm=check_should_use_tqdm(kwargs)
+    )
 
 
 @lru_cache
@@ -119,8 +118,6 @@ def get_relation_mapping(
     prefix: str,
     relation: ReferenceHint,
     target_prefix: str,
-    *,
-    use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get relations from identifiers in the source prefix to target prefix with the given relation.
@@ -137,7 +134,7 @@ def get_relation_mapping(
     """
     ontology = get_ontology(prefix, **kwargs)
     return ontology.get_relation_mapping(
-        relation=relation, target_prefix=target_prefix, use_tqdm=use_tqdm
+        relation=relation, target_prefix=target_prefix, use_tqdm=check_should_use_tqdm(kwargs)
     )
 
 
@@ -147,8 +144,6 @@ def get_relation(
     source_identifier: str,
     relation: ReferenceHint,
     target_prefix: str,
-    *,
-    use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the target identifier corresponding to the given relationship from the source prefix/identifier pair.
@@ -168,18 +163,17 @@ def get_relation(
         prefix=prefix,
         relation=relation,
         target_prefix=target_prefix,
-        use_tqdm=use_tqdm,
         **kwargs,
     )
     return relation_mapping.get(source_identifier)
 
 
 def get_graph(
-    prefix: str, use_tqdm: bool = False, wide: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, *, wide: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> nx.DiGraph:
     """Get the relation graph."""
     rv = nx.MultiDiGraph()
-    df = get_relations_df(prefix=prefix, wide=wide, use_tqdm=use_tqdm, **kwargs)
+    df = get_relations_df(prefix=prefix, wide=wide, **kwargs)
     for source_id, relation_prefix, relation_id, target_ns, target_id in df.values:
         rv.add_edge(
             f"{prefix}:{source_id}",
