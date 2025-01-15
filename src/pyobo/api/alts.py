@@ -11,7 +11,6 @@ from .utils import _get_pi, get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..struct.reference import Reference
 from ..utils.cache import cached_multidict
 from ..utils.path import prefix_cache_join
 
@@ -62,18 +61,23 @@ def get_alts_to_id(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[
 
 
 def get_primary_curie(
-    curie: str,
+    prefix: str | curies.Reference | curies.ReferenceTuple,
+    identifier: str | None = None,
+    /,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the primary curie for an entity."""
-    reference = Reference.from_curie_or_uri(curie, strict=kwargs.get("strict", True))
-    if reference is None:
+    reference = _get_pi(prefix, identifier)
+    try:
+        primary_identifier = get_primary_identifier(reference, **kwargs)
+    except ValueError:
+        if kwargs.get("strict"):
+            raise
+        # this happens on invalid prefix. maybe revise?
         return None
-    primary_identifier = get_primary_identifier(reference, **kwargs)
     return f"{reference.prefix}:{primary_identifier}"
 
 
-@wrap_norm_prefix
 def get_primary_identifier(
     prefix: str | curies.Reference | curies.ReferenceTuple,
     identifier: str | None = None,

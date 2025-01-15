@@ -23,7 +23,6 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-@wrap_norm_prefix
 def get_species(
     prefix: str | curies.Reference | curies.ReferenceTuple,
     identifier: str | None = None,

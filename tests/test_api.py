@@ -77,7 +77,7 @@ class TestAltIds(unittest.TestCase):
         primary_id = get_primary_identifier("go", "0001071")
         self.assertIsNotNone(primary_id)
         self.assertEqual("0003700", primary_id)
-        name = get_name("go", "0001071")
+        name = get_name(ReferenceTuple("go", "0001071"))
         self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
@@ -96,10 +96,10 @@ class TestAltIds(unittest.TestCase):
     @mock_id_names_mapping
     def test_already_primary(self, _, __):
         """Test when you give a primary id."""
-        primary_id = get_primary_identifier("go", "0003700")
+        primary_id = get_primary_identifier(ReferenceTuple("go", "0003700"))
         self.assertIsNotNone(primary_id)
         self.assertEqual("0003700", primary_id)
-        name = get_name("go", "0003700")
+        name = get_name(ReferenceTuple("go", "0003700"))
         self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
@@ -134,9 +134,9 @@ class TestAltIds(unittest.TestCase):
     @mock_id_names_mapping
     def test_no_alts(self, _, __):
         """Test alternate behavior for nomenclature source with no alts."""
-        primary_id = get_primary_identifier("ncbitaxon", "52818")
+        primary_id = get_primary_identifier(ReferenceTuple("ncbitaxon", "52818"))
         self.assertEqual("52818", primary_id)
-        self.assertEqual("Allamanda cathartica", get_name("ncbitaxon", "52818"))
+        self.assertEqual("Allamanda cathartica", get_name(ReferenceTuple("ncbitaxon", "52818")))
 
     def test_api(self) -> None:
         """Test getting the hierarchy."""

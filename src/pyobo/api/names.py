@@ -6,13 +6,13 @@ import logging
 import subprocess
 from collections.abc import Callable, Mapping
 from functools import lru_cache
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from curies import Reference, ReferenceTuple
 from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
-from .utils import _get_pi, get_version, get_version_from_kwargs
+from .utils import _get_pi, get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
@@ -35,12 +35,9 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def get_name_by_curie(curie: str, *, version: str | None = None) -> str | None:
+def get_name_by_curie(curie: str, **kwargs: Any) -> str | None:
     """Get the name for a CURIE, if possible."""
-    reference = Reference.from_curie(curie)
-    if version is None:
-        version = get_version(reference.prefix)
-    return get_name(reference, version=version)
+    return get_name(curie, **kwargs)
 
 
 X = TypeVar("X")
@@ -78,7 +75,6 @@ def _help_get(
     return mapping.get(primary_id)
 
 
-@wrap_norm_prefix
 def get_name(
     prefix: str | Reference | ReferenceTuple,
     identifier: str | None = None,
@@ -166,7 +162,6 @@ def get_name_id_mapping(
     return {v: k for k, v in id_name.items()}
 
 
-@wrap_norm_prefix
 def get_definition(
     prefix: str | Reference | ReferenceTuple,
     identifier: str | None = None,
@@ -218,7 +213,6 @@ def get_obsolete(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
     return set(_get_obsolete())
 
 
-@wrap_norm_prefix
 def get_synonyms(
     prefix: str | Reference | ReferenceTuple,
     identifier: str | None = None,

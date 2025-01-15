@@ -145,6 +145,8 @@ def _get_pi(
         if identifier is not None:
             raise ValueError("unexpected non-none value passed as second positional argument")
         return prefix.pair
+    if isinstance(prefix, str) and identifier is None:
+        return ReferenceTuple.from_curie(prefix)
     if identifier is None:
         raise ValueError(
             "prefix was given as a string, so an identifier was expected to be passed as a string as well"
