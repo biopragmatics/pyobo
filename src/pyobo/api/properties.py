@@ -12,6 +12,7 @@ from ..constants import (
     GetOntologyKwargs,
     check_should_cache,
     check_should_force,
+    check_should_use_tqdm,
 )
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
@@ -39,9 +40,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def get_edges_df(
-    prefix, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
-) -> pd.DataFrame:
+def get_edges_df(prefix, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get a dataframe of edges triples."""
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="object_properties.tsv", version=version)
@@ -50,16 +49,16 @@ def get_edges_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
     )
     def _df_getter() -> pd.DataFrame:
-        return get_ontology(prefix, **kwargs).get_edges_df(use_tqdm=use_tqdm)
+        return get_ontology(prefix, **kwargs).get_edges_df(use_tqdm=check_should_use_tqdm(kwargs))
 
     return _df_getter()
 
 
 def get_edges(
-    prefix, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[tuple[Reference, Reference, Reference]]:
     """Get a list of edge triples."""
-    df = get_edges_df(prefix, use_tqdm=use_tqdm, **kwargs)
+    df = get_edges_df(prefix, **kwargs)
     return [
         (Reference.from_curie(s), Reference.from_curie(p), Reference.from_curie(o))
         for s, p, o in tqdm(
@@ -67,14 +66,12 @@ def get_edges(
             desc=f"[{prefix}] parsing edges",
             unit="edge",
             unit_scale=True,
-            disable=not use_tqdm,
+            disable=not check_should_use_tqdm(kwargs),
         )
     ]
 
 
-def get_object_properties_df(
-    prefix, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
-) -> pd.DataFrame:
+def get_object_properties_df(prefix, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get a dataframe of object property triples."""
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="object_properties.tsv", version=version)
@@ -83,16 +80,18 @@ def get_object_properties_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
     )
     def _df_getter() -> pd.DataFrame:
-        return get_ontology(prefix, **kwargs).get_object_properties_df(use_tqdm=use_tqdm)
+        return get_ontology(prefix, **kwargs).get_object_properties_df(
+            use_tqdm=check_should_use_tqdm(kwargs)
+        )
 
     return _df_getter()
 
 
 def get_object_properties(
-    prefix, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[tuple[Reference, Reference, Reference]]:
     """Get a list of object property triples."""
-    df = get_object_properties_df(prefix, use_tqdm=use_tqdm, **kwargs)
+    df = get_object_properties_df(prefix, **kwargs)
     return [
         (Reference.from_curie(s), Reference.from_curie(p), Reference.from_curie(o))
         for s, p, o in df.values
@@ -100,10 +99,10 @@ def get_object_properties(
 
 
 def get_literal_properties(
-    prefix: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[tuple[Reference, Reference, OBOLiteral]]:
     """Get a list of literal property triples."""
-    df = get_literal_properties_df(prefix, use_tqdm=use_tqdm, **kwargs)
+    df = get_literal_properties_df(prefix, **kwargs)
     return [
         (
             Reference.from_curie(s),
@@ -115,14 +114,12 @@ def get_literal_properties(
             desc=f"[{prefix}] parsing properties",
             unit_scale=True,
             unit="triple",
-            disable=not use_tqdm,
+            disable=not check_should_use_tqdm(kwargs),
         )
     ]
 
 
-def get_literal_properties_df(
-    prefix: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
-) -> pd.DataFrame:
+def get_literal_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get a dataframe of literal property quads."""
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="literal_properties.tsv", version=version)
@@ -131,15 +128,15 @@ def get_literal_properties_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
     )
     def _df_getter() -> pd.DataFrame:
-        return get_ontology(prefix, **kwargs).get_literal_properties_df(use_tqdm=use_tqdm)
+        return get_ontology(prefix, **kwargs).get_literal_properties_df(
+            use_tqdm=check_should_use_tqdm(kwargs)
+        )
 
     return _df_getter()
 
 
 @wrap_norm_prefix
-def get_properties_df(
-    prefix: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
-) -> pd.DataFrame:
+def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Extract properties.
 
     :param prefix: the resource to load
@@ -152,7 +149,9 @@ def get_properties_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
     )
     def _df_getter() -> pd.DataFrame:
-        return get_ontology(prefix, **kwargs).get_properties_df(use_tqdm=use_tqdm)
+        return get_ontology(prefix, **kwargs).get_properties_df(
+            use_tqdm=check_should_use_tqdm(kwargs)
+        )
 
     return _df_getter()
 

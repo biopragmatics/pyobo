@@ -44,10 +44,10 @@ logger = logging.getLogger(__name__)
 
 @wrap_norm_prefix
 def get_relations(
-    prefix: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[tuple[Reference, Reference, Reference]]:
     """Get relations."""
-    df = get_relations_df(prefix, wide=False, use_tqdm=use_tqdm, **kwargs)
+    df = get_relations_df(prefix, wide=False, **kwargs)
     return [
         (
             Reference(prefix=prefix, identifier=source_id),

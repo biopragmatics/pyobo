@@ -34,7 +34,6 @@ class HierarchyKwargs(GetOntologyKwargs):
 
     include_part_of: bool
     include_has_member: bool
-    use_tqdm: bool
 
 
 def get_hierarchy(
@@ -56,7 +55,6 @@ def get_hierarchy(
         example, it might be useful to include the positively_regulates
     :param properties: Properties to include in the data part of each node. For example, might want
         to include SMILES strings with the ChEBI tree.
-    :param use_tqdm: Show a progress bar
     :param force: should the resources be reloaded when extracting relations?
     :returns: A directional graph representing the hierarchy
 
@@ -84,7 +82,6 @@ def _get_hierarchy_helper(
     properties: tuple[Reference, ...],
     include_part_of: bool = False,
     include_has_member: bool = False,
-    use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> nx.DiGraph:
     predicates, reverse_predicates = _get_predicate_sets(
@@ -92,10 +89,10 @@ def _get_hierarchy_helper(
     )
 
     rv = nx.DiGraph()
-    for s in get_ids(prefix, use_tqdm=use_tqdm, **kwargs):
+    for s in get_ids(prefix, **kwargs):
         rv.add_node(f"{prefix}:{s}")
 
-    edges_df = get_edges_df(prefix, use_tqdm=use_tqdm, **kwargs)
+    edges_df = get_edges_df(prefix, **kwargs)
     for s, p, o in edges_df.values:
         if p in predicates:
             rv.add_edge(s, o, relation=p)
@@ -103,7 +100,7 @@ def _get_hierarchy_helper(
             rv.add_edge(o, s, relation=p)
 
     properties_ = set(properties)
-    for s, p, op in get_literal_properties(prefix, use_tqdm=use_tqdm, **kwargs):
+    for s, p, op in get_literal_properties(prefix, **kwargs):
         if s in rv and p in properties_:
             rv.nodes[s][p] = op.value
 

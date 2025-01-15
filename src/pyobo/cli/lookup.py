@@ -243,7 +243,6 @@ def hierarchy(
     h = get_hierarchy(
         include_part_of=include_part_of,
         include_has_member=include_has_member,
-        use_tqdm=False,
         **kwargs,
     )
     click.echo_via_pager("\n".join("\t".join(row) for row in h.edges()))
