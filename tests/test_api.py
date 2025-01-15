@@ -9,9 +9,16 @@ from curies import Reference, ReferenceTuple
 
 import pyobo
 from pyobo import Reference as PyOBOReference
-from pyobo import get_name, get_name_by_curie, get_primary_curie, get_primary_identifier
+from pyobo import (
+    default_reference,
+    get_name,
+    get_name_by_curie,
+    get_primary_curie,
+    get_primary_identifier,
+)
 from pyobo.mocks import get_mock_id_alts_mapping, get_mock_id_name_mapping
-from pyobo.struct.struct import Obo, Term, make_ad_hoc_ontology
+from pyobo.struct import vocabulary as v
+from pyobo.struct.struct import Obo, Term, TypeDef, make_ad_hoc_ontology
 
 mock_id_alts_mapping = get_mock_id_alts_mapping(
     {
@@ -133,15 +140,28 @@ class TestAltIds(unittest.TestCase):
 
     def test_api(self) -> None:
         """Test getting the hierarchy."""
+        tr1 = default_reference(TEST_P1, "r1")
+        td1 = TypeDef(reference=tr1)
         r1 = PyOBOReference(prefix=TEST_P1, identifier="1", name="test name")
         r2 = PyOBOReference(prefix=TEST_P1, identifier="2")
+        r3 = PyOBOReference(prefix=TEST_P1, identifier="3")
         t1 = Term(reference=r1).append_alt(r2)
+        t1.append_comment("test comment")
         t2 = Term(reference=r2)
-        ontology = make_ad_hoc_ontology(TEST_P1, terms=[t1, t2])
+        t3 = Term(reference=r3).append_parent(r1)
+        terms = [t1, t2, t3]
+        ontology = make_ad_hoc_ontology(TEST_P1, terms=terms, _typedefs=[td1])
 
-        with patch_ontologies(
-            ontology, ["pyobo.api.names.get_ontology", "pyobo.api.alts.get_ontology"]
-        ):
+        targets = [
+            "pyobo.api.names.get_ontology",
+            "pyobo.api.alts.get_ontology",
+            "pyobo.api.properties.get_ontology",
+            "pyobo.api.relations.get_ontology",
+            "pyobo.api.edges.get_ontology",
+        ]
+        with patch_ontologies(ontology, targets):
+            # Alts
+
             ids_alts = pyobo.get_id_to_alts(TEST_P1, cache=False)
             self.assertEqual({"1": ["2"]}, ids_alts)
 
@@ -154,8 +174,10 @@ class TestAltIds(unittest.TestCase):
             self.assertEqual("test:1", pyobo.get_primary_curie(r1.curie, cache=False))
             self.assertEqual("test:1", pyobo.get_primary_curie(r2.curie, cache=False))
 
+            # Names
+
             ids = pyobo.get_ids(TEST_P1, cache=False)
-            self.assertEqual({"1", "2"}, ids)
+            self.assertEqual({t.identifier for t in terms}, ids)
 
             id_name = pyobo.get_id_name_mapping(TEST_P1, cache=False)
             self.assertEqual({t1.identifier: t1.name}, id_name)
@@ -165,3 +187,20 @@ class TestAltIds(unittest.TestCase):
 
             self.assertEqual(t1.name, pyobo.get_name(r1, cache=False))
             self.assertEqual(t1.name, pyobo.get_name(r2, cache=False))
+
+            # Properties
+
+            value = pyobo.get_property(
+                r1.prefix, r1.identifier, prop=v.comment, cache=False, use_tqdm=False
+            )
+            self.assertEqual("test comment", value)
+
+            edges = pyobo.get_edges(TEST_P1, cache=False, use_tqdm=False)
+            self.assertEqual({(r3, v.is_a, r1), (r1, v.alternative_term, r2)}, set(edges))
+
+            graph = pyobo.get_hierarchy(TEST_P1, cache=False, use_tqdm=False)
+            self.assertEqual(3, graph.number_of_nodes())
+            self.assertIn(r1.curie, graph)
+            self.assertIn(r2.curie, graph)
+            self.assertIn(r3.curie, graph)
+            self.assertEqual(1, graph.number_of_edges())

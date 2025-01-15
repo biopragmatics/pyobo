@@ -5,12 +5,15 @@ from collections.abc import Iterable
 from functools import lru_cache
 
 import networkx as nx
+from curies import ReferenceTuple
+from typing_extensions import Unpack
 
-from .names import get_name
-from .properties import get_filtered_properties_mapping
-from .relations import get_filtered_relations_df
-from ..identifier_utils import wrap_norm_prefix
-from ..struct import has_member, is_a, part_of
+from .edges import get_edges_df
+from .names import get_ids, get_name
+from .properties import get_literal_properties
+from .utils import _get_pi
+from ..constants import GetOntologyKwargs
+from ..struct import has_member, has_part, is_a, member_of, part_of
 from ..struct.reference import Reference
 from ..struct.struct_utils import ReferenceHint, _ensure_ref
 
@@ -24,23 +27,22 @@ __all__ = [
     "is_descendent",
 ]
 
-
 logger = logging.getLogger(__name__)
+
+
+class HierarchyKwargs(GetOntologyKwargs):
+    """Keyword argument hints for hierarchy getter functions."""
+
+    include_part_of: bool
+    include_has_member: bool
 
 
 def get_hierarchy(
     prefix: str,
     *,
-    include_part_of: bool = True,
-    include_has_member: bool = False,
     extra_relations: Iterable[ReferenceHint] | None = None,
     properties: Iterable[ReferenceHint] | None = None,
-    use_tqdm: bool = False,
-    force: bool = False,
-    force_process: bool = False,
-    version: str | None = None,
-    strict: bool = True,
-    cache: bool = True,
+    **kwargs: Unpack[HierarchyKwargs],
 ) -> nx.DiGraph:
     """Get hierarchy of parents as a directed graph.
 
@@ -54,133 +56,70 @@ def get_hierarchy(
         example, it might be useful to include the positively_regulates
     :param properties: Properties to include in the data part of each node. For example, might want
         to include SMILES strings with the ChEBI tree.
-    :param use_tqdm: Show a progress bar
     :param force: should the resources be reloaded when extracting relations?
     :returns: A directional graph representing the hierarchy
 
     This function thinly wraps :func:`_get_hierarchy_helper` to make it easier to work with the lru_cache mechanism.
     """
-    extra_relations_ = tuple(
-        sorted(_ensure_ref(r, ontology_prefix=prefix) for r in extra_relations or [])
-    )
-    properties_ = tuple(
-        sorted(_ensure_ref(prop, ontology_prefix=prefix) for prop in properties or [])
-    )
-
     return _get_hierarchy_helper(
         prefix=prefix,
-        include_part_of=include_part_of,
-        include_has_member=include_has_member,
-        extra_relations=extra_relations_,
-        properties=properties_,
-        use_tqdm=use_tqdm,
-        force=force,
-        force_process=force_process,
-        version=version,
-        strict=strict,
-        cache=cache,
+        extra_relations=_tp(prefix, extra_relations),
+        properties=_tp(prefix, properties),
+        **kwargs,
+    )
+
+
+def _tp(prefix: str, references: Iterable[ReferenceHint] | None) -> tuple[Reference, ...]:
+    return tuple(
+        sorted(_ensure_ref(reference, ontology_prefix=prefix) for reference in references or [])
     )
 
 
 @lru_cache
-@wrap_norm_prefix
 def _get_hierarchy_helper(
     prefix: str,
     *,
     extra_relations: tuple[Reference, ...],
     properties: tuple[Reference, ...],
-    include_part_of: bool,
-    include_has_member: bool,
-    use_tqdm: bool,
-    force: bool = False,
-    force_process: bool = False,
-    version: str | None = None,
-    strict: bool = True,
-    cache: bool = True,
+    include_part_of: bool = False,
+    include_has_member: bool = False,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> nx.DiGraph:
-    rv = nx.DiGraph()
-
-    is_a_df = get_filtered_relations_df(
-        prefix=prefix,
-        relation=is_a,
-        use_tqdm=use_tqdm,
-        force=force,
-        force_process=force_process,
-        version=version,
-        strict=strict,
+    predicates, reverse_predicates = _get_predicate_sets(
+        extra_relations, include_part_of, include_has_member
     )
-    for source_id, target_ns, target_id in is_a_df.values:
-        rv.add_edge(f"{prefix}:{source_id}", f"{target_ns}:{target_id}", relation="is_a")
 
-    if include_has_member:
-        has_member_df = get_filtered_relations_df(
-            prefix=prefix,
-            relation=has_member,
-            use_tqdm=use_tqdm,
-            force=force,
-            force_process=force_process,
-            version=version,
-            strict=strict,
-        )
-        for target_id, source_ns, source_id in has_member_df.values:
-            rv.add_edge(f"{source_ns}:{source_id}", f"{prefix}:{target_id}", relation="is_a")
+    rv = nx.DiGraph()
+    for s in get_ids(prefix, **kwargs):
+        rv.add_node(f"{prefix}:{s}")
 
-    if include_part_of:
-        part_of_df = get_filtered_relations_df(
-            prefix=prefix,
-            relation=part_of,
-            use_tqdm=use_tqdm,
-            force=force,
-            force_process=force_process,
-            version=version,
-            strict=strict,
-        )
-        for source_id, target_ns, target_id in part_of_df.values:
-            rv.add_edge(f"{prefix}:{source_id}", f"{target_ns}:{target_id}", relation="part_of")
+    edges_df = get_edges_df(prefix, **kwargs)
+    for s, p, o in edges_df.values:
+        if p in predicates:
+            rv.add_edge(s, o, relation=p)
+        elif p in reverse_predicates:
+            rv.add_edge(o, s, relation=p)
 
-        has_part_df = get_filtered_relations_df(
-            prefix=prefix,
-            relation=part_of,
-            use_tqdm=use_tqdm,
-            force=force,
-            force_process=force_process,
-            version=version,
-            strict=strict,
-        )
-        for target_id, source_ns, source_id in has_part_df.values:
-            rv.add_edge(f"{source_ns}:{source_id}", f"{prefix}:{target_id}", relation="part_of")
-
-    for relation in extra_relations:
-        relation_df = get_filtered_relations_df(
-            prefix=prefix,
-            relation=relation,
-            use_tqdm=use_tqdm,
-            force=force,
-            force_process=force_process,
-            version=version,
-            strict=strict,
-        )
-        for source_id, target_ns, target_id in relation_df.values:
-            rv.add_edge(
-                f"{prefix}:{source_id}", f"{target_ns}:{target_id}", relation=relation.identifier
-            )
-
-    for prop in properties:
-        props = get_filtered_properties_mapping(
-            prefix=prefix,
-            prop=prop,
-            use_tqdm=use_tqdm,
-            force=force,
-            force_process=force_process,
-            strict=strict,
-            version=version,
-        )
-        for identifier, value in props.items():
-            curie = f"{prefix}:{identifier}"
-            if curie in rv:
-                rv.nodes[curie][prop] = value
+    properties_ = set(properties)
+    for s, p, op in get_literal_properties(prefix, **kwargs):
+        if s in rv and p in properties_:
+            rv.nodes[s][p] = op.value
 
     return rv
+
+
+def _get_predicate_sets(
+    extra_relations: Iterable[Reference], include_part_of: bool, include_has_member: bool
+) -> tuple[set[str], set[str]]:
+    predicates: set[Reference] = {is_a.reference, *extra_relations}
+    reverse_predicates: set[Reference] = set()
+    if include_part_of:
+        predicates.add(part_of.reference)
+        reverse_predicates.add(has_part.reference)
+    if include_has_member:
+        predicates.add(has_member.reference)
+        reverse_predicates.add(member_of.reference)
+    return {p.curie for p in predicates}, {p.curie for p in reverse_predicates}
 
 
 def is_descendent(
@@ -198,61 +137,32 @@ def is_descendent(
 
 @lru_cache
 def get_descendants(
-    prefix: str,
+    prefix: str | Reference | ReferenceTuple,
     identifier: str | None = None,
-    include_part_of: bool = True,
-    include_has_member: bool = False,
-    use_tqdm: bool = False,
-    force: bool = False,
-    **kwargs,
+    /,
+    **kwargs: Unpack[HierarchyKwargs],
 ) -> set[str] | None:
     """Get all the descendants (children) of the term as CURIEs."""
-    curie, prefix, identifier = _pic(prefix, identifier)
-    hierarchy = get_hierarchy(
-        prefix=prefix,
-        include_has_member=include_has_member,
-        include_part_of=include_part_of,
-        use_tqdm=use_tqdm,
-        force=force,
-        **kwargs,
-    )
-    if curie not in hierarchy:
+    t = _get_pi(prefix, identifier)
+    hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
+    if t.curie not in hierarchy:
         return None
-    return nx.ancestors(hierarchy, curie)  # note this is backwards
-
-
-def _pic(prefix, identifier=None) -> tuple[str, str, str]:
-    if identifier is None:
-        curie = prefix
-        prefix, identifier = prefix.split(":")
-    else:
-        curie = f"{prefix}:{identifier}"
-    return curie, prefix, identifier
+    return nx.ancestors(hierarchy, t.curie)  # note this is backwards
 
 
 @lru_cache
 def get_children(
-    prefix: str,
+    prefix: str | Reference | ReferenceTuple,
     identifier: str | None = None,
-    include_part_of: bool = True,
-    include_has_member: bool = False,
-    use_tqdm: bool = False,
-    force: bool = False,
-    **kwargs,
+    /,
+    **kwargs: Unpack[HierarchyKwargs],
 ) -> set[str] | None:
     """Get all the descendants (children) of the term as CURIEs."""
-    curie, prefix, identifier = _pic(prefix, identifier)
-    hierarchy = get_hierarchy(
-        prefix=prefix,
-        include_has_member=include_has_member,
-        include_part_of=include_part_of,
-        use_tqdm=use_tqdm,
-        force=force,
-        **kwargs,
-    )
-    if curie not in hierarchy:
+    t = _get_pi(prefix, identifier)
+    hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
+    if t.curie not in hierarchy:
         return None
-    return set(hierarchy.predecessors(curie))
+    return set(hierarchy.predecessors(t.curie))
 
 
 def has_ancestor(
@@ -269,52 +179,30 @@ def has_ancestor(
 
 @lru_cache
 def get_ancestors(
-    prefix: str,
+    prefix: str | Reference | ReferenceTuple,
     identifier: str | None = None,
-    include_part_of: bool = True,
-    include_has_member: bool = False,
-    use_tqdm: bool = False,
-    force: bool = False,
-    **kwargs,
+    /,
+    **kwargs: Unpack[HierarchyKwargs],
 ) -> set[str] | None:
     """Get all the ancestors (parents) of the term as CURIEs."""
-    curie, prefix, identifier = _pic(prefix, identifier)
-    hierarchy = get_hierarchy(
-        prefix=prefix,
-        include_has_member=include_has_member,
-        include_part_of=include_part_of,
-        use_tqdm=use_tqdm,
-        force=force,
-        **kwargs,
-    )
-    if curie not in hierarchy:
+    t = _get_pi(prefix, identifier)
+    hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
+    if t.curie not in hierarchy:
         return None
-    return nx.descendants(hierarchy, curie)  # note this is backwards
+    return nx.descendants(hierarchy, t.curie)  # note this is backwards
 
 
 def get_subhierarchy(
-    prefix: str,
+    prefix: str | Reference | ReferenceTuple,
     identifier: str | None = None,
-    include_part_of: bool = True,
-    include_has_member: bool = False,
-    use_tqdm: bool = False,
-    force: bool = False,
-    **kwargs,
+    /,
+    **kwargs: Unpack[HierarchyKwargs],
 ) -> nx.DiGraph:
     """Get the subhierarchy for a given node."""
-    curie, prefix, identifier = _pic(prefix, identifier)
-    hierarchy = get_hierarchy(
-        prefix=prefix,
-        include_has_member=include_has_member,
-        include_part_of=include_part_of,
-        use_tqdm=use_tqdm,
-        force=force,
-        **kwargs,
-    )
-    logger.info(
-        "getting descendants of %s:%s ! %s", prefix, identifier, get_name(prefix, identifier)
-    )
-    curies = nx.ancestors(hierarchy, curie)  # note this is backwards
+    t = _get_pi(prefix, identifier)
+    hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
+    logger.info("getting descendants of %s ! %s", t.curie, get_name(t))
+    curies = set(nx.ancestors(hierarchy, t.curie)) | {t.curie}  # note this is backwards
     logger.info("inducing subgraph")
     sg = hierarchy.subgraph(curies).copy()
     logger.info("subgraph has %d nodes/%d edges", sg.number_of_nodes(), sg.number_of_edges())

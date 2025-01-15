@@ -4,7 +4,6 @@ import logging
 from collections.abc import Mapping
 from functools import lru_cache
 
-import networkx as nx
 import pandas as pd
 from typing_extensions import Unpack
 
@@ -31,16 +30,30 @@ from ..utils.path import prefix_cache_join
 
 __all__ = [
     "get_filtered_relations_df",
-    "get_graph",
     "get_id_multirelations_mapping",
     "get_relation",
     "get_relation_mapping",
+    "get_relations",
     "get_relations_df",
 ]
 
-# TODO get_relation, get_relations
-
 logger = logging.getLogger(__name__)
+
+
+@wrap_norm_prefix
+def get_relations(
+    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+) -> list[tuple[Reference, Reference, Reference]]:
+    """Get relations."""
+    df = get_relations_df(prefix, wide=False, **kwargs)
+    return [
+        (
+            Reference(prefix=prefix, identifier=source_id),
+            Reference(prefix=relation_prefix, identifier=relation_id),
+            Reference(prefix=target_prefix, identifier=target_id),
+        )
+        for source_id, relation_prefix, relation_id, target_prefix, target_id in df.values
+    ]
 
 
 @wrap_norm_prefix
@@ -171,18 +184,3 @@ def get_relation(
         **kwargs,
     )
     return relation_mapping.get(source_identifier)
-
-
-def get_graph(
-    prefix: str, *, wide: bool = False, **kwargs: Unpack[GetOntologyKwargs]
-) -> nx.DiGraph:
-    """Get the relation graph."""
-    rv = nx.MultiDiGraph()
-    df = get_relations_df(prefix=prefix, wide=wide, **kwargs)
-    for source_id, relation_prefix, relation_id, target_ns, target_id in df.values:
-        rv.add_edge(
-            f"{prefix}:{source_id}",
-            f"{target_ns}:{target_id}",
-            key=f"{relation_prefix}:{relation_id}",
-        )
-    return rv

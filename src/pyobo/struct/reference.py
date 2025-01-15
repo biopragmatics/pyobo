@@ -9,8 +9,8 @@ import bioontologies.relations
 import bioontologies.upgrade
 import bioregistry
 import curies
-from curies import ReferenceTuple
-from curies.api import ExpansionError
+from curies import Converter, ReferenceTuple
+from curies.api import ExpansionError, _split
 from pydantic import Field, field_validator, model_validator
 
 from .utils import obo_escape
@@ -78,6 +78,24 @@ class Reference(curies.Reference):
     def bioregistry_link(self) -> str:
         """Get the bioregistry link."""
         return f"https://bioregistry.io/{self.curie}"
+
+    # override from_curie to get typing right
+    @classmethod
+    def from_curie(
+        cls, curie: str, *, sep: str = ":", converter: Converter | None = None
+    ) -> Reference:
+        """Parse a CURIE string and populate a reference.
+
+        :param curie: A string representation of a compact URI (CURIE)
+        :param sep: The separator
+        :param converter: The converter to use as context when parsing
+        :return: A reference object
+
+        >>> Reference.from_curie("chebi:1234")
+        Reference(prefix='CHEBI', identifier='1234')
+        """
+        prefix, identifier = _split(curie, sep=sep)
+        return cls.model_validate({"prefix": prefix, "identifier": identifier}, context=converter)
 
     @classmethod
     def from_curie_or_uri(

@@ -12,7 +12,7 @@ from curies import Reference, ReferenceTuple
 from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
-from .utils import get_version, get_version_from_kwargs
+from .utils import _get_pi, get_version, get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
@@ -87,12 +87,8 @@ def get_name(
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the name for an entity."""
-    if isinstance(prefix, ReferenceTuple | Reference):
-        identifier = prefix.identifier
-        prefix = prefix.prefix
-    if identifier is None:
-        raise ValueError("identifier is None")
-    return _help_get(get_id_name_mapping, prefix=prefix, identifier=identifier, **kwargs)
+    t = _get_pi(prefix, identifier)
+    return _help_get(get_id_name_mapping, prefix=t.prefix, identifier=t.identifier, **kwargs)
 
 
 @lru_cache

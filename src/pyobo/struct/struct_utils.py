@@ -421,6 +421,20 @@ class Stanza:
             for target in sorted(targets):
                 yield typedef, target
 
+    def iterate_object_properties(self) -> Iterable[tuple[Reference, Reference]]:
+        """Iterate over properties with references as their targets."""
+        for predicate, values in self.properties.items():
+            for value in values:
+                if isinstance(value, Reference):
+                    yield predicate, value
+
+    def iterate_literal_properties(self) -> Iterable[tuple[Reference, OBOLiteral]]:
+        """Iterate over properties with literals as their targets."""
+        for predicate, values in self.properties.items():
+            for value in values:
+                if isinstance(value, OBOLiteral):
+                    yield predicate, value
+
     def get_relationships(self, typedef: ReferenceHint) -> list[Reference]:
         """Get relationships from the given type."""
         return self.relationships.get(_ensure_ref(typedef), [])
@@ -511,25 +525,37 @@ class Stanza:
         """Get edges."""
         return list(self._iter_edges())
 
-    def _iter_edges(self) -> Iterable[tuple[Reference, Reference]]:
-        yield from self.iterate_relations()
+    def _iter_parents(self) -> Iterable[tuple[Reference, Reference]]:
         parent_prop = stanza_type_to_prop[self.type]
         for parent in itt.chain(self.parents, self.union_of):
             yield parent_prop, parent
-        for subset in self.subsets:
-            yield v.in_subset, subset
-        for k, values in self.properties.items():
-            for value in values:
-                if isinstance(value, Reference):
-                    yield k, value
+
+    def _iter_intersections(self) -> Iterable[tuple[Reference, Reference]]:
+        parent_prop = stanza_type_to_prop[self.type]
         for intersection_of in self.intersection_of:
             match intersection_of:
                 case Reference():
                     yield parent_prop, intersection_of
                 case (predicate, target):
                     yield predicate, target
+
+    def _iter_edges(self) -> Iterable[tuple[Reference, Reference]]:
+        # The following are "object" properties, meaning
+        # they're part of the definition of the object
+        yield from self.iterate_relations()
+        yield from self._iter_parents()
+        yield from self._iter_intersections()
+        for equivalent_to in self.equivalent_to:
+            yield v.equivalent_class, equivalent_to
+
+        # The following are "annotation" properties
+        for subset in self.subsets:
+            yield v.in_subset, subset
+        yield from self.iterate_object_properties()
+        for xref_reference in self.xrefs:
+            yield v.has_dbxref, xref_reference
+
         # TODO disjoint_from
-        yield from self.get_mappings(include_xrefs=True, add_context=False)
 
     # docstr-coverage:excused `overload`
     @overload
