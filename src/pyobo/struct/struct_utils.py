@@ -675,9 +675,11 @@ def _ensure_ref(
         return Reference(prefix=reference[0], identifier=reference[1])
     if isinstance(reference, Reference):
         return reference
+    if isinstance(reference, curies.Reference):
+        return Reference(prefix=reference.prefix, identifier=reference.identifier)
     if ":" not in reference:
         if not ontology_prefix:
-            raise ValueError(f"can't parse reference: {reference}")
+            raise ValueError(f"can't parse reference of type {type(reference)}: {reference}")
         return default_reference(ontology_prefix, reference)
     _rv = Reference.from_curie_or_uri(reference, strict=True, ontology_prefix=ontology_prefix)
     if _rv is None:

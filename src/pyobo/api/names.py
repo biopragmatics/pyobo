@@ -6,13 +6,13 @@ import logging
 import subprocess
 from collections.abc import Callable, Mapping
 from functools import lru_cache
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from curies import Reference, ReferenceTuple
 from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
-from .utils import _get_pi, get_version, get_version_from_kwargs
+from .utils import _get_pi, get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
@@ -35,12 +35,9 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def get_name_by_curie(curie: str, *, version: str | None = None) -> str | None:
+def get_name_by_curie(curie: str, **kwargs: Any) -> str | None:
     """Get the name for a CURIE, if possible."""
-    reference = Reference.from_curie(curie)
-    if version is None:
-        version = get_version(reference.prefix)
-    return get_name(reference, version=version)
+    return get_name(curie, **kwargs)
 
 
 X = TypeVar("X")
@@ -51,35 +48,33 @@ NO_BUILD_LOGGED: set = set()
 
 def _help_get(
     f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
-    prefix: str,
-    identifier: str,
+    reference: ReferenceTuple,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> X | None:
     """Get the result for an entity based on a mapping maker function ``f``."""
     try:
-        mapping = f(prefix, **kwargs)  # type:ignore
+        mapping = f(reference.prefix, **kwargs)  # type:ignore
     except NoBuildError:
-        if prefix not in NO_BUILD_PREFIXES:
-            logger.warning("[%s] unable to look up results with %s", prefix, f)
-            NO_BUILD_PREFIXES.add(prefix)
+        if reference.prefix not in NO_BUILD_PREFIXES:
+            logger.warning("[%s] unable to look up results with %s", reference, f)
+            NO_BUILD_PREFIXES.add(reference.prefix)
         return None
     except ValueError as e:
-        if prefix not in NO_BUILD_PREFIXES:
-            logger.warning("[%s] value error while looking up results with %s: %s", prefix, f, e)
-            NO_BUILD_PREFIXES.add(prefix)
+        if reference.prefix not in NO_BUILD_PREFIXES:
+            logger.warning("[%s] value error while looking up results with %s: %s", reference, f, e)
+            NO_BUILD_PREFIXES.add(reference.prefix)
         return None
 
     if not mapping:
-        if prefix not in NO_BUILD_PREFIXES:
-            logger.warning("[%s] no results produced with %s", prefix, f)
-            NO_BUILD_PREFIXES.add(prefix)
+        if reference.prefix not in NO_BUILD_PREFIXES:
+            logger.warning("[%s] no results produced with %s", reference, f)
+            NO_BUILD_PREFIXES.add(reference.prefix)
         return None
 
-    primary_id = get_primary_identifier(prefix, identifier, **kwargs)
+    primary_id = get_primary_identifier(reference, **kwargs)
     return mapping.get(primary_id)
 
 
-@wrap_norm_prefix
 def get_name(
     prefix: str | Reference | ReferenceTuple,
     identifier: str | None = None,
@@ -87,8 +82,8 @@ def get_name(
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the name for an entity."""
-    t = _get_pi(prefix, identifier)
-    return _help_get(get_id_name_mapping, prefix=t.prefix, identifier=t.identifier, **kwargs)
+    reference = _get_pi(prefix, identifier)
+    return _help_get(get_id_name_mapping, reference, **kwargs)
 
 
 @lru_cache
@@ -167,16 +162,15 @@ def get_name_id_mapping(
     return {v: k for k, v in id_name.items()}
 
 
-@wrap_norm_prefix
 def get_definition(
-    prefix: str, identifier: str | None = None, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str | Reference | ReferenceTuple,
+    identifier: str | None = None,
+    /,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the definition for an entity."""
-    if identifier is None:
-        prefix, _, identifier = prefix.rpartition(":")
-    if identifier is None:
-        raise ValueError
-    return _help_get(get_id_definition_mapping, prefix=prefix, identifier=identifier, **kwargs)
+    reference = _get_pi(prefix, identifier)
+    return _help_get(get_id_definition_mapping, reference, **kwargs)
 
 
 def get_id_definition_mapping(
@@ -219,12 +213,15 @@ def get_obsolete(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
     return set(_get_obsolete())
 
 
-@wrap_norm_prefix
 def get_synonyms(
-    prefix: str, identifier: str, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str | Reference | ReferenceTuple,
+    identifier: str | None = None,
+    /,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> list[str] | None:
     """Get the synonyms for an entity."""
-    return _help_get(get_id_synonyms_mapping, prefix=prefix, identifier=identifier, **kwargs)
+    reference = _get_pi(prefix, identifier)
+    return _help_get(get_id_synonyms_mapping, reference, **kwargs)
 
 
 @wrap_norm_prefix
