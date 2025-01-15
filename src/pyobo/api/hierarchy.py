@@ -8,7 +8,7 @@ import networkx as nx
 from curies import ReferenceTuple
 from typing_extensions import Unpack
 
-from .names import get_name
+from .names import get_ids, get_name
 from .properties import get_edges_df, get_literal_properties
 from .utils import _get_pi
 from ..constants import GetOntologyKwargs
@@ -91,9 +91,11 @@ def _get_hierarchy_helper(
         extra_relations, include_part_of, include_has_member
     )
 
-    edges_df = get_edges_df(prefix, use_tqdm=use_tqdm, **kwargs)
-
     rv = nx.DiGraph()
+    for s in get_ids(prefix, use_tqdm=use_tqdm, **kwargs):
+        rv.add_node(f"{prefix}:{s}")
+
+    edges_df = get_edges_df(prefix, use_tqdm=use_tqdm, **kwargs)
     for s, p, o in edges_df.values:
         if p in predicates:
             rv.add_edge(s, o, relation=p)

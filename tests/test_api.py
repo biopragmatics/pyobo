@@ -195,3 +195,10 @@ class TestAltIds(unittest.TestCase):
 
             edges = pyobo.get_edges(TEST_P1, cache=False)
             self.assertEqual({(r3, v.is_a, r1), (r1, v.alternative_term, r2)}, set(edges))
+
+            graph = pyobo.get_hierarchy(TEST_P1, cache=False)
+            self.assertEqual(3, graph.number_of_nodes())
+            self.assertIn(r1.curie, graph)
+            self.assertIn(r2.curie, graph)
+            self.assertIn(r3.curie, graph)
+            self.assertEqual(1, graph.number_of_edges())
