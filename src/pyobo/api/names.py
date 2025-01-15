@@ -86,8 +86,8 @@ def get_name(
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the name for an entity."""
-    t = _get_pi(prefix, identifier)
-    return _help_get(get_id_name_mapping, t, **kwargs)
+    reference = _get_pi(prefix, identifier)
+    return _help_get(get_id_name_mapping, reference, **kwargs)
 
 
 @lru_cache
@@ -174,8 +174,8 @@ def get_definition(
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the definition for an entity."""
-    t = _get_pi(prefix, identifier)
-    return _help_get(get_id_definition_mapping, t, **kwargs)
+    reference = _get_pi(prefix, identifier)
+    return _help_get(get_id_definition_mapping, reference, **kwargs)
 
 
 def get_id_definition_mapping(
@@ -226,8 +226,8 @@ def get_synonyms(
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> list[str] | None:
     """Get the synonyms for an entity."""
-    t = _get_pi(prefix, identifier)
-    return _help_get(get_id_synonyms_mapping, t, **kwargs)
+    reference = _get_pi(prefix, identifier)
+    return _help_get(get_id_synonyms_mapping, reference, **kwargs)
 
 
 @wrap_norm_prefix
