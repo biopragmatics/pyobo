@@ -42,6 +42,7 @@ from .struct.reference import OBOLiteral, _parse_identifier
 from .struct.struct_utils import Annotation, Stanza
 from .struct.typedef import comment as has_comment
 from .struct.typedef import default_typedefs, has_ontology_root_term
+from .utils.cache import write_gzipped_graph
 from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
 
 __all__ = [
@@ -60,6 +61,7 @@ def from_obo_path(
     version: str | None,
     upgrade: bool = True,
     ignore_obsolete: bool = False,
+    _cache_path: Path | None = None,
 ) -> Obo:
     """Get the OBO graph from a path."""
     path = Path(path).expanduser().resolve()
@@ -86,6 +88,9 @@ def from_obo_path(
     if prefix:
         # Make sure the graph is named properly
         _clean_graph_ontology(graph, prefix)
+
+    if _cache_path:
+        write_gzipped_graph(path=_cache_path, graph=graph)
 
     # Convert to an Obo instance and return
     return from_obonet(graph, strict=strict, version=version, upgrade=upgrade)

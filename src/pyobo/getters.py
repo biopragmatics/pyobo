@@ -34,7 +34,7 @@ from .constants import (
 )
 from .identifier_utils import ParseError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
-from .reader import from_obo_path
+from .reader import from_obo_path, from_obonet
 from .struct import Obo
 from .utils.io import get_writer
 from .utils.path import ensure_path, prefix_directory_join
@@ -110,16 +110,25 @@ def get_ontology(
         logger.info("UBERON has so much garbage in it that defaulting to non-strict parsing")
         strict = False
 
-    if cache:
+    if not cache:
+        obonet_json_gz_path = None
+    else:
         obonet_json_gz_path = prefix_directory_join(
             prefix, name=f"{prefix}.obonet.json.gz", ensure_exists=False, version=version
         )
         if obonet_json_gz_path.exists() and not force:
-            from .reader import from_obonet
             from .utils.cache import get_gzipped_graph
 
             logger.debug("[%s] using obonet cache at %s", prefix, obonet_json_gz_path)
-            return from_obonet(get_gzipped_graph(obonet_json_gz_path))
+            return from_obonet(
+                get_gzipped_graph(obonet_json_gz_path),
+                strict=strict,
+                version=version,
+                upgrade=upgrade,
+            )
+        else:
+            logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
+
 
     if has_nomenclature_plugin(prefix):
         obo = run_nomenclature_plugin(prefix, version=version)
@@ -127,8 +136,6 @@ def get_ontology(
             logger.debug("[%s] caching nomenclature plugin", prefix)
             obo.write_default(force=force_process)
         return obo
-
-    logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
 
     ontology_format, path = _ensure_ontology_path(prefix, force=force, version=version)
     if path is None:
@@ -144,7 +151,14 @@ def get_ontology(
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
 
-    obo = from_obo_path(path, prefix=prefix, strict=strict, version=version, upgrade=upgrade)
+    obo = from_obo_path(
+        path,
+        prefix=prefix,
+        strict=strict,
+        version=version,
+        upgrade=upgrade,
+        _cache_path=obonet_json_gz_path,
+    )
     if cache:
         obo.write_default(force=force_process)
     return obo
