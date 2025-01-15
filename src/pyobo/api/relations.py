@@ -4,7 +4,6 @@ import logging
 from collections.abc import Mapping
 from functools import lru_cache
 
-import networkx as nx
 import pandas as pd
 from typing_extensions import Unpack
 
@@ -31,7 +30,6 @@ from ..utils.path import prefix_cache_join
 
 __all__ = [
     "get_filtered_relations_df",
-    "get_graph",
     "get_id_multirelations_mapping",
     "get_relation",
     "get_relation_mapping",
@@ -186,18 +184,3 @@ def get_relation(
         **kwargs,
     )
     return relation_mapping.get(source_identifier)
-
-
-def get_graph(
-    prefix: str, *, wide: bool = False, **kwargs: Unpack[GetOntologyKwargs]
-) -> nx.DiGraph:
-    """Get the relation graph."""
-    rv = nx.MultiDiGraph()
-    df = get_relations_df(prefix=prefix, wide=wide, **kwargs)
-    for source_id, relation_prefix, relation_id, target_ns, target_id in df.values:
-        rv.add_edge(
-            f"{prefix}:{source_id}",
-            f"{target_ns}:{target_id}",
-            key=f"{relation_prefix}:{relation_id}",
-        )
-    return rv

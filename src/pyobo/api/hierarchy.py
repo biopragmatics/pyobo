@@ -8,8 +8,9 @@ import networkx as nx
 from curies import ReferenceTuple
 from typing_extensions import Unpack
 
+from .edges import get_edges_df
 from .names import get_ids, get_name
-from .properties import get_edges_df, get_literal_properties
+from .properties import get_literal_properties
 from .utils import _get_pi
 from ..constants import GetOntologyKwargs
 from ..struct import has_member, has_part, is_a, member_of, part_of

@@ -6,6 +6,7 @@ from .alts import (
     get_primary_curie,
     get_primary_identifier,
 )
+from .edges import get_edges, get_edges_df, get_graph
 from .hierarchy import (
     get_ancestors,
     get_children,
@@ -29,8 +30,6 @@ from .names import (
     get_synonyms,
 )
 from .properties import (
-    get_edges,
-    get_edges_df,
     get_filtered_properties_df,
     get_filtered_properties_mapping,
     get_filtered_properties_multimapping,
@@ -44,7 +43,6 @@ from .properties import (
 )
 from .relations import (
     get_filtered_relations_df,
-    get_graph,
     get_id_multirelations_mapping,
     get_relation,
     get_relation_mapping,
