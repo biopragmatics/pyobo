@@ -111,10 +111,16 @@ def get_ontology(
         strict = False
 
     if not cache:
+        logger.debug("[%s] caching was turned off, so dont look for an obonet file", prefix)
         obonet_json_gz_path = None
     else:
         obonet_json_gz_path = prefix_directory_join(
             prefix, name=f"{prefix}.obonet.json.gz", ensure_exists=False, version=version
+        )
+        logger.debug(
+            "[%s] caching is turned on, so look for an obonet file at %s",
+            prefix,
+            obonet_json_gz_path,
         )
         if obonet_json_gz_path.exists() and not force:
             from .utils.cache import get_gzipped_graph
@@ -128,7 +134,6 @@ def get_ontology(
             )
         else:
             logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
-
 
     if has_nomenclature_plugin(prefix):
         obo = run_nomenclature_plugin(prefix, version=version)

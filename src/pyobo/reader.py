@@ -90,6 +90,7 @@ def from_obo_path(
         _clean_graph_ontology(graph, prefix)
 
     if _cache_path:
+        logger.info("[%s] writing obonet cache to %s", prefix, _cache_path)
         write_gzipped_graph(path=_cache_path, graph=graph)
 
     # Convert to an Obo instance and return
