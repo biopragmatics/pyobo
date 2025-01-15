@@ -4,6 +4,7 @@ import logging
 from collections.abc import Mapping
 
 import pandas as pd
+from tqdm import tqdm
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
@@ -17,6 +18,8 @@ from ..utils.io import multidict
 from ..utils.path import prefix_cache_join
 
 __all__ = [
+    "get_edges",
+    "get_edges_df",
     "get_filtered_properties_df",
     "get_filtered_properties_mapping",
     "get_filtered_properties_multimapping",
@@ -34,6 +37,33 @@ logger = logging.getLogger(__name__)
 
 class PropertiesKwargs(GetOntologyKwargs):
     use_tqdm: bool
+
+
+def get_edges_df(
+    prefix, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+) -> pd.DataFrame:
+    """Get a dataframe of edges triples."""
+    version = get_version_from_kwargs(prefix, kwargs)
+    path = prefix_cache_join(prefix, name="object_properties.tsv", version=version)
+
+    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    def _df_getter() -> pd.DataFrame:
+        return get_ontology(prefix, **kwargs).get_edges_df(use_tqdm=use_tqdm)
+
+    return _df_getter()
+
+
+def get_edges(
+    prefix, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+) -> list[tuple[Reference, Reference, Reference]]:
+    """Get a list of edge triples."""
+    df = get_edges_df(prefix, use_tqdm=use_tqdm, **kwargs)
+    return [
+        (Reference.from_curie(s), Reference.from_curie(p), Reference.from_curie(o))
+        for s, p, o in tqdm(
+            df.values, desc=f"[{prefix}] parsing edges", unit="edge", unit_scale=True
+        )
+    ]
 
 
 def get_object_properties_df(
@@ -72,7 +102,9 @@ def get_literal_properties(
             Reference.from_curie(p),
             OBOLiteral(value, Reference.from_curie(datatype)),
         )
-        for s, p, value, datatype in df.values
+        for s, p, value, datatype in tqdm(
+            df.values, desc=f"[{prefix}] parsing properties", unit_scale=True, unit="triple"
+        )
     ]
 
 
