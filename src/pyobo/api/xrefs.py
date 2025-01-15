@@ -14,6 +14,7 @@ from ..constants import (
     TARGET_ID,
     TARGET_PREFIX,
     GetOntologyKwargs,
+    check_should_cache,
     check_should_force,
     check_should_use_tqdm,
 )
@@ -69,6 +70,7 @@ def get_filtered_xrefs(
         header=header,
         use_tqdm=check_should_use_tqdm(kwargs),
         force=check_should_force(kwargs),
+        cache=check_should_cache(kwargs),
     )
     def _get_mapping() -> Mapping[str, str]:
         if all_xrefs_path.is_file():
@@ -103,7 +105,9 @@ def get_xrefs_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFra
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
@@ -168,7 +172,9 @@ def get_mappings_df(
             prefix, BUILD_SUBDIRECTORY_NAME, name="sssom.tsv", version=version
         )
 
-        @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+        @cached_df(
+            path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+        )
         def _df_getter() -> pd.DataFrame:
             logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
             ontology = get_ontology(prefix, **kwargs)

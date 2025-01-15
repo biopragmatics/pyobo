@@ -18,6 +18,7 @@ from ..constants import (
     TARGET_ID,
     TARGET_PREFIX,
     GetOntologyKwargs,
+    check_should_cache,
     check_should_force,
     check_should_use_tqdm,
 )
@@ -50,7 +51,9 @@ def get_relations_df(
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="relations.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         ontology = get_ontology(prefix, **kwargs)
         return ontology.get_relations_df(use_tqdm=check_should_use_tqdm(kwargs))
@@ -89,7 +92,9 @@ def get_filtered_relations_df(
         version=version,
     )
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         logger.info("[%s] no cached relations found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)

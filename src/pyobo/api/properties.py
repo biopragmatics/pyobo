@@ -7,7 +7,12 @@ import pandas as pd
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
-from ..constants import GetOntologyKwargs, check_should_force, check_should_use_tqdm
+from ..constants import (
+    GetOntologyKwargs,
+    check_should_cache,
+    check_should_force,
+    check_should_use_tqdm,
+)
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct.struct_utils import ReferenceHint, _ensure_ref
@@ -37,7 +42,9 @@ def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.Da
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         ontology = get_ontology(prefix, **kwargs)
         df = ontology.get_properties_df()
@@ -71,7 +78,10 @@ def get_filtered_properties_mapping(
     path = prefix_cache_join(prefix, "properties", name=f"{prop_curie}.tsv", version=version)
 
     @cached_mapping(
-        path=path, header=[f"{prefix}_id", prop_curie], force=check_should_force(kwargs)
+        path=path,
+        header=[f"{prefix}_id", prop_curie],
+        force=check_should_force(kwargs),
+        cache=check_should_cache(kwargs),
     )
     def _mapping_getter() -> Mapping[str, str]:
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
@@ -108,7 +118,10 @@ def get_filtered_properties_multimapping(
     path = prefix_cache_join(prefix, "properties", name=f"{prop_curie}.tsv", version=version)
 
     @cached_multidict(
-        path=path, header=[f"{prefix}_id", prop_curie], force=check_should_force(kwargs)
+        path=path,
+        header=[f"{prefix}_id", prop_curie],
+        force=check_should_force(kwargs),
+        cache=check_should_cache(kwargs),
     )
     def _mapping_getter() -> Mapping[str, list[str]]:
         logger.info("[%s] no cached properties found. getting from OBO loader", prefix)
@@ -176,7 +189,9 @@ def get_filtered_properties_df(
 
     path = prefix_cache_join(prefix, "properties", name=f"{prop}.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         ontology = get_ontology(prefix, **kwargs)
         return ontology.get_filtered_properties_df(prop, use_tqdm=check_should_use_tqdm(kwargs))
