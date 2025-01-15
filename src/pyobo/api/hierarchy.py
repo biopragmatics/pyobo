@@ -3,7 +3,6 @@
 import logging
 from collections.abc import Iterable
 from functools import lru_cache
-from pathlib import Path
 
 import networkx as nx
 from curies import ReferenceTuple
@@ -37,8 +36,6 @@ class HierarchyKwargs(GetOntologyKwargs):
     include_part_of: bool
     include_has_member: bool
     use_tqdm: bool
-    cache: bool
-    _base_directory: Path | None
 
 
 def get_hierarchy(
@@ -90,17 +87,13 @@ def _get_hierarchy_helper(
     include_part_of: bool = False,
     include_has_member: bool = False,
     use_tqdm: bool = False,
-    cache: bool = True,
-    _base_directory: Path | None = None,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> nx.DiGraph:
     predicates, reverse_predicates = _get_predicate_sets(
         extra_relations, include_part_of, include_has_member
     )
 
-    edges_df = get_edges_df(
-        prefix, use_tqdm=use_tqdm, cache=cache, _base_directory=_base_directory, **kwargs
-    )
+    edges_df = get_edges_df(prefix, use_tqdm=use_tqdm, **kwargs)
 
     rv = nx.DiGraph()
     for s, p, o in edges_df.values:
