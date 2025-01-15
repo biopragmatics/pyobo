@@ -1,11 +1,17 @@
 """Tests for alternative identifiers."""
 
 import unittest
+from contextlib import ExitStack
+from unittest import mock
 
+import bioregistry
 from curies import Reference, ReferenceTuple
 
+import pyobo
+from pyobo import Reference as PyOBOReference
 from pyobo import get_name, get_name_by_curie, get_primary_curie, get_primary_identifier
 from pyobo.mocks import get_mock_id_alts_mapping, get_mock_id_name_mapping
+from pyobo.struct.struct import Obo, Term, make_ad_hoc_ontology
 
 mock_id_alts_mapping = get_mock_id_alts_mapping(
     {
@@ -25,6 +31,24 @@ mock_id_names_mapping = get_mock_id_name_mapping(
         },
     }
 )
+
+TEST_P1 = "test"
+
+bioregistry.manager.synonyms[TEST_P1] = TEST_P1
+bioregistry.manager.registry[TEST_P1] = bioregistry.Resource(
+    prefix=TEST_P1,
+    name="Test Semantic Space",
+    pattern="^\\d+$",
+)
+
+
+def patch_ontologies(ontology: Obo, targets: list[str]) -> ExitStack:
+    """Patch multiple ontologies."""
+    stack = ExitStack()
+    for target in targets:
+        patch = mock.patch(target, return_value=ontology)
+        stack.enter_context(patch)
+    return stack
 
 
 class TestAltIds(unittest.TestCase):
@@ -106,3 +130,38 @@ class TestAltIds(unittest.TestCase):
         primary_id = get_primary_identifier("ncbitaxon", "52818")
         self.assertEqual("52818", primary_id)
         self.assertEqual("Allamanda cathartica", get_name("ncbitaxon", "52818"))
+
+    def test_api(self) -> None:
+        """Test getting the hierarchy."""
+        r1 = PyOBOReference(prefix=TEST_P1, identifier="1", name="test name")
+        r2 = PyOBOReference(prefix=TEST_P1, identifier="2")
+        t1 = Term(reference=r1).append_alt(r2)
+        t2 = Term(reference=r2)
+        ontology = make_ad_hoc_ontology(TEST_P1, terms=[t1, t2])
+
+        with patch_ontologies(
+            ontology, ["pyobo.api.names.get_ontology", "pyobo.api.alts.get_ontology"]
+        ):
+            ids_alts = pyobo.get_id_to_alts(TEST_P1, cache=False)
+            self.assertEqual({"1": ["2"]}, ids_alts)
+
+            alts_ids = pyobo.get_alts_to_id(TEST_P1, cache=False)
+            self.assertEqual({"2": "1"}, alts_ids)
+
+            self.assertEqual("1", pyobo.get_primary_identifier(r1, cache=False))
+            self.assertEqual("1", pyobo.get_primary_identifier(r2, cache=False))
+
+            self.assertEqual("test:1", pyobo.get_primary_curie(r1.curie, cache=False))
+            self.assertEqual("test:1", pyobo.get_primary_curie(r2.curie, cache=False))
+
+            ids = pyobo.get_ids(TEST_P1, cache=False)
+            self.assertEqual({"1", "2"}, ids)
+
+            id_name = pyobo.get_id_name_mapping(TEST_P1, cache=False)
+            self.assertEqual({t1.identifier: t1.name}, id_name)
+
+            name_id = pyobo.get_name_id_mapping(TEST_P1, cache=False)
+            self.assertEqual({t1.name: t1.identifier}, name_id)
+
+            self.assertEqual(t1.name, pyobo.get_name(r1, cache=False))
+            self.assertEqual(t1.name, pyobo.get_name(r2, cache=False))

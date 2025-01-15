@@ -142,6 +142,7 @@ class GetOntologyKwargs(SlimGetOntologyKwargs):
     """
 
     version: str | None
+    cache: bool
 
 
 def check_should_force(data: GetOntologyKwargs) -> bool:
@@ -150,6 +151,11 @@ def check_should_force(data: GetOntologyKwargs) -> bool:
     # but this function should only be used in the scope where GetOntologyKwargs
     # is appropriate.
     return data.get("force", False) or data.get("force_process", False)
+
+
+def check_should_cache(data: GetOntologyKwargs) -> bool:
+    """Determine whether caching should be done based on generic keyword arguments."""
+    return data.get("cache", True)
 
 
 class LookupKwargs(GetOntologyKwargs):

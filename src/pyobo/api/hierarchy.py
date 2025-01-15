@@ -40,6 +40,7 @@ def get_hierarchy(
     force_process: bool = False,
     version: str | None = None,
     strict: bool = True,
+    cache: bool = True,
 ) -> nx.DiGraph:
     """Get hierarchy of parents as a directed graph.
 
@@ -77,6 +78,7 @@ def get_hierarchy(
         force_process=force_process,
         version=version,
         strict=strict,
+        cache=cache,
     )
 
 
@@ -94,6 +96,7 @@ def _get_hierarchy_helper(
     force_process: bool = False,
     version: str | None = None,
     strict: bool = True,
+    cache: bool = True,
 ) -> nx.DiGraph:
     rv = nx.DiGraph()
 
