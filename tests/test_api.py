@@ -190,7 +190,9 @@ class TestAltIds(unittest.TestCase):
 
             # Properties
 
-            value = pyobo.get_property(r1.prefix, r1.identifier, prop=v.comment, cache=False, use_tqdm=False)
+            value = pyobo.get_property(
+                r1.prefix, r1.identifier, prop=v.comment, cache=False, use_tqdm=False
+            )
             self.assertEqual("test comment", value)
 
             edges = pyobo.get_edges(TEST_P1, cache=False, use_tqdm=False)
