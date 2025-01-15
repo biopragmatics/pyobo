@@ -1490,7 +1490,7 @@ class Obo:
 
     def get_literal_properties_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get all properties as a dataframe."""
-        return pd.DataFrame(self.iter_literal_properties(), columns=self.object_properties_header)
+        return pd.DataFrame(self.iter_literal_properties(), columns=self.literal_properties_header)
 
     def iterate_filtered_properties(
         self, prop: ReferenceHint, *, use_tqdm: bool = False
@@ -1570,10 +1570,14 @@ class Obo:
                 if td := self._get_typedef(term, predicate, _warned, typedefs):
                     yield term, td, reference
 
+    def get_edges_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
+        """Get an edges dataframe."""
+        return pd.DataFrame(self.iterate_edge_rows(use_tqdm=use_tqdm), columns=self.edges_header)
+
     def iterate_edge_rows(self, use_tqdm: bool = False) -> Iterable[tuple[str, str, str]]:
         """Iterate the edge rows."""
         for term, typedef, reference in self.iterate_edges(use_tqdm=use_tqdm):
-            yield (term.curie, typedef.curie, reference.curie)
+            yield term.curie, typedef.curie, reference.curie
 
     def _get_typedef(
         self,
