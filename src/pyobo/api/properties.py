@@ -36,6 +36,8 @@ logger = logging.getLogger(__name__)
 
 
 class PropertiesKwargs(GetOntologyKwargs):
+    """Extended kwargs to simplify passing use_tqdm."""
+
     use_tqdm: bool
 
 
