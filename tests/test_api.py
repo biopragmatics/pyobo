@@ -152,16 +152,14 @@ class TestAltIds(unittest.TestCase):
         terms = [t1, t2, t3]
         ontology = make_ad_hoc_ontology(TEST_P1, terms=terms, _typedefs=[td1])
 
-        with patch_ontologies(
-            ontology,
-            [
-                "pyobo.api.names.get_ontology",
-                "pyobo.api.alts.get_ontology",
-                "pyobo.api.properties.get_ontology",
-                "pyobo.api.relations.get_ontology",
-                "pyobo.api.edges.get_ontology",
-            ],
-        ):
+        targets = [
+            "pyobo.api.names.get_ontology",
+            "pyobo.api.alts.get_ontology",
+            "pyobo.api.properties.get_ontology",
+            "pyobo.api.relations.get_ontology",
+            "pyobo.api.edges.get_ontology",
+        ]
+        with patch_ontologies(ontology, targets):
             # Alts
 
             ids_alts = pyobo.get_id_to_alts(TEST_P1, cache=False)
