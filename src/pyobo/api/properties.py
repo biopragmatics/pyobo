@@ -8,7 +8,7 @@ from tqdm import tqdm
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
-from ..constants import GetOntologyKwargs, check_should_force
+from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct.reference import Reference
@@ -46,7 +46,9 @@ def get_edges_df(
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="object_properties.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         return get_ontology(prefix, **kwargs).get_edges_df(use_tqdm=use_tqdm)
 
@@ -77,7 +79,9 @@ def get_object_properties_df(
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="object_properties.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         return get_ontology(prefix, **kwargs).get_object_properties_df(use_tqdm=use_tqdm)
 
@@ -123,7 +127,9 @@ def get_literal_properties_df(
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="literal_properties.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         return get_ontology(prefix, **kwargs).get_literal_properties_df(use_tqdm=use_tqdm)
 
@@ -143,7 +149,9 @@ def get_properties_df(
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="properties.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         return get_ontology(prefix, **kwargs).get_properties_df(use_tqdm=use_tqdm)
 
