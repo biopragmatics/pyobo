@@ -143,6 +143,7 @@ class GetOntologyKwargs(SlimGetOntologyKwargs):
 
     version: str | None
     cache: bool
+    use_tqdm: bool
 
 
 def check_should_force(data: GetOntologyKwargs) -> bool:
@@ -156,6 +157,11 @@ def check_should_force(data: GetOntologyKwargs) -> bool:
 def check_should_cache(data: GetOntologyKwargs) -> bool:
     """Determine whether caching should be done based on generic keyword arguments."""
     return data.get("cache", True)
+
+
+def check_should_use_tqdm(data: GetOntologyKwargs) -> bool:
+    """Determine whether caching should be done based on generic keyword arguments."""
+    return data.get("use_tqdm", True)
 
 
 class LookupKwargs(GetOntologyKwargs):

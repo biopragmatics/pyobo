@@ -8,7 +8,11 @@ from tqdm import tqdm
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
-from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
+from ..constants import (
+    GetOntologyKwargs,
+    check_should_cache,
+    check_should_force,
+)
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct.reference import Reference
@@ -33,12 +37,6 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-
-
-class PropertiesKwargs(GetOntologyKwargs):
-    """Extended kwargs to simplify passing use_tqdm."""
-
-    use_tqdm: bool
 
 
 def get_edges_df(
@@ -145,7 +143,6 @@ def get_properties_df(
     """Extract properties.
 
     :param prefix: the resource to load
-    :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A dataframe with the properties
     """
     version = get_version_from_kwargs(prefix, kwargs)
@@ -162,14 +159,12 @@ def get_properties_df(
 
 @wrap_norm_prefix
 def get_filtered_properties_mapping(
-    prefix: str, prop: ReferenceHint, **kwargs: Unpack[PropertiesKwargs]
+    prefix: str, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, str]:
     """Extract a single property for each term as a dictionary.
 
     :param prefix: the resource to load
     :param prop: the property to extract
-    :param use_tqdm: should a progress bar be shown?
-    :param force: should the resource be re-downloaded, re-parsed, and re-cached?
     :returns: A mapping from identifier to property value
     """
     df = get_filtered_properties_df(prefix, prop, **kwargs)
@@ -178,7 +173,7 @@ def get_filtered_properties_mapping(
 
 @wrap_norm_prefix
 def get_filtered_properties_multimapping(
-    prefix: str, prop: ReferenceHint, **kwargs: Unpack[PropertiesKwargs]
+    prefix: str, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, list[str]]:
     """Extract multiple properties for each term as a dictionary.
 
@@ -214,7 +209,7 @@ def get_properties(
     prefix: str,
     identifier: str,
     prop: ReferenceHint,
-    **kwargs: Unpack[PropertiesKwargs],
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> list[str] | None:
     """Extract a set of properties for the given entity.
 
@@ -231,7 +226,7 @@ def get_properties(
 
 @wrap_norm_prefix
 def get_filtered_properties_df(
-    prefix: str, prop: ReferenceHint, **kwargs: Unpack[PropertiesKwargs]
+    prefix: str, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
 ) -> pd.DataFrame:
     """Extract a single property for each term.
 

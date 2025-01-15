@@ -60,6 +60,7 @@ def from_obo_path(
     strict: bool = True,
     version: str | None,
     upgrade: bool = True,
+    use_tqdm: bool = False,
     ignore_obsolete: bool = False,
     _cache_path: Path | None = None,
 ) -> Obo:
@@ -70,7 +71,7 @@ def from_obo_path(
 
         logger.info("[%s] parsing gzipped OBO with obonet from %s", prefix or "<unknown>", path)
         with gzip.open(path, "rt") as file:
-            graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete)
+            graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete, use_tqdm=use_tqdm)
     elif path.suffix.endswith(".zip"):
         import io
         import zipfile
@@ -79,11 +80,13 @@ def from_obo_path(
         with zipfile.ZipFile(path) as zf:
             with zf.open(path.name.removesuffix(".zip"), "r") as file:
                 content = file.read().decode("utf-8")
-                graph = _read_obo(io.StringIO(content), prefix, ignore_obsolete=ignore_obsolete)
+                graph = _read_obo(
+                    io.StringIO(content), prefix, ignore_obsolete=ignore_obsolete, use_tqdm=use_tqdm
+                )
     else:
         logger.info("[%s] parsing OBO with obonet from %s", prefix or "<unknown>", path)
         with open(path) as file:
-            graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete)
+            graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete, use_tqdm=use_tqdm)
 
     if prefix:
         # Make sure the graph is named properly
@@ -94,10 +97,12 @@ def from_obo_path(
         write_gzipped_graph(path=_cache_path, graph=graph)
 
     # Convert to an Obo instance and return
-    return from_obonet(graph, strict=strict, version=version, upgrade=upgrade)
+    return from_obonet(graph, strict=strict, version=version, upgrade=upgrade, use_tqdm=use_tqdm)
 
 
-def _read_obo(filelike, prefix: str | None, ignore_obsolete: bool) -> nx.MultiDiGraph:
+def _read_obo(
+    filelike, prefix: str | None, ignore_obsolete: bool, use_tqdm: bool = True
+) -> nx.MultiDiGraph:
     import obonet
 
     return obonet.read_obo(
@@ -105,7 +110,7 @@ def _read_obo(filelike, prefix: str | None, ignore_obsolete: bool) -> nx.MultiDi
             filelike,
             unit_scale=True,
             desc=f"[{prefix or ''}] parsing OBO",
-            disable=None,
+            disable=not use_tqdm,
             leave=True,
         ),
         ignore_obsolete=ignore_obsolete,
@@ -126,6 +131,7 @@ def from_str(
     version: str | None = None,
     upgrade: bool = True,
     ignore_obsolete: bool = False,
+    use_tqdm: bool = False,
 ) -> Obo:
     """Read an ontology from a string representation."""
     import obonet
@@ -135,7 +141,7 @@ def from_str(
     io.write(text)
     io.seek(0)
     graph = obonet.read_obo(io, ignore_obsolete=ignore_obsolete)
-    return from_obonet(graph, strict=strict, version=version, upgrade=upgrade)
+    return from_obonet(graph, strict=strict, version=version, upgrade=upgrade, use_tqdm=use_tqdm)
 
 
 def from_obonet(
@@ -144,6 +150,7 @@ def from_obonet(
     strict: bool = True,
     version: str | None = None,
     upgrade: bool = True,
+    use_tqdm: bool = False,
 ) -> Obo:
     """Get all of the terms from a OBO graph."""
     ontology_prefix_raw = graph.graph["ontology"]
@@ -231,6 +238,7 @@ def from_obonet(
         synonym_typedefs=synonym_typedefs,
         subset_typedefs=subset_typedefs,
         macro_config=macro_config,
+        use_tqdm=use_tqdm,
     )
 
     return make_ad_hoc_ontology(
@@ -261,10 +269,14 @@ def _get_terms(
     subset_typedefs,
     missing_typedefs: set[ReferenceTuple],
     macro_config: MacroConfig,
+    use_tqdm: bool = False,
 ) -> list[Term]:
     terms = []
     for reference, data in _iter_obo_graph(
-        graph=graph, strict=strict, ontology_prefix=ontology_prefix
+        graph=graph,
+        strict=strict,
+        ontology_prefix=ontology_prefix,
+        use_tqdm=use_tqdm,
     ):
         if reference.prefix != ontology_prefix:
             continue
@@ -671,9 +683,10 @@ def _iter_obo_graph(
     *,
     strict: bool = True,
     ontology_prefix: str | None = None,
+    use_tqdm: bool = False,
 ) -> Iterable[tuple[Reference, Mapping[str, Any]]]:
     """Iterate over the nodes in the graph with the prefix stripped (if it's there)."""
-    for node, data in graph.nodes(data=True):
+    for node, data in tqdm(graph.nodes(data=True), disable=not use_tqdm):
         node = Reference.from_curie_or_uri(
             node, strict=strict, ontology_prefix=ontology_prefix, name=data.get("name")
         )
