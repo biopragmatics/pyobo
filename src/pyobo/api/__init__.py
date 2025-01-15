@@ -29,6 +29,8 @@ from .names import (
     get_synonyms,
 )
 from .properties import (
+    get_edges,
+    get_edges_df,
     get_filtered_properties_df,
     get_filtered_properties_mapping,
     get_filtered_properties_multimapping,
@@ -61,6 +63,8 @@ __all__ = [
     "get_children",
     "get_definition",
     "get_descendants",
+    "get_edges",
+    "get_edges_df",
     "get_equivalent",
     "get_filtered_properties_df",
     "get_filtered_properties_mapping",
