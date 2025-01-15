@@ -158,6 +158,8 @@ class TestAltIds(unittest.TestCase):
                 "pyobo.api.names.get_ontology",
                 "pyobo.api.alts.get_ontology",
                 "pyobo.api.properties.get_ontology",
+                "pyobo.api.relations.get_ontology",
+                "pyobo.api.edges.get_ontology",
             ],
         ):
             # Alts
@@ -190,13 +192,13 @@ class TestAltIds(unittest.TestCase):
 
             # Properties
 
-            value = pyobo.get_property(r1.prefix, r1.identifier, prop=v.comment, cache=False)
+            value = pyobo.get_property(r1.prefix, r1.identifier, prop=v.comment, cache=False, use_tqdm=False)
             self.assertEqual("test comment", value)
 
-            edges = pyobo.get_edges(TEST_P1, cache=False)
+            edges = pyobo.get_edges(TEST_P1, cache=False, use_tqdm=False)
             self.assertEqual({(r3, v.is_a, r1), (r1, v.alternative_term, r2)}, set(edges))
 
-            graph = pyobo.get_hierarchy(TEST_P1, cache=False)
+            graph = pyobo.get_hierarchy(TEST_P1, cache=False, use_tqdm=False)
             self.assertEqual(3, graph.number_of_nodes())
             self.assertIn(r1.curie, graph)
             self.assertIn(r2.curie, graph)
