@@ -136,16 +136,6 @@ __all__ = [
     "ontology_resolver",
 ]
 
-
-def _assert_sorted():
-    _sorted = sorted(__all__)
-    if _sorted != __all__:
-        raise ValueError(f"unsorted. should be:\n{_sorted}")
-
-
-_assert_sorted()
-del _assert_sorted
-
 ontology_resolver: ClassResolver[Obo] = ClassResolver.from_subclasses(base=Obo, suffix="Getter")
 for getter in list(ontology_resolver):
     ontology_resolver.synonyms[getter.ontology] = getter
