@@ -982,7 +982,7 @@ def _extract_definition(
             rest,
             node=node,
             ontology_prefix=ontology_prefix,
-            dd=DEFINITION_PROVENANCE_COUNTER,
+            counter=DEFINITION_PROVENANCE_COUNTER,
             scope_text="definition provenance",
         )
     return definition or None, provenance
@@ -1326,7 +1326,7 @@ def iterate_node_xrefs(
                 rest_front,
                 node=node,
                 ontology_prefix=ontology_prefix,
-                dd=XREF_PROVENANCE_COUNTER,
+                counter=XREF_PROVENANCE_COUNTER,
                 scope_text="xref provenance",
             )
         else:

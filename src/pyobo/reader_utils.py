@@ -103,7 +103,7 @@ def _chomp_references(
         first,
         node=node,
         ontology_prefix=ontology_prefix,
-        dd=SYNONYM_REFERENCE_WARNED,
+        counter=SYNONYM_REFERENCE_WARNED,
         scope_text="synonym provenance",
     )
     return references, rest
@@ -117,25 +117,31 @@ def _parse_provenance_list(
     curies_or_uris: str,
     node: Reference,
     ontology_prefix: str,
-    dd: Counter[tuple[str, str]],
+    counter: Counter[tuple[str, str]],
     scope_text: str,
 ) -> list[Reference | OBOLiteral]:
-    rv = []
-    for curie_or_uri in curies_or_uris.split(","):
-        reference = _help_parse_provenance_list(
-            curie_or_uri, node=node, ontology_prefix=ontology_prefix
+    return [
+        reference_or_literal
+        for curie_or_uri in curies_or_uris.split(",")
+        if (
+            reference_or_literal := _parse_reference_or_literal(
+                curie_or_uri,
+                node=node,
+                ontology_prefix=ontology_prefix,
+                counter=counter,
+                scope_text=scope_text,
+            )
         )
-        if reference is not None:
-            rv.append(reference)
-        else:
-            if not dd[ontology_prefix, curie_or_uri]:
-                logger.warning("[%s] unable to parse %s: %s", node.curie, scope_text, curie_or_uri)
-            dd[ontology_prefix, curie_or_uri] += 1
-    return rv
+    ]
 
 
-def _help_parse_provenance_list(
-    curie_or_uri: str, *, node: Reference, ontology_prefix: str
+def _parse_reference_or_literal(
+    curie_or_uri: str,
+    *,
+    node: Reference,
+    ontology_prefix: str,
+    counter: Counter[tuple[str, str]],
+    scope_text: str,
 ) -> None | Reference | OBOLiteral:
     curie_or_uri = curie_or_uri.strip()
     if not curie_or_uri:
@@ -149,4 +155,7 @@ def _help_parse_provenance_list(
         return reference
     if curie_or_uri.startswith("https://") or curie_or_uri.startswith("http://"):
         return OBOLiteral.uri(curie_or_uri)
+    if not counter[ontology_prefix, curie_or_uri]:
+        logger.warning("[%s] unable to parse %s: %s", node.curie, scope_text, curie_or_uri)
+    counter[ontology_prefix, curie_or_uri] += 1
     return None
