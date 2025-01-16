@@ -821,6 +821,20 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual("121.323", row["value"])
         self.assertEqual("xsd:decimal", row["datatype"])
 
+    def test_12_property_literal_datetime(self) -> None:
+        """Test parsing a property with a datetime object."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: oboInOwl:creation_date 2022-07-26T19:27:20Z xsd:dateTime
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.properties))
+        self.assertEqual("2022-07-26T19:27:20Z", term.get_property(v.obo_creation_date))
+        # TODO test getting datatype
+
     def test_12_property_literal_obo_purl(self) -> None:
         """Test using a full OBO PURL as the property."""
         ontology = from_str("""\
@@ -1161,7 +1175,19 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual("0000-0003-4423-4370", context.contributor.identifier)
 
     # TODO created_by
-    # TODO creation_date
+
+    def test_20_creation_date(self) -> None:
+        """Test parsing a property with a datetime object."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            creation_date: 2022-07-26T19:27:20Z
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.properties))
+        self.assertEqual("2022-07-26T19:27:20Z", term.get_property(v.obo_creation_date))
 
     def test_21_is_obsolete(self) -> None:
         """Test the ``is_obsolete`` tag."""

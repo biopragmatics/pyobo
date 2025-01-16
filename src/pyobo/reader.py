@@ -1140,6 +1140,10 @@ def _handle_prop(
         UNHANDLED_PROPS[prop] += 1
         return None
 
+    if value_type.endswith(" xsd:dateTime"):
+        # FIXME
+        return None
+
     # if the value doesn't start with a quote, we're going to
     # assume that it's a reference
     if not value_type.startswith('"'):
