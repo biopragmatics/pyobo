@@ -85,6 +85,8 @@ class TestReaderOntologyMetadata(unittest.TestCase):
             synonymtypedef: ST1 "ST1 Name" EXACT
             synonymtypedef: ST2 "ST2 Name" NARROW
             synonymtypedef: ST3 "ST3 Name"
+            synonymtypedef: ST4 "ST4 Name" exact
+            synonymtypedef: ST5 "ST5 Name" garbage
             synonymtypedef: OMO:0000001 "E1 Name" EXACT
             synonymtypedef: OMO:0000002 "E2 Name" NARROW
             synonymtypedef: OMO:0000003 "E3 Name"
@@ -102,6 +104,12 @@ class TestReaderOntologyMetadata(unittest.TestCase):
                 ),
                 SynonymTypeDef(
                     reference=default_reference("chebi", "ST3", name="ST3 Name"), specificity=None
+                ),
+                SynonymTypeDef(
+                    reference=default_reference("chebi", "ST4", name="ST4 Name"), specificity="EXACT"
+                ),
+                SynonymTypeDef(
+                    reference=default_reference("chebi", "ST5", name="ST5 Name"), specificity=None
                 ),
                 SynonymTypeDef(
                     reference=Reference(prefix="OMO", identifier="0000001", name="E1 Name"),
