@@ -934,7 +934,7 @@ def _process_chain_helper(
 
 def get_definition(
     data, *, node: Reference, ontology_prefix: str | None, strict: bool = True
-) -> tuple[None | str, list[Reference]]:
+) -> tuple[None | str, list[Reference | OBOLiteral]]:
     """Extract the definition from the data."""
     definition = data.get("def")  # it's allowed not to have a definition
     if not definition:
@@ -950,7 +950,7 @@ def _extract_definition(
     node: Reference,
     strict: bool = False,
     ontology_prefix: str | None,
-) -> tuple[None | str, list[Reference]]:
+) -> tuple[None | str, list[Reference | OBOLiteral]]:
     """Extract the definitions."""
     if not s.startswith('"'):
         logger.warning(f"[{node.curie}] definition does not start with a quote")
@@ -1048,22 +1048,26 @@ PROVENANCE_COUNTER: Counter[str] = Counter()
 
 def _parse_trailing_ref_list(
     rest: str, *, strict: bool = True, node: Reference, ontology_prefix: str | None
-) -> list[Reference]:
+) -> list[Reference | OBOLiteral]:
     rest = rest.lstrip("[").rstrip("]")  # FIXME this doesn't account for trailing annotations
-    rv = []
-    for curie in rest.split(","):
-        curie = curie.strip()
-        if not curie:
+    rv: list[Reference | OBOLiteral] = []
+    for curie_or_uri in rest.split(","):
+        curie_or_uri = curie_or_uri.strip()
+        if not curie_or_uri:
             continue
         reference = Reference.from_curie_or_uri(
-            curie, strict=strict, node=node, ontology_prefix=ontology_prefix
+            curie_or_uri, strict=strict, node=node, ontology_prefix=ontology_prefix
         )
-        if reference is None:
-            if not PROVENANCE_COUNTER[curie]:
-                logger.warning("[%s] could not parse provenance CURIE: %s", node.curie, curie)
-            PROVENANCE_COUNTER[curie] += 1
-            continue
-        rv.append(reference)
+        if reference is not None:
+            rv.append(reference)
+        elif curie_or_uri.startswith("https://") or curie_or_uri.startswith("http://"):
+            rv.append(OBOLiteral(curie_or_uri, datatype=v.xsd_uri))
+        else:
+            if not PROVENANCE_COUNTER[curie_or_uri]:
+                logger.warning(
+                    "[%s] could not parse provenance CURIE: %s", node.curie, curie_or_uri
+                )
+            PROVENANCE_COUNTER[curie_or_uri] += 1
     return rv
 
 
