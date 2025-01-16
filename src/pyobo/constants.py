@@ -6,7 +6,7 @@ import logging
 import re
 
 import pystow
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 __all__ = [
     "DATABASE_DIRECTORY",
@@ -130,9 +130,9 @@ class SlimGetOntologyKwargs(TypedDict):
     ontology is requested.
     """
 
-    strict: bool
-    force: bool
-    force_process: bool
+    strict: NotRequired[bool]
+    force: NotRequired[bool]
+    force_process: NotRequired[bool]
 
 
 class GetOntologyKwargs(SlimGetOntologyKwargs):
@@ -141,9 +141,9 @@ class GetOntologyKwargs(SlimGetOntologyKwargs):
     This dictionary doesn't contain ``prefix`` since this is always explicitly handled.
     """
 
-    version: str | None
-    cache: bool
-    use_tqdm: bool
+    version: NotRequired[str | None]
+    cache: NotRequired[bool]
+    use_tqdm: NotRequired[bool]
 
 
 def check_should_force(data: GetOntologyKwargs) -> bool:
