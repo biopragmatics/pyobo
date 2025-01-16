@@ -438,7 +438,9 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                         term.is_obsolete,
                         term.bioregistry_link,
                         ", ".join(
-                            p.bioregistry_link for p in term.provenance if p.bioregistry_link
+                            p.bioregistry_link
+                            for p in term.provenance
+                            if isinstance(p, Reference) and p.bioregistry_link
                         ),
                     )
                     for hgnc_id, term in sorted(v.items())

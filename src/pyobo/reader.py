@@ -25,6 +25,7 @@ from .reader_utils import (
     _chomp_references,
     _chomp_specificity,
     _chomp_typedef,
+    _parse_provenance_list,
 )
 from .registries import curie_has_blacklisted_prefix, curie_is_blacklisted, remap_prefix
 from .struct import (
@@ -431,16 +432,13 @@ def _process_xrefs(
     strict: bool,
     macro_config: MacroConfig,
 ) -> None:
-    node_xrefs: list[Reference] = list(
-        iterate_node_xrefs(
-            data=data,
-            strict=strict,
-            ontology_prefix=ontology_prefix,
-            node=term.reference,
-        )
-    )
-    for node_xref in node_xrefs:
-        _handle_xref(term, node_xref, macro_config=macro_config)
+    for reference, provenance in iterate_node_xrefs(
+        data=data,
+        strict=strict,
+        ontology_prefix=ontology_prefix,
+        node=term.reference,
+    ):
+        _handle_xref(term, reference, provenance=provenance, macro_config=macro_config)
 
 
 def _process_properties(
@@ -583,23 +581,34 @@ def _handle_xref(
     term: Stanza,
     xref: Reference,
     *,
+    provenance: list[Reference | OBOLiteral],
     macro_config: MacroConfig | None = None,
 ) -> Stanza:
+    annotations = [Annotation(v.has_dbxref, p) for p in provenance]
+
     if macro_config is not None:
         if xref.prefix in macro_config.treat_xrefs_as_equivalent:
-            return term.append_equivalent(xref)
+            return term.append_equivalent(xref, annotations=annotations)
         elif object_property := macro_config.treat_xrefs_as_genus_differentia.get(xref.prefix):
+            # TODO how to add annotations here?
+            if annotations:
+                logger.warning(
+                    "[%s] unable to add provenance to xref upgraded to intersection_of: %s",
+                    term.reference.curie,
+                    xref,
+                )
             return term.append_intersection_of(xref).append_intersection_of(object_property)
         elif predicate := macro_config.treat_xrefs_as_relationship.get(xref.prefix):
-            return term.append_relationship(predicate, xref)
+            return term.append_relationship(predicate, xref, annotations=annotations)
         elif xref.prefix in macro_config.treat_xrefs_as_is_a:
-            return term.append_parent(xref)
+            return term.append_parent(xref, annotations=annotations)
 
     # TODO this is not what spec calls for, maybe
     #  need a flag in macro config for this
     if xref.prefix in PROVENANCE_PREFIXES:
-        return term.append_provenance(xref)
-    return term.append_xref(xref)
+        return term.append_provenance(xref, annotations=annotations)
+
+    return term.append_xref(xref, annotations=annotations)
 
 
 def _get_subsetdefs(graph: nx.MultiDiGraph, ontology_prefix: str) -> list[tuple[Reference, str]]:
@@ -933,8 +942,8 @@ def _process_chain_helper(
 
 
 def get_definition(
-    data, *, node: Reference, ontology_prefix: str | None, strict: bool = True
-) -> tuple[None | str, list[Reference]]:
+    data, *, node: Reference, ontology_prefix: str, strict: bool = True
+) -> tuple[None | str, list[Reference | OBOLiteral]]:
     """Extract the definition from the data."""
     definition = data.get("def")  # it's allowed not to have a definition
     if not definition:
@@ -949,8 +958,8 @@ def _extract_definition(
     *,
     node: Reference,
     strict: bool = False,
-    ontology_prefix: str | None,
-) -> tuple[None | str, list[Reference]]:
+    ontology_prefix: str,
+) -> tuple[None | str, list[Reference | OBOLiteral]]:
     """Extract the definitions."""
     if not s.startswith('"'):
         logger.warning(f"[{node.curie}] definition does not start with a quote")
@@ -968,8 +977,13 @@ def _extract_definition(
         )
         provenance = []
     else:
-        provenance = _parse_trailing_ref_list(
-            rest, strict=strict, node=node, ontology_prefix=ontology_prefix
+        rest = rest.lstrip("[").rstrip("]")  # FIXME this doesn't account for trailing annotations
+        provenance = _parse_provenance_list(
+            rest,
+            node=node,
+            ontology_prefix=ontology_prefix,
+            counter=DEFINITION_PROVENANCE_COUNTER,
+            scope_text="definition provenance",
         )
     return definition or None, provenance
 
@@ -1037,34 +1051,13 @@ def _extract_synonym(
         name=name,
         specificity=specificity,
         type=synonym_typedef.reference if synonym_typedef else None,
-        provenance=provenance,
+        provenance=list(provenance or []),
         annotations=annotations,
     )
 
 
 #: A counter for errors in parsing provenance
-PROVENANCE_COUNTER: Counter[str] = Counter()
-
-
-def _parse_trailing_ref_list(
-    rest: str, *, strict: bool = True, node: Reference, ontology_prefix: str | None
-) -> list[Reference]:
-    rest = rest.lstrip("[").rstrip("]")  # FIXME this doesn't account for trailing annotations
-    rv = []
-    for curie in rest.split(","):
-        curie = curie.strip()
-        if not curie:
-            continue
-        reference = Reference.from_curie_or_uri(
-            curie, strict=strict, node=node, ontology_prefix=ontology_prefix
-        )
-        if reference is None:
-            if not PROVENANCE_COUNTER[curie]:
-                logger.warning("[%s] could not parse provenance CURIE: %s", node.curie, curie)
-            PROVENANCE_COUNTER[curie] += 1
-            continue
-        rv.append(reference)
-    return rv
+DEFINITION_PROVENANCE_COUNTER: Counter[tuple[str, str]] = Counter()
 
 
 def iterate_node_synonyms(
@@ -1302,10 +1295,11 @@ def iterate_node_xrefs(
     strict: bool = True,
     ontology_prefix: str,
     node: Reference,
-) -> Iterable[Reference]:
+) -> Iterable[tuple[Reference, list[Reference | OBOLiteral]]]:
     """Extract xrefs from a :mod:`obonet` node's data."""
-    for xref in data.get("xref", []):
-        xref = xref.strip()
+    for line in data.get("xref", []):
+        line = line.strip()
+        xref, _, rest = line.partition(" [")
 
         if curie_has_blacklisted_prefix(xref) or curie_is_blacklisted(xref) or ":" not in xref:
             continue  # sometimes xref to self... weird
@@ -1320,8 +1314,25 @@ def iterate_node_xrefs(
                 continue
             xref = _xref_split[0]
 
-        yv = Reference.from_curie_or_uri(
+        xref_ref = Reference.from_curie_or_uri(
             xref, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
-        if yv is not None:
-            yield yv
+        if xref_ref is None:
+            continue
+
+        if rest:
+            rest_front, _, _rest_rest = rest.partition("]")
+            provenance = _parse_provenance_list(
+                rest_front,
+                node=node,
+                ontology_prefix=ontology_prefix,
+                counter=XREF_PROVENANCE_COUNTER,
+                scope_text="xref provenance",
+            )
+        else:
+            provenance = []
+
+        yield xref_ref, provenance
+
+
+XREF_PROVENANCE_COUNTER: Counter[tuple[str, str]] = Counter()

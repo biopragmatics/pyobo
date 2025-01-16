@@ -219,13 +219,14 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_xrefs(self):
         """Test getting parents from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:51990"]
-        xrefs = list(
-            iterate_node_xrefs(
+        xrefs = [
+            xref
+            for xref, _ in iterate_node_xrefs(
                 data=data,
                 ontology_prefix="chebi",
                 node=Reference(prefix="chebi", identifier="51990"),
             )
-        )
+        ]
         self.assertEqual(7, len(xrefs))
         # NOTE the prefixes are remapped by Bioregistry
         self.assertEqual({"pubmed", "cas", "reaxys"}, {xref.prefix for xref in xrefs})

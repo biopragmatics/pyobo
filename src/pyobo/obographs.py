@@ -20,7 +20,7 @@ from bioontologies.obograph import (
 from bioontologies.robot import ParseResults
 from tqdm import tqdm
 
-from pyobo.struct import Obo, Referenced, Term
+from pyobo.struct import Obo, OBOLiteral, Reference, Referenced, Term
 from pyobo.struct.typedef import definition_source, is_a
 
 __all__ = [
@@ -69,7 +69,7 @@ def _rewire(r: curies.Reference | Referenced) -> curies.Reference:
 def _get_class_node(term: Term) -> Node:
     if term.provenance or term.definition:
         definition = Definition.from_parsed(
-            value=term.definition, references=[_rewire(p) for p in term.provenance or []]
+            value=term.definition, references=_prep_prov(term.provenance)
         )
     else:
         definition = None
@@ -87,7 +87,7 @@ def _get_class_node(term: Term) -> Node:
             name=synonym.name,
             predicate=synonym.predicate,
             synonym_type=_rewire(synonym.type) if synonym.type else None,
-            references=[_rewire(x) for x in synonym.provenance],
+            references=_prep_prov(synonym.provenance),
         )
         for synonym in term.synonyms
     ]
@@ -109,6 +109,18 @@ def _get_class_node(term: Term) -> Node:
     )
 
 
+def _prep_prov(provenance):
+    rv = []
+    for x in provenance:
+        match x:
+            case Reference():
+                rv.append(_rewire(x))
+            case OBOLiteral():
+                logger.warning("not implemented to convert literal provenance")
+                continue
+    return rv
+
+
 def _iter_edges(term: Term) -> Iterable[Edge]:
     for parent in term.parents:
         yield Edge.from_parsed(
@@ -126,9 +138,10 @@ def _iter_edges(term: Term) -> Iterable[Edge]:
             )
 
     for provenance_reference in term.provenance:
-        yield Edge.from_parsed(
-            _rewire(term.reference),
-            _rewire(definition_source.reference),
-            _rewire(provenance_reference),
-        )
+        if isinstance(provenance_reference, Reference):
+            yield Edge.from_parsed(
+                _rewire(term.reference),
+                _rewire(definition_source.reference),
+                _rewire(provenance_reference),
+            )
     # TODO also look through xrefs and seealso to get provenance xrefs?
