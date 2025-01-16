@@ -431,16 +431,13 @@ def _process_xrefs(
     strict: bool,
     macro_config: MacroConfig,
 ) -> None:
-    node_xrefs: list[Reference] = list(
-        iterate_node_xrefs(
-            data=data,
-            strict=strict,
-            ontology_prefix=ontology_prefix,
-            node=term.reference,
-        )
-    )
-    for node_xref in node_xrefs:
-        _handle_xref(term, node_xref, macro_config=macro_config)
+    for reference, provenance in iterate_node_xrefs(
+        data=data,
+        strict=strict,
+        ontology_prefix=ontology_prefix,
+        node=term.reference,
+    ):
+        _handle_xref(term, reference, provenance=provenance, macro_config=macro_config)
 
 
 def _process_properties(
@@ -583,9 +580,13 @@ def _handle_xref(
     term: Stanza,
     xref: Reference,
     *,
+    provenance: list[Reference | OBOLiteral],
     macro_config: MacroConfig | None = None,
 ) -> Stanza:
+    annotations = [Annotation(v.has_dbxref, p) for p in provenance]
+
     if macro_config is not None:
+        # TODO handle annotations here
         if xref.prefix in macro_config.treat_xrefs_as_equivalent:
             return term.append_equivalent(xref)
         elif object_property := macro_config.treat_xrefs_as_genus_differentia.get(xref.prefix):
@@ -598,8 +599,9 @@ def _handle_xref(
     # TODO this is not what spec calls for, maybe
     #  need a flag in macro config for this
     if xref.prefix in PROVENANCE_PREFIXES:
-        return term.append_provenance(xref)
-    return term.append_xref(xref)
+        return term.append_provenance(xref, annotations=annotations)
+
+    return term.append_xref(xref, annotations=annotations)
 
 
 def _get_subsetdefs(graph: nx.MultiDiGraph, ontology_prefix: str) -> list[tuple[Reference, str]]:
@@ -1055,8 +1057,10 @@ def _parse_trailing_ref_list(
         curie_or_uri = curie_or_uri.strip()
         if not curie_or_uri:
             continue
+
+        # we're not strict here since we want to do some alternate kind of parsing
         reference = Reference.from_curie_or_uri(
-            curie_or_uri, strict=strict, node=node, ontology_prefix=ontology_prefix
+            curie_or_uri, strict=False, node=node, ontology_prefix=ontology_prefix
         )
         if reference is not None:
             rv.append(reference)
@@ -1306,10 +1310,11 @@ def iterate_node_xrefs(
     strict: bool = True,
     ontology_prefix: str,
     node: Reference,
-) -> Iterable[Reference]:
+) -> Iterable[tuple[Reference, list[Reference | OBOLiteral]]]:
     """Extract xrefs from a :mod:`obonet` node's data."""
-    for xref in data.get("xref", []):
-        xref = xref.strip()
+    for line in data.get("xref", []):
+        line = line.strip()
+        xref, _, rest = line.partition(" [")
 
         if curie_has_blacklisted_prefix(xref) or curie_is_blacklisted(xref) or ":" not in xref:
             continue  # sometimes xref to self... weird
@@ -1324,8 +1329,21 @@ def iterate_node_xrefs(
                 continue
             xref = _xref_split[0]
 
-        yv = Reference.from_curie_or_uri(
+        xref_ref = Reference.from_curie_or_uri(
             xref, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
-        if yv is not None:
-            yield yv
+        if xref_ref is None:
+            continue
+
+        provenance: list[Reference | OBOLiteral] = []
+        if rest:
+            rest_front, _, _rest_rest = rest.partition("]")
+            for c in rest_front.split(","):
+                c = c.strip()
+                r = _parse_identifier(c, ontology_prefix=ontology_prefix, strict=False, node=node)
+                if r:
+                    provenance.append(r)
+                elif c.startswith("http://") or c.startswith("https://"):
+                    provenance.append(OBOLiteral.uri(c))
+
+        yield xref_ref, provenance

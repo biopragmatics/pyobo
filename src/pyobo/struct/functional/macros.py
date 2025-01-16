@@ -247,7 +247,7 @@ class SynonymMacro(Macro):
         language: str | None = None,
         annotations: f.Annotations | None = None,
         synonym_type: f.IdentifierBoxOrHint | None = None,
-        provenance: Sequence[f.IdentifierBoxOrHint] | None = None,
+        provenance: Sequence[f.PrimitiveHint] | None = None,
     ) -> None:
         """Instatitate the synonym annotation assertion macro."""
         if annotations is None:

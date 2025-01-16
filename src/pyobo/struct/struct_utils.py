@@ -185,14 +185,19 @@ class Stanza:
         mapping_justification: Reference | None = None,
         confidence: float | None = None,
         contributor: Reference | None = None,
+        annotations: list[Annotation] | None = None,
     ) -> Self:
         """Append an xref."""
         reference = _ensure_ref(reference)
         self.xrefs.append(reference)
-        annotations = self._prepare_mapping_annotations(
-            mapping_justification=mapping_justification,
-            confidence=confidence,
-            contributor=contributor,
+        if annotations is None:
+            annotations = []
+        annotations.extend(
+            self._prepare_mapping_annotations(
+                mapping_justification=mapping_justification,
+                confidence=confidence,
+                contributor=contributor,
+            )
         )
         self._extend_annotations(v.has_dbxref, reference, annotations)
         return self
@@ -637,12 +642,18 @@ class Stanza:
         ]
 
     @property
-    def provenance(self) -> Sequence[Reference]:
+    def provenance(self) -> Sequence[Reference | OBOLiteral]:
         """Get definition provenance."""
         # return as a tuple to make sure nobody is appending on it
         return (
-            *(x for x in self._get_definition_provenance() if isinstance(x, Reference)),
             *self.get_property_objects(v.has_citation),
+            # This gets all of the xrefs on _any_ axiom,
+            # which includes the definition provenance
+            *(
+                annotation.value
+                for annotation in itt.chain.from_iterable(self._axioms.values())
+                if annotation.predicate.pair == v.has_dbxref.pair
+            ),
         )
 
     def append_definition_xref(self, reference: ReferenceHint) -> Self:
@@ -656,9 +667,14 @@ class Stanza:
         )
         return self
 
-    def append_provenance(self, reference: Reference) -> Self:
+    def append_provenance(
+        self,
+        reference: Reference,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
         """Append a citation."""
-        return self.annotate_object(v.has_citation, reference)
+        return self.annotate_object(v.has_citation, reference, annotations=annotations)
 
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str

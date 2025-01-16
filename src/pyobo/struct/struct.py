@@ -408,7 +408,7 @@ class Term(Referenced, Stanza):
         for alt in sorted(self.alt_ids):
             yield f"alt_id: {self._reference(alt, ontology_prefix, add_name_comment=True)}"
         # 6
-        if self.definition or self.provenance:
+        if self.definition:
             yield f"def: {self._definition_fp()}"
         # 7
         for x in self.get_property_values(v.comment):
@@ -1302,7 +1302,7 @@ class Obo:
             d = {
                 "id": term.curie,
                 "name": term.name,
-                "def": (term.definition or term.provenance) and term._definition_fp(),
+                "def": term.definition and term._definition_fp(),
                 "xref": [xref.curie for xref in term.xrefs],
                 "is_a": parents,
                 "relationship": relations,

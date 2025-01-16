@@ -69,7 +69,7 @@ def _rewire(r: curies.Reference | Referenced) -> curies.Reference:
 def _get_class_node(term: Term) -> Node:
     if term.provenance or term.definition:
         definition = Definition.from_parsed(
-            value=term.definition, references=[_rewire(p) for p in term.provenance or []]
+            value=term.definition, references=_prep_prov(term.provenance)
         )
     else:
         definition = None
@@ -138,9 +138,10 @@ def _iter_edges(term: Term) -> Iterable[Edge]:
             )
 
     for provenance_reference in term.provenance:
-        yield Edge.from_parsed(
-            _rewire(term.reference),
-            _rewire(definition_source.reference),
-            _rewire(provenance_reference),
-        )
+        if isinstance(provenance_reference, Reference):
+            yield Edge.from_parsed(
+                _rewire(term.reference),
+                _rewire(definition_source.reference),
+                _rewire(provenance_reference),
+            )
     # TODO also look through xrefs and seealso to get provenance xrefs?

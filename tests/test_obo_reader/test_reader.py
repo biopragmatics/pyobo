@@ -6,6 +6,7 @@ from pyobo import Obo, Reference, Term
 from pyobo.identifier_utils import UnparsableIRIError
 from pyobo.reader import from_str, get_first_nonescaped_quote
 from pyobo.struct import TypeDef, default_reference
+from pyobo.struct import vocabulary as v
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import abbreviation
 from pyobo.struct.struct_utils import Annotation
@@ -251,6 +252,15 @@ class TestReaderTerm(unittest.TestCase):
            """)
         term = self.get_only_term(ontology)
         self.assertEqual("definition of CHEBI:1234", term.definition)
+        annotations = term._get_annotations(v.has_description, "definition of CHEBI:1234")
+        self.assertEqual(
+            1, len(annotations), msg=f"Wrong annotations, see all axioms:\n\n{dict(term._axioms)}"
+        )
+        annotation = annotations[0]
+        self.assertEqual(has_dbxref.pair, annotation.predicate.pair)
+        self.assertIsInstance(annotation.value, OBOLiteral)
+        self.assertEqual(OBOLiteral.uri("https://example.org/test"), annotation.value)
+
         self.assertEqual(1, len(term.provenance))
         self.assertEqual(OBOLiteral.uri("https://example.org/test"), term.provenance[0])
 
@@ -658,14 +668,14 @@ class TestReaderTerm(unittest.TestCase):
         """)
         term = self.get_only_term(ontology)
         x = Reference(prefix="cas", identifier="cas:389-08-2")
-        axioms = term._axioms[has_dbxref, x]
+        axioms = term._get_annotations(has_dbxref, x)
         self.assertEqual(1, len(axioms))
         axiom = axioms[0]
         self.assertIsInstance(axiom, Annotation)
         self.assertIsInstance(axiom.predicate, Reference)
         self.assertIsInstance(axiom.value, Reference)
-        self.assertEqual(has_dbxref, axiom.predicate)
-        self.assertEqual(CHARLIE, axiom.value)
+        self.assertEqual(has_dbxref.pair, axiom.predicate.pair)
+        self.assertEqual(CHARLIE.pair, axiom.value.pair)
 
     def test_10_xrefs_with_provenance_uri(self) -> None:
         """Test getting mappings."""
@@ -678,13 +688,13 @@ class TestReaderTerm(unittest.TestCase):
         """)
         term = self.get_only_term(ontology)
         x = Reference(prefix="cas", identifier="cas:389-08-2")
-        axioms = term._axioms[Annotation(has_dbxref, x)]
+        axioms = term._get_annotations(has_dbxref, x)
         self.assertEqual(1, len(axioms))
         axiom = axioms[0]
         self.assertIsInstance(axiom, Annotation)
         self.assertIsInstance(axiom.predicate, Reference)
         self.assertIsInstance(axiom.value, OBOLiteral)
-        self.assertEqual(has_dbxref, axiom.predicate)
+        self.assertEqual(has_dbxref.pair, axiom.predicate.pair)
         self.assertEqual(OBOLiteral.uri("https://example.org/test"), axiom.value)
 
     def test_11_builtin(self) -> None:

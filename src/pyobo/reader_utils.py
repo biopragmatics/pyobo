@@ -100,19 +100,24 @@ def _chomp_references(
 
     first, rest = s.lstrip("[").split("]", 1)
     references: list[Reference | OBOLiteral] = []
-    for curie in first.split(","):
-        curie = curie.strip()
-        if not curie:
+    for curie_or_uri in first.split(","):
+        curie_or_uri = curie_or_uri.strip()
+        if not curie_or_uri:
             continue
         reference = Reference.from_curie_or_uri(
-            curie, strict=strict, node=node, ontology_prefix=ontology_prefix
+            curie_or_uri, strict=False, node=node, ontology_prefix=ontology_prefix
         )
-        if reference is None:
-            if not SYNONYM_REFERENCE_WARNED[ontology_prefix, curie]:
-                logger.warning("[%s] unable to parse synonym reference: %s", node.curie, curie)
-            SYNONYM_REFERENCE_WARNED[ontology_prefix, curie] += 1
+        if reference is not None:
+            references.append(reference)
+        elif curie_or_uri.startswith("http://") or curie_or_uri.startswith("https://"):
+            references.append(OBOLiteral.uri(curie_or_uri))
+        else:
+            if not SYNONYM_REFERENCE_WARNED[ontology_prefix, curie_or_uri]:
+                logger.warning(
+                    "[%s] unable to parse synonym reference: %s", node.curie, curie_or_uri
+                )
+            SYNONYM_REFERENCE_WARNED[ontology_prefix, curie_or_uri] += 1
             continue
-        references.append(reference)
     return references, rest
 
 
