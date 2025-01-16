@@ -623,10 +623,10 @@ def _get_subsetdefs(graph: nx.MultiDiGraph, ontology_prefix: str) -> list[tuple[
 def _clean_graph_ontology(graph, prefix: str) -> None:
     """Update the ontology entry in the graph's metadata, if necessary."""
     if "ontology" not in graph.graph:
-        logger.warning('[%s] missing "ontology" key', prefix)
+        logger.debug('[%s] missing "ontology" key', prefix)
         graph.graph["ontology"] = prefix
     elif not graph.graph["ontology"].isalpha():
-        logger.warning(
+        logger.debug(
             "[%s] ontology prefix `%s` has a strange format. replacing with prefix",
             prefix,
             graph.graph["ontology"],
@@ -655,26 +655,26 @@ def _clean_graph_version(
         if clean_data_version != clean_injected_version:
             # in this case, we're going to trust the one that's passed
             # through explicitly more than the graph's content
-            logger.warning(
+            logger.debug(
                 "[%s] had version %s, overriding with %s", ontology_prefix, data_version, version
             )
         return clean_injected_version
 
     if data_version:
         clean_data_version = cleanup_version(data_version, prefix=ontology_prefix)
-        logger.info("[%s] using version %s", ontology_prefix, clean_data_version)
+        logger.debug("[%s] using version %s", ontology_prefix, clean_data_version)
         return clean_data_version
 
     if date is not None:
         derived_date_version = date.strftime("%Y-%m-%d")
-        logger.info(
+        logger.debug(
             "[%s] does not report a version. falling back to date: %s",
             ontology_prefix,
             derived_date_version,
         )
         return derived_date_version
 
-    logger.warning("[%s] does not report a version nor a date", ontology_prefix)
+    logger.debug("[%s] does not report a version nor a date", ontology_prefix)
     return None
 
 
