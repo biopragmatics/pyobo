@@ -113,7 +113,7 @@ class Synonym:
     type: Reference | None = None
 
     #: References to articles where the synonym appears
-    provenance: list[Reference | OBOLiteral] = field(default_factory=list)
+    provenance: Sequence[Reference | OBOLiteral] = field(default_factory=list)
 
     #: Extra annotations
     annotations: list[Annotation] = field(default_factory=list)
