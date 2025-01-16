@@ -294,6 +294,9 @@ has_title = TypeDef(reference=v.has_title, is_metadata_tag=True)
 has_license = TypeDef(reference=v.has_license, is_metadata_tag=True)
 has_description = TypeDef(reference=v.has_description, is_metadata_tag=True)
 
+in_subset = TypeDef(reference=v.in_subset, is_metadata_tag=True)
+has_term_editor = TypeDef(reference=v.has_term_editor, is_metadata_tag=True)
+
 default_typedefs: dict[ReferenceTuple, TypeDef] = {
     v.pair: v for v in locals().values() if isinstance(v, TypeDef)
 }

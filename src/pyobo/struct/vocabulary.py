@@ -57,6 +57,7 @@ alternative_term = Reference(prefix="IAO", identifier="0000118", name="alternati
 has_ontology_root_term = Reference(
     prefix="IAO", identifier="0000700", name="has ontology root term"
 )
+has_term_editor = Reference(prefix="IAO", identifier="0000117", name="term editor")
 see_also = Reference(prefix="rdfs", identifier="seeAlso", name="see also")
 comment = Reference(prefix="rdfs", identifier="comment", name="comment")
 label = Reference(prefix="rdfs", identifier="label", name="has label")

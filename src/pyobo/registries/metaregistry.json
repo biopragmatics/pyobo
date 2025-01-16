@@ -528,6 +528,9 @@
         "colocalizes:with": "biolink:colocalizes_with",
         "available:from": "biolink:available_from"
       },
+      "biomodels.teddy": {
+        "TR:": "biomodels.teddy:"
+      },
       "cellosaurus": {
         "PubChem_Cell_line:CVCL_": "cellosaurus:",
         "pgx:CVCL_": "cellosaurus:"
