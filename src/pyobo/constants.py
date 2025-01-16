@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+from typing import Literal
 
 import pystow
 from typing_extensions import TypedDict
@@ -197,3 +198,5 @@ DEFAULT_PREFIX_MAP = {
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "owl": "http://www.w3.org/2002/07/owl#",
 }
+
+OBOFormats = Literal["obo", "owl", "json"]

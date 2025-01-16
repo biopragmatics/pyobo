@@ -16,7 +16,7 @@ from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
 from textwrap import indent
-from typing import TypeVar
+from typing import NamedTuple, TypeVar
 
 import bioregistry
 import click
@@ -30,6 +30,7 @@ from .constants import (
     DATABASE_DIRECTORY,
     GetOntologyKwargs,
     IterHelperHelperDict,
+    OBOFormats,
     SlimGetOntologyKwargs,
 )
 from .identifier_utils import ParseError, wrap_norm_prefix
@@ -37,6 +38,7 @@ from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .reader import from_obo_path, from_obonet
 from .struct import Obo
 from .utils.io import get_writer
+from .utils.misc import VERSION_GETTERS, cleanup_version
 from .utils.path import ensure_path, prefix_directory_join
 from .version import get_git_hash, get_version
 
@@ -107,9 +109,22 @@ def get_ontology(
     """
     if force:
         force_process = True
+    if has_nomenclature_plugin(prefix):
+        obo = run_nomenclature_plugin(prefix, version=version)
+        if cache:
+            logger.debug("[%s] caching nomenclature plugin", prefix)
+            obo.write_default(force=force_process)
+        return obo
+
     if prefix == "uberon":
         logger.info("UBERON has so much garbage in it that defaulting to non-strict parsing")
         strict = False
+
+    # TODO what's the logic with force and force_process
+    #  that decides that we should look up the metadata file
+    #  in the root and just use the version from there
+    if version is None:
+        version = _get_version(prefix)
 
     if not cache:
         logger.debug("[%s] caching was turned off, so dont look for an obonet file", prefix)
@@ -137,26 +152,18 @@ def get_ontology(
         else:
             logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
 
-    if has_nomenclature_plugin(prefix):
-        obo = run_nomenclature_plugin(prefix, version=version)
-        if cache:
-            logger.debug("[%s] caching nomenclature plugin", prefix)
-            obo.write_default(force=force_process)
-        return obo
-
-    ontology_format, path = _ensure_ontology_path(prefix, force=force, version=version)
-    if path is None:
+    path_pack = _ensure_ontology_path(prefix, force=force, version=version)
+    if path_pack is None:
         raise NoBuildError(prefix)
-    elif ontology_format == "obo":
-        pass  # all gucci
-    elif ontology_format == "owl":
-        _converted_obo_path = path.with_suffix(".obo")
+    elif path_pack.format == "obo":
+        path = path_pack.path
+    elif path_pack.format == "owl":
+        path = path_pack.path.with_suffix(".obo")
         if prefix in REQUIRES_NO_ROBOT_CHECK:
             robot_check = False
-        robot.convert(path, _converted_obo_path, check=robot_check)
-        path = _converted_obo_path
+        robot.convert(path_pack.path, path, check=robot_check)
     else:
-        raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
+        raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path_pack.format}")
 
     obo = from_obo_path(
         path,
@@ -172,22 +179,51 @@ def get_ontology(
     return obo
 
 
-def _ensure_ontology_path(
-    prefix: str, force: bool, version: str | None
-) -> tuple[str, Path] | tuple[None, None]:
-    for ontology_format, url in [
-        ("obo", bioregistry.get_obo_download(prefix)),
-        ("owl", bioregistry.get_owl_download(prefix)),
-        ("json", bioregistry.get_json_download(prefix)),
-    ]:
-        if url is not None:
-            try:
-                path = ensure_path(prefix, url=url, force=force, version=version)
-            except (urllib.error.HTTPError, pystow.utils.DownloadError):
-                continue
-            else:
-                return ontology_format, path
-    return None, None
+DOWNLOADERS: Sequence[tuple[OBOFormats, Callable[[str], str | None]]] = [
+    ("obo", bioregistry.get_obo_download),
+    ("owl", bioregistry.get_owl_download),
+    ("json", bioregistry.get_json_download),
+]
+
+
+class VersionPack(NamedTuple):
+    url: str
+    format: OBOFormats
+    version: str | None
+
+
+def _get_version(prefix: str) -> str | None:
+    # assume that all possible files that can be downloaded
+    # are in sync and have the same version
+    for ontology_format, func in DOWNLOADERS:
+        url = func(prefix)
+        if url is None:
+            continue
+        # Try to peak into the file to get the version without fully downloading
+        version_func = VERSION_GETTERS[ontology_format]
+        version = version_func(prefix, url)
+        if version:
+            return cleanup_version(version, prefix=prefix)
+    return None
+
+
+class OntologyPathPack(NamedTuple):
+    format: OBOFormats
+    path: Path
+
+
+def _ensure_ontology_path(prefix: str, force: bool, version: str | None) -> OntologyPathPack | None:
+    for ontology_format, func in DOWNLOADERS:
+        url = func(prefix)
+        if url is None:
+            continue
+        try:
+            path = ensure_path(prefix, url=url, force=force, version=version)
+        except (urllib.error.HTTPError, pystow.utils.DownloadError):
+            continue
+        else:
+            return OntologyPathPack(ontology_format, path)
+    return None
 
 
 #: Obonet/Pronto can't parse these (consider converting to OBO with ROBOT?)
