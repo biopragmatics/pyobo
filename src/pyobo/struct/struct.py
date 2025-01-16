@@ -113,7 +113,7 @@ class Synonym:
     type: Reference | None = None
 
     #: References to articles where the synonym appears
-    provenance: list[Reference] = field(default_factory=list)
+    provenance: Sequence[Reference | OBOLiteral] = field(default_factory=list)
 
     #: Extra annotations
     annotations: list[Annotation] = field(default_factory=list)
@@ -127,7 +127,12 @@ class Synonym:
         rv: set[str] = {"oboInOwl"}
         if self.type is not None:
             rv.add(self.type.prefix)
-        rv.update(p.prefix for p in self.provenance)
+        for provenance in self.provenance:
+            match provenance:
+                case Reference():
+                    rv.add(provenance.prefix)
+                case OBOLiteral(_, datatype):
+                    rv.add(datatype.prefix)
         rv.update(_get_prefixes_from_annotations(self.annotations))
         return rv
 
@@ -403,7 +408,7 @@ class Term(Referenced, Stanza):
         for alt in sorted(self.alt_ids):
             yield f"alt_id: {self._reference(alt, ontology_prefix, add_name_comment=True)}"
         # 6
-        if self.definition or self.provenance:
+        if self.definition:
             yield f"def: {self._definition_fp()}"
         # 7
         for x in self.get_property_values(v.comment):
@@ -1297,7 +1302,7 @@ class Obo:
             d = {
                 "id": term.curie,
                 "name": term.name,
-                "def": (term.definition or term.provenance) and term._definition_fp(),
+                "def": term.definition and term._definition_fp(),
                 "xref": [xref.curie for xref in term.xrefs],
                 "is_a": parents,
                 "relationship": relations,

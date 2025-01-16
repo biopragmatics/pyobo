@@ -248,9 +248,17 @@ def multi_reference_escape(
     return rv
 
 
-def comma_separate_references(references: list[Reference]) -> str:
+def comma_separate_references(elements: Iterable[Reference | OBOLiteral]) -> str:
     """Map a list to strings and make comma separated."""
-    return ", ".join(get_preferred_curie(r) for r in references)
+    parts = []
+    for element in elements:
+        match element:
+            case Reference():
+                parts.append(get_preferred_curie(element))
+            case OBOLiteral(value, _datatype):
+                # TODO check datatype is URI
+                parts.append(value)
+    return ", ".join(parts)
 
 
 def _ground_relation(relation_str: str) -> Reference | None:
@@ -297,6 +305,11 @@ class OBOLiteral(NamedTuple):
     def string(cls, value: str) -> OBOLiteral:
         """Get a string literal."""
         return cls(value, Reference(prefix="xsd", identifier="string"))
+
+    @classmethod
+    def uri(cls, uri: str) -> OBOLiteral:
+        """Get a string literal for a URI."""
+        return cls(uri, Reference(prefix="xsd", identifier="anyURI"))
 
 
 def _reference_list_tag(

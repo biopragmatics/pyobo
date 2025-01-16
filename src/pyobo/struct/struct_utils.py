@@ -80,6 +80,12 @@ stanza_type_to_prop: dict[StanzaType, Reference] = {
     "TypeDef": v.subproperty_of,
 }
 
+stanza_type_to_eq_prop: dict[StanzaType, Reference] = {
+    "Term": v.equivalent_class,
+    "Instance": v.owl_same_as,
+    "TypeDef": v.equivalent_property,
+}
+
 
 class Stanza:
     """A high-level class for stanzas."""
@@ -172,11 +178,13 @@ class Stanza:
     def append_equivalent(
         self,
         reference: ReferenceHint,
+        *,
+        annotations: Iterable[Annotation] | None = None,
     ) -> Self:
         """Append an equivalent class axiom."""
-        reference = _ensure_ref(reference)
-        self.append_relationship(v.equivalent_class, reference)
-        return self
+        return self.append_relationship(
+            stanza_type_to_eq_prop[self.type], reference, annotations=annotations
+        )
 
     def append_xref(
         self,
@@ -185,14 +193,19 @@ class Stanza:
         mapping_justification: Reference | None = None,
         confidence: float | None = None,
         contributor: Reference | None = None,
+        annotations: list[Annotation] | None = None,
     ) -> Self:
         """Append an xref."""
         reference = _ensure_ref(reference)
         self.xrefs.append(reference)
-        annotations = self._prepare_mapping_annotations(
-            mapping_justification=mapping_justification,
-            confidence=confidence,
-            contributor=contributor,
+        if annotations is None:
+            annotations = []
+        annotations.extend(
+            self._prepare_mapping_annotations(
+                mapping_justification=mapping_justification,
+                confidence=confidence,
+                contributor=contributor,
+            )
         )
         self._extend_annotations(v.has_dbxref, reference, annotations)
         return self
@@ -211,11 +224,17 @@ class Stanza:
         if confidence is not None:
             yield Annotation.float(v.mapping_has_confidence, confidence)
 
-    def append_parent(self, reference: ReferenceHint) -> Self:
+    def append_parent(
+        self,
+        reference: ReferenceHint,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
         """Add a parent to this entity."""
         reference = _ensure_ref(reference)
         if reference not in self.parents:
             self.parents.append(reference)
+        self._extend_annotations(stanza_type_to_prop[self.type], reference, annotations)
         return self
 
     def append_intersection_of(
@@ -223,6 +242,8 @@ class Stanza:
         /,
         reference: ReferenceHint | tuple[ReferenceHint, ReferenceHint],
         r2: ReferenceHint | None = None,
+        *,
+        annotations: Iterable[Annotation] | None = None,
     ) -> Self:
         """Append an intersection of."""
         if r2 is not None:
@@ -240,9 +261,13 @@ class Stanza:
         self.union_of.append(_ensure_ref(reference))
         return self
 
-    def append_equivalent_to(self, reference: ReferenceHint) -> Self:
+    def append_equivalent_to(
+        self, reference: ReferenceHint, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
         """Append to the "equivalent to" list."""
-        self.equivalent_to.append(_ensure_ref(reference))
+        reference = _ensure_ref(reference)
+        self.equivalent_to.append(reference)
+        self._extend_annotations(stanza_type_to_eq_prop[self.type], reference, annotations)
         return self
 
     def _iterate_intersection_of_obo(self, *, ontology_prefix: str) -> Iterable[str]:
@@ -478,7 +503,7 @@ class Stanza:
         *,
         type: Reference | Referenced | None = None,
         specificity: SynonymScope | None = None,
-        provenance: list[Reference] | None = None,
+        provenance: Sequence[Reference | OBOLiteral] | None = None,
         annotations: Iterable[Annotation] | None = None,
     ) -> Self:
         """Add a synonym."""
@@ -491,7 +516,7 @@ class Stanza:
                 synonym,
                 type=type,
                 specificity=specificity,
-                provenance=provenance or [],
+                provenance=list(provenance or []),
                 annotations=list(annotations or []),
             )
         self.synonyms.append(synonym)
@@ -546,7 +571,7 @@ class Stanza:
         yield from self._iter_parents()
         yield from self._iter_intersections()
         for equivalent_to in self.equivalent_to:
-            yield v.equivalent_class, equivalent_to
+            yield stanza_type_to_eq_prop[self.type], equivalent_to
 
         # The following are "annotation" properties
         for subset in self.subsets:
@@ -627,22 +652,28 @@ class Stanza:
         definition = obo_escape_slim(self.definition) if self.definition else ""
         return f'"{definition}" [{comma_separate_references(self._get_definition_provenance())}]'
 
-    def _get_definition_provenance(self) -> list[Reference]:
-        if not self.definition:
+    def _get_definition_provenance(self) -> Sequence[Reference | OBOLiteral]:
+        if self.definition is None:
             return []
         return [
-            ax.value
-            for ax in self._get_annotations(v.has_description, self.definition)
-            if ax.predicate.pair == v.has_dbxref.pair and isinstance(ax.value, Reference)
+            annotation.value
+            for annotation in self._get_annotations(v.has_description, self.definition)
+            if annotation.predicate.pair == v.has_dbxref.pair
         ]
 
     @property
-    def provenance(self) -> Sequence[Reference]:
+    def provenance(self) -> Sequence[Reference | OBOLiteral]:
         """Get definition provenance."""
         # return as a tuple to make sure nobody is appending on it
         return (
-            *self._get_definition_provenance(),
             *self.get_property_objects(v.has_citation),
+            # This gets all of the xrefs on _any_ axiom,
+            # which includes the definition provenance
+            *(
+                annotation.value
+                for annotation in itt.chain.from_iterable(self._axioms.values())
+                if annotation.predicate.pair == v.has_dbxref.pair
+            ),
         )
 
     def append_definition_xref(self, reference: ReferenceHint) -> Self:
@@ -656,9 +687,14 @@ class Stanza:
         )
         return self
 
-    def append_provenance(self, reference: Reference) -> Self:
+    def append_provenance(
+        self,
+        reference: Reference,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
         """Append a citation."""
-        return self.annotate_object(v.has_citation, reference)
+        return self.annotate_object(v.has_citation, reference, annotations=annotations)
 
 
 ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
