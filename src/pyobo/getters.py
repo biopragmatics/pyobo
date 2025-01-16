@@ -186,12 +186,6 @@ DOWNLOADERS: Sequence[tuple[OBOFormats, Callable[[str], str | None]]] = [
 ]
 
 
-class VersionPack(NamedTuple):
-    url: str
-    format: OBOFormats
-    version: str | None
-
-
 def _get_version(prefix: str) -> str | None:
     # assume that all possible files that can be downloaded
     # are in sync and have the same version
@@ -208,6 +202,8 @@ def _get_version(prefix: str) -> str | None:
 
 
 class OntologyPathPack(NamedTuple):
+    """A format and path tuple."""
+
     format: OBOFormats
     path: Path
 
