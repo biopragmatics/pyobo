@@ -1,5 +1,6 @@
 """Tests for the OBO data structures."""
 
+import datetime
 import unittest
 from collections.abc import Iterable
 from textwrap import dedent
@@ -1079,6 +1080,24 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
 
     def test_20_creation_date(self) -> None:
         """Test the ``creation_date`` tag."""
+        date_str= "2022-07-26T19:27:20Z"
+        creation_date = datetime.datetime.strptime(date_str)
+
+        term = Term(LYSINE_DEHYDROGENASE_ACT, creation_date=creation_date)
+        self.assert_obo_stanza(
+            term,
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                creation_date: 2022-07-26T19:27:20Z
+            """,
+            ofn="""
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(oboInOwl:creation_date GO:0050069 "2022-07-26T19:27:20Z"^^xsd:dateTime)
+            """,
+        )
 
     def test_21_obsolete(self) -> None:
         """Test obsolete definition."""
