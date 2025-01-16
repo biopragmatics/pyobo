@@ -587,15 +587,21 @@ def _handle_xref(
     annotations = [Annotation(v.has_dbxref, p) for p in provenance]
 
     if macro_config is not None:
-        # TODO handle annotations here
         if xref.prefix in macro_config.treat_xrefs_as_equivalent:
-            return term.append_equivalent(xref)
+            return term.append_equivalent(xref, annotations=annotations)
         elif object_property := macro_config.treat_xrefs_as_genus_differentia.get(xref.prefix):
+            # TODO how to add annotations here?
+            if annotations:
+                logger.warning(
+                    "[%s] unable to add provenance to xref upgraded to intersection_of: %s",
+                    term.reference.curie,
+                    xref,
+                )
             return term.append_intersection_of(xref).append_intersection_of(object_property)
         elif predicate := macro_config.treat_xrefs_as_relationship.get(xref.prefix):
-            return term.append_relationship(predicate, xref)
+            return term.append_relationship(predicate, xref, annotations=annotations)
         elif xref.prefix in macro_config.treat_xrefs_as_is_a:
-            return term.append_parent(xref)
+            return term.append_parent(xref, annotations=annotations)
 
     # TODO this is not what spec calls for, maybe
     #  need a flag in macro config for this

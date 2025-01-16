@@ -80,6 +80,12 @@ stanza_type_to_prop: dict[StanzaType, Reference] = {
     "TypeDef": v.subproperty_of,
 }
 
+stanza_type_to_eq_prop: dict[StanzaType, Reference] = {
+    "Term": v.equivalent_class,
+    "Instance": v.owl_same_as,
+    "TypeDef": v.equivalent_property,
+}
+
 
 class Stanza:
     """A high-level class for stanzas."""
@@ -172,11 +178,13 @@ class Stanza:
     def append_equivalent(
         self,
         reference: ReferenceHint,
+        *,
+        annotations: Iterable[Annotation] | None = None,
     ) -> Self:
         """Append an equivalent class axiom."""
-        reference = _ensure_ref(reference)
-        self.append_relationship(v.equivalent_class, reference)
-        return self
+        return self.append_relationship(
+            stanza_type_to_eq_prop[self.type], reference, annotations=annotations
+        )
 
     def append_xref(
         self,
@@ -216,11 +224,17 @@ class Stanza:
         if confidence is not None:
             yield Annotation.float(v.mapping_has_confidence, confidence)
 
-    def append_parent(self, reference: ReferenceHint) -> Self:
+    def append_parent(
+        self,
+        reference: ReferenceHint,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
         """Add a parent to this entity."""
         reference = _ensure_ref(reference)
         if reference not in self.parents:
             self.parents.append(reference)
+        self._extend_annotations(stanza_type_to_prop[self.type], reference, annotations)
         return self
 
     def append_intersection_of(
@@ -228,6 +242,8 @@ class Stanza:
         /,
         reference: ReferenceHint | tuple[ReferenceHint, ReferenceHint],
         r2: ReferenceHint | None = None,
+        *,
+        annotations: Iterable[Annotation] | None = None,
     ) -> Self:
         """Append an intersection of."""
         if r2 is not None:
@@ -245,9 +261,13 @@ class Stanza:
         self.union_of.append(_ensure_ref(reference))
         return self
 
-    def append_equivalent_to(self, reference: ReferenceHint) -> Self:
+    def append_equivalent_to(
+        self, reference: ReferenceHint, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
         """Append to the "equivalent to" list."""
-        self.equivalent_to.append(_ensure_ref(reference))
+        reference = _ensure_ref(reference)
+        self.equivalent_to.append(reference)
+        self._extend_annotations(stanza_type_to_eq_prop[self.type], reference, annotations)
         return self
 
     def _iterate_intersection_of_obo(self, *, ontology_prefix: str) -> Iterable[str]:
@@ -551,7 +571,7 @@ class Stanza:
         yield from self._iter_parents()
         yield from self._iter_intersections()
         for equivalent_to in self.equivalent_to:
-            yield v.equivalent_class, equivalent_to
+            yield stanza_type_to_eq_prop[self.type], equivalent_to
 
         # The following are "annotation" properties
         for subset in self.subsets:
