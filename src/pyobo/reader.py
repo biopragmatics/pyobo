@@ -734,6 +734,7 @@ def iterate_graph_synonym_typedefs(
     for line in graph.graph.get("synonymtypedef", []):
         # TODO handle trailing comments
         line, _, specificity = (x.strip() for x in line.rpartition('"'))
+        specificity = specificity.upper()
         if not specificity:
             specificity = None
         elif specificity not in t.get_args(SynonymScope):
