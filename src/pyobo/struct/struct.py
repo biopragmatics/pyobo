@@ -113,7 +113,7 @@ class Synonym:
     type: Reference | None = None
 
     #: References to articles where the synonym appears
-    provenance: list[Reference] = field(default_factory=list)
+    provenance: list[Reference | OBOLiteral] = field(default_factory=list)
 
     #: Extra annotations
     annotations: list[Annotation] = field(default_factory=list)
@@ -127,7 +127,12 @@ class Synonym:
         rv: set[str] = {"oboInOwl"}
         if self.type is not None:
             rv.add(self.type.prefix)
-        rv.update(p.prefix for p in self.provenance)
+        for provenance in self.provenance:
+            match provenance:
+                case Reference():
+                    rv.add(provenance.prefix)
+                case OBOLiteral(_, datatype):
+                    rv.add(datatype.prefix)
         rv.update(_get_prefixes_from_annotations(self.annotations))
         return rv
 

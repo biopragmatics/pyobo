@@ -1037,7 +1037,7 @@ def _extract_synonym(
         name=name,
         specificity=specificity,
         type=synonym_typedef.reference if synonym_typedef else None,
-        provenance=provenance,
+        provenance=list(provenance or []),
         annotations=annotations,
     )
 

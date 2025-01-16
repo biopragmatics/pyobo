@@ -1,6 +1,6 @@
 """Data structures for OBO."""
 
-from .reference import Reference, Referenced, default_reference
+from .reference import OBOLiteral, Reference, Referenced, default_reference
 from .struct import (
     CHARLIE_TERM,
     HUMAN_TERM,
@@ -40,6 +40,7 @@ __all__ = [
     "CHARLIE_TERM",
     "HUMAN_TERM",
     "PYOBO_INJECTED",
+    "OBOLiteral",
     "Obo",
     "Reference",
     "Referenced",

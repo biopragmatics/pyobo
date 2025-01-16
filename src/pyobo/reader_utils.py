@@ -5,12 +5,12 @@ from __future__ import annotations
 import logging
 import typing as t
 from collections import Counter
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 from curies import ReferenceTuple
 from curies import vocabulary as v
 
-from pyobo.struct.reference import _parse_identifier
+from pyobo.struct.reference import OBOLiteral, _parse_identifier
 from pyobo.struct.struct import Reference, SynonymTypeDef, _synonym_typedef_warn
 from pyobo.struct.struct_utils import Annotation
 
@@ -83,7 +83,7 @@ SYNONYM_REFERENCE_WARNED: Counter[tuple[str, str]] = Counter()
 
 def _chomp_references(
     s: str, *, strict: bool = True, node: Reference, ontology_prefix: str
-) -> tuple[list[Reference], str]:
+) -> tuple[Sequence[Reference | OBOLiteral], str]:
     if not s:
         return [], ""
     if not s.startswith("["):
@@ -99,7 +99,7 @@ def _chomp_references(
         return [], s
 
     first, rest = s.lstrip("[").split("]", 1)
-    references = []
+    references: list[Reference | OBOLiteral] = []
     for curie in first.split(","):
         curie = curie.strip()
         if not curie:

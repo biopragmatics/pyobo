@@ -478,7 +478,7 @@ class Stanza:
         *,
         type: Reference | Referenced | None = None,
         specificity: SynonymScope | None = None,
-        provenance: list[Reference] | None = None,
+        provenance: Sequence[Reference | OBOLiteral] | None = None,
         annotations: Iterable[Annotation] | None = None,
     ) -> Self:
         """Add a synonym."""
@@ -491,7 +491,7 @@ class Stanza:
                 synonym,
                 type=type,
                 specificity=specificity,
-                provenance=provenance or [],
+                provenance=list(provenance or []),
                 annotations=list(annotations or []),
             )
         self.synonyms.append(synonym)
@@ -627,13 +627,13 @@ class Stanza:
         definition = obo_escape_slim(self.definition) if self.definition else ""
         return f'"{definition}" [{comma_separate_references(self._get_definition_provenance())}]'
 
-    def _get_definition_provenance(self) -> list[Reference]:
-        if not self.definition:
+    def _get_definition_provenance(self) -> Sequence[Reference | OBOLiteral]:
+        if self.definition is None:
             return []
         return [
-            ax.value
-            for ax in self._get_annotations(v.has_description, self.definition)
-            if ax.predicate.pair == v.has_dbxref.pair and isinstance(ax.value, Reference)
+            annotation.value
+            for annotation in self._get_annotations(v.has_description, self.definition)
+            if annotation.predicate.pair == v.has_dbxref.pair
         ]
 
     @property
@@ -641,7 +641,7 @@ class Stanza:
         """Get definition provenance."""
         # return as a tuple to make sure nobody is appending on it
         return (
-            *self._get_definition_provenance(),
+            *(x for x in self._get_definition_provenance() if isinstance(x, Reference)),
             *self.get_property_objects(v.has_citation),
         )
 

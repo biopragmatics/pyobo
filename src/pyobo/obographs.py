@@ -20,7 +20,7 @@ from bioontologies.obograph import (
 from bioontologies.robot import ParseResults
 from tqdm import tqdm
 
-from pyobo.struct import Obo, Referenced, Term
+from pyobo.struct import Obo, OBOLiteral, Reference, Referenced, Term
 from pyobo.struct.typedef import definition_source, is_a
 
 __all__ = [
@@ -87,7 +87,7 @@ def _get_class_node(term: Term) -> Node:
             name=synonym.name,
             predicate=synonym.predicate,
             synonym_type=_rewire(synonym.type) if synonym.type else None,
-            references=[_rewire(x) for x in synonym.provenance],
+            references=_prep_prov(synonym.provenance),
         )
         for synonym in term.synonyms
     ]
@@ -107,6 +107,18 @@ def _get_class_node(term: Term) -> Node:
         reference=_rewire(term.reference),
         standardized=True,
     )
+
+
+def _prep_prov(provenance):
+    rv = []
+    for x in provenance:
+        match x:
+            case Reference():
+                rv.append(_rewire(x))
+            case OBOLiteral():
+                logger.warning("not implemented to convert literal provenance")
+                continue
+    return rv
 
 
 def _iter_edges(term: Term) -> Iterable[Edge]:

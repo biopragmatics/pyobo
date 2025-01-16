@@ -8,6 +8,7 @@ from pyobo.reader import from_str, get_first_nonescaped_quote
 from pyobo.struct import TypeDef, default_reference
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import abbreviation
+from pyobo.struct.struct_utils import Annotation
 from pyobo.struct.typedef import (
     comment,
     derives_from,
@@ -225,7 +226,7 @@ class TestReaderTerm(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual("definition of CHEBI:1234", term.definition)
 
-    def test_6_definition_with_provenance(self) -> None:
+    def test_6_definition_with_provenance_object(self) -> None:
         """Test parsing a term with a definition and provenance."""
         ontology = from_str(f"""\
             ontology: chebi
@@ -238,6 +239,20 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual("definition of CHEBI:1234", term.definition)
         self.assertEqual(1, len(term.provenance))
         self.assertEqual(CHARLIE, term.provenance[0])
+
+    def test_6_definition_with_provenance_uri(self) -> None:
+        """Test parsing a term with a definition and provenance."""
+        ontology = from_str("""\
+               ontology: chebi
+
+               [Term]
+               id: CHEBI:1234
+               def: "definition of CHEBI:1234" [https://example.org/test]
+           """)
+        term = self.get_only_term(ontology)
+        self.assertEqual("definition of CHEBI:1234", term.definition)
+        self.assertEqual(1, len(term.provenance))
+        self.assertEqual(OBOLiteral.uri("https://example.org/test"), term.provenance[0])
 
     def test_6_provenance_no_definition(self) -> None:
         """Test parsing a term with provenance but no definition."""
@@ -382,6 +397,24 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual("NARROW", synonym.specificity)
         self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type)
         self.assertEqual([], synonym.provenance)
+
+    def test_9_synonym_with_provenance_uri(self) -> None:
+        """Test parsing a synonym with specificity,type, and explicit empty provenance."""
+        ontology = from_str("""\
+            ontology: chebi
+            synonymtypedef: OMO:1234567 ""
+
+            [Term]
+            id: CHEBI:1234
+            synonym: "LTEC I" NARROW OMO:1234567 [https://example.org/test]
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.synonyms))
+        synonym = term.synonyms[0]
+        self.assertEqual("LTEC I", synonym.name)
+        self.assertEqual("NARROW", synonym.specificity)
+        self.assertEqual(Reference(prefix="omo", identifier="1234567"), synonym.type)
+        self.assertEqual([OBOLiteral.uri("https://example.org/test")], synonym.provenance)
 
     def test_9_synonym_no_type(self) -> None:
         """Test parsing a synonym with specificity and provenance."""
@@ -613,6 +646,46 @@ class TestReaderTerm(unittest.TestCase):
             },
             {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
         )
+
+    def test_10_xrefs_with_provenance_object(self) -> None:
+        """Test getting mappings."""
+        ontology = from_str(f"""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:100147
+            xref: cas:389-08-2 [{CHARLIE.curie}]
+        """)
+        term = self.get_only_term(ontology)
+        x = Reference(prefix="cas", identifier="cas:389-08-2")
+        axioms = term._axioms[has_dbxref, x]
+        self.assertEqual(1, len(axioms))
+        axiom = axioms[0]
+        self.assertIsInstance(axiom, Annotation)
+        self.assertIsInstance(axiom.predicate, Reference)
+        self.assertIsInstance(axiom.value, Reference)
+        self.assertEqual(has_dbxref, axiom.predicate)
+        self.assertEqual(CHARLIE, axiom.value)
+
+    def test_10_xrefs_with_provenance_uri(self) -> None:
+        """Test getting mappings."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:100147
+            xref: cas:389-08-2 [https://example.org/test]
+        """)
+        term = self.get_only_term(ontology)
+        x = Reference(prefix="cas", identifier="cas:389-08-2")
+        axioms = term._axioms[Annotation(has_dbxref, x)]
+        self.assertEqual(1, len(axioms))
+        axiom = axioms[0]
+        self.assertIsInstance(axiom, Annotation)
+        self.assertIsInstance(axiom.predicate, Reference)
+        self.assertIsInstance(axiom.value, OBOLiteral)
+        self.assertEqual(has_dbxref, axiom.predicate)
+        self.assertEqual(OBOLiteral.uri("https://example.org/test"), axiom.value)
 
     def test_11_builtin(self) -> None:
         """Test the ``builtin`` tag."""
