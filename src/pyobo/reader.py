@@ -1217,7 +1217,7 @@ def iterate_node_reference_tag(
         )
         if reference is None:
             logger.warning(
-                "[%] %s - could not parse identifier: %s", ontology_prefix, tag, identifier
+                "[%s] %s - could not parse identifier: %s", ontology_prefix, tag, identifier
             )
         else:
             yield reference
@@ -1242,7 +1242,7 @@ def _process_intersection_of(
             upgrade=upgrade,
         )
         if predicate is None:
-            logger.warning("[%] %s - could not parse intersection_of: %s", ontology_prefix, line)
+            logger.warning("[%s] - could not parse intersection_of: %s", ontology_prefix, line)
             continue
 
         if target_id:
@@ -1256,7 +1256,7 @@ def _process_intersection_of(
             )
             if target is None:
                 logger.warning(
-                    "[%] could not parse intersection_of target: %s", ontology_prefix, line
+                    "[%s] could not parse intersection_of target: %s", ontology_prefix, line
                 )
                 continue
             term.append_intersection_of(predicate, target)
