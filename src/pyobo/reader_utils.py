@@ -99,27 +99,54 @@ def _chomp_references(
         return [], s
 
     first, rest = s.lstrip("[").split("]", 1)
-    references: list[Reference | OBOLiteral] = []
-    for curie_or_uri in first.split(","):
-        curie_or_uri = curie_or_uri.strip()
-        if not curie_or_uri:
-            continue
-        reference = Reference.from_curie_or_uri(
-            curie_or_uri, strict=False, node=node, ontology_prefix=ontology_prefix
-        )
-        if reference is not None:
-            references.append(reference)
-        elif curie_or_uri.startswith("http://") or curie_or_uri.startswith("https://"):
-            references.append(OBOLiteral.uri(curie_or_uri))
-        else:
-            if not SYNONYM_REFERENCE_WARNED[ontology_prefix, curie_or_uri]:
-                logger.warning(
-                    "[%s] unable to parse synonym reference: %s", node.curie, curie_or_uri
-                )
-            SYNONYM_REFERENCE_WARNED[ontology_prefix, curie_or_uri] += 1
-            continue
+    references = _parse_provenance_list(
+        first,
+        node=node,
+        ontology_prefix=ontology_prefix,
+        dd=SYNONYM_REFERENCE_WARNED,
+        scope_text="synonym provenance",
+    )
     return references, rest
 
 
 def _chomp_axioms(s: str, *, strict: bool = True, node: Reference) -> list[Annotation]:
     return []
+
+
+def _parse_provenance_list(
+    curies_or_uris: str,
+    node: Reference,
+    ontology_prefix: str,
+    dd: Counter[tuple[str, str]],
+    scope_text: str,
+) -> list[Reference | OBOLiteral]:
+    rv = []
+    for curie_or_uri in curies_or_uris.split(","):
+        reference = _help_parse_provenance_list(
+            curie_or_uri, node=node, ontology_prefix=ontology_prefix
+        )
+        if reference is not None:
+            rv.append(reference)
+        else:
+            if not dd[ontology_prefix, curie_or_uri]:
+                logger.warning("[%s] unable to parse %s: %s", node.curie, scope_text, curie_or_uri)
+            dd[ontology_prefix, curie_or_uri] += 1
+    return rv
+
+
+def _help_parse_provenance_list(
+    curie_or_uri: str, *, node: Reference, ontology_prefix: str
+) -> None | Reference | OBOLiteral:
+    curie_or_uri = curie_or_uri.strip()
+    if not curie_or_uri:
+        return None
+
+    # we're not strict here since we want to do some alternate kind of parsing
+    reference = Reference.from_curie_or_uri(
+        curie_or_uri, strict=False, node=node, ontology_prefix=ontology_prefix
+    )
+    if reference is not None:
+        return reference
+    if curie_or_uri.startswith("https://") or curie_or_uri.startswith("http://"):
+        return OBOLiteral.uri(curie_or_uri)
+    return None

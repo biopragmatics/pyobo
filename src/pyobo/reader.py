@@ -25,6 +25,7 @@ from .reader_utils import (
     _chomp_references,
     _chomp_specificity,
     _chomp_typedef,
+    _parse_provenance_list,
 )
 from .registries import curie_has_blacklisted_prefix, curie_is_blacklisted, remap_prefix
 from .struct import (
@@ -935,7 +936,7 @@ def _process_chain_helper(
 
 
 def get_definition(
-    data, *, node: Reference, ontology_prefix: str | None, strict: bool = True
+    data, *, node: Reference, ontology_prefix: str, strict: bool = True
 ) -> tuple[None | str, list[Reference | OBOLiteral]]:
     """Extract the definition from the data."""
     definition = data.get("def")  # it's allowed not to have a definition
@@ -951,7 +952,7 @@ def _extract_definition(
     *,
     node: Reference,
     strict: bool = False,
-    ontology_prefix: str | None,
+    ontology_prefix: str,
 ) -> tuple[None | str, list[Reference | OBOLiteral]]:
     """Extract the definitions."""
     if not s.startswith('"'):
@@ -970,8 +971,13 @@ def _extract_definition(
         )
         provenance = []
     else:
-        provenance = _parse_trailing_ref_list(
-            rest, strict=strict, node=node, ontology_prefix=ontology_prefix
+        rest = rest.lstrip("[").rstrip("]")  # FIXME this doesn't account for trailing annotations
+        provenance = _parse_provenance_list(
+            rest,
+            node=node,
+            ontology_prefix=ontology_prefix,
+            dd=DEFINITION_PROVENANCE_COUNTER,
+            scope_text="definition provenance",
         )
     return definition or None, provenance
 
@@ -1045,34 +1051,7 @@ def _extract_synonym(
 
 
 #: A counter for errors in parsing provenance
-PROVENANCE_COUNTER: Counter[str] = Counter()
-
-
-def _parse_trailing_ref_list(
-    rest: str, *, strict: bool = True, node: Reference, ontology_prefix: str | None
-) -> list[Reference | OBOLiteral]:
-    rest = rest.lstrip("[").rstrip("]")  # FIXME this doesn't account for trailing annotations
-    rv: list[Reference | OBOLiteral] = []
-    for curie_or_uri in rest.split(","):
-        curie_or_uri = curie_or_uri.strip()
-        if not curie_or_uri:
-            continue
-
-        # we're not strict here since we want to do some alternate kind of parsing
-        reference = Reference.from_curie_or_uri(
-            curie_or_uri, strict=False, node=node, ontology_prefix=ontology_prefix
-        )
-        if reference is not None:
-            rv.append(reference)
-        elif curie_or_uri.startswith("https://") or curie_or_uri.startswith("http://"):
-            rv.append(OBOLiteral(curie_or_uri, datatype=v.xsd_uri))
-        else:
-            if not PROVENANCE_COUNTER[curie_or_uri]:
-                logger.warning(
-                    "[%s] could not parse provenance CURIE: %s", node.curie, curie_or_uri
-                )
-            PROVENANCE_COUNTER[curie_or_uri] += 1
-    return rv
+DEFINITION_PROVENANCE_COUNTER: Counter[tuple[str, str]] = Counter()
 
 
 def iterate_node_synonyms(
@@ -1335,15 +1314,19 @@ def iterate_node_xrefs(
         if xref_ref is None:
             continue
 
-        provenance: list[Reference | OBOLiteral] = []
         if rest:
             rest_front, _, _rest_rest = rest.partition("]")
-            for c in rest_front.split(","):
-                c = c.strip()
-                r = _parse_identifier(c, ontology_prefix=ontology_prefix, strict=False, node=node)
-                if r:
-                    provenance.append(r)
-                elif c.startswith("http://") or c.startswith("https://"):
-                    provenance.append(OBOLiteral.uri(c))
+            provenance = _parse_provenance_list(
+                rest_front,
+                node=node,
+                ontology_prefix=ontology_prefix,
+                dd=XREF_PROVENANCE_COUNTER,
+                scope_text="xref provenance",
+            )
+        else:
+            provenance = []
 
         yield xref_ref, provenance
+
+
+XREF_PROVENANCE_COUNTER: Counter[tuple[str, str]] = Counter()

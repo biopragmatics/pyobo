@@ -248,13 +248,13 @@ def multi_reference_escape(
     return rv
 
 
-def comma_separate_references(references: Iterable[Reference | OBOLiteral]) -> str:
+def comma_separate_references(elements: Iterable[Reference | OBOLiteral]) -> str:
     """Map a list to strings and make comma separated."""
     parts = []
-    for r in references:
-        match r:
+    for element in elements:
+        match element:
             case Reference():
-                parts.append(get_preferred_curie(r))
+                parts.append(get_preferred_curie(element))
             case OBOLiteral(value, _datatype):
                 # TODO check datatype is URI
                 parts.append(value)
