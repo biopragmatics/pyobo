@@ -35,6 +35,7 @@ from .mgi import MGIGetter
 from .mirbase import MiRBaseFamilyGetter, MiRBaseGetter, MiRBaseMatureGetter
 from .msigdb import MSigDBGetter
 from .ncbi import NCBIGCGetter, NCBIGeneGetter
+from .nih_reporter import NIHReporterGetter
 from .nlm import NLMCatalogGetter, NLMPublisherGetter
 from .npass import NPASSGetter
 from .omim_ps import OMIMPSGetter
@@ -105,6 +106,7 @@ __all__ = [
     "MiRBaseMatureGetter",
     "NCBIGCGetter",
     "NCBIGeneGetter",
+    "NIHReporterGetter",
     "NLMCatalogGetter",
     "NLMPublisherGetter",
     "NPASSGetter",
