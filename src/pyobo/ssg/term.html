@@ -2,6 +2,16 @@
 
 {% block title %}{{ term.name or term.identifier }}{% endblock title %}
 
+{% macro display_value(v) %}
+    {% if v.prefix %}
+        <a href="{{ v.bioregistry_link }}">{{ v.curie }}</a>
+    {% elif v.datatype.identifier == "anyURI" %}
+        <a href="{{ v.value }}">{{ v.value }}</a>
+    {% else %}
+        {{ v.value }}
+    {% endif %}
+{% endmacro %}
+
 {% block content -%}
     <div class="card">
         <h5 class="card-header">
@@ -69,11 +79,11 @@
                     </dt>
                     <dd>
                         {% if values|length == 1 %}
-                            {{ values[0] }}
+                            {{ display_value(values[0]) }}
                         {% else %}
                             <ul>
                                 {% for value in values %}
-                                    <li>{{ value }}</li>
+                                    <li>{{ display_value(value) }}</li>
                                 {% endfor %}
                             </ul>
                         {% endif %}
