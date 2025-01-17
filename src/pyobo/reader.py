@@ -1283,7 +1283,9 @@ def iterate_node_relationships(
             target_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
         if target is None:
-            logger.warning("[%s - %s] could not parse target %s", node.curie, relation, target_curie)
+            logger.warning(
+                "[%s - %s] could not parse target %s", node.curie, relation, target_curie
+            )
             continue
 
         yield relation, target
