@@ -355,6 +355,14 @@ class Stanza:
         """Append an object annotation."""
         return self.annotate_literal(prop, str(int(value)), v.xsd_integer)
 
+    def annotate_float(self, prop: ReferenceHint, value: float) -> Self:
+        """Append a float annotation."""
+        return self.annotate_literal(prop, str(value), v.xsd_float)
+
+    def annotate_decimal(self, prop: ReferenceHint, value: float) -> Self:
+        """Append a decimal annotation."""
+        return self.annotate_literal(prop, str(value), v.xsd_decimal)
+
     def annotate_year(self, prop: ReferenceHint, value: int | str) -> Self:
         """Append a year annotation."""
         return self.annotate_literal(prop, str(int(value)), v.xsd_year)

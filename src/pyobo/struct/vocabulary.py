@@ -93,6 +93,7 @@ rdf_type = Reference(prefix="rdf", identifier="type", name="subclass of")
 
 xsd_string = Reference(prefix="xsd", identifier="string", name="string")
 xsd_float = Reference(prefix="xsd", identifier="float", name="float")
+xsd_decimal = Reference(prefix="xsd", identifier="decimal", name="decimal")
 xsd_integer = Reference(prefix="xsd", identifier="integer", name="integer")
 xsd_boolean = Reference(prefix="xsd", identifier="boolean", name="boolean")
 xsd_year = Reference(prefix="xsd", identifier="gYear", name="year")
