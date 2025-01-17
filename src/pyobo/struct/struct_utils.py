@@ -335,14 +335,19 @@ class Stanza:
     def annotate_literal(
         self,
         prop: ReferenceHint,
-        value: str,
+        value: str | OBOLiteral,
         datatype: Reference | None = None,
         *,
         annotations: Iterable[Annotation] | None = None,
     ) -> Self:
         """Append an object annotation."""
         prop = _ensure_ref(prop)
-        literal = OBOLiteral(value, datatype or v.xsd_string)
+        if isinstance(value, str):
+            literal = OBOLiteral(value, datatype or v.xsd_string)
+        elif datatype is not None:
+            raise ValueError("can not pass pre-instantiated literal with a datatype")
+        else:  # the value is a pre-instantiated OBOLiteral
+            literal = value
         self.properties[prop].append(literal)
         self._extend_annotations(prop, literal, annotations)
         return self
