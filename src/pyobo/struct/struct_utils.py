@@ -48,7 +48,7 @@ class Annotation(NamedTuple):
     @classmethod
     def float(cls, predicate: Reference, value: float) -> Self:
         """Return a literal property for a float."""
-        return cls(predicate, OBOLiteral(str(value), v.xsd_float))
+        return cls(predicate, OBOLiteral.float(value))
 
     @staticmethod
     def _sort_key(x: Annotation):
@@ -335,46 +335,76 @@ class Stanza:
     def annotate_literal(
         self,
         prop: ReferenceHint,
-        value: str | OBOLiteral,
-        datatype: Reference | None = None,
+        value: OBOLiteral,
         *,
         annotations: Iterable[Annotation] | None = None,
     ) -> Self:
         """Append an object annotation."""
         prop = _ensure_ref(prop)
-        if isinstance(value, str):
-            literal = OBOLiteral(value, datatype or v.xsd_string)
-        elif datatype is not None:
-            raise ValueError("can not pass pre-instantiated literal with a datatype")
-        else:  # the value is a pre-instantiated OBOLiteral
-            literal = value
-        self.properties[prop].append(literal)
-        self._extend_annotations(prop, literal, annotations)
+        self.properties[prop].append(value)
+        self._extend_annotations(prop, value, annotations)
         return self
 
-    def annotate_boolean(self, prop: ReferenceHint, value: bool) -> Self:
+    def annotate_string(
+        self,
+        prop: ReferenceHint,
+        value: str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+        language: str | None = None,
+    ) -> Self:
         """Append an object annotation."""
-        return self.annotate_literal(prop, str(value).lower(), v.xsd_boolean)
+        return self.annotate_literal(
+            prop, OBOLiteral.string(value, language=language), annotations=annotations
+        )
 
-    def annotate_integer(self, prop: ReferenceHint, value: int | str) -> Self:
+    def annotate_boolean(
+        self,
+        prop: ReferenceHint,
+        value: bool,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
         """Append an object annotation."""
-        return self.annotate_literal(prop, str(int(value)), v.xsd_integer)
+        return self.annotate_literal(prop, OBOLiteral.boolean(value), annotations=annotations)
 
-    def annotate_float(self, prop: ReferenceHint, value: float) -> Self:
+    def annotate_integer(
+        self,
+        prop: ReferenceHint,
+        value: int | str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
+        """Append an object annotation."""
+        return self.annotate_literal(prop, OBOLiteral.integer(value), annotations=annotations)
+
+    def annotate_float(
+        self, prop: ReferenceHint, value: float, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
         """Append a float annotation."""
-        return self.annotate_literal(prop, str(value), v.xsd_float)
+        return self.annotate_literal(prop, OBOLiteral.float(value), annotations=annotations)
 
-    def annotate_decimal(self, prop: ReferenceHint, value: float) -> Self:
+    def annotate_decimal(
+        self, prop: ReferenceHint, value: float, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
         """Append a decimal annotation."""
-        return self.annotate_literal(prop, str(value), v.xsd_decimal)
+        return self.annotate_literal(prop, OBOLiteral.decimal(value), annotations=annotations)
 
-    def annotate_year(self, prop: ReferenceHint, value: int | str) -> Self:
+    def annotate_year(
+        self,
+        prop: ReferenceHint,
+        value: int | str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
         """Append a year annotation."""
-        return self.annotate_literal(prop, str(int(value)), v.xsd_year)
+        return self.annotate_literal(prop, OBOLiteral.year(value), annotations=annotations)
 
-    def annotate_uri(self, prop: ReferenceHint, value: str) -> Self:
+    def annotate_uri(
+        self, prop: ReferenceHint, value: str, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
         """Append a URI annotation."""
-        return self.annotate_literal(prop, value, v.xsd_uri)
+        return self.annotate_literal(prop, OBOLiteral.uri(value), annotations=annotations)
 
     def _iterate_obo_properties(
         self,
@@ -518,6 +548,7 @@ class Stanza:
         specificity: SynonymScope | None = None,
         provenance: Sequence[Reference | OBOLiteral] | None = None,
         annotations: Iterable[Annotation] | None = None,
+        language: str | None = None,
     ) -> Self:
         """Add a synonym."""
         if isinstance(type, Referenced):
@@ -531,6 +562,7 @@ class Stanza:
                 specificity=specificity,
                 provenance=list(provenance or []),
                 annotations=list(annotations or []),
+                language=language,
             )
         self.synonyms.append(synonym)
         return self
@@ -549,10 +581,14 @@ class Stanza:
         return self.annotate_object(v.see_also, _reference, annotations=annotations)
 
     def append_comment(
-        self, value: str, *, annotations: Iterable[Annotation] | None = None
+        self,
+        value: str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+        language: str | None = None,
     ) -> Self:
         """Add a comment property."""
-        return self.annotate_literal(v.comment, value, annotations=annotations)
+        return self.annotate_string(v.comment, value, annotations=annotations, language=language)
 
     @property
     def alt_ids(self) -> Sequence[Reference]:
@@ -663,7 +699,11 @@ class Stanza:
 
     def _definition_fp(self) -> str:
         definition = obo_escape_slim(self.definition) if self.definition else ""
-        return f'"{definition}" [{comma_separate_references(self._get_definition_provenance())}]'
+        dp = self._get_definition_provenance()
+        if dp:
+            return f'"{definition}" [{comma_separate_references(dp)}]'
+        else:
+            return f'"{definition}"'
 
     def _get_definition_provenance(self) -> Sequence[Reference | OBOLiteral]:
         if self.definition is None:
@@ -769,7 +809,7 @@ def _iterate_obo_relations(
         start = f"{pc} "
         for value in sorted(values, key=_reference_or_literal_key):
             match value:
-                case OBOLiteral(dd, datatype):
+                case OBOLiteral(dd, datatype, _language):
                     if predicate in skip_predicate_literals:
                         continue
                     # TODO how to clean/escape value?
@@ -831,7 +871,7 @@ def _format_obo_trailing_modifiers(
         match prop.value:
             case Reference():
                 right = reference_escape(prop.value, ontology_prefix=ontology_prefix)
-            case OBOLiteral(value, _datatype):
+            case OBOLiteral(value, _datatype, _language):
                 right = value
         modifiers.append((left, right))
     inner = ", ".join(f"{key}={value}" for key, value in modifiers)

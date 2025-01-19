@@ -161,13 +161,13 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
             seen_geonames_references.add(geonames_reference)
             term.append_relationship(RMAP["Located in"], geonames_reference)
 
-        for label in record.get("labels", []):
-            # TODO get language code from `label` dictionary, then use in synonym
-            label = label["label"]
+        for label_dict in record.get("labels", []):
+            label = label_dict["label"]
             label = label.strip().replace("\n", " ")
-            term.append_synonym(label)
+            language = label_dict["iso639"]
+            term.append_synonym(label, language=language)
             if label.startswith("The "):
-                term.append_synonym(label.removeprefix("The "))
+                term.append_synonym(label.removeprefix("The "), language=language)
 
         for synonym in record.get("aliases", []):
             synonym = synonym.strip().replace("\n", " ")

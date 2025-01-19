@@ -244,7 +244,7 @@ class TestTypeDef(unittest.TestCase):
             f"""\
             [Typedef]
             id: RO:0000087
-            def: "{obo_escape_slim(has_role.definition)}" []
+            def: "{obo_escape_slim(has_role.definition)}"
             """,
             typedef,
         )
@@ -303,19 +303,39 @@ class TestTypeDef(unittest.TestCase):
             """\
             [Typedef]
             id: RO:0000087
-            synonym: "bears role" EXACT []
+            synonym: "bears role" []
             """,
             typedef,
         )
         self.assert_funowl_lines(
             """\
             Declaration(ObjectProperty(RO:0000087))
-            AnnotationAssertion(oboInOwl:hasExactSynonym RO:0000087 "bears role")
+            AnnotationAssertion(oboInOwl:hasRelatedSynonym RO:0000087 "bears role")
             """,
             typedef,
         )
 
         typedef = TypeDef(reference=REF, synonyms=[Synonym("bears role", type=v.previous_name)])
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: RO:0000087
+            synonym: "bears role" RELATED OMO:0003008 []
+            """,
+            typedef,
+        )
+        self.assert_funowl_lines(
+            """\
+            Declaration(ObjectProperty(RO:0000087))
+            AnnotationAssertion(Annotation(oboInOwl:hasSynonymType OMO:0003008) oboInOwl:hasRelatedSynonym RO:0000087 "bears role")
+            """,
+            typedef,
+        )
+
+        typedef = TypeDef(
+            reference=REF,
+            synonyms=[Synonym("bears role", type=v.previous_name, specificity="EXACT")],
+        )
         self.assert_obo_stanza(
             """\
             [Typedef]
@@ -363,9 +383,7 @@ class TestTypeDef(unittest.TestCase):
                         name=v.charlie.name,
                     )
                 ],
-                has_inchi.reference: [
-                    OBOLiteral("abc", Reference(prefix="xsd", identifier="string"))
-                ],
+                has_inchi.reference: [OBOLiteral.string("abc")],
             },
         )
         self.assert_obo_stanza(

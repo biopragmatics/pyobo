@@ -83,7 +83,8 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SPECIFICITY: _cv.SynonymScope = "EXACT"
+#: This is what happens if no specificity is given
+DEFAULT_SPECIFICITY: _cv.SynonymScope = "RELATED"
 
 #: Columns in the SSSOM dataframe
 SSSOM_DF_COLUMNS = [
@@ -118,6 +119,9 @@ class Synonym:
     #: Extra annotations
     annotations: list[Annotation] = field(default_factory=list)
 
+    #: Language tag for the synonym
+    language: str | None = None
+
     def __lt__(self, other: Synonym) -> bool:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
@@ -131,7 +135,7 @@ class Synonym:
             match provenance:
                 case Reference():
                     rv.add(provenance.prefix)
-                case OBOLiteral(_, datatype):
+                case OBOLiteral(_, datatype, _language):
                     rv.add(datatype.prefix)
         rv.update(_get_prefixes_from_annotations(self.annotations))
         return rv
@@ -163,17 +167,33 @@ class Synonym:
     ) -> str:
         if synonym_typedefs is None:
             synonym_typedefs = {}
-        std = _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
-        if std is not None and std.specificity is not None:
-            specificity = std.specificity
-        elif self.specificity:
-            specificity = self.specificity
-        else:
-            specificity = DEFAULT_SPECIFICITY
-        x = f'"{self._escape(self.name)}" {specificity}'
+
+        x = f'"{self._escape(self.name)}"'
+
+        # Add on the specificity, e.g., EXACT
+        synonym_typedef = _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
+        if synonym_typedef is not None and synonym_typedef.specificity is not None:
+            x = f"{x} {synonym_typedef.specificity}"
+        elif self.specificity is not None:
+            x = f"{x} {self.specificity}"
+        elif self.type is not None:
+            # it's not valid to have a synonym type without a specificity,
+            # so automatically assign one if we'll need it
+            x = f"{x} {DEFAULT_SPECIFICITY}"
+
+        # Add on the synonym type, if exists
         if self.type is not None:
             x = f"{x} {reference_escape(self.type, ontology_prefix=ontology_prefix)}"
-        return f"{x} [{comma_separate_references(self.provenance)}]"
+
+        # the provenance list is required, even if it's empty :/
+        x = f"{x} [{comma_separate_references(self.provenance)}]"
+
+        # OBO flat file format does not support language,
+        # but at least we can mention it here as a comment
+        if self.language:
+            x += f" ! language: {self.language}"
+
+        return x
 
     @staticmethod
     def _escape(s: str) -> str:
@@ -326,7 +346,7 @@ class Term(Referenced, Stanza):
             match t:
                 case Reference():
                     rv.append(get_preferred_curie(t))
-                case OBOLiteral(value, _):
+                case OBOLiteral(value, _datatype, _language):
                     rv.append(value)
         return rv
 
@@ -891,7 +911,7 @@ class Obo:
         # TODO add SPDX to idspaces and use as a CURIE?
         if license_spdx_id := bioregistry.get_license(self.ontology):
             if license_spdx_id.startswith("http"):
-                license_literal = OBOLiteral(license_spdx_id, v.xsd_uri)
+                license_literal = OBOLiteral.uri(license_spdx_id)
             else:
                 license_literal = OBOLiteral.string(license_spdx_id)
             yield Annotation(v.has_license, license_literal)
@@ -1443,7 +1463,7 @@ class Obo:
     @property
     def properties_header(self):
         """Property dataframe header."""
-        return [f"{self.ontology}_id", "property", "value", "datatype"]
+        return [f"{self.ontology}_id", "property", "value", "datatype", "language"]
 
     @property
     def object_properties_header(self):
@@ -1453,17 +1473,25 @@ class Obo:
     @property
     def literal_properties_header(self):
         """Property dataframe header."""
-        return ["source", "predicate", "target", "datatype"]
+        return ["source", "predicate", "target", "datatype", "language"]
 
-    def _iter_property_rows(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str, str, str]]:
+    def _iter_property_rows(
+        self, *, use_tqdm: bool = False
+    ) -> Iterable[tuple[str, str, str, str, str]]:
         """Iterate property rows."""
         for term, t in self.iterate_properties(use_tqdm=use_tqdm):
             pred = term._reference(t.predicate, ontology_prefix=self.ontology)
             match t.value:
-                case OBOLiteral(value, datatype):
-                    yield (term.identifier, pred, value, get_preferred_curie(datatype))
+                case OBOLiteral(value, datatype, language):
+                    yield (
+                        term.identifier,
+                        pred,
+                        value,
+                        get_preferred_curie(datatype),
+                        language or "",
+                    )
                 case Reference() as obj:
-                    yield (term.identifier, pred, get_preferred_curie(obj), "")
+                    yield term.identifier, pred, get_preferred_curie(obj), "", ""
                 case _:
                     raise TypeError(f"got: {type(t)} - {t}")
 
@@ -1491,11 +1519,17 @@ class Obo:
 
     def iter_literal_properties(
         self, *, use_tqdm: bool = False
-    ) -> Iterable[tuple[str, str, str, str]]:
+    ) -> Iterable[tuple[str, str, str, str, str]]:
         """Iterate over literal properties quads."""
         for term in self._iter_terms(use_tqdm=use_tqdm):
             for predicate, target in term.iterate_literal_properties():
-                yield term.curie, predicate.curie, target.value, target.datatype.curie
+                yield (
+                    term.curie,
+                    predicate.curie,
+                    target.value,
+                    target.datatype.curie,
+                    target.language or "",
+                )
 
     def get_literal_properties_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get all properties as a dataframe."""

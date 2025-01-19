@@ -1178,7 +1178,7 @@ def _handle_prop(
     if datatype_reference is None:
         logger.warning("[%s] had unparsable datatype %s", node.curie, prop_value_type)
         return None
-    return Annotation(prop_reference, OBOLiteral(value, datatype_reference))
+    return Annotation(prop_reference, OBOLiteral(value, datatype_reference, None))
 
 
 def _get_prop(
