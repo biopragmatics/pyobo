@@ -1,0 +1,68 @@
+"""Utilities for PharmGKB."""
+
+from collections.abc import Iterable
+
+import pandas as pd
+from pystow.utils import read_zipfile_csv
+from tqdm import tqdm
+
+from pyobo import Reference
+from pyobo.utils.path import ensure_path
+
+__all__ = [
+    "download_pharmgkb_tsv",
+]
+
+AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
+
+
+def download_pharmgkb_tsv(prefix: str, url: str, inner: str, *, force: bool) -> pd.DataFrame:
+    """Download PharmGKB data."""
+    path = ensure_path(
+        prefix,
+        url=url,
+        backend="requests",
+        download_kwargs={
+            "headers": {
+                "User-Agent": AGENT,
+            },
+        },
+        force=force,
+    )
+    df = read_zipfile_csv(path, inner_path=inner, dtype=str)
+    return df
+
+
+def split(row, key: str) -> Iterable[str]:
+    """Split the data."""
+    values = row.get(key)
+    if pd.isna(values) or not values:
+        return
+    try:
+        for value in values.split(","):
+            yield value.strip()
+    except AttributeError:
+        pass
+
+
+_MISSING_PREFIXES: set[str] = set()
+REPLACES = {
+    "URL:http://www.ncbi.nlm.nih.gov/omim/": "omim:",
+}
+
+
+def parse_xrefs(term, row) -> Iterable[Reference]:
+    """Parse the cross-references."""
+    for xref_curie in split(row, "Cross-references"):
+        for k, v in REPLACES.items():
+            if xref_curie.startswith(k):
+                xref_curie = xref_curie.replace(k, v)
+        try:
+            xref = Reference.from_curie(xref_curie)
+        except ValueError:
+            p, _, _ = xref_curie.partition(":")
+            if p not in _MISSING_PREFIXES:
+                tqdm.write(f"[{term.curie}] could not parse xref: {xref_curie}")
+            _MISSING_PREFIXES.add(p)
+        else:
+            yield xref
