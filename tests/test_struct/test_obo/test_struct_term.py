@@ -485,6 +485,28 @@ class TestTerm(unittest.TestCase):
             "WARNING:pyobo.struct.struct:[go] synonym typedef not defined: OMO:1234567", log.output
         )
 
+    def test_9_append_synonym_with_language(self) -> None:
+        """Test appending a synonym with a language tag."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_synonym(
+            "L-lysine:NAD+ oxidoreductase",
+            language="en",
+        )
+        self.assert_obo_stanza(
+            term,
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                synonym: "L-lysine:NAD+ oxidoreductase" [] ! language: en
+            """,
+            ofn="""
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(oboInOwl:hasRelatedSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase"@en)
+            """,
+        )
+
     def test_10_xref(self) -> None:
         """Test emitting a relationship."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -599,6 +621,27 @@ class TestTerm(unittest.TestCase):
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
                 AnnotationAssertion(RO:1234567 GO:0050069 "value"^^xsd:string)
+            """,
+        )
+
+    def test_12_property_string_with_language(self) -> None:
+        """Test emitting a string property literal with a language."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_string(RO_DUMMY, "value", language="en")
+        self.assert_obo_stanza(
+            term,
+            # FIXME what to do when emitting property value?
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                property_value: RO:1234567 "value" xsd:string
+            """,
+            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            ofn="""\
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(RO:1234567 GO:0050069 "value"@en)
             """,
         )
 

@@ -48,7 +48,7 @@ class Annotation(NamedTuple):
     @classmethod
     def float(cls, predicate: Reference, value: float) -> Self:
         """Return a literal property for a float."""
-        return cls(predicate, OBOLiteral(str(value), v.xsd_float))
+        return cls(predicate, OBOLiteral.float(value))
 
     @staticmethod
     def _sort_key(x: Annotation):
@@ -548,6 +548,7 @@ class Stanza:
         specificity: SynonymScope | None = None,
         provenance: Sequence[Reference | OBOLiteral] | None = None,
         annotations: Iterable[Annotation] | None = None,
+        language: str | None = None,
     ) -> Self:
         """Add a synonym."""
         if isinstance(type, Referenced):
@@ -561,6 +562,7 @@ class Stanza:
                 specificity=specificity,
                 provenance=list(provenance or []),
                 annotations=list(annotations or []),
+                language=language,
             )
         self.synonyms.append(synonym)
         return self
@@ -807,7 +809,7 @@ def _iterate_obo_relations(
         start = f"{pc} "
         for value in sorted(values, key=_reference_or_literal_key):
             match value:
-                case OBOLiteral(dd, datatype):
+                case OBOLiteral(dd, datatype, _language):
                     if predicate in skip_predicate_literals:
                         continue
                     # TODO how to clean/escape value?
@@ -869,7 +871,7 @@ def _format_obo_trailing_modifiers(
         match prop.value:
             case Reference():
                 right = reference_escape(prop.value, ontology_prefix=ontology_prefix)
-            case OBOLiteral(value, _datatype):
+            case OBOLiteral(value, _datatype, _language):
                 right = value
         modifiers.append((left, right))
     inner = ", ".join(f"{key}={value}" for key, value in modifiers)

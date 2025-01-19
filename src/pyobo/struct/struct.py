@@ -119,6 +119,9 @@ class Synonym:
     #: Extra annotations
     annotations: list[Annotation] = field(default_factory=list)
 
+    #: Language tag for the synonym
+    language: str | None = None
+
     def __lt__(self, other: Synonym) -> bool:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
@@ -132,7 +135,7 @@ class Synonym:
             match provenance:
                 case Reference():
                     rv.add(provenance.prefix)
-                case OBOLiteral(_, datatype):
+                case OBOLiteral(_, datatype, _language):
                     rv.add(datatype.prefix)
         rv.update(_get_prefixes_from_annotations(self.annotations))
         return rv
@@ -184,6 +187,11 @@ class Synonym:
 
         # the provenance list is required, even if it's empty :/
         x = f"{x} [{comma_separate_references(self.provenance)}]"
+
+        # OBO flat file format does not support language,
+        # but at least we can mention it here as a comment
+        if self.language:
+            x += f" ! language: {self.language}"
 
         return x
 
@@ -333,7 +341,7 @@ class Term(Referenced, Stanza):
             match t:
                 case Reference():
                     rv.append(get_preferred_curie(t))
-                case OBOLiteral(value, _):
+                case OBOLiteral(value, _datatype, _language):
                     rv.append(value)
         return rv
 
@@ -898,7 +906,7 @@ class Obo:
         # TODO add SPDX to idspaces and use as a CURIE?
         if license_spdx_id := bioregistry.get_license(self.ontology):
             if license_spdx_id.startswith("http"):
-                license_literal = OBOLiteral(license_spdx_id, v.xsd_uri)
+                license_literal = OBOLiteral.uri(license_spdx_id)
             else:
                 license_literal = OBOLiteral.string(license_spdx_id)
             yield Annotation(v.has_license, license_literal)
@@ -1450,7 +1458,7 @@ class Obo:
     @property
     def properties_header(self):
         """Property dataframe header."""
-        return [f"{self.ontology}_id", "property", "value", "datatype"]
+        return [f"{self.ontology}_id", "property", "value", "datatype", "language"]
 
     @property
     def object_properties_header(self):
@@ -1460,17 +1468,25 @@ class Obo:
     @property
     def literal_properties_header(self):
         """Property dataframe header."""
-        return ["source", "predicate", "target", "datatype"]
+        return ["source", "predicate", "target", "datatype", "language"]
 
-    def _iter_property_rows(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str, str, str]]:
+    def _iter_property_rows(
+        self, *, use_tqdm: bool = False
+    ) -> Iterable[tuple[str, str, str, str, str]]:
         """Iterate property rows."""
         for term, t in self.iterate_properties(use_tqdm=use_tqdm):
             pred = term._reference(t.predicate, ontology_prefix=self.ontology)
             match t.value:
-                case OBOLiteral(value, datatype):
-                    yield (term.identifier, pred, value, get_preferred_curie(datatype))
+                case OBOLiteral(value, datatype, language):
+                    yield (
+                        term.identifier,
+                        pred,
+                        value,
+                        get_preferred_curie(datatype),
+                        language or "",
+                    )
                 case Reference() as obj:
-                    yield (term.identifier, pred, get_preferred_curie(obj), "")
+                    yield term.identifier, pred, get_preferred_curie(obj), "", ""
                 case _:
                     raise TypeError(f"got: {type(t)} - {t}")
 
@@ -1498,11 +1514,17 @@ class Obo:
 
     def iter_literal_properties(
         self, *, use_tqdm: bool = False
-    ) -> Iterable[tuple[str, str, str, str]]:
+    ) -> Iterable[tuple[str, str, str, str, str]]:
         """Iterate over literal properties quads."""
         for term in self._iter_terms(use_tqdm=use_tqdm):
             for predicate, target in term.iterate_literal_properties():
-                yield term.curie, predicate.curie, target.value, target.datatype.curie
+                yield (
+                    term.curie,
+                    predicate.curie,
+                    target.value,
+                    target.datatype.curie,
+                    target.language or "",
+                )
 
     def get_literal_properties_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get all properties as a dataframe."""

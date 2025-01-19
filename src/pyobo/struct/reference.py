@@ -255,7 +255,7 @@ def comma_separate_references(elements: Iterable[Reference | OBOLiteral]) -> str
         match element:
             case Reference():
                 parts.append(get_preferred_curie(element))
-            case OBOLiteral(value, _datatype):
+            case OBOLiteral(value, _datatype, _language):
                 # TODO check datatype is URI
                 parts.append(value)
     return ", ".join(parts)
@@ -300,43 +300,42 @@ class OBOLiteral(NamedTuple):
 
     value: str
     datatype: Reference
+    language: str | None
 
     @classmethod
     def string(cls, value: str, *, language: str | None = None) -> OBOLiteral:
         """Get a string literal."""
-        if language:
-            raise NotImplementedError
-        return cls(value, Reference(prefix="xsd", identifier="string"))
+        return cls(value, Reference(prefix="xsd", identifier="string"), language)
 
     @classmethod
     def boolean(cls, value: bool) -> OBOLiteral:
         """Get a boolean literal."""
-        return cls(str(value).lower(), Reference(prefix="xsd", identifier="boolean"))
+        return cls(str(value).lower(), Reference(prefix="xsd", identifier="boolean"), None)
 
     @classmethod
     def decimal(cls, value) -> OBOLiteral:
         """Get a decimal literal."""
-        return cls(str(value), Reference(prefix="xsd", identifier="decimal"))
+        return cls(str(value), Reference(prefix="xsd", identifier="decimal"), None)
 
     @classmethod
     def float(cls, value) -> OBOLiteral:
         """Get a float literal."""
-        return cls(str(value), Reference(prefix="xsd", identifier="float"))
+        return cls(str(value), Reference(prefix="xsd", identifier="float"), None)
 
     @classmethod
     def integer(cls, value: int | str) -> OBOLiteral:
         """Get a integer literal."""
-        return cls(str(int(value)), Reference(prefix="xsd", identifier="integer"))
+        return cls(str(int(value)), Reference(prefix="xsd", identifier="integer"), None)
 
     @classmethod
     def year(cls, value: int | str) -> OBOLiteral:
         """Get a year (gYear) literal."""
-        return cls(str(int(value)), Reference(prefix="xsd", identifier="gYear"))
+        return cls(str(int(value)), Reference(prefix="xsd", identifier="gYear"), None)
 
     @classmethod
     def uri(cls, uri: str) -> OBOLiteral:
         """Get a string literal for a URI."""
-        return cls(uri, Reference(prefix="xsd", identifier="anyURI"))
+        return cls(uri, Reference(prefix="xsd", identifier="anyURI"), None)
 
 
 def _reference_list_tag(

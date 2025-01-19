@@ -104,7 +104,9 @@ def get_ontology_annotations(obo_ontology: Obo) -> Iterable[f.Annotation]:
         )
 
 
-def _oboliteral_to_literal(obo_literal) -> rdflib.Literal:
+def _oboliteral_to_literal(obo_literal: OBOLiteral) -> rdflib.Literal:
+    if obo_literal.datatype.pair == ("xsd", "string") and obo_literal.language:
+        return rdflib.Literal(obo_literal.value, lang=obo_literal.language)
     if obo_literal.datatype.prefix == "xsd":
         datatype = XSD._NS.term(obo_literal.datatype.identifier)
     else:
@@ -345,6 +347,7 @@ def _yield_synonyms(stanza: Stanza, r) -> Iterable[m.SynonymMacro]:
             synonym_type=synonym.type,
             provenance=synonym.provenance,
             annotations=_process_anns(synonym.annotations),
+            language=synonym.language,
         )
 
 
