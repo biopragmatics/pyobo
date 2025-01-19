@@ -586,7 +586,7 @@ class Stanza:
         language: str | None = None,
     ) -> Self:
         """Add a comment property."""
-        return self.annotate_string(v.comment, value, annotations=annotations)
+        return self.annotate_string(v.comment, value, annotations=annotations, language=language)
 
     @property
     def alt_ids(self) -> Sequence[Reference]:
