@@ -1456,7 +1456,7 @@ class Obo:
     @property
     def literal_properties_header(self):
         """Property dataframe header."""
-        return ["source", "predicate", "target", "datatype"]
+        return ["source", "predicate", "target", "datatype", "language"]
 
     def _iter_property_rows(
         self, *, use_tqdm: bool = False
@@ -1502,11 +1502,17 @@ class Obo:
 
     def iter_literal_properties(
         self, *, use_tqdm: bool = False
-    ) -> Iterable[tuple[str, str, str, str]]:
+    ) -> Iterable[tuple[str, str, str, str, str]]:
         """Iterate over literal properties quads."""
         for term in self._iter_terms(use_tqdm=use_tqdm):
             for predicate, target in term.iterate_literal_properties():
-                yield term.curie, predicate.curie, target.value, target.datatype.curie
+                yield (
+                    term.curie,
+                    predicate.curie,
+                    target.value,
+                    target.datatype.curie,
+                    target.language or "",
+                )
 
     def get_literal_properties_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get all properties as a dataframe."""
