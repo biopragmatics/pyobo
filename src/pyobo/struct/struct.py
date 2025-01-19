@@ -118,6 +118,9 @@ class Synonym:
     #: Extra annotations
     annotations: list[Annotation] = field(default_factory=list)
 
+    #: Language tag for the synonym
+    language: str | None = None
+
     def __lt__(self, other: Synonym) -> bool:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
@@ -173,7 +176,12 @@ class Synonym:
         x = f'"{self._escape(self.name)}" {specificity}'
         if self.type is not None:
             x = f"{x} {reference_escape(self.type, ontology_prefix=ontology_prefix)}"
-        return f"{x} [{comma_separate_references(self.provenance)}]"
+        x = f"{x} [{comma_separate_references(self.provenance)}]"
+        # OBO flat file format does not support language,
+        # but at least we can mention it here as a comment
+        if self.language:
+            x += f" ! language: {self.language}"
+        return x
 
     @staticmethod
     def _escape(s: str) -> str:

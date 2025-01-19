@@ -345,6 +345,7 @@ def _yield_synonyms(stanza: Stanza, r) -> Iterable[m.SynonymMacro]:
             synonym_type=synonym.type,
             provenance=synonym.provenance,
             annotations=_process_anns(synonym.annotations),
+            language=synonym.language,
         )
 
 
