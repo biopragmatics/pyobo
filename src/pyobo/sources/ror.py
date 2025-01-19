@@ -85,6 +85,9 @@ class RORGetter(Obo):
         """Iterate over terms in the ontology."""
         yield CHARLIE_TERM
         yield HUMAN_TERM
+        yield Term(reference=ORG_CLASS)
+        yield Term(reference=CITY_CLASS)
+        yield from ROR_ORGANIZATION_TYPE_TO_OBI.values()
         yield from iterate_ror_terms(force=force)
 
 
@@ -94,26 +97,21 @@ ROR_ORGANIZATION_TYPE_TO_OBI: dict[str, Term] = {
     "Company": Term.default(PREFIX, "company", "company"),
     "Government": Term.default(PREFIX, "government", "government organization"),
     "Healthcare": Term.default(PREFIX, "healthcare", "healthcare organization"),
-    "Other": Term(reference=ORG_CLASS),
-    "Archive": Term.default(PREFIX, "archive", "archive"),
+    "Archive": Term.default(PREFIX, "archive", "archival organization"),
     "Nonprofit": Term.default(PREFIX, "healthcare", "nonprofit organization")
     .append_xref(Reference(prefix="ICO", identifier="0000048"))
     .append_xref(Reference(prefix="GSSO", identifier="004615")),
 }
-for k, v in ROR_ORGANIZATION_TYPE_TO_OBI.items():
-    if k != "Other":
-        v.append_parent(ORG_CLASS)
-        v.append_contributor(CHARLIE_TERM)
-        v.append_comment(PYOBO_INJECTED)
+for _k, v in ROR_ORGANIZATION_TYPE_TO_OBI.items():
+    v.append_parent(ORG_CLASS)
+    v.append_contributor(CHARLIE_TERM)
+    v.append_comment(PYOBO_INJECTED)
 
 _MISSED_ORG_TYPES: set[str] = set()
 
 
 def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
     """Iterate over terms in ROR."""
-    yield Term(reference=ORG_CLASS)
-    yield Term(reference=CITY_CLASS)
-
     _version, _source_uri, records = get_latest(force=force)
     unhandled_xref_prefixes = set()
 
@@ -134,7 +132,10 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
             definition=description,
         )
         for organization_type in organization_types:
-            term.append_parent(ROR_ORGANIZATION_TYPE_TO_OBI[organization_type])
+            if organization_type == "Other":
+                term.append_parent(ORG_CLASS)
+            else:
+                term.append_parent(ROR_ORGANIZATION_TYPE_TO_OBI[organization_type])
 
         for link in record.get("links", []):
             term.annotate_uri(has_homepage, link)
