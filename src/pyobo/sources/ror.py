@@ -154,9 +154,9 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
             label = label_dict["label"]
             label = label.strip().replace("\n", " ")
             language = label_dict["iso639"]
-            term.append_synonym(label, langauge=language)
+            term.append_synonym(label, language=language)
             if label.startswith("The "):
-                term.append_synonym(label.removeprefix("The "), langauge=language)
+                term.append_synonym(label.removeprefix("The "), language=language)
 
         for synonym in record.get("aliases", []):
             synonym = synonym.strip().replace("\n", " ")
