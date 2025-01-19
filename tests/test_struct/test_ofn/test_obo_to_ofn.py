@@ -28,6 +28,7 @@ class TestConversion(unittest.TestCase):
         )
         term.append_synonym("test-synonym-1")
         term.append_synonym("test-synonym-2", type=synonym_typedef)
+        term.append_synonym("test-synonym-3", specificity="EXACT")
 
         obo_ontology = make_ad_hoc_ontology(
             _ontology="go",
@@ -76,8 +77,9 @@ class TestConversion(unittest.TestCase):
                 Declaration(Class(GO:1234567))
                 AnnotationAssertion(rdfs:label GO:1234567 "test")
                 AnnotationAssertion(oboInOwl:inSubset GO:1234567 obo:go#SUBSET-1)
-                AnnotationAssertion(oboInOwl:hasExactSynonym GO:1234567 "test-synonym-1")
-                AnnotationAssertion(Annotation(oboInOwl:hasSynonymType OMO:0003008) oboInOwl:hasExactSynonym GO:1234567 "test-synonym-2")
+                AnnotationAssertion(oboInOwl:hasRelatedSynonym GO:1234567 "test-synonym-1")
+                AnnotationAssertion(Annotation(oboInOwl:hasSynonymType OMO:0003008) oboInOwl:hasRelatedSynonym GO:1234567 "test-synonym-2")
+                AnnotationAssertion(oboInOwl:hasExactSynonym GO:1234567 "test-synonym-3")
                 )
             """).strip(),
             ofn_ontology.to_funowl().strip(),

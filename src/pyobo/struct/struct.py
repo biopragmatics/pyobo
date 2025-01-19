@@ -171,8 +171,12 @@ class Synonym:
         synonym_typedef = _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
         if synonym_typedef is not None and synonym_typedef.specificity is not None:
             x = f"{x} {synonym_typedef.specificity}"
-        elif self.specificity:
+        elif self.specificity is not None:
             x = f"{x} {self.specificity}"
+        elif self.type is not None:
+            # it's not valid to have a synonym type without a specificity,
+            # so automatically assign one if we'll need it
+            x = f"{x} {DEFAULT_SPECIFICITY}"
 
         # Add on the synonym type, if exists
         if self.type is not None:

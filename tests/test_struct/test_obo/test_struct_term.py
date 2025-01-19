@@ -387,7 +387,7 @@ class TestTerm(unittest.TestCase):
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(oboInOwl:hasExactSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
+                AnnotationAssertion(oboInOwl:hasRelatedSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
             """,
         )
 
@@ -450,12 +450,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                synonym: "L-lysine:NAD+ oxidoreductase" OMO:1234567 [orcid:0000-0003-4423-4370]
+                synonym: "L-lysine:NAD+ oxidoreductase" RELATED OMO:1234567 [orcid:0000-0003-4423-4370]
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(Annotation(oboInOwl:hasDbXref orcid:0000-0003-4423-4370) Annotation(oboInOwl:hasSynonymType OMO:1234567) oboInOwl:hasExactSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
+                AnnotationAssertion(Annotation(oboInOwl:hasDbXref orcid:0000-0003-4423-4370) Annotation(oboInOwl:hasSynonymType OMO:1234567) oboInOwl:hasRelatedSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
             """,
         )
 
@@ -473,12 +473,12 @@ class TestTerm(unittest.TestCase):
                     [Term]
                     id: GO:0050069
                     name: lysine dehydrogenase activity
-                    synonym: "L-lysine:NAD+ oxidoreductase" OMO:1234567 []
+                    synonym: "L-lysine:NAD+ oxidoreductase" RELATED OMO:1234567 []
                 """,
                 ofn="""
                     Declaration(Class(GO:0050069))
                     AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                    AnnotationAssertion(Annotation(oboInOwl:hasSynonymType OMO:1234567) oboInOwl:hasExactSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
+                    AnnotationAssertion(Annotation(oboInOwl:hasSynonymType OMO:1234567) oboInOwl:hasRelatedSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
                 """,
             )
         self.assertIn(
