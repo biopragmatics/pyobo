@@ -579,6 +579,7 @@ class TestRDF(unittest.TestCase):
             m.IsOBOBuiltinMacro("a:1234"),
             m.IsOBOBuiltinMacro("a:1234", False),
             m.SynonymMacro("a:16793", "ULBP4", scope="EXACT", synonym_type="OMO:0003008"),
+            m.SynonymMacro("a:16793", "ULBP4", scope="EXACT", synonym_type="OMO:0003008", language="en"),
             m.MappingMacro(
                 "a:0619dd9e",
                 "EXACT",

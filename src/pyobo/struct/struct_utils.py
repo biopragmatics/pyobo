@@ -518,7 +518,7 @@ class Stanza:
         specificity: SynonymScope | None = None,
         provenance: Sequence[Reference | OBOLiteral] | None = None,
         annotations: Iterable[Annotation] | None = None,
-        langauge: str | None = None,
+        language: str | None = None,
     ) -> Self:
         """Add a synonym."""
         if isinstance(type, Referenced):
@@ -532,7 +532,7 @@ class Stanza:
                 specificity=specificity,
                 provenance=list(provenance or []),
                 annotations=list(annotations or []),
-                language=langauge,
+                language=language,
             )
         self.synonyms.append(synonym)
         return self
