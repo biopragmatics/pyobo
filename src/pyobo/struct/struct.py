@@ -83,7 +83,8 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SPECIFICITY: _cv.SynonymScope = "EXACT"
+#: This is what happens if no specificity is given
+DEFAULT_SPECIFICITY: _cv.SynonymScope = "RELATED"
 
 #: Columns in the SSSOM dataframe
 SSSOM_DF_COLUMNS = [
@@ -163,17 +164,25 @@ class Synonym:
     ) -> str:
         if synonym_typedefs is None:
             synonym_typedefs = {}
+
+        x = f'"{self._escape(self.name)}"'
+
+        # Add on the specificity, e.g., EXACT
         std = _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
         if std is not None and std.specificity is not None:
             specificity = std.specificity
+            x = f"{x} {std.specificity}"
         elif self.specificity:
-            specificity = self.specificity
-        else:
-            specificity = DEFAULT_SPECIFICITY
-        x = f'"{self._escape(self.name)}" {specificity}'
+            x = f"{x} {self.specificity}"
+
+        # Add on the synonym type, if exists
         if self.type is not None:
             x = f"{x} {reference_escape(self.type, ontology_prefix=ontology_prefix)}"
-        return f"{x} [{comma_separate_references(self.provenance)}]"
+
+        # the provenance list is required, even if it's empty :/
+        x = f"{x} [{comma_separate_references(self.provenance)}]"
+
+        return x
 
     @staticmethod
     def _escape(s: str) -> str:

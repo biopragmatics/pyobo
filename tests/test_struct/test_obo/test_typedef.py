@@ -303,14 +303,14 @@ class TestTypeDef(unittest.TestCase):
             """\
             [Typedef]
             id: RO:0000087
-            synonym: "bears role" EXACT []
+            synonym: "bears role" []
             """,
             typedef,
         )
         self.assert_funowl_lines(
             """\
             Declaration(ObjectProperty(RO:0000087))
-            AnnotationAssertion(oboInOwl:hasExactSynonym RO:0000087 "bears role")
+            AnnotationAssertion(oboInOwl:hasRelatedSynonym RO:0000087 "bears role")
             """,
             typedef,
         )

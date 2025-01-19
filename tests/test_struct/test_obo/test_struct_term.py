@@ -382,7 +382,7 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                synonym: "L-lysine:NAD+ oxidoreductase" EXACT []
+                synonym: "L-lysine:NAD+ oxidoreductase" []
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
@@ -450,7 +450,7 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                synonym: "L-lysine:NAD+ oxidoreductase" EXACT OMO:1234567 [orcid:0000-0003-4423-4370]
+                synonym: "L-lysine:NAD+ oxidoreductase" OMO:1234567 [orcid:0000-0003-4423-4370]
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
@@ -473,7 +473,7 @@ class TestTerm(unittest.TestCase):
                     [Term]
                     id: GO:0050069
                     name: lysine dehydrogenase activity
-                    synonym: "L-lysine:NAD+ oxidoreductase" EXACT OMO:1234567 []
+                    synonym: "L-lysine:NAD+ oxidoreductase" OMO:1234567 []
                 """,
                 ofn="""
                     Declaration(Class(GO:0050069))
