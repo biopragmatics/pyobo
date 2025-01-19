@@ -3,23 +3,25 @@
 from __future__ import annotations
 
 import logging
+import typing as t
 from collections import Counter
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 from curies import ReferenceTuple
+from curies import vocabulary as v
 
-from pyobo.struct import SynonymSpecificities, SynonymSpecificity
-from pyobo.struct.reference import _parse_identifier
+from pyobo.struct.reference import OBOLiteral, _parse_identifier
 from pyobo.struct.struct import Reference, SynonymTypeDef, _synonym_typedef_warn
+from pyobo.struct.struct_utils import Annotation
 
 logger = logging.getLogger(__name__)
 
 TARGET_URI_WARNINGS: Counter[tuple[str, str]] = Counter()
 
 
-def _chomp_specificity(s: str) -> tuple[SynonymSpecificity | None, str]:
+def _chomp_specificity(s: str) -> tuple[v.SynonymScope | None, str]:
     s = s.strip()
-    for _specificity in SynonymSpecificities:
+    for _specificity in t.get_args(v.SynonymScope):
         if s.startswith(_specificity):
             return _specificity, s[len(_specificity) :].strip()
     return None, s
@@ -81,7 +83,7 @@ SYNONYM_REFERENCE_WARNED: Counter[tuple[str, str]] = Counter()
 
 def _chomp_references(
     s: str, *, strict: bool = True, node: Reference, ontology_prefix: str
-) -> tuple[list[Reference], str]:
+) -> tuple[Sequence[Reference | OBOLiteral], str]:
     if not s:
         return [], ""
     if not s.startswith("["):
@@ -97,24 +99,63 @@ def _chomp_references(
         return [], s
 
     first, rest = s.lstrip("[").split("]", 1)
-    references = []
-    for curie in first.split(","):
-        curie = curie.strip()
-        if not curie:
-            continue
-        reference = Reference.from_curie_or_uri(
-            curie, strict=strict, node=node, ontology_prefix=ontology_prefix
-        )
-        if reference is None:
-            if not SYNONYM_REFERENCE_WARNED[ontology_prefix, curie]:
-                logger.warning("[%s] unable to parse synonym reference: %s", node.curie, curie)
-            SYNONYM_REFERENCE_WARNED[ontology_prefix, curie] += 1
-            continue
-        references.append(reference)
+    references = _parse_provenance_list(
+        first,
+        node=node,
+        ontology_prefix=ontology_prefix,
+        counter=SYNONYM_REFERENCE_WARNED,
+        scope_text="synonym provenance",
+    )
     return references, rest
 
 
-def _chomp_axioms(
-    s: str, *, strict: bool = True, node: Reference
-) -> list[tuple[Reference, Reference]]:
+def _chomp_axioms(s: str, *, strict: bool = True, node: Reference) -> list[Annotation]:
     return []
+
+
+def _parse_provenance_list(
+    curies_or_uris: str,
+    node: Reference,
+    ontology_prefix: str,
+    counter: Counter[tuple[str, str]],
+    scope_text: str,
+) -> list[Reference | OBOLiteral]:
+    return [
+        reference_or_literal
+        for curie_or_uri in curies_or_uris.split(",")
+        if (
+            reference_or_literal := _parse_reference_or_literal(
+                curie_or_uri,
+                node=node,
+                ontology_prefix=ontology_prefix,
+                counter=counter,
+                scope_text=scope_text,
+            )
+        )
+    ]
+
+
+def _parse_reference_or_literal(
+    curie_or_uri: str,
+    *,
+    node: Reference,
+    ontology_prefix: str,
+    counter: Counter[tuple[str, str]],
+    scope_text: str,
+) -> None | Reference | OBOLiteral:
+    curie_or_uri = curie_or_uri.strip()
+    if not curie_or_uri:
+        return None
+
+    # we're not strict here since we want to do some alternate kind of parsing
+    reference = Reference.from_curie_or_uri(
+        curie_or_uri, strict=False, node=node, ontology_prefix=ontology_prefix
+    )
+    if reference is not None:
+        return reference
+    if curie_or_uri.startswith("https://") or curie_or_uri.startswith("http://"):
+        return OBOLiteral.uri(curie_or_uri)
+    if not counter[ontology_prefix, curie_or_uri]:
+        logger.warning("[%s] unable to parse %s: %s", node.curie, scope_text, curie_or_uri)
+    counter[ontology_prefix, curie_or_uri] += 1
+    return None

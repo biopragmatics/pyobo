@@ -91,11 +91,6 @@ def _get_synonyms(version, force):
     return df  # TODO use this
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get OBO."""
-    return FlyBaseGetter(force=force)
-
-
 GTYPE_TO_SO = {
     "SRP_RNA_gene": "0001269",
     "protein_coding_gene": "0001217",

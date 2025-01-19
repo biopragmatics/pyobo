@@ -13,6 +13,7 @@ from zenodo_client import update_zenodo
 from .database_utils import (
     _iter_alts,
     _iter_definitions,
+    _iter_edges,
     _iter_mappings,
     _iter_metadata,
     _iter_names,
@@ -120,6 +121,8 @@ def build(ctx: click.Context, **kwargs: Unpack[DatabaseKwargs]) -> None:
         ctx.invoke(properties, **updated_kwargs)
         click.secho("Relations", fg="cyan", bold=True)
         ctx.invoke(relations, **updated_kwargs)
+        click.secho("Edges", fg="cyan", bold=True)
+        ctx.invoke(edges, **updated_kwargs)
         click.secho("Typedefs", fg="cyan", bold=True)
         ctx.invoke(typedefs, **updated_kwargs)
         click.secho("Species", fg="cyan", bold=True)
@@ -272,6 +275,26 @@ def relations(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -
     if zenodo:
         # see https://zenodo.org/record/4625167
         update_zenodo(RELATIONS_RECORD, paths)
+
+
+@database_annotate
+def edges(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
+    """Make the edges dump."""
+    with logging_redirect_tqdm():
+        it = _iter_edges(**kwargs)
+        db_output_helper(
+            it,
+            "edges",
+            (
+                ":START_ID",
+                ":TYPE",
+                ":END_ID",
+                "provenance",
+            ),
+            directory=directory,
+        )
+    if zenodo:
+        raise NotImplementedError
 
 
 @database_annotate

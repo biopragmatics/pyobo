@@ -6,7 +6,7 @@ import logging
 import re
 
 import pystow
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 __all__ = [
     "DATABASE_DIRECTORY",
@@ -21,6 +21,13 @@ RAW_MODULE = PYOBO_MODULE.module("raw")
 RAW_DIRECTORY = RAW_MODULE.base
 DATABASE_MODULE = PYOBO_MODULE.module("database")
 DATABASE_DIRECTORY = DATABASE_MODULE.base
+
+#: The directory inside an ontology cache where
+#: large artifacts like OBO, OWL, JSON, etc. go
+BUILD_SUBDIRECTORY_NAME = "build"
+#: The directory inside an ontology cache where
+#: small caches for alts, xrefs, names, etc. go
+CACHE_SUBDIRECTORY_NAME = "cache"
 
 SPECIES_REMAPPING = {
     "Canis familiaris": "Canis lupus familiaris",
@@ -123,9 +130,9 @@ class SlimGetOntologyKwargs(TypedDict):
     ontology is requested.
     """
 
-    strict: bool
-    force: bool
-    force_process: bool
+    strict: NotRequired[bool]
+    force: NotRequired[bool]
+    force_process: NotRequired[bool]
 
 
 class GetOntologyKwargs(SlimGetOntologyKwargs):
@@ -134,7 +141,9 @@ class GetOntologyKwargs(SlimGetOntologyKwargs):
     This dictionary doesn't contain ``prefix`` since this is always explicitly handled.
     """
 
-    version: str | None
+    version: NotRequired[str | None]
+    cache: NotRequired[bool]
+    use_tqdm: NotRequired[bool]
 
 
 def check_should_force(data: GetOntologyKwargs) -> bool:
@@ -143,6 +152,16 @@ def check_should_force(data: GetOntologyKwargs) -> bool:
     # but this function should only be used in the scope where GetOntologyKwargs
     # is appropriate.
     return data.get("force", False) or data.get("force_process", False)
+
+
+def check_should_cache(data: GetOntologyKwargs) -> bool:
+    """Determine whether caching should be done based on generic keyword arguments."""
+    return data.get("cache", True)
+
+
+def check_should_use_tqdm(data: GetOntologyKwargs) -> bool:
+    """Determine whether caching should be done based on generic keyword arguments."""
+    return data.get("use_tqdm", True)
 
 
 class LookupKwargs(GetOntologyKwargs):
@@ -168,3 +187,13 @@ class IterHelperHelperDict(SlimGetOntologyKwargs):
     skip_below: str | None
     skip_pyobo: bool
     skip_set: set[str] | None
+
+
+#: from table 2 of the Functional OWL syntax definition
+#: at https://www.w3.org/TR/owl2-syntax/#IRIs
+DEFAULT_PREFIX_MAP = {
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+}

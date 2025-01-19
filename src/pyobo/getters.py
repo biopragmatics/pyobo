@@ -34,7 +34,7 @@ from .constants import (
 )
 from .identifier_utils import ParseError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
-from .reader import from_obo_path
+from .reader import from_obo_path, from_obonet
 from .struct import Obo
 from .utils.io import get_writer
 from .utils.path import ensure_path, prefix_directory_join
@@ -71,6 +71,8 @@ def get_ontology(
     version: str | None = None,
     robot_check: bool = True,
     upgrade: bool = True,
+    cache: bool = True,
+    use_tqdm: bool = True,
 ) -> Obo:
     """Get the OBO for a given graph.
 
@@ -85,18 +87,23 @@ def get_ontology(
     :param upgrade:
         If set to true, will automatically upgrade relationships, such as
         ``obo:chebi#part_of`` to ``BFO:0000051``
+    :param cache:
+        Should cached objects be written? defaults to True
     :returns: An OBO object
 
     :raises OnlyOWLError: If the OBO foundry only has an OWL document for this resource.
 
     Alternate usage if you have a custom url::
 
-    >>> from pystow.utils import download
-    >>> from pyobo import Obo, from_obo_path
-    >>> url = ...
-    >>> obo_path = ...
-    >>> download(url=url, path=path)
-    >>> obo = from_obo_path(path)
+    .. code-block:: python
+
+        from pystow.utils import download
+        from pyobo import Obo, from_obo_path
+
+        url = ...
+        obo_path = ...
+        download(url=url, path=path)
+        obo = from_obo_path(path)
     """
     if force:
         force_process = True
@@ -104,23 +111,38 @@ def get_ontology(
         logger.info("UBERON has so much garbage in it that defaulting to non-strict parsing")
         strict = False
 
-    obonet_json_gz_path = prefix_directory_join(
-        prefix, name=f"{prefix}.obonet.json.gz", ensure_exists=False, version=version
-    )
-    if obonet_json_gz_path.exists() and not force:
-        from .reader import from_obonet
-        from .utils.cache import get_gzipped_graph
+    if not cache:
+        logger.debug("[%s] caching was turned off, so dont look for an obonet file", prefix)
+        obonet_json_gz_path = None
+    else:
+        obonet_json_gz_path = prefix_directory_join(
+            prefix, name=f"{prefix}.obonet.json.gz", ensure_exists=False, version=version
+        )
+        logger.debug(
+            "[%s] caching is turned on, so look for an obonet file at %s",
+            prefix,
+            obonet_json_gz_path,
+        )
+        if obonet_json_gz_path.exists() and not force:
+            from .utils.cache import get_gzipped_graph
 
-        logger.debug("[%s] using obonet cache at %s", prefix, obonet_json_gz_path)
-        return from_obonet(get_gzipped_graph(obonet_json_gz_path))
+            logger.debug("[%s] using obonet cache at %s", prefix, obonet_json_gz_path)
+            return from_obonet(
+                get_gzipped_graph(obonet_json_gz_path),
+                strict=strict,
+                version=version,
+                upgrade=upgrade,
+                use_tqdm=use_tqdm,
+            )
+        else:
+            logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
 
     if has_nomenclature_plugin(prefix):
         obo = run_nomenclature_plugin(prefix, version=version)
-        logger.debug("[%s] caching nomenclature plugin", prefix)
-        obo.write_default(force=force_process)
+        if cache:
+            logger.debug("[%s] caching nomenclature plugin", prefix)
+            obo.write_default(force=force_process)
         return obo
-
-    logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
 
     ontology_format, path = _ensure_ontology_path(prefix, force=force, version=version)
     if path is None:
@@ -136,8 +158,17 @@ def get_ontology(
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
 
-    obo = from_obo_path(path, prefix=prefix, strict=strict, version=version, upgrade=upgrade)
-    obo.write_default(force=force_process)
+    obo = from_obo_path(
+        path,
+        prefix=prefix,
+        strict=strict,
+        version=version,
+        upgrade=upgrade,
+        use_tqdm=use_tqdm,
+        _cache_path=obonet_json_gz_path,
+    )
+    if cache:
+        obo.write_default(force=force_process)
     return obo
 
 

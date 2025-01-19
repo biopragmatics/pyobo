@@ -1,5 +1,6 @@
 """Converter for metabolites in BiGG."""
 
+import logging
 import re
 from collections.abc import Iterable
 
@@ -14,6 +15,8 @@ from pyobo.utils.path import ensure_df
 __all__ = [
     "BiGGMetaboliteGetter",
 ]
+
+logger = logging.getLogger(__name__)
 
 PREFIX = "bigg.metabolite"
 URL = "http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt"
@@ -105,7 +108,7 @@ def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[T
         )
         if pd.notna(bigg_compartmental_id):
             if not PATTERN.match(bigg_compartmental_id):
-                tqdm.write(
+                logger.debug(
                     f"[{PREFIX}:{universal_bigg_id}] invalid compartment ID: {bigg_compartmental_id}"
                 )
             else:
@@ -116,7 +119,7 @@ def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[T
             if not PATTERN.match(old_bigg_id):
                 if not old_bigg_id.endswith("]"):
                     # if it ends with ']' then it's a compartment identifier
-                    tqdm.write(f"[{PREFIX}:{universal_bigg_id}] invalid alt ID: {old_bigg_id}")
+                    logger.debug(f"[{PREFIX}:{universal_bigg_id}] invalid alt ID: {old_bigg_id}")
                 continue
             term.append_alt(Reference(prefix=PREFIX, identifier=old_bigg_id))
         _parse_model_links(term, model_list)
@@ -172,4 +175,4 @@ def _parse_dblinks(term: Term, database_links: str, property_map=None) -> None:
 
 
 if __name__ == "__main__":
-    BiGGMetaboliteGetter().write_default(force=True, write_owl=True, write_obo=True)
+    BiGGMetaboliteGetter.cli()

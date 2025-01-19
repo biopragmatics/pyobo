@@ -9,12 +9,20 @@ import pandas as pd
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
-from ..constants import TARGET_ID, TARGET_PREFIX, GetOntologyKwargs, check_should_force
+from ..constants import (
+    BUILD_SUBDIRECTORY_NAME,
+    TARGET_ID,
+    TARGET_PREFIX,
+    GetOntologyKwargs,
+    check_should_cache,
+    check_should_force,
+    check_should_use_tqdm,
+)
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct import Obo
 from ..utils.cache import cached_df, cached_mapping
-from ..utils.path import prefix_cache_join
+from ..utils.path import prefix_cache_join, prefix_directory_join
 
 __all__ = [
     "get_filtered_xrefs",
@@ -49,7 +57,6 @@ def get_filtered_xrefs(
     xref_prefix: str,
     *,
     flip: bool = False,
-    use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
@@ -58,7 +65,13 @@ def get_filtered_xrefs(
     all_xrefs_path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
     header = [f"{prefix}_id", f"{xref_prefix}_id"]
 
-    @cached_mapping(path=path, header=header, use_tqdm=use_tqdm, force=check_should_force(kwargs))
+    @cached_mapping(
+        path=path,
+        header=header,
+        use_tqdm=check_should_use_tqdm(kwargs),
+        force=check_should_force(kwargs),
+        cache=check_should_cache(kwargs),
+    )
     def _get_mapping() -> Mapping[str, str]:
         if all_xrefs_path.is_file():
             logger.info("[%s] loading pre-cached xrefs", prefix)
@@ -69,7 +82,9 @@ def get_filtered_xrefs(
 
         logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_filtered_xrefs_mapping(xref_prefix, use_tqdm=use_tqdm)
+        return ontology.get_filtered_xrefs_mapping(
+            xref_prefix, use_tqdm=check_should_use_tqdm(kwargs)
+        )
 
     rv = _get_mapping()
     if flip:
@@ -81,9 +96,7 @@ get_xrefs = get_filtered_xrefs
 
 
 @wrap_norm_prefix
-def get_xrefs_df(
-    prefix: str, *, use_tqdm: bool = False, **kwargs: Unpack[GetOntologyKwargs]
-) -> pd.DataFrame:
+def get_xrefs_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get all xrefs."""
     warnings.warn(
         "use pyobo.get_mappings_df instead of pyobo.get_xrefs_df", DeprecationWarning, stacklevel=2
@@ -92,25 +105,23 @@ def get_xrefs_df(
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_xrefs_df(use_tqdm=use_tqdm)
+        return ontology.get_xrefs_df(use_tqdm=check_should_use_tqdm(kwargs))
 
     return _df_getter()
 
 
 def get_sssom_df(
-    prefix: str | Obo,
-    *,
-    names: bool = True,
-    use_tqdm: bool = False,
-    **kwargs: Unpack[GetOntologyKwargs],
+    prefix: str | Obo, *, names: bool = True, **kwargs: Unpack[GetOntologyKwargs]
 ) -> pd.DataFrame:
     """Get an SSSOM dataframe, replaced by :func:`get_mappings_df`."""
     warnings.warn("get_sssom_df was renamed to get_mappings_df", DeprecationWarning, stacklevel=2)
-    return get_mappings_df(prefix=prefix, names=names, use_tqdm=use_tqdm, **kwargs)
+    return get_mappings_df(prefix=prefix, names=names, **kwargs)
 
 
 def get_mappings_df(
@@ -118,7 +129,6 @@ def get_mappings_df(
     *,
     names: bool = True,
     include_mapping_source_column: bool = False,
-    use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
     r"""Get semantic mappings from a source as an SSSOM dataframe.
@@ -129,37 +139,47 @@ def get_mappings_df(
 
     For example, if you want to get UMLS as an SSSOM dataframe, you can do
 
-    >>> import pyobo
-    >>> df = pyobo.get_mappings_df("umls")
-    >>> df.to_csv("umls.sssom.tsv", sep="\t", index=False)
+    .. code-block:: python
+
+        import pyobo
+
+        df = pyobo.get_mappings_df("umls")
+        df.to_csv("umls.sssom.tsv", sep="\t", index=False)
 
     If you don't want to get all of the many resources required to add
     names, you can pass ``names=False``
 
-    >>> import pyobo
-    >>> df = pyobo.get_mappings_df("umls", names=False)
-    >>> df.to_csv("umls.sssom.tsv", sep="\t", index=False)
+    .. code-block:: python
+
+        import pyobo
+
+        df = pyobo.get_mappings_df("umls", names=False)
+        df.to_csv("umls.sssom.tsv", sep="\t", index=False)
 
     .. note:: This assumes the Bioregistry as the prefix map
     """
     if isinstance(prefix, Obo):
         df = prefix.get_mappings_df(
-            use_tqdm=use_tqdm,
             include_subject_labels=names,
             include_mapping_source_column=include_mapping_source_column,
+            use_tqdm=check_should_use_tqdm(kwargs),
         )
         prefix = prefix.ontology
 
     else:
         version = get_version_from_kwargs(prefix, kwargs)
-        path = prefix_cache_join(prefix, name="sssom.tsv", version=version)
+        path = prefix_directory_join(
+            prefix, BUILD_SUBDIRECTORY_NAME, name="sssom.tsv", version=version
+        )
 
-        @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+        @cached_df(
+            path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+        )
         def _df_getter() -> pd.DataFrame:
             logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
             ontology = get_ontology(prefix, **kwargs)
             return ontology.get_mappings_df(
-                use_tqdm=use_tqdm,
+                use_tqdm=check_should_use_tqdm(kwargs),
                 include_subject_labels=True,
                 include_mapping_source_column=include_mapping_source_column,
             )

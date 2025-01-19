@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Iterable, Sequence
+from typing import Any, NamedTuple
 
 import bioontologies.relations
 import bioontologies.upgrade
 import bioregistry
 import curies
-from curies import ReferenceTuple
-from curies.api import ExpansionError
+from curies import Converter, ReferenceTuple
+from curies.api import ExpansionError, _split
 from pydantic import Field, field_validator, model_validator
 
 from .utils import obo_escape
@@ -20,6 +21,9 @@ __all__ = [
     "Reference",
     "Referenced",
     "default_reference",
+    "get_preferred_curie",
+    "multi_reference_escape",
+    "reference_escape",
     "unspecified_matching",
 ]
 
@@ -74,6 +78,24 @@ class Reference(curies.Reference):
     def bioregistry_link(self) -> str:
         """Get the bioregistry link."""
         return f"https://bioregistry.io/{self.curie}"
+
+    # override from_curie to get typing right
+    @classmethod
+    def from_curie(
+        cls, curie: str, *, sep: str = ":", converter: Converter | None = None
+    ) -> Reference:
+        """Parse a CURIE string and populate a reference.
+
+        :param curie: A string representation of a compact URI (CURIE)
+        :param sep: The separator
+        :param converter: The converter to use as context when parsing
+        :return: A reference object
+
+        >>> Reference.from_curie("chebi:1234")
+        Reference(prefix='CHEBI', identifier='1234')
+        """
+        prefix, identifier = _split(curie, sep=sep)
+        return cls.model_validate({"prefix": prefix, "identifier": identifier}, context=converter)
 
     @classmethod
     def from_curie_or_uri(
@@ -170,6 +192,17 @@ class Referenced:
         return self.reference.bioregistry_link
 
 
+def get_preferred_curie(
+    ref: curies.Reference | curies.NamedReference | Reference | Referenced,
+) -> str:
+    """Get the preferred CURIE from a variety of types."""
+    match ref:
+        case Referenced() | Reference():
+            return ref.preferred_curie
+        case curies.Reference() | curies.NamedReference():
+            return ref.curie
+
+
 def default_reference(prefix: str, identifier: str, name: str | None = None) -> Reference:
     """Create a CURIE for an "unqualified" reference.
 
@@ -179,7 +212,7 @@ def default_reference(prefix: str, identifier: str, name: str | None = None) -> 
     :returns: A CURIE for the "unqualified" reference based on the OBO semantic space
 
     >>> default_reference("chebi", "conjugate_base_of")
-    Reference(prefix="obo", identifier="chebi#conjugate_base_of")
+    Reference(prefix="obo", identifier="chebi#conjugate_base_of", name=None)
     """
     if not identifier.strip():
         raise ValueError("default identifier is empty")
@@ -192,15 +225,40 @@ def reference_escape(
     """Write a reference with default namespace removed."""
     if reference.prefix == "obo" and reference.identifier.startswith(f"{ontology_prefix}#"):
         return reference.identifier.removeprefix(f"{ontology_prefix}#")
-    rv = reference.preferred_curie
+    rv = get_preferred_curie(reference)
     if add_name_comment and reference.name:
         rv += f" ! {reference.name}"
     return rv
 
 
-def comma_separate_references(references: list[Reference]) -> str:
+def multi_reference_escape(
+    references: Sequence[Reference | Reference],
+    *,
+    ontology_prefix: str,
+    add_name_comment: bool = False,
+) -> str:
+    """Write multiple references with default namespace normalized."""
+    rv = " ".join(
+        reference_escape(r, ontology_prefix=ontology_prefix, add_name_comment=False)
+        for r in references
+    )
+    names = [r.name or "" for r in references]
+    if add_name_comment and all(names):
+        rv += " ! " + " ".join(names)
+    return rv
+
+
+def comma_separate_references(elements: Iterable[Reference | OBOLiteral]) -> str:
     """Map a list to strings and make comma separated."""
-    return ", ".join(r.preferred_curie for r in references)
+    parts = []
+    for element in elements:
+        match element:
+            case Reference():
+                parts.append(get_preferred_curie(element))
+            case OBOLiteral(value, _datatype, _language):
+                # TODO check datatype is URI
+                parts.append(value)
+    return ", ".join(parts)
 
 
 def _ground_relation(relation_str: str) -> Reference | None:
@@ -235,3 +293,53 @@ def _parse_identifier(
 unspecified_matching = Reference(
     prefix="semapv", identifier="UnspecifiedMatching", name="unspecified matching process"
 )
+
+
+class OBOLiteral(NamedTuple):
+    """A tuple representing a property with a literal value."""
+
+    value: str
+    datatype: Reference
+    language: str | None
+
+    @classmethod
+    def string(cls, value: str, *, language: str | None = None) -> OBOLiteral:
+        """Get a string literal."""
+        return cls(value, Reference(prefix="xsd", identifier="string"), language)
+
+    @classmethod
+    def boolean(cls, value: bool) -> OBOLiteral:
+        """Get a boolean literal."""
+        return cls(str(value).lower(), Reference(prefix="xsd", identifier="boolean"), None)
+
+    @classmethod
+    def decimal(cls, value) -> OBOLiteral:
+        """Get a decimal literal."""
+        return cls(str(value), Reference(prefix="xsd", identifier="decimal"), None)
+
+    @classmethod
+    def float(cls, value) -> OBOLiteral:
+        """Get a float literal."""
+        return cls(str(value), Reference(prefix="xsd", identifier="float"), None)
+
+    @classmethod
+    def integer(cls, value: int | str) -> OBOLiteral:
+        """Get a integer literal."""
+        return cls(str(int(value)), Reference(prefix="xsd", identifier="integer"), None)
+
+    @classmethod
+    def year(cls, value: int | str) -> OBOLiteral:
+        """Get a year (gYear) literal."""
+        return cls(str(int(value)), Reference(prefix="xsd", identifier="gYear"), None)
+
+    @classmethod
+    def uri(cls, uri: str) -> OBOLiteral:
+        """Get a string literal for a URI."""
+        return cls(uri, Reference(prefix="xsd", identifier="anyURI"), None)
+
+
+def _reference_list_tag(
+    tag: str, references: Iterable[Reference], ontology_prefix: str
+) -> Iterable[str]:
+    for reference in references:
+        yield f"{tag}: {reference_escape(reference, ontology_prefix=ontology_prefix, add_name_comment=True)}"

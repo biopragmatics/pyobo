@@ -7,7 +7,7 @@ from tqdm.auto import tqdm
 
 from pyobo import Obo, Reference, Term, TypeDef
 from pyobo.struct.struct import abbreviation as abbreviation_typedef
-from pyobo.struct.typedef import exact_match, has_inchi, has_smiles
+from pyobo.struct.typedef import exact_match, has_citation, has_inchi, has_smiles
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -36,24 +36,19 @@ COLUMNS = [
     "HMDB",
     "PMID",
 ]
-LEVEL = TypeDef.default(PREFIX, "level")
+LEVEL = TypeDef.default(PREFIX, "level", is_metadata_tag=True)
 
 
 class SLMGetter(Obo):
     """An ontology representation of SwissLipid's lipid nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [exact_match, LEVEL, has_inchi, has_smiles]
+    typedefs = [exact_match, LEVEL, has_inchi, has_smiles, has_citation]
     synonym_typedefs = [abbreviation_typedef]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms(force=force, version=self._version_or_raise)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get SwissLipids as OBO."""
-    return SLMGetter(force=force)
 
 
 def iter_terms(version: str, force: bool = False):
@@ -91,18 +86,18 @@ def iter_terms(version: str, force: bool = False):
             raise ValueError(identifier)
         term = Term.from_triple(PREFIX, identifier, name)
         if pd.notna(level):
-            term.annotate_literal(LEVEL, level)
+            term.annotate_string(LEVEL, level)
         if pd.notna(abbreviation):
             term.append_synonym(abbreviation, type=abbreviation_typedef)
         if pd.notna(synonyms):
             for synonym in synonyms.split("|"):
                 term.append_synonym(synonym.strip())
         if pd.notna(smiles):
-            term.annotate_literal(has_smiles, smiles)
+            term.annotate_string(has_smiles, smiles)
         if pd.notna(inchi) and inchi != "InChI=none":
             if inchi.startswith("InChI="):
                 inchi = inchi[len("InChI=") :]
-            term.annotate_literal(has_inchi, inchi)
+            term.annotate_string(has_inchi, inchi)
         if pd.notna(inchikey):
             inchikey = inchikey.removeprefix("InChIKey=").strip()
             if inchikey and inchikey != "none":
@@ -121,7 +116,7 @@ def iter_terms(version: str, force: bool = False):
         for hmdb_id in _split(hmdb_ids):
             term.append_exact_match(("hmdb", hmdb_id))
         for pubmed_id in _split(pubmed_ids):
-            term.append_provenance(("pubmed", pubmed_id))
+            term.append_provenance(Reference(prefix="pubmed", identifier=pubmed_id))
         # TODO how to handle class, parents, and components?
         yield term
 
@@ -135,4 +130,4 @@ def _split(s: str) -> Iterable[str]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default(write_obo=True, use_tqdm=True)
+    SLMGetter.cli()

@@ -78,11 +78,6 @@ class PathBankGetter(Obo):
         return iter_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get PathBank as OBO."""
-    return PathBankGetter(force=force)
-
-
 def get_proteins_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get the proteins dataframe."""
     proteins_df = ensure_df(
@@ -166,7 +161,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             #  but there are weird parser errors
         )
         term.append_exact_match(Reference(prefix="smpdb", identifier=smpdb_id))
-        term.annotate_literal(has_category, subject.lower().replace(" ", "_"))
+        term.annotate_string(has_category, subject.lower().replace(" ", "_"))
         for participant in chain(smpdb_id_to_proteins[smpdb_id], smpdb_id_to_metabolites[smpdb_id]):
             term.append_relationship(has_participant, participant)
         yield term

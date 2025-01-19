@@ -259,6 +259,7 @@
       ],
       "fbbt": [
         "FlyPNS:PNS",
+        "VFB_vol:",
         "larvalbrain_axon_tract:",
         "larvalbrain_neuropil:"
       ],
@@ -512,25 +513,32 @@
       "biolink": {
         "active:in": "biolink:active_in",
         "actively:involves": "biolink:actively_involves",
+        "affected:by": "biolink:affected_by",
         "aggregate:statistic": "biolink:aggregate_statistic",
         "associated:with": "biolink:associated_with",
-        "affected:by": "biolink:affected_by",
+        "association:slot": "biolink:association_slot",
+        "association:type": "biolink:association_type",
+        "available:from": "biolink:available_from",
         "base:coordinate": "biolink:base_coordinate",
         "biomarker:for": "biolink:biomarker_for",
         "capable:of": "biolink:capable_of",
         "caused:by": "biolink:caused_by",
-        "coexpressed:with": "biolink:coexpressed_with",
-        "association:type": "biolink:association_type",
-        "association:slot": "biolink:association_slot",
         "close:match": "biolink:close_match",
-        "completed:by": "biolink:completed_by",
         "coexists:with": "biolink:coexists_with",
+        "coexpressed:with": "biolink:coexpressed_with",
         "colocalizes:with": "biolink:colocalizes_with",
-        "available:from": "biolink:available_from"
+        "completed:by": "biolink:completed_by"
+      },
+      "biomodels.teddy": {
+        "TR:": "biomodels.teddy:"
       },
       "cellosaurus": {
         "PubChem_Cell_line:CVCL_": "cellosaurus:",
         "pgx:CVCL_": "cellosaurus:"
+      },
+      "chmo": {
+        "Orange:": "orangebook:",
+        "Orange: ": "orangebook:"
       },
       "ehdaa2": {
         "CS": "carnegie.stage:"

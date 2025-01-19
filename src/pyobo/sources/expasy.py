@@ -65,11 +65,6 @@ class ExpasyGetter(Obo):
         return get_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get ExPASy as OBO."""
-    return ExpasyGetter(force=force)
-
-
 def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get the ExPASy terms."""
     tree_path = ensure_path(PREFIX, url=EXPASY_TREE_URL, version=version, force=force)

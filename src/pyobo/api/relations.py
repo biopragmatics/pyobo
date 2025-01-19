@@ -4,7 +4,6 @@ import logging
 from collections.abc import Mapping
 from functools import lru_cache
 
-import networkx as nx
 import pandas as pd
 from typing_extensions import Unpack
 
@@ -18,41 +17,59 @@ from ..constants import (
     TARGET_ID,
     TARGET_PREFIX,
     GetOntologyKwargs,
+    check_should_cache,
     check_should_force,
+    check_should_use_tqdm,
 )
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct.reference import Reference
-from ..struct.struct import ReferenceHint, _ensure_ref
+from ..struct.struct_utils import ReferenceHint, _ensure_ref
 from ..utils.cache import cached_df
 from ..utils.path import prefix_cache_join
 
 __all__ = [
     "get_filtered_relations_df",
-    "get_graph",
     "get_id_multirelations_mapping",
     "get_relation",
     "get_relation_mapping",
+    "get_relations",
     "get_relations_df",
 ]
-
-# TODO get_relation, get_relations
 
 logger = logging.getLogger(__name__)
 
 
 @wrap_norm_prefix
+def get_relations(
+    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+) -> list[tuple[Reference, Reference, Reference]]:
+    """Get relations."""
+    df = get_relations_df(prefix, wide=False, **kwargs)
+    return [
+        (
+            Reference(prefix=prefix, identifier=source_id),
+            Reference(prefix=relation_prefix, identifier=relation_id),
+            Reference(prefix=target_prefix, identifier=target_id),
+        )
+        for source_id, relation_prefix, relation_id, target_prefix, target_id in df.values
+    ]
+
+
+@wrap_norm_prefix
 def get_relations_df(
-    prefix: str, *, use_tqdm: bool = False, wide: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, *, wide: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> pd.DataFrame:
     """Get all relations from the OBO."""
     version = get_version_from_kwargs(prefix, kwargs)
     path = prefix_cache_join(prefix, name="relations.tsv", version=version)
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_relations_df(use_tqdm=use_tqdm)
+        return ontology.get_relations_df(use_tqdm=check_should_use_tqdm(kwargs))
 
     rv = _df_getter()
 
@@ -68,8 +85,6 @@ def get_relations_df(
 def get_filtered_relations_df(
     prefix: str,
     relation: ReferenceHint,
-    *,
-    use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
     """Get all the given relation."""
@@ -90,11 +105,13 @@ def get_filtered_relations_df(
         version=version,
     )
 
-    @cached_df(path=path, dtype=str, force=check_should_force(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
     def _df_getter() -> pd.DataFrame:
         logger.info("[%s] no cached relations found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_filtered_relations_df(relation, use_tqdm=use_tqdm)
+        return ontology.get_filtered_relations_df(relation, use_tqdm=check_should_use_tqdm(kwargs))
 
     return _df_getter()
 
@@ -103,14 +120,14 @@ def get_filtered_relations_df(
 def get_id_multirelations_mapping(
     prefix: str,
     typedef: ReferenceHint,
-    *,
-    use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, list[Reference]]:
     """Get the OBO file and output a synonym dictionary."""
     kwargs["version"] = get_version_from_kwargs(prefix, kwargs)
     ontology = get_ontology(prefix, **kwargs)
-    return ontology.get_id_multirelations_mapping(typedef=typedef, use_tqdm=use_tqdm)
+    return ontology.get_id_multirelations_mapping(
+        typedef=typedef, use_tqdm=check_should_use_tqdm(kwargs)
+    )
 
 
 @lru_cache
@@ -119,8 +136,6 @@ def get_relation_mapping(
     prefix: str,
     relation: ReferenceHint,
     target_prefix: str,
-    *,
-    use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get relations from identifiers in the source prefix to target prefix with the given relation.
@@ -137,7 +152,7 @@ def get_relation_mapping(
     """
     ontology = get_ontology(prefix, **kwargs)
     return ontology.get_relation_mapping(
-        relation=relation, target_prefix=target_prefix, use_tqdm=use_tqdm
+        relation=relation, target_prefix=target_prefix, use_tqdm=check_should_use_tqdm(kwargs)
     )
 
 
@@ -147,8 +162,6 @@ def get_relation(
     source_identifier: str,
     relation: ReferenceHint,
     target_prefix: str,
-    *,
-    use_tqdm: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the target identifier corresponding to the given relationship from the source prefix/identifier pair.
@@ -168,22 +181,6 @@ def get_relation(
         prefix=prefix,
         relation=relation,
         target_prefix=target_prefix,
-        use_tqdm=use_tqdm,
         **kwargs,
     )
     return relation_mapping.get(source_identifier)
-
-
-def get_graph(
-    prefix: str, use_tqdm: bool = False, wide: bool = False, **kwargs: Unpack[GetOntologyKwargs]
-) -> nx.DiGraph:
-    """Get the relation graph."""
-    rv = nx.MultiDiGraph()
-    df = get_relations_df(prefix=prefix, wide=wide, use_tqdm=use_tqdm, **kwargs)
-    for source_id, relation_prefix, relation_id, target_ns, target_id in df.values:
-        rv.add_edge(
-            f"{prefix}:{source_id}",
-            f"{target_ns}:{target_id}",
-            key=f"{relation_prefix}:{relation_id}",
-        )
-    return rv

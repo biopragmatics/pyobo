@@ -32,11 +32,6 @@ class CreditGetter(Obo):
         return get_terms(force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get RGD as OBO."""
-    return CreditGetter(force=force)
-
-
 def get_terms(force: bool = False) -> list[Term]:
     """Get terms from the Contributor Roles Taxonomy via GitHub."""
     path = ensure_path(PREFIX, url=url, name="picklist-api.json", force=force)
@@ -65,4 +60,4 @@ def get_terms(force: bool = False) -> list[Term]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).write_default(write_obo=True)
+    CreditGetter.cli()

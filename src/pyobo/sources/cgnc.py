@@ -31,11 +31,6 @@ class CGNCGetter(Obo):
         return get_terms(force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get CGNC as OBO."""
-    return CGNCGetter(force=force)
-
-
 HEADER = [
     "cgnc_id",
     "ncbigene_id",

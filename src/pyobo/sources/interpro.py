@@ -37,11 +37,6 @@ class InterProGetter(Obo):
         return iter_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get InterPro as OBO."""
-    return InterProGetter(force=force)
-
-
 def iter_terms(*, version: str, proteins: bool = False, force: bool = False) -> Iterable[Term]:
     """Get InterPro terms."""
     parents = get_interpro_tree(version=version, force=force)
@@ -74,7 +69,7 @@ def iter_terms(*, version: str, proteins: bool = False, force: bool = False) -> 
             term.append_relationship(
                 enables, Reference(prefix="go", identifier=go_id, name=go_name)
             )
-        term.annotate_literal(has_category, entry_type)
+        term.annotate_string(has_category, entry_type)
         for uniprot_id in interpro_to_proteins.get(identifier, []):
             term.append_relationship(has_member, Reference(prefix="uniprot", identifier=uniprot_id))
         yield term

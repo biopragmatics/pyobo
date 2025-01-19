@@ -43,11 +43,6 @@ class ITISGetter(Obo):
         return iter_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo() -> Obo:
-    """Get ITIS as OBO."""
-    return ITISGetter()
-
-
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get ITIS terms."""
     zip_path = ensure_path(PREFIX, url=URL, force=force, version=version)

@@ -10,7 +10,16 @@ from pyobo import Obo, Reference
 from pyobo.api.utils import get_version
 from pyobo.constants import RAW_MODULE
 from pyobo.identifier_utils import standardize_ec
-from pyobo.struct import Term, TypeDef, derives_from, enables, from_species, participates_in
+from pyobo.struct import (
+    Term,
+    TypeDef,
+    default_reference,
+    derives_from,
+    enables,
+    from_species,
+    has_citation,
+    participates_in,
+)
 from pyobo.struct.typedef import gene_product_of, located_in, molecularly_interacts_with
 from pyobo.utils.io import open_reader
 
@@ -42,7 +51,7 @@ PARAMS = {
     "query": QUERY,
     "fields": FIELDS,
 }
-IS_REVIEWED = TypeDef.default(PREFIX, "reviewed")
+IS_REVIEWED = TypeDef(reference=default_reference(PREFIX, "reviewed"), is_metadata_tag=True)
 
 
 class UniProtGetter(Obo):
@@ -58,16 +67,12 @@ class UniProtGetter(Obo):
         derives_from,
         located_in,
         IS_REVIEWED,
+        has_citation,
     ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         yield from iter_terms(version=self._version_or_raise)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get UniProt as OBO."""
-    return UniProtGetter(force=force)
 
 
 def iter_terms(version: str | None = None) -> Iterable[Term]:
@@ -100,9 +105,10 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
             term.set_species(taxonomy_id)
             if gene_ids:
                 for gene_id in gene_ids.split(";"):
-                    term.annotate_object(
-                        gene_product_of, Reference(prefix="ncbigene", identifier=gene_id.strip())
-                    )
+                    if gene_id := gene_id.strip():
+                        term.annotate_object(
+                            gene_product_of, Reference(prefix="ncbigene", identifier=gene_id)
+                        )
 
             term.annotate_boolean(IS_REVIEWED, True)
 
@@ -143,15 +149,16 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
 
             if ecs:
                 for ec in ecs.split(";"):
-                    term.annotate_object(
-                        enables, Reference(prefix="eccode", identifier=standardize_ec(ec))
-                    )
+                    if ec := ec.strip():
+                        term.annotate_object(
+                            enables, Reference(prefix="eccode", identifier=standardize_ec(ec))
+                        )
             for pubmed in pubmeds.split(";"):
-                if pubmed:
-                    term.append_provenance(Reference(prefix="pubmed", identifier=pubmed.strip()))
+                if pubmed := pubmed.strip():
+                    term.append_provenance(Reference(prefix="pubmed", identifier=pubmed))
             for pdb in pdbs.split(";"):
-                if pdb:
-                    term.append_xref(Reference(prefix="pdb", identifier=pdb.strip()))
+                if pdb := pdb.strip():
+                    term.append_xref(Reference(prefix="pdb", identifier=pdb))
             yield term
 
 

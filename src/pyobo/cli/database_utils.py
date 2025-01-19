@@ -14,6 +14,7 @@ from tqdm.auto import tqdm
 from typing_extensions import Unpack
 
 from ..api import (
+    get_edges_df,
     get_id_definition_mapping,
     get_id_name_mapping,
     get_id_species_mapping,
@@ -27,7 +28,8 @@ from ..api import (
     get_xrefs_df,
 )
 from ..getters import IterHelperHelperDict, iter_helper, iter_helper_helper
-from ..sources import ncbigene, pubchem
+from ..sources import pubchem
+from ..sources.ncbi import ncbigene
 from ..utils.path import ensure_path
 from ..xrefdb.sources import iter_xref_plugins
 
@@ -120,6 +122,12 @@ def _iter_relations(
         for t in df.values:
             if all(t):
                 yield cast(tuple[str, str, str, str, str, str], (prefix, *t))
+
+
+def _iter_edges(**kwargs: Unpack[IterHelperHelperDict]) -> Iterable[tuple[str, str, str, str]]:
+    for prefix, df in iter_helper_helper(get_edges_df, **kwargs):
+        for row in df.values:
+            yield cast(tuple[str, str, str, str], (*row, prefix))
 
 
 def _iter_properties(**kwargs: Unpack[IterHelperHelperDict]) -> Iterable[tuple[str, str, str, str]]:

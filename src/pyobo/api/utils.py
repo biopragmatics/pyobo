@@ -3,10 +3,13 @@
 import json
 import logging
 import os
+import warnings
 from functools import lru_cache
 from typing import Literal, overload
 
 import bioversions
+import curies
+from curies import ReferenceTuple
 
 from ..constants import GetOntologyKwargs
 from ..utils.path import prefix_directory_join
@@ -129,3 +132,28 @@ def get_version_pins() -> dict[str, str]:
         f"name."
     )
     return version_pins
+
+
+def _get_pi(
+    prefix: str | curies.Reference | ReferenceTuple, identifier: str | None = None, /
+) -> ReferenceTuple:
+    if isinstance(prefix, ReferenceTuple):
+        if identifier is not None:
+            raise ValueError("unexpected non-none value passed as second positional argument")
+        return prefix
+    if isinstance(prefix, curies.Reference):
+        if identifier is not None:
+            raise ValueError("unexpected non-none value passed as second positional argument")
+        return prefix.pair
+    if isinstance(prefix, str) and identifier is None:
+        return ReferenceTuple.from_curie(prefix)
+    if identifier is None:
+        raise ValueError(
+            "prefix was given as a string, so an identifier was expected to be passed as a string as well"
+        )
+    warnings.warn(
+        "Passing a prefix and identifier as seperate arguments is deprecated. Please pass a curies.Reference or curies.ReferenceTuple in the first positional-only argument instead.",
+        DeprecationWarning,
+        stacklevel=4,  # this is 4 since this is (always?) called from inside a decorator
+    )
+    return ReferenceTuple(prefix, identifier)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import zipfile
 from collections.abc import Iterable
 from typing import Any
@@ -12,7 +13,7 @@ import zenodo_client
 from tqdm.auto import tqdm
 
 from pyobo.struct import Obo, Reference, Term
-from pyobo.struct.struct import acronym
+from pyobo.struct.struct import CHARLIE_TERM, HUMAN_TERM, PYOBO_INJECTED, acronym
 from pyobo.struct.typedef import (
     has_homepage,
     has_part,
@@ -23,11 +24,13 @@ from pyobo.struct.typedef import (
     see_also,
 )
 
+logger = logging.getLogger(__name__)
 PREFIX = "ror"
 ROR_ZENODO_RECORD_ID = "10086202"
 
 # Constants
-ORG_CLASS = Reference(prefix="OBI", identifier="0000245")
+ORG_CLASS = Reference(prefix="OBI", identifier="0000245", name="organization")
+CITY_CLASS = Reference(prefix="ENVO", identifier="00000856", name="city")
 
 RMAP = {
     "Related": see_also,
@@ -52,15 +55,26 @@ class RORGetter(Obo):
     ontology = bioregistry_key = PREFIX
     typedefs = [has_homepage, *RMAP.values()]
     synonym_typedefs = [acronym]
+    root_terms = [CITY_CLASS, ORG_CLASS]
     idspaces = {
         "ror": "https://ror.org/",
         "geonames": "https://www.geonames.org/",
         "ENVO": "http://purl.obolibrary.org/obo/ENVO_",
         "BFO": "http://purl.obolibrary.org/obo/BFO_",
         "RO": "http://purl.obolibrary.org/obo/RO_",
+        "IAO": "http://purl.obolibrary.org/obo/IAO_",
         "OBI": "http://purl.obolibrary.org/obo/OBI_",
         "OMO": "http://purl.obolibrary.org/obo/OMO_",
         "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "isni": "http://www.isni.org/isni/",
+        "funderregistry": "http://data.crossref.org/fundingdata/funder/",
+        "wikidata": "http://www.wikidata.org/entity/",
+        "grid": "https://www.grid.ac/institutes/",
+        "hesa": "https://bioregistry.io/hesa:",
+        "ucas": "https://bioregistry.io/ucas:",
+        "ukprn": "https://bioregistry.io/ukprn:",
+        "cnrs": "https://bioregistry.io/cnrs:",
     }
 
     def __post_init__(self):
@@ -69,18 +83,30 @@ class RORGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return iterate_ror_terms(force=force)
+        yield CHARLIE_TERM
+        yield HUMAN_TERM
+        yield Term(reference=ORG_CLASS)
+        yield Term(reference=CITY_CLASS)
+        yield from ROR_ORGANIZATION_TYPE_TO_OBI.values()
+        yield from iterate_ror_terms(force=force)
 
 
-ROR_ORGANIZATION_TYPE_TO_OBI = {
-    "Education": ...,
-    "Facility": ...,
-    "Company": ...,
-    "Government": ...,
-    "Healthcare": ...,
-    "Other": ...,
-    "Archive": ...,
+ROR_ORGANIZATION_TYPE_TO_OBI: dict[str, Term] = {
+    "Education": Term.default(PREFIX, "education", "educational organization"),
+    "Facility": Term.default(PREFIX, "facility", "facility"),
+    "Company": Term.default(PREFIX, "company", "company"),
+    "Government": Term.default(PREFIX, "government", "government organization"),
+    "Healthcare": Term.default(PREFIX, "healthcare", "healthcare organization"),
+    "Archive": Term.default(PREFIX, "archive", "archival organization"),
+    "Nonprofit": Term.default(PREFIX, "healthcare", "nonprofit organization")
+    .append_xref(Reference(prefix="ICO", identifier="0000048"))
+    .append_xref(Reference(prefix="GSSO", identifier="004615")),
 }
+for _k, v in ROR_ORGANIZATION_TYPE_TO_OBI.items():
+    v.append_parent(ORG_CLASS)
+    v.append_contributor(CHARLIE_TERM)
+    v.append_comment(PYOBO_INJECTED)
+
 _MISSED_ORG_TYPES: set[str] = set()
 
 
@@ -88,6 +114,8 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
     """Iterate over terms in ROR."""
     _version, _source_uri, records = get_latest(force=force)
     unhandled_xref_prefixes = set()
+
+    seen_geonames_references = set()
     for record in tqdm(records, unit_scale=True, unit="record", desc=PREFIX):
         identifier = record["id"].removeprefix("https://ror.org/")
         name = record["name"]
@@ -103,13 +131,14 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
             type="Instance",
             definition=description,
         )
-        term.append_parent(ORG_CLASS)
-        # TODO replace term.append_parent(ORG_CLASS) with:
-        # for organization_type in organization_types:
-        #     term.append_parent(ORG_PARENTS[organization_type])
+        for organization_type in organization_types:
+            if organization_type == "Other":
+                term.append_parent(ORG_CLASS)
+            else:
+                term.append_parent(ROR_ORGANIZATION_TYPE_TO_OBI[organization_type])
 
         for link in record.get("links", []):
-            term.annotate_literal(has_homepage, link, Reference(prefix="xsd", identifier="anyURI"))
+            term.annotate_uri(has_homepage, link)
 
         if name.startswith("The "):
             term.append_synonym(name.removeprefix("The "))
@@ -120,23 +149,29 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
                 RMAP[relationship["type"]], Reference(prefix=PREFIX, identifier=target_id)
             )
 
-        term.is_obsolete = record.get("status") != "active"
+        if record.get("status") != "active":
+            term.is_obsolete = True
 
         for address in record.get("addresses", []):
             city = address.get("geonames_city")
             if not city:
                 continue
-            term.append_relationship(
-                RMAP["Located in"], Reference(prefix="geonames", identifier=str(city["id"]))
+            geonames_reference = Reference(
+                prefix="geonames", identifier=str(city["id"]), name=city["city"]
             )
+            seen_geonames_references.add(geonames_reference)
+            term.append_relationship(RMAP["Located in"], geonames_reference)
 
-        for label in record.get("labels", []):
-            label = label["label"]  # there's a language availabel in this dict too
-            term.append_synonym(label)
+        for label_dict in record.get("labels", []):
+            label = label_dict["label"]
+            label = label.strip().replace("\n", " ")
+            language = label_dict["iso639"]
+            term.append_synonym(label, language=language)
             if label.startswith("The "):
-                term.append_synonym(label.removeprefix("The "))
+                term.append_synonym(label.removeprefix("The "), language=language)
 
         for synonym in record.get("aliases", []):
+            synonym = synonym.strip().replace("\n", " ")
             term.append_synonym(synonym)
             if synonym.startswith("The "):
                 term.append_synonym(synonym.removeprefix("The "))
@@ -166,6 +201,11 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
 
         yield term
 
+    for geonames_ref in sorted(seen_geonames_references):
+        geonames_term = Term(reference=geonames_ref, type="Instance")
+        geonames_term.append_parent(CITY_CLASS)
+        yield geonames_term
+
 
 def _get_info(*, force: bool = False):
     client = zenodo_client.Zenodo()
@@ -193,7 +233,7 @@ def get_latest(*, force: bool = False):
 
 def get_ror_to_country_geonames(**kwargs: Any) -> dict[str, str]:
     """Get a mapping of ROR ids to GeoNames IDs for countries."""
-    from pyobo.sources.geonames import get_city_to_country
+    from pyobo.sources.geonames.geonames import get_city_to_country
 
     city_to_country = get_city_to_country()
     rv = {}
@@ -207,4 +247,4 @@ def get_ror_to_country_geonames(**kwargs: Any) -> dict[str, str]:
 
 
 if __name__ == "__main__":
-    RORGetter(force=True).write_default(write_obo=True, force=True)
+    RORGetter.cli()

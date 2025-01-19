@@ -169,7 +169,10 @@ def typedefs(**kwargs: Unpack[LookupKwargs]) -> None:
 
 
 def _help_page_mapping(id_to_name: Mapping[str, str]) -> None:
-    click.echo_via_pager("\n".join("\t".join(item) for item in id_to_name.items()))
+    if not id_to_name:
+        click.secho("no data", fg="red")
+    else:
+        click.echo_via_pager("\n".join("\t".join(item) for item in id_to_name.items()))
 
 
 @lookup_annotate

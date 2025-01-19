@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 PREFIX = "pombase"
 GENE_NAMES_URL = "https://www.pombase.org/data/names_and_identifiers/gene_IDs_names_products.tsv"
 ORTHOLOGS_URL = "https://www.pombase.org/data/orthologs/human-orthologs.txt.gz"
-CHROMOSOME = TypeDef.default(PREFIX, "chromosome")
+CHROMOSOME = TypeDef.default(PREFIX, "chromosome", is_metadata_tag=True)
 
 
 class PomBaseGetter(Obo):
@@ -34,11 +34,6 @@ class PomBaseGetter(Obo):
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return get_terms(force=force, version=self._version_or_raise)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get OBO."""
-    return PomBaseGetter(force=force)
 
 
 #: A mapping from PomBase gene type to sequence ontology terms
@@ -90,7 +85,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             name=symbol if pd.notna(symbol) else None,
             definition=name if pd.notna(name) else None,
         )
-        term.annotate_literal(CHROMOSOME, chromosome[len("chromosome_") :])
+        term.annotate_string(CHROMOSOME, chromosome[len("chromosome_") :])
         term.append_parent(so[gtype])
         term.set_species(identifier="4896", name="Schizosaccharomyces pombe")
         for hgnc_id in identifier_to_hgnc_ids.get(identifier, []):

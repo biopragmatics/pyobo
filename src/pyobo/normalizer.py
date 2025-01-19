@@ -11,21 +11,17 @@ from functools import lru_cache
 import bioregistry
 
 from .api import names
+from .struct import Reference
 from .utils.io import multisetdict
 
 __all__ = [
     "MultiNormalizer",
-    "NormalizationResult",
     "Normalizer",
     "OboNormalizer",
     "ground",
 ]
 
 logger = logging.getLogger(__name__)
-
-NormalizationSuccess = tuple[str, str, str]
-NormalizationFailure = tuple[None, None, str]
-NormalizationResult = NormalizationSuccess | NormalizationFailure
 
 
 class Normalizer(ABC):
@@ -104,9 +100,8 @@ class Normalizer(ABC):
         return list(self.norm_name_to_name.get(norm_text, []))
 
     @abstractmethod
-    def normalize(self, query: str) -> NormalizationResult:
+    def normalize(self, query: str) -> Reference | None:
         """Try and normalize a name to a identifier and canonical name."""
-        raise NotImplementedError
 
 
 @lru_cache
@@ -125,7 +120,7 @@ def get_normalizer(prefix: str) -> Normalizer:
     return normalizer
 
 
-def ground(prefix: str | Iterable[str], query: str) -> NormalizationResult:
+def ground(prefix: str | Iterable[str], query: str) -> Reference | None:
     """Normalize a string given the prefix's labels and synonyms.
 
     :param prefix: If a string, only grounds against that namespace. If a list, will try grounding
@@ -137,10 +132,9 @@ def ground(prefix: str | Iterable[str], query: str) -> NormalizationResult:
         return normalizer.normalize(query)
     else:
         for p in prefix:
-            norm_prefix, identifier, name = ground(p, query)
-            if norm_prefix and identifier and name:
-                return norm_prefix, identifier, name
-        return None, None, query
+            if rv := ground(p, query):
+                return rv
+        return None
 
 
 class OboNormalizer(Normalizer):
@@ -161,22 +155,26 @@ class OboNormalizer(Normalizer):
     def __repr__(self) -> str:
         return f'OboNormalizer(prefix="{self.prefix}")'
 
-    def normalize(self, query: str) -> NormalizationResult:
+    def normalize(self, query: str) -> Reference | None:
         """Try and normalize a name to a identifier and canonical name."""
         names = self.get_names(query)
         if not names:
-            return None, None, query
+            return None
 
         for name in names:
             identifiers = self.synonym_to_identifiers_mapping[name]
             for identifier in identifiers:
                 if identifier in self.id_to_name:
-                    return self.prefix, identifier, self.id_to_name[identifier]
+                    return Reference(
+                        prefix=self.prefix,
+                        identifier=identifier,
+                        name=self.id_to_name.get(identifier),
+                    )
             logger.warning(f"Could not find valid identifier for {name} from {identifiers}")
 
         # maybe it happens that one can't be found?
         logger.warning(f"was able to look up name {query}->{names} but not find fresh identifier")
-        return None, None, query
+        return None
 
 
 @dataclass
@@ -186,13 +184,12 @@ class MultiNormalizer:
     If you're looking for taxa of exotic plants, you might use:
 
     >>> from pyobo.normalizer import MultiNormalizer
-    >>> normalizer = MultiNormalizer(prefixes=["ncbitaxon", "itis"])
+    >>> normalizer = MultiNormalizer.from_prefixes(["ncbitaxon", "itis"])
     >>> normalizer.normalize("Homo sapiens")
-    ('ncbitaxon', '9606', 'Homo sapiens')
+    Reference(prefix='ncbitaxon', identifier='9606', name='Homo sapiens')
     >>> normalizer.normalize("Abies bifolia")  # variety not listed in NCBI
-    ('itis', '507501', 'Abies bifolia')
+    Reference(prefic='itis', identifier='507501', name='Abies bifolia')
     >>> normalizer.normalize("vulcan")  # nice try, nerds
-    (None, None, None)
     """
 
     #: The normalizers for each prefix
@@ -203,13 +200,12 @@ class MultiNormalizer:
         """Instantiate normalizers based on the given prefixes, in preferred order.."""
         return MultiNormalizer([get_normalizer(prefix) for prefix in prefixes])
 
-    def normalize(self, query: str) -> NormalizationResult:
+    def normalize(self, query: str) -> Reference | None:
         """Try and normalize a canonical name using multiple normalizers."""
         for normalizer in self.normalizers:
-            prefix, identifier, name = normalizer.normalize(query)
-            if prefix and identifier and name:  # all not empty
-                return prefix, identifier, name
-        return None, None, query
+            if rv := normalizer.normalize(query):
+                return rv
+        return None
 
 
 # See: https://en.wikipedia.org/wiki/Dash

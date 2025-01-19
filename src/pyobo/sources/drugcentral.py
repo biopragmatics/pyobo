@@ -32,16 +32,11 @@ class DrugCentralGetter(Obo):
     """An ontology representation of the DrugCentral database."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [exact_match]
+    typedefs = [exact_match, has_inchi, has_smiles]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms()
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get DrugCentral OBO."""
-    return DrugCentralGetter(force=force)
 
 
 def iter_terms() -> Iterable[Term]:
@@ -85,16 +80,16 @@ def iter_terms() -> Iterable[Term]:
         drugcentral_id = str(drugcentral_id)
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=drugcentral_id, name=name),
-            definition=definition,
+            definition=definition.replace("\n", " ") if definition else None,
             synonyms=synonyms.get(drugcentral_id, []),
             xrefs=xrefs.get(drugcentral_id, []),
         )
         if inchi_key:
             term.append_exact_match(Reference(prefix="inchikey", identifier=inchi_key))
         if smiles:
-            term.annotate_literal(has_smiles, smiles)
+            term.annotate_string(has_smiles, smiles)
         if inchi:
-            term.annotate_literal(has_inchi, inchi)
+            term.annotate_string(has_inchi, inchi)
         if cas:
             term.append_exact_match(Reference(prefix="cas", identifier=cas))
         yield term

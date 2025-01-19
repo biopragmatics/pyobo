@@ -51,12 +51,6 @@ class KEGGPathwayGetter(Obo):
         return iter_terms(version=self._version_or_raise)
 
 
-def get_obo() -> Obo:
-    """Get KEGG Pathways as OBO."""
-    # since old kegg versions go away forever, do NOT add a force option
-    return KEGGPathwayGetter()
-
-
 def iter_terms(version: str, skip_missing: bool = True) -> Iterable[Term]:
     """Iterate over terms for KEGG Pathway."""
     # since old kegg versions go away forever, do NOT add a force option
