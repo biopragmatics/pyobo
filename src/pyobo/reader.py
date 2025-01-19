@@ -1146,17 +1146,24 @@ def _handle_prop(
         obj_reference = _parse_identifier(
             value_type, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
-        if obj_reference is None:
-            if not UNHANDLED_PROP_OBJECTS[prop_reference, value_type]:
-                logger.warning(
-                    "[%s - %s] could not parse object: %s",
-                    node.curie,
-                    prop_reference.curie,
-                    value_type,
-                )
-            UNHANDLED_PROP_OBJECTS[prop_reference, value_type] += 1
-            return None
-        return Annotation(prop_reference, obj_reference)
+        if obj_reference is not None:
+            return Annotation(prop_reference, obj_reference)
+
+        # TODO if the predicate is part of a sacred class (e.g., rdfs:seeAlso)
+        #  and the value_type looks like a URL, store it
+        if prop_reference in {v.see_also} and value_type.startswith("http"):
+            return Annotation(prop_reference, OBOLiteral.uri(value_type))
+
+        if not UNHANDLED_PROP_OBJECTS[prop_reference, value_type]:
+            logger.warning(
+                "[%s - %s] could not parse object: %s",
+                node.curie,
+                prop_reference.curie,
+                value_type,
+            )
+        UNHANDLED_PROP_OBJECTS[prop_reference, value_type] += 1
+        return None
+
 
     try:
         value, datatype = value_type.rsplit(" ", 1)  # second entry is the value type

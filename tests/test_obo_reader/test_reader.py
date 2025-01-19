@@ -954,6 +954,25 @@ class TestReaderTerm(unittest.TestCase):
         self.assertIn(see_also.reference, term.properties)
         self.assertEqual("hgnc:1234", term.get_property(see_also))
 
+    def test_12_property_convert_uri(self) -> None:
+        """Test that unparsable URIs for seeAlso are stored as literals."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: rdfs:seeAlso https://example.org
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(list(term.properties)))
+        self.assertIn(see_also.reference, term.properties)
+        properties = term.properties[see_also.reference]
+        self.assertEqual(1, len(properties))
+        prop = properties[0]
+        self.assertIsInstance(prop, OBOLiteral)
+        self.assertEqual("https://example.org", prop.value)
+        self.assertEqual(v.xsd_uri, prop.datatype)
+
     def test_13_parent(self) -> None:
         """Test parsing out a parent."""
         ontology = from_str("""\
