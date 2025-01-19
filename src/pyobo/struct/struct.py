@@ -168,10 +168,9 @@ class Synonym:
         x = f'"{self._escape(self.name)}"'
 
         # Add on the specificity, e.g., EXACT
-        std = _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
-        if std is not None and std.specificity is not None:
-            specificity = std.specificity
-            x = f"{x} {std.specificity}"
+        synonym_typedef = _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
+        if synonym_typedef is not None and synonym_typedef.specificity is not None:
+            x = f"{x} {synonym_typedef.specificity}"
         elif self.specificity:
             x = f"{x} {self.specificity}"
 
