@@ -498,12 +498,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                synonym: "L-lysine:NAD+ oxidoreductase" EXACT [] ! language: en
+                synonym: "L-lysine:NAD+ oxidoreductase" [] ! language: en
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(oboInOwl:hasExactSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase"@en)
+                AnnotationAssertion(oboInOwl:hasRelatedSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase"@en)
             """,
         )
 
