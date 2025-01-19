@@ -634,6 +634,7 @@ class TestTerm(unittest.TestCase):
         term.annotate_string(RO_DUMMY, "value", language="en")
         self.assert_obo_stanza(
             term,
+            # FIXME what to do when emitting property value?
             obo="""\
                 [Term]
                 id: GO:0050069
