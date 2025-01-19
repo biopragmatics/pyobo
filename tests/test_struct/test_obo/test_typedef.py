@@ -244,7 +244,7 @@ class TestTypeDef(unittest.TestCase):
             f"""\
             [Typedef]
             id: RO:0000087
-            def: "{obo_escape_slim(has_role.definition)}" []
+            def: "{obo_escape_slim(has_role.definition)}"
             """,
             typedef,
         )

@@ -306,7 +306,7 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                def: "Something" []
+                def: "Something"
             """,
             ofn="""\
                 Declaration(Class(GO:0050069))

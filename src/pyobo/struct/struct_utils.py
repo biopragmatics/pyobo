@@ -697,7 +697,11 @@ class Stanza:
 
     def _definition_fp(self) -> str:
         definition = obo_escape_slim(self.definition) if self.definition else ""
-        return f'"{definition}" [{comma_separate_references(self._get_definition_provenance())}]'
+        dp = self._get_definition_provenance()
+        if dp:
+            return f'"{definition}" [{comma_separate_references(dp)}]'
+        else:
+            return f'"{definition}"'
 
     def _get_definition_provenance(self) -> Sequence[Reference | OBOLiteral]:
         if self.definition is None:
