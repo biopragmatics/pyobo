@@ -628,6 +628,26 @@ class TestTerm(unittest.TestCase):
             """,
         )
 
+    def test_12_property_string_with_language(self) -> None:
+        """Test emitting a string property literal with a language."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_string(RO_DUMMY, "value", language="en")
+        self.assert_obo_stanza(
+            term,
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                property_value: RO:1234567 "value" xsd:string
+            """,
+            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            ofn="""\
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(RO:1234567 GO:0050069 "value"@en)
+            """,
+        )
+
     def test_12_property_integer(self) -> None:
         """Test emitting property literals that were annotated as a boolean."""
         term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
