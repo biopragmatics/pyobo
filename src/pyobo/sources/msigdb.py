@@ -115,7 +115,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
         for key, typedef in PROPERTIES:
             if value := attrib[key].strip():
-                term.annotate_literal(typedef, value)
+                term.annotate_string(typedef, value)
 
         term.set_species(tax_id)
 

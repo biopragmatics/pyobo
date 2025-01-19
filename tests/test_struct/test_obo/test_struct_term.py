@@ -611,7 +611,7 @@ class TestTerm(unittest.TestCase):
     def test_12_property_literal(self) -> None:
         """Test emitting property literals."""
         term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
-        term.annotate_literal(RO_DUMMY, "value")
+        term.annotate_string(RO_DUMMY, "value")
         self.assert_obo_stanza(
             term,
             obo="""\

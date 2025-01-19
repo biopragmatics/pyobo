@@ -302,9 +302,36 @@ class OBOLiteral(NamedTuple):
     datatype: Reference
 
     @classmethod
-    def string(cls, value: str) -> OBOLiteral:
+    def string(cls, value: str, *, language: str | None = None) -> OBOLiteral:
         """Get a string literal."""
+        if language:
+            raise NotImplementedError
         return cls(value, Reference(prefix="xsd", identifier="string"))
+
+    @classmethod
+    def boolean(cls, value: bool) -> OBOLiteral:
+        """Get a boolean literal."""
+        return cls(str(value).lower(), Reference(prefix="xsd", identifier="boolean"))
+
+    @classmethod
+    def decimal(cls, value) -> OBOLiteral:
+        """Get a decimal literal."""
+        return cls(str(value), Reference(prefix="xsd", identifier="decimal"))
+
+    @classmethod
+    def float(cls, value) -> OBOLiteral:
+        """Get a float literal."""
+        return cls(str(value), Reference(prefix="xsd", identifier="float"))
+
+    @classmethod
+    def integer(cls, value: int | str) -> OBOLiteral:
+        """Get a integer literal."""
+        return cls(str(int(value)), Reference(prefix="xsd", identifier="integer"))
+
+    @classmethod
+    def year(cls, value: int | str) -> OBOLiteral:
+        """Get a year (gYear) literal."""
+        return cls(str(int(value)), Reference(prefix="xsd", identifier="gYear"))
 
     @classmethod
     def uri(cls, uri: str) -> OBOLiteral:

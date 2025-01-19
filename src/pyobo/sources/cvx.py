@@ -85,7 +85,7 @@ def iter_terms() -> Iterable[Term]:
             if replacement_identifier:
                 term.append_replaced_by(Reference(prefix=PREFIX, identifier=replacement_identifier))
         if pd.notna(status):
-            term.annotate_literal(STATUS, status)
+            term.annotate_string(STATUS, status)
         if pd.notna(nonvaccine):
             term.annotate_boolean(NONVACCINE, nonvaccine)
         terms[cvx] = term
