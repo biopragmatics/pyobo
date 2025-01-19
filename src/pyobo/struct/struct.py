@@ -134,7 +134,7 @@ class Synonym:
             match provenance:
                 case Reference():
                     rv.add(provenance.prefix)
-                case OBOLiteral(_, datatype):
+                case OBOLiteral(_, datatype, _language):
                     rv.add(datatype.prefix)
         rv.update(_get_prefixes_from_annotations(self.annotations))
         return rv
@@ -329,7 +329,7 @@ class Term(Referenced, Stanza):
             match t:
                 case Reference():
                     rv.append(get_preferred_curie(t))
-                case OBOLiteral(value, _):
+                case OBOLiteral(value, _datatype, _language):
                     rv.append(value)
         return rv
 
@@ -894,7 +894,7 @@ class Obo:
         # TODO add SPDX to idspaces and use as a CURIE?
         if license_spdx_id := bioregistry.get_license(self.ontology):
             if license_spdx_id.startswith("http"):
-                license_literal = OBOLiteral(license_spdx_id, v.xsd_uri)
+                license_literal = OBOLiteral.uri(license_spdx_id)
             else:
                 license_literal = OBOLiteral.string(license_spdx_id)
             yield Annotation(v.has_license, license_literal)
@@ -1446,7 +1446,7 @@ class Obo:
     @property
     def properties_header(self):
         """Property dataframe header."""
-        return [f"{self.ontology}_id", "property", "value", "datatype"]
+        return [f"{self.ontology}_id", "property", "value", "datatype", "language"]
 
     @property
     def object_properties_header(self):
@@ -1458,15 +1458,23 @@ class Obo:
         """Property dataframe header."""
         return ["source", "predicate", "target", "datatype"]
 
-    def _iter_property_rows(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str, str, str]]:
+    def _iter_property_rows(
+        self, *, use_tqdm: bool = False
+    ) -> Iterable[tuple[str, str, str, str, str]]:
         """Iterate property rows."""
         for term, t in self.iterate_properties(use_tqdm=use_tqdm):
             pred = term._reference(t.predicate, ontology_prefix=self.ontology)
             match t.value:
-                case OBOLiteral(value, datatype):
-                    yield (term.identifier, pred, value, get_preferred_curie(datatype))
+                case OBOLiteral(value, datatype, language):
+                    yield (
+                        term.identifier,
+                        pred,
+                        value,
+                        get_preferred_curie(datatype),
+                        language or "",
+                    )
                 case Reference() as obj:
-                    yield (term.identifier, pred, get_preferred_curie(obj), "")
+                    yield term.identifier, pred, get_preferred_curie(obj), "", ""
                 case _:
                     raise TypeError(f"got: {type(t)} - {t}")
 
