@@ -221,13 +221,13 @@ HAS_MAPPING_JUSTIFICATION = Reference.from_curie("sssom:has_mapping_justificatio
 class SynonymMacro(Macro):
     """A macro for synonym assertion.
 
-    You can just make a quick assertion, which defaults to exact:
+    You can just make a quick assertion, which defaults to ``RELATED``:
 
     >>> SynonymMacro("hgnc:16793", "ULBP4").to_funowl()
-    'AnnotationAssertion(oboInOwl:hasExactSynonym hgnc:16793 "ULBP4")'
+    'AnnotationAssertion(oboInOwl:hasRelatedSynonym hgnc:16793 "ULBP4")'
 
     You can make the predicate more explicit either with OBO-style
-    scoping (EXACT, BROAD, NARROW, CLOSE) or a CURIE/:class:`curies.Reference`/URIRef
+    scoping (``EXACT``, ``BROAD``, ``NARROW``, ``RELATED``) or a CURIE/:class:`curies.Reference`/URIRef
 
     >>> SynonymMacro("hgnc:16793", "ULBP4", "EXACT").to_funowl()
     'AnnotationAssertion(oboInOwl:hasExactSynonym hgnc:16793 "ULBP4")'
