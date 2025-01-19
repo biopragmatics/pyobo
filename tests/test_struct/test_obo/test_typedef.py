@@ -303,19 +303,39 @@ class TestTypeDef(unittest.TestCase):
             """\
             [Typedef]
             id: RO:0000087
-            synonym: "bears role" EXACT []
+            synonym: "bears role" []
             """,
             typedef,
         )
         self.assert_funowl_lines(
             """\
             Declaration(ObjectProperty(RO:0000087))
-            AnnotationAssertion(oboInOwl:hasExactSynonym RO:0000087 "bears role")
+            AnnotationAssertion(oboInOwl:hasRelatedSynonym RO:0000087 "bears role")
             """,
             typedef,
         )
 
         typedef = TypeDef(reference=REF, synonyms=[Synonym("bears role", type=v.previous_name)])
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: RO:0000087
+            synonym: "bears role" RELATED OMO:0003008 []
+            """,
+            typedef,
+        )
+        self.assert_funowl_lines(
+            """\
+            Declaration(ObjectProperty(RO:0000087))
+            AnnotationAssertion(Annotation(oboInOwl:hasSynonymType OMO:0003008) oboInOwl:hasRelatedSynonym RO:0000087 "bears role")
+            """,
+            typedef,
+        )
+
+        typedef = TypeDef(
+            reference=REF,
+            synonyms=[Synonym("bears role", type=v.previous_name, specificity="EXACT")],
+        )
         self.assert_obo_stanza(
             """\
             [Typedef]
