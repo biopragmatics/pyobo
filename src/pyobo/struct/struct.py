@@ -303,6 +303,11 @@ class Term(Referenced, Stanza):
             definition=get_definition(prefix, identifier),
         )
 
+    @classmethod
+    def default(cls, prefix, identifier, name=None) -> Self:
+        """Create a default term."""
+        return cls(reference=default_reference(prefix=prefix, identifier=identifier, name=name))
+
     def append_see_also_uri(self, uri: str) -> Self:
         """Add a see also property."""
         return self.annotate_uri(v.see_also, uri)

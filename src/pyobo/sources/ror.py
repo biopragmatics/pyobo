@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import zipfile
 from collections.abc import Iterable
 from typing import Any
@@ -12,7 +13,7 @@ import zenodo_client
 from tqdm.auto import tqdm
 
 from pyobo.struct import Obo, Reference, Term
-from pyobo.struct.struct import acronym
+from pyobo.struct.struct import CHARLIE_TERM, HUMAN_TERM, PYOBO_INJECTED, acronym
 from pyobo.struct.typedef import (
     has_homepage,
     has_part,
@@ -23,6 +24,7 @@ from pyobo.struct.typedef import (
     see_also,
 )
 
+logger = logging.getLogger(__name__)
 PREFIX = "ror"
 ROR_ZENODO_RECORD_ID = "10086202"
 
@@ -81,18 +83,29 @@ class RORGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return iterate_ror_terms(force=force)
+        yield CHARLIE_TERM
+        yield HUMAN_TERM
+        yield from iterate_ror_terms(force=force)
 
 
-ROR_ORGANIZATION_TYPE_TO_OBI = {
-    "Education": ...,
-    "Facility": ...,
-    "Company": ...,
-    "Government": ...,
-    "Healthcare": ...,
-    "Other": ...,
-    "Archive": ...,
+ROR_ORGANIZATION_TYPE_TO_OBI: dict[str, Term] = {
+    "Education": Term.default(PREFIX, "education", "educational organization"),
+    "Facility": Term.default(PREFIX, "facility", "facility"),
+    "Company": Term.default(PREFIX, "company", "company"),
+    "Government": Term.default(PREFIX, "government", "government organization"),
+    "Healthcare": Term.default(PREFIX, "healthcare", "healthcare organization"),
+    "Other": Term(reference=ORG_CLASS),
+    "Archive": Term.default(PREFIX, "archive", "archive"),
+    "Nonprofit": Term.default(PREFIX, "healthcare", "nonprofit organization")
+    .append_xref(Reference(prefix="ICO", identifier="0000048"))
+    .append_xref(Reference(prefix="GSSO", identifier="004615")),
 }
+for k, v in ROR_ORGANIZATION_TYPE_TO_OBI.items():
+    if k != "Other":
+        v.append_parent(ORG_CLASS)
+        v.append_contributor(CHARLIE_TERM)
+        v.append_comment(PYOBO_INJECTED)
+
 _MISSED_ORG_TYPES: set[str] = set()
 
 
@@ -120,10 +133,8 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
             type="Instance",
             definition=description,
         )
-        term.append_parent(ORG_CLASS)
-        # TODO replace term.append_parent(ORG_CLASS) with:
-        # for organization_type in organization_types:
-        #     term.append_parent(ORG_PARENTS[organization_type])
+        for organization_type in organization_types:
+            term.append_parent(ROR_ORGANIZATION_TYPE_TO_OBI[organization_type])
 
         for link in record.get("links", []):
             term.annotate_uri(has_homepage, link)
