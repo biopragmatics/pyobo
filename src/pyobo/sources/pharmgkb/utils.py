@@ -1,6 +1,7 @@
 """Utilities for PharmGKB."""
 
 from collections.abc import Iterable
+from pathlib import Path
 
 import pandas as pd
 from pystow.utils import read_zipfile_csv
@@ -16,19 +17,25 @@ __all__ = [
 AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
 
 
-def download_pharmgkb_tsv(prefix: str, url: str, inner: str, *, force: bool) -> pd.DataFrame:
-    """Download PharmGKB data."""
-    path = ensure_path(
+def download_pharmgkb(prefix: str, url: str, *, force: bool) -> Path:
+    """Download a file from PharmGKB, spoofing the user agent."""
+    return ensure_path(
         prefix,
         url=url,
         backend="requests",
         download_kwargs={
             "headers": {
+                # This is required otherwise we get booted
                 "User-Agent": AGENT,
             },
         },
         force=force,
     )
+
+
+def download_pharmgkb_tsv(prefix: str, url: str, inner: str, *, force: bool) -> pd.DataFrame:
+    """Download PharmGKB data."""
+    path = download_pharmgkb(prefix, url=url, force=force)
     df = read_zipfile_csv(path, inner_path=inner, dtype=str)
     return df
 

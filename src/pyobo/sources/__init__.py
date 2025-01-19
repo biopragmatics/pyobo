@@ -45,6 +45,7 @@ from .pharmgkb import (
     PharmGKBChemicalGetter,
     PharmGKBDiseaseGetter,
     PharmGKBGeneGetter,
+    PharmGKBPathwayGetter,
     PharmGKBVariantGetter,
 )
 from .pid import PIDGetter
@@ -125,6 +126,7 @@ __all__ = [
     "PharmGKBChemicalGetter",
     "PharmGKBDiseaseGetter",
     "PharmGKBGeneGetter",
+    "PharmGKBPathwayGetter",
     "PharmGKBVariantGetter",
     "PomBaseGetter",
     "PubChemCompoundGetter",
