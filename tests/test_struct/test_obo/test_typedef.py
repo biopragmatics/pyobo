@@ -363,9 +363,7 @@ class TestTypeDef(unittest.TestCase):
                         name=v.charlie.name,
                     )
                 ],
-                has_inchi.reference: [
-                    OBOLiteral("abc", Reference(prefix="xsd", identifier="string"))
-                ],
+                has_inchi.reference: [OBOLiteral.string("abc")],
             },
         )
         self.assert_obo_stanza(

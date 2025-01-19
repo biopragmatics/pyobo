@@ -305,8 +305,6 @@ class OBOLiteral(NamedTuple):
     @classmethod
     def string(cls, value: str, *, language: str | None = None) -> OBOLiteral:
         """Get a string literal."""
-        if language:
-            raise NotImplementedError
         return cls(value, Reference(prefix="xsd", identifier="string"), language)
 
     @classmethod
