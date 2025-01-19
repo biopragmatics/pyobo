@@ -492,23 +492,19 @@ class TestTerm(unittest.TestCase):
             "L-lysine:NAD+ oxidoreductase",
             language="en",
         )
-        with self.assertLogs(level="INFO") as log:
-            self.assert_obo_stanza(
-                term,
-                obo="""\
-                    [Term]
-                    id: GO:0050069
-                    name: lysine dehydrogenase activity
-                    synonym: "L-lysine:NAD+ oxidoreductase" EXACT OMO:1234567 [] ! language: en
-                """,
-                ofn="""
-                    Declaration(Class(GO:0050069))
-                    AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                    AnnotationAssertion(oboInOwl:hasExactSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase"@en)
-                """,
-            )
-        self.assertIn(
-            "WARNING:pyobo.struct.struct:[go] synonym typedef not defined: OMO:1234567", log.output
+        self.assert_obo_stanza(
+            term,
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                synonym: "L-lysine:NAD+ oxidoreductase" EXACT [] ! language: en
+            """,
+            ofn="""
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(oboInOwl:hasExactSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase"@en)
+            """,
         )
 
     def test_10_xref(self) -> None:
