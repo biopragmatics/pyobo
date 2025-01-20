@@ -58,9 +58,9 @@ REPLACES = {
 }
 
 
-def parse_xrefs(term, row) -> Iterable[Reference]:
+def parse_xrefs(term, row, key="Cross-references") -> Iterable[Reference]:
     """Parse the cross-references."""
-    for xref_curie in split(row, "Cross-references"):
+    for xref_curie in split(row, key):
         # HOXD@ is a valid genatlas identifier, see http://genatlas.medecine.univ-paris5.fr/fiche.php?symbol=HOXD@
         # but this is broken, so skip them for now
         if xref_curie.endswith("@"):

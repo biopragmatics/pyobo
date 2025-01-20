@@ -4,7 +4,7 @@ from collections.abc import Iterable
 
 import pandas as pd
 
-from pyobo import Obo, Term
+from pyobo import Obo, Reference, Term
 from pyobo.sources.pharmgkb.utils import download_pharmgkb_tsv, parse_xrefs, split
 
 __all__ = [
@@ -43,11 +43,29 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
         identifier = row["PharmGKB Accession Id"]
         if pd.isna(identifier):
             continue
-        term = Term.from_triple(PREFIX, identifier=str(identifier), name=row["Name"])
+        name = row["Name"]
+        term = Term.from_triple(PREFIX, identifier=str(identifier), name=name)
+
+        synonyms = set()
         for synonym in split(row, "Alternate Names"):
+            synonym = synonym.strip()
+            if synonym.casefold() == name.casefold():
+                continue
+            synonyms.add(synonym.strip('"'))
+        for synonym in sorted(synonyms):
             term.append_synonym(synonym)
         for xref in parse_xrefs(term, row):
             term.append_xref(xref)
+
+        for xref_line in split(row, "External Vocabulary"):
+            xref_curie, _, _ = xref_line.strip('"').partition("(")
+            try:
+                xref = Reference.from_curie(xref_curie)
+            except Exception:  # noqa:S110
+                pass  # this happens when there's a comma in the name, but not a problem
+            else:
+                term.append_xref(xref)
+
         yield term
 
 

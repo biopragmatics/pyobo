@@ -28,7 +28,7 @@ class PharmGKBChemicalGetter(Obo):
         return iter_terms(force=force)
 
 
-SKIP_PREFIXES = {"smiles", "inchi"}
+SKIP_PREFIXES = {"smiles", "inchi", "atc", "rxnorm", "pubchem.compound"}
 
 
 def iter_terms(force: bool = False) -> Iterable[Term]:

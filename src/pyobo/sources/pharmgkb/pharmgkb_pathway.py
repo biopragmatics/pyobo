@@ -12,7 +12,7 @@ __all__ = [
 
 PREFIX = "pharmgkb.pathways"
 BIOPAX_URL = "https://api.pharmgkb.org/v1/download/file/data/pathways-biopax.zip"
-TSV_URL = "https://api.pharmgkb.org/v1/download/file/data/pathways-tsv.zip"
+EXTENSION = ".owl"
 
 
 class PharmGKBPathwayGetter(Obo):
@@ -41,14 +41,14 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
     path = download_pharmgkb(PREFIX, url=BIOPAX_URL, force=force)
     with zipfile.ZipFile(path) as zf:
         for zip_info in zf.filelist:
-            if not zip_info.filename.endswith(".owl"):
+            if not zip_info.filename.endswith(EXTENSION):
                 continue
             with zf.open(zip_info) as file:
                 yield _process_biopax(zip_info, file)
 
 
 def _process_biopax(path: zipfile.ZipInfo, file) -> Term:
-    fname = path.filename.removesuffix(".tsv").strip().replace("\r\n", " ")
+    fname = path.filename.removesuffix(EXTENSION).strip().replace("\r\n", " ")
     identifier, _, name = fname.partition("-")
     name = name.replace("_", " ")
     term = Term.from_triple(PREFIX, identifier, name)

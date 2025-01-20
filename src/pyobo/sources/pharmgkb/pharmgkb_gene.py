@@ -78,6 +78,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
             term.append_xref(Reference(prefix="ensembl", identifier=ensembl_id))
 
         for synonym in split(row, "Alternate Names"):
+            synonym = synonym.strip('"')
             term.append_synonym(synonym)
 
         # TODO symbol synonym type
