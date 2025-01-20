@@ -48,8 +48,8 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
 
 
 def _process_biopax(path: zipfile.ZipInfo, file) -> Term:
-    identifier, _, rest = path.filename.partition("-")
-    name, _, _extension = rest.rpartition(".")
+    fname = path.filename.removesuffix(".tsv").strip().replace("\r\n", " ")
+    identifier, _, name = fname.partition("-")
     name = name.replace("_", " ")
     term = Term.from_triple(PREFIX, identifier, name)
     # TODO parse file with pybiopax to include members and provenance
@@ -57,4 +57,4 @@ def _process_biopax(path: zipfile.ZipInfo, file) -> Term:
 
 
 if __name__ == "__main__":
-    PharmGKBPathwayGetter().write_default(force=True, write_obo=True, use_tqdm=True)
+    PharmGKBPathwayGetter.cli()

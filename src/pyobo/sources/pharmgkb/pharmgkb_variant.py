@@ -53,14 +53,15 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
     df = download_pharmgkb_tsv(PREFIX, url=URL, inner="variants.tsv", force=force)
 
     for _, row in df.iterrows():
-        identifier = row["Variant Id"]
+        identifier = row["Variant ID"]
         if pd.isna(identifier):
             continue
 
         term = Term.from_triple(PREFIX, identifier=str(identifier))
 
         dbsnp_id = row["Variant Name"]
-        term.append_exact_match(Reference(prefix="dbsnp", identifier=dbsnp_id))
+        if pd.notna(dbsnp_id):
+            term.append_exact_match(Reference(prefix="dbsnp", identifier=dbsnp_id))
 
         for gene_id, gene_name in zip(
             split(row, "Gene IDs"), split(row, "Gene Symbols"), strict=False
@@ -74,4 +75,4 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    PharmGKBVariantGetter().write_default(force=True, write_obo=True, use_tqdm=True)
+    PharmGKBVariantGetter.cli()

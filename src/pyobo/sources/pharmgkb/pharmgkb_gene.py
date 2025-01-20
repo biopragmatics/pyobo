@@ -52,6 +52,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
     """
     df = download_pharmgkb_tsv(PREFIX, url=URL, inner="genes.tsv", force=force)
 
+    skip_xrefs = {"ncbigene", "hgnc", "ensembl"}
     for _, row in df.iterrows():
         identifier = row["PharmGKB Accession Id"]
         if pd.isna(identifier):
@@ -59,11 +60,22 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
 
         term = Term.from_triple(PREFIX, identifier=str(identifier), name=row["Name"])
 
-        term.append_exact_match(Reference(prefix="ncbigene", identifier=str(row["NCBI Gene ID"])))
-        if pd.notna(hgnc_id := row["HGNC ID"]):
-            term.append_exact_match(Reference(prefix="hgnc", identifier=str(hgnc_id)))
-        if pd.notna(ensembl_id := row["Ensembl Id"]):
-            term.append_exact_match(Reference(prefix="ensembl", identifier=str(ensembl_id)))
+        ncbigene_ids = list(split(row, "NCBI Gene ID"))
+        if len(ncbigene_ids) == 1:
+            term.append_exact_match(Reference(prefix="ncbigene", identifier=ncbigene_ids[0]))
+        else:
+            for ncbigene_id in ncbigene_ids:
+                term.append_xref(Reference(prefix="ncbigene", identifier=ncbigene_id))
+
+        hgnc_ids = list(split(row, "HGNC ID"))
+        if len(hgnc_ids) == 1:
+            term.append_exact_match(Reference(prefix="hgnc", identifier=hgnc_ids[0]))
+        else:
+            for hgnc_id in hgnc_ids:
+                term.append_xref(Reference(prefix="hgnc", identifier=hgnc_id))
+
+        for ensembl_id in split(row, "Ensembl Id"):
+            term.append_xref(Reference(prefix="ensembl", identifier=ensembl_id))
 
         for synonym in split(row, "Alternate Names"):
             term.append_synonym(synonym)
@@ -75,7 +87,8 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
             term.append_synonym(synonym)
 
         for xref in parse_xrefs(term, row):
-            term.append_xref(xref)
+            if xref.prefix not in skip_xrefs:
+                term.append_xref(xref)
 
         yield term
 

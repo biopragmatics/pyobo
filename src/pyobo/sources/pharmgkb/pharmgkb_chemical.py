@@ -28,6 +28,9 @@ class PharmGKBChemicalGetter(Obo):
         return iter_terms(force=force)
 
 
+SKIP_PREFIXES = {"smiles", "inchi"}
+
+
 def iter_terms(force: bool = False) -> Iterable[Term]:
     """Iterate over terms."""
     df = download_pharmgkb_tsv(PREFIX, url=URL, inner="chemicals.tsv", force=force)
@@ -43,9 +46,9 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
         term = Term.from_triple(PREFIX, identifier=row["PharmGKB Accession Id"], name=row["Name"])
         term.append_parent(type_to_ref[row["Type"]])
         if pd.notna(row["SMILES"]):
-            term.annotate_object(has_smiles, Reference(prefix="smiles", identifier=row["SMILES"]))
+            term.annotate_string(has_smiles, row["SMILES"])
         if pd.notna(row["InChI"]):
-            term.annotate_object(has_inchi, Reference(prefix="inchi", identifier=row["InChI"]))
+            term.annotate_string(has_inchi, row["InChI"])
         for atc_id in split(row, "ATC Identifiers"):
             term.append_exact_match(Reference(prefix="atc", identifier=atc_id))
         for rxnorm_id in split(row, "RxNorm Identifiers"):
@@ -58,14 +61,16 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
             except ValueError:
                 pass
             else:
-                term.append_exact_match(reference)
+                if reference.prefix not in SKIP_PREFIXES:
+                    term.append_exact_match(reference)
         for xref_curie in split(row, "Cross-references"):
             try:
                 reference = Reference.from_curie(xref_curie)
             except ValueError:
                 pass
             else:
-                term.append_exact_match(reference)
+                if reference.prefix not in SKIP_PREFIXES:
+                    term.append_exact_match(reference)
 
         for trade_name in split(row, "Trade names"):
             # TODO use OMO term for trade name
