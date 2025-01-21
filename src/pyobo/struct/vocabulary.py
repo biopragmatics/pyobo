@@ -30,6 +30,11 @@ exact_match = _c(_v.exact_match)
 narrow_match = _c(_v.narrow_match)
 related_match = _c(_v.related_match)
 
+has_related_synonym = _c(_v.has_related_synonym)
+has_exact_synonym = _c(_v.has_exact_synonym)
+has_narrow_synonym = _c(_v.has_narrow_synonym)
+has_broad_synonym = _c(_v.has_broad_synonym)
+
 mapping_has_justification = Reference(
     prefix="sssom", identifier="mapping_justification", name="mapping justification"
 )

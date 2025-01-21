@@ -956,18 +956,10 @@ def _get_prefixes_from_annotations(annotations: Iterable[Annotation]) -> set[str
     return prefixes
 
 
-def _repack(reference: Reference) -> curies.NamedReference:
-    return curies.NamedReference(
-        prefix=reference.prefix,
-        identifier=reference.identifier,
-        name=reference.name,
-    )
-
-
 def _get_stanza_name_synonym(stanza: Stanza) -> biosynonyms.LiteralMapping:
     return biosynonyms.LiteralMapping(
         text=stanza.reference.name,
-        reference=_repack(stanza.reference),
+        reference=stanza.reference.as_named_refernce(),
         predicate=v.label,
         type=None,
         provenance=[p for p in stanza.provenance if isinstance(p, curies.Reference)],
@@ -994,7 +986,7 @@ def _convert_synoynym(stanza: Stanza, synonym: Synonym) -> biosynonyms.LiteralMa
     return biosynonyms.LiteralMapping(
         text=synonym.name,
         language=synonym.language,
-        reference=_repack(stanza.reference),
+        reference=stanza.reference.as_named_refernce(),
         predicate=synonym.predicate,
         type=synonym.type,
         provenance=[p for p in synonym.provenance if isinstance(p, curies.Reference)],
