@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import itertools as itt
 import json
 import logging
 import os
@@ -16,6 +17,7 @@ from textwrap import dedent
 from typing import Annotated, Any, ClassVar, TextIO
 
 import bioregistry
+import biosynonyms
 import click
 import curies
 import networkx as nx
@@ -1801,6 +1803,11 @@ class Obo:
         """Get a mapping from identifiers to a list of sorted synonym strings."""
         return multidict(self.iterate_synonym_rows(use_tqdm=use_tqdm))
 
+    def get_literal_mappings(self) -> Iterable[biosynonyms.LiteralMapping]:
+        """Get literal mappings in a standard data model."""
+        stanzas: Iterable[Stanza] = itt.chain(self, self.typedefs or [])
+        yield from itt.chain.from_iterable(stanza.get_literal_mappings() for stanza in stanzas)
+
     #########
     # XREFS #
     #########
@@ -1823,6 +1830,16 @@ class Obo:
         """Iterate over terms' identifiers, xref prefixes, and xref identifiers."""
         for term, xref in self.iterate_xrefs(use_tqdm=use_tqdm):
             yield term.identifier, xref.prefix, xref.identifier
+
+    def iterate_literal_mapping_rows(self) -> Iterable[biosynonyms.LiteralMappingTuple]:
+        for synonym in self.get_literal_mappings():
+            yield synonym._as_row()
+
+    def get_literal_mappings_df(self) -> pd.DataFrame:
+        df = pd.DataFrame(
+            self.iterate_literal_mapping_rows(), columns=biosynonyms.LiteralMappingTuple._fields
+        )
+        return df
 
     def iterate_mapping_rows(
         self, *, use_tqdm: bool = False

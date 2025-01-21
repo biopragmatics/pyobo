@@ -8,6 +8,8 @@ from collections.abc import Callable, Mapping
 from functools import lru_cache
 from typing import Any, TypeVar
 
+import biosynonyms
+import pandas as pd
 from curies import Reference, ReferenceTuple
 from typing_extensions import Unpack
 
@@ -16,7 +18,7 @@ from .utils import _get_pi, get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..utils.cache import cached_collection, cached_mapping, cached_multidict
+from ..utils.cache import cached_collection, cached_df, cached_mapping, cached_multidict
 from ..utils.path import prefix_cache_join
 
 __all__ = [
@@ -25,6 +27,8 @@ __all__ = [
     "get_id_name_mapping",
     "get_id_synonyms_mapping",
     "get_ids",
+    "get_literal_mappings",
+    "get_literal_mappings_df",
     "get_name",
     "get_name_by_curie",
     "get_name_id_mapping",
@@ -244,3 +248,30 @@ def get_id_synonyms_mapping(
         return ontology.get_id_synonyms_mapping()
 
     return _get_multidict()
+
+
+def get_literal_mappings(
+    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+) -> list[biosynonyms.LiteralMapping]:
+    """Get literal mappings."""
+    ontology = get_ontology(prefix, **kwargs)
+    return list(ontology.get_literal_mappings())
+
+
+def get_literal_mappings_df(
+    prefix: str | Obo,
+    **kwargs: Unpack[GetOntologyKwargs],
+) -> pd.DataFrame:
+    """Get a literal mappings dataframe."""
+    version = get_version_from_kwargs(prefix, kwargs)
+    path = prefix_directory_join(
+        prefix, BUILD_SUBDIRECTORY_NAME, name="literal_mappings.tsv", version=version
+    )
+
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
+    def _df_getter() -> pd.DataFrame:
+        return get_ontology(prefix, **kwargs).get_literal_mappings_df()
+
+    return _df_getter()
