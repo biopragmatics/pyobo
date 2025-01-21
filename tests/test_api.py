@@ -5,7 +5,9 @@ from contextlib import ExitStack
 from unittest import mock
 
 import bioregistry
+from biosynonyms import LiteralMapping
 from curies import Reference, ReferenceTuple
+from curies import vocabulary as _v
 
 import pyobo
 from pyobo import Reference as PyOBOReference
@@ -16,6 +18,7 @@ from pyobo import (
     get_primary_curie,
     get_primary_identifier,
 )
+from pyobo.gilda_utils import get_grounder
 from pyobo.mocks import get_mock_id_alts_mapping, get_mock_id_name_mapping
 from pyobo.struct import vocabulary as v
 from pyobo.struct.struct import Obo, Term, TypeDef, make_ad_hoc_ontology
@@ -139,13 +142,17 @@ class TestAltIds(unittest.TestCase):
         self.assertEqual("Allamanda cathartica", get_name(ReferenceTuple("ncbitaxon", "52818")))
 
     def test_api(self) -> None:
-        """Test getting the hierarchy."""
+        """Test getting the hierarchy.
+
+        Run this with ``tox -e py -- tests/test_api.py``.
+        """
         tr1 = default_reference(TEST_P1, "r1")
         td1 = TypeDef(reference=tr1)
         r1 = PyOBOReference(prefix=TEST_P1, identifier="1", name="test name")
         r2 = PyOBOReference(prefix=TEST_P1, identifier="2")
         r3 = PyOBOReference(prefix=TEST_P1, identifier="3")
-        t1 = Term(reference=r1).append_alt(r2)
+        syn1 = "ttt1"
+        t1 = Term(reference=r1).append_alt(r2).append_synonym(syn1)
         t1.append_comment("test comment")
         t2 = Term(reference=r2)
         t3 = Term(reference=r3).append_parent(r1)
@@ -187,6 +194,31 @@ class TestAltIds(unittest.TestCase):
 
             self.assertEqual(t1.name, pyobo.get_name(r1, cache=False))
             self.assertEqual(t1.name, pyobo.get_name(r2, cache=False))
+
+            # Synonyms
+
+            literal_mappings = pyobo.get_literal_mappings(TEST_P1)
+            expected = [
+                LiteralMapping(
+                    text="ttt1",
+                    reference=r1.as_named_refernce(),
+                    predicate=_v.has_related_synonym,
+                    source=TEST_P1,
+                ),
+                LiteralMapping(
+                    text="test name",
+                    reference=r1.as_named_refernce(),
+                    predicate=_v.has_label,
+                    source=TEST_P1,
+                ),
+            ]
+            self.assertEqual(expected, literal_mappings)
+
+            grounder = get_grounder(TEST_P1)
+            scored_match = grounder.ground_best(syn1)
+            self.assertIsNotNone(scored_match)
+            self.assertEqual(TEST_P1, scored_match.term.db)
+            self.assertEqual("1", scored_match.term.id)
 
             # Properties
 

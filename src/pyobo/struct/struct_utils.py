@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias, overload
 import biosynonyms
 import curies
 from curies import ReferenceTuple
+from curies import vocabulary as _v
 from curies.vocabulary import SynonymScope
 from pydantic import BaseModel, ConfigDict
 from typing_extensions import Self
@@ -960,12 +961,12 @@ def _get_stanza_name_synonym(stanza: Stanza) -> biosynonyms.LiteralMapping:
     return biosynonyms.LiteralMapping(
         text=stanza.reference.name,
         reference=stanza.reference.as_named_refernce(),
-        predicate=v.label,
+        predicate=_v.has_label,
         type=None,
         provenance=[p for p in stanza.provenance if isinstance(p, curies.Reference)],
         contributor=None,  # TODO
         comment=None,  # TODO
-        source=None,  # TODO
+        source=stanza.reference.prefix,
         date=None,  # TODO
     )
 
@@ -980,7 +981,6 @@ def _convert_synoynym(stanza: Stanza, synonym: Synonym) -> biosynonyms.LiteralMa
 
     comment = _safe_str(idx.get(v.comment))
     contributor = _safe_str(idx.get(v.has_contributor))
-    source = _safe_str(idx.get(v.has_source))
     date = _safe_str(idx.get(v.has_date))
 
     return biosynonyms.LiteralMapping(
@@ -992,7 +992,7 @@ def _convert_synoynym(stanza: Stanza, synonym: Synonym) -> biosynonyms.LiteralMa
         provenance=[p for p in synonym.provenance if isinstance(p, curies.Reference)],
         contributor=contributor,
         comment=comment,
-        source=source,
+        source=stanza.reference.prefix,
         date=date,
     )
 
