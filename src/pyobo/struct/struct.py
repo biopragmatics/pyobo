@@ -1841,6 +1841,12 @@ class Obo:
         df = pd.DataFrame(
             self.iterate_literal_mapping_rows(), columns=biosynonyms.LiteralMappingTuple._fields
         )
+
+        # remove any columns that are fully blank
+        for col in list(df.columns):
+            if df[col].isna().all():
+                del df[col]
+
         return df
 
     def iterate_mapping_rows(
