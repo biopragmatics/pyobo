@@ -66,6 +66,12 @@ class Reference(curies.Reference):
             raise ValueError(f"non-standard identifier: {resource.prefix}:{values['identifier']}")
         return values
 
+    def as_named_refernce(self) -> curies.NamedReference:
+        """Get a named reference."""
+        if not self.name:
+            raise ValueError
+        return curies.NamedReference(prefix=self.prefix, identifier=self.identifier, name=self.name)
+
     @classmethod
     def auto(cls, prefix: str, identifier: str) -> Reference:
         """Create a reference and autopopulate its name."""
