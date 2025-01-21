@@ -540,6 +540,25 @@ class Stanza:
             if isinstance(reference, curies.Reference)
         )
 
+    def append_exact_synonym(
+        self,
+        synonym: str | Synonym,
+        *,
+        type: Reference | Referenced | None = None,
+        provenance: Sequence[Reference | OBOLiteral] | None = None,
+        annotations: Iterable[Annotation] | None = None,
+        language: str | None = None,
+    ) -> Self:
+        """Add an exact synonym."""
+        return self.append_synonym(
+            synonym,
+            type=type,
+            specificity="EXACT",
+            provenance=provenance,
+            annotations=annotations,
+            language=language,
+        )
+
     def append_synonym(
         self,
         synonym: str | Synonym,
