@@ -36,6 +36,7 @@ from .reference import (
     default_reference,
     get_preferred_curie,
     reference_escape,
+    reference_or_literal_to_str,
 )
 from .struct_utils import (
     Annotation,
@@ -341,14 +342,7 @@ class Term(Referenced, Stanza):
 
     def get_property_literals(self, prop: ReferenceHint) -> list[str]:
         """Get properties from the given key."""
-        rv = []
-        for t in self.properties.get(_ensure_ref(prop), []):
-            match t:
-                case Reference():
-                    rv.append(get_preferred_curie(t))
-                case OBOLiteral(value, _datatype, _language):
-                    rv.append(value)
-        return rv
+        return [reference_or_literal_to_str(t) for t in self.properties.get(_ensure_ref(prop), [])]
 
     def get_property(self, prop: ReferenceHint) -> str | None:
         """Get a single property of the given key."""
@@ -1548,11 +1542,7 @@ class Obo:
             for t in term.get_property_annotations():
                 if t.predicate != prop:
                     continue
-                match t.value:
-                    case OBOLiteral(value, _datatype):
-                        yield term, value
-                    case Reference():
-                        yield term, get_preferred_curie(t.value)
+                yield term, reference_or_literal_to_str(t.value)
 
     def get_filtered_properties_df(
         self, prop: ReferenceHint, *, use_tqdm: bool = False

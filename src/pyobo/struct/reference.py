@@ -250,15 +250,7 @@ def multi_reference_escape(
 
 def comma_separate_references(elements: Iterable[Reference | OBOLiteral]) -> str:
     """Map a list to strings and make comma separated."""
-    parts = []
-    for element in elements:
-        match element:
-            case Reference():
-                parts.append(get_preferred_curie(element))
-            case OBOLiteral(value, _datatype, _language):
-                # TODO check datatype is URI
-                parts.append(value)
-    return ", ".join(parts)
+    return ", ".join(reference_or_literal_to_str(element) for element in elements)
 
 
 def _ground_relation(relation_str: str) -> Reference | None:
@@ -343,3 +335,12 @@ def _reference_list_tag(
 ) -> Iterable[str]:
     for reference in references:
         yield f"{tag}: {reference_escape(reference, ontology_prefix=ontology_prefix, add_name_comment=True)}"
+
+
+def reference_or_literal_to_str(x: Reference | OBOLiteral) -> str:
+    """Get a string from a reference or literal."""
+    match x:
+        case Reference():
+            return get_preferred_curie(x)
+        case OBOLiteral(value, _, _):
+            return value
