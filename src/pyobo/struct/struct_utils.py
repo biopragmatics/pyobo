@@ -55,11 +55,8 @@ class Annotation(NamedTuple):
         return x.predicate, _reference_or_literal_key(x.value)
 
 
-def _property_resolve(
-    p: Reference | Referenced, o: Reference | Referenced | OBOLiteral
-) -> Annotation:
-    if isinstance(p, Referenced):
-        p = p.reference
+def _property_resolve(p: ReferenceHint, o: Reference | Referenced | OBOLiteral) -> Annotation:
+    p = _ensure_ref(p)
     if isinstance(o, Referenced):
         o = o.reference
     return Annotation(p, o)
@@ -171,7 +168,7 @@ class Stanza:
             self._append_annotation(p, o, annotation)
 
     def _append_annotation(
-        self, p: Reference, o: Reference | OBOLiteral, annotation: Annotation
+        self, p: ReferenceHint, o: Reference | OBOLiteral, annotation: Annotation
     ) -> None:
         self._axioms[_property_resolve(p, o)].append(annotation)
 
@@ -309,14 +306,14 @@ class Stanza:
             yield xref_yv
 
     def _get_annotations(
-        self, p: Reference | Referenced, o: Reference | Referenced | OBOLiteral | str
+        self, p: ReferenceHint, o: Reference | Referenced | OBOLiteral | str
     ) -> list[Annotation]:
         if isinstance(o, str):
             o = OBOLiteral.string(o)
         return self._axioms.get(_property_resolve(p, o), [])
 
     def _get_annotation(
-        self, p: Reference, o: Reference | OBOLiteral, ap: Reference
+        self, p: ReferenceHint, o: Reference | OBOLiteral, ap: Reference
     ) -> Reference | OBOLiteral | None:
         ap_norm = _ensure_ref(ap)
         for annotation in self._get_annotations(p, o):
@@ -769,7 +766,9 @@ class Stanza:
         return self.annotate_object(v.has_citation, reference, annotations=annotations)
 
 
-ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
+ReferenceHint: TypeAlias = (
+    Reference | Referenced | curies.Reference | curies.NamedReference | tuple[str, str] | str
+)
 
 
 def _ensure_ref(
@@ -783,6 +782,10 @@ def _ensure_ref(
         return Reference(prefix=reference[0], identifier=reference[1])
     if isinstance(reference, Reference):
         return reference
+    if isinstance(reference, curies.NamedReference):
+        return Reference(
+            prefix=reference.prefix, identifier=reference.identifier, name=reference.name
+        )
     if isinstance(reference, curies.Reference):
         return Reference(prefix=reference.prefix, identifier=reference.identifier)
     if ":" not in reference:
@@ -859,7 +862,7 @@ def _reference_or_literal_key(x: Reference | OBOLiteral) -> tuple[int, Reference
 
 
 def _get_obo_trailing_modifiers(
-    p: Reference,
+    p: ReferenceHint,
     o: Reference | OBOLiteral,
     annotations_dict: AnnotationsDict,
     *,
