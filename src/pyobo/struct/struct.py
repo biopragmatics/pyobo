@@ -1209,12 +1209,16 @@ class Obo:
                 tqdm.write(
                     f"[{self.ontology}] converting OFN to OBO Graph at {self._obograph_path}"
                 )
-                bioontologies.robot.convert(self._ofn_path, self._obograph_path)
+                bioontologies.robot.convert(
+                    self._ofn_path, self._obograph_path, debug=True, merge=False, reason=False
+                )
         if write_owl and (not self._owl_path.exists() or force):
             tqdm.write(f"[{self.ontology}] writing OWL to {self._owl_path}")
             import bioontologies.robot
 
-            bioontologies.robot.convert(self._ofn_path, self._owl_path)
+            bioontologies.robot.convert(
+                self._ofn_path, self._owl_path, debug=True, merge=False, reason=False
+            )
         if write_ttl and (not self._ttl_path.exists() or force):
             tqdm.write(f"[{self.ontology}] writing Turtle to {self._ttl_path}")
             self.write_rdf(self._ttl_path)
