@@ -1,5 +1,6 @@
 """Tests for alternative identifiers."""
 
+import importlib.util
 import unittest
 from contextlib import ExitStack
 from unittest import mock
@@ -214,11 +215,12 @@ class TestAltIds(unittest.TestCase):
             ]
             self.assertEqual(expected, literal_mappings)
 
-            grounder = get_grounder(TEST_P1)
-            scored_match = grounder.ground_best(syn1)
-            self.assertIsNotNone(scored_match)
-            self.assertEqual(TEST_P1, scored_match.term.db)
-            self.assertEqual("1", scored_match.term.id)
+            if importlib.util.find_spec("gilda"):
+                grounder = get_grounder(TEST_P1)
+                scored_match = grounder.ground_best(syn1)
+                self.assertIsNotNone(scored_match)
+                self.assertEqual(TEST_P1, scored_match.term.db)
+                self.assertEqual("1", scored_match.term.id)
 
             # Properties
 
