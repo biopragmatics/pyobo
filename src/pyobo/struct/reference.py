@@ -232,7 +232,7 @@ def reference_escape(
 
 
 def multi_reference_escape(
-    references: Sequence[Reference | Reference],
+    references: Sequence[Reference | Referenced],
     *,
     ontology_prefix: str,
     add_name_comment: bool = False,
