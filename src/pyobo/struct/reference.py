@@ -66,7 +66,7 @@ class Reference(curies.Reference):
             raise ValueError(f"non-standard identifier: {resource.prefix}:{values['identifier']}")
         return values
 
-    def as_named_refernce(self) -> curies.NamedReference:
+    def as_named_reference(self) -> curies.NamedReference:
         """Get a named reference."""
         if not self.name:
             raise ValueError

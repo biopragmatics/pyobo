@@ -201,13 +201,13 @@ class TestAltIds(unittest.TestCase):
             expected = [
                 LiteralMapping(
                     text="ttt1",
-                    reference=r1.as_named_refernce(),
+                    reference=r1.as_named_reference(),
                     predicate=_v.has_related_synonym,
                     source=TEST_P1,
                 ),
                 LiteralMapping(
                     text="test name",
-                    reference=r1.as_named_refernce(),
+                    reference=r1.as_named_reference(),
                     predicate=_v.has_label,
                     source=TEST_P1,
                 ),
