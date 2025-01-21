@@ -35,6 +35,9 @@ mapping_has_justification = Reference(
 )
 mapping_has_confidence = Reference(prefix="sssom", identifier="confidence", name="has confidence")
 has_contributor = Reference(prefix="dcterms", identifier="contributor", name="contributor")
+#: source is supposed to be used with a URI
+has_source = Reference(prefix="dcterms", identifier="source", name="source")
+has_date = Reference(prefix="dcterms", identifier="date", name="date")
 has_dbxref = Reference(
     prefix="oboInOwl", identifier="hasDbXref", name="has database cross-reference"
 )
