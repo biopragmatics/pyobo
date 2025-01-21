@@ -5,12 +5,9 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 from subprocess import CalledProcessError
+from typing import TYPE_CHECKING
 
 import bioregistry
-import gilda.api
-import gilda.term
-from gilda.grounder import Grounder
-from gilda.term import filter_out_duplicates
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
 
@@ -27,6 +24,9 @@ from pyobo.constants import GetOntologyKwargs, check_should_use_tqdm
 from pyobo.getters import NoBuildError
 from pyobo.utils.io import multidict
 
+if TYPE_CHECKING:
+    import gilda
+
 __all__ = [
     "get_gilda_terms",
     "get_grounder",
@@ -40,12 +40,14 @@ def iter_gilda_prediction_tuples(
     prefix: str,
     relation: str = "skos:exactMatch",
     *,
-    grounder: Grounder | None = None,
+    grounder: gilda.Grounder | None = None,
     identifiers_are_names: bool = False,
     strict: bool = False,
 ) -> Iterable[tuple[str, str, str, str, str, str, str, str, float]]:
     """Iterate over prediction tuples for a given prefix."""
     if grounder is None:
+        import gilda.api
+
         grounder = gilda.api.grounder
     id_name_mapping = get_id_name_mapping(prefix, strict=strict)
     it = tqdm(
@@ -96,11 +98,11 @@ def get_grounder(
     prefixes: str | Iterable[str],
     *,
     unnamed: Iterable[str] | None = None,
-    grounder_cls: type[Grounder] | None = None,
+    grounder_cls: type[gilda.Grounder] | None = None,
     versions: None | str | Iterable[str | None] | dict[str, str] = None,
     skip_obsolete: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
-) -> Grounder:
+) -> gilda.Grounder:
     """Get a Gilda grounder for the given prefix(es)."""
     unnamed = set() if unnamed is None else set(unnamed)
     if isinstance(prefixes, str):
@@ -118,8 +120,10 @@ def get_grounder(
     if len(prefixes) != len(versions):
         raise ValueError
 
+    from gilda.term import filter_out_duplicates
+
     progress = check_should_use_tqdm(kwargs)
-    terms: list[gilda.term.Term] = []
+    terms: list[gilda.Term] = []
     for prefix, kwargs["version"] in zip(
         tqdm(prefixes, leave=False, disable=not progress), versions, strict=False
     ):
@@ -139,6 +143,8 @@ def get_grounder(
     terms = filter_out_duplicates(terms)
     terms_dict = multidict((term.norm_text, term) for term in terms)
     if grounder_cls is None:
+        from gilda import Grounder
+
         return Grounder(terms_dict)
     else:
         return grounder_cls(terms_dict)
@@ -150,7 +156,7 @@ def get_gilda_terms(
     identifiers_are_names: bool = False,
     skip_obsolete: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
-) -> Iterable[gilda.term.Term]:
+) -> Iterable[gilda.Term]:
     """Get gilda terms for the given namespace."""
     if identifiers_are_names:
         raise NotImplementedError
@@ -167,7 +173,7 @@ def get_gilda_term_subset(
     source: str,
     ancestors: str | list[str],
     **kwargs: Unpack[GetOntologyKwargs],
-) -> Iterable[gilda.term.Term]:
+) -> Iterable[gilda.Term]:
     """Get a subset of terms."""
     subset = {
         descendant

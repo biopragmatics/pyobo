@@ -15,11 +15,16 @@ from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
 from .utils import _get_pi, get_version_from_kwargs
-from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
+from ..constants import (
+    BUILD_SUBDIRECTORY_NAME,
+    GetOntologyKwargs,
+    check_should_cache,
+    check_should_force,
+)
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_collection, cached_df, cached_mapping, cached_multidict
-from ..utils.path import prefix_cache_join
+from ..utils.path import prefix_cache_join, prefix_directory_join
 
 __all__ = [
     "get_definition",
@@ -259,7 +264,7 @@ def get_literal_mappings(
 
 
 def get_literal_mappings_df(
-    prefix: str | Obo,
+    prefix: str,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
     """Get a literal mappings dataframe."""

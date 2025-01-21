@@ -1832,10 +1832,12 @@ class Obo:
             yield term.identifier, xref.prefix, xref.identifier
 
     def iterate_literal_mapping_rows(self) -> Iterable[biosynonyms.LiteralMappingTuple]:
+        """Iterate over literal mapping rows."""
         for synonym in self.get_literal_mappings():
             yield synonym._as_row()
 
     def get_literal_mappings_df(self) -> pd.DataFrame:
+        """Get a literal mappings dataframe."""
         df = pd.DataFrame(
             self.iterate_literal_mapping_rows(), columns=biosynonyms.LiteralMappingTuple._fields
         )
