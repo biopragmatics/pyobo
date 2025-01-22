@@ -61,7 +61,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     ar_path = ensure_path(PREFIX, url=GTDB_AR_URL, version=version, force=force)
     bac_path = ensure_path(PREFIX, url=GTDB_BAC_URL, version=version, force=force)
-    columns = ["gtdb_taxonomy", "ncbi_taxid"]
+    columns = ["gtdb_taxonomy", "ncbi_species_taxid"]
     for path_name, path in [
         ("ar", ar_path),
         ("bac", bac_path),
