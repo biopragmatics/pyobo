@@ -49,9 +49,6 @@ class BiGGCompartmentGetter(Obo):
 
     ontology = PREFIX
     bioversions_key = "bigg"
-    idspaces = {
-        PREFIX: "http://bigg.ucsd.edu/compartments/",
-    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
