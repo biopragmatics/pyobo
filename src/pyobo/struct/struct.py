@@ -1363,7 +1363,7 @@ class Obo:
     def iterate_ids(self, *, use_tqdm: bool = False) -> Iterable[str]:
         """Iterate over identifiers."""
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"):
-            if term.prefix == self.ontology:
+            if self._in_ontology(term.reference):
                 yield term.identifier
 
     def get_ids(self, *, use_tqdm: bool = False) -> set[str]:
@@ -1373,7 +1373,7 @@ class Obo:
     def iterate_id_name(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str]]:
         """Iterate identifier name pairs."""
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"):
-            if term.prefix == self.ontology and term.name:
+            if self._in_ontology(term.reference) and term.name:
                 yield term.identifier, term.name
 
     def get_id_name_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, str]:
@@ -1806,7 +1806,16 @@ class Obo:
     def get_literal_mappings(self) -> Iterable[biosynonyms.LiteralMapping]:
         """Get literal mappings in a standard data model."""
         stanzas: Iterable[Stanza] = itt.chain(self, self.typedefs or [])
-        yield from itt.chain.from_iterable(stanza.get_literal_mappings() for stanza in stanzas)
+        yield from itt.chain.from_iterable(
+            stanza.get_literal_mappings()
+            for stanza in stanzas
+            if self._in_ontology(stanza.reference)
+        )
+
+    def _in_ontology(self, reference: Reference) -> bool:
+        return (reference.prefix == self.ontology) or (
+            reference.prefix == "obo" and reference.identifier.startswith(self.ontology + "#")
+        )
 
     #########
     # XREFS #
