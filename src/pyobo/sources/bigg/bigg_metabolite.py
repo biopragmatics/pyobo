@@ -29,10 +29,6 @@ class BiGGMetaboliteGetter(Obo):
     ontology = PREFIX
     bioversions_key = "bigg"
     typedefs = [participates_in]
-    idspaces = {
-        PREFIX: "http://bigg.ucsd.edu/models/universal/metabolites/",
-        "bigg.model": "http://bigg.ucsd.edu/models/",
-    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

@@ -56,26 +56,6 @@ class RORGetter(Obo):
     typedefs = [has_homepage, *RMAP.values()]
     synonym_typedefs = [acronym]
     root_terms = [CITY_CLASS, ORG_CLASS]
-    idspaces = {
-        "ror": "https://ror.org/",
-        "geonames": "https://www.geonames.org/",
-        "ENVO": "http://purl.obolibrary.org/obo/ENVO_",
-        "BFO": "http://purl.obolibrary.org/obo/BFO_",
-        "RO": "http://purl.obolibrary.org/obo/RO_",
-        "IAO": "http://purl.obolibrary.org/obo/IAO_",
-        "OBI": "http://purl.obolibrary.org/obo/OBI_",
-        "OMO": "http://purl.obolibrary.org/obo/OMO_",
-        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-        "foaf": "http://xmlns.com/foaf/0.1/",
-        "isni": "http://www.isni.org/isni/",
-        "funderregistry": "http://data.crossref.org/fundingdata/funder/",
-        "wikidata": "http://www.wikidata.org/entity/",
-        "grid": "https://www.grid.ac/institutes/",
-        "hesa": "https://bioregistry.io/hesa:",
-        "ucas": "https://bioregistry.io/ucas:",
-        "ukprn": "https://bioregistry.io/ukprn:",
-        "cnrs": "https://bioregistry.io/cnrs:",
-    }
 
     def __post_init__(self):
         self.data_version, _url, _path = _get_info()

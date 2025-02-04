@@ -42,14 +42,6 @@ class GeonamesGetter(Obo):
     ontology = PREFIX
     dynamic_version = True
     typedefs = [part_of, CODE_TYPEDEF, has_part]
-    idspaces = {
-        PREFIX: "https://www.geonames.org/",
-        PREFIX_FEATURE: "https://www.geonames.org/recent-changes/featurecode/",
-        "BFO": "http://purl.obolibrary.org/obo/BFO_",
-        "ENVO": "http://purl.obolibrary.org/obo/ENVO_",
-        "NCBITaxon": "http://purl.obolibrary.org/obo/NCBITaxon_",
-        "orcid": "https://orcid.org/",
-    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

@@ -18,12 +18,6 @@ class GeonamesFeatureGetter(Obo):
 
     ontology = PREFIX_FEATURE
     dynamic_version = True
-    idspaces = {
-        PREFIX_FEATURE: "https://www.geonames.org/recent-changes/featurecode/",
-        "dcterms": "http://purl.org/dc/terms/",
-        "orcid": "https://orcid.org/",
-        "NCBITaxon": "http://purl.obolibrary.org/obo/NCBITaxon_",
-    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

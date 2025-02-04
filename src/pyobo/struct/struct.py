@@ -654,7 +654,12 @@ class Obo:
         """Get a prefix map including all prefixes used in the ontology."""
         rv = {}
         for prefix in sorted(self._get_prefixes(), key=str.casefold):
-            uri_prefix = bioregistry.get_uri_prefix(prefix)
+            resource = bioregistry.get_resource(prefix)
+            if resource is None:
+                raise ValueError
+            uri_prefix = resource.get_rdf_uri_prefix()
+            if uri_prefix is None:
+                uri_prefix = resource.get_uri_prefix()
             if uri_prefix is None:
                 # This allows us an escape hatch, since some
                 # prefixes don't have an associated URI prefix

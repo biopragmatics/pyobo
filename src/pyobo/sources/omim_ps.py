@@ -11,7 +11,6 @@ __all__ = [
     "OMIMPSGetter",
 ]
 
-
 logger = logging.getLogger(__name__)
 PREFIX = "omim.ps"
 URL = "https://omim.org/phenotypicSeriesTitles/all"
@@ -25,8 +24,16 @@ class OMIMPSGetter(Obo):
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         soup = get_soup(URL, user_agent="Mozilla/5.0")
-        rows = soup.find(id="mimContent").find("table").find("tbody").find_all("tr")
-        for row in rows:
+        content = soup.find(id="mimContent")
+        if content is None:
+            raise ValueError
+        table = content.find("table")  # type:ignore[attr-defined]
+        if table is None:
+            raise ValueError
+        tbody = table.find("tbody")
+        if tbody is None:
+            raise ValueError
+        for row in tbody.find_all("tr"):
             anchor = row.find("td").find("a")
             name = anchor.text.strip()
             identifier = anchor.attrs["href"][len("/phenotypicSeries/") :]

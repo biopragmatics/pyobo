@@ -22,9 +22,6 @@ class BiGGModelGetter(Obo):
 
     ontology = PREFIX
     bioversions_key = "bigg"
-    idspaces = {
-        "bigg.model": "http://bigg.ucsd.edu/models/",
-    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
