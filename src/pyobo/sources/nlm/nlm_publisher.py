@@ -2,7 +2,7 @@
 
 from collections.abc import Iterable
 
-from pyobo.sources.nlm.utils import PREFIX_CATALOG, PREFIX_PUBLISHER, PUBLISHER_TERM, get_publishers
+from pyobo.sources.nlm.utils import PREFIX_PUBLISHER, PUBLISHER_TERM, get_publishers
 from pyobo.struct import CHARLIE_TERM, HUMAN_TERM, Obo, Term
 
 __all__ = [

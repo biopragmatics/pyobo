@@ -5,7 +5,6 @@ from collections.abc import Iterable
 from pyobo.sources.nlm.utils import (
     JOURNAL_TERM,
     PREFIX_CATALOG,
-    PREFIX_PUBLISHER,
     PUBLISHED_IN,
     PUBLISHER_TERM,
     get_journals,
