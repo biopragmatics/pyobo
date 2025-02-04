@@ -84,7 +84,7 @@ def iter_terms() -> Iterable[Term]:
         if (
             short_name.casefold()
             == full_name.casefold()
-            .replace("virus vaccine")
+            .replace("virus vaccine", "")
             .replace("vaccine", "")
             .replace("  ", " ")
             .strip()

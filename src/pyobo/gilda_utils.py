@@ -5,13 +5,9 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 from subprocess import CalledProcessError
+from typing import TYPE_CHECKING
 
 import bioregistry
-import gilda.api
-import gilda.term
-from gilda.grounder import Grounder
-from gilda.process import normalize
-from gilda.term import filter_out_duplicates
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
 
@@ -19,14 +15,17 @@ from pyobo import (
     get_descendants,
     get_id_name_mapping,
     get_id_species_mapping,
-    get_id_synonyms_mapping,
     get_ids,
+    get_literal_mappings,
     get_obsolete,
 )
 from pyobo.api.utils import get_version_from_kwargs
-from pyobo.constants import GetOntologyKwargs
+from pyobo.constants import GetOntologyKwargs, check_should_use_tqdm
 from pyobo.getters import NoBuildError
 from pyobo.utils.io import multidict
+
+if TYPE_CHECKING:
+    import gilda
 
 __all__ = [
     "get_gilda_terms",
@@ -41,12 +40,14 @@ def iter_gilda_prediction_tuples(
     prefix: str,
     relation: str = "skos:exactMatch",
     *,
-    grounder: Grounder | None = None,
+    grounder: gilda.Grounder | None = None,
     identifiers_are_names: bool = False,
     strict: bool = False,
 ) -> Iterable[tuple[str, str, str, str, str, str, str, str, float]]:
     """Iterate over prediction tuples for a given prefix."""
     if grounder is None:
+        import gilda.api
+
         grounder = gilda.api.grounder
     id_name_mapping = get_id_name_mapping(prefix, strict=strict)
     it = tqdm(
@@ -97,12 +98,11 @@ def get_grounder(
     prefixes: str | Iterable[str],
     *,
     unnamed: Iterable[str] | None = None,
-    grounder_cls: type[Grounder] | None = None,
+    grounder_cls: type[gilda.Grounder] | None = None,
     versions: None | str | Iterable[str | None] | dict[str, str] = None,
     skip_obsolete: bool = False,
-    progress: bool = True,
     **kwargs: Unpack[GetOntologyKwargs],
-) -> Grounder:
+) -> gilda.Grounder:
     """Get a Gilda grounder for the given prefix(es)."""
     unnamed = set() if unnamed is None else set(unnamed)
     if isinstance(prefixes, str):
@@ -120,7 +120,10 @@ def get_grounder(
     if len(prefixes) != len(versions):
         raise ValueError
 
-    terms: list[gilda.term.Term] = []
+    from gilda.term import filter_out_duplicates
+
+    progress = check_should_use_tqdm(kwargs)
+    terms: list[gilda.Term] = []
     for prefix, kwargs["version"] in zip(
         tqdm(prefixes, leave=False, disable=not progress), versions, strict=False
     ):
@@ -130,7 +133,6 @@ def get_grounder(
                     prefix,
                     identifiers_are_names=prefix in unnamed,
                     skip_obsolete=skip_obsolete,
-                    progress=progress,
                     **kwargs,
                 )
             )
@@ -141,126 +143,37 @@ def get_grounder(
     terms = filter_out_duplicates(terms)
     terms_dict = multidict((term.norm_text, term) for term in terms)
     if grounder_cls is None:
+        from gilda import Grounder
+
         return Grounder(terms_dict)
     else:
         return grounder_cls(terms_dict)
-
-
-def _fast_term(
-    *,
-    text: str,
-    prefix: str,
-    identifier: str,
-    name: str,
-    status: str,
-    organism: str | None = None,
-) -> gilda.term.Term | None:
-    try:
-        term = gilda.term.Term(
-            norm_text=normalize(text),
-            text=text,
-            db=prefix,
-            id=identifier,
-            entry_name=name,
-            status=status,
-            source=prefix,
-            organism=organism,
-        )
-    except ValueError:
-        return None
-    return term
 
 
 def get_gilda_terms(
     prefix: str,
     *,
     identifiers_are_names: bool = False,
-    progress: bool = True,
     skip_obsolete: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
-) -> Iterable[gilda.term.Term]:
+) -> Iterable[gilda.Term]:
     """Get gilda terms for the given namespace."""
+    if identifiers_are_names:
+        raise NotImplementedError
     kwargs["version"] = get_version_from_kwargs(prefix, kwargs)  # type:ignore
-    id_to_name = get_id_name_mapping(prefix, **kwargs)
     id_to_species = get_id_species_mapping(prefix, **kwargs)
     obsoletes = get_obsolete(prefix, **kwargs) if skip_obsolete else set()
-
-    it = tqdm(
-        id_to_name.items(),
-        desc=f"[{prefix}] mapping",
-        unit_scale=True,
-        unit="name",
-        disable=not progress,
-    )
-    for identifier, name in it:
-        if identifier in obsoletes:
+    for synonym in get_literal_mappings(prefix, **kwargs):
+        if synonym.reference.identifier in obsoletes:
             continue
-        term = _fast_term(
-            text=name,
-            prefix=prefix,
-            identifier=identifier,
-            name=name,
-            status="name",
-            organism=id_to_species.get(identifier),
-        )
-        if term is not None:
-            yield term
-
-    id_to_synonyms = get_id_synonyms_mapping(prefix, **kwargs)
-    if id_to_synonyms:
-        it = tqdm(
-            id_to_synonyms.items(),
-            desc=f"[{prefix}] mapping",
-            unit_scale=True,
-            unit="synonym",
-            disable=not progress,
-        )
-        for identifier, synonyms in it:
-            if identifier in obsoletes:
-                continue
-            name = id_to_name[identifier]
-            for synonym in synonyms:
-                if not synonym:
-                    continue
-                term = _fast_term(
-                    text=synonym,
-                    prefix=prefix,
-                    identifier=identifier,
-                    name=name,
-                    status="synonym",
-                    organism=id_to_species.get(identifier),
-                )
-                if term is not None:
-                    yield term
-
-    if identifiers_are_names:
-        it = tqdm(
-            get_ids(prefix),
-            desc=f"[{prefix}] mapping",
-            unit_scale=True,
-            unit="id",
-            disable=not progress,
-        )
-        for identifier in it:
-            if identifier in obsoletes:
-                continue
-            term = _fast_term(
-                text=identifier,
-                prefix=prefix,
-                identifier=identifier,
-                name=identifier,
-                status="name",
-                organism=id_to_species.get(identifier),
-            )
-            if term is not None:
-                yield term
+        yield synonym.to_gilda(organism=id_to_species.get(synonym.reference.identifier))
 
 
 def get_gilda_term_subset(
     source: str,
     ancestors: str | list[str],
     **kwargs: Unpack[GetOntologyKwargs],
-) -> Iterable[gilda.term.Term]:
+) -> Iterable[gilda.Term]:
     """Get a subset of terms."""
     subset = {
         descendant

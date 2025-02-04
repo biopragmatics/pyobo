@@ -7,8 +7,10 @@ import logging
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias, overload
 
+import biosynonyms
 import curies
 from curies import ReferenceTuple
+from curies import vocabulary as _v
 from curies.vocabulary import SynonymScope
 from pydantic import BaseModel, ConfigDict
 from typing_extensions import Self
@@ -23,6 +25,7 @@ from .reference import (
     get_preferred_curie,
     multi_reference_escape,
     reference_escape,
+    reference_or_literal_to_str,
     unspecified_matching,
 )
 from .utils import obo_escape_slim
@@ -143,6 +146,13 @@ class Stanza:
             if isinstance(p_o.value, Reference):
                 rv.add(p_o.value.prefix)
             rv.update(_get_prefixes_from_annotations(annotations_))
+        return rv
+
+    def get_literal_mappings(self) -> list[biosynonyms.LiteralMapping]:
+        """Get synonym objects for this term, including one for its label."""
+        rv = [_convert_synoynym(self, synonym) for synonym in self.synonyms]
+        if self.reference.name:
+            rv.append(_get_stanza_name_synonym(self))
         return rv
 
     def append_relationship(
@@ -945,3 +955,49 @@ def _get_prefixes_from_annotations(annotations: Iterable[Annotation]) -> set[str
         if isinstance(right, Reference):
             prefixes.add(right.prefix)
     return prefixes
+
+
+def _get_stanza_name_synonym(stanza: Stanza) -> biosynonyms.LiteralMapping:
+    return biosynonyms.LiteralMapping(
+        text=stanza.reference.name,
+        reference=stanza.reference.as_named_reference(),
+        predicate=_v.has_label,
+        type=None,
+        provenance=[p for p in stanza.provenance if isinstance(p, curies.Reference)],
+        contributor=None,  # TODO
+        comment=None,  # TODO
+        source=stanza.reference.prefix,
+        date=None,  # TODO
+    )
+
+
+def _convert_synoynym(stanza: Stanza, synonym: Synonym) -> biosynonyms.LiteralMapping:
+    o = OBOLiteral.string(synonym.name, language=synonym.language)
+    # TODO make this indexing reusable? similar code used for SSSOM export
+    idx: dict[Reference, Reference | OBOLiteral] = {
+        annotation.predicate: annotation.value
+        for annotation in stanza._get_annotations(synonym.predicate, o)
+    }
+
+    comment = _safe_str(idx.get(v.comment))
+    contributor = _safe_str(idx.get(v.has_contributor))
+    date = _safe_str(idx.get(v.has_date))
+
+    return biosynonyms.LiteralMapping(
+        text=synonym.name,
+        language=synonym.language,
+        reference=stanza.reference.as_named_reference(),
+        predicate=synonym.predicate,
+        type=synonym.type,
+        provenance=[p for p in synonym.provenance if isinstance(p, curies.Reference)],
+        contributor=contributor,
+        comment=comment,
+        source=stanza.reference.prefix,
+        date=date,
+    )
+
+
+def _safe_str(x: Reference | OBOLiteral | None) -> str | None:
+    if x is None:
+        return None
+    return reference_or_literal_to_str(x)
