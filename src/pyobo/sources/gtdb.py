@@ -40,9 +40,6 @@ class GTDBGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     typedefs = [has_taxonomy_rank]
-    idspaces = {
-        PREFIX: "https://gtdb.ecogenomic.org/tree?r=",
-    }
     root_terms = [
         Reference(prefix=PREFIX, identifier="d__Archea", name="Archea"),
         Reference(prefix=PREFIX, identifier="d__Bacteria", name="Bacteria"),
@@ -61,7 +58,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     ar_path = ensure_path(PREFIX, url=GTDB_AR_URL, version=version, force=force)
     bac_path = ensure_path(PREFIX, url=GTDB_BAC_URL, version=version, force=force)
-    columns = ["gtdb_taxonomy", "ncbi_taxid"]
+    columns = ["gtdb_taxonomy", "ncbi_species_taxid"]
     for path_name, path in [
         ("ar", ar_path),
         ("bac", bac_path),

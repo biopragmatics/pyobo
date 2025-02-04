@@ -115,10 +115,10 @@ def _make_term(drug_info: Mapping[str, Any]) -> Term:
         if identifier:
             term.append_xref(Reference(prefix=xref_prefix, identifier=identifier))
 
-    for prop, debio_curie in [("smiles", has_smiles), ("inchi", has_inchi)]:
-        identifier = drug_info.get(prop)
+    for key, typedef_ in [("smiles", has_smiles), ("inchi", has_inchi)]:
+        identifier = drug_info.get(key)
         if identifier:
-            term.annotate_literal(debio_curie, identifier)
+            term.annotate_string(typedef_, identifier)
 
     for salt in drug_info.get("salts", []):
         term.annotate_object(

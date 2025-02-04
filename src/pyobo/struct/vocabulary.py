@@ -30,11 +30,19 @@ exact_match = _c(_v.exact_match)
 narrow_match = _c(_v.narrow_match)
 related_match = _c(_v.related_match)
 
+has_related_synonym = _c(_v.has_related_synonym)
+has_exact_synonym = _c(_v.has_exact_synonym)
+has_narrow_synonym = _c(_v.has_narrow_synonym)
+has_broad_synonym = _c(_v.has_broad_synonym)
+
 mapping_has_justification = Reference(
     prefix="sssom", identifier="mapping_justification", name="mapping justification"
 )
 mapping_has_confidence = Reference(prefix="sssom", identifier="confidence", name="has confidence")
 has_contributor = Reference(prefix="dcterms", identifier="contributor", name="contributor")
+#: source is supposed to be used with a URI
+has_source = Reference(prefix="dcterms", identifier="source", name="source")
+has_date = Reference(prefix="dcterms", identifier="date", name="date")
 has_dbxref = Reference(
     prefix="oboInOwl", identifier="hasDbXref", name="has database cross-reference"
 )
@@ -93,6 +101,7 @@ rdf_type = Reference(prefix="rdf", identifier="type", name="subclass of")
 
 xsd_string = Reference(prefix="xsd", identifier="string", name="string")
 xsd_float = Reference(prefix="xsd", identifier="float", name="float")
+xsd_decimal = Reference(prefix="xsd", identifier="decimal", name="decimal")
 xsd_integer = Reference(prefix="xsd", identifier="integer", name="integer")
 xsd_boolean = Reference(prefix="xsd", identifier="boolean", name="boolean")
 xsd_year = Reference(prefix="xsd", identifier="gYear", name="year")

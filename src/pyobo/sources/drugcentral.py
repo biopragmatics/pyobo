@@ -87,9 +87,9 @@ def iter_terms() -> Iterable[Term]:
         if inchi_key:
             term.append_exact_match(Reference(prefix="inchikey", identifier=inchi_key))
         if smiles:
-            term.annotate_literal(has_smiles, smiles)
+            term.annotate_string(has_smiles, smiles)
         if inchi:
-            term.annotate_literal(has_inchi, inchi)
+            term.annotate_string(has_inchi, inchi)
         if cas:
             term.append_exact_match(Reference(prefix="cas", identifier=cas))
         yield term

@@ -66,6 +66,12 @@ class Reference(curies.Reference):
             raise ValueError(f"non-standard identifier: {resource.prefix}:{values['identifier']}")
         return values
 
+    def as_named_reference(self) -> curies.NamedReference:
+        """Get a named reference."""
+        if not self.name:
+            raise ValueError
+        return curies.NamedReference(prefix=self.prefix, identifier=self.identifier, name=self.name)
+
     @classmethod
     def auto(cls, prefix: str, identifier: str) -> Reference:
         """Create a reference and autopopulate its name."""
@@ -232,7 +238,7 @@ def reference_escape(
 
 
 def multi_reference_escape(
-    references: Sequence[Reference | Reference],
+    references: Sequence[Reference | Referenced],
     *,
     ontology_prefix: str,
     add_name_comment: bool = False,
@@ -250,15 +256,7 @@ def multi_reference_escape(
 
 def comma_separate_references(elements: Iterable[Reference | OBOLiteral]) -> str:
     """Map a list to strings and make comma separated."""
-    parts = []
-    for element in elements:
-        match element:
-            case Reference():
-                parts.append(get_preferred_curie(element))
-            case OBOLiteral(value, _datatype):
-                # TODO check datatype is URI
-                parts.append(value)
-    return ", ".join(parts)
+    return ", ".join(reference_or_literal_to_str(element) for element in elements)
 
 
 def _ground_relation(relation_str: str) -> Reference | None:
@@ -300,16 +298,42 @@ class OBOLiteral(NamedTuple):
 
     value: str
     datatype: Reference
+    language: str | None
 
     @classmethod
-    def string(cls, value: str) -> OBOLiteral:
+    def string(cls, value: str, *, language: str | None = None) -> OBOLiteral:
         """Get a string literal."""
-        return cls(value, Reference(prefix="xsd", identifier="string"))
+        return cls(value, Reference(prefix="xsd", identifier="string"), language)
+
+    @classmethod
+    def boolean(cls, value: bool) -> OBOLiteral:
+        """Get a boolean literal."""
+        return cls(str(value).lower(), Reference(prefix="xsd", identifier="boolean"), None)
+
+    @classmethod
+    def decimal(cls, value) -> OBOLiteral:
+        """Get a decimal literal."""
+        return cls(str(value), Reference(prefix="xsd", identifier="decimal"), None)
+
+    @classmethod
+    def float(cls, value) -> OBOLiteral:
+        """Get a float literal."""
+        return cls(str(value), Reference(prefix="xsd", identifier="float"), None)
+
+    @classmethod
+    def integer(cls, value: int | str) -> OBOLiteral:
+        """Get a integer literal."""
+        return cls(str(int(value)), Reference(prefix="xsd", identifier="integer"), None)
+
+    @classmethod
+    def year(cls, value: int | str) -> OBOLiteral:
+        """Get a year (gYear) literal."""
+        return cls(str(int(value)), Reference(prefix="xsd", identifier="gYear"), None)
 
     @classmethod
     def uri(cls, uri: str) -> OBOLiteral:
         """Get a string literal for a URI."""
-        return cls(uri, Reference(prefix="xsd", identifier="anyURI"))
+        return cls(uri, Reference(prefix="xsd", identifier="anyURI"), None)
 
 
 def _reference_list_tag(
@@ -317,3 +341,12 @@ def _reference_list_tag(
 ) -> Iterable[str]:
     for reference in references:
         yield f"{tag}: {reference_escape(reference, ontology_prefix=ontology_prefix, add_name_comment=True)}"
+
+
+def reference_or_literal_to_str(x: Reference | OBOLiteral) -> str:
+    """Get a string from a reference or literal."""
+    match x:
+        case Reference():
+            return get_preferred_curie(x)
+        case OBOLiteral(value, _, _):
+            return value

@@ -53,12 +53,6 @@ class ExpasyGetter(Obo):
         Reference(prefix="eccode", identifier="6"),
         Reference(prefix="eccode", identifier="7"),
     ]
-    idspaces = {
-        "uniprot": "https://bioregistry.io/uniprot:",
-        "eccode": "https://bioregistry.io/eccode:",
-        "GO": "http://purl.obolibrary.org/obo/GO_",
-        "RO": "http://purl.obolibrary.org/obo/RO_",
-    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

@@ -74,9 +74,13 @@ def get_literal_properties(
         (
             Reference.from_curie(s),
             Reference.from_curie(p),
-            OBOLiteral(value, Reference.from_curie(datatype)),
+            OBOLiteral(
+                value,
+                Reference.from_curie(datatype),
+                language if language and pd.notna(language) else None,
+            ),
         )
-        for s, p, value, datatype in tqdm(
+        for s, p, value, datatype, language in tqdm(
             df.values,
             desc=f"[{prefix}] parsing properties",
             unit_scale=True,

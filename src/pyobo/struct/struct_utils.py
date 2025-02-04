@@ -7,8 +7,10 @@ import logging
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias, overload
 
+import biosynonyms
 import curies
 from curies import ReferenceTuple
+from curies import vocabulary as _v
 from curies.vocabulary import SynonymScope
 from pydantic import BaseModel, ConfigDict
 from typing_extensions import Self
@@ -23,6 +25,7 @@ from .reference import (
     get_preferred_curie,
     multi_reference_escape,
     reference_escape,
+    reference_or_literal_to_str,
     unspecified_matching,
 )
 from .utils import obo_escape_slim
@@ -48,18 +51,15 @@ class Annotation(NamedTuple):
     @classmethod
     def float(cls, predicate: Reference, value: float) -> Self:
         """Return a literal property for a float."""
-        return cls(predicate, OBOLiteral(str(value), v.xsd_float))
+        return cls(predicate, OBOLiteral.float(value))
 
     @staticmethod
     def _sort_key(x: Annotation):
         return x.predicate, _reference_or_literal_key(x.value)
 
 
-def _property_resolve(
-    p: Reference | Referenced, o: Reference | Referenced | OBOLiteral
-) -> Annotation:
-    if isinstance(p, Referenced):
-        p = p.reference
+def _property_resolve(p: ReferenceHint, o: Reference | Referenced | OBOLiteral) -> Annotation:
+    p = _ensure_ref(p)
     if isinstance(o, Referenced):
         o = o.reference
     return Annotation(p, o)
@@ -148,6 +148,13 @@ class Stanza:
             rv.update(_get_prefixes_from_annotations(annotations_))
         return rv
 
+    def get_literal_mappings(self) -> list[biosynonyms.LiteralMapping]:
+        """Get synonym objects for this term, including one for its label."""
+        rv = [_convert_synoynym(self, synonym) for synonym in self.synonyms]
+        if self.reference.name:
+            rv.append(_get_stanza_name_synonym(self))
+        return rv
+
     def append_relationship(
         self,
         typedef: ReferenceHint,
@@ -171,7 +178,7 @@ class Stanza:
             self._append_annotation(p, o, annotation)
 
     def _append_annotation(
-        self, p: Reference, o: Reference | OBOLiteral, annotation: Annotation
+        self, p: ReferenceHint, o: Reference | OBOLiteral, annotation: Annotation
     ) -> None:
         self._axioms[_property_resolve(p, o)].append(annotation)
 
@@ -309,14 +316,14 @@ class Stanza:
             yield xref_yv
 
     def _get_annotations(
-        self, p: Reference | Referenced, o: Reference | Referenced | OBOLiteral | str
+        self, p: ReferenceHint, o: Reference | Referenced | OBOLiteral | str
     ) -> list[Annotation]:
         if isinstance(o, str):
             o = OBOLiteral.string(o)
         return self._axioms.get(_property_resolve(p, o), [])
 
     def _get_annotation(
-        self, p: Reference, o: Reference | OBOLiteral, ap: Reference
+        self, p: ReferenceHint, o: Reference | OBOLiteral, ap: Reference
     ) -> Reference | OBOLiteral | None:
         ap_norm = _ensure_ref(ap)
         for annotation in self._get_annotations(p, o):
@@ -335,33 +342,76 @@ class Stanza:
     def annotate_literal(
         self,
         prop: ReferenceHint,
-        value: str,
-        datatype: Reference | None = None,
+        value: OBOLiteral,
         *,
         annotations: Iterable[Annotation] | None = None,
     ) -> Self:
         """Append an object annotation."""
         prop = _ensure_ref(prop)
-        literal = OBOLiteral(value, datatype or v.xsd_string)
-        self.properties[prop].append(literal)
-        self._extend_annotations(prop, literal, annotations)
+        self.properties[prop].append(value)
+        self._extend_annotations(prop, value, annotations)
         return self
 
-    def annotate_boolean(self, prop: ReferenceHint, value: bool) -> Self:
+    def annotate_string(
+        self,
+        prop: ReferenceHint,
+        value: str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+        language: str | None = None,
+    ) -> Self:
         """Append an object annotation."""
-        return self.annotate_literal(prop, str(value).lower(), v.xsd_boolean)
+        return self.annotate_literal(
+            prop, OBOLiteral.string(value, language=language), annotations=annotations
+        )
 
-    def annotate_integer(self, prop: ReferenceHint, value: int | str) -> Self:
+    def annotate_boolean(
+        self,
+        prop: ReferenceHint,
+        value: bool,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
         """Append an object annotation."""
-        return self.annotate_literal(prop, str(int(value)), v.xsd_integer)
+        return self.annotate_literal(prop, OBOLiteral.boolean(value), annotations=annotations)
 
-    def annotate_year(self, prop: ReferenceHint, value: int | str) -> Self:
+    def annotate_integer(
+        self,
+        prop: ReferenceHint,
+        value: int | str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
+        """Append an object annotation."""
+        return self.annotate_literal(prop, OBOLiteral.integer(value), annotations=annotations)
+
+    def annotate_float(
+        self, prop: ReferenceHint, value: float, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
+        """Append a float annotation."""
+        return self.annotate_literal(prop, OBOLiteral.float(value), annotations=annotations)
+
+    def annotate_decimal(
+        self, prop: ReferenceHint, value: float, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
+        """Append a decimal annotation."""
+        return self.annotate_literal(prop, OBOLiteral.decimal(value), annotations=annotations)
+
+    def annotate_year(
+        self,
+        prop: ReferenceHint,
+        value: int | str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
         """Append a year annotation."""
-        return self.annotate_literal(prop, str(int(value)), v.xsd_year)
+        return self.annotate_literal(prop, OBOLiteral.year(value), annotations=annotations)
 
-    def annotate_uri(self, prop: ReferenceHint, value: str) -> Self:
+    def annotate_uri(
+        self, prop: ReferenceHint, value: str, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
         """Append a URI annotation."""
-        return self.annotate_literal(prop, value, v.xsd_uri)
+        return self.annotate_literal(prop, OBOLiteral.uri(value), annotations=annotations)
 
     def _iterate_obo_properties(
         self,
@@ -497,6 +547,25 @@ class Stanza:
             if isinstance(reference, curies.Reference)
         )
 
+    def append_exact_synonym(
+        self,
+        synonym: str | Synonym,
+        *,
+        type: Reference | Referenced | None = None,
+        provenance: Sequence[Reference | OBOLiteral] | None = None,
+        annotations: Iterable[Annotation] | None = None,
+        language: str | None = None,
+    ) -> Self:
+        """Add an exact synonym."""
+        return self.append_synonym(
+            synonym,
+            type=type,
+            specificity="EXACT",
+            provenance=provenance,
+            annotations=annotations,
+            language=language,
+        )
+
     def append_synonym(
         self,
         synonym: str | Synonym,
@@ -505,6 +574,7 @@ class Stanza:
         specificity: SynonymScope | None = None,
         provenance: Sequence[Reference | OBOLiteral] | None = None,
         annotations: Iterable[Annotation] | None = None,
+        language: str | None = None,
     ) -> Self:
         """Add a synonym."""
         if isinstance(type, Referenced):
@@ -518,6 +588,7 @@ class Stanza:
                 specificity=specificity,
                 provenance=list(provenance or []),
                 annotations=list(annotations or []),
+                language=language,
             )
         self.synonyms.append(synonym)
         return self
@@ -536,10 +607,14 @@ class Stanza:
         return self.annotate_object(v.see_also, _reference, annotations=annotations)
 
     def append_comment(
-        self, value: str, *, annotations: Iterable[Annotation] | None = None
+        self,
+        value: str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+        language: str | None = None,
     ) -> Self:
         """Add a comment property."""
-        return self.annotate_literal(v.comment, value, annotations=annotations)
+        return self.annotate_string(v.comment, value, annotations=annotations, language=language)
 
     @property
     def alt_ids(self) -> Sequence[Reference]:
@@ -650,7 +725,11 @@ class Stanza:
 
     def _definition_fp(self) -> str:
         definition = obo_escape_slim(self.definition) if self.definition else ""
-        return f'"{definition}" [{comma_separate_references(self._get_definition_provenance())}]'
+        dp = self._get_definition_provenance()
+        if dp:
+            return f'"{definition}" [{comma_separate_references(dp)}]'
+        else:
+            return f'"{definition}"'
 
     def _get_definition_provenance(self) -> Sequence[Reference | OBOLiteral]:
         if self.definition is None:
@@ -697,7 +776,9 @@ class Stanza:
         return self.annotate_object(v.has_citation, reference, annotations=annotations)
 
 
-ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
+ReferenceHint: TypeAlias = (
+    Reference | Referenced | curies.Reference | curies.NamedReference | tuple[str, str] | str
+)
 
 
 def _ensure_ref(
@@ -711,6 +792,10 @@ def _ensure_ref(
         return Reference(prefix=reference[0], identifier=reference[1])
     if isinstance(reference, Reference):
         return reference
+    if isinstance(reference, curies.NamedReference):
+        return Reference(
+            prefix=reference.prefix, identifier=reference.identifier, name=reference.name
+        )
     if isinstance(reference, curies.Reference):
         return Reference(prefix=reference.prefix, identifier=reference.identifier)
     if ":" not in reference:
@@ -756,7 +841,7 @@ def _iterate_obo_relations(
         start = f"{pc} "
         for value in sorted(values, key=_reference_or_literal_key):
             match value:
-                case OBOLiteral(dd, datatype):
+                case OBOLiteral(dd, datatype, _language):
                     if predicate in skip_predicate_literals:
                         continue
                     # TODO how to clean/escape value?
@@ -787,7 +872,7 @@ def _reference_or_literal_key(x: Reference | OBOLiteral) -> tuple[int, Reference
 
 
 def _get_obo_trailing_modifiers(
-    p: Reference,
+    p: ReferenceHint,
     o: Reference | OBOLiteral,
     annotations_dict: AnnotationsDict,
     *,
@@ -818,7 +903,7 @@ def _format_obo_trailing_modifiers(
         match prop.value:
             case Reference():
                 right = reference_escape(prop.value, ontology_prefix=ontology_prefix)
-            case OBOLiteral(value, _datatype):
+            case OBOLiteral(value, _datatype, _language):
                 right = value
         modifiers.append((left, right))
     inner = ", ".join(f"{key}={value}" for key, value in modifiers)
@@ -870,3 +955,49 @@ def _get_prefixes_from_annotations(annotations: Iterable[Annotation]) -> set[str
         if isinstance(right, Reference):
             prefixes.add(right.prefix)
     return prefixes
+
+
+def _get_stanza_name_synonym(stanza: Stanza) -> biosynonyms.LiteralMapping:
+    return biosynonyms.LiteralMapping(
+        text=stanza.reference.name,
+        reference=stanza.reference.as_named_reference(),
+        predicate=_v.has_label,
+        type=None,
+        provenance=[p for p in stanza.provenance if isinstance(p, curies.Reference)],
+        contributor=None,  # TODO
+        comment=None,  # TODO
+        source=stanza.reference.prefix,
+        date=None,  # TODO
+    )
+
+
+def _convert_synoynym(stanza: Stanza, synonym: Synonym) -> biosynonyms.LiteralMapping:
+    o = OBOLiteral.string(synonym.name, language=synonym.language)
+    # TODO make this indexing reusable? similar code used for SSSOM export
+    idx: dict[Reference, Reference | OBOLiteral] = {
+        annotation.predicate: annotation.value
+        for annotation in stanza._get_annotations(synonym.predicate, o)
+    }
+
+    comment = _safe_str(idx.get(v.comment))
+    contributor = _safe_str(idx.get(v.has_contributor))
+    date = _safe_str(idx.get(v.has_date))
+
+    return biosynonyms.LiteralMapping(
+        text=synonym.name,
+        language=synonym.language,
+        reference=stanza.reference.as_named_reference(),
+        predicate=synonym.predicate,
+        type=synonym.type,
+        provenance=[p for p in synonym.provenance if isinstance(p, curies.Reference)],
+        contributor=contributor,
+        comment=comment,
+        source=stanza.reference.prefix,
+        date=date,
+    )
+
+
+def _safe_str(x: Reference | OBOLiteral | None) -> str | None:
+    if x is None:
+        return None
+    return reference_or_literal_to_str(x)

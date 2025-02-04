@@ -1,6 +1,5 @@
 """Static site generator."""
 
-import itertools as itt
 from collections import defaultdict
 from collections.abc import Sequence
 from operator import attrgetter
@@ -64,15 +63,12 @@ def make_site(
     if resource is None:
         raise KeyError
 
+    terms = [term for term in obo if term.prefix == obo.ontology]
+
     if not manifest:
         _manifest = None
     else:
-        _manifest = sorted(
-            (term for term in itt.chain(obo, obo.typedefs or []) if term.prefix == obo.ontology),
-            key=attrgetter("identifier"),
-        )
-
-    terms = [term for term in obo if term.prefix == obo.ontology]
+        _manifest = sorted(terms, key=attrgetter("identifier"))
 
     directory.joinpath("index.html").write_text(
         index_template.render(

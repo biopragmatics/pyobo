@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import itertools as itt
 import json
 import logging
 import os
@@ -16,6 +17,7 @@ from textwrap import dedent
 from typing import Annotated, Any, ClassVar, TextIO
 
 import bioregistry
+import biosynonyms
 import click
 import curies
 import networkx as nx
@@ -36,6 +38,7 @@ from .reference import (
     default_reference,
     get_preferred_curie,
     reference_escape,
+    reference_or_literal_to_str,
 )
 from .struct_utils import (
     Annotation,
@@ -83,7 +86,8 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SPECIFICITY: _cv.SynonymScope = "EXACT"
+#: This is what happens if no specificity is given
+DEFAULT_SPECIFICITY: _cv.SynonymScope = "RELATED"
 
 #: Columns in the SSSOM dataframe
 SSSOM_DF_COLUMNS = [
@@ -118,6 +122,9 @@ class Synonym:
     #: Extra annotations
     annotations: list[Annotation] = field(default_factory=list)
 
+    #: Language tag for the synonym
+    language: str | None = None
+
     def __lt__(self, other: Synonym) -> bool:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
@@ -131,7 +138,7 @@ class Synonym:
             match provenance:
                 case Reference():
                     rv.add(provenance.prefix)
-                case OBOLiteral(_, datatype):
+                case OBOLiteral(_, datatype, _language):
                     rv.add(datatype.prefix)
         rv.update(_get_prefixes_from_annotations(self.annotations))
         return rv
@@ -163,17 +170,33 @@ class Synonym:
     ) -> str:
         if synonym_typedefs is None:
             synonym_typedefs = {}
-        std = _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
-        if std is not None and std.specificity is not None:
-            specificity = std.specificity
-        elif self.specificity:
-            specificity = self.specificity
-        else:
-            specificity = DEFAULT_SPECIFICITY
-        x = f'"{self._escape(self.name)}" {specificity}'
+
+        x = f'"{self._escape(self.name)}"'
+
+        # Add on the specificity, e.g., EXACT
+        synonym_typedef = _synonym_typedef_warn(ontology_prefix, self.type, synonym_typedefs)
+        if synonym_typedef is not None and synonym_typedef.specificity is not None:
+            x = f"{x} {synonym_typedef.specificity}"
+        elif self.specificity is not None:
+            x = f"{x} {self.specificity}"
+        elif self.type is not None:
+            # it's not valid to have a synonym type without a specificity,
+            # so automatically assign one if we'll need it
+            x = f"{x} {DEFAULT_SPECIFICITY}"
+
+        # Add on the synonym type, if exists
         if self.type is not None:
             x = f"{x} {reference_escape(self.type, ontology_prefix=ontology_prefix)}"
-        return f"{x} [{comma_separate_references(self.provenance)}]"
+
+        # the provenance list is required, even if it's empty :/
+        x = f"{x} [{comma_separate_references(self.provenance)}]"
+
+        # OBO flat file format does not support language,
+        # but at least we can mention it here as a comment
+        if self.language:
+            x += f" ! language: {self.language}"
+
+        return x
 
     @staticmethod
     def _escape(s: str) -> str:
@@ -303,6 +326,11 @@ class Term(Referenced, Stanza):
             definition=get_definition(prefix, identifier),
         )
 
+    @classmethod
+    def default(cls, prefix, identifier, name=None) -> Self:
+        """Create a default term."""
+        return cls(reference=default_reference(prefix=prefix, identifier=identifier, name=name))
+
     def append_see_also_uri(self, uri: str) -> Self:
         """Add a see also property."""
         return self.annotate_uri(v.see_also, uri)
@@ -316,14 +344,7 @@ class Term(Referenced, Stanza):
 
     def get_property_literals(self, prop: ReferenceHint) -> list[str]:
         """Get properties from the given key."""
-        rv = []
-        for t in self.properties.get(_ensure_ref(prop), []):
-            match t:
-                case Reference():
-                    rv.append(get_preferred_curie(t))
-                case OBOLiteral(value, _):
-                    rv.append(value)
-        return rv
+        return [reference_or_literal_to_str(t) for t in self.properties.get(_ensure_ref(prop), [])]
 
     def get_property(self, prop: ReferenceHint) -> str | None:
         """Get a single property of the given key."""
@@ -633,7 +654,12 @@ class Obo:
         """Get a prefix map including all prefixes used in the ontology."""
         rv = {}
         for prefix in sorted(self._get_prefixes(), key=str.casefold):
-            uri_prefix = bioregistry.get_uri_prefix(prefix)
+            resource = bioregistry.get_resource(prefix)
+            if resource is None:
+                raise ValueError
+            uri_prefix = resource.get_rdf_uri_prefix()
+            if uri_prefix is None:
+                uri_prefix = resource.get_uri_prefix()
             if uri_prefix is None:
                 # This allows us an escape hatch, since some
                 # prefixes don't have an associated URI prefix
@@ -886,7 +912,7 @@ class Obo:
         # TODO add SPDX to idspaces and use as a CURIE?
         if license_spdx_id := bioregistry.get_license(self.ontology):
             if license_spdx_id.startswith("http"):
-                license_literal = OBOLiteral(license_spdx_id, v.xsd_uri)
+                license_literal = OBOLiteral.uri(license_spdx_id)
             else:
                 license_literal = OBOLiteral.string(license_spdx_id)
             yield Annotation(v.has_license, license_literal)
@@ -1184,12 +1210,16 @@ class Obo:
                 tqdm.write(
                     f"[{self.ontology}] converting OFN to OBO Graph at {self._obograph_path}"
                 )
-                bioontologies.robot.convert(self._ofn_path, self._obograph_path)
+                bioontologies.robot.convert(
+                    self._ofn_path, self._obograph_path, debug=True, merge=False, reason=False
+                )
         if write_owl and (not self._owl_path.exists() or force):
             tqdm.write(f"[{self.ontology}] writing OWL to {self._owl_path}")
             import bioontologies.robot
 
-            bioontologies.robot.convert(self._ofn_path, self._owl_path)
+            bioontologies.robot.convert(
+                self._ofn_path, self._owl_path, debug=True, merge=False, reason=False
+            )
         if write_ttl and (not self._ttl_path.exists() or force):
             tqdm.write(f"[{self.ontology}] writing Turtle to {self._ttl_path}")
             self.write_rdf(self._ttl_path)
@@ -1338,7 +1368,7 @@ class Obo:
     def iterate_ids(self, *, use_tqdm: bool = False) -> Iterable[str]:
         """Iterate over identifiers."""
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"):
-            if term.prefix == self.ontology:
+            if self._in_ontology(term.reference):
                 yield term.identifier
 
     def get_ids(self, *, use_tqdm: bool = False) -> set[str]:
@@ -1348,7 +1378,7 @@ class Obo:
     def iterate_id_name(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str]]:
         """Iterate identifier name pairs."""
         for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"):
-            if term.prefix == self.ontology and term.name:
+            if self._in_ontology(term.reference) and term.name:
                 yield term.identifier, term.name
 
     def get_id_name_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, str]:
@@ -1438,7 +1468,7 @@ class Obo:
     @property
     def properties_header(self):
         """Property dataframe header."""
-        return [f"{self.ontology}_id", "property", "value", "datatype"]
+        return [f"{self.ontology}_id", "property", "value", "datatype", "language"]
 
     @property
     def object_properties_header(self):
@@ -1448,17 +1478,25 @@ class Obo:
     @property
     def literal_properties_header(self):
         """Property dataframe header."""
-        return ["source", "predicate", "target", "datatype"]
+        return ["source", "predicate", "target", "datatype", "language"]
 
-    def _iter_property_rows(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str, str, str]]:
+    def _iter_property_rows(
+        self, *, use_tqdm: bool = False
+    ) -> Iterable[tuple[str, str, str, str, str]]:
         """Iterate property rows."""
         for term, t in self.iterate_properties(use_tqdm=use_tqdm):
             pred = term._reference(t.predicate, ontology_prefix=self.ontology)
             match t.value:
-                case OBOLiteral(value, datatype):
-                    yield (term.identifier, pred, value, get_preferred_curie(datatype))
+                case OBOLiteral(value, datatype, language):
+                    yield (
+                        term.identifier,
+                        pred,
+                        value,
+                        get_preferred_curie(datatype),
+                        language or "",
+                    )
                 case Reference() as obj:
-                    yield (term.identifier, pred, get_preferred_curie(obj), "")
+                    yield term.identifier, pred, get_preferred_curie(obj), "", ""
                 case _:
                     raise TypeError(f"got: {type(t)} - {t}")
 
@@ -1486,11 +1524,17 @@ class Obo:
 
     def iter_literal_properties(
         self, *, use_tqdm: bool = False
-    ) -> Iterable[tuple[str, str, str, str]]:
+    ) -> Iterable[tuple[str, str, str, str, str]]:
         """Iterate over literal properties quads."""
         for term in self._iter_terms(use_tqdm=use_tqdm):
             for predicate, target in term.iterate_literal_properties():
-                yield term.curie, predicate.curie, target.value, target.datatype.curie
+                yield (
+                    term.curie,
+                    predicate.curie,
+                    target.value,
+                    target.datatype.curie,
+                    target.language or "",
+                )
 
     def get_literal_properties_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get all properties as a dataframe."""
@@ -1505,11 +1549,7 @@ class Obo:
             for t in term.get_property_annotations():
                 if t.predicate != prop:
                     continue
-                match t.value:
-                    case OBOLiteral(value, _datatype):
-                        yield term, value
-                    case Reference():
-                        yield term, get_preferred_curie(t.value)
+                yield term, reference_or_literal_to_str(t.value)
 
     def get_filtered_properties_df(
         self, prop: ReferenceHint, *, use_tqdm: bool = False
@@ -1768,6 +1808,20 @@ class Obo:
         """Get a mapping from identifiers to a list of sorted synonym strings."""
         return multidict(self.iterate_synonym_rows(use_tqdm=use_tqdm))
 
+    def get_literal_mappings(self) -> Iterable[biosynonyms.LiteralMapping]:
+        """Get literal mappings in a standard data model."""
+        stanzas: Iterable[Stanza] = itt.chain(self, self.typedefs or [])
+        yield from itt.chain.from_iterable(
+            stanza.get_literal_mappings()
+            for stanza in stanzas
+            if self._in_ontology(stanza.reference)
+        )
+
+    def _in_ontology(self, reference: Reference) -> bool:
+        return (reference.prefix == self.ontology) or (
+            reference.prefix == "obo" and reference.identifier.startswith(self.ontology + "#")
+        )
+
     #########
     # XREFS #
     #########
@@ -1790,6 +1844,15 @@ class Obo:
         """Iterate over terms' identifiers, xref prefixes, and xref identifiers."""
         for term, xref in self.iterate_xrefs(use_tqdm=use_tqdm):
             yield term.identifier, xref.prefix, xref.identifier
+
+    def iterate_literal_mapping_rows(self) -> Iterable[biosynonyms.LiteralMappingTuple]:
+        """Iterate over literal mapping rows."""
+        for synonym in self.get_literal_mappings():
+            yield synonym._as_row()
+
+    def get_literal_mappings_df(self) -> pd.DataFrame:
+        """Get a literal mappings dataframe."""
+        return biosynonyms.literal_mappings_to_df(self.get_literal_mappings())
 
     def iterate_mapping_rows(
         self, *, use_tqdm: bool = False
