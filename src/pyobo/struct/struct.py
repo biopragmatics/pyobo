@@ -1838,16 +1838,7 @@ class Obo:
 
     def get_literal_mappings_df(self) -> pd.DataFrame:
         """Get a literal mappings dataframe."""
-        df = pd.DataFrame(
-            self.iterate_literal_mapping_rows(), columns=biosynonyms.LiteralMappingTuple._fields
-        )
-
-        # remove any columns that are fully blank
-        for col in list(df.columns):
-            if df[col].isna().all():
-                del df[col]
-
-        return df
+        return biosynonyms.literal_mappings_to_df(self.get_literal_mappings())
 
     def iterate_mapping_rows(
         self, *, use_tqdm: bool = False
