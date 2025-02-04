@@ -259,8 +259,8 @@ def get_literal_mappings(
     prefix: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[biosynonyms.LiteralMapping]:
     """Get literal mappings."""
-    ontology = get_ontology(prefix, **kwargs)
-    return list(ontology.get_literal_mappings())
+    df = get_literal_mappings_df(prefix=prefix, **kwargs)
+    return biosynonyms.df_to_literal_mappings(df)
 
 
 def get_literal_mappings_df(
