@@ -40,9 +40,6 @@ class GTDBGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     typedefs = [has_taxonomy_rank]
-    idspaces = {
-        PREFIX: "https://gtdb.ecogenomic.org/tree?r=",
-    }
     root_terms = [
         Reference(prefix=PREFIX, identifier="d__Archea", name="Archea"),
         Reference(prefix=PREFIX, identifier="d__Bacteria", name="Bacteria"),

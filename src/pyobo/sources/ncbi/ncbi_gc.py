@@ -68,11 +68,6 @@ class NCBIGCGetter(Obo):
     static_version = VERSION
     root_terms = [GC_ROOT]
     typedefs = [has_gc_code, has_contributor, see_also, comment, term_replaced_by]
-    idspaces = {
-        PREFIX: URI_PREFIX,
-        "orcid": "https://orcid.org/",
-        "dcterms": "http://purl.org/dc/terms/",
-    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

@@ -26,23 +26,6 @@ class NLMCatalogGetter(Obo):
     dynamic_version = True
     typedefs = [PUBLISHED_IN, has_end_date, has_start_date, exact_match]
     root_terms = [JOURNAL_TERM.reference, PUBLISHER_TERM.reference]
-    idspaces = {
-        PREFIX_CATALOG: "https://www.ncbi.nlm.nih.gov/nlmcatalog/",
-        PREFIX_PUBLISHER: "https://bioregistry.io/nlm.publisher:",
-        "sio": "http://semanticscience.org/resource/SIO_",
-        "schema": "http://schema.org/",
-        "biolink": "https://w3id.org/biolink/vocab/",
-        "MI": "http://purl.obolibrary.org/obo/MI_",
-        "IAO": "http://purl.obolibrary.org/obo/IAO_",
-        "bibo": "http://purl.org/ontology/bibo/",
-        "FBcv": "http://purl.obolibrary.org/obo/FBcv_",
-        "issn": "https://portal.issn.org/resource/ISSN/",
-        "skos": "http://www.w3.org/2004/02/skos/core#",
-        "uniprot.core": "http://purl.uniprot.org/core/",
-        "dcat": "http://www.w3.org/ns/dcat#",
-        "orcid": "https://orcid.org/",
-        "NCBITaxon": "http://purl.obolibrary.org/obo/NCBITaxon_",
-    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over journal terms for NLM Catalog."""
