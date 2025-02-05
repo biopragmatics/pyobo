@@ -1124,9 +1124,9 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
     def test_20_creation_date(self) -> None:
         """Test the ``creation_date`` tag."""
         date_str = "2022-07-26T19:27:20Z"
-        creation_date = datetime.datetime.strptime(date_str)
+        creation_date = datetime.datetime.fromisoformat(date_str)
 
-        term = Term(LYSINE_DEHYDROGENASE_ACT, creation_date=creation_date)
+        term = Term(LYSINE_DEHYDROGENASE_ACT).append_creation_date(creation_date)
         self.assert_obo_stanza(
             term,
             obo="""\

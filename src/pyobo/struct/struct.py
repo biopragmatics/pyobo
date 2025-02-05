@@ -473,7 +473,10 @@ class Term(Referenced, Stanza):
                 ontology_prefix=ontology_prefix, typedefs=typedefs
             )
         # 19 TODO created_by
-        # 20 TODO creation_date
+        # 20
+        for x in self.get_property_values(v.obo_creation_date):
+            if isinstance(x, OBOLiteral):
+                yield f"creation_date: {x.value}"
         # 21
         yield from _boolean_tag("is_obsolete", self.is_obsolete)
         # 22

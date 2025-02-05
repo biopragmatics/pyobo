@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import itertools as itt
 import logging
 from collections.abc import Iterable, Mapping, Sequence
@@ -413,6 +414,16 @@ class Stanza:
         """Append a URI annotation."""
         return self.annotate_literal(prop, OBOLiteral.uri(value), annotations=annotations)
 
+    def annotate_datetime(
+        self,
+        prop: ReferenceHint,
+        value: datetime.datetime,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
+        """Append a datetime annotation."""
+        return self.annotate_literal(prop, OBOLiteral.datetime(value), annotations=annotations)
+
     def _iterate_obo_properties(
         self,
         *,
@@ -475,6 +486,10 @@ class Stanza:
     def append_contributor(self, reference: ReferenceHint) -> Self:
         """Append contributor."""
         return self.annotate_object(v.has_contributor, reference)
+
+    def append_creation_date(self, date: datetime.datetime) -> Self:
+        """Append contributor."""
+        return self.annotate_datetime(v.obo_creation_date, date)
 
     def get_see_also(self) -> list[Reference]:
         """Get all see also objects."""
