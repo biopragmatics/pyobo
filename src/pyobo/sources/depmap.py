@@ -67,7 +67,10 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         columns
     ].values:
         if pd.isna(name):
-            name = None
+            if pd.notna(sname):
+                name, sname = sname, None
+            else:
+                name = None
         term = Term.from_triple(PREFIX, identifier, name)
         if pd.notna(sname):
             term.append_synonym(sname)
