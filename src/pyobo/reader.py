@@ -333,6 +333,7 @@ def _get_terms(
         _process_consider(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_comment(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_description(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_created_by(term, data)
 
         terms.append(term)
     return terms
@@ -356,6 +357,10 @@ def _process_comment(term: Stanza, data, *, ontology_prefix: str, strict: bool) 
     if comment := data.get("comment"):
         term.append_comment(comment)
 
+
+def _process_created_by(term: Stanza, data) -> None:
+    if date_str := data.get("created_by"):
+        term.append_creation_date(date_str)
 
 def _process_union_of(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
     for reference in iterate_node_reference_tag(
@@ -853,6 +858,7 @@ def iterate_typedefs(
         _process_consider(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_comment(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_description(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_created_by(typedef, data)
 
         # the next 4 are typedef-specific
         _process_equivalent_to_chain(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
@@ -1141,8 +1147,8 @@ def _handle_prop(
         return None
 
     if value_type.endswith(" xsd:dateTime"):
-        # FIXME
-        return None
+        dt = value_type.removesuffix(" xsd:dateTime").rstrip()
+        return Annotation(prop_reference, OBOLiteral.datetime(dt))
 
     # if the value doesn't start with a quote, we're going to
     # assume that it's a reference

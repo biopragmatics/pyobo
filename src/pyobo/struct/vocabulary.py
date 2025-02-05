@@ -139,4 +139,5 @@ SKIP_PROPERTY_PREDICATES_OBJECTS = [
 
 SKIP_PROPERTY_PREDICATES_LITERAL = [
     comment,  # maps to "comment:" line with strings
+    obo_creation_date,
 ]
