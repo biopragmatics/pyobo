@@ -1161,6 +1161,9 @@ def _handle_prop(
     # if the value doesn't start with a quote, we're going to
     # assume that it's a reference
     if not value_type.startswith('"'):
+        # TODO check if there's a space in here. if so, assume that it splits between
+        #  a datatype definition. if so, check that it's xsd:string or xsd:anyURI,
+        #  otherwise error
         obj_reference = _parse_identifier(
             value_type, strict=strict, ontology_prefix=ontology_prefix, node=node
         )

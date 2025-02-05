@@ -17,6 +17,7 @@ from pyobo.struct.typedef import (
     has_dbxref,
     is_conjugate_base_of,
     see_also,
+    definition_source,
     term_replaced_by,
 )
 from pyobo.struct.vocabulary import CHARLIE
@@ -1000,6 +1001,22 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual(1, len(list(term.properties)))
         self.assertIn(see_also.reference, term.properties)
         self.assertEqual("hgnc:1234", term.get_property(see_also))
+
+    def test_12_property_object_with_string_dtype(self) -> None:
+        """Test parsing a property with a literal object that has a string dtype."""
+        # the dtype really shouldn't be here, so we have to special case it
+        ontology = from_str("""\
+            ontology: ro
+
+            [Term]
+            id: RO:0002160
+            property_value: IAO:0000119 PMID:17921072 xsd:string
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(list(term.properties)))
+        xx = term.get_property_objects(definition_source)
+        self.assertEqual(1, len(xx))
+        self.assertEqual(Reference(prefix="pubmed", identifier="17921072"), xx[0])
 
     def test_13_parent(self) -> None:
         """Test parsing out a parent."""
