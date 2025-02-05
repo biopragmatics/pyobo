@@ -1049,6 +1049,10 @@ class Obo:
         return self._cache(name="literal_mappings.tsv")
 
     @property
+    def _prefix_map_path(self) -> Path:
+        return self._cache(name="prefixes.json")
+
+    @property
     def _root_metadata_path(self) -> Path:
         return prefix_directory_join(self.ontology, name="metadata.json")
 
@@ -1160,6 +1164,9 @@ class Obo:
             logger.debug("[%s v%s] caching metadata to %s", self.ontology, self.data_version, path)
             with path.open("w") as file:
                 json.dump(metadata, file, indent=2)
+
+        with self._prefix_map_path.open("w") as file:
+            json.dump(self._get_clean_idspaces(), file, indent=2)
 
         if write_cache:
             logger.debug(
