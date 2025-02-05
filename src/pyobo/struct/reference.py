@@ -61,6 +61,8 @@ class Reference(curies.Reference):
         if resource is None:
             raise ExpansionError(f"Unknown prefix: {prefix}")
         values["prefix"] = resource.prefix
+        if " " in identifier:
+            raise ValueError(f"[{prefix}] space in identifier: {identifier}")
         values["identifier"] = resource.standardize_identifier(identifier)
         if GLOBAL_CHECK_IDS and not resource.is_valid_identifier(values["identifier"]):
             raise ValueError(f"non-standard identifier: {resource.prefix}:{values['identifier']}")
