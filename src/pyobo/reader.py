@@ -362,6 +362,7 @@ def _process_created_by(term: Stanza, data) -> None:
     if date_str := data.get("created_by"):
         term.append_creation_date(date_str)
 
+
 def _process_union_of(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
     for reference in iterate_node_reference_tag(
         "union_of", data=data, ontology_prefix=ontology_prefix, strict=strict, node=term.reference
