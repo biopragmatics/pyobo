@@ -345,6 +345,11 @@ class OBOLiteral(NamedTuple):
         """Get a string literal for a URI."""
         return cls(uri, Reference(prefix="xsd", identifier="anyURI"), None)
 
+    @classmethod
+    def datetime(cls, dt: datetime.datetime) -> OBOLiteral:
+        """Get a datetime literal."""
+        return cls(dt, Reference(prefix="xsd", identifier="dateTime"), None)
+
 
 def _reference_list_tag(
     tag: str, references: Iterable[Reference], ontology_prefix: str
