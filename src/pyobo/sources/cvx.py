@@ -1,11 +1,13 @@
 """Converter for CVX."""
 
+import re
 from collections import defaultdict
 from collections.abc import Iterable
 
 import pandas as pd
 
 from pyobo import Obo, Reference, Term, TypeDef, default_reference
+from pyobo.struct.struct import acronym
 
 __all__ = [
     "CVXGetter",
@@ -18,12 +20,15 @@ STATUS = TypeDef(
 )
 NONVACCINE = TypeDef(reference=default_reference(PREFIX, "nonvaccine"), is_metadata_tag=True)
 
+ACRONYM_RE = re.compile("^[A-Z]+$")
+
 
 class CVXGetter(Obo):
     """An ontology representation of CVX."""
 
     ontology = PREFIX
     dynamic_version = True
+    synonym_typedefs = [acronym]
     typedefs = [STATUS, NONVACCINE]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -76,8 +81,20 @@ def iter_terms() -> Iterable[Term]:
             reference=Reference(prefix=PREFIX, identifier=cvx, name=full_name),
             is_obsolete=is_obsolete,
         )
-        if short_name != full_name:
-            term.append_synonym(short_name)
+        if (
+            short_name.casefold()
+            == full_name.casefold()
+            .replace("virus vaccine", "")
+            .replace("vaccine", "")
+            .replace("  ", " ")
+            .strip()
+        ):
+            pass
+        elif short_name != full_name:
+            if ACRONYM_RE.match(short_name):
+                term.append_exact_synonym(short_name, type=acronym.reference)
+            else:
+                term.append_synonym(short_name)
         if pd.notna(notes):
             term.append_comment(notes)
         if is_obsolete:
@@ -85,7 +102,7 @@ def iter_terms() -> Iterable[Term]:
             if replacement_identifier:
                 term.append_replaced_by(Reference(prefix=PREFIX, identifier=replacement_identifier))
         if pd.notna(status):
-            term.annotate_literal(STATUS, status)
+            term.annotate_string(STATUS, status)
         if pd.notna(nonvaccine):
             term.annotate_boolean(NONVACCINE, nonvaccine)
         terms[cvx] = term

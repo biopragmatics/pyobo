@@ -85,7 +85,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             name=symbol if pd.notna(symbol) else None,
             definition=name if pd.notna(name) else None,
         )
-        term.annotate_literal(CHROMOSOME, chromosome[len("chromosome_") :])
+        term.annotate_string(CHROMOSOME, chromosome[len("chromosome_") :])
         term.append_parent(so[gtype])
         term.set_species(identifier="4896", name="Schizosaccharomyces pombe")
         for hgnc_id in identifier_to_hgnc_ids.get(identifier, []):

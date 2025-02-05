@@ -75,7 +75,7 @@ def _extract_icd10(res_json: Mapping[str, Any]) -> Term:
         synonyms=synonyms,
         parents=parents,
     )
-    rv.annotate_literal(has_category, res_json["classKind"])
+    rv.annotate_string(has_category, res_json["classKind"])
 
     return rv
 

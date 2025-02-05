@@ -116,7 +116,7 @@ def _prep_prov(provenance):
             case Reference():
                 rv.append(_rewire(x))
             case OBOLiteral():
-                logger.warning("not implemented to convert literal provenance")
+                logger.debug("not implemented to convert literal provenance")
                 continue
     return rv
 

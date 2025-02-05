@@ -26,7 +26,11 @@ def get_umls_synonyms(*, refresh: bool = False) -> Mapping[str, str]:
     res = requests.get(ABBREVIATIONS_URL, timeout=5)
     soup = BeautifulSoup(res.text, features="html.parser")
     table = soup.find(id="mrdoc_TTY")
-    body = table.find("tbody")
+    if table is None:
+        raise ValueError
+    body = table.find("tbody")  # type:ignore[attr-defined]
+    if body is None:
+        raise ValueError
     rv = {}
     for row in body.find_all("tr"):
         left, right = row.find_all("td")
