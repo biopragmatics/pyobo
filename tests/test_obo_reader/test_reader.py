@@ -12,12 +12,12 @@ from pyobo.struct.struct import abbreviation
 from pyobo.struct.struct_utils import Annotation
 from pyobo.struct.typedef import (
     comment,
+    definition_source,
     derives_from,
     exact_match,
     has_dbxref,
     is_conjugate_base_of,
     see_also,
-    definition_source,
     term_replaced_by,
 )
 from pyobo.struct.vocabulary import CHARLIE
