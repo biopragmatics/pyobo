@@ -830,8 +830,8 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual("xsd:decimal", row["datatype"])
         self.assertEqual("", row["language"])
 
-    def test_12_property_literal_datetime(self) -> None:
-        """Test parsing a property with a datetime object."""
+    def test_12_property_literal_datetime_unquoted(self) -> None:
+        """Test parsing a property with a datetime object, with no quotes."""
         ontology = from_str("""\
             ontology: chebi
 
@@ -842,7 +842,19 @@ class TestReaderTerm(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(1, len(term.properties))
         self.assertEqual("2022-07-26T19:27:20+00:00", term.get_property(v.obo_creation_date))
-        # TODO test getting datatype
+
+    def test_12_property_literal_datetime_quoted(self) -> None:
+        """Test parsing a property with a datetime object, with quotes."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: oboInOwl:creation_date "2022-07-26T19:27:20Z" xsd:dateTime
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.properties))
+        self.assertEqual("2022-07-26T19:27:20+00:00", term.get_property(v.obo_creation_date))
 
     def test_12_property_literal_obo_purl(self) -> None:
         """Test using a full OBO PURL as the property."""

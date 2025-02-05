@@ -726,6 +726,26 @@ class TestTerm(unittest.TestCase):
             typedefs={RO_DUMMY.pair: RO_DUMMY},
         )
 
+    def test_12_property_datetime(self) -> None:
+        """Test emitting property datetimes."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_datetime(RO_DUMMY, "2022-07-26T19:27:20Z")
+        self.assert_obo_stanza(
+            term,
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                property_value: RO:1234567 2022-07-26T19:27:20+00:00 xsd:dateTime
+            """,
+            ofn="""\
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(RO:1234567 GO:0050069 "2022-07-26T19:27:20+00:00"^^xsd:dateTime)
+            """,
+            typedefs={RO_DUMMY.pair: RO_DUMMY},
+        )
+
     def test_13_parent(self) -> None:
         """Test emitting a relationship."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)

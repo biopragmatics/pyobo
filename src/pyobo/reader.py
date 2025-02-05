@@ -1151,7 +1151,7 @@ def _handle_prop(
         return None
 
     if value_type.endswith(" xsd:dateTime"):
-        dt = value_type.removesuffix(" xsd:dateTime").rstrip()
+        dt = value_type.removesuffix(" xsd:dateTime").rstrip().strip('"')
         return Annotation(prop_reference, OBOLiteral.datetime(dt))
 
     # if the value doesn't start with a quote, we're going to
