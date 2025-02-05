@@ -417,7 +417,7 @@ class Stanza:
     def annotate_datetime(
         self,
         prop: ReferenceHint,
-        value: datetime.datetime,
+        value: datetime.datetime | str,
         *,
         annotations: Iterable[Annotation] | None = None,
     ) -> Self:
@@ -487,7 +487,7 @@ class Stanza:
         """Append contributor."""
         return self.annotate_object(v.has_contributor, reference)
 
-    def append_creation_date(self, date: datetime.datetime) -> Self:
+    def append_creation_date(self, date: datetime.datetime | str) -> Self:
         """Append contributor."""
         return self.annotate_datetime(v.obo_creation_date, date)
 

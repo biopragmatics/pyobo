@@ -360,7 +360,10 @@ def _process_comment(term: Stanza, data, *, ontology_prefix: str, strict: bool) 
 
 def _process_creation_date(term: Stanza, data) -> None:
     if date_str := data.get("creation_date"):
-        term.append_creation_date(date_str)
+        try:
+            term.append_creation_date(date_str)
+        except ValueError:
+            logger.warning("[%s] failed to parse creation_date: %s", term.reference.curie, date_str)
 
 
 def _process_union_of(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:

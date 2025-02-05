@@ -1209,6 +1209,18 @@ class TestReaderTerm(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual("2022-07-26T19:27:20+00:00", term.get_property(v.obo_creation_date))
 
+    def test_20_creation_date_bad_format(self) -> None:
+        """Test parsing a property with a datetime object."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            creation_date: asgasgag
+        """)
+        term = self.get_only_term(ontology)
+        self.assertIsNone(term.get_property(v.obo_creation_date))
+
     def test_21_is_obsolete(self) -> None:
         """Test the ``is_obsolete`` tag."""
         self.assert_boolean_flag("is_obsolete")
