@@ -106,7 +106,8 @@ class TestReaderOntologyMetadata(unittest.TestCase):
                     reference=default_reference("chebi", "ST3", name="ST3 Name"), specificity=None
                 ),
                 SynonymTypeDef(
-                    reference=default_reference("chebi", "ST4", name="ST4 Name"), specificity="EXACT"
+                    reference=default_reference("chebi", "ST4", name="ST4 Name"),
+                    specificity="EXACT",
                 ),
                 SynonymTypeDef(
                     reference=default_reference("chebi", "ST5", name="ST5 Name"), specificity=None
