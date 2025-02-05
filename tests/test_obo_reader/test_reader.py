@@ -830,6 +830,32 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual("xsd:decimal", row["datatype"])
         self.assertEqual("", row["language"])
 
+    def test_12_property_literal_datetime_unquoted(self) -> None:
+        """Test parsing a property with a datetime object, with no quotes."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: oboInOwl:creation_date 2022-07-26T19:27:20Z xsd:dateTime
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.properties))
+        self.assertEqual("2022-07-26T19:27:20+00:00", term.get_property(v.obo_creation_date))
+
+    def test_12_property_literal_datetime_quoted(self) -> None:
+        """Test parsing a property with a datetime object, with quotes."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: oboInOwl:creation_date "2022-07-26T19:27:20Z" xsd:dateTime
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.properties))
+        self.assertEqual("2022-07-26T19:27:20+00:00", term.get_property(v.obo_creation_date))
+
     def test_12_property_literal_obo_purl(self) -> None:
         """Test using a full OBO PURL as the property."""
         ontology = from_str("""\
@@ -1182,7 +1208,30 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual("0000-0003-4423-4370", context.contributor.identifier)
 
     # TODO created_by
-    # TODO creation_date
+
+    def test_20_creation_date(self) -> None:
+        """Test parsing a property with a datetime object."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            creation_date: 2022-07-26T19:27:20Z
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual("2022-07-26T19:27:20+00:00", term.get_property(v.obo_creation_date))
+
+    def test_20_creation_date_bad_format(self) -> None:
+        """Test parsing a property with a datetime object."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            creation_date: asgasgag
+        """)
+        term = self.get_only_term(ontology)
+        self.assertIsNone(term.get_property(v.obo_creation_date))
 
     def test_21_is_obsolete(self) -> None:
         """Test the ``is_obsolete`` tag."""
