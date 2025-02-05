@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable, Sequence
 from typing import Any, NamedTuple
 
@@ -26,6 +27,8 @@ __all__ = [
     "reference_escape",
     "unspecified_matching",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 class Reference(curies.Reference):
@@ -68,11 +71,16 @@ class Reference(curies.Reference):
             raise ValueError(f"non-standard identifier: {resource.prefix}:{values['identifier']}")
         return values
 
-    def as_named_reference(self) -> curies.NamedReference:
+    def as_named_reference(self, name: str | None = None) -> curies.NamedReference:
         """Get a named reference."""
         if not self.name:
-            raise ValueError
-        return curies.NamedReference(prefix=self.prefix, identifier=self.identifier, name=self.name)
+            if name:
+                logger.warning("[%s] missing name; overriding with synonym: %s", self.curie, name)
+            else:
+                raise ValueError(f"[{self.curie}] missing name; can't convert to named reference")
+        return curies.NamedReference(
+            prefix=self.prefix, identifier=self.identifier, name=self.name or name
+        )
 
     @classmethod
     def auto(cls, prefix: str, identifier: str) -> Reference:

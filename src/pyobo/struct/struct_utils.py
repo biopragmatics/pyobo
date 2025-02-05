@@ -986,7 +986,7 @@ def _convert_synoynym(stanza: Stanza, synonym: Synonym) -> biosynonyms.LiteralMa
     return biosynonyms.LiteralMapping(
         text=synonym.name,
         language=synonym.language,
-        reference=stanza.reference.as_named_reference(),
+        reference=stanza.reference.as_named_reference(synonym.name),
         predicate=synonym.predicate,
         type=synonym.type,
         provenance=[p for p in synonym.provenance if isinstance(p, curies.Reference)],
