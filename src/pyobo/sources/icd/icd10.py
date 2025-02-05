@@ -12,7 +12,7 @@ from tqdm.auto import tqdm
 from .icd_utils import (
     ICD10_TOP_LEVEL_URL,
     get_child_identifiers,
-    get_icd,
+    get_icd_10_top,
     visiter,
 )
 from ...struct import Obo, Reference, Synonym, Term, has_category
@@ -42,7 +42,8 @@ class ICD10Getter(Obo):
 
 def iter_terms() -> Iterable[Term]:
     """Iterate over ICD-10 terms."""
-    r = get_icd(ICD10_TOP_LEVEL_URL)
+    r = get_icd_10_top()
+
     res_json = r.json()
 
     directory = prefix_directory_join(PREFIX, version=VERSION)
@@ -50,15 +51,20 @@ def iter_terms() -> Iterable[Term]:
     chapter_urls = res_json["child"]
     tqdm.write(f"there are {len(chapter_urls)} chapters")
 
+    identifiers = get_child_identifiers(ICD10_TOP_LEVEL_URL, res_json)
+
     visited_identifiers: set[str] = set()
-    for identifier in get_child_identifiers(ICD10_TOP_LEVEL_URL, res_json):
-        yield from visiter(
-            identifier,
-            visited_identifiers,
-            directory,
-            endpoint=ICD10_TOP_LEVEL_URL,
-            converter=_extract_icd10,
-        )
+    with tqdm(desc=f"[{PREFIX}]") as pbar:
+        for identifier in identifiers:
+            for term in visiter(
+                identifier,
+                visited_identifiers,
+                directory,
+                endpoint=ICD10_TOP_LEVEL_URL,
+                converter=_extract_icd10,
+            ):
+                pbar.update(1)
+                yield term
 
 
 def _extract_icd10(res_json: Mapping[str, Any]) -> Term:

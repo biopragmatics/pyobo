@@ -33,7 +33,12 @@ ICD10_TOP_LEVEL_URL = f"{ICD_BASE_URL}/release/10/2016"
 
 def get_icd(url: str) -> requests.Response:
     """Get an ICD API endpoint."""
-    return requests.get(url, headers=get_icd_api_headers())
+    return requests.get(url, headers=get_icd_api_headers(), timeout=5)
+
+
+def get_icd_10_top() -> requests.Response:
+    """Get from the ICD10 top."""
+    return get_icd(ICD10_TOP_LEVEL_URL)
 
 
 def get_icd_11(identifier: str):
@@ -88,7 +93,9 @@ def get_icd_api_headers() -> Mapping[str, str]:
     grant_type = "client_credentials"
     body_params = {"grant_type": grant_type}
     tqdm.write("getting ICD API token")
-    res = requests.post(TOKEN_URL, data=body_params, auth=(icd_client_id, icd_client_secret))
+    res = requests.post(
+        TOKEN_URL, data=body_params, auth=(icd_client_id, icd_client_secret), timeout=10
+    )
     res_json = res.json()
     access_type = res_json["token_type"]
     access_token = res_json["access_token"]
