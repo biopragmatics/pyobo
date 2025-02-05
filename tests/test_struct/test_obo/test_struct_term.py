@@ -736,7 +736,7 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                property_value: RO:1234567 2022-07-26T19:27:20+00:00 xsd:dateTime
+                property_value: RO:1234567 "2022-07-26T19:27:20+00:00" xsd:dateTime
             """,
             ofn="""\
                 Declaration(Class(GO:0050069))
