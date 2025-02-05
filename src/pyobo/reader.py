@@ -1198,7 +1198,7 @@ def _handle_prop(
                 return Annotation(prop_reference, OBOLiteral.string(value))
     else:
         if datatype:
-            logger.warning(
+            logger.debug(
                 "[%s] throwing away datatype since no quotes were used: %s", node.curie, value_type
             )
 
