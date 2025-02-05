@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import datetime
+import logging
 from collections.abc import Iterable, Sequence
 from typing import Any, NamedTuple
 
@@ -9,6 +11,7 @@ import bioontologies.relations
 import bioontologies.upgrade
 import bioregistry
 import curies
+import pytz
 from curies import Converter, ReferenceTuple
 from curies.api import ExpansionError, _split
 from pydantic import Field, field_validator, model_validator
@@ -26,6 +29,8 @@ __all__ = [
     "reference_escape",
     "unspecified_matching",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 class Reference(curies.Reference):
@@ -61,16 +66,23 @@ class Reference(curies.Reference):
         if resource is None:
             raise ExpansionError(f"Unknown prefix: {prefix}")
         values["prefix"] = resource.prefix
+        if " " in identifier:
+            raise ValueError(f"[{prefix}] space in identifier: {identifier}")
         values["identifier"] = resource.standardize_identifier(identifier)
         if GLOBAL_CHECK_IDS and not resource.is_valid_identifier(values["identifier"]):
             raise ValueError(f"non-standard identifier: {resource.prefix}:{values['identifier']}")
         return values
 
-    def as_named_reference(self) -> curies.NamedReference:
+    def as_named_reference(self, name: str | None = None) -> curies.NamedReference:
         """Get a named reference."""
         if not self.name:
-            raise ValueError
-        return curies.NamedReference(prefix=self.prefix, identifier=self.identifier, name=self.name)
+            if name:
+                logger.warning("[%s] missing name; overriding with synonym: %s", self.curie, name)
+            else:
+                raise ValueError(f"[{self.curie}] missing name; can't convert to named reference")
+        return curies.NamedReference(
+            prefix=self.prefix, identifier=self.identifier, name=self.name or name
+        )
 
     @classmethod
     def auto(cls, prefix: str, identifier: str) -> Reference:
@@ -334,6 +346,17 @@ class OBOLiteral(NamedTuple):
     def uri(cls, uri: str) -> OBOLiteral:
         """Get a string literal for a URI."""
         return cls(uri, Reference(prefix="xsd", identifier="anyURI"), None)
+
+    @classmethod
+    def datetime(cls, dt: datetime.datetime | str) -> OBOLiteral:
+        """Get a datetime literal."""
+        if isinstance(dt, str):
+            dt = _parse_datetime(dt)
+        return cls(dt.isoformat(), Reference(prefix="xsd", identifier="dateTime"), None)
+
+
+def _parse_datetime(dd: str) -> datetime.datetime:
+    return datetime.datetime.fromisoformat(dd).astimezone(pytz.UTC)
 
 
 def _reference_list_tag(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import itertools as itt
 import logging
 from collections.abc import Iterable, Mapping, Sequence
@@ -413,6 +414,16 @@ class Stanza:
         """Append a URI annotation."""
         return self.annotate_literal(prop, OBOLiteral.uri(value), annotations=annotations)
 
+    def annotate_datetime(
+        self,
+        prop: ReferenceHint,
+        value: datetime.datetime | str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
+        """Append a datetime annotation."""
+        return self.annotate_literal(prop, OBOLiteral.datetime(value), annotations=annotations)
+
     def _iterate_obo_properties(
         self,
         *,
@@ -475,6 +486,10 @@ class Stanza:
     def append_contributor(self, reference: ReferenceHint) -> Self:
         """Append contributor."""
         return self.annotate_object(v.has_contributor, reference)
+
+    def append_creation_date(self, date: datetime.datetime | str) -> Self:
+        """Append contributor."""
+        return self.annotate_datetime(v.obo_creation_date, date)
 
     def get_see_also(self) -> list[Reference]:
         """Get all see also objects."""
@@ -986,7 +1001,7 @@ def _convert_synoynym(stanza: Stanza, synonym: Synonym) -> biosynonyms.LiteralMa
     return biosynonyms.LiteralMapping(
         text=synonym.name,
         language=synonym.language,
-        reference=stanza.reference.as_named_reference(),
+        reference=stanza.reference.as_named_reference(synonym.name),
         predicate=synonym.predicate,
         type=synonym.type,
         provenance=[p for p in synonym.provenance if isinstance(p, curies.Reference)],

@@ -1,5 +1,6 @@
 """Tests for the OBO data structures."""
 
+import datetime
 import unittest
 from collections.abc import Iterable
 from textwrap import dedent
@@ -725,6 +726,26 @@ class TestTerm(unittest.TestCase):
             typedefs={RO_DUMMY.pair: RO_DUMMY},
         )
 
+    def test_12_property_datetime(self) -> None:
+        """Test emitting property datetimes."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_datetime(RO_DUMMY, "2022-07-26T19:27:20Z")
+        self.assert_obo_stanza(
+            term,
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                property_value: RO:1234567 "2022-07-26T19:27:20+00:00" xsd:dateTime
+            """,
+            ofn="""\
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(RO:1234567 GO:0050069 "2022-07-26T19:27:20+00:00"^^xsd:dateTime)
+            """,
+            typedefs={RO_DUMMY.pair: RO_DUMMY},
+        )
+
     def test_13_parent(self) -> None:
         """Test emitting a relationship."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -1122,6 +1143,26 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
 
     def test_20_creation_date(self) -> None:
         """Test the ``creation_date`` tag."""
+        date_str = "2022-07-26T19:27:20Z"
+        creation_date = datetime.datetime.fromisoformat(date_str)
+
+        term = Term(LYSINE_DEHYDROGENASE_ACT).append_creation_date(creation_date)
+        # note that the timezone has some funny stuff going on here, this will probably
+        # cause issues in the future
+        self.assert_obo_stanza(
+            term,
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                creation_date: 2022-07-26T19:27:20+00:00
+            """,
+            ofn="""
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(oboInOwl:creation_date GO:0050069 "2022-07-26T19:27:20+00:00"^^xsd:dateTime)
+            """,
+        )
 
     def test_21_obsolete(self) -> None:
         """Test obsolete definition."""

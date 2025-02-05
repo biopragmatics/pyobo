@@ -95,7 +95,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
             go_processes,
             bindings,
             description,
-        ) in tqdm(reader, desc="Mapping UniProt", unit_scale=True):
+        ) in tqdm(reader, desc=f"[{PREFIX}] mapping", unit_scale=True):
             if description:
                 description = description.removeprefix("FUNCTION: ")
             term = Term(

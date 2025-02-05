@@ -333,6 +333,7 @@ def _get_terms(
         _process_consider(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_comment(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_description(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_creation_date(term, data)
 
         terms.append(term)
     return terms
@@ -355,6 +356,18 @@ def _process_description(term: Stanza, data, *, ontology_prefix: str, strict: bo
 def _process_comment(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
     if comment := data.get("comment"):
         term.append_comment(comment)
+
+
+def _process_creation_date(term: Stanza, data) -> None:
+    date_str = data.get("creation_date")
+    if not date_str:
+        return
+    if isinstance(date_str, list):
+        date_str = date_str[0]
+    try:
+        term.append_creation_date(date_str)
+    except ValueError:
+        logger.warning("[%s] failed to parse creation_date: %s", term.reference.curie, date_str)
 
 
 def _process_union_of(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
@@ -854,6 +867,7 @@ def iterate_typedefs(
         _process_consider(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_comment(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_description(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_creation_date(typedef, data)
 
         # the next 4 are typedef-specific
         _process_equivalent_to_chain(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
@@ -1141,45 +1155,69 @@ def _handle_prop(
         UNHANDLED_PROPS[prop] += 1
         return None
 
-    # if the value doesn't start with a quote, we're going to
-    # assume that it's a reference
-    if not value_type.startswith('"'):
-        obj_reference = _parse_identifier(
-            value_type, strict=strict, ontology_prefix=ontology_prefix, node=node
+    value_type = value_type.strip()
+    datatype: Reference | None
+    if " " not in value_type:
+        value, datatype = value_type, None
+    else:
+        value, _datatype = (s.strip() for s in value_type.rsplit(" ", 1))
+        datatype = Reference.from_curie_or_uri(
+            _datatype, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
-        if obj_reference is None:
-            if not UNHANDLED_PROP_OBJECTS[prop_reference, value_type]:
-                logger.warning(
-                    "[%s - %s] could not parse object: %s",
-                    node.curie,
-                    prop_reference.curie,
-                    value_type,
-                )
-            UNHANDLED_PROP_OBJECTS[prop_reference, value_type] += 1
+        if datatype is None:
+            logger.warning("[%s] had unparsable datatype %s", node.curie, prop_value_type)
             return None
-        return Annotation(prop_reference, obj_reference)
 
-    try:
-        value, datatype = value_type.rsplit(" ", 1)  # second entry is the value type
-    except ValueError:
-        logger.warning(
-            "[%s] property missing datatype. defaulting to string - %s", node.curie, prop_value_type
+    quoted = value.startswith('"') and value.endswith('"')
+    value = value.strip('"').strip()
+
+    # first, special case datetimes. Whether it's quoted or not,
+    # we always deal with this first
+    if datatype and datatype.curie == "xsd:dateTime":
+        return Annotation(prop_reference, OBOLiteral.datetime(value))
+
+    if datatype and datatype.curie == "xsd:anyURI":
+        obj_reference = Reference.from_curie_or_uri(value)
+        if obj_reference:
+            return Annotation(prop_reference, obj_reference)
+        else:
+            return Annotation(prop_reference, OBOLiteral.uri(value))
+
+    # if it's quoted and there's a data try parsing as a CURIE/URI anyway (this is a bit
+    # aggressive, but more useful than spec).
+    if quoted:
+        if datatype:
+            return Annotation(prop_reference, OBOLiteral(value, datatype, None))
+        else:
+            # give a try parsing it anyway, just in case ;)
+            obj_reference = Reference.from_curie_or_uri(
+                value, ontology_prefix=ontology_prefix, strict=strict, node=node
+            )
+            if obj_reference:
+                return Annotation(prop_reference, obj_reference)
+            else:
+                return Annotation(prop_reference, OBOLiteral.string(value))
+    else:
+        if datatype:
+            logger.debug(
+                "[%s] throwing away datatype since no quotes were used: %s", node.curie, value_type
+            )
+
+        # if it wasn't quoted and there was no datatype, go for parsing as an object
+        obj_reference = _parse_identifier(
+            value, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
-        value = value_type
-        datatype = ""
-
-    value = value.strip('"')
-
-    if not datatype:
-        return Annotation(prop_reference, OBOLiteral.string(value))
-
-    datatype_reference = Reference.from_curie_or_uri(
-        datatype, strict=strict, ontology_prefix=ontology_prefix, node=node
-    )
-    if datatype_reference is None:
-        logger.warning("[%s] had unparsable datatype %s", node.curie, prop_value_type)
+        if obj_reference:
+            return Annotation(prop_reference, obj_reference)
+        if not UNHANDLED_PROP_OBJECTS[prop_reference, value]:
+            logger.warning(
+                "[%s - %s] could not parse object: %s",
+                node.curie,
+                prop_reference.curie,
+                value,
+            )
+        UNHANDLED_PROP_OBJECTS[prop_reference, value_type] += 1
         return None
-    return Annotation(prop_reference, OBOLiteral(value, datatype_reference, None))
 
 
 def _get_prop(

@@ -473,7 +473,10 @@ class Term(Referenced, Stanza):
                 ontology_prefix=ontology_prefix, typedefs=typedefs
             )
         # 19 TODO created_by
-        # 20 TODO creation_date
+        # 20
+        for x in self.get_property_values(v.obo_creation_date):
+            if isinstance(x, OBOLiteral):
+                yield f"creation_date: {x.value}"
         # 21
         yield from _boolean_tag("is_obsolete", self.is_obsolete)
         # 22
@@ -1045,6 +1048,10 @@ class Obo:
         return self._cache(name="object_properties.tsv")
 
     @property
+    def _literal_mappings_path(self) -> Path:
+        return self._cache(name="literal_mappings.tsv")
+
+    @property
     def _root_metadata_path(self) -> Path:
         return prefix_directory_join(self.ontology, name="metadata.json")
 
@@ -1126,6 +1133,12 @@ class Obo:
                 self._literal_properties_path,
                 self.literal_properties_header,
                 self.iter_literal_properties,
+            ),
+            (
+                "literal_mappings",
+                self._literal_mappings_path,
+                biosynonyms.LiteralMappingTuple._fields,
+                self.iterate_literal_mapping_rows,
             ),
         ]
 
