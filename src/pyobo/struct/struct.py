@@ -1045,6 +1045,10 @@ class Obo:
         return self._cache(name="object_properties.tsv")
 
     @property
+    def _literal_mappings_path(self) -> Path:
+        return self._cache(name="literal_mappings.tsv")
+
+    @property
     def _root_metadata_path(self) -> Path:
         return prefix_directory_join(self.ontology, name="metadata.json")
 
@@ -1126,6 +1130,12 @@ class Obo:
                 self._literal_properties_path,
                 self.literal_properties_header,
                 self.iter_literal_properties,
+            ),
+            (
+                "literal_mappings",
+                self._literal_mappings_path,
+                biosynonyms.LiteralMappingTuple._fields,
+                self.iterate_literal_mapping_rows,
             ),
         ]
 
