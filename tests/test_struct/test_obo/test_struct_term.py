@@ -1127,18 +1127,20 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
         creation_date = datetime.datetime.fromisoformat(date_str)
 
         term = Term(LYSINE_DEHYDROGENASE_ACT).append_creation_date(creation_date)
+        # note that the timezone has some funny stuff going on here, this will probably
+        # cause issues in the future
         self.assert_obo_stanza(
             term,
             obo="""\
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                creation_date: 2022-07-26T19:27:20Z
+                creation_date: 2022-07-26T19:27:20+00:00
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(oboInOwl:creation_date GO:0050069 "2022-07-26T19:27:20Z"^^xsd:dateTime)
+                AnnotationAssertion(oboInOwl:creation_date GO:0050069 "2022-07-26T19:27:20+00:00"^^xsd:dateTime)
             """,
         )
 

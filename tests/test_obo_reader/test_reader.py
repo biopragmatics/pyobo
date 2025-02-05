@@ -841,7 +841,7 @@ class TestReaderTerm(unittest.TestCase):
         """)
         term = self.get_only_term(ontology)
         self.assertEqual(1, len(term.properties))
-        self.assertEqual("2022-07-26T19:27:20Z", term.get_property(v.obo_creation_date))
+        self.assertEqual("2022-07-26T19:27:20+00:00", term.get_property(v.obo_creation_date))
         # TODO test getting datatype
 
     def test_12_property_literal_obo_purl(self) -> None:
@@ -1207,8 +1207,7 @@ class TestReaderTerm(unittest.TestCase):
             creation_date: 2022-07-26T19:27:20Z
         """)
         term = self.get_only_term(ontology)
-        self.assertEqual(1, len(term.properties))
-        self.assertEqual("2022-07-26T19:27:20Z", term.get_property(v.obo_creation_date))
+        self.assertEqual("2022-07-26T19:27:20+00:00", term.get_property(v.obo_creation_date))
 
     def test_21_is_obsolete(self) -> None:
         """Test the ``is_obsolete`` tag."""

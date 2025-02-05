@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import datetime
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, cast
 
+import pytz
 import rdflib
 from curies import vocabulary as v
 from rdflib import XSD
@@ -108,7 +110,12 @@ def _oboliteral_to_literal(obo_literal: OBOLiteral) -> rdflib.Literal:
     if obo_literal.datatype.pair == ("xsd", "string") and obo_literal.language:
         return rdflib.Literal(obo_literal.value, lang=obo_literal.language)
     if obo_literal.datatype.prefix == "xsd":
-        datatype = XSD._NS.term(obo_literal.datatype.identifier)
+        if obo_literal.datatype.identifier == "dateTime":
+            # special handling for datetime
+            _dt = datetime.datetime.fromisoformat(obo_literal.value).astimezone(pytz.UTC)
+            return rdflib.Literal(_dt, datatype=XSD.dateTime)
+        else:
+            datatype = XSD._NS.term(obo_literal.datatype.identifier)
     else:
         raise NotImplementedError(
             f"Automatic literal conversion is not implemented for prefix: {obo_literal.datatype.prefix}"

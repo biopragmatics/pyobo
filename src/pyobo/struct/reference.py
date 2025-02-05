@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import logging
 from collections.abc import Iterable, Sequence
 from typing import Any, NamedTuple
@@ -10,6 +11,7 @@ import bioontologies.relations
 import bioontologies.upgrade
 import bioregistry
 import curies
+import pytz
 from curies import Converter, ReferenceTuple
 from curies.api import ExpansionError, _split
 from pydantic import Field, field_validator, model_validator
@@ -346,9 +348,11 @@ class OBOLiteral(NamedTuple):
         return cls(uri, Reference(prefix="xsd", identifier="anyURI"), None)
 
     @classmethod
-    def datetime(cls, dt: datetime.datetime) -> OBOLiteral:
+    def datetime(cls, dt: datetime.datetime | str) -> OBOLiteral:
         """Get a datetime literal."""
-        return cls(dt, Reference(prefix="xsd", identifier="dateTime"), None)
+        if isinstance(dt, str):
+            dt = datetime.datetime.fromisoformat(dt).astimezone(pytz.UTC)
+        return cls(dt.isoformat(), Reference(prefix="xsd", identifier="dateTime"), None)
 
 
 def _reference_list_tag(
