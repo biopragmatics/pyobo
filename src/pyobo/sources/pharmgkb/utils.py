@@ -4,10 +4,10 @@ from collections.abc import Iterable
 from pathlib import Path
 
 import pandas as pd
+from curies import Reference
 from pystow.utils import read_zipfile_csv
 from tqdm import tqdm
 
-from pyobo import Reference
 from pyobo.utils.path import ensure_path
 
 __all__ = [

@@ -2,6 +2,7 @@
 
 import networkx as nx
 import pandas as pd
+from curies import Reference
 from tqdm import tqdm
 from typing_extensions import Unpack
 
@@ -14,7 +15,6 @@ from pyobo.constants import (
     check_should_use_tqdm,
 )
 from pyobo.getters import get_ontology
-from pyobo.struct import Reference
 from pyobo.utils.path import prefix_cache_join
 
 from ..utils.cache import cached_df

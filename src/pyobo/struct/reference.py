@@ -11,10 +11,11 @@ import bioontologies.relations
 import bioontologies.upgrade
 import bioregistry
 import curies
+import dateutil.parser
 import pytz
-from curies import Converter, ReferenceTuple
-from curies.api import ExpansionError, _split
-from pydantic import Field, field_validator, model_validator
+from curies import ReferenceTuple
+from curies.api import ExpansionError
+from pydantic import ValidationError, model_validator
 
 from .utils import obo_escape
 from ..constants import GLOBAL_CHECK_IDS
@@ -33,18 +34,8 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-class Reference(curies.Reference):
+class Reference(curies.NamableReference):
     """A namespace, identifier, and label."""
-
-    name: str | None = Field(default=None, description="the name of the reference")
-
-    @field_validator("prefix")
-    def validate_prefix(cls, v):  # noqa
-        """Validate the prefix for this reference."""
-        norm_prefix = bioregistry.normalize_prefix(v)
-        if norm_prefix is None:
-            raise ExpansionError(f"Unknown prefix: {v}")
-        return norm_prefix
 
     @property
     def preferred_prefix(self) -> str:
@@ -97,24 +88,6 @@ class Reference(curies.Reference):
         """Get the bioregistry link."""
         return f"https://bioregistry.io/{self.curie}"
 
-    # override from_curie to get typing right
-    @classmethod
-    def from_curie(
-        cls, curie: str, *, sep: str = ":", converter: Converter | None = None
-    ) -> Reference:
-        """Parse a CURIE string and populate a reference.
-
-        :param curie: A string representation of a compact URI (CURIE)
-        :param sep: The separator
-        :param converter: The converter to use as context when parsing
-        :return: A reference object
-
-        >>> Reference.from_curie("chebi:1234")
-        Reference(prefix='CHEBI', identifier='1234')
-        """
-        prefix, identifier = _split(curie, sep=sep)
-        return cls.model_validate({"prefix": prefix, "identifier": identifier}, context=converter)
-
     @classmethod
     def from_curie_or_uri(
         cls,
@@ -143,7 +116,14 @@ class Reference(curies.Reference):
             from ..api import get_name
 
             name = get_name(prefix, identifier)
-        return cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
+        try:
+            rv = cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
+        except ValidationError:
+            if strict:
+                raise
+            return None
+        else:
+            return rv
 
     @property
     def _escaped_identifier(self):
@@ -211,13 +191,13 @@ class Referenced:
 
 
 def get_preferred_curie(
-    ref: curies.Reference | curies.NamedReference | Reference | Referenced,
+    ref: curies.Reference | Reference | Referenced,
 ) -> str:
     """Get the preferred CURIE from a variety of types."""
     match ref:
         case Referenced() | Reference():
             return ref.preferred_curie
-        case curies.Reference() | curies.NamedReference():
+        case curies.Reference():
             return ref.curie
 
 
@@ -237,15 +217,24 @@ def default_reference(prefix: str, identifier: str, name: str | None = None) -> 
     return Reference(prefix="obo", identifier=f"{prefix}#{identifier}", name=name)
 
 
+def _get_ref_name(reference: curies.Reference | Referenced) -> str | None:
+    if isinstance(reference, curies.NamableReference | Referenced):
+        return reference.name
+    return None
+
+
 def reference_escape(
-    reference: Reference | Referenced, *, ontology_prefix: str, add_name_comment: bool = False
+    reference: curies.Reference | Referenced,
+    *,
+    ontology_prefix: str,
+    add_name_comment: bool = False,
 ) -> str:
     """Write a reference with default namespace removed."""
     if reference.prefix == "obo" and reference.identifier.startswith(f"{ontology_prefix}#"):
         return reference.identifier.removeprefix(f"{ontology_prefix}#")
     rv = get_preferred_curie(reference)
-    if add_name_comment and reference.name:
-        rv += f" ! {reference.name}"
+    if add_name_comment and (name := _get_ref_name(reference)):
+        rv += f" ! {name}"
     return rv
 
 
@@ -297,7 +286,13 @@ def _parse_identifier(
             return Reference(prefix=xx.prefix, identifier=xx.identifier, name=name)
         if yy := _ground_relation(s):
             return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
-    return default_reference(ontology_prefix, s, name=name)
+
+    # in `geno`, there are some string properties that are written
+    # without quotes where this check is important
+    try:
+        return default_reference(ontology_prefix, s, name=name)
+    except ValidationError:
+        return None
 
 
 unspecified_matching = Reference(
@@ -309,54 +304,56 @@ class OBOLiteral(NamedTuple):
     """A tuple representing a property with a literal value."""
 
     value: str
-    datatype: Reference
+    datatype: curies.Reference
     language: str | None
 
     @classmethod
     def string(cls, value: str, *, language: str | None = None) -> OBOLiteral:
         """Get a string literal."""
-        return cls(value, Reference(prefix="xsd", identifier="string"), language)
+        return cls(value, curies.Reference(prefix="xsd", identifier="string"), language)
 
     @classmethod
     def boolean(cls, value: bool) -> OBOLiteral:
         """Get a boolean literal."""
-        return cls(str(value).lower(), Reference(prefix="xsd", identifier="boolean"), None)
+        return cls(str(value).lower(), curies.Reference(prefix="xsd", identifier="boolean"), None)
 
     @classmethod
     def decimal(cls, value) -> OBOLiteral:
         """Get a decimal literal."""
-        return cls(str(value), Reference(prefix="xsd", identifier="decimal"), None)
+        return cls(str(value), curies.Reference(prefix="xsd", identifier="decimal"), None)
 
     @classmethod
     def float(cls, value) -> OBOLiteral:
         """Get a float literal."""
-        return cls(str(value), Reference(prefix="xsd", identifier="float"), None)
+        return cls(str(value), curies.Reference(prefix="xsd", identifier="float"), None)
 
     @classmethod
     def integer(cls, value: int | str) -> OBOLiteral:
         """Get a integer literal."""
-        return cls(str(int(value)), Reference(prefix="xsd", identifier="integer"), None)
+        return cls(str(int(value)), curies.Reference(prefix="xsd", identifier="integer"), None)
 
     @classmethod
     def year(cls, value: int | str) -> OBOLiteral:
         """Get a year (gYear) literal."""
-        return cls(str(int(value)), Reference(prefix="xsd", identifier="gYear"), None)
+        return cls(str(int(value)), curies.Reference(prefix="xsd", identifier="gYear"), None)
 
     @classmethod
     def uri(cls, uri: str) -> OBOLiteral:
         """Get a string literal for a URI."""
-        return cls(uri, Reference(prefix="xsd", identifier="anyURI"), None)
+        return cls(uri, curies.Reference(prefix="xsd", identifier="anyURI"), None)
 
     @classmethod
     def datetime(cls, dt: datetime.datetime | str) -> OBOLiteral:
         """Get a datetime literal."""
         if isinstance(dt, str):
             dt = _parse_datetime(dt)
-        return cls(dt.isoformat(), Reference(prefix="xsd", identifier="dateTime"), None)
+        return cls(dt.isoformat(), curies.Reference(prefix="xsd", identifier="dateTime"), None)
 
 
 def _parse_datetime(dd: str) -> datetime.datetime:
-    return datetime.datetime.fromisoformat(dd).astimezone(pytz.UTC)
+    xx = dateutil.parser.parse(dd)
+    xx = xx.astimezone(pytz.UTC)
+    return xx
 
 
 def _reference_list_tag(
@@ -366,10 +363,8 @@ def _reference_list_tag(
         yield f"{tag}: {reference_escape(reference, ontology_prefix=ontology_prefix, add_name_comment=True)}"
 
 
-def reference_or_literal_to_str(x: Reference | OBOLiteral) -> str:
+def reference_or_literal_to_str(x: OBOLiteral | curies.Reference | Reference | Referenced) -> str:
     """Get a string from a reference or literal."""
-    match x:
-        case Reference():
-            return get_preferred_curie(x)
-        case OBOLiteral(value, _, _):
-            return value
+    if isinstance(x, OBOLiteral):
+        return x.value
+    return get_preferred_curie(x)
