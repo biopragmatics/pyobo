@@ -20,8 +20,11 @@ IAO_PREFIX = "IAO"
 SIO_PREFIX = "SIO"
 
 
-def _c(c: curies.NamedReference) -> Reference:
-    return Reference(prefix=c.prefix, identifier=c.identifier, name=c.name)
+def _c(c: curies.Reference) -> Reference:
+    if isinstance(c, curies.NamableReference):
+        return Reference(prefix=c.prefix, identifier=c.identifier, name=c.name)
+    else:
+        return Reference(prefix=c.prefix, identifier=c.identifier)
 
 
 broad_match = _c(_v.broad_match)

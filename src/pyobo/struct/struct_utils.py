@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime
 import itertools as itt
 import logging
+from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias, overload
 
@@ -114,39 +115,57 @@ class Stanza:
     definition: str | None = None
 
     def _get_prefixes(self) -> set[str]:
+        return set(self._get_references())
+
+    def _get_references(self) -> dict[str, set[Reference]]:
         """Get all prefixes used by the typedef."""
-        rv: set[str] = {self.reference.prefix}
-        rv.update(a.prefix for a in self.subsets)
+        rv: defaultdict[str, set[Reference]] = defaultdict()
+
+        def _add(r: Reference) -> None:
+            rv[r.prefix].add(r)
+
         for synonym in self.synonyms:
-            rv.update(synonym._get_prefixes())
+            for k, vals in synonym._get_references().items():
+                rv[k].update(vals)
+
         if self.xrefs:
-            rv.add("oboInOwl")
-            rv.update(a.prefix for a in self.xrefs)
+            # xrefs themselves added in the chain below
+            _add(v.has_dbxref)
+
         for predicate, values in self.properties.items():
-            rv.add(predicate.prefix)
+            _add(predicate)
             for value in values:
                 if isinstance(value, Reference):
-                    rv.add(value.prefix)
-        rv.update(a.prefix for a in self.parents)
+                    _add(value)
+                elif isinstance(value, OBOLiteral):
+                    _add(v._c(value.datatype))
+        for parent in itt.chain(
+            self.parents,
+            self.union_of,
+            self.equivalent_to,
+            self.disjoint_from,
+            self.subsets,
+            self.xrefs,
+        ):
+            rv[parent.prefix].add(parent)
         for intersection_of in self.intersection_of:
             match intersection_of:
                 case Reference():
-                    rv.add(intersection_of.prefix)
+                    _add(intersection_of)
                 case (intersection_predicate, intersection_value):
-                    rv.add(intersection_predicate.prefix)
-                    rv.add(intersection_value.prefix)
+                    _add(intersection_predicate)
+                    _add(intersection_value)
 
-        rv.update(a.prefix for a in self.union_of)
-        rv.update(a.prefix for a in self.equivalent_to)
-        rv.update(a.prefix for a in self.disjoint_from)
         for rel_predicate, rel_values in self.relationships.items():
-            rv.add(rel_predicate.prefix)
-            rv.update(a.prefix for a in rel_values)
+            _add(rel_predicate)
+            for r in rel_values:
+                _add(r)
         for p_o, annotations_ in self._axioms.items():
-            rv.add(p_o.predicate.prefix)
+            _add(p_o.predicate)
             if isinstance(p_o.value, Reference):
-                rv.add(p_o.value.prefix)
-            rv.update(_get_prefixes_from_annotations(annotations_))
+                _add(p_o.value)
+            for k, vals in _get_references_from_annotations(annotations_).items():
+                rv[k].update(vals)
         return rv
 
     def get_literal_mappings(self) -> list[biosynonyms.LiteralMapping]:
@@ -964,12 +983,18 @@ class MappingContext(BaseModel):
 
 
 def _get_prefixes_from_annotations(annotations: Iterable[Annotation]) -> set[str]:
-    prefixes: set[str] = set()
+    return set(_get_references_from_annotations(annotations))
+
+
+def _get_references_from_annotations(
+    annotations: Iterable[Annotation],
+) -> dict[str, set[Reference]]:
+    rv: defaultdict[str, set[Reference]] = defaultdict(set)
     for left, right in annotations:
-        prefixes.add(left.prefix)
+        rv[left.prefix].add(left)
         if isinstance(right, Reference):
-            prefixes.add(right.prefix)
-    return prefixes
+            rv[right.prefix].add(right)
+    return dict(rv)
 
 
 def _get_stanza_name_synonym(stanza: Stanza) -> biosynonyms.LiteralMapping:
