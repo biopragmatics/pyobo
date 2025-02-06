@@ -15,7 +15,7 @@ import dateutil.parser
 import pytz
 from curies import Converter, ReferenceTuple
 from curies.api import ExpansionError, _split
-from pydantic import Field, field_validator, model_validator
+from pydantic import field_validator, model_validator
 
 from .utils import obo_escape
 from ..constants import GLOBAL_CHECK_IDS
@@ -34,10 +34,8 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-class Reference(curies.Reference):
+class Reference(curies.NamableReference):
     """A namespace, identifier, and label."""
-
-    name: str | None = Field(default=None, description="the name of the reference")
 
     @field_validator("prefix")
     def validate_prefix(cls, v):  # noqa
@@ -101,7 +99,12 @@ class Reference(curies.Reference):
     # override from_curie to get typing right
     @classmethod
     def from_curie(
-        cls, curie: str, *, sep: str = ":", converter: Converter | None = None
+        cls,
+        curie: str,
+        name: str | None = None,
+        *,
+        sep: str = ":",
+        converter: Converter | None = None,
     ) -> Reference:
         """Parse a CURIE string and populate a reference.
 
@@ -111,10 +114,12 @@ class Reference(curies.Reference):
         :return: A reference object
 
         >>> Reference.from_curie("chebi:1234")
-        Reference(prefix='CHEBI', identifier='1234')
+        Reference(prefix='CHEBI', identifier='1234', name=None)
         """
         prefix, identifier = _split(curie, sep=sep)
-        return cls.model_validate({"prefix": prefix, "identifier": identifier}, context=converter)
+        return cls.model_validate(
+            {"prefix": prefix, "identifier": identifier, "name": name}, context=converter
+        )
 
     @classmethod
     def from_curie_or_uri(
@@ -144,7 +149,14 @@ class Reference(curies.Reference):
             from ..api import get_name
 
             name = get_name(prefix, identifier)
-        return cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
+        try:
+            rv = cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
+        except ValueError:
+            if strict:
+                raise
+            return None
+        else:
+            return rv
 
     @property
     def _escaped_identifier(self):
