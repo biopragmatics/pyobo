@@ -321,6 +321,50 @@ class TestReaderOntologyMetadata(unittest.TestCase):
             ontology.root_terms,
         )
 
+    def test_18_root_with_url(self) -> None:
+        """Test root terms as URL."""
+        ontology = from_str("""\
+            ontology: lepao
+            property_value: IAO:0000700 http://purl.obolibrary.org/obo/LEPAO_0000006
+        """)
+        self.assertEqual(
+            [Reference(prefix="LEPAO", identifier="0000006")],
+            ontology.root_terms,
+        )
+
+    def test_18_root_with_url_quoted(self) -> None:
+        """Test root terms as URL."""
+        ontology = from_str("""\
+            ontology: lepao
+            property_value: IAO:0000700 "http://purl.obolibrary.org/obo/LEPAO_0000006"
+        """)
+        self.assertEqual(
+            [Reference(prefix="LEPAO", identifier="0000006")],
+            ontology.root_terms,
+        )
+
+    def test_18_root_with_typed_uri(self) -> None:
+        """Test root terms as URL."""
+        ontology = from_str("""\
+            ontology: lepao
+            property_value: IAO:0000700 "http://purl.obolibrary.org/obo/LEPAO_0000006" xsd:anyURI
+        """)
+        self.assertEqual(
+            [Reference(prefix="LEPAO", identifier="0000006")],
+            ontology.root_terms,
+        )
+
+    def test_18_root_with_mistyped_uri(self) -> None:
+        """Test root terms as URL."""
+        ontology = from_str("""\
+            ontology: lepao
+            property_value: IAO:0000700 "http://purl.obolibrary.org/obo/LEPAO_0000006" xsd:string
+        """)
+        self.assertEqual(
+            [Reference(prefix="LEPAO", identifier="0000006")],
+            ontology.root_terms,
+        )
+
 
 class TestVersionHandling(unittest.TestCase):
     """Test version handling."""
