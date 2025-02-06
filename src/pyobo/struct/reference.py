@@ -191,13 +191,13 @@ class Referenced:
 
 
 def get_preferred_curie(
-    ref: curies.Reference | curies.NamedReference | Reference | Referenced,
+    ref: curies.Reference | Reference | Referenced,
 ) -> str:
     """Get the preferred CURIE from a variety of types."""
     match ref:
         case Referenced() | Reference():
             return ref.preferred_curie
-        case curies.Reference() | curies.NamedReference():
+        case curies.Reference():
             return ref.curie
 
 
@@ -281,12 +281,15 @@ def _parse_identifier(
         return Reference.from_curie_or_uri(
             s, ontology_prefix=ontology_prefix, name=name, strict=strict, node=node
         )
-    if upgrade:
-        if xx := bioontologies.upgrade.upgrade(s):
-            return Reference(prefix=xx.prefix, identifier=xx.identifier, name=name)
-        if yy := _ground_relation(s):
-            return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
-    return default_reference(ontology_prefix, s, name=name)
+    try:
+        if upgrade:
+            if xx := bioontologies.upgrade.upgrade(s):
+                return Reference(prefix=xx.prefix, identifier=xx.identifier, name=name)
+            if yy := _ground_relation(s):
+                return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
+        return default_reference(ontology_prefix, s, name=name)
+    except ValidationError:
+        return None
 
 
 unspecified_matching = Reference(
@@ -304,44 +307,44 @@ class OBOLiteral(NamedTuple):
     @classmethod
     def string(cls, value: str, *, language: str | None = None) -> OBOLiteral:
         """Get a string literal."""
-        return cls(value, Reference(prefix="xsd", identifier="string"), language)
+        return cls(value, curies.Reference(prefix="xsd", identifier="string"), language)
 
     @classmethod
     def boolean(cls, value: bool) -> OBOLiteral:
         """Get a boolean literal."""
-        return cls(str(value).lower(), Reference(prefix="xsd", identifier="boolean"), None)
+        return cls(str(value).lower(), curies.Reference(prefix="xsd", identifier="boolean"), None)
 
     @classmethod
     def decimal(cls, value) -> OBOLiteral:
         """Get a decimal literal."""
-        return cls(str(value), Reference(prefix="xsd", identifier="decimal"), None)
+        return cls(str(value), curies.Reference(prefix="xsd", identifier="decimal"), None)
 
     @classmethod
     def float(cls, value) -> OBOLiteral:
         """Get a float literal."""
-        return cls(str(value), Reference(prefix="xsd", identifier="float"), None)
+        return cls(str(value), curies.Reference(prefix="xsd", identifier="float"), None)
 
     @classmethod
     def integer(cls, value: int | str) -> OBOLiteral:
         """Get a integer literal."""
-        return cls(str(int(value)), Reference(prefix="xsd", identifier="integer"), None)
+        return cls(str(int(value)), curies.Reference(prefix="xsd", identifier="integer"), None)
 
     @classmethod
     def year(cls, value: int | str) -> OBOLiteral:
         """Get a year (gYear) literal."""
-        return cls(str(int(value)), Reference(prefix="xsd", identifier="gYear"), None)
+        return cls(str(int(value)), curies.Reference(prefix="xsd", identifier="gYear"), None)
 
     @classmethod
     def uri(cls, uri: str) -> OBOLiteral:
         """Get a string literal for a URI."""
-        return cls(uri, Reference(prefix="xsd", identifier="anyURI"), None)
+        return cls(uri, curies.Reference(prefix="xsd", identifier="anyURI"), None)
 
     @classmethod
     def datetime(cls, dt: datetime.datetime | str) -> OBOLiteral:
         """Get a datetime literal."""
         if isinstance(dt, str):
             dt = _parse_datetime(dt)
-        return cls(dt.isoformat(), Reference(prefix="xsd", identifier="dateTime"), None)
+        return cls(dt.isoformat(), curies.Reference(prefix="xsd", identifier="dateTime"), None)
 
 
 def _parse_datetime(dd: str) -> datetime.datetime:
@@ -357,10 +360,8 @@ def _reference_list_tag(
         yield f"{tag}: {reference_escape(reference, ontology_prefix=ontology_prefix, add_name_comment=True)}"
 
 
-def reference_or_literal_to_str(x: Reference | OBOLiteral) -> str:
+def reference_or_literal_to_str(x: OBOLiteral | curies.Reference | Reference | Referenced) -> str:
     """Get a string from a reference or literal."""
-    match x:
-        case Reference():
-            return get_preferred_curie(x)
-        case OBOLiteral(value, _, _):
-            return value
+    if isinstance(x, OBOLiteral):
+        return x.value
+    return get_preferred_curie(x)
