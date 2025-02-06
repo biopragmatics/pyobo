@@ -11,6 +11,7 @@ import bioontologies.relations
 import bioontologies.upgrade
 import bioregistry
 import curies
+import dateutil.parser
 import pytz
 from curies import Converter, ReferenceTuple
 from curies.api import ExpansionError, _split
@@ -356,7 +357,9 @@ class OBOLiteral(NamedTuple):
 
 
 def _parse_datetime(dd: str) -> datetime.datetime:
-    return datetime.datetime.fromisoformat(dd).astimezone(pytz.UTC)
+    xx = dateutil.parser.parse(dd)
+    xx = xx.astimezone(pytz.UTC)
+    return xx
 
 
 def _reference_list_tag(

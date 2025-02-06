@@ -1,6 +1,5 @@
 """Tests for the OBO data structures."""
 
-import datetime
 import unittest
 from collections.abc import Iterable
 from textwrap import dedent
@@ -11,7 +10,7 @@ import bioregistry
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
 from pyobo.struct.functional.obo_to_functional import get_term_axioms
-from pyobo.struct.reference import unspecified_matching
+from pyobo.struct.reference import _parse_datetime, unspecified_matching
 from pyobo.struct.struct import (
     BioregistryError,
     SynonymTypeDef,
@@ -1144,7 +1143,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
     def test_20_creation_date(self) -> None:
         """Test the ``creation_date`` tag."""
         date_str = "2022-07-26T19:27:20Z"
-        creation_date = datetime.datetime.fromisoformat(date_str)
+        creation_date = _parse_datetime(date_str)
 
         term = Term(LYSINE_DEHYDROGENASE_ACT).append_creation_date(creation_date)
         # note that the timezone has some funny stuff going on here, this will probably
