@@ -1,6 +1,8 @@
 """Convert ICD-10 to OBO.
 
-Run with python -m pyobo.sources.icd10 -v
+Run with ``python -m pyobo.sources.icd10 -v``.
+
+.. note:: If web requests are stalling, try deleting the ``~/.cachier`` directory.
 """
 
 import logging

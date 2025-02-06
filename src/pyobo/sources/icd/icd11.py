@@ -1,6 +1,8 @@
 """Convert ICD11 to OBO.
 
-Run with python -m pyobo.sources.icd11 -v
+Run with ``python -m pyobo.sources.icd11 -v``.
+
+.. note:: If web requests are stalling, try deleting the ``~/.cachier`` directory.
 """
 
 import json
