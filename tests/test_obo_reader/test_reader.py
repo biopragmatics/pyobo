@@ -12,6 +12,7 @@ from pyobo.struct.struct import abbreviation
 from pyobo.struct.struct_utils import Annotation
 from pyobo.struct.typedef import (
     comment,
+    definition_source,
     derives_from,
     exact_match,
     has_dbxref,
@@ -830,6 +831,32 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual("xsd:decimal", row["datatype"])
         self.assertEqual("", row["language"])
 
+    def test_12_property_literal_datetime_unquoted(self) -> None:
+        """Test parsing a property with a datetime object, with no quotes."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: oboInOwl:creation_date 2022-07-26T19:27:20Z xsd:dateTime
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.properties))
+        self.assertEqual("2022-07-26T19:27:20+00:00", term.get_property(v.obo_creation_date))
+
+    def test_12_property_literal_datetime_quoted(self) -> None:
+        """Test parsing a property with a datetime object, with quotes."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: oboInOwl:creation_date "2022-07-26T19:27:20Z" xsd:dateTime
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.properties))
+        self.assertEqual("2022-07-26T19:27:20+00:00", term.get_property(v.obo_creation_date))
+
     def test_12_property_literal_obo_purl(self) -> None:
         """Test using a full OBO PURL as the property."""
         ontology = from_str("""\
@@ -974,6 +1001,22 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual(1, len(list(term.properties)))
         self.assertIn(see_also.reference, term.properties)
         self.assertEqual("hgnc:1234", term.get_property(see_also))
+
+    def test_12_property_object_with_string_dtype(self) -> None:
+        """Test parsing a property with a literal object that has a string dtype."""
+        # the dtype really shouldn't be here, so we have to special case it
+        ontology = from_str("""\
+            ontology: ro
+
+            [Term]
+            id: RO:0002160
+            property_value: IAO:0000119 PMID:17921072 xsd:string
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(list(term.properties)))
+        xx = term.get_property_objects(definition_source)
+        self.assertEqual(1, len(xx))
+        self.assertEqual(Reference(prefix="pubmed", identifier="17921072"), xx[0])
 
     def test_13_parent(self) -> None:
         """Test parsing out a parent."""
@@ -1182,7 +1225,30 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual("0000-0003-4423-4370", context.contributor.identifier)
 
     # TODO created_by
-    # TODO creation_date
+
+    def test_20_creation_date(self) -> None:
+        """Test parsing a property with a datetime object."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            creation_date: 2022-07-26T19:27:20Z
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual("2022-07-26T19:27:20+00:00", term.get_property(v.obo_creation_date))
+
+    def test_20_creation_date_bad_format(self) -> None:
+        """Test parsing a property with a datetime object."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            creation_date: asgasgag
+        """)
+        term = self.get_only_term(ontology)
+        self.assertIsNone(term.get_property(v.obo_creation_date))
 
     def test_21_is_obsolete(self) -> None:
         """Test the ``is_obsolete`` tag."""
