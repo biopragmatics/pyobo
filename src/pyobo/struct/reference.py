@@ -13,9 +13,9 @@ import bioregistry
 import curies
 import dateutil.parser
 import pytz
-from curies import Converter, ReferenceTuple
-from curies.api import ExpansionError, _split
-from pydantic import Field, field_validator, model_validator
+from curies import ReferenceTuple
+from curies.api import ExpansionError
+from pydantic import ValidationError, model_validator
 
 from .utils import obo_escape
 from ..constants import GLOBAL_CHECK_IDS
@@ -34,18 +34,8 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-class Reference(curies.Reference):
+class Reference(curies.NamableReference):
     """A namespace, identifier, and label."""
-
-    name: str | None = Field(default=None, description="the name of the reference")
-
-    @field_validator("prefix")
-    def validate_prefix(cls, v):  # noqa
-        """Validate the prefix for this reference."""
-        norm_prefix = bioregistry.normalize_prefix(v)
-        if norm_prefix is None:
-            raise ExpansionError(f"Unknown prefix: {v}")
-        return norm_prefix
 
     @property
     def preferred_prefix(self) -> str:
@@ -98,24 +88,6 @@ class Reference(curies.Reference):
         """Get the bioregistry link."""
         return f"https://bioregistry.io/{self.curie}"
 
-    # override from_curie to get typing right
-    @classmethod
-    def from_curie(
-        cls, curie: str, *, sep: str = ":", converter: Converter | None = None
-    ) -> Reference:
-        """Parse a CURIE string and populate a reference.
-
-        :param curie: A string representation of a compact URI (CURIE)
-        :param sep: The separator
-        :param converter: The converter to use as context when parsing
-        :return: A reference object
-
-        >>> Reference.from_curie("chebi:1234")
-        Reference(prefix='CHEBI', identifier='1234')
-        """
-        prefix, identifier = _split(curie, sep=sep)
-        return cls.model_validate({"prefix": prefix, "identifier": identifier}, context=converter)
-
     @classmethod
     def from_curie_or_uri(
         cls,
@@ -144,7 +116,14 @@ class Reference(curies.Reference):
             from ..api import get_name
 
             name = get_name(prefix, identifier)
-        return cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
+        try:
+            rv = cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
+        except ValidationError:
+            if strict:
+                raise
+            return None
+        else:
+            return rv
 
     @property
     def _escaped_identifier(self):
@@ -238,15 +217,24 @@ def default_reference(prefix: str, identifier: str, name: str | None = None) -> 
     return Reference(prefix="obo", identifier=f"{prefix}#{identifier}", name=name)
 
 
+def _get_ref_name(reference: curies.Reference | Referenced) -> str | None:
+    if isinstance(reference, curies.NamableReference | Referenced):
+        return reference.name
+    return None
+
+
 def reference_escape(
-    reference: Reference | Referenced, *, ontology_prefix: str, add_name_comment: bool = False
+    reference: curies.Reference | Referenced,
+    *,
+    ontology_prefix: str,
+    add_name_comment: bool = False,
 ) -> str:
     """Write a reference with default namespace removed."""
     if reference.prefix == "obo" and reference.identifier.startswith(f"{ontology_prefix}#"):
         return reference.identifier.removeprefix(f"{ontology_prefix}#")
     rv = get_preferred_curie(reference)
-    if add_name_comment and reference.name:
-        rv += f" ! {reference.name}"
+    if add_name_comment and (name := _get_ref_name(reference)):
+        rv += f" ! {name}"
     return rv
 
 
@@ -310,7 +298,7 @@ class OBOLiteral(NamedTuple):
     """A tuple representing a property with a literal value."""
 
     value: str
-    datatype: Reference
+    datatype: curies.Reference
     language: str | None
 
     @classmethod
