@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import datetime
 import itertools as itt
 import logging
+from abc import ABC, abstractmethod
+from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias, overload
 
@@ -35,6 +38,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "AnnotationsDict",
+    "HasReferencesMixin",
     "ReferenceHint",
     "Stanza",
 ]
@@ -87,7 +91,18 @@ stanza_type_to_eq_prop: dict[StanzaType, Reference] = {
 }
 
 
-class Stanza:
+class HasReferencesMixin(ABC):
+    """A class that can report on the references it contains."""
+
+    def _get_prefixes(self) -> set[str]:
+        return set(self._get_references())
+
+    @abstractmethod
+    def _get_references(self) -> dict[str, set[Reference]]:
+        raise NotImplementedError
+
+
+class Stanza(HasReferencesMixin):
     """A high-level class for stanzas."""
 
     reference: Reference
@@ -113,39 +128,59 @@ class Stanza:
     definition: str | None = None
 
     def _get_prefixes(self) -> set[str]:
+        return set(self._get_references())
+
+    def _get_references(self) -> dict[str, set[Reference]]:
         """Get all prefixes used by the typedef."""
-        rv: set[str] = {self.reference.prefix}
-        rv.update(a.prefix for a in self.subsets)
+        rv: defaultdict[str, set[Reference]] = defaultdict(set)
+
+        def _add(r: Reference) -> None:
+            rv[r.prefix].add(r)
+
+        _add(self.reference)
+
         for synonym in self.synonyms:
-            rv.update(synonym._get_prefixes())
+            for prefix, references in synonym._get_references().items():
+                rv[prefix].update(references)
+
         if self.xrefs:
-            rv.add("oboInOwl")
-            rv.update(a.prefix for a in self.xrefs)
+            # xrefs themselves added in the chain below
+            _add(v.has_dbxref)
+
         for predicate, values in self.properties.items():
-            rv.add(predicate.prefix)
+            _add(predicate)
             for value in values:
                 if isinstance(value, Reference):
-                    rv.add(value.prefix)
-        rv.update(a.prefix for a in self.parents)
+                    _add(value)
+                elif isinstance(value, OBOLiteral):
+                    _add(v._c(value.datatype))
+        for parent in itt.chain(
+            self.parents,
+            self.union_of,
+            self.equivalent_to,
+            self.disjoint_from,
+            self.subsets,
+            self.xrefs,
+        ):
+            _add(parent)
         for intersection_of in self.intersection_of:
             match intersection_of:
                 case Reference():
-                    rv.add(intersection_of.prefix)
+                    _add(intersection_of)
                 case (intersection_predicate, intersection_value):
-                    rv.add(intersection_predicate.prefix)
-                    rv.add(intersection_value.prefix)
+                    _add(intersection_predicate)
+                    _add(intersection_value)
 
-        rv.update(a.prefix for a in self.union_of)
-        rv.update(a.prefix for a in self.equivalent_to)
-        rv.update(a.prefix for a in self.disjoint_from)
         for rel_predicate, rel_values in self.relationships.items():
-            rv.add(rel_predicate.prefix)
-            rv.update(a.prefix for a in rel_values)
+            _add(rel_predicate)
+            for r in rel_values:
+                _add(r)
         for p_o, annotations_ in self._axioms.items():
-            rv.add(p_o.predicate.prefix)
+            _add(p_o.predicate)
             if isinstance(p_o.value, Reference):
-                rv.add(p_o.value.prefix)
-            rv.update(_get_prefixes_from_annotations(annotations_))
+                _add(p_o.value)
+            for prefix, references in _get_references_from_annotations(annotations_).items():
+                rv[prefix].update(references)
         return rv
 
     def get_literal_mappings(self) -> list[biosynonyms.LiteralMapping]:
@@ -413,6 +448,16 @@ class Stanza:
         """Append a URI annotation."""
         return self.annotate_literal(prop, OBOLiteral.uri(value), annotations=annotations)
 
+    def annotate_datetime(
+        self,
+        prop: ReferenceHint,
+        value: datetime.datetime | str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
+        """Append a datetime annotation."""
+        return self.annotate_literal(prop, OBOLiteral.datetime(value), annotations=annotations)
+
     def _iterate_obo_properties(
         self,
         *,
@@ -475,6 +520,10 @@ class Stanza:
     def append_contributor(self, reference: ReferenceHint) -> Self:
         """Append contributor."""
         return self.annotate_object(v.has_contributor, reference)
+
+    def append_creation_date(self, date: datetime.datetime | str) -> Self:
+        """Append contributor."""
+        return self.annotate_datetime(v.obo_creation_date, date)
 
     def get_see_also(self) -> list[Reference]:
         """Get all see also objects."""
@@ -949,12 +998,18 @@ class MappingContext(BaseModel):
 
 
 def _get_prefixes_from_annotations(annotations: Iterable[Annotation]) -> set[str]:
-    prefixes: set[str] = set()
+    return set(_get_references_from_annotations(annotations))
+
+
+def _get_references_from_annotations(
+    annotations: Iterable[Annotation],
+) -> dict[str, set[Reference]]:
+    rv: defaultdict[str, set[Reference]] = defaultdict(set)
     for left, right in annotations:
-        prefixes.add(left.prefix)
+        rv[left.prefix].add(left)
         if isinstance(right, Reference):
-            prefixes.add(right.prefix)
-    return prefixes
+            rv[right.prefix].add(right)
+    return dict(rv)
 
 
 def _get_stanza_name_synonym(stanza: Stanza) -> biosynonyms.LiteralMapping:

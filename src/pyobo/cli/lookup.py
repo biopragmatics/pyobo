@@ -40,6 +40,7 @@ from ..api import (
     get_xrefs_df,
 )
 from ..constants import LookupKwargs
+from ..getters import get_ontology
 from ..struct import Reference
 
 __all__ = [
@@ -291,3 +292,11 @@ def alts(
     """Page through alt ids in a namespace."""
     id_to_alts = get_id_to_alts(**kwargs)
     _help_page_mapping(id_to_alts, identifier=identifier)
+
+
+@lookup_annotate
+def prefixes(**kwargs: Unpack[LookupKwargs]) -> None:
+    """Page through prefixes appearing in an ontology."""
+    ontology = get_ontology(**kwargs)
+    for prefix in sorted(ontology._get_prefixes(), key=str.casefold):
+        click.echo(prefix)

@@ -80,16 +80,30 @@ class TestReaderOntologyMetadata(unittest.TestCase):
 
     def test_8_synonym_typedef(self) -> None:
         """Test the ``synonym_typedef`` tag."""
-        ontology = from_str("""\
+        with self.assertRaises(ValueError):
+            # This raises
+            from_str(
+                """\
+                ontology: chebi
+                synonymtypedef: ST5 "ST5 Name" garbage
+            """,
+                strict=True,
+            )
+
+        ontology = from_str(
+            """\
             ontology: chebi
             synonymtypedef: ST1 "ST1 Name" EXACT
             synonymtypedef: ST2 "ST2 Name" NARROW
             synonymtypedef: ST3 "ST3 Name"
+            synonymtypedef: ST4 "ST4 Name" exact
+            synonymtypedef: ST5 "ST5 Name" garbage
             synonymtypedef: OMO:0000001 "E1 Name" EXACT
             synonymtypedef: OMO:0000002 "E2 Name" NARROW
             synonymtypedef: OMO:0000003 "E3 Name"
-        """)
-        self.assertEqual(6, len(ontology.synonym_typedefs))
+        """,
+            strict=False,
+        )
         self.assertEqual(
             [
                 SynonymTypeDef(
@@ -102,6 +116,13 @@ class TestReaderOntologyMetadata(unittest.TestCase):
                 ),
                 SynonymTypeDef(
                     reference=default_reference("chebi", "ST3", name="ST3 Name"), specificity=None
+                ),
+                SynonymTypeDef(
+                    reference=default_reference("chebi", "ST4", name="ST4 Name"),
+                    specificity="EXACT",
+                ),
+                SynonymTypeDef(
+                    reference=default_reference("chebi", "ST5", name="ST5 Name"), specificity=None
                 ),
                 SynonymTypeDef(
                     reference=Reference(prefix="OMO", identifier="0000001", name="E1 Name"),
@@ -297,6 +318,50 @@ class TestReaderOntologyMetadata(unittest.TestCase):
         # FIXME support default reference, like property_value: IAO:0000700 adhoc
         self.assertEqual(
             [Reference(prefix="GO", identifier="0050069")],
+            ontology.root_terms,
+        )
+
+    def test_18_root_with_url(self) -> None:
+        """Test root terms as URL."""
+        ontology = from_str("""\
+            ontology: lepao
+            property_value: IAO:0000700 http://purl.obolibrary.org/obo/LEPAO_0000006
+        """)
+        self.assertEqual(
+            [Reference(prefix="LEPAO", identifier="0000006")],
+            ontology.root_terms,
+        )
+
+    def test_18_root_with_url_quoted(self) -> None:
+        """Test root terms as URL."""
+        ontology = from_str("""\
+            ontology: lepao
+            property_value: IAO:0000700 "http://purl.obolibrary.org/obo/LEPAO_0000006"
+        """)
+        self.assertEqual(
+            [Reference(prefix="LEPAO", identifier="0000006")],
+            ontology.root_terms,
+        )
+
+    def test_18_root_with_typed_uri(self) -> None:
+        """Test root terms as URL."""
+        ontology = from_str("""\
+            ontology: lepao
+            property_value: IAO:0000700 "http://purl.obolibrary.org/obo/LEPAO_0000006" xsd:anyURI
+        """)
+        self.assertEqual(
+            [Reference(prefix="LEPAO", identifier="0000006")],
+            ontology.root_terms,
+        )
+
+    def test_18_root_with_mistyped_uri(self) -> None:
+        """Test root terms as URL."""
+        ontology = from_str("""\
+            ontology: lepao
+            property_value: IAO:0000700 "http://purl.obolibrary.org/obo/LEPAO_0000006" xsd:string
+        """)
+        self.assertEqual(
+            [Reference(prefix="LEPAO", identifier="0000006")],
             ontology.root_terms,
         )
 
