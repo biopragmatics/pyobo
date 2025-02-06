@@ -15,7 +15,7 @@ import dateutil.parser
 import pytz
 from curies import ReferenceTuple
 from curies.api import ExpansionError
-from pydantic import model_validator
+from pydantic import ValidationError, model_validator
 
 from .utils import obo_escape
 from ..constants import GLOBAL_CHECK_IDS
@@ -118,7 +118,7 @@ class Reference(curies.NamableReference):
             name = get_name(prefix, identifier)
         try:
             rv = cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
-        except ValueError:
+        except ValidationError:
             if strict:
                 raise
             return None
