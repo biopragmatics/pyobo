@@ -1218,6 +1218,8 @@ def _handle_prop(
         )
         if obj_reference:
             return Annotation(prop_reference, obj_reference)
+        elif datatype:
+            return Annotation(prop_reference, OBOLiteral(value, datatype, None))
         else:
             return Annotation(prop_reference, OBOLiteral.string(value))
     else:
