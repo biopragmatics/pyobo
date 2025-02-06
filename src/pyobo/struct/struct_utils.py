@@ -127,8 +127,8 @@ class Stanza:
         _add(self.reference)
 
         for synonym in self.synonyms:
-            for k, vals in synonym._get_references().items():
-                rv[k].update(vals)
+            for prefix, references in synonym._get_references().items():
+                rv[prefix].update(references)
 
         if self.xrefs:
             # xrefs themselves added in the chain below
@@ -166,8 +166,8 @@ class Stanza:
             _add(p_o.predicate)
             if isinstance(p_o.value, Reference):
                 _add(p_o.value)
-            for k, vals in _get_references_from_annotations(annotations_).items():
-                rv[k].update(vals)
+            for prefix, references in _get_references_from_annotations(annotations_).items():
+                rv[prefix].update(references)
         return rv
 
     def get_literal_mappings(self) -> list[biosynonyms.LiteralMapping]:
