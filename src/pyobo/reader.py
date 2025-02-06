@@ -1201,7 +1201,9 @@ def _handle_prop(
             return Annotation(prop_reference, obo_literal)
 
     if datatype and datatype.curie == "xsd:anyURI":
-        obj_reference = Reference.from_curie_or_uri(value)
+        obj_reference = Reference.from_curie_or_uri(
+            value, strict=strict, node=node, ontology_prefix=ontology_prefix
+        )
         if obj_reference:
             return Annotation(prop_reference, obj_reference)
         else:
@@ -1210,17 +1212,16 @@ def _handle_prop(
     # if it's quoted and there's a data try parsing as a CURIE/URI anyway (this is a bit
     # aggressive, but more useful than spec).
     if quoted:
-        if datatype:
+        # give a try parsing it anyway, just in case ;)
+        obj_reference = Reference.from_curie_or_uri(
+            value, ontology_prefix=ontology_prefix, strict=strict, node=node
+        )
+        if obj_reference:
+            return Annotation(prop_reference, obj_reference)
+        elif datatype:
             return Annotation(prop_reference, OBOLiteral(value, datatype, None))
         else:
-            # give a try parsing it anyway, just in case ;)
-            obj_reference = Reference.from_curie_or_uri(
-                value, ontology_prefix=ontology_prefix, strict=strict, node=node
-            )
-            if obj_reference:
-                return Annotation(prop_reference, obj_reference)
-            else:
-                return Annotation(prop_reference, OBOLiteral.string(value))
+            return Annotation(prop_reference, OBOLiteral.string(value))
     else:
         if datatype:
             logger.debug(
