@@ -556,7 +556,9 @@ class MacroConfig:
             try:
                 gd_prefix, gd_predicate, gd_target = line.split()
             except ValueError:
-                tqdm.write(f"[{ontology_prefix}] failed to parse treat-xrefs-as-genus-differentia: {line}")
+                tqdm.write(
+                    f"[{ontology_prefix}] failed to parse treat-xrefs-as-genus-differentia: {line}"
+                )
                 continue
 
             gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
@@ -1181,7 +1183,9 @@ def _handle_prop(
         try:
             obo_literal = OBOLiteral.datetime(value)
         except ValueError:
-            logger.warning('[%s - %s] could not parse date: %s', node.curie, prop_reference.curie, value)
+            logger.warning(
+                "[%s - %s] could not parse date: %s", node.curie, prop_reference.curie, value
+            )
             return None
         else:
             return Annotation(prop_reference, obo_literal)

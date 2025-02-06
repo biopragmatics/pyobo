@@ -281,12 +281,15 @@ def _parse_identifier(
         return Reference.from_curie_or_uri(
             s, ontology_prefix=ontology_prefix, name=name, strict=strict, node=node
         )
+    if upgrade:
+        if xx := bioontologies.upgrade.upgrade(s):
+            return Reference(prefix=xx.prefix, identifier=xx.identifier, name=name)
+        if yy := _ground_relation(s):
+            return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
+
+    # in `geno`, there are some string properties that are written
+    # without quotes where this check is important
     try:
-        if upgrade:
-            if xx := bioontologies.upgrade.upgrade(s):
-                return Reference(prefix=xx.prefix, identifier=xx.identifier, name=name)
-            if yy := _ground_relation(s):
-                return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
         return default_reference(ontology_prefix, s, name=name)
     except ValidationError:
         return None
