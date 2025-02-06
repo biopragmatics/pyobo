@@ -16,7 +16,7 @@ from .hierarchy import (
     has_ancestor,
     is_descendent,
 )
-from .metadata import get_metadata
+from .metadata import get_metadata, get_prefixes
 from .names import (
     get_definition,
     get_id_definition_mapping,
@@ -97,6 +97,7 @@ __all__ = [
     "get_object_properties_df",
     "get_obsolete",
     "get_ontology",
+    "get_prefixes",
     "get_primary_curie",
     "get_primary_identifier",
     "get_priority_curie",

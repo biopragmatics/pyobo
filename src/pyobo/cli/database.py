@@ -4,6 +4,7 @@ import logging
 import warnings
 from pathlib import Path
 
+import bioregistry
 import click
 from more_click import verbose_option
 from tqdm.contrib.logging import logging_redirect_tqdm
@@ -13,10 +14,12 @@ from zenodo_client import update_zenodo
 from .database_utils import (
     _iter_alts,
     _iter_definitions,
+    _iter_ec,
     _iter_edges,
     _iter_mappings,
     _iter_metadata,
     _iter_names,
+    _iter_prefix_count,
     _iter_properties,
     _iter_relations,
     _iter_species,
@@ -352,6 +355,50 @@ def mappings(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) ->
         )
     if zenodo:
         raise NotImplementedError("need to do initial manual upload of SSSOM build")
+
+
+@database_annotate
+def prefixes(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
+    """Make the prefix count."""
+    columns = [
+        "prefix",
+        "external",
+        "count",
+    ]
+    with logging_redirect_tqdm():
+        it = _iter_prefix_count(**kwargs)
+        db_output_helper(
+            it,
+            "prefixes",
+            columns,
+            directory=directory,
+        )
+    if zenodo:
+        raise NotImplementedError("need to do initial manual upload of prefixes build")
+
+
+@database_annotate
+@click.option("--ext", required=True)
+def usages(zenodo: bool, directory: Path, ext: str, **kwargs: Unpack[DatabaseKwargs]) -> None:
+    """Make the prefix count."""
+    norm_ext = bioregistry.normalize_prefix(ext)
+    if norm_ext is None:
+        raise ValueError
+    columns = [
+        "prefix",
+        norm_ext,
+        "count",
+    ]
+    with logging_redirect_tqdm():
+        it = _iter_ec(ext=norm_ext, **kwargs)
+        db_output_helper(
+            it,
+            f"{norm_ext}-usages",
+            columns,
+            directory=directory,
+        )
+    if zenodo:
+        raise NotImplementedError
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import gzip
 import logging
 import warnings
@@ -22,11 +23,13 @@ from ..api import (
     get_id_to_alts,
     get_mappings_df,
     get_metadata,
+    get_prefixes,
     get_properties_df,
     get_relations_df,
     get_typedef_df,
     get_xrefs_df,
 )
+from ..api.metadata import get_references_to
 from ..getters import IterHelperHelperDict, iter_helper, iter_helper_helper
 from ..sources import pubchem
 from ..sources.ncbi import ncbigene
@@ -163,3 +166,24 @@ def _iter_mappings(
     it = iter_helper_helper(f, **kwargs)
     for _prefix, df in it:
         yield from df.values
+
+
+def _iter_prefix_count(**kwargs: Unpack[IterHelperHelperDict]) -> Iterable[tuple[str, str, str]]:
+    """Iterate over all prefix-external prefix-count triples.
+
+    :param leave: should the tqdm be left behind?
+    """
+    for prefix, external_prefix, count in iter_helper(get_prefixes, **kwargs):
+        if prefix != external_prefix:
+            yield prefix, external_prefix, str(count)
+
+
+def _iter_ec(ext: str, **kwargs: Unpack[IterHelperHelperDict]) -> Iterable[tuple[str, str, str]]:
+    """Iterate over all prefix-ec pairs.
+
+    :param leave: should the tqdm be left behind?
+    """
+    f = functools.partial(get_references_to, ext=ext)
+    f.__name__ = "get_references_to_"  # type:ignore
+    for prefix, ext, count in iter_helper(f, **kwargs):
+        yield prefix, ext, str(count)
