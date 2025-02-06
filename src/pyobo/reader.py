@@ -553,7 +553,16 @@ class MacroConfig:
 
         self.treat_xrefs_as_genus_differentia: dict[str, tuple[Reference, Reference]] = {}
         for line in data.get("treat-xrefs-as-genus-differentia", []):
-            gd_prefix, gd_predicate, gd_target = line.split()
+            try:
+                gd_prefix, gd_predicate, gd_target = line.split()
+            except ValueError:
+                # this happens in `plana`, where there's an incorrectly written
+                # line `CARO part_of NCBITaxon:79327; CL part_of NCBITaxon:79327`
+                tqdm.write(
+                    f"[{ontology_prefix}] failed to parse treat-xrefs-as-genus-differentia: {line}"
+                )
+                continue
+
             gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
             if gd_prefix_norm is None:
                 continue
@@ -571,7 +580,14 @@ class MacroConfig:
 
         self.treat_xrefs_as_relationship: dict[str, Reference] = {}
         for line in data.get("treat-xrefs-as-relationship", []):
-            gd_prefix, gd_predicate = line.split()
+            try:
+                gd_prefix, gd_predicate = line.split()
+            except ValueError:
+                tqdm.write(
+                    f"[{ontology_prefix}] failed to parse treat-xrefs-as-relationship: {line}"
+                )
+                continue
+
             gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
             if gd_prefix_norm is None:
                 continue
@@ -1173,7 +1189,15 @@ def _handle_prop(
     # first, special case datetimes. Whether it's quoted or not,
     # we always deal with this first
     if datatype and datatype.curie == "xsd:dateTime":
-        return Annotation(prop_reference, OBOLiteral.datetime(value))
+        try:
+            obo_literal = OBOLiteral.datetime(value)
+        except ValueError:
+            logger.warning(
+                "[%s - %s] could not parse date: %s", node.curie, prop_reference.curie, value
+            )
+            return None
+        else:
+            return Annotation(prop_reference, obo_literal)
 
     if datatype and datatype.curie == "xsd:anyURI":
         obj_reference = Reference.from_curie_or_uri(value)
