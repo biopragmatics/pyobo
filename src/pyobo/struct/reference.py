@@ -217,8 +217,14 @@ def default_reference(prefix: str, identifier: str, name: str | None = None) -> 
     return Reference(prefix="obo", identifier=f"{prefix}#{identifier}", name=name)
 
 
+def _get_ref_name(reference: curies.Reference | Referenced) -> str | None:
+    if isinstance(reference, curies.NamableReference | Referenced):
+        return reference.name
+    return None
+
+
 def reference_escape(
-    reference: curies.Reference | Reference | Referenced,
+    reference: curies.Reference | Referenced,
     *,
     ontology_prefix: str,
     add_name_comment: bool = False,
@@ -227,8 +233,8 @@ def reference_escape(
     if reference.prefix == "obo" and reference.identifier.startswith(f"{ontology_prefix}#"):
         return reference.identifier.removeprefix(f"{ontology_prefix}#")
     rv = get_preferred_curie(reference)
-    if add_name_comment and isinstance(reference, curies.NamableReference) and reference.name:
-        rv += f" ! {reference.name}"
+    if add_name_comment and (name := _get_ref_name(reference)):
+        rv += f" ! {name}"
     return rv
 
 
