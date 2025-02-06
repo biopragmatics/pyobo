@@ -47,6 +47,5 @@ def get_prefixes(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Counter[st
 def get_references_to(prefix: str, ext: str, **kwargs: Unpack[GetOntologyKwargs]) -> dict[str, int]:
     """Count the number of unique references to each vocabulary appear in the ontology."""
     ontology = get_ontology(prefix, **kwargs)
-    references = ontology._get_references().get(ext, set())
-    # TODO get specific references? this makes the data model one level more complicated
-    return {r.identifier: 1 for r in references}
+    references = ontology._get_references().get(ext, Counter())
+    return {r.identifier: count for r, count in references.items()}
