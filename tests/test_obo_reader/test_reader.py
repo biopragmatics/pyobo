@@ -1290,3 +1290,34 @@ class TestReaderTerm(unittest.TestCase):
             relationships: {dict(term.relationships)}
             """,
         )
+
+    def test_get_references(self) -> None:
+        """Test getting references from an ontology."""
+        ontology = from_str("""\
+            ontology: chebi
+            date: 20:11:2024 18:44
+            subsetdef: TESTSUBSET "test subset name"
+            synonymtypedef: OMO:0000001 "E1 Name" EXACT
+
+            [Typedef]
+            id: RO:1234567
+
+            [Term]
+            id: CHEBI:1234
+            is_a: CHEBI:5678
+            subset: TESTSUBSET
+        """)
+        r1 = Reference(prefix="CHEBI", identifier="1234")
+        r2 = Reference(prefix="CHEBI", identifier="5678")
+        td1 = Reference(prefix="RO", identifier="1234567")
+        ss1 = default_reference("chebi", "TESTSUBSET")
+        std1 = Reference(prefix="OMO", identifier="0000001", name="E1 Name")
+        expected_references = {
+            r1.prefix: {r1, r2},
+            td1.prefix: {td1},
+            "obo": {ss1},
+            std1.prefix: {std1},
+            "dcterms": {v.has_description, v.has_license, v.has_title},
+            v.has_dbxref.prefix: {v.has_exact_synonym},
+        }
+        self.assertEqual(expected_references, ontology._get_references())
