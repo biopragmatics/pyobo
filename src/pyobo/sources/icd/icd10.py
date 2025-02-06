@@ -1,10 +1,13 @@
 """Convert ICD-10 to OBO.
 
-Run with python -m pyobo.sources.icd10 -v
+Run with ``python -m pyobo.sources.icd10 -v``.
+
+.. note:: If web requests are stalling, try deleting the ``~/.cachier`` directory.
 """
 
 import logging
 from collections.abc import Iterable, Mapping
+from pathlib import Path
 from typing import Any
 
 from tqdm.auto import tqdm
@@ -12,7 +15,7 @@ from tqdm.auto import tqdm
 from .icd_utils import (
     ICD10_TOP_LEVEL_URL,
     get_child_identifiers,
-    get_icd,
+    get_icd_10_top,
     visiter,
 )
 from ...struct import Obo, Reference, Synonym, Term, has_category
@@ -32,33 +35,39 @@ class ICD10Getter(Obo):
     """An ontology representation of ICD-10."""
 
     ontology = PREFIX
-    dynamic_version = True
+    static_version = VERSION
     typedefs = [has_category]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return iter_terms()
+        return iter_terms(self._version_or_raise)
 
 
-def iter_terms() -> Iterable[Term]:
-    """Iterate over ICD-10 terms."""
-    r = get_icd(ICD10_TOP_LEVEL_URL)
-    res_json = r.json()
-
-    directory = prefix_directory_join(PREFIX, version=VERSION)
-
+def _get_chapters(version: str, path: Path):
+    res_json = get_icd_10_top(version=version, path=path)
     chapter_urls = res_json["child"]
     tqdm.write(f"there are {len(chapter_urls)} chapters")
+    identifiers = get_child_identifiers(ICD10_TOP_LEVEL_URL, res_json)
+    return identifiers
+
+
+def iter_terms(version: str) -> Iterable[Term]:
+    """Iterate over ICD-10 terms."""
+    directory = prefix_directory_join(PREFIX, version=version)
+    identifiers = _get_chapters(version=version, path=directory.joinpath("top.json"))
 
     visited_identifiers: set[str] = set()
-    for identifier in get_child_identifiers(ICD10_TOP_LEVEL_URL, res_json):
-        yield from visiter(
-            identifier,
-            visited_identifiers,
-            directory,
-            endpoint=ICD10_TOP_LEVEL_URL,
-            converter=_extract_icd10,
-        )
+    with tqdm(desc=f"[{PREFIX}]") as pbar:
+        for identifier in identifiers:
+            for term in visiter(
+                identifier,
+                visited_identifiers,
+                directory,
+                endpoint=ICD10_TOP_LEVEL_URL,
+                converter=_extract_icd10,
+            ):
+                pbar.update(1)
+                yield term
 
 
 def _extract_icd10(res_json: Mapping[str, Any]) -> Term:
