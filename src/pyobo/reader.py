@@ -556,6 +556,8 @@ class MacroConfig:
             try:
                 gd_prefix, gd_predicate, gd_target = line.split()
             except ValueError:
+                # this happens in `plana`, where there's an incorrectly written
+                # line `CARO part_of NCBITaxon:79327; CL part_of NCBITaxon:79327`
                 tqdm.write(
                     f"[{ontology_prefix}] failed to parse treat-xrefs-as-genus-differentia: {line}"
                 )
@@ -578,7 +580,14 @@ class MacroConfig:
 
         self.treat_xrefs_as_relationship: dict[str, Reference] = {}
         for line in data.get("treat-xrefs-as-relationship", []):
-            gd_prefix, gd_predicate = line.split()
+            try:
+                gd_prefix, gd_predicate = line.split()
+            except ValueError:
+                tqdm.write(
+                    f"[{ontology_prefix}] failed to parse treat-xrefs-as-relationship: {line}"
+                )
+                continue
+
             gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
             if gd_prefix_norm is None:
                 continue
