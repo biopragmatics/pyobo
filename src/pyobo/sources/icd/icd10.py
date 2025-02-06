@@ -5,6 +5,7 @@ Run with python -m pyobo.sources.icd10 -v
 
 import logging
 from collections.abc import Iterable, Mapping
+from pathlib import Path
 from typing import Any
 
 from tqdm.auto import tqdm
@@ -32,26 +33,26 @@ class ICD10Getter(Obo):
     """An ontology representation of ICD-10."""
 
     ontology = PREFIX
-    dynamic_version = True
+    static_version = VERSION
     typedefs = [has_category]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return iter_terms()
+        return iter_terms(self._version_or_raise)
 
 
-def iter_terms() -> Iterable[Term]:
-    """Iterate over ICD-10 terms."""
-    r = get_icd_10_top()
-
-    res_json = r.json()
-
-    directory = prefix_directory_join(PREFIX, version=VERSION)
-
+def _get_chapters(version: str, path: Path):
+    res_json = get_icd_10_top(version=version, path=path)
     chapter_urls = res_json["child"]
     tqdm.write(f"there are {len(chapter_urls)} chapters")
-
     identifiers = get_child_identifiers(ICD10_TOP_LEVEL_URL, res_json)
+    return identifiers
+
+
+def iter_terms(version: str) -> Iterable[Term]:
+    """Iterate over ICD-10 terms."""
+    directory = prefix_directory_join(PREFIX, version=version)
+    identifiers = _get_chapters(version=version, path=directory.joinpath("top.json"))
 
     visited_identifiers: set[str] = set()
     with tqdm(desc=f"[{PREFIX}]") as pbar:

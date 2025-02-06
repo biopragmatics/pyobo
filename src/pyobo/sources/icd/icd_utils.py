@@ -8,7 +8,6 @@ Want to get your own API client ID and client secret?
 
 import datetime
 import json
-import os
 from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 from typing import Any
@@ -33,22 +32,27 @@ ICD10_TOP_LEVEL_URL = f"{ICD_BASE_URL}/release/10/2016"
 
 def get_icd(url: str) -> requests.Response:
     """Get an ICD API endpoint."""
-    return requests.get(url, headers=get_icd_api_headers(), timeout=5)
+    headers = get_icd_api_headers()
+    return requests.get(url, headers=headers, timeout=5)
 
 
-def get_icd_10_top() -> requests.Response:
+def get_icd_10_top(version: str, path: Path) -> dict[str, Any]:
     """Get from the ICD10 top."""
-    return get_icd(ICD10_TOP_LEVEL_URL)
+    if path.is_file():
+        return json.loads(path.read_text())
+    rv = get_icd(ICD10_TOP_LEVEL_URL).json()
+    path.write_text(json.dumps(rv, indent=2))
+    return rv
 
 
-def get_icd_11(identifier: str):
+def get_icd_11(identifier: str) -> dict[str, Any]:
     """Get from ICD11."""
-    return _get_entity(ICD11_TOP_LEVEL_URL, identifier)
+    return get_icd_entity(ICD11_TOP_LEVEL_URL, identifier)
 
 
-def get_icd_11_mms(identifier: str):
+def get_icd_11_mms(identifier: str) -> dict[str, Any]:
     """Get from ICD11 MMS."""
-    return _get_entity(ICD_11_MMS_URL, identifier)
+    return get_icd_entity(ICD_11_MMS_URL, identifier)
 
 
 class ICDError(ValueError):
@@ -65,9 +69,9 @@ class ICDError(ValueError):
         return f"[icd11:{self.identifier}] Error getting {self.url} - {self.text}. Try {ICD11_TOP_LEVEL_URL}/{self.identifier}"
 
 
-def _get_entity(endpoint: str, identifier: str):
+def get_icd_entity(endpoint: str, identifier: str) -> dict[str, Any]:
+    """Query a given endpoint at ICD."""
     url = f"{endpoint}/{identifier}"
-    # tqdm.write(f'query {identifier} at {url}')
     res = get_icd(url)
     try:
         rv = res.json()
@@ -81,9 +85,13 @@ def get_child_identifiers(endpoint: str, res_json: Mapping[str, Any]) -> list[st
     return [url[len(endpoint) :].lstrip("/") for url in res_json.get("child", [])]
 
 
-@cachier(stale_after=datetime.timedelta(minutes=45))
+DELAY = 45
+
+
+@cachier(stale_after=datetime.timedelta(minutes=DELAY))
 def get_icd_api_headers() -> Mapping[str, str]:
     """Get the headers, and refresh every hour."""
+    tqdm.write("Getting ICD credentials w/ PyStow")
     try:
         icd_client_id = pystow.get_config("pyobo", "icd_client_id", raise_on_missing=True)
         icd_client_secret = pystow.get_config("pyobo", "icd_client_secret", raise_on_missing=True)
@@ -92,7 +100,7 @@ def get_icd_api_headers() -> Mapping[str, str]:
 
     grant_type = "client_credentials"
     body_params = {"grant_type": grant_type}
-    tqdm.write("getting ICD API token")
+    tqdm.write(f"getting ICD API token, good for {DELAY} minutes")
     res = requests.post(
         TOKEN_URL, data=body_params, auth=(icd_client_id, icd_client_secret), timeout=10
     )
@@ -120,13 +128,11 @@ def visiter(
         return
     visited_identifiers.add(identifier)
 
-    if os.path.exists(path):
-        with open(path) as file:
-            res_json = json.load(file)
+    if path.is_file():
+        res_json = json.loads(path.read_text())
     else:
-        res_json = _get_entity(endpoint, identifier)
-        with open(path, "w") as file:
-            json.dump(res_json, file, indent=2)
+        res_json = get_icd_entity(endpoint, identifier)
+        path.write_text(json.dumps(res_json, indent=2))
 
     yield converter(res_json)
     for identifier in get_child_identifiers(endpoint, res_json):
