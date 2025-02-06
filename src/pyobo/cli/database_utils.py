@@ -178,12 +178,14 @@ def _iter_prefix_count(**kwargs: Unpack[IterHelperHelperDict]) -> Iterable[tuple
             yield prefix, external_prefix, str(count)
 
 
-def _iter_ec(ext: str, **kwargs: Unpack[IterHelperHelperDict]) -> Iterable[tuple[str, str, str]]:
-    """Iterate over all prefix-ec pairs.
+def _iter_external_counts(
+    target_prefix: str, **kwargs: Unpack[IterHelperHelperDict]
+) -> Iterable[tuple[str, str, str]]:
+    """Iterate over all prefix-external pairs.
 
     :param leave: should the tqdm be left behind?
     """
-    f = functools.partial(get_references_to, ext=ext)
+    f = functools.partial(get_references_to, target_prefix=target_prefix)
     f.__name__ = "get_references_to_"  # type:ignore
-    for prefix, ext, count in iter_helper(f, **kwargs):
-        yield prefix, ext, str(count)
+    for prefix, external_identifier, count in iter_helper(f, **kwargs):
+        yield prefix, external_identifier, str(count)

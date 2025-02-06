@@ -362,7 +362,7 @@ def iter_helper_helper(
             skip_below=skip_below,
             skip_pyobo=skip_pyobo,
         )
-    )[:10]
+    )
     prefix_it = tqdm(
         prefixes, disable=not use_tqdm, desc=f"Building with {f.__name__}()", unit="resource"
     )

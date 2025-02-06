@@ -14,8 +14,8 @@ from zenodo_client import update_zenodo
 from .database_utils import (
     _iter_alts,
     _iter_definitions,
-    _iter_ec,
     _iter_edges,
+    _iter_external_counts,
     _iter_mappings,
     _iter_metadata,
     _iter_names,
@@ -390,7 +390,7 @@ def usages(zenodo: bool, directory: Path, ext: str, **kwargs: Unpack[DatabaseKwa
         "count",
     ]
     with logging_redirect_tqdm():
-        it = _iter_ec(ext=norm_ext, **kwargs)
+        it = _iter_external_counts(target_prefix=norm_ext, **kwargs)
         db_output_helper(
             it,
             f"{norm_ext}-usages",

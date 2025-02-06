@@ -44,8 +44,10 @@ def get_prefixes(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Counter[st
     return Counter({k: len(values) for k, values in ontology._get_references().items()})
 
 
-def get_references_to(prefix: str, ext: str, **kwargs: Unpack[GetOntologyKwargs]) -> dict[str, int]:
+def get_references_to(
+    prefix: str, target_prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+) -> dict[str, int]:
     """Count the number of unique references to each vocabulary appear in the ontology."""
     ontology = get_ontology(prefix, **kwargs)
-    references = ontology._get_references().get(ext, Counter())
+    references = ontology._get_references().get(target_prefix, Counter())
     return {r.identifier: count for r, count in references.items()}
