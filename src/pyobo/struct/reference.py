@@ -13,8 +13,8 @@ import bioregistry
 import curies
 import dateutil.parser
 import pytz
-from curies import Converter, ReferenceTuple
-from curies.api import ExpansionError, _split
+from curies import ReferenceTuple
+from curies.api import ExpansionError
 from pydantic import field_validator, model_validator
 
 from .utils import obo_escape
@@ -95,31 +95,6 @@ class Reference(curies.NamableReference):
     def bioregistry_link(self) -> str:
         """Get the bioregistry link."""
         return f"https://bioregistry.io/{self.curie}"
-
-    # override from_curie to get typing right
-    @classmethod
-    def from_curie(
-        cls,
-        curie: str,
-        name: str | None = None,
-        *,
-        sep: str = ":",
-        converter: Converter | None = None,
-    ) -> Reference:
-        """Parse a CURIE string and populate a reference.
-
-        :param curie: A string representation of a compact URI (CURIE)
-        :param sep: The separator
-        :param converter: The converter to use as context when parsing
-        :return: A reference object
-
-        >>> Reference.from_curie("chebi:1234")
-        Reference(prefix='CHEBI', identifier='1234', name=None)
-        """
-        prefix, identifier = _split(curie, sep=sep)
-        return cls.model_validate(
-            {"prefix": prefix, "identifier": identifier, "name": name}, context=converter
-        )
 
     @classmethod
     def from_curie_or_uri(
@@ -251,13 +226,16 @@ def default_reference(prefix: str, identifier: str, name: str | None = None) -> 
 
 
 def reference_escape(
-    reference: Reference | Referenced, *, ontology_prefix: str, add_name_comment: bool = False
+    reference: curies.Reference | Reference | Referenced,
+    *,
+    ontology_prefix: str,
+    add_name_comment: bool = False,
 ) -> str:
     """Write a reference with default namespace removed."""
     if reference.prefix == "obo" and reference.identifier.startswith(f"{ontology_prefix}#"):
         return reference.identifier.removeprefix(f"{ontology_prefix}#")
     rv = get_preferred_curie(reference)
-    if add_name_comment and reference.name:
+    if add_name_comment and isinstance(reference, curies.NamableReference) and reference.name:
         rv += f" ! {reference.name}"
     return rv
 
@@ -322,7 +300,7 @@ class OBOLiteral(NamedTuple):
     """A tuple representing a property with a literal value."""
 
     value: str
-    datatype: Reference
+    datatype: curies.Reference
     language: str | None
 
     @classmethod
