@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime
 import itertools as itt
 import logging
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias, overload
@@ -37,6 +38,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "AnnotationsDict",
+    "HasReferencesMixin",
     "ReferenceHint",
     "Stanza",
 ]
@@ -89,7 +91,18 @@ stanza_type_to_eq_prop: dict[StanzaType, Reference] = {
 }
 
 
-class Stanza:
+class HasReferencesMixin(ABC):
+    """A class that can report on the references it contains."""
+
+    def _get_prefixes(self) -> set[str]:
+        return set(self._get_references())
+
+    @abstractmethod
+    def _get_references(self) -> dict[str, set[Reference]]:
+        raise NotImplementedError
+
+
+class Stanza(HasReferencesMixin):
     """A high-level class for stanzas."""
 
     reference: Reference
@@ -149,7 +162,7 @@ class Stanza:
             self.subsets,
             self.xrefs,
         ):
-            rv[parent.prefix].add(parent)
+            _add(parent)
         for intersection_of in self.intersection_of:
             match intersection_of:
                 case Reference():

@@ -43,6 +43,7 @@ from .reference import (
 from .struct_utils import (
     Annotation,
     AnnotationsDict,
+    HasReferencesMixin,
     IntersectionOfHint,
     PropertiesHint,
     ReferenceHint,
@@ -105,7 +106,7 @@ FORMAT_VERSION = "1.4"
 
 
 @dataclass
-class Synonym:
+class Synonym(HasReferencesMixin):
     """A synonym with optional specificity and references."""
 
     #: The string representing the synonym
@@ -129,10 +130,6 @@ class Synonym:
     def __lt__(self, other: Synonym) -> bool:
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
-
-    def _get_prefixes(self) -> set[str]:
-        """Get all prefixes used by the typedef."""
-        return set(self._get_references())
 
     def _get_references(self) -> defaultdict[str, set[Reference]]:
         """Get all prefixes used by the typedef."""
@@ -211,7 +208,7 @@ class Synonym:
 
 
 @dataclass
-class SynonymTypeDef(Referenced):
+class SynonymTypeDef(Referenced, HasReferencesMixin):
     """A type definition for synonyms in OBO."""
 
     reference: Reference
@@ -229,10 +226,6 @@ class SynonymTypeDef(Referenced):
         if self.specificity:
             rv = f"{rv} {self.specificity}"
         return rv
-
-    def _get_prefixes(self) -> set[str]:
-        """Get all prefixes used by the typedef."""
-        return set(self._get_references())
 
     def _get_references(self) -> dict[str, set[Reference]]:
         """Get all references used by the typedef."""
@@ -715,14 +708,9 @@ class Obo:
     def _get_references(self) -> dict[str, set[Reference]]:
         """Get all references used by the ontology."""
         rv: defaultdict[str, set[Reference]] = defaultdict(set)
-        for term in self:
-            for prefix, references in term._get_references().items():
-                rv[prefix].update(references)
-        for typedef in self.typedefs or []:
-            for prefix, references in typedef._get_references().items():
-                rv[prefix].update(references)
-        for synonym_typedef in self.synonym_typedefs or []:
-            for prefix, references in synonym_typedef._get_references().items():
+
+        for rr in itt.chain(self, self.typedefs or [], self.synonym_typedefs or []):
+            for prefix, references in rr._get_references().items():
                 rv[prefix].update(references)
         for subset, _ in self.subsetdefs or []:
             rv[subset.prefix].add(subset)
