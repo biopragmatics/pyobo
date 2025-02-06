@@ -2090,6 +2090,8 @@ class TypeDef(Referenced, Stanza):
             _add(self.range)
         if self.inverse:
             _add(self.inverse)
+
+        # TODO all of the properties, which are from oboInOwl
         for rr in itt.chain(self.transitive_over, self.disjoint_over):
             _add(rr)
         for part in itt.chain(self.holds_over_chain, self.equivalent_to_chain):

@@ -119,10 +119,12 @@ class Stanza:
 
     def _get_references(self) -> dict[str, set[Reference]]:
         """Get all prefixes used by the typedef."""
-        rv: defaultdict[str, set[Reference]] = defaultdict()
+        rv: defaultdict[str, set[Reference]] = defaultdict(set)
 
         def _add(r: Reference) -> None:
             rv[r.prefix].add(r)
+
+        _add(self.reference)
 
         for synonym in self.synonyms:
             for k, vals in synonym._get_references().items():
