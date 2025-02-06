@@ -15,7 +15,7 @@ import dateutil.parser
 import pytz
 from curies import ReferenceTuple
 from curies.api import ExpansionError
-from pydantic import field_validator, model_validator
+from pydantic import model_validator
 
 from .utils import obo_escape
 from ..constants import GLOBAL_CHECK_IDS
@@ -36,14 +36,6 @@ logger = logging.getLogger(__name__)
 
 class Reference(curies.NamableReference):
     """A namespace, identifier, and label."""
-
-    @field_validator("prefix")
-    def validate_prefix(cls, v):  # noqa
-        """Validate the prefix for this reference."""
-        norm_prefix = bioregistry.normalize_prefix(v)
-        if norm_prefix is None:
-            raise ExpansionError(f"Unknown prefix: {v}")
-        return norm_prefix
 
     @property
     def preferred_prefix(self) -> str:
