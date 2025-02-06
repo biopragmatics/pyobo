@@ -186,6 +186,6 @@ def _iter_external_counts(
     :param leave: should the tqdm be left behind?
     """
     f = functools.partial(get_references_to, target_prefix=target_prefix)
-    f.__name__ = "get_references_to_"  # type:ignore
+    f.__name__ = f'get_references_to(target_prefix="{target_prefix}")'  # type:ignore
     for prefix, external_identifier, count in iter_helper(f, **kwargs):
         yield prefix, external_identifier, str(count)
