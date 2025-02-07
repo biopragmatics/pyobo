@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from subprocess import CalledProcessError
-from typing import TYPE_CHECKING, Unpack
+from typing import TYPE_CHECKING
 
 import biosynonyms
 from biosynonyms import LiteralMapping
 from pydantic import BaseModel
 from tqdm import tqdm
+from typing_extensions import Unpack
 
 from pyobo.api import get_literal_mappings, get_species
 from pyobo.constants import GetOntologyKwargs, check_should_use_tqdm

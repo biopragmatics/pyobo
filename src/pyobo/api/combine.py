@@ -1,9 +1,9 @@
 """Functions that combine other API aspects."""
 
 from collections.abc import Sequence
-from typing import Unpack
 
 import biosynonyms
+from typing_extensions import Unpack
 
 from pyobo.api.hierarchy import get_descendants
 from pyobo.api.names import get_literal_mappings
