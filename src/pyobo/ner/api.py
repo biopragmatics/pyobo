@@ -86,7 +86,7 @@ def get_grounder(
     skip_obsolete: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> gilda.Grounder:
-    """Get a Gilda grounder for the given prefix(es)."""
+    """Get a grounder for the given prefix(es)."""
     literal_mappings: list[biosynonyms.LiteralMapping] = []
     disable = not check_should_use_tqdm(kwargs)
     for prefix, kwargs["version"] in tqdm(
