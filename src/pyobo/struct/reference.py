@@ -89,18 +89,6 @@ class Reference(curies.NamableReference):
         return f"https://bioregistry.io/{self.curie}"
 
     @classmethod
-    def from_curie(  # type:ignore
-        cls,
-        curie: str,
-        name: str | None = None,
-        *,
-        sep: str = ":",
-        converter: curies.Converter | None = None,
-    ) -> Reference:
-        """Parse a CURIE string."""
-        super().from_curie(curie, name, sep=sep, converter=converter)
-
-    @classmethod
     def from_curie_or_uri(
         cls,
         curie: str,

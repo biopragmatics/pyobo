@@ -3,6 +3,7 @@
 from collections.abc import Sequence
 
 import biosynonyms
+import curies
 from typing_extensions import Unpack
 
 from pyobo.api.hierarchy import get_descendants
@@ -17,14 +18,16 @@ __all__ = [
 
 def get_literal_mappings_subset(
     prefix: str,
-    ancestors: Reference | Sequence[Reference],
+    ancestors: curies.Reference | Sequence[curies.Reference],
     *,
     skip_obsolete: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> list[biosynonyms.LiteralMapping]:
     """Get a subset of literal mappings under the given ancestors."""
-    ancestors = _ensure_list(ancestors)
-    subset: set[Reference] = {
+    if isinstance(ancestors, curies.Reference):
+        ancestors = [ancestors]
+
+    subset: set[curies.Reference] = {
         Reference.from_curie(descendant)
         for ancestor in ancestors
         for descendant in get_descendants(ancestor, **kwargs) or []
@@ -34,9 +37,3 @@ def get_literal_mappings_subset(
         for literal_mapping in get_literal_mappings(prefix, skip_obsolete=skip_obsolete, **kwargs)
         if literal_mapping.reference in subset
     ]
-
-
-def _ensure_list(reference: Reference | Sequence[Reference]) -> Sequence[Reference]:
-    if isinstance(reference, Reference):
-        return [reference]
-    return reference
