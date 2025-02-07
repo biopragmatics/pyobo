@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
-from subprocess import CalledProcessError
+import warnings
+from collections.abc import Iterable, Sequence
 from typing import TYPE_CHECKING
 
 import bioregistry
@@ -12,23 +12,19 @@ from tqdm.auto import tqdm
 from typing_extensions import Unpack
 
 from pyobo import (
-    get_descendants,
+    Reference,
     get_id_name_mapping,
-    get_id_species_mapping,
     get_ids,
     get_literal_mappings,
-    get_obsolete,
+    get_literal_mappings_subset,
 )
-from pyobo.api.utils import get_version_from_kwargs
-from pyobo.constants import GetOntologyKwargs, check_should_use_tqdm
-from pyobo.getters import NoBuildError
-from pyobo.utils.io import multidict
+from pyobo.constants import GetOntologyKwargs
+from pyobo.ner.api import ground
 
 if TYPE_CHECKING:
     import gilda
 
 __all__ = [
-    "get_gilda_terms",
     "get_grounder",
     "iter_gilda_prediction_tuples",
 ]
@@ -54,16 +50,16 @@ def iter_gilda_prediction_tuples(
         id_name_mapping.items(), desc=f"[{prefix}] gilda tuples", unit_scale=True, unit="name"
     )
     for identifier, name in it:
-        for scored_match in grounder.ground(name):
-            target_prefix = scored_match.term.db.lower()
+        norm_identifier = normalize_identifier(prefix, identifier)
+        for scored_match in ground(grounder, name):
             yield (
                 prefix,
-                normalize_identifier(prefix, identifier),
+                norm_identifier,
                 name,
                 relation,
-                target_prefix,
-                normalize_identifier(target_prefix, scored_match.term.id),
-                scored_match.term.entry_name,
+                scored_match.prefix,
+                normalize_identifier(scored_match.prefix, scored_match.identifier),
+                scored_match.name,
                 "semapv:LexicalMatching",
                 round(scored_match.score, 3),
             )
@@ -71,16 +67,16 @@ def iter_gilda_prediction_tuples(
     if identifiers_are_names:
         it = tqdm(get_ids(prefix), desc=f"[{prefix}] gilda tuples", unit_scale=True, unit="id")
         for identifier in it:
-            for scored_match in grounder.ground(identifier):
-                target_prefix = scored_match.term.db.lower()
+            norm_identifier = normalize_identifier(prefix, identifier)
+            for scored_match in ground(grounder, identifier):
                 yield (
                     prefix,
-                    normalize_identifier(prefix, identifier),
+                    norm_identifier,
                     identifier,
                     relation,
-                    target_prefix,
-                    normalize_identifier(target_prefix, scored_match.term.id),
-                    scored_match.term.entry_name,
+                    scored_match.prefix,
+                    normalize_identifier(scored_match.prefix, scored_match.identifier),
+                    scored_match.name,
                     "semapv:LexicalMatching",
                     scored_match.score,
                 )
@@ -94,98 +90,48 @@ def normalize_identifier(prefix: str, identifier: str) -> str:
     return resource.miriam_standardize_identifier(identifier) or identifier
 
 
-def get_grounder(
-    prefixes: str | Iterable[str],
-    *,
-    unnamed: Iterable[str] | None = None,
-    grounder_cls: type[gilda.Grounder] | None = None,
-    versions: None | str | Iterable[str | None] | dict[str, str] = None,
-    skip_obsolete: bool = False,
-    **kwargs: Unpack[GetOntologyKwargs],
-) -> gilda.Grounder:
-    """Get a Gilda grounder for the given prefix(es)."""
-    unnamed = set() if unnamed is None else set(unnamed)
-    if isinstance(prefixes, str):
-        prefixes = [prefixes]
-    else:
-        prefixes = list(prefixes)
-    if versions is None:
-        versions = [None] * len(prefixes)
-    elif isinstance(versions, str):
-        versions = [versions]
-    elif isinstance(versions, dict):
-        versions = [versions.get(prefix) for prefix in prefixes]
-    else:
-        versions = list(versions)
-    if len(prefixes) != len(versions):
-        raise ValueError
+def get_grounder(*args, **kwargs):
+    """Get a grounder."""
+    warnings.warn("use pyobo.ner.get_grounder", DeprecationWarning, stacklevel=2)
+    import pyobo.ner
 
-    from gilda.term import filter_out_duplicates
-
-    progress = check_should_use_tqdm(kwargs)
-    terms: list[gilda.Term] = []
-    for prefix, kwargs["version"] in zip(
-        tqdm(prefixes, leave=False, disable=not progress), versions, strict=False
-    ):
-        try:
-            p_terms = list(
-                get_gilda_terms(
-                    prefix,
-                    identifiers_are_names=prefix in unnamed,
-                    skip_obsolete=skip_obsolete,
-                    **kwargs,
-                )
-            )
-        except (NoBuildError, CalledProcessError):
-            continue
-        else:
-            terms.extend(p_terms)
-    terms = filter_out_duplicates(terms)
-    terms_dict = multidict((term.norm_text, term) for term in terms)
-    if grounder_cls is None:
-        from gilda import Grounder
-
-        return Grounder(terms_dict)
-    else:
-        return grounder_cls(terms_dict)
+    return pyobo.ner.get_grounder(*args, **kwargs)
 
 
-def get_gilda_terms(
-    prefix: str,
-    *,
-    identifiers_are_names: bool = False,
-    skip_obsolete: bool = False,
-    **kwargs: Unpack[GetOntologyKwargs],
-) -> Iterable[gilda.Term]:
-    """Get gilda terms for the given namespace."""
-    if identifiers_are_names:
-        raise NotImplementedError
-    kwargs["version"] = get_version_from_kwargs(prefix, kwargs)  # type:ignore
-    id_to_species = get_id_species_mapping(prefix, **kwargs)
-    obsoletes = get_obsolete(prefix, **kwargs) if skip_obsolete else set()
-    for synonym in get_literal_mappings(prefix, **kwargs):
-        if synonym.reference.identifier in obsoletes:
-            continue
-        yield synonym.to_gilda(organism=id_to_species.get(synonym.reference.identifier))
+def get_gilda_terms(prefix: str, *, skip_obsolete: bool = False, **kwargs) -> Iterable[gilda.Term]:
+    """Get gilda terms."""
+    warnings.warn(
+        "use pyobo.get_literal_mappings() directly and convert to gilda yourself",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    from pyobo.ner.api import _lm_to_gilda
+
+    for lm in get_literal_mappings(prefix, skip_obsolete=skip_obsolete, **kwargs):
+        yield _lm_to_gilda(lm)
 
 
 def get_gilda_term_subset(
     source: str,
-    ancestors: str | list[str],
+    ancestors: str | Sequence[str],
+    *,
+    skip_obsolete: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> Iterable[gilda.Term]:
     """Get a subset of terms."""
-    subset = {
-        descendant
-        for parent_curie in _ensure_list(ancestors)
-        for descendant in get_descendants(*parent_curie.split(":")) or []
-    }
-    for term in get_gilda_terms(source, **kwargs):
-        if bioregistry.curie_to_str(term.db, term.id) in subset:
-            yield term
+    warnings.warn(
+        "use pyobo.get_literal_mappings_subset() directly and convert to gilda yourself",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    from pyobo.ner.api import _lm_to_gilda
 
-
-def _ensure_list(s: str | list[str]) -> list[str]:
-    if isinstance(s, str):
-        return [s]
-    return s
+    if isinstance(ancestors, str):
+        ancestors = [ancestors]
+    for lm in get_literal_mappings_subset(
+        source,
+        ancestors=[Reference.from_curie(a) for a in ancestors],
+        skip_obsolete=skip_obsolete,
+        **kwargs,
+    ):
+        yield _lm_to_gilda(lm)
