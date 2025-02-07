@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from subprocess import CalledProcessError
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import biosynonyms
 from biosynonyms import LiteralMapping
@@ -65,16 +65,16 @@ class Match(BaseModel):
         return self.reference.name
 
 
-def ground(grounder: gilda.Grounder, *args, **kwargs) -> list[Match]:
+def ground(grounder: gilda.Grounder, text: str, **kwargs: Any) -> list[Match]:
     """Repack scored matches to be easier to use."""
     return [
-        Match.from_scored_match(scored_match) for scored_match in grounder.ground(*args, **kwargs)
+        Match.from_scored_match(scored_match) for scored_match in grounder.ground(text, **kwargs)
     ]
 
 
-def ground_best(grounder: gilda.Grounder, *args, **kwargs) -> Match | None:
+def ground_best(grounder: gilda.Grounder, text: str, **kwargs: Any) -> Match | None:
     """Repack scored matches to be easier to use."""
-    sm = grounder.ground(*args, **kwargs)
+    sm = grounder.ground_best(text, **kwargs)
     return Match.from_scored_match(sm) if sm else None
 
 
