@@ -11,10 +11,10 @@ from biosynonyms import LiteralMapping
 from pydantic import BaseModel
 from tqdm import tqdm
 
-from pyobo import Reference
 from pyobo.api import get_literal_mappings, get_species
 from pyobo.constants import GetOntologyKwargs, check_should_use_tqdm
 from pyobo.getters import NoBuildError
+from pyobo.struct.reference import Reference
 from pyobo.utils.io import multidict
 
 if TYPE_CHECKING:
@@ -107,13 +107,24 @@ def get_grounder(
     return _build_grounder(literal_mappings, grounder_cls=grounder_cls)
 
 
+def literal_mappings_to_gilda(
+    literal_mappings: Iterable[biosynonyms.LiteralMapping],
+) -> Iterable[gilda.Term]:
+    """Yield literal mappings as gilda terms.
+
+    This is different from the upstream biosynonyms impl
+    because it injects species.
+    """
+    for lm in literal_mappings:
+        yield _lm_to_gilda(lm)
+
+
 def _build_grounder(
     literal_mappings: list[LiteralMapping], grounder_cls: type[gilda.Grounder] | None = None
 ):
     from gilda.term import filter_out_duplicates
 
-    gilda_terms = [_lm_to_gilda(m) for m in literal_mappings]
-    gilda_terms = filter_out_duplicates(gilda_terms)
+    gilda_terms = filter_out_duplicates(literal_mappings_to_gilda(literal_mappings))
     terms_dict = multidict((term.norm_text, term) for term in gilda_terms)
 
     if grounder_cls is None:
