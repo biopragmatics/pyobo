@@ -19,8 +19,8 @@ from pyobo import (
     get_primary_curie,
     get_primary_identifier,
 )
-from pyobo.gilda_utils import get_grounder
 from pyobo.mocks import get_mock_id_alts_mapping, get_mock_id_name_mapping
+from pyobo.ner import get_grounder, ground_best
 from pyobo.struct import vocabulary as v
 from pyobo.struct.struct import Obo, Term, TypeDef, make_ad_hoc_ontology
 
@@ -217,10 +217,10 @@ class TestAltIds(unittest.TestCase):
 
             if importlib.util.find_spec("gilda"):
                 grounder = get_grounder(TEST_P1)
-                scored_match = grounder.ground_best(syn1)
+                scored_match = ground_best(grounder, syn1)
                 self.assertIsNotNone(scored_match)
-                self.assertEqual(TEST_P1, scored_match.term.db)
-                self.assertEqual("1", scored_match.term.id)
+                self.assertEqual(TEST_P1, scored_match.prefix)
+                self.assertEqual("1", scored_match.identifier)
 
             # Properties
 

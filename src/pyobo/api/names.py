@@ -256,11 +256,15 @@ def get_id_synonyms_mapping(
 
 
 def get_literal_mappings(
-    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, *, skip_obsolete: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[biosynonyms.LiteralMapping]:
     """Get literal mappings."""
     df = get_literal_mappings_df(prefix=prefix, **kwargs)
-    return biosynonyms.df_to_literal_mappings(df)
+    rv = biosynonyms.df_to_literal_mappings(df)
+    if skip_obsolete:
+        obsoletes = get_obsolete(prefix, **kwargs)
+        rv = [lm for lm in rv if lm.reference.identifier not in obsoletes]
+    return rv
 
 
 def get_literal_mappings_df(

@@ -24,6 +24,7 @@ from .api import (
     get_ids,
     get_literal_mappings,
     get_literal_mappings_df,
+    get_literal_mappings_subset,
     get_literal_properties,
     get_literal_properties_df,
     get_mappings_df,
@@ -54,7 +55,8 @@ from .api import (
     is_descendent,
 )
 from .getters import get_ontology
-from .normalizer import OboNormalizer, ground
+from .ner import get_grounder, literal_mappings_to_gilda
+from .ner.normalizer import OboNormalizer, ground
 from .obographs import parse_results_from_obo
 from .plugins import (
     has_nomenclature_plugin,
@@ -96,6 +98,7 @@ __all__ = [
     "get_filtered_relations_df",
     "get_filtered_xrefs",
     "get_graph",
+    "get_grounder",
     "get_hierarchy",
     "get_id_definition_mapping",
     "get_id_multirelations_mapping",
@@ -106,6 +109,7 @@ __all__ = [
     "get_ids",
     "get_literal_mappings",
     "get_literal_mappings_df",
+    "get_literal_mappings_subset",
     "get_literal_properties",
     "get_literal_properties_df",
     "get_mappings_df",
@@ -135,13 +139,13 @@ __all__ = [
     "get_xrefs",
     "get_xrefs_df",
     "ground",
-    "ground",
     "has_ancestor",
     "has_nomenclature_plugin",
     "has_xref_plugin",
     "is_descendent",
     "iter_nomenclature_plugins",
     "iter_xref_plugins",
+    "literal_mappings_to_gilda",
     "parse_results_from_obo",
     "run_nomenclature_plugin",
     "run_xref_plugin",

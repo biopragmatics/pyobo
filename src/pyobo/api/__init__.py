@@ -6,6 +6,7 @@ from .alts import (
     get_primary_curie,
     get_primary_identifier,
 )
+from .combine import get_literal_mappings_subset
 from .edges import get_edges, get_edges_df, get_graph
 from .hierarchy import (
     get_ancestors,
@@ -86,6 +87,7 @@ __all__ = [
     "get_ids",
     "get_literal_mappings",
     "get_literal_mappings_df",
+    "get_literal_mappings_subset",
     "get_literal_properties",
     "get_literal_properties_df",
     "get_mappings_df",
