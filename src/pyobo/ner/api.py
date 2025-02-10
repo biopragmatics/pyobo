@@ -54,7 +54,6 @@ def get_grounder(
     return ssslm.make_grounder(literal_mappings, implementation="gilda", grounder_cls=grounder_cls)
 
 
-
 def _clean_prefix_versions(
     prefixes: str | Iterable[str],
     versions: None | str | Iterable[str | None] | dict[str, str] = None,
