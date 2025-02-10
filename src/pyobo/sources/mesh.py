@@ -336,6 +336,24 @@ def get_mesh_category_curies(
 
     .. seealso:: https://meshb.nlm.nih.gov/treeView
     """
+    return [
+        reference.curie
+        for reference in get_mesh_category_references(letter=letter, skip=skip, version=version)
+    ]
+
+
+def get_mesh_category_references(
+    letter: str, *, skip: Collection[str] | None = None, version: str | None = None
+) -> list[Reference]:
+    """Get the MeSH references for a category, by letter (e.g., "A").
+
+    :param letter: The MeSH tree, A for anatomy, C for disease, etc.
+    :param skip: An optional collection of MeSH tree codes to skip, such as "A03"
+    :param version: The MeSH version to use. Defaults to latest
+    :returns: A list of MeSH references for the top level of each MeSH tree.
+
+    .. seealso:: https://meshb.nlm.nih.gov/treeView
+    """
     if version is None:
         version = safe_get_version("mesh")
     tree_to_mesh = get_tree_to_mesh_id(version=version)
@@ -346,8 +364,10 @@ def get_mesh_category_curies(
             continue
         mesh_id = tree_to_mesh.get(key)
         if mesh_id is None:
+            # as soon as we get to a missing ID, we don't
+            # have to go any further
             break
-        rv.append(f"mesh:{mesh_id}")
+        rv.append(Reference(prefix="mesh", identifier=mesh_id))
     return rv
 
 
