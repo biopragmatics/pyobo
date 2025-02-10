@@ -8,9 +8,10 @@ from collections.abc import Callable, Mapping
 from functools import lru_cache
 from typing import Any, TypeVar
 
-import biosynonyms
 import pandas as pd
+import ssslm
 from curies import Reference, ReferenceTuple
+from ssslm import LiteralMapping
 from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
@@ -257,10 +258,10 @@ def get_id_synonyms_mapping(
 
 def get_literal_mappings(
     prefix: str, *, skip_obsolete: bool = False, **kwargs: Unpack[GetOntologyKwargs]
-) -> list[biosynonyms.LiteralMapping]:
+) -> list[LiteralMapping]:
     """Get literal mappings."""
     df = get_literal_mappings_df(prefix=prefix, **kwargs)
-    rv = biosynonyms.df_to_literal_mappings(df)
+    rv = ssslm.df_to_literal_mappings(df)
     if skip_obsolete:
         obsoletes = get_obsolete(prefix, **kwargs)
         rv = [lm for lm in rv if lm.reference.identifier not in obsoletes]

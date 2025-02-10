@@ -10,12 +10,12 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias, overload
 
-import biosynonyms
 import curies
 from curies import ReferenceTuple
 from curies import vocabulary as _v
 from curies.vocabulary import SynonymScope
 from pydantic import BaseModel, ConfigDict
+from ssslm import LiteralMapping
 from typing_extensions import Self
 
 from . import vocabulary as v
@@ -183,7 +183,7 @@ class Stanza(HasReferencesMixin):
                 rv[prefix].update(references)
         return rv
 
-    def get_literal_mappings(self) -> list[biosynonyms.LiteralMapping]:
+    def get_literal_mappings(self) -> list[LiteralMapping]:
         """Get synonym objects for this term, including one for its label."""
         rv = [_convert_synoynym(self, synonym) for synonym in self.synonyms]
         if self.reference.name:
@@ -1012,8 +1012,8 @@ def _get_references_from_annotations(
     return dict(rv)
 
 
-def _get_stanza_name_synonym(stanza: Stanza) -> biosynonyms.LiteralMapping:
-    return biosynonyms.LiteralMapping(
+def _get_stanza_name_synonym(stanza: Stanza) -> LiteralMapping:
+    return LiteralMapping(
         text=stanza.reference.name,
         reference=stanza.reference.as_named_reference(),
         predicate=_v.has_label,
@@ -1026,7 +1026,7 @@ def _get_stanza_name_synonym(stanza: Stanza) -> biosynonyms.LiteralMapping:
     )
 
 
-def _convert_synoynym(stanza: Stanza, synonym: Synonym) -> biosynonyms.LiteralMapping:
+def _convert_synoynym(stanza: Stanza, synonym: Synonym) -> LiteralMapping:
     o = OBOLiteral.string(synonym.name, language=synonym.language)
     # TODO make this indexing reusable? similar code used for SSSOM export
     idx: dict[Reference, Reference | OBOLiteral] = {
@@ -1038,7 +1038,7 @@ def _convert_synoynym(stanza: Stanza, synonym: Synonym) -> biosynonyms.LiteralMa
     contributor = _safe_str(idx.get(v.has_contributor))
     date = _safe_str(idx.get(v.has_date))
 
-    return biosynonyms.LiteralMapping(
+    return LiteralMapping(
         text=synonym.name,
         language=synonym.language,
         reference=stanza.reference.as_named_reference(synonym.name),

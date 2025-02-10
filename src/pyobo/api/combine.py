@@ -2,8 +2,8 @@
 
 from collections.abc import Sequence
 
-import biosynonyms
 import curies
+import ssslm
 from typing_extensions import Unpack
 
 from pyobo.api.hierarchy import get_descendants
@@ -22,7 +22,7 @@ def get_literal_mappings_subset(
     *,
     skip_obsolete: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
-) -> list[biosynonyms.LiteralMapping]:
+) -> list[ssslm.LiteralMapping]:
     """Get a subset of literal mappings under the given ancestors."""
     if isinstance(ancestors, curies.Reference):
         ancestors = [ancestors]

@@ -5,12 +5,13 @@ from __future__ import annotations
 import logging
 import warnings
 from collections.abc import Iterable, Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import bioregistry
+import ssslm
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
-
+from ssslm import GildaGrounder
 from pyobo.api import (
     get_id_name_mapping,
     get_ids,
@@ -18,7 +19,7 @@ from pyobo.api import (
     get_literal_mappings_subset,
 )
 from pyobo.constants import GetOntologyKwargs
-from pyobo.ner.api import ground, literal_mappings_to_gilda
+from pyobo.ner.api import literal_mappings_to_gilda
 from pyobo.struct.reference import Reference
 
 if TYPE_CHECKING:
@@ -47,13 +48,14 @@ def iter_gilda_prediction_tuples(
         import gilda.api
 
         grounder = gilda.api.grounder
+    grounder_ = GildaGrounder(grounder)
     id_name_mapping = get_id_name_mapping(prefix, strict=strict)
     it = tqdm(
         id_name_mapping.items(), desc=f"[{prefix}] gilda tuples", unit_scale=True, unit="name"
     )
     for identifier, name in it:
         norm_identifier = _normalize_identifier(prefix, identifier)
-        for scored_match in ground(grounder, name):
+        for scored_match in grounder_.get_matches(name):
             yield (
                 prefix,
                 norm_identifier,
@@ -61,7 +63,7 @@ def iter_gilda_prediction_tuples(
                 relation,
                 scored_match.prefix,
                 _normalize_identifier(scored_match.prefix, scored_match.identifier),
-                scored_match.name,
+                name,
                 "semapv:LexicalMatching",
                 round(scored_match.score, 3),
             )
@@ -70,7 +72,7 @@ def iter_gilda_prediction_tuples(
         it = tqdm(get_ids(prefix), desc=f"[{prefix}] gilda tuples", unit_scale=True, unit="id")
         for identifier in it:
             norm_identifier = _normalize_identifier(prefix, identifier)
-            for scored_match in ground(grounder, identifier):
+            for scored_match in grounder_.get_matches(identifier):
                 yield (
                     prefix,
                     norm_identifier,
@@ -78,7 +80,7 @@ def iter_gilda_prediction_tuples(
                     relation,
                     scored_match.prefix,
                     _normalize_identifier(scored_match.prefix, scored_match.identifier),
-                    scored_match.name,
+                    identifier,
                     "semapv:LexicalMatching",
                     scored_match.score,
                 )
@@ -102,12 +104,13 @@ def normalize_identifier(prefix: str, identifier: str) -> str:
     return _normalize_identifier(prefix, identifier)
 
 
-def get_grounder(*args, **kwargs):
+def get_grounder(*args: Any, **kwargs: Any) -> gilda.Grounder:
     """Get a grounder."""
     warnings.warn("use pyobo.ner.get_grounder", DeprecationWarning, stacklevel=2)
     import pyobo.ner
 
-    return pyobo.ner.get_grounder(*args, **kwargs)
+    grounder = cast(ssslm.ner.GildaGrounder, pyobo.get_grounder(*args, **kwargs))
+    return grounder._grounder
 
 
 def get_gilda_terms(prefix: str, *, skip_obsolete: bool = False, **kwargs) -> Iterable[gilda.Term]:
