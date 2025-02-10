@@ -143,9 +143,12 @@ def _parse_reference_or_literal(
     counter: Counter[tuple[str, str]],
     scope_text: str,
 ) -> None | Reference | OBOLiteral:
-    curie_or_uri = curie_or_uri.strip()
+    curie_or_uri = curie_or_uri.strip().removeprefix("url:")
     if not curie_or_uri:
         return None
+
+    curie_or_uri = curie_or_uri.replace("http\\:", "http:")
+    curie_or_uri = curie_or_uri.replace("https\\:", "https:")
 
     # we're not strict here since we want to do some alternate kind of parsing
     reference = Reference.from_curie_or_uri(
