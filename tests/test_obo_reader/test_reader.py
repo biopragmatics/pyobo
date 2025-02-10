@@ -1320,4 +1320,6 @@ class TestReaderTerm(unittest.TestCase):
             "dcterms": {v.has_description, v.has_license, v.has_title},
             v.has_dbxref.prefix: {v.has_exact_synonym},
         }
-        self.assertEqual(expected_references, ontology._get_references())
+        self.assertEqual(
+            expected_references, {p: set(v) for p, v in ontology._get_references().items()}
+        )

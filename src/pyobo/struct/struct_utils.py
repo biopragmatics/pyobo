@@ -6,7 +6,7 @@ import datetime
 import itertools as itt
 import logging
 from abc import ABC, abstractmethod
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias, overload
 
@@ -98,7 +98,7 @@ class HasReferencesMixin(ABC):
         return set(self._get_references())
 
     @abstractmethod
-    def _get_references(self) -> dict[str, set[Reference]]:
+    def _get_references(self) -> dict[str, Counter[Reference]]:
         raise NotImplementedError
 
 
@@ -130,18 +130,18 @@ class Stanza(HasReferencesMixin):
     def _get_prefixes(self) -> set[str]:
         return set(self._get_references())
 
-    def _get_references(self) -> dict[str, set[Reference]]:
+    def _get_references(self) -> dict[str, Counter[Reference]]:
         """Get all prefixes used by the typedef."""
-        rv: defaultdict[str, set[Reference]] = defaultdict(set)
+        rv: defaultdict[str, Counter[Reference]] = defaultdict(Counter)
 
         def _add(r: Reference) -> None:
-            rv[r.prefix].add(r)
+            rv[r.prefix][r] += 1
 
         _add(self.reference)
 
         for synonym in self.synonyms:
-            for prefix, references in synonym._get_references().items():
-                rv[prefix].update(references)
+            for prefix, reference_counter in synonym._get_references().items():
+                rv[prefix].update(reference_counter)
 
         if self.xrefs:
             # xrefs themselves added in the chain below
@@ -179,8 +179,10 @@ class Stanza(HasReferencesMixin):
             _add(p_o.predicate)
             if isinstance(p_o.value, Reference):
                 _add(p_o.value)
-            for prefix, references in _get_references_from_annotations(annotations_).items():
-                rv[prefix].update(references)
+            for prefix, reference_counter in _count_references_from_annotations(
+                annotations_
+            ).items():
+                rv[prefix].update(reference_counter)
         return rv
 
     def get_literal_mappings(self) -> list[biosynonyms.LiteralMapping]:
@@ -998,17 +1000,17 @@ class MappingContext(BaseModel):
 
 
 def _get_prefixes_from_annotations(annotations: Iterable[Annotation]) -> set[str]:
-    return set(_get_references_from_annotations(annotations))
+    return set(_count_references_from_annotations(annotations))
 
 
-def _get_references_from_annotations(
+def _count_references_from_annotations(
     annotations: Iterable[Annotation],
-) -> dict[str, set[Reference]]:
-    rv: defaultdict[str, set[Reference]] = defaultdict(set)
+) -> dict[str, Counter[Reference]]:
+    rv: defaultdict[str, Counter[Reference]] = defaultdict(Counter)
     for left, right in annotations:
-        rv[left.prefix].add(left)
+        rv[left.prefix][left] += 1
         if isinstance(right, Reference):
-            rv[right.prefix].add(right)
+            rv[right.prefix][right] += 1
     return dict(rv)
 
 

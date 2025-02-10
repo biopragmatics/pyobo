@@ -7,6 +7,7 @@ from collections.abc import Mapping
 import bioregistry
 import click
 from more_click import verbose_option
+from tqdm.contrib.logging import logging_redirect_tqdm
 from typing_extensions import Unpack
 
 from .utils import (
@@ -42,6 +43,7 @@ from ..api import (
 from ..constants import LookupKwargs
 from ..getters import get_ontology
 from ..struct import Reference
+from ..struct.reference import get_preferred_curie
 
 __all__ = [
     "lookup",
@@ -300,3 +302,18 @@ def prefixes(**kwargs: Unpack[LookupKwargs]) -> None:
     ontology = get_ontology(**kwargs)
     for prefix in sorted(ontology._get_prefixes(), key=str.casefold):
         click.echo(prefix)
+
+
+@lookup_annotate
+def usage(**kwargs: Unpack[LookupKwargs]) -> None:
+    """Page through prefixes appearing in an ontology."""
+    from tabulate import tabulate
+
+    with logging_redirect_tqdm():
+        ontology = get_ontology(**kwargs)
+        references = ontology._get_references()
+    rows = [
+        (prefix, len(counter), sum(counter.values()), get_preferred_curie(min(counter)))
+        for prefix, counter in sorted(references.items())
+    ]
+    click.echo(tabulate(rows, headers=["prefix", "unique", "total", "example"]))
