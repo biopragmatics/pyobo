@@ -55,7 +55,7 @@ from .api import (
     is_descendent,
 )
 from .getters import get_ontology
-from .ner import get_grounder, literal_mappings_to_gilda
+from .ner import get_grounder
 from .ner.normalizer import OboNormalizer, ground
 from .obographs import parse_results_from_obo
 from .plugins import (
@@ -145,7 +145,6 @@ __all__ = [
     "is_descendent",
     "iter_nomenclature_plugins",
     "iter_xref_plugins",
-    "literal_mappings_to_gilda",
     "parse_results_from_obo",
     "run_nomenclature_plugin",
     "run_xref_plugin",

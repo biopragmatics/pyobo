@@ -6,9 +6,9 @@ from contextlib import ExitStack
 from unittest import mock
 
 import bioregistry
-from biosynonyms import LiteralMapping
 from curies import Reference, ReferenceTuple
 from curies import vocabulary as _v
+from ssslm import LiteralMapping
 
 import pyobo
 from pyobo import Reference as PyOBOReference
@@ -20,7 +20,7 @@ from pyobo import (
     get_primary_identifier,
 )
 from pyobo.mocks import get_mock_id_alts_mapping, get_mock_id_name_mapping
-from pyobo.ner import get_grounder, ground_best
+from pyobo.ner import get_grounder
 from pyobo.struct import vocabulary as v
 from pyobo.struct.struct import Obo, Term, TypeDef, make_ad_hoc_ontology
 
@@ -217,10 +217,10 @@ class TestAltIds(unittest.TestCase):
 
             if importlib.util.find_spec("gilda"):
                 grounder = get_grounder(TEST_P1)
-                scored_match = ground_best(grounder, syn1)
-                self.assertIsNotNone(scored_match)
-                self.assertEqual(TEST_P1, scored_match.prefix)
-                self.assertEqual("1", scored_match.identifier)
+                match = grounder.get_best_match(syn1)
+                self.assertIsNotNone(match)
+                self.assertEqual(TEST_P1, match.prefix)
+                self.assertEqual("1", match.identifier)
 
             # Properties
 

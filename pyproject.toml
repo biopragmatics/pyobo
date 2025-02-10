@@ -75,7 +75,7 @@ dependencies = [
     "bioversions>=0.7.0",
     "bioregistry>=0.11.33",
     "bioontologies>=0.5.2",
-    "biosynonyms>=0.3.3",
+    "ssslm>=0.0.9",
     "zenodo-client>=0.3.6",
     "class_resolver",
     "psycopg2-binary",
@@ -103,14 +103,12 @@ docs = [
     "sphinx-click", 
     "sphinx_automodapi",
 ]
-grounding = [
-    "gilda",
+gilda = [
+    "ssslm[gilda]",
 ]
-
-[tool.uv.sources]
-# this fork of gilda doesn't install any of
-# the unneeded requirements for grounding
-gilda = { git = "https://github.com/cthoyt/gilda", branch = "slim" }
+gilda-slim = [
+    "ssslm[gilda-slim]",
+]
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
 # and also https://packaging.python.org/en/latest/specifications/well-known-project-urls/
