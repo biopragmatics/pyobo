@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from subprocess import CalledProcessError
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import ssslm
-from ssslm import LiteralMapping, Match
-from ssslm.ner import GildaGrounder
+from ssslm import LiteralMapping
 from tqdm import tqdm
 from typing_extensions import Unpack
 

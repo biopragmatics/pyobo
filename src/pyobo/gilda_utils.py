@@ -9,9 +9,10 @@ from typing import TYPE_CHECKING, Any, cast
 
 import bioregistry
 import ssslm
+from ssslm import GildaGrounder
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
-from ssslm import GildaGrounder
+
 from pyobo.api import (
     get_id_name_mapping,
     get_ids,
