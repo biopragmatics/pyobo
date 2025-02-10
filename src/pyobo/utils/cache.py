@@ -65,17 +65,19 @@ class CachedMapping(_CachedMapping[Mapping[str, str]]):
 
 cached_mapping = CachedMapping
 
+NODE_LINK_STYLE = "links"  # TODO update to "edges"
+
 
 def get_gzipped_graph(path: str | Path) -> nx.MultiDiGraph:
     """Read a graph that's gzipped nodelink."""
     with gzip.open(path, "rt") as file:
-        return nx.node_link_graph(json.load(file))
+        return nx.node_link_graph(json.load(file), edges=NODE_LINK_STYLE)
 
 
 def write_gzipped_graph(graph: nx.MultiDiGraph, path: str | Path) -> None:
     """Write a graph as gzipped nodelink."""
     with gzip.open(path, "wt") as file:
-        json.dump(nx.node_link_data(graph), file)
+        json.dump(nx.node_link_data(graph, edges=NODE_LINK_STYLE), file)
 
 
 class CachedGraph(Cached[nx.MultiDiGraph]):
