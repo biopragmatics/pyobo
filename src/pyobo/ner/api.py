@@ -54,17 +54,6 @@ def get_grounder(
     return ssslm.make_grounder(literal_mappings, implementation="gilda", grounder_cls=grounder_cls)
 
 
-def literal_mappings_to_gilda(
-    literal_mappings: Iterable[LiteralMapping],
-) -> Iterable[gilda.Term]:
-    """Yield literal mappings as gilda terms.
-
-    This is different from the upstream ssslm impl
-    because it injects species.
-    """
-    for _lm in literal_mappings:
-        yield _lm.to_gilda()
-
 
 def _clean_prefix_versions(
     prefixes: str | Iterable[str],

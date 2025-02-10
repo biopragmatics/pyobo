@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import bioregistry
 import ssslm
-from ssslm import GildaGrounder
+from ssslm import GildaGrounder, literal_mappings_to_gilda
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
 
@@ -20,7 +20,6 @@ from pyobo.api import (
     get_literal_mappings_subset,
 )
 from pyobo.constants import GetOntologyKwargs
-from pyobo.ner.api import literal_mappings_to_gilda
 from pyobo.struct.reference import Reference
 
 if TYPE_CHECKING:

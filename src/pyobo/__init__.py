@@ -145,7 +145,6 @@ __all__ = [
     "is_descendent",
     "iter_nomenclature_plugins",
     "iter_xref_plugins",
-    "literal_mappings_to_gilda",
     "parse_results_from_obo",
     "run_nomenclature_plugin",
     "run_xref_plugin",
