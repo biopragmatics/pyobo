@@ -39,6 +39,7 @@ __all__ = [
     "get_name_by_curie",
     "get_name_id_mapping",
     "get_obsolete",
+    "get_obsolete_references",
     "get_references",
     "get_synonyms",
 ]
@@ -215,6 +216,7 @@ def get_id_definition_mapping(
     return _get_mapping()
 
 
+@wrap_norm_prefix
 def get_obsolete(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
     """Get the set of obsolete local unique identifiers."""
     version = get_version_from_kwargs(prefix, kwargs)
@@ -230,6 +232,15 @@ def get_obsolete(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
         return sorted(ontology.get_obsolete())
 
     return set(_get_obsolete())
+
+
+@wrap_norm_prefix
+def get_obsolete_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Reference]:
+    """Get the set of obsolete references."""
+    return {
+        Reference(prefix=prefix, identifier=identifier)
+        for identifier in get_obsolete(prefix, **kwargs)
+    }
 
 
 def get_synonyms(
@@ -272,8 +283,8 @@ def get_literal_mappings(
     df = get_literal_mappings_df(prefix=prefix, **kwargs)
     rv = ssslm.df_to_literal_mappings(df)
     if skip_obsolete:
-        obsoletes = get_obsolete(prefix, **kwargs)
-        rv = [lm for lm in rv if lm.reference.identifier not in obsoletes]
+        obsoletes = get_obsolete_references(prefix, **kwargs)
+        rv = [lm for lm in rv if lm.reference not in obsoletes]
     return rv
 
 
