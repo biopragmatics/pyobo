@@ -9,7 +9,6 @@ from typing_extensions import Unpack
 from pyobo.api.hierarchy import get_descendants
 from pyobo.api.names import get_literal_mappings
 from pyobo.constants import GetOntologyKwargs
-from pyobo.struct.reference import Reference
 
 __all__ = [
     "get_literal_mappings_subset",
@@ -28,7 +27,7 @@ def get_literal_mappings_subset(
         ancestors = [ancestors]
 
     subset: set[curies.Reference] = {
-        Reference.from_curie(descendant)
+        descendant
         for ancestor in ancestors
         for descendant in get_descendants(ancestor, **kwargs) or []
     }

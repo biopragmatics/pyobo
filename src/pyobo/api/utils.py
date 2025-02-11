@@ -136,17 +136,13 @@ def get_version_pins() -> dict[str, str]:
 
 def _get_pi(
     prefix: str | curies.Reference | ReferenceTuple, identifier: str | None = None, /
-) -> ReferenceTuple:
-    if isinstance(prefix, ReferenceTuple):
+) -> curies.Reference:
+    if isinstance(prefix, ReferenceTuple | curies.Reference):
         if identifier is not None:
             raise ValueError("unexpected non-none value passed as second positional argument")
-        return prefix
-    if isinstance(prefix, curies.Reference):
-        if identifier is not None:
-            raise ValueError("unexpected non-none value passed as second positional argument")
-        return prefix.pair
+        return curies.Reference(prefix=prefix.prefix, identifier=prefix.identifier)
     if isinstance(prefix, str) and identifier is None:
-        return ReferenceTuple.from_curie(prefix)
+        return curies.Reference.from_curie(prefix)
     if identifier is None:
         raise ValueError(
             "prefix was given as a string, so an identifier was expected to be passed as a string as well"
@@ -156,4 +152,4 @@ def _get_pi(
         DeprecationWarning,
         stacklevel=4,  # this is 4 since this is (always?) called from inside a decorator
     )
-    return ReferenceTuple(prefix, identifier)
+    return curies.Reference(prefix=prefix, identifier=identifier)

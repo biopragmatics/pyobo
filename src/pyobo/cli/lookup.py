@@ -33,7 +33,7 @@ from ..api import (
     get_ids,
     get_mappings_df,
     get_metadata,
-    get_name_by_curie,
+    get_name,
     get_properties_df,
     get_relations_df,
     get_typedef_df,
@@ -240,7 +240,7 @@ def hierarchy(
     if h.number_of_edges() == 0:
         click.secho("no data", fg="red")
     else:
-        click.echo_via_pager("\n".join("\t".join(row) for row in h.edges()))
+        click.echo_via_pager("\n".join(f"{u.curie}\t{v.curie}" for u, v in h.edges()))
 
 
 @lookup_annotate
@@ -251,9 +251,9 @@ def ancestors(
 ) -> None:
     """Look up ancestors."""
     # note, prefix is passed via kwargs
-    curies = get_ancestors(identifier=identifier, **kwargs)
-    for curie in sorted(curies or []):
-        click.echo(f"{curie}\t{get_name_by_curie(curie, version=kwargs['version'])}")
+    ancestors = get_ancestors(identifier=identifier, **kwargs)
+    for ancestor in sorted(ancestors or []):
+        click.echo(f"{ancestor.curie}\t{get_name(ancestor, version=kwargs['version'])}")
 
 
 @lookup_annotate
@@ -264,9 +264,9 @@ def descendants(
 ) -> None:
     """Look up descendants."""
     # note, prefix is passed via kwargs
-    curies = get_descendants(identifier=identifier, **kwargs)
-    for curie in sorted(curies or []):
-        click.echo(f"{curie}\t{get_name_by_curie(curie, version=kwargs['version'])}")
+    descendants = get_descendants(identifier=identifier, **kwargs)
+    for descendant in sorted(descendants or []):
+        click.echo(f"{descendant.curie}\t{get_name(descendant, version=kwargs['version'])}")
 
 
 @lookup_annotate
