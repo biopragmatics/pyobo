@@ -234,7 +234,20 @@ class TestAltIds(unittest.TestCase):
 
             graph = pyobo.get_hierarchy(TEST_P1, cache=False, use_tqdm=False)
             self.assertEqual(3, graph.number_of_nodes())
-            self.assertIn(r1.curie, graph)
-            self.assertIn(r2.curie, graph)
-            self.assertIn(r3.curie, graph)
+            self.assertIn(r1, graph)
+            self.assertIn(r2, graph)
+            self.assertIn(r3, graph)
             self.assertEqual(1, graph.number_of_edges())
+
+            self.assertEqual(set(), pyobo.get_ancestors(r1, cache=False, use_tqdm=False))
+            self.assertEqual(set(), pyobo.get_descendants(r3, cache=False, use_tqdm=False))
+            self.assertEqual(set(), pyobo.get_children(r3, cache=False, use_tqdm=False))
+
+            self.assertEqual({r1}, pyobo.get_ancestors(r3, cache=False, use_tqdm=False))
+            self.assertEqual({r3}, pyobo.get_descendants(r1, cache=False, use_tqdm=False))
+            self.assertEqual({r3}, pyobo.get_children(r1, cache=False, use_tqdm=False))
+
+            self.assertTrue(pyobo.has_ancestor(*r3.pair, *r1.pair, cache=False, use_tqdm=False))
+            self.assertFalse(pyobo.has_ancestor(*r1.pair, *r3.pair, cache=False, use_tqdm=False))
+            self.assertTrue(pyobo.is_descendent(*r3.pair, *r1.pair, cache=False, use_tqdm=False))
+            self.assertFalse(pyobo.is_descendent(*r1.pair, *r3.pair, cache=False, use_tqdm=False))

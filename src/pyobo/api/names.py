@@ -39,6 +39,7 @@ __all__ = [
     "get_name_by_curie",
     "get_name_id_mapping",
     "get_obsolete",
+    "get_references",
     "get_synonyms",
 ]
 
@@ -93,7 +94,7 @@ def get_name(
 ) -> str | None:
     """Get the name for an entity."""
     reference = _get_pi(prefix, identifier)
-    return _help_get(get_id_name_mapping, reference, **kwargs)
+    return _help_get(get_id_name_mapping, reference.pair, **kwargs)
 
 
 @lru_cache
@@ -121,6 +122,14 @@ def get_ids(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
         return sorted(ontology.get_ids())
 
     return set(_get_ids())
+
+
+@wrap_norm_prefix
+def get_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Reference]:
+    """Get the set of identifiers for this prefix."""
+    return {
+        Reference(prefix=prefix, identifier=identifier) for identifier in get_ids(prefix, **kwargs)
+    }
 
 
 @lru_cache
@@ -180,7 +189,7 @@ def get_definition(
 ) -> str | None:
     """Get the definition for an entity."""
     reference = _get_pi(prefix, identifier)
-    return _help_get(get_id_definition_mapping, reference, **kwargs)
+    return _help_get(get_id_definition_mapping, reference.pair, **kwargs)
 
 
 def get_id_definition_mapping(
@@ -231,7 +240,7 @@ def get_synonyms(
 ) -> list[str] | None:
     """Get the synonyms for an entity."""
     reference = _get_pi(prefix, identifier)
-    return _help_get(get_id_synonyms_mapping, reference, **kwargs)
+    return _help_get(get_id_synonyms_mapping, reference.pair, **kwargs)
 
 
 @wrap_norm_prefix
