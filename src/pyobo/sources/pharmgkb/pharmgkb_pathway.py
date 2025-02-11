@@ -30,13 +30,16 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
     """Iterate over terms.
 
     :param force: Should the data be re-downloaded
+
     :yields: Terms
 
     1. PharmGKB Accession Id = Identifier assigned to this phenotype by PharmGKB
     2. Name = Name PharmGKB uses for this phenotype
     3. Alternate Names = Other known names for this phenotype, comma-separated
-    4. Cross-references = References to other resources in the form "resource:id", comma-separated
-    5. External Vocabulary = Term for this phenotype in another vocabulary in the form "vocabulary:id", comma-separated
+    4. Cross-references = References to other resources in the form "resource:id",
+       comma-separated
+    5. External Vocabulary = Term for this phenotype in another vocabulary in the form
+       "vocabulary:id", comma-separated
     """
     path = download_pharmgkb(PREFIX, url=BIOPAX_URL, force=force)
     with zipfile.ZipFile(path) as zf:

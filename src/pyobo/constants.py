@@ -124,10 +124,9 @@ class DatabaseKwargs(TypedDict):
 class SlimGetOntologyKwargs(TypedDict):
     """Keyword arguments for database CLI functions.
 
-    These arguments are global during iteration over _all_
-    ontologies, whereas the additional ``version`` is added in the
-    subclass below for specific instances when only a single
-    ontology is requested.
+    These arguments are global during iteration over _all_ ontologies, whereas the
+    additional ``version`` is added in the subclass below for specific instances when
+    only a single ontology is requested.
     """
 
     strict: NotRequired[bool]
@@ -167,8 +166,8 @@ def check_should_use_tqdm(data: GetOntologyKwargs) -> bool:
 class LookupKwargs(GetOntologyKwargs):
     """Represents all arguments passed to :func:`pyobo.get_ontology`.
 
-    This dictionary does contain the ``prefix`` since it's used in the scope
-    of CLI functions.
+    This dictionary does contain the ``prefix`` since it's used in the scope of CLI
+    functions.
     """
 
     prefix: str
@@ -177,10 +176,9 @@ class LookupKwargs(GetOntologyKwargs):
 class IterHelperHelperDict(SlimGetOntologyKwargs):
     """Represents arguments needed when iterating over all ontologies.
 
-    The explicitly defind arguments in this typed dict are used for
-    the loop function :func:`iter_helper_helper` and the rest that
-    are inherited get passed to :func:`pyobo.get_ontology` in each
-    iteration.
+    The explicitly defind arguments in this typed dict are used for the loop function
+    :func:`iter_helper_helper` and the rest that are inherited get passed to
+    :func:`pyobo.get_ontology` in each iteration.
     """
 
     use_tqdm: bool

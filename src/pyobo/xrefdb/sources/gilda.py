@@ -1,6 +1,8 @@
 """Cross references from Gilda.
 
-.. seealso:: https://github.com/indralabs/gilda
+.. seealso::
+
+    https://github.com/indralabs/gilda
 """
 
 import bioregistry

@@ -213,9 +213,10 @@ def get_descriptor_record(
     """Get descriptor records from the main element.
 
     :param element: An XML element
-    :param id_key: For descriptors, set to 'DescriptorUI'. For supplement, set to 'SupplementalRecordUI'
-    :param name_key: For descriptors, set to 'DescriptorName/String'.
-     For supplement, set to 'SupplementalRecordName/String'
+    :param id_key: For descriptors, set to 'DescriptorUI'. For supplement, set to
+        'SupplementalRecordUI'
+    :param name_key: For descriptors, set to 'DescriptorName/String'. For supplement,
+        set to 'SupplementalRecordName/String'
     """
     concepts = get_concept_records(element)
     scope_note = get_scope_note(concepts)
@@ -332,9 +333,12 @@ def get_mesh_category_curies(
     :param letter: The MeSH tree, A for anatomy, C for disease, etc.
     :param skip: An optional collection of MeSH tree codes to skip, such as "A03"
     :param version: The MeSH version to use. Defaults to latest
+
     :returns: A list of MeSH CURIE strings for the top level of each MeSH tree.
 
-    .. seealso:: https://meshb.nlm.nih.gov/treeView
+    .. seealso::
+
+        https://meshb.nlm.nih.gov/treeView
     """
     return [
         reference.curie
@@ -350,9 +354,12 @@ def get_mesh_category_references(
     :param letter: The MeSH tree, A for anatomy, C for disease, etc.
     :param skip: An optional collection of MeSH tree codes to skip, such as "A03"
     :param version: The MeSH version to use. Defaults to latest
+
     :returns: A list of MeSH references for the top level of each MeSH tree.
 
-    .. seealso:: https://meshb.nlm.nih.gov/treeView
+    .. seealso::
+
+        https://meshb.nlm.nih.gov/treeView
     """
     if version is None:
         version = safe_get_version("mesh")

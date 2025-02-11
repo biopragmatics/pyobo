@@ -32,12 +32,13 @@ def get_url(version: str | None = None) -> str:
     """Get the URL for the given version of the DepMap cell line metadata file.
 
     :param version: The version of the data
+
     :returns: The URL as a string for downloading the dat
 
     .. warning::
 
-        This does not currently take the version into account. Need to write a crawler since data is not easy
-        to access.
+        This does not currently take the version into account. Need to write a crawler
+        since data is not easy to access.
     """
     #: This is the DepMap Public 21Q2 version. There isn't a way to do this automatically without writing a crawler
     url = "https://ndownloader.figshare.com/files/27902376"

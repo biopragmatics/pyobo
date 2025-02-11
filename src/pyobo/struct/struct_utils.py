@@ -940,11 +940,12 @@ def _format_obo_trailing_modifiers(
 
     :param annotations: A list of annnotations
     :param ontology_prefix: The ontology prefix
-    :return: The trailing modifiers string
 
-    See https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.1.4
-    trailing modifiers can be both annotations and some other implementation-specific
-    things, so split up the place where annotations are put in here.
+    :returns: The trailing modifiers string
+
+    See https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.1.4 trailing
+    modifiers can be both annotations and some other implementation-specific things, so
+    split up the place where annotations are put in here.
     """
     modifiers: list[tuple[str, str]] = []
     for prop in sorted(annotations, key=Annotation._sort_key):

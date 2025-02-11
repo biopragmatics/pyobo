@@ -1,6 +1,8 @@
 """Selventa chemicals.
 
-.. seealso:: https://github.com/pyobo/pyobo/issues/27
+.. seealso::
+
+    https://github.com/pyobo/pyobo/issues/27
 """
 
 from collections.abc import Iterable

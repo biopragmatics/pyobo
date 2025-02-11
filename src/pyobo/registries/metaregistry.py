@@ -111,7 +111,9 @@ def remap_full(x: str) -> str:
 def get_remappings_prefix() -> Mapping[str, str]:
     """Get the remappings for xrefs based on the prefix.
 
-    .. note:: Doesn't take into account the semicolon `:`
+    .. note::
+
+        Doesn't take into account the semicolon `:`
     """
     return CURATED_REGISTRY["remappings"]["prefix"]
 

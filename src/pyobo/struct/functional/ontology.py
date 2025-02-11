@@ -63,10 +63,16 @@ class Document:
 
         :param ontologies: An ontology or list of ontologies.
 
-            .. warning:: RDF export can only be used for a single ontology.
+            .. warning::
+
+                RDF export can only be used for a single ontology.
+
         :param prefixes: A list of prefixes to define in the document
 
-            .. seealso:: `3.7 "Functional-Style Syntax" <https://www.w3.org/TR/owl2-syntax/#Functional-Style_Syntax>`_
+            .. seealso::
+
+                `3.7 "Functional-Style Syntax"
+                <https://www.w3.org/TR/owl2-syntax/#Functional-Style_Syntax>`_
         """
         self.ontologies = ontologies if isinstance(ontologies, list) else [ontologies]
         if isinstance(prefixes, dict):
@@ -131,7 +137,11 @@ class Ontology(Box):
 
         :param iri: The ontology IRI.
 
-            .. seealso:: `3.1 "Ontology IRI and Version IRI" <https://www.w3.org/TR/owl2-syntax/#Ontology_IRI_and_Version_IRI>`_
+            .. seealso::
+
+                `3.1 "Ontology IRI and Version IRI"
+                <https://www.w3.org/TR/owl2-syntax/#Ontology_IRI_and_Version_IRI>`_
+
         :param version_iri: An optional version IRI
         :param directly_imports_documents:
 

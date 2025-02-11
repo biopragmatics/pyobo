@@ -51,7 +51,9 @@ def _get_zenodo() -> Zenodo:
 def _get_parts(_concept_rec_id, _record_id, version) -> Sequence[str]:
     """Get sequence to use in :func:`pystow.ensure`.
 
-    .. note:: Corresponds to :data:`pyobo.constants.DATABASE_MODULE`.
+    .. note::
+
+        Corresponds to :data:`pyobo.constants.DATABASE_MODULE`.
     """
     return ["pyobo", "database", version]
 
@@ -66,7 +68,9 @@ def _ensure(record_id: str | int, name: str, force: bool = False) -> str:
 def ensure_ooh_na_na(force: bool = False) -> str:
     """Ensure that the Ooh Na Na Nomenclature Database is downloaded/built.
 
-    .. seealso:: :data:`pyobo.constants.OOH_NA_NA_RECORD`
+    .. seealso::
+
+        :data:`pyobo.constants.OOH_NA_NA_RECORD`
     """
     return _ensure(record_id=OOH_NA_NA_RECORD, name=OOH_NA_NA_FILE, force=force)
 
@@ -74,7 +78,9 @@ def ensure_ooh_na_na(force: bool = False) -> str:
 def ensure_inspector_javert(force: bool = False) -> str:
     """Ensure that the Inspector Javert's Xref Database is downloaded/built.
 
-    .. seealso:: :data:`pyobo.constants.JAVERT_RECORD`
+    .. seealso::
+
+        :data:`pyobo.constants.JAVERT_RECORD`
     """
     return _ensure(record_id=JAVERT_RECORD, name=JAVERT_FILE, force=force)
 
@@ -88,7 +94,9 @@ def ensure_inspector_javert_df(force: bool = False) -> pd.DataFrame:
 def ensure_synonyms(force: bool = False) -> str:
     """Ensure that the Synonym Database is downloaded/built.
 
-    .. seealso:: :data:`pyobo.constants.SYNONYMS_RECORD`
+    .. seealso::
+
+        :data:`pyobo.constants.SYNONYMS_RECORD`
     """
     return _ensure(record_id=SYNONYMS_RECORD, name=SYNONYMS_FILE, force=force)
 
@@ -96,7 +104,9 @@ def ensure_synonyms(force: bool = False) -> str:
 def ensure_alts(force: bool = False) -> str:
     """Ensure that the alt data is downloaded/built.
 
-    .. seealso:: :data:`pyobo.constants.ALTS_DATA_RECORD`
+    .. seealso::
+
+        :data:`pyobo.constants.ALTS_DATA_RECORD`
     """
     return _ensure(record_id=ALTS_DATA_RECORD, name=ALTS_FILE, force=force)
 
@@ -104,7 +114,9 @@ def ensure_alts(force: bool = False) -> str:
 def ensure_species(force: bool = False) -> str:
     """Ensure that the species data is downloaded/built.
 
-    .. seealso:: :data:`pyobo.constants.SPECIES_RECORD`
+    .. seealso::
+
+        :data:`pyobo.constants.SPECIES_RECORD`
     """
     return _ensure(record_id=SPECIES_RECORD, name=SPECIES_FILE, force=force)
 
@@ -112,7 +124,9 @@ def ensure_species(force: bool = False) -> str:
 def ensure_definitions(force: bool = False) -> str:
     """Ensure that the definitions data is downloaded/built.
 
-    .. seealso:: :data:`pyobo.constants.DEFINITIONS_RECORD`
+    .. seealso::
+
+        :data:`pyobo.constants.DEFINITIONS_RECORD`
     """
     return _ensure(record_id=DEFINITIONS_RECORD, name=DEFINITIONS_FILE, force=force)
 
@@ -120,7 +134,9 @@ def ensure_definitions(force: bool = False) -> str:
 def ensure_properties(force: bool = False) -> str:
     """Ensure that the properties data is downloaded/built.
 
-    .. seealso:: :data:`pyobo.constants.PROPERTIES_RECORD`
+    .. seealso::
+
+        :data:`pyobo.constants.PROPERTIES_RECORD`
     """
     return _ensure(record_id=PROPERTIES_RECORD, name=PROPERTIES_FILE, force=force)
 
@@ -128,7 +144,9 @@ def ensure_properties(force: bool = False) -> str:
 def ensure_relations(force: bool = False) -> str:
     """Ensure that the relations data is downloaded/built.
 
-    .. seealso:: :data:`pyobo.constants.RELATIONS_RECORD`
+    .. seealso::
+
+        :data:`pyobo.constants.RELATIONS_RECORD`
     """
     return _ensure(record_id=RELATIONS_RECORD, name=RELATIONS_FILE, force=force)
 

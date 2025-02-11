@@ -2,7 +2,9 @@
 
 Run with ``python -m pyobo.sources.icd10 -v``.
 
-.. note:: If web requests are stalling, try deleting the ``~/.cachier`` directory.
+.. note::
+
+    If web requests are stalling, try deleting the ``~/.cachier`` directory.
 """
 
 import logging

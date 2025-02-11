@@ -43,7 +43,9 @@ def get_version(prefix: str, *, strict: bool = False) -> str | None:
 
     :param prefix: the resource name
     :param strict: Should an error be raised if no version is available?
-    :return: The version if available else None
+
+    :returns: The version if available else None
+
     :raises VersionError: if the version is not available and strict mode is enabled
     """
     # Prioritize loaded environment variable PYOBO_VERSION_PINS dictionary
@@ -95,13 +97,12 @@ def get_version_pins() -> dict[str, str]:
     """Retrieve user-defined resource version pins.
 
     To set your own resource pins, set your machine's environmental variable
-    "PYOBO_VERSION_PINS" to a JSON string containing string resource prefixes
-    as keys and string versions of their respective resource as values.
-    Constraining version pins will make PyOBO rely on cached versions of a resource.
-    A user might want to pin resource versions that are used by PyOBO due to
-    the fact that PyOBO will download the latest version of a resource if it is
-    not pinned. This downloading process can lead to a slow-down in downstream
-    applications that rely on PyOBO.
+    "PYOBO_VERSION_PINS" to a JSON string containing string resource prefixes as keys
+    and string versions of their respective resource as values. Constraining version
+    pins will make PyOBO rely on cached versions of a resource. A user might want to pin
+    resource versions that are used by PyOBO due to the fact that PyOBO will download
+    the latest version of a resource if it is not pinned. This downloading process can
+    lead to a slow-down in downstream applications that rely on PyOBO.
     """
     version_pins_str = os.getenv("PYOBO_VERSION_PINS")
     if not version_pins_str:

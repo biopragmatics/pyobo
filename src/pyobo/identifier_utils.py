@@ -80,12 +80,15 @@ def normalize_curie(
     """Parse a string that looks like a CURIE.
 
     :param curie: A compact uniform resource identifier (CURIE)
-    :param strict: Should an exception be thrown if the CURIE can not be parsed w.r.t. the Bioregistry?
+    :param strict: Should an exception be thrown if the CURIE can not be parsed w.r.t.
+        the Bioregistry?
     :param ontology_prefix: The ontology in which the CURIE appears
-    :return: A parse tuple or a tuple of None, None if not able to parse and not strict
+
+    :returns: A parse tuple or a tuple of None, None if not able to parse and not strict
 
     - Normalizes the namespace
-    - Checks against a blacklist for the entire curie, for the namespace, and for suffixes.
+    - Checks against a blacklist for the entire curie, for the namespace, and for
+      suffixes.
     """
     if upgrade:
         # Remap the curie with the full list

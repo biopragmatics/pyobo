@@ -47,19 +47,22 @@ def get_hierarchy(
     """Get hierarchy of parents as a directed graph.
 
     :param prefix: The name of the namespace.
-    :param include_part_of: Add "part of" relations. Only works if the relations are properly
-        defined using bfo:0000050 ! part of or bfo:0000051 ! has part
-    :param include_has_member: Add "has member" relations. These aren't part of the BFO, but
-        are hacked into PyOBO using :data:`pyobo.struct.typedef.has_member` for relationships like
-        from protein families to their actual proteins.
-    :param extra_relations: Other relations that you want to include in the hierarchy. For
-        example, it might be useful to include the positively_regulates
-    :param properties: Properties to include in the data part of each node. For example, might want
-        to include SMILES strings with the ChEBI tree.
+    :param include_part_of: Add "part of" relations. Only works if the relations are
+        properly defined using bfo:0000050 ! part of or bfo:0000051 ! has part
+    :param include_has_member: Add "has member" relations. These aren't part of the BFO,
+        but are hacked into PyOBO using :data:`pyobo.struct.typedef.has_member` for
+        relationships like from protein families to their actual proteins.
+    :param extra_relations: Other relations that you want to include in the hierarchy.
+        For example, it might be useful to include the positively_regulates
+    :param properties: Properties to include in the data part of each node. For example,
+        might want to include SMILES strings with the ChEBI tree.
     :param force: should the resources be reloaded when extracting relations?
+
     :returns: A directional graph representing the hierarchy
 
-    This function thinly wraps :func:`_get_hierarchy_helper` to make it easier to work with the lru_cache mechanism.
+    This function thinly wraps :func:`_get_hierarchy_helper` to make it easier to work
+    with the lru_cache mechanism.
+
     """
     return _get_hierarchy_helper(
         prefix=prefix,

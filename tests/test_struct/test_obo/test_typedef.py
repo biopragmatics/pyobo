@@ -775,13 +775,14 @@ class TestTypeDef(unittest.TestCase):
     def test_30_equivalent_to_chain(self) -> None:
         """Test the ``equivalent_to_chain`` tag.
 
-        Interestingly, this property doesn't appear to be used anywhere
-        on GitHub publicly except:
+        Interestingly, this property doesn't appear to be used anywhere on GitHub
+        publicly except:
 
         - https://github.com/geneontology/go-ontology/blob/ce41588cbdc05223f9cfd029985df3cadd1e0399/src/ontology/extensions/gorel.obo#L1277-L1285
         - https://github.com/cmungall/bioperl-owl/blob/0b52048975c078d3bc50f6611235e9f8cb9b9475/ont/interval_relations.obo~#L86-L103
 
-        This also works for the combination of gene-transribes-protein, protein-memberof-ec.
+        This also works for the combination of gene-transribes-protein,
+        protein-memberof-ec.
         """
         typedef = TypeDef(
             reference=Reference(prefix="GO", identifier="1"),

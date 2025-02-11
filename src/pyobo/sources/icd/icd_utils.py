@@ -5,7 +5,9 @@ Want to get your own API client ID and client secret?
 1. Register at https://icdapihome.azurewebsites.net/icdapi/Account/Register
 2. Sell your soul to the American government
 
-.. note:: If web requests are stalling, try deleting the ``~/.cachier`` directory.
+.. note::
+
+    If web requests are stalling, try deleting the ``~/.cachier`` directory.
 """
 
 import datetime

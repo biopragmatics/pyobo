@@ -135,6 +135,7 @@ def get_mappings_df(
 
     :param prefix: The ontology to look in for xrefs
     :param names: Add name columns (``subject_label`` and ``object_label``)
+
     :returns: A SSSOM-compliant dataframe of xrefs
 
     For example, if you want to get UMLS as an SSSOM dataframe, you can do
@@ -146,8 +147,8 @@ def get_mappings_df(
         df = pyobo.get_mappings_df("umls")
         df.to_csv("umls.sssom.tsv", sep="\t", index=False)
 
-    If you don't want to get all of the many resources required to add
-    names, you can pass ``names=False``
+    If you don't want to get all of the many resources required to add names, you can
+    pass ``names=False``
 
     .. code-block:: python
 
@@ -156,7 +157,9 @@ def get_mappings_df(
         df = pyobo.get_mappings_df("umls", names=False)
         df.to_csv("umls.sssom.tsv", sep="\t", index=False)
 
-    .. note:: This assumes the Bioregistry as the prefix map
+    .. note::
+
+        This assumes the Bioregistry as the prefix map
     """
     if isinstance(prefix, Obo):
         df = prefix.get_mappings_df(

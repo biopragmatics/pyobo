@@ -1,6 +1,8 @@
 """Cross references from cbms2019.
 
-.. seealso:: https://github.com/pantapps/cbms2019
+.. seealso::
+
+    https://github.com/pantapps/cbms2019
 """
 
 import pandas as pd

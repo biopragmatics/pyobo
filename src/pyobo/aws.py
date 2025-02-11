@@ -36,9 +36,9 @@ def download_artifacts(bucket: str, suffix: str | None = None) -> None:
     """Download compiled parts from AWS.
 
     :param bucket: The name of the S3 bucket to download
-    :param suffix: If specified, only download files with this suffix. Might
-     be useful to specify ``suffix='names.tsv`` if you just want to run the
-     name resolution service.
+    :param suffix: If specified, only download files with this suffix. Might be useful
+        to specify ``suffix='names.tsv`` if you just want to run the name resolution
+        service.
     """
     s3_client = boto3.client("s3")
     all_objects = s3_client.list_objects(Bucket=bucket)

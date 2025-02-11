@@ -88,9 +88,11 @@ def get_primary_identifier(
 
     :param prefix: The name of the resource
     :param identifier: The identifier to look up
+
     :returns: the canonical identifier based on alt id lookup
 
-    Returns the original identifier if there are no alts available or if there's no mapping.
+    Returns the original identifier if there are no alts available or if there's no
+    mapping.
     """
     t = _get_pi(prefix, identifier)
     if t.prefix in NO_ALTS:  # TODO later expand list to other namespaces with no alts

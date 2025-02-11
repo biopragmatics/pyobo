@@ -2,7 +2,9 @@
 
 Run with ``python -m pyobo.sources.icd11 -v``.
 
-.. note:: If web requests are stalling, try deleting the ``~/.cachier`` directory.
+.. note::
+
+    If web requests are stalling, try deleting the ``~/.cachier`` directory.
 """
 
 import json
@@ -78,10 +80,10 @@ def iterate_icd11(version: str | None = None) -> Iterable[Term]:
 def _get_icd11_terms_helper(version: str | None = None) -> tuple[str, list[Term]]:
     """Iterate over the terms in ICD11.
 
-    The API doesn't seem to have a rate limit, but returns pretty slow.
-    This means that it only gets results at at about 5 calls/second.
-    Get ready to be patient - the API token expires every hour so there's
-    a caching mechanism with :mod:`cachier` that gets a new one every hour.
+    The API doesn't seem to have a rate limit, but returns pretty slow. This means that
+    it only gets results at at about 5 calls/second. Get ready to be patient - the API
+    token expires every hour so there's a caching mechanism with :mod:`cachier` that
+    gets a new one every hour.
     """
     if version is not None:
         directory = prefix_directory_join(PREFIX, "base", version=version)
