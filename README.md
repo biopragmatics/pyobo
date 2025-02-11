@@ -105,7 +105,7 @@ primary_curie = pyobo.get_primary_curie('go:0001071')
 assert primary_curie == 'go:0003700'
 
 # If it's already the primary, it just gets returned
-assert 'go:0003700' == pyobo.get_priority_curie('go:0003700')
+assert 'go:0003700' == pyobo.get_primary_curie('go:0003700')
 ```
 
 ### Mapping Species
@@ -224,42 +224,6 @@ import pyobo
 
 hgnc_id = pyobo.get_xref('hgnc', '4137', 'ncbigene', flip=True)
 assert hgnc_id == '6893'
-```
-
-Remap a CURIE based on pre-defined priority list and
-[Inspector Javert's Xref Database](https://cthoyt.com/2020/04/19/inspector-javerts-xref-database.html):
-
-```python
-
-import pyobo
-
-# Map to the best source possible
-mapt_ncbigene = pyobo.get_priority_curie('hgnc:6893')
-assert mapt_ncbigene == 'ncbigene:4137'
-
-# Sometimes you know you're the best. Own it.
-assert 'ncbigene:4137' == pyobo.get_priority_curie('ncbigene:4137')
-```
-
-Find all CURIEs mapped to a given one using Inspector Javert's Xref Database:
-
-```python
-import pyobo
-
-# Get a set of all CURIEs mapped to MAPT
-mapt_curies = pyobo.get_equivalent('hgnc:6893')
-assert 'ncbigene:4137' in mapt_curies
-assert 'ensembl:ENSG00000186868' in mapt_curies
-```
-
-If you don't want to wait to build the database locally for the
-`pyobo.get_priority_curie` and `pyobo.get_equivalent`, you can use the following
-code to download a release from [Zenodo](https://zenodo.org/record/3757266):
-
-```python
-import pyobo.resource_utils
-
-pyobo.resource_utils.ensure_inspector_javert()
 ```
 
 ### Properties
