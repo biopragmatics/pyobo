@@ -41,12 +41,8 @@ SILVA_RANK_TO_TAXRANK = {
 }
 
 #: URLs for the SILVA files.
-SILVA_TAXONOMY_URL = (
-    "https://www.arb-silva.de/fileadmin/silva_databases/current/Exports/taxonomy/tax_slv_ssu_138.2.txt.gz"
-)
-SILVA_TAXMAP_URL = (
-    "https://www.arb-silva.de/fileadmin/silva_databases/current/Exports/taxonomy/taxmap_slv_ssu_ref_nr_138.2.txt.gz"
-)
+SILVA_TAXONOMY_URL = "https://www.arb-silva.de/fileadmin/silva_databases/current/Exports/taxonomy/tax_slv_ssu_138.2.txt.gz"
+SILVA_TAXMAP_URL = "https://www.arb-silva.de/fileadmin/silva_databases/current/Exports/taxonomy/taxmap_slv_ssu_ref_nr_138.2.txt.gz"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
@@ -87,11 +83,13 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
 
     # Dictionaries for building the hierarchy.
     tax_path_to_id = {}  # maps the joined taxonomy path (with trailing ";") to taxon_id
-    terms_by_id = {}     # maps taxon_id to the Term object
+    terms_by_id = {}  # maps taxon_id to the Term object
 
     for idx, row in tqdm(
-        tax_df.iterrows(), total=len(tax_df),
-        desc=f"[{PREFIX}] processing main taxonomy", unit="row"
+        tax_df.iterrows(),
+        total=len(tax_df),
+        desc=f"[{PREFIX}] processing main taxonomy",
+        unit="row",
     ):
         tax_str = row["taxonomy"].strip()
         taxon_id = row["taxon_id"].strip()
@@ -127,17 +125,19 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
     # This file has a header with columns: primaryAccession, start, stop, path, organism_name, taxid
     taxmap_path = ensure_path(PREFIX, url=SILVA_TAXMAP_URL, version=version, force=force)
     taxmap_df = pd.read_csv(taxmap_path, sep="\t", dtype=str)
-    taxmap_df.rename(columns={
-        "primaryAccession": "accession",
-        "organism_name": "organism",
-        "taxid": "species_taxon_id",
-        "path": "taxonomy"
-    }, inplace=True)
+    taxmap_df.rename(
+        columns={
+            "primaryAccession": "accession",
+            "organism_name": "organism",
+            "taxid": "species_taxon_id",
+            "path": "taxonomy",
+        },
+        inplace=True,
+    )
     taxmap_df.fillna("", inplace=True)
 
     for idx, row in tqdm(
-        taxmap_df.iterrows(), total=len(taxmap_df),
-        desc=f"[{PREFIX}] processing taxmap", unit="row"
+        taxmap_df.iterrows(), total=len(taxmap_df), desc=f"[{PREFIX}] processing taxmap", unit="row"
     ):
         accession = row["accession"].strip()
         species_taxon_id = row["species_taxon_id"].strip()
@@ -146,7 +146,9 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
             continue
         if species_taxon_id in terms_by_id:
             # Create a new term for the ENA accession.
-            new_term = Term(reference=Reference(prefix="ena.embl", identifier=accession, name=organism))
+            new_term = Term(
+                reference=Reference(prefix="ena.embl", identifier=accession, name=organism)
+            )
             # Do NOT annotate the new term with a rank (leave it unranked).
             new_term.append_parent(Reference(prefix=PREFIX, identifier=species_taxon_id))
             yield new_term
