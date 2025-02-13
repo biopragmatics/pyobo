@@ -81,9 +81,10 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
     )
     tax_df.fillna("", inplace=True)
 
-    # Dictionaries for building the hierarchy.
-    tax_path_to_id = {}  # maps the joined taxonomy path (with trailing ";") to taxon_id
-    terms_by_id = {}  # maps taxon_id to the Term object
+    #: a dictionary that maps the joined taxonomy path (with trailing ";") to taxon_id
+    tax_path_to_id: dict[str, str] = {}
+    #: maps taxon_id to the Term object
+    terms_by_id = {}
 
     for idx, row in tqdm(
         tax_df.iterrows(),
