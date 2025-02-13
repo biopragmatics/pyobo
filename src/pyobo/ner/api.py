@@ -14,7 +14,6 @@ from typing_extensions import Unpack
 from pyobo.api import get_literal_mappings
 from pyobo.constants import GetOntologyKwargs, check_should_use_tqdm
 from pyobo.getters import NoBuildError
-from pyobo.struct.reference import Reference
 
 if TYPE_CHECKING:
     import gilda
@@ -74,9 +73,3 @@ def _clean_prefix_versions(
         raise ValueError
 
     return list(zip(prefixes, versions, strict=True))
-
-
-def _ensure_list(reference: Reference | list[Reference]) -> list[Reference]:
-    if isinstance(reference, Reference):
-        return [reference]
-    return reference
