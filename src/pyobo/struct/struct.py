@@ -321,20 +321,6 @@ class Term(Referenced, Stanza):
         )
 
     @classmethod
-    def auto(
-        cls,
-        prefix: str,
-        identifier: str,
-    ) -> Term:
-        """Create a term from a reference."""
-        from ..api import get_definition
-
-        return cls(
-            reference=Reference.auto(prefix=prefix, identifier=identifier),
-            definition=get_definition(prefix, identifier),
-        )
-
-    @classmethod
     def default(cls, prefix, identifier, name=None) -> Self:
         """Create a default term."""
         return cls(reference=default_reference(prefix=prefix, identifier=identifier, name=name))

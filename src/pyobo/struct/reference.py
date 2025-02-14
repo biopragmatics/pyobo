@@ -37,16 +37,6 @@ logger = logging.getLogger(__name__)
 class Reference(curies.NamableReference):
     """A namespace, identifier, and label."""
 
-    @property
-    def preferred_prefix(self) -> str:
-        """Get the preferred curie for this reference."""
-        return bioregistry.get_preferred_prefix(self.prefix) or self.prefix
-
-    @property
-    def preferred_curie(self) -> str:
-        """Get the preferred curie for this reference."""
-        return f"{self.preferred_prefix}:{self.identifier}"
-
     @model_validator(mode="before")
     def validate_identifier(cls, values):  # noqa
         """Validate the identifier."""
@@ -74,19 +64,6 @@ class Reference(curies.NamableReference):
         return curies.NamedReference(
             prefix=self.prefix, identifier=self.identifier, name=self.name or name
         )
-
-    @classmethod
-    def auto(cls, prefix: str, identifier: str) -> Reference:
-        """Create a reference and autopopulate its name."""
-        from ..api import get_name
-
-        name = get_name(prefix, identifier)
-        return cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
-
-    @property
-    def bioregistry_link(self) -> str:
-        """Get the bioregistry link."""
-        return f"https://bioregistry.io/{self.curie}"
 
     @classmethod
     def from_curie_or_uri(
@@ -130,7 +107,8 @@ class Reference(curies.NamableReference):
         return obo_escape(self.identifier)
 
     def __str__(self) -> str:
-        rv = f"{self.preferred_prefix}:{self._escaped_identifier}"
+        # TODO figure out where this is used
+        rv = f"{get_preferred_prefix(self)}:{self._escaped_identifier}"
         if self.name:
             rv = f"{rv} ! {self.name}"
         return rv
@@ -175,19 +153,20 @@ class Referenced:
         return self.reference.curie
 
     @property
-    def preferred_curie(self) -> str:
-        """The preferred CURIE for this typedef."""
-        return self.reference.preferred_curie
-
-    @property
     def pair(self) -> ReferenceTuple:
         """The pair of namespace/identifier."""
         return self.reference.pair
 
-    @property
-    def bioregistry_link(self) -> str:
-        """Get the bioregistry link."""
-        return self.reference.bioregistry_link
+
+def get_preferred_prefix(
+    ref: curies.Reference | Reference | Referenced,
+) -> str:
+    """Get the preferred prefix from a variety of types."""
+    match ref:
+        case Referenced() | Reference():
+            return bioregistry.get_preferred_prefix(ref.prefix) or ref.prefix
+        case curies.Reference():
+            return ref.prefix
 
 
 def get_preferred_curie(
@@ -196,7 +175,7 @@ def get_preferred_curie(
     """Get the preferred CURIE from a variety of types."""
     match ref:
         case Referenced() | Reference():
-            return ref.preferred_curie
+            return f"{get_preferred_prefix(ref)}:{ref.identifier}"
         case curies.Reference():
             return ref.curie
 

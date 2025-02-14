@@ -24,6 +24,7 @@ class TestSources(unittest.TestCase):
                 or path.stem.endswith("_utils")
                 or path.stem.endswith("_constants")
                 or path.stem in EXCEPTIONS
+                or not path.stem
             ):
                 continue
             with self.subTest(module=path.stem):
