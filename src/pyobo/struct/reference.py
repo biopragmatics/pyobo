@@ -17,7 +17,6 @@ from curies import ReferenceTuple
 from curies.api import ExpansionError
 from pydantic import ValidationError, model_validator
 
-from .utils import obo_escape
 from ..constants import GLOBAL_CHECK_IDS
 from ..identifier_utils import normalize_curie
 
@@ -101,17 +100,6 @@ class Reference(curies.NamableReference):
             return None
         else:
             return rv
-
-    @property
-    def _escaped_identifier(self):
-        return obo_escape(self.identifier)
-
-    def __str__(self) -> str:
-        # TODO figure out where this is used
-        rv = f"{get_preferred_prefix(self)}:{self._escaped_identifier}"
-        if self.name:
-            rv = f"{rv} ! {self.name}"
-        return rv
 
 
 class Referenced:
