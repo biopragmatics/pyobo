@@ -20,11 +20,10 @@ class TestSources(unittest.TestCase):
         directory = Path(pyobo.sources.__file__).parent.resolve()
         for path in directory.iterdir():
             if (
-                path.stem in {"utils", "__init__", "__pycache__", "README"}
+                path.stem in {"utils", "__init__", "__pycache__", "README", ".ropeproject"}
                 or path.stem.endswith("_utils")
                 or path.stem.endswith("_constants")
                 or path.stem in EXCEPTIONS
-                or not path.stem
             ):
                 continue
             with self.subTest(module=path.stem):
