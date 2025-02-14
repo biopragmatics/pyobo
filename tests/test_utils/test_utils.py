@@ -15,7 +15,7 @@ class TestStringUtils(unittest.TestCase):
         self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("GO:1234"))
         self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("go:1234"))
 
-        self.assertEqual((None, None), _parse_str_or_curie_or_uri_helper("1234"))
+        self.assertIsNone(_parse_str_or_curie_or_uri_helper("1234"))
         self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("GO:GO:1234"))
 
         self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("pubmed:1234"))
@@ -24,9 +24,10 @@ class TestStringUtils(unittest.TestCase):
         self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("PMID:1234"))
 
         # Test resource-specific remapping
-        self.assertEqual((None, None), _parse_str_or_curie_or_uri_helper("Thesaurus:C1234", strict=False))
+        self.assertIsNone(_parse_str_or_curie_or_uri_helper("Thesaurus:C1234", strict=False))
         self.assertEqual(
-            ("ncit", "C1234"), _parse_str_or_curie_or_uri_helper("Thesaurus:C1234", ontology_prefix="enm")
+            ("ncit", "C1234"),
+            _parse_str_or_curie_or_uri_helper("Thesaurus:C1234", ontology_prefix="enm"),
         )
 
         # parsing IRIs

@@ -18,7 +18,7 @@ from curies.api import ExpansionError
 from pydantic import ValidationError, model_validator
 
 from ..constants import GLOBAL_CHECK_IDS
-from ..identifier_utils import _parse_str_or_curie_or_uri_helper
+from ..identifier_utils import ParseError, _parse_str_or_curie_or_uri_helper
 
 __all__ = [
     "Reference",
@@ -73,11 +73,18 @@ def _parse_str_or_curie_or_uri(
     ontology_prefix: str | None = None,
     node: Reference | None = None,
 ) -> Reference | None:
-    prefix, identifier = _parse_str_or_curie_or_uri_helper(
+    reference = _parse_str_or_curie_or_uri_helper(
         str_curie_or_uri, strict=strict, ontology_prefix=ontology_prefix, node=node
     )
-    if prefix is None or identifier is None:
-        return None
+    match reference:
+        case None:
+            # This happens when there's something blacklisted, so don't error
+            return None
+        case ParseError():
+            if strict:
+                raise reference
+            else:
+                return None
 
     try:
         rv = Reference.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
