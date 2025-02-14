@@ -1214,7 +1214,7 @@ def _handle_prop(
     if quoted:
         # give a try parsing it anyway, just in case ;)
         obj_reference = _parse_str_or_curie_or_uri(
-            value, ontology_prefix=ontology_prefix, strict=strict, node=node
+            value, ontology_prefix=ontology_prefix, strict=False, node=node
         )
         if obj_reference:
             return Annotation(prop_reference, obj_reference)

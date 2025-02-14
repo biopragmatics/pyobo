@@ -27,6 +27,10 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
+class BlacklistedError(ValueError):
+    """A sentinel for blacklisted strings."""
+
+
 class ParseError(ValueError):
     """Raised on a missing prefix."""
 
@@ -46,11 +50,11 @@ class ParseError(ValueError):
 
     def __str__(self) -> str:
         s = ""
-        if self.ontology_prefix:
+        if self.node:
+            s += f"[{self.node.curie}] "
+        elif self.ontology_prefix:
             s += f"[{self.ontology_prefix}] "
         s += f"{self.text}: `{self.curie}`"
-        if self.node is not None:
-            s += f" from {self.node.curie}"
         return s
 
 
@@ -66,7 +70,10 @@ class UnparsableIRIError(ParseError):
     text = "IRI could not be parsed"
 
 
-BAD_CURIES = set()
+class NotCURIEError(ParseError):
+    """Raised on a text that can't be parsed as a CURIE."""
+
+    text = "Not a CURIE"
 
 
 def _is_uri(s: str) -> bool:
@@ -80,7 +87,7 @@ def _parse_str_or_curie_or_uri_helper(
     ontology_prefix: str | None = None,
     node: Reference | None = None,
     upgrade: bool = True,
-) -> ReferenceTuple | None | ParseError:
+) -> ReferenceTuple | None | ParseError | BlacklistedError:
     """Parse a string that looks like a CURIE.
 
     :param str_or_curie_or_uri: A compact uniform resource identifier (CURIE)
@@ -104,11 +111,11 @@ def _parse_str_or_curie_or_uri_helper(
         str_or_curie_or_uri = remap_prefix(str_or_curie_or_uri, ontology_prefix=ontology_prefix)
 
     if curie_is_blacklisted(str_or_curie_or_uri):
-        return None
+        return BlacklistedError()
     if curie_has_blacklisted_prefix(str_or_curie_or_uri):
-        return None
+        return BlacklistedError()
     if curie_has_blacklisted_suffix(str_or_curie_or_uri):
-        return None
+        return BlacklistedError()
 
     if upgrade and (reference_t := bioontologies.upgrade.upgrade(str_or_curie_or_uri)):
         return reference_t
@@ -123,13 +130,14 @@ def _parse_str_or_curie_or_uri_helper(
         else:
             return None
 
-    try:
-        prefix, identifier = str_or_curie_or_uri.split(":", 1)
-    except ValueError:  # skip nodes that don't look like normal CURIEs
-        if str_or_curie_or_uri not in BAD_CURIES:
-            BAD_CURIES.add(str_or_curie_or_uri)
-            logger.debug(f"could not split CURIE on colon: {str_or_curie_or_uri}")
-        return None
+    prefix, delimiter, identifier = str_or_curie_or_uri.partition(":")
+    if not delimiter:
+        if strict:
+            return NotCURIEError(
+                curie=str_or_curie_or_uri, ontology_prefix=ontology_prefix, node=node
+            )
+        else:
+            return None
 
     norm_node_prefix = bioregistry.normalize_prefix(prefix)
     if norm_node_prefix:

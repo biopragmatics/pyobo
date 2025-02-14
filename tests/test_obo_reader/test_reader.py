@@ -3,7 +3,7 @@
 import unittest
 
 from pyobo import Obo, Reference, Term
-from pyobo.identifier_utils import UnparsableIRIError
+from pyobo.identifier_utils import NotCURIEError, UnparsableIRIError
 from pyobo.reader import from_str, get_first_nonescaped_quote
 from pyobo.struct import TypeDef, default_reference
 from pyobo.struct import vocabulary as v
@@ -1179,7 +1179,7 @@ class TestReaderTerm(unittest.TestCase):
 
     def test_18_relationship_bad_target(self) -> None:
         """Test an ontology with a version but no date."""
-        ontology = from_str("""\
+        text = """\
             ontology: chebi
 
             [Term]
@@ -1189,7 +1189,12 @@ class TestReaderTerm(unittest.TestCase):
             [Typedef]
             id: RO:0018033
             name: is conjugate base of
-        """)
+        """
+
+        with self.assertRaises(NotCURIEError):
+            from_str(text)
+
+        ontology = from_str(text, strict=False)
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(list(term.iterate_relations())))
 

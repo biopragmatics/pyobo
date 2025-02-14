@@ -2,7 +2,10 @@
 
 import unittest
 
-from pyobo.identifier_utils import _parse_str_or_curie_or_uri_helper
+from pyobo.identifier_utils import (
+    NotCURIEError,
+    _parse_str_or_curie_or_uri_helper,
+)
 from pyobo.sources.expasy import _parse_transfer
 from pyobo.utils.iter import iterate_together
 
@@ -15,7 +18,8 @@ class TestStringUtils(unittest.TestCase):
         self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("GO:1234"))
         self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("go:1234"))
 
-        self.assertIsNone(_parse_str_or_curie_or_uri_helper("1234"))
+        self.assertIsInstance(_parse_str_or_curie_or_uri_helper("1234", strict=True), NotCURIEError)
+        self.assertIsNone(_parse_str_or_curie_or_uri_helper("1234", strict=False))
         self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("GO:GO:1234"))
 
         self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("pubmed:1234"))
