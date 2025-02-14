@@ -41,7 +41,7 @@ from ..api import (
 )
 from ..constants import LookupKwargs
 from ..getters import get_ontology
-from ..struct import Reference
+from ..struct.reference import _parse_str_or_curie_or_uri
 
 __all__ = [
     "lookup",
@@ -205,7 +205,7 @@ def relations(
         else:
             echo_df(relations_df)
     else:
-        relation_reference = Reference.from_curie_or_uri(relation, strict=False)
+        relation_reference = _parse_str_or_curie_or_uri(relation, strict=False)
         if relation_reference is None:
             click.secho(f"not a valid curie: {relation}", fg="red")
             raise sys.exit(1)

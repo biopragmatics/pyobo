@@ -10,7 +10,7 @@ from collections.abc import Mapping, Sequence
 from curies import ReferenceTuple
 from curies import vocabulary as v
 
-from pyobo.struct.reference import OBOLiteral, _parse_identifier
+from pyobo.struct.reference import OBOLiteral, _obo_parse_identifier, _parse_str_or_curie_or_uri
 from pyobo.struct.struct import Reference, SynonymTypeDef, _synonym_typedef_warn
 from pyobo.struct.struct_utils import Annotation
 
@@ -59,7 +59,7 @@ def _chomp_typedef(
 
         synonym_typedef_id, rest = s, ""
 
-    reference = _parse_identifier(
+    reference = _obo_parse_identifier(
         synonym_typedef_id,
         strict=strict,
         node=node,
@@ -151,7 +151,7 @@ def _parse_reference_or_literal(
     curie_or_uri = curie_or_uri.replace("https\\:", "https:")
 
     # we're not strict here since we want to do some alternate kind of parsing
-    reference = Reference.from_curie_or_uri(
+    reference = _parse_str_or_curie_or_uri(
         curie_or_uri, strict=False, node=node, ontology_prefix=ontology_prefix
     )
     if reference is not None:

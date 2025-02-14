@@ -39,7 +39,7 @@ from .struct import (
     make_ad_hoc_ontology,
 )
 from .struct import vocabulary as v
-from .struct.reference import OBOLiteral, _parse_identifier
+from .struct.reference import OBOLiteral, _obo_parse_identifier, _parse_str_or_curie_or_uri
 from .struct.struct_utils import Annotation, Stanza
 from .struct.typedef import comment as has_comment
 from .struct.typedef import default_typedefs, has_ontology_root_term
@@ -531,7 +531,7 @@ def _get_reference(
         return None
     if isinstance(value, list):
         value = value[0]
-    return _parse_identifier(value, ontology_prefix=ontology_prefix, strict=strict, **kwargs)
+    return _obo_parse_identifier(value, ontology_prefix=ontology_prefix, strict=strict, **kwargs)
 
 
 class MacroConfig:
@@ -566,12 +566,12 @@ class MacroConfig:
             gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
             if gd_prefix_norm is None:
                 continue
-            gd_predicate_re = _parse_identifier(
+            gd_predicate_re = _obo_parse_identifier(
                 gd_predicate, ontology_prefix=ontology_prefix, strict=strict
             )
             if gd_predicate_re is None:
                 continue
-            gd_target_re = _parse_identifier(
+            gd_target_re = _obo_parse_identifier(
                 gd_target, ontology_prefix=ontology_prefix, strict=strict
             )
             if gd_target_re is None:
@@ -591,7 +591,7 @@ class MacroConfig:
             gd_prefix_norm = bioregistry.normalize_prefix(gd_prefix)
             if gd_prefix_norm is None:
                 continue
-            gd_predicate_re = _parse_identifier(
+            gd_predicate_re = _obo_parse_identifier(
                 gd_predicate, ontology_prefix=ontology_prefix, strict=strict
             )
             if gd_predicate_re is None:
@@ -647,7 +647,7 @@ def _get_subsetdefs(graph: nx.MultiDiGraph, ontology_prefix: str) -> list[tuple[
         if not right:
             logger.warning("[%s] subsetdef did not have two parts", ontology_prefix, subsetdef)
             continue
-        left_ref = _parse_identifier(left, ontology_prefix=ontology_prefix, name=right)
+        left_ref = _obo_parse_identifier(left, ontology_prefix=ontology_prefix, name=right)
         if left_ref is None:
             logger.warning(
                 "[%s] subsetdef identifier could not be parsed", ontology_prefix, subsetdef
@@ -725,7 +725,7 @@ def _iter_obo_graph(
 ) -> Iterable[tuple[Reference, Mapping[str, Any]]]:
     """Iterate over the nodes in the graph with the prefix stripped (if it's there)."""
     for node, data in tqdm(graph.nodes(data=True), disable=not use_tqdm):
-        node = Reference.from_curie_or_uri(
+        node = _parse_str_or_curie_or_uri(
             node, strict=strict, ontology_prefix=ontology_prefix, name=data.get("name")
         )
         if node:
@@ -776,7 +776,7 @@ def iterate_graph_synonym_typedefs(
         # the name should be in quotes, so strip them out
         name = name.strip().strip('"')
         # TODO unquote the string?
-        reference = _parse_identifier(
+        reference = _obo_parse_identifier(
             curie,
             ontology_prefix=ontology_prefix,
             name=name,
@@ -816,7 +816,7 @@ def iterate_typedefs(
         if name is None:
             logger.debug("[%s] typedef %s is missing a name", ontology_prefix, typedef_id)
 
-        reference = _parse_identifier(
+        reference = _obo_parse_identifier(
             typedef_id, strict=strict, ontology_prefix=ontology_prefix, name=name, upgrade=upgrade
         )
         if reference is None:
@@ -963,7 +963,7 @@ def _process_chain_helper(
     rv = []
     for curie in chain.split():
         curie = curie.strip()
-        r = _parse_identifier(
+        r = _obo_parse_identifier(
             curie, ontology_prefix=ontology_prefix, strict=strict, node=term.reference
         )
         if r is None:
@@ -1177,7 +1177,7 @@ def _handle_prop(
         value, datatype = value_type, None
     else:
         value, _datatype = (s.strip() for s in value_type.rsplit(" ", 1))
-        datatype = Reference.from_curie_or_uri(
+        datatype = _parse_str_or_curie_or_uri(
             _datatype, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
         if datatype is None:
@@ -1201,7 +1201,7 @@ def _handle_prop(
             return Annotation(prop_reference, obo_literal)
 
     if datatype and datatype.curie == "xsd:anyURI":
-        obj_reference = Reference.from_curie_or_uri(
+        obj_reference = _parse_str_or_curie_or_uri(
             value, strict=strict, node=node, ontology_prefix=ontology_prefix
         )
         if obj_reference:
@@ -1213,7 +1213,7 @@ def _handle_prop(
     # aggressive, but more useful than spec).
     if quoted:
         # give a try parsing it anyway, just in case ;)
-        obj_reference = Reference.from_curie_or_uri(
+        obj_reference = _parse_str_or_curie_or_uri(
             value, ontology_prefix=ontology_prefix, strict=strict, node=node
         )
         if obj_reference:
@@ -1229,7 +1229,7 @@ def _handle_prop(
             )
 
         # if it wasn't quoted and there was no datatype, go for parsing as an object
-        obj_reference = _parse_identifier(
+        obj_reference = _obo_parse_identifier(
             value, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
         if obj_reference:
@@ -1253,7 +1253,7 @@ def _get_prop(
         if property_id.startswith(sw):
             identifier = property_id.removeprefix(sw)
             return default_reference(ontology_prefix, identifier)
-    return _parse_identifier(
+    return _obo_parse_identifier(
         property_id, strict=strict, node=node, ontology_prefix=ontology_prefix, upgrade=upgrade
     )
 
@@ -1269,7 +1269,7 @@ def iterate_node_reference_tag(
 ) -> Iterable[Reference]:
     """Extract a list of CURIEs from the data."""
     for identifier in data.get(tag, []):
-        reference = _parse_identifier(
+        reference = _obo_parse_identifier(
             identifier, strict=strict, node=node, ontology_prefix=ontology_prefix, upgrade=upgrade
         )
         if reference is None:
@@ -1291,7 +1291,7 @@ def _process_intersection_of(
     """Extract a list of CURIEs from the data."""
     for line in data.get("intersection_of", []):
         predicate_id, _, target_id = line.partition(" ")
-        predicate = _parse_identifier(
+        predicate = _obo_parse_identifier(
             predicate_id,
             strict=strict,
             node=term.reference,
@@ -1304,7 +1304,7 @@ def _process_intersection_of(
 
         if target_id:
             # this means that there's a second part, so let's try parsing it
-            target = _parse_identifier(
+            target = _obo_parse_identifier(
                 target_id,
                 strict=strict,
                 node=term.reference,
@@ -1332,7 +1332,7 @@ def iterate_node_relationships(
     """Extract relationships from a :mod:`obonet` node's data."""
     for s in data.get("relationship", []):
         relation_curie, target_curie = s.split(" ")
-        relation = _parse_identifier(
+        relation = _obo_parse_identifier(
             relation_curie,
             strict=strict,
             ontology_prefix=ontology_prefix,
@@ -1343,7 +1343,7 @@ def iterate_node_relationships(
             logger.warning("[%s] could not parse relation %s", node.curie, relation_curie)
             continue
 
-        target = Reference.from_curie_or_uri(
+        target = _parse_str_or_curie_or_uri(
             target_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
         if target is None:
@@ -1380,7 +1380,7 @@ def iterate_node_xrefs(
                 continue
             xref = _xref_split[0]
 
-        xref_ref = Reference.from_curie_or_uri(
+        xref_ref = _parse_str_or_curie_or_uri(
             xref, strict=strict, ontology_prefix=ontology_prefix, node=node
         )
         if xref_ref is None:

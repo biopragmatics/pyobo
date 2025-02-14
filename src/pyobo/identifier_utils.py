@@ -19,7 +19,7 @@ from .registries import (
 )
 
 __all__ = [
-    "normalize_curie",
+    "_parse_str_or_curie_or_uri_helper",
     "standardize_ec",
     "wrap_norm_prefix",
 ]
@@ -69,8 +69,8 @@ class UnparsableIRIError(ParseError):
 BAD_CURIES = set()
 
 
-def normalize_curie(
-    curie: str,
+def _parse_str_or_curie_or_uri_helper(
+    str_or_curie_or_uri: str,
     *,
     strict: bool = True,
     ontology_prefix: str | None = None,
@@ -79,7 +79,7 @@ def normalize_curie(
 ) -> ReferenceTuple | tuple[None, None]:
     """Parse a string that looks like a CURIE.
 
-    :param curie: A compact uniform resource identifier (CURIE)
+    :param str_or_curie_or_uri: A compact uniform resource identifier (CURIE)
     :param strict: Should an exception be thrown if the CURIE can not be parsed w.r.t.
         the Bioregistry?
     :param ontology_prefix: The ontology in which the CURIE appears
@@ -92,35 +92,37 @@ def normalize_curie(
     """
     if upgrade:
         # Remap the curie with the full list
-        curie = remap_full(curie)
+        str_or_curie_or_uri = remap_full(str_or_curie_or_uri)
 
         # Remap node's prefix (if necessary)
-        curie = remap_prefix(curie, ontology_prefix=ontology_prefix)
+        str_or_curie_or_uri = remap_prefix(str_or_curie_or_uri, ontology_prefix=ontology_prefix)
 
-    if curie_is_blacklisted(curie):
+    if curie_is_blacklisted(str_or_curie_or_uri):
         return None, None
-    if curie_has_blacklisted_prefix(curie):
+    if curie_has_blacklisted_prefix(str_or_curie_or_uri):
         return None, None
-    if curie_has_blacklisted_suffix(curie):
+    if curie_has_blacklisted_suffix(str_or_curie_or_uri):
         return None, None
 
-    if upgrade and (reference_t := bioontologies.upgrade.upgrade(curie)):
+    if upgrade and (reference_t := bioontologies.upgrade.upgrade(str_or_curie_or_uri)):
         return reference_t
 
-    if curie.startswith("http:") or curie.startswith("https:"):
-        if reference := parse_iri(curie):
-            return reference.pair
+    if str_or_curie_or_uri.startswith("http:") or str_or_curie_or_uri.startswith("https:"):
+        if reference_tuple := _parse_iri(str_or_curie_or_uri):
+            return reference_tuple
         elif strict:
-            raise UnparsableIRIError(curie=curie, ontology_prefix=ontology_prefix, node=node)
+            raise UnparsableIRIError(
+                curie=str_or_curie_or_uri, ontology_prefix=ontology_prefix, node=node
+            )
         else:
             return None, None
 
     try:
-        prefix, identifier = curie.split(":", 1)
+        prefix, identifier = str_or_curie_or_uri.split(":", 1)
     except ValueError:  # skip nodes that don't look like normal CURIEs
-        if curie not in BAD_CURIES:
-            BAD_CURIES.add(curie)
-            logger.debug(f"could not split CURIE on colon: {curie}")
+        if str_or_curie_or_uri not in BAD_CURIES:
+            BAD_CURIES.add(str_or_curie_or_uri)
+            logger.debug(f"could not split CURIE on colon: {str_or_curie_or_uri}")
         return None, None
 
     norm_node_prefix = bioregistry.normalize_prefix(prefix)
@@ -128,16 +130,18 @@ def normalize_curie(
         identifier = bioregistry.standardize_identifier(norm_node_prefix, identifier)
         return ReferenceTuple(norm_node_prefix, identifier)
     elif strict:
-        raise MissingPrefixError(curie=curie, ontology_prefix=ontology_prefix, node=node)
+        raise MissingPrefixError(
+            curie=str_or_curie_or_uri, ontology_prefix=ontology_prefix, node=node
+        )
     else:
         return None, None
 
 
-def parse_iri(iri: str) -> Reference | None:
+def _parse_iri(iri: str) -> ReferenceTuple | None:
     """Parse an IRI into a reference, if possible."""
     p, i = bioregistry.parse_iri(iri)
     if p and i:
-        return Reference(prefix=p, identifier=i)
+        return ReferenceTuple(p, i)
     return None
 
 

@@ -8,7 +8,7 @@ from tqdm.auto import tqdm
 
 from pyobo import Reference
 from pyobo.resources.so import get_so_name
-from pyobo.struct import Obo, Term, from_species, orthologous
+from pyobo.struct import Obo, Term, _parse_str_or_curie_or_uri, from_species, orthologous
 from pyobo.utils.io import multisetdict
 from pyobo.utils.path import ensure_df
 
@@ -149,7 +149,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         for hgnc_curie in human_orthologs.get(identifier, []):
             if not hgnc_curie or pd.isna(hgnc_curie):
                 continue
-            hgnc_ortholog = Reference.from_curie_or_uri(hgnc_curie)
+            hgnc_ortholog = _parse_str_or_curie_or_uri(hgnc_curie)
             if hgnc_ortholog is None:
                 tqdm.write(f"[{PREFIX}] {identifier} had invalid ortholog: {hgnc_curie}")
             else:

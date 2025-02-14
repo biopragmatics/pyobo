@@ -23,6 +23,7 @@ from .reference import (
     OBOLiteral,
     Reference,
     Referenced,
+    _parse_str_or_curie_or_uri,
     comma_separate_references,
     default_reference,
     get_preferred_curie,
@@ -851,7 +852,7 @@ def _ensure_ref(
         if not ontology_prefix:
             raise ValueError(f"can't parse reference of type {type(reference)}: {reference}")
         return default_reference(ontology_prefix, reference)
-    _rv = Reference.from_curie_or_uri(reference, strict=True, ontology_prefix=ontology_prefix)
+    _rv = _parse_str_or_curie_or_uri(reference, strict=True, ontology_prefix=ontology_prefix)
     if _rv is None:
         raise ValueError(f"[{ontology_prefix}] unable to parse {reference}")
     return _rv

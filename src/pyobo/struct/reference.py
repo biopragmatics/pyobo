@@ -18,7 +18,7 @@ from curies.api import ExpansionError
 from pydantic import ValidationError, model_validator
 
 from ..constants import GLOBAL_CHECK_IDS
-from ..identifier_utils import normalize_curie
+from ..identifier_utils import _parse_str_or_curie_or_uri_helper
 
 __all__ = [
     "Reference",
@@ -64,42 +64,29 @@ class Reference(curies.NamableReference):
             prefix=self.prefix, identifier=self.identifier, name=self.name or name
         )
 
-    @classmethod
-    def from_curie_or_uri(
-        cls,
-        curie: str,
-        name: str | None = None,
-        *,
-        strict: bool = True,
-        auto: bool = False,
-        ontology_prefix: str | None = None,
-        node: Reference | None = None,
-    ) -> Reference | None:
-        """Get a reference from a CURIE.
 
-        :param curie: The compact URI (CURIE) to parse in the form of `<prefix>:<identifier>`
-        :param name: The name associated with the CURIE
-        :param strict: If true, raises an error if the CURIE can not be parsed.
-        :param auto: Automatically look up name
-        """
-        prefix, identifier = normalize_curie(
-            curie, strict=strict, ontology_prefix=ontology_prefix, node=node
-        )
-        if prefix is None or identifier is None:
-            return None
+def _parse_str_or_curie_or_uri(
+    str_curie_or_uri: str,
+    name: str | None = None,
+    *,
+    strict: bool = True,
+    ontology_prefix: str | None = None,
+    node: Reference | None = None,
+) -> Reference | None:
+    prefix, identifier = _parse_str_or_curie_or_uri_helper(
+        str_curie_or_uri, strict=strict, ontology_prefix=ontology_prefix, node=node
+    )
+    if prefix is None or identifier is None:
+        return None
 
-        if name is None and auto:
-            from ..api import get_name
-
-            name = get_name(prefix, identifier)
-        try:
-            rv = cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
-        except ValidationError:
-            if strict:
-                raise
-            return None
-        else:
-            return rv
+    try:
+        rv = Reference.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
+    except ValidationError:
+        if strict:
+            raise
+        return None
+    else:
+        return rv
 
 
 class Referenced:
@@ -234,7 +221,7 @@ def _ground_relation(relation_str: str) -> Reference | None:
     return None
 
 
-def _parse_identifier(
+def _obo_parse_identifier(
     s: str,
     *,
     ontology_prefix: str,
@@ -243,9 +230,9 @@ def _parse_identifier(
     name: str | None = None,
     upgrade: bool = True,
 ) -> Reference | None:
-    """Parse from a CURIE, URI, or default string in the ontology prefix's IDspace."""
+    """Parse from a CURIE, URI, or default string in the ontology prefix's IDspace using OBO semantics."""
     if ":" in s:
-        return Reference.from_curie_or_uri(
+        return _parse_str_or_curie_or_uri(
             s, ontology_prefix=ontology_prefix, name=name, strict=strict, node=node
         )
     if upgrade:
