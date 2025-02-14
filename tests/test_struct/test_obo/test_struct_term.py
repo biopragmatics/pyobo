@@ -517,12 +517,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                xref: eccode:1.4.1.15
+                xref: EC:1.4.1.15
             """,
             ofn="""\
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(oboInOwl:hasDbXref GO:0050069 eccode:1.4.1.15)
+                AnnotationAssertion(oboInOwl:hasDbXref GO:0050069 EC:1.4.1.15)
             """,
         )
 
@@ -533,7 +533,7 @@ class TestTerm(unittest.TestCase):
             list(mappings_df.columns),
         )
         self.assertEqual(
-            ["GO:0050069", "eccode:1.4.1.15", "oboInOwl:hasDbXref", "semapv:UnspecifiedMatching"],
+            ["GO:0050069", "EC:1.4.1.15", "oboInOwl:hasDbXref", "semapv:UnspecifiedMatching"],
             list(mappings_df.values[0]),
         )
 
@@ -548,12 +548,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                xref: eccode:1.4.1.15 {sssom:confidence=0.99} ! lysine dehydrogenase
+                xref: EC:1.4.1.15 {sssom:confidence=0.99} ! lysine dehydrogenase
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(Annotation(sssom:confidence "0.99"^^xsd:float) oboInOwl:hasDbXref GO:0050069 eccode:1.4.1.15)
+                AnnotationAssertion(Annotation(sssom:confidence "0.99"^^xsd:float) oboInOwl:hasDbXref GO:0050069 EC:1.4.1.15)
             """,
             typedefs={
                 mapping_has_confidence.pair: mapping_has_confidence,
@@ -571,7 +571,7 @@ class TestTerm(unittest.TestCase):
         self.assertEqual(
             [
                 "GO:0050069",
-                "eccode:1.4.1.15",
+                "EC:1.4.1.15",
                 "oboInOwl:hasDbXref",
                 "semapv:UnspecifiedMatching",
                 0.99,
@@ -898,12 +898,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                relationship: RO:1234567 eccode:1.4.1.15
+                relationship: RO:1234567 EC:1.4.1.15
             """,
             ofn="""\
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                SubClassOf(GO:0050069 ObjectSomeValuesFrom(RO:1234567 eccode:1.4.1.15))
+                SubClassOf(GO:0050069 ObjectSomeValuesFrom(RO:1234567 EC:1.4.1.15))
             """,
         )
 
@@ -920,12 +920,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
+                property_value: skos:exactMatch EC:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(skos:exactMatch GO:0050069 eccode:1.4.1.15)
+                AnnotationAssertion(skos:exactMatch GO:0050069 EC:1.4.1.15)
             """,
         )
 
@@ -936,7 +936,7 @@ class TestTerm(unittest.TestCase):
             list(mappings_df.columns),
         )
         self.assertEqual(
-            ["GO:0050069", "eccode:1.4.1.15", "skos:exactMatch", "semapv:UnspecifiedMatching"],
+            ["GO:0050069", "EC:1.4.1.15", "skos:exactMatch", "semapv:UnspecifiedMatching"],
             list(mappings_df.values[0]),
         )
 
@@ -951,12 +951,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
+                property_value: skos:exactMatch EC:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(skos:exactMatch GO:0050069 eccode:1.4.1.15)
+                AnnotationAssertion(skos:exactMatch GO:0050069 EC:1.4.1.15)
             """,
         )
 
@@ -972,12 +972,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
+                property_value: skos:exactMatch EC:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(skos:exactMatch GO:0050069 eccode:1.4.1.15)
+                AnnotationAssertion(skos:exactMatch GO:0050069 EC:1.4.1.15)
             """,
         )
 
@@ -1035,13 +1035,13 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                property_value: skos:exactMatch eccode:1.4.1.15 {sssom:confidence=0.99, \
+                property_value: skos:exactMatch EC:1.4.1.15 {sssom:confidence=0.99, \
 sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine dehydrogenase
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(Annotation(sssom:mapping_justification semapv:UnspecifiedMatching) Annotation(sssom:confidence "0.99"^^xsd:float) skos:exactMatch GO:0050069 eccode:1.4.1.15)
+                AnnotationAssertion(Annotation(sssom:mapping_justification semapv:UnspecifiedMatching) Annotation(sssom:confidence "0.99"^^xsd:float) skos:exactMatch GO:0050069 EC:1.4.1.15)
             """,
         )
 
@@ -1063,7 +1063,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
         self.assertEqual(
             [
                 "GO:0050069",
-                "eccode:1.4.1.15",
+                "EC:1.4.1.15",
                 "skos:exactMatch",
                 "semapv:UnspecifiedMatching",
                 0.99,
