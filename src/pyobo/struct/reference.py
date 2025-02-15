@@ -59,6 +59,7 @@ class Reference(curies.NamableReference):
             raise ValueError(f"non-standard identifier: {resource.prefix}:{values['identifier']}")
         return values
 
+
 def _parse_str_or_curie_or_uri(
     str_curie_or_uri: str,
     name: str | None = None,
