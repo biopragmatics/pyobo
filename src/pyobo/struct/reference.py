@@ -45,9 +45,15 @@ def _parse_str_or_curie_or_uri(
     ontology_prefix: str | None = None,
     node: Reference | None = None,
     line: str | None = None,
+    context: str | None = None,
 ) -> Reference | None:
     reference = _parse_str_or_curie_or_uri_helper(
-        str_curie_or_uri, ontology_prefix=ontology_prefix, name=name, node=node, line=line
+        str_curie_or_uri,
+        ontology_prefix=ontology_prefix,
+        name=name,
+        node=node,
+        line=line,
+        context=context,
     )
     match reference:
         case Reference():
@@ -204,6 +210,7 @@ def _obo_parse_identifier(
     name: str | None = None,
     upgrade: bool = True,
     line: str | None = None,
+    context: str | None = None,
 ) -> Reference | None:
     """Parse from a CURIE, URI, or default string in the ontology prefix's IDspace using OBO semantics."""
     if ":" in s:
@@ -214,6 +221,7 @@ def _obo_parse_identifier(
             strict=strict,
             node=node,
             line=line,
+            context=context,
         )
     if upgrade:
         if xx := bioontologies.upgrade.upgrade(s):
@@ -229,11 +237,13 @@ def _obo_parse_identifier(
         except ValidationError as e:
             if strict:
                 raise DefaultCoercionError(
-                    s, ontology_prefix=ontology_prefix, node=node, line=line
+                    s, ontology_prefix=ontology_prefix, node=node, line=line, context=context
                 ) from e
             return None
     elif strict:
-        raise DefaultCoercionError(s, ontology_prefix=ontology_prefix, node=node, line=line)
+        raise DefaultCoercionError(
+            s, ontology_prefix=ontology_prefix, node=node, line=line, context=context
+        )
     else:
         return None
 

@@ -20,6 +20,7 @@ from more_itertools import pairwise
 from tqdm.auto import tqdm
 
 from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
+from .identifier_utils import BlacklistedError, ParseError, _parse_str_or_curie_or_uri_helper
 from .reader_utils import (
     _chomp_axioms,
     _chomp_references,
@@ -725,11 +726,17 @@ def _iter_obo_graph(
 ) -> Iterable[tuple[Reference, Mapping[str, Any]]]:
     """Iterate over the nodes in the graph with the prefix stripped (if it's there)."""
     for node, data in tqdm(graph.nodes(data=True), disable=not use_tqdm):
-        node = _parse_str_or_curie_or_uri(
-            node, strict=strict, ontology_prefix=ontology_prefix, name=data.get("name")
-        )
-        if node:
-            yield node, data
+        match _parse_str_or_curie_or_uri_helper(
+            node, ontology_prefix=ontology_prefix, name=data.get("name")
+        ):
+            case Reference() as reference:
+                yield reference, data
+            case ParseError() as exc:
+                if strict:
+                    raise exc
+                else:
+                    logger.warning(str(exc))
+            # if blacklisted, just skip it with no warning
 
 
 def _get_date(graph, ontology_prefix: str) -> datetime | None:
@@ -1185,17 +1192,23 @@ def _handle_prop(
     if " " not in value_type:
         value, datatype = value_type, None
     else:
-        value, _datatype = (s.strip() for s in value_type.rsplit(" ", 1))
-        datatype = _parse_str_or_curie_or_uri(
-            _datatype,
-            strict=strict,
+        value, datatype_raw = (s.strip() for s in value_type.rsplit(" ", 1))
+        match _parse_str_or_curie_or_uri_helper(
+            datatype_raw,
             ontology_prefix=ontology_prefix,
             node=node,
             line=prop_value_type,
-        )
-        if datatype is None:
-            logger.warning("[%s] had unparsable datatype %s", node.curie, prop_value_type)
-            return None
+        ):
+            case Reference() as datatype_:
+                datatype = datatype_
+            case BlacklistedError():
+                return None
+            case ParseError() as exc:
+                if strict:
+                    raise exc
+                else:
+                    logger.warning("[%s] had unparsable datatype %s", node.curie, prop_value_type)
+                    return None
 
     # if it's an empty string, like the ones removed in https://github.com/oborel/obo-relations/pull/830,
     # just quit
@@ -1358,29 +1371,38 @@ def iterate_node_relationships(
     upgrade: bool,
 ) -> Iterable[tuple[Reference, Reference]]:
     """Extract relationships from a :mod:`obonet` node's data."""
-    for s in data.get("relationship", []):
-        relation_curie, target_curie = s.split(" ")
+    for line in data.get("relationship", []):
+        relation_curie, target_curie = line.split(" ")
+
         relation = _obo_parse_identifier(
             relation_curie,
             strict=strict,
             ontology_prefix=ontology_prefix,
             node=node,
             upgrade=upgrade,
+            line=line,
+            context="relationship predicate",
         )
-        if relation is None:
-            logger.warning("[%s] could not parse relation %s", node.curie, relation_curie)
-            continue
+        match relation:
+            # TODO extend with other exception handling
+            case None:
+                logger.warning("[%s] could not parse relation %s", node.curie, relation_curie)
+                continue
 
-        target = _parse_str_or_curie_or_uri(
-            target_curie, strict=strict, ontology_prefix=ontology_prefix, node=node
-        )
-        if target is None:
-            logger.warning(
-                "[%s - %s] could not parse target %s", node.curie, relation.curie, target_curie
-            )
-            continue
-
-        yield relation, target
+        match _parse_str_or_curie_or_uri_helper(
+            target_curie,
+            ontology_prefix=ontology_prefix,
+            node=node,
+            line=line,
+            context="relationship target",
+        ):
+            case Reference() as target:
+                yield relation, target
+            case ParseError() as exc:
+                if strict:
+                    raise exc
+                else:
+                    logger.warning(str(exc))
 
 
 def iterate_node_xrefs(
@@ -1393,42 +1415,58 @@ def iterate_node_xrefs(
     """Extract xrefs from a :mod:`obonet` node's data."""
     for line in data.get("xref", []):
         line = line.strip()
-        xref, _, rest = line.partition(" [")
+        if pair := _parse_xref_line(
+            line.strip(), strict=strict, node=node, ontology_prefix=ontology_prefix
+        ):
+            yield pair
 
-        if curie_has_blacklisted_prefix(xref) or curie_is_blacklisted(xref) or ":" not in xref:
-            continue  # sometimes xref to self... weird
 
-        xref = remap_prefix(xref, ontology_prefix=ontology_prefix)
+def _parse_xref_line(
+    line: str, *, strict: bool = True, ontology_prefix: str, node: Reference
+) -> tuple[Reference, list[Reference | OBOLiteral]] | None:
+    xref, _, rest = line.partition(" [")
 
-        split_space = " " in xref
-        if split_space:
-            _xref_split = xref.split(" ", 1)
-            if _xref_split[1][0] not in {'"', "("}:
-                logger.debug("[%s] Problem with space in xref %s", node.curie, xref)
-                continue
-            xref = _xref_split[0]
+    if curie_has_blacklisted_prefix(xref) or curie_is_blacklisted(xref) or ":" not in xref:
+        return None  # sometimes xref to self... weird
 
-        xref_ref = _parse_str_or_curie_or_uri(
-            xref, strict=strict, ontology_prefix=ontology_prefix, node=node
+    xref = remap_prefix(xref, ontology_prefix=ontology_prefix)
+
+    split_space = " " in xref
+    if split_space:
+        _xref_split = xref.split(" ", 1)
+        if _xref_split[1][0] not in {'"', "("}:
+            logger.debug("[%s] Problem with space in xref %s", node.curie, xref)
+            return None
+        xref = _xref_split[0]
+
+    xref_ref = _parse_str_or_curie_or_uri_helper(
+        xref, ontology_prefix=ontology_prefix, node=node, line=line, context="xref"
+    )
+    match xref_ref:
+        case BlacklistedError():
+            return None
+        case ParseError() as exc:
+            if strict:
+                raise exc
+            else:
+                logger.warning(str(exc))
+                return None
+
+    if rest:
+        rest_front, _, _rest_rest = rest.partition("]")
+        provenance = _parse_provenance_list(
+            rest_front,
+            node=node,
+            ontology_prefix=ontology_prefix,
+            counter=XREF_PROVENANCE_COUNTER,
+            scope_text="xref provenance",
+            line=line,
+            strict=strict,
         )
-        if xref_ref is None:
-            continue
+    else:
+        provenance = []
 
-        if rest:
-            rest_front, _, _rest_rest = rest.partition("]")
-            provenance = _parse_provenance_list(
-                rest_front,
-                node=node,
-                ontology_prefix=ontology_prefix,
-                counter=XREF_PROVENANCE_COUNTER,
-                scope_text="xref provenance",
-                line=line,
-                strict=strict,
-            )
-        else:
-            provenance = []
-
-        yield xref_ref, provenance
+    return xref_ref, provenance
 
 
 XREF_PROVENANCE_COUNTER: Counter[tuple[str, str]] = Counter()

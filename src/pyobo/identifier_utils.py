@@ -46,12 +46,14 @@ class ParseError(BaseException):
         self,
         curie: str,
         *,
+        context: str | None,
         ontology_prefix: str | None = None,
         node: Reference | None = None,
         line: Line = None,
     ) -> None:
         """Initialize the error."""
         self.curie = curie
+        self.context = context
         self.ontology_prefix = ontology_prefix
         self.node = node
         self.line = line
@@ -130,6 +132,7 @@ def _parse_str_or_curie_or_uri_helper(
     upgrade: bool = True,
     line: str | None = None,
     name: str | None = None,
+    context: str | None = None,
 ) -> Reference | ParseError | BlacklistedError:
     """Parse a string that looks like a CURIE.
 
@@ -149,6 +152,7 @@ def _parse_str_or_curie_or_uri_helper(
             ontology_prefix=ontology_prefix,
             node=node,
             line=line,
+            context=context,
         )
 
     if upgrade:
@@ -178,12 +182,17 @@ def _parse_str_or_curie_or_uri_helper(
                 ontology_prefix=ontology_prefix,
                 node=node,
                 line=line,
+                context=context,
             )
 
     prefix, delimiter, identifier = str_or_curie_or_uri.partition(":")
     if not delimiter:
         return NotCURIEError(
-            str_or_curie_or_uri, ontology_prefix=ontology_prefix, node=node, line=line
+            str_or_curie_or_uri,
+            ontology_prefix=ontology_prefix,
+            node=node,
+            line=line,
+            context=context,
         )
 
     norm_node_prefix = bioregistry.normalize_prefix(prefix)
@@ -193,6 +202,7 @@ def _parse_str_or_curie_or_uri_helper(
             ontology_prefix=ontology_prefix,
             node=node,
             line=line,
+            context=context,
         )
 
     identifier = bioregistry.standardize_identifier(norm_node_prefix, identifier)
@@ -200,9 +210,14 @@ def _parse_str_or_curie_or_uri_helper(
         rv = Reference.model_validate(
             {"prefix": norm_node_prefix, "identifier": identifier, "name": name}
         )
-    except ValidationError as e:
+    except ValidationError as exc:
         return ParseValidationError(
-            str_or_curie_or_uri, ontology_prefix=ontology_prefix, node=node, line=line, exc=e
+            str_or_curie_or_uri,
+            ontology_prefix=ontology_prefix,
+            node=node,
+            line=line,
+            exc=exc,
+            context=context,
         )
     else:
         return rv

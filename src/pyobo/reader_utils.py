@@ -169,6 +169,7 @@ def _parse_reference_or_uri_literal(
         node=node,
         ontology_prefix=ontology_prefix,
         line=line,
+        context=scope_text,
     )
     match reference:
         case Reference():
@@ -179,18 +180,18 @@ def _parse_reference_or_uri_literal(
             # this means that it's defininitely a URI,
             # but it couldn't be parsed with Bioregistry
             return OBOLiteral.uri(curie_or_uri)
-        case NotCURIEError():
+        case NotCURIEError() as exc:
             # this means there's no colon `:`
             if _is_valid_identifier(curie_or_uri):
                 return default_reference(prefix=ontology_prefix, identifier=curie_or_uri)
             elif strict:
-                raise reference
+                raise exc
             else:
                 return None
-        case ParseError():
+        case ParseError() as exc:
             if strict:
-                raise reference
+                raise exc
             if not counter[ontology_prefix, curie_or_uri]:
-                logger.warning("[%s] unable to parse %s: %s", node.curie, scope_text, curie_or_uri)
+                logger.warning(str(exc))
             counter[ontology_prefix, curie_or_uri] += 1
             return None
