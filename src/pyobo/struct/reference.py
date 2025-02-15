@@ -59,18 +59,6 @@ class Reference(curies.NamableReference):
             raise ValueError(f"non-standard identifier: {resource.prefix}:{values['identifier']}")
         return values
 
-    def as_named_reference(self, name: str | None = None) -> curies.NamedReference:
-        """Get a named reference."""
-        if not self.name:
-            if name:
-                logger.warning("[%s] missing name; overriding with synonym: %s", self.curie, name)
-            else:
-                raise ValueError(f"[{self.curie}] missing name; can't convert to named reference")
-        return curies.NamedReference(
-            prefix=self.prefix, identifier=self.identifier, name=self.name or name
-        )
-
-
 def _parse_str_or_curie_or_uri(
     str_curie_or_uri: str,
     name: str | None = None,

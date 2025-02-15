@@ -1033,7 +1033,7 @@ def _get_references_from_annotations(
 def _get_stanza_name_synonym(stanza: Stanza) -> LiteralMapping:
     return LiteralMapping(
         text=stanza.reference.name,
-        reference=stanza.reference.as_named_reference(),
+        reference=stanza.reference,
         predicate=_v.has_label,
         type=None,
         provenance=[p for p in stanza.provenance if isinstance(p, curies.Reference)],
@@ -1059,7 +1059,7 @@ def _convert_synoynym(stanza: Stanza, synonym: Synonym) -> LiteralMapping:
     return LiteralMapping(
         text=synonym.name,
         language=synonym.language,
-        reference=stanza.reference.as_named_reference(synonym.name),
+        reference=stanza.reference,
         predicate=synonym.predicate,
         type=synonym.type,
         provenance=[p for p in synonym.provenance if isinstance(p, curies.Reference)],
