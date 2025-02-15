@@ -104,7 +104,7 @@ class HasReferencesMixin(ABC):
         raise NotImplementedError
 
 
-class Stanza(HasReferencesMixin):
+class Stanza(Referenced, HasReferencesMixin):
     """A high-level class for stanzas."""
 
     reference: Reference
@@ -128,6 +128,14 @@ class Stanza(HasReferencesMixin):
 
     #: A description of the entity
     definition: str | None = None
+
+    @staticmethod
+    def _reference(
+        reference: Reference, ontology_prefix: str, add_name_comment: bool = False
+    ) -> str:
+        return reference_escape(
+            reference, ontology_prefix=ontology_prefix, add_name_comment=add_name_comment
+        )
 
     def _get_prefixes(self) -> set[str]:
         return set(self._get_references())

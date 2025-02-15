@@ -16,7 +16,6 @@ from .struct import (
     SynonymTypeDef,
     Term,
     TypeDef,
-    int_identifier_sort_key,
     make_ad_hoc_ontology,
 )
 from .struct_utils import Stanza
@@ -67,7 +66,6 @@ __all__ = [
     "has_member",
     "has_part",
     "has_participant",
-    "int_identifier_sort_key",
     "is_a",
     "make_ad_hoc_ontology",
     "member_of",
