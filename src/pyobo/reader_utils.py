@@ -11,7 +11,12 @@ from curies import ReferenceTuple
 from curies import vocabulary as v
 from pydantic import ValidationError
 
-from pyobo.identifier_utils import ParseError, _is_uri, _is_valid_identifier
+from pyobo.identifier_utils import (
+    NotCURIEError,
+    ParseError,
+    UnparsableIRIError,
+    _is_valid_identifier,
+)
 from pyobo.struct.reference import (
     OBOLiteral,
     _obo_parse_identifier,
@@ -173,12 +178,20 @@ def _parse_reference_or_uri_literal(
         else:
             logger.warning("[%s] invalid reference in %s: %s", node.curie, scope_text, curie_or_uri)
             return None
-    except ParseError:
-        if _is_uri(curie_or_uri):
-            return OBOLiteral.uri(curie_or_uri)
-        elif _is_valid_identifier(curie_or_uri):
+    except UnparsableIRIError:
+        # this means that it's defininitely a URI,
+        # but it couldn't be parsed with Bioregistry
+        return OBOLiteral.uri(curie_or_uri)
+    except NotCURIEError:
+        # this means there's no colon `:`
+        if _is_valid_identifier(curie_or_uri):
             return default_reference(prefix=ontology_prefix, identifier=curie_or_uri)
         elif strict:
+            raise
+        else:
+            return None
+    except ParseError:
+        if strict:
             raise
         else:
             if not counter[ontology_prefix, curie_or_uri]:

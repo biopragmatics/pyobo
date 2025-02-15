@@ -415,6 +415,7 @@
       "ATCC number: ": "ATCC:",
       "ATTC: ": "ATCC:",
       "BAO_": "BAO:",
+      "NCBI:txid": "NCBITaxon:",
       "BioRXiv:https\\://doi.org/": "doi:",
       "CCLV:CCLV-RIE ": "CCLV:",
       "CREDIT_00": "CREDIT:00",
