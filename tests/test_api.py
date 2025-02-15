@@ -185,7 +185,10 @@ class TestAltIds(unittest.TestCase):
             # Names
 
             ids = pyobo.get_ids(TEST_P1, cache=False)
-            self.assertEqual({t.identifier for t in terms}, ids)
+            self.assertEqual({r1.identifier, r2.identifier, r3.identifier}, ids)
+
+            references = pyobo.get_references(TEST_P1, cache=False)
+            self.assertEqual({r1, r2, r3, tr1}, references)
 
             id_name = pyobo.get_id_name_mapping(TEST_P1, cache=False)
             self.assertEqual({t1.identifier: t1.name}, id_name)
@@ -233,10 +236,11 @@ class TestAltIds(unittest.TestCase):
             self.assertEqual({(r3, v.is_a, r1), (r1, v.alternative_term, r2)}, set(edges))
 
             graph = pyobo.get_hierarchy(TEST_P1, cache=False, use_tqdm=False)
-            self.assertEqual(3, graph.number_of_nodes())
+            self.assertEqual(4, graph.number_of_nodes())
             self.assertIn(r1, graph)
             self.assertIn(r2, graph)
             self.assertIn(r3, graph)
+            self.assertIn(tr1, graph)
             self.assertEqual(1, graph.number_of_edges())
 
             self.assertEqual(set(), pyobo.get_ancestors(r1, cache=False, use_tqdm=False))
