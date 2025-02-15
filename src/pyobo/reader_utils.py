@@ -10,18 +10,10 @@ from collections.abc import Mapping, Sequence
 from curies import ReferenceTuple
 from curies import vocabulary as v
 
-from pyobo.identifier_utils import (
-    BlacklistedError,
-    NotCURIEError,
-    ParseError,
-    UnparsableIRIError,
-    _is_valid_identifier,
-    _parse_str_or_curie_or_uri_helper,
-)
 from pyobo.struct.reference import (
     OBOLiteral,
     _obo_parse_identifier,
-    default_reference,
+    _parse_reference_or_uri_literal,
 )
 from pyobo.struct.struct import Reference, SynonymTypeDef, _synonym_typedef_warn
 from pyobo.struct.struct_utils import Annotation
@@ -146,52 +138,9 @@ def _parse_provenance_list(
                 node=node,
                 ontology_prefix=ontology_prefix,
                 counter=counter,
-                scope_text=scope_text,
+                context=scope_text,
                 line=line,
                 strict=strict,
             )
         )
     ]
-
-
-def _parse_reference_or_uri_literal(
-    curie_or_uri: str,
-    *,
-    node: Reference,
-    ontology_prefix: str,
-    counter: Counter[tuple[str, str]],
-    scope_text: str,
-    strict: bool = True,
-    line: str,
-) -> None | Reference | OBOLiteral:
-    reference = _parse_str_or_curie_or_uri_helper(
-        curie_or_uri,
-        node=node,
-        ontology_prefix=ontology_prefix,
-        line=line,
-        context=scope_text,
-    )
-    match reference:
-        case Reference():
-            return reference
-        case BlacklistedError():
-            return None
-        case UnparsableIRIError():
-            # this means that it's defininitely a URI,
-            # but it couldn't be parsed with Bioregistry
-            return OBOLiteral.uri(curie_or_uri)
-        case NotCURIEError() as exc:
-            # this means there's no colon `:`
-            if _is_valid_identifier(curie_or_uri):
-                return default_reference(prefix=ontology_prefix, identifier=curie_or_uri)
-            elif strict:
-                raise exc
-            else:
-                return None
-        case ParseError() as exc:
-            if strict:
-                raise exc
-            if not counter[ontology_prefix, curie_or_uri]:
-                logger.warning(str(exc))
-            counter[ontology_prefix, curie_or_uri] += 1
-            return None

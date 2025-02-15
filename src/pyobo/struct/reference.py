@@ -4,23 +4,22 @@ from __future__ import annotations
 
 import datetime
 import logging
+from collections import Counter
 from collections.abc import Iterable, Sequence
 from typing import Any, NamedTuple
 
-import bioontologies.relations
-import bioontologies.upgrade
 import bioregistry
 import curies
 import dateutil.parser
 import pytz
 from curies import ReferenceTuple
-from pydantic import ValidationError
 
 from .._reference_tmp import Reference
 from ..identifier_utils import (
     BlacklistedError,
-    DefaultCoercionError,
+    NotCURIEError,
     ParseError,
+    UnparsableIRIError,
     _is_valid_identifier,
     _parse_str_or_curie_or_uri_helper,
 )
@@ -46,6 +45,7 @@ def _parse_str_or_curie_or_uri(
     node: Reference | None = None,
     line: str | None = None,
     context: str | None = None,
+    upgrade: bool = False,
 ) -> Reference | None:
     reference = _parse_str_or_curie_or_uri_helper(
         str_curie_or_uri,
@@ -54,7 +54,9 @@ def _parse_str_or_curie_or_uri(
         node=node,
         line=line,
         context=context,
+        upgrade=upgrade,
     )
+
     match reference:
         case Reference():
             return reference
@@ -194,58 +196,91 @@ def comma_separate_references(elements: Iterable[Reference | OBOLiteral]) -> str
     return ", ".join(reference_or_literal_to_str(element) for element in elements)
 
 
-def _ground_relation(relation_str: str) -> Reference | None:
-    prefix, identifier = bioontologies.relations.ground_relation(relation_str)
-    if prefix and identifier:
-        return Reference(prefix=prefix, identifier=identifier)
-    return None
-
-
 def _obo_parse_identifier(
-    s: str,
+    str_or_curie_or_uri: str,
     *,
     ontology_prefix: str,
     strict: bool = True,
     node: Reference | None = None,
-    name: str | None = None,
-    upgrade: bool = True,
     line: str | None = None,
     context: str | None = None,
+    name: str | None = None,
+    upgrade: bool = True,
 ) -> Reference | None:
     """Parse from a CURIE, URI, or default string in the ontology prefix's IDspace using OBO semantics."""
-    if ":" in s:
-        return _parse_str_or_curie_or_uri(
-            s,
-            ontology_prefix=ontology_prefix,
-            name=name,
-            strict=strict,
-            node=node,
-            line=line,
-            context=context,
-        )
-    if upgrade:
-        if xx := bioontologies.upgrade.upgrade(s):
-            return Reference(prefix=xx.prefix, identifier=xx.identifier, name=name)
-        if yy := _ground_relation(s):
-            return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
-
-    if _is_valid_identifier(s):
-        # in `geno`, there are some string properties that are written
-        # without quotes where this check is important
-        try:
-            return default_reference(ontology_prefix, s, name=name)
-        except ValidationError as e:
-            if strict:
-                raise DefaultCoercionError(
-                    s, ontology_prefix=ontology_prefix, node=node, line=line, context=context
-                ) from e
+    match _parse_str_or_curie_or_uri_helper(
+        str_or_curie_or_uri,
+        ontology_prefix=ontology_prefix,
+        node=node,
+        line=line,
+        context=context,
+        name=name,
+        upgrade=upgrade,
+    ):
+        case Reference() as reference:
+            return reference
+        case BlacklistedError():
             return None
-    elif strict:
-        raise DefaultCoercionError(
-            s, ontology_prefix=ontology_prefix, node=node, line=line, context=context
-        )
-    else:
-        return None
+        case NotCURIEError() as exc:
+            # this means there's no colon `:`
+            if _is_valid_identifier(str_or_curie_or_uri):
+                return default_reference(prefix=ontology_prefix, identifier=str_or_curie_or_uri)
+            elif strict:
+                raise exc
+            else:
+                return None
+        case ParseError() as exc:
+            if strict:
+                raise exc
+            logger.warning(str(exc))
+            return None
+
+
+def _parse_reference_or_uri_literal(
+    str_or_curie_or_uri: str,
+    *,
+    ontology_prefix: str,
+    strict: bool = True,
+    node: Reference,
+    line: str,
+    context: str,
+    name: str | None = None,
+    upgrade: bool = True,
+    #
+    counter: Counter[tuple[str, str]],
+) -> None | Reference | OBOLiteral:
+    match _parse_str_or_curie_or_uri_helper(
+        str_or_curie_or_uri,
+        node=node,
+        ontology_prefix=ontology_prefix,
+        line=line,
+        context=context,
+        name=name,
+        upgrade=upgrade,
+    ):
+        case Reference() as reference:
+            return reference
+        case BlacklistedError():
+            return None
+        case UnparsableIRIError():
+            # this means that it's defininitely a URI,
+            # but it couldn't be parsed with Bioregistry
+            return OBOLiteral.uri(str_or_curie_or_uri)
+        case NotCURIEError() as exc:
+            # this means there's no colon `:`
+            if _is_valid_identifier(str_or_curie_or_uri):
+                return default_reference(prefix=ontology_prefix, identifier=str_or_curie_or_uri)
+            elif strict:
+                raise exc
+            else:
+                return None
+        case ParseError() as exc:
+            if strict:
+                raise exc
+            if not counter[ontology_prefix, str_or_curie_or_uri]:
+                logger.warning(str(exc))
+            counter[ontology_prefix, str_or_curie_or_uri] += 1
+            return None
 
 
 unspecified_matching = Reference(
