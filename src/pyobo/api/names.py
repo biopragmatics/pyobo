@@ -11,6 +11,7 @@ from typing import Any, TypeVar
 import pandas as pd
 import ssslm
 from curies import Reference, ReferenceTuple
+from pystow.cache import Cached
 from ssslm import LiteralMapping
 from typing_extensions import Unpack
 
@@ -110,27 +111,58 @@ def get_ids(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
         logger.info("[%s] done loading name mappings", prefix)
         return rv
 
-    version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="ids.tsv", version=version)
+    return {
+        reference.identifier
+        for reference in get_references(prefix, **kwargs)
+        if reference.prefix == prefix
+    }
 
-    @cached_collection(
-        path=path,
-        force=check_should_force(kwargs),
-        cache=check_should_cache(kwargs),
-    )
-    def _get_ids() -> list[str]:
-        ontology = get_ontology(prefix, **kwargs)
-        return sorted(ontology.get_ids())
 
-    return set(_get_ids())
+class CachedReferences(Cached[list[Reference]]):
+    """Make a function lazily cache its return value as file."""
+
+    def load(self) -> list[Reference]:
+        """Load data from the cache as a list of strings.
+
+        :returns: A list of strings loaded from the cache
+        """
+        with open(self.path) as file:
+            return [Reference.from_curie(line.strip()) for line in file]
+
+    def dump(self, references: list[Reference]) -> None:
+        """Dump data to the cache as a list of strings.
+
+        :param references: The list of strings to dump
+        """
+        with open(self.path, "w") as file:
+            for reference in references:
+                print(reference.curie, file=file)
 
 
 @wrap_norm_prefix
 def get_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Reference]:
     """Get the set of identifiers for this prefix."""
-    return {
-        Reference(prefix=prefix, identifier=identifier) for identifier in get_ids(prefix, **kwargs)
-    }
+    if prefix == "ncbigene":
+        from ..sources.ncbigene import get_ncbigene_ids
+
+        logger.info("[%s] loading identifiers ", prefix)
+        rv = {Reference(prefix="ncbigene", identifier=i) for i in get_ncbigene_ids()}
+        logger.info("[%s] done loading identifiers", prefix)
+        return rv
+
+    version = get_version_from_kwargs(prefix, kwargs)
+    path = prefix_cache_join(prefix, name="ids.tsv", version=version)
+
+    @CachedReferences(
+        path=path,
+        force=check_should_force(kwargs),
+        cache=check_should_cache(kwargs),
+    )
+    def _get_references() -> list[Reference]:
+        ontology = get_ontology(prefix, **kwargs)
+        return sorted(ontology.iterate_references())
+
+    return set(_get_references())
 
 
 @lru_cache
@@ -143,9 +175,9 @@ def get_id_name_mapping(
     if prefix == "ncbigene":
         from ..sources.ncbigene import get_ncbigene_id_to_name_mapping
 
-        logger.info("[%s] loading name mappings", prefix)
+        logger.info("[%s] loading identifiers", prefix)
         rv = get_ncbigene_id_to_name_mapping()
-        logger.info("[%s] done loading name mappings", prefix)
+        logger.info("[%s] done loading identifiers", prefix)
         return rv
 
     version = get_version_from_kwargs(prefix, kwargs)

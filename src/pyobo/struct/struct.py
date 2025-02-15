@@ -1404,12 +1404,20 @@ class Obo:
             "date": self.date and self.date.isoformat(),
         }
 
+    def iterate_references(self, *, use_tqdm: bool = False) -> Iterable[Reference]:
+        """Iterate over identifiers."""
+        for stanza in self._iter_stanzas(
+            use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting identifiers"
+        ):
+            if self._in_ontology(stanza.reference):
+                yield stanza.reference
+
     def iterate_ids(self, *, use_tqdm: bool = False) -> Iterable[str]:
         """Iterate over identifiers."""
         for stanza in self._iter_stanzas(
-            use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"
+            use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting identifiers"
         ):
-            if self._in_ontology(stanza.reference):
+            if self._in_ontology_strict(stanza.reference):
                 yield stanza.identifier
 
     def get_ids(self, *, use_tqdm: bool = False) -> set[str]:

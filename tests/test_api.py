@@ -184,8 +184,11 @@ class TestAltIds(unittest.TestCase):
 
             # Names
 
-            ids = pyobo.get_ids(TEST_P1, cache=False)
-            self.assertEqual({t.identifier for t in terms}, ids)
+            ids = pyobo.get_references(TEST_P1, cache=False)
+            self.assertEqual({r1.identifier, r2.identifier, r3.identifier}, ids)
+
+            references = pyobo.get_references(TEST_P1, cache=False)
+            self.assertEqual({r1, r2, r3, tr1}, references)
 
             id_name = pyobo.get_id_name_mapping(TEST_P1, cache=False)
             self.assertEqual({t1.identifier: t1.name}, id_name)
