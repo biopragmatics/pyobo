@@ -151,7 +151,7 @@ def get_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Refe
         return rv
 
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="ids.tsv", version=version)
+    path = prefix_cache_join(prefix, name="references.tsv", version=version)
 
     @CachedReferences(
         path=path,
