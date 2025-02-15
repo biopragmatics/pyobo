@@ -32,6 +32,7 @@ from collections.abc import Iterable, Mapping
 from tqdm.auto import tqdm
 
 from pyobo import Obo, Reference, Term
+from pyobo.struct import _parse_str_or_curie_or_uri
 from pyobo.utils.path import ensure_path
 
 __all__ = [
@@ -91,7 +92,7 @@ def _parse(i, lines: Iterable[tuple[str, str]]) -> Term | None:
             if line.startswith(y):
                 line = x + line[len(y) :]
 
-        ref = Reference.from_curie_or_uri(line.replace("; ", ":"))
+        ref = _parse_str_or_curie_or_uri(line.replace("; ", ":"))
         if ref:
             term.append_xref(ref)
         else:

@@ -17,9 +17,14 @@ from curies import ReferenceTuple
 from curies.api import ExpansionError
 from pydantic import ValidationError, model_validator
 
-from .utils import obo_escape
 from ..constants import GLOBAL_CHECK_IDS
-from ..identifier_utils import normalize_curie
+from ..identifier_utils import (
+    BlacklistedError,
+    DefaultCoercionError,
+    ParseError,
+    _is_valid_identifier,
+    _parse_str_or_curie_or_uri_helper,
+)
 
 __all__ = [
     "Reference",
@@ -36,16 +41,6 @@ logger = logging.getLogger(__name__)
 
 class Reference(curies.NamableReference):
     """A namespace, identifier, and label."""
-
-    @property
-    def preferred_prefix(self) -> str:
-        """Get the preferred curie for this reference."""
-        return bioregistry.get_preferred_prefix(self.prefix) or self.prefix
-
-    @property
-    def preferred_curie(self) -> str:
-        """Get the preferred curie for this reference."""
-        return f"{self.preferred_prefix}:{self.identifier}"
 
     @model_validator(mode="before")
     def validate_identifier(cls, values):  # noqa
@@ -64,75 +59,37 @@ class Reference(curies.NamableReference):
             raise ValueError(f"non-standard identifier: {resource.prefix}:{values['identifier']}")
         return values
 
-    def as_named_reference(self, name: str | None = None) -> curies.NamedReference:
-        """Get a named reference."""
-        if not self.name:
-            if name:
-                logger.warning("[%s] missing name; overriding with synonym: %s", self.curie, name)
-            else:
-                raise ValueError(f"[{self.curie}] missing name; can't convert to named reference")
-        return curies.NamedReference(
-            prefix=self.prefix, identifier=self.identifier, name=self.name or name
-        )
 
-    @classmethod
-    def auto(cls, prefix: str, identifier: str) -> Reference:
-        """Create a reference and autopopulate its name."""
-        from ..api import get_name
-
-        name = get_name(prefix, identifier)
-        return cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
-
-    @property
-    def bioregistry_link(self) -> str:
-        """Get the bioregistry link."""
-        return f"https://bioregistry.io/{self.curie}"
-
-    @classmethod
-    def from_curie_or_uri(
-        cls,
-        curie: str,
-        name: str | None = None,
-        *,
-        strict: bool = True,
-        auto: bool = False,
-        ontology_prefix: str | None = None,
-        node: Reference | None = None,
-    ) -> Reference | None:
-        """Get a reference from a CURIE.
-
-        :param curie: The compact URI (CURIE) to parse in the form of `<prefix>:<identifier>`
-        :param name: The name associated with the CURIE
-        :param strict: If true, raises an error if the CURIE can not be parsed.
-        :param auto: Automatically look up name
-        """
-        prefix, identifier = normalize_curie(
-            curie, strict=strict, ontology_prefix=ontology_prefix, node=node
-        )
-        if prefix is None or identifier is None:
+def _parse_str_or_curie_or_uri(
+    str_curie_or_uri: str,
+    name: str | None = None,
+    *,
+    strict: bool = True,
+    ontology_prefix: str | None = None,
+    node: Reference | None = None,
+    line: str | None = None,
+) -> Reference | None:
+    reference = _parse_str_or_curie_or_uri_helper(
+        str_curie_or_uri, ontology_prefix=ontology_prefix, node=node, line=line
+    )
+    match reference:
+        case None | BlacklistedError():
             return None
-
-        if name is None and auto:
-            from ..api import get_name
-
-            name = get_name(prefix, identifier)
-        try:
-            rv = cls.model_validate({"prefix": prefix, "identifier": identifier, "name": name})
-        except ValidationError:
+        case ParseError():
             if strict:
-                raise
-            return None
-        else:
-            return rv
+                raise reference
+            else:
+                return None
 
-    @property
-    def _escaped_identifier(self):
-        return obo_escape(self.identifier)
-
-    def __str__(self) -> str:
-        rv = f"{self.preferred_prefix}:{self._escaped_identifier}"
-        if self.name:
-            rv = f"{rv} ! {self.name}"
+    try:
+        rv = Reference.model_validate(
+            {"prefix": reference.prefix, "identifier": reference.identifier, "name": name}
+        )
+    except ValidationError:
+        if strict:
+            raise
+        return None
+    else:
         return rv
 
 
@@ -175,19 +132,20 @@ class Referenced:
         return self.reference.curie
 
     @property
-    def preferred_curie(self) -> str:
-        """The preferred CURIE for this typedef."""
-        return self.reference.preferred_curie
-
-    @property
     def pair(self) -> ReferenceTuple:
         """The pair of namespace/identifier."""
         return self.reference.pair
 
-    @property
-    def bioregistry_link(self) -> str:
-        """Get the bioregistry link."""
-        return self.reference.bioregistry_link
+
+def get_preferred_prefix(
+    ref: curies.Reference | Reference | Referenced,
+) -> str:
+    """Get the preferred prefix from a variety of types."""
+    match ref:
+        case Referenced() | Reference():
+            return bioregistry.get_preferred_prefix(ref.prefix) or ref.prefix
+        case curies.Reference():
+            return ref.prefix
 
 
 def get_preferred_curie(
@@ -196,7 +154,7 @@ def get_preferred_curie(
     """Get the preferred CURIE from a variety of types."""
     match ref:
         case Referenced() | Reference():
-            return ref.preferred_curie
+            return f"{get_preferred_prefix(ref)}:{ref.identifier}"
         case curies.Reference():
             return ref.curie
 
@@ -267,7 +225,7 @@ def _ground_relation(relation_str: str) -> Reference | None:
     return None
 
 
-def _parse_identifier(
+def _obo_parse_identifier(
     s: str,
     *,
     ontology_prefix: str,
@@ -275,11 +233,17 @@ def _parse_identifier(
     node: Reference | None = None,
     name: str | None = None,
     upgrade: bool = True,
+    line: str | None = None,
 ) -> Reference | None:
-    """Parse from a CURIE, URI, or default string in the ontology prefix's IDspace."""
+    """Parse from a CURIE, URI, or default string in the ontology prefix's IDspace using OBO semantics."""
     if ":" in s:
-        return Reference.from_curie_or_uri(
-            s, ontology_prefix=ontology_prefix, name=name, strict=strict, node=node
+        return _parse_str_or_curie_or_uri(
+            s,
+            ontology_prefix=ontology_prefix,
+            name=name,
+            strict=strict,
+            node=node,
+            line=line,
         )
     if upgrade:
         if xx := bioontologies.upgrade.upgrade(s):
@@ -287,11 +251,20 @@ def _parse_identifier(
         if yy := _ground_relation(s):
             return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
 
-    # in `geno`, there are some string properties that are written
-    # without quotes where this check is important
-    try:
-        return default_reference(ontology_prefix, s, name=name)
-    except ValidationError:
+    if _is_valid_identifier(s):
+        # in `geno`, there are some string properties that are written
+        # without quotes where this check is important
+        try:
+            return default_reference(ontology_prefix, s, name=name)
+        except ValidationError as e:
+            if strict:
+                raise DefaultCoercionError(
+                    s, ontology_prefix=ontology_prefix, node=node, line=line
+                ) from e
+            return None
+    elif strict:
+        raise DefaultCoercionError(s, ontology_prefix=ontology_prefix, node=node, line=line)
+    else:
         return None
 
 

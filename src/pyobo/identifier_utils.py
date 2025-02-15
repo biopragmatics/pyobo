@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import logging
 from functools import wraps
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import bioontologies.upgrade
 import bioregistry
 from curies import Reference, ReferenceTuple
+from typing_extensions import Doc
 
 from .registries import (
     curie_has_blacklisted_prefix,
@@ -19,7 +20,7 @@ from .registries import (
 )
 
 __all__ = [
-    "normalize_curie",
+    "_parse_str_or_curie_or_uri_helper",
     "standardize_ec",
     "wrap_norm_prefix",
 ]
@@ -27,59 +28,98 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-class ParseError(ValueError):
+class BlacklistedError(ValueError):
+    """A sentinel for blacklisted strings."""
+
+
+Line = Annotated[str | None, Doc("""The OBO line where the parsing happened""")]
+
+
+class ParseError(BaseException):
     """Raised on a missing prefix."""
 
     text: ClassVar[str]
 
     def __init__(
         self,
-        *,
         curie: str,
+        *,
         ontology_prefix: str | None = None,
         node: Reference | None = None,
+        line: Line = None,
     ) -> None:
         """Initialize the error."""
         self.curie = curie
         self.ontology_prefix = ontology_prefix
         self.node = node
+        self.line = line
 
     def __str__(self) -> str:
         s = ""
-        if self.ontology_prefix:
+        if self.node:
+            s += f"[{self.node.curie}] "
+        elif self.ontology_prefix:
             s += f"[{self.ontology_prefix}] "
-        s += f"{self.text}: `{self.curie}`"
-        if self.node is not None:
-            s += f" from {self.node.curie}"
+        s += f"`{self.curie}` {self.text}"
+        if self.line:
+            s += f" in: {self.line}"
         return s
 
 
-class MissingPrefixError(ParseError):
+class UnregisteredPrefixError(ParseError):
     """Raised on a missing prefix."""
 
-    text = "CURIE contains unhandled prefix"
+    text = "contains unhandled prefix"
 
 
 class UnparsableIRIError(ParseError):
     """Raised on a an unparsable IRI."""
 
-    text = "IRI could not be parsed"
+    text = "could not be IRI parsed"
 
 
-BAD_CURIES = set()
+class EmptyStringError(ParseError):
+    """Raised on a an empty string."""
+
+    text = "is empty"
 
 
-def normalize_curie(
-    curie: str,
+class NotCURIEError(ParseError):
+    """Raised on a text that can't be parsed as a CURIE."""
+
+    text = "Not a CURIE"
+
+
+class DefaultCoercionError(ParseError):
+    """Raised on a text that can't be coerced into a default reference."""
+
+    text = "can't be coerced into a default reference"
+
+
+def _is_uri(s: str) -> bool:
+    return s.startswith("http:") or s.startswith("https:")
+
+
+def _preclean_uri(s: str) -> str:
+    s = s.strip().removeprefix("url:").removeprefix("uri:")
+    s = s.removeprefix("URL:").removeprefix("URI:")
+    s = s.removeprefix("WWW:").removeprefix("www:").lstrip()
+    s = s.replace("http\\:", "http:")
+    s = s.replace("https\\:", "https:")
+    return s
+
+
+def _parse_str_or_curie_or_uri_helper(
+    str_or_curie_or_uri: str,
     *,
-    strict: bool = True,
     ontology_prefix: str | None = None,
     node: Reference | None = None,
     upgrade: bool = True,
-) -> ReferenceTuple | tuple[None, None]:
+    line: str | None = None,
+) -> ReferenceTuple | ParseError | BlacklistedError:
     """Parse a string that looks like a CURIE.
 
-    :param curie: A compact uniform resource identifier (CURIE)
+    :param str_or_curie_or_uri: A compact uniform resource identifier (CURIE)
     :param strict: Should an exception be thrown if the CURIE can not be parsed w.r.t.
         the Bioregistry?
     :param ontology_prefix: The ontology in which the CURIE appears
@@ -90,54 +130,67 @@ def normalize_curie(
     - Checks against a blacklist for the entire curie, for the namespace, and for
       suffixes.
     """
+    str_or_curie_or_uri = _preclean_uri(str_or_curie_or_uri)
+    if not str_or_curie_or_uri:
+        raise EmptyStringError(
+            curie=str_or_curie_or_uri,
+            ontology_prefix=ontology_prefix,
+            node=node,
+            line=line,
+        )
+
     if upgrade:
         # Remap the curie with the full list
-        curie = remap_full(curie)
+        str_or_curie_or_uri = remap_full(str_or_curie_or_uri)
 
         # Remap node's prefix (if necessary)
-        curie = remap_prefix(curie, ontology_prefix=ontology_prefix)
+        str_or_curie_or_uri = remap_prefix(str_or_curie_or_uri, ontology_prefix=ontology_prefix)
 
-    if curie_is_blacklisted(curie):
-        return None, None
-    if curie_has_blacklisted_prefix(curie):
-        return None, None
-    if curie_has_blacklisted_suffix(curie):
-        return None, None
+    if curie_is_blacklisted(str_or_curie_or_uri):
+        return BlacklistedError()
+    if curie_has_blacklisted_prefix(str_or_curie_or_uri):
+        return BlacklistedError()
+    if curie_has_blacklisted_suffix(str_or_curie_or_uri):
+        return BlacklistedError()
 
-    if upgrade and (reference_t := bioontologies.upgrade.upgrade(curie)):
+    if upgrade and (reference_t := bioontologies.upgrade.upgrade(str_or_curie_or_uri)):
         return reference_t
 
-    if curie.startswith("http:") or curie.startswith("https:"):
-        if reference := parse_iri(curie):
-            return reference.pair
-        elif strict:
-            raise UnparsableIRIError(curie=curie, ontology_prefix=ontology_prefix, node=node)
+    if _is_uri(str_or_curie_or_uri):
+        if reference_tuple := _parse_iri(str_or_curie_or_uri):
+            return reference_tuple
         else:
-            return None, None
+            return UnparsableIRIError(
+                curie=str_or_curie_or_uri,
+                ontology_prefix=ontology_prefix,
+                node=node,
+                line=line,
+            )
 
-    try:
-        prefix, identifier = curie.split(":", 1)
-    except ValueError:  # skip nodes that don't look like normal CURIEs
-        if curie not in BAD_CURIES:
-            BAD_CURIES.add(curie)
-            logger.debug(f"could not split CURIE on colon: {curie}")
-        return None, None
+    prefix, delimiter, identifier = str_or_curie_or_uri.partition(":")
+    if not delimiter:
+        return NotCURIEError(
+            curie=str_or_curie_or_uri, ontology_prefix=ontology_prefix, node=node, line=line
+        )
 
     norm_node_prefix = bioregistry.normalize_prefix(prefix)
     if norm_node_prefix:
         identifier = bioregistry.standardize_identifier(norm_node_prefix, identifier)
         return ReferenceTuple(norm_node_prefix, identifier)
-    elif strict:
-        raise MissingPrefixError(curie=curie, ontology_prefix=ontology_prefix, node=node)
     else:
-        return None, None
+        return UnregisteredPrefixError(
+            curie=str_or_curie_or_uri,
+            ontology_prefix=ontology_prefix,
+            node=node,
+            line=line,
+        )
 
 
-def parse_iri(iri: str) -> Reference | None:
+def _parse_iri(iri: str) -> ReferenceTuple | None:
     """Parse an IRI into a reference, if possible."""
     p, i = bioregistry.parse_iri(iri)
     if p and i:
-        return Reference(prefix=p, identifier=i)
+        return ReferenceTuple(p, i)
     return None
 
 
@@ -174,3 +227,8 @@ def standardize_ec(ec: str) -> str:
     for _ in range(4):
         ec = ec.rstrip("-").rstrip(".")
     return ec
+
+
+def _is_valid_identifier(curie_or_uri: str) -> bool:
+    # TODO this needs more careful implementation
+    return bool(curie_or_uri.strip()) and " " not in curie_or_uri

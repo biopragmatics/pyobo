@@ -3,7 +3,7 @@
 import unittest
 
 from pyobo import Obo, Reference, Term
-from pyobo.identifier_utils import UnparsableIRIError
+from pyobo.identifier_utils import NotCURIEError, UnparsableIRIError, UnregisteredPrefixError
 from pyobo.reader import from_str, get_first_nonescaped_quote
 from pyobo.struct import TypeDef, default_reference
 from pyobo.struct import vocabulary as v
@@ -127,7 +127,7 @@ class TestReaderTerm(unittest.TestCase):
             [Term]
             id: nope:1234
         """
-        with self.assertRaises(ValueError):
+        with self.assertRaises(UnregisteredPrefixError):
             from_str(text)
         ontology = from_str(text, strict=False)
         self.assertEqual(0, len(list(ontology.iter_terms())))
@@ -779,7 +779,7 @@ class TestReaderTerm(unittest.TestCase):
             id: CHEBI:1234
             property_value: mass "121.323" NOPE:NOPE
         """
-        with self.assertRaises(ValueError):
+        with self.assertRaises(UnregisteredPrefixError):
             from_str(text)
         ontology = from_str(text, strict=False)
         term = self.get_only_term(ontology)
@@ -923,7 +923,7 @@ class TestReaderTerm(unittest.TestCase):
             id: CHEBI:1234
             property_value: http://purl.obolibrary.org/obo/RO_0018033 http://example.org/nope:nope
         """
-        with self.assertRaises(ValueError):
+        with self.assertRaises(UnparsableIRIError):
             from_str(text)
         ontology = from_str(text, strict=False)
         term = self.get_only_term(ontology)
@@ -953,7 +953,7 @@ class TestReaderTerm(unittest.TestCase):
             property_value: https://w3id.org/biolink/vocab/something NOPE:NOPE
             """
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(UnregisteredPrefixError):
             from_str(text)
 
         ontology = from_str(text, strict=False)
@@ -1179,7 +1179,7 @@ class TestReaderTerm(unittest.TestCase):
 
     def test_18_relationship_bad_target(self) -> None:
         """Test an ontology with a version but no date."""
-        ontology = from_str("""\
+        text = """\
             ontology: chebi
 
             [Term]
@@ -1189,7 +1189,12 @@ class TestReaderTerm(unittest.TestCase):
             [Typedef]
             id: RO:0018033
             name: is conjugate base of
-        """)
+        """
+
+        with self.assertRaises(NotCURIEError):
+            from_str(text)
+
+        ontology = from_str(text, strict=False)
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(list(term.iterate_relations())))
 

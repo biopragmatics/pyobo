@@ -1,6 +1,12 @@
 """Data structures for OBO."""
 
-from .reference import OBOLiteral, Reference, Referenced, default_reference
+from .reference import (
+    OBOLiteral,
+    Reference,
+    Referenced,
+    _parse_str_or_curie_or_uri,
+    default_reference,
+)
 from .struct import (
     CHARLIE_TERM,
     HUMAN_TERM,
@@ -48,6 +54,7 @@ __all__ = [
     "SynonymTypeDef",
     "Term",
     "TypeDef",
+    "_parse_str_or_curie_or_uri",
     "default_reference",
     "derives_from",
     "enables",

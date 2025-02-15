@@ -15,7 +15,7 @@ from rdflib import OWL, RDF, RDFS, XSD, Graph, collection, term
 
 from pyobo.struct.functional.utils import list_to_funowl
 from pyobo.struct.reference import Reference as PyOBOReference
-from pyobo.struct.reference import Referenced
+from pyobo.struct.reference import Referenced, get_preferred_prefix
 from pyobo.struct.struct_utils import OBOLiteral
 
 from .utils import FunctionalOWLSerializable, RDFNodeSerializable
@@ -145,7 +145,7 @@ class IdentifierBox(Box):
             # it doesn't matter we're potentially throwing away the name,
             # since this annotation gets put in OFN in a different place
             self.identifier = Reference(
-                prefix=identifier.preferred_prefix, identifier=identifier.identifier
+                prefix=get_preferred_prefix(identifier), identifier=identifier.identifier
             )
         elif isinstance(identifier, Reference):
             self.identifier = identifier
