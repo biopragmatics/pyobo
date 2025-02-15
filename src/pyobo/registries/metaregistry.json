@@ -193,25 +193,21 @@
     "prefix": [
       "DDB:",
       "FBC:",
-      "GIOC:",
-      "Germplasm:",
       "IUPAC:",
-      "IUPHAR:GPCRListForward?",
       "Image:",
       "MONDORULE:",
-      "MTH:",
       "NCBITaxon_Union",
       "OBO_SF2_PECO",
       "PECO_GIT",
       "PERSON",
       "PO_GIT:",
-      "PhenoScape:",
       "RSC:",
       "STRUCTURE_ChemicalName_IUPAC",
       "STRUCTURE_Formula",
       "SUBMITTER",
       "TEMP:",
-      "stedman"
+      "stedman",
+      "synonym:"
     ],
     "resource_prefix": {
       "cellosaurus": [
@@ -250,6 +246,9 @@
         "BilaDO:",
         "Germplasm:",
         "OGES:"
+      ],
+      "ehdaa": [
+        "synonym:"
       ],
       "envo": [
         "IUCN-PACS:",
@@ -374,6 +373,9 @@
       "LIPIDMAPSLMFA01030141": "LIPIDMAPS:LMFA01030141",
       "LIPIDMAPSLMFA01030152": "LIPIDMAPS:LMFA01030152",
       "PATOC:MAH": "orcid:0000-0003-4148-4606",
+      "GOC:MAH": "orcid:0000-0003-4148-4606",
+      "PHI-base:AlayneCuzick": "orcid:0000-0001-8941-3984",
+      "MimicDB:KatalinParej": "orcid:0000-0002-2567-6061",
       "PMI:17498297": "PMID:17498297",
       "Property:P1659": "wikidata:P1659",
       "SBN:9780070316607": "ISBN:9780070316607",
@@ -381,6 +383,7 @@
       "SIB:PG xsd:string": "orcid:0000-0003-1813-6857",
       "SNOMEDCT274897005": "SNOMEDCT:274897005",
       "UBERON:cjm": "orcid:0000-0002-6601-2165",
+      "PATOC:CJM": "orcid:0000-0002-6601-2165",
       "\\:has_start_point": "has_start_point",
       "bearer:of": "RO:0000053",
       "dc-contributor": "dc:contributor",
@@ -531,6 +534,9 @@
       },
       "biomodels.teddy": {
         "TR:": "biomodels.teddy:"
+      },
+      "caloha": {
+        "UBERON: BIRNLEX:": "birnlex:"
       },
       "cellosaurus": {
         "PubChem_Cell_line:CVCL_": "cellosaurus:",

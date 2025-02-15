@@ -490,7 +490,7 @@ def _process_relations(
             and relation.pair not in missing_typedefs
         ):
             missing_typedefs.add(relation.pair)
-            logger.warning("[%s] has no typedef for %s", ontology_prefix, relation)
+            logger.warning("[%s] has no typedef for %s", ontology_prefix, relation.curie)
             logger.debug("[%s] available typedefs: %s", ontology_prefix, set(typedefs))
         # TODO parse axioms
         term.append_relationship(relation, reference)
@@ -1002,10 +1002,8 @@ def _extract_definition(
         logger.warning("[%s] failed to parse definition quotes: %s", node.curie, str(e))
         return None, []
 
-    if not rest.startswith("[") or not rest.endswith("]"):
-        logger.warning(
-            "[%s] missing square brackets in rest of: %s (rest = `%s`)", node.curie, s, rest
-        )
+    if not rest.startswith("["):
+        logger.debug("[%s] no square brackets for provenance on line: %s", node.curie, s)
         provenance = []
     else:
         rest = rest.lstrip("[").rstrip("]")  # FIXME this doesn't account for trailing annotations
@@ -1015,6 +1013,8 @@ def _extract_definition(
             ontology_prefix=ontology_prefix,
             counter=DEFINITION_PROVENANCE_COUNTER,
             scope_text="definition provenance",
+            line=s,
+            strict=strict,
         )
     return definition or None, provenance
 
@@ -1074,7 +1074,11 @@ def _extract_synonym(
         upgrade=upgrade,
     )
     provenance, rest = _chomp_references(
-        rest, strict=strict, node=node, ontology_prefix=ontology_prefix
+        rest,
+        strict=strict,
+        node=node,
+        ontology_prefix=ontology_prefix,
+        line=s,
     )
     annotations = _chomp_axioms(rest, node=node, strict=strict)
 
@@ -1163,7 +1167,12 @@ def _handle_prop(
         return None
 
     prop_reference = _get_prop(
-        prop, node=node, strict=strict, ontology_prefix=ontology_prefix, upgrade=upgrade
+        prop,
+        node=node,
+        strict=strict,
+        ontology_prefix=ontology_prefix,
+        upgrade=upgrade,
+        line=prop_value_type,
     )
     if prop_reference is None:
         if not UNHANDLED_PROPS[prop]:
@@ -1178,11 +1187,20 @@ def _handle_prop(
     else:
         value, _datatype = (s.strip() for s in value_type.rsplit(" ", 1))
         datatype = _parse_str_or_curie_or_uri(
-            _datatype, strict=strict, ontology_prefix=ontology_prefix, node=node
+            _datatype,
+            strict=strict,
+            ontology_prefix=ontology_prefix,
+            node=node,
+            line=prop_value_type,
         )
         if datatype is None:
             logger.warning("[%s] had unparsable datatype %s", node.curie, prop_value_type)
             return None
+
+    # if it's an empty string, like the ones removed in https://github.com/oborel/obo-relations/pull/830,
+    # just quit
+    if value == '""':
+        return None
 
     quoted = value.startswith('"') and value.endswith('"')
     value = value.strip('"').strip()
@@ -1202,7 +1220,11 @@ def _handle_prop(
 
     if datatype and datatype.curie == "xsd:anyURI":
         obj_reference = _parse_str_or_curie_or_uri(
-            value, strict=strict, node=node, ontology_prefix=ontology_prefix
+            value,
+            strict=strict,
+            node=node,
+            ontology_prefix=ontology_prefix,
+            line=prop_value_type,
         )
         if obj_reference:
             return Annotation(prop_reference, obj_reference)
@@ -1214,7 +1236,7 @@ def _handle_prop(
     if quoted:
         # give a try parsing it anyway, just in case ;)
         obj_reference = _parse_str_or_curie_or_uri(
-            value, ontology_prefix=ontology_prefix, strict=False, node=node
+            value, ontology_prefix=ontology_prefix, strict=False, node=node, line=prop_value_type
         )
         if obj_reference:
             return Annotation(prop_reference, obj_reference)
@@ -1230,7 +1252,7 @@ def _handle_prop(
 
         # if it wasn't quoted and there was no datatype, go for parsing as an object
         obj_reference = _obo_parse_identifier(
-            value, strict=strict, ontology_prefix=ontology_prefix, node=node
+            value, strict=strict, ontology_prefix=ontology_prefix, node=node, line=prop_value_type
         )
         if obj_reference:
             return Annotation(prop_reference, obj_reference)
@@ -1246,7 +1268,13 @@ def _handle_prop(
 
 
 def _get_prop(
-    property_id: str, *, node: Reference, strict: bool, ontology_prefix: str, upgrade: bool
+    property_id: str,
+    *,
+    node: Reference,
+    strict: bool,
+    ontology_prefix: str,
+    upgrade: bool,
+    line: str,
 ) -> Reference | None:
     for delim in "#/":
         sw = f"http://purl.obolibrary.org/obo/{ontology_prefix}{delim}"
@@ -1348,7 +1376,7 @@ def iterate_node_relationships(
         )
         if target is None:
             logger.warning(
-                "[%s - %s] could not parse target %s", node.curie, relation, target_curie
+                "[%s - %s] could not parse target %s", node.curie, relation.curie, target_curie
             )
             continue
 
@@ -1394,6 +1422,8 @@ def iterate_node_xrefs(
                 ontology_prefix=ontology_prefix,
                 counter=XREF_PROVENANCE_COUNTER,
                 scope_text="xref provenance",
+                line=line,
+                strict=strict,
             )
         else:
             provenance = []

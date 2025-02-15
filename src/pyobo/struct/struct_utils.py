@@ -33,6 +33,7 @@ from .reference import (
     unspecified_matching,
 )
 from .utils import obo_escape_slim
+from ..identifier_utils import ParseError, _is_valid_identifier
 
 if TYPE_CHECKING:
     from pyobo.struct.struct import Synonym, TypeDef
@@ -848,14 +849,21 @@ def _ensure_ref(
         )
     if isinstance(reference, curies.Reference):
         return Reference(prefix=reference.prefix, identifier=reference.identifier)
-    if ":" not in reference:
-        if not ontology_prefix:
-            raise ValueError(f"can't parse reference of type {type(reference)}: {reference}")
-        return default_reference(ontology_prefix, reference)
-    _rv = _parse_str_or_curie_or_uri(reference, strict=True, ontology_prefix=ontology_prefix)
-    if _rv is None:
-        raise ValueError(f"[{ontology_prefix}] unable to parse {reference}")
-    return _rv
+    try:
+        rv = _parse_str_or_curie_or_uri(reference, strict=True, ontology_prefix=ontology_prefix)
+    except ParseError:
+        if not _is_valid_identifier(reference):
+            raise
+        elif ontology_prefix:
+            return default_reference(ontology_prefix, reference)
+        else:
+            raise ValueError(
+                "can't automatically create a reference without an `ontology_prefix` given"
+            ) from None
+    else:
+        if rv is None:
+            raise ValueError(f"[{ontology_prefix}] unable to parse {reference}")
+        return rv
 
 
 def _chain_tag(

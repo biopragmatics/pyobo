@@ -18,7 +18,13 @@ from curies.api import ExpansionError
 from pydantic import ValidationError, model_validator
 
 from ..constants import GLOBAL_CHECK_IDS
-from ..identifier_utils import BlacklistedError, ParseError, _parse_str_or_curie_or_uri_helper
+from ..identifier_utils import (
+    BlacklistedError,
+    DefaultCoercionError,
+    ParseError,
+    _is_valid_identifier,
+    _parse_str_or_curie_or_uri_helper,
+)
 
 __all__ = [
     "Reference",
@@ -72,9 +78,10 @@ def _parse_str_or_curie_or_uri(
     strict: bool = True,
     ontology_prefix: str | None = None,
     node: Reference | None = None,
+    line: str | None = None,
 ) -> Reference | None:
     reference = _parse_str_or_curie_or_uri_helper(
-        str_curie_or_uri, strict=strict, ontology_prefix=ontology_prefix, node=node
+        str_curie_or_uri, ontology_prefix=ontology_prefix, node=node, line=line
     )
     match reference:
         case None | BlacklistedError():
@@ -237,11 +244,17 @@ def _obo_parse_identifier(
     node: Reference | None = None,
     name: str | None = None,
     upgrade: bool = True,
+    line: str | None = None,
 ) -> Reference | None:
     """Parse from a CURIE, URI, or default string in the ontology prefix's IDspace using OBO semantics."""
     if ":" in s:
         return _parse_str_or_curie_or_uri(
-            s, ontology_prefix=ontology_prefix, name=name, strict=strict, node=node
+            s,
+            ontology_prefix=ontology_prefix,
+            name=name,
+            strict=strict,
+            node=node,
+            line=line,
         )
     if upgrade:
         if xx := bioontologies.upgrade.upgrade(s):
@@ -249,11 +262,20 @@ def _obo_parse_identifier(
         if yy := _ground_relation(s):
             return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
 
-    # in `geno`, there are some string properties that are written
-    # without quotes where this check is important
-    try:
-        return default_reference(ontology_prefix, s, name=name)
-    except ValidationError:
+    if _is_valid_identifier(s):
+        # in `geno`, there are some string properties that are written
+        # without quotes where this check is important
+        try:
+            return default_reference(ontology_prefix, s, name=name)
+        except ValidationError as e:
+            if strict:
+                raise DefaultCoercionError(
+                    s, ontology_prefix=ontology_prefix, node=node, line=line
+                ) from e
+            return None
+    elif strict:
+        raise DefaultCoercionError(s, ontology_prefix=ontology_prefix, node=node, line=line)
+    else:
         return None
 
 

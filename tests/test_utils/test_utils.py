@@ -4,6 +4,7 @@ import unittest
 
 from pyobo.identifier_utils import (
     NotCURIEError,
+    UnregisteredPrefixError,
     _parse_str_or_curie_or_uri_helper,
 )
 from pyobo.sources.expasy import _parse_transfer
@@ -18,8 +19,7 @@ class TestStringUtils(unittest.TestCase):
         self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("GO:1234"))
         self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("go:1234"))
 
-        self.assertIsInstance(_parse_str_or_curie_or_uri_helper("1234", strict=True), NotCURIEError)
-        self.assertIsNone(_parse_str_or_curie_or_uri_helper("1234", strict=False))
+        self.assertIsInstance(_parse_str_or_curie_or_uri_helper("1234"), NotCURIEError)
         self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("GO:GO:1234"))
 
         self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("pubmed:1234"))
@@ -28,7 +28,9 @@ class TestStringUtils(unittest.TestCase):
         self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("PMID:1234"))
 
         # Test resource-specific remapping
-        self.assertIsNone(_parse_str_or_curie_or_uri_helper("Thesaurus:C1234", strict=False))
+        self.assertIsInstance(
+            _parse_str_or_curie_or_uri_helper("Thesaurus:C1234"), UnregisteredPrefixError
+        )
         self.assertEqual(
             ("ncit", "C1234"),
             _parse_str_or_curie_or_uri_helper("Thesaurus:C1234", ontology_prefix="enm"),
