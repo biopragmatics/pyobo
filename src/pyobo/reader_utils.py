@@ -9,18 +9,18 @@ from collections.abc import Mapping, Sequence
 
 from curies import ReferenceTuple
 from curies import vocabulary as v
-from pydantic import ValidationError
 
 from pyobo.identifier_utils import (
+    BlacklistedError,
     NotCURIEError,
     ParseError,
     UnparsableIRIError,
     _is_valid_identifier,
+    _parse_str_or_curie_or_uri_helper,
 )
 from pyobo.struct.reference import (
     OBOLiteral,
     _obo_parse_identifier,
-    _parse_str_or_curie_or_uri,
     default_reference,
 )
 from pyobo.struct.struct import Reference, SynonymTypeDef, _synonym_typedef_warn
@@ -164,39 +164,33 @@ def _parse_reference_or_uri_literal(
     strict: bool = True,
     line: str,
 ) -> None | Reference | OBOLiteral:
-    try:
-        reference = _parse_str_or_curie_or_uri(
-            curie_or_uri,
-            strict=True,
-            node=node,
-            ontology_prefix=ontology_prefix,
-            line=line,
-        )
-    except ValidationError:
-        if strict:
-            raise
-        else:
-            logger.warning("[%s] invalid reference in %s: %s", node.curie, scope_text, curie_or_uri)
+    reference = _parse_str_or_curie_or_uri_helper(
+        curie_or_uri,
+        node=node,
+        ontology_prefix=ontology_prefix,
+        line=line,
+    )
+    match reference:
+        case Reference():
+            return reference
+        case BlacklistedError():
             return None
-    except UnparsableIRIError:
-        # this means that it's defininitely a URI,
-        # but it couldn't be parsed with Bioregistry
-        return OBOLiteral.uri(curie_or_uri)
-    except NotCURIEError:
-        # this means there's no colon `:`
-        if _is_valid_identifier(curie_or_uri):
-            return default_reference(prefix=ontology_prefix, identifier=curie_or_uri)
-        elif strict:
-            raise
-        else:
-            return None
-    except ParseError:
-        if strict:
-            raise
-        else:
+        case UnparsableIRIError():
+            # this means that it's defininitely a URI,
+            # but it couldn't be parsed with Bioregistry
+            return OBOLiteral.uri(curie_or_uri)
+        case NotCURIEError():
+            # this means there's no colon `:`
+            if _is_valid_identifier(curie_or_uri):
+                return default_reference(prefix=ontology_prefix, identifier=curie_or_uri)
+            elif strict:
+                raise reference
+            else:
+                return None
+        case ParseError():
+            if strict:
+                raise reference
             if not counter[ontology_prefix, curie_or_uri]:
                 logger.warning("[%s] unable to parse %s: %s", node.curie, scope_text, curie_or_uri)
             counter[ontology_prefix, curie_or_uri] += 1
             return None
-    else:
-        return reference

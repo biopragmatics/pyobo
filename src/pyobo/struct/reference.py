@@ -14,10 +14,9 @@ import curies
 import dateutil.parser
 import pytz
 from curies import ReferenceTuple
-from curies.api import ExpansionError
-from pydantic import ValidationError, model_validator
+from pydantic import ValidationError
 
-from ..constants import GLOBAL_CHECK_IDS
+from .._reference_tmp import Reference
 from ..identifier_utils import (
     BlacklistedError,
     DefaultCoercionError,
@@ -27,7 +26,6 @@ from ..identifier_utils import (
 )
 
 __all__ = [
-    "Reference",
     "Referenced",
     "default_reference",
     "get_preferred_curie",
@@ -37,27 +35,6 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-
-
-class Reference(curies.NamableReference):
-    """A namespace, identifier, and label."""
-
-    @model_validator(mode="before")
-    def validate_identifier(cls, values):  # noqa
-        """Validate the identifier."""
-        prefix, identifier = values.get("prefix"), values.get("identifier")
-        if not prefix or not identifier:
-            return values
-        resource = bioregistry.get_resource(prefix)
-        if resource is None:
-            raise ExpansionError(f"Unknown prefix: {prefix}")
-        values["prefix"] = resource.prefix
-        if " " in identifier:
-            raise ValueError(f"[{prefix}] space in identifier: {identifier}")
-        values["identifier"] = resource.standardize_identifier(identifier)
-        if GLOBAL_CHECK_IDS and not resource.is_valid_identifier(values["identifier"]):
-            raise ValueError(f"non-standard identifier: {resource.prefix}:{values['identifier']}")
-        return values
 
 
 def _parse_str_or_curie_or_uri(
@@ -70,27 +47,20 @@ def _parse_str_or_curie_or_uri(
     line: str | None = None,
 ) -> Reference | None:
     reference = _parse_str_or_curie_or_uri_helper(
-        str_curie_or_uri, ontology_prefix=ontology_prefix, node=node, line=line
+        str_curie_or_uri, ontology_prefix=ontology_prefix, name=name, node=node, line=line
     )
     match reference:
-        case None | BlacklistedError():
+        case Reference():
+            return reference
+        case BlacklistedError():
             return None
         case ParseError():
             if strict:
                 raise reference
             else:
                 return None
-
-    try:
-        rv = Reference.model_validate(
-            {"prefix": reference.prefix, "identifier": reference.identifier, "name": name}
-        )
-    except ValidationError:
-        if strict:
-            raise
-        return None
-    else:
-        return rv
+        case _:
+            raise TypeError(f"Got invalid: ({type(reference)}) {reference}")
 
 
 class Referenced:

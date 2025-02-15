@@ -16,16 +16,16 @@ class TestStringUtils(unittest.TestCase):
 
     def test_strip_prefix(self):
         """Test stripping prefixes works."""
-        self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("GO:1234"))
-        self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("go:1234"))
+        self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("GO:1234").pair)
+        self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("go:1234").pair)
 
         self.assertIsInstance(_parse_str_or_curie_or_uri_helper("1234"), NotCURIEError)
-        self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("GO:GO:1234"))
+        self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("GO:GO:1234").pair)
 
-        self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("pubmed:1234"))
+        self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("pubmed:1234").pair)
         # Test remapping
-        self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("pmid:1234"))
-        self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("PMID:1234"))
+        self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("pmid:1234").pair)
+        self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("PMID:1234").pair)
 
         # Test resource-specific remapping
         self.assertIsInstance(
@@ -33,13 +33,13 @@ class TestStringUtils(unittest.TestCase):
         )
         self.assertEqual(
             ("ncit", "C1234"),
-            _parse_str_or_curie_or_uri_helper("Thesaurus:C1234", ontology_prefix="enm"),
+            _parse_str_or_curie_or_uri_helper("Thesaurus:C1234", ontology_prefix="enm").pair,
         )
 
         # parsing IRIs
         self.assertEqual(
             ("chebi", "1234"),
-            _parse_str_or_curie_or_uri_helper("http://purl.obolibrary.org/obo/CHEBI_1234"),
+            _parse_str_or_curie_or_uri_helper("http://purl.obolibrary.org/obo/CHEBI_1234").pair,
         )
 
     def test_parse_eccode_transfer(self):
