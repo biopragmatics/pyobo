@@ -136,19 +136,20 @@ def _parse_provenance_list(
     line: str,
     strict: bool,
 ) -> list[Reference | OBOLiteral]:
-    return [
-        reference_or_literal
-        for raw_curie_or_uri in curies_or_uris.strip().split(",")
-        if (curie_or_uri := raw_curie_or_uri.strip())
-        and (
-            reference_or_literal := _parse_reference_or_uri_literal(
-                curie_or_uri,
-                node=node,
-                ontology_prefix=ontology_prefix,
-                counter=counter,
-                context=scope_text,
-                line=line,
-                strict=strict,
-            )
-        )
-    ]
+    rv = []
+    for curie_or_uri_raw in curies_or_uris.strip().split(","):
+        curie_or_uri_raw = curie_or_uri_raw.strip()
+        if not curie_or_uri_raw:
+            continue
+        curie_or_uri, _, _ = curie_or_uri_raw.strip().partition(" ")
+        if reference_or_literal := _parse_reference_or_uri_literal(
+            curie_or_uri,
+            node=node,
+            ontology_prefix=ontology_prefix,
+            counter=counter,
+            context=scope_text,
+            line=line,
+            strict=strict,
+        ):
+            rv.append(reference_or_literal)
+    return rv

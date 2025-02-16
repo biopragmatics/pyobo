@@ -242,6 +242,20 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual(1, len(term.provenance))
         self.assertEqual(CHARLIE, term.provenance[0])
 
+    def test_6_definition_with_provenance_object_with_comment(self) -> None:
+        """Test parsing a term with a definition and provenance, with a comment."""
+        ontology = from_str(f"""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            def: "definition of CHEBI:1234" [{CHARLIE.curie} "TestComment"]
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual("definition of CHEBI:1234", term.definition)
+        self.assertEqual(1, len(term.provenance))
+        self.assertEqual(CHARLIE, term.provenance[0])
+
     def test_6_definition_with_provenance_uri(self) -> None:
         """Test parsing a term with a definition and provenance."""
         ontology = from_str("""\
@@ -666,6 +680,26 @@ class TestReaderTerm(unittest.TestCase):
             [Term]
             id: CHEBI:100147
             xref: cas:389-08-2 [{CHARLIE.curie}]
+        """)
+        term = self.get_only_term(ontology)
+        x = Reference(prefix="cas", identifier="cas:389-08-2")
+        axioms = term._get_annotations(has_dbxref, x)
+        self.assertEqual(1, len(axioms))
+        axiom = axioms[0]
+        self.assertIsInstance(axiom, Annotation)
+        self.assertIsInstance(axiom.predicate, Reference)
+        self.assertIsInstance(axiom.value, Reference)
+        self.assertEqual(has_dbxref.pair, axiom.predicate.pair)
+        self.assertEqual(CHARLIE.pair, axiom.value.pair)
+
+    def test_10_xrefs_with_provenance_object_comment(self) -> None:
+        """Test an xref, same as before but with a comment text."""
+        ontology = from_str(f"""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:100147
+            xref: cas:389-08-2 [{CHARLIE.curie} "Comment-Text"]
         """)
         term = self.get_only_term(ontology)
         x = Reference(prefix="cas", identifier="cas:389-08-2")
