@@ -34,7 +34,7 @@ CONSORTIUM_SPECIES_MAPPING = {
 }
 
 GENE_INFO_URL = "ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene_info.gz"
-#: Columns fro gene_info.gz that are used
+#: Columns for gene_info.gz that are used
 GENE_INFO_COLUMNS = [
     "#tax_id",
     "GeneID",
@@ -106,17 +106,16 @@ def get_gene_info_df(force: bool = False) -> pd.DataFrame:
     )
 
 
-"""xref_mapping was obtained from:
 
-namespaces = set()
-for xrefs in df[df['dbXrefs'].notna()]['dbXrefs']:
-    for xref in xrefs.split('|'):
-        namespaces.add(xref.split(':')[0])
+def _get_xref_mapping() -> list[str]:
+    namespaces: set[str] = set()
+    df = get_gene_info_df()
+    for xrefs in df[df['dbXrefs'].notna()]['dbXrefs']:
+        for xref in xrefs.split('|'):
+            namespaces.add(xref.split(':')[0])
+    return sorted(namespaces, key=str.casefold)
 
-print('namespaces:')
-print(*sorted(namespaces), sep='\n')
-"""
-
+# this was retrieved from :func:`_get_xref_mapping`
 xref_mapping = {
     "APHIDBASE",
     "ASAP",
@@ -152,7 +151,12 @@ xref_mapping = {x.lower() for x in xref_mapping}
 
 
 def get_terms(force: bool = False) -> Iterable[Term]:
-    """Get Entrez terms."""
+    """Get Entrez terms.
+
+    :param force: should re-download be forced?
+
+    :yields: terms for each line
+    """
     df = get_gene_info_df(force=force)
 
     it = tqdm(

@@ -22,7 +22,6 @@ KW         Keyword                         Optional; once or more
 DR         Cross-reference to external     Optional; once or more
            databases
 //         Terminator                      Once; ends an entr
-
 """
 
 import itertools as itt
