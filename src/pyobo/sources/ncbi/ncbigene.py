@@ -106,14 +106,14 @@ def get_gene_info_df(force: bool = False) -> pd.DataFrame:
     )
 
 
-
 def _get_xref_mapping() -> list[str]:
     namespaces: set[str] = set()
     df = get_gene_info_df()
-    for xrefs in df[df['dbXrefs'].notna()]['dbXrefs']:
-        for xref in xrefs.split('|'):
-            namespaces.add(xref.split(':')[0])
+    for xrefs in df[df["dbXrefs"].notna()]["dbXrefs"]:
+        for xref in xrefs.split("|"):
+            namespaces.add(xref.split(":")[0])
     return sorted(namespaces, key=str.casefold)
+
 
 # this was retrieved from :func:`_get_xref_mapping`
 xref_mapping = {
