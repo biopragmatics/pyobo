@@ -154,8 +154,6 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     return terms.values()
 
 
-"""TREE"""
-
 
 def normalize_expasy_id(expasy_id: str) -> str:
     """Return a standardized ExPASy identifier string.
