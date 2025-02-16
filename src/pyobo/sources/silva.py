@@ -6,7 +6,7 @@ from collections.abc import Iterable
 import pandas as pd
 from tqdm.auto import tqdm
 
-from pyobo.struct import Obo, Reference, Term
+from pyobo.struct import Obo, Reference, Term, TypeDef
 from pyobo.struct.typedef import has_taxonomy_rank
 from pyobo.utils.path import ensure_path
 
@@ -47,12 +47,18 @@ SILVA_TAXMAP_URL = "https://www.arb-silva.de/fileadmin/silva_databases/current/E
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
+TYPEDEF = TypeDef(
+    reference=default_reference(PREFIX, "fixme", name="fixme"),
+    definition="fixme",
+    is_metadata_tag=False,
+)
+
 
 class SILVAGetter(Obo):
     """An ontology representation of the SILVA taxonomy."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_taxonomy_rank]
+    typedefs = [has_taxonomy_rank, TYPEDEF]
     idspaces = {
         PREFIX: "https://www.arb-silva.de/no_cache/download/archive/current/Exports/taxonomy/",
         "ena.embl": "https://www.ebi.ac.uk/ena/browser/view/",
