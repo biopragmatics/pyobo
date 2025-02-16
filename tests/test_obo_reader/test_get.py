@@ -207,6 +207,7 @@ class TestParseObonet(unittest.TestCase):
                 node=Reference(prefix="chebi", identifier="51990"),
                 ontology_prefix="chebi",
                 upgrade=False,
+                context="",
             )
         )
         t_prop = default_reference("chebi", "monoisotopicmass")
