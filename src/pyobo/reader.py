@@ -22,8 +22,10 @@ from tqdm.auto import tqdm
 from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
 from .identifier_utils import (
     BlacklistedError,
+    NotCURIEError,
     ParseError,
     UnparsableIRIError,
+    _is_valid_identifier,
     _parse_str_or_curie_or_uri_helper,
 )
 from .reader_utils import (
@@ -190,6 +192,7 @@ def from_obonet(
         upgrade=upgrade,
         node=Reference(prefix="obo", identifier=ontology_prefix),
         strict=strict,
+        context="graph property",
     ):
         if ann.predicate.pair == has_ontology_root_term.pair:
             match ann.value:
@@ -472,7 +475,12 @@ def _process_properties(
     term: Stanza, data, *, ontology_prefix: str, strict: bool, upgrade: bool, typedefs
 ) -> None:
     for ann in iterate_node_properties(
-        data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix, upgrade=upgrade
+        data,
+        node=term.reference,
+        strict=strict,
+        ontology_prefix=ontology_prefix,
+        upgrade=upgrade,
+        context="stanza property",
     ):
         # TODO parse axioms
         term.append_property(ann)
@@ -519,7 +527,12 @@ def _process_replaced_by(stanza: Stanza, data, *, ontology_prefix: str, strict: 
 
 def _process_subsets(stanza: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
     for reference in iterate_node_reference_tag(
-        "subset", data, node=stanza.reference, strict=strict, ontology_prefix=ontology_prefix
+        "subset",
+        data,
+        node=stanza.reference,
+        strict=strict,
+        ontology_prefix=ontology_prefix,
+        counter=SUBSET_ERROR_COUNTER,
     ):
         stanza.append_subset(reference)
 
@@ -656,6 +669,9 @@ def _handle_xref(
     return term.append_xref(xref, annotations=annotations)
 
 
+SUBSET_ERROR_COUNTER: Counter[tuple[str, str]] = Counter()
+
+
 def _get_subsetdefs(graph: nx.MultiDiGraph, ontology_prefix: str) -> list[tuple[Reference, str]]:
     rv = []
     for subsetdef in graph.get("subsetdef", []):
@@ -664,12 +680,13 @@ def _get_subsetdefs(graph: nx.MultiDiGraph, ontology_prefix: str) -> list[tuple[
             logger.warning("[%s] subsetdef did not have two parts", ontology_prefix, subsetdef)
             continue
         left_ref = _obo_parse_identifier(
-            left, ontology_prefix=ontology_prefix, name=right, line=subsetdef
+            left,
+            ontology_prefix=ontology_prefix,
+            name=right,
+            line=subsetdef,
+            counter=SUBSET_ERROR_COUNTER,
         )
         if left_ref is None:
-            logger.warning(
-                "[%s] subsetdef identifier could not be parsed", ontology_prefix, subsetdef
-            )
             continue
         right = right.strip('"')
         rv.append((left_ref, right))
@@ -738,20 +755,31 @@ def _iter_obo_graph(
     graph: nx.MultiDiGraph,
     *,
     strict: bool = True,
-    ontology_prefix: str | None = None,
+    ontology_prefix: str,
     use_tqdm: bool = False,
     upgrade: bool,
 ) -> Iterable[tuple[Reference, Mapping[str, Any]]]:
     """Iterate over the nodes in the graph with the prefix stripped (if it's there)."""
-    for node, data in tqdm(graph.nodes(data=True), disable=not use_tqdm):
+    for node, data in tqdm(
+        graph.nodes(data=True), disable=not use_tqdm, unit_scale=True, desc=f"[{ontology_prefix}]"
+    ):
+        name = data.get("name")
         match _parse_str_or_curie_or_uri_helper(
             node,
             ontology_prefix=ontology_prefix,
-            name=data.get("name"),
+            name=name,
             upgrade=upgrade,
+            context="stanza ID",
         ):
             case Reference() as reference:
                 yield reference, data
+            case NotCURIEError() as exc:
+                if _is_valid_identifier(node):
+                    yield default_reference(ontology_prefix, node, name=name), data
+                elif strict:
+                    raise exc
+                else:
+                    logger.warning(str(exc))
             case ParseError() as exc:
                 if strict:
                     raise exc
@@ -1165,6 +1193,7 @@ def iterate_node_properties(
     strict: bool = True,
     ontology_prefix: str,
     upgrade: bool,
+    context: str,
 ) -> Iterable[Annotation]:
     """Extract properties from a :mod:`obonet` node's data."""
     for prop_value_type in data.get("property_value", []):
@@ -1174,15 +1203,16 @@ def iterate_node_properties(
             strict=strict,
             ontology_prefix=ontology_prefix,
             upgrade=upgrade,
+            context=context,
         ):
             yield yv
 
 
 #: Keep track of property-value pairs for which the value couldn't be parsed,
 #: such as `dc:conformsTo autoimmune:inflammation.yaml` in MONDO
-UNHANDLED_PROP_OBJECTS: Counter[tuple[Reference, str]] = Counter()
+UNHANDLED_PROP_OBJECTS: Counter[tuple[str, str]] = Counter()
 
-UNHANDLED_PROPS: Counter[str] = Counter()
+UNHANDLED_PROPS: Counter[tuple[str, str]] = Counter()
 
 
 def _handle_prop(
@@ -1192,6 +1222,7 @@ def _handle_prop(
     strict: bool = True,
     ontology_prefix: str,
     upgrade: bool,
+    context: str | None,
 ) -> Annotation | None:
     try:
         prop, value_type = prop_value_type.split(" ", 1)
@@ -1206,11 +1237,10 @@ def _handle_prop(
         ontology_prefix=ontology_prefix,
         upgrade=upgrade,
         line=prop_value_type,
+        counter=UNHANDLED_PROPS,
+        context=context,
     )
     if prop_reference is None:
-        if not UNHANDLED_PROPS[prop]:
-            logger.warning("[%s] unparsable property: %s", node.curie, prop)
-        UNHANDLED_PROPS[prop] += 1
         return None
 
     value_type = value_type.strip()
@@ -1223,8 +1253,10 @@ def _handle_prop(
             datatype_raw,
             ontology_prefix=ontology_prefix,
             node=node,
+            predicate=prop_reference,
             line=prop_value_type,
             upgrade=upgrade,
+            context="property datatype",
         ):
             case Reference() as datatype_:
                 datatype = datatype_
@@ -1234,7 +1266,7 @@ def _handle_prop(
                 if strict:
                     raise exc
                 else:
-                    logger.warning("[%s] had unparsable datatype %s", node.curie, prop_value_type)
+                    logger.warning(str(exc))
                     return None
 
     # if it's an empty string, like the ones removed in https://github.com/oborel/obo-relations/pull/830,
@@ -1260,7 +1292,13 @@ def _handle_prop(
 
     if datatype and datatype.curie == "xsd:anyURI":
         match _parse_str_or_curie_or_uri_helper(
-            value, node=node, ontology_prefix=ontology_prefix, line=prop_value_type, upgrade=upgrade
+            value,
+            node=node,
+            predicate=prop_reference,
+            ontology_prefix=ontology_prefix,
+            line=prop_value_type,
+            upgrade=upgrade,
+            context="property object",
         ):
             case Reference() as obj_reference:
                 return Annotation(prop_reference, obj_reference)
@@ -1280,7 +1318,13 @@ def _handle_prop(
     if quoted:
         # give a try parsing it anyway, just in case ;)
         match _parse_str_or_curie_or_uri_helper(
-            value, ontology_prefix=ontology_prefix, node=node, line=prop_value_type, upgrade=upgrade
+            value,
+            ontology_prefix=ontology_prefix,
+            node=node,
+            line=prop_value_type,
+            upgrade=upgrade,
+            predicate=prop_reference,
+            context="property object",
         ):
             case Reference() as obj_reference:
                 return Annotation(prop_reference, obj_reference)
@@ -1303,20 +1347,14 @@ def _handle_prop(
             strict=strict,
             ontology_prefix=ontology_prefix,
             node=node,
+            predicate=prop_reference,
             line=prop_value_type,
-            context=f"property {prop_reference.curie} object",
+            context="property object",
+            counter=UNHANDLED_PROP_OBJECTS,
         ):
             case Reference() as obj_reference:
                 return Annotation(prop_reference, obj_reference)
             case None:
-                if not UNHANDLED_PROP_OBJECTS[prop_reference, value]:
-                    logger.warning(
-                        "[%s - %s] could not parse object: %s",
-                        node.curie,
-                        prop_reference.curie,
-                        value,
-                    )
-                UNHANDLED_PROP_OBJECTS[prop_reference, value_type] += 1
                 return None
 
 
@@ -1328,15 +1366,30 @@ def _get_prop(
     ontology_prefix: str,
     upgrade: bool,
     line: str,
+    counter: Counter[tuple[str, str]] | None = None,
+    context: str | None = None,
 ) -> Reference | None:
+    if rv := _parse_default_prop(property_id, ontology_prefix):
+        return rv
+    return _obo_parse_identifier(
+        property_id,
+        strict=strict,
+        node=node,
+        ontology_prefix=ontology_prefix,
+        upgrade=upgrade,
+        counter=counter,
+        context=context,
+        line=line,
+    )
+
+
+def _parse_default_prop(property_id, ontology_prefix) -> Reference | None:
     for delim in "#/":
         sw = f"http://purl.obolibrary.org/obo/{ontology_prefix}{delim}"
         if property_id.startswith(sw):
             identifier = property_id.removeprefix(sw)
             return default_reference(ontology_prefix, identifier)
-    return _obo_parse_identifier(
-        property_id, strict=strict, node=node, ontology_prefix=ontology_prefix, upgrade=upgrade
-    )
+    return None
 
 
 def iterate_node_reference_tag(
@@ -1347,11 +1400,17 @@ def iterate_node_reference_tag(
     strict: bool = True,
     ontology_prefix: str,
     upgrade: bool = True,
+    counter: Counter[tuple[str, str]] | None = None,
 ) -> Iterable[Reference]:
     """Extract a list of CURIEs from the data."""
     for identifier in data.get(tag, []):
         reference = _obo_parse_identifier(
-            identifier, strict=strict, node=node, ontology_prefix=ontology_prefix, upgrade=upgrade
+            identifier,
+            strict=strict,
+            node=node,
+            ontology_prefix=ontology_prefix,
+            upgrade=upgrade,
+            counter=counter,
         )
         if reference is None:
             logger.warning(
@@ -1389,6 +1448,7 @@ def _process_intersection_of(
                 target_id,
                 strict=strict,
                 node=term.reference,
+                predicate=predicate,
                 ontology_prefix=ontology_prefix,
                 upgrade=upgrade,
             )
@@ -1414,7 +1474,7 @@ def iterate_node_relationships(
     for line in data.get("relationship", []):
         relation_curie, target_curie = line.split(" ")
 
-        relation = _obo_parse_identifier(
+        predicate = _obo_parse_identifier(
             relation_curie,
             strict=strict,
             ontology_prefix=ontology_prefix,
@@ -1423,7 +1483,7 @@ def iterate_node_relationships(
             line=line,
             context="relationship predicate",
         )
-        match relation:
+        match predicate:
             # TODO extend with other exception handling
             case None:
                 logger.warning("[%s] could not parse relation %s", node.curie, relation_curie)
@@ -1433,12 +1493,13 @@ def iterate_node_relationships(
             target_curie,
             ontology_prefix=ontology_prefix,
             node=node,
+            predicate=predicate,
             line=line,
             context="relationship target",
             upgrade=upgrade,
         ):
             case Reference() as target:
-                yield relation, target
+                yield predicate, target
             case ParseError() as exc:
                 if strict:
                     raise exc
@@ -1495,7 +1556,9 @@ def _parse_xref_line(
             if strict:
                 raise exc
             else:
-                logger.warning(str(exc))
+                if not XREF_PROVENANCE_COUNTER[ontology_prefix, xref]:
+                    logger.warning(str(exc))
+                XREF_PROVENANCE_COUNTER[ontology_prefix, xref] += 1
                 return None
 
     if rest:

@@ -9,6 +9,7 @@ import bioregistry
 
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
+from pyobo.identifier_utils import NotCURIEError
 from pyobo.struct.functional.obo_to_functional import get_term_axioms
 from pyobo.struct.reference import _parse_datetime, unspecified_matching
 from pyobo.struct.struct import (
@@ -1103,7 +1104,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
     def test_18_see_also_double(self) -> None:
         """Test appending see also."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(NotCURIEError):
             term.append_see_also("something")
 
         term = Term(LYSINE_DEHYDROGENASE_ACT)

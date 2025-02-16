@@ -43,6 +43,7 @@ def _parse_str_or_curie_or_uri(
     strict: bool = True,
     ontology_prefix: str | None = None,
     node: Reference | None = None,
+    predicate: Reference | None = None,
     line: str | None = None,
     context: str | None = None,
     upgrade: bool = False,
@@ -52,6 +53,7 @@ def _parse_str_or_curie_or_uri(
         ontology_prefix=ontology_prefix,
         name=name,
         node=node,
+        predicate=predicate,
         line=line,
         context=context,
         upgrade=upgrade,
@@ -202,16 +204,19 @@ def _obo_parse_identifier(
     ontology_prefix: str,
     strict: bool = True,
     node: Reference | None = None,
+    predicate: Reference | None = None,
     line: str | None = None,
     context: str | None = None,
     name: str | None = None,
     upgrade: bool = True,
+    counter: Counter[tuple[str, str]] | None = None,
 ) -> Reference | None:
     """Parse from a CURIE, URI, or default string in the ontology prefix's IDspace using OBO semantics."""
     match _parse_str_or_curie_or_uri_helper(
         str_or_curie_or_uri,
         ontology_prefix=ontology_prefix,
         node=node,
+        predicate=predicate,
         line=line,
         context=context,
         name=name,
@@ -232,7 +237,12 @@ def _obo_parse_identifier(
         case ParseError() as exc:
             if strict:
                 raise exc
-            logger.warning(str(exc))
+            if counter is None:
+                logger.warning(str(exc))
+            else:
+                if not counter[ontology_prefix, str_or_curie_or_uri]:
+                    logger.warning(str(exc))
+                counter[ontology_prefix, str_or_curie_or_uri] += 1
             return None
 
 
@@ -242,16 +252,18 @@ def _parse_reference_or_uri_literal(
     ontology_prefix: str,
     strict: bool = True,
     node: Reference,
+    predicate: Reference | None = None,
     line: str,
     context: str,
     name: str | None = None,
     upgrade: bool = True,
     #
-    counter: Counter[tuple[str, str]],
+    counter: Counter[tuple[str, str]] | None = None,
 ) -> None | Reference | OBOLiteral:
     match _parse_str_or_curie_or_uri_helper(
         str_or_curie_or_uri,
         node=node,
+        predicate=predicate,
         ontology_prefix=ontology_prefix,
         line=line,
         context=context,
@@ -277,9 +289,12 @@ def _parse_reference_or_uri_literal(
         case ParseError() as exc:
             if strict:
                 raise exc
-            if not counter[ontology_prefix, str_or_curie_or_uri]:
+            if counter is None:
                 logger.warning(str(exc))
-            counter[ontology_prefix, str_or_curie_or_uri] += 1
+            else:
+                if not counter[ontology_prefix, str_or_curie_or_uri]:
+                    logger.warning(str(exc))
+                counter[ontology_prefix, str_or_curie_or_uri] += 1
             return None
 
 

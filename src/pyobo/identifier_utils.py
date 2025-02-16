@@ -9,6 +9,7 @@ from typing import Annotated, ClassVar
 import bioontologies.relations
 import bioontologies.upgrade
 import bioregistry
+import click
 from curies import ReferenceTuple
 from pydantic import ValidationError
 from typing_extensions import Doc
@@ -41,7 +42,7 @@ Line = Annotated[str | None, Doc("""The OBO line where the parsing happened""")]
 class ParseError(BaseException):
     """Raised on a missing prefix."""
 
-    text: ClassVar[str]
+    message: ClassVar[str]
 
     def __init__(
         self,
@@ -50,6 +51,7 @@ class ParseError(BaseException):
         context: str | None,
         ontology_prefix: str | None = None,
         node: Reference | None = None,
+        predicate: Reference | None = None,
         line: Line = None,
     ) -> None:
         """Initialize the error."""
@@ -57,24 +59,30 @@ class ParseError(BaseException):
         self.context = context
         self.ontology_prefix = ontology_prefix
         self.node = node
+        self.predicate = predicate
         self.line = line
 
     def __str__(self) -> str:
         s = ""
         if self.node:
-            s += f"[{self.node.curie}] "
+            if self.predicate:
+                s += f"[{self.node.curie} - {self.predicate.curie}] "
+            else:
+                s += f"[{self.node.curie}] "
         elif self.ontology_prefix:
             s += f"[{self.ontology_prefix}] "
-        s += f"`{self.curie}` {self.text}"
-        if self.line:
-            s += f" in: {self.line}"
+        s += f"{self.message} {click.style(self.curie, fg='cyan')}"
+        if self.context:
+            s += f" in {self.context}"
+        if self.line and self.line != self.curie:
+            s += f" in {click.style(self.line, fg='yellow')}"
         return s
 
 
 class ParseValidationError(ParseError):
     """Raised on a validation error."""
 
-    text = "failed Pydantic validation"
+    message = "failed Pydantic validation"
 
     def __init__(self, *args, exc: ValidationError, **kwargs) -> None:
         """Initialize the error."""
@@ -85,31 +93,31 @@ class ParseValidationError(ParseError):
 class UnregisteredPrefixError(ParseError):
     """Raised on a missing prefix."""
 
-    text = "contains unhandled prefix"
+    message = "unregistered prefix in"
 
 
 class UnparsableIRIError(ParseError):
     """Raised on a an unparsable IRI."""
 
-    text = "could not be IRI parsed"
+    message = "couldn't parse IRI"
 
 
 class EmptyStringError(ParseError):
     """Raised on a an empty string."""
 
-    text = "is empty"
+    message = "is empty"
 
 
 class NotCURIEError(ParseError):
     """Raised on a text that can't be parsed as a CURIE."""
 
-    text = "Not a CURIE"
+    message = "not a CURIE"
 
 
 class DefaultCoercionError(ParseError):
     """Raised on a text that can't be coerced into a default reference."""
 
-    text = "can't be coerced into a default reference"
+    message = "can't be coerced into a default reference"
 
 
 def _is_uri(s: str) -> bool:
@@ -117,6 +125,8 @@ def _is_uri(s: str) -> bool:
 
 
 def _preclean_uri(s: str) -> str:
+    s = s.strip().removeprefix(r"url\:").removeprefix(r"uri\:")
+    s = s.strip().removeprefix(r"URL\:").removeprefix(r"URI\:")
     s = s.strip().removeprefix("url:").removeprefix("uri:")
     s = s.removeprefix("URL:").removeprefix("URI:")
     s = s.removeprefix("WWW:").removeprefix("www:").lstrip()
@@ -130,6 +140,7 @@ def _parse_str_or_curie_or_uri_helper(
     *,
     ontology_prefix: str | None = None,
     node: Reference | None = None,
+    predicate: Reference | None = None,
     upgrade: bool = True,
     line: str | None = None,
     name: str | None = None,
@@ -148,10 +159,11 @@ def _parse_str_or_curie_or_uri_helper(
     """
     str_or_curie_or_uri = _preclean_uri(str_or_curie_or_uri)
     if not str_or_curie_or_uri:
-        raise EmptyStringError(
+        return EmptyStringError(
             str_or_curie_or_uri,
             ontology_prefix=ontology_prefix,
             node=node,
+            predicate=predicate,
             line=line,
             context=context,
         )
@@ -177,16 +189,31 @@ def _parse_str_or_curie_or_uri_helper(
 
     if _is_uri(str_or_curie_or_uri):
         prefix, identifier = bioregistry.parse_iri(str_or_curie_or_uri)
-        if prefix and identifier:
-            return Reference(prefix=prefix, identifier=identifier)
-        else:
+        if not prefix or not identifier:
             return UnparsableIRIError(
                 str_or_curie_or_uri,
                 ontology_prefix=ontology_prefix,
                 node=node,
+                predicate=predicate,
                 line=line,
                 context=context,
             )
+        try:
+            rv = Reference.model_validate(
+                {"prefix": prefix, "identifier": identifier, "name": name}
+            )
+        except ValidationError as exc:
+            return ParseValidationError(
+                str_or_curie_or_uri,
+                ontology_prefix=ontology_prefix,
+                node=node,
+                predicate=predicate,
+                line=line,
+                context=context,
+                exc=exc,
+            )
+        else:
+            return rv
 
     prefix, delimiter, identifier = str_or_curie_or_uri.partition(":")
     if not delimiter:
@@ -194,6 +221,7 @@ def _parse_str_or_curie_or_uri_helper(
             str_or_curie_or_uri,
             ontology_prefix=ontology_prefix,
             node=node,
+            predicate=predicate,
             line=line,
             context=context,
         )
@@ -204,6 +232,7 @@ def _parse_str_or_curie_or_uri_helper(
             str_or_curie_or_uri,
             ontology_prefix=ontology_prefix,
             node=node,
+            predicate=predicate,
             line=line,
             context=context,
         )
@@ -218,6 +247,7 @@ def _parse_str_or_curie_or_uri_helper(
             str_or_curie_or_uri,
             ontology_prefix=ontology_prefix,
             node=node,
+            predicate=predicate,
             line=line,
             exc=exc,
             context=context,

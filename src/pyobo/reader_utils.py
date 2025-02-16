@@ -7,6 +7,7 @@ import typing as t
 from collections import Counter
 from collections.abc import Mapping, Sequence
 
+import click
 from curies import ReferenceTuple
 from curies import vocabulary as v
 
@@ -72,7 +73,10 @@ def _chomp_typedef(
     )
     if reference is None:
         logger.warning(
-            "[%s] unable to parse synonym type `%s` in line %s", node.curie, synonym_typedef_id, s
+            "[%s] unable to parse synonym type `%s` in line %s",
+            node.curie,
+            synonym_typedef_id,
+            click.style(s, fg="yellow"),
         )
         return None, rest
 
@@ -99,7 +103,11 @@ def _chomp_references(
             return [], s
 
     if "]" not in s:
-        logger.warning("[%s] missing closing square bracket in references: %s", node.curie, s)
+        logger.warning(
+            "[%s] missing closing square bracket in references: %s",
+            node.curie,
+            click.style(line, fg="yellow"),
+        )
         return [], s
 
     first, rest = s.lstrip("[").split("]", 1)

@@ -23,7 +23,6 @@ from .reference import (
     OBOLiteral,
     Reference,
     Referenced,
-    _parse_str_or_curie_or_uri,
     comma_separate_references,
     default_reference,
     get_preferred_curie,
@@ -33,7 +32,12 @@ from .reference import (
     unspecified_matching,
 )
 from .utils import obo_escape_slim
-from ..identifier_utils import ParseError, _is_valid_identifier
+from ..identifier_utils import (
+    NotCURIEError,
+    ParseError,
+    _is_valid_identifier,
+    _parse_str_or_curie_or_uri_helper,
+)
 
 if TYPE_CHECKING:
     from pyobo.struct.struct import Synonym, TypeDef
@@ -857,21 +861,19 @@ def _ensure_ref(
         )
     if isinstance(reference, curies.Reference):
         return Reference(prefix=reference.prefix, identifier=reference.identifier)
-    try:
-        rv = _parse_str_or_curie_or_uri(reference, strict=True, ontology_prefix=ontology_prefix)
-    except ParseError:
-        if not _is_valid_identifier(reference):
-            raise
-        elif ontology_prefix:
-            return default_reference(ontology_prefix, reference)
-        else:
-            raise ValueError(
-                "can't automatically create a reference without an `ontology_prefix` given"
-            ) from None
-    else:
-        if rv is None:
-            raise ValueError(f"[{ontology_prefix}] unable to parse {reference}")
-        return rv
+
+    match _parse_str_or_curie_or_uri_helper(reference, ontology_prefix=ontology_prefix):
+        case Reference() as parsed_reference:
+            return parsed_reference
+        case NotCURIEError() as exc:
+            if ontology_prefix and _is_valid_identifier(reference):
+                return default_reference(ontology_prefix, reference)
+            else:
+                raise exc
+        case ParseError() as exc:
+            raise exc
+
+    raise TypeError
 
 
 def _chain_tag(
