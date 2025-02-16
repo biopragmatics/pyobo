@@ -1,7 +1,8 @@
 Installation
 ============
-The most recent release can be installed from
-`PyPI <https://pypi.org/project/pyobo>`_ with:
+
+The most recent release can be installed from `PyPI <https://pypi.org/project/pyobo>`_
+with:
 
 .. code-block:: shell
 
@@ -21,5 +22,5 @@ To install in development mode, use the following:
     cd pyobo
     UV_PREVIEW=1 python3 -m pip install -e .
 
-Note that the ``UV_PREVIEW`` environment variable is required to be
-set until the uv build backend becomes a stable feature.
+Note that the ``UV_PREVIEW`` environment variable is required to be set until the uv
+build backend becomes a stable feature.

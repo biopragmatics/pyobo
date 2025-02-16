@@ -62,7 +62,6 @@ def get_hierarchy(
 
     This function thinly wraps :func:`_get_hierarchy_helper` to make it easier to work
     with the lru_cache mechanism.
-
     """
     return _get_hierarchy_helper(
         prefix=prefix,
@@ -132,8 +131,9 @@ def is_descendent(
 ) -> bool:
     """Check that the first identifier has the second as a descendent.
 
-    Check that go:0070246 ! natural killer cell apoptotic process is a
-    descendant of go:0006915 ! apoptotic process::
+    Check that go:0070246 ! natural killer cell apoptotic process is a descendant of
+    go:0006915 ! apoptotic process
+
     >>> assert is_descendent("go", "0070246", "go", "0006915")
     """
     ancestor = Reference(prefix=ancestor_prefix, identifier=ancestor_identifier)
@@ -181,7 +181,9 @@ def has_ancestor(
 ) -> bool:
     """Check that the first identifier has the second as an ancestor.
 
-    Check that go:0008219 ! cell death is an ancestor of go:0006915 ! apoptotic process::
+    Check that go:0008219 ! cell death is an ancestor of go:0006915 ! apoptotic
+    process
+
     >>> assert has_ancestor("go", "0006915", "go", "0008219")
     """
     ancestor = Reference(prefix=ancestor_prefix, identifier=ancestor_identifier)
