@@ -307,7 +307,8 @@ for reference, name in load_ro().items():
             reference.prefix, reference.identifier, name
         )
 
-#: See https://mapping-commons.github.io/sssom/spec-model/
+#: SSSOM-compliant match type definitions
+#: .. seealso:: https://mapping-commons.github.io/sssom/spec-model/
 match_typedefs: Sequence[TypeDef] = (
     broad_match,
     close_match,

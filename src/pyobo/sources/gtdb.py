@@ -130,7 +130,7 @@ def _parse_name(part: str) -> tuple[str, str] | None:
 
     >>> _parse_name("x__Sulfolobaceae")
 
-    The following is malformed because it's missing a name'
+    The following is malformed because it's missing a name
 
     >>> _parse_name("f__")
     """

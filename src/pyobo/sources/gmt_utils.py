@@ -11,6 +11,7 @@ def parse_gmt_file(path: str | Path) -> Iterable[GMTSummary]:
     """Return file as list of pathway - gene sets (ENTREZ-identifiers).
 
     :param path: path to GMT file
+
     :yields: processed lines
     """
     with open(path) as file:
@@ -22,9 +23,8 @@ def _process_line(line: str) -> tuple[str, str, set[str]]:
     """Return the pathway name, url, and gene sets associated.
 
     :param line: gmt file line
-    :return: pathway name
-    :return: pathway info url
-    :return: genes set associated
+
+    :returns: pathway name, pathway info url, and genes set associated
     """
     name, info, *entries = (p.strip() for p in line.split("\t"))
     return name, info, set(entries)
