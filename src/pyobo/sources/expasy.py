@@ -154,13 +154,11 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     return terms.values()
 
 
-"""TREE"""
-
-
 def normalize_expasy_id(expasy_id: str) -> str:
     """Return a standardized ExPASy identifier string.
 
     :param expasy_id: A possibly non-normalized ExPASy identifier
+    :return: A normalized string.
     """
     return expasy_id.replace(" ", "")
 
@@ -207,10 +205,11 @@ def get_tree(lines: Iterable[str]):
     return rv
 
 
-def get_database(lines: Iterable[str]) -> Mapping:
+def get_database(lines: Iterable[str]) -> Mapping[str, dict[str, Any]]:
     """Parse the ExPASy database file and returns a list of enzyme entry dictionaries.
 
     :param lines: An iterator over the ExPASy database file or file-like
+    :returns: A mapping from EC code to data
     """
     rv = {}
     for groups in _group_by_id(lines):
@@ -276,6 +275,9 @@ TRANSFER_SPLIT_RE = re.compile(r",\s*|\s+and\s+")
 
 def _parse_transfer(value: str) -> list[str]:
     """Parse transferred entry string.
+
+    :param value: A string for a transferred entry
+    :returns: A list of EC codes that it got transferred to
 
     >>> _parse_transfer("Transferred entry: 1.1.1.198, 1.1.1.227 and 1.1.1.228.")
     ['1.1.1.198', '1.1.1.227', '1.1.1.228']

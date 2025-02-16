@@ -32,12 +32,11 @@ class TestCaches(unittest.TestCase):
 
             self._help_test_mapping(rv1)
 
-            """Test cache"""
+            # Test cache
             rv3 = open_map_tsv(path)
             self._help_test_mapping(rv3)
 
-            """Test reload"""
-
+            # Test reload
             start_time = time.time()
             rv2 = _get_mapping()  # this time should be fast
             elapsed = time.time() - start_time
@@ -68,11 +67,11 @@ class TestCaches(unittest.TestCase):
 
             self._help_test_multidict(rv1)
 
-            """Test cache"""
+            # Test cache
             rv3 = open_multimap_tsv(path)
             self._help_test_multidict(rv3)
 
-            """Test reload"""
+            # Test reload
             start_time = time.time()
             rv2 = _get_multidict()  # this time should be fast
             elapsed = time.time() - start_time

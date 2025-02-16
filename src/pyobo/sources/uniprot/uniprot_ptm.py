@@ -1,29 +1,4 @@
-"""Converter for UniProt PTMs.
-
-Line code  Content                         Occurrence in an entry
----------  ---------------------------     ------------------------------
-ID         Identifier (FT description)     Once; starts a PTM entry
-AC         Accession (PTM-xxxx)            Once
-FT         Feature key                     Once
-TG         Target                          Once; two targets separated by
-                                           a dash in case of intrachain
-                                           crosslinks
-PA         Position of the modification    Optional; once
-           on the amino acid
-PP         Position of the modification    Optional; once
-           in the polypeptide
-CF         Correction formula              Optional; once
-MM         Monoisotopic mass difference    Optional; once
-MA         Average mass difference         Optional; once
-LC         Cellular location               Optional; once; alternatives
-                                           can be proposed
-TR         Taxonomic range                 Optional; once or more
-KW         Keyword                         Optional; once or more
-DR         Cross-reference to external     Optional; once or more
-           databases
-//         Terminator                      Once; ends an entr
-
-"""
+"""Converter for UniProt PTMs."""
 
 import itertools as itt
 from collections import defaultdict

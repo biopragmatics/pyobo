@@ -94,7 +94,7 @@ def get_ontology(
 
     :raises OnlyOWLError: If the OBO foundry only has an OWL document for this resource.
 
-    Alternate usage if you have a custom url::
+    Alternate usage if you have a custom url
 
     .. code-block:: python
 

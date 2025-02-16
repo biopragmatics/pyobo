@@ -1167,7 +1167,8 @@ def iterate_node_synonyms(
 ) -> Iterable[Synonym]:
     """Extract synonyms from a :mod:`obonet` node's data.
 
-    Example strings:
+    Example strings
+
     - "LTEC I" EXACT [Orphanet:93938,DOI:xxxx]
     - "LTEC I" EXACT [Orphanet:93938]
     - "LTEC I" [Orphanet:93938]

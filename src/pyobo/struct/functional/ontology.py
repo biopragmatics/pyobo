@@ -143,15 +143,21 @@ class Ontology(Box):
                 <https://www.w3.org/TR/owl2-syntax/#Ontology_IRI_and_Version_IRI>`_
 
         :param version_iri: An optional version IRI
-        :param directly_imports_documents:
+        :param directly_imports_documents: Optional ontology imports
 
-            .. seealso:: `3.4 "Imports" <https://www.w3.org/TR/owl2-syntax/#Imports>`_
-        :param annotations:
+            .. seealso::
 
-            .. seealso:: `3.5 "Ontology Annotations" <https://www.w3.org/TR/owl2-syntax/#Ontology_Annotations>`_
+                `3.4 "Imports" <https://www.w3.org/TR/owl2-syntax/#Imports>`_
+
+        :param annotations: .. seealso::
+
+            `3.5 "Ontology Annotations"
+            <https://www.w3.org/TR/owl2-syntax/#Ontology_Annotations>`_
         :param axioms: statements about what is true in the domain
 
-            .. seealso:: `9 "Axioms" <https://www.w3.org/TR/owl2-syntax/#Axioms>`_
+            .. seealso::
+
+                `9 "Axioms" <https://www.w3.org/TR/owl2-syntax/#Axioms>`_
         """
         self.iri = iri
         self.version_iri = version_iri
