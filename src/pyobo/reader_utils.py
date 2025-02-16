@@ -7,21 +7,14 @@ import typing as t
 from collections import Counter
 from collections.abc import Mapping, Sequence
 
+import click
 from curies import ReferenceTuple
 from curies import vocabulary as v
-from pydantic import ValidationError
 
-from pyobo.identifier_utils import (
-    NotCURIEError,
-    ParseError,
-    UnparsableIRIError,
-    _is_valid_identifier,
-)
 from pyobo.struct.reference import (
     OBOLiteral,
     _obo_parse_identifier,
-    _parse_str_or_curie_or_uri,
-    default_reference,
+    _parse_reference_or_uri_literal,
 )
 from pyobo.struct.struct import Reference, SynonymTypeDef, _synonym_typedef_warn
 from pyobo.struct.struct_utils import Annotation
@@ -80,7 +73,10 @@ def _chomp_typedef(
     )
     if reference is None:
         logger.warning(
-            "[%s] unable to parse synonym type `%s` in line %s", node.curie, synonym_typedef_id, s
+            "[%s] unable to parse synonym type `%s` in line %s",
+            node.curie,
+            synonym_typedef_id,
+            click.style(s, fg="yellow"),
         )
         return None, rest
 
@@ -107,7 +103,11 @@ def _chomp_references(
             return [], s
 
     if "]" not in s:
-        logger.warning("[%s] missing closing square bracket in references: %s", node.curie, s)
+        logger.warning(
+            "[%s] missing closing square bracket in references: %s",
+            node.curie,
+            click.style(line, fg="yellow"),
+        )
         return [], s
 
     first, rest = s.lstrip("[").split("]", 1)
@@ -146,57 +146,9 @@ def _parse_provenance_list(
                 node=node,
                 ontology_prefix=ontology_prefix,
                 counter=counter,
-                scope_text=scope_text,
+                context=scope_text,
                 line=line,
                 strict=strict,
             )
         )
     ]
-
-
-def _parse_reference_or_uri_literal(
-    curie_or_uri: str,
-    *,
-    node: Reference,
-    ontology_prefix: str,
-    counter: Counter[tuple[str, str]],
-    scope_text: str,
-    strict: bool = True,
-    line: str,
-) -> None | Reference | OBOLiteral:
-    try:
-        reference = _parse_str_or_curie_or_uri(
-            curie_or_uri,
-            strict=True,
-            node=node,
-            ontology_prefix=ontology_prefix,
-            line=line,
-        )
-    except ValidationError:
-        if strict:
-            raise
-        else:
-            logger.warning("[%s] invalid reference in %s: %s", node.curie, scope_text, curie_or_uri)
-            return None
-    except UnparsableIRIError:
-        # this means that it's defininitely a URI,
-        # but it couldn't be parsed with Bioregistry
-        return OBOLiteral.uri(curie_or_uri)
-    except NotCURIEError:
-        # this means there's no colon `:`
-        if _is_valid_identifier(curie_or_uri):
-            return default_reference(prefix=ontology_prefix, identifier=curie_or_uri)
-        elif strict:
-            raise
-        else:
-            return None
-    except ParseError:
-        if strict:
-            raise
-        else:
-            if not counter[ontology_prefix, curie_or_uri]:
-                logger.warning("[%s] unable to parse %s: %s", node.curie, scope_text, curie_or_uri)
-            counter[ontology_prefix, curie_or_uri] += 1
-            return None
-    else:
-        return reference

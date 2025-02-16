@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv>=0.5.13,<0.6.0"]
+requires = ["uv>=0.5.13,<0.7.0"]
 # The uv backend entered preview mode in https://github.com/astral-sh/uv/pull/8886/files
 # with the 0.5.0 release. See also https://github.com/astral-sh/uv/issues/3957 for tracking.
 build-backend = "uv"
