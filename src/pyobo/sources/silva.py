@@ -6,7 +6,7 @@ from collections.abc import Iterable
 import pandas as pd
 from tqdm.auto import tqdm
 
-from pyobo.struct import Obo, Reference, Term, TypeDef
+from pyobo.struct import Obo, Reference, Term, TypeDef, default_reference
 from pyobo.struct.typedef import has_taxonomy_rank
 from pyobo.utils.path import ensure_path
 
