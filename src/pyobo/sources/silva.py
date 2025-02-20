@@ -47,10 +47,10 @@ SILVA_TAXMAP_URL = "https://www.arb-silva.de/fileadmin/silva_databases/current/E
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
-TYPEDEF = TypeDef(
-    reference=default_reference(PREFIX, "fixme", name="fixme"),
-    definition="fixme",
-    is_metadata_tag=False,
+HAS_TAXONOMIC_CLASSIFICATION = TypeDef(
+    reference=default_reference(PREFIX, "has_taxonomic_classification", name="has taxonomic classification"),
+    definition="Indicates that the genome sequence represented by an ENA accession is classified under this taxon by SILVA.",
+    is_metadata_tag=True,
 )
 
 
@@ -58,7 +58,7 @@ class SILVAGetter(Obo):
     """An ontology representation of the SILVA taxonomy."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_taxonomy_rank, TYPEDEF]
+    typedefs = [has_taxonomy_rank, HAS_TAXONOMIC_CLASSIFICATION]
     idspaces = {
         PREFIX: "https://www.arb-silva.de/no_cache/download/archive/current/Exports/taxonomy/",
         "ena.embl": "https://www.ebi.ac.uk/ena/browser/view/",
@@ -157,7 +157,9 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
                 reference=Reference(prefix="ena.embl", identifier=accession, name=organism)
             )
             # Do NOT annotate the new term with a rank (leave it unranked).
-            new_term.append_parent(Reference(prefix=PREFIX, identifier=species_taxon_id))
+            new_term.annotate_object(
+                HAS_TAXONOMIC_CLASSIFICATION, Reference(prefix=PREFIX, identifier=species_taxon_id)
+            )
             yield new_term
         else:
             logger.warning(
