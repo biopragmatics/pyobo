@@ -58,6 +58,7 @@ from .ror import RORGetter
 from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
 from .sgd import SGDGetter
 from .signor import SignorGetter
+from .silva import SILVAGetter
 from .slm import SLMGetter
 from .umls import UMLSGetter, UMLSSTyGetter
 from .unimod import UnimodGetter
@@ -139,6 +140,7 @@ __all__ = [
     "SDISGetter",
     "SFAMGetter",
     "SGDGetter",
+    "SILVAGetter",
     "SLMGetter",
     "SignorGetter",
     "UMLSGetter",
