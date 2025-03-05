@@ -48,7 +48,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
 HAS_TAXONOMIC_CLASSIFICATION = TypeDef(
-    reference=default_reference(PREFIX, "has_taxonomic_classification", name="has taxonomic classification"),
+    reference=default_reference(
+        PREFIX, "has_taxonomic_classification", name="has taxonomic classification"
+    ),
     definition="Indicates that the genome sequence represented by an ENA accession is classified under this taxon by SILVA.",
     is_metadata_tag=True,
 )
