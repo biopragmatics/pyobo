@@ -33,12 +33,9 @@ def get_grounder(
 ) -> ssslm.Grounder:
     """Get a grounder for the given prefix(es)."""
     literal_mappings: list[LiteralMapping] = []
-    disable = not check_should_use_tqdm(kwargs)
-    for prefix, kwargs["version"] in tqdm(
-        _clean_prefix_versions(prefixes, versions=versions),
-        leave=False,
-        disable=disable,
-    ):
+    it = _clean_prefix_versions(prefixes, versions=versions)
+    disable = len(it) == 1 or not check_should_use_tqdm(kwargs)
+    for prefix, kwargs["version"] in tqdm(it, leave=False, disable=disable):
         try:
             literal_mappings.extend(
                 get_literal_mappings(
