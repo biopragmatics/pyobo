@@ -146,13 +146,12 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
     ):
         accession = row["accession"].strip()
         species_taxon_id = row["species_taxon_id"].strip()
-        organism = row["organism"].strip()
         if not accession or not species_taxon_id:
             continue
         if species_taxon_id in terms_by_id:
             # Create a new term for the ENA accession.
             new_term = Term(
-                reference=Reference(prefix="ena.embl", identifier=accession, name=organism)
+                reference=Reference(prefix="ena.embl", identifier=accession)
             )
             # Do NOT annotate the new term with a rank (leave it unranked).
             new_term.annotate_object(
