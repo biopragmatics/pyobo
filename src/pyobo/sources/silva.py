@@ -50,12 +50,10 @@ logger.setLevel(logging.WARNING)
 RELATION_NEEDS_NEW_NAME = TypeDef(
     reference=default_reference(PREFIX, "has_related_sequence", name="has related sequence"),
     # FIXME!
-    definition="""
-        This relation represents a connection between a species and ENA records that are annotated by SILVA's
-        "taxmap" that these are related in some way. It's crucial to make more explicit what this relation is.
-
-        Old text: Indicates that the genome sequence represented by an ENA accession is classified under this taxon by SILVA.
-    """,
+    definition="This relation represents a connection between a species and ENA records that are "
+    "annotated by SILVA's 'taxmap' that these are related in some way. It's crucial to make more explicit "
+    "what this relation is. Old text: Indicates that the genome sequence represented by an ENA accession is "
+    "classified under this taxon by SILVA.",
     is_metadata_tag=True,
 )
 
@@ -99,7 +97,7 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
         tax_df.iterrows(),
         total=len(tax_df),
         desc=f"[{PREFIX}] processing main taxonomy",
-        unit="row",
+        unit_scale=True,
     ):
         tax_str = row["taxonomy"].strip()
         silva_taxon_id = row["taxon_id"].strip()
@@ -126,6 +124,7 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
             parent_key = ";".join(parts[:-1]) + ";"  # e.g. "Bacteria;"
             parent_id = tax_path_to_id.get(parent_key)
             if parent_id:
+                # TODO get parent's name in there if possible, makes the OBO file much more readable
                 term.append_parent(Reference(prefix=PREFIX, identifier=parent_id))
         full_key = ";".join(parts) + ";"
         tax_path_to_id[full_key] = silva_taxon_id
@@ -137,7 +136,7 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
     taxmap_df = pd.read_csv(taxmap_path, sep="\t", dtype=str, usecols=[0, 5])
 
     for ena_embl_id, species_silva_taxon_id in tqdm(
-        taxmap_df.values, desc=f"[{PREFIX}] processing taxmap"
+        taxmap_df.values, desc=f"[{PREFIX}] processing taxmap", unit_scale=True
     ):
         if pd.isna(ena_embl_id) or pd.isna(species_silva_taxon_id):
             continue
