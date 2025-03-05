@@ -143,14 +143,15 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
             continue
         # FIXME please add a comment on why we're only doing this based on the species ID.
         #  does SILVA not make mappings for other ranks?
-        if species_silva_taxon_id in silva_taxon_id_to_term:
-            silva_taxon_id_to_term[species_silva_taxon_id].annotate_object(
-                RELATION_NEEDS_NEW_NAME, Reference(prefix="ena.embl", identifier=ena_embl_id)
-            )
-        else:
+        term = silva_taxon_id_to_term.get(species_silva_taxon_id)
+        if term is None:
             logger.warning(
                 f"Row {idx} in taxmap: species_taxon_id {species_silva_taxon_id} not found in main taxonomy"
             )
+        else:
+            ref = Reference(prefix="ena.embl", identifier=ena_embl_id)
+            if ref not in term.properties[RELATION_NEEDS_NEW_NAME.reference]:
+                term.annotate_object(RELATION_NEEDS_NEW_NAME, ref)
 
     # Yield all terms from the main taxonomy.
     yield from silva_taxon_id_to_term.values()
