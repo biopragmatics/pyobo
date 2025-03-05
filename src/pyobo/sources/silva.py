@@ -61,10 +61,6 @@ class SILVAGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     typedefs = [has_taxonomy_rank, HAS_TAXONOMIC_CLASSIFICATION]
-    idspaces = {
-        PREFIX: "https://www.arb-silva.de/no_cache/download/archive/current/Exports/taxonomy/",
-        "ena.embl": "https://www.ebi.ac.uk/ena/browser/view/",
-    }
     root_terms = [
         Reference(prefix=PREFIX, identifier="2", name="Archaea"),
         Reference(prefix=PREFIX, identifier="3", name="Bacteria"),
