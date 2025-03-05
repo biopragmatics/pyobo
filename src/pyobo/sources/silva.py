@@ -87,6 +87,8 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
 
     #: a dictionary that maps the joined taxonomy path (with trailing ";") to taxon_id
     tax_path_to_id: dict[str, str] = {}
+
+    # FIXME better name for this dictionary
     #: maps taxon_id to the Term object
     terms_by_id = {}
 
@@ -145,10 +147,15 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
         taxmap_df.iterrows(), total=len(taxmap_df), desc=f"[{PREFIX}] processing taxmap", unit="row"
     ):
         accession = row["accession"].strip()
+        # FIXME better variable name... what kind of taxon_id? species_silva_taxon_id or species_ncbitaxon_id?
         species_taxon_id = row["species_taxon_id"].strip()
         if not accession or not species_taxon_id:
             continue
         if species_taxon_id in terms_by_id:
+            # FIXME rather than creating a term for ena.embl and doing axiom injection
+            #  (i.e., making relationships for terms outside of this ontology),
+            #  flip the direction of the relationship and annotate it directly onto the SILVA
+            #  term
             # Create a new term for the ENA accession.
             new_term = Term(
                 reference=Reference(prefix="ena.embl", identifier=accession)
