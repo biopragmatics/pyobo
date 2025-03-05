@@ -157,9 +157,7 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
             #  flip the direction of the relationship and annotate it directly onto the SILVA
             #  term
             # Create a new term for the ENA accession.
-            new_term = Term(
-                reference=Reference(prefix="ena.embl", identifier=accession)
-            )
+            new_term = Term(reference=Reference(prefix="ena.embl", identifier=accession))
             # Do NOT annotate the new term with a rank (leave it unranked).
             new_term.annotate_object(
                 HAS_TAXONOMIC_CLASSIFICATION, Reference(prefix=PREFIX, identifier=species_taxon_id)
