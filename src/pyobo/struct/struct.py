@@ -82,7 +82,6 @@ __all__ = [
     "Term",
     "abbreviation",
     "acronym",
-    "int_identifier_sort_key",
     "make_ad_hoc_ontology",
 ]
 
@@ -257,7 +256,7 @@ default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
 
 
 @dataclass
-class Term(Referenced, Stanza):
+class Term(Stanza):
     """A term in OBO."""
 
     #: The primary reference for the entity
@@ -318,20 +317,6 @@ class Term(Referenced, Stanza):
             reference=Reference(prefix=prefix, identifier=identifier, name=name),
             definition=definition,
             **kwargs,
-        )
-
-    @classmethod
-    def auto(
-        cls,
-        prefix: str,
-        identifier: str,
-    ) -> Term:
-        """Create a term from a reference."""
-        from ..api import get_definition
-
-        return cls(
-            reference=Reference.auto(prefix=prefix, identifier=identifier),
-            definition=get_definition(prefix, identifier),
         )
 
     @classmethod
@@ -496,14 +481,6 @@ class Term(Referenced, Stanza):
             "consider", self, v.see_also, ontology_prefix=ontology_prefix
         )
 
-    @staticmethod
-    def _reference(
-        predicate: Reference, ontology_prefix: str, add_name_comment: bool = False
-    ) -> str:
-        return reference_escape(
-            predicate, ontology_prefix=ontology_prefix, add_name_comment=add_name_comment
-        )
-
 
 #: A set of warnings, used to make sure we don't show the same one over and over
 _SYNONYM_TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
@@ -550,11 +527,6 @@ class BioregistryError(ValueError):
         on the PyOBO issue tracker for support.
         """
         )
-
-
-def int_identifier_sort_key(obo: Obo, term: Term) -> int:
-    """Sort terms by integer identifiers."""
-    return int(term.identifier)
 
 
 LOGGED_MISSING_URI: set[tuple[str, str]] = set()
@@ -612,8 +584,6 @@ class Obo:
     _hierarchy: nx.DiGraph | None = field(init=False, default=None, repr=False)
     #: A cache of terms
     _items: list[Term] | None = field(init=False, default=None, repr=False)
-
-    term_sort_key: ClassVar[Callable[[Obo, Term], int] | None] = None
 
     subsetdefs: ClassVar[list[tuple[Reference, str]] | None] = None
 
@@ -691,10 +661,8 @@ class Obo:
     def _get_prefixes(self) -> set[str]:
         """Get all prefixes used by the ontology."""
         prefixes: set[str] = set(DEFAULT_PREFIX_MAP)
-        for term in self:
-            prefixes.update(term._get_prefixes())
-        for typedef in self.typedefs or []:
-            prefixes.update(typedef._get_prefixes())
+        for stanza in self._iter_stanzas():
+            prefixes.update(stanza._get_prefixes())
         for synonym_typedef in self.synonym_typedefs or []:
             prefixes.update(synonym_typedef._get_prefixes())
         prefixes.update(subset.prefix for subset, _ in self.subsetdefs or [])
@@ -807,16 +775,25 @@ class Obo:
         """Get the date as a formatted string."""
         return (self.date if self.date else datetime.datetime.now()).strftime(DATE_FORMAT)
 
+    def _iter_terms_safe(self) -> Iterator[Term]:
+        if self.iter_only:
+            return iter(self.iter_terms(force=self.force))
+        return iter(self._items_accessor)
+
     def _iter_terms(self, use_tqdm: bool = False, desc: str = "terms") -> Iterable[Term]:
+        yv = self._iter_terms_safe()
         if use_tqdm:
             total: int | None
             try:
                 total = len(self._items_accessor)
             except TypeError:
                 total = None
-            yield from tqdm(self, desc=desc, unit_scale=True, unit="term", total=total)
-        else:
-            yield from self
+            yv = tqdm(yv, desc=desc, unit_scale=True, unit="term", total=total)
+        yield from yv
+
+    def _iter_stanzas(self, use_tqdm: bool = False, desc: str = "terms") -> Iterable[Stanza]:
+        yield from self._iter_terms(use_tqdm=use_tqdm, desc=desc)
+        yield from self.typedefs or []
 
     def iterate_obo_lines(
         self,
@@ -915,7 +892,7 @@ class Obo:
             )
 
         # TERMS AND INSTANCES
-        for term in self:
+        for term in self._iter_terms():
             yield from term.iterate_obo_lines(
                 ontology_prefix=self.ontology,
                 typedefs=typedefs,
@@ -1278,16 +1255,16 @@ class Obo:
             self.get_graph().get_nodes_df().to_csv(self._nodes_path, sep="\t", index=False)
 
     @property
-    def _items_accessor(self):
+    def _items_accessor(self) -> list[Term]:
         if self._items is None:
             # if the term sort key is None, then the terms get sorted by their reference
-            self._items = sorted(self.iter_terms(force=self.force), key=self.term_sort_key)
+            self._items = sorted(
+                self.iter_terms(force=self.force),
+            )
         return self._items
 
     def __iter__(self) -> Iterator[Term]:
-        if self.iter_only:
-            return iter(self.iter_terms(force=self.force))
-        return iter(self._items_accessor)
+        yield from self._iter_terms_safe()
 
     def ancestors(self, identifier: str) -> set[str]:
         """Return a set of identifiers for parents of the given identifier."""
@@ -1329,9 +1306,10 @@ class Obo:
         """
         if self._hierarchy is None:
             self._hierarchy = nx.DiGraph()
-            for term in self._iter_terms(desc=f"[{self.ontology}] getting hierarchy"):
-                for parent in term.parents:
-                    self._hierarchy.add_edge(term.identifier, parent.identifier)
+            for stanza in self._iter_stanzas(desc=f"[{self.ontology}] getting hierarchy"):
+                for parent in stanza.parents:
+                    # FIXME add referneces
+                    self._hierarchy.add_edge(stanza.identifier, parent.identifier)
         return self._hierarchy
 
     def to_obonet(self: Obo, *, use_tqdm: bool = False) -> nx.MultiDiGraph:
@@ -1358,40 +1336,40 @@ class Obo:
         links = []
         typedefs = self._index_typedefs()
         synonym_typedefs = self._index_synonym_typedefs()
-        for term in self._iter_terms(use_tqdm=use_tqdm):
+        for stanza in self._iter_stanzas(use_tqdm=use_tqdm):
             parents = []
-            for parent in term.parents:
+            for parent in stanza.parents:
                 if parent is None:
                     raise ValueError("parent should not be none!")
-                links.append((term.curie, "is_a", parent.curie))
+                links.append((stanza.curie, "is_a", parent.curie))
                 parents.append(parent.curie)
 
             relations = []
-            for typedef, target in term.iterate_relations():
+            for typedef, target in stanza.iterate_relations():
                 relations.append(f"{typedef.curie} {target.curie}")
-                links.append((term.curie, typedef.curie, target.curie))
+                links.append((stanza.curie, typedef.curie, target.curie))
 
-            for typedef, targets in sorted(term.properties.items()):
+            for typedef, targets in sorted(stanza.properties.items()):
                 for target_or_literal in targets:
                     if isinstance(target_or_literal, curies.Reference):
-                        links.append((term.curie, typedef.curie, target_or_literal.curie))
+                        links.append((stanza.curie, typedef.curie, target_or_literal.curie))
 
             d = {
-                "id": term.curie,
-                "name": term.name,
-                "def": term.definition and term._definition_fp(),
-                "xref": [xref.curie for xref in term.xrefs],
+                "id": stanza.curie,
+                "name": stanza.name,
+                "def": stanza.definition and stanza._definition_fp(),
+                "xref": [xref.curie for xref in stanza.xrefs],
                 "is_a": parents,
                 "relationship": relations,
                 "synonym": [
                     synonym._fp(ontology_prefix=self.ontology, synonym_typedefs=synonym_typedefs)
-                    for synonym in term.synonyms
+                    for synonym in stanza.synonyms
                 ],
                 "property_value": list(
-                    term._iterate_obo_properties(ontology_prefix=self.ontology, typedefs=typedefs)
+                    stanza._iterate_obo_properties(ontology_prefix=self.ontology, typedefs=typedefs)
                 ),
             }
-            nodes[term.curie] = {k: v for k, v in d.items() if v}
+            nodes[stanza.curie] = {k: v for k, v in d.items() if v}
 
         rv.add_nodes_from(nodes.items())
         for _source, _key, _target in links:
@@ -1412,11 +1390,21 @@ class Obo:
             "date": self.date and self.date.isoformat(),
         }
 
+    def iterate_references(self, *, use_tqdm: bool = False) -> Iterable[Reference]:
+        """Iterate over identifiers."""
+        for stanza in self._iter_stanzas(
+            use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting identifiers"
+        ):
+            if self._in_ontology(stanza.reference):
+                yield stanza.reference
+
     def iterate_ids(self, *, use_tqdm: bool = False) -> Iterable[str]:
         """Iterate over identifiers."""
-        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"):
-            if self._in_ontology(term.reference):
-                yield term.identifier
+        for stanza in self._iter_stanzas(
+            use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting identifiers"
+        ):
+            if self._in_ontology_strict(stanza.reference):
+                yield stanza.identifier
 
     def get_ids(self, *, use_tqdm: bool = False) -> set[str]:
         """Get the set of identifiers."""
@@ -1424,9 +1412,11 @@ class Obo:
 
     def iterate_id_name(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str]]:
         """Iterate identifier name pairs."""
-        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"):
-            if self._in_ontology(term.reference) and term.name:
-                yield term.identifier, term.name
+        for stanza in self._iter_stanzas(
+            use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"
+        ):
+            if self._in_ontology(stanza.reference) and stanza.name:
+                yield stanza.identifier, stanza.name
 
     def get_id_name_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, str]:
         """Get a mapping from identifiers to names."""
@@ -1434,11 +1424,13 @@ class Obo:
 
     def iterate_id_definition(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str]]:
         """Iterate over pairs of terms' identifiers and their respective definitions."""
-        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"):
-            if term.identifier and term.definition:
+        for stanza in self._iter_stanzas(
+            use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting names"
+        ):
+            if stanza.identifier and stanza.definition:
                 yield (
-                    term.identifier,
-                    term.definition.strip('"')
+                    stanza.identifier,
+                    stanza.definition.strip('"')
                     .replace("\n", " ")
                     .replace("\t", " ")
                     .replace("  ", " "),
@@ -1451,11 +1443,11 @@ class Obo:
     def get_obsolete(self, *, use_tqdm: bool = False) -> set[str]:
         """Get the set of obsolete identifiers."""
         return {
-            term.identifier
-            for term in self._iter_terms(
+            stanza.identifier
+            for stanza in self._iter_stanzas(
                 use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting obsolete"
             )
-            if term.identifier and term.is_obsolete
+            if stanza.identifier and stanza.is_obsolete
         }
 
     ############
@@ -1468,10 +1460,11 @@ class Obo:
         """Iterate over terms' identifiers and respective species (if available)."""
         if prefix is None:
             prefix = NCBITAXON_PREFIX
-        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting species"):
-            species = term.get_species(prefix=prefix)
-            if species:
-                yield term.identifier, species.identifier
+        for stanza in self._iter_stanzas(
+            use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting species"
+        ):
+            if isinstance(stanza, Term) and (species := stanza.get_species(prefix=prefix)):
+                yield stanza.identifier, species.identifier
 
     def get_id_species_mapping(
         self, *, prefix: str | None = None, use_tqdm: bool = False
@@ -1504,13 +1497,13 @@ class Obo:
     # PROPS #
     #########
 
-    def iterate_properties(self, *, use_tqdm: bool = False) -> Iterable[tuple[Term, Annotation]]:
+    def iterate_properties(self, *, use_tqdm: bool = False) -> Iterable[tuple[Stanza, Annotation]]:
         """Iterate over tuples of terms, properties, and their values."""
-        for term in self._iter_terms(
+        for stanza in self._iter_stanzas(
             use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting properties"
         ):
-            for property_tuple in term.get_property_annotations():
-                yield term, property_tuple
+            for property_tuple in stanza.get_property_annotations():
+                yield stanza, property_tuple
 
     @property
     def properties_header(self):
@@ -1559,9 +1552,9 @@ class Obo:
 
     def iter_object_properties(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str, str]]:
         """Iterate over object property triples."""
-        for term in self._iter_terms(use_tqdm=use_tqdm):
-            for predicate, target in term.iterate_object_properties():
-                yield term.curie, predicate.curie, target.curie
+        for stanza in self._iter_stanzas(use_tqdm=use_tqdm):
+            for predicate, target in stanza.iterate_object_properties():
+                yield stanza.curie, predicate.curie, target.curie
 
     def get_object_properties_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get all properties as a dataframe."""
@@ -1573,10 +1566,10 @@ class Obo:
         self, *, use_tqdm: bool = False
     ) -> Iterable[tuple[str, str, str, str, str]]:
         """Iterate over literal properties quads."""
-        for term in self._iter_terms(use_tqdm=use_tqdm):
-            for predicate, target in term.iterate_literal_properties():
+        for stanza in self._iter_stanzas(use_tqdm=use_tqdm):
+            for predicate, target in stanza.iterate_literal_properties():
                 yield (
-                    term.curie,
+                    stanza.curie,
                     predicate.curie,
                     target.value,
                     target.datatype.curie,
@@ -1589,14 +1582,14 @@ class Obo:
 
     def iterate_filtered_properties(
         self, prop: ReferenceHint, *, use_tqdm: bool = False
-    ) -> Iterable[tuple[Term, str]]:
+    ) -> Iterable[tuple[Stanza, str]]:
         """Iterate over tuples of terms and the values for the given property."""
         prop = _ensure_ref(prop)
-        for term in self._iter_terms(use_tqdm=use_tqdm):
-            for t in term.get_property_annotations():
+        for stanza in self._iter_stanzas(use_tqdm=use_tqdm):
+            for t in stanza.get_property_annotations():
                 if t.predicate != prop:
                     continue
-                yield term, reference_or_literal_to_str(t.value)
+                yield stanza, reference_or_literal_to_str(t.value)
 
     def get_filtered_properties_df(
         self, prop: ReferenceHint, *, use_tqdm: bool = False
@@ -1632,14 +1625,16 @@ class Obo:
     # RELATIONS #
     #############
 
-    def iterate_edges(self, *, use_tqdm: bool = False) -> Iterable[tuple[Term, TypeDef, Reference]]:
+    def iterate_edges(
+        self, *, use_tqdm: bool = False
+    ) -> Iterable[tuple[Stanza, TypeDef, Reference]]:
         """Iterate over triples of terms, relations, and their targets."""
         _warned: set[ReferenceTuple] = set()
         typedefs = self._index_typedefs()
-        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] edge"):
-            for predicate, reference in term._iter_edges():
-                if td := self._get_typedef(term, predicate, _warned, typedefs):
-                    yield term, td, reference
+        for stanza in self._iter_stanzas(use_tqdm=use_tqdm, desc=f"[{self.ontology}] edge"):
+            for predicate, reference in stanza._iter_edges():
+                if td := self._get_typedef(stanza, predicate, _warned, typedefs):
+                    yield stanza, td, reference
 
     @property
     def edges_header(self) -> Sequence[str]:
@@ -1648,7 +1643,7 @@ class Obo:
 
     def iterate_relations(
         self, *, use_tqdm: bool = False
-    ) -> Iterable[tuple[Term, TypeDef, Reference]]:
+    ) -> Iterable[tuple[Stanza, TypeDef, Reference]]:
         """Iterate over tuples of terms, relations, and their targets.
 
         This only outputs stuff from the `relationship:` tag, not
@@ -1656,10 +1651,10 @@ class Obo:
         """
         _warned: set[ReferenceTuple] = set()
         typedefs = self._index_typedefs()
-        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] relation"):
-            for predicate, reference in term.iterate_relations():
-                if td := self._get_typedef(term, predicate, _warned, typedefs):
-                    yield term, td, reference
+        for stanza in self._iter_stanzas(use_tqdm=use_tqdm, desc=f"[{self.ontology}] relation"):
+            for predicate, reference in stanza.iterate_relations():
+                if td := self._get_typedef(stanza, predicate, _warned, typedefs):
+                    yield stanza, td, reference
 
     def get_edges_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get an edges dataframe."""
@@ -1672,7 +1667,7 @@ class Obo:
 
     def _get_typedef(
         self,
-        term: Term,
+        term: Stanza,
         predicate: Reference,
         _warned: set[ReferenceTuple],
         typedefs: Mapping[ReferenceTuple, TypeDef],
@@ -1706,7 +1701,7 @@ class Obo:
         relation: ReferenceHint,
         *,
         use_tqdm: bool = False,
-    ) -> Iterable[tuple[Term, Reference]]:
+    ) -> Iterable[tuple[Stanza, Reference]]:
         """Iterate over tuples of terms and ther targets for the given relation."""
         _pair = _ensure_ref(relation, ontology_prefix=self.ontology).pair
         for term, predicate, reference in self.iterate_relations(use_tqdm=use_tqdm):
@@ -1746,7 +1741,7 @@ class Obo:
         target_prefix: str,
         *,
         use_tqdm: bool = False,
-    ) -> Iterable[tuple[Term, Reference]]:
+    ) -> Iterable[tuple[Stanza, Reference]]:
         """Iterate over relationships between one identifier and another."""
         for term, reference in self.iterate_filtered_relations(
             relation=relation, use_tqdm=use_tqdm
@@ -1829,22 +1824,24 @@ class Obo:
     ) -> Mapping[str, list[Reference]]:
         """Get a mapping from identifiers to a list of all references for the given relation."""
         return multidict(
-            (term.identifier, reference)
-            for term in self._iter_terms(
+            (stanza.identifier, reference)
+            for stanza in self._iter_stanzas(
                 use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting {typedef.curie}"
             )
-            for reference in term.get_relationships(typedef)
+            for reference in stanza.get_relationships(typedef)
         )
 
     ############
     # SYNONYMS #
     ############
 
-    def iterate_synonyms(self, *, use_tqdm: bool = False) -> Iterable[tuple[Term, Synonym]]:
+    def iterate_synonyms(self, *, use_tqdm: bool = False) -> Iterable[tuple[Stanza, Synonym]]:
         """Iterate over pairs of term and synonym object."""
-        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting synonyms"):
-            for synonym in sorted(term.synonyms):
-                yield term, synonym
+        for stanza in self._iter_stanzas(
+            use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting synonyms"
+        ):
+            for synonym in sorted(stanza.synonyms):
+                yield stanza, synonym
 
     def iterate_synonym_rows(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str]]:
         """Iterate over pairs of identifier and synonym text."""
@@ -1864,24 +1861,30 @@ class Obo:
             if self._in_ontology(stanza.reference)
         )
 
-    def _in_ontology(self, reference: Reference) -> bool:
-        return (reference.prefix == self.ontology) or (
-            reference.prefix == "obo" and reference.identifier.startswith(self.ontology + "#")
-        )
+    def _in_ontology(self, reference: Reference | Referenced) -> bool:
+        return self._in_ontology_strict(reference) or self._in_ontology_aux(reference)
+
+    def _in_ontology_strict(self, reference: Reference | Referenced) -> bool:
+        return reference.prefix == self.ontology
+
+    def _in_ontology_aux(self, reference: Reference | Referenced) -> bool:
+        return reference.prefix == "obo" and reference.identifier.startswith(self.ontology + "#")
 
     #########
     # XREFS #
     #########
 
-    def iterate_xrefs(self, *, use_tqdm: bool = False) -> Iterable[tuple[Term, Reference]]:
+    def iterate_xrefs(self, *, use_tqdm: bool = False) -> Iterable[tuple[Stanza, Reference]]:
         """Iterate over xrefs."""
-        for term in self._iter_terms(use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting xrefs"):
-            for xref in term.xrefs:
-                yield term, xref
+        for stanza in self._iter_stanzas(
+            use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting xrefs"
+        ):
+            for xref in stanza.xrefs:
+                yield stanza, xref
 
     def iterate_filtered_xrefs(
         self, prefix: str, *, use_tqdm: bool = False
-    ) -> Iterable[tuple[Term, Reference]]:
+    ) -> Iterable[tuple[Stanza, Reference]]:
         """Iterate over xrefs to a given prefix."""
         for term, xref in self.iterate_xrefs(use_tqdm=use_tqdm):
             if xref.prefix == prefix:
@@ -1905,13 +1908,13 @@ class Obo:
         self, *, use_tqdm: bool = False
     ) -> Iterable[tuple[str, str, str, str, str, float | None, str | None]]:
         """Iterate over SSSOM rows for mappings."""
-        for term in self._iter_terms(use_tqdm=use_tqdm):
-            for predicate, obj_ref, context in term.get_mappings(
+        for stanza in self._iter_stanzas(use_tqdm=use_tqdm):
+            for predicate, obj_ref, context in stanza.get_mappings(
                 include_xrefs=True, add_context=True
             ):
                 yield (
-                    get_preferred_curie(term),
-                    term.name,
+                    get_preferred_curie(stanza),
+                    stanza.name,
                     get_preferred_curie(obj_ref),
                     get_preferred_curie(predicate),
                     get_preferred_curie(context.justification),
@@ -1980,11 +1983,12 @@ class Obo:
     # ALTS #
     ########
 
-    def iterate_alts(self) -> Iterable[tuple[Term, Reference]]:
+    def iterate_alts(self) -> Iterable[tuple[Stanza, Reference]]:
         """Iterate over alternative identifiers."""
-        for term in self:
-            for alt in term.alt_ids:
-                yield term, alt
+        for stanza in self._iter_stanzas():
+            if self._in_ontology(stanza):
+                for alt in stanza.alt_ids:
+                    yield stanza, alt
 
     def iterate_alt_rows(self) -> Iterable[tuple[str, str]]:
         """Iterate over pairs of terms' primary identifiers and alternate identifiers."""
@@ -1997,7 +2001,7 @@ class Obo:
 
 
 @dataclass
-class TypeDef(Referenced, Stanza):
+class TypeDef(Stanza):
     """A type definition in OBO.
 
     See the subsection of https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.2.2.

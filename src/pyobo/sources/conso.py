@@ -4,7 +4,7 @@ from collections.abc import Iterable
 
 import pandas as pd
 
-from ..struct import Obo, Reference, Synonym, Term, has_citation
+from ..struct import Obo, Reference, Synonym, Term, _parse_str_or_curie_or_uri, has_citation
 from ..utils.io import multidict
 from ..utils.path import ensure_df
 
@@ -38,7 +38,7 @@ def iter_terms() -> Iterable[Term]:
 
     synonyms_df = ensure_df(PREFIX, url=SYNONYMS_URL)
     synonyms_df["reference"] = synonyms_df["reference"].map(
-        lambda s: [Reference.from_curie_or_uri(s)] if pd.notna(s) and s != "?" else [],
+        lambda s: [_parse_str_or_curie_or_uri(s)] if pd.notna(s) and s != "?" else [],
     )
     synonyms = multidict(
         (
@@ -69,7 +69,7 @@ def iter_terms() -> Iterable[Term]:
             curie = curie.strip()
             if not curie:
                 continue
-            reference = Reference.from_curie_or_uri(curie)
+            reference = _parse_str_or_curie_or_uri(curie)
             if reference is not None:
                 term.append_provenance(reference)
         yield term

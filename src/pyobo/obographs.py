@@ -100,7 +100,8 @@ def _get_class_node(term: Term) -> Node:
         deprecated=term.is_obsolete or False,
     )
     return Node(
-        id=term.bioregistry_link,
+        # FIXME do expansion same as for OFN
+        id=f"https://bioregistry.io/{term.curie}",
         lbl=term.name,
         meta=meta,
         type="CLASS",

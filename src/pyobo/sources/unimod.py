@@ -4,7 +4,7 @@ from collections.abc import Iterable
 
 from lxml import etree
 
-from pyobo.struct import Obo, Reference, Term, int_identifier_sort_key
+from pyobo.struct import Obo, Reference, Term
 from pyobo.utils.path import ensure_path
 
 URL = "https://www.unimod.org/xml/unimod.xml"
@@ -16,7 +16,6 @@ class UnimodGetter(Obo):
     """An ontology representation of the unimod modifications."""
 
     ontology = bioversions_key = PREFIX
-    term_sort_key = int_identifier_sort_key
     dynamic_version = True
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:

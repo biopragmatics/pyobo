@@ -27,8 +27,12 @@ PATH = HERE.joinpath("goc.tsv")
 
 def load_goc_map() -> dict[str, str]:
     """Get GOC to ORCID mappings."""
+    rv = {}
     with PATH.open() as f:
-        return {row[0]: f"orcid:{row[2]}" for row in csv.reader(f, delimiter="\t")}
+        for goc_curie, _, orcid, *_ in csv.reader(f, delimiter="\t"):
+            rv[goc_curie] = f"orcid:{orcid}"
+            rv[goc_curie.upper()] = f"orcid:{orcid}"
+    return rv
 
 
 def main() -> None:

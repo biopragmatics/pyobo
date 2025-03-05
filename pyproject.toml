@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv>=0.5.13,<0.6.0"]
+requires = ["uv>=0.5.13,<0.7.0"]
 # The uv backend entered preview mode in https://github.com/astral-sh/uv/pull/8886/files
 # with the 0.5.0 release. See also https://github.com/astral-sh/uv/issues/3957 for tracking.
 build-backend = "uv"
@@ -73,14 +73,14 @@ dependencies = [
     "cachier",
     "pystow>=0.7.0",
     "bioversions>=0.7.0",
-    "bioregistry>=0.11.33",
+    "bioregistry>=0.12.0",
     "bioontologies>=0.5.2",
     "ssslm>=0.0.9",
     "zenodo-client>=0.3.6",
     "class_resolver",
     "psycopg2-binary",
     "pydantic>=2.0",
-    "curies>=0.10.3",
+    "curies>=0.10.6",
     "python-dateutil",
     "networkx>=3.4",
     # Resource Downloaders

@@ -13,7 +13,7 @@ __all__ = [
 
 DATA_URL = "http://bigg.ucsd.edu/compartments/"
 PREFIX = "bigg.compartment"
-GO_MAPPING: dict[str, Reference] = {
+GO_MAPPING: dict[str, Reference | None] = {
     "c": Reference(prefix="go", identifier="0005829", name="cytosol"),
     "e": Reference(prefix="go", identifier="0005615", name="extracellular space"),
     "p": Reference(prefix="go", identifier="0042597", name="periplasmic space"),
@@ -33,15 +33,11 @@ GO_MAPPING: dict[str, Reference] = {
     "x": Reference(prefix="go", identifier="0005777", name="peroxisome"),
     "mm": Reference(prefix="go", identifier="0005743", name="mitochondrial inner membrane"),
     "im": Reference(prefix="go", identifier="0005758", name="mitochondrial intermembrane space"),
+    "cx": None,  # missing for carboxyzome
+    "cm": None,  # missing for cytosolic membrane
+    "i": None,  # missing for inner mitochondrial compartment
+    "w": None,  # missing for wildtype staph aureus
 }
-"""
-MISSING:
-
-cx carboxyzome
-cm cytosolic membrane
-i inner mitochondrial compartment
-w wildtype staph aureus
-"""
 
 
 class BiGGCompartmentGetter(Obo):

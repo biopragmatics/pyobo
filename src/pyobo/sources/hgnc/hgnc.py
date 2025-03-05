@@ -436,11 +436,11 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                         hgnc_id,
                         term.name,
                         term.is_obsolete,
-                        term.bioregistry_link,
+                        f"https://bioregistry.io/{term.curie}",
                         ", ".join(
-                            p.bioregistry_link
+                            f"https://bioregistry.io/{p.curie}"
                             for p in term.provenance
-                            if isinstance(p, Reference) and p.bioregistry_link
+                            if isinstance(p, Reference)
                         ),
                     )
                     for hgnc_id, term in sorted(v.items())

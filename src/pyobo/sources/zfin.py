@@ -11,6 +11,7 @@ from pyobo.struct import (
     Obo,
     Reference,
     Term,
+    _parse_str_or_curie_or_uri,
     from_species,
     has_gene_product,
     orthologous,
@@ -145,7 +146,7 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
         for hgnc_id in human_orthologs.get(identifier, []):
             term.append_relationship(orthologous, Reference(prefix="hgnc", identifier=hgnc_id))
         for mgi_curie in mouse_orthologs.get(identifier, []):
-            mouse_ortholog = Reference.from_curie_or_uri(mgi_curie)
+            mouse_ortholog = _parse_str_or_curie_or_uri(mgi_curie)
             if mouse_ortholog:
                 term.append_relationship(orthologous, mouse_ortholog)
         for flybase_id in fly_orthologs.get(identifier, []):

@@ -32,6 +32,12 @@ from .reference import (
     unspecified_matching,
 )
 from .utils import obo_escape_slim
+from ..identifier_utils import (
+    NotCURIEError,
+    ParseError,
+    _is_valid_identifier,
+    _parse_str_or_curie_or_uri_helper,
+)
 
 if TYPE_CHECKING:
     from pyobo.struct.struct import Synonym, TypeDef
@@ -102,7 +108,7 @@ class HasReferencesMixin(ABC):
         raise NotImplementedError
 
 
-class Stanza(HasReferencesMixin):
+class Stanza(Referenced, HasReferencesMixin):
     """A high-level class for stanzas."""
 
     reference: Reference
@@ -126,6 +132,14 @@ class Stanza(HasReferencesMixin):
 
     #: A description of the entity
     definition: str | None = None
+
+    @staticmethod
+    def _reference(
+        reference: Reference, ontology_prefix: str, add_name_comment: bool = False
+    ) -> str:
+        return reference_escape(
+            reference, ontology_prefix=ontology_prefix, add_name_comment=add_name_comment
+        )
 
     def _get_prefixes(self) -> set[str]:
         return set(self._get_references())
@@ -847,14 +861,19 @@ def _ensure_ref(
         )
     if isinstance(reference, curies.Reference):
         return Reference(prefix=reference.prefix, identifier=reference.identifier)
-    if ":" not in reference:
-        if not ontology_prefix:
-            raise ValueError(f"can't parse reference of type {type(reference)}: {reference}")
-        return default_reference(ontology_prefix, reference)
-    _rv = Reference.from_curie_or_uri(reference, strict=True, ontology_prefix=ontology_prefix)
-    if _rv is None:
-        raise ValueError(f"[{ontology_prefix}] unable to parse {reference}")
-    return _rv
+
+    match _parse_str_or_curie_or_uri_helper(reference, ontology_prefix=ontology_prefix):
+        case Reference() as parsed_reference:
+            return parsed_reference
+        case NotCURIEError() as exc:
+            if ontology_prefix and _is_valid_identifier(reference):
+                return default_reference(ontology_prefix, reference)
+            else:
+                raise exc
+        case ParseError() as exc:
+            raise exc
+
+    raise TypeError
 
 
 def _chain_tag(
@@ -1016,7 +1035,7 @@ def _get_references_from_annotations(
 def _get_stanza_name_synonym(stanza: Stanza) -> LiteralMapping:
     return LiteralMapping(
         text=stanza.reference.name,
-        reference=stanza.reference.as_named_reference(),
+        reference=stanza.reference,
         predicate=_v.has_label,
         type=None,
         provenance=[p for p in stanza.provenance if isinstance(p, curies.Reference)],
@@ -1042,7 +1061,7 @@ def _convert_synoynym(stanza: Stanza, synonym: Synonym) -> LiteralMapping:
     return LiteralMapping(
         text=synonym.name,
         language=synonym.language,
-        reference=stanza.reference.as_named_reference(synonym.name),
+        reference=stanza.reference,
         predicate=synonym.predicate,
         type=synonym.type,
         provenance=[p for p in synonym.provenance if isinstance(p, curies.Reference)],

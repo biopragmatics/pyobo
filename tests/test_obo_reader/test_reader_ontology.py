@@ -184,9 +184,9 @@ class TestReaderOntologyMetadata(unittest.TestCase):
     def test_13_xref_genus_differentia(self) -> None:
         """Test the ``treat-xrefs-as-is_a `` macro.
 
-        The test should become the same as:
+        The test should become the same as
 
-        .. code::
+        .. code-block::
 
             [Term]
             id: ZFA:0000134
@@ -216,7 +216,7 @@ class TestReaderOntologyMetadata(unittest.TestCase):
         )
 
     def test_14_xref_relation(self) -> None:
-        """Test the ``treat-xrefs-as-relationship  `` macro."""
+        """Test the ``treat-xrefs-as-relationship`` macro."""
         ontology = from_str("""\
             ontology: go
             treat-xrefs-as-relationship: CL BFO:0000000
@@ -237,7 +237,7 @@ class TestReaderOntologyMetadata(unittest.TestCase):
         self.assertEqual([Reference(prefix="CL", identifier="0000000")], term.relationships[pred])
 
     def test_15_xref_is_a_for_term(self) -> None:
-        """Test the ``treat-xrefs-as-is_a `` macro."""
+        """Test the ``treat-xrefs-as-is_a`` macro."""
         ontology = from_str("""\
             ontology: go
             treat-xrefs-as-is_a: CL
@@ -256,7 +256,7 @@ class TestReaderOntologyMetadata(unittest.TestCase):
         self.assertEqual([Reference(prefix="CL", identifier="0000000")], term.parents)
 
     def test_15_xref_is_a_for_typedef(self) -> None:
-        """Test the ``treat-xrefs-as-is_a `` macro."""
+        """Test the ``treat-xrefs-as-is_a`` macro."""
         ontology = from_str("""\
             ontology: ro
             treat-xrefs-as-is_a: skos
@@ -392,7 +392,7 @@ class TestVersionHandling(unittest.TestCase):
         self.assertEqual("123", ontology.data_version)
 
     def test_releases_prefix_simple(self):
-        """Test a parsing a simple version starting with `releases/`."""
+        """Test a parsing a simple version starting with ``releases/``."""
         ontology = from_str("""\
             ontology: chebi
             data-version: releases/123
@@ -400,11 +400,11 @@ class TestVersionHandling(unittest.TestCase):
         self.assertEqual(
             "123",
             ontology.data_version,
-            msg="The prefix `releases/` wasn't properly automatically stripped",
+            msg="The prefix ``releases/`` wasn't properly automatically stripped",
         )
 
     def test_releases_prefix_complex(self):
-        """Test parsing a complex string starting with `releases/`."""
+        """Test parsing a complex string starting with ``releases/``."""
         ontology = from_str("""\
             ontology: chebi
             data-version: releases/123/chebi.owl
@@ -412,7 +412,7 @@ class TestVersionHandling(unittest.TestCase):
         self.assertEqual(
             "123",
             ontology.data_version,
-            msg="The prefix `releases/` wasn't properly automatically stripped",
+            msg="The prefix ``releases/`` wasn't properly automatically stripped",
         )
 
     def test_no_version_with_date(self):

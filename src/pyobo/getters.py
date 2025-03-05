@@ -94,7 +94,7 @@ def get_ontology(
 
     :raises OnlyOWLError: If the OBO foundry only has an OWL document for this resource.
 
-    Alternate usage if you have a custom url::
+    Alternate usage if you have a custom url
 
     .. code-block:: python
 
@@ -390,7 +390,10 @@ def iter_helper_helper(
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
         except ParseError as e:
-            logger.warning("[%s] CURIE/IRI parse error: %s", prefix, e)
+            if not e.node:
+                logger.warning("[%s] %s", prefix, e)
+            else:
+                logger.warning(str(e))
             if strict and not bioregistry.is_deprecated(prefix):
                 raise e
         except RuntimeError as e:
