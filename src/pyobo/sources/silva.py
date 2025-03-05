@@ -47,11 +47,15 @@ SILVA_TAXMAP_URL = "https://www.arb-silva.de/fileadmin/silva_databases/current/E
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
-HAS_TAXONOMIC_CLASSIFICATION = TypeDef(
-    reference=default_reference(
-        PREFIX, "has_taxonomic_classification", name="has taxonomic classification"
-    ),
-    definition="Indicates that the genome sequence represented by an ENA accession is classified under this taxon by SILVA.",
+RELATION_NEEDS_NEW_NAME = TypeDef(
+    reference=default_reference(PREFIX, "has_related_sequence", name="has related sequence"),
+    # FIXME!
+    definition="""
+        This relation represents a connection between a species and ENA records that are annotated by SILVA's
+        "taxmap" that these are related in some way. It's crucial to make more explicit what this relation is.
+
+        Old text: Indicates that the genome sequence represented by an ENA accession is classified under this taxon by SILVA.
+    """,
     is_metadata_tag=True,
 )
 
@@ -60,7 +64,7 @@ class SILVAGetter(Obo):
     """An ontology representation of the SILVA taxonomy."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_taxonomy_rank, HAS_TAXONOMIC_CLASSIFICATION]
+    typedefs = [has_taxonomy_rank, RELATION_NEEDS_NEW_NAME]
     root_terms = [
         Reference(prefix=PREFIX, identifier="2", name="Archaea"),
         Reference(prefix=PREFIX, identifier="3", name="Bacteria"),
@@ -88,9 +92,8 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
     #: a dictionary that maps the joined taxonomy path (with trailing ";") to taxon_id
     tax_path_to_id: dict[str, str] = {}
 
-    # FIXME better name for this dictionary
     #: maps taxon_id to the Term object
-    terms_by_id = {}
+    silva_taxon_id_to_term: dict[str, Term] = {}
 
     for idx, row in tqdm(
         tax_df.iterrows(),
@@ -99,7 +102,7 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
         unit="row",
     ):
         tax_str = row["taxonomy"].strip()
-        taxon_id = row["taxon_id"].strip()
+        silva_taxon_id = row["taxon_id"].strip()
         rank_raw = row["rank"].strip()
         rank = rank_raw.lower()
         # Split taxonomy string by ";" and discard empty parts.
@@ -110,12 +113,12 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
 
         # The term's name is the last element (e.g. for "Bacteria;Actinomycetota;", name is "Actinomycetota").
         name = parts[-1]
-        term = Term(reference=Reference(prefix=PREFIX, identifier=taxon_id, name=name))
+        term = Term(reference=Reference(prefix=PREFIX, identifier=silva_taxon_id, name=name))
         if rank in SILVA_RANK_TO_TAXRANK:
             term.annotate_object(has_taxonomy_rank, SILVA_RANK_TO_TAXRANK[rank])
         else:
             logger.warning(
-                f"Row {idx}: unknown rank '{rank_raw}' for taxonomy: {tax_str} (taxon id: {taxon_id})"
+                f"Row {idx}: unknown rank '{rank_raw}' for taxonomy: {tax_str} (taxon id: {silva_taxon_id})"
             )
 
         # Determine the parent by joining all but the last element.
@@ -125,52 +128,32 @@ def iter_terms_silva(version: str, force: bool = False) -> Iterable[Term]:
             if parent_id:
                 term.append_parent(Reference(prefix=PREFIX, identifier=parent_id))
         full_key = ";".join(parts) + ";"
-        tax_path_to_id[full_key] = taxon_id
-        terms_by_id[taxon_id] = term
+        tax_path_to_id[full_key] = silva_taxon_id
+        silva_taxon_id_to_term[silva_taxon_id] = term
 
     # --- Process the taxmap file ---
     # This file has a header with columns: primaryAccession, start, stop, path, organism_name, taxid
     taxmap_path = ensure_path(PREFIX, url=SILVA_TAXMAP_URL, version=version, force=force)
-    taxmap_df = pd.read_csv(taxmap_path, sep="\t", dtype=str)
-    taxmap_df.rename(
-        columns={
-            "primaryAccession": "accession",
-            "organism_name": "organism",
-            "taxid": "species_taxon_id",
-            "path": "taxonomy",
-        },
-        inplace=True,
-    )
-    taxmap_df.fillna("", inplace=True)
+    taxmap_df = pd.read_csv(taxmap_path, sep="\t", dtype=str, usecols=[0, 5])
 
-    for idx, row in tqdm(
-        taxmap_df.iterrows(), total=len(taxmap_df), desc=f"[{PREFIX}] processing taxmap", unit="row"
+    for ena_embl_id, species_silva_taxon_id in tqdm(
+        taxmap_df.values, desc=f"[{PREFIX}] processing taxmap"
     ):
-        accession = row["accession"].strip()
-        # FIXME better variable name... what kind of taxon_id? species_silva_taxon_id or species_ncbitaxon_id?
-        species_taxon_id = row["species_taxon_id"].strip()
-        if not accession or not species_taxon_id:
+        if pd.isna(ena_embl_id) or pd.isna(species_silva_taxon_id):
             continue
-        if species_taxon_id in terms_by_id:
-            # FIXME rather than creating a term for ena.embl and doing axiom injection
-            #  (i.e., making relationships for terms outside of this ontology),
-            #  flip the direction of the relationship and annotate it directly onto the SILVA
-            #  term
-            # Create a new term for the ENA accession.
-            new_term = Term(reference=Reference(prefix="ena.embl", identifier=accession))
-            # Do NOT annotate the new term with a rank (leave it unranked).
-            new_term.annotate_object(
-                HAS_TAXONOMIC_CLASSIFICATION, Reference(prefix=PREFIX, identifier=species_taxon_id)
+        # FIXME please add a comment on why we're only doing this based on the species ID.
+        #  does SILVA not make mappings for other ranks?
+        if species_silva_taxon_id in silva_taxon_id_to_term:
+            silva_taxon_id_to_term[species_silva_taxon_id].annotate_object(
+                RELATION_NEEDS_NEW_NAME, Reference(prefix="ena.embl", identifier=ena_embl_id)
             )
-            yield new_term
         else:
             logger.warning(
-                f"Row {idx} in taxmap: species_taxon_id {species_taxon_id} not found in main taxonomy"
+                f"Row {idx} in taxmap: species_taxon_id {species_silva_taxon_id} not found in main taxonomy"
             )
 
     # Yield all terms from the main taxonomy.
-    for term in terms_by_id.values():
-        yield term
+    yield from silva_taxon_id_to_term.values()
 
 
 if __name__ == "__main__":
