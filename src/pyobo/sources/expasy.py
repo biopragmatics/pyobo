@@ -244,7 +244,7 @@ def get_database(lines: Iterable[str]) -> Mapping[str, dict[str, Any]]:
             elif descriptor == DE:
                 if "name" not in ec_data_entry["concept"]:
                     ec_data_entry["concept"]["name"] = ""
-                ec_data_entry["concept"]["name"] .= value.rstrip(".")  # type:ignore
+                ec_data_entry["concept"]["name"] += value.rstrip(".")  # type:ignore
             elif descriptor == AN:
                 ec_data_entry["synonyms"].append(value.rstrip("."))  # type:ignore
             elif descriptor == PR:
