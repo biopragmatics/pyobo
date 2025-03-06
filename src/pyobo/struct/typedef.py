@@ -280,6 +280,7 @@ mapping_has_confidence = TypeDef(
     reference=v.mapping_has_confidence, is_metadata_tag=True, range=v.xsd_float
 )
 has_contributor = TypeDef(reference=v.has_contributor, is_metadata_tag=True)
+has_source = TypeDef(reference=v.has_source, is_metadata_tag=True)
 
 has_start_date = TypeDef(
     reference=Reference(prefix="dcat", identifier="startDate", name="has start date"),

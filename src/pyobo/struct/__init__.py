@@ -18,7 +18,7 @@ from .struct import (
     TypeDef,
     make_ad_hoc_ontology,
 )
-from .struct_utils import Stanza
+from .struct_utils import Annotation, Stanza
 from .typedef import (
     derives_from,
     enables,
@@ -45,6 +45,7 @@ __all__ = [
     "CHARLIE_TERM",
     "HUMAN_TERM",
     "PYOBO_INJECTED",
+    "Annotation",
     "OBOLiteral",
     "Obo",
     "Reference",
