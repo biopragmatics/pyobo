@@ -7,15 +7,15 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 from .utils import get_go_mapping
-from ..struct import Obo, Reference, Synonym, Term
-from ..struct.typedef import enables, has_member, term_replaced_by
+from ..struct import Annotation, Obo, OBOLiteral, Reference, Synonym, Term
+from ..struct.typedef import enables, has_member, has_source, term_replaced_by
 from ..utils.path import ensure_path
 
 __all__ = [
     "ExpasyGetter",
 ]
 
-PREFIX = "eccode"
+PREFIX = "ec"
 EXPASY_DATABASE_URL = "ftp://ftp.expasy.org/databases/enzyme/enzyme.dat"
 EXPASY_TREE_URL = "ftp://ftp.expasy.org/databases/enzyme/enzclass.txt"
 
@@ -43,7 +43,7 @@ class ExpasyGetter(Obo):
     """A getter for ExPASy Enzyme Classes."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [has_member, enables, term_replaced_by]
+    typedefs = [has_member, enables, term_replaced_by, has_source]
     root_terms = [
         Reference(prefix="eccode", identifier="1"),
         Reference(prefix="eccode", identifier="2"),
@@ -53,6 +53,7 @@ class ExpasyGetter(Obo):
         Reference(prefix="eccode", identifier="6"),
         Reference(prefix="eccode", identifier="7"),
     ]
+    property_values = [Annotation(has_source.reference, OBOLiteral.uri(EXPASY_DATABASE_URL))]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
