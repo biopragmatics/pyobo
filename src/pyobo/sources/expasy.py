@@ -130,6 +130,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             reference=Reference(prefix=PREFIX, identifier=ec_code, name=name),
             parents=[parent_term.reference],
             synonyms=synonyms,
+            definition=data.get("reaction"),
         )
         for domain in data.get("domains", []):
             term.annotate_object(
@@ -246,6 +247,10 @@ def get_database(lines: Iterable[str]) -> Mapping[str, dict[str, Any]]:
                 if "name" not in ec_data_entry["concept"]:
                     ec_data_entry["concept"]["name"] = ""
                 ec_data_entry["concept"]["name"] += value.rstrip(".")  # type:ignore
+            elif descriptor == CA:
+                if "reaction" not in ec_data_entry["concept"]:
+                    ec_data_entry["reaction"]["name"] = ""
+                ec_data_entry["concept"]["reaction"] += value.rstrip(".")  # type:ignore
             elif descriptor == AN:
                 ec_data_entry["synonyms"].append(value.rstrip("."))  # type:ignore
             elif descriptor == PR:
