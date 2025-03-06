@@ -242,7 +242,9 @@ def get_database(lines: Iterable[str]) -> Mapping[str, dict[str, Any]]:
                 value = value.strip().removesuffix("and").rstrip(",").strip()
                 ec_data_entry["transfer_id"] = _parse_transfer(value)
             elif descriptor == DE:
-                ec_data_entry["concept"]["name"] = value.rstrip(".")  # type:ignore
+                if "name" not in ec_data_entry["concept"]:
+                    ec_data_entry["concept"]["name"] = ""
+                ec_data_entry["concept"]["name"] .= value.rstrip(".")  # type:ignore
             elif descriptor == AN:
                 ec_data_entry["synonyms"].append(value.rstrip("."))  # type:ignore
             elif descriptor == PR:
