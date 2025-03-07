@@ -248,9 +248,9 @@ def get_database(lines: Iterable[str]) -> Mapping[str, dict[str, Any]]:
                     ec_data_entry["concept"]["name"] = ""
                 ec_data_entry["concept"]["name"] += value.rstrip(".")  # type:ignore
             elif descriptor == CA:
-                if "reaction" not in ec_data_entry["concept"]:
-                    ec_data_entry["reaction"]["name"] = ""
-                ec_data_entry["concept"]["reaction"] += value.rstrip(".")  # type:ignore
+                if "reaction" not in ec_data_entry:
+                    ec_data_entry["reaction"] = ""
+                ec_data_entry["reaction"] += value.rstrip(".")  # type:ignore
             elif descriptor == AN:
                 ec_data_entry["synonyms"].append(value.rstrip("."))  # type:ignore
             elif descriptor == PR:
