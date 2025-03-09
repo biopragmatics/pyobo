@@ -654,7 +654,7 @@ class Obo:
                         uri_prefix,
                     )
 
-            pp = bioregistry.get_preferred_prefix(prefix) or prefix
+            pp = bioregistry.get_preferred_prefix(prefix) or str(prefix)
             rv[pp] = uri_prefix
         return rv
 
