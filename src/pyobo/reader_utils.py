@@ -36,7 +36,7 @@ def _chomp_typedef(
     s: str,
     *,
     synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
-    strict: bool = True,
+    strict: bool = False,
     node: Reference,
     ontology_prefix: str,
     upgrade: bool,
@@ -90,7 +90,7 @@ SYNONYM_REFERENCE_WARNED: Counter[tuple[str, str]] = Counter()
 
 
 def _chomp_references(
-    s: str, *, strict: bool = True, node: Reference, ontology_prefix: str, line: str
+    s: str, *, strict: bool = False, node: Reference, ontology_prefix: str, line: str
 ) -> tuple[Sequence[Reference | OBOLiteral], str]:
     if not s:
         return [], ""
@@ -123,7 +123,7 @@ def _chomp_references(
     return references, rest
 
 
-def _chomp_axioms(s: str, *, strict: bool = True, node: Reference) -> list[Annotation]:
+def _chomp_axioms(s: str, *, strict: bool = False, node: Reference) -> list[Annotation]:
     return []
 
 
