@@ -6,8 +6,7 @@ import pandas as pd
 
 from pyobo.api.utils import get_version
 from pyobo.constants import PROVENANCE, SOURCE_PREFIX, TARGET_PREFIX, XREF_COLUMNS
-from pyobo.utils.cache import cached_mapping
-from pyobo.utils.path import prefix_cache_join
+from pyobo.utils.path import ensure_df
 
 __all__ = [
     "COMPLEXPORTAL_MAPPINGS",
@@ -23,9 +22,16 @@ COMPLEXPORTAL_MAPPINGS = (
 REACTOME_MAPPINGS = "ftp://ftp.ebi.ac.uk/pub/databases/intact/current/various/reactome.dat"
 
 
-def _get_complexportal_df():
-    return pd.read_csv(
-        COMPLEXPORTAL_MAPPINGS, sep="\t", header=None, names=["source_id", "target_id"]
+def _get_complexportal_df(version: str | None = None):
+    if version is None:
+        version = get_version("intact")
+    return ensure_df(
+        "intact",
+        url=COMPLEXPORTAL_MAPPINGS,
+        version=version,
+        sep="\t",
+        header=None,
+        names=["source_id", "target_id"],
     )
 
 
@@ -50,22 +56,21 @@ def get_complexportal_mapping() -> Mapping[str, str]:
 
         intact_complexportal_mapping = get_filtered_xrefs("intact", "complexportal")
     """
+    df = _get_complexportal_df()
+    return dict(df.values)
 
-    @cached_mapping(
-        path=prefix_cache_join(
-            "intact", "xrefs", name="complexportal.tsv", version=get_version("intact")
-        ),
-        header=["intact_id", "complexportal_id"],
+
+def _get_reactome_df(version: str | None = None):
+    if version is None:
+        version = get_version("intact")
+    return ensure_df(
+        "intact",
+        url=REACTOME_MAPPINGS,
+        version=version,
+        sep="\t",
+        header=None,
+        names=["source_id", "target_id"],
     )
-    def _cache():
-        df = _get_complexportal_df()
-        return dict(df.values)
-
-    return _cache()
-
-
-def _get_reactome_df():
-    return pd.read_csv(REACTOME_MAPPINGS, sep="\t", header=None, names=["source_id", "target_id"])
 
 
 def get_intact_reactome_xrefs_df() -> pd.DataFrame:
@@ -89,18 +94,8 @@ def get_reactome_mapping() -> Mapping[str, str]:
 
         intact_complexportal_mapping = get_filtered_xrefs("intact", "reactome")
     """
-
-    @cached_mapping(
-        path=prefix_cache_join(
-            "intact", "xrefs", name="reactome.tsv", version=get_version("intact")
-        ),
-        header=["intact_id", "reactome_id"],
-    )
-    def _cache():
-        df = _get_complexportal_df()
-        return dict(df.values)
-
-    return _cache()
+    df = _get_reactome_df()
+    return dict(df.values)
 
 
 def get_xrefs_df() -> pd.DataFrame:

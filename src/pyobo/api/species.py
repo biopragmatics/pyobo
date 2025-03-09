@@ -13,7 +13,7 @@ from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_mapping
-from ..utils.path import prefix_cache_join
+from ..utils.path import CacheArtifact, get_cache_path
 
 __all__ = [
     "get_id_species_mapping",
@@ -62,7 +62,7 @@ def get_id_species_mapping(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> 
         return rv
 
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="species.tsv", version=version)
+    path = get_cache_path(prefix, CacheArtifact.species, version=version)
 
     @cached_mapping(path=path, header=[f"{prefix}_id", "species"], force=check_should_force(kwargs))
     def _get_id_species_mapping() -> Mapping[str, str]:
