@@ -61,7 +61,6 @@ from .utils import _boolean_tag, obo_escape_slim
 from ..api.utils import get_version
 from ..constants import (
     BUILD_SUBDIRECTORY_NAME,
-    CACHE_SUBDIRECTORY_NAME,
     DATE_FORMAT,
     DEFAULT_PREFIX_MAP,
     NCBITAXON_PREFIX,
@@ -72,7 +71,12 @@ from ..constants import (
 )
 from ..utils.cache import write_gzipped_graph
 from ..utils.io import multidict, write_iterable_tsv
-from ..utils.path import prefix_directory_join
+from ..utils.path import (
+    CacheArtifact,
+    get_cache_path,
+    get_relation_cache_path,
+    prefix_directory_join,
+)
 from ..version import get_version as get_pyobo_version
 
 __all__ = [
@@ -996,76 +1000,20 @@ class Obo:
         ofn = get_ofn_from_obo(self)
         ofn.write_rdf(path)
 
+    def write_nodes(self, path: str | Path) -> None:
+        """Write a nodes TSV file."""
+        # TODO reimplement internally
+        self.get_graph().get_nodes_df().to_csv(path, sep="\t", index=False)
+
     def _path(self, *parts: str, name: str | None = None) -> Path:
         return prefix_directory_join(self.ontology, *parts, name=name, version=self.data_version)
 
-    def _cache(self, *parts: str, name: str | None = None) -> Path:
-        return self._path(CACHE_SUBDIRECTORY_NAME, *parts, name=name)
-
-    @property
-    def _names_path(self) -> Path:
-        return self._cache(name="names.tsv")
-
-    @property
-    def _definitions_path(self) -> Path:
-        return self._cache(name="definitions.tsv")
-
-    @property
-    def _species_path(self) -> Path:
-        return self._cache(name="species.tsv")
-
-    @property
-    def _synonyms_path(self) -> Path:
-        return self._cache(name="synonyms.tsv")
-
-    @property
-    def _alts_path(self):
-        return self._cache(name="alt_ids.tsv")
-
-    @property
-    def _typedefs_path(self) -> Path:
-        return self._cache(name="typedefs.tsv")
-
-    @property
-    def _xrefs_path(self) -> Path:
-        warnings.warn("use _mappings_path", DeprecationWarning, stacklevel=2)
-        return self._cache(name="xrefs.tsv")
-
-    @property
-    def _mappings_path(self) -> Path:
-        return self._cache(name="mappings.tsv")
-
-    @property
-    def _relations_path(self) -> Path:
-        return self._cache(name="relations.tsv")
-
-    @property
-    def _properties_path(self) -> Path:
-        return self._cache(name="properties.tsv")
-
-    @property
-    def _literal_properties_path(self) -> Path:
-        return self._cache(name="literal_properties.tsv")
-
-    @property
-    def _object_properties_path(self) -> Path:
-        return self._cache(name="object_properties.tsv")
-
-    @property
-    def _literal_mappings_path(self) -> Path:
-        return self._cache(name="literal_mappings.tsv")
-
-    @property
-    def _prefix_map_path(self) -> Path:
-        return self._cache(name="prefixes.json")
+    def _get_cache_path(self, name: CacheArtifact) -> Path:
+        return get_cache_path(self.ontology, name=name, version=self.data_version)
 
     @property
     def _root_metadata_path(self) -> Path:
         return prefix_directory_join(self.ontology, name="metadata.json")
-
-    @property
-    def _versioned_metadata_path(self) -> Path:
-        return self._cache(name="metadata.json")
 
     @property
     def _obo_path(self) -> Path:
@@ -1091,64 +1039,116 @@ class Obo:
     def _ttl_path(self) -> Path:
         return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.ttl")
 
-    @property
-    def _nodes_path(self) -> Path:
-        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.nodes.tsv")
-
-    @property
-    def _edges_path(self) -> Path:
-        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.edges.tsv")
-
-    def _get_cache_config(self) -> list[tuple[str, Path, Sequence[str], Callable]]:
+    def _get_cache_config(self) -> list[tuple[CacheArtifact, Sequence[str], Callable]]:
         return [
-            ("names", self._names_path, [f"{self.ontology}_id", "name"], self.iterate_id_name),
+            (CacheArtifact.names, [f"{self.ontology}_id", "name"], self.iterate_id_name),
             (
-                "definitions",
-                self._definitions_path,
+                CacheArtifact.definitions,
                 [f"{self.ontology}_id", "definition"],
                 self.iterate_id_definition,
             ),
             (
-                "species",
-                self._species_path,
+                CacheArtifact.species,
                 [f"{self.ontology}_id", "taxonomy_id"],
                 self.iterate_id_species,
             ),
             (
-                "synonyms",
-                self._synonyms_path,
+                # TODO deprecate this in favor of literal mappings output
+                CacheArtifact.synonyms,
                 [f"{self.ontology}_id", "synonym"],
                 self.iterate_synonym_rows,
             ),
-            ("alts", self._alts_path, [f"{self.ontology}_id", "alt_id"], self.iterate_alt_rows),
-            ("mappings", self._mappings_path, SSSOM_DF_COLUMNS, self.iterate_mapping_rows),
-            ("relations", self._relations_path, self.relations_header, self.iter_relation_rows),
-            ("edges", self._edges_path, self.edges_header, self.iterate_edge_rows),
+            (CacheArtifact.alts, [f"{self.ontology}_id", "alt_id"], self.iterate_alt_rows),
+            (CacheArtifact.mappings, SSSOM_DF_COLUMNS, self.iterate_mapping_rows),
+            (CacheArtifact.relations, self.relations_header, self.iter_relation_rows),
+            (CacheArtifact.edges, self.edges_header, self.iterate_edge_rows),
             (
-                "properties",
-                self._properties_path,
+                # TODO deprecate this in favor of pair of literal and object properties
+                CacheArtifact.properties,
                 self.properties_header,
                 self._iter_property_rows,
             ),
             (
-                "object_properties",
-                self._object_properties_path,
+                CacheArtifact.object_properties,
                 self.object_properties_header,
                 self.iter_object_properties,
             ),
             (
-                "literal_properties",
-                self._literal_properties_path,
+                CacheArtifact.literal_properties,
                 self.literal_properties_header,
                 self.iter_literal_properties,
             ),
             (
-                "literal_mappings",
-                self._literal_mappings_path,
+                CacheArtifact.literal_mappings,
                 ssslm.LiteralMappingTuple._fields,
                 self.iterate_literal_mapping_rows,
             ),
         ]
+
+    def write_metadata(self) -> None:
+        """Write the metadata JSON file."""
+        metadata = self.get_metadata()
+        for path in (self._root_metadata_path, self._get_cache_path(CacheArtifact.metadata)):
+            logger.debug("[%s v%s] caching metadata to %s", self.ontology, self.data_version, path)
+            with path.open("w") as file:
+                json.dump(metadata, file, indent=2)
+
+    def write_prefix_map(self) -> None:
+        """Write a prefix map file that includes all prefixes used in this ontology."""
+        with self._get_cache_path(CacheArtifact.prefixes).open("w") as file:
+            json.dump(self._get_clean_idspaces(), file, indent=2)
+
+    def write_cache(self, *, force: bool = False) -> None:
+        """Write cache parts."""
+        typedefs_path = self._get_cache_path(CacheArtifact.typedefs)
+        logger.debug(
+            "[%s v%s] caching typedefs to %s",
+            self.ontology,
+            self.data_version,
+            typedefs_path,
+        )
+        typedef_df: pd.DataFrame = self.get_typedef_df()
+        typedef_df.sort_values(list(typedef_df.columns), inplace=True)
+        typedef_df.to_csv(typedefs_path, sep="\t", index=False)
+
+        for cache_artifact, header, fn in self._get_cache_config():
+            path = self._get_cache_path(cache_artifact)
+            if path.exists() and not force:
+                continue
+            logger.debug(
+                "[%s v%s] caching %s to %s",
+                self.ontology,
+                self.data_version,
+                cache_artifact.name,
+                path,
+            )
+            write_iterable_tsv(
+                path=path,
+                header=header,
+                it=fn(),  # type:ignore
+            )
+
+        typedefs = self._index_typedefs()
+        for relation in (v.is_a, v.has_part, v.part_of, v.from_species, v.orthologous):
+            if relation is not v.is_a and relation.pair not in typedefs:
+                continue
+            relations_path = get_relation_cache_path(
+                self.ontology, reference=relation, version=self.data_version
+            )
+            if relations_path.exists() and not force:
+                continue
+            logger.debug(
+                "[%s v%s] caching relation %s ! %s",
+                self.ontology,
+                self.data_version,
+                relation.curie,
+                relation.name,
+            )
+            relation_df = self.get_filtered_relations_df(relation)
+            if not len(relation_df.index):
+                continue
+            relation_df.sort_values(list(relation_df.columns), inplace=True)
+            relation_df.to_csv(relations_path, sep="\t", index=False)
 
     def write_default(
         self,
@@ -1166,58 +1166,10 @@ class Obo:
         write_cache: bool = True,
     ) -> None:
         """Write the OBO to the default path."""
-        metadata = self.get_metadata()
-        for path in (self._root_metadata_path, self._versioned_metadata_path):
-            logger.debug("[%s v%s] caching metadata to %s", self.ontology, self.data_version, path)
-            with path.open("w") as file:
-                json.dump(metadata, file, indent=2)
-
-        with self._prefix_map_path.open("w") as file:
-            json.dump(self._get_clean_idspaces(), file, indent=2)
-
+        self.write_metadata()
+        self.write_prefix_map()
         if write_cache:
-            logger.debug(
-                "[%s v%s] caching typedefs to %s",
-                self.ontology,
-                self.data_version,
-                self._typedefs_path,
-            )
-            typedef_df: pd.DataFrame = self.get_typedef_df()
-            typedef_df.sort_values(list(typedef_df.columns), inplace=True)
-            typedef_df.to_csv(self._typedefs_path, sep="\t", index=False)
-
-            for label, path, header, fn in self._get_cache_config():
-                if path.exists() and not force:
-                    continue
-                logger.debug(
-                    "[%s v%s] caching %s to %s", self.ontology, self.data_version, label, path
-                )
-                write_iterable_tsv(
-                    path=path,
-                    header=header,
-                    it=fn(),  # type:ignore
-                )
-
-            typedefs = self._index_typedefs()
-            for relation in (v.is_a, v.has_part, v.part_of, v.from_species, v.orthologous):
-                if relation is not v.is_a and relation.pair not in typedefs:
-                    continue
-                relations_path = self._cache("relations", name=f"{relation.curie}.tsv")
-                if relations_path.exists() and not force:
-                    continue
-                logger.debug(
-                    "[%s v%s] caching relation %s ! %s",
-                    self.ontology,
-                    self.data_version,
-                    relation.curie,
-                    relation.name,
-                )
-                relation_df = self.get_filtered_relations_df(relation)
-                if not len(relation_df.index):
-                    continue
-                relation_df.sort_values(list(relation_df.columns), inplace=True)
-                relation_df.to_csv(relations_path, sep="\t", index=False)
-
+            self.write_cache(force=force)
         if write_obo and (not self._obo_path.exists() or force):
             tqdm.write(f"[{self.ontology}] writing OBO to {self._obo_path}")
             self.write_obo(self._obo_path, use_tqdm=use_tqdm)
@@ -1251,8 +1203,9 @@ class Obo:
             tqdm.write(f"[{self.ontology}] writing obonet to {self._obonet_gz_path}")
             self.write_obonet_gz(self._obonet_gz_path)
         if write_nodes:
-            tqdm.write(f"[{self.ontology}] writing nodes TSV to {self._nodes_path}")
-            self.get_graph().get_nodes_df().to_csv(self._nodes_path, sep="\t", index=False)
+            nodes_path = self._get_cache_path(CacheArtifact.nodes)
+            tqdm.write(f"[{self.ontology}] writing nodes TSV to {nodes_path}")
+            self.write_nodes(nodes_path)
 
     @property
     def _items_accessor(self) -> list[Term]:
@@ -1268,10 +1221,12 @@ class Obo:
 
     def ancestors(self, identifier: str) -> set[str]:
         """Return a set of identifiers for parents of the given identifier."""
+        # FIXME switch to references
         return nx.descendants(self.hierarchy, identifier)  # note this is backwards
 
     def descendants(self, identifier: str) -> set[str]:
         """Return a set of identifiers for the children of the given identifier."""
+        # FIXME switch to references
         return nx.ancestors(self.hierarchy, identifier)  # note this is backwards
 
     def is_descendant(self, descendant: str, ancestor: str) -> bool:

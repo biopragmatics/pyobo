@@ -20,7 +20,7 @@ from pyobo import (
 from pyobo.api.utils import get_version
 from pyobo.constants import RAW_DIRECTORY
 from pyobo.registries import iter_cached_obo
-from pyobo.utils.path import prefix_cache_join
+from pyobo.utils.path import CacheArtifact, get_cache_path
 
 __all__ = [
     "download_artifacts",
@@ -88,55 +88,55 @@ def upload_artifacts_for_prefix(
 
     logger.info("[%s] getting id->name mapping", prefix)
     get_id_name_mapping(prefix)
-    id_name_path = prefix_cache_join(prefix, name="names.tsv", version=version)
+    id_name_path = get_cache_path(prefix, CacheArtifact.names, version=version)
     if not id_name_path.exists():
         raise FileNotFoundError
-    id_name_key = os.path.join(prefix, "cache", "names.tsv")
+    id_name_key = os.path.join(prefix, "cache", id_name_path.name)
     logger.info("[%s] uploading id->name mapping", prefix)
     upload_file(path=id_name_path, bucket=bucket, key=id_name_key, s3_client=s3_client)
 
     logger.info("[%s] getting id->synonyms mapping", prefix)
     get_id_synonyms_mapping(prefix)
-    id_synonyms_path = prefix_cache_join(prefix, name="synonyms.tsv", version=version)
+    id_synonyms_path = get_cache_path(prefix, CacheArtifact.synonyms, version=version)
     if not id_synonyms_path.exists():
         raise FileNotFoundError
-    id_synonyms_key = os.path.join(prefix, "cache", "synonyms.tsv")
+    id_synonyms_key = os.path.join(prefix, "cache", id_synonyms_path.name)
     logger.info("[%s] uploading id->synonyms mapping", prefix)
     upload_file(path=id_synonyms_path, bucket=bucket, key=id_synonyms_key, s3_client=s3_client)
 
     logger.info("[%s] getting xrefs", prefix)
     get_xrefs_df(prefix)
-    xrefs_path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
+    xrefs_path = get_cache_path(prefix, CacheArtifact.xrefs, version=version)
     if not xrefs_path.exists():
         raise FileNotFoundError
-    xrefs_key = os.path.join(prefix, "cache", "xrefs.tsv")
+    xrefs_key = os.path.join(prefix, "cache", xrefs_path.name)
     logger.info("[%s] uploading xrefs", prefix)
     upload_file(path=xrefs_path, bucket=bucket, key=xrefs_key, s3_client=s3_client)
 
     logger.info("[%s] getting relations", prefix)
     get_relations_df(prefix)
-    relations_path = prefix_cache_join(prefix, name="relations.tsv", version=version)
+    relations_path = get_cache_path(prefix, CacheArtifact.relations, version=version)
     if not relations_path.exists():
         raise FileNotFoundError
-    relations_key = os.path.join(prefix, "cache", "relations.tsv")
+    relations_key = os.path.join(prefix, "cache", relations_path.name)
     logger.info("[%s] uploading relations", prefix)
     upload_file(path=relations_path, bucket=bucket, key=relations_key, s3_client=s3_client)
 
     logger.info("[%s] getting properties", prefix)
     get_properties_df(prefix)
-    properties_path = prefix_cache_join(prefix, name="properties.tsv", version=version)
+    properties_path = get_cache_path(prefix, CacheArtifact.properties, version=version)
     if not properties_path.exists():
         raise FileNotFoundError
-    properties_key = os.path.join(prefix, "cache", "properties.tsv")
+    properties_key = os.path.join(prefix, properties_path.name)
     logger.info("[%s] uploading properties", prefix)
     upload_file(path=properties_path, bucket=bucket, key=properties_key, s3_client=s3_client)
 
     logger.info("[%s] getting alternative identifiers", prefix)
     get_id_to_alts(prefix)
-    alts_path = prefix_cache_join(prefix, name="alt_ids.tsv", version=version)
+    alts_path = get_cache_path(prefix, CacheArtifact.alts, version=version)
     if not alts_path.exists():
         raise FileNotFoundError
-    alts_key = os.path.join(prefix, "cache", "alt_ids.tsv")
+    alts_key = os.path.join(prefix, "cache", alts_path.name)
     logger.info("[%s] uploading alternative identifiers", prefix)
     upload_file(path=alts_path, bucket=bucket, key=alts_key)
 

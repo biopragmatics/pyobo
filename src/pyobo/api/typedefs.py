@@ -11,7 +11,7 @@ from ..constants import GetOntologyKwargs, check_should_cache, check_should_forc
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_df
-from ..utils.path import prefix_cache_join
+from ..utils.path import CacheArtifact, get_cache_path
 
 __all__ = [
     "get_typedef_df",
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 def get_typedef_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get an identifier to name mapping for the typedefs in an OBO file."""
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="typedefs.tsv", version=version)
+    path = get_cache_path(prefix, CacheArtifact.typedefs, version=version)
 
     @cached_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
