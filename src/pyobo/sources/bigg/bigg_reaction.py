@@ -16,7 +16,7 @@ __all__ = [
 
 PREFIX = "bigg.reaction"
 URL = "http://bigg.ucsd.edu/static/namespace/bigg_models_reactions.txt"
-PROPERTY_MAP = {"eccode": enabled_by}
+PROPERTY_MAP = {"ec": enabled_by}
 
 
 class BiGGReactionGetter(Obo):

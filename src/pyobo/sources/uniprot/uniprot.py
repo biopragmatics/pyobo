@@ -152,7 +152,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                 for ec in ecs.split(";"):
                     if ec := ec.strip():
                         term.annotate_object(
-                            enables, Reference(prefix="eccode", identifier=standardize_ec(ec))
+                            enables, Reference(prefix="ec", identifier=standardize_ec(ec))
                         )
             for pubmed in pubmeds.split(";"):
                 if pubmed := pubmed.strip():

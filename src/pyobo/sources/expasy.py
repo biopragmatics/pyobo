@@ -45,13 +45,13 @@ class ExpasyGetter(Obo):
     bioversions_key = ontology = PREFIX
     typedefs = [has_member, enables, term_replaced_by, has_source]
     root_terms = [
-        Reference(prefix="eccode", identifier="1"),
-        Reference(prefix="eccode", identifier="2"),
-        Reference(prefix="eccode", identifier="3"),
-        Reference(prefix="eccode", identifier="4"),
-        Reference(prefix="eccode", identifier="5"),
-        Reference(prefix="eccode", identifier="6"),
-        Reference(prefix="eccode", identifier="7"),
+        Reference(prefix=PREFIX, identifier="1"),
+        Reference(prefix=PREFIX, identifier="2"),
+        Reference(prefix=PREFIX, identifier="3"),
+        Reference(prefix=PREFIX, identifier="4"),
+        Reference(prefix=PREFIX, identifier="5"),
+        Reference(prefix=PREFIX, identifier="6"),
+        Reference(prefix=PREFIX, identifier="7"),
     ]
     property_values = [Annotation(has_source.reference, OBOLiteral.uri(EXPASY_DATABASE_URL))]
 

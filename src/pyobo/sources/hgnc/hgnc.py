@@ -280,7 +280,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 continue  # only add concrete annotations
             term.append_relationship(
                 gene_product_member_of,
-                Reference(prefix="eccode", identifier=ec_code),
+                Reference(prefix="ec", identifier=ec_code),
             )
         for rna_central_ids in entry.pop("rna_central_id", []):
             for rna_central_id in rna_central_ids.split(","):

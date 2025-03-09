@@ -255,7 +255,7 @@ def _get_xrefs(element: Element) -> list[tuple[str, str]]:
         elif registry_number.startswith("txid"):
             rv.append(("NCBITaxon", registry_number[4:]))
         elif registry_number.startswith("EC "):
-            rv.append(("eccode", standardize_ec(registry_number[3:])))
+            rv.append(("ec", standardize_ec(registry_number[3:])))
         elif CAS_RE.fullmatch(registry_number):
             rv.append(("cas", registry_number))
         elif UNII_RE.fullmatch(registry_number):
