@@ -10,7 +10,6 @@ from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
 from ..constants import (
-    BUILD_SUBDIRECTORY_NAME,
     TARGET_ID,
     TARGET_PREFIX,
     GetOntologyKwargs,
@@ -21,8 +20,8 @@ from ..constants import (
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct import Obo
-from ..utils.cache import cached_df, cached_mapping
-from ..utils.path import prefix_cache_join, prefix_directory_join
+from ..utils.cache import cached_df
+from ..utils.path import CacheArtifact, get_cache_path
 
 __all__ = [
     "get_filtered_xrefs",
@@ -60,33 +59,9 @@ def get_filtered_xrefs(
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
-    version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, "xrefs", name=f"{xref_prefix}.tsv", version=version)
-    all_xrefs_path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
-    header = [f"{prefix}_id", f"{xref_prefix}_id"]
-
-    @cached_mapping(
-        path=path,
-        header=header,
-        use_tqdm=check_should_use_tqdm(kwargs),
-        force=check_should_force(kwargs),
-        cache=check_should_cache(kwargs),
-    )
-    def _get_mapping() -> Mapping[str, str]:
-        if all_xrefs_path.is_file():
-            logger.info("[%s] loading pre-cached xrefs", prefix)
-            df = pd.read_csv(all_xrefs_path, sep="\t", dtype=str)
-            logger.info("[%s] filtering pre-cached xrefs", prefix)
-            df = df.loc[df[TARGET_PREFIX] == xref_prefix, [f"{prefix}_id", TARGET_ID]]
-            return dict(df.values)
-
-        logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_filtered_xrefs_mapping(
-            xref_prefix, use_tqdm=check_should_use_tqdm(kwargs)
-        )
-
-    rv = _get_mapping()
+    df = get_xrefs_df(prefix, **kwargs)
+    df = df.loc[df[TARGET_PREFIX] == xref_prefix, [f"{prefix}_id", TARGET_ID]]
+    rv = dict(df.values)
     if flip:
         return {v: k for k, v in rv.items()}
     return rv
@@ -103,7 +78,7 @@ def get_xrefs_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFra
     )
 
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="xrefs.tsv", version=version)
+    path = get_cache_path(prefix, CacheArtifact.xrefs, version=version)
 
     @cached_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
@@ -171,9 +146,7 @@ def get_mappings_df(
 
     else:
         version = get_version_from_kwargs(prefix, kwargs)
-        path = prefix_directory_join(
-            prefix, BUILD_SUBDIRECTORY_NAME, name="sssom.tsv", version=version
-        )
+        path = get_cache_path(prefix, CacheArtifact.mappings, version=version)
 
         @cached_df(
             path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)

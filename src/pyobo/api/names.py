@@ -18,15 +18,15 @@ from typing_extensions import Unpack
 from .alts import get_primary_identifier
 from .utils import _get_pi, get_version_from_kwargs
 from ..constants import (
-    BUILD_SUBDIRECTORY_NAME,
     GetOntologyKwargs,
     check_should_cache,
     check_should_force,
 )
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..utils.cache import cached_collection, cached_df, cached_mapping, cached_multidict
-from ..utils.path import prefix_cache_join, prefix_directory_join
+from ..utils.cache import cached_collection, cached_df, cached_mapping
+from ..utils.io import multidict
+from ..utils.path import CacheArtifact, get_cache_path
 
 __all__ = [
     "get_definition",
@@ -151,7 +151,8 @@ def get_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Refe
         return rv
 
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="references.tsv", version=version)
+    # TODO pre-cache these!
+    path = get_cache_path(prefix, CacheArtifact.references, version=version)
 
     @CachedReferences(
         path=path,
@@ -181,7 +182,7 @@ def get_id_name_mapping(
         return rv
 
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="names.tsv", version=version)
+    path = get_cache_path(prefix, CacheArtifact.names, version=version)
 
     @cached_mapping(
         path=path,
@@ -230,7 +231,7 @@ def get_id_definition_mapping(
 ) -> Mapping[str, str]:
     """Get a mapping of descriptions."""
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="definitions.tsv", version=version)
+    path = get_cache_path(prefix, CacheArtifact.definitions, version=version)
 
     @cached_mapping(
         path=path,
@@ -252,7 +253,8 @@ def get_id_definition_mapping(
 def get_obsolete(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
     """Get the set of obsolete local unique identifiers."""
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="obsolete.tsv", version=version)
+    # TODO pre-cache these!
+    path = get_cache_path(prefix, CacheArtifact.obsoletes, version=version)
 
     @cached_collection(
         path=path,
@@ -291,21 +293,14 @@ def get_id_synonyms_mapping(
     prefix: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, list[str]]:
     """Get the OBO file and output a synonym dictionary."""
-    version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="synonyms.tsv", version=version)
-
-    @cached_multidict(
-        path=path,
-        header=[f"{prefix}_id", "synonym"],
-        force=check_should_force(kwargs),
-        cache=check_should_cache(kwargs),
+    df = get_literal_mappings_df(prefix=prefix, **kwargs)
+    prefix_with_colon = f"{prefix}:"
+    prefix_with_colon_len = len(prefix_with_colon)
+    # keep only literal mappings with the right prefix
+    df = df[df["curie"].str.startswith(prefix_with_colon)]
+    return multidict(
+        (curie[prefix_with_colon_len:], text) for curie, text in df[["curie", "text"]].values
     )
-    def _get_multidict() -> Mapping[str, list[str]]:
-        logger.info("[%s v%s] no cached synonyms found. getting from OBO loader", prefix, version)
-        ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_id_synonyms_mapping()
-
-    return _get_multidict()
 
 
 def get_literal_mappings(
@@ -326,9 +321,7 @@ def get_literal_mappings_df(
 ) -> pd.DataFrame:
     """Get a literal mappings dataframe."""
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_directory_join(
-        prefix, BUILD_SUBDIRECTORY_NAME, name="literal_mappings.tsv", version=version
-    )
+    path = get_cache_path(prefix, CacheArtifact.literal_mappings, version=version)
 
     @cached_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)

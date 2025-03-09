@@ -28,6 +28,8 @@ BUILD_SUBDIRECTORY_NAME = "build"
 #: The directory inside an ontology cache where
 #: small caches for alts, xrefs, names, etc. go
 CACHE_SUBDIRECTORY_NAME = "cache"
+#: the directory for caching relations
+RELATION_SUBDIRECTORY_NAME = "relations"
 
 SPECIES_REMAPPING = {
     "Canis familiaris": "Canis lupus familiaris",
