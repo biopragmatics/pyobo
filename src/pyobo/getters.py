@@ -67,7 +67,7 @@ def get_ontology(
     *,
     force: bool = False,
     force_process: bool = False,
-    strict: bool = True,
+    strict: bool = False,
     version: str | None = None,
     robot_check: bool = True,
     upgrade: bool = True,
@@ -450,7 +450,7 @@ def db_output_helper(
     columns: Sequence[str],
     *,
     directory: None | str | pathlib.Path = None,
-    strict: bool = True,
+    strict: bool = False,
     use_gzip: bool = True,
     summary_detailed: Sequence[int] | None = None,
 ) -> list[pathlib.Path]:

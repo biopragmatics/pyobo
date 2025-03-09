@@ -128,7 +128,7 @@ class TestReaderTerm(unittest.TestCase):
             id: nope:1234
         """
         with self.assertRaises(UnregisteredPrefixError):
-            from_str(text)
+            from_str(text, strict=True)
         ontology = from_str(text, strict=False)
         self.assertEqual(0, len(list(ontology.iter_terms())))
 
@@ -814,7 +814,7 @@ class TestReaderTerm(unittest.TestCase):
             property_value: mass "121.323" NOPE:NOPE
         """
         with self.assertRaises(UnregisteredPrefixError):
-            from_str(text)
+            from_str(text, strict=True)
         ontology = from_str(text, strict=False)
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(term.properties))
@@ -958,7 +958,7 @@ class TestReaderTerm(unittest.TestCase):
             property_value: http://purl.obolibrary.org/obo/RO_0018033 http://example.org/nope:nope
         """
         with self.assertRaises(UnparsableIRIError):
-            from_str(text)
+            from_str(text, strict=True)
         ontology = from_str(text, strict=False)
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(term.properties))
@@ -988,7 +988,7 @@ class TestReaderTerm(unittest.TestCase):
             """
 
         with self.assertRaises(UnregisteredPrefixError):
-            from_str(text)
+            from_str(text, strict=True)
 
         ontology = from_str(text, strict=False)
         term = self.get_only_term(ontology)
@@ -1226,7 +1226,7 @@ class TestReaderTerm(unittest.TestCase):
         """
 
         with self.assertRaises(NotCURIEError):
-            from_str(text)
+            from_str(text, strict=True)
 
         ontology = from_str(text, strict=False)
         term = self.get_only_term(ontology)
