@@ -96,7 +96,7 @@ def ensure_df(
     return pd.read_csv(_path, sep=sep, dtype=dtype, **kwargs)
 
 
-class CacheArtifact(enum.StrEnum):
+class CacheArtifact(enum.Enum):
     """An enumeration for."""
 
     names = "names.tsv"
