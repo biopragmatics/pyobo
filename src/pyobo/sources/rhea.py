@@ -224,7 +224,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         _iubmb,
     ) in ec_df.values:
         terms[directional_rhea_id].append_relationship(
-            v.enabled_by, Reference(prefix="eccode", identifier=ec)
+            v.enabled_by, Reference(prefix="ec", identifier=ec)
         )
 
     yield from terms.values()

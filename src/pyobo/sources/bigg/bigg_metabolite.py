@@ -49,7 +49,7 @@ KEY_TO_PREFIX = {
     "KEGG Glycan": "kegg.glycan",
     "MetaNetX (MNX) Equation": "metanetx.reaction",
     "RHEA": "rhea",
-    "EC Number": "eccode",
+    "EC Number": "ec",
     "SEED Reaction": "seed.reaction",
     "Reactome Reaction": "reactome",
     "KEGG Reaction": "kegg.reaction",

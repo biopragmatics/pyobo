@@ -61,7 +61,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
     """
     df = download_pharmgkb_tsv(PREFIX, url=URL, inner="genes.tsv", force=force)
 
-    skip_xrefs = {"ncbigene", "hgnc", "ensembl"}
+    skip_xrefs = {"ncbigene", "hgnc", "ensembl", "GeneCard"}
     for _, row in df.iterrows():
         identifier = row["PharmGKB Accession Id"]
         if pd.isna(identifier):
@@ -97,8 +97,9 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
             term.append_synonym(synonym)
 
         for xref in parse_xrefs(term, row):
-            if xref.prefix not in skip_xrefs:
-                term.append_xref(xref)
+            if xref.prefix in skip_xrefs:
+                continue
+            term.append_xref(xref)
 
         yield term
 
