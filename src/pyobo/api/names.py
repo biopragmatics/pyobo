@@ -69,18 +69,20 @@ def _help_get(
         mapping = f(reference.prefix, **kwargs)  # type:ignore
     except NoBuildError:
         if reference.prefix not in NO_BUILD_PREFIXES:
-            logger.warning("[%s] unable to look up results with %s", reference, f)
+            logger.warning("[%s] unable to look up results with %s", reference.prefix, f)
             NO_BUILD_PREFIXES.add(reference.prefix)
         return None
     except ValueError as e:
         if reference.prefix not in NO_BUILD_PREFIXES:
-            logger.warning("[%s] value error while looking up results with %s: %s", reference, f, e)
+            logger.warning(
+                "[%s] value error while looking up results with %s: %s", reference.prefix, f, e
+            )
             NO_BUILD_PREFIXES.add(reference.prefix)
         return None
 
     if not mapping:
         if reference.prefix not in NO_BUILD_PREFIXES:
-            logger.warning("[%s] no results produced with %s", reference, f)
+            logger.warning("[%s] no results produced with %s", reference.prefix, f)
             NO_BUILD_PREFIXES.add(reference.prefix)
         return None
 
