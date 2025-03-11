@@ -80,16 +80,30 @@ class TestReaderOntologyMetadata(unittest.TestCase):
 
     def test_8_synonym_typedef(self) -> None:
         """Test the ``synonym_typedef`` tag."""
-        ontology = from_str("""\
+        with self.assertRaises(ValueError):
+            # This raises
+            from_str(
+                """\
+                ontology: chebi
+                synonymtypedef: ST5 "ST5 Name" garbage
+            """,
+                strict=True,
+            )
+
+        ontology = from_str(
+            """\
             ontology: chebi
             synonymtypedef: ST1 "ST1 Name" EXACT
             synonymtypedef: ST2 "ST2 Name" NARROW
             synonymtypedef: ST3 "ST3 Name"
+            synonymtypedef: ST4 "ST4 Name" exact
+            synonymtypedef: ST5 "ST5 Name" garbage
             synonymtypedef: OMO:0000001 "E1 Name" EXACT
             synonymtypedef: OMO:0000002 "E2 Name" NARROW
             synonymtypedef: OMO:0000003 "E3 Name"
-        """)
-        self.assertEqual(6, len(ontology.synonym_typedefs))
+        """,
+            strict=False,
+        )
         self.assertEqual(
             [
                 SynonymTypeDef(
@@ -102,6 +116,13 @@ class TestReaderOntologyMetadata(unittest.TestCase):
                 ),
                 SynonymTypeDef(
                     reference=default_reference("chebi", "ST3", name="ST3 Name"), specificity=None
+                ),
+                SynonymTypeDef(
+                    reference=default_reference("chebi", "ST4", name="ST4 Name"),
+                    specificity="EXACT",
+                ),
+                SynonymTypeDef(
+                    reference=default_reference("chebi", "ST5", name="ST5 Name"), specificity=None
                 ),
                 SynonymTypeDef(
                     reference=Reference(prefix="OMO", identifier="0000001", name="E1 Name"),
@@ -163,9 +184,9 @@ class TestReaderOntologyMetadata(unittest.TestCase):
     def test_13_xref_genus_differentia(self) -> None:
         """Test the ``treat-xrefs-as-is_a `` macro.
 
-        The test should become the same as:
+        The test should become the same as
 
-        .. code::
+        .. code-block::
 
             [Term]
             id: ZFA:0000134
@@ -195,7 +216,7 @@ class TestReaderOntologyMetadata(unittest.TestCase):
         )
 
     def test_14_xref_relation(self) -> None:
-        """Test the ``treat-xrefs-as-relationship  `` macro."""
+        """Test the ``treat-xrefs-as-relationship`` macro."""
         ontology = from_str("""\
             ontology: go
             treat-xrefs-as-relationship: CL BFO:0000000
@@ -216,7 +237,7 @@ class TestReaderOntologyMetadata(unittest.TestCase):
         self.assertEqual([Reference(prefix="CL", identifier="0000000")], term.relationships[pred])
 
     def test_15_xref_is_a_for_term(self) -> None:
-        """Test the ``treat-xrefs-as-is_a `` macro."""
+        """Test the ``treat-xrefs-as-is_a`` macro."""
         ontology = from_str("""\
             ontology: go
             treat-xrefs-as-is_a: CL
@@ -235,7 +256,7 @@ class TestReaderOntologyMetadata(unittest.TestCase):
         self.assertEqual([Reference(prefix="CL", identifier="0000000")], term.parents)
 
     def test_15_xref_is_a_for_typedef(self) -> None:
-        """Test the ``treat-xrefs-as-is_a `` macro."""
+        """Test the ``treat-xrefs-as-is_a`` macro."""
         ontology = from_str("""\
             ontology: ro
             treat-xrefs-as-is_a: skos
@@ -300,6 +321,50 @@ class TestReaderOntologyMetadata(unittest.TestCase):
             ontology.root_terms,
         )
 
+    def test_18_root_with_url(self) -> None:
+        """Test root terms as URL."""
+        ontology = from_str("""\
+            ontology: lepao
+            property_value: IAO:0000700 http://purl.obolibrary.org/obo/LEPAO_0000006
+        """)
+        self.assertEqual(
+            [Reference(prefix="LEPAO", identifier="0000006")],
+            ontology.root_terms,
+        )
+
+    def test_18_root_with_url_quoted(self) -> None:
+        """Test root terms as URL."""
+        ontology = from_str("""\
+            ontology: lepao
+            property_value: IAO:0000700 "http://purl.obolibrary.org/obo/LEPAO_0000006"
+        """)
+        self.assertEqual(
+            [Reference(prefix="LEPAO", identifier="0000006")],
+            ontology.root_terms,
+        )
+
+    def test_18_root_with_typed_uri(self) -> None:
+        """Test root terms as URL."""
+        ontology = from_str("""\
+            ontology: lepao
+            property_value: IAO:0000700 "http://purl.obolibrary.org/obo/LEPAO_0000006" xsd:anyURI
+        """)
+        self.assertEqual(
+            [Reference(prefix="LEPAO", identifier="0000006")],
+            ontology.root_terms,
+        )
+
+    def test_18_root_with_mistyped_uri(self) -> None:
+        """Test root terms as URL."""
+        ontology = from_str("""\
+            ontology: lepao
+            property_value: IAO:0000700 "http://purl.obolibrary.org/obo/LEPAO_0000006" xsd:string
+        """)
+        self.assertEqual(
+            [Reference(prefix="LEPAO", identifier="0000006")],
+            ontology.root_terms,
+        )
+
 
 class TestVersionHandling(unittest.TestCase):
     """Test version handling."""
@@ -327,7 +392,7 @@ class TestVersionHandling(unittest.TestCase):
         self.assertEqual("123", ontology.data_version)
 
     def test_releases_prefix_simple(self):
-        """Test a parsing a simple version starting with `releases/`."""
+        """Test a parsing a simple version starting with ``releases/``."""
         ontology = from_str("""\
             ontology: chebi
             data-version: releases/123
@@ -335,11 +400,11 @@ class TestVersionHandling(unittest.TestCase):
         self.assertEqual(
             "123",
             ontology.data_version,
-            msg="The prefix `releases/` wasn't properly automatically stripped",
+            msg="The prefix ``releases/`` wasn't properly automatically stripped",
         )
 
     def test_releases_prefix_complex(self):
-        """Test parsing a complex string starting with `releases/`."""
+        """Test parsing a complex string starting with ``releases/``."""
         ontology = from_str("""\
             ontology: chebi
             data-version: releases/123/chebi.owl
@@ -347,7 +412,7 @@ class TestVersionHandling(unittest.TestCase):
         self.assertEqual(
             "123",
             ontology.data_version,
-            msg="The prefix `releases/` wasn't properly automatically stripped",
+            msg="The prefix ``releases/`` wasn't properly automatically stripped",
         )
 
     def test_no_version_with_date(self):

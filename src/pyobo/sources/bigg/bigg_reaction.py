@@ -16,7 +16,7 @@ __all__ = [
 
 PREFIX = "bigg.reaction"
 URL = "http://bigg.ucsd.edu/static/namespace/bigg_models_reactions.txt"
-PROPERTY_MAP = {"eccode": enabled_by}
+PROPERTY_MAP = {"ec": enabled_by}
 
 
 class BiGGReactionGetter(Obo):
@@ -25,10 +25,6 @@ class BiGGReactionGetter(Obo):
     ontology = PREFIX
     bioversions_key = "bigg"
     typedefs = [participates_in, enabled_by]
-    idspaces = {
-        PREFIX: "http://bigg.ucsd.edu/models/universal/reactions/",
-        "bigg.model": "http://bigg.ucsd.edu/models/",
-    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

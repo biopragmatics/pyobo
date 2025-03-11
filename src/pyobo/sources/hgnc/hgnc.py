@@ -280,7 +280,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 continue  # only add concrete annotations
             term.append_relationship(
                 gene_product_member_of,
-                Reference(prefix="eccode", identifier=ec_code),
+                Reference(prefix="ec", identifier=ec_code),
             )
         for rna_central_ids in entry.pop("rna_central_id", []):
             for rna_central_id in rna_central_ids.split(","):
@@ -396,7 +396,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         for prop, td in [("location", HAS_LOCATION)]:
             value = entry.pop(prop, None)
             if value:
-                term.annotate_literal(td, value)
+                term.annotate_string(td, value)
 
         locus_type = entry.pop("locus_type")
         locus_group = entry.pop("locus_group")
@@ -408,8 +408,8 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 Reference(prefix="SO", identifier="0000704", name=get_so_name("0000704"))
             )  # gene
             unhandle_locus_types[locus_type][identifier] = term
-            term.annotate_literal(HAS_LOCUS_TYPE, locus_type)
-            term.annotate_literal(HAS_LOCUS_GROUP, locus_group)
+            term.annotate_string(HAS_LOCUS_TYPE, locus_type)
+            term.annotate_string(HAS_LOCUS_GROUP, locus_group)
 
         term.set_species(identifier="9606", name="Homo sapiens")
 
@@ -436,11 +436,11 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                         hgnc_id,
                         term.name,
                         term.is_obsolete,
-                        term.bioregistry_link,
+                        f"https://bioregistry.io/{term.curie}",
                         ", ".join(
-                            p.bioregistry_link
+                            f"https://bioregistry.io/{p.curie}"
                             for p in term.provenance
-                            if isinstance(p, Reference) and p.bioregistry_link
+                            if isinstance(p, Reference)
                         ),
                     )
                     for hgnc_id, term in sorted(v.items())

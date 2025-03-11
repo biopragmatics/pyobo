@@ -213,9 +213,10 @@ def get_descriptor_record(
     """Get descriptor records from the main element.
 
     :param element: An XML element
-    :param id_key: For descriptors, set to 'DescriptorUI'. For supplement, set to 'SupplementalRecordUI'
-    :param name_key: For descriptors, set to 'DescriptorName/String'.
-     For supplement, set to 'SupplementalRecordName/String'
+    :param id_key: For descriptors, set to 'DescriptorUI'. For supplement, set to
+        'SupplementalRecordUI'
+    :param name_key: For descriptors, set to 'DescriptorName/String'. For supplement,
+        set to 'SupplementalRecordName/String'
     """
     concepts = get_concept_records(element)
     scope_note = get_scope_note(concepts)
@@ -254,7 +255,7 @@ def _get_xrefs(element: Element) -> list[tuple[str, str]]:
         elif registry_number.startswith("txid"):
             rv.append(("NCBITaxon", registry_number[4:]))
         elif registry_number.startswith("EC "):
-            rv.append(("eccode", standardize_ec(registry_number[3:])))
+            rv.append(("ec", standardize_ec(registry_number[3:])))
         elif CAS_RE.fullmatch(registry_number):
             rv.append(("cas", registry_number))
         elif UNII_RE.fullmatch(registry_number):
@@ -332,9 +333,33 @@ def get_mesh_category_curies(
     :param letter: The MeSH tree, A for anatomy, C for disease, etc.
     :param skip: An optional collection of MeSH tree codes to skip, such as "A03"
     :param version: The MeSH version to use. Defaults to latest
+
     :returns: A list of MeSH CURIE strings for the top level of each MeSH tree.
 
-    .. seealso:: https://meshb.nlm.nih.gov/treeView
+    .. seealso::
+
+        https://meshb.nlm.nih.gov/treeView
+    """
+    return [
+        reference.curie
+        for reference in get_mesh_category_references(letter=letter, skip=skip, version=version)
+    ]
+
+
+def get_mesh_category_references(
+    letter: str, *, skip: Collection[str] | None = None, version: str | None = None
+) -> list[Reference]:
+    """Get the MeSH references for a category, by letter (e.g., "A").
+
+    :param letter: The MeSH tree, A for anatomy, C for disease, etc.
+    :param skip: An optional collection of MeSH tree codes to skip, such as "A03"
+    :param version: The MeSH version to use. Defaults to latest
+
+    :returns: A list of MeSH references for the top level of each MeSH tree.
+
+    .. seealso::
+
+        https://meshb.nlm.nih.gov/treeView
     """
     if version is None:
         version = safe_get_version("mesh")
@@ -346,8 +371,10 @@ def get_mesh_category_curies(
             continue
         mesh_id = tree_to_mesh.get(key)
         if mesh_id is None:
+            # as soon as we get to a missing ID, we don't
+            # have to go any further
             break
-        rv.append(f"mesh:{mesh_id}")
+        rv.append(Reference(prefix="mesh", identifier=mesh_id))
     return rv
 
 

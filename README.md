@@ -98,6 +98,7 @@ one using alternative identifiers listed in the underlying OBO with:
 
 ```python
 import pyobo
+from pyobo import Reference
 
 # Look up DNA-binding transcription factor activity (go:0003700)
 # based on an old id
@@ -105,7 +106,7 @@ primary_curie = pyobo.get_primary_curie('go:0001071')
 assert primary_curie == 'go:0003700'
 
 # If it's already the primary, it just gets returned
-assert 'go:0003700' == pyobo.get_priority_curie('go:0003700')
+assert Reference.from_curie('go:0003700') == pyobo.get_primary_curie('go:0003700')
 ```
 
 ### Mapping Species
@@ -226,42 +227,6 @@ hgnc_id = pyobo.get_xref('hgnc', '4137', 'ncbigene', flip=True)
 assert hgnc_id == '6893'
 ```
 
-Remap a CURIE based on pre-defined priority list and
-[Inspector Javert's Xref Database](https://cthoyt.com/2020/04/19/inspector-javerts-xref-database.html):
-
-```python
-
-import pyobo
-
-# Map to the best source possible
-mapt_ncbigene = pyobo.get_priority_curie('hgnc:6893')
-assert mapt_ncbigene == 'ncbigene:4137'
-
-# Sometimes you know you're the best. Own it.
-assert 'ncbigene:4137' == pyobo.get_priority_curie('ncbigene:4137')
-```
-
-Find all CURIEs mapped to a given one using Inspector Javert's Xref Database:
-
-```python
-import pyobo
-
-# Get a set of all CURIEs mapped to MAPT
-mapt_curies = pyobo.get_equivalent('hgnc:6893')
-assert 'ncbigene:4137' in mapt_curies
-assert 'ensembl:ENSG00000186868' in mapt_curies
-```
-
-If you don't want to wait to build the database locally for the
-`pyobo.get_priority_curie` and `pyobo.get_equivalent`, you can use the following
-code to download a release from [Zenodo](https://zenodo.org/record/3757266):
-
-```python
-import pyobo.resource_utils
-
-pyobo.resource_utils.ensure_inspector_javert()
-```
-
 ### Properties
 
 Get properties, like SMILES. The semantics of these are defined on an OBO-OBO
@@ -292,40 +257,42 @@ assert smiles == 'C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F'
 Check if an entity is in the hierarchy:
 
 ```python
-import networkx as nx
 import pyobo
+from pyobo import Reference
 
 # check that go:0008219 ! cell death is an ancestor of go:0006915 ! apoptotic process
-assert 'go:0008219' in pyobo.get_ancestors('go', '0006915')
+assert Reference.from_curie('go:0008219') in pyobo.get_ancestors('go', '0006915')
 
 # check that go:0070246 ! natural killer cell apoptotic process is a
 # descendant of go:0006915 ! apoptotic process
 apopototic_process_descendants = pyobo.get_descendants('go', '0006915')
-assert 'go:0070246' in apopototic_process_descendants
+assert Reference.from_curie('go:0070246') in apopototic_process_descendants
 ```
 
 Get the sub-hierarchy below a given node:
 
 ```python
 import pyobo
+from pyobo import Reference
 
 # get the descendant graph of go:0006915 ! apoptotic process
 apopototic_process_subhierarchy = pyobo.get_subhierarchy('go', '0006915')
 
 # check that go:0070246 ! natural killer cell apoptotic process is a
 # descendant of go:0006915 ! apoptotic process through the subhierarchy
-assert 'go:0070246' in apopototic_process_subhierarchy
+assert Reference.from_curie('go:0070246') in apopototic_process_subhierarchy
 ```
 
 Get a hierarchy with properties preloaded in the node data dictionaries:
 
 ```python
 import pyobo
+from pyobo import Reference
 
 prop = 'http://purl.obolibrary.org/obo/chebi/smiles'
 chebi_hierarchy = pyobo.get_hierarchy('chebi', properties=[prop])
 
-assert 'chebi:132964' in chebi_hierarchy
+assert Reference.from_curie('chebi:132964') in chebi_hierarchy
 assert prop in chebi_hierarchy.nodes['chebi:132964']
 assert chebi_hierarchy.nodes['chebi:132964'][prop] == 'C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F'
 ```
@@ -357,8 +324,8 @@ If you want to do it in one line, use:
 
 If you're writing your own code that relies on PyOBO, and unit testing it (as
 you should) in a continuous integration setting, you've probably realized that
-loading all of the resources on each build is not so fast. In those scenarios,
-you can use some of the pre-build patches like in the following:
+loading all the resources on each build is not so fast. In those scenarios, you
+can use some of the pre-build patches like in the following:
 
 ```python
 import unittest

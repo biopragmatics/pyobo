@@ -2,8 +2,8 @@
 
 Run with ``python -m pyobo.sources.drugbank_salt``
 
-Get relations between drugbank salts and drugbank parents with
-``pyobo relations drugbank --relation obo:has_salt`` or
+Get relations between drugbank salts and drugbank parents with ``pyobo relations
+drugbank --relation obo:has_salt`` or
 
 .. code-block:: python
 

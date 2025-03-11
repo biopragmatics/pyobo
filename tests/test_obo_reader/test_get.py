@@ -207,6 +207,7 @@ class TestParseObonet(unittest.TestCase):
                 node=Reference(prefix="chebi", identifier="51990"),
                 ontology_prefix="chebi",
                 upgrade=False,
+                context="",
             )
         )
         t_prop = default_reference("chebi", "monoisotopicmass")
@@ -225,6 +226,7 @@ class TestParseObonet(unittest.TestCase):
                 data=data,
                 ontology_prefix="chebi",
                 node=Reference(prefix="chebi", identifier="51990"),
+                upgrade=True,
             )
         ]
         self.assertEqual(7, len(xrefs))

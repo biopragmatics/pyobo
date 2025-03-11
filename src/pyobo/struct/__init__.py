@@ -1,6 +1,12 @@
 """Data structures for OBO."""
 
-from .reference import OBOLiteral, Reference, Referenced, default_reference
+from .reference import (
+    OBOLiteral,
+    Reference,
+    Referenced,
+    _parse_str_or_curie_or_uri,
+    default_reference,
+)
 from .struct import (
     CHARLIE_TERM,
     HUMAN_TERM,
@@ -10,10 +16,9 @@ from .struct import (
     SynonymTypeDef,
     Term,
     TypeDef,
-    int_identifier_sort_key,
     make_ad_hoc_ontology,
 )
-from .struct_utils import Stanza
+from .struct_utils import Annotation, Stanza
 from .typedef import (
     derives_from,
     enables,
@@ -40,6 +45,7 @@ __all__ = [
     "CHARLIE_TERM",
     "HUMAN_TERM",
     "PYOBO_INJECTED",
+    "Annotation",
     "OBOLiteral",
     "Obo",
     "Reference",
@@ -49,6 +55,7 @@ __all__ = [
     "SynonymTypeDef",
     "Term",
     "TypeDef",
+    "_parse_str_or_curie_or_uri",
     "default_reference",
     "derives_from",
     "enables",
@@ -60,7 +67,6 @@ __all__ = [
     "has_member",
     "has_part",
     "has_participant",
-    "int_identifier_sort_key",
     "is_a",
     "make_ad_hoc_ontology",
     "member_of",

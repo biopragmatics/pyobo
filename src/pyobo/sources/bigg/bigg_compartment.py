@@ -13,7 +13,7 @@ __all__ = [
 
 DATA_URL = "http://bigg.ucsd.edu/compartments/"
 PREFIX = "bigg.compartment"
-GO_MAPPING: dict[str, Reference] = {
+GO_MAPPING: dict[str, Reference | None] = {
     "c": Reference(prefix="go", identifier="0005829", name="cytosol"),
     "e": Reference(prefix="go", identifier="0005615", name="extracellular space"),
     "p": Reference(prefix="go", identifier="0042597", name="periplasmic space"),
@@ -33,15 +33,11 @@ GO_MAPPING: dict[str, Reference] = {
     "x": Reference(prefix="go", identifier="0005777", name="peroxisome"),
     "mm": Reference(prefix="go", identifier="0005743", name="mitochondrial inner membrane"),
     "im": Reference(prefix="go", identifier="0005758", name="mitochondrial intermembrane space"),
+    "cx": None,  # missing for carboxyzome
+    "cm": None,  # missing for cytosolic membrane
+    "i": None,  # missing for inner mitochondrial compartment
+    "w": None,  # missing for wildtype staph aureus
 }
-"""
-MISSING:
-
-cx carboxyzome
-cm cytosolic membrane
-i inner mitochondrial compartment
-w wildtype staph aureus
-"""
 
 
 class BiGGCompartmentGetter(Obo):
@@ -49,9 +45,6 @@ class BiGGCompartmentGetter(Obo):
 
     ontology = PREFIX
     bioversions_key = "bigg"
-    idspaces = {
-        PREFIX: "http://bigg.ucsd.edu/compartments/",
-    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -62,9 +55,11 @@ def get_compartments(*, force: bool = False, version: str | None = None) -> dict
     """Get a dictionary of BiGG compartments."""
     rv = {}
     soup = get_soup(DATA_URL)
-    table = soup.find(**{"class": "myTable"})
-    for row in table.findAll("tr"):
-        cells = list(row.findAll("td"))
+    table = soup.find(**{"class": "myTable"})  # type:ignore[arg-type]
+    if table is None:
+        raise ValueError
+    for row in table.find_all("tr"):  # type:ignore[attr-defined]
+        cells = list(row.find_all("td"))
         if not cells:
             continue
         identifier_cell, name_cell = cells

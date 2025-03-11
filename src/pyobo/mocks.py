@@ -37,7 +37,8 @@ def get_mock_id_synonyms_mapping(data: Mapping[str, Mapping[str, list[str]]]) ->
 def get_mock_id_alts_mapping(data: Mapping[str, Mapping[str, list[str]]]) -> mock._patch:
     """Mock the :func:`pyobo.extract.get_id_to_alts` function.
 
-    :param data: A mapping from prefix to mappings of identifier to lists of alternative identifiers.
+    :param data: A mapping from prefix to mappings of identifier to lists of alternative
+        identifiers.
     """
     return _replace_mapping_getter("pyobo.api.alts.get_id_to_alts", data)
 

@@ -12,7 +12,7 @@ from ..constants import GetOntologyKwargs, check_should_cache, check_should_forc
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..utils.cache import cached_multidict
-from ..utils.path import prefix_cache_join
+from ..utils.path import CacheArtifact, get_cache_path
 
 __all__ = [
     "get_alts_to_id",
@@ -36,7 +36,7 @@ def get_id_to_alts(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[
         return {}
 
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="alt_ids.tsv", version=version)
+    path = get_cache_path(prefix, CacheArtifact.alts, version=version)
 
     @cached_multidict(
         path=path,
@@ -88,9 +88,11 @@ def get_primary_identifier(
 
     :param prefix: The name of the resource
     :param identifier: The identifier to look up
+
     :returns: the canonical identifier based on alt id lookup
 
-    Returns the original identifier if there are no alts available or if there's no mapping.
+    Returns the original identifier if there are no alts available or if there's no
+    mapping.
     """
     t = _get_pi(prefix, identifier)
     if t.prefix in NO_ALTS:  # TODO later expand list to other namespaces with no alts

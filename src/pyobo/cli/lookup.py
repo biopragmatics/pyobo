@@ -33,14 +33,15 @@ from ..api import (
     get_ids,
     get_mappings_df,
     get_metadata,
-    get_name_by_curie,
+    get_name,
     get_properties_df,
     get_relations_df,
     get_typedef_df,
     get_xrefs_df,
 )
 from ..constants import LookupKwargs
-from ..struct import Reference
+from ..getters import get_ontology
+from ..struct.reference import _parse_str_or_curie_or_uri
 
 __all__ = [
     "lookup",
@@ -113,7 +114,10 @@ def metadata(**kwargs: Unpack[LookupKwargs]) -> None:
 def ids(**kwargs: Unpack[LookupKwargs]) -> None:
     """Page through the identifiers of entities in the given namespace."""
     id_list = get_ids(**kwargs)
-    click.echo_via_pager("\n".join(id_list))
+    if not id_list:
+        click.secho("no data", fg="red")
+    else:
+        click.echo_via_pager("\n".join(id_list))
 
 
 @lookup_annotate
@@ -121,14 +125,7 @@ def ids(**kwargs: Unpack[LookupKwargs]) -> None:
 def names(identifier: str | None, **kwargs: Unpack[LookupKwargs]) -> None:
     """Page through the identifiers and names of entities in the given namespace."""
     id_to_name = get_id_name_mapping(**kwargs)
-    if identifier is None:
-        _help_page_mapping(id_to_name)
-    else:
-        name = id_to_name.get(identifier)
-        if name is None:
-            click.secho(f"No name available for {identifier}", fg="red")
-        else:
-            click.echo(name)
+    _help_page_mapping(id_to_name, identifier=identifier)
 
 
 @lookup_annotate
@@ -136,14 +133,7 @@ def names(identifier: str | None, **kwargs: Unpack[LookupKwargs]) -> None:
 def species(identifier: str | None, **kwargs: Unpack[LookupKwargs]) -> None:
     """Page through the identifiers and species of entities in the given namespace."""
     id_to_species = get_id_species_mapping(**kwargs)
-    if identifier is None:
-        _help_page_mapping(id_to_species)
-    else:
-        species = id_to_species.get(identifier)
-        if species is None:
-            click.secho(f"No species available for {identifier}", fg="red")
-        else:
-            click.echo(species)
+    _help_page_mapping(id_to_species, identifier=identifier)
 
 
 @lookup_annotate
@@ -151,14 +141,7 @@ def species(identifier: str | None, **kwargs: Unpack[LookupKwargs]) -> None:
 def definitions(identifier: str | None, **kwargs: Unpack[LookupKwargs]) -> None:
     """Page through the identifiers and definitions of entities in the given namespace."""
     id_to_definition = get_id_definition_mapping(**kwargs)
-    if identifier is None:
-        _help_page_mapping(id_to_definition)
-    else:
-        definition = id_to_definition.get(identifier)
-        if definition is None:
-            click.secho(f"No definition available for {identifier}", fg="red")
-        else:
-            click.echo(definition)
+    _help_page_mapping(id_to_definition, identifier=identifier)
 
 
 @lookup_annotate
@@ -168,9 +151,15 @@ def typedefs(**kwargs: Unpack[LookupKwargs]) -> None:
     echo_df(df)
 
 
-def _help_page_mapping(id_to_name: Mapping[str, str]) -> None:
+def _help_page_mapping(id_to_name: Mapping[str, str], *, identifier: str | None = None) -> None:
     if not id_to_name:
         click.secho("no data", fg="red")
+    elif identifier:
+        value = id_to_name.get(identifier)
+        if value:
+            click.echo(value)
+        else:
+            click.secho(f"no data for {identifier}", fg="red")
     else:
         click.echo_via_pager("\n".join("\t".join(item) for item in id_to_name.items()))
 
@@ -216,7 +205,7 @@ def relations(
         else:
             echo_df(relations_df)
     else:
-        relation_reference = Reference.from_curie_or_uri(relation, strict=False)
+        relation_reference = _parse_str_or_curie_or_uri(relation, strict=False)
         if relation_reference is None:
             click.secho(f"not a valid curie: {relation}", fg="red")
             raise sys.exit(1)
@@ -248,7 +237,10 @@ def hierarchy(
         include_has_member=include_has_member,
         **kwargs,
     )
-    click.echo_via_pager("\n".join("\t".join(row) for row in h.edges()))
+    if h.number_of_edges() == 0:
+        click.secho("no data", fg="red")
+    else:
+        click.echo_via_pager("\n".join(f"{u.curie}\t{v.curie}" for u, v in h.edges()))
 
 
 @lookup_annotate
@@ -258,9 +250,10 @@ def ancestors(
     **kwargs: Unpack[LookupKwargs],
 ) -> None:
     """Look up ancestors."""
-    curies = get_ancestors(identifier=identifier, **kwargs)
-    for curie in sorted(curies or []):
-        click.echo(f"{curie}\t{get_name_by_curie(curie, version=kwargs['version'])}")
+    # note, prefix is passed via kwargs
+    ancestors = get_ancestors(identifier=identifier, **kwargs)
+    for ancestor in sorted(ancestors or []):
+        click.echo(f"{ancestor.curie}\t{get_name(ancestor, version=kwargs['version'])}")
 
 
 @lookup_annotate
@@ -270,9 +263,10 @@ def descendants(
     **kwargs: Unpack[LookupKwargs],
 ) -> None:
     """Look up descendants."""
-    curies = get_descendants(identifier=identifier, **kwargs)
-    for curie in sorted(curies or []):
-        click.echo(f"{curie}\t{get_name_by_curie(curie, version=kwargs['version'])}")
+    # note, prefix is passed via kwargs
+    descendants = get_descendants(identifier=identifier, **kwargs)
+    for descendant in sorted(descendants or []):
+        click.echo(f"{descendant.curie}\t{get_name(descendant, version=kwargs['version'])}")
 
 
 @lookup_annotate
@@ -297,15 +291,12 @@ def alts(
 ) -> None:
     """Page through alt ids in a namespace."""
     id_to_alts = get_id_to_alts(**kwargs)
-    if identifier is None:
-        click.echo_via_pager(
-            "\n".join(
-                f"{identifier}\t{alt}" for identifier, alts in id_to_alts.items() for alt in alts
-            )
-        )
-    else:
-        _alts = id_to_alts.get(identifier)
-        if _alts is None:
-            click.secho(f"No alternate identifiers for {identifier}", fg="red")
-        else:
-            click.echo("\n".join(_alts))
+    _help_page_mapping(id_to_alts, identifier=identifier)
+
+
+@lookup_annotate
+def prefixes(**kwargs: Unpack[LookupKwargs]) -> None:
+    """Page through prefixes appearing in an ontology."""
+    ontology = get_ontology(**kwargs)
+    for prefix in sorted(ontology._get_prefixes(), key=str.casefold):
+        click.echo(prefix)

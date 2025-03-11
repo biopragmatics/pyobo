@@ -244,7 +244,7 @@ class TestTypeDef(unittest.TestCase):
             f"""\
             [Typedef]
             id: RO:0000087
-            def: "{obo_escape_slim(has_role.definition)}" []
+            def: "{obo_escape_slim(has_role.definition)}"
             """,
             typedef,
         )
@@ -303,19 +303,39 @@ class TestTypeDef(unittest.TestCase):
             """\
             [Typedef]
             id: RO:0000087
-            synonym: "bears role" EXACT []
+            synonym: "bears role" []
             """,
             typedef,
         )
         self.assert_funowl_lines(
             """\
             Declaration(ObjectProperty(RO:0000087))
-            AnnotationAssertion(oboInOwl:hasExactSynonym RO:0000087 "bears role")
+            AnnotationAssertion(oboInOwl:hasRelatedSynonym RO:0000087 "bears role")
             """,
             typedef,
         )
 
         typedef = TypeDef(reference=REF, synonyms=[Synonym("bears role", type=v.previous_name)])
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: RO:0000087
+            synonym: "bears role" RELATED OMO:0003008 []
+            """,
+            typedef,
+        )
+        self.assert_funowl_lines(
+            """\
+            Declaration(ObjectProperty(RO:0000087))
+            AnnotationAssertion(Annotation(oboInOwl:hasSynonymType OMO:0003008) oboInOwl:hasRelatedSynonym RO:0000087 "bears role")
+            """,
+            typedef,
+        )
+
+        typedef = TypeDef(
+            reference=REF,
+            synonyms=[Synonym("bears role", type=v.previous_name, specificity="EXACT")],
+        )
         self.assert_obo_stanza(
             """\
             [Typedef]
@@ -363,9 +383,7 @@ class TestTypeDef(unittest.TestCase):
                         name=v.charlie.name,
                     )
                 ],
-                has_inchi.reference: [
-                    OBOLiteral("abc", Reference(prefix="xsd", identifier="string"))
-                ],
+                has_inchi.reference: [OBOLiteral.string("abc")],
             },
         )
         self.assert_obo_stanza(
@@ -757,13 +775,14 @@ class TestTypeDef(unittest.TestCase):
     def test_30_equivalent_to_chain(self) -> None:
         """Test the ``equivalent_to_chain`` tag.
 
-        Interestingly, this property doesn't appear to be used anywhere
-        on GitHub publicly except:
+        Interestingly, this property doesn't appear to be used anywhere on GitHub
+        publicly except:
 
         - https://github.com/geneontology/go-ontology/blob/ce41588cbdc05223f9cfd029985df3cadd1e0399/src/ontology/extensions/gorel.obo#L1277-L1285
         - https://github.com/cmungall/bioperl-owl/blob/0b52048975c078d3bc50f6611235e9f8cb9b9475/ont/interval_relations.obo~#L86-L103
 
-        This also works for the combination of gene-transribes-protein, protein-memberof-ec.
+        This also works for the combination of gene-transribes-protein,
+        protein-memberof-ec.
         """
         typedef = TypeDef(
             reference=Reference(prefix="GO", identifier="1"),

@@ -8,7 +8,7 @@
             Metadata
         </h5>
         <div class="card-body">
-            <p>{{ resource.get_description() }}</p>
+            <p>{{ resource.get_description(use_markdown=True) }}</p>
             <dl>
                 {% if obo.data_version %}
                     <dt>Data Version</dt>
@@ -64,6 +64,30 @@
         </div>
     {% endif %}
 
+    {% if obo.typedefs %}
+        <div class="card" style="margin-top: 1em;">
+            <h5 class="card-header">
+                Type Definitions
+            </h5>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>CURIE</th>
+                    <th>Name</th>
+                </tr>
+                </thead>
+                <tbody>
+                    {%- for typedef in obo.typedefs %}
+                    <tr>
+                        <td>{{ typedef.curie }}</td>
+                        <td>{% if typedef.name %}{{ typedef.name }}{% endif %}</td>
+                    </tr>
+                    {%- endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
     {% if manifest %}
         <div class="card" style="margin-top: 1em;">
             <h5 class="card-header">
@@ -85,7 +109,7 @@
                             {% if term.is_metadata_tag %}
                                 Property
                             {% else %}
-                                {{ term.__class__.__name__ }}
+                                {{ term.type }}
                             {% endif %}
                         </td>
                         <td align="right"><a href="{{ term.identifier }}">{{ term.identifier }}</a></td>
@@ -95,17 +119,6 @@
                 {% endfor %}
                 </tbody>
             </table>
-        </div>
-    {% elif obo.typedefs %}
-        <div class="card" style="margin-top: 1em;">
-            <h5 class="card-header">
-                Relation Definitions
-            </h5>
-            <ul class="list-group list-group-flush">
-                {% for typedef in obo.typedefs %}
-                    <li class="list-group-item">{{ typedef }}</li>
-                {% endfor %}
-            </ul>
         </div>
     {% endif %}
 {%- endblock content %}

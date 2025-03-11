@@ -4,6 +4,7 @@ import logging
 from collections.abc import Mapping
 
 import pandas as pd
+from curies import Reference
 from tqdm import tqdm
 from typing_extensions import Unpack
 
@@ -16,11 +17,10 @@ from ..constants import (
 )
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..struct.reference import Reference
 from ..struct.struct_utils import OBOLiteral, ReferenceHint, _ensure_ref
 from ..utils.cache import cached_df
 from ..utils.io import multidict
-from ..utils.path import prefix_cache_join
+from ..utils.path import CacheArtifact, get_cache_path
 
 __all__ = [
     "get_filtered_properties_df",
@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 def get_object_properties_df(prefix, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get a dataframe of object property triples."""
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="object_properties.tsv", version=version)
+    path = get_cache_path(prefix, CacheArtifact.object_properties, version=version)
 
     @cached_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
@@ -74,9 +74,13 @@ def get_literal_properties(
         (
             Reference.from_curie(s),
             Reference.from_curie(p),
-            OBOLiteral(value, Reference.from_curie(datatype)),
+            OBOLiteral(
+                value,
+                Reference.from_curie(datatype),
+                language if language and pd.notna(language) else None,
+            ),
         )
-        for s, p, value, datatype in tqdm(
+        for s, p, value, datatype, language in tqdm(
             df.values,
             desc=f"[{prefix}] parsing properties",
             unit_scale=True,
@@ -89,7 +93,7 @@ def get_literal_properties(
 def get_literal_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get a dataframe of literal property quads."""
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="literal_properties.tsv", version=version)
+    path = get_cache_path(prefix, CacheArtifact.literal_properties, version=version)
 
     @cached_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
@@ -110,7 +114,7 @@ def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.Da
     :returns: A dataframe with the properties
     """
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="properties.tsv", version=version)
+    path = get_cache_path(prefix, CacheArtifact.properties, version=version)
 
     @cached_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)

@@ -14,7 +14,7 @@ from pyobo.struct import vocabulary as pv
 from pyobo.struct.functional import dsl as f
 from pyobo.struct.functional import macros as m
 from pyobo.struct.functional.ontology import Document, Ontology
-from pyobo.struct.reference import OBOLiteral, Reference
+from pyobo.struct.reference import OBOLiteral, Reference, _parse_datetime
 
 if TYPE_CHECKING:
     from pyobo.struct.struct import Obo, Referenced, Term
@@ -28,7 +28,6 @@ __all__ = [
     "get_term_axioms",
     "get_typedef_axioms",
 ]
-
 
 _BASE = "https://w3id.org/biopragmatics/resources"
 
@@ -104,14 +103,16 @@ def get_ontology_annotations(obo_ontology: Obo) -> Iterable[f.Annotation]:
         )
 
 
-def _oboliteral_to_literal(obo_literal) -> rdflib.Literal:
-    if obo_literal.datatype.prefix == "xsd":
-        datatype = XSD._NS.term(obo_literal.datatype.identifier)
-    else:
+def _oboliteral_to_literal(obo_literal: OBOLiteral) -> rdflib.Literal:
+    if obo_literal.datatype.pair == ("xsd", "string") and obo_literal.language:
+        return rdflib.Literal(obo_literal.value, lang=obo_literal.language)
+    if obo_literal.datatype.prefix != "xsd":
         raise NotImplementedError(
             f"Automatic literal conversion is not implemented for prefix: {obo_literal.datatype.prefix}"
         )
-    return rdflib.Literal(obo_literal.value, datatype=datatype)
+    if obo_literal.datatype.identifier == "dateTime":
+        return rdflib.Literal(_parse_datetime(obo_literal.value), datatype=XSD.dateTime)
+    return rdflib.Literal(obo_literal.value, datatype=XSD._NS.term(obo_literal.datatype.identifier))
 
 
 def get_term_axioms(term: Term) -> Iterable[f.Box]:
@@ -345,6 +346,7 @@ def _yield_synonyms(stanza: Stanza, r) -> Iterable[m.SynonymMacro]:
             synonym_type=synonym.type,
             provenance=synonym.provenance,
             annotations=_process_anns(synonym.annotations),
+            language=synonym.language,
         )
 
 

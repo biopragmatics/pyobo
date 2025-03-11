@@ -2,15 +2,20 @@
 
 from __future__ import annotations
 
+import datetime
 import itertools as itt
 import logging
+from abc import ABC, abstractmethod
+from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias, overload
 
 import curies
 from curies import ReferenceTuple
+from curies import vocabulary as _v
 from curies.vocabulary import SynonymScope
 from pydantic import BaseModel, ConfigDict
+from ssslm import LiteralMapping
 from typing_extensions import Self
 
 from . import vocabulary as v
@@ -23,15 +28,23 @@ from .reference import (
     get_preferred_curie,
     multi_reference_escape,
     reference_escape,
+    reference_or_literal_to_str,
     unspecified_matching,
 )
 from .utils import obo_escape_slim
+from ..identifier_utils import (
+    NotCURIEError,
+    ParseError,
+    _is_valid_identifier,
+    _parse_str_or_curie_or_uri_helper,
+)
 
 if TYPE_CHECKING:
     from pyobo.struct.struct import Synonym, TypeDef
 
 __all__ = [
     "AnnotationsDict",
+    "HasReferencesMixin",
     "ReferenceHint",
     "Stanza",
 ]
@@ -48,18 +61,15 @@ class Annotation(NamedTuple):
     @classmethod
     def float(cls, predicate: Reference, value: float) -> Self:
         """Return a literal property for a float."""
-        return cls(predicate, OBOLiteral(str(value), v.xsd_float))
+        return cls(predicate, OBOLiteral.float(value))
 
     @staticmethod
     def _sort_key(x: Annotation):
         return x.predicate, _reference_or_literal_key(x.value)
 
 
-def _property_resolve(
-    p: Reference | Referenced, o: Reference | Referenced | OBOLiteral
-) -> Annotation:
-    if isinstance(p, Referenced):
-        p = p.reference
+def _property_resolve(p: ReferenceHint, o: Reference | Referenced | OBOLiteral) -> Annotation:
+    p = _ensure_ref(p)
     if isinstance(o, Referenced):
         o = o.reference
     return Annotation(p, o)
@@ -87,7 +97,18 @@ stanza_type_to_eq_prop: dict[StanzaType, Reference] = {
 }
 
 
-class Stanza:
+class HasReferencesMixin(ABC):
+    """A class that can report on the references it contains."""
+
+    def _get_prefixes(self) -> set[str]:
+        return set(self._get_references())
+
+    @abstractmethod
+    def _get_references(self) -> dict[str, set[Reference]]:
+        raise NotImplementedError
+
+
+class Stanza(Referenced, HasReferencesMixin):
     """A high-level class for stanzas."""
 
     reference: Reference
@@ -112,40 +133,75 @@ class Stanza:
     #: A description of the entity
     definition: str | None = None
 
+    @staticmethod
+    def _reference(
+        reference: Reference, ontology_prefix: str, add_name_comment: bool = False
+    ) -> str:
+        return reference_escape(
+            reference, ontology_prefix=ontology_prefix, add_name_comment=add_name_comment
+        )
+
     def _get_prefixes(self) -> set[str]:
+        return set(self._get_references())
+
+    def _get_references(self) -> dict[str, set[Reference]]:
         """Get all prefixes used by the typedef."""
-        rv: set[str] = {self.reference.prefix}
-        rv.update(a.prefix for a in self.subsets)
+        rv: defaultdict[str, set[Reference]] = defaultdict(set)
+
+        def _add(r: Reference) -> None:
+            rv[r.prefix].add(r)
+
+        _add(self.reference)
+
         for synonym in self.synonyms:
-            rv.update(synonym._get_prefixes())
+            for prefix, references in synonym._get_references().items():
+                rv[prefix].update(references)
+
         if self.xrefs:
-            rv.add("oboInOwl")
-            rv.update(a.prefix for a in self.xrefs)
+            # xrefs themselves added in the chain below
+            _add(v.has_dbxref)
+
         for predicate, values in self.properties.items():
-            rv.add(predicate.prefix)
+            _add(predicate)
             for value in values:
                 if isinstance(value, Reference):
-                    rv.add(value.prefix)
-        rv.update(a.prefix for a in self.parents)
+                    _add(value)
+                elif isinstance(value, OBOLiteral):
+                    _add(v._c(value.datatype))
+        for parent in itt.chain(
+            self.parents,
+            self.union_of,
+            self.equivalent_to,
+            self.disjoint_from,
+            self.subsets,
+            self.xrefs,
+        ):
+            _add(parent)
         for intersection_of in self.intersection_of:
             match intersection_of:
                 case Reference():
-                    rv.add(intersection_of.prefix)
+                    _add(intersection_of)
                 case (intersection_predicate, intersection_value):
-                    rv.add(intersection_predicate.prefix)
-                    rv.add(intersection_value.prefix)
+                    _add(intersection_predicate)
+                    _add(intersection_value)
 
-        rv.update(a.prefix for a in self.union_of)
-        rv.update(a.prefix for a in self.equivalent_to)
-        rv.update(a.prefix for a in self.disjoint_from)
         for rel_predicate, rel_values in self.relationships.items():
-            rv.add(rel_predicate.prefix)
-            rv.update(a.prefix for a in rel_values)
+            _add(rel_predicate)
+            for r in rel_values:
+                _add(r)
         for p_o, annotations_ in self._axioms.items():
-            rv.add(p_o.predicate.prefix)
+            _add(p_o.predicate)
             if isinstance(p_o.value, Reference):
-                rv.add(p_o.value.prefix)
-            rv.update(_get_prefixes_from_annotations(annotations_))
+                _add(p_o.value)
+            for prefix, references in _get_references_from_annotations(annotations_).items():
+                rv[prefix].update(references)
+        return rv
+
+    def get_literal_mappings(self) -> list[LiteralMapping]:
+        """Get synonym objects for this term, including one for its label."""
+        rv = [_convert_synoynym(self, synonym) for synonym in self.synonyms]
+        if self.reference.name:
+            rv.append(_get_stanza_name_synonym(self))
         return rv
 
     def append_relationship(
@@ -171,7 +227,7 @@ class Stanza:
             self._append_annotation(p, o, annotation)
 
     def _append_annotation(
-        self, p: Reference, o: Reference | OBOLiteral, annotation: Annotation
+        self, p: ReferenceHint, o: Reference | OBOLiteral, annotation: Annotation
     ) -> None:
         self._axioms[_property_resolve(p, o)].append(annotation)
 
@@ -309,14 +365,14 @@ class Stanza:
             yield xref_yv
 
     def _get_annotations(
-        self, p: Reference | Referenced, o: Reference | Referenced | OBOLiteral | str
+        self, p: ReferenceHint, o: Reference | Referenced | OBOLiteral | str
     ) -> list[Annotation]:
         if isinstance(o, str):
             o = OBOLiteral.string(o)
         return self._axioms.get(_property_resolve(p, o), [])
 
     def _get_annotation(
-        self, p: Reference, o: Reference | OBOLiteral, ap: Reference
+        self, p: ReferenceHint, o: Reference | OBOLiteral, ap: Reference
     ) -> Reference | OBOLiteral | None:
         ap_norm = _ensure_ref(ap)
         for annotation in self._get_annotations(p, o):
@@ -335,33 +391,86 @@ class Stanza:
     def annotate_literal(
         self,
         prop: ReferenceHint,
-        value: str,
-        datatype: Reference | None = None,
+        value: OBOLiteral,
         *,
         annotations: Iterable[Annotation] | None = None,
     ) -> Self:
         """Append an object annotation."""
         prop = _ensure_ref(prop)
-        literal = OBOLiteral(value, datatype or v.xsd_string)
-        self.properties[prop].append(literal)
-        self._extend_annotations(prop, literal, annotations)
+        self.properties[prop].append(value)
+        self._extend_annotations(prop, value, annotations)
         return self
 
-    def annotate_boolean(self, prop: ReferenceHint, value: bool) -> Self:
+    def annotate_string(
+        self,
+        prop: ReferenceHint,
+        value: str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+        language: str | None = None,
+    ) -> Self:
         """Append an object annotation."""
-        return self.annotate_literal(prop, str(value).lower(), v.xsd_boolean)
+        return self.annotate_literal(
+            prop, OBOLiteral.string(value, language=language), annotations=annotations
+        )
 
-    def annotate_integer(self, prop: ReferenceHint, value: int | str) -> Self:
+    def annotate_boolean(
+        self,
+        prop: ReferenceHint,
+        value: bool,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
         """Append an object annotation."""
-        return self.annotate_literal(prop, str(int(value)), v.xsd_integer)
+        return self.annotate_literal(prop, OBOLiteral.boolean(value), annotations=annotations)
 
-    def annotate_year(self, prop: ReferenceHint, value: int | str) -> Self:
+    def annotate_integer(
+        self,
+        prop: ReferenceHint,
+        value: int | str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
+        """Append an object annotation."""
+        return self.annotate_literal(prop, OBOLiteral.integer(value), annotations=annotations)
+
+    def annotate_float(
+        self, prop: ReferenceHint, value: float, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
+        """Append a float annotation."""
+        return self.annotate_literal(prop, OBOLiteral.float(value), annotations=annotations)
+
+    def annotate_decimal(
+        self, prop: ReferenceHint, value: float, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
+        """Append a decimal annotation."""
+        return self.annotate_literal(prop, OBOLiteral.decimal(value), annotations=annotations)
+
+    def annotate_year(
+        self,
+        prop: ReferenceHint,
+        value: int | str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
         """Append a year annotation."""
-        return self.annotate_literal(prop, str(int(value)), v.xsd_year)
+        return self.annotate_literal(prop, OBOLiteral.year(value), annotations=annotations)
 
-    def annotate_uri(self, prop: ReferenceHint, value: str) -> Self:
+    def annotate_uri(
+        self, prop: ReferenceHint, value: str, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
         """Append a URI annotation."""
-        return self.annotate_literal(prop, value, v.xsd_uri)
+        return self.annotate_literal(prop, OBOLiteral.uri(value), annotations=annotations)
+
+    def annotate_datetime(
+        self,
+        prop: ReferenceHint,
+        value: datetime.datetime | str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
+        """Append a datetime annotation."""
+        return self.annotate_literal(prop, OBOLiteral.datetime(value), annotations=annotations)
 
     def _iterate_obo_properties(
         self,
@@ -425,6 +534,10 @@ class Stanza:
     def append_contributor(self, reference: ReferenceHint) -> Self:
         """Append contributor."""
         return self.annotate_object(v.has_contributor, reference)
+
+    def append_creation_date(self, date: datetime.datetime | str) -> Self:
+        """Append contributor."""
+        return self.annotate_datetime(v.obo_creation_date, date)
 
     def get_see_also(self) -> list[Reference]:
         """Get all see also objects."""
@@ -497,6 +610,25 @@ class Stanza:
             if isinstance(reference, curies.Reference)
         )
 
+    def append_exact_synonym(
+        self,
+        synonym: str | Synonym,
+        *,
+        type: Reference | Referenced | None = None,
+        provenance: Sequence[Reference | OBOLiteral] | None = None,
+        annotations: Iterable[Annotation] | None = None,
+        language: str | None = None,
+    ) -> Self:
+        """Add an exact synonym."""
+        return self.append_synonym(
+            synonym,
+            type=type,
+            specificity="EXACT",
+            provenance=provenance,
+            annotations=annotations,
+            language=language,
+        )
+
     def append_synonym(
         self,
         synonym: str | Synonym,
@@ -505,6 +637,7 @@ class Stanza:
         specificity: SynonymScope | None = None,
         provenance: Sequence[Reference | OBOLiteral] | None = None,
         annotations: Iterable[Annotation] | None = None,
+        language: str | None = None,
     ) -> Self:
         """Add a synonym."""
         if isinstance(type, Referenced):
@@ -518,6 +651,7 @@ class Stanza:
                 specificity=specificity,
                 provenance=list(provenance or []),
                 annotations=list(annotations or []),
+                language=language,
             )
         self.synonyms.append(synonym)
         return self
@@ -536,10 +670,14 @@ class Stanza:
         return self.annotate_object(v.see_also, _reference, annotations=annotations)
 
     def append_comment(
-        self, value: str, *, annotations: Iterable[Annotation] | None = None
+        self,
+        value: str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+        language: str | None = None,
     ) -> Self:
         """Add a comment property."""
-        return self.annotate_literal(v.comment, value, annotations=annotations)
+        return self.annotate_string(v.comment, value, annotations=annotations, language=language)
 
     @property
     def alt_ids(self) -> Sequence[Reference]:
@@ -650,7 +788,11 @@ class Stanza:
 
     def _definition_fp(self) -> str:
         definition = obo_escape_slim(self.definition) if self.definition else ""
-        return f'"{definition}" [{comma_separate_references(self._get_definition_provenance())}]'
+        dp = self._get_definition_provenance()
+        if dp:
+            return f'"{definition}" [{comma_separate_references(dp)}]'
+        else:
+            return f'"{definition}"'
 
     def _get_definition_provenance(self) -> Sequence[Reference | OBOLiteral]:
         if self.definition is None:
@@ -697,7 +839,9 @@ class Stanza:
         return self.annotate_object(v.has_citation, reference, annotations=annotations)
 
 
-ReferenceHint: TypeAlias = Reference | Referenced | tuple[str, str] | str
+ReferenceHint: TypeAlias = (
+    Reference | Referenced | curies.Reference | curies.NamedReference | tuple[str, str] | str
+)
 
 
 def _ensure_ref(
@@ -711,16 +855,25 @@ def _ensure_ref(
         return Reference(prefix=reference[0], identifier=reference[1])
     if isinstance(reference, Reference):
         return reference
+    if isinstance(reference, curies.NamedReference):
+        return Reference(
+            prefix=reference.prefix, identifier=reference.identifier, name=reference.name
+        )
     if isinstance(reference, curies.Reference):
         return Reference(prefix=reference.prefix, identifier=reference.identifier)
-    if ":" not in reference:
-        if not ontology_prefix:
-            raise ValueError(f"can't parse reference of type {type(reference)}: {reference}")
-        return default_reference(ontology_prefix, reference)
-    _rv = Reference.from_curie_or_uri(reference, strict=True, ontology_prefix=ontology_prefix)
-    if _rv is None:
-        raise ValueError(f"[{ontology_prefix}] unable to parse {reference}")
-    return _rv
+
+    match _parse_str_or_curie_or_uri_helper(reference, ontology_prefix=ontology_prefix):
+        case Reference() as parsed_reference:
+            return parsed_reference
+        case NotCURIEError() as exc:
+            if ontology_prefix and _is_valid_identifier(reference):
+                return default_reference(ontology_prefix, reference)
+            else:
+                raise exc
+        case ParseError() as exc:
+            raise exc
+
+    raise TypeError
 
 
 def _chain_tag(
@@ -756,7 +909,7 @@ def _iterate_obo_relations(
         start = f"{pc} "
         for value in sorted(values, key=_reference_or_literal_key):
             match value:
-                case OBOLiteral(dd, datatype):
+                case OBOLiteral(dd, datatype, _language):
                     if predicate in skip_predicate_literals:
                         continue
                     # TODO how to clean/escape value?
@@ -787,7 +940,7 @@ def _reference_or_literal_key(x: Reference | OBOLiteral) -> tuple[int, Reference
 
 
 def _get_obo_trailing_modifiers(
-    p: Reference,
+    p: ReferenceHint,
     o: Reference | OBOLiteral,
     annotations_dict: AnnotationsDict,
     *,
@@ -806,11 +959,12 @@ def _format_obo_trailing_modifiers(
 
     :param annotations: A list of annnotations
     :param ontology_prefix: The ontology prefix
-    :return: The trailing modifiers string
 
-    See https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.1.4
-    trailing modifiers can be both annotations and some other implementation-specific
-    things, so split up the place where annotations are put in here.
+    :returns: The trailing modifiers string
+
+    See https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.1.4 trailing
+    modifiers can be both annotations and some other implementation-specific things, so
+    split up the place where annotations are put in here.
     """
     modifiers: list[tuple[str, str]] = []
     for prop in sorted(annotations, key=Annotation._sort_key):
@@ -818,7 +972,7 @@ def _format_obo_trailing_modifiers(
         match prop.value:
             case Reference():
                 right = reference_escape(prop.value, ontology_prefix=ontology_prefix)
-            case OBOLiteral(value, _datatype):
+            case OBOLiteral(value, _datatype, _language):
                 right = value
         modifiers.append((left, right))
     inner = ", ".join(f"{key}={value}" for key, value in modifiers)
@@ -864,9 +1018,61 @@ class MappingContext(BaseModel):
 
 
 def _get_prefixes_from_annotations(annotations: Iterable[Annotation]) -> set[str]:
-    prefixes: set[str] = set()
+    return set(_get_references_from_annotations(annotations))
+
+
+def _get_references_from_annotations(
+    annotations: Iterable[Annotation],
+) -> dict[str, set[Reference]]:
+    rv: defaultdict[str, set[Reference]] = defaultdict(set)
     for left, right in annotations:
-        prefixes.add(left.prefix)
+        rv[left.prefix].add(left)
         if isinstance(right, Reference):
-            prefixes.add(right.prefix)
-    return prefixes
+            rv[right.prefix].add(right)
+    return dict(rv)
+
+
+def _get_stanza_name_synonym(stanza: Stanza) -> LiteralMapping:
+    return LiteralMapping(
+        text=stanza.reference.name,
+        reference=stanza.reference,
+        predicate=_v.has_label,
+        type=None,
+        provenance=[p for p in stanza.provenance if isinstance(p, curies.Reference)],
+        contributor=None,  # TODO
+        comment=None,  # TODO
+        source=stanza.reference.prefix,
+        date=None,  # TODO
+    )
+
+
+def _convert_synoynym(stanza: Stanza, synonym: Synonym) -> LiteralMapping:
+    o = OBOLiteral.string(synonym.name, language=synonym.language)
+    # TODO make this indexing reusable? similar code used for SSSOM export
+    idx: dict[Reference, Reference | OBOLiteral] = {
+        annotation.predicate: annotation.value
+        for annotation in stanza._get_annotations(synonym.predicate, o)
+    }
+
+    comment = _safe_str(idx.get(v.comment))
+    contributor = _safe_str(idx.get(v.has_contributor))
+    date = _safe_str(idx.get(v.has_date))
+
+    return LiteralMapping(
+        text=synonym.name,
+        language=synonym.language,
+        reference=stanza.reference,
+        predicate=synonym.predicate,
+        type=synonym.type,
+        provenance=[p for p in synonym.provenance if isinstance(p, curies.Reference)],
+        contributor=contributor,
+        comment=comment,
+        source=stanza.reference.prefix,
+        date=date,
+    )
+
+
+def _safe_str(x: Reference | OBOLiteral | None) -> str | None:
+    if x is None:
+        return None
+    return reference_or_literal_to_str(x)

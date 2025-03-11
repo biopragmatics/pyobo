@@ -100,7 +100,8 @@ def _get_class_node(term: Term) -> Node:
         deprecated=term.is_obsolete or False,
     )
     return Node(
-        id=term.bioregistry_link,
+        # FIXME do expansion same as for OFN
+        id=f"https://bioregistry.io/{term.curie}",
         lbl=term.name,
         meta=meta,
         type="CLASS",
@@ -116,7 +117,7 @@ def _prep_prov(provenance):
             case Reference():
                 rv.append(_rewire(x))
             case OBOLiteral():
-                logger.warning("not implemented to convert literal provenance")
+                logger.debug("not implemented to convert literal provenance")
                 continue
     return rv
 

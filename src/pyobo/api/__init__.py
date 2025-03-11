@@ -6,6 +6,7 @@ from .alts import (
     get_primary_curie,
     get_primary_identifier,
 )
+from .combine import get_literal_mappings_subset
 from .edges import get_edges, get_edges_df, get_graph
 from .hierarchy import (
     get_ancestors,
@@ -23,10 +24,14 @@ from .names import (
     get_id_name_mapping,
     get_id_synonyms_mapping,
     get_ids,
+    get_literal_mappings,
+    get_literal_mappings_df,
     get_name,
     get_name_by_curie,
     get_name_id_mapping,
     get_obsolete,
+    get_obsolete_references,
+    get_references,
     get_synonyms,
 )
 from .properties import (
@@ -82,6 +87,9 @@ __all__ = [
     "get_id_synonyms_mapping",
     "get_id_to_alts",
     "get_ids",
+    "get_literal_mappings",
+    "get_literal_mappings_df",
+    "get_literal_mappings_subset",
     "get_literal_properties",
     "get_literal_properties_df",
     "get_mappings_df",
@@ -92,6 +100,7 @@ __all__ = [
     "get_object_properties",
     "get_object_properties_df",
     "get_obsolete",
+    "get_obsolete_references",
     "get_ontology",
     "get_primary_curie",
     "get_primary_identifier",
@@ -99,6 +108,7 @@ __all__ = [
     "get_properties",
     "get_properties_df",
     "get_property",
+    "get_references",
     "get_relation",
     "get_relation_mapping",
     "get_relations_df",

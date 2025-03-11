@@ -69,7 +69,7 @@ def get_ontology(
     *,
     force: bool = False,
     force_process: bool = False,
-    strict: bool = True,
+    strict: bool = False,
     version: str | None = None,
     robot_check: bool = True,
     upgrade: bool = True,
@@ -81,21 +81,22 @@ def get_ontology(
     :param prefix: The prefix of the ontology to look up
     :param version: The pre-looked-up version of the ontology
     :param force: Download the data again
-    :param force_process: Should the OBO cache be rewritten? Automatically set to true if ``force`` is true
-    :param strict: Should CURIEs be treated strictly? If true, raises exceptions on invalid/malformed
-    :param robot_check:
-        If set to false, will send the ``--check=false`` command to ROBOT to disregard
-        malformed ontology components. Necessary to load some ontologies like VO.
-    :param upgrade:
-        If set to true, will automatically upgrade relationships, such as
+    :param force_process: Should the OBO cache be rewritten? Automatically set to true
+        if ``force`` is true
+    :param strict: Should CURIEs be treated strictly? If true, raises exceptions on
+        invalid/malformed
+    :param robot_check: If set to false, will send the ``--check=false`` command to
+        ROBOT to disregard malformed ontology components. Necessary to load some
+        ontologies like VO.
+    :param upgrade: If set to true, will automatically upgrade relationships, such as
         ``obo:chebi#part_of`` to ``BFO:0000051``
-    :param cache:
-        Should cached objects be written? defaults to True
+    :param cache: Should cached objects be written? defaults to True
+
     :returns: An OBO object
 
     :raises OnlyOWLError: If the OBO foundry only has an OWL document for this resource.
 
-    Alternate usage if you have a custom url::
+    Alternate usage if you have a custom url
 
     .. code-block:: python
 
@@ -373,19 +374,23 @@ def iter_helper_helper(
 ) -> Iterable[tuple[str, X]]:
     """Yield all mappings extracted from each database given.
 
-    :param f: A function that takes a prefix and gives back something that will be used by an outer function.
+    :param f: A function that takes a prefix and gives back something that will be used
+        by an outer function.
     :param use_tqdm: If true, use the tqdm progress bar
-    :param skip_below: If true, skip sources whose names are less than this (used for iterative curation
+    :param skip_below: If true, skip sources whose names are less than this (used for
+        iterative curation
     :param skip_pyobo: If true, skip sources implemented in PyOBO
     :param skip_set: A pre-defined blacklist to skip
-    :param strict: If true, will raise exceptions and crash the program instead of logging them.
+    :param strict: If true, will raise exceptions and crash the program instead of
+        logging them.
     :param kwargs: Keyword arguments passed to ``f``.
-    :yields: A prefix and the result of the callable ``f``
 
     :raises TypeError: If a type error is raised, it gets re-raised
     :raises urllib.error.HTTPError: If the resource could not be downloaded
     :raises urllib.error.URLError: If another problem was encountered during download
     :raises ValueError: If the data was not in the format that was expected (e.g., OWL)
+
+    :yields: A prefix and the result of the callable ``f``
     """
     strict = kwargs.get("strict", True)
     prefixes = list(
@@ -417,7 +422,10 @@ def iter_helper_helper(
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
         except ParseError as e:
-            logger.warning("[%s] CURIE/IRI parse error: %s", prefix, e)
+            if not e.node:
+                logger.warning("[%s] %s", prefix, e)
+            else:
+                logger.warning(str(e))
             if strict and not bioregistry.is_deprecated(prefix):
                 raise e
         except RuntimeError as e:
@@ -474,17 +482,20 @@ def db_output_helper(
     columns: Sequence[str],
     *,
     directory: None | str | pathlib.Path = None,
-    strict: bool = True,
+    strict: bool = False,
     use_gzip: bool = True,
     summary_detailed: Sequence[int] | None = None,
 ) -> list[pathlib.Path]:
     """Help output database builds.
 
-    :param f: A function that takes a prefix and gives back something that will be used by an outer function.
+    :param f: A function that takes a prefix and gives back something that will be used
+        by an outer function.
     :param db_name: name of the output resource (e.g., "alts", "names")
     :param columns: The names of the columns
-    :param directory: The directory to output everything, or defaults to :data:`pyobo.constants.DATABASE_DIRECTORY`.
+    :param directory: The directory to output everything, or defaults to
+        :data:`pyobo.constants.DATABASE_DIRECTORY`.
     :param strict: Passed to ``f`` by keyword
+
     :returns: A sequence of paths that got created.
     """
     start = time.time()

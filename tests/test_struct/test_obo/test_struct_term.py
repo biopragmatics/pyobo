@@ -9,8 +9,9 @@ import bioregistry
 
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
+from pyobo.identifier_utils import NotCURIEError
 from pyobo.struct.functional.obo_to_functional import get_term_axioms
-from pyobo.struct.reference import unspecified_matching
+from pyobo.struct.reference import _parse_datetime, unspecified_matching
 from pyobo.struct.struct import (
     BioregistryError,
     SynonymTypeDef,
@@ -306,7 +307,7 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                def: "Something" []
+                def: "Something"
             """,
             ofn="""\
                 Declaration(Class(GO:0050069))
@@ -382,12 +383,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                synonym: "L-lysine:NAD+ oxidoreductase" EXACT []
+                synonym: "L-lysine:NAD+ oxidoreductase" []
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(oboInOwl:hasExactSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
+                AnnotationAssertion(oboInOwl:hasRelatedSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
             """,
         )
 
@@ -450,12 +451,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                synonym: "L-lysine:NAD+ oxidoreductase" EXACT OMO:1234567 [orcid:0000-0003-4423-4370]
+                synonym: "L-lysine:NAD+ oxidoreductase" RELATED OMO:1234567 [orcid:0000-0003-4423-4370]
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(Annotation(oboInOwl:hasDbXref orcid:0000-0003-4423-4370) Annotation(oboInOwl:hasSynonymType OMO:1234567) oboInOwl:hasExactSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
+                AnnotationAssertion(Annotation(oboInOwl:hasDbXref orcid:0000-0003-4423-4370) Annotation(oboInOwl:hasSynonymType OMO:1234567) oboInOwl:hasRelatedSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
             """,
         )
 
@@ -473,16 +474,38 @@ class TestTerm(unittest.TestCase):
                     [Term]
                     id: GO:0050069
                     name: lysine dehydrogenase activity
-                    synonym: "L-lysine:NAD+ oxidoreductase" EXACT OMO:1234567 []
+                    synonym: "L-lysine:NAD+ oxidoreductase" RELATED OMO:1234567 []
                 """,
                 ofn="""
                     Declaration(Class(GO:0050069))
                     AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                    AnnotationAssertion(Annotation(oboInOwl:hasSynonymType OMO:1234567) oboInOwl:hasExactSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
+                    AnnotationAssertion(Annotation(oboInOwl:hasSynonymType OMO:1234567) oboInOwl:hasRelatedSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase")
                 """,
             )
         self.assertIn(
             "WARNING:pyobo.struct.struct:[go] synonym typedef not defined: OMO:1234567", log.output
+        )
+
+    def test_9_append_synonym_with_language(self) -> None:
+        """Test appending a synonym with a language tag."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_synonym(
+            "L-lysine:NAD+ oxidoreductase",
+            language="en",
+        )
+        self.assert_obo_stanza(
+            term,
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                synonym: "L-lysine:NAD+ oxidoreductase" [] ! language: en
+            """,
+            ofn="""
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(oboInOwl:hasRelatedSynonym GO:0050069 "L-lysine:NAD+ oxidoreductase"@en)
+            """,
         )
 
     def test_10_xref(self) -> None:
@@ -495,12 +518,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                xref: eccode:1.4.1.15
+                xref: EC:1.4.1.15
             """,
             ofn="""\
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(oboInOwl:hasDbXref GO:0050069 eccode:1.4.1.15)
+                AnnotationAssertion(oboInOwl:hasDbXref GO:0050069 EC:1.4.1.15)
             """,
         )
 
@@ -511,7 +534,7 @@ class TestTerm(unittest.TestCase):
             list(mappings_df.columns),
         )
         self.assertEqual(
-            ["GO:0050069", "eccode:1.4.1.15", "oboInOwl:hasDbXref", "semapv:UnspecifiedMatching"],
+            ["GO:0050069", "EC:1.4.1.15", "oboInOwl:hasDbXref", "semapv:UnspecifiedMatching"],
             list(mappings_df.values[0]),
         )
 
@@ -526,12 +549,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                xref: eccode:1.4.1.15 {sssom:confidence=0.99} ! lysine dehydrogenase
+                xref: EC:1.4.1.15 {sssom:confidence=0.99} ! lysine dehydrogenase
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(Annotation(sssom:confidence "0.99"^^xsd:float) oboInOwl:hasDbXref GO:0050069 eccode:1.4.1.15)
+                AnnotationAssertion(Annotation(sssom:confidence "0.99"^^xsd:float) oboInOwl:hasDbXref GO:0050069 EC:1.4.1.15)
             """,
             typedefs={
                 mapping_has_confidence.pair: mapping_has_confidence,
@@ -549,7 +572,7 @@ class TestTerm(unittest.TestCase):
         self.assertEqual(
             [
                 "GO:0050069",
-                "eccode:1.4.1.15",
+                "EC:1.4.1.15",
                 "oboInOwl:hasDbXref",
                 "semapv:UnspecifiedMatching",
                 0.99,
@@ -585,7 +608,7 @@ class TestTerm(unittest.TestCase):
     def test_12_property_literal(self) -> None:
         """Test emitting property literals."""
         term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
-        term.annotate_literal(RO_DUMMY, "value")
+        term.annotate_string(RO_DUMMY, "value")
         self.assert_obo_stanza(
             term,
             obo="""\
@@ -599,6 +622,27 @@ class TestTerm(unittest.TestCase):
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
                 AnnotationAssertion(RO:1234567 GO:0050069 "value"^^xsd:string)
+            """,
+        )
+
+    def test_12_property_string_with_language(self) -> None:
+        """Test emitting a string property literal with a language."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_string(RO_DUMMY, "value", language="en")
+        self.assert_obo_stanza(
+            term,
+            # FIXME what to do when emitting property value?
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                property_value: RO:1234567 "value" xsd:string
+            """,
+            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            ofn="""\
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(RO:1234567 GO:0050069 "value"@en)
             """,
         )
 
@@ -678,6 +722,26 @@ class TestTerm(unittest.TestCase):
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
                 AnnotationAssertion(RO:1234567 GO:0050069 hgnc:123)
+            """,
+            typedefs={RO_DUMMY.pair: RO_DUMMY},
+        )
+
+    def test_12_property_datetime(self) -> None:
+        """Test emitting property datetimes."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_datetime(RO_DUMMY, "2022-07-26T19:27:20Z")
+        self.assert_obo_stanza(
+            term,
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                property_value: RO:1234567 "2022-07-26T19:27:20+00:00" xsd:dateTime
+            """,
+            ofn="""\
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(RO:1234567 GO:0050069 "2022-07-26T19:27:20+00:00"^^xsd:dateTime)
             """,
             typedefs={RO_DUMMY.pair: RO_DUMMY},
         )
@@ -835,12 +899,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                relationship: RO:1234567 eccode:1.4.1.15
+                relationship: RO:1234567 EC:1.4.1.15
             """,
             ofn="""\
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                SubClassOf(GO:0050069 ObjectSomeValuesFrom(RO:1234567 eccode:1.4.1.15))
+                SubClassOf(GO:0050069 ObjectSomeValuesFrom(RO:1234567 EC:1.4.1.15))
             """,
         )
 
@@ -857,12 +921,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
+                property_value: skos:exactMatch EC:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(skos:exactMatch GO:0050069 eccode:1.4.1.15)
+                AnnotationAssertion(skos:exactMatch GO:0050069 EC:1.4.1.15)
             """,
         )
 
@@ -873,7 +937,7 @@ class TestTerm(unittest.TestCase):
             list(mappings_df.columns),
         )
         self.assertEqual(
-            ["GO:0050069", "eccode:1.4.1.15", "skos:exactMatch", "semapv:UnspecifiedMatching"],
+            ["GO:0050069", "EC:1.4.1.15", "skos:exactMatch", "semapv:UnspecifiedMatching"],
             list(mappings_df.values[0]),
         )
 
@@ -888,12 +952,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
+                property_value: skos:exactMatch EC:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(skos:exactMatch GO:0050069 eccode:1.4.1.15)
+                AnnotationAssertion(skos:exactMatch GO:0050069 EC:1.4.1.15)
             """,
         )
 
@@ -909,12 +973,12 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                property_value: skos:exactMatch eccode:1.4.1.15 ! exact match lysine dehydrogenase
+                property_value: skos:exactMatch EC:1.4.1.15 ! exact match lysine dehydrogenase
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(skos:exactMatch GO:0050069 eccode:1.4.1.15)
+                AnnotationAssertion(skos:exactMatch GO:0050069 EC:1.4.1.15)
             """,
         )
 
@@ -972,13 +1036,13 @@ class TestTerm(unittest.TestCase):
                 [Term]
                 id: GO:0050069
                 name: lysine dehydrogenase activity
-                property_value: skos:exactMatch eccode:1.4.1.15 {sssom:confidence=0.99, \
+                property_value: skos:exactMatch EC:1.4.1.15 {sssom:confidence=0.99, \
 sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine dehydrogenase
             """,
             ofn="""
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(Annotation(sssom:mapping_justification semapv:UnspecifiedMatching) Annotation(sssom:confidence "0.99"^^xsd:float) skos:exactMatch GO:0050069 eccode:1.4.1.15)
+                AnnotationAssertion(Annotation(sssom:mapping_justification semapv:UnspecifiedMatching) Annotation(sssom:confidence "0.99"^^xsd:float) skos:exactMatch GO:0050069 EC:1.4.1.15)
             """,
         )
 
@@ -1000,7 +1064,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
         self.assertEqual(
             [
                 "GO:0050069",
-                "eccode:1.4.1.15",
+                "EC:1.4.1.15",
                 "skos:exactMatch",
                 "semapv:UnspecifiedMatching",
                 0.99,
@@ -1040,7 +1104,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
     def test_18_see_also_double(self) -> None:
         """Test appending see also."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(NotCURIEError):
             term.append_see_also("something")
 
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -1079,6 +1143,26 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
 
     def test_20_creation_date(self) -> None:
         """Test the ``creation_date`` tag."""
+        date_str = "2022-07-26T19:27:20Z"
+        creation_date = _parse_datetime(date_str)
+
+        term = Term(LYSINE_DEHYDROGENASE_ACT).append_creation_date(creation_date)
+        # note that the timezone has some funny stuff going on here, this will probably
+        # cause issues in the future
+        self.assert_obo_stanza(
+            term,
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                creation_date: 2022-07-26T19:27:20+00:00
+            """,
+            ofn="""
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(oboInOwl:creation_date GO:0050069 "2022-07-26T19:27:20+00:00"^^xsd:dateTime)
+            """,
+        )
 
     def test_21_obsolete(self) -> None:
         """Test obsolete definition."""

@@ -10,9 +10,9 @@ from functools import lru_cache
 
 import bioregistry
 
-from .api import names
-from .struct import Reference
-from .utils.io import multisetdict
+from ..api import names
+from ..struct import Reference
+from ..utils.io import multisetdict
 
 __all__ = [
     "MultiNormalizer",
@@ -183,7 +183,7 @@ class MultiNormalizer:
 
     If you're looking for taxa of exotic plants, you might use:
 
-    >>> from pyobo.normalizer import MultiNormalizer
+    >>> from pyobo.ner.normalizer import MultiNormalizer
     >>> normalizer = MultiNormalizer.from_prefixes(["ncbitaxon", "itis"])
     >>> normalizer.normalize("Homo sapiens")
     Reference(prefix='ncbitaxon', identifier='9606', name='Homo sapiens')
@@ -212,7 +212,7 @@ class MultiNormalizer:
 FIGURE_DASH = b"\xe2\x80\x92".decode("utf-8")
 EN_DASH = b"\xe2\x80\x93".decode("utf-8")
 EM_DASH = b"\xe2\x80\x94".decode("utf-8")
-HORIZONAL_BAR = b"\xe2\x80\x95".decode("utf-8")
+HORIZONTAL_BAR = b"\xe2\x80\x95".decode("utf-8")
 NORMAL_DASH = "-"
 
 
@@ -222,5 +222,5 @@ def normalize_dashes(s: str) -> str:
         s.replace(FIGURE_DASH, NORMAL_DASH)
         .replace(EN_DASH, NORMAL_DASH)
         .replace(EM_DASH, NORMAL_DASH)
-        .replace(HORIZONAL_BAR, NORMAL_DASH)
+        .replace(HORIZONTAL_BAR, NORMAL_DASH)
     )

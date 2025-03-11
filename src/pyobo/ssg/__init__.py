@@ -1,6 +1,5 @@
 """Static site generator."""
 
-import itertools as itt
 from collections import defaultdict
 from collections.abc import Sequence
 from operator import attrgetter
@@ -43,8 +42,9 @@ def make_site(
 
     :param obo: The ontology to generate a site for
     :param directory: The directory in which to generate the site
-    :param use_subdirectories: If true, creates directories for each term/property/typedef with an index.html
-        inside. If false, creates HTML files named with the identifiers.
+    :param use_subdirectories: If true, creates directories for each
+        term/property/typedef with an index.html inside. If false, creates HTML files
+        named with the identifiers.
     :param manifest: If true, lists all entries on the homepage.
     :param resource: A custom resource
     """
@@ -64,15 +64,12 @@ def make_site(
     if resource is None:
         raise KeyError
 
+    terms = [term for term in obo if term.prefix == obo.ontology]
+
     if not manifest:
         _manifest = None
     else:
-        _manifest = sorted(
-            (term for term in itt.chain(obo, obo.typedefs or []) if term.prefix == obo.ontology),
-            key=attrgetter("identifier"),
-        )
-
-    terms = [term for term in obo if term.prefix == obo.ontology]
+        _manifest = sorted(terms, key=attrgetter("identifier"))
 
     directory.joinpath("index.html").write_text(
         index_template.render(

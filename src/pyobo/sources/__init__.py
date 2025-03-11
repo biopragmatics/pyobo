@@ -41,6 +41,13 @@ from .npass import NPASSGetter
 from .omim_ps import OMIMPSGetter
 from .pathbank import PathBankGetter
 from .pfam import PfamClanGetter, PfamGetter
+from .pharmgkb import (
+    PharmGKBChemicalGetter,
+    PharmGKBDiseaseGetter,
+    PharmGKBGeneGetter,
+    PharmGKBPathwayGetter,
+    PharmGKBVariantGetter,
+)
 from .pid import PIDGetter
 from .pombase import PomBaseGetter
 from .pubchem import PubChemCompoundGetter
@@ -116,6 +123,11 @@ __all__ = [
     "PathBankGetter",
     "PfamClanGetter",
     "PfamGetter",
+    "PharmGKBChemicalGetter",
+    "PharmGKBDiseaseGetter",
+    "PharmGKBGeneGetter",
+    "PharmGKBPathwayGetter",
+    "PharmGKBVariantGetter",
     "PomBaseGetter",
     "PubChemCompoundGetter",
     "RGDGetter",

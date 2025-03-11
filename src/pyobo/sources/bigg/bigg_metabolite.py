@@ -29,10 +29,6 @@ class BiGGMetaboliteGetter(Obo):
     ontology = PREFIX
     bioversions_key = "bigg"
     typedefs = [participates_in]
-    idspaces = {
-        PREFIX: "http://bigg.ucsd.edu/models/universal/metabolites/",
-        "bigg.model": "http://bigg.ucsd.edu/models/",
-    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -53,7 +49,7 @@ KEY_TO_PREFIX = {
     "KEGG Glycan": "kegg.glycan",
     "MetaNetX (MNX) Equation": "metanetx.reaction",
     "RHEA": "rhea",
-    "EC Number": "eccode",
+    "EC Number": "ec",
     "SEED Reaction": "seed.reaction",
     "Reactome Reaction": "reactome",
     "KEGG Reaction": "kegg.reaction",

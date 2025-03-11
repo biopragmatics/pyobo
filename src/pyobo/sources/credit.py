@@ -23,9 +23,6 @@ class CreditGetter(Obo):
 
     ontology = PREFIX
     static_version = "2022"
-    idspaces = {
-        PREFIX: "https://credit.niso.org/contributor-roles/",
-    }
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

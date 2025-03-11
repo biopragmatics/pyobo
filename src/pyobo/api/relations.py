@@ -26,7 +26,7 @@ from ..identifier_utils import wrap_norm_prefix
 from ..struct.reference import Reference
 from ..struct.struct_utils import ReferenceHint, _ensure_ref
 from ..utils.cache import cached_df
-from ..utils.path import prefix_cache_join
+from ..utils.path import CacheArtifact, get_cache_path, get_relation_cache_path
 
 __all__ = [
     "get_filtered_relations_df",
@@ -62,7 +62,7 @@ def get_relations_df(
 ) -> pd.DataFrame:
     """Get all relations from the OBO."""
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="relations.tsv", version=version)
+    path = get_cache_path(prefix, CacheArtifact.relations, version=version)
 
     @cached_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
@@ -90,7 +90,7 @@ def get_filtered_relations_df(
     """Get all the given relation."""
     relation = _ensure_ref(relation, ontology_prefix=prefix)
     version = get_version_from_kwargs(prefix, kwargs)
-    all_relations_path = prefix_cache_join(prefix, name="relations.tsv", version=version)
+    all_relations_path = get_cache_path(prefix, CacheArtifact.relations, version=version)
     if all_relations_path.is_file():
         logger.debug("[%] loading all relations from %s", prefix, all_relations_path)
         df = pd.read_csv(all_relations_path, sep="\t", dtype=str)
@@ -98,12 +98,7 @@ def get_filtered_relations_df(
         columns = [f"{prefix}_id", TARGET_PREFIX, TARGET_ID]
         return df.loc[idx, columns]
 
-    path = prefix_cache_join(
-        prefix,
-        "relations",
-        name=f"{relation.curie}.tsv",
-        version=version,
-    )
+    path = get_relation_cache_path(prefix, relation, version=version)
 
     @cached_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)

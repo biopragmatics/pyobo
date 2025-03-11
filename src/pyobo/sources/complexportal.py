@@ -7,7 +7,16 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 from pyobo.resources.ncbitaxon import get_ncbitaxon_name
-from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_citation, has_part
+from pyobo.struct import (
+    Obo,
+    Reference,
+    Synonym,
+    Term,
+    _parse_str_or_curie_or_uri,
+    from_species,
+    has_citation,
+    has_part,
+)
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -101,9 +110,9 @@ def _parse_xrefs(s) -> list[tuple[Reference, str]]:
         xref = xref.replace("rhea:RHEA: ", "rhea:")
         xref = xref.replace("rhea:RHEA:rhea ", "rhea:")
         xref = xref.replace("intenz:RHEA:", "rhea:")
-        xref = xref.replace("eccode::", "eccode:")
-        xref = xref.replace("eccode:EC:", "eccode:")
-        xref = xref.replace("intenz:EC:", "eccode:")
+        xref = xref.replace("eccode::", "ec:")
+        xref = xref.replace("eccode:EC:", "ec:")
+        xref = xref.replace("intenz:EC:", "ec:")
         xref = xref.replace("eccode:RHEA:", "rhea:")
         xref = xref.replace("efo:MONDO:", "MONDO:")
         xref = xref.replace("omim:MIM:", "omim:")
@@ -126,7 +135,7 @@ def _parse_xrefs(s) -> list[tuple[Reference, str]]:
             xref_curie = _clean_intenz(xref_curie)
 
         try:
-            reference = Reference.from_curie_or_uri(xref_curie)
+            reference = _parse_str_or_curie_or_uri(xref_curie)
         except ValueError:
             logger.warning("can not parse CURIE: %s", xref_curie)
             continue

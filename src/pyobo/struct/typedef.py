@@ -223,7 +223,7 @@ has_output = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002234", name="h
 has_successor = TypeDef.from_triple(prefix="BFO", identifier="0000063", name="has successor")
 has_predecessor = TypeDef.from_triple(prefix="BFO", identifier="0000062", name="has predecessor")
 
-"""ChEBI"""
+# ChEBI
 
 is_conjugate_base_of = TypeDef(
     reference=Reference(prefix="ro", identifier="0018033", name="is conjugate base of"),
@@ -280,6 +280,7 @@ mapping_has_confidence = TypeDef(
     reference=v.mapping_has_confidence, is_metadata_tag=True, range=v.xsd_float
 )
 has_contributor = TypeDef(reference=v.has_contributor, is_metadata_tag=True)
+has_source = TypeDef(reference=v.has_source, is_metadata_tag=True)
 
 has_start_date = TypeDef(
     reference=Reference(prefix="dcat", identifier="startDate", name="has start date"),
@@ -307,7 +308,8 @@ for reference, name in load_ro().items():
             reference.prefix, reference.identifier, name
         )
 
-#: See https://mapping-commons.github.io/sssom/spec-model/
+#: SSSOM-compliant match type definitions
+#: .. seealso:: https://mapping-commons.github.io/sssom/spec-model/
 match_typedefs: Sequence[TypeDef] = (
     broad_match,
     close_match,
