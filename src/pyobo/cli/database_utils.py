@@ -31,7 +31,6 @@ from ..getters import IterHelperHelperDict, iter_helper, iter_helper_helper
 from ..sources import pubchem
 from ..sources.ncbi import ncbigene
 from ..utils.path import ensure_path
-from ..xrefdb.sources import iter_xref_plugins
 
 logger = logging.getLogger(__name__)
 
@@ -148,9 +147,6 @@ def _iter_xrefs(
             if any(not element for element in row):
                 continue
             yield cast(tuple[str, str, str, str, str], (prefix, *row, prefix))
-    for df in iter_xref_plugins(skip_below=kwargs.get("skip_below")):
-        df.dropna(inplace=True)
-        yield from tqdm(df.values, leave=False, total=len(df.index), unit_scale=True)
 
 
 def _iter_mappings(

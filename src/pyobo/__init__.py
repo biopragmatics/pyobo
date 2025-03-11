@@ -68,11 +68,6 @@ from .reader import from_obo_path, from_obonet
 from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef, default_reference
 from .utils.path import ensure_path
 from .version import get_version
-from .xrefdb.sources import (
-    has_xref_plugin,
-    iter_xref_plugins,
-    run_xref_plugin,
-)
 
 __all__ = [
     "Obo",
@@ -143,11 +138,8 @@ __all__ = [
     "ground",
     "has_ancestor",
     "has_nomenclature_plugin",
-    "has_xref_plugin",
     "is_descendent",
     "iter_nomenclature_plugins",
-    "iter_xref_plugins",
     "parse_results_from_obo",
     "run_nomenclature_plugin",
-    "run_xref_plugin",
 ]
