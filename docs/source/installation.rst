@@ -37,7 +37,7 @@ To install in development mode with uv:
 .. code-block:: console
 
     $ git clone git+https://github.com/biopragmatics/pyobo.git
-    $cd pyobo
+    $ cd pyobo
     $ uv pip install -e .
 
 or with pip:
