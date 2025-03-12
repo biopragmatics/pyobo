@@ -388,7 +388,7 @@ entry for that namespace in the Bioregistry.
 The most recent release can be installed from
 [PyPI](https://pypi.org/project/pyobo/) with uv:
 
- ```console
+```console
 python3 -m pip install pyobo
 $ uv pip install pyobo
 ```
