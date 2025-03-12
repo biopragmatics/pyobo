@@ -106,7 +106,7 @@ def get_name(
 def get_ids(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
     """Get the set of identifiers for this prefix."""
     if prefix == "ncbigene":
-        from ..sources.ncbigene import get_ncbigene_ids
+        from ..sources.ncbi.ncbigene import get_ncbigene_ids
 
         logger.info("[%s] loading name mappings", prefix)
         rv = get_ncbigene_ids()
@@ -145,7 +145,7 @@ class CachedReferences(Cached[list[Reference]]):
 def get_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Reference]:
     """Get the set of identifiers for this prefix."""
     if prefix == "ncbigene":
-        from ..sources.ncbigene import get_ncbigene_ids
+        from ..sources.ncbi.ncbigene import get_ncbigene_ids
 
         logger.info("[%s] loading identifiers ", prefix)
         rv = {Reference(prefix="ncbigene", identifier=i) for i in get_ncbigene_ids()}
@@ -176,7 +176,7 @@ def get_id_name_mapping(
 ) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == "ncbigene":
-        from ..sources.ncbigene import get_ncbigene_id_to_name_mapping
+        from ..sources.ncbi.ncbigene import get_ncbigene_id_to_name_mapping
 
         logger.info("[%s] loading identifiers", prefix)
         rv = get_ncbigene_id_to_name_mapping()
