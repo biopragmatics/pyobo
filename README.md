@@ -501,7 +501,6 @@ More info on Cruft's update command is available
 After cloning the repository and installing `tox` with
 `uv tool install tox --with tox-uv` or `python3 -m pip install tox tox-uv`, the
 unit tests in the `tests/` folder can be run reproducibly with:
- 
 
 ```console
 $ tox -e py
