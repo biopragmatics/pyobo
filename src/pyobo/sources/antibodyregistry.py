@@ -1,15 +1,17 @@
-"""Converter for the Antibody Registry.
-
-TODO use API https://www.antibodyregistry.org/api/antibodies?page=1&size=100
-"""
+"""Converter for the Antibody Registry."""
 
 import logging
 from collections.abc import Iterable, Mapping
 
+import lxml.html
 import pandas as pd
+import pystow
+from httpx import Client, Timeout, Cookies, URL as httpx_URL
+
 from bioregistry.utils import removeprefix
 from tqdm.auto import tqdm
 
+from curies import Prefix
 from pyobo import Obo, Reference, Term
 from pyobo.api.utils import get_version
 from pyobo.struct.typedef import has_citation
@@ -22,8 +24,8 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 PREFIX = "antibodyregistry"
-URL = "http://antibodyregistry.org/php/fileHandler.php"
-CHUNKSIZE = 20_000
+BASE_URL = "https://www.antibodyregistry.org/api/antibodies"
+PAGE_SIZE = 1000
 
 
 def get_chunks(*, force: bool = False, version: str | None = None) -> pd.DataFrame:
@@ -99,6 +101,125 @@ def iter_terms(*, force: bool = False, version: str | None = None) -> Iterable[T
                         continue
                     term.append_provenance(Reference(prefix="pubmed", identifier=pubmed_id))
             yield term
+
+
+def _get_term(json_data: dict[str, None | str | list[str]]) -> Term:
+    identifier = json_data["abId"]
+    name = json_data["abName"]
+    vendor = json_data["vendorName"]
+    catalog_number = json_data["catalogNum"]
+    defining_citation = json_data["definingCitation"]
+    term = Term.from_triple(prefix=PREFIX, identifier=identifier, name=name)
+
+    if vendor not in MAPPING:
+        logger.debug(f"! vendor {vendor} for {identifier}")
+    elif MAPPING[vendor] is not None and catalog_number:
+        term.append_xref((MAPPING[vendor], catalog_number))
+    if defining_citation:
+        for pubmed_id in defining_citation.split(","):
+            pubmed_id = pubmed_id.strip().removeprefix("PMID: ")
+            if not pubmed_id:
+                continue
+            term.append_provenance(
+                Reference(prefix=Prefix("pubmed"), identifier=pubmed_id, name=None)
+            )
+    return term
+
+
+def get_data(max_pages: int = None, page_size: int = PAGE_SIZE) -> Iterable[Term]:
+    """Get the BioGRID identifiers mapping dataframe."""
+    cookies = antibodyregistry_login()
+    with Client(
+        http2=True,
+        timeout=Timeout(5.0),
+    ) as client:
+        r = client.get(
+            httpx_URL(BASE_URL),
+            cookies=cookies,
+            params={"page": 1, "size": page_size},
+        )
+        r.raise_for_status()
+        res_json = r.json()
+
+        # Get max page and calculate total pages left after first page
+        total_count = res_json["totalElements"]
+        total_pages = (
+            (total_count // page_size) + 1 if total_count % page_size > 0 else 0
+        )
+        if max_pages is not None:
+            total_pages = min(total_pages, max_pages)
+        if len(res_json["items"]) != page_size:
+            logger.error("The first page does not have the expected number of items.")
+            raise ValueError(
+                f"Number of items on the first page is not {page_size}. "
+                f"Recommending reduce page_size."
+            )
+
+        for item in res_json["items"]:
+            # todo: makes use of more fields in the JSON? All fields:
+            #  catalogNum, vendorName, clonality, epitope, comments, url, abName,
+            #  abTarget, cloneId, commercialType, definingCitation, productConjugate,
+            #  productForm, productIsotype, sourceOrganism, targetSpecies, uniprotId,
+            #  applications, kitContents, abTargetEntrezId, abTargetUniprotId,
+            #  numOfCitation, accession, status, feedback, abId, catAlt, curateTime,
+            #  curatorComment, discDate, insertTime, targetModification,
+            #  targetSubregion, vendorId, lastEditTime, ix, showLink, vendorUrl
+            term = _get_term(item)
+            yield term
+
+        # Now, iterate over the remaining pages
+        for page in tqdm(
+            range(2, total_pages + 1),
+            desc=f"{PREFIX}, page size={page_size}",
+            total=total_pages - 1,
+        ):
+            r = client.get(
+                httpx_URL(BASE_URL),
+                cookies=cookies,
+                params={"page": page, "size": page_size},
+            )
+            r.raise_for_status()
+            res_json = r.json()
+            for item in res_json["items"]:
+                term = _get_term(item)
+                yield term
+
+
+def antibodyregistry_login() -> Cookies:
+    """Login to Antibody Registry."""
+    logger.info("Logging in to Antibody Registry")
+    username = pystow.get_config(
+        "pyobo", "antibodyregistry_username", raise_on_missing=True
+    )
+    password = pystow.get_config(
+        "pyobo", "antibodyregistry_password", raise_on_missing=True
+    )
+    with Client(
+        follow_redirects=True,
+        http2=True,
+        timeout=Timeout(5.0),
+    ) as client:
+        r = client.get(httpx_URL("https://www.antibodyregistry.org/login"))
+        r.raise_for_status()
+
+        cookies = r.cookies
+        tree = lxml.html.fromstring(r.content)
+        login_post_url = httpx_URL(tree.xpath('//form[@id="kc-form-login"]/@action')[0])
+
+        r = client.post(
+            login_post_url,
+            cookies=cookies,
+            data={
+                "username": username,
+                "password": password,
+                "rememberMe": "on",
+                "credentialId": "",
+            },
+        )
+        r.raise_for_status()
+
+        cookies = r.history[1].cookies
+        return cookies
 
 
 if __name__ == "__main__":
