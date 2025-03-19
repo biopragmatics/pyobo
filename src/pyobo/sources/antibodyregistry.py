@@ -4,7 +4,6 @@ import logging
 from collections.abc import Iterable, Mapping
 
 import lxml.html
-import pandas as pd
 import pystow
 from httpx import Client, Timeout, Cookies, URL as httpx_URL
 
@@ -15,7 +14,6 @@ from curies import Prefix
 from pyobo import Obo, Reference, Term
 from pyobo.constants import RAW_MODULE
 from pyobo.struct.typedef import has_citation
-from pyobo.utils.path import ensure_df
 
 __all__ = [
     "AntibodyRegistryGetter",
