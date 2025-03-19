@@ -1,5 +1,5 @@
 """Converter for the Antibody Registry."""
-
+import json
 import logging
 from collections.abc import Iterable, Mapping
 
@@ -13,7 +13,7 @@ from tqdm.auto import tqdm
 
 from curies import Prefix
 from pyobo import Obo, Reference, Term
-from pyobo.api.utils import get_version
+from pyobo.constants import RAW_MODULE
 from pyobo.struct.typedef import has_citation
 from pyobo.utils.path import ensure_df
 
@@ -25,25 +25,10 @@ logger = logging.getLogger(__name__)
 
 PREFIX = "antibodyregistry"
 BASE_URL = "https://www.antibodyregistry.org/api/antibodies"
-
-
-def get_chunks(*, force: bool = False, version: str | None = None) -> pd.DataFrame:
-    """Get the BioGRID identifiers mapping dataframe."""
-    if version is None:
-        version = get_version(PREFIX)
-    df = ensure_df(
-        PREFIX,
-        url=URL,
-        name="results.csv",
-        force=force,
-        version=version,
-        sep=",",
-        chunksize=CHUNKSIZE,
-        usecols=[0, 1, 2, 3, 5],
-    )
-    return df
 PAGE_SIZE = 10000
 TIMEOUT = 180.0
+RAW_DATA_MODULE = RAW_MODULE.module(PREFIX)
+RAW_CACHE = RAW_DATA_MODULE.base.joinpath("results.json")
 
 
 class AntibodyRegistryGetter(Obo):
@@ -54,7 +39,17 @@ class AntibodyRegistryGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return iter_terms(force=force, version=self._version_or_raise)
+        return iter_terms()
+
+
+def iter_terms(force: bool = False) -> Iterable[Term]:
+    """Get Antibody Registry terms."""
+    raw_data = get_data(force=force)
+    needs_curating = set()
+    for item in raw_data:
+        term = _get_term(item, needs_curating=needs_curating)
+        yield term
+    
 
 
 # TODO there are tonnnnsss of mappings to be curated
@@ -76,35 +71,16 @@ SKIP = {
 }
 
 
-def iter_terms(*, force: bool = False, version: str | None = None) -> Iterable[Term]:
-    """Iterate over antibodies."""
-    chunks = get_chunks(force=force, version=version)
-    needs_curating = set()
-    # df['vendor'] = df['vendor'].map(bioregistry.normalize_prefix)
-    it = tqdm(chunks, desc=f"{PREFIX}, chunkssize={CHUNKSIZE}")
-    for chunk in it:
-        for identifier, name, vendor, catalog_number, defining_citation in chunk.values:
-            if pd.isna(identifier):
-                continue
-            identifier = removeprefix(identifier, "AB_")
-            term = Term.from_triple(PREFIX, identifier, name if pd.notna(name) else None)
-            if vendor not in MAPPING:
-                if vendor not in needs_curating:
-                    needs_curating.add(vendor)
-                    if all(x not in vendor for x in SKIP):
-                        logger.debug(f"! vendor {vendor} for {identifier}")
-            elif MAPPING[vendor] is not None and pd.notna(catalog_number) and catalog_number:
-                term.append_xref((MAPPING[vendor], catalog_number))  # type:ignore
-            if defining_citation and pd.notna(defining_citation):
-                for pubmed_id in defining_citation.split(","):
-                    pubmed_id = pubmed_id.strip()
-                    if not pubmed_id:
-                        continue
-                    term.append_provenance(Reference(prefix="pubmed", identifier=pubmed_id))
-            yield term
 
-
-def _get_term(json_data: dict[str, None | str | list[str]]) -> Term:
+def _get_term(json_data: dict[str, None | str | list[str]], needs_curating: set) -> Term:
+    # todo: makes use of more fields in the JSON? All fields:
+    #  catalogNum, vendorName, clonality, epitope, comments, url, abName,
+    #  abTarget, cloneId, commercialType, definingCitation, productConjugate,
+    #  productForm, productIsotype, sourceOrganism, targetSpecies, uniprotId,
+    #  applications, kitContents, abTargetEntrezId, abTargetUniprotId,
+    #  numOfCitation, accession, status, feedback, abId, catAlt, curateTime,
+    #  curatorComment, discDate, insertTime, targetModification,
+    #  targetSubregion, vendorId, lastEditTime, ix, showLink, vendorUrl
     identifier = json_data["abId"]
     name = json_data["abName"]
     vendor = json_data["vendorName"]
@@ -113,7 +89,10 @@ def _get_term(json_data: dict[str, None | str | list[str]]) -> Term:
     term = Term.from_triple(prefix=PREFIX, identifier=identifier, name=name)
 
     if vendor not in MAPPING:
-        logger.debug(f"! vendor {vendor} for {identifier}")
+        if vendor not in needs_curating:
+            needs_curating.add(vendor)
+            if all(x not in vendor for x in SKIP):
+                logger.debug(f"! vendor {vendor} for {identifier}")
     elif MAPPING[vendor] is not None and catalog_number:
         term.append_xref((MAPPING[vendor], catalog_number))
     if defining_citation:
@@ -127,16 +106,20 @@ def _get_term(json_data: dict[str, None | str | list[str]]) -> Term:
     return term
 
 
-    with Client(
-        http2=True,
-        timeout=Timeout(5.0),
-    ) as client:
 def get_data(
     max_pages: int = None,
     page_size: int = PAGE_SIZE,
+    force: bool = False,
     timeout: float = TIMEOUT,
 ) -> list[dict[str, str | None | list[str]]]:
+    # identifier, name, vendor, catalog_number, defining_citation
     """Iterate over terms in the Antibody Registry."""
+    if RAW_CACHE.is_file() and not force:
+        # load cache
+        with open(RAW_CACHE) as file:
+            return json.load(file)
+
+    cache = []
     cookies = antibodyregistry_login(timeout=timeout)
     with Client(http2=True, timeout=Timeout(timeout)) as client:
         r = client.get(
@@ -161,17 +144,7 @@ def get_data(
                 f"Recommending reduce page_size."
             )
 
-        for item in res_json["items"]:
-            # todo: makes use of more fields in the JSON? All fields:
-            #  catalogNum, vendorName, clonality, epitope, comments, url, abName,
-            #  abTarget, cloneId, commercialType, definingCitation, productConjugate,
-            #  productForm, productIsotype, sourceOrganism, targetSpecies, uniprotId,
-            #  applications, kitContents, abTargetEntrezId, abTargetUniprotId,
-            #  numOfCitation, accession, status, feedback, abId, catAlt, curateTime,
-            #  curatorComment, discDate, insertTime, targetModification,
-            #  targetSubregion, vendorId, lastEditTime, ix, showLink, vendorUrl
-            term = _get_term(item)
-            yield term
+        cache.append(res_json["items"])
 
         # Now, iterate over the remaining pages
         for page in tqdm(
@@ -186,10 +159,12 @@ def get_data(
             )
             r.raise_for_status()
             res_json = r.json()
-            for item in res_json["items"]:
-                term = _get_term(item)
-                yield term
+            cache.append(res_json)
 
+        # Save cache
+        with RAW_CACHE.open("w") as file:
+            json.dump(cache, file)
+    return cache
 
 def antibodyregistry_login(timeout: float = TIMEOUT) -> Cookies:
     """Login to Antibody Registry."""
