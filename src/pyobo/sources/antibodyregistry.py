@@ -6,7 +6,7 @@ from collections.abc import Iterable, Mapping
 
 import lxml.html
 import pystow
-from httpx import Client, Timeout, Cookies, URL as httpx_URL
+from httpx import Client, Timeout, Cookies, URL as HTTPX_URL
 from pystow import ConfigError
 
 from bioregistry.utils import removeprefix
@@ -124,7 +124,7 @@ def get_data(
     cookies = antibodyregistry_login(timeout=timeout)
     with Client(http2=True, timeout=Timeout(timeout)) as client:
         r = client.get(
-            httpx_URL(BASE_URL),
+            HTTPX_URL(BASE_URL),
             cookies=cookies,
             params={"page": 1, "size": page_size},
         )
@@ -154,7 +154,7 @@ def get_data(
             total=total_pages - 1,
         ):
             r = client.get(
-                httpx_URL(BASE_URL),
+                HTTPX_URL(BASE_URL),
                 cookies=cookies,
                 params={"page": page, "size": page_size},
             )
@@ -189,12 +189,12 @@ def antibodyregistry_login(timeout: float = TIMEOUT) -> Cookies:
         http2=True,
         timeout=Timeout(timeout),
     ) as client:
-        r = client.get(httpx_URL("https://www.antibodyregistry.org/login"))
+        r = client.get(HTTPX_URL("https://www.antibodyregistry.org/login"))
         r.raise_for_status()
 
         cookies = r.cookies
         tree = lxml.html.fromstring(r.content)
-        login_post_url = httpx_URL(tree.xpath('//form[@id="kc-form-login"]/@action')[0])
+        login_post_url = HTTPX_URL(tree.xpath('//form[@id="kc-form-login"]/@action')[0])
 
         r = client.post(
             login_post_url,
