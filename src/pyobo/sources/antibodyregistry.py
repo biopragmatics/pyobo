@@ -7,6 +7,7 @@ from collections.abc import Iterable, Mapping
 import lxml.html
 import pystow
 from httpx import Client, Timeout, Cookies, URL as httpx_URL
+from pystow import ConfigError
 
 from bioregistry.utils import removeprefix
 from tqdm.auto import tqdm
@@ -170,12 +171,19 @@ def get_data(
 def antibodyregistry_login(timeout: float = TIMEOUT) -> Cookies:
     """Login to Antibody Registry."""
     logger.info("Logging in to Antibody Registry")
-    username = pystow.get_config(
-        "pyobo", "antibodyregistry_username", raise_on_missing=True
-    )
-    password = pystow.get_config(
-        "pyobo", "antibodyregistry_password", raise_on_missing=True
-    )
+    try:
+        username = pystow.get_config(
+            "pyobo", "antibodyregistry_username", raise_on_missing=True
+        )
+        password = pystow.get_config(
+            "pyobo", "antibodyregistry_password", raise_on_missing=True
+        )
+    except ConfigError:
+        logger.error(
+            "You must register at https://www.antibodyregistry.org to use this source."
+        )
+        raise
+
     with Client(
         follow_redirects=True,
         http2=True,
