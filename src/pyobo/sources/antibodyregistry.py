@@ -36,6 +36,7 @@ class AntibodyRegistryGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     typedefs = [has_citation]
+    dynamic_version = True
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -97,7 +98,7 @@ def _get_term(json_data: dict[str, None | str | list[str]], needs_curating: set)
         term.append_xref((MAPPING[vendor], catalog_number))
     if defining_citation:
         for pubmed_id in defining_citation.split(","):
-            pubmed_id = pubmed_id.strip().removeprefix("PMID: ")
+            pubmed_id = removeprefix(pubmed_id.strip(), prefix="PMID:").strip()
             if not pubmed_id:
                 continue
             term.append_provenance(
