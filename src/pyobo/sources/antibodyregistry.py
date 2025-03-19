@@ -1,4 +1,5 @@
 """Converter for the Antibody Registry."""
+
 import json
 import logging
 from collections.abc import Iterable, Mapping
@@ -48,7 +49,6 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
     for item in raw_data:
         term = _get_term(item, needs_curating=needs_curating)
         yield term
-    
 
 
 # TODO there are tonnnnsss of mappings to be curated
@@ -70,8 +70,9 @@ SKIP = {
 }
 
 
-
-def _get_term(json_data: dict[str, None | str | list[str]], needs_curating: set) -> Term:
+def _get_term(
+    json_data: dict[str, None | str | list[str]], needs_curating: set
+) -> Term:
     # todo: makes use of more fields in the JSON? All fields:
     #  catalogNum, vendorName, clonality, epitope, comments, url, abName,
     #  abTarget, cloneId, commercialType, definingCitation, productConjugate,
@@ -164,6 +165,7 @@ def get_data(
         with RAW_CACHE.open("w") as file:
             json.dump(cache, file)
     return cache
+
 
 def antibodyregistry_login(timeout: float = TIMEOUT) -> Cookies:
     """Login to Antibody Registry."""
