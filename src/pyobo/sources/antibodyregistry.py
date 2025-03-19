@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 PREFIX = "antibodyregistry"
 BASE_URL = "https://www.antibodyregistry.org/api/antibodies"
-PAGE_SIZE = 1000
 
 
 def get_chunks(*, force: bool = False, version: str | None = None) -> pd.DataFrame:
@@ -43,6 +42,8 @@ def get_chunks(*, force: bool = False, version: str | None = None) -> pd.DataFra
         usecols=[0, 1, 2, 3, 5],
     )
     return df
+PAGE_SIZE = 10000
+TIMEOUT = 180.0
 
 
 class AntibodyRegistryGetter(Obo):
@@ -126,13 +127,18 @@ def _get_term(json_data: dict[str, None | str | list[str]]) -> Term:
     return term
 
 
-def get_data(max_pages: int = None, page_size: int = PAGE_SIZE) -> Iterable[Term]:
-    """Get the BioGRID identifiers mapping dataframe."""
-    cookies = antibodyregistry_login()
     with Client(
         http2=True,
         timeout=Timeout(5.0),
     ) as client:
+def get_data(
+    max_pages: int = None,
+    page_size: int = PAGE_SIZE,
+    timeout: float = TIMEOUT,
+) -> list[dict[str, str | None | list[str]]]:
+    """Iterate over terms in the Antibody Registry."""
+    cookies = antibodyregistry_login(timeout=timeout)
+    with Client(http2=True, timeout=Timeout(timeout)) as client:
         r = client.get(
             httpx_URL(BASE_URL),
             cookies=cookies,
@@ -185,7 +191,7 @@ def get_data(max_pages: int = None, page_size: int = PAGE_SIZE) -> Iterable[Term
                 yield term
 
 
-def antibodyregistry_login() -> Cookies:
+def antibodyregistry_login(timeout: float = TIMEOUT) -> Cookies:
     """Login to Antibody Registry."""
     logger.info("Logging in to Antibody Registry")
     username = pystow.get_config(
@@ -197,7 +203,7 @@ def antibodyregistry_login() -> Cookies:
     with Client(
         follow_redirects=True,
         http2=True,
-        timeout=Timeout(5.0),
+        timeout=Timeout(timeout),
     ) as client:
         r = client.get(httpx_URL("https://www.antibodyregistry.org/login"))
         r.raise_for_status()
