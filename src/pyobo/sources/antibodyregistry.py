@@ -108,7 +108,7 @@ def _get_term(
 
 
 def get_data(
-    max_pages: int = None,
+    max_pages: int | None = None,
     page_size: int = PAGE_SIZE,
     force: bool = False,
     timeout: float = TIMEOUT,
