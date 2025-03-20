@@ -81,7 +81,7 @@ dependencies = [
     "curies>=0.10.6",
     "python-dateutil",
     "networkx>=3.4",
-    "httpx",
+    "httpx[http2]",
     # Resource Downloaders
     "drugbank_downloader",
     "chembl_downloader",
