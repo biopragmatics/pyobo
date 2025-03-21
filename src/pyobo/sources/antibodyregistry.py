@@ -28,6 +28,7 @@ BASE_URL = "https://www.antibodyregistry.org/api/antibodies"
 PAGE_SIZE = 10000
 TIMEOUT = 180.0
 RAW_DATA_MODULE = RAW_MODULE.module(PREFIX)
+RAW_DATA_PARTS = RAW_DATA_MODULE.module("parts")
 RAW_CACHE = RAW_DATA_MODULE.base.joinpath("results.json")
 
 
@@ -120,51 +121,70 @@ def get_data(
         with open(RAW_CACHE) as file:
             return json.load(file)
 
-    cache = []
+    # Check for existing parts, sort in ascending order of filename
+    parts = sorted((p for p in RAW_DATA_PARTS.base.glob("page*json")), key=lambda x: x.name)
+
+    # Get first non-existing page, unless we force
+    existing_pages = {int(p.stem.removeprefix("page")) for p in parts} if not force else set()
+    if not existing_pages:
+        # No existing pages, start from page 1
+        first_page = 1
+    else:
+        # Find the first missing page
+        logger.info(f"Found {len(existing_pages)} existing pages.")
+        first_page = min(set(range(1, max(existing_pages) + 2)) - existing_pages)
+
+    # Get first missing page
     cookies = antibodyregistry_login(timeout=timeout)
     with Client(http2=True, timeout=Timeout(timeout)) as client:
         r = client.get(
             HTTPX_URL(BASE_URL),
             cookies=cookies,
-            params={"page": 1, "size": page_size},
+            params={"page": first_page, "size": PAGE_SIZE},
         )
         r.raise_for_status()
         res_json = r.json()
 
+        # Write the first page to the cache
+        with RAW_DATA_PARTS.base.joinpath(f"page{first_page}.json").open("w") as file:
+            json.dump(res_json["items"], file)
+
         # Get max page and calculate total pages left after first page
         total_count = res_json["totalElements"]
-        total_pages = (
-            (total_count // page_size) + 1 if total_count % page_size > 0 else 0
-        )
-        if max_pages is not None:
-            total_pages = min(total_pages, max_pages)
-        if len(res_json["items"]) != page_size:
+        total_pages = total_count // PAGE_SIZE + (1 if total_count % PAGE_SIZE else 0)
+        if len(res_json["items"]) != PAGE_SIZE:
             logger.error("The first page does not have the expected number of items.")
             raise ValueError(
-                f"Number of items on the first page is not {page_size}. "
+                f"Number of items on the first page is not {PAGE_SIZE}. "
                 f"Recommending reduce page_size."
             )
 
-        cache.append(res_json["items"])
-
         # Now, iterate over the remaining pages
         for page in tqdm(
-            range(2, total_pages + 1),
-            desc=f"{PREFIX}, page size={page_size}",
-            total=total_pages - 1,
+            range(1, total_pages),
+            desc=f"{PREFIX}, page size={PAGE_SIZE}",
+            total=total_pages,
         ):
+            # Skip if the page already exists, unless we are forcing
+            part_file = RAW_DATA_PARTS.base.joinpath(f"page{page}.json")
+            if part_file.is_file() and not force:
+                continue
+
             r = client.get(
                 HTTPX_URL(BASE_URL),
                 cookies=cookies,
-                params={"page": page, "size": page_size},
+                params={"page": page, "size": PAGE_SIZE},
             )
             r.raise_for_status()
             res_json = r.json()
-            cache.append(res_json)
+            with part_file.open("w") as file:
+                json.dump(res_json["items"], file)
 
-        # Save cache
-        with RAW_CACHE.open("w") as file:
-            json.dump(cache, file)
+    # Now merge all the pages
+    cache = []
+    for page in RAW_DATA_PARTS.base.glob("page*json"):
+        with page.open("r") as file:
+            cache.extend(json.load(file))
     return cache
 
 
