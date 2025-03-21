@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 PREFIX = "antibodyregistry"
 BASE_URL = "https://www.antibodyregistry.org/api/antibodies"
-PAGE_SIZE = 10000
+PAGE_SIZE = 10_000
 TIMEOUT = 180.0
 RAW_DATA_MODULE = RAW_MODULE.module(PREFIX)
 RAW_DATA_PARTS = RAW_DATA_MODULE.module("parts")
@@ -84,9 +84,7 @@ SKIP = {
 }
 
 
-def _get_term(
-    json_data: dict[str, None | str | list[str]], needs_curating: set
-) -> Term:
+def _get_term(json_data: dict[str, None | str | list[str]], needs_curating: set) -> Term:
     # todo: makes use of more fields in the JSON? All fields:
     #  catalogNum, vendorName, clonality, epitope, comments, url, abName,
     #  abTarget, cloneId, commercialType, definingCitation, productConjugate,
@@ -121,8 +119,6 @@ def _get_term(
 
 
 def get_data(
-    max_pages: int | None = None,
-    page_size: int = PAGE_SIZE,
     force: bool = False,
     timeout: float = TIMEOUT,
 ) -> list[dict[str, str | None | list[str]]]:
@@ -174,7 +170,7 @@ def get_data(
         # Now, iterate over the remaining pages
         for page in tqdm(
             range(1, total_pages),
-            desc=f"{PREFIX}, page size={PAGE_SIZE}",
+            desc=PREFIX,
             total=total_pages,
         ):
             # Skip if the page already exists, unless we are forcing
@@ -204,16 +200,10 @@ def antibodyregistry_login(timeout: float = TIMEOUT) -> Cookies:
     """Login to Antibody Registry."""
     logger.info("Logging in to Antibody Registry")
     try:
-        username = pystow.get_config(
-            "pyobo", "antibodyregistry_username", raise_on_missing=True
-        )
-        password = pystow.get_config(
-            "pyobo", "antibodyregistry_password", raise_on_missing=True
-        )
+        username = pystow.get_config("pyobo", "antibodyregistry_username", raise_on_missing=True)
+        password = pystow.get_config("pyobo", "antibodyregistry_password", raise_on_missing=True)
     except ConfigError:
-        logger.error(
-            "You must register at https://www.antibodyregistry.org to use this source."
-        )
+        logger.error("You must register at https://www.antibodyregistry.org to use this source.")
         raise
 
     with Client(
