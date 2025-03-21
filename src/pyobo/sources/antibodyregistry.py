@@ -44,10 +44,8 @@ class AntibodyRegistryGetter(Obo):
         return iter_terms()
 
 
-def iter_terms(force: bool = False, retries: int = 4) -> Iterable[Term]:
+def iter_terms(force: bool = False, retries: int = 10) -> Iterable[Term]:
     """Get Antibody Registry terms."""
-    # From experience, errors typically happen about one hour after the first request,
-    # so with < 400 pages 4 retries should be enough.
     raw_data = []
     for i in range(max(1, retries)):
         try:
