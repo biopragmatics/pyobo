@@ -153,10 +153,6 @@ def get_data(
         r.raise_for_status()
         res_json = r.json()
 
-        # Write the first page to the cache
-        with RAW_DATA_PARTS.base.joinpath(f"page{first_page}.json").open("w") as file:
-            json.dump(res_json["items"], file)
-
         # Get max page and calculate total pages left after first page
         total_count = res_json["totalElements"]
         total_pages = total_count // PAGE_SIZE + (1 if total_count % PAGE_SIZE else 0)
@@ -167,6 +163,10 @@ def get_data(
                 f"Number of items on the first page is not {PAGE_SIZE}. "
                 f"Recommending reduce page_size."
             )
+
+        # Write the first page to the cache
+        with RAW_DATA_PARTS.base.joinpath(f"page{first_page}.json").open("w") as file:
+            json.dump(res_json["items"], file)
 
         # Now, iterate over the remaining pages
         for page in tqdm(
