@@ -169,7 +169,7 @@ def get_data(
 
         # Now, iterate over the remaining pages
         for page in tqdm(
-            range(1, total_pages),
+            range(1, total_pages+1),
             desc=PREFIX,
             total=total_pages,
         ):
