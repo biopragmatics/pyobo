@@ -6,7 +6,7 @@ from collections.abc import Iterable, Mapping
 
 import lxml.html
 import pystow
-from httpx import Client, Timeout, Cookies, URL as HTTPX_URL
+from httpx import Client, Timeout, Cookies, URL as HTTPX_URL, RequestError
 from pystow import ConfigError
 
 from bioregistry.utils import removeprefix
@@ -44,9 +44,21 @@ class AntibodyRegistryGetter(Obo):
         return iter_terms()
 
 
-def iter_terms(force: bool = False) -> Iterable[Term]:
+def iter_terms(force: bool = False, retries: int = 4) -> Iterable[Term]:
     """Get Antibody Registry terms."""
-    raw_data = get_data(force=force)
+    # From experience, errors typically happen about one hour after the first request,
+    # so with < 400 pages 4 retries should be enough.
+    raw_data = []
+    for i in range(max(1, retries)):
+        try:
+            raw_data = get_data(force=force)
+            break
+        except RequestError:
+            if i == retries - 1:
+                logger.error("Too many retries failed for Antibody Registry.")
+                raise
+            continue
+
     needs_curating = set()
     for item in raw_data:
         term = _get_term(item, needs_curating=needs_curating)
