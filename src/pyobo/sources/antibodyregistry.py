@@ -160,7 +160,8 @@ def get_data(
         # Get max page and calculate total pages left after first page
         total_count = res_json["totalElements"]
         total_pages = total_count // PAGE_SIZE + (1 if total_count % PAGE_SIZE else 0)
-        if len(res_json["items"]) != PAGE_SIZE:
+        # Check if the first page has the expected number of items (unless it's the last page)
+        if len(res_json["items"]) != PAGE_SIZE and first_page != total_pages:
             logger.error("The first page does not have the expected number of items.")
             raise ValueError(
                 f"Number of items on the first page is not {PAGE_SIZE}. "
