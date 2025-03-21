@@ -188,11 +188,13 @@ def get_data(
             with part_file.open("w") as file:
                 json.dump(res_json["items"], file)
 
-    # Now merge all the pages
+    # Now merge all the pages and write to the cache
     cache = []
     for page in RAW_DATA_PARTS.base.glob("page*json"):
         with page.open("r") as file:
             cache.extend(json.load(file))
+    with RAW_CACHE.open("w") as file:
+        json.dump(cache, file)
     return cache
 
 
