@@ -140,7 +140,21 @@ def get_data(
     else:
         # Find the first missing page
         logger.info(f"Found {len(existing_pages)} existing pages.")
-        first_page = min(set(range(1, max(existing_pages) + 2)) - existing_pages)
+        first_page = min(
+            set(range(1, max(existing_pages) + 1)) - existing_pages or
+            # if all pages exist, return -1
+            {-1}
+        )
+
+    if first_page == -1:
+        logger.info("All pages exist, returning cached data.")
+        cache = []
+        for page in RAW_DATA_PARTS.base.glob("page*json"):
+            with page.open("r") as file:
+                cache.extend(json.load(file))
+        with RAW_CACHE.open("w") as file:
+            json.dump(cache, file)
+        return cache
 
     # Get first missing page
     cookies = antibodyregistry_login(timeout=timeout)
