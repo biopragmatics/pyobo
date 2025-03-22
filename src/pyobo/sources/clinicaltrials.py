@@ -15,13 +15,15 @@ __all__ = [
 PREFIX = "clinicaltrials"
 
 INVESTIGATES_CONDITION = TypeDef(
-    reference=Reference(
+    reference=default_reference(
         prefix=PREFIX, identifier="investigates_condition", name="investigates condition"
     ),
     is_metadata_tag=True,
 )
 HAS_INTERVENTION = TypeDef(
-    reference=Reference(prefix=PREFIX, identifier="has_intervention", name="has intervention"),
+    reference=default_reference(
+        prefix=PREFIX, identifier="has_intervention", name="has intervention"
+    ),
     is_metadata_tag=True,
 )
 
