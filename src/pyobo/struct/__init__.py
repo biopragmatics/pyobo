@@ -18,7 +18,7 @@ from .struct import (
     TypeDef,
     make_ad_hoc_ontology,
 )
-from .struct_utils import Annotation, Stanza
+from .struct_utils import Annotation, Stanza, StanzaType
 from .typedef import (
     derives_from,
     enables,
@@ -51,6 +51,7 @@ __all__ = [
     "Reference",
     "Referenced",
     "Stanza",
+    "StanzaType",
     "Synonym",
     "SynonymTypeDef",
     "Term",
