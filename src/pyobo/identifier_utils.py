@@ -10,11 +10,11 @@ import bioontologies.relations
 import bioontologies.upgrade
 import bioregistry
 import click
+from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
 from pydantic import ValidationError
 from typing_extensions import Doc
 
-from ._reference_tmp import Reference
 from .registries import (
     curie_has_blacklisted_prefix,
     curie_has_blacklisted_suffix,
