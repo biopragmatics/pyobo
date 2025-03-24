@@ -318,7 +318,10 @@ class TestReaderTypedef(unittest.TestCase):
         """)
         typedef = self.get_only_typedef(ontology)
         self.assertEqual(
-            [Reference(prefix="RO", identifier="1111111"), Reference(prefix="RO", identifier="2222222")],
+            [
+                Reference(prefix="RO", identifier="1111111"),
+                Reference(prefix="RO", identifier="2222222"),
+            ],
             typedef.disjoint_from,
         )
 
@@ -380,7 +383,10 @@ class TestReaderTypedef(unittest.TestCase):
         """)
         typedef = self.get_only_typedef(ontology)
         self.assertEqual(
-            [Reference(prefix="RO", identifier="1111111"), Reference(prefix="RO", identifier="2222222")],
+            [
+                Reference(prefix="RO", identifier="1111111"),
+                Reference(prefix="RO", identifier="2222222"),
+            ],
             typedef.disjoint_over,
         )
 

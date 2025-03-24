@@ -1090,7 +1090,10 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual(
             [
                 Reference(prefix="CHEBI", identifier="2"),
-                (Reference(prefix="RO", identifier="1234567"), Reference(prefix="CHEBI", identifier="3")),
+                (
+                    Reference(prefix="RO", identifier="1234567"),
+                    Reference(prefix="CHEBI", identifier="3"),
+                ),
             ],
             term.intersection_of,
         )
