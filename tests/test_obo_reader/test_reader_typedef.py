@@ -84,7 +84,7 @@ class TestReaderTypedef(unittest.TestCase):
             ontology: RO
 
             [Typedef]
-            id: RO:1
+            id: RO:1234567
             namespace: test-namespace
         """)
         typedef = self.get_only_typedef(ontology)
@@ -96,12 +96,12 @@ class TestReaderTypedef(unittest.TestCase):
             ontology: RO
 
             [Typedef]
-            id: RO:1
-            alt_id: RO:2
+            id: RO:1234567
+            alt_id: RO:2222222
         """)
         typedef = self.get_only_typedef(ontology)
         self.assertEqual(
-            [Reference(prefix="RO", identifier="2")],
+            [Reference(prefix="RO", identifier="2222222")],
             list(typedef.alt_ids),
         )
 
@@ -111,7 +111,7 @@ class TestReaderTypedef(unittest.TestCase):
             ontology: ro
 
             [Typedef]
-            id: RO:1234
+            id: RO:1234567
             comment: comment
         """)
         self.get_only_typedef(ontology)
@@ -122,7 +122,7 @@ class TestReaderTypedef(unittest.TestCase):
             ontology: ro
 
             [Typedef]
-            id: RO:1234
+            id: RO:1234567
             subset: test-subset
         """)
         term = self.get_only_typedef(ontology)
@@ -313,12 +313,12 @@ class TestReaderTypedef(unittest.TestCase):
 
             [Typedef]
             id: BFO:0000066
-            disjoint_from: RO:1
-            disjoint_from: RO:2
+            disjoint_from: RO:1111111
+            disjoint_from: RO:2222222
         """)
         typedef = self.get_only_typedef(ontology)
         self.assertEqual(
-            [Reference(prefix="RO", identifier="1"), Reference(prefix="RO", identifier="2")],
+            [Reference(prefix="RO", identifier="1111111"), Reference(prefix="RO", identifier="2222222")],
             typedef.disjoint_from,
         )
 
@@ -354,15 +354,15 @@ class TestReaderTypedef(unittest.TestCase):
             ontology: ro
 
             [Typedef]
-            id: GO:1
-            equivalent_to_chain: GO:2 GO:3
+            id: GO:1111111
+            equivalent_to_chain: GO:2222222 GO:3333333
         """)
         typedef = self.get_only_typedef(ontology)
         self.assertEqual(
             [
                 [
-                    Reference(prefix="GO", identifier="2"),
-                    Reference(prefix="GO", identifier="3"),
+                    Reference(prefix="GO", identifier="2222222"),
+                    Reference(prefix="GO", identifier="3333333"),
                 ]
             ],
             typedef.equivalent_to_chain,
@@ -375,12 +375,12 @@ class TestReaderTypedef(unittest.TestCase):
 
             [Typedef]
             id: BFO:0000066
-            disjoint_over: RO:1
-            disjoint_over: RO:2
+            disjoint_over: RO:1111111
+            disjoint_over: RO:2222222
         """)
         typedef = self.get_only_typedef(ontology)
         self.assertEqual(
-            [Reference(prefix="RO", identifier="1"), Reference(prefix="RO", identifier="2")],
+            [Reference(prefix="RO", identifier="1111111"), Reference(prefix="RO", identifier="2222222")],
             typedef.disjoint_over,
         )
 
@@ -391,11 +391,11 @@ class TestReaderTypedef(unittest.TestCase):
 
             [Typedef]
             id: BFO:0000066
-            relationship: RO:1 RO:2
+            relationship: RO:1111111 RO:2222222
         """)
         typedef = self.get_only_typedef(ontology)
-        r1 = Reference(prefix="RO", identifier="1")
-        r2 = Reference(prefix="RO", identifier="2")
+        r1 = Reference(prefix="RO", identifier="1111111")
+        r2 = Reference(prefix="RO", identifier="2222222")
         self.assertIn(r1, typedef.relationships)
         self.assertEqual(1, len(typedef.relationships[r1]))
         self.assertEqual(r2, typedef.relationships[r1][0])
@@ -417,11 +417,11 @@ class TestReaderTypedef(unittest.TestCase):
 
             [Typedef]
             id: BFO:0000066
-            replaced_by: RO:1
+            replaced_by: RO:1111111
         """)
         r = self.get_only_typedef(ontology)
         self.assertEqual(
-            [Reference(prefix="RO", identifier="1")],
+            [Reference(prefix="RO", identifier="1111111")],
             r.get_replaced_by(),
             msg=str(dict(r.properties)),
         )
@@ -433,12 +433,12 @@ class TestReaderTypedef(unittest.TestCase):
 
             [Typedef]
             id: BFO:0000066
-            consider: RO:1
+            consider: RO:1111111
         """)
         typedef = self.get_only_typedef(ontology)
         r = typedef.get_property_objects(see_also)
         self.assertEqual(1, len(r))
-        self.assertEqual(Reference(prefix="RO", identifier="1"), r[0])
+        self.assertEqual(Reference(prefix="RO", identifier="1111111"), r[0])
 
     def test_38_expand_assertion_to(self) -> None:
         """Test the ``expand_assertion_to`` tag."""

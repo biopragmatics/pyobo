@@ -791,75 +791,75 @@ class TestTerm(unittest.TestCase):
 
     def test_15_union_of(self) -> None:
         """Test emitting union of."""
-        term = Term(reference=Reference(prefix="GO", identifier="1"))
-        term.append_union_of(Reference(prefix="GO", identifier="2"))
-        term.append_union_of(Reference(prefix="GO", identifier="3"))
+        term = Term(reference=Reference(prefix="GO", identifier="1111111"))
+        term.append_union_of(Reference(prefix="GO", identifier="2222222"))
+        term.append_union_of(Reference(prefix="GO", identifier="3333333"))
         self.assert_obo_stanza(
             term,
             obo="""
                 [Term]
-                id: GO:1
-                union_of: GO:2
-                union_of: GO:3
+                id: GO:1111111
+                union_of: GO:2222222
+                union_of: GO:3333333
             """,
             ofn="""
-                Declaration(Class(GO:1))
-                EquivalentClasses(GO:1 ObjectUnionOf(GO:2 GO:3))
+                Declaration(Class(GO:1111111))
+                EquivalentClasses(GO:1111111 ObjectUnionOf(GO:2222222 GO:3333333))
             """,
         )
 
-        term = Term(reference=Reference(prefix="GO", identifier="1"))
-        term.append_union_of(Reference(prefix="GO", identifier="2"))
-        term.append_union_of(Reference(prefix="GO", identifier="3"))
-        term.append_union_of(Reference(prefix="GO", identifier="4"))
+        term = Term(reference=Reference(prefix="GO", identifier="1111111"))
+        term.append_union_of(Reference(prefix="GO", identifier="2222222"))
+        term.append_union_of(Reference(prefix="GO", identifier="3333333"))
+        term.append_union_of(Reference(prefix="GO", identifier="4444444"))
         self.assert_obo_stanza(
             term,
             obo="""
                 [Term]
-                id: GO:1
-                union_of: GO:2
-                union_of: GO:3
-                union_of: GO:4
+                id: GO:1111111
+                union_of: GO:2222222
+                union_of: GO:3333333
+                union_of: GO:4444444
             """,
             ofn="""
-                Declaration(Class(GO:1))
-                EquivalentClasses(GO:1 ObjectUnionOf(GO:2 GO:3 GO:4))
+                Declaration(Class(GO:1111111))
+                EquivalentClasses(GO:1111111 ObjectUnionOf(GO:2222222 GO:3333333 GO:4444444))
             """,
         )
 
     def test_16_equivalent_classes(self) -> None:
         """Test emitting equivalent classes."""
         term = Term(reference=Reference(prefix="ZFA", identifier="0000134"))
-        term.append_equivalent_to(Reference(prefix="GO", identifier="0"))
+        term.append_equivalent_to(Reference(prefix="GO", identifier="0000000"))
         self.assert_obo_stanza(
             term,
             ontology_prefix="zfa",
             obo="""\
                 [Term]
                 id: ZFA:0000134
-                equivalent_to: GO:0
+                equivalent_to: GO:0000000
             """,
             ofn="""
                 Declaration(Class(ZFA:0000134))
-                EquivalentClasses(ZFA:0000134 GO:0)
+                EquivalentClasses(ZFA:0000134 GO:0000000)
             """,
         )
 
         term = Term(reference=Reference(prefix="ZFA", identifier="0000134"))
-        term.append_equivalent_to(Reference(prefix="GO", identifier="0"))
-        term.append_equivalent_to(Reference(prefix="GO", identifier="1"))
+        term.append_equivalent_to(Reference(prefix="GO", identifier="0000000"))
+        term.append_equivalent_to(Reference(prefix="GO", identifier="1111111"))
         self.assert_obo_stanza(
             term,
             ontology_prefix="zfa",
             obo="""\
                 [Term]
                 id: ZFA:0000134
-                equivalent_to: GO:0
-                equivalent_to: GO:1
+                equivalent_to: GO:0000000
+                equivalent_to: GO:1111111
             """,
             ofn="""
                 Declaration(Class(ZFA:0000134))
-                EquivalentClasses(ZFA:0000134 GO:0 GO:1)
+                EquivalentClasses(ZFA:0000134 GO:0000000 GO:1111111)
             """,
         )
 
