@@ -41,7 +41,6 @@ GLOBAL_SKIP = {
     "resid",  # deprecated
     "adw",  # deprecated
 }
-GLOBAL_CHECK_IDS = False
 
 #: Default prefix
 DEFAULT_PREFIX = "debio"

@@ -12,9 +12,9 @@ import bioregistry
 import curies
 import dateutil.parser
 import pytz
+from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
 
-from .._reference_tmp import Reference
 from ..identifier_utils import (
     BlacklistedError,
     NotCURIEError,

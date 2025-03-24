@@ -10,11 +10,11 @@ import bioontologies.relations
 import bioontologies.upgrade
 import bioregistry
 import click
+from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
 from pydantic import ValidationError
 from typing_extensions import Doc
 
-from ._reference_tmp import Reference
 from .registries import (
     curie_has_blacklisted_prefix,
     curie_has_blacklisted_suffix,
@@ -184,7 +184,7 @@ def _parse_str_or_curie_or_uri_helper(
 
     if upgrade and (reference_t := bioontologies.upgrade.upgrade(str_or_curie_or_uri)):
         return Reference(prefix=reference_t.prefix, identifier=reference_t.identifier)
-    if upgrade and (yy := _ground_relation(str_or_curie_or_uri)):
+    if upgrade and (yy := bioontologies.relations.ground_relation(str_or_curie_or_uri)):
         return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
 
     if _is_uri(str_or_curie_or_uri):
@@ -294,10 +294,3 @@ def standardize_ec(ec: str) -> str:
 def _is_valid_identifier(curie_or_uri: str) -> bool:
     # TODO this needs more careful implementation
     return bool(curie_or_uri.strip()) and " " not in curie_or_uri
-
-
-def _ground_relation(relation_str: str) -> Reference | None:
-    prefix, identifier = bioontologies.relations.ground_relation(relation_str)
-    if prefix and identifier:
-        return Reference(prefix=prefix, identifier=identifier)
-    return None

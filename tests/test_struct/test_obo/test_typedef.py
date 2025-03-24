@@ -785,19 +785,19 @@ class TestTypeDef(unittest.TestCase):
         protein-memberof-ec.
         """
         typedef = TypeDef(
-            reference=Reference(prefix="GO", identifier="1"),
+            reference=Reference(prefix="GO", identifier="1111111"),
             equivalent_to_chain=[
                 [
-                    Reference(prefix="GO", identifier="2"),
-                    Reference(prefix="GO", identifier="3"),
+                    Reference(prefix="GO", identifier="2222222"),
+                    Reference(prefix="GO", identifier="3333333"),
                 ]
             ],
         )
         self.assert_obo_stanza(
             """\
             [Typedef]
-            id: GO:1
-            equivalent_to_chain: GO:2 GO:3
+            id: GO:1111111
+            equivalent_to_chain: GO:2222222 GO:3333333
             """,
             typedef,
         )

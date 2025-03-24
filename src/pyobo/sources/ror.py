@@ -93,7 +93,7 @@ _MISSED_ORG_TYPES: set[str] = set()
 def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
     """Iterate over terms in ROR."""
     _version, _source_uri, records = get_latest(force=force)
-    unhandled_xref_prefixes = set()
+    unhandled_xref_prefixes: set[str] = set()
 
     seen_geonames_references = set()
     for record in tqdm(records, unit_scale=True, unit="record", desc=PREFIX):

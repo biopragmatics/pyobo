@@ -107,8 +107,8 @@ class TestReaderTerm(unittest.TestCase):
             [Term]
             id: CHEBI:1234
             name: Test Name
-            def: "Test definition" [orcid:1234-1234-1234]
-            xref: drugbank:DB1234567
+            def: "Test definition" [orcid:1234-1234-1234-1234]
+            xref: drugbank:DB12345
         """)
         self.assertEqual([], ontology.typedefs)
         self.assertEqual([], ontology.synonym_typedefs)
@@ -117,7 +117,7 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual("Test definition", term.definition)
         self.assertEqual(1, len(term.xrefs))
         xref = term.xrefs[0]
-        self.assertEqual("drugbank:DB1234567", xref.curie)
+        self.assertEqual("drugbank:DB12345", xref.curie)
 
     def test_1_node_unparsable(self) -> None:
         """Test loading an ontology with unparsable nodes."""
@@ -1084,13 +1084,16 @@ class TestReaderTerm(unittest.TestCase):
             [Term]
             id: CHEBI:1
             intersection_of: CHEBI:2
-            intersection_of: RO:1 CHEBI:3
+            intersection_of: RO:1234567 CHEBI:3
         """)
         term = self.get_only_term(ontology)
         self.assertEqual(
             [
                 Reference(prefix="CHEBI", identifier="2"),
-                (Reference(prefix="RO", identifier="1"), Reference(prefix="CHEBI", identifier="3")),
+                (
+                    Reference(prefix="RO", identifier="1234567"),
+                    Reference(prefix="CHEBI", identifier="3"),
+                ),
             ],
             term.intersection_of,
         )
