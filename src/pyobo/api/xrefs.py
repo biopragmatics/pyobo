@@ -161,7 +161,7 @@ def get_mappings_df(
             path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
         )
         def _df_getter() -> pd.DataFrame:
-            logger.info(f"[%s] rebuilding SSSOM", prefix)
+            logger.info("[%s] rebuilding SSSOM", prefix)
             ontology = get_ontology(prefix, **kwargs)
             return ontology.get_mappings_df(
                 use_tqdm=check_should_use_tqdm(kwargs),
