@@ -90,8 +90,6 @@ def iter_terms(version: str) -> Iterable[Term]:
             uniprot_ids = chembl_to_uniprots.get(chembl_id)
             if uniprot_ids is None:
                 pass
-            elif len(uniprot_ids) == 1:
-                term.append_exact_match(Reference(prefix="uniprot", identifier=uniprot_ids[0]))
             elif target_type in {
                 "PROTEIN COMPLEX",
                 "CHIMERIC PROTEIN",
@@ -119,6 +117,13 @@ def iter_terms(version: str) -> Iterable[Term]:
                 )
                 for uniprot_id in uniprot_ids:
                     term.append_xref(Reference(prefix="uniprot", identifier=uniprot_id))
+            elif len(uniprot_ids) == 1:
+                luid = uniprot_ids[0]
+                if luid.startswith("ENSG"):
+                    reference = Reference(prefix="ensembl", identifier=luid)
+                else:
+                    reference = Reference(prefix="uniprot", identifier=luid)
+                term.append_exact_match(reference)
             else:
                 tqdm.write(
                     f"[chembl.target:{chembl_id}] need to handle multiple uniprots for {target_type}"
