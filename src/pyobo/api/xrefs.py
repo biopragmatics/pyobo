@@ -61,9 +61,15 @@ def get_filtered_xrefs(
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
-    df = get_xrefs_df(prefix, **kwargs)
-    df = df.loc[df[TARGET_PREFIX] == xref_prefix, [f"{prefix}_id", TARGET_ID]]
-    rv = dict(df.values)
+    mappings_df = get_mappings_df(prefix, **kwargs)
+
+    rv = {}
+    for subject_curie, object_curie in mappings_df[["subject_id", "object_id"]].values:
+        subject_pair = ReferenceTuple.from_curie(subject_curie)
+        object_pair = ReferenceTuple.from_curie(object_curie)
+        if object_pair.prefix == xref_prefix:
+            rv[subject_pair.identifier] = object_pair.identifier
+
     if flip:
         return {v: k for k, v in rv.items()}
     return rv
