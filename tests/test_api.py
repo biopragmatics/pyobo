@@ -272,7 +272,11 @@ class TestAltIds(unittest.TestCase):
             self.assertEqual({r3}, pyobo.get_descendants(r1, cache=False, use_tqdm=False))
             self.assertEqual({r3}, pyobo.get_children(r1, cache=False, use_tqdm=False))
 
+            self.assertTrue(pyobo.has_ancestor(r3, r1, cache=False, use_tqdm=False))
             self.assertTrue(pyobo.has_ancestor(*r3.pair, *r1.pair, cache=False, use_tqdm=False))
+            self.assertFalse(pyobo.has_ancestor(r1, r3, cache=False, use_tqdm=False))
             self.assertFalse(pyobo.has_ancestor(*r1.pair, *r3.pair, cache=False, use_tqdm=False))
             self.assertTrue(pyobo.is_descendent(*r3.pair, *r1.pair, cache=False, use_tqdm=False))
+            self.assertTrue(pyobo.is_descendent(r3, r1, cache=False, use_tqdm=False))
+            self.assertFalse(pyobo.is_descendent(r1, r3, cache=False, use_tqdm=False))
             self.assertFalse(pyobo.is_descendent(*r1.pair, *r3.pair, cache=False, use_tqdm=False))
