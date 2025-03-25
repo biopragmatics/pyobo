@@ -1834,7 +1834,8 @@ class Obo:
         for stanza in self._iter_stanzas(
             use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting xrefs"
         ):
-            for xref in stanza.xrefs:
+            xrefs = {xref for _, xref in stanza.get_mappings(add_context=False)}
+            for xref in sorted(xrefs):
                 yield stanza, xref
 
     def iterate_filtered_xrefs(
@@ -1844,11 +1845,6 @@ class Obo:
         for term, xref in self.iterate_xrefs(use_tqdm=use_tqdm):
             if xref.prefix == prefix:
                 yield term, xref
-
-    def iterate_xref_rows(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str, str]]:
-        """Iterate over terms' identifiers, xref prefixes, and xref identifiers."""
-        for term, xref in self.iterate_xrefs(use_tqdm=use_tqdm):
-            yield term.identifier, xref.prefix, xref.identifier
 
     def iterate_literal_mapping_rows(self) -> Iterable[ssslm.LiteralMappingTuple]:
         """Iterate over literal mapping rows."""
@@ -1900,21 +1896,6 @@ class Obo:
             df["mapping_source"] = self.ontology
 
         return df
-
-    @property
-    def xrefs_header(self):
-        """The header for the xref dataframe."""
-        warnings.warn("use SSSOM_DF_COLUMNS instead", DeprecationWarning, stacklevel=2)
-        return [f"{self.ontology}_id", TARGET_PREFIX, TARGET_ID]
-
-    def get_xrefs_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
-        """Get a dataframe of all xrefs extracted from the OBO document."""
-        warnings.warn("use ontology.get_mappings_df instead", DeprecationWarning, stacklevel=2)
-
-        return pd.DataFrame(
-            list(self.iterate_xref_rows(use_tqdm=use_tqdm)),
-            columns=[f"{self.ontology}_id", TARGET_PREFIX, TARGET_ID],
-        ).drop_duplicates()
 
     def get_filtered_xrefs_mapping(
         self, prefix: str, *, use_tqdm: bool = False
