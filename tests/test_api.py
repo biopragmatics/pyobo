@@ -201,7 +201,7 @@ class TestAltIds(unittest.TestCase):
 
             # Synonyms
 
-            literal_mappings = pyobo.get_literal_mappings(TEST_P1)
+            literal_mappings = pyobo.get_literal_mappings(TEST_P1, cache=False)
             expected = [
                 LiteralMapping(
                     text="ttt1",
@@ -219,7 +219,7 @@ class TestAltIds(unittest.TestCase):
             self.assertEqual(expected, literal_mappings)
 
             if importlib.util.find_spec("gilda"):
-                grounder = get_grounder(TEST_P1)
+                grounder = get_grounder(TEST_P1, cache=False)
                 match = grounder.get_best_match(syn1)
                 self.assertIsNotNone(match)
                 self.assertEqual(TEST_P1, match.prefix)
