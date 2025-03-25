@@ -64,7 +64,7 @@ from .unimod import UnimodGetter
 from .uniprot import UniProtGetter, UniProtPtmGetter
 from .wikipathways import WikiPathwaysGetter
 from .zfin import ZFINGetter
-from ..struct import Obo
+from ..struct.struct import AdHocOntologyBase, Obo
 
 __all__ = [
     "AntibodyRegistryGetter",
@@ -151,6 +151,10 @@ __all__ = [
     "ontology_resolver",
 ]
 
-ontology_resolver: ClassResolver[Obo] = ClassResolver.from_subclasses(base=Obo, suffix="Getter")
+ontology_resolver: ClassResolver[Obo] = ClassResolver.from_subclasses(
+    base=Obo,
+    suffix="Getter",
+    skip={AdHocOntologyBase},
+)
 for getter in list(ontology_resolver):
     ontology_resolver.synonyms[getter.ontology] = getter
