@@ -4,7 +4,6 @@ import logging
 from collections.abc import Mapping
 
 import pandas as pd
-from curies import Reference
 from tqdm import tqdm
 from typing_extensions import Unpack
 
@@ -17,6 +16,7 @@ from ..constants import (
 )
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
+from ..struct import Reference
 from ..struct.struct_utils import OBOLiteral, ReferenceHint, _ensure_ref
 from ..utils.cache import cached_df
 from ..utils.io import multidict

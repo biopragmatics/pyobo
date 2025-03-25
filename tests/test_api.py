@@ -8,6 +8,7 @@ from unittest import mock
 import bioregistry
 from curies import Reference, ReferenceTuple
 from curies import vocabulary as _v
+from pydantic import ValidationError
 from ssslm import LiteralMapping
 
 import pyobo
@@ -76,7 +77,9 @@ class TestAltIds(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_primary_identifier("go")
 
-        self.assertIsNone(get_primary_curie("nope:nope", strict=False))
+        # if you try passing a string, you're on your own for error handling
+        with self.assertRaises(ValidationError):
+            self.assertIsNone(get_primary_curie("nope:nope", strict=False))
         with self.assertRaises(ValueError):
             get_primary_curie("nope:nope", strict=True)
 
@@ -219,13 +222,13 @@ class TestAltIds(unittest.TestCase):
                 LiteralMapping(
                     text="ttt1",
                     reference=r1,
-                    predicate=_v.has_related_synonym,
+                    predicate=PyOBOReference.from_reference(_v.has_related_synonym),
                     source=TEST_P1,
                 ),
                 LiteralMapping(
                     text="test name",
                     reference=r1,
-                    predicate=_v.has_label,
+                    predicate=PyOBOReference.from_reference(_v.has_label),
                     source=TEST_P1,
                 ),
             ]
