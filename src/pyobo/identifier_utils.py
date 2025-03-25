@@ -184,8 +184,10 @@ def _parse_str_or_curie_or_uri_helper(
 
     if upgrade and (reference_t := bioontologies.upgrade.upgrade(str_or_curie_or_uri)):
         return Reference(prefix=reference_t.prefix, identifier=reference_t.identifier)
-    if upgrade and (yy := bioontologies.relations.ground_relation(str_or_curie_or_uri)):
-        return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
+    if upgrade:
+        rel_prefix, rel_identifier = bioontologies.relations.ground_relation(str_or_curie_or_uri)
+        if rel_prefix and rel_identifier:
+            return Reference(prefix=rel_prefix, identifier=rel_identifier, name=name)
 
     if _is_uri(str_or_curie_or_uri):
         prefix, identifier = bioregistry.parse_iri(str_or_curie_or_uri)
