@@ -1,12 +1,14 @@
 """High-level API for hierarchies."""
 
 import logging
+import warnings
 from collections.abc import Iterable
 from functools import lru_cache
+from typing import overload
 
 import networkx as nx
 from curies import ReferenceTuple
-from typing_extensions import Unpack
+from typing_extensions import NotRequired, Unpack
 
 from .edges import get_edges
 from .names import get_name, get_references
@@ -33,8 +35,8 @@ logger = logging.getLogger(__name__)
 class HierarchyKwargs(GetOntologyKwargs):
     """Keyword argument hints for hierarchy getter functions."""
 
-    include_part_of: bool
-    include_has_member: bool
+    include_part_of: NotRequired[bool]
+    include_has_member: NotRequired[bool]
 
 
 def get_hierarchy(
@@ -123,10 +125,11 @@ def _get_predicate_sets(
 
 
 def is_descendent(
-    prefix: str,
-    identifier: str,
-    ancestor_prefix: str,
-    ancestor_identifier: str,
+    prefix: str | Reference,
+    identifier: str | Reference,
+    ancestor_prefix: str | None = None,
+    ancestor_identifier: str | None = None,
+    /,
     **kwargs: Unpack[HierarchyKwargs],
 ) -> bool:
     """Check that the first identifier has the second as a descendent.
@@ -136,8 +139,9 @@ def is_descendent(
 
     >>> assert is_descendent("go", "0070246", "go", "0006915")
     """
-    ancestor = Reference(prefix=ancestor_prefix, identifier=ancestor_identifier)
-    descendant = Reference(prefix=prefix, identifier=identifier)
+    descendant, ancestor = _get_double_reference(
+        prefix, identifier, ancestor_prefix, ancestor_identifier
+    )
     descendants = get_descendants(ancestor, **kwargs)
     return descendants is not None and descendant in descendants
 
@@ -172,11 +176,34 @@ def get_children(
     return set(hierarchy.predecessors(t))
 
 
+@overload
 def has_ancestor(
     prefix: str,
     identifier: str,
-    ancestor_prefix: str,
-    ancestor_identifier: str,
+    ancestor_prefix: str = ...,
+    ancestor_identifier: str = ...,
+    /,
+    **kwargs: Unpack[HierarchyKwargs],
+) -> bool: ...
+
+
+@overload
+def has_ancestor(
+    prefix: Reference,
+    identifier: Reference,
+    ancestor_prefix: None = ...,
+    ancestor_identifier: None = ...,
+    /,
+    **kwargs: Unpack[HierarchyKwargs],
+) -> bool: ...
+
+
+def has_ancestor(
+    prefix: str | Reference,
+    identifier: str | Reference,
+    ancestor_prefix: str | None = None,
+    ancestor_identifier: str | None = None,
+    /,
     **kwargs: Unpack[HierarchyKwargs],
 ) -> bool:
     """Check that the first identifier has the second as an ancestor.
@@ -186,10 +213,23 @@ def has_ancestor(
 
     >>> assert has_ancestor("go", "0006915", "go", "0008219")
     """
-    ancestor = Reference(prefix=ancestor_prefix, identifier=ancestor_identifier)
-    descendant = Reference(prefix=prefix, identifier=identifier)
+    descendant, ancestor = _get_double_reference(
+        prefix, identifier, ancestor_prefix, ancestor_identifier
+    )
     ancestors = get_ancestors(descendant, **kwargs)
     return ancestors is not None and ancestor in ancestors
+
+
+def _get_double_reference(
+    a: str | Reference, b: str | Reference, c: str | None, d: str | None
+) -> tuple[Reference, Reference]:
+    if isinstance(a, Reference) and isinstance(b, Reference):
+        return a, b
+    elif all(isinstance(x, str) for x in (a, b, c, d)):
+        warnings.warn("passing strings is deprecated", DeprecationWarning, stacklevel=2)
+        return Reference(prefix=a, identifier=b), Reference(prefix=c, identifier=d)
+    else:
+        raise TypeError
 
 
 @lru_cache
