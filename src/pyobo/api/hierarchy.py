@@ -124,6 +124,30 @@ def _get_predicate_sets(
     return predicates, reverse_predicates
 
 
+# docstr-coverage:excused `overload`
+@overload
+def is_descendent(
+    prefix: str,
+    identifier: str,
+    ancestor_prefix: str = ...,
+    ancestor_identifier: str = ...,
+    /,
+    **kwargs: Unpack[HierarchyKwargs],
+) -> bool: ...
+
+
+# docstr-coverage:excused `overload`
+@overload
+def is_descendent(
+    descendant: Reference,
+    ancestor: Reference,
+    _1: None = ...,
+    _2: None = ...,
+    /,
+    **kwargs: Unpack[HierarchyKwargs],
+) -> bool: ...
+
+
 def is_descendent(
     prefix: str | Reference,
     identifier: str | Reference,
@@ -134,8 +158,23 @@ def is_descendent(
 ) -> bool:
     """Check that the first identifier has the second as a descendent.
 
-    Check that go:0070246 ! natural killer cell apoptotic process is a descendant of
-    go:0006915 ! apoptotic process
+    :param prefix: The prefix for the descendant
+    :param identifier: The local unique identifier for the descendant
+    :param ancestor_prefix: The prefix for the ancestor
+    :param ancestor_identifier: The local unique identifier for the ancestor
+    :param kwargs: Keyword arguments for :func:`get_hierarchy`
+    :return: If the decendant has the given ancestor
+
+    Check that ``GO:0070246`` (natural killer cell apoptotic process) is a descendant of
+    ``GO:0006915`` (apoptotic process)
+
+    >>> nk_apoptosis = Reference.from_curie(
+    ...     "GO:0070246", name="natural killer cell apoptotic process"
+    ... )
+    >>> apoptosis = Reference.from_curie("GO:0006915", name="apoptotic process")
+    >>> assert is_descendent(nk_apoptosis, apoptosis)
+
+    Using deprecated old-style arguments:
 
     >>> assert is_descendent("go", "0070246", "go", "0006915")
     """
@@ -176,6 +215,7 @@ def get_children(
     return set(hierarchy.predecessors(t))
 
 
+# docstr-coverage:excused `overload`
 @overload
 def has_ancestor(
     prefix: str,
@@ -187,12 +227,13 @@ def has_ancestor(
 ) -> bool: ...
 
 
+# docstr-coverage:excused `overload`
 @overload
 def has_ancestor(
-    prefix: Reference,
-    identifier: Reference,
-    ancestor_prefix: None = ...,
-    ancestor_identifier: None = ...,
+    descendant: Reference,
+    ancestor: Reference,
+    _1: None = ...,
+    _2: None = ...,
     /,
     **kwargs: Unpack[HierarchyKwargs],
 ) -> bool: ...
@@ -208,8 +249,21 @@ def has_ancestor(
 ) -> bool:
     """Check that the first identifier has the second as an ancestor.
 
-    Check that go:0008219 ! cell death is an ancestor of go:0006915 ! apoptotic
-    process
+    :param prefix: The prefix for the descendant
+    :param identifier: The local unique identifier for the descendant
+    :param ancestor_prefix: The prefix for the ancestor
+    :param ancestor_identifier: The local unique identifier for the ancestor
+    :param kwargs: Keyword arguments for :func:`get_hierarchy`
+    :return: If the decendant has the given ancestor
+
+    Check that ``GO:0008219`` (cell death) is an ancestor of ``GO:0006915``
+    (apoptotic process):
+
+    >>> apoptosis = Reference.from_curie("GO:0006915", name="apoptotic process")
+    >>> cell_death = Reference.from_curie("GO:0008219", name="cell death")
+    >>> assert has_ancestor(apoptosis, cell_death)
+
+    The same, using the deprecated argumentation style:
 
     >>> assert has_ancestor("go", "0006915", "go", "0008219")
     """
