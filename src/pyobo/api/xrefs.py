@@ -7,7 +7,6 @@ from functools import lru_cache
 
 import pandas as pd
 from curies import ReferenceTuple
-from tqdm import tqdm
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
