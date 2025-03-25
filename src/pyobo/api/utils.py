@@ -9,10 +9,10 @@ from typing import Literal, overload
 
 import bioversions
 import curies
+from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
 
 from ..constants import GetOntologyKwargs
-from ..struct import Reference
 from ..utils.path import prefix_directory_join
 
 __all__ = [
