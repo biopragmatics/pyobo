@@ -2229,6 +2229,10 @@ class TypeDef(Stanza):
         )
 
 
+class AdHocOntologyBase(Obo):
+    """A base class for ad-hoc ontologies."""
+
+
 def make_ad_hoc_ontology(
     _ontology: str,
     _name: str | None = None,
@@ -2247,7 +2251,7 @@ def make_ad_hoc_ontology(
 ) -> Obo:
     """Make an ad-hoc ontology."""
 
-    class AdHocOntology(Obo):
+    class AdHocOntology(AdHocOntologyBase):
         """An ad hoc ontology created from an OBO file."""
 
         ontology = _ontology
