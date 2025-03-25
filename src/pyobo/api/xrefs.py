@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from functools import lru_cache
 
 import pandas as pd
+from curies import ReferenceTuple
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
@@ -59,9 +60,15 @@ def get_filtered_xrefs(
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get xrefs to a given target."""
-    df = get_xrefs_df(prefix, **kwargs)
-    df = df.loc[df[TARGET_PREFIX] == xref_prefix, [f"{prefix}_id", TARGET_ID]]
-    rv = dict(df.values)
+    mappings_df = get_mappings_df(prefix, **kwargs)
+
+    rv = {}
+    for subject_curie, object_curie in mappings_df[["subject_id", "object_id"]].values:
+        subject_pair = ReferenceTuple.from_curie(subject_curie)
+        object_pair = ReferenceTuple.from_curie(object_curie)
+        if object_pair.prefix == xref_prefix:
+            rv[subject_pair.identifier] = object_pair.identifier
+
     if flip:
         return {v: k for k, v in rv.items()}
     return rv
@@ -74,21 +81,23 @@ get_xrefs = get_filtered_xrefs
 def get_xrefs_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get all xrefs."""
     warnings.warn(
-        "use pyobo.get_mappings_df instead of pyobo.get_xrefs_df", DeprecationWarning, stacklevel=2
+        f"use pyobo.get_mappings_df instead of pyobo.get_xrefs_df."
+        f"Not using cache artifact path to {CacheArtifact.xrefs}",
+        DeprecationWarning,
+        stacklevel=2,
     )
 
-    version = get_version_from_kwargs(prefix, kwargs)
-    path = get_cache_path(prefix, CacheArtifact.xrefs, version=version)
+    mappings_df = get_mappings_df(prefix, **kwargs)
 
-    @cached_df(
-        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
-    )
-    def _df_getter() -> pd.DataFrame:
-        logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
-        ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_xrefs_df(use_tqdm=check_should_use_tqdm(kwargs))
+    rows = []
+    for subject_curie, object_curie in mappings_df[["subject_id", "object_id"]].values:
+        subject_pair = ReferenceTuple.from_curie(subject_curie)
+        object_pair = ReferenceTuple.from_curie(object_curie)
+        rows.append((subject_pair.identifier, object_pair.prefix, object_pair.identifier))
 
-    return _df_getter()
+    df = pd.DataFrame(rows, columns=[f"{prefix}_id", TARGET_PREFIX, TARGET_ID])
+    df = df.drop_duplicates()
+    return df
 
 
 def get_sssom_df(
@@ -152,7 +161,7 @@ def get_mappings_df(
             path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
         )
         def _df_getter() -> pd.DataFrame:
-            logger.info("[%s] no cached xrefs found. getting from OBO loader", prefix)
+            logger.info("[%s] rebuilding SSSOM", prefix)
             ontology = get_ontology(prefix, **kwargs)
             return ontology.get_mappings_df(
                 use_tqdm=check_should_use_tqdm(kwargs),
