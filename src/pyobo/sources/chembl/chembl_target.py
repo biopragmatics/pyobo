@@ -120,7 +120,7 @@ def iter_terms(version: str) -> Iterable[Term]:
             elif len(uniprot_ids) == 1:
                 luid = uniprot_ids[0]
                 if luid.startswith("ENSG"):
-                    reference = Reference(prefix="ensembl", indentifier=luid)
+                    reference = Reference(prefix="ensembl", identifier=luid)
                 else:
                     reference = Reference(prefix="uniprot", identifier=luid)
                 term.append_exact_match(reference)
