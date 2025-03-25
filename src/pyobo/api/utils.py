@@ -12,6 +12,7 @@ import curies
 from curies import ReferenceTuple
 
 from ..constants import GetOntologyKwargs
+from ..struct import Reference
 from ..utils.path import prefix_directory_join
 
 __all__ = [
@@ -137,13 +138,13 @@ def get_version_pins() -> dict[str, str]:
 
 def _get_pi(
     prefix: str | curies.Reference | ReferenceTuple, identifier: str | None = None, /
-) -> curies.Reference:
+) -> Reference:
     if isinstance(prefix, ReferenceTuple | curies.Reference):
         if identifier is not None:
             raise ValueError("unexpected non-none value passed as second positional argument")
-        return curies.Reference(prefix=prefix.prefix, identifier=prefix.identifier)
+        return Reference(prefix=prefix.prefix, identifier=prefix.identifier)
     if isinstance(prefix, str) and identifier is None:
-        return curies.Reference.from_curie(prefix)
+        return Reference.from_curie(prefix)
     if identifier is None:
         raise ValueError(
             "prefix was given as a string, so an identifier was expected to be passed as a string as well"
@@ -153,4 +154,4 @@ def _get_pi(
         DeprecationWarning,
         stacklevel=4,  # this is 4 since this is (always?) called from inside a decorator
     )
-    return curies.Reference(prefix=prefix, identifier=identifier)
+    return Reference(prefix=prefix, identifier=identifier)

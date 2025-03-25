@@ -73,7 +73,7 @@ dependencies = [
     "bioversions>=0.7.0",
     "bioregistry>=0.12.7",
     "bioontologies>=0.7.0",
-    "ssslm>=0.0.9",
+    "ssslm>=0.0.13",
     "zenodo-client>=0.3.6",
     "class_resolver",
     "psycopg2-binary",
