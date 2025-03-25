@@ -6,7 +6,7 @@ from functools import lru_cache
 
 import networkx as nx
 from curies import ReferenceTuple
-from typing_extensions import Unpack
+from typing_extensions import NotRequired, Unpack
 
 from .edges import get_edges
 from .names import get_name, get_references
@@ -33,8 +33,8 @@ logger = logging.getLogger(__name__)
 class HierarchyKwargs(GetOntologyKwargs):
     """Keyword argument hints for hierarchy getter functions."""
 
-    include_part_of: bool
-    include_has_member: bool
+    include_part_of: NotRequired[bool]
+    include_has_member: NotRequired[bool]
 
 
 def get_hierarchy(
