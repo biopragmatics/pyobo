@@ -1834,7 +1834,7 @@ class Obo:
         for stanza in self._iter_stanzas(
             use_tqdm=use_tqdm, desc=f"[{self.ontology}] getting xrefs"
         ):
-            xrefs = {xref for _, xref in stanza.get_mappings()}
+            xrefs = {xref for _, xref in stanza.get_mappings(add_context=False)}
             for xref in sorted(xrefs):
                 yield stanza, xref
 
