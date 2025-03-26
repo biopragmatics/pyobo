@@ -164,7 +164,14 @@ def _parse_dblinks(term: Term, database_links: str, property_map=None) -> None:
         if prefix != KEY_TO_PREFIX.get(key):
             tqdm.write(f"[{PREFIX}] mismatch between {prefix=} and {key=} - {identifier_url}")
             return
-        reference = Reference(prefix=prefix, identifier=identifier)
+        if prefix == "rhea" and "#" in identifier:
+            identifier = identifier.split("#")[0]
+
+        try:
+            reference = Reference(prefix=prefix, identifier=identifier)
+        except ValidationError:
+            tqdm.write(f"[{term.curie}] could not validate xref - {prefix}:{identifier}")
+            return
         # don't add self-reference
         if reference.pair == term.pair:
             return
