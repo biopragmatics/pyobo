@@ -10,6 +10,7 @@ from typing import Any
 
 import bioregistry
 import zenodo_client
+from pydantic import ValidationError
 from tqdm.auto import tqdm
 
 from pyobo.struct import Obo, Reference, Term
@@ -96,7 +97,7 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
     unhandled_xref_prefixes: set[str] = set()
 
     seen_geonames_references = set()
-    for record in tqdm(records, unit_scale=True, unit="record", desc=PREFIX):
+    for record in tqdm(records, unit_scale=True, unit="record", desc=f"{PREFIX} v{_version}"):
         identifier = record["id"].removeprefix("https://ror.org/")
         name = record["name"]
         name = NAME_REMAPPING.get(name, name)
@@ -177,7 +178,13 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
             if isinstance(identifiers, str):
                 identifiers = [identifiers]
             for xref_id in identifiers:
-                term.append_xref(Reference(prefix=norm_prefix, identifier=xref_id.replace(" ", "")))
+                xref_id = xref_id.replace(" ", "")
+                try:
+                    xref = Reference(prefix=norm_prefix, identifier=xref_id)
+                except ValidationError:
+                    tqdm.write(f"[{term.curie}] invalid xref: {norm_prefix}:{xref_id}")
+                else:
+                    term.append_xref(xref)
 
         yield term
 
