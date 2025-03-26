@@ -3,6 +3,7 @@
 from collections.abc import Iterable
 
 import pandas as pd
+from tqdm import tqdm
 
 from pyobo import Obo, Reference, Term, default_reference
 from pyobo.sources.pharmgkb.utils import download_pharmgkb_tsv, split
@@ -52,7 +53,10 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
         for atc_id in split(row, "ATC Identifiers"):
             term.append_exact_match(Reference(prefix="atc", identifier=atc_id))
         for rxnorm_id in split(row, "RxNorm Identifiers"):
-            term.append_exact_match(Reference(prefix="rxnorm", identifier=rxnorm_id))
+            if len(rxnorm_id) > 7:
+                tqdm.write(f"invalid rxnorm luid (too long) - {rxnorm_id}")
+            else:
+                term.append_exact_match(Reference(prefix="rxnorm", identifier=rxnorm_id))
         for pubchem_id in split(row, "PubChem Compound Identifiers"):
             term.append_exact_match(Reference(prefix="pubchem.compound", identifier=pubchem_id))
         for xref_curie in split(row, "External Vocabulary"):

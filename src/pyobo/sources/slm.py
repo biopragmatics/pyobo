@@ -104,9 +104,7 @@ def iter_terms(version: str, force: bool = False):
                 try:
                     inchi_ref = Reference(prefix="inchikey", identifier=inchikey)
                 except ValueError:
-                    tqdm.write(
-                        f"[slm:{identifier}] had invalid inchikey reference: ({type(inchikey)}) {inchikey}"
-                    )
+                    tqdm.write(f"[slm:{identifier}] had invalid inchikey reference: `{inchikey}`")
                 else:
                     term.append_exact_match(inchi_ref)
         for chebi_id in _split(chebi_ids):

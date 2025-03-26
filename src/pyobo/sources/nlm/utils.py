@@ -68,14 +68,22 @@ def get_journals(
         journal_id_to_publisher_key = get_publishers(force=force)
     elements = root.findall("Journal")
     for element in elements:
-        yield _process_journal(element, journal_id_to_publisher_key)
+        if term := _process_journal(element, journal_id_to_publisher_key):
+            yield term
 
 
-def _process_journal(element, journal_id_to_publisher_key: dict[str, Term]) -> Term:
+def _process_journal(element, journal_id_to_publisher_key: dict[str, Term]) -> Term | None:
     # TODO enrich with context from https://ftp.ncbi.nlm.nih.gov/pubmed/J_Entrez.txt and https://ftp.ncbi.nlm.nih.gov/pubmed/J_Medline.txt
 
     nlm_id = element.findtext("NlmUniqueID")
     name = element.findtext("Name")
+
+    if not nlm_id.isnumeric():
+        # TODO investigate these records, which all appear to have IDs that
+        #  end in R like 17410670R (Proceedings of the staff meetings. Honolulu. Clinic)
+        #  which corresponds to https://www.ncbi.nlm.nih.gov/nlmcatalog/287649
+        return None
+
     issns = [(issn.text, issn.attrib["type"]) for issn in element.findall("Issn")]
     # ActivityFlag is either "0" or "1"
     term = Term(
@@ -86,6 +94,9 @@ def _process_journal(element, journal_id_to_publisher_key: dict[str, Term]) -> T
     for synonym in element.findall("Alias"):
         term.append_synonym(synonym.text)
     for issn, _issn_type in issns:
+        if issn.isnumeric():
+            issn = issn[:4] + "-" + issn[4:]
+
         # TODO include ISSN type, this is important
         #  to determine a "canonical" one
         term.append_xref(Reference(prefix="issn", identifier=issn))
