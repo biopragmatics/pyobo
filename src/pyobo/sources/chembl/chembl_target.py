@@ -112,11 +112,14 @@ def iter_terms(version: str) -> Iterable[Term]:
                         has_participant, Reference(prefix="uniprot", identifier=uniprot_id)
                     )
             elif target_type == "SINGLE PROTEIN":
-                logger.warning(
-                    f"[chembl.target:{chembl_id}] multiple mappings found to single protein"
-                )
-                for uniprot_id in uniprot_ids:
-                    term.append_xref(Reference(prefix="uniprot", identifier=uniprot_id))
+                if len(uniprot_ids) == 1:
+                    term.append_exact_match(Reference(prefix="uniprot", identifier=uniprot_ids[0]))
+                else:
+                    tqdm.write(
+                        f"[chembl.target:{chembl_id}] multiple mappings found to single protein: {uniprot_ids}"
+                    )
+                    for uniprot_id in uniprot_ids:
+                        term.append_xref(Reference(prefix="uniprot", identifier=uniprot_id))
             elif len(uniprot_ids) == 1:
                 luid = uniprot_ids[0]
                 if luid.startswith("ENSG"):
@@ -126,7 +129,7 @@ def iter_terms(version: str) -> Iterable[Term]:
                 term.append_exact_match(reference)
             else:
                 tqdm.write(
-                    f"[chembl.target:{chembl_id}] need to handle multiple uniprots for {target_type}"
+                    f"[chembl.target:{chembl_id}] need to handle multiple uniprots for {target_type} - {uniprot_ids}"
                 )
 
             yield term
