@@ -6,6 +6,7 @@ from collections.abc import Iterable
 
 import bioregistry
 import pandas as pd
+from pydantic import ValidationError
 from tqdm import tqdm
 
 from pyobo.struct import Obo, Reference, Term
@@ -126,7 +127,12 @@ def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[T
 
 def _parse_model_links(term: Term, model_list: str) -> None:
     for model_id in _split(model_list):
-        term.annotate_object(participates_in, Reference(prefix="bigg.model", identifier=model_id))
+        try:
+            reference = Reference(prefix="bigg.model", identifier=model_id)
+        except ValidationError:
+            tqdm.write(f"[{term.curie}] invalid model reference: {model_id}")
+        else:
+            term.annotate_object(participates_in, reference)
 
 
 def _parse_dblinks(term: Term, database_links: str, property_map=None) -> None:
