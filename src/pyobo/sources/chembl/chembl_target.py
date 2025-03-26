@@ -115,7 +115,7 @@ def iter_terms(version: str) -> Iterable[Term]:
                 if len(uniprot_ids) == 1:
                     term.append_exact_match(Reference(prefix="uniprot", identifier=uniprot_ids[0]))
                 else:
-                    logger.warning(
+                    tqdm.write(
                         f"[chembl.target:{chembl_id}] multiple mappings found to single protein: {uniprot_ids}"
                     )
                     for uniprot_id in uniprot_ids:
@@ -129,7 +129,7 @@ def iter_terms(version: str) -> Iterable[Term]:
                 term.append_exact_match(reference)
             else:
                 tqdm.write(
-                    f"[chembl.target:{chembl_id}] need to handle multiple uniprots for {target_type}"
+                    f"[chembl.target:{chembl_id}] need to handle multiple uniprots for {target_type} - {uniprot_ids}"
                 )
 
             yield term
