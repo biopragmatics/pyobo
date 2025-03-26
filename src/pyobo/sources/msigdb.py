@@ -5,6 +5,7 @@ import zipfile
 from collections.abc import Iterable
 
 from lxml import etree
+from pydantic import ValidationError
 from tqdm.auto import tqdm
 
 from pyobo.struct import Obo, Reference, Term, TypeDef, has_citation, has_participant
@@ -149,7 +150,15 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
                 logger.warning(
                     "missing %s source: msigdb:%s (%s)", contributor, identifier, external_details
                 )
-            term.append_xref(Reference(prefix="kegg.pathway", identifier=external_id))
+
+            try:
+                kegg_reference = Reference(prefix="kegg.pathway", identifier=external_id)
+            except ValidationError:
+                # TODO handle kegg.network which starts with N, like N01146
+                if not external_id.startswith("N"):
+                    tqdm.write(f"could not validate kegg.pathway:{external_id}")
+            else:
+                term.append_xref(kegg_reference)
 
         for ncbigene_id in attrib["MEMBERS_EZID"].strip().split(","):
             if ncbigene_id:
