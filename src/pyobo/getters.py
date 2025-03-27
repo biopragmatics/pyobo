@@ -58,7 +58,14 @@ class UnhandledFormatError(NoBuildError):
 
 #: The following prefixes can not be loaded through ROBOT without
 #: turning off integrity checks
-REQUIRES_NO_ROBOT_CHECK = {"clo", "vo", "orphanet.ordo", "orphanet"}
+REQUIRES_NO_ROBOT_CHECK = {
+    "clo",
+    "vo",
+    "orphanet.ordo",
+    "orphanet",
+    "foodon",
+    "caloha",
+}
 
 
 @wrap_norm_prefix
