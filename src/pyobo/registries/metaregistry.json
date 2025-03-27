@@ -572,6 +572,9 @@
       "ehdaa2": {
         "CS": "carnegie.stage:"
       },
+      "emapa": {
+        "TS:": "theiler:"
+      },
       "enm": {
         "Thesaurus:C": "NCIT:C"
       },
@@ -591,6 +594,9 @@
         "operation:": "edam.operation:",
         "topic:": "edam.topic:"
       },
+      "mdm": {
+        "drugbank:DB:": "drugbank:DB"
+      },
       "phipo": {
         "created:by": "dcterms:creator",
         "created:date": "dcterms:created",
@@ -600,11 +606,26 @@
         "OMA:": "uniprot:",
         "iPTMnet:": "uniprot:"
       },
+      "senso": {
+        "odo:SENSO_": "senso:"
+      },
       "sio": {
         "ns2:": "skos:"
       },
       "srao": {
         "topic:": "edam.topic:"
+      },
+      "t4fs": {
+        "TF4S:": "t4fs:"
+      },
+      "uniprot.disease": {
+        "http://purl.obolibrary.org/obo/TEMP#": "uniprot.disease:"
+      },
+      "uniprot.location": {
+        "http://purl.obolibrary.org/obo/TEMP#": "uniprot.location:"
+      },
+      "worldavatar.kin": {
+        "OntoKin:": "worldavatar.kin:"
       },
       "xlmod": {
         "CID_Fragment:": "obo:xlmod#CID_Fragment",
