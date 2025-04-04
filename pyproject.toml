@@ -121,19 +121,6 @@ Funding = "https://github.com/sponsors/cthoyt"
 [project.scripts]
 pyobo = "pyobo.cli:main"
 
-# TODO add entrypoints
-# pyobo.xrefs =
-#    cbms2019 = pyobo.xrefdb.sources.cbms2019:get_cbms2019_xrefs_df
-#    chembl   = pyobo.xrefdb.sources.chembl:get_chembl_xrefs_df
-#    compath  = pyobo.xrefdb.sources.compath:get_compath_xrefs_df
-#    famplex  = pyobo.xrefdb.sources.famplex:get_famplex_xrefs_df
-#    gilda    = pyobo.xrefdb.sources.gilda:get_gilda_xrefs_df
-#    intact   = pyobo.xrefdb.sources.intact:get_xrefs_df
-#    ncit     = pyobo.xrefdb.sources.ncit:get_ncit_xrefs_df
-#    pubchem  = pyobo.xrefdb.sources.pubchem:get_pubchem_mesh_df
-#    wikidata = pyobo.xrefdb.sources.wikidata:get_wikidata_xrefs_df
-#    biomappings = pyobo.xrefdb.sources.biomappings:get_biomappings_df
-
 [tool.cruft]
 skip = [
     "**/__init__.py",
