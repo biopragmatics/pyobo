@@ -216,7 +216,6 @@ def _parse_str_or_curie_or_uri_helper(
         else:
             return rv
 
-    bioregistry.parse_curie()
     prefix, delimiter, identifier = str_or_curie_or_uri.partition(":")
     if not delimiter:
         return NotCURIEError(
