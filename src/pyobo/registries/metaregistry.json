@@ -1,145 +1,6 @@
 {
   "blacklists": {
     "full": [
-      {
-        "from": "ceph",
-        "text": [
-          "Nidamental:gland"
-        ],
-        "type": "group"
-      },
-      {
-        "from": "envo",
-        "text": [
-          "USGS:SDTS",
-          "NASA:earthrealm",
-          "Genomes:fissure",
-          "METAR:FZRA",
-          "INTERNAS:WS2",
-          "Uranium:mining"
-        ],
-        "type": "group"
-      },
-      {
-        "from": "fbbt",
-        "text": [
-          "FlyPNS:PNSdescription0.html",
-          "FlyPNS:PNSdescription.html#lbd",
-          "FlyPNS:PNSdescription.html#ltd",
-          "FlyPNS:PNSnomenclature.html",
-          "FlyPNS:PNSdescription.html#dh1"
-        ],
-        "type": "group"
-      },
-      {
-        "from": "hp",
-        "reason": "curator names appearing in definition and synonym provenance strings",
-        "text": [
-          "LMU:mgriese",
-          "HPO:sdoelken",
-          "HPO:curators",
-          "Sanford:krageth",
-          "HPO:probinson",
-          "UToronto:chum",
-          "PhenoTips:CHum"
-        ],
-        "type": "group"
-      },
-      {
-        "from": "idomal",
-        "reason": "nonsense attribution",
-        "text": [
-          "KL:KL",
-          "PT:PT",
-          "EM:EM"
-        ],
-        "type": "group"
-      },
-      {
-        "from": "ino",
-        "reason": "random ad-hoc term. should probably just skip this entire ontology",
-        "text": [
-          "LifO:0000005"
-        ],
-        "type": "group"
-      },
-      {
-        "comment": "these actually correspond to NCBI books",
-        "from": "maxo",
-        "text": [
-          "GeneReviews:NBK331",
-          "GeneReviews:NBK5191",
-          "GeneReveiws:NBK350"
-        ],
-        "type": "group"
-      },
-      {
-        "from": "miro",
-        "text": [
-          "NS:NS",
-          "Walter_Reed:taxonomy"
-        ],
-        "type": "group"
-      },
-      {
-        "from": "mpath",
-        "text": [
-          "Pathbase: Curation",
-          "Pathbase: Pathology Committee"
-        ],
-        "type": "group"
-      },
-      {
-        "from": "ms",
-        "text": [
-          "value-type:xsd\\:string"
-        ],
-        "type": "group"
-      },
-      {
-        "from": "po",
-        "text": [
-          "POC:Maria_Alejandra_Gandolfo",
-          "NIG:Yukiko_Yamazaki",
-          "NYBG:Brandon_Sinn",
-          "NYBG:Dario_Cavaliere"
-        ],
-        "type": "group"
-      },
-      {
-        "from": "to",
-        "text": [
-          "Gramene:pankaj_jaiswal",
-          "scale:6",
-          "Gramene:cwt6"
-        ],
-        "type": "group"
-      },
-      {
-        "from": "tto",
-        "text": [
-          "TTOCurator:Conway_etal_2008",
-          "TTOCurator:CavenderAndCoburn1992",
-          "TTOCurator:Vari1995"
-        ],
-        "type": "group"
-      },
-      {
-        "from": "uberon",
-        "text": [
-          "OBOL:accepted",
-          "OBOL:automatic",
-          "Follicular:antrum",
-          "Leydig's:organ",
-          "Dermal:denticle",
-          "Serous:membrane",
-          "Pinhole:eye",
-          "Vaginal:fornix",
-          "Duct:(anatomy)",
-          "Organ:(anatomy)"
-        ],
-        "type": "group"
-      },
       ":",
       "ADL:FTT",
       "Bgee:curator",
@@ -216,6 +77,82 @@
       "stedman",
       "synonym:"
     ],
+    "resource_full": {
+      "ceph": [
+        "Nidamental:gland"
+      ],
+      "envo": [
+        "Genomes:fissure",
+        "INTERNAS:WS2",
+        "METAR:FZRA",
+        "NASA:earthrealm",
+        "USGS:SDTS",
+        "Uranium:mining"
+      ],
+      "fbbt": [
+        "FlyPNS:PNSdescription.html#dh1",
+        "FlyPNS:PNSdescription.html#lbd",
+        "FlyPNS:PNSdescription.html#ltd",
+        "FlyPNS:PNSdescription0.html",
+        "FlyPNS:PNSnomenclature.html"
+      ],
+      "hp": [
+        "HPO:curators",
+        "HPO:probinson",
+        "HPO:sdoelken",
+        "LMU:mgriese",
+        "PhenoTips:CHum",
+        "Sanford:krageth",
+        "UToronto:chum"
+      ],
+      "idomal": [
+        "EM:EM",
+        "KL:KL",
+        "PT:PT"
+      ],
+      "ino": [
+        "LifO:0000005"
+      ],
+      "miro": [
+        "NS:NS",
+        "Walter_Reed:taxonomy"
+      ],
+      "mpath": [
+        "Pathbase: Curation",
+        "Pathbase: Pathology Committee"
+      ],
+      "ms": [
+        "value-type:xsd\\:string"
+      ],
+      "po": [
+        "NIG:Yukiko_Yamazaki",
+        "NYBG:Brandon_Sinn",
+        "NYBG:Dario_Cavaliere",
+        "POC:Maria_Alejandra_Gandolfo"
+      ],
+      "to": [
+        "Gramene:cwt6",
+        "Gramene:pankaj_jaiswal",
+        "scale:6"
+      ],
+      "tto": [
+        "TTOCurator:CavenderAndCoburn1992",
+        "TTOCurator:Conway_etal_2008",
+        "TTOCurator:Vari1995"
+      ],
+      "uberon": [
+        "Dermal:denticle",
+        "Duct:(anatomy)",
+        "Follicular:antrum",
+        "Leydig's:organ",
+        "OBOL:accepted",
+        "OBOL:automatic",
+        "Organ:(anatomy)",
+        "Pinhole:eye",
+        "Serous:membrane",
+        "Vaginal:fornix"
+      ]
+    },
     "resource_prefix": {
       "cellosaurus": [
         "CCLV",
@@ -364,9 +301,10 @@
       ".svg"
     ]
   },
-  "remappings": {
+  "rewrites": {
     "full": {
       ":has_start_point": "has_start_point",
+      "ABBREVIATION": "omo:0003000",
       "CHEBI:133245 MetaCyc:quercetin 3-rhamnoside-7-rhamnoside": "CHEBI:133245",
       "CHEBI:16531 MetaCyc:renillar luciferin": "CHEBI:16531",
       "CHEBI:49553 PDBeChem:Copper(II) chloride": "CHEBI:49553",
@@ -385,6 +323,7 @@
       "LIPIDMAPSLMFA01030141": "LIPIDMAPS:LMFA01030141",
       "LIPIDMAPSLMFA01030152": "LIPIDMAPS:LMFA01030152",
       "MimicDB:KatalinParej": "orcid:0000-0002-2567-6061",
+      "OBO_REL2:has_role": "ro:0000087",
       "PATOC:CJM": "orcid:0000-0002-6601-2165",
       "PATOC:MAH": "orcid:0000-0003-4148-4606",
       "PHI-base:AlayneCuzick": "orcid:0000-0001-8941-3984",
@@ -397,29 +336,245 @@
       "UBERON:cjm": "orcid:0000-0002-6601-2165",
       "\\:has_start_point": "has_start_point",
       "bearer:of": "RO:0000053",
+      "broadMatch": "skos:broadMatch",
+      "connected_to": "ro:0002170",
+      "created:by": "oboinowl:created_by",
+      "created_by": "oboinowl:created_by",
+      "creation:date": "oboinowl:creation_date",
+      "creation_date": "oboinowl:creation_date",
+      "curator_notes": "iao:0000232",
       "dc-contributor": "dc:contributor",
       "dc-creator": "dc:creator",
+      "dc-description": "dc:description",
       "dc-license": "dc:license",
+      "dc-title": "dc:title",
       "definition:citation": "obo:efo#definition_citation",
       "depicted:by": "foaf:depicted_by",
+      "depicted_by": "foaf:depicted_by",
+      "develops_from": "ro:0002202",
       "dph:GOC": "orcid:0000-0001-7476-6306",
+      "editor_note": "oboinowl:editor_note",
+      "ends_at_start_of": "ro:0002593",
+      "exactMatch": "skos:exactMatch",
+      "excluded_from_qc_check": "obo:mondo#excluded_from_qc_check",
+      "excluded_subClassOf": "obo:mondo#excluded_subClassOf",
       "gro:partOf": "BFO:0000050",
       "gwas:trait": "obo:efo#gwas_trait",
       "has:input": "RO:0002233",
       "has:output": "RO:0002234",
+      "hasBroadSynonym": "oboinowl:hasBroadSynonym",
+      "hasExactSynonym": "oboinowl:hasExactSynonym",
+      "hasNarrowSynonym": "oboinowl:hasNarrowSynonym",
+      "hasRelatedSynonym": "oboinowl:hasRelatedSynonym",
+      "has_part": "bfo:0000051",
       "has_start_point:": "has_start_point",
+      "http://creativecommons.org/licenses/by/3.0/": "spdx:CC-BY-3.0",
+      "http://creativecommons.org/licenses/by/4.0/": "spdx:CC-BY-4.0",
+      "http://creativecommons.org/publicdomain/zero/1.0/": "spdx:CC0-1.0",
+      "http://example.com/bfo-spec-label": "bfo:0000179",
+      "http://purl.obolibrary.org/obo/NCBITaxon#_species_group": "debio:0000024",
+      "http://purl.obolibrary.org/obo/OBO_REL#_agent_in": "sio:000063",
+      "http://purl.obolibrary.org/obo/OBO_REL#_bearer_of": "ro:0000053",
+      "http://purl.obolibrary.org/obo/OBO_REL#_contained_in": "ro:0001018",
+      "http://purl.obolibrary.org/obo/OBO_REL#_derived_into": "sio:000245",
+      "http://purl.obolibrary.org/obo/OBO_REL#_has_agent": "sio:000139",
+      "http://purl.obolibrary.org/obo/OBO_REL#_has_function": "ro:0000085",
+      "http://purl.obolibrary.org/obo/OBO_REL#_has_improper_part": "bfo:0000051",
+      "http://purl.obolibrary.org/obo/OBO_REL#_has_integral_part": "bfo:0000051",
+      "http://purl.obolibrary.org/obo/OBO_REL#_has_proper_part": "bfo:0000051",
+      "http://purl.obolibrary.org/obo/OBO_REL#_has_quality": "bfo:0000086",
+      "http://purl.obolibrary.org/obo/OBO_REL#_has_role": "ro:0000087",
+      "http://purl.obolibrary.org/obo/OBO_REL#_has_vector": "ro:0002460",
+      "http://purl.obolibrary.org/obo/OBO_REL#_improper_part_of": "bfo:0000050",
+      "http://purl.obolibrary.org/obo/OBO_REL#_instance_of": "rdf:type",
+      "http://purl.obolibrary.org/obo/OBO_REL#_integral_part_of": "bfo:0000050",
+      "http://purl.obolibrary.org/obo/OBO_REL#_part_of": "bfo:0000050",
+      "http://purl.obolibrary.org/obo/OBO_REL#_proper_part_of": "bfo:0000050",
+      "http://purl.obolibrary.org/obo/OBO_REL#_realized_as": "bfo:0000054",
+      "http://purl.obolibrary.org/obo/OBO_REL#_transformed_into": "sio:000657",
+      "http://purl.obolibrary.org/obo/RO#_is_a": "rdfs:subClassOf",
+      "http://purl.obolibrary.org/obo/TEMP#agent_in": "sio:000063",
+      "http://purl.obolibrary.org/obo/TEMP#bearer_of": "ro:0000053",
+      "http://purl.obolibrary.org/obo/TEMP#happens_during": "ro:0002092",
+      "http://purl.obolibrary.org/obo/TEMP#has_role": "ro:0000087",
+      "http://purl.obolibrary.org/obo/TEMP#is_a": "rdfs:subClassOf",
+      "http://purl.obolibrary.org/obo/TEMP#only_in_taxon": "ro:0002160",
+      "http://purl.obolibrary.org/obo/TEMP#output_of": "ro:0002353",
+      "http://purl.obolibrary.org/obo/TEMP#part_of": "bfo:0000050",
+      "http://purl.obolibrary.org/obo/TEMP#participates_in": "ro:0000056",
+      "http://purl.obolibrary.org/obo/TEMP#preceded_by": "bfo:0000062",
+      "http://purl.obolibrary.org/obo/TEMP#precedes": "bfo:0000063",
+      "http://purl.obolibrary.org/obo/TEMP#realized_by": "bfo:0000054",
+      "http://purl.obolibrary.org/obo/activates": "ro:0002213",
+      "http://purl.obolibrary.org/obo/bearer_of": "ro:0000053",
+      "http://purl.obolibrary.org/obo/bspo#parallel_to": "pato:0002272",
+      "http://purl.obolibrary.org/obo/caloha-reqs-vetted#PLURAL": "omo:0003004",
+      "http://purl.obolibrary.org/obo/chebi#INN": "omo:0003010",
+      "http://purl.obolibrary.org/obo/chebi#IUPAC_NAME": "debio:0000026",
+      "http://purl.obolibrary.org/obo/chebi#has_functional_parent": "debio:0000015",
+      "http://purl.obolibrary.org/obo/chebi#has_parent_hydride": "debio:0000014",
+      "http://purl.obolibrary.org/obo/chebi#is_conjugate_acid_of": "debio:0000011",
+      "http://purl.obolibrary.org/obo/chebi#is_conjugate_base_of": "debio:0000010",
+      "http://purl.obolibrary.org/obo/chebi#is_enantiomer_of": "debio:0000012",
+      "http://purl.obolibrary.org/obo/chebi#is_substituent_group_from": "debio:0000027",
+      "http://purl.obolibrary.org/obo/chebi#is_tautomer_of": "debio:0000013",
+      "http://purl.obolibrary.org/obo/chebi/charge": "debio:0000017",
+      "http://purl.obolibrary.org/obo/chebi/formula": "debio:0000018",
+      "http://purl.obolibrary.org/obo/chebi/inchi": "debio:0000020",
+      "http://purl.obolibrary.org/obo/chebi/inchikey": "debio:0000021",
+      "http://purl.obolibrary.org/obo/chebi/mass": "debio:0000019",
+      "http://purl.obolibrary.org/obo/chebi/monoisotopicmass": "debio:0000016",
+      "http://purl.obolibrary.org/obo/chebi/smiles": "debio:0000022",
+      "http://purl.obolibrary.org/obo/chmo#isDefinedBy": "rdfs:isDefinedBy",
+      "http://purl.obolibrary.org/obo/cl#LATIN": "omo:0003011",
+      "http://purl.obolibrary.org/obo/cl#PLURAL": "omo:0003004",
+      "http://purl.obolibrary.org/obo/cl#abbreviation": "omo:0003000",
+      "http://purl.obolibrary.org/obo/emapa#ends_at": "ro:0002493",
+      "http://purl.obolibrary.org/obo/emapa#is_a": "rdfs:subClassOf",
+      "http://purl.obolibrary.org/obo/emapa#starts_at": "ro:0002489",
+      "http://purl.obolibrary.org/obo/envo#PLURAL": "omo:0003004",
+      "http://purl.obolibrary.org/obo/envo#common_name": "omo:0003003",
+      "http://purl.obolibrary.org/obo/fbbt#FORMULA": "debio:0000018",
+      "http://purl.obolibrary.org/obo/fbbt#INN": "omo:0003010",
+      "http://purl.obolibrary.org/obo/fbbt#IUPAC_NAME": "debio:0000026",
+      "http://purl.obolibrary.org/obo/fbbt#InChI": "debio:0000020",
+      "http://purl.obolibrary.org/obo/fbbt#InChIKey": "debio:0000021",
+      "http://purl.obolibrary.org/obo/fbbt#SMILES": "debio:0000022",
+      "http://purl.obolibrary.org/obo/fbbt#develops_directly_from": "ro:0002207",
+      "http://purl.obolibrary.org/obo/fbbt#has_function_in": "ro:0002216",
+      "http://purl.obolibrary.org/obo/fbbt#has_synaptic_terminals_of": "ro:0002006",
+      "http://purl.obolibrary.org/obo/foaf_depicted_by": "foaf:depicted_by",
+      "http://purl.obolibrary.org/obo/fovt#ABBREVIATION": "omo:0003000",
+      "http://purl.obolibrary.org/obo/fovt#DUBIOUS": "omo:0003002",
+      "http://purl.obolibrary.org/obo/fovt#PLURAL": "omo:0003004",
+      "http://purl.obolibrary.org/obo/fovt#isDefinedBy": "rdfs:isDefinedBy",
+      "http://purl.obolibrary.org/obo/fypo#seeAlso": "rdf:seeAlso",
+      "http://purl.obolibrary.org/obo/go#results_in": "sio:001156",
+      "http://purl.obolibrary.org/obo/has_role": "ro:0000087",
+      "http://purl.obolibrary.org/obo/hp#layperson": "omo:0003003",
+      "http://purl.obolibrary.org/obo/hp#obsolete_synonym": "omo:0003008",
+      "http://purl.obolibrary.org/obo/hp#uk_spelling": "omo:0003005",
+      "http://purl.obolibrary.org/obo/inheres_in": "ro:0004096",
+      "http://purl.obolibrary.org/obo/mi#RESID-misnomer": "omo:0003007",
+      "http://purl.obolibrary.org/obo/mi#isDefinedBy ": "rdfs:isDefinedBy",
+      "http://purl.obolibrary.org/obo/mondo#AMBIGUOUS": "omo:0003001",
+      "http://purl.obolibrary.org/obo/mondo#DUBIOUS": "omo:0003002",
+      "http://purl.obolibrary.org/obo/mondo#broadMatch": "skos:broadMatch",
+      "http://purl.obolibrary.org/obo/mondo#closeMatch": "skos:closeMatch",
+      "http://purl.obolibrary.org/obo/mondo#exactMatch": "skos:exactMatch",
+      "http://purl.obolibrary.org/obo/mondo#narrowMatch": "skos:narrowMatch",
+      "http://purl.obolibrary.org/obo/mondo#relatedMatch": "skos:relatedMatch",
+      "http://purl.obolibrary.org/obo/mpath#is_a": "rdfs:subClassOf",
+      "http://purl.obolibrary.org/obo/nbo#has_participant": "ro:0000057",
+      "http://purl.obolibrary.org/obo/nbo#is_about": "iao:0000136",
+      "http://purl.obolibrary.org/obo/ncbitaxon#acronym": "omo:0003000",
+      "http://purl.obolibrary.org/obo/ncbitaxon#genbank_acronym": "omo:0003000",
+      "http://purl.obolibrary.org/obo/ncbitaxon#genbank_common_name": "omo:0003003",
+      "http://purl.obolibrary.org/obo/ncbitaxon#has_rank": "debio:0000023",
+      "http://purl.obolibrary.org/obo/ncbitaxon/subsets/taxslim#common_name": "omo:0003003",
+      "http://purl.obolibrary.org/obo/ncbitaxon/subsets/taxslim#has_rank": "debio:0000023",
+      "http://purl.obolibrary.org/obo/obo#_PATO_0000047": "pato:0000047",
+      "http://purl.obolibrary.org/obo/pato#seeAlso": "rdf:seeAlso",
+      "http://purl.obolibrary.org/obo/po#Plural": "omo:0003004",
+      "http://purl.obolibrary.org/obo/pr#PRO-common-name": "omo:0003003",
+      "http://purl.obolibrary.org/obo/rbo#ABBREVIATION": "omo:0003000",
+      "http://purl.obolibrary.org/obo/rbo#DUBIOUS": "omo:0003002",
+      "http://purl.obolibrary.org/obo/rbo#PLURAL": "omo:0003004",
+      "http://purl.obolibrary.org/obo/rbo#closeMatch": "skos:closeMatch",
+      "http://purl.obolibrary.org/obo/rbo#exactMatch": "skos:exactMatch",
+      "http://purl.obolibrary.org/obo/rbo#isDefinedBy": "rdfs:isDefinedBy",
+      "http://purl.obolibrary.org/obo/rbo#seeAlso ": "rdf:seeAlso",
+      "http://purl.obolibrary.org/obo/reto#is_a": "rdfs:subClassOf",
+      "http://purl.obolibrary.org/obo/rex#inverse_of": "owl:inverseOf",
+      "http://purl.obolibrary.org/obo/rex#is_a": "rdfs:subClassOf",
+      "http://purl.obolibrary.org/obo/rexo#is_a": "rdfs:subClassOf",
+      "http://purl.obolibrary.org/obo/so#derives_from": "ro:0001000",
+      "http://purl.obolibrary.org/obo/so#has_integral_part": "bfo:0000051",
+      "http://purl.obolibrary.org/obo/so#has_origin": "debio:0000025",
+      "http://purl.obolibrary.org/obo/so#integral_part_of": "bfo:0000050",
+      "http://purl.obolibrary.org/obo/so#member_of": "ro:0002350",
+      "http://purl.obolibrary.org/obo/so#overlaps": "ro:0002131",
+      "http://purl.obolibrary.org/obo/so#part_of": "bfo:0000050",
+      "http://purl.obolibrary.org/obo/to#seeAlso ": "rdf:seeAlso",
+      "http://purl.obolibrary.org/obo/uberon#LATIN": "omo:0003011",
+      "http://purl.obolibrary.org/obo/uberon#PLURAL": "omo:0003004",
+      "http://purl.obolibrary.org/obo/uberon/core#ABBREVIATION": "omo:0003000",
+      "http://purl.obolibrary.org/obo/uberon/core#DUBIOUS": "omo:0003002",
+      "http://purl.obolibrary.org/obo/uberon/core#LATIN": "omo:0003011",
+      "http://purl.obolibrary.org/obo/uberon/core#PLURAL": "omo:0003004",
+      "http://purl.obolibrary.org/obo/uberon/core#conduit_for": "ro:0002570",
+      "http://purl.obolibrary.org/obo/uberon/core#existence_starts_and_ends_during": "ro:0002491",
+      "http://purl.obolibrary.org/obo/uberon/core#synapsed_by": "ro:0002103",
+      "http://purl.obolibrary.org/obo/unfolds_in": "bfo:0000066",
+      "http://purl.obolibrary.org/obo/vsao#has_integral_part": "bfo:0000051",
+      "http://purl.obolibrary.org/obo/vsao#integral_part_of": "bfo:0000050",
+      "http://purl.obolibrary.org/obo/xao#PLURAL": "omo:0003004",
+      "http://purl.obolibrary.org/obo/zfa#PLURAL": "omo:0003004",
+      "http://purl.obolibrary.org/obo/zfs#PLURAL": "omo:0003004",
+      "http://purl.obolibrary.org/obo:exo#interacts_with": "ro:0002434",
+      "http://purl.obolibrary.org/obo:pato#decreased_in_magnitude_relative_to": "ro:0015008",
+      "http://purl.obolibrary.org/obo:pato#has_cross_section": "ro:0015011",
+      "http://purl.obolibrary.org/obo:pato#increased_in_magnitude_relative_to": "ro:0015007",
+      "http://purl.obolibrary.org/obo:pato#reciprocal_of": "ro:0015012",
+      "http://www.ebi.ac.uk/swo/has_license": "dc:license",
+      "http://www.obofoundry.org/ro/#OBO_REL:has_participant": "ro:0000057",
+      "http://www.obofoundry.org/ro/#OBO_REL:located_in": "ro:0001025",
+      "http://www.obofoundry.org/ro/#OBO_REL:part_of": "bfo:0000050",
+      "http://www.obofoundry.org/ro/#OBO_REL:preceded_by": "bfo:0000062",
+      "http://www.obofoundry.org/ro/ro.owl#adjacent_to": "ro:0002220",
+      "http://www.obofoundry.org/ro/ro.owl#agent_in": "sio:000063",
+      "http://www.obofoundry.org/ro/ro.owl#bearer_of": "ro:0000053",
+      "http://www.obofoundry.org/ro/ro.owl#contained_in": "ro:0001018",
+      "http://www.obofoundry.org/ro/ro.owl#derived_into": "sio:000245",
+      "http://www.obofoundry.org/ro/ro.owl#derives_from": "ro:0001000",
+      "http://www.obofoundry.org/ro/ro.owl#has_agent": "ro:0002218",
+      "http://www.obofoundry.org/ro/ro.owl#has_disposition": "ro:0000091",
+      "http://www.obofoundry.org/ro/ro.owl#has_improper_part": "bfo:0000050",
+      "http://www.obofoundry.org/ro/ro.owl#has_integral_part": "bfo:0000051",
+      "http://www.obofoundry.org/ro/ro.owl#has_part": "bfo:0000051",
+      "http://www.obofoundry.org/ro/ro.owl#has_participant": "ro:0000057",
+      "http://www.obofoundry.org/ro/ro.owl#has_proper_part": "bfo:0000051",
+      "http://www.obofoundry.org/ro/ro.owl#improper_part_of": "bfo:0000050",
+      "http://www.obofoundry.org/ro/ro.owl#inheres_in": "ro:0004096",
+      "http://www.obofoundry.org/ro/ro.owl#integral_part_of": "bfo:0000050",
+      "http://www.obofoundry.org/ro/ro.owl#located_in": "ro:0001025",
+      "http://www.obofoundry.org/ro/ro.owl#location_of": "ro:0001015",
+      "http://www.obofoundry.org/ro/ro.owl#part_of": "bfo:0000050",
+      "http://www.obofoundry.org/ro/ro.owl#participates_in": "ro:0000056",
+      "http://www.obofoundry.org/ro/ro.owl#preceded_by": "bfo:0000062",
+      "http://www.obofoundry.org/ro/ro.owl#precedes": "bfo:0000063",
+      "http://www.obofoundry.org/ro/ro.owl#proper_part_of": "bfo:0000050",
+      "http://www.obofoundry.org/ro/ro.owl#relationship": "owl:ObjectProperty",
+      "http://www.obofoundry.org/ro/ro.owl#transformation_of": "ro:0002494",
+      "https://creativecommons.org/licenses/by/3.0/": "spdx:CC-BY-3.0",
+      "https://creativecommons.org/licenses/by/4.0/": "spdx:CC-BY-4.0",
+      "https://creativecommons.org/publicdomain/zero/1.0/": "spdx:CC0-1.0",
       "https://w3id.org/scholarlydata/person/aldo-gangemi": "orcid:0000-0001-5568-2684",
       "https://w3id.org/scholarlydata/person/andrea-giovanni-nuzzolese": "orcid:0000-0003-2928-9496",
       "https://w3id.org/scholarlydata/person/anna-lisa-gentile": "orcid:0000-0002-6401-4175",
       "https://w3id.org/scholarlydata/person/valentina-presutti": "orcid:0000-0002-9380-5160",
+      "immediately_preceded_by": "ro:0002087",
+      "immediately_precedes": "ro:0002090",
       "inheres:in": "RO:0000052",
       "inheres:in-obso": "RO:0000052",
       "inheres:in_part_of": "RO:0002314",
+      "innervates": "ro:0002134",
+      "inverseOf": "owl:inverseOf",
       "isDefinedBy": "rdfs:isDefinedBy",
+      "is_a": "rdfs:subClassOf",
+      "isa": "rdfs:subClassOf",
+      "narrowMatch": "skos:narrowMatch",
       "part:of": "BFO:0000050",
+      "part_of": "bfo:0000050",
+      "provenance_notes": "ubprop:0000004",
       "role:of": "RO:0000081",
       "seeAlso": "rdfs:seeAlso",
+      "see_also": "rdfs:seeAlso",
+      "starts_at_end_of": "ro:0002583",
+      "structure_notes": "ubprop:0000010",
+      "subPropertyOf": "rdfs:subPropertyOf",
       "term:contributor": "dc:contributor",
+      "type": "rdf:type",
       "unfolds:in": "BFO:0000066",
       "vocab:crossSpeciesExactMatch": "semapv:crossSpeciesExactMatch",
       "x_1.1:contributor": "dc:contributor"
@@ -520,21 +675,22 @@
       "url: \"https://en.wikipedia.org/wiki/": "wikipedia.en:",
       "url:http\\://": "http://",
       "url:http\\://en.wikipedia.org/wiki/": "wikipedia.en:",
-      "url:http\\://omim.org/entry/": "omim",
-      "url:http\\://www.ncbi.nlm.nih.gov/gene/": "ncbigene",
-      "url:http\\://www.ncbi.nlm.nih.gov/sites/entrez/": "ncbigene",
-      "url:http\\://www.omim.org/entry/": "omim",
+      "url:http\\://omim.org/entry/": "omim:",
+      "url:http\\://www.ncbi.nlm.nih.gov/gene/": "ncbigene:",
+      "url:http\\://www.ncbi.nlm.nih.gov/sites/entrez/": "ncbigene:",
+      "url:http\\://www.omim.org/entry/": "omim:",
       "url:https\\://en.wikipedia.org/wiki/": "wikipedia.en:",
       "url:https\\://ghr.nlm.nih.gov/condition/": "ghr:",
       "url:https\\://pubmed.ncbi.nlm.nih.gov/": "pubmed:",
-      "url:https\\://www.ncbi.nlm.nih.gov/books/": "ncbibook",
+      "url:https\\://www.ncbi.nlm.nih.gov/books/": "ncbibook:",
       "url:https\\://www.ncbi.nlm.nih.gov/pmc/articles/": "pmc:",
       "url:https\\://www.ncbi.nlm.nih.gov/pubmed/": "pubmed:",
-      "url:https\\://www.omim.org/entry/": "omim",
+      "url:https\\://www.omim.org/entry/": "omim:",
       "urn:issn:": "issn:",
       "vo/ontorat/PR:": "PR:",
       "xsd\\:": "xsd:"
     },
+    "resource_full": {},
     "resource_prefix": {
       "biolink": {
         "active:in": "biolink:active_in",
