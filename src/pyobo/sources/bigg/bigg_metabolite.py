@@ -9,8 +9,9 @@ import pandas as pd
 from pydantic import ValidationError
 from tqdm import tqdm
 
+from pyobo.sources.bigg.bigg_compartment import GO_MAPPING
 from pyobo.struct import Obo, Reference, Term
-from pyobo.struct.typedef import participates_in
+from pyobo.struct.typedef import located_in, participates_in
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -29,7 +30,7 @@ class BiGGMetaboliteGetter(Obo):
 
     ontology = PREFIX
     bioversions_key = "bigg"
-    typedefs = [participates_in]
+    typedefs = [participates_in, located_in]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -78,6 +79,8 @@ def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[T
         if v != nmp:
             raise ValueError(f"Normalize {v} to {nmp}")
 
+    universal_references: set[Reference] = set()
+
     # TODO there are duplicates on universal ID - this might be
     # because the compartment ID is unique
     for (
@@ -93,23 +96,37 @@ def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[T
         unit="metabolite",
         desc=f"[{PREFIX}] processing",
     ):
-        if not PATTERN.match(universal_bigg_id):
-            tqdm.write(f"[{PREFIX}] invalid universal ID: {universal_bigg_id}")
+        if not PATTERN.match(bigg_compartmental_id):
+            tqdm.write(f"[{PREFIX}] invalid BIGG ID: {bigg_compartmental_id}")
             continue
+
         term = Term(
             reference=Reference(
                 prefix=PREFIX,
-                identifier=universal_bigg_id,
+                identifier=bigg_compartmental_id,
                 name=name.strip() if pd.notna(name) else None,
             ),
         )
-        if pd.notna(bigg_compartmental_id):
-            if not PATTERN.match(bigg_compartmental_id):
-                logger.debug(
-                    f"[{PREFIX}:{universal_bigg_id}] invalid compartment ID: {bigg_compartmental_id}"
-                )
-            else:
-                term.append_alt(Reference(prefix=PREFIX, identifier=bigg_compartmental_id))
+
+        _, _, compartment_letter = bigg_compartmental_id.rpartition("_")
+        compartment_reference = GO_MAPPING[compartment_letter]
+        if compartment_reference:  # some are not mappable to GO
+            term.append_relationship(located_in, compartment_reference)
+        else:
+            term.append_relationship(
+                located_in, Reference(prefix="bigg.compartment", identifier=compartment_letter)
+            )
+
+        if PATTERN.match(universal_bigg_id):
+            universal_reference = Reference(
+                prefix=PREFIX,
+                identifier=universal_bigg_id,
+            )
+            term.append_parent(universal_reference)
+            universal_references.add(universal_reference)
+        else:
+            tqdm.write(f"[{PREFIX}] invalid universal BIGG ID: {bigg_compartmental_id}")
+
         for old_bigg_id in _split(old_bigg_ids):
             if old_bigg_id in {bigg_compartmental_id, universal_bigg_id}:
                 continue
@@ -123,6 +140,9 @@ def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[T
         _parse_dblinks(term, database_links)
 
         yield term
+
+    for universal_reference in universal_references:
+        yield Term(reference=universal_reference)
 
 
 def _parse_model_links(term: Term, model_list: str) -> None:
@@ -138,11 +158,15 @@ def _parse_model_links(term: Term, model_list: str) -> None:
 def _parse_dblinks(term: Term, database_links: str, property_map=None) -> None:
     if not property_map:
         property_map = {}
+
+    # there are duplicate xrefs, keep track
+    seen = set()
+
     for dblink in _split(database_links):
         key, _, identifier_url = dblink.strip().partition(":")
         identifier_url = identifier_url.strip()
         if not identifier_url:
-            return
+            continue
 
         if identifier_url.startswith("http://identifiers.org/kegg.glycan/"):
             prefix = "kegg.glycan"
@@ -157,13 +181,13 @@ def _parse_dblinks(term: Term, database_links: str, property_map=None) -> None:
             prefix_, identifier_ = bioregistry.parse_iri(identifier_url)
             if not prefix_ or not identifier_:
                 tqdm.write(f"[{PREFIX}] failed to parse xref IRI: {identifier_url}")
-                return
+                continue
             prefix, identifier = prefix_, identifier_
         if prefix == "kegg":
             prefix = "kegg.compound"
         if prefix != KEY_TO_PREFIX.get(key):
             tqdm.write(f"[{PREFIX}] mismatch between {prefix=} and {key=} - {identifier_url}")
-            return
+            continue
         if prefix == "rhea" and "#" in identifier:
             identifier = identifier.split("#")[0]
 
@@ -171,10 +195,17 @@ def _parse_dblinks(term: Term, database_links: str, property_map=None) -> None:
             reference = Reference(prefix=prefix, identifier=identifier)
         except ValidationError:
             tqdm.write(f"[{term.curie}] could not validate xref - {prefix}:{identifier}")
-            return
+            continue
         # don't add self-reference
         if reference.pair == term.pair:
-            return
+            continue
+
+        if reference in seen:
+            tqdm.write(f"[{term.curie}] got duplicate xref {reference}")
+            continue
+
+        seen.add(reference)
+
         if prefix in property_map:
             term.annotate_object(property_map[prefix], reference)
         elif prefix in EXACTS:
