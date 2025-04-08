@@ -24,6 +24,7 @@ PREFIX = "bigg.metabolite"
 URL = "http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt"
 PATTERN = re.compile("^[a-z_A-Z0-9]+$")
 
+MOLECULE = Term.from_triple("cob", "0000013", "molecule")
 
 class BiGGMetaboliteGetter(Obo):
     """An ontology representation of BiGG Metabolites."""
@@ -31,6 +32,7 @@ class BiGGMetaboliteGetter(Obo):
     ontology = PREFIX
     bioversions_key = "bigg"
     typedefs = [participates_in, located_in]
+    root_terms = [MOLECULE.reference]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -80,6 +82,9 @@ def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[T
             raise ValueError(f"Normalize {v} to {nmp}")
 
     universal_references: set[Reference] = set()
+    compartment_references: set[Reference] = set()
+
+    yield MOLECULE
 
     # TODO there are duplicates on universal ID - this might be
     # because the compartment ID is unique
@@ -100,27 +105,29 @@ def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[T
             tqdm.write(f"[{PREFIX}] invalid BIGG ID: {bigg_compartmental_id}")
             continue
 
+        universal_name = name.strip() if pd.notna(name) else None
+
+        _, _, compartment_letter = bigg_compartmental_id.rpartition("_")
+        compartment_reference = GO_MAPPING[compartment_letter] or Reference(
+            prefix="bigg.compartment", identifier=compartment_letter
+        )
+        compartment_references.add(compartment_reference)
+        compartment_name = (
+            f"{universal_name} (in {compartment_reference.name})" if universal_name else None
+        )
+
         term = Term(
             reference=Reference(
                 prefix=PREFIX,
                 identifier=bigg_compartmental_id,
-                name=name.strip() if pd.notna(name) else None,
+                name=compartment_name,
             ),
         )
-
-        _, _, compartment_letter = bigg_compartmental_id.rpartition("_")
-        compartment_reference = GO_MAPPING[compartment_letter]
-        if compartment_reference:  # some are not mappable to GO
-            term.append_relationship(located_in, compartment_reference)
-        else:
-            term.append_relationship(
-                located_in, Reference(prefix="bigg.compartment", identifier=compartment_letter)
-            )
+        term.append_relationship(located_in, compartment_reference)
 
         if PATTERN.match(universal_bigg_id):
             universal_reference = Reference(
-                prefix=PREFIX,
-                identifier=universal_bigg_id,
+                prefix=PREFIX, identifier=universal_bigg_id, name=universal_name
             )
             term.append_parent(universal_reference)
             universal_references.add(universal_reference)
@@ -142,7 +149,10 @@ def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[T
         yield term
 
     for universal_reference in universal_references:
-        yield Term(reference=universal_reference)
+        yield Term(reference=universal_reference).append_parent(MOLECULE)
+
+    for compartment in compartment_references:
+        yield Term(reference=compartment)
 
 
 def _parse_model_links(term: Term, model_list: str) -> None:
