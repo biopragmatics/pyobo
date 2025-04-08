@@ -11,7 +11,6 @@ import click
 import humanize
 from tabulate import tabulate
 
-from .aws import main as aws_main
 from .database import main as database_main
 from .lookup import lookup
 from ..constants import GLOBAL_SKIP, RAW_DIRECTORY
@@ -100,7 +99,6 @@ def _no_download() -> set[str]:
 
 
 main.add_command(lookup)
-main.add_command(aws_main)
 main.add_command(database_main)
 
 if __name__ == "__main__":
