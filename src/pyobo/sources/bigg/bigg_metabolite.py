@@ -9,8 +9,9 @@ import pandas as pd
 from pydantic import ValidationError
 from tqdm import tqdm
 
+from pyobo.sources.bigg.bigg_compartment import GO_MAPPING
 from pyobo.struct import Obo, Reference, Term
-from pyobo.struct.typedef import participates_in
+from pyobo.struct.typedef import located_in, participates_in
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -29,7 +30,7 @@ class BiGGMetaboliteGetter(Obo):
 
     ontology = PREFIX
     bioversions_key = "bigg"
-    typedefs = [participates_in]
+    typedefs = [participates_in, located_in]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -107,14 +108,24 @@ def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[T
             ),
         )
 
+        _, _, compartment_letter = bigg_compartmental_id.rpartition("_")
+        compartment_reference = GO_MAPPING[compartment_letter]
+        if compartment_reference:  # some are not mappable to GO
+            term.append_relationship(located_in, compartment_reference)
+        else:
+            term.append_relationship(
+                located_in, Reference(prefix="bigg.compartment", identifier=compartment_letter)
+            )
+
         if PATTERN.match(universal_bigg_id):
-            tqdm.write(f"[{PREFIX}] invalid universal BIGG ID: {bigg_compartmental_id}")
             universal_reference = Reference(
                 prefix=PREFIX,
                 identifier=universal_bigg_id,
             )
             term.append_parent(universal_reference)
             universal_references.add(universal_reference)
+        else:
+            tqdm.write(f"[{PREFIX}] invalid universal BIGG ID: {bigg_compartmental_id}")
 
         for old_bigg_id in _split(old_bigg_ids):
             if old_bigg_id in {bigg_compartmental_id, universal_bigg_id}:
