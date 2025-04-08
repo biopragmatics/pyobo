@@ -969,7 +969,7 @@ class Obo:
             emit_annotation_properties=emit_annotation_properties,
         )
         if use_tqdm:
-            it = tqdm(it, desc=f"Writing {self.ontology}", unit_scale=True, unit="line")
+            it = tqdm(it, desc=f"[{self.ontology}] writing OBO", unit_scale=True, unit="line")
         if isinstance(file, str | Path | os.PathLike):
             with open(file, "w") as fh:
                 self._write_lines(it, fh)
@@ -1115,12 +1115,8 @@ class Obo:
             path = self._get_cache_path(cache_artifact)
             if path.exists() and not force:
                 continue
-            logger.debug(
-                "[%s v%s] caching %s to %s",
-                self.ontology,
-                self.data_version,
-                cache_artifact.name,
-                path,
+            tqdm.write(
+                f"[{self.ontology} {self.data_version}] writing {cache_artifact.name} to {path}",
             )
             write_iterable_tsv(
                 path=path,
