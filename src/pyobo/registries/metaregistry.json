@@ -303,6 +303,7 @@
   },
   "rewrites": {
     "full": {
+      "OBO_REL:is_a": "rdfs:subClassOf",
       ":has_start_point": "has_start_point",
       "ABBREVIATION": "omo:0003000",
       "CHEBI:133245 MetaCyc:quercetin 3-rhamnoside-7-rhamnoside": "CHEBI:133245",
@@ -720,6 +721,9 @@
       "cellosaurus": {
         "PubChem_Cell_line:CVCL_": "cellosaurus:",
         "pgx:CVCL_": "cellosaurus:"
+      },
+      "chebi": {
+        "DrugBank:DBSALT": "drugbank.salt:"
       },
       "chmo": {
         "Orange:": "orangebook:",
