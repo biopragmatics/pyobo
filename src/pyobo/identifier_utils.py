@@ -6,21 +6,21 @@ import logging
 from functools import wraps
 from typing import Annotated, ClassVar
 
-import bioontologies.relations
-import bioontologies.upgrade
 import bioregistry
 import click
 from bioregistry import NormalizedNamableReference as Reference
+from bioregistry.constants import FailureReturnType
 from curies import ReferenceTuple
 from pydantic import ValidationError
 from typing_extensions import Doc
 
 from .registries import (
-    curie_has_blacklisted_prefix,
-    curie_has_blacklisted_suffix,
-    curie_is_blacklisted,
+    ground_relation,
     remap_full,
     remap_prefix,
+    str_has_blacklisted_prefix,
+    str_has_blacklisted_suffix,
+    str_is_blacklisted,
 )
 
 __all__ = [
@@ -170,26 +170,27 @@ def _parse_str_or_curie_or_uri_helper(
 
     if upgrade:
         # Remap the curie with the full list
-        str_or_curie_or_uri = remap_full(str_or_curie_or_uri)
+        if r1 := remap_full(str_or_curie_or_uri, ontology_prefix=ontology_prefix):
+            return r1
 
         # Remap node's prefix (if necessary)
         str_or_curie_or_uri = remap_prefix(str_or_curie_or_uri, ontology_prefix=ontology_prefix)
 
-    if curie_is_blacklisted(str_or_curie_or_uri):
-        return BlacklistedError()
-    if curie_has_blacklisted_prefix(str_or_curie_or_uri):
-        return BlacklistedError()
-    if curie_has_blacklisted_suffix(str_or_curie_or_uri):
-        return BlacklistedError()
+        if r2 := ground_relation(str_or_curie_or_uri):
+            return r2
 
-    if upgrade and (reference_t := bioontologies.upgrade.upgrade(str_or_curie_or_uri)):
-        return Reference(prefix=reference_t.prefix, identifier=reference_t.identifier)
-    if upgrade and (yy := bioontologies.relations.ground_relation(str_or_curie_or_uri)):
-        return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
+    if str_is_blacklisted(str_or_curie_or_uri, ontology_prefix=ontology_prefix):
+        return BlacklistedError()
+    if str_has_blacklisted_prefix(str_or_curie_or_uri, ontology_prefix=ontology_prefix):
+        return BlacklistedError()
+    if str_has_blacklisted_suffix(str_or_curie_or_uri):
+        return BlacklistedError()
 
     if _is_uri(str_or_curie_or_uri):
-        prefix, identifier = bioregistry.parse_iri(str_or_curie_or_uri)
-        if not prefix or not identifier:
+        rt = bioregistry.parse_iri(
+            str_or_curie_or_uri, on_failure_return_type=FailureReturnType.single
+        )
+        if rt is None:
             return UnparsableIRIError(
                 str_or_curie_or_uri,
                 ontology_prefix=ontology_prefix,
@@ -200,7 +201,7 @@ def _parse_str_or_curie_or_uri_helper(
             )
         try:
             rv = Reference.model_validate(
-                {"prefix": prefix, "identifier": identifier, "name": name}
+                {"prefix": rt.prefix, "identifier": rt.identifier, "name": name}
             )
         except ValidationError as exc:
             return ParseValidationError(
