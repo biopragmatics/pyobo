@@ -732,6 +732,9 @@
       "ehdaa2": {
         "CS": "carnegie.stage:"
       },
+      "doid": {
+        "MIM:PS": "omim.ps:"
+      },
       "emapa": {
         "TS:": "theiler:"
       },
