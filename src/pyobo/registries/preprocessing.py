@@ -23,7 +23,7 @@ CURATED_REGISTRY_PATH = HERE.joinpath("metaregistry.json")
 
 @lru_cache(1)
 def get_rules() -> Rules:
-    """Get the rulezzzz."""
+    """Get the CURIE/URI string preprocessing rules."""
     rules = Rules.model_validate_json(CURATED_REGISTRY_PATH.read_text())
     rules.rewrites.full.update(load_goc_map())
     return rules

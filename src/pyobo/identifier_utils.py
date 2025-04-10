@@ -14,14 +14,14 @@ from curies import ReferenceTuple
 from pydantic import ValidationError
 from typing_extensions import Doc
 
-from .registries.metaregistry import (
+from .registries import (
+    ground_relation,
     remap_full,
     remap_prefix,
     str_has_blacklisted_prefix,
     str_has_blacklisted_suffix,
     str_is_blacklisted,
 )
-from .registries.relations import ground_relation
 
 __all__ = [
     "_parse_str_or_curie_or_uri_helper",
