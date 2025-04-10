@@ -26,6 +26,7 @@ PATTERN = re.compile("^[a-z_A-Z0-9]+$")
 
 MOLECULE = Term.from_triple("cob", "0000013", "molecule")
 
+
 class BiGGMetaboliteGetter(Obo):
     """An ontology representation of BiGG Metabolites."""
 
