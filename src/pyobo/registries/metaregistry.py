@@ -6,8 +6,8 @@ from pathlib import Path
 
 from bioregistry import NormalizedNamableReference
 
-from pyobo.registries.model import Rules
-from pyobo.resources.goc import load_goc_map
+from .model import Rules
+from ..resources.goc import load_goc_map
 
 __all__ = [
     "remap_full",
