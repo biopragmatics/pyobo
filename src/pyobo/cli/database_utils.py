@@ -42,8 +42,8 @@ def _iter_ncbigene(left: int, right: int) -> Iterable[tuple[str, str, str]]:
         for line in tqdm(
             file, desc=f"extracting {ncbigene.PREFIX}", unit_scale=True, total=27_000_000
         ):
-            line = line.strip().split("\t")
-            yield ncbigene.PREFIX, line[left], line[right]
+            parts = line.strip().split("\t")
+            yield ncbigene.PREFIX, parts[left], parts[right]
 
 
 def _iter_metadata(**kwargs: Unpack[IterHelperHelperDict]):
