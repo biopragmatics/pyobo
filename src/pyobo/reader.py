@@ -27,6 +27,8 @@ from .identifier_utils import (
     UnparsableIRIError,
     _is_valid_identifier,
     _parse_str_or_curie_or_uri_helper,
+    remap_prefix,
+    str_is_blacklisted,
 )
 from .reader_utils import (
     _chomp_axioms,
@@ -35,7 +37,6 @@ from .reader_utils import (
     _chomp_typedef,
     _parse_provenance_list,
 )
-from .registries import remap_prefix, str_has_blacklisted_prefix, str_is_blacklisted
 from .struct import (
     Obo,
     Reference,
@@ -1534,11 +1535,7 @@ def _parse_xref_line(
 ) -> tuple[Reference, list[Reference | OBOLiteral]] | None:
     xref, _, rest = line.partition(" [")
 
-    if (
-        str_has_blacklisted_prefix(xref, ontology_prefix=ontology_prefix)
-        or str_is_blacklisted(xref, ontology_prefix=ontology_prefix)
-        or ":" not in xref
-    ):
+    if str_is_blacklisted(xref, ontology_prefix=ontology_prefix) or ":" not in xref:
         return None  # sometimes xref to self... weird
 
     xref = remap_prefix(xref, ontology_prefix=ontology_prefix)

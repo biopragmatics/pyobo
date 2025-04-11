@@ -14,16 +14,18 @@ from curies import ReferenceTuple
 from pydantic import ValidationError
 from typing_extensions import Doc
 
-from .registries import (
-    ground_relation,
-    remap_full,
-    remap_prefix,
-    str_has_blacklisted_prefix,
-    str_has_blacklisted_suffix,
-    str_is_blacklisted,
-)
+from .preprocessing import remap_full, remap_prefix, str_is_blacklisted
+from .relations import ground_relation
 
 __all__ = [
+    "BlacklistedError",
+    "DefaultCoercionError",
+    "EmptyStringError",
+    "NotCURIEError",
+    "ParseError",
+    "ParseValidationError",
+    "UnparsableIRIError",
+    "UnregisteredPrefixError",
     "_parse_str_or_curie_or_uri_helper",
     "standardize_ec",
     "wrap_norm_prefix",
@@ -180,10 +182,6 @@ def _parse_str_or_curie_or_uri_helper(
             return r2
 
     if str_is_blacklisted(str_or_curie_or_uri, ontology_prefix=ontology_prefix):
-        return BlacklistedError()
-    if str_has_blacklisted_prefix(str_or_curie_or_uri, ontology_prefix=ontology_prefix):
-        return BlacklistedError()
-    if str_has_blacklisted_suffix(str_or_curie_or_uri):
         return BlacklistedError()
 
     if _is_uri(str_or_curie_or_uri):
