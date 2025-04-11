@@ -27,6 +27,8 @@ from .identifier_utils import (
     UnparsableIRIError,
     _is_valid_identifier,
     _parse_str_or_curie_or_uri_helper,
+    remap_prefix,
+    str_is_blacklisted,
 )
 from .reader_utils import (
     _chomp_axioms,
@@ -35,7 +37,6 @@ from .reader_utils import (
     _chomp_typedef,
     _parse_provenance_list,
 )
-from .identifier_utils import remap_prefix, str_is_blacklisted
 from .struct import (
     Obo,
     Reference,

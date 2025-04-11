@@ -16,13 +16,13 @@ __all__ = [
 ]
 
 HERE = Path(__file__).parent.resolve()
-CURATED_REGISTRY_PATH = HERE.joinpath("metaregistry.json")
+RULES_PATH = HERE.joinpath("preprocessing.json")
 
 
 @lru_cache(1)
 def get_rules() -> Rules:
     """Get the CURIE/URI string preprocessing rules."""
-    rules = Rules.model_validate_json(CURATED_REGISTRY_PATH.read_text())
+    rules = Rules.model_validate_json(RULES_PATH.read_text())
     rules.rewrites.full.update(load_goc_map())
     return rules
 
@@ -42,9 +42,9 @@ def remap_prefix(str_or_curie_or_uri: str, ontology_prefix: str | None = None) -
 
 
 def _lint() -> None:
-    rules = Rules.model_validate_json(CURATED_REGISTRY_PATH.read_text())
+    rules = Rules.model_validate_json(RULES_PATH.read_text())
     rules.blacklists._sort()
-    CURATED_REGISTRY_PATH.write_text(json.dumps(rules.model_dump(), sort_keys=True, indent=2))
+    RULES_PATH.write_text(json.dumps(rules.model_dump(), sort_keys=True, indent=2))
 
 
 def str_is_blacklisted(str_or_curie_or_uri: str, *, ontology_prefix: str | None = None) -> bool:
