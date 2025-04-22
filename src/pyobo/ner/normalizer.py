@@ -23,7 +23,9 @@ def ground(prefix: str | Iterable[str], query: str) -> Reference | None:
         normalizer = get_grounder(prefix)
         match = normalizer.get_best_match(query)
         if match:
-            return match.reference
+            # TODO when generics are working, the grounder
+            #  can be type annotated with the right reference
+            return Reference.from_reference(match.reference)
     else:
         for p in prefix:
             if rv := ground(p, query):
