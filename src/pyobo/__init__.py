@@ -56,8 +56,7 @@ from .api import (
     is_descendent,
 )
 from .getters import get_ontology
-from .ner import get_grounder
-from .ner.normalizer import OboNormalizer, ground
+from .ner import get_grounder, ground
 from .obographs import parse_results_from_obo
 from .plugins import (
     has_nomenclature_plugin,
@@ -71,7 +70,6 @@ from .version import get_version
 
 __all__ = [
     "Obo",
-    "OboNormalizer",
     "Reference",
     "Synonym",
     "SynonymTypeDef",
