@@ -1005,6 +1005,14 @@ class Obo:
         # TODO reimplement internally
         self.get_graph().get_nodes_df().to_csv(path, sep="\t", index=False)
 
+    def write_edges(self, path: str | Path) -> None:
+        """Write a edges TSV file."""
+        write_iterable_tsv(
+            path=path,
+            header=self.edges_header,
+            it=self.iterate_edge_rows(),
+        )
+
     def _path(self, *parts: str, name: str | None = None) -> Path:
         return prefix_directory_join(self.ontology, *parts, name=name, version=self.data_version)
 
