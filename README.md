@@ -143,16 +143,14 @@ it up and its preferred label.
 ```python
 import pyobo
 
-prefix, identifier, name = pyobo.ground('chebi', 'Fusilade II')
-assert prefix == 'chebi'
-assert identifier == '132964'
-assert name == 'fluazifop-P-butyl'
+reference = pyobo.ground('chebi', 'Fusilade II')
+assert reference.prefix == 'chebi'
+assert reference.identifier == '132964'
+assert reference.name == 'fluazifop-P-butyl'
 
 # When failure happens...
-prefix, identifier, name = pyobo.ground('chebi', 'Definitely not a real name')
-assert prefix is None
-assert identifier is None
-assert name is None
+reference = pyobo.ground('chebi', 'Definitely not a real name')
+assert reference is None
 ```
 
 If you're not really sure which namespace a name might belong to, you can try a
@@ -163,10 +161,10 @@ false positives in case of conflicts):
 import pyobo
 
 # looking for phenotypes/pathways
-prefix, identifier, name = pyobo.ground(['efo', 'go'], 'ERAD')
-assert prefix == 'go'
-assert identifier == '0030433'
-assert name == 'ubiquitin-dependent ERAD pathway'
+reference = pyobo.ground(['efo', 'go'], 'ERAD')
+assert reference.prefix == 'go'
+assert reference.identifier == '0030433'
+assert reference.name == 'ubiquitin-dependent ERAD pathway'
 ```
 
 ### Cross-referencing
@@ -389,7 +387,6 @@ The most recent release can be installed from
 [PyPI](https://pypi.org/project/pyobo/) with uv:
 
 ```console
-python3 -m pip install pyobo
 $ uv pip install pyobo
 ```
 
