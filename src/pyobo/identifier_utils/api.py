@@ -134,6 +134,7 @@ def _preclean_uri(s: str) -> str:
     s = s.removeprefix("WWW:").removeprefix("www:").lstrip()
     s = s.replace("http\\:", "http:")
     s = s.replace("https\\:", "https:")
+    s = s.rstrip("/")
     return s
 
 
