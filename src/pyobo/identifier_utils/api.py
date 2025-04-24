@@ -177,8 +177,9 @@ def _parse_str_or_curie_or_uri_helper(
             context=context,
         )
 
+    rules = get_rules()
+
     if upgrade:
-        rules = get_rules()
         # Remap the curie with the full list
         if r1 := rules.remap_full(
             str_or_curie_or_uri, reference_cls=Reference, context=ontology_prefix

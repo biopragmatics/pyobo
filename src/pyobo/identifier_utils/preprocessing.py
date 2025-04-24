@@ -18,7 +18,7 @@ RULES_PATH = HERE.joinpath("preprocessing.json")
 @lru_cache(1)
 def get_rules() -> PreprocessingRules:
     """Get the CURIE/URI string preprocessing rules."""
-    rules = _load_rules(RULES_PATH.read_text())
+    rules = _load_rules(RULES_PATH)
     rules.rewrites.full.update(load_goc_map())
     return rules
 
