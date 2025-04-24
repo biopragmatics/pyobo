@@ -16,7 +16,7 @@ from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
 
 from ..identifier_utils import (
-    BlacklistedError,
+    BlocklistError,
     NotCURIEError,
     ParseError,
     UnparsableIRIError,
@@ -62,7 +62,7 @@ def _parse_str_or_curie_or_uri(
     match reference:
         case Reference():
             return reference
-        case BlacklistedError():
+        case BlocklistError():
             return None
         case ParseError():
             if strict:
@@ -224,7 +224,7 @@ def _obo_parse_identifier(
     ):
         case Reference() as reference:
             return reference
-        case BlacklistedError():
+        case BlocklistError():
             return None
         case NotCURIEError() as exc:
             # this means there's no colon `:`
@@ -272,7 +272,7 @@ def _parse_reference_or_uri_literal(
     ):
         case Reference() as reference:
             return reference
-        case BlacklistedError():
+        case BlocklistError():
             return None
         case UnparsableIRIError():
             # this means that it's defininitely a URI,

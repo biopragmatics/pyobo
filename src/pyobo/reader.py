@@ -21,14 +21,13 @@ from tqdm.auto import tqdm
 
 from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
 from .identifier_utils import (
-    BlacklistedError,
+    BlocklistError,
     NotCURIEError,
     ParseError,
     UnparsableIRIError,
     _is_valid_identifier,
     _parse_str_or_curie_or_uri_helper,
-    remap_prefix,
-    str_is_blacklisted,
+    get_rules,
 )
 from .reader_utils import (
     _chomp_axioms,
@@ -1262,7 +1261,7 @@ def _handle_prop(
         ):
             case Reference() as datatype_:
                 datatype = datatype_
-            case BlacklistedError():
+            case BlocklistError():
                 return None
             case ParseError() as exc:
                 if strict:
@@ -1304,7 +1303,7 @@ def _handle_prop(
         ):
             case Reference() as obj_reference:
                 return Annotation(prop_reference, obj_reference)
-            case BlacklistedError():
+            case BlocklistError():
                 return None
             case UnparsableIRIError():
                 return Annotation(prop_reference, OBOLiteral.uri(value))
@@ -1330,7 +1329,7 @@ def _handle_prop(
         ):
             case Reference() as obj_reference:
                 return Annotation(prop_reference, obj_reference)
-            case BlacklistedError():
+            case BlocklistError():
                 return None
             case ParseError():
                 if datatype:
@@ -1535,10 +1534,12 @@ def _parse_xref_line(
 ) -> tuple[Reference, list[Reference | OBOLiteral]] | None:
     xref, _, rest = line.partition(" [")
 
-    if str_is_blacklisted(xref, ontology_prefix=ontology_prefix) or ":" not in xref:
+    rules = get_rules()
+
+    if rules.str_is_blocked(xref, context=ontology_prefix) or ":" not in xref:
         return None  # sometimes xref to self... weird
 
-    xref = remap_prefix(xref, ontology_prefix=ontology_prefix)
+    xref = rules.remap_prefix(xref, context=ontology_prefix)
 
     split_space = " " in xref
     if split_space:
@@ -1552,7 +1553,7 @@ def _parse_xref_line(
         xref, ontology_prefix=ontology_prefix, node=node, line=line, context="xref", upgrade=upgrade
     )
     match xref_ref:
-        case BlacklistedError():
+        case BlocklistError():
             return None
         case ParseError() as exc:
             if strict:

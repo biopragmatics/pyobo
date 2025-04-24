@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from functools import wraps
+from functools import lru_cache, wraps
 from typing import Annotated, ClassVar
 
 import bioregistry
@@ -11,14 +11,15 @@ import click
 from bioregistry import NormalizedNamableReference as Reference
 from bioregistry.constants import FailureReturnType
 from curies import ReferenceTuple
+from curies.preprocessing import BlocklistError, PreprocessingConverter
 from pydantic import ValidationError
 from typing_extensions import Doc
 
-from .preprocessing import remap_full, remap_prefix, str_is_blacklisted
+from .preprocessing import get_rules
 from .relations import ground_relation
 
 __all__ = [
-    "BlacklistedError",
+    "BlocklistError",
     "DefaultCoercionError",
     "EmptyStringError",
     "NotCURIEError",
@@ -32,10 +33,6 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-
-
-class BlacklistedError(ValueError):
-    """A sentinel for blacklisted strings."""
 
 
 Line = Annotated[str | None, Doc("""The OBO line where the parsing happened""")]
@@ -138,6 +135,15 @@ def _preclean_uri(s: str) -> str:
     return s
 
 
+@lru_cache(1)
+def _get_converter() -> PreprocessingConverter:
+    return PreprocessingConverter(
+        converter=bioregistry.manager.converter,
+        rules=get_rules(),
+        preclean=_preclean_uri,
+    )
+
+
 def _parse_str_or_curie_or_uri_helper(
     str_or_curie_or_uri: str,
     *,
@@ -148,7 +154,7 @@ def _parse_str_or_curie_or_uri_helper(
     line: str | None = None,
     name: str | None = None,
     context: str | None = None,
-) -> Reference | ParseError | BlacklistedError:
+) -> Reference | ParseError | BlocklistError:
     """Parse a string that looks like a CURIE.
 
     :param str_or_curie_or_uri: A compact uniform resource identifier (CURIE)
@@ -172,18 +178,21 @@ def _parse_str_or_curie_or_uri_helper(
         )
 
     if upgrade:
+        rules = get_rules()
         # Remap the curie with the full list
-        if r1 := remap_full(str_or_curie_or_uri, ontology_prefix=ontology_prefix):
+        if r1 := rules.remap_full(
+            str_or_curie_or_uri, reference_cls=Reference, context=ontology_prefix
+        ):
             return r1
 
         # Remap node's prefix (if necessary)
-        str_or_curie_or_uri = remap_prefix(str_or_curie_or_uri, ontology_prefix=ontology_prefix)
+        str_or_curie_or_uri = rules.remap_prefix(str_or_curie_or_uri, context=ontology_prefix)
 
         if r2 := ground_relation(str_or_curie_or_uri):
             return r2
 
-    if str_is_blacklisted(str_or_curie_or_uri, ontology_prefix=ontology_prefix):
-        return BlacklistedError()
+    if rules.str_is_blocked(str_or_curie_or_uri, context=ontology_prefix):
+        return BlocklistError()
 
     if _is_uri(str_or_curie_or_uri):
         rt = bioregistry.parse_iri(
