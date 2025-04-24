@@ -15,13 +15,13 @@ from typing import Any
 import bioregistry
 import networkx as nx
 from curies import ReferenceTuple
+from curies.preprocessing import BlocklistError
 from curies.vocabulary import SynonymScope
 from more_itertools import pairwise
 from tqdm.auto import tqdm
 
 from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
 from .identifier_utils import (
-    BlocklistError,
     NotCURIEError,
     ParseError,
     UnparsableIRIError,
