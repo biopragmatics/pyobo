@@ -19,7 +19,6 @@ from .preprocessing import get_rules
 from .relations import ground_relation
 
 __all__ = [
-    "BlocklistError",
     "DefaultCoercionError",
     "EmptyStringError",
     "NotCURIEError",
