@@ -14,9 +14,9 @@ import dateutil.parser
 import pytz
 from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
+from curies.preprocessing import BlocklistError
 
 from ..identifier_utils import (
-    BlocklistError,
     NotCURIEError,
     ParseError,
     UnparsableIRIError,

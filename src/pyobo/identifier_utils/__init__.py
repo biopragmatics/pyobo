@@ -1,7 +1,5 @@
 """Extract registry information."""
 
-from curies.preprocessing import BlocklistError
-
 from .api import (
     DefaultCoercionError,
     EmptyStringError,
@@ -19,7 +17,6 @@ from .preprocessing import get_rules
 from .relations import ground_relation
 
 __all__ = [
-    "BlocklistError",
     "DefaultCoercionError",
     "EmptyStringError",
     "NotCURIEError",
