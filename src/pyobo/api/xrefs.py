@@ -81,8 +81,7 @@ get_xrefs = get_filtered_xrefs
 def get_xrefs_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get all xrefs."""
     warnings.warn(
-        f"use pyobo.get_mappings_df instead of pyobo.get_xrefs_df."
-        f"Not using cache artifact path to {CacheArtifact.xrefs}",
+        "use pyobo.get_mappings_df instead of pyobo.get_xrefs_df.",
         DeprecationWarning,
         stacklevel=2,
     )

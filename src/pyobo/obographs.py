@@ -41,7 +41,11 @@ def graph_from_obo(obo: Obo, use_tqdm: bool = True) -> Graph:
     nodes: list[Node] = []
     edges: list[Edge] = []
     for term in tqdm(
-        obo, disable=not use_tqdm, unit="term", unit_scale=True, desc=f"[{obo.ontology}] to JSON"
+        obo,
+        disable=not use_tqdm,
+        unit="term",
+        unit_scale=True,
+        desc=f"[{obo._prefix_version}] to OBO Graph JSON",
     ):
         nodes.append(_get_class_node(term))
         edges.extend(_iter_edges(term))

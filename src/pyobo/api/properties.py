@@ -113,18 +113,9 @@ def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.Da
     :param prefix: the resource to load
     :returns: A dataframe with the properties
     """
-    version = get_version_from_kwargs(prefix, kwargs)
-    path = get_cache_path(prefix, CacheArtifact.properties, version=version)
-
-    @cached_df(
-        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    raise NotImplementedError(
+        "need to re-implement using a combination of literal_properties and object_properties"
     )
-    def _df_getter() -> pd.DataFrame:
-        return get_ontology(prefix, **kwargs).get_properties_df(
-            use_tqdm=check_should_use_tqdm(kwargs)
-        )
-
-    return _df_getter()
 
 
 @wrap_norm_prefix

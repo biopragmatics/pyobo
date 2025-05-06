@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import datetime
-import gzip
 import json
 import logging
 import pathlib
@@ -16,7 +15,7 @@ from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
 from textwrap import indent
-from typing import TypeVar
+from typing import Any, TypeVar
 
 import bioregistry
 import click
@@ -27,6 +26,7 @@ from tqdm.auto import tqdm
 from typing_extensions import Unpack
 
 from .constants import (
+    BUILD_SUBDIRECTORY_NAME,
     DATABASE_DIRECTORY,
     GetOntologyKwargs,
     IterHelperHelperDict,
@@ -36,7 +36,7 @@ from .identifier_utils import ParseError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .reader import from_obo_path, from_obonet
 from .struct import Obo
-from .utils.io import get_writer
+from .utils.io import safe_open_writer
 from .utils.path import ensure_path, prefix_directory_join
 from .version import get_git_hash, get_version
 
@@ -119,19 +119,21 @@ def get_ontology(
         logger.info("UBERON has so much garbage in it that defaulting to non-strict parsing")
         strict = False
 
-    if not cache:
+    if force_process:
+        obonet_json_gz_path = None
+    elif not cache:
         logger.debug("[%s] caching was turned off, so dont look for an obonet file", prefix)
         obonet_json_gz_path = None
     else:
         obonet_json_gz_path = prefix_directory_join(
-            prefix, name=f"{prefix}.obonet.json.gz", ensure_exists=False, version=version
+            prefix, BUILD_SUBDIRECTORY_NAME, name=f"{prefix}.obonet.json.gz", version=version
         )
         logger.debug(
             "[%s] caching is turned on, so look for an obonet file at %s",
             prefix,
             obonet_json_gz_path,
         )
-        if obonet_json_gz_path.exists() and not force:
+        if obonet_json_gz_path.is_file() and not force:
             from .utils.cache import get_gzipped_graph
 
             logger.debug("[%s] using obonet cache at %s", prefix, obonet_json_gz_path)
@@ -412,7 +414,7 @@ def iter_helper_helper(
         except ValueError as e:
             if _is_xml(e):
                 # this means that it tried doing parsing on an xml page
-                logger.info(
+                logger.warning(
                     "no resource available for %s. See http://www.obofoundry.org/ontology/%s",
                     prefix,
                     prefix,
@@ -452,7 +454,7 @@ def _prep_dir(directory: None | str | pathlib.Path) -> pathlib.Path:
 
 
 def db_output_helper(
-    it: Iterable[tuple[str, ...]],
+    it: Iterable[tuple[Any, ...]],
     db_name: str,
     columns: Sequence[str],
     *,
@@ -497,13 +499,10 @@ def db_output_helper(
     logger.info("writing %s to %s", db_name, db_path)
     logger.info("writing %s sample to %s", db_name, db_sample_path)
     sample_rows = []
-    with gzip.open(db_path, mode="wt") if use_gzip else open(db_path, "w") as gzipped_file:
-        writer = get_writer(gzipped_file)
 
+    with safe_open_writer(db_path) as writer:
         # for the first 10 rows, put it in a sample file too
-        with open(db_sample_path, "w") as sample_file:
-            sample_writer = get_writer(sample_file)
-
+        with safe_open_writer(db_sample_path) as sample_writer:
             # write header
             writer.writerow(columns)
             sample_writer.writerow(columns)
@@ -523,15 +522,13 @@ def db_output_helper(
                 c_detailed[tuple(row[i] for i in summary_detailed)] += 1
             writer.writerow(row)
 
-    with open(db_summary_path, "w") as file:
-        writer = get_writer(file)
-        writer.writerows(c.most_common())
+    with safe_open_writer(db_summary_path) as summary_writer:
+        summary_writer.writerows(c.most_common())
 
     if summary_detailed is not None:
         logger.info(f"writing {db_name} detailed summary to {db_summary_detailed_path}")
-        with open(db_summary_detailed_path, "w") as file:
-            writer = get_writer(file)
-            writer.writerows((*keys, v) for keys, v in c_detailed.most_common())
+        with safe_open_writer(db_summary_detailed_path) as detailed_summary_writer:
+            detailed_summary_writer.writerows((*keys, v) for keys, v in c_detailed.most_common())
         rv.append(("Summary (Detailed)", db_summary_detailed_path))
 
     with open(db_metadata_path, "w") as file:
