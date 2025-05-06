@@ -1,9 +1,14 @@
 """Import of OBO Graph JSON."""
 
-from obographs import NodeType, StandardizedGraph, StandardizedNode, StandardizedXref, StandardizedMeta, \
-    StandardizedSynonym
+from obographs import (
+    NodeType,
+    StandardizedGraph,
+    StandardizedMeta,
+    StandardizedNode,
+    StandardizedSynonym,
+)
 
-from pyobo import Obo, Reference, StanzaType, Term, TypeDef, Synonym
+from pyobo import Obo, Reference, StanzaType, Synonym, Term, TypeDef
 
 __all__ = [
     "from_node",
@@ -97,7 +102,7 @@ def _process_term_meta(meta: StandardizedMeta, term: Term) -> None:
     if meta.deprecated:
         term.is_obsolete = True
 
-    for prop in meta.properties or []:
+    for _prop in meta.properties or []:
         raise NotImplementedError
 
 
