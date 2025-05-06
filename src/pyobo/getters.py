@@ -198,64 +198,6 @@ def _ensure_ontology_path(
     return None, None
 
 
-#: Obonet/Pronto can't parse these (consider converting to OBO with ROBOT?)
-CANT_PARSE = {
-    "agro",
-    "aro",
-    "bco",
-    "caro",
-    "cco",
-    "chmo",
-    "cido",
-    "covoc",
-    "cto",
-    "cvdo",
-    "dicom",
-    "dinto",
-    "emap",
-    "epso",
-    "eupath",
-    "fbbi",
-    "fma",
-    "fobi",
-    "foodon",
-    "genepio",
-    "hancestro",
-    "hom",
-    "hso",
-    "htn",  # Unknown string format: creation: 16MAY2017
-    "ico",
-    "idocovid19",
-    "labo",
-    "mamo",
-    "mfmo",
-    "mfo",
-    "mfomd",
-    "miapa",
-    "mo",
-    "oae",
-    "ogms",  # Unknown string format: creation: 16MAY2017
-    "ohd",
-    "ons",
-    "oostt",
-    "opmi",
-    "ornaseq",
-    "orth",
-    "pdro",
-    "probonto",
-    "psdo",
-    "reo",
-    "rex",
-    "rnao",
-    "sepio",
-    "sio",
-    "spd",
-    "sweetrealm",
-    "txpo",
-    "vido",
-    "vt",
-    "xl",
-}
 SKIP = {
     "ncbigene": "too big, refs acquired from other dbs",
     "pubchem.compound": "top big, can't deal with this now",
@@ -276,11 +218,12 @@ SKIP = {
     "kegg.genes": "needs fix",  # FIXME
     "kegg.genome": "needs fix",  # FIXME
     "kegg.pathway": "needs fix",  # FIXME
-    "ensemblglossary": "uri is wrong",
+    "ensemblglossary": "URI is self-referential to data in OLS, extract from there",
     "epio": "content from fraunhofer is unreliable",
     "epso": "content from fraunhofer is unreliable",
     "gwascentral.phenotype": "website is down? or API changed?",  # FIXME
     "gwascentral.study": "website is down? or API changed?",  # FIXME
+    "snomedct": "dead source",
 }
 
 X = TypeVar("X")
