@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "pyobo"
-version = "0.12.0-dev"
+version = "0.12.2-dev"
 description = "A python package for handling and generating OBO"
 readme = "README.md"
 authors = [
@@ -70,15 +70,15 @@ dependencies = [
     "tabulate",
     "cachier",
     "pystow>=0.7.0",
-    "bioversions>=0.7.0",
-    "bioregistry>=0.12.6",
-    "bioontologies>=0.5.2",
-    "ssslm>=0.0.9",
+    "bioversions>=0.8.0",
+    "bioregistry>=0.12.7",
+    "bioontologies>=0.7.1",
+    "ssslm>=0.0.13",
     "zenodo-client>=0.3.6",
-    "class_resolver",
+    "class_resolver>=0.6.0",
     "psycopg2-binary",
     "pydantic>=2.0",
-    "curies>=0.10.6",
+    "curies>=0.10.13",
     "python-dateutil",
     "networkx>=3.4",
     # Resource Downloaders
@@ -91,7 +91,8 @@ dependencies = [
     "rdflib",
 ]
 
-[project.optional-dependencies]
+# see https://peps.python.org/pep-0735/ and https://docs.astral.sh/uv/concepts/dependencies/#dependency-groups
+[dependency-groups]
 tests = [
     "pytest",
     "coverage[toml]",
@@ -102,6 +103,53 @@ docs = [
     "sphinx-click", 
     "sphinx_automodapi",
 ]
+lint = [
+    "ruff",
+]
+typing = [
+    { include-group = "tests" },
+    "mypy",
+    "pydantic",
+    "types-tabulate",
+    "types-requests",
+    "types-PyYAML",
+    "types-Markdown",
+    "types-python-dateutil",
+    "types-redis",
+    "types-pytz",
+]
+docs-lint = [
+    { include-group = "docs" },
+    "doc8",
+]
+format-docs = [
+    { include-group = "docs" },
+    "docstrfmt",
+]
+doctests = [
+    "xdoctest",
+    "pygments",
+]
+pyroma = [
+    "pyroma",
+    "pygments",
+]
+# follow https://github.com/astral-sh/uv/issues/6298 for switching to a uv-based version bump workflow
+bump = [
+    "bump-my-version",
+]
+build = [
+    "uv",
+    "uv-build",
+]
+release = [
+    { include-group = "build" },
+    "uv",
+    "keyring",
+]
+
+# see https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#dependencies-optional-dependencies
+[project.optional-dependencies]
 gilda = [
     "ssslm[gilda]",
 ]
@@ -120,19 +168,6 @@ Funding = "https://github.com/sponsors/cthoyt"
 
 [project.scripts]
 pyobo = "pyobo.cli:main"
-
-# TODO add entrypoints
-# pyobo.xrefs =
-#    cbms2019 = pyobo.xrefdb.sources.cbms2019:get_cbms2019_xrefs_df
-#    chembl   = pyobo.xrefdb.sources.chembl:get_chembl_xrefs_df
-#    compath  = pyobo.xrefdb.sources.compath:get_compath_xrefs_df
-#    famplex  = pyobo.xrefdb.sources.famplex:get_famplex_xrefs_df
-#    gilda    = pyobo.xrefdb.sources.gilda:get_gilda_xrefs_df
-#    intact   = pyobo.xrefdb.sources.intact:get_xrefs_df
-#    ncit     = pyobo.xrefdb.sources.ncit:get_ncit_xrefs_df
-#    pubchem  = pyobo.xrefdb.sources.pubchem:get_pubchem_mesh_df
-#    wikidata = pyobo.xrefdb.sources.wikidata:get_wikidata_xrefs_df
-#    biomappings = pyobo.xrefdb.sources.biomappings:get_biomappings_df
 
 [tool.cruft]
 skip = [
@@ -253,7 +288,7 @@ known-first-party = [
 docstring-code-format = true
 
 [tool.bumpversion]
-current_version = "0.12.0-dev"
+current_version = "0.12.2-dev"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:-(?P<release>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+(?P<build>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?"
 serialize = [
     "{major}.{minor}.{patch}-{release}+{build}",

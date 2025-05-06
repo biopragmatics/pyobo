@@ -16,6 +16,7 @@ from pyobo.struct.functional.utils import (
     FunctionalOWLSerializable,
     list_to_funowl,
 )
+from pyobo.utils.io import safe_open
 
 __all__ = [
     "Document",
@@ -109,7 +110,8 @@ class Document:
     def write_funowl(self, path: str | Path) -> None:
         """Write functional OWL to a file.."""
         path = Path(path).expanduser().resolve()
-        path.write_text(self.to_funowl())
+        with safe_open(path, read=False) as file:
+            file.write(self.to_funowl())
 
     def to_funowl(self) -> str:
         """Get the document as a functional OWL string."""

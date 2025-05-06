@@ -41,14 +41,7 @@ identifiers. It also means all identifiers are strings, no exceptions.
 
 Note! The first time you run these, they have to download and cache all
 resources. We're not in the business of redistributing data, so all scripts
-should be completely reproducible. There's some AWS tools for
-hosting/downloading pre-compiled versions in `pyobo.aws` if you don't have time
-for that.
-
-Note! PyOBO can perform grounding in a limited number of cases, but it is _not_
-a general solution for named entity recognition (NER) or grounding. It's
-suggested to check `Gilda <https://github.com/indralab/gilda>`\_ for a
-no-nonsense solution.
+should be completely reproducible.
 
 ### Mapping Identifiers and CURIEs
 
@@ -57,19 +50,11 @@ Get mapping of ChEBI identifiers to names:
 ```python
 import pyobo
 
-chebi_id_to_name = pyobo.get_id_name_mapping('chebi')
+chebi_id_to_name = pyobo.get_id_name_mapping("chebi")
+assert "fluazifop-P-butyl" == chebi_id_to_name["132964"]
 
-name = chebi_id_to_name['132964']
-assert name == 'fluazifop-P-butyl'
-```
-
-Or, you don't have time for two lines:
-
-```python
-import pyobo
-
-name = pyobo.get_name('chebi', '132964')
-assert name == 'fluazifop-P-butyl'
+# or more directly
+assert "fluazifop-P-butyl" == pyobo.get_name("chebi", "132964")
 ```
 
 Get reverse mapping of ChEBI names to identifiers:
@@ -77,10 +62,8 @@ Get reverse mapping of ChEBI names to identifiers:
 ```python
 import pyobo
 
-chebi_name_to_id = pyobo.get_name_id_mapping('chebi')
-
-identifier = chebi_name_to_id['fluazifop-P-butyl']
-assert identifier == '132964'
+chebi_name_to_id = pyobo.get_name_id_mapping("chebi")
+assert "132964" == chebi_name_to_id["fluazifop-P-butyl"]
 ```
 
 Maybe you live in CURIE world and just want to normalize something like
@@ -89,8 +72,7 @@ Maybe you live in CURIE world and just want to normalize something like
 ```python
 import pyobo
 
-name = pyobo.get_name_by_curie('CHEBI:132964')
-assert name == 'fluazifop-P-butyl'
+assert "fluazifop-P-butyl" == pyobo.get_name_by_curie("CHEBI:132964")
 ```
 
 Sometimes you accidentally got an old CURIE. It can be mapped to the more recent
@@ -102,11 +84,11 @@ from pyobo import Reference
 
 # Look up DNA-binding transcription factor activity (go:0003700)
 # based on an old id
-primary_curie = pyobo.get_primary_curie('go:0001071')
-assert primary_curie == 'go:0003700'
+primary_curie = pyobo.get_primary_curie("go:0001071")
+assert primary_curie == "go:0003700"
 
 # If it's already the primary, it just gets returned
-assert Reference.from_curie('go:0003700') == pyobo.get_primary_curie('go:0003700')
+assert Reference.from_curie("go:0003700") == pyobo.get_primary_curie("go:0003700")
 ```
 
 ### Mapping Species
@@ -117,11 +99,10 @@ WikiPathway identifiers to species (as NCBI taxonomy identifiers):
 ```python
 import pyobo
 
-wikipathways_id_to_species = pyobo.get_id_species_mapping('wikipathways')
+wikipathways_id_to_species = pyobo.get_id_species_mapping("wikipathways")
 
 # Apoptosis (Homo sapiens)
-taxonomy_id = wikipathways_id_to_species['WP254']
-assert taxonomy_id == '9606'
+assert "9606" == wikipathways_id_to_species["WP254"]
 ```
 
 Or, you don't have time for two lines:
@@ -130,8 +111,8 @@ Or, you don't have time for two lines:
 import pyobo
 
 # Apoptosis (Homo sapiens)
-taxonomy_id = pyobo.get_species('wikipathways', 'WP254')
-assert taxonomy_id == '9606'
+taxonomy_id = pyobo.get_species("wikipathways", "WP254")
+assert taxonomy_id == "9606"
 ```
 
 ### Grounding
@@ -143,16 +124,14 @@ it up and its preferred label.
 ```python
 import pyobo
 
-prefix, identifier, name = pyobo.ground('chebi', 'Fusilade II')
-assert prefix == 'chebi'
-assert identifier == '132964'
-assert name == 'fluazifop-P-butyl'
+reference = pyobo.ground("chebi", "Fusilade II")
+assert reference.prefix == "chebi"
+assert reference.identifier == "132964"
+assert reference.name == "fluazifop-P-butyl"
 
 # When failure happens...
-prefix, identifier, name = pyobo.ground('chebi', 'Definitely not a real name')
-assert prefix is None
-assert identifier is None
-assert name is None
+reference = pyobo.ground("chebi", "Definitely not a real name")
+assert reference is None
 ```
 
 If you're not really sure which namespace a name might belong to, you can try a
@@ -163,10 +142,10 @@ false positives in case of conflicts):
 import pyobo
 
 # looking for phenotypes/pathways
-prefix, identifier, name = pyobo.ground(['efo', 'go'], 'ERAD')
-assert prefix == 'go'
-assert identifier == '0030433'
-assert name == 'ubiquitin-dependent ERAD pathway'
+reference = pyobo.ground(["efo", "go"], "ERAD")
+assert reference.prefix == "go"
+assert reference.identifier == "0030433"
+assert reference.name == "ubiquitin-dependent ERAD pathway"
 ```
 
 ### Cross-referencing
@@ -176,10 +155,10 @@ Get xrefs from ChEBI to PubChem:
 ```python
 import pyobo
 
-chebi_id_to_pubchem_compound_id = pyobo.get_filtered_xrefs('chebi', 'pubchem.compound')
+chebi_id_to_pubchem_compound_id = pyobo.get_filtered_xrefs("chebi", "pubchem.compound")
 
-pubchem_compound_id = chebi_id_to_pubchem_compound_id['132964']
-assert pubchem_compound_id == '3033674'
+pubchem_compound_id = chebi_id_to_pubchem_compound_id["132964"]
+assert pubchem_compound_id == "3033674"
 ```
 
 If you don't have time for two lines:
@@ -187,8 +166,8 @@ If you don't have time for two lines:
 ```python
 import pyobo
 
-pubchem_compound_id = pyobo.get_xref('chebi', '132964', 'pubchem.compound')
-assert pubchem_compound_id == '3033674'
+pubchem_compound_id = pyobo.get_xref("chebi", "132964", "pubchem.compound")
+assert pubchem_compound_id == "3033674"
 ```
 
 Get xrefs from Entrez to HGNC, but they're only available through HGNC, so you
@@ -197,13 +176,13 @@ need to flip them:
 ```python
 import pyobo
 
-hgnc_id_to_ncbigene_id = pyobo.get_filtered_xrefs('hgnc', 'ncbigene')
+hgnc_id_to_ncbigene_id = pyobo.get_filtered_xrefs("hgnc", "ncbigene")
 ncbigene_id_to_hgnc_id = {
   ncbigene_id: hgnc_id
   for hgnc_id, ncbigene_id in hgnc_id_to_ncbigene_id.items()
 }
-mapt_hgnc = ncbigene_id_to_hgnc_id['4137']
-assert mapt_hgnc == '6893'
+mapt_hgnc = ncbigene_id_to_hgnc_id["4137"]
+assert mapt_hgnc == "6893"
 ```
 
 Since this is a common pattern, there's a keyword argument `flip` that does this
@@ -212,9 +191,9 @@ for you:
 ```python
 import pyobo
 
-ncbigene_id_to_hgnc_id = pyobo.get_filtered_xrefs('hgnc', 'ncbigene', flip=True)
-mapt_hgnc_id = ncbigene_id_to_hgnc_id['4137']
-assert mapt_hgnc_id == '6893'
+ncbigene_id_to_hgnc_id = pyobo.get_filtered_xrefs("hgnc", "ncbigene", flip=True)
+mapt_hgnc_id = ncbigene_id_to_hgnc_id["4137"]
+assert mapt_hgnc_id == "6893"
 ```
 
 If you don't have time for two lines (I admit this one is a bit confusing) and
@@ -223,8 +202,8 @@ need to flip it:
 ```python
 import pyobo
 
-hgnc_id = pyobo.get_xref('hgnc', '4137', 'ncbigene', flip=True)
-assert hgnc_id == '6893'
+hgnc_id = pyobo.get_xref("hgnc", "4137", "ncbigene", flip=True)
+assert hgnc_id == "6893"
 ```
 
 ### Properties
@@ -236,11 +215,11 @@ basis.
 import pyobo
 
 # I don't make the rules. I wouldn't have chosen this as the key for this property. It could be any string
-chebi_smiles_property = 'http://purl.obolibrary.org/obo/chebi/smiles'
-chebi_id_to_smiles = pyobo.get_filtered_properties_mapping('chebi', chebi_smiles_property)
+chebi_smiles_property = "http://purl.obolibrary.org/obo/chebi/smiles"
+chebi_id_to_smiles = pyobo.get_filtered_properties_mapping("chebi", chebi_smiles_property)
 
-smiles = chebi_id_to_smiles['132964']
-assert smiles == 'C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F'
+smiles = chebi_id_to_smiles["132964"]
+assert smiles == "C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F"
 ```
 
 If you don't have time for two lines:
@@ -248,8 +227,8 @@ If you don't have time for two lines:
 ```python
 import pyobo
 
-smiles = pyobo.get_property('chebi', '132964', 'http://purl.obolibrary.org/obo/chebi/smiles')
-assert smiles == 'C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F'
+smiles = pyobo.get_property("chebi", "132964", "http://purl.obolibrary.org/obo/chebi/smiles")
+assert smiles == "C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F"
 ```
 
 ### Hierarchy
@@ -261,12 +240,12 @@ import pyobo
 from pyobo import Reference
 
 # check that go:0008219 ! cell death is an ancestor of go:0006915 ! apoptotic process
-assert Reference.from_curie('go:0008219') in pyobo.get_ancestors('go', '0006915')
+assert Reference.from_curie("go:0008219") in pyobo.get_ancestors("go", "0006915")
 
 # check that go:0070246 ! natural killer cell apoptotic process is a
 # descendant of go:0006915 ! apoptotic process
-apopototic_process_descendants = pyobo.get_descendants('go', '0006915')
-assert Reference.from_curie('go:0070246') in apopototic_process_descendants
+apopototic_process_descendants = pyobo.get_descendants("go", "0006915")
+assert Reference.from_curie("go:0070246") in apopototic_process_descendants
 ```
 
 Get the sub-hierarchy below a given node:
@@ -276,11 +255,11 @@ import pyobo
 from pyobo import Reference
 
 # get the descendant graph of go:0006915 ! apoptotic process
-apopototic_process_subhierarchy = pyobo.get_subhierarchy('go', '0006915')
+apopototic_process_subhierarchy = pyobo.get_subhierarchy("go", "0006915")
 
 # check that go:0070246 ! natural killer cell apoptotic process is a
 # descendant of go:0006915 ! apoptotic process through the subhierarchy
-assert Reference.from_curie('go:0070246') in apopototic_process_subhierarchy
+assert Reference.from_curie("go:0070246") in apopototic_process_subhierarchy
 ```
 
 Get a hierarchy with properties preloaded in the node data dictionaries:
@@ -289,12 +268,12 @@ Get a hierarchy with properties preloaded in the node data dictionaries:
 import pyobo
 from pyobo import Reference
 
-prop = 'http://purl.obolibrary.org/obo/chebi/smiles'
-chebi_hierarchy = pyobo.get_hierarchy('chebi', properties=[prop])
+prop = "http://purl.obolibrary.org/obo/chebi/smiles"
+chebi_hierarchy = pyobo.get_hierarchy("chebi", properties=[prop])
 
-assert Reference.from_curie('chebi:132964') in chebi_hierarchy
-assert prop in chebi_hierarchy.nodes['chebi:132964']
-assert chebi_hierarchy.nodes['chebi:132964'][prop] == 'C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F'
+assert Reference.from_curie("chebi:132964") in chebi_hierarchy
+assert prop in chebi_hierarchy.nodes["chebi:132964"]
+assert chebi_hierarchy.nodes["chebi:132964"][prop] == "C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F"
 ```
 
 ### Relations
@@ -304,9 +283,9 @@ way)
 
 ```python
 >>> import pyobo
->>> human_mapt_hgnc_id = '6893'
->>> mouse_mapt_mgi_id = '97180'
->>> hgnc_mgi_orthology_mapping = pyobo.get_relation_mapping('hgnc', 'ro:HOM0000017', 'mgi')
+>>> human_mapt_hgnc_id = "6893"
+>>> mouse_mapt_mgi_id = "97180"
+>>> hgnc_mgi_orthology_mapping = pyobo.get_relation_mapping("hgnc", "ro:HOM0000017", "mgi")
 >>> assert mouse_mapt_mgi_id == hgnc_mgi_orthology_mapping[human_mapt_hgnc_id]
 ```
 
@@ -315,9 +294,9 @@ If you want to do it in one line, use:
 ```python
 
 >>> import pyobo
->>> human_mapt_hgnc_id = '6893'
->>> mouse_mapt_mgi_id = '97180'
->>> assert mouse_mapt_mgi_id == pyobo.get_relation('hgnc', 'ro:HOM0000017', 'mgi', human_mapt_hgnc_id)
+>>> human_mapt_hgnc_id = "6893"
+>>> mouse_mapt_mgi_id = "97180"
+>>> assert mouse_mapt_mgi_id == pyobo.get_relation("hgnc", "ro:HOM0000017", "mgi", human_mapt_hgnc_id)
 ```
 
 ### Writings Tests that Use PyOBO
@@ -333,8 +312,8 @@ import pyobo
 from pyobo.mocks import get_mock_id_name_mapping
 
 mock_id_name_mapping = get_mock_id_name_mapping({
-  'chebi': {
-      '132964': 'fluazifop-P-butyl',
+  "chebi": {
+      "132964": "fluazifop-P-butyl",
   },
 })
 
@@ -342,33 +321,21 @@ class MyTestCase(unittest.TestCase):
   def my_test(self):
       with mock_id_name_mapping:
           # use functions directly, or use your functions that wrap them
-          pyobo.get_name('chebi', '1234')
+          pyobo.get_name("chebi", "1234")
 ```
 
-## Curation of the Bioregistry
+## Preprocessing CURIEs, URIs, and unqualified identifiers
 
 In order to normalize references and identify resources, PyOBO uses the
 [Bioregistry](https://github.com/bioregistry/bioregistry). It used to be a part
 of PyOBO, but has since been externalized for more general reuse.
 
 At
-[src/pyobo/registries/metaregistry.json](https://github.com/pyobo/pyobo/blob/master/src/pyobo/registries/metaregistry.json)
-is the curated "metaregistry". This is a source of information that contains all
-sorts of fixes for missing/wrong information in MIRIAM, OLS, and OBO Foundry;
-entries that don't appear in any of them; additional synonym information for
-each namespace/prefix; rules for normalizing xrefs and CURIEs, etc.
-
-Other entries in the metaregistry:
-
-- The `"remappings"->"full"` entry is a dictionary from strings that might
-  follow `xref:` in a given OBO file that need to be completely replaced, due to
-  incorrect formatting
-- The `"remappings"->"prefix"` entry contains a dictionary of prefixes for xrefs
-  that need to be remapped. Several rules, for example, remove superfluous
-  spaces that occur inside CURIEs or and others address instances of the GOGO
-  issue.
-- The `"blacklists"` entry contains rules for throwing out malformed xrefs based
-  on full string, just prefix, or just suffix.
+[src/pyobo/identifier_utils/preprocessing.json](https://github.com/pyobo/pyobo/blob/master/src/pyobo/src/pyobo/identifier_utils/preprocessing.json)
+is the curated set of pre-processing rules. These are used in combination with
+the `curies` package to do pre-processing steps on CURIEs, URIs, and unqualified
+identifiers beyond what is possible with the Bioregistry. See
+https://curies.readthedocs.io/en/latest/preprocessing.html.
 
 ## Troubleshooting
 
@@ -389,7 +356,6 @@ The most recent release can be installed from
 [PyPI](https://pypi.org/project/pyobo/) with uv:
 
 ```console
-python3 -m pip install pyobo
 $ uv pip install pyobo
 ```
 

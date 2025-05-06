@@ -6,7 +6,6 @@ import logging
 from collections.abc import Iterable
 
 import bioregistry
-import curies
 from bioontologies.obograph import (
     Definition,
     Edge,
@@ -20,7 +19,7 @@ from bioontologies.obograph import (
 from bioontologies.robot import ParseResults
 from tqdm import tqdm
 
-from pyobo.struct import Obo, OBOLiteral, Reference, Referenced, Term
+from pyobo.struct import Obo, OBOLiteral, Reference, Term
 from pyobo.struct.typedef import definition_source, is_a
 
 __all__ = [
@@ -42,7 +41,11 @@ def graph_from_obo(obo: Obo, use_tqdm: bool = True) -> Graph:
     nodes: list[Node] = []
     edges: list[Edge] = []
     for term in tqdm(
-        obo, disable=not use_tqdm, unit="term", unit_scale=True, desc=f"[{obo.ontology}] to JSON"
+        obo,
+        disable=not use_tqdm,
+        unit="term",
+        unit_scale=True,
+        desc=f"[{obo._prefix_version}] to OBO Graph JSON",
     ):
         nodes.append(_get_class_node(term))
         edges.extend(_iter_edges(term))
@@ -62,10 +65,6 @@ def _get_meta(obo: Obo) -> Meta:
     )
 
 
-def _rewire(r: curies.Reference | Referenced) -> curies.Reference:
-    return curies.Reference(prefix=r.prefix, identifier=r.identifier)
-
-
 def _get_class_node(term: Term) -> Node:
     if term.provenance or term.definition:
         definition = Definition.from_parsed(
@@ -75,8 +74,8 @@ def _get_class_node(term: Term) -> Node:
         definition = None
     xrefs = [
         Xref.from_parsed(
-            predicate=_rewire(mapping_predicate),
-            value=_rewire(mapping_object),
+            predicate=Reference.from_reference(mapping_predicate),
+            value=Reference.from_reference(mapping_object),
         )
         for mapping_predicate, mapping_object in term.get_mappings(
             include_xrefs=True, add_context=False
@@ -85,8 +84,8 @@ def _get_class_node(term: Term) -> Node:
     synonyms = [
         Synonym.from_parsed(
             name=synonym.name,
-            predicate=synonym.predicate,
-            synonym_type=_rewire(synonym.type) if synonym.type else None,
+            predicate=Reference.from_reference(synonym.predicate),
+            synonym_type=Reference.from_reference(synonym.type) if synonym.type else None,
             references=_prep_prov(synonym.provenance),
         )
         for synonym in term.synonyms
@@ -105,7 +104,7 @@ def _get_class_node(term: Term) -> Node:
         lbl=term.name,
         meta=meta,
         type="CLASS",
-        reference=_rewire(term.reference),
+        reference=Reference.from_reference(term.reference),
         standardized=True,
     )
 
@@ -115,7 +114,7 @@ def _prep_prov(provenance):
     for x in provenance:
         match x:
             case Reference():
-                rv.append(_rewire(x))
+                rv.append(Reference.from_reference(x))
             case OBOLiteral():
                 logger.debug("not implemented to convert literal provenance")
                 continue
@@ -125,24 +124,24 @@ def _prep_prov(provenance):
 def _iter_edges(term: Term) -> Iterable[Edge]:
     for parent in term.parents:
         yield Edge.from_parsed(
-            _rewire(term.reference),
-            _rewire(is_a.reference),
-            _rewire(parent),
+            Reference.from_reference(term.reference),
+            Reference.from_reference(is_a.reference),
+            Reference.from_reference(parent),
         )
 
     for typedef, targets in term.relationships.items():
         for target in targets:
             yield Edge.from_parsed(
-                _rewire(term.reference),
-                _rewire(typedef),
-                _rewire(target),
+                Reference.from_reference(term.reference),
+                Reference.from_reference(typedef),
+                Reference.from_reference(target),
             )
 
     for provenance_reference in term.provenance:
         if isinstance(provenance_reference, Reference):
             yield Edge.from_parsed(
-                _rewire(term.reference),
-                _rewire(definition_source.reference),
-                _rewire(provenance_reference),
+                Reference.from_reference(term.reference),
+                Reference.from_reference(definition_source.reference),
+                Reference.from_reference(provenance_reference),
             )
     # TODO also look through xrefs and seealso to get provenance xrefs?

@@ -105,4 +105,4 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    PharmGKBGeneGetter().write_default(force=True, write_obo=True, use_tqdm=True)
+    PharmGKBGeneGetter.cli()

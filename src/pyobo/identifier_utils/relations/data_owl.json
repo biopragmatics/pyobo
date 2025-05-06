@@ -1,0 +1,57 @@
+[
+  {
+    "identifier": "backwardCompatibleWith",
+    "label": "backwardCompatibleWith",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "bottomDataProperty",
+    "label": "bottomDataProperty",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "bottomObjectProperty",
+    "label": "bottomObjectProperty",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "deprecated",
+    "label": "deprecated",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "imports",
+    "label": "imports",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "incompatibleWith",
+    "label": "incompatibleWith",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "priorVersion",
+    "label": "priorVersion",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "topDataProperty",
+    "label": "topDataProperty",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "topObjectProperty",
+    "label": "topObjectProperty",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "versionIRI",
+    "label": "versionIRI",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "versionInfo",
+    "label": "versionInfo",
+    "prefix": "owl"
+  }
+]

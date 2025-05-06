@@ -99,25 +99,22 @@ def ensure_df(
 class CacheArtifact(enum.Enum):
     """An enumeration for."""
 
-    names = "names.tsv"
-    definitions = "definitions.tsv"
-    species = "species.tsv"
-    synonyms = "synonyms.tsv"  # deprecated
-    xrefs = "xrefs.tsv"  # deprecated
-    mappings = "mappings.tsv"
-    relations = "relations.tsv"
-    alts = "alt_ids.tsv"
-    typedefs = "typedefs.tsv"
-    literal_mappings = "literal_mappings.tsv"
-    references = "references.tsv"
-    obsoletes = "obsolete.tsv"
+    names = "names.tsv.gz"
+    definitions = "definitions.tsv.gz"
+    species = "species.tsv.gz"
+    mappings = "mappings.tsv.gz"
+    relations = "relations.tsv.gz"
+    alts = "alt_ids.tsv.gz"
+    typedefs = "typedefs.tsv.gz"
+    literal_mappings = "literal_mappings.tsv.gz"
+    references = "references.tsv.gz"
+    obsoletes = "obsolete.tsv.gz"
 
-    properties = "properties.tsv"  # deprecated
-    literal_properties = "literal_properties.tsv"
-    object_properties = "object_properties.tsv"
+    literal_properties = "literal_properties.tsv.gz"
+    object_properties = "object_properties.tsv.gz"
 
-    nodes = "nodes.tsv"
-    edges = "edges.tsv"
+    nodes = "nodes.tsv.gz"
+    edges = "edges.tsv.gz"
 
     prefixes = "prefixes.json"
     metadata = "metadata.json"

@@ -12,11 +12,11 @@ import bioregistry
 import curies
 import dateutil.parser
 import pytz
+from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
+from curies.preprocessing import BlocklistError
 
-from .._reference_tmp import Reference
 from ..identifier_utils import (
-    BlacklistedError,
     NotCURIEError,
     ParseError,
     UnparsableIRIError,
@@ -40,7 +40,7 @@ def _parse_str_or_curie_or_uri(
     str_curie_or_uri: str,
     name: str | None = None,
     *,
-    strict: bool = True,
+    strict: bool = False,
     ontology_prefix: str | None = None,
     node: Reference | None = None,
     predicate: Reference | None = None,
@@ -62,7 +62,7 @@ def _parse_str_or_curie_or_uri(
     match reference:
         case Reference():
             return reference
-        case BlacklistedError():
+        case BlocklistError():
             return None
         case ParseError():
             if strict:
@@ -202,7 +202,7 @@ def _obo_parse_identifier(
     str_or_curie_or_uri: str,
     *,
     ontology_prefix: str,
-    strict: bool = True,
+    strict: bool = False,
     node: Reference | None = None,
     predicate: Reference | None = None,
     line: str | None = None,
@@ -224,7 +224,7 @@ def _obo_parse_identifier(
     ):
         case Reference() as reference:
             return reference
-        case BlacklistedError():
+        case BlocklistError():
             return None
         case NotCURIEError() as exc:
             # this means there's no colon `:`
@@ -250,7 +250,7 @@ def _parse_reference_or_uri_literal(
     str_or_curie_or_uri: str,
     *,
     ontology_prefix: str,
-    strict: bool = True,
+    strict: bool = False,
     node: Reference,
     predicate: Reference | None = None,
     line: str,
@@ -272,7 +272,7 @@ def _parse_reference_or_uri_literal(
     ):
         case Reference() as reference:
             return reference
-        case BlacklistedError():
+        case BlocklistError():
             return None
         case UnparsableIRIError():
             # this means that it's defininitely a URI,

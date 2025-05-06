@@ -4,7 +4,6 @@ import logging
 from collections.abc import Mapping
 
 import pandas as pd
-from curies import Reference
 from tqdm import tqdm
 from typing_extensions import Unpack
 
@@ -17,6 +16,7 @@ from ..constants import (
 )
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
+from ..struct import Reference
 from ..struct.struct_utils import OBOLiteral, ReferenceHint, _ensure_ref
 from ..utils.cache import cached_df
 from ..utils.io import multidict
@@ -113,18 +113,14 @@ def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.Da
     :param prefix: the resource to load
     :returns: A dataframe with the properties
     """
-    version = get_version_from_kwargs(prefix, kwargs)
-    path = get_cache_path(prefix, CacheArtifact.properties, version=version)
-
-    @cached_df(
-        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
-    )
-    def _df_getter() -> pd.DataFrame:
-        return get_ontology(prefix, **kwargs).get_properties_df(
-            use_tqdm=check_should_use_tqdm(kwargs)
-        )
-
-    return _df_getter()
+    df1 = get_literal_properties_df(prefix, **kwargs)
+    df2 = get_object_properties_df(prefix, **kwargs)
+    df = pd.concat([df1[["source", "predicate", "target"]], df2])
+    ll = len(prefix) + 1
+    df[f"{prefix}_id"] = df["source"].map(lambda x: x[ll:])
+    df = df.rename(columns={"predicate": "property", "target": "value"})
+    del df["source"]
+    return df[[f"{prefix}_id", "property", "value"]]
 
 
 @wrap_norm_prefix

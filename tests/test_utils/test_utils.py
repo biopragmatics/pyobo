@@ -16,11 +16,11 @@ class TestStringUtils(unittest.TestCase):
 
     def test_strip_prefix(self):
         """Test stripping prefixes works."""
-        self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("GO:1234").pair)
-        self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("go:1234").pair)
+        self.assertEqual(("go", "1234567"), _parse_str_or_curie_or_uri_helper("GO:1234567").pair)
+        self.assertEqual(("go", "1234567"), _parse_str_or_curie_or_uri_helper("go:1234567").pair)
 
-        self.assertIsInstance(_parse_str_or_curie_or_uri_helper("1234"), NotCURIEError)
-        self.assertEqual(("go", "1234"), _parse_str_or_curie_or_uri_helper("GO:GO:1234").pair)
+        self.assertIsInstance(_parse_str_or_curie_or_uri_helper("1234567"), NotCURIEError)
+        self.assertEqual(("go", "1234567"), _parse_str_or_curie_or_uri_helper("GO:GO:1234567").pair)
 
         self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("pubmed:1234").pair)
         # Test remapping

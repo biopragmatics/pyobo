@@ -1,26 +1,28 @@
 """I/O utilities."""
 
 import collections.abc
+import contextlib
 import csv
 import gzip
 import logging
 from collections import defaultdict
-from collections.abc import Iterable, Mapping
+from collections.abc import Generator, Iterable, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TypeVar
+from typing import Literal, TextIO, TypeVar
 
 import pandas as pd
 from tqdm.auto import tqdm
 
 __all__ = [
     "get_reader",
-    "get_writer",
     "multidict",
     "multisetdict",
     "open_map_tsv",
     "open_multimap_tsv",
     "open_reader",
+    "safe_open",
+    "safe_open_writer",
     "write_iterable_tsv",
     "write_map_tsv",
     "write_multimap_tsv",
@@ -36,7 +38,7 @@ Y = TypeVar("Y")
 def open_reader(path: str | Path, sep: str = "\t"):
     """Open a file and get a reader for it."""
     path = Path(path)
-    with gzip.open(path, "rt") if path.suffix == ".gz" else open(path) as file:
+    with safe_open(path, read=True) as file:
         yield get_reader(file, sep=sep)
 
 
@@ -45,16 +47,11 @@ def get_reader(x, sep: str = "\t"):
     return csv.reader(x, delimiter=sep, quoting=csv.QUOTE_MINIMAL)
 
 
-def get_writer(x, sep: str = "\t"):
-    """Get a :func:`csv.writer` with PyOBO default settings."""
-    return csv.writer(x, delimiter=sep, quoting=csv.QUOTE_MINIMAL)
-
-
 def open_map_tsv(
     path: str | Path, *, use_tqdm: bool = False, has_header: bool = True
 ) -> Mapping[str, str]:
     """Load a mapping TSV file into a dictionary."""
-    with open(path) as file:
+    with safe_open(path, read=True) as file:
         if has_header:
             next(file)  # throw away header
         if use_tqdm:
@@ -84,9 +81,12 @@ def _help_multimap_tsv(
     use_tqdm: bool = False,
     has_header: bool = True,
 ) -> Iterable[tuple[str, str]]:
-    with open(path) as file:
+    with safe_open(path, read=True) as file:
         if has_header:
-            next(file)  # throw away header
+            try:
+                next(file)  # throw away header
+            except gzip.BadGzipFile as e:
+                raise ValueError(f"could not open file {path}") from e
         if use_tqdm:
             file = tqdm(file, desc=f"loading TSV from {path}")
         yield from get_reader(file)
@@ -145,8 +145,32 @@ def write_iterable_tsv(
     """Write a mapping dictionary to a TSV file."""
     it = (row for row in it if all(cell is not None for cell in row))
     it = sorted(it)
-    with open(path, "w") as file:
-        writer = get_writer(file, sep=sep)
+    with safe_open_writer(path, delimiter=sep) as writer:
         if header is not None:
             writer.writerow(header)
         writer.writerows(it)
+
+
+@contextlib.contextmanager
+def safe_open(
+    path: str | Path, read: bool, encoding: str | None = None
+) -> Generator[TextIO, None, None]:
+    """Safely open a file for reading or writing text."""
+    path = Path(path).expanduser().resolve()
+    mode: Literal["rt", "wt"] = "rt" if read else "wt"
+    if path.suffix.endswith(".gz"):
+        with gzip.open(path, mode=mode, encoding=encoding) as file:
+            yield file
+    else:
+        with open(path, mode=mode) as file:
+            yield file
+
+
+@contextlib.contextmanager
+def safe_open_writer(f: str | Path | TextIO, *, delimiter: str = "\t"):  # type:ignore
+    """Open a CSV writer, wrapping :func:`csv.writer`."""
+    if isinstance(f, str | Path):
+        with safe_open(f, read=False) as file:
+            yield csv.writer(file, delimiter=delimiter)
+    else:
+        yield csv.writer(f, delimiter=delimiter)
