@@ -9,7 +9,6 @@ from collections.abc import Iterable
 from functools import partial
 from typing import cast
 
-import bioregistry
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
 
@@ -21,7 +20,6 @@ from ..api import (
     get_id_synonyms_mapping,
     get_id_to_alts,
     get_mappings_df,
-    get_metadata,
     get_properties_df,
     get_relations_df,
     get_typedef_df,
@@ -44,13 +42,6 @@ def _iter_ncbigene(left: int, right: int) -> Iterable[tuple[str, str, str]]:
         ):
             parts = line.strip().split("\t")
             yield ncbigene.PREFIX, parts[left], parts[right]
-
-
-def _iter_metadata(**kwargs: Unpack[IterHelperHelperDict]):
-    for prefix, data in iter_helper_helper(get_metadata, **kwargs):
-        version = data["version"]
-        logger.debug(f"[{prefix}] using version {version}")
-        yield prefix, version, data["date"], bioregistry.is_deprecated(prefix)
 
 
 def _iter_names(leave: bool = False, **kwargs) -> Iterable[tuple[str, str, str]]:

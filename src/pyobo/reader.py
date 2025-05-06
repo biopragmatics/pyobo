@@ -52,6 +52,7 @@ from .struct.struct_utils import Annotation, Stanza
 from .struct.typedef import comment as has_comment
 from .struct.typedef import default_typedefs, has_ontology_root_term
 from .utils.cache import write_gzipped_graph
+from .utils.io import safe_open
 from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
 
 __all__ = [
@@ -75,13 +76,7 @@ def from_obo_path(
 ) -> Obo:
     """Get the OBO graph from a path."""
     path = Path(path).expanduser().resolve()
-    if path.suffix.endswith(".gz"):
-        import gzip
-
-        logger.info("[%s] parsing gzipped OBO with obonet from %s", prefix or "<unknown>", path)
-        with gzip.open(path, "rt") as file:
-            graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete, use_tqdm=use_tqdm)
-    elif path.suffix.endswith(".zip"):
+    if path.suffix.endswith(".zip"):
         import io
         import zipfile
 
@@ -94,7 +89,7 @@ def from_obo_path(
                 )
     else:
         logger.info("[%s] parsing OBO with obonet from %s", prefix or "<unknown>", path)
-        with open(path) as file:
+        with safe_open(path, read=True) as file:
             graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete, use_tqdm=use_tqdm)
 
     if prefix:

@@ -70,7 +70,7 @@ from ..constants import (
     TARGET_PREFIX,
 )
 from ..utils.cache import write_gzipped_graph
-from ..utils.io import multidict, write_iterable_tsv
+from ..utils.io import multidict, safe_open, write_iterable_tsv
 from ..utils.path import (
     CacheArtifact,
     get_cache_path,
@@ -712,6 +712,13 @@ class Obo:
             raise ValueError(f"There is no version available for {self.ontology}")
         return self.data_version
 
+    @property
+    def _prefix_version(self) -> str:
+        """Get the prefix and version (for logging)."""
+        if self.data_version:
+            return f"{self.ontology} {self.data_version}"
+        return self.ontology
+
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in this ontology."""
         raise NotImplementedError
@@ -722,10 +729,11 @@ class Obo:
 
         return graph_from_obo(self)
 
-    def write_obograph(self, path: Path) -> None:
+    def write_obograph(self, path: str | Path) -> None:
         """Write OBO Graph json."""
         graph = self.get_graph()
-        path.write_text(graph.model_dump_json(indent=2, exclude_none=True, exclude_unset=True))
+        with safe_open(path, read=False) as file:
+            file.write(graph.model_dump_json(indent=2, exclude_none=True, exclude_unset=True))
 
     @classmethod
     def cli(cls, *args, default_rewrite: bool = False) -> Any:
@@ -761,13 +769,12 @@ class Obo:
                 click.secho(f"[{cls.ontology}] Got an exception during instantiation - {type(e)}")
                 sys.exit(1)
             inst.write_default(
-                write_obograph=True,
-                write_obo=True,
+                write_obograph=False,
+                write_obo=False,
                 write_owl=owl,
                 write_ofn=ofn,
                 write_ttl=ttl,
                 write_nodes=True,
-                write_edges=True,
                 force=force or rewrite,
                 use_tqdm=True,
             )
@@ -969,9 +976,14 @@ class Obo:
             emit_annotation_properties=emit_annotation_properties,
         )
         if use_tqdm:
-            it = tqdm(it, desc=f"[{self.ontology}] writing OBO", unit_scale=True, unit="line")
+            it = tqdm(
+                it,
+                desc=f"[{self._prefix_version}] writing OBO",
+                unit_scale=True,
+                unit="line",
+            )
         if isinstance(file, str | Path | os.PathLike):
-            with open(file, "w") as fh:
+            with safe_open(file, read=False) as fh:
                 self._write_lines(it, fh)
         else:
             self._write_lines(it, file)
@@ -1002,11 +1014,72 @@ class Obo:
 
     def write_nodes(self, path: str | Path) -> None:
         """Write a nodes TSV file."""
-        # TODO reimplement internally
-        self.get_graph().get_nodes_df().to_csv(path, sep="\t", index=False)
+        write_iterable_tsv(
+            path=path,
+            header=self.nodes_header,
+            it=self.iterate_edge_rows(),
+        )
+
+    @property
+    def nodes_header(self) -> Sequence[str]:
+        """Get the header for nodes."""
+        return [
+            "curie:ID",
+            "name:string",
+            "synonyms:string[]",
+            "synonym_predicates:string[]",
+            "synonym_types:string[]",
+            "definition:string",
+            "deprecated:boolean",
+            "type:string",
+            "provenance:string[]",
+            "alts:string[]",
+            "replaced_by:string[]",
+            "mapping_objects:string[]",
+            "mapping_predicates:string[]",
+            "version:string",
+        ]
+
+    def _get_node_row(self, node: Term, sep: str, version: str) -> Sequence[str]:
+        synonym_predicate_curies, synonym_type_curies, synonyms = [], [], []
+        for synonym in node.synonyms:
+            synonym_predicate_curies.append(synonym.predicate.curie)
+            synonym_type_curies.append(synonym.type.curie if synonym.type else "")
+            synonyms.append(synonym.name)
+        mapping_predicate_curies, mapping_target_curies = [], []
+        for predicate, obj in node.get_mappings(include_xrefs=True, add_context=False):
+            mapping_predicate_curies.append(predicate.curie)
+            mapping_target_curies.append(obj.curie)
+        return (
+            node.curie,
+            node.name or "",
+            sep.join(synonyms),
+            sep.join(synonym_predicate_curies),
+            sep.join(synonym_type_curies),
+            node.definition or "",
+            "true" if node.is_obsolete else "false",
+            node.type,
+            sep.join(
+                reference.curie for reference in node.provenance if isinstance(reference, Reference)
+            ),
+            sep.join(alt_reference.curie for alt_reference in node.alt_ids),
+            sep.join(ref.curie for ref in node.get_replaced_by()),
+            sep.join(mapping_target_curies),
+            sep.join(mapping_predicate_curies),
+            version,
+        )
+
+    def iterate_node_rows(self, sep: str = ";") -> Iterable[Sequence[str]]:
+        """Get a nodes iterator appropriate for serialization."""
+        version = self.data_version or ""
+        for node in self.iter_terms():
+            if node.prefix != self.ontology:
+                continue
+            yield self._get_node_row(node, sep=sep, version=version)
 
     def write_edges(self, path: str | Path) -> None:
         """Write a edges TSV file."""
+        # node, this is actually taken care of as part of the cache configuration
         write_iterable_tsv(
             path=path,
             header=self.edges_header,
@@ -1025,15 +1098,15 @@ class Obo:
 
     @property
     def _obo_path(self) -> Path:
-        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.obo")
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.obo.gz")
 
     @property
     def _obograph_path(self) -> Path:
-        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.json")
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.json.gz")
 
     @property
     def _owl_path(self) -> Path:
-        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.owl")
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.owl.gz")
 
     @property
     def _obonet_gz_path(self) -> Path:
@@ -1041,7 +1114,7 @@ class Obo:
 
     @property
     def _ofn_path(self) -> Path:
-        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.ofn")
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.ofn.gz")
 
     @property
     def _ttl_path(self) -> Path:
@@ -1060,22 +1133,10 @@ class Obo:
                 [f"{self.ontology}_id", "taxonomy_id"],
                 self.iterate_id_species,
             ),
-            (
-                # TODO deprecate this in favor of literal mappings output
-                CacheArtifact.synonyms,
-                [f"{self.ontology}_id", "synonym"],
-                self.iterate_synonym_rows,
-            ),
             (CacheArtifact.alts, [f"{self.ontology}_id", "alt_id"], self.iterate_alt_rows),
             (CacheArtifact.mappings, SSSOM_DF_COLUMNS, self.iterate_mapping_rows),
             (CacheArtifact.relations, self.relations_header, self.iter_relation_rows),
             (CacheArtifact.edges, self.edges_header, self.iterate_edge_rows),
-            (
-                # TODO deprecate this in favor of pair of literal and object properties
-                CacheArtifact.properties,
-                self.properties_header,
-                self._iter_property_rows,
-            ),
             (
                 CacheArtifact.object_properties,
                 self.object_properties_header,
@@ -1097,8 +1158,8 @@ class Obo:
         """Write the metadata JSON file."""
         metadata = self.get_metadata()
         for path in (self._root_metadata_path, self._get_cache_path(CacheArtifact.metadata)):
-            logger.debug("[%s v%s] caching metadata to %s", self.ontology, self.data_version, path)
-            with path.open("w") as file:
+            logger.debug("[%s] caching metadata to %s", self._prefix_version, path)
+            with safe_open(path, read=False) as file:
                 json.dump(metadata, file, indent=2)
 
     def write_prefix_map(self) -> None:
@@ -1110,9 +1171,8 @@ class Obo:
         """Write cache parts."""
         typedefs_path = self._get_cache_path(CacheArtifact.typedefs)
         logger.debug(
-            "[%s v%s] caching typedefs to %s",
-            self.ontology,
-            self.data_version,
+            "[%s] caching typedefs to %s",
+            self._prefix_version,
             typedefs_path,
         )
         typedef_df: pd.DataFrame = self.get_typedef_df()
@@ -1121,10 +1181,10 @@ class Obo:
 
         for cache_artifact, header, fn in self._get_cache_config():
             path = self._get_cache_path(cache_artifact)
-            if path.exists() and not force:
+            if path.is_file() and not force:
                 continue
             tqdm.write(
-                f"[{self.ontology} {self.data_version}] writing {cache_artifact.name} to {path}",
+                f"[{self._prefix_version}] writing {cache_artifact.name} to {path}",
             )
             write_iterable_tsv(
                 path=path,
@@ -1139,12 +1199,11 @@ class Obo:
             relations_path = get_relation_cache_path(
                 self.ontology, reference=relation, version=self.data_version
             )
-            if relations_path.exists() and not force:
+            if relations_path.is_file() and not force:
                 continue
             logger.debug(
-                "[%s v%s] caching relation %s ! %s",
-                self.ontology,
-                self.data_version,
+                "[%s] caching relation %s ! %s",
+                self._prefix_version,
                 relation.curie,
                 relation.name,
             )
@@ -1164,8 +1223,7 @@ class Obo:
         write_owl: bool = False,
         write_ofn: bool = False,
         write_ttl: bool = False,
-        write_nodes: bool = True,
-        write_edges: bool = True,
+        write_nodes: bool = False,
         obograph_use_internal: bool = False,
         write_cache: bool = True,
     ) -> None:
@@ -1174,15 +1232,15 @@ class Obo:
         self.write_prefix_map()
         if write_cache:
             self.write_cache(force=force)
-        if write_obo and (not self._obo_path.exists() or force):
-            tqdm.write(f"[{self.ontology}] writing OBO to {self._obo_path}")
+        if write_obo and (not self._obo_path.is_file() or force):
+            tqdm.write(f"[{self._prefix_version}] writing OBO to {self._obo_path}")
             self.write_obo(self._obo_path, use_tqdm=use_tqdm)
-        if (write_ofn or write_owl or write_obograph) and (not self._ofn_path.exists() or force):
-            tqdm.write(f"[{self.ontology}] writing OFN to {self._ofn_path}")
+        if (write_ofn or write_owl or write_obograph) and (not self._ofn_path.is_file() or force):
+            tqdm.write(f"[{self._prefix_version}] writing OFN to {self._ofn_path}")
             self.write_ofn(self._ofn_path)
-        if write_obograph and (not self._obograph_path.exists() or force):
+        if write_obograph and (not self._obograph_path.is_file() or force):
             if obograph_use_internal:
-                tqdm.write(f"[{self.ontology}] writing OBO Graph to {self._obograph_path}")
+                tqdm.write(f"[{self._prefix_version}] writing OBO Graph to {self._obograph_path}")
                 self.write_obograph(self._obograph_path)
             else:
                 import bioontologies.robot
@@ -1193,22 +1251,22 @@ class Obo:
                 bioontologies.robot.convert(
                     self._ofn_path, self._obograph_path, debug=True, merge=False, reason=False
                 )
-        if write_owl and (not self._owl_path.exists() or force):
-            tqdm.write(f"[{self.ontology}] writing OWL to {self._owl_path}")
+        if write_owl and (not self._owl_path.is_file() or force):
+            tqdm.write(f"[{self._prefix_version}] writing OWL to {self._owl_path}")
             import bioontologies.robot
 
             bioontologies.robot.convert(
                 self._ofn_path, self._owl_path, debug=True, merge=False, reason=False
             )
-        if write_ttl and (not self._ttl_path.exists() or force):
-            tqdm.write(f"[{self.ontology}] writing Turtle to {self._ttl_path}")
+        if write_ttl and (not self._ttl_path.is_file() or force):
+            tqdm.write(f"[{self._prefix_version}] writing Turtle to {self._ttl_path}")
             self.write_rdf(self._ttl_path)
-        if write_obonet and (not self._obonet_gz_path.exists() or force):
-            tqdm.write(f"[{self.ontology}] writing obonet to {self._obonet_gz_path}")
+        if write_obonet and (not self._obonet_gz_path.is_file() or force):
+            tqdm.write(f"[{self._prefix_version}] writing obonet to {self._obonet_gz_path}")
             self.write_obonet_gz(self._obonet_gz_path)
         if write_nodes:
             nodes_path = self._get_cache_path(CacheArtifact.nodes)
-            tqdm.write(f"[{self.ontology}] writing nodes TSV to {nodes_path}")
+            tqdm.write(f"[{self._prefix_version}] writing nodes TSV to {nodes_path}")
             self.write_nodes(nodes_path)
 
     @property
@@ -1335,9 +1393,8 @@ class Obo:
             rv.add_edge(_source, _target, key=_key)
 
         logger.info(
-            "[%s v%s] exported graph with %d nodes",
-            self.ontology,
-            self.data_version,
+            "[%s] exported graph with %d nodes",
+            self._prefix_version,
             rv.number_of_nodes(),
         )
         return rv

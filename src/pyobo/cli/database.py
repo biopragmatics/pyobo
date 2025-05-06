@@ -2,8 +2,10 @@
 
 import logging
 import warnings
+from collections.abc import Iterable
 from pathlib import Path
 
+import bioregistry
 import click
 from more_click import verbose_option
 from tqdm.contrib.logging import logging_redirect_tqdm
@@ -11,11 +13,11 @@ from typing_extensions import Unpack
 from zenodo_client import update_zenodo
 
 from .database_utils import (
+    IterHelperHelperDict,
     _iter_alts,
     _iter_definitions,
     _iter_edges,
     _iter_mappings,
-    _iter_metadata,
     _iter_names,
     _iter_properties,
     _iter_relations,
@@ -23,6 +25,7 @@ from .database_utils import (
     _iter_synonyms,
     _iter_typedefs,
     _iter_xrefs,
+    iter_helper_helper,
 )
 from .utils import (
     Clickable,
@@ -44,11 +47,13 @@ from ..constants import (
     TYPEDEFS_RECORD,
     DatabaseKwargs,
 )
-from ..getters import db_output_helper
+from ..getters import db_output_helper, get_ontology
 
 __all__ = [
     "main",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 @click.group(name="database")
@@ -130,8 +135,31 @@ def build(ctx: click.Context, **kwargs: Unpack[DatabaseKwargs]) -> None:
 
 
 @database_annotate
+def cache(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
+    """Cache all things."""
+    if zenodo:
+        click.echo("no zenodo for caching")
+
+    kwargs["force_process"] = True
+    with logging_redirect_tqdm():
+        for _ in iter_helper_helper(get_ontology, **kwargs):
+            # this pass intentional to consume the iterable
+            pass
+
+
+@database_annotate
 def metadata(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the prefix-metadata dump."""
+    from ..api import get_metadata
+
+    def _iter_metadata(
+        **kwargs: Unpack[IterHelperHelperDict],
+    ) -> Iterable[tuple[str, str, str, bool]]:
+        for prefix, data in iter_helper_helper(get_metadata, **kwargs):
+            version = data["version"]
+            logger.debug(f"[{prefix}] using version {version}")
+            yield prefix, version, data["date"], bioregistry.is_deprecated(prefix)
+
     it = _iter_metadata(**kwargs)
     db_output_helper(
         it,
