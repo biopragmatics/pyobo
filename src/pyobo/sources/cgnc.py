@@ -45,7 +45,15 @@ HEADER = [
 
 def get_terms(force: bool = False) -> Iterable[Term]:
     """Get CGNC terms."""
-    df = ensure_df(PREFIX, url=URL, name=f"{PREFIX}.tsv", force=force, header=0, names=HEADER)
+    df = ensure_df(
+        PREFIX,
+        url=URL,
+        name=f"{PREFIX}.tsv",
+        force=force,
+        header=0,
+        names=HEADER,
+        on_bad_lines="skip",
+    )
     for i, (cgnc_id, entrez_id, ensembl_id, name, synonym_1, synoynm_2, _, _) in enumerate(
         df.values
     ):
