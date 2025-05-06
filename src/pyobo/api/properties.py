@@ -113,9 +113,14 @@ def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.Da
     :param prefix: the resource to load
     :returns: A dataframe with the properties
     """
-    raise NotImplementedError(
-        "need to re-implement using a combination of literal_properties and object_properties"
-    )
+    df1 = get_literal_properties_df(prefix, **kwargs)
+    df2 = get_object_properties_df(prefix, **kwargs)
+    df = pd.concat([df1[["source", "predicate", "target"]], df2])
+    ll = len(prefix) + 1
+    df[f"{prefix}_id"] = df["source"].map(lambda x: x[ll:])
+    df = df.rename(columns={"predicate": "property", "target": "value"})
+    del df["source"]
+    return df[[f"{prefix}_id", "property", "value"]]
 
 
 @wrap_norm_prefix
