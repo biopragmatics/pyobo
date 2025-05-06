@@ -40,7 +40,7 @@ def _iter_ncbigene(left: int, right: int) -> Iterable[tuple[str, str, str]]:
     with gzip.open(ncbi_path, "rt") as file:
         next(file)  # throw away the header
         for line in tqdm(
-            file, desc=f"extracting {ncbigene.PREFIX}", unit_scale=True, total=27_000_000
+            file, desc=f"[{ncbigene.PREFIX}] extracting names", unit_scale=True, total=56_700_000
         ):
             parts = line.strip().split("\t")
             yield ncbigene.PREFIX, parts[left], parts[right]
@@ -60,11 +60,14 @@ def _iter_names(leave: bool = False, **kwargs) -> Iterable[tuple[str, str, str]]
     """
     yield from iter_helper(get_id_name_mapping, leave=leave, **kwargs)
     yield from _iter_ncbigene(1, 2)
+    yield from _iter_pubchem_compound()
 
+
+def _iter_pubchem_compound():
     pcc_path = pubchem._ensure_cid_name_path()
     with gzip.open(pcc_path, mode="rt", encoding="ISO-8859-1") as file:
         for line in tqdm(
-            file, desc=f"extracting {pubchem.PREFIX}", unit_scale=True, total=103_000_000
+            file, desc=f"[{pubchem.PREFIX}] extracting names", unit_scale=True, total=119_000_000
         ):
             identifier, name = line.strip().split("\t", 1)
             yield pubchem.PREFIX, identifier, name

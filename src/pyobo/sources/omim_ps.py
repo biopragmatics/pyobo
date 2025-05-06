@@ -13,7 +13,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 PREFIX = "omim.ps"
-URL = "https://omim.org/phenotypicSeriesTitles/all"
+URL = "https://omim.org/phenotypicSeriesTitles/"
 
 
 class OMIMPSGetter(Obo):
@@ -26,13 +26,13 @@ class OMIMPSGetter(Obo):
         soup = get_soup(URL, user_agent="Mozilla/5.0")
         content = soup.find(id="mimContent")
         if content is None:
-            raise ValueError
+            raise ValueError("omim.ps failed - scraper could not find id='mimContent' in HTML")
         table = content.find("table")  # type:ignore[attr-defined]
         if table is None:
-            raise ValueError
+            raise ValueError("omim.ps failed - scraper could not find table in HTML")
         tbody = table.find("tbody")
         if tbody is None:
-            raise ValueError
+            raise ValueError("omim.ps failed - scraper could not find table body in HTML")
         for row in tbody.find_all("tr"):
             anchor = row.find("td").find("a")
             name = anchor.text.strip()
