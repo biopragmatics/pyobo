@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/cthoyt/cookiecutter-snekpack",
-  "commit": "eb27d1b87c67b842cb1adf73846c617af849d10b",
+  "commit": "9bad1ea3f001d8630c8a6e54fffc7d8d0f3e7b42",
   "checkout": null,
   "context": {
     "cookiecutter": {
@@ -24,7 +24,7 @@
       "__runner_tests": "py",
       "__gh_slug": "biopragmatics/pyobo",
       "_template": "https://github.com/cthoyt/cookiecutter-snekpack",
-      "_commit": "eb27d1b87c67b842cb1adf73846c617af849d10b"
+      "_commit": "9bad1ea3f001d8630c8a6e54fffc7d8d0f3e7b42"
     }
   },
   "directory": null
