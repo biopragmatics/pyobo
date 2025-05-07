@@ -73,7 +73,6 @@ from .struct import (
     TypeDef,
     default_reference,
 )
-from .struct.obograph.export_obograph import parse_results_from_obo
 from .utils.path import ensure_path
 from .version import get_version
 
