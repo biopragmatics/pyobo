@@ -1,9 +1,10 @@
 """Exports to OBO Graph JSON."""
 
 from curies import Converter
-from obographs import Edge, Graph, GraphDocument, Meta, Node, Property
+from obographs import Graph, GraphDocument, Meta, Node, Property
+from obographs.model import Edge
 
-from pyobo.struct import Obo
+from pyobo.struct import Obo, OBOLiteral
 
 
 def to_obograph(obo: Obo, converter: Converter) -> GraphDocument:
@@ -27,7 +28,7 @@ def _get_meta(obo: Obo, converter: Converter) -> Meta:
         properties.append(
             Property(
                 pred="http://purl.obolibrary.org/obo/IAO_0000700",
-                val=converter.expand_reference(root_term, strict=True),
+                val=converter.expand_reference(root_term.pair, strict=True),
             )
         )
 
@@ -51,8 +52,8 @@ def _get_meta(obo: Obo, converter: Converter) -> Meta:
         properties.append(
             Property(
                 pred=converter.expand_reference(p.predicate.pair, strict=True),
-                val=p.value
-                if isinstance(p.value, str)
+                val=p.value.value
+                if isinstance(p.value, OBOLiteral)
                 else converter.expand_reference(p.value.pair, strict=True),
             )
         )

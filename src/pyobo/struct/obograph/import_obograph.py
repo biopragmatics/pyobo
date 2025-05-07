@@ -31,12 +31,14 @@ def from_standardized_graph(prefix: str, graph: StandardizedGraph) -> Obo:
                 typedefs[stanza.reference] = stanza
 
     for edge in graph.edges:
-        if edge.subject in terms:
-            stanza = terms[edge.subject]
-            stanza.append_relationship(edge.predicate, edge.object)
-        elif edge.subject in typedefs:
-            stanza = typedefs[edge.subject]
-            stanza.append_relationship(edge.predicate, edge.object)
+        s, p, o = (Reference.from_reference(r) for r in (edge.subject, edge.predicate, edge.object))
+
+        if s in terms:
+            stanza = terms[s]
+            stanza.append_relationship(p, o)
+        elif s in typedefs:
+            stanza = typedefs[s]
+            stanza.append_relationship(p, o)
 
     root_terms: list[Reference] = []
     property_values = []
@@ -50,6 +52,8 @@ def from_standardized_graph(prefix: str, graph: StandardizedGraph) -> Obo:
                 else:
                     root_terms.append(Reference.from_reference(prop.value))
             elif predicate.pair == ("oboinowl", "auto_generated_by"):
+                if not isinstance(prop.value, str):
+                    raise TypeError
                 auto_generated_by = prop.value
             # TODO specific subsetdef, imports
             else:
@@ -70,7 +74,7 @@ def from_standardized_graph(prefix: str, graph: StandardizedGraph) -> Obo:
         _typedefs=list(typedefs.values()),
         _root_terms=root_terms,
         _property_values=property_values,
-        _data_version=graph.meta and graph.meta.version,
+        _data_version=graph.meta.version if graph.meta is not None else None,
         _auto_generated_by=auto_generated_by,
     )
 
