@@ -9,7 +9,7 @@ from obographs import (
 )
 
 from pyobo import Obo, Reference, StanzaType, Synonym, Term, TypeDef
-from pyobo.struct import make_ad_hoc_ontology, Annotation, OBOLiteral
+from pyobo.struct import Annotation, OBOLiteral, make_ad_hoc_ontology
 from pyobo.struct.typedef import has_ontology_root_term
 
 __all__ = [
@@ -26,42 +26,52 @@ def from_standardized_graph(prefix: str, graph: StandardizedGraph) -> Obo:
         stanza = from_node(node)
         match stanza:
             case Term():
-                terms[node.reference] = stanza
+                terms[stanza.reference] = stanza
             case TypeDef():
-                typedefs[node.reference] = stanza
+                typedefs[stanza.reference] = stanza
 
     for edge in graph.edges:
         if edge.subject in terms:
             stanza = terms[edge.subject]
             stanza.append_relationship(edge.predicate, edge.object)
         elif edge.subject in typedefs:
-            stanza = terms[edge.subject]
+            stanza = typedefs[edge.subject]
             stanza.append_relationship(edge.predicate, edge.object)
 
-    root_terms = []
+    root_terms: list[Reference] = []
     property_values = []
+    auto_generated_by: str | None = None
     if graph.meta:
-        for property in graph.meta.properties or []:
-            if property.predicate == has_ontology_root_term:
-                if isinstance(property.value, str):
+        for prop in graph.meta.properties or []:
+            predicate = Reference.from_reference(prop.predicate)
+            if predicate == has_ontology_root_term:
+                if isinstance(prop.value, str):
                     raise TypeError
-                root_terms.append(property.value)
-            # TODO specific for auto_generated_by, subsetdef, imports
+                else:
+                    root_terms.append(Reference.from_reference(prop.value))
+            elif predicate.pair == ("oboinowl", "auto_generated_by"):
+                auto_generated_by = prop.value
+            # TODO specific subsetdef, imports
             else:
-                property_values.append(Annotation(
-                    predicate=predicate,
-                    # TODO obographs are limited by ability to specify datatype?
-                    value=value if isinstance(value, Reference) else OBOLiteral.string(value)
-                ))
+                property_values.append(
+                    Annotation(
+                        predicate=predicate,
+                        # TODO obographs are limited by ability to specify datatype?
+                        value=OBOLiteral.string(prop.value)
+                        if isinstance(prop.value, str)
+                        else Reference.from_reference(prop.value),
+                    )
+                )
 
     return make_ad_hoc_ontology(
         _ontology=prefix,
         _name=graph.name,
-        terms=terms.values(),
-        _typedefs=typedefs.values(),
+        terms=list(terms.values()),
+        _typedefs=list(typedefs.values()),
         _root_terms=root_terms,
         _property_values=property_values,
         _data_version=graph.meta and graph.meta.version,
+        _auto_generated_by=auto_generated_by,
     )
 
 

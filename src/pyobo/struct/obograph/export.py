@@ -1,17 +1,17 @@
-""""""
+"""Exports to OBO Graph JSON."""
 
-from obographs import Graph, Meta, Edge, Node, GraphDocument, Property
-from pyobo.struct import Obo
-import bioregistry
 from curies import Converter
-import curies
+from obographs import Edge, Graph, GraphDocument, Meta, Node, Property
+
+from pyobo.struct import Obo
 
 
 def to_obograph(obo: Obo, converter: Converter) -> GraphDocument:
-    return GraphDocument(graphs=[to_graph(obo, converter)])
+    """Convert an ontology to an OBO Graph JSON document."""
+    return GraphDocument(graphs=[_to_graph(obo, converter)])
 
 
-def to_graph(obo: Obo, converter: Converter) -> Graph:
+def _to_graph(obo: Obo, converter: Converter) -> Graph:
     return Graph(
         id=f"http://purl.obolibrary.org/obo/{obo.ontology}.owl",
         meta=_get_meta(obo, converter),
@@ -51,12 +51,16 @@ def _get_meta(obo: Obo, converter: Converter) -> Meta:
         properties.append(
             Property(
                 pred=converter.expand_reference(p.predicate.pair, strict=True),
-                val=p.value if isinstance(p.value, str) else converter.expand_reference(p.value.pair, strict=True),
+                val=p.value
+                if isinstance(p.value, str)
+                else converter.expand_reference(p.value.pair, strict=True),
             )
         )
 
     if obo.data_version:
-        version_iri = f"http://purl.obolibrary.org/obo/{obo.ontology}/{obo.data_version}/{obo.ontology}.owl"
+        version_iri = (
+            f"http://purl.obolibrary.org/obo/{obo.ontology}/{obo.data_version}/{obo.ontology}.owl"
+        )
     else:
         version_iri = None
 
