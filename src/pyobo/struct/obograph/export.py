@@ -1,10 +1,11 @@
 """Exports to OBO Graph JSON."""
 
 from curies import Converter
-from obographs import Graph, GraphDocument, Meta, Node, Property
-from obographs.model import Edge
+from curies.vocabulary import DEFAULT_SYNONYM_SCOPE_OIO, synonym_scope_to_oio
+from obographs import Graph, GraphDocument, Meta, Node, Property, Synonym, Xref
+from obographs.model import Definition, Edge
 
-from pyobo.struct import Obo, OBOLiteral
+from pyobo.struct import Obo, OBOLiteral, Term
 
 
 def to_obograph(obo: Obo, converter: Converter) -> GraphDocument:
@@ -72,7 +73,49 @@ def _get_meta(obo: Obo, converter: Converter) -> Meta:
 
 
 def _get_nodes(obo: Obo, converter: Converter) -> list[Node]:
-    return []
+    rv = []
+    for term in obo:
+        rv.append(_get_class_node(term, converter))
+    return rv
+
+
+def _get_class_node(term: Term, converter: Converter) -> Node:
+    if term.definition:
+        definition = Definition.from_parsed(
+            value=term.definition,
+            references=[converter.expand_reference(p.pair, strict=True) for p in term.provenance],
+        )
+    else:
+        definition = None
+    xrefs = [Xref(val=converter.expand_reference(xref.pair, strict=True)) for xref in term.xrefs]
+    synonyms = [
+        Synonym(
+            val=synonym.name,
+            pred=synonym_scope_to_oio[synonym.specificity]
+            if synonym.specificity is not None
+            else DEFAULT_SYNONYM_SCOPE_OIO,
+            synonymType=converter.expand_reference(synonym.type.pair, strict=True)
+            if synonym.type
+            else None,
+            xrefs=[converter.expand_reference(p.pair) for p in synonym.provenance],
+            meta=None,
+        )
+        for synonym in term.synonyms
+    ]
+
+    meta = Meta(
+        definition=definition,
+        xrefs=xrefs,
+        synonyms=synonyms,
+        basicPropertyValues=None,  # TODO properties
+        deprecated=term.is_obsolete or False,
+    )
+    return Node(
+        id=converter.expand_reference(term.reference.pair, strict=True),
+        lbl=term.name,
+        meta=meta,
+        type="CLASS" if term.type == "Term" else "INDIVIDUAL",
+    )
 
 
 def _get_edges(obo: Obo, converter: Converter) -> list[Edge]:

@@ -91,8 +91,9 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
+# TODO remove this
 #: This is what happens if no specificity is given
-DEFAULT_SPECIFICITY: _cv.SynonymScope = "RELATED"
+DEFAULT_SPECIFICITY: _cv.SynonymScope = _cv.DEFAULT_SYNONYM_SCOPE
 
 #: Columns in the SSSOM dataframe
 SSSOM_DF_COLUMNS = [
