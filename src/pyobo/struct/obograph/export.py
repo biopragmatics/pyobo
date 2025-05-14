@@ -3,13 +3,16 @@
 import tempfile
 from pathlib import Path
 
+import bioregistry
 import curies
 import obographs as og
+from bioregistry import NormalizedNamableReference as Reference
 from curies import Converter
 from curies import vocabulary as v
 
 from pyobo.identifier_utils.api import _get_converter
-from pyobo.struct import Obo, OBOLiteral, Term
+from pyobo.struct import Obo, OBOLiteral, Stanza, Term, TypeDef
+from pyobo.struct.struct import FORMAT_VERSION
 from pyobo.utils.io import safe_open
 
 __all__ = [
@@ -116,14 +119,16 @@ def _get_property_chain_axioms(obo: Obo) -> list[og.StandardizedPropertyChainAxi
 
 def _get_meta(obo: Obo) -> og.StandardizedMeta:
     properties = []
-    for root_term in obo.root_terms or []:
-        properties.append(
-            og.StandardizedProperty(
-                predicate=v.has_ontology_root_term,
-                value=root_term,
-            )
-        )
 
+    # 1
+    properties.append(
+        og.StandardizedProperty(
+            predicate=Reference(prefix="oboinowl", identifier="hasOBOFormatVersion"),
+            value=FORMAT_VERSION,
+        )
+    )
+
+    # 5
     if obo.auto_generated_by:
         properties.append(
             og.StandardizedProperty(
@@ -139,6 +144,30 @@ def _get_meta(obo: Obo) -> og.StandardizedMeta:
                 value=obo.name,
             )
         )
+
+    if license_spdx_id := bioregistry.get_license(obo.ontology):
+        properties.append(
+            og.StandardizedProperty(
+                predicate=v.has_license,
+                value=license_spdx_id,
+            )
+        )
+
+    if description := bioregistry.get_description(obo.ontology):
+        properties.append(
+            og.StandardizedProperty(
+                predicate=v.has_license,
+                value=description,
+            )
+        )
+
+        for root_term in obo.root_terms or []:
+            properties.append(
+                og.StandardizedProperty(
+                    predicate=v.has_ontology_root_term,
+                    value=root_term,
+                )
+            )
 
     for p in obo.property_values or []:
         properties.append(
@@ -158,6 +187,7 @@ def _get_meta(obo: Obo) -> og.StandardizedMeta:
     return og.StandardizedMeta(
         properties=properties,
         version=version_iri,
+        # TODO subsets
     )
 
 
@@ -165,19 +195,22 @@ def _get_nodes(obo: Obo) -> list[og.StandardizedNode]:
     rv = []
     for term in obo:
         rv.append(_get_class_node(term))
+    for typedef in obo.typedefs or []:
+        rv.append(_get_typedef_node(typedef))
     return rv
 
 
-def _get_class_node(term: Term) -> og.StandardizedNode:
-    if term.definition:
-        definition = og.StandardizedDefinition(
-            value=term.definition,
-            xrefs=[p for p in term.provenance if isinstance(p, curies.Reference)],
-        )
-    else:
-        definition = None
-    xrefs = [og.StandardizedXref(reference=xref) for xref in term.xrefs]
-    synonyms = [
+def _get_definition(stanza: Stanza) -> og.StandardizedDefinition | None:
+    if not stanza.definition:
+        return None
+    return og.StandardizedDefinition(
+        value=stanza.definition,
+        xrefs=[p for p in stanza.provenance if isinstance(p, curies.Reference)],
+    )
+
+
+def _get_synonyms(stanza: Stanza) -> list[og.StandardizedSynonym]:
+    return [
         og.StandardizedSynonym(
             text=synonym.name,
             predicate=v.synonym_scopes[synonym.specificity]
@@ -186,9 +219,11 @@ def _get_class_node(term: Term) -> og.StandardizedNode:
             type=synonym.type,
             xrefs=[p for p in synonym.provenance if isinstance(p, curies.Reference)],
         )
-        for synonym in term.synonyms
+        for synonym in stanza.synonyms
     ]
 
+
+def _get_properties(term: Stanza) -> list[og.StandardizedProperty]:
     properties = []
     for predicate, obj in term.iterate_object_properties():
         properties.append(
@@ -204,12 +239,18 @@ def _get_class_node(term: Term) -> og.StandardizedNode:
                 value=literal.value,
             )
         )
+    return properties
 
+
+def _get_class_node(term: Term) -> og.StandardizedNode:
+    xrefs = [og.StandardizedXref(reference=xref) for xref in term.xrefs]
+    synonyms = _get_synonyms(term)
+    properties = _get_properties(term)
     meta = og.StandardizedMeta(
-        definition=definition,
+        definition=_get_definition(term),
         xrefs=xrefs,
         synonyms=synonyms,
-        properties=[],
+        properties=properties if properties else None,
         deprecated=term.is_obsolete or False,
     )
     return og.StandardizedNode(
@@ -217,6 +258,26 @@ def _get_class_node(term: Term) -> og.StandardizedNode:
         label=term.name,
         meta=meta,
         type="CLASS" if term.type == "Term" else "INDIVIDUAL",
+    )
+
+
+def _get_typedef_node(typedef: TypeDef) -> og.StandardizedNode:
+    xrefs = [og.StandardizedXref(reference=xref) for xref in typedef.xrefs]
+    synonyms = _get_synonyms(typedef)
+    properties = _get_properties(typedef)
+    meta = og.StandardizedMeta(
+        definition=_get_definition(typedef),
+        xrefs=xrefs,
+        synonyms=synonyms,
+        properties=properties if properties else None,
+        deprecated=typedef.is_obsolete or False,
+    )
+    return og.StandardizedNode(
+        reference=typedef.reference,
+        label=typedef.name,
+        meta=meta,
+        type="PROPERTY",
+        property_type="ANNOTATION" if typedef.is_metadata_tag else "OBJECT",
     )
 
 
