@@ -11,6 +11,7 @@ from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
 from pyobo.identifier_utils import NotCURIEError
 from pyobo.struct.functional.obo_to_functional import get_term_axioms
+from pyobo.struct.obograph import to_parsed_obograph, to_parsed_obograph_oracle
 from pyobo.struct.reference import _parse_datetime, unspecified_matching
 from pyobo.struct.struct import (
     BioregistryError,
@@ -139,9 +140,16 @@ class TestTerm(unittest.TestCase):
         )
         self._assert_lines(ofn, (x.to_funowl() for x in get_term_axioms(term)))
 
-    def assert_funowl_lines(self, text: str, term: Term) -> None:
-        """Assert functional OWL lines are equal."""
-        raise NotImplementedError
+        ont = _ontology_from_term(prefix=term.prefix, term=term)
+        self.maxDiff = None
+        self.assertEqual(
+            to_parsed_obograph_oracle(ont).model_dump(
+                exclude_none=True, exclude_unset=True, exclude_defaults=True
+            ),
+            to_parsed_obograph(ont).model_dump(
+                exclude_none=True, exclude_unset=True, exclude_defaults=True
+            ),
+        )
 
     def assert_boolean_tag(self, name: str, *, curie: str | None = None) -> None:
         """Assert the boolean tag parses properly."""

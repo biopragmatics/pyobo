@@ -1,5 +1,6 @@
 """Exports to OBO Graph JSON."""
 
+import tempfile
 from pathlib import Path
 
 import curies
@@ -9,6 +10,7 @@ from curies import vocabulary as v
 
 from pyobo.identifier_utils.api import _get_converter
 from pyobo.struct import Obo, OBOLiteral, Term
+from pyobo.utils.io import safe_open
 
 __all__ = [
     "to_obograph",
@@ -21,7 +23,28 @@ def write_obograph(obo: Obo, path: str | Path, *, converter: Converter | None = 
     """Write an ontology to a file as OBO Graph JSON."""
     path = Path(path).expanduser().resolve()
     raw_graph = to_obograph(obo, converter=converter)
-    path.write_text(raw_graph.model_dump_json(indent=2, exclude_none=True, exclude_unset=True))
+    with safe_open(path, read=False) as file:
+        file.write(raw_graph.model_dump_json(indent=2, exclude_none=True, exclude_unset=True))
+
+
+def to_parsed_obograph_oracle(
+    obo: Obo, *, converter: Converter | None = None
+) -> og.StandardizedGraphDocument:
+    """Serialize to OBO, convert to OBO Graph JSON with ROBOT, load, then parse."""
+    from bioontologies.robot import convert
+
+    if converter is None:
+        converter = _get_converter()
+
+    with tempfile.TemporaryDirectory() as directory:
+        stub = Path(directory).joinpath("test")
+        obo_path = stub.with_suffix(".obo")
+        obograph_path = stub.with_suffix(".json")
+        obo.write_obo(obo_path)
+        convert(input_path=obo_path, output_path=obograph_path)
+        raw = og.read(obograph_path, squeeze=False)
+    rv = raw.standardize(converter)
+    return rv
 
 
 def to_obograph(obo: Obo, *, converter: Converter | None = None) -> og.GraphDocument:
