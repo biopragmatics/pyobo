@@ -17,7 +17,7 @@ from pyobo.struct import (
     default_reference,
     make_ad_hoc_ontology,
 )
-from pyobo.struct.obograph.export import to_obograph
+from pyobo.struct.obograph.export import to_parsed_obograph
 
 EXPECTED_RAW_OBOGRAPH = {
     "graphs": [
@@ -195,4 +195,6 @@ class TestConversion(unittest.TestCase):
 
             m = obographs.GraphDocument.model_validate(j)
 
-            self.assertEqual(m.model_dump(), to_obograph(obo_ontology, converter).model_dump())
+            self.assertEqual(
+                m.model_dump(), to_parsed_obograph(obo_ontology, converter).model_dump()
+            )
