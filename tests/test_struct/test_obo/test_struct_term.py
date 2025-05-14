@@ -6,6 +6,7 @@ from textwrap import dedent
 from typing import cast
 
 import bioregistry
+from curies import ReferenceTuple
 
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
@@ -46,13 +47,15 @@ class Nope(Obo):
         """Do not do anything."""
 
 
-def _ontology_from_term(prefix: str, term: Term) -> Obo:
+def _ontology_from_term(
+    prefix: str,
+    term: Term,
+    *,
+    typedefs: list[TypeDef] | None = None,
+    synonym_typedefs: list[SynonymTypeDef] | None = None,
+) -> Obo:
     name = cast(str, bioregistry.get_name(prefix))
-    return make_ad_hoc_ontology(
-        _ontology=prefix,
-        _name=name,
-        terms=[term],
-    )
+    return make_ad_hoc_ontology(_ontology=prefix, _name=name, terms=[term], _typedefs=typedefs)
 
 
 class TestStruct(unittest.TestCase):
@@ -126,8 +129,8 @@ class TestTerm(unittest.TestCase):
         obo: str,
         ofn: str,
         ontology_prefix: str = ONTOLOGY_PREFIX,
-        typedefs=None,
-        synonym_typedefs=None,
+        typedefs: dict[ReferenceTuple, TypeDef] | None = None,
+        synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] | None = None,
     ) -> None:
         """Assert the typedef text."""
         self._assert_lines(
@@ -140,7 +143,12 @@ class TestTerm(unittest.TestCase):
         )
         self._assert_lines(ofn, (x.to_funowl() for x in get_term_axioms(term)))
 
-        ont = _ontology_from_term(prefix=term.prefix, term=term)
+        ont = _ontology_from_term(
+            prefix=term.prefix,
+            term=term,
+            typedefs=typedefs.values() if typedefs else None,
+            synonym_typedefs=synonym_typedefs.values() if synonym_typedefs else None,
+        )
         self.maxDiff = None
         self.assertEqual(
             to_parsed_obograph_oracle(ont).model_dump(
@@ -567,7 +575,6 @@ class TestTerm(unittest.TestCase):
             typedefs={
                 mapping_has_confidence.pair: mapping_has_confidence,
                 mapping_has_justification.pair: mapping_has_justification,
-                has_contributor.pair: has_contributor,
             },
         )
 
