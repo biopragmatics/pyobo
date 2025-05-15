@@ -236,11 +236,14 @@ def _get_properties(term: Stanza) -> list[og.StandardizedProperty] | None:
     return properties or None
 
 
+def _get_xrefs(stanza: Stanza) -> list[og.StandardizedXref] | None:
+    return [og.StandardizedXref(reference=xref) for xref in stanza.xrefs] or None
+
+
 def _get_class_node(term: Term) -> og.StandardizedNode:
-    xrefs = [og.StandardizedXref(reference=xref) for xref in term.xrefs]
     meta = og.StandardizedMeta(
         definition=_get_definition(term),
-        xrefs=xrefs,
+        xrefs=_get_xrefs(term),
         synonyms=_get_synonyms(term),
         properties=_get_properties(term),
         deprecated=term.is_obsolete or False,
@@ -254,13 +257,11 @@ def _get_class_node(term: Term) -> og.StandardizedNode:
 
 
 def _get_typedef_node(typedef: TypeDef) -> og.StandardizedNode:
-    xrefs = [og.StandardizedXref(reference=xref) for xref in typedef.xrefs]
-    properties = _get_properties(typedef)
     meta = og.StandardizedMeta(
         definition=_get_definition(typedef),
-        xrefs=xrefs,
+        xrefs=_get_xrefs(typedef),
         synonyms=_get_synonyms(typedef),
-        properties=properties,
+        properties=_get_properties(typedef),
         deprecated=typedef.is_obsolete or False,
     )
     return og.StandardizedNode(
