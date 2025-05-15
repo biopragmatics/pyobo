@@ -12,7 +12,7 @@ from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
 from pyobo.identifier_utils import NotCURIEError
 from pyobo.struct.functional.obo_to_functional import get_term_axioms
-from pyobo.struct.obograph import to_parsed_obograph, to_parsed_obograph_oracle
+from pyobo.struct.obograph import assert_graph_equal, to_parsed_obograph, to_parsed_obograph_oracle
 from pyobo.struct.reference import _parse_datetime, unspecified_matching
 from pyobo.struct.struct import (
     BioregistryError,
@@ -150,13 +150,10 @@ class TestTerm(unittest.TestCase):
             synonym_typedefs=synonym_typedefs.values() if synonym_typedefs else None,
         )
         self.maxDiff = None
-        self.assertEqual(
-            to_parsed_obograph_oracle(ont).model_dump(
-                exclude_none=True, exclude_unset=True, exclude_defaults=True
-            ),
-            to_parsed_obograph(ont).model_dump(
-                exclude_none=True, exclude_unset=True, exclude_defaults=True
-            ),
+        assert_graph_equal(
+            self,
+            to_parsed_obograph_oracle(ont).graphs[0],
+            to_parsed_obograph(ont).graphs[0],
         )
 
     def assert_boolean_tag(self, name: str, *, curie: str | None = None) -> None:
