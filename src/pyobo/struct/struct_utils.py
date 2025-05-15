@@ -684,9 +684,9 @@ class Stanza(Referenced, HasReferencesMixin):
         """Get alternative terms."""
         return tuple(self.get_property_objects(v.alternative_term))
 
-    def get_edges(self) -> list[tuple[Reference, Reference]]:
+    def get_edges(self, *, include_xrefs: bool = True) -> list[tuple[Reference, Reference]]:
         """Get edges."""
-        return list(self._iter_edges())
+        return list(self._iter_edges(include_xrefs=include_xrefs))
 
     def _iter_parents(self) -> Iterable[tuple[Reference, Reference]]:
         parent_prop = stanza_type_to_prop[self.type]
@@ -702,7 +702,7 @@ class Stanza(Referenced, HasReferencesMixin):
                 case (predicate, target):
                     yield predicate, target
 
-    def _iter_edges(self) -> Iterable[tuple[Reference, Reference]]:
+    def _iter_edges(self, *, include_xrefs: bool = True) -> Iterable[tuple[Reference, Reference]]:
         # The following are "object" properties, meaning
         # they're part of the definition of the object
         yield from self.iterate_relations()
@@ -715,8 +715,10 @@ class Stanza(Referenced, HasReferencesMixin):
         for subset in self.subsets:
             yield v.in_subset, subset
         yield from self.iterate_object_properties()
-        for xref_reference in self.xrefs:
-            yield v.has_dbxref, xref_reference
+
+        if include_xrefs:
+            for xref_reference in self.xrefs:
+                yield v.has_dbxref, xref_reference
 
         # TODO disjoint_from
 

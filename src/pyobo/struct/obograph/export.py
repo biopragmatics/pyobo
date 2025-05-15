@@ -273,14 +273,12 @@ def _get_typedef_node(typedef: TypeDef) -> og.StandardizedNode:
 
 
 def _get_edges(obo: Obo) -> list[og.StandardizedEdge]:
-    rv = []
-    for term in obo:
-        for predicate, obj in term.iterate_relations():
-            rv.append(
-                og.StandardizedEdge(
-                    subject=term.reference,
-                    predicate=predicate,
-                    object=obj,
-                )
-            )
+    rv = [
+        og.StandardizedEdge(
+            subject=stanza.reference,
+            predicate=typedef.reference,
+            object=target,
+        )
+        for stanza, typedef, target in obo.iterate_edges(include_xrefs=False)
+    ]
     return rv

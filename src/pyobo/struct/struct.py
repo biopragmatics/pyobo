@@ -1638,13 +1638,13 @@ class Obo:
     #############
 
     def iterate_edges(
-        self, *, use_tqdm: bool = False
+        self, *, use_tqdm: bool = False, include_xrefs: bool = True
     ) -> Iterable[tuple[Stanza, TypeDef, Reference]]:
         """Iterate over triples of terms, relations, and their targets."""
         _warned: set[ReferenceTuple] = set()
         typedefs = self._index_typedefs()
         for stanza in self._iter_stanzas(use_tqdm=use_tqdm, desc=f"[{self.ontology}] edge"):
-            for predicate, reference in stanza._iter_edges():
+            for predicate, reference in stanza._iter_edges(include_xrefs=include_xrefs):
                 if td := self._get_typedef(stanza, predicate, _warned, typedefs):
                     yield stanza, td, reference
 
