@@ -117,7 +117,7 @@ def _get_property_chain_axioms(obo: Obo) -> list[og.StandardizedPropertyChainAxi
     return rv
 
 
-def _get_meta(obo: Obo) -> og.StandardizedMeta:
+def _get_meta(obo: Obo) -> og.StandardizedMeta | None:
     properties = []
 
     if description := bioregistry.get_description(obo.ontology):
@@ -175,8 +175,11 @@ def _get_meta(obo: Obo) -> og.StandardizedMeta:
     else:
         version_iri = None
 
+    if not properties and not version_iri:
+        return None
+
     return og.StandardizedMeta(
-        properties=properties,
+        properties=properties or None,
         version=version_iri,
         # TODO subsets
     )
