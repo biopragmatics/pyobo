@@ -57,20 +57,29 @@ from .api import (
 )
 from .getters import get_ontology
 from .ner import get_grounder, ground
-from .obographs import parse_results_from_obo
 from .plugins import (
     has_nomenclature_plugin,
     iter_nomenclature_plugins,
     run_nomenclature_plugin,
 )
 from .reader import from_obo_path, from_obonet
-from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef, default_reference
+from .struct import (
+    Obo,
+    Reference,
+    StanzaType,
+    Synonym,
+    SynonymTypeDef,
+    Term,
+    TypeDef,
+    default_reference,
+)
 from .utils.path import ensure_path
 from .version import get_version
 
 __all__ = [
     "Obo",
     "Reference",
+    "StanzaType",
     "Synonym",
     "SynonymTypeDef",
     "Term",
