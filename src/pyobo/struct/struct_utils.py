@@ -231,6 +231,8 @@ class Stanza(Referenced, HasReferencesMixin):
     ) -> None:
         self._axioms[_property_resolve(p, o)].append(annotation)
 
+    # TODO check different usages of this
+
     def append_equivalent(
         self,
         reference: ReferenceHint,
@@ -241,6 +243,15 @@ class Stanza(Referenced, HasReferencesMixin):
         return self.append_relationship(
             stanza_type_to_eq_prop[self.type], reference, annotations=annotations
         )
+
+    def append_equivalent_to(
+        self, reference: ReferenceHint, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
+        """Append to the "equivalent to" list."""
+        reference = _ensure_ref(reference)
+        self.equivalent_to.append(reference)
+        self._extend_annotations(stanza_type_to_eq_prop[self.type], reference, annotations)
+        return self
 
     def append_xref(
         self,
@@ -315,15 +326,6 @@ class Stanza(Referenced, HasReferencesMixin):
     def append_union_of(self, reference: ReferenceHint) -> Self:
         """Append to the "union of" list."""
         self.union_of.append(_ensure_ref(reference))
-        return self
-
-    def append_equivalent_to(
-        self, reference: ReferenceHint, *, annotations: Iterable[Annotation] | None = None
-    ) -> Self:
-        """Append to the "equivalent to" list."""
-        reference = _ensure_ref(reference)
-        self.equivalent_to.append(reference)
-        self._extend_annotations(stanza_type_to_eq_prop[self.type], reference, annotations)
         return self
 
     def _iterate_intersection_of_obo(self, *, ontology_prefix: str) -> Iterable[str]:

@@ -9,7 +9,7 @@ import obographs as og
 from curies import Converter
 from curies import vocabulary as v
 
-from pyobo.identifier_utils.api import _get_converter
+from pyobo.identifier_utils.api import get_converter
 from pyobo.struct import Obo, OBOLiteral, Stanza, Term, TypeDef
 from pyobo.struct import typedef as tdv
 from pyobo.utils.io import safe_open
@@ -36,7 +36,7 @@ def to_parsed_obograph_oracle(
     from bioontologies.robot import convert
 
     if converter is None:
-        converter = _get_converter()
+        converter = get_converter()
 
     with tempfile.TemporaryDirectory() as directory:
         stub = Path(directory).joinpath("test")
@@ -52,7 +52,7 @@ def to_parsed_obograph_oracle(
 def to_obograph(obo: Obo, *, converter: Converter | None = None) -> og.GraphDocument:
     """Convert an ontology to a OBO Graph JSON document."""
     if converter is None:
-        converter = _get_converter()
+        converter = get_converter()
     return to_parsed_obograph(obo).to_raw(converter)
 
 
