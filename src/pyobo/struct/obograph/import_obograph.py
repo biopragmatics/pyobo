@@ -9,7 +9,6 @@ from curies import Converter
 from curies.vocabulary import SynonymScope, synonym_scopes
 from obographs import (
     Graph,
-    GraphDocument,
     NodeType,
     StandardizedGraph,
     StandardizedMeta,
@@ -39,9 +38,7 @@ def read_obograph(prefix: str, path: str | Path, *, converter: Converter | None 
     return from_obograph(prefix=prefix, graph=graph, converter=converter)
 
 
-def from_obograph(
-    prefix: str, graph: Graph | GraphDocument, *, converter: Converter | None = None
-) -> Obo:
+def from_obograph(prefix: str, graph: Graph, *, converter: Converter | None = None) -> Obo:
     """Parse a raw OBO Graph JSON into a PyOBO structure."""
     if converter is None:
         converter = get_converter()
@@ -97,13 +94,22 @@ def from_standardized_graph(prefix: str, graph: StandardizedGraph) -> Obo:
                     )
                 )
 
-    for equivalent_ndoe_set in graph.equivalent_node_sets:
-        node = Reference.from_reference(equivalent_ndoe_set.node)
-        if node not in terms:
-            logger.warning("unknown reference node in equivalent_node_set: %s", node.curie)
+    for equivalent_node_set in graph.equivalent_node_sets:
+        equivalent_reference = Reference.from_reference(equivalent_node_set.node)
+        if equivalent_reference in terms:
+            for equivalent in equivalent_node_set.equivalents:
+                terms[equivalent_reference].append_equivalent_to(
+                    Reference.from_reference(equivalent)
+                )
+        elif equivalent_reference in typedefs:
+            for equivalent in equivalent_node_set.equivalents:
+                typedefs[equivalent_reference].append_equivalent_to(
+                    Reference.from_reference(equivalent)
+                )
         else:
-            for equivalent in equivalent_ndoe_set.equivalents:
-                terms[node].append_equivalent_to(Reference.from_reference(equivalent))
+            logger.warning(
+                "unknown reference node in equivalent_node_set: %s", equivalent_reference.curie
+            )
 
     for _domain_range_axiom in graph.domain_range_axioms or []:
         pass  # TODO
@@ -173,8 +179,8 @@ def _process_term_meta(meta: StandardizedMeta, term: Term) -> None:
     """Process the ``meta`` object associated with a term node."""
     if meta.definition:
         term.definition = meta.definition.value
-        for xref in meta.definition.xrefs:
-            term.append_definition_xref(xref)
+        for definition_xref in meta.definition.xrefs or []:
+            term.append_definition_xref(definition_xref)
 
     if meta.subsets:
         term.subsets.extend(Reference.from_reference(r) for r in meta.subsets)
@@ -208,8 +214,8 @@ def _from_synonym(syn: StandardizedSynonym) -> Synonym | None:
     return Synonym(
         name=syn.text,
         specificity=REV_SYNONYM_SCOPE[syn.predicate],
-        type=syn.type,
-        provenance=syn.xrefs or [],
+        type=Reference.from_reference(syn.type) if syn.type is not None else None,
+        provenance=[Reference.from_reference(r) for r in syn.xrefs or []],
     )
 
 
