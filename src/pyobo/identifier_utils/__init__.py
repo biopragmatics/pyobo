@@ -1,5 +1,7 @@
 """Extract registry information."""
 
+from curies_processing import get_rules
+
 from .api import (
     DefaultCoercionError,
     EmptyStringError,
@@ -13,7 +15,6 @@ from .api import (
     standardize_ec,
     wrap_norm_prefix,
 )
-from .preprocessing import get_rules
 from .relations import ground_relation
 
 __all__ = [
