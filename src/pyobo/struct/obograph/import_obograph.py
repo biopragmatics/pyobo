@@ -32,17 +32,17 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def read_obograph(prefix: str, path: str | Path, *, converter: Converter | None = None) -> Obo:
+def read_obograph(prefix: str, path: str | Path, *, converter: Converter | None = None, strict: bool = False) -> Obo:
     """Read an OBO Graph JSON file using :func:`obographs.read` then process into a PyOBO structure."""
     graph = obographs.read(path, squeeze=True)
-    return from_obograph(prefix=prefix, graph=graph, converter=converter)
+    return from_obograph(prefix=prefix, graph=graph, converter=converter, strict=strict)
 
 
-def from_obograph(prefix: str, graph: Graph, *, converter: Converter | None = None) -> Obo:
+def from_obograph(prefix: str, graph: Graph, *, converter: Converter | None = None, strict: bool = False) -> Obo:
     """Parse a raw OBO Graph JSON into a PyOBO structure."""
     if converter is None:
         converter = get_converter()
-    standardized_graph = graph.standardize(converter)
+    standardized_graph = graph.standardize(converter, strict=strict)
     return from_standardized_graph(prefix, standardized_graph)
 
 
