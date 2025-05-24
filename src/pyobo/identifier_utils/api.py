@@ -136,6 +136,7 @@ def _preclean_uri(s: str) -> str:
 
 @lru_cache(1)
 def get_converter() -> PreprocessingConverter:
+    """Get a converter."""
     return PreprocessingConverter(
         records=bioregistry.manager.converter.records,
         rules=get_rules(),
