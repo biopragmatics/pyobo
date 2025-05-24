@@ -166,13 +166,16 @@ def _get_meta(obo: Obo) -> og.StandardizedMeta | None:
     else:
         version_iri = None
 
-    if not properties and not version_iri:
+    # comments don't make the round trip
+    subsets = [r for r, _ in obo.subsetdefs or []]
+
+    if not properties and not version_iri and not subsets:
         return None
 
     return og.StandardizedMeta(
         properties=properties or None,
-        version=version_iri,
-        # TODO subsets
+        version_iri=version_iri,
+        subsets=subsets,
     )
 
 
@@ -247,7 +250,7 @@ def _meta_or_none(meta: og.StandardizedMeta) -> og.StandardizedMeta | None:
             meta.xrefs,
             meta.synonyms,
             meta.comments,
-            meta.version,
+            meta.version_iri,
             meta.properties,
         )
     ):
@@ -258,10 +261,12 @@ def _meta_or_none(meta: og.StandardizedMeta) -> og.StandardizedMeta | None:
 def _get_class_node(term: Term) -> og.StandardizedNode:
     meta = og.StandardizedMeta(
         definition=_get_definition(term),
+        subsets=term.subsets or None,
         xrefs=_get_xrefs(term),
         synonyms=_get_synonyms(term),
-        properties=_get_properties(term),
+        comments=term.get_comments() or None,
         deprecated=term.is_obsolete or False,
+        properties=_get_properties(term),
     )
     return og.StandardizedNode(
         reference=term.reference,
@@ -274,10 +279,12 @@ def _get_class_node(term: Term) -> og.StandardizedNode:
 def _get_typedef_node(typedef: TypeDef) -> og.StandardizedNode:
     meta = og.StandardizedMeta(
         definition=_get_definition(typedef),
+        subsets=typedef.subsets or None,
         xrefs=_get_xrefs(typedef),
         synonyms=_get_synonyms(typedef),
-        properties=_get_properties(typedef),
+        comments=typedef.get_comments() or None,
         deprecated=typedef.is_obsolete or False,
+        properties=_get_properties(typedef),
     )
     return og.StandardizedNode(
         reference=typedef.reference,

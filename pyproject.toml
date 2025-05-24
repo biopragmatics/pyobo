@@ -90,7 +90,7 @@ dependencies = [
     "nih-reporter-downloader>=0.0.1",
     "typing_extensions",
     "rdflib",
-    "obographs>=0.0.5",
+    "obographs>=0.0.8",
 ]
 
 # see https://peps.python.org/pep-0735/ and https://docs.astral.sh/uv/concepts/dependencies/#dependency-groups

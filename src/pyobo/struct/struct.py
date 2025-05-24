@@ -431,9 +431,8 @@ class Term(Stanza):
         if self.definition:
             yield f"def: {self._definition_fp()}"
         # 7
-        for x in self.get_property_values(v.comment):
-            if isinstance(x, OBOLiteral):
-                yield f'comment: "{x.value}"'
+        for comment in self.get_comments():
+            yield f'comment: "{comment}"'
         # 8
         yield from _reference_list_tag("subset", self.subsets, ontology_prefix)
         # 9

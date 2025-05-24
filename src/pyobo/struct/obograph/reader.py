@@ -32,13 +32,17 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def read_obograph(prefix: str, path: str | Path, *, converter: Converter | None = None, strict: bool = False) -> Obo:
+def read_obograph(
+    prefix: str, path: str | Path, *, converter: Converter | None = None, strict: bool = False
+) -> Obo:
     """Read an OBO Graph JSON file using :func:`obographs.read` then process into a PyOBO structure."""
     graph = obographs.read(path, squeeze=True)
     return from_obograph(prefix=prefix, graph=graph, converter=converter, strict=strict)
 
 
-def from_obograph(prefix: str, graph: Graph, *, converter: Converter | None = None, strict: bool = False) -> Obo:
+def from_obograph(
+    prefix: str, graph: Graph, *, converter: Converter | None = None, strict: bool = False
+) -> Obo:
     """Parse a raw OBO Graph JSON into a PyOBO structure."""
     if converter is None:
         converter = get_converter()
@@ -112,10 +116,24 @@ def from_standardized_graph(prefix: str, graph: StandardizedGraph) -> Obo:
             )
 
     for _domain_range_axiom in graph.domain_range_axioms or []:
-        pass  # TODO
+        p = Reference.from_reference(_domain_range_axiom.predicate)
+        if p not in typedefs:
+            continue
+        # the OBO Graph model allows for multiple ranges
+        # or domains, but OBO only one.
+        if _domain_range_axiom.ranges:
+            typedefs[p].range = Reference.from_reference(_domain_range_axiom.ranges[0])
+        if _domain_range_axiom.domains:
+            typedefs[p].domain = Reference.from_reference(_domain_range_axiom.domains[0])
 
     for _property_chain_axiom in graph.property_chain_axioms:
-        pass  # TODO
+        p = Reference.from_reference(_property_chain_axiom.predicate)
+        if p not in typedefs or not _property_chain_axiom.chain:
+            continue
+        # TODO check that it's transitive_over and not equivalent_to_chain
+        typedefs[p].transitive_over.append(
+            [Reference.from_reference(r) for r in _property_chain_axiom.chain]
+        )
 
     for _logical_definition_axiom in graph.logical_definition_axioms:
         pass  # TODO
@@ -127,7 +145,7 @@ def from_standardized_graph(prefix: str, graph: StandardizedGraph) -> Obo:
         _typedefs=list(typedefs.values()),
         _root_terms=root_terms,
         _property_values=property_values,
-        _data_version=graph.meta.version if graph.meta is not None else None,
+        _data_version=graph.version or (graph.meta.version_iri if graph.meta is not None else None),
         _auto_generated_by=auto_generated_by,
     )
 

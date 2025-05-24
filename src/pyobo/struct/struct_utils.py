@@ -681,6 +681,10 @@ class Stanza(Referenced, HasReferencesMixin):
         """Add a comment property."""
         return self.annotate_string(v.comment, value, annotations=annotations, language=language)
 
+    def get_comments(self) -> list[str]:
+        """Get all comment strings."""
+        return [x.value for x in self.get_property_values(v.comment) if isinstance(x, OBOLiteral)]
+
     @property
     def alt_ids(self) -> Sequence[Reference]:
         """Get alternative terms."""
