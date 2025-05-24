@@ -324,19 +324,6 @@ class MyTestCase(unittest.TestCase):
           pyobo.get_name("chebi", "1234")
 ```
 
-## Preprocessing CURIEs, URIs, and unqualified identifiers
-
-In order to normalize references and identify resources, PyOBO uses the
-[Bioregistry](https://github.com/bioregistry/bioregistry). It used to be a part
-of PyOBO, but has since been externalized for more general reuse.
-
-At
-[src/pyobo/identifier_utils/preprocessing.json](https://github.com/pyobo/pyobo/blob/master/src/pyobo/src/pyobo/identifier_utils/preprocessing.json)
-is the curated set of pre-processing rules. These are used in combination with
-the `curies` package to do pre-processing steps on CURIEs, URIs, and unqualified
-identifiers beyond what is possible with the Bioregistry. See
-https://curies.readthedocs.io/en/latest/preprocessing.html.
-
 ## Troubleshooting
 
 The OBO Foundry seems to be pretty unstable with respect to the URLs to OBO

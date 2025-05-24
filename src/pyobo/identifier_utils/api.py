@@ -12,10 +12,10 @@ from bioregistry import NormalizedNamableReference as Reference
 from bioregistry.constants import FailureReturnType
 from curies import ReferenceTuple
 from curies.preprocessing import BlocklistError, PreprocessingConverter
+from curies_processing import get_rules
 from pydantic import ValidationError
 from typing_extensions import Doc
 
-from .preprocessing import get_rules
 from .relations import ground_relation
 
 __all__ = [
