@@ -92,10 +92,6 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-# TODO remove this
-#: This is what happens if no specificity is given
-DEFAULT_SPECIFICITY: _cv.SynonymScope = _cv.DEFAULT_SYNONYM_SCOPE
-
 #: Columns in the SSSOM dataframe
 SSSOM_DF_COLUMNS = [
     "subject_id",
@@ -106,7 +102,6 @@ SSSOM_DF_COLUMNS = [
     "confidence",
     "contributor",
 ]
-UNSPECIFIED_MATCHING_CURIE = "sempav:UnspecifiedMatching"
 FORMAT_VERSION = "1.4"
 
 
@@ -155,14 +150,14 @@ class Synonym(HasReferencesMixin):
     def _sort_key(self) -> tuple[str, _cv.SynonymScope, str]:
         return (
             self.name,
-            self.specificity or DEFAULT_SPECIFICITY,
+            self.specificity or _cv.DEFAULT_SYNONYM_SCOPE,
             self.type.curie if self.type else "",
         )
 
     @property
     def predicate(self) -> curies.NamedReference:
         """Get the specificity reference."""
-        return _cv.synonym_scopes[self.specificity or DEFAULT_SPECIFICITY]
+        return _cv.synonym_scopes[self.specificity or _cv.DEFAULT_SYNONYM_SCOPE]
 
     def to_obo(
         self,
@@ -191,7 +186,7 @@ class Synonym(HasReferencesMixin):
         elif self.type is not None:
             # it's not valid to have a synonym type without a specificity,
             # so automatically assign one if we'll need it
-            x = f"{x} {DEFAULT_SPECIFICITY}"
+            x = f"{x} {_cv.DEFAULT_SYNONYM_SCOPE}"
 
         # Add on the synonym type, if exists
         if self.type is not None:
