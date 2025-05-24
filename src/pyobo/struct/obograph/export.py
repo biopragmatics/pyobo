@@ -33,7 +33,7 @@ def to_parsed_obograph_oracle(
     obo: Obo, *, converter: Converter | None = None
 ) -> og.StandardizedGraphDocument:
     """Serialize to OBO, convert to OBO Graph JSON with ROBOT, load, then parse."""
-    from bioontologies.robot import convert
+    import bioontologies.robot
 
     if converter is None:
         converter = get_converter()
@@ -43,7 +43,7 @@ def to_parsed_obograph_oracle(
         obo_path = stub.with_suffix(".obo")
         obograph_path = stub.with_suffix(".json")
         obo.write_obo(obo_path)
-        convert(input_path=obo_path, output_path=obograph_path)
+        bioontologies.robot.convert(input_path=obo_path, output_path=obograph_path)
         raw = og.read(obograph_path, squeeze=False)
     rv = raw.standardize(converter)
     for graph in rv.graphs:
