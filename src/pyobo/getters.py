@@ -20,7 +20,6 @@ from typing import Any, TypeVar
 import bioregistry
 import click
 import pystow.utils
-from bioontologies import robot
 from tabulate import tabulate
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
@@ -160,6 +159,8 @@ def get_ontology(
     elif ontology_format == "obo":
         pass  # all gucci
     elif ontology_format == "owl":
+        from bioontologies import robot
+
         _converted_obo_path = path.with_suffix(".obo")
         if prefix in REQUIRES_NO_ROBOT_CHECK:
             robot_check = False
