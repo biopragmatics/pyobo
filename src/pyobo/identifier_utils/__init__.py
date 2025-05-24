@@ -12,6 +12,7 @@ from .api import (
     UnregisteredPrefixError,
     _is_valid_identifier,
     _parse_str_or_curie_or_uri_helper,
+    get_converter,
     standardize_ec,
     wrap_norm_prefix,
 )
@@ -27,6 +28,7 @@ __all__ = [
     "UnregisteredPrefixError",
     "_is_valid_identifier",
     "_parse_str_or_curie_or_uri_helper",
+    "get_converter",
     "get_rules",
     "ground_relation",
     "standardize_ec",

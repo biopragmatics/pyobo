@@ -159,13 +159,20 @@ def get_ontology(
     elif ontology_format == "obo":
         pass  # all gucci
     elif ontology_format == "owl":
-        from bioontologies import robot
+        import bioontologies.robot
 
         _converted_obo_path = path.with_suffix(".obo")
         if prefix in REQUIRES_NO_ROBOT_CHECK:
             robot_check = False
-        robot.convert(path, _converted_obo_path, check=robot_check)
+        bioontologies.robot.convert(path, _converted_obo_path, check=robot_check)
         path = _converted_obo_path
+    elif ontology_format == "json":
+        from .struct.obograph import read_obograph
+
+        obo = read_obograph(prefix=prefix, path=path)
+        if cache:
+            obo.write_default(force=force_process)
+        return obo
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
 

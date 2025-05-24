@@ -22,7 +22,7 @@ import curies
 import networkx as nx
 import pandas as pd
 import ssslm
-from curies import ReferenceTuple
+from curies import Converter, ReferenceTuple
 from curies import vocabulary as _cv
 from more_click import force_option, verbose_option
 from tqdm.auto import tqdm
@@ -84,15 +84,13 @@ __all__ = [
     "Synonym",
     "SynonymTypeDef",
     "Term",
+    "TypeDef",
     "abbreviation",
     "acronym",
     "make_ad_hoc_ontology",
 ]
 
 logger = logging.getLogger(__name__)
-
-#: This is what happens if no specificity is given
-DEFAULT_SPECIFICITY: _cv.SynonymScope = "RELATED"
 
 #: Columns in the SSSOM dataframe
 SSSOM_DF_COLUMNS = [
@@ -104,7 +102,6 @@ SSSOM_DF_COLUMNS = [
     "confidence",
     "contributor",
 ]
-UNSPECIFIED_MATCHING_CURIE = "sempav:UnspecifiedMatching"
 FORMAT_VERSION = "1.4"
 
 
@@ -153,14 +150,14 @@ class Synonym(HasReferencesMixin):
     def _sort_key(self) -> tuple[str, _cv.SynonymScope, str]:
         return (
             self.name,
-            self.specificity or DEFAULT_SPECIFICITY,
+            self.specificity or _cv.DEFAULT_SYNONYM_SCOPE,
             self.type.curie if self.type else "",
         )
 
     @property
     def predicate(self) -> curies.NamedReference:
         """Get the specificity reference."""
-        return _cv.synonym_scopes[self.specificity or DEFAULT_SPECIFICITY]
+        return _cv.synonym_scopes[self.specificity or _cv.DEFAULT_SYNONYM_SCOPE]
 
     def to_obo(
         self,
@@ -189,7 +186,7 @@ class Synonym(HasReferencesMixin):
         elif self.type is not None:
             # it's not valid to have a synonym type without a specificity,
             # so automatically assign one if we'll need it
-            x = f"{x} {DEFAULT_SPECIFICITY}"
+            x = f"{x} {_cv.DEFAULT_SYNONYM_SCOPE}"
 
         # Add on the synonym type, if exists
         if self.type is not None:
@@ -429,9 +426,8 @@ class Term(Stanza):
         if self.definition:
             yield f"def: {self._definition_fp()}"
         # 7
-        for x in self.get_property_values(v.comment):
-            if isinstance(x, OBOLiteral):
-                yield f'comment: "{x.value}"'
+        for comment in self.get_comments():
+            yield f'comment: "{comment}"'
         # 8
         yield from _reference_list_tag("subset", self.subsets, ontology_prefix)
         # 9
@@ -723,17 +719,11 @@ class Obo:
         """Iterate over terms in this ontology."""
         raise NotImplementedError
 
-    def get_graph(self):
-        """Get an OBO Graph object."""
-        from ..obographs import graph_from_obo
-
-        return graph_from_obo(self)
-
-    def write_obograph(self, path: str | Path) -> None:
+    def write_obograph(self, path: str | Path, *, converter: Converter | None = None) -> None:
         """Write OBO Graph json."""
-        graph = self.get_graph()
-        with safe_open(path, read=False) as file:
-            file.write(graph.model_dump_json(indent=2, exclude_none=True, exclude_unset=True))
+        from . import obograph
+
+        obograph.write_obograph(self, path, converter=converter)
 
     @classmethod
     def cli(cls, *args, default_rewrite: bool = False) -> Any:
@@ -1642,13 +1632,13 @@ class Obo:
     #############
 
     def iterate_edges(
-        self, *, use_tqdm: bool = False
+        self, *, use_tqdm: bool = False, include_xrefs: bool = True
     ) -> Iterable[tuple[Stanza, TypeDef, Reference]]:
         """Iterate over triples of terms, relations, and their targets."""
         _warned: set[ReferenceTuple] = set()
         typedefs = self._index_typedefs()
         for stanza in self._iter_stanzas(use_tqdm=use_tqdm, desc=f"[{self.ontology}] edge"):
-            for predicate, reference in stanza._iter_edges():
+            for predicate, reference in stanza._iter_edges(include_xrefs=include_xrefs):
                 if td := self._get_typedef(stanza, predicate, _warned, typedefs):
                     yield stanza, td, reference
 
