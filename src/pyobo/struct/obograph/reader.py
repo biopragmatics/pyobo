@@ -130,8 +130,8 @@ def from_standardized_graph(prefix: str, graph: StandardizedGraph) -> Obo:
         p = Reference.from_reference(_property_chain_axiom.predicate)
         if p not in typedefs or not _property_chain_axiom.chain:
             continue
-        # TODO check that it's transitive_over and not equivalent_to_chain
-        typedefs[p].transitive_over.append(
+        # TODO check if its also transitive_over and/or equivalent_to_chain
+        typedefs[p].holds_over_chain.append(
             [Reference.from_reference(r) for r in _property_chain_axiom.chain]
         )
 
