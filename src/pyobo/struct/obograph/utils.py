@@ -14,10 +14,12 @@ def assert_graph_equal(
     test_case: unittest.TestCase, expected: StandardizedGraph, actual: StandardizedGraph
 ) -> None:
     """Assert two graphs are equal."""
-    test_case.assertEqual(
-        expected.meta.model_dump(exclude_unset=True, exclude_none=True, exclude_defaults=True),
-        actual.meta.model_dump(exclude_unset=True, exclude_none=True, exclude_defaults=True),
-    )
+    if expected.meta is not None:
+        test_case.assertIsNotNone(actual.meta)
+        test_case.assertEqual(
+            expected.meta.model_dump(exclude_unset=True, exclude_none=True, exclude_defaults=True),
+            actual.meta.model_dump(exclude_unset=True, exclude_none=True, exclude_defaults=True),
+        )
 
     # strip out extra info
     for node in actual.nodes:

@@ -11,7 +11,6 @@ from curies import vocabulary as v
 
 from pyobo.identifier_utils.api import get_converter
 from pyobo.struct import Obo, OBOLiteral, Stanza, Term, TypeDef
-from pyobo.struct.typedef import obo_has_format_version
 from pyobo.struct import typedef as tdv
 from pyobo.utils.io import safe_open
 
@@ -52,7 +51,8 @@ def to_parsed_obograph_oracle(
             graph.meta.properties = [
                 p
                 for p in graph.meta.properties
-                if p.predicate.pair != ReferenceTuple(prefix='oboinowl', identifier='hasOBOFormatVersion')
+                if p.predicate.pair
+                != ReferenceTuple(prefix="oboinowl", identifier="hasOBOFormatVersion")
             ] or None
     return rv
 
