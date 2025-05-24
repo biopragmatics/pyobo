@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 import bioregistry
 from bioontologies.obograph import (
@@ -16,11 +17,13 @@ from bioontologies.obograph import (
     Synonym,
     Xref,
 )
-from bioontologies.robot import ParseResults
 from tqdm import tqdm
 
 from pyobo.struct import Obo, OBOLiteral, Reference, Term
 from pyobo.struct.typedef import definition_source, is_a
+
+if TYPE_CHECKING:
+    from bioontologies.robot import ParseResults
 
 __all__ = [
     "graph_from_obo",
@@ -33,6 +36,8 @@ logger = logging.getLogger(__name__)
 def parse_results_from_obo(obo: Obo) -> ParseResults:
     """Get parse results from an OBO graph."""
     graph = graph_from_obo(obo)
+    from bioontologies.robot import ParseResults
+
     return ParseResults(graph_document=GraphDocument(graphs=[graph]))
 
 
