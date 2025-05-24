@@ -7,7 +7,7 @@ import obonet
 from curies import ReferenceTuple
 
 from pyobo import Reference, Synonym, SynonymTypeDef, default_reference, get_ontology
-from pyobo.reader import (
+from pyobo.struct.obo.reader import (
     _extract_definition,
     _extract_synonym,
     iterate_graph_synonym_typedefs,

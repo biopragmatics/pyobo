@@ -62,7 +62,6 @@ from .plugins import (
     iter_nomenclature_plugins,
     run_nomenclature_plugin,
 )
-from .reader import from_obo_path, from_obonet
 from .struct import (
     Obo,
     Reference,
@@ -73,6 +72,7 @@ from .struct import (
     TypeDef,
     default_reference,
 )
+from .struct.obo import from_obo_path, from_obonet
 from .utils.path import ensure_path
 from .version import get_version
 
@@ -147,6 +147,5 @@ __all__ = [
     "has_nomenclature_plugin",
     "is_descendent",
     "iter_nomenclature_plugins",
-    "parse_results_from_obo",
     "run_nomenclature_plugin",
 ]

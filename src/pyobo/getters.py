@@ -33,8 +33,8 @@ from .constants import (
 )
 from .identifier_utils import ParseError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
-from .reader import from_obo_path, from_obonet
 from .struct import Obo
+from .struct.obo import from_obo_path, from_obonet
 from .utils.io import safe_open_writer
 from .utils.path import ensure_path, prefix_directory_join
 from .version import get_git_hash, get_version

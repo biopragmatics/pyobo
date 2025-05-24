@@ -4,9 +4,9 @@ import unittest
 
 from pyobo import Obo, Reference, Term
 from pyobo.identifier_utils import NotCURIEError, UnparsableIRIError, UnregisteredPrefixError
-from pyobo.reader import from_str, get_first_nonescaped_quote
 from pyobo.struct import TypeDef, default_reference
 from pyobo.struct import vocabulary as v
+from pyobo.struct.obo.reader import from_str, get_first_nonescaped_quote
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import abbreviation
 from pyobo.struct.struct_utils import Annotation

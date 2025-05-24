@@ -3,8 +3,8 @@
 import unittest
 
 from pyobo import Obo, Reference, TypeDef, default_reference
-from pyobo.reader import from_str
 from pyobo.struct import part_of
+from pyobo.struct.obo import from_str
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.typedef import is_conjugate_base_of, occurs_in, see_also
 from pyobo.struct.vocabulary import CHARLIE, has_contributor
