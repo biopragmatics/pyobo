@@ -20,15 +20,6 @@ from curies.vocabulary import SynonymScope
 from more_itertools import pairwise
 from tqdm.auto import tqdm
 
-from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
-from .identifier_utils import (
-    NotCURIEError,
-    ParseError,
-    UnparsableIRIError,
-    _is_valid_identifier,
-    _parse_str_or_curie_or_uri_helper,
-    get_rules,
-)
 from .reader_utils import (
     _chomp_axioms,
     _chomp_references,
@@ -36,7 +27,9 @@ from .reader_utils import (
     _chomp_typedef,
     _parse_provenance_list,
 )
-from .struct import (
+from .. import vocabulary as v
+from ..reference import OBOLiteral, _obo_parse_identifier
+from ..struct import (
     Obo,
     Reference,
     Synonym,
@@ -46,18 +39,26 @@ from .struct import (
     default_reference,
     make_ad_hoc_ontology,
 )
-from .struct import vocabulary as v
-from .struct.reference import OBOLiteral, _obo_parse_identifier
-from .struct.struct_utils import Annotation, Stanza
-from .struct.typedef import comment as has_comment
-from .struct.typedef import default_typedefs, has_ontology_root_term
-from .utils.cache import write_gzipped_graph
-from .utils.io import safe_open
-from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
+from ..struct_utils import Annotation, Stanza
+from ..typedef import comment as has_comment
+from ..typedef import default_typedefs, has_ontology_root_term
+from ...constants import DATE_FORMAT, PROVENANCE_PREFIXES
+from ...identifier_utils import (
+    NotCURIEError,
+    ParseError,
+    UnparsableIRIError,
+    _is_valid_identifier,
+    _parse_str_or_curie_or_uri_helper,
+    get_rules,
+)
+from ...utils.cache import write_gzipped_graph
+from ...utils.io import safe_open
+from ...utils.misc import STATIC_VERSION_REWRITES, cleanup_version
 
 __all__ = [
     "from_obo_path",
     "from_obonet",
+    "from_str",
 ]
 
 logger = logging.getLogger(__name__)
@@ -1352,6 +1353,8 @@ def _handle_prop(
                 return Annotation(prop_reference, obj_reference)
             case None:
                 return None
+
+    return None
 
 
 def _get_prop(

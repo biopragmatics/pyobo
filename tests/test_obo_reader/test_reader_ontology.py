@@ -4,8 +4,8 @@ import datetime
 import unittest
 
 from pyobo import Obo, Reference, SynonymTypeDef, Term, TypeDef, default_reference
-from pyobo.reader import from_str
 from pyobo.struct import part_of
+from pyobo.struct.obo import from_str
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct_utils import Annotation
 from pyobo.struct.typedef import comment, equivalent_class
