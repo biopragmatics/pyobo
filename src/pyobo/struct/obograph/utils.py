@@ -1,6 +1,7 @@
 """Testing utilities."""
 
 import unittest
+from typing import cast
 
 from curies import Reference
 from obographs import StandardizedGraph, StandardizedMeta
@@ -18,7 +19,9 @@ def assert_graph_equal(
         test_case.assertIsNotNone(actual.meta)
         test_case.assertEqual(
             expected.meta.model_dump(exclude_unset=True, exclude_none=True, exclude_defaults=True),
-            actual.meta.model_dump(exclude_unset=True, exclude_none=True, exclude_defaults=True),
+            cast(StandardizedMeta, actual.meta).model_dump(
+                exclude_unset=True, exclude_none=True, exclude_defaults=True
+            ),
         )
 
     # strip out extra info
@@ -42,10 +45,3 @@ def assert_graph_equal(
             exclude_none=True, exclude_unset=True, exclude_defaults=True, exclude=excludes
         ),
     )
-
-
-def assert_meta_equal(
-    test_case: unittest.TestCase, expected: StandardizedMeta, actual: StandardizedGraph
-) -> None:
-    """Assert two metas are equal."""
-    test_case.assertEqual(expected, actual)
