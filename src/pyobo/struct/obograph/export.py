@@ -6,11 +6,12 @@ from pathlib import Path
 import bioregistry
 import curies
 import obographs as og
-from curies import Converter
+from curies import Converter, ReferenceTuple
 from curies import vocabulary as v
 
 from pyobo.identifier_utils.api import get_converter
 from pyobo.struct import Obo, OBOLiteral, Stanza, Term, TypeDef
+from pyobo.struct.typedef import obo_has_format_version
 from pyobo.struct import typedef as tdv
 from pyobo.utils.io import safe_open
 
@@ -46,6 +47,13 @@ def to_parsed_obograph_oracle(
         convert(input_path=obo_path, output_path=obograph_path)
         raw = og.read(obograph_path, squeeze=False)
     rv = raw.standardize(converter)
+    for graph in rv.graphs:
+        if graph.meta and graph.meta.properties:
+            graph.meta.properties = [
+                p
+                for p in graph.meta.properties
+                if p.predicate.pair != ReferenceTuple(prefix='oboinowl', identifier='hasOBOFormatVersion')
+            ] or None
     return rv
 
 
@@ -167,7 +175,7 @@ def _get_meta(obo: Obo) -> og.StandardizedMeta | None:
         version_iri = None
 
     # comments don't make the round trip
-    subsets = [r for r, _ in obo.subsetdefs or []]
+    subsets = [r for r, _ in obo.subsetdefs or []] or None
 
     if not properties and not version_iri and not subsets:
         return None

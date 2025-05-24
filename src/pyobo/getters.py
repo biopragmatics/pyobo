@@ -35,7 +35,6 @@ from .identifier_utils import ParseError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .reader import from_obo_path, from_obonet
 from .struct import Obo
-from .struct.obograph import read_obograph
 from .utils.io import safe_open_writer
 from .utils.path import ensure_path, prefix_directory_join
 from .version import get_git_hash, get_version
@@ -168,6 +167,8 @@ def get_ontology(
         robot.convert(path, _converted_obo_path, check=robot_check)
         path = _converted_obo_path
     elif ontology_format == "json":
+        from .struct.obograph import read_obograph
+
         obo = read_obograph(prefix=prefix, path=path)
         if cache:
             obo.write_default(force=force_process)

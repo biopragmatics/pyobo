@@ -5,7 +5,7 @@ import unittest
 from obographs.standardized import StandardizedNode
 
 from pyobo import Reference
-from pyobo.struct.obograph.import_obograph import from_node
+from pyobo.struct.obograph.reader import from_node
 
 
 class TestImportNode(unittest.TestCase):
