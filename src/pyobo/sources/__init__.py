@@ -27,6 +27,7 @@ from .gtdb import GTDBGetter
 from .gwascentral import GWASCentralPhenotypeGetter, GWASCentralStudyGetter
 from .hgnc import HGNCGetter, HGNCGroupGetter
 from .icd import ICD10Getter, ICD11Getter
+from .intact import IntactGetter
 from .interpro import InterProGetter
 from .itis import ITISGetter
 from .kegg import KEGGGeneGetter, KEGGGenomeGetter, KEGGPathwayGetter
@@ -102,6 +103,7 @@ __all__ = [
     "ICD10Getter",
     "ICD11Getter",
     "ITISGetter",
+    "IntactGetter",
     "InterProGetter",
     "KEGGGeneGetter",
     "KEGGGenomeGetter",
