@@ -166,7 +166,14 @@ def get_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Refe
         ontology = get_ontology(prefix, **kwargs)
         return sorted(ontology.iterate_references())
 
-    return set(_get_references())
+    try:
+        return set(_get_references())
+    except NoBuildError:
+        logger.debug("[%s] no build", prefix)
+        return set()
+    except (Exception, subprocess.CalledProcessError) as e:
+        logger.exception("[%s v%s] could not load: %s", prefix, version, e)
+        return set()
 
 
 @lru_cache
