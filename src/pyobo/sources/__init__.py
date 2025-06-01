@@ -6,7 +6,7 @@ from .antibodyregistry import AntibodyRegistryGetter
 from .bigg import BiGGCompartmentGetter, BiGGMetaboliteGetter, BiGGModelGetter, BiGGReactionGetter
 from .ccle import CCLEGetter
 from .cgnc import CGNCGetter
-from .chembl import ChEMBLCompoundGetter, ChEMBLTargetGetter
+from .chembl import ChEMBLCompoundGetter, ChEMBLMechanismGetter, ChEMBLTargetGetter
 from .civic_gene import CIVICGeneGetter
 from .clinicaltrials import ClinicalTrialsGetter
 from .complexportal import ComplexPortalGetter
@@ -80,6 +80,7 @@ __all__ = [
     "CPTGetter",
     "CVXGetter",
     "ChEMBLCompoundGetter",
+    "ChEMBLMechanismGetter",
     "ChEMBLTargetGetter",
     "ClinicalTrialsGetter",
     "ComplexPortalGetter",
