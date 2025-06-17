@@ -21,13 +21,13 @@ TERM_PREFIX = "spdx.term"
 
 ROOT = Term.from_triple(TERM_PREFIX, "ListedLicense", "listed license")
 IS_OSI = TypeDef(
-    reference=Reference(prefix=TERM_PREFIX, identifier="isOsiApproved"),
+    reference=Reference(prefix=TERM_PREFIX, identifier="isOsiApproved", name="is OSI approved"),
     is_metadata_tag=True,
     domain=ROOT.reference,
     range=xsd_boolean,
 )
 IS_FSF = TypeDef(
-    reference=Reference(prefix=TERM_PREFIX, identifier="isFsfLibre"),
+    reference=Reference(prefix=TERM_PREFIX, identifier="isFsfLibre", name="is FSF Libre"),
     is_metadata_tag=True,
     domain=ROOT.reference,
     range=xsd_boolean,
