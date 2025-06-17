@@ -60,6 +60,7 @@ from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
 from .sgd import SGDGetter
 from .signor import SignorGetter
 from .slm import SLMGetter
+from .spdx import SPDXLicenseGetter
 from .umls import UMLSGetter, UMLSSTyGetter
 from .unimod import UnimodGetter
 from .uniprot import UniProtGetter, UniProtPtmGetter
@@ -142,6 +143,7 @@ __all__ = [
     "SFAMGetter",
     "SGDGetter",
     "SLMGetter",
+    "SPDXLicenseGetter",
     "SignorGetter",
     "UMLSGetter",
     "UMLSSTyGetter",
