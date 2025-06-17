@@ -11,6 +11,7 @@ from .civic_gene import CIVICGeneGetter
 from .clinicaltrials import ClinicalTrialsGetter
 from .complexportal import ComplexPortalGetter
 from .conso import CONSOGetter
+from .spdx import SPDXLicenseGetter
 from .cpt import CPTGetter
 from .credit import CreditGetter
 from .cvx import CVXGetter
@@ -142,6 +143,7 @@ __all__ = [
     "SFAMGetter",
     "SGDGetter",
     "SLMGetter",
+    "SPDXLicenseGetter",
     "SignorGetter",
     "UMLSGetter",
     "UMLSSTyGetter",
