@@ -1,13 +1,13 @@
 """Convert SPDX to an ontology."""
 
 import json
-from typing import Iterable
+from collections.abc import Iterable
 
 import requests
 from pydantic import ValidationError
 from tqdm import tqdm
 
-from pyobo.struct import Obo, Term, Reference, TypeDef
+from pyobo.struct import Obo, Reference, Term, TypeDef
 from pyobo.struct.typedef import see_also
 from pyobo.utils.path import ensure_path
 
@@ -16,8 +16,8 @@ __all__ = [
 ]
 
 DATA_URL = "https://github.com/spdx/license-list-data/raw/refs/heads/main/json/licenses.json"
-LICENSE_PREFIX = 'spdx'
-TERM_PREFIX = 'spdx.term'
+LICENSE_PREFIX = "spdx"
+TERM_PREFIX = "spdx.term"
 
 IS_OSI = TypeDef(
     reference=Reference(prefix=TERM_PREFIX, identifier="isOsiApproved"),
@@ -30,7 +30,7 @@ IS_FSF = TypeDef(
 
 
 def get_version():
-    return requests.get(DATA_URL, timeout=5).json()['licenseListVersion']
+    return requests.get(DATA_URL, timeout=5).json()["licenseListVersion"]
 
 
 def get_terms(version: str) -> Iterable[Term]:
@@ -41,25 +41,27 @@ def get_terms(version: str) -> Iterable[Term]:
         version=version,
     )
     with path.open() as file:
-        records = json.load(file)['licenses']
+        records = json.load(file)["licenses"]
     for record in records:
-        if term:=_get_term(record):
+        if term := _get_term(record):
             yield term
 
 
 def _get_term(record: dict[str, any]) -> Term | None:
     try:
-        reference =Reference(prefix=LICENSE_PREFIX, identifier=record['licenseId'], name=record['name'])
+        reference = Reference(
+            prefix=LICENSE_PREFIX, identifier=record["licenseId"], name=record["name"]
+        )
     except ValidationError:
         tqdm.write(f"invalid: {record['licenseId']}")
         return None
     term = Term(
         reference=reference,
-        is_obsolete=record['isDeprecatedLicenseId'],
+        is_obsolete=record["isDeprecatedLicenseId"],
     )
-    if record.get('isOsiApproved'):
+    if record.get("isOsiApproved"):
         term.annotate_boolean(IS_OSI, True)
-    if record.get('isFsfLibre'):
+    if record.get("isFsfLibre"):
         term.annotate_boolean(IS_FSF, True)
     for uri in record.get("seeAlso", []):
         term.annotate_uri(see_also, uri)
@@ -77,5 +79,5 @@ class SPDXLicenseGetter(Obo):
         return get_terms(version=self._version_or_raise)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     SPDXLicenseGetter.cli()

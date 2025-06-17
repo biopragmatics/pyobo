@@ -11,7 +11,6 @@ from .civic_gene import CIVICGeneGetter
 from .clinicaltrials import ClinicalTrialsGetter
 from .complexportal import ComplexPortalGetter
 from .conso import CONSOGetter
-from .spdx import SPDXLicenseGetter
 from .cpt import CPTGetter
 from .credit import CreditGetter
 from .cvx import CVXGetter
@@ -61,6 +60,7 @@ from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
 from .sgd import SGDGetter
 from .signor import SignorGetter
 from .slm import SLMGetter
+from .spdx import SPDXLicenseGetter
 from .umls import UMLSGetter, UMLSSTyGetter
 from .unimod import UnimodGetter
 from .uniprot import UniProtGetter, UniProtPtmGetter
