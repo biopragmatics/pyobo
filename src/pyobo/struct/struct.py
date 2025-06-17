@@ -746,13 +746,21 @@ class Obo:
             help="Re-process the data, but don't download it again.",
         )
         @click.option("--owl", is_flag=True, help="Write OWL via ROBOT")
+        @click.option("--obo", is_flag=True, help="Write OBO")
         @click.option("--ofn", is_flag=True, help="Write Functional OWL (OFN)")
         @click.option("--ttl", is_flag=True, help="Write turtle RDF via OFN")
         @click.option(
             "--version", help="Specify data version to get. Use this if bioversions is acting up."
         )
-        def _main(force: bool, owl: bool, ofn: bool, ttl: bool, version: str | None, rewrite: bool):
-            rewrite = True
+        def _main(
+            force: bool,
+            obo: bool,
+            owl: bool,
+            ofn: bool,
+            ttl: bool,
+            version: str | None,
+            rewrite: bool,
+        ) -> None:
             try:
                 inst = cls(force=force, data_version=version)
             except Exception as e:
@@ -760,7 +768,7 @@ class Obo:
                 sys.exit(1)
             inst.write_default(
                 write_obograph=False,
-                write_obo=False,
+                write_obo=obo,
                 write_owl=owl,
                 write_ofn=ofn,
                 write_ttl=ttl,
