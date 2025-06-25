@@ -17,7 +17,7 @@ PREFIX = "iana.mediatype"
 ROOT = Term.from_triple(prefix="dcterms", identifier="MediaType", name="media type")
 
 #: The top-level types listed on https://www.iana.org/assignments/media-types/media-types.xhtml
-TYPES = [
+MEDIA_TYPE_GROUPS = [
     "application",
     "audio",
     "font",
@@ -30,12 +30,14 @@ TYPES = [
     "video",
 ]
 
-XX = {
-    typ: (
-        f"https://www.iana.org/assignments/media-types/{typ}.csv",
-        Term(reference=default_reference(PREFIX, typ, typ)).append_parent(ROOT),
+GROUP_TO_CSV = {
+    media_type_group: (
+        f"https://www.iana.org/assignments/media-types/{media_type_group}.csv",
+        Term(reference=default_reference(PREFIX, media_type_group, media_type_group)).append_parent(
+            ROOT
+        ),
     )
-    for typ in TYPES
+    for media_type_group in MEDIA_TYPE_GROUPS
 }
 
 bioregistry.add_resource(
@@ -51,7 +53,7 @@ class IANAGetter(Obo):
     ontology = bioregistry_key = PREFIX
     name = "IANA Media Types"
     dynamic_version = True
-    root_terms = [t.reference for _, (_, t) in sorted(XX.items())]
+    root_terms = [t.reference for _, (_, t) in sorted(GROUP_TO_CSV.items())]
     typedefs = [
         term_replaced_by,
     ]
@@ -65,7 +67,7 @@ def get_terms() -> list[Term]:
     """Get IANA Media Type terms."""
     terms: dict[str, Term] = {}
     forwards: dict[Term, str] = {}
-    for key, (url, parent) in XX.items():
+    for key, (url, parent) in GROUP_TO_CSV.items():
         df = ensure_df(PREFIX, url=url, sep=",")
         terms[key] = parent
         for name, identifier, references in df.values:
