@@ -105,4 +105,4 @@ def _process_references(cell: str) -> list[str]:
 
 
 if __name__ == "__main__":
-    IANAGetter.cli(["--ofn", "--obo"])
+    IANAGetter.cli()
