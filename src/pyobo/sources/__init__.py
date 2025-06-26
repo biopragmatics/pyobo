@@ -59,6 +59,7 @@ from .ror import RORGetter
 from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
 from .sgd import SGDGetter
 from .signor import SignorGetter
+from .silva import SILVAGetter
 from .slm import SLMGetter
 from .spdx import SPDXLicenseGetter
 from .umls import UMLSGetter, UMLSSTyGetter
@@ -142,6 +143,7 @@ __all__ = [
     "SDISGetter",
     "SFAMGetter",
     "SGDGetter",
+    "SILVAGetter",
     "SLMGetter",
     "SPDXLicenseGetter",
     "SignorGetter",
