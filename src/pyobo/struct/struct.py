@@ -87,6 +87,7 @@ __all__ = [
     "TypeDef",
     "abbreviation",
     "acronym",
+    "build_ontology",
     "make_ad_hoc_ontology",
 ]
 
@@ -917,6 +918,8 @@ class Obo:
                     end = f'"{obo_escape_slim(value.value)}" {reference_escape(value.datatype, ontology_prefix=self.ontology)}'
                 case Reference():
                     end = reference_escape(value, ontology_prefix=self.ontology)
+                case _:
+                    raise TypeError(f"Invalid property value: {value}")
             yield f"property_value: {reference_escape(predicate, ontology_prefix=self.ontology)} {end}"
 
     def _iterate_property_pairs(self) -> Iterable[Annotation]:
@@ -2271,6 +2274,41 @@ class TypeDef(Stanza):
 
 class AdHocOntologyBase(Obo):
     """A base class for ad-hoc ontologies."""
+
+
+def build_ontology(
+    prefix: str,
+    terms: list[Term] | None = None,
+    synonym_typedefs: list[SynonymTypeDef] | None = None,
+    typedefs: list[TypeDef] | None = None,
+    name: str | None = None,  # inferred
+    version: str | None = None,
+    idspaces: dict[str, str] | None = None,
+    root_terms: list[Reference] | None = None,
+    subsetdefs: list[tuple[Reference, str]] | None = None,
+    properties: list[Annotation] | None = None,
+    imports: list[str] | None = None,
+) -> Obo:
+    """Build an ontology from parts."""
+    resource = bioregistry.get_resource(prefix, strict=True)
+    if name is None:
+        name = resource.get_name()
+    # TODO auto-populate license and other properties
+    return make_ad_hoc_ontology(
+        _ontology=prefix,
+        _name=name,
+        # _auto_generated_by
+        _typedefs=typedefs,
+        _synonym_typedefs=synonym_typedefs,
+        # _date: datetime.datetime | None = None,
+        _data_version=version,
+        _idspaces=idspaces,
+        _root_terms=root_terms,
+        _subsetdefs=subsetdefs,
+        _property_values=properties,
+        _imports=imports,
+        terms=terms,
+    )
 
 
 def make_ad_hoc_ontology(

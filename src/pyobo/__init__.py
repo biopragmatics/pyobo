@@ -70,6 +70,7 @@ from .struct import (
     SynonymTypeDef,
     Term,
     TypeDef,
+    build_ontology,
     default_reference,
 )
 from .struct.obo import from_obo_path, from_obonet
@@ -84,6 +85,7 @@ __all__ = [
     "SynonymTypeDef",
     "Term",
     "TypeDef",
+    "build_ontology",
     "default_reference",
     "ensure_path",
     "from_obo_path",

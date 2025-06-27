@@ -16,6 +16,7 @@ from .struct import (
     SynonymTypeDef,
     Term,
     TypeDef,
+    build_ontology,
     make_ad_hoc_ontology,
 )
 from .struct_utils import Annotation, Stanza, StanzaType
@@ -57,6 +58,7 @@ __all__ = [
     "Term",
     "TypeDef",
     "_parse_str_or_curie_or_uri",
+    "build_ontology",
     "default_reference",
     "derives_from",
     "enables",
