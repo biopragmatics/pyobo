@@ -26,6 +26,7 @@ from .geonames import GeonamesFeatureGetter, GeonamesGetter
 from .gtdb import GTDBGetter
 from .gwascentral import GWASCentralPhenotypeGetter, GWASCentralStudyGetter
 from .hgnc import HGNCGetter, HGNCGroupGetter
+from .iana_media_type import IANAGetter
 from .icd import ICD10Getter, ICD11Getter
 from .intact import IntactGetter
 from .interpro import InterProGetter
@@ -101,6 +102,7 @@ __all__ = [
     "GeonamesGetter",
     "HGNCGetter",
     "HGNCGroupGetter",
+    "IANAGetter",
     "ICD10Getter",
     "ICD11Getter",
     "ITISGetter",
