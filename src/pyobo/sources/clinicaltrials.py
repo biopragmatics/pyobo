@@ -43,21 +43,19 @@ CLINICAL_TRIAL_TERM = Term(
     reference=Reference(prefix="obi", identifier="0003699", name="clinical trial")
 ).append_parent(CLINICAL_INVESTIGATION_TERM)
 
-# TODO request OBI term
 RANDOMIZED_INTERVENTIONAL_CLINICAL_TRIAL_TERM = Term(
-    reference=default_reference(
-        PREFIX,
-        "randomized-interventional-clinical-trial",
-        name="randomized interventional clinical trial",
+    reference=Reference(
+        prefix="obi",
+        identifier="0004001",
+        name="randomized clinical trial",
     )
 ).append_parent(CLINICAL_TRIAL_TERM)
 
-# TODO request OBI term
 NON_RANDOMIZED_INTERVENTIONAL_CLINICAL_TRIAL_TERM = Term(
-    reference=default_reference(
-        PREFIX,
-        "non-randomized-interventional-clinical-trial",
-        name="non-randomized interventional clinical trial",
+    reference=Reference(
+        prefix="obi",
+        identifier="0004002",
+        name="non-randomized clinical trial",
     )
 ).append_parent(CLINICAL_TRIAL_TERM)
 
