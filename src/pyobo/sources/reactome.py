@@ -22,6 +22,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 PREFIX = "reactome"
+ROOT = Reference(prefix="pw", identifier="0000001", name="pathway")
 
 
 # TODO alt ids https://reactome.org/download/current/reactome_stable_ids.txt
@@ -32,10 +33,12 @@ class ReactomeGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     typedefs = [from_species, has_participant, has_citation]
+    root_terms = [ROOT]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return iter_terms(version=self._version_or_raise, force=force)
+        yield Term(reference=ROOT)
+        yield from iter_terms(version=self._version_or_raise, force=force)
 
 
 def ensure_participant_df(version: str, force: bool = False) -> pd.DataFrame:
@@ -87,6 +90,10 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     for parent_id, child_id in hierarchy_df.values:
         terms[child_id].append_parent(terms[parent_id])
 
+    for term in terms.values():
+        if not term.parents:
+            term.append_parent(ROOT)
+
     uniprot_pathway_df = ensure_participant_df(version=version, force=force)
     for uniprot_id, reactome_id in tqdm(
         uniprot_pathway_df.values,
@@ -102,7 +109,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             reference = Reference(prefix="uniprot.isoform", identifier=uniprot_id)
         else:
             reference = Reference(prefix="uniprot", identifier=uniprot_id)
-        terms[reactome_id].append_relationship(has_participant, reference)
+        terms[reactome_id].annotate_object(has_participant, reference)
 
     chebi_pathway_url = f"https://reactome.org/download/{version}/ChEBI2Reactome_All_Levels.txt"
     chebi_pathway_df = ensure_df(
@@ -122,7 +129,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         if reactome_id not in terms:
             tqdm.write(f"{reactome_id} appears in chebi participants file but not pathways file")
             continue
-        terms[reactome_id].append_relationship(
+        terms[reactome_id].annotate_object(
             has_participant, Reference(prefix="chebi", identifier=chebi_id)
         )
 

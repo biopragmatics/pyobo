@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 PREFIX = "wikipathways"
 
+ROOT = Reference(prefix="pw", identifier="0000001", name="pathway")
 _PATHWAY_INFO = [
     ("Anopheles_gambiae", "7165"),
     ("Arabidopsis_thaliana", "3702"),
@@ -47,10 +48,12 @@ class WikiPathwaysGetter(Obo):
 
     ontology = bioversions_key = PREFIX
     typedefs = [from_species, has_participant]
+    root_terms = [ROOT]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return iter_terms(version=self._version_or_raise)
+        yield Term(reference=ROOT)
+        yield from iter_terms(version=self._version_or_raise)
 
 
 def iter_terms(version: str) -> Iterable[Term]:
@@ -69,6 +72,7 @@ def iter_terms(version: str) -> Iterable[Term]:
 
         for identifier, _version, _revision, name, _species, genes in parse_wikipathways_gmt(path):
             term = Term(reference=Reference(prefix=PREFIX, identifier=identifier, name=name))
+            term.append_parent(ROOT)
             term.set_species(taxonomy_id, taxonomy_name)
             for ncbigene_id in genes:
                 term.annotate_object(
