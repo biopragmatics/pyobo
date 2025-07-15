@@ -750,6 +750,7 @@ class Obo:
         @click.option("--obo", is_flag=True, help="Write OBO")
         @click.option("--ofn", is_flag=True, help="Write Functional OWL (OFN)")
         @click.option("--ttl", is_flag=True, help="Write turtle RDF via OFN")
+        @click.option("--cache/--no-cache", is_flag=True, help="Write the cache", default=True)
         @click.option(
             "--version", help="Specify data version to get. Use this if bioversions is acting up."
         )
@@ -761,6 +762,7 @@ class Obo:
             ttl: bool,
             version: str | None,
             rewrite: bool,
+            cache: bool,
         ) -> None:
             try:
                 inst = cls(force=force, data_version=version)
@@ -776,6 +778,7 @@ class Obo:
                 write_nodes=True,
                 force=force or rewrite,
                 use_tqdm=True,
+                write_cache=cache,
             )
 
         return _main
