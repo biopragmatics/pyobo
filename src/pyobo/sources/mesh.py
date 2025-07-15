@@ -116,17 +116,17 @@ def get_terms(version: str, *, force: bool = False) -> Iterable[Term]:
     """Get MeSH OBO terms."""
     mesh_id_to_term: dict[str, Term] = {}
 
-    descriptors = ensure_mesh_descriptors(version=version, force=force)
+    descriptor_records = ensure_mesh_descriptors(version=version, force=force)
     supplemental_records = ensure_mesh_supplemental_records(version=version, force=force)
 
-    for entry in itt.chain(descriptors, supplemental_records):
-        identifier = entry["identifier"]
-        name = entry["name"]
-        definition = entry.get("scope_note")
+    for descriptor_record in itt.chain(descriptor_records, supplemental_records):
+        identifier = descriptor_record["identifier"]
+        name = descriptor_record["name"]
+        definition = descriptor_record.get("scope_note")
 
         xrefs: list[Reference] = []
         synonyms: set[str] = set()
-        for concept in entry["concepts"]:
+        for concept in descriptor_record["concepts"]:
             synonyms.add(concept["name"])
             for term in concept["terms"]:
                 synonyms.add(term["name"])
@@ -140,13 +140,23 @@ def get_terms(version: str, *, force: bool = False) -> Iterable[Term]:
             xrefs=xrefs,
         )
 
-    for entry in descriptors:
-        term = mesh_id_to_term[entry["identifier"]]
-        if entry["parents"]:
-            for parent_descriptor_id in entry["parents"]:
-                term.append_parent(mesh_id_to_term[parent_descriptor_id])
-        else:
-            term.append_parent(SUPPLEMENT_PARENT)
+    for descriptor_record in descriptor_records:
+        term = mesh_id_to_term[descriptor_record["identifier"]]
+        for parent_descriptor_id in descriptor_record["parents"]:
+            term.append_parent(mesh_id_to_term[parent_descriptor_id])
+
+        # This takes care of terms that don't have any parents like
+        # Body Regions (https://meshb.nlm.nih.gov/record/ui?ui=D001829),
+        # which have the tree code A01 and need to point to a made-up
+        # term for "A"
+        for top_level_letter in descriptor_record["top_levels"]:
+            term.append_parent(TREE_HEADERS[top_level_letter])
+
+    # MeSH supplementary records' identifiers start with "C"
+    # and do not have a hierarchy assigned to them
+    for supplemental_record in supplemental_records:
+        term = mesh_id_to_term[supplemental_record["identifier"]]
+        term.append_parent(SUPPLEMENT_PARENT)
 
     return mesh_id_to_term.values()
 
@@ -213,26 +223,29 @@ def get_descriptor_records(element: Element, id_key: str, name_key: str) -> list
 
     # add in parents to each descriptor based on their tree numbers
     for descriptor in rv:
+        top_levels = set()
         parents_descriptor_uis = set()
         for tree_number in descriptor["tree_numbers"]:
             try:
                 parent_tn, _self_tn = tree_number.rsplit(".", 1)
             except ValueError:
-                logger.debug("No dot for %s", tree_number)
-                continue
-
-            parent_descriptor_ui = tree_number_to_descriptor_ui.get(parent_tn)
-            if parent_descriptor_ui is not None:
-                parents_descriptor_uis.add(parent_descriptor_ui)
+                # e.g., this happens for A01 (Body Regions)
+                # https://meshb.nlm.nih.gov/record/ui?ui=D001829
+                top_levels.add(tree_number[0])
             else:
-                logger.debug("missing tree number: %s", parent_tn)
+                parent_descriptor_ui = tree_number_to_descriptor_ui.get(parent_tn)
+                if parent_descriptor_ui is not None:
+                    parents_descriptor_uis.add(parent_descriptor_ui)
+                else:
+                    tqdm.write(f"missing tree number: {parent_tn}")
 
-        descriptor["parents"] = list(parents_descriptor_uis)
+        descriptor["parents"] = sorted(parents_descriptor_uis)
+        descriptor["top_levels"] = sorted(top_levels)
 
     return rv
 
 
-def get_scope_note(descriptor_record: dict[str, Any]) -> str | None:
+def get_scope_note(descriptor_record: Mapping[str, Any] | list[Mapping[str, Any]]) -> str | None:
     """Get the scope note from the preferred concept in a term's record."""
     if isinstance(descriptor_record, dict):
         # necessary for pre-2023 data
