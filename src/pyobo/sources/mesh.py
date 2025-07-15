@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 
 from pyobo.api.utils import safe_get_version
 from pyobo.identifier_utils import standardize_ec
-from pyobo.struct import Obo, Reference, Synonym, Term
+from pyobo.struct import Obo, Reference, Synonym, Term, default_reference
 from pyobo.utils.cache import cached_json, cached_mapping
 from pyobo.utils.path import ensure_path, prefix_directory_join
 
@@ -31,6 +31,9 @@ PREFIX = "mesh"
 NOW_YEAR = str(datetime.datetime.now().year)
 CAS_RE = re.compile(r"^\d{1,7}\-\d{2}\-\d$")
 UNII_RE = re.compile(r"[0-9A-Za-z]{10}$")
+SUPPLEMENT_PARENT = default_reference(
+    prefix=PREFIX, identifier="supplemental-record", name="supplemental records"
+)
 
 
 def _get_xml_root(path: Path) -> Element:
@@ -52,7 +55,8 @@ class MeSHGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return get_terms(version=self._version_or_raise, force=force)
+        yield SUPPLEMENT_PARENT
+        yield from get_terms(version=self._version_or_raise, force=force)
 
 
 def get_tree_to_mesh_id(version: str) -> Mapping[str, str]:
@@ -74,7 +78,7 @@ def get_tree_to_mesh_id(version: str) -> Mapping[str, str]:
     return _inner()
 
 
-def get_terms(version: str, force: bool = False) -> Iterable[Term]:
+def get_terms(version: str, *, force: bool = False) -> Iterable[Term]:
     """Get MeSH OBO terms."""
     mesh_id_to_term: dict[str, Term] = {}
 
@@ -104,11 +108,11 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     for entry in descriptors:
         term = mesh_id_to_term[entry["identifier"]]
-        for parent_descriptor_id in entry["parents"]:
-            term.append_parent(mesh_id_to_term[parent_descriptor_id])
-
-    # TODO check for any term that has no parents from the supplement
-    #  and give a fake one
+        if entry["parents"]:
+            for parent_descriptor_id in entry["parents"]:
+                term.append_parent(mesh_id_to_term[parent_descriptor_id])
+        else:
+            term.append_parent(SUPPLEMENT_PARENT)
 
     return mesh_id_to_term.values()
 
@@ -155,7 +159,7 @@ def ensure_mesh_supplemental_records(version: str, force: bool = False) -> list[
     return _inner()  # type:ignore
 
 
-def get_descriptor_records(element: Element, id_key: str, name_key) -> list[dict[str, Any]]:
+def get_descriptor_records(element: Element, id_key: str, name_key: str) -> list[dict[str, Any]]:
     """Get MeSH descriptor records."""
     logger.info("extract MeSH descriptors, concepts, and terms")
 
@@ -194,7 +198,7 @@ def get_descriptor_records(element: Element, id_key: str, name_key) -> list[dict
     return rv
 
 
-def get_scope_note(descriptor_record) -> str | None:
+def get_scope_note(descriptor_record: dict[str, Any]) -> str | None:
     """Get the scope note from the preferred concept in a term's record."""
     if isinstance(descriptor_record, dict):
         # necessary for pre-2023 data
@@ -300,7 +304,7 @@ def get_term_records(element: Element) -> list[Mapping[str, Any]]:
     return [get_term_record(term) for term in element.findall("TermList/Term")]
 
 
-def get_term_record(element) -> Mapping[str, Any]:
+def get_term_record(element: Element) -> Mapping[str, Any]:
     """Get a single MeSH term record."""
     return {
         "term_ui": element.findtext("TermUI"),
