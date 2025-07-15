@@ -55,7 +55,7 @@ class MeSHGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        yield SUPPLEMENT_PARENT
+        yield Term(reference=SUPPLEMENT_PARENT)
         yield from get_terms(version=self._version_or_raise, force=force)
 
 
@@ -227,7 +227,7 @@ def get_descriptor_record(
     """
     concepts = get_concept_records(element)
     scope_note = get_scope_note(concepts)
-    rv = {
+    rv: dict[str, Any] = {
         "identifier": element.findtext(id_key),
         "name": element.findtext(name_key),
         "tree_numbers": sorted(
