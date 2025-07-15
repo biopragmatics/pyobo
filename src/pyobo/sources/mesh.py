@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 
 from pyobo.api.utils import safe_get_version
 from pyobo.identifier_utils import standardize_ec
-from pyobo.struct import Obo, Reference, Synonym, Term
+from pyobo.struct import Obo, Reference, Synonym, Term, default_reference
 from pyobo.utils.cache import cached_json, cached_mapping
 from pyobo.utils.path import ensure_path, prefix_directory_join
 
@@ -31,6 +31,37 @@ PREFIX = "mesh"
 NOW_YEAR = str(datetime.datetime.now().year)
 CAS_RE = re.compile(r"^\d{1,7}\-\d{2}\-\d$")
 UNII_RE = re.compile(r"[0-9A-Za-z]{10}$")
+SUPPLEMENT_PARENT = default_reference(
+    prefix=PREFIX, identifier="supplemental-record", name="supplemental records"
+)
+
+#: A mapping from tree header letters to labels
+#:
+#: .. seealso:: https://meshb-prev.nlm.nih.gov/treeView
+TREE_HEADER_TO_NAME = {
+    "A": "Anatomy",
+    "B": "Organisms",
+    "C": "Diseases",
+    "D": "Chemicals and Drugs",
+    "E": "Analytical, Diagnostic and Therapeutic Techniques, and Equipment",
+    "F": "Psychiatry and Psychology",
+    "G": "Phenomena and Processes",
+    "H": "Disciplines and Occupations",
+    "I": "Anthropology, Education, Sociology, and Social Phenomena",
+    "J": "Technology, Industry, and Agriculture",
+    "K": "Humanities",
+    "L": "Information Science",
+    "M": "Named Groups",
+    "N": "Health Care",
+    "V": "Publication Characteristics",
+    "Z": "Geographicals",
+}
+
+#: A mapping from tree header letters to term objects
+TREE_HEADERS: dict[str, Reference] = {
+    letter: default_reference(prefix=PREFIX, identifier=letter, name=name)
+    for letter, name in TREE_HEADER_TO_NAME.items()
+}
 
 
 def _get_xml_root(path: Path) -> Element:
@@ -46,13 +77,20 @@ class MeSHGetter(Obo):
     """An ontology representation of the Medical Subject Headings."""
 
     ontology = bioversions_key = PREFIX
+    root_terms = [
+        SUPPLEMENT_PARENT,
+        *TREE_HEADERS.values(),
+    ]
 
     def _get_version(self) -> str | None:
         return NOW_YEAR
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return get_terms(version=self._version_or_raise, force=force)
+        yield Term(reference=SUPPLEMENT_PARENT)
+        for x in TREE_HEADERS.values():
+            yield Term(reference=x)
+        yield from get_terms(version=self._version_or_raise, force=force)
 
 
 def get_tree_to_mesh_id(version: str) -> Mapping[str, str]:
@@ -74,21 +112,21 @@ def get_tree_to_mesh_id(version: str) -> Mapping[str, str]:
     return _inner()
 
 
-def get_terms(version: str, force: bool = False) -> Iterable[Term]:
+def get_terms(version: str, *, force: bool = False) -> Iterable[Term]:
     """Get MeSH OBO terms."""
     mesh_id_to_term: dict[str, Term] = {}
 
-    descriptors = ensure_mesh_descriptors(version=version, force=force)
+    descriptor_records = ensure_mesh_descriptors(version=version, force=force)
     supplemental_records = ensure_mesh_supplemental_records(version=version, force=force)
 
-    for entry in itt.chain(descriptors, supplemental_records):
-        identifier = entry["identifier"]
-        name = entry["name"]
-        definition = entry.get("scope_note")
+    for descriptor_record in itt.chain(descriptor_records, supplemental_records):
+        identifier = descriptor_record["identifier"]
+        name = descriptor_record["name"]
+        definition = descriptor_record.get("scope_note")
 
         xrefs: list[Reference] = []
         synonyms: set[str] = set()
-        for concept in entry["concepts"]:
+        for concept in descriptor_record["concepts"]:
             synonyms.add(concept["name"])
             for term in concept["terms"]:
                 synonyms.add(term["name"])
@@ -102,11 +140,23 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             xrefs=xrefs,
         )
 
-    for entry in descriptors:
-        mesh_id_to_term[entry["identifier"]].parents = [
-            mesh_id_to_term[parent_descriptor_id].reference
-            for parent_descriptor_id in entry["parents"]
-        ]
+    for descriptor_record in descriptor_records:
+        term = mesh_id_to_term[descriptor_record["identifier"]]
+        for parent_descriptor_id in descriptor_record["parents"]:
+            term.append_parent(mesh_id_to_term[parent_descriptor_id])
+
+        # This takes care of terms that don't have any parents like
+        # Body Regions (https://meshb.nlm.nih.gov/record/ui?ui=D001829),
+        # which have the tree code A01 and need to point to a made-up
+        # term for "A"
+        for top_level_letter in descriptor_record["top_levels"]:
+            term.append_parent(TREE_HEADERS[top_level_letter])
+
+    # MeSH supplementary records' identifiers start with "C"
+    # and do not have a hierarchy assigned to them
+    for supplemental_record in supplemental_records:
+        term = mesh_id_to_term[supplemental_record["identifier"]]
+        term.append_parent(SUPPLEMENT_PARENT)
 
     return mesh_id_to_term.values()
 
@@ -153,7 +203,7 @@ def ensure_mesh_supplemental_records(version: str, force: bool = False) -> list[
     return _inner()  # type:ignore
 
 
-def get_descriptor_records(element: Element, id_key: str, name_key) -> list[dict[str, Any]]:
+def get_descriptor_records(element: Element, id_key: str, name_key: str) -> list[dict[str, Any]]:
     """Get MeSH descriptor records."""
     logger.info("extract MeSH descriptors, concepts, and terms")
 
@@ -164,7 +214,7 @@ def get_descriptor_records(element: Element, id_key: str, name_key) -> list[dict
     logger.debug(f"got {len(rv)} descriptors")
 
     # cache tree numbers
-    tree_number_to_descriptor_ui = {
+    tree_number_to_descriptor_ui: dict[str, str] = {
         tree_number: descriptor["identifier"]
         for descriptor in rv
         for tree_number in descriptor["tree_numbers"]
@@ -173,26 +223,29 @@ def get_descriptor_records(element: Element, id_key: str, name_key) -> list[dict
 
     # add in parents to each descriptor based on their tree numbers
     for descriptor in rv:
+        top_levels = set()
         parents_descriptor_uis = set()
         for tree_number in descriptor["tree_numbers"]:
             try:
                 parent_tn, _self_tn = tree_number.rsplit(".", 1)
             except ValueError:
-                logger.debug("No dot for %s", tree_number)
-                continue
-
-            parent_descriptor_ui = tree_number_to_descriptor_ui.get(parent_tn)
-            if parent_descriptor_ui is not None:
-                parents_descriptor_uis.add(parent_descriptor_ui)
+                # e.g., this happens for A01 (Body Regions)
+                # https://meshb.nlm.nih.gov/record/ui?ui=D001829
+                top_levels.add(tree_number[0])
             else:
-                logger.debug("missing tree number: %s", parent_tn)
+                parent_descriptor_ui = tree_number_to_descriptor_ui.get(parent_tn)
+                if parent_descriptor_ui is not None:
+                    parents_descriptor_uis.add(parent_descriptor_ui)
+                else:
+                    tqdm.write(f"missing tree number: {parent_tn}")
 
-        descriptor["parents"] = list(parents_descriptor_uis)
+        descriptor["parents"] = sorted(parents_descriptor_uis)
+        descriptor["top_levels"] = sorted(top_levels)
 
     return rv
 
 
-def get_scope_note(descriptor_record) -> str | None:
+def get_scope_note(descriptor_record: Mapping[str, Any] | list[Mapping[str, Any]]) -> str | None:
     """Get the scope note from the preferred concept in a term's record."""
     if isinstance(descriptor_record, dict):
         # necessary for pre-2023 data
@@ -221,7 +274,7 @@ def get_descriptor_record(
     """
     concepts = get_concept_records(element)
     scope_note = get_scope_note(concepts)
-    rv = {
+    rv: dict[str, Any] = {
         "identifier": element.findtext(id_key),
         "name": element.findtext(name_key),
         "tree_numbers": sorted(
@@ -298,7 +351,7 @@ def get_term_records(element: Element) -> list[Mapping[str, Any]]:
     return [get_term_record(term) for term in element.findall("TermList/Term")]
 
 
-def get_term_record(element) -> Mapping[str, Any]:
+def get_term_record(element: Element) -> Mapping[str, Any]:
     """Get a single MeSH term record."""
     return {
         "term_ui": element.findtext("TermUI"),
