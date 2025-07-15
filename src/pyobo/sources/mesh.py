@@ -35,6 +35,34 @@ SUPPLEMENT_PARENT = default_reference(
     prefix=PREFIX, identifier="supplemental-record", name="supplemental records"
 )
 
+#: A mapping from tree header letters to labels
+#:
+#: .. seealso:: https://meshb-prev.nlm.nih.gov/treeView
+TREE_HEADER_TO_NAME = {
+    "A": "Anatomy",
+    "B": "Organisms",
+    "C": "Diseases",
+    "D": "Chemicals and Drugs",
+    "E": "Analytical, Diagnostic and Therapeutic Techniques, and Equipment",
+    "F": "Psychiatry and Psychology",
+    "G": "Phenomena and Processes",
+    "H": "Disciplines and Occupations",
+    "I": "Anthropology, Education, Sociology, and Social Phenomena",
+    "J": "Technology, Industry, and Agriculture",
+    "K": "Humanities",
+    "L": "Information Science",
+    "M": "Named Groups",
+    "N": "Health Care",
+    "V": "Publication Characteristics",
+    "Z": "Geographicals",
+}
+
+#: A mapping from tree header letters to term objects
+TREE_HEADERS: dict[str, Reference] = {
+    letter: default_reference(prefix=PREFIX, identifier=letter, name=name)
+    for letter, name in TREE_HEADER_TO_NAME.items()
+}
+
 
 def _get_xml_root(path: Path) -> Element:
     """Parse an XML file from a path to a GZIP file."""
@@ -49,6 +77,10 @@ class MeSHGetter(Obo):
     """An ontology representation of the Medical Subject Headings."""
 
     ontology = bioversions_key = PREFIX
+    root_terms = [
+        SUPPLEMENT_PARENT,
+        *TREE_HEADERS.values(),
+    ]
 
     def _get_version(self) -> str | None:
         return NOW_YEAR
@@ -56,6 +88,8 @@ class MeSHGetter(Obo):
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         yield Term(reference=SUPPLEMENT_PARENT)
+        for x in TREE_HEADERS.values():
+            yield Term(reference=x)
         yield from get_terms(version=self._version_or_raise, force=force)
 
 
@@ -170,7 +204,7 @@ def get_descriptor_records(element: Element, id_key: str, name_key: str) -> list
     logger.debug(f"got {len(rv)} descriptors")
 
     # cache tree numbers
-    tree_number_to_descriptor_ui = {
+    tree_number_to_descriptor_ui: dict[str, str] = {
         tree_number: descriptor["identifier"]
         for descriptor in rv
         for tree_number in descriptor["tree_numbers"]
