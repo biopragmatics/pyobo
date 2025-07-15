@@ -103,10 +103,12 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         )
 
     for entry in descriptors:
-        mesh_id_to_term[entry["identifier"]].parents = [
-            mesh_id_to_term[parent_descriptor_id].reference
-            for parent_descriptor_id in entry["parents"]
-        ]
+        term = mesh_id_to_term[entry["identifier"]]
+        for parent_descriptor_id in entry["parents"]:
+            term.append_parent(mesh_id_to_term[parent_descriptor_id])
+
+    # TODO check for any term that has no parents from the supplement
+    #  and give a fake one
 
     return mesh_id_to_term.values()
 
