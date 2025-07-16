@@ -203,6 +203,8 @@ def _ensure_ontology_path(
                 path = ensure_path(prefix, url=url, force=force, version=version)
             except (urllib.error.HTTPError, pystow.utils.DownloadError):
                 continue
+            except pystow.utils.UnexpectedDirectoryError:
+                continue  # TODO report more info about the URL and the name it tried to make
             else:
                 return ontology_format, path
     return None, None

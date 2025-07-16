@@ -7,6 +7,7 @@ import typing
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 
+import pydantic
 from tabulate import tabulate
 from tqdm.auto import tqdm
 
@@ -280,7 +281,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 continue  # only add concrete annotations
             term.append_relationship(
                 gene_product_member_of,
-                Reference(prefix="ec", identifier=ec_code),
+                Reference(prefix="ec", identifier=ec_code.strip()),
             )
         for rna_central_ids in entry.pop("rna_central_id", []):
             for rna_central_id in rna_central_ids.split(","):
@@ -314,7 +315,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             )
         for mgi_curie in entry.pop("mgd_id", []):
             if not mgi_curie.startswith("MGI:"):
-                tqdm.write(f"hgnc:{identifier} had bad MGI CURIE: {mgi_curie}")
+                tqdm.write(f"[hgnc:{identifier}] had bad MGI CURIE: {mgi_curie}")
                 continue
             mgi_id = mgi_curie[len("MGI:") :]
             if not mgi_id:
@@ -335,7 +336,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                     Reference(prefix="iuphar.ligand", identifier=iuphar[len("ligandId:") :])
                 )
             else:
-                tqdm.write(f"unhandled IUPHAR: {iuphar}")
+                tqdm.write(f"[hgnc:{identifier}] unhandled IUPHAR: {iuphar}")
 
         for lrg_info in entry.pop("lsdb", []):
             if lrg_info.startswith("LRG_"):
@@ -360,9 +361,15 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 xref_identifiers = [i.strip(".") for i in xref_identifiers]
 
             if len(xref_identifiers) == 1:
-                term.append_exact_match(
-                    Reference(prefix=xref_prefix, identifier=str(xref_identifiers[0]))
-                )
+                try:
+                    xref = Reference(prefix=xref_prefix, identifier=str(xref_identifiers[0]))
+                except pydantic.ValidationError:
+                    tqdm.write(
+                        f"[hgnc:{identifier}] had bad {key} xref: {xref_prefix}:{xref_identifiers[0]}"
+                    )
+                    continue
+                else:
+                    term.append_exact_match(xref)
             else:
                 for xref_identifier in xref_identifiers:
                     term.append_xref(Reference(prefix=xref_prefix, identifier=str(xref_identifier)))
