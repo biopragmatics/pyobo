@@ -5,8 +5,6 @@
 
 from collections.abc import Iterable
 
-import bioregistry
-
 from pyobo import Obo, Reference, Term, default_reference
 from pyobo.struct.typedef import term_replaced_by
 from pyobo.utils.path import ensure_df
@@ -39,12 +37,6 @@ GROUP_TO_CSV = {
     )
     for media_type_group in MEDIA_TYPE_GROUPS
 }
-
-bioregistry.add_resource(
-    bioregistry.Resource(
-        prefix=PREFIX, uri_format="https://www.iana.org/assignments/media-types/$1"
-    )
-)
 
 
 class IANAGetter(Obo):
