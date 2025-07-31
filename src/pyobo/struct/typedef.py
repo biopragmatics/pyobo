@@ -16,6 +16,7 @@ __all__ = [
     "broad_match",
     "close_match",
     "default_typedefs",
+    "derives_from_organism",
     "editor_note",
     "enables",
     "exact_match",
@@ -102,6 +103,9 @@ has_component = TypeDef(
 )
 derives_from = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0001000", name="derives from"),
+)
+derives_from_organism = TypeDef(
+    reference=Reference(prefix="CLO", identifier="0037207", name="derives from organism")
 )
 molecularly_interacts_with = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0002436", name="molecularly interacts with"),
