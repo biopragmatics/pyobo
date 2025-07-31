@@ -15,7 +15,7 @@ from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
 from textwrap import indent
-from typing import Any, TypeVar
+from typing import Any, Literal, TypeAlias, TypeVar
 
 import bioregistry
 import click
@@ -41,6 +41,7 @@ from .version import get_git_hash, get_version
 
 __all__ = [
     "NoBuildError",
+    "OntologyFormat",
     "get_ontology",
 ]
 
@@ -193,23 +194,31 @@ def get_ontology(
     return obo
 
 
+OntologyFormat: TypeAlias = Literal["obo", "owl", "json", "rdf"]
+# order matters in this list, since order implicitly defines priority
+_ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | None]]] = [
+    ("obo", bioregistry.get_obo_download),
+    ("owl", bioregistry.get_owl_download),
+    ("json", bioregistry.get_json_download),
+    ("rdf", bioregistry.get_rdf_download),
+]
+
+
 def _ensure_ontology_path(
     prefix: str, force: bool, version: str | None
-) -> tuple[str, Path] | tuple[None, None]:
-    for ontology_format, url in [
-        ("obo", bioregistry.get_obo_download(prefix)),
-        ("owl", bioregistry.get_owl_download(prefix)),
-        ("json", bioregistry.get_json_download(prefix)),
-    ]:
-        if url is not None:
-            try:
-                path = ensure_path(prefix, url=url, force=force, version=version)
-            except (urllib.error.HTTPError, pystow.utils.DownloadError):
-                continue
-            except pystow.utils.UnexpectedDirectoryError:
-                continue  # TODO report more info about the URL and the name it tried to make
-            else:
-                return ontology_format, path
+) -> tuple[OntologyFormat, Path] | tuple[None, None]:
+    for ontology_format, getter in _ONTOLOGY_GETTERS:
+        url = getter(prefix)
+        if url is None:
+            continue
+        try:
+            path = ensure_path(prefix, url=url, force=force, version=version)
+        except (urllib.error.HTTPError, pystow.utils.DownloadError):
+            continue
+        except pystow.utils.UnexpectedDirectoryError:
+            continue  # TODO report more info about the URL and the name it tried to make
+        else:
+            return ontology_format, path
     return None, None
 
 
