@@ -8,7 +8,7 @@ import bioregistry
 from pystow.utils import get_commit
 
 from pyobo import get_name_id_mapping
-from pyobo.struct import Obo, Reference, Term
+from pyobo.struct import Obo, Reference, Term, _parse_str_or_curie_or_uri
 from pyobo.struct.typedef import has_citation, has_member, has_part, is_a, part_of
 from pyobo.utils.io import multidict
 from pyobo.utils.path import ensure_df
@@ -107,7 +107,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         )
 
         provenance_reference = (
-            Reference.from_curie_or_uri(provenance) if isinstance(provenance, str) else None
+            _parse_str_or_curie_or_uri(provenance) if isinstance(provenance, str) else None
         )
         if provenance_reference:
             term.append_provenance(provenance_reference)

@@ -1,6 +1,8 @@
 """Selventa diseases.
 
-.. seealso:: https://github.com/pyobo/pyobo/issues/26
+.. seealso::
+
+    https://github.com/pyobo/pyobo/issues/26
 """
 
 from collections.abc import Iterable

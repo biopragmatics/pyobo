@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/cthoyt/cookiecutter-snekpack",
-  "commit": "a6f6b5681f77004e7714efb00895d7b5983eb4c3",
+  "commit": "9bad1ea3f001d8630c8a6e54fffc7d8d0f3e7b42",
   "checkout": null,
   "context": {
     "cookiecutter": {
@@ -15,13 +15,16 @@
       "command_line_interface": true,
       "gitlab": false,
       "runner": "tox",
+      "__not_charlie": "",
       "__runner": "tox -e",
       "__runner_uv": "--with tox-uv tox -e",
       "__runner_pip": "tox tox-uv",
+      "__runner_install_uv": "uv tool install tox --with tox-uv",
+      "__runner_install_pip": "python3 -m pip install tox tox-uv",
       "__runner_tests": "py",
       "__gh_slug": "biopragmatics/pyobo",
       "_template": "https://github.com/cthoyt/cookiecutter-snekpack",
-      "_commit": "a6f6b5681f77004e7714efb00895d7b5983eb4c3"
+      "_commit": "9bad1ea3f001d8630c8a6e54fffc7d8d0f3e7b42"
     }
   },
   "directory": null

@@ -1,6 +1,8 @@
 """Convert NCBI Genetic Codes to an ontology.
 
-.. seealso:: https://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/index.cgi?chapter=cgencodes
+.. seealso::
+
+    https://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/index.cgi?chapter=cgencodes
 """
 
 from collections.abc import Iterable

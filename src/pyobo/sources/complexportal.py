@@ -7,7 +7,16 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 from pyobo.resources.ncbitaxon import get_ncbitaxon_name
-from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_citation, has_part
+from pyobo.struct import (
+    Obo,
+    Reference,
+    Synonym,
+    Term,
+    _parse_str_or_curie_or_uri,
+    from_species,
+    has_citation,
+    has_part,
+)
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -48,6 +57,7 @@ SPECIES = [
 DTYPE = {
     "taxonomy_id": str,
 }
+ROOT = Reference(prefix="go", identifier="0032991", name="macromolecular complex")
 
 
 def _parse_members(s) -> list[tuple[Reference, str]]:
@@ -101,9 +111,9 @@ def _parse_xrefs(s) -> list[tuple[Reference, str]]:
         xref = xref.replace("rhea:RHEA: ", "rhea:")
         xref = xref.replace("rhea:RHEA:rhea ", "rhea:")
         xref = xref.replace("intenz:RHEA:", "rhea:")
-        xref = xref.replace("eccode::", "eccode:")
-        xref = xref.replace("eccode:EC:", "eccode:")
-        xref = xref.replace("intenz:EC:", "eccode:")
+        xref = xref.replace("eccode::", "ec:")
+        xref = xref.replace("eccode:EC:", "ec:")
+        xref = xref.replace("intenz:EC:", "ec:")
         xref = xref.replace("eccode:RHEA:", "rhea:")
         xref = xref.replace("efo:MONDO:", "MONDO:")
         xref = xref.replace("omim:MIM:", "omim:")
@@ -126,7 +136,7 @@ def _parse_xrefs(s) -> list[tuple[Reference, str]]:
             xref_curie = _clean_intenz(xref_curie)
 
         try:
-            reference = Reference.from_curie_or_uri(xref_curie)
+            reference = _parse_str_or_curie_or_uri(xref_curie)
         except ValueError:
             logger.warning("can not parse CURIE: %s", xref_curie)
             continue
@@ -148,10 +158,12 @@ class ComplexPortalGetter(Obo):
 
     bioversions_key = ontology = PREFIX
     typedefs = [from_species, has_part, has_citation]
+    root_terms = [ROOT]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return get_terms(version=self._version_or_raise)
+        yield Term(reference=ROOT)
+        yield from get_terms(version=self._version_or_raise)
 
 
 def get_df(version: str, force: bool = False) -> pd.DataFrame:
@@ -223,6 +235,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             definition=definition.strip() if pd.notna(definition) else None,
             synonyms=[Synonym(name=alias) for alias in aliases],
         )
+        term.append_parent(ROOT)
         for reference, note in xrefs:
             if note == "identity":
                 term.append_xref(reference)

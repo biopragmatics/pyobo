@@ -14,10 +14,10 @@ from pyobo.constants import (
     check_should_use_tqdm,
 )
 from pyobo.getters import get_ontology
-from pyobo.struct import Reference
-from pyobo.utils.path import prefix_cache_join
 
+from ..struct import Reference
 from ..utils.cache import cached_df
+from ..utils.path import CacheArtifact, get_cache_path
 
 __all__ = [
     "get_edges",
@@ -40,7 +40,7 @@ def get_graph(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> nx.DiGraph:
 def get_edges_df(prefix, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get a dataframe of edges triples."""
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="object_properties.tsv", version=version)
+    path = get_cache_path(prefix, CacheArtifact.edges, version=version)
 
     @cached_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)

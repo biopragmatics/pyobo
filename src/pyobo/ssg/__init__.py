@@ -42,8 +42,9 @@ def make_site(
 
     :param obo: The ontology to generate a site for
     :param directory: The directory in which to generate the site
-    :param use_subdirectories: If true, creates directories for each term/property/typedef with an index.html
-        inside. If false, creates HTML files named with the identifiers.
+    :param use_subdirectories: If true, creates directories for each
+        term/property/typedef with an index.html inside. If false, creates HTML files
+        named with the identifiers.
     :param manifest: If true, lists all entries on the homepage.
     :param resource: A custom resource
     """

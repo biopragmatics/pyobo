@@ -33,14 +33,15 @@ from ..api import (
     get_ids,
     get_mappings_df,
     get_metadata,
-    get_name_by_curie,
+    get_name,
     get_properties_df,
     get_relations_df,
     get_typedef_df,
     get_xrefs_df,
 )
 from ..constants import LookupKwargs
-from ..struct import Reference
+from ..getters import get_ontology
+from ..struct.reference import _parse_str_or_curie_or_uri
 
 __all__ = [
     "lookup",
@@ -204,7 +205,7 @@ def relations(
         else:
             echo_df(relations_df)
     else:
-        relation_reference = Reference.from_curie_or_uri(relation, strict=False)
+        relation_reference = _parse_str_or_curie_or_uri(relation, strict=False)
         if relation_reference is None:
             click.secho(f"not a valid curie: {relation}", fg="red")
             raise sys.exit(1)
@@ -239,7 +240,7 @@ def hierarchy(
     if h.number_of_edges() == 0:
         click.secho("no data", fg="red")
     else:
-        click.echo_via_pager("\n".join("\t".join(row) for row in h.edges()))
+        click.echo_via_pager("\n".join(f"{u.curie}\t{v.curie}" for u, v in h.edges()))
 
 
 @lookup_annotate
@@ -250,9 +251,9 @@ def ancestors(
 ) -> None:
     """Look up ancestors."""
     # note, prefix is passed via kwargs
-    curies = get_ancestors(identifier=identifier, **kwargs)
-    for curie in sorted(curies or []):
-        click.echo(f"{curie}\t{get_name_by_curie(curie, version=kwargs['version'])}")
+    ancestors = get_ancestors(identifier=identifier, **kwargs)
+    for ancestor in sorted(ancestors or []):
+        click.echo(f"{ancestor.curie}\t{get_name(ancestor, version=kwargs['version'])}")
 
 
 @lookup_annotate
@@ -263,9 +264,9 @@ def descendants(
 ) -> None:
     """Look up descendants."""
     # note, prefix is passed via kwargs
-    curies = get_descendants(identifier=identifier, **kwargs)
-    for curie in sorted(curies or []):
-        click.echo(f"{curie}\t{get_name_by_curie(curie, version=kwargs['version'])}")
+    descendants = get_descendants(identifier=identifier, **kwargs)
+    for descendant in sorted(descendants or []):
+        click.echo(f"{descendant.curie}\t{get_name(descendant, version=kwargs['version'])}")
 
 
 @lookup_annotate
@@ -291,3 +292,11 @@ def alts(
     """Page through alt ids in a namespace."""
     id_to_alts = get_id_to_alts(**kwargs)
     _help_page_mapping(id_to_alts, identifier=identifier)
+
+
+@lookup_annotate
+def prefixes(**kwargs: Unpack[LookupKwargs]) -> None:
+    """Page through prefixes appearing in an ontology."""
+    ontology = get_ontology(**kwargs)
+    for prefix in sorted(ontology._get_prefixes(), key=str.casefold):
+        click.echo(prefix)

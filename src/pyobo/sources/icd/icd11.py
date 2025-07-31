@@ -1,6 +1,10 @@
 """Convert ICD11 to OBO.
 
-Run with python -m pyobo.sources.icd11 -v
+Run with ``python -m pyobo.sources.icd11 -v``.
+
+.. note::
+
+    If web requests are stalling, try deleting the ``~/.cachier`` directory.
 """
 
 import json
@@ -45,17 +49,13 @@ class ICD11Getter(Obo):
         return iterate_icd11()
 
 
-def iterate_icd11() -> Iterable[Term]:
+def iterate_icd11(version: str | None = None) -> Iterable[Term]:
     """Iterate over the terms in ICD11 and enrich them with MMS."""
-    res = get_icd(ICD11_TOP_LEVEL_URL)
-    res_json = res.json()
-    version = res_json["releaseId"]
-
     # Get all terms from the ICD foundation API
-    terms = list(iterate_icd11_helper(res_json, version))
+    version_strict, terms = _get_icd11_terms_helper(version=version)
 
     # prepare a directory for enriching from MMS
-    mms_directory = prefix_directory_join(PREFIX, "mms", version=version)
+    mms_directory = prefix_directory_join(PREFIX, "mms", version=version_strict)
 
     # this takes a bit more than 2 hours
     for term in tqdm(terms, desc="Getting MMS", unit_scale=True):
@@ -77,30 +77,47 @@ def iterate_icd11() -> Iterable[Term]:
         yield term
 
 
-def iterate_icd11_helper(res_json, version) -> Iterable[Term]:
+def _get_icd11_terms_helper(version: str | None = None) -> tuple[str, list[Term]]:
     """Iterate over the terms in ICD11.
 
-    The API doesn't seem to have a rate limit, but returns pretty slow.
-    This means that it only gets results at at about 5 calls/second.
-    Get ready to be patient - the API token expires every hour so there's
-    a caching mechanism with :mod:`cachier` that gets a new one every hour.
+    The API doesn't seem to have a rate limit, but returns pretty slow. This means that
+    it only gets results at at about 5 calls/second. Get ready to be patient - the API
+    token expires every hour so there's a caching mechanism with :mod:`cachier` that
+    gets a new one every hour.
     """
-    directory = prefix_directory_join(PREFIX, "base", version=version)
-    top_path = directory.joinpath("top.json")
-    with top_path.open("w") as file:
-        json.dump(res_json, file, indent=2)
+    if version is not None:
+        directory = prefix_directory_join(PREFIX, "base", version=version)
+        top_path = directory.joinpath("top.json")
+        if top_path.is_file():
+            res_json = json.loads(top_path.read_text())
+        else:
+            res_json = get_icd(ICD11_TOP_LEVEL_URL).json()
+            top_path.write_text(json.dumps(res_json, indent=2))
+    else:
+        tqdm.write("No version passed, looking up version from ICD11")
+        res_json = get_icd(ICD11_TOP_LEVEL_URL).json()
+        version = res_json["releaseId"]
+        directory = prefix_directory_join(PREFIX, "base", version=version)
+        top_path = directory.joinpath("top.json")
+        with top_path.open("w") as file:
+            json.dump(res_json, file, indent=2)
 
     tqdm.write(f"There are {len(res_json['child'])} top level entities")
 
     visited_identifiers: set[str] = set()
+    rv: list[Term] = []
     for identifier in get_child_identifiers(ICD11_TOP_LEVEL_URL, res_json):
-        yield from visiter(
-            identifier,
-            visited_identifiers,
-            directory,
-            endpoint=ICD11_TOP_LEVEL_URL,
-            converter=_extract_icd11,
+        rv.extend(
+            visiter(
+                identifier,
+                visited_identifiers,
+                directory,
+                endpoint=ICD11_TOP_LEVEL_URL,
+                converter=_extract_icd11,
+            )
         )
+
+    return version, rv
 
 
 def _extract_icd11(res_json: Mapping[str, Any]) -> Term:

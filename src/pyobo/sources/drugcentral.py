@@ -7,6 +7,7 @@ from contextlib import closing
 
 import bioregistry
 import psycopg2
+from pydantic import ValidationError
 from tqdm.auto import tqdm
 
 from pyobo.struct import Obo, Reference, Synonym, Term
@@ -66,10 +67,18 @@ def iter_terms() -> Iterable[Term]:
                 if xref_prefix_norm == "pdb.ligand":
                     # there is a weird invalid escaped \W appearing in pdb ligand ids
                     identifier = identifier.strip()
-                identifier = bioregistry.standardize_identifier(xref_prefix_norm, identifier)
-                xrefs[str(drugcentral_id)].append(
-                    Reference(prefix=xref_prefix_norm, identifier=identifier)
-                )
+
+                try:
+                    xref = Reference(prefix=xref_prefix_norm, identifier=identifier)
+                except ValidationError:
+                    # TODO mmsl is systematically incorrect, figure this out
+                    if xref_prefix_norm != "mmsl":
+                        tqdm.write(
+                            f"[drugcentral:{drugcentral_id}] had invalid xref: {prefix}:{identifier}"
+                        )
+                    continue
+                else:
+                    xrefs[str(drugcentral_id)].append(xref)
         with closing(conn.cursor()) as cur:
             cur.execute("SELECT id, name FROM public.synonyms")
             synonyms: defaultdict[str, list[Synonym]] = defaultdict(list)

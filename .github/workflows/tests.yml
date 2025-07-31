@@ -59,18 +59,14 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get install graphviz
-      - name: Check RST conformity with doc8
-        run: uvx -p ${{ matrix.python-version }} --with tox-uv tox -e doc8
+      - name: Lint documentation
+        run: uvx -p ${{ matrix.python-version }} --with tox-uv tox -e docs-lint
       - name: Check docstring coverage
         run: uvx -p ${{ matrix.python-version }} --with tox-uv tox -e docstr-coverage
       - name: Check documentation build with Sphinx
         run: uvx -p ${{ matrix.python-version }} --with tox-uv tox -e docs-test
-
-      # Check all markdown files are properly formatted
-      # inspired by https://github.com/astral-sh/uv/blob/98523e2014e9a5c69706623344026d76296e178f/.github/workflows/ci.yml#L67C1-L70C61
-      - name: Check markdown formatting
-        run: |
-          npx --yes prettier --prose-wrap always --check "**/*.md"
+      - name: Lint markdown
+        run: uvx -p ${{ matrix.python-version }} --with tox-uv tox -e lint-markdown
 
   tests:
     name: Tests

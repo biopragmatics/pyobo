@@ -16,6 +16,7 @@ from pyobo.struct.functional.utils import (
     FunctionalOWLSerializable,
     list_to_funowl,
 )
+from pyobo.utils.io import safe_open
 
 __all__ = [
     "Document",
@@ -63,10 +64,16 @@ class Document:
 
         :param ontologies: An ontology or list of ontologies.
 
-            .. warning:: RDF export can only be used for a single ontology.
+            .. warning::
+
+                RDF export can only be used for a single ontology.
+
         :param prefixes: A list of prefixes to define in the document
 
-            .. seealso:: `3.7 "Functional-Style Syntax" <https://www.w3.org/TR/owl2-syntax/#Functional-Style_Syntax>`_
+            .. seealso::
+
+                `3.7 "Functional-Style Syntax"
+                <https://www.w3.org/TR/owl2-syntax/#Functional-Style_Syntax>`_
         """
         self.ontologies = ontologies if isinstance(ontologies, list) else [ontologies]
         if isinstance(prefixes, dict):
@@ -103,7 +110,8 @@ class Document:
     def write_funowl(self, path: str | Path) -> None:
         """Write functional OWL to a file.."""
         path = Path(path).expanduser().resolve()
-        path.write_text(self.to_funowl())
+        with safe_open(path, read=False) as file:
+            file.write(self.to_funowl())
 
     def to_funowl(self) -> str:
         """Get the document as a functional OWL string."""
@@ -131,17 +139,27 @@ class Ontology(Box):
 
         :param iri: The ontology IRI.
 
-            .. seealso:: `3.1 "Ontology IRI and Version IRI" <https://www.w3.org/TR/owl2-syntax/#Ontology_IRI_and_Version_IRI>`_
+            .. seealso::
+
+                `3.1 "Ontology IRI and Version IRI"
+                <https://www.w3.org/TR/owl2-syntax/#Ontology_IRI_and_Version_IRI>`_
+
         :param version_iri: An optional version IRI
-        :param directly_imports_documents:
+        :param directly_imports_documents: Optional ontology imports
 
-            .. seealso:: `3.4 "Imports" <https://www.w3.org/TR/owl2-syntax/#Imports>`_
-        :param annotations:
+            .. seealso::
 
-            .. seealso:: `3.5 "Ontology Annotations" <https://www.w3.org/TR/owl2-syntax/#Ontology_Annotations>`_
+                `3.4 "Imports" <https://www.w3.org/TR/owl2-syntax/#Imports>`_
+
+        :param annotations: .. seealso::
+
+            `3.5 "Ontology Annotations"
+            <https://www.w3.org/TR/owl2-syntax/#Ontology_Annotations>`_
         :param axioms: statements about what is true in the domain
 
-            .. seealso:: `9 "Axioms" <https://www.w3.org/TR/owl2-syntax/#Axioms>`_
+            .. seealso::
+
+                `9 "Axioms" <https://www.w3.org/TR/owl2-syntax/#Axioms>`_
         """
         self.iri = iri
         self.version_iri = version_iri
@@ -232,7 +250,7 @@ class Import(Box):
 
 def get_rdf_graph_oracle(boxes: list[Box], *, prefix_map: dict[str, str]) -> Graph:
     """Serialize to turtle via OFN and conversion with ROBOT."""
-    from bioontologies.robot import convert
+    import bioontologies.robot
 
     ontology = Ontology(
         iri=EXAMPLE_ONTOLOGY_IRI,
@@ -247,7 +265,7 @@ def get_rdf_graph_oracle(boxes: list[Box], *, prefix_map: dict[str, str]) -> Gra
         ofn_path.write_text(text)
         ttl_path = stub.with_suffix(".ttl")
         try:
-            convert(ofn_path, ttl_path)
+            bioontologies.robot.convert(ofn_path, ttl_path)
         except subprocess.CalledProcessError:
             raise RuntimeError(f"failed to convert axioms from:\n\n{text}") from None
         graph.parse(ttl_path)

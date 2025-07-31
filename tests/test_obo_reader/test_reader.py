@@ -3,15 +3,16 @@
 import unittest
 
 from pyobo import Obo, Reference, Term
-from pyobo.identifier_utils import UnparsableIRIError
-from pyobo.reader import from_str, get_first_nonescaped_quote
+from pyobo.identifier_utils import NotCURIEError, UnparsableIRIError, UnregisteredPrefixError
 from pyobo.struct import TypeDef, default_reference
 from pyobo.struct import vocabulary as v
+from pyobo.struct.obo.reader import from_str, get_first_nonescaped_quote
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import abbreviation
 from pyobo.struct.struct_utils import Annotation
 from pyobo.struct.typedef import (
     comment,
+    definition_source,
     derives_from,
     exact_match,
     has_dbxref,
@@ -106,8 +107,8 @@ class TestReaderTerm(unittest.TestCase):
             [Term]
             id: CHEBI:1234
             name: Test Name
-            def: "Test definition" [orcid:1234-1234-1234]
-            xref: drugbank:DB1234567
+            def: "Test definition" [orcid:1234-1234-1234-1234]
+            xref: drugbank:DB12345
         """)
         self.assertEqual([], ontology.typedefs)
         self.assertEqual([], ontology.synonym_typedefs)
@@ -116,7 +117,7 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual("Test definition", term.definition)
         self.assertEqual(1, len(term.xrefs))
         xref = term.xrefs[0]
-        self.assertEqual("drugbank:DB1234567", xref.curie)
+        self.assertEqual("drugbank:DB12345", xref.curie)
 
     def test_1_node_unparsable(self) -> None:
         """Test loading an ontology with unparsable nodes."""
@@ -126,8 +127,8 @@ class TestReaderTerm(unittest.TestCase):
             [Term]
             id: nope:1234
         """
-        with self.assertRaises(ValueError):
-            from_str(text)
+        with self.assertRaises(UnregisteredPrefixError):
+            from_str(text, strict=True)
         ontology = from_str(text, strict=False)
         self.assertEqual(0, len(list(ontology.iter_terms())))
 
@@ -235,6 +236,20 @@ class TestReaderTerm(unittest.TestCase):
             [Term]
             id: CHEBI:1234
             def: "definition of CHEBI:1234" [{CHARLIE.curie}]
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual("definition of CHEBI:1234", term.definition)
+        self.assertEqual(1, len(term.provenance))
+        self.assertEqual(CHARLIE, term.provenance[0])
+
+    def test_6_definition_with_provenance_object_with_comment(self) -> None:
+        """Test parsing a term with a definition and provenance, with a comment."""
+        ontology = from_str(f"""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            def: "definition of CHEBI:1234" [{CHARLIE.curie} "TestComment"]
         """)
         term = self.get_only_term(ontology)
         self.assertEqual("definition of CHEBI:1234", term.definition)
@@ -677,6 +692,26 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual(has_dbxref.pair, axiom.predicate.pair)
         self.assertEqual(CHARLIE.pair, axiom.value.pair)
 
+    def test_10_xrefs_with_provenance_object_comment(self) -> None:
+        """Test an xref, same as before but with a comment text."""
+        ontology = from_str(f"""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:100147
+            xref: cas:389-08-2 [{CHARLIE.curie} "Comment-Text"]
+        """)
+        term = self.get_only_term(ontology)
+        x = Reference(prefix="cas", identifier="cas:389-08-2")
+        axioms = term._get_annotations(has_dbxref, x)
+        self.assertEqual(1, len(axioms))
+        axiom = axioms[0]
+        self.assertIsInstance(axiom, Annotation)
+        self.assertIsInstance(axiom.predicate, Reference)
+        self.assertIsInstance(axiom.value, Reference)
+        self.assertEqual(has_dbxref.pair, axiom.predicate.pair)
+        self.assertEqual(CHARLIE.pair, axiom.value.pair)
+
     def test_10_xrefs_with_provenance_uri(self) -> None:
         """Test getting mappings."""
         ontology = from_str("""\
@@ -778,8 +813,8 @@ class TestReaderTerm(unittest.TestCase):
             id: CHEBI:1234
             property_value: mass "121.323" NOPE:NOPE
         """
-        with self.assertRaises(ValueError):
-            from_str(text)
+        with self.assertRaises(UnregisteredPrefixError):
+            from_str(text, strict=True)
         ontology = from_str(text, strict=False)
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(term.properties))
@@ -829,6 +864,32 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual("121.323", row["value"])
         self.assertEqual("xsd:decimal", row["datatype"])
         self.assertEqual("", row["language"])
+
+    def test_12_property_literal_datetime_unquoted(self) -> None:
+        """Test parsing a property with a datetime object, with no quotes."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: oboInOwl:creation_date 2022-07-26T19:27:20Z xsd:dateTime
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.properties))
+        self.assertEqual("2022-07-26T19:27:20+00:00", term.get_property(v.obo_creation_date))
+
+    def test_12_property_literal_datetime_quoted(self) -> None:
+        """Test parsing a property with a datetime object, with quotes."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            property_value: oboInOwl:creation_date "2022-07-26T19:27:20Z" xsd:dateTime
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(term.properties))
+        self.assertEqual("2022-07-26T19:27:20+00:00", term.get_property(v.obo_creation_date))
 
     def test_12_property_literal_obo_purl(self) -> None:
         """Test using a full OBO PURL as the property."""
@@ -896,8 +957,8 @@ class TestReaderTerm(unittest.TestCase):
             id: CHEBI:1234
             property_value: http://purl.obolibrary.org/obo/RO_0018033 http://example.org/nope:nope
         """
-        with self.assertRaises(ValueError):
-            from_str(text)
+        with self.assertRaises(UnparsableIRIError):
+            from_str(text, strict=True)
         ontology = from_str(text, strict=False)
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(term.properties))
@@ -926,8 +987,8 @@ class TestReaderTerm(unittest.TestCase):
             property_value: https://w3id.org/biolink/vocab/something NOPE:NOPE
             """
 
-        with self.assertRaises(ValueError):
-            from_str(text)
+        with self.assertRaises(UnregisteredPrefixError):
+            from_str(text, strict=True)
 
         ontology = from_str(text, strict=False)
         term = self.get_only_term(ontology)
@@ -975,6 +1036,22 @@ class TestReaderTerm(unittest.TestCase):
         self.assertIn(see_also.reference, term.properties)
         self.assertEqual("hgnc:1234", term.get_property(see_also))
 
+    def test_12_property_object_with_string_dtype(self) -> None:
+        """Test parsing a property with a literal object that has a string dtype."""
+        # the dtype really shouldn't be here, so we have to special case it
+        ontology = from_str("""\
+            ontology: ro
+
+            [Term]
+            id: RO:0002160
+            property_value: IAO:0000119 PMID:17921072 xsd:string
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(list(term.properties)))
+        xx = term.get_property_objects(definition_source)
+        self.assertEqual(1, len(xx))
+        self.assertEqual(Reference(prefix="pubmed", identifier="17921072"), xx[0])
+
     def test_13_parent(self) -> None:
         """Test parsing out a parent."""
         ontology = from_str("""\
@@ -1007,13 +1084,16 @@ class TestReaderTerm(unittest.TestCase):
             [Term]
             id: CHEBI:1
             intersection_of: CHEBI:2
-            intersection_of: RO:1 CHEBI:3
+            intersection_of: RO:1234567 CHEBI:3
         """)
         term = self.get_only_term(ontology)
         self.assertEqual(
             [
                 Reference(prefix="CHEBI", identifier="2"),
-                (Reference(prefix="RO", identifier="1"), Reference(prefix="CHEBI", identifier="3")),
+                (
+                    Reference(prefix="RO", identifier="1234567"),
+                    Reference(prefix="CHEBI", identifier="3"),
+                ),
             ],
             term.intersection_of,
         )
@@ -1136,7 +1216,7 @@ class TestReaderTerm(unittest.TestCase):
 
     def test_18_relationship_bad_target(self) -> None:
         """Test an ontology with a version but no date."""
-        ontology = from_str("""\
+        text = """\
             ontology: chebi
 
             [Term]
@@ -1146,7 +1226,12 @@ class TestReaderTerm(unittest.TestCase):
             [Typedef]
             id: RO:0018033
             name: is conjugate base of
-        """)
+        """
+
+        with self.assertRaises(NotCURIEError):
+            from_str(text, strict=True)
+
+        ontology = from_str(text, strict=False)
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(list(term.iterate_relations())))
 
@@ -1182,7 +1267,30 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual("0000-0003-4423-4370", context.contributor.identifier)
 
     # TODO created_by
-    # TODO creation_date
+
+    def test_20_creation_date(self) -> None:
+        """Test parsing a property with a datetime object."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            creation_date: 2022-07-26T19:27:20Z
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual("2022-07-26T19:27:20+00:00", term.get_property(v.obo_creation_date))
+
+    def test_20_creation_date_bad_format(self) -> None:
+        """Test parsing a property with a datetime object."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            creation_date: asgasgag
+        """)
+        term = self.get_only_term(ontology)
+        self.assertIsNone(term.get_property(v.obo_creation_date))
 
     def test_21_is_obsolete(self) -> None:
         """Test the ``is_obsolete`` tag."""
@@ -1224,3 +1332,34 @@ class TestReaderTerm(unittest.TestCase):
             relationships: {dict(term.relationships)}
             """,
         )
+
+    def test_get_references(self) -> None:
+        """Test getting references from an ontology."""
+        ontology = from_str("""\
+            ontology: chebi
+            date: 20:11:2024 18:44
+            subsetdef: TESTSUBSET "test subset name"
+            synonymtypedef: OMO:0000001 "E1 Name" EXACT
+
+            [Typedef]
+            id: RO:1234567
+
+            [Term]
+            id: CHEBI:1234
+            is_a: CHEBI:5678
+            subset: TESTSUBSET
+        """)
+        r1 = Reference(prefix="CHEBI", identifier="1234")
+        r2 = Reference(prefix="CHEBI", identifier="5678")
+        td1 = Reference(prefix="RO", identifier="1234567")
+        ss1 = default_reference("chebi", "TESTSUBSET")
+        std1 = Reference(prefix="OMO", identifier="0000001", name="E1 Name")
+        expected_references = {
+            r1.prefix: {r1, r2},
+            td1.prefix: {td1},
+            "obo": {ss1},
+            std1.prefix: {std1},
+            "dcterms": {v.has_description, v.has_license, v.has_title},
+            v.has_dbxref.prefix: {v.has_exact_synonym},
+        }
+        self.assertEqual(expected_references, ontology._get_references())

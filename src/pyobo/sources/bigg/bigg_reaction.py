@@ -3,6 +3,7 @@
 from collections.abc import Iterable
 
 import pandas as pd
+from pydantic import ValidationError
 from tqdm import tqdm
 
 from pyobo.sources.bigg.bigg_metabolite import _parse_dblinks, _parse_model_links, _split
@@ -16,7 +17,7 @@ __all__ = [
 
 PREFIX = "bigg.reaction"
 URL = "http://bigg.ucsd.edu/static/namespace/bigg_models_reactions.txt"
-PROPERTY_MAP = {"eccode": enabled_by}
+PROPERTY_MAP = {"ec": enabled_by}
 
 
 class BiGGReactionGetter(Obo):
@@ -58,7 +59,12 @@ def iterate_terms(force: bool = False, version: str | None = None) -> Iterable[T
                 continue
             if "(" in old_bigg_id:
                 continue
-            term.append_alt(Reference(prefix=PREFIX, identifier=old_bigg_id))
+            try:
+                alt_reference = Reference(prefix=PREFIX, identifier=old_bigg_id)
+            except ValidationError:
+                tqdm.write(f"[{term.curie}] had problematic alt reference: {old_bigg_id}")
+            else:
+                term.append_alt(alt_reference)
         _parse_model_links(term, model_list)
 
         # TODO make sure exact match goes to the bidirectional rhea reaction but not others

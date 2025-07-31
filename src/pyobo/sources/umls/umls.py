@@ -64,7 +64,8 @@ def get_semantic_types() -> Mapping[str, set[str]]:
     """Get UMLS semantic types for each term."""
     dd = defaultdict(set)
     with open_umls_semantic_types() as file:
-        for line in tqdm(file, unit_scale=True):
+        # this is very fast and doesn't need a progress bar
+        for line in file:
             cui, sty, _ = line.decode("utf8").split("|", 2)
             dd[cui].add(sty)
     return dict(dd)
@@ -75,7 +76,7 @@ def iter_terms(version: str) -> Iterable[Term]:
     semantic_types = get_semantic_types()
 
     with open_umls(version=version) as file:
-        it = tqdm(file, unit_scale=True, desc="[umls] parsing")
+        it = tqdm(file, unit_scale=True, desc="[umls] parsing", total=16_700_000)
         lines = (line.decode("utf-8").strip().split("|") for line in it)
         for cui, cui_lines in itt.groupby(lines, key=operator.itemgetter(0)):
             df = pd.DataFrame(list(cui_lines), columns=RRF_COLUMNS)
@@ -98,31 +99,31 @@ def iter_terms(version: str) -> Iterable[Term]:
             sdf = df[["SAB - source name", "CODE", "TTY - Term Type in Source", "STR"]]
 
             synonyms = []
-            xrefs = []
+            xrefs = set()
             for source, identifier, synonym_type, synonym in sdf.values:
                 norm_source = bioregistry.normalize_prefix(source)
-                if norm_source is None or not identifier:
+                if not norm_source or not identifier or "," in identifier:
                     provenance = []
                 else:
-                    ref = Reference(prefix=norm_source, identifier=identifier)
-                    provenance = [ref]
-                    xrefs.append(ref)
+                    try:
+                        ref = Reference(prefix=norm_source, identifier=identifier)
+                    except ValueError:
+                        continue
+                    else:
+                        provenance = [ref]
+                        xrefs.add(ref)
                 synonyms.append(
                     Synonym(
                         name=synonym,
                         provenance=provenance,
-                        type=synonym_type,
+                        type=synonym_type.reference,
                     )
                 )
-
-            xrefs = sorted(
-                set(xrefs), key=lambda reference: (reference.prefix, reference.identifier)
-            )
 
             term = Term(
                 reference=Reference(prefix=PREFIX, identifier=cui, name=_r["STR"]),
                 synonyms=synonyms,
-                xrefs=xrefs,
+                xrefs=sorted(xrefs),
             )
             for sty_id in semantic_types.get(cui, set()):
                 term.append_parent(Reference(prefix="sty", identifier=sty_id))

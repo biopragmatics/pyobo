@@ -1,6 +1,7 @@
 """An ontology representation of PharmGKB phenotypes."""
 
 from collections.abc import Iterable
+from typing import cast
 
 import pandas as pd
 
@@ -30,13 +31,16 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
     """Iterate over terms.
 
     :param force: Should the data be re-downloaded
+
     :yields: Terms
 
     1. PharmGKB Accession Id = Identifier assigned to this phenotype by PharmGKB
     2. Name = Name PharmGKB uses for this phenotype
     3. Alternate Names = Other known names for this phenotype, comma-separated
-    4. Cross-references = References to other resources in the form "resource:id", comma-separated
-    5. External Vocabulary = Term for this phenotype in another vocabulary in the form "vocabulary:id", comma-separated
+    4. Cross-references = References to other resources in the form "resource:id",
+       comma-separated
+    5. External Vocabulary = Term for this phenotype in another vocabulary in the form
+       "vocabulary:id", comma-separated
     """
     df = download_pharmgkb_tsv(PREFIX, url=URL, inner="phenotypes.tsv", force=force)
     for _, row in df.iterrows():
@@ -60,7 +64,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
         for xref_line in split(row, "External Vocabulary"):
             xref_curie, _, _ = xref_line.strip('"').partition("(")
             try:
-                xref = Reference.from_curie(xref_curie)
+                xref = cast(Reference, Reference.from_curie(xref_curie))
             except Exception:  # noqa:S110
                 pass  # this happens when there's a comma in the name, but not a problem
             else:

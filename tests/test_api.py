@@ -6,9 +6,10 @@ from contextlib import ExitStack
 from unittest import mock
 
 import bioregistry
-from biosynonyms import LiteralMapping
 from curies import Reference, ReferenceTuple
 from curies import vocabulary as _v
+from pydantic import ValidationError
+from ssslm import LiteralMapping
 
 import pyobo
 from pyobo import Reference as PyOBOReference
@@ -19,8 +20,8 @@ from pyobo import (
     get_primary_curie,
     get_primary_identifier,
 )
-from pyobo.gilda_utils import get_grounder
 from pyobo.mocks import get_mock_id_alts_mapping, get_mock_id_name_mapping
+from pyobo.ner import get_grounder
 from pyobo.struct import vocabulary as v
 from pyobo.struct.struct import Obo, Term, TypeDef, make_ad_hoc_ontology
 
@@ -44,12 +45,18 @@ mock_id_names_mapping = get_mock_id_name_mapping(
 )
 
 TEST_P1 = "test"
+TEST_P2 = "test2"
 
 bioregistry.manager.synonyms[TEST_P1] = TEST_P1
 bioregistry.manager.registry[TEST_P1] = bioregistry.Resource(
     prefix=TEST_P1,
     name="Test Semantic Space",
     pattern="^\\d+$",
+)
+bioregistry.manager.synonyms[TEST_P2] = TEST_P2
+bioregistry.manager.registry[TEST_P2] = bioregistry.Resource(
+    prefix=TEST_P2,
+    name="Test Semantic Space 2",
 )
 
 
@@ -70,7 +77,9 @@ class TestAltIds(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_primary_identifier("go")
 
-        self.assertIsNone(get_primary_curie("nope:nope", strict=False))
+        # if you try passing a string, you're on your own for error handling
+        with self.assertRaises(ValidationError):
+            self.assertIsNone(get_primary_curie("nope:nope", strict=False))
         with self.assertRaises(ValueError):
             get_primary_curie("nope:nope", strict=True)
 
@@ -152,11 +161,13 @@ class TestAltIds(unittest.TestCase):
         r1 = PyOBOReference(prefix=TEST_P1, identifier="1", name="test name")
         r2 = PyOBOReference(prefix=TEST_P1, identifier="2")
         r3 = PyOBOReference(prefix=TEST_P1, identifier="3")
+        r2_1 = PyOBOReference(prefix=TEST_P2, identifier="X")
+        r2_2 = PyOBOReference(prefix=TEST_P2, identifier="Y")
         syn1 = "ttt1"
-        t1 = Term(reference=r1).append_alt(r2).append_synonym(syn1)
+        t1 = Term(reference=r1).append_alt(r2).append_synonym(syn1).append_xref(r2_1)
         t1.append_comment("test comment")
         t2 = Term(reference=r2)
-        t3 = Term(reference=r3).append_parent(r1)
+        t3 = Term(reference=r3).append_parent(r1).append_exact_match(r2_2)
         terms = [t1, t2, t3]
         ontology = make_ad_hoc_ontology(TEST_P1, terms=terms, _typedefs=[td1])
 
@@ -166,6 +177,7 @@ class TestAltIds(unittest.TestCase):
             "pyobo.api.properties.get_ontology",
             "pyobo.api.relations.get_ontology",
             "pyobo.api.edges.get_ontology",
+            "pyobo.api.xrefs.get_ontology",
         ]
         with patch_ontologies(ontology, targets):
             # Alts
@@ -185,7 +197,10 @@ class TestAltIds(unittest.TestCase):
             # Names
 
             ids = pyobo.get_ids(TEST_P1, cache=False)
-            self.assertEqual({t.identifier for t in terms}, ids)
+            self.assertEqual({r1.identifier, r2.identifier, r3.identifier}, ids)
+
+            references = pyobo.get_references(TEST_P1, cache=False)
+            self.assertEqual({r1, r2, r3, tr1}, references)
 
             id_name = pyobo.get_id_name_mapping(TEST_P1, cache=False)
             self.assertEqual({t1.identifier: t1.name}, id_name)
@@ -196,31 +211,35 @@ class TestAltIds(unittest.TestCase):
             self.assertEqual(t1.name, pyobo.get_name(r1, cache=False))
             self.assertEqual(t1.name, pyobo.get_name(r2, cache=False))
 
+            # Xrefs
+            d = pyobo.get_filtered_xrefs(TEST_P1, TEST_P2, cache=False, use_tqdm=False)
+            self.assertEqual({"1": "X", "3": "Y"}, d)
+
             # Synonyms
 
-            literal_mappings = pyobo.get_literal_mappings(TEST_P1)
+            literal_mappings = pyobo.get_literal_mappings(TEST_P1, cache=False)
             expected = [
                 LiteralMapping(
                     text="ttt1",
-                    reference=r1.as_named_reference(),
-                    predicate=_v.has_related_synonym,
+                    reference=r1,
+                    predicate=PyOBOReference.from_reference(_v.has_related_synonym),
                     source=TEST_P1,
                 ),
                 LiteralMapping(
                     text="test name",
-                    reference=r1.as_named_reference(),
-                    predicate=_v.has_label,
+                    reference=r1,
+                    predicate=PyOBOReference.from_reference(_v.has_label),
                     source=TEST_P1,
                 ),
             ]
             self.assertEqual(expected, literal_mappings)
 
             if importlib.util.find_spec("gilda"):
-                grounder = get_grounder(TEST_P1)
-                scored_match = grounder.ground_best(syn1)
-                self.assertIsNotNone(scored_match)
-                self.assertEqual(TEST_P1, scored_match.term.db)
-                self.assertEqual("1", scored_match.term.id)
+                grounder = get_grounder(TEST_P1, cache=False)
+                match = grounder.get_best_match(syn1)
+                self.assertIsNotNone(match)
+                self.assertEqual(TEST_P1, match.prefix)
+                self.assertEqual("1", match.identifier)
 
             # Properties
 
@@ -230,11 +249,37 @@ class TestAltIds(unittest.TestCase):
             self.assertEqual("test comment", value)
 
             edges = pyobo.get_edges(TEST_P1, cache=False, use_tqdm=False)
-            self.assertEqual({(r3, v.is_a, r1), (r1, v.alternative_term, r2)}, set(edges))
+            self.assertEqual(
+                {
+                    (r3, v.is_a, r1),
+                    (r1, v.alternative_term, r2),
+                    (r1, v.has_dbxref, r2_1),
+                    (r3, v.exact_match, r2_2),
+                },
+                set(edges),
+            )
 
             graph = pyobo.get_hierarchy(TEST_P1, cache=False, use_tqdm=False)
-            self.assertEqual(3, graph.number_of_nodes())
-            self.assertIn(r1.curie, graph)
-            self.assertIn(r2.curie, graph)
-            self.assertIn(r3.curie, graph)
+            self.assertEqual(4, graph.number_of_nodes())
+            self.assertIn(r1, graph)
+            self.assertIn(r2, graph)
+            self.assertIn(r3, graph)
+            self.assertIn(tr1, graph)
             self.assertEqual(1, graph.number_of_edges())
+
+            self.assertEqual(set(), pyobo.get_ancestors(r1, cache=False, use_tqdm=False))
+            self.assertEqual(set(), pyobo.get_descendants(r3, cache=False, use_tqdm=False))
+            self.assertEqual(set(), pyobo.get_children(r3, cache=False, use_tqdm=False))
+
+            self.assertEqual({r1}, pyobo.get_ancestors(r3, cache=False, use_tqdm=False))
+            self.assertEqual({r3}, pyobo.get_descendants(r1, cache=False, use_tqdm=False))
+            self.assertEqual({r3}, pyobo.get_children(r1, cache=False, use_tqdm=False))
+
+            self.assertTrue(pyobo.has_ancestor(r3, r1, cache=False, use_tqdm=False))
+            self.assertTrue(pyobo.has_ancestor(*r3.pair, *r1.pair, cache=False, use_tqdm=False))
+            self.assertFalse(pyobo.has_ancestor(r1, r3, cache=False, use_tqdm=False))
+            self.assertFalse(pyobo.has_ancestor(*r1.pair, *r3.pair, cache=False, use_tqdm=False))
+            self.assertTrue(pyobo.is_descendent(*r3.pair, *r1.pair, cache=False, use_tqdm=False))
+            self.assertTrue(pyobo.is_descendent(r3, r1, cache=False, use_tqdm=False))
+            self.assertFalse(pyobo.is_descendent(r1, r3, cache=False, use_tqdm=False))
+            self.assertFalse(pyobo.is_descendent(*r1.pair, *r3.pair, cache=False, use_tqdm=False))

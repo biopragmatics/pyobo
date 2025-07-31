@@ -30,6 +30,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
     """Iterate over terms.
 
     :param force: Should the data be re-downloaded
+
     :yields: Terms
 
     1. PharmGKB Accession Id = Identifier assigned to this gene by PharmGKB
@@ -40,19 +41,27 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
     6. Symbol = Canonical name for this gene (by HGNC)
     7. Alternate Names = Other known names for this gene, comma-separated
     8. Alternate Symbols = Other known symbols for this gene, comma-separated
-    9. Is VIP = "Yes" if PharmGKB has written a VIP annotation for this gene, "No" otherwise
-    10. Has Variant Annotation = "Yes" if PharmGKB has written at least one variant annotation for this gene, "No" otherwise
-    11. Cross-references = References to other resources in the form "resource:id", comma-separated
-    12. Has CPIC Dosing Guideline = "Yes" if PharmGKB has annotated a CPIC guideline for this gene, "No" otherwise
+    9. Is VIP = "Yes" if PharmGKB has written a VIP annotation for this gene, "No"
+       otherwise
+    10. Has Variant Annotation = "Yes" if PharmGKB has written at least one variant
+        annotation for this gene, "No" otherwise
+    11. Cross-references = References to other resources in the form "resource:id",
+        comma-separated
+    12. Has CPIC Dosing Guideline = "Yes" if PharmGKB has annotated a CPIC guideline for
+        this gene, "No" otherwise
     13. Chromosome = The chromosome this gene is on, in the form "chr##"
-    14. Chromosomal Start - GRCh37 = Where this gene starts on the chromosomal sequence for NCBI GRCh37
-    15. Chromosomal Stop - GRCh37 = Where this gene stops on the chromosomal sequence for NCBI GRCh37
-    16. Chromosomal Start - GRCh38 = Where this gene starts on the chromosomal sequence for NCBI GRCh38
-    17. Chromosomal Stop - GRCh38 = Where this gene stops on the chromosomal sequence for NCBI GRCh38
+    14. Chromosomal Start - GRCh37 = Where this gene starts on the chromosomal sequence
+        for NCBI GRCh37
+    15. Chromosomal Stop - GRCh37 = Where this gene stops on the chromosomal sequence
+        for NCBI GRCh37
+    16. Chromosomal Start - GRCh38 = Where this gene starts on the chromosomal sequence
+        for NCBI GRCh38
+    17. Chromosomal Stop - GRCh38 = Where this gene stops on the chromosomal sequence
+        for NCBI GRCh38
     """
     df = download_pharmgkb_tsv(PREFIX, url=URL, inner="genes.tsv", force=force)
 
-    skip_xrefs = {"ncbigene", "hgnc", "ensembl"}
+    skip_xrefs = {"ncbigene", "hgnc", "ensembl", "GeneCard"}
     for _, row in df.iterrows():
         identifier = row["PharmGKB Accession Id"]
         if pd.isna(identifier):
@@ -88,11 +97,12 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
             term.append_synonym(synonym)
 
         for xref in parse_xrefs(term, row):
-            if xref.prefix not in skip_xrefs:
-                term.append_xref(xref)
+            if xref.prefix in skip_xrefs:
+                continue
+            term.append_xref(xref)
 
         yield term
 
 
 if __name__ == "__main__":
-    PharmGKBGeneGetter().write_default(force=True, write_obo=True, use_tqdm=True)
+    PharmGKBGeneGetter.cli()

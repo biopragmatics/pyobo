@@ -7,15 +7,15 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 from .utils import get_go_mapping
-from ..struct import Obo, Reference, Synonym, Term
-from ..struct.typedef import enables, has_member, term_replaced_by
+from ..struct import Annotation, Obo, OBOLiteral, Reference, Synonym, Term
+from ..struct.typedef import enables, has_member, has_source, term_replaced_by
 from ..utils.path import ensure_path
 
 __all__ = [
     "ExpasyGetter",
 ]
 
-PREFIX = "eccode"
+PREFIX = "ec"
 EXPASY_DATABASE_URL = "ftp://ftp.expasy.org/databases/enzyme/enzyme.dat"
 EXPASY_TREE_URL = "ftp://ftp.expasy.org/databases/enzyme/enzclass.txt"
 
@@ -43,16 +43,17 @@ class ExpasyGetter(Obo):
     """A getter for ExPASy Enzyme Classes."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [has_member, enables, term_replaced_by]
+    typedefs = [has_member, enables, term_replaced_by, has_source]
     root_terms = [
-        Reference(prefix="eccode", identifier="1"),
-        Reference(prefix="eccode", identifier="2"),
-        Reference(prefix="eccode", identifier="3"),
-        Reference(prefix="eccode", identifier="4"),
-        Reference(prefix="eccode", identifier="5"),
-        Reference(prefix="eccode", identifier="6"),
-        Reference(prefix="eccode", identifier="7"),
+        Reference(prefix=PREFIX, identifier="1"),
+        Reference(prefix=PREFIX, identifier="2"),
+        Reference(prefix=PREFIX, identifier="3"),
+        Reference(prefix=PREFIX, identifier="4"),
+        Reference(prefix=PREFIX, identifier="5"),
+        Reference(prefix=PREFIX, identifier="6"),
+        Reference(prefix=PREFIX, identifier="7"),
     ]
+    property_values = [Annotation(has_source.reference, OBOLiteral.uri(EXPASY_DATABASE_URL))]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -129,6 +130,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             reference=Reference(prefix=PREFIX, identifier=ec_code, name=name),
             parents=[parent_term.reference],
             synonyms=synonyms,
+            definition=data.get("reaction"),
         )
         for domain in data.get("domains", []):
             term.annotate_object(
@@ -154,13 +156,11 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     return terms.values()
 
 
-"""TREE"""
-
-
 def normalize_expasy_id(expasy_id: str) -> str:
     """Return a standardized ExPASy identifier string.
 
     :param expasy_id: A possibly non-normalized ExPASy identifier
+    :return: A normalized string.
     """
     return expasy_id.replace(" ", "")
 
@@ -207,10 +207,11 @@ def get_tree(lines: Iterable[str]):
     return rv
 
 
-def get_database(lines: Iterable[str]) -> Mapping:
+def get_database(lines: Iterable[str]) -> Mapping[str, dict[str, Any]]:
     """Parse the ExPASy database file and returns a list of enzyme entry dictionaries.
 
     :param lines: An iterator over the ExPASy database file or file-like
+    :returns: A mapping from EC code to data
     """
     rv = {}
     for groups in _group_by_id(lines):
@@ -243,7 +244,13 @@ def get_database(lines: Iterable[str]) -> Mapping:
                 value = value.strip().removesuffix("and").rstrip(",").strip()
                 ec_data_entry["transfer_id"] = _parse_transfer(value)
             elif descriptor == DE:
-                ec_data_entry["concept"]["name"] = value.rstrip(".")  # type:ignore
+                if "name" not in ec_data_entry["concept"]:
+                    ec_data_entry["concept"]["name"] = ""
+                ec_data_entry["concept"]["name"] += value.rstrip(".")  # type:ignore
+            elif descriptor == CA:
+                if "reaction" not in ec_data_entry:
+                    ec_data_entry["reaction"] = ""
+                ec_data_entry["reaction"] += value.rstrip(".")  # type:ignore
             elif descriptor == AN:
                 ec_data_entry["synonyms"].append(value.rstrip("."))  # type:ignore
             elif descriptor == PR:
@@ -276,6 +283,9 @@ TRANSFER_SPLIT_RE = re.compile(r",\s*|\s+and\s+")
 
 def _parse_transfer(value: str) -> list[str]:
     """Parse transferred entry string.
+
+    :param value: A string for a transferred entry
+    :returns: A list of EC codes that it got transferred to
 
     >>> _parse_transfer("Transferred entry: 1.1.1.198, 1.1.1.227 and 1.1.1.228.")
     ['1.1.1.198', '1.1.1.227', '1.1.1.228']

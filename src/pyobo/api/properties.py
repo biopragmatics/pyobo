@@ -16,11 +16,11 @@ from ..constants import (
 )
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..struct.reference import Reference
+from ..struct import Reference
 from ..struct.struct_utils import OBOLiteral, ReferenceHint, _ensure_ref
 from ..utils.cache import cached_df
 from ..utils.io import multidict
-from ..utils.path import prefix_cache_join
+from ..utils.path import CacheArtifact, get_cache_path
 
 __all__ = [
     "get_filtered_properties_df",
@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 def get_object_properties_df(prefix, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get a dataframe of object property triples."""
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="object_properties.tsv", version=version)
+    path = get_cache_path(prefix, CacheArtifact.object_properties, version=version)
 
     @cached_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
@@ -93,7 +93,7 @@ def get_literal_properties(
 def get_literal_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get a dataframe of literal property quads."""
     version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="literal_properties.tsv", version=version)
+    path = get_cache_path(prefix, CacheArtifact.literal_properties, version=version)
 
     @cached_df(
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
@@ -113,18 +113,14 @@ def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.Da
     :param prefix: the resource to load
     :returns: A dataframe with the properties
     """
-    version = get_version_from_kwargs(prefix, kwargs)
-    path = prefix_cache_join(prefix, name="properties.tsv", version=version)
-
-    @cached_df(
-        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
-    )
-    def _df_getter() -> pd.DataFrame:
-        return get_ontology(prefix, **kwargs).get_properties_df(
-            use_tqdm=check_should_use_tqdm(kwargs)
-        )
-
-    return _df_getter()
+    df1 = get_literal_properties_df(prefix, **kwargs)
+    df2 = get_object_properties_df(prefix, **kwargs)
+    df = pd.concat([df1[["source", "predicate", "target"]], df2])
+    ll = len(prefix) + 1
+    df[f"{prefix}_id"] = df["source"].map(lambda x: x[ll:])
+    df = df.rename(columns={"predicate": "property", "target": "value"})
+    del df["source"]
+    return df[[f"{prefix}_id", "property", "value"]]
 
 
 @wrap_norm_prefix

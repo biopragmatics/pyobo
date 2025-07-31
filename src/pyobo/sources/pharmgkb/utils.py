@@ -2,6 +2,7 @@
 
 from collections.abc import Iterable
 from pathlib import Path
+from typing import cast
 
 import pandas as pd
 from pystow.utils import read_zipfile_csv
@@ -55,6 +56,12 @@ def split(row, key: str) -> Iterable[str]:
 _MISSING_PREFIXES: set[str] = set()
 REPLACES = {
     "URL:http://www.ncbi.nlm.nih.gov/omim/": "omim:",
+    "Comparative Toxicogenomics Database:": "mesh:",
+    "ModBase:": "uniprot:",
+    "RefSeq DNA:": "refseq:",
+    "RefSeq RNA:": "refseq:",
+    "RefSeq Protein:": "refseq:",
+    "UCSC Genome Browser:": "refseq:",
 }
 
 
@@ -69,7 +76,7 @@ def parse_xrefs(term, row, key="Cross-references") -> Iterable[Reference]:
             if xref_curie.startswith(k):
                 xref_curie = xref_curie.replace(k, v)
         try:
-            xref = Reference.from_curie(xref_curie)
+            xref = cast(Reference, Reference.from_curie(xref_curie))
         except ValueError:
             p, _, _ = xref_curie.partition(":")
             if p not in _MISSING_PREFIXES:

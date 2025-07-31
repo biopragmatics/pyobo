@@ -1,20 +1,19 @@
 PyOBO |release| Documentation
 =============================
-.. automodapi:: pyobo
 
-Table of Contents
------------------
 .. toctree::
-   :maxdepth: 2
-   :caption: Getting Started
-   :name: start
+    :maxdepth: 2
+    :caption: Getting Started
+    :name: start
 
-   installation
-   cli
-   functional
+    installation
+    cli
+    usage
+    functional
 
 Indices and Tables
 ------------------
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+
+- :ref:`genindex`
+- :ref:`modindex`
+- :ref:`search`

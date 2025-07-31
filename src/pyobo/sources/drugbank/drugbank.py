@@ -149,7 +149,7 @@ def get_xml_root(version: str | None = None) -> ElementTree.Element:
         raise NoBuildError from e
 
     element = parse_drugbank(version=version, username=username, password=password)
-    return element.getroot()
+    return element.getroot()  # type:ignore
 
 
 ns = "{http://www.drugbank.ca}"

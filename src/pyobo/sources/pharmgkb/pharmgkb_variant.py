@@ -36,18 +36,24 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
     """Iterate over terms.
 
     :param force: Should the data be re-downloaded
+
     :yields: Terms
 
     1. Variant ID = The PharmGKB identifier for this variant
     2. Variant Name = The PharmGKB name for this variant
     3. Gene IDs = The PharmGKB identifiers for genes associated with this variant
     4. Gene Symbols = The HGNC symbols for genes associated with this variant
-    5. Location = The location of this variation on a reference sequence (either RefSeq or GenBank), if available. HGVS format when applicable
+    5. Location = The location of this variation on a reference sequence (either RefSeq
+       or GenBank), if available. HGVS format when applicable
     6. Variant Annotation count = The count of Variant Annotations done on this variant
-    7. Clinical Annotation count = The count of all Clinical Annotations done on this variant
-    8. Level 1/2 Clinical Annotation count = The count of Level 1 or Level 2 ("top") Clinical Annotations done on this variant
-    9. Guideline Annotation count = The count of Dosing Guideline Annotations of which this variant is a part
-    10. Label Annotation count = The count of Drug Label Annotations in which this variant is mentioned
+    7. Clinical Annotation count = The count of all Clinical Annotations done on this
+       variant
+    8. Level 1/2 Clinical Annotation count = The count of Level 1 or Level 2 ("top")
+       Clinical Annotations done on this variant
+    9. Guideline Annotation count = The count of Dosing Guideline Annotations of which
+       this variant is a part
+    10. Label Annotation count = The count of Drug Label Annotations in which this
+        variant is mentioned
     11. Synonym
     """
     df = download_pharmgkb_tsv(PREFIX, url=URL, inner="variants.tsv", force=force)

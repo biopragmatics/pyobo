@@ -7,10 +7,15 @@ import typing as t
 from collections import Counter
 from collections.abc import Mapping, Sequence
 
+import click
 from curies import ReferenceTuple
 from curies import vocabulary as v
 
-from pyobo.struct.reference import OBOLiteral, _parse_identifier
+from pyobo.struct.reference import (
+    OBOLiteral,
+    _obo_parse_identifier,
+    _parse_reference_or_uri_literal,
+)
 from pyobo.struct.struct import Reference, SynonymTypeDef, _synonym_typedef_warn
 from pyobo.struct.struct_utils import Annotation
 
@@ -31,7 +36,7 @@ def _chomp_typedef(
     s: str,
     *,
     synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
-    strict: bool = True,
+    strict: bool = False,
     node: Reference,
     ontology_prefix: str,
     upgrade: bool,
@@ -59,7 +64,7 @@ def _chomp_typedef(
 
         synonym_typedef_id, rest = s, ""
 
-    reference = _parse_identifier(
+    reference = _obo_parse_identifier(
         synonym_typedef_id,
         strict=strict,
         node=node,
@@ -68,7 +73,10 @@ def _chomp_typedef(
     )
     if reference is None:
         logger.warning(
-            "[%s] unable to parse synonym type `%s` in line %s", node.curie, synonym_typedef_id, s
+            "[%s] unable to parse synonym type `%s` in line %s",
+            node.curie,
+            synonym_typedef_id,
+            click.style(s, fg="yellow"),
         )
         return None, rest
 
@@ -82,7 +90,7 @@ SYNONYM_REFERENCE_WARNED: Counter[tuple[str, str]] = Counter()
 
 
 def _chomp_references(
-    s: str, *, strict: bool = True, node: Reference, ontology_prefix: str
+    s: str, *, strict: bool = False, node: Reference, ontology_prefix: str, line: str
 ) -> tuple[Sequence[Reference | OBOLiteral], str]:
     if not s:
         return [], ""
@@ -95,7 +103,11 @@ def _chomp_references(
             return [], s
 
     if "]" not in s:
-        logger.warning("[%s] missing closing square bracket in references: %s", node.curie, s)
+        logger.warning(
+            "[%s] missing closing square bracket in references: %s",
+            node.curie,
+            click.style(line, fg="yellow"),
+        )
         return [], s
 
     first, rest = s.lstrip("[").split("]", 1)
@@ -105,11 +117,13 @@ def _chomp_references(
         ontology_prefix=ontology_prefix,
         counter=SYNONYM_REFERENCE_WARNED,
         scope_text="synonym provenance",
+        line=line,
+        strict=strict,
     )
     return references, rest
 
 
-def _chomp_axioms(s: str, *, strict: bool = True, node: Reference) -> list[Annotation]:
+def _chomp_axioms(s: str, *, strict: bool = False, node: Reference) -> list[Annotation]:
     return []
 
 
@@ -119,43 +133,23 @@ def _parse_provenance_list(
     ontology_prefix: str,
     counter: Counter[tuple[str, str]],
     scope_text: str,
+    line: str,
+    strict: bool,
 ) -> list[Reference | OBOLiteral]:
-    return [
-        reference_or_literal
-        for curie_or_uri in curies_or_uris.split(",")
-        if (
-            reference_or_literal := _parse_reference_or_literal(
-                curie_or_uri,
-                node=node,
-                ontology_prefix=ontology_prefix,
-                counter=counter,
-                scope_text=scope_text,
-            )
-        )
-    ]
-
-
-def _parse_reference_or_literal(
-    curie_or_uri: str,
-    *,
-    node: Reference,
-    ontology_prefix: str,
-    counter: Counter[tuple[str, str]],
-    scope_text: str,
-) -> None | Reference | OBOLiteral:
-    curie_or_uri = curie_or_uri.strip()
-    if not curie_or_uri:
-        return None
-
-    # we're not strict here since we want to do some alternate kind of parsing
-    reference = Reference.from_curie_or_uri(
-        curie_or_uri, strict=False, node=node, ontology_prefix=ontology_prefix
-    )
-    if reference is not None:
-        return reference
-    if curie_or_uri.startswith("https://") or curie_or_uri.startswith("http://"):
-        return OBOLiteral.uri(curie_or_uri)
-    if not counter[ontology_prefix, curie_or_uri]:
-        logger.warning("[%s] unable to parse %s: %s", node.curie, scope_text, curie_or_uri)
-    counter[ontology_prefix, curie_or_uri] += 1
-    return None
+    rv = []
+    for curie_or_uri_raw in curies_or_uris.strip().split(","):
+        curie_or_uri_raw = curie_or_uri_raw.strip()
+        if not curie_or_uri_raw:
+            continue
+        curie_or_uri, _, _ = curie_or_uri_raw.strip().partition(" ")
+        if reference_or_literal := _parse_reference_or_uri_literal(
+            curie_or_uri,
+            node=node,
+            ontology_prefix=ontology_prefix,
+            counter=counter,
+            context=scope_text,
+            line=line,
+            strict=strict,
+        ):
+            rv.append(reference_or_literal)
+    return rv

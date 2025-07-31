@@ -13,6 +13,7 @@ from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import (
     Term,
     TypeDef,
+    _parse_str_or_curie_or_uri,
     default_reference,
     derives_from,
     enables,
@@ -132,7 +133,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                         # FIXME this needs a different relation than enables
                         #  see https://github.com/biopragmatics/pyobo/pull/168#issuecomment-1918680152
                         enables,
-                        cast(Reference, Reference.from_curie_or_uri(rhea_curie, strict=True)),
+                        cast(Reference, _parse_str_or_curie_or_uri(rhea_curie, strict=True)),
                     )
 
             if bindings:
@@ -142,7 +143,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                     if part.startswith("/ligand_id"):
                         curie = part.removeprefix('/ligand_id="').rstrip('"')
                         binding_references.add(
-                            cast(Reference, Reference.from_curie_or_uri(curie, strict=True))
+                            cast(Reference, _parse_str_or_curie_or_uri(curie, strict=True))
                         )
                 for binding_reference in sorted(binding_references):
                     term.annotate_object(molecularly_interacts_with, binding_reference)
@@ -151,7 +152,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                 for ec in ecs.split(";"):
                     if ec := ec.strip():
                         term.annotate_object(
-                            enables, Reference(prefix="eccode", identifier=standardize_ec(ec))
+                            enables, Reference(prefix="ec", identifier=standardize_ec(ec))
                         )
             for pubmed in pubmeds.split(";"):
                 if pubmed := pubmed.strip():
