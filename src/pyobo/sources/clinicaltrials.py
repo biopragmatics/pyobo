@@ -27,49 +27,48 @@ HAS_INTERVENTION = TypeDef(
     is_metadata_tag=True,
 )
 
-STUDY_TERM = Term(reference=default_reference(PREFIX, "study", name="study"))
+INVESTIGATION_TERM = Term(
+    reference=Reference(prefix="obi", identifier="0000066", name="investigation")
+)
+
+OBSERVATIONAL_INVESTIGATION_TERM = Term(
+    reference=Reference(prefix="obi", identifier="0003693", name="observational investigation")
+).append_parent(INVESTIGATION_TERM)
+
+CLINICAL_INVESTIGATION_TERM = Term(
+    reference=Reference(prefix="obi", identifier="0003697", name="clinical investigation")
+).append_parent(INVESTIGATION_TERM)
 
 CLINICAL_TRIAL_TERM = Term(
-    reference=default_reference(PREFIX, "clinical-trial", name="clinical trial")
-).append_parent(STUDY_TERM)
-
-INTERVENTIONAL_CLINICAL_TRIAL_TERM = Term(
-    reference=default_reference(
-        PREFIX, "interventional-clinical-trial", name="interventional clinical trial"
-    )
-).append_parent(CLINICAL_TRIAL_TERM)
+    reference=Reference(prefix="obi", identifier="0003699", name="clinical trial")
+).append_parent(CLINICAL_INVESTIGATION_TERM)
 
 RANDOMIZED_INTERVENTIONAL_CLINICAL_TRIAL_TERM = Term(
-    reference=default_reference(
-        PREFIX,
-        "randomized-interventional-clinical-trial",
-        name="randomized interventional clinical trial",
-    )
-).append_parent(INTERVENTIONAL_CLINICAL_TRIAL_TERM)
-
-NON_RANDOMIZED_INTERVENTIONAL_CLINICAL_TRIAL_TERM = Term(
-    reference=default_reference(
-        PREFIX,
-        "non-randomized-interventional-clinical-trial",
-        name="non-randomized interventional clinical trial",
-    )
-).append_parent(INTERVENTIONAL_CLINICAL_TRIAL_TERM)
-
-OBSERVATIONAL_CLINICAL_TRIAL_TERM = Term(
-    reference=default_reference(
-        PREFIX, "observational-clinical-trial", name="observational clinical trial"
+    reference=Reference(
+        prefix="obi",
+        identifier="0004001",
+        name="randomized clinical trial",
     )
 ).append_parent(CLINICAL_TRIAL_TERM)
 
+NON_RANDOMIZED_INTERVENTIONAL_CLINICAL_TRIAL_TERM = Term(
+    reference=Reference(
+        prefix="obi",
+        identifier="0004002",
+        name="non-randomized clinical trial",
+    )
+).append_parent(CLINICAL_TRIAL_TERM)
+
+# TODO request OBI term
 EXPANDED_ACCESS_STUDY_TERM = Term(
     reference=default_reference(PREFIX, "expanded-access-study", name="expanded access study")
-).append_parent(STUDY_TERM)
+).append_parent(INVESTIGATION_TERM)
 
 TERMS = [
-    STUDY_TERM,
+    INVESTIGATION_TERM,
+    CLINICAL_INVESTIGATION_TERM,
+    OBSERVATIONAL_INVESTIGATION_TERM,
     CLINICAL_TRIAL_TERM,
-    OBSERVATIONAL_CLINICAL_TRIAL_TERM,
-    INTERVENTIONAL_CLINICAL_TRIAL_TERM,
     EXPANDED_ACCESS_STUDY_TERM,
     RANDOMIZED_INTERVENTIONAL_CLINICAL_TRIAL_TERM,
     NON_RANDOMIZED_INTERVENTIONAL_CLINICAL_TRIAL_TERM,
@@ -79,13 +78,13 @@ TERMS = [
 # types in ClinicalTrials.gov. See summary script at
 # https://gist.github.com/cthoyt/12a3cb3c63ad68d73fe5a2f0d506526f
 PARENTS: dict[tuple[str | None, str | None], Term] = {
-    ("INTERVENTIONAL", None): INTERVENTIONAL_CLINICAL_TRIAL_TERM,
-    ("INTERVENTIONAL", "NA"): INTERVENTIONAL_CLINICAL_TRIAL_TERM,
+    ("INTERVENTIONAL", None): CLINICAL_TRIAL_TERM,
+    ("INTERVENTIONAL", "NA"): CLINICAL_TRIAL_TERM,
     ("INTERVENTIONAL", "RANDOMIZED"): RANDOMIZED_INTERVENTIONAL_CLINICAL_TRIAL_TERM,
     ("INTERVENTIONAL", "NON_RANDOMIZED"): NON_RANDOMIZED_INTERVENTIONAL_CLINICAL_TRIAL_TERM,
-    ("OBSERVATIONAL", None): OBSERVATIONAL_CLINICAL_TRIAL_TERM,
+    ("OBSERVATIONAL", None): OBSERVATIONAL_INVESTIGATION_TERM,
     ("EXPANDED_ACCESS", None): EXPANDED_ACCESS_STUDY_TERM,
-    (None, None): STUDY_TERM,
+    (None, None): INVESTIGATION_TERM,
 }
 
 
@@ -95,7 +94,7 @@ class ClinicalTrialsGetter(Obo):
     ontology = PREFIX
     dynamic_version = True
     typedefs = [has_contributor, INVESTIGATES_CONDITION, HAS_INTERVENTION]
-    root_terms = [STUDY_TERM.reference]
+    root_terms = [INVESTIGATION_TERM.reference]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms for studies."""
