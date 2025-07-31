@@ -56,7 +56,7 @@ class UnhandledFormatError(NoBuildError):
 
 
 #: The following prefixes can not be loaded through ROBOT without
-#: turning off integrity checks
+#: turning off integrity checks. This used to be part of _convert_to_obo
 REQUIRES_NO_ROBOT_CHECK = {
     "clo",
     "vo",
@@ -64,7 +64,16 @@ REQUIRES_NO_ROBOT_CHECK = {
     "orphanet",
     "foodon",
     "caloha",
+    # "aeon",
 }
+
+
+def _convert_to_obo(path: Path) -> Path:
+    import bioontologies.robot
+
+    _converted_obo_path = path.with_suffix(".obo")
+    bioontologies.robot.convert(path, _converted_obo_path, check=False)
+    return _converted_obo_path
 
 
 @wrap_norm_prefix
@@ -158,14 +167,8 @@ def get_ontology(
         raise NoBuildError(prefix)
     elif ontology_format == "obo":
         pass  # all gucci
-    elif ontology_format == "owl":
-        import bioontologies.robot
-
-        _converted_obo_path = path.with_suffix(".obo")
-        if prefix in REQUIRES_NO_ROBOT_CHECK:
-            robot_check = False
-        bioontologies.robot.convert(path, _converted_obo_path, check=robot_check)
-        path = _converted_obo_path
+    elif ontology_format in {"owl", "rdf"}:
+        path = _convert_to_obo(path)
     elif ontology_format == "json":
         from .struct.obograph import read_obograph
 
