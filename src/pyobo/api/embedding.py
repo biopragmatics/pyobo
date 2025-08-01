@@ -14,11 +14,13 @@ if TYPE_CHECKING:
 
 __all__ = [
     "get_text_embedding",
+    "get_text_embedding_model",
     "get_text_embedding_similarity",
 ]
 
 
-def _get_transformer() -> sentence_transformers.SentenceTransformer:
+def get_text_embedding_model() -> sentence_transformers.SentenceTransformer:
+    """Get the default text embedding model."""
     from sentence_transformers import SentenceTransformer
 
     model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -39,29 +41,35 @@ def _get_text(
 
 def get_text_embedding(
     reference: str | curies.Reference | curies.ReferenceTuple,
+    *,
+    model: sentence_transformers.SentenceTransformer | None = None,
 ) -> np.ndarray | None:
     """Get a text embedding for an entity, or return none if no text is available.
 
     :param reference: A reference, either as a string or Reference object
+    :param model: A sentence transformer model. Defaults to ``all-MiniLM-L6-v2`` if not given.
     :return: A 1D numpy float array of embeddings from :class:`sentence_transformers`
     """
     text = _get_text(reference)
     if text is None:
         return None
-
-    t = _get_transformer()
-    res = t.encode([text])
+    if model is None:
+        model = get_text_embedding_model()
+    res = model.encode([text])
     return res[0]
 
 
 def get_text_embedding_similarity(
     reference_1: str | curies.Reference | curies.ReferenceTuple,
     reference_2: str | curies.Reference | curies.ReferenceTuple,
+    *,
+    model: sentence_transformers.SentenceTransformer | None = None,
 ) -> float | None:
     """Get the pairwise similarity.
 
     :param reference_1: A reference, given as a string or Reference object
     :param reference_2: A second reference
+    :param model: A sentence transformer model. Defaults to ``all-MiniLM-L6-v2`` if not given.
     :returns:
         A floating point similarity, if text is available for both references, otherwise none
 
@@ -72,11 +80,13 @@ def get_text_embedding_similarity(
         similarity = pyobo.get_text_embedding_similarity("GO:0000001", "GO:0000004")
         # 0.24702128767967224
     """
-    e1 = get_text_embedding(reference_1)
-    e2 = get_text_embedding(reference_2)
+    if model is None:
+        model = get_text_embedding_model()
+    e1 = get_text_embedding(reference_1, model=model)
+    e2 = get_text_embedding(reference_2, model=model)
     if e1 is None or e2 is None:
         return None
-    return _get_transformer().similarity(e1, e2)[0][0].item()
+    return model.similarity(e1, e2)[0][0].item()
 
 
 if __name__ == "__main__":
