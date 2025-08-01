@@ -8,7 +8,7 @@ from .alts import (
 )
 from .combine import get_literal_mappings_subset
 from .edges import get_edges, get_edges_df, get_graph
-from .embedding import get_text_embedding
+from .embedding import get_text_embedding, get_text_embedding_similarity
 from .hierarchy import (
     get_ancestors,
     get_children,
@@ -118,6 +118,7 @@ __all__ = [
     "get_subhierarchy",
     "get_synonyms",
     "get_text_embedding",
+    "get_text_embedding_similarity",
     "get_typedef_df",
     "get_version",
     "get_xref",

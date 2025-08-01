@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "get_text_embedding",
+    "get_text_embedding_similarity",
 ]
 
 
@@ -37,14 +38,14 @@ def _get_text(
 
 
 def get_text_embedding(
-    references: str | curies.Reference | curies.ReferenceTuple,
+    reference: str | curies.Reference | curies.ReferenceTuple,
 ) -> np.ndarray | None:
     """Get a text embedding for an entity, or return none if no text is available.
 
-    :param references: A reference, either as a string or Reference object
+    :param reference: A reference, either as a string or Reference object
     :return: A 1D numpy float array of embeddings from :class:`sentence_transformers`
     """
-    text = _get_text(references)
+    text = _get_text(reference)
     if text is None:
         return None
 
@@ -53,5 +54,30 @@ def get_text_embedding(
     return res[0]
 
 
+def get_text_embedding_similarity(
+    reference_1: str | curies.Reference | curies.ReferenceTuple,
+    reference_2: str | curies.Reference | curies.ReferenceTuple,
+) -> float | None:
+    """Get the pairwise similarity.
+
+    :param reference_1: A reference, given as a string or Reference object
+    :param reference_2: A second reference
+    :returns:
+        A floating point similarity, if text is available for both references, otherwise none
+
+    .. code-block:: python
+
+        import pyobo
+
+        similarity = pyobo.get_text_embedding_similarity("GO:0000001", "GO:0000004")
+        # 0.24702128767967224
+    """
+    e1 = get_text_embedding(reference_1)
+    e2 = get_text_embedding(reference_2)
+    if e1 is None or e2 is None:
+        return None
+    return _get_transformer().similarity(e1, e2)[0][0].item()
+
+
 if __name__ == "__main__":
-    get_text_embedding("GO:0000001")
+    pass
