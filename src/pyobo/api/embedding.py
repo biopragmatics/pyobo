@@ -116,7 +116,3 @@ def get_text_embedding_similarity(
     if e1 is None or e2 is None:
         return None
     return model.similarity(e1, e2)[0][0].item()
-
-
-if __name__ == "__main__":
-    pass
