@@ -49,6 +49,24 @@ def get_text_embedding(
     :param reference: A reference, either as a string or Reference object
     :param model: A sentence transformer model. Defaults to ``all-MiniLM-L6-v2`` if not given.
     :return: A 1D numpy float array of embeddings from :class:`sentence_transformers`
+
+    .. code-block:: python
+
+        import pyobo
+
+        embedding = pyobo.get_text_embedding("GO:0000001")
+        # [-5.68335280e-02  7.96175096e-03 -3.36112119e-02  2.34440481e-03 ... ]
+
+    If you want to do multiple operations, load up the model for reuse
+
+    .. code-block:: python
+
+        import pyobo
+        from pyobo.api.embedding import get_text_embedding_model
+
+        model = get_text_embedding_model()
+        embedding = pyobo.get_text_embedding("GO:0000001", model=model)
+        # [-5.68335280e-02  7.96175096e-03 -3.36112119e-02  2.34440481e-03 ... ]
     """
     text = _get_text(reference)
     if text is None:
@@ -78,6 +96,17 @@ def get_text_embedding_similarity(
         import pyobo
 
         similarity = pyobo.get_text_embedding_similarity("GO:0000001", "GO:0000004")
+        # 0.24702128767967224
+
+    If you want to do multiple operations, load up the model for reuse
+
+    .. code-block:: python
+
+        import pyobo
+        from pyobo.api.embedding import get_text_embedding_model
+
+        model = get_text_embedding_model()
+        similarity = pyobo.get_text_embedding_similarity("GO:0000001", "GO:0000004", model=model)
         # 0.24702128767967224
     """
     if model is None:
