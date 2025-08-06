@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 from xml.etree.ElementTree import Element
 
+import bioversions
 from lxml import etree
 from tqdm.auto import tqdm
 

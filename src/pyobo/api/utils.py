@@ -83,7 +83,6 @@ def get_version_from_kwargs(prefix: str, kwargs: GetOntologyKwargs) -> str | Non
     return get_version(prefix, strict=False)
 
 
-
 @lru_cache(1)
 def get_version_pins() -> dict[str, str]:
     """Retrieve user-defined resource version pins.
