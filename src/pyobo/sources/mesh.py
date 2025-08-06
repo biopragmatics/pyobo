@@ -13,7 +13,6 @@ from xml.etree.ElementTree import Element
 from lxml import etree
 from tqdm.auto import tqdm
 
-from pyobo.api.utils import safe_get_version
 from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import Obo, Reference, Synonym, Term, default_reference
 from pyobo.utils.cache import cached_json, cached_mapping
@@ -416,7 +415,7 @@ def get_mesh_category_references(
         https://meshb.nlm.nih.gov/treeView
     """
     if version is None:
-        version = safe_get_version("mesh")
+        version = bioversions.get_version("mesh", strict=True)
     tree_to_mesh = get_tree_to_mesh_id(version=version)
     rv = []
     for i in range(1, 100):
