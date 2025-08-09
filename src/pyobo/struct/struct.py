@@ -939,7 +939,7 @@ class Obo:
                 license_literal = OBOLiteral.string(license_spdx_id)
             yield Annotation(v.has_license, license_literal)
 
-        # Description
+        rrr: bioregistry.Resource = bioregistry.get_resource(self.ontology, strict=True)
         if description := bioregistry.get_description(self.ontology):
             description = obo_escape_slim(description.strip())
             yield Annotation(v.has_description, OBOLiteral.string(description.strip()))
