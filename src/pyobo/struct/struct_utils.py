@@ -63,6 +63,11 @@ class Annotation(NamedTuple):
         """Return a literal property for a float."""
         return cls(predicate, OBOLiteral.float(value))
 
+    @classmethod
+    def string(cls, predicate: Reference, value: str, *, language: str | None = None) -> Self:
+        """Return a literal property for a float."""
+        return cls(predicate, OBOLiteral.string(value, language=language))
+
     @staticmethod
     def _sort_key(x: Annotation):
         return x.predicate, _reference_or_literal_key(x.value)

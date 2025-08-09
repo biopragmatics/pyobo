@@ -261,9 +261,7 @@ has_smiles = TypeDef(reference=v.has_smiles, is_metadata_tag=True).append_xref(v
 
 has_inchi = TypeDef(reference=v.has_inchi, is_metadata_tag=True).append_xref(v.debio_has_inchi)
 
-has_homepage = TypeDef(
-    reference=Reference(prefix="foaf", identifier="homepage", name="homepage"), is_metadata_tag=True
-)
+has_homepage = TypeDef(reference=v.has_homepage, is_metadata_tag=True)
 
 has_category = TypeDef(
     reference=Reference(prefix="biolink", identifier="category", name="has category"),

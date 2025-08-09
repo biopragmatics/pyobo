@@ -90,6 +90,12 @@ has_description = _c(_v.has_description)
 has_license = _c(_v.has_license)
 has_title = _c(_v.has_title)
 
+has_homepage = Reference(prefix="foaf", identifier="homepage", name="has homepage")
+has_logo = Reference(prefix="foaf", identifier="logo", name="has logo")
+has_repository = Reference(prefix="doap", identifier="repository", name="has repository")
+has_mailing_list = Reference(prefix="doap", identifier="mailing-list", name="has mailing list")
+has_maintainer = Reference(prefix="doap", identifier="maintainer", name="has maintainer")
+
 has_part = Reference(prefix=BFO_PREFIX, identifier="0000051", name="has part")
 part_of = Reference(prefix=BFO_PREFIX, identifier="0000050", name="part of")
 orthologous = Reference(

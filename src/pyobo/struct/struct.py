@@ -943,6 +943,16 @@ class Obo:
         if description := bioregistry.get_description(self.ontology):
             description = obo_escape_slim(description.strip())
             yield Annotation(v.has_description, OBOLiteral.string(description.strip()))
+        if homepage := bioregistry.get_homepage(self.ontology):
+            yield Annotation(v.has_homepage, OBOLiteral.uri(homepage))
+        if repository := bioregistry.get_repository(self.ontology):
+            yield Annotation(v.has_repository, OBOLiteral.uri(repository))
+        if logo := resource.get_logo():
+            yield Annotation(v.has_logo, OBOLiteral.uri(logo))
+        if mailing_list := None:
+            yield Annotation(v.has_mailing_list, OBOLiteral.string(mailing_list))
+        if maintainer_orcid := bioregistry.get_contact_orcid(self.ontology):
+            yield Annotation(v.has_maintainer, Reference(prefix="orcid", identifier=maintainer_orcid))
 
         # Root terms
         for root_term in self.root_terms or []:
@@ -2291,12 +2301,32 @@ def build_ontology(
     subsetdefs: list[tuple[Reference, str]] | None = None,
     properties: list[Annotation] | None = None,
     imports: list[str] | None = None,
+    description: str | None = None,
+    homepage: str | None = None,
 ) -> Obo:
     """Build an ontology from parts."""
     resource = bioregistry.get_resource(prefix, strict=True)
     if name is None:
         name = resource.get_name()
     # TODO auto-populate license and other properties
+
+    if properties is None:
+        properties = []
+    if typedefs is None:
+        typedefs = []
+
+    if description:
+        from .typedef import has_description
+        properties.append(Annotation.string(has_description.reference, description))
+        if has_description not in typedefs:
+            typedefs.append(has_description)  # TODO get proper typedef
+
+    if homepage:
+        from .typedef import has_homepage
+        properties.append(Annotation.string(has_homepage.reference, homepage))
+        if has_homepage not in typedefs:
+            typedefs.append(has_homepage)
+
     return make_ad_hoc_ontology(
         _ontology=prefix,
         _name=name,
