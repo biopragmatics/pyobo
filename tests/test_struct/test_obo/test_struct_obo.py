@@ -166,9 +166,9 @@ class TestOBOHeader(unittest.TestCase):
             ontology: go
             property_value: dcterms:license "CC-BY-4.0" xsd:string
             property_value: dcterms:description "The Gene Ontology project provides a controlled vocabulary to describe gene and gene product attributes in any organism." xsd:string
-            property_value: foaf:homepage "http\://geneontology.org/" xsd:anyURI
-            property_value: doap:repository "https\://github.com/geneontology/go-ontology" xsd:anyURI
-            property_value: foaf:logo "https\://obofoundry.org/images/go_logo.png" xsd:anyURI
+            property_value: foaf:homepage "http\\://geneontology.org/" xsd:anyURI
+            property_value: doap:repository "https\\://github.com/geneontology/go-ontology" xsd:anyURI
+            property_value: foaf:logo "https\\://obofoundry.org/images/go_logo.png" xsd:anyURI
             property_value: doap:maintainer orcid:0000-0001-6787-2901
             """,
             ontology,
