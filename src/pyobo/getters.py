@@ -138,7 +138,7 @@ def get_ontology(
         strict = False
 
     if version is None:
-        version = _get_version(prefix)
+        version = _get_version_from_artifact(prefix)
 
     if force_process:
         obonet_json_gz_path = None
@@ -208,7 +208,9 @@ _ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | None]]] = [
 ]
 
 
-def _ensure_ontology_path(prefix: str, force: bool, version: str | None) -> OntologyPathPack | None:
+def _ensure_ontology_path(
+    prefix: str, *, force: bool, version: str | None
+) -> OntologyPathPack | None:
     for ontology_format, getter in _ONTOLOGY_GETTERS:
         url = getter(prefix)
         if url is None:
@@ -521,7 +523,7 @@ def db_output_helper(
     return [path for _, path in rv]
 
 
-def _get_version(prefix: str) -> str | None:
+def _get_version_from_artifact(prefix: str) -> str | None:
     # assume that all possible files that can be downloaded
     # are in sync and have the same version
     for ontology_format, func in _ONTOLOGY_GETTERS:
