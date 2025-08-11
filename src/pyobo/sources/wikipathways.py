@@ -10,7 +10,7 @@ from tqdm import tqdm
 from .gmt_utils import parse_wikipathways_gmt
 from ..constants import SPECIES_REMAPPING
 from ..struct import Obo, Reference, Term, from_species
-from ..struct.typedef import contributes_to_condition, has_participant, located_in
+from ..struct.typedef import contributes_to_condition, has_depiction, has_participant, located_in
 from ..utils.path import ensure_path
 
 __all__ = [
@@ -48,7 +48,7 @@ class WikiPathwaysGetter(Obo):
     """An ontology representation of WikiPathways' pathway database."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [from_species, has_participant, contributes_to_condition, located_in]
+    typedefs = [from_species, has_participant, contributes_to_condition, located_in, has_depiction]
     root_terms = [ROOT]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -62,7 +62,7 @@ DOID_PREFIX = "http://purl.obolibrary.org/obo/DOID_"
 CL_PREFIX = "http://purl.obolibrary.org/obo/CL_"
 
 
-def iter_terms(version: str) -> Iterable[Term]:
+def iter_terms(version: str, *, include_descriptions: bool = False) -> Iterable[Term]:
     """Get WikiPathways terms."""
     archive_url = f"https://data.wikipathways.org/current/rdf/wikipathways-{version}-rdf-wp.zip"
     archive = pystow.ensure(PREFIX, url=archive_url, version=version)
@@ -81,17 +81,35 @@ def iter_terms(version: str) -> Iterable[Term]:
 
         for identifier, _version, _revision, name, _species, genes in parse_wikipathways_gmt(path):
             graph = read_zipfile_rdf(archive, inner_path=f"wp/{identifier}.ttl")
+            uri = f"https://identifiers.org/wikipathways/{identifier}"
 
-            term = Term(reference=Reference(prefix=PREFIX, identifier=identifier, name=name))
+            definition: str | None = None
+            if include_descriptions:
+                # TODO deal with weird characters breaking OFN
+                description_results = list(
+                    graph.query(
+                        f"SELECT ?p WHERE {{ <{uri}> pav:hasVersion/dcterms:description ?p }} LIMIT 1"
+                    )
+                )
+                if description_results:
+                    definition = str(description_results[0][0])  # type:ignore[index]
 
+            term = Term(
+                reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
+                definition=definition,
+            )
             term.set_species(taxonomy_id, taxonomy_name)
+            term.annotate_uri(
+                has_depiction,
+                f"https://www.wikipathways.org/wikipathways-assets/pathways/{identifier}/{identifier}.svg",
+            )
             for ncbigene_id in genes:
                 term.annotate_object(
                     has_participant,
                     Reference(prefix="ncbigene", identifier=ncbigene_id),
                 )
-
-            uri = f"https://identifiers.org/wikipathways/{identifier}"
+            # TODO switch query over to including chemicals from RDF SPARQL query
+            # TODO get description from SPARQL
             parents = [  # type:ignore[misc]
                 p
                 for (p,) in graph.query(

@@ -26,6 +26,7 @@ __all__ = [
     "gene_product_member_of",
     "has_contributor",
     "has_dbxref",
+    "has_depiction",
     "has_end_date",
     "has_gene_product",
     "has_homepage",
@@ -267,6 +268,10 @@ has_inchi = TypeDef(reference=v.has_inchi, is_metadata_tag=True).append_xref(v.d
 
 has_homepage = TypeDef(
     reference=Reference(prefix="foaf", identifier="homepage", name="homepage"), is_metadata_tag=True
+)
+has_depiction = TypeDef(
+    reference=Reference(prefix="foaf", identifier="depicted_by", name="depicted by"),
+    is_metadata_tag=True,
 )
 
 has_category = TypeDef(
