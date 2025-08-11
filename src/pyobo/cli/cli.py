@@ -90,12 +90,7 @@ def _has_no_download(prefix: str) -> bool:
 @lru_cache(maxsize=1)
 def _no_download() -> set[str]:
     """Get the list of prefixes not available as OBO."""
-    return {
-        prefix
-        for prefix in bioregistry.read_registry()
-        if bioregistry.get_obo_download(prefix) is None
-        and bioregistry.get_owl_download(prefix) is None
-    }
+    return {resource.prefix for resource in bioregistry.resources() if not resource.has_download()}
 
 
 main.add_command(lookup)
