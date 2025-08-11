@@ -531,7 +531,9 @@ def _get_version_from_artifact(prefix: str) -> str | None:
         if url is None:
             continue
         # Try to peak into the file to get the version without fully downloading
-        version_func = VERSION_GETTERS[ontology_format]
+        version_func = VERSION_GETTERS.get(ontology_format)
+        if version_func is None:
+            continue
         version = version_func(prefix, url)
         if version:
             return cleanup_version(version, prefix=prefix)
