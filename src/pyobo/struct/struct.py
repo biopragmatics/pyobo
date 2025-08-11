@@ -940,7 +940,6 @@ class Obo:
             yield Annotation(v.has_license, license_literal)
 
         if description := bioregistry.get_description(self.ontology):
-            description = obo_escape_slim(description.strip())
             yield Annotation(v.has_description, OBOLiteral.string(description.strip()))
         if homepage := bioregistry.get_homepage(self.ontology):
             yield Annotation(v.has_homepage, OBOLiteral.uri(homepage))
