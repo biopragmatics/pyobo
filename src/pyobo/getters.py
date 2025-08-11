@@ -15,7 +15,7 @@ from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
 from textwrap import indent
-from typing import Any, Literal, TypeAlias, TypeVar
+from typing import Any, TypeVar
 
 import bioontologies.robot
 import bioregistry
@@ -30,6 +30,8 @@ from .constants import (
     DATABASE_DIRECTORY,
     GetOntologyKwargs,
     IterHelperHelperDict,
+    OntologyFormat,
+    OntologyPathPack,
     SlimGetOntologyKwargs,
 )
 from .identifier_utils import ParseError, wrap_norm_prefix
@@ -37,12 +39,12 @@ from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
 from .struct.obo import from_obo_path, from_obonet
 from .utils.io import safe_open_writer
+from .utils.misc import VERSION_GETTERS, cleanup_version
 from .utils.path import ensure_path, prefix_directory_join
 from .version import get_git_hash, get_version
 
 __all__ = [
     "NoBuildError",
-    "OntologyFormat",
     "get_ontology",
 ]
 
@@ -125,9 +127,19 @@ def get_ontology(
     """
     if force:
         force_process = True
+    if has_nomenclature_plugin(prefix):
+        obo = run_nomenclature_plugin(prefix, version=version)
+        if cache:
+            logger.debug("[%s] caching nomenclature plugin", prefix)
+            obo.write_default(force=force_process)
+        return obo
+
     if prefix == "uberon":
         logger.info("UBERON has so much garbage in it that defaulting to non-strict parsing")
         strict = False
+
+    if version is None:
+        version = _get_version_from_artifact(prefix)
 
     if force_process:
         obonet_json_gz_path = None
@@ -157,17 +169,11 @@ def get_ontology(
         else:
             logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
 
-    if has_nomenclature_plugin(prefix):
-        obo = run_nomenclature_plugin(prefix, version=version)
-        if cache:
-            logger.debug("[%s] caching nomenclature plugin", prefix)
-            obo.write_default(force=force_process)
-        return obo
-
-    ontology_format, path = _ensure_ontology_path(prefix, force=force, version=version)
-    if path is None:
+    path_pack = _ensure_ontology_path(prefix, force=force, version=version)
+    if path_pack is None:
         raise NoBuildError(prefix)
-    elif ontology_format == "obo":
+    ontology_format, path = path_pack
+    if ontology_format == "obo":
         pass  # all gucci
     elif ontology_format in {"owl", "rdf"}:
         path = _convert_to_obo(path)
@@ -195,7 +201,6 @@ def get_ontology(
     return obo
 
 
-OntologyFormat: TypeAlias = Literal["obo", "owl", "json", "rdf"]
 # order matters in this list, since order implicitly defines priority
 _ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | None]]] = [
     ("obo", bioregistry.get_obo_download),
@@ -206,8 +211,8 @@ _ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | None]]] = [
 
 
 def _ensure_ontology_path(
-    prefix: str, force: bool, version: str | None
-) -> tuple[OntologyFormat, Path] | tuple[None, None]:
+    prefix: str, *, force: bool, version: str | None
+) -> OntologyPathPack | None:
     for ontology_format, getter in _ONTOLOGY_GETTERS:
         url = getter(prefix)
         if url is None:
@@ -219,8 +224,8 @@ def _ensure_ontology_path(
         except pystow.utils.UnexpectedDirectoryError:
             continue  # TODO report more info about the URL and the name it tried to make
         else:
-            return ontology_format, path
-    return None, None
+            return OntologyPathPack(ontology_format, path)
+    return None
 
 
 SKIP = {
@@ -519,3 +524,20 @@ def db_output_helper(
     click.echo()
 
     return [path for _, path in rv]
+
+
+def _get_version_from_artifact(prefix: str) -> str | None:
+    # assume that all possible files that can be downloaded
+    # are in sync and have the same version
+    for ontology_format, func in _ONTOLOGY_GETTERS:
+        url = func(prefix)
+        if url is None:
+            continue
+        # Try to peak into the file to get the version without fully downloading
+        version_func = VERSION_GETTERS.get(ontology_format)
+        if version_func is None:
+            continue
+        version = version_func(prefix, url)
+        if version:
+            return cleanup_version(version, prefix=prefix)
+    return None
