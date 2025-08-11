@@ -1,7 +1,6 @@
 """I/O utilities."""
 
 import collections.abc
-import csv
 import gzip
 import logging
 from collections import defaultdict
@@ -16,7 +15,6 @@ from pystow.utils import safe_open_reader, safe_open_writer
 from tqdm.auto import tqdm
 
 __all__ = [
-    "get_reader",
     "multidict",
     "multisetdict",
     "open_map_tsv",
@@ -31,11 +29,6 @@ logger = logging.getLogger(__name__)
 
 X = TypeVar("X")
 Y = TypeVar("Y")
-
-
-def get_reader(x, sep: str = "\t"):
-    """Get a :func:`csv.reader` with PyOBO default settings."""
-    return csv.reader(x, delimiter=sep, quoting=csv.QUOTE_MINIMAL)
 
 
 def open_map_tsv(
