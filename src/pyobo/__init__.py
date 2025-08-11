@@ -48,6 +48,8 @@ from .api import (
     get_sssom_df,
     get_subhierarchy,
     get_synonyms,
+    get_text_embedding,
+    get_text_embedding_similarity,
     get_typedef_df,
     get_xref,
     get_xrefs,
@@ -56,27 +58,36 @@ from .api import (
     is_descendent,
 )
 from .getters import get_ontology
-from .ner import get_grounder
-from .ner.normalizer import OboNormalizer, ground
-from .obographs import parse_results_from_obo
+from .ner import get_grounder, ground
 from .plugins import (
     has_nomenclature_plugin,
     iter_nomenclature_plugins,
     run_nomenclature_plugin,
 )
-from .reader import from_obo_path, from_obonet
-from .struct import Obo, Reference, Synonym, SynonymTypeDef, Term, TypeDef, default_reference
+from .struct import (
+    Obo,
+    Reference,
+    StanzaType,
+    Synonym,
+    SynonymTypeDef,
+    Term,
+    TypeDef,
+    build_ontology,
+    default_reference,
+)
+from .struct.obo import from_obo_path, from_obonet
 from .utils.path import ensure_path
 from .version import get_version
 
 __all__ = [
     "Obo",
-    "OboNormalizer",
     "Reference",
+    "StanzaType",
     "Synonym",
     "SynonymTypeDef",
     "Term",
     "TypeDef",
+    "build_ontology",
     "default_reference",
     "ensure_path",
     "from_obo_path",
@@ -130,6 +141,8 @@ __all__ = [
     "get_sssom_df",
     "get_subhierarchy",
     "get_synonyms",
+    "get_text_embedding",
+    "get_text_embedding_similarity",
     "get_typedef_df",
     "get_version",
     "get_xref",
@@ -140,6 +153,5 @@ __all__ = [
     "has_nomenclature_plugin",
     "is_descendent",
     "iter_nomenclature_plugins",
-    "parse_results_from_obo",
     "run_nomenclature_plugin",
 ]

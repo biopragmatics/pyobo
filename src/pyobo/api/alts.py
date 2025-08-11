@@ -5,6 +5,7 @@ from collections.abc import Mapping
 from functools import lru_cache
 
 import curies
+from pydantic import ValidationError
 from typing_extensions import Unpack
 
 from .utils import _get_pi, get_version_from_kwargs
@@ -70,7 +71,7 @@ def get_primary_curie(
     reference = _get_pi(prefix, identifier)
     try:
         primary_identifier = get_primary_identifier(reference, **kwargs)
-    except ValueError:
+    except (ValueError, ValidationError):
         if kwargs.get("strict"):
             raise
         # this happens on invalid prefix. maybe revise?

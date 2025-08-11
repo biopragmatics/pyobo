@@ -57,6 +57,7 @@ SPECIES = [
 DTYPE = {
     "taxonomy_id": str,
 }
+ROOT = Reference(prefix="go", identifier="0032991", name="macromolecular complex")
 
 
 def _parse_members(s) -> list[tuple[Reference, str]]:
@@ -157,10 +158,12 @@ class ComplexPortalGetter(Obo):
 
     bioversions_key = ontology = PREFIX
     typedefs = [from_species, has_part, has_citation]
+    root_terms = [ROOT]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return get_terms(version=self._version_or_raise)
+        yield Term(reference=ROOT)
+        yield from get_terms(version=self._version_or_raise)
 
 
 def get_df(version: str, force: bool = False) -> pd.DataFrame:
@@ -232,6 +235,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             definition=definition.strip() if pd.notna(definition) else None,
             synonyms=[Synonym(name=alias) for alias in aliases],
         )
+        term.append_parent(ROOT)
         for reference, note in xrefs:
             if note == "identity":
                 term.append_xref(reference)

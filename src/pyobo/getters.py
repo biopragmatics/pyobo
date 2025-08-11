@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import datetime
-import gzip
 import json
 import logging
 import pathlib
@@ -14,18 +13,19 @@ import urllib.error
 import zipfile
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
+from pathlib import Path
 from textwrap import indent
-from typing import TypeVar
+from typing import Any, Literal, TypeAlias, TypeVar
 
 import bioregistry
 import click
 import pystow.utils
-from bioontologies import robot
 from tabulate import tabulate
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
 
 from .constants import (
+    BUILD_SUBDIRECTORY_NAME,
     DATABASE_DIRECTORY,
     GetOntologyKwargs,
     IterHelperHelperDict,
@@ -34,15 +34,16 @@ from .constants import (
 )
 from .identifier_utils import ParseError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
-from .reader import from_obo_path, from_obonet
 from .struct import Obo
-from .utils.io import get_writer
-from .utils.misc import DOWNLOADERS, _get_version
+from .struct.obo import from_obo_path, from_obonet
+from .utils.io import safe_open_writer
+from .utils.misc import _get_version
 from .utils.path import ensure_path, prefix_directory_join
 from .version import get_git_hash, get_version
 
 __all__ = [
     "NoBuildError",
+    "OntologyFormat",
     "get_ontology",
 ]
 
@@ -58,8 +59,24 @@ class UnhandledFormatError(NoBuildError):
 
 
 #: The following prefixes can not be loaded through ROBOT without
-#: turning off integrity checks
-REQUIRES_NO_ROBOT_CHECK = {"clo", "vo", "orphanet.ordo", "orphanet"}
+#: turning off integrity checks. This used to be part of _convert_to_obo
+REQUIRES_NO_ROBOT_CHECK = {
+    "clo",
+    "vo",
+    "orphanet.ordo",
+    "orphanet",
+    "foodon",
+    "caloha",
+    # "aeon",
+}
+
+
+def _convert_to_obo(path: Path) -> Path:
+    import bioontologies.robot
+
+    _converted_obo_path = path.with_suffix(".obo")
+    bioontologies.robot.convert(path, _converted_obo_path, check=False)
+    return _converted_obo_path
 
 
 @wrap_norm_prefix
@@ -120,25 +137,24 @@ def get_ontology(
         logger.info("UBERON has so much garbage in it that defaulting to non-strict parsing")
         strict = False
 
-    # TODO what's the logic with force and force_process
-    #  that decides that we should look up the metadata file
-    #  in the root and just use the version from there
     if version is None:
         version = _get_version(prefix)
 
-    if not cache:
+    if force_process:
+        obonet_json_gz_path = None
+    elif not cache:
         logger.debug("[%s] caching was turned off, so dont look for an obonet file", prefix)
         obonet_json_gz_path = None
     else:
         obonet_json_gz_path = prefix_directory_join(
-            prefix, name=f"{prefix}.obonet.json.gz", ensure_exists=False, version=version
+            prefix, BUILD_SUBDIRECTORY_NAME, name=f"{prefix}.obonet.json.gz", version=version
         )
         logger.debug(
             "[%s] caching is turned on, so look for an obonet file at %s",
             prefix,
             obonet_json_gz_path,
         )
-        if obonet_json_gz_path.exists() and not force:
+        if obonet_json_gz_path.is_file() and not force:
             from .utils.cache import get_gzipped_graph
 
             logger.debug("[%s] using obonet cache at %s", prefix, obonet_json_gz_path)
@@ -157,11 +173,15 @@ def get_ontology(
         raise NoBuildError(prefix)
     elif path_pack.format == "obo":
         path = path_pack.path
-    elif path_pack.format == "owl":
-        path = path_pack.path.with_suffix(".obo")
-        if prefix in REQUIRES_NO_ROBOT_CHECK:
-            robot_check = False
-        robot.convert(path_pack.path, path, check=robot_check)
+    elif path_pack.format in {"owl", "rdf"}:
+        path = _convert_to_obo(path_pack.path)
+    elif path_pack.format == "json":
+        from .struct.obograph import read_obograph
+
+        obo = read_obograph(prefix=prefix, path=path)
+        if cache:
+            obo.write_default(force=force_process)
+        return obo
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path_pack.format}")
 
@@ -179,78 +199,33 @@ def get_ontology(
     return obo
 
 
+OntologyFormat: TypeAlias = Literal["obo", "owl", "json", "rdf"]
+
+# order matters in this list, since order implicitly defines priority
+_ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | None]]] = [
+    ("obo", bioregistry.get_obo_download),
+    ("owl", bioregistry.get_owl_download),
+    ("json", bioregistry.get_json_download),
+    ("rdf", bioregistry.get_rdf_download),
+]
+
+
 def _ensure_ontology_path(prefix: str, force: bool, version: str | None) -> OntologyPathPack | None:
-    for ontology_format, func in DOWNLOADERS:
-        url = func(prefix)
+    for ontology_format, getter in _ONTOLOGY_GETTERS:
+        url = getter(prefix)
         if url is None:
             continue
         try:
             path = ensure_path(prefix, url=url, force=force, version=version)
         except (urllib.error.HTTPError, pystow.utils.DownloadError):
             continue
+        except pystow.utils.UnexpectedDirectoryError:
+            continue  # TODO report more info about the URL and the name it tried to make
         else:
             return OntologyPathPack(ontology_format, path)
     return None
 
 
-#: Obonet/Pronto can't parse these (consider converting to OBO with ROBOT?)
-CANT_PARSE = {
-    "agro",
-    "aro",
-    "bco",
-    "caro",
-    "cco",
-    "chmo",
-    "cido",
-    "covoc",
-    "cto",
-    "cvdo",
-    "dicom",
-    "dinto",
-    "emap",
-    "epso",
-    "eupath",
-    "fbbi",
-    "fma",
-    "fobi",
-    "foodon",
-    "genepio",
-    "hancestro",
-    "hom",
-    "hso",
-    "htn",  # Unknown string format: creation: 16MAY2017
-    "ico",
-    "idocovid19",
-    "labo",
-    "mamo",
-    "mfmo",
-    "mfo",
-    "mfomd",
-    "miapa",
-    "mo",
-    "oae",
-    "ogms",  # Unknown string format: creation: 16MAY2017
-    "ohd",
-    "ons",
-    "oostt",
-    "opmi",
-    "ornaseq",
-    "orth",
-    "pdro",
-    "probonto",
-    "psdo",
-    "reo",
-    "rex",
-    "rnao",
-    "sepio",
-    "sio",
-    "spd",
-    "sweetrealm",
-    "txpo",
-    "vido",
-    "vt",
-    "xl",
-}
 SKIP = {
     "ncbigene": "too big, refs acquired from other dbs",
     "pubchem.compound": "top big, can't deal with this now",
@@ -271,11 +246,12 @@ SKIP = {
     "kegg.genes": "needs fix",  # FIXME
     "kegg.genome": "needs fix",  # FIXME
     "kegg.pathway": "needs fix",  # FIXME
-    "ensemblglossary": "uri is wrong",
+    "ensemblglossary": "URI is self-referential to data in OLS, extract from there",
     "epio": "content from fraunhofer is unreliable",
     "epso": "content from fraunhofer is unreliable",
     "gwascentral.phenotype": "website is down? or API changed?",  # FIXME
     "gwascentral.study": "website is down? or API changed?",  # FIXME
+    "snomedct": "dead source",
 }
 
 X = TypeVar("X")
@@ -407,7 +383,7 @@ def iter_helper_helper(
         except ValueError as e:
             if _is_xml(e):
                 # this means that it tried doing parsing on an xml page
-                logger.info(
+                logger.warning(
                     "no resource available for %s. See http://www.obofoundry.org/ontology/%s",
                     prefix,
                     prefix,
@@ -447,7 +423,7 @@ def _prep_dir(directory: None | str | pathlib.Path) -> pathlib.Path:
 
 
 def db_output_helper(
-    it: Iterable[tuple[str, ...]],
+    it: Iterable[tuple[Any, ...]],
     db_name: str,
     columns: Sequence[str],
     *,
@@ -492,13 +468,10 @@ def db_output_helper(
     logger.info("writing %s to %s", db_name, db_path)
     logger.info("writing %s sample to %s", db_name, db_sample_path)
     sample_rows = []
-    with gzip.open(db_path, mode="wt") if use_gzip else open(db_path, "w") as gzipped_file:
-        writer = get_writer(gzipped_file)
 
+    with safe_open_writer(db_path) as writer:
         # for the first 10 rows, put it in a sample file too
-        with open(db_sample_path, "w") as sample_file:
-            sample_writer = get_writer(sample_file)
-
+        with safe_open_writer(db_sample_path) as sample_writer:
             # write header
             writer.writerow(columns)
             sample_writer.writerow(columns)
@@ -518,15 +491,13 @@ def db_output_helper(
                 c_detailed[tuple(row[i] for i in summary_detailed)] += 1
             writer.writerow(row)
 
-    with open(db_summary_path, "w") as file:
-        writer = get_writer(file)
-        writer.writerows(c.most_common())
+    with safe_open_writer(db_summary_path) as summary_writer:
+        summary_writer.writerows(c.most_common())
 
     if summary_detailed is not None:
         logger.info(f"writing {db_name} detailed summary to {db_summary_detailed_path}")
-        with open(db_summary_detailed_path, "w") as file:
-            writer = get_writer(file)
-            writer.writerows((*keys, v) for keys, v in c_detailed.most_common())
+        with safe_open_writer(db_summary_detailed_path) as detailed_summary_writer:
+            detailed_summary_writer.writerows((*keys, v) for keys, v in c_detailed.most_common())
         rv.append(("Summary (Detailed)", db_summary_detailed_path))
 
     with open(db_metadata_path, "w") as file:

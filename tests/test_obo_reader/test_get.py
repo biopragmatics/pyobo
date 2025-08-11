@@ -7,7 +7,7 @@ import obonet
 from curies import ReferenceTuple
 
 from pyobo import Reference, Synonym, SynonymTypeDef, default_reference, get_ontology
-from pyobo.reader import (
+from pyobo.struct.obo.reader import (
     _extract_definition,
     _extract_synonym,
     iterate_graph_synonym_typedefs,
@@ -86,7 +86,7 @@ class TestParseObonet(unittest.TestCase):
         ]:
             with self.subTest(s=s):
                 actual_text, actual_references = _extract_definition(
-                    s, node=Reference(prefix="chebi", identifier="XXX"), ontology_prefix="chebi"
+                    s, node=Reference(prefix="chebi", identifier="1234"), ontology_prefix="chebi"
                 )
                 self.assertEqual(expected_text, actual_text)
                 self.assertEqual(expected_references, actual_references)
@@ -98,7 +98,7 @@ class TestParseObonet(unittest.TestCase):
         actual_text, actual_references = _extract_definition(
             s,
             strict=True,
-            node=Reference(prefix="chebi", identifier="XXX"),
+            node=Reference(prefix="chebi", identifier="1234"),
             ontology_prefix="chebi",
         )
         self.assertEqual(expected_text, actual_text)
@@ -165,7 +165,7 @@ class TestParseObonet(unittest.TestCase):
                 actual_synonym = _extract_synonym(
                     text,
                     synoynym_typedefs,
-                    node=Reference(prefix="chebi", identifier="XXX"),
+                    node=Reference(prefix="chebi", identifier="1234"),
                     ontology_prefix="chebi",
                     upgrade=False,
                 )
@@ -185,7 +185,7 @@ class TestParseObonet(unittest.TestCase):
             iterate_node_synonyms(
                 data,
                 synoynym_typedefs,
-                node=Reference(prefix="chebi", identifier="XXX"),
+                node=Reference(prefix="chebi", identifier="51990"),
                 ontology_prefix="chebi",
                 upgrade=False,
             )

@@ -6,7 +6,13 @@ from .antibodyregistry import AntibodyRegistryGetter
 from .bigg import BiGGCompartmentGetter, BiGGMetaboliteGetter, BiGGModelGetter, BiGGReactionGetter
 from .ccle import CCLEGetter
 from .cgnc import CGNCGetter
-from .chembl import ChEMBLCompoundGetter, ChEMBLTargetGetter
+from .chembl import (
+    ChEMBLCellGetter,
+    ChEMBLCompoundGetter,
+    ChEMBLMechanismGetter,
+    ChEMBLTargetGetter,
+    ChEMBLTissueGetter,
+)
 from .civic_gene import CIVICGeneGetter
 from .clinicaltrials import ClinicalTrialsGetter
 from .complexportal import ComplexPortalGetter
@@ -26,7 +32,9 @@ from .geonames import GeonamesFeatureGetter, GeonamesGetter
 from .gtdb import GTDBGetter
 from .gwascentral import GWASCentralPhenotypeGetter, GWASCentralStudyGetter
 from .hgnc import HGNCGetter, HGNCGroupGetter
+from .iana_media_type import IANAGetter
 from .icd import ICD10Getter, ICD11Getter
+from .intact import IntactGetter
 from .interpro import InterProGetter
 from .itis import ITISGetter
 from .kegg import KEGGGeneGetter, KEGGGenomeGetter, KEGGPathwayGetter
@@ -59,12 +67,13 @@ from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
 from .sgd import SGDGetter
 from .signor import SignorGetter
 from .slm import SLMGetter
+from .spdx import SPDXLicenseGetter
 from .umls import UMLSGetter, UMLSSTyGetter
 from .unimod import UnimodGetter
 from .uniprot import UniProtGetter, UniProtPtmGetter
 from .wikipathways import WikiPathwaysGetter
 from .zfin import ZFINGetter
-from ..struct import Obo
+from ..struct.struct import AdHocOntologyBase, Obo
 
 __all__ = [
     "AntibodyRegistryGetter",
@@ -78,8 +87,11 @@ __all__ = [
     "CONSOGetter",
     "CPTGetter",
     "CVXGetter",
+    "ChEMBLCellGetter",
     "ChEMBLCompoundGetter",
+    "ChEMBLMechanismGetter",
     "ChEMBLTargetGetter",
+    "ChEMBLTissueGetter",
     "ClinicalTrialsGetter",
     "ComplexPortalGetter",
     "CreditGetter",
@@ -99,9 +111,11 @@ __all__ = [
     "GeonamesGetter",
     "HGNCGetter",
     "HGNCGroupGetter",
+    "IANAGetter",
     "ICD10Getter",
     "ICD11Getter",
     "ITISGetter",
+    "IntactGetter",
     "InterProGetter",
     "KEGGGeneGetter",
     "KEGGGenomeGetter",
@@ -140,6 +154,7 @@ __all__ = [
     "SFAMGetter",
     "SGDGetter",
     "SLMGetter",
+    "SPDXLicenseGetter",
     "SignorGetter",
     "UMLSGetter",
     "UMLSSTyGetter",
@@ -151,6 +166,10 @@ __all__ = [
     "ontology_resolver",
 ]
 
-ontology_resolver: ClassResolver[Obo] = ClassResolver.from_subclasses(base=Obo, suffix="Getter")
+ontology_resolver: ClassResolver[Obo] = ClassResolver.from_subclasses(
+    base=Obo,
+    suffix="Getter",
+    skip={AdHocOntologyBase},
+)
 for getter in list(ontology_resolver):
     ontology_resolver.synonyms[getter.ontology] = getter

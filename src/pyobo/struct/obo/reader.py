@@ -15,19 +15,11 @@ from typing import Any
 import bioregistry
 import networkx as nx
 from curies import ReferenceTuple
+from curies.preprocessing import BlocklistError
 from curies.vocabulary import SynonymScope
 from more_itertools import pairwise
 from tqdm.auto import tqdm
 
-from .constants import DATE_FORMAT, PROVENANCE_PREFIXES
-from .identifier_utils import (
-    BlacklistedError,
-    NotCURIEError,
-    ParseError,
-    UnparsableIRIError,
-    _is_valid_identifier,
-    _parse_str_or_curie_or_uri_helper,
-)
 from .reader_utils import (
     _chomp_axioms,
     _chomp_references,
@@ -35,8 +27,9 @@ from .reader_utils import (
     _chomp_typedef,
     _parse_provenance_list,
 )
-from .registries import curie_has_blacklisted_prefix, curie_is_blacklisted, remap_prefix
-from .struct import (
+from .. import vocabulary as v
+from ..reference import OBOLiteral, _obo_parse_identifier
+from ..struct import (
     Obo,
     Reference,
     Synonym,
@@ -46,17 +39,26 @@ from .struct import (
     default_reference,
     make_ad_hoc_ontology,
 )
-from .struct import vocabulary as v
-from .struct.reference import OBOLiteral, _obo_parse_identifier
-from .struct.struct_utils import Annotation, Stanza
-from .struct.typedef import comment as has_comment
-from .struct.typedef import default_typedefs, has_ontology_root_term
-from .utils.cache import write_gzipped_graph
-from .utils.misc import STATIC_VERSION_REWRITES, cleanup_version
+from ..struct_utils import Annotation, Stanza
+from ..typedef import comment as has_comment
+from ..typedef import default_typedefs, has_ontology_root_term
+from ...constants import DATE_FORMAT, PROVENANCE_PREFIXES
+from ...identifier_utils import (
+    NotCURIEError,
+    ParseError,
+    UnparsableIRIError,
+    _is_valid_identifier,
+    _parse_str_or_curie_or_uri_helper,
+    get_rules,
+)
+from ...utils.cache import write_gzipped_graph
+from ...utils.io import safe_open
+from ...utils.misc import STATIC_VERSION_REWRITES, cleanup_version
 
 __all__ = [
     "from_obo_path",
     "from_obonet",
+    "from_str",
 ]
 
 logger = logging.getLogger(__name__)
@@ -75,13 +77,7 @@ def from_obo_path(
 ) -> Obo:
     """Get the OBO graph from a path."""
     path = Path(path).expanduser().resolve()
-    if path.suffix.endswith(".gz"):
-        import gzip
-
-        logger.info("[%s] parsing gzipped OBO with obonet from %s", prefix or "<unknown>", path)
-        with gzip.open(path, "rt") as file:
-            graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete, use_tqdm=use_tqdm)
-    elif path.suffix.endswith(".zip"):
+    if path.suffix.endswith(".zip"):
         import io
         import zipfile
 
@@ -94,7 +90,7 @@ def from_obo_path(
                 )
     else:
         logger.info("[%s] parsing OBO with obonet from %s", prefix or "<unknown>", path)
-        with open(path) as file:
+        with safe_open(path, read=True) as file:
             graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete, use_tqdm=use_tqdm)
 
     if prefix:
@@ -1261,7 +1257,7 @@ def _handle_prop(
         ):
             case Reference() as datatype_:
                 datatype = datatype_
-            case BlacklistedError():
+            case BlocklistError():
                 return None
             case ParseError() as exc:
                 if strict:
@@ -1303,7 +1299,7 @@ def _handle_prop(
         ):
             case Reference() as obj_reference:
                 return Annotation(prop_reference, obj_reference)
-            case BlacklistedError():
+            case BlocklistError():
                 return None
             case UnparsableIRIError():
                 return Annotation(prop_reference, OBOLiteral.uri(value))
@@ -1329,7 +1325,7 @@ def _handle_prop(
         ):
             case Reference() as obj_reference:
                 return Annotation(prop_reference, obj_reference)
-            case BlacklistedError():
+            case BlocklistError():
                 return None
             case ParseError():
                 if datatype:
@@ -1357,6 +1353,8 @@ def _handle_prop(
                 return Annotation(prop_reference, obj_reference)
             case None:
                 return None
+
+    return None
 
 
 def _get_prop(
@@ -1534,10 +1532,12 @@ def _parse_xref_line(
 ) -> tuple[Reference, list[Reference | OBOLiteral]] | None:
     xref, _, rest = line.partition(" [")
 
-    if curie_has_blacklisted_prefix(xref) or curie_is_blacklisted(xref) or ":" not in xref:
+    rules = get_rules()
+
+    if rules.str_is_blocked(xref, context=ontology_prefix) or ":" not in xref:
         return None  # sometimes xref to self... weird
 
-    xref = remap_prefix(xref, ontology_prefix=ontology_prefix)
+    xref = rules.remap_prefix(xref, context=ontology_prefix)
 
     split_space = " " in xref
     if split_space:
@@ -1551,7 +1551,7 @@ def _parse_xref_line(
         xref, ontology_prefix=ontology_prefix, node=node, line=line, context="xref", upgrade=upgrade
     )
     match xref_ref:
-        case BlacklistedError():
+        case BlocklistError():
             return None
         case ParseError() as exc:
             if strict:

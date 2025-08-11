@@ -1,6 +1,7 @@
 """Utilities for building paths."""
 
 import enum
+import json
 import logging
 from pathlib import Path
 from typing import Any, Literal
@@ -14,6 +15,7 @@ from ..constants import CACHE_SUBDIRECTORY_NAME, RAW_MODULE, RELATION_SUBDIRECTO
 __all__ = [
     "CacheArtifact",
     "ensure_df",
+    "ensure_json",
     "ensure_path",
     "get_cache_path",
     "get_relation_cache_path",
@@ -46,11 +48,13 @@ def ensure_path(
     version: VersionHint = None,
     name: str | None = None,
     force: bool = False,
-    backend: Literal["requests", "urllib"] = "urllib",
+    backend: Literal["requests", "urllib"] | None = None,
     verify: bool = True,
     **download_kwargs: Any,
 ) -> Path:
     """Download a file if it doesn't exist."""
+    if backend is None:
+        backend = "urllib"
     if verify:
         download_kwargs = {"backend": backend}
     else:
@@ -79,7 +83,7 @@ def ensure_df(
     sep: str = "\t",
     dtype=str,
     verify: bool = True,
-    backend: Literal["requests", "urllib"] = "urllib",
+    backend: Literal["requests", "urllib"] | None = None,
     **kwargs,
 ) -> pd.DataFrame:
     """Download a file and open as a dataframe."""
@@ -96,28 +100,53 @@ def ensure_df(
     return pd.read_csv(_path, sep=sep, dtype=dtype, **kwargs)
 
 
+def ensure_json(
+    prefix: str,
+    *parts: str,
+    url: str,
+    version: VersionHint = None,
+    name: str | None = None,
+    force: bool = False,
+    sep: str = "\t",
+    dtype=str,
+    verify: bool = True,
+    backend: Literal["requests", "urllib"] | None = None,
+    **kwargs,
+) -> pd.DataFrame:
+    """Download a file and open as JSON."""
+    _path = ensure_path(
+        prefix,
+        *parts,
+        url=url,
+        version=version,
+        name=name,
+        force=force,
+        verify=verify,
+        backend=backend,
+    )
+    with _path.open() as file:
+        return json.load(file)
+
+
 class CacheArtifact(enum.Enum):
     """An enumeration for."""
 
-    names = "names.tsv"
-    definitions = "definitions.tsv"
-    species = "species.tsv"
-    synonyms = "synonyms.tsv"  # deprecated
-    xrefs = "xrefs.tsv"  # deprecated
-    mappings = "mappings.tsv"
-    relations = "relations.tsv"
-    alts = "alt_ids.tsv"
-    typedefs = "typedefs.tsv"
-    literal_mappings = "literal_mappings.tsv"
-    references = "references.tsv"
-    obsoletes = "obsolete.tsv"
+    names = "names.tsv.gz"
+    definitions = "definitions.tsv.gz"
+    species = "species.tsv.gz"
+    mappings = "mappings.tsv.gz"
+    relations = "relations.tsv.gz"
+    alts = "alt_ids.tsv.gz"
+    typedefs = "typedefs.tsv.gz"
+    literal_mappings = "literal_mappings.tsv.gz"
+    references = "references.tsv.gz"
+    obsoletes = "obsolete.tsv.gz"
 
-    properties = "properties.tsv"  # deprecated
-    literal_properties = "literal_properties.tsv"
-    object_properties = "object_properties.tsv"
+    literal_properties = "literal_properties.tsv.gz"
+    object_properties = "object_properties.tsv.gz"
 
-    nodes = "nodes.tsv"
-    edges = "edges.tsv"
+    nodes = "nodes.tsv.gz"
+    edges = "edges.tsv.gz"
 
     prefixes = "prefixes.json"
     metadata = "metadata.json"

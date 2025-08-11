@@ -64,6 +64,8 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             part_id = part_id.strip()
             if part_id.startswith("SIGNOR-"):
                 part = Reference(prefix="signor", identifier=part_id)
+            elif part_id.startswith("CHEBI:"):
+                part = Reference(prefix="chebi", identifier=part_id.removeprefix("CHEBI:"))
             else:
                 part = Reference(prefix="uniprot", identifier=part_id)
             term.annotate_object(has_component, part)

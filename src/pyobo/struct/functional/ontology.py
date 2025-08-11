@@ -16,6 +16,7 @@ from pyobo.struct.functional.utils import (
     FunctionalOWLSerializable,
     list_to_funowl,
 )
+from pyobo.utils.io import safe_open
 
 __all__ = [
     "Document",
@@ -109,7 +110,8 @@ class Document:
     def write_funowl(self, path: str | Path) -> None:
         """Write functional OWL to a file.."""
         path = Path(path).expanduser().resolve()
-        path.write_text(self.to_funowl())
+        with safe_open(path, read=False) as file:
+            file.write(self.to_funowl())
 
     def to_funowl(self) -> str:
         """Get the document as a functional OWL string."""
@@ -248,7 +250,7 @@ class Import(Box):
 
 def get_rdf_graph_oracle(boxes: list[Box], *, prefix_map: dict[str, str]) -> Graph:
     """Serialize to turtle via OFN and conversion with ROBOT."""
-    from bioontologies.robot import convert
+    import bioontologies.robot
 
     ontology = Ontology(
         iri=EXAMPLE_ONTOLOGY_IRI,
@@ -263,7 +265,7 @@ def get_rdf_graph_oracle(boxes: list[Box], *, prefix_map: dict[str, str]) -> Gra
         ofn_path.write_text(text)
         ttl_path = stub.with_suffix(".ttl")
         try:
-            convert(ofn_path, ttl_path)
+            bioontologies.robot.convert(ofn_path, ttl_path)
         except subprocess.CalledProcessError:
             raise RuntimeError(f"failed to convert axioms from:\n\n{text}") from None
         graph.parse(ttl_path)

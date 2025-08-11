@@ -63,6 +63,16 @@ class Annotation(NamedTuple):
         """Return a literal property for a float."""
         return cls(predicate, OBOLiteral.float(value))
 
+    @classmethod
+    def uri(cls, predicate: Reference, uri: str) -> Self:
+        """Return a literal property for a URI."""
+        return cls(predicate, OBOLiteral.uri(uri))
+
+    @classmethod
+    def string(cls, predicate: Reference, value: str, *, language: str | None = None) -> Self:
+        """Return a literal property for a float."""
+        return cls(predicate, OBOLiteral.string(value, language=language))
+
     @staticmethod
     def _sort_key(x: Annotation):
         return x.predicate, _reference_or_literal_key(x.value)
@@ -231,6 +241,8 @@ class Stanza(Referenced, HasReferencesMixin):
     ) -> None:
         self._axioms[_property_resolve(p, o)].append(annotation)
 
+    # TODO check different usages of this
+
     def append_equivalent(
         self,
         reference: ReferenceHint,
@@ -241,6 +253,15 @@ class Stanza(Referenced, HasReferencesMixin):
         return self.append_relationship(
             stanza_type_to_eq_prop[self.type], reference, annotations=annotations
         )
+
+    def append_equivalent_to(
+        self, reference: ReferenceHint, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
+        """Append to the "equivalent to" list."""
+        reference = _ensure_ref(reference)
+        self.equivalent_to.append(reference)
+        self._extend_annotations(stanza_type_to_eq_prop[self.type], reference, annotations)
+        return self
 
     def append_xref(
         self,
@@ -315,15 +336,6 @@ class Stanza(Referenced, HasReferencesMixin):
     def append_union_of(self, reference: ReferenceHint) -> Self:
         """Append to the "union of" list."""
         self.union_of.append(_ensure_ref(reference))
-        return self
-
-    def append_equivalent_to(
-        self, reference: ReferenceHint, *, annotations: Iterable[Annotation] | None = None
-    ) -> Self:
-        """Append to the "equivalent to" list."""
-        reference = _ensure_ref(reference)
-        self.equivalent_to.append(reference)
-        self._extend_annotations(stanza_type_to_eq_prop[self.type], reference, annotations)
         return self
 
     def _iterate_intersection_of_obo(self, *, ontology_prefix: str) -> Iterable[str]:
@@ -679,14 +691,18 @@ class Stanza(Referenced, HasReferencesMixin):
         """Add a comment property."""
         return self.annotate_string(v.comment, value, annotations=annotations, language=language)
 
+    def get_comments(self) -> list[str]:
+        """Get all comment strings."""
+        return [x.value for x in self.get_property_values(v.comment) if isinstance(x, OBOLiteral)]
+
     @property
     def alt_ids(self) -> Sequence[Reference]:
         """Get alternative terms."""
         return tuple(self.get_property_objects(v.alternative_term))
 
-    def get_edges(self) -> list[tuple[Reference, Reference]]:
+    def get_edges(self, *, include_xrefs: bool = True) -> list[tuple[Reference, Reference]]:
         """Get edges."""
-        return list(self._iter_edges())
+        return list(self._iter_edges(include_xrefs=include_xrefs))
 
     def _iter_parents(self) -> Iterable[tuple[Reference, Reference]]:
         parent_prop = stanza_type_to_prop[self.type]
@@ -702,7 +718,7 @@ class Stanza(Referenced, HasReferencesMixin):
                 case (predicate, target):
                     yield predicate, target
 
-    def _iter_edges(self) -> Iterable[tuple[Reference, Reference]]:
+    def _iter_edges(self, *, include_xrefs: bool = True) -> Iterable[tuple[Reference, Reference]]:
         # The following are "object" properties, meaning
         # they're part of the definition of the object
         yield from self.iterate_relations()
@@ -715,8 +731,10 @@ class Stanza(Referenced, HasReferencesMixin):
         for subset in self.subsets:
             yield v.in_subset, subset
         yield from self.iterate_object_properties()
-        for xref_reference in self.xrefs:
-            yield v.has_dbxref, xref_reference
+
+        if include_xrefs:
+            for xref_reference in self.xrefs:
+                yield v.has_dbxref, xref_reference
 
         # TODO disjoint_from
 

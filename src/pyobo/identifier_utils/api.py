@@ -3,37 +3,35 @@
 from __future__ import annotations
 
 import logging
-from functools import wraps
+from functools import lru_cache, wraps
 from typing import Annotated, ClassVar
 
-import bioontologies.relations
-import bioontologies.upgrade
 import bioregistry
 import click
+from bioregistry import NormalizedNamableReference as Reference
+from bioregistry.constants import FailureReturnType
 from curies import ReferenceTuple
+from curies.preprocessing import BlocklistError, PreprocessingConverter
+from curies_processing import get_rules
 from pydantic import ValidationError
 from typing_extensions import Doc
 
-from ._reference_tmp import Reference
-from .registries import (
-    curie_has_blacklisted_prefix,
-    curie_has_blacklisted_suffix,
-    curie_is_blacklisted,
-    remap_full,
-    remap_prefix,
-)
+from .relations import ground_relation
 
 __all__ = [
+    "DefaultCoercionError",
+    "EmptyStringError",
+    "NotCURIEError",
+    "ParseError",
+    "ParseValidationError",
+    "UnparsableIRIError",
+    "UnregisteredPrefixError",
     "_parse_str_or_curie_or_uri_helper",
     "standardize_ec",
     "wrap_norm_prefix",
 ]
 
 logger = logging.getLogger(__name__)
-
-
-class BlacklistedError(ValueError):
-    """A sentinel for blacklisted strings."""
 
 
 Line = Annotated[str | None, Doc("""The OBO line where the parsing happened""")]
@@ -132,7 +130,18 @@ def _preclean_uri(s: str) -> str:
     s = s.removeprefix("WWW:").removeprefix("www:").lstrip()
     s = s.replace("http\\:", "http:")
     s = s.replace("https\\:", "https:")
+    s = s.rstrip("/")
     return s
+
+
+@lru_cache(1)
+def get_converter() -> PreprocessingConverter:
+    """Get a converter."""
+    return PreprocessingConverter(
+        records=bioregistry.manager.converter.records,
+        rules=get_rules(),
+        preclean=_preclean_uri,
+    )
 
 
 def _parse_str_or_curie_or_uri_helper(
@@ -145,7 +154,7 @@ def _parse_str_or_curie_or_uri_helper(
     line: str | None = None,
     name: str | None = None,
     context: str | None = None,
-) -> Reference | ParseError | BlacklistedError:
+) -> Reference | ParseError | BlocklistError:
     """Parse a string that looks like a CURIE.
 
     :param str_or_curie_or_uri: A compact uniform resource identifier (CURIE)
@@ -168,28 +177,29 @@ def _parse_str_or_curie_or_uri_helper(
             context=context,
         )
 
+    rules = get_rules()
+
     if upgrade:
         # Remap the curie with the full list
-        str_or_curie_or_uri = remap_full(str_or_curie_or_uri)
+        if r1 := rules.remap_full(
+            str_or_curie_or_uri, reference_cls=Reference, context=ontology_prefix
+        ):
+            return r1
 
         # Remap node's prefix (if necessary)
-        str_or_curie_or_uri = remap_prefix(str_or_curie_or_uri, ontology_prefix=ontology_prefix)
+        str_or_curie_or_uri = rules.remap_prefix(str_or_curie_or_uri, context=ontology_prefix)
 
-    if curie_is_blacklisted(str_or_curie_or_uri):
-        return BlacklistedError()
-    if curie_has_blacklisted_prefix(str_or_curie_or_uri):
-        return BlacklistedError()
-    if curie_has_blacklisted_suffix(str_or_curie_or_uri):
-        return BlacklistedError()
+        if r2 := ground_relation(str_or_curie_or_uri):
+            return r2
 
-    if upgrade and (reference_t := bioontologies.upgrade.upgrade(str_or_curie_or_uri)):
-        return Reference(prefix=reference_t.prefix, identifier=reference_t.identifier)
-    if upgrade and (yy := _ground_relation(str_or_curie_or_uri)):
-        return Reference(prefix=yy.prefix, identifier=yy.identifier, name=name)
+    if rules.str_is_blocked(str_or_curie_or_uri, context=ontology_prefix):
+        return BlocklistError()
 
     if _is_uri(str_or_curie_or_uri):
-        prefix, identifier = bioregistry.parse_iri(str_or_curie_or_uri)
-        if not prefix or not identifier:
+        rt = bioregistry.parse_iri(
+            str_or_curie_or_uri, on_failure_return_type=FailureReturnType.single
+        )
+        if rt is None:
             return UnparsableIRIError(
                 str_or_curie_or_uri,
                 ontology_prefix=ontology_prefix,
@@ -200,7 +210,7 @@ def _parse_str_or_curie_or_uri_helper(
             )
         try:
             rv = Reference.model_validate(
-                {"prefix": prefix, "identifier": identifier, "name": name}
+                {"prefix": rt.prefix, "identifier": rt.identifier, "name": name}
             )
         except ValidationError as exc:
             return ParseValidationError(
@@ -294,10 +304,3 @@ def standardize_ec(ec: str) -> str:
 def _is_valid_identifier(curie_or_uri: str) -> bool:
     # TODO this needs more careful implementation
     return bool(curie_or_uri.strip()) and " " not in curie_or_uri
-
-
-def _ground_relation(relation_str: str) -> Reference | None:
-    prefix, identifier = bioontologies.relations.ground_relation(relation_str)
-    if prefix and identifier:
-        return Reference(prefix=prefix, identifier=identifier)
-    return None

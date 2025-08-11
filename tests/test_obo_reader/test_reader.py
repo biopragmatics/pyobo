@@ -4,9 +4,9 @@ import unittest
 
 from pyobo import Obo, Reference, Term
 from pyobo.identifier_utils import NotCURIEError, UnparsableIRIError, UnregisteredPrefixError
-from pyobo.reader import from_str, get_first_nonescaped_quote
 from pyobo.struct import TypeDef, default_reference
 from pyobo.struct import vocabulary as v
+from pyobo.struct.obo.reader import from_str, get_first_nonescaped_quote
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import abbreviation
 from pyobo.struct.struct_utils import Annotation
@@ -26,6 +26,8 @@ REASON_OBONET_IMPL = (
     "This needs to be fixed upstream, since obonet's parser "
     "for synonyms fails on the open squiggly bracket {"
 )
+
+ADNAN_MALIK = Reference(prefix="orcid", identifier="0000-0001-8123-5351")
 
 
 class TestUtils(unittest.TestCase):
@@ -107,8 +109,8 @@ class TestReaderTerm(unittest.TestCase):
             [Term]
             id: CHEBI:1234
             name: Test Name
-            def: "Test definition" [orcid:1234-1234-1234]
-            xref: drugbank:DB1234567
+            def: "Test definition" [orcid:1234-1234-1234-1234]
+            xref: drugbank:DB12345
         """)
         self.assertEqual([], ontology.typedefs)
         self.assertEqual([], ontology.synonym_typedefs)
@@ -117,7 +119,7 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual("Test definition", term.definition)
         self.assertEqual(1, len(term.xrefs))
         xref = term.xrefs[0]
-        self.assertEqual("drugbank:DB1234567", xref.curie)
+        self.assertEqual("drugbank:DB12345", xref.curie)
 
     def test_1_node_unparsable(self) -> None:
         """Test loading an ontology with unparsable nodes."""
@@ -1084,13 +1086,16 @@ class TestReaderTerm(unittest.TestCase):
             [Term]
             id: CHEBI:1
             intersection_of: CHEBI:2
-            intersection_of: RO:1 CHEBI:3
+            intersection_of: RO:1234567 CHEBI:3
         """)
         term = self.get_only_term(ontology)
         self.assertEqual(
             [
                 Reference(prefix="CHEBI", identifier="2"),
-                (Reference(prefix="RO", identifier="1"), Reference(prefix="CHEBI", identifier="3")),
+                (
+                    Reference(prefix="RO", identifier="1234567"),
+                    Reference(prefix="CHEBI", identifier="3"),
+                ),
             ],
             term.intersection_of,
         )
@@ -1358,5 +1363,9 @@ class TestReaderTerm(unittest.TestCase):
             std1.prefix: {std1},
             "dcterms": {v.has_description, v.has_license, v.has_title},
             v.has_dbxref.prefix: {v.has_exact_synonym},
+            # these get automatically added
+            "doap": {v.has_maintainer, v.has_repository},
+            "foaf": {v.has_homepage, v.has_logo},
+            "orcid": {ADNAN_MALIK},
         }
         self.assertEqual(expected_references, ontology._get_references())

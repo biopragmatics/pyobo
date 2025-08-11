@@ -79,7 +79,7 @@ def iterate_terms(version: str, force: bool = False) -> Iterable[Term]:
                 except ElementTree.ParseError:
                     logger.warning("malformed XML in %s", tar_info.path)
                     continue
-            yield _get_term_from_tree(tree)
+            yield _get_term_from_tree(tree)  # type:ignore
 
 
 if __name__ == "__main__":

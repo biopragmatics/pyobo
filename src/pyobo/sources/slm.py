@@ -51,6 +51,9 @@ class SLMGetter(Obo):
         return iter_terms(force=force, version=self._version_or_raise)
 
 
+INVALID_INCHI = {"-", "none"}
+
+
 def iter_terms(version: str, force: bool = False):
     """Iterate over SwissLipids terms."""
     df = ensure_df(
@@ -100,13 +103,11 @@ def iter_terms(version: str, force: bool = False):
             term.annotate_string(has_inchi, inchi)
         if pd.notna(inchikey):
             inchikey = inchikey.removeprefix("InChIKey=").strip()
-            if inchikey and inchikey != "none":
+            if inchikey and inchikey not in INVALID_INCHI:
                 try:
                     inchi_ref = Reference(prefix="inchikey", identifier=inchikey)
                 except ValueError:
-                    tqdm.write(
-                        f"[slm:{identifier}] had invalid inchikey reference: ({type(inchikey)}) {inchikey}"
-                    )
+                    tqdm.write(f"[slm:{identifier}] had invalid inchikey reference: `{inchikey}`")
                 else:
                     term.append_exact_match(inchi_ref)
         for chebi_id in _split(chebi_ids):

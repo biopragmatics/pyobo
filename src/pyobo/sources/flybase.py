@@ -18,7 +18,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = "http://ftp.flybase.net/releases"
+BASE_URL = "https://s3ftp.flybase.org/releases"
 PREFIX = "flybase"
 NAME = "FlyBase"
 
@@ -51,7 +51,7 @@ def _get_names(version: str, force: bool = False) -> pd.DataFrame:
 
 def _get_organisms(version: str, force: bool = False) -> Mapping[str, str]:
     """Get mapping from abbreviation column to NCBI taxonomy ID column."""
-    url = f"http://ftp.flybase.net/releases/FB{version}/precomputed_files/species/organism_list_fb_{version}.tsv.gz"
+    url = f"{BASE_URL}/FB{version}/precomputed_files/species/organism_list_fb_{version}.tsv.gz"
     df = ensure_df(
         PREFIX, url=url, force=force, version=version, skiprows=4, header=None, usecols=[2, 4]
     )
@@ -60,7 +60,7 @@ def _get_organisms(version: str, force: bool = False) -> Mapping[str, str]:
 
 
 def _get_definitions(version: str, force: bool = False) -> Mapping[str, str]:
-    url = f"http://ftp.flybase.net/releases/FB{version}/precomputed_files/genes/automated_gene_summaries.tsv.gz"
+    url = f"{BASE_URL}/FB{version}/precomputed_files/genes/automated_gene_summaries.tsv.gz"
     df = ensure_df(
         PREFIX, url=url, force=force, version=version, skiprows=2, header=None, usecols=[0, 1]
     )
@@ -69,7 +69,7 @@ def _get_definitions(version: str, force: bool = False) -> Mapping[str, str]:
 
 def _get_human_orthologs(version: str, force: bool = False) -> Mapping[str, set[str]]:
     url = (
-        f"http://ftp.flybase.net/releases/FB{version}/precomputed_files/"
+        f"{BASE_URL}/FB{version}/precomputed_files/"
         f"orthologs/dmel_human_orthologs_disease_fb_{version}.tsv.gz"
     )
     df = ensure_df(
@@ -86,7 +86,7 @@ def _get_human_orthologs(version: str, force: bool = False) -> Mapping[str, set[
 
 
 def _get_synonyms(version, force):
-    url = f"http://ftp.flybase.net/releases/FB{version}/precomputed_files/synonyms/fb_synonym_fb_{version}.tsv.gz"
+    url = f"{BASE_URL}/FB{version}/precomputed_files/synonyms/fb_synonym_fb_{version}.tsv.gz"
     df = ensure_df(PREFIX, url=url, force=force, version=version, skiprows=4, usecols=[0, 2])
     return df  # TODO use this
 

@@ -8,9 +8,9 @@ from collections.abc import Callable, Mapping
 from functools import lru_cache
 from typing import Any, TypeVar
 
+import curies
 import pandas as pd
 import ssslm
-from curies import Reference, ReferenceTuple
 from pystow.cache import Cached
 from ssslm import LiteralMapping
 from typing_extensions import Unpack
@@ -24,6 +24,7 @@ from ..constants import (
 )
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
+from ..struct import Reference
 from ..utils.cache import cached_collection, cached_df, cached_mapping
 from ..utils.io import multidict
 from ..utils.path import CacheArtifact, get_cache_path
@@ -61,7 +62,7 @@ NO_BUILD_LOGGED: set = set()
 
 def _help_get(
     f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
-    reference: ReferenceTuple,
+    reference: Reference,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> X | None:
     """Get the result for an entity based on a mapping maker function ``f``."""
@@ -91,14 +92,14 @@ def _help_get(
 
 
 def get_name(
-    prefix: str | Reference | ReferenceTuple,
+    prefix: str | curies.Reference | curies.ReferenceTuple,
     identifier: str | None = None,
     /,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the name for an entity."""
     reference = _get_pi(prefix, identifier)
-    return _help_get(get_id_name_mapping, reference.pair, **kwargs)
+    return _help_get(get_id_name_mapping, reference, **kwargs)
 
 
 @lru_cache
@@ -106,7 +107,7 @@ def get_name(
 def get_ids(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
     """Get the set of identifiers for this prefix."""
     if prefix == "ncbigene":
-        from ..sources.ncbigene import get_ncbigene_ids
+        from ..sources.ncbi.ncbigene import get_ncbigene_ids
 
         logger.info("[%s] loading name mappings", prefix)
         rv = get_ncbigene_ids()
@@ -145,7 +146,7 @@ class CachedReferences(Cached[list[Reference]]):
 def get_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Reference]:
     """Get the set of identifiers for this prefix."""
     if prefix == "ncbigene":
-        from ..sources.ncbigene import get_ncbigene_ids
+        from ..sources.ncbi.ncbigene import get_ncbigene_ids
 
         logger.info("[%s] loading identifiers ", prefix)
         rv = {Reference(prefix="ncbigene", identifier=i) for i in get_ncbigene_ids()}
@@ -165,7 +166,14 @@ def get_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Refe
         ontology = get_ontology(prefix, **kwargs)
         return sorted(ontology.iterate_references())
 
-    return set(_get_references())
+    try:
+        return set(_get_references())
+    except NoBuildError:
+        logger.debug("[%s] no build", prefix)
+        return set()
+    except (Exception, subprocess.CalledProcessError) as e:
+        logger.exception("[%s v%s] could not load: %s", prefix, version, e)
+        return set()
 
 
 @lru_cache
@@ -176,7 +184,7 @@ def get_id_name_mapping(
 ) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == "ncbigene":
-        from ..sources.ncbigene import get_ncbigene_id_to_name_mapping
+        from ..sources.ncbi.ncbigene import get_ncbigene_id_to_name_mapping
 
         logger.info("[%s] loading identifiers", prefix)
         rv = get_ncbigene_id_to_name_mapping()
@@ -218,14 +226,14 @@ def get_name_id_mapping(
 
 
 def get_definition(
-    prefix: str | Reference | ReferenceTuple,
+    prefix: str | curies.Reference | curies.ReferenceTuple,
     identifier: str | None = None,
     /,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the definition for an entity."""
     reference = _get_pi(prefix, identifier)
-    return _help_get(get_id_definition_mapping, reference.pair, **kwargs)
+    return _help_get(get_id_definition_mapping, reference, **kwargs)
 
 
 def get_id_definition_mapping(
@@ -280,14 +288,14 @@ def get_obsolete_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) ->
 
 
 def get_synonyms(
-    prefix: str | Reference | ReferenceTuple,
+    prefix: str | curies.Reference | curies.ReferenceTuple,
     identifier: str | None = None,
     /,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> list[str] | None:
     """Get the synonyms for an entity."""
     reference = _get_pi(prefix, identifier)
-    return _help_get(get_id_synonyms_mapping, reference.pair, **kwargs)
+    return _help_get(get_id_synonyms_mapping, reference, **kwargs)
 
 
 @wrap_norm_prefix
@@ -310,7 +318,7 @@ def get_literal_mappings(
 ) -> list[LiteralMapping]:
     """Get literal mappings."""
     df = get_literal_mappings_df(prefix=prefix, **kwargs)
-    rv = ssslm.df_to_literal_mappings(df)
+    rv = ssslm.df_to_literal_mappings(df, reference_cls=Reference)
     if skip_obsolete:
         obsoletes = get_obsolete_references(prefix, **kwargs)
         rv = [lm for lm in rv if lm.reference not in obsoletes]
