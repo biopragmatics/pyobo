@@ -367,8 +367,12 @@ def iter_helper_helper(
             logger.warning("[%s] HTTP %s: unable to download %s", prefix, e.getcode(), e.geturl())
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
-        except (urllib.error.URLError, requests.exceptions.ConnectTimeout) as e:
+        except urllib.error.URLError as e:
             logger.warning("[%s] unable to download - %s", prefix, e.reason)
+            if strict and not bioregistry.is_deprecated(prefix):
+                raise
+        except requests.exceptions.ConnectTimeout as e:
+            logger.warning("[%s] unable to download - %s", prefix, e)
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
         except ParseError as e:

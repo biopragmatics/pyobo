@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import cast
 
+from pystow.utils import safe_open_reader
 from tqdm.auto import tqdm
 
 from pyobo import Obo, Reference
@@ -22,7 +23,6 @@ from pyobo.struct import (
     participates_in,
 )
 from pyobo.struct.typedef import gene_product_of, located_in, molecularly_interacts_with
-from pyobo.utils.io import open_reader
 
 PREFIX = "uniprot"
 BASE_URL = "https://rest.uniprot.org/uniprotkb/stream"
@@ -78,7 +78,7 @@ class UniProtGetter(Obo):
 
 def iter_terms(version: str | None = None) -> Iterable[Term]:
     """Iterate over UniProt Terms."""
-    with open_reader(ensure(version=version)) as reader:
+    with safe_open_reader(ensure(version=version)) as reader:
         _ = next(reader)  # header
         for (
             uniprot_id,

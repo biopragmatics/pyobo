@@ -9,9 +9,11 @@ from collections import defaultdict
 from collections.abc import Generator, Iterable, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Literal, TextIO, TypeVar
+from typing import Literal, TextIO, TypeVar, cast
 
 import pandas as pd
+import pystow.utils
+from pystow.utils import safe_open_reader, safe_open_writer
 from tqdm.auto import tqdm
 
 __all__ = [
@@ -20,7 +22,6 @@ __all__ = [
     "multisetdict",
     "open_map_tsv",
     "open_multimap_tsv",
-    "open_reader",
     "safe_open",
     "safe_open_writer",
     "write_iterable_tsv",
@@ -34,14 +35,6 @@ X = TypeVar("X")
 Y = TypeVar("Y")
 
 
-@contextmanager
-def open_reader(path: str | Path, sep: str = "\t"):
-    """Open a file and get a reader for it."""
-    path = Path(path)
-    with safe_open(path, read=True) as file:
-        yield get_reader(file, sep=sep)
-
-
 def get_reader(x, sep: str = "\t"):
     """Get a :func:`csv.reader` with PyOBO default settings."""
     return csv.reader(x, delimiter=sep, quoting=csv.QUOTE_MINIMAL)
@@ -51,18 +44,18 @@ def open_map_tsv(
     path: str | Path, *, use_tqdm: bool = False, has_header: bool = True
 ) -> Mapping[str, str]:
     """Load a mapping TSV file into a dictionary."""
-    with safe_open(path, read=True) as file:
+    rv = {}
+    with pystow.utils.safe_open_reader(path) as reader:
         if has_header:
-            next(file)  # throw away header
+            next(reader)  # throw away header
         if use_tqdm:
-            file = tqdm(file, desc=f"loading TSV from {path}")
-        rv = {}
-        for row in get_reader(file):
+            reader = tqdm(reader, desc=f"loading TSV from {path}")
+        for row in reader:
             if len(row) != 2:
                 logger.warning("[%s] malformed row can not be put in dict: %s", path, row)
                 continue
             rv[row[0]] = row[1]
-        return rv
+    return rv
 
 
 def open_multimap_tsv(
@@ -72,24 +65,27 @@ def open_multimap_tsv(
     has_header: bool = True,
 ) -> Mapping[str, list[str]]:
     """Load a mapping TSV file that has multiple mappings for each."""
-    return multidict(_help_multimap_tsv(path=path, use_tqdm=use_tqdm, has_header=has_header))
+    with _help_multimap_tsv(path=path, use_tqdm=use_tqdm, has_header=has_header) as file:
+        return multidict(file)
 
 
+@contextmanager
 def _help_multimap_tsv(
     path: str | Path,
     *,
     use_tqdm: bool = False,
     has_header: bool = True,
-) -> Iterable[tuple[str, str]]:
-    with safe_open(path, read=True) as file:
+) -> Generator[Iterable[tuple[str, str]], None, None]:
+    with safe_open_reader(path) as reader:
         if has_header:
             try:
-                next(file)  # throw away header
+                next(reader)  # throw away header
             except gzip.BadGzipFile as e:
                 raise ValueError(f"could not open file {path}") from e
         if use_tqdm:
-            file = tqdm(file, desc=f"loading TSV from {path}")
-        yield from get_reader(file)
+            yield tqdm(reader, desc=f"loading TSV from {path}")
+        else:
+            yield cast(Iterable[tuple[str, str]], reader)
 
 
 def multidict(pairs: Iterable[tuple[X, Y]]) -> Mapping[X, list[Y]]:
@@ -156,6 +152,7 @@ def safe_open(
     path: str | Path, read: bool, encoding: str | None = None
 ) -> Generator[TextIO, None, None]:
     """Safely open a file for reading or writing text."""
+    # TODO replace me!
     path = Path(path).expanduser().resolve()
     mode: Literal["rt", "wt"] = "rt" if read else "wt"
     if path.suffix.endswith(".gz"):
@@ -164,13 +161,3 @@ def safe_open(
     else:
         with open(path, mode=mode) as file:
             yield file
-
-
-@contextlib.contextmanager
-def safe_open_writer(f: str | Path | TextIO, *, delimiter: str = "\t"):  # type:ignore
-    """Open a CSV writer, wrapping :func:`csv.writer`."""
-    if isinstance(f, str | Path):
-        with safe_open(f, read=False) as file:
-            yield csv.writer(file, delimiter=delimiter)
-    else:
-        yield csv.writer(f, delimiter=delimiter)
