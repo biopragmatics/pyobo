@@ -2307,12 +2307,11 @@ def build_ontology(
     homepage: str | None = None,
     mailing_list: str | None = None,
     logo: str | None = None,
-    repository: str | None,
+    repository: str | None = None,
 ) -> Obo:
     """Build an ontology from parts."""
-    resource = bioregistry.get_resource(prefix, strict=True)
     if name is None:
-        name = resource.get_name()
+        name = bioregistry.get_name(prefix)
     # TODO auto-populate license and other properties
 
     if properties is None:
