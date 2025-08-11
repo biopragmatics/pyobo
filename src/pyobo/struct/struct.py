@@ -948,7 +948,7 @@ class Obo:
             yield Annotation(v.has_repository, OBOLiteral.uri(repository))
         if logo := bioregistry.get_logo(self.ontology):
             yield Annotation(v.has_logo, OBOLiteral.uri(logo))
-        if mailing_list := None:
+        if mailing_list := bioregistry.get_mailing_list(self.ontology):
             yield Annotation(v.has_mailing_list, OBOLiteral.string(mailing_list))
         if maintainer_orcid := bioregistry.get_contact_orcid(self.ontology):
             yield Annotation(
@@ -2304,6 +2304,8 @@ def build_ontology(
     imports: list[str] | None = None,
     description: str | None = None,
     homepage: str | None = None,
+    mailing_list: str | None = None,
+    logo: str | None = None,
 ) -> Obo:
     """Build an ontology from parts."""
     resource = bioregistry.get_resource(prefix, strict=True)
@@ -2329,6 +2331,20 @@ def build_ontology(
         properties.append(Annotation.string(has_homepage.reference, homepage))
         if has_homepage not in typedefs:
             typedefs.append(has_homepage)
+
+    if logo:
+        from .typedef import has_depiction
+
+        properties.append(Annotation(has_depiction.reference, OBOLiteral.uri(logo)))
+        if has_depiction not in typedefs:
+            typedefs.append(has_depiction)
+
+    if mailing_list:
+        from .typedef import has_mailbox
+
+        properties.append(Annotation.string(has_mailbox.reference, mailing_list))
+        if has_mailbox not in typedefs:
+            typedefs.append(has_mailbox)
 
     return make_ad_hoc_ontology(
         _ontology=prefix,

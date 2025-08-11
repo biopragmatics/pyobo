@@ -31,6 +31,7 @@ __all__ = [
     "has_gene_product",
     "has_homepage",
     "has_inchi",
+    "has_mailbox",
     "has_mature",
     "has_member",
     "has_part",
@@ -269,6 +270,10 @@ has_inchi = TypeDef(reference=v.has_inchi, is_metadata_tag=True).append_xref(v.d
 has_homepage = TypeDef(reference=v.has_homepage, is_metadata_tag=True)
 has_depiction = TypeDef(
     reference=Reference(prefix="foaf", identifier="depicted_by", name="depicted by"),
+    is_metadata_tag=True,
+)
+has_mailbox = TypeDef(
+    reference=Reference(prefix="foaf", identifier="mbox", name="has mailbox"),
     is_metadata_tag=True,
 )
 
