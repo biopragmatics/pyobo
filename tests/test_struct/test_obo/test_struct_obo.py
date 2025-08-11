@@ -26,6 +26,13 @@ class TestOBOHeader(unittest.TestCase):
         """Assert OBO header has the right lines."""
         self.assert_lines(text, ontology.iterate_obo_lines())
 
+    def assert_ofn_lines(self, text: str, ontology: Obo) -> None:
+        """Assert OFN header has the right lines."""
+        with tempfile.TemporaryDirectory() as directory:
+            in_path = Path(directory).joinpath("tmp.ofn")
+            ontology.write_ofn(in_path)
+            self.assert_lines(text, in_path.read_text().splitlines())
+
     def assert_owl_lines(self, text: str, ontology: Obo) -> None:
         """Assert OWL header has the right lines."""
         with tempfile.TemporaryDirectory() as directory:
@@ -210,6 +217,23 @@ class TestOBOHeader(unittest.TestCase):
             id: dcterms:description
             name: description
             is_metadata_tag: true
+            """,
+            ontology,
+        )
+        self.assert_ofn_lines(
+            """
+            Prefix(dcterms:=<http://purl.org/dc/terms/>)
+            Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
+            Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+            Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
+            Prefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)
+
+            Ontology(<https://w3id.org/biopragmatics/resources/xxx/xxx.ofn>
+            Annotation(dcterms:description "MeSH (Medical Subject Headings)"^^xsd:string)
+
+            Declaration(AnnotationProperty(dcterms:description))
+            AnnotationAssertion(rdfs:label dcterms:description "description")
+            )
             """,
             ontology,
         )
