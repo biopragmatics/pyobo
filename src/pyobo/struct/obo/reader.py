@@ -18,6 +18,7 @@ from curies import ReferenceTuple
 from curies.preprocessing import BlocklistError
 from curies.vocabulary import SynonymScope
 from more_itertools import pairwise
+from pystow.utils import safe_open
 from tqdm.auto import tqdm
 
 from .reader_utils import (
@@ -52,7 +53,6 @@ from ...identifier_utils import (
     get_rules,
 )
 from ...utils.cache import write_gzipped_graph
-from ...utils.io import safe_open
 from ...utils.misc import STATIC_VERSION_REWRITES, cleanup_version
 
 __all__ = [
@@ -90,7 +90,7 @@ def from_obo_path(
                 )
     else:
         logger.info("[%s] parsing OBO with obonet from %s", prefix or "<unknown>", path)
-        with safe_open(path, read=True) as file:
+        with safe_open(path, operation="read") as file:
             graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete, use_tqdm=use_tqdm)
 
     if prefix:

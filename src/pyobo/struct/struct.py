@@ -25,6 +25,7 @@ import ssslm
 from curies import Converter, ReferenceTuple
 from curies import vocabulary as _cv
 from more_click import force_option, verbose_option
+from pystow.utils import safe_open
 from tqdm.auto import tqdm
 from typing_extensions import Self
 
@@ -70,7 +71,7 @@ from ..constants import (
     TARGET_PREFIX,
 )
 from ..utils.cache import write_gzipped_graph
-from ..utils.io import multidict, safe_open, write_iterable_tsv
+from ..utils.io import multidict, write_iterable_tsv
 from ..utils.path import (
     CacheArtifact,
     get_cache_path,
@@ -997,7 +998,7 @@ class Obo:
                 unit="line",
             )
         if isinstance(file, str | Path | os.PathLike):
-            with safe_open(file, read=False) as fh:
+            with safe_open(file, operation="write") as fh:
                 self._write_lines(it, fh)
         else:
             self._write_lines(it, file)
@@ -1173,7 +1174,7 @@ class Obo:
         metadata = self.get_metadata()
         for path in (self._root_metadata_path, self._get_cache_path(CacheArtifact.metadata)):
             logger.debug("[%s] caching metadata to %s", self._prefix_version, path)
-            with safe_open(path, read=False) as file:
+            with safe_open(path, operation="write") as file:
                 json.dump(metadata, file, indent=2)
 
     def write_prefix_map(self) -> None:

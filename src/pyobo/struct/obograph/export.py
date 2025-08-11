@@ -8,11 +8,11 @@ import curies
 import obographs as og
 from curies import Converter, ReferenceTuple
 from curies import vocabulary as v
+from pystow.utils import safe_open
 
 from pyobo.identifier_utils.api import get_converter
 from pyobo.struct import Obo, OBOLiteral, Stanza, Term, TypeDef
 from pyobo.struct import typedef as tdv
-from pyobo.utils.io import safe_open
 
 __all__ = [
     "to_obograph",
@@ -25,7 +25,7 @@ def write_obograph(obo: Obo, path: str | Path, *, converter: Converter | None = 
     """Write an ontology to a file as OBO Graph JSON."""
     path = Path(path).expanduser().resolve()
     raw_graph = to_obograph(obo, converter=converter)
-    with safe_open(path, read=False) as file:
+    with safe_open(path, operation="write") as file:
         file.write(raw_graph.model_dump_json(indent=2, exclude_none=True, exclude_unset=True))
 
 
