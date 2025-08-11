@@ -180,7 +180,7 @@ def get_ontology(
     elif ontology_format == "json":
         from .struct.obograph import read_obograph
 
-        obo = read_obograph(prefix=prefix, path=path_pack.path)
+        obo = read_obograph(prefix=prefix, path=path)
         if cache:
             obo.write_default(force=force_process)
         return obo
