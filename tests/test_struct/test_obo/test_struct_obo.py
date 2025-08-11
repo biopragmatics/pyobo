@@ -58,9 +58,9 @@ class TestOBOHeader(unittest.TestCase):
 
     def test_5_data_version(self) -> None:
         """Test ontology definition."""
-        ontology = build_ontology(
-            prefix="xxx",
-            auto_generated_by="test",
+        ontology = make_ad_hoc_ontology(
+            _ontology="xxx",
+            _auto_generated_by="test",
         )
         self.assert_obo_lines(
             """\
