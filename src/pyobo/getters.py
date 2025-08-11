@@ -185,7 +185,7 @@ def get_ontology(
             obo.write_default(force=force_process)
         return obo
     else:
-        raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {ontology_format}")
+        raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
 
     obo = from_obo_path(
         path,
