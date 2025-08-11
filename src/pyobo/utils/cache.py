@@ -12,8 +12,9 @@ from pystow.cache import CachedCollection as cached_collection  # noqa:N813
 from pystow.cache import CachedDataFrame as cached_df  # noqa:N813
 from pystow.cache import CachedJSON as cached_json  # noqa:N813
 from pystow.cache import CachedPickle as cached_pickle  # noqa:N813
+from pystow.utils import safe_open
 
-from .io import open_map_tsv, open_multimap_tsv, safe_open, write_map_tsv, write_multimap_tsv
+from .io import open_map_tsv, open_multimap_tsv, write_map_tsv, write_multimap_tsv
 
 __all__ = [
     "cached_collection",
@@ -69,13 +70,13 @@ NODE_LINK_STYLE = "links"  # TODO update to "edges"
 
 def get_gzipped_graph(path: str | Path) -> nx.MultiDiGraph:
     """Read a graph that's gzipped nodelink."""
-    with safe_open(path, read=True) as file:
+    with safe_open(path, operation="read") as file:
         return nx.node_link_graph(json.load(file), edges=NODE_LINK_STYLE)
 
 
 def write_gzipped_graph(graph: nx.MultiDiGraph, path: str | Path) -> None:
     """Write a graph as gzipped nodelink."""
-    with safe_open(path, read=False) as file:
+    with safe_open(path, operation="write") as file:
         json.dump(nx.node_link_data(graph, edges=NODE_LINK_STYLE), file)
 
 

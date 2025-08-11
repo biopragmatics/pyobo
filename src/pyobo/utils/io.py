@@ -1,7 +1,6 @@
 """I/O utilities."""
 
 import collections.abc
-import contextlib
 import csv
 import gzip
 import logging
@@ -9,7 +8,7 @@ from collections import defaultdict
 from collections.abc import Generator, Iterable, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Literal, TextIO, TypeVar, cast
+from typing import TypeVar, cast
 
 import pandas as pd
 import pystow.utils
@@ -22,7 +21,6 @@ __all__ = [
     "multisetdict",
     "open_map_tsv",
     "open_multimap_tsv",
-    "safe_open",
     "safe_open_writer",
     "write_iterable_tsv",
     "write_map_tsv",
@@ -145,19 +143,3 @@ def write_iterable_tsv(
         if header is not None:
             writer.writerow(header)
         writer.writerows(it)
-
-
-@contextlib.contextmanager
-def safe_open(
-    path: str | Path, read: bool, encoding: str | None = None
-) -> Generator[TextIO, None, None]:
-    """Safely open a file for reading or writing text."""
-    # TODO replace me!
-    path = Path(path).expanduser().resolve()
-    mode: Literal["rt", "wt"] = "rt" if read else "wt"
-    if path.suffix.endswith(".gz"):
-        with gzip.open(path, mode=mode, encoding=encoding) as file:
-            yield file
-    else:
-        with open(path, mode=mode) as file:
-            yield file

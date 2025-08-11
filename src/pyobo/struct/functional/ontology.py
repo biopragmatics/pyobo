@@ -8,6 +8,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from curies import Converter
+from pystow.utils import safe_open
 from rdflib import OWL, RDF, Graph, term
 
 from pyobo.struct.functional.dsl import Annotation, Annotations, Axiom, Box
@@ -16,7 +17,6 @@ from pyobo.struct.functional.utils import (
     FunctionalOWLSerializable,
     list_to_funowl,
 )
-from pyobo.utils.io import safe_open
 
 __all__ = [
     "Document",
@@ -108,9 +108,9 @@ class Document:
         return graph
 
     def write_funowl(self, path: str | Path) -> None:
-        """Write functional OWL to a file.."""
+        """Write functional OWL to a file."""
         path = Path(path).expanduser().resolve()
-        with safe_open(path, read=False) as file:
+        with safe_open(path, operation="write") as file:
             file.write(self.to_funowl())
 
     def to_funowl(self) -> str:
