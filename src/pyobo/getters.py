@@ -172,17 +172,18 @@ def get_ontology(
     path_pack = _ensure_ontology_path(prefix, force=force, version=version)
     if path_pack is None:
         raise NoBuildError(prefix)
-    elif path_pack.format == "obo":
-        path = path_pack.path
-    elif path_pack.format in {"owl", "rdf"}:
-        path = _convert_to_obo(path_pack.path)
-    elif path_pack.format == "json":
+    if path_pack.format == "json":
         from .struct.obograph import read_obograph
 
         obo = read_obograph(prefix=prefix, path=path_pack.path)
         if cache:
             obo.write_default(force=force_process)
         return obo
+
+    if path_pack.format == "obo":
+        path = path_pack.path
+    elif path_pack.format in {"owl", "rdf"}:
+        path = _convert_to_obo(path_pack.path)
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path_pack.format}")
 
