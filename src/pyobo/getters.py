@@ -249,6 +249,7 @@ SKIP = {
     "gwascentral.phenotype": "website is down? or API changed?",  # FIXME
     "gwascentral.study": "website is down? or API changed?",  # FIXME
     "snomedct": "dead source",
+    "ero": "dead",
 }
 
 X = TypeVar("X")
