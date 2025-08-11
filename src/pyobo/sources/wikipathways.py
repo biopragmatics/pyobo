@@ -68,6 +68,7 @@ def iter_terms(version: str) -> Iterable[Term]:
     archive = pystow.ensure(PREFIX, url=archive_url, version=version)
 
     base_url = f"http://data.wikipathways.org/{version}/gmt/wikipathways-{version}-gmt"
+    pw_references = set()
     for species_code, taxonomy_id in tqdm(_PATHWAY_INFO, desc=f"[{PREFIX}]", unit="species"):
         url = f"{base_url}-{species_code}.gmt"
         try:
@@ -91,14 +92,17 @@ def iter_terms(version: str) -> Iterable[Term]:
                 )
 
             uri = f"https://identifiers.org/wikipathways/{identifier}"
-            parents = graph.query(
-                f"SELECT ?p WHERE {{ <{uri}> pav:hasVersion/wp:pathwayOntologyTag ?p }}"
-            )
-            for (parent,) in parents:
+            parents = [
+                p
+                for (p,) in graph.query(
+                    f"SELECT ?p WHERE {{ <{uri}> pav:hasVersion/wp:pathwayOntologyTag ?p }}"
+                )
+            ]
+            for parent in parents:
                 if parent.startswith(PW_PREFIX):
-                    term.append_parent(
-                        Reference(prefix="pw", identifier=parent.removeprefix(PW_PREFIX))
-                    )
+                    ref = Reference(prefix="pw", identifier=parent.removeprefix(PW_PREFIX))
+                    pw_references.add(ref)
+                    term.append_parent(ref)
             if not parents:
                 tqdm.write(f"[{term.curie}] could not find parent")
                 term.append_parent(ROOT)
@@ -124,6 +128,21 @@ def iter_terms(version: str) -> Iterable[Term]:
                     )
 
             yield term
+
+    from ..api import get_ancestors
+    from ..getters import get_ontology
+
+    for pw_reference in list(pw_references):
+        pw_references.update(get_ancestors(pw_reference) or set())
+
+    for pw_term in get_ontology("pw"):
+        if pw_term.reference in pw_references:
+            yield Term(
+                reference=pw_term.reference,
+                definition=pw_term.definition,
+                # PW has issues in hierarchy - there are lots of leaves with no root
+                parents=pw_term.parents or [ROOT],
+            )
 
 
 if __name__ == "__main__":
