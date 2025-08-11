@@ -92,7 +92,7 @@ def iter_terms(version: str) -> Iterable[Term]:
                 )
 
             uri = f"https://identifiers.org/wikipathways/{identifier}"
-            parents = [
+            parents = [  # type:ignore[misc]
                 p
                 for (p,) in graph.query(
                     f"SELECT ?p WHERE {{ <{uri}> pav:hasVersion/wp:pathwayOntologyTag ?p }}"
@@ -110,7 +110,7 @@ def iter_terms(version: str) -> Iterable[Term]:
             diseases = graph.query(
                 f"SELECT ?p WHERE {{ <{uri}> pav:hasVersion/wp:diseaseOntologyTag ?p }}"
             )
-            for (disease,) in diseases:
+            for (disease,) in diseases:  # type:ignore[misc]
                 if disease.startswith(DOID_PREFIX):
                     term.annotate_object(
                         contributes_to_condition,
@@ -120,7 +120,7 @@ def iter_terms(version: str) -> Iterable[Term]:
             cells = graph.query(
                 f"SELECT ?p WHERE {{ <{uri}> pav:hasVersion/wp:cellTypeOntologyTag ?p }}"
             )
-            for (cell,) in cells:
+            for (cell,) in cells:  # type:ignore[misc]
                 if cell.startswith(CL_PREFIX):
                     term.annotate_object(
                         located_in,
