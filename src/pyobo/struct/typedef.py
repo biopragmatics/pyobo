@@ -31,6 +31,7 @@ __all__ = [
     "has_gene_product",
     "has_homepage",
     "has_inchi",
+    "has_mailbox",
     "has_mature",
     "has_member",
     "has_part",
@@ -266,13 +267,11 @@ has_smiles = TypeDef(reference=v.has_smiles, is_metadata_tag=True).append_xref(v
 
 has_inchi = TypeDef(reference=v.has_inchi, is_metadata_tag=True).append_xref(v.debio_has_inchi)
 
-has_homepage = TypeDef(
-    reference=Reference(prefix="foaf", identifier="homepage", name="homepage"), is_metadata_tag=True
-)
-has_depiction = TypeDef(
-    reference=Reference(prefix="foaf", identifier="depicted_by", name="depicted by"),
-    is_metadata_tag=True,
-)
+has_homepage = TypeDef(reference=v.has_homepage, is_metadata_tag=True)
+has_depiction = TypeDef(reference=v.has_depiction, is_metadata_tag=True)
+has_mailbox = TypeDef(reference=v.has_mailbox, is_metadata_tag=True)
+has_mailing_list = TypeDef(reference=v.has_mailing_list, is_metadata_tag=True)
+has_repository = TypeDef(reference=v.has_repository, is_metadata_tag=True)
 
 has_category = TypeDef(
     reference=Reference(prefix="biolink", identifier="category", name="has category"),

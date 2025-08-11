@@ -939,10 +939,21 @@ class Obo:
                 license_literal = OBOLiteral.string(license_spdx_id)
             yield Annotation(v.has_license, license_literal)
 
-        # Description
         if description := bioregistry.get_description(self.ontology):
             description = obo_escape_slim(description.strip())
             yield Annotation(v.has_description, OBOLiteral.string(description.strip()))
+        if homepage := bioregistry.get_homepage(self.ontology):
+            yield Annotation(v.has_homepage, OBOLiteral.uri(homepage))
+        if repository := bioregistry.get_repository(self.ontology):
+            yield Annotation(v.has_repository, OBOLiteral.uri(repository))
+        if logo := bioregistry.get_logo(self.ontology):
+            yield Annotation(v.has_logo, OBOLiteral.uri(logo))
+        if mailing_list := bioregistry.get_mailing_list(self.ontology):
+            yield Annotation(v.has_mailing_list, OBOLiteral.string(mailing_list))
+        if maintainer_orcid := bioregistry.get_contact_orcid(self.ontology):
+            yield Annotation(
+                v.has_maintainer, Reference(prefix="orcid", identifier=maintainer_orcid)
+            )
 
         # Root terms
         for root_term in self.root_terms or []:
@@ -2281,6 +2292,7 @@ class AdHocOntologyBase(Obo):
 
 def build_ontology(
     prefix: str,
+    *,
     terms: list[Term] | None = None,
     synonym_typedefs: list[SynonymTypeDef] | None = None,
     typedefs: list[TypeDef] | None = None,
@@ -2291,12 +2303,58 @@ def build_ontology(
     subsetdefs: list[tuple[Reference, str]] | None = None,
     properties: list[Annotation] | None = None,
     imports: list[str] | None = None,
+    description: str | None = None,
+    homepage: str | None = None,
+    mailing_list: str | None = None,
+    logo: str | None = None,
+    repository: str | None,
 ) -> Obo:
     """Build an ontology from parts."""
     resource = bioregistry.get_resource(prefix, strict=True)
     if name is None:
         name = resource.get_name()
     # TODO auto-populate license and other properties
+
+    if properties is None:
+        properties = []
+    if typedefs is None:
+        typedefs = []
+
+    if description:
+        from .typedef import has_description
+
+        properties.append(Annotation.string(has_description.reference, description))
+        if has_description not in typedefs:
+            typedefs.append(has_description)  # TODO get proper typedef
+
+    if homepage:
+        from .typedef import has_homepage
+
+        properties.append(Annotation.uri(has_homepage.reference, homepage))
+        if has_homepage not in typedefs:
+            typedefs.append(has_homepage)
+
+    if logo:
+        from .typedef import has_depiction
+
+        properties.append(Annotation.uri(has_depiction.reference, logo))
+        if has_depiction not in typedefs:
+            typedefs.append(has_depiction)
+
+    if mailing_list:
+        from .typedef import has_mailing_list
+
+        properties.append(Annotation.string(has_mailing_list.reference, mailing_list))
+        if has_mailing_list not in typedefs:
+            typedefs.append(has_mailing_list)
+
+    if repository:
+        from .typedef import has_repository
+
+        properties.append(Annotation.uri(has_repository.reference, repository))
+        if has_repository not in typedefs:
+            typedefs.append(has_repository)
+
     return make_ad_hoc_ontology(
         _ontology=prefix,
         _name=name,
