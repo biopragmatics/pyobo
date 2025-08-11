@@ -17,6 +17,7 @@ from pathlib import Path
 from textwrap import indent
 from typing import Any, TypeVar
 
+import bioontologies.robot
 import bioregistry
 import click
 import pystow.utils
@@ -252,6 +253,7 @@ SKIP = {
     "gwascentral.phenotype": "website is down? or API changed?",  # FIXME
     "gwascentral.study": "website is down? or API changed?",  # FIXME
     "snomedct": "dead source",
+    "ero": "dead",
 }
 
 X = TypeVar("X")
@@ -378,7 +380,7 @@ def iter_helper_helper(
             if "DrugBank" not in str(e):
                 raise
             logger.warning("[drugbank] invalid credentials")
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, bioontologies.robot.ROBOTError):
             logger.warning("[%s] ROBOT was unable to convert OWL to OBO", prefix)
         except ValueError as e:
             if _is_xml(e):

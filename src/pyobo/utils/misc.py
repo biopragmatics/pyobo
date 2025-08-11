@@ -39,6 +39,7 @@ VERSION_PREFIXES = [
     "http://purl.dataone.org/odo/SENSO/",  # like in http://purl.dataone.org/odo/SENSO/0.1.0
     "https://purl.dataone.org/odo/ADCAD/",
     "http://identifiers.org/combine.specifications/teddy.rel-",
+    "https://nfdi.fiz-karlsruhe.de/ontology/",
 ]
 VERSION_PREFIX_SPLITS = [
     "http://www.ebi.ac.uk/efo/releases/v",
