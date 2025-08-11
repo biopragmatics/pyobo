@@ -92,6 +92,8 @@ has_title = _c(_v.has_title)
 
 has_homepage = Reference(prefix="foaf", identifier="homepage", name="has homepage")
 has_logo = Reference(prefix="foaf", identifier="logo", name="has logo")
+has_mailbox = Reference(prefix="foaf", identifier="mbox", name="has mailbox")
+has_depiction = Reference(prefix="foaf", identifier="depicted_by", name="depicted by")
 has_repository = Reference(prefix="doap", identifier="repository", name="has repository")
 has_mailing_list = Reference(prefix="doap", identifier="mailing-list", name="has mailing list")
 has_maintainer = Reference(prefix="doap", identifier="maintainer", name="has maintainer")

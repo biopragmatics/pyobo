@@ -2292,6 +2292,7 @@ class AdHocOntologyBase(Obo):
 
 def build_ontology(
     prefix: str,
+    *,
     terms: list[Term] | None = None,
     synonym_typedefs: list[SynonymTypeDef] | None = None,
     typedefs: list[TypeDef] | None = None,
@@ -2306,6 +2307,7 @@ def build_ontology(
     homepage: str | None = None,
     mailing_list: str | None = None,
     logo: str | None = None,
+    repository: str | None,
 ) -> Obo:
     """Build an ontology from parts."""
     resource = bioregistry.get_resource(prefix, strict=True)
@@ -2328,23 +2330,30 @@ def build_ontology(
     if homepage:
         from .typedef import has_homepage
 
-        properties.append(Annotation.string(has_homepage.reference, homepage))
+        properties.append(Annotation.uri(has_homepage.reference, homepage))
         if has_homepage not in typedefs:
             typedefs.append(has_homepage)
 
     if logo:
         from .typedef import has_depiction
 
-        properties.append(Annotation(has_depiction.reference, OBOLiteral.uri(logo)))
+        properties.append(Annotation.uri(has_depiction.reference, logo))
         if has_depiction not in typedefs:
             typedefs.append(has_depiction)
 
     if mailing_list:
-        from .typedef import has_mailbox
+        from .typedef import has_mailing_list
 
-        properties.append(Annotation.string(has_mailbox.reference, mailing_list))
-        if has_mailbox not in typedefs:
-            typedefs.append(has_mailbox)
+        properties.append(Annotation.string(has_mailing_list.reference, mailing_list))
+        if has_mailing_list not in typedefs:
+            typedefs.append(has_mailing_list)
+
+    if repository:
+        from .typedef import has_repository
+
+        properties.append(Annotation.uri(has_repository.reference, repository))
+        if has_repository not in typedefs:
+            typedefs.append(has_repository)
 
     return make_ad_hoc_ontology(
         _ontology=prefix,

@@ -64,6 +64,11 @@ class Annotation(NamedTuple):
         return cls(predicate, OBOLiteral.float(value))
 
     @classmethod
+    def uri(cls, predicate: Reference, uri: str) -> Self:
+        """Return a literal property for a URI."""
+        return cls(predicate, OBOLiteral.uri(uri))
+
+    @classmethod
     def string(cls, predicate: Reference, value: str, *, language: str | None = None) -> Self:
         """Return a literal property for a float."""
         return cls(predicate, OBOLiteral.string(value, language=language))
