@@ -15,7 +15,7 @@ BIZARRE_LOGGED = set()
 VERSION_REWRITES = {
     "$Date: 2009/11/15 10:54:12 $": "2009-11-15",  # for owl
     "http://www.w3.org/2006/time#2016": "2016",  # for time
-    "https://purl.org/ontology/modalia#1.0.0": "1.0.0", # for dalia
+    "https://purl.org/ontology/modalia#1.0.0": "1.0.0",  # for dalia
 }
 STATIC_VERSION_REWRITES = {
     "orth": "2",

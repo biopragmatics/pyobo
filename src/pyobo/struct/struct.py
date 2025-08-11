@@ -939,7 +939,6 @@ class Obo:
                 license_literal = OBOLiteral.string(license_spdx_id)
             yield Annotation(v.has_license, license_literal)
 
-        rrr: bioregistry.Resource = bioregistry.get_resource(self.ontology, strict=True)
         if description := bioregistry.get_description(self.ontology):
             description = obo_escape_slim(description.strip())
             yield Annotation(v.has_description, OBOLiteral.string(description.strip()))
@@ -947,12 +946,14 @@ class Obo:
             yield Annotation(v.has_homepage, OBOLiteral.uri(homepage))
         if repository := bioregistry.get_repository(self.ontology):
             yield Annotation(v.has_repository, OBOLiteral.uri(repository))
-        if logo := resource.get_logo():
+        if logo := bioregistry.get_logo(self.ontology):
             yield Annotation(v.has_logo, OBOLiteral.uri(logo))
         if mailing_list := None:
             yield Annotation(v.has_mailing_list, OBOLiteral.string(mailing_list))
         if maintainer_orcid := bioregistry.get_contact_orcid(self.ontology):
-            yield Annotation(v.has_maintainer, Reference(prefix="orcid", identifier=maintainer_orcid))
+            yield Annotation(
+                v.has_maintainer, Reference(prefix="orcid", identifier=maintainer_orcid)
+            )
 
         # Root terms
         for root_term in self.root_terms or []:
@@ -2317,12 +2318,14 @@ def build_ontology(
 
     if description:
         from .typedef import has_description
+
         properties.append(Annotation.string(has_description.reference, description))
         if has_description not in typedefs:
             typedefs.append(has_description)  # TODO get proper typedef
 
     if homepage:
         from .typedef import has_homepage
+
         properties.append(Annotation.string(has_homepage.reference, homepage))
         if has_homepage not in typedefs:
             typedefs.append(has_homepage)
