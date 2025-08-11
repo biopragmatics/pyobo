@@ -26,6 +26,8 @@ from tabulate import tabulate
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
 
+from pyobo.utils.misc import DOWNLOADERS, _get_version
+
 from .constants import (
     DATABASE_DIRECTORY,
     GetOntologyKwargs,
@@ -38,7 +40,6 @@ from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .reader import from_obo_path, from_obonet
 from .struct import Obo
 from .utils.io import get_writer
-from .utils.misc import VERSION_GETTERS, cleanup_version
 from .utils.path import ensure_path, prefix_directory_join
 from .version import get_git_hash, get_version
 
@@ -178,28 +179,6 @@ def get_ontology(
     if cache:
         obo.write_default(force=force_process)
     return obo
-
-
-DOWNLOADERS: Sequence[tuple[OBOFormats, Callable[[str], str | None]]] = [
-    ("obo", bioregistry.get_obo_download),
-    ("owl", bioregistry.get_owl_download),
-    ("json", bioregistry.get_json_download),
-]
-
-
-def _get_version(prefix: str) -> str | None:
-    # assume that all possible files that can be downloaded
-    # are in sync and have the same version
-    for ontology_format, func in DOWNLOADERS:
-        url = func(prefix)
-        if url is None:
-            continue
-        # Try to peak into the file to get the version without fully downloading
-        version_func = VERSION_GETTERS[ontology_format]
-        version = version_func(prefix, url)
-        if version:
-            return cleanup_version(version, prefix=prefix)
-    return None
 
 
 class OntologyPathPack(NamedTuple):
