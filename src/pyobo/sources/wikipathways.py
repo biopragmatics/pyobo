@@ -10,7 +10,7 @@ from tqdm import tqdm
 from .gmt_utils import parse_wikipathways_gmt
 from ..constants import SPECIES_REMAPPING
 from ..struct import Obo, Reference, Term, from_species
-from ..struct.typedef import has_participant
+from ..struct.typedef import contributes_to_condition, has_participant, located_in
 from ..utils.path import ensure_path
 
 __all__ = [
@@ -48,7 +48,7 @@ class WikiPathwaysGetter(Obo):
     """An ontology representation of WikiPathways' pathway database."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [from_species, has_participant]
+    typedefs = [from_species, has_participant, contributes_to_condition, located_in]
     root_terms = [ROOT]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -58,6 +58,8 @@ class WikiPathwaysGetter(Obo):
 
 
 PW_PREFIX = "http://purl.obolibrary.org/obo/PW_"
+DOID_PREFIX = "http://purl.obolibrary.org/obo/DOID_"
+CL_PREFIX = "http://purl.obolibrary.org/obo/CL_"
 
 
 def iter_terms(version: str) -> Iterable[Term]:
@@ -78,14 +80,6 @@ def iter_terms(version: str) -> Iterable[Term]:
 
         for identifier, _version, _revision, name, _species, genes in parse_wikipathways_gmt(path):
             graph = read_zipfile_rdf(archive, inner_path=f"wp/{identifier}.ttl")
-            parents = graph.query(
-                f"""\
-                SELECT ?parent
-                WHERE {{
-                    <https://identifiers.org/wikipathways/{identifier}> pav:hasVersion / wp:pathwayOntologyTag ?parent
-                }}
-                """,
-            )
 
             term = Term(reference=Reference(prefix=PREFIX, identifier=identifier, name=name))
 
@@ -96,14 +90,38 @@ def iter_terms(version: str) -> Iterable[Term]:
                     Reference(prefix="ncbigene", identifier=ncbigene_id),
                 )
 
+            uri = f"https://identifiers.org/wikipathways/{identifier}"
+            parents = graph.query(
+                f"SELECT ?p WHERE {{ <{uri}> pav:hasVersion/wp:pathwayOntologyTag ?p }}"
+            )
             for (parent,) in parents:
                 if parent.startswith(PW_PREFIX):
                     term.append_parent(
                         Reference(prefix="pw", identifier=parent.removeprefix(PW_PREFIX))
                     )
             if not parents:
-                tqdm.write(f"[{identifier}] no parent")
+                tqdm.write(f"[{term.curie}] could not find parent")
                 term.append_parent(ROOT)
+
+            diseases = graph.query(
+                f"SELECT ?p WHERE {{ <{uri}> pav:hasVersion/wp:diseaseOntologyTag ?p }}"
+            )
+            for (disease,) in diseases:
+                if disease.startswith(DOID_PREFIX):
+                    term.annotate_object(
+                        contributes_to_condition,
+                        Reference(prefix="doid", identifier=disease.removeprefix(DOID_PREFIX)),
+                    )
+
+            cells = graph.query(
+                f"SELECT ?p WHERE {{ <{uri}> pav:hasVersion/wp:cellTypeOntologyTag ?p }}"
+            )
+            for (cell,) in cells:
+                if cell.startswith(CL_PREFIX):
+                    term.annotate_object(
+                        located_in,
+                        Reference(prefix="cl", identifier=cell.removeprefix(CL_PREFIX)),
+                    )
 
             yield term
 

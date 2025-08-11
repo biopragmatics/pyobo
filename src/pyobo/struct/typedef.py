@@ -15,6 +15,7 @@ __all__ = [
     "alternative_term",
     "broad_match",
     "close_match",
+    "contributes_to_condition",
     "default_typedefs",
     "derives_from_organism",
     "editor_note",
@@ -112,6 +113,9 @@ molecularly_interacts_with = TypeDef(
 )
 located_in = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0001025", name="located in"),
+)
+contributes_to_condition = TypeDef(
+    reference=Reference(prefix=RO_PREFIX, identifier="0003304", name="contributes to condition"),
 )
 exact_match = TypeDef(reference=v.exact_match, is_metadata_tag=True)
 narrow_match = TypeDef(reference=v.narrow_match, is_metadata_tag=True)
