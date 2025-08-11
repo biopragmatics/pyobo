@@ -21,6 +21,7 @@ import bioontologies.robot
 import bioregistry
 import click
 import pystow.utils
+import requests.exceptions
 from tabulate import tabulate
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
@@ -366,7 +367,7 @@ def iter_helper_helper(
             logger.warning("[%s] HTTP %s: unable to download %s", prefix, e.getcode(), e.geturl())
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
-        except urllib.error.URLError as e:
+        except (urllib.error.URLError, requests.exceptions.ConnectTimeout) as e:
             logger.warning("[%s] unable to download - %s", prefix, e.reason)
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
