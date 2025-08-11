@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from datetime import datetime
 
-import bioregistry
 import bioversions.utils
 
-from pyobo.constants import OBOFormats
+from pyobo.constants import OntologyFormat
 
 __all__ = [
     "VERSION_GETTERS",
@@ -113,29 +112,9 @@ def _get_obograph_json_version(prefix: str, url: str) -> str | None:
     return cleanup_version(rv, prefix)
 
 
-VERSION_GETTERS: dict[OBOFormats, Callable[[str, str], str | None]] = {
+#: A mapping from data type to gersion getter function
+VERSION_GETTERS: dict[OntologyFormat, Callable[[str, str], str | None]] = {
     "obo": _get_obo_version,
     "owl": _get_owl_version,
     "json": _get_obograph_json_version,
 }
-
-DOWNLOADERS: Sequence[tuple[OBOFormats, Callable[[str], str | None]]] = [
-    ("obo", bioregistry.get_obo_download),
-    ("owl", bioregistry.get_owl_download),
-    ("json", bioregistry.get_json_download),
-]
-
-
-def _get_version(prefix: str) -> str | None:
-    # assume that all possible files that can be downloaded
-    # are in sync and have the same version
-    for ontology_format, func in DOWNLOADERS:
-        url = func(prefix)
-        if url is None:
-            continue
-        # Try to peak into the file to get the version without fully downloading
-        version_func = VERSION_GETTERS[ontology_format]
-        version = version_func(prefix, url)
-        if version:
-            return cleanup_version(version, prefix=prefix)
-    return None

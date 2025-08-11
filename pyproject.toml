@@ -70,7 +70,7 @@ dependencies = [
     "tabulate",
     "cachier",
     "pystow>=0.7.0",
-    "bioversions>=0.8.44",
+    "bioversions>=0.8.99",
     "bioregistry>=0.12.30",
     "bioontologies>=0.7.2",
     "ssslm>=0.0.13",
