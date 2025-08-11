@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Literal
+from pathlib import Path
+from typing import Literal, NamedTuple
 
 import pystow
 from typing_extensions import NotRequired, TypedDict
@@ -200,3 +201,10 @@ DEFAULT_PREFIX_MAP = {
 }
 
 OBOFormats = Literal["obo", "owl", "json"]
+
+
+class OntologyPathPack(NamedTuple):
+    """A format and path tuple."""
+
+    format: OBOFormats
+    path: Path

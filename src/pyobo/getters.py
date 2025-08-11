@@ -14,9 +14,8 @@ import urllib.error
 import zipfile
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from pathlib import Path
 from textwrap import indent
-from typing import NamedTuple, TypeVar
+from typing import TypeVar
 
 import bioregistry
 import click
@@ -26,13 +25,11 @@ from tabulate import tabulate
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
 
-from pyobo.utils.misc import DOWNLOADERS, _get_version
-
 from .constants import (
     DATABASE_DIRECTORY,
     GetOntologyKwargs,
     IterHelperHelperDict,
-    OBOFormats,
+    OntologyPathPack,
     SlimGetOntologyKwargs,
 )
 from .identifier_utils import ParseError, wrap_norm_prefix
@@ -40,6 +37,7 @@ from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .reader import from_obo_path, from_obonet
 from .struct import Obo
 from .utils.io import get_writer
+from .utils.misc import DOWNLOADERS, _get_version
 from .utils.path import ensure_path, prefix_directory_join
 from .version import get_git_hash, get_version
 
@@ -179,13 +177,6 @@ def get_ontology(
     if cache:
         obo.write_default(force=force_process)
     return obo
-
-
-class OntologyPathPack(NamedTuple):
-    """A format and path tuple."""
-
-    format: OBOFormats
-    path: Path
 
 
 def _ensure_ontology_path(prefix: str, force: bool, version: str | None) -> OntologyPathPack | None:
