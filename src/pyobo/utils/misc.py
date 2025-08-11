@@ -4,7 +4,7 @@ import logging
 from collections.abc import Callable
 from datetime import datetime
 
-import requests
+import bioversions.utils
 
 from pyobo.constants import OBOFormats
 
@@ -87,42 +87,28 @@ def cleanup_version(data_version: str, prefix: str) -> str:
 
 
 def _get_obo_version(prefix: str, url: str, *, max_lines: int = 200) -> str | None:
-    res = requests.get(url, stream=True)
-    for i, line in enumerate(res.iter_lines(decode_unicode=True)):
-        line = line.strip()
-        if line.startswith("data-version"):
-            return cleanup_version(line, prefix=prefix)
-        if not line:
-            return None
-        if i > max_lines:
-            return None
-    return None
-
-
-VERSION_IRI_TAG = "<owl:versionIRI rdf:resource="
-VERSION_IRI_TAG_LEN = len(VERSION_IRI_TAG)
+    rv = bioversions.utils.get_obo_version(url, max_lines=max_lines)
+    if rv is None:
+        return None
+    return cleanup_version(rv, prefix)
 
 
 def _get_owl_version(prefix: str, url: str, *, max_lines: int = 200) -> str | None:
-    res = requests.get(url, stream=True)
-    for i, line in enumerate(res.iter_lines(decode_unicode=True)):
-        line = line.strip()
-        if line.startswith(VERSION_IRI_TAG):
-            part = line[VERSION_IRI_TAG_LEN:].removesuffix("/>")
-            return cleanup_version(part, prefix=prefix)
-        if i > max_lines:
-            return None
-    return None
+    rv = bioversions.utils.get_owl_xml_version(url, max_lines=max_lines)
+    if rv is None:
+        return None
+    return cleanup_version(rv, prefix)
 
 
-def _get_json_version(prefix: str, url: str) -> str | None:
-    res = requests.get(url).json()
-    version = res["graphs"][0]["meta"]["version"]
-    return cleanup_version(version, prefix)
+def _get_obograph_json_version(prefix: str, url: str) -> str | None:
+    rv = bioversions.utils.get_obograph_json_version(url)
+    if rv is None:
+        return None
+    return cleanup_version(rv, prefix)
 
 
 VERSION_GETTERS: dict[OBOFormats, Callable[[str, str], str | None]] = {
     "obo": _get_obo_version,
     "owl": _get_owl_version,
-    "json": _get_json_version,
+    "json": _get_obograph_json_version,
 }
