@@ -1,9 +1,17 @@
 """Miscellaneous utilities."""
 
+from __future__ import annotations
+
 import logging
+from collections.abc import Callable
 from datetime import datetime
 
+import bioversions.utils
+
+from pyobo.constants import OntologyFormat
+
 __all__ = [
+    "VERSION_GETTERS",
     "cleanup_version",
 ]
 
@@ -15,8 +23,11 @@ BIZARRE_LOGGED = set()
 VERSION_REWRITES = {
     "$Date: 2009/11/15 10:54:12 $": "2009-11-15",  # for owl
     "http://www.w3.org/2006/time#2016": "2016",  # for time
+    "https://purl.org/ontology/modalia#1.0.0": "1.0.0",  # for dalia
 }
-STATIC_VERSION_REWRITES = {"orth": "2"}
+STATIC_VERSION_REWRITES = {
+    "orth": "2",
+}
 VERSION_PREFIXES = [
     "http://www.orpha.net/version",
     "https://www.orphadata.com/data/ontologies/ordo/last_version/ORDO_en_",
@@ -27,6 +38,8 @@ VERSION_PREFIXES = [
     "http://purl.dataone.org/odo/SASAP/",  # like in http://purl.dataone.org/odo/SASAP/0.3.1
     "http://purl.dataone.org/odo/SENSO/",  # like in http://purl.dataone.org/odo/SENSO/0.1.0
     "https://purl.dataone.org/odo/ADCAD/",
+    "http://identifiers.org/combine.specifications/teddy.rel-",
+    "https://nfdi.fiz-karlsruhe.de/ontology/",
 ]
 VERSION_PREFIX_SPLITS = [
     "http://www.ebi.ac.uk/efo/releases/v",
@@ -38,6 +51,9 @@ VERSION_PREFIX_SPLITS = [
 
 def cleanup_version(data_version: str, prefix: str) -> str:
     """Clean the version information."""
+    # in case a literal string that wasn't parsed properly gets put in
+    data_version = data_version.strip('"')
+
     if data_version in VERSION_REWRITES:
         return VERSION_REWRITES[data_version]
 
@@ -74,3 +90,32 @@ def cleanup_version(data_version: str, prefix: str) -> str:
         logger.debug("[%s] bizarre version: %s", prefix, data_version)
         BIZARRE_LOGGED.add((prefix, data_version))
     return data_version
+
+
+def _get_obo_version(prefix: str, url: str, *, max_lines: int = 200) -> str | None:
+    rv = bioversions.utils.get_obo_version(url, max_lines=max_lines)
+    if rv is None:
+        return None
+    return cleanup_version(rv, prefix)
+
+
+def _get_owl_version(prefix: str, url: str, *, max_lines: int = 200) -> str | None:
+    rv = bioversions.utils.get_owl_xml_version(url, max_lines=max_lines)
+    if rv is None:
+        return None
+    return cleanup_version(rv, prefix)
+
+
+def _get_obograph_json_version(prefix: str, url: str) -> str | None:
+    rv = bioversions.utils.get_obograph_json_version(url)
+    if rv is None:
+        return None
+    return cleanup_version(rv, prefix)
+
+
+#: A mapping from data type to gersion getter function
+VERSION_GETTERS: dict[OntologyFormat, Callable[[str, str], str | None]] = {
+    "obo": _get_obo_version,
+    "owl": _get_owl_version,
+    "json": _get_obograph_json_version,
+}

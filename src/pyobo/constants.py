@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 import re
+from pathlib import Path
+from typing import Literal, NamedTuple, TypeAlias
 
 import pystow
 from typing_extensions import NotRequired, TypedDict
@@ -188,6 +190,8 @@ class IterHelperHelperDict(SlimGetOntologyKwargs):
     skip_set: set[str] | None
 
 
+OntologyFormat: TypeAlias = Literal["obo", "owl", "json", "rdf"]
+
 #: from table 2 of the Functional OWL syntax definition
 #: at https://www.w3.org/TR/owl2-syntax/#IRIs
 DEFAULT_PREFIX_MAP = {
@@ -196,3 +200,10 @@ DEFAULT_PREFIX_MAP = {
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "owl": "http://www.w3.org/2002/07/owl#",
 }
+
+
+class OntologyPathPack(NamedTuple):
+    """A format and path tuple."""
+
+    format: OntologyFormat
+    path: Path

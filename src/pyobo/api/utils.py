@@ -19,7 +19,6 @@ __all__ = [
     "VersionError",
     "get_version",
     "get_version_pins",
-    "safe_get_version",
 ]
 
 logger = logging.getLogger(__name__)
@@ -82,15 +81,6 @@ def get_version_from_kwargs(prefix: str, kwargs: GetOntologyKwargs) -> str | Non
         return version
     # it's okay if none gets returned after getting this far, we at least tried
     return get_version(prefix, strict=False)
-
-
-def safe_get_version(prefix: str) -> str:
-    """Get the version."""
-    # FIXME replace with get_version(prefix, strict=True)
-    v = get_version(prefix)
-    if v is None:
-        raise ValueError
-    return v
 
 
 @lru_cache(1)

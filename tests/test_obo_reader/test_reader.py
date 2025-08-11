@@ -27,6 +27,8 @@ REASON_OBONET_IMPL = (
     "for synonyms fails on the open squiggly bracket {"
 )
 
+ADNAN_MALIK = Reference(prefix="orcid", identifier="0000-0001-8123-5351")
+
 
 class TestUtils(unittest.TestCase):
     """Test utilities for the reader."""
@@ -1361,5 +1363,9 @@ class TestReaderTerm(unittest.TestCase):
             std1.prefix: {std1},
             "dcterms": {v.has_description, v.has_license, v.has_title},
             v.has_dbxref.prefix: {v.has_exact_synonym},
+            # these get automatically added
+            "doap": {v.has_maintainer, v.has_repository},
+            "foaf": {v.has_homepage, v.has_logo},
+            "orcid": {ADNAN_MALIK},
         }
         self.assertEqual(expected_references, ontology._get_references())

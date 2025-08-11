@@ -15,6 +15,7 @@ __all__ = [
     "alternative_term",
     "broad_match",
     "close_match",
+    "contributes_to_condition",
     "default_typedefs",
     "derives_from_organism",
     "editor_note",
@@ -25,10 +26,12 @@ __all__ = [
     "gene_product_member_of",
     "has_contributor",
     "has_dbxref",
+    "has_depiction",
     "has_end_date",
     "has_gene_product",
     "has_homepage",
     "has_inchi",
+    "has_mailbox",
     "has_mature",
     "has_member",
     "has_part",
@@ -112,6 +115,9 @@ molecularly_interacts_with = TypeDef(
 )
 located_in = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0001025", name="located in"),
+)
+contributes_to_condition = TypeDef(
+    reference=Reference(prefix=RO_PREFIX, identifier="0003304", name="contributes to condition"),
 )
 exact_match = TypeDef(reference=v.exact_match, is_metadata_tag=True)
 narrow_match = TypeDef(reference=v.narrow_match, is_metadata_tag=True)
@@ -261,9 +267,11 @@ has_smiles = TypeDef(reference=v.has_smiles, is_metadata_tag=True).append_xref(v
 
 has_inchi = TypeDef(reference=v.has_inchi, is_metadata_tag=True).append_xref(v.debio_has_inchi)
 
-has_homepage = TypeDef(
-    reference=Reference(prefix="foaf", identifier="homepage", name="homepage"), is_metadata_tag=True
-)
+has_homepage = TypeDef(reference=v.has_homepage, is_metadata_tag=True)
+has_depiction = TypeDef(reference=v.has_depiction, is_metadata_tag=True)
+has_mailbox = TypeDef(reference=v.has_mailbox, is_metadata_tag=True)
+has_mailing_list = TypeDef(reference=v.has_mailing_list, is_metadata_tag=True)
+has_repository = TypeDef(reference=v.has_repository, is_metadata_tag=True)
 
 has_category = TypeDef(
     reference=Reference(prefix="biolink", identifier="category", name="has category"),
