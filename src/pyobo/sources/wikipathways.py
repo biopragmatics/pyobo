@@ -3,7 +3,8 @@
 import logging
 from collections.abc import Iterable
 
-from pystow.utils import DownloadError
+import pystow
+from pystow.utils import DownloadError, read_zipfile_rdf
 from tqdm import tqdm
 
 from .gmt_utils import parse_wikipathways_gmt
@@ -56,10 +57,15 @@ class WikiPathwaysGetter(Obo):
         yield from iter_terms(version=self._version_or_raise)
 
 
+PW_PREFIX = "http://purl.obolibrary.org/obo/PW_"
+
+
 def iter_terms(version: str) -> Iterable[Term]:
     """Get WikiPathways terms."""
-    base_url = f"http://data.wikipathways.org/{version}/gmt/wikipathways-{version}-gmt"
+    archive_url = f"https://data.wikipathways.org/current/rdf/wikipathways-{version}-rdf-wp.zip"
+    archive = pystow.ensure(PREFIX, url=archive_url, version=version)
 
+    base_url = f"http://data.wikipathways.org/{version}/gmt/wikipathways-{version}-gmt"
     for species_code, taxonomy_id in tqdm(_PATHWAY_INFO, desc=f"[{PREFIX}]", unit="species"):
         url = f"{base_url}-{species_code}.gmt"
         try:
@@ -71,14 +77,34 @@ def iter_terms(version: str) -> Iterable[Term]:
         taxonomy_name = SPECIES_REMAPPING.get(species_code, species_code)
 
         for identifier, _version, _revision, name, _species, genes in parse_wikipathways_gmt(path):
+            graph = read_zipfile_rdf(archive, inner_path=f"wp/{identifier}.ttl")
+            parents = graph.query(
+                f"""\
+                SELECT ?parent
+                WHERE {{
+                    <https://identifiers.org/wikipathways/{identifier}> pav:hasVersion / wp:pathwayOntologyTag ?parent
+                }}
+                """,
+            )
+
             term = Term(reference=Reference(prefix=PREFIX, identifier=identifier, name=name))
-            term.append_parent(ROOT)
+
             term.set_species(taxonomy_id, taxonomy_name)
             for ncbigene_id in genes:
                 term.annotate_object(
                     has_participant,
                     Reference(prefix="ncbigene", identifier=ncbigene_id),
                 )
+
+            for (parent,) in parents:
+                if parent.startswith(PW_PREFIX):
+                    term.append_parent(
+                        Reference(prefix="pw", identifier=parent.removeprefix(PW_PREFIX))
+                    )
+            if not parents:
+                tqdm.write(f"[{identifier}] no parent")
+                term.append_parent(ROOT)
+
             yield term
 
 
