@@ -174,7 +174,7 @@ def get_ontology(
         raise NoBuildError(prefix)
     ontology_format, path = path_pack
     if ontology_format == "obo":
-        pass
+        pass  # all gucci
     elif ontology_format in {"owl", "rdf"}:
         path = _convert_to_obo(path)
     elif ontology_format == "json":
