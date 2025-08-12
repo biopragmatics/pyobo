@@ -53,7 +53,7 @@ from ...identifier_utils import (
     get_rules,
 )
 from ...utils.cache import write_gzipped_graph
-from ...utils.misc import STATIC_VERSION_REWRITES, cleanup_version
+from ...utils.misc import _prioritize_version
 
 __all__ = [
     "from_obo_path",
@@ -157,7 +157,7 @@ def from_obonet(
     upgrade: bool = True,
     use_tqdm: bool = False,
 ) -> Obo:
-    """Get all of the terms from a OBO graph."""
+    """Get all the terms from a OBO graph."""
     ontology_prefix_raw = graph.graph["ontology"]
     ontology_prefix = _normalize_prefix_strict(ontology_prefix_raw)
     logger.info("[%s] extracting OBO using obonet", ontology_prefix)
@@ -168,8 +168,11 @@ def from_obonet(
 
     macro_config = MacroConfig(graph.graph, strict=strict, ontology_prefix=ontology_prefix)
 
-    data_version = _clean_graph_version(
-        graph, ontology_prefix=ontology_prefix, version=version, date=date
+    data_version = _prioritize_version(
+        data_version=graph.graph.get("data-version") or None,
+        ontology_prefix=ontology_prefix,
+        version=version,
+        date=date,
     )
     if data_version and "/" in data_version:
         raise ValueError(
@@ -701,50 +704,6 @@ def _clean_graph_ontology(graph, prefix: str) -> None:
             graph.graph["ontology"],
         )
         graph.graph["ontology"] = prefix
-
-
-def _clean_graph_version(
-    graph, ontology_prefix: str, version: str | None, date: datetime | None
-) -> str | None:
-    if ontology_prefix in STATIC_VERSION_REWRITES:
-        return STATIC_VERSION_REWRITES[ontology_prefix]
-
-    data_version: str | None = graph.graph.get("data-version") or None
-    if version:
-        clean_injected_version = cleanup_version(version, prefix=ontology_prefix)
-        if not data_version:
-            logger.debug(
-                "[%s] did not have a version, overriding with %s",
-                ontology_prefix,
-                clean_injected_version,
-            )
-            return clean_injected_version
-
-        clean_data_version = cleanup_version(data_version, prefix=ontology_prefix)
-        if clean_data_version != clean_injected_version:
-            # in this case, we're going to trust the one that's passed
-            # through explicitly more than the graph's content
-            logger.debug(
-                "[%s] had version %s, overriding with %s", ontology_prefix, data_version, version
-            )
-        return clean_injected_version
-
-    if data_version:
-        clean_data_version = cleanup_version(data_version, prefix=ontology_prefix)
-        logger.debug("[%s] using version %s", ontology_prefix, clean_data_version)
-        return clean_data_version
-
-    if date is not None:
-        derived_date_version = date.strftime("%Y-%m-%d")
-        logger.debug(
-            "[%s] does not report a version. falling back to date: %s",
-            ontology_prefix,
-            derived_date_version,
-        )
-        return derived_date_version
-
-    logger.debug("[%s] does not report a version nor a date", ontology_prefix)
-    return None
 
 
 def _iter_obo_graph(
