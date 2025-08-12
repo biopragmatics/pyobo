@@ -168,8 +168,11 @@ def from_obonet(
 
     macro_config = MacroConfig(graph.graph, strict=strict, ontology_prefix=ontology_prefix)
 
-    data_version = _clean_graph_version(
-        graph, ontology_prefix=ontology_prefix, version=version, date=date
+    data_version = clean_graph_version_helper(
+        data_version=graph.graph.get("data-version") or None,
+        ontology_prefix=ontology_prefix,
+        version=version,
+        date=date,
     )
     if data_version and "/" in data_version:
         raise ValueError(
@@ -701,17 +704,6 @@ def _clean_graph_ontology(graph, prefix: str) -> None:
             graph.graph["ontology"],
         )
         graph.graph["ontology"] = prefix
-
-
-def _clean_graph_version(
-    graph, ontology_prefix: str, version: str | None, date: datetime | None
-) -> str | None:
-    return clean_graph_version_helper(
-        data_version=graph.graph.get("data-version") or None,
-        ontology_prefix=ontology_prefix,
-        version=version,
-        date=date,
-    )
 
 
 def _iter_obo_graph(
