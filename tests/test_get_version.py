@@ -5,6 +5,7 @@ import unittest
 from unittest import mock
 
 from pyobo.api.utils import get_version, get_version_pins
+from pyobo.utils.misc import _get_version_from_artifact
 
 MOCK_PYOBO_VERSION_PINS = '{"ncbitaxon": "2024-07-03", "vo":"2024-04-09", "chebi":"235", "bfo":5}'
 FAULTY_MOCK_PYOBO_VERSION_PINS = "{'ncbitaxon': '2024-07-03'}"
@@ -42,3 +43,12 @@ class TestVersionPins(unittest.TestCase):
         """Test erroneously set version pins are processed correctly."""
         version_pins = get_version_pins()
         self.assertFalse(version_pins)
+
+
+class TestVersionGetter(unittest.TestCase):
+    """Test functions for getting versions."""
+
+    def test_prov(self) -> None:
+        """Test getting the version of prov."""
+        v = _get_version_from_artifact("prov")
+        self.assertEqual("20130430", v)

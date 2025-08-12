@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Callable
 from pathlib import Path
 from typing import Literal, NamedTuple, TypeAlias
 
+import bioregistry
 import pystow
 from typing_extensions import NotRequired, TypedDict
 
@@ -207,3 +209,13 @@ class OntologyPathPack(NamedTuple):
 
     format: OntologyFormat
     path: Path
+
+
+#: Functions that get ontology files. Order matters in this list,
+#: since order implicitly defines priority
+ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | None]]] = [
+    ("obo", bioregistry.get_obo_download),
+    ("owl", bioregistry.get_owl_download),
+    ("json", bioregistry.get_json_download),
+    ("rdf", bioregistry.get_rdf_download),
+]
