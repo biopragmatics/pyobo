@@ -12,7 +12,6 @@ from pyobo.constants import ONTOLOGY_GETTERS, OntologyFormat
 
 __all__ = [
     "VERSION_GETTERS",
-    "clean_graph_version_helper",
     "cleanup_version",
 ]
 
@@ -57,6 +56,7 @@ VERSION_PREFIX_SPLITS = [
 ]
 BAD = {
     "http://purl.obolibrary.org/obo",
+    "http://www.bioassayontology.org/bao/bao_complete",
 }
 
 
@@ -132,17 +132,21 @@ VERSION_GETTERS: dict[OntologyFormat, Callable[[str, str], str | None]] = {
 }
 
 
-def clean_graph_version_helper(
+def _prioritize_version(
     data_version: str | None,
     ontology_prefix: str,
     version: str | None,
     date: datetime | None,
 ) -> str | None:
-    """Process the version(s)."""
+    """Process version information coming from several sources and normalize them."""
     if ontology_prefix in STATIC_VERSION_REWRITES:
         return STATIC_VERSION_REWRITES[ontology_prefix]
 
     if version:
+        if version in BAD:
+            logger.debug("[%s] had known bad version, returning None: ", ontology_prefix, version)
+            return None
+
         clean_injected_version = cleanup_version(version, prefix=ontology_prefix)
         if not data_version:
             logger.debug(
@@ -165,6 +169,12 @@ def clean_graph_version_helper(
         return clean_injected_version
 
     if data_version:
+        if data_version in BAD:
+            logger.debug(
+                "[%s] had known bad version, returning None: ", ontology_prefix, data_version
+            )
+            return None
+
         clean_data_version = cleanup_version(data_version, prefix=ontology_prefix)
         logger.debug("[%s] using version %s", ontology_prefix, clean_data_version)
         return clean_data_version

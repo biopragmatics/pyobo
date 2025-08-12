@@ -53,7 +53,7 @@ from ...identifier_utils import (
     get_rules,
 )
 from ...utils.cache import write_gzipped_graph
-from ...utils.misc import clean_graph_version_helper
+from ...utils.misc import _prioritize_version
 
 __all__ = [
     "from_obo_path",
@@ -168,7 +168,7 @@ def from_obonet(
 
     macro_config = MacroConfig(graph.graph, strict=strict, ontology_prefix=ontology_prefix)
 
-    data_version = clean_graph_version_helper(
+    data_version = _prioritize_version(
         data_version=graph.graph.get("data-version") or None,
         ontology_prefix=ontology_prefix,
         version=version,
