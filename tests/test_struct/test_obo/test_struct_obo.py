@@ -39,7 +39,7 @@ class TestOBOHeader(unittest.TestCase):
             in_path = Path(directory).joinpath("tmp.ofn")
             ontology.write_ofn(in_path)
             out_path = Path(directory).joinpath("tmp.owl")
-            bioontologies.robot.convert(in_path, out_path, check=False)
+            bioontologies.robot.convert(in_path, out_path, check=True, debug=True)
             lines = out_path.read_text().splitlines()
             lines = [
                 "" if not line.strip() else line.rstrip()
@@ -263,6 +263,59 @@ class TestOBOHeader(unittest.TestCase):
                     <rdfs:label>description</rdfs:label>
                 </owl:AnnotationProperty>
             </rdf:RDF>
+            """,
+            ontology,
+        )
+
+    def test_ror_metadata(self) -> None:
+        """Test the ROR metadata can be turned into OWL."""
+        ontology = build_ontology("ror")
+        self.assert_obo_lines(
+            r"""
+            format-version: 1.4
+            idspace: dcterms http://purl.org/dc/terms/ "Dublin Core Metadata Initiative Terms"
+            idspace: doap http://usefulinc.com/ns/doap# "Description of a Project"
+            idspace: foaf http://xmlns.com/foaf/0.1/ "Friend of a Friend"
+            idspace: orcid https://orcid.org/ "Open Researcher and Contributor"
+            ontology: ror
+            property_value: dcterms:title "Research Organization Registry" xsd:string
+            property_value: dcterms:license "CC0-1.0" xsd:string
+            property_value: dcterms:description "ROR \(Research Organization Registry\) is a global\, community-led registry\nof open persistent identifiers for research organizations. ROR is jointly\noperated by California Digital Library\, Crossref\, and Datacite." xsd:string
+            property_value: foaf:homepage "https\://ror.org" xsd:anyURI
+            property_value: doap:repository "https\://github.com/ror-community" xsd:anyURI
+            property_value: foaf:logo "https\://ror.org/img/ror-logo.svg" xsd:anyURI
+            property_value: doap:maintainer orcid:0000-0002-2916-3423
+            """,  # add Maria Gould
+            ontology,
+        )
+        # TODO how to escape properly
+        self.assert_ofn_lines(
+            '''
+            Prefix(dcterms:=<http://purl.org/dc/terms/>)
+            Prefix(doap:=<http://usefulinc.com/ns/doap#>)
+            Prefix(foaf:=<http://xmlns.com/foaf/0.1/>)
+            Prefix(orcid:=<https://orcid.org/>)
+            Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
+            Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+            Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
+            Prefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)
+
+            Ontology(<https://w3id.org/biopragmatics/resources/ror/ror.ofn>
+            Annotation(dcterms:title "Research Organization Registry"^^xsd:string)
+            Annotation(dcterms:license "CC0-1.0"^^xsd:string)
+            Annotation(dcterms:description """ROR (Research Organization Registry) is a global, community-led registry
+            of open persistent identifiers for research organizations. ROR is jointly
+            operated by California Digital Library, Crossref, and Datacite."""^^xsd:string)
+            Annotation(foaf:homepage "https://ror.org"^^xsd:anyURI)
+            Annotation(doap:repository "https://github.com/ror-community"^^xsd:anyURI)
+            Annotation(foaf:logo "https://ror.org/img/ror-logo.svg"^^xsd:anyURI)
+            Annotation(doap:maintainer orcid:0000-0002-2916-3423)
+            )
+            ''',
+            ontology,
+        )
+        self.assert_owl_lines(
+            """
             """,
             ontology,
         )
