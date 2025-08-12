@@ -29,9 +29,9 @@ from typing_extensions import Unpack
 from .constants import (
     BUILD_SUBDIRECTORY_NAME,
     DATABASE_DIRECTORY,
+    ONTOLOGY_GETTERS,
     GetOntologyKwargs,
     IterHelperHelperDict,
-    OntologyFormat,
     OntologyPathPack,
     SlimGetOntologyKwargs,
 )
@@ -40,7 +40,7 @@ from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
 from .struct.obo import from_obo_path, from_obonet
 from .utils.io import safe_open_writer
-from .utils.misc import VERSION_GETTERS, cleanup_version
+from .utils.misc import _get_version_from_artifact
 from .utils.path import ensure_path, prefix_directory_join
 from .version import get_git_hash, get_version
 
@@ -202,19 +202,10 @@ def get_ontology(
     return obo
 
 
-# order matters in this list, since order implicitly defines priority
-_ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | None]]] = [
-    ("obo", bioregistry.get_obo_download),
-    ("owl", bioregistry.get_owl_download),
-    ("json", bioregistry.get_json_download),
-    ("rdf", bioregistry.get_rdf_download),
-]
-
-
 def _ensure_ontology_path(
     prefix: str, *, force: bool, version: str | None
 ) -> OntologyPathPack | None:
-    for ontology_format, getter in _ONTOLOGY_GETTERS:
+    for ontology_format, getter in ONTOLOGY_GETTERS:
         url = getter(prefix)
         if url is None:
             continue
@@ -529,20 +520,3 @@ def db_output_helper(
     click.echo()
 
     return [path for _, path in rv]
-
-
-def _get_version_from_artifact(prefix: str) -> str | None:
-    # assume that all possible files that can be downloaded
-    # are in sync and have the same version
-    for ontology_format, func in _ONTOLOGY_GETTERS:
-        url = func(prefix)
-        if url is None:
-            continue
-        # Try to peak into the file to get the version without fully downloading
-        version_func = VERSION_GETTERS.get(ontology_format)
-        if version_func is None:
-            continue
-        version = version_func(prefix, url)
-        if version:
-            return cleanup_version(version, prefix=prefix)
-    return None
