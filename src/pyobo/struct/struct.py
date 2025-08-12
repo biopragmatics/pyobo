@@ -950,9 +950,10 @@ class Obo:
             yield Annotation(v.has_logo, OBOLiteral.uri(logo))
         if mailing_list := bioregistry.get_mailing_list(self.ontology):
             yield Annotation(v.has_mailing_list, OBOLiteral.string(mailing_list))
-        if maintainer_orcid := bioregistry.get_contact_orcid(self.ontology):
+        if (maintainer := bioregistry.get_contact(self.ontology)) and maintainer.orcid:
             yield Annotation(
-                v.has_maintainer, Reference(prefix="orcid", identifier=maintainer_orcid)
+                v.has_maintainer,
+                Reference(prefix="orcid", identifier=maintainer.orcid, name=maintainer.name),
             )
 
         # Root terms
