@@ -33,11 +33,17 @@ class TestOBOHeader(unittest.TestCase):
             ontology.write_ofn(in_path)
             self.assert_lines(text, in_path.read_text().splitlines())
 
-    def assert_owl_lines(self, text: str, ontology: Obo) -> None:
+    def assert_owl_lines(self, text: str, ontology: Obo, method: str = "ofn") -> None:
         """Assert OWL header has the right lines."""
         with tempfile.TemporaryDirectory() as directory:
-            in_path = Path(directory).joinpath("tmp.ofn")
-            ontology.write_ofn(in_path)
+            if method == "ofn":
+                in_path = Path(directory).joinpath("tmp.ofn")
+                ontology.write_ofn(in_path)
+            elif method == "obo":
+                in_path = Path(directory).joinpath("tmp.obo")
+                ontology.write_obo(in_path)
+            else:
+                raise ValueError
             out_path = Path(directory).joinpath("tmp.owl")
             bioontologies.robot.convert(in_path, out_path, check=True, debug=True)
             lines = out_path.read_text().splitlines()
@@ -288,9 +294,8 @@ class TestOBOHeader(unittest.TestCase):
             """,  # add Maria Gould
             ontology,
         )
-        # TODO how to escape properly
         self.assert_ofn_lines(
-            '''
+            """
             Prefix(dcterms:=<http://purl.org/dc/terms/>)
             Prefix(doap:=<http://usefulinc.com/ns/doap#>)
             Prefix(foaf:=<http://xmlns.com/foaf/0.1/>)
@@ -303,19 +308,64 @@ class TestOBOHeader(unittest.TestCase):
             Ontology(<https://w3id.org/biopragmatics/resources/ror/ror.ofn>
             Annotation(dcterms:title "Research Organization Registry"^^xsd:string)
             Annotation(dcterms:license "CC0-1.0"^^xsd:string)
-            Annotation(dcterms:description """ROR (Research Organization Registry) is a global, community-led registry
+            Annotation(dcterms:description "ROR (Research Organization Registry) is a global, community-led registry
             of open persistent identifiers for research organizations. ROR is jointly
-            operated by California Digital Library, Crossref, and Datacite."""^^xsd:string)
+            operated by California Digital Library, Crossref, and Datacite."^^xsd:string)
             Annotation(foaf:homepage "https://ror.org"^^xsd:anyURI)
             Annotation(doap:repository "https://github.com/ror-community"^^xsd:anyURI)
             Annotation(foaf:logo "https://ror.org/img/ror-logo.svg"^^xsd:anyURI)
             Annotation(doap:maintainer orcid:0000-0002-2916-3423)
             )
-            ''',
+            """,
             ontology,
         )
         self.assert_owl_lines(
             """
+            <?xml version="1.0"?>
+            <rdf:RDF xmlns="https://w3id.org/biopragmatics/resources/ror/ror.ofn#"
+                 xml:base="https://w3id.org/biopragmatics/resources/ror/ror.ofn"
+                 xmlns:owl="http://www.w3.org/2002/07/owl#"
+                 xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+                 xmlns:xml="http://www.w3.org/XML/1998/namespace"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+                 xmlns:doap="http://usefulinc.com/ns/doap#"
+                 xmlns:foaf="http://xmlns.com/foaf/0.1/"
+                 xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+                 xmlns:orcid="https://orcid.org/"
+                 xmlns:dcterms="http://purl.org/dc/terms/">
+                <owl:Ontology rdf:about="https://w3id.org/biopragmatics/resources/ror/ror.ofn">
+                    <dcterms:description>ROR (Research Organization Registry) is a global, community-led registry
+            of open persistent identifiers for research organizations. ROR is jointly
+            operated by California Digital Library, Crossref, and Datacite.</dcterms:description>
+                    <dcterms:license>CC0-1.0</dcterms:license>
+                    <dcterms:title>Research Organization Registry</dcterms:title>
+                    <doap:maintainer rdf:resource="https://orcid.org/0000-0002-2916-3423"/>
+                    <doap:repository rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://github.com/ror-community</doap:repository>
+                    <foaf:homepage rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://ror.org</foaf:homepage>
+                    <foaf:logo rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://ror.org/img/ror-logo.svg</foaf:logo>
+                </owl:Ontology>
+                <!--
+                ///////////////////////////////////////////////////////////////////////////////////////
+                //
+                // Annotation properties
+                //
+                ///////////////////////////////////////////////////////////////////////////////////////
+                 -->
+                <!-- http://purl.org/dc/terms/description -->
+                <owl:AnnotationProperty rdf:about="http://purl.org/dc/terms/description"/>
+                <!-- http://purl.org/dc/terms/license -->
+                <owl:AnnotationProperty rdf:about="http://purl.org/dc/terms/license"/>
+                <!-- http://purl.org/dc/terms/title -->
+                <owl:AnnotationProperty rdf:about="http://purl.org/dc/terms/title"/>
+                <!-- http://usefulinc.com/ns/doap#maintainer -->
+                <owl:AnnotationProperty rdf:about="http://usefulinc.com/ns/doap#maintainer"/>
+                <!-- http://usefulinc.com/ns/doap#repository -->
+                <owl:AnnotationProperty rdf:about="http://usefulinc.com/ns/doap#repository"/>
+                <!-- http://xmlns.com/foaf/0.1/homepage -->
+                <owl:AnnotationProperty rdf:about="http://xmlns.com/foaf/0.1/homepage"/>
+                <!-- http://xmlns.com/foaf/0.1/logo -->
+                <owl:AnnotationProperty rdf:about="http://xmlns.com/foaf/0.1/logo"/>
+            </rdf:RDF>
             """,
             ontology,
         )
