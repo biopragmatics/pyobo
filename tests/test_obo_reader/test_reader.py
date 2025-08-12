@@ -74,31 +74,24 @@ class TestReaderTerm(unittest.TestCase):
         value = getattr(term, tag)
         self.assertIsNone(value)
 
-        ontology = from_str(f"""\
-            ontology: chebi
+        for given_value, exp in [
+            ("true", True),
+            ("false", False),
+            ("1", True),
+            ("0", False),
+        ]:
+            ontology = from_str(f"""\
+                ontology: chebi
 
-            [Term]
-            id: CHEBI:1234
-            {tag}: true
-        """)
-        term = self.get_only_term(ontology)
-        self.assertTrue(hasattr(term, tag))
-        value = getattr(term, tag)
-        self.assertIsNotNone(value)
-        self.assertTrue(value)
-
-        ontology = from_str(f"""\
-            ontology: chebi
-
-            [Term]
-            id: CHEBI:1234
-            {tag}: false
-        """)
-        term = self.get_only_term(ontology)
-        self.assertTrue(hasattr(term, tag))
-        value = getattr(term, tag)
-        self.assertIsNotNone(value)
-        self.assertFalse(value)
+                [Term]
+                id: CHEBI:1234
+                {tag}: {given_value}
+            """)
+            term = self.get_only_term(ontology)
+            self.assertTrue(hasattr(term, tag))
+            value = getattr(term, tag)
+            self.assertIsNotNone(value)
+            self.assertEqual(exp, value)
 
     def test_0_minimal(self) -> None:
         """Test an ontology with a version but no date."""

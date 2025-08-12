@@ -536,17 +536,22 @@ def _process_subsets(stanza: Stanza, data, *, ontology_prefix: str, strict: bool
         stanza.append_subset(reference)
 
 
+# needed to parse OPMI
+_BOOLEAN_TRUE_VALUES = {"true", "1", 1}
+_BOOLEAN_FALSE_VALUES = {"false", "0", 0}
+
+
 def _get_boolean(data: Mapping[str, Any], tag: str) -> bool | None:
     value = data.get(tag)
     if value is None:
         return None
     if isinstance(value, list):
         value = value[0]
-    if value == "false":
+    if value in _BOOLEAN_FALSE_VALUES:
         return False
-    if value == "true":
+    if value in _BOOLEAN_TRUE_VALUES:
         return True
-    raise ValueError(value)
+    raise ValueError(f"unhandled value for boolean: ({type(value)}) {value}")
 
 
 def _get_reference(
