@@ -64,3 +64,11 @@ class TestVersionGetter(unittest.TestCase):
         """Test the nmrCV version."""
         v = cleanup_version("http://nmrml.org/cv/v1.1.0/nmrCV", prefix="nmrcv")
         self.assertEqual("1.1.0", v)
+
+    def test_fobi(self) -> None:
+        """Test the FOBI version."""
+        self.assertIsNone(
+            _prioritize_version(
+                _get_version_from_artifact("fobi"), ontology_prefix="fobi", version=None, date=None
+            )
+        )

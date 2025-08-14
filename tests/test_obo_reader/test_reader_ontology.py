@@ -9,6 +9,7 @@ from pyobo.struct.obo import from_str
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct_utils import Annotation
 from pyobo.struct.typedef import comment, equivalent_class
+from pyobo.struct.vocabulary import has_license
 
 
 class TestReaderOntologyMetadata(unittest.TestCase):
@@ -363,6 +364,17 @@ class TestReaderOntologyMetadata(unittest.TestCase):
         self.assertEqual(
             [Reference(prefix="LEPAO", identifier="0000006")],
             ontology.root_terms,
+        )
+
+    def test_18_root_with_rewrite(self) -> None:
+        """Test root terms as URL."""
+        ontology = from_str("""\
+            ontology: lepao
+            property_value: dcterms:license https://creativecommons.org/licenses/by/4.0/
+        """)
+        self.assertEqual(
+            [(has_license, Reference(prefix="spdx", identifier="CC-BY-4.0"))],
+            ontology.property_values,
         )
 
 
