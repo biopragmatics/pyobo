@@ -215,9 +215,9 @@ class LiteralBox(Box):
         # it appears that the OFN format doesn't use triple quotes
         if rv.startswith('"""') and rv.endswith('"""^^xsd:string'):
             # strip them off
-            rv= rv.removeprefix('"""').removesuffix('"""^^xsd:string')
+            rv = rv.removeprefix('"""').removesuffix('"""^^xsd:string')
             # escape quotes
-            rv = rv.replace("\"", "\\\"")
+            rv = rv.replace('"', '\\"')
             # stick back quotes and xsd tag
             rv = '"' + rv + '"^^xsd:string'
         return rv
