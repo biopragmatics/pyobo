@@ -211,7 +211,16 @@ class LiteralBox(Box):
 
     def to_funowl(self) -> str:
         """Represent this literal for functional OWL."""
-        return self.literal.n3(self._namespace_manager)
+        rv = self.literal.n3(self._namespace_manager)
+        # it appears that the OFN format doesn't use triple quotes
+        if rv.startswith('"""') and rv.endswith('"""^^xsd:string'):
+            # strip them off
+            rv = rv.removeprefix('"""').removesuffix('"""^^xsd:string')
+            # escape quotes
+            rv = rv.replace('"', '\\"')
+            # stick back quotes and xsd tag
+            rv = '"' + rv + '"^^xsd:string'
+        return rv
 
     def to_funowl_args(self) -> str:  # pragma: no cover
         """Get the inside of the functional OWL tag representing the literal (unused)."""
