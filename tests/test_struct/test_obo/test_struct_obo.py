@@ -282,7 +282,7 @@ class TestOBOHeader(unittest.TestCase):
         """Test escapes in property values, like for parentheses."""
         ontology = build_ontology(
             prefix="xxx",
-            description="Something \"Like This\"",
+            description='Something "Like This"',
         )
         self.assert_obo_lines(
             r"""
