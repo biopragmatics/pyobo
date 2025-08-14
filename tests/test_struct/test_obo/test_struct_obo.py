@@ -26,11 +26,16 @@ class TestOBOHeader(unittest.TestCase):
         """Assert OBO header has the right lines."""
         self.assert_lines(text, ontology.iterate_obo_lines())
 
-    def assert_ofn_lines(self, text: str, ontology: Obo) -> None:
+    def assert_ofn_lines(self, text: str, ontology: Obo, oracle: bool = False) -> None:
         """Assert OFN header has the right lines."""
         with tempfile.TemporaryDirectory() as directory:
             in_path = Path(directory).joinpath("tmp.ofn")
-            ontology.write_ofn(in_path)
+            if oracle:
+                tmp_path = Path(directory).joinpath("tmp.obo")
+                ontology.write_obo(tmp_path)
+                bioontologies.robot.convert(tmp_path, in_path, check=True, debug=True)
+            else:
+                ontology.write_ofn(in_path)
             self.assert_lines(text, in_path.read_text().splitlines())
 
     def assert_owl_lines(self, text: str, ontology: Obo, method: str = "ofn") -> None:
@@ -256,6 +261,73 @@ class TestOBOHeader(unittest.TestCase):
                  xmlns:dcterms="http://purl.org/dc/terms/">
                 <owl:Ontology rdf:about="https://w3id.org/biopragmatics/resources/xxx/xxx.ofn">
                     <dcterms:description>MeSH (Medical Subject Headings)</dcterms:description>
+                </owl:Ontology>
+                <!--
+                ///////////////////////////////////////////////////////////////////////////////////////
+                //
+                // Annotation properties
+                //
+                ///////////////////////////////////////////////////////////////////////////////////////
+                 -->
+                <!-- http://purl.org/dc/terms/description -->
+                <owl:AnnotationProperty rdf:about="http://purl.org/dc/terms/description">
+                    <rdfs:label>description</rdfs:label>
+                </owl:AnnotationProperty>
+            </rdf:RDF>
+            """,
+            ontology,
+        )
+
+    def test_18_properties_escape_quotes(self) -> None:
+        """Test escapes in property values, like for parentheses."""
+        ontology = build_ontology(
+            prefix="xxx",
+            description="Something \"Like This\"",
+        )
+        self.assert_obo_lines(
+            r"""
+            format-version: 1.4
+            idspace: dcterms http://purl.org/dc/terms/ "Dublin Core Metadata Initiative Terms"
+            ontology: xxx
+            property_value: dcterms:description "Something \"Like This\"" xsd:string
+
+            [Typedef]
+            id: dcterms:description
+            name: description
+            is_metadata_tag: true
+            """,
+            ontology,
+        )
+        self.assert_ofn_lines(
+            """
+            Prefix(dcterms:=<http://purl.org/dc/terms/>)
+            Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
+            Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+            Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
+            Prefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)
+
+            Ontology(<https://w3id.org/biopragmatics/resources/xxx/xxx.ofn>
+            Annotation(dcterms:description "Something \\\"Like This\\\""^^xsd:string)
+
+            Declaration(AnnotationProperty(dcterms:description))
+            AnnotationAssertion(rdfs:label dcterms:description "description")
+            )
+            """,
+            ontology,
+        )
+        self.assert_owl_lines(
+            """
+            <?xml version="1.0"?>
+            <rdf:RDF xmlns="https://w3id.org/biopragmatics/resources/xxx/xxx.ofn#"
+                 xml:base="https://w3id.org/biopragmatics/resources/xxx/xxx.ofn"
+                 xmlns:owl="http://www.w3.org/2002/07/owl#"
+                 xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+                 xmlns:xml="http://www.w3.org/XML/1998/namespace"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+                 xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+                 xmlns:dcterms="http://purl.org/dc/terms/">
+                <owl:Ontology rdf:about="https://w3id.org/biopragmatics/resources/xxx/xxx.ofn">
+                    <dcterms:description>Something &quot;Like This&quot;</dcterms:description>
                 </owl:Ontology>
                 <!--
                 ///////////////////////////////////////////////////////////////////////////////////////
