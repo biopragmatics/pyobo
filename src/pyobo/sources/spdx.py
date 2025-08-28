@@ -1,7 +1,7 @@
 """Convert SPDX to an ontology."""
 
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import ValidationError
 from tqdm import tqdm
@@ -74,6 +74,8 @@ class SPDXLicenseGetter(Obo):
 
     bioversions_key = ontology = LICENSE_PREFIX
     typedefs = [see_also, IS_FSF, IS_OSI]
+    collection: ClassVar[list[str]] = ["spdx", "spdx.term"]
+
     root_terms = [ROOT.reference]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -82,4 +84,4 @@ class SPDXLicenseGetter(Obo):
 
 
 if __name__ == "__main__":
-    SPDXLicenseGetter.cli(["--obo", "--owl", "--rewrite"])
+    SPDXLicenseGetter.cli()

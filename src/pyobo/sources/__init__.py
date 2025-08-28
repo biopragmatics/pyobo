@@ -170,6 +170,7 @@ ontology_resolver: ClassResolver[Obo] = ClassResolver.from_subclasses(
     base=Obo,
     suffix="Getter",
     skip={AdHocOntologyBase},
+    synonym_attribute=["collection"],
 )
 for getter in list(ontology_resolver):
     ontology_resolver.synonyms[getter.ontology] = getter
