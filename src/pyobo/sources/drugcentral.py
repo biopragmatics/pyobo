@@ -6,7 +6,6 @@ from collections.abc import Iterable
 from contextlib import closing
 
 import bioregistry
-import psycopg2
 from pydantic import ValidationError
 from tqdm.auto import tqdm
 
@@ -42,6 +41,8 @@ class DrugCentralGetter(Obo):
 
 def iter_terms() -> Iterable[Term]:
     """Iterate over DrugCentral terms."""
+    import psycopg2
+
     with closing(psycopg2.connect(**PARAMS)) as conn:
         with closing(conn.cursor()) as cur:
             cur.execute(

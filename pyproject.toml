@@ -63,7 +63,6 @@ dependencies = [
     "pyyaml",
     "pandas",
     "requests",
-    "protmapper",
     "more_itertools",
     "more_click>=0.0.2",
     "humanize",
@@ -76,7 +75,6 @@ dependencies = [
     "ssslm>=0.0.13",
     "zenodo-client>=0.3.6",
     "class_resolver>=0.6.0",
-    "psycopg2-binary",
     "pydantic>=2.0",
     "curies>=0.10.17",
     "curies-processing>=0.1.2",
@@ -157,6 +155,15 @@ gilda = [
 ]
 gilda-slim = [
     "ssslm[gilda-slim]",
+]
+sources = [
+    "pyobo[drugcentral,pid]",
+]
+drugcentral =[
+    "psycopg2-binary",
+]
+pid = [
+    "protmapper",
 ]
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
