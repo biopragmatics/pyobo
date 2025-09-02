@@ -6,6 +6,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 import bioregistry
+import bioversions
 import click
 from more_click import verbose_option
 from tqdm.contrib.logging import logging_redirect_tqdm
@@ -97,12 +98,17 @@ def _update_database_kwargs(kwargs: DatabaseKwargs) -> DatabaseKwargs:
 
 
 @database_annotate
+@click.option("--eager-versions", is_flag=True)
 @click.pass_context
-def build(ctx: click.Context, **kwargs: Unpack[DatabaseKwargs]) -> None:
+def build(ctx: click.Context, eager_versions: bool, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Build all databases."""
     # if no_strict and zenodo:
     #    click.secho("Must be strict before uploading", fg="red")
     #    sys.exit(1)
+
+    if eager_versions:
+        bioversions.get_rows(use_tqdm=True)
+
     with logging_redirect_tqdm():
         click.secho("Collecting metadata and building", fg="cyan", bold=True)
         # note that this is the only one that needs a force=force
