@@ -5,7 +5,12 @@ import unittest
 from unittest import mock
 
 from pyobo.api.utils import get_version, get_version_pins
-from pyobo.utils.misc import _get_version_from_artifact, _prioritize_version, cleanup_version
+from pyobo.utils.misc import (
+    _get_getter_urls,
+    _get_version_from_artifact,
+    _prioritize_version,
+    cleanup_version,
+)
 
 MOCK_PYOBO_VERSION_PINS = '{"ncbitaxon": "2024-07-03", "vo":"2024-04-09", "chebi":"235", "bfo":5}'
 FAULTY_MOCK_PYOBO_VERSION_PINS = "{'ncbitaxon': '2024-07-03'}"
@@ -50,6 +55,9 @@ class TestVersionGetter(unittest.TestCase):
 
     def test_prov(self) -> None:
         """Test getting the version of prov."""
+        urls = list(_get_getter_urls("prov"))
+        self.assertEqual(1, len(urls))
+        self.assertEqual(("owl", "http://aber-owl.net/media/ontologies/PROV/1/prov.owl"), urls[0])
         v = _get_version_from_artifact("prov")
         self.assertEqual("20130430", v)
 
