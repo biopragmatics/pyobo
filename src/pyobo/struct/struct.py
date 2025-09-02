@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import sys
+import tempfile
 import warnings
 from collections import ChainMap, defaultdict
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
@@ -1020,6 +1021,15 @@ class Obo:
 
         ofn = get_ofn_from_obo(self)
         ofn.write_funowl(path)
+
+    def write_owl(self, path: str | Path) -> None:
+        """Write OWL, by first outputting OFN then converting with ROBOT."""
+        from bioontologies import robot
+
+        with tempfile.TemporaryDirectory() as directory:
+            ofn_path = Path(directory).joinpath("tmp.ofn")
+            self.write_ofn(ofn_path)
+            robot.convert(ofn_path, path)
 
     def write_rdf(self, path: str | Path) -> None:
         """Write as Turtle RDF."""
