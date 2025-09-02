@@ -46,6 +46,8 @@ VERSION_PREFIXES = [
     "http://w3id.org/nfdi4ing/metadata4ing/",  # like http://w3id.org/nfdi4ing/metadata4ing/1.3.1
     "http://www.semanticweb.com/OntoRxn/",  # like http://www.semanticweb.com/OntoRxn/0.2.5
     "https://w3id.org/lehrplan/ontology/",  # like in https://w3id.org/lehrplan/ontology/1.0.0-4
+    "http://www.ebi.ac.uk/swo/version/",  # http://www.ebi.ac.uk/swo/version/6.0
+    "https://w3id.org/emi/version/",
 ]
 VERSION_PREFIX_SPLITS = [
     "http://www.ebi.ac.uk/efo/releases/v",
