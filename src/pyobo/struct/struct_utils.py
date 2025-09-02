@@ -59,18 +59,26 @@ class Annotation(NamedTuple):
     value: Reference | OBOLiteral
 
     @classmethod
-    def float(cls, predicate: Reference, value: float) -> Self:
+    def float(cls, predicate: Reference | TypeDef, value: float) -> Self:
         """Return a literal property for a float."""
+        if isinstance(predicate, TypeDef):
+            predicate = predicate.reference
         return cls(predicate, OBOLiteral.float(value))
 
     @classmethod
-    def uri(cls, predicate: Reference, uri: str) -> Self:
+    def uri(cls, predicate: Reference | TypeDef, uri: str) -> Self:
         """Return a literal property for a URI."""
+        if isinstance(predicate, TypeDef):
+            predicate = predicate.reference
         return cls(predicate, OBOLiteral.uri(uri))
 
     @classmethod
-    def string(cls, predicate: Reference, value: str, *, language: str | None = None) -> Self:
+    def string(
+        cls, predicate: Reference | TypeDef, value: str, *, language: str | None = None
+    ) -> Self:
         """Return a literal property for a float."""
+        if isinstance(predicate, TypeDef):
+            predicate = predicate.reference
         return cls(predicate, OBOLiteral.string(value, language=language))
 
     @staticmethod
