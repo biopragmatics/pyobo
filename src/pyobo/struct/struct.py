@@ -2321,21 +2321,27 @@ def build_ontology(
     repository: str | None = None,
 ) -> Obo:
     """Build an ontology from parts."""
-    if name is None:
-        name = bioregistry.get_name(prefix)
-    # TODO auto-populate license and other properties
-
     if properties is None:
         properties = []
     if typedefs is None:
         typedefs = []
+
+    if name is None:
+        name = bioregistry.get_name(prefix)
+
+    if name is not None:
+        from .typedef import has_title
+
+        properties.append(Annotation.string(has_title.reference, name))
+        if has_title not in typedefs:
+            typedefs.append(has_title)
 
     if description:
         from .typedef import has_description
 
         properties.append(Annotation.string(has_description.reference, description))
         if has_description not in typedefs:
-            typedefs.append(has_description)  # TODO get proper typedef
+            typedefs.append(has_description)
 
     if homepage:
         from .typedef import has_homepage
