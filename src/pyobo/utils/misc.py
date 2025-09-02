@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from datetime import datetime
 
 import bioversions.utils
@@ -193,6 +193,16 @@ def _prioritize_version(
 
     logger.debug("[%s] does not report a version nor a date", ontology_prefix)
     return None
+
+
+def _get_getter_urls(prefix: str) -> Iterable[tuple[OntologyFormat, str]]:
+    # assume that all possible files that can be downloaded
+    # are in sync and have the same version
+    for ontology_format, func in ONTOLOGY_GETTERS:
+        url = func(prefix)
+        if url is None:
+            continue
+        yield ontology_format, url
 
 
 def _get_version_from_artifact(prefix: str) -> str | None:
