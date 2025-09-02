@@ -55,11 +55,15 @@ def _get_term(record: dict[str, Any]) -> Term | None:
     except ValidationError:
         tqdm.write(f"invalid: {record['licenseId']}")
         return None
-    term = Term(
-        reference=reference,
-        is_obsolete=True if record.get("isDeprecatedLicenseId") else None,
-        # type="Instance",
-    ).append_parent(ROOT)
+    term = (
+        Term(
+            reference=reference,
+            is_obsolete=True if record.get("isDeprecatedLicenseId") else None,
+            # type="Instance",
+        )
+        .append_parent(ROOT)
+        .append_synonym(record["licenseId"])
+    )
     if record.get("isOsiApproved"):
         term.annotate_boolean(IS_OSI, True)
     if record.get("isFsfLibre"):
@@ -82,4 +86,4 @@ class SPDXLicenseGetter(Obo):
 
 
 if __name__ == "__main__":
-    SPDXLicenseGetter.cli(["--obo", "--owl", "--rewrite"])
+    SPDXLicenseGetter.cli()
