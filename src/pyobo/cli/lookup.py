@@ -63,6 +63,11 @@ def lookup_annotate(f: Clickable) -> Clickable:
         force_process_option,
         strict_option,
         version_option,
+        click.option(
+            "--robot-check",
+            is_flag=True,
+            help="Turn on --check when using ROBOT to convert from OWL to OBO",
+        ),
     ]:
         f = decorator(f)
     return f
@@ -122,7 +127,7 @@ def ids(**kwargs: Unpack[LookupKwargs]) -> None:
 
 @lookup_annotate
 @identifier_option
-def names(identifier: str | None, **kwargs: Unpack[LookupKwargs]) -> None:
+def names(identifier: str | None, robot_check: bool, **kwargs: Unpack[LookupKwargs]) -> None:
     """Page through the identifiers and names of entities in the given namespace."""
     id_to_name = get_id_name_mapping(**kwargs)
     _help_page_mapping(id_to_name, identifier=identifier)

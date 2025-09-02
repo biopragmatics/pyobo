@@ -148,6 +148,7 @@ class GetOntologyKwargs(SlimGetOntologyKwargs):
     version: NotRequired[str | None]
     cache: NotRequired[bool]
     use_tqdm: NotRequired[bool]
+    robot_check: NotRequired[bool]
 
 
 def check_should_force(data: GetOntologyKwargs) -> bool:
@@ -215,7 +216,7 @@ class OntologyPathPack(NamedTuple):
 #: since order implicitly defines priority
 ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | None]]] = [
     ("obo", bioregistry.get_obo_download),
-    ("owl", bioregistry.get_owl_download),
     ("json", bioregistry.get_json_download),
+    ("owl", bioregistry.get_owl_download),
     ("rdf", bioregistry.get_rdf_download),
 ]
