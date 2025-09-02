@@ -156,6 +156,9 @@ gilda = [
 gilda-slim = [
     "ssslm[gilda-slim]",
 ]
+sources = [
+    "pyobo[drugcentral,pid]",
+]
 drugcentral =[
     "psycopg2-binary",
 ]
