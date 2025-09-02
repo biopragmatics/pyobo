@@ -287,7 +287,9 @@ def wrap_norm_prefix(f):
                 raise ValueError(f"Invalid prefix: {prefix.prefix}")
             prefix = ReferenceTuple(norm_prefix, prefix.identifier)
         else:
-            raise TypeError
+            raise TypeError(
+                f"prefix should be given as a string or reference object. Got {type(prefix)} {prefix}"
+            )
         return f(prefix, *args, **kwargs)
 
     return _wrapped
