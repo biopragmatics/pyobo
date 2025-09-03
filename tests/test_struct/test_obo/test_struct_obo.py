@@ -459,3 +459,49 @@ class TestOBOHeader(unittest.TestCase):
             """,
             ontology,
         )
+
+    def test_ontology_iri(self) -> None:
+        """Test adding an ontology IRI."""
+        ontology = build_ontology(
+            prefix="xxx",
+            ontology_iri="https://example.org/xxx.owl",
+        )
+        # self.assert_obo_lines(
+        #     r"""
+        #     format-version: 1.4
+        #     idspace: dcterms http://purl.org/dc/terms/ "Dublin Core Metadata Initiative Terms"
+        #     ontology: xxx
+        #     property_value: dcterms:description "MeSH \(Medical Subject Headings\)" xsd:string
+        #     """,
+        #     ontology,
+        # )
+        self.assert_ofn_lines(
+            """
+            Prefix(dcterms:=<http://purl.org/dc/terms/>)
+            Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
+            Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+            Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
+            Prefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)
+
+            Ontology(<https://example.org/xxx.owl>
+            )
+            """,
+            ontology,
+        )
+        self.assert_owl_lines(
+            """
+            <?xml version="1.0"?>
+            <rdf:RDF xmlns="https://example.org/xxx.owl#"
+                 xml:base="https://example.org/xxx.owl"
+                 xmlns:owl="http://www.w3.org/2002/07/owl#"
+                 xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+                 xmlns:xml="http://www.w3.org/XML/1998/namespace"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+                 xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+                 xmlns:dcterms="http://purl.org/dc/terms/">
+                <owl:Ontology rdf:about="https://example.org/xxx.owl">
+                </owl:Ontology>
+            </rdf:RDF>
+            """,
+            ontology,
+        )
