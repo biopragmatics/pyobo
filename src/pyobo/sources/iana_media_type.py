@@ -6,6 +6,7 @@
 from collections.abc import Iterable
 
 import requests
+from curies.vocabulary import xsd_string
 
 from pyobo import Obo, Reference, Term, TypeDef, default_reference
 from pyobo.struct import Annotation
@@ -56,7 +57,11 @@ def _get_mimetypes():
 
 
 PREDICATE = TypeDef(
-    reference=default_reference(PREFIX, "hasExtension"),
+    reference=default_reference(
+        prefix=PREFIX, identifier="hasExtension", name="media type uses file extension"
+    ),
+    domain=ROOT.reference,
+    range=xsd_string,
     definition="Connects a media type to a string representing the file extension",
     is_metadata_tag=True,
 )
