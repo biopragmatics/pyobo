@@ -135,6 +135,7 @@ rdf_type = TypeDef(reference=v.rdf_type)
 subproperty_of = TypeDef(reference=v.subproperty_of)
 see_also = TypeDef(reference=v.see_also, is_metadata_tag=True)
 comment = TypeDef(reference=v.comment, is_metadata_tag=True)
+label = TypeDef(reference=v.label, is_metadata_tag=True)
 has_member = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0002351", name="has member"),
 )
