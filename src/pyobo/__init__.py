@@ -65,6 +65,7 @@ from .plugins import (
     run_nomenclature_plugin,
 )
 from .struct import (
+    Annotation,
     Obo,
     Reference,
     StanzaType,
@@ -80,6 +81,7 @@ from .utils.path import ensure_path
 from .version import get_version
 
 __all__ = [
+    "Annotation",
     "Obo",
     "Reference",
     "StanzaType",
