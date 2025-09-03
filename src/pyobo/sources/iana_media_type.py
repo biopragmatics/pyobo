@@ -6,11 +6,11 @@
 from collections.abc import Iterable
 
 import requests
-from curies.vocabulary import xsd_string
 
 from pyobo import Obo, Reference, Term, TypeDef, default_reference
 from pyobo.struct import Annotation
 from pyobo.struct.typedef import has_source, term_replaced_by
+from pyobo.struct.vocabulary import xsd_string
 from pyobo.utils.path import ensure_df
 
 __all__ = ["IANAGetter"]
@@ -138,4 +138,4 @@ def _process_references(cell: str) -> list[str]:
 
 
 if __name__ == "__main__":
-    IANAGetter.cli(["--owl", "--obo"])
+    IANAGetter.cli()
