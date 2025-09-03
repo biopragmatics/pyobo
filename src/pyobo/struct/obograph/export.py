@@ -70,8 +70,12 @@ def to_parsed_obograph(obo: Obo) -> og.StandardizedGraphDocument:
 
 
 def _to_parsed_graph(obo: Obo) -> og.StandardizedGraph:
+    if obo.ontology_iri:
+        ontology_iri = obo.ontology_iri
+    else:
+        ontology_iri = f"http://purl.obolibrary.org/obo/{obo.ontology}.owl"
     return og.StandardizedGraph(
-        id=f"http://purl.obolibrary.org/obo/{obo.ontology}.owl",
+        id=ontology_iri,
         meta=_get_meta(obo),
         nodes=_get_nodes(obo),
         edges=_get_edges(obo),
@@ -167,7 +171,9 @@ def _get_meta(obo: Obo) -> og.StandardizedMeta | None:
             )
         )
 
-    if obo.data_version:
+    if obo.ontology_version_iri:
+        version_iri = obo.ontology_version_iri
+    elif obo.data_version:
         version_iri = (
             f"http://purl.obolibrary.org/obo/{obo.ontology}/{obo.data_version}/{obo.ontology}.owl"
         )

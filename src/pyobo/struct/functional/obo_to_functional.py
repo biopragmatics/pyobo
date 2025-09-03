@@ -39,9 +39,15 @@ def get_ofn_from_obo(
     prefix = obo_ontology.ontology
     base = f"{_BASE}/{prefix}"
     if iri is None:
-        iri = f"{base}/{prefix}.ofn"
-    if version_iri is None and obo_ontology.data_version:
-        version_iri = f"{base}/{obo_ontology.data_version}/{prefix}.ofn"
+        if obo_ontology.ontology_iri:
+            iri = obo_ontology.ontology_version_iri
+        else:
+            iri = f"{base}/{prefix}.ofn"
+    if version_iri is None:
+        if obo_ontology.ontology_version_iri:
+            version_iri = obo_ontology.ontology_version_iri
+        elif obo_ontology.data_version:
+            version_iri = f"{base}/{obo_ontology.data_version}/{prefix}.ofn"
     ofn_ontology = Ontology(
         iri=iri,
         version_iri=version_iri,

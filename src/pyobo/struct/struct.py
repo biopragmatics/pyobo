@@ -594,6 +594,10 @@ class Obo:
 
     imports: ClassVar[list[str] | None] = None
 
+    ontology_iri: ClassVar[str | None ] = None
+
+    ontology_version_iri: ClassVar[str | None ] = None
+
     def __post_init__(self):
         """Run post-init checks."""
         if self.ontology is None:
@@ -2319,6 +2323,8 @@ def build_ontology(
     mailing_list: str | None = None,
     logo: str | None = None,
     repository: str | None = None,
+    ontology_iri: str | None = None,
+    ontology_version_iri: str | None = None,
 ) -> Obo:
     """Build an ontology from parts."""
     if name is None:
@@ -2378,6 +2384,8 @@ def build_ontology(
         _subsetdefs=subsetdefs,
         _property_values=properties,
         _imports=imports,
+        _ontology_iri=ontology_iri,
+        _ontology_version_iri=ontology_version_iri,
         terms=terms,
     )
 
@@ -2395,6 +2403,8 @@ def make_ad_hoc_ontology(
     _subsetdefs: list[tuple[Reference, str]] | None = None,
     _property_values: list[Annotation] | None = None,
     _imports: list[str] | None = None,
+    _ontology_iri: str | None = None,
+    _ontology_version_iri: str | None = None,
     *,
     terms: list[Term] | None = None,
 ) -> Obo:
@@ -2413,6 +2423,8 @@ def make_ad_hoc_ontology(
         subsetdefs = _subsetdefs
         property_values = _property_values
         imports = _imports
+        ontology_iri = _ontology_iri
+        ontology_version_iri = _ontology_version_iri
 
         def __post_init__(self):
             self.date = _date
