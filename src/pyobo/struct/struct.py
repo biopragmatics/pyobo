@@ -594,9 +594,9 @@ class Obo:
 
     imports: ClassVar[list[str] | None] = None
 
-    ontology_iri: ClassVar[str | None ] = None
+    ontology_iri: ClassVar[str | None] = None
 
-    ontology_version_iri: ClassVar[str | None ] = None
+    ontology_version_iri: ClassVar[str | None] = None
 
     def __post_init__(self):
         """Run post-init checks."""

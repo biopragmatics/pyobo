@@ -40,7 +40,7 @@ def get_ofn_from_obo(
     base = f"{_BASE}/{prefix}"
     if iri is None:
         if obo_ontology.ontology_iri:
-            iri = obo_ontology.ontology_version_iri
+            iri = obo_ontology.ontology_iri
         else:
             iri = f"{base}/{prefix}.ofn"
     if version_iri is None:
