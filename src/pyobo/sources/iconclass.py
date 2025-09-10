@@ -13,16 +13,15 @@ __all__ = [
 ]
 
 PREFIX = "iconclass"
-
 BASE_URL = "https://github.com/iconclass/data/raw/refs/heads/main/txt/en/txt_en_{}.txt"
-
 URLS = [
     BASE_URL.format("0_1"),
     BASE_URL.format("2_3"),
     BASE_URL.format("4"),
     BASE_URL.format("5_6_7_8"),
     BASE_URL.format("9"),
-    # maybe keys, maybe shakespeare
+    BASE_URL.format("keys"),
+    # shakespeare
 ]
 
 
@@ -53,4 +52,4 @@ class IconclassGetter(Obo):
 
 
 if __name__ == "__main__":
-    IconclassGetter.cli(["--obo", "--owl"])
+    IconclassGetter.cli()
