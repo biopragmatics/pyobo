@@ -8,7 +8,7 @@ import curies
 import numpy as np
 import pandas as pd
 
-from pyobo.api.names import get_definition, get_ids, get_name
+from pyobo.api.names import get_definition, get_name, get_references
 
 if TYPE_CHECKING:
     import sentence_transformers
@@ -52,11 +52,11 @@ def get_text_embeddings_df(
     :param model: A sentence transformer model. Defaults to ``all-MiniLM-L6-v2`` if not given.
     """
     luids, texts = [], []
-    for luid in get_ids(prefix):
-        text = _get_text(luid)
+    for reference in get_references(prefix):
+        text = _get_text(reference)
         if text is None:
             continue
-        luids.append(luid)
+        luids.append(reference.identifier)
         texts.append(text)
     if model is None:
         model = get_text_embedding_model()
