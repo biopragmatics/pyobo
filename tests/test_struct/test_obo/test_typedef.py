@@ -835,7 +835,7 @@ class TestTypeDef(unittest.TestCase):
 
     def test_33_is_obsolete(self) -> None:
         """Test the ``is_obsolete`` tag."""
-        td_true, td_false = self.assert_boolean_tag("is_obsolete", funowl_curie="owl:deprecated")
+        self.assert_boolean_tag("is_obsolete", funowl_curie="owl:deprecated")
 
     def test_34_created_by(self) -> None:
         """Test the ``created_by`` tag."""

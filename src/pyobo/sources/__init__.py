@@ -34,6 +34,7 @@ from .gwascentral import GWASCentralPhenotypeGetter, GWASCentralStudyGetter
 from .hgnc import HGNCGetter, HGNCGroupGetter
 from .iana_media_type import IANAGetter
 from .icd import ICD10Getter, ICD11Getter
+from .iconclass import IconclassGetter
 from .intact import IntactGetter
 from .interpro import InterProGetter
 from .itis import ITISGetter
@@ -115,6 +116,7 @@ __all__ = [
     "ICD10Getter",
     "ICD11Getter",
     "ITISGetter",
+    "IconclassGetter",
     "IntactGetter",
     "InterProGetter",
     "KEGGGeneGetter",
