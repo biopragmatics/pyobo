@@ -6,8 +6,9 @@ from typing import TYPE_CHECKING
 
 import curies
 import numpy as np
+import pandas as pd
 
-from pyobo.api.names import get_definition, get_name
+from pyobo.api.names import get_definition, get_ids, get_name
 
 if TYPE_CHECKING:
     import sentence_transformers
@@ -16,6 +17,7 @@ __all__ = [
     "get_text_embedding",
     "get_text_embedding_model",
     "get_text_embedding_similarity",
+    "get_text_embeddings_df",
 ]
 
 
@@ -37,6 +39,29 @@ def _get_text(
     if description:
         name += " " + description
     return name
+
+
+def get_text_embeddings_df(
+    prefix: str,
+    *,
+    model: sentence_transformers.SentenceTransformer | None = None,
+) -> pd.DataFrame:
+    """Get embeddings for all entities in the resource.
+
+    :param prefix: A reference, either as a string or Reference object
+    :param model: A sentence transformer model. Defaults to ``all-MiniLM-L6-v2`` if not given.
+    """
+    luids, texts = [], []
+    for luid in get_ids(prefix):
+        text = _get_text(luid)
+        if text is None:
+            continue
+        luids.append(luid)
+        texts.append(text)
+    if model is None:
+        model = get_text_embedding_model()
+    res = model.encode(texts)
+    return pd.DataFrame(res, index=luids)
 
 
 def get_text_embedding(
