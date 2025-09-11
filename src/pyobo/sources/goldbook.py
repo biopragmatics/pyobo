@@ -4,6 +4,7 @@ import json.decoder
 from collections.abc import Iterable
 from typing import Any
 
+import pystow.utils
 import requests
 from tqdm import tqdm
 
@@ -37,7 +38,7 @@ def _get_term(luid: str, record: dict[str, Any]) -> Term | None:
     url = TERM_URL_FORMAT.format(luid)
     try:
         res = ensure_json(PREFIX, "terms", url=url, name=f"{luid}.json")
-    except json.decoder.JSONDecodeError:
+    except (json.decoder.JSONDecodeError, pystow.utils.DownloadError):
         tqdm.write(f"[{PREFIX}:{luid}] failed to parse data, see {url}")
         return None
 
