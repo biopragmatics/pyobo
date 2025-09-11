@@ -1,24 +1,43 @@
+"""An ontology representation of IUPAC Gold Book."""
+
+from collections.abc import Iterable
+from typing import Any
+
 import requests
-from typing import Iterable, Any
-from pyobo.struct import Term, Reference
 from tqdm import tqdm
+
+from pyobo.struct import Obo, Reference, Term
+from pyobo.utils.path import ensure_json
 
 PREFIX = "goldbook"
 URL = "https://goldbook.iupac.org/terms/index/all/json/download"
-XX = "https://goldbook.iupac.org/terms/view/{}/json"
+TERM_URL_FORMAT = "https://goldbook.iupac.org/terms/view/{}/json"
 
 
-def iter_terms() -> Iterable[Term]:
+class GoldBookGetter(Obo):
+    """An ontology representation of IUPAC Gold Book."""
+
+    ontology = PREFIX
+    dynamic_version = True
+
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
+        """Iterate over terms in the ontology."""
+        return _iter_terms()
+
+
+def _iter_terms() -> Iterable[Term]:
     res = requests.get(URL, timeout=15).json()
-    for luid, record in tqdm(res['terms']['list'].items()):
+    for luid, record in tqdm(res["terms"]["list"].items()):
         yield _get_term(luid, record)
 
+
 def _get_term(luid: str, record: dict[str, Any]) -> Term:
-    res = requests.get(XX.format(luid)).json()
-    term = res['term']
-    definitions = term['definitions']
+    url = TERM_URL_FORMAT.format(luid)
+    res = ensure_json(PREFIX, "terms", url=url, name=f"{luid}.json")
+    term = res["term"]
+    definitions = term["definitions"]
     if definitions:
-        definition = definitions[0]['text']
+        definition = definitions[0]["text"]
     else:
         definition = None
 
@@ -26,7 +45,11 @@ def _get_term(luid: str, record: dict[str, Any]) -> Term:
         reference=Reference(
             prefix=PREFIX,
             identifier=luid,
-            name=record['title'],
+            name=record["title"],
         ),
         definition=definition,
     )
+
+
+if __name__ == "__main__":
+    GoldBookGetter.cli()

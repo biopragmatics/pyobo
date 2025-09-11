@@ -107,12 +107,11 @@ def ensure_json(
     version: VersionHint = None,
     name: str | None = None,
     force: bool = False,
-    sep: str = "\t",
     dtype=str,
     verify: bool = True,
     backend: Literal["requests", "urllib"] | None = None,
     **kwargs,
-) -> pd.DataFrame:
+) -> Any:
     """Download a file and open as JSON."""
     _path = ensure_path(
         prefix,
