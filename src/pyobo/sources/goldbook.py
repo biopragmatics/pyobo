@@ -28,7 +28,7 @@ class GoldBookGetter(Obo):
 
 def _iter_terms() -> Iterable[Term]:
     res = requests.get(URL, timeout=15).json()
-    for luid, record in tqdm(res["terms"]["list"].items()):
+    for luid, record in tqdm(res["terms"]["list"].items(), unit_scale=True):
         if term := _get_term(luid, record):
             yield term
 
@@ -38,7 +38,7 @@ def _get_term(luid: str, record: dict[str, Any]) -> Term | None:
     try:
         res = ensure_json(PREFIX, "terms", url=url, name=f"{luid}.json")
     except json.decoder.JSONDecodeError:
-        tqdm.write(f"failed to parse {luid} data")
+        tqdm.write(f"[{PREFIX}:{luid}] failed to parse data, see {url}")
         return None
 
     term = res["term"]
