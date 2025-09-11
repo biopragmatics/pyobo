@@ -1,5 +1,6 @@
 """An ontology representation of IUPAC Gold Book."""
 
+import json.decoder
 from collections.abc import Iterable
 from typing import Any
 
@@ -28,12 +29,18 @@ class GoldBookGetter(Obo):
 def _iter_terms() -> Iterable[Term]:
     res = requests.get(URL, timeout=15).json()
     for luid, record in tqdm(res["terms"]["list"].items()):
-        yield _get_term(luid, record)
+        if term := _get_term(luid, record):
+            yield term
 
 
-def _get_term(luid: str, record: dict[str, Any]) -> Term:
+def _get_term(luid: str, record: dict[str, Any]) -> Term | None:
     url = TERM_URL_FORMAT.format(luid)
-    res = ensure_json(PREFIX, "terms", url=url, name=f"{luid}.json")
+    try:
+        res = ensure_json(PREFIX, "terms", url=url, name=f"{luid}.json")
+    except json.decoder.JSONDecodeError:
+        tqdm.write(f"failed to parse {luid} data")
+        return None
+
     term = res["term"]
     definitions = term["definitions"]
     if definitions:
