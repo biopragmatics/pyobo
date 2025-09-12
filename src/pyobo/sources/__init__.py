@@ -29,6 +29,7 @@ from .famplex import FamPlexGetter
 from .flybase import FlyBaseGetter
 from .gard import GARDGetter
 from .geonames import GeonamesFeatureGetter, GeonamesGetter
+from .goldbook import GoldBookGetter
 from .gtdb import GTDBGetter
 from .gwascentral import GWASCentralPhenotypeGetter, GWASCentralStudyGetter
 from .hgnc import HGNCGetter, HGNCGroupGetter
@@ -110,6 +111,7 @@ __all__ = [
     "GWASCentralStudyGetter",
     "GeonamesFeatureGetter",
     "GeonamesGetter",
+    "GoldBookGetter",
     "HGNCGetter",
     "HGNCGroupGetter",
     "IANAGetter",

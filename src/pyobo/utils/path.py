@@ -84,7 +84,7 @@ def ensure_df(
     dtype=str,
     verify: bool = True,
     backend: Literal["requests", "urllib"] | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> pd.DataFrame:
     """Download a file and open as a dataframe."""
     _path = ensure_path(
@@ -107,12 +107,11 @@ def ensure_json(
     version: VersionHint = None,
     name: str | None = None,
     force: bool = False,
-    sep: str = "\t",
     dtype=str,
     verify: bool = True,
     backend: Literal["requests", "urllib"] | None = None,
-    **kwargs,
-) -> pd.DataFrame:
+    **kwargs: Any,
+) -> Any:
     """Download a file and open as JSON."""
     _path = ensure_path(
         prefix,
