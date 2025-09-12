@@ -135,9 +135,11 @@ def get_relation_mapping(
 ) -> Mapping[str, str]:
     """Get relations from identifiers in the source prefix to target prefix with the given relation.
 
-    .. warning:: Assumes there's only one version of the property for each term.
+    .. warning::
 
-     Example usage: get homology between HGNC and MGI:
+        Assumes there's only one version of the property for each term.
+
+    Example usage: get homology between HGNC and MGI:
 
     >>> import pyobo
     >>> human_mapt_hgnc_id = "6893"
@@ -161,16 +163,18 @@ def get_relation(
 ) -> str | None:
     """Get the target identifier corresponding to the given relationship from the source prefix/identifier pair.
 
-    .. warning:: Assumes there's only one version of the property for each term.
+    .. warning::
 
-     Example usage: get homology between MAPT in HGNC and MGI:
+        Assumes there's only one version of the property for each term.
+
+    Example usage: get homology between MAPT in HGNC and MGI:
 
     >>> import pyobo
     >>> human_mapt_hgnc_id = "6893"
     >>> mouse_mapt_mgi_id = "97180"
     >>> assert mouse_mapt_mgi_id == pyobo.get_relation(
     ...     "hgnc", human_mapt_hgnc_id, "ro:HOM0000017", "mgi"
-    ... )
+    >>> )
     """
     relation_mapping = get_relation_mapping(
         prefix=prefix,

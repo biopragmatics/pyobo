@@ -142,9 +142,11 @@ def get_preferred_curie(
 def default_reference(prefix: str, identifier: str, name: str | None = None) -> Reference:
     """Create a CURIE for an "unqualified" reference.
 
-    :param prefix: The prefix of the ontology in which the "unqualified" reference is made
+    :param prefix: The prefix of the ontology in which the "unqualified" reference is
+        made
     :param identifier: The "unqualified" reference. For example, if you just write
         "located_in" somewhere there is supposed to be a CURIE
+
     :returns: A CURIE for the "unqualified" reference based on the OBO semantic space
 
     >>> default_reference("chebi", "conjugate_base_of")

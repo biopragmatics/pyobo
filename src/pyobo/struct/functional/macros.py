@@ -1,7 +1,7 @@
 """Macros over functional OWL.
 
-This module contains classes that are extensions
-to functional OWL that reflect common usage.
+This module contains classes that are extensions to functional OWL that reflect common
+usage.
 """
 
 import typing as t
@@ -57,8 +57,7 @@ class Macro(f.Box):
 class RelationshipMacro(Macro):
     """A macro for an object-to-object relationship.
 
-    Assert that the RAET1E gene from HGNC (16793) is
-    only in the human taxon (9606)
+    Assert that the RAET1E gene from HGNC (16793) is only in the human taxon (9606)
 
     >>> RelationshipMacro("hgnc:16793", "RO:0002160", "NCBITaxon:9606").to_funowl()
     'SubClassOf(hgnc:16793 ObjectSomeValuesFrom(RO:0002160 NCBITaxon:9606))'
@@ -226,8 +225,8 @@ class SynonymMacro(Macro):
     >>> SynonymMacro("hgnc:16793", "ULBP4").to_funowl()
     'AnnotationAssertion(oboInOwl:hasRelatedSynonym hgnc:16793 "ULBP4")'
 
-    You can make the predicate more explicit either with OBO-style
-    scoping (``EXACT``, ``BROAD``, ``NARROW``, ``RELATED``) or a CURIE/:class:`curies.Reference`/URIRef
+    You can make the predicate more explicit either with OBO-style scoping (``EXACT``,
+    ``BROAD``, ``NARROW``, ``RELATED``) or a CURIE/:class:`curies.Reference`/URIRef
 
     >>> SynonymMacro("hgnc:16793", "ULBP4", "EXACT").to_funowl()
     'AnnotationAssertion(oboInOwl:hasExactSynonym hgnc:16793 "ULBP4")'
@@ -337,14 +336,15 @@ class HoldsOverChain(Macro):
 class TransitiveOver(HoldsOverChain):
     """A macro for the OBO-style "transitive over" annotation.
 
-    For example, ``BFO:0000066`` (occurs in) is transitive over
-    ``BFO:0000050`` (part of). This means that if X occurs in Y,
-    and Y is a part of Z, then X occurs in Z.
+    For example, ``BFO:0000066`` (occurs in) is transitive over ``BFO:0000050`` (part
+    of). This means that if X occurs in Y, and Y is a part of Z, then X occurs in Z.
 
     >>> TransitiveOver("BFO:0000066", "BFO:0000050").to_funowl()
     'SubObjectPropertyOf(ObjectPropertyChain(BFO:0000066 BFO:0000050) BFO:0000066)'
 
-    .. note:: This is a special case of :class:`HoldsOverChain`
+    .. note::
+
+        This is a special case of :class:`HoldsOverChain`
     """
 
     def __init__(self, predicate: f.IdentifierBoxOrHint, target: f.IdentifierBoxOrHint):
@@ -355,8 +355,8 @@ class TransitiveOver(HoldsOverChain):
 class DataPropertyMaxCardinality(Macro):
     r"""A macro over :class:`DataMaxCardinality` that adds an axiom.
 
-    For example, each person can be annotated with a maximum of one age.
-    This can be represented as:
+    For example, each person can be annotated with a maximum of one age. This can be
+    represented as:
 
     >>> DataPropertyMaxCardinality(1, "a:hasAge").to_funowl()
     'SubClassOf(owl:Thing DataMaxCardinality(1 a:hasAge))'
