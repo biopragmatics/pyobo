@@ -383,7 +383,8 @@ class Term(Stanza):
     def get_species(self, prefix: str = NCBITAXON_PREFIX) -> Reference | None:
         """Get the species if it exists.
 
-        :param prefix: The prefix to use in case the term has several species annotations.
+        :param prefix: The prefix to use in case the term has several species
+            annotations.
         """
         for species in self.get_relationships(v.from_species):
             if species.prefix == prefix:
@@ -1651,7 +1652,9 @@ class Obo:
     ) -> Mapping[str, str]:
         """Get a mapping from a term's identifier to the property.
 
-        .. warning:: Assumes there's only one version of the property for each term.
+        .. warning::
+
+            Assumes there's only one version of the property for each term.
         """
         return {
             term.identifier: value
@@ -1692,8 +1695,8 @@ class Obo:
     ) -> Iterable[tuple[Stanza, TypeDef, Reference]]:
         """Iterate over tuples of terms, relations, and their targets.
 
-        This only outputs stuff from the `relationship:` tag, not
-        all possible triples. For that, see :func:`iterate_edges`.
+        This only outputs stuff from the `relationship:` tag, not all possible triples.
+        For that, see :func:`iterate_edges`.
         """
         _warned: set[ReferenceTuple] = set()
         typedefs = self._index_typedefs()
@@ -1804,9 +1807,11 @@ class Obo:
     ) -> Mapping[str, str]:
         """Get a mapping from the term's identifier to the target's identifier.
 
-        .. warning:: Assumes there's only one version of the property for each term.
+        .. warning::
 
-         Example usage: get homology between HGNC and MGI:
+            Assumes there's only one version of the property for each term.
+
+        Example usage: get homology between HGNC and MGI:
 
         >>> from pyobo.sources.hgnc import HGNCGetter
         >>> obo = HGNCGetter()
@@ -2031,7 +2036,8 @@ class Obo:
 class TypeDef(Stanza):
     """A type definition in OBO.
 
-    See the subsection of https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.2.2.
+    See the subsection of
+    https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.2.2.
     """
 
     reference: Annotated[Reference, 1]
@@ -2126,14 +2132,16 @@ class TypeDef(Stanza):
     ) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file.
 
-        :param ontology_prefix:
-            The prefix of the ontology into which the type definition is being written.
-            This is used for compressing builtin identifiers
-        :yield:
-            The lines to write to an OBO file
+        :param ontology_prefix: The prefix of the ontology into which the type
+            definition is being written. This is used for compressing builtin
+            identifiers
 
-        `S.3.5.5 <https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.3.5.5>`_
-        of the OBO Flat File Specification v1.4 says tags should appear in the following order:
+        :yield: The lines to write to an OBO file
+
+        `S.3.5.5
+        <https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.3.5.5>`_ of
+        the OBO Flat File Specification v1.4 says tags should appear in the following
+        order:
 
         1. id
         2. is_anonymous

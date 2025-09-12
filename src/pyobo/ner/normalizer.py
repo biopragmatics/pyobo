@@ -20,8 +20,8 @@ def ground(
 ) -> Reference | None:
     """Normalize a string given the prefix's labels and synonyms.
 
-    :param prefix: If a string, only grounds against that namespace. If a list, will try grounding
-        against all in that order
+    :param prefix: If a string, only grounds against that namespace. If a list, will try
+        grounding against all in that order
     :param query: The string to try grounding
     """
     grounder = get_grounder(prefix, **kwargs)
