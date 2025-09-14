@@ -2,14 +2,13 @@
 
 import json.decoder
 from collections.abc import Iterable
-from typing import Any
 
 import pystow.utils
 import requests
 from tqdm import tqdm
 
 from pyobo.struct import Obo, Reference, Term
-from pyobo.utils.path import ensure_json
+from pyobo.utils.path import ensure_path
 
 PREFIX = "goldbook"
 URL = "https://goldbook.iupac.org/terms/index/all/json/download"
@@ -29,34 +28,58 @@ class GoldBookGetter(Obo):
 
 def _iter_terms() -> Iterable[Term]:
     res = requests.get(URL, timeout=15).json()
-    for luid, record in tqdm(res["terms"]["list"].items(), unit_scale=True):
-        if term := _get_term(luid, record):
+    for identifier in tqdm(res["terms"]["list"], unit_scale=True):
+        if term := _get_term(identifier):
             yield term
 
 
-def _get_term(luid: str, record: dict[str, Any]) -> Term | None:
-    url = TERM_URL_FORMAT.format(luid)
+def _get_term(identifier: str) -> Term | None:
+    url = TERM_URL_FORMAT.format(identifier)
     try:
-        res = ensure_json(PREFIX, "terms", url=url, name=f"{luid}.json")
-    except (json.decoder.JSONDecodeError, pystow.utils.DownloadError):
-        tqdm.write(f"[{PREFIX}:{luid}] failed to parse data, see {url}")
+        path = ensure_path(PREFIX, "terms", url=url, name=f"{identifier}.json")
+    except pystow.utils.DownloadError:
+        tqdm.write(f"[{PREFIX}:{identifier}] failed to download {url}")
         return None
 
-    term = res["term"]
-    definitions = term["definitions"]
+    try:
+        with path.open() as file:
+            res = json.load(file)
+    except json.decoder.JSONDecodeError:
+        tqdm.write(f"[{PREFIX}:{identifier}] failed to parse data in {path}")
+        return None
+
+    record = res["term"]
+    definitions = record["definitions"]
     if definitions:
-        definition = definitions[0]["text"]
+        definition = _clean(definitions[0]["text"])
     else:
         definition = None
 
-    return Term(
+    term = Term(
         reference=Reference(
             prefix=PREFIX,
-            identifier=luid,
-            name=record["title"],
+            identifier=identifier,
+            name=record["title"].strip(),
         ),
         definition=definition,
     )
+
+    if synonym := record.get("synonym"):
+        if synonym.startswith("<"):
+            if synonym.startswith("<em>synonym</em>:"):
+                synonym = synonym.removeprefix("<em>synonym</em>:")
+                term.append_synonym(_clean(synonym))
+            elif synonym.startswith("<em>synonyms</em>:"):
+                for s in synonym.removeprefix("<em>synonyms</em>:").strip().split(","):
+                    term.append_synonym(_clean(s))
+            else:
+                tqdm.write(f'[{term.curie}] issue with synonym: {synonym}')
+
+    return term
+
+
+def _clean(s: str) -> str:
+    return s.strip().replace("\\n", "\n")
 
 
 if __name__ == "__main__":
