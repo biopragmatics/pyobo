@@ -165,10 +165,12 @@ drugcentral =[
 pid = [
     "protmapper",
 ]
+# note that scispacy currently only works on <= 3.12
+# because of its transitive dependencies
 scispacy = [
-    "scispacy; python_version <= '3.11'",
-    "spacy; python_version <= '3.11'",
-    "scipy<1.11; python_version <= '3.11'",
+    "scispacy; python_version <= '3.12'",
+    "spacy; python_version <= '3.12'",
+    "scipy<1.11; python_version <= '3.12'",
 ]
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
