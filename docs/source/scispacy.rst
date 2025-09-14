@@ -1,4 +1,4 @@
-SciSpacy Integration
+ScispaCy Integration
 ====================
 
 .. automodapi:: pyobo.ner.scispacy_utils
