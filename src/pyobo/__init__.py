@@ -59,7 +59,13 @@ from .api import (
     is_descendent,
 )
 from .getters import get_ontology
-from .ner import get_grounder, ground
+from .ner import (
+    get_grounder,
+    get_scispacy_entities,
+    get_scispacy_entity_linker,
+    get_scispacy_knowledgebase,
+    ground,
+)
 from .plugins import (
     has_nomenclature_plugin,
     iter_nomenclature_plugins,
@@ -140,6 +146,9 @@ __all__ = [
     "get_relation",
     "get_relation_mapping",
     "get_relations_df",
+    "get_scispacy_entities",
+    "get_scispacy_entity_linker",
+    "get_scispacy_knowledgebase",
     "get_species",
     "get_sssom_df",
     "get_subhierarchy",
