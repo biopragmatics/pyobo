@@ -1,4 +1,10 @@
-""":mod:`scispacy` implements a lexical index in :class:`scispacy.linking_utils.KnowledgeBase` which keeps track of labels, synonyms, and definitions for entities. These are used to construct a TF-IDF index and implement entity linking (als ocalled named entity normalization (NEN) or grounding) in :class:`scispacy.linking.EntityLinker`.
+"""A bridge between PyOBO and :mod:`scispacy`.
+
+:mod:`scispacy` implements a lexical index in
+:class:`scispacy.linking_utils.KnowledgeBase` which keeps track of labels, synonyms, and
+definitions for entities. These are used to construct a TF-IDF index and implement
+entity linking (also called named entity normalization (NEN) or grounding) in
+:class:`scispacy.linking.EntityLinker`.
 
 Constructing a Lexical Index
 ============================
