@@ -67,8 +67,21 @@ a definition.
 
 PyOBO provides a convenience function :func:`pyobo.get_scispacy_entity_linker` that
 wraps this workflow and also automatically caches the TF-IDF index constructed in the
-process in the correctly versioned folder in the PyOBO cache. Putting this all together
-with a full example:
+process in the correctly versioned folder in the PyOBO cache.
+
+.. code-block:: python
+
+    import pyobo
+    from scispacy.linking import EntityLinker
+
+    linker = pyobo.get_scispacy_entity_linker("hgnc", filter_for_definitions=False)
+
+Full Workflow
+=============
+
+Once an entity linker has been constructed, it can b used in series with a
+:mod:`spacy.Language` object instantiated with :func:`spacy.load` to ground named
+entities that were recognized by a model like ``en_core_web_sm``
 
 .. code-block:: python
 
@@ -76,15 +89,22 @@ with a full example:
     import spacy
     from scispacy.linking import EntityLinker
 
-    linker = pyobo.get_scispacy_entity_linker("hgnc", filter_for_definitions=False)
+    linker: EntityLinker = pyobo.get_scispacy_entity_linker("hgnc", filter_for_definitions=False)
 
     # now, put it all together with a NER model
     nlp = spacy.load("en_core_web_sm")
 
-    text = "RAC(Rho family)-alpha serine/threonine-protein kinase is an enzyme that in humans is encoded by the AKT1 gene."
+    text = (
+        "RAC(Rho family)-alpha serine/threonine-protein kinase "
+        "is an enzyme that in humans is encoded by the AKT1 gene."
+    )
     doc = linker(nlp(text))
-    for entity in doc.ents:
-        print(entity)
+    for span in doc.ents:
+        print(span, span.start_char, span.end_char, span._.kb_ents)
+
+This example recognizes the AKT serine/threonine kinase 1 (AKT1) gene and grounds it to
+`HGNC:391 <https://bioregistry.io/HGNC:391>`_. Note that they are stored in a hidden
+object inside the ``span`` object.
 """
 
 from __future__ import annotations
