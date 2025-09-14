@@ -1,5 +1,5 @@
-Bridge to SciSpacy
-==================
+SciSpacy Integration
+====================
 
 .. automodapi:: pyobo.ner.scispacy_utils
     :no-heading:
