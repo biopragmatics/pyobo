@@ -10,6 +10,7 @@ PyOBO |release| Documentation
     cli
     usage
     functional
+    scispacy
 
 Indices and Tables
 ------------------

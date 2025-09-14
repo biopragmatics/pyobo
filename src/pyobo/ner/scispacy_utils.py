@@ -1,45 +1,55 @@
-"""Wrapper around scispacy.
+"""
+:mod:`scispacy` implements a lexical index in :class:`scispacy.linking_utils.KnowledgeBase`
+which keeps track of labels, synonyms, and definitions for entities. These
+are used to construct a TF-IDF index and implement entity linking (als ocalled named entity normalization (NEN) or grounding)
+in :class:`scispacy.linking.EntityLinker`.
 
-New, :class:`KnowledgeBase` subclasses can be defined based on :mod:`pyobo` (after
-running ``pip install pyobo``) like in the following:
+Constructing a Lexical Index
+----------------------------
+
+An *ad hoc* SciSpacy lexical index can be constructed on-the-fly by passing a Bioregistry prefix to
+:func:`pyobo.get_scispacy_knowledgebase`. In the following example, the prefix ``to`` is used to construct a
+lexical index for the `Plant Trait Ontology <https://bioregistry.io/to>`_.
 
 .. code-block:: python
 
     import pyobo
-    from scispacy.linking_utils import KnowledgeBase, entities_from_pyobo
+    from scispacy.linking_utils import KnowledgeBase
 
+    kb: KnowledgeBase = pyobo.get_scispacy_knowledgebase("to")
+
+Alternatively, a reusable class can be defined like in the following:
+
+.. code-block:: python
+
+    import pyobo
+    from scispacy.linking_utils import KnowledgeBase
 
     class PlantTraitOntology(KnowledgeBase):
         def __init__(self) -> None:
-            # see https://bioregistry.io/registry/to
             super().__init__(pyobo.get_scispacy_entities("to"))
-
 
     kb = PlantTraitOntology()
 
-New _ad-hoc_ :class:`KnowledgeBase` instances can be constructed using :mod:`pyobo` like
-in the following, using the `Plant Trait Ontology <https://bioregistry.io/to>`_ as an
-example:
+Constructing an Entity Linker
+-----------------------------
+
+An entity linker can be constructed from a :class:`scispacy.linking_utils.KnowledgeBase`
+like in:
 
 .. code-block:: python
 
     import pyobo
-
-    kb = pyobo.get_scispacy_knowledgebase("to")
-
-You can go further and create a linker using the following:
-
-.. code-block:: python
-
-    import pyobo
-    import spacy
     from scispacy.linking import EntityLinker
 
     kb = pyobo.get_scispacy_knowledgebase("to")
     linker = EntityLinker.from_kb(kb, filter_for_definitions=False)
 
-This can be wrapped with :func:`pyobo.get_scispacy_entity_linker` like in, then put
-together with spacy to annotate text
+Where ``filter_for_definitions`` is set to ``False`` to retain entities that don't have a definition.
+
+PyOBO provides a convenience function :func:`pyobo.get_scispacy_entity_linker` that wraps this workflow
+and also automatically caches the TF-IDF index constructed in the process in the correctly versioned
+folder in the PyOBO cache. Putting this all together with a full example:
 
 .. code-block:: python
 
