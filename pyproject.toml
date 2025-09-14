@@ -166,7 +166,9 @@ pid = [
     "protmapper",
 ]
 # note that scispacy currently only works on <= 3.12
-# because of its transitive dependencies
+# because of its transitive dependencies. It also has
+# a hard cutoff on scipy because it relied on (private/unstable?)
+# functionality that no longer exists in newer versions
 scispacy = [
     "scispacy; python_version <= '3.12'",
     "spacy; python_version <= '3.12'",
