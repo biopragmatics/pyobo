@@ -88,6 +88,7 @@ entities that were recognized by a model like ``en_core_web_sm``
     import pyobo
     import spacy
     from scispacy.linking import EntityLinker
+    from tabulate import tabulate
 
     linker: EntityLinker = pyobo.get_scispacy_entity_linker("hgnc", filter_for_definitions=False)
 
@@ -99,12 +100,36 @@ entities that were recognized by a model like ``en_core_web_sm``
         "is an enzyme that in humans is encoded by the AKT1 gene."
     )
     doc = linker(nlp(text))
-    for span in doc.ents:
-        print(span, span.start_char, span.end_char, span._.kb_ents)
 
-This example recognizes the AKT serine/threonine kinase 1 (AKT1) gene and grounds it to
-`HGNC:391 <https://bioregistry.io/HGNC:391>`_. Note that they are stored in a hidden
-object inside the ``span`` object.
+    rows = [
+        (
+            span,
+            span.start_char,
+            span.end_char,
+            f"`{curie} <https://bioregistry.io/{curie}>`_",
+            score,
+        )
+        for span in doc.ents
+        for curie, score in span._.kb_ents
+    ]
+    print(tabulate(rows, headers=["text", "start", "end", "prefix", "identifier"], tablefmt="rst"))
+
+==== ===== === ============================================= ========
+text start end curie                                         score
+==== ===== === ============================================= ========
+AKT1 100   104 `hgnc:391 <https://bioregistry.io/hgnc:391>`_ 1
+AKT1 100   104 `hgnc:392 <https://bioregistry.io/hgnc:392>`_ 0.776504
+AKT1 100   104 `hgnc:393 <https://bioregistry.io/hgnc:393>`_ 0.764049
+==== ===== === ============================================= ========
+
+This example recognizes the AKT serine/threonine kinase 1 (AKT1) gene and provides three
+highly scored groundings, the best of which, `hgnc:391
+<https://bioregistry.io/hgnc:391>`_, is correct.
+
+.. note::
+
+    The groundings and scores are stored by SciSpacy in the hidden attribute
+    ``span._.kb_ents``.
 """
 
 from __future__ import annotations
@@ -162,6 +187,7 @@ def get_scispacy_entity_linker(
     version = get_version_from_kwargs(prefix, ontology_kwargs)
     scispacy_cache_directory = prefix_directory_join(prefix, "scispacy", version=version)
 
+    # TODO see if we can skip loading the KB
     kb = get_scispacy_knowledgebase(prefix, **ontology_kwargs)
     linker = EntityLinker.from_kb(
         kb,
@@ -204,6 +230,7 @@ def get_scispacy_entities(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> I
     """
     from scispacy.linking_utils import Entity
 
+    # TODO reuse labels, synonyms, and definitions cache
     ontology = get_ontology(prefix, **kwargs)
     for term in ontology:
         yield Entity(
