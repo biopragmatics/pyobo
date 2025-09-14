@@ -9,7 +9,7 @@ entity linking (also called named entity normalization (NEN) or grounding) in
 Constructing a Lexical Index
 ============================
 
-An *ad hoc* SciSpacy lexical index can be constructed on-the-fly by passing a
+An *ad hoc* ScispaCy lexical index can be constructed on-the-fly by passing a
 Bioregistry prefix to :func:`pyobo.get_scispacy_knowledgebase`. In the following
 example, the prefix ``to`` is used to construct a lexical index for the `Plant Trait
 Ontology <https://bioregistry.io/to>`_.
@@ -74,7 +74,7 @@ process in the correctly versioned folder in the PyOBO cache.
     import pyobo
     from scispacy.linking import EntityLinker
 
-    linker = pyobo.get_scispacy_entity_linker("hgnc", filter_for_definitions=False)
+    linker: EntityLinker = pyobo.get_scispacy_entity_linker("hgnc", filter_for_definitions=False)
 
 Full Workflow
 =============
@@ -128,7 +128,7 @@ highly scored groundings, the best of which, `hgnc:391
 
 .. note::
 
-    The groundings and scores are stored by SciSpacy in the hidden attribute
+    The groundings and scores are stored by ScispaCy in the hidden attribute
     ``span._.kb_ents``.
 """
 
@@ -162,12 +162,10 @@ def get_scispacy_entity_linker(
     candidate_generator_kwargs: dict[str, Any] | None = None,
     **entity_linker_kwargs: Any,
 ) -> EntityLinker:
-    """Get a knowledgebase object for usage with :mod:`scispacy`.
+    """Get an entity linker for usage with :mod:`scispacy`.
 
-    :param prefix :
-        The ontology's prefix, such as ``go` for Gene Ontology, ``doid`` for the Disease
-        Ontology, or more.
-
+    :param prefix: The ontology's prefix, such as ``go` for Gene Ontology, ``doid`` for
+        the Disease Ontology, or more.
     :param ontology_kwargs: keyword arguments to pass to :func:`pyobo.get_ontology`,
         such as ``version``.
     :param candidate_generator_kwargs: keyword arguments to pass to
@@ -199,14 +197,12 @@ def get_scispacy_entity_linker(
 
 
 def get_scispacy_knowledgebase(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> KnowledgeBase:
-    """Get a knowledgebase object for usage with :mod:`scispacy`.
+    """Get a lexical index for usage with :mod:`scispacy`.
 
-    :param prefix :
-        The ontology's prefix, such as ``go` for Gene Ontology, ``doid`` for the Disease
-        Ontology, or more.
-
-    :param kwargs :
-        keyword arguments to pass to :func:`pyobo.get_ontology`, such as ``version``.
+    :param prefix: The ontology's prefix, such as ``go` for Gene Ontology, ``doid`` for
+        the Disease Ontology, or more.
+    :param kwargs: keyword arguments to pass to :func:`pyobo.get_ontology`, such as
+        ``version``.
 
     :returns: An object that represents a lexical index over name, synonym, and
         definition strings from the ontology.
@@ -219,12 +215,10 @@ def get_scispacy_knowledgebase(prefix: str, **kwargs: Unpack[GetOntologyKwargs])
 def get_scispacy_entities(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Iterable[Entity]:
     """Iterate over entities in a given ontology via :mod:`pyobo`.
 
-    :param prefix :
-        The ontology's prefix, such as ``go` for Gene Ontology, ``doid`` for the Disease
-        Ontology, or more.
-
-    :param kwargs :
-        keyword arguments to pass to :func:`pyobo.get_ontology`, such as ``version``.
+    :param prefix: The ontology's prefix, such as ``go` for Gene Ontology, ``doid`` for
+        the Disease Ontology, or more.
+    :param kwargs: keyword arguments to pass to :func:`pyobo.get_ontology`, such as
+        ``version``.
 
     :yields: Entity objects for all terms in the ontology
     """
