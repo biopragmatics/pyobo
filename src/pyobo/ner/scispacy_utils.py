@@ -95,11 +95,28 @@ __all__ = [
 
 def get_scispacy_entity_linker(
     prefix: str,
+    *,
     ontology_kwargs: GetOntologyKwargs | None = None,
     candidate_generator_kwargs: dict[str, Any] | None = None,
-    entity_linker_kwargs: dict[str, Any] | None = None,
+    **entity_linker_kwargs: dict[str, Any] | None,
 ) -> EntityLinker:
-    """Get a knowledgebase object for usage with :mod:`scispacy`."""
+    """Get a knowledgebase object for usage with :mod:`scispacy`.
+
+    :param prefix :
+        The ontology's prefix, such as ``go` for Gene Ontology, ``doid`` for the Disease
+        Ontology, or more.
+
+    :param ontology_kwargs: keyword arguments to pass to :func:`pyobo.get_ontology`,
+        such as ``version``.
+    :param candidate_generator_kwargs: keyword arguments to pass to
+        :class:`scispacy.candidate_generation.CandidateGenerator`, such as ``ef_search``
+    :param entity_linker_kwargs: keyword arguments to pass to
+        :class:`scispacy.linking.EntityLinker`, such as ``ef_search``
+
+    :returns: An object that can be applied in a :mod:`spacy` natural language
+        processing workflow, namely to apply grounding/named entity normalization to
+        recognized named entities.
+    """
     from scispacy.linking import EntityLinker
 
     kb = get_scispacy_knowledgebase(prefix, **(ontology_kwargs or {}))
@@ -115,7 +132,18 @@ def get_scispacy_entity_linker(
 
 
 def get_scispacy_knowledgebase(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> KnowledgeBase:
-    """Get a knowledgebase object for usage with :mod:`scispacy`."""
+    """Get a knowledgebase object for usage with :mod:`scispacy`.
+
+    :param prefix :
+        The ontology's prefix, such as ``go` for Gene Ontology, ``doid`` for the Disease
+        Ontology, or more.
+
+    :param kwargs :
+        keyword arguments to pass to :func:`pyobo.get_ontology`, such as ``version``.
+
+    :returns: An object that represents a lexical index over name, synonym, and
+        definition strings from the ontology.
+    """
     from scispacy.linking_utils import KnowledgeBase
 
     return KnowledgeBase(get_scispacy_entities(prefix, **kwargs))
