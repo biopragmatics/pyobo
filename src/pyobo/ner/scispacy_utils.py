@@ -1,15 +1,12 @@
-"""
-:mod:`scispacy` implements a lexical index in :class:`scispacy.linking_utils.KnowledgeBase`
-which keeps track of labels, synonyms, and definitions for entities. These
-are used to construct a TF-IDF index and implement entity linking (als ocalled named entity normalization (NEN) or grounding)
-in :class:`scispacy.linking.EntityLinker`.
+""":mod:`scispacy` implements a lexical index in :class:`scispacy.linking_utils.KnowledgeBase` which keeps track of labels, synonyms, and definitions for entities. These are used to construct a TF-IDF index and implement entity linking (als ocalled named entity normalization (NEN) or grounding) in :class:`scispacy.linking.EntityLinker`.
 
 Constructing a Lexical Index
-----------------------------
+============================
 
-An *ad hoc* SciSpacy lexical index can be constructed on-the-fly by passing a Bioregistry prefix to
-:func:`pyobo.get_scispacy_knowledgebase`. In the following example, the prefix ``to`` is used to construct a
-lexical index for the `Plant Trait Ontology <https://bioregistry.io/to>`_.
+An *ad hoc* SciSpacy lexical index can be constructed on-the-fly by passing a
+Bioregistry prefix to :func:`pyobo.get_scispacy_knowledgebase`. In the following
+example, the prefix ``to`` is used to construct a lexical index for the `Plant Trait
+Ontology <https://bioregistry.io/to>`_.
 
 .. code-block:: python
 
@@ -25,14 +22,16 @@ Alternatively, a reusable class can be defined like in the following:
     import pyobo
     from scispacy.linking_utils import KnowledgeBase
 
+
     class PlantTraitOntology(KnowledgeBase):
         def __init__(self) -> None:
             super().__init__(pyobo.get_scispacy_entities("to"))
 
+
     kb = PlantTraitOntology()
 
 Constructing an Entity Linker
------------------------------
+=============================
 
 An entity linker can be constructed from a :class:`scispacy.linking_utils.KnowledgeBase`
 like in:
@@ -45,11 +44,13 @@ like in:
     kb = pyobo.get_scispacy_knowledgebase("to")
     linker = EntityLinker.from_kb(kb, filter_for_definitions=False)
 
-Where ``filter_for_definitions`` is set to ``False`` to retain entities that don't have a definition.
+Where ``filter_for_definitions`` is set to ``False`` to retain entities that don't have
+a definition.
 
-PyOBO provides a convenience function :func:`pyobo.get_scispacy_entity_linker` that wraps this workflow
-and also automatically caches the TF-IDF index constructed in the process in the correctly versioned
-folder in the PyOBO cache. Putting this all together with a full example:
+PyOBO provides a convenience function :func:`pyobo.get_scispacy_entity_linker` that
+wraps this workflow and also automatically caches the TF-IDF index constructed in the
+process in the correctly versioned folder in the PyOBO cache. Putting this all together
+with a full example:
 
 .. code-block:: python
 
