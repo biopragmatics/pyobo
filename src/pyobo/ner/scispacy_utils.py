@@ -120,10 +120,13 @@ def get_scispacy_entity_linker(
     """
     from scispacy.linking import EntityLinker
 
+    if ontology_kwargs is None:
+        ontology_kwargs = {}
+
     version = get_version_from_kwargs(prefix, ontology_kwargs)
     scispacy_cache_directory = prefix_directory_join(prefix, "scispacy", version=version)
 
-    kb = get_scispacy_knowledgebase(prefix, **(ontology_kwargs or {}))
+    kb = get_scispacy_knowledgebase(prefix, **ontology_kwargs)
     linker = EntityLinker.from_kb(
         kb,
         ann_index_out_dir=scispacy_cache_directory.as_posix(),
