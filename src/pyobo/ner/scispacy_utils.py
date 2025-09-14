@@ -78,6 +78,7 @@ from typing import TYPE_CHECKING, Any
 
 from typing_extensions import Unpack
 
+from ..api.utils import get_version_from_kwargs
 from ..constants import GetOntologyKwargs
 from ..getters import get_ontology
 from ..utils.path import prefix_directory_join
@@ -119,12 +120,13 @@ def get_scispacy_entity_linker(
     """
     from scispacy.linking import EntityLinker
 
+    version = get_version_from_kwargs(prefix, ontology_kwargs)
+    scispacy_cache_directory = prefix_directory_join(prefix, "scispacy", version=version)
+
     kb = get_scispacy_knowledgebase(prefix, **(ontology_kwargs or {}))
-    # TODO extract version from kwargs to pass to prefix_directory_join
-    cache_directory = prefix_directory_join(prefix, "scispacy")
     linker = EntityLinker.from_kb(
         kb,
-        ann_index_out_dir=cache_directory.as_posix(),
+        ann_index_out_dir=scispacy_cache_directory.as_posix(),
         candidate_generator_kwargs=candidate_generator_kwargs,
         **(entity_linker_kwargs or {}),
     )

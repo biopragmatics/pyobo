@@ -136,9 +136,7 @@ def get_text_embedding_similarity(
         from pyobo.api.embedding import get_text_embedding_model
 
         model = get_text_embedding_model()
-        similarity = pyobo.get_text_embedding_similarity(
-            "GO:0000001", "GO:0000004", model=model
-        )
+        similarity = pyobo.get_text_embedding_similarity("GO:0000001", "GO:0000004", model=model)
         # 0.24702128767967224
     """
     if model is None:
