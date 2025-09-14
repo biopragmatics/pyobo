@@ -165,6 +165,11 @@ drugcentral =[
 pid = [
     "protmapper",
 ]
+scispacy = [
+    "scispacy; python_version <= '3.11'",
+    "spacy; python_version <= '3.11'",
+    "scipy<1.11; python_version <= '3.11'",
+]
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
 # and also https://packaging.python.org/en/latest/specifications/well-known-project-urls/
