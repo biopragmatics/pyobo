@@ -21,6 +21,18 @@ Ontology <https://bioregistry.io/to>`_.
 
     kb: KnowledgeBase = pyobo.get_scispacy_knowledgebase("to")
 
+The high-level PyOBO interface abstracts the differences between external ontologies
+like the Plant Trait Ontology and databases that are converted to ontologies in
+:mod:`pyobo.sources` like the `HUGO Gene Nomenclature Committee
+<https://bioregistry.io/hgnc>`_. Therefore, you can also do
+
+.. code-block:: python
+
+    import pyobo
+    from scispacy.linking_utils import KnowledgeBase
+
+    kb: KnowledgeBase = pyobo.get_scispacy_knowledgebase("hgnc")
+
 Alternatively, a reusable class can be defined like in the following:
 
 .. code-block:: python
@@ -29,12 +41,12 @@ Alternatively, a reusable class can be defined like in the following:
     from scispacy.linking_utils import KnowledgeBase
 
 
-    class PlantTraitOntology(KnowledgeBase):
+    class HGNCKnowledgeBase(KnowledgeBase):
         def __init__(self) -> None:
-            super().__init__(pyobo.get_scispacy_entities("to"))
+            super().__init__(pyobo.get_scispacy_entities("hgnc"))
 
 
-    kb = PlantTraitOntology()
+    kb = HGNCKnowledgeBase()
 
 Constructing an Entity Linker
 =============================
@@ -47,7 +59,7 @@ like in:
     import pyobo
     from scispacy.linking import EntityLinker
 
-    kb = pyobo.get_scispacy_knowledgebase("to")
+    kb = pyobo.get_scispacy_knowledgebase("hgnc")
     linker = EntityLinker.from_kb(kb, filter_for_definitions=False)
 
 Where ``filter_for_definitions`` is set to ``False`` to retain entities that don't have
@@ -64,11 +76,15 @@ with a full example:
     import spacy
     from scispacy.linking import EntityLinker
 
-    linker = pyobo.get_scispacy_entity_linker("to", filter_for_definitions=False)
+    linker = pyobo.get_scispacy_entity_linker("hgnc", filter_for_definitions=False)
 
     # now, put it all together with a NER model
     nlp = spacy.load("en_core_web_sm")
+
+    text = "RAC(Rho family)-alpha serine/threonine-protein kinase is an enzyme that in humans is encoded by the AKT1 gene."
     doc = linker(nlp(text))
+    for entity in doc.ents:
+        print(entity)
 """
 
 from __future__ import annotations
@@ -99,7 +115,7 @@ def get_scispacy_entity_linker(
     *,
     ontology_kwargs: GetOntologyKwargs | None = None,
     candidate_generator_kwargs: dict[str, Any] | None = None,
-    **entity_linker_kwargs: dict[str, Any] | None,
+    **entity_linker_kwargs: Any,
 ) -> EntityLinker:
     """Get a knowledgebase object for usage with :mod:`scispacy`.
 
