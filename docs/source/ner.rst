@@ -13,7 +13,7 @@ You can use :func:`pyobo.ground` as an integrated workflow:
     import pyobo
     import ssslm
 
-    matches: list[ssslm.Match] = pyobo.ground("chebi", "ethanol")
+    matches: list[ssslm.Match] = pyobo.ground("taxrank", "species")
 
 You can get the grounder directly first using :func:`pyobo.get_grounder`:
 
@@ -22,8 +22,8 @@ You can get the grounder directly first using :func:`pyobo.get_grounder`:
     import pyobo
     import ssslm
 
-    grounder: ssslm.Grounder = pyobo.get_grounder("chebi")
-    matches: list[ssslm.Match] = grounder.get_matches("ethanol")
+    grounder: ssslm.Grounder = pyobo.get_grounder("taxrank")
+    matches: list[ssslm.Match] = grounder.get_matches("species")
 
 You can get the ontology directly using :func:`pyobo.get_ontology` then construct a
 grounder with :meth:`pyobo.Obo.get_grounder`:
@@ -33,9 +33,9 @@ grounder with :meth:`pyobo.Obo.get_grounder`:
     import pyobo
     import ssslm
 
-    ontology: pyobo.Obo = pyobo.get_ontology("chebi")
+    ontology: pyobo.Obo = pyobo.get_ontology("taxrank")
     grounder: ssslm.Grounder = ontology.get_grounder()
-    matches: list[ssslm.Match] = grounder.get_matches("ethanol")
+    matches: list[ssslm.Match] = grounder.get_matches("species")
 
 You can load a custom ontology with :func:`pyobo.from_obo_path` then construct a
 grounder with :meth:`pyobo.Obo.get_grounder`:
@@ -46,13 +46,13 @@ grounder with :meth:`pyobo.Obo.get_grounder`:
     import ssslm
     from urllib.request import urlretrieve
 
-    url = "http://purl.obolibrary.org/obo/chebi.obo"
-    path = "chebi.obo"
+    url = "http://purl.obolibrary.org/obo/taxrank.obo"
+    path = "taxrank.obo"
     urlretrieve(url, path)
 
-    ontology: pyobo.Obo = pyobo.from_obo_path(path, prefix="chebi")
+    ontology: pyobo.Obo = pyobo.from_obo_path(path, prefix="taxrank")
     grounder: ssslm.Grounder = ontology.get_grounder()
-    matches: list[ssslm.Match] = grounder.get_matches("ethanol")
+    matches: list[ssslm.Match] = grounder.get_matches("species")
 
 .. warning::
 
