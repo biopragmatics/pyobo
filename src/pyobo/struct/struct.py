@@ -1916,7 +1916,7 @@ class Obo:
 
             ontology = pyobo.get_ontology("taxrank")
             grounder = ontology.get_grounder()
-            matches = grounder.ground("species") # contains a match to taxrank:0000006
+            matches = grounder.ground("species")  # contains a match to taxrank:0000006
 
         Here's example usage for a custom ontology:
 
