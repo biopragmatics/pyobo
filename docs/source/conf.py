@@ -240,6 +240,7 @@ intersphinx_mapping = {
     "sqlalchemy": ("https://docs.sqlalchemy.org/en/latest", None),
     "requests": ("https://requests.kennethreitz.org/en/master/", None),
     "setuptools": ("https://setuptools.readthedocs.io/en/latest/", None),
+    "bioregistry": ("https://bioregistry.readthedocs.io/en/latest/", None),
     "pandas": ("https://pandas.pydata.org/docs", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
     "numpy": ("https://numpy.org/doc/stable", None),
