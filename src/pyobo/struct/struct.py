@@ -1903,6 +1903,39 @@ class Obo:
         """Get a mapping from identifiers to a list of sorted synonym strings."""
         return multidict(self.iterate_synonym_rows(use_tqdm=use_tqdm))
 
+    def get_grounder(self) -> ssslm.Grounder:
+        """Get a grounder from this ontology.
+
+        :returns: An object that can be used for named entity recognition and named entity normalization
+
+        Here's example usage for a built-in ontology:
+
+        .. code-block:: python
+
+            import pyobo
+
+            ontology = pyobo.get_ontology("taxrank")
+            grounder = ontology.get_grounder()
+            matches = grounder.ground("species") # contains a match to taxrank:0000006
+
+        Here's example usage for a custom ontology:
+
+            import pyobo
+            from urllib.request import urlretrieve
+
+            url = "http://purl.obolibrary.org/obo/taxrank.obo"
+            path = "taxrank.obo"
+            urlretrieve(url, path)
+
+            # it's required to tell PyOBO the prefix for a custom ontology,
+            # and it must be registered in the Bioregistry
+            ontology = pyobo.from_obo_path(path, prefix="taxrank")
+            grounder = ontology.get_grounder()
+            matches = grounder.ground("species") # contains a match to taxrank:0000006
+
+        """
+        return ssslm.make_grounder(self.get_literal_mappings())
+
     def get_literal_mappings(self) -> Iterable[ssslm.LiteralMapping]:
         """Get literal mappings in a standard data model."""
         stanzas: Iterable[Stanza] = itt.chain(self, self.typedefs or [])
