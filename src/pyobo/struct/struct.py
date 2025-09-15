@@ -1914,27 +1914,32 @@ class Obo:
         .. code-block:: python
 
             import pyobo
+            import ssslm
 
             ontology = pyobo.get_ontology("taxrank")
-            grounder = ontology.get_grounder()
-            matches = grounder.ground("species")  # contains a match to taxrank:0000006
+            grounder: ssslm.Grounder = ontology.get_grounder()
+            matches: list[ssslm.Match] = grounder.ground("species")
 
         Here's example usage for a custom ontology:
 
         .. code-block:: python
 
             import pyobo
+            import ssslm
             from urllib.request import urlretrieve
 
             url = "http://purl.obolibrary.org/obo/taxrank.obo"
             path = "taxrank.obo"
             urlretrieve(url, path)
 
-            # it's required to tell PyOBO the prefix for a custom ontology,
-            # and it must be registered in the Bioregistry
             ontology = pyobo.from_obo_path(path, prefix="taxrank")
-            grounder = ontology.get_grounder()
-            matches = grounder.ground("species")  # contains a match to taxrank:0000006
+            grounder: ssslm.Grounder = ontology.get_grounder()
+            matches: list[ssslm.Match] = grounder.get_matches("species")
+
+        .. warning::
+
+            It's required to tell PyOBO the prefix for a custom ontology when using
+            :func:`pyobo.from_obo_path`, and it must be registered in the Bioregistry
         """
         return ssslm.make_grounder(self.get_literal_mappings())
 
