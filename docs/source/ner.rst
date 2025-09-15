@@ -25,8 +25,8 @@ You can get the grounder directly first using :func:`pyobo.get_grounder`:
     grounder: ssslm.Grounder = pyobo.get_grounder("chebi")
     matches: list[ssslm.Match] = grounder.get_matches("ethanol")
 
-You can get the ontology directly using :func:`pyobo.get_ontology` then the grounder
-with :meth:`pyobo.Obo.get_grounder`:
+You can get the ontology directly using :func:`pyobo.get_ontology` then construct a
+grounder with :meth:`pyobo.Obo.get_grounder`:
 
 .. code-block:: python
 
@@ -37,11 +37,13 @@ with :meth:`pyobo.Obo.get_grounder`:
     grounder: ssslm.Grounder = ontology.get_grounder()
     matches: list[ssslm.Match] = grounder.get_matches("ethanol")
 
-You can load a custom ontology with :func:`pyobo.from_obo_path`:
+You can load a custom ontology with :func:`pyobo.from_obo_path` then construct a
+grounder with :meth:`pyobo.Obo.get_grounder`:
 
 .. code-block:: python
 
     import pyobo
+    import ssslm
     from urllib.request import urlretrieve
 
     url = "http://purl.obolibrary.org/obo/chebi.obo"
