@@ -1906,7 +1906,8 @@ class Obo:
     def get_grounder(self) -> ssslm.Grounder:
         """Get a grounder from this ontology.
 
-        :returns: An object that can be used for named entity recognition and named entity normalization
+        :returns: An object that can be used for named entity recognition and named
+            entity normalization
 
         Here's example usage for a built-in ontology:
 
@@ -1920,6 +1921,8 @@ class Obo:
 
         Here's example usage for a custom ontology:
 
+        .. code-block:: python
+
             import pyobo
             from urllib.request import urlretrieve
 
@@ -1931,8 +1934,7 @@ class Obo:
             # and it must be registered in the Bioregistry
             ontology = pyobo.from_obo_path(path, prefix="taxrank")
             grounder = ontology.get_grounder()
-            matches = grounder.ground("species") # contains a match to taxrank:0000006
-
+            matches = grounder.ground("species")  # contains a match to taxrank:0000006
         """
         return ssslm.make_grounder(self.get_literal_mappings())
 
