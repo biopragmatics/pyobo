@@ -91,7 +91,8 @@ class TestAltIds(unittest.TestCase):
         primary_id = get_primary_identifier("go", "0001071")
         self.assertIsNotNone(primary_id)
         self.assertEqual("0003700", primary_id)
-        name = get_name(ReferenceTuple("go", "0001071"))
+        self.assertIsNone(get_name(ReferenceTuple("go", "0001071"), upgrade_identifier=False))
+        name = get_name(ReferenceTuple("go", "0001071"), upgrade_identifier=True)
         self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
@@ -107,7 +108,16 @@ class TestAltIds(unittest.TestCase):
         self.assertIsNotNone(primary_reference)
         self.assertEqual(ReferenceTuple("go", "0003700"), primary_reference)
 
-        name = get_name_by_curie("go:0001071")
+        self.assertIsNone(get_name_by_curie("go:0001071", upgrade_identifier=False))
+
+        # if set explicitly to true, then it will do it eagerly
+        name = get_name_by_curie("go:0001071", upgrade_identifier=True)
+        self.assertIsNotNone(name)
+        self.assertEqual("DNA-binding transcription factor activity", name)
+
+        # if not set, or left as default, then it will do it only if there's no
+        # original name
+        name = get_name_by_curie("go:0001071", upgrade_identifier=None)
         self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
@@ -215,7 +225,8 @@ class TestAltIds(unittest.TestCase):
             self.assertEqual({t1.name: t1.identifier}, name_id)
 
             self.assertEqual(t1.name, pyobo.get_name(r1, cache=False))
-            self.assertEqual(t1.name, pyobo.get_name(r2, cache=False))
+            self.assertEqual(t1.name, pyobo.get_name(r2, cache=False, upgrade_identifier=True))
+            self.assertIsNone(pyobo.get_name(r2, cache=False, upgrade_identifier=False))
 
             # Xrefs
             d = pyobo.get_filtered_xrefs(TEST_P1, TEST_P2, cache=False, use_tqdm=False)
