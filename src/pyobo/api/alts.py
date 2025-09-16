@@ -67,7 +67,7 @@ def get_primary_reference(
     identifier: str | None = None,
     /,
     **kwargs: Unpack[GetOntologyKwargs],
-) -> curies.ReferenceTuple:
+) -> curies.ReferenceTuple | None:
     """Get the primary reference for an entity."""
     reference = _get_pi(prefix, identifier)
     try:
