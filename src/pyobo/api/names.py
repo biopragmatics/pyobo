@@ -63,6 +63,8 @@ NO_BUILD_LOGGED: set = set()
 def _help_get(
     f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
     reference: Reference,
+    *,
+    upgrade_identifier: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> X | None:
     """Get the result for an entity based on a mapping maker function ``f``."""
@@ -87,19 +89,24 @@ def _help_get(
             NO_BUILD_PREFIXES.add(reference.prefix)
         return None
 
-    primary_id = get_primary_identifier(reference, **kwargs)
-    return mapping.get(primary_id)
+    if upgrade_identifier:
+        primary_id = get_primary_identifier(reference, **kwargs)
+        return mapping.get(primary_id)
+    else:
+        return mapping.get(reference.identifier)
 
 
 def get_name(
     prefix: str | curies.Reference | curies.ReferenceTuple,
     identifier: str | None = None,
     /,
+    *,
+    upgrade_identifier: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the name for an entity."""
     reference = _get_pi(prefix, identifier)
-    return _help_get(get_id_name_mapping, reference, **kwargs)
+    return _help_get(get_id_name_mapping, reference, upgrade_identifier=upgrade_identifier, **kwargs)
 
 
 @lru_cache
