@@ -1,5 +1,8 @@
-Usage
-=====
+Reference
+=========
 
-.. automodule:: pyobo
-    :members:
+.. automodapi:: pyobo
+    :no-heading:
+
+.. automodapi:: pyobo.constants
+    :no-heading:

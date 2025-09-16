@@ -74,6 +74,7 @@ extensions = [
     "sphinx_click.ext",
     "sphinx_automodapi.automodapi",
     "sphinx_automodapi.smart_resolver",
+    "sphinx_toolbox.more_autodoc.autotypeddict",
 ]
 
 # generate autosummary pages
@@ -258,3 +259,7 @@ todo_emit_warnings = True
 
 # Output SVG inheritance diagrams
 graphviz_output_format = "svg"
+
+# sphinx_autodoc_typehints configuration
+always_document_param_types = True
+autodoc_typehints = "description"

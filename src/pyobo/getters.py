@@ -45,8 +45,14 @@ from .utils.path import ensure_path, prefix_directory_join
 from .version import get_git_hash, get_version
 
 __all__ = [
+    "REQUIRES_NO_ROBOT_CHECK",
+    "SKIP",
     "NoBuildError",
+    "UnhandledFormatError",
+    "db_output_helper",
     "get_ontology",
+    "iter_helper",
+    "iter_helper_helper",
 ]
 
 logger = logging.getLogger(__name__)
@@ -111,8 +117,6 @@ def get_ontology(
     :param cache: Should cached objects be written? defaults to True
 
     :returns: An OBO object
-
-    :raises OnlyOWLError: If the OBO foundry only has an OWL document for this resource.
 
     Alternate usage if you have a custom url
 
@@ -220,7 +224,8 @@ def _ensure_ontology_path(
     return None
 
 
-SKIP = {
+#: A dictioanry of prefixes to skip during full build with reasons as values
+SKIP: dict[str, str] = {
     "ncbigene": "too big, refs acquired from other dbs",
     "pubchem.compound": "top big, can't deal with this now",
     "gaz": "Gazetteer is irrelevant for biology",
