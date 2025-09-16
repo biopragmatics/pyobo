@@ -19,6 +19,7 @@ from pyobo import (
     get_name_by_curie,
     get_primary_curie,
     get_primary_identifier,
+    get_primary_reference,
 )
 from pyobo.mocks import get_mock_id_alts_mapping, get_mock_id_name_mapping
 from pyobo.ner import get_grounder
@@ -101,6 +102,11 @@ class TestAltIds(unittest.TestCase):
         primary_curie = get_primary_curie("go:0001071")
         self.assertIsNotNone(primary_curie)
         self.assertEqual("go:0003700", primary_curie)
+
+        primary_reference = get_primary_reference("go:0001071")
+        self.assertIsNotNone(primary_reference)
+        self.assertEqual(ReferenceTuple("go", "0003700"), primary_reference)
+
         name = get_name_by_curie("go:0001071")
         self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
