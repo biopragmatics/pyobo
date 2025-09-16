@@ -5,6 +5,7 @@ from .alts import (
     get_id_to_alts,
     get_primary_curie,
     get_primary_identifier,
+    get_primary_reference,
 )
 from .combine import get_literal_mappings_subset
 from .edges import get_edges, get_edges_df, get_graph
@@ -105,6 +106,7 @@ __all__ = [
     "get_ontology",
     "get_primary_curie",
     "get_primary_identifier",
+    "get_primary_reference",
     "get_priority_curie",
     "get_properties",
     "get_properties_df",
