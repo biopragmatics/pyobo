@@ -117,6 +117,7 @@ def _parse_name(part: str) -> tuple[str, str] | None:
     """Parse a GTDB taxonomy identifier.
 
     :param part: The string
+
     :returns: A tuple with the level and name, if parsable
 
     >>> _parse_name("f__Sulfolobaceae")

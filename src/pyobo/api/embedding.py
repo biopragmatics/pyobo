@@ -49,7 +49,8 @@ def get_text_embeddings_df(
     """Get embeddings for all entities in the resource.
 
     :param prefix: A reference, either as a string or Reference object
-    :param model: A sentence transformer model. Defaults to ``all-MiniLM-L6-v2`` if not given.
+    :param model: A sentence transformer model. Defaults to ``all-MiniLM-L6-v2`` if not
+        given.
     """
     luids, texts = [], []
     for reference in get_references(prefix):
@@ -72,8 +73,10 @@ def get_text_embedding(
     """Get a text embedding for an entity, or return none if no text is available.
 
     :param reference: A reference, either as a string or Reference object
-    :param model: A sentence transformer model. Defaults to ``all-MiniLM-L6-v2`` if not given.
-    :return: A 1D numpy float array of embeddings from :class:`sentence_transformers`
+    :param model: A sentence transformer model. Defaults to ``all-MiniLM-L6-v2`` if not
+        given.
+
+    :returns: A 1D numpy float array of embeddings from :class:`sentence_transformers`
 
     .. code-block:: python
 
@@ -112,9 +115,11 @@ def get_text_embedding_similarity(
 
     :param reference_1: A reference, given as a string or Reference object
     :param reference_2: A second reference
-    :param model: A sentence transformer model. Defaults to ``all-MiniLM-L6-v2`` if not given.
-    :returns:
-        A floating point similarity, if text is available for both references, otherwise none
+    :param model: A sentence transformer model. Defaults to ``all-MiniLM-L6-v2`` if not
+        given.
+
+    :returns: A floating point similarity, if text is available for both references,
+        otherwise none
 
     .. code-block:: python
 

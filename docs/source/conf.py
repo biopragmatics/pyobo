@@ -24,7 +24,7 @@ copyright = f"{date.today().year}, Charles Tapley Hoyt"
 author = "Charles Tapley Hoyt"
 
 # The full version, including alpha/beta/rc tags.
-release = "0.12.9-dev"
+release = "0.12.11-dev"
 
 # The short X.Y version.
 parsed_version = re.match(
@@ -240,6 +240,7 @@ intersphinx_mapping = {
     "sqlalchemy": ("https://docs.sqlalchemy.org/en/latest", None),
     "requests": ("https://requests.kennethreitz.org/en/master/", None),
     "setuptools": ("https://setuptools.readthedocs.io/en/latest/", None),
+    "bioregistry": ("https://bioregistry.readthedocs.io/en/latest/", None),
     "pandas": ("https://pandas.pydata.org/docs", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
     "numpy": ("https://numpy.org/doc/stable", None),

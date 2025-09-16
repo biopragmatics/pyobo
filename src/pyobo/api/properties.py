@@ -111,6 +111,7 @@ def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.Da
     """Extract properties.
 
     :param prefix: the resource to load
+
     :returns: A dataframe with the properties
     """
     df1 = get_literal_properties_df(prefix, **kwargs)
@@ -131,6 +132,7 @@ def get_filtered_properties_mapping(
 
     :param prefix: the resource to load
     :param prop: the property to extract
+
     :returns: A mapping from identifier to property value
     """
     df = get_filtered_properties_df(prefix, prop, **kwargs)
@@ -145,6 +147,7 @@ def get_filtered_properties_multimapping(
 
     :param prefix: the resource to load
     :param prop: the property to extract
+
     :returns: A mapping from identifier to property values
     """
     df = get_filtered_properties_df(prefix, prop, **kwargs)
@@ -159,7 +162,9 @@ def get_property(
     :param prefix: the resource to load
     :param identifier: the identifier withing the resource
     :param prop: the property to extract
-    :returns: The single value for the property. If multiple are expected, use :func:`get_properties`
+
+    :returns: The single value for the property. If multiple are expected, use
+        :func:`get_properties`
 
     >>> import pyobo
     >>> pyobo.get_property("chebi", "132964", "http://purl.obolibrary.org/obo/chebi/smiles")
@@ -182,7 +187,9 @@ def get_properties(
     :param prefix: the resource to load
     :param identifier: the identifier withing the resource
     :param prop: the property to extract
-    :returns: Multiple values for the property. If only one is expected, use :func:`get_property`
+
+    :returns: Multiple values for the property. If only one is expected, use
+        :func:`get_property`
     """
     filtered_properties_multimapping = get_filtered_properties_multimapping(
         prefix=prefix, prop=prop, **kwargs
@@ -198,7 +205,9 @@ def get_filtered_properties_df(
 
     :param prefix: the resource to load
     :param prop: the property to extract
-    :returns: A dataframe from identifier to property value. Columns are [<prefix>_id, value].
+
+    :returns: A dataframe from identifier to property value. Columns are [<prefix>_id,
+        value].
     """
     prop = _ensure_ref(prop, ontology_prefix=prefix)
     df = get_properties_df(prefix, **kwargs)

@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "pyobo"
-version = "0.12.9-dev"
+version = "0.12.11-dev"
 description = "A python package for handling and generating OBO"
 readme = "README.md"
 authors = [
@@ -165,6 +165,15 @@ drugcentral =[
 pid = [
     "protmapper",
 ]
+# note that scispacy currently only works on <= 3.12
+# because of its transitive dependencies. It also has
+# a hard cutoff on scipy because it relied on (private/unstable?)
+# functionality that no longer exists in newer versions
+scispacy = [
+    "scispacy; python_version <= '3.12'",
+    "spacy; python_version <= '3.12'",
+    "scipy<1.11; python_version <= '3.12'",
+]
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
 # and also https://packaging.python.org/en/latest/specifications/well-known-project-urls/
@@ -296,7 +305,7 @@ known-first-party = [
 docstring-code-format = true
 
 [tool.bumpversion]
-current_version = "0.12.9-dev"
+current_version = "0.12.11-dev"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:-(?P<release>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+(?P<build>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?"
 serialize = [
     "{major}.{minor}.{patch}-{release}+{build}",

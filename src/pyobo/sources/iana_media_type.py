@@ -1,6 +1,8 @@
 """An ontology representation of IANA media types (i.e. MIME types).
 
-.. seealso:: https://www.iana.org/assignments/media-types/media-types.xhtml
+.. seealso::
+
+    https://www.iana.org/assignments/media-types/media-types.xhtml
 """
 
 from collections.abc import Iterable

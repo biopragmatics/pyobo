@@ -163,7 +163,8 @@ def is_descendent(
     :param ancestor_prefix: The prefix for the ancestor
     :param ancestor_identifier: The local unique identifier for the ancestor
     :param kwargs: Keyword arguments for :func:`get_hierarchy`
-    :return: If the decendant has the given ancestor
+
+    :returns: If the decendant has the given ancestor
 
     Check that ``GO:0070246`` (natural killer cell apoptotic process) is a descendant of
     ``GO:0006915`` (apoptotic process)
@@ -254,10 +255,11 @@ def has_ancestor(
     :param ancestor_prefix: The prefix for the ancestor
     :param ancestor_identifier: The local unique identifier for the ancestor
     :param kwargs: Keyword arguments for :func:`get_hierarchy`
-    :return: If the decendant has the given ancestor
 
-    Check that ``GO:0008219`` (cell death) is an ancestor of ``GO:0006915``
-    (apoptotic process):
+    :returns: If the decendant has the given ancestor
+
+    Check that ``GO:0008219`` (cell death) is an ancestor of ``GO:0006915`` (apoptotic
+    process):
 
     >>> apoptosis = Reference.from_curie("GO:0006915", name="apoptotic process")
     >>> cell_death = Reference.from_curie("GO:0008219", name="cell death")

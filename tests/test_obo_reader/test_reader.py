@@ -1362,3 +1362,21 @@ class TestReaderTerm(unittest.TestCase):
             "orcid": {ADNAN_MALIK},
         }
         self.assertEqual(expected_references, ontology._get_references())
+
+    def test_get_grounder(self) -> None:
+        """Test getting a grounder from an ontology."""
+        ontology = from_str("""\
+            ontology: chebi
+            date: 20:11:2024 18:44
+
+            [Term]
+            id: CHEBI:16236
+            name: ethanol
+        """)
+        r1 = Reference(prefix="CHEBI", identifier="16236", name="ethanol")
+        grounder = ontology.get_grounder()
+        match = grounder.get_best_match("Ethanol")
+        self.assertIsNotNone(match)
+        if match is None:
+            raise ValueError
+        self.assertEqual(r1, match.reference)
