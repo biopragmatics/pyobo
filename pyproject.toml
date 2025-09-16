@@ -102,7 +102,7 @@ docs = [
     "sphinx-rtd-theme>=3.0",
     "sphinx-click", 
     "sphinx_automodapi",
-    "sphinx_autodoc_typehints",
+    "sphinx_toolbox",
 ]
 lint = [
     "ruff",

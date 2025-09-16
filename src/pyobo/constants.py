@@ -132,13 +132,21 @@ PROVENANCE_PREFIXES = {
 class DatabaseKwargs(TypedDict):
     """Keyword arguments for database CLI functions."""
 
+    #: Should strict identifier parsing be enabled?
     strict: bool
+    #: Should re-download and re-processing be forced?
     force: bool
+    #: Should re-processing be forced?
     force_process: bool
-    skip_pyobo: bool
-    skip_below: str | None
-    skip_set: set[str] | None
+
+    #: Should a progress bar be used?
     use_tqdm: bool
+    #: Skip all prefixes lexicographically sorted below the given prefix
+    skip_below: str | None
+    #: If true, skips prefixes that are ontologized as sources in PyOBO
+    skip_pyobo: bool
+    #: An enumerated set of prefixes to skip
+    skip_set: set[str] | None
 
 
 class SlimGetOntologyKwargs(TypedDict):
@@ -207,12 +215,17 @@ class IterHelperHelperDict(SlimGetOntologyKwargs):
     :func:`pyobo.get_ontology` in each iteration.
     """
 
+    #: Should a progress bar be used?
     use_tqdm: bool
+    #: Skip all prefixes lexicographically sorted below the given prefix
     skip_below: str | None
+    #: If true, skips prefixes that are ontologized as sources in PyOBO
     skip_pyobo: bool
+    #: An enumerated set of prefixes to skip
     skip_set: set[str] | None
 
 
+#: The ontology format
 OntologyFormat: TypeAlias = Literal["obo", "owl", "json", "rdf"]
 
 #: from table 2 of the Functional OWL syntax definition
@@ -228,7 +241,9 @@ DEFAULT_PREFIX_MAP = {
 class OntologyPathPack(NamedTuple):
     """A format and path tuple."""
 
+    #: The ontology format
     format: OntologyFormat
+    #: The path to the ontology file
     path: Path
 
 
