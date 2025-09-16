@@ -73,7 +73,7 @@ def _get_term(identifier: str) -> Term | None:
                 for s in synonym.removeprefix("<em>synonyms</em>:").strip().split(","):
                     term.append_synonym(_clean(s))
             else:
-                tqdm.write(f'[{term.curie}] issue with synonym: {synonym}')
+                tqdm.write(f"[{term.curie}] issue with synonym: {synonym}")
 
     return term
 
