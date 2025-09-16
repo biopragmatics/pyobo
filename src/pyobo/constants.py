@@ -14,8 +14,21 @@ from typing_extensions import NotRequired, TypedDict
 
 __all__ = [
     "DATABASE_DIRECTORY",
+    "DEFAULT_PREFIX_MAP",
+    "ONTOLOGY_GETTERS",
+    "PROVENANCE_PREFIXES",
     "RAW_DIRECTORY",
     "SPECIES_REMAPPING",
+    "DatabaseKwargs",
+    "GetOntologyKwargs",
+    "IterHelperHelperDict",
+    "LookupKwargs",
+    "OntologyFormat",
+    "OntologyPathPack",
+    "SlimGetOntologyKwargs",
+    "check_should_cache",
+    "check_should_force",
+    "check_should_use_tqdm",
 ]
 
 logger = logging.getLogger(__name__)
@@ -96,6 +109,8 @@ SPECIES_FILE = "species.tsv.gz"
 
 NCBITAXON_PREFIX = "ncbitaxon"
 DATE_FORMAT = "%d:%m:%Y %H:%M"
+
+#: Prefixes for resources that are considered as provenance
 PROVENANCE_PREFIXES = {
     "pubmed",
     "pmc",
@@ -134,8 +149,11 @@ class SlimGetOntologyKwargs(TypedDict):
     only a single ontology is requested.
     """
 
+    #: Should strict identifier parsing be enabled?
     strict: NotRequired[bool]
+    #: Should re-download and re-processing be forced?
     force: NotRequired[bool]
+    #: Should re-processing be forced?
     force_process: NotRequired[bool]
 
 
@@ -145,8 +163,11 @@ class GetOntologyKwargs(SlimGetOntologyKwargs):
     This dictionary doesn't contain ``prefix`` since this is always explicitly handled.
     """
 
+    #: The version of the ontology to get
     version: NotRequired[str | None]
+    #: Should the cache be used?
     cache: NotRequired[bool]
+    #: Should a progress bar be used?
     use_tqdm: NotRequired[bool]
 
 
