@@ -6,7 +6,7 @@ import logging
 import subprocess
 from collections.abc import Callable, Mapping
 from functools import lru_cache
-from typing import Any, TypeVar
+from typing import TypeVar
 
 import curies
 import pandas as pd
@@ -49,9 +49,15 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def get_name_by_curie(curie: str, **kwargs: Any) -> str | None:
+def get_name_by_curie(
+    curie: str,
+    /,
+    *,
+    upgrade_identifier: bool | None = None,
+    **kwargs: Unpack[GetOntologyKwargs],
+) -> str | None:
     """Get the name for a CURIE, if possible."""
-    return get_name(curie, **kwargs)
+    return get_name(curie, upgrade_identifier=upgrade_identifier, **kwargs)
 
 
 X = TypeVar("X")
@@ -64,7 +70,7 @@ def _help_get(
     f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
     reference: Reference,
     *,
-    upgrade_identifier: bool = False,
+    upgrade_identifier: bool | None = None,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> X | None:
     """Get the result for an entity based on a mapping maker function ``f``."""
@@ -89,7 +95,13 @@ def _help_get(
             NO_BUILD_PREFIXES.add(reference.prefix)
         return None
 
-    if upgrade_identifier:
+    if upgrade_identifier is None:
+        if reference.identifier in mapping:
+            return mapping[reference.identifier]
+        else:
+            primary_id = get_primary_identifier(reference, **kwargs)
+            return mapping.get(primary_id)
+    elif upgrade_identifier is True:
         primary_id = get_primary_identifier(reference, **kwargs)
         return mapping.get(primary_id)
     else:
@@ -101,12 +113,14 @@ def get_name(
     identifier: str | None = None,
     /,
     *,
-    upgrade_identifier: bool = False,
+    upgrade_identifier: bool | None = None,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the name for an entity."""
     reference = _get_pi(prefix, identifier)
-    return _help_get(get_id_name_mapping, reference, upgrade_identifier=upgrade_identifier, **kwargs)
+    return _help_get(
+        get_id_name_mapping, reference, upgrade_identifier=upgrade_identifier, **kwargs
+    )
 
 
 @lru_cache
