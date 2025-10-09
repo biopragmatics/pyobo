@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Unpack
+from typing import TYPE_CHECKING
 
 import curies
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from typing_extensions import Unpack
 
 from pyobo.api.names import get_definition, get_id_name_mapping, get_name
 from pyobo.api.utils import get_version_from_kwargs
