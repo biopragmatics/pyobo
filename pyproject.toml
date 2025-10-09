@@ -103,6 +103,7 @@ docs = [
     "sphinx-click", 
     "sphinx_automodapi",
     "sphinx_toolbox",
+    "sphinx_unpack",
 ]
 lint = [
     "ruff",

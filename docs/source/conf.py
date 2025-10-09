@@ -75,6 +75,7 @@ extensions = [
     "sphinx_automodapi.automodapi",
     "sphinx_automodapi.smart_resolver",
     "sphinx_toolbox.more_autodoc.autotypeddict",
+    "sphinx_unpack",
 ]
 
 # generate autosummary pages
