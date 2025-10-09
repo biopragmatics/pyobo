@@ -52,7 +52,9 @@ def get_skos_ontology(
         raise ValueError(f"no prefix given nor found using {VANN.preferredNamespacePrefix}")
 
     root_terms = [
-        NormalizedNamableReference.from_reference(converter.parse_uri(subject, strict=True))
+        NormalizedNamableReference.from_reference(
+            converter.parse_uri(str(subject), strict=True).to_pydantic()
+        )
         for subject in graph.objects(scheme, SKOS.hasTopConcept)
     ]
     terms = [
@@ -78,12 +80,15 @@ def _literal_objects(graph: Graph, subject: Node, predicate: Node) -> list[rdfli
     ]
 
 
+# until we have a better way of representing internationalization, this
+# just extracts a language-less or english language literal. otherwise,
+# it takes one at random
 DEFAULT_LANGUAGES = {"en", None}
 
 
 def get_term(graph: rdflib.Graph, node: URIRef, converter: curies.Converter) -> Term:
     """Get a term."""
-    reference_tuple = converter.parse_uri(node, strict=True)
+    reference_tuple = converter.parse_uri(str(node), strict=True)
     labels = _literal_objects(graph, node, SKOS.prefLabel)
     definitions = _literal_objects(graph, node, SKOS.definition)
     term = Term(
@@ -98,18 +103,18 @@ def get_term(graph: rdflib.Graph, node: URIRef, converter: curies.Converter) -> 
         term.append_synonym(alt)
 
     for exact_match in graph.objects(node, SKOS.exactMatch):
-        term.append_exact_match(converter.parse_uri(exact_match, strict=True))
-
-    # TODO broad, narrow, related match. add to term functions too
+        if isinstance(exact_match, URIRef):
+            term.append_exact_match(converter.parse_uri(str(exact_match), strict=True))
+    for broad_match in graph.objects(node, SKOS.broadMatch):
+        if isinstance(broad_match, URIRef):
+            term.append_broad_match(converter.parse_uri(str(broad_match), strict=True))
+    for narrow_match in graph.objects(node, SKOS.narrowMatch):
+        if isinstance(narrow_match, URIRef):
+            term.append_narrow_match(converter.parse_uri(str(narrow_match), strict=True))
+    for related_match in graph.objects(node, SKOS.relatedMatch):
+        if isinstance(related_match, URIRef):
+            term.append_related_match(converter.parse_uri(str(related_match), strict=True))
     return term
-
-
-def _split_literals(literals: list[rdflib.Literal]) -> tuple[str, str]:
-    for literal in literals:
-        if literal._language == "en" or literal._language is None:
-            return literal, "en", {}
-    literal = literals[0]
-    return str(literal), literal._language, {}
 
 
 def _demo():
