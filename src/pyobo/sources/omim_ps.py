@@ -2,6 +2,7 @@
 
 import logging
 from collections.abc import Iterable
+from typing import cast
 
 from bioversions.utils import get_soup
 
@@ -34,9 +35,14 @@ class OMIMPSGetter(Obo):
         if tbody is None:
             raise ValueError("omim.ps failed - scraper could not find table body in HTML")
         for row in tbody.find_all("tr"):
-            anchor = row.find("td").find("a")
+            td = row.find("td")
+            if td is None:
+                continue
+            anchor = td.find("a")
+            if anchor is None or anchor.text is None:
+                continue
             name = anchor.text.strip()
-            identifier = anchor.attrs["href"][len("/phenotypicSeries/") :]
+            identifier = cast(str, anchor.attrs["href"])[len("/phenotypicSeries/") :]
             yield Term.from_triple(PREFIX, identifier, name)
 
 

@@ -7,8 +7,14 @@ from typing import TYPE_CHECKING
 import curies
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
+from typing_extensions import Unpack
 
-from pyobo.api.names import get_definition, get_name, get_references
+from pyobo.api.names import get_definition, get_id_name_mapping, get_name
+from pyobo.api.utils import get_version_from_kwargs
+from pyobo.constants import GetOntologyKwargs, check_should_force
+from pyobo.identifier_utils import wrap_norm_prefix
+from pyobo.utils.path import CacheArtifact, get_cache_path
 
 if TYPE_CHECKING:
     import sentence_transformers
@@ -31,38 +37,61 @@ def get_text_embedding_model() -> sentence_transformers.SentenceTransformer:
 
 def _get_text(
     reference: str | curies.Reference | curies.ReferenceTuple,
+    /,
+    *,
+    name: str | None = None,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
-    name = get_name(reference)
+    if name is None:
+        name = get_name(reference, **kwargs)
     if name is None:
         return None
-    description = get_definition(reference)
+    description = get_definition(reference, **kwargs)
     if description:
         name += " " + description
     return name
 
 
+@wrap_norm_prefix
 def get_text_embeddings_df(
     prefix: str,
     *,
     model: sentence_transformers.SentenceTransformer | None = None,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
     """Get embeddings for all entities in the resource.
 
     :param prefix: A reference, either as a string or Reference object
     :param model: A sentence transformer model. Defaults to ``all-MiniLM-L6-v2`` if not
         given.
+    :param kwargs: The keyword arguments to forward to ontology getter functions for
+        names, definitions, and version
+
+    :returns: A pandas dataframe with an index representing local unique identifiers and
+        columns for the values of the model returned vectors
     """
+    path = get_cache_path(
+        prefix, CacheArtifact.embeddings, version=get_version_from_kwargs(prefix, kwargs)
+    )
+    if path.is_file() and not check_should_force(kwargs):
+        df = pd.read_csv(path, sep="\t").set_index(0)
+        return df
+
+    id_to_name = get_id_name_mapping(prefix, **kwargs)
+
     luids, texts = [], []
-    for reference in get_references(prefix):
-        text = _get_text(reference)
+    for identifier, name in tqdm(id_to_name.items(), desc=f"[{prefix}] constructing text"):
+        text = _get_text(curies.ReferenceTuple(prefix, identifier), name=name, **kwargs)
         if text is None:
             continue
-        luids.append(reference.identifier)
+        luids.append(identifier)
         texts.append(text)
     if model is None:
         model = get_text_embedding_model()
-    res = model.encode(texts)
-    return pd.DataFrame(res, index=luids)
+    res = model.encode(texts, show_progress_bar=True)
+    df = pd.DataFrame(res, index=luids)
+    df.to_csv(path, sep="\t")  # index is important here!
+    return df
 
 
 def get_text_embedding(
