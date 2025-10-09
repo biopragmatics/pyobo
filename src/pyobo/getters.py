@@ -38,7 +38,7 @@ from .constants import (
 from .identifier_utils import ParseError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
-from .struct.obo import from_obo_path, from_obonet
+from .struct.obo import from_obonet
 from .utils.io import safe_open_writer
 from .utils.misc import _get_version_from_artifact
 from .utils.path import ensure_path, prefix_directory_join
@@ -189,21 +189,32 @@ def get_ontology(
         if cache:
             obo.write_default(force=force_process)
         return obo
+    elif ontology_format == "skos":
+        from .struct.skosrdf import read_skos
+
+        obo = read_skos(prefix=prefix, path=path)
+        if cache:
+            obo.write_default(force=force)
+        return obo
+    elif ontology_format == "obo":
+        from .struct.obo import from_obo_path
+
+        obo = from_obo_path(
+            path,
+            prefix=prefix,
+            strict=strict,
+            version=version,
+            upgrade=upgrade,
+            use_tqdm=use_tqdm,
+            _cache_path=obonet_json_gz_path,
+        )
+        if cache:
+            obo.write_default(force=force_process)
+        return obo
+    elif ontology_format == "jskos":
+        raise NotImplementedError
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
-
-    obo = from_obo_path(
-        path,
-        prefix=prefix,
-        strict=strict,
-        version=version,
-        upgrade=upgrade,
-        use_tqdm=use_tqdm,
-        _cache_path=obonet_json_gz_path,
-    )
-    if cache:
-        obo.write_default(force=force_process)
-    return obo
 
 
 def _ensure_ontology_path(

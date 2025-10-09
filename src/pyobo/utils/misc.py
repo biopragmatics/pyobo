@@ -132,6 +132,7 @@ VERSION_GETTERS: dict[OntologyFormat, Callable[[str, str], str | None]] = {
     "obo": _get_obo_version,
     "owl": _get_owl_version,
     "json": _get_obograph_json_version,
+    # TODO add version gettersfor SKOS, JSKOS
 }
 
 

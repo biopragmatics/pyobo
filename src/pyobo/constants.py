@@ -226,7 +226,7 @@ class IterHelperHelperDict(SlimGetOntologyKwargs):
 
 
 #: The ontology format
-OntologyFormat: TypeAlias = Literal["obo", "owl", "json", "rdf"]
+OntologyFormat: TypeAlias = Literal["obo", "owl", "json", "rdf", "skos"]
 
 #: from table 2 of the Functional OWL syntax definition
 #: at https://www.w3.org/TR/owl2-syntax/#IRIs
@@ -254,4 +254,5 @@ ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | None]]] = [
     ("owl", bioregistry.get_owl_download),
     ("json", bioregistry.get_json_download),
     ("rdf", bioregistry.get_rdf_download),
+    ("skos", bioregistry.get_skos_download),
 ]

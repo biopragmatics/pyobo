@@ -1,0 +1,28 @@
+@base <https://w3id.org/kim/hcrt/>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#>.
+@prefix vann: <http://purl.org/vocab/vann/> .
+
+
+<scheme> a skos:ConceptScheme;
+        dct:title "Hochschulcampus Ressourcentypen"@de, "Higher Education Resource Types"@en, "Brontypen voor het hoger onderwijs"@nl, "Типи ресурсів вищої освіти"@uk, "Typy zdrojů vyššího vzdělání"@cs ;
+        dct:description "Eine Wertelliste für Typen von Lernressourcen (Learning Resource Type), entstanden im Kontext des Metadatenschemas \"LOM for Higher Education OER Repositories\" (https://w3id.org/dini-ag-kim/hs-oer-lom-profil/latest/)."@de ;
+        dct:publisher <https://oerworldmap.org/resource/urn:uuid:fd06253e-fe67-4910-b923-51db9d27e59f> ;
+        dct:issued "2020-02-07" ;
+        vann:preferredNamespaceUri "https://w3id.org/kim/hcrt/" ;
+        vann:preferredNamespacePrefix "hcrt" ;
+        dct:license <http://creativecommons.org/publicdomain/zero/1.0/> ;
+        skos:hasTopConcept <application>, <assessment>, <audio>, <case_study>, <course>, <data>, <diagram>,
+            <drill_and_practice>, <educational_game>, <experiment>, <image>, <index>, <lesson_plan>, <map>,
+            <portal>, <questionnaire>, <script>, <sheet_music>, <simulation>, <slide>, <text>, <textbook>, <video>, <web_page>,
+            <worksheet>, <other> .
+
+<application> a skos:Concept;
+           skos:topConceptOf <scheme> ;
+           skos:prefLabel "Softwareanwendung"@de, "Software Application"@en, "Computerprogramma"@nl, "Програмне забезпечення"@uk, "Počítačový program"@cs, "Application logicielle"@fr .
+
+<assessment> a skos:Concept;
+          skos:topConceptOf <scheme> ;
+          skos:prefLabel "Lernkontrolle"@de, "Assessment"@en, "Evaluatie"@nl, "Оцінювання"@uk, "Hodnocení"@cs, "Contrôle d’apprentissage"@fr ;
+          skos:altLabel "Assessment"@de ;
+          skos:scopeNote "unter anderem (Selbst-)Tests"@de, "entre autres (auto)tests"@fr .
