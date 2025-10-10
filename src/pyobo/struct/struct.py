@@ -246,12 +246,22 @@ DEFAULT_SYNONYM_TYPE = SynonymTypeDef(
     reference=Reference(prefix="oboInOwl", identifier="SynonymType", name="synonym type"),
 )
 abbreviation = SynonymTypeDef(
-    reference=Reference(prefix="OMO", identifier="0003000", name="abbreviation")
+    reference=Reference(prefix="omo", identifier="0003000", name="abbreviation")
 )
 acronym = SynonymTypeDef(reference=Reference(prefix="omo", identifier="0003012", name="acronym"))
 uk_spelling = SynonymTypeDef(
     reference=Reference(prefix="omo", identifier="0003005", name="UK spelling synonym")
 )
+previous_name = SynonymTypeDef(
+    reference=Reference(prefix="omo", identifier="0003008", name="previous name")
+)
+previous_gene_symbol = SynonymTypeDef(
+    reference=Reference(prefix="omo", identifier="0003015", name="previous gene symbol")
+)
+gene_symbol_synonym = SynonymTypeDef(
+    reference=Reference(prefix="omo", identifier="0003016", name="gene symbol synonym")
+)
+
 default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
     abbreviation.pair: abbreviation,
     acronym.pair: acronym,

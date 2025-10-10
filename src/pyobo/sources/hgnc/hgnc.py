@@ -16,7 +16,6 @@ from pyobo.resources.so import get_so_name
 from pyobo.struct import (
     Obo,
     Reference,
-    SynonymTypeDef,
     Term,
     TypeDef,
     default_reference,
@@ -28,6 +27,7 @@ from pyobo.struct import (
     orthologous,
     transcribes_to,
 )
+from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
 from pyobo.struct.typedef import exact_match
 from pyobo.utils.path import ensure_path, prefix_directory_join
 
@@ -43,18 +43,6 @@ DEFINITIONS_URL_FMT = (
     "hgnc_complete_set_{version}.json"
 )
 
-previous_symbol_type = SynonymTypeDef(
-    reference=default_reference(PREFIX, "previous_symbol", name="previous symbol")
-)
-alias_symbol_type = SynonymTypeDef(
-    reference=default_reference(PREFIX, "alias_symbol", name="alias symbol")
-)
-previous_name_type = SynonymTypeDef(
-    reference=default_reference(PREFIX, "previous_name", name="previous name")
-)
-alias_name_type = SynonymTypeDef(
-    reference=default_reference(PREFIX, "alias_name", name="alias name")
-)
 HAS_LOCUS_TYPE = TypeDef(
     reference=default_reference(PREFIX, "locus_type", name="has locus type"), is_metadata_tag=True
 )
@@ -209,10 +197,9 @@ class HGNCGetter(Obo):
         HAS_LOCATION,
     ]
     synonym_typedefs = [
-        previous_name_type,
-        previous_symbol_type,
-        alias_name_type,
-        alias_symbol_type,
+        previous_name,
+        previous_gene_symbol,
+        gene_symbol_synonym,
     ]
     root_terms = [
         Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id))
@@ -390,15 +377,16 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             )
 
         for alias_symbol in entry.pop("alias_symbol", []):
-            term.append_synonym(alias_symbol, type=alias_symbol_type)
+            term.append_synonym(alias_symbol, type=gene_symbol_synonym)
         for alias_name in entry.pop("alias_name", []):
-            term.append_synonym(alias_name, type=alias_name_type)
+            # regular synonym, no type needed.
+            term.append_synonym(alias_name)
         for previous_symbol in itt.chain(
             entry.pop("previous_symbol", []), entry.pop("prev_symbol", [])
         ):
-            term.append_synonym(previous_symbol, type=previous_symbol_type)
-        for previous_name in entry.pop("prev_name", []):
-            term.append_synonym(previous_name, type=previous_name_type)
+            term.append_synonym(previous_symbol, type=previous_gene_symbol)
+        for previous_name_ in entry.pop("prev_name", []):
+            term.append_synonym(previous_name_, type=previous_name)
 
         for prop, td in [("location", HAS_LOCATION)]:
             value = entry.pop(prop, None)
