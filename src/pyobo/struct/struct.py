@@ -255,6 +255,13 @@ uk_spelling = SynonymTypeDef(
 previous_name = SynonymTypeDef(
     reference=Reference(prefix="omo", identifier="0003008", name="previous name")
 )
+previous_gene_symbol = SynonymTypeDef(
+    reference=Reference(prefix="omo", identifier="0003015", name="previous gene symbol")
+)
+gene_symbol_synonym = SynonymTypeDef(
+    reference=Reference(prefix="omo", identifier="0003016", name="gene symbol synonym")
+)
+
 default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
     abbreviation.pair: abbreviation,
     acronym.pair: acronym,

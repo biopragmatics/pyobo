@@ -9,21 +9,17 @@ from tqdm.auto import tqdm
 from pyobo.struct import (
     Obo,
     Reference,
-    SynonymTypeDef,
     Term,
-    default_reference,
     from_species,
     has_gene_product,
     is_mentioned_by,
     transcribes_to,
 )
-from pyobo.struct.struct import previous_name
+from pyobo.struct.struct import previous_gene_symbol, previous_name
 from pyobo.utils.path import ensure_df
 
 logger = logging.getLogger(__name__)
 PREFIX = "rgd"
-
-old_symbol_type = SynonymTypeDef(reference=default_reference(PREFIX, "old_symbol"))
 
 # NOTE unigene id was discontinue in January 18th, 2021 dump
 
@@ -74,7 +70,7 @@ class RGDGetter(Obo):
 
     bioversions_key = ontology = PREFIX
     typedefs = [from_species, transcribes_to, has_gene_product, is_mentioned_by]
-    synonym_typedefs = [previous_name, old_symbol_type]
+    synonym_typedefs = [previous_name, previous_gene_symbol]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -123,7 +119,7 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
         old_symbols = row["OLD_SYMBOL"]
         if old_symbols and pd.notna(old_symbols):
             for old_symbol in old_symbols.split(";"):
-                term.append_synonym(old_symbol, type=old_symbol_type)
+                term.append_synonym(old_symbol, type=previous_gene_symbol)
         for prefix, key in namespace_to_column:
             xref_ids = str(row[key])
             if xref_ids and pd.notna(xref_ids):
