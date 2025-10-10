@@ -11,7 +11,7 @@ from tqdm.auto import tqdm
 from ..api import get_id_multirelations_mapping
 from ..constants import SPECIES_REMAPPING
 from ..resources.ncbitaxon import get_ncbitaxon_id
-from ..struct import Obo, Reference, Term, from_species, has_citation, has_participant
+from ..struct import Obo, Reference, Term, from_species, has_participant, is_mentioned_by
 from ..utils.io import multidict
 from ..utils.path import ensure_df
 
@@ -32,7 +32,7 @@ class ReactomeGetter(Obo):
     """An ontology representation of the Reactome pathway database."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [from_species, has_participant, has_citation]
+    typedefs = [from_species, has_participant, is_mentioned_by]
     root_terms = [ROOT]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -76,7 +76,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             reference=Reference(prefix=PREFIX, identifier=reactome_id, name=name),
         )
         for pubmed_id in provenance_d.get(reactome_id, []):
-            term.append_provenance(Reference(prefix="pubmed", identifier=pubmed_id))
+            term.append_mentioned_by(Reference(prefix="pubmed", identifier=pubmed_id))
 
         if not taxonomy_id or pd.isna(taxonomy_id):
             raise ValueError(f"unmapped species: {species_name}")

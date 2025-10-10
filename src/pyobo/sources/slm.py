@@ -7,7 +7,7 @@ from tqdm.auto import tqdm
 
 from pyobo import Obo, Reference, Term, TypeDef
 from pyobo.struct.struct import abbreviation as abbreviation_typedef
-from pyobo.struct.typedef import exact_match, has_citation, has_inchi, has_smiles
+from pyobo.struct.typedef import exact_match, has_inchi, has_smiles, is_mentioned_by
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -43,7 +43,7 @@ class SLMGetter(Obo):
     """An ontology representation of SwissLipid's lipid nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [exact_match, LEVEL, has_inchi, has_smiles, has_citation]
+    typedefs = [exact_match, LEVEL, has_inchi, has_smiles, is_mentioned_by]
     synonym_typedefs = [abbreviation_typedef]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -117,7 +117,7 @@ def iter_terms(version: str, force: bool = False):
         for hmdb_id in _split(hmdb_ids):
             term.append_exact_match(("hmdb", hmdb_id))
         for pubmed_id in _split(pubmed_ids):
-            term.append_provenance(Reference(prefix="pubmed", identifier=pubmed_id))
+            term.append_mentioned_by(Reference(prefix="pubmed", identifier=pubmed_id))
         # TODO how to handle class, parents, and components?
         yield term
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime
 import itertools as itt
 import logging
+import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
@@ -840,7 +841,7 @@ class Stanza(Referenced, HasReferencesMixin):
         """Get definition provenance."""
         # return as a tuple to make sure nobody is appending on it
         return (
-            *self.get_property_objects(v.has_citation),
+            *self.get_property_objects(v.is_mentioned_by),
             # This gets all of the xrefs on _any_ axiom,
             # which includes the definition provenance
             *(
@@ -867,8 +868,18 @@ class Stanza(Referenced, HasReferencesMixin):
         *,
         annotations: Iterable[Annotation] | None = None,
     ) -> Self:
-        """Append a citation."""
-        return self.annotate_object(v.has_citation, reference, annotations=annotations)
+        """Append a creative work that mentions this term."""
+        warnings.warn("use append_mentioned_by instead", DeprecationWarning, stacklevel=2)
+        return self.append_mentioned_by(reference, annotations=annotations)
+
+    def append_mentioned_by(
+        self,
+        reference: Reference,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
+        """Append a creative work that mentions this term."""
+        return self.annotate_object(v.is_mentioned_by, reference, annotations=annotations)
 
 
 ReferenceHint: TypeAlias = (

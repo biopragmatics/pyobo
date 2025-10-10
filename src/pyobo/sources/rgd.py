@@ -13,8 +13,8 @@ from pyobo.struct import (
     Term,
     default_reference,
     from_species,
-    has_citation,
     has_gene_product,
+    is_mentioned_by,
     transcribes_to,
 )
 from pyobo.utils.path import ensure_df
@@ -73,7 +73,7 @@ class RGDGetter(Obo):
     """An ontology representation of RGD's rat gene nomenclature."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [from_species, transcribes_to, has_gene_product, has_citation]
+    typedefs = [from_species, transcribes_to, has_gene_product, is_mentioned_by]
     synonym_typedefs = [old_name_type, old_symbol_type]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -154,7 +154,7 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
         pubmed_ids = row["CURATED_REF_PUBMED_ID"]
         if pubmed_ids and pd.notna(pubmed_ids):
             for pubmed_id in str(pubmed_ids).split(";"):
-                term.append_provenance(Reference(prefix="pubmed", identifier=pubmed_id))
+                term.append_mentioned_by(Reference(prefix="pubmed", identifier=pubmed_id))
 
         term.set_species(identifier="10116", name="Rattus norvegicus")
         yield term
