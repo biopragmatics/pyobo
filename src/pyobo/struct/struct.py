@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import inspect
 import itertools as itt
 import json
 import logging
@@ -106,6 +107,7 @@ SSSOM_DF_COLUMNS = [
     "contributor",
 ]
 FORMAT_VERSION = "1.4"
+_SOURCES = Path(__file__).parent.parent.joinpath("sources").resolve()
 
 
 @dataclass
@@ -631,8 +633,15 @@ class Obo:
                 raise ValueError(f"{self.ontology} is missing data_version")
             elif "/" in self.data_version:
                 raise ValueError(f"{self.ontology} has a slash in version: {self.data_version}")
+
+        file_path = Path(inspect.getfile(self.__class__)).resolve()
+        script_url = f"https://github.com/biopragmatics/pyobo/blob/main/src/pyobo/sources/{file_path.relative_to(_SOURCES)}"
+
         if self.auto_generated_by is None:
-            self.auto_generated_by = f"PyOBO v{get_pyobo_version(with_git_hash=True)} on {datetime.datetime.now().isoformat()}"  # type:ignore
+            self.auto_generated_by = (
+                f"PyOBO v{get_pyobo_version(with_git_hash=True)} on "
+                f"{datetime.datetime.now().isoformat()} by {script_url}."
+            )  # type:ignore
 
     def _get_clean_idspaces(self) -> dict[str, str]:
         """Get normalized idspace dictionary."""
