@@ -5,7 +5,7 @@ from pathlib import Path
 import curies
 import rdflib
 from bioregistry import NormalizedNamableReference, NormalizedNamedReference
-from rdflib import DCTERMS, RDF, SKOS, VANN, Graph, Node, URIRef, RDFS
+from rdflib import DCTERMS, RDF, RDFS, SKOS, VANN, Graph, Node, URIRef
 from tqdm import tqdm
 
 from pyobo.identifier_utils import get_converter
@@ -70,7 +70,8 @@ def get_skos_ontology(
         root_terms=root_terms,
         idspaces={curie_prefix: str(uri_prefix) for curie_prefix, uri_prefix in graph.namespaces()},
         name=_get_scheme_object_literal(DCTERMS.title),
-        description=_get_scheme_object_literal(DCTERMS.description) or _get_scheme_object_literal(RDFS.comment),
+        description=_get_scheme_object_literal(DCTERMS.description)
+        or _get_scheme_object_literal(RDFS.comment),
     )
 
 

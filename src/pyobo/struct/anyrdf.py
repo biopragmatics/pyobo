@@ -40,7 +40,7 @@ def _get_ontology(
             graph.subjects(RDF.type, [RDFS.Class, SKOS.Concept, OWL.Class, OWL.NamedIndividual])
         )
         if isinstance(concept, URIRef)
-           and (term := get_term(graph, concept, converter=converter)) is not None
+        and (term := get_term(graph, concept, converter=converter)) is not None
     ]
     return build_ontology(
         prefix=prefix,
