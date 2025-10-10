@@ -17,13 +17,13 @@ from pyobo.struct import (
     is_mentioned_by,
     transcribes_to,
 )
+from pyobo.struct.struct import previous_name
 from pyobo.utils.path import ensure_df
 
 logger = logging.getLogger(__name__)
 PREFIX = "rgd"
 
 old_symbol_type = SynonymTypeDef(reference=default_reference(PREFIX, "old_symbol"))
-old_name_type = SynonymTypeDef(reference=default_reference(PREFIX, "old_name"))
 
 # NOTE unigene id was discontinue in January 18th, 2021 dump
 
@@ -74,7 +74,7 @@ class RGDGetter(Obo):
 
     bioversions_key = ontology = PREFIX
     typedefs = [from_species, transcribes_to, has_gene_product, is_mentioned_by]
-    synonym_typedefs = [old_name_type, old_symbol_type]
+    synonym_typedefs = [previous_name, old_symbol_type]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -119,7 +119,7 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
         old_names = row["OLD_NAME"]
         if old_names and pd.notna(old_names):
             for old_name in old_names.split(";"):
-                term.append_synonym(old_name, type=old_name_type)
+                term.append_synonym(old_name, type=previous_name)
         old_symbols = row["OLD_SYMBOL"]
         if old_symbols and pd.notna(old_symbols):
             for old_symbol in old_symbols.split(";"):

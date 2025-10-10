@@ -28,6 +28,7 @@ from pyobo.struct import (
     orthologous,
     transcribes_to,
 )
+from pyobo.struct.struct import previous_name as previous_name_type
 from pyobo.struct.typedef import exact_match
 from pyobo.utils.path import ensure_path, prefix_directory_join
 
@@ -48,9 +49,6 @@ previous_symbol_type = SynonymTypeDef(
 )
 alias_symbol_type = SynonymTypeDef(
     reference=default_reference(PREFIX, "alias_symbol", name="alias symbol")
-)
-previous_name_type = SynonymTypeDef(
-    reference=default_reference(PREFIX, "previous_name", name="previous name")
 )
 alias_name_type = SynonymTypeDef(
     reference=default_reference(PREFIX, "alias_name", name="alias name")
