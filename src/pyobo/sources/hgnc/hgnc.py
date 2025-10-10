@@ -22,8 +22,8 @@ from pyobo.struct import (
     default_reference,
     from_species,
     gene_product_member_of,
-    has_citation,
     has_gene_product,
+    is_mentioned_by,
     member_of,
     orthologous,
     transcribes_to,
@@ -203,7 +203,7 @@ class HGNCGetter(Obo):
         orthologous,
         member_of,
         exact_match,
-        has_citation,
+        is_mentioned_by,
         HAS_LOCUS_GROUP,
         HAS_LOCUS_TYPE,
         HAS_LOCATION,
@@ -375,7 +375,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                     term.append_xref(Reference(prefix=xref_prefix, identifier=str(xref_identifier)))
 
         for pubmed_id in entry.pop("pubmed_id", []):
-            term.append_provenance(Reference(prefix="pubmed", identifier=str(pubmed_id)))
+            term.append_mentioned_by(Reference(prefix="pubmed", identifier=str(pubmed_id)))
 
         gene_group_ids = entry.pop("gene_group_id", [])
         gene_groups = entry.pop("gene_group", [])

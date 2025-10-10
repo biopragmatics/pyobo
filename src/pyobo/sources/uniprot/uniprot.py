@@ -19,7 +19,7 @@ from pyobo.struct import (
     derives_from,
     enables,
     from_species,
-    has_citation,
+    is_mentioned_by,
     participates_in,
 )
 from pyobo.struct.typedef import gene_product_of, located_in, molecularly_interacts_with
@@ -68,7 +68,7 @@ class UniProtGetter(Obo):
         derives_from,
         located_in,
         IS_REVIEWED,
-        has_citation,
+        is_mentioned_by,
     ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -156,7 +156,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                         )
             for pubmed in pubmeds.split(";"):
                 if pubmed := pubmed.strip():
-                    term.append_provenance(Reference(prefix="pubmed", identifier=pubmed))
+                    term.append_mentioned_by(Reference(prefix="pubmed", identifier=pubmed))
             for pdb in pdbs.split(";"):
                 if pdb := pdb.strip():
                     term.append_xref(Reference(prefix="pdb", identifier=pdb))

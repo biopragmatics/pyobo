@@ -258,10 +258,15 @@ has_functional_parent = TypeDef(
     reference=Reference(prefix="ro", identifier="0018038", name="has functional parent"),
 )
 
-has_citation = TypeDef(
-    reference=v.has_citation,
+is_mentioned_by = TypeDef(
+    reference=v.is_mentioned_by,
     is_metadata_tag=True,
-    range=Reference(prefix="IAO", identifier="0000013", name="journal article"),
+    inverse=v.mentions,
+)
+mentions = TypeDef(
+    reference=v.mentions,
+    is_metadata_tag=True,
+    inverse=v.is_mentioned_by,
 )
 
 has_smiles = TypeDef(reference=v.has_smiles, is_metadata_tag=True).append_xref(v.debio_has_smiles)
