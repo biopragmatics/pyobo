@@ -145,7 +145,7 @@ LOCUS_TYPE_TO_SO = {
     "complex locus constituent": "0000997",  # https://github.com/pyobo/pyobo/issues/118#issuecomment-1564520052
     # non-coding RNA
     "RNA, Y": "0002359",
-    "RNA, cluster": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/564
+    "RNA, cluster": "0003001",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/564
     "RNA, long non-coding": "0002127",  # HGNC links to wrong one
     "RNA, micro": "0001265",
     "RNA, misc": "0001266",
@@ -168,7 +168,7 @@ LOCUS_TYPE_TO_SO = {
     "fragile site": "0002349",
     "readthrough": "0000697",  # maybe not right
     "transposable element": "0000111",  # HGNC links to wrong one
-    "virus integration site": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/551
+    "virus integration site": "0003002",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/551
     "region": "0001411",  # a small bucket for things that need a better annotation, even higher than "gene"
     "unknown": "0000704",  # gene
     None: "0000704",  # gene
@@ -177,7 +177,6 @@ LOCUS_TYPE_TO_SO = {
 PUBLICATION_TERM = Term(
     reference=Reference(prefix="IAO", identifier="0000013", name="journal article")
 )
-
 
 class HGNCGetter(Obo):
     """An ontology representation of HGNC's gene nomenclature."""
@@ -395,16 +394,10 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
 
         locus_type = entry.pop("locus_type")
         locus_group = entry.pop("locus_group")
-        so_id = LOCUS_TYPE_TO_SO.get(locus_type)
-        if so_id:
-            term.append_parent(Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
-        else:
-            term.append_parent(
-                Reference(prefix="SO", identifier="0000704", name=get_so_name("0000704"))
-            )  # gene
-            unhandle_locus_types[locus_type][identifier] = term
-            term.annotate_string(HAS_LOCUS_TYPE, locus_type)
-            term.annotate_string(HAS_LOCUS_GROUP, locus_group)
+        so_id = LOCUS_TYPE_TO_SO[locus_type]
+        term.append_parent(Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
+
+        term.annotate_string(HAS_LOCUS_GROUP, locus_group)
 
         term.set_species(identifier="9606", name="Homo sapiens")
 
