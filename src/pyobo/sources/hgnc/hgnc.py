@@ -43,9 +43,8 @@ DEFINITIONS_URL_FMT = (
     "hgnc_complete_set_{version}.json"
 )
 
-HAS_LOCUS_GROUP = TypeDef(
-    reference=default_reference(PREFIX, "locus_group", name="has locus group"), is_metadata_tag=True
-)
+# TODO upstream to either OMO or RO. Discusson in
+#  https://github.com/information-artifact-ontology/ontology-metadata/issues/199
 HAS_LOCATION = TypeDef(
     reference=default_reference(PREFIX, "location", name="has location"), is_metadata_tag=True
 )
@@ -189,7 +188,6 @@ class HGNCGetter(Obo):
         member_of,
         exact_match,
         is_mentioned_by,
-        HAS_LOCUS_GROUP,
         HAS_LOCATION,
     ]
     synonym_typedefs = [
@@ -389,7 +387,10 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 term.annotate_string(td, value)
 
         locus_type = entry.pop("locus_type")
-        locus_group = entry.pop("locus_group")
+        # note that locus group is a more broad category than locus type,
+        # and since we already have an exhaustive mapping from locus type
+        # to SO, then we can throw this annotation away
+        _locus_group = entry.pop("locus_group")
 
         so_id = LOCUS_TYPE_TO_SO.get(locus_type)
         if not so_id:
@@ -404,7 +405,6 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             """)
 
         term.append_parent(Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
-        term.annotate_string(HAS_LOCUS_GROUP, locus_group)
         term.set_species(identifier="9606", name="Homo sapiens")
 
         for key in entry:
