@@ -390,11 +390,21 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
 
         locus_type = entry.pop("locus_type")
         locus_group = entry.pop("locus_group")
-        so_id = LOCUS_TYPE_TO_SO[locus_type]
+
+        so_id = LOCUS_TYPE_TO_SO.get(locus_type)
+        if not so_id:
+            raise ValueError("""\
+                HGNC has updated their list of locus types, so the HGNC script is currently
+                incomplete. This can be fixed by updating the ``LOCUS_TYPE_TO_SO`` dictionary
+                to point to a new SO term. If there is none existing, then make a pull request
+                to https://github.com/The-Sequence-Ontology/SO-Ontologies like in
+                https://github.com/The-Sequence-Ontology/SO-Ontologies/pull/668. If the
+                maintainers aren't responsive, you can still use the proposed term before it's
+                accepted upstream like was done for SO:0003001 and SO:0003002
+            """)
+
         term.append_parent(Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
-
         term.annotate_string(HAS_LOCUS_GROUP, locus_group)
-
         term.set_species(identifier="9606", name="Homo sapiens")
 
         for key in entry:
