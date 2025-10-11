@@ -4,7 +4,7 @@ import itertools as itt
 import json
 import logging
 import typing
-from collections import Counter, defaultdict
+from collections import Counter
 from collections.abc import Iterable
 
 import pydantic
@@ -29,7 +29,7 @@ from pyobo.struct import (
 )
 from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
 from pyobo.struct.typedef import exact_match
-from pyobo.utils.path import ensure_path, prefix_directory_join
+from pyobo.utils.path import ensure_path
 
 __all__ = [
     "HGNCGetter",
