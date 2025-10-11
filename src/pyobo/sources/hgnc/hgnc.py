@@ -391,7 +391,6 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         # and since we already have an exhaustive mapping from locus type
         # to SO, then we can throw this annotation away
         _locus_group = entry.pop("locus_group")
-
         so_id = LOCUS_TYPE_TO_SO.get(locus_type)
         if not so_id:
             raise ValueError("""\
