@@ -4,7 +4,7 @@ import itertools as itt
 import json
 import logging
 import typing
-from collections import Counter, defaultdict
+from collections import Counter
 from collections.abc import Iterable
 
 import pydantic
@@ -29,7 +29,7 @@ from pyobo.struct import (
 )
 from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
 from pyobo.struct.typedef import exact_match
-from pyobo.utils.path import ensure_path, prefix_directory_join
+from pyobo.utils.path import ensure_path
 
 __all__ = [
     "HGNCGetter",
@@ -43,12 +43,8 @@ DEFINITIONS_URL_FMT = (
     "hgnc_complete_set_{version}.json"
 )
 
-HAS_LOCUS_TYPE = TypeDef(
-    reference=default_reference(PREFIX, "locus_type", name="has locus type"), is_metadata_tag=True
-)
-HAS_LOCUS_GROUP = TypeDef(
-    reference=default_reference(PREFIX, "locus_group", name="has locus group"), is_metadata_tag=True
-)
+# TODO upstream to either OMO or RO. Discusson in
+#  https://github.com/information-artifact-ontology/ontology-metadata/issues/199
 HAS_LOCATION = TypeDef(
     reference=default_reference(PREFIX, "location", name="has location"), is_metadata_tag=True
 )
@@ -145,7 +141,7 @@ LOCUS_TYPE_TO_SO = {
     "complex locus constituent": "0000997",  # https://github.com/pyobo/pyobo/issues/118#issuecomment-1564520052
     # non-coding RNA
     "RNA, Y": "0002359",
-    "RNA, cluster": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/564
+    "RNA, cluster": "0003001",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/564
     "RNA, long non-coding": "0002127",  # HGNC links to wrong one
     "RNA, micro": "0001265",
     "RNA, misc": "0001266",
@@ -168,7 +164,7 @@ LOCUS_TYPE_TO_SO = {
     "fragile site": "0002349",
     "readthrough": "0000697",  # maybe not right
     "transposable element": "0000111",  # HGNC links to wrong one
-    "virus integration site": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/551
+    "virus integration site": "0003002",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/551
     "region": "0001411",  # a small bucket for things that need a better annotation, even higher than "gene"
     "unknown": "0000704",  # gene
     None: "0000704",  # gene
@@ -192,8 +188,6 @@ class HGNCGetter(Obo):
         member_of,
         exact_match,
         is_mentioned_by,
-        HAS_LOCUS_GROUP,
-        HAS_LOCUS_TYPE,
         HAS_LOCATION,
     ]
     synonym_typedefs = [
@@ -217,7 +211,6 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
     if version is None:
         version = get_version("hgnc")
     unhandled_entry_keys: typing.Counter[str] = Counter()
-    unhandle_locus_types: defaultdict[str, dict[str, Term]] = defaultdict(dict)
     path = ensure_path(
         PREFIX,
         url=DEFINITIONS_URL_FMT.format(version=version),
@@ -394,18 +387,23 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 term.annotate_string(td, value)
 
         locus_type = entry.pop("locus_type")
-        locus_group = entry.pop("locus_group")
+        # note that locus group is a more broad category than locus type,
+        # and since we already have an exhaustive mapping from locus type
+        # to SO, then we can throw this annotation away
+        _locus_group = entry.pop("locus_group")
         so_id = LOCUS_TYPE_TO_SO.get(locus_type)
-        if so_id:
-            term.append_parent(Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
-        else:
-            term.append_parent(
-                Reference(prefix="SO", identifier="0000704", name=get_so_name("0000704"))
-            )  # gene
-            unhandle_locus_types[locus_type][identifier] = term
-            term.annotate_string(HAS_LOCUS_TYPE, locus_type)
-            term.annotate_string(HAS_LOCUS_GROUP, locus_group)
+        if not so_id:
+            raise ValueError("""\
+                HGNC has updated their list of locus types, so the HGNC script is currently
+                incomplete. This can be fixed by updating the ``LOCUS_TYPE_TO_SO`` dictionary
+                to point to a new SO term. If there is none existing, then make a pull request
+                to https://github.com/The-Sequence-Ontology/SO-Ontologies like in
+                https://github.com/The-Sequence-Ontology/SO-Ontologies/pull/668. If the
+                maintainers aren't responsive, you can still use the proposed term before it's
+                accepted upstream like was done for SO:0003001 and SO:0003002
+            """)
 
+        term.append_parent(Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
         term.set_species(identifier="9606", name="Homo sapiens")
 
         for key in entry:
@@ -413,45 +411,6 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 unhandled_entry_keys[key] += 1
         yield term
 
-    with open(prefix_directory_join(PREFIX, name="unhandled.json"), "w") as file:
-        json.dump(
-            {
-                k: {hgnc_id: term.name for hgnc_id, term in v.items()}
-                for k, v in unhandle_locus_types.items()
-            },
-            file,
-            indent=2,
-        )
-
-    with open(prefix_directory_join(PREFIX, name="unhandled.md"), "w") as file:
-        for k, v in sorted(unhandle_locus_types.items()):
-            t = tabulate(
-                [
-                    (
-                        hgnc_id,
-                        term.name,
-                        term.is_obsolete,
-                        f"https://bioregistry.io/{term.curie}",
-                        ", ".join(
-                            f"https://bioregistry.io/{p.curie}"
-                            for p in term.provenance
-                            if isinstance(p, Reference)
-                        ),
-                    )
-                    for hgnc_id, term in sorted(v.items())
-                ],
-                headers=["hgnc_id", "name", "obsolete", "link", "provenance"],
-                tablefmt="github",
-            )
-            print(f"## {k} ({len(v)})", file=file)
-            print(t, "\n", file=file)
-
-    unhandle_locus_type_counter = Counter(
-        {locus_type: len(d) for locus_type, d in unhandle_locus_types.items()}
-    )
-    logger.warning(
-        "Unhandled locus types:\n%s", tabulate(unhandle_locus_type_counter.most_common())
-    )
     if unhandled_entry_keys:
         logger.warning("Unhandled keys:\n%s", tabulate(unhandled_entry_keys.most_common()))
 
