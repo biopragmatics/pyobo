@@ -126,13 +126,16 @@ def _get_obograph_json_version(prefix: str, url: str) -> str | None:
         return None
     return cleanup_version(rv, prefix)
 
+
 def _get_skos_version(prefix: str, url: str) -> str | None:
     # TODO add implementation
     return None
 
+
 def _get_jskos_version(prefix: str, url: str) -> str | None:
     # TODO add implementation
     return None
+
 
 #: A mapping from data type to gersion getter function
 VERSION_GETTERS: dict[OntologyFormat, Callable[[str, str], str | None]] = {
