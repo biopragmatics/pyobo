@@ -43,9 +43,6 @@ DEFINITIONS_URL_FMT = (
     "hgnc_complete_set_{version}.json"
 )
 
-HAS_LOCUS_TYPE = TypeDef(
-    reference=default_reference(PREFIX, "locus_type", name="has locus type"), is_metadata_tag=True
-)
 HAS_LOCUS_GROUP = TypeDef(
     reference=default_reference(PREFIX, "locus_group", name="has locus group"), is_metadata_tag=True
 )
@@ -178,6 +175,7 @@ PUBLICATION_TERM = Term(
     reference=Reference(prefix="IAO", identifier="0000013", name="journal article")
 )
 
+
 class HGNCGetter(Obo):
     """An ontology representation of HGNC's gene nomenclature."""
 
@@ -192,7 +190,6 @@ class HGNCGetter(Obo):
         exact_match,
         is_mentioned_by,
         HAS_LOCUS_GROUP,
-        HAS_LOCUS_TYPE,
         HAS_LOCATION,
     ]
     synonym_typedefs = [
