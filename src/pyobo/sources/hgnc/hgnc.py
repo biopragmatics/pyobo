@@ -213,7 +213,6 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
     if version is None:
         version = get_version("hgnc")
     unhandled_entry_keys: typing.Counter[str] = Counter()
-    unhandle_locus_types: defaultdict[str, dict[str, Term]] = defaultdict(dict)
     path = ensure_path(
         PREFIX,
         url=DEFINITIONS_URL_FMT.format(version=version),
@@ -403,45 +402,6 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 unhandled_entry_keys[key] += 1
         yield term
 
-    with open(prefix_directory_join(PREFIX, name="unhandled.json"), "w") as file:
-        json.dump(
-            {
-                k: {hgnc_id: term.name for hgnc_id, term in v.items()}
-                for k, v in unhandle_locus_types.items()
-            },
-            file,
-            indent=2,
-        )
-
-    with open(prefix_directory_join(PREFIX, name="unhandled.md"), "w") as file:
-        for k, v in sorted(unhandle_locus_types.items()):
-            t = tabulate(
-                [
-                    (
-                        hgnc_id,
-                        term.name,
-                        term.is_obsolete,
-                        f"https://bioregistry.io/{term.curie}",
-                        ", ".join(
-                            f"https://bioregistry.io/{p.curie}"
-                            for p in term.provenance
-                            if isinstance(p, Reference)
-                        ),
-                    )
-                    for hgnc_id, term in sorted(v.items())
-                ],
-                headers=["hgnc_id", "name", "obsolete", "link", "provenance"],
-                tablefmt="github",
-            )
-            print(f"## {k} ({len(v)})", file=file)
-            print(t, "\n", file=file)
-
-    unhandle_locus_type_counter = Counter(
-        {locus_type: len(d) for locus_type, d in unhandle_locus_types.items()}
-    )
-    logger.warning(
-        "Unhandled locus types:\n%s", tabulate(unhandle_locus_type_counter.most_common())
-    )
     if unhandled_entry_keys:
         logger.warning("Unhandled keys:\n%s", tabulate(unhandled_entry_keys.most_common()))
 
