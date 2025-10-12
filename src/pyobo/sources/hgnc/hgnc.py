@@ -29,7 +29,7 @@ from pyobo.struct import (
     transcribes_to,
 )
 from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
-from pyobo.struct.typedef import ends, exact_match, located_in, see_also, starts
+from pyobo.struct.typedef import comment, ends, exact_match, located_in, starts
 from pyobo.utils.path import ensure_path
 
 __all__ = [
@@ -198,6 +198,7 @@ class HGNCGetter(Obo):
         located_in,
         starts,
         ends,
+        comment,
     ]
     synonym_typedefs = [
         previous_name,
@@ -419,7 +420,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                     location = location.removesuffix(qualifier_suffix)
                     annotations.append(
                         Annotation(
-                            predicate=see_also.reference, value=OBOLiteral.string(qualifier_text)
+                            predicate=comment.reference, value=OBOLiteral.string(qualifier_text)
                         )
                     )
                     break
