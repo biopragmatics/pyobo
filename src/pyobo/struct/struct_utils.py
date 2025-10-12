@@ -1015,8 +1015,11 @@ def _format_obo_trailing_modifiers(
         match prop.value:
             case Reference():
                 right = reference_escape(prop.value, ontology_prefix=ontology_prefix)
-            case OBOLiteral(value, _datatype, _language):
-                right = value
+            case OBOLiteral(value, datatype, _language):
+                if datatype == v.xsd_string:
+                    right = f'"{obo_escape_slim(value)}"'
+                else:
+                    right = value
         modifiers.append((left, right))
     inner = ", ".join(f"{key}={value}" for key, value in modifiers)
     return " {" + inner + "}"
