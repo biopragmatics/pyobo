@@ -27,7 +27,7 @@ from pyobo.struct import (
     transcribes_to,
 )
 from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
-from pyobo.struct.typedef import exact_match, located_in, starts, ends
+from pyobo.struct.typedef import ends, exact_match, located_in, starts
 from pyobo.utils.path import ensure_path
 
 __all__ = [
@@ -434,6 +434,20 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             else:
                 if "-" in location:
                     start, _, end = location.partition("-")
+
+                    # the range that sarts with a q needs
+                    # the chromosome moved over, like in
+                    # 17q24.2-q24.3
+                    if end.startswith("q"):
+                        chr, _, _ = start.partition("q")
+                        end = f"{chr}{end}"
+                    # the range that sarts with a p needs
+                    # the chromosome moved over, like in
+                    # 1p34.2-p34.1
+                    elif end.startswith("p"):
+                        chr, _, _ = start.partition("p")
+                        end = f"{chr}{end}"
+
                     if start not in location_to_chr:
                         unhandled_locations[start] += 1
                     elif end not in location_to_chr:
