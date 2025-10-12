@@ -4,7 +4,7 @@ import itertools as itt
 import json
 import logging
 import typing
-from collections import Counter
+from collections import Counter, defaultdict
 from collections.abc import Iterable
 
 import obographs
@@ -233,7 +233,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
     if version is None:
         version = get_version("hgnc")
 
-    unhandled_locations: typing.Counter[str] = Counter()
+    unhandled_locations: defaultdict[str, set[str]] = defaultdict(set)
     location_to_chr = _get_location_to_chr()
 
     unhandled_entry_keys: typing.Counter[str] = Counter()
@@ -437,9 +437,9 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             elif " and " in location:
                 left, _, right = location.partition(" and ")
                 if left not in location_to_chr:
-                    unhandled_locations[left] += 1
+                    unhandled_locations[left].add(identifier)
                 elif right not in location_to_chr:
-                    unhandled_locations[right] += 1
+                    unhandled_locations[right].add(identifier)
                 elif left in location_to_chr and right in location_to_chr:
                     term.append_relationship(
                         located_in, location_to_chr[left], annotations=annotations
@@ -448,18 +448,18 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                         located_in, location_to_chr[right], annotations=annotations
                     )
                 else:
-                    unhandled_locations[location] += 1
+                    unhandled_locations[location].add(identifier)
             elif " or " in location:
                 left, _, right = location.partition(" or ")
                 if left not in location_to_chr:
-                    unhandled_locations[left] += 1
+                    unhandled_locations[left].add(identifier)
                 elif right not in location_to_chr:
-                    unhandled_locations[right] += 1
+                    unhandled_locations[right].add(identifier)
                 elif left in location_to_chr and right in location_to_chr:
                     # FIXME implement
-                    unhandled_locations[location] += 1
+                    unhandled_locations[location].add(identifier)
                 else:
-                    unhandled_locations[location] += 1
+                    unhandled_locations[location].add(identifier)
             elif "-" in location:
                 start, _, end = location.partition("-")
 
@@ -477,18 +477,18 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                     end = f"{chr}{end}"
 
                 if start not in location_to_chr:
-                    unhandled_locations[start] += 1
+                    unhandled_locations[start].add(identifier)
                 elif end not in location_to_chr:
-                    unhandled_locations[end] += 1
+                    unhandled_locations[end].add(identifier)
                 elif start in location_to_chr and end in location_to_chr:
                     term.append_relationship(
                         starts, location_to_chr[start], annotations=annotations
                     )
                     term.append_relationship(ends, location_to_chr[end], annotations=annotations)
                 else:
-                    unhandled_locations[location] += 1
+                    unhandled_locations[location].add(identifier)
             else:
-                unhandled_locations[location] += 1
+                unhandled_locations[location].add(identifier)
 
         locus_type = entry.pop("locus_type")
         # note that locus group is a more broad category than locus type,
@@ -519,8 +519,8 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         logger.warning(
             "Unhandled chromosomal locations:\n\n%s\n",
             tabulate(
-                unhandled_locations.most_common(),
-                headers=["unhandled location", "count"],
+                [(k, len(vs), f"HGNC:{min(vs)}") for k, vs in unhandled_locations.items()],
+                headers=["location", "count", "example"],
                 tablefmt="github",
             ),
         )
