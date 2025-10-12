@@ -206,7 +206,7 @@ class TestOBOHeader(unittest.TestCase):
             property_value: foaf:homepage "http\\://geneontology.org/" xsd:anyURI
             property_value: doap:repository "https\\://github.com/geneontology/go-ontology" xsd:anyURI
             property_value: foaf:logo "https\\://obofoundry.org/images/go_logo.png" xsd:anyURI
-            property_value: doap:maintainer orcid:0000-0001-6787-2901
+            property_value: doap:maintainer orcid:0000-0001-6787-2901 ! Suzi Aleksander
             """,
             ontology,
         )
@@ -362,7 +362,8 @@ class TestOBOHeader(unittest.TestCase):
             property_value: foaf:homepage "https\://ror.org" xsd:anyURI
             property_value: doap:repository "https\://github.com/ror-community" xsd:anyURI
             property_value: foaf:logo "https\://ror.org/img/ror-logo.svg" xsd:anyURI
-            property_value: doap:maintainer orcid:0000-0002-2916-3423
+            property_value: doap:mailing-list "support@ror.org" xsd:string
+            property_value: doap:maintainer orcid:0000-0002-2916-3423 ! Maria Gould
             """,  # add Maria Gould
             ontology,
         )
@@ -386,6 +387,7 @@ class TestOBOHeader(unittest.TestCase):
             Annotation(foaf:homepage "https://ror.org"^^xsd:anyURI)
             Annotation(doap:repository "https://github.com/ror-community"^^xsd:anyURI)
             Annotation(foaf:logo "https://ror.org/img/ror-logo.svg"^^xsd:anyURI)
+            Annotation(doap:mailing-list "support@ror.org"^^xsd:string)
             Annotation(doap:maintainer orcid:0000-0002-2916-3423)
             )
             """,
@@ -411,6 +413,7 @@ class TestOBOHeader(unittest.TestCase):
             operated by California Digital Library, Crossref, and Datacite.</dcterms:description>
                     <dcterms:license>CC0-1.0</dcterms:license>
                     <dcterms:title>Research Organization Registry</dcterms:title>
+                    <doap:mailing-list>support@ror.org</doap:mailing-list>
                     <doap:maintainer rdf:resource="https://orcid.org/0000-0002-2916-3423"/>
                     <doap:repository rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://github.com/ror-community</doap:repository>
                     <foaf:homepage rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://ror.org</foaf:homepage>
@@ -429,6 +432,8 @@ class TestOBOHeader(unittest.TestCase):
                 <owl:AnnotationProperty rdf:about="http://purl.org/dc/terms/license"/>
                 <!-- http://purl.org/dc/terms/title -->
                 <owl:AnnotationProperty rdf:about="http://purl.org/dc/terms/title"/>
+                <!-- http://usefulinc.com/ns/doap#mailing-list -->
+                <owl:AnnotationProperty rdf:about="http://usefulinc.com/ns/doap#mailing-list"/>
                 <!-- http://usefulinc.com/ns/doap#maintainer -->
                 <owl:AnnotationProperty rdf:about="http://usefulinc.com/ns/doap#maintainer"/>
                 <!-- http://usefulinc.com/ns/doap#repository -->

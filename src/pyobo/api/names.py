@@ -346,6 +346,7 @@ def get_literal_mappings(
     return rv
 
 
+@wrap_norm_prefix
 def get_literal_mappings_df(
     prefix: str,
     **kwargs: Unpack[GetOntologyKwargs],

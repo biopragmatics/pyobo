@@ -150,6 +150,8 @@ class CacheArtifact(enum.Enum):
     prefixes = "prefixes.json"
     metadata = "metadata.json"
 
+    embeddings = "embeddings.tsv.gz"
+
 
 def get_cache_path(
     ontology: str,

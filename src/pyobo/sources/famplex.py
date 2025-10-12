@@ -9,7 +9,7 @@ from pystow.utils import get_commit
 
 from pyobo import get_name_id_mapping
 from pyobo.struct import Obo, Reference, Term, _parse_str_or_curie_or_uri
-from pyobo.struct.typedef import has_citation, has_member, has_part, is_a, part_of
+from pyobo.struct.typedef import has_member, has_part, is_a, is_mentioned_by, part_of
 from pyobo.utils.io import multidict
 from pyobo.utils.path import ensure_df
 
@@ -23,7 +23,7 @@ class FamPlexGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
-    typedefs = [has_member, has_part, is_a, part_of, has_citation]
+    typedefs = [has_member, has_part, is_a, part_of, is_mentioned_by]
 
     def _get_version(self) -> str:
         return get_commit("sorgerlab", "famplex")
@@ -110,7 +110,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             _parse_str_or_curie_or_uri(provenance) if isinstance(provenance, str) else None
         )
         if provenance_reference:
-            term.append_provenance(provenance_reference)
+            term.append_mentioned_by(provenance_reference)
 
         for xref_reference in id_xrefs.get(entity, []):
             term.append_xref(xref_reference)

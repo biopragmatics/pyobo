@@ -668,7 +668,7 @@ def _handle_xref(
     # TODO this is not what spec calls for, maybe
     #  need a flag in macro config for this
     if xref.prefix in PROVENANCE_PREFIXES:
-        return term.append_provenance(xref, annotations=annotations)
+        return term.append_mentioned_by(xref, annotations=annotations)
 
     return term.append_xref(xref, annotations=annotations)
 

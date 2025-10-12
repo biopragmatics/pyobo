@@ -20,6 +20,7 @@ __all__ = [
     "get_id_to_alts",
     "get_primary_curie",
     "get_primary_identifier",
+    "get_primary_reference",
 ]
 
 logger = logging.getLogger(__name__)
@@ -61,13 +62,13 @@ def get_alts_to_id(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[
     }
 
 
-def get_primary_curie(
+def get_primary_reference(
     prefix: str | curies.Reference | curies.ReferenceTuple,
     identifier: str | None = None,
     /,
     **kwargs: Unpack[GetOntologyKwargs],
-) -> str | None:
-    """Get the primary curie for an entity."""
+) -> curies.ReferenceTuple | None:
+    """Get the primary reference for an entity."""
     reference = _get_pi(prefix, identifier)
     try:
         primary_identifier = get_primary_identifier(reference, **kwargs)
@@ -76,7 +77,20 @@ def get_primary_curie(
             raise
         # this happens on invalid prefix. maybe revise?
         return None
-    return f"{reference.prefix}:{primary_identifier}"
+    return curies.ReferenceTuple(reference.prefix, primary_identifier)
+
+
+def get_primary_curie(
+    prefix: str | curies.Reference | curies.ReferenceTuple,
+    identifier: str | None = None,
+    /,
+    **kwargs: Unpack[GetOntologyKwargs],
+) -> str | None:
+    """Get the primary curie for an entity."""
+    reference = get_primary_reference(prefix, identifier, **kwargs)
+    if reference is None:
+        return None
+    return reference.curie
 
 
 def get_primary_identifier(
