@@ -622,10 +622,6 @@ class TestTerm(unittest.TestCase):
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
                 AnnotationAssertion(Annotation(rdfs:comment "something something"^^xsd:string) oboInOwl:hasDbXref GO:0050069 EC:1.4.1.15)
             """,
-            typedefs={
-                mapping_has_confidence.pair: mapping_has_confidence,
-                mapping_has_justification.pair: mapping_has_justification,
-            },
         )
 
     def test_11_builtin(self) -> None:
