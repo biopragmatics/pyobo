@@ -1120,7 +1120,9 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
         """Test emitting a relationship with axioms."""
         target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
         term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_relationship(RO_DUMMY, target, annotations=[Annotation.string(comment, "something something")])
+        term.append_relationship(
+            RO_DUMMY, target, annotations=[Annotation.string(comment, "something something")]
+        )
         self.assert_obo_stanza(
             term,
             typedefs={RO_DUMMY.pair: RO_DUMMY},
