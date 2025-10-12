@@ -15,6 +15,7 @@ from pyobo.struct.functional.obo_to_functional import get_term_axioms
 from pyobo.struct.obograph import assert_graph_equal, to_parsed_obograph, to_parsed_obograph_oracle
 from pyobo.struct.reference import _parse_datetime, unspecified_matching
 from pyobo.struct.struct import (
+    Annotation,
     BioregistryError,
     SynonymTypeDef,
     Term,
@@ -31,6 +32,7 @@ from pyobo.struct.typedef import (
     part_of,
     see_also,
 )
+from pyobo.struct.vocabulary import comment
 
 LYSINE_DEHYDROGENASE_ACT = Reference(
     prefix="GO", identifier="0050069", name="lysine dehydrogenase activity"
@@ -561,7 +563,7 @@ class TestTerm(unittest.TestCase):
             list(mappings_df.values[0]),
         )
 
-    def test_10_append_xref_with_axioms(self) -> None:
+    def test_10_append_xref_with_float_axiom(self) -> None:
         """Test emitting a xref with axioms."""
         target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -600,6 +602,30 @@ class TestTerm(unittest.TestCase):
                 0.99,
             ],
             list(mappings_df.values[0]),
+        )
+
+    def test_10_append_xref_with_string_axiom(self) -> None:
+        """Test emitting a xref with axioms."""
+        target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_xref(target, annotations=[Annotation.string(comment, "something something")])
+        self.assert_obo_stanza(
+            term,
+            obo="""
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                xref: EC:1.4.1.15 {rdfs:comment="something something"} ! lysine dehydrogenase
+            """,
+            ofn="""
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(Annotation(rdfs:comment "something something"^^xsd:string) oboInOwl:hasDbXref GO:0050069 EC:1.4.1.15)
+            """,
+            typedefs={
+                mapping_has_confidence.pair: mapping_has_confidence,
+                mapping_has_justification.pair: mapping_has_justification,
+            },
         )
 
     def test_11_builtin(self) -> None:
