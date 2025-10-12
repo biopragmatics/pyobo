@@ -206,7 +206,7 @@ class TestOBOHeader(unittest.TestCase):
             property_value: foaf:homepage "http\\://geneontology.org/" xsd:anyURI
             property_value: doap:repository "https\\://github.com/geneontology/go-ontology" xsd:anyURI
             property_value: foaf:logo "https\\://obofoundry.org/images/go_logo.png" xsd:anyURI
-            property_value: doap:maintainer orcid:0000-0001-6787-2901
+            property_value: doap:maintainer orcid:0000-0001-6787-2901 ! Suzi Aleksander
             """,
             ontology,
         )
@@ -363,7 +363,7 @@ class TestOBOHeader(unittest.TestCase):
             property_value: doap:repository "https\://github.com/ror-community" xsd:anyURI
             property_value: foaf:logo "https\://ror.org/img/ror-logo.svg" xsd:anyURI
             property_value: doap:mailing-list "support@ror.org" xsd:string
-            property_value: doap:maintainer orcid:0000-0002-2916-3423
+            property_value: doap:maintainer orcid:0000-0002-2916-3423 ! Maria Gould
             """,  # add Maria Gould
             ontology,
         )
