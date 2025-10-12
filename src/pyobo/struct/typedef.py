@@ -116,6 +116,12 @@ molecularly_interacts_with = TypeDef(
 located_in = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0001025", name="located in"),
 )
+starts = TypeDef(
+    reference=Reference(prefix=RO_PREFIX, identifier="0002223", name="starts"),
+)
+ends = TypeDef(
+    reference=Reference(prefix=RO_PREFIX, identifier="0002229", name="ends"),
+)
 contributes_to_condition = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0003304", name="contributes to condition"),
 )
@@ -257,6 +263,10 @@ is_substituent_group_from = TypeDef(
 has_functional_parent = TypeDef(
     reference=Reference(prefix="ro", identifier="0018038", name="has functional parent"),
 )
+located_in = TypeDef(
+    reference=Reference(prefix="ro", identifier="0001025", name="located in"),
+)
+
 
 is_mentioned_by = TypeDef(
     reference=v.is_mentioned_by,

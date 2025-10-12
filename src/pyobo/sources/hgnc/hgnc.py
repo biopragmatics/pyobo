@@ -7,6 +7,7 @@ import typing
 from collections import Counter
 from collections.abc import Iterable
 
+import obographs
 import pydantic
 from tabulate import tabulate
 from tqdm.auto import tqdm
@@ -17,8 +18,6 @@ from pyobo.struct import (
     Obo,
     Reference,
     Term,
-    TypeDef,
-    default_reference,
     from_species,
     gene_product_member_of,
     has_gene_product,
@@ -28,7 +27,7 @@ from pyobo.struct import (
     transcribes_to,
 )
 from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
-from pyobo.struct.typedef import exact_match
+from pyobo.struct.typedef import exact_match, located_in, starts, ends
 from pyobo.utils.path import ensure_path
 
 __all__ = [
@@ -43,10 +42,8 @@ DEFINITIONS_URL_FMT = (
     "hgnc_complete_set_{version}.json"
 )
 
-# TODO upstream to either OMO or RO. Discusson in
-#  https://github.com/information-artifact-ontology/ontology-metadata/issues/199
-HAS_LOCATION = TypeDef(
-    reference=default_reference(PREFIX, "location", name="has location"), is_metadata_tag=True
+CHR_URL = (
+    "https://raw.githubusercontent.com/monarch-initiative/monochrom/refs/heads/master/chr.json"
 )
 
 #: First column is MIRIAM prefix, second column is HGNC key
@@ -188,7 +185,9 @@ class HGNCGetter(Obo):
         member_of,
         exact_match,
         is_mentioned_by,
-        HAS_LOCATION,
+        located_in,
+        starts,
+        ends,
     ]
     synonym_typedefs = [
         previous_name,
@@ -206,10 +205,27 @@ class HGNCGetter(Obo):
         return get_terms(force=force, version=self.data_version)
 
 
+def _get_location_to_chr() -> dict[str, Reference]:
+    uri_prefix = "http://purl.obolibrary.org/obo/CHR_9606-chr"
+    graph: obographs.Graph = obographs.read(CHR_URL, squeeze=True)
+    rv = {}
+    for node in graph.nodes:
+        if node.id.startswith(uri_prefix):
+            identifier = node.id.removeprefix(uri_prefix)
+            rv[identifier] = Reference(
+                prefix="CHR", identifier=f"9606-chr{identifier}", name=node.lbl
+            )
+    return rv
+
+
 def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]:
     """Get HGNC terms."""
     if version is None:
         version = get_version("hgnc")
+
+    unhandled_locations: typing.Counter[str] = Counter()
+    location_to_chr = _get_location_to_chr()
+
     unhandled_entry_keys: typing.Counter[str] = Counter()
     path = ensure_path(
         PREFIX,
@@ -381,10 +397,54 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         for previous_name_ in entry.pop("prev_name", []):
             term.append_synonym(previous_name_, type=previous_name)
 
-        for prop, td in [("location", HAS_LOCATION)]:
-            value = entry.pop(prop, None)
-            if value:
-                term.annotate_string(td, value)
+        """
+        Indicates the cytogenetic location of the gene or region on the chromsome.
+        In the absence of that information one of the following may be listed:
+
+        - not on reference assembly - named gene is not annotated on the current
+          version of the Genome Reference Consortium human reference assembly; may have
+          been annotated on previous assembly versions or on a non-reference human assembly
+        - unplaced - named gene is annotated on an unplaced/unlocalized scaffold of the human reference assembly
+        - reserved - named gene has never been annotated on any human assembly
+        """
+
+        location: str | None = entry.pop("location", None)
+        if location is None or location in {"not on reference assembly", "unplaced", "reserved"}:
+            pass
+        elif location in location_to_chr:
+            term.append_relationship(located_in, location_to_chr[location])
+        elif location == "mitochondria":
+            term.append_relationship(
+                located_in,
+                Reference(prefix="go", identifier="0000262", name="mitochondrial chromosome"),
+            )
+        elif " and " in location:
+            a, _, b = location.partition(" and ")
+            if a in location_to_chr and b in location_to_chr:
+                term.append_relationship(located_in, location_to_chr[a])
+                term.append_relationship(located_in, location_to_chr[b])
+            else:
+                unhandled_locations[location] += 1
+        else:
+            for x in [" not on reference assembly", " unplaced", " alternate reference locus"]:
+                location_norm = location.removesuffix(x)
+                if location_norm in location_to_chr:
+                    term.append_relationship(located_in, location_to_chr[location_norm])
+                    break
+            else:
+                if "-" in location:
+                    start, _, end = location.partition("-")
+                    if start not in location_to_chr:
+                        unhandled_locations[start] += 1
+                    elif end not in location_to_chr:
+                        unhandled_locations[end] += 1
+                    elif start in location_to_chr and end in location_to_chr:
+                        term.append_relationship(starts, location_to_chr[start])
+                        term.append_relationship(ends, location_to_chr[end])
+                    else:
+                        unhandled_locations[location] += 1
+                else:
+                    unhandled_locations[location] += 1
 
         locus_type = entry.pop("locus_type")
         # note that locus group is a more broad category than locus type,
@@ -410,6 +470,13 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             if key not in SKIP_KEYS:
                 unhandled_entry_keys[key] += 1
         yield term
+
+    if unhandled_locations:
+        logger.warning(
+            "Unhandled chromosomal locations:\n%s",
+            tabulate(unhandled_locations.most_common(), headers=["unhandled location", "count"]),
+        )
+        logger.warning("total: %d", sum(unhandled_locations.values()))
 
     if unhandled_entry_keys:
         logger.warning("Unhandled keys:\n%s", tabulate(unhandled_entry_keys.most_common()))
