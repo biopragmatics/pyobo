@@ -15,7 +15,9 @@ from tqdm.auto import tqdm
 from pyobo.api.utils import get_version
 from pyobo.resources.so import get_so_name
 from pyobo.struct import (
+    Annotation,
     Obo,
+    OBOLiteral,
     Reference,
     Term,
     from_species,
@@ -27,7 +29,7 @@ from pyobo.struct import (
     transcribes_to,
 )
 from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
-from pyobo.struct.typedef import ends, exact_match, located_in, starts
+from pyobo.struct.typedef import ends, exact_match, located_in, see_also, starts
 from pyobo.utils.path import ensure_path
 
 __all__ = [
@@ -170,6 +172,14 @@ LOCUS_TYPE_TO_SO = {
 PUBLICATION_TERM = Term(
     reference=Reference(prefix="IAO", identifier="0000013", name="journal article")
 )
+
+#: Indicates the cytogenetic location of the gene or region on the chromsome.
+#: In the absence of that information one of the following may be listed.
+QUALIFIERS = {
+    " not on reference assembly": "not on reference assembly -named gene is not annotated on the current version of the Genome Reference Consortium human reference assembly; may have been annotated on previous assembly versions or on a non-reference human assembly",
+    " unplaced": "unplaced - named gene is annotated on an unplaced/unlocalized scaffold of the human reference assembly",
+    " alternate reference locus": "reserved - named gene has never been annotated on any human assembly",
+}
 
 
 class HGNCGetter(Obo):
@@ -397,68 +407,88 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         for previous_name_ in entry.pop("prev_name", []):
             term.append_synonym(previous_name_, type=previous_name)
 
-        """
-        Indicates the cytogenetic location of the gene or region on the chromsome.
-        In the absence of that information one of the following may be listed:
-
-        - not on reference assembly - named gene is not annotated on the current
-          version of the Genome Reference Consortium human reference assembly; may have
-          been annotated on previous assembly versions or on a non-reference human assembly
-        - unplaced - named gene is annotated on an unplaced/unlocalized scaffold of the human reference assembly
-        - reserved - named gene has never been annotated on any human assembly
-        """
-
         location: str | None = entry.pop("location", None)
-        if location is None or location in {"not on reference assembly", "unplaced", "reserved"}:
-            pass
-        elif location in location_to_chr:
-            term.append_relationship(located_in, location_to_chr[location])
-        elif location == "mitochondria":
-            term.append_relationship(
-                located_in,
-                Reference(prefix="go", identifier="0000262", name="mitochondrial chromosome"),
-            )
-        elif " and " in location:
-            a, _, b = location.partition(" and ")
-            if a in location_to_chr and b in location_to_chr:
-                term.append_relationship(located_in, location_to_chr[a])
-                term.append_relationship(located_in, location_to_chr[b])
-            else:
-                unhandled_locations[location] += 1
-        else:
-            for x in [" not on reference assembly", " unplaced", " alternate reference locus"]:
-                location_norm = location.removesuffix(x)
-                if location_norm in location_to_chr:
-                    term.append_relationship(located_in, location_to_chr[location_norm])
+        if location is not None and location not in {
+            "not on reference assembly",
+            "unplaced",
+            "reserved",
+        }:
+            annotations = []
+            for qualifier_suffix, qualifier_text in QUALIFIERS.items():
+                if location.endswith(qualifier_suffix):
+                    location = location.removesuffix(qualifier_suffix)
+                    annotations.append(
+                        Annotation(
+                            predicate=see_also.reference, value=OBOLiteral.string(qualifier_text)
+                        )
+                    )
                     break
-            else:
-                if "-" in location:
-                    start, _, end = location.partition("-")
 
-                    # the range that sarts with a q needs
-                    # the chromosome moved over, like in
-                    # 17q24.2-q24.3
-                    if end.startswith("q"):
-                        chr, _, _ = start.partition("q")
-                        end = f"{chr}{end}"
-                    # the range that sarts with a p needs
-                    # the chromosome moved over, like in
-                    # 1p34.2-p34.1
-                    elif end.startswith("p"):
-                        chr, _, _ = start.partition("p")
-                        end = f"{chr}{end}"
-
-                    if start not in location_to_chr:
-                        unhandled_locations[start] += 1
-                    elif end not in location_to_chr:
-                        unhandled_locations[end] += 1
-                    elif start in location_to_chr and end in location_to_chr:
-                        term.append_relationship(starts, location_to_chr[start])
-                        term.append_relationship(ends, location_to_chr[end])
-                    else:
-                        unhandled_locations[location] += 1
+            if location in location_to_chr:
+                term.append_relationship(
+                    located_in, location_to_chr[location], annotations=annotations
+                )
+            elif location == "mitochondria":
+                term.append_relationship(
+                    located_in,
+                    Reference(prefix="go", identifier="0000262", name="mitochondrial chromosome"),
+                    annotations=annotations,
+                )
+            elif " and " in location:
+                left, _, right = location.partition(" and ")
+                if left not in location_to_chr:
+                    unhandled_locations[left] += 1
+                elif right not in location_to_chr:
+                    unhandled_locations[right] += 1
+                elif left in location_to_chr and right in location_to_chr:
+                    term.append_relationship(
+                        located_in, location_to_chr[left], annotations=annotations
+                    )
+                    term.append_relationship(
+                        located_in, location_to_chr[right], annotations=annotations
+                    )
                 else:
                     unhandled_locations[location] += 1
+            elif " or " in location:
+                left, _, right = location.partition(" or ")
+                if left not in location_to_chr:
+                    unhandled_locations[left] += 1
+                elif right not in location_to_chr:
+                    unhandled_locations[right] += 1
+                elif left in location_to_chr and right in location_to_chr:
+                    # FIXME implement
+                    unhandled_locations[location] += 1
+                else:
+                    unhandled_locations[location] += 1
+            elif "-" in location:
+                start, _, end = location.partition("-")
+
+                # the range that sarts with a q needs
+                # the chromosome moved over, like in
+                # 17q24.2-q24.3
+                if end.startswith("q"):
+                    chr, _, _ = start.partition("q")
+                    end = f"{chr}{end}"
+                # the range that sarts with a p needs
+                # the chromosome moved over, like in
+                # 1p34.2-p34.1
+                elif end.startswith("p"):
+                    chr, _, _ = start.partition("p")
+                    end = f"{chr}{end}"
+
+                if start not in location_to_chr:
+                    unhandled_locations[start] += 1
+                elif end not in location_to_chr:
+                    unhandled_locations[end] += 1
+                elif start in location_to_chr and end in location_to_chr:
+                    term.append_relationship(
+                        starts, location_to_chr[start], annotations=annotations
+                    )
+                    term.append_relationship(ends, location_to_chr[end], annotations=annotations)
+                else:
+                    unhandled_locations[location] += 1
+            else:
+                unhandled_locations[location] += 1
 
         locus_type = entry.pop("locus_type")
         # note that locus group is a more broad category than locus type,
@@ -487,10 +517,13 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
 
     if unhandled_locations:
         logger.warning(
-            "Unhandled chromosomal locations:\n%s",
-            tabulate(unhandled_locations.most_common(), headers=["unhandled location", "count"]),
+            "Unhandled chromosomal locations:\n\n%s\n",
+            tabulate(
+                unhandled_locations.most_common(),
+                headers=["unhandled location", "count"],
+                tablefmt="github",
+            ),
         )
-        logger.warning("total: %d", sum(unhandled_locations.values()))
 
     if unhandled_entry_keys:
         logger.warning("Unhandled keys:\n%s", tabulate(unhandled_entry_keys.most_common()))
