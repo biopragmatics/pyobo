@@ -48,6 +48,8 @@ __all__ = [
     "mapping_has_confidence",
     "mapping_has_justification",
     "match_typedefs",
+    "starts",
+    "ends",
     "member_of",
     "narrow_match",
     "orthologous",
@@ -263,10 +265,6 @@ is_substituent_group_from = TypeDef(
 has_functional_parent = TypeDef(
     reference=Reference(prefix="ro", identifier="0018038", name="has functional parent"),
 )
-located_in = TypeDef(
-    reference=Reference(prefix="ro", identifier="0001025", name="located in"),
-)
-
 
 is_mentioned_by = TypeDef(
     reference=v.is_mentioned_by,
