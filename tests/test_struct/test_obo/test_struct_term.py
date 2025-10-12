@@ -1116,6 +1116,27 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
             list(mappings_df.values[0]),
         )
 
+    def test_18_append_with_string_axioms(self) -> None:
+        """Test emitting a relationship with axioms."""
+        target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_relationship(RO_DUMMY, target, annotations=[Annotation.string(comment, "something something")])
+        self.assert_obo_stanza(
+            term,
+            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                relationship: RO:1234567 EC:1.4.1.15 {rdfs:comment="something something"}
+            """,
+            ofn="""
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                SubClassOf(Annotation(rdfs:comment "something something"^^xsd:string) GO:0050069 ObjectSomeValuesFrom(RO:1234567 EC:1.4.1.15))
+            """,
+        )
+
     def test_18_see_also_single(self) -> None:
         """Test appending see also."""
         term = Term(LYSINE_DEHYDROGENASE_ACT)
