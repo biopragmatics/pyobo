@@ -9,7 +9,12 @@ from .alts import (
 )
 from .combine import get_literal_mappings_subset
 from .edges import get_edges, get_edges_df, get_graph
-from .embedding import get_text_embedding, get_text_embedding_similarity, get_text_embeddings_df
+from .embedding import (
+    get_graph_embeddings_df,
+    get_text_embedding,
+    get_text_embedding_similarity,
+    get_text_embeddings_df,
+)
 from .hierarchy import (
     get_ancestors,
     get_children,
@@ -81,6 +86,7 @@ __all__ = [
     "get_filtered_relations_df",
     "get_filtered_xrefs",
     "get_graph",
+    "get_graph_embeddings_df",
     "get_hierarchy",
     "get_id_definition_mapping",
     "get_id_multirelations_mapping",
