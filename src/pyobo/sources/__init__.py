@@ -29,11 +29,13 @@ from .famplex import FamPlexGetter
 from .flybase import FlyBaseGetter
 from .gard import GARDGetter
 from .geonames import GeonamesFeatureGetter, GeonamesGetter
+from .goldbook import GoldBookGetter
 from .gtdb import GTDBGetter
 from .gwascentral import GWASCentralPhenotypeGetter, GWASCentralStudyGetter
 from .hgnc import HGNCGetter, HGNCGroupGetter
 from .iana_media_type import IANAGetter
 from .icd import ICD10Getter, ICD11Getter
+from .iconclass import IconclassGetter
 from .intact import IntactGetter
 from .interpro import InterProGetter
 from .itis import ITISGetter
@@ -109,12 +111,14 @@ __all__ = [
     "GWASCentralStudyGetter",
     "GeonamesFeatureGetter",
     "GeonamesGetter",
+    "GoldBookGetter",
     "HGNCGetter",
     "HGNCGroupGetter",
     "IANAGetter",
     "ICD10Getter",
     "ICD11Getter",
     "ITISGetter",
+    "IconclassGetter",
     "IntactGetter",
     "InterProGetter",
     "KEGGGeneGetter",

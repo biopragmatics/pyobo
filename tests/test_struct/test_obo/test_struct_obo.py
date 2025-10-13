@@ -206,7 +206,7 @@ class TestOBOHeader(unittest.TestCase):
             property_value: foaf:homepage "http\\://geneontology.org/" xsd:anyURI
             property_value: doap:repository "https\\://github.com/geneontology/go-ontology" xsd:anyURI
             property_value: foaf:logo "https\\://obofoundry.org/images/go_logo.png" xsd:anyURI
-            property_value: doap:maintainer orcid:0000-0001-6787-2901
+            property_value: doap:maintainer orcid:0000-0001-6787-2901 ! Suzi Aleksander
             """,
             ontology,
         )
@@ -362,7 +362,8 @@ class TestOBOHeader(unittest.TestCase):
             property_value: foaf:homepage "https\://ror.org" xsd:anyURI
             property_value: doap:repository "https\://github.com/ror-community" xsd:anyURI
             property_value: foaf:logo "https\://ror.org/img/ror-logo.svg" xsd:anyURI
-            property_value: doap:maintainer orcid:0000-0002-2916-3423
+            property_value: doap:mailing-list "support@ror.org" xsd:string
+            property_value: doap:maintainer orcid:0000-0002-2916-3423 ! Maria Gould
             """,  # add Maria Gould
             ontology,
         )
@@ -386,6 +387,7 @@ class TestOBOHeader(unittest.TestCase):
             Annotation(foaf:homepage "https://ror.org"^^xsd:anyURI)
             Annotation(doap:repository "https://github.com/ror-community"^^xsd:anyURI)
             Annotation(foaf:logo "https://ror.org/img/ror-logo.svg"^^xsd:anyURI)
+            Annotation(doap:mailing-list "support@ror.org"^^xsd:string)
             Annotation(doap:maintainer orcid:0000-0002-2916-3423)
             )
             """,
@@ -411,6 +413,7 @@ class TestOBOHeader(unittest.TestCase):
             operated by California Digital Library, Crossref, and Datacite.</dcterms:description>
                     <dcterms:license>CC0-1.0</dcterms:license>
                     <dcterms:title>Research Organization Registry</dcterms:title>
+                    <doap:mailing-list>support@ror.org</doap:mailing-list>
                     <doap:maintainer rdf:resource="https://orcid.org/0000-0002-2916-3423"/>
                     <doap:repository rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://github.com/ror-community</doap:repository>
                     <foaf:homepage rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://ror.org</foaf:homepage>
@@ -429,6 +432,8 @@ class TestOBOHeader(unittest.TestCase):
                 <owl:AnnotationProperty rdf:about="http://purl.org/dc/terms/license"/>
                 <!-- http://purl.org/dc/terms/title -->
                 <owl:AnnotationProperty rdf:about="http://purl.org/dc/terms/title"/>
+                <!-- http://usefulinc.com/ns/doap#mailing-list -->
+                <owl:AnnotationProperty rdf:about="http://usefulinc.com/ns/doap#mailing-list"/>
                 <!-- http://usefulinc.com/ns/doap#maintainer -->
                 <owl:AnnotationProperty rdf:about="http://usefulinc.com/ns/doap#maintainer"/>
                 <!-- http://usefulinc.com/ns/doap#repository -->
@@ -456,6 +461,48 @@ class TestOBOHeader(unittest.TestCase):
             idspace: dcterms http://purl.org/dc/terms/ "Dublin Core Metadata Initiative Terms"
             ontology: xxx
             property_value: dcterms:license "CC0" xsd:string
+            """,
+            ontology,
+        )
+
+    def test_ontology_iri(self) -> None:
+        """Test adding an ontology IRI."""
+        ontology = build_ontology(
+            prefix="xxx",
+            ontology_iri="https://example.org/xxx.owl",
+        )
+        self.assert_obo_lines(
+            r"""
+            format-version: 1.4
+            ontology: xxx
+            """,
+            ontology,
+        )
+        self.assert_ofn_lines(
+            """
+            Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
+            Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+            Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
+            Prefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)
+
+            Ontology(<https://example.org/xxx.owl>
+
+            )
+            """,
+            ontology,
+        )
+        self.assert_owl_lines(
+            """
+            <?xml version="1.0"?>
+            <rdf:RDF xmlns="https://example.org/xxx.owl#"
+                 xml:base="https://example.org/xxx.owl"
+                 xmlns:owl="http://www.w3.org/2002/07/owl#"
+                 xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+                 xmlns:xml="http://www.w3.org/XML/1998/namespace"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+                 xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+                <owl:Ontology rdf:about="https://example.org/xxx.owl"/>
+            </rdf:RDF>
             """,
             ontology,
         )

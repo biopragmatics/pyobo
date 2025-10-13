@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import inspect
 import itertools as itt
 import json
 import logging
@@ -106,6 +107,7 @@ SSSOM_DF_COLUMNS = [
     "contributor",
 ]
 FORMAT_VERSION = "1.4"
+_SOURCES = Path(__file__).parent.parent.joinpath("sources").resolve()
 
 
 @dataclass
@@ -246,12 +248,22 @@ DEFAULT_SYNONYM_TYPE = SynonymTypeDef(
     reference=Reference(prefix="oboInOwl", identifier="SynonymType", name="synonym type"),
 )
 abbreviation = SynonymTypeDef(
-    reference=Reference(prefix="OMO", identifier="0003000", name="abbreviation")
+    reference=Reference(prefix="omo", identifier="0003000", name="abbreviation")
 )
 acronym = SynonymTypeDef(reference=Reference(prefix="omo", identifier="0003012", name="acronym"))
 uk_spelling = SynonymTypeDef(
     reference=Reference(prefix="omo", identifier="0003005", name="UK spelling synonym")
 )
+previous_name = SynonymTypeDef(
+    reference=Reference(prefix="omo", identifier="0003008", name="previous name")
+)
+previous_gene_symbol = SynonymTypeDef(
+    reference=Reference(prefix="omo", identifier="0003015", name="previous gene symbol")
+)
+gene_symbol_synonym = SynonymTypeDef(
+    reference=Reference(prefix="omo", identifier="0003016", name="gene symbol synonym")
+)
+
 default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
     abbreviation.pair: abbreviation,
     acronym.pair: acronym,
@@ -383,7 +395,8 @@ class Term(Stanza):
     def get_species(self, prefix: str = NCBITAXON_PREFIX) -> Reference | None:
         """Get the species if it exists.
 
-        :param prefix: The prefix to use in case the term has several species annotations.
+        :param prefix: The prefix to use in case the term has several species
+            annotations.
         """
         for species in self.get_relationships(v.from_species):
             if species.prefix == prefix:
@@ -594,6 +607,10 @@ class Obo:
 
     imports: ClassVar[list[str] | None] = None
 
+    ontology_iri: ClassVar[str | None] = None
+
+    ontology_version_iri: ClassVar[str | None] = None
+
     def __post_init__(self):
         """Run post-init checks."""
         if self.ontology is None:
@@ -616,8 +633,15 @@ class Obo:
                 raise ValueError(f"{self.ontology} is missing data_version")
             elif "/" in self.data_version:
                 raise ValueError(f"{self.ontology} has a slash in version: {self.data_version}")
+
+        file_path = Path(inspect.getfile(self.__class__)).resolve()
+        script_url = f"https://github.com/biopragmatics/pyobo/blob/main/src/pyobo/sources/{file_path.relative_to(_SOURCES)}"
+
         if self.auto_generated_by is None:
-            self.auto_generated_by = f"PyOBO v{get_pyobo_version(with_git_hash=True)} on {datetime.datetime.now().isoformat()}"  # type:ignore
+            self.auto_generated_by = (
+                f"PyOBO v{get_pyobo_version(with_git_hash=True)} on "
+                f"{datetime.datetime.now().isoformat()} by {script_url}."
+            )  # type:ignore
 
     def _get_clean_idspaces(self) -> dict[str, str]:
         """Get normalized idspace dictionary."""
@@ -922,7 +946,9 @@ class Obo:
                 case OBOLiteral():
                     end = f'"{obo_escape_slim(value.value)}" {reference_escape(value.datatype, ontology_prefix=self.ontology)}'
                 case Reference():
-                    end = reference_escape(value, ontology_prefix=self.ontology)
+                    end = reference_escape(
+                        value, ontology_prefix=self.ontology, add_name_comment=True
+                    )
                 case _:
                     raise TypeError(f"Invalid property value: {value}")
             yield f"property_value: {reference_escape(predicate, ontology_prefix=self.ontology)} {end}"
@@ -941,21 +967,30 @@ class Obo:
                 license_literal = OBOLiteral.string(license_spdx_id)
             yield Annotation(v.has_license, license_literal)
 
-        if description := bioregistry.get_description(self.ontology):
-            yield Annotation(v.has_description, OBOLiteral.string(description.strip()))
-        if homepage := bioregistry.get_homepage(self.ontology):
-            yield Annotation(v.has_homepage, OBOLiteral.uri(homepage))
-        if repository := bioregistry.get_repository(self.ontology):
-            yield Annotation(v.has_repository, OBOLiteral.uri(repository))
-        if logo := bioregistry.get_logo(self.ontology):
-            yield Annotation(v.has_logo, OBOLiteral.uri(logo))
-        if mailing_list := bioregistry.get_mailing_list(self.ontology):
-            yield Annotation(v.has_mailing_list, OBOLiteral.string(mailing_list))
-        if (maintainer := bioregistry.get_contact(self.ontology)) and maintainer.orcid:
-            yield Annotation(
-                v.has_maintainer,
-                Reference(prefix="orcid", identifier=maintainer.orcid, name=maintainer.name),
-            )
+        if resource := bioregistry.get_resource(self.ontology):
+            if description := resource.get_description():
+                yield Annotation(v.has_description, OBOLiteral.string(description.strip()))
+            if homepage := resource.get_homepage():
+                yield Annotation(v.has_homepage, OBOLiteral.uri(homepage))
+            if repository := resource.get_repository():
+                yield Annotation(v.has_repository, OBOLiteral.uri(repository))
+            if logo := resource.get_logo():
+                yield Annotation(v.has_logo, OBOLiteral.uri(logo))
+            if mailing_list := resource.get_mailing_list():
+                yield Annotation(v.has_mailing_list, OBOLiteral.string(mailing_list))
+            if (maintainer := resource.get_contact()) and maintainer.orcid:
+                yield Annotation(
+                    v.has_maintainer,
+                    Reference(prefix="orcid", identifier=maintainer.orcid, name=maintainer.name),
+                )
+            for maintainer in resource.contact_extras or []:
+                if maintainer.orcid:
+                    yield Annotation(
+                        v.has_maintainer,
+                        Reference(
+                            prefix="orcid", identifier=maintainer.orcid, name=maintainer.name
+                        ),
+                    )
 
         # Root terms
         for root_term in self.root_terms or []:
@@ -1647,7 +1682,9 @@ class Obo:
     ) -> Mapping[str, str]:
         """Get a mapping from a term's identifier to the property.
 
-        .. warning:: Assumes there's only one version of the property for each term.
+        .. warning::
+
+            Assumes there's only one version of the property for each term.
         """
         return {
             term.identifier: value
@@ -1688,8 +1725,8 @@ class Obo:
     ) -> Iterable[tuple[Stanza, TypeDef, Reference]]:
         """Iterate over tuples of terms, relations, and their targets.
 
-        This only outputs stuff from the `relationship:` tag, not
-        all possible triples. For that, see :func:`iterate_edges`.
+        This only outputs stuff from the `relationship:` tag, not all possible triples.
+        For that, see :func:`iterate_edges`.
         """
         _warned: set[ReferenceTuple] = set()
         typedefs = self._index_typedefs()
@@ -1800,9 +1837,11 @@ class Obo:
     ) -> Mapping[str, str]:
         """Get a mapping from the term's identifier to the target's identifier.
 
-        .. warning:: Assumes there's only one version of the property for each term.
+        .. warning::
 
-         Example usage: get homology between HGNC and MGI:
+            Assumes there's only one version of the property for each term.
+
+        Example usage: get homology between HGNC and MGI:
 
         >>> from pyobo.sources.hgnc import HGNCGetter
         >>> obo = HGNCGetter()
@@ -1893,6 +1932,46 @@ class Obo:
     def get_id_synonyms_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, list[str]]:
         """Get a mapping from identifiers to a list of sorted synonym strings."""
         return multidict(self.iterate_synonym_rows(use_tqdm=use_tqdm))
+
+    def get_grounder(self) -> ssslm.Grounder:
+        """Get a grounder from this ontology.
+
+        :returns: An object that can be used for named entity recognition and named
+            entity normalization
+
+        Here's example usage for a built-in ontology:
+
+        .. code-block:: python
+
+            import pyobo
+            import ssslm
+
+            ontology = pyobo.get_ontology("taxrank")
+            grounder: ssslm.Grounder = ontology.get_grounder()
+            matches: list[ssslm.Match] = grounder.ground("species")
+
+        Here's example usage for a custom ontology:
+
+        .. code-block:: python
+
+            import pyobo
+            import ssslm
+            from urllib.request import urlretrieve
+
+            url = "http://purl.obolibrary.org/obo/taxrank.obo"
+            path = "taxrank.obo"
+            urlretrieve(url, path)
+
+            ontology = pyobo.from_obo_path(path, prefix="taxrank")
+            grounder: ssslm.Grounder = ontology.get_grounder()
+            matches: list[ssslm.Match] = grounder.get_matches("species")
+
+        .. warning::
+
+            It's required to tell PyOBO the prefix for a custom ontology when using
+            :func:`pyobo.from_obo_path`, and it must be registered in the Bioregistry
+        """
+        return ssslm.make_grounder(self.get_literal_mappings())
 
     def get_literal_mappings(self) -> Iterable[ssslm.LiteralMapping]:
         """Get literal mappings in a standard data model."""
@@ -2027,7 +2106,8 @@ class Obo:
 class TypeDef(Stanza):
     """A type definition in OBO.
 
-    See the subsection of https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.2.2.
+    See the subsection of
+    https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.2.2.
     """
 
     reference: Annotated[Reference, 1]
@@ -2122,14 +2202,16 @@ class TypeDef(Stanza):
     ) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file.
 
-        :param ontology_prefix:
-            The prefix of the ontology into which the type definition is being written.
-            This is used for compressing builtin identifiers
-        :yield:
-            The lines to write to an OBO file
+        :param ontology_prefix: The prefix of the ontology into which the type
+            definition is being written. This is used for compressing builtin
+            identifiers
 
-        `S.3.5.5 <https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.3.5.5>`_
-        of the OBO Flat File Specification v1.4 says tags should appear in the following order:
+        :yield: The lines to write to an OBO file
+
+        `S.3.5.5
+        <https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html#S.3.5.5>`_ of
+        the OBO Flat File Specification v1.4 says tags should appear in the following
+        order:
 
         1. id
         2. is_anonymous
@@ -2319,6 +2401,8 @@ def build_ontology(
     mailing_list: str | None = None,
     logo: str | None = None,
     repository: str | None = None,
+    ontology_iri: str | None = None,
+    ontology_version_iri: str | None = None,
 ) -> Obo:
     """Build an ontology from parts."""
     if name is None:
@@ -2378,6 +2462,8 @@ def build_ontology(
         _subsetdefs=subsetdefs,
         _property_values=properties,
         _imports=imports,
+        _ontology_iri=ontology_iri,
+        _ontology_version_iri=ontology_version_iri,
         terms=terms,
     )
 
@@ -2395,6 +2481,8 @@ def make_ad_hoc_ontology(
     _subsetdefs: list[tuple[Reference, str]] | None = None,
     _property_values: list[Annotation] | None = None,
     _imports: list[str] | None = None,
+    _ontology_iri: str | None = None,
+    _ontology_version_iri: str | None = None,
     *,
     terms: list[Term] | None = None,
 ) -> Obo:
@@ -2413,6 +2501,8 @@ def make_ad_hoc_ontology(
         subsetdefs = _subsetdefs
         property_values = _property_values
         imports = _imports
+        ontology_iri = _ontology_iri
+        ontology_version_iri = _ontology_version_iri
 
         def __post_init__(self):
             self.date = _date

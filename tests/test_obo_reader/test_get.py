@@ -18,7 +18,7 @@ from pyobo.struct.obo.reader import (
     iterate_typedefs,
 )
 from pyobo.struct.struct import acronym
-from tests.constants import TEST_CHEBI_OBO_PATH, chebi_patch
+from tests.constants import TEST_CHEBI_OBO_PATH, chebi_patch, chebi_version_patch
 
 
 class TestParseObonet(unittest.TestCase):
@@ -272,7 +272,7 @@ class TestGet(unittest.TestCase):
 
     def setUp(self) -> None:
         """Set up the test with the mock ChEBI OBO file."""
-        with chebi_patch:
+        with chebi_patch, chebi_version_patch:
             self.ontology = get_ontology("chebi", cache=False)
 
     def test_get_id_alts_mapping(self):

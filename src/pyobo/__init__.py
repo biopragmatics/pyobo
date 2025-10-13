@@ -14,6 +14,7 @@ from .api import (
     get_filtered_relations_df,
     get_filtered_xrefs,
     get_graph,
+    get_graph_embeddings_df,
     get_hierarchy,
     get_id_definition_mapping,
     get_id_multirelations_mapping,
@@ -37,6 +38,7 @@ from .api import (
     get_obsolete,
     get_primary_curie,
     get_primary_identifier,
+    get_primary_reference,
     get_properties,
     get_properties_df,
     get_property,
@@ -50,6 +52,7 @@ from .api import (
     get_synonyms,
     get_text_embedding,
     get_text_embedding_similarity,
+    get_text_embeddings_df,
     get_typedef_df,
     get_xref,
     get_xrefs,
@@ -58,13 +61,20 @@ from .api import (
     is_descendent,
 )
 from .getters import get_ontology
-from .ner import get_grounder, ground
+from .ner import (
+    get_grounder,
+    get_scispacy_entities,
+    get_scispacy_entity_linker,
+    get_scispacy_knowledgebase,
+    ground,
+)
 from .plugins import (
     has_nomenclature_plugin,
     iter_nomenclature_plugins,
     run_nomenclature_plugin,
 )
 from .struct import (
+    Annotation,
     Obo,
     Reference,
     StanzaType,
@@ -80,6 +90,7 @@ from .utils.path import ensure_path
 from .version import get_version
 
 __all__ = [
+    "Annotation",
     "Obo",
     "Reference",
     "StanzaType",
@@ -105,6 +116,7 @@ __all__ = [
     "get_filtered_relations_df",
     "get_filtered_xrefs",
     "get_graph",
+    "get_graph_embeddings_df",
     "get_grounder",
     "get_hierarchy",
     "get_id_definition_mapping",
@@ -130,6 +142,7 @@ __all__ = [
     "get_ontology",
     "get_primary_curie",
     "get_primary_identifier",
+    "get_primary_reference",
     "get_properties",
     "get_properties_df",
     "get_property",
@@ -137,12 +150,16 @@ __all__ = [
     "get_relation",
     "get_relation_mapping",
     "get_relations_df",
+    "get_scispacy_entities",
+    "get_scispacy_entity_linker",
+    "get_scispacy_knowledgebase",
     "get_species",
     "get_sssom_df",
     "get_subhierarchy",
     "get_synonyms",
     "get_text_embedding",
     "get_text_embedding_similarity",
+    "get_text_embeddings_df",
     "get_typedef_df",
     "get_version",
     "get_xref",

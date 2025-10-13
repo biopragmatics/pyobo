@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
@@ -22,6 +23,8 @@ __all__ = [
     "get_grounder",
 ]
 
+logger = logging.getLogger(__name__)
+
 
 def get_grounder(
     prefixes: str | Iterable[str],
@@ -32,22 +35,23 @@ def get_grounder(
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> ssslm.Grounder:
     """Get a grounder for the given prefix(es)."""
-    literal_mappings: list[LiteralMapping] = []
+    all_literal_mappings: list[LiteralMapping] = []
     it = _clean_prefix_versions(prefixes, versions=versions)
     disable = len(it) == 1 or not check_should_use_tqdm(kwargs)
     for prefix, kwargs["version"] in tqdm(it, leave=False, disable=disable):
         try:
-            literal_mappings.extend(
-                get_literal_mappings(
-                    prefix,
-                    skip_obsolete=skip_obsolete,
-                    **kwargs,
-                )
-            )
-        except (NoBuildError, CalledProcessError):
+            literal_mappings = get_literal_mappings(prefix, skip_obsolete=skip_obsolete, **kwargs)
+        except (NoBuildError, CalledProcessError) as e:
+            logger.warning("[%s] unable to get literal mappings: %s", prefix, e)
             continue
+        else:
+            if not literal_mappings:
+                logger.warning("[%s] no literal mappings loaded", prefix)
+            all_literal_mappings.extend(literal_mappings)
 
-    return ssslm.make_grounder(literal_mappings, implementation="gilda", grounder_cls=grounder_cls)
+    return ssslm.make_grounder(
+        all_literal_mappings, implementation="gilda", grounder_cls=grounder_cls
+    )
 
 
 def _clean_prefix_versions(

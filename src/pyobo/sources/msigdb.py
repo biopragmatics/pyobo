@@ -8,7 +8,7 @@ from lxml import etree
 from pydantic import ValidationError
 from tqdm.auto import tqdm
 
-from pyobo.struct import Obo, Reference, Term, TypeDef, has_citation, has_participant
+from pyobo.struct import Obo, Reference, Term, TypeDef, has_participant, is_mentioned_by
 from pyobo.utils.path import ensure_path
 
 __all__ = [
@@ -43,7 +43,7 @@ class MSigDBGetter(Obo):
     """An ontology representation of MMSigDB's gene set nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_participant, has_citation, *(p for _, p in PROPERTIES)]
+    typedefs = [has_participant, is_mentioned_by, *(p for _, p in PROPERTIES)]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -112,7 +112,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         elif reference_id.startswith("GSE"):
             term.append_see_also(Reference(prefix="gse", identifier=reference_id))
         else:
-            term.append_provenance(Reference(prefix="pubmed", identifier=reference_id))
+            term.append_mentioned_by(Reference(prefix="pubmed", identifier=reference_id))
 
         for key, typedef in PROPERTIES:
             if value := attrib[key].strip():

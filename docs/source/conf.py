@@ -24,7 +24,7 @@ copyright = f"{date.today().year}, Charles Tapley Hoyt"
 author = "Charles Tapley Hoyt"
 
 # The full version, including alpha/beta/rc tags.
-release = "0.12.6-dev"
+release = "0.12.11-dev"
 
 # The short X.Y version.
 parsed_version = re.match(
@@ -74,6 +74,7 @@ extensions = [
     "sphinx_click.ext",
     "sphinx_automodapi.automodapi",
     "sphinx_automodapi.smart_resolver",
+    "sphinx_toolbox.more_autodoc.autotypeddict",
 ]
 
 # generate autosummary pages
@@ -240,6 +241,7 @@ intersphinx_mapping = {
     "sqlalchemy": ("https://docs.sqlalchemy.org/en/latest", None),
     "requests": ("https://requests.kennethreitz.org/en/master/", None),
     "setuptools": ("https://setuptools.readthedocs.io/en/latest/", None),
+    "bioregistry": ("https://bioregistry.readthedocs.io/en/latest/", None),
     "pandas": ("https://pandas.pydata.org/docs", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
     "numpy": ("https://numpy.org/doc/stable", None),
@@ -257,3 +259,7 @@ todo_emit_warnings = True
 
 # Output SVG inheritance diagrams
 graphviz_output_format = "svg"
+
+# sphinx_autodoc_typehints configuration
+always_document_param_types = True
+autodoc_typehints = "description"

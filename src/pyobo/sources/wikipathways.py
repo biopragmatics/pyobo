@@ -80,7 +80,12 @@ def iter_terms(version: str, *, include_descriptions: bool = False) -> Iterable[
         taxonomy_name = SPECIES_REMAPPING.get(species_code, species_code)
 
         for identifier, _version, _revision, name, _species, genes in parse_wikipathways_gmt(path):
-            graph = read_zipfile_rdf(archive, inner_path=f"wp/{identifier}.ttl")
+            try:
+                graph = read_zipfile_rdf(archive, inner_path=f"wp/{identifier}.ttl")
+            except KeyError:
+                tqdm.write(f"[wikipathways:{identifier}] was not found inside zip file, skipping")
+                continue
+
             uri = f"https://identifiers.org/wikipathways/{identifier}"
 
             definition: str | None = None
@@ -122,7 +127,7 @@ def iter_terms(version: str, *, include_descriptions: bool = False) -> Iterable[
                     pw_references.add(ref)
                     term.append_parent(ref)
             if not parents:
-                tqdm.write(f"[{term.curie}] could not find parent")
+                tqdm.write(f"[{term.curie}] could not find annotation to parent in PW")
                 term.append_parent(ROOT)
 
             diseases = graph.query(

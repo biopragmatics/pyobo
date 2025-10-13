@@ -138,7 +138,7 @@ def iter_terms(version: str) -> Iterable[Term]:
 def get_chembl_protein_equivalences(version: str | None = None) -> dict[str, list[str]]:
     """Get ChEMBL protein equivalences."""
     if version is None:
-        version = chembl_downloader.latest()
+        version = chembl_downloader.latest(full=False)
     url = f"ftp://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_{version}/chembl_uniprot_mapping.txt"
     df = ensure_df(
         PREFIX,

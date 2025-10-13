@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "pyobo"
-version = "0.12.6-dev"
+version = "0.12.11-dev"
 description = "A python package for handling and generating OBO"
 readme = "README.md"
 authors = [
@@ -63,7 +63,6 @@ dependencies = [
     "pyyaml",
     "pandas",
     "requests",
-    "protmapper",
     "more_itertools",
     "more_click>=0.0.2",
     "humanize",
@@ -76,7 +75,6 @@ dependencies = [
     "ssslm>=0.0.13",
     "zenodo-client>=0.3.6",
     "class_resolver>=0.6.0",
-    "psycopg2-binary",
     "pydantic>=2.0",
     "curies>=0.10.17",
     "curies-processing>=0.1.2",
@@ -104,6 +102,7 @@ docs = [
     "sphinx-rtd-theme>=3.0",
     "sphinx-click", 
     "sphinx_automodapi",
+    "sphinx_toolbox",
 ]
 lint = [
     "ruff",
@@ -157,6 +156,32 @@ gilda = [
 ]
 gilda-slim = [
     "ssslm[gilda-slim]",
+]
+sources = [
+    "pyobo[drugcentral,pid]",
+]
+drugcentral =[
+    "psycopg2-binary",
+]
+pid = [
+    "protmapper",
+]
+# note that scispacy currently only works on <= 3.12
+# because of its transitive dependencies. It also has
+# a hard cutoff on scipy because it relied on (private/unstable?)
+# functionality that no longer exists in newer versions
+scispacy = [
+    "scispacy; python_version <= '3.12'",
+    "spacy; python_version <= '3.12'",
+    "scipy<1.11; python_version <= '3.12'",
+]
+pykeen = [
+    "pykeen",
+]
+grape = [
+    "grape",
+    "embiggen",
+    "ensmallen",
 ]
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
@@ -289,7 +314,7 @@ known-first-party = [
 docstring-code-format = true
 
 [tool.bumpversion]
-current_version = "0.12.6-dev"
+current_version = "0.12.11-dev"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:-(?P<release>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+(?P<build>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?"
 serialize = [
     "{major}.{minor}.{patch}-{release}+{build}",

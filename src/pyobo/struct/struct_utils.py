@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime
 import itertools as itt
 import logging
+import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
@@ -59,18 +60,32 @@ class Annotation(NamedTuple):
     value: Reference | OBOLiteral
 
     @classmethod
-    def float(cls, predicate: Reference, value: float) -> Self:
+    def float(cls, predicate: Reference | TypeDef, value: float) -> Self:
         """Return a literal property for a float."""
+        from .struct import TypeDef
+
+        if isinstance(predicate, TypeDef):
+            predicate = predicate.reference
         return cls(predicate, OBOLiteral.float(value))
 
     @classmethod
-    def uri(cls, predicate: Reference, uri: str) -> Self:
+    def uri(cls, predicate: Reference | TypeDef, uri: str) -> Self:
         """Return a literal property for a URI."""
+        from .struct import TypeDef
+
+        if isinstance(predicate, TypeDef):
+            predicate = predicate.reference
         return cls(predicate, OBOLiteral.uri(uri))
 
     @classmethod
-    def string(cls, predicate: Reference, value: str, *, language: str | None = None) -> Self:
+    def string(
+        cls, predicate: Reference | TypeDef, value: str, *, language: str | None = None
+    ) -> Self:
         """Return a literal property for a float."""
+        from .struct import TypeDef
+
+        if isinstance(predicate, TypeDef):
+            predicate = predicate.reference
         return cls(predicate, OBOLiteral.string(value, language=language))
 
     @staticmethod
@@ -826,7 +841,7 @@ class Stanza(Referenced, HasReferencesMixin):
         """Get definition provenance."""
         # return as a tuple to make sure nobody is appending on it
         return (
-            *self.get_property_objects(v.has_citation),
+            *self.get_property_objects(v.is_mentioned_by),
             # This gets all of the xrefs on _any_ axiom,
             # which includes the definition provenance
             *(
@@ -853,8 +868,18 @@ class Stanza(Referenced, HasReferencesMixin):
         *,
         annotations: Iterable[Annotation] | None = None,
     ) -> Self:
-        """Append a citation."""
-        return self.annotate_object(v.has_citation, reference, annotations=annotations)
+        """Append a creative work that mentions this term."""
+        warnings.warn("use append_mentioned_by instead", DeprecationWarning, stacklevel=2)
+        return self.append_mentioned_by(reference, annotations=annotations)
+
+    def append_mentioned_by(
+        self,
+        reference: Reference,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
+        """Append a creative work that mentions this term."""
+        return self.annotate_object(v.is_mentioned_by, reference, annotations=annotations)
 
 
 ReferenceHint: TypeAlias = (
@@ -990,8 +1015,11 @@ def _format_obo_trailing_modifiers(
         match prop.value:
             case Reference():
                 right = reference_escape(prop.value, ontology_prefix=ontology_prefix)
-            case OBOLiteral(value, _datatype, _language):
-                right = value
+            case OBOLiteral(value, datatype, _language):
+                if datatype == v.xsd_string:
+                    right = f'"{obo_escape_slim(value)}"'
+                else:
+                    right = value
         modifiers.append((left, right))
     inner = ", ".join(f"{key}={value}" for key, value in modifiers)
     return " {" + inner + "}"

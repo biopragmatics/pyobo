@@ -55,7 +55,7 @@ def get_compartments(*, force: bool = False, version: str | None = None) -> dict
     """Get a dictionary of BiGG compartments."""
     rv = {}
     soup = get_soup(DATA_URL)
-    table = soup.find(**{"class": "myTable"})  # type:ignore[arg-type]
+    table = soup.find(class_="myTable")
     if table is None:
         raise ValueError
     for row in table.find_all("tr"):  # type:ignore[attr-defined]
