@@ -21,7 +21,6 @@ from pyobo.identifier_utils import wrap_norm_prefix
 from pyobo.utils.path import CacheArtifact, get_cache_path
 
 if TYPE_CHECKING:
-    import ensmallen
     import sentence_transformers
 
 __all__ = [
@@ -58,27 +57,9 @@ def _get_text(
     return name
 
 
-def _get_ensmallen_graph(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> ensmallen.Graph:
-    from ensmallen import Graph
-
-    edges_df = get_edges_df(prefix, **kwargs)
-    with tempfile.TemporaryDirectory() as d:
-        path = Path(d).joinpath("test.tsv")
-        edges_df[[":START_ID", ":END_ID"]].to_csv(path, header=None, sep="\t", index=False)
-        return Graph.from_csv(
-            edge_path=str(path),
-            edge_list_separator="\t",
-            sources_column_number=0,
-            destinations_column_number=1,
-            edge_list_numeric_node_ids=False,
-            directed=True,
-            name=bioregistry.get_name(prefix, strict=True),
-            verbose=True,
-        )
-
-
 def get_graph_embeddings_df(
     prefix: str,
+    *,
     method: Literal["pykeen", "embiggen"] | None = None,
     epochs: int = 30,
     dimension: int = 32,
@@ -107,7 +88,22 @@ def get_graph_embeddings_df(
         )
 
     elif method == "embiggen":
-        graph = _get_ensmallen_graph(prefix, **kwargs)
+        from ensmallen import Graph
+
+        edges_df = get_edges_df(prefix, **kwargs)
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d).joinpath("test.tsv")
+            edges_df[[":START_ID", ":END_ID"]].to_csv(path, header=None, sep="\t", index=False)
+            graph = Graph.from_csv(
+                edge_path=str(path),
+                edge_list_separator="\t",
+                sources_column_number=0,
+                destinations_column_number=1,
+                edge_list_numeric_node_ids=False,
+                directed=True,
+                name=bioregistry.get_name(prefix, strict=True),
+                verbose=True,
+            )
         graph = graph.remove_disconnected_nodes()
 
         from embiggen.embedders.ensmallen_embedders.second_order_line import (
