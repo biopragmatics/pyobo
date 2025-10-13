@@ -60,7 +60,7 @@ def _get_text(
 def get_graph_embeddings_df(
     prefix: str,
     *,
-    method: Literal["pykeen", "embiggen"] | None = None,
+    method: Literal["pykeen", "grape"] | None = None,
     epochs: int = 30,
     dimension: int = 32,
     **kwargs: Unpack[GetOntologyKwargs],
@@ -87,7 +87,7 @@ def get_graph_embeddings_df(
             index=[training.entity_id_to_label[i] for i in range(embeddings.shape[0])],
         )
 
-    elif method == "embiggen":
+    elif method == "grape":
         from ensmallen import Graph
 
         edges_df = get_edges_df(prefix, **kwargs)
