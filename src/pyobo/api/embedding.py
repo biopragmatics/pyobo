@@ -85,13 +85,6 @@ def get_graph_embeddings_df(
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
     """Get graph machine learning embeddings."""
-    path = get_cache_path(
-        prefix, CacheArtifact.graph_embeddings, version=get_version_from_kwargs(prefix, kwargs)
-    )
-    if path.is_file() and not check_should_force(kwargs):
-        df = pd.read_csv(path, sep="\t").set_index(0)
-        return df
-
     if method == "pykeen" or method is None:
         from pykeen.models import PairRE
         from pykeen.training import SLCWATrainingLoop
@@ -130,7 +123,6 @@ def get_graph_embeddings_df(
         raise ValueError(f"invalid graph machine learning method: {method}")
 
     df.index.name = "curie"
-    df.to_csv(path, sep="\t")  # index is important here!
     return df
 
 
