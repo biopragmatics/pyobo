@@ -151,6 +151,7 @@ class CacheArtifact(enum.Enum):
     metadata = "metadata.json"
 
     embeddings = "embeddings.tsv.gz"
+    graph_embeddings = "embeddings_graph.tsv.gz"
 
 
 def get_cache_path(
