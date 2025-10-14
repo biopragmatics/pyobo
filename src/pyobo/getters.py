@@ -181,13 +181,32 @@ def get_ontology(
     if ontology_format == "obo":
         pass  # all gucci
     elif ontology_format in {"owl", "rdf"}:
-        path = _convert_to_obo(path)
+        try:
+            path = _convert_to_obo(path)
+        except bioontologies.robot.ROBOTError:
+            from .struct.anyrdf import read_anyrdf
+
+            return read_anyrdf(path=path, prefix=prefix)
     elif ontology_format == "json":
         from .struct.obograph import read_obograph
 
         obo = read_obograph(prefix=prefix, path=path)
         if cache:
             obo.write_default(force=force_process)
+        return obo
+    elif ontology_format == "skos":
+        from .struct.skosrdf import read_skos
+
+        obo = read_skos(prefix=prefix, path=path)
+        if cache:
+            obo.write_default(force=force)
+        return obo
+    elif ontology_format == "jskos":
+        from .struct.jskos_utils import read_jskos
+
+        obo = read_jskos(prefix=prefix, path=path)
+        if cache:
+            obo.write_default(force=force)
         return obo
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
