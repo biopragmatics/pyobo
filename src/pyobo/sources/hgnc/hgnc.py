@@ -28,7 +28,14 @@ from pyobo.struct import (
     transcribes_to,
 )
 from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
-from pyobo.struct.typedef import comment, ends, exact_match, located_in, starts, gene_product_enables
+from pyobo.struct.typedef import (
+    comment,
+    ends,
+    exact_match,
+    gene_product_enables,
+    located_in,
+    starts,
+)
 from pyobo.utils.path import ensure_path
 
 __all__ = [
