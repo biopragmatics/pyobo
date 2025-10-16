@@ -359,7 +359,6 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 xref_identifiers = [str(xref_identifiers)]
 
             if xref_prefix == "merops.entry":
-                continue
                 # e.g., XM02-001 should be rewritten as XM02.001
                 xref_identifiers = [i.replace("-", ".") for i in xref_identifiers]
 
