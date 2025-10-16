@@ -640,7 +640,7 @@ class Obo:
         if self.auto_generated_by is None:
             self.auto_generated_by = (
                 f"PyOBO v{get_pyobo_version(with_git_hash=True)} on "
-                f"{datetime.datetime.now().isoformat()} by {script_url}."
+                f"{datetime.datetime.now().isoformat()} by {script_url}"
             )  # type:ignore
 
     def _get_clean_idspaces(self) -> dict[str, str]:
