@@ -19,6 +19,7 @@ __all__ = [
     "ensure_path",
     "get_cache_path",
     "get_relation_cache_path",
+    "ensure_open",
     "prefix_directory_join",
 ]
 
@@ -40,6 +41,12 @@ def prefix_directory_join(
         version=version,
     )
 
+@contextmanager
+def ensure_open(*args, **kwargs) -> Generator[TextIO, None, None]:
+    """Ensure a path and open it."""
+    path = ensure_path()
+    with path.open() as file:
+        yield file
 
 def ensure_path(
     prefix: str,
