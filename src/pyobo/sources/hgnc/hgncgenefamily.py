@@ -5,9 +5,10 @@ from collections.abc import Iterable, Mapping
 
 import pandas as pd
 
-from ...struct import Obo, Reference, SynonymTypeDef, Term, is_mentioned_by
+from ...struct import Obo, Reference, Term, is_mentioned_by
+from ...struct.struct import abbreviation as symbol_type
 from ...struct.typedef import enables, exact_match, from_species
-from ...utils.path import ensure_path
+from ...utils.path import ensure_df
 
 __all__ = [
     "HGNCGroupGetter",
@@ -15,12 +16,8 @@ __all__ = [
 
 PREFIX = "hgnc.genegroup"
 FAMILIES_URL = "https://storage.googleapis.com/public-download-files/hgnc/csv/csv/genefamily_db_tables/family.csv"
-# TODO use family_alias.csv
+FAMILIES_ALIAS_URL = "https://storage.googleapis.com/public-download-files/hgnc/csv/csv/genefamily_db_tables/family_alias.csv"
 HIERARCHY_URL = "https://storage.googleapis.com/public-download-files/hgnc/csv/csv/genefamily_db_tables/hierarchy.csv"
-
-symbol_type = SynonymTypeDef(
-    reference=Reference(prefix="OMO", identifier="0004000", name="has symbol")
-)
 
 
 class HGNCGroupGetter(Obo):
@@ -38,8 +35,7 @@ class HGNCGroupGetter(Obo):
 
 def get_hierarchy(force: bool = False) -> Mapping[str, list[str]]:
     """Get the HGNC Gene Families hierarchy as a dictionary."""
-    path = ensure_path(PREFIX, url=HIERARCHY_URL, force=force)
-    df = pd.read_csv(path, dtype={"parent_fam_id": str, "child_fam_id": str})
+    df = ensure_df(PREFIX, url=HIERARCHY_URL, force=force, sep=",")
     d = defaultdict(list)
     for parent_id, child_id in df.values:
         d[child_id].append(parent_id)
@@ -75,9 +71,12 @@ def get_terms(force: bool = False) -> Iterable[Term]:
 
 
 def _get_terms_helper(force: bool = False) -> Iterable[Term]:
-    path = ensure_path(PREFIX, url=FAMILIES_URL, force=force)
-    df = pd.read_csv(path, dtype={"id": str})
+    alias_df = ensure_df(PREFIX, url=FAMILIES_ALIAS_URL, force=force, sep=",")
+    aliases = defaultdict(set)
+    for _id, family_id, alias in alias_df.values:
+        aliases[family_id].add(alias)
 
+    df = ensure_df(PREFIX, url=FAMILIES_URL, force=force, sep=",")
     for gene_group_id, symbol, name, pubmed_ids, definition, desc_go in df[COLUMNS].values:
         if not definition or pd.isna(definition):
             definition = None
@@ -95,6 +94,8 @@ def _get_terms_helper(force: bool = False) -> Iterable[Term]:
             term.append_relationship(enables, Reference(prefix="GO", identifier=go_id))
         if symbol and pd.notna(symbol):
             term.append_synonym(symbol, type=symbol_type)
+        for alias in aliases[gene_group_id]:
+            term.append_synonym(alias)
         term.set_species(identifier="9606", name="Homo sapiens")
         yield term
 
