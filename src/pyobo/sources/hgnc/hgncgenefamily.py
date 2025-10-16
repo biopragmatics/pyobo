@@ -35,7 +35,7 @@ class HGNCGroupGetter(Obo):
 
 def get_hierarchy(force: bool = False) -> Mapping[str, list[str]]:
     """Get the HGNC Gene Families hierarchy as a dictionary."""
-    df = ensure_df(PREFIX, url=HIERARCHY_URL, force=force, sep=',')
+    df = ensure_df(PREFIX, url=HIERARCHY_URL, force=force, sep=",")
     d = defaultdict(list)
     for parent_id, child_id in df.values:
         d[child_id].append(parent_id)
@@ -76,7 +76,7 @@ def _get_terms_helper(force: bool = False) -> Iterable[Term]:
     for _id, family_id, alias in alias_df.values:
         aliases[family_id].add(alias)
 
-    df = ensure_df(PREFIX, url=FAMILIES_URL, force=force, sep=',')
+    df = ensure_df(PREFIX, url=FAMILIES_URL, force=force, sep=",")
     for gene_group_id, symbol, name, pubmed_ids, definition, desc_go in df[COLUMNS].values:
         if not definition or pd.isna(definition):
             definition = None
