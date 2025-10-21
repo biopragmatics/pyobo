@@ -5,6 +5,7 @@ import warnings
 from collections.abc import Mapping
 from functools import lru_cache
 
+import curies
 import pandas as pd
 from curies import ReferenceTuple
 from sssom_pydantic import SemanticMapping
@@ -111,14 +112,21 @@ def get_sssom_df(
 
 
 def get_semantic_mappings(
-    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str,
+    converter: curies.Converter | None = None,
+    names: bool = True,
+    include_mapping_source_column: bool = False,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> list[SemanticMapping]:
     """Get semantic mapping objects."""
-    df = get_mappings_df(prefix, **kwargs)
-    converter = get_converter()
+    df = get_mappings_df(
+        prefix, names=names, include_mapping_source_column=include_mapping_source_column, **kwargs
+    )
+    if converter is None:
+        converter = get_converter()
     rv = []
     for _, row in df.iterrows():
-        record = parse_row(row)
+        record = parse_row(row.to_dict())
         mapping = parse_record(record, converter=converter)
         rv.append(mapping)
     return rv
