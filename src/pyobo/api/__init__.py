@@ -65,6 +65,7 @@ from .typedefs import get_typedef_df
 from .xrefs import (
     get_filtered_xrefs,
     get_mappings_df,
+    get_semantic_mappings,
     get_sssom_df,
     get_xref,
     get_xrefs,
@@ -121,6 +122,7 @@ __all__ = [
     "get_relation",
     "get_relation_mapping",
     "get_relations_df",
+    "get_semantic_mappings",
     "get_species",
     "get_sssom_df",
     "get_subhierarchy",

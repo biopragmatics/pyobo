@@ -89,6 +89,7 @@ dependencies = [
     "typing_extensions",
     "rdflib",
     "obographs>=0.0.8",
+    "sssom_pydantic",
 ]
 
 # see https://peps.python.org/pep-0735/ and https://docs.astral.sh/uv/concepts/dependencies/#dependency-groups

@@ -7,6 +7,8 @@ from functools import lru_cache
 
 import pandas as pd
 from curies import ReferenceTuple
+from sssom_pydantic import SemanticMapping
+from sssom_pydantic.io import parse_record, parse_row
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
@@ -19,7 +21,7 @@ from ..constants import (
     check_should_use_tqdm,
 )
 from ..getters import get_ontology
-from ..identifier_utils import wrap_norm_prefix
+from ..identifier_utils import get_converter, wrap_norm_prefix
 from ..struct import Obo
 from ..utils.cache import cached_df
 from ..utils.path import CacheArtifact, get_cache_path
@@ -27,6 +29,7 @@ from ..utils.path import CacheArtifact, get_cache_path
 __all__ = [
     "get_filtered_xrefs",
     "get_mappings_df",
+    "get_semantic_mappings",
     "get_sssom_df",
     "get_xref",
     "get_xrefs",
@@ -105,6 +108,20 @@ def get_sssom_df(
     """Get an SSSOM dataframe, replaced by :func:`get_mappings_df`."""
     warnings.warn("get_sssom_df was renamed to get_mappings_df", DeprecationWarning, stacklevel=2)
     return get_mappings_df(prefix=prefix, names=names, **kwargs)
+
+
+def get_semantic_mappings(
+    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+) -> list[SemanticMapping]:
+    """Get semantic mapping objects."""
+    df = get_mappings_df(prefix, **kwargs)
+    converter = get_converter()
+    rv = []
+    for _, row in df.iterrows():
+        record = parse_row(row)
+        mapping = parse_record(record, converter=converter)
+        rv.append(mapping)
+    return rv
 
 
 def get_mappings_df(
