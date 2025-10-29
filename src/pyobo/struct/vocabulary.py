@@ -41,6 +41,7 @@ mapping_has_justification = Reference(
 )
 mapping_has_confidence = Reference(prefix="sssom", identifier="confidence", name="has confidence")
 has_contributor = _c(_v.has_contributor)
+has_creator = Reference(prefix="dcterms", identifier="creator", name="creator")
 has_source = _c(_v.has_source)
 has_date = _c(_v.has_date)
 has_dbxref = _c(_v.has_dbxref)
@@ -88,6 +89,7 @@ is_mentioned_by = Reference(prefix="mito", identifier="isMentionedBy", name="is 
 mentions = Reference(prefix="mito", identifier="mentions", name="mentions")
 
 has_description = _c(_v.has_description)
+has_license = _c(_v.has_license)
 has_license = _c(_v.has_license)
 has_title = _c(_v.has_title)
 
