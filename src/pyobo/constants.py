@@ -8,7 +8,6 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Literal, NamedTuple, TypeAlias
 
-import bioregistry
 import pystow
 from typing_extensions import NotRequired, TypedDict
 
@@ -247,11 +246,35 @@ class OntologyPathPack(NamedTuple):
     path: Path
 
 
+def _get_obo_download(prefix: str) -> str | None:
+    import bioregistry
+
+    return bioregistry.get_obo_download(prefix)
+
+
+def _get_owl_download(prefix: str) -> str | None:
+    import bioregistry
+
+    return bioregistry.get_owl_download(prefix)
+
+
+def _get_json_download(prefix: str) -> str | None:
+    import bioregistry
+
+    return bioregistry.get_json_download(prefix)
+
+
+def _get_rdf_download(prefix: str) -> str | None:
+    import bioregistry
+
+    return bioregistry.get_rdf_download(prefix)
+
+
 #: Functions that get ontology files. Order matters in this list,
 #: since order implicitly defines priority
 ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | None]]] = [
-    ("obo", bioregistry.get_obo_download),
-    ("owl", bioregistry.get_owl_download),
-    ("json", bioregistry.get_json_download),
-    ("rdf", bioregistry.get_rdf_download),
+    ("obo", _get_obo_download),
+    ("owl", _get_owl_download),
+    ("json", _get_json_download),
+    ("rdf", _get_rdf_download),
 ]

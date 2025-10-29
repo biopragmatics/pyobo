@@ -3,12 +3,14 @@
 import datetime
 import pathlib
 from collections.abc import Callable
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 import click
-import pandas as pd
 
 from ..constants import DATABASE_DIRECTORY
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 __all__ = [
     "Clickable",
