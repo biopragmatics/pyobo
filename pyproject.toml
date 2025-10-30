@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv_build>=0.6.6,<1.0"]
+requires = ["uv_build>=0.9.6,<1.0"]
 build-backend = "uv_build"
 
 [project]
@@ -141,8 +141,8 @@ bump = [
     "bump-my-version",
 ]
 build = [
-    "uv",
-    "uv-build",
+    "uv>=0.9.6",
+    "uv-build>=0.9.6",
 ]
 release = [
     { include-group = "build" },
