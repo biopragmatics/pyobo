@@ -9,7 +9,7 @@ import curies
 import pandas as pd
 from curies import ReferenceTuple
 from sssom_pydantic import SemanticMapping
-from sssom_pydantic.io import record_to_semantic_mapping, row_to_record, row_to_semantic_mapping
+from sssom_pydantic.io import row_to_semantic_mapping
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
@@ -124,10 +124,7 @@ def get_semantic_mappings(
     )
     if converter is None:
         converter = get_converter()
-    return [
-        row_to_semantic_mapping(row, converter=converter)
-        for _, row in df.iterrows()
-    ]
+    return [row_to_semantic_mapping(row, converter=converter) for _, row in df.iterrows()]
 
 
 def get_mappings_df(
