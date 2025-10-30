@@ -345,7 +345,7 @@ def _get_terms(
         _process_equivalent_to(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_disjoint_from(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_consider(term, data, ontology_prefix=ontology_prefix, strict=strict)
-        _process_comment(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_comment(term, data)
         _process_description(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_creation_date(term, data)
 
@@ -367,7 +367,7 @@ def _process_description(term: Stanza, data, *, ontology_prefix: str, strict: bo
             )
 
 
-def _process_comment(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+def _process_comment(term: Stanza, data) -> None:
     if comment := data.get("comment"):
         term.append_comment(comment)
 
@@ -902,7 +902,7 @@ def iterate_typedefs(
         _process_equivalent_to(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_disjoint_from(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_consider(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
-        _process_comment(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_comment(typedef, data)
         _process_description(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_creation_date(typedef, data)
 
