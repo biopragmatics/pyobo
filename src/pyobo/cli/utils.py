@@ -1,5 +1,7 @@
 """Utilities for the CLI."""
 
+from __future__ import annotations
+
 import datetime
 import pathlib
 from collections.abc import Callable
