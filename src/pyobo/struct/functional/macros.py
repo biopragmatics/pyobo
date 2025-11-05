@@ -72,7 +72,7 @@ class RelationshipMacro(Macro):
         annotations: f.Annotations | None = None,
     ) -> None:
         """Instantiate the object-to-object SubClassOf macro."""
-        super().__init__(f.SubClassOf(s, f.ObjectSomeValuesFrom(p, o)))
+        super().__init__(f.SubClassOf(s, f.ObjectSomeValuesFrom(p, o), annotations=annotations))
 
 
 class StringMacro(Macro):

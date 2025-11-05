@@ -6,10 +6,12 @@ from contextlib import ExitStack
 from unittest import mock
 
 import bioregistry
+import curies
 from curies import Reference, ReferenceTuple
 from curies import vocabulary as _v
 from pydantic import ValidationError
 from ssslm import LiteralMapping
+from sssom_pydantic import SemanticMapping
 
 import pyobo
 from pyobo import Reference as PyOBOReference
@@ -187,6 +189,17 @@ class TestAltIds(unittest.TestCase):
         terms = [t1, t2, t3]
         ontology = make_ad_hoc_ontology(TEST_P1, terms=terms, _typedefs=[td1])
 
+        converter = curies.Converter.from_prefix_map(
+            {
+                TEST_P1: f"https://example.org/{TEST_P1}:",
+                TEST_P2: f"https://example.org/{TEST_P2}:",
+                "IAO": "http://purl.obolibrary.org/obo/IAO_",
+                "skos": "http://www.w3.org/2004/02/skos/core#",
+                "oboInOwl": "http://www.geneontology.org/formats/oboInOwl#",
+                "semapv": "https://w3id.org/semapv/vocab/",
+            }
+        )
+
         targets = [
             "pyobo.api.names.get_ontology",
             "pyobo.api.alts.get_ontology",
@@ -232,8 +245,41 @@ class TestAltIds(unittest.TestCase):
             d = pyobo.get_filtered_xrefs(TEST_P1, TEST_P2, cache=False, use_tqdm=False)
             self.assertEqual({"1": "X", "3": "Y"}, d)
 
-            # Synonyms
+            semantic_mappings = pyobo.get_semantic_mappings(
+                TEST_P1, converter=converter, cache=False, use_tqdm=False
+            )
+            expected_semantic_mappings = [
+                SemanticMapping(
+                    subject=r1,
+                    predicate=_v.alternative_term,
+                    object=r2,
+                    justification=_v.unspecified_matching_process,
+                ),
+                SemanticMapping(
+                    subject=r1,
+                    predicate=_v.has_dbxref,
+                    object=r2_1,
+                    justification=_v.unspecified_matching_process,
+                ),
+                SemanticMapping(
+                    subject=r3,
+                    predicate=_v.exact_match,
+                    object=r2_2,
+                    justification=_v.unspecified_matching_process,
+                ),
+            ]
+            self.assertEqual(
+                [
+                    m.model_dump(exclude_none=True, exclude_unset=True)
+                    for m in sorted(expected_semantic_mappings)
+                ],
+                [
+                    m.model_dump(exclude_none=True, exclude_unset=True)
+                    for m in sorted(semantic_mappings)
+                ],
+            )
 
+            # Synonyms
             literal_mappings = pyobo.get_literal_mappings(TEST_P1, cache=False)
             expected = [
                 LiteralMapping(

@@ -7,6 +7,7 @@ import typing
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 
+import obographs
 import pydantic
 from tabulate import tabulate
 from tqdm.auto import tqdm
@@ -14,22 +15,22 @@ from tqdm.auto import tqdm
 from pyobo.api.utils import get_version
 from pyobo.resources.so import get_so_name
 from pyobo.struct import (
+    Annotation,
     Obo,
+    OBOLiteral,
     Reference,
-    SynonymTypeDef,
     Term,
-    TypeDef,
-    default_reference,
     from_species,
     gene_product_member_of,
-    has_citation,
     has_gene_product,
+    is_mentioned_by,
     member_of,
     orthologous,
     transcribes_to,
 )
-from pyobo.struct.typedef import exact_match
-from pyobo.utils.path import ensure_path, prefix_directory_join
+from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
+from pyobo.struct.typedef import comment, ends, exact_match, located_in, starts
+from pyobo.utils.path import ensure_path
 
 __all__ = [
     "HGNCGetter",
@@ -43,26 +44,8 @@ DEFINITIONS_URL_FMT = (
     "hgnc_complete_set_{version}.json"
 )
 
-previous_symbol_type = SynonymTypeDef(
-    reference=default_reference(PREFIX, "previous_symbol", name="previous symbol")
-)
-alias_symbol_type = SynonymTypeDef(
-    reference=default_reference(PREFIX, "alias_symbol", name="alias symbol")
-)
-previous_name_type = SynonymTypeDef(
-    reference=default_reference(PREFIX, "previous_name", name="previous name")
-)
-alias_name_type = SynonymTypeDef(
-    reference=default_reference(PREFIX, "alias_name", name="alias name")
-)
-HAS_LOCUS_TYPE = TypeDef(
-    reference=default_reference(PREFIX, "locus_type", name="has locus type"), is_metadata_tag=True
-)
-HAS_LOCUS_GROUP = TypeDef(
-    reference=default_reference(PREFIX, "locus_group", name="has locus group"), is_metadata_tag=True
-)
-HAS_LOCATION = TypeDef(
-    reference=default_reference(PREFIX, "location", name="has location"), is_metadata_tag=True
+CHR_URL = (
+    "https://raw.githubusercontent.com/monarch-initiative/monochrom/refs/heads/master/chr.json"
 )
 
 #: First column is MIRIAM prefix, second column is HGNC key
@@ -157,7 +140,7 @@ LOCUS_TYPE_TO_SO = {
     "complex locus constituent": "0000997",  # https://github.com/pyobo/pyobo/issues/118#issuecomment-1564520052
     # non-coding RNA
     "RNA, Y": "0002359",
-    "RNA, cluster": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/564
+    "RNA, cluster": "0003001",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/564
     "RNA, long non-coding": "0002127",  # HGNC links to wrong one
     "RNA, micro": "0001265",
     "RNA, misc": "0001266",
@@ -180,7 +163,7 @@ LOCUS_TYPE_TO_SO = {
     "fragile site": "0002349",
     "readthrough": "0000697",  # maybe not right
     "transposable element": "0000111",  # HGNC links to wrong one
-    "virus integration site": "",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/551
+    "virus integration site": "0003002",  # TODO see https://github.com/The-Sequence-Ontology/SO-Ontologies/issues/551
     "region": "0001411",  # a small bucket for things that need a better annotation, even higher than "gene"
     "unknown": "0000704",  # gene
     None: "0000704",  # gene
@@ -189,6 +172,14 @@ LOCUS_TYPE_TO_SO = {
 PUBLICATION_TERM = Term(
     reference=Reference(prefix="IAO", identifier="0000013", name="journal article")
 )
+
+#: Indicates the cytogenetic location of the gene or region on the chromsome.
+#: In the absence of that information one of the following may be listed.
+QUALIFIERS = {
+    " not on reference assembly": "not on reference assembly -named gene is not annotated on the current version of the Genome Reference Consortium human reference assembly; may have been annotated on previous assembly versions or on a non-reference human assembly",
+    " unplaced": "unplaced - named gene is annotated on an unplaced/unlocalized scaffold of the human reference assembly",
+    " alternate reference locus": "reserved - named gene has never been annotated on any human assembly",
+}
 
 
 class HGNCGetter(Obo):
@@ -203,16 +194,16 @@ class HGNCGetter(Obo):
         orthologous,
         member_of,
         exact_match,
-        has_citation,
-        HAS_LOCUS_GROUP,
-        HAS_LOCUS_TYPE,
-        HAS_LOCATION,
+        is_mentioned_by,
+        located_in,
+        starts,
+        ends,
+        comment,
     ]
     synonym_typedefs = [
-        previous_name_type,
-        previous_symbol_type,
-        alias_name_type,
-        alias_symbol_type,
+        previous_name,
+        previous_gene_symbol,
+        gene_symbol_synonym,
     ]
     root_terms = [
         Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id))
@@ -225,12 +216,28 @@ class HGNCGetter(Obo):
         return get_terms(force=force, version=self.data_version)
 
 
+def _get_location_to_chr() -> dict[str, Reference]:
+    uri_prefix = "http://purl.obolibrary.org/obo/CHR_9606-chr"
+    graph: obographs.Graph = obographs.read(CHR_URL, squeeze=True)
+    rv = {}
+    for node in graph.nodes:
+        if node.id.startswith(uri_prefix):
+            identifier = node.id.removeprefix(uri_prefix)
+            rv[identifier] = Reference(
+                prefix="CHR", identifier=f"9606-chr{identifier}", name=node.lbl
+            )
+    return rv
+
+
 def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]:
     """Get HGNC terms."""
     if version is None:
         version = get_version("hgnc")
+
+    unhandled_locations: defaultdict[str, set[str]] = defaultdict(set)
+    location_to_chr = _get_location_to_chr()
+
     unhandled_entry_keys: typing.Counter[str] = Counter()
-    unhandle_locus_types: defaultdict[str, dict[str, Term]] = defaultdict(dict)
     path = ensure_path(
         PREFIX,
         url=DEFINITIONS_URL_FMT.format(version=version),
@@ -352,7 +359,6 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 xref_identifiers = [str(xref_identifiers)]
 
             if xref_prefix == "merops.entry":
-                continue
                 # e.g., XM02-001 should be rewritten as XM02.001
                 xref_identifiers = [i.replace("-", ".") for i in xref_identifiers]
 
@@ -375,7 +381,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                     term.append_xref(Reference(prefix=xref_prefix, identifier=str(xref_identifier)))
 
         for pubmed_id in entry.pop("pubmed_id", []):
-            term.append_provenance(Reference(prefix="pubmed", identifier=str(pubmed_id)))
+            term.append_mentioned_by(Reference(prefix="pubmed", identifier=str(pubmed_id)))
 
         gene_group_ids = entry.pop("gene_group_id", [])
         gene_groups = entry.pop("gene_group", [])
@@ -390,34 +396,118 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             )
 
         for alias_symbol in entry.pop("alias_symbol", []):
-            term.append_synonym(alias_symbol, type=alias_symbol_type)
+            term.append_synonym(alias_symbol, type=gene_symbol_synonym)
         for alias_name in entry.pop("alias_name", []):
-            term.append_synonym(alias_name, type=alias_name_type)
+            # regular synonym, no type needed.
+            term.append_synonym(alias_name)
         for previous_symbol in itt.chain(
             entry.pop("previous_symbol", []), entry.pop("prev_symbol", [])
         ):
-            term.append_synonym(previous_symbol, type=previous_symbol_type)
-        for previous_name in entry.pop("prev_name", []):
-            term.append_synonym(previous_name, type=previous_name_type)
+            term.append_synonym(previous_symbol, type=previous_gene_symbol)
+        for previous_name_ in entry.pop("prev_name", []):
+            term.append_synonym(previous_name_, type=previous_name)
 
-        for prop, td in [("location", HAS_LOCATION)]:
-            value = entry.pop(prop, None)
-            if value:
-                term.annotate_string(td, value)
+        location: str | None = entry.pop("location", None)
+        if location is not None and location not in {
+            "not on reference assembly",
+            "unplaced",
+            "reserved",
+        }:
+            annotations = []
+            for qualifier_suffix, qualifier_text in QUALIFIERS.items():
+                if location.endswith(qualifier_suffix):
+                    location = location.removesuffix(qualifier_suffix)
+                    annotations.append(
+                        Annotation(
+                            predicate=comment.reference, value=OBOLiteral.string(qualifier_text)
+                        )
+                    )
+                    break
+
+            if location in location_to_chr:
+                term.append_relationship(
+                    located_in, location_to_chr[location], annotations=annotations
+                )
+            elif location == "mitochondria":
+                term.append_relationship(
+                    located_in,
+                    Reference(prefix="go", identifier="0000262", name="mitochondrial chromosome"),
+                    annotations=annotations,
+                )
+            elif " and " in location:
+                left, _, right = location.partition(" and ")
+                if left not in location_to_chr:
+                    unhandled_locations[left].add(identifier)
+                elif right not in location_to_chr:
+                    unhandled_locations[right].add(identifier)
+                elif left in location_to_chr and right in location_to_chr:
+                    term.append_relationship(
+                        located_in, location_to_chr[left], annotations=annotations
+                    )
+                    term.append_relationship(
+                        located_in, location_to_chr[right], annotations=annotations
+                    )
+                else:
+                    unhandled_locations[location].add(identifier)
+            elif " or " in location:
+                left, _, right = location.partition(" or ")
+                if left not in location_to_chr:
+                    unhandled_locations[left].add(identifier)
+                elif right not in location_to_chr:
+                    unhandled_locations[right].add(identifier)
+                elif left in location_to_chr and right in location_to_chr:
+                    # FIXME implement
+                    unhandled_locations[location].add(identifier)
+                else:
+                    unhandled_locations[location].add(identifier)
+            elif "-" in location:
+                start, _, end = location.partition("-")
+
+                # the range that sarts with a q needs
+                # the chromosome moved over, like in
+                # 17q24.2-q24.3
+                if end.startswith("q"):
+                    chr, _, _ = start.partition("q")
+                    end = f"{chr}{end}"
+                # the range that sarts with a p needs
+                # the chromosome moved over, like in
+                # 1p34.2-p34.1
+                elif end.startswith("p"):
+                    chr, _, _ = start.partition("p")
+                    end = f"{chr}{end}"
+
+                if start not in location_to_chr:
+                    unhandled_locations[start].add(identifier)
+                elif end not in location_to_chr:
+                    unhandled_locations[end].add(identifier)
+                elif start in location_to_chr and end in location_to_chr:
+                    term.append_relationship(
+                        starts, location_to_chr[start], annotations=annotations
+                    )
+                    term.append_relationship(ends, location_to_chr[end], annotations=annotations)
+                else:
+                    unhandled_locations[location].add(identifier)
+            else:
+                unhandled_locations[location].add(identifier)
 
         locus_type = entry.pop("locus_type")
-        locus_group = entry.pop("locus_group")
+        # note that locus group is a more broad category than locus type,
+        # and since we already have an exhaustive mapping from locus type
+        # to SO, then we can throw this annotation away
+        _locus_group = entry.pop("locus_group")
         so_id = LOCUS_TYPE_TO_SO.get(locus_type)
-        if so_id:
-            term.append_parent(Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
-        else:
-            term.append_parent(
-                Reference(prefix="SO", identifier="0000704", name=get_so_name("0000704"))
-            )  # gene
-            unhandle_locus_types[locus_type][identifier] = term
-            term.annotate_string(HAS_LOCUS_TYPE, locus_type)
-            term.annotate_string(HAS_LOCUS_GROUP, locus_group)
+        if not so_id:
+            raise ValueError("""\
+                HGNC has updated their list of locus types, so the HGNC script is currently
+                incomplete. This can be fixed by updating the ``LOCUS_TYPE_TO_SO`` dictionary
+                to point to a new SO term. If there is none existing, then make a pull request
+                to https://github.com/The-Sequence-Ontology/SO-Ontologies like in
+                https://github.com/The-Sequence-Ontology/SO-Ontologies/pull/668. If the
+                maintainers aren't responsive, you can still use the proposed term before it's
+                accepted upstream like was done for SO:0003001 and SO:0003002
+            """)
 
+        term.append_parent(Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
         term.set_species(identifier="9606", name="Homo sapiens")
 
         for key in entry:
@@ -425,45 +515,16 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 unhandled_entry_keys[key] += 1
         yield term
 
-    with open(prefix_directory_join(PREFIX, name="unhandled.json"), "w") as file:
-        json.dump(
-            {
-                k: {hgnc_id: term.name for hgnc_id, term in v.items()}
-                for k, v in unhandle_locus_types.items()
-            },
-            file,
-            indent=2,
+    if unhandled_locations:
+        logger.warning(
+            "Unhandled chromosomal locations:\n\n%s\n",
+            tabulate(
+                [(k, len(vs), f"HGNC:{min(vs)}") for k, vs in unhandled_locations.items()],
+                headers=["location", "count", "example"],
+                tablefmt="github",
+            ),
         )
 
-    with open(prefix_directory_join(PREFIX, name="unhandled.md"), "w") as file:
-        for k, v in sorted(unhandle_locus_types.items()):
-            t = tabulate(
-                [
-                    (
-                        hgnc_id,
-                        term.name,
-                        term.is_obsolete,
-                        f"https://bioregistry.io/{term.curie}",
-                        ", ".join(
-                            f"https://bioregistry.io/{p.curie}"
-                            for p in term.provenance
-                            if isinstance(p, Reference)
-                        ),
-                    )
-                    for hgnc_id, term in sorted(v.items())
-                ],
-                headers=["hgnc_id", "name", "obsolete", "link", "provenance"],
-                tablefmt="github",
-            )
-            print(f"## {k} ({len(v)})", file=file)
-            print(t, "\n", file=file)
-
-    unhandle_locus_type_counter = Counter(
-        {locus_type: len(d) for locus_type, d in unhandle_locus_types.items()}
-    )
-    logger.warning(
-        "Unhandled locus types:\n%s", tabulate(unhandle_locus_type_counter.most_common())
-    )
     if unhandled_entry_keys:
         logger.warning("Unhandled keys:\n%s", tabulate(unhandled_entry_keys.most_common()))
 

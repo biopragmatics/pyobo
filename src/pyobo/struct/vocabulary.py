@@ -5,7 +5,7 @@ from collections.abc import Sequence
 import curies
 from curies import vocabulary as _v
 
-from .reference import Reference, default_reference
+from .reference import Reference
 
 __all__ = [
     "equivalent_class",
@@ -41,6 +41,7 @@ mapping_has_justification = Reference(
 )
 mapping_has_confidence = Reference(prefix="sssom", identifier="confidence", name="has confidence")
 has_contributor = _c(_v.has_contributor)
+has_creator = Reference(prefix="dcterms", identifier="creator", name="creator")
 has_source = _c(_v.has_source)
 has_date = _c(_v.has_date)
 has_dbxref = _c(_v.has_dbxref)
@@ -84,9 +85,11 @@ has_inchi = Reference(prefix="chemrof", identifier="inchi_string")
 debio_has_smiles = Reference(prefix="debio", identifier="0000022", name="has SMILES")
 has_smiles = Reference(prefix="chemrof", identifier="smiles_string")
 
-# TODO update to use debio, or put in RO
-has_citation = default_reference(prefix="RO", identifier="hasCitation", name="has citation")
+is_mentioned_by = Reference(prefix="mito", identifier="isMentionedBy", name="is mentioned by")
+mentions = Reference(prefix="mito", identifier="mentions", name="mentions")
+
 has_description = _c(_v.has_description)
+has_license = _c(_v.has_license)
 has_license = _c(_v.has_license)
 has_title = _c(_v.has_title)
 

@@ -32,6 +32,7 @@ def get_grounder(
     grounder_cls: type[gilda.Grounder] | None = None,
     versions: None | str | Iterable[str | None] | dict[str, str] = None,
     skip_obsolete: bool = False,
+    raise_on_missing: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> ssslm.Grounder:
     """Get a grounder for the given prefix(es)."""
@@ -46,6 +47,8 @@ def get_grounder(
             continue
         else:
             if not literal_mappings:
+                if raise_on_missing:
+                    raise ValueError(f"no literal mappings were loaded for {prefix}")
                 logger.warning("[%s] no literal mappings loaded", prefix)
             all_literal_mappings.extend(literal_mappings)
 

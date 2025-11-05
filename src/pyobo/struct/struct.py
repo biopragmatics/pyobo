@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import inspect
 import itertools as itt
 import json
 import logging
@@ -106,6 +107,7 @@ SSSOM_DF_COLUMNS = [
     "contributor",
 ]
 FORMAT_VERSION = "1.4"
+_SOURCES = Path(__file__).parent.parent.joinpath("sources").resolve()
 
 
 @dataclass
@@ -246,12 +248,22 @@ DEFAULT_SYNONYM_TYPE = SynonymTypeDef(
     reference=Reference(prefix="oboInOwl", identifier="SynonymType", name="synonym type"),
 )
 abbreviation = SynonymTypeDef(
-    reference=Reference(prefix="OMO", identifier="0003000", name="abbreviation")
+    reference=Reference(prefix="omo", identifier="0003000", name="abbreviation")
 )
 acronym = SynonymTypeDef(reference=Reference(prefix="omo", identifier="0003012", name="acronym"))
 uk_spelling = SynonymTypeDef(
     reference=Reference(prefix="omo", identifier="0003005", name="UK spelling synonym")
 )
+previous_name = SynonymTypeDef(
+    reference=Reference(prefix="omo", identifier="0003008", name="previous name")
+)
+previous_gene_symbol = SynonymTypeDef(
+    reference=Reference(prefix="omo", identifier="0003015", name="previous gene symbol")
+)
+gene_symbol_synonym = SynonymTypeDef(
+    reference=Reference(prefix="omo", identifier="0003016", name="gene symbol synonym")
+)
+
 default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
     abbreviation.pair: abbreviation,
     acronym.pair: acronym,
@@ -675,8 +687,15 @@ class Obo:
                 raise ValueError(f"{self.ontology} is missing data_version")
             elif "/" in self.data_version:
                 raise ValueError(f"{self.ontology} has a slash in version: {self.data_version}")
+
+        file_path = Path(inspect.getfile(self.__class__)).resolve()
+        script_url = f"https://github.com/biopragmatics/pyobo/blob/main/src/pyobo/sources/{file_path.relative_to(_SOURCES)}"
+
         if self.auto_generated_by is None:
-            self.auto_generated_by = f"PyOBO v{get_pyobo_version(with_git_hash=True)} on {datetime.datetime.now().isoformat()}"  # type:ignore
+            self.auto_generated_by = (
+                f"PyOBO v{get_pyobo_version(with_git_hash=True)} on "
+                f"{datetime.datetime.now().isoformat()} by {script_url}"
+            )  # type:ignore
 
     def _get_clean_idspaces(self) -> dict[str, str]:
         """Get normalized idspace dictionary."""
@@ -981,7 +1000,9 @@ class Obo:
                 case OBOLiteral():
                     end = f'"{obo_escape_slim(value.value)}" {reference_escape(value.datatype, ontology_prefix=self.ontology)}'
                 case Reference():
-                    end = reference_escape(value, ontology_prefix=self.ontology)
+                    end = reference_escape(
+                        value, ontology_prefix=self.ontology, add_name_comment=True
+                    )
                 case _:
                     raise TypeError(f"Invalid property value: {value}")
             yield f"property_value: {reference_escape(predicate, ontology_prefix=self.ontology)} {end}"
@@ -1000,21 +1021,30 @@ class Obo:
                 license_literal = OBOLiteral.string(license_spdx_id)
             yield Annotation(v.has_license, license_literal)
 
-        if description := bioregistry.get_description(self.ontology):
-            yield Annotation(v.has_description, OBOLiteral.string(description.strip()))
-        if homepage := bioregistry.get_homepage(self.ontology):
-            yield Annotation(v.has_homepage, OBOLiteral.uri(homepage))
-        if repository := bioregistry.get_repository(self.ontology):
-            yield Annotation(v.has_repository, OBOLiteral.uri(repository))
-        if logo := bioregistry.get_logo(self.ontology):
-            yield Annotation(v.has_logo, OBOLiteral.uri(logo))
-        if mailing_list := bioregistry.get_mailing_list(self.ontology):
-            yield Annotation(v.has_mailing_list, OBOLiteral.string(mailing_list))
-        if (maintainer := bioregistry.get_contact(self.ontology)) and maintainer.orcid:
-            yield Annotation(
-                v.has_maintainer,
-                Reference(prefix="orcid", identifier=maintainer.orcid, name=maintainer.name),
-            )
+        if resource := bioregistry.get_resource(self.ontology):
+            if description := resource.get_description():
+                yield Annotation(v.has_description, OBOLiteral.string(description.strip()))
+            if homepage := resource.get_homepage():
+                yield Annotation(v.has_homepage, OBOLiteral.uri(homepage))
+            if repository := resource.get_repository():
+                yield Annotation(v.has_repository, OBOLiteral.uri(repository))
+            if logo := resource.get_logo():
+                yield Annotation(v.has_logo, OBOLiteral.uri(logo))
+            if mailing_list := resource.get_mailing_list():
+                yield Annotation(v.has_mailing_list, OBOLiteral.string(mailing_list))
+            if (maintainer := resource.get_contact()) and maintainer.orcid:
+                yield Annotation(
+                    v.has_maintainer,
+                    Reference(prefix="orcid", identifier=maintainer.orcid, name=maintainer.name),
+                )
+            for maintainer in resource.contact_extras or []:
+                if maintainer.orcid:
+                    yield Annotation(
+                        v.has_maintainer,
+                        Reference(
+                            prefix="orcid", identifier=maintainer.orcid, name=maintainer.name
+                        ),
+                    )
 
         # Root terms
         for root_term in self.root_terms or []:

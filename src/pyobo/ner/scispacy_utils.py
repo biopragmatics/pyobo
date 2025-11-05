@@ -227,6 +227,8 @@ def get_scispacy_entities(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> I
     # TODO reuse labels, synonyms, and definitions cache
     ontology = get_ontology(prefix, **kwargs)
     for term in ontology:
+        if not term.name or term.prefix != ontology.ontology:
+            continue
         yield Entity(
             concept_id=term.curie,
             canonical_name=term.name,

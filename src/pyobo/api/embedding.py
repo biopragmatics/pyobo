@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import tempfile
+from pathlib import Path
+from typing import TYPE_CHECKING, Literal
 
+import bioregistry
 import curies
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from typing_extensions import Unpack
 
+from pyobo.api.edges import get_edges_df
 from pyobo.api.names import get_definition, get_id_name_mapping, get_name
 from pyobo.api.utils import get_version_from_kwargs
 from pyobo.constants import GetOntologyKwargs, check_should_force
@@ -20,6 +24,7 @@ if TYPE_CHECKING:
     import sentence_transformers
 
 __all__ = [
+    "get_graph_embeddings_df",
     "get_text_embedding",
     "get_text_embedding_model",
     "get_text_embedding_similarity",
@@ -50,6 +55,71 @@ def _get_text(
     if description:
         name += " " + description
     return name
+
+
+def get_graph_embeddings_df(
+    prefix: str,
+    *,
+    method: Literal["pykeen", "grape"] | None = None,
+    epochs: int = 30,
+    dimension: int = 32,
+    **kwargs: Unpack[GetOntologyKwargs],
+) -> pd.DataFrame:
+    """Get graph machine learning embeddings."""
+    if method == "pykeen" or method is None:
+        from pykeen.models import PairRE
+        from pykeen.training import SLCWATrainingLoop
+        from pykeen.triples import TriplesFactory
+        from torch.optim import Adam
+
+        triples_df = get_edges_df(prefix, **kwargs)
+        training = TriplesFactory.from_labeled_triples(triples_df.values)
+        model = PairRE(triples_factory=training, embedding_dim=dimension)
+        optimizer = Adam(params=model.get_grad_params())
+        training_loop = SLCWATrainingLoop(
+            model=model, triples_factory=training, optimizer=optimizer
+        )
+        # can also set batch size here
+        training_loop.train(triples_factory=training, num_epochs=epochs)
+        embeddings = model.entity_representations[0]()
+        df = pd.DataFrame(
+            embeddings.detach().numpy(),
+            index=[training.entity_id_to_label[i] for i in range(embeddings.shape[0])],
+        )
+
+    elif method == "grape":
+        from ensmallen import Graph
+
+        edges_df = get_edges_df(prefix, **kwargs)
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d).joinpath("test.tsv")
+            edges_df[[":START_ID", ":END_ID"]].to_csv(path, header=None, sep="\t", index=False)
+            graph = Graph.from_csv(
+                edge_path=str(path),
+                edge_list_separator="\t",
+                sources_column_number=0,
+                destinations_column_number=1,
+                edge_list_numeric_node_ids=False,
+                directed=True,
+                name=bioregistry.get_name(prefix, strict=True),
+                verbose=True,
+            )
+        graph = graph.remove_disconnected_nodes()
+
+        from embiggen.embedders.ensmallen_embedders.second_order_line import (
+            SecondOrderLINEEnsmallen,
+        )
+
+        embedding = SecondOrderLINEEnsmallen(embedding_size=dimension, epochs=epochs).fit_transform(
+            graph
+        )
+        df = embedding.get_all_node_embedding()[0].sort_index()
+        # df.columns = [str(c) for c in df.columns]
+    else:
+        raise ValueError(f"invalid graph machine learning method: {method}")
+
+    df.index.name = "curie"
+    return df
 
 
 @wrap_norm_prefix

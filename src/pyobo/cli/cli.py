@@ -6,10 +6,7 @@ from collections.abc import Iterable
 from functools import lru_cache
 from operator import itemgetter
 
-import bioregistry
 import click
-import humanize
-from tabulate import tabulate
 
 from .database import main as database_main
 from .lookup import lookup
@@ -59,6 +56,9 @@ def clean(remove_obo: bool):
 @main.command()
 def ls():
     """List how big all of the OBO files are."""
+    import humanize
+    from tabulate import tabulate
+
     entries = [(prefix, os.path.getsize(path)) for prefix, path in _iter_cached_obo()]
     entries = [
         (prefix, humanize.naturalsize(size), "✅" if not has_nomenclature_plugin(prefix) else "❌")
@@ -69,6 +69,8 @@ def ls():
 
 def _iter_cached_obo() -> Iterable[tuple[str, str]]:
     """Iterate over cached OBO paths."""
+    import bioregistry
+
     for prefix in os.listdir(RAW_DIRECTORY):
         if prefix in GLOBAL_SKIP or _has_no_download(prefix) or bioregistry.is_deprecated(prefix):
             continue
@@ -83,6 +85,8 @@ def _iter_cached_obo() -> Iterable[tuple[str, str]]:
 
 def _has_no_download(prefix: str) -> bool:
     """Return if the prefix is not available."""
+    import bioregistry
+
     prefix_norm = bioregistry.normalize_prefix(prefix)
     return prefix_norm is not None and prefix_norm in _no_download()
 
@@ -90,6 +94,8 @@ def _has_no_download(prefix: str) -> bool:
 @lru_cache(maxsize=1)
 def _no_download() -> set[str]:
     """Get the list of prefixes not available as OBO."""
+    import bioregistry
+
     return {resource.prefix for resource in bioregistry.resources() if not resource.has_download()}
 
 

@@ -14,8 +14,8 @@ from pyobo.struct import (
     Term,
     _parse_str_or_curie_or_uri,
     from_species,
-    has_citation,
     has_part,
+    is_mentioned_by,
 )
 from pyobo.utils.path import ensure_df
 
@@ -157,7 +157,7 @@ class ComplexPortalGetter(Obo):
     """An ontology representation of the Complex Portal."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [from_species, has_part, has_citation]
+    typedefs = [from_species, has_part, is_mentioned_by]
     root_terms = [ROOT]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -240,7 +240,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             if note == "identity":
                 term.append_xref(reference)
             elif note == "see-also" and reference.prefix == "pubmed":
-                term.append_provenance(reference)
+                term.append_mentioned_by(reference)
             elif (note, reference.prefix) not in unhandled_xref_type:
                 logger.debug(f"unhandled xref type: {note} / {reference.prefix}")
                 unhandled_xref_type.add((note, reference.prefix))
