@@ -181,12 +181,11 @@ def get_ontology(
     if ontology_format == "obo":
         pass  # all gucci
     elif ontology_format in {"owl", "rdf"}:
-        try:
-            path = _convert_to_obo(path)
-        except bioontologies.robot.ROBOTError:
-            from .struct.anyrdf import read_anyrdf
+        path = _convert_to_obo(path)
+    elif ontology_format == "rdf":
+        from .struct.anyrdf import read_anyrdf
 
-            return read_anyrdf(path=path, prefix=prefix)
+        return read_anyrdf(path=path, prefix=prefix)
     elif ontology_format == "json":
         from .struct.obograph import read_obograph
 
@@ -195,7 +194,7 @@ def get_ontology(
             obo.write_default(force=force_process)
         return obo
     elif ontology_format == "skos":
-        from .struct.skosrdf import read_skos
+        from .struct.skos import read_skos
 
         obo = read_skos(prefix=prefix, path=path)
         if cache:

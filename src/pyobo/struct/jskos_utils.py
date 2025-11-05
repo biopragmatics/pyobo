@@ -16,5 +16,7 @@ def read_jskos(
     path: str | Path, *, prefix: str | None = None, converter: curies.Converter | None = None
 ) -> Obo:
     """Read JSKOS into an ontology."""
-    path = jskos.read(path)
-    raise NotImplementedError
+    kos = jskos.read(path)
+    raise NotImplementedError(
+        f"not implemented for KOS with {len(kos.has_top_concept)} top concepts"
+    )

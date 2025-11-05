@@ -5,6 +5,7 @@ from pathlib import Path
 import curies
 import rdflib
 from bioregistry import NormalizedNamedReference
+from curies import ReferenceTuple
 from rdflib import OWL, RDF, RDFS, SKOS, Graph, Node, URIRef
 from tqdm import tqdm
 
@@ -16,9 +17,7 @@ __all__ = [
 ]
 
 
-def read_anyrdf(
-    path: str | Path, *, prefix: str | None = None, converter: curies.Converter | None = None
-) -> Obo:
+def read_anyrdf(path: str | Path, *, prefix: str, converter: curies.Converter | None = None) -> Obo:
     """Read an RDF file."""
     graph = rdflib.Graph()
     graph.parse(path)
@@ -28,7 +27,7 @@ def read_anyrdf(
 def _get_ontology(
     graph: rdflib.Graph,
     *,
-    prefix: str | None = None,
+    prefix: str,
     converter: curies.Converter | None = None,
 ) -> Obo:
     """Extract an ontology from a SKOS RDF graph."""
@@ -65,7 +64,7 @@ DEFAULT_LANGUAGES = {"en", None}
 
 def get_term(graph: rdflib.Graph, node: URIRef, converter: curies.Converter) -> Term | None:
     """Get a term."""
-    reference_tuple = converter.parse_uri(str(node), strict=False)
+    reference_tuple: ReferenceTuple | None = converter.parse_uri(str(node), strict=False)
     if reference_tuple is None:
         return None
     labels = _literal_objects(graph, node, RDFS.label) or _literal_objects(

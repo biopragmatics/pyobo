@@ -18,11 +18,15 @@ __all__ = [
 
 
 def read_skos(
-    path: str | Path, *, prefix: str | None = None, converter: curies.Converter | None = None
+    path: str | Path,
+    *,
+    prefix: str | None = None,
+    converter: curies.Converter | None = None,
+    format: str | None = None,
 ) -> Obo:
     """Read a SKOS RDF file."""
     graph = rdflib.Graph()
-    graph.parse(path)
+    graph.parse(path, format=format or "ttl")
     return get_skos_ontology(graph, prefix=prefix, converter=converter)
 
 
