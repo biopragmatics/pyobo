@@ -30,8 +30,8 @@ def read_generic_rdf(
     return _get_ontology(graph, prefix=prefix, converter=converter)
 
 
-TERM_OBJECT_TYPES = [RDFS.Class, SKOS.Concept, OWL.Class, OWL.NamedIndividual]
-TYPEDEF_OBJECT_TYPES = [RDF.Property]
+TERM_OBJECT_TYPES: list[Node] = [RDFS.Class, SKOS.Concept, OWL.Class, OWL.NamedIndividual]
+TYPEDEF_OBJECT_TYPES: list[Node] = [RDF.Property]
 
 
 def _get_ontology(
