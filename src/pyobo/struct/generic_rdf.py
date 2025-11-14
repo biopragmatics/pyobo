@@ -10,18 +10,28 @@ from rdflib import OWL, RDF, RDFS, SKOS, Graph, Node, URIRef
 from tqdm import tqdm
 
 from pyobo.identifier_utils import get_converter
-from pyobo.struct import Obo, Term, build_ontology
+from pyobo.struct import Obo, Term, TypeDef, build_ontology
 
 __all__ = [
-    "read_anyrdf",
+    "read_generic_rdf",
 ]
 
 
-def read_anyrdf(path: str | Path, *, prefix: str, converter: curies.Converter | None = None) -> Obo:
+def read_generic_rdf(
+    path: str | Path,
+    *,
+    prefix: str,
+    converter: curies.Converter | None = None,
+    rdf_format: str | None = None,
+) -> Obo:
     """Read an RDF file."""
     graph = rdflib.Graph()
-    graph.parse(path)
+    graph.parse(path, format=rdf_format)
     return _get_ontology(graph, prefix=prefix, converter=converter)
+
+
+TERM_OBJECT_TYPES = [RDFS.Class, SKOS.Concept, OWL.Class, OWL.NamedIndividual]
+TYPEDEF_OBJECT_TYPES = [RDF.Property]
 
 
 def _get_ontology(
@@ -35,15 +45,20 @@ def _get_ontology(
         converter = get_converter()
     terms = [
         term
-        for concept in tqdm(
-            graph.subjects(RDF.type, [RDFS.Class, SKOS.Concept, OWL.Class, OWL.NamedIndividual])
-        )
+        for concept in tqdm(graph.subjects(RDF.type, TERM_OBJECT_TYPES))
         if isinstance(concept, URIRef)
         and (term := get_term(graph, concept, converter=converter)) is not None
+    ]
+    typedefs = [
+        typedef
+        for concept in tqdm(graph.subjects(RDF.type, TYPEDEF_OBJECT_TYPES))
+        if isinstance(concept, URIRef)
+        and (typedef := get_typedef(graph, concept, converter=converter)) is not None
     ]
     return build_ontology(
         prefix=prefix,
         terms=terms,
+        typedefs=typedefs,
         idspaces={curie_prefix: str(uri_prefix) for curie_prefix, uri_prefix in graph.namespaces()},
     )
 
@@ -71,6 +86,7 @@ def get_term(graph: rdflib.Graph, node: URIRef, converter: curies.Converter) -> 
         graph, node, SKOS.prefLabel
     )
     definitions = _literal_objects(graph, node, SKOS.definition)  # MULTIPLE
+    # TODO decide if class or individual
     term = Term(
         reference=NormalizedNamedReference(
             prefix=reference_tuple.prefix,
@@ -95,6 +111,11 @@ def get_term(graph: rdflib.Graph, node: URIRef, converter: curies.Converter) -> 
         if isinstance(related_match, URIRef):
             term.append_related_match(converter.parse_uri(str(related_match), strict=True))
     return term
+
+
+def get_typedef(graph: rdflib.Graph, node: URIRef, converter: curies.Converter) -> TypeDef | None:
+    """Get a typedef."""
+    return None
 
 
 def _demo():

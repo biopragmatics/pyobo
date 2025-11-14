@@ -70,7 +70,7 @@ dependencies = [
     "cachier",
     "pystow>=0.7.5",
     "bioversions>=0.8.101",
-    "bioregistry>=0.12.30",
+    "bioregistry>=0.13.4",
     "bioontologies>=0.7.2",
     "ssslm>=0.0.13",
     "zenodo-client>=0.3.6",

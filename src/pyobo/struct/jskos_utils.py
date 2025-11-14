@@ -3,20 +3,14 @@
 from pathlib import Path
 
 import curies
-import jskos
 
-from .struct import Obo
+from .struct import Obo, build_ontology
 
 __all__ = [
     "read_jskos",
 ]
 
 
-def read_jskos(
-    path: str | Path, *, prefix: str | None = None, converter: curies.Converter | None = None
-) -> Obo:
+def read_jskos(path: str | Path, *, prefix: str, converter: curies.Converter | None = None) -> Obo:
     """Read JSKOS into an ontology."""
-    kos = jskos.read(path)
-    raise NotImplementedError(
-        f"not implemented for KOS with {len(kos.has_top_concept)} top concepts"
-    )
+    return build_ontology(prefix=prefix)

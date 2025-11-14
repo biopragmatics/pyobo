@@ -22,11 +22,11 @@ def read_skos(
     *,
     prefix: str | None = None,
     converter: curies.Converter | None = None,
-    format: str | None = None,
+    rdf_format: str | None = None,
 ) -> Obo:
     """Read a SKOS RDF file."""
     graph = rdflib.Graph()
-    graph.parse(path, format=format or "ttl")
+    graph.parse(path, format=rdf_format or "ttl")
     return get_skos_ontology(graph, prefix=prefix, converter=converter)
 
 

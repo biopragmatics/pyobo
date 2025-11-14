@@ -22,6 +22,7 @@ import bioregistry
 import click
 import pystow.utils
 import requests.exceptions
+from bioregistry.schema.struct import AnnotatedURL
 from tabulate import tabulate
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
@@ -32,6 +33,7 @@ from .constants import (
     ONTOLOGY_GETTERS,
     GetOntologyKwargs,
     IterHelperHelperDict,
+    OntologyFormat,
     OntologyPathPack,
     SlimGetOntologyKwargs,
 )
@@ -177,15 +179,15 @@ def get_ontology(
     path_pack = _ensure_ontology_path(prefix, force=force, version=version)
     if path_pack is None:
         raise NoBuildError(prefix)
-    ontology_format, path = path_pack
+    ontology_format, path, rdf_format = path_pack
     if ontology_format == "obo":
         pass  # all gucci
-    elif ontology_format in {"owl", "rdf"}:
+    elif ontology_format == "owl":
         path = _convert_to_obo(path)
     elif ontology_format == "rdf":
-        from .struct.anyrdf import read_anyrdf
+        from .struct.generic_rdf import read_generic_rdf
 
-        return read_anyrdf(path=path, prefix=prefix)
+        return read_generic_rdf(path=path, prefix=prefix, rdf_format=rdf_format)
     elif ontology_format == "json":
         from .struct.obograph import read_obograph
 
@@ -196,7 +198,7 @@ def get_ontology(
     elif ontology_format == "skos":
         from .struct.skos import read_skos
 
-        obo = read_skos(prefix=prefix, path=path)
+        obo = read_skos(prefix=prefix, path=path, rdf_format=rdf_format)
         if cache:
             obo.write_default(force=force)
         return obo
@@ -224,6 +226,24 @@ def get_ontology(
     return obo
 
 
+ONTOLOGY_FORMAT_TO_SUFFIX: dict[OntologyFormat, str] = {
+    "skos": ".ttl",
+    "jskos": ".json",
+}
+
+XX_TO_SUFFIX: dict[str, str] = {"rdf/xml": ".xml", "xml": ".xml"}
+
+
+def _name_from_url(url: str, ontology_format: OntologyFormat, rdf_format: str | None) -> str:
+    name = pystow.utils.name_from_url(url)
+    if "." not in name:
+        if rdf_format is None:
+            raise ValueError(f"need to curate a RDF format for {url}")
+        name = name + XX_TO_SUFFIX[rdf_format]
+        # TODO add unit test that checks all downloads with no extension have a (RDF) format
+    return name
+
+
 def _ensure_ontology_path(
     prefix: str, *, force: bool, version: str | None
 ) -> OntologyPathPack | None:
@@ -231,14 +251,23 @@ def _ensure_ontology_path(
         url = getter(prefix)
         if url is None:
             continue
+        elif isinstance(url, str):
+            rdf_format = None
+        elif isinstance(url, AnnotatedURL):
+            url, rdf_format = url.url, url.rdf_format
+        else:
+            raise TypeError
+
+        name = _name_from_url(url, ontology_format, rdf_format)
+
         try:
-            path = ensure_path(prefix, url=url, force=force, version=version)
+            path = ensure_path(prefix, url=url, force=force, version=version, name=name)
         except (urllib.error.HTTPError, pystow.utils.DownloadError):
             continue
         except pystow.utils.UnexpectedDirectoryError:
             continue  # TODO report more info about the URL and the name it tried to make
         else:
-            return OntologyPathPack(ontology_format, path)
+            return OntologyPathPack(ontology_format, path, rdf_format)
     return None
 
 
