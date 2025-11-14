@@ -18,6 +18,7 @@ __all__ = [
     "contributes_to_condition",
     "default_typedefs",
     "derives_from_organism",
+    "directly_regulates_activity_of",
     "editor_note",
     "enables",
     "ends",
@@ -46,15 +47,20 @@ __all__ = [
     "has_successor",
     "has_taxonomy_rank",
     "is_a",
+    "is_agonist_of",
+    "is_antagonist_of",
+    "is_inverse_agonist_of",
     "located_in",
     "mapping_has_confidence",
     "mapping_has_justification",
     "match_typedefs",
     "member_of",
     "narrow_match",
+    "negatively_regulates",
     "orthologous",
     "part_of",
     "participates_in",
+    "positively_regulates",
     "related_match",
     "role_of",
     "see_also",
@@ -265,6 +271,19 @@ is_substituent_group_from = TypeDef(
 )
 has_functional_parent = TypeDef(
     reference=Reference(prefix="ro", identifier="0018038", name="has functional parent"),
+)
+
+positively_regulates = TypeDef(
+    Reference(prefix="RO", identifier="0002213", name="positively regulates")
+)
+negatively_regulates = TypeDef(
+    Reference(prefix="RO", identifier="0002212", name="negatively regulates")
+)
+is_agonist_of = TypeDef.from_triple("RO", "0018027", "is agonist of")
+is_inverse_agonist_of = TypeDef.from_triple("RO", "0018028", "is inverse agonist of")
+is_antagonist_of = TypeDef.from_triple("RO", "0018029", "is antagonist of")
+directly_regulates_activity_of = TypeDef.from_triple(
+    "RO", "0002448", "directly regulates activity of"
 )
 
 is_mentioned_by = TypeDef(
