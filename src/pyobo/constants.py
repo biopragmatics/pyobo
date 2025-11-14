@@ -6,10 +6,13 @@ import logging
 import re
 from collections.abc import Callable
 from pathlib import Path
-from typing import Literal, NamedTuple, TypeAlias
+from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias
 
 import pystow
 from typing_extensions import NotRequired, TypedDict
+
+if TYPE_CHECKING:
+    from bioregistry.schema.struct import AnnotatedURL
 
 __all__ = [
     "DATABASE_DIRECTORY",
@@ -244,6 +247,8 @@ class OntologyPathPack(NamedTuple):
     format: OntologyFormat
     #: The path to the ontology file
     path: Path
+    #: The RDF format
+    rdf_format: str | None
 
 
 def _get_obo_download(prefix: str) -> str | None:
@@ -264,16 +269,16 @@ def _get_json_download(prefix: str) -> str | None:
     return bioregistry.get_json_download(prefix)
 
 
-def _get_rdf_download(prefix: str) -> str | None:
+def _get_rdf_download(prefix: str) -> AnnotatedURL | None:
     import bioregistry
 
-    return bioregistry.get_rdf_download(prefix)
+    return bioregistry.get_rdf_download(prefix, get_format=True)
 
 
-def _get_skos_download(prefix: str) -> str | None:
+def _get_skos_download(prefix: str) -> AnnotatedURL | None:
     import bioregistry
 
-    return bioregistry.get_skos_download(prefix)
+    return bioregistry.get_skos_download(prefix, get_format=True)
 
 
 def _get_jskos_download(prefix: str) -> str | None:
@@ -284,7 +289,7 @@ def _get_jskos_download(prefix: str) -> str | None:
 
 #: Functions that get ontology files. Order matters in this list,
 #: since order implicitly defines priority
-ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | None]]] = [
+ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | AnnotatedURL | None]]] = [
     ("obo", _get_obo_download),
     ("owl", _get_owl_download),
     ("json", _get_json_download),
