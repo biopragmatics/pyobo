@@ -1020,6 +1020,8 @@ def _format_obo_trailing_modifiers(
                     right = f'"{obo_escape_slim(value)}"'
                 else:
                     right = value
+            case _:
+                raise TypeError(f"invalid prop value: {type(prop.value)} - {prop.value}")
         modifiers.append((left, right))
     inner = ", ".join(f"{key}={value}" for key, value in modifiers)
     return " {" + inner + "}"
