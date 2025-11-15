@@ -382,6 +382,60 @@ class Term(Stanza):
         self.annotate_object(v.exact_match, reference, annotations=axioms)
         return self
 
+    def append_broad_match(
+        self,
+        reference: ReferenceHint,
+        *,
+        mapping_justification: Reference | None = None,
+        confidence: float | None = None,
+        contributor: Reference | None = None,
+    ) -> Self:
+        """Append a broad match, also adding an xref."""
+        reference = _ensure_ref(reference)
+        axioms = self._prepare_mapping_annotations(
+            mapping_justification=mapping_justification,
+            confidence=confidence,
+            contributor=contributor,
+        )
+        self.annotate_object(v.broad_match, reference, annotations=axioms)
+        return self
+
+    def append_narrow_match(
+        self,
+        reference: ReferenceHint,
+        *,
+        mapping_justification: Reference | None = None,
+        confidence: float | None = None,
+        contributor: Reference | None = None,
+    ) -> Self:
+        """Append a narrow match, also adding an xref."""
+        reference = _ensure_ref(reference)
+        axioms = self._prepare_mapping_annotations(
+            mapping_justification=mapping_justification,
+            confidence=confidence,
+            contributor=contributor,
+        )
+        self.annotate_object(v.narrow_match, reference, annotations=axioms)
+        return self
+
+    def append_related_match(
+        self,
+        reference: ReferenceHint,
+        *,
+        mapping_justification: Reference | None = None,
+        confidence: float | None = None,
+        contributor: Reference | None = None,
+    ) -> Self:
+        """Append a related match, also adding an xref."""
+        reference = _ensure_ref(reference)
+        axioms = self._prepare_mapping_annotations(
+            mapping_justification=mapping_justification,
+            confidence=confidence,
+            contributor=contributor,
+        )
+        self.annotate_object(v.related_match, reference, annotations=axioms)
+        return self
+
     def set_species(self, identifier: str, name: str | None = None) -> Self:
         """Append the from_species relation."""
         if name is None:
