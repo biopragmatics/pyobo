@@ -7,7 +7,7 @@ import curies
 import rdflib
 
 from pyobo.struct import Obo
-from pyobo.struct.skosrdf import get_skos_ontology
+from pyobo.struct.skos import get_skos_ontology
 
 HERE = Path(__file__).parent.resolve()
 PATH = HERE.joinpath("test.ttl")
