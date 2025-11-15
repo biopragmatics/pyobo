@@ -22,7 +22,7 @@ import bioregistry
 import click
 import pystow.utils
 import requests.exceptions
-from bioregistry.schema.struct import AnnotatedURL
+from bioregistry.schema.struct import AnnotatedURL, RDFFormat
 from tabulate import tabulate
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
@@ -234,7 +234,9 @@ ONTOLOGY_FORMAT_TO_SUFFIX: dict[OntologyFormat, str] = {
 XX_TO_SUFFIX: dict[str, str] = {"rdf/xml": ".xml", "xml": ".xml"}
 
 
-def _name_from_url(url: str, ontology_format: OntologyFormat, rdf_format: str | None) -> str:
+def _name_from_url(
+    url: str, ontology_format: OntologyFormat, *, rdf_format: str | None = None
+) -> str:
     name = pystow.utils.name_from_url(url)
     if "." not in name:
         if rdf_format is None:
@@ -247,18 +249,19 @@ def _name_from_url(url: str, ontology_format: OntologyFormat, rdf_format: str | 
 def _ensure_ontology_path(
     prefix: str, *, force: bool, version: str | None
 ) -> OntologyPathPack | None:
+    rdf_format: RDFFormat | None
     for ontology_format, getter in ONTOLOGY_GETTERS:
-        url = getter(prefix)
-        if url is None:
-            continue
-        elif isinstance(url, str):
-            rdf_format = None
-        elif isinstance(url, AnnotatedURL):
-            url, rdf_format = url.url, url.rdf_format
-        else:
-            raise TypeError
-
-        name = _name_from_url(url, ontology_format, rdf_format)
+        match getter(prefix):
+            case None:
+                continue
+            case AnnotatedURL() as a:
+                name = _name_from_url(a.url, ontology_format, rdf_format=a.rdf_format)
+                rdf_format = a.rdf_format
+            case str() as url:
+                name = _name_from_url(url, ontology_format)
+                rdf_format = None
+            case _:
+                raise TypeError
 
         try:
             path = ensure_path(prefix, url=url, force=force, version=version, name=name)

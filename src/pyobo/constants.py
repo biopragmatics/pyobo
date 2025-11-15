@@ -269,13 +269,13 @@ def _get_json_download(prefix: str) -> str | None:
     return bioregistry.get_json_download(prefix)
 
 
-def _get_rdf_download(prefix: str) -> AnnotatedURL | None:
+def _get_rdf_download(prefix: str) -> str | AnnotatedURL | None:
     import bioregistry
 
     return bioregistry.get_rdf_download(prefix, get_format=True)
 
 
-def _get_skos_download(prefix: str) -> AnnotatedURL | None:
+def _get_skos_download(prefix: str) -> str | AnnotatedURL | None:
     import bioregistry
 
     return bioregistry.get_skos_download(prefix, get_format=True)
