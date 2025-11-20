@@ -3,14 +3,14 @@
 from pathlib import Path
 
 import curies
-
-from .struct import Obo, build_ontology
 import jskos
 from jskos import ProcessedConcept, ProcessedKOS
 
+from .struct import Obo, build_ontology
+
 __all__ = [
-    "read_jskos",
     "from_pkos",
+    "read_jskos",
 ]
 
 
@@ -18,6 +18,7 @@ def read_jskos(path: str | Path, *, prefix: str, converter: curies.Converter | N
     """Read JSKOS into an ontology."""
     if converter is None:
         from ..identifier_utils import get_converter
+
         converter = get_converter()
     kos = jskos.read(path)
     pkos = jskos.process(kos, converter)
