@@ -5,10 +5,12 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Iterable
 from datetime import datetime
+from typing import TypeAlias
 
 import bioversions.utils
+from bioregistry.schema.struct import AnnotatedURL
 
-from pyobo.constants import ONTOLOGY_GETTERS, OntologyFormat
+from ..constants import ONTOLOGY_GETTERS, OntologyFormat
 
 __all__ = [
     "VERSION_GETTERS",
@@ -48,6 +50,8 @@ VERSION_PREFIXES = [
     "https://w3id.org/lehrplan/ontology/",  # like in https://w3id.org/lehrplan/ontology/1.0.0-4
     "http://www.ebi.ac.uk/swo/version/",  # http://www.ebi.ac.uk/swo/version/6.0
     "https://w3id.org/emi/version/",
+    "https://nfdi4culture.de/ontology/",  # https://nfdi4culture.de/ontology/3.0.0
+    "http://purls.helmholtz-metadaten.de/mwo/mwo.owl/",  # http://purls.helmholtz-metadaten.de/mwo/mwo.owl/3.0.0
 ]
 VERSION_PREFIX_SPLITS = [
     "http://www.ebi.ac.uk/efo/releases/v",
@@ -56,6 +60,7 @@ VERSION_PREFIX_SPLITS = [
     "http://ontology.neuinfo.org/NIF/ttl/nif/version/",
     "http://nmrml.org/cv/v",  # as in http://nmrml.org/cv/v1.1.0/nmrCV
     "http://enanomapper.github.io/ontologies/releases/",  # as in http://enanomapper.github.io/ontologies/releases/10.0/enanomapper
+    "https://w3id.org/sulo/sulo-",  # as in https://w3id.org/sulo/sulo-0.2.4.ttl
 ]
 BAD = {
     "http://purl.obolibrary.org/obo",
@@ -127,11 +132,25 @@ def _get_obograph_json_version(prefix: str, url: str) -> str | None:
     return cleanup_version(rv, prefix)
 
 
+def _get_skos_version(prefix: str, url: str) -> str | None:
+    # TODO add implementation
+    return None
+
+
+def _get_jskos_version(prefix: str, url: str) -> str | None:
+    # TODO add implementation
+    return None
+
+
+VersionGetter: TypeAlias = Callable[[str, str], str | None]
+
 #: A mapping from data type to gersion getter function
-VERSION_GETTERS: dict[OntologyFormat, Callable[[str, str], str | None]] = {
+VERSION_GETTERS: dict[OntologyFormat, VersionGetter] = {
     "obo": _get_obo_version,
     "owl": _get_owl_version,
     "json": _get_obograph_json_version,
+    "skos": _get_skos_version,
+    "jskos": _get_jskos_version,
 }
 
 
@@ -195,7 +214,7 @@ def _prioritize_version(
     return None
 
 
-def _get_getter_urls(prefix: str) -> Iterable[tuple[OntologyFormat, str]]:
+def _get_getter_urls(prefix: str) -> Iterable[tuple[OntologyFormat, str | AnnotatedURL]]:
     # assume that all possible files that can be downloaded
     # are in sync and have the same version
     for ontology_format, get_url_func in ONTOLOGY_GETTERS:
@@ -211,7 +230,11 @@ def _get_version_from_artifact(prefix: str) -> str | None:
         get_version_func = VERSION_GETTERS.get(ontology_format)
         if get_version_func is None:
             continue
-        version = get_version_func(prefix, url)
+        match url:
+            case str():
+                version = get_version_func(prefix, url)
+            case AnnotatedURL():
+                version = get_version_func(prefix, url.url)
         if version:
             return cleanup_version(version, prefix=prefix)
     return None
