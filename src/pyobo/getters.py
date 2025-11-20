@@ -255,13 +255,14 @@ def _ensure_ontology_path(
             case None:
                 continue
             case AnnotatedURL() as a:
-                name = _name_from_url(a.url, ontology_format, rdf_format=a.rdf_format)
+                url = a.url
                 rdf_format = a.rdf_format
             case str() as url:
-                name = _name_from_url(url, ontology_format)
                 rdf_format = None
             case _:
                 raise TypeError
+
+        name = _name_from_url(url, ontology_format, rdf_format=rdf_format)
 
         try:
             path = ensure_path(prefix, url=url, force=force, version=version, name=name)

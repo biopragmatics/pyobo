@@ -277,7 +277,7 @@ def _parse_reference_or_uri_literal(
         case BlocklistError():
             return None
         case UnparsableIRIError():
-            # this means that it's defininitely a URI,
+            # this means that it's definitely a URI,
             # but it couldn't be parsed with Bioregistry
             return OBOLiteral.uri(str_or_curie_or_uri)
         case NotCURIEError() as exc:
