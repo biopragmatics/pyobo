@@ -267,7 +267,7 @@ def _get_json_download(prefix: str) -> str | None:
 def _get_rdf_download(prefix: str) -> str | None:
     import bioregistry
 
-    return bioregistry.get_rdf_download(prefix)
+    return bioregistry.get_rdf_download(prefix, get_format=False)
 
 
 #: Functions that get ontology files. Order matters in this list,
