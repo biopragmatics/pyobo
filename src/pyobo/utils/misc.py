@@ -48,6 +48,12 @@ VERSION_PREFIXES = [
     "https://w3id.org/lehrplan/ontology/",  # like in https://w3id.org/lehrplan/ontology/1.0.0-4
     "http://www.ebi.ac.uk/swo/version/",  # http://www.ebi.ac.uk/swo/version/6.0
     "https://w3id.org/emi/version/",
+    "https://nfdi4culture.de/ontology/",  # https://nfdi4culture.de/ontology/3.0.0
+    "http://purls.helmholtz-metadaten.de/mwo/mwo.owl/",  # http://purls.helmholtz-metadaten.de/mwo/mwo.owl/3.0.0
+    "http://publications.europa.eu/ontology/euvoc#",
+    "http://purls.helmholtz-metadaten.de/cdos/cdco/",  # http://purls.helmholtz-metadaten.de/cdos/cdco/1.0.0
+    "https://endlessforms.info/gdo/releases/gdoa-",
+    "https://openenergyplatform.org/ontology/oeo/releases/",
 ]
 VERSION_PREFIX_SPLITS = [
     "http://www.ebi.ac.uk/efo/releases/v",
@@ -56,10 +62,13 @@ VERSION_PREFIX_SPLITS = [
     "http://ontology.neuinfo.org/NIF/ttl/nif/version/",
     "http://nmrml.org/cv/v",  # as in http://nmrml.org/cv/v1.1.0/nmrCV
     "http://enanomapper.github.io/ontologies/releases/",  # as in http://enanomapper.github.io/ontologies/releases/10.0/enanomapper
+    "https://w3id.org/sulo/sulo-",  # as in https://w3id.org/sulo/sulo-0.2.4.ttl
+    "https://spec.industrialontologies.org/ontology/",  # as in https://spec.industrialontologies.org/ontology/202401/core/Core
 ]
 BAD = {
     "http://purl.obolibrary.org/obo",
     "http://www.bioassayontology.org/bao/bao_complete",
+    "https://vocabularies.wikipathways.org",
 }
 
 
