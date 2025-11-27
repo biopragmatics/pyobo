@@ -20,6 +20,7 @@ __all__ = [
     "derives_from_organism",
     "directly_regulates_activity_of",
     "editor_note",
+    "editor_preferred_term",
     "enables",
     "ends",
     "exact_match",
@@ -28,6 +29,7 @@ __all__ = [
     "gene_product_member_of",
     "has_contributor",
     "has_creator",
+    "has_curation_status",
     "has_dbxref",
     "has_depiction",
     "has_end_date",
@@ -43,17 +45,20 @@ __all__ = [
     "has_role",
     "has_salt",
     "has_smiles",
+    "has_source",
     "has_start_date",
     "has_successor",
     "has_taxonomy_rank",
     "is_a",
     "is_agonist_of",
     "is_antagonist_of",
+    "is_defined_by",
     "is_inverse_agonist_of",
     "located_in",
     "mapping_has_confidence",
     "mapping_has_justification",
     "match_typedefs",
+    "may_be_identical_to",
     "member_of",
     "narrow_match",
     "negatively_regulates",
@@ -151,6 +156,10 @@ subproperty_of = TypeDef(reference=v.subproperty_of)
 see_also = TypeDef(reference=v.see_also, is_metadata_tag=True)
 comment = TypeDef(reference=v.comment, is_metadata_tag=True)
 label = TypeDef(reference=v.label, is_metadata_tag=True)
+is_defined_by = TypeDef(
+    reference=Reference(prefix="rdfs", identifier="isDefinedBy", name="is defined by"),
+    is_metadata_tag=True,
+)
 has_member = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0002351", name="has member"),
 )
@@ -227,6 +236,17 @@ definition_source = TypeDef(
     reference=Reference(prefix=IAO_PREFIX, identifier="0000119", name="definition source"),
     is_metadata_tag=True,
 )
+may_be_identical_to = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0006011", name="may be identical to")
+)
+# todo this is also useful for SSSLM
+editor_preferred_term = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0000111", name="editor preferred term")
+)
+has_curation_status = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0000114", name="has curation status")
+)
+
 has_dbxref = TypeDef(reference=v.has_dbxref, is_metadata_tag=True)
 
 editor_note = TypeDef(
