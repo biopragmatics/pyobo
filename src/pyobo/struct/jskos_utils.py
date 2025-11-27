@@ -26,6 +26,7 @@ def read_jskos(path: str | Path, *, prefix: str, converter: curies.Converter | N
 
 
 def from_pkos(prefix: str, pkos: ProcessedKOS) -> Obo:
+    """Get from a processed knowledge organization system."""
     raise NotImplementedError
     return build_ontology(prefix=prefix)
 
@@ -37,5 +38,5 @@ def _iterate_concepts(pkos: ProcessedKOS) -> list[ProcessedConcept]:
 
 def _iterate_concepts_inner(concept: ProcessedConcept):
     yield concept
-    for narrower in concept.narrower:
+    for _narrower in concept.narrower:
         yield from _iterate_concepts_inner(concept)
