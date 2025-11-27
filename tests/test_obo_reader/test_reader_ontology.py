@@ -79,6 +79,30 @@ class TestReaderOntologyMetadata(unittest.TestCase):
             ontology.subsetdefs,
         )
 
+    def test_7_curie(self) -> None:
+        """Test parsing a subset definition that is a CURIE."""
+        ontology = from_str("""\
+            ontology: chebi
+            subsetdef: obo:test "name"
+        """)
+        self.assertEqual([(Reference.from_curie("obo:test"), "name")], ontology.subsetdefs)
+
+    def test_7_blocked_curie(self) -> None:
+        """Test parsing a subset definition that is explicitly blocked."""
+        ontology = from_str("""\
+            ontology: chebi
+            subsetdef: 1:STAR "Preliminary entries"
+        """)
+        self.assertEqual([], ontology.subsetdefs)
+
+    def test_7_uri(self) -> None:
+        """Test parsing a subset definition that is a URI."""
+        ontology = from_str("""\
+            ontology: chebi
+            subsetdef: http://purl.obolibrary.org/obo/chebi#TEST "name"
+        """)
+        self.assertEqual([(default_reference("chebi", "TEST"), "name")], ontology.subsetdefs)
+
     def test_8_synonym_typedef(self) -> None:
         """Test the ``synonym_typedef`` tag."""
         with self.assertRaises(ValueError):

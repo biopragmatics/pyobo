@@ -315,6 +315,18 @@ class TestReaderTerm(unittest.TestCase):
         self.assertEqual(1, len(term.subsets))
         self.assertEqual(default_reference("go", "TESTSET"), term.subsets[0])
 
+    def test_8_subset_blocked(self) -> None:
+        """Test parsing subsets that are blocked."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:10
+            subset: 2:STAR
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(0, len(term.subsets))
+
     def test_9_synonym_minimal(self) -> None:
         """Test parsing a synonym just the text."""
         ontology = from_str("""\

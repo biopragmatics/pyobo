@@ -77,7 +77,7 @@ dependencies = [
     "class_resolver>=0.6.0",
     "pydantic>=2.0",
     "curies>=0.10.17",
-    "curies-processing>=0.1.2",
+    "curies-processing>=0.1.6",
     "python-dateutil",
     "networkx>=3.4",
     # Resource Downloaders
