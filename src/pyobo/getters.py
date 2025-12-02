@@ -22,7 +22,7 @@ import bioregistry
 import click
 import pystow.utils
 import requests.exceptions
-from bioregistry.schema.struct import AnnotatedURL, RDFFormat
+from bioregistry.schema import AnnotatedURL, RDFFormat
 from tabulate import tabulate
 from tqdm.auto import tqdm
 from typing_extensions import Unpack

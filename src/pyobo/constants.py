@@ -12,7 +12,7 @@ import pystow
 from typing_extensions import NotRequired, TypedDict
 
 if TYPE_CHECKING:
-    from bioregistry.schema.struct import AnnotatedURL
+    from bioregistry.schema import AnnotatedURL
 
 __all__ = [
     "DATABASE_DIRECTORY",

@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import TypeAlias
 
 import bioversions.utils
-from bioregistry.schema.struct import AnnotatedURL
+from bioregistry.schema import AnnotatedURL
 
 from ..constants import ONTOLOGY_GETTERS, OntologyFormat
 
