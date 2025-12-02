@@ -1,5 +1,6 @@
 """Read from RDF."""
 
+import logging
 from pathlib import Path
 
 import curies
@@ -15,6 +16,8 @@ from pyobo.struct import Obo, Term, TypeDef, build_ontology
 __all__ = [
     "read_generic_rdf",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 def read_generic_rdf(
@@ -115,7 +118,51 @@ def get_term(graph: rdflib.Graph, node: URIRef, converter: curies.Converter) -> 
 
 def get_typedef(graph: rdflib.Graph, node: URIRef, converter: curies.Converter) -> TypeDef | None:
     """Get a typedef."""
-    return None
+    tqdm.write(str(node))
+    reference_tuple: ReferenceTuple | None = converter.parse_uri(str(node), strict=False)
+    if reference_tuple is None:
+        tqdm.write("failed to parse")
+        return None
+    labels = _literal_objects(graph, node, RDFS.label) or _literal_objects(
+        graph, node, SKOS.prefLabel
+    )
+    definitions = _literal_objects(graph, node, SKOS.definition)  # MULTIPLE
+    if not definitions:
+        definition = None
+    elif len(definitions) == 1:
+        definition = definitions[0]
+    else:
+        logger.debug("[%s] multiple definitions found, only keeping first", reference_tuple.curie)
+        definition = definitions[0]
+
+    comments = _literal_objects(graph, node, RDFS.comment)
+    if not comments:
+        comment = None
+    elif len(comments) == 1:
+        comment = comments[0]
+    else:
+        logger.debug("[%s] multiple comments found, only keeping first", reference_tuple.curie)
+        comment = comments[0]
+
+    if not definition and comment:
+        logger.debug("[%s] had no definition but it did have a comment. upgrading", reference_tuple.curie)
+        definition = comment
+        comment = None
+
+    typedef = TypeDef(
+        reference=NormalizedNamedReference(
+            prefix=reference_tuple.prefix,
+            identifier=reference_tuple.identifier,
+            name=labels[0] if labels else None,
+        ),
+        definition=definition,
+        comment=comment,
+    )
+    for parent_uri in graph.objects(node, RDFS.subClassOf):
+        if parent_reference := converter.parse_uri(str(parent_uri), strict=False):
+            typedef.append_parent(parent_reference)
+
+    return typedef
 
 
 def _demo():
