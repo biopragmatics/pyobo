@@ -1812,7 +1812,7 @@ class Obo:
             _warn_string = f"[{term.curie}] undefined typedef: {pp}"
             if predicate.name:
                 _warn_string += f" ({predicate.name})"
-            logger.warning(_warn_string)
+            logger.debug(_warn_string)
             _warned.add(pp)
         return None
 
