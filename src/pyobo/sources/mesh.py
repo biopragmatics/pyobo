@@ -131,7 +131,14 @@ def get_terms(version: str, *, force: bool = False) -> Iterable[Term]:
             for term in concept["terms"]:
                 synonyms.add(term["name"])
             for xref_prefix, xref_identifier in concept.get("xrefs", []):
-                xrefs.append(Reference(prefix=xref_prefix, identifier=xref_identifier))
+                try:
+                    xref = Reference(prefix=xref_prefix, identifier=xref_identifier)
+                except ValueError:
+                    tqdm.write(
+                        f"[mesh:{identifier}] has invalid xref {xref_prefix}:{xref_identifier}"
+                    )
+                else:
+                    xrefs.append(xref)
 
         mesh_id_to_term[identifier] = Term(
             definition=definition,
