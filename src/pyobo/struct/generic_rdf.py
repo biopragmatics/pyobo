@@ -145,7 +145,9 @@ def get_typedef(graph: rdflib.Graph, node: URIRef, converter: curies.Converter) 
         comment = comments[0]
 
     if not definition and comment:
-        logger.debug("[%s] had no definition but it did have a comment. upgrading", reference_tuple.curie)
+        logger.debug(
+            "[%s] had no definition but it did have a comment. upgrading", reference_tuple.curie
+        )
         definition = comment
         comment = None
 
@@ -169,9 +171,10 @@ def _demo():
     import pystow
 
     url = "https://nfdi4ing.pages.rwth-aachen.de/metadata4ing/metadata4ing/ontology.ttl"
+    url = "https://bioschemas.org/types/bioschemas_types.ttl"
     graph = pystow.ensure_rdf("dalia", url=url)
-    ontology = _get_ontology(graph, prefix="m4i")
-    ontology.write_obo("/Users/cthoyt/Desktop/m4i.obo")
+    ontology = _get_ontology(graph, prefix="bioschemas")
+    ontology.write_obo("/Users/cthoyt/Desktop/bioschemas.obo")
 
 
 if __name__ == "__main__":
