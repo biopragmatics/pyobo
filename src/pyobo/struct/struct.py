@@ -611,6 +611,11 @@ class Obo:
 
     ontology_version_iri: ClassVar[str | None] = None
 
+    #: Allow skipping adding maintainers annotations, in case
+    #: the resource maintainers don't want their names associated
+    #: with the OWL exports that e.g. end up on EBI OLS
+    skip_maintainers: ClassVar[bool] = False
+
     def __post_init__(self):
         """Run post-init checks."""
         if self.ontology is None:
@@ -978,19 +983,22 @@ class Obo:
                 yield Annotation(v.has_logo, OBOLiteral.uri(logo))
             if mailing_list := resource.get_mailing_list():
                 yield Annotation(v.has_mailing_list, OBOLiteral.string(mailing_list))
-            if (maintainer := resource.get_contact()) and maintainer.orcid:
-                yield Annotation(
-                    v.has_maintainer,
-                    Reference(prefix="orcid", identifier=maintainer.orcid, name=maintainer.name),
-                )
-            for maintainer in resource.contact_extras or []:
-                if maintainer.orcid:
+            if not self.skip_maintainers:
+                if (maintainer := resource.get_contact()) and maintainer.orcid:
                     yield Annotation(
                         v.has_maintainer,
                         Reference(
                             prefix="orcid", identifier=maintainer.orcid, name=maintainer.name
                         ),
                     )
+                for maintainer in resource.contact_extras or []:
+                    if maintainer.orcid:
+                        yield Annotation(
+                            v.has_maintainer,
+                            Reference(
+                                prefix="orcid", identifier=maintainer.orcid, name=maintainer.name
+                            ),
+                        )
 
         # Root terms
         for root_term in self.root_terms or []:

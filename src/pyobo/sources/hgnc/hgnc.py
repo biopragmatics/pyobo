@@ -210,6 +210,7 @@ class HGNCGetter(Obo):
         for so_id in sorted(set(LOCUS_TYPE_TO_SO.values()))
         if so_id
     ]
+    skip_maintainers = True
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -342,6 +343,8 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 term.append_exact_match(
                     Reference(prefix="iuphar.ligand", identifier=iuphar[len("ligandId:") :])
                 )
+            elif iuphar.startswith("HGNC:"):
+                pass
             else:
                 tqdm.write(f"[hgnc:{identifier}] unhandled IUPHAR: {iuphar}")
 
