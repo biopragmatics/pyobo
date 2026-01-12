@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 import pystow
 import requests
 from pydantic import BaseModel, Field
@@ -38,7 +39,15 @@ def get_terms(*, force: bool = False) -> Iterable[Term]:
 def get_term(row: dict[str, Any]) -> Term:
     """Get a term for a row in the LOINC table."""
     reference = Reference(prefix=PREFIX, identifier=row["LOINC_NUM"], name=row.get("COMPONENT"))
-    term = Term(reference=reference)
+    term = Term(
+        reference=reference,
+        definition=definition if pd.notna(definition := row.get("DefinitionDescription")) else None,
+    )
+    if pd.notna(short_name := row.get("SHORTNAME")):
+        term.append_synonym(short_name)
+    if pd.notna(long_common_name := row.get("LONG_COMMON_NAME")):
+        term.append_synonym(long_common_name)
+
     return term
 
 
