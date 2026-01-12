@@ -27,7 +27,7 @@ from pyobo.struct.typedef import (
 
 logger = logging.getLogger(__name__)
 PREFIX = "ror"
-ROR_ZENODO_RECORD_ID = "10086202"
+ROR_ZENODO_RECORD_ID = "17953395"
 
 # Constants
 ORG_CLASS = Reference(prefix="OBI", identifier="0000245", name="organization")
