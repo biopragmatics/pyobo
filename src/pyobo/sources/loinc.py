@@ -38,15 +38,23 @@ def get_terms(*, force: bool = False) -> Iterable[Term]:
 
 def get_term(row: dict[str, Any]) -> Term:
     """Get a term for a row in the LOINC table."""
-    reference = Reference(prefix=PREFIX, identifier=row["LOINC_NUM"], name=row.get("COMPONENT"))
+    long_name: str | None = row.get("LONG_COMMON_NAME")
+    component: str = row["COMPONENT"]
+
+    if long_name is not None and pd.notna(long_name):
+        name = long_name
+    else:
+        name = component
+
+    reference = Reference(prefix=PREFIX, identifier=row["LOINC_NUM"], name=name)
     term = Term(
         reference=reference,
         definition=definition if pd.notna(definition := row.get("DefinitionDescription")) else None,
     )
-    if pd.notna(short_name := row.get("SHORTNAME")):
-        term.append_synonym(short_name)
-    if pd.notna(long_common_name := row.get("LONG_COMMON_NAME")):
-        term.append_synonym(long_common_name)
+    if long_name is not None and pd.notna(long_name):
+        term.append_synonym(component)
+    if isinstance(short_name := row.get("SHORTNAME"), str):
+        term.append_synonym(short_name, specificity="EXACT")
 
     return term
 
