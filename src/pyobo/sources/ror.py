@@ -190,6 +190,17 @@ class Record(BaseModel):
     types: list[OrganizationType]
     admin: Admin
 
+    def get_preferred_label(self) -> str | None:
+        """Get the preferred label."""
+        primary_name: str | None = None
+        for name in self.names:
+            if "ror_display" in name.types:
+                primary_name = name.value
+        if primary_name is None:
+            return None
+        primary_name = NAME_REMAPPING.get(primary_name, primary_name)
+        return primary_name
+
 
 _description_prefix = {
     "education": "an educational organization",
@@ -222,15 +233,9 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
     for record in tqdm(records, unit_scale=True, unit="record", desc=f"{PREFIX} v{_version}"):
         identifier = record.id.removeprefix("https://ror.org/")
 
-        primary_name: str | None = None
-        for name in record.names:
-            if "ror_display" in name.types:
-                primary_name = name.value
-
+        primary_name = record.get_preferred_label()
         if primary_name is None:
             raise ValueError("should have got a primary name...")
-
-        primary_name = NAME_REMAPPING.get(primary_name, primary_name)
 
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=identifier, name=primary_name),
