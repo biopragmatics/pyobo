@@ -7,6 +7,7 @@ import json
 import logging
 import zipfile
 from collections.abc import Iterable
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal, NamedTuple, TypeAlias
 
@@ -26,6 +27,14 @@ from pyobo.struct.typedef import (
     part_of,
     see_also,
 )
+
+__all__ = [
+    "OrganizationType",
+    "RORStatus",
+    "get_ror_records",
+    "get_ror_status",
+    "get_ror_to_country_geonames",
+]
 
 logger = logging.getLogger(__name__)
 PREFIX = "ror"
@@ -61,7 +70,7 @@ class RORGetter(Obo):
     root_terms = [CITY_CLASS, ORG_CLASS]
 
     def __post_init__(self):
-        self.data_version, _url, _path = _get_info()
+        self.data_version, _url, _path = get_ror_status()
         super().__post_init__()
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -226,11 +235,11 @@ def _get_description(record: Record) -> str | None:
 
 def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
     """Iterate over terms in ROR."""
-    _version, _source_uri, records = get_latest(force=force)
+    status, records = get_ror_records(force=force)
     unhandled_xref_prefixes: set[str] = set()
 
     seen_geonames_references = set()
-    for record in tqdm(records, unit_scale=True, unit="record", desc=f"{PREFIX} v{_version}"):
+    for record in tqdm(records, unit_scale=True, unit="record", desc=f"{PREFIX} v{status.version}"):
         identifier = record.id.removeprefix("https://ror.org/")
 
         primary_name = record.get_preferred_label()
@@ -330,7 +339,7 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
         yield geonames_term
 
 
-class InfoTuple(NamedTuple):
+class RORStatus(NamedTuple):
     """A version information tuple."""
 
     version: str
@@ -338,12 +347,14 @@ class InfoTuple(NamedTuple):
     path: Path
 
 
-def _get_info(*, force: bool = False) -> InfoTuple:
+def get_ror_status(*, force: bool = False, authenticate_zenodo: bool = True) -> RORStatus:
     """Ensure the latest ROR record, metadata, and filepath.
 
     :param force: Should the record be downloaded again? This almost
         never needs to be true, since the data doesn't change for
         a given version
+    :param authenticate_zenodo: Should Zenodo be authenticated?
+        This isn't required, but can help avoid rate limits
     :return: A version information tuple
 
     .. note::
@@ -354,21 +365,26 @@ def _get_info(*, force: bool = False) -> InfoTuple:
         for :data:`ROR_ZENODO_RECORD_ID`
     """
     client = zenodo_client.Zenodo()
-    latest_record_id = client.get_latest_record(ROR_ZENODO_RECORD_ID)
-    response = client.get_record(latest_record_id)
+    latest_record_id = client.get_latest_record(
+        ROR_ZENODO_RECORD_ID, authenticate=authenticate_zenodo
+    )
+    response = client.get_record(latest_record_id, authenticate=authenticate_zenodo)
     response_json = response.json()
     version = response_json["metadata"]["version"].lstrip("v")
     file_record = response_json["files"][0]
     name = file_record["key"]
     url = file_record["links"]["self"]
     path = client.download(latest_record_id, name=name, force=force)
-    return InfoTuple(version=version, url=url, path=path)
+    return RORStatus(version=version, url=url, path=path)
 
 
-def get_latest(*, force: bool = False) -> tuple[str, str, list[Record]]:
+@lru_cache
+def get_ror_records(
+    *, force: bool = False, authenticate_zenodo: bool = True
+) -> tuple[RORStatus, list[Record]]:
     """Get the latest ROR metadata and records."""
-    version_info = _get_info(force=force)
-    with zipfile.ZipFile(version_info.path) as zf:
+    status = get_ror_status(force=force, authenticate_zenodo=authenticate_zenodo)
+    with zipfile.ZipFile(status.path) as zf:
         for zip_info in zf.filelist:
             if zip_info.filename.endswith(".json"):
                 with zf.open(zip_info) as file:
@@ -376,7 +392,7 @@ def get_latest(*, force: bool = False) -> tuple[str, str, list[Record]]:
                         Record.model_validate(record)
                         for record in tqdm(json.load(file), unit_scale=True)
                     ]
-                    return version_info.version, version_info.url, records
+                    return status, records
     raise FileNotFoundError
 
 
