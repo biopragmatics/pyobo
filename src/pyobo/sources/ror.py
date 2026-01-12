@@ -89,6 +89,7 @@ OrganizationType: TypeAlias = Literal[
 ROR_ORGANIZATION_TYPE_TO_OBI: dict[OrganizationType, Term] = {
     "education": Term.default(PREFIX, "education", "educational organization"),
     "facility": Term.default(PREFIX, "facility", "facility"),
+    "funder": Term.default(PREFIX, "funder", "funder"),
     "company": Term.default(PREFIX, "company", "company"),
     "government": Term.default(PREFIX, "government", "government organization"),
     "healthcare": Term.default(PREFIX, "healthcare", "healthcare organization"),
