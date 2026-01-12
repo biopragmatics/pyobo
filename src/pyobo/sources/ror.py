@@ -190,6 +190,28 @@ class Record(BaseModel):
     admin: Admin
 
 
+_description_prefix = {
+    "education": "an educational organization",
+    "facility": "a facility",
+    "funder": "a funder",
+    "company": "a company",
+    "government": "a governmental organization",
+    "healthcare": "a healthcare organization",
+    "archive": "an archive",
+    "nonprofit": "a nonprofit organization",
+    "other": "an organization",
+}
+
+
+def _get_description(record: Record) -> str | None:
+    description = (
+        f"{_description_prefix[record.types[0]]} in {record.locations[0].geonames_details.name}"
+    )
+    if record.established:
+        description += f" established in {record.established}"
+    return description
+
+
 def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
     """Iterate over terms in ROR."""
     _version, _source_uri, records = get_latest(force=force)
@@ -209,14 +231,10 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
 
         primary_name = NAME_REMAPPING.get(primary_name, primary_name)
 
-        description = f"{record.types[0]} in {record.locations[0].geonames_details.name}"
-        if record.established:
-            description += f" established in {record.established}"
-
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=identifier, name=primary_name),
             type="Instance",
-            definition=description,
+            definition=_get_description(record),
         )
         for organization_type in record.types:
             if organization_type in ROR_ORGANIZATION_TYPE_TO_OBI:
