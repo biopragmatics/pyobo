@@ -8,10 +8,11 @@ from typing import Any
 import pandas as pd
 import pystow
 import requests
+from curies.vocabulary import has_comment
 from pydantic import BaseModel, Field
 from pystow.utils import read_zipfile_csv
 
-from pyobo import Obo, Reference, Term
+from pyobo import Annotation, Obo, Reference, Term
 
 PREFIX = "loinc"
 
@@ -32,8 +33,19 @@ def get_terms(*, force: bool = False) -> Iterable[Term]:
     """Get terms."""
     _status, path = ensure_loinc(force=force)
     df = read_zipfile_csv(path, inner_path="LoincTable/Loinc.csv", sep=",")
+
+    terms: dict[str, Term] = {}
+
     for _, row in df.iterrows():
-        yield get_term(row)
+        if term := get_term(row):
+            terms[term.identifier] = term
+
+    replaced_by_df = read_zipfile_csv(path, inner_path="LoincTable/MapTo.csv", sep=",")
+    for old, new, comment in replaced_by_df.values:
+        annotations = [Annotation.string(has_comment, comment)] if pd.notna(comment) else None
+        terms[old].append_replaced_by(terms[new], annotations=annotations)
+
+    yield from terms.values()
 
 
 def get_term(row: dict[str, Any]) -> Term:
