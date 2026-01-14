@@ -1,0 +1,4612 @@
+{
+  "reference": null,
+  "genes": [
+    {
+      "PANTHER": [
+        "PTHR15469"
+      ],
+      "start": "804752",
+      "lineage": [
+        6072,
+        7711,
+        7742,
+        7776,
+        8287,
+        8457,
+        8492,
+        8782,
+        8783,
+        8819,
+        8820,
+        8821,
+        8824,
+        32523,
+        32524,
+        32561,
+        33154,
+        33208,
+        33213,
+        33511,
+        89593,
+        117570,
+        117571,
+        436486,
+        436489,
+        436491,
+        436492,
+        1329799,
+        1338369,
+        1,
+        2759,
+        131567
+      ],
+      "Phobius": [
+        "CYTOPLASMIC_DOMAIN",
+        "NON_CYTOPLASMIC_DOMAIN",
+        "TRANSMEMBRANE"
+      ],
+      "id": "ENSAOWG00000013871",
+      "end": "820833",
+      "transcripts": [
+        {
+          "TMHMM": [
+            "TMhelix"
+          ],
+          "translations": [
+            {
+              "Phobius": [
+                "TRANSMEMBRANE",
+                "NON_CYTOPLASMIC_DOMAIN",
+                "CYTOPLASMIC_DOMAIN"
+              ],
+              "id": "ENSAOWP00000020504",
+              "TMHMM": [
+                "TMhelix"
+              ],
+              "PANTHER": [
+                "PTHR15469"
+              ],
+              "MobiDBLite": [
+                "mobidb-lite"
+              ],
+              "Interpro": [
+                "IPR009866"
+              ],
+              "Uniprot/SPTREMBL": [
+                "A0A8B9Q7M1"
+              ],
+              "Pfam": [
+                "PF07225"
+              ],
+              "Seg": [
+                "seg"
+              ],
+              "protein_features": [
+                {
+                  "translation_id": "ENSAOWP00000020504",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "Cytoplasmic domain",
+                  "start": "114",
+                  "dbname": "Phobius",
+                  "name": "CYTOPLASMIC_DOMAIN",
+                  "end": "153"
+                },
+                {
+                  "dbname": "Phobius",
+                  "end": "94",
+                  "name": "NON_CYTOPLASMIC_DOMAIN",
+                  "translation_id": "ENSAOWP00000020504",
+                  "start": "1",
+                  "description": "Non cytoplasmic domain",
+                  "ensembl_object_type": "protein_feature"
+                },
+                {
+                  "interpro_description": "NADH:ubiquinone oxidoreductase, subunit NDUFB4",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "NDUF_B4",
+                  "interpro_name": "NADH_UbQ_OxRdtase_NDUFB4_su",
+                  "interpro_ac": "IPR009866",
+                  "translation_id": "ENSAOWP00000020504",
+                  "start": "14",
+                  "name": "PF07225",
+                  "end": "129",
+                  "dbname": "Pfam"
+                },
+                {
+                  "ensembl_object_type": "protein_feature",
+                  "description": "NADH-UBIQUINONE OXIDOREDUCTASE B15 SUBUNIT",
+                  "interpro_description": "NADH:ubiquinone oxidoreductase, subunit NDUFB4",
+                  "start": "10",
+                  "translation_id": "ENSAOWP00000020504",
+                  "interpro_ac": "IPR009866",
+                  "interpro_name": "NADH_UbQ_OxRdtase_NDUFB4_su",
+                  "dbname": "PANTHER",
+                  "name": "PTHR15469",
+                  "end": "133"
+                },
+                {
+                  "name": "TMhelix",
+                  "end": "113",
+                  "dbname": "TMHMM",
+                  "translation_id": "ENSAOWP00000020504",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "Region of a membrane-bound protein predicted to be embedded in the membrane.",
+                  "start": "94"
+                },
+                {
+                  "end": "113",
+                  "name": "TRANSMEMBRANE",
+                  "dbname": "Phobius",
+                  "translation_id": "ENSAOWP00000020504",
+                  "ensembl_object_type": "protein_feature",
+                  "start": "95",
+                  "description": "Transmembrane region"
+                },
+                {
+                  "ensembl_object_type": "protein_feature",
+                  "description": "disorder_prediction",
+                  "start": "134",
+                  "translation_id": "ENSAOWP00000020504",
+                  "name": "mobidb-lite",
+                  "end": "153",
+                  "dbname": "MobiDBLite"
+                },
+                {
+                  "dbname": "Seg",
+                  "name": "seg",
+                  "end": "13",
+                  "start": "2",
+                  "ensembl_object_type": "protein_feature",
+                  "translation_id": "ENSAOWP00000020504"
+                },
+                {
+                  "translation_id": "ENSAOWP00000020504",
+                  "ensembl_object_type": "protein_feature",
+                  "start": "36",
+                  "end": "53",
+                  "name": "seg",
+                  "dbname": "Seg"
+                }
+              ],
+              "UniParc": [
+                "UPI001088D0A3"
+              ],
+              "xrefs": [
+                {
+                  "info_text": "",
+                  "dbname": "UniParc",
+                  "info_type": "CHECKSUM",
+                  "db_display": "UniParc",
+                  "primary_id": "UPI001088D0A3",
+                  "display_id": "UPI001088D0A3"
+                },
+                {
+                  "info_text": "Generated via direct",
+                  "dbname": "Uniprot/SPTREMBL",
+                  "info_type": "DIRECT",
+                  "db_display": "UniProtKB/TrEMBL",
+                  "primary_id": "A0A8B9Q7M1",
+                  "description": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                  "display_id": "A0A8B9Q7M1.12"
+                }
+              ]
+            }
+          ],
+          "MobiDBLite": [
+            "mobidb-lite"
+          ],
+          "Interpro": [
+            "IPR009866"
+          ],
+          "biotype": "protein_coding",
+          "seq_region_name": "PTFC01000203.1",
+          "Pfam": [
+            "PF07225"
+          ],
+          "Seg": [
+            "seg"
+          ],
+          "strand": "1",
+          "UniParc": [
+            "UPI001088D0A3"
+          ],
+          "GO": [
+            {
+              "term": "GO:0016020",
+              "evidence": [
+                "membrane"
+              ],
+              "parents": [
+                "GO:0016020",
+                "GO:0016020"
+              ]
+            },
+            {
+              "term": "GO:0005739",
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ],
+              "evidence": [
+                "mitochondrion"
+              ]
+            },
+            {
+              "evidence": [
+                "mitochondrion"
+              ],
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ],
+              "term": "GO:0005739"
+            },
+            {
+              "term": "GO:0005739",
+              "evidence": [
+                "mitochondrion"
+              ],
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ]
+            },
+            {
+              "term": "GO:0005743",
+              "evidence": [
+                "mitochondrial inner membrane"
+              ],
+              "parents": [
+                "GO:0016020",
+                "GO:0031090",
+                "GO:0019866",
+                "GO:0031966",
+                "GO:0005743",
+                "GO:0005743"
+              ]
+            }
+          ],
+          "exons": [
+            {
+              "id": "ENSAOWE00000138496",
+              "start": "804752",
+              "seq_region_name": "PTFC01000203.1",
+              "end": "805047",
+              "strand": "1"
+            },
+            {
+              "id": "ENSAOWE00000138497",
+              "start": "805208",
+              "seq_region_name": "PTFC01000203.1",
+              "end": "805354",
+              "strand": "1"
+            },
+            {
+              "strand": "1",
+              "end": "807118",
+              "start": "807091",
+              "id": "ENSAOWE00000138498",
+              "seq_region_name": "PTFC01000203.1"
+            },
+            {
+              "end": "810307",
+              "strand": "1",
+              "seq_region_name": "PTFC01000203.1",
+              "id": "ENSAOWE00000138500",
+              "start": "810229"
+            },
+            {
+              "end": "816926",
+              "strand": "1",
+              "id": "ENSAOWE00000138538",
+              "start": "815513",
+              "seq_region_name": "PTFC01000203.1"
+            }
+          ],
+          "id": "ENSAOWT00000023236",
+          "Phobius": [
+            "CYTOPLASMIC_DOMAIN",
+            "TRANSMEMBRANE",
+            "NON_CYTOPLASMIC_DOMAIN"
+          ],
+          "start": "804752",
+          "PANTHER": [
+            "PTHR15469"
+          ],
+          "end": "816926",
+          "Uniprot/SPTREMBL": [
+            "A0A8B9Q7M1"
+          ],
+          "xrefs": [
+            {
+              "linkage_types": [
+                {
+                  "evidence": "membrane",
+                  "source": {
+                    "display_id": "A0A8B9Q7M1",
+                    "description": "A0A8B9Q7M1.12",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 "
+                  }
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0016020",
+              "primary_id": "GO:0016020",
+              "associated_xrefs": [],
+              "dbname": "GO"
+            },
+            {
+              "associated_xrefs": [],
+              "primary_id": "GO:0005739",
+              "display_id": "GO:0005739",
+              "linkage_types": [
+                {
+                  "evidence": "mitochondrion",
+                  "source": {
+                    "description": "A0A8B9Q7M1.12",
+                    "display_id": "A0A8B9Q7M1",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 "
+                  }
+                }
+              ],
+              "description": "GO",
+              "dbname": "GO"
+            },
+            {
+              "dbname": "GO",
+              "linkage_types": [
+                {
+                  "source": {
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "description": "A0A8B9Q7M1.12",
+                    "display_id": "A0A8B9Q7M1"
+                  },
+                  "evidence": "mitochondrion"
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0005739",
+              "primary_id": "GO:0005739",
+              "associated_xrefs": []
+            },
+            {
+              "display_id": "GO:0005739",
+              "linkage_types": [
+                {
+                  "source": {
+                    "description": "NADH_UbQ_OxRdtase_NDUFB4_su",
+                    "display_id": "IPR009866",
+                    "db_display_name": "Interpro",
+                    "primary_id": "IEA",
+                    "dbname": "NADH:ubiquinone oxidoreductase, subunit NDUFB4"
+                  },
+                  "evidence": "mitochondrion"
+                }
+              ],
+              "description": "GO",
+              "primary_id": "GO:0005739",
+              "associated_xrefs": [],
+              "dbname": "GO"
+            },
+            {
+              "dbname": "GO",
+              "associated_xrefs": [],
+              "primary_id": "GO:0005743",
+              "display_id": "GO:0005743",
+              "linkage_types": [
+                {
+                  "source": {
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                    "description": "A0A8B9Q7M1.12",
+                    "display_id": "A0A8B9Q7M1",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL"
+                  },
+                  "evidence": "mitochondrial inner membrane"
+                }
+              ],
+              "description": "GO"
+            }
+          ]
+        },
+        {
+          "exons": [
+            {
+              "seq_region_name": "PTFC01000203.1",
+              "start": "804752",
+              "id": "ENSAOWE00000138496",
+              "strand": "1",
+              "end": "805047"
+            },
+            {
+              "end": "805354",
+              "strand": "1",
+              "seq_region_name": "PTFC01000203.1",
+              "id": "ENSAOWE00000138497",
+              "start": "805208"
+            },
+            {
+              "start": "805817",
+              "id": "ENSAOWE00000138549",
+              "seq_region_name": "PTFC01000203.1",
+              "strand": "1",
+              "end": "805872"
+            },
+            {
+              "seq_region_name": "PTFC01000203.1",
+              "start": "807091",
+              "id": "ENSAOWE00000138550",
+              "strand": "1",
+              "end": "807118"
+            }
+          ],
+          "id": "ENSAOWT00000023240",
+          "Phobius": [
+            "CYTOPLASMIC_DOMAIN",
+            "NON_CYTOPLASMIC_DOMAIN",
+            "TRANSMEMBRANE"
+          ],
+          "PANTHER": [
+            "PTHR15469"
+          ],
+          "start": "804752",
+          "end": "807118",
+          "Uniprot/SPTREMBL": [
+            "A0A8B9Q4V9"
+          ],
+          "xrefs": [
+            {
+              "dbname": "GO",
+              "primary_id": "GO:0005739",
+              "associated_xrefs": [],
+              "linkage_types": [
+                {
+                  "evidence": "mitochondrion",
+                  "source": {
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "display_id": "A0A8B9Q4V9",
+                    "description": "A0A8B9Q4V9.12"
+                  }
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0005739"
+            },
+            {
+              "dbname": "GO",
+              "display_id": "GO:0005739",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "mitochondrion",
+                  "source": {
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "display_id": "A0A8B9Q4V9",
+                    "description": "A0A8B9Q4V9.12"
+                  }
+                }
+              ],
+              "associated_xrefs": [],
+              "primary_id": "GO:0005739"
+            },
+            {
+              "dbname": "GO",
+              "display_id": "GO:0005739",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "mitochondrion",
+                  "source": {
+                    "dbname": "NADH:ubiquinone oxidoreductase, subunit NDUFB4",
+                    "db_display_name": "Interpro",
+                    "primary_id": "IEA",
+                    "description": "NADH_UbQ_OxRdtase_NDUFB4_su",
+                    "display_id": "IPR009866"
+                  }
+                }
+              ],
+              "primary_id": "GO:0005739",
+              "associated_xrefs": []
+            },
+            {
+              "primary_id": "GO:0016020",
+              "associated_xrefs": [],
+              "display_id": "GO:0016020",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "source": {
+                    "description": "A0A8B9Q4V9.12",
+                    "display_id": "A0A8B9Q4V9",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 "
+                  },
+                  "evidence": "membrane"
+                }
+              ],
+              "dbname": "GO"
+            },
+            {
+              "dbname": "GO",
+              "primary_id": "GO:0005743",
+              "associated_xrefs": [],
+              "display_id": "GO:0005743",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "source": {
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "description": "A0A8B9Q4V9.12",
+                    "display_id": "A0A8B9Q4V9"
+                  },
+                  "evidence": "mitochondrial inner membrane"
+                }
+              ]
+            }
+          ],
+          "translations": [
+            {
+              "id": "ENSAOWP00000020508",
+              "Phobius": [
+                "TRANSMEMBRANE",
+                "NON_CYTOPLASMIC_DOMAIN",
+                "CYTOPLASMIC_DOMAIN"
+              ],
+              "TMHMM": [
+                "TMhelix"
+              ],
+              "PANTHER": [
+                "PTHR15469"
+              ],
+              "Interpro": [
+                "IPR009866"
+              ],
+              "Pfam": [
+                "PF07225"
+              ],
+              "Seg": [
+                "seg"
+              ],
+              "Uniprot/SPTREMBL": [
+                "A0A8B9Q4V9"
+              ],
+              "xrefs": [
+                {
+                  "info_type": "CHECKSUM",
+                  "dbname": "UniParc",
+                  "info_text": "",
+                  "display_id": "UPI00108F6A23",
+                  "primary_id": "UPI00108F6A23",
+                  "db_display": "UniParc"
+                },
+                {
+                  "info_type": "DIRECT",
+                  "dbname": "Uniprot/SPTREMBL",
+                  "info_text": "Generated via direct",
+                  "display_id": "A0A8B9Q4V9.12",
+                  "description": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                  "db_display": "UniProtKB/TrEMBL",
+                  "primary_id": "A0A8B9Q4V9"
+                }
+              ],
+              "UniParc": [
+                "UPI00108F6A23"
+              ],
+              "protein_features": [
+                {
+                  "translation_id": "ENSAOWP00000020508",
+                  "description": "Cytoplasmic domain",
+                  "ensembl_object_type": "protein_feature",
+                  "start": "114",
+                  "dbname": "Phobius",
+                  "end": "131",
+                  "name": "CYTOPLASMIC_DOMAIN"
+                },
+                {
+                  "dbname": "Phobius",
+                  "name": "NON_CYTOPLASMIC_DOMAIN",
+                  "end": "94",
+                  "translation_id": "ENSAOWP00000020508",
+                  "ensembl_object_type": "protein_feature",
+                  "start": "1",
+                  "description": "Non cytoplasmic domain"
+                },
+                {
+                  "interpro_description": "NADH:ubiquinone oxidoreductase, subunit NDUFB4",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "NDUF_B4",
+                  "interpro_ac": "IPR009866",
+                  "interpro_name": "NADH_UbQ_OxRdtase_NDUFB4_su",
+                  "start": "14",
+                  "translation_id": "ENSAOWP00000020508",
+                  "name": "PF07225",
+                  "end": "117",
+                  "dbname": "Pfam"
+                },
+                {
+                  "ensembl_object_type": "protein_feature",
+                  "description": "NADH-UBIQUINONE OXIDOREDUCTASE B15 SUBUNIT",
+                  "interpro_description": "NADH:ubiquinone oxidoreductase, subunit NDUFB4",
+                  "translation_id": "ENSAOWP00000020508",
+                  "start": "10",
+                  "interpro_name": "NADH_UbQ_OxRdtase_NDUFB4_su",
+                  "interpro_ac": "IPR009866",
+                  "dbname": "PANTHER",
+                  "end": "120",
+                  "name": "PTHR15469"
+                },
+                {
+                  "dbname": "TMHMM",
+                  "end": "113",
+                  "name": "TMhelix",
+                  "description": "Region of a membrane-bound protein predicted to be embedded in the membrane.",
+                  "start": "94",
+                  "ensembl_object_type": "protein_feature",
+                  "translation_id": "ENSAOWP00000020508"
+                },
+                {
+                  "end": "113",
+                  "name": "TRANSMEMBRANE",
+                  "dbname": "Phobius",
+                  "start": "95",
+                  "description": "Transmembrane region",
+                  "ensembl_object_type": "protein_feature",
+                  "translation_id": "ENSAOWP00000020508"
+                },
+                {
+                  "ensembl_object_type": "protein_feature",
+                  "start": "2",
+                  "translation_id": "ENSAOWP00000020508",
+                  "name": "seg",
+                  "end": "13",
+                  "dbname": "Seg"
+                },
+                {
+                  "translation_id": "ENSAOWP00000020508",
+                  "start": "36",
+                  "ensembl_object_type": "protein_feature",
+                  "name": "seg",
+                  "end": "53",
+                  "dbname": "Seg"
+                }
+              ]
+            }
+          ],
+          "TMHMM": [
+            "TMhelix"
+          ],
+          "Interpro": [
+            "IPR009866"
+          ],
+          "biotype": "protein_coding",
+          "seq_region_name": "PTFC01000203.1",
+          "Seg": [
+            "seg"
+          ],
+          "Pfam": [
+            "PF07225"
+          ],
+          "strand": "1",
+          "UniParc": [
+            "UPI00108F6A23"
+          ],
+          "GO": [
+            {
+              "term": "GO:0005739",
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ],
+              "evidence": [
+                "mitochondrion"
+              ]
+            },
+            {
+              "evidence": [
+                "mitochondrion"
+              ],
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ],
+              "term": "GO:0005739"
+            },
+            {
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ],
+              "evidence": [
+                "mitochondrion"
+              ],
+              "term": "GO:0005739"
+            },
+            {
+              "term": "GO:0016020",
+              "evidence": [
+                "membrane"
+              ],
+              "parents": [
+                "GO:0016020",
+                "GO:0016020"
+              ]
+            },
+            {
+              "term": "GO:0005743",
+              "evidence": [
+                "mitochondrial inner membrane"
+              ],
+              "parents": [
+                "GO:0016020",
+                "GO:0031090",
+                "GO:0019866",
+                "GO:0031966",
+                "GO:0005743",
+                "GO:0005743"
+              ]
+            }
+          ]
+        },
+        {
+          "UniParc": [
+            "UPI00108D02BD"
+          ],
+          "GO": [
+            {
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ],
+              "evidence": [
+                "mitochondrion"
+              ],
+              "term": "GO:0005739"
+            },
+            {
+              "term": "GO:0005739",
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ],
+              "evidence": [
+                "mitochondrion"
+              ]
+            },
+            {
+              "term": "GO:0005743",
+              "parents": [
+                "GO:0016020",
+                "GO:0031090",
+                "GO:0019866",
+                "GO:0031966",
+                "GO:0005743",
+                "GO:0005743"
+              ],
+              "evidence": [
+                "mitochondrial inner membrane"
+              ]
+            },
+            {
+              "parents": [
+                "GO:0016020",
+                "GO:0016020"
+              ],
+              "evidence": [
+                "membrane"
+              ],
+              "term": "GO:0016020"
+            },
+            {
+              "evidence": [
+                "mitochondrion"
+              ],
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ],
+              "term": "GO:0005739"
+            }
+          ],
+          "strand": "1",
+          "seq_region_name": "PTFC01000203.1",
+          "Seg": [
+            "seg"
+          ],
+          "Pfam": [
+            "PF07225"
+          ],
+          "biotype": "protein_coding",
+          "Interpro": [
+            "IPR009866"
+          ],
+          "TMHMM": [
+            "TMhelix"
+          ],
+          "translations": [
+            {
+              "PANTHER": [
+                "PTHR15469"
+              ],
+              "TMHMM": [
+                "TMhelix"
+              ],
+              "id": "ENSAOWP00000020500",
+              "Phobius": [
+                "CYTOPLASMIC_DOMAIN",
+                "TRANSMEMBRANE",
+                "NON_CYTOPLASMIC_DOMAIN"
+              ],
+              "Interpro": [
+                "IPR009866"
+              ],
+              "Uniprot/SPTREMBL": [
+                "A0A8B9Q2F3"
+              ],
+              "Seg": [
+                "seg"
+              ],
+              "Pfam": [
+                "PF07225"
+              ],
+              "protein_features": [
+                {
+                  "translation_id": "ENSAOWP00000020500",
+                  "ensembl_object_type": "protein_feature",
+                  "start": "114",
+                  "description": "Cytoplasmic domain",
+                  "name": "CYTOPLASMIC_DOMAIN",
+                  "end": "219",
+                  "dbname": "Phobius"
+                },
+                {
+                  "end": "94",
+                  "name": "NON_CYTOPLASMIC_DOMAIN",
+                  "dbname": "Phobius",
+                  "translation_id": "ENSAOWP00000020500",
+                  "start": "1",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "Non cytoplasmic domain"
+                },
+                {
+                  "end": "129",
+                  "name": "PF07225",
+                  "dbname": "Pfam",
+                  "interpro_ac": "IPR009866",
+                  "interpro_name": "NADH_UbQ_OxRdtase_NDUFB4_su",
+                  "start": "14",
+                  "translation_id": "ENSAOWP00000020500",
+                  "interpro_description": "NADH:ubiquinone oxidoreductase, subunit NDUFB4",
+                  "description": "NDUF_B4",
+                  "ensembl_object_type": "protein_feature"
+                },
+                {
+                  "interpro_name": "NADH_UbQ_OxRdtase_NDUFB4_su",
+                  "interpro_ac": "IPR009866",
+                  "translation_id": "ENSAOWP00000020500",
+                  "start": "10",
+                  "end": "133",
+                  "name": "PTHR15469",
+                  "dbname": "PANTHER",
+                  "interpro_description": "NADH:ubiquinone oxidoreductase, subunit NDUFB4",
+                  "description": "NADH-UBIQUINONE OXIDOREDUCTASE B15 SUBUNIT",
+                  "ensembl_object_type": "protein_feature"
+                },
+                {
+                  "ensembl_object_type": "protein_feature",
+                  "start": "94",
+                  "description": "Region of a membrane-bound protein predicted to be embedded in the membrane.",
+                  "translation_id": "ENSAOWP00000020500",
+                  "name": "TMhelix",
+                  "end": "113",
+                  "dbname": "TMHMM"
+                },
+                {
+                  "start": "95",
+                  "description": "Transmembrane region",
+                  "ensembl_object_type": "protein_feature",
+                  "translation_id": "ENSAOWP00000020500",
+                  "name": "TRANSMEMBRANE",
+                  "end": "113",
+                  "dbname": "Phobius"
+                },
+                {
+                  "dbname": "Seg",
+                  "end": "13",
+                  "name": "seg",
+                  "start": "2",
+                  "ensembl_object_type": "protein_feature",
+                  "translation_id": "ENSAOWP00000020500"
+                },
+                {
+                  "translation_id": "ENSAOWP00000020500",
+                  "ensembl_object_type": "protein_feature",
+                  "start": "36",
+                  "dbname": "Seg",
+                  "name": "seg",
+                  "end": "53"
+                }
+              ],
+              "UniParc": [
+                "UPI00108D02BD"
+              ],
+              "xrefs": [
+                {
+                  "primary_id": "UPI00108D02BD",
+                  "db_display": "UniParc",
+                  "display_id": "UPI00108D02BD",
+                  "info_text": "",
+                  "dbname": "UniParc",
+                  "info_type": "CHECKSUM"
+                },
+                {
+                  "primary_id": "A0A8B9Q2F3",
+                  "db_display": "UniProtKB/TrEMBL",
+                  "description": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                  "display_id": "A0A8B9Q2F3.12",
+                  "info_text": "Generated via direct",
+                  "dbname": "Uniprot/SPTREMBL",
+                  "info_type": "DIRECT"
+                }
+              ]
+            }
+          ],
+          "xrefs": [
+            {
+              "dbname": "GO",
+              "display_id": "GO:0005739",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "source": {
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                    "display_id": "A0A8B9Q2F3",
+                    "description": "A0A8B9Q2F3.12",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA"
+                  },
+                  "evidence": "mitochondrion"
+                }
+              ],
+              "primary_id": "GO:0005739",
+              "associated_xrefs": []
+            },
+            {
+              "dbname": "GO",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "source": {
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "description": "A0A8B9Q2F3.12",
+                    "display_id": "A0A8B9Q2F3"
+                  },
+                  "evidence": "mitochondrion"
+                }
+              ],
+              "display_id": "GO:0005739",
+              "primary_id": "GO:0005739",
+              "associated_xrefs": []
+            },
+            {
+              "associated_xrefs": [],
+              "primary_id": "GO:0005743",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "mitochondrial inner membrane",
+                  "source": {
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "display_id": "A0A8B9Q2F3",
+                    "description": "A0A8B9Q2F3.12",
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 "
+                  }
+                }
+              ],
+              "display_id": "GO:0005743",
+              "dbname": "GO"
+            },
+            {
+              "linkage_types": [
+                {
+                  "evidence": "membrane",
+                  "source": {
+                    "display_id": "A0A8B9Q2F3",
+                    "description": "A0A8B9Q2F3.12",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 "
+                  }
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0016020",
+              "associated_xrefs": [],
+              "primary_id": "GO:0016020",
+              "dbname": "GO"
+            },
+            {
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "mitochondrion",
+                  "source": {
+                    "primary_id": "IEA",
+                    "db_display_name": "Interpro",
+                    "description": "NADH_UbQ_OxRdtase_NDUFB4_su",
+                    "display_id": "IPR009866",
+                    "dbname": "NADH:ubiquinone oxidoreductase, subunit NDUFB4"
+                  }
+                }
+              ],
+              "display_id": "GO:0005739",
+              "primary_id": "GO:0005739",
+              "associated_xrefs": [],
+              "dbname": "GO"
+            }
+          ],
+          "Uniprot/SPTREMBL": [
+            "A0A8B9Q2F3"
+          ],
+          "end": "820833",
+          "exons": [
+            {
+              "strand": "1",
+              "end": "805047",
+              "seq_region_name": "PTFC01000203.1",
+              "start": "804752",
+              "id": "ENSAOWE00000138496"
+            },
+            {
+              "seq_region_name": "PTFC01000203.1",
+              "start": "805208",
+              "id": "ENSAOWE00000138497",
+              "strand": "1",
+              "end": "805354"
+            },
+            {
+              "strand": "1",
+              "end": "807118",
+              "seq_region_name": "PTFC01000203.1",
+              "start": "807091",
+              "id": "ENSAOWE00000138498"
+            },
+            {
+              "seq_region_name": "PTFC01000203.1",
+              "id": "ENSAOWE00000138500",
+              "start": "810229",
+              "end": "810307",
+              "strand": "1"
+            },
+            {
+              "seq_region_name": "PTFC01000203.1",
+              "id": "ENSAOWE00000138501",
+              "start": "820632",
+              "end": "820833",
+              "strand": "1"
+            }
+          ],
+          "Phobius": [
+            "CYTOPLASMIC_DOMAIN",
+            "NON_CYTOPLASMIC_DOMAIN",
+            "TRANSMEMBRANE"
+          ],
+          "id": "ENSAOWT00000023231",
+          "start": "804752",
+          "PANTHER": [
+            "PTHR15469"
+          ]
+        },
+        {
+          "Uniprot/SPTREMBL": [
+            "A0A8B9SB59"
+          ],
+          "xrefs": [
+            {
+              "dbname": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "mitochondrion",
+                  "source": {
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "display_id": "A0A8B9SB59",
+                    "description": "A0A8B9SB59.12",
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 "
+                  }
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0005739",
+              "primary_id": "GO:0005739",
+              "associated_xrefs": []
+            },
+            {
+              "associated_xrefs": [],
+              "primary_id": "GO:0016020",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "source": {
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "description": "A0A8B9SB59.12",
+                    "display_id": "A0A8B9SB59",
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 "
+                  },
+                  "evidence": "membrane"
+                }
+              ],
+              "display_id": "GO:0016020",
+              "dbname": "GO"
+            },
+            {
+              "display_id": "GO:0005739",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "source": {
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                    "display_id": "A0A8B9SB59",
+                    "description": "A0A8B9SB59.12",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL"
+                  },
+                  "evidence": "mitochondrion"
+                }
+              ],
+              "primary_id": "GO:0005739",
+              "associated_xrefs": [],
+              "dbname": "GO"
+            },
+            {
+              "dbname": "GO",
+              "primary_id": "GO:0005739",
+              "associated_xrefs": [],
+              "linkage_types": [
+                {
+                  "source": {
+                    "display_id": "IPR009866",
+                    "description": "NADH_UbQ_OxRdtase_NDUFB4_su",
+                    "primary_id": "IEA",
+                    "db_display_name": "Interpro",
+                    "dbname": "NADH:ubiquinone oxidoreductase, subunit NDUFB4"
+                  },
+                  "evidence": "mitochondrion"
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0005739"
+            },
+            {
+              "display_id": "GO:0005743",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "mitochondrial inner membrane",
+                  "source": {
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "description": "A0A8B9SB59.12",
+                    "display_id": "A0A8B9SB59",
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 "
+                  }
+                }
+              ],
+              "associated_xrefs": [],
+              "primary_id": "GO:0005743",
+              "dbname": "GO"
+            }
+          ],
+          "exons": [
+            {
+              "strand": "1",
+              "end": "805047",
+              "seq_region_name": "PTFC01000203.1",
+              "start": "804752",
+              "id": "ENSAOWE00000138496"
+            },
+            {
+              "end": "805354",
+              "strand": "1",
+              "id": "ENSAOWE00000138497",
+              "start": "805208",
+              "seq_region_name": "PTFC01000203.1"
+            },
+            {
+              "strand": "1",
+              "end": "807118",
+              "seq_region_name": "PTFC01000203.1",
+              "start": "807091",
+              "id": "ENSAOWE00000138498"
+            },
+            {
+              "seq_region_name": "PTFC01000203.1",
+              "start": "807290",
+              "id": "ENSAOWE00000138545",
+              "strand": "1",
+              "end": "807668"
+            }
+          ],
+          "start": "804752",
+          "PANTHER": [
+            "PTHR15469"
+          ],
+          "id": "ENSAOWT00000023239",
+          "Phobius": [
+            "CYTOPLASMIC_DOMAIN",
+            "NON_CYTOPLASMIC_DOMAIN",
+            "TRANSMEMBRANE"
+          ],
+          "end": "807668",
+          "seq_region_name": "PTFC01000203.1",
+          "Seg": [
+            "seg"
+          ],
+          "Pfam": [
+            "PF07225"
+          ],
+          "strand": "1",
+          "UniParc": [
+            "UPI001087D2E2"
+          ],
+          "GO": [
+            {
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ],
+              "evidence": [
+                "mitochondrion"
+              ],
+              "term": "GO:0005739"
+            },
+            {
+              "parents": [
+                "GO:0016020",
+                "GO:0016020"
+              ],
+              "evidence": [
+                "membrane"
+              ],
+              "term": "GO:0016020"
+            },
+            {
+              "term": "GO:0005739",
+              "evidence": [
+                "mitochondrion"
+              ],
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ]
+            },
+            {
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ],
+              "evidence": [
+                "mitochondrion"
+              ],
+              "term": "GO:0005739"
+            },
+            {
+              "term": "GO:0005743",
+              "evidence": [
+                "mitochondrial inner membrane"
+              ],
+              "parents": [
+                "GO:0016020",
+                "GO:0031090",
+                "GO:0019866",
+                "GO:0031966",
+                "GO:0005743",
+                "GO:0005743"
+              ]
+            }
+          ],
+          "translations": [
+            {
+              "Interpro": [
+                "IPR009866"
+              ],
+              "PANTHER": [
+                "PTHR15469"
+              ],
+              "TMHMM": [
+                "TMhelix"
+              ],
+              "Phobius": [
+                "NON_CYTOPLASMIC_DOMAIN",
+                "TRANSMEMBRANE",
+                "CYTOPLASMIC_DOMAIN"
+              ],
+              "id": "ENSAOWP00000020507",
+              "protein_features": [
+                {
+                  "translation_id": "ENSAOWP00000020507",
+                  "start": "114",
+                  "description": "Cytoplasmic domain",
+                  "ensembl_object_type": "protein_feature",
+                  "dbname": "Phobius",
+                  "end": "138",
+                  "name": "CYTOPLASMIC_DOMAIN"
+                },
+                {
+                  "dbname": "Phobius",
+                  "name": "NON_CYTOPLASMIC_DOMAIN",
+                  "end": "94",
+                  "translation_id": "ENSAOWP00000020507",
+                  "ensembl_object_type": "protein_feature",
+                  "start": "1",
+                  "description": "Non cytoplasmic domain"
+                },
+                {
+                  "interpro_name": "NADH_UbQ_OxRdtase_NDUFB4_su",
+                  "interpro_ac": "IPR009866",
+                  "translation_id": "ENSAOWP00000020507",
+                  "start": "14",
+                  "end": "126",
+                  "name": "PF07225",
+                  "dbname": "Pfam",
+                  "interpro_description": "NADH:ubiquinone oxidoreductase, subunit NDUFB4",
+                  "description": "NDUF_B4",
+                  "ensembl_object_type": "protein_feature"
+                },
+                {
+                  "description": "NADH-UBIQUINONE OXIDOREDUCTASE B15 SUBUNIT",
+                  "ensembl_object_type": "protein_feature",
+                  "interpro_description": "NADH:ubiquinone oxidoreductase, subunit NDUFB4",
+                  "dbname": "PANTHER",
+                  "name": "PTHR15469",
+                  "end": "126",
+                  "start": "10",
+                  "translation_id": "ENSAOWP00000020507",
+                  "interpro_ac": "IPR009866",
+                  "interpro_name": "NADH_UbQ_OxRdtase_NDUFB4_su"
+                },
+                {
+                  "translation_id": "ENSAOWP00000020507",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "Region of a membrane-bound protein predicted to be embedded in the membrane.",
+                  "start": "94",
+                  "name": "TMhelix",
+                  "end": "113",
+                  "dbname": "TMHMM"
+                },
+                {
+                  "translation_id": "ENSAOWP00000020507",
+                  "start": "95",
+                  "description": "Transmembrane region",
+                  "ensembl_object_type": "protein_feature",
+                  "end": "113",
+                  "name": "TRANSMEMBRANE",
+                  "dbname": "Phobius"
+                },
+                {
+                  "ensembl_object_type": "protein_feature",
+                  "start": "2",
+                  "translation_id": "ENSAOWP00000020507",
+                  "end": "13",
+                  "name": "seg",
+                  "dbname": "Seg"
+                },
+                {
+                  "name": "seg",
+                  "end": "53",
+                  "dbname": "Seg",
+                  "start": "36",
+                  "ensembl_object_type": "protein_feature",
+                  "translation_id": "ENSAOWP00000020507"
+                }
+              ],
+              "UniParc": [
+                "UPI001087D2E2"
+              ],
+              "xrefs": [
+                {
+                  "db_display": "UniParc",
+                  "primary_id": "UPI001087D2E2",
+                  "display_id": "UPI001087D2E2",
+                  "info_text": "",
+                  "dbname": "UniParc",
+                  "info_type": "CHECKSUM"
+                },
+                {
+                  "info_text": "Generated via direct",
+                  "info_type": "DIRECT",
+                  "dbname": "Uniprot/SPTREMBL",
+                  "primary_id": "A0A8B9SB59",
+                  "db_display": "UniProtKB/TrEMBL",
+                  "display_id": "A0A8B9SB59.12",
+                  "description": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 "
+                }
+              ],
+              "Uniprot/SPTREMBL": [
+                "A0A8B9SB59"
+              ],
+              "Seg": [
+                "seg"
+              ],
+              "Pfam": [
+                "PF07225"
+              ]
+            }
+          ],
+          "TMHMM": [
+            "TMhelix"
+          ],
+          "biotype": "protein_coding",
+          "Interpro": [
+            "IPR009866"
+          ]
+        },
+        {
+          "Seg": [
+            "seg"
+          ],
+          "Pfam": [
+            "PF07225"
+          ],
+          "seq_region_name": "PTFC01000203.1",
+          "strand": "1",
+          "UniParc": [
+            "UPI00108E901D"
+          ],
+          "GO": [
+            {
+              "term": "GO:0016020",
+              "evidence": [
+                "membrane"
+              ],
+              "parents": [
+                "GO:0016020",
+                "GO:0016020"
+              ]
+            },
+            {
+              "term": "GO:0005739",
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ],
+              "evidence": [
+                "mitochondrion"
+              ]
+            },
+            {
+              "evidence": [
+                "mitochondrion"
+              ],
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ],
+              "term": "GO:0005739"
+            },
+            {
+              "evidence": [
+                "mitochondrion"
+              ],
+              "parents": [
+                "GO:0005739",
+                "GO:0005739"
+              ],
+              "term": "GO:0005739"
+            },
+            {
+              "parents": [
+                "GO:0016020",
+                "GO:0031090",
+                "GO:0019866",
+                "GO:0031966",
+                "GO:0005743",
+                "GO:0005743"
+              ],
+              "evidence": [
+                "mitochondrial inner membrane"
+              ],
+              "term": "GO:0005743"
+            }
+          ],
+          "TMHMM": [
+            "TMhelix"
+          ],
+          "translations": [
+            {
+              "UniParc": [
+                "UPI00108E901D"
+              ],
+              "protein_features": [
+                {
+                  "name": "CYTOPLASMIC_DOMAIN",
+                  "end": "253",
+                  "dbname": "Phobius",
+                  "translation_id": "ENSAOWP00000020502",
+                  "start": "114",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "Cytoplasmic domain"
+                },
+                {
+                  "name": "NON_CYTOPLASMIC_DOMAIN",
+                  "end": "94",
+                  "dbname": "Phobius",
+                  "translation_id": "ENSAOWP00000020502",
+                  "description": "Non cytoplasmic domain",
+                  "ensembl_object_type": "protein_feature",
+                  "start": "1"
+                },
+                {
+                  "interpro_description": "NADH:ubiquinone oxidoreductase, subunit NDUFB4",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "NDUF_B4",
+                  "interpro_ac": "IPR009866",
+                  "interpro_name": "NADH_UbQ_OxRdtase_NDUFB4_su",
+                  "start": "14",
+                  "translation_id": "ENSAOWP00000020502",
+                  "name": "PF07225",
+                  "end": "129",
+                  "dbname": "Pfam"
+                },
+                {
+                  "name": "PTHR15469",
+                  "end": "133",
+                  "dbname": "PANTHER",
+                  "interpro_name": "NADH_UbQ_OxRdtase_NDUFB4_su",
+                  "interpro_ac": "IPR009866",
+                  "translation_id": "ENSAOWP00000020502",
+                  "start": "10",
+                  "interpro_description": "NADH:ubiquinone oxidoreductase, subunit NDUFB4",
+                  "description": "NADH-UBIQUINONE OXIDOREDUCTASE B15 SUBUNIT",
+                  "ensembl_object_type": "protein_feature"
+                },
+                {
+                  "dbname": "TMHMM",
+                  "name": "TMhelix",
+                  "end": "113",
+                  "translation_id": "ENSAOWP00000020502",
+                  "ensembl_object_type": "protein_feature",
+                  "start": "94",
+                  "description": "Region of a membrane-bound protein predicted to be embedded in the membrane."
+                },
+                {
+                  "ensembl_object_type": "protein_feature",
+                  "description": "Transmembrane region",
+                  "start": "95",
+                  "translation_id": "ENSAOWP00000020502",
+                  "dbname": "Phobius",
+                  "name": "TRANSMEMBRANE",
+                  "end": "113"
+                },
+                {
+                  "translation_id": "ENSAOWP00000020502",
+                  "start": "146",
+                  "description": "disorder_prediction",
+                  "ensembl_object_type": "protein_feature",
+                  "end": "171",
+                  "name": "mobidb-lite",
+                  "dbname": "MobiDBLite"
+                },
+                {
+                  "start": "2",
+                  "ensembl_object_type": "protein_feature",
+                  "translation_id": "ENSAOWP00000020502",
+                  "end": "13",
+                  "name": "seg",
+                  "dbname": "Seg"
+                },
+                {
+                  "dbname": "Seg",
+                  "end": "53",
+                  "name": "seg",
+                  "translation_id": "ENSAOWP00000020502",
+                  "ensembl_object_type": "protein_feature",
+                  "start": "36"
+                }
+              ],
+              "xrefs": [
+                {
+                  "dbname": "UniParc",
+                  "info_type": "CHECKSUM",
+                  "info_text": "",
+                  "display_id": "UPI00108E901D",
+                  "db_display": "UniParc",
+                  "primary_id": "UPI00108E901D"
+                },
+                {
+                  "info_text": "Generated via direct",
+                  "dbname": "Uniprot/SPTREMBL",
+                  "info_type": "DIRECT",
+                  "db_display": "UniProtKB/TrEMBL",
+                  "primary_id": "A0A8B9Q385",
+                  "description": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                  "display_id": "A0A8B9Q385.12"
+                }
+              ],
+              "Uniprot/SPTREMBL": [
+                "A0A8B9Q385"
+              ],
+              "Seg": [
+                "seg"
+              ],
+              "Pfam": [
+                "PF07225"
+              ],
+              "MobiDBLite": [
+                "mobidb-lite"
+              ],
+              "Interpro": [
+                "IPR009866"
+              ],
+              "id": "ENSAOWP00000020502",
+              "Phobius": [
+                "TRANSMEMBRANE",
+                "NON_CYTOPLASMIC_DOMAIN",
+                "CYTOPLASMIC_DOMAIN"
+              ],
+              "PANTHER": [
+                "PTHR15469"
+              ],
+              "TMHMM": [
+                "TMhelix"
+              ]
+            }
+          ],
+          "Interpro": [
+            "IPR009866"
+          ],
+          "biotype": "protein_coding",
+          "MobiDBLite": [
+            "mobidb-lite"
+          ],
+          "Uniprot/SPTREMBL": [
+            "A0A8B9Q385"
+          ],
+          "xrefs": [
+            {
+              "dbname": "GO",
+              "primary_id": "GO:0016020",
+              "associated_xrefs": [],
+              "linkage_types": [
+                {
+                  "evidence": "membrane",
+                  "source": {
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                    "description": "A0A8B9Q385.12",
+                    "display_id": "A0A8B9Q385",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL"
+                  }
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0016020"
+            },
+            {
+              "dbname": "GO",
+              "display_id": "GO:0005739",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "source": {
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                    "description": "A0A8B9Q385.12",
+                    "display_id": "A0A8B9Q385",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL"
+                  },
+                  "evidence": "mitochondrion"
+                }
+              ],
+              "primary_id": "GO:0005739",
+              "associated_xrefs": []
+            },
+            {
+              "associated_xrefs": [],
+              "primary_id": "GO:0005739",
+              "linkage_types": [
+                {
+                  "evidence": "mitochondrion",
+                  "source": {
+                    "db_display_name": "Interpro",
+                    "primary_id": "IEA",
+                    "display_id": "IPR009866",
+                    "description": "NADH_UbQ_OxRdtase_NDUFB4_su",
+                    "dbname": "NADH:ubiquinone oxidoreductase, subunit NDUFB4"
+                  }
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0005739",
+              "dbname": "GO"
+            },
+            {
+              "display_id": "GO:0005739",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "mitochondrion",
+                  "source": {
+                    "display_id": "A0A8B9Q385",
+                    "description": "A0A8B9Q385.12",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 "
+                  }
+                }
+              ],
+              "associated_xrefs": [],
+              "primary_id": "GO:0005739",
+              "dbname": "GO"
+            },
+            {
+              "linkage_types": [
+                {
+                  "source": {
+                    "dbname": "NADH dehydrogenase [ubiquinone] 1 beta subcomplex subunit 4 ",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "display_id": "A0A8B9Q385",
+                    "description": "A0A8B9Q385.12"
+                  },
+                  "evidence": "mitochondrial inner membrane"
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0005743",
+              "associated_xrefs": [],
+              "primary_id": "GO:0005743",
+              "dbname": "GO"
+            }
+          ],
+          "id": "ENSAOWT00000023233",
+          "Phobius": [
+            "NON_CYTOPLASMIC_DOMAIN",
+            "TRANSMEMBRANE",
+            "CYTOPLASMIC_DOMAIN"
+          ],
+          "PANTHER": [
+            "PTHR15469"
+          ],
+          "start": "804752",
+          "exons": [
+            {
+              "id": "ENSAOWE00000138496",
+              "start": "804752",
+              "seq_region_name": "PTFC01000203.1",
+              "end": "805047",
+              "strand": "1"
+            },
+            {
+              "id": "ENSAOWE00000138497",
+              "start": "805208",
+              "seq_region_name": "PTFC01000203.1",
+              "end": "805354",
+              "strand": "1"
+            },
+            {
+              "end": "807118",
+              "strand": "1",
+              "id": "ENSAOWE00000138498",
+              "start": "807091",
+              "seq_region_name": "PTFC01000203.1"
+            },
+            {
+              "id": "ENSAOWE00000138500",
+              "start": "810229",
+              "seq_region_name": "PTFC01000203.1",
+              "end": "810307",
+              "strand": "1"
+            },
+            {
+              "strand": "1",
+              "end": "814432",
+              "seq_region_name": "PTFC01000203.1",
+              "start": "814335",
+              "id": "ENSAOWE00000138513"
+            },
+            {
+              "start": "815513",
+              "id": "ENSAOWE00000138514",
+              "seq_region_name": "PTFC01000203.1",
+              "strand": "1",
+              "end": "816926"
+            }
+          ],
+          "end": "816926"
+        }
+      ],
+      "description": "NADH:ubiquinone oxidoreductase subunit B4 [Source:HGNC Symbol;Acc:HGNC:7699]",
+      "Uniprot/SPTREMBL": [
+        "A0A8B9SB59",
+        "A0A8B9Q7M1",
+        "A0A8B9Q385",
+        "A0A8B9Q2F3",
+        "A0A8B9Q4V9"
+      ],
+      "xrefs": [],
+      "genome": "apteryx_owenii",
+      "taxon_id": 8824,
+      "TMHMM": [
+        "TMhelix"
+      ],
+      "homologues": [],
+      "biotype": "protein_coding",
+      "Interpro": [
+        "IPR009866"
+      ],
+      "MobiDBLite": [
+        "mobidb-lite"
+      ],
+      "genome_display": "Little spotted kiwi",
+      "Seg": [
+        "seg"
+      ],
+      "Pfam": [
+        "PF07225"
+      ],
+      "seq_region_name": "PTFC01000203.1",
+      "strand": "1",
+      "GO": [
+        {
+          "term": "GO:0016020",
+          "parents": [
+            "GO:0016020",
+            "GO:0016020"
+          ],
+          "evidence": [
+            "membrane"
+          ]
+        },
+        {
+          "evidence": [
+            "mitochondrion"
+          ],
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ],
+          "term": "GO:0005739"
+        },
+        {
+          "evidence": [
+            "mitochondrion"
+          ],
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ],
+          "term": "GO:0005739"
+        },
+        {
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ],
+          "evidence": [
+            "mitochondrion"
+          ],
+          "term": "GO:0005739"
+        },
+        {
+          "term": "GO:0005743",
+          "parents": [
+            "GO:0016020",
+            "GO:0031090",
+            "GO:0019866",
+            "GO:0031966",
+            "GO:0005743",
+            "GO:0005743"
+          ],
+          "evidence": [
+            "mitochondrial inner membrane"
+          ]
+        },
+        {
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ],
+          "evidence": [
+            "mitochondrion"
+          ],
+          "term": "GO:0005739"
+        },
+        {
+          "evidence": [
+            "mitochondrion"
+          ],
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ],
+          "term": "GO:0005739"
+        },
+        {
+          "evidence": [
+            "mitochondrion"
+          ],
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ],
+          "term": "GO:0005739"
+        },
+        {
+          "evidence": [
+            "membrane"
+          ],
+          "parents": [
+            "GO:0016020",
+            "GO:0016020"
+          ],
+          "term": "GO:0016020"
+        },
+        {
+          "term": "GO:0005743",
+          "parents": [
+            "GO:0016020",
+            "GO:0031090",
+            "GO:0019866",
+            "GO:0031966",
+            "GO:0005743",
+            "GO:0005743"
+          ],
+          "evidence": [
+            "mitochondrial inner membrane"
+          ]
+        },
+        {
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ],
+          "evidence": [
+            "mitochondrion"
+          ],
+          "term": "GO:0005739"
+        },
+        {
+          "term": "GO:0005739",
+          "evidence": [
+            "mitochondrion"
+          ],
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ]
+        },
+        {
+          "term": "GO:0005743",
+          "parents": [
+            "GO:0016020",
+            "GO:0031090",
+            "GO:0019866",
+            "GO:0031966",
+            "GO:0005743",
+            "GO:0005743"
+          ],
+          "evidence": [
+            "mitochondrial inner membrane"
+          ]
+        },
+        {
+          "parents": [
+            "GO:0016020",
+            "GO:0016020"
+          ],
+          "evidence": [
+            "membrane"
+          ],
+          "term": "GO:0016020"
+        },
+        {
+          "term": "GO:0005739",
+          "evidence": [
+            "mitochondrion"
+          ],
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ]
+        },
+        {
+          "evidence": [
+            "mitochondrion"
+          ],
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ],
+          "term": "GO:0005739"
+        },
+        {
+          "term": "GO:0016020",
+          "parents": [
+            "GO:0016020",
+            "GO:0016020"
+          ],
+          "evidence": [
+            "membrane"
+          ]
+        },
+        {
+          "term": "GO:0005739",
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ],
+          "evidence": [
+            "mitochondrion"
+          ]
+        },
+        {
+          "term": "GO:0005739",
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ],
+          "evidence": [
+            "mitochondrion"
+          ]
+        },
+        {
+          "evidence": [
+            "mitochondrial inner membrane"
+          ],
+          "parents": [
+            "GO:0016020",
+            "GO:0031090",
+            "GO:0019866",
+            "GO:0031966",
+            "GO:0005743",
+            "GO:0005743"
+          ],
+          "term": "GO:0005743"
+        },
+        {
+          "parents": [
+            "GO:0016020",
+            "GO:0016020"
+          ],
+          "evidence": [
+            "membrane"
+          ],
+          "term": "GO:0016020"
+        },
+        {
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ],
+          "evidence": [
+            "mitochondrion"
+          ],
+          "term": "GO:0005739"
+        },
+        {
+          "term": "GO:0005739",
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ],
+          "evidence": [
+            "mitochondrion"
+          ]
+        },
+        {
+          "parents": [
+            "GO:0005739",
+            "GO:0005739"
+          ],
+          "evidence": [
+            "mitochondrion"
+          ],
+          "term": "GO:0005739"
+        },
+        {
+          "evidence": [
+            "mitochondrial inner membrane"
+          ],
+          "parents": [
+            "GO:0016020",
+            "GO:0031090",
+            "GO:0019866",
+            "GO:0031966",
+            "GO:0005743",
+            "GO:0005743"
+          ],
+          "term": "GO:0005743"
+        }
+      ],
+      "UniParc": [
+        "UPI00108F6A23",
+        "UPI001087D2E2",
+        "UPI00108D02BD",
+        "UPI001088D0A3",
+        "UPI00108E901D"
+      ],
+      "coord_system": {
+        "name": "primary_assembly",
+        "seq_length": 1618278,
+        "version": "aptOwe1",
+        "seq_name": "PTFC01000203.1"
+      }
+    },
+    {
+      "Phobius": [
+        "SIGNAL_PEPTIDE_H_REGION",
+        "SIGNAL_PEPTIDE_C_REGION",
+        "CYTOPLASMIC_DOMAIN",
+        "SIGNAL_PEPTIDE",
+        "NON_CYTOPLASMIC_DOMAIN",
+        "TRANSMEMBRANE",
+        "SIGNAL_PEPTIDE_N_REGION"
+      ],
+      "lineage": [
+        6072,
+        7711,
+        7742,
+        7776,
+        8287,
+        8457,
+        8492,
+        8782,
+        8783,
+        8819,
+        8820,
+        8821,
+        8824,
+        32523,
+        32524,
+        32561,
+        33154,
+        33208,
+        33213,
+        33511,
+        89593,
+        117570,
+        117571,
+        436486,
+        436489,
+        436491,
+        436492,
+        1329799,
+        1338369,
+        1,
+        2759,
+        131567
+      ],
+      "id": "ENSAOWG00000006941",
+      "start": "78684",
+      "PANTHER": [
+        "PTHR22625"
+      ],
+      "transcripts": [
+        {
+          "Seg": [
+            "seg"
+          ],
+          "Pfam": [
+            "PF24317",
+            "PF01437",
+            "PF01403",
+            "PF01833",
+            "PF20170",
+            "PF17960",
+            "PF08337"
+          ],
+          "seq_region_name": "PTFC01000866.1",
+          "GO": [
+            {
+              "term": "GO:0008360",
+              "parents": [
+                "GO:0008150",
+                "GO:0065008",
+                "GO:0065007",
+                "GO:0050789",
+                "GO:0022603",
+                "GO:0050793",
+                "GO:0008360",
+                "GO:0022604",
+                "GO:0008360"
+              ],
+              "evidence": [
+                "regulation of cell shape"
+              ]
+            },
+            {
+              "parents": [
+                "GO:0008150",
+                "GO:0065007",
+                "GO:0009987",
+                "GO:0050789",
+                "GO:0050794",
+                "GO:0007166",
+                "GO:0007165",
+                "GO:0071526",
+                "GO:0071526"
+              ],
+              "evidence": [
+                "semaphorin-plexin signaling pathway"
+              ],
+              "term": "GO:0071526"
+            },
+            {
+              "parents": [
+                "GO:0005515",
+                "GO:0005515"
+              ],
+              "evidence": [
+                "protein binding",
+                "protein binding"
+              ],
+              "term": "GO:0005515"
+            },
+            {
+              "term": "GO:0010975",
+              "parents": [
+                "GO:0008150",
+                "GO:0065007",
+                "GO:0050789",
+                "GO:0050794",
+                "GO:0051128",
+                "GO:0010975",
+                "GO:0120035",
+                "GO:0031344",
+                "GO:0010975"
+              ],
+              "evidence": [
+                "regulation of neuron projection development"
+              ]
+            },
+            {
+              "term": "GO:0005886",
+              "parents": [
+                "GO:0005886",
+                "GO:0005886"
+              ],
+              "evidence": [
+                "plasma membrane"
+              ]
+            },
+            {
+              "term": "GO:0050772",
+              "evidence": [
+                "positive regulation of axonogenesis"
+              ],
+              "parents": [
+                "GO:0008150",
+                "GO:0065007",
+                "GO:0050789",
+                "GO:0050794",
+                "GO:0051239",
+                "GO:0022603",
+                "GO:0050793",
+                "GO:0051240",
+                "GO:0048518",
+                "GO:0051094",
+                "GO:0048522",
+                "GO:0045595",
+                "GO:0045597",
+                "GO:0051128",
+                "GO:0051130",
+                "GO:2000026",
+                "GO:0010975",
+                "GO:0120035",
+                "GO:0031344",
+                "GO:0031346",
+                "GO:0060284",
+                "GO:0010720",
+                "GO:0050769",
+                "GO:0051962",
+                "GO:0051960",
+                "GO:0050767",
+                "GO:0050770",
+                "GO:0050772",
+                "GO:0050772"
+              ]
+            },
+            {
+              "parents": [
+                "GO:0017154"
+              ],
+              "evidence": [
+                "semaphorin receptor activity"
+              ],
+              "term": "GO:0017154"
+            },
+            {
+              "term": "GO:0004888",
+              "evidence": [
+                "transmembrane signaling receptor activity"
+              ],
+              "parents": [
+                "GO:0038023",
+                "GO:0004888",
+                "GO:0004888"
+              ]
+            },
+            {
+              "term": "GO:0031346",
+              "parents": [
+                "GO:0008150",
+                "GO:0065007",
+                "GO:0050789",
+                "GO:0050794",
+                "GO:0048518",
+                "GO:0048522",
+                "GO:0051128",
+                "GO:0051130",
+                "GO:0031344",
+                "GO:0031346",
+                "GO:0031346"
+              ],
+              "evidence": [
+                "positive regulation of cell projection organization"
+              ]
+            },
+            {
+              "parents": [
+                "GO:0016020",
+                "GO:0016020"
+              ],
+              "evidence": [
+                "membrane"
+              ],
+              "term": "GO:0016020"
+            },
+            {
+              "evidence": [
+                "plasma membrane"
+              ],
+              "parents": [
+                "GO:0005886",
+                "GO:0005886"
+              ],
+              "term": "GO:0005886"
+            },
+            {
+              "parents": [
+                "GO:0017154"
+              ],
+              "evidence": [
+                "semaphorin receptor activity"
+              ],
+              "term": "GO:0017154"
+            },
+            {
+              "evidence": [
+                "regulation of protein metabolic process"
+              ],
+              "parents": [
+                "GO:0008150",
+                "GO:0065007",
+                "GO:0050789",
+                "GO:0050794",
+                "GO:0080090",
+                "GO:0019222",
+                "GO:0051246",
+                "GO:0060255",
+                "GO:0051246"
+              ],
+              "term": "GO:0051246"
+            },
+            {
+              "term": "GO:0002116",
+              "evidence": [
+                "semaphorin receptor complex"
+              ],
+              "parents": [
+                "GO:0005575",
+                "GO:0032991",
+                "GO:0043235",
+                "GO:0002116",
+                "GO:0002116"
+              ]
+            },
+            {
+              "term": "GO:0007162",
+              "parents": [
+                "GO:0008150",
+                "GO:0065007",
+                "GO:0050789",
+                "GO:0050794",
+                "GO:0048519",
+                "GO:0048523",
+                "GO:0030155",
+                "GO:0007162",
+                "GO:0007162"
+              ],
+              "evidence": [
+                "negative regulation of cell adhesion"
+              ]
+            },
+            {
+              "term": "GO:0017154",
+              "evidence": [
+                "semaphorin receptor activity",
+                "semaphorin receptor activity",
+                "semaphorin receptor activity"
+              ],
+              "parents": [
+                "GO:0017154"
+              ]
+            },
+            {
+              "parents": [
+                "GO:0008150",
+                "GO:0065007",
+                "GO:0009987",
+                "GO:0050789",
+                "GO:0050794",
+                "GO:0007166",
+                "GO:0007165",
+                "GO:0071526",
+                "GO:0071526"
+              ],
+              "evidence": [
+                "semaphorin-plexin signaling pathway"
+              ],
+              "term": "GO:0071526"
+            },
+            {
+              "term": "GO:0030334",
+              "parents": [
+                "GO:0008150",
+                "GO:0065007",
+                "GO:0050789",
+                "GO:0050794",
+                "GO:2000145",
+                "GO:0040012",
+                "GO:0030334",
+                "GO:0030334"
+              ],
+              "evidence": [
+                "regulation of cell migration"
+              ]
+            }
+          ],
+          "Smart": [
+            "SM00423",
+            "SM00630",
+            "SM00429"
+          ],
+          "UniParc": [
+            "UPI00108A7B04"
+          ],
+          "strand": "1",
+          "translations": [
+            {
+              "SuperFamily": [
+                "SSF103575",
+                "SSF81296",
+                "SSF48350",
+                "SSF101912"
+              ],
+              "Interpro": [
+                "IPR015943",
+                "IPR002165",
+                "IPR002909",
+                "IPR013783",
+                "IPR008936",
+                "IPR014756",
+                "IPR013548",
+                "IPR001627",
+                "IPR016201",
+                "IPR041019",
+                "IPR031148",
+                "IPR046800",
+                "IPR036352"
+              ],
+              "Prosite_profiles": [
+                "PS51004"
+              ],
+              "Gene3D": [
+                "2.130.10.10",
+                "2.60.40.10"
+              ],
+              "Smart": [
+                "SM00423",
+                "SM00630",
+                "SM00429"
+              ],
+              "protein_features": [
+                {
+                  "ensembl_object_type": "protein_feature",
+                  "interpro_description": "WD40/YVTN repeat-like-containing domain superfamily",
+                  "dbname": "Gene3D",
+                  "name": "2.130.10.10",
+                  "end": "492",
+                  "translation_id": "ENSAOWP00000010095",
+                  "start": "28",
+                  "interpro_name": "WD40/YVTN_repeat-like_dom_sf",
+                  "interpro_ac": "IPR015943"
+                },
+                {
+                  "description": "Immunoglobulins",
+                  "ensembl_object_type": "protein_feature",
+                  "interpro_description": "Immunoglobulin-like fold",
+                  "start": "493",
+                  "translation_id": "ENSAOWP00000010095",
+                  "interpro_ac": "IPR013783",
+                  "interpro_name": "Ig-like_fold",
+                  "dbname": "Gene3D",
+                  "end": "628",
+                  "name": "2.60.40.10"
+                },
+                {
+                  "dbname": "Gene3D",
+                  "end": "910",
+                  "name": "2.60.40.10",
+                  "start": "783",
+                  "translation_id": "ENSAOWP00000010095",
+                  "interpro_ac": "IPR013783",
+                  "interpro_name": "Ig-like_fold",
+                  "description": "Immunoglobulins",
+                  "ensembl_object_type": "protein_feature",
+                  "interpro_description": "Immunoglobulin-like fold"
+                },
+                {
+                  "end": "997",
+                  "name": "2.60.40.10",
+                  "dbname": "Gene3D",
+                  "interpro_ac": "IPR013783",
+                  "interpro_name": "Ig-like_fold",
+                  "start": "911",
+                  "translation_id": "ENSAOWP00000010095",
+                  "interpro_description": "Immunoglobulin-like fold",
+                  "description": "Immunoglobulins",
+                  "ensembl_object_type": "protein_feature"
+                },
+                {
+                  "end": "1821",
+                  "name": "CYTOPLASMIC_DOMAIN",
+                  "dbname": "Phobius",
+                  "translation_id": "ENSAOWP00000010095",
+                  "description": "Cytoplasmic domain",
+                  "start": "1228",
+                  "ensembl_object_type": "protein_feature"
+                },
+                {
+                  "dbname": "ncoils",
+                  "end": "1251",
+                  "name": "Coil",
+                  "description": "Coil",
+                  "start": "1224",
+                  "ensembl_object_type": "protein_feature",
+                  "translation_id": "ENSAOWP00000010095"
+                },
+                {
+                  "ensembl_object_type": "protein_feature",
+                  "description": "Non cytoplasmic domain",
+                  "start": "21",
+                  "translation_id": "ENSAOWP00000010095",
+                  "end": "1206",
+                  "name": "NON_CYTOPLASMIC_DOMAIN",
+                  "dbname": "Phobius"
+                },
+                {
+                  "end": "458",
+                  "name": "PF01403",
+                  "dbname": "Pfam",
+                  "interpro_name": "Semap_dom",
+                  "interpro_ac": "IPR001627",
+                  "translation_id": "ENSAOWP00000010095",
+                  "start": "298",
+                  "interpro_description": "Sema domain",
+                  "description": "Sema",
+                  "ensembl_object_type": "protein_feature"
+                },
+                {
+                  "interpro_ac": "IPR002165",
+                  "interpro_name": "Plexin_repeat",
+                  "start": "481",
+                  "translation_id": "ENSAOWP00000010095",
+                  "end": "531",
+                  "name": "PF01437",
+                  "dbname": "Pfam",
+                  "interpro_description": "Plexin repeat",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "PSI"
+                },
+                {
+                  "ensembl_object_type": "protein_feature",
+                  "description": "TIG",
+                  "interpro_description": "IPT domain",
+                  "translation_id": "ENSAOWP00000010095",
+                  "start": "818",
+                  "interpro_name": "IPT_dom",
+                  "interpro_ac": "IPR002909",
+                  "dbname": "Pfam",
+                  "end": "907",
+                  "name": "PF01833"
+                },
+                {
+                  "description": "TIG",
+                  "ensembl_object_type": "protein_feature",
+                  "interpro_description": "IPT domain",
+                  "dbname": "Pfam",
+                  "end": "993",
+                  "name": "PF01833",
+                  "translation_id": "ENSAOWP00000010095",
+                  "start": "910",
+                  "interpro_name": "IPT_dom",
+                  "interpro_ac": "IPR002909"
+                },
+                {
+                  "start": "997",
+                  "translation_id": "ENSAOWP00000010095",
+                  "interpro_ac": "IPR002909",
+                  "interpro_name": "IPT_dom",
+                  "dbname": "Pfam",
+                  "name": "PF01833",
+                  "end": "1068",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "TIG",
+                  "interpro_description": "IPT domain"
+                },
+                {
+                  "interpro_description": "Plexin, cytoplasmic RasGAP domain",
+                  "description": "Plexin_cytopl",
+                  "ensembl_object_type": "protein_feature",
+                  "name": "PF08337",
+                  "end": "1812",
+                  "dbname": "Pfam",
+                  "interpro_ac": "IPR013548",
+                  "interpro_name": "Plexin_cytoplasmic_RasGAP_dom",
+                  "start": "1278",
+                  "translation_id": "ENSAOWP00000010095"
+                },
+                {
+                  "dbname": "Pfam",
+                  "name": "PF17960",
+                  "end": "625",
+                  "start": "539",
+                  "translation_id": "ENSAOWP00000010095",
+                  "interpro_ac": "IPR041019",
+                  "interpro_name": "TIG1_plexin",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "TIG_plexin",
+                  "interpro_description": "Plexin, TIG domain 1"
+                },
+                {
+                  "interpro_ac": "IPR046800",
+                  "interpro_name": "Plexin_RBD",
+                  "start": "1455",
+                  "translation_id": "ENSAOWP00000010095",
+                  "name": "PF20170",
+                  "end": "1563",
+                  "dbname": "Pfam",
+                  "interpro_description": "Plexin, cytoplasmic RhoGTPase-binding domain",
+                  "description": "Plexin_RBD",
+                  "ensembl_object_type": "protein_feature"
+                },
+                {
+                  "description": "PSI_Plexin-B",
+                  "ensembl_object_type": "protein_feature",
+                  "start": "769",
+                  "translation_id": "ENSAOWP00000010095",
+                  "dbname": "Pfam",
+                  "name": "PF24317",
+                  "end": "803"
+                },
+                {
+                  "interpro_name": "Semap_dom",
+                  "interpro_ac": "IPR001627",
+                  "translation_id": "ENSAOWP00000010095",
+                  "start": "1",
+                  "end": "479",
+                  "name": "PS51004",
+                  "dbname": "Prosite_profiles",
+                  "interpro_description": "Sema domain",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "SEMA"
+                },
+                {
+                  "name": "PTHR22625",
+                  "end": "1812",
+                  "dbname": "PANTHER",
+                  "interpro_ac": "IPR031148",
+                  "interpro_name": "Plexin",
+                  "start": "11",
+                  "translation_id": "ENSAOWP00000010095",
+                  "interpro_description": "Plexin family",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "PLEXIN"
+                },
+                {
+                  "end": "20",
+                  "name": "SIGNAL_PEPTIDE",
+                  "dbname": "Phobius",
+                  "translation_id": "ENSAOWP00000010095",
+                  "start": "1",
+                  "description": "Signal Peptide",
+                  "ensembl_object_type": "protein_feature"
+                },
+                {
+                  "dbname": "Phobius",
+                  "end": "20",
+                  "name": "SIGNAL_PEPTIDE_C_REGION",
+                  "description": "Signal peptide C-region",
+                  "start": "17",
+                  "ensembl_object_type": "protein_feature",
+                  "translation_id": "ENSAOWP00000010095"
+                },
+                {
+                  "start": "7",
+                  "description": "Signal peptide H-region",
+                  "ensembl_object_type": "protein_feature",
+                  "translation_id": "ENSAOWP00000010095",
+                  "name": "SIGNAL_PEPTIDE_H_REGION",
+                  "end": "16",
+                  "dbname": "Phobius"
+                },
+                {
+                  "dbname": "Phobius",
+                  "end": "6",
+                  "name": "SIGNAL_PEPTIDE_N_REGION",
+                  "translation_id": "ENSAOWP00000010095",
+                  "start": "1",
+                  "description": "Signal peptide N-region",
+                  "ensembl_object_type": "protein_feature"
+                },
+                {
+                  "interpro_description": "PSI domain",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "psinew7",
+                  "interpro_ac": "IPR016201",
+                  "interpro_name": "PSI",
+                  "start": "481",
+                  "translation_id": "ENSAOWP00000010095",
+                  "name": "SM00423",
+                  "end": "532",
+                  "dbname": "Smart"
+                },
+                {
+                  "description": "psinew7",
+                  "ensembl_object_type": "protein_feature",
+                  "interpro_description": "PSI domain",
+                  "dbname": "Smart",
+                  "name": "SM00423",
+                  "end": "677",
+                  "start": "626",
+                  "translation_id": "ENSAOWP00000010095",
+                  "interpro_ac": "IPR016201",
+                  "interpro_name": "PSI"
+                },
+                {
+                  "interpro_description": "PSI domain",
+                  "description": "psinew7",
+                  "ensembl_object_type": "protein_feature",
+                  "name": "SM00423",
+                  "end": "816",
+                  "dbname": "Smart",
+                  "interpro_name": "PSI",
+                  "interpro_ac": "IPR016201",
+                  "translation_id": "ENSAOWP00000010095",
+                  "start": "769"
+                },
+                {
+                  "ensembl_object_type": "protein_feature",
+                  "description": "iptmega2",
+                  "interpro_description": "IPT domain",
+                  "start": "817",
+                  "translation_id": "ENSAOWP00000010095",
+                  "interpro_ac": "IPR002909",
+                  "interpro_name": "IPT_dom",
+                  "dbname": "Smart",
+                  "end": "908",
+                  "name": "SM00429"
+                },
+                {
+                  "interpro_description": "IPT domain",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "iptmega2",
+                  "name": "SM00429",
+                  "end": "994",
+                  "dbname": "Smart",
+                  "interpro_ac": "IPR002909",
+                  "interpro_name": "IPT_dom",
+                  "start": "909",
+                  "translation_id": "ENSAOWP00000010095"
+                },
+                {
+                  "description": "iptmega2",
+                  "ensembl_object_type": "protein_feature",
+                  "interpro_description": "IPT domain",
+                  "start": "996",
+                  "translation_id": "ENSAOWP00000010095",
+                  "interpro_ac": "IPR002909",
+                  "interpro_name": "IPT_dom",
+                  "dbname": "Smart",
+                  "end": "1099",
+                  "name": "SM00429"
+                },
+                {
+                  "description": "sema",
+                  "ensembl_object_type": "protein_feature",
+                  "interpro_description": "Sema domain",
+                  "dbname": "Smart",
+                  "end": "463",
+                  "name": "SM00630",
+                  "translation_id": "ENSAOWP00000010095",
+                  "start": "38",
+                  "interpro_name": "Semap_dom",
+                  "interpro_ac": "IPR001627"
+                },
+                {
+                  "interpro_name": "Semap_dom_sf",
+                  "interpro_ac": "IPR036352",
+                  "translation_id": "ENSAOWP00000010095",
+                  "start": "29",
+                  "name": "SSF101912",
+                  "end": "479",
+                  "dbname": "SuperFamily",
+                  "interpro_description": "Sema domain superfamily",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "Sema domain"
+                },
+                {
+                  "translation_id": "ENSAOWP00000010095",
+                  "ensembl_object_type": "protein_feature",
+                  "start": "482",
+                  "description": "Plexin repeat",
+                  "dbname": "SuperFamily",
+                  "name": "SSF103575",
+                  "end": "533"
+                },
+                {
+                  "interpro_description": "Rho GTPase activation protein",
+                  "description": "GTPase activation domain, GAP",
+                  "ensembl_object_type": "protein_feature",
+                  "end": "1812",
+                  "name": "SSF48350",
+                  "dbname": "SuperFamily",
+                  "interpro_ac": "IPR008936",
+                  "interpro_name": "Rho_GTPase_activation_prot",
+                  "start": "1320",
+                  "translation_id": "ENSAOWP00000010095"
+                },
+                {
+                  "ensembl_object_type": "protein_feature",
+                  "description": "E set domains",
+                  "interpro_description": "Immunoglobulin E-set",
+                  "translation_id": "ENSAOWP00000010095",
+                  "start": "814",
+                  "interpro_name": "Ig_E-set",
+                  "interpro_ac": "IPR014756",
+                  "dbname": "SuperFamily",
+                  "name": "SSF81296",
+                  "end": "909"
+                },
+                {
+                  "interpro_description": "Immunoglobulin E-set",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "E set domains",
+                  "interpro_ac": "IPR014756",
+                  "interpro_name": "Ig_E-set",
+                  "start": "907",
+                  "translation_id": "ENSAOWP00000010095",
+                  "end": "996",
+                  "name": "SSF81296",
+                  "dbname": "SuperFamily"
+                },
+                {
+                  "dbname": "SuperFamily",
+                  "name": "SSF81296",
+                  "end": "1085",
+                  "start": "994",
+                  "translation_id": "ENSAOWP00000010095",
+                  "interpro_ac": "IPR014756",
+                  "interpro_name": "Ig_E-set",
+                  "description": "E set domains",
+                  "ensembl_object_type": "protein_feature",
+                  "interpro_description": "Immunoglobulin E-set"
+                },
+                {
+                  "name": "SignalP-noTM",
+                  "end": "24",
+                  "dbname": "SignalP",
+                  "start": "1",
+                  "description": "SignalP-noTM",
+                  "ensembl_object_type": "protein_feature",
+                  "translation_id": "ENSAOWP00000010095"
+                },
+                {
+                  "ensembl_object_type": "protein_feature",
+                  "start": "1207",
+                  "description": "Transmembrane region",
+                  "translation_id": "ENSAOWP00000010095",
+                  "dbname": "Phobius",
+                  "name": "TRANSMEMBRANE",
+                  "end": "1227"
+                },
+                {
+                  "name": "seg",
+                  "end": "108",
+                  "dbname": "Seg",
+                  "translation_id": "ENSAOWP00000010095",
+                  "start": "101",
+                  "ensembl_object_type": "protein_feature"
+                },
+                {
+                  "end": "307",
+                  "name": "seg",
+                  "dbname": "Seg",
+                  "start": "295",
+                  "ensembl_object_type": "protein_feature",
+                  "translation_id": "ENSAOWP00000010095"
+                },
+                {
+                  "name": "seg",
+                  "end": "938",
+                  "dbname": "Seg",
+                  "translation_id": "ENSAOWP00000010095",
+                  "start": "923",
+                  "ensembl_object_type": "protein_feature"
+                },
+                {
+                  "dbname": "Seg",
+                  "end": "1225",
+                  "name": "seg",
+                  "translation_id": "ENSAOWP00000010095",
+                  "start": "1203",
+                  "ensembl_object_type": "protein_feature"
+                }
+              ],
+              "UniParc": [
+                "UPI00108A7B04"
+              ],
+              "Pfam": [
+                "PF17960",
+                "PF20170",
+                "PF08337",
+                "PF01833",
+                "PF01403",
+                "PF24317",
+                "PF01437"
+              ],
+              "Seg": [
+                "seg"
+              ],
+              "ncoils": [
+                "Coil"
+              ],
+              "PANTHER": [
+                "PTHR22625"
+              ],
+              "Phobius": [
+                "CYTOPLASMIC_DOMAIN",
+                "SIGNAL_PEPTIDE",
+                "TRANSMEMBRANE",
+                "NON_CYTOPLASMIC_DOMAIN",
+                "SIGNAL_PEPTIDE_N_REGION",
+                "SIGNAL_PEPTIDE_C_REGION",
+                "SIGNAL_PEPTIDE_H_REGION"
+              ],
+              "id": "ENSAOWP00000010095",
+              "SignalP": [
+                "SignalP-noTM"
+              ],
+              "xrefs": [
+                {
+                  "info_text": "",
+                  "dbname": "UniParc",
+                  "info_type": "CHECKSUM",
+                  "primary_id": "UPI00108A7B04",
+                  "db_display": "UniParc",
+                  "display_id": "UPI00108A7B04"
+                },
+                {
+                  "info_text": "Generated via direct",
+                  "info_type": "DIRECT",
+                  "dbname": "Uniprot/SPTREMBL",
+                  "db_display": "UniProtKB/TrEMBL",
+                  "primary_id": "A0A8B9PBU7",
+                  "display_id": "A0A8B9PBU7.13",
+                  "description": "Plexin B2 "
+                }
+              ],
+              "Uniprot/SPTREMBL": [
+                "A0A8B9PBU7"
+              ]
+            }
+          ],
+          "Gene3D": [
+            "2.130.10.10",
+            "2.60.40.10"
+          ],
+          "Prosite_profiles": [
+            "PS51004"
+          ],
+          "Interpro": [
+            "IPR015943",
+            "IPR002165",
+            "IPR002909",
+            "IPR013783",
+            "IPR014756",
+            "IPR008936",
+            "IPR013548",
+            "IPR001627",
+            "IPR041019",
+            "IPR016201",
+            "IPR031148",
+            "IPR046800",
+            "IPR036352"
+          ],
+          "SuperFamily": [
+            "SSF103575",
+            "SSF81296",
+            "SSF48350",
+            "SSF101912"
+          ],
+          "biotype": "protein_coding",
+          "Uniprot/SPTREMBL": [
+            "A0A8B9PBU7"
+          ],
+          "xrefs": [
+            {
+              "associated_xrefs": [],
+              "primary_id": "GO:0008360",
+              "display_id": "GO:0008360",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "regulation of cell shape",
+                  "source": {
+                    "dbname": "Plexin B2 ",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "display_id": "A0A8B9PBU7",
+                    "description": "A0A8B9PBU7.13"
+                  }
+                }
+              ],
+              "dbname": "GO"
+            },
+            {
+              "display_id": "GO:0071526",
+              "linkage_types": [
+                {
+                  "source": {
+                    "db_display_name": "Interpro",
+                    "primary_id": "IEA",
+                    "display_id": "IPR031148",
+                    "description": "Plexin",
+                    "dbname": "Plexin family"
+                  },
+                  "evidence": "semaphorin-plexin signaling pathway"
+                }
+              ],
+              "description": "GO",
+              "associated_xrefs": [],
+              "primary_id": "GO:0071526",
+              "dbname": "GO"
+            },
+            {
+              "display_id": "GO:0005515",
+              "linkage_types": [
+                {
+                  "evidence": "protein binding",
+                  "source": {
+                    "display_id": "IPR001627",
+                    "description": "Semap_dom",
+                    "primary_id": "IEA",
+                    "db_display_name": "Interpro",
+                    "dbname": "Sema domain"
+                  }
+                },
+                {
+                  "evidence": "protein binding",
+                  "source": {
+                    "dbname": "WD40/YVTN repeat-like-containing domain superfamily",
+                    "db_display_name": "Interpro",
+                    "primary_id": "IEA",
+                    "display_id": "IPR015943",
+                    "description": "WD40/YVTN_repeat-like_dom_sf"
+                  }
+                }
+              ],
+              "description": "GO",
+              "associated_xrefs": [],
+              "primary_id": "GO:0005515",
+              "dbname": "GO"
+            },
+            {
+              "display_id": "GO:0010975",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "regulation of neuron projection development",
+                  "source": {
+                    "description": "A0A8B9PBU7.13",
+                    "display_id": "A0A8B9PBU7",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "dbname": "Plexin B2 "
+                  }
+                }
+              ],
+              "associated_xrefs": [],
+              "primary_id": "GO:0010975",
+              "dbname": "GO"
+            },
+            {
+              "dbname": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "plasma membrane",
+                  "source": {
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "display_id": "A0A8B9PBU7",
+                    "description": "A0A8B9PBU7.13",
+                    "dbname": "Plexin B2 "
+                  }
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0005886",
+              "associated_xrefs": [],
+              "primary_id": "GO:0005886"
+            },
+            {
+              "dbname": "GO",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "source": {
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "description": "A0A8B9PBU7.13",
+                    "display_id": "A0A8B9PBU7",
+                    "dbname": "Plexin B2 "
+                  },
+                  "evidence": "positive regulation of axonogenesis"
+                }
+              ],
+              "display_id": "GO:0050772",
+              "associated_xrefs": [],
+              "primary_id": "GO:0050772"
+            },
+            {
+              "dbname": "GO",
+              "display_id": "GO:0017154",
+              "linkage_types": [
+                {
+                  "evidence": "semaphorin receptor activity",
+                  "source": {
+                    "description": "A0A8B9PBU7.13",
+                    "display_id": "A0A8B9PBU7",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "dbname": "Plexin B2 "
+                  }
+                }
+              ],
+              "description": "GO",
+              "primary_id": "GO:0017154",
+              "associated_xrefs": []
+            },
+            {
+              "primary_id": "GO:0004888",
+              "associated_xrefs": [],
+              "display_id": "GO:0004888",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "source": {
+                    "dbname": "Plexin B2 ",
+                    "display_id": "A0A8B9PBU7",
+                    "description": "A0A8B9PBU7.13",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA"
+                  },
+                  "evidence": "transmembrane signaling receptor activity"
+                }
+              ],
+              "dbname": "GO"
+            },
+            {
+              "dbname": "GO",
+              "primary_id": "GO:0031346",
+              "associated_xrefs": [],
+              "display_id": "GO:0031346",
+              "linkage_types": [
+                {
+                  "source": {
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "display_id": "A0A8B9PBU7",
+                    "description": "A0A8B9PBU7.13",
+                    "dbname": "Plexin B2 "
+                  },
+                  "evidence": "positive regulation of cell projection organization"
+                }
+              ],
+              "description": "GO"
+            },
+            {
+              "dbname": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "membrane",
+                  "source": {
+                    "dbname": "Plexin B2 ",
+                    "description": "A0A8B9PBU7.13",
+                    "display_id": "A0A8B9PBU7",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL"
+                  }
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0016020",
+              "primary_id": "GO:0016020",
+              "associated_xrefs": []
+            },
+            {
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "plasma membrane",
+                  "source": {
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "display_id": "A0A8B9PBU7",
+                    "description": "A0A8B9PBU7.13",
+                    "dbname": "Plexin B2 "
+                  }
+                }
+              ],
+              "display_id": "GO:0005886",
+              "primary_id": "GO:0005886",
+              "associated_xrefs": [],
+              "dbname": "GO"
+            },
+            {
+              "linkage_types": [
+                {
+                  "evidence": "semaphorin receptor activity",
+                  "source": {
+                    "dbname": "Plexin B2 ",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "display_id": "A0A8B9PBU7",
+                    "description": "A0A8B9PBU7.13"
+                  }
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0017154",
+              "primary_id": "GO:0017154",
+              "associated_xrefs": [],
+              "dbname": "GO"
+            },
+            {
+              "dbname": "GO",
+              "associated_xrefs": [],
+              "primary_id": "GO:0051246",
+              "linkage_types": [
+                {
+                  "evidence": "regulation of protein metabolic process",
+                  "source": {
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "display_id": "A0A8B9PBU7",
+                    "description": "A0A8B9PBU7.13",
+                    "dbname": "Plexin B2 "
+                  }
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0051246"
+            },
+            {
+              "primary_id": "GO:0002116",
+              "associated_xrefs": [],
+              "linkage_types": [
+                {
+                  "source": {
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "description": "A0A8B9PBU7.13",
+                    "display_id": "A0A8B9PBU7",
+                    "dbname": "Plexin B2 "
+                  },
+                  "evidence": "semaphorin receptor complex"
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0002116",
+              "dbname": "GO"
+            },
+            {
+              "dbname": "GO",
+              "display_id": "GO:0007162",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "negative regulation of cell adhesion",
+                  "source": {
+                    "description": "A0A8B9PBU7.13",
+                    "display_id": "A0A8B9PBU7",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "dbname": "Plexin B2 "
+                  }
+                }
+              ],
+              "primary_id": "GO:0007162",
+              "associated_xrefs": []
+            },
+            {
+              "dbname": "GO",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "semaphorin receptor activity",
+                  "source": {
+                    "dbname": "Plexin family",
+                    "db_display_name": "Interpro",
+                    "primary_id": "IEA",
+                    "display_id": "IPR031148",
+                    "description": "Plexin"
+                  }
+                },
+                {
+                  "source": {
+                    "description": "Plexin_RBD",
+                    "display_id": "IPR046800",
+                    "db_display_name": "Interpro",
+                    "primary_id": "IEA",
+                    "dbname": "Plexin, cytoplasmic RhoGTPase-binding domain"
+                  },
+                  "evidence": "semaphorin receptor activity"
+                },
+                {
+                  "evidence": "semaphorin receptor activity",
+                  "source": {
+                    "dbname": "Plexin, cytoplasmic RasGAP domain",
+                    "description": "Plexin_cytoplasmic_RasGAP_dom",
+                    "display_id": "IPR013548",
+                    "primary_id": "IEA",
+                    "db_display_name": "Interpro"
+                  }
+                }
+              ],
+              "display_id": "GO:0017154",
+              "associated_xrefs": [],
+              "primary_id": "GO:0017154"
+            },
+            {
+              "associated_xrefs": [],
+              "primary_id": "GO:0071526",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "semaphorin-plexin signaling pathway",
+                  "source": {
+                    "description": "A0A8B9PBU7.13",
+                    "display_id": "A0A8B9PBU7",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "dbname": "Plexin B2 "
+                  }
+                }
+              ],
+              "display_id": "GO:0071526",
+              "dbname": "GO"
+            },
+            {
+              "primary_id": "GO:0030334",
+              "associated_xrefs": [],
+              "display_id": "GO:0030334",
+              "description": "GO",
+              "linkage_types": [
+                {
+                  "evidence": "regulation of cell migration",
+                  "source": {
+                    "dbname": "Plexin B2 ",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "display_id": "A0A8B9PBU7",
+                    "description": "A0A8B9PBU7.13"
+                  }
+                }
+              ],
+              "dbname": "GO"
+            }
+          ],
+          "SignalP": [
+            "SignalP-noTM"
+          ],
+          "start": "78684",
+          "PANTHER": [
+            "PTHR22625"
+          ],
+          "id": "ENSAOWT00000011460",
+          "Phobius": [
+            "SIGNAL_PEPTIDE_H_REGION",
+            "SIGNAL_PEPTIDE_C_REGION",
+            "SIGNAL_PEPTIDE_N_REGION",
+            "NON_CYTOPLASMIC_DOMAIN",
+            "TRANSMEMBRANE",
+            "SIGNAL_PEPTIDE",
+            "CYTOPLASMIC_DOMAIN"
+          ],
+          "exons": [
+            {
+              "start": "78684",
+              "id": "ENSAOWE00000067565",
+              "seq_region_name": "PTFC01000866.1",
+              "strand": "1",
+              "end": "78858"
+            },
+            {
+              "strand": "1",
+              "end": "140472",
+              "seq_region_name": "PTFC01000866.1",
+              "start": "140393",
+              "id": "ENSAOWE00000067566"
+            },
+            {
+              "strand": "1",
+              "end": "178165",
+              "seq_region_name": "PTFC01000866.1",
+              "start": "177055",
+              "id": "ENSAOWE00000067567"
+            },
+            {
+              "seq_region_name": "PTFC01000866.1",
+              "start": "179816",
+              "id": "ENSAOWE00000067568",
+              "strand": "1",
+              "end": "179998"
+            },
+            {
+              "end": "180995",
+              "strand": "1",
+              "id": "ENSAOWE00000067569",
+              "start": "180873",
+              "seq_region_name": "PTFC01000866.1"
+            },
+            {
+              "strand": "1",
+              "end": "185190",
+              "start": "185090",
+              "id": "ENSAOWE00000067570",
+              "seq_region_name": "PTFC01000866.1"
+            },
+            {
+              "id": "ENSAOWE00000067571",
+              "start": "187387",
+              "seq_region_name": "PTFC01000866.1",
+              "end": "187513",
+              "strand": "1"
+            },
+            {
+              "seq_region_name": "PTFC01000866.1",
+              "id": "ENSAOWE00000067572",
+              "start": "189347",
+              "end": "189497",
+              "strand": "1"
+            },
+            {
+              "id": "ENSAOWE00000067574",
+              "start": "191794",
+              "seq_region_name": "PTFC01000866.1",
+              "end": "191908",
+              "strand": "1"
+            },
+            {
+              "seq_region_name": "PTFC01000866.1",
+              "start": "192624",
+              "id": "ENSAOWE00000067576",
+              "strand": "1",
+              "end": "192726"
+            },
+            {
+              "seq_region_name": "PTFC01000866.1",
+              "start": "193194",
+              "id": "ENSAOWE00000067578",
+              "strand": "1",
+              "end": "193295"
+            },
+            {
+              "strand": "1",
+              "end": "198165",
+              "seq_region_name": "PTFC01000866.1",
+              "start": "198073",
+              "id": "ENSAOWE00000067580"
+            },
+            {
+              "strand": "1",
+              "end": "199428",
+              "start": "199347",
+              "id": "ENSAOWE00000067583",
+              "seq_region_name": "PTFC01000866.1"
+            },
+            {
+              "id": "ENSAOWE00000067585",
+              "start": "203837",
+              "seq_region_name": "PTFC01000866.1",
+              "end": "204009",
+              "strand": "1"
+            },
+            {
+              "strand": "1",
+              "end": "206588",
+              "seq_region_name": "PTFC01000866.1",
+              "start": "206440",
+              "id": "ENSAOWE00000067587"
+            },
+            {
+              "start": "209568",
+              "id": "ENSAOWE00000067588",
+              "seq_region_name": "PTFC01000866.1",
+              "strand": "1",
+              "end": "209676"
+            },
+            {
+              "end": "222513",
+              "strand": "1",
+              "id": "ENSAOWE00000067589",
+              "start": "222377",
+              "seq_region_name": "PTFC01000866.1"
+            },
+            {
+              "seq_region_name": "PTFC01000866.1",
+              "id": "ENSAOWE00000067590",
+              "start": "223161",
+              "end": "223328",
+              "strand": "1"
+            },
+            {
+              "strand": "1",
+              "end": "224998",
+              "seq_region_name": "PTFC01000866.1",
+              "start": "224890",
+              "id": "ENSAOWE00000067591"
+            },
+            {
+              "end": "227011",
+              "strand": "1",
+              "seq_region_name": "PTFC01000866.1",
+              "id": "ENSAOWE00000067595",
+              "start": "226784"
+            },
+            {
+              "start": "227496",
+              "id": "ENSAOWE00000067597",
+              "seq_region_name": "PTFC01000866.1",
+              "strand": "1",
+              "end": "227672"
+            },
+            {
+              "id": "ENSAOWE00000067598",
+              "start": "228136",
+              "seq_region_name": "PTFC01000866.1",
+              "end": "228275",
+              "strand": "1"
+            },
+            {
+              "strand": "1",
+              "end": "229462",
+              "seq_region_name": "PTFC01000866.1",
+              "start": "229362",
+              "id": "ENSAOWE00000067599"
+            },
+            {
+              "end": "231954",
+              "strand": "1",
+              "id": "ENSAOWE00000067602",
+              "start": "231725",
+              "seq_region_name": "PTFC01000866.1"
+            },
+            {
+              "seq_region_name": "PTFC01000866.1",
+              "start": "232993",
+              "id": "ENSAOWE00000067603",
+              "strand": "1",
+              "end": "233174"
+            },
+            {
+              "strand": "1",
+              "end": "234005",
+              "start": "233939",
+              "id": "ENSAOWE00000067605",
+              "seq_region_name": "PTFC01000866.1"
+            },
+            {
+              "strand": "1",
+              "end": "234251",
+              "seq_region_name": "PTFC01000866.1",
+              "start": "234105",
+              "id": "ENSAOWE00000067606"
+            },
+            {
+              "start": "237448",
+              "id": "ENSAOWE00000067607",
+              "seq_region_name": "PTFC01000866.1",
+              "strand": "1",
+              "end": "237604"
+            },
+            {
+              "end": "238674",
+              "strand": "1",
+              "id": "ENSAOWE00000067608",
+              "start": "238574",
+              "seq_region_name": "PTFC01000866.1"
+            },
+            {
+              "end": "239657",
+              "strand": "1",
+              "id": "ENSAOWE00000067610",
+              "start": "239573",
+              "seq_region_name": "PTFC01000866.1"
+            },
+            {
+              "start": "248690",
+              "id": "ENSAOWE00000067611",
+              "seq_region_name": "PTFC01000866.1",
+              "strand": "1",
+              "end": "248844"
+            },
+            {
+              "id": "ENSAOWE00000067613",
+              "start": "250281",
+              "seq_region_name": "PTFC01000866.1",
+              "end": "250441",
+              "strand": "1"
+            },
+            {
+              "end": "251267",
+              "strand": "1",
+              "id": "ENSAOWE00000067614",
+              "start": "251120",
+              "seq_region_name": "PTFC01000866.1"
+            },
+            {
+              "id": "ENSAOWE00000067617",
+              "start": "251776",
+              "seq_region_name": "PTFC01000866.1",
+              "end": "251840",
+              "strand": "1"
+            },
+            {
+              "end": "252708",
+              "strand": "1",
+              "seq_region_name": "PTFC01000866.1",
+              "id": "ENSAOWE00000067618",
+              "start": "252633"
+            },
+            {
+              "end": "254902",
+              "strand": "1",
+              "seq_region_name": "PTFC01000866.1",
+              "id": "ENSAOWE00000067619",
+              "start": "254765"
+            }
+          ],
+          "ncoils": [
+            "Coil"
+          ],
+          "end": "254902"
+        }
+      ],
+      "end": "254902",
+      "ncoils": [
+        "Coil"
+      ],
+      "Uniprot/SPTREMBL": [
+        "A0A8B9PBU7"
+      ],
+      "description": "plexin B2 [Source:HGNC Symbol;Acc:HGNC:9104]",
+      "taxon_id": 8824,
+      "xrefs": [],
+      "genome": "apteryx_owenii",
+      "SignalP": [
+        "SignalP-noTM"
+      ],
+      "homologues": [],
+      "Gene3D": [
+        "2.130.10.10",
+        "2.60.40.10"
+      ],
+      "genome_display": "Little spotted kiwi",
+      "biotype": "protein_coding",
+      "Prosite_profiles": [
+        "PS51004"
+      ],
+      "SuperFamily": [
+        "SSF103575",
+        "SSF81296",
+        "SSF48350",
+        "SSF101912"
+      ],
+      "Interpro": [
+        "IPR002909",
+        "IPR013783",
+        "IPR002165",
+        "IPR015943",
+        "IPR008936",
+        "IPR014756",
+        "IPR001627",
+        "IPR013548",
+        "IPR036352",
+        "IPR046800",
+        "IPR031148",
+        "IPR016201",
+        "IPR041019"
+      ],
+      "seq_region_name": "PTFC01000866.1",
+      "Seg": [
+        "seg"
+      ],
+      "Pfam": [
+        "PF24317",
+        "PF01437",
+        "PF20170",
+        "PF17960",
+        "PF08337",
+        "PF01833",
+        "PF01403"
+      ],
+      "coord_system": {
+        "version": "aptOwe1",
+        "seq_length": 311015,
+        "seq_name": "PTFC01000866.1",
+        "name": "primary_assembly"
+      },
+      "strand": "1",
+      "GO": [
+        {
+          "evidence": [
+            "regulation of cell shape"
+          ],
+          "parents": [
+            "GO:0008150",
+            "GO:0065008",
+            "GO:0065007",
+            "GO:0050789",
+            "GO:0022603",
+            "GO:0050793",
+            "GO:0008360",
+            "GO:0022604",
+            "GO:0008360"
+          ],
+          "term": "GO:0008360"
+        },
+        {
+          "term": "GO:0071526",
+          "parents": [
+            "GO:0008150",
+            "GO:0065007",
+            "GO:0009987",
+            "GO:0050789",
+            "GO:0050794",
+            "GO:0007166",
+            "GO:0007165",
+            "GO:0071526",
+            "GO:0071526"
+          ],
+          "evidence": [
+            "semaphorin-plexin signaling pathway"
+          ]
+        },
+        {
+          "term": "GO:0005515",
+          "evidence": [
+            "protein binding",
+            "protein binding"
+          ],
+          "parents": [
+            "GO:0005515",
+            "GO:0005515"
+          ]
+        },
+        {
+          "parents": [
+            "GO:0008150",
+            "GO:0065007",
+            "GO:0050789",
+            "GO:0050794",
+            "GO:0051128",
+            "GO:0010975",
+            "GO:0120035",
+            "GO:0031344",
+            "GO:0010975"
+          ],
+          "evidence": [
+            "regulation of neuron projection development"
+          ],
+          "term": "GO:0010975"
+        },
+        {
+          "parents": [
+            "GO:0005886",
+            "GO:0005886"
+          ],
+          "evidence": [
+            "plasma membrane"
+          ],
+          "term": "GO:0005886"
+        },
+        {
+          "term": "GO:0050772",
+          "evidence": [
+            "positive regulation of axonogenesis"
+          ],
+          "parents": [
+            "GO:0008150",
+            "GO:0065007",
+            "GO:0050789",
+            "GO:0050794",
+            "GO:0051239",
+            "GO:0022603",
+            "GO:0050793",
+            "GO:0051240",
+            "GO:0048518",
+            "GO:0051094",
+            "GO:0048522",
+            "GO:0045595",
+            "GO:0045597",
+            "GO:0051128",
+            "GO:0051130",
+            "GO:2000026",
+            "GO:0010975",
+            "GO:0120035",
+            "GO:0031344",
+            "GO:0031346",
+            "GO:0060284",
+            "GO:0010720",
+            "GO:0050769",
+            "GO:0051962",
+            "GO:0051960",
+            "GO:0050767",
+            "GO:0050770",
+            "GO:0050772",
+            "GO:0050772"
+          ]
+        },
+        {
+          "term": "GO:0017154",
+          "parents": [
+            "GO:0017154"
+          ],
+          "evidence": [
+            "semaphorin receptor activity"
+          ]
+        },
+        {
+          "parents": [
+            "GO:0038023",
+            "GO:0004888",
+            "GO:0004888"
+          ],
+          "evidence": [
+            "transmembrane signaling receptor activity"
+          ],
+          "term": "GO:0004888"
+        },
+        {
+          "evidence": [
+            "positive regulation of cell projection organization"
+          ],
+          "parents": [
+            "GO:0008150",
+            "GO:0065007",
+            "GO:0050789",
+            "GO:0050794",
+            "GO:0048518",
+            "GO:0048522",
+            "GO:0051128",
+            "GO:0051130",
+            "GO:0031344",
+            "GO:0031346",
+            "GO:0031346"
+          ],
+          "term": "GO:0031346"
+        },
+        {
+          "evidence": [
+            "membrane"
+          ],
+          "parents": [
+            "GO:0016020",
+            "GO:0016020"
+          ],
+          "term": "GO:0016020"
+        },
+        {
+          "term": "GO:0005886",
+          "parents": [
+            "GO:0005886",
+            "GO:0005886"
+          ],
+          "evidence": [
+            "plasma membrane"
+          ]
+        },
+        {
+          "term": "GO:0017154",
+          "parents": [
+            "GO:0017154"
+          ],
+          "evidence": [
+            "semaphorin receptor activity"
+          ]
+        },
+        {
+          "term": "GO:0051246",
+          "evidence": [
+            "regulation of protein metabolic process"
+          ],
+          "parents": [
+            "GO:0008150",
+            "GO:0065007",
+            "GO:0050789",
+            "GO:0050794",
+            "GO:0080090",
+            "GO:0019222",
+            "GO:0051246",
+            "GO:0060255",
+            "GO:0051246"
+          ]
+        },
+        {
+          "term": "GO:0002116",
+          "parents": [
+            "GO:0005575",
+            "GO:0032991",
+            "GO:0043235",
+            "GO:0002116",
+            "GO:0002116"
+          ],
+          "evidence": [
+            "semaphorin receptor complex"
+          ]
+        },
+        {
+          "term": "GO:0007162",
+          "parents": [
+            "GO:0008150",
+            "GO:0065007",
+            "GO:0050789",
+            "GO:0050794",
+            "GO:0048519",
+            "GO:0048523",
+            "GO:0030155",
+            "GO:0007162",
+            "GO:0007162"
+          ],
+          "evidence": [
+            "negative regulation of cell adhesion"
+          ]
+        },
+        {
+          "evidence": [
+            "semaphorin receptor activity",
+            "semaphorin receptor activity",
+            "semaphorin receptor activity"
+          ],
+          "parents": [
+            "GO:0017154"
+          ],
+          "term": "GO:0017154"
+        },
+        {
+          "evidence": [
+            "semaphorin-plexin signaling pathway"
+          ],
+          "parents": [
+            "GO:0008150",
+            "GO:0065007",
+            "GO:0009987",
+            "GO:0050789",
+            "GO:0050794",
+            "GO:0007166",
+            "GO:0007165",
+            "GO:0071526",
+            "GO:0071526"
+          ],
+          "term": "GO:0071526"
+        },
+        {
+          "parents": [
+            "GO:0008150",
+            "GO:0065007",
+            "GO:0050789",
+            "GO:0050794",
+            "GO:2000145",
+            "GO:0040012",
+            "GO:0030334",
+            "GO:0030334"
+          ],
+          "evidence": [
+            "regulation of cell migration"
+          ],
+          "term": "GO:0030334"
+        }
+      ],
+      "Smart": [
+        "SM00630",
+        "SM00423",
+        "SM00429"
+      ],
+      "UniParc": [
+        "UPI00108A7B04"
+      ]
+    },
+    {
+      "end": "642193",
+      "transcripts": [
+        {
+          "start": "639858",
+          "PANTHER": [
+            "PTHR19303"
+          ],
+          "id": "ENSAOWT00000015814",
+          "exons": [
+            {
+              "start": "642177",
+              "id": "ENSAOWE00000094092",
+              "seq_region_name": "PTFC01000182.1",
+              "strand": "-1",
+              "end": "642193"
+            },
+            {
+              "seq_region_name": "PTFC01000182.1",
+              "id": "ENSAOWE00000094093",
+              "start": "641545",
+              "end": "641604",
+              "strand": "-1"
+            },
+            {
+              "end": "641493",
+              "strand": "-1",
+              "id": "ENSAOWE00000094096",
+              "start": "641313",
+              "seq_region_name": "PTFC01000182.1"
+            },
+            {
+              "start": "640890",
+              "id": "ENSAOWE00000094100",
+              "seq_region_name": "PTFC01000182.1",
+              "strand": "-1",
+              "end": "641279"
+            },
+            {
+              "id": "ENSAOWE00000094108",
+              "start": "639858",
+              "seq_region_name": "PTFC01000182.1",
+              "end": "640784",
+              "strand": "-1"
+            }
+          ],
+          "end": "642193",
+          "Uniprot/SPTREMBL": [
+            "A0A8B9S987"
+          ],
+          "xrefs": [
+            {
+              "dbname": "GO",
+              "associated_xrefs": [],
+              "primary_id": "GO:0003677",
+              "display_id": "GO:0003677",
+              "linkage_types": [
+                {
+                  "source": {
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "display_id": "A0A8B9S987",
+                    "description": "A0A8B9S987.13",
+                    "dbname": "HTH CENPB-type domain-containing protein "
+                  },
+                  "evidence": "DNA binding"
+                }
+              ],
+              "description": "GO"
+            },
+            {
+              "dbname": "GO",
+              "display_id": "GO:0003676",
+              "linkage_types": [
+                {
+                  "evidence": "nucleic acid binding",
+                  "source": {
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA",
+                    "description": "A0A8B9S987.13",
+                    "display_id": "A0A8B9S987",
+                    "dbname": "HTH CENPB-type domain-containing protein "
+                  }
+                }
+              ],
+              "description": "GO",
+              "primary_id": "GO:0003676",
+              "associated_xrefs": []
+            },
+            {
+              "display_id": "GO:0005634",
+              "linkage_types": [
+                {
+                  "evidence": "nucleus",
+                  "source": {
+                    "dbname": "HTH CENPB-type domain-containing protein ",
+                    "description": "A0A8B9S987.13",
+                    "display_id": "A0A8B9S987",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "primary_id": "IEA"
+                  }
+                }
+              ],
+              "description": "GO",
+              "primary_id": "GO:0005634",
+              "associated_xrefs": [],
+              "dbname": "GO"
+            },
+            {
+              "dbname": "GO",
+              "associated_xrefs": [],
+              "primary_id": "GO:0003676",
+              "linkage_types": [
+                {
+                  "evidence": "nucleic acid binding",
+                  "source": {
+                    "db_display_name": "Interpro",
+                    "primary_id": "IEA",
+                    "description": "DDE_SF_endonuclease_dom",
+                    "display_id": "IPR004875",
+                    "dbname": "DDE superfamily endonuclease domain"
+                  }
+                }
+              ],
+              "description": "GO",
+              "display_id": "GO:0003676"
+            },
+            {
+              "dbname": "GO",
+              "display_id": "GO:0003677",
+              "linkage_types": [
+                {
+                  "evidence": "DNA binding",
+                  "source": {
+                    "description": "A0A8B9S987.13",
+                    "display_id": "A0A8B9S987",
+                    "primary_id": "IEA",
+                    "db_display_name": "Uniprot/SPTREMBL",
+                    "dbname": "HTH CENPB-type domain-containing protein "
+                  }
+                }
+              ],
+              "description": "GO",
+              "primary_id": "GO:0003677",
+              "associated_xrefs": []
+            }
+          ],
+          "Gene3D": [
+            "1.10.10.60"
+          ],
+          "translations": [
+            {
+              "MobiDBLite": [
+                "mobidb-lite"
+              ],
+              "Prosite_profiles": [
+                "PS51253"
+              ],
+              "SuperFamily": [
+                "SSF46689"
+              ],
+              "Interpro": [
+                "IPR004875",
+                "IPR050863",
+                "IPR006600",
+                "IPR009057"
+              ],
+              "Gene3D": [
+                "1.10.10.60"
+              ],
+              "PANTHER": [
+                "PTHR19303"
+              ],
+              "id": "ENSAOWP00000013928",
+              "protein_features": [
+                {
+                  "translation_id": "ENSAOWP00000013928",
+                  "start": "58",
+                  "ensembl_object_type": "protein_feature",
+                  "name": "1.10.10.60",
+                  "end": "110",
+                  "dbname": "Gene3D"
+                },
+                {
+                  "end": "217",
+                  "name": "PF03184",
+                  "dbname": "Pfam",
+                  "interpro_name": "DDE_SF_endonuclease_dom",
+                  "interpro_ac": "IPR004875",
+                  "translation_id": "ENSAOWP00000013928",
+                  "start": "182",
+                  "interpro_description": "DDE superfamily endonuclease domain",
+                  "description": "DDE_1",
+                  "ensembl_object_type": "protein_feature"
+                },
+                {
+                  "interpro_description": "DDE superfamily endonuclease domain",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "DDE_1",
+                  "name": "PF03184",
+                  "end": "334",
+                  "dbname": "Pfam",
+                  "interpro_name": "DDE_SF_endonuclease_dom",
+                  "interpro_ac": "IPR004875",
+                  "translation_id": "ENSAOWP00000013928",
+                  "start": "220"
+                },
+                {
+                  "start": "48",
+                  "translation_id": "ENSAOWP00000013928",
+                  "interpro_ac": "IPR006600",
+                  "interpro_name": "HTH_CenpB_DNA-bd_dom",
+                  "dbname": "Prosite_profiles",
+                  "name": "PS51253",
+                  "end": "116",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "HTH_CENPB",
+                  "interpro_description": "HTH CenpB-type DNA-binding domain"
+                },
+                {
+                  "ensembl_object_type": "protein_feature",
+                  "description": "TRANSPOSON",
+                  "interpro_description": "Centromere and Transposable Element-Derived Protein",
+                  "dbname": "PANTHER",
+                  "end": "369",
+                  "name": "PTHR19303",
+                  "translation_id": "ENSAOWP00000013928",
+                  "start": "25",
+                  "interpro_name": "CenT-Element_Derived",
+                  "interpro_ac": "IPR050863"
+                },
+                {
+                  "end": "116",
+                  "name": "SM00674",
+                  "dbname": "Smart",
+                  "interpro_name": "HTH_CenpB_DNA-bd_dom",
+                  "interpro_ac": "IPR006600",
+                  "translation_id": "ENSAOWP00000013928",
+                  "start": "54",
+                  "interpro_description": "HTH CenpB-type DNA-binding domain",
+                  "ensembl_object_type": "protein_feature",
+                  "description": "cenpb"
+                },
+                {
+                  "dbname": "SuperFamily",
+                  "name": "SSF46689",
+                  "end": "109",
+                  "start": "51",
+                  "translation_id": "ENSAOWP00000013928",
+                  "interpro_ac": "IPR009057",
+                  "interpro_name": "Homeobox-like_sf",
+                  "description": "Homeodomain-like",
+                  "ensembl_object_type": "protein_feature",
+                  "interpro_description": "Homeobox-like domain superfamily"
+                },
+                {
+                  "dbname": "MobiDBLite",
+                  "name": "mobidb-lite",
+                  "end": "524",
+                  "description": "disorder_prediction",
+                  "ensembl_object_type": "protein_feature",
+                  "start": "502",
+                  "translation_id": "ENSAOWP00000013928"
+                },
+                {
+                  "name": "seg",
+                  "end": "365",
+                  "dbname": "Seg",
+                  "start": "352",
+                  "ensembl_object_type": "protein_feature",
+                  "translation_id": "ENSAOWP00000013928"
+                },
+                {
+                  "name": "seg",
+                  "end": "400",
+                  "dbname": "Seg",
+                  "translation_id": "ENSAOWP00000013928",
+                  "ensembl_object_type": "protein_feature",
+                  "start": "386"
+                }
+              ],
+              "UniParc": [
+                "UPI001090149A"
+              ],
+              "Smart": [
+                "SM00674"
+              ],
+              "xrefs": [
+                {
+                  "db_display": "UniParc",
+                  "primary_id": "UPI001090149A",
+                  "display_id": "UPI001090149A",
+                  "info_text": "",
+                  "info_type": "CHECKSUM",
+                  "dbname": "UniParc"
+                },
+                {
+                  "db_display": "UniProtKB/TrEMBL",
+                  "primary_id": "A0A8B9S987",
+                  "display_id": "A0A8B9S987.13",
+                  "description": "HTH CENPB-type domain-containing protein ",
+                  "info_text": "Generated via direct",
+                  "info_type": "DIRECT",
+                  "dbname": "Uniprot/SPTREMBL"
+                }
+              ],
+              "Uniprot/SPTREMBL": [
+                "A0A8B9S987"
+              ],
+              "Seg": [
+                "seg"
+              ],
+              "Pfam": [
+                "PF03184"
+              ]
+            }
+          ],
+          "biotype": "protein_coding",
+          "SuperFamily": [
+            "SSF46689"
+          ],
+          "Interpro": [
+            "IPR004875",
+            "IPR050863",
+            "IPR006600",
+            "IPR009057"
+          ],
+          "Prosite_profiles": [
+            "PS51253"
+          ],
+          "MobiDBLite": [
+            "mobidb-lite"
+          ],
+          "Seg": [
+            "seg"
+          ],
+          "Pfam": [
+            "PF03184"
+          ],
+          "seq_region_name": "PTFC01000182.1",
+          "UniParc": [
+            "UPI001090149A"
+          ],
+          "Smart": [
+            "SM00674"
+          ],
+          "GO": [
+            {
+              "parents": [
+                "GO:0003677",
+                "GO:0003677"
+              ],
+              "evidence": [
+                "DNA binding"
+              ],
+              "term": "GO:0003677"
+            },
+            {
+              "term": "GO:0003676",
+              "evidence": [
+                "nucleic acid binding"
+              ],
+              "parents": [
+                "GO:0003674",
+                "GO:0005488",
+                "GO:0097159",
+                "GO:0003676",
+                "GO:0003676"
+              ]
+            },
+            {
+              "parents": [
+                "GO:0005634",
+                "GO:0005634"
+              ],
+              "evidence": [
+                "nucleus"
+              ],
+              "term": "GO:0005634"
+            },
+            {
+              "evidence": [
+                "nucleic acid binding"
+              ],
+              "parents": [
+                "GO:0003674",
+                "GO:0005488",
+                "GO:0097159",
+                "GO:0003676",
+                "GO:0003676"
+              ],
+              "term": "GO:0003676"
+            },
+            {
+              "parents": [
+                "GO:0003677",
+                "GO:0003677"
+              ],
+              "evidence": [
+                "DNA binding"
+              ],
+              "term": "GO:0003677"
+            }
+          ],
+          "strand": "-1"
+        }
+      ],
+      "PANTHER": [
+        "PTHR19303"
+      ],
+      "start": "639858",
+      "lineage": [
+        6072,
+        7711,
+        7742,
+        7776,
+        8287,
+        8457,
+        8492,
+        8782,
+        8783,
+        8819,
+        8820,
+        8821,
+        8824,
+        32523,
+        32524,
+        32561,
+        33154,
+        33208,
+        33213,
+        33511,
+        89593,
+        117570,
+        117571,
+        436486,
+        436489,
+        436491,
+        436492,
+        1329799,
+        1338369,
+        1,
+        2759,
+        131567
+      ],
+      "id": "ENSAOWG00000009497",
+      "taxon_id": 8824,
+      "genome": "apteryx_owenii",
+      "xrefs": [],
+      "Uniprot/SPTREMBL": [
+        "A0A8B9S987"
+      ],
+      "MobiDBLite": [
+        "mobidb-lite"
+      ],
+      "genome_display": "Little spotted kiwi",
+      "SuperFamily": [
+        "SSF46689"
+      ],
+      "biotype": "protein_coding",
+      "Interpro": [
+        "IPR006600",
+        "IPR050863",
+        "IPR009057",
+        "IPR004875"
+      ],
+      "Prosite_profiles": [
+        "PS51253"
+      ],
+      "homologues": [],
+      "Gene3D": [
+        "1.10.10.60"
+      ],
+      "GO": [
+        {
+          "parents": [
+            "GO:0003677",
+            "GO:0003677"
+          ],
+          "evidence": [
+            "DNA binding"
+          ],
+          "term": "GO:0003677"
+        },
+        {
+          "parents": [
+            "GO:0003674",
+            "GO:0005488",
+            "GO:0097159",
+            "GO:0003676",
+            "GO:0003676"
+          ],
+          "evidence": [
+            "nucleic acid binding"
+          ],
+          "term": "GO:0003676"
+        },
+        {
+          "parents": [
+            "GO:0005634",
+            "GO:0005634"
+          ],
+          "evidence": [
+            "nucleus"
+          ],
+          "term": "GO:0005634"
+        },
+        {
+          "term": "GO:0003676",
+          "evidence": [
+            "nucleic acid binding"
+          ],
+          "parents": [
+            "GO:0003674",
+            "GO:0005488",
+            "GO:0097159",
+            "GO:0003676",
+            "GO:0003676"
+          ]
+        },
+        {
+          "term": "GO:0003677",
+          "evidence": [
+            "DNA binding"
+          ],
+          "parents": [
+            "GO:0003677",
+            "GO:0003677"
+          ]
+        }
+      ],
+      "strand": "-1",
+      "Smart": [
+        "SM00674"
+      ],
+      "UniParc": [
+        "UPI001090149A"
+      ],
+      "coord_system": {
+        "seq_name": "PTFC01000182.1",
+        "seq_length": 1750278,
+        "version": "aptOwe1",
+        "name": "primary_assembly"
+      },
+      "seq_region_name": "PTFC01000182.1",
+      "Pfam": [
+        "PF03184"
+      ],
+      "Seg": [
+        "seg"
+      ]
+    }
+  ]
+}
