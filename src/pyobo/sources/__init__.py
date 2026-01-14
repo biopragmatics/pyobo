@@ -1,46 +1,63 @@
-# -*- coding: utf-8 -*-
-
 """Sources of OBO content."""
 
 from class_resolver import ClassResolver
 
 from .antibodyregistry import AntibodyRegistryGetter
+from .bigg import BiGGCompartmentGetter, BiGGMetaboliteGetter, BiGGModelGetter, BiGGReactionGetter
 from .ccle import CCLEGetter
 from .cgnc import CGNCGetter
-from .chembl import ChEMBLCompoundGetter
+from .chembl import (
+    ChEMBLCellGetter,
+    ChEMBLCompoundGetter,
+    ChEMBLMechanismGetter,
+    ChEMBLTargetGetter,
+    ChEMBLTissueGetter,
+)
+from .civic_gene import CIVICGeneGetter
+from .clinicaltrials import ClinicalTrialsGetter
 from .complexportal import ComplexPortalGetter
 from .conso import CONSOGetter
 from .cpt import CPTGetter
+from .credit import CreditGetter
 from .cvx import CVXGetter
 from .depmap import DepMapGetter
 from .dictybase_gene import DictybaseGetter
-from .drugbank import DrugBankGetter
-from .drugbank_salt import DrugBankSaltGetter
+from .drugbank import DrugBankGetter, DrugBankSaltGetter
 from .drugcentral import DrugCentralGetter
 from .expasy import ExpasyGetter
 from .famplex import FamPlexGetter
 from .flybase import FlyBaseGetter
-from .geonames import GeonamesGetter
-from .gwascentral_phenotype import GWASCentralPhenotypeGetter
-from .gwascentral_study import GWASCentralStudyGetter
-from .hgnc import HGNCGetter
-from .hgncgenefamily import HGNCGroupGetter
-from .icd10 import ICD10Getter
-from .icd11 import ICD11Getter
+from .gard import GARDGetter
+from .geonames import GeonamesFeatureGetter, GeonamesGetter
+from .goldbook import GoldBookGetter
+from .gtdb import GTDBGetter
+from .gwascentral import GWASCentralPhenotypeGetter, GWASCentralStudyGetter
+from .hgnc import HGNCGetter, HGNCGroupGetter
+from .iana_media_type import IANAGetter
+from .icd import ICD10Getter, ICD11Getter
+from .iconclass import IconclassGetter
+from .intact import IntactGetter
 from .interpro import InterProGetter
 from .itis import ITISGetter
 from .kegg import KEGGGeneGetter, KEGGGenomeGetter, KEGGPathwayGetter
 from .mesh import MeSHGetter
 from .mgi import MGIGetter
-from .mirbase import MiRBaseGetter
-from .mirbase_family import MiRBaseFamilyGetter
-from .mirbase_mature import MiRBaseMatureGetter
+from .mirbase import MiRBaseFamilyGetter, MiRBaseGetter, MiRBaseMatureGetter
 from .msigdb import MSigDBGetter
-from .ncbigene import NCBIGeneGetter
+from .ncbi import NCBIGCGetter, NCBIGeneGetter
+from .nih_reporter import NIHReporterGetter
+from .nlm import NLMCatalogGetter, NLMPublisherGetter
 from .npass import NPASSGetter
+from .omim_ps import OMIMPSGetter
 from .pathbank import PathBankGetter
-from .pfam import PfamGetter
-from .pfam_clan import PfamClanGetter
+from .pfam import PfamClanGetter, PfamGetter
+from .pharmgkb import (
+    PharmGKBChemicalGetter,
+    PharmGKBDiseaseGetter,
+    PharmGKBGeneGetter,
+    PharmGKBPathwayGetter,
+    PharmGKBVariantGetter,
+)
 from .pid import PIDGetter
 from .pombase import PomBaseGetter
 from .pubchem import PubChemCompoundGetter
@@ -50,22 +67,36 @@ from .rhea import RheaGetter
 from .ror import RORGetter
 from .selventa import SCHEMGetter, SCOMPGetter, SDISGetter, SFAMGetter
 from .sgd import SGDGetter
+from .signor import SignorGetter
 from .slm import SLMGetter
-from .umls import UMLSGetter
+from .spdx import SPDXLicenseGetter
+from .umls import UMLSGetter, UMLSSTyGetter
+from .unimod import UnimodGetter
 from .uniprot import UniProtGetter, UniProtPtmGetter
 from .wikipathways import WikiPathwaysGetter
 from .zfin import ZFINGetter
-from ..struct import Obo
+from ..struct.struct import AdHocOntologyBase, Obo
 
 __all__ = [
     "AntibodyRegistryGetter",
+    "BiGGCompartmentGetter",
+    "BiGGMetaboliteGetter",
+    "BiGGModelGetter",
+    "BiGGReactionGetter",
     "CCLEGetter",
     "CGNCGetter",
+    "CIVICGeneGetter",
     "CONSOGetter",
     "CPTGetter",
     "CVXGetter",
+    "ChEMBLCellGetter",
     "ChEMBLCompoundGetter",
+    "ChEMBLMechanismGetter",
+    "ChEMBLTargetGetter",
+    "ChEMBLTissueGetter",
+    "ClinicalTrialsGetter",
     "ComplexPortalGetter",
+    "CreditGetter",
     "DepMapGetter",
     "DictybaseGetter",
     "DrugBankGetter",
@@ -74,14 +105,21 @@ __all__ = [
     "ExpasyGetter",
     "FamPlexGetter",
     "FlyBaseGetter",
+    "GARDGetter",
+    "GTDBGetter",
     "GWASCentralPhenotypeGetter",
     "GWASCentralStudyGetter",
+    "GeonamesFeatureGetter",
     "GeonamesGetter",
+    "GoldBookGetter",
     "HGNCGetter",
     "HGNCGroupGetter",
+    "IANAGetter",
     "ICD10Getter",
     "ICD11Getter",
     "ITISGetter",
+    "IconclassGetter",
+    "IntactGetter",
     "InterProGetter",
     "KEGGGeneGetter",
     "KEGGGenomeGetter",
@@ -92,12 +130,22 @@ __all__ = [
     "MiRBaseFamilyGetter",
     "MiRBaseGetter",
     "MiRBaseMatureGetter",
+    "NCBIGCGetter",
     "NCBIGeneGetter",
+    "NIHReporterGetter",
+    "NLMCatalogGetter",
+    "NLMPublisherGetter",
     "NPASSGetter",
+    "OMIMPSGetter",
     "PIDGetter",
     "PathBankGetter",
     "PfamClanGetter",
     "PfamGetter",
+    "PharmGKBChemicalGetter",
+    "PharmGKBDiseaseGetter",
+    "PharmGKBGeneGetter",
+    "PharmGKBPathwayGetter",
+    "PharmGKBVariantGetter",
     "PomBaseGetter",
     "PubChemCompoundGetter",
     "RGDGetter",
@@ -110,24 +158,22 @@ __all__ = [
     "SFAMGetter",
     "SGDGetter",
     "SLMGetter",
+    "SPDXLicenseGetter",
+    "SignorGetter",
     "UMLSGetter",
+    "UMLSSTyGetter",
     "UniProtGetter",
     "UniProtPtmGetter",
+    "UnimodGetter",
     "WikiPathwaysGetter",
     "ZFINGetter",
     "ontology_resolver",
 ]
 
-
-def _assert_sorted():
-    _sorted = sorted(__all__)
-    if _sorted != __all__:
-        raise ValueError(f"unsorted. should be:\n{_sorted}")
-
-
-_assert_sorted()
-del _assert_sorted
-
-ontology_resolver: ClassResolver[Obo] = ClassResolver.from_subclasses(base=Obo, suffix="Getter")
+ontology_resolver: ClassResolver[Obo] = ClassResolver.from_subclasses(
+    base=Obo,
+    suffix="Getter",
+    skip={AdHocOntologyBase},
+)
 for getter in list(ontology_resolver):
     ontology_resolver.synonyms[getter.ontology] = getter

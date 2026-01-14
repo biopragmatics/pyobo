@@ -1,0 +1,5824 @@
+[
+  {
+    "identifier": "0000050",
+    "label": "part of",
+    "prefix": "bfo"
+  },
+  {
+    "identifier": "0000051",
+    "label": "has part",
+    "prefix": "bfo"
+  },
+  {
+    "identifier": "0000054",
+    "label": "realized in",
+    "prefix": "bfo"
+  },
+  {
+    "identifier": "0000055",
+    "label": "realizes",
+    "prefix": "bfo"
+  },
+  {
+    "identifier": "0000060",
+    "label": "obsolete preceded by",
+    "prefix": "bfo"
+  },
+  {
+    "identifier": "0000062",
+    "label": "preceded by",
+    "prefix": "bfo"
+  },
+  {
+    "identifier": "0000063",
+    "label": "precedes",
+    "prefix": "bfo"
+  },
+  {
+    "identifier": "0000066",
+    "label": "occurs in",
+    "prefix": "bfo"
+  },
+  {
+    "identifier": "0000067",
+    "label": "contains process",
+    "prefix": "bfo"
+  },
+  {
+    "identifier": "0000179",
+    "label": "BFO OWL specification label",
+    "prefix": "bfo"
+  },
+  {
+    "identifier": "0000180",
+    "label": "BFO CLIF specification label",
+    "prefix": "bfo"
+  },
+  {
+    "identifier": "0000095",
+    "label": "anatomical relation",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000096",
+    "label": "anterior to",
+    "prefix": "bspo",
+    "synonyms": [
+      "rostral_to"
+    ]
+  },
+  {
+    "identifier": "0000097",
+    "label": "distal to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000098",
+    "label": "dorsal to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000099",
+    "label": "posterior to",
+    "prefix": "bspo",
+    "synonyms": [
+      "caudal to"
+    ]
+  },
+  {
+    "identifier": "0000100",
+    "label": "proximal to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000101",
+    "label": "obsolete surrounds",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000102",
+    "label": "ventral to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000103",
+    "label": "vicinity of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000104",
+    "label": "approximately perpendicular to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000105",
+    "label": "ipsilateral to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000106",
+    "label": "contralateral to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000107",
+    "label": "deep to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000108",
+    "label": "superficial to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000109",
+    "label": "obsolete surrounded_by",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000110",
+    "label": "left of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000111",
+    "label": "right of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000113",
+    "label": "opposite to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000114",
+    "label": "lateral to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000115",
+    "label": "medial to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000120",
+    "label": "in left side of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000121",
+    "label": "in right side of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000122",
+    "label": "in posterior side of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000123",
+    "label": "in anterior side of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000124",
+    "label": "in proximal side of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000125",
+    "label": "in distal side of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0000126",
+    "label": "in lateral side of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0001100",
+    "label": "in superficial part of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0001101",
+    "label": "in deep part of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0001102",
+    "label": "parallel to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0001106",
+    "label": "proximalmost part of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0001107",
+    "label": "immediately deep to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0001108",
+    "label": "distalmost part of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0001113",
+    "label": "preaxialmost part of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0001114",
+    "label": "postaxial to",
+    "prefix": "bspo",
+    "synonyms": [
+      "posterior to (developmentally)"
+    ]
+  },
+  {
+    "identifier": "0001115",
+    "label": "postaxialmost part of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0005001",
+    "label": "intersects midsagittal plane of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015001",
+    "label": "finishes axis",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015002",
+    "label": "follows axis",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015003",
+    "label": "has axis",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015004",
+    "label": "has end point",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015005",
+    "label": "orthogonal to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015006",
+    "label": "passes through",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015007",
+    "label": "starts axis",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015008",
+    "label": "surface of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015009",
+    "label": "immediately anterior to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015010",
+    "label": "immediately distal to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015011",
+    "label": "immediately dorsal to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015012",
+    "label": "immediately posterior to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015013",
+    "label": "immediately proximal to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015014",
+    "label": "immediately superficial to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015015",
+    "label": "immediately ventral to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015016",
+    "label": "immediately left of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015017",
+    "label": "immediately right of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015101",
+    "label": "in dorsal side of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015102",
+    "label": "in ventral side of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015201",
+    "label": "oral to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0015202",
+    "label": "aboral to",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0020001",
+    "label": "in central side of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0020002",
+    "label": "has start point",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0030003",
+    "label": "dorsalmost part of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0030004",
+    "label": "anteriormost part of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0030005",
+    "label": "lateralmost part of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0030006",
+    "label": "in medial side of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "0030007",
+    "label": "medialmost part of",
+    "prefix": "bspo"
+  },
+  {
+    "identifier": "1000000",
+    "label": "preaxial to",
+    "prefix": "bspo",
+    "synonyms": [
+      "anterior to (developmentally)",
+      "lateral (radial) to",
+      "medial (tibial) to"
+    ]
+  },
+  {
+    "identifier": "contributor",
+    "label": "Contributor",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "coverage",
+    "label": "Coverage",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "creator",
+    "label": "Creator",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "date",
+    "label": "Date",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "description",
+    "label": "Description",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "format",
+    "label": "Format",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "identifier",
+    "label": "Resource Identifier",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "language",
+    "label": "Language",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "publisher",
+    "label": "Publisher",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "relation",
+    "label": "Relation",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "rights",
+    "label": "Rights Management",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "source",
+    "label": "Source",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "subject",
+    "label": "Subject and Keywords",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "title",
+    "label": "Title",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "type",
+    "label": "Resource Type",
+    "prefix": "dc"
+  },
+  {
+    "identifier": "0000001",
+    "label": "gene product is a member of",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000002",
+    "label": "has mature miRNA",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000003",
+    "label": "species specific",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000004",
+    "label": "Antibody has target",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000005",
+    "label": "locus group",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000006",
+    "label": "has salt",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000007",
+    "label": "has left-to-right reaction",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000008",
+    "label": "has right-to-left reaction",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000009",
+    "label": "has bi-directional reaction",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000016",
+    "label": "monoisotopic mass",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000017",
+    "label": "charge",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000018",
+    "label": "formula",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000019",
+    "label": "mass",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000020",
+    "label": "InChI",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000021",
+    "label": "InChI Key",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000022",
+    "label": "smiles",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000023",
+    "label": "has taxonomy rank",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000023",
+    "label": "has_rank",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000024",
+    "label": "has species group",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000025",
+    "label": "has origin",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000026",
+    "label": "IUPAC Name",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000027",
+    "label": "is substituent group from",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000028",
+    "label": "International Nonproprietary Name",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000029",
+    "label": "has citation",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000030",
+    "label": "has related symbol",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000031",
+    "label": "has related LaTeX",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000032",
+    "label": "causes side effect",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000033",
+    "label": "pathogen has host",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000034",
+    "label": "vaccine has gene engineering",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000035",
+    "label": "has intervention",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000036",
+    "label": "has condition",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000037",
+    "label": "has platform",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000038",
+    "label": "mentioned in",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000039",
+    "label": "annotated with",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000040",
+    "label": "related trial",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000041",
+    "label": "prevents infection",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000042",
+    "label": "constant has value",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000043",
+    "label": "constant has formula",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000044",
+    "label": "pathogen defines vaccine class",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "0000045",
+    "label": "vector vaccine uses pathogen as vector",
+    "prefix": "debio"
+  },
+  {
+    "identifier": "01003004",
+    "label": "derives from part of",
+    "prefix": "envo"
+  },
+  {
+    "identifier": "0000004",
+    "label": "has measurement value",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000039",
+    "label": "has measurement unit label",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000111",
+    "label": "editor preferred term",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000111",
+    "label": "editor preferred term~editor preferred label",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000112",
+    "label": "example of usage",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000113",
+    "label": "in branch",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000114",
+    "label": "has curation status",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000115",
+    "label": "definition",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000115",
+    "label": "textual definition",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000116",
+    "label": "editor note",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000117",
+    "label": "term editor",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000118",
+    "label": "alternative label",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000118",
+    "label": "alternative term",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000119",
+    "label": "definition source",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000135",
+    "label": "obsolete_specifically denotes",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000136",
+    "label": "is about",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000142",
+    "label": "mentions",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000143",
+    "label": "mentioned by",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000219",
+    "label": "denotes",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000220",
+    "label": "obsolete_materially denotes",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000221",
+    "label": "is quality measurement of",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000222",
+    "label": "obsolete_describes",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000223",
+    "label": "obsolete_represents",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000231",
+    "label": "has obsolescence reason",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000232",
+    "label": "curator note",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000233",
+    "label": "term tracker item",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000234",
+    "label": "ontology term requester",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000235",
+    "label": "denoted by",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000404",
+    "label": "has x coordinate value",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000405",
+    "label": "has z coordinate value",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000406",
+    "label": "has y coordinate value",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000407",
+    "label": "has coordinate unit label",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000411",
+    "label": "is denotator type",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000412",
+    "label": "imported from",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000413",
+    "label": "is duration of",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000417",
+    "label": "is quality measured as",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000418",
+    "label": "is quality specification of",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000419",
+    "label": "quality is specified as",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000424",
+    "label": "expand expression to",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000425",
+    "label": "expand assertion to",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000426",
+    "label": "first order logic expression",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000427",
+    "label": "antisymmetric property",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000581",
+    "label": "has time stamp",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000583",
+    "label": "has measurement datum",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000589",
+    "label": "OBO foundry unique label",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000596",
+    "label": "has ID digit count",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000597",
+    "label": "has ID range allocated to",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000598",
+    "label": "has ID policy for",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000599",
+    "label": "has ID prefix",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000600",
+    "label": "elucidation",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000601",
+    "label": "has associated axiom(nl)",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000602",
+    "label": "has associated axiom(fol)",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000603",
+    "label": "is allocated id range",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000604",
+    "label": "retired from use as of",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000700",
+    "label": "has ontology root term",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0006011",
+    "label": "may be identical to",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0006012",
+    "label": "scheduled for obsoletion on or after",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0010000",
+    "label": "has axiom label",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0100001",
+    "label": "term replaced by",
+    "prefix": "iao"
+  },
+  {
+    "identifier": "0000107",
+    "label": "provides_service_consumer_with",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000124",
+    "label": "is_supported_by_data",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000292",
+    "label": "has_feature_value",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000293",
+    "label": "has_specified_input",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000294",
+    "label": "obsolete_is_concretization_of",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000295",
+    "label": "is_specified_input_of",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000297",
+    "label": "obsolete_is_concretized_as",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000298",
+    "label": "obsolete_has_quality",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000299",
+    "label": "has_specified_output",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000300",
+    "label": "obsolete_is_realized_by",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000301",
+    "label": "obsoleted_has_specified_output_information",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000304",
+    "label": "is_manufactured_by",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000306",
+    "label": "obsolete_has_function",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000307",
+    "label": "obsoleted_is_reagent_in",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000308",
+    "label": "obsolete_realizes",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000309",
+    "label": "obsoleted_utilizes_reagent",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000311",
+    "label": "obsoleted_is_device_for",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000312",
+    "label": "is_specified_output_of",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000313",
+    "label": "obsoleted_utilizes_device",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000314",
+    "label": "is_proxy_for",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000315",
+    "label": "obsoleted_has_specified_input_information",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000316",
+    "label": "obsolete_has_role",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000365",
+    "label": "obsolete_results_from",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000417",
+    "label": "achieves_planned_objective",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000459",
+    "label": "obsoleted_is_specified_information_output_of",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000643",
+    "label": "has grain",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000644",
+    "label": "obsoleted_is_specified_information_intput_of",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000645",
+    "label": "is grain of",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000646",
+    "label": "provisions",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000647",
+    "label": "has_supplier",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000833",
+    "label": "objective_achieved_by",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000846",
+    "label": "is member of organization",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0000999",
+    "label": "has category label",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0001637",
+    "label": "has disposition to bind",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0001688",
+    "label": "has organization member",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0001847",
+    "label": "ISA alternative term",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0001886",
+    "label": "NIAID GSCID-BRC alternative term",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0001927",
+    "label": "specifies value of",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0001937",
+    "label": "has specified numeric value",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0001938",
+    "label": "has value specification",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0001950",
+    "label": "has performer",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0002135",
+    "label": "has specified value",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0002815",
+    "label": "has representation",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "0003385",
+    "label": "has assay target context",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "1110060",
+    "label": "process is result of",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "1110112",
+    "label": "obsolete_is_described_by",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "1110119",
+    "label": "bound_to",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "9991118",
+    "label": "IEDB alternative term",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "9991119",
+    "label": "FGED alternative term",
+    "prefix": "obi"
+  },
+  {
+    "identifier": "UBPROP_0000001",
+    "label": "external_definition",
+    "prefix": "obo"
+  },
+  {
+    "identifier": "UBPROP_0000002",
+    "label": "axiom_lost_from_external_ontology",
+    "prefix": "obo"
+  },
+  {
+    "identifier": "UBPROP_0000003",
+    "label": "homology_notes",
+    "prefix": "obo"
+  },
+  {
+    "identifier": "UBPROP_0000007",
+    "label": "has_relational_adjective",
+    "prefix": "obo"
+  },
+  {
+    "identifier": "UBPROP_0000008",
+    "label": "taxon_notes",
+    "prefix": "obo"
+  },
+  {
+    "identifier": "UBPROP_0000011",
+    "label": "development_notes",
+    "prefix": "obo"
+  },
+  {
+    "identifier": "UBPROP_0000012",
+    "label": "external_ontology_notes",
+    "prefix": "obo"
+  },
+  {
+    "identifier": "UBPROP_0000202",
+    "label": "fma_set_term",
+    "prefix": "obo"
+  },
+  {
+    "identifier": "valid_for_go_annotation_extension",
+    "label": "valid_for_go_annotation_extension",
+    "prefix": "obo"
+  },
+  {
+    "identifier": "valid_for_go_gp2term",
+    "label": "valid_for_go_gp2term",
+    "prefix": "obo"
+  },
+  {
+    "identifier": "valid_for_go_ontology",
+    "label": "valid_for_go_ontology",
+    "prefix": "obo"
+  },
+  {
+    "identifier": "valid_for_gocam",
+    "label": "valid_for_gocam",
+    "prefix": "obo"
+  },
+  {
+    "identifier": "NamespaceIdRule",
+    "label": "namespace-id-rule",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "ObsoleteProperty",
+    "label": "obsolete_property",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "SubsetProperty",
+    "label": "subset_property",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "SynonymTypeProperty",
+    "label": "synonym_type_property",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "consider",
+    "label": "consider",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasAlternativeId",
+    "label": "has_alternative_id",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasBroadSynonym",
+    "label": "has broad synonym",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasBroadSynonym",
+    "label": "has_broad_synonym",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasDate",
+    "label": "has_date",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasDbXref",
+    "label": "database_cross_reference",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasDbXref",
+    "label": "has_dbxref",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasDefaultNamespace",
+    "label": "has_default_namespace",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasDefinition",
+    "label": "has_definition",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasExactSynonym",
+    "label": "has exact synonym",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasExactSynonym",
+    "label": "has_exact_synonym",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasNarrowSynonym",
+    "label": "has narrow synonym",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasNarrowSynonym",
+    "label": "has_narrow_synonym",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasOBOFormatVersion",
+    "label": "has_obo_format_version",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasOBONamespace",
+    "label": "has_obo_namespace",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasRelatedSynonym",
+    "label": "has related synonym",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasRelatedSynonym",
+    "label": "has_related_synonym",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasScope",
+    "label": "has_scope",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasSubset",
+    "label": "has_subset",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasSynonym",
+    "label": "has_synonym",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasSynonymType",
+    "label": "has_synonym_type",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasURI",
+    "label": "has_URI",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "hasVersion",
+    "label": "has_version",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "inSubset",
+    "label": "in_subset",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "isCyclic",
+    "label": "is_cyclic",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "replacedBy",
+    "label": "replaced_by",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "savedBy",
+    "label": "saved_by",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "shorthand",
+    "label": "shorthand",
+    "prefix": "oboinowl"
+  },
+  {
+    "identifier": "0000000006",
+    "label": "NCBI GeneID",
+    "prefix": "ogg"
+  },
+  {
+    "identifier": "0000000007",
+    "label": "NCBI LocusTag",
+    "prefix": "ogg"
+  },
+  {
+    "identifier": "0000000009",
+    "label": "modification date",
+    "prefix": "ogg"
+  },
+  {
+    "identifier": "0000000015",
+    "label": "organism NCBITaxon ID",
+    "prefix": "ogg"
+  },
+  {
+    "identifier": "0000000017",
+    "label": "chromosome ID of gene",
+    "prefix": "ogg"
+  },
+  {
+    "identifier": "0000000018",
+    "label": "type of gene",
+    "prefix": "ogg"
+  },
+  {
+    "identifier": "0000000019",
+    "label": "nomenclature status",
+    "prefix": "ogg"
+  },
+  {
+    "identifier": "0000000030",
+    "label": "has PubMed association",
+    "prefix": "ogg"
+  },
+  {
+    "identifier": "0001001",
+    "label": "logical characteristic of object property",
+    "prefix": "omo"
+  },
+  {
+    "identifier": "0002000",
+    "label": "defined by construct",
+    "prefix": "omo"
+  },
+  {
+    "identifier": "0003000",
+    "label": "abbreviation",
+    "prefix": "omo"
+  },
+  {
+    "identifier": "0003001",
+    "label": "ambiguous synonym",
+    "prefix": "omo"
+  },
+  {
+    "identifier": "0003002",
+    "label": "dubious synonym",
+    "prefix": "omo"
+  },
+  {
+    "identifier": "0003003",
+    "label": "layperson synonym",
+    "prefix": "omo"
+  },
+  {
+    "identifier": "0003004",
+    "label": "plural form",
+    "prefix": "omo"
+  },
+  {
+    "identifier": "0003005",
+    "label": "UK spelling synonym",
+    "prefix": "omo"
+  },
+  {
+    "identifier": "0003006",
+    "label": "misspelling",
+    "prefix": "omo"
+  },
+  {
+    "identifier": "0003007",
+    "label": "misnomer",
+    "prefix": "omo"
+  },
+  {
+    "identifier": "0003008",
+    "label": "previous name",
+    "prefix": "omo"
+  },
+  {
+    "identifier": "0003009",
+    "label": "legal name",
+    "prefix": "omo"
+  },
+  {
+    "identifier": "0003010",
+    "label": "International Nonproprietary Name",
+    "prefix": "omo",
+    "synonyms": [
+      "INN"
+    ]
+  },
+  {
+    "identifier": "0003011",
+    "label": "latin term",
+    "prefix": "omo"
+  },
+  {
+    "identifier": "0003012",
+    "label": "acronym",
+    "prefix": "omo"
+  },
+  {
+    "identifier": "backwardCompatibleWith",
+    "label": "backwardCompatibleWith",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "bottomDataProperty",
+    "label": "bottomDataProperty",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "bottomObjectProperty",
+    "label": "bottomObjectProperty",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "deprecated",
+    "label": "deprecated",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "imports",
+    "label": "imports",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "incompatibleWith",
+    "label": "incompatibleWith",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "priorVersion",
+    "label": "priorVersion",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "topDataProperty",
+    "label": "topDataProperty",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "topObjectProperty",
+    "label": "topObjectProperty",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "versionIRI",
+    "label": "versionIRI",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "versionInfo",
+    "label": "versionInfo",
+    "prefix": "owl"
+  },
+  {
+    "identifier": "label",
+    "label": "label",
+    "prefix": "rdfs"
+  },
+  {
+    "identifier": "seeAlso",
+    "label": "see also",
+    "prefix": "rdfs"
+  },
+  {
+    "identifier": "0000015",
+    "label": "has functional parent",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000052",
+    "label": "characteristic of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000052",
+    "label": "inheres in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000053",
+    "label": "bearer of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000053",
+    "label": "has characteristic",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000056",
+    "label": "participates in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000057",
+    "label": "has participant",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000058",
+    "label": "is concretized as",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000059",
+    "label": "concretizes",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000079",
+    "label": "function of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000080",
+    "label": "quality of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000081",
+    "label": "role of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000085",
+    "label": "has function",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000086",
+    "label": "has quality",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000087",
+    "label": "has role",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000091",
+    "label": "has disposition",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000092",
+    "label": "disposition of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000300",
+    "label": "obsolete in neural circuit with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000301",
+    "label": "obsolete upstream in neural circuit with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0000302",
+    "label": "obsolete downstream in neural circuit with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0001000",
+    "label": "derives from",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0001001",
+    "label": "derives into",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0001015",
+    "label": "location of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0001018",
+    "label": "obsolete contained in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0001019",
+    "label": "obsolete contains",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0001020",
+    "label": "is allergic trigger for",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0001021",
+    "label": "is autoimmune trigger for",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0001022",
+    "label": "has allergic trigger",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0001023",
+    "label": "has autoimmune trigger",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0001025",
+    "label": "located in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0001900",
+    "label": "temporal interpretation",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002000",
+    "label": "2D boundary of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002001",
+    "label": "aligned with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002002",
+    "label": "has 2D boundary",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002003",
+    "label": "electrically_synapsed_to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002004",
+    "label": "tracheates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002005",
+    "label": "innervated_by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002006",
+    "label": "has synaptic terminal of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002007",
+    "label": "bounding layer of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002008",
+    "label": "coincident with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002009",
+    "label": "cell expresses",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002010",
+    "label": "regulates in other organism",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002011",
+    "label": "regulates transport of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002012",
+    "label": "occurrent part of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002013",
+    "label": "has regulatory component activity",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002014",
+    "label": "has negative regulatory component activity",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002015",
+    "label": "has positive regulatory component activity",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002016",
+    "label": "has necessary component activity",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002017",
+    "label": "has component activity",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002018",
+    "label": "has component process",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002019",
+    "label": "has ligand",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002020",
+    "label": "transports",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002021",
+    "label": "occurs across",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002022",
+    "label": "directly regulated by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002023",
+    "label": "directly negatively regulated by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002024",
+    "label": "directly positively regulated by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002025",
+    "label": "has effector activity",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002026",
+    "label": "in register with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002029",
+    "label": "has increased age-specific mortality rate",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002081",
+    "label": "before or simultaneous with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002082",
+    "label": "simultaneous with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002083",
+    "label": "before",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002084",
+    "label": "during which ends",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002085",
+    "label": "encompasses",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002086",
+    "label": "ends after",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002087",
+    "label": "immediately preceded by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002088",
+    "label": "during which starts",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002089",
+    "label": "starts before",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002090",
+    "label": "immediately precedes",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002091",
+    "label": "starts during",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002092",
+    "label": "happens during",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002093",
+    "label": "ends during",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002100",
+    "label": "has soma location",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002101",
+    "label": "fasciculates with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002102",
+    "label": "axon synapses in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002103",
+    "label": "synapsed by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002104",
+    "label": "has plasma membrane part",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002105",
+    "label": "synapsed_via_type_Ib_bouton_to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002106",
+    "label": "synapsed_via_type_Is_bouton_to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002107",
+    "label": "synapsed_via_type_II_bouton_to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002108",
+    "label": "synapsed_by_via_type_II_bouton",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002109",
+    "label": "synapsed_by_via_type_Ib_bouton",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002110",
+    "label": "has postsynaptic terminal in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002111",
+    "label": "releases neurotransmitter",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002112",
+    "label": "synapsed_by_via_type_Is_bouton",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002113",
+    "label": "has presynaptic terminal in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002114",
+    "label": "synapsed_via_type_III_bouton_to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002115",
+    "label": "synapsed_by_via_type_III_bouton",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002120",
+    "label": "synapsed to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002121",
+    "label": "dendrite synapsed in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002130",
+    "label": "has synaptic terminal in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002131",
+    "label": "overlaps",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002132",
+    "label": "has fasciculating neuron projection",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002134",
+    "label": "innervates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002150",
+    "label": "continuous with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002151",
+    "label": "partially overlaps",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002156",
+    "label": "derived by descent from",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002157",
+    "label": "has derived by descendant",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002158",
+    "label": "shares ancestor with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002159",
+    "label": "serially homologous to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002160",
+    "label": "only in taxon",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002161",
+    "label": "never in taxon",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002162",
+    "label": "in taxon",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002163",
+    "label": "spatially disjoint from",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002170",
+    "label": "connected to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002171",
+    "label": "mutually spatially disjoint with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002172",
+    "label": "taxonomic class assertion",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002173",
+    "label": "ambiguous for taxon",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002174",
+    "label": "dubious for taxon",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002175",
+    "label": "present in taxon",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002176",
+    "label": "connects",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002177",
+    "label": "attached to part of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002178",
+    "label": "supplies",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002179",
+    "label": "drains",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002180",
+    "label": "has component",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002200",
+    "label": "has phenotype",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002201",
+    "label": "phenotype of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002202",
+    "label": "develops from",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002203",
+    "label": "develops into",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002204",
+    "label": "gene product of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002205",
+    "label": "has gene product",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002206",
+    "label": "expressed in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002207",
+    "label": "directly develops from",
+    "prefix": "ro",
+    "synonyms": [
+      "has developmental precursor"
+    ]
+  },
+  {
+    "identifier": "0002208",
+    "label": "parasitoid of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002209",
+    "label": "has parasitoid",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002210",
+    "label": "directly develops into",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002211",
+    "label": "regulates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002212",
+    "label": "negatively regulates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002213",
+    "label": "positively regulates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002214",
+    "label": "has prototype",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002215",
+    "label": "capable of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002216",
+    "label": "capable of part of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002217",
+    "label": "obsolete actively participates in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002218",
+    "label": "obsolete has active participant",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002219",
+    "label": "surrounded by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002220",
+    "label": "adjacent to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002221",
+    "label": "surrounds",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002222",
+    "label": "temporal relation",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002222",
+    "label": "temporally related to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002223",
+    "label": "starts",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002224",
+    "label": "starts with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002225",
+    "label": "develops from part of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002226",
+    "label": "develops in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002227",
+    "label": "obligate parasite of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002228",
+    "label": "facultative parasite of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002229",
+    "label": "ends",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002230",
+    "label": "ends with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002231",
+    "label": "has start location",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002232",
+    "label": "has end location",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002233",
+    "label": "has input",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002234",
+    "label": "has output",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002235",
+    "label": "stem parasite of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002236",
+    "label": "root parasite of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002237",
+    "label": "hemiparasite of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002238",
+    "label": "has component participant",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002240",
+    "label": "has exposure receptor",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002241",
+    "label": "has exposure stressor",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002242",
+    "label": "has exposure route",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002243",
+    "label": "has exposure transport path",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002244",
+    "label": "related via exposure to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002245",
+    "label": "over-expressed in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002246",
+    "label": "under-expressed in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002248",
+    "label": "has active ingredient",
+    "prefix": "ro",
+    "synonyms": [
+      "has active pharmaceutical ingredient",
+      "has active substance"
+    ]
+  },
+  {
+    "identifier": "0002249",
+    "label": "active ingredient in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002252",
+    "label": "connecting branch of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002253",
+    "label": "has connecting branch",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002254",
+    "label": "has developmental contribution from",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002255",
+    "label": "developmentally contributes to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002256",
+    "label": "developmentally induced by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002257",
+    "label": "developmentally induces",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002258",
+    "label": "developmentally preceded by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002259",
+    "label": "defined by inverse",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002260",
+    "label": "has biological role",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002261",
+    "label": "has application role",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002262",
+    "label": "has chemical role",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002263",
+    "label": "acts upstream of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002264",
+    "label": "acts upstream of or within",
+    "prefix": "ro",
+    "synonyms": [
+      "affects"
+    ]
+  },
+  {
+    "identifier": "0002285",
+    "label": "developmentally replaces",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002286",
+    "label": "developmentally succeeded by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002287",
+    "label": "part of developmental precursor of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002291",
+    "label": "ubiquitously expressed in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002292",
+    "label": "expresses",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002293",
+    "label": "ubiquitously expresses",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002295",
+    "label": "results in developmental progression of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002296",
+    "label": "results in development of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002297",
+    "label": "results in formation of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002298",
+    "label": "results in morphogenesis of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002299",
+    "label": "results in maturation of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002300",
+    "label": "results in disappearance of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002301",
+    "label": "results in developmental regression of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002302",
+    "label": "is treated by substance",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002303",
+    "label": "has habitat",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002304",
+    "label": "causally upstream of, positive effect",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002305",
+    "label": "causally upstream of, negative effect",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002309",
+    "label": "has exposure stimulus",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002312",
+    "label": "evolutionary variant of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002313",
+    "label": "transports or maintains localization of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002314",
+    "label": "characteristic of part of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002315",
+    "label": "results in acquisition of features of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002320",
+    "label": "evolutionarily related to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002321",
+    "label": "ecologically related to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002322",
+    "label": "confers advantage in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002323",
+    "label": "mereotopologically related to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002324",
+    "label": "developmentally related to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002325",
+    "label": "colocalizes with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002326",
+    "label": "contributes to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002327",
+    "label": "enables",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002328",
+    "label": "functionally related to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002329",
+    "label": "part of structure that is capable of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002330",
+    "label": "genomically related to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002331",
+    "label": "involved in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002332",
+    "label": "regulates levels of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002333",
+    "label": "enabled by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002334",
+    "label": "regulated by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002335",
+    "label": "negatively regulated by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002336",
+    "label": "positively regulated by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002337",
+    "label": "related via localization to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002338",
+    "label": "has target start location",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002339",
+    "label": "has target end location",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002340",
+    "label": "imports",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002341",
+    "label": "results in transport along",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002342",
+    "label": "results in transport across",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002343",
+    "label": "results in growth of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002344",
+    "label": "results in transport to from or in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002345",
+    "label": "exports",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002348",
+    "label": "results in commitment to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002349",
+    "label": "results in determination of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002350",
+    "label": "member of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002351",
+    "label": "has member",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002352",
+    "label": "input of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002353",
+    "label": "output of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002354",
+    "label": "formed as result of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002355",
+    "label": "results in structural organization of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002356",
+    "label": "results in specification of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002357",
+    "label": "results in developmental induction of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002360",
+    "label": "has dendrite location",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002371",
+    "label": "attached to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002372",
+    "label": "has muscle origin",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002373",
+    "label": "has muscle insertion",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002374",
+    "label": "derived from ancestral fusion of",
+    "prefix": "ro",
+    "synonyms": [
+      "has fused element"
+    ]
+  },
+  {
+    "identifier": "0002375",
+    "label": "in branching relationship with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002376",
+    "label": "tributary of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002377",
+    "label": "distributary of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002378",
+    "label": "anabranch of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002379",
+    "label": "spatially coextensive with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002380",
+    "label": "branching part of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002381",
+    "label": "main stem of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002382",
+    "label": "proper distributary of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002383",
+    "label": "proper tributary of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002384",
+    "label": "has developmental potential involving",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002385",
+    "label": "has potential to developmentally contribute to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002386",
+    "label": "has potential to developmentally induce",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002387",
+    "label": "has potential to develop into",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002388",
+    "label": "has potential to directly develop into",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002400",
+    "label": "has direct input",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002401",
+    "label": "obsolete has indirect input",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002402",
+    "label": "obsolete has direct output",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002403",
+    "label": "obsolete has indirect output",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002404",
+    "label": "causally downstream of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002405",
+    "label": "immediately causally downstream of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002406",
+    "label": "obsolete directly activates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002407",
+    "label": "indirectly positively regulates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002408",
+    "label": "obsolete directly inhibits",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002409",
+    "label": "indirectly negatively regulates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002410",
+    "label": "causally related to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002411",
+    "label": "causally upstream of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002412",
+    "label": "immediately causally upstream of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002413",
+    "label": "provides input for",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002414",
+    "label": "transitively provides input for",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002416",
+    "label": "logical macro assertion",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002418",
+    "label": "causally upstream of or within",
+    "prefix": "ro",
+    "synonyms": [
+      "affects"
+    ]
+  },
+  {
+    "identifier": "0002419",
+    "label": "annotation property cardinality",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002420",
+    "label": "logical macro assertion on a class",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002421",
+    "label": "logical macro assertion on a property",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002422",
+    "label": "logical macro assertion on an object property",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002423",
+    "label": "logical macro assertion on an annotation property",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002424",
+    "label": "differs in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002425",
+    "label": "differs in attribute of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002426",
+    "label": "differs in attribute",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002427",
+    "label": "causally downstream of or within",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002428",
+    "label": "involved in regulation of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002429",
+    "label": "involved in positive regulation of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002430",
+    "label": "involved in negative regulation of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002431",
+    "label": "involved in or involved in regulation of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002432",
+    "label": "is active in",
+    "prefix": "ro",
+    "synonyms": [
+      "enables activity in"
+    ]
+  },
+  {
+    "identifier": "0002433",
+    "label": "contributes to morphology of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002434",
+    "label": "interacts with",
+    "prefix": "ro",
+    "synonyms": [
+      "in pairwise interaction with"
+    ]
+  },
+  {
+    "identifier": "0002435",
+    "label": "genetically interacts with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002436",
+    "label": "molecularly interacts with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002437",
+    "label": "biotically interacts with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002438",
+    "label": "trophically interacts with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002439",
+    "label": "preys on",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002440",
+    "label": "symbiotically interacts with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002441",
+    "label": "commensually interacts with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002442",
+    "label": "mutualistically interacts with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002443",
+    "label": "interacts with via parasite-host interaction",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002444",
+    "label": "parasite of",
+    "prefix": "ro",
+    "synonyms": [
+      "direct parasite of"
+    ]
+  },
+  {
+    "identifier": "0002445",
+    "label": "parasitized by",
+    "prefix": "ro",
+    "synonyms": [
+      "directly parasitized by"
+    ]
+  },
+  {
+    "identifier": "0002446",
+    "label": "participates in a abiotic-biotic interaction with",
+    "prefix": "ro",
+    "synonyms": [
+      "semibiotically interacts with"
+    ]
+  },
+  {
+    "identifier": "0002447",
+    "label": "phosphorylates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002448",
+    "label": "directly regulates activity of",
+    "prefix": "ro",
+    "synonyms": [
+      "molecularly controls"
+    ]
+  },
+  {
+    "identifier": "0002449",
+    "label": "directly negatively regulates activity of",
+    "prefix": "ro",
+    "synonyms": [
+      "molecularly decreases activity of"
+    ]
+  },
+  {
+    "identifier": "0002450",
+    "label": "directly positively regulates activity of",
+    "prefix": "ro",
+    "synonyms": [
+      "molecularly increases activity of"
+    ]
+  },
+  {
+    "identifier": "0002451",
+    "label": "transmitted by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002452",
+    "label": "has symptom",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002453",
+    "label": "host of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002454",
+    "label": "has host",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002455",
+    "label": "pollinates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002456",
+    "label": "pollinated by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002457",
+    "label": "acquires nutrients from",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002458",
+    "label": "preyed upon by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002459",
+    "label": "is vector for",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002460",
+    "label": "has vector",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002461",
+    "label": "partner in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002462",
+    "label": "subject participant in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002463",
+    "label": "target participant in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002464",
+    "label": "helper property (not for use in curation)",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002465",
+    "label": "is symbiosis",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002466",
+    "label": "is commensalism",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002467",
+    "label": "is mutualism",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002468",
+    "label": "is parasitism",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002469",
+    "label": "provides nutrients for",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002470",
+    "label": "eats",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002471",
+    "label": "is eaten by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002472",
+    "label": "is evidence for",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002473",
+    "label": "composed primarily of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002474",
+    "label": "dispositional interpretation",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002475",
+    "label": "has no connections with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002476",
+    "label": "child nucleus of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002477",
+    "label": "child nucleus of in hermaphrodite",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002478",
+    "label": "child nucleus of in male",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002479",
+    "label": "has part that occurs in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002480",
+    "label": "ubiquitinates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002481",
+    "label": "is kinase activity",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002482",
+    "label": "is ubiquitination",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002483",
+    "label": "inherited annotation property",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002484",
+    "label": "curator guidance link",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002485",
+    "label": "receives input from",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002486",
+    "label": "sends output to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002487",
+    "label": "relation between physical entity and a process or stage",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002488",
+    "label": "existence starts during",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002489",
+    "label": "existence starts with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002490",
+    "label": "existence overlaps",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002491",
+    "label": "existence starts and ends during",
+    "prefix": "ro",
+    "synonyms": [
+      "exists during"
+    ]
+  },
+  {
+    "identifier": "0002492",
+    "label": "existence ends during",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002493",
+    "label": "existence ends with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002494",
+    "label": "transformation of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002495",
+    "label": "immediate transformation of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002496",
+    "label": "existence starts during or after",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002497",
+    "label": "existence ends during or before",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002500",
+    "label": "causal agent in process",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002501",
+    "label": "causal relation between processes",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002502",
+    "label": "depends on",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002503",
+    "label": "towards",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002504",
+    "label": "always present in taxon",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002505",
+    "label": "has intermediate",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002506",
+    "label": "causal relation between entities",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002507",
+    "label": "determined by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002508",
+    "label": "determines",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002509",
+    "label": "determined by part of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002510",
+    "label": "transcribed from",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002511",
+    "label": "transcribed to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002512",
+    "label": "ribosomal translation of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002513",
+    "label": "ribosomally translates to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002514",
+    "label": "sequentially related to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002515",
+    "label": "sequentially adjacent to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002516",
+    "label": "has start sequence",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002517",
+    "label": "is start sequence of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002518",
+    "label": "has end sequence",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002519",
+    "label": "is end sequence of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002520",
+    "label": "is consecutive sequence of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002521",
+    "label": "is sequentially aligned with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002522",
+    "label": "bounds sequence of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002523",
+    "label": "is bound by sequence of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002524",
+    "label": "has subsequence",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002525",
+    "label": "is subsequence of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002526",
+    "label": "overlaps sequence of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002527",
+    "label": "does not overlap sequence of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002528",
+    "label": "is upstream of sequence of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002529",
+    "label": "is downstream of sequence of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002530",
+    "label": "is immediately downstream of sequence of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002531",
+    "label": "is immediately upstream of sequence of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002535",
+    "label": "temporal logical macro assertion on a class",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002536",
+    "label": "measurement property has unit",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002537",
+    "label": "has start time value",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002538",
+    "label": "has end time value",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002539",
+    "label": "start, days post fertilization",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002540",
+    "label": "end, days post fertilization",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002541",
+    "label": "start, years post birth",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002542",
+    "label": "end, years post birth",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002543",
+    "label": "start, months post birth",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002544",
+    "label": "end, months post birth",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002545",
+    "label": "month of gestation",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002546",
+    "label": "has developmental stage marker",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002547",
+    "label": "start, days post coitum",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002548",
+    "label": "end, days post coitum",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002549",
+    "label": "start, weeks post birth",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002550",
+    "label": "end, weeks post birth",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002551",
+    "label": "has skeleton",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002552",
+    "label": "results in ending of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002553",
+    "label": "hyperparasite of",
+    "prefix": "ro",
+    "synonyms": [
+      "epiparasite of",
+      "hyperparasitoid of"
+    ]
+  },
+  {
+    "identifier": "0002554",
+    "label": "hyperparasitized by",
+    "prefix": "ro",
+    "synonyms": [
+      "has epiparasite",
+      "has hyperparasite",
+      "hyperparasitoidized by"
+    ]
+  },
+  {
+    "identifier": "0002555",
+    "label": "allelopath of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002556",
+    "label": "pathogen of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002557",
+    "label": "has pathogen",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002558",
+    "label": "has evidence",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002559",
+    "label": "causally influenced by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002560",
+    "label": "is asymmetric relational form of process class",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002561",
+    "label": "is symmetric relational form of process class",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002562",
+    "label": "is relational form of process class",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002563",
+    "label": "interaction relation helper property",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002564",
+    "label": "molecular interaction relation helper property",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002565",
+    "label": "results in movement of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002566",
+    "label": "causally influences",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002567",
+    "label": "biomechanically related to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002568",
+    "label": "has muscle antagonist",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002569",
+    "label": "has branching part",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002570",
+    "label": "conduit for",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002571",
+    "label": "lumen of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002572",
+    "label": "luminal space of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002573",
+    "label": "has modifier",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002574",
+    "label": "participates in a biotic-biotic interaction with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002575",
+    "label": "is direct form of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002576",
+    "label": "skeleton of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002578",
+    "label": "directly regulates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002579",
+    "label": "is indirect form of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002580",
+    "label": "logical macro assertion on an axiom",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002581",
+    "label": "is a defining property chain axiom",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002582",
+    "label": "is a defining property chain axiom where second argument is reflexive",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002583",
+    "label": "existence starts at end of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002584",
+    "label": "has part structure that is capable of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002585",
+    "label": "results in closure of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002586",
+    "label": "results in breakdown of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002587",
+    "label": "results in synthesis of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002588",
+    "label": "results in assembly of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002589",
+    "label": "results in catabolism of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002590",
+    "label": "results in disassembly of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002591",
+    "label": "results in remodeling of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002592",
+    "label": "results in organization of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002593",
+    "label": "existence ends at start of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002594",
+    "label": "is relational form of a class",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002595",
+    "label": "causal relation between material entity and a process",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002596",
+    "label": "capable of regulating",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002597",
+    "label": "capable of negatively regulating",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002598",
+    "label": "capable of positively regulating",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002599",
+    "label": "capable of inhibiting or preventing pathological process",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002600",
+    "label": "capable of upregulating or causing pathological process",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002601",
+    "label": "logical macro assertion involving identity",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002602",
+    "label": "in approximate one to one relationship with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002603",
+    "label": "is approximately equivalent to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002604",
+    "label": "is opposite of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002605",
+    "label": "is indistinguishable from",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002606",
+    "label": "is substance that treats",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002607",
+    "label": "is marker for",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002608",
+    "label": "process has causal agent",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002609",
+    "label": "obsolete related via dependence to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002610",
+    "label": "correlated with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002611",
+    "label": "evidential logical macro assertion on an axiom",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002612",
+    "label": "axiom has evidence",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002613",
+    "label": "axiom contradicted by evidence",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002614",
+    "label": "is evidence with support from",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002615",
+    "label": "has model",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002616",
+    "label": "related via evidence or inference to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002617",
+    "label": "is representative IRI for equivalence set",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002618",
+    "label": "visits",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002619",
+    "label": "visited by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002622",
+    "label": "visits flowers of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002623",
+    "label": "has flowers visited by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002624",
+    "label": "lays eggs in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002625",
+    "label": "has eggs laid in by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002626",
+    "label": "kills",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002627",
+    "label": "is killed by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002629",
+    "label": "directly positively regulates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002630",
+    "label": "directly negatively regulates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002632",
+    "label": "ectoparasite of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002633",
+    "label": "has ectoparasite",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002634",
+    "label": "endoparasite of",
+    "prefix": "ro",
+    "synonyms": [
+      "lives inside of"
+    ]
+  },
+  {
+    "identifier": "0002635",
+    "label": "has endoparasite",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002636",
+    "label": "mesoparasite of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002637",
+    "label": "has mesoparasite",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002638",
+    "label": "intercellular endoparasite of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002639",
+    "label": "has intercellular endoparasite",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002640",
+    "label": "intracellular endoparasite of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002641",
+    "label": "has intracellular endoparasite",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0002801",
+    "label": "co-roosts with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003000",
+    "label": "produces",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003001",
+    "label": "produced by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003002",
+    "label": "represses expression of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003003",
+    "label": "increases expression of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003301",
+    "label": "has role in modeling",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003302",
+    "label": "causes or contributes to condition",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003303",
+    "label": "causes condition",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003304",
+    "label": "contributes to condition",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003305",
+    "label": "contributes to severity of condition",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003306",
+    "label": "contributes to frequency of condition",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003307",
+    "label": "ameliorates condition",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003308",
+    "label": "correlated with condition",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003309",
+    "label": "exacerbates condition",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003310",
+    "label": "condition ameliorated by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0003311",
+    "label": "condition exacerbated by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004000",
+    "label": "condition has genetic basis in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004001",
+    "label": "has material basis in gain of function germline mutation in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004002",
+    "label": "has material basis in loss of function germline mutation in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004003",
+    "label": "has material basis in germline mutation in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004004",
+    "label": "has material basis in somatic mutation in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004005",
+    "label": "has major susceptibility factor",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004006",
+    "label": "has partial material basis in germline mutation in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004007",
+    "label": "has primary input or output",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004008",
+    "label": "has primary output",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004009",
+    "label": "has primary input",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004010",
+    "label": "is genetic basis for condition",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004011",
+    "label": "is causal gain of function germline mutation of in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004012",
+    "label": "is causal loss of function germline mutation of in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004013",
+    "label": "is causal germline mutation in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004014",
+    "label": "is causal somatic mutation in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004015",
+    "label": "is causal susceptibility factor for",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004016",
+    "label": "is causal germline mutation partially giving rise to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004017",
+    "label": "realizable has basis in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004018",
+    "label": "is basis for realizable",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004019",
+    "label": "disease has basis in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004020",
+    "label": "disease has basis in dysfunction of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004021",
+    "label": "disease has basis in disruption of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004022",
+    "label": "disease has basis in feature",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004023",
+    "label": "causal relationship with disease as subject",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004024",
+    "label": "disease causes disruption of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004025",
+    "label": "disease causes dysfunction of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004026",
+    "label": "disease has location",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004027",
+    "label": "disease has inflammation site",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004028",
+    "label": "realized in response to stimulus",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004029",
+    "label": "disease has feature",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004030",
+    "label": "disease arises from alteration in structure",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004031",
+    "label": "enables subfunction",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004032",
+    "label": "acts upstream of or within, positive effect",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004033",
+    "label": "acts upstream of or within, negative effect",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004034",
+    "label": "acts upstream of, positive effect",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004035",
+    "label": "acts upstream of, negative effect",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004036",
+    "label": "nominally disjoint with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004046",
+    "label": "causally upstream of or within, negative effect",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004047",
+    "label": "causally upstream of or within, positive effect",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004048",
+    "label": "is directional form of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004049",
+    "label": "is positive form of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004050",
+    "label": "is negative form of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004096",
+    "label": "DEPRECATED inheres in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0004097",
+    "label": "DEPRECATED bearer of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0007000",
+    "label": "has driver",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0007001",
+    "label": "has disease driver",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0008501",
+    "label": "epiphyte of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0008502",
+    "label": "has epiphyte",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0008503",
+    "label": "kleptoparasite of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0008504",
+    "label": "kleptoparasitized by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0008505",
+    "label": "creates habitat for",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0008506",
+    "label": "ecologically co-occurs with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0008507",
+    "label": "lays eggs on",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0008508",
+    "label": "has eggs laid on by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0008509",
+    "label": "has roost",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0009001",
+    "label": "has substance added",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0009002",
+    "label": "has substance removed",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0009003",
+    "label": "immersed in",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0009004",
+    "label": "has consumer",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0009005",
+    "label": "has primary substance added",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0009501",
+    "label": "realized in response to",
+    "prefix": "ro",
+    "synonyms": [
+      "triggered by process"
+    ]
+  },
+  {
+    "identifier": "0010001",
+    "label": "generically depends on",
+    "prefix": "ro",
+    "synonyms": [
+      "g-depends on"
+    ]
+  },
+  {
+    "identifier": "0010002",
+    "label": "is carrier of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011002",
+    "label": "regulates activity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011003",
+    "label": "regulates quantity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011004",
+    "label": "indirectly regulates activity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011007",
+    "label": "decreases by repression quantity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011008",
+    "label": "increases by expression quantity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011009",
+    "label": "directly positively regulates quantity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011010",
+    "label": "directly negatively regulates quantity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011013",
+    "label": "indirectly positively regulates activity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011014",
+    "label": "destabilizes quantity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011015",
+    "label": "stabilizes quantity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011016",
+    "label": "indirectly negatively regulates activity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011021",
+    "label": "directly regulates quantity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011022",
+    "label": "indirectly regulates quantity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011023",
+    "label": "indirectly negatively regulates quantity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0011024",
+    "label": "indirectly positively regulates quantity of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0012000",
+    "label": "has small molecule regulator",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0012001",
+    "label": "has small molecule activator",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0012002",
+    "label": "has small molecule inhibitor",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0012003",
+    "label": "acts on population of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0012004",
+    "label": "is small molecule regulator of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0012005",
+    "label": "is small molecule activator of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0012006",
+    "label": "is small molecule inhibitor of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0012007",
+    "label": "results in adhesion of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0012008",
+    "label": "results in fusion of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0012009",
+    "label": "constitutively upstream of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0012010",
+    "label": "removes input for",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0012011",
+    "label": "indirectly causally upstream of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0012012",
+    "label": "indirectly regulates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0013001",
+    "label": "has synaptic IO in region",
+    "prefix": "ro",
+    "synonyms": [
+      "has synaptic input or output in"
+    ]
+  },
+  {
+    "identifier": "0013002",
+    "label": "receives synaptic input in region",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0013003",
+    "label": "sends synaptic output to region",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0013004",
+    "label": "has synaptic IO throughout",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0013005",
+    "label": "receives synaptic input throughout",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0013006",
+    "label": "sends synaptic output throughout",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0013007",
+    "label": "has sensory dendrite in",
+    "prefix": "ro",
+    "synonyms": [
+      "has sensory dendrite location",
+      "has sensory terminal in",
+      "has sensory terminal location"
+    ]
+  },
+  {
+    "identifier": "0013008",
+    "label": "receives synaptic input from neuron",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0013009",
+    "label": "sends synaptic output to cell",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0014001",
+    "label": "disease has infectious agent",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0015001",
+    "label": "has exemplar data",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0015002",
+    "label": "exemplar data of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0015003",
+    "label": "subcluster of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0015004",
+    "label": "has characterizing marker set",
+    "prefix": "ro",
+    "synonyms": [
+      "has marker gene combination",
+      "has marker signature set"
+    ]
+  },
+  {
+    "identifier": "0015006",
+    "label": "different in magnitude relative to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0015007",
+    "label": "increased in magnitude relative to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0015008",
+    "label": "decreased in magnitude relative to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0015009",
+    "label": "similar in magnitude relative to",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0015010",
+    "label": "has relative magnitude",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0015011",
+    "label": "has cross section",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0015012",
+    "label": "reciprocal of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0015015",
+    "label": "has high plasma membrane amount",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0015016",
+    "label": "has low plasma membrane amount",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0016001",
+    "label": "has phenotype or disease",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0016002",
+    "label": "has disease",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0016004",
+    "label": "has exposure medium",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0017001",
+    "label": "device utilizes material",
+    "prefix": "ro",
+    "synonyms": [
+      "utilizes"
+    ]
+  },
+  {
+    "identifier": "0017003",
+    "label": "positively correlated with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0017004",
+    "label": "negatively correlated with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018001",
+    "label": "is myristoyltransferase activity",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018002",
+    "label": "myristoylates",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018003",
+    "label": "myristoylated by",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018027",
+    "label": "is agonist of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018028",
+    "label": "is inverse agonist of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018029",
+    "label": "is antagonist of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018030",
+    "label": "chemical relationship",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018031",
+    "label": "is direct conjugate base of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018032",
+    "label": "is direct conjugate acid of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018033",
+    "label": "is conjugate base of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018033",
+    "label": "is deprotonated form of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018034",
+    "label": "is conjugate acid of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018034",
+    "label": "is protonated form of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018035",
+    "label": "is matched small molecular pair with",
+    "prefix": "ro",
+    "synonyms": [
+      "is MMP with",
+      "is matched molecular pair with"
+    ]
+  },
+  {
+    "identifier": "0018036",
+    "label": "is tautomer of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018036",
+    "label": "is tautomer of",
+    "prefix": "ro",
+    "synonyms": [
+      "is desmotrope of"
+    ]
+  },
+  {
+    "identifier": "0018037",
+    "label": "is substitutent group from",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018038",
+    "label": "has functional parent",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018039",
+    "label": "is enantiomer of",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0018039",
+    "label": "is enantiomer of",
+    "prefix": "ro",
+    "synonyms": [
+      "is optical isomer of"
+    ]
+  },
+  {
+    "identifier": "0018040",
+    "label": "has parent hydride",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0019000",
+    "label": "regulates characteristic",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0019001",
+    "label": "positively regulates characteristic",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0019002",
+    "label": "negatively regulates characteristic",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0019501",
+    "label": "confers susceptibility to condition",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0040035",
+    "label": "disease relationship",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0040036",
+    "label": "results in changes to anatomical or cellular structure",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "0040042",
+    "label": "is homeomorphic for",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "HOM0000000",
+    "label": "in similarity relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "correspondence",
+      "resemblance",
+      "sameness",
+      "similar to"
+    ]
+  },
+  {
+    "identifier": "HOM0000001",
+    "label": "in homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "homologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000002",
+    "label": "in homoplasy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "analogy",
+      "homoplasous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000003",
+    "label": "in homocracy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "homocracous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000004",
+    "label": "in convergence relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "analogy"
+    ]
+  },
+  {
+    "identifier": "HOM0000005",
+    "label": "in parallelism relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "parallel evolution"
+    ]
+  },
+  {
+    "identifier": "HOM0000006",
+    "label": "in structural homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "idealistic homology",
+      "structural homologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000007",
+    "label": "in historical homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "cladistic homology",
+      "historical homologous to",
+      "homology",
+      "phylogenetic homology",
+      "taxic homology",
+      "true homology"
+    ]
+  },
+  {
+    "identifier": "HOM0000008",
+    "label": "in biological homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "biological homologous to",
+      "transformational homology"
+    ]
+  },
+  {
+    "identifier": "HOM0000009",
+    "label": "in reversal relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "atavism",
+      "reversion",
+      "rudiment"
+    ]
+  },
+  {
+    "identifier": "HOM0000010",
+    "label": "in syntenic homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "syntenic homologous to",
+      "synteny"
+    ]
+  },
+  {
+    "identifier": "HOM0000011",
+    "label": "in paralogy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "paralogous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000012",
+    "label": "in syntenic paralogy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "duplicon",
+      "paralogon",
+      "syntenic paralogous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000013",
+    "label": "in syntenic orthology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "syntenic orthologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000014",
+    "label": "in partial homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "fractional homology",
+      "mixed homology",
+      "modular homology",
+      "partial correspondence",
+      "partial homologous to",
+      "percent homology",
+      "segmental homology"
+    ]
+  },
+  {
+    "identifier": "HOM0000015",
+    "label": "in protein structural homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "protein structural homologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000016",
+    "label": "in non functional homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "non functional homologous to",
+      "pseudogene"
+    ]
+  },
+  {
+    "identifier": "HOM0000017",
+    "label": "in orthology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "orthologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000018",
+    "label": "in xenology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "xenologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000019",
+    "label": "in 1 to 1 homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "1 to 1 homologous to",
+      "1:1 homology",
+      "one-to-one homology"
+    ]
+  },
+  {
+    "identifier": "HOM0000020",
+    "label": "in 1 to 1 orthology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "1 to 1 orthologous to",
+      "1:1 orthology",
+      "one-to-one orthology"
+    ]
+  },
+  {
+    "identifier": "HOM0000022",
+    "label": "in ohnology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "homoeology",
+      "ohnologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000023",
+    "label": "in in-paralogy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "in-paralogous to",
+      "inparalogy",
+      "symparalogy"
+    ]
+  },
+  {
+    "identifier": "HOM0000024",
+    "label": "in out-paralogy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "alloparalogy",
+      "out-paralogous to",
+      "outparalogy"
+    ]
+  },
+  {
+    "identifier": "HOM0000025",
+    "label": "in pro-orthology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "pro-orthologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000026",
+    "label": "in semi-orthology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "semi-orthologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000027",
+    "label": "in serial homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "homonomy",
+      "serial homologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000028",
+    "label": "in heterochronous homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "heterochronous homologous to",
+      "heterochrony"
+    ]
+  },
+  {
+    "identifier": "HOM0000029",
+    "label": "in paedomorphorsis relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "juvenification",
+      "pedomorphosis"
+    ]
+  },
+  {
+    "identifier": "HOM0000030",
+    "label": "in peramorphosis relationship with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "HOM0000031",
+    "label": "in progenesis relationship with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "HOM0000032",
+    "label": "in neoteny relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "juvenilization",
+      "neotenous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000033",
+    "label": "in mimicry relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "mimicrous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000034",
+    "label": "in 1 to many orthology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "1 to many orthologous to",
+      "1:many orthology",
+      "co-orthology",
+      "many to 1 orthology",
+      "one-to-many orthology"
+    ]
+  },
+  {
+    "identifier": "HOM0000036",
+    "label": "in many to many homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "many to many homologous to",
+      "many-to-many homology",
+      "many:many homology"
+    ]
+  },
+  {
+    "identifier": "HOM0000037",
+    "label": "in 1 to many homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "1 to many homologous to",
+      "1:many homology",
+      "one-to-many homology"
+    ]
+  },
+  {
+    "identifier": "HOM0000042",
+    "label": "in apomorphy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "apomorphous to",
+      "synapomorphy"
+    ]
+  },
+  {
+    "identifier": "HOM0000043",
+    "label": "in plesiomorphy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "plesiomorphous to",
+      "symplesiomorphy"
+    ]
+  },
+  {
+    "identifier": "HOM0000044",
+    "label": "in deep homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "deep genetic homology",
+      "deep homologous to",
+      "generative homology",
+      "homoiology"
+    ]
+  },
+  {
+    "identifier": "HOM0000045",
+    "label": "in hemiplasy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "hemiplasous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000046",
+    "label": "in gametology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "gametologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000047",
+    "label": "in chromosomal homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "chromosomal homologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000048",
+    "label": "in many to many orthology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "co-orthology",
+      "many to many orthologous to",
+      "many-to-many orthology",
+      "many:many orthology",
+      "trans-homology",
+      "trans-orthology"
+    ]
+  },
+  {
+    "identifier": "HOM0000049",
+    "label": "in within-species paralogy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "within-species paralogous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000050",
+    "label": "in between-species paralogy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "between-species paralogous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000051",
+    "label": "in postdisplacement relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "post-displacement"
+    ]
+  },
+  {
+    "identifier": "HOM0000052",
+    "label": "in hypermorphosis relationship with",
+    "prefix": "ro"
+  },
+  {
+    "identifier": "HOM0000053",
+    "label": "in synology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "synologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000054",
+    "label": "in isoorthology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "isoorthologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000055",
+    "label": "in tandem paralogy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "iterative paralogy",
+      "serial paralogy",
+      "tandem paralogous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000057",
+    "label": "in latent homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "apomorphic tendency",
+      "cryptic homology",
+      "homoiology",
+      "homoplastic tendency",
+      "latent homologous to",
+      "re-awakening",
+      "underlying synapomorphy"
+    ]
+  },
+  {
+    "identifier": "HOM0000058",
+    "label": "in syngeny relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "generative homology",
+      "syngenous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000060",
+    "label": "in apparent orthology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "1:1 paralogy",
+      "apparent 1:1 orthology",
+      "apparent orthologous to",
+      "pseudoorthology"
+    ]
+  },
+  {
+    "identifier": "HOM0000061",
+    "label": "in pseudoparalogy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "pseudoparalogous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000062",
+    "label": "in equivalogy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "equivalogous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000063",
+    "label": "in interology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "interologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000065",
+    "label": "in functional equivalence relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "functional similarity"
+    ]
+  },
+  {
+    "identifier": "HOM0000066",
+    "label": "in iterative homology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "iterative homologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000068",
+    "label": "in paraxenology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "duplicate xenology",
+      "multiple xenology",
+      "paraxenologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000069",
+    "label": "in plerology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "plerologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000071",
+    "label": "in homotopy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "homotopous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000072",
+    "label": "in homeosis relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "heterotopy"
+    ]
+  },
+  {
+    "identifier": "HOM0000073",
+    "label": "in homoeology relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "homoeologous to"
+    ]
+  },
+  {
+    "identifier": "HOM0000074",
+    "label": "in paramorphism relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "axis paramorphism"
+    ]
+  },
+  {
+    "identifier": "HOM0000075",
+    "label": "in regulogy relationship with",
+    "prefix": "ro",
+    "synonyms": [
+      "regulogous to"
+    ]
+  },
+  {
+    "identifier": "0000016",
+    "label": "has vaccine conjugate protein",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000138",
+    "label": "has bacterial vaccine vector",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000270",
+    "label": "has vaccine contraindication",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000281",
+    "label": "has viral vaccine vector",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000369",
+    "label": "has DNA vaccine plasmid",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000445",
+    "label": "infection_of",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000462",
+    "label": "induced by vaccination of",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000476",
+    "label": "has DNA vaccine antigen gene",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000520",
+    "label": "has vaccine component",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000524",
+    "label": "has vaccine antigen",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000525",
+    "label": "has subunit vaccine antigen",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000527",
+    "label": "has vaccine protective antigen",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000529",
+    "label": "has vaccine adjuvant",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000530",
+    "label": "has vaccine vector",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000531",
+    "label": "has vaccine allergen",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000537",
+    "label": "vaccine organism secretes",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000538",
+    "label": "has vaccine preservative",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000547",
+    "label": "vaccinated in route",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000553",
+    "label": "has vaccinee",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000608",
+    "label": "DNA vaccine expresses protein antigen",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000638",
+    "label": "obsolete vaccinates",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000711",
+    "label": "obsolete has_vaccine_allergen",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000799",
+    "label": "vaccine organism has mutation",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000818",
+    "label": "has vaccine virmugen",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000894",
+    "label": "has subunit vaccine protective antigen",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0000908",
+    "label": "is_distributed_by",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0001011",
+    "label": "immunizes against disease",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0001039",
+    "label": "has gene mutation",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0001243",
+    "label": "immunizes organism",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0001818",
+    "label": "VIOLIN vaccine ID",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003099",
+    "label": "trade name",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003127",
+    "label": "has prime vaccine",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003128",
+    "label": "has boost vaccine",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003146",
+    "label": "has vaccine active ingredient",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003147",
+    "label": "has vaccine ingredient",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003151",
+    "label": "vaccine dose annotation",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003158",
+    "label": "vaccine proper name",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003159",
+    "label": "vaccine manufacturer",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003160",
+    "label": "FDA vaccine indications",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003161",
+    "label": "vaccine package insert PDF URL",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003162",
+    "label": "vaccine STN",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003198",
+    "label": "RxNORM ID",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003355",
+    "label": "immunizes against microbe",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003557",
+    "label": "has Protegen id",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003558",
+    "label": "has Protegen annotation",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0003560",
+    "label": "RxNORM Preferred Name",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0004909",
+    "label": "immunizes against disease process",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0005242",
+    "label": "up-expressed as immune signature of",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0005312",
+    "label": "induces immune profile",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0005328",
+    "label": "VAC adjuvant ID",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0005377",
+    "label": "has molecular receptor",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0005431",
+    "label": "vaccine antigen annotation",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0005432",
+    "label": "vaccine preparation annotation",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0005433",
+    "label": "vaccine response annotation",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0005438",
+    "label": "CVX code",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0005481",
+    "label": "capable of blocking transmission (of life cycle)",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0005500",
+    "label": "status of vaccine development",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0005561",
+    "label": "blocks transmission of pathogen via vaccine",
+    "prefix": "vo"
+  },
+  {
+    "identifier": "0005562",
+    "label": "vaccine immunity response transferrable to organism",
+    "prefix": "vo"
+  }
+]

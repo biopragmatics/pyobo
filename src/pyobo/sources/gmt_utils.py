@@ -1,38 +1,36 @@
-# -*- coding: utf-8 -*-
-
 """GMT utilities."""
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, Set, Tuple, Union
 
-GMTSummary = Tuple[str, str, Set[str]]
-WikiPathwaysGMTSummary = Tuple[str, str, str, str, str, Set[str]]
+GMTSummary = tuple[str, str, set[str]]
+WikiPathwaysGMTSummary = tuple[str, str, str, str, str, set[str]]
 
 
-def parse_gmt_file(path: Union[str, Path]) -> Iterable[GMTSummary]:
+def parse_gmt_file(path: str | Path) -> Iterable[GMTSummary]:
     """Return file as list of pathway - gene sets (ENTREZ-identifiers).
 
     :param path: path to GMT file
-    :return: line-based processed file
+
+    :yields: processed lines
     """
     with open(path) as file:
         for line in file:
             yield _process_line(line)
 
 
-def _process_line(line: str) -> Tuple[str, str, Set[str]]:
+def _process_line(line: str) -> tuple[str, str, set[str]]:
     """Return the pathway name, url, and gene sets associated.
 
     :param line: gmt file line
-    :return: pathway name
-    :return: pathway info url
-    :return: genes set associated
+
+    :returns: pathway name, pathway info url, and genes set associated
     """
     name, info, *entries = (p.strip() for p in line.split("\t"))
     return name, info, set(entries)
 
 
-def parse_wikipathways_gmt(path: Union[str, Path]) -> Iterable[WikiPathwaysGMTSummary]:
+def parse_wikipathways_gmt(path: str | Path) -> Iterable[WikiPathwaysGMTSummary]:
     """Parse WikiPathways GMT."""
     for info, _uri, entries in parse_gmt_file(path):
         info, version, identifier, species = info.split("%")

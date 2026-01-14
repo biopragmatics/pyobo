@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """Converter for NPASS."""
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 from tqdm.auto import tqdm
 
-from ..struct import Obo, Reference, Synonym, Term
+from ..struct import Obo, Reference, Term
 from ..utils.path import ensure_df
 
 __all__ = [
@@ -34,14 +32,9 @@ class NPASSGetter(Obo):
         return iter_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get NPASS as OBO."""
-    return NPASSGetter()
-
-
 def get_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get the NPASS chemical nomenclature."""
-    base_url = f"http://bidd.group/NPASS/downloadFiles/NPASSv{version}_download"
+    base_url = f"https://bidd.group/NPASS/downloadFiles/NPASSv{version}_download"
     url = f"{base_url}_naturalProducts_generalInfo.txt"
     return ensure_df(
         PREFIX,
@@ -64,7 +57,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         )
 
         for xref_prefix, xref_id in [
-            ("chembl", chembl_id),
+            ("chembl.compound", chembl_id),
             # ("zinc", zinc_id),
         ]:
             if pd.notna(xref_id):
@@ -73,7 +66,10 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         # TODO check that the first is always the parent compound?
         if pd.notna(pubchem_compound_ids):
             pubchem_compound_ids = [
-                yy.strip() for xx in pubchem_compound_ids.split(";") for yy in xx.strip().split(",")
+                zz
+                for xx in pubchem_compound_ids.split(";")
+                for yy in xx.strip().split(",")
+                if (zz := yy.strip())
             ]
             if len(pubchem_compound_ids) > 1:
                 logger.debug("multiple cids for %s: %s", identifier, pubchem_compound_ids)
@@ -84,7 +80,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
         for synonym in [iupac]:
             if pd.notna(synonym):
-                term.append_synonym(Synonym(name=synonym))
+                term.append_synonym(synonym)
 
         yield term
 

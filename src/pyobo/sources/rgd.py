@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Converter for RGD."""
 
 import logging
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -11,24 +9,21 @@ from tqdm.auto import tqdm
 from pyobo.struct import (
     Obo,
     Reference,
-    Synonym,
-    SynonymTypeDef,
     Term,
     from_species,
     has_gene_product,
+    is_mentioned_by,
     transcribes_to,
 )
+from pyobo.struct.struct import previous_gene_symbol, previous_name
 from pyobo.utils.path import ensure_df
 
 logger = logging.getLogger(__name__)
 PREFIX = "rgd"
 
-old_symbol_type = SynonymTypeDef.from_text("old_symbol")
-old_name_type = SynonymTypeDef.from_text("old_name")
-
 # NOTE unigene id was discontinue in January 18th, 2021 dump
 
-GENES_URL = "https://download.rgd.mcw.edu/data_release/GENES.RAT.txt"
+GENES_URL = "https://download.rgd.mcw.edu/data_release/GENES_RAT.txt"
 GENES_HEADER = [
     "GENE_RGD_ID",
     "SYMBOL",
@@ -74,17 +69,12 @@ class RGDGetter(Obo):
     """An ontology representation of RGD's rat gene nomenclature."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [from_species, transcribes_to, has_gene_product]
-    synonym_typedefs = [old_name_type, old_symbol_type]
+    typedefs = [from_species, transcribes_to, has_gene_product, is_mentioned_by]
+    synonym_typedefs = [previous_name, previous_gene_symbol]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return get_terms(force=force, version=self._version_or_raise)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get RGD as OBO."""
-    return RGDGetter(force=force)
 
 
 namespace_to_column = [
@@ -94,7 +84,7 @@ namespace_to_column = [
 ]
 
 
-def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Term]:
+def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]:
     """Get RGD terms."""
     df = ensure_df(
         PREFIX,
@@ -125,11 +115,11 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
         old_names = row["OLD_NAME"]
         if old_names and pd.notna(old_names):
             for old_name in old_names.split(";"):
-                term.append_synonym(Synonym(name=old_name, type=old_name_type))
+                term.append_synonym(old_name, type=previous_name)
         old_symbols = row["OLD_SYMBOL"]
         if old_symbols and pd.notna(old_symbols):
             for old_symbol in old_symbols.split(";"):
-                term.append_synonym(Synonym(name=old_symbol, type=old_symbol_type))
+                term.append_synonym(old_symbol, type=previous_gene_symbol)
         for prefix, key in namespace_to_column:
             xref_ids = str(row[key])
             if xref_ids and pd.notna(xref_ids):
@@ -137,19 +127,19 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
                     if xref_id == "nan":
                         continue
                     if prefix == "uniprot":
-                        term.append_relationship(
-                            has_gene_product, Reference.auto(prefix=prefix, identifier=xref_id)
+                        term.annotate_object(
+                            has_gene_product, Reference(prefix=prefix, identifier=xref_id)
                         )
                     elif prefix == "ensembl":
                         if xref_id.startswith("ENSMUSG") or xref_id.startswith("ENSRNOG"):
                             # second one is reverse strand
                             term.append_xref(Reference(prefix=prefix, identifier=xref_id))
                         elif xref_id.startswith("ENSMUST"):
-                            term.append_relationship(
+                            term.annotate_object(
                                 transcribes_to, Reference(prefix=prefix, identifier=xref_id)
                             )
                         elif xref_id.startswith("ENSMUSP"):
-                            term.append_relationship(
+                            term.annotate_object(
                                 has_gene_product, Reference(prefix=prefix, identifier=xref_id)
                             )
                         else:
@@ -160,7 +150,7 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
         pubmed_ids = row["CURATED_REF_PUBMED_ID"]
         if pubmed_ids and pd.notna(pubmed_ids):
             for pubmed_id in str(pubmed_ids).split(";"):
-                term.append_provenance(Reference(prefix="pubmed", identifier=pubmed_id))
+                term.append_mentioned_by(Reference(prefix="pubmed", identifier=pubmed_id))
 
         term.set_species(identifier="10116", name="Rattus norvegicus")
         yield term

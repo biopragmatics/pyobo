@@ -1,17 +1,17 @@
-# -*- coding: utf-8 -*-
-
 """Converter for ZFIN."""
 
 import logging
 from collections import defaultdict
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 from tqdm.auto import tqdm
 
+from pyobo.resources.so import get_so_name
 from pyobo.struct import (
     Obo,
     Reference,
     Term,
+    _parse_str_or_curie_or_uri,
     from_species,
     has_gene_product,
     orthologous,
@@ -48,11 +48,6 @@ class ZFINGetter(Obo):
         return get_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get ZFIN OBO."""
-    return ZFINGetter(force=force)
-
-
 MARKERS_COLUMNS = [
     "zfin_id",
     "name",
@@ -62,7 +57,7 @@ MARKERS_COLUMNS = [
 ]
 
 
-def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Term]:
+def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]:
     """Get terms."""
     alt_ids_df = ensure_df(
         PREFIX,
@@ -73,7 +68,7 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
         names=["alt", "zfin_id"],
         version=version,
     )
-    primary_to_alt_ids = defaultdict(set)
+    primary_to_alt_ids: defaultdict[str, set[str]] = defaultdict(set)
     for alt_id, zfin_id in alt_ids_df.values:
         primary_to_alt_ids[zfin_id].add(alt_id)
 
@@ -114,7 +109,9 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
     )
     df["sequence_ontology_id"] = df["sequence_ontology_id"].map(lambda x: x[len("SO:") :])
     so = {
-        sequence_ontology_id: Reference.auto(prefix="SO", identifier=sequence_ontology_id)
+        sequence_ontology_id: Reference(
+            prefix="SO", identifier=sequence_ontology_id, name=get_so_name(sequence_ontology_id)
+        )
         for sequence_ontology_id in df["sequence_ontology_id"].unique()
     }
     for _, reference in sorted(so.items()):
@@ -133,20 +130,29 @@ def get_terms(force: bool = False, version: Optional[str] = None) -> Iterable[Te
         # Entity type is redundant of identifier
         # term.append_property("type", entity_type)
         for alt_id in primary_to_alt_ids[identifier]:
-            term.append_alt(alt_id)
+            term.append_alt(Reference(prefix=PREFIX, identifier=alt_id))
         entrez_id = entrez_mappings.get(identifier)
         if entrez_id:
-            term.append_exact_match(Reference(prefix="ncbigene", identifier=entrez_id))
+            try:
+                ncbigene_ref = Reference(prefix="ncbigene", identifier=entrez_id)
+            except ValueError:
+                tqdm.write(f"[zfin] invalid NCBI gene: {entrez_id}")
+            else:
+                term.append_exact_match(ncbigene_ref)
         for uniprot_id in uniprot_mappings.get(identifier, []):
-            term.append_relationship(has_gene_product, Reference.auto("uniprot", uniprot_id))
+            term.append_relationship(
+                has_gene_product, Reference(prefix="uniprot", identifier=uniprot_id)
+            )
         for hgnc_id in human_orthologs.get(identifier, []):
-            term.append_relationship(orthologous, Reference.auto("hgnc", hgnc_id))
+            term.append_relationship(orthologous, Reference(prefix="hgnc", identifier=hgnc_id))
         for mgi_curie in mouse_orthologs.get(identifier, []):
-            mouse_ortholog = Reference.from_curie(mgi_curie, auto=True)
+            mouse_ortholog = _parse_str_or_curie_or_uri(mgi_curie)
             if mouse_ortholog:
                 term.append_relationship(orthologous, mouse_ortholog)
         for flybase_id in fly_orthologs.get(identifier, []):
-            term.append_relationship(orthologous, Reference.auto("flybase", flybase_id))
+            term.append_relationship(
+                orthologous, Reference(prefix="flybase", identifier=flybase_id)
+            )
 
         yield term
 

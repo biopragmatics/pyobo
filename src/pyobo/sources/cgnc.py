@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """Converter for CGNC."""
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 
@@ -33,11 +31,6 @@ class CGNCGetter(Obo):
         return get_terms(force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get CGNC as OBO."""
-    return CGNCGetter(force=force)
-
-
 HEADER = [
     "cgnc_id",
     "ncbigene_id",
@@ -52,7 +45,15 @@ HEADER = [
 
 def get_terms(force: bool = False) -> Iterable[Term]:
     """Get CGNC terms."""
-    df = ensure_df(PREFIX, url=URL, name=f"{PREFIX}.tsv", force=force, header=0, names=HEADER)
+    df = ensure_df(
+        PREFIX,
+        url=URL,
+        name=f"{PREFIX}.tsv",
+        force=force,
+        header=0,
+        names=HEADER,
+        on_bad_lines="skip",
+    )
     for i, (cgnc_id, entrez_id, ensembl_id, name, synonym_1, synoynm_2, _, _) in enumerate(
         df.values
     ):
@@ -69,7 +70,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         term = Term.from_triple(
             prefix=PREFIX,
             identifier=cgnc_id,
-            name=name,
+            name=name if pd.notna(name) else None,
         )
         term.set_species(identifier="9031", name="Gallus gallus")
         if entrez_id and pd.notna(entrez_id):

@@ -1,40 +1,53 @@
-# -*- coding: utf-8 -*-
-
 """Parsers for MSig."""
 
 import logging
-from typing import Iterable, Optional
-from xml.etree import ElementTree
+import zipfile
+from collections.abc import Iterable
 
+from lxml import etree
+from pydantic import ValidationError
 from tqdm.auto import tqdm
 
-from ..struct import Obo, Reference, Term, has_participant
-from ..utils.path import ensure_path
-
-logger = logging.getLogger(__name__)
+from pyobo.struct import Obo, Reference, Term, TypeDef, has_participant, is_mentioned_by
+from pyobo.utils.path import ensure_path
 
 __all__ = [
     "MSigDBGetter",
 ]
 
+logger = logging.getLogger(__name__)
+
 PREFIX = "msigdb"
 BASE_URL = "https://data.broadinstitute.org/gsea-msigdb/msigdb/release"
+
+CATEGORY_CODE = TypeDef.default(PREFIX, "category_code", name="category code", is_metadata_tag=True)
+SUB_CATEGORY_CODE = TypeDef.default(
+    PREFIX, "sub_category_code", name="sub-category code", is_metadata_tag=True
+)
+CONTRIBUTOR = TypeDef.default(PREFIX, "contributor", name="contributor", is_metadata_tag=True)
+EXACT_SOURCE = TypeDef.default(PREFIX, "exact_source", name="exact source", is_metadata_tag=True)
+EXTERNAL_DETAILS_URL = TypeDef.default(
+    PREFIX, "external_details_url", name="external details URL", is_metadata_tag=True
+)
+
+PROPERTIES = [
+    ("CATEGORY_CODE", CATEGORY_CODE),
+    ("SUB_CATEGORY_CODE", SUB_CATEGORY_CODE),
+    ("CONTRIBUTOR", CONTRIBUTOR),
+    ("EXACT_SOURCE", EXACT_SOURCE),
+    ("EXTERNAL_DETAILS_URL", EXTERNAL_DETAILS_URL),
+]
 
 
 class MSigDBGetter(Obo):
     """An ontology representation of MMSigDB's gene set nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_participant]
+    typedefs = [has_participant, is_mentioned_by, *(p for _, p in PROPERTIES)]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms(version=self._version_or_raise, force=force)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get MSIG as Obo."""
-    return MSigDBGetter(force=force)
 
 
 _SPECIES = {
@@ -50,23 +63,35 @@ GO_URL_PREFIX = "http://amigo.geneontology.org/amigo/term/GO:"
 KEGG_URL_PREFIX = "http://www.genome.jp/kegg/pathway/hsa/"
 
 
+def _iter_entries(version: str, force: bool = False):
+    xml_url = f"{BASE_URL}/{version}.Hs/msigdb_v{version}.Hs.xml.zip"
+    path = ensure_path(prefix=PREFIX, url=xml_url, version=version, force=force)
+    with zipfile.ZipFile(path, "r") as zf:
+        with zf.open(f"msigdb_v{version}.Hs.xml") as file:
+            for _ in range(3):
+                next(file)
+            # from here on out, every row except the last is a GENESET
+            for i, line_bytes in enumerate(file, start=4):
+                line = line_bytes.decode("utf8").strip()
+                if not line.startswith("<GENESET"):
+                    continue
+                try:
+                    tree = etree.fromstring(line)
+                except etree.XMLSyntaxError as e:
+                    # this is the result of faulty encoding in XML - maybe they
+                    # wrote XML with their own string formatting instead of using a
+                    # library.
+                    logger.debug("[%s] failed on line %s: %s", PREFIX, i, e)
+                else:
+                    yield tree
+
+
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Get MSigDb terms."""
-    xml_url = f"{BASE_URL}/{version}.Hs/msigdb_v{version}.Hs.xml"
-    path = ensure_path(prefix=PREFIX, url=xml_url, version=version, force=force)
-    tree = ElementTree.parse(path)
-
-    for entry in tqdm(tree.getroot(), desc=f"{PREFIX} v{version}", unit_scale=True):
+    entries = _iter_entries(version=version, force=force)
+    for entry in tqdm(entries, desc=f"{PREFIX} v{version}", unit_scale=True):
         attrib = dict(entry.attrib)
         tax_id = _SPECIES[attrib["ORGANISM"]]
-
-        reference_id = attrib["PMID"].strip()
-        if not reference_id:
-            reference = None
-        elif reference_id.startswith("GSE"):
-            reference = Reference(prefix="gse", identifier=reference_id)
-        else:
-            reference = Reference(prefix="pubmed", identifier=reference_id)
 
         # NONE have the entry "HISTORICAL_NAME"
         # historical_name = thing.attrib['HISTORICAL_NAME']
@@ -78,19 +103,20 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
             definition=_get_definition(attrib),
-            provenance=[] if reference is None else [reference],
             is_obsolete=is_obsolete,
         )
-        for key in [
-            "CATEGORY_CODE",
-            "SUB_CATEGORY_CODE",
-            "CONTRIBUTOR",
-            "EXACT_SOURCE",
-            "EXTERNAL_DETAILS_URL",
-        ]:
-            value = attrib[key].strip()
-            if value:
-                term.append_property(key.lower(), value)
+
+        reference_id = attrib["PMID"].strip()
+        if not reference_id:
+            pass
+        elif reference_id.startswith("GSE"):
+            term.append_see_also(Reference(prefix="gse", identifier=reference_id))
+        else:
+            term.append_mentioned_by(Reference(prefix="pubmed", identifier=reference_id))
+
+        for key, typedef in PROPERTIES:
+            if value := attrib[key].strip():
+                term.annotate_string(typedef, value)
 
         term.set_species(tax_id)
 
@@ -124,20 +150,28 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
                 logger.warning(
                     "missing %s source: msigdb:%s (%s)", contributor, identifier, external_details
                 )
-            term.append_xref(Reference(prefix="kegg.pathway", identifier=external_id))
+
+            try:
+                kegg_reference = Reference(prefix="kegg.pathway", identifier=external_id)
+            except ValidationError:
+                # TODO handle kegg.network which starts with N, like N01146
+                if not external_id.startswith("N"):
+                    tqdm.write(f"could not validate kegg.pathway:{external_id}")
+            else:
+                term.append_xref(kegg_reference)
 
         for ncbigene_id in attrib["MEMBERS_EZID"].strip().split(","):
             if ncbigene_id:
-                term.append_relationship(
+                term.annotate_object(
                     has_participant, Reference(prefix="ncbigene", identifier=ncbigene_id)
                 )
         yield term
 
 
-def _get_definition(attrib) -> Optional[str]:
+def _get_definition(attrib) -> str | None:
     rv = attrib["DESCRIPTION_FULL"].strip() or attrib["DESCRIPTION_BRIEF"].strip() or None
     if rv is not None:
-        return rv.replace("\d", "").replace("\s", "")  # noqa: W605
+        return rv.replace(r"\d", "").replace(r"\s", "")
     return None
 
 

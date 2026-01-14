@@ -1,15 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """Convert KEGG Genes to OBO.
 
 Run with ``python -m pyobo.sources.kegg.genes``
 """
 
 import logging
-from typing import Iterable, Optional
+from collections.abc import Iterable
+from pathlib import Path
 
-import click
-from more_click import verbose_option
 from tqdm.auto import tqdm
 
 from .api import (
@@ -43,11 +40,6 @@ class KEGGGeneGetter(Obo):
         return iter_terms(version=self._version_or_raise)
 
 
-def get_obo() -> Obo:
-    """Get KEGG Genes as OBO."""
-    return KEGGGeneGetter()
-
-
 def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over terms for KEGG Genome."""
     for kegg_genome in iter_kegg_genomes(version=version, desc="KEGG Genes"):
@@ -73,9 +65,9 @@ def iter_terms(version: str) -> Iterable[Term]:
 
 def _make_terms(
     kegg_genome: KEGGGenome,
-    list_genome_path: str,
-    conv_uniprot_path: Optional[str] = None,
-    conv_ncbigene_path: Optional[str] = None,
+    list_genome_path: Path,
+    conv_uniprot_path: Path | None = None,
+    conv_ncbigene_path: Path | None = None,
 ) -> Iterable[Term]:
     uniprot_conv = _load_conv(conv_uniprot_path, "up:") if conv_uniprot_path else {}
     ncbigene_conv = _load_conv(conv_ncbigene_path, "ncbi-geneid:") if conv_ncbigene_path else {}
@@ -90,7 +82,7 @@ def _make_terms(
                 )
                 continue
             if ";" in line:
-                *_extras, name = [part.strip() for part in extras.split(";")]
+                *_extras, name = (part.strip() for part in extras.split(";"))
             else:
                 name = extras
 
@@ -102,7 +94,9 @@ def _make_terms(
 
             uniprot_xref = uniprot_conv.get(identifier)
             if uniprot_xref is not None:
-                term.append_relationship(has_gene_product, Reference("uniprot", uniprot_xref))
+                term.annotate_object(
+                    has_gene_product, Reference(prefix="uniprot", identifier=uniprot_xref)
+                )
 
             ncbigene_xref = ncbigene_conv.get(identifier)
             if ncbigene_xref is not None:
@@ -112,17 +106,11 @@ def _make_terms(
             yield term
 
 
-def _load_conv(path, value_prefix):
+def _load_conv(path: Path, value_prefix):
     m = open_map_tsv(path)
     m = {k: v[len(value_prefix) :] for k, v in m.items()}
     return m
 
 
-@click.command()
-@verbose_option
-def _main():
-    get_obo().write_default()
-
-
 if __name__ == "__main__":
-    _main()
+    KEGGGeneGetter.cli()

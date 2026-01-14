@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Importers for selventa terminologies."""
 
 from .schem import SCHEMGetter

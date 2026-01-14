@@ -1,14 +1,350 @@
-# See https://setuptools.readthedocs.io/en/latest/build_meta.html
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta:__legacy__"
+requires = ["uv_build>=0.9.6,<1.0"]
+build-backend = "uv_build"
 
-[tool.black]
+[project]
+name = "pyobo"
+version = "0.12.16-dev"
+description = "A python package for handling and generating OBO"
+readme = "README.md"
+authors = [
+    { name = "Charles Tapley Hoyt", email = "cthoyt@gmail.com" }
+]
+maintainers = [
+    { name = "Charles Tapley Hoyt", email = "cthoyt@gmail.com" }
+]
+
+# See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#classifiers
+# Search tags using the controlled vocabulary at https://pypi.org/classifiers
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Framework :: Pytest",
+    "Framework :: tox",
+    "Framework :: Sphinx",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Typing :: Typed",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
+keywords = [
+    "snekpack", # please keep this keyword to credit the cookiecutter-snekpack template
+    "cookiecutter",
+    "ontologies",
+    "biomedical ontologies",
+    "life sciences",
+    "natural sciences",
+    "bioinformatics",
+    "cheminformatics",
+    "Open Biomedical Ontologies",
+    "OBO",
+]
+
+# License Information.
+# See PEP-639 at https://peps.python.org/pep-0639/#add-license-files-key
+license-files = [
+    "LICENSE",
+]
+
+requires-python = ">=3.10"
+dependencies = [
+    "obonet>=0.3.0",
+    "click",
+    "tqdm",
+    "pyyaml",
+    "pandas",
+    "requests",
+    "more_itertools",
+    "more_click>=0.0.2",
+    "humanize",
+    "tabulate",
+    "cachier",
+    "pystow>=0.7.5",
+    "bioversions>=0.8.101",
+    "bioregistry>=0.12.30",
+    "bioontologies>=0.7.2",
+    "ssslm>=0.0.13",
+    "zenodo-client>=0.4.1",
+    "class_resolver>=0.6.0",
+    "pydantic>=2.0",
+    "curies>=0.10.17",
+    "curies-processing>=0.1.6",
+    "python-dateutil",
+    "networkx>=3.4",
+    # Resource Downloaders
+    "drugbank_downloader",
+    "chembl_downloader",
+    "umls_downloader>=0.1.3",
+    "clinicaltrials_downloader>=0.0.2",
+    "nih-reporter-downloader>=0.0.1",
+    "typing_extensions",
+    "rdflib",
+    "obographs>=0.0.8",
+    "sssom_pydantic>=0.1.1",
+]
+
+# see https://peps.python.org/pep-0735/ and https://docs.astral.sh/uv/concepts/dependencies/#dependency-groups
+[dependency-groups]
+tests = [
+    "pytest",
+    "coverage[toml]",
+]
+docs = [
+    "sphinx>=8",
+    "sphinx-rtd-theme>=3.0",
+    "sphinx-click", 
+    "sphinx_automodapi",
+    "sphinx_toolbox",
+]
+lint = [
+    "ruff",
+]
+typing = [
+    { include-group = "tests" },
+    "mypy",
+    "pydantic",
+    "types-tabulate",
+    "types-requests",
+    "types-PyYAML",
+    "types-Markdown",
+    "types-python-dateutil",
+    "types-redis",
+    "types-pytz",
+]
+docs-lint = [
+    { include-group = "docs" },
+    "doc8",
+]
+format-docs = [
+    { include-group = "docs" },
+    "docstrfmt",
+]
+doctests = [
+    "xdoctest",
+    "pygments",
+]
+pyroma = [
+    "pyroma",
+    "pygments",
+]
+# follow https://github.com/astral-sh/uv/issues/6298 for switching to a uv-based version bump workflow
+bump = [
+    "bump-my-version",
+]
+build = [
+    "uv>=0.9.6",
+    "uv-build>=0.9.6",
+]
+release = [
+    { include-group = "build" },
+    "uv",
+    "keyring",
+]
+
+# see https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#dependencies-optional-dependencies
+[project.optional-dependencies]
+gilda = [
+    "ssslm[gilda]",
+]
+gilda-slim = [
+    "ssslm[gilda-slim]",
+]
+sources = [
+    "pyobo[drugcentral,pid]",
+]
+drugcentral =[
+    "psycopg2-binary",
+]
+pid = [
+    "protmapper",
+]
+# note that scispacy currently only works on <= 3.12
+# because of its transitive dependencies. It also has
+# a hard cutoff on scipy because it relied on (private/unstable?)
+# functionality that no longer exists in newer versions
+scispacy = [
+    "scispacy; python_version <= '3.12'",
+    "spacy; python_version <= '3.12'",
+    "scipy<1.11; python_version <= '3.12'",
+]
+pykeen = [
+    "pykeen",
+]
+grape = [
+    "grape",
+    "embiggen",
+    "ensmallen",
+]
+
+# See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
+# and also https://packaging.python.org/en/latest/specifications/well-known-project-urls/
+[project.urls]
+"Bug Tracker" = "https://github.com/biopragmatics/pyobo/issues"
+Homepage = "https://github.com/biopragmatics/pyobo"
+Repository = "https://github.com/biopragmatics/pyobo.git"
+Documentation = "https://pyobo.readthedocs.io"
+Funding = "https://github.com/sponsors/cthoyt"
+
+[project.scripts]
+pyobo = "pyobo.cli:main"
+
+[tool.cruft]
+skip = [
+    "**/__init__.py",
+    "tests/*"
+]
+
+# MyPy, see https://mypy.readthedocs.io/en/stable/config_file.html
+[tool.mypy]
+plugins = [
+    "pydantic.mypy",
+]
+
+# Doc8, see https://doc8.readthedocs.io/en/stable/readme.html#ini-file-usage
+[tool.doc8]
+max-line-length = 120
+
+# Pytest, see https://docs.pytest.org/en/stable/reference/customize.html#pyproject-toml
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+
+# Coverage, see https://coverage.readthedocs.io/en/latest/config.html
+[tool.coverage.run]
+branch = true
+source = [
+    "pyobo",
+]
+omit = [
+    "tests/*",
+    "docs/*",
+    "src/pyobo/version.py",
+    "src/pyobo/__main__.py",
+    "src/pyobo/cli.py",
+    "src/pyobo/sources/*",
+    "src/pyobo/xrefdb/*",
+]
+
+[tool.coverage.paths]
+source = [
+    "src/pyobo",
+    ".tox/*/lib/python*/site-packages/pyobo",
+]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == \"__main__\":",
+    "if TYPE_CHECKING:",
+    "def __str__",
+    "def __repr__",
+]
+
+[tool.ruff]
 line-length = 100
-target-version = ["py38", "py39", "py310", "py311"]
+extend-include = ["*.ipynb"]
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-include_trailing_comma = true
-reverse_relative = true
+[tool.ruff.lint]
+# See https://docs.astral.sh/ruff/rules
+extend-select = [
+    "F", # pyflakes
+    "E", # pycodestyle errors
+    "W", # pycodestyle warnings
+    "C90", # mccabe
+    "I", # isort
+    "UP", # pyupgrade
+    "D", # pydocstyle
+    "DOC", # pydoclint
+    "B", # bugbear
+    "S", # bandit
+    "T20", # print
+    "N", # pep8 naming
+    "ERA", # eradicate commented out code
+    "NPY", # numpy checks
+    "RUF", # ruff rules
+    "C4", # comprehensions
+]
+ignore = [
+    "D105", # Missing docstring in magic method
+    "E203", # Black conflicts with the following
+    # Everything below is TODO
+    "ERA001",
+    "S113",
+    "C901",
+    "E501",
+    "RUF012",
+    "S314",
+]
+
+# See https://docs.astral.sh/ruff/settings/#per-file-ignores
+[tool.ruff.lint.per-file-ignores]
+# Ignore security issues in the version.py, which are inconsistent
+"src/pyobo/version.py" = ["S603", "S607"]
+# Ignore commented out code in Sphinx configuration file
+"docs/source/conf.py" = ["ERA001"]
+# Prints are okay in notebooks
+"notebooks/**/*.ipynb" = ["T201"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.lint.isort]
+relative-imports-order = "closest-to-furthest"
+known-third-party = [
+    "tqdm",
+]
+known-first-party = [
+    "pyobo",
+    "tests",
+]
+
+[tool.ruff.format]
+# see https://docs.astral.sh/ruff/settings/#format_docstring-code-format
+docstring-code-format = true
+
+[tool.bumpversion]
+current_version = "0.12.16-dev"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:-(?P<release>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+(?P<build>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?"
+serialize = [
+    "{major}.{minor}.{patch}-{release}+{build}",
+    "{major}.{minor}.{patch}+{build}",
+    "{major}.{minor}.{patch}-{release}",
+    "{major}.{minor}.{patch}",
+]
+commit = true
+tag = false
+
+[tool.bumpversion.parts.release]
+optional_value = "production"
+first_value = "dev"
+values = [
+    "dev",
+    "production",
+]
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = "version = \"{current_version}\""
+replace = "version = \"{new_version}\""
+
+[[tool.bumpversion.files]]
+filename = "docs/source/conf.py"
+search = "release = \"{current_version}\""
+replace = "release = \"{new_version}\""
+
+[[tool.bumpversion.files]]
+filename = "src/pyobo/version.py"
+search = "VERSION = \"{current_version}\""
+replace = "VERSION = \"{new_version}\""

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Converter for AGROVOC."""
 
 import pystow
@@ -11,6 +9,8 @@ __all__ = [
     "ensure_agrovoc_graph",
 ]
 
+PREFIX = "agrovoc"
+
 
 def ensure_agrovoc_graph(version: str) -> Graph:
     """Download and parse the given version of AGROVOC."""
@@ -20,5 +20,5 @@ def ensure_agrovoc_graph(version: str) -> Graph:
     graph.bind("skosxl", "http://www.w3.org/2008/05/skos-xl#")
     graph.bind("skos", SKOS)
     graph.bind("dcterms", DCTERMS)
-    graph.bind("agrovoc", "http://aims.fao.org/aos/agrontology#")
+    graph.bind(PREFIX, "http://aims.fao.org/aos/agrontology#")
     return graph

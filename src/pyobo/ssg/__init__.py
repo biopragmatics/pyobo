@@ -1,10 +1,9 @@
 """Static site generator."""
 
-import itertools as itt
 from collections import defaultdict
+from collections.abc import Sequence
 from operator import attrgetter
 from pathlib import Path
-from typing import Optional, Sequence, Tuple, Union
 
 import bioregistry
 from bioregistry.constants import BIOREGISTRY_DEFAULT_BASE_URL
@@ -30,21 +29,22 @@ index_template = environment.get_template("index.html")
 
 def make_site(
     obo: Obo,
-    directory: Union[str, Path],
+    directory: str | Path,
     use_subdirectories: bool = True,
     manifest: bool = False,
-    resource: Optional[bioregistry.Resource] = None,
-    metaregistry_metaprefix: Optional[str] = None,
-    metaregistry_name: Optional[str] = None,
-    metaregistry_base_url: Optional[str] = None,
-    show_properties_in_manifest: Optional[Sequence[Tuple[str, str]]] = None,
+    resource: bioregistry.Resource | None = None,
+    metaregistry_metaprefix: str | None = None,
+    metaregistry_name: str | None = None,
+    metaregistry_base_url: str | None = None,
+    show_properties_in_manifest: Sequence[tuple[str, str]] | None = None,
 ) -> None:
     """Make a website in the given directory.
 
     :param obo: The ontology to generate a site for
     :param directory: The directory in which to generate the site
-    :param use_subdirectories: If true, creates directories for each term/property/typedef with an index.html
-        inside. If false, creates HTML files named with the identifiers.
+    :param use_subdirectories: If true, creates directories for each
+        term/property/typedef with an index.html inside. If false, creates HTML files
+        named with the identifiers.
     :param manifest: If true, lists all entries on the homepage.
     :param resource: A custom resource
     """
@@ -64,15 +64,12 @@ def make_site(
     if resource is None:
         raise KeyError
 
+    terms = [term for term in obo if term.prefix == obo.ontology]
+
     if not manifest:
         _manifest = None
     else:
-        _manifest = sorted(
-            (term for term in itt.chain(obo, obo.typedefs or []) if term.prefix == obo.ontology),
-            key=attrgetter("identifier"),
-        )
-
-    terms = [term for term in obo if term.prefix == obo.ontology]
+        _manifest = sorted(terms, key=attrgetter("identifier"))
 
     directory.joinpath("index.html").write_text(
         index_template.render(

@@ -1,19 +1,17 @@
-# -*- coding: utf-8 -*-
-
 """Loading of the NCBI Taxonomy names."""
 
 import csv
 import gzip
+from collections.abc import Mapping
 from functools import lru_cache
 from pathlib import Path
-from typing import Mapping, Optional, Union
 
 import requests
 
 __all__ = [
-    "load_ncbitaxon",
     "get_ncbitaxon_id",
     "get_ncbitaxon_name",
+    "load_ncbitaxon",
 ]
 
 HERE = Path(__file__).parent.resolve()
@@ -34,17 +32,17 @@ def load_ncbitaxon_reverse() -> Mapping[str, str]:
     return {name: identifier for identifier, name in load_ncbitaxon().items()}
 
 
-def get_ncbitaxon_name(ncbitaxon_id: str) -> Optional[str]:
+def get_ncbitaxon_name(ncbitaxon_id: str) -> str | None:
     """Get the name from the identifier."""
     return load_ncbitaxon().get(ncbitaxon_id)
 
 
-def get_ncbitaxon_id(name: str) -> Optional[str]:
+def get_ncbitaxon_id(name: str) -> str | None:
     """Get the identifier from the name."""
     return load_ncbitaxon_reverse().get(name)
 
 
-def ensure(url: str, path: Union[str, Path], uri_prefix: str) -> Mapping[str, str]:
+def ensure(url: str, path: str | Path, uri_prefix: str) -> Mapping[str, str]:
     """Download the latest version of the resource."""
     path = Path(path)
     if path.is_file():

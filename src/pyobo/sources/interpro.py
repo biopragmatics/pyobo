@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
-
 """Converter for InterPro."""
 
 from collections import defaultdict
-from typing import DefaultDict, Iterable, List, Mapping, Set, Tuple
+from collections.abc import Iterable, Mapping
 
 from .utils import get_go_mapping
 from ..struct import Obo, Reference, Term
-from ..struct.typedef import enables, has_member
+from ..struct.typedef import enables, has_category, has_member
 from ..utils.io import multisetdict
 from ..utils.path import ensure_df, ensure_path
 
@@ -32,16 +30,11 @@ class InterProGetter(Obo):
     """An ontology representation of InterPro."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [enables, has_member]
+    typedefs = [enables, has_member, has_category]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over InterPro terms."""
         return iter_terms(version=self._version_or_raise, force=force)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get InterPro as OBO."""
-    return InterProGetter(force=force)
 
 
 def iter_terms(*, version: str, proteins: bool = False, force: bool = False) -> Iterable[Term]:
@@ -76,13 +69,13 @@ def iter_terms(*, version: str, proteins: bool = False, force: bool = False) -> 
             term.append_relationship(
                 enables, Reference(prefix="go", identifier=go_id, name=go_name)
             )
-        term.append_property("type", entry_type)
+        term.annotate_string(has_category, entry_type)
         for uniprot_id in interpro_to_proteins.get(identifier, []):
             term.append_relationship(has_member, Reference(prefix="uniprot", identifier=uniprot_id))
         yield term
 
 
-def get_interpro_go_df(version: str, force: bool = False) -> Mapping[str, Set[Tuple[str, str]]]:
+def get_interpro_go_df(version: str, force: bool = False) -> Mapping[str, set[tuple[str, str]]]:
     """Get InterPro to Gene Ontology molecular function mapping."""
     url = f"https://ftp.ebi.ac.uk/pub/databases/interpro/releases/{version}/interpro2go"
     path = ensure_path(PREFIX, url=url, name="interpro2go.tsv", version=version, force=force)
@@ -93,12 +86,12 @@ def get_interpro_tree(version: str, force: bool = False):
     """Get InterPro Data source."""
     url = f"https://ftp.ebi.ac.uk/pub/databases/interpro/releases/{version}/ParentChildTreeFile.txt"
     path = ensure_path(PREFIX, url=url, version=version, force=force)
-    with open(path) as f:
+    with path.open() as f:
         return _parse_tree_helper(f)
 
 
 def _parse_tree_helper(lines: Iterable[str]):
-    rv1: DefaultDict[str, List[str]] = defaultdict(list)
+    rv1: defaultdict[str, list[str]] = defaultdict(list)
     previous_depth, previous_id = 0, ""
     stack = [previous_id]
 

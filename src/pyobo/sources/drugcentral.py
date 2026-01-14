@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """Get DrugCentral as OBO."""
 
 import logging
 from collections import defaultdict
+from collections.abc import Iterable
 from contextlib import closing
-from typing import DefaultDict, Iterable, List
 
 import bioregistry
-import psycopg2
+from pydantic import ValidationError
 from tqdm.auto import tqdm
 
 from pyobo.struct import Obo, Reference, Synonym, Term
@@ -25,29 +23,26 @@ PREFIX = "drugcentral"
 HOST = "unmtid-dbs.net"
 PORT = 5433
 USER = "drugman"
-PASSWORD = "dosage"
+PASSWORD = "dosage"  # noqa:S105
 DBNAME = "drugcentral"
-PARAMS = dict(dbname=DBNAME, user=USER, password=PASSWORD, host=HOST, port=PORT)
+PARAMS = {"dbname": DBNAME, "user": USER, "password": PASSWORD, "host": HOST, "port": PORT}
 
 
 class DrugCentralGetter(Obo):
     """An ontology representation of the DrugCentral database."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [exact_match]
+    typedefs = [exact_match, has_inchi, has_smiles]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms()
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get DrugCentral OBO."""
-    return DrugCentralGetter(force=force)
-
-
 def iter_terms() -> Iterable[Term]:
     """Iterate over DrugCentral terms."""
+    import psycopg2
+
     with closing(psycopg2.connect(**PARAMS)) as conn:
         with closing(conn.cursor()) as cur:
             cur.execute(
@@ -58,7 +53,7 @@ def iter_terms() -> Iterable[Term]:
         with closing(conn.cursor()) as cur:
             cur.execute("SELECT struct_id, id_type, identifier FROM public.identifier")
             rows = cur.fetchall()
-            xrefs: DefaultDict[str, List[Reference]] = defaultdict(list)
+            xrefs: defaultdict[str, list[Reference]] = defaultdict(list)
             for drugcentral_id, prefix, identifier in tqdm(
                 rows, unit_scale=True, desc="loading xrefs"
             ):
@@ -70,13 +65,24 @@ def iter_terms() -> Iterable[Term]:
                 if xref_prefix_norm is None:
                     tqdm.write(f"did not normalize {prefix}:{identifier}")
                     continue
-                identifier = bioregistry.standardize_identifier(xref_prefix_norm, identifier)
-                xrefs[str(drugcentral_id)].append(
-                    Reference(prefix=xref_prefix_norm, identifier=identifier)
-                )
+                if xref_prefix_norm == "pdb.ligand":
+                    # there is a weird invalid escaped \W appearing in pdb ligand ids
+                    identifier = identifier.strip()
+
+                try:
+                    xref = Reference(prefix=xref_prefix_norm, identifier=identifier)
+                except ValidationError:
+                    # TODO mmsl is systematically incorrect, figure this out
+                    if xref_prefix_norm != "mmsl":
+                        tqdm.write(
+                            f"[drugcentral:{drugcentral_id}] had invalid xref: {prefix}:{identifier}"
+                        )
+                    continue
+                else:
+                    xrefs[str(drugcentral_id)].append(xref)
         with closing(conn.cursor()) as cur:
             cur.execute("SELECT id, name FROM public.synonyms")
-            synonyms: DefaultDict[str, List[Synonym]] = defaultdict(list)
+            synonyms: defaultdict[str, list[Synonym]] = defaultdict(list)
             for drugcentral_id, synonym in cur.fetchall():
                 synonyms[str(drugcentral_id)].append(Synonym(name=synonym))
 
@@ -84,20 +90,20 @@ def iter_terms() -> Iterable[Term]:
         drugcentral_id = str(drugcentral_id)
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=drugcentral_id, name=name),
-            definition=definition,
+            definition=definition.replace("\n", " ") if definition else None,
             synonyms=synonyms.get(drugcentral_id, []),
             xrefs=xrefs.get(drugcentral_id, []),
         )
         if inchi_key:
             term.append_exact_match(Reference(prefix="inchikey", identifier=inchi_key))
         if smiles:
-            term.append_property(has_smiles, smiles)
+            term.annotate_string(has_smiles, smiles)
         if inchi:
-            term.append_property(has_inchi, inchi)
+            term.annotate_string(has_inchi, inchi)
         if cas:
             term.append_exact_match(Reference(prefix="cas", identifier=cas))
         yield term
 
 
 if __name__ == "__main__":
-    get_obo().write_default(write_obo=True)
+    DrugCentralGetter.cli()

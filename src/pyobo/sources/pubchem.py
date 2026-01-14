@@ -1,16 +1,15 @@
-# -*- coding: utf-8 -*-
-
 """Converter for PubChem Compound."""
 
 import logging
-from typing import Iterable, Mapping, Optional
+from collections.abc import Iterable, Mapping
+from pathlib import Path
 
-import bioversions
 import pandas as pd
 from bioregistry.utils import removeprefix
 from tqdm.auto import tqdm
 
 from ..api import get_name_id_mapping
+from ..api.utils import get_version
 from ..struct import Obo, Reference, Synonym, Term
 from ..utils.iter import iterate_gzips_together
 from ..utils.path import ensure_df, ensure_path
@@ -24,9 +23,9 @@ logger = logging.getLogger(__name__)
 PREFIX = "pubchem.compound"
 
 
-def _get_pubchem_extras_url(version: Optional[str], end: str) -> str:
+def _get_pubchem_extras_url(version: str | None, end: str) -> str:
     if version is None:
-        version = bioversions.get_version("pubchem")
+        version = get_version("pubchem")
     return f"ftp://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Monthly/{version}/Extras/{end}"
 
 
@@ -39,11 +38,6 @@ class PubChemCompoundGetter(Obo):
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return get_terms(version=self._version_or_raise, force=force)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get PubChem Compound OBO."""
-    return PubChemCompoundGetter(force=force)
 
 
 def _get_cid_smiles_df(version: str) -> pd.DataFrame:
@@ -98,9 +92,9 @@ def get_pubchem_id_to_mesh_id(version: str) -> Mapping[str, str]:
     return dict(df.values)
 
 
-def _ensure_cid_name_path(*, version: Optional[str] = None, force: bool = False) -> str:
+def _ensure_cid_name_path(*, version: str | None = None, force: bool = False) -> Path:
     if version is None:
-        version = bioversions.get_version("pubchem")
+        version = get_version("pubchem")
     # 2 tab-separated columns: compound_id, name
     cid_name_url = _get_pubchem_extras_url(version, "CID-Title.gz")
     cid_name_path = ensure_path(PREFIX, url=cid_name_url, version=version, force=force)
@@ -146,4 +140,4 @@ def get_terms(*, version: str, use_tqdm: bool = True, force: bool = False) -> It
 
 
 if __name__ == "__main__":
-    get_obo().write_default()
+    PubChemCompoundGetter.cli()

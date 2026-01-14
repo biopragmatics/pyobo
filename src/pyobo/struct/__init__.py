@@ -1,29 +1,37 @@
-# -*- coding: utf-8 -*-
-
 """Data structures for OBO."""
 
-from .reference import Reference  # noqa: F401
-from .struct import (  # noqa: F401
+from .reference import (
+    OBOLiteral,
+    Reference,
+    Referenced,
+    _parse_str_or_curie_or_uri,
+    default_reference,
+)
+from .struct import (
+    CHARLIE_TERM,
+    HUMAN_TERM,
+    PYOBO_INJECTED,
     Obo,
     Synonym,
-    SynonymSpecificities,
-    SynonymSpecificity,
     SynonymTypeDef,
     Term,
+    TypeDef,
+    build_ontology,
     make_ad_hoc_ontology,
 )
-from .typedef import (  # noqa: F401
-    RelationHint,
-    TypeDef,
+from .struct_utils import Annotation, Stanza, StanzaType
+from .typedef import (
+    derives_from,
     enables,
     from_species,
     gene_product_member_of,
-    get_reference_tuple,
+    has_category,
     has_gene_product,
     has_member,
     has_part,
     has_participant,
     is_a,
+    is_mentioned_by,
     member_of,
     orthologous,
     part_of,
@@ -33,3 +41,43 @@ from .typedef import (  # noqa: F401
     transcribes_to,
     translates_to,
 )
+
+__all__ = [
+    "CHARLIE_TERM",
+    "HUMAN_TERM",
+    "PYOBO_INJECTED",
+    "Annotation",
+    "OBOLiteral",
+    "Obo",
+    "Reference",
+    "Referenced",
+    "Stanza",
+    "StanzaType",
+    "Synonym",
+    "SynonymTypeDef",
+    "Term",
+    "TypeDef",
+    "_parse_str_or_curie_or_uri",
+    "build_ontology",
+    "default_reference",
+    "derives_from",
+    "enables",
+    "from_species",
+    "gene_product_member_of",
+    "has_category",
+    "has_gene_product",
+    "has_member",
+    "has_part",
+    "has_participant",
+    "is_a",
+    "is_mentioned_by",
+    "make_ad_hoc_ontology",
+    "member_of",
+    "orthologous",
+    "part_of",
+    "participates_in",
+    "species_specific",
+    "superclass_of",
+    "transcribes_to",
+    "translates_to",
+]

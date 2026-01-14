@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Converter for MGI."""
 
 import logging
 from collections import defaultdict
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -14,7 +12,6 @@ from pyobo.struct.typedef import exact_match
 from ..struct import (
     Obo,
     Reference,
-    Synonym,
     Term,
     from_species,
     has_gene_product,
@@ -37,18 +34,12 @@ ENSEMBL_XREFS_URL = "http://www.informatics.jax.org/downloads/reports/MRK_ENSEMB
 class MGIGetter(Obo):
     """An ontology representation of MGI's mouse gene nomenclature."""
 
-    ontology = PREFIX
-    dynamic_version = True
+    ontology = bioversions_key = PREFIX
     typedefs = [from_species, has_gene_product, transcribes_to, exact_match]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return get_terms(force=force)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get MGI as OBO."""
-    return MGIGetter(force=force)
 
 
 COLUMNS = ["MGI Accession ID", "Marker Symbol", "Marker Name"]
@@ -161,7 +152,7 @@ def get_terms(force: bool = False) -> Iterable[Term]:
         )
         if identifier in mgi_to_synonyms:
             for synonym in mgi_to_synonyms[identifier]:
-                term.append_synonym(Synonym(name=synonym))
+                term.append_synonym(synonym)
         if identifier in mgi_to_entrez_id:
             term.append_exact_match(
                 Reference(prefix="ncbigene", identifier=mgi_to_entrez_id[identifier])
@@ -181,4 +172,4 @@ def get_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo(force=True).write_default(write_obo=True, write_obograph=True, use_tqdm=True)
+    MGIGetter.cli()

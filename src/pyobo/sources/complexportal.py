@@ -1,15 +1,22 @@
-# -*- coding: utf-8 -*-
-
 """Converter for ComplexPortal."""
 
 import logging
-from typing import Iterable, List, Tuple
+from collections.abc import Iterable
 
 import pandas as pd
 from tqdm.auto import tqdm
 
 from pyobo.resources.ncbitaxon import get_ncbitaxon_name
-from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_part
+from pyobo.struct import (
+    Obo,
+    Reference,
+    Synonym,
+    Term,
+    _parse_str_or_curie_or_uri,
+    from_species,
+    has_part,
+    is_mentioned_by,
+)
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -50,9 +57,10 @@ SPECIES = [
 DTYPE = {
     "taxonomy_id": str,
 }
+ROOT = Reference(prefix="go", identifier="0032991", name="macromolecular complex")
 
 
-def _parse_members(s) -> List[Tuple[Reference, str]]:
+def _parse_members(s) -> list[tuple[Reference, str]]:
     if pd.isna(s):
         return []
 
@@ -60,15 +68,35 @@ def _parse_members(s) -> List[Tuple[Reference, str]]:
     for member in s.split("|"):
         entity_id, count = member.split("(")
         count = count.rstrip(")")
-        if ":" in entity_id:
-            prefix, identifier = entity_id.split(":", 1)
+        if entity_id.startswith("URS"):
+            prefix, identifier = "rnacentral", entity_id
+        elif entity_id.startswith("CPX"):
+            # TODO why self xref?
+            prefix, identifier = "complexportal", entity_id
+        elif entity_id.startswith("["):
+            continue  # this is a list of uniprot IDs, not sure what to do with this
+        elif entity_id.startswith("EBI-"):
+            continue
+        elif ":" not in entity_id:
+            if "PRO_" in entity_id:
+                prefix = "uniprot.chain"
+                identifier = entity_id.split("-")[1]
+            elif "-" in entity_id:
+                prefix, identifier = "uniprot.isoform", entity_id
+            else:
+                prefix, identifier = "uniprot", entity_id
         else:
-            prefix, identifier = "uniprot", entity_id
-        rv.append((Reference(prefix=prefix, identifier=identifier), count))
+            prefix, identifier = entity_id.split(":", 1)
+        try:
+            reference = Reference(prefix=prefix, identifier=identifier)
+        except ValueError:
+            tqdm.write(f"failed to validate reference: {entity_id}")
+        else:
+            rv.append((reference, count))
     return rv
 
 
-def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
+def _parse_xrefs(s) -> list[tuple[Reference, str]]:
     if pd.isna(s):
         return []
 
@@ -76,27 +104,41 @@ def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
     for xref in s.split("|"):
         xref = xref.replace("protein ontology:PR:", "PR:")
         xref = xref.replace("protein ontology:PR_", "PR:")
+        xref = xref.replace("rhea:rhea ", "rhea:")
+        xref = xref.replace("rhea:Rhea ", "rhea:")
+        xref = xref.replace("rhea:RHEA ", "rhea:")
+        xref = xref.replace("rhea:RHEA:rhea", "rhea:")
+        xref = xref.replace("rhea:RHEA: ", "rhea:")
+        xref = xref.replace("rhea:RHEA:rhea ", "rhea:")
+        xref = xref.replace("intenz:RHEA:", "rhea:")
+        xref = xref.replace("eccode::", "ec:")
+        xref = xref.replace("eccode:EC:", "ec:")
+        xref = xref.replace("intenz:EC:", "ec:")
+        xref = xref.replace("eccode:RHEA:", "rhea:")
+        xref = xref.replace("efo:MONDO:", "MONDO:")
+        xref = xref.replace("omim:MIM:", "omim:")
+        xref = xref.replace("efo:HP:", "HP:")
+        xref = xref.replace("efo:Orphanet:", "Orphanet:")
+        xref = xref.replace("orphanet:ORDO:", "Orphanet:")
+        xref = xref.replace("biorxiv:doi.org/", "doi:")
+        xref = xref.replace("emdb:EMDB-", "emdb:EMD-")
+        xref = xref.replace("wwpdb:EMD-", "emdb:EMD-")
+        xref = xref.replace("signor:CPX-", "complexportal:CPX-")
+
         try:
             xref_curie, note = xref.split("(")
         except ValueError:
             logger.warning("xref missing (: %s", xref)
             continue
         note = note.rstrip(")")
-        note.replace("rhea:rhea ", "rhea:")
-        note.replace("rhea:Rhea ", "rhea:")
-        note.replace("eccode::", "eccode:")
-        note.replace("eccode:EC:", "eccode:")
-        note.replace("eccode:RHEA:", "rhea:")
-        if note.lower().startswith("rhea "):
-            note = note[len("Rhea ") :]
-            if note.lower().startswith("rhea:rhea "):
-                note = note[len("rhea:rhea ") :]
-        if note.lower().startswith("EC:"):
-            note = note[len("EC:") :]
+
+        if xref_curie.startswith("intenz:"):
+            xref_curie = _clean_intenz(xref_curie)
+
         try:
-            reference = Reference.from_curie(xref_curie)
+            reference = _parse_str_or_curie_or_uri(xref_curie)
         except ValueError:
-            logger.warning("can not parse CURIE: %s", xref)
+            logger.warning("can not parse CURIE: %s", xref_curie)
             continue
         if reference is None:
             logger.warning("reference is None after parsing: %s", xref)
@@ -105,20 +147,23 @@ def _parse_xrefs(s) -> List[Tuple[Reference, str]]:
     return rv
 
 
+def _clean_intenz(s: str) -> str:
+    for _ in range(3):
+        s = s.rstrip("-").rstrip(".")
+    return s
+
+
 class ComplexPortalGetter(Obo):
     """An ontology representation of the Complex Portal."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [from_species, has_part]
+    typedefs = [from_species, has_part, is_mentioned_by]
+    root_terms = [ROOT]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return get_terms(version=self._version_or_raise)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get the ComplexPortal OBO."""
-    return ComplexPortalGetter(force=force)
+        yield Term(reference=ROOT)
+        yield from get_terms(version=self._version_or_raise)
 
 
 def get_df(version: str, force: bool = False) -> pd.DataFrame:
@@ -185,29 +230,25 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         taxonomy_name,
         members,
     ) in it:
-        synonyms = [Synonym(name=alias) for alias in aliases]
-        _xrefs = []
-        provenance = []
+        term = Term(
+            reference=Reference(prefix=PREFIX, identifier=complexportal_id, name=name),
+            definition=definition.strip() if pd.notna(definition) else None,
+            synonyms=[Synonym(name=alias) for alias in aliases],
+        )
+        term.append_parent(ROOT)
         for reference, note in xrefs:
             if note == "identity":
-                _xrefs.append(reference)
+                term.append_xref(reference)
             elif note == "see-also" and reference.prefix == "pubmed":
-                provenance.append(reference)
+                term.append_mentioned_by(reference)
             elif (note, reference.prefix) not in unhandled_xref_type:
                 logger.debug(f"unhandled xref type: {note} / {reference.prefix}")
                 unhandled_xref_type.add((note, reference.prefix))
 
-        term = Term(
-            reference=Reference(prefix=PREFIX, identifier=complexportal_id, name=name),
-            definition=definition.strip() if pd.notna(definition) else None,
-            synonyms=synonyms,
-            xrefs=_xrefs,
-            provenance=provenance,
-        )
         term.set_species(identifier=taxonomy_id, name=taxonomy_name)
 
         for reference, _count in members:
-            term.append_relationship(has_part, reference)
+            term.annotate_object(has_part, reference)
 
         yield term
 

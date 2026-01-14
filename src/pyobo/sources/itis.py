@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
-
 """Converter for the Integrated Taxonomic Information System (ITIS)."""
 
 import os
 import shutil
 import sqlite3
 import zipfile
+from collections.abc import Iterable
 from contextlib import closing
-from typing import Iterable
 
 from pyobo.struct import Obo, Reference, Term
 from pyobo.utils.io import multidict
@@ -43,11 +41,6 @@ class ITISGetter(Obo):
         """Iterate over terms in the ontology."""
         # don't add force since the version getter already will
         return iter_terms(force=force, version=self._version_or_raise)
-
-
-def get_obo() -> Obo:
-    """Get ITIS as OBO."""
-    return ITISGetter()
 
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:

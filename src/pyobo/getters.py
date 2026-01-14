@@ -1,61 +1,90 @@
-# -*- coding: utf-8 -*-
-
 """Utilities for OBO files."""
 
+from __future__ import annotations
+
 import datetime
-import gzip
 import json
 import logging
 import pathlib
 import subprocess
+import time
 import typing
 import urllib.error
+import zipfile
 from collections import Counter
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import (
-    Callable,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from textwrap import indent
+from typing import Any, TypeVar
 
+import bioontologies.robot
 import bioregistry
-from bioontologies import robot
+import click
+import pystow.utils
+import requests.exceptions
+from tabulate import tabulate
 from tqdm.auto import tqdm
+from typing_extensions import Unpack
 
-from .constants import DATABASE_DIRECTORY
-from .identifier_utils import MissingPrefix, wrap_norm_prefix
+from .constants import (
+    BUILD_SUBDIRECTORY_NAME,
+    DATABASE_DIRECTORY,
+    ONTOLOGY_GETTERS,
+    GetOntologyKwargs,
+    IterHelperHelperDict,
+    OntologyPathPack,
+    SlimGetOntologyKwargs,
+)
+from .identifier_utils import ParseError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
 from .struct import Obo
-from .utils.io import get_writer
+from .struct.obo import from_obo_path, from_obonet
+from .utils.io import safe_open_writer
+from .utils.misc import _get_version_from_artifact
 from .utils.path import ensure_path, prefix_directory_join
 from .version import get_git_hash, get_version
 
 __all__ = [
+    "REQUIRES_NO_ROBOT_CHECK",
+    "SKIP",
+    "NoBuildError",
+    "UnhandledFormatError",
+    "db_output_helper",
     "get_ontology",
-    "NoBuild",
+    "iter_helper",
+    "iter_helper_helper",
 ]
 
 logger = logging.getLogger(__name__)
 
 
-class NoBuild(RuntimeError):
+class NoBuildError(RuntimeError):
     """Base exception for being unable to build."""
 
 
-class UnhandledFormat(NoBuild):
+class UnhandledFormatError(NoBuildError):
     """Only OWL is available."""
 
 
 #: The following prefixes can not be loaded through ROBOT without
-#: turning off integrity checks
-REQUIRES_NO_ROBOT_CHECK = {"clo", "vo"}
+#: turning off integrity checks. This used to be part of _convert_to_obo
+REQUIRES_NO_ROBOT_CHECK = {
+    "clo",
+    "vo",
+    "orphanet.ordo",
+    "orphanet",
+    "foodon",
+    "caloha",
+    # "aeon",
+}
+
+
+def _convert_to_obo(path: Path) -> Path:
+    import bioontologies.robot
+
+    _converted_obo_path = path.with_suffix(".obo")
+    bioontologies.robot.convert(path, _converted_obo_path, check=False)
+    return _converted_obo_path
 
 
 @wrap_norm_prefix
@@ -63,192 +92,178 @@ def get_ontology(
     prefix: str,
     *,
     force: bool = False,
-    rewrite: bool = False,
-    strict: bool = True,
-    version: Optional[str] = None,
+    force_process: bool = False,
+    strict: bool = False,
+    version: str | None = None,
     robot_check: bool = True,
+    upgrade: bool = True,
+    cache: bool = True,
+    use_tqdm: bool = True,
 ) -> Obo:
     """Get the OBO for a given graph.
 
     :param prefix: The prefix of the ontology to look up
     :param version: The pre-looked-up version of the ontology
     :param force: Download the data again
-    :param rewrite: Should the OBO cache be rewritten? Automatically set to true if ``force`` is true
-    :param strict: Should CURIEs be treated strictly? If true, raises exceptions on invalid/malformed
-    :param robot_check:
-        If set to false, will send the ``--check=false`` command to ROBOT to disregard
-        malformed ontology components. Necessary to load some ontologies like VO.
+    :param force_process: Should the OBO cache be rewritten? Automatically set to true
+        if ``force`` is true
+    :param strict: Should CURIEs be treated strictly? If true, raises exceptions on
+        invalid/malformed
+    :param robot_check: If set to false, will send the ``--check=false`` command to
+        ROBOT to disregard malformed ontology components. Necessary to load some
+        ontologies like VO.
+    :param upgrade: If set to true, will automatically upgrade relationships, such as
+        ``obo:chebi#part_of`` to ``BFO:0000051``
+    :param cache: Should cached objects be written? defaults to True
+
     :returns: An OBO object
 
-    :raises OnlyOWLError: If the OBO foundry only has an OWL document for this resource.
+    Alternate usage if you have a custom url
 
-    Alternate usage if you have a custom url::
+    .. code-block:: python
 
-    >>> from pystow.utils import download
-    >>> from pyobo import Obo, from_obo_path
-    >>> url = ...
-    >>> obo_path = ...
-    >>> download(url=url, path=path)
-    >>> obo = from_obo_path(path)
+        from pystow.utils import download
+        from pyobo import Obo, from_obo_path
+
+        url = ...
+        obo_path = ...
+        download(url=url, path=path)
+        obo = from_obo_path(path)
     """
     if force:
-        rewrite = True
+        force_process = True
+    if has_nomenclature_plugin(prefix):
+        obo = run_nomenclature_plugin(prefix, version=version)
+        if cache:
+            logger.debug("[%s] caching nomenclature plugin", prefix)
+            obo.write_default(force=force_process)
+        return obo
+
     if prefix == "uberon":
         logger.info("UBERON has so much garbage in it that defaulting to non-strict parsing")
         strict = False
 
-    obonet_json_gz_path = prefix_directory_join(
-        prefix, name=f"{prefix}.obonet.json.gz", ensure_exists=False, version=version
-    )
-    if obonet_json_gz_path.exists() and not force:
-        from .reader import from_obonet
-        from .utils.cache import get_gzipped_graph
+    if version is None:
+        version = _get_version_from_artifact(prefix)
 
-        logger.debug("[%s] using obonet cache at %s", prefix, obonet_json_gz_path)
-        return from_obonet(get_gzipped_graph(obonet_json_gz_path))
-
-    if has_nomenclature_plugin(prefix):
-        obo = run_nomenclature_plugin(prefix, version=version)
-        logger.debug("[%s] caching nomenclature plugin", prefix)
-        obo.write_default(force=rewrite)
-        return obo
-
-    logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
-
-    ontology_format, path = _ensure_ontology_path(prefix, force=force, version=version)
-    if path is None:
-        raise NoBuild
-    elif ontology_format == "obo":
-        pass  # all gucci
-    elif ontology_format == "owl":
-        _converted_obo_path = path.with_suffix(".obo")
-        if prefix in REQUIRES_NO_ROBOT_CHECK:
-            robot_check = False
-        robot.convert(path, _converted_obo_path, check=robot_check)
-        path = _converted_obo_path
+    if force_process:
+        obonet_json_gz_path = None
+    elif not cache:
+        logger.debug("[%s] caching was turned off, so dont look for an obonet file", prefix)
+        obonet_json_gz_path = None
     else:
-        raise UnhandledFormat(f"[{prefix}] unhandled ontology file format: {path.suffix}")
+        obonet_json_gz_path = prefix_directory_join(
+            prefix, BUILD_SUBDIRECTORY_NAME, name=f"{prefix}.obonet.json.gz", version=version
+        )
+        logger.debug(
+            "[%s] caching is turned on, so look for an obonet file at %s",
+            prefix,
+            obonet_json_gz_path,
+        )
+        if obonet_json_gz_path.is_file() and not force:
+            from .utils.cache import get_gzipped_graph
 
-    from .reader import from_obo_path
-
-    obo = from_obo_path(path, prefix=prefix, strict=strict)
-    if version is not None:
-        if obo.data_version is None:
-            logger.warning("[%s] did not have a version, overriding with %s", obo.ontology, version)
-            obo.data_version = version
-        elif obo.data_version != version:
-            logger.warning(
-                "[%s] had version %s, overriding with %s", obo.ontology, obo.data_version, version
+            logger.debug("[%s] using obonet cache at %s", prefix, obonet_json_gz_path)
+            return from_obonet(
+                get_gzipped_graph(obonet_json_gz_path),
+                strict=strict,
+                version=version,
+                upgrade=upgrade,
+                use_tqdm=use_tqdm,
             )
-            obo.data_version = version
-    obo.write_default(force=rewrite)
+        else:
+            logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
+
+    path_pack = _ensure_ontology_path(prefix, force=force, version=version)
+    if path_pack is None:
+        raise NoBuildError(prefix)
+    ontology_format, path = path_pack
+    if ontology_format == "obo":
+        pass  # all gucci
+    elif ontology_format in {"owl", "rdf"}:
+        path = _convert_to_obo(path)
+    elif ontology_format == "json":
+        from .struct.obograph import read_obograph
+
+        obo = read_obograph(prefix=prefix, path=path)
+        if cache:
+            obo.write_default(force=force_process)
+        return obo
+    else:
+        raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
+
+    obo = from_obo_path(
+        path,
+        prefix=prefix,
+        strict=strict,
+        version=version,
+        upgrade=upgrade,
+        use_tqdm=use_tqdm,
+        _cache_path=obonet_json_gz_path,
+    )
+    if cache:
+        obo.write_default(force=force_process)
     return obo
 
 
 def _ensure_ontology_path(
-    prefix: str, force, version
-) -> Union[Tuple[str, Path], Tuple[None, None]]:
-    for ontology_format, url in [  # noqa:B007
-        ("obo", bioregistry.get_obo_download(prefix)),
-        ("owl", bioregistry.get_owl_download(prefix)),
-        ("json", bioregistry.get_json_download(prefix)),
-    ]:
-        if url is not None:
-            try:
-                path = Path(ensure_path(prefix, url=url, force=force, version=version))
-            except urllib.error.HTTPError:
-                continue
-            else:
-                return ontology_format, path
-    return None, None
+    prefix: str, *, force: bool, version: str | None
+) -> OntologyPathPack | None:
+    for ontology_format, getter in ONTOLOGY_GETTERS:
+        url = getter(prefix)
+        if url is None:
+            continue
+        try:
+            path = ensure_path(prefix, url=url, force=force, version=version)
+        except (urllib.error.HTTPError, pystow.utils.DownloadError):
+            continue
+        except pystow.utils.UnexpectedDirectoryError:
+            continue  # TODO report more info about the URL and the name it tried to make
+        else:
+            return OntologyPathPack(ontology_format, path)
+    return None
 
 
-#: Obonet/Pronto can't parse these (consider converting to OBO with ROBOT?)
-CANT_PARSE = {
-    "agro",
-    "aro",
-    "bco",
-    "caro",
-    "cco",
-    "chmo",
-    "cido",
-    "covoc",
-    "cto",
-    "cvdo",
-    "dicom",
-    "dinto",
-    "emap",
-    "epso",
-    "eupath",
-    "fbbi",
-    "fma",
-    "fobi",
-    "foodon",
-    "genepio",
-    "hancestro",
-    "hom",
-    "hso",
-    "htn",  # Unknown string format: creation: 16MAY2017
-    "ico",
-    "idocovid19",
-    "labo",
-    "mamo",
-    "mfmo",
-    "mfo",
-    "mfomd",
-    "miapa",
-    "mo",
-    "oae",
-    "ogms",  # Unknown string format: creation: 16MAY2017
-    "ohd",
-    "ons",
-    "oostt",
-    "opmi",
-    "ornaseq",
-    "orth",
-    "pdro",
-    "probonto",
-    "psdo",
-    "reo",
-    "rex",
-    "rnao",
-    "sepio",
-    "sio",
-    "spd",
-    "sweetrealm",
-    "txpo",
-    "vido",
-    "vt",
-    "xl",
-}
-SKIP = {
-    "ncbigene",  # too big, refs acquired from other dbs
-    "pubchem.compound",  # to big, can't deal with this now
-    "gaz",  # Gazetteer is irrelevant for biology
-    "ma",  # yanked
-    "bila",  # yanked
-    # FIXME below
-    "emapa",  # recently changed with EMAP... not sure what the difference is anymore
-    "kegg.genes",
-    "kegg.genome",
-    "kegg.pathway",
-    # URL is wrong
-    "ensemblglossary",
-    # Too much junk
-    "biolink",
+#: A dictioanry of prefixes to skip during full build with reasons as values
+SKIP: dict[str, str] = {
+    "ncbigene": "too big, refs acquired from other dbs",
+    "pubchem.compound": "top big, can't deal with this now",
+    "gaz": "Gazetteer is irrelevant for biology",
+    "ma": "yanked",
+    "bila": "yanked",
+    # Can't download",
+    "afpo": "unable to download",
+    "atol": "unable to download",
+    "eol": "unable to download, same source as atol",
+    "hog": "unable to download",
+    "vhog": "unable to download",
+    "gorel": "unable to download",
+    "dinto": "unable to download",
+    "gainesville.core": "unable to download",
+    "ato": "can't process",
+    "emapa": "recently changed with EMAP... not sure what the difference is anymore",
+    "kegg.genes": "needs fix",  # FIXME
+    "kegg.genome": "needs fix",  # FIXME
+    "kegg.pathway": "needs fix",  # FIXME
+    "ensemblglossary": "URI is self-referential to data in OLS, extract from there",
+    "epio": "content from fraunhofer is unreliable",
+    "epso": "content from fraunhofer is unreliable",
+    "gwascentral.phenotype": "website is down? or API changed?",  # FIXME
+    "gwascentral.study": "website is down? or API changed?",  # FIXME
+    "snomedct": "dead source",
+    "ero": "dead",
 }
 
 X = TypeVar("X")
 
 
 def iter_helper(
-    f: Callable[[str], Mapping[str, X]],
+    f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
     leave: bool = False,
-    strict: bool = True,
-    **kwargs,
-) -> Iterable[Tuple[str, str, X]]:
+    **kwargs: Unpack[IterHelperHelperDict],
+) -> Iterable[tuple[str, str, X]]:
     """Yield all mappings extracted from each database given."""
-    for prefix, mapping in iter_helper_helper(f, strict=strict, **kwargs):
+    for prefix, mapping in iter_helper_helper(f, **kwargs):
         it = tqdm(
             mapping.items(),
             desc=f"iterating {prefix}",
@@ -257,22 +272,24 @@ def iter_helper(
             disable=None,
         )
         for key, value in it:
-            value = value.strip('"').replace("\n", " ").replace("\t", " ").replace("  ", " ")
+            if isinstance(value, str):
+                value = value.strip('"').replace("\n", " ").replace("\t", " ").replace("  ", " ")
+            # TODO deal with when this is not a string?
             if value:
                 yield prefix, key, value
 
 
 def _prefixes(
-    skip_below: Optional[str] = None,
+    skip_below: str | None = None,
     skip_below_inclusive: bool = True,
     skip_pyobo: bool = False,
-    skip_set: Optional[Set[str]] = None,
+    skip_set: set[str] | None = None,
 ) -> Iterable[str]:
     for prefix, resource in sorted(bioregistry.read_registry().items()):
         if resource.no_own_terms:
             continue
         if prefix in SKIP:
-            tqdm.write(f"skipping {prefix} because in default skip set")
+            tqdm.write(f"skipping {prefix} because {SKIP[prefix]}")
             continue
         if skip_set and prefix in skip_set:
             tqdm.write(f"skipping {prefix} because in skip set")
@@ -294,37 +311,39 @@ def _prefixes(
 
 
 def iter_helper_helper(
-    f: Callable[[str], X],
+    f: Callable[[str, Unpack[GetOntologyKwargs]], X],
     use_tqdm: bool = True,
-    skip_below: Optional[str] = None,
-    skip_below_inclusive: bool = True,
+    skip_below: str | None = None,
     skip_pyobo: bool = False,
-    skip_set: Optional[Set[str]] = None,
-    strict: bool = True,
-    **kwargs,
-) -> Iterable[Tuple[str, X]]:
+    skip_set: set[str] | None = None,
+    **kwargs: Unpack[SlimGetOntologyKwargs],
+) -> Iterable[tuple[str, X]]:
     """Yield all mappings extracted from each database given.
 
-    :param f: A function that takes a prefix and gives back something that will be used by an outer function.
+    :param f: A function that takes a prefix and gives back something that will be used
+        by an outer function.
     :param use_tqdm: If true, use the tqdm progress bar
-    :param skip_below: If true, skip sources whose names are less than this (used for iterative curation
+    :param skip_below: If true, skip sources whose names are less than this (used for
+        iterative curation
     :param skip_pyobo: If true, skip sources implemented in PyOBO
     :param skip_set: A pre-defined blacklist to skip
-    :param strict: If true, will raise exceptions and crash the program instead of logging them.
+    :param strict: If true, will raise exceptions and crash the program instead of
+        logging them.
     :param kwargs: Keyword arguments passed to ``f``.
-    :yields: A prefix and the result of the callable ``f``
 
     :raises TypeError: If a type error is raised, it gets re-raised
     :raises urllib.error.HTTPError: If the resource could not be downloaded
     :raises urllib.error.URLError: If another problem was encountered during download
     :raises ValueError: If the data was not in the format that was expected (e.g., OWL)
+
+    :yields: A prefix and the result of the callable ``f``
     """
+    strict = kwargs.get("strict", True)
     prefixes = list(
         _prefixes(
             skip_set=skip_set,
             skip_below=skip_below,
             skip_pyobo=skip_pyobo,
-            skip_below_inclusive=skip_below_inclusive,
         )
     )
     prefix_it = tqdm(
@@ -332,28 +351,43 @@ def iter_helper_helper(
     )
     for prefix in prefix_it:
         prefix_it.set_postfix(prefix=prefix)
+        tqdm.write(
+            click.style(f"\n{prefix} - {bioregistry.get_name(prefix)}", fg="green", bold=True)
+        )
         try:
             yv = f(prefix, **kwargs)  # type:ignore
+        except (UnhandledFormatError, NoBuildError) as e:
+            # make sure this comes before the other runtimeerror catch
+            logger.warning("[%s] %s", prefix, e)
         except urllib.error.HTTPError as e:
             logger.warning("[%s] HTTP %s: unable to download %s", prefix, e.getcode(), e.geturl())
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
-        except urllib.error.URLError:
-            logger.warning("[%s] unable to download", prefix)
+        except urllib.error.URLError as e:
+            logger.warning("[%s] unable to download - %s", prefix, e.reason)
             if strict and not bioregistry.is_deprecated(prefix):
                 raise
-        except MissingPrefix as e:
-            logger.warning("[%s] missing prefix: %s", prefix, e)
+        except requests.exceptions.ConnectTimeout as e:
+            logger.warning("[%s] unable to download - %s", prefix, e)
+            if strict and not bioregistry.is_deprecated(prefix):
+                raise
+        except ParseError as e:
+            if not e.node:
+                logger.warning("[%s] %s", prefix, e)
+            else:
+                logger.warning(str(e))
             if strict and not bioregistry.is_deprecated(prefix):
                 raise e
-        except subprocess.CalledProcessError:
+        except RuntimeError as e:
+            if "DrugBank" not in str(e):
+                raise
+            logger.warning("[drugbank] invalid credentials")
+        except (subprocess.CalledProcessError, bioontologies.robot.ROBOTError):
             logger.warning("[%s] ROBOT was unable to convert OWL to OBO", prefix)
-        except UnhandledFormat as e:
-            logger.warning("[%s] %s", prefix, e)
         except ValueError as e:
             if _is_xml(e):
                 # this means that it tried doing parsing on an xml page
-                logger.info(
+                logger.warning(
                     "no resource available for %s. See http://www.obofoundry.org/ontology/%s",
                     prefix,
                     prefix,
@@ -362,6 +396,9 @@ def iter_helper_helper(
                 logger.exception(
                     "[%s] got exception %s while parsing", prefix, e.__class__.__name__
                 )
+        except zipfile.BadZipFile as e:
+            # This can happen if there's an error on UMLS
+            logger.exception("[%s] got exception %s while parsing", prefix, e.__class__.__name__)
         except TypeError as e:
             logger.exception("[%s] got exception %s while parsing", prefix, e.__class__.__name__)
             if strict:
@@ -376,7 +413,7 @@ def _is_xml(e) -> bool:
     )
 
 
-def _prep_dir(directory: Union[None, str, pathlib.Path]) -> pathlib.Path:
+def _prep_dir(directory: None | str | pathlib.Path) -> pathlib.Path:
     if directory is None:
         rv = DATABASE_DIRECTORY
     elif isinstance(directory, str):
@@ -390,30 +427,32 @@ def _prep_dir(directory: Union[None, str, pathlib.Path]) -> pathlib.Path:
 
 
 def db_output_helper(
-    f: Callable[..., Iterable[Tuple[str, ...]]],
+    it: Iterable[tuple[Any, ...]],
     db_name: str,
     columns: Sequence[str],
     *,
-    directory: Union[None, str, pathlib.Path] = None,
-    strict: bool = True,
+    directory: None | str | pathlib.Path = None,
+    strict: bool = False,
     use_gzip: bool = True,
-    summary_detailed: Optional[Sequence[int]] = None,
-    **kwargs,
-) -> List[pathlib.Path]:
+    summary_detailed: Sequence[int] | None = None,
+) -> list[pathlib.Path]:
     """Help output database builds.
 
-    :param f: A function that takes a prefix and gives back something that will be used by an outer function.
+    :param f: A function that takes a prefix and gives back something that will be used
+        by an outer function.
     :param db_name: name of the output resource (e.g., "alts", "names")
     :param columns: The names of the columns
-    :param directory: The directory to output everything, or defaults to :data:`pyobo.constants.DATABASE_DIRECTORY`.
+    :param directory: The directory to output everything, or defaults to
+        :data:`pyobo.constants.DATABASE_DIRECTORY`.
     :param strict: Passed to ``f`` by keyword
-    :param kwargs: Passed to ``f`` by splat
+
     :returns: A sequence of paths that got created.
     """
+    start = time.time()
     directory = _prep_dir(directory)
 
     c: typing.Counter[str] = Counter()
-    c_detailed: typing.Counter[Tuple[str, ...]] = Counter()
+    c_detailed: typing.Counter[tuple[str, ...]] = Counter()
 
     if use_gzip:
         db_path = directory.joinpath(f"{db_name}.tsv.gz")
@@ -422,27 +461,32 @@ def db_output_helper(
     db_sample_path = directory.joinpath(f"{db_name}_sample.tsv")
     db_summary_path = directory.joinpath(f"{db_name}_summary.tsv")
     db_summary_detailed_path = directory.joinpath(f"{db_name}_summary_detailed.tsv")
+    db_metadata_path = directory.joinpath(f"{db_name}_metadata.json")
+    rv: list[tuple[str, pathlib.Path]] = [
+        ("Metadata", db_metadata_path),
+        ("Data", db_path),
+        ("Sample", db_sample_path),
+        ("Summary", db_summary_path),
+    ]
 
     logger.info("writing %s to %s", db_name, db_path)
     logger.info("writing %s sample to %s", db_name, db_sample_path)
-    it = f(strict=strict, **kwargs)
-    with gzip.open(db_path, mode="wt") if use_gzip else open(db_path, "w") as gzipped_file:
-        writer = get_writer(gzipped_file)
+    sample_rows = []
 
+    with safe_open_writer(db_path) as writer:
         # for the first 10 rows, put it in a sample file too
-        with open(db_sample_path, "w") as sample_file:
-            sample_writer = get_writer(sample_file)
-
+        with safe_open_writer(db_sample_path) as sample_writer:
             # write header
             writer.writerow(columns)
             sample_writer.writerow(columns)
 
-            for row, _ in zip(it, range(10)):
+            for row, _ in zip(it, range(10), strict=False):
                 c[row[0]] += 1
                 if summary_detailed is not None:
                     c_detailed[tuple(row[i] for i in summary_detailed)] += 1
                 writer.writerow(row)
                 sample_writer.writerow(row)
+                sample_rows.append(row)
 
         # continue just in the gzipped one
         for row in it:
@@ -451,18 +495,15 @@ def db_output_helper(
                 c_detailed[tuple(row[i] for i in summary_detailed)] += 1
             writer.writerow(row)
 
-    logger.info(f"writing {db_name} summary to {db_summary_path}")
-    with open(db_summary_path, "w") as file:
-        writer = get_writer(file)
-        writer.writerows(c.most_common())
+    with safe_open_writer(db_summary_path) as summary_writer:
+        summary_writer.writerows(c.most_common())
 
     if summary_detailed is not None:
         logger.info(f"writing {db_name} detailed summary to {db_summary_detailed_path}")
-        with open(db_summary_detailed_path, "w") as file:
-            writer = get_writer(file)
-            writer.writerows((*keys, v) for keys, v in c_detailed.most_common())
+        with safe_open_writer(db_summary_detailed_path) as detailed_summary_writer:
+            detailed_summary_writer.writerows((*keys, v) for keys, v in c_detailed.most_common())
+        rv.append(("Summary (Detailed)", db_summary_detailed_path))
 
-    db_metadata_path = directory.joinpath(f"{db_name}_metadata.json")
     with open(db_metadata_path, "w") as file:
         json.dump(
             {
@@ -475,12 +516,12 @@ def db_output_helper(
             indent=2,
         )
 
-    rv: List[pathlib.Path] = [
-        db_metadata_path,
-        db_path,
-        db_sample_path,
-        db_summary_path,
-    ]
-    if summary_detailed:
-        rv.append(db_summary_detailed_path)
-    return rv
+    elapsed = time.time() - start
+    click.secho(f"\nWrote the following files in {elapsed:.1f} seconds\n", fg="green")
+    click.secho(indent(tabulate(rv), " "), fg="green")
+
+    click.secho("\nSample rows:\n", fg="green")
+    click.secho(indent(tabulate(sample_rows, headers=columns), " "), fg="green")
+    click.echo()
+
+    return [path for _, path in rv]

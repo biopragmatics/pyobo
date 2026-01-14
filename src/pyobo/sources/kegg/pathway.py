@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Convert KEGG Pathways to OBO.
 
 Run with ``python -m pyobo.sources.kegg.pathway``
@@ -8,8 +6,8 @@ Run with ``python -m pyobo.sources.kegg.pathway``
 import logging
 import urllib.error
 from collections import defaultdict
+from collections.abc import Iterable, Mapping
 from functools import partial
-from typing import Iterable, List, Mapping, Tuple, Union
 
 from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import thread_map
@@ -40,6 +38,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
+# FIXME KEGG API is not usable anymore
 class KEGGPathwayGetter(Obo):
     """An ontology representation of KEGG Pathways."""
 
@@ -50,12 +49,6 @@ class KEGGPathwayGetter(Obo):
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms(version=self._version_or_raise)
-
-
-def get_obo() -> Obo:
-    """Get KEGG Pathways as OBO."""
-    # since old kegg versions go away forever, do NOT add a force option
-    return KEGGPathwayGetter()
 
 
 def iter_terms(version: str, skip_missing: bool = True) -> Iterable[Term]:
@@ -76,7 +69,7 @@ def iter_terms(version: str, skip_missing: bool = True) -> Iterable[Term]:
         )
 
 
-def _get_link_pathway_map(path: str) -> Mapping[str, List[str]]:
+def _get_link_pathway_map(path: str) -> Mapping[str, list[str]]:
     rv = defaultdict(list)
     with open(path) as file:
         for line in file:
@@ -110,7 +103,7 @@ def _iter_genome_terms(
         list_pathway_lines = [line.strip() for line in file]
     for line in list_pathway_lines:
         line = line.strip()
-        pathway_id, name = [part.strip() for part in line.split("\t")]
+        pathway_id, name = (part.strip() for part in line.split("\t"))
         pathway_id = pathway_id[len("path:") :]
 
         terms[pathway_id] = term = Term.from_triple(
@@ -136,7 +129,7 @@ def _iter_genome_terms(
             tqdm.write(f"could not find kegg.pathway:{pathway_id} for {kegg_genome.name}")
             continue
         for protein_id in protein_ids:
-            pathway_term.append_relationship(
+            pathway_term.annotate_object(
                 has_participant,
                 Reference(
                     prefix=KEGG_GENES_PREFIX,
@@ -149,26 +142,20 @@ def _iter_genome_terms(
 
 def iter_kegg_pathway_paths(
     version: str, skip_missing: bool = True
-) -> Iterable[Union[Tuple[KEGGGenome, str, str], Tuple[None, None, None]]]:
+) -> Iterable[tuple[KEGGGenome, str, str] | tuple[None, None, None]]:
     """Get paths for the KEGG Pathway files."""
-    genomes = list(iter_kegg_genomes(version=version, desc="KEGG Pathways"))
+    genomes = sorted(
+        iter_kegg_genomes(version=version, desc="KEGG Pathways"), key=lambda x: int(x.identifier)
+    )
     func = partial(_process_genome, version=version, skip_missing=skip_missing)
     return thread_map(func, genomes, unit="pathway", unit_scale=True)
 
 
-def _process_genome(kegg_genome, version, skip_missing):
+def _process_genome(kegg_genome: KEGGGenome, version: str, skip_missing: bool):
     with logging_redirect_tqdm():
         try:
-            list_pathway_path = ensure_list_pathway_genome(
-                kegg_genome.identifier,
-                version=version,
-                error_on_missing=not skip_missing,
-            )
-            link_pathway_path = ensure_link_pathway_genome(
-                kegg_genome.identifier,
-                version=version,
-                error_on_missing=not skip_missing,
-            )
+            list_pathway_path = ensure_list_pathway_genome(kegg_genome.identifier, version=version)
+            link_pathway_path = ensure_link_pathway_genome(kegg_genome.identifier, version=version)
         except urllib.error.HTTPError as e:
             code = e.getcode()
             if code != 404:

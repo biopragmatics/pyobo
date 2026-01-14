@@ -1,21 +1,21 @@
-# -*- coding: utf-8 -*-
-
 """Convert ExPASy to OBO."""
 
 import logging
+import re
 from collections import defaultdict
-from typing import Dict, Iterable, Mapping, Optional, Set, Tuple
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 from .utils import get_go_mapping
-from ..struct import Obo, Reference, Synonym, Term
-from ..struct.typedef import enables, has_member
+from ..struct import Annotation, Obo, OBOLiteral, Reference, Synonym, Term
+from ..struct.typedef import enables, has_member, has_source, term_replaced_by
 from ..utils.path import ensure_path
 
 __all__ = [
     "ExpasyGetter",
 ]
 
-PREFIX = "eccode"
+PREFIX = "ec"
 EXPASY_DATABASE_URL = "ftp://ftp.expasy.org/databases/enzyme/enzyme.dat"
 EXPASY_TREE_URL = "ftp://ftp.expasy.org/databases/enzyme/enzclass.txt"
 
@@ -43,31 +43,21 @@ class ExpasyGetter(Obo):
     """A getter for ExPASy Enzyme Classes."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = [has_member, enables]
+    typedefs = [has_member, enables, term_replaced_by, has_source]
     root_terms = [
-        Reference(prefix="eccode", identifier="1"),
-        Reference(prefix="eccode", identifier="2"),
-        Reference(prefix="eccode", identifier="3"),
-        Reference(prefix="eccode", identifier="4"),
-        Reference(prefix="eccode", identifier="5"),
-        Reference(prefix="eccode", identifier="6"),
-        Reference(prefix="eccode", identifier="7"),
+        Reference(prefix=PREFIX, identifier="1"),
+        Reference(prefix=PREFIX, identifier="2"),
+        Reference(prefix=PREFIX, identifier="3"),
+        Reference(prefix=PREFIX, identifier="4"),
+        Reference(prefix=PREFIX, identifier="5"),
+        Reference(prefix=PREFIX, identifier="6"),
+        Reference(prefix=PREFIX, identifier="7"),
     ]
-    idspaces = {
-        "uniprot": "https://bioregistry.io/uniprot:",
-        "eccode": "https://bioregistry.io/eccode:",
-        "GO": "http://purl.obolibrary.org/obo/GO_",
-        "RO": "http://purl.obolibrary.org/obo/RO_",
-    }
+    property_values = [Annotation(has_source.reference, OBOLiteral.uri(EXPASY_DATABASE_URL))]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return get_terms(version=self._version_or_raise, force=force)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get ExPASy as OBO."""
-    return ExpasyGetter(force=force)
 
 
 def get_terms(version: str, force: bool = False) -> Iterable[Term]:
@@ -76,7 +66,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     with open(tree_path) as file:
         tree = get_tree(file)
 
-    terms: Dict[str, Term] = {}
+    terms: dict[str, Term] = {}
     child_to_parents = defaultdict(list)
     for ec_code, data in tree.items():
         terms[ec_code] = Term(
@@ -93,12 +83,27 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     database_path = ensure_path(PREFIX, url=EXPASY_DATABASE_URL, version=version)
     with open(database_path) as file:
-        _data = get_database(file)
+        id_to_data = get_database(file)
 
     ec2go = get_ec2go(version=version)
 
     ec_code_to_alt_ids = {}
-    for ec_code, data in _data.items():
+    for ec_code, data in id_to_data.items():
+        if data.get("deleted"):
+            terms[ec_code] = Term(
+                reference=Reference(prefix=PREFIX, identifier=ec_code), is_obsolete=True
+            )
+            continue
+
+        transfer_ids = data.get("transfer_id")
+        if transfer_ids:
+            term = terms[ec_code] = Term(
+                reference=Reference(prefix=PREFIX, identifier=ec_code), is_obsolete=True
+            )
+            for transfer_id in transfer_ids:
+                term.append_replaced_by(Reference(prefix=PREFIX, identifier=transfer_id))
+            continue
+
         parent_ec_code = data["parent"]["identifier"]
         parent_term = terms[parent_ec_code]
 
@@ -125,14 +130,17 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             reference=Reference(prefix=PREFIX, identifier=ec_code, name=name),
             parents=[parent_term.reference],
             synonyms=synonyms,
+            definition=data.get("reaction"),
         )
         for domain in data.get("domains", []):
-            term.append_relationship(
+            term.annotate_object(
                 has_member,
-                Reference(prefix=domain["namespace"], identifier=domain["identifier"]),
+                Reference.model_validate(
+                    {"prefix": domain["namespace"], "identifier": domain["identifier"]},
+                ),
             )
         for protein in data.get("proteins", []):
-            term.append_relationship(
+            term.annotate_object(
                 has_member,
                 Reference(
                     prefix=protein["namespace"],
@@ -148,18 +156,17 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     return terms.values()
 
 
-"""TREE"""
-
-
 def normalize_expasy_id(expasy_id: str) -> str:
     """Return a standardized ExPASy identifier string.
 
     :param expasy_id: A possibly non-normalized ExPASy identifier
+
+    :returns: A normalized string.
     """
     return expasy_id.replace(" ", "")
 
 
-def give_edge(unnormalized_ec_code: str) -> Tuple[int, Optional[str], str]:
+def give_edge(unnormalized_ec_code: str) -> tuple[int, str | None, str]:
     """Return a (parent, child) tuple for given id."""
     levels = [x for x in unnormalized_ec_code.replace(" ", "").replace("-", "").split(".") if x]
     level = len(levels)
@@ -201,16 +208,18 @@ def get_tree(lines: Iterable[str]):
     return rv
 
 
-def get_database(lines: Iterable[str]) -> Mapping:
+def get_database(lines: Iterable[str]) -> Mapping[str, dict[str, Any]]:
     """Parse the ExPASy database file and returns a list of enzyme entry dictionaries.
 
     :param lines: An iterator over the ExPASy database file or file-like
+
+    :returns: A mapping from EC code to data
     """
     rv = {}
     for groups in _group_by_id(lines):
         _, expasy_id = groups[0]
 
-        rv[expasy_id] = ec_data_entry = {
+        ec_data_entry: dict[str, Any] = {
             "concept": {
                 "namespace": PREFIX,
                 "identifier": expasy_id,
@@ -230,12 +239,20 @@ def get_database(lines: Iterable[str]) -> Mapping:
             if descriptor == "//":
                 continue
             elif descriptor == DE and value == "Deleted entry.":
-                continue
+                ec_data_entry["deleted"] = True
             elif descriptor == DE and value.startswith("Transferred entry: "):
-                value = value[len("Transferred entry: ") :].rstrip()
-                ec_data_entry["transfer_id"] = value
+                # TODO There's a situation where there are enough transfers that it goes on to a second line
+                #  the following line just gives up on this one. or maybe I don't understand
+                value = value.strip().removesuffix("and").rstrip(",").strip()
+                ec_data_entry["transfer_id"] = _parse_transfer(value)
             elif descriptor == DE:
-                ec_data_entry["concept"]["name"] = value.rstrip(".")  # type:ignore
+                if "name" not in ec_data_entry["concept"]:
+                    ec_data_entry["concept"]["name"] = ""
+                ec_data_entry["concept"]["name"] += value.rstrip(".")  # type:ignore
+            elif descriptor == CA:
+                if "reaction" not in ec_data_entry:
+                    ec_data_entry["reaction"] = ""
+                ec_data_entry["reaction"] += value.rstrip(".")  # type:ignore
             elif descriptor == AN:
                 ec_data_entry["synonyms"].append(value.rstrip("."))  # type:ignore
             elif descriptor == PR:
@@ -252,19 +269,32 @@ def get_database(lines: Iterable[str]) -> Mapping:
                         continue
                     uniprot_id, uniprot_accession = uniprot_entry.split(",")
                     ec_data_entry["proteins"].append(  # type:ignore
-                        dict(
-                            namespace="uniprot",
-                            name=uniprot_accession,
-                            identifier=uniprot_id,
-                        )
+                        {
+                            "namespace": "uniprot",
+                            "name": uniprot_accession,
+                            "identifier": uniprot_id,
+                        }
                     )
 
-    for expasy_id, data in rv.items():
-        transfer_id = data.pop("transfer_id", None)
-        if transfer_id is not None:
-            rv[expasy_id]["alt_ids"].append(transfer_id)  # type:ignore
-
+        rv[expasy_id] = ec_data_entry
     return rv
+
+
+TRANSFER_SPLIT_RE = re.compile(r",\s*|\s+and\s+")
+
+
+def _parse_transfer(value: str) -> list[str]:
+    """Parse transferred entry string.
+
+    :param value: A string for a transferred entry
+
+    :returns: A list of EC codes that it got transferred to
+
+    >>> _parse_transfer("Transferred entry: 1.1.1.198, 1.1.1.227 and 1.1.1.228.")
+    ['1.1.1.198', '1.1.1.227', '1.1.1.228']
+    """
+    value = value[len("Transferred entry: ") :].rstrip().rstrip(".")
+    return sorted(x.strip().removeprefix("and").strip() for x in TRANSFER_SPLIT_RE.split(value))
 
 
 def _group_by_id(lines):
@@ -287,7 +317,7 @@ def _group_by_id(lines):
     return groups
 
 
-def get_ec2go(version: str) -> Mapping[str, Set[Tuple[str, str]]]:
+def get_ec2go(version: str) -> Mapping[str, set[tuple[str, str]]]:
     """Get the EC mapping to GO activities."""
     url = "http://current.geneontology.org/ontology/external2go/ec2go"
     path = ensure_path(PREFIX, url=url, name="ec2go.tsv", version=version)

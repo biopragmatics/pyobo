@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """KEGG Databases."""
 
 from .genes import KEGGGeneGetter

@@ -146,6 +146,7 @@ OAM	Obsolete Modifier Abbreviation
 OAP	Obsolete active preferred term
 OAS	Obsolete active synonym
 OC	Nursing outcomes
+ODN	Obsolete Display Name
 OET	Obsolete entry term
 OF	Obsolete fully specified name
 OL	Non-current Lower Level Term
@@ -188,7 +189,6 @@ PX	Expanded preferred terms (pair with PS)
 PXQ	Preferred qualifier term
 QAB	Qualifier abbreviation
 QEV	Qualifier entry version
-QSV	Qualifier sort version
 RAB	Root abbreviation
 RHT	Root hierarchical term
 RPT	Root preferred term

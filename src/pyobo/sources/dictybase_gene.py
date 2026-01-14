@@ -1,18 +1,15 @@
-# -*- coding: utf-8 -*-
-
 """Converter for dictyBase gene.
 
 Note that normal dictybase idenififers are for sequences
 """
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 from tqdm.auto import tqdm
 
-from pyobo.struct import Obo, Reference, Synonym, Term, from_species, has_gene_product
-from pyobo.utils.io import multisetdict
+from pyobo.struct import Obo, Term, from_species, has_gene_product
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -44,17 +41,13 @@ class DictybaseGetter(Obo):
         return get_terms(force=force)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get dictyBase Gene as OBO."""
-    return DictybaseGetter(force=force)
-
-
 def get_terms(force: bool = False) -> Iterable[Term]:
     """Get terms."""
+    # TODO the mappings file has actually no uniprot at all, and requires text mining
     # DDB ID	DDB_G ID	Name	UniProt ID
-    uniprot_mappings = multisetdict(
-        ensure_df(PREFIX, url=URL, force=force, name="uniprot_mappings.tsv", usecols=[1, 3]).values
-    )
+    # uniprot_mappings = multisetdict(
+    #     ensure_df(PREFIX, url=URL, force=force, name="uniprot_mappings.tsv", usecols=[1, 3]).values
+    # )
 
     terms = ensure_df(PREFIX, url=URL, force=force, name="gene_info.tsv")
     # GENE ID (DDB_G ID)	Gene Name	Synonyms	Gene products
@@ -69,11 +62,16 @@ def get_terms(force: bool = False) -> Iterable[Term]:
                 term.append_synonym(synonym.strip())
         if synonyms and pd.notna(synonyms):
             for synonym in synonyms.split(","):
-                term.append_synonym(Synonym(synonym.strip()))
-        for uniprot_id in uniprot_mappings.get(identifier, []):
-            if not uniprot_id or pd.isna(uniprot_id) or uniprot_id not in {"unknown", "pseudogene"}:
-                continue
-            term.append_relationship(has_gene_product, Reference.auto("uniprot", uniprot_id))
+                term.append_synonym(synonym.strip())
+        # for uniprot_id in uniprot_mappings.get(identifier, []):
+        #     if not uniprot_id or pd.isna(uniprot_id) or uniprot_id in {"unknown", "pseudogene"}:
+        #         continue
+        #     try:
+        #         uniprot_ref = Reference(prefix="uniprot", identifier=uniprot_id)
+        #     except ValueError:
+        #         tqdm.write(f"[dictybase.gene] invalid uniprot ref: {uniprot_id}")
+        #     else:
+        #         term.append_relationship(has_gene_product, uniprot_ref)
 
         term.set_species(identifier="44689", name="Dictyostelium discoideum")
         yield term

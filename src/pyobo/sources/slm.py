@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
-
 """Swisslipids."""
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 from tqdm.auto import tqdm
 
-from pyobo import Obo, Reference, Term
+from pyobo import Obo, Reference, Term, TypeDef
 from pyobo.struct.struct import abbreviation as abbreviation_typedef
-from pyobo.struct.typedef import exact_match, has_inchi, has_smiles
+from pyobo.struct.typedef import exact_match, has_inchi, has_smiles, is_mentioned_by
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -38,13 +36,14 @@ COLUMNS = [
     "HMDB",
     "PMID",
 ]
+LEVEL = TypeDef.default(PREFIX, "level", is_metadata_tag=True)
 
 
 class SLMGetter(Obo):
     """An ontology representation of SwissLipid's lipid nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [exact_match]
+    typedefs = [exact_match, LEVEL, has_inchi, has_smiles, is_mentioned_by]
     synonym_typedefs = [abbreviation_typedef]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -52,9 +51,7 @@ class SLMGetter(Obo):
         return iter_terms(force=force, version=self._version_or_raise)
 
 
-def get_obo(force: bool = False) -> Obo:
-    """Get SwissLipids as OBO."""
-    return SLMGetter(force=force)
+INVALID_INCHI = {"-", "none"}
 
 
 def iter_terms(version: str, force: bool = False):
@@ -79,10 +76,10 @@ def iter_terms(version: str, force: bool = False):
         smiles,
         inchi,
         inchikey,
-        chebi_id,
-        lipidmaps_id,
-        hmdb_id,
-        pmids,
+        chebi_ids,
+        lipidmaps_ids,
+        hmdb_ids,
+        pubmed_ids,
     ) in tqdm(
         df[COLUMNS].values, desc=f"[{PREFIX}] generating terms", unit_scale=True, unit="lipid"
     ):
@@ -92,34 +89,46 @@ def iter_terms(version: str, force: bool = False):
             raise ValueError(identifier)
         term = Term.from_triple(PREFIX, identifier, name)
         if pd.notna(level):
-            term.append_property("level", level)
+            term.annotate_string(LEVEL, level)
         if pd.notna(abbreviation):
             term.append_synonym(abbreviation, type=abbreviation_typedef)
         if pd.notna(synonyms):
             for synonym in synonyms.split("|"):
                 term.append_synonym(synonym.strip())
         if pd.notna(smiles):
-            term.append_property(has_smiles, smiles)
+            term.annotate_string(has_smiles, smiles)
         if pd.notna(inchi) and inchi != "InChI=none":
             if inchi.startswith("InChI="):
                 inchi = inchi[len("InChI=") :]
-            term.append_property(has_inchi, inchi)
+            term.annotate_string(has_inchi, inchi)
         if pd.notna(inchikey):
-            if inchikey.startswith("InChIKey="):
-                inchikey = inchikey[len("InChIKey=") :]
-            term.append_exact_match(Reference(prefix="inchikey", identifier=inchikey))
-        if pd.notna(chebi_id):
-            term.append_exact_match(("chebi", chebi_id))
-        if pd.notna(lipidmaps_id):
+            inchikey = inchikey.removeprefix("InChIKey=").strip()
+            if inchikey and inchikey not in INVALID_INCHI:
+                try:
+                    inchi_ref = Reference(prefix="inchikey", identifier=inchikey)
+                except ValueError:
+                    tqdm.write(f"[slm:{identifier}] had invalid inchikey reference: `{inchikey}`")
+                else:
+                    term.append_exact_match(inchi_ref)
+        for chebi_id in _split(chebi_ids):
+            term.append_xref(("chebi", chebi_id))
+        for lipidmaps_id in _split(lipidmaps_ids):
             term.append_exact_match(("lipidmaps", lipidmaps_id))
-        if pd.notna(hmdb_id):
+        for hmdb_id in _split(hmdb_ids):
             term.append_exact_match(("hmdb", hmdb_id))
-        if pd.notna(pmids):
-            for pmid in pmids.split("|"):
-                term.append_provenance(("pubmed", pmid))
+        for pubmed_id in _split(pubmed_ids):
+            term.append_mentioned_by(Reference(prefix="pubmed", identifier=pubmed_id))
         # TODO how to handle class, parents, and components?
         yield term
 
 
+def _split(s: str) -> Iterable[str]:
+    if pd.notna(s):
+        for x in s.split("|"):
+            x = x.strip()
+            if x:
+                yield x
+
+
 if __name__ == "__main__":
-    get_obo().write_default(write_obo=True, use_tqdm=True)
+    SLMGetter.cli()

@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 """DepMap cell lines."""
 
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 import pandas as pd
 import pystow
@@ -11,7 +9,6 @@ from pyobo import Obo, Reference, Term
 from pyobo.struct.typedef import exact_match
 
 __all__ = [
-    "get_obo",
     "DepMapGetter",
 ]
 
@@ -31,28 +28,24 @@ class DepMapGetter(Obo):
         return iter_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo(*, force: bool = False) -> Obo:
-    """Get DepMap cell lines as OBO."""
-    return DepMapGetter(force=force)
-
-
-def get_url(version: Optional[str] = None) -> str:
+def get_url(version: str | None = None) -> str:
     """Get the URL for the given version of the DepMap cell line metadata file.
 
     :param version: The version of the data
+
     :returns: The URL as a string for downloading the dat
 
     .. warning::
 
-        This does not currently take the version into account. Need to write a crawler since data is not easy
-        to access.
+        This does not currently take the version into account. Need to write a crawler
+        since data is not easy to access.
     """
     #: This is the DepMap Public 21Q2 version. There isn't a way to do this automatically without writing a crawler
     url = "https://ndownloader.figshare.com/files/27902376"
     return url
 
 
-def _fix_mangled_int(x: str) -> Optional[str]:
+def _fix_mangled_int(x: str) -> str | None:
     return str(int(float(x))) if pd.notna(x) else None
 
 
@@ -75,7 +68,10 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         columns
     ].values:
         if pd.isna(name):
-            name = None
+            if pd.notna(sname):
+                name, sname = sname, None
+            else:
+                name = None
         term = Term.from_triple(PREFIX, identifier, name)
         if pd.notna(sname):
             term.append_synonym(sname)
@@ -113,7 +109,7 @@ def ensure(version: str, force: bool = False) -> pd.DataFrame:
         url=get_url(version=version),
         name="sample_info.tsv",
         force=force,
-        read_csv_kwargs=dict(sep=",", dtype=str),
+        read_csv_kwargs={"sep": ",", "dtype": str},
     )
 
 

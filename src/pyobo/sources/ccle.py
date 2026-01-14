@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 """Get the CCLE Cells, provided by cBioPortal."""
 
 import tarfile
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, Optional
 
 import pandas as pd
 import pystow
@@ -12,7 +10,6 @@ import pystow
 from pyobo import Obo, Reference, Term
 
 __all__ = [
-    "get_obo",
     "CCLEGetter",
 ]
 
@@ -24,21 +21,18 @@ class CCLEGetter(Obo):
     """An ontology representation of the Cancer Cell Line Encyclopedia's cell lines."""
 
     ontology = bioregistry_key = PREFIX
+    name = "Cancer Cell Line Encyclopedia Cell Line"
 
-    def __post_init__(self):  # noqa: D105
+    def __post_init__(self):
         self.data_version = VERSION
+        super().__post_init__()
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms(version=self._version_or_raise, force=force)
 
 
-def get_obo(*, force: bool = False) -> Obo:
-    """Get CCLE Cells as OBO."""
-    return CCLEGetter(force=force)
-
-
-def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[Term]:
+def iter_terms(version: str | None = None, force: bool = False) -> Iterable[Term]:
     """Iterate over CCLE Cells."""
     df = ensure_df(version=version, force=force)
     for identifier, depmap_id, name in df.values:
@@ -50,37 +44,37 @@ def iter_terms(version: Optional[str] = None, force: bool = False) -> Iterable[T
         yield term
 
 
-def get_version() -> str:
+def get_ccle_static_version() -> str:
     """Get the default version of CCLE's cell lines."""
     return "2019"
 
 
-def get_url(version: Optional[str] = None) -> str:
+def get_url(version: str | None = None) -> str:
     """Get the cBioPortal URL for the given version of CCLE's cell lines."""
     if version is None:
-        version = get_version()
+        version = get_ccle_static_version()
     return f"https://cbioportal-datahub.s3.amazonaws.com/ccle_broad_{version}.tar.gz"
 
 
-def get_inner(version: Optional[str] = None) -> str:
+def get_inner(version: str | None = None) -> str:
     """Get the inner tarfile path."""
     if version is None:
-        version = get_version()
+        version = get_ccle_static_version()
     return f"ccle_broad_{version}/data_clinical_sample.txt"
 
 
-def ensure(version: Optional[str] = None, **kwargs) -> Path:
+def ensure(version: str | None = None, **kwargs) -> Path:
     """Ensure the given version is downloaded."""
     if version is None:
-        version = get_version()
+        version = get_ccle_static_version()
     url = get_url(version=version)
     return pystow.ensure("pyobo", "raw", PREFIX, version, url=url, **kwargs)
 
 
-def ensure_df(version: Optional[str] = None, force: bool = False) -> pd.DataFrame:
+def ensure_df(version: str | None = None, force: bool = False) -> pd.DataFrame:
     """Get the CCLE clinical sample dataframe."""
     if version is None:
-        version = get_version()
+        version = get_ccle_static_version()
     path = ensure(version=version, force=force)
     inner_path = get_inner(version=version)
     with tarfile.open(path) as tf:

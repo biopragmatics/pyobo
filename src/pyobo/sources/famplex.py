@@ -1,17 +1,15 @@
-# -*- coding: utf-8 -*-
-
 """Converter for FamPlex."""
 
 import logging
 from collections import defaultdict
-from typing import Iterable, List, Mapping, Tuple
+from collections.abc import Iterable, Mapping
 
 import bioregistry
 from pystow.utils import get_commit
 
 from pyobo import get_name_id_mapping
-from pyobo.struct import Obo, Reference, Term
-from pyobo.struct.typedef import has_member, has_part, is_a, part_of
+from pyobo.struct import Obo, Reference, Term, _parse_str_or_curie_or_uri
+from pyobo.struct.typedef import has_member, has_part, is_a, is_mentioned_by, part_of
 from pyobo.utils.io import multidict
 from pyobo.utils.path import ensure_df
 
@@ -25,7 +23,7 @@ class FamPlexGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
-    typedefs = [has_member, has_part, is_a, part_of]
+    typedefs = [has_member, has_part, is_a, part_of, is_mentioned_by]
 
     def _get_version(self) -> str:
         return get_commit("sorgerlab", "famplex")
@@ -33,11 +31,6 @@ class FamPlexGetter(Obo):
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return get_terms(force=force, version=self._version_or_raise)
-
-
-def get_obo(force: bool = False) -> Obo:
-    """Get FamPlex as OBO."""
-    return FamPlexGetter(force=force)
 
 
 def get_terms(version: str, force: bool = False) -> Iterable[Term]:
@@ -62,7 +55,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         dtype=str,
         force=force,
     )
-    id_to_definition: Mapping[str, Tuple[str, str]] = {
+    id_to_definition: Mapping[str, tuple[str, str]] = {
         identifier: (definition, provenance)
         for identifier, provenance, definition in definitions_df.values
     }
@@ -108,39 +101,39 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     for (entity,) in entities_df.values:
         reference = Reference(prefix=PREFIX, identifier=entity, name=entity)
         definition, provenance = id_to_definition.get(entity, (None, None))
-        provenance_reference = (
-            Reference.from_curie(provenance) if isinstance(provenance, str) else None
-        )
         term = Term(
             reference=reference,
             definition=definition,
-            provenance=[] if provenance_reference is None else [provenance_reference],
         )
+
+        provenance_reference = (
+            _parse_str_or_curie_or_uri(provenance) if isinstance(provenance, str) else None
+        )
+        if provenance_reference:
+            term.append_mentioned_by(provenance_reference)
 
         for xref_reference in id_xrefs.get(entity, []):
             term.append_xref(xref_reference)
 
         for r, t in out_edges.get(reference, []):
-            if r == "isa" and t.prefix == "fplx":
+            if r == "isa":
                 term.append_parent(t)
-            elif r == "isa":
-                term.append_relationship(is_a, t)
             elif r == "partof":
-                term.append_relationship(part_of, t)
+                term.annotate_object(part_of, t)
             else:
                 logging.warning("unhandled relation %s", r)
 
         for r, h in in_edges.get(reference, []):
             if r == "isa":
-                term.append_relationship(has_member, h)
+                term.annotate_object(has_member, h)
             elif r == "partof":
-                term.append_relationship(has_part, h)
+                term.annotate_object(has_part, h)
             else:
                 logging.warning("unhandled relation %s", r)
         yield term
 
 
-def _get_xref_df(version: str) -> Mapping[str, List[Reference]]:
+def _get_xref_df(version: str) -> Mapping[str, list[Reference]]:
     base_url = f"https://raw.githubusercontent.com/sorgerlab/famplex/{version}"
     xrefs_url = f"{base_url}/equivalences.csv"
     xrefs_df = ensure_df(PREFIX, url=xrefs_url, version=version, header=None, sep=",", dtype=str)
@@ -151,9 +144,11 @@ def _get_xref_df(version: str) -> Mapping[str, List[Reference]]:
     }
     xrefs_df[0] = xrefs_df[0].map(lambda s: ns_remapping.get(s, s))
     xrefs_df[1] = [
-        bioregistry.standardize_identifier(xref_prefix, xref_identifier)
-        if xref_prefix != "nextprot.family"
-        else xref_identifier[len("FA:") :]
+        (
+            bioregistry.standardize_identifier(xref_prefix, xref_identifier)
+            if xref_prefix != "nextprot.family"
+            else xref_identifier[len("FA:") :]
+        )
         for xref_prefix, xref_identifier in xrefs_df[[0, 1]].values
     ]
 

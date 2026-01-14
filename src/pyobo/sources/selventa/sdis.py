@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
-
 """Selventa diseases.
 
-.. seealso:: https://github.com/pyobo/pyobo/issues/26
+.. seealso::
+
+    https://github.com/pyobo/pyobo/issues/26
 """
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 
@@ -31,11 +31,6 @@ class SDISGetter(Obo):
         return iter_terms(force=force)
 
 
-def get_obo(*, force: bool = False) -> Obo:
-    """Get Selventa Diseases as OBO."""
-    return SDISGetter(force=force)
-
-
 def iter_terms(force: bool = False) -> Iterable[Term]:
     """Iterate over selventa disease terms."""
     df = ensure_df(PREFIX, url=URL, skiprows=9, force=force)
@@ -50,4 +45,4 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    get_obo().write_default(write_obo=True, force=True)
+    SDISGetter.cli()

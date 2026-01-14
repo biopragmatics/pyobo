@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Converter for UMLS.
 
 Run with ``python -m pyobo.sources.umls``
@@ -7,16 +5,17 @@ Run with ``python -m pyobo.sources.umls``
 
 import itertools as itt
 import operator
-from typing import Iterable
+from collections import defaultdict
+from collections.abc import Iterable, Mapping
 
 import bioregistry
 import pandas as pd
 from tqdm.auto import tqdm
-from umls_downloader import open_umls
+from umls_downloader import open_umls, open_umls_semantic_types
 
 from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
 
-from .get_synonym_types import get_umls_synonyms
+from .get_synonym_types import get_umls_typedefs
 
 __all__ = [
     "UMLSGetter",
@@ -47,29 +46,37 @@ RRF_COLUMNS = [
 
 PREFIX = "umls"
 SOURCE_VOCAB_URL = "https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html"
-SYNONYM_ABB = get_umls_synonyms()
+UMLS_TYPEDEFS: dict[str, SynonymTypeDef] = get_umls_typedefs()
 
 
 class UMLSGetter(Obo):
     """An ontology representation of UMLS."""
 
     ontology = bioversions_key = PREFIX
-    synonym_typedefs = [SynonymTypeDef.from_text(v) for v in SYNONYM_ABB.values()]
+    synonym_typedefs = list(UMLS_TYPEDEFS.values())
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         return iter_terms(version=self._version_or_raise)
 
 
-def get_obo() -> Obo:
-    """Get UMLS as OBO."""
-    return UMLSGetter()
+def get_semantic_types() -> Mapping[str, set[str]]:
+    """Get UMLS semantic types for each term."""
+    dd = defaultdict(set)
+    with open_umls_semantic_types() as file:
+        # this is very fast and doesn't need a progress bar
+        for line in file:
+            cui, sty, _ = line.decode("utf8").split("|", 2)
+            dd[cui].add(sty)
+    return dict(dd)
 
 
 def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over UMLS terms."""
+    semantic_types = get_semantic_types()
+
     with open_umls(version=version) as file:
-        it = tqdm(file, unit_scale=True, desc="[umls] parsing")
+        it = tqdm(file, unit_scale=True, desc="[umls] parsing", total=16_700_000)
         lines = (line.decode("utf-8").strip().split("|") for line in it)
         for cui, cui_lines in itt.groupby(lines, key=operator.itemgetter(0)):
             df = pd.DataFrame(list(cui_lines), columns=RRF_COLUMNS)
@@ -85,39 +92,41 @@ def iter_terms(version: str) -> Iterable[Term]:
                 continue
 
             df["TTY - Term Type in Source"] = df["TTY - Term Type in Source"].map(
-                SYNONYM_ABB.__getitem__
+                UMLS_TYPEDEFS.__getitem__
             )
 
             _r = pref_rows_df.iloc[0]
             sdf = df[["SAB - source name", "CODE", "TTY - Term Type in Source", "STR"]]
 
             synonyms = []
-            xrefs = []
+            xrefs = set()
             for source, identifier, synonym_type, synonym in sdf.values:
                 norm_source = bioregistry.normalize_prefix(source)
-                if norm_source is None or not identifier:
+                if not norm_source or not identifier or "," in identifier:
                     provenance = []
                 else:
-                    ref = Reference(prefix=norm_source, identifier=identifier)
-                    provenance = [ref]
-                    xrefs.append(ref)
+                    try:
+                        ref = Reference(prefix=norm_source, identifier=identifier)
+                    except ValueError:
+                        continue
+                    else:
+                        provenance = [ref]
+                        xrefs.add(ref)
                 synonyms.append(
                     Synonym(
                         name=synonym,
                         provenance=provenance,
-                        type=SynonymTypeDef.from_text(synonym_type),
+                        type=synonym_type.reference,
                     )
                 )
-
-            xrefs = sorted(
-                set(xrefs), key=lambda reference: (reference.prefix, reference.identifier)
-            )
 
             term = Term(
                 reference=Reference(prefix=PREFIX, identifier=cui, name=_r["STR"]),
                 synonyms=synonyms,
-                xrefs=xrefs,
+                xrefs=sorted(xrefs),
             )
+            for sty_id in semantic_types.get(cui, set()):
+                term.append_parent(Reference(prefix="sty", identifier=sty_id))
             yield term
 
 
