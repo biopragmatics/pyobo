@@ -62,7 +62,7 @@ class RORGetter(Obo):
     root_terms = [CITY_CLASS, ORG_CLASS]
 
     def __post_init__(self):
-        self.data_version, _url, _path = ror_downloader.get_version_info()
+        self.data_version = ror_downloader.get_version_info(download=False).version
         super().__post_init__()
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
