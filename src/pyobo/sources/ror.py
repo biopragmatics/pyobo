@@ -7,17 +7,9 @@ from collections.abc import Iterable
 from typing import Any
 
 import bioregistry
+import ror_downloader
 from pydantic import ValidationError
-from ror_downloader import (
-    OrganizationType,
-    get_description,
-)
-from ror_downloader import (
-    get_organizations as get_ror_records,
-)
-from ror_downloader import (
-    get_version_info as get_ror_status,
-)
+from ror_downloader import OrganizationType
 from tqdm.auto import tqdm
 
 from pyobo.struct import Obo, Reference, Term
@@ -33,7 +25,7 @@ from pyobo.struct.typedef import (
 )
 
 __all__ = [
-    "get_ror_records",
+    "RORGetter",
     "get_ror_to_country_geonames",
 ]
 
@@ -70,7 +62,7 @@ class RORGetter(Obo):
     root_terms = [CITY_CLASS, ORG_CLASS]
 
     def __post_init__(self):
-        self.data_version, _url, _path = get_ror_status()
+        self.data_version, _url, _path = ror_downloader.get_version_info()
         super().__post_init__()
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -105,7 +97,7 @@ _MISSED_ORG_TYPES: set[str] = set()
 
 def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
     """Iterate over terms in ROR."""
-    status, records = get_ror_records(force=force)
+    status, records = ror_downloader.get_organizations(force=force)
     unhandled_xref_prefixes: set[str] = set()
 
     seen_geonames_references = set()
@@ -119,7 +111,7 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
         term = Term(
             reference=Reference(prefix=PREFIX, identifier=identifier, name=primary_name),
             type="Instance",
-            definition=get_description(record),
+            definition=record.get_description(),
         )
         for organization_type in record.types:
             if organization_type in ROR_ORGANIZATION_TYPE_TO_OBI:
