@@ -125,6 +125,7 @@ def get_semantic_mappings(
     if converter is None:
         converter = get_converter()
     return [
+        # TODO upstream this into sssom-pydantic?
         row_to_semantic_mapping({k: v for k, v in row.items() if pd.notna(v)}, converter=converter)
         for _, row in df.iterrows()
     ]
