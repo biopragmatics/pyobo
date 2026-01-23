@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "pyobo"
-version = "0.12.15-dev"
+version = "0.12.16-dev"
 description = "A python package for handling and generating OBO"
 readme = "README.md"
 authors = [
@@ -73,7 +73,7 @@ dependencies = [
     "bioregistry>=0.12.30",
     "bioontologies>=0.7.2",
     "ssslm>=0.0.13",
-    "zenodo-client>=0.4.0",
+    "zenodo-client>=0.4.1",
     "class_resolver>=0.6.0",
     "pydantic>=2.0",
     "curies>=0.10.17",
@@ -89,7 +89,8 @@ dependencies = [
     "typing_extensions",
     "rdflib",
     "obographs>=0.0.8",
-    "sssom_pydantic>=0.1.1",
+    "sssom_pydantic>=0.2.0",
+    "pytz",
 ]
 
 # see https://peps.python.org/pep-0735/ and https://docs.astral.sh/uv/concepts/dependencies/#dependency-groups
@@ -99,11 +100,11 @@ tests = [
     "coverage[toml]",
 ]
 docs = [
-    "sphinx>=8",
+    "sphinx>=8,<9",
     "sphinx-rtd-theme>=3.0",
     "sphinx-click", 
     "sphinx_automodapi",
-    "sphinx_toolbox",
+    "sphinx_toolbox<=4.0.0",
 ]
 lint = [
     "ruff",
@@ -315,7 +316,7 @@ known-first-party = [
 docstring-code-format = true
 
 [tool.bumpversion]
-current_version = "0.12.15-dev"
+current_version = "0.12.16-dev"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:-(?P<release>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+(?P<build>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?"
 serialize = [
     "{major}.{minor}.{patch}-{release}+{build}",

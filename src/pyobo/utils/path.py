@@ -107,7 +107,6 @@ def ensure_json(
     version: VersionHint = None,
     name: str | None = None,
     force: bool = False,
-    dtype=str,
     verify: bool = True,
     backend: Literal["requests", "urllib"] | None = None,
     **kwargs: Any,
