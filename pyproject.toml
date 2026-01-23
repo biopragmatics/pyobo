@@ -89,7 +89,7 @@ dependencies = [
     "typing_extensions",
     "rdflib",
     "obographs>=0.0.8",
-    "sssom_pydantic>=0.1.1",
+    "sssom_pydantic>=0.2.0",
     "pytz",
 ]
 
