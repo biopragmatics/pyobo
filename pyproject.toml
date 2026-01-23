@@ -100,11 +100,11 @@ tests = [
     "coverage[toml]",
 ]
 docs = [
-    "sphinx>=8",
+    "sphinx>=8,<9",
     "sphinx-rtd-theme>=3.0",
     "sphinx-click", 
     "sphinx_automodapi",
-    "sphinx_toolbox",
+    "sphinx_toolbox<=4.0.0",
 ]
 lint = [
     "ruff",
