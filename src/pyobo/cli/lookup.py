@@ -1,8 +1,10 @@
 """CLI for PyOBO lookups."""
 
+import inspect
 import json
 import sys
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
+from typing import TYPE_CHECKING
 
 import click
 from more_click import verbose_option
@@ -17,7 +19,10 @@ from .utils import (
     strict_option,
     version_option,
 )
-from ..constants import LookupKwargs
+from ..constants import GetOntologyKwargs, LookupKwargs
+
+if TYPE_CHECKING:
+    from curies import Reference
 
 __all__ = [
     "lookup",
@@ -31,9 +36,12 @@ def lookup():
 
 def lookup_annotate(f: Clickable) -> Clickable:
     """Add appropriate decorators to lookup CLI functions."""
+    signature = inspect.signature(f)
+    param = signature.parameters["kwargs"]
+    if param.kind is not inspect.Parameter.VAR_KEYWORD:
+        raise ValueError("programmer error")
     for decorator in [
         lookup.command(),
-        prefix_argument,
         verbose_option,
         force_option,
         force_process_option,
@@ -41,6 +49,13 @@ def lookup_annotate(f: Clickable) -> Clickable:
         version_option,
     ]:
         f = decorator(f)
+
+    if param.annotation == Unpack[LookupKwargs]:
+        f = prefix_argument(f)
+    elif param.annotation == Unpack[GetOntologyKwargs]:
+        pass
+    else:
+        raise ValueError
     return f
 
 
@@ -249,33 +264,30 @@ def hierarchy(
 
 
 @lookup_annotate
-@click.argument("identifier")
-def ancestors(
-    identifier: str,
-    **kwargs: Unpack[LookupKwargs],
-) -> None:
+@click.argument("curie")
+def ancestors(curie: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Look up ancestors."""
-    from ..api import get_ancestors, get_name
+    from ..api import get_ancestors
 
-    # note, prefix is passed via kwargs
-    ancestors = get_ancestors(identifier=identifier, **kwargs)
-    for ancestor in sorted(ancestors or []):
-        click.echo(f"{ancestor.curie}\t{get_name(ancestor, version=kwargs['version'])}")
+    ancestors = get_ancestors(curie, **kwargs)
+    _list_curies(ancestors, **kwargs)
 
 
 @lookup_annotate
-@click.argument("identifier")
-def descendants(
-    identifier: str,
-    **kwargs: Unpack[LookupKwargs],
-) -> None:
+@click.argument("curie")
+def descendants(curie: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Look up descendants."""
-    from ..api import get_descendants, get_name
+    from ..api import get_descendants
 
-    # note, prefix is passed via kwargs
-    descendants = get_descendants(identifier=identifier, **kwargs)
-    for descendant in sorted(descendants or []):
-        click.echo(f"{descendant.curie}\t{get_name(descendant, version=kwargs['version'])}")
+    descendants = get_descendants(curie, **kwargs)
+    _list_curies(descendants, **kwargs)
+
+
+def _list_curies(references: Iterable[Reference], **kwargs: Unpack[GetOntologyKwargs]) -> None:
+    from ..api import get_name
+
+    for reference in sorted(references or []):
+        click.echo(f"{reference.curie}\t{get_name(reference, version=kwargs['version'])}")
 
 
 @lookup_annotate
