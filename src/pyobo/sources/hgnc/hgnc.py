@@ -21,7 +21,6 @@ from pyobo.struct import (
     Reference,
     Term,
     from_species,
-    gene_product_member_of,
     has_gene_product,
     is_mentioned_by,
     member_of,
@@ -29,7 +28,14 @@ from pyobo.struct import (
     transcribes_to,
 )
 from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
-from pyobo.struct.typedef import comment, ends, exact_match, located_in, starts
+from pyobo.struct.typedef import (
+    comment,
+    ends,
+    exact_match,
+    gene_product_enables,
+    located_in,
+    starts,
+)
 from pyobo.utils.path import ensure_path
 
 __all__ = [
@@ -189,7 +195,7 @@ class HGNCGetter(Obo):
     typedefs = [
         from_species,
         has_gene_product,
-        gene_product_member_of,
+        gene_product_enables,
         transcribes_to,
         orthologous,
         member_of,
@@ -288,7 +294,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             if "-" in ec_code:
                 continue  # only add concrete annotations
             term.append_relationship(
-                gene_product_member_of,
+                gene_product_enables,
                 Reference(prefix="ec", identifier=ec_code.strip()),
             )
         for rna_central_ids in entry.pop("rna_central_id", []):
