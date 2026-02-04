@@ -1,16 +1,30 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "bioregistry>=0.13.18",
+#     "click>=8.3.1",
+#     "obographs>=0.0.8",
+#     "pystow>=0.7.21",
+#     "robot-obo-tool>=0.0.1",
+#     "ssslm>=0.1.3",
+#     "tabulate>=0.9.0",
+#     "tqdm>=4.67.3",
+# ]
+# ///
+
+"""Implement lexical review for an ontology."""
+
 import subprocess
 import tempfile
 from pathlib import Path
 
-import click
-
-import ssslm
-import obographs
-import sys
 import bioregistry
-from tqdm import tqdm
-from pystow.utils import name_from_url, download
+import click
+import obographs
 import robot_obo_tool
+import ssslm
+from pystow.utils import download, name_from_url
+from tqdm import tqdm
 
 INDEX_URL = "https://github.com/biopragmatics/biolexica/raw/main/lexica/obo/obo.ssslm.tsv.gz"
 
@@ -35,7 +49,10 @@ def get_obograph_by_prefix(
         else:
             return graph_document
 
-    for label, url in [("OWL", bioregistry.get_owl_download(prefix)), ("OBO", bioregistry.get_obo_download(prefix))]:
+    for label, url in [
+        ("OWL", bioregistry.get_owl_download(prefix)),
+        ("OBO", bioregistry.get_obo_download(prefix)),
+    ]:
         if url is None:
             msg = f"[{prefix}] no {label} URL available"
             tqdm.write(msg)
@@ -61,15 +78,20 @@ def get_obograph_by_prefix(
 
     raise ValueError
 
+
 @click.command()
 @click.argument("obo_prefix")
-@click.option("--obograph-path",
-              help="Local path to an OBO Graph JSON file. If not given, will try and look up through the OBO PURL system")
+@click.option(
+    "--obograph-path",
+    help="Local path to an OBO Graph JSON file. If not given, will try and look up through the OBO PURL system",
+)
 def obo_review(obo_prefix: str, obograph_path: str) -> None:
     """Make a lexical review of an ontology."""
     obo_uri_prefix = f"http://purl.obolibrary.org/obo/{obo_prefix}_"
     if obograph_path is None:
         obograph_path = f"https://purl.obolibrary.org/obo/{obo_prefix.lower()}.json"
+
+    graph_document = get_obograph_by_prefix(obo_prefix)
 
     click.echo(f"Loading lexical index from {INDEX_URL} using SSSLM")
     grounder = ssslm.make_grounder(INDEX_URL)
@@ -86,27 +108,29 @@ def obo_review(obo_prefix: str, obograph_path: str) -> None:
             if not name:
                 continue
 
-            local_unique_identifier = node.id[len(obo_uri_prefix):]
+            local_unique_identifier = node.id[len(obo_uri_prefix) :]
 
             matches = []
             matches.extend(grounder.get_matches(name))
             matches.extend(
                 match
                 for synonym in node.get("meta", {}).get("synonyms", [])
-                for match in grounder.get_matches(synonym['val'])
+                for match in grounder.get_matches(synonym["val"])
             )
 
             if not matches:
                 safe.append((local_unique_identifier, name))
             else:
-                print(f'- f`{obo_prefix}:{local_unique_identifier}`', name)
+                click.echo(f"- f`{obo_prefix}:{local_unique_identifier}` {name}")
             for match in matches:
                 curie = match.curie
-                print(f'  - [`{curie}`](https://bioregistry.io/{curie}) {match.name} ({round(match.score, 3)})')
+                click.echo(
+                    f"  - [`{curie}`](https://bioregistry.io/{curie}) {match.name} ({round(match.score, 3)})"
+                )
 
     for local_unique_identifier, name in safe:
-        click.echo(f'- `{obo_prefix}:{local_unique_identifier}`', name)
+        click.echo(f"- `{obo_prefix}:{local_unique_identifier}` {name}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     obo_review()
