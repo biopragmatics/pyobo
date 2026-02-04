@@ -40,6 +40,7 @@ UPPER = {"ncit"}
 @click.option("--index-url", default=INDEX_URL, show_default=True)
 @click.option("--show-passed", is_flag=True)
 @click.option("--skip-upper", is_flag=True, help=f"if true, skip upper level ontologies {UPPER}")
+@click.option("--index-force", is_flag=True, help="if true, force re-downloading the lexical index")
 def obo_lexical_review(
     prefix: str,
     location: str | None,
@@ -47,14 +48,18 @@ def obo_lexical_review(
     index_url: str,
     show_passed: bool,
     skip_upper: bool,
+    index_force: bool,
 ) -> None:
     """Make a lexical review of an ontology."""
     import sys
     import time
 
     import pyperclip
+    import pystow
     import ssslm
     from tabulate import tabulate
+
+    module = pystow.module("pyobo", "obo-lexical-review")
 
     args = " ".join(sys.argv[1:])
     output = f"Analysis of {prefix} run on {time.asctime()} with the following command:\n\n```console\n$ uvx pyobo obo-lexical-review {args}\n```\n\n"
@@ -66,7 +71,8 @@ def obo_lexical_review(
     )
 
     click.echo(f"Loading lexical index from {index_url} using SSSLM")
-    grounder = ssslm.make_grounder(index_url)
+    path = module.ensure(url=index_url, force=index_force)
+    grounder = ssslm.make_grounder(path)
     click.echo("Done loading lexical index")
 
     passed, failed = _get_calls(
