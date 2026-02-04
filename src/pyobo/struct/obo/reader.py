@@ -1375,12 +1375,16 @@ def iterate_node_reference_tag(
             upgrade=upgrade,
             counter=counter,
         )
-        if reference is None:
+        if reference is not None:
+            yield reference
+        elif tag == "subset":
+            # this is to avoid the millions of 2:STAR and 3:STAR errors when parsing ChEBI that makes
+            # it take forever. In general, most of the subset identifiers are totally borked.
+            pass
+        else:
             logger.warning(
                 "[%s] %s - could not parse identifier: %s", ontology_prefix, tag, identifier
             )
-        else:
-            yield reference
 
 
 def _process_intersection_of(
