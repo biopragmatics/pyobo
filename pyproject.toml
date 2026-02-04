@@ -92,6 +92,7 @@ dependencies = [
     "obographs>=0.0.8",
     "sssom_pydantic>=0.2.0",
     "pytz",
+    "robot-obo-tool",
 ]
 
 # see https://peps.python.org/pep-0735/ and https://docs.astral.sh/uv/concepts/dependencies/#dependency-groups
