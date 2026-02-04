@@ -1,8 +1,11 @@
 """CLI for PyOBO lookups."""
 
+from __future__ import annotations
+
 import inspect
 import json
 import sys
+import typing
 from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING
 
@@ -50,12 +53,14 @@ def lookup_annotate(f: Clickable) -> Clickable:
     ]:
         f = decorator(f)
 
-    if param.annotation == Unpack[LookupKwargs]:
+    if param.annotation is None:
+        pass
+    if param.annotation in {"Unpack[LookupKwargs]", Unpack[LookupKwargs]}:
         f = prefix_argument(f)
-    elif param.annotation == Unpack[GetOntologyKwargs]:
+    elif param.annotation in {"Unpack[GetOntologyKwargs]", Unpack[GetOntologyKwargs]}:
         pass
     else:
-        raise ValueError
+        raise ValueError(f"unknown parameter type for {f}: {param.annotation}")
     return f
 
 
@@ -283,7 +288,12 @@ def descendants(curie: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     _list_curies(descendants, **kwargs)
 
 
-def _list_curies(references: Iterable[Reference], **kwargs: Unpack[GetOntologyKwargs]) -> None:
+def _list_curies(
+    references: Iterable[Reference] | None, **kwargs: Unpack[GetOntologyKwargs]
+) -> None:
+    if not references:
+        return
+
     from ..api import get_name
 
     for reference in sorted(references or []):
