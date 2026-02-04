@@ -10,7 +10,7 @@ import click
 
 from .database import main as database_main
 from .lookup import lookup
-from .obo_review import obo_lexical_review
+from .obo_lexical_review import obo_lexical_review
 from ..constants import GLOBAL_SKIP, RAW_DIRECTORY
 from ..plugins import has_nomenclature_plugin
 

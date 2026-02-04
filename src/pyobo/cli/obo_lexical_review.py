@@ -3,6 +3,7 @@
 # dependencies = [
 #     "click>=8.3.1",
 #     "obographs>=0.0.8",
+#     "pyperclip>=1.11.0",
 #     "robot-obo-tool>=0.0.1",
 #     "ssslm[gilda-slim]>=0.1.3",
 #     "tabulate>=0.9.0",
@@ -21,30 +22,46 @@ if TYPE_CHECKING:
     import ssslm
 
 INDEX_URL = "https://github.com/biopragmatics/biolexica/raw/main/lexica/obo/obo.ssslm.tsv.gz"
+UPPER = {"ncit"}
 
 
 @click.command()
 @click.argument("prefix")
 @click.option(
-    "--ontology-path",
-    help="Local path to an OBO Graph JSON file. If not given, will try and look up through the OBO PURL system",
+    "--location",
+    help="Local path or URL to an OBO Graph JSON file or OWL file. If not given, will try and look up through the OBO PURL system",
 )
 @click.option(
     "--uri-prefix",
     help="Local path to an OBO Graph JSON file. If not given, will try and look up through the OBO PURL system",
 )
 @click.option("--index-url", default=INDEX_URL, show_default=True)
+@click.option("--show-passed", is_flag=True)
+@click.option("--skip-upper", is_flag=True, help=f"if true, skip upper level ontologies {UPPER}")
 def obo_lexical_review(
-    prefix: str, ontology_path: str | None, uri_prefix: str | None, index_url: str
+    prefix: str,
+    location: str | None,
+    uri_prefix: str | None,
+    index_url: str,
+    show_passed: bool,
+    skip_upper: bool,
 ) -> None:
     """Make a lexical review of an ontology."""
+    import sys
+    import time
+
+    import pyperclip
     import ssslm
     from tabulate import tabulate
+
+    args = " ".join(sys.argv[1:])
+    output = f"Analysis of {prefix} run on {time.asctime()} with the following command:\n\n```console\n$ uvx pyobo obo-lexical-review {args}\n```\n\n"
+    click.echo(output)
 
     graph_document, uri_prefix = _get_graph_document(
         prefix=prefix,
         uri_prefix=uri_prefix,
-        ontology_path=ontology_path,
+        ontology_path=location,
     )
 
     click.echo(f"Loading lexical index from {index_url} using SSSLM")
@@ -52,12 +69,18 @@ def obo_lexical_review(
     click.echo("Done loading lexical index")
 
     passed, failed = _get_calls(
-        graph_document=graph_document, matcher=grounder, uri_prefix=uri_prefix
+        graph_document=graph_document,
+        matcher=grounder,
+        uri_prefix=uri_prefix,
+        skip_upper=skip_upper,
     )
 
-    if passed:
+    total = len(passed) + len(failed)
+
+    if passed and show_passed:
         passed_table = tabulate(passed, headers=["LUID", "Name"], tablefmt="github")
-        click.echo(f"## Passed Nodes\n\n{passed_table}\n")
+        passed_msg = f"## Passed Nodes ({len(passed):,}/{total:,}; {len(passed) / total:.1%})\n\n{passed_table}\n\n"
+        output += passed_msg
 
     if failed:
         rows = []
@@ -68,19 +91,18 @@ def obo_lexical_review(
         failed_table = tabulate(
             rows, headers=[prefix, "name", "obo-curie", "obo-name", "obo-score"], tablefmt="github"
         )
-        click.echo(f"## Failed Nodes\n\n{failed_table}")
-        # click.echo(f"- `{obo_prefix}:{luid}` {name}")
-        # for match in matches:
-        #     curie = match.curie
-        #     click.echo(
-        #         f"  - [`{curie}`](https://semantic.farm/{curie}) {match.name} ({round(match.score, 3)})"
-        #     )
+        failed_message = f"## Failed Nodes ({len(failed):,}/{total:,}; {len(failed) / total:.1%})\n\n{failed_table}\n\n"
+        output += failed_message
+
+    click.echo(output)
+    click.echo("\ncopied to the clipboard (e.g., for paste into GitHub)")
+    pyperclip.copy(output)
 
 
 def _parts(match: ssslm.Match) -> tuple[str, str, float]:
     return (
         f"[`{match.curie}`](https://semantic.farm/{match.curie})",
-        match.name,
+        match.name or "",
         round(match.score, 3),
     )
 
@@ -128,6 +150,7 @@ def _get_calls(
     graph_document: obographs.GraphDocument,
     matcher: ssslm.Matcher,
     uri_prefix: str,
+    skip_upper: bool = False,
 ) -> tuple[list[tuple[str, str]], list[tuple[str, str, list[ssslm.Match]]]]:
     """Get matches."""
     from tqdm import tqdm
@@ -159,6 +182,11 @@ def _get_calls(
                     for synonym in node.meta.synonyms
                     for match in matcher.get_matches(synonym.val)
                 )
+
+            # there are a lot of NCIT matches, which aren't that informative
+            # since OBO doesn't mind duplicating these terms
+            if skip_upper:
+                matches = [m for m in matches if m.prefix not in UPPER]
 
             if not matches:
                 passed.append((local_unique_identifier, node.lbl))
