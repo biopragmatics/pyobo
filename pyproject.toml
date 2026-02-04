@@ -71,7 +71,6 @@ dependencies = [
     "pystow>=0.7.5",
     "bioversions>=0.8.243",
     "bioregistry>=0.12.30",
-    "bioontologies>=0.7.2",
     "ssslm>=0.0.13",
     "zenodo-client>=0.4.1",
     "class_resolver>=0.6.0",
@@ -92,6 +91,7 @@ dependencies = [
     "obographs>=0.0.8",
     "sssom_pydantic>=0.2.0",
     "pytz",
+    "robot-obo-tool",
 ]
 
 # see https://peps.python.org/pep-0735/ and https://docs.astral.sh/uv/concepts/dependencies/#dependency-groups

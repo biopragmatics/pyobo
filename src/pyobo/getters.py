@@ -17,7 +17,6 @@ from pathlib import Path
 from textwrap import indent
 from typing import Any, TypeVar
 
-import bioontologies.robot
 import bioregistry
 import click
 import pystow.utils
@@ -80,10 +79,10 @@ REQUIRES_NO_ROBOT_CHECK = {
 
 
 def _convert_to_obo(path: Path) -> Path:
-    import bioontologies.robot
+    import robot_obo_tool
 
     _converted_obo_path = path.with_suffix(".obo")
-    bioontologies.robot.convert(path, _converted_obo_path, check=False)
+    robot_obo_tool.convert(path, _converted_obo_path, check=False)
     return _converted_obo_path
 
 
@@ -338,6 +337,8 @@ def iter_helper_helper(
 
     :yields: A prefix and the result of the callable ``f``
     """
+    from robot_obo_tool import ROBOTError
+
     strict = kwargs.get("strict", True)
     prefixes = list(
         _prefixes(
@@ -382,7 +383,7 @@ def iter_helper_helper(
             if "DrugBank" not in str(e):
                 raise
             logger.warning("[drugbank] invalid credentials")
-        except (subprocess.CalledProcessError, bioontologies.robot.ROBOTError):
+        except (subprocess.CalledProcessError, ROBOTError):
             logger.warning("[%s] ROBOT was unable to convert OWL to OBO", prefix)
         except ValueError as e:
             if _is_xml(e):

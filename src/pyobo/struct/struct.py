@@ -1067,12 +1067,12 @@ class Obo:
 
     def write_owl(self, path: str | Path) -> None:
         """Write OWL, by first outputting OFN then converting with ROBOT."""
-        from bioontologies import robot
+        import robot_obo_tool
 
         with tempfile.TemporaryDirectory() as directory:
             ofn_path = Path(directory).joinpath("tmp.ofn")
             self.write_ofn(ofn_path)
-            robot.convert(ofn_path, path)
+            robot_obo_tool.convert(ofn_path, path)
 
     def write_rdf(self, path: str | Path) -> None:
         """Write as Turtle RDF."""
@@ -1312,19 +1312,19 @@ class Obo:
                 tqdm.write(f"[{self._prefix_version}] writing OBO Graph to {self._obograph_path}")
                 self.write_obograph(self._obograph_path)
             else:
-                import bioontologies.robot
+                import robot_obo_tool
 
                 tqdm.write(
                     f"[{self.ontology}] converting OFN to OBO Graph at {self._obograph_path}"
                 )
-                bioontologies.robot.convert(
+                robot_obo_tool.convert(
                     self._ofn_path, self._obograph_path, debug=True, merge=False, reason=False
                 )
         if write_owl and (not self._owl_path.is_file() or force):
             tqdm.write(f"[{self._prefix_version}] writing OWL to {self._owl_path}")
-            import bioontologies.robot
+            import robot_obo_tool
 
-            bioontologies.robot.convert(
+            robot_obo_tool.convert(
                 self._ofn_path, self._owl_path, debug=True, merge=False, reason=False
             )
         if write_ttl and (not self._ttl_path.is_file() or force):

@@ -250,7 +250,7 @@ class Import(Box):
 
 def get_rdf_graph_oracle(boxes: list[Box], *, prefix_map: dict[str, str]) -> Graph:
     """Serialize to turtle via OFN and conversion with ROBOT."""
-    import bioontologies.robot
+    import robot_obo_tool
 
     ontology = Ontology(
         iri=EXAMPLE_ONTOLOGY_IRI,
@@ -265,7 +265,7 @@ def get_rdf_graph_oracle(boxes: list[Box], *, prefix_map: dict[str, str]) -> Gra
         ofn_path.write_text(text)
         ttl_path = stub.with_suffix(".ttl")
         try:
-            bioontologies.robot.convert(ofn_path, ttl_path)
+            robot_obo_tool.convert(ofn_path, ttl_path)
         except subprocess.CalledProcessError:
             raise RuntimeError(f"failed to convert axioms from:\n\n{text}") from None
         graph.parse(ttl_path)
