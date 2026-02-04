@@ -283,7 +283,12 @@ def descendants(curie: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     _list_curies(descendants, **kwargs)
 
 
-def _list_curies(references: Iterable[Reference], **kwargs: Unpack[GetOntologyKwargs]) -> None:
+def _list_curies(
+    references: Iterable[Reference] | None, **kwargs: Unpack[GetOntologyKwargs]
+) -> None:
+    if not references:
+        return
+
     from ..api import get_name
 
     for reference in sorted(references or []):
