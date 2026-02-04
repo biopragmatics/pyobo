@@ -95,7 +95,7 @@ def obo_lexical_review(
         output += failed_message
 
     click.echo(output)
-    click.echo("\ncopied to the clipboard (e.g., for paste into GitHub)")
+    click.echo("Finished! automatically copied to the clipboard, e.g., for pasting into GitHub)")
     pyperclip.copy(output)
 
 
