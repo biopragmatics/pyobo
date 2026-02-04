@@ -35,16 +35,19 @@ INDEX_URL = "https://github.com/biopragmatics/biolexica/raw/main/lexica/obo/obo.
     "--uri-prefix",
     help="Local path to an OBO Graph JSON file. If not given, will try and look up through the OBO PURL system",
 )
-def obo_review(obo_prefix: str, ontology_path: str, uri_prefix: str) -> None:
+@click.option("--index-url", default=INDEX_URL, show_default=True)
+def obo_review(
+    obo_prefix: str, ontology_path: str | None, uri_prefix: str | None, index_url: str
+) -> None:
     """Make a lexical review of an ontology."""
-    graph_document = _get_graph_document(
+    graph_document, uri_prefix = _get_graph_document(
         obo_prefix=obo_prefix,
         uri_prefix=uri_prefix,
         ontology_path=ontology_path,
     )
 
-    click.echo(f"Loading lexical index from {INDEX_URL} using SSSLM")
-    grounder = ssslm.make_grounder(INDEX_URL)
+    click.echo(f"Loading lexical index from {index_url} using SSSLM")
+    grounder = ssslm.make_grounder(index_url)
     click.echo("Done loading lexical index")
 
     passed, failed = _get_calls(
@@ -67,7 +70,7 @@ def obo_review(obo_prefix: str, ontology_path: str, uri_prefix: str) -> None:
 
 def _get_graph_document(
     obo_prefix: str, uri_prefix: str | None = None, ontology_path: str | None = None
-) -> obographs.GraphDocument:
+) -> tuple[obographs.GraphDocument, str]:
     if uri_prefix is None:
         uri_prefix = f"http://purl.obolibrary.org/obo/{obo_prefix}_"
         click.echo(f"Inferred URI prefix from given OBO CURIE prefix: {uri_prefix}")
@@ -76,14 +79,12 @@ def _get_graph_document(
         click.echo(f"No ontology path given, guessing it's available at {ontology_path}")
     if ontology_path.endswith(".json"):
         click.echo(f"reading OBO Graph JSON from {ontology_path}")
-        return obographs.read(ontology_path, squeeze=False, timeout=60)
-
+        graph_documents = obographs.read(ontology_path, squeeze=False, timeout=60)
     with tempfile.TemporaryDirectory() as tmpdir:
         tmppath = Path(tmpdir).joinpath("temp.json")
         click.echo(
             "given ontology path does not end with JSON. implicitly converting to OBO Graph JSON using ROBOT"
         )
-
         robot_obo_tool.convert(
             input_path=ontology_path,
             output_path=tmppath,
@@ -92,7 +93,9 @@ def _get_graph_document(
             reason=False,
         )
         click.echo("reading converted OBO Graph JSON")
-        return obographs.read(tmppath, squeeze=False)
+        graph_documents = obographs.read(tmppath, squeeze=False)
+
+    return graph_documents, uri_prefix
 
 
 def _get_calls(
@@ -105,7 +108,7 @@ def _get_calls(
     failed = []
     for graph in tqdm(graph_document.graphs, unit="graph"):
         for node in tqdm(sorted(graph.nodes, key=lambda n: n.id), unit="node", leave=False):
-            if not node.id or not node.id.startswith(uri_prefix) or not node.lbl:
+            if node.id is None or not node.id.startswith(uri_prefix) or not node.lbl:
                 continue
 
             local_unique_identifier = node.id[len(uri_prefix) :]
