@@ -1,5 +1,7 @@
 """CLI for PyOBO lookups."""
 
+from __future__ import annotations
+
 import inspect
 import json
 import sys
