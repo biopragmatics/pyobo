@@ -24,6 +24,7 @@ import obographs
 import robot_obo_tool
 import ssslm
 from pystow.utils import download, name_from_url
+from tabulate import tabulate
 from tqdm import tqdm
 
 INDEX_URL = "https://github.com/biopragmatics/biolexica/raw/main/lexica/obo/obo.ssslm.tsv.gz"
@@ -87,7 +88,7 @@ def get_obograph_by_prefix(
 )
 def obo_review(obo_prefix: str, obograph_path: str) -> None:
     """Make a lexical review of an ontology."""
-    obo_uri_prefix = f"http://purl.obolibrary.org/obo/{obo_prefix}_"
+    uri_prefix = f"http://purl.obolibrary.org/obo/{obo_prefix}_"
     if obograph_path is None:
         obograph_path = f"https://purl.obolibrary.org/obo/{obo_prefix.lower()}.json"
 
@@ -96,40 +97,51 @@ def obo_review(obo_prefix: str, obograph_path: str) -> None:
     click.echo(f"Loading lexical index from {INDEX_URL} using SSSLM")
     grounder = ssslm.make_grounder(INDEX_URL)
 
-    safe = []
+    passed, failed = do_it(graph_document=graph_document, grounder=grounder, uri_prefix=uri_prefix)
 
-    for graph in graph_document.graphs:
-        for node in sorted(graph.nodes, key=lambda n: n.id):
-            if not node.id.startswith(obo_uri_prefix):
-                continue
+    if passed:
+        click.echo(f"## Passed Nodes\n\n{tabulate(passed, headers=['LUID', 'Name'])}\n")
 
-            # Skip nodes without a label
-            name = node.lbl
-            if not name:
-                continue
-
-            local_unique_identifier = node.id[len(obo_uri_prefix) :]
-
-            matches = []
-            matches.extend(grounder.get_matches(name))
-            matches.extend(
-                match
-                for synonym in node.get("meta", {}).get("synonyms", [])
-                for match in grounder.get_matches(synonym["val"])
-            )
-
-            if not matches:
-                safe.append((local_unique_identifier, name))
-            else:
-                click.echo(f"- f`{obo_prefix}:{local_unique_identifier}` {name}")
+    if failed:
+        click.echo("## Failed Nodes")
+        for luid, name, matches in failed:
+            click.echo(f"- f`{obo_prefix}:{luid}` {name}")
             for match in matches:
                 curie = match.curie
                 click.echo(
-                    f"  - [`{curie}`](https://bioregistry.io/{curie}) {match.name} ({round(match.score, 3)})"
+                    f"  - [`{curie}`](https://semantic.farm/{curie}) {match.name} ({round(match.score, 3)})"
                 )
 
-    for local_unique_identifier, name in safe:
-        click.echo(f"- `{obo_prefix}:{local_unique_identifier}` {name}")
+
+def do_it(
+    graph_document: obographs.GraphDocument,
+    grounder: ssslm.Matcher,
+    uri_prefix: str,
+) -> tuple[list[tuple[str, str]], list[tuple[str, str, list[ssslm.Match]]]]:
+    """Get matches."""
+    passed = []
+    failed = []
+    for graph in tqdm(graph_document.graphs, unit="graph"):
+        for node in tqdm(sorted(graph.nodes, key=lambda n: n.id), unit="node", leave=False):
+            if not node.id.startswith(uri_prefix) or not node.lbl:
+                continue
+
+            local_unique_identifier = node.id[len(uri_prefix) :]
+
+            matches = []
+            matches.extend(grounder.get_matches(node.lbl))
+            if node.meta is not None and node.meta.synonyms is not None:
+                matches.extend(
+                    match
+                    for synonym in node.meta.synonyms
+                    for match in grounder.get_matches(synonym.val)
+                )
+
+            if not matches:
+                passed.append((local_unique_identifier, node.lbl))
+            else:
+                failed.append((local_unique_identifier, node.lbl, matches))
+    return passed, failed
 
 
 if __name__ == "__main__":
