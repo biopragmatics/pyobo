@@ -13,6 +13,8 @@
 
 """Implement lexical review for an ontology."""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import click
