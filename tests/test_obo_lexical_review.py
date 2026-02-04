@@ -2,7 +2,7 @@
 
 import unittest
 
-from pyobo.cli.obo_review import do_it
+from pyobo.cli.obo_review import _get_calls
 
 
 class TestOboLexicalReview(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestOboLexicalReview(unittest.TestCase):
         matcher = ...
         graph_document = ...
         uri_prefix = ...
-        passes, fails = do_it(
+        passes, fails = _get_calls(
             matcher=matcher,
             graph_document=graph_document,
             uri_prefix=uri_prefix,

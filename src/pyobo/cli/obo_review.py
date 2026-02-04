@@ -4,7 +4,7 @@
 #     "click>=8.3.1",
 #     "obographs>=0.0.8",
 #     "robot-obo-tool>=0.0.1",
-#     "ssslm>=0.1.3",
+#     "ssslm[gilda-slim]>=0.1.3",
 #     "tabulate>=0.9.0",
 #     "tqdm>=4.67.3",
 # ]
@@ -45,8 +45,11 @@ def obo_review(obo_prefix: str, ontology_path: str, uri_prefix: str) -> None:
 
     click.echo(f"Loading lexical index from {INDEX_URL} using SSSLM")
     grounder = ssslm.make_grounder(INDEX_URL)
+    click.echo("Done loading lexical index")
 
-    passed, failed = do_it(graph_document=graph_document, matcher=grounder, uri_prefix=uri_prefix)
+    passed, failed = _get_calls(
+        graph_document=graph_document, matcher=grounder, uri_prefix=uri_prefix
+    )
 
     if passed:
         click.echo(f"## Passed Nodes\n\n{tabulate(passed, headers=['LUID', 'Name'])}\n")
@@ -92,7 +95,7 @@ def _get_graph_document(
         return obographs.read(tmppath, squeeze=False)
 
 
-def do_it(
+def _get_calls(
     graph_document: obographs.GraphDocument,
     matcher: ssslm.Matcher,
     uri_prefix: str,
@@ -102,7 +105,7 @@ def do_it(
     failed = []
     for graph in tqdm(graph_document.graphs, unit="graph"):
         for node in tqdm(sorted(graph.nodes, key=lambda n: n.id), unit="node", leave=False):
-            if not node.id.startswith(uri_prefix) or not node.lbl:
+            if not node.id or not node.id.startswith(uri_prefix) or not node.lbl:
                 continue
 
             local_unique_identifier = node.id[len(uri_prefix) :]
