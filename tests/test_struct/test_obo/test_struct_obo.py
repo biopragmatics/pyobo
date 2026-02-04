@@ -6,7 +6,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from textwrap import dedent
 
-import bioontologies.robot
+import robot_obo_tool
 
 from pyobo import default_reference
 from pyobo.struct.reference import OBOLiteral
@@ -33,7 +33,7 @@ class TestOBOHeader(unittest.TestCase):
             if oracle:
                 tmp_path = Path(directory).joinpath("tmp.obo")
                 ontology.write_obo(tmp_path)
-                bioontologies.robot.convert(tmp_path, in_path, check=True, debug=True)
+                robot_obo_tool.convert(tmp_path, in_path, check=True, debug=True)
             else:
                 ontology.write_ofn(in_path)
             self.assert_lines(text, in_path.read_text().splitlines())
@@ -50,7 +50,7 @@ class TestOBOHeader(unittest.TestCase):
             else:
                 raise ValueError
             out_path = Path(directory).joinpath("tmp.owl")
-            bioontologies.robot.convert(in_path, out_path, check=True, debug=True)
+            robot_obo_tool.convert(in_path, out_path, check=True, debug=True)
             lines = out_path.read_text().splitlines()
             lines = [
                 "" if not line.strip() else line.rstrip()
