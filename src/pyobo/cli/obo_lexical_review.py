@@ -12,21 +12,19 @@
 
 """Implement lexical review for an ontology."""
 
-import tempfile
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
-import obographs
-import robot_obo_tool
-import ssslm
-from tabulate import tabulate
-from tqdm import tqdm
+
+if TYPE_CHECKING:
+    import obographs
+    import ssslm
 
 INDEX_URL = "https://github.com/biopragmatics/biolexica/raw/main/lexica/obo/obo.ssslm.tsv.gz"
 
 
 @click.command()
-@click.argument("obo_prefix")
+@click.argument("prefix")
 @click.option(
     "--ontology-path",
     help="Local path to an OBO Graph JSON file. If not given, will try and look up through the OBO PURL system",
@@ -36,12 +34,15 @@ INDEX_URL = "https://github.com/biopragmatics/biolexica/raw/main/lexica/obo/obo.
     help="Local path to an OBO Graph JSON file. If not given, will try and look up through the OBO PURL system",
 )
 @click.option("--index-url", default=INDEX_URL, show_default=True)
-def obo_review(
-    obo_prefix: str, ontology_path: str | None, uri_prefix: str | None, index_url: str
+def obo_lexical_review(
+    prefix: str, ontology_path: str | None, uri_prefix: str | None, index_url: str
 ) -> None:
     """Make a lexical review of an ontology."""
+    import ssslm
+    from tabulate import tabulate
+
     graph_document, uri_prefix = _get_graph_document(
-        obo_prefix=obo_prefix,
+        prefix=prefix,
         uri_prefix=uri_prefix,
         ontology_path=ontology_path,
     )
@@ -55,65 +56,102 @@ def obo_review(
     )
 
     if passed:
-        click.echo(f"## Passed Nodes\n\n{tabulate(passed, headers=['LUID', 'Name'])}\n")
+        passed_table = tabulate(passed, headers=["LUID", "Name"], tablefmt="github")
+        click.echo(f"## Passed Nodes\n\n{passed_table}\n")
 
     if failed:
-        click.echo("## Failed Nodes")
+        rows = []
         for luid, name, matches in failed:
-            click.echo(f"- f`{obo_prefix}:{luid}` {name}")
-            for match in matches:
-                curie = match.curie
-                click.echo(
-                    f"  - [`{curie}`](https://semantic.farm/{curie}) {match.name} ({round(match.score, 3)})"
-                )
+            rows.append((luid, name, *_parts(matches[0])))
+            for match in matches[1:]:
+                rows.append(("", "", *_parts(match)))
+        failed_table = tabulate(
+            rows, headers=[prefix, "name", "obo-curie", "obo-name", "obo-score"], tablefmt="github"
+        )
+        click.echo(f"## Failed Nodes\n\n{failed_table}")
+        # click.echo(f"- `{obo_prefix}:{luid}` {name}")
+        # for match in matches:
+        #     curie = match.curie
+        #     click.echo(
+        #         f"  - [`{curie}`](https://semantic.farm/{curie}) {match.name} ({round(match.score, 3)})"
+        #     )
+
+
+def _parts(match: ssslm.Match) -> tuple[str, str, float]:
+    return (
+        f"[`{match.curie}`](https://semantic.farm/{match.curie})",
+        match.name,
+        round(match.score, 3),
+    )
 
 
 def _get_graph_document(
-    obo_prefix: str, uri_prefix: str | None = None, ontology_path: str | None = None
+    prefix: str, uri_prefix: str | None = None, ontology_path: str | None = None
 ) -> tuple[obographs.GraphDocument, str]:
+    from pathlib import Path
+
+    import obographs
+    import robot_obo_tool
+
     if uri_prefix is None:
-        uri_prefix = f"http://purl.obolibrary.org/obo/{obo_prefix}_"
+        uri_prefix = f"http://purl.obolibrary.org/obo/{prefix}_"
         click.echo(f"Inferred URI prefix from given OBO CURIE prefix: {uri_prefix}")
     if ontology_path is None:
-        ontology_path = f"https://purl.obolibrary.org/obo/{obo_prefix.lower()}.json"
+        ontology_path = f"https://purl.obolibrary.org/obo/{prefix.lower()}.json"
         click.echo(f"No ontology path given, guessing it's available at {ontology_path}")
     if ontology_path.endswith(".json"):
         click.echo(f"reading OBO Graph JSON from {ontology_path}")
         graph_documents = obographs.read(ontology_path, squeeze=False, timeout=60)
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmppath = Path(tmpdir).joinpath("temp.json")
-        click.echo(
-            "given ontology path does not end with JSON. implicitly converting to OBO Graph JSON using ROBOT"
-        )
-        robot_obo_tool.convert(
-            input_path=ontology_path,
-            output_path=tmppath,
-            check=False,
-            merge=False,
-            reason=False,
-        )
-        click.echo("reading converted OBO Graph JSON")
-        graph_documents = obographs.read(tmppath, squeeze=False)
+    else:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmppath = Path(tmpdir).joinpath("temp.json")
+            click.echo(
+                "given ontology path does not end with JSON. implicitly converting to OBO Graph JSON using ROBOT"
+            )
+            robot_obo_tool.convert(
+                input_path=ontology_path,
+                output_path=tmppath,
+                check=False,
+                merge=False,
+                reason=False,
+            )
+            click.echo("reading converted OBO Graph JSON")
+            graph_documents = obographs.read(tmppath, squeeze=False)
 
     return graph_documents, uri_prefix
 
 
 def _get_calls(
+    *,
     graph_document: obographs.GraphDocument,
     matcher: ssslm.Matcher,
     uri_prefix: str,
 ) -> tuple[list[tuple[str, str]], list[tuple[str, str, list[ssslm.Match]]]]:
     """Get matches."""
+    from tqdm import tqdm
+
     passed = []
     failed = []
+    total = 0
+    skipped = 0
     for graph in tqdm(graph_document.graphs, unit="graph"):
         for node in tqdm(sorted(graph.nodes, key=lambda n: n.id), unit="node", leave=False):
-            if node.id is None or not node.id.startswith(uri_prefix) or not node.lbl:
+            if node.id is None:
+                continue
+
+            total += 1
+            if not node.id.startswith(uri_prefix):
+                skipped += 1
+                continue
+
+            if not node.lbl:
                 continue
 
             local_unique_identifier = node.id[len(uri_prefix) :]
 
-            matches = []
+            matches: list[ssslm.Match] = []
             matches.extend(matcher.get_matches(node.lbl))
             if node.meta is not None and node.meta.synonyms is not None:
                 matches.extend(
@@ -126,8 +164,9 @@ def _get_calls(
                 passed.append((local_unique_identifier, node.lbl))
             else:
                 failed.append((local_unique_identifier, node.lbl, matches))
+
     return passed, failed
 
 
 if __name__ == "__main__":
-    obo_review()
+    obo_lexical_review()
