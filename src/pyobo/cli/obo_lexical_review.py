@@ -58,7 +58,6 @@ def obo_lexical_review(
 
     args = " ".join(sys.argv[1:])
     output = f"Analysis of {prefix} run on {time.asctime()} with the following command:\n\n```console\n$ uvx pyobo obo-lexical-review {args}\n```\n\n"
-    click.echo(output)
 
     graph_document, uri_prefix = _get_graph_document(
         prefix=prefix,
