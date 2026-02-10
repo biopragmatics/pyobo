@@ -32,7 +32,7 @@ __all__ = [
 
 
 @click.group()
-def lookup():
+def lookup() -> None:
     """Lookup resources."""
 
 
