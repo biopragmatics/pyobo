@@ -2410,6 +2410,8 @@ def build_ontology(
     repository: str | None = None,
     ontology_iri: str | None = None,
     ontology_version_iri: str | None = None,
+    auto_generated_by: str | None = None,
+    date: datetime.datetime | None = None,
 ) -> Obo:
     """Build an ontology from parts."""
     if name is None:
@@ -2459,10 +2461,10 @@ def build_ontology(
     return make_ad_hoc_ontology(
         _ontology=prefix,
         _name=name,
-        # _auto_generated_by
+        _auto_generated_by=auto_generated_by,
         _typedefs=typedefs,
         _synonym_typedefs=synonym_typedefs,
-        # _date: datetime.datetime | None = None,
+        _date=date,
         _data_version=version,
         _idspaces=idspaces,
         _root_terms=root_terms,

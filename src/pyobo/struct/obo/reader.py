@@ -37,8 +37,8 @@ from ..struct import (
     SynonymTypeDef,
     Term,
     TypeDef,
+    build_ontology,
     default_reference,
-    make_ad_hoc_ontology,
 )
 from ..struct_utils import Annotation, Stanza
 from ..typedef import comment as has_comment
@@ -243,20 +243,22 @@ def from_obonet(
         use_tqdm=use_tqdm,
     )
 
-    return make_ad_hoc_ontology(
-        _ontology=ontology_prefix,
-        _name=name,
-        _auto_generated_by=graph.graph.get("auto-generated-by"),
-        _typedefs=list(typedefs.values()),
-        _synonym_typedefs=list(synonym_typedefs.values()),
-        _date=date,
-        _data_version=data_version,
-        _root_terms=root_terms,
+    return build_ontology(
+        prefix=ontology_prefix,
+        name=name,
+        auto_generated_by=graph.graph.get("auto-generated-by"),
+        typedefs=list(typedefs.values()),
+        synonym_typedefs=list(synonym_typedefs.values()),
+        date=date,
+        version=data_version,
+        idspaces=idspaces,
+        root_terms=root_terms,
+        subsetdefs=subset_typedefs,
+        properties=property_values,
+        imports=imports,
+        # ontology_iri
+        # ontology_version_iri
         terms=terms,
-        _property_values=property_values,
-        _subsetdefs=subset_typedefs,
-        _imports=imports,
-        _idspaces=idspaces,
     )
 
 
