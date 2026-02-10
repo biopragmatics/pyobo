@@ -4,14 +4,13 @@ import unittest
 from textwrap import dedent
 
 from curies import vocabulary as v
-from pyobo import build_ontology
 
+from pyobo import build_ontology
 from pyobo.struct import (
     Reference,
     SynonymTypeDef,
     Term,
     default_reference,
-    make_ad_hoc_ontology,
 )
 from pyobo.struct.functional.obo_to_functional import get_ofn_from_obo
 
