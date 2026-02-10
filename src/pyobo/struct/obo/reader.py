@@ -18,7 +18,7 @@ from curies import ReferenceTuple
 from curies.preprocessing import BlocklistError
 from curies.vocabulary import SynonymScope
 from more_itertools import pairwise
-from pystow.utils import safe_open
+from pystow.utils import open_zipfile, safe_open
 from tqdm.auto import tqdm
 
 from .reader_utils import (
@@ -78,16 +78,9 @@ def from_obo_path(
     """Get the OBO graph from a path."""
     path = Path(path).expanduser().resolve()
     if path.suffix.endswith(".zip"):
-        import io
-        import zipfile
-
         logger.info("[%s] parsing zipped OBO with obonet from %s", prefix or "<unknown>", path)
-        with zipfile.ZipFile(path) as zf:
-            with zf.open(path.name.removesuffix(".zip"), "r") as file:
-                content = file.read().decode("utf-8")
-                graph = _read_obo(
-                    io.StringIO(content), prefix, ignore_obsolete=ignore_obsolete, use_tqdm=use_tqdm
-                )
+        with open_zipfile(path, path.name.removesuffix(".zip")) as file:
+            graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete, use_tqdm=use_tqdm)
     else:
         logger.info("[%s] parsing OBO with obonet from %s", prefix or "<unknown>", path)
         with safe_open(path, operation="read") as file:

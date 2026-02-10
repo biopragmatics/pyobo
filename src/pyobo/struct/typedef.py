@@ -26,6 +26,7 @@ __all__ = [
     "exact_match",
     "example_of_usage",
     "from_species",
+    "gene_product_enables",
     "gene_product_member_of",
     "has_contributor",
     "has_creator",
@@ -268,6 +269,16 @@ has_output = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002234", name="h
 
 has_successor = TypeDef.from_triple(prefix="BFO", identifier="0000063", name="has successor")
 has_predecessor = TypeDef.from_triple(prefix="BFO", identifier="0000062", name="has predecessor")
+
+gene_product_enables = TypeDef(
+    reference=Reference(prefix="RO", identifier="0018042", name="has gene product that enables"),
+    holds_over_chain=[
+        [
+            has_gene_product.reference,
+            enables.reference,
+        ]
+    ],
+)
 
 # ChEBI
 

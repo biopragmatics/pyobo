@@ -10,6 +10,7 @@ import click
 
 from .database import main as database_main
 from .lookup import lookup
+from .obo_lexical_review import obo_lexical_review
 from ..constants import GLOBAL_SKIP, RAW_DIRECTORY
 from ..plugins import has_nomenclature_plugin
 
@@ -101,6 +102,7 @@ def _no_download() -> set[str]:
 
 main.add_command(lookup)
 main.add_command(database_main)
+main.add_command(obo_lexical_review)
 
 if __name__ == "__main__":
     main()

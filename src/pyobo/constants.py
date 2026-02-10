@@ -6,10 +6,10 @@ import logging
 import re
 from collections.abc import Callable
 from pathlib import Path
-from typing import Literal, NamedTuple, TypeAlias
+from typing import Literal, NamedTuple, NotRequired, TypeAlias
 
 import pystow
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 
 __all__ = [
     "DATABASE_DIRECTORY",
