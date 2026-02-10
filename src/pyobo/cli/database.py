@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.group(name="database")
-def main():
+def main() -> None:
     """Build the PyOBO Database."""
 
 
@@ -126,8 +126,7 @@ def build(ctx: click.Context, eager_versions: bool, **kwargs: Unpack[DatabaseKwa
 @database_annotate
 def cache(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Cache all things."""
-    from .database_utils import iter_helper_helper
-    from ..getters import get_ontology
+    from ..getters import get_ontology, iter_helper_helper
 
     if zenodo:
         click.echo("no zenodo for caching")
@@ -144,9 +143,9 @@ def metadata(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) ->
     """Make the prefix-metadata dump."""
     import bioregistry
 
-    from .database_utils import IterHelperHelperDict, iter_helper_helper
+    from .database_utils import IterHelperHelperDict
     from ..api import get_metadata
-    from ..getters import db_output_helper
+    from ..getters import db_output_helper, iter_helper_helper
 
     def _iter_metadata_internal(
         **kwargs: Unpack[IterHelperHelperDict],
