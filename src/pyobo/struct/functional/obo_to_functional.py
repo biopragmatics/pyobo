@@ -69,7 +69,7 @@ def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
 
     if obo_ontology.subsetdefs:
         yield f.Declaration("oboInOwl:SubsetProperty", type="AnnotationProperty")
-        for subset_typedef, subset_label in obo_ontology.subsetdefs:
+        for subset_typedef, subset_label in obo_ontology.subsetdefs.items():
             yield f.Declaration(subset_typedef, type="AnnotationProperty")
             yield m.LabelMacro(subset_typedef, subset_label)
             yield f.SubAnnotationPropertyOf(subset_typedef, "oboInOwl:SubsetProperty")

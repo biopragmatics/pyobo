@@ -600,7 +600,7 @@ class Obo:
     #: A cache of terms
     _items: list[Term] | None = field(init=False, default=None, repr=False)
 
-    subsetdefs: ClassVar[list[tuple[Reference, str]] | None] = None
+    subsetdefs: ClassVar[dict[Reference, str] | None] = None
 
     property_values: ClassVar[list[Annotation] | None] = None
 
@@ -696,7 +696,7 @@ class Obo:
             prefixes.update(stanza._get_prefixes())
         for synonym_typedef in self.synonym_typedefs or []:
             prefixes.update(synonym_typedef._get_prefixes())
-        prefixes.update(subset.prefix for subset, _ in self.subsetdefs or [])
+        prefixes.update(subset.prefix for subset in self.subsetdefs or [])
         # _iterate_property_pairs covers metadata, root terms,
         # and properties in self.property_values
         prefixes.update(_get_prefixes_from_annotations(self._iterate_property_pairs()))
@@ -711,7 +711,7 @@ class Obo:
         for rr in itt.chain(self, self.typedefs or [], self.synonym_typedefs or []):
             for prefix, references in rr._get_references().items():
                 rv[prefix].update(references)
-        for subset, _ in self.subsetdefs or []:
+        for subset in self.subsetdefs or {}:
             rv[subset.prefix].add(subset)
         # _iterate_property_pairs covers metadata, root terms,
         # and properties in self.property_values
@@ -881,7 +881,7 @@ class Obo:
         for imp in self.imports or []:
             yield f"import: {imp}"
         # 7
-        for subset, subset_remark in self.subsetdefs or []:
+        for subset, subset_remark in (self.subsetdefs or {}).items():
             yield f'subsetdef: {reference_escape(subset, ontology_prefix=self.ontology)} "{subset_remark}"'
         # 8
         for synonym_typedef in sorted(self.synonym_typedefs or []):
@@ -2400,7 +2400,7 @@ def build_ontology(
     version: str | None = None,
     idspaces: dict[str, str] | None = None,
     root_terms: list[Reference] | None = None,
-    subsetdefs: list[tuple[Reference, str]] | None = None,
+    subsetdefs: dict[Reference, str] | None = None,
     properties: list[Annotation] | None = None,
     imports: list[str] | None = None,
     description: str | None = None,
@@ -2410,6 +2410,8 @@ def build_ontology(
     repository: str | None = None,
     ontology_iri: str | None = None,
     ontology_version_iri: str | None = None,
+    auto_generated_by: str | None = None,
+    date: datetime.datetime | None = None,
 ) -> Obo:
     """Build an ontology from parts."""
     if name is None:
@@ -2459,10 +2461,10 @@ def build_ontology(
     return make_ad_hoc_ontology(
         _ontology=prefix,
         _name=name,
-        # _auto_generated_by
+        _auto_generated_by=auto_generated_by,
         _typedefs=typedefs,
         _synonym_typedefs=synonym_typedefs,
-        # _date: datetime.datetime | None = None,
+        _date=date,
         _data_version=version,
         _idspaces=idspaces,
         _root_terms=root_terms,
@@ -2485,7 +2487,7 @@ def make_ad_hoc_ontology(
     _data_version: str | None = None,
     _idspaces: Mapping[str, str] | None = None,
     _root_terms: list[Reference] | None = None,
-    _subsetdefs: list[tuple[Reference, str]] | None = None,
+    _subsetdefs: dict[Reference, str] | None = None,
     _property_values: list[Annotation] | None = None,
     _imports: list[str] | None = None,
     _ontology_iri: str | None = None,

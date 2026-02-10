@@ -96,7 +96,7 @@ class TestOBOHeader(unittest.TestCase):
         """Test ontology definition."""
         ontology = make_ad_hoc_ontology(
             _ontology="xxx",
-            _subsetdefs=[(default_reference("xxx", "HELLO"), "test")],
+            _subsetdefs={default_reference("xxx", "HELLO"): "test"},
         )
         self.assert_obo_lines(
             """\
@@ -109,7 +109,7 @@ class TestOBOHeader(unittest.TestCase):
 
         ontology = make_ad_hoc_ontology(
             _ontology="xxx",
-            _subsetdefs=[(default_reference("go", "HELLO"), "test")],
+            _subsetdefs={default_reference("go", "HELLO"): "test"},
         )
         self.assert_obo_lines(
             """\
