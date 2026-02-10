@@ -27,10 +27,10 @@ classifiers = [
     "Framework :: Sphinx",
     "Natural Language :: English",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3 :: Only",
     "Typing :: Typed",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
@@ -55,7 +55,7 @@ license-files = [
     "LICENSE",
 ]
 
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "obonet>=0.3.0",
     "click",
@@ -68,7 +68,7 @@ dependencies = [
     "humanize",
     "tabulate",
     "cachier",
-    "pystow>=0.7.5",
+    "pystow<=0.7.23",
     "bioversions>=0.8.243",
     "bioregistry>=0.12.30",
     "ssslm>=0.0.13",
@@ -152,32 +152,14 @@ release = [
     "uv",
     "keyring",
 ]
-
-# see https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#dependencies-optional-dependencies
-[project.optional-dependencies]
-gilda = [
-    "ssslm[gilda]",
-]
-gilda-slim = [
-    "ssslm[gilda-slim]",
-]
-sources = [
-    "pyobo[drugcentral,pid]",
-]
-drugcentral =[
-    "psycopg2-binary",
-]
-pid = [
-    "protmapper",
-]
 # note that scispacy currently only works on <= 3.12
 # because of its transitive dependencies. It also has
 # a hard cutoff on scipy because it relied on (private/unstable?)
 # functionality that no longer exists in newer versions
 scispacy = [
-    "scispacy; python_version <= '3.12'",
-    "spacy; python_version <= '3.12'",
-    "scipy<1.11; python_version <= '3.12'",
+    #"scispacy; python_version <= '3.12'",
+    #"spacy; python_version <= '3.12'",
+    #"scipy<1.11; python_version <= '3.12'",
 ]
 pykeen = [
     "pykeen",
@@ -187,6 +169,27 @@ grape = [
     "embiggen",
     "ensmallen",
 ]
+
+# see https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#dependencies-optional-dependencies
+[project.optional-dependencies]
+gilda = [
+    "ssslm[gilda-slim]",
+]
+gilda-slim = [
+    "ssslm[gilda-slim]",
+]
+sources = [
+    # keep as sum of all sources
+    "psycopg2-binary",
+    "protmapper"
+]
+drugcentral =[
+    "psycopg2-binary",
+]
+pid = [
+    "protmapper",
+]
+
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
 # and also https://packaging.python.org/en/latest/specifications/well-known-project-urls/

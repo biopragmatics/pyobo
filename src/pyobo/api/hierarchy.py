@@ -4,11 +4,11 @@ import logging
 import warnings
 from collections.abc import Iterable
 from functools import lru_cache
-from typing import overload
+from typing import NotRequired, overload
 
 import networkx as nx
 from curies import ReferenceTuple
-from typing_extensions import NotRequired, Unpack
+from typing_extensions import Unpack
 
 from .edges import get_edges
 from .names import get_name, get_references

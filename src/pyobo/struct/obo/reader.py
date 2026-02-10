@@ -10,7 +10,7 @@ from datetime import datetime
 from io import StringIO
 from pathlib import Path
 from textwrap import dedent
-from typing import Any
+from typing import Any, TypeAlias
 
 import bioregistry
 import networkx as nx
@@ -18,7 +18,7 @@ from curies import ReferenceTuple
 from curies.preprocessing import BlocklistError
 from curies.vocabulary import SynonymScope
 from more_itertools import pairwise
-from pystow.utils import safe_open
+from pystow.utils import open_zipfile, safe_open
 from tqdm.auto import tqdm
 
 from .reader_utils import (
@@ -37,8 +37,8 @@ from ..struct import (
     SynonymTypeDef,
     Term,
     TypeDef,
+    build_ontology,
     default_reference,
-    make_ad_hoc_ontology,
 )
 from ..struct_utils import Annotation, Stanza
 from ..typedef import comment as has_comment
@@ -78,16 +78,9 @@ def from_obo_path(
     """Get the OBO graph from a path."""
     path = Path(path).expanduser().resolve()
     if path.suffix.endswith(".zip"):
-        import io
-        import zipfile
-
         logger.info("[%s] parsing zipped OBO with obonet from %s", prefix or "<unknown>", path)
-        with zipfile.ZipFile(path) as zf:
-            with zf.open(path.name.removesuffix(".zip"), "r") as file:
-                content = file.read().decode("utf-8")
-                graph = _read_obo(
-                    io.StringIO(content), prefix, ignore_obsolete=ignore_obsolete, use_tqdm=use_tqdm
-                )
+        with open_zipfile(path, path.name.removesuffix(".zip")) as file:
+            graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete, use_tqdm=use_tqdm)
     else:
         logger.info("[%s] parsing OBO with obonet from %s", prefix or "<unknown>", path)
         with safe_open(path, operation="read") as file:
@@ -181,7 +174,7 @@ def from_obonet(
 
     missing_typedefs: set[ReferenceTuple] = set()
 
-    subset_typedefs = _get_subsetdefs(graph.graph, ontology_prefix=ontology_prefix)
+    subset_typedefs = _get_subsetdefs(graph.graph, ontology_prefix=ontology_prefix, strict=strict)
 
     root_terms: list[Reference] = []
     property_values: list[Annotation] = []
@@ -250,20 +243,22 @@ def from_obonet(
         use_tqdm=use_tqdm,
     )
 
-    return make_ad_hoc_ontology(
-        _ontology=ontology_prefix,
-        _name=name,
-        _auto_generated_by=graph.graph.get("auto-generated-by"),
-        _typedefs=list(typedefs.values()),
-        _synonym_typedefs=list(synonym_typedefs.values()),
-        _date=date,
-        _data_version=data_version,
-        _root_terms=root_terms,
+    return build_ontology(
+        prefix=ontology_prefix,
+        name=name,
+        auto_generated_by=graph.graph.get("auto-generated-by"),
+        typedefs=list(typedefs.values()),
+        synonym_typedefs=list(synonym_typedefs.values()),
+        date=date,
+        version=data_version,
+        idspaces=idspaces,
+        root_terms=root_terms,
+        subsetdefs=subset_typedefs,
+        properties=property_values,
+        imports=imports,
+        # ontology_iri
+        # ontology_version_iri
         terms=terms,
-        _property_values=property_values,
-        _subsetdefs=subset_typedefs,
-        _imports=imports,
-        _idspaces=idspaces,
     )
 
 
@@ -275,7 +270,7 @@ def _get_terms(
     upgrade: bool,
     typedefs: Mapping[ReferenceTuple, TypeDef],
     synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
-    subset_typedefs,
+    subset_typedefs: SubsetTypeDefs,
     missing_typedefs: set[ReferenceTuple],
     macro_config: MacroConfig,
     use_tqdm: bool = False,
@@ -339,7 +334,13 @@ def _get_terms(
             missing_typedefs=missing_typedefs,
         )
         _process_replaced_by(term, data, ontology_prefix=ontology_prefix, strict=strict)
-        _process_subsets(term, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_subsets(
+            term,
+            data,
+            ontology_prefix=ontology_prefix,
+            strict=strict,
+            subset_typedefs=subset_typedefs,
+        )
         _process_intersection_of(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_union_of(term, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_equivalent_to(term, data, ontology_prefix=ontology_prefix, strict=strict)
@@ -386,13 +387,19 @@ def _process_creation_date(term: Stanza, data) -> None:
 
 def _process_union_of(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
     for reference in iterate_node_reference_tag(
-        "union_of", data=data, ontology_prefix=ontology_prefix, strict=strict, node=term.reference
+        term,
+        "union_of",
+        data=data,
+        ontology_prefix=ontology_prefix,
+        strict=strict,
+        node=term.reference,
     ):
         term.append_union_of(reference)
 
 
 def _process_equivalent_to(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
     for reference in iterate_node_reference_tag(
+        term,
         "equivalent_to",
         data=data,
         ontology_prefix=ontology_prefix,
@@ -404,6 +411,7 @@ def _process_equivalent_to(term: Stanza, data, *, ontology_prefix: str, strict: 
 
 def _process_disjoint_from(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
     for reference in iterate_node_reference_tag(
+        term,
         "disjoint_from",
         data=data,
         ontology_prefix=ontology_prefix,
@@ -415,7 +423,7 @@ def _process_disjoint_from(term: Stanza, data, *, ontology_prefix: str, strict: 
 
 def _process_alts(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
     for alt_reference in iterate_node_reference_tag(
-        "alt_id", data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix
+        term, "alt_id", data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix
     ):
         term.append_alt(alt_reference)
 
@@ -423,7 +431,7 @@ def _process_alts(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> 
 def _process_parents(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
     for tag in ["is_a", "instance_of"]:
         for parent in iterate_node_reference_tag(
-            tag, data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix
+            term, tag, data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix
         ):
             term.append_parent(parent)
 
@@ -519,13 +527,24 @@ def _process_relations(
 
 def _process_replaced_by(stanza: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
     for reference in iterate_node_reference_tag(
-        "replaced_by", data, node=stanza.reference, strict=strict, ontology_prefix=ontology_prefix
+        stanza,
+        "replaced_by",
+        data,
+        node=stanza.reference,
+        strict=strict,
+        ontology_prefix=ontology_prefix,
     ):
         stanza.append_replaced_by(reference)
 
 
-def _process_subsets(stanza: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+UNDEFINED_SUBSETS = set()
+
+
+def _process_subsets(
+    stanza: Stanza, data, *, ontology_prefix: str, strict: bool, subset_typedefs: SubsetTypeDefs
+) -> None:
     for reference in iterate_node_reference_tag(
+        stanza,
         "subset",
         data,
         node=stanza.reference,
@@ -533,6 +552,10 @@ def _process_subsets(stanza: Stanza, data, *, ontology_prefix: str, strict: bool
         ontology_prefix=ontology_prefix,
         counter=SUBSET_ERROR_COUNTER,
     ):
+        if reference not in subset_typedefs:
+            if reference not in UNDEFINED_SUBSETS:
+                logger.warning("[%s] undefined subset: %s", stanza.curie, reference)
+                UNDEFINED_SUBSETS.add(reference)
         stanza.append_subset(reference)
 
 
@@ -676,8 +699,13 @@ def _handle_xref(
 SUBSET_ERROR_COUNTER: Counter[tuple[str, str]] = Counter()
 
 
-def _get_subsetdefs(graph: nx.MultiDiGraph, ontology_prefix: str) -> list[tuple[Reference, str]]:
-    rv = []
+SubsetTypeDefs: TypeAlias = dict[Reference, str]
+
+
+def _get_subsetdefs(
+    graph: nx.MultiDiGraph, ontology_prefix: str, *, strict: bool = False
+) -> SubsetTypeDefs:
+    rv = {}
     for subsetdef in graph.get("subsetdef", []):
         left, _, right = subsetdef.partition(" ")
         if not right:
@@ -689,11 +717,12 @@ def _get_subsetdefs(graph: nx.MultiDiGraph, ontology_prefix: str) -> list[tuple[
             name=right,
             line=subsetdef,
             counter=SUBSET_ERROR_COUNTER,
+            strict=strict,
         )
         if left_ref is None:
             continue
         right = right.strip('"')
-        rv.append((left_ref, right))
+        rv[left_ref] = right
     return rv
 
 
@@ -819,6 +848,7 @@ def iterate_typedefs(
     # can't really have a pre-defined set of synonym typedefs here!
     synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] = {}
     typedefs: Mapping[ReferenceTuple, TypeDef] = {}
+    subset_typedefs: SubsetTypeDefs = {}  # FIXME
     missing_typedefs: set[ReferenceTuple] = set()
     for data in graph.graph.get("typedefs", []):
         if "id" in data:
@@ -896,7 +926,13 @@ def iterate_typedefs(
             missing_typedefs=missing_typedefs,
         )
         _process_replaced_by(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
-        _process_subsets(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
+        _process_subsets(
+            typedef,
+            data,
+            ontology_prefix=ontology_prefix,
+            strict=strict,
+            subset_typedefs=subset_typedefs,
+        )
         _process_intersection_of(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_union_of(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         _process_equivalent_to(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
@@ -911,6 +947,7 @@ def iterate_typedefs(
         _process_holds_over_chain(typedef, data, ontology_prefix=ontology_prefix, strict=strict)
         typedef.disjoint_over.extend(
             iterate_node_reference_tag(
+                typedef,
                 "disjoint_over",
                 data,
                 node=typedef.reference,
@@ -920,6 +957,7 @@ def iterate_typedefs(
         )
         typedef.transitive_over.extend(
             iterate_node_reference_tag(
+                typedef,
                 "transitive_over",
                 data,
                 node=typedef.reference,
@@ -933,6 +971,7 @@ def iterate_typedefs(
 
 def _process_consider(stanza: Stanza, data, *, ontology_prefix: str, strict: bool = False):
     for reference in iterate_node_reference_tag(
+        stanza,
         "consider",
         data,
         node=stanza.reference,
@@ -1356,6 +1395,7 @@ def _parse_default_prop(property_id, ontology_prefix) -> Reference | None:
 
 
 def iterate_node_reference_tag(
+    stanza: Stanza,
     tag: str,
     data: Mapping[str, Any],
     *,
@@ -1366,21 +1406,35 @@ def iterate_node_reference_tag(
     counter: Counter[tuple[str, str]] | None = None,
 ) -> Iterable[Reference]:
     """Extract a list of CURIEs from the data."""
-    for identifier in data.get(tag, []):
+    for str_or_curie_or_uri in data.get(tag, []):
         reference = _obo_parse_identifier(
-            identifier,
+            str_or_curie_or_uri,
             strict=strict,
             node=node,
             ontology_prefix=ontology_prefix,
             upgrade=upgrade,
             counter=counter,
         )
-        if reference is None:
-            logger.warning(
-                "[%s] %s - could not parse identifier: %s", ontology_prefix, tag, identifier
-            )
-        else:
+        if reference is not None:
             yield reference
+        elif tag == "subset":
+            # this is to avoid the millions of 2:STAR and 3:STAR errors when parsing ChEBI that makes
+            # it take forever. In general, most of the subset identifiers are totally borked.
+            if str_or_curie_or_uri not in SUBSET_INVALIDS:
+                logger.warning(
+                    "[%s] %s - could not parse subset identifier: %s",
+                    stanza.curie,
+                    tag,
+                    str_or_curie_or_uri,
+                )
+                SUBSET_INVALIDS.add(str_or_curie_or_uri)
+        else:
+            logger.warning(
+                "[%s] %s - could not parse identifier: %s", stanza.curie, tag, str_or_curie_or_uri
+            )
+
+
+SUBSET_INVALIDS: set[str] = set()
 
 
 def _process_intersection_of(

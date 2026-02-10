@@ -73,9 +73,13 @@ class TestReaderOntologyMetadata(unittest.TestCase):
         ontology = from_str("""\
             ontology: chebi
             subsetdef: TEST "comment"
+            subsetdef: TEST2 "comment2"
         """)
         self.assertEqual(
-            [(default_reference("chebi", "TEST"), "comment")],
+            {
+                default_reference("chebi", "TEST"): "comment",
+                default_reference("chebi", "TEST2"): "comment2",
+            },
             ontology.subsetdefs,
         )
 
@@ -85,15 +89,16 @@ class TestReaderOntologyMetadata(unittest.TestCase):
             ontology: chebi
             subsetdef: obo:test "name"
         """)
-        self.assertEqual([(Reference.from_curie("obo:test"), "name")], ontology.subsetdefs)
+        self.assertEqual({Reference.from_curie("obo:test"): "name"}, ontology.subsetdefs)
 
     def test_7_blocked_curie(self) -> None:
         """Test parsing a subset definition that is explicitly blocked."""
-        ontology = from_str("""\
+        source = """\
             ontology: chebi
             subsetdef: 1:STAR "Preliminary entries"
-        """)
-        self.assertEqual([], ontology.subsetdefs)
+        """
+        ontology = from_str(source, strict=False)
+        self.assertEqual({}, ontology.subsetdefs)
 
     def test_7_uri(self) -> None:
         """Test parsing a subset definition that is a URI."""
@@ -101,7 +106,7 @@ class TestReaderOntologyMetadata(unittest.TestCase):
             ontology: chebi
             subsetdef: http://purl.obolibrary.org/obo/chebi#TEST "name"
         """)
-        self.assertEqual([(default_reference("chebi", "TEST"), "name")], ontology.subsetdefs)
+        self.assertEqual({default_reference("chebi", "TEST"): "name"}, ontology.subsetdefs)
 
     def test_8_synonym_typedef(self) -> None:
         """Test the ``synonym_typedef`` tag."""
