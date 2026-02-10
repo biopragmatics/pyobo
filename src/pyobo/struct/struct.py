@@ -16,7 +16,7 @@ from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, S
 from dataclasses import dataclass, field
 from pathlib import Path
 from textwrap import dedent
-from typing import Annotated, Any, ClassVar, TextIO
+from typing import Annotated, Any, ClassVar, Self, TextIO
 
 import bioregistry
 import click
@@ -29,7 +29,6 @@ from curies import vocabulary as _cv
 from more_click import force_option, verbose_option
 from pystow.utils import safe_open
 from tqdm.auto import tqdm
-from typing_extensions import Self
 
 from . import vocabulary as v
 from .reference import (

@@ -9,7 +9,7 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
-from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias, overload
+from typing import TYPE_CHECKING, Literal, NamedTuple, Self, TypeAlias, overload
 
 import curies
 from curies import ReferenceTuple
@@ -17,7 +17,6 @@ from curies import vocabulary as _v
 from curies.vocabulary import SynonymScope
 from pydantic import BaseModel, ConfigDict
 from ssslm import LiteralMapping
-from typing_extensions import Self
 
 from . import vocabulary as v
 from .reference import (
