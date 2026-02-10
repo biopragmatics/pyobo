@@ -144,6 +144,7 @@ def get_ontology(
 
     if version is None:
         version = _get_version_from_artifact(prefix)
+        logger.info(f"[%s] current version is {version}", prefix)
 
     if force_process:
         obonet_json_gz_path = None

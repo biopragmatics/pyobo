@@ -1,5 +1,6 @@
 """Tests for the reader."""
 
+import logging
 import unittest
 
 from pyobo import Obo, Reference, Term
@@ -317,13 +318,16 @@ class TestReaderTerm(unittest.TestCase):
 
     def test_8_subset_blocked(self) -> None:
         """Test parsing subsets that are blocked."""
-        ontology = from_str("""\
-            ontology: chebi
-
-            [Term]
-            id: CHEBI:10
-            subset: 2:STAR
-        """)
+        logger = logging.getLogger('pyobo')
+        with self.assertLogs(logger, level='DEBUG') as cm:
+            ontology = from_str("""\
+                ontology: chebi
+    
+                [Term]
+                id: CHEBI:10
+                subset: 2:STAR
+            """)
+            self.assertEqual([], cm.output)
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(term.subsets))
 
