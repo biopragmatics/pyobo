@@ -194,7 +194,7 @@ def _prioritize_version(
     if date is not None:
         derived_date_version = date.strftime("%Y-%m-%d")
         logger.debug(
-            "[%s] does not report a version. falling back to date: %s",
+            "[%s] does not report a version using the `data-version` tag. falling back to date: %s",
             ontology_prefix,
             derived_date_version,
         )

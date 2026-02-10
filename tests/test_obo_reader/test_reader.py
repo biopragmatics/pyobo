@@ -318,18 +318,36 @@ class TestReaderTerm(unittest.TestCase):
 
     def test_8_subset_blocked(self) -> None:
         """Test parsing subsets that are blocked."""
-        logger = logging.getLogger('pyobo')
-        with self.assertLogs(logger, level='DEBUG') as cm:
-            ontology = from_str("""\
+        logger = logging.getLogger("pyobo")
+        with self.assertLogs(logger, level="DEBUG") as cm:
+            ontology = from_str(
+                """\
                 ontology: chebi
-    
+                data-version: 1
+                date: 20:11:2024 18:44
+
                 [Term]
                 id: CHEBI:10
                 subset: 2:STAR
-            """)
-            self.assertEqual([], cm.output)
-        term = self.get_only_term(ontology)
-        self.assertEqual(0, len(term.subsets))
+
+                [Term]
+                id: CHEBI:20
+                subset: 2:STAR
+            """,
+                strict=True,
+            )
+            self.assertEqual(
+                [
+                    "INFO:pyobo.struct.obo.reader:[chebi] extracting OBO using obonet",
+                    "DEBUG:pyobo.utils.misc:[chebi] using version 1",
+                    "WARNING:pyobo.struct.obo.reader:[chebi:10] subset - could not parse subset identifier: 2:STAR",
+                ],
+                cm.output,
+            )
+        terms = list(ontology.iter_terms())
+        self.assertEqual(2, len(terms))
+        self.assertEqual(0, len(terms[0].subsets))
+        self.assertEqual(0, len(terms[1].subsets))
 
     def test_9_synonym_minimal(self) -> None:
         """Test parsing a synonym just the text."""

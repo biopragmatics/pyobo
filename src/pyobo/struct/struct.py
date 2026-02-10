@@ -600,7 +600,7 @@ class Obo:
     #: A cache of terms
     _items: list[Term] | None = field(init=False, default=None, repr=False)
 
-    subsetdefs: ClassVar[list[tuple[Reference, str]] | None] = None
+    subsetdefs: ClassVar[dict[Reference, str] | None] = None
 
     property_values: ClassVar[list[Annotation] | None] = None
 
@@ -711,7 +711,7 @@ class Obo:
         for rr in itt.chain(self, self.typedefs or [], self.synonym_typedefs or []):
             for prefix, references in rr._get_references().items():
                 rv[prefix].update(references)
-        for subset, _ in self.subsetdefs or []:
+        for subset in self.subsetdefs or {}:
             rv[subset.prefix].add(subset)
         # _iterate_property_pairs covers metadata, root terms,
         # and properties in self.property_values
