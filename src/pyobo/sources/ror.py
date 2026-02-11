@@ -61,7 +61,7 @@ class RORGetter(Obo):
     synonym_typedefs = [acronym]
     root_terms = [CITY_CLASS, ORG_CLASS]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.data_version = ror_downloader.get_version_info(download=False).version
         super().__post_init__()
 

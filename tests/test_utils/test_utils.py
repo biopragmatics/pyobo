@@ -14,7 +14,7 @@ from pyobo.utils.iter import iterate_together
 class TestStringUtils(unittest.TestCase):
     """Test string utilities."""
 
-    def test_strip_prefix(self):
+    def test_strip_prefix(self) -> None:
         """Test stripping prefixes works."""
         self.assertEqual(("go", "1234567"), _parse_str_or_curie_or_uri_helper("GO:1234567").pair)
         self.assertEqual(("go", "1234567"), _parse_str_or_curie_or_uri_helper("go:1234567").pair)
@@ -42,7 +42,7 @@ class TestStringUtils(unittest.TestCase):
             _parse_str_or_curie_or_uri_helper("http://purl.obolibrary.org/obo/CHEBI_1234").pair,
         )
 
-    def test_parse_eccode_transfer(self):
+    def test_parse_eccode_transfer(self) -> None:
         """Test parse_eccode_transfer."""
         self.assertEqual(
             ["1.1.1.198", "1.1.1.227", "1.1.1.228"],
@@ -65,7 +65,7 @@ class TestStringUtils(unittest.TestCase):
 class TestIterate(unittest.TestCase):
     """Test iteration tools."""
 
-    def test_a(self):
+    def test_a(self) -> None:
         """Test iterating two iterables together."""
         a = iter(
             [

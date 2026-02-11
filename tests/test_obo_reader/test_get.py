@@ -30,7 +30,7 @@ class TestParseObonet(unittest.TestCase):
         cls.ontology = "chebi"
         cls.graph = obonet.read_obo(TEST_CHEBI_OBO_PATH)
 
-    def test_get_graph_typedefs(self):
+    def test_get_graph_typedefs(self) -> None:
         """Test getting type definitions from an :mod:`obonet` graph."""
         pairs = {
             typedef.pair
@@ -38,7 +38,7 @@ class TestParseObonet(unittest.TestCase):
         }
         self.assertIn(ReferenceTuple("obo", "chebi#has_major_microspecies_at_pH_7_3"), pairs)
 
-    def test_get_graph_synonym_typedefs(self):
+    def test_get_graph_synonym_typedefs(self) -> None:
         """Test getting synonym type definitions from an :mod:`obonet` graph."""
         synonym_typedefs = sorted(
             iterate_graph_synonym_typedefs(
@@ -68,7 +68,7 @@ class TestParseObonet(unittest.TestCase):
             synonym_typedefs,
         )
 
-    def test_extract_definition(self):
+    def test_extract_definition(self) -> None:
         """Test extracting a definition."""
         expected_text = "Test Text."
 
@@ -91,7 +91,7 @@ class TestParseObonet(unittest.TestCase):
                 self.assertEqual(expected_text, actual_text)
                 self.assertEqual(expected_references, actual_references)
 
-    def test_extract_definition_with_escapes(self):
+    def test_extract_definition_with_escapes(self) -> None:
         """Test extracting a definition with escapes in it."""
         expected_text = """The canonical 3' splice site has the sequence "AG"."""
         s = """"The canonical 3' splice site has the sequence \\"AG\\"." [PMID:1234]"""
@@ -104,7 +104,7 @@ class TestParseObonet(unittest.TestCase):
         self.assertEqual(expected_text, actual_text)
         self.assertEqual([Reference(prefix="pubmed", identifier="1234")], actual_references)
 
-    def test_extract_synonym(self):
+    def test_extract_synonym(self) -> None:
         """Test extracting synonym strings."""
         iupac_name = SynonymTypeDef(
             reference=default_reference(prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME")
@@ -172,7 +172,7 @@ class TestParseObonet(unittest.TestCase):
                 self.assertIsInstance(actual_synonym, Synonym)
                 self.assertEqual(expected_synonym, actual_synonym)
 
-    def test_get_node_synonyms(self):
+    def test_get_node_synonyms(self) -> None:
         """Test getting synonyms from a node in a :mod:`obonet` graph."""
         iupac_name = SynonymTypeDef(
             reference=default_reference(prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME")
@@ -198,7 +198,7 @@ class TestParseObonet(unittest.TestCase):
         self.assertEqual("EXACT", synonym.specificity, msg="specificity parsing failed")
         self.assertEqual(iupac_name.reference, synonym.type)
 
-    def test_get_node_properties(self):
+    def test_get_node_properties(self) -> None:
         """Test getting properties from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:51990"]
         properties = list(
@@ -217,7 +217,7 @@ class TestParseObonet(unittest.TestCase):
         self.assertIsInstance(value, str)
         self.assertEqual("261.28318", value)
 
-    def test_get_node_xrefs(self):
+    def test_get_node_xrefs(self) -> None:
         """Test getting parents from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:51990"]
         xrefs = [
@@ -244,7 +244,7 @@ class TestParseObonet(unittest.TestCase):
             {(xref.prefix, xref.identifier) for xref in xrefs},
         )
 
-    def test_get_node_relations(self):
+    def test_get_node_relations(self) -> None:
         """Test getting relations from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:17051"]
         relations = list(
@@ -275,7 +275,7 @@ class TestGet(unittest.TestCase):
         with chebi_patch, chebi_version_patch:
             self.ontology = get_ontology("chebi", cache=False)
 
-    def test_get_id_alts_mapping(self):
+    def test_get_id_alts_mapping(self) -> None:
         """Make sure the alternative ids are mapped properly.
 
         .. code-block::
@@ -291,7 +291,7 @@ class TestGet(unittest.TestCase):
         self.assertIn("16042", id_alts_mapping, msg="halide anion alt_id fields not parsed")
         self.assertEqual({"5605", "14384"}, set(id_alts_mapping["16042"]))
 
-    def test_typedefs(self):
+    def test_typedefs(self) -> None:
         """Test typedefs."""
         xx = default_reference("chebi", "has_major_microspecies_at_pH_7_3")
         td = self.ontology._index_typedefs()

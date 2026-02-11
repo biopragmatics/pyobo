@@ -47,7 +47,7 @@ class Nope(Obo):
 
     ontology = "nope"
 
-    def iter_terms(self, force: bool = False):
+    def iter_terms(self, force: bool = False) -> Iterable:
         """Do not do anything."""
 
 
@@ -323,7 +323,7 @@ class TestTerm(unittest.TestCase):
             """,
         )
 
-    def test_6_definition(self):
+    def test_6_definition(self) -> None:
         """Test adding a definition."""
         term = Term(LYSINE_DEHYDROGENASE_ACT, definition="Something")
         self.assert_obo_stanza(

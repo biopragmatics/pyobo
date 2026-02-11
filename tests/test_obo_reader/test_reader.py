@@ -34,7 +34,7 @@ ADNAN_MALIK = Reference(prefix="orcid", identifier="0000-0001-8123-5351")
 class TestUtils(unittest.TestCase):
     """Test utilities for the reader."""
 
-    def test_first_nonescaped_quote(self):
+    def test_first_nonescaped_quote(self) -> None:
         """Test finding the first non-escaped double quote."""
         self.assertIsNone(get_first_nonescaped_quote(""))
         self.assertEqual(0, get_first_nonescaped_quote('"'))
@@ -1264,7 +1264,7 @@ class TestReaderTerm(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(list(term.iterate_relations())))
 
-    def test_18_default_relation(self):
+    def test_18_default_relation(self) -> None:
         """Test parsing a default relation."""
         ontology = from_str("""\
             ontology: chebi

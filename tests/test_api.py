@@ -75,7 +75,7 @@ def patch_ontologies(ontology: Obo, targets: list[str]) -> ExitStack:
 class TestAltIds(unittest.TestCase):
     """Tests for alternative identifiers."""
 
-    def test_get_primary_errors(self):
+    def test_get_primary_errors(self) -> None:
         """Test when calling get_primary_identifier incorrectly."""
         with self.assertRaises(ValueError):
             get_primary_identifier("go")
@@ -88,7 +88,7 @@ class TestAltIds(unittest.TestCase):
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_get_primary(self, _, __):
+    def test_get_primary(self, _, __) -> None:
         """Test upgrading an obsolete identifier."""
         primary_id = get_primary_identifier("go", "0001071")
         self.assertIsNotNone(primary_id)
@@ -100,7 +100,7 @@ class TestAltIds(unittest.TestCase):
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_get_primary_by_curie(self, _, __):
+    def test_get_primary_by_curie(self, _, __) -> None:
         """Test upgrading an obsolete CURIE."""
         primary_curie = get_primary_curie("go:0001071")
         self.assertIsNotNone(primary_curie)
@@ -125,7 +125,7 @@ class TestAltIds(unittest.TestCase):
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_already_primary(self, _, __):
+    def test_already_primary(self, _, __) -> None:
         """Test when you give a primary id."""
         primary_id = get_primary_identifier(ReferenceTuple("go", "0003700"))
         self.assertIsNotNone(primary_id)
@@ -144,7 +144,7 @@ class TestAltIds(unittest.TestCase):
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_get_primary_on_reference(self, _, __):
+    def test_get_primary_on_reference(self, _, __) -> None:
         """Test when you give a primary id."""
         self.assertEqual(
             "0003700", get_primary_identifier(Reference(prefix="go", identifier="0001071"))
@@ -152,7 +152,7 @@ class TestAltIds(unittest.TestCase):
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_already_primary_by_curie(self, _, __):
+    def test_already_primary_by_curie(self, _, __) -> None:
         """Test when you give a primary CURIE."""
         primary_curie = get_primary_curie("go:0003700")
         self.assertIsNotNone(primary_curie)
@@ -163,7 +163,7 @@ class TestAltIds(unittest.TestCase):
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_no_alts(self, _, __):
+    def test_no_alts(self, _, __) -> None:
         """Test alternate behavior for nomenclature source with no alts."""
         primary_id = get_primary_identifier(ReferenceTuple("ncbitaxon", "52818"))
         self.assertEqual("52818", primary_id)

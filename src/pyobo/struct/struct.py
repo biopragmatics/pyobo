@@ -615,7 +615,7 @@ class Obo:
     #: with the OWL exports that e.g. end up on EBI OLS
     skip_maintainers: ClassVar[bool] = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Run post-init checks."""
         if self.ontology is None:
             raise ValueError
@@ -642,10 +642,10 @@ class Obo:
         script_url = f"https://github.com/biopragmatics/pyobo/blob/main/src/pyobo/sources/{file_path.relative_to(_SOURCES)}"
 
         if self.auto_generated_by is None:
-            self.auto_generated_by = (
+            self.auto_generated_by = (  # type:ignore
                 f"PyOBO v{get_pyobo_version(with_git_hash=True)} on "
                 f"{datetime.datetime.now().isoformat()} by {script_url}"
-            )  # type:ignore
+            )
 
     def _get_clean_idspaces(self) -> dict[str, str]:
         """Get normalized idspace dictionary."""
@@ -1048,7 +1048,7 @@ class Obo:
             self._write_lines(it, file)
 
     @staticmethod
-    def _write_lines(it, file: TextIO | None):
+    def _write_lines(it, file: TextIO | None) -> None:
         for line in it:
             print(line, file=file)
 
@@ -1590,17 +1590,17 @@ class Obo:
                 yield stanza, property_tuple
 
     @property
-    def properties_header(self):
+    def properties_header(self) -> list[str]:
         """Property dataframe header."""
         return [f"{self.ontology}_id", "property", "value", "datatype", "language"]
 
     @property
-    def object_properties_header(self):
+    def object_properties_header(self) -> list[str]:
         """Property dataframe header."""
         return ["source", "predicate", "target"]
 
     @property
-    def literal_properties_header(self):
+    def literal_properties_header(self) -> list[str]:
         """Property dataframe header."""
         return ["source", "predicate", "target", "datatype", "language"]
 

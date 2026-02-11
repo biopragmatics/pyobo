@@ -33,9 +33,9 @@ def load_so() -> dict[str, str]:
         return dict(csv.reader(file, delimiter="\t"))
 
 
-def download_so():
+def download_so() -> None:
     """Download the latest version of the Relation Ontology."""
-    rows = []
+    rows: list[tuple[int, str]] = []
     res_json = requests.get(SO_JSON_URL).json()
     for node in res_json["graphs"][0]["nodes"]:
         uri = node["id"]
@@ -46,9 +46,10 @@ def download_so():
         if name:
             rows.append((identifier, name))
 
+    rows = sorted(rows, key=lambda x: int(x[0]))
     with open(SO_PATH, "w") as file:
         writer = csv.writer(file, delimiter="\t")
-        writer.writerows(sorted(rows, key=lambda x: int(x[0])))
+        writer.writerows(rows)
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ sleep_time = 3
 class TestCaches(unittest.TestCase):
     """Tests for PyOBO cache decorators."""
 
-    def test_mapping(self):
+    def test_mapping(self) -> None:
         """Test the mapping cache."""
         with TemporaryDirectory() as directory:
             path = os.path.join(directory, "test.tsv")
@@ -44,12 +44,12 @@ class TestCaches(unittest.TestCase):
 
             self._help_test_mapping(rv2)
 
-    def _help_test_mapping(self, d):
+    def _help_test_mapping(self, d) -> None:
         self.assertIsNotNone(d)
         self.assertEqual(3, len(d))
         self.assertEqual({"a": "x", "b": "y", "c": "z"}, d)
 
-    def test_multidict(self):
+    def test_multidict(self) -> None:
         """Test caching a multidict."""
         with TemporaryDirectory() as directory:
             path = os.path.join(directory, "test.tsv")
@@ -79,7 +79,7 @@ class TestCaches(unittest.TestCase):
 
             self._help_test_multidict(rv2)
 
-    def _help_test_multidict(self, d):
+    def _help_test_multidict(self, d) -> None:
         self.assertIsNotNone(d)
         self.assertEqual(3, len(d))
         self.assertEqual({"a": ["a1", "a2"], "b": ["b1"], "c": ["c1", "c2"]}, d)

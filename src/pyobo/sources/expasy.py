@@ -179,7 +179,7 @@ def give_edge(unnormalized_ec_code: str) -> tuple[int, str | None, str]:
     return level, parent_id, ".".join(levels)
 
 
-def get_tree(lines: Iterable[str]):
+def get_tree(lines: Iterable[str]) -> dict:
     """Get the ExPASy tree mapping."""
     rv = {}
     for line in lines:
@@ -297,9 +297,9 @@ def _parse_transfer(value: str) -> list[str]:
     return sorted(x.strip().removeprefix("and").strip() for x in TRANSFER_SPLIT_RE.split(value))
 
 
-def _group_by_id(lines):
+def _group_by_id(lines) -> list:
     """Group lines by identifier."""
-    groups = []
+    groups: list[list[tuple[str, str]]] = []
     for line in lines:  # TODO replace with itertools.groupby
         line = line.strip()
 

@@ -9,7 +9,7 @@ BASE_URL = "https://github.com/cthoyt/mirbase/raw/main/"
 FROZEN_VERSION = "22.1"
 
 
-def _assert_frozen_version(version: str):
+def _assert_frozen_version(version: str) -> None:
     if version != FROZEN_VERSION:
         raise ValueError
 

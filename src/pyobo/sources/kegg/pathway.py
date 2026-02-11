@@ -8,6 +8,7 @@ import urllib.error
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from functools import partial
+from pathlib import Path
 
 from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import thread_map
@@ -151,7 +152,9 @@ def iter_kegg_pathway_paths(
     return thread_map(func, genomes, unit="pathway", unit_scale=True)
 
 
-def _process_genome(kegg_genome: KEGGGenome, version: str, skip_missing: bool):
+def _process_genome(
+    kegg_genome: KEGGGenome, version: str, skip_missing: bool
+) -> tuple[KEGGGenome, Path, Path] | tuple[None, None, None]:
     with logging_redirect_tqdm():
         try:
             list_pathway_path = ensure_list_pathway_genome(kegg_genome.identifier, version=version)
@@ -167,6 +170,7 @@ def _process_genome(kegg_genome: KEGGGenome, version: str, skip_missing: bool):
                 else:
                     msg = f"{msg}; taxonomy:{kegg_genome.taxonomy_id}): {e.geturl()}"
                 tqdm.write(msg)
+            return None, None, None
         except FileNotFoundError:
             return None, None, None
         else:

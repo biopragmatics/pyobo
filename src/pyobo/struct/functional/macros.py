@@ -37,7 +37,7 @@ def _safe_literal(value: str | rdflib.Literal, *, language: str | None = None) -
 class Macro(f.Box):
     """A macro, which wraps a more complicated set of functional OWL axioms."""
 
-    def __init__(self, box: f.Box):
+    def __init__(self, box: f.Box) -> None:
         """Initialize the macro with a given axiom."""
         self.box = box
 
@@ -328,7 +328,9 @@ class XrefMacro(MappingMacro):
 class HoldsOverChain(Macro):
     """A macro for the OBO-style "holds over chain" annotation."""
 
-    def __init__(self, predicate: f.IdentifierBoxOrHint, chain: Sequence[f.IdentifierBoxOrHint]):
+    def __init__(
+        self, predicate: f.IdentifierBoxOrHint, chain: Sequence[f.IdentifierBoxOrHint]
+    ) -> None:
         """Instantiate a "holds over chain" macro."""
         super().__init__(f.SubObjectPropertyOf(f.ObjectPropertyChain(chain), predicate))
 
@@ -347,7 +349,7 @@ class TransitiveOver(HoldsOverChain):
         This is a special case of :class:`HoldsOverChain`
     """
 
-    def __init__(self, predicate: f.IdentifierBoxOrHint, target: f.IdentifierBoxOrHint):
+    def __init__(self, predicate: f.IdentifierBoxOrHint, target: f.IdentifierBoxOrHint) -> None:
         """Instantiate a "transitive over" macro."""
         super().__init__(predicate, [predicate, target])
 
@@ -366,7 +368,7 @@ class DataPropertyMaxCardinality(Macro):
         self,
         cardinality: int,
         data_property_expression: f.DataPropertyExpression | f.IdentifierBoxOrHint,
-    ):
+    ) -> None:
         """Initialize a data property maximum cardinality macro."""
         super().__init__(
             f.SubClassOf(
