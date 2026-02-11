@@ -27,7 +27,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def _s(line: str, sep: str):
+def _s(line: str, sep: str) -> list:
     return [part.strip() for part in line.strip().split(sep, 1)]
 
 

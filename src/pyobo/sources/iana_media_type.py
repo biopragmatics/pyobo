@@ -49,7 +49,7 @@ MIMETYPE_IO_URL = (
 )
 
 
-def _get_mimetypes():
+def _get_mimetypes() -> dict:
     records = requests.get(MIMETYPE_IO_URL, timeout=5).json()
     rv = {}
     for record in records:

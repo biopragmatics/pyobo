@@ -9,10 +9,10 @@ import bioregistry
 from curies import vocabulary as v
 
 from pyobo import Obo, Reference, default_reference
-from pyobo.struct import TypeDef
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import (
     Synonym,
+    TypeDef,
     make_ad_hoc_ontology,
 )
 from pyobo.struct.typedef import (
@@ -72,7 +72,7 @@ class TestTypeDef(unittest.TestCase):
         test_funowl: bool = True,
         funowl_func: str | None = None,
         funowl_curie: str | None = None,
-    ):
+    ) -> tuple[TypeDef, TypeDef]:
         """Assert the boolean tag parses properly."""
         reference = Reference(prefix="GO", identifier="0000001")
         typedef_true = TypeDef(reference=reference, **{name: True})

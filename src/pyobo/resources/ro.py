@@ -30,7 +30,7 @@ def load_ro() -> Mapping[ReferenceTuple, str]:
         }
 
 
-def download():
+def download() -> None:
     """Download the latest version of the Relation Ontology."""
     rows = []
     res_json = requests.get(URL).json()

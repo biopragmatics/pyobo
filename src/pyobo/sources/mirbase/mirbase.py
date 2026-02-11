@@ -57,7 +57,7 @@ def get_terms(version: str, force: bool = False) -> list[Term]:
         return list(_process_definitions_lines(file, version=version, force=force))
 
 
-def _prepare_organisms(version: str, force: bool = False):
+def _prepare_organisms(version: str, force: bool = False) -> dict:
     _assert_frozen_version(version)
     url = f"{BASE_URL}/organisms.txt.gz"
     df = ensure_df(

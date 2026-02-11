@@ -354,7 +354,7 @@ def _get_terms(
     return terms
 
 
-def _process_description(term: Stanza, data, *, ontology_prefix: str, strict: bool):
+def _process_description(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
     definition, definition_references = get_definition(
         data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix
     )
@@ -595,7 +595,7 @@ class MacroConfig:
 
     def __init__(
         self, data: Mapping[str, list[str]] | None = None, *, strict: bool, ontology_prefix: str
-    ):
+    ) -> None:
         """Instantiate the configuration from obonet graph metadata."""
         if data is None:
             data = {}
@@ -969,7 +969,7 @@ def iterate_typedefs(
         yield typedef
 
 
-def _process_consider(stanza: Stanza, data, *, ontology_prefix: str, strict: bool = False):
+def _process_consider(stanza: Stanza, data, *, ontology_prefix: str, strict: bool = False) -> None:
     for reference in iterate_node_reference_tag(
         stanza,
         "consider",

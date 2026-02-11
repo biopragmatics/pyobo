@@ -6,7 +6,7 @@ Run with ``python -m pyobo.sources.drugbank``
 import datetime
 import itertools as itt
 import logging
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Iterator, Mapping
 from functools import lru_cache
 from typing import Any
 from xml.etree import ElementTree
@@ -228,7 +228,7 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
     return row
 
 
-def _get_patents(drug_element):
+def _get_patents(drug_element) -> Iterator:
     for patent_element in drug_element.findall(f"{ns}patents/{ns}patent"):
         rv = {
             "patent_id": patent_element.findtext(f"{ns}number"),
@@ -247,14 +247,14 @@ def _get_patents(drug_element):
 _categories = ["target", "enzyme", "carrier", "transporter"]
 
 
-def _iterate_protein_stuff(drug_xml):
+def _iterate_protein_stuff(drug_xml) -> Iterator:
     for category in _categories:
         proteins = drug_xml.findall(f"{ns}{category}s/{ns}{category}")
         for protein in proteins:
             yield category, protein
 
 
-def _extract_protein_info(category, protein):
+def _extract_protein_info(category, protein) -> dict:
     # FIXME Differentiate between proteins and protein groups/complexes
     polypeptides = protein.findall(f"{ns}polypeptide")
 

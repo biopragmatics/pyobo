@@ -137,7 +137,7 @@ def make_site(
         )
 
 
-def _main():
+def _main() -> None:
     from pyobo.sources import HGNCGetter, UniProtPtmGetter
 
     for cls in [UniProtPtmGetter, HGNCGetter]:
