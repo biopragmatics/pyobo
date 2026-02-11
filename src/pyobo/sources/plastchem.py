@@ -66,8 +66,9 @@ def get_terms() -> Iterable[Term]:
         yield term
 
     echa_counter = Counter()
-    funcs = Counter()
-    examples = Counter()
+    echa_examples = {}
+    function_counter = Counter()
+    function_examples = {}
     chebi_grounder = get_grounder("chebi")
 
     path = ensure_path(PREFIX, url=URL)
@@ -76,6 +77,7 @@ def get_terms() -> Iterable[Term]:
         if pd.isna(row["plastchem_ID"]):
             continue
 
+        name: str | None
         if pd.notna(row["pubchem_name"]):
             name = row["pubchem_name"]
         elif pd.notna(row["iupac_name"]):
@@ -105,15 +107,23 @@ def get_terms() -> Iterable[Term]:
 
         if pd.notna(echa_grouping := row.pop("ECHA_grouping")):
             echa_counter[echa_grouping] += 1
+            if echa_grouping not in echa_examples:
+                if match := chebi_grounder.get_best_match(echa_grouping):
+                    echa_examples[echa_grouping] = match.curie, match.name
+                elif match := chebi_grounder.get_best_match(echa_grouping.rstrip("s")):
+                    echa_examples[echa_grouping] = match.curie, match.name
 
         # NIAS means non-intentionally added substance
         for func in _get_sep(row, "Harmonized_functions"):
             func = func.replace("_", " ").lower()
-            funcs[func] += 1
-
-            if func not in examples and name is not None:
+            function_counter[func] += 1
+            if func not in function_examples and name is not None:
                 if match := chebi_grounder.get_best_match(name):
-                    examples[func] = match.curie, match.name
+                    if match.curie != "chebi:15702":
+                        function_examples[func] = match.curie, match.name
+                elif match := chebi_grounder.get_best_match(name.rstrip("s")):
+                    if match.curie != "chebi:15702":
+                        function_examples[func] = match.curie, match.name
 
         # TODO ECHA_grouping
         # TODO ground to chebi:
@@ -126,19 +136,34 @@ def get_terms() -> Iterable[Term]:
 
         yield term
 
-    tqdm.write(tabulate(echa_counter.most_common(), headers=["ECHA", "count"]))
-    tqdm.write("")
     tqdm.write(
         tabulate(
             [
                 (
-                    name,
-                    r.curie if (r := CHEBI_ROLE_MAP.get(name)) else "",
-                    *examples.get(name, (None, None)),
+                    echa_name,
+                    m.curie if (m := chebi_grounder.get_best_match(echa_name)) else None,
                     count,
                 )
-                for name, count in funcs.most_common()
+                for echa_name, count in echa_counter.most_common()
             ],
+            headers=["ECHA", "chebi", "count"],
+        )
+    )
+    tqdm.write("")
+
+    rows = [
+        (
+            function_name,
+            function_curie.curie if (function_curie := CHEBI_ROLE_MAP.get(function_name)) else "",
+            *function_examples.get(function_name, (None, None)),
+            count,
+        )
+        for function_name, count in function_counter.most_common()
+    ]
+    rows = [r for r in rows if not r[1]]
+    tqdm.write(
+        tabulate(
+            rows,
             headers=["function", "chebi", "example_chebi", "example_chebi_name", "count"],
         )
     )
@@ -150,15 +175,22 @@ CHEBI_ROLE_MAP = {
     "monomer": Reference.from_curie("CHEBI:74236", name="polymerization monomer"),
     "antioxidant": Reference.from_curie("CHEBI:22586", name="antioxidant"),
     "flame retardant": Reference.from_curie("CHEBI:79314"),
-    "blowing agent": None,
-    "filler": None,
-    "adhesive": None,
+    "blowing agent": Reference.from_curie("CHEBI:747328"),
+    "filler": Reference.from_curie("CHEBI:747333"),
+    "stabilizer": Reference.from_curie("CHEBI:747331"),
     "colorant": Reference.from_curie("CHEBI:37958"),  # TODO add synonym
-    "lubricant": None,
+    "lubricant": Reference.from_curie("CHEBI:747329"),
     "biocide": Reference.from_curie("CHEBI:33281"),  # TODO add synonym
     "solvent": Reference.from_curie("CHEBI:46787"),
     "emulsifier": Reference.from_curie("CHEBI:63046"),
     "surfactant": Reference.from_curie("CHEBI:35195"),
+    "anti-fog additive": Reference.from_curie("CHEBI:747327"),
+    "other processing aids": Reference.from_curie(
+        "CHEBI:747334"
+    ),  # this is the super class for processing aid
+    "antistatic agent": Reference.from_curie("CHEBI:747335"),
+    "adhesive": Reference.from_curie("CHEBI:747337"),
+    "intermediate": None,
 }
 
 
