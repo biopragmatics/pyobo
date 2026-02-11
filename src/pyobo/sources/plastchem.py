@@ -190,7 +190,11 @@ CHEBI_ROLE_MAP = {
     ),  # this is the super class for processing aid
     "antistatic agent": Reference.from_curie("CHEBI:747335"),
     "adhesive": Reference.from_curie("CHEBI:747337"),
-    "intermediate": None,
+    "unspecified additive": Reference.from_curie("CHEBI:747326"), # parent class
+    "heat stabilizer": Reference.from_curie("CHEBI:747338"),
+    "light stabilizer": Reference.from_curie("CHEBI:747339"),
+    "viscocity modifier": Reference.from_curie("CHEBI:747340"),
+    "impact modifier": Reference.from_curie("CHEBI:747341"),
 }
 
 
