@@ -9,7 +9,13 @@ from tqdm import tqdm
 
 from pyobo import Obo, get_grounder
 from pyobo.struct import Reference, Term, TypeDef, default_reference
-from pyobo.struct.typedef import exact_match, has_canonical_smiles, has_inchi, has_isomeric_smiles
+from pyobo.struct.typedef import (
+    exact_match,
+    has_canonical_smiles,
+    has_inchi,
+    has_isomeric_smiles,
+    has_role,
+)
 from pyobo.utils.path import ensure_path
 
 __all__ = ["PlastChemGetter"]
@@ -50,6 +56,7 @@ class PlastChemGetter(Obo):
         has_canonical_smiles,
         has_isomeric_smiles,
         exact_match,
+        has_role,
     ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -116,6 +123,9 @@ def get_terms() -> Iterable[Term]:
         # NIAS means non-intentionally added substance
         for func in _get_sep(row, "Harmonized_functions"):
             func = func.replace("_", " ").lower()
+            if role := CHEBI_ROLE_MAP.get(func):
+                term.append_relationship(has_role, role)
+
             function_counter[func] += 1
             if func not in function_examples and name is not None:
                 if match := chebi_grounder.get_best_match(name):
@@ -179,6 +189,7 @@ CHEBI_ROLE_MAP = {
     "filler": Reference.from_curie("CHEBI:747333"),
     "stabilizer": Reference.from_curie("CHEBI:747331"),
     "colorant": Reference.from_curie("CHEBI:37958"),  # TODO add synonym
+    "pigment": Reference.from_curie("CHEBI:37958"),  # TODO add synonym
     "lubricant": Reference.from_curie("CHEBI:747329"),
     "biocide": Reference.from_curie("CHEBI:33281"),  # TODO add synonym
     "solvent": Reference.from_curie("CHEBI:46787"),
@@ -190,11 +201,25 @@ CHEBI_ROLE_MAP = {
     ),  # this is the super class for processing aid
     "antistatic agent": Reference.from_curie("CHEBI:747335"),
     "adhesive": Reference.from_curie("CHEBI:747337"),
-    "unspecified additive": Reference.from_curie("CHEBI:747326"), # parent class
+    "unspecified additive": Reference.from_curie("CHEBI:747326"),  # parent class
     "heat stabilizer": Reference.from_curie("CHEBI:747338"),
     "light stabilizer": Reference.from_curie("CHEBI:747339"),
-    "viscocity modifier": Reference.from_curie("CHEBI:747340"),
+    "viscosity modifier": Reference.from_curie("CHEBI:747340"),
     "impact modifier": Reference.from_curie("CHEBI:747341"),
+    "initiator": Reference.from_curie("CHEBI:747342"),
+    "crosslinking agent": Reference.from_curie("CHEBI:50684"),
+    "odor agent": Reference.from_curie("CHEBI:747343"),
+    "impurity": Reference.from_curie("CHEBI:143130"),
+    "ultraviolet-absorbing agent": Reference.from_curie("CHEBI:73335"),
+    "polymerization aid": Reference.from_curie("CHEBI:747345"),
+    # Non-intentionally added substances (NIAS)
+    "nias": Reference.from_curie("CHEBI:747346"),
+    # the following map up to NIAS
+    "intermediate": Reference.from_curie("CHEBI:747346"),
+    "degradation product": Reference.from_curie("CHEBI:747346"),
+    # TODO not sure how to model this. other starting
+    #  substances are initiator and monomer
+    "unspecified raw material": None,
 }
 
 
