@@ -82,7 +82,7 @@ def get_interpro_go_df(version: str, force: bool = False) -> Mapping[str, set[tu
     return get_go_mapping(path, prefix=PREFIX)
 
 
-def get_interpro_tree(version: str, force: bool = False):
+def get_interpro_tree(version: str, force: bool = False) -> dict:
     """Get InterPro Data source."""
     url = f"https://ftp.ebi.ac.uk/pub/databases/interpro/releases/{version}/ParentChildTreeFile.txt"
     path = ensure_path(PREFIX, url=url, version=version, force=force)
@@ -90,7 +90,7 @@ def get_interpro_tree(version: str, force: bool = False):
         return _parse_tree_helper(f)
 
 
-def _parse_tree_helper(lines: Iterable[str]):
+def _parse_tree_helper(lines: Iterable[str]) -> dict:
     rv1: defaultdict[str, list[str]] = defaultdict(list)
     previous_depth, previous_id = 0, ""
     stack = [previous_id]

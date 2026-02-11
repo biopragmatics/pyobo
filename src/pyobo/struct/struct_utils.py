@@ -88,7 +88,7 @@ class Annotation(NamedTuple):
         return cls(predicate, OBOLiteral.string(value, language=language))
 
     @staticmethod
-    def _sort_key(x: Annotation):
+    def _sort_key(x: Annotation) -> tuple:
         return x.predicate, _reference_or_literal_key(x.value)
 
 
@@ -374,7 +374,7 @@ class Stanza(Referenced, HasReferencesMixin):
             yield f"intersection_of: {end}"
 
     @staticmethod
-    def _intersection_of_key(io: Reference | tuple[Reference, Reference]):
+    def _intersection_of_key(io: Reference | tuple[Reference, Reference]) -> tuple:
         if isinstance(io, Reference):
             return 0, io
         else:

@@ -154,7 +154,7 @@ def ensure_relations(force: bool = False) -> str:
 @click.command()
 @verbose_option
 @click.option("-f", "--force", is_flag=True)
-def main(force: bool):
+def main(force: bool) -> None:
     """Ensure resources are available."""
     for f in [
         ensure_ooh_na_na,

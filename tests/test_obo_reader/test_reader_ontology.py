@@ -410,21 +410,21 @@ class TestReaderOntologyMetadata(unittest.TestCase):
 class TestVersionHandling(unittest.TestCase):
     """Test version handling."""
 
-    def test_no_version_no_data(self):
+    def test_no_version_no_data(self) -> None:
         """Test when nothing is given."""
         ontology = from_str("""\
             ontology: chebi
         """)
         self.assertIsNone(ontology.data_version)
 
-    def test_static_rewrite(self):
+    def test_static_rewrite(self) -> None:
         """Test using custom configuration for version lookup."""
         ontology = from_str("""\
             ontology: orth
         """)
         self.assertEqual("2", ontology.data_version, msg="The static rewrite wasn't applied")
 
-    def test_simple_version(self):
+    def test_simple_version(self) -> None:
         """Test handling a simple version."""
         ontology = from_str("""\
             ontology: chebi
@@ -432,7 +432,7 @@ class TestVersionHandling(unittest.TestCase):
         """)
         self.assertEqual("123", ontology.data_version)
 
-    def test_releases_prefix_simple(self):
+    def test_releases_prefix_simple(self) -> None:
         """Test a parsing a simple version starting with ``releases/``."""
         ontology = from_str("""\
             ontology: chebi
@@ -444,7 +444,7 @@ class TestVersionHandling(unittest.TestCase):
             msg="The prefix ``releases/`` wasn't properly automatically stripped",
         )
 
-    def test_releases_prefix_complex(self):
+    def test_releases_prefix_complex(self) -> None:
         """Test parsing a complex string starting with ``releases/``."""
         ontology = from_str("""\
             ontology: chebi
@@ -456,7 +456,7 @@ class TestVersionHandling(unittest.TestCase):
             msg="The prefix ``releases/`` wasn't properly automatically stripped",
         )
 
-    def test_no_version_with_date(self):
+    def test_no_version_with_date(self) -> None:
         """Test when the date is substituted for a missing version."""
         ontology = from_str("""\
             ontology: chebi
@@ -464,7 +464,7 @@ class TestVersionHandling(unittest.TestCase):
         """)
         self.assertEqual("2024-11-20", ontology.data_version)
 
-    def test_bad_version(self):
+    def test_bad_version(self) -> None:
         """Test that a version with slashes raises an error."""
         with self.assertRaises(ValueError):
             from_str("""\
@@ -472,7 +472,7 @@ class TestVersionHandling(unittest.TestCase):
                 data-version: /////
             """)
 
-    def test_data_prefix_strip(self):
+    def test_data_prefix_strip(self) -> None:
         """Test when a prefix gets stripped from the beginning of a version."""
         ontology = from_str("""\
             ontology: sasap
@@ -482,7 +482,7 @@ class TestVersionHandling(unittest.TestCase):
             "0.3.1", ontology.data_version, msg="The custom defined prefix wasn't stripped"
         )
 
-    def test_version_full_rewrite(self):
+    def test_version_full_rewrite(self) -> None:
         """Test when a version gets fully replaced from a custom configuration."""
         ontology = from_str("""\
             ontology: owl
@@ -492,7 +492,7 @@ class TestVersionHandling(unittest.TestCase):
             "2009-11-15", ontology.data_version, msg="The custom rewrite wasn't invooked"
         )
 
-    def test_version_injected(self):
+    def test_version_injected(self) -> None:
         """Test when a missing version gets overwritten."""
         ontology = from_str(
             """\
@@ -502,7 +502,7 @@ class TestVersionHandling(unittest.TestCase):
         )
         self.assertEqual("123", ontology.data_version)
 
-    def test_version_overwrite_mismatch(self):
+    def test_version_overwrite_mismatch(self) -> None:
         """Test when a version gets overwritten, but it's not matching."""
         ontology = from_str(
             """\

@@ -44,7 +44,7 @@ class _CachedMapping(Cached[X], Generic[X]):
         use_tqdm: bool = False,
         force: bool = False,
         cache: bool = True,
-    ):
+    ) -> None:
         """Initialize the mapping cache."""
         super().__init__(path=path, cache=cache, force=force)
         self.header = header

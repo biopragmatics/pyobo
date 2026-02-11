@@ -539,7 +539,7 @@ class DataComplementOf(DataRange):
 
     data_range: DataRange
 
-    def __init__(self, data_range: DataRange | IdentifierBoxOrHint):
+    def __init__(self, data_range: DataRange | IdentifierBoxOrHint) -> None:
         """Initialize a complement of a data range using another data range."""
         self.data_range = DataRange.safe(data_range)
 
@@ -572,7 +572,7 @@ class DataOneOf(DataRange):
 
     literals: Sequence[LiteralBox]
 
-    def __init__(self, literals: Sequence[LiteralBoxOrHint]):
+    def __init__(self, literals: Sequence[LiteralBoxOrHint]) -> None:
         """Initialize an enumeration of literals."""
         self.literals = [LiteralBox(literal) for literal in literals]
 
@@ -1449,7 +1449,7 @@ class ObjectPropertyChain(Box):
 
     def __init__(
         self, object_property_expressions: Sequence[ObjectPropertyExpression | IdentifierBoxOrHint]
-    ):
+    ) -> None:
         """Instantiate a list of object property expressions."""
         self.object_property_expressions = [
             ObjectPropertyExpression.safe(ope) for ope in object_property_expressions
@@ -1961,7 +1961,7 @@ class FunctionalDataProperty(DataPropertyAxiom):
         data_property_expression: DataPropertyExpression | IdentifierBoxOrHint,
         *,
         annotations: Annotations | None = None,
-    ):
+    ) -> None:
         """Instantiate a functional data property axiom."""
         self.data_property_expression = DataPropertyExpression.safe(data_property_expression)
         super().__init__(annotations)
