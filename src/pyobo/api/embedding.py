@@ -38,7 +38,8 @@ def get_text_embedding_model() -> sentence_transformers.SentenceTransformer:
     """Get the default text embedding model."""
     warnings.warn(
         "get_text_embedding_model() is deprecated, use pystow.get_sentence_transfomer() directly",
-        DeprecationWarning, stacklevel=2,
+        DeprecationWarning,
+        stacklevel=2,
     )
     return get_sentence_transformer()
 
