@@ -757,13 +757,13 @@ class Obo:
         obograph.write_obograph(self, path, converter=converter)
 
     @classmethod
-    def cli(cls, *args, default_rewrite: bool = False) -> Any:
+    def cli(cls, *args) -> Any:
         """Run the CLI for this class."""
-        cli = cls.get_cls_cli(default_rewrite=default_rewrite)
+        cli = cls.get_cls_cli()
         return cli(*args)
 
     @classmethod
-    def get_cls_cli(cls, *, default_rewrite: bool = False) -> click.Command:
+    def get_cls_cli(cls) -> click.Command:
         """Get the CLI for this class."""
 
         @click.command()
