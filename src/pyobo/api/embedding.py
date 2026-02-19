@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import tempfile
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
@@ -10,6 +11,7 @@ import bioregistry
 import curies
 import numpy as np
 import pandas as pd
+from pystow import get_sentence_transformer
 from tqdm import tqdm
 from typing_extensions import Unpack
 
@@ -34,10 +36,11 @@ __all__ = [
 
 def get_text_embedding_model() -> sentence_transformers.SentenceTransformer:
     """Get the default text embedding model."""
-    from sentence_transformers import SentenceTransformer
-
-    model = SentenceTransformer("all-MiniLM-L6-v2")
-    return model
+    warnings.warn(
+        "get_text_embedding_model() is deprecated, use pystow.get_sentence_transfomer() directly",
+        DeprecationWarning, stacklevel=2,
+    )
+    return get_sentence_transformer()
 
 
 def _get_text(
@@ -157,7 +160,7 @@ def get_text_embeddings_df(
         luids.append(identifier)
         texts.append(text)
     if model is None:
-        model = get_text_embedding_model()
+        model = get_sentence_transformer()
     res = model.encode(texts, show_progress_bar=True)
     df = pd.DataFrame(res, index=luids)
     df.to_csv(path, sep="\t")  # index is important here!
@@ -199,7 +202,7 @@ def get_text_embedding(
     if text is None:
         return None
     if model is None:
-        model = get_text_embedding_model()
+        model = get_sentence_transformer()
     res = model.encode([text])
     return res[0]
 
@@ -239,7 +242,7 @@ def get_text_embedding_similarity(
         # 0.24702128767967224
     """
     if model is None:
-        model = get_text_embedding_model()
+        model = get_sentence_transformer()
     e1 = get_text_embedding(reference_1, model=model)
     e2 = get_text_embedding(reference_2, model=model)
     if e1 is None or e2 is None:
