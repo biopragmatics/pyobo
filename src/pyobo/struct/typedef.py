@@ -28,6 +28,7 @@ __all__ = [
     "from_species",
     "gene_product_enables",
     "gene_product_member_of",
+    "has_canonical_smiles",
     "has_contributor",
     "has_creator",
     "has_curation_status",
@@ -37,6 +38,7 @@ __all__ = [
     "has_gene_product",
     "has_homepage",
     "has_inchi",
+    "has_isomeric_smiles",
     "has_mailbox",
     "has_mature",
     "has_member",
@@ -329,6 +331,14 @@ mentions = TypeDef(
 )
 
 has_smiles = TypeDef(reference=v.has_smiles, is_metadata_tag=True).append_xref(v.debio_has_smiles)
+has_canonical_smiles = TypeDef(reference=v.has_canonical_smiles, is_metadata_tag=True).append_xref(
+    v.debio_has_smiles
+)
+has_isomeric_smiles = TypeDef(reference=v.has_isomeric_smiles, is_metadata_tag=True).append_xref(
+    v.debio_has_smiles
+)
+
+# https://chemkg.github.io/chemrof/isomeric_smiles_string/
 
 has_inchi = TypeDef(reference=v.has_inchi, is_metadata_tag=True).append_xref(v.debio_has_inchi)
 
