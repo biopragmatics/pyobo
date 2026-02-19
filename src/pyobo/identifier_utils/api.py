@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from functools import lru_cache, wraps
-from typing import Annotated, ClassVar
+from typing import Annotated, ClassVar, ParamSpec, TypeVar
 
 import bioregistry
 import click
@@ -266,7 +267,11 @@ def _parse_str_or_curie_or_uri_helper(
         return rv
 
 
-def wrap_norm_prefix(f):
+S = ParamSpec("S")
+T = TypeVar("T")
+
+
+def wrap_norm_prefix(f: Callable[S, T]) -> Callable[S, T]:
     """Decorate a function that take in a prefix to auto-normalize, or return None if it can't be normalized."""
 
     @wraps(f)

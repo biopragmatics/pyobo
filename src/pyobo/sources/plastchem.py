@@ -2,6 +2,7 @@
 
 from collections import Counter
 from collections.abc import Iterable
+from typing import Any
 
 import pandas as pd
 from tabulate import tabulate
@@ -19,8 +20,10 @@ from pyobo.struct.typedef import (
 from pyobo.utils.path import ensure_path
 
 __all__ = ["PlastChemGetter"]
+
 PREFIX = "plastchem"
 URL = "https://zenodo.org/records/10701706/files/plastchem_db_v1.0.xlsx?download=1"
+VERSION = "1.0"
 
 # See page 45 of the report for explanation
 HAZARD_LISTS = {
@@ -49,7 +52,7 @@ class PlastChemGetter(Obo):
     """An ontology representation of PlastChem."""
 
     ontology = PREFIX
-    static_version = "1.0"
+    static_version = VERSION
     typedef = [
         TYPEDEF,
         has_inchi,
@@ -72,14 +75,15 @@ def get_terms() -> Iterable[Term]:
         term.append_parent(HAZARD_LIST_ROOT)
         yield term
 
-    echa_counter = Counter()
+    echa_counter: Counter[str] = Counter()
     echa_examples = {}
-    function_counter = Counter()
+    function_counter: Counter[str] = Counter()
     function_examples = {}
     chebi_grounder = get_grounder("chebi")
 
-    path = ensure_path(PREFIX, url=URL)
+    path = ensure_path(PREFIX, url=URL, version=VERSION)
     df = pd.read_excel(path, sheet_name="Full database", dtype=str, skiprows=1)
+    # TODO group by CAS number and add alt-id annotations
     for _, row in df.iterrows():
         if pd.isna(row["plastchem_ID"]):
             continue
@@ -119,6 +123,8 @@ def get_terms() -> Iterable[Term]:
                     echa_examples[echa_grouping] = match.curie, match.name
                 elif match := chebi_grounder.get_best_match(echa_grouping.rstrip("s")):
                     echa_examples[echa_grouping] = match.curie, match.name
+
+        # TODO add hazard lists?
 
         # NIAS means non-intentionally added substance
         for func in _get_sep(row, "Harmonized_functions"):
@@ -223,11 +229,11 @@ CHEBI_ROLE_MAP = {
 }
 
 
-def _get_sep(row, key):
+def _get_sep(row: dict[str, Any], key: str) -> list[str]:
     if pd.notna(row[key]):
         return row[key].split(";")
     return []
 
 
 if __name__ == "__main__":
-    PlastChemGetter.cli()
+    PlastChemGetter.cli(["--owl", "--obo", "--force"])
