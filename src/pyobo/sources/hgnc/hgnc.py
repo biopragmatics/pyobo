@@ -14,6 +14,7 @@ from tqdm.auto import tqdm
 
 from pyobo.api.utils import get_version
 from pyobo.resources.so import get_so_name
+from pyobo.sources.hgnc.hgncgenefamily import get_gene_family_terms
 from pyobo.struct import (
     Annotation,
     Obo,
@@ -261,6 +262,8 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         Term(reference=Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
         for so_id in sorted(_so_ids)
     ]
+
+    yield from get_gene_family_terms(version=version, force=force)
 
     statuses = set()
     for entry in tqdm(entries, desc=f"Mapping {PREFIX}", unit="gene", unit_scale=True):

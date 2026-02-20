@@ -55,6 +55,7 @@ __all__ = [
     "is_antagonist_of",
     "is_defined_by",
     "is_inverse_agonist_of",
+    "is_mentioned_by",
     "located_in",
     "mapping_has_confidence",
     "mapping_has_justification",
