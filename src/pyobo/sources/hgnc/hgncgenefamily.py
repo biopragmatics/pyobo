@@ -12,10 +12,10 @@ from ...struct.typedef import enables, exact_match, from_species, is_mentioned_b
 from ...utils.path import ensure_df
 
 __all__ = [
+    "GENE_GROUP_REFERENCE",
+    "GENE_GROUP_TERM",
     "HGNCGroupGetter",
     "get_gene_family_terms",
-    "GENE_GROUP_TERM",
-    "GENE_GROUP_REFERENCE",
 ]
 
 PREFIX = "hgnc.genegroup"
@@ -52,6 +52,7 @@ COLUMNS = ["id", "abbreviation", "name", "pubmed_ids", "desc_comment", "desc_go"
 
 GENE_GROUP_REFERENCE = Reference(prefix="SO", identifier="0005855", name="gene group")
 GENE_GROUP_TERM = Term(reference=GENE_GROUP_REFERENCE)
+
 
 def get_gene_family_terms(*, version: str | None = None, force: bool = False) -> Iterable[Term]:
     """Get the HGNC Gene Group terms."""
