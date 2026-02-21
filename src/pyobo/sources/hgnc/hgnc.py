@@ -14,27 +14,25 @@ from tqdm.auto import tqdm
 
 from pyobo.api.utils import get_version
 from pyobo.resources.so import get_so_name
-from pyobo.struct import (
-    Annotation,
-    Obo,
-    OBOLiteral,
-    Reference,
-    Term,
-    from_species,
-    has_gene_product,
-    is_mentioned_by,
-    member_of,
-    orthologous,
-    transcribes_to,
-)
+from pyobo.sources.hgnc.hgncgenefamily import GENE_GROUP_PREFIX, get_gene_family_terms
+from pyobo.struct import Annotation, Obo, OBOLiteral, Reference, Term
 from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
 from pyobo.struct.typedef import (
     comment,
+    enables,
     ends,
     exact_match,
+    from_species,
     gene_product_enables,
+    gene_product_of,
+    has_gene_product,
+    has_member,
+    is_mentioned_by,
     located_in,
+    member_of,
+    orthologous,
     starts,
+    transcribes_to,
 )
 from pyobo.utils.path import ensure_path
 
@@ -137,6 +135,7 @@ SKIP_KEYS = {
     "homeodb",  # TODO add to bioregistry, though this is defunct
     "mamit-trnadb",  # TODO add to bioregistry, though this is defunct
     "mane_select",  # TODO
+    "gene_group",  # gene_group_id is needed, but this just has label
 }
 
 #: A mapping from HGNC's locus_type annotations to sequence ontology identifiers
@@ -195,8 +194,10 @@ class HGNCGetter(Obo):
     typedefs = [
         from_species,
         has_gene_product,
+        gene_product_of,
         gene_product_enables,
         transcribes_to,
+        has_member,
         orthologous,
         member_of,
         exact_match,
@@ -205,6 +206,7 @@ class HGNCGetter(Obo):
         starts,
         ends,
         comment,
+        enables,
     ]
     synonym_typedefs = [
         previous_name,
@@ -261,6 +263,8 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         Term(reference=Reference(prefix="SO", identifier=so_id, name=get_so_name(so_id)))
         for so_id in sorted(_so_ids)
     ]
+
+    yield from get_gene_family_terms(version=version, force=force)
 
     statuses = set()
     for entry in tqdm(entries, desc=f"Mapping {PREFIX}", unit="gene", unit_scale=True):
@@ -393,15 +397,10 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             term.append_mentioned_by(Reference(prefix="pubmed", identifier=str(pubmed_id)))
 
         gene_group_ids = entry.pop("gene_group_id", [])
-        gene_groups = entry.pop("gene_group", [])
-        for gene_group_id, gene_group_label in zip(gene_group_ids, gene_groups, strict=False):
+        for gene_group_id in gene_group_ids:
             term.append_relationship(
                 member_of,
-                Reference(
-                    prefix="hgnc.genegroup",
-                    identifier=str(gene_group_id),
-                    name=gene_group_label,
-                ),
+                Reference(prefix=GENE_GROUP_PREFIX, identifier=str(gene_group_id)),
             )
 
         for alias_symbol in entry.pop("alias_symbol", []):
