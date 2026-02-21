@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 from pyobo.api.utils import get_version
 from pyobo.resources.so import get_so_name
 from pyobo.sources.hgnc.hgncgenefamily import GENE_GROUP_PREFIX, get_gene_family_terms
-from pyobo.struct import Annotation, Obo, OBOLiteral, Reference, Term, default_reference
+from pyobo.struct import Annotation, Obo, OBOLiteral, Reference, Term
 from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
 from pyobo.struct.typedef import (
     comment,
