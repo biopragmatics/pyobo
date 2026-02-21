@@ -19,6 +19,7 @@ from pyobo.struct import Annotation, Obo, OBOLiteral, Reference, Term, default_r
 from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
 from pyobo.struct.typedef import (
     comment,
+    enables,
     ends,
     exact_match,
     from_species,
@@ -134,7 +135,7 @@ SKIP_KEYS = {
     "homeodb",  # TODO add to bioregistry, though this is defunct
     "mamit-trnadb",  # TODO add to bioregistry, though this is defunct
     "mane_select",  # TODO
-    "gene_group", # gene_group_id is needed, but this just has label
+    "gene_group",  # gene_group_id is needed, but this just has label
 }
 
 #: A mapping from HGNC's locus_type annotations to sequence ontology identifiers
