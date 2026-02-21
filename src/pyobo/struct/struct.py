@@ -2527,3 +2527,26 @@ def make_ad_hoc_ontology(
 HUMAN_TERM = Term(reference=v.HUMAN)
 CHARLIE_TERM = Term(reference=v.CHARLIE, type="Instance").append_parent(HUMAN_TERM)
 PYOBO_INJECTED = "Injected by PyOBO"
+
+
+def cleanup_terms(terms: Iterable[Term], *, prefix: str, prefix_allowlist: set[str]) -> set[Term]:
+    """Define missing references as classes."""
+    terms = set(terms)
+    term_references = {term.reference for term in terms}
+
+    aux_term = Term(reference=default_reference(prefix, "aux", "auxiliary terms"))
+    undefined: set[Reference] = set()
+    for term in terms:
+        undefined.update(
+            reference
+            for references in term._get_references().values()
+            for reference in references
+            if reference not in term_references and reference.prefix in prefix_allowlist
+        )
+
+    rv = (
+        terms
+        | {aux_term}
+        | {Term(reference=reference).append_parent(aux_term) for reference in undefined}
+    )
+    return rv
