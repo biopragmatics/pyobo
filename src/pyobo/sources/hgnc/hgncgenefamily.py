@@ -18,7 +18,7 @@ __all__ = [
     "get_gene_family_terms",
 ]
 
-PREFIX = "hgnc.genegroup"
+GENE_GROUP_PREFIX = "hgnc.genegroup"
 FAMILIES_URL = "https://storage.googleapis.com/public-download-files/hgnc/csv/csv/genefamily_db_tables/family.csv"
 FAMILIES_ALIAS_URL = "https://storage.googleapis.com/public-download-files/hgnc/csv/csv/genefamily_db_tables/family_alias.csv"
 HIERARCHY_URL = "https://storage.googleapis.com/public-download-files/hgnc/csv/csv/genefamily_db_tables/hierarchy.csv"
@@ -27,7 +27,7 @@ HIERARCHY_URL = "https://storage.googleapis.com/public-download-files/hgnc/csv/c
 class HGNCGroupGetter(Obo):
     """An ontology representation of HGNC's gene group nomenclature."""
 
-    ontology = PREFIX
+    ontology = GENE_GROUP_PREFIX
     bioversions_key = "hgnc"
     synonym_typedefs = [symbol_type]
     typedefs = [from_species, enables, exact_match, is_mentioned_by]
@@ -41,7 +41,7 @@ def get_hierarchy(*, version: str | None = None, force: bool = False) -> Mapping
     """Get the HGNC Gene Families hierarchy as a dictionary."""
     if version is None:
         version = get_version("hgnc")
-    df = ensure_df(PREFIX, url=HIERARCHY_URL, force=force, sep=",", version=version)
+    df = ensure_df(GENE_GROUP_PREFIX, url=HIERARCHY_URL, force=force, sep=",", version=version)
     d = defaultdict(list)
     for parent_id, child_id in df.values:
         d[child_id].append(parent_id)
@@ -75,17 +75,19 @@ def get_gene_family_terms(*, version: str | None = None, force: bool = False) ->
 
 
 def _get_terms_helper(version: str, force: bool = False) -> Iterable[Term]:
-    alias_df = ensure_df(PREFIX, url=FAMILIES_ALIAS_URL, force=force, sep=",", version=version)
+    alias_df = ensure_df(
+        GENE_GROUP_PREFIX, url=FAMILIES_ALIAS_URL, force=force, sep=",", version=version
+    )
     aliases = defaultdict(set)
     for _id, family_id, alias in alias_df.values:
         aliases[family_id].add(alias)
 
-    df = ensure_df(PREFIX, url=FAMILIES_URL, force=force, sep=",", version=version)
+    df = ensure_df(GENE_GROUP_PREFIX, url=FAMILIES_URL, force=force, sep=",", version=version)
     for gene_group_id, symbol, name, pubmed_ids, definition, desc_go in df[COLUMNS].values:
         if not definition or pd.isna(definition):
             definition = None
         term = Term(
-            reference=Reference(prefix=PREFIX, identifier=gene_group_id, name=name),
+            reference=Reference(prefix=GENE_GROUP_PREFIX, identifier=gene_group_id, name=name),
             definition=definition,
         )
         if pubmed_ids and pd.notna(pubmed_ids):

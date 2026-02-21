@@ -21,6 +21,12 @@ SO_URI_PREFIX = "http://purl.obolibrary.org/obo/SO_"
 
 def get_so_name(so_id: str) -> str | None:
     """Get the name from the identifier."""
+    if so_id == "0003002":
+        # see https://github.com/The-Sequence-Ontology/SO-Ontologies/pull/668
+        return "viral integration site"
+    if so_id == "0003001":
+        # see https://github.com/The-Sequence-Ontology/SO-Ontologies/pull/667
+        return "cluster RNA gene"
     return load_so().get(so_id)
 
 
