@@ -2548,7 +2548,7 @@ def cleanup_terms(
 
         prefix_to_parent_term[allowlist_prefix] = (
             Term.default(
-                allowlist_prefix,
+                prefix,
                 f"aux-{allowlist_prefix}",
                 name=f"auxiliary terms from {allowlist_prefix}",
             )
