@@ -154,3 +154,12 @@ SKIP_PROPERTY_PREDICATES_LITERAL = [
     comment,  # maps to "comment:" line with strings
     obo_creation_date,
 ]
+
+mouse = Reference(prefix="NCBITaxon", identifier="10090", name="Mus musculus")
+rat = Reference(prefix="NCBITaxon", identifier="10116", name="Rattus norvegicus")
+gene = Reference(prefix="SO", identifier="0000704", name="gene")
+GENE_GROUP = Reference(prefix="SO", identifier="0005855", name="gene group")
+protein = Reference(prefix="PR", identifier="000000001", name="protein")
+molecular_function = Reference(prefix="GO", identifier="0003674", name="molecular function")
+rna = Reference(prefix="uniprot.core", identifier="RNA", name="RNA")
+chromosomal_region = Reference(prefix="GO", identifier="0098687", name="chromosomal region")

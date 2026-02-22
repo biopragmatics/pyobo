@@ -9,11 +9,10 @@ from ...api.utils import get_version
 from ...struct.struct import Obo, Reference, Term
 from ...struct.struct import abbreviation as symbol_type
 from ...struct.typedef import enables, exact_match, from_species, is_mentioned_by
+from ...struct.vocabulary import GENE_GROUP
 from ...utils.path import ensure_df
 
 __all__ = [
-    "GENE_GROUP_REFERENCE",
-    "GENE_GROUP_TERM",
     "HGNCGroupGetter",
     "get_gene_family_terms",
 ]
@@ -30,6 +29,7 @@ class HGNCGroupGetter(Obo):
     ontology = GENE_GROUP_PREFIX
     bioversions_key = "hgnc"
     synonym_typedefs = [symbol_type]
+    root_terms = [GENE_GROUP]
     typedefs = [from_species, enables, exact_match, is_mentioned_by]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -50,9 +50,6 @@ def get_hierarchy(*, version: str | None = None, force: bool = False) -> Mapping
 
 COLUMNS = ["id", "abbreviation", "name", "pubmed_ids", "desc_comment", "desc_go"]
 
-GENE_GROUP_REFERENCE = Reference(prefix="SO", identifier="0005855", name="gene group")
-GENE_GROUP_TERM = Term(reference=GENE_GROUP_REFERENCE)
-
 
 def get_gene_family_terms(*, version: str | None = None, force: bool = False) -> Iterable[Term]:
     """Get the HGNC Gene Group terms."""
@@ -67,10 +64,10 @@ def get_gene_family_terms(*, version: str | None = None, force: bool = False) ->
         child: Term = id_to_term[child_id]
         for parent_id in parent_ids:
             child.append_parent(id_to_term[parent_id])
-    yield GENE_GROUP_TERM
+    yield Term(reference=GENE_GROUP)
     for term in terms:
         if not term.parents:
-            term.append_parent(GENE_GROUP_REFERENCE)
+            term.append_parent(GENE_GROUP)
     yield from terms
 
 

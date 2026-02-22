@@ -16,7 +16,13 @@ from pyobo.api.utils import get_version
 from pyobo.resources.so import get_so_name
 from pyobo.sources.hgnc.hgncgenefamily import GENE_GROUP_PREFIX, get_gene_family_terms
 from pyobo.struct import Annotation, Obo, OBOLiteral, Reference, Term
-from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
+from pyobo.struct import vocabulary as v
+from pyobo.struct.struct import (
+    cleanup_terms,
+    gene_symbol_synonym,
+    previous_gene_symbol,
+    previous_name,
+)
 from pyobo.struct.typedef import (
     comment,
     enables,
@@ -222,7 +228,22 @@ class HGNCGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return get_terms(force=force, version=self.data_version)
+        yield from cleanup_terms(
+            get_terms(force=force, version=self.data_version),
+            prefix=PREFIX,
+            prefix_allowlist={
+                "chr": v.chromosomal_region,
+                "uniprot": v.protein,
+                "mgi": v.gene,
+                "rgd": v.gene,
+                "go": v.molecular_function,
+                "ec": v.molecular_function,
+                "ncbigene": v.gene,
+                "rnacentral": v.rna,
+                "mirbase": v.rna,
+                "snornabase": v.rna,
+            },
+        )
 
 
 def _get_location_to_chr() -> dict[str, Reference]:
