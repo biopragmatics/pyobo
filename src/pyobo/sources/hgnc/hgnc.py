@@ -16,6 +16,7 @@ from pyobo.api.utils import get_version
 from pyobo.resources.so import get_so_name
 from pyobo.sources.hgnc.hgncgenefamily import GENE_GROUP_PREFIX, get_gene_family_terms
 from pyobo.struct import Annotation, Obo, OBOLiteral, Reference, Term
+from pyobo.struct import vocabulary as v
 from pyobo.struct.struct import (
     cleanup_terms,
     gene_symbol_synonym,
@@ -231,16 +232,16 @@ class HGNCGetter(Obo):
             get_terms(force=force, version=self.data_version),
             prefix=PREFIX,
             prefix_allowlist={
-                "uniprot",
-                "mgi",
-                "rgd",
-                "go",
-                "ncbigene",
-                "rnacentral",
-                "chr",
-                "ec",
-                "mirbase",
-                "snornabase",
+                "chr": v.chromosomal_region,
+                "uniprot": v.protein,
+                "mgi": v.gene,
+                "rgd": v.gene,
+                "go": v.molecular_function,
+                "ec": v.molecular_function,
+                "ncbigene": v.gene,
+                "rnacentral": v.rna,
+                "mirbase": v.rna,
+                "snornabase": v.rna,
             },
         )
 

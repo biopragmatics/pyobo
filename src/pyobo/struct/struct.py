@@ -2529,24 +2529,41 @@ CHARLIE_TERM = Term(reference=v.CHARLIE, type="Instance").append_parent(HUMAN_TE
 PYOBO_INJECTED = "Injected by PyOBO"
 
 
-def cleanup_terms(terms: Iterable[Term], *, prefix: str, prefix_allowlist: set[str]) -> set[Term]:
+def cleanup_terms(
+    terms: Iterable[Term], *, prefix: str, prefix_allowlist: dict[str, Reference]
+) -> set[Term]:
     """Define missing references as classes."""
-    terms = set(terms)
-    term_references = {term.reference for term in terms}
-
     aux_term = Term(reference=default_reference(prefix, "aux", "auxiliary terms"))
-    undefined: set[Reference] = set()
-    for term in terms:
-        undefined.update(
-            reference
-            for references in term._get_references().values()
-            for reference in references
-            if reference not in term_references and reference.prefix in prefix_allowlist
+
+    terms = set(terms)
+    term_references: dict[Reference, Term] = {term.reference: term for term in terms}
+
+    prefix_to_parent_term: dict[str, Term] = {}
+    for allowlist_prefix, allowlist_reference in prefix_allowlist.items():
+        if allowlist_reference not in term_references:
+            term = Term(reference=allowlist_reference)
+            term_references[allowlist_reference] = term
+            prefix_to_parent_term[allowlist_prefix] = term
+            terms.add(term)
+
+        prefix_to_parent_term[allowlist_prefix] = (
+            Term.default(
+                allowlist_prefix,
+                f"aux-{allowlist_prefix}",
+                name=f"auxiliary terms from {allowlist_prefix}",
+            )
+            .append_parent(aux_term)
+            .append_parent(allowlist_reference)
         )
 
-    rv = (
-        terms
-        | {aux_term}
-        | {Term(reference=reference).append_parent(aux_term) for reference in undefined}
-    )
+    undefined: dict[Reference, Term] = {}
+    for term in terms:
+        for references in term._get_references().values():
+            for reference in references:
+                if reference in term_references or reference in undefined:
+                    continue
+                if parent := prefix_to_parent_term.get(reference.prefix):
+                    undefined[reference] = Term(reference=reference).append_parent(parent)
+
+    rv = terms | {aux_term} | set(prefix_to_parent_term.values()) | set(undefined.values())
     return rv
