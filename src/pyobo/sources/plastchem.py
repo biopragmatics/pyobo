@@ -223,9 +223,8 @@ CHEBI_ROLE_MAP = {
     "emulsifier": Reference.from_curie("CHEBI:63046"),
     "surfactant": Reference.from_curie("CHEBI:35195"),
     "anti-fog additive": Reference.from_curie("CHEBI:747327"),
-    "other processing aids": Reference.from_curie(
-        "CHEBI:747334"
-    ),  # this is the super class for processing aid
+    # this is the super class for processing aid
+    "other processing aids": Reference.from_curie("CHEBI:747334"),
     "antistatic agent": Reference.from_curie("CHEBI:747335"),
     "adhesive": Reference.from_curie("CHEBI:747337"),
     "unspecified additive": Reference.from_curie("CHEBI:747326"),  # parent class
@@ -257,4 +256,4 @@ def _get_sep(row: dict[str, Any], key: str) -> list[str]:
 
 
 if __name__ == "__main__":
-    PlastChemGetter.cli(["--owl", "--obo", "--force"])
+    PlastChemGetter.cli()
