@@ -1467,7 +1467,7 @@ class Obo:
         )
         return rv
 
-    def get_metadata(self) -> Mapping[str, Any]:
+    def get_metadata(self) -> dict[str, Any]:
         """Get metadata."""
         return {
             "version": self.data_version,
@@ -1568,14 +1568,14 @@ class Obo:
         ]
         return pd.DataFrame(rows, columns=["prefix", "identifier", "name"])
 
-    def iter_typedef_id_name(self) -> Iterable[tuple[str, str]]:
+    def iter_typedef_id_name(self) -> Iterable[tuple[str, str | None]]:
         """Iterate over typedefs' identifiers and their respective names."""
         for typedef in self.typedefs or []:
             yield typedef.identifier, typedef.name
 
     def get_typedef_id_name_mapping(self) -> Mapping[str, str]:
         """Get a mapping from typedefs' identifiers to names."""
-        return dict(self.iter_typedef_id_name())
+        return {identifier: name for identifier, name in self.iter_typedef_id_name() if name}
 
     #########
     # PROPS #
@@ -1906,11 +1906,12 @@ class Obo:
 
     def get_id_multirelations_mapping(
         self,
-        typedef: TypeDef,
+        typedef: ReferenceHint,
         *,
         use_tqdm: bool = False,
     ) -> Mapping[str, list[Reference]]:
         """Get a mapping from identifiers to a list of all references for the given relation."""
+        typedef = _ensure_ref(typedef, ontology_prefix=self.ontology)
         return multidict(
             (stanza.identifier, reference)
             for stanza in self._iter_stanzas(
@@ -2030,7 +2031,7 @@ class Obo:
 
     def iterate_mapping_rows(
         self, *, use_tqdm: bool = False
-    ) -> Iterable[tuple[str, str, str, str, str, float | None, str | None]]:
+    ) -> Iterable[tuple[str, str | None, str, str, str, float | None, str | None]]:
         """Iterate over SSSOM rows for mappings."""
         for stanza in self._iter_stanzas(use_tqdm=use_tqdm):
             for predicate, obj_ref, context in stanza.get_mappings(

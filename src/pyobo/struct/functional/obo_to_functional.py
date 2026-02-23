@@ -78,7 +78,8 @@ def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
         used_has_scope = False
         for synonym_typedef in obo_ontology.synonym_typedefs:
             yield f.Declaration(synonym_typedef, type="AnnotationProperty")
-            yield m.LabelMacro(synonym_typedef, synonym_typedef.name)
+            if synonym_typedef.name is not None:
+                yield m.LabelMacro(synonym_typedef, synonym_typedef.name)
             yield f.SubAnnotationPropertyOf(synonym_typedef, "oboInOwl:SynonymTypeProperty")
             if synonym_typedef.specificity:
                 used_has_scope = True

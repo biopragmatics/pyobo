@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import inspect
 import json
-import sys
 from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING
 
@@ -166,17 +165,27 @@ def typedefs(**kwargs: Unpack[LookupKwargs]) -> None:
     echo_df(df)
 
 
-def _help_page_mapping(id_to_name: Mapping[str, str], *, identifier: str | None = None) -> None:
+def _help_page_mapping(
+    id_to_name: Mapping[str, str | list[str]], *, identifier: str | None = None
+) -> None:
     if not id_to_name:
         click.secho("no data", fg="red")
     elif identifier:
         value = id_to_name.get(identifier)
-        if value:
+        if isinstance(value, str):
             click.echo(value)
+        elif isinstance(value, list):
+            click.echo("\n".join(value))
         else:
             click.secho(f"no data for {identifier}", fg="red")
     else:
-        click.echo_via_pager("\n".join("\t".join(item) for item in id_to_name.items()))
+        click.echo_via_pager(
+            "\n".join(
+                f"{key}\t{value}"
+                for key, values in id_to_name.items()
+                for value in ([values] if isinstance(values, str) else values)
+            )
+        )
 
 
 @lookup_annotate
@@ -206,43 +215,24 @@ def synonyms(identifier: str | None, **kwargs: Unpack[LookupKwargs]) -> None:
 @click.option(
     "--relation", help="CURIE for the relationship or just the ID if local to the ontology"
 )
-@click.option("--target", help="Prefix for the target")
 @click.option("--summarize", is_flag=True)
 def relations(
     relation: str,
-    target: str,
+    target: str | None,
     summarize: bool,
     **kwargs: Unpack[LookupKwargs],
 ) -> None:
     """Page through the relations for entities in the given namespace."""
-    import bioregistry
-
     from ..api import get_filtered_relations_df, get_relations_df
-    from ..struct.reference import _parse_str_or_curie_or_uri
 
     if relation is None:
         relations_df = get_relations_df(**kwargs)
-        if summarize:
-            click.echo(relations_df[relations_df.columns[2]].value_counts())
-        else:
-            echo_df(relations_df)
     else:
-        relation_reference = _parse_str_or_curie_or_uri(relation, strict=False)
-        if relation_reference is None:
-            click.secho(f"not a valid curie: {relation}", fg="red")
-            raise sys.exit(1)
-
-        if target is not None:
-            norm_target = bioregistry.normalize_prefix(target)
-            if norm_target is None:
-                raise ValueError
-            relations_df = get_filtered_relations_df(
-                relation=relation_reference,
-                target=norm_target,
-                **kwargs,
-            )
-        else:
-            raise NotImplementedError(f"can not filter by target prefix {target}")
+        relations_df = get_filtered_relations_df(relation=relation, **kwargs)
+    if summarize:
+        click.echo(relations_df[relations_df.columns[2]].value_counts())
+    else:
+        echo_df(relations_df)
 
 
 @lookup_annotate
