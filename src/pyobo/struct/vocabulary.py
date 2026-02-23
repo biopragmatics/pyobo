@@ -84,6 +84,8 @@ has_inchi = Reference(prefix="chemrof", identifier="inchi_string")
 
 debio_has_smiles = Reference(prefix="debio", identifier="0000022", name="has SMILES")
 has_smiles = Reference(prefix="chemrof", identifier="smiles_string")
+has_canonical_smiles = Reference(prefix="chemrof", identifier="canonical_smiles_string")
+has_isomeric_smiles = Reference(prefix="chemrof", identifier="isomeric_smiles_string")
 
 is_mentioned_by = Reference(prefix="mito", identifier="isMentionedBy", name="is mentioned by")
 mentions = Reference(prefix="mito", identifier="mentions", name="mentions")
@@ -163,3 +165,4 @@ protein = Reference(prefix="PR", identifier="000000001", name="protein")
 molecular_function = Reference(prefix="GO", identifier="0003674", name="molecular function")
 rna = Reference(prefix="uniprot.core", identifier="RNA", name="RNA")
 chromosomal_region = Reference(prefix="GO", identifier="0098687", name="chromosomal region")
+chemical = Reference(prefix="chebi", identifier="24431", name="chemical entity")
