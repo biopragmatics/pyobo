@@ -11,14 +11,16 @@ from tabulate import tabulate
 from tqdm import tqdm
 
 from pyobo import Obo, get_grounder
-from pyobo.struct import Reference, Term, TypeDef, default_reference
+from pyobo.struct import Reference, Term, default_reference
 from pyobo.struct.typedef import (
     exact_match,
     has_canonical_smiles,
     has_inchi,
     has_isomeric_smiles,
     has_role,
+    member_of,
 )
+from pyobo.struct.vocabulary import chemical
 from pyobo.utils.path import ensure_path
 
 __all__ = ["PlastChemGetter"]
@@ -42,12 +44,13 @@ HAZARD_LISTS = {
     "MEA": "regulated globally",  # Basel, Stochholm, Minamata
 }
 HAZARD_LIST_REFERENCES = {
-    f"{listn}_list": default_reference(PREFIX, f"{listn}_list") for listn in HAZARD_LISTS
+    f"{list_color}_list": default_reference(
+        PREFIX, f"{list_color}_list", f"PlastChem {list_color} List"
+    )
+    for list_color in HAZARD_LISTS
 }
 
-HAZARD_LIST_ROOT = default_reference(PREFIX, "list")
-
-TYPEDEF = TypeDef(reference=default_reference(PREFIX, "onList"))
+HAZARD_LIST_ROOT = default_reference(PREFIX, "list", "PlastChem List")
 
 
 class PlastChemGetter(Obo):
@@ -55,13 +58,13 @@ class PlastChemGetter(Obo):
 
     ontology = PREFIX
     static_version = VERSION
-    typedef = [
-        TYPEDEF,
+    typedefs = [
         has_inchi,
         has_canonical_smiles,
         has_isomeric_smiles,
         exact_match,
         has_role,
+        member_of,
     ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -71,7 +74,12 @@ class PlastChemGetter(Obo):
 
 def get_terms() -> Iterable[Term]:
     """Do it."""
+    yield Term(reference=chemical)
     yield Term(reference=HAZARD_LIST_ROOT)
+    for chebi_role in CHEBI_ROLE_MAP.values():
+        yield Term(reference=chebi_role)
+    for echa_reference_def in ECHA_MAP.values():
+        yield Term(reference=echa_reference_def)
     for hazard_list_reference in HAZARD_LIST_REFERENCES.values():
         term = Term(reference=hazard_list_reference)
         term.append_parent(HAZARD_LIST_ROOT)
@@ -98,7 +106,7 @@ def get_terms() -> Iterable[Term]:
             name = row["iupac_name"]
         else:
             name = None
-        term = Term.from_triple(PREFIX, identifier, name)
+        term = Term.from_triple(PREFIX, identifier, name).append_parent(chemical)
 
         cas = row.pop("cas")
         cas_fixed = row.pop("cas_fixed")
@@ -129,7 +137,8 @@ def get_terms() -> Iterable[Term]:
                 else:
                     pass  # needs curating...
 
-        # TODO add hazard lists?
+        if pd.notna(plastchem_list := row.pop("PlastChem_lists")):
+            term.append_relationship(member_of, HAZARD_LIST_REFERENCES[plastchem_list])
 
         # NIAS means non-intentionally added substance
         for func in _get_sep(row, "Harmonized_functions"):
@@ -146,9 +155,8 @@ def get_terms() -> Iterable[Term]:
                     if reference.curie != "chebi:15702":
                         function_examples[func] = reference.curie, reference.name
 
-        # TODO ECHA_grouping
-        # TODO ground to chebi:
-        #  - Harmonized_functions
+        # TODO check if the `Harmonized_functions` is just actually
+        #  the union of the following:
         #  - original_function_plasticmap
         #  - original_function_cpp
         #  - original_primary_function_aurisano
@@ -192,6 +200,7 @@ def get_terms() -> Iterable[Term]:
 
 
 def _ground_echa(chebi_grounder: ssslm.Grounder, echa_grouping: str) -> Reference | None:
+    echa_grouping = echa_grouping.strip()
     if echa_grouping in ECHA_MAP:
         return ECHA_MAP[echa_grouping]
     if match := chebi_grounder.get_best_match(echa_grouping):
@@ -201,51 +210,182 @@ def _ground_echa(chebi_grounder: ssslm.Grounder, echa_grouping: str) -> Referenc
     return None
 
 
-ECHA_MAP = {
+# TODO curate links from all ECHA terms back to ChEBI terms
+
+
+"""
+| ECHA                                                                                                | chebi        |   count |
+|-----------------------------------------------------------------------------------------------------|--------------|---------|
+| Isocyanates                                                                                         | chebi:53212  |      55 |
+| Ortho-phthalates                                                                                    |              |      53 |
+| Acrylates and methacrylates with linear or branched aliphatic alcohols, simple acids and salts      |              |      46 |
+| Bisphenol A (BPA) derivatives                                                                       |              |      41 |
+| Resin and rosin acids and their derivatives                                                         |              |      40 |
+| Esters from acrylic and methacrylic acid and aliphatic cyclic alcohols, polyols and ether [...]     |              |      38 |
+| Branched carboxylic acids and its salts                                                             |              |      38 |
+| Isophthalates, Terephthalates and Trimellitates                                                     |              |      29 |
+| Glycidyl ethers and esters                                                                          |              |      28 |
+| primary aliphatic diamines and their salts                                                          |              |      28 |
+| Phthalic anhydrides and hydrogenated phthalic anhydrides                                            |              |      28 |
+| Simple inorganic silicon compounds                                                                  |              |      26 |
+| chlorinated aromatic hydrocarbons                                                                   |              |      24 |
+| hydrocarbyl siloxanes                                                                               |              |      21 |
+| Aliphatic tertiary amines and oxides                                                                |              |      20 |
+| Simple Lithium compounds                                                                            |              |      19 |
+| mono-, dialkyl phosphate esters and salts                                                           |              |      19 |
+| EDTA-related acids and salts                                                                        |              |      18 |
+| Benzoates                                                                                           | chebi:16150  |      18 |
+| Simple manganese compounds                                                                          |              |      17 |
+| Aromatic primary monoamines                                                                         |              |      17 |
+| Photoinitiators (benzoyl radical precursor type)                                                    |              |      17 |
+| Brominated cycloalkanes, alcohols, phosphates, triazine triones, diphenyl ethers and diphenyl [...] |              |      17 |
+| Esters from linear saturated dicarboxylic acids and branched aliphatic alcohols                     |              |      16 |
+| Aliphatic nitriles                                                                                  | chebi:80291  |      16 |
+| Organic hydroperoxides and aliphatic/cumyl peroxides                                                |              |      15 |
+| Linear aliphatic ketones                                                                            |              |      15 |
+| Organic phosphonic acids, salts and esters                                                          |              |      15 |
+| Unsubstituted and linear aliphatic-substituted cyclic ketones                                       |              |      14 |
+| Aliphatic primary amides                                                                            | chebi:65285  |      14 |
+| Branched aliphatic-substituted cyclic ketones and polycyclic ketones                                |              |      14 |
+| dithiocarbamate complexes                                                                           |              |      14 |
+| Aliphatic secondary and tertiary amides                                                             |              |      13 |
+| acrylate and methacrylate amines                                                                    |              |      13 |
+| Benzene and its derivatives with linear aliphatic substituents                                      |              |      12 |
+| Vinylbenzene derivatives                                                                            |              |      11 |
+| Zirconium and its simple inorganic compounds                                                        |              |      11 |
+| Ethoxylated and alcohols (other than methanol and ethanol); ethoxylated aromatic alcohols           |              |      11 |
+| Ethoxylated alcohol sulfates                                                                        |              |      11 |
+| Salicylate esters                                                                                   |              |      11 |
+| substances containing 4-TBP                                                                         |              |      11 |
+| Mono-, di-phenyl phosphite derivatives                                                              |              |      11 |
+| Miscellaneous bisphenols                                                                            |              |      11 |
+| Polyphenyls and its partially hydrogenated derivatives                                              |              |      11 |
+| aromatic ethers                                                                                     | chebi:35618  |      10 |
+| aliphatic sulfonic acids, hydroxyalkanesulfonic acids and their salts                               |              |      10 |
+| succinic anhydrides                                                                                 | chebi:36595  |      10 |
+| Arylamino anthraquinones                                                                            |              |      10 |
+| Paraben acid, salts and esters                                                                      |              |      10 |
+| Molybdenum and its simple compounds                                                                 |              |      10 |
+| Rose ketones                                                                                        |              |      10 |
+| triphenylphosphite and its derivatives                                                              |              |       9 |
+| Ethoxylated alcohol phosphates and phosphinic acid derivatives                                      |              |       9 |
+| 1,2-ethanediols and their carbonates                                                                |              |       9 |
+| imidazoles                                                                                          | chebi:14434  |       9 |
+| Triphenylphosphate derivatives                                                                      |              |       9 |
+| Aralkylaldehydes                                                                                    |              |       8 |
+| Chlorinated trialkylphosphates                                                                      |              |       8 |
+| Acyl glycinates and sarcosinates                                                                    |              |       8 |
+| Alkyl aryl and cyclic diaryl esters of phosphoric acid                                              |              |       8 |
+| Ditriazine stilbenedisulfonic acid dyes (optical brighteners)                                       |              |       8 |
+| Tetrabromobisphenol A derivatives                                                                   |              |       8 |
+| (tetrahydro)furan primary alcohol derivatives and their oxidation products                          |              |       8 |
+| aralkylamines                                                                                       | chebi:18000  |       7 |
+| Linear diols                                                                                        |              |       7 |
+| Bisphenol F (BPF) derivative                                                                        |              |       7 |
+| Esters from branched or non-aromatic cyclic dicarboxylic acids and aliphatic alcohols               |              |       7 |
+| Polycarboxylic acid monoamines, hydroxy derivatives and their salts with monovalent cations         |              |       7 |
+| Aromatic nitriles                                                                                   |              |       6 |
+| Cyclic ethers                                                                                       | chebi:37407  |       6 |
+| Thioureas                                                                                           | chebi:36946  |       6 |
+| Piperazine-functionalised polyamines                                                                |              |       6 |
+| peroxide anhydrides (non-cyclic)                                                                    |              |       6 |
+| Diazo amino hydroxyl naphthalenedisulfonic acid dyes                                                |              |       6 |
+| Carboxylated/methylated nitrobenzenes and their derivatives                                         |              |       6 |
+| N-alkoxy-2,2,6,6-tetramethylpiperidine derivatives                                                  |              |       6 |
+| Trialkyl phosphates                                                                                 | chebi:37562  |       6 |
+| Brominated phthalates                                                                               |              |       6 |
+| (hydroxy)carboxylic acid amine chelates                                                             |              |       6 |
+| Non-aromatic guanidines                                                                             |              |       5 |
+| tetrahydroxymethyl and tetraalkyl phosphonium salts                                                 |              |       5 |
+| simple vanadium compounds                                                                           |              |       5 |
+| dibenzoyl peroxide derivatives                                                                      |              |       5 |
+| Dibenzo oxaphosphorine oxide derivatives                                                            |              |       5 |
+| Alkyldimethylbetaines                                                                               |              |       5 |
+| thioxanthenones                                                                                     |              |       4 |
+| nitroalkanes                                                                                        | chebi:7587   |       4 |
+| Cyclic acetals from aldehydes                                                                       |              |       4 |
+| Polyol amines                                                                                       |              |       4 |
+| Inorganic Bromide Salts                                                                             |              |       4 |
+| Guanidylureas, cyanoguanidines and biguanides                                                       |              |       4 |
+| beta-hydroxyacids and their esters with aliphatic alcohols                                          |              |       3 |
+| Yttrium and its simple compounds                                                                    |              |       3 |
+| Branched/cyclic dialiphatic ethers (excluding alpha,beta-unsaturated ethers)                        |              |       3 |
+| Hydroxy and alkoxy phenylketones                                                                    |              |       3 |
+| Bisphenol AF (BPAF) derivatives                                                                     |              |       3 |
+| Other aliphatic- or aryl-bridged bisphenol derivatives                                              |              |       3 |
+| Alpha-chloro aliphatic carboxylate derivatives                                                      |              |       3 |
+| Salicylic acid, its salts and alkylated derivatives                                                 |              |       3 |
+| Methylene diphenyl ureas                                                                            |              |       2 |
+| Fused tricyclic ethers with short chain polyalkyl substituents                                      |              |       2 |
+| ethoxylated N-alkyltrimethylenediamines                                                             |              |       2 |
+| Neodymium and its compounds                                                                         |              |       2 |
+| Linear and branched alpha-beta unsaturated ketones                                                  |              |       2 |
+| organic inorganic tin compounds without hydrocarbyl substituent                                     |              |       2 |
+| Cardanols                                                                                           | chebi:186661 |       2 |
+| Aminoureas, aminoguanidines and nitroguanidines                                                     |              |       2 |
+| Sulfocarboxylic acids and esters (other than succinates)                                            |              |       2 |
+| Dialkyl sulfates                                                                                    |              |       2 |
+| Bisphenol S (BPS) derivatives                                                                       |              |       2 |
+| Montan, carnauba and rice bran waxes and their derivatives                                          |              |       2 |
+| Long chain aliphatic amino-acetic, -propionic and -succinic acids and their salts                   |              |       1 |
+| Dialkyl (and diaryl) dithiophosphates (DDP)                                                         |              |       1 |
+| Alkyl nitrates                                                                                      |              |       1 |
+| thiocarbamates                                                                                      | chebi:38127  |       1 |
+| Dihydropurinedione derivatives                                                                      |              |       1 |
+| Pyrazoles                                                                                           | chebi:14973  |       1 |
+| Amphoacetate and amphopropionate derivatives of N-hydroxyethylimidazolines                          |              |       1 |
+| Hydroxyacid amides                                                                                  |              |       1 |
+"""
+
+ECHA_MAP: dict[str, Reference] = {
     "Ortho-phthalates": Reference.from_curie("CHEBI:26092", name="phthalate"),
     "Paraben acid, salts and esters": Reference.from_curie("CHEBI:85122", name="paraben"),
 }
 
-CHEBI_ROLE_MAP = {
+CHEBI_ROLE_MAP: dict[str, Reference] = {
     "plasticizer": Reference.from_curie("CHEBI:79056", name="plasticiser"),
     "catalyst": Reference.from_curie("CHEBI:35223", name="catalyst"),
     "monomer": Reference.from_curie("CHEBI:74236", name="polymerization monomer"),
     "antioxidant": Reference.from_curie("CHEBI:22586", name="antioxidant"),
-    "flame retardant": Reference.from_curie("CHEBI:79314"),
-    "blowing agent": Reference.from_curie("CHEBI:747328"),
-    "filler": Reference.from_curie("CHEBI:747333"),
-    "stabilizer": Reference.from_curie("CHEBI:747331"),
-    "colorant": Reference.from_curie("CHEBI:37958"),  # TODO add synonym to ChEBI
-    "pigment": Reference.from_curie("CHEBI:37958"),  # TODO add synonym to ChEBI
-    "lubricant": Reference.from_curie("CHEBI:747329"),
-    "biocide": Reference.from_curie("CHEBI:33281"),  # TODO add synonym to ChEBI
-    "solvent": Reference.from_curie("CHEBI:46787"),
-    "emulsifier": Reference.from_curie("CHEBI:63046"),
-    "surfactant": Reference.from_curie("CHEBI:35195"),
-    "anti-fog additive": Reference.from_curie("CHEBI:747327"),
+    "flame retardant": Reference.from_curie("CHEBI:79314", name="flame retardant"),
+    "blowing agent": Reference.from_curie("CHEBI:747328", name="blowing agent"),
+    "filler": Reference.from_curie("CHEBI:747333", name="filler"),
+    "stabilizer": Reference.from_curie("CHEBI:747331", name="stabilizer"),
+    "colorant": Reference.from_curie("CHEBI:37958", name="dye"),  # TODO add synonym to ChEBI
+    "pigment": Reference.from_curie("CHEBI:37958", name="dye"),  # TODO add synonym to ChEBI
+    "lubricant": Reference.from_curie("CHEBI:747329", name="lubricant"),
+    "biocide": Reference.from_curie(
+        "CHEBI:33281", name="antimicrobial agent"
+    ),  # TODO add synonym to ChEBI
+    "solvent": Reference.from_curie("CHEBI:46787", name="solvent"),
+    "emulsifier": Reference.from_curie("CHEBI:63046", name="emulsifier"),
+    "surfactant": Reference.from_curie("CHEBI:35195", name="surfactant"),
+    "anti-fog additive": Reference.from_curie("CHEBI:747327", name="anti-fog additive"),
     # this is the super class for processing aid
-    "other processing aids": Reference.from_curie("CHEBI:747334"),
-    "antistatic agent": Reference.from_curie("CHEBI:747335"),
-    "adhesive": Reference.from_curie("CHEBI:747337"),
-    "unspecified additive": Reference.from_curie("CHEBI:747326"),  # parent class
-    "heat stabilizer": Reference.from_curie("CHEBI:747338"),
-    "light stabilizer": Reference.from_curie("CHEBI:747339"),
-    "viscosity modifier": Reference.from_curie("CHEBI:747340"),
-    "impact modifier": Reference.from_curie("CHEBI:747341"),
-    "initiator": Reference.from_curie("CHEBI:747342"),
-    "crosslinking agent": Reference.from_curie("CHEBI:50684"),
-    "odor agent": Reference.from_curie("CHEBI:747343"),
-    "impurity": Reference.from_curie("CHEBI:143130"),
-    "ultraviolet-absorbing agent": Reference.from_curie("CHEBI:73335"),
-    "polymerization aid": Reference.from_curie("CHEBI:747345"),
+    "other processing aids": Reference.from_curie("CHEBI:747334", name="processing aids"),
+    "antistatic agent": Reference.from_curie("CHEBI:747335", name="antistatic agent"),
+    "adhesive": Reference.from_curie("CHEBI:747337", name="adhesive"),
+    "unspecified additive": Reference.from_curie("CHEBI:747326", name="additive"),  # parent class
+    "heat stabilizer": Reference.from_curie("CHEBI:747338", name="heat stabilizer"),
+    "light stabilizer": Reference.from_curie("CHEBI:747339", name="light stabilizer"),
+    "viscosity modifier": Reference.from_curie("CHEBI:747340", name="viscosity modifier"),
+    "impact modifier": Reference.from_curie("CHEBI:747341", name="impact modifier"),
+    "initiator": Reference.from_curie("CHEBI:747342", name="initiator"),
+    "crosslinking agent": Reference.from_curie("CHEBI:50684", name="crosslinking agent"),
+    "odor agent": Reference.from_curie("CHEBI:747343", name="odor agent"),
+    "impurity": Reference.from_curie("CHEBI:143130", name="impurity"),
+    "ultraviolet-absorbing agent": Reference.from_curie(
+        "CHEBI:73335", name="ultraviolet-absorbing agent"
+    ),
+    "polymerization aid": Reference.from_curie("CHEBI:747345", name="polymerization aid"),
     # Non-intentionally added substances (NIAS)
-    "nias": Reference.from_curie("CHEBI:747346"),
+    "nias": Reference.from_curie("CHEBI:747346", name="non-intentionally added substances"),
     # the following map up to NIAS
-    "intermediate": Reference.from_curie("CHEBI:747346"),
-    "degradation product": Reference.from_curie("CHEBI:747346"),
+    "intermediate": Reference.from_curie("CHEBI:747346", name="intermediate"),
+    "degradation product": Reference.from_curie("CHEBI:747346", name="degradation product"),
     # TODO not sure how to model this. other starting
     #  substances are initiator and monomer
-    "unspecified raw material": None,
+    # "unspecified raw material": None,
 }
 
 
