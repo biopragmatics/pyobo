@@ -1467,7 +1467,7 @@ class Obo:
         )
         return rv
 
-    def get_metadata(self) -> Mapping[str, Any]:
+    def get_metadata(self) -> dict[str, Any]:
         """Get metadata."""
         return {
             "version": self.data_version,
@@ -1906,11 +1906,12 @@ class Obo:
 
     def get_id_multirelations_mapping(
         self,
-        typedef: TypeDef,
+        typedef: ReferenceHint,
         *,
         use_tqdm: bool = False,
     ) -> Mapping[str, list[Reference]]:
         """Get a mapping from identifiers to a list of all references for the given relation."""
+        typedef = _ensure_ref(typedef, ontology_prefix=self.ontology)
         return multidict(
             (stanza.identifier, reference)
             for stanza in self._iter_stanzas(
