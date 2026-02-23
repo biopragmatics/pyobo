@@ -84,6 +84,8 @@ has_inchi = Reference(prefix="chemrof", identifier="inchi_string")
 
 debio_has_smiles = Reference(prefix="debio", identifier="0000022", name="has SMILES")
 has_smiles = Reference(prefix="chemrof", identifier="smiles_string")
+has_canonical_smiles = Reference(prefix="chemrof", identifier="canonical_smiles_string")
+has_isomeric_smiles = Reference(prefix="chemrof", identifier="isomeric_smiles_string")
 
 is_mentioned_by = Reference(prefix="mito", identifier="isMentionedBy", name="is mentioned by")
 mentions = Reference(prefix="mito", identifier="mentions", name="mentions")
