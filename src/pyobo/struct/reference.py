@@ -86,18 +86,20 @@ class Referenced:
             return self.prefix == other.prefix and self.identifier == other.identifier
         raise TypeError
 
-    def __lt__(self, other: Referenced) -> bool:
-        if not isinstance(other, curies.Reference | Referenced):
-            raise TypeError
-        return self.reference < other.reference
+    def __lt__(self, other: curies.Reference | Referenced) -> bool:
+        if isinstance(other, curies.Reference):
+            return self.reference < other
+        if isinstance(other, Referenced):
+            return self.reference < other.reference
+        raise TypeError
 
     @property
-    def prefix(self):
+    def prefix(self) -> str:
         """The prefix of the typedef."""
         return self.reference.prefix
 
     @property
-    def name(self):
+    def name(self) -> str | None:
         """The name of the typedef."""
         return self.reference.name
 
