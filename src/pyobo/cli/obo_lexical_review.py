@@ -188,6 +188,7 @@ def _get_calls(
                     match
                     for synonym in node.meta.synonyms
                     for match in matcher.get_matches(synonym.val)
+                    if synonym.val and synonym.val.strip()
                 )
 
             # there are a lot of NCIT matches, which aren't that informative
