@@ -35,11 +35,24 @@ UPPER = {"ncit"}
 )
 @click.option(
     "--uri-prefix",
-    help="Local path to an OBO Graph JSON file. If not given, will try and look up through the OBO PURL system",
+    help="The URI prefix to use to identify terms that belong to the graph. If not given, "
+    "assumes that the URI prefix should be constructed as an OBO PURL like "
+    "`http://purl.obolibrary.org/obo/<prefix>_`. If you",
 )
-@click.option("--index-url", default=INDEX_URL, show_default=True)
-@click.option("--show-passed", is_flag=True)
-@click.option("--skip-upper", is_flag=True, help=f"if true, skip upper level ontologies {UPPER}")
+@click.option(
+    "--index-url",
+    default=INDEX_URL,
+    show_default=True,
+    help="Define an alternate term index. Note, this gets cached locally. Big ones take a few minutes to load.",
+)
+@click.option(
+    "--show-passed", is_flag=True, help="Output statistics about passing terms to the console"
+)
+@click.option(
+    "--skip-upper",
+    is_flag=True,
+    help=f"if true, skip matching to upper level ontologies {UPPER}, which are often false positives (or unhelpful for review)",
+)
 @click.option("--index-force", is_flag=True, help="if true, force re-downloading the lexical index")
 def obo_lexical_review(
     prefix: str,
@@ -117,16 +130,32 @@ def _parts(match: ssslm.Match) -> tuple[str, str, float]:
 def _get_graph_document(
     prefix: str, uri_prefix: str | None = None, ontology_path: str | None = None
 ) -> tuple[obographs.GraphDocument, str]:
+    import sys
     from pathlib import Path
 
     import obographs
     import robot_obo_tool
+    from bioregistry import manager
+
+    resource = manager.get_resource(prefix, strict=True)
+    obo_prefix = resource.get_obofoundry_prefix()
 
     if uri_prefix is None:
-        uri_prefix = f"http://purl.obolibrary.org/obo/{prefix}_"
+        if obo_prefix is None:
+            click.secho(
+                f"{prefix} is not an OBO Foundry resource, so --uri-prefix and --location are required"
+            )
+            raise sys.exit(1)
+        uri_prefix = f"http://purl.obolibrary.org/obo/{obo_prefix}_"
         click.echo(f"Inferred URI prefix from given OBO CURIE prefix: {uri_prefix}")
     if ontology_path is None:
-        ontology_path = f"https://purl.obolibrary.org/obo/{prefix.lower()}.json"
+        if obo_prefix is None:
+            click.secho(
+                f"{prefix} is not an OBO Foundry resource, so --uri-prefix and --location are required"
+            )
+            raise sys.exit(1)
+        # raise error if there's no mapping from prefix to OBO
+        ontology_path = f"https://purl.obolibrary.org/obo/{obo_prefix.lower()}.json"
         click.echo(f"No ontology path given, guessing it's available at {ontology_path}")
     if ontology_path.endswith(".json"):
         click.echo(f"reading OBO Graph JSON from {ontology_path}")
