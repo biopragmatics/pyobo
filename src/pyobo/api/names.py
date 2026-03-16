@@ -211,6 +211,9 @@ def get_id_name_mapping(
         rv = get_ncbigene_id_to_name_mapping()
         logger.info("[%s] done loading identifiers", prefix)
         return rv
+    if prefix == "ensembl":
+        # FIXME implement!
+        return {}
 
     version = get_version_from_kwargs(prefix, kwargs)
     path = get_cache_path(prefix, CacheArtifact.names, version=version)
