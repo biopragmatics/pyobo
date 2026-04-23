@@ -4,7 +4,7 @@ import enum
 import json
 import logging
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 import pandas as pd
 from curies import Reference
@@ -50,21 +50,10 @@ def ensure_path(
     version: VersionHint = None,
     name: str | None = None,
     force: bool = False,
-    backend: Literal["requests", "urllib"] | None = None,
-    verify: bool = True,
     **download_kwargs: Unpack[DownloadKwargs],
 ) -> Path:
     """Download a file if it doesn't exist."""
-    if backend is None:
-        backend = "urllib"
-    if verify:
-        download_kwargs = {"backend": backend}
-    else:
-        if backend != "requests":
-            logger.warning("using requests since verify=False")
-        download_kwargs = {"backend": "requests", "verify": False}
-
-    path = RAW_MODULE.module(prefix).ensure(
+    return RAW_MODULE.module(prefix).ensure(
         *parts,
         url=url,
         name=name,
@@ -72,7 +61,6 @@ def ensure_path(
         version=version,
         download_kwargs=download_kwargs,
     )
-    return path
 
 
 def ensure_df(
@@ -84,8 +72,6 @@ def ensure_df(
     force: bool = False,
     sep: str = "\t",
     dtype=str,
-    verify: bool = True,
-    backend: Literal["requests", "urllib"] | None = None,
     **kwargs: Any,
 ) -> pd.DataFrame:
     """Download a file and open as a dataframe."""
@@ -96,8 +82,6 @@ def ensure_df(
         version=version,
         name=name,
         force=force,
-        verify=verify,
-        backend=backend,
     )
     return pd.read_csv(_path, sep=sep, dtype=dtype, **kwargs)
 
@@ -109,9 +93,7 @@ def ensure_json(
     version: VersionHint = None,
     name: str | None = None,
     force: bool = False,
-    verify: bool = True,
-    backend: Literal["requests", "urllib"] | None = None,
-    **kwargs: Any,
+    **kwargs: Unpack[DownloadKwargs],
 ) -> Any:
     """Download a file and open as JSON."""
     _path = ensure_path(
@@ -120,9 +102,7 @@ def ensure_json(
         url=url,
         version=version,
         name=name,
-        force=force,
-        verify=verify,
-        backend=backend,
+        **kwargs,
     )
     with _path.open() as file:
         return json.load(file)
