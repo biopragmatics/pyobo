@@ -409,7 +409,7 @@ def iter_helper_helper(
             yield prefix, yv
 
 
-def _is_xml(e) -> bool:
+def _is_xml(e: Exception) -> bool:
     return str(e).startswith("Tag-value pair parsing failed for:") or str(e).startswith(
         'Tag-value pair parsing failed for:\n<?xml version="1.0" encoding="UTF-8"?>'
     )
