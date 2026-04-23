@@ -146,8 +146,8 @@ def metadata(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) ->
     """Make the prefix-metadata dump."""
     import bioregistry
 
-    from .database_utils import IterHelperHelperDict
     from ..api import get_metadata
+    from ..constants import IterHelperHelperDict
     from ..getters import db_output_helper, iter_helper_helper
 
     def _iter_metadata_internal(
