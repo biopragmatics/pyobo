@@ -325,7 +325,7 @@ class Term(Stanza):
         identifier: str,
         name: str | None = None,
         definition: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> Term:
         """Create a term from a reference."""
         return cls(
@@ -335,7 +335,7 @@ class Term(Stanza):
         )
 
     @classmethod
-    def default(cls, prefix, identifier, name=None) -> Self:
+    def default(cls, prefix, identifier, name: str | None = None) -> Self:
         """Create a default term."""
         return cls(reference=default_reference(prefix=prefix, identifier=identifier, name=name))
 
@@ -371,7 +371,7 @@ class Term(Stanza):
         confidence: float | None = None,
         contributor: Reference | None = None,
     ) -> Self:
-        """Append an exact match, also adding an xref."""
+        """Append an exact match, also adding a cross-reference."""
         reference = _ensure_ref(reference)
         axioms = self._prepare_mapping_annotations(
             mapping_justification=mapping_justification,
@@ -751,13 +751,13 @@ class Obo:
         raise NotImplementedError
 
     def write_obograph(self, path: str | Path, *, converter: Converter | None = None) -> None:
-        """Write OBO Graph json."""
+        """Write OBO Graph JSON."""
         from . import obograph
 
         obograph.write_obograph(self, path, converter=converter)
 
     @classmethod
-    def cli(cls, *args) -> Any:
+    def cli(cls, *args: Any) -> Any:
         """Run the CLI for this class."""
         cli = cls.get_cls_cli()
         return cli(*args)
@@ -1048,7 +1048,7 @@ class Obo:
             self._write_lines(it, file)
 
     @staticmethod
-    def _write_lines(it, file: TextIO | None) -> None:
+    def _write_lines(it: Iterable[str], file: TextIO | None) -> None:
         for line in it:
             print(line, file=file)
 
@@ -1257,7 +1257,7 @@ class Obo:
             write_iterable_tsv(
                 path=path,
                 header=header,
-                it=fn(),  # type:ignore
+                it=fn(),
             )
 
         typedefs = self._index_typedefs()

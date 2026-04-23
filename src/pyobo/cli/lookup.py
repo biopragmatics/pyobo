@@ -4,15 +4,14 @@ from __future__ import annotations
 
 import inspect
 import json
-from collections.abc import Iterable, Mapping
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Iterable, Mapping
+from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
 import click
 from more_click import verbose_option
 from typing_extensions import Unpack
 
 from .utils import (
-    Clickable,
     echo_df,
     force_option,
     force_process_option,
@@ -30,12 +29,16 @@ __all__ = [
 ]
 
 
+P = ParamSpec("P")
+T = TypeVar("T")
+
+
 @click.group()
 def lookup() -> None:
     """Lookup resources."""
 
 
-def lookup_annotate(f: Clickable) -> Clickable:
+def lookup_annotate(f: Callable[P, T]) -> Callable[P, T]:
     """Add appropriate decorators to lookup CLI functions."""
     signature = inspect.signature(f)
     param = signature.parameters["kwargs"]

@@ -508,10 +508,7 @@ class Stanza(Referenced, HasReferencesMixin):
         typedefs: Mapping[ReferenceTuple, TypeDef],
     ) -> Iterable[str]:
         for line in _iterate_obo_relations(
-            # the type checker seems to be a bit confused, this is an okay typing since we're
-            # passing a more explicit version. The issue is that list is used for the typing,
-            # which means it can't narrow properly
-            self.properties,  # type:ignore
+            self.properties,
             self._axioms,
             ontology_prefix=ontology_prefix,
             skip_predicate_objects=skip_predicate_objects,
@@ -524,10 +521,7 @@ class Stanza(Referenced, HasReferencesMixin):
         self, *, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:
         for line in _iterate_obo_relations(
-            # the type checker seems to be a bit confused, this is an okay typing since we're
-            # passing a more explicit version. The issue is that list is used for the typing,
-            # which means it can't narrow properly
-            self.relationships,  # type:ignore
+            self.relationships,
             self._axioms,
             ontology_prefix=ontology_prefix,
             typedefs=typedefs,

@@ -5,7 +5,7 @@ from __future__ import annotations
 import gzip
 import logging
 import warnings
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable
 from functools import partial
 from typing import cast
 
@@ -56,7 +56,7 @@ def _iter_names(
     yield from _iter_pubchem_compound()
 
 
-def _iter_pubchem_compound() -> Iterator:
+def _iter_pubchem_compound() -> Iterable[tuple[str, str, str]]:
     pcc_path = pubchem._ensure_cid_name_path()
     with gzip.open(pcc_path, mode="rt", encoding="ISO-8859-1") as file:
         for line in tqdm(
