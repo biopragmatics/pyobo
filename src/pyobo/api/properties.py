@@ -170,9 +170,7 @@ def get_property(
     >>> pyobo.get_property("chebi", "132964", "http://purl.obolibrary.org/obo/chebi/smiles")
     "C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F"
     """
-    filtered_properties_mapping = get_filtered_properties_mapping(
-        prefix=prefix, prop=prop, **kwargs
-    )
+    filtered_properties_mapping = get_filtered_properties_mapping(prefix, prop=prop, **kwargs)
     return filtered_properties_mapping.get(identifier)
 
 
@@ -192,7 +190,7 @@ def get_properties(
         :func:`get_property`
     """
     filtered_properties_multimapping = get_filtered_properties_multimapping(
-        prefix=prefix, prop=prop, **kwargs
+        prefix, prop=prop, **kwargs
     )
     return filtered_properties_multimapping.get(identifier)
 

@@ -324,7 +324,7 @@ def get_id_synonyms_mapping(
     prefix: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, list[str]]:
     """Get the OBO file and output a synonym dictionary."""
-    df = get_literal_mappings_df(prefix=prefix, **kwargs)
+    df = get_literal_mappings_df(prefix, **kwargs)
     prefix_with_colon = f"{prefix}:"
     prefix_with_colon_len = len(prefix_with_colon)
     # keep only literal mappings with the right prefix
@@ -338,7 +338,7 @@ def get_literal_mappings(
     prefix: str, *, skip_obsolete: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[LiteralMapping]:
     """Get literal mappings."""
-    df = get_literal_mappings_df(prefix=prefix, **kwargs)
+    df = get_literal_mappings_df(prefix, **kwargs)
     rv = ssslm.df_to_literal_mappings(df, reference_cls=Reference)
     if skip_obsolete:
         obsoletes = get_obsolete_references(prefix, **kwargs)
