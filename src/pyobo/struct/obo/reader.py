@@ -262,7 +262,7 @@ def from_obonet(
 
 
 def _get_terms(
-    graph,
+    graph: nx.MultiDiGraph,
     *,
     strict: bool,
     ontology_prefix: str,
@@ -496,7 +496,7 @@ def _process_properties(
     ontology_prefix: str,
     strict: bool,
     upgrade: bool,
-    typedefs,
+    typedefs: Mapping[ReferenceTuple, TypeDef],
 ) -> None:
     for ann in iterate_node_properties(
         data,
@@ -506,6 +506,8 @@ def _process_properties(
         upgrade=upgrade,
         context="stanza property",
     ):
+        if ann.predicate.pair not in typedefs:
+            pass  # TODO logging
         # TODO parse axioms
         term.append_property(ann)
 
@@ -602,7 +604,7 @@ def _get_boolean(data: dict[str, Any], tag: str) -> bool | None:
 
 
 def _get_reference(
-    data: dict[str, Any], tag: str, *, ontology_prefix: str, strict: bool, **kwargs
+    data: dict[str, Any], tag: str, *, ontology_prefix: str, strict: bool, **kwargs: Any
 ) -> Reference | None:
     value = data.get(tag)
     if value is None:
@@ -818,11 +820,12 @@ def _get_date(graph: nx.MultiDiGraph, ontology_prefix: str) -> datetime | None:
 
 def _get_name(graph: nx.MultiDiGraph, ontology_prefix: str) -> str:
     try:
-        rv = graph.graph["name"]
+        rv = t.cast(str, graph.graph["name"])
     except KeyError:
         logger.info("[%s] does not report a name", ontology_prefix)
-        rv = ontology_prefix
-    return rv
+        return ontology_prefix
+    else:
+        return rv
 
 
 def iterate_graph_synonym_typedefs(
@@ -1411,7 +1414,7 @@ def _get_prop(
     )
 
 
-def _parse_default_prop(property_id, ontology_prefix) -> Reference | None:
+def _parse_default_prop(property_id: str, ontology_prefix: str) -> Reference | None:
     for delim in "#/":
         sw = f"http://purl.obolibrary.org/obo/{ontology_prefix}{delim}"
         if property_id.startswith(sw):
