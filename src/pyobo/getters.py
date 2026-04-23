@@ -357,7 +357,7 @@ def iter_helper_helper(
             click.style(f"\n{prefix} - {bioregistry.get_name(prefix)}", fg="green", bold=True)
         )
         try:
-            yv = f(prefix, **kwargs)  # type:ignore
+            yv = f(prefix, **kwargs)
         except (UnhandledFormatError, NoBuildError) as e:
             # make sure this comes before the other runtimeerror catch
             logger.warning("[%s] %s", prefix, e)

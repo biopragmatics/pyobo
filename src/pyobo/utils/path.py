@@ -9,6 +9,8 @@ from typing import Any, Literal
 import pandas as pd
 from curies import Reference
 from pystow import VersionHint
+from pystow.utils.download import DownloadKwargs
+from typing_extensions import Unpack
 
 from ..constants import CACHE_SUBDIRECTORY_NAME, RAW_MODULE, RELATION_SUBDIRECTORY_NAME
 
@@ -50,7 +52,7 @@ def ensure_path(
     force: bool = False,
     backend: Literal["requests", "urllib"] | None = None,
     verify: bool = True,
-    **download_kwargs: Any,
+    **download_kwargs: Unpack[DownloadKwargs],
 ) -> Path:
     """Download a file if it doesn't exist."""
     if backend is None:

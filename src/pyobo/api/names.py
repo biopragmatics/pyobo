@@ -75,7 +75,7 @@ def _help_get(
 ) -> X | None:
     """Get the result for an entity based on a mapping maker function ``f``."""
     try:
-        mapping = f(reference.prefix, **kwargs)  # type:ignore
+        mapping = f(reference.prefix, **kwargs)
     except NoBuildError:
         if reference.prefix not in NO_BUILD_PREFIXES:
             logger.warning("[%s] unable to look up results with %s", reference.prefix, f)
