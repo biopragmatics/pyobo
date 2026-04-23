@@ -21,7 +21,6 @@ __all__ = [
     "DatabaseKwargs",
     "GetOntologyKwargs",
     "IterHelperHelperDict",
-    "LookupKwargs",
     "OntologyFormat",
     "OntologyPathPack",
     "SlimGetOntologyKwargs",
@@ -194,16 +193,6 @@ def check_should_cache(data: GetOntologyKwargs) -> bool:
 def check_should_use_tqdm(data: GetOntologyKwargs) -> bool:
     """Determine whether caching should be done based on generic keyword arguments."""
     return data.get("use_tqdm", True)
-
-
-class LookupKwargs(GetOntologyKwargs):
-    """Represents all arguments passed to :func:`pyobo.get_ontology`.
-
-    This dictionary does contain the ``prefix`` since it's used in the scope of CLI
-    functions.
-    """
-
-    prefix: str
 
 
 class IterHelperHelperDict(SlimGetOntologyKwargs):

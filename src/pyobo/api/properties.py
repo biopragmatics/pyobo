@@ -38,7 +38,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def get_object_properties_df(prefix, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
+def get_object_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get a dataframe of object property triples."""
     version = get_version_from_kwargs(prefix, kwargs)
     path = get_cache_path(prefix, CacheArtifact.object_properties, version=version)
@@ -55,7 +55,7 @@ def get_object_properties_df(prefix, **kwargs: Unpack[GetOntologyKwargs]) -> pd.
 
 
 def get_object_properties(
-    prefix, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[tuple[Reference, Reference, Reference]]:
     """Get a list of object property triples."""
     df = get_object_properties_df(prefix, **kwargs)
