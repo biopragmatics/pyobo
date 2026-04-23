@@ -68,10 +68,9 @@ def obo_lexical_review(
     Example usage for a non-OBO Foundry ontology requires giving
     the --uri-format and --location
 
-    pyobo obo-lexical-review \
-        --uri-format "http://semanticscience.org/resource/SIO_" \
-        --location http://semanticscience.org/ontology/sio/v1.59/sio-release.owl \
-        sio
+    .. code-block:: console
+
+        $ pyobo obo-lexical-review --uri-format "http://semanticscience.org/resource/SIO_" --location http://semanticscience.org/ontology/sio/v1.59/sio-release.owl sio
     """
     import sys
     import time
