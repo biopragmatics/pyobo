@@ -98,7 +98,7 @@ def from_obo_path(
 
 
 def _read_obo(
-    filelike, prefix: str | None, ignore_obsolete: bool, use_tqdm: bool = True
+    filelike: Iterable[str], prefix: str | None, ignore_obsolete: bool, use_tqdm: bool = True
 ) -> nx.MultiDiGraph:
     import obonet
 
@@ -353,7 +353,9 @@ def _get_terms(
     return terms
 
 
-def _process_description(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+def _process_description(
+    term: Stanza, data: dict[str, Any], *, ontology_prefix: str, strict: bool
+) -> None:
     definition, definition_references = get_definition(
         data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix
     )
@@ -367,12 +369,12 @@ def _process_description(term: Stanza, data, *, ontology_prefix: str, strict: bo
             )
 
 
-def _process_comment(term: Stanza, data) -> None:
+def _process_comment(term: Stanza, data: dict[str, Any]) -> None:
     if comment := data.get("comment"):
         term.append_comment(comment)
 
 
-def _process_creation_date(term: Stanza, data) -> None:
+def _process_creation_date(term: Stanza, data: dict[str, Any]) -> None:
     date_str = data.get("creation_date")
     if not date_str:
         return
@@ -384,7 +386,9 @@ def _process_creation_date(term: Stanza, data) -> None:
         logger.warning("[%s] failed to parse creation_date: %s", term.reference.curie, date_str)
 
 
-def _process_union_of(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+def _process_union_of(
+    term: Stanza, data: dict[str, Any], *, ontology_prefix: str, strict: bool
+) -> None:
     for reference in iterate_node_reference_tag(
         term,
         "union_of",
@@ -396,7 +400,9 @@ def _process_union_of(term: Stanza, data, *, ontology_prefix: str, strict: bool)
         term.append_union_of(reference)
 
 
-def _process_equivalent_to(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+def _process_equivalent_to(
+    term: Stanza, data: dict[str, Any], *, ontology_prefix: str, strict: bool
+) -> None:
     for reference in iterate_node_reference_tag(
         term,
         "equivalent_to",
@@ -408,7 +414,9 @@ def _process_equivalent_to(term: Stanza, data, *, ontology_prefix: str, strict: 
         term.append_equivalent_to(reference)
 
 
-def _process_disjoint_from(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+def _process_disjoint_from(
+    term: Stanza, data: dict[str, Any], *, ontology_prefix: str, strict: bool
+) -> None:
     for reference in iterate_node_reference_tag(
         term,
         "disjoint_from",
@@ -420,14 +428,18 @@ def _process_disjoint_from(term: Stanza, data, *, ontology_prefix: str, strict: 
         term.append_disjoint_from(reference)
 
 
-def _process_alts(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+def _process_alts(
+    term: Stanza, data: dict[str, Any], *, ontology_prefix: str, strict: bool
+) -> None:
     for alt_reference in iterate_node_reference_tag(
         term, "alt_id", data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix
     ):
         term.append_alt(alt_reference)
 
 
-def _process_parents(term: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+def _process_parents(
+    term: Stanza, data: dict[str, Any], *, ontology_prefix: str, strict: bool
+) -> None:
     for tag in ["is_a", "instance_of"]:
         for parent in iterate_node_reference_tag(
             term, tag, data, node=term.reference, strict=strict, ontology_prefix=ontology_prefix
@@ -437,7 +449,7 @@ def _process_parents(term: Stanza, data, *, ontology_prefix: str, strict: bool) 
 
 def _process_synonyms(
     term: Stanza,
-    data,
+    data: dict[str, Any],
     *,
     ontology_prefix: str,
     strict: bool,
@@ -460,7 +472,7 @@ def _process_synonyms(
 
 def _process_xrefs(
     term: Stanza,
-    data,
+    data: dict[str, Any],
     *,
     ontology_prefix: str,
     strict: bool,
@@ -478,7 +490,13 @@ def _process_xrefs(
 
 
 def _process_properties(
-    term: Stanza, data, *, ontology_prefix: str, strict: bool, upgrade: bool, typedefs
+    term: Stanza,
+    data: dict[str, Any],
+    *,
+    ontology_prefix: str,
+    strict: bool,
+    upgrade: bool,
+    typedefs,
 ) -> None:
     for ann in iterate_node_properties(
         data,
@@ -494,7 +512,7 @@ def _process_properties(
 
 def _process_relations(
     term: Stanza,
-    data,
+    data: dict[str, Any],
     *,
     ontology_prefix: str,
     strict: bool,
@@ -524,7 +542,9 @@ def _process_relations(
         term.append_relationship(relation, reference)
 
 
-def _process_replaced_by(stanza: Stanza, data, *, ontology_prefix: str, strict: bool) -> None:
+def _process_replaced_by(
+    stanza: Stanza, data: dict[str, Any], *, ontology_prefix: str, strict: bool
+) -> None:
     for reference in iterate_node_reference_tag(
         stanza,
         "replaced_by",
@@ -540,7 +560,12 @@ UNDEFINED_SUBSETS = set()
 
 
 def _process_subsets(
-    stanza: Stanza, data, *, ontology_prefix: str, strict: bool, subset_typedefs: SubsetTypeDefs
+    stanza: Stanza,
+    data: dict[str, Any],
+    *,
+    ontology_prefix: str,
+    strict: bool,
+    subset_typedefs: SubsetTypeDefs,
 ) -> None:
     for reference in iterate_node_reference_tag(
         stanza,
@@ -563,7 +588,7 @@ _BOOLEAN_TRUE_VALUES = {"true", "1", 1}
 _BOOLEAN_FALSE_VALUES = {"false", "0", 0}
 
 
-def _get_boolean(data: Mapping[str, Any], tag: str) -> bool | None:
+def _get_boolean(data: dict[str, Any], tag: str) -> bool | None:
     value = data.get(tag)
     if value is None:
         return None
@@ -577,7 +602,7 @@ def _get_boolean(data: Mapping[str, Any], tag: str) -> bool | None:
 
 
 def _get_reference(
-    data: Mapping[str, Any], tag: str, *, ontology_prefix: str, strict: bool, **kwargs
+    data: dict[str, Any], tag: str, *, ontology_prefix: str, strict: bool, **kwargs
 ) -> Reference | None:
     value = data.get(tag)
     if value is None:
@@ -725,7 +750,7 @@ def _get_subsetdefs(
     return rv
 
 
-def _clean_graph_ontology(graph, prefix: str) -> None:
+def _clean_graph_ontology(graph: nx.MultiDiGraph, prefix: str) -> None:
     """Update the ontology entry in the graph's metadata, if necessary."""
     if "ontology" not in graph.graph:
         logger.debug('[%s] missing "ontology" key', prefix)
@@ -746,7 +771,7 @@ def _iter_obo_graph(
     ontology_prefix: str,
     use_tqdm: bool = False,
     upgrade: bool,
-) -> Iterable[tuple[Reference, Mapping[str, Any]]]:
+) -> Iterable[tuple[Reference, dict[str, Any]]]:
     """Iterate over the nodes in the graph with the prefix stripped (if it's there)."""
     for node, data in tqdm(
         graph.nodes(data=True), disable=not use_tqdm, unit_scale=True, desc=f"[{ontology_prefix}]"
@@ -776,7 +801,7 @@ def _iter_obo_graph(
             # if blacklisted, just skip it with no warning
 
 
-def _get_date(graph, ontology_prefix: str) -> datetime | None:
+def _get_date(graph: nx.MultiDiGraph, ontology_prefix: str) -> datetime | None:
     try:
         rv = datetime.strptime(graph.graph["date"], DATE_FORMAT)
     except KeyError:
@@ -791,7 +816,7 @@ def _get_date(graph, ontology_prefix: str) -> datetime | None:
         return rv
 
 
-def _get_name(graph, ontology_prefix: str) -> str:
+def _get_name(graph: nx.MultiDiGraph, ontology_prefix: str) -> str:
     try:
         rv = graph.graph["name"]
     except KeyError:
@@ -968,7 +993,9 @@ def iterate_typedefs(
         yield typedef
 
 
-def _process_consider(stanza: Stanza, data, *, ontology_prefix: str, strict: bool = False) -> None:
+def _process_consider(
+    stanza: Stanza, data: dict[str, Any], *, ontology_prefix: str, strict: bool = False
+) -> None:
     for reference in iterate_node_reference_tag(
         stanza,
         "consider",
@@ -981,7 +1008,7 @@ def _process_consider(stanza: Stanza, data, *, ontology_prefix: str, strict: boo
 
 
 def _process_equivalent_to_chain(
-    typedef: TypeDef, data, *, ontology_prefix: str, strict: bool = False
+    typedef: TypeDef, data: dict[str, Any], *, ontology_prefix: str, strict: bool = False
 ) -> None:
     for chain in _iterate_chain(
         "equivalent_to_chain", typedef, data, ontology_prefix=ontology_prefix, strict=strict
@@ -990,7 +1017,7 @@ def _process_equivalent_to_chain(
 
 
 def _process_holds_over_chain(
-    typedef: TypeDef, data, *, ontology_prefix: str, strict: bool = False
+    typedef: TypeDef, data: dict[str, Any], *, ontology_prefix: str, strict: bool = False
 ) -> None:
     for chain in _iterate_chain(
         "holds_over_chain", typedef, data, ontology_prefix=ontology_prefix, strict=strict
@@ -999,7 +1026,7 @@ def _process_holds_over_chain(
 
 
 def _iterate_chain(
-    tag: str, typedef: TypeDef, data, *, ontology_prefix: str, strict: bool = False
+    tag: str, typedef: TypeDef, data: dict[str, Any], *, ontology_prefix: str, strict: bool = False
 ) -> Iterable[list[Reference]]:
     for chain in data.get(tag, []):
         # chain is a list of CURIEs
@@ -1032,7 +1059,7 @@ def _process_chain_helper(
 
 
 def get_definition(
-    data, *, node: Reference, ontology_prefix: str, strict: bool = False
+    data: dict[str, Any], *, node: Reference, ontology_prefix: str, strict: bool = False
 ) -> tuple[None | str, list[Reference | OBOLiteral]]:
     """Extract the definition from the data."""
     definition = data.get("def")  # it's allowed not to have a definition
@@ -1155,7 +1182,7 @@ DEFINITION_PROVENANCE_COUNTER: Counter[tuple[str, str]] = Counter()
 
 
 def iterate_node_synonyms(
-    data: Mapping[str, Any],
+    data: dict[str, Any],
     synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
     *,
     node: Reference,
@@ -1186,7 +1213,7 @@ def iterate_node_synonyms(
 
 
 def iterate_node_properties(
-    data: Mapping[str, Any],
+    data: dict[str, Any],
     *,
     node: Reference,
     strict: bool = False,
@@ -1396,7 +1423,7 @@ def _parse_default_prop(property_id, ontology_prefix) -> Reference | None:
 def iterate_node_reference_tag(
     stanza: Stanza,
     tag: str,
-    data: Mapping[str, Any],
+    data: dict[str, Any],
     *,
     node: Reference,
     strict: bool = False,
@@ -1438,7 +1465,7 @@ SUBSET_INVALIDS: set[str] = set()
 
 def _process_intersection_of(
     term: Stanza,
-    data: Mapping[str, Any],
+    data: dict[str, Any],
     *,
     strict: bool = False,
     ontology_prefix: str,
@@ -1479,7 +1506,7 @@ def _process_intersection_of(
 
 
 def iterate_node_relationships(
-    data: Mapping[str, Any],
+    data: dict[str, Any],
     *,
     node: Reference,
     strict: bool = False,
@@ -1525,7 +1552,7 @@ def iterate_node_relationships(
 
 def iterate_node_xrefs(
     *,
-    data: Mapping[str, Any],
+    data: dict[str, Any],
     strict: bool = False,
     ontology_prefix: str,
     node: Reference,
