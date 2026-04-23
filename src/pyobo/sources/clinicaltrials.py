@@ -1,6 +1,7 @@
 """A source for ClinicalTrials.gov."""
 
 from collections.abc import Iterable
+from typing import Any
 
 from clinicaltrials_downloader import get_studies_slim
 
@@ -114,7 +115,7 @@ def iterate_studies(*, force: bool = False) -> Iterable[Term]:
         yield _process_study(study)
 
 
-def _process_study(raw_study) -> Term:
+def _process_study(raw_study: dict[str, Any]) -> Term:
     protocol_section = raw_study["protocolSection"]
     identification_module = protocol_section["identificationModule"]
     identifier = identification_module["nctId"]

@@ -59,7 +59,7 @@ def _replace_mapping_getter(name: str, data: Mapping[str, Mapping[str, X]]) -> P
 
 def get_mock_get_xrefs_df(
     df: list[tuple[str, str, str, str, str]] | pd.DataFrame,
-) -> mock._patch:
+) -> Patch:
     """Mock the :func:`pyobo.xrefsdb.xrefs_pipeline.get_xref_df` function.
 
     :param df: The dataframe to return when the function is called
@@ -75,7 +75,7 @@ def get_mock_get_xrefs_df(
     )
 
 
-def _make_mock_get_name(name: str, data: Mapping[str, Mapping[str, X]]) -> mock._patch:
+def _make_mock_get_name(name: str, data: Mapping[str, Mapping[str, X]]) -> Patch:
     def _get_name(prefix: str, identifier: str) -> X | None:
         return data.get(prefix, {}).get(identifier)
 
