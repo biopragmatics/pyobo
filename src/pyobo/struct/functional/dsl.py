@@ -1251,9 +1251,9 @@ def _add_triple_annotations(
     type: term.URIRef | None = None,
     converter: Converter,
     force_for_negative_assertion: bool = False,
-    reified_s=OWL.annotatedSource,
-    reified_p=OWL.annotatedProperty,
-    reified_o=OWL.annotatedTarget,
+    reified_s: term.URIRef = OWL.annotatedSource,
+    reified_p: term.URIRef = OWL.annotatedProperty,
+    reified_o: term.URIRef = OWL.annotatedTarget,
 ) -> term.BNode:
     # in order to represent annotations on a triple,
     # we need to "reify" the triple, which means to
