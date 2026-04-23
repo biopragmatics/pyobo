@@ -1375,7 +1375,7 @@ class Obo:
         return ancestor in self.ancestors(descendant)
 
     @property
-    def hierarchy(self) -> nx.DiGraph:
+    def hierarchy(self) -> nx.DiGraph[Reference]:
         """A graph representing the parent/child relationships between the entities.
 
         To get all children of a given entity, do:
