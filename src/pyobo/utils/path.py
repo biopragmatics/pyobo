@@ -1,10 +1,12 @@
 """Utilities for building paths."""
 
+from __future__ import annotations
+
 import enum
 import json
 import logging
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from curies import Reference
@@ -13,6 +15,9 @@ from pystow.utils.download import DownloadKwargs
 from typing_extensions import Unpack
 
 from ..constants import CACHE_SUBDIRECTORY_NAME, RAW_MODULE, RELATION_SUBDIRECTORY_NAME
+
+if TYPE_CHECKING:
+    from pandas._typing import DtypeArg
 
 __all__ = [
     "CacheArtifact",
@@ -71,7 +76,7 @@ def ensure_df(
     name: str | None = None,
     force: bool = False,
     sep: str = "\t",
-    dtype=str,
+    dtype: DtypeArg | None = str,
     **kwargs: Any,
 ) -> pd.DataFrame:
     """Download a file and open as a dataframe."""

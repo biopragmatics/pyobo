@@ -37,7 +37,7 @@ def get_graph(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> nx.DiGraph:
     return rv
 
 
-def get_edges_df(prefix, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
+def get_edges_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get a dataframe of edges triples."""
     version = get_version_from_kwargs(prefix, kwargs)
     path = get_cache_path(prefix, CacheArtifact.edges, version=version)
@@ -52,7 +52,7 @@ def get_edges_df(prefix, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
 
 
 def get_edges(
-    prefix, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[tuple[Reference, Reference, Reference]]:
     """Get a list of edge triples."""
     df = get_edges_df(prefix, **kwargs)

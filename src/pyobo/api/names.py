@@ -63,7 +63,6 @@ def get_name_by_curie(
 X = TypeVar("X")
 
 NO_BUILD_PREFIXES: set[str] = set()
-NO_BUILD_LOGGED: set = set()
 
 
 def _help_get(

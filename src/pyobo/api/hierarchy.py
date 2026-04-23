@@ -1,5 +1,7 @@
 """High-level API for hierarchies."""
 
+from __future__ import annotations
+
 import logging
 import warnings
 from collections.abc import Iterable
@@ -45,7 +47,7 @@ def get_hierarchy(
     extra_relations: Iterable[ReferenceHint] | None = None,
     properties: Iterable[ReferenceHint] | None = None,
     **kwargs: Unpack[HierarchyKwargs],
-) -> nx.DiGraph:
+) -> nx.DiGraph[Reference]:
     """Get hierarchy of parents as a directed graph.
 
     :param prefix: The name of the namespace.

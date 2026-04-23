@@ -48,7 +48,7 @@ def _get_zenodo() -> Zenodo:
     return Zenodo()
 
 
-def _get_parts(_concept_rec_id, _record_id, version) -> Sequence[str]:
+def _get_parts(_concept_rec_id: str, _record_id: str, version: str) -> Sequence[str]:
     """Get sequence to use in :func:`pystow.ensure`.
 
     .. note::

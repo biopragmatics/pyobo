@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from contextlib import AbstractContextManager
-from typing import TypeAlias, TypeVar
+from typing import Any, TypeAlias, TypeVar
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -51,7 +51,7 @@ X = TypeVar("X")
 
 
 def _replace_mapping_getter(name: str, data: Mapping[str, Mapping[str, X]]) -> Patch:
-    def _mock_get_data(prefix: str, **_kwargs) -> Mapping[str, X]:
+    def _mock_get_data(prefix: str, **_kwargs: Any) -> Mapping[str, X]:
         return data.get(prefix, {})
 
     return mock.patch(name, side_effect=_mock_get_data)
