@@ -62,4 +62,6 @@ version_option = click.option(
 force_process_option = click.option(
     "--force-process", is_flag=True, help="Force re-processing, but not necessarily re-downloading"
 )
-Clickable = TypeVar("Clickable", bound=Callable)
+
+X = TypeVar("X")
+Clickable = TypeVar("Clickable", bound=Callable[X])

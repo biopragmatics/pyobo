@@ -44,7 +44,9 @@ def _iter_ncbigene(left: int, right: int) -> Iterable[tuple[str, str, str]]:
             yield ncbigene.PREFIX, parts[left], parts[right]
 
 
-def _iter_names(leave: bool = False, **kwargs) -> Iterable[tuple[str, str, str]]:
+def _iter_names(
+    leave: bool = False, **kwargs: Unpack[IterHelperHelperDict]
+) -> Iterable[tuple[str, str, str]]:
     """Iterate over all prefix-identifier-name triples we can get.
 
     :param leave: should the tqdm be left behind?

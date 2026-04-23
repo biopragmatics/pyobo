@@ -14,6 +14,7 @@ from typing import Any, TypeAlias
 
 import bioregistry
 import networkx as nx
+from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
 from curies.preprocessing import BlocklistError
 from curies.vocabulary import SynonymScope
@@ -29,16 +30,14 @@ from .reader_utils import (
     _parse_provenance_list,
 )
 from .. import vocabulary as v
-from ..reference import OBOLiteral, _obo_parse_identifier
+from ..reference import OBOLiteral, _obo_parse_identifier, default_reference
 from ..struct import (
     Obo,
-    Reference,
     Synonym,
     SynonymTypeDef,
     Term,
     TypeDef,
     build_ontology,
-    default_reference,
 )
 from ..struct_utils import Annotation, Stanza
 from ..typedef import comment as has_comment
@@ -554,7 +553,7 @@ def _process_subsets(
     ):
         if reference not in subset_typedefs:
             if reference not in UNDEFINED_SUBSETS:
-                logger.warning("[%s] undefined subset: %s", stanza.curie, reference)
+                logger.debug("[%s] undefined subset: %s", stanza.curie, reference)
                 UNDEFINED_SUBSETS.add(reference)
         stanza.append_subset(reference)
 

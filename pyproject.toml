@@ -163,6 +163,7 @@ scispacy = [
 ]
 pykeen = [
     "pykeen",
+    "scipy>=1.17.1",
 ]
 grape = [
     "grape",

@@ -33,7 +33,7 @@ Y = TypeVar("Y")
 
 def open_map_tsv(
     path: str | Path, *, use_tqdm: bool = False, has_header: bool = True
-) -> Mapping[str, str]:
+) -> dict[str, str]:
     """Load a mapping TSV file into a dictionary."""
     rv = {}
     with pystow.utils.safe_open_reader(path) as reader:
@@ -79,7 +79,7 @@ def _help_multimap_tsv(
             yield cast(Iterable[tuple[str, str]], reader)
 
 
-def multidict(pairs: Iterable[tuple[X, Y]]) -> Mapping[X, list[Y]]:
+def multidict(pairs: Iterable[tuple[X, Y]]) -> dict[X, list[Y]]:
     """Accumulate a multidict from a list of pairs."""
     rv = defaultdict(list)
     for key, value in pairs:

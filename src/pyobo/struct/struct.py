@@ -1762,10 +1762,10 @@ class Obo:
         if pp in typedefs:
             return typedefs[pp]
         if pp not in _warned:
-            _warn_string = f"[{term.curie}] undefined typedef: {pp}"
+            _warn_string = f"[{term.curie}] undefined typedef: {pp.curie}"
             if predicate.name:
                 _warn_string += f" ({predicate.name})"
-            logger.warning(_warn_string)
+            logger.debug(_warn_string)
             _warned.add(pp)
         return None
 
@@ -2514,7 +2514,7 @@ def make_ad_hoc_ontology(
         ontology_iri = _ontology_iri
         ontology_version_iri = _ontology_version_iri
 
-        def __post_init__(self):
+        def __post_init__(self) -> None:
             self.date = _date
             self.data_version = _data_version
 

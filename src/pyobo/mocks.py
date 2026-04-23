@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TypeVar
+from contextlib import AbstractContextManager
+from typing import TypeAlias, TypeVar
 from unittest import mock
+from unittest.mock import MagicMock
 
 import pandas as pd
 
@@ -17,8 +19,10 @@ __all__ = [
     "get_mock_id_synonyms_mapping",
 ]
 
+Patch: TypeAlias = AbstractContextManager[MagicMock]
 
-def get_mock_id_name_mapping(data: Mapping[str, Mapping[str, str]]) -> mock._patch:
+
+def get_mock_id_name_mapping(data: Mapping[str, Mapping[str, str]]) -> Patch:
     """Mock the :func:`pyobo.extract.get_id_name_mapping` function.
 
     :param data: A mapping from prefix to mappings of identifier to names.
@@ -26,7 +30,7 @@ def get_mock_id_name_mapping(data: Mapping[str, Mapping[str, str]]) -> mock._pat
     return _replace_mapping_getter("pyobo.api.names.get_id_name_mapping", data)
 
 
-def get_mock_id_synonyms_mapping(data: Mapping[str, Mapping[str, list[str]]]) -> mock._patch:
+def get_mock_id_synonyms_mapping(data: Mapping[str, Mapping[str, list[str]]]) -> Patch:
     """Mock the :func:`pyobo.extract.get_id_synonyms_mapping` function.
 
     :param data: A mapping from prefix to mappings of identifier to lists of synonyms.
@@ -34,7 +38,7 @@ def get_mock_id_synonyms_mapping(data: Mapping[str, Mapping[str, list[str]]]) ->
     return _replace_mapping_getter("pyobo.api.names.get_id_synonyms_mapping", data)
 
 
-def get_mock_id_alts_mapping(data: Mapping[str, Mapping[str, list[str]]]) -> mock._patch:
+def get_mock_id_alts_mapping(data: Mapping[str, Mapping[str, list[str]]]) -> Patch:
     """Mock the :func:`pyobo.extract.get_id_to_alts` function.
 
     :param data: A mapping from prefix to mappings of identifier to lists of alternative
@@ -46,7 +50,7 @@ def get_mock_id_alts_mapping(data: Mapping[str, Mapping[str, list[str]]]) -> moc
 X = TypeVar("X")
 
 
-def _replace_mapping_getter(name: str, data: Mapping[str, Mapping[str, X]]) -> mock._patch:
+def _replace_mapping_getter(name: str, data: Mapping[str, Mapping[str, X]]) -> Patch:
     def _mock_get_data(prefix: str, **_kwargs) -> Mapping[str, X]:
         return data.get(prefix, {})
 

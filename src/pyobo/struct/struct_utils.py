@@ -43,6 +43,7 @@ if TYPE_CHECKING:
     from pyobo.struct.struct import Synonym, TypeDef
 
 __all__ = [
+    "Annotation",
     "AnnotationsDict",
     "HasReferencesMixin",
     "ReferenceHint",
@@ -755,13 +756,13 @@ class Stanza(Referenced, HasReferencesMixin):
     # docstr-coverage:excused `overload`
     @overload
     def get_mappings(
-        self, *, include_xrefs: bool = ..., add_context: Literal[True] = True
+        self, *, include_xrefs: bool = ..., add_context: Literal[True] = ...
     ) -> list[tuple[Reference, Reference, MappingContext]]: ...
 
     # docstr-coverage:excused `overload`
     @overload
     def get_mappings(
-        self, *, include_xrefs: bool = ..., add_context: Literal[False] = False
+        self, *, include_xrefs: bool = ..., add_context: Literal[False] = ...
     ) -> list[tuple[Reference, Reference]]: ...
 
     def get_mappings(

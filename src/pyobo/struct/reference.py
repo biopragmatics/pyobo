@@ -25,6 +25,8 @@ from ..identifier_utils import (
 )
 
 __all__ = [
+    "OBOLiteral",
+    "Reference",
     "Referenced",
     "default_reference",
     "get_preferred_curie",

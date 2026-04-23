@@ -2,7 +2,10 @@
 
 from collections.abc import Mapping
 
+from typing_extensions import Unpack
+
 from ..api import get_filtered_properties_mapping, get_filtered_relations_df
+from ..constants import GetOntologyKwargs
 from ..struct.typedef import has_role
 from ..utils.io import multisetdict
 
@@ -13,7 +16,7 @@ __all__ = [
 ]
 
 
-def get_chebi_id_smiles_mapping(**kwargs) -> Mapping[str, str]:
+def get_chebi_id_smiles_mapping(**kwargs: Unpack[GetOntologyKwargs]) -> dict[str, str]:
     """Get a mapping from ChEBI identifiers to SMILES.
 
     This is common enough that it gets its own function :)

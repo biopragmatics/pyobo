@@ -47,7 +47,7 @@ class Nope(Obo):
 
     ontology = "nope"
 
-    def iter_terms(self, force: bool = False) -> Iterable:
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Do not do anything."""
 
 

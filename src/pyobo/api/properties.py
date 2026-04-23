@@ -127,7 +127,7 @@ def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.Da
 @wrap_norm_prefix
 def get_filtered_properties_mapping(
     prefix: str, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
-) -> Mapping[str, str]:
+) -> dict[str, str]:
     """Extract a single property for each term as a dictionary.
 
     :param prefix: the resource to load

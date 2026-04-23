@@ -1,6 +1,7 @@
 """Tests for functional OWL."""
 
 import unittest
+from typing import ClassVar
 
 import rdflib
 from curies import Converter, Reference
@@ -22,6 +23,8 @@ from pyobo.struct.functional.utils import EXAMPLE_PREFIX_MAP, get_rdf_graph
 
 class TestBox(unittest.TestCase):
     """Test boxes."""
+
+    converter: ClassVar[Converter]
 
     @classmethod
     def setUpClass(cls) -> None:
