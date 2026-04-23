@@ -3,7 +3,7 @@
 import json
 import os
 from collections.abc import Iterable, Mapping
-from typing import Any
+from typing import Any, cast
 
 import requests
 from tqdm.auto import tqdm
@@ -35,7 +35,7 @@ def ensure_ndex_network(prefix: str, uuid: str, force: bool = False) -> CX:
     path = prefix_directory_join(prefix, "ndex", name=f"{uuid}.json")
     if os.path.exists(path) and not force:
         with open(path) as file:
-            return json.load(file)
+            return cast(CX, json.load(file))
 
     res = requests.get(f"{NETWORK_ENDPOINT}/{uuid}")
     res_json = res.json()

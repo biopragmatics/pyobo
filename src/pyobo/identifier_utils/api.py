@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from functools import lru_cache, wraps
-from typing import Annotated, ClassVar, Concatenate, ParamSpec, TypeVar
+from typing import Annotated, Any, ClassVar, Concatenate, ParamSpec, TypeVar
 
 import bioregistry
 import click
@@ -84,7 +84,7 @@ class ParseValidationError(ParseError):
 
     message = "failed Pydantic validation"
 
-    def __init__(self, *args, exc: ValidationError, **kwargs) -> None:
+    def __init__(self, *args: Any, exc: ValidationError, **kwargs: Any) -> None:
         """Initialize the error."""
         super().__init__(*args, **kwargs)
         self.exc = exc

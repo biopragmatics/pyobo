@@ -67,7 +67,7 @@ def get_mock_get_xrefs_df(
     if isinstance(df, list):
         df = pd.DataFrame(df, columns=XREF_COLUMNS)
 
-    def _mock_get_xrefs_df(*_args, **_kwargs) -> pd.DataFrame:
+    def _mock_get_xrefs_df(*_args: Any, **_kwargs: Any) -> pd.DataFrame:
         return df
 
     return mock.patch(
