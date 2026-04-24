@@ -251,21 +251,21 @@ class TestAltIds(unittest.TestCase):
             expected_semantic_mappings = [
                 SemanticMapping(
                     subject=r1,
-                    predicate=_v.alternative_term,
+                    predicate=_v.alternative_term.without_name(),
                     object=r2,
-                    justification=_v.unspecified_matching_process,
+                    justification=_v.unspecified_matching_process.without_name(),
                 ),
                 SemanticMapping(
                     subject=r1,
-                    predicate=_v.has_dbxref,
+                    predicate=_v.has_dbxref.without_name(),
                     object=r2_1,
-                    justification=_v.unspecified_matching_process,
+                    justification=_v.unspecified_matching_process.without_name(),
                 ),
                 SemanticMapping(
                     subject=r3,
-                    predicate=_v.exact_match,
+                    predicate=_v.exact_match.without_name(),
                     object=r2_2,
-                    justification=_v.unspecified_matching_process,
+                    justification=_v.unspecified_matching_process.without_name(),
                 ),
             ]
             self.assertEqual(
@@ -277,6 +277,7 @@ class TestAltIds(unittest.TestCase):
                     m.model_dump(exclude_none=True, exclude_unset=True)
                     for m in sorted(semantic_mappings)
                 ],
+                msg="\nsemantic mappings are unexpectedly different"
             )
 
             # Synonyms
