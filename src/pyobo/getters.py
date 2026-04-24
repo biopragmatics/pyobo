@@ -214,7 +214,7 @@ def _ensure_ontology_path(
         if url is None:
             continue
         try:
-            path = ensure_path(prefix, url=url, force=force, version=version)
+            path = ensure_path(prefix, url=url, force=force, version=version, backend="requests")
         except (urllib.error.HTTPError, pystow.utils.DownloadError):
             continue
         except pystow.utils.UnexpectedDirectoryError:
