@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 from collections.abc import Sequence
 from pathlib import Path
+from typing import TextIO
 
 from curies import Converter
 from pystow.utils import safe_open
@@ -35,7 +36,7 @@ def write_ontology(
     directly_imports_documents: list[Import | str] | None = None,
     annotations: Annotations | None = None,
     axioms: list[Axiom] | None = None,
-    file=None,
+    file: TextIO | None = None,
 ) -> None:
     """Print an ontology serialized as functional OWL."""
     ontology = Ontology(

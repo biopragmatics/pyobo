@@ -24,11 +24,9 @@ def download_pharmgkb(prefix: str, url: str, *, force: bool) -> Path:
         prefix,
         url=url,
         backend="requests",
-        download_kwargs={
-            "headers": {
-                # This is required otherwise we get booted
-                "User-Agent": AGENT,
-            },
+        headers={
+            # This is required otherwise we get booted
+            "User-Agent": AGENT,
         },
         force=force,
     )

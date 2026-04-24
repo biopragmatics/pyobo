@@ -28,7 +28,7 @@ class OMIMPSGetter(Obo):
         content = soup.find(id="mimContent")
         if content is None:
             raise ValueError("omim.ps failed - scraper could not find id='mimContent' in HTML")
-        table = content.find("table")  # type:ignore[attr-defined]
+        table = content.find("table")
         if table is None:
             raise ValueError("omim.ps failed - scraper could not find table in HTML")
         tbody = table.find("tbody")

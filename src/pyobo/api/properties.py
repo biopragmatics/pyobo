@@ -38,7 +38,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def get_object_properties_df(prefix, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
+def get_object_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get a dataframe of object property triples."""
     version = get_version_from_kwargs(prefix, kwargs)
     path = get_cache_path(prefix, CacheArtifact.object_properties, version=version)
@@ -55,7 +55,7 @@ def get_object_properties_df(prefix, **kwargs: Unpack[GetOntologyKwargs]) -> pd.
 
 
 def get_object_properties(
-    prefix, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[tuple[Reference, Reference, Reference]]:
     """Get a list of object property triples."""
     df = get_object_properties_df(prefix, **kwargs)
@@ -127,7 +127,7 @@ def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.Da
 @wrap_norm_prefix
 def get_filtered_properties_mapping(
     prefix: str, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
-) -> Mapping[str, str]:
+) -> dict[str, str]:
     """Extract a single property for each term as a dictionary.
 
     :param prefix: the resource to load
@@ -170,9 +170,7 @@ def get_property(
     >>> pyobo.get_property("chebi", "132964", "http://purl.obolibrary.org/obo/chebi/smiles")
     "C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F"
     """
-    filtered_properties_mapping = get_filtered_properties_mapping(
-        prefix=prefix, prop=prop, **kwargs
-    )
+    filtered_properties_mapping = get_filtered_properties_mapping(prefix, prop=prop, **kwargs)
     return filtered_properties_mapping.get(identifier)
 
 
@@ -192,7 +190,7 @@ def get_properties(
         :func:`get_property`
     """
     filtered_properties_multimapping = get_filtered_properties_multimapping(
-        prefix=prefix, prop=prop, **kwargs
+        prefix, prop=prop, **kwargs
     )
     return filtered_properties_multimapping.get(identifier)
 

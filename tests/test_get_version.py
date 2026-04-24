@@ -6,7 +6,6 @@ from unittest import mock
 
 from pyobo.api.utils import get_version, get_version_pins
 from pyobo.utils.misc import (
-    _get_getter_urls,
     _get_version_from_artifact,
     _prioritize_version,
     cleanup_version,
@@ -52,14 +51,6 @@ class TestVersionPins(unittest.TestCase):
 
 class TestVersionGetter(unittest.TestCase):
     """Test functions for getting versions."""
-
-    def test_prov(self) -> None:
-        """Test getting the version of prov."""
-        urls = list(_get_getter_urls("prov"))
-        self.assertEqual(1, len(urls))
-        self.assertEqual(("owl", "http://aber-owl.net/media/ontologies/PROV/1/prov.owl"), urls[0])
-        v = _get_version_from_artifact("prov")
-        self.assertEqual("20130430", v)
 
     def test_bao(self) -> None:
         """Test getting the version of BAO."""

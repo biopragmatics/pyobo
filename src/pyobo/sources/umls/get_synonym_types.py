@@ -28,7 +28,7 @@ def get_umls_synonyms(*, refresh: bool = False) -> Mapping[str, str]:
     table = soup.find(id="mrdoc_TTY")
     if table is None:
         raise ValueError
-    body = table.find("tbody")  # type:ignore[attr-defined]
+    body = table.find("tbody")
     if body is None:
         raise ValueError
     rv = {}

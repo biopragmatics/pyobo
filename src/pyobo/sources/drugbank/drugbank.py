@@ -10,6 +10,7 @@ from collections.abc import Iterable, Iterator, Mapping
 from functools import lru_cache
 from typing import Any
 from xml.etree import ElementTree
+from xml.etree.ElementTree import Element
 
 import pystow
 from tqdm.auto import tqdm
@@ -52,7 +53,7 @@ def iterate_drug_info(version: str, force: bool = False) -> Iterable[Mapping[str
     @cached_pickle(
         prefix_directory_join(PREFIX, name="precompiled.pkl", version=version), force=force
     )
-    def _inner():
+    def _inner() -> list[Mapping[str, Any]]:
         root = get_xml_root(version)
         rv = [_extract_drug_info(drug_xml) for drug_xml in tqdm(root, desc="Drugs")]
         return rv
@@ -228,9 +229,9 @@ def _extract_drug_info(drug_xml: ElementTree.Element) -> Mapping[str, Any]:
     return row
 
 
-def _get_patents(drug_element) -> Iterator:
+def _get_patents(drug_element: Element) -> Iterator[dict[str, Any]]:
     for patent_element in drug_element.findall(f"{ns}patents/{ns}patent"):
-        rv = {
+        rv: dict[str, Any] = {
             "patent_id": patent_element.findtext(f"{ns}number"),
             "country": patent_element.findtext(f"{ns}country"),
             "pediatric_extension": patent_element.findtext(f"{ns}pediatric-extension") != "false",
@@ -247,14 +248,14 @@ def _get_patents(drug_element) -> Iterator:
 _categories = ["target", "enzyme", "carrier", "transporter"]
 
 
-def _iterate_protein_stuff(drug_xml) -> Iterator:
+def _iterate_protein_stuff(drug_xml: Element) -> Iterator:
     for category in _categories:
         proteins = drug_xml.findall(f"{ns}{category}s/{ns}{category}")
         for protein in proteins:
             yield category, protein
 
 
-def _extract_protein_info(category, protein) -> dict:
+def _extract_protein_info(category: str, protein: Element) -> dict:
     # FIXME Differentiate between proteins and protein groups/complexes
     polypeptides = protein.findall(f"{ns}polypeptide")
 
@@ -285,7 +286,7 @@ def _extract_protein_info(category, protein) -> dict:
     return row
 
 
-def _iter_polypeptides(polypeptides) -> Iterable[Mapping[str, Any]]:
+def _iter_polypeptides(polypeptides: list[Element]) -> Iterable[Mapping[str, Any]]:
     for polypeptide in polypeptides:
         name = polypeptide.findtext(f"{ns}name")
 
@@ -295,16 +296,14 @@ def _iter_polypeptides(polypeptides) -> Iterable[Mapping[str, Any]]:
         uniprot_accession = polypeptide.findtext(
             f"{ns}external-identifiers/{ns}external-identifier[{ns}resource='UniProt Accession']/{ns}identifier",
         )
-        organism = polypeptide.findtext(f"{ns}organism")
-        taxonomy_id = polypeptide.find(f"{ns}organism").attrib["ncbi-taxonomy-id"]
-
         yv = {
             "name": name,
             "uniprot_id": uniprot_id,
             "uniprot_accession": uniprot_accession,
-            "organism": organism,
-            "taxonomy": taxonomy_id,
+            "organism": polypeptide.findtext(f"{ns}organism"),
         }
+        if (organism_tag := polypeptide.find(f"{ns}organism")) is not None:
+            yv["taxonomy_id"] = organism_tag.attrib["ncbi-taxonomy-id"]
 
         hgnc_id = polypeptide.findtext(
             f"{ns}external-identifiers/{ns}external-identifier"

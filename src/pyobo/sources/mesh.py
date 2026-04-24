@@ -68,7 +68,7 @@ def _get_xml_root(path: Path) -> Element:
     """Parse an XML file from a path to a GZIP file."""
     t = time.time()
     logger.info("parsing xml from %s", path)
-    tree = etree.parse(path.as_posix())  # type:ignore
+    tree = etree.parse(path.as_posix())
     logger.info("parsed xml in %.2f seconds", time.time() - t)
     return tree.getroot()
 

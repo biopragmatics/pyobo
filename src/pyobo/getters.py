@@ -357,7 +357,7 @@ def iter_helper_helper(
             click.style(f"\n{prefix} - {bioregistry.get_name(prefix)}", fg="green", bold=True)
         )
         try:
-            yv = f(prefix, **kwargs)  # type:ignore
+            yv = f(prefix, **kwargs)
         except (UnhandledFormatError, NoBuildError) as e:
             # make sure this comes before the other runtimeerror catch
             logger.warning("[%s] %s", prefix, e)
@@ -409,7 +409,7 @@ def iter_helper_helper(
             yield prefix, yv
 
 
-def _is_xml(e) -> bool:
+def _is_xml(e: Exception) -> bool:
     return str(e).startswith("Tag-value pair parsing failed for:") or str(e).startswith(
         'Tag-value pair parsing failed for:\n<?xml version="1.0" encoding="UTF-8"?>'
     )

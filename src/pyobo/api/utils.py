@@ -5,7 +5,7 @@ import logging
 import os
 import warnings
 from functools import lru_cache
-from typing import Literal, overload
+from typing import Literal, cast, overload
 
 import bioversions
 import curies
@@ -18,6 +18,7 @@ from ..utils.path import prefix_directory_join
 __all__ = [
     "VersionError",
     "get_version",
+    "get_version_from_kwargs",
     "get_version_pins",
 ]
 
@@ -65,7 +66,7 @@ def get_version(prefix: str, *, strict: bool = False) -> str | None:
     metadata_json_path = prefix_directory_join(prefix, name="metadata.json", ensure_exists=False)
     if metadata_json_path.exists():
         data = json.loads(metadata_json_path.read_text())
-        version = data["version"]
+        version = cast(str | None, data["version"])
         if version:
             return version
 
@@ -100,7 +101,7 @@ def get_version_pins() -> dict[str, str]:
         return {}
 
     try:
-        version_pins = json.loads(version_pins_str)
+        version_pins = cast(dict[str, str], json.loads(version_pins_str))
     except ValueError as e:
         logger.error(
             "The value for the environment variable PYOBO_VERSION_PINS "

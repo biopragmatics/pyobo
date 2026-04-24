@@ -42,6 +42,7 @@ __all__ = [
     "has_mailbox",
     "has_mature",
     "has_member",
+    "has_ontology_root_term",
     "has_part",
     "has_participant",
     "has_predecessor",

@@ -1,8 +1,12 @@
 """Tests for getting OBO."""
 
+from __future__ import annotations
+
 import unittest
 from operator import attrgetter
+from typing import ClassVar
 
+import networkx as nx
 import obonet
 from curies import ReferenceTuple
 
@@ -23,6 +27,9 @@ from tests.constants import TEST_CHEBI_OBO_PATH, chebi_patch, chebi_version_patc
 
 class TestParseObonet(unittest.TestCase):
     """Test parsing OBO."""
+
+    ontology: ClassVar[str]
+    graph: ClassVar[nx.MultiDiGraph[str]]
 
     @classmethod
     def setUpClass(cls) -> None:

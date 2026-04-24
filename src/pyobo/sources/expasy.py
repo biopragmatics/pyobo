@@ -248,16 +248,16 @@ def get_database(lines: Iterable[str]) -> Mapping[str, dict[str, Any]]:
             elif descriptor == DE:
                 if "name" not in ec_data_entry["concept"]:
                     ec_data_entry["concept"]["name"] = ""
-                ec_data_entry["concept"]["name"] += value.rstrip(".")  # type:ignore
+                ec_data_entry["concept"]["name"] += value.rstrip(".")
             elif descriptor == CA:
                 if "reaction" not in ec_data_entry:
                     ec_data_entry["reaction"] = ""
-                ec_data_entry["reaction"] += value.rstrip(".")  # type:ignore
+                ec_data_entry["reaction"] += value.rstrip(".")
             elif descriptor == AN:
-                ec_data_entry["synonyms"].append(value.rstrip("."))  # type:ignore
+                ec_data_entry["synonyms"].append(value.rstrip("."))
             elif descriptor == PR:
                 value = value[len("PROSITE; ") : -1]  # remove trailing comma
-                ec_data_entry["domains"].append(  # type:ignore
+                ec_data_entry["domains"].append(
                     {
                         "namespace": "prosite",
                         "identifier": value,
@@ -268,7 +268,7 @@ def get_database(lines: Iterable[str]) -> Mapping[str, dict[str, Any]]:
                     if not uniprot_entry:
                         continue
                     uniprot_id, uniprot_accession = uniprot_entry.split(",")
-                    ec_data_entry["proteins"].append(  # type:ignore
+                    ec_data_entry["proteins"].append(
                         {
                             "namespace": "uniprot",
                             "name": uniprot_accession,
@@ -297,7 +297,7 @@ def _parse_transfer(value: str) -> list[str]:
     return sorted(x.strip().removeprefix("and").strip() for x in TRANSFER_SPLIT_RE.split(value))
 
 
-def _group_by_id(lines) -> list:
+def _group_by_id(lines: Iterable[str]) -> list[list[tuple[str, str]]]:
     """Group lines by identifier."""
     groups: list[list[tuple[str, str]]] = []
     for line in lines:  # TODO replace with itertools.groupby

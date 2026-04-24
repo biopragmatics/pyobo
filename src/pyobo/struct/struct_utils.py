@@ -43,6 +43,7 @@ if TYPE_CHECKING:
     from pyobo.struct.struct import Synonym, TypeDef
 
 __all__ = [
+    "Annotation",
     "AnnotationsDict",
     "HasReferencesMixin",
     "ReferenceHint",
@@ -88,7 +89,7 @@ class Annotation(NamedTuple):
         return cls(predicate, OBOLiteral.string(value, language=language))
 
     @staticmethod
-    def _sort_key(x: Annotation) -> tuple:
+    def _sort_key(x: Annotation) -> tuple[Reference, tuple[int, Reference | OBOLiteral]]:
         return x.predicate, _reference_or_literal_key(x.value)
 
 
@@ -374,13 +375,15 @@ class Stanza(Referenced, HasReferencesMixin):
             yield f"intersection_of: {end}"
 
     @staticmethod
-    def _intersection_of_key(io: Reference | tuple[Reference, Reference]) -> tuple:
+    def _intersection_of_key(
+        io: Reference | tuple[Reference, Reference],
+    ) -> tuple[Literal[0], Reference] | tuple[Literal[1], tuple[Reference, Reference]]:
         if isinstance(io, Reference):
             return 0, io
         else:
             return 1, io
 
-    def _iterate_xref_obo(self, *, ontology_prefix) -> Iterable[str]:
+    def _iterate_xref_obo(self, *, ontology_prefix: str) -> Iterable[str]:
         for xref in sorted(self.xrefs):
             xref_yv = f"xref: {reference_escape(xref, ontology_prefix=ontology_prefix, add_name_comment=False)}"
             xref_yv += _get_obo_trailing_modifiers(
@@ -507,10 +510,7 @@ class Stanza(Referenced, HasReferencesMixin):
         typedefs: Mapping[ReferenceTuple, TypeDef],
     ) -> Iterable[str]:
         for line in _iterate_obo_relations(
-            # the type checker seems to be a bit confused, this is an okay typing since we're
-            # passing a more explicit version. The issue is that list is used for the typing,
-            # which means it can't narrow properly
-            self.properties,  # type:ignore
+            self.properties,
             self._axioms,
             ontology_prefix=ontology_prefix,
             skip_predicate_objects=skip_predicate_objects,
@@ -523,10 +523,7 @@ class Stanza(Referenced, HasReferencesMixin):
         self, *, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:
         for line in _iterate_obo_relations(
-            # the type checker seems to be a bit confused, this is an okay typing since we're
-            # passing a more explicit version. The issue is that list is used for the typing,
-            # which means it can't narrow properly
-            self.relationships,  # type:ignore
+            self.relationships,
             self._axioms,
             ontology_prefix=ontology_prefix,
             typedefs=typedefs,
@@ -755,13 +752,13 @@ class Stanza(Referenced, HasReferencesMixin):
     # docstr-coverage:excused `overload`
     @overload
     def get_mappings(
-        self, *, include_xrefs: bool = ..., add_context: Literal[True] = True
+        self, *, include_xrefs: bool = ..., add_context: Literal[True] = ...
     ) -> list[tuple[Reference, Reference, MappingContext]]: ...
 
     # docstr-coverage:excused `overload`
     @overload
     def get_mappings(
-        self, *, include_xrefs: bool = ..., add_context: Literal[False] = False
+        self, *, include_xrefs: bool = ..., add_context: Literal[False] = ...
     ) -> list[tuple[Reference, Reference]]: ...
 
     def get_mappings(

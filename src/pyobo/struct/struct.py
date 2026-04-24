@@ -16,7 +16,7 @@ from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, S
 from dataclasses import dataclass, field
 from pathlib import Path
 from textwrap import dedent
-from typing import Annotated, Any, ClassVar, Self, TextIO
+from typing import Annotated, Any, ClassVar, Self, TextIO, cast
 
 import bioregistry
 import click
@@ -24,6 +24,7 @@ import curies
 import networkx as nx
 import pandas as pd
 import ssslm
+import sssom_pydantic
 from curies import Converter, ReferenceTuple
 from curies import vocabulary as _cv
 from more_click import force_option, verbose_option
@@ -325,7 +326,7 @@ class Term(Stanza):
         identifier: str,
         name: str | None = None,
         definition: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> Term:
         """Create a term from a reference."""
         return cls(
@@ -335,7 +336,7 @@ class Term(Stanza):
         )
 
     @classmethod
-    def default(cls, prefix, identifier, name=None) -> Self:
+    def default(cls, prefix: str, identifier: str, name: str | None = None) -> Self:
         """Create a default term."""
         return cls(reference=default_reference(prefix=prefix, identifier=identifier, name=name))
 
@@ -371,7 +372,7 @@ class Term(Stanza):
         confidence: float | None = None,
         contributor: Reference | None = None,
     ) -> Self:
-        """Append an exact match, also adding an xref."""
+        """Append an exact match, also adding a cross-reference."""
         reference = _ensure_ref(reference)
         axioms = self._prepare_mapping_annotations(
             mapping_justification=mapping_justification,
@@ -751,13 +752,13 @@ class Obo:
         raise NotImplementedError
 
     def write_obograph(self, path: str | Path, *, converter: Converter | None = None) -> None:
-        """Write OBO Graph json."""
+        """Write OBO Graph JSON."""
         from . import obograph
 
         obograph.write_obograph(self, path, converter=converter)
 
     @classmethod
-    def cli(cls, *args) -> Any:
+    def cli(cls, *args: Any) -> Any:
         """Run the CLI for this class."""
         cli = cls.get_cls_cli()
         return cli(*args)
@@ -823,7 +824,7 @@ class Obo:
             return iter(self.iter_terms(force=self.force))
         return iter(self._items_accessor)
 
-    def _iter_terms(self, use_tqdm: bool = False, desc: str = "terms") -> Iterable[Term]:
+    def _iter_terms(self, use_tqdm: bool = False, desc: str | None = None) -> Iterable[Term]:
         yv = self._iter_terms_safe()
         if use_tqdm:
             total: int | None
@@ -831,10 +832,12 @@ class Obo:
                 total = len(self._items_accessor)
             except TypeError:
                 total = None
-            yv = tqdm(yv, desc=desc, unit_scale=True, unit="term", total=total)
+            yv = tqdm(
+                yv, desc=desc or "terms", unit_scale=True, unit="term", total=total, leave=False
+            )
         yield from yv
 
-    def _iter_stanzas(self, use_tqdm: bool = False, desc: str = "terms") -> Iterable[Stanza]:
+    def _iter_stanzas(self, use_tqdm: bool = False, desc: str | None = None) -> Iterable[Stanza]:
         yield from self._iter_terms(use_tqdm=use_tqdm, desc=desc)
         yield from self.typedefs or []
 
@@ -1040,6 +1043,7 @@ class Obo:
                 desc=f"[{self._prefix_version}] writing OBO",
                 unit_scale=True,
                 unit="line",
+                leave=False,
             )
         if isinstance(file, str | Path | os.PathLike):
             with safe_open(file, operation="write") as fh:
@@ -1048,7 +1052,7 @@ class Obo:
             self._write_lines(it, file)
 
     @staticmethod
-    def _write_lines(it, file: TextIO | None) -> None:
+    def _write_lines(it: Iterable[str], file: TextIO | None) -> None:
         for line in it:
             print(line, file=file)
 
@@ -1188,7 +1192,9 @@ class Obo:
     def _ttl_path(self) -> Path:
         return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.ttl")
 
-    def _get_cache_config(self) -> list[tuple[CacheArtifact, Sequence[str], Callable]]:
+    def _get_cache_config(
+        self,
+    ) -> list[tuple[CacheArtifact, Sequence[str], Callable[..., Iterable[tuple]]]]:
         return [
             (CacheArtifact.names, [f"{self.ontology}_id", "name"], self.iterate_id_name),
             (
@@ -1251,13 +1257,13 @@ class Obo:
             path = self._get_cache_path(cache_artifact)
             if path.is_file() and not force:
                 continue
-            tqdm.write(
+            logger.info(
                 f"[{self._prefix_version}] writing {cache_artifact.name} to {path}",
             )
             write_iterable_tsv(
                 path=path,
                 header=header,
-                it=fn(),  # type:ignore
+                it=fn(),
             )
 
         typedefs = self._index_typedefs()
@@ -1301,40 +1307,40 @@ class Obo:
         if write_cache:
             self.write_cache(force=force)
         if write_obo and (not self._obo_path.is_file() or force):
-            tqdm.write(f"[{self._prefix_version}] writing OBO to {self._obo_path}")
+            logger.info(f"[{self._prefix_version}] writing OBO to {self._obo_path}")
             self.write_obo(self._obo_path, use_tqdm=use_tqdm)
         if (write_ofn or write_owl or write_obograph) and (not self._ofn_path.is_file() or force):
-            tqdm.write(f"[{self._prefix_version}] writing OFN to {self._ofn_path}")
+            logger.info(f"[{self._prefix_version}] writing OFN to {self._ofn_path}")
             self.write_ofn(self._ofn_path)
         if write_obograph and (not self._obograph_path.is_file() or force):
             if obograph_use_internal:
-                tqdm.write(f"[{self._prefix_version}] writing OBO Graph to {self._obograph_path}")
+                logger.info(f"[{self._prefix_version}] writing OBO Graph to {self._obograph_path}")
                 self.write_obograph(self._obograph_path)
             else:
                 import robot_obo_tool
 
-                tqdm.write(
+                logger.info(
                     f"[{self.ontology}] converting OFN to OBO Graph at {self._obograph_path}"
                 )
                 robot_obo_tool.convert(
                     self._ofn_path, self._obograph_path, debug=True, merge=False, reason=False
                 )
         if write_owl and (not self._owl_path.is_file() or force):
-            tqdm.write(f"[{self._prefix_version}] writing OWL to {self._owl_path}")
+            logger.info(f"[{self._prefix_version}] writing OWL to {self._owl_path}")
             import robot_obo_tool
 
             robot_obo_tool.convert(
                 self._ofn_path, self._owl_path, debug=True, merge=False, reason=False
             )
         if write_ttl and (not self._ttl_path.is_file() or force):
-            tqdm.write(f"[{self._prefix_version}] writing Turtle to {self._ttl_path}")
+            logger.info(f"[{self._prefix_version}] writing Turtle to {self._ttl_path}")
             self.write_rdf(self._ttl_path)
         if write_obonet and (not self._obonet_gz_path.is_file() or force):
-            tqdm.write(f"[{self._prefix_version}] writing obonet to {self._obonet_gz_path}")
+            logger.info(f"[{self._prefix_version}] writing obonet to {self._obonet_gz_path}")
             self.write_obonet_gz(self._obonet_gz_path)
         if write_nodes:
             nodes_path = self._get_cache_path(CacheArtifact.nodes)
-            tqdm.write(f"[{self._prefix_version}] writing nodes TSV to {nodes_path}")
+            logger.info(f"[{self._prefix_version}] writing nodes TSV to {nodes_path}")
             self.write_nodes(nodes_path)
 
     @property
@@ -1352,15 +1358,15 @@ class Obo:
     def ancestors(self, identifier: str) -> set[str]:
         """Return a set of identifiers for parents of the given identifier."""
         # FIXME switch to references
-        return nx.descendants(self.hierarchy, identifier)  # note this is backwards
+        return cast(set[str], nx.descendants(self.hierarchy, identifier))  # note this is backwards
 
     def descendants(self, identifier: str) -> set[str]:
         """Return a set of identifiers for the children of the given identifier."""
         # FIXME switch to references
-        return nx.ancestors(self.hierarchy, identifier)  # note this is backwards
+        return cast(set[str], nx.ancestors(self.hierarchy, identifier))  # note this is backwards
 
     def is_descendant(self, descendant: str, ancestor: str) -> bool:
-        """Return if the given identifier is a descendent of the ancestor.
+        """Return if the given identifier is a descendant of the ancestor.
 
         .. code-block:: python
 
@@ -1375,7 +1381,7 @@ class Obo:
         return ancestor in self.ancestors(descendant)
 
     @property
-    def hierarchy(self) -> nx.DiGraph:
+    def hierarchy(self) -> nx.DiGraph[str]:
         """A graph representing the parent/child relationships between the entities.
 
         To get all children of a given entity, do:
@@ -1393,7 +1399,7 @@ class Obo:
             self._hierarchy = nx.DiGraph()
             for stanza in self._iter_stanzas(desc=f"[{self.ontology}] getting hierarchy"):
                 for parent in stanza.parents:
-                    # FIXME add referneces
+                    # FIXME add references
                     self._hierarchy.add_edge(stanza.identifier, parent.identifier)
         return self._hierarchy
 
@@ -1762,10 +1768,10 @@ class Obo:
         if pp in typedefs:
             return typedefs[pp]
         if pp not in _warned:
-            _warn_string = f"[{term.curie}] undefined typedef: {pp}"
+            _warn_string = f"[{term.curie}] undefined typedef: {pp.curie}"
             if predicate.name:
                 _warn_string += f" ({predicate.name})"
-            logger.warning(_warn_string)
+            logger.debug(_warn_string)
             _warned.add(pp)
         return None
 
@@ -2047,6 +2053,29 @@ class Obo:
                     get_preferred_curie(context.contributor) if context.contributor else None,
                 )
 
+    def get_semantic_mappings(
+        self, *, progress: bool = False
+    ) -> Iterable[sssom_pydantic.SemanticMapping]:
+        """Iterate over semantic mappings."""
+        self_license = bioregistry.get_license(self.ontology)
+        source = Reference(prefix="bioregistry", identifier=self.ontology, name=self.name)
+        for stanza in self._iter_stanzas(use_tqdm=progress):
+            for predicate, obj_ref, context in stanza.get_mappings(
+                include_xrefs=True, add_context=True
+            ):
+                yield sssom_pydantic.SemanticMapping(
+                    subject=stanza.reference,
+                    predicate=predicate,
+                    object=obj_ref,
+                    confidence=context.confidence,
+                    justification=context.justification,
+                    authors=[context.contributor] if context.contributor else None,
+                    source=source,
+                    subject_source=source,
+                    subject_source_version=self.data_version,
+                    license=self_license,
+                )
+
     def get_mappings_df(
         self,
         *,
@@ -2054,7 +2083,15 @@ class Obo:
         include_subject_labels: bool = False,
         include_mapping_source_column: bool = False,
     ) -> pd.DataFrame:
-        """Get a dataframe with SSSOM extracted from the OBO document."""
+        """Get a dataframe with SSSOM extracted from the OBO document.
+
+        :param use_tqdm: Should a progres bar be shown
+        :param include_subject_labels: If false, removes the ``subject_label`` column. Defaults to false.
+        :param include_mapping_source_column: If true, adds the prefix for the current
+            ontology in the ``mapping_source`` column
+
+        :returns: A pandas dataframe representing SSSOM records
+        """
         df = pd.DataFrame(self.iterate_mapping_rows(use_tqdm=use_tqdm), columns=SSSOM_DF_COLUMNS)
         if not include_subject_labels:
             del df["subject_label"]
@@ -2514,7 +2551,7 @@ def make_ad_hoc_ontology(
         ontology_iri = _ontology_iri
         ontology_version_iri = _ontology_version_iri
 
-        def __post_init__(self):
+        def __post_init__(self) -> None:
             self.date = _date
             self.data_version = _data_version
 

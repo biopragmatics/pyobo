@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from functools import lru_cache, wraps
-from typing import Annotated, ClassVar
+from typing import Annotated, Any, ClassVar, Concatenate, ParamSpec, TypeVar
 
 import bioregistry
 import click
 from bioregistry import NormalizedNamableReference as Reference
 from bioregistry.constants import FailureReturnType
-from curies import ReferenceTuple
 from curies.preprocessing import BlocklistError, PreprocessingConverter
 from curies_processing import get_rules
 from pydantic import ValidationError
@@ -33,6 +33,8 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
+P = ParamSpec("P")
+T = TypeVar("T")
 
 Line = Annotated[str | None, Doc("""The OBO line where the parsing happened""")]
 
@@ -82,7 +84,7 @@ class ParseValidationError(ParseError):
 
     message = "failed Pydantic validation"
 
-    def __init__(self, *args, exc: ValidationError, **kwargs) -> None:
+    def __init__(self, *args: Any, exc: ValidationError, **kwargs: Any) -> None:
         """Initialize the error."""
         super().__init__(*args, **kwargs)
         self.exc = exc
@@ -266,31 +268,13 @@ def _parse_str_or_curie_or_uri_helper(
         return rv
 
 
-def wrap_norm_prefix(f):
+def wrap_norm_prefix(f: Callable[Concatenate[str, P], T]) -> Callable[Concatenate[str, P], T]:
     """Decorate a function that take in a prefix to auto-normalize, or return None if it can't be normalized."""
 
     @wraps(f)
-    def _wrapped(prefix: str | Reference | ReferenceTuple, *args, **kwargs):
-        if isinstance(prefix, str):
-            norm_prefix = bioregistry.normalize_prefix(prefix)
-            if norm_prefix is None:
-                raise ValueError(f"Invalid prefix: {prefix}")
-            prefix = norm_prefix
-        elif isinstance(prefix, Reference):
-            norm_prefix = bioregistry.normalize_prefix(prefix.prefix)
-            if norm_prefix is None:
-                raise ValueError(f"Invalid prefix: {prefix.prefix}")
-            prefix = Reference(prefix=norm_prefix, identifier=prefix.identifier)
-        elif isinstance(prefix, ReferenceTuple):
-            norm_prefix = bioregistry.normalize_prefix(prefix.prefix)
-            if norm_prefix is None:
-                raise ValueError(f"Invalid prefix: {prefix.prefix}")
-            prefix = ReferenceTuple(norm_prefix, prefix.identifier)
-        else:
-            raise TypeError(
-                f"prefix should be given as a string or reference object. Got {type(prefix)} {prefix}"
-            )
-        return f(prefix, *args, **kwargs)
+    def _wrapped(prefix: str, *args: P.args, **kwargs: P.kwargs) -> T:
+        norm_prefix = bioregistry.normalize_prefix(prefix, strict=True)
+        return f(norm_prefix, *args, **kwargs)
 
     return _wrapped
 

@@ -82,7 +82,7 @@ def get_interpro_go_df(version: str, force: bool = False) -> Mapping[str, set[tu
     return get_go_mapping(path, prefix=PREFIX)
 
 
-def get_interpro_tree(version: str, force: bool = False) -> dict:
+def get_interpro_tree(version: str, force: bool = False) -> dict[str, list[str]]:
     """Get InterPro Data source."""
     url = f"https://ftp.ebi.ac.uk/pub/databases/interpro/releases/{version}/ParentChildTreeFile.txt"
     path = ensure_path(PREFIX, url=url, version=version, force=force)
@@ -90,7 +90,7 @@ def get_interpro_tree(version: str, force: bool = False) -> dict:
         return _parse_tree_helper(f)
 
 
-def _parse_tree_helper(lines: Iterable[str]) -> dict:
+def _parse_tree_helper(lines: Iterable[str]) -> dict[str, list[str]]:
     rv1: defaultdict[str, list[str]] = defaultdict(list)
     previous_depth, previous_id = 0, ""
     stack = [previous_id]
@@ -110,7 +110,7 @@ def _parse_tree_helper(lines: Iterable[str]) -> dict:
                 del stack[-1]
 
             child_id = stack[-1]
-            rv1[child_id].append(parent_id)  # type:ignore
+            rv1[child_id].append(parent_id)
 
         previous_depth, previous_id = depth, parent_id
 
@@ -129,7 +129,7 @@ def _count_front(s: str) -> int:
     raise ValueError
 
 
-def get_interpro_to_proteins_df(version: str, force: bool = False):
+def get_interpro_to_proteins_df(version: str, force: bool = False) -> dict[str, set[str]]:
     """Get InterPro to Protein dataframe."""
     url = f"https://ftp.ebi.ac.uk/pub/databases/interpro/releases/{version}/protein2ipr.dat.gz"
     df = ensure_df(

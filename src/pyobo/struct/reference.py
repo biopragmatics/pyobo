@@ -25,6 +25,8 @@ from ..identifier_utils import (
 )
 
 __all__ = [
+    "OBOLiteral",
+    "Reference",
     "Referenced",
     "default_reference",
     "get_preferred_curie",
@@ -325,12 +327,12 @@ class OBOLiteral(NamedTuple):
         return cls(str(value).lower(), curies.Reference(prefix="xsd", identifier="boolean"), None)
 
     @classmethod
-    def decimal(cls, value) -> OBOLiteral:
+    def decimal(cls, value: float) -> OBOLiteral:
         """Get a decimal literal."""
         return cls(str(value), curies.Reference(prefix="xsd", identifier="decimal"), None)
 
     @classmethod
-    def float(cls, value) -> OBOLiteral:
+    def float(cls, value: float) -> OBOLiteral:
         """Get a float literal."""
         return cls(str(value), curies.Reference(prefix="xsd", identifier="float"), None)
 

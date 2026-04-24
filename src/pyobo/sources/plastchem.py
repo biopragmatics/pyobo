@@ -3,7 +3,6 @@
 import textwrap
 from collections import Counter
 from collections.abc import Iterable
-from typing import Any
 
 import pandas as pd
 import ssslm
@@ -389,7 +388,7 @@ CHEBI_ROLE_MAP: dict[str, Reference] = {
 }
 
 
-def _get_sep(row: dict[str, Any], key: str) -> list[str]:
+def _get_sep(row: dict[str, str], key: str) -> list[str]:
     if pd.notna(row[key]):
         return row[key].split(";")
     return []

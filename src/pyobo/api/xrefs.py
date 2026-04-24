@@ -5,11 +5,13 @@ import warnings
 from collections.abc import Mapping
 from functools import lru_cache
 
-import curies
+import bioregistry
+import bioversions
 import pandas as pd
+import sssom_pydantic
 from curies import ReferenceTuple
 from sssom_pydantic import SemanticMapping
-from sssom_pydantic.io import row_to_semantic_mapping
+from sssom_pydantic.io import CachedSemanticMappings
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
@@ -22,7 +24,7 @@ from ..constants import (
     check_should_use_tqdm,
 )
 from ..getters import get_ontology
-from ..identifier_utils import get_converter, wrap_norm_prefix
+from ..identifier_utils import wrap_norm_prefix
 from ..struct import Obo
 from ..utils.cache import cached_df
 from ..utils.path import CacheArtifact, get_cache_path
@@ -111,24 +113,51 @@ def get_sssom_df(
     return get_mappings_df(prefix=prefix, names=names, **kwargs)
 
 
+def get_semantic_mapping_metadata(
+    prefix: str, version: str | None = None
+) -> sssom_pydantic.MappingSet:
+    """Get metadata for a resource."""
+    resource = bioregistry.get_resource(prefix, strict=True)
+    return sssom_pydantic.MappingSet(
+        id=resource.get_download(),
+        version=version or bioversions.get_version(prefix),
+        title=resource.get_name(strict=True),
+        description=resource.get_description(),
+        license=resource.get_license(),
+    )
+
+
 def get_semantic_mappings(
     prefix: str,
-    converter: curies.Converter | None = None,
-    names: bool = True,
-    include_mapping_source_column: bool = False,
+    names: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> list[SemanticMapping]:
-    """Get semantic mapping objects."""
-    df = get_mappings_df(
-        prefix, names=names, include_mapping_source_column=include_mapping_source_column, **kwargs
+    """Get semantic mappings."""
+    version = get_version_from_kwargs(prefix, kwargs)
+
+    @CachedSemanticMappings(
+        path=get_cache_path(prefix, CacheArtifact.mappings, version=version),
+        force=check_should_force(kwargs),
+        cache=check_should_cache(kwargs),
     )
-    if converter is None:
-        converter = get_converter()
-    return [
-        # TODO upstream this into sssom-pydantic?
-        row_to_semantic_mapping({k: v for k, v in row.items() if pd.notna(v)}, converter=converter)
-        for _, row in df.iterrows()
-    ]
+    def _mapping_getter() -> sssom_pydantic.SemanticMappingPack:
+        logger.info("[%s] extracting SSSOM", prefix)
+        ontology = get_ontology(prefix, **kwargs)
+        mapping_set = get_semantic_mapping_metadata(prefix, version=version)
+        converter = bioregistry.get_default_converter()
+        mappings = list(
+            ontology.get_semantic_mappings(
+                progress=check_should_use_tqdm(kwargs),
+            )
+        )
+        return sssom_pydantic.SemanticMappingPack(
+            mappings=mappings, converter=converter, mapping_set=mapping_set
+        )
+
+    mappings = _mapping_getter().mappings
+    if names:
+        raise NotImplementedError
+    return mappings
 
 
 def get_mappings_df(
@@ -141,7 +170,9 @@ def get_mappings_df(
     r"""Get semantic mappings from a source as an SSSOM dataframe.
 
     :param prefix: The ontology to look in for xrefs
-    :param names: Add name columns (``subject_label`` and ``object_label``)
+    :param names: Add name columns (``subject_label`` and ``object_label``). Defaults to True.
+    :param include_mapping_source_column: If true, adds the prefix for the current
+        ontology in the ``mapping_source`` column
 
     :returns: A SSSOM-compliant dataframe of xrefs
 

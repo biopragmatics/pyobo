@@ -3,7 +3,7 @@
 import json
 import os
 from collections.abc import Iterable, Mapping
-from typing import Any
+from typing import Any, cast
 
 import requests
 from tqdm.auto import tqdm
@@ -35,13 +35,13 @@ def ensure_ndex_network(prefix: str, uuid: str, force: bool = False) -> CX:
     path = prefix_directory_join(prefix, "ndex", name=f"{uuid}.json")
     if os.path.exists(path) and not force:
         with open(path) as file:
-            return json.load(file)
+            return cast(CX, json.load(file))
 
     res = requests.get(f"{NETWORK_ENDPOINT}/{uuid}")
     res_json = res.json()
     with open(path, "w") as file:
         json.dump(res_json, file, indent=2)
-    return res_json
+    return cast(CX, res_json)
 
 
 def ensure_ndex_network_set(
@@ -65,7 +65,7 @@ def _help_ensure_ndex_network_set(prefix: str, uuid: str, force: bool = False) -
     url = f"{NETWORKSET_ENDPOINT}/{uuid}"
     res = requests.get(url)
     res_json = res.json()
-    network_uuids = res_json["networks"]
+    network_uuids = cast(list[str], res_json["networks"])
     with open(networkset_path, "w") as file:
         for network_uuid in sorted(network_uuids):
             print(network_uuid, file=file)

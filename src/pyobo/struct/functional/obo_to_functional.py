@@ -339,7 +339,7 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         yield m.OBOIsClassLevelMacro(r, typedef.is_class_level)
 
 
-def _yield_definition(term: Stanza, s) -> Iterable[m.DescriptionMacro]:
+def _yield_definition(term: Stanza, s: f.IdentifierBox) -> Iterable[m.DescriptionMacro]:
     if term.definition:
         yield m.DescriptionMacro(
             s,
@@ -348,7 +348,7 @@ def _yield_definition(term: Stanza, s) -> Iterable[m.DescriptionMacro]:
         )
 
 
-def _yield_synonyms(stanza: Stanza, r) -> Iterable[m.SynonymMacro]:
+def _yield_synonyms(stanza: Stanza, r: f.IdentifierBox) -> Iterable[m.SynonymMacro]:
     for synonym in stanza.synonyms:
         yield m.SynonymMacro(
             r,
@@ -361,7 +361,7 @@ def _yield_synonyms(stanza: Stanza, r) -> Iterable[m.SynonymMacro]:
         )
 
 
-def _yield_xrefs(term: Stanza, s) -> Iterable[m.XrefMacro]:
+def _yield_xrefs(term: Stanza, s: f.IdentifierBox) -> Iterable[m.XrefMacro]:
     for xref in term.xrefs:
         yield m.XrefMacro(s, xref, annotations=_get_annotations(term, pv.has_dbxref, xref))
 
@@ -373,7 +373,7 @@ _SKIP = {
 }
 
 
-def _yield_properties(term: Stanza, s) -> Iterable[f.AnnotationAssertion]:
+def _yield_properties(term: Stanza, s: f.IdentifierBox) -> Iterable[f.AnnotationAssertion]:
     for typedef, values in term.properties.items():
         for value in values:
             annotations = _get_annotations(term, typedef, value)

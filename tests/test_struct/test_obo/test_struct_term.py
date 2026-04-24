@@ -3,7 +3,6 @@
 import unittest
 from collections.abc import Iterable
 from textwrap import dedent
-from typing import cast
 
 import bioregistry
 from curies import ReferenceTuple
@@ -47,7 +46,7 @@ class Nope(Obo):
 
     ontology = "nope"
 
-    def iter_terms(self, force: bool = False) -> Iterable:
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Do not do anything."""
 
 
@@ -58,8 +57,14 @@ def _ontology_from_term(
     typedefs: list[TypeDef] | None = None,
     synonym_typedefs: list[SynonymTypeDef] | None = None,
 ) -> Obo:
-    name = cast(str, bioregistry.get_name(prefix))
-    return make_ad_hoc_ontology(_ontology=prefix, _name=name, terms=[term], _typedefs=typedefs)
+    name = bioregistry.get_name(prefix)
+    return make_ad_hoc_ontology(
+        _ontology=prefix,
+        _name=name,
+        terms=[term],
+        _typedefs=typedefs,
+        _synonym_typedefs=synonym_typedefs,
+    )
 
 
 class TestStruct(unittest.TestCase):
