@@ -145,8 +145,10 @@ def get_semantic_mappings(
         ontology = get_ontology(prefix, **kwargs)
         mapping_set = get_semantic_mapping_metadata(prefix, version=version)
         converter = bioregistry.get_default_converter()
-        mappings = mappings = ontology.get_semantic_mappings(
-            progress=check_should_use_tqdm(kwargs),
+        mappings = list(
+            ontology.get_semantic_mappings(
+                progress=check_should_use_tqdm(kwargs),
+            )
         )
         return sssom_pydantic.SemanticMappingPack(
             mappings=mappings, converter=converter, mapping_set=mapping_set
