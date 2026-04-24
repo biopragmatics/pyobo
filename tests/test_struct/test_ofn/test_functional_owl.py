@@ -421,10 +421,12 @@ class TestMiscellaneous(unittest.TestCase):
 class TestRDF(unittest.TestCase):
     """Test serialization to RDF."""
 
+    axiom_examples: ClassVar[list[f.Axiom]]
+
     @classmethod
     def setUpClass(cls) -> None:
         """Set up the serialization test case."""
-        cls.axiom_examples: list[f.Axiom] = [
+        cls.axiom_examples = [
             f.ClassAssertion(
                 f.DataSomeValuesFrom(
                     ["a:hasAge"], f.DatatypeRestriction("xsd:integer", [("xsd:maxExclusive", 20)])
@@ -445,7 +447,10 @@ class TestRDF(unittest.TestCase):
                 "a:Test", f.DataIntersectionOf(["xsd:integer", f.DataOneOf([1, 2, 3])])
             ),
             f.DatatypeDefinition(
-                "a:Test", f.DataUnionOf(["xsd:integer", f.DataOneOf([f.l("a"), f.l("b")])])
+                "a:Test",
+                f.DataUnionOf(
+                    ["xsd:integer", f.DataOneOf([rdflib.Literal("a"), rdflib.Literal("b")])]
+                ),
             ),
             f.DatatypeDefinition("a:Test", f.DataUnionOf(["xsd:integer", "xsd:string"])),
             f.DatatypeDefinition("a:Test", f.DataComplementOf("xsd:nonNegativeInteger")),
@@ -491,7 +496,7 @@ class TestRDF(unittest.TestCase):
             f.SubObjectPropertyOf(f.ObjectInverseOf("a:ope1"), "a:ope2"),
             f.EquivalentObjectProperties(["a:ope1", f.ObjectInverseOf("a:ope2")]),
             f.ClassAssertion(f.DataHasValue("a:hasAge", 17), "a:Meg"),
-            f.ClassAssertion(f.DataHasValue("a:hasHairColor", f.l("brown")), "a:Meg"),
+            f.ClassAssertion(f.DataHasValue("a:hasHairColor", rdflib.Literal("brown")), "a:Meg"),
             f.EquivalentClasses(["a:Boy", "a:Girl"]),
             # do the griffin parent both ways to see if sorting is happening in ROBOT
             f.EquivalentClasses(["a:GriffinParent", f.ObjectOneOf(["a:Peter", "a:Lois"])]),
@@ -513,8 +518,8 @@ class TestRDF(unittest.TestCase):
                 "a:hasPet",
                 annotations=[f.Annotation("dcterms:contributor", "orcid:0000-0003-4423-4370")],
             ),
-            f.AnnotationAssertion("rdfs:label", "a:Dog", f.l("dog")),
-            f.AnnotationAssertion("a:ap1", "a:Dog", f.l("dog")),
+            f.AnnotationAssertion("rdfs:label", "a:Dog", rdflib.Literal("dog")),
+            f.AnnotationAssertion("a:ap1", "a:Dog", rdflib.Literal("dog")),
             f.AnnotationPropertyRange("a:hasPet", "a:Pet"),
             f.AnnotationPropertyDomain("a:hasPet", "a:Person"),
             f.AsymmetricObjectProperty("a:hasParent"),
@@ -545,7 +550,7 @@ class TestRDF(unittest.TestCase):
             f.DisjointUnion("a:Child", ["a:Boy", "a:Girl"]),
             f.ClassAssertion("a:Child", "a:Stewie"),
             f.ClassAssertion(f.ObjectComplementOf("a:Girl"), "a:Stewie"),
-            f.DataPropertyAssertion("a:hasLastName", "a:Peter", f.l("Griffin")),
+            f.DataPropertyAssertion("a:hasLastName", "a:Peter", rdflib.Literal("Griffin")),
             f.DatatypeDefinition(
                 "a:SSN",
                 f.DatatypeRestriction(

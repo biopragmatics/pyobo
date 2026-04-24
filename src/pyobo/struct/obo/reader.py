@@ -98,18 +98,20 @@ def from_obo_path(
 
 
 def _read_obo(
-    filelike: Iterable[str], prefix: str | None, ignore_obsolete: bool, use_tqdm: bool = True
+    lines: Iterable[str],
+    prefix: str | None,
+    ignore_obsolete: bool,
+    use_tqdm: bool = True,
 ) -> nx.MultiDiGraph:
     import obonet
 
+    tqdm_kwargs = {
+        "unit_scale": True,
+        "desc": f"[{prefix or ''}] parsing OBO",
+        "leave": True,
+    }
     return obonet.read_obo(
-        tqdm(
-            filelike,
-            unit_scale=True,
-            desc=f"[{prefix or ''}] parsing OBO",
-            disable=not use_tqdm,
-            leave=True,
-        ),
+        tqdm(lines, disable=not use_tqdm, **tqdm_kwargs),
         ignore_obsolete=ignore_obsolete,
     )
 

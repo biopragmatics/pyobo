@@ -14,9 +14,8 @@ from curies import Converter, Reference
 from rdflib import OWL, RDF, RDFS, XSD, Graph, collection, term
 
 from pyobo.struct.functional.utils import list_to_funowl
+from pyobo.struct.reference import OBOLiteral, Referenced, get_preferred_prefix
 from pyobo.struct.reference import Reference as PyOBOReference
-from pyobo.struct.reference import Referenced, get_preferred_prefix
-from pyobo.struct.struct_utils import OBOLiteral
 
 from .utils import FunctionalOWLSerializable, RDFNodeSerializable
 
@@ -97,13 +96,7 @@ __all__ = [
     "SubObjectPropertyOf",
     "SymmetricObjectProperty",
     "TransitiveObjectProperty",
-    "l",
 ]
-
-
-def l(value) -> term.Literal:  # noqa:E743
-    """Get a literal."""
-    return term.Literal(value)
 
 
 #: These are the literals that can be automatically converted to and from RDFLib
@@ -1100,7 +1093,7 @@ class _DataValuesFrom(ClassExpression):
 
 
 def _get_data_value_po(
-    graph, converter, dpes: Sequence[DataPropertyExpression]
+    graph: rdflib.Graph, converter: Converter, dpes: Sequence[DataPropertyExpression]
 ) -> tuple[term.URIRef, term.Node]:
     if len(dpes) >= 2:
         # Note that this is currently not possible to get to with

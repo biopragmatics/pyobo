@@ -18,6 +18,7 @@ from ..utils.path import prefix_directory_join
 __all__ = [
     "VersionError",
     "get_version",
+    "get_version_from_kwargs",
     "get_version_pins",
 ]
 

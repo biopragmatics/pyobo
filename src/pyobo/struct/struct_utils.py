@@ -89,7 +89,7 @@ class Annotation(NamedTuple):
         return cls(predicate, OBOLiteral.string(value, language=language))
 
     @staticmethod
-    def _sort_key(x: Annotation) -> tuple:
+    def _sort_key(x: Annotation) -> tuple[Reference, tuple[int, Reference | OBOLiteral]]:
         return x.predicate, _reference_or_literal_key(x.value)
 
 
@@ -375,13 +375,15 @@ class Stanza(Referenced, HasReferencesMixin):
             yield f"intersection_of: {end}"
 
     @staticmethod
-    def _intersection_of_key(io: Reference | tuple[Reference, Reference]) -> tuple:
+    def _intersection_of_key(
+        io: Reference | tuple[Reference, Reference],
+    ) -> tuple[Literal[0], Reference] | tuple[Literal[1], tuple[Reference, Reference]]:
         if isinstance(io, Reference):
             return 0, io
         else:
             return 1, io
 
-    def _iterate_xref_obo(self, *, ontology_prefix) -> Iterable[str]:
+    def _iterate_xref_obo(self, *, ontology_prefix: str) -> Iterable[str]:
         for xref in sorted(self.xrefs):
             xref_yv = f"xref: {reference_escape(xref, ontology_prefix=ontology_prefix, add_name_comment=False)}"
             xref_yv += _get_obo_trailing_modifiers(

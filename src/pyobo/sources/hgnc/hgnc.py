@@ -69,7 +69,7 @@ gene_xrefs = [
     ("lncipedia", "lncipedia"),
     ("orphanet", "orphanet"),
     ("pseudogene", "pseudogene.org"),
-    ("ena", "ena"),
+    #  ("ena.embl", "ena"), FIXME, ena gets mapped into into insdc.run. Need a top-level insdc namespace for this.
     ("refseq", "refseq_accession"),
     ("iuphar.receptor", "iuphar"),
     # ("mgi", "mgd_id"),
@@ -288,7 +288,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
     yield from get_gene_family_terms(version=version, force=force)
 
     statuses = set()
-    for entry in tqdm(entries, desc=f"Mapping {PREFIX}", unit="gene", unit_scale=True):
+    for entry in tqdm(entries, desc=f"[{PREFIX} {version} parsing]", unit="gene", unit_scale=True):
         name, symbol, identifier = (
             entry.pop("name"),
             entry.pop("symbol"),
@@ -345,7 +345,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
 
         for rgd_curie in entry.pop("rgd_id", []):
             if not rgd_curie.startswith("RGD:"):
-                tqdm.write(f"hgnc:{identifier} had bad RGD CURIE: {rgd_curie}")
+                logger.debug(f"hgnc:{identifier} had bad RGD CURIE: {rgd_curie}")
                 continue
             rgd_id = rgd_curie[len("RGD:") :]
             term.append_relationship(
@@ -354,7 +354,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             )
         for mgi_curie in entry.pop("mgd_id", []):
             if not mgi_curie.startswith("MGI:"):
-                tqdm.write(f"[hgnc:{identifier}] had bad MGI CURIE: {mgi_curie}")
+                logger.debug(f"[hgnc:{identifier}] had bad MGI CURIE: {mgi_curie}")
                 continue
             mgi_id = mgi_curie[len("MGI:") :]
             if not mgi_id:
@@ -404,7 +404,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 try:
                     xref = Reference(prefix=xref_prefix, identifier=str(xref_identifiers[0]))
                 except pydantic.ValidationError:
-                    tqdm.write(
+                    logger.debug(
                         f"[hgnc:{identifier}] had bad {key} xref: {xref_prefix}:{xref_identifiers[0]}"
                     )
                     continue
@@ -545,7 +545,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         yield term
 
     if unhandled_locations:
-        logger.warning(
+        logger.debug(
             "Unhandled chromosomal locations:\n\n%s\n",
             tabulate(
                 [(k, len(vs), f"HGNC:{min(vs)}") for k, vs in unhandled_locations.items()],
@@ -555,7 +555,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         )
 
     if unhandled_entry_keys:
-        logger.warning("Unhandled keys:\n%s", tabulate(unhandled_entry_keys.most_common()))
+        logger.debug("Unhandled keys:\n%s", tabulate(unhandled_entry_keys.most_common()))
 
 
 if __name__ == "__main__":
