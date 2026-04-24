@@ -7,11 +7,12 @@ from unittest import mock
 
 import bioregistry
 import curies
-from curies import Reference, ReferenceTuple
+from curies import ReferenceTuple
 from curies import vocabulary as _v
 from pydantic import ValidationError
 from ssslm import LiteralMapping
 from sssom_pydantic import SemanticMapping
+from sssom_pydantic.testing import assert_semantic_mapping_equal
 
 import pyobo
 from pyobo import Reference as PyOBOReference
@@ -55,6 +56,7 @@ bioregistry.manager.registry[TEST_P1] = bioregistry.Resource(
     prefix=TEST_P1,
     name="Test Semantic Space",
     pattern="^\\d+$",
+    download_owl="https://example.org/test.owl",
 )
 bioregistry.manager.synonyms[TEST_P2] = TEST_P2
 bioregistry.manager.registry[TEST_P2] = bioregistry.Resource(
@@ -138,7 +140,7 @@ class TestAltIds(unittest.TestCase):
         self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
-        name = get_name(Reference(prefix="go", identifier="0003700"))
+        name = get_name(curies.Reference(prefix="go", identifier="0003700"))
         self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
@@ -147,7 +149,7 @@ class TestAltIds(unittest.TestCase):
     def test_get_primary_on_reference(self, _, __) -> None:
         """Test when you give a primary id."""
         self.assertEqual(
-            "0003700", get_primary_identifier(Reference(prefix="go", identifier="0001071"))
+            "0003700", get_primary_identifier(curies.Reference(prefix="go", identifier="0001071"))
         )
 
     @mock_id_alts_mapping
@@ -169,6 +171,10 @@ class TestAltIds(unittest.TestCase):
         self.assertEqual("52818", primary_id)
         self.assertEqual("Allamanda cathartica", get_name(ReferenceTuple("ncbitaxon", "52818")))
 
+
+class TestEverything(unittest.TestCase):
+    """Big test for everything."""
+
     def test_api(self) -> None:
         """Test getting the hierarchy.
 
@@ -189,7 +195,7 @@ class TestAltIds(unittest.TestCase):
         terms = [t1, t2, t3]
         ontology = make_ad_hoc_ontology(TEST_P1, terms=terms, _typedefs=[td1])
 
-        converter = curies.Converter.from_prefix_map(
+        curies.Converter.from_prefix_map(
             {
                 TEST_P1: f"https://example.org/{TEST_P1}:",
                 TEST_P2: f"https://example.org/{TEST_P2}:",
@@ -245,40 +251,44 @@ class TestAltIds(unittest.TestCase):
             d = pyobo.get_filtered_xrefs(TEST_P1, TEST_P2, cache=False, use_tqdm=False)
             self.assertEqual({"1": "X", "3": "Y"}, d)
 
-            semantic_mappings = pyobo.get_semantic_mappings(
-                TEST_P1, converter=converter, cache=False, use_tqdm=False
+            semantic_mappings = list(
+                pyobo.get_semantic_mappings(
+                    TEST_P1,
+                    cache=False,
+                    use_tqdm=False,
+                    version="1.0.0",
+                )
             )
+            self.assertEqual(3, len(semantic_mappings))
+            subject_source = PyOBOReference(prefix="bioregistry", identifier=r1.prefix)
             expected_semantic_mappings = [
                 SemanticMapping(
                     subject=r1,
-                    predicate=_v.alternative_term.without_name(),
+                    predicate=PyOBOReference.from_reference(_v.alternative_term),
                     object=r2,
                     justification=_v.unspecified_matching_process.without_name(),
+                    source=subject_source,
+                    subject_source=subject_source,
                 ),
                 SemanticMapping(
                     subject=r1,
-                    predicate=_v.has_dbxref.without_name(),
+                    predicate=PyOBOReference.from_reference(_v.has_dbxref),
                     object=r2_1,
                     justification=_v.unspecified_matching_process.without_name(),
+                    source=subject_source,
+                    subject_source=subject_source,
                 ),
                 SemanticMapping(
                     subject=r3,
-                    predicate=_v.exact_match.without_name(),
+                    predicate=PyOBOReference.from_reference(_v.exact_match),
                     object=r2_2,
                     justification=_v.unspecified_matching_process.without_name(),
+                    source=subject_source,
+                    subject_source=subject_source,
                 ),
             ]
-            self.assertEqual(
-                [
-                    m.model_dump(exclude_none=True, exclude_unset=True)
-                    for m in sorted(expected_semantic_mappings)
-                ],
-                [
-                    m.model_dump(exclude_none=True, exclude_unset=True)
-                    for m in sorted(semantic_mappings)
-                ],
-                msg="\nsemantic mappings are unexpectedly different"
-            )
+            for m1, m2 in zip(expected_semantic_mappings, semantic_mappings, strict=False):
+                assert_semantic_mapping_equal(self, m1, m2)
 
             # Synonyms
             literal_mappings = pyobo.get_literal_mappings(TEST_P1, cache=False)

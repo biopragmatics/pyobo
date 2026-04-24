@@ -24,6 +24,7 @@ import curies
 import networkx as nx
 import pandas as pd
 import ssslm
+import sssom_pydantic
 from curies import Converter, ReferenceTuple
 from curies import vocabulary as _cv
 from more_click import force_option, verbose_option
@@ -2050,6 +2051,29 @@ class Obo:
                     get_preferred_curie(context.justification),
                     context.confidence if context.confidence is not None else None,
                     get_preferred_curie(context.contributor) if context.contributor else None,
+                )
+
+    def get_semantic_mappings(
+        self, *, progress: bool = False
+    ) -> Iterable[sssom_pydantic.SemanticMapping]:
+        """Iterate over semantic mappings."""
+        self_license = bioregistry.get_license(self.ontology)
+        source = Reference(prefix="bioregistry", identifier=self.ontology, name=self.name)
+        for stanza in self._iter_stanzas(use_tqdm=progress):
+            for predicate, obj_ref, context in stanza.get_mappings(
+                include_xrefs=True, add_context=True
+            ):
+                yield sssom_pydantic.SemanticMapping(
+                    subject=stanza.reference,
+                    predicate=predicate,
+                    object=obj_ref,
+                    confidence=context.confidence,
+                    justification=context.justification,
+                    authors=[context.contributor] if context.contributor else None,
+                    source=source,
+                    subject_source=source,
+                    subject_source_version=self.data_version,
+                    license=self_license,
                 )
 
     def get_mappings_df(

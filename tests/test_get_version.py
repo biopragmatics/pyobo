@@ -6,7 +6,6 @@ from unittest import mock
 
 from pyobo.api.utils import get_version, get_version_pins
 from pyobo.utils.misc import (
-    _get_getter_urls,
     _get_version_from_artifact,
     _prioritize_version,
     cleanup_version,
