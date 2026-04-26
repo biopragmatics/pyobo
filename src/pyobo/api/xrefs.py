@@ -119,11 +119,11 @@ def get_semantic_mapping_metadata(
     """Get metadata for a resource."""
     resource = bioregistry.get_resource(prefix, strict=True)
     return sssom_pydantic.MappingSet(
-        id=resource.get_download(),
+        id=resource.get_download() or f"https://w3id.org/sssom/pyobo-mappings/{prefix}.sssom.tsv",
         version=version or bioversions.get_version(prefix),
         title=resource.get_name(strict=True),
         description=resource.get_description(),
-        license=resource.get_license(),
+        license=resource.get_license_url(),
     )
 
 
