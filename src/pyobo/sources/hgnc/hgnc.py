@@ -262,7 +262,7 @@ def _get_location_to_chr() -> dict[str, Reference]:
 def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]:
     """Get HGNC terms."""
     if version is None:
-        version = get_version("hgnc")
+        version = get_version(PREFIX)
 
     unhandled_locations: defaultdict[str, set[str]] = defaultdict(set)
     location_to_chr = _get_location_to_chr()
