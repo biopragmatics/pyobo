@@ -1,5 +1,6 @@
-Reference
-=========
+###########
+ Reference
+###########
 
 .. automodapi:: pyobo
     :no-heading:

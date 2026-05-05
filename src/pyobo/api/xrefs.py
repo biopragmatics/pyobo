@@ -181,7 +181,8 @@ def get_mappings_df(
     r"""Get semantic mappings from a source as an SSSOM dataframe.
 
     :param prefix: The ontology to look in for xrefs
-    :param names: Add name columns (``subject_label`` and ``object_label``). Defaults to True.
+    :param names: Add name columns (``subject_label`` and ``object_label``). Defaults to
+        True.
     :param include_mapping_source_column: If true, adds the prefix for the current
         ontology in the ``mapping_source`` column
 

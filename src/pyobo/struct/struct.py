@@ -411,6 +411,7 @@ class Term(Stanza):
         :param prefix: The prefix to use in case the term has several species
             annotations.
         :param strict: If true, raises when no species reference is available
+
         :returns: A species reference, if available
         """
         for species in self.get_relationships(v.from_species):
@@ -2103,7 +2104,8 @@ class Obo:
         """Get a dataframe with SSSOM extracted from the OBO document.
 
         :param use_tqdm: Should a progres bar be shown
-        :param include_subject_labels: If false, removes the ``subject_label`` column. Defaults to false.
+        :param include_subject_labels: If false, removes the ``subject_label`` column.
+            Defaults to false.
         :param include_mapping_source_column: If true, adds the prefix for the current
             ontology in the ``mapping_source`` column
 

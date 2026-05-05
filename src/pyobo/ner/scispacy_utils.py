@@ -6,8 +6,9 @@ definitions for entities. These are used to construct a TF-IDF index and impleme
 entity linking (also called named entity normalization (NEN) or grounding) in
 :class:`scispacy.linking.EntityLinker`.
 
-Constructing a Lexical Index
-============================
+##############################
+ Constructing a Lexical Index
+##############################
 
 An *ad hoc* ScispaCy lexical index can be constructed on-the-fly by passing a
 Bioregistry prefix to :func:`pyobo.get_scispacy_knowledgebase`. In the following
@@ -48,8 +49,9 @@ Alternatively, a reusable class can be defined like in the following:
 
     kb = HGNCKnowledgeBase()
 
-Constructing an Entity Linker
-=============================
+###############################
+ Constructing an Entity Linker
+###############################
 
 An entity linker can be constructed from a :class:`scispacy.linking_utils.KnowledgeBase`
 like in:
@@ -76,8 +78,9 @@ process in the correctly versioned folder in the PyOBO cache.
 
     linker: EntityLinker = pyobo.get_scispacy_entity_linker("hgnc", filter_for_definitions=False)
 
-Full Workflow
-=============
+###############
+ Full Workflow
+###############
 
 Once an entity linker has been constructed, it can b used in series with a
 :mod:`spacy.Language` object instantiated with :func:`spacy.load` to ground named
