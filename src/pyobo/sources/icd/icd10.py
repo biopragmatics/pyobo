@@ -45,7 +45,7 @@ class ICD10Getter(Obo):
         return iter_terms(self._version_or_raise)
 
 
-def _get_chapters(version: str, path: Path):
+def _get_chapters(version: str, path: Path) -> list[str]:
     res_json = get_icd_10_top(version=version, path=path)
     chapter_urls = res_json["child"]
     tqdm.write(f"there are {len(chapter_urls)} chapters")

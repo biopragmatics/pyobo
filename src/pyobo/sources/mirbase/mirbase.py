@@ -190,6 +190,7 @@ def get_mature_id_to_name(version: str) -> Mapping[str, str]:
             mature.identifier: mature.name
             for term in get_terms(version)
             for mature in term.get_relationships(has_mature)
+            if mature.name is not None
         }
 
     return _inner()

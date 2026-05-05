@@ -63,7 +63,7 @@ EXACTS = {"inchikey"}
 
 
 def _split(x: str | None) -> list[str]:
-    if pd.notna(x):
+    if x is not None and pd.notna(x):
         return [y.strip() for y in x.split(";")]
     return []
 

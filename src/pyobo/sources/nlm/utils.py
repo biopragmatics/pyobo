@@ -80,13 +80,13 @@ def _process_journal(
     nlm_id = element.findtext("NlmUniqueID")
     name = element.findtext("Name")
 
-    if not nlm_id.isnumeric():
+    if nlm_id is None or not nlm_id.isnumeric():
         # TODO investigate these records, which all appear to have IDs that
         #  end in R like 17410670R (Proceedings of the staff meetings. Honolulu. Clinic)
         #  which corresponds to https://www.ncbi.nlm.nih.gov/nlmcatalog/287649
         return None
 
-    issns = [(issn.text, issn.attrib["type"]) for issn in element.findall("Issn")]
+    issns = [(issn.text, issn.attrib["type"]) for issn in element.findall("Issn") if issn.text]
     # ActivityFlag is either "0" or "1"
     term = Term(
         reference=Reference(prefix=PREFIX_CATALOG, identifier=nlm_id, name=name),
@@ -94,7 +94,8 @@ def _process_journal(
     )
     term.append_parent(JOURNAL_TERM)
     for synonym in element.findall("Alias"):
-        term.append_synonym(synonym.text)
+        if synonym.text:
+            term.append_synonym(synonym.text)
     for issn, _issn_type in issns:
         if issn.isnumeric():
             issn = issn[:4] + "-" + issn[4:]
