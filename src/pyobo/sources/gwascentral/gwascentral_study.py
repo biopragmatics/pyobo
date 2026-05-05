@@ -3,7 +3,8 @@
 import logging
 import tarfile
 from collections.abc import Iterable
-from lxml.etree import ElementTree, Element
+
+from lxml.etree import Element, ElementTree
 
 from pyobo.struct import Obo, Reference, Term, has_part
 from pyobo.utils.path import ensure_path
