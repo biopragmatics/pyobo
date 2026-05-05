@@ -1,8 +1,8 @@
 """Utilities for NLM."""
 
 from collections.abc import Iterable
-from xml.etree import ElementTree
 
+from lxml.etree import Element, ElementTree
 from tqdm import tqdm
 
 from pyobo import Reference, Term, TypeDef, default_reference, ensure_path
@@ -72,19 +72,19 @@ def get_journals(
             yield term
 
 
-def _process_journal(element, journal_id_to_publisher_key: dict[str, Term]) -> Term | None:
+def _process_journal(element: Element, journal_id_to_publisher_key: dict[str, Term]) -> Term | None:
     # TODO enrich with context from https://ftp.ncbi.nlm.nih.gov/pubmed/J_Entrez.txt and https://ftp.ncbi.nlm.nih.gov/pubmed/J_Medline.txt
 
     nlm_id = element.findtext("NlmUniqueID")
     name = element.findtext("Name")
 
-    if not nlm_id.isnumeric():
+    if nlm_id is None or not nlm_id.isnumeric():
         # TODO investigate these records, which all appear to have IDs that
         #  end in R like 17410670R (Proceedings of the staff meetings. Honolulu. Clinic)
         #  which corresponds to https://www.ncbi.nlm.nih.gov/nlmcatalog/287649
         return None
 
-    issns = [(issn.text, issn.attrib["type"]) for issn in element.findall("Issn")]
+    issns = [(issn.text, issn.attrib["type"]) for issn in element.findall("Issn") if issn.text]
     # ActivityFlag is either "0" or "1"
     term = Term(
         reference=Reference(prefix=PREFIX_CATALOG, identifier=nlm_id, name=name),
@@ -92,7 +92,8 @@ def _process_journal(element, journal_id_to_publisher_key: dict[str, Term]) -> T
     )
     term.append_parent(JOURNAL_TERM)
     for synonym in element.findall("Alias"):
-        term.append_synonym(synonym.text)
+        if synonym.text:
+            term.append_synonym(synonym.text)
     for issn, _issn_type in issns:
         if issn.isnumeric():
             issn = issn[:4] + "-" + issn[4:]

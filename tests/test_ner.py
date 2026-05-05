@@ -11,8 +11,9 @@ class TestGround(unittest.TestCase):
 
     def test_ground(self) -> None:
         """Test grounding a TAXRANK entry by name and synonym."""
-        result = pyobo.ground("taxrank", "biovariety", cache=False, use_tqdm=False)
-        self.assertIsNotNone(result)
+        result = pyobo.ground(
+            "taxrank", "biovariety", cache=False, use_tqdm=False, strict_match=True
+        )
         self.assertEqual("taxrank", result.prefix)
         self.assertEqual("0000032", result.identifier)
         self.assertEqual("bio-variety", result.name)

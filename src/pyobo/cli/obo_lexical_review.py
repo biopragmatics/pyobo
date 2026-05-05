@@ -65,8 +65,8 @@ def obo_lexical_review(
 ) -> None:
     """Make a lexical review of an ontology.
 
-    Example usage for a non-OBO Foundry ontology requires giving
-    the --uri-format and --location
+    Example usage for a non-OBO Foundry ontology requires giving the --uri-format and
+    --location
 
     .. code-block:: console
 

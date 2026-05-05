@@ -3,7 +3,8 @@
 import logging
 import tarfile
 from collections.abc import Iterable
-from xml.etree import ElementTree
+
+from lxml.etree import Element, ElementTree
 
 from pyobo.struct import Obo, Reference, Term, has_part
 from pyobo.utils.path import ensure_path
@@ -30,14 +31,14 @@ class GWASCentralStudyGetter(Obo):
         return iterate_terms(force=force, version=self._version_or_raise)
 
 
-def _find_text(element, name: str) -> str | None:
+def _find_text(element: Element, name: str) -> str | None:
     x = element.find(name)
     if x is not None:
         return x.text
     return None
 
 
-def _get_term_from_tree(tree: ElementTree.ElementTree) -> Term:
+def _get_term_from_tree(tree: ElementTree) -> Term:
     name = _find_text(tree, "name")
     description = _find_text(tree, "description")
     if description:

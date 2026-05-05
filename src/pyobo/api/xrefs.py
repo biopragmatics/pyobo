@@ -10,6 +10,7 @@ import bioversions
 import pandas as pd
 import sssom_pydantic
 from curies import ReferenceTuple
+from pydantic import AnyUrl
 from sssom_pydantic import SemanticMapping
 from sssom_pydantic.io import CachedSemanticMappings
 from typing_extensions import Unpack
@@ -32,6 +33,7 @@ from ..utils.path import CacheArtifact, get_cache_path
 __all__ = [
     "get_filtered_xrefs",
     "get_mappings_df",
+    "get_semantic_mapping_metadata",
     "get_semantic_mappings",
     "get_sssom_df",
     "get_xref",
@@ -114,16 +116,25 @@ def get_sssom_df(
 
 
 def get_semantic_mapping_metadata(
-    prefix: str, version: str | None = None
+    prefix: str,
+    *,
+    id: str | None = None,
+    confidence: float | None = None,
+    version: str | None = None,
 ) -> sssom_pydantic.MappingSet:
     """Get metadata for a resource."""
     resource = bioregistry.get_resource(prefix, strict=True)
     return sssom_pydantic.MappingSet(
-        id=resource.get_download() or f"https://w3id.org/sssom/pyobo-mappings/{prefix}.sssom.tsv",
-        version=version or bioversions.get_version(prefix),
+        id=id
+        or resource.get_download()
+        or f"https://w3id.org/biopragmatics/pyobo/mappings/{resource.prefix}.sssom.tsv",
         title=resource.get_name(strict=True),
+        # maybe update this?
+        source=[AnyUrl(f"https://bioregistry.io/{resource.prefix}")],
         description=resource.get_description(),
         license=resource.get_license_url(),
+        confidence=confidence,
+        version=version or bioversions.get_version(prefix, strict=False),
     )
 
 
@@ -170,7 +181,8 @@ def get_mappings_df(
     r"""Get semantic mappings from a source as an SSSOM dataframe.
 
     :param prefix: The ontology to look in for xrefs
-    :param names: Add name columns (``subject_label`` and ``object_label``). Defaults to True.
+    :param names: Add name columns (``subject_label`` and ``object_label``). Defaults to
+        True.
     :param include_mapping_source_column: If true, adds the prefix for the current
         ontology in the ``mapping_source`` column
 

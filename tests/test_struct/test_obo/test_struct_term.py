@@ -178,7 +178,7 @@ class TestTerm(unittest.TestCase):
         if curie is None:
             curie = f"oboInOwl:{name}"
         reference = Reference(prefix="GO", identifier="0000001")
-        term = Term(reference=reference, **{name: True})
+        term = Term(reference=reference, **{name: True})  # type:ignore[arg-type]
         self.assert_obo_stanza(
             term,
             obo=f"""\
@@ -196,7 +196,7 @@ class TestTerm(unittest.TestCase):
         self.assertIsNotNone(value)
         self.assertTrue(value)
 
-        term = Term(reference=reference, **{name: False})
+        term = Term(reference=reference, **{name: False})  # type:ignore[arg-type]
         self.assert_obo_stanza(
             term,
             obo=f"""\
@@ -1050,8 +1050,7 @@ class TestTerm(unittest.TestCase):
             """,
         )
 
-        species = term.get_species()
-        self.assertIsNotNone(species)
+        species = term.get_species(strict=True)
         self.assertEqual("ncbitaxon", species.prefix)
         self.assertEqual("9606", species.identifier)
 
@@ -1059,8 +1058,7 @@ class TestTerm(unittest.TestCase):
         """Test setting and getting species."""
         term = Term(reference=Reference(prefix="hgnc", identifier="1234"))
         term.set_species("9606", "Homo sapiens")
-        species = term.get_species()
-        self.assertIsNotNone(species)
+        species = term.get_species(strict=True)
         self.assertEqual(NCBITAXON_PREFIX, species.prefix)
         self.assertEqual("9606", species.identifier)
 

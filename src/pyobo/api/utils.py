@@ -39,6 +39,7 @@ def get_version(prefix: str, *, strict: Literal[True] = True) -> str: ...
 def get_version(prefix: str, *, strict: Literal[False] = False) -> str | None: ...
 
 
+@lru_cache(None)
 def get_version(prefix: str, *, strict: bool = False) -> str | None:
     """Get the version for the resource, if available.
 
@@ -50,15 +51,19 @@ def get_version(prefix: str, *, strict: bool = False) -> str | None:
     :raises VersionError: if the version is not available and strict mode is enabled
     """
     # Prioritize loaded environment variable PYOBO_VERSION_PINS dictionary
-    version = get_version_pins().get(prefix)
-    if version:
+    if version := get_version_pins().get(prefix):
         return version
+
     try:
         version = bioversions.get_version(prefix)
     except KeyError:
         pass  # this prefix isn't available from bioversions
     except Exception as e:
-        raise ValueError(f"[{prefix}] could not get version from bioversions") from e
+        msg = f"[{prefix}] could not get version from bioversions"
+        if strict:
+            raise ValueError(msg) from e
+        logger.warning(msg)
+        raise
     else:
         if version:
             return version

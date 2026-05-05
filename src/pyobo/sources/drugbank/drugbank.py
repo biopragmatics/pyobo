@@ -47,7 +47,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         yield _make_term(drug_info)
 
 
-def iterate_drug_info(version: str, force: bool = False) -> Iterable[Mapping[str, Any]]:
+def iterate_drug_info(version: str, force: bool = False) -> list[Mapping[str, Any]]:
     """Iterate over DrugBank records."""
 
     @cached_pickle(
@@ -248,14 +248,14 @@ def _get_patents(drug_element: Element) -> Iterator[dict[str, Any]]:
 _categories = ["target", "enzyme", "carrier", "transporter"]
 
 
-def _iterate_protein_stuff(drug_xml: Element) -> Iterator:
+def _iterate_protein_stuff(drug_xml: Element) -> Iterable[tuple[str, Element]]:
     for category in _categories:
         proteins = drug_xml.findall(f"{ns}{category}s/{ns}{category}")
         for protein in proteins:
             yield category, protein
 
 
-def _extract_protein_info(category: str, protein: Element) -> dict:
+def _extract_protein_info(category: str, protein: Element) -> dict[str, Any]:
     # FIXME Differentiate between proteins and protein groups/complexes
     polypeptides = protein.findall(f"{ns}polypeptide")
 

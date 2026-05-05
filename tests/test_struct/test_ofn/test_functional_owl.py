@@ -1,3 +1,5 @@
+# type:ignore
+
 """Tests for functional OWL."""
 
 import unittest
@@ -421,7 +423,7 @@ class TestMiscellaneous(unittest.TestCase):
 class TestRDF(unittest.TestCase):
     """Test serialization to RDF."""
 
-    axiom_examples: ClassVar[list[f.Axiom]]
+    axiom_examples: ClassVar[list[f.Axiom | f.Box]]
 
     @classmethod
     def setUpClass(cls) -> None:

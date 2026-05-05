@@ -16,7 +16,7 @@ from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, S
 from dataclasses import dataclass, field
 from pathlib import Path
 from textwrap import dedent
-from typing import Annotated, Any, ClassVar, Self, TextIO, cast
+from typing import Annotated, Any, ClassVar, Literal, Self, TextIO, cast, overload
 
 import bioregistry
 import click
@@ -84,6 +84,7 @@ from ..version import get_version as get_pyobo_version
 
 __all__ = [
     "Obo",
+    "Reference",
     "Synonym",
     "SynonymTypeDef",
     "Term",
@@ -392,15 +393,32 @@ class Term(Stanza):
             v.from_species, Reference(prefix=NCBITAXON_PREFIX, identifier=identifier, name=name)
         )
 
-    def get_species(self, prefix: str = NCBITAXON_PREFIX) -> Reference | None:
+    # docstr-coverage:excused `overload`
+    @overload
+    def get_species(self, prefix: str = ..., *, strict: Literal[True] = ...) -> Reference: ...
+
+    # docstr-coverage:excused `overload`
+    @overload
+    def get_species(
+        self, prefix: str = ..., *, strict: Literal[False] = ...
+    ) -> Reference | None: ...
+
+    def get_species(
+        self, prefix: str = NCBITAXON_PREFIX, *, strict: bool = False
+    ) -> Reference | None:
         """Get the species if it exists.
 
         :param prefix: The prefix to use in case the term has several species
             annotations.
+        :param strict: If true, raises when no species reference is available
+
+        :returns: A species reference, if available
         """
         for species in self.get_relationships(v.from_species):
             if species.prefix == prefix:
                 return species
+        if strict:
+            raise ValueError
         return None
 
     def extend_relationship(self, typedef: ReferenceHint, references: Iterable[Reference]) -> None:
@@ -1194,7 +1212,7 @@ class Obo:
 
     def _get_cache_config(
         self,
-    ) -> list[tuple[CacheArtifact, Sequence[str], Callable[..., Iterable[tuple]]]]:
+    ) -> list[tuple[CacheArtifact, Sequence[str], Callable[..., Iterable[tuple[Any, ...]]]]]:
         return [
             (CacheArtifact.names, [f"{self.ontology}_id", "name"], self.iterate_id_name),
             (
@@ -2057,8 +2075,8 @@ class Obo:
         self, *, progress: bool = False
     ) -> Iterable[sssom_pydantic.SemanticMapping]:
         """Iterate over semantic mappings."""
-        self_license = bioregistry.get_license(self.ontology)
-        source = Reference(prefix="bioregistry", identifier=self.ontology, name=self.name)
+        license_url = bioregistry.get_license_url(self.ontology)
+        source = _get_download_source(self.ontology)
         for stanza in self._iter_stanzas(use_tqdm=progress):
             for predicate, obj_ref, context in stanza.get_mappings(
                 include_xrefs=True, add_context=True
@@ -2073,7 +2091,7 @@ class Obo:
                     source=source,
                     subject_source=source,
                     subject_source_version=self.data_version,
-                    license=self_license,
+                    license=license_url,
                 )
 
     def get_mappings_df(
@@ -2086,7 +2104,8 @@ class Obo:
         """Get a dataframe with SSSOM extracted from the OBO document.
 
         :param use_tqdm: Should a progres bar be shown
-        :param include_subject_labels: If false, removes the ``subject_label`` column. Defaults to false.
+        :param include_subject_labels: If false, removes the ``subject_label`` column.
+            Defaults to false.
         :param include_mapping_source_column: If true, adds the prefix for the current
             ontology in the ``mapping_source`` column
 
@@ -2145,6 +2164,17 @@ class Obo:
     def get_id_alts_mapping(self) -> Mapping[str, list[str]]:
         """Get a mapping from identifiers to a list of alternative identifiers."""
         return multidict((term.identifier, alt.identifier) for term, alt in self.iterate_alts())
+
+
+def _get_download_source(prefix: str) -> Reference:
+    resource = bioregistry.get_resource(prefix, strict=True)
+    if resource.get_obofoundry_prefix():
+        download = resource.get_download()
+        if download and download.startswith("http://purl.obolibrary.org/obo/"):
+            return Reference(
+                prefix="obo", identifier=download.removeprefix("http://purl.obolibrary.org/obo/")
+            )
+    return Reference(prefix="bioregistry", identifier=resource.prefix)
 
 
 @dataclass

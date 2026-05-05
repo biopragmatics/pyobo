@@ -62,8 +62,8 @@ KEY_TO_PREFIX = {
 EXACTS = {"inchikey"}
 
 
-def _split(x) -> list[str]:
-    if pd.notna(x):
+def _split(x: str | None) -> list[str]:
+    if x is not None and pd.notna(x):
         return [y.strip() for y in x.split(";")]
     return []
 
@@ -166,7 +166,9 @@ def _parse_model_links(term: Term, model_list: str) -> None:
             term.annotate_object(participates_in, reference)
 
 
-def _parse_dblinks(term: Term, database_links: str, property_map=None) -> None:
+def _parse_dblinks(
+    term: Term, database_links: str, property_map: dict[str, Reference] | None = None
+) -> None:
     if not property_map:
         property_map = {}
 

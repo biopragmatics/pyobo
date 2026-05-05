@@ -2,6 +2,7 @@
 
 import zipfile
 from collections.abc import Iterable
+from typing import IO
 
 from pyobo import Obo, Term
 from pyobo.sources.pharmgkb.utils import download_pharmgkb
@@ -50,7 +51,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
                 yield _process_biopax(zip_info, file)
 
 
-def _process_biopax(path: zipfile.ZipInfo, file) -> Term:
+def _process_biopax(path: zipfile.ZipInfo, file: IO[bytes]) -> Term:
     fname = path.filename.removesuffix(EXTENSION).strip().replace("\r\n", " ")
     identifier, _, name = fname.partition("-")
     name = name.replace("_", " ")

@@ -1,14 +1,14 @@
 """Utilities for PharmGKB."""
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import cast
+from typing import Any
 
 import pandas as pd
 from pystow.utils import read_zipfile_csv
 from tqdm import tqdm
 
-from pyobo import Reference
+from pyobo.struct import Reference, Term
 from pyobo.utils.path import ensure_path
 
 __all__ = [
@@ -39,7 +39,7 @@ def download_pharmgkb_tsv(prefix: str, url: str, inner: str, *, force: bool) -> 
     return df
 
 
-def split(row, key: str) -> Iterable[str]:
+def split(row: Mapping[str, Any], key: str) -> Iterable[str]:
     """Split the data."""
     values = row.get(key)
     if pd.isna(values) or not values:
@@ -63,7 +63,9 @@ REPLACES = {
 }
 
 
-def parse_xrefs(term, row, key="Cross-references") -> Iterable[Reference]:
+def parse_xrefs(
+    term: Term, row: Mapping[str, Any], key: str = "Cross-references"
+) -> Iterable[Reference]:
     """Parse the cross-references."""
     for xref_curie in split(row, key):
         # HOXD@ is a valid genatlas identifier, see http://genatlas.medecine.univ-paris5.fr/fiche.php?symbol=HOXD@
@@ -74,7 +76,7 @@ def parse_xrefs(term, row, key="Cross-references") -> Iterable[Reference]:
             if xref_curie.startswith(k):
                 xref_curie = xref_curie.replace(k, v)
         try:
-            xref = cast(Reference, Reference.from_curie(xref_curie))
+            xref = Reference.from_curie(xref_curie)
         except ValueError:
             p, _, _ = xref_curie.partition(":")
             if p not in _MISSING_PREFIXES:
