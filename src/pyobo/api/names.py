@@ -335,7 +335,7 @@ def get_id_synonyms_mapping(
 
 def get_literal_mappings(
     prefix: str, *, skip_obsolete: bool = False, **kwargs: Unpack[GetOntologyKwargs]
-) -> list[LiteralMapping]:
+) -> list[LiteralMapping[Reference]]:
     """Get literal mappings."""
     df = get_literal_mappings_df(prefix, **kwargs)
     rv = ssslm.df_to_literal_mappings(df, reference_cls=Reference)

@@ -15,6 +15,7 @@ from typing_extensions import Unpack
 from pyobo.api import get_literal_mappings
 from pyobo.constants import GetOntologyKwargs, check_should_use_tqdm
 from pyobo.getters import NoBuildError
+from pyobo.struct import Reference
 
 if TYPE_CHECKING:
     import gilda
@@ -36,7 +37,7 @@ def get_grounder(
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> ssslm.Grounder:
     """Get a grounder for the given prefix(es)."""
-    all_literal_mappings: list[LiteralMapping] = []
+    all_literal_mappings: list[LiteralMapping[Reference]] = []
     it = _clean_prefix_versions(prefixes, versions=versions)
     disable = len(it) == 1 or not check_should_use_tqdm(kwargs)
     for prefix, kwargs["version"] in tqdm(it, leave=False, disable=disable):

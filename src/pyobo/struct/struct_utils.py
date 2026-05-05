@@ -600,10 +600,22 @@ class Stanza(Referenced, HasReferencesMixin):
         """Get relationships from the given type."""
         return self.relationships.get(_ensure_ref(typedef), [])
 
-    def get_relationship(self, typedef: ReferenceHint) -> Reference | None:
+    @overload
+    def get_relationship(
+        self, typedef: ReferenceHint, *, strict: Literal[False] = ...
+    ) -> Reference | None: ...
+
+    @overload
+    def get_relationship(
+        self, typedef: ReferenceHint, *, strict: Literal[True] = ...
+    ) -> Reference: ...
+
+    def get_relationship(self, typedef: ReferenceHint, *, strict: bool = False) -> Reference | None:
         """Get a single relationship of the given type."""
         r = self.get_relationships(typedef)
         if not r:
+            if strict:
+                raise ValueError
             return None
         if len(r) > 1:
             raise ValueError
@@ -752,14 +764,14 @@ class Stanza(Referenced, HasReferencesMixin):
     # docstr-coverage:excused `overload`
     @overload
     def get_mappings(
-        self, *, include_xrefs: bool = ..., add_context: Literal[True] = ...
-    ) -> list[tuple[Reference, Reference, MappingContext]]: ...
+        self, *, include_xrefs: bool = ..., add_context: Literal[False] = ...
+    ) -> list[tuple[Reference, Reference]]: ...
 
     # docstr-coverage:excused `overload`
     @overload
     def get_mappings(
-        self, *, include_xrefs: bool = ..., add_context: Literal[False] = ...
-    ) -> list[tuple[Reference, Reference]]: ...
+        self, *, include_xrefs: bool = ..., add_context: Literal[True] = ...
+    ) -> list[tuple[Reference, Reference, MappingContext]]: ...
 
     def get_mappings(
         self, *, include_xrefs: bool = True, add_context: bool = False

@@ -3,9 +3,9 @@
 import unittest
 from collections.abc import Iterable
 from textwrap import dedent
-from typing import cast
 
 import bioregistry
+from bioregistry import NormalizedNamedReference
 from curies import vocabulary as v
 
 from pyobo import Obo, Reference, default_reference
@@ -31,7 +31,7 @@ ONTOLOGY_PREFIX = "go"
 
 
 def _ontology_from_typedef(prefix: str, typedef: TypeDef) -> Obo:
-    name = cast(str, bioregistry.get_name(prefix))
+    name = bioregistry.get_name(prefix)
     return make_ad_hoc_ontology(
         _ontology=prefix,
         _name=name,
@@ -75,7 +75,7 @@ class TestTypeDef(unittest.TestCase):
     ) -> tuple[TypeDef, TypeDef]:
         """Assert the boolean tag parses properly."""
         reference = Reference(prefix="GO", identifier="0000001")
-        typedef_true = TypeDef(reference=reference, **{name: True})
+        typedef_true = TypeDef(reference=reference, **{name: True})  # type:ignore[arg-type]
         if funowl_curie is None:
             funowl_curie = f"oboInOwl:{name}"
         self.assert_obo_stanza(
@@ -109,7 +109,7 @@ class TestTypeDef(unittest.TestCase):
         self.assertIsNotNone(value)
         self.assertTrue(value)
 
-        typedef_false = TypeDef(reference=reference, **{name: False})
+        typedef_false = TypeDef(reference=reference, **{name: False})  # type:ignore[arg-type]
         self.assert_obo_stanza(
             f"""\
             [Typedef]
@@ -240,6 +240,8 @@ class TestTypeDef(unittest.TestCase):
     def test_6_description(self) -> None:
         """Test outputting a description."""
         typedef = TypeDef(reference=REF, definition=has_role.definition)
+        if has_role.definition is None:
+            raise self.fail("has_role is missing a definition")
         self.assert_obo_stanza(
             f"""\
             [Typedef]
@@ -315,7 +317,12 @@ class TestTypeDef(unittest.TestCase):
             typedef,
         )
 
-        typedef = TypeDef(reference=REF, synonyms=[Synonym("bears role", type=v.previous_name)])
+        typedef = TypeDef(
+            reference=REF,
+            synonyms=[
+                Synonym("bears role", type=NormalizedNamedReference.from_reference(v.previous_name))
+            ],
+        )
         self.assert_obo_stanza(
             """\
             [Typedef]
@@ -334,7 +341,13 @@ class TestTypeDef(unittest.TestCase):
 
         typedef = TypeDef(
             reference=REF,
-            synonyms=[Synonym("bears role", type=v.previous_name, specificity="EXACT")],
+            synonyms=[
+                Synonym(
+                    "bears role",
+                    type=NormalizedNamedReference.from_reference(v.previous_name),
+                    specificity="EXACT",
+                )
+            ],
         )
         self.assert_obo_stanza(
             """\
@@ -376,13 +389,7 @@ class TestTypeDef(unittest.TestCase):
         typedef = TypeDef(
             reference=REF,
             properties={
-                has_contributor.reference: [
-                    Reference(
-                        prefix=v.charlie.prefix,
-                        identifier=v.charlie.identifier,
-                        name=v.charlie.name,
-                    )
-                ],
+                has_contributor.reference: [NormalizedNamedReference.from_reference(v.charlie)],
                 has_inchi.reference: [OBOLiteral.string("abc")],
             },
         )

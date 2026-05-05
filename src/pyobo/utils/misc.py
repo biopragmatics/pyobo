@@ -54,6 +54,7 @@ VERSION_PREFIXES = [
     "http://purls.helmholtz-metadaten.de/cdos/cdco/",  # http://purls.helmholtz-metadaten.de/cdos/cdco/1.0.0
     "https://endlessforms.info/gdo/releases/gdoa-",
     "https://openenergyplatform.org/ontology/oeo/releases/",
+    "https://w3id.org/amv/",  # https://w3id.org/amv/1.0
 ]
 VERSION_PREFIX_SPLITS = [
     "http://www.ebi.ac.uk/efo/releases/v",

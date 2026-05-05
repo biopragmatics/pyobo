@@ -673,11 +673,14 @@ class TestReaderTerm(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(
             {(has_dbxref.pair, Reference(prefix="cas", identifier="389-08-2").pair)},
-            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
+            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True, add_context=False)},
         )
         self.assertEqual(
             set(),
-            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=False)},
+            {
+                (a.pair, b.pair)
+                for a, b in term.get_mappings(include_xrefs=False, add_context=False)
+            },
         )
 
         ontology = from_str("""\
@@ -691,7 +694,10 @@ class TestReaderTerm(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(
             {(exact_match.pair, Reference(prefix="drugbank", identifier="DB00779").pair)},
-            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=False)},
+            {
+                (a.pair, b.pair)
+                for a, b in term.get_mappings(include_xrefs=False, add_context=False)
+            },
         )
         self.assertEqual(
             {
@@ -1194,8 +1200,7 @@ class TestReaderTerm(unittest.TestCase):
             relationship: RO:0018033 CHEBI:5678
         """)
         term = self.get_only_term(ontology)
-        reference = term.get_relationship(is_conjugate_base_of)
-        self.assertIsNotNone(reference)
+        reference = term.get_relationship(is_conjugate_base_of, strict=True)
         self.assertEqual("chebi:5678", reference.curie)
 
     def test_18_relationship_qualified_defined(self) -> None:
@@ -1212,8 +1217,7 @@ class TestReaderTerm(unittest.TestCase):
             name: is conjugate base of
         """)
         term = self.get_only_term(ontology)
-        reference = term.get_relationship(is_conjugate_base_of)
-        self.assertIsNotNone(reference)
+        reference = term.get_relationship(is_conjugate_base_of, strict=True)
         self.assertEqual("chebi:5678", reference.curie)
 
     def test_18_relationship_unqualified(self) -> None:
@@ -1233,8 +1237,7 @@ class TestReaderTerm(unittest.TestCase):
         self.assertIsNone(term.get_relationship(is_conjugate_base_of))
         r = default_reference("chebi", "xyz")
         td = TypeDef(reference=r)
-        reference = term.get_relationship(td)
-        self.assertIsNotNone(reference)
+        reference = term.get_relationship(td, strict=True)
         self.assertEqual("chebi:5678", reference.curie)
 
         rr = list(ontology.iterate_filtered_relations(td))
