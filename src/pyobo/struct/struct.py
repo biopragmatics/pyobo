@@ -393,9 +393,11 @@ class Term(Stanza):
             v.from_species, Reference(prefix=NCBITAXON_PREFIX, identifier=identifier, name=name)
         )
 
+    # docstr-coverage:excused `overload`
     @overload
     def get_species(self, prefix: str = ..., *, strict: Literal[True] = ...) -> Reference: ...
 
+    # docstr-coverage:excused `overload`
     @overload
     def get_species(
         self, prefix: str = ..., *, strict: Literal[False] = ...

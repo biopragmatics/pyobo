@@ -16,6 +16,7 @@ __all__ = [
 ]
 
 
+# docstr-coverage:excused `overload`
 @overload
 def ground(
     prefix: str | Iterable[str],
@@ -26,6 +27,7 @@ def ground(
 ) -> Reference: ...
 
 
+# docstr-coverage:excused `overload`
 @overload
 def ground(
     prefix: str | Iterable[str],

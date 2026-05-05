@@ -600,11 +600,13 @@ class Stanza(Referenced, HasReferencesMixin):
         """Get relationships from the given type."""
         return self.relationships.get(_ensure_ref(typedef), [])
 
+    # docstr-coverage:excused `overload`
     @overload
     def get_relationship(
         self, typedef: ReferenceHint, *, strict: Literal[False] = ...
     ) -> Reference | None: ...
 
+    # docstr-coverage:excused `overload`
     @overload
     def get_relationship(
         self, typedef: ReferenceHint, *, strict: Literal[True] = ...
