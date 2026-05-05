@@ -1,3 +1,5 @@
+# type:ignore
+
 """Tests for functional OWL."""
 
 import unittest

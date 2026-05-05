@@ -185,7 +185,7 @@ def get_mature_id_to_name(version: str) -> Mapping[str, str]:
         path=prefix_directory_join(PREFIX, name=f"{PREFIX}.mature_mapping.tsv", version=version),
         header=["mirbase.mature_id", "name"],
     )
-    def _inner():
+    def _inner() -> Mapping[str, str]:
         return {
             mature.identifier: mature.name
             for term in get_terms(version)

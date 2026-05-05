@@ -35,13 +35,13 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
     with open(path) as file:
         lines = list(file)
     it: Iterable[tuple[str, str]] = ((line[:2], line[2:].strip()) for line in lines[47:-5])
-    for i, (_, term_lines) in enumerate(itt.groupby(it, key=lambda p: p[0] == "//")):
-        term = _parse(i, term_lines)
+    for _i, (_, term_lines) in enumerate(itt.groupby(it, key=lambda p: p[0] == "//")):
+        term = _parse(term_lines)
         if term:
             yield term
 
 
-def _parse(i, lines: Iterable[tuple[str, str]]) -> Term | None:
+def _parse(lines: Iterable[tuple[str, str]]) -> Term | None:
     dd_: defaultdict[str, list[str]] = defaultdict(list)
     for key, value in lines:
         dd_[key].append(value)

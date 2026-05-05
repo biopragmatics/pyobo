@@ -3,6 +3,7 @@
 import os
 import time
 import unittest
+from collections.abc import Mapping
 from tempfile import TemporaryDirectory
 
 from pyobo.utils.cache import cached_mapping, cached_multidict
@@ -21,7 +22,7 @@ class TestCaches(unittest.TestCase):
             header = ["key", "value"]
 
             @cached_mapping(path=path, header=header)
-            def _get_mapping() -> dict[str, str]:
+            def _get_mapping() -> Mapping[str, str]:
                 time.sleep(sleep_time)
                 return {"a": "x", "b": "y", "c": "z"}
 
@@ -44,7 +45,7 @@ class TestCaches(unittest.TestCase):
 
             self._help_test_mapping(rv2)
 
-    def _help_test_mapping(self, d: dict[str, str]) -> None:
+    def _help_test_mapping(self, d: Mapping[str, str]) -> None:
         self.assertIsNotNone(d)
         self.assertEqual(3, len(d))
         self.assertEqual({"a": "x", "b": "y", "c": "z"}, d)
@@ -56,7 +57,7 @@ class TestCaches(unittest.TestCase):
             header = ["key", "value"]
 
             @cached_multidict(path=path, header=header)
-            def _get_multidict():
+            def _get_multidict() -> Mapping[str, list[str]]:
                 time.sleep(sleep_time)
                 return {"a": ["a1", "a2"], "b": ["b1"], "c": ["c1", "c2"]}
 
@@ -79,7 +80,7 @@ class TestCaches(unittest.TestCase):
 
             self._help_test_multidict(rv2)
 
-    def _help_test_multidict(self, d: dict[str, list[str]]) -> None:
+    def _help_test_multidict(self, d: Mapping[str, list[str]]) -> None:
         self.assertIsNotNone(d)
         self.assertEqual(3, len(d))
         self.assertEqual({"a": ["a1", "a2"], "b": ["b1"], "c": ["c1", "c2"]}, d)

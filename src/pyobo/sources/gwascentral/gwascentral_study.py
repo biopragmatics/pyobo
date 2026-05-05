@@ -30,9 +30,9 @@ class GWASCentralStudyGetter(Obo):
         return iterate_terms(force=force, version=self._version_or_raise)
 
 
-def _find_text(element, name: str) -> str | None:
+def _find_text(element: ElementTree.Element[str], name: str) -> str | None:
     x = element.find(name)
-    if x is not None:
+    if x is not None and x.text:
         return x.text
     return None
 

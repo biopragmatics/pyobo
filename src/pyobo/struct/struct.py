@@ -84,6 +84,7 @@ from ..version import get_version as get_pyobo_version
 
 __all__ = [
     "Obo",
+    "Reference",
     "Synonym",
     "SynonymTypeDef",
     "Term",
@@ -1208,7 +1209,7 @@ class Obo:
 
     def _get_cache_config(
         self,
-    ) -> list[tuple[CacheArtifact, Sequence[str], Callable[..., Iterable[tuple]]]]:
+    ) -> list[tuple[CacheArtifact, Sequence[str], Callable[..., Iterable[tuple[Any, ...]]]]]:
         return [
             (CacheArtifact.names, [f"{self.ontology}_id", "name"], self.iterate_id_name),
             (

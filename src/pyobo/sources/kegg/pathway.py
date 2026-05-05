@@ -149,7 +149,7 @@ def iter_kegg_pathway_paths(
         iter_kegg_genomes(version=version, desc="KEGG Pathways"), key=lambda x: int(x.identifier)
     )
     func = partial(_process_genome, version=version, skip_missing=skip_missing)
-    return thread_map(func, genomes, unit="pathway", unit_scale=True)
+    return thread_map(func, genomes, unit="pathway", unit_scale=True)  # type:ignore[no-any-return]
 
 
 def _process_genome(

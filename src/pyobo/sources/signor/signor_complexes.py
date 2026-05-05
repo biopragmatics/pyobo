@@ -95,7 +95,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         yield term
 
 
-def _clean_descr(d) -> str | None:
+def _clean_descr(d: str | None) -> str | None:
     if pd.isna(d):
         return None
     return d.replace("\n", " ")

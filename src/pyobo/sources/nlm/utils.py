@@ -72,7 +72,9 @@ def get_journals(
             yield term
 
 
-def _process_journal(element, journal_id_to_publisher_key: dict[str, Term]) -> Term | None:
+def _process_journal(
+    element: ElementTree.Element[str], journal_id_to_publisher_key: dict[str, Term]
+) -> Term | None:
     # TODO enrich with context from https://ftp.ncbi.nlm.nih.gov/pubmed/J_Entrez.txt and https://ftp.ncbi.nlm.nih.gov/pubmed/J_Medline.txt
 
     nlm_id = element.findtext("NlmUniqueID")

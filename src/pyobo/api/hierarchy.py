@@ -6,7 +6,7 @@ import logging
 import warnings
 from collections.abc import Iterable
 from functools import lru_cache
-from typing import NotRequired, overload
+from typing import NotRequired, cast, overload
 
 import networkx as nx
 from curies import ReferenceTuple
@@ -200,7 +200,7 @@ def get_descendants(
     hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
     if t not in hierarchy:
         return None
-    return nx.ancestors(hierarchy, t)  # note this is backwards
+    return cast(set[Reference], nx.ancestors(hierarchy, t))  # note this is backwards
 
 
 @lru_cache
