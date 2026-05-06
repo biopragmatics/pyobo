@@ -2,6 +2,8 @@
 
 import unittest
 
+from curies import Reference
+
 from pyobo.identifier_utils import (
     NotCURIEError,
     UnregisteredPrefixError,
@@ -14,32 +16,42 @@ from pyobo.utils.iter import iterate_together
 class TestStringUtils(unittest.TestCase):
     """Test string utilities."""
 
+    def assert_pair(
+        self, expected: tuple[str, str], curie: str, ontology_prefix: str | None = None
+    ) -> None:
+        """Test a pair is parsed properly."""
+        xx = _parse_str_or_curie_or_uri_helper(curie, ontology_prefix=ontology_prefix)
+        if not isinstance(xx, Reference):
+            raise self.fail()
+        self.assertEqual(expected, xx.pair)
+
     def test_strip_prefix(self) -> None:
         """Test stripping prefixes works."""
-        self.assertEqual(("go", "1234567"), _parse_str_or_curie_or_uri_helper("GO:1234567").pair)
-        self.assertEqual(("go", "1234567"), _parse_str_or_curie_or_uri_helper("go:1234567").pair)
+        self.assert_pair(("go", "1234567"), "GO:1234567")
+        self.assert_pair(("go", "1234567"), "go:1234567")
 
         self.assertIsInstance(_parse_str_or_curie_or_uri_helper("1234567"), NotCURIEError)
-        self.assertEqual(("go", "1234567"), _parse_str_or_curie_or_uri_helper("GO:GO:1234567").pair)
+        self.assert_pair(("go", "1234567"), "GO:GO:1234567")
 
-        self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("pubmed:1234").pair)
+        self.assert_pair(("pubmed", "1234"), "pubmed:1234")
         # Test remapping
-        self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("pmid:1234").pair)
-        self.assertEqual(("pubmed", "1234"), _parse_str_or_curie_or_uri_helper("PMID:1234").pair)
+        self.assert_pair(("pubmed", "1234"), "pmid:1234")
+        self.assert_pair(("pubmed", "1234"), "PMID:1234")
 
         # Test resource-specific remapping
         self.assertIsInstance(
             _parse_str_or_curie_or_uri_helper("Thesaurus:C1234"), UnregisteredPrefixError
         )
-        self.assertEqual(
+        self.assert_pair(
             ("ncit", "C1234"),
-            _parse_str_or_curie_or_uri_helper("Thesaurus:C1234", ontology_prefix="enm").pair,
+            "Thesaurus:C1234",
+            ontology_prefix="enm",
         )
 
         # parsing IRIs
-        self.assertEqual(
+        self.assert_pair(
             ("chebi", "1234"),
-            _parse_str_or_curie_or_uri_helper("http://purl.obolibrary.org/obo/CHEBI_1234").pair,
+            "http://purl.obolibrary.org/obo/CHEBI_1234",
         )
 
     def test_parse_eccode_transfer(self) -> None:
