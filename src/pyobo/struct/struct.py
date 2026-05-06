@@ -83,6 +83,7 @@ from ..utils.path import (
 from ..version import get_version as get_pyobo_version
 
 __all__ = [
+    "BioregistryError",
     "Obo",
     "Reference",
     "Synonym",

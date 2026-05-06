@@ -27,7 +27,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def _s(line: str, sep: str) -> list:
+def _s(line: str, sep: str) -> list[str]:
     return [part.strip() for part in line.strip().split(sep, 1)]
 
 
@@ -51,16 +51,16 @@ def parse_genome_line(line: str) -> KEGGGenome | None:
     identifier, rest = _s(line, "\t")
     identifier = identifier[len("gn:") :]
     if ";" in rest:
-        rest, name = _s(rest, ";")
+        rest_2, name = _s(rest, ";")
 
-        rest = [part.strip() for part in rest.split(",")]
-        if len(rest) == 3:
-            kegg_code, long_code, taxonomy_id = rest
-        elif len(rest) == 2:
-            kegg_code, taxonomy_id = rest
+        rest_3 = [part.strip() for part in rest_2.split(",")]
+        if len(rest_3) == 3:
+            kegg_code, long_code, taxonomy_id = rest_3
+        elif len(rest_3) == 2:
+            kegg_code, taxonomy_id = rest_3
             long_code = None
-        elif len(rest) == 1:
-            (kegg_code,) = rest
+        elif len(rest_3) == 1:
+            (kegg_code,) = rest_3
             long_code, taxonomy_id = None, None
         else:
             raise ValueError(f"unexpected line: {line}")

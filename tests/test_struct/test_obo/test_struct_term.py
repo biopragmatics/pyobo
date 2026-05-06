@@ -48,6 +48,7 @@ class Nope(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Do not do anything."""
+        yield from iter([])
 
 
 def _ontology_from_term(
