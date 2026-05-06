@@ -560,7 +560,7 @@ def _process_replaced_by(
         stanza.append_replaced_by(reference)
 
 
-UNDEFINED_SUBSETS = set()
+UNDEFINED_SUBSETS: set[Reference] = set()
 
 
 def _process_subsets(
