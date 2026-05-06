@@ -24,6 +24,8 @@ class TestReaderOntologyMetadata(unittest.TestCase):
 
     def get_only_typedef(self, ontology: Obo) -> TypeDef:
         """Assert there is only a single typedef in the ontology and return it."""
+        if ontology.typedefs is None:
+            raise self.fail()
         self.assertEqual(1, len(ontology.typedefs))
         return ontology.typedefs[0]
 

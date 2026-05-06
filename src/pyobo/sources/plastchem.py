@@ -198,7 +198,7 @@ def get_terms() -> Iterable[Term]:
     )
 
 
-def _ground_echa(chebi_grounder: ssslm.Grounder, echa_grouping: str) -> Reference | None:
+def _ground_echa(chebi_grounder: ssslm.Grounder[Reference], echa_grouping: str) -> Reference | None:
     echa_grouping = echa_grouping.strip()
     if echa_grouping in ECHA_MAP:
         return ECHA_MAP[echa_grouping]

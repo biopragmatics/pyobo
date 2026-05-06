@@ -10,17 +10,17 @@ from curies import ReferenceTuple
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
 from pyobo.identifier_utils import NotCURIEError
-from pyobo.struct.functional.obo_to_functional import get_term_axioms
-from pyobo.struct.obograph import assert_graph_equal, to_parsed_obograph, to_parsed_obograph_oracle
-from pyobo.struct.reference import _parse_datetime, unspecified_matching
-from pyobo.struct.struct import (
+from pyobo.struct import (
     Annotation,
-    BioregistryError,
     SynonymTypeDef,
     Term,
     TypeDef,
     make_ad_hoc_ontology,
 )
+from pyobo.struct.functional.obo_to_functional import get_term_axioms
+from pyobo.struct.obograph import assert_graph_equal, to_parsed_obograph, to_parsed_obograph_oracle
+from pyobo.struct.reference import _parse_datetime, unspecified_matching
+from pyobo.struct.struct import BioregistryError
 from pyobo.struct.typedef import (
     exact_match,
     has_contributor,
@@ -48,6 +48,7 @@ class Nope(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Do not do anything."""
+        yield from iter([])
 
 
 def _ontology_from_term(
@@ -164,7 +165,7 @@ class TestTerm(unittest.TestCase):
                 prefix=term.prefix,
                 term=term,
                 typedefs=list(xx),
-                synonym_typedefs=synonym_typedefs.values() if synonym_typedefs else None,
+                synonym_typedefs=list(synonym_typedefs.values()) if synonym_typedefs else None,
             )
             self.maxDiff = None
             assert_graph_equal(
@@ -640,7 +641,7 @@ class TestTerm(unittest.TestCase):
         term.annotate_object(r, Reference(prefix="GO", identifier="1234569", name="dummy"))
         self.assert_obo_stanza(
             term,
-            typedefs={r.pair: r},
+            typedefs={r.pair: TypeDef(reference=r)},
             obo="""\
                 [Term]
                 id: GO:0050069

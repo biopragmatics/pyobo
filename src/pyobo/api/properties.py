@@ -16,8 +16,8 @@ from ..constants import (
 )
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..struct import Reference
-from ..struct.struct_utils import OBOLiteral, ReferenceHint, _ensure_ref
+from ..struct import OBOLiteral, Reference
+from ..struct.struct_utils import ReferenceHint, _ensure_ref
 from ..utils.cache import cached_df
 from ..utils.io import multidict
 from ..utils.path import CacheArtifact, get_cache_path

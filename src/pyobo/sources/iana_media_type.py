@@ -6,6 +6,7 @@
 """
 
 from collections.abc import Iterable
+from typing import Any
 
 import requests
 
@@ -49,7 +50,7 @@ MIMETYPE_IO_URL = (
 )
 
 
-def _get_mimetypes() -> dict:
+def _get_mimetypes() -> dict[str, dict[str, Any]]:
     records = requests.get(MIMETYPE_IO_URL, timeout=5).json()
     rv = {}
     for record in records:

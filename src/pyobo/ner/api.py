@@ -35,7 +35,7 @@ def get_grounder(
     skip_obsolete: bool = False,
     raise_on_missing: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
-) -> ssslm.Grounder:
+) -> ssslm.Grounder[Reference]:
     """Get a grounder for the given prefix(es)."""
     all_literal_mappings: list[LiteralMapping[Reference]] = []
     it = _clean_prefix_versions(prefixes, versions=versions)

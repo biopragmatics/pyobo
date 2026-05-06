@@ -17,7 +17,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-BIZARRE_LOGGED = set()
+BIZARRE_LOGGED: set[tuple[str, str]] = set()
 
 #: Rewrites for mostly static resources that have weird quirks
 VERSION_REWRITES = {

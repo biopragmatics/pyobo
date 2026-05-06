@@ -300,7 +300,8 @@ class TestReaderTerm(unittest.TestCase):
         term = self.get_only_term(ontology)
         comments = term.get_property_values(comment)
         self.assertEqual(1, len(comments))
-        self.assertIsInstance(comments[0], OBOLiteral)
+        if not isinstance(comments[0], OBOLiteral):
+            raise self.fail()
         self.assertEqual("comment", comments[0].value)
 
     def test_8_subset(self) -> None:
@@ -723,12 +724,13 @@ class TestReaderTerm(unittest.TestCase):
         axiom = axioms[0]
         self.assertIsInstance(axiom, Annotation)
         self.assertIsInstance(axiom.predicate, Reference)
-        self.assertIsInstance(axiom.value, Reference)
         self.assertEqual(has_dbxref.pair, axiom.predicate.pair)
+        if not isinstance(axiom.value, Reference):
+            raise self.fail()
         self.assertEqual(CHARLIE.pair, axiom.value.pair)
 
     def test_10_xrefs_with_provenance_object_comment(self) -> None:
-        """Test an xref, same as before but with a comment text."""
+        """Test a xref, same as before but with a comment text."""
         ontology = from_str(f"""\
             ontology: chebi
 
@@ -743,8 +745,9 @@ class TestReaderTerm(unittest.TestCase):
         axiom = axioms[0]
         self.assertIsInstance(axiom, Annotation)
         self.assertIsInstance(axiom.predicate, Reference)
-        self.assertIsInstance(axiom.value, Reference)
         self.assertEqual(has_dbxref.pair, axiom.predicate.pair)
+        if not isinstance(axiom.value, Reference):
+            raise self.fail()
         self.assertEqual(CHARLIE.pair, axiom.value.pair)
 
     def test_10_xrefs_with_provenance_uri(self) -> None:
@@ -1295,7 +1298,8 @@ class TestReaderTerm(unittest.TestCase):
         mappings = term.get_mappings(add_context=True)
         self.assertEqual(1, len(mappings))
         context = mappings[0][2]
-        self.assertIsNotNone(context.contributor)
+        if context.contributor is None:
+            raise self.fail()
         self.assertEqual("0000-0003-4423-4370", context.contributor.identifier)
 
     # TODO created_by

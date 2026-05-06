@@ -17,9 +17,8 @@ from pyobo.struct.functional.ontology import Document, Ontology
 from pyobo.struct.reference import OBOLiteral, Reference, _parse_datetime
 
 if TYPE_CHECKING:
-    from pyobo.struct.struct import Obo, Referenced, Term
+    from pyobo.struct import Obo, Referenced, Term, TypeDef
     from pyobo.struct.struct_utils import Annotation as OBOAnnotation
-    from pyobo.struct.typedef import TypeDef
 
 __all__ = [
     "get_ofn_from_obo",

@@ -276,7 +276,7 @@ def wrap_norm_prefix(f: Callable[Concatenate[str, P], T]) -> Callable[Concatenat
         norm_prefix = bioregistry.normalize_prefix(prefix, strict=True)
         return f(norm_prefix, *args, **kwargs)
 
-    return _wrapped
+    return _wrapped  # type:ignore[return-value]
 
 
 def standardize_ec(ec: str) -> str:

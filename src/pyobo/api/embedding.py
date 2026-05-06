@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, cast
 
 import bioregistry
 import curies
@@ -172,7 +172,7 @@ def get_text_embedding(
     reference: str | curies.Reference | curies.ReferenceTuple,
     *,
     model: sentence_transformers.SentenceTransformer | None = None,
-) -> np.ndarray | None:
+) -> np.ndarray[tuple[int], np.dtype[np.float64]] | None:
     """Get a text embedding for an entity, or return none if no text is available.
 
     :param reference: A reference, either as a string or Reference object
@@ -205,7 +205,7 @@ def get_text_embedding(
     if model is None:
         model = get_sentence_transformer()
     res = model.encode([text])
-    return res[0]
+    return cast(np.ndarray[tuple[int], np.dtype[np.float64]], res[0])
 
 
 def get_text_embedding_similarity(
@@ -248,4 +248,4 @@ def get_text_embedding_similarity(
     e2 = get_text_embedding(reference_2, model=model)
     if e1 is None or e2 is None:
         return None
-    return model.similarity(e1, e2)[0][0].item()
+    return cast(float, model.similarity(e1, e2)[0][0].item())

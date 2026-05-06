@@ -14,7 +14,7 @@ import datetime
 import json
 from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pystow
 import requests
@@ -42,11 +42,12 @@ def get_icd(url: str) -> requests.Response:
 
 def get_icd_10_top(version: str, path: Path) -> dict[str, Any]:
     """Get from the ICD10 top."""
+    # TODO use version for cache path
     if path.is_file():
-        return json.loads(path.read_text())
+        return cast(dict[str, Any], json.loads(path.read_text()))
     rv = get_icd(ICD10_TOP_LEVEL_URL).json()
     path.write_text(json.dumps(rv, indent=2))
-    return rv
+    return cast(dict[str, Any], rv)
 
 
 def get_icd_11(identifier: str) -> dict[str, Any]:
@@ -81,7 +82,7 @@ def get_icd_entity(endpoint: str, identifier: str) -> dict[str, Any]:
         rv = res.json()
     except OSError:
         raise ICDError(identifier, url, res.text) from None
-    return rv
+    return cast(dict[str, Any], rv)
 
 
 def get_child_identifiers(endpoint: str, res_json: Mapping[str, Any]) -> list[str]:
@@ -92,7 +93,7 @@ def get_child_identifiers(endpoint: str, res_json: Mapping[str, Any]) -> list[st
 DELAY = 45
 
 
-@cachier(stale_after=datetime.timedelta(minutes=DELAY))
+@cachier(stale_after=datetime.timedelta(minutes=DELAY))  # type:ignore[untyped-decorator]
 def get_icd_api_headers() -> Mapping[str, str]:
     """Get the headers, and refresh every hour."""
     tqdm.write("Getting ICD credentials w/ PyStow")

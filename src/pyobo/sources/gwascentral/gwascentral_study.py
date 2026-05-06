@@ -33,8 +33,8 @@ class GWASCentralStudyGetter(Obo):
 
 def _find_text(element: Element, name: str) -> str | None:
     x = element.find(name)
-    if x is not None:
-        return x.text
+    if x is not None and isinstance(x.text, str) and x.text.strip():
+        return x.text.strip()
     return None
 
 
@@ -80,7 +80,7 @@ def iterate_terms(version: str, force: bool = False) -> Iterable[Term]:
                 except ElementTree.ParseError:
                     logger.warning("malformed XML in %s", tar_info.path)
                     continue
-            yield _get_term_from_tree(tree)  # type:ignore
+            yield _get_term_from_tree(tree)
 
 
 if __name__ == "__main__":

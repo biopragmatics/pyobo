@@ -3,6 +3,7 @@
 import importlib.util
 import unittest
 from contextlib import ExitStack
+from typing import Any
 from unittest import mock
 
 import bioregistry
@@ -90,7 +91,7 @@ class TestAltIds(unittest.TestCase):
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_get_primary(self, _, __) -> None:
+    def test_get_primary(self, _: Any, __: Any) -> None:
         """Test upgrading an obsolete identifier."""
         primary_id = get_primary_identifier("go", "0001071")
         self.assertIsNotNone(primary_id)
@@ -102,7 +103,7 @@ class TestAltIds(unittest.TestCase):
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_get_primary_by_curie(self, _, __) -> None:
+    def test_get_primary_by_curie(self, _: Any, __: Any) -> None:
         """Test upgrading an obsolete CURIE."""
         primary_curie = get_primary_curie("go:0001071")
         self.assertIsNotNone(primary_curie)
@@ -127,7 +128,7 @@ class TestAltIds(unittest.TestCase):
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_already_primary(self, _, __) -> None:
+    def test_already_primary(self, _: Any, __: Any) -> None:
         """Test when you give a primary id."""
         primary_id = get_primary_identifier(ReferenceTuple("go", "0003700"))
         self.assertIsNotNone(primary_id)
@@ -146,7 +147,7 @@ class TestAltIds(unittest.TestCase):
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_get_primary_on_reference(self, _, __) -> None:
+    def test_get_primary_on_reference(self, _: Any, __: Any) -> None:
         """Test when you give a primary id."""
         self.assertEqual(
             "0003700", get_primary_identifier(curies.Reference(prefix="go", identifier="0001071"))
@@ -154,7 +155,7 @@ class TestAltIds(unittest.TestCase):
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_already_primary_by_curie(self, _, __) -> None:
+    def test_already_primary_by_curie(self, _: Any, __: Any) -> None:
         """Test when you give a primary CURIE."""
         primary_curie = get_primary_curie("go:0003700")
         self.assertIsNotNone(primary_curie)
@@ -165,7 +166,7 @@ class TestAltIds(unittest.TestCase):
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_no_alts(self, _, __) -> None:
+    def test_no_alts(self, _: Any, __: Any) -> None:
         """Test alternate behavior for nomenclature source with no alts."""
         primary_id = get_primary_identifier(ReferenceTuple("ncbitaxon", "52818"))
         self.assertEqual("52818", primary_id)
@@ -310,8 +311,7 @@ class TestEverything(unittest.TestCase):
 
             if importlib.util.find_spec("gilda"):
                 grounder = get_grounder(TEST_P1, cache=False)
-                match = grounder.get_best_match(syn1)
-                self.assertIsNotNone(match)
+                match = grounder.get_best_match(syn1, strict=True)
                 self.assertEqual(TEST_P1, match.prefix)
                 self.assertEqual("1", match.identifier)
 

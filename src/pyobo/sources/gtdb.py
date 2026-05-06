@@ -2,6 +2,7 @@
 
 import logging
 from collections.abc import Iterable
+from typing import Any
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -70,7 +71,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
             yield from _process_row(tax_string, ncbitaxon_id)
 
 
-def _process_row(tax_string, ncbitaxon_id) -> Iterable[Term]:
+def _process_row(tax_string: Any, ncbitaxon_id: str) -> Iterable[Term]:
     if not isinstance(tax_string, str):
         logger.warning(f"Invalid taxonomy string: {tax_string}")
         return None

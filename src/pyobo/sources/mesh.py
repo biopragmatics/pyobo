@@ -8,10 +8,10 @@ import time
 from collections.abc import Collection, Iterable, Mapping
 from pathlib import Path
 from typing import Any
-from xml.etree.ElementTree import Element
 
 import bioversions
 from lxml import etree
+from lxml.etree import Element
 from tqdm.auto import tqdm
 
 from pyobo.identifier_utils import standardize_ec
@@ -100,7 +100,7 @@ def get_tree_to_mesh_id(version: str) -> Mapping[str, str]:
         path=prefix_directory_join(PREFIX, name="mesh_tree.tsv", version=version),
         header=["mesh_tree_number", "mesh_id"],
     )
-    def _inner():
+    def _inner() -> Mapping[str, str]:
         mesh = ensure_mesh_descriptors(version=version)
         rv = {}
         for entry in mesh:
@@ -261,7 +261,7 @@ def get_scope_note(descriptor_record: Mapping[str, Any] | list[Mapping[str, Any]
         concepts = descriptor_record
     for concept in concepts:
         scope_note = concept.get("ScopeNote")
-        if scope_note is not None:
+        if isinstance(scope_note, str):
             return scope_note.replace("\\n", "\n").strip()
     return None
 
@@ -369,9 +369,9 @@ def get_term_record(element: Element) -> Mapping[str, Any]:
 
 def _text_or_bust(element: Element, name: str) -> str:
     n = element.findtext(name)
-    if n is None:
-        raise ValueError
-    return n
+    if isinstance(n, str) and n.strip():
+        return n
+    raise ValueError
 
 
 def _get_descriptor_qualifiers(descriptor: Element) -> list[Mapping[str, str]]:

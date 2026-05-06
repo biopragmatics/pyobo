@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+import unittest.mock
 from collections.abc import Mapping
-from contextlib import AbstractContextManager
 from typing import Any, TypeAlias, TypeVar
 from unittest import mock
-from unittest.mock import MagicMock
 
 import pandas as pd
 
@@ -19,7 +18,7 @@ __all__ = [
     "get_mock_id_synonyms_mapping",
 ]
 
-Patch: TypeAlias = AbstractContextManager[MagicMock]
+Patch: TypeAlias = "unittest.mock._patch[Any]"
 
 
 def get_mock_id_name_mapping(data: Mapping[str, Mapping[str, str]]) -> Patch:

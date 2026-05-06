@@ -8,7 +8,7 @@ import itertools as itt
 import logging
 from collections.abc import Iterable, Iterator, Mapping
 from functools import lru_cache
-from typing import Any
+from typing import Any, cast
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
@@ -58,7 +58,7 @@ def iterate_drug_info(version: str, force: bool = False) -> list[Mapping[str, An
         rv = [_extract_drug_info(drug_xml) for drug_xml in tqdm(root, desc="Drugs")]
         return rv
 
-    return _inner()
+    return cast(list[Mapping[str, Any]], _inner())
 
 
 DRUG_XREF_SKIP = {

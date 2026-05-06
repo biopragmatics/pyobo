@@ -20,6 +20,7 @@ __all__ = [
     "get_version",
     "get_version_from_kwargs",
     "get_version_pins",
+    "pin_version",
 ]
 
 logger = logging.getLogger(__name__)
@@ -87,6 +88,11 @@ def get_version_from_kwargs(prefix: str, kwargs: GetOntologyKwargs) -> str | Non
         return version
     # it's okay if none gets returned after getting this far, we at least tried
     return get_version(prefix, strict=False)
+
+
+def pin_version(prefix: str, version: str) -> None:
+    """Pin the version."""
+    get_version_pins()[prefix] = version
 
 
 @lru_cache(1)
