@@ -303,7 +303,7 @@ def get_ancestors(
     if t not in hierarchy:
         return None
 
-    return nx.descendants(hierarchy, t)  # note this is backwards
+    return cast(set[Reference], nx.descendants(hierarchy, t))  # note this is backwards
 
 
 def get_subhierarchy(

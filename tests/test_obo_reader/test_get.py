@@ -10,7 +10,8 @@ import networkx as nx
 import obonet
 from curies import ReferenceTuple
 
-from pyobo import Reference, Synonym, SynonymTypeDef, default_reference, get_ontology
+from pyobo import Annotation, Reference, Synonym, SynonymTypeDef, default_reference, get_ontology
+from pyobo.struct import OBOLiteral
 from pyobo.struct.obo.reader import (
     _extract_definition,
     _extract_synonym,
@@ -208,7 +209,7 @@ class TestParseObonet(unittest.TestCase):
     def test_get_node_properties(self) -> None:
         """Test getting properties from a node in a :mod:`obonet` graph."""
         data = self.graph.nodes["CHEBI:51990"]
-        properties = list(
+        properties: list[Annotation] = list(
             iterate_node_properties(
                 data,
                 node=Reference(prefix="chebi", identifier="51990"),
@@ -220,7 +221,11 @@ class TestParseObonet(unittest.TestCase):
         t_prop = default_reference("chebi", "monoisotopicmass")
         self.assertIn(t_prop, {prop for prop, value in properties})
         self.assertEqual(1, sum(prop == t_prop for prop, value in properties))
-        value = next(value.value for prop, value in properties if prop == t_prop)
+        value: str = next(
+            value.value
+            for prop, value in properties
+            if prop == t_prop and isinstance(value, OBOLiteral) and isinstance(value.value, str)
+        )
         self.assertIsInstance(value, str)
         self.assertEqual("261.28318", value)
 

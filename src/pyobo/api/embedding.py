@@ -172,7 +172,7 @@ def get_text_embedding(
     reference: str | curies.Reference | curies.ReferenceTuple,
     *,
     model: sentence_transformers.SentenceTransformer | None = None,
-) -> np.ndarray | None:
+) -> np.ndarray[tuple[int], np.dtype[np.float64]] | None:
     """Get a text embedding for an entity, or return none if no text is available.
 
     :param reference: A reference, either as a string or Reference object
@@ -205,7 +205,7 @@ def get_text_embedding(
     if model is None:
         model = get_sentence_transformer()
     res = model.encode([text])
-    return res[0]
+    return cast(np.ndarray[tuple[int], np.dtype[np.float64]], res[0])
 
 
 def get_text_embedding_similarity(

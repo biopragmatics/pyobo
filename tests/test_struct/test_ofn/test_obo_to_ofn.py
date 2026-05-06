@@ -21,7 +21,7 @@ class TestConversion(unittest.TestCase):
     def test_simple_conversion(self) -> None:
         """Test conversion."""
         subset = default_reference("go", "SUBSET-1")
-        synonym_typedef = SynonymTypeDef(reference=v.previous_name)
+        synonym_typedef = SynonymTypeDef(reference=Reference.from_reference(v.previous_name))
         term = Term(
             reference=Reference(prefix="go", identifier="1234567", name="test"),
             subsets=[subset],

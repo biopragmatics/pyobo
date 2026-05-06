@@ -22,7 +22,7 @@ class TestOBOHeader(unittest.TestCase):
         """Assert the lines are equal."""
         self.assertEqual(dedent(text).strip(), "\n".join(lines).strip())
 
-    def assert_obo_lines(self, text, ontology: Obo) -> None:
+    def assert_obo_lines(self, text: str, ontology: Obo) -> None:
         """Assert OBO header has the right lines."""
         self.assert_lines(text, ontology.iterate_obo_lines())
 

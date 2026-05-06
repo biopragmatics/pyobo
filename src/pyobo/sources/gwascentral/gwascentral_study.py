@@ -33,8 +33,8 @@ class GWASCentralStudyGetter(Obo):
 
 def _find_text(element: Element, name: str) -> str | None:
     x = element.find(name)
-    if x is not None:
-        return x.text
+    if x is not None and isinstance(x.text, str) and x.text.strip():
+        return x.text.strip()
     return None
 
 
