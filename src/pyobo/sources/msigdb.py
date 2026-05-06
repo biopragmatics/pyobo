@@ -168,7 +168,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         yield term
 
 
-def _get_definition(attrib) -> str | None:
+def _get_definition(attrib: dict[str, str]) -> str | None:
     rv = attrib["DESCRIPTION_FULL"].strip() or attrib["DESCRIPTION_BRIEF"].strip() or None
     if rv is not None:
         return rv.replace(r"\d", "").replace(r"\s", "")

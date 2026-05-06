@@ -179,7 +179,7 @@ def give_edge(unnormalized_ec_code: str) -> tuple[int, str | None, str]:
     return level, parent_id, ".".join(levels)
 
 
-def get_tree(lines: Iterable[str]) -> dict:
+def get_tree(lines: Iterable[str]) -> dict[str, dict[str, Any]]:
     """Get the ExPASy tree mapping."""
     rv = {}
     for line in lines:

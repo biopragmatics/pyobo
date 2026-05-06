@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, cast
 
 import bioregistry
 import curies
@@ -248,4 +248,4 @@ def get_text_embedding_similarity(
     e2 = get_text_embedding(reference_2, model=model)
     if e1 is None or e2 is None:
         return None
-    return model.similarity(e1, e2)[0][0].item()
+    return cast(float, model.similarity(e1, e2)[0][0].item())
