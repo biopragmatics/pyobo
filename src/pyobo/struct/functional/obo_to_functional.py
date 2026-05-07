@@ -66,6 +66,12 @@ def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
         yield f.Declaration(pv.has_ontology_root_term, type="AnnotationProperty")
         yield m.LabelMacro(pv.has_ontology_root_term, cast(str, pv.has_ontology_root_term.name))
 
+    if obo_ontology.hierarchy_typedefs:
+        yield f.Declaration(pv.has_ontology_hierarchy_predicate, type="AnnotationProperty")
+        yield m.LabelMacro(
+            pv.has_ontology_hierarchy_predicate, cast(str, pv.has_ontology_hierarchy_predicate.name)
+        )
+
     if obo_ontology.subsetdefs:
         yield f.Declaration("oboInOwl:SubsetProperty", type="AnnotationProperty")
         for subset_typedef, subset_label in obo_ontology.subsetdefs.items():

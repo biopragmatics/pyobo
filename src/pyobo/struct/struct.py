@@ -606,6 +606,8 @@ class Obo:
     #: Root terms to use for the ontology
     root_terms: ClassVar[list[Reference] | None] = None
 
+    hierarchy_typedefs: ClassVar[list[Reference] | None] = None
+
     #: The date the ontology was generated
     date: datetime.datetime | None = field(default_factory=datetime.datetime.today)
 
@@ -1024,6 +1026,9 @@ class Obo:
         # Root terms
         for root_term in self.root_terms or []:
             yield Annotation(v.has_ontology_root_term, root_term)
+
+        for hierarchy_typedef in self.hierarchy_typedefs or []:
+            yield Annotation(v.has_ontology_hierarchy_predicate, hierarchy_typedef)
 
         # Extras
         if self.property_values:

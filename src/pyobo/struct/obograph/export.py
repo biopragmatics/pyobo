@@ -147,6 +147,14 @@ def _get_meta(obo: Obo) -> og.StandardizedMeta | None:
                 )
             )
 
+        for hierarchy_typedef in obo.hierarchy_typedefs or []:
+            properties.append(
+                og.StandardizedProperty(
+                    predicate=v.has_ontology_hierarchical_property,
+                    value=hierarchy_typedef,
+                )
+            )
+
     if license_spdx_id := bioregistry.get_license(obo.ontology):
         properties.append(
             og.StandardizedProperty(
