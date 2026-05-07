@@ -12,10 +12,12 @@ from pydantic import ValidationError
 from ror_downloader import OrganizationType
 from tqdm.auto import tqdm
 
+from pyobo import Annotation
 from pyobo.struct import Obo, Reference, Term
 from pyobo.struct.struct import CHARLIE_TERM, HUMAN_TERM, PYOBO_INJECTED, acronym
 from pyobo.struct.typedef import (
     has_homepage,
+    has_ontology_hierarchy_predicate,
     has_predecessor,
     has_suborganization,
     has_successor,
@@ -61,7 +63,9 @@ class RORGetter(Obo):
     typedefs = [has_homepage, *RMAP.values()]
     synonym_typedefs = [acronym]
     root_terms = [CITY_CLASS, ORG_CLASS]
-    hierarchy_typedefs = [is_suborganization_of.reference]
+    property_values = [
+        Annotation(has_ontology_hierarchy_predicate.reference, is_suborganization_of.reference)
+    ]
 
     def __post_init__(self) -> None:
         self.data_version = ror_downloader.get_version_info(download=False).version
