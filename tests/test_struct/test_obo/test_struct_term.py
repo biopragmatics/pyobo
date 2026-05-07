@@ -1115,9 +1115,9 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
             """,
         )
 
-        mappings = list(term.get_mappings(add_context=True))
-        self.assertEqual(1, len(mappings))
-        predicate, target_, context = mappings[0]
+        term_mappings = list(term.get_mappings(add_context=True))
+        self.assertEqual(1, len(term_mappings))
+        predicate, target_, context = term_mappings[0]
         self.assertEqual(exact_match.reference, predicate)
         self.assertEqual(target, target_)
         self.assertEqual(unspecified_matching, context.justification)
