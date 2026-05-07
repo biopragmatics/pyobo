@@ -121,7 +121,7 @@ class CacheArtifact(enum.Enum):
     names = "names.tsv.gz"
     definitions = "definitions.tsv.gz"
     species = "species.tsv.gz"
-    mappings = "mappings.tsv.gz"
+    mappings = "mappings.sssom.tsv.gz"
     relations = "relations.tsv.gz"
     alts = "alt_ids.tsv.gz"
     typedefs = "typedefs.tsv.gz"

@@ -87,17 +87,14 @@ def xrefs(target: str, *, prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> N
 
 @lookup_annotate
 @prefix_argument
-@click.option("--include-names", is_flag=True)
 @click.option("-t", "--target")
-def mappings(
-    include_names: bool, target: str | None, prefix: str, **kwargs: Unpack[GetOntologyKwargs]
-) -> None:
+def mappings(target: str | None, prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Page through mappings for the given namespace."""
     import bioregistry
 
     from ..api import get_mappings_df
 
-    mappings_df = get_mappings_df(prefix, names=include_names, **kwargs)
+    mappings_df = get_mappings_df(prefix, **kwargs)
     if target:
         target_norm = bioregistry.normalize_prefix(target)
         if target_norm is None:
