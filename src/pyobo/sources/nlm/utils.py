@@ -2,7 +2,8 @@
 
 from collections.abc import Iterable
 
-from lxml.etree import Element, ElementTree
+from lxml import etree
+from lxml.etree import Element
 from tqdm import tqdm
 
 from pyobo import Reference, Term, TypeDef, default_reference, ensure_path
@@ -62,7 +63,7 @@ def get_journals(
 ) -> Iterable[Term]:
     """Get NLM Catalog terms."""
     path = ensure_path(PREFIX_CATALOG, url=JOURNAL_INFO_PATH, force=force)
-    root = ElementTree.parse(path).getroot()
+    root = etree.parse(path).getroot()
 
     if journal_id_to_publisher_key is None:
         journal_id_to_publisher_key = get_publishers(force=force)

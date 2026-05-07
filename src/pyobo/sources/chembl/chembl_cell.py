@@ -4,6 +4,7 @@ import logging
 from collections.abc import Iterable
 
 import chembl_downloader
+from tqdm import tqdm
 
 from pyobo.struct import Obo, Reference, Term
 from pyobo.struct.typedef import derives_from_organism, exact_match
@@ -67,7 +68,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
             )
             if taxid:
                 term.append_relationship(
-                    derives_from_organism, Reference(prefix="ncbitaxon", identifier=taxid)
+                    derives_from_organism, Reference(prefix="ncbitaxon", identifier=str(taxid))
                 )
             # TODO how to annotate tissue, via TISSUE_DICTIONARY
             if clo:
@@ -79,9 +80,14 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                     Reference(prefix="efo", identifier=efo.removeprefix("EFO_").removeprefix("EFO"))
                 )
             if cellosaurus:
-                term.append_exact_match(
-                    Reference(prefix="cellosaurus", identifier=cellosaurus.removeprefix("CVCL_"))
-                )
+                try:
+                    cellosaurus_ref = Reference(
+                        prefix="cellosaurus", identifier=cellosaurus.removeprefix("CVCL_")
+                    )
+                except ValueError:
+                    tqdm.write(f"[{term.curie}] invalid cellosaurus xref: {cellosaurus}")
+                else:
+                    term.append_exact_match(cellosaurus_ref)
             if lincs:
                 # with LCL- included!
                 term.append_exact_match(Reference(prefix="lincs.cell", identifier=lincs))

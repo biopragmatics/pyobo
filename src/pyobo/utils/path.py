@@ -77,6 +77,7 @@ def ensure_df(
     force: bool = False,
     sep: str = "\t",
     dtype: DtypeArg | None = str,
+    download_kwargs: DownloadKwargs | None = None,
     **kwargs: Any,
 ) -> pd.DataFrame:
     """Download a file and open as a dataframe."""
@@ -87,6 +88,7 @@ def ensure_df(
         version=version,
         name=name,
         force=force,
+        **(download_kwargs or {}),
     )
     return pd.read_csv(_path, sep=sep, dtype=dtype, **kwargs)
 
