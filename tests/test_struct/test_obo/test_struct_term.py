@@ -6,6 +6,8 @@ from textwrap import dedent
 
 import bioregistry
 from curies import ReferenceTuple
+from sssom_pydantic import SemanticMapping
+from sssom_pydantic.testing import assert_semantic_mapping_equal
 
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
@@ -559,14 +561,23 @@ class TestTerm(unittest.TestCase):
         )
 
         ontology = _ontology_from_term("go", term)
-        mappings_df = ontology.get_mappings_df()
-        self.assertEqual(
-            ["subject_id", "object_id", "predicate_id", "mapping_justification"],
-            list(mappings_df.columns),
-        )
-        self.assertEqual(
-            ["GO:0050069", "EC:1.4.1.15", "oboInOwl:hasDbXref", "semapv:UnspecifiedMatching"],
-            list(mappings_df.values[0]),
+        mappings = list(ontology.get_semantic_mappings())
+        self.assertEqual(1, len(mappings))
+        assert_semantic_mapping_equal(
+            self,
+            SemanticMapping(
+                subject=LYSINE_DEHYDROGENASE_ACT,
+                object=Reference.from_curie("EC:1.4.1.15"),
+                predicate=Reference.from_curie(
+                    "oboInOwl:hasDbXref", name="has database cross-reference"
+                ),
+                justification=Reference.from_curie("semapv:UnspecifiedMatching"),
+                # Added automatically based on ontology prefix
+                license="https://creativecommons.org/licenses/by/4.0/",
+                subject_source=Reference(prefix="obo", identifier="go.obo"),
+                source=Reference(prefix="obo", identifier="go.obo"),
+            ),
+            mappings[0],
         )
 
     def test_10_append_xref_with_float_axiom(self) -> None:
@@ -594,20 +605,24 @@ class TestTerm(unittest.TestCase):
         )
 
         ontology = _ontology_from_term("go", term)
-        mappings_df = ontology.get_mappings_df()
-        self.assertEqual(
-            ["subject_id", "object_id", "predicate_id", "mapping_justification", "confidence"],
-            list(mappings_df.columns),
-        )
-        self.assertEqual(
-            [
-                "GO:0050069",
-                "EC:1.4.1.15",
-                "oboInOwl:hasDbXref",
-                "semapv:UnspecifiedMatching",
-                0.99,
-            ],
-            list(mappings_df.values[0]),
+        mappings = list(ontology.get_semantic_mappings())
+
+        assert_semantic_mapping_equal(
+            self,
+            SemanticMapping(
+                subject=LYSINE_DEHYDROGENASE_ACT,
+                object=target,
+                predicate=Reference.from_curie(
+                    "oboInOwl:hasDbXref", name="has database cross-reference"
+                ),
+                justification=Reference.from_curie("semapv:UnspecifiedMatching"),
+                confidence=0.99,
+                # Added automatically based on ontology prefix
+                license="https://creativecommons.org/licenses/by/4.0/",
+                subject_source=Reference(prefix="obo", identifier="go.obo"),
+                source=Reference(prefix="obo", identifier="go.obo"),
+            ),
+            mappings[0],
         )
 
     def test_10_append_xref_with_string_axiom(self) -> None:
@@ -960,10 +975,9 @@ class TestTerm(unittest.TestCase):
 
     def test_18_append_exact_match(self) -> None:
         """Test emitting a relationship."""
+        target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
         term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_exact_match(
-            Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
-        )
+        term.append_exact_match(target)
         self.assert_obo_stanza(
             term,
             typedefs={RO_DUMMY.pair: RO_DUMMY},
@@ -981,14 +995,21 @@ class TestTerm(unittest.TestCase):
         )
 
         ontology = _ontology_from_term("go", term)
-        mappings_df = ontology.get_mappings_df()
-        self.assertEqual(
-            ["subject_id", "object_id", "predicate_id", "mapping_justification"],
-            list(mappings_df.columns),
-        )
-        self.assertEqual(
-            ["GO:0050069", "EC:1.4.1.15", "skos:exactMatch", "semapv:UnspecifiedMatching"],
-            list(mappings_df.values[0]),
+        mappings = list(ontology.get_semantic_mappings())
+        self.assertEqual(1, len(mappings))
+        assert_semantic_mapping_equal(
+            self,
+            SemanticMapping(
+                subject=LYSINE_DEHYDROGENASE_ACT,
+                object=target,
+                predicate=Reference.from_curie("skos:exactMatch", name="exact match"),
+                justification=Reference.from_curie("semapv:UnspecifiedMatching"),
+                # Added automatically based on ontology prefix
+                license="https://creativecommons.org/licenses/by/4.0/",
+                subject_source=Reference(prefix="obo", identifier="go.obo"),
+                source=Reference(prefix="obo", identifier="go.obo"),
+            ),
+            mappings[0],
         )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -1094,9 +1115,9 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
             """,
         )
 
-        mappings = list(term.get_mappings(add_context=True))
-        self.assertEqual(1, len(mappings))
-        predicate, target_, context = mappings[0]
+        term_mappings = list(term.get_mappings(add_context=True))
+        self.assertEqual(1, len(term_mappings))
+        predicate, target_, context = term_mappings[0]
         self.assertEqual(exact_match.reference, predicate)
         self.assertEqual(target, target_)
         self.assertEqual(unspecified_matching, context.justification)
@@ -1104,20 +1125,22 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
         self.assertIsNone(context.contributor)
 
         ontology = _ontology_from_term("go", term)
-        mappings_df = ontology.get_mappings_df()
-        self.assertEqual(
-            ["subject_id", "object_id", "predicate_id", "mapping_justification", "confidence"],
-            list(mappings_df.columns),
-        )
-        self.assertEqual(
-            [
-                "GO:0050069",
-                "EC:1.4.1.15",
-                "skos:exactMatch",
-                "semapv:UnspecifiedMatching",
-                0.99,
-            ],
-            list(mappings_df.values[0]),
+        mappings = list(ontology.get_semantic_mappings())
+        self.assertEqual(1, len(mappings))
+        assert_semantic_mapping_equal(
+            self,
+            SemanticMapping(
+                subject=LYSINE_DEHYDROGENASE_ACT,
+                object=target,
+                predicate=Reference.from_curie("skos:exactMatch", name="exact match"),
+                justification=Reference.from_curie("semapv:UnspecifiedMatching"),
+                confidence=0.99,
+                # Added automatically based on ontology prefix
+                license="https://creativecommons.org/licenses/by/4.0/",
+                subject_source=Reference(prefix="obo", identifier="go.obo"),
+                source=Reference(prefix="obo", identifier="go.obo"),
+            ),
+            mappings[0],
         )
 
     def test_18_append_with_string_axioms(self) -> None:

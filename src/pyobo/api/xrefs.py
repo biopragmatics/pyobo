@@ -6,11 +6,9 @@ from collections.abc import Mapping
 from functools import lru_cache
 
 import bioregistry
-import bioversions
 import pandas as pd
 import sssom_pydantic
 from curies import ReferenceTuple
-from pydantic import AnyUrl
 from sssom_pydantic import SemanticMapping
 from sssom_pydantic.io import CachedSemanticMappings
 from typing_extensions import Unpack
@@ -23,6 +21,7 @@ from ..constants import (
     check_should_cache,
     check_should_force,
     check_should_use_tqdm,
+    get_semantic_mapping_metadata,
 )
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
@@ -33,7 +32,6 @@ from ..utils.path import CacheArtifact, get_cache_path
 __all__ = [
     "get_filtered_xrefs",
     "get_mappings_df",
-    "get_semantic_mapping_metadata",
     "get_semantic_mappings",
     "get_sssom_df",
     "get_xref",
@@ -107,35 +105,10 @@ def get_xrefs_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFra
     return df
 
 
-def get_sssom_df(
-    prefix: str | Obo, *, names: bool = True, **kwargs: Unpack[GetOntologyKwargs]
-) -> pd.DataFrame:
+def get_sssom_df(prefix: str | Obo, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get an SSSOM dataframe, replaced by :func:`get_mappings_df`."""
     warnings.warn("get_sssom_df was renamed to get_mappings_df", DeprecationWarning, stacklevel=2)
-    return get_mappings_df(prefix=prefix, names=names, **kwargs)
-
-
-def get_semantic_mapping_metadata(
-    prefix: str,
-    *,
-    id: str | None = None,
-    confidence: float | None = None,
-    version: str | None = None,
-) -> sssom_pydantic.MappingSet:
-    """Get metadata for a resource."""
-    resource = bioregistry.get_resource(prefix, strict=True)
-    return sssom_pydantic.MappingSet(
-        id=id
-        or resource.get_download()
-        or f"https://w3id.org/biopragmatics/pyobo/mappings/{resource.prefix}.sssom.tsv",
-        title=resource.get_name(strict=True),
-        # maybe update this?
-        source=[AnyUrl(f"https://bioregistry.io/{resource.prefix}")],
-        description=resource.get_description(),
-        license=resource.get_license_url(),
-        confidence=confidence,
-        version=version or bioversions.get_version(prefix, strict=False),
-    )
+    return get_mappings_df(prefix=prefix, **kwargs)
 
 
 def get_semantic_mappings(
@@ -173,18 +146,11 @@ def get_semantic_mappings(
 
 def get_mappings_df(
     prefix: str | Obo,
-    *,
-    names: bool = True,
-    include_mapping_source_column: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
     r"""Get semantic mappings from a source as an SSSOM dataframe.
 
     :param prefix: The ontology to look in for xrefs
-    :param names: Add name columns (``subject_label`` and ``object_label``). Defaults to
-        True.
-    :param include_mapping_source_column: If true, adds the prefix for the current
-        ontology in the ``mapping_source`` column
 
     :returns: A SSSOM-compliant dataframe of xrefs
 
@@ -213,8 +179,6 @@ def get_mappings_df(
     """
     if isinstance(prefix, Obo):
         df = prefix.get_mappings_df(
-            include_subject_labels=names,
-            include_mapping_source_column=include_mapping_source_column,
             use_tqdm=check_should_use_tqdm(kwargs),
         )
         prefix = prefix.ontology
@@ -229,19 +193,8 @@ def get_mappings_df(
         def _df_getter() -> pd.DataFrame:
             logger.info("[%s] rebuilding SSSOM", prefix)
             ontology = get_ontology(prefix, **kwargs)
-            return ontology.get_mappings_df(
-                use_tqdm=check_should_use_tqdm(kwargs),
-                include_subject_labels=True,
-                include_mapping_source_column=include_mapping_source_column,
-            )
+            return ontology.get_mappings_df(use_tqdm=check_should_use_tqdm(kwargs))
 
         df = _df_getter()
-
-    if names:
-        from .names import get_name_by_curie
-
-        df["object_label"] = df["object_id"].map(get_name_by_curie)
-    elif "subject_label" in df.columns:
-        del df["subject_label"]
 
     return df

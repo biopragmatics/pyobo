@@ -46,7 +46,6 @@ from .api import (
     get_relation,
     get_relation_mapping,
     get_relations_df,
-    get_semantic_mapping_metadata,
     get_semantic_mappings,
     get_species,
     get_sssom_df,
@@ -62,6 +61,7 @@ from .api import (
     has_ancestor,
     is_descendent,
 )
+from .constants import get_semantic_mapping_metadata
 from .getters import get_ontology
 from .ner import (
     get_grounder,

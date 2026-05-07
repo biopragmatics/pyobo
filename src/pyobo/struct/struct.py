@@ -71,6 +71,7 @@ from ..constants import (
     RELATION_PREFIX,
     TARGET_ID,
     TARGET_PREFIX,
+    get_semantic_mapping_metadata,
 )
 from ..utils.cache import write_gzipped_graph
 from ..utils.io import multidict, write_iterable_tsv
@@ -98,16 +99,6 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-#: Columns in the SSSOM dataframe
-SSSOM_DF_COLUMNS = [
-    "subject_id",
-    "subject_label",
-    "object_id",
-    "predicate_id",
-    "mapping_justification",
-    "confidence",
-    "contributor",
-]
 FORMAT_VERSION = "1.4"
 _SOURCES = Path(__file__).parent.parent.joinpath("sources").resolve()
 
@@ -1227,7 +1218,6 @@ class Obo:
                 self.iterate_id_species,
             ),
             (CacheArtifact.alts, [f"{self.ontology}_id", "alt_id"], self.iterate_alt_rows),
-            (CacheArtifact.mappings, SSSOM_DF_COLUMNS, self.iterate_mapping_rows),
             (CacheArtifact.relations, self.relations_header, self.iter_relation_rows),
             (CacheArtifact.edges, self.edges_header, self.iterate_edge_rows),
             (
@@ -1284,6 +1274,19 @@ class Obo:
                 header=header,
                 it=fn(),
             )
+
+        semantic_mapping_metadata = get_semantic_mapping_metadata(
+            self.ontology, version=self.data_version, lookup_missing_version=False
+        )
+        semantic_mappings = self.get_semantic_mappings()
+        converter = bioregistry.get_default_converter()
+        semantic_mappings_path = self._get_cache_path(CacheArtifact.mappings)
+        sssom_pydantic.write(
+            semantic_mappings,
+            semantic_mappings_path,
+            metadata=semantic_mapping_metadata,
+            converter=converter,
+        )
 
         typedefs = self._index_typedefs()
         for relation in (v.is_a, v.has_part, v.part_of, v.from_species, v.orthologous):
@@ -2054,24 +2057,6 @@ class Obo:
         """Get a literal mappings dataframe."""
         return ssslm.literal_mappings_to_df(self.get_literal_mappings())
 
-    def iterate_mapping_rows(
-        self, *, use_tqdm: bool = False
-    ) -> Iterable[tuple[str, str | None, str, str, str, float | None, str | None]]:
-        """Iterate over SSSOM rows for mappings."""
-        for stanza in self._iter_stanzas(use_tqdm=use_tqdm):
-            for predicate, obj_ref, context in stanza.get_mappings(
-                include_xrefs=True, add_context=True
-            ):
-                yield (
-                    get_preferred_curie(stanza),
-                    stanza.name,
-                    get_preferred_curie(obj_ref),
-                    get_preferred_curie(predicate),
-                    get_preferred_curie(context.justification),
-                    context.confidence if context.confidence is not None else None,
-                    get_preferred_curie(context.contributor) if context.contributor else None,
-                )
-
     def get_semantic_mappings(
         self, *, progress: bool = False
     ) -> Iterable[sssom_pydantic.SemanticMapping]:
@@ -2082,6 +2067,7 @@ class Obo:
             for predicate, obj_ref, context in stanza.get_mappings(
                 include_xrefs=True, add_context=True
             ):
+                # TODO update object reference with label?
                 yield sssom_pydantic.SemanticMapping(
                     subject=stanza.reference,
                     predicate=predicate,
@@ -2095,38 +2081,15 @@ class Obo:
                     license=license_url,
                 )
 
-    def get_mappings_df(
-        self,
-        *,
-        use_tqdm: bool = False,
-        include_subject_labels: bool = False,
-        include_mapping_source_column: bool = False,
-    ) -> pd.DataFrame:
+    def get_mappings_df(self, *, use_tqdm: bool = False) -> pd.DataFrame:
         """Get a dataframe with SSSOM extracted from the OBO document.
 
         :param use_tqdm: Should a progres bar be shown
-        :param include_subject_labels: If false, removes the ``subject_label`` column.
-            Defaults to false.
-        :param include_mapping_source_column: If true, adds the prefix for the current
-            ontology in the ``mapping_source`` column
 
         :returns: A pandas dataframe representing SSSOM records
         """
-        df = pd.DataFrame(self.iterate_mapping_rows(use_tqdm=use_tqdm), columns=SSSOM_DF_COLUMNS)
-        if not include_subject_labels:
-            del df["subject_label"]
-
-        # if no confidences/contributor, remove that column
-        for c in ["confidence", "contributor"]:
-            if df[c].isna().all():
-                del df[c]
-
-        # append on the mapping_source
-        # (https://mapping-commons.github.io/sssom/mapping_source/)
-        if include_mapping_source_column:
-            df["mapping_source"] = self.ontology
-
-        return df
+        mappings = self.get_semantic_mappings(progress=use_tqdm)
+        return sssom_pydantic.to_dataframe(mappings)
 
     def get_filtered_xrefs_mapping(
         self, prefix: str, *, use_tqdm: bool = False

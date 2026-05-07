@@ -6,7 +6,6 @@ import gzip
 import logging
 import warnings
 from collections.abc import Iterable
-from functools import partial
 from typing import cast
 
 from tqdm.auto import tqdm
@@ -149,10 +148,6 @@ def _iter_xrefs(
 def _iter_mappings(
     **kwargs: Unpack[IterHelperHelperDict],
 ) -> Iterable[tuple[str, str, str, str, str]]:
-    f = partial(get_mappings_df, names=False, include_mapping_source_column=True)
-    # hack in a name to the partial function object since
-    # it's used for the tqdm description in iter_helper_helper
-    f.__name__ = "get_mappings_df"  # type:ignore
-    it = iter_helper_helper(f, **kwargs)
+    it = iter_helper_helper(get_mappings_df, **kwargs)
     for _prefix, df in it:
         yield from df.values
