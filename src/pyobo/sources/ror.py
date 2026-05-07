@@ -12,15 +12,17 @@ from pydantic import ValidationError
 from ror_downloader import OrganizationType
 from tqdm.auto import tqdm
 
+from pyobo import Annotation
 from pyobo.struct import Obo, Reference, Term
 from pyobo.struct.struct import CHARLIE_TERM, HUMAN_TERM, PYOBO_INJECTED, acronym
 from pyobo.struct.typedef import (
     has_homepage,
-    has_part,
+    has_ontology_hierarchy_predicate,
     has_predecessor,
+    has_suborganization,
     has_successor,
+    is_suborganization_of,
     located_in,
-    part_of,
     see_also,
 )
 
@@ -34,12 +36,13 @@ PREFIX = "ror"
 
 # Constants
 ORG_CLASS = Reference(prefix="OBI", identifier="0000245", name="organization")
+ORG_ORG_CLASS = Reference(prefix="org", identifier="Organization", name="Organization")
 CITY_CLASS = Reference(prefix="ENVO", identifier="00000856", name="city")
 
 RMAP = {
     "related": see_also,
-    "child": has_part,
-    "parent": part_of,
+    "child": has_suborganization,
+    "parent": is_suborganization_of,
     "predecessor": has_predecessor,
     "successor": has_successor,
     "located in": located_in,
@@ -60,6 +63,9 @@ class RORGetter(Obo):
     typedefs = [has_homepage, *RMAP.values()]
     synonym_typedefs = [acronym]
     root_terms = [CITY_CLASS, ORG_CLASS]
+    property_values = [
+        Annotation(has_ontology_hierarchy_predicate.reference, is_suborganization_of.reference)
+    ]
 
     def __post_init__(self) -> None:
         self.data_version = ror_downloader.get_version_info(download=False).version
@@ -69,7 +75,7 @@ class RORGetter(Obo):
         """Iterate over terms in the ontology."""
         yield CHARLIE_TERM
         yield HUMAN_TERM
-        yield Term(reference=ORG_CLASS)
+        yield Term(reference=ORG_CLASS).append_exact_match(ORG_ORG_CLASS)
         yield Term(reference=CITY_CLASS)
         yield from ROR_ORGANIZATION_TYPE_TO_OBI.values()
         yield from iterate_ror_terms(force=force)
@@ -101,7 +107,9 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
     unhandled_xref_prefixes: set[str] = set()
 
     seen_geonames_references = set()
-    for record in tqdm(records, unit_scale=True, unit="record", desc=f"{PREFIX} v{status.version}"):
+    for record in tqdm(
+        records, unit_scale=True, unit="record", desc=f"parsing {PREFIX} v{status.version}"
+    ):
         identifier = record.id.removeprefix("https://ror.org/")
 
         primary_name = record.get_preferred_label()
