@@ -52,6 +52,7 @@ __all__ = [
     "has_smiles",
     "has_source",
     "has_start_date",
+    "has_suborganization",
     "has_successor",
     "has_taxonomy_rank",
     "is_a",
@@ -60,6 +61,7 @@ __all__ = [
     "is_defined_by",
     "is_inverse_agonist_of",
     "is_mentioned_by",
+    "is_suborganization_of",
     "located_in",
     "mapping_has_confidence",
     "mapping_has_justification",
@@ -286,6 +288,9 @@ has_output = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002234", name="h
 
 has_successor = TypeDef.from_triple(prefix="BFO", identifier="0000063", name="has successor")
 has_predecessor = TypeDef.from_triple(prefix="BFO", identifier="0000062", name="has predecessor")
+
+has_suborganization = TypeDef(reference=v.has_suborganization)
+is_suborganization_of = TypeDef(reference=v.is_suborganization_of)
 
 gene_product_enables = TypeDef(
     reference=Reference(prefix="RO", identifier="0018042", name="has gene product that enables"),

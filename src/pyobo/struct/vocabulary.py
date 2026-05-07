@@ -104,6 +104,9 @@ has_repository = Reference(prefix="doap", identifier="repository", name="has rep
 has_mailing_list = Reference(prefix="doap", identifier="mailing-list", name="has mailing list")
 has_maintainer = Reference(prefix="doap", identifier="maintainer", name="has maintainer")
 
+has_suborganization = _c(_v.has_suborganization)
+is_suborganization_of = _c(_v.is_suborganization_of)
+
 has_part = Reference(prefix=BFO_PREFIX, identifier="0000051", name="has part")
 part_of = Reference(prefix=BFO_PREFIX, identifier="0000050", name="part of")
 orthologous = Reference(
