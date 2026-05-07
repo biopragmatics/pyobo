@@ -214,7 +214,7 @@ class TestReaderOntologyMetadata(unittest.TestCase):
         )
 
     def test_13_xref_genus_differentia(self) -> None:
-        """Test the ``treat-xrefs-as-is_a `` macro.
+        """Test the ``treat-xrefs-as-is_a`` macro.
 
         The test should become the same as
 

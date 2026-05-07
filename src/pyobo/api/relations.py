@@ -174,7 +174,7 @@ def get_relation(
     >>> mouse_mapt_mgi_id = "97180"
     >>> assert mouse_mapt_mgi_id == pyobo.get_relation(
     ...     "hgnc", human_mapt_hgnc_id, "ro:HOM0000017", "mgi"
-    >>> )
+    ... )
     """
     relation_mapping = get_relation_mapping(
         prefix=prefix,

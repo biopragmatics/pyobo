@@ -72,7 +72,7 @@ class PlastChemGetter(Obo):
 
 
 def get_terms() -> Iterable[Term]:
-    """Do it."""
+    """Get PlastChem terms."""
     yield Term(reference=chemical)
     yield Term(reference=HAZARD_LIST_ROOT)
     for chebi_role in CHEBI_ROLE_MAP.values():

@@ -42,6 +42,7 @@ __all__ = [
     "has_mailbox",
     "has_mature",
     "has_member",
+    "has_ontology_hierarchy_predicate",
     "has_ontology_root_term",
     "has_part",
     "has_participant",
@@ -237,6 +238,18 @@ example_of_usage = TypeDef(
 )
 alternative_term = TypeDef(reference=v.alternative_term, is_metadata_tag=True)
 has_ontology_root_term = TypeDef(reference=v.has_ontology_root_term, is_metadata_tag=True)
+has_ontology_hierarchy_predicate = TypeDef(
+    reference=v.has_ontology_hierarchy_predicate, is_metadata_tag=True
+)
+"""
+You can annotate this into an ontology with
+
+.. code-block:: python
+
+    property_values = [
+        Annotation(has_ontology_hierarchy_predicate.reference, ...)
+    ]
+"""
 definition_source = TypeDef(
     reference=Reference(prefix=IAO_PREFIX, identifier="0000119", name="definition source"),
     is_metadata_tag=True,
