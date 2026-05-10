@@ -148,7 +148,12 @@ def get_text_embeddings_df(
         prefix, CacheArtifact.embeddings, version=get_version_from_kwargs(prefix, kwargs)
     )
     if path.is_file() and not check_should_force(kwargs):
-        df = pd.read_csv(path, sep="\t").set_index(0)
+        df = pd.read_csv(path, sep="\t")
+        try:
+            df = df.set_index(0)
+        except KeyError as e:
+            e.add_note("valid columns are: {df.columns}")
+            raise
         return df
 
     id_to_name = get_id_name_mapping(prefix, **kwargs)
@@ -164,6 +169,7 @@ def get_text_embeddings_df(
         model = get_sentence_transformer()
     res = model.encode(texts, show_progress_bar=True)
     df = pd.DataFrame(res, index=luids)
+    df.index.name = "luid"
     df.to_csv(path, sep="\t")  # index is important here!
     return df
 
