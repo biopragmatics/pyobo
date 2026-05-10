@@ -620,7 +620,7 @@ class Stanza(Referenced, HasReferencesMixin):
                 raise ValueError
             return None
         if len(r) > 1:
-            raise ValueError
+            raise ValueError(f"multiple relationships returned: {r}")
         return r[0]
 
     def iterate_relation_targets(self, typedef: ReferenceHint) -> list[Reference]:

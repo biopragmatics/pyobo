@@ -216,9 +216,10 @@ def get_ror_to_country_geonames(**kwargs: Any) -> dict[str, str]:
     city_to_country = get_city_to_country()
     rv = {}
     for term in iterate_ror_terms(**kwargs):
-        city_geonames_reference = term.get_relationship(located_in)
-        if city_geonames_reference is None:
+        city_geonames_references = term.get_relationships(located_in)
+        if not city_geonames_references:
             continue
+        city_geonames_reference = city_geonames_references[0]
         if city_geonames_reference.identifier in city_to_country:
             rv[term.identifier] = city_to_country[city_geonames_reference.identifier]
     return rv
