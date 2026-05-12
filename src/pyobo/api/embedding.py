@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import bioregistry
 import curies
@@ -126,6 +126,10 @@ def get_graph_embeddings_df(
     return df
 
 
+EMBEDDING_INDEX_NAME = "luid"
+EMBEDDING_DIMENSIONALITY = 384
+
+
 @wrap_norm_prefix
 def get_text_embeddings_df(
     prefix: str,
@@ -148,12 +152,15 @@ def get_text_embeddings_df(
         prefix, CacheArtifact.embeddings, version=get_version_from_kwargs(prefix, kwargs)
     )
     if path.is_file() and not check_should_force(kwargs):
-        df = pd.read_csv(path, sep="\t")
-        try:
-            df = df.set_index(0)
-        except KeyError as e:
-            e.add_note("valid columns are: {df.columns}")
-            raise
+        # make an explicit dictionary so we make sure that the index column
+        # doesn't also get interpreted as a float. This would silently be an
+        # issue for any identifier space that has number-looking identifier patterns
+        dtype: dict[str, Any] = {str(i): float for i in range(EMBEDDING_DIMENSIONALITY)}
+        dtype[EMBEDDING_INDEX_NAME] = str
+        df = pd.read_csv(path, sep="\t", dtype=dtype, index_col=0)
+        if df.index.name != EMBEDDING_INDEX_NAME:
+            df.index.name = EMBEDDING_INDEX_NAME
+        df.index = df.index.astype(str)
         return df
 
     id_to_name = get_id_name_mapping(prefix, **kwargs)
@@ -169,7 +176,7 @@ def get_text_embeddings_df(
         model = get_sentence_transformer()
     res = model.encode(texts, show_progress_bar=True)
     df = pd.DataFrame(res, index=luids)
-    df.index.name = "luid"
+    df.index.name = EMBEDDING_INDEX_NAME
     df.to_csv(path, sep="\t")  # index is important here!
     return df
 
