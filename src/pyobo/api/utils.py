@@ -32,12 +32,12 @@ class VersionError(ValueError):
 
 # docstr-coverage:excused `overload`
 @overload
-def get_version(prefix: str, *, strict: Literal[True] = True) -> str: ...
+def get_version(prefix: str, *, strict: Literal[True] = ...) -> str: ...
 
 
 # docstr-coverage:excused `overload`
 @overload
-def get_version(prefix: str, *, strict: Literal[False] = False) -> str | None: ...
+def get_version(prefix: str, *, strict: Literal[False] = ...) -> str | None: ...
 
 
 @lru_cache(None)
