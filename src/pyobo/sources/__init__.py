@@ -17,6 +17,7 @@ from .civic_gene import CIVICGeneGetter
 from .clinicaltrials import ClinicalTrialsGetter
 from .complexportal import ComplexPortalGetter
 from .conso import CONSOGetter
+from .cordis import CordisBasisGetter, CordisProjectGetter
 from .cpt import CPTGetter
 from .credit import CreditGetter
 from .cvx import CVXGetter
@@ -94,6 +95,8 @@ __all__ = [
     "ChEMBLTissueGetter",
     "ClinicalTrialsGetter",
     "ComplexPortalGetter",
+    "CordisBasisGetter",
+    "CordisProjectGetter",
     "CreditGetter",
     "DepMapGetter",
     "DictybaseGetter",
