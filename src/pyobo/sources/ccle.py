@@ -3,6 +3,7 @@
 import tarfile
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import pystow
@@ -23,7 +24,7 @@ class CCLEGetter(Obo):
     ontology = bioregistry_key = PREFIX
     name = "Cancer Cell Line Encyclopedia Cell Line"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.data_version = VERSION
         super().__post_init__()
 
@@ -63,7 +64,7 @@ def get_inner(version: str | None = None) -> str:
     return f"ccle_broad_{version}/data_clinical_sample.txt"
 
 
-def ensure(version: str | None = None, **kwargs) -> Path:
+def ensure(version: str | None = None, **kwargs: Any) -> Path:
     """Ensure the given version is downloaded."""
     if version is None:
         version = get_ccle_static_version()

@@ -56,7 +56,7 @@ class RDFNodeSerializable(ABC):
     """An object that can be serialized to RDF as a node."""
 
     @abstractmethod
-    def to_rdflib_node(self, graph: Graph, converter: Converter):
+    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
         """Make RDF."""
 
     def to_ttl(self, prefix_map: dict[str, str], *, output_prefixes: bool = False) -> str:

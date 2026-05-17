@@ -33,7 +33,7 @@ def get_pfam_clan_df(version: str, force: bool = False) -> pd.DataFrame:
         version=version,
         dtype=str,
         force=force,
-        backend="urllib",
+        download_kwargs={"backend": "urllib"},
     )
 
 

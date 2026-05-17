@@ -4,16 +4,33 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Callable
 from pathlib import Path
-from typing import Literal, NamedTuple, TypeAlias
+from typing import TYPE_CHECKING, Literal, NamedTuple, NotRequired, TypeAlias
 
 import pystow
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
+
+if TYPE_CHECKING:
+    import sssom_pydantic
 
 __all__ = [
     "DATABASE_DIRECTORY",
+    "DEFAULT_PREFIX_MAP",
+    "ONTOLOGY_GETTERS",
+    "PROVENANCE_PREFIXES",
     "RAW_DIRECTORY",
     "SPECIES_REMAPPING",
+    "DatabaseKwargs",
+    "GetOntologyKwargs",
+    "IterHelperHelperDict",
+    "OntologyFormat",
+    "OntologyPathPack",
+    "SlimGetOntologyKwargs",
+    "check_should_cache",
+    "check_should_force",
+    "check_should_use_tqdm",
+    "get_semantic_mapping_metadata",
 ]
 
 logger = logging.getLogger(__name__)
@@ -94,6 +111,8 @@ SPECIES_FILE = "species.tsv.gz"
 
 NCBITAXON_PREFIX = "ncbitaxon"
 DATE_FORMAT = "%d:%m:%Y %H:%M"
+
+#: Prefixes for resources that are considered as provenance
 PROVENANCE_PREFIXES = {
     "pubmed",
     "pmc",
@@ -115,13 +134,21 @@ PROVENANCE_PREFIXES = {
 class DatabaseKwargs(TypedDict):
     """Keyword arguments for database CLI functions."""
 
+    #: Should strict identifier parsing be enabled?
     strict: bool
+    #: Should re-download and re-processing be forced?
     force: bool
+    #: Should re-processing be forced?
     force_process: bool
-    skip_pyobo: bool
-    skip_below: str | None
-    skip_set: set[str] | None
+
+    #: Should a progress bar be used?
     use_tqdm: bool
+    #: Skip all prefixes lexicographically sorted below the given prefix
+    skip_below: str | None
+    #: If true, skips prefixes that are ontologized as sources in PyOBO
+    skip_pyobo: bool
+    #: An enumerated set of prefixes to skip
+    skip_set: set[str] | None
 
 
 class SlimGetOntologyKwargs(TypedDict):
@@ -132,8 +159,11 @@ class SlimGetOntologyKwargs(TypedDict):
     only a single ontology is requested.
     """
 
+    #: Should strict identifier parsing be enabled?
     strict: NotRequired[bool]
+    #: Should re-download and re-processing be forced?
     force: NotRequired[bool]
+    #: Should re-processing be forced?
     force_process: NotRequired[bool]
 
 
@@ -143,8 +173,11 @@ class GetOntologyKwargs(SlimGetOntologyKwargs):
     This dictionary doesn't contain ``prefix`` since this is always explicitly handled.
     """
 
+    #: The version of the ontology to get
     version: NotRequired[str | None]
+    #: Should the cache be used?
     cache: NotRequired[bool]
+    #: Should a progress bar be used?
     use_tqdm: NotRequired[bool]
 
 
@@ -166,16 +199,6 @@ def check_should_use_tqdm(data: GetOntologyKwargs) -> bool:
     return data.get("use_tqdm", True)
 
 
-class LookupKwargs(GetOntologyKwargs):
-    """Represents all arguments passed to :func:`pyobo.get_ontology`.
-
-    This dictionary does contain the ``prefix`` since it's used in the scope of CLI
-    functions.
-    """
-
-    prefix: str
-
-
 class IterHelperHelperDict(SlimGetOntologyKwargs):
     """Represents arguments needed when iterating over all ontologies.
 
@@ -184,12 +207,17 @@ class IterHelperHelperDict(SlimGetOntologyKwargs):
     :func:`pyobo.get_ontology` in each iteration.
     """
 
+    #: Should a progress bar be used?
     use_tqdm: bool
+    #: Skip all prefixes lexicographically sorted below the given prefix
     skip_below: str | None
+    #: If true, skips prefixes that are ontologized as sources in PyOBO
     skip_pyobo: bool
+    #: An enumerated set of prefixes to skip
     skip_set: set[str] | None
 
 
+#: The ontology format
 OntologyFormat: TypeAlias = Literal["obo", "owl", "json", "rdf"]
 
 #: from table 2 of the Functional OWL syntax definition
@@ -205,5 +233,73 @@ DEFAULT_PREFIX_MAP = {
 class OntologyPathPack(NamedTuple):
     """A format and path tuple."""
 
+    #: The ontology format
     format: OntologyFormat
+    #: The path to the ontology file
     path: Path
+
+
+def _get_obo_download(prefix: str) -> str | None:
+    import bioregistry
+
+    return bioregistry.get_obo_download(prefix)
+
+
+def _get_owl_download(prefix: str) -> str | None:
+    import bioregistry
+
+    return bioregistry.get_owl_download(prefix)
+
+
+def _get_json_download(prefix: str) -> str | None:
+    import bioregistry
+
+    return bioregistry.get_json_download(prefix)
+
+
+def _get_rdf_download(prefix: str) -> str | None:
+    import bioregistry
+
+    return bioregistry.get_rdf_download(prefix, get_format=False)
+
+
+#: Functions that get ontology files. Order matters in this list,
+#: since order implicitly defines priority
+ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | None]]] = [
+    ("obo", _get_obo_download),
+    ("owl", _get_owl_download),
+    ("json", _get_json_download),
+    ("rdf", _get_rdf_download),
+]
+
+
+def get_semantic_mapping_metadata(
+    prefix: str,
+    *,
+    id: str | None = None,
+    confidence: float | None = None,
+    version: str | None = None,
+    lookup_missing_version: bool = True,
+) -> sssom_pydantic.MappingSet:
+    """Get metadata for a resource."""
+    import bioregistry
+    import sssom_pydantic
+    from pydantic import AnyUrl
+
+    resource = bioregistry.get_resource(prefix, strict=True)
+    if version is None and lookup_missing_version:
+        import bioversions
+
+        version = bioversions.get_version(prefix, strict=False)
+    return sssom_pydantic.MappingSet(
+        id=id
+        or resource.get_download()
+        or f"https://w3id.org/biopragmatics/pyobo/mappings/{resource.prefix}.sssom.tsv",
+        title=resource.get_name(strict=True),
+        # maybe update this?
+        source=[AnyUrl(f"https://bioregistry.io/{resource.prefix}")],
+        description=resource.get_description(),
+        license=resource.get_license_url(),
+        confidence=confidence,
+        version=version,
+    )

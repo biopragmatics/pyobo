@@ -17,9 +17,8 @@ from pyobo.struct.functional.ontology import Document, Ontology
 from pyobo.struct.reference import OBOLiteral, Reference, _parse_datetime
 
 if TYPE_CHECKING:
-    from pyobo.struct.struct import Obo, Referenced, Term
+    from pyobo.struct import Obo, Referenced, Term, TypeDef
     from pyobo.struct.struct_utils import Annotation as OBOAnnotation
-    from pyobo.struct.typedef import TypeDef
 
 __all__ = [
     "get_ofn_from_obo",
@@ -39,9 +38,15 @@ def get_ofn_from_obo(
     prefix = obo_ontology.ontology
     base = f"{_BASE}/{prefix}"
     if iri is None:
-        iri = f"{base}/{prefix}.ofn"
-    if version_iri is None and obo_ontology.data_version:
-        version_iri = f"{base}/{obo_ontology.data_version}/{prefix}.ofn"
+        if obo_ontology.ontology_iri:
+            iri = obo_ontology.ontology_iri
+        else:
+            iri = f"{base}/{prefix}.ofn"
+    if version_iri is None:
+        if obo_ontology.ontology_version_iri:
+            version_iri = obo_ontology.ontology_version_iri
+        elif obo_ontology.data_version:
+            version_iri = f"{base}/{obo_ontology.data_version}/{prefix}.ofn"
     ofn_ontology = Ontology(
         iri=iri,
         version_iri=version_iri,
@@ -63,7 +68,7 @@ def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
 
     if obo_ontology.subsetdefs:
         yield f.Declaration("oboInOwl:SubsetProperty", type="AnnotationProperty")
-        for subset_typedef, subset_label in obo_ontology.subsetdefs:
+        for subset_typedef, subset_label in obo_ontology.subsetdefs.items():
             yield f.Declaration(subset_typedef, type="AnnotationProperty")
             yield m.LabelMacro(subset_typedef, subset_label)
             yield f.SubAnnotationPropertyOf(subset_typedef, "oboInOwl:SubsetProperty")
@@ -72,7 +77,8 @@ def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
         used_has_scope = False
         for synonym_typedef in obo_ontology.synonym_typedefs:
             yield f.Declaration(synonym_typedef, type="AnnotationProperty")
-            yield m.LabelMacro(synonym_typedef, synonym_typedef.name)
+            if synonym_typedef.name is not None:
+                yield m.LabelMacro(synonym_typedef, synonym_typedef.name)
             yield f.SubAnnotationPropertyOf(synonym_typedef, "oboInOwl:SynonymTypeProperty")
             if synonym_typedef.specificity:
                 used_has_scope = True
@@ -122,11 +128,15 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
     if term.type == "Term":
         yield f.Declaration(s, type="Class")
         for parent in term.parents:
-            yield f.SubClassOf(s, parent)
-    else:
+            yield f.SubClassOf(s, parent, annotations=_get_annotations(term, pv.is_a, parent))
+    elif term.type == "Instance":
         yield f.Declaration(s, type="NamedIndividual")
         for parent in term.parents:
-            yield f.ClassAssertion(parent, s)
+            yield f.ClassAssertion(
+                parent, s, annotations=_get_annotations(term, pv.rdf_type, parent)
+            )
+    else:
+        raise ValueError(f"invalid term type: {term.type}")
     # 2
     if term.is_anonymous is not None:
         yield m.IsAnonymousMacro(s, term.is_anonymous)
@@ -328,7 +338,7 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         yield m.OBOIsClassLevelMacro(r, typedef.is_class_level)
 
 
-def _yield_definition(term: Stanza, s) -> Iterable[m.DescriptionMacro]:
+def _yield_definition(term: Stanza, s: f.IdentifierBox) -> Iterable[m.DescriptionMacro]:
     if term.definition:
         yield m.DescriptionMacro(
             s,
@@ -337,7 +347,7 @@ def _yield_definition(term: Stanza, s) -> Iterable[m.DescriptionMacro]:
         )
 
 
-def _yield_synonyms(stanza: Stanza, r) -> Iterable[m.SynonymMacro]:
+def _yield_synonyms(stanza: Stanza, r: f.IdentifierBox) -> Iterable[m.SynonymMacro]:
     for synonym in stanza.synonyms:
         yield m.SynonymMacro(
             r,
@@ -350,7 +360,7 @@ def _yield_synonyms(stanza: Stanza, r) -> Iterable[m.SynonymMacro]:
         )
 
 
-def _yield_xrefs(term: Stanza, s) -> Iterable[m.XrefMacro]:
+def _yield_xrefs(term: Stanza, s: f.IdentifierBox) -> Iterable[m.XrefMacro]:
     for xref in term.xrefs:
         yield m.XrefMacro(s, xref, annotations=_get_annotations(term, pv.has_dbxref, xref))
 
@@ -362,7 +372,7 @@ _SKIP = {
 }
 
 
-def _yield_properties(term: Stanza, s) -> Iterable[f.AnnotationAssertion]:
+def _yield_properties(term: Stanza, s: f.IdentifierBox) -> Iterable[f.AnnotationAssertion]:
     for typedef, values in term.properties.items():
         for value in values:
             annotations = _get_annotations(term, typedef, value)

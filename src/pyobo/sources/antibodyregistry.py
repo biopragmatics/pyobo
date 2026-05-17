@@ -12,7 +12,7 @@ from tqdm.auto import tqdm
 
 from pyobo import Obo, Reference, Term
 from pyobo.api.utils import get_version
-from pyobo.struct.typedef import has_citation
+from pyobo.struct.typedef import is_mentioned_by
 from pyobo.utils.path import ensure_df
 
 __all__ = [
@@ -47,7 +47,7 @@ class AntibodyRegistryGetter(Obo):
     """An ontology representation of the Antibody Registry."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_citation]
+    typedefs = [is_mentioned_by]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -97,7 +97,7 @@ def iter_terms(*, force: bool = False, version: str | None = None) -> Iterable[T
                     pubmed_id = pubmed_id.strip()
                     if not pubmed_id:
                         continue
-                    term.append_provenance(Reference(prefix="pubmed", identifier=pubmed_id))
+                    term.append_mentioned_by(Reference(prefix="pubmed", identifier=pubmed_id))
             yield term
 
 

@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from datetime import datetime
 
 import bioversions.utils
 
-from pyobo.constants import OntologyFormat
+from pyobo.constants import ONTOLOGY_GETTERS, OntologyFormat
 
 __all__ = [
     "VERSION_GETTERS",
@@ -17,7 +17,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-BIZARRE_LOGGED = set()
+BIZARRE_LOGGED: set[tuple[str, str]] = set()
 
 #: Rewrites for mostly static resources that have weird quirks
 VERSION_REWRITES = {
@@ -40,13 +40,37 @@ VERSION_PREFIXES = [
     "https://purl.dataone.org/odo/ADCAD/",
     "http://identifiers.org/combine.specifications/teddy.rel-",
     "https://nfdi.fiz-karlsruhe.de/ontology/",
+    "http://www.w3.org/ns/prov-",
+    "https://raw.githubusercontent.com/enpadasi/Ontology-for-Nutritional-Studies/releases/download/v",
+    "http://purl.jp/bio/4/ontology/iobc/",  # like http://purl.jp/bio/4/ontology/iobc/1.6.0
+    "http://w3id.org/nfdi4ing/metadata4ing/",  # like http://w3id.org/nfdi4ing/metadata4ing/1.3.1
+    "http://www.semanticweb.com/OntoRxn/",  # like http://www.semanticweb.com/OntoRxn/0.2.5
+    "https://w3id.org/lehrplan/ontology/",  # like in https://w3id.org/lehrplan/ontology/1.0.0-4
+    "http://www.ebi.ac.uk/swo/version/",  # http://www.ebi.ac.uk/swo/version/6.0
+    "https://w3id.org/emi/version/",
+    "https://nfdi4culture.de/ontology/",  # https://nfdi4culture.de/ontology/3.0.0
+    "http://purls.helmholtz-metadaten.de/mwo/mwo.owl/",  # http://purls.helmholtz-metadaten.de/mwo/mwo.owl/3.0.0
+    "http://publications.europa.eu/ontology/euvoc#",
+    "http://purls.helmholtz-metadaten.de/cdos/cdco/",  # http://purls.helmholtz-metadaten.de/cdos/cdco/1.0.0
+    "https://endlessforms.info/gdo/releases/gdoa-",
+    "https://openenergyplatform.org/ontology/oeo/releases/",
+    "https://w3id.org/amv/",  # https://w3id.org/amv/1.0
 ]
 VERSION_PREFIX_SPLITS = [
     "http://www.ebi.ac.uk/efo/releases/v",
     "http://www.ebi.ac.uk/swo/swo.owl/",
     "http://semanticscience.org/ontology/sio/v",
     "http://ontology.neuinfo.org/NIF/ttl/nif/version/",
+    "http://nmrml.org/cv/v",  # as in http://nmrml.org/cv/v1.1.0/nmrCV
+    "http://enanomapper.github.io/ontologies/releases/",  # as in http://enanomapper.github.io/ontologies/releases/10.0/enanomapper
+    "https://w3id.org/sulo/sulo-",  # as in https://w3id.org/sulo/sulo-0.2.4.ttl
+    "https://spec.industrialontologies.org/ontology/",  # as in https://spec.industrialontologies.org/ontology/202401/core/Core
 ]
+BAD = {
+    "http://purl.obolibrary.org/obo",
+    "http://www.bioassayontology.org/bao/bao_complete",
+    "https://vocabularies.wikipathways.org",
+}
 
 
 def cleanup_version(data_version: str, prefix: str) -> str:
@@ -119,3 +143,85 @@ VERSION_GETTERS: dict[OntologyFormat, Callable[[str, str], str | None]] = {
     "owl": _get_owl_version,
     "json": _get_obograph_json_version,
 }
+
+
+def _prioritize_version(
+    data_version: str | None,
+    ontology_prefix: str,
+    version: str | None,
+    date: datetime | None,
+) -> str | None:
+    """Process version information coming from several sources and normalize them."""
+    if ontology_prefix in STATIC_VERSION_REWRITES:
+        return STATIC_VERSION_REWRITES[ontology_prefix]
+
+    if version:
+        if version in BAD:
+            logger.debug("[%s] had known bad version, returning None: ", ontology_prefix, version)
+            return None
+
+        clean_injected_version = cleanup_version(version, prefix=ontology_prefix)
+        if not data_version:
+            logger.debug(
+                "[%s] did not have a version, overriding with %s",
+                ontology_prefix,
+                clean_injected_version,
+            )
+            return clean_injected_version
+
+        clean_data_version = cleanup_version(data_version, prefix=ontology_prefix)
+        if clean_data_version != clean_injected_version:
+            # in this case, we're going to trust the one that's passed
+            # through explicitly more than the graph's content
+            logger.debug(
+                "[%s] had version %s, overriding with %s",
+                ontology_prefix,
+                data_version,
+                version,
+            )
+        return clean_injected_version
+
+    if data_version:
+        if data_version in BAD:
+            logger.debug(
+                "[%s] had known bad version, returning None: ", ontology_prefix, data_version
+            )
+            return None
+
+        clean_data_version = cleanup_version(data_version, prefix=ontology_prefix)
+        logger.debug("[%s] using version %s", ontology_prefix, clean_data_version)
+        return clean_data_version
+
+    if date is not None:
+        derived_date_version = date.strftime("%Y-%m-%d")
+        logger.debug(
+            "[%s] does not report a version using the `data-version` tag. falling back to date: %s",
+            ontology_prefix,
+            derived_date_version,
+        )
+        return derived_date_version
+
+    logger.debug("[%s] does not report a version nor a date", ontology_prefix)
+    return None
+
+
+def _get_getter_urls(prefix: str) -> Iterable[tuple[OntologyFormat, str]]:
+    # assume that all possible files that can be downloaded
+    # are in sync and have the same version
+    for ontology_format, get_url_func in ONTOLOGY_GETTERS:
+        url = get_url_func(prefix)
+        if url is None:
+            continue
+        yield ontology_format, url
+
+
+def _get_version_from_artifact(prefix: str) -> str | None:
+    for ontology_format, url in _get_getter_urls(prefix):
+        # Try to peak into the file to get the version without fully downloading
+        get_version_func = VERSION_GETTERS.get(ontology_format)
+        if get_version_func is None:
+            continue
+        version = get_version_func(prefix, url)
+        if version:
+            return cleanup_version(version, prefix=prefix)
+    return None

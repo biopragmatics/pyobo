@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import cast
 
+from pystow.utils import safe_open_reader
 from tqdm.auto import tqdm
 
 from pyobo import Obo, Reference
@@ -18,11 +19,10 @@ from pyobo.struct import (
     derives_from,
     enables,
     from_species,
-    has_citation,
+    is_mentioned_by,
     participates_in,
 )
 from pyobo.struct.typedef import gene_product_of, located_in, molecularly_interacts_with
-from pyobo.utils.io import open_reader
 
 PREFIX = "uniprot"
 BASE_URL = "https://rest.uniprot.org/uniprotkb/stream"
@@ -68,7 +68,7 @@ class UniProtGetter(Obo):
         derives_from,
         located_in,
         IS_REVIEWED,
-        has_citation,
+        is_mentioned_by,
     ]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -78,7 +78,7 @@ class UniProtGetter(Obo):
 
 def iter_terms(version: str | None = None) -> Iterable[Term]:
     """Iterate over UniProt Terms."""
-    with open_reader(ensure(version=version)) as reader:
+    with safe_open_reader(ensure(version=version)) as reader:
         _ = next(reader)  # header
         for (
             uniprot_id,
@@ -156,14 +156,14 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                         )
             for pubmed in pubmeds.split(";"):
                 if pubmed := pubmed.strip():
-                    term.append_provenance(Reference(prefix="pubmed", identifier=pubmed))
+                    term.append_mentioned_by(Reference(prefix="pubmed", identifier=pubmed))
             for pdb in pdbs.split(";"):
                 if pdb := pdb.strip():
                     term.append_xref(Reference(prefix="pdb", identifier=pdb))
             yield term
 
 
-def _parse_go(go_terms) -> list[Reference]:
+def _parse_go(go_terms: str | None) -> list[Reference]:
     rv = []
     if go_terms:
         for go_term in go_terms.split(";"):

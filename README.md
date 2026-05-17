@@ -435,20 +435,6 @@ Alternatively, install using pip:
 $ python3 -m pip install -e .
 ```
 
-### Updating Package Boilerplate
-
-This project uses `cruft` to keep boilerplate (i.e., configuration, contribution
-guidelines, documentation configuration) up-to-date with the upstream
-cookiecutter package. Install cruft with either `uv tool install cruft` or
-`python3 -m pip install cruft` then run:
-
-```console
-$ cruft update
-```
-
-More info on Cruft's update command is available
-[here](https://github.com/cruft/cruft?tab=readme-ov-file#updating-a-project).
-
 ### 🥼 Testing
 
 After cloning the repository and installing `tox` with
@@ -486,7 +472,20 @@ only that Sphinx can build the documentation in an isolated environment (i.e.,
 with `tox -e docs-test`) but also that
 [ReadTheDocs can build it too](https://docs.readthedocs.io/en/stable/pull-requests.html).
 
+</details>
+
+## 🧑‍💻 For Maintainers
+
+<details>
+  <summary>See maintainer instructions</summary>
+
+### Initial Configuration
+
 #### Configuring ReadTheDocs
+
+[ReadTheDocs](https://readthedocs.org) is an external documentation hosting
+service that integrates with GitHub's CI/CD. Do the following for each
+repository:
 
 1. Log in to ReadTheDocs with your GitHub account to install the integration at
    https://readthedocs.org/accounts/login/?next=/dashboard/
@@ -496,12 +495,10 @@ with `tox -e docs-test`) but also that
    (i.e., with spaces and capital letters)
 4. Click next, and you're good to go!
 
-### 📦 Making a Release
-
-#### Configuring Zenodo
+#### Configuring Archival on Zenodo
 
 [Zenodo](https://zenodo.org) is a long-term archival system that assigns a DOI
-to each release of your package.
+to each release of your package. Do the following for each repository:
 
 1. Log in to Zenodo via GitHub with this link:
    https://zenodo.org/oauth/login/github/?next=%2F. This brings you to a page
@@ -521,10 +518,10 @@ the DOI for the release and link to the Zenodo record for it.
 
 #### Registering with the Python Package Index (PyPI)
 
-You only have to do the following steps once.
+The [Python Package Index (PyPI)](https://pypi.org) hosts packages so they can
+be easily installed with `pip`, `uv`, and equivalent tools.
 
-1. Register for an account on the
-   [Python Package Index (PyPI)](https://pypi.org/account/register)
+1. Register for an account [here](https://pypi.org/account/register)
 2. Navigate to https://pypi.org/manage/account and make sure you have verified
    your email address. A verification email might not have been sent by default,
    so you might have to click the "options" dropdown next to your address to get
@@ -535,9 +532,11 @@ You only have to do the following steps once.
    2-factor authentication
 4. Issue an API token from https://pypi.org/manage/account/token
 
+This only needs to be done once per developer.
+
 #### Configuring your machine's connection to PyPI
 
-You have to do the following steps once per machine.
+This needs to be done once per machine.
 
 ```console
 $ uv tool install keyring
@@ -546,6 +545,8 @@ $ keyring set https://test.pypi.org/legacy/ __token__
 ```
 
 Note that this deprecates previous workflows using `.pypirc`.
+
+### 📦 Making a Release
 
 #### Uploading to PyPI
 
@@ -583,5 +584,19 @@ This script does the following:
 4. Click the big green "Publish Release" button
 
 This will trigger Zenodo to assign a DOI to your release as well.
+
+### Updating Package Boilerplate
+
+This project uses `cruft` to keep boilerplate (i.e., configuration, contribution
+guidelines, documentation configuration) up-to-date with the upstream
+cookiecutter package. Install cruft with either `uv tool install cruft` or
+`python3 -m pip install cruft` then run:
+
+```console
+$ cruft update
+```
+
+More info on Cruft's update command is available
+[here](https://github.com/cruft/cruft?tab=readme-ov-file#updating-a-project).
 
 </details>

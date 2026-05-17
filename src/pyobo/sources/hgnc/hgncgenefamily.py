@@ -5,41 +5,43 @@ from collections.abc import Iterable, Mapping
 
 import pandas as pd
 
-from ...struct import Obo, Reference, SynonymTypeDef, Term, has_citation
-from ...struct.typedef import enables, exact_match, from_species
-from ...utils.path import ensure_path
+from ...api.utils import get_version
+from ...struct.struct import Obo, Reference, Term
+from ...struct.struct import abbreviation as symbol_type
+from ...struct.typedef import enables, exact_match, from_species, is_mentioned_by
+from ...struct.vocabulary import GENE_GROUP
+from ...utils.path import ensure_df
 
 __all__ = [
     "HGNCGroupGetter",
+    "get_gene_family_terms",
 ]
 
-PREFIX = "hgnc.genegroup"
+GENE_GROUP_PREFIX = "hgnc.genegroup"
 FAMILIES_URL = "https://storage.googleapis.com/public-download-files/hgnc/csv/csv/genefamily_db_tables/family.csv"
-# TODO use family_alias.csv
+FAMILIES_ALIAS_URL = "https://storage.googleapis.com/public-download-files/hgnc/csv/csv/genefamily_db_tables/family_alias.csv"
 HIERARCHY_URL = "https://storage.googleapis.com/public-download-files/hgnc/csv/csv/genefamily_db_tables/hierarchy.csv"
-
-symbol_type = SynonymTypeDef(
-    reference=Reference(prefix="OMO", identifier="0004000", name="has symbol")
-)
 
 
 class HGNCGroupGetter(Obo):
     """An ontology representation of HGNC's gene group nomenclature."""
 
-    ontology = PREFIX
+    ontology = GENE_GROUP_PREFIX
     bioversions_key = "hgnc"
     synonym_typedefs = [symbol_type]
-    typedefs = [from_species, enables, exact_match, has_citation]
+    root_terms = [GENE_GROUP]
+    typedefs = [from_species, enables, exact_match, is_mentioned_by]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return get_terms(force=force)
+        return get_gene_family_terms(force=force)
 
 
-def get_hierarchy(force: bool = False) -> Mapping[str, list[str]]:
+def get_hierarchy(*, version: str | None = None, force: bool = False) -> Mapping[str, list[str]]:
     """Get the HGNC Gene Families hierarchy as a dictionary."""
-    path = ensure_path(PREFIX, url=HIERARCHY_URL, force=force)
-    df = pd.read_csv(path, dtype={"parent_fam_id": str, "child_fam_id": str})
+    if version is None:
+        version = get_version("hgnc")
+    df = ensure_df(GENE_GROUP_PREFIX, url=HIERARCHY_URL, force=force, sep=",", version=version)
     d = defaultdict(list)
     for parent_id, child_id in df.values:
         d[child_id].append(parent_id)
@@ -49,52 +51,54 @@ def get_hierarchy(force: bool = False) -> Mapping[str, list[str]]:
 COLUMNS = ["id", "abbreviation", "name", "pubmed_ids", "desc_comment", "desc_go"]
 
 
-def get_terms(force: bool = False) -> Iterable[Term]:
+def get_gene_family_terms(*, version: str | None = None, force: bool = False) -> Iterable[Term]:
     """Get the HGNC Gene Group terms."""
-    terms = list(_get_terms_helper(force=force))
-    hierarchy = get_hierarchy(force=force)
+    if version is None:
+        version = get_version("hgnc")
 
-    id_to_term = {term.reference.identifier: term for term in terms}
+    terms = list(_get_terms_helper(force=force, version=version))
+    hierarchy = get_hierarchy(force=force, version=version)
+
+    id_to_term = {term.identifier: term for term in terms}
     for child_id, parent_ids in hierarchy.items():
         child: Term = id_to_term[child_id]
         for parent_id in parent_ids:
-            parent: Term = id_to_term[parent_id]
-            child.append_parent(
-                Reference(
-                    prefix=PREFIX,
-                    identifier=parent_id,
-                    name=parent.name,
-                )
-            )
-    gene_group = Reference(prefix="SO", identifier="0005855", name="gene group")
-    yield Term(reference=gene_group)
+            child.append_parent(id_to_term[parent_id])
+    yield Term(reference=GENE_GROUP)
     for term in terms:
         if not term.parents:
-            term.append_parent(gene_group)
+            term.append_parent(GENE_GROUP)
     yield from terms
 
 
-def _get_terms_helper(force: bool = False) -> Iterable[Term]:
-    path = ensure_path(PREFIX, url=FAMILIES_URL, force=force)
-    df = pd.read_csv(path, dtype={"id": str})
+def _get_terms_helper(version: str, force: bool = False) -> Iterable[Term]:
+    alias_df = ensure_df(
+        GENE_GROUP_PREFIX, url=FAMILIES_ALIAS_URL, force=force, sep=",", version=version
+    )
+    aliases = defaultdict(set)
+    for _id, family_id, alias in alias_df.values:
+        aliases[family_id].add(alias)
 
+    df = ensure_df(GENE_GROUP_PREFIX, url=FAMILIES_URL, force=force, sep=",", version=version)
     for gene_group_id, symbol, name, pubmed_ids, definition, desc_go in df[COLUMNS].values:
         if not definition or pd.isna(definition):
             definition = None
         term = Term(
-            reference=Reference(prefix=PREFIX, identifier=gene_group_id, name=name),
+            reference=Reference(prefix=GENE_GROUP_PREFIX, identifier=gene_group_id, name=name),
             definition=definition,
         )
         if pubmed_ids and pd.notna(pubmed_ids):
-            for s in pubmed_ids.replace(" ", ",").split(","):
-                s = s.strip()
-                if s:
-                    term.append_provenance(Reference(prefix="pubmed", identifier=s))
+            for pubmed_id in pubmed_ids.replace(" ", ",").split(","):
+                pubmed_id = pubmed_id.strip()
+                if pubmed_id:
+                    term.append_mentioned_by(Reference(prefix="pubmed", identifier=pubmed_id))
         if desc_go and pd.notna(desc_go):
             go_id = desc_go[len("http://purl.uniprot.org/go/") :]
             term.append_relationship(enables, Reference(prefix="GO", identifier=go_id))
         if symbol and pd.notna(symbol):
             term.append_synonym(symbol, type=symbol_type)
+        for alias in aliases[gene_group_id]:
+            term.append_synonym(alias)
         term.set_species(identifier="9606", name="Homo sapiens")
         yield term
 

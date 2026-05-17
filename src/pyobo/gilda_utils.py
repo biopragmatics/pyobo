@@ -10,10 +10,7 @@ import ssslm
 from ssslm import literal_mappings_to_gilda
 from typing_extensions import Unpack
 
-from pyobo.api import (
-    get_literal_mappings,
-    get_literal_mappings_subset,
-)
+from pyobo.api import get_literal_mappings, get_literal_mappings_subset
 from pyobo.constants import GetOntologyKwargs
 from pyobo.struct.reference import Reference
 
@@ -36,7 +33,9 @@ def get_grounder(*args: Any, **kwargs: Any) -> gilda.Grounder:
     return grounder._grounder
 
 
-def get_gilda_terms(prefix: str, *, skip_obsolete: bool = False, **kwargs) -> Iterable[gilda.Term]:
+def get_gilda_terms(
+    prefix: str, *, skip_obsolete: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+) -> Iterable[gilda.Term]:
     """Get gilda terms."""
     warnings.warn(
         "use pyobo.get_literal_mappings() directly and convert to gilda yourself",

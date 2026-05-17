@@ -111,7 +111,7 @@ def get_curie_to_norm_name() -> Mapping[str, str]:
 HEADER = ["prefix", "identifier", "label", "synonyms"]
 
 
-def main():
+def main() -> None:
     """Download and process the relation ontology data."""
     from bioontologies import get_obograph_by_prefix
     from bioontologies.obograph import GraphDocument

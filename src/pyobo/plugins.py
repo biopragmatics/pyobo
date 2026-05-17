@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
-from .struct import Obo
+if TYPE_CHECKING:
+    from .struct import Obo
 
 __all__ = [
     "has_nomenclature_plugin",

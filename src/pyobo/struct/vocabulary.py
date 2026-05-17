@@ -5,7 +5,7 @@ from collections.abc import Sequence
 import curies
 from curies import vocabulary as _v
 
-from .reference import Reference, default_reference
+from .reference import Reference
 
 __all__ = [
     "equivalent_class",
@@ -41,6 +41,7 @@ mapping_has_justification = Reference(
 )
 mapping_has_confidence = Reference(prefix="sssom", identifier="confidence", name="has confidence")
 has_contributor = _c(_v.has_contributor)
+has_creator = Reference(prefix="dcterms", identifier="creator", name="creator")
 has_source = _c(_v.has_source)
 has_date = _c(_v.has_date)
 has_dbxref = _c(_v.has_dbxref)
@@ -64,6 +65,7 @@ version_info = _c(_v.owl_version_info)
 term_replaced_by = _c(_v.term_replaced_by)
 alternative_term = _c(_v.alternative_term)
 has_ontology_root_term = _c(_v.has_ontology_root_term)
+has_ontology_hierarchy_predicate = _c(_v.has_ontology_hierarchical_property)
 has_term_editor = _c(_v.has_term_editor)
 
 see_also = _c(_v.see_also)
@@ -83,10 +85,14 @@ has_inchi = Reference(prefix="chemrof", identifier="inchi_string")
 
 debio_has_smiles = Reference(prefix="debio", identifier="0000022", name="has SMILES")
 has_smiles = Reference(prefix="chemrof", identifier="smiles_string")
+has_canonical_smiles = Reference(prefix="chemrof", identifier="canonical_smiles_string")
+has_isomeric_smiles = Reference(prefix="chemrof", identifier="isomeric_smiles_string")
 
-# TODO update to use debio, or put in RO
-has_citation = default_reference(prefix="RO", identifier="hasCitation", name="has citation")
+is_mentioned_by = Reference(prefix="mito", identifier="isMentionedBy", name="is mentioned by")
+mentions = Reference(prefix="mito", identifier="mentions", name="mentions")
+
 has_description = _c(_v.has_description)
+has_license = _c(_v.has_license)
 has_license = _c(_v.has_license)
 has_title = _c(_v.has_title)
 
@@ -97,6 +103,9 @@ has_depiction = Reference(prefix="foaf", identifier="depicted_by", name="depicte
 has_repository = Reference(prefix="doap", identifier="repository", name="has repository")
 has_mailing_list = Reference(prefix="doap", identifier="mailing-list", name="has mailing list")
 has_maintainer = Reference(prefix="doap", identifier="maintainer", name="has maintainer")
+
+has_suborganization = _c(_v.has_suborganization)
+is_suborganization_of = _c(_v.is_suborganization_of)
 
 has_part = Reference(prefix=BFO_PREFIX, identifier="0000051", name="has part")
 part_of = Reference(prefix=BFO_PREFIX, identifier="0000050", name="part of")
@@ -151,3 +160,13 @@ SKIP_PROPERTY_PREDICATES_LITERAL = [
     comment,  # maps to "comment:" line with strings
     obo_creation_date,
 ]
+
+mouse = Reference(prefix="NCBITaxon", identifier="10090", name="Mus musculus")
+rat = Reference(prefix="NCBITaxon", identifier="10116", name="Rattus norvegicus")
+gene = Reference(prefix="SO", identifier="0000704", name="gene")
+GENE_GROUP = Reference(prefix="SO", identifier="0005855", name="gene group")
+protein = Reference(prefix="PR", identifier="000000001", name="protein")
+molecular_function = Reference(prefix="GO", identifier="0003674", name="molecular function")
+rna = Reference(prefix="uniprot.core", identifier="RNA", name="RNA")
+chromosomal_region = Reference(prefix="GO", identifier="0098687", name="chromosomal region")
+chemical = Reference(prefix="chebi", identifier="24431", name="chemical entity")

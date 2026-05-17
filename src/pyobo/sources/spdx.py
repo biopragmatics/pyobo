@@ -3,6 +3,7 @@
 from collections.abc import Iterable
 from typing import Any
 
+import bioversions
 from pydantic import ValidationError
 from tqdm import tqdm
 
@@ -16,29 +17,33 @@ __all__ = [
 ]
 
 DATA_URL = "https://github.com/spdx/license-list-data/raw/refs/heads/main/json/licenses.json"
-LICENSE_PREFIX = "spdx"
-TERM_PREFIX = "spdx.term"
+SPDX_LICENSE_PREFIX = "spdx"
+SPDX_TERM_PREFIX = "spdx.term"
 
-ROOT = Term.from_triple(TERM_PREFIX, "ListedLicense", "listed license")
+ROOT = Term.from_triple(SPDX_TERM_PREFIX, "ListedLicense", "listed license")
 IS_OSI = TypeDef(
-    reference=Reference(prefix=TERM_PREFIX, identifier="isOsiApproved", name="is OSI approved"),
+    reference=Reference(
+        prefix=SPDX_TERM_PREFIX, identifier="isOsiApproved", name="is OSI approved"
+    ),
     is_metadata_tag=True,
     domain=ROOT.reference,
     range=xsd_boolean,
 )
 IS_FSF = TypeDef(
-    reference=Reference(prefix=TERM_PREFIX, identifier="isFsfLibre", name="is FSF Libre"),
+    reference=Reference(prefix=SPDX_TERM_PREFIX, identifier="isFsfLibre", name="is FSF Libre"),
     is_metadata_tag=True,
     domain=ROOT.reference,
     range=xsd_boolean,
 )
 
 
-def get_terms(version: str) -> Iterable[Term]:
+def get_terms(version: str | None = None) -> Iterable[Term]:
     """Iterate over terms."""
+    if version is None:
+        version = bioversions.get_version("spdx")
     yield ROOT
     data = ensure_json(
-        LICENSE_PREFIX,
+        SPDX_LICENSE_PREFIX,
         url=DATA_URL,
         version=version,
     )
@@ -50,16 +55,20 @@ def get_terms(version: str) -> Iterable[Term]:
 def _get_term(record: dict[str, Any]) -> Term | None:
     try:
         reference = Reference(
-            prefix=LICENSE_PREFIX, identifier=record["licenseId"], name=record["name"]
+            prefix=SPDX_LICENSE_PREFIX, identifier=record["licenseId"], name=record["name"]
         )
     except ValidationError:
         tqdm.write(f"invalid: {record['licenseId']}")
         return None
-    term = Term(
-        reference=reference,
-        is_obsolete=True if record.get("isDeprecatedLicenseId") else None,
-        # type="Instance",
-    ).append_parent(ROOT)
+    term = (
+        Term(
+            reference=reference,
+            is_obsolete=True if record.get("isDeprecatedLicenseId") else None,
+            # type="Instance",
+        )
+        .append_parent(ROOT)
+        .append_synonym(record["licenseId"])
+    )
     if record.get("isOsiApproved"):
         term.annotate_boolean(IS_OSI, True)
     if record.get("isFsfLibre"):
@@ -72,7 +81,7 @@ def _get_term(record: dict[str, Any]) -> Term | None:
 class SPDXLicenseGetter(Obo):
     """An ontology representation of the SPDX Licenses."""
 
-    bioversions_key = ontology = LICENSE_PREFIX
+    bioversions_key = ontology = SPDX_LICENSE_PREFIX
     typedefs = [see_also, IS_FSF, IS_OSI]
     root_terms = [ROOT.reference]
 
@@ -82,4 +91,4 @@ class SPDXLicenseGetter(Obo):
 
 
 if __name__ == "__main__":
-    SPDXLicenseGetter.cli(["--obo", "--owl", "--rewrite"])
+    SPDXLicenseGetter.cli()

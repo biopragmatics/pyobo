@@ -1,5 +1,6 @@
-PyOBO |release| Documentation
-=============================
+###############################
+ PyOBO |release| Documentation
+###############################
 
 .. toctree::
     :maxdepth: 2
@@ -10,9 +11,12 @@ PyOBO |release| Documentation
     cli
     usage
     functional
+    ner
+    scispacy
 
-Indices and Tables
-------------------
+********************
+ Indices and Tables
+********************
 
 - :ref:`genindex`
 - :ref:`modindex`

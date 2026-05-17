@@ -18,45 +18,67 @@ __all__ = [
     "contributes_to_condition",
     "default_typedefs",
     "derives_from_organism",
+    "directly_regulates_activity_of",
     "editor_note",
+    "editor_preferred_term",
     "enables",
+    "ends",
     "exact_match",
     "example_of_usage",
     "from_species",
+    "gene_product_enables",
     "gene_product_member_of",
+    "has_canonical_smiles",
     "has_contributor",
+    "has_creator",
+    "has_curation_status",
     "has_dbxref",
     "has_depiction",
     "has_end_date",
     "has_gene_product",
     "has_homepage",
     "has_inchi",
+    "has_isomeric_smiles",
     "has_mailbox",
     "has_mature",
     "has_member",
+    "has_ontology_hierarchy_predicate",
+    "has_ontology_root_term",
     "has_part",
     "has_participant",
     "has_predecessor",
     "has_role",
     "has_salt",
     "has_smiles",
+    "has_source",
     "has_start_date",
+    "has_suborganization",
     "has_successor",
     "has_taxonomy_rank",
     "is_a",
+    "is_agonist_of",
+    "is_antagonist_of",
+    "is_defined_by",
+    "is_inverse_agonist_of",
+    "is_mentioned_by",
+    "is_suborganization_of",
     "located_in",
     "mapping_has_confidence",
     "mapping_has_justification",
     "match_typedefs",
+    "may_be_identical_to",
     "member_of",
     "narrow_match",
+    "negatively_regulates",
     "orthologous",
     "part_of",
     "participates_in",
+    "positively_regulates",
     "related_match",
     "role_of",
     "see_also",
     "species_specific",
+    "starts",
     "superclass_of",
     "transcribes_to",
     "translates_to",
@@ -116,6 +138,12 @@ molecularly_interacts_with = TypeDef(
 located_in = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0001025", name="located in"),
 )
+starts = TypeDef(
+    reference=Reference(prefix=RO_PREFIX, identifier="0002223", name="starts"),
+)
+ends = TypeDef(
+    reference=Reference(prefix=RO_PREFIX, identifier="0002229", name="ends"),
+)
 contributes_to_condition = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0003304", name="contributes to condition"),
 )
@@ -135,6 +163,11 @@ rdf_type = TypeDef(reference=v.rdf_type)
 subproperty_of = TypeDef(reference=v.subproperty_of)
 see_also = TypeDef(reference=v.see_also, is_metadata_tag=True)
 comment = TypeDef(reference=v.comment, is_metadata_tag=True)
+label = TypeDef(reference=v.label, is_metadata_tag=True)
+is_defined_by = TypeDef(
+    reference=Reference(prefix="rdfs", identifier="isDefinedBy", name="is defined by"),
+    is_metadata_tag=True,
+)
 has_member = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0002351", name="has member"),
 )
@@ -207,10 +240,33 @@ example_of_usage = TypeDef(
 )
 alternative_term = TypeDef(reference=v.alternative_term, is_metadata_tag=True)
 has_ontology_root_term = TypeDef(reference=v.has_ontology_root_term, is_metadata_tag=True)
+has_ontology_hierarchy_predicate = TypeDef(
+    reference=v.has_ontology_hierarchy_predicate, is_metadata_tag=True
+)
+"""
+You can annotate this into an ontology with
+
+.. code-block:: python
+
+    property_values = [
+        Annotation(has_ontology_hierarchy_predicate.reference, ...)
+    ]
+"""
 definition_source = TypeDef(
     reference=Reference(prefix=IAO_PREFIX, identifier="0000119", name="definition source"),
     is_metadata_tag=True,
 )
+may_be_identical_to = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0006011", name="may be identical to")
+)
+# todo this is also useful for SSSLM
+editor_preferred_term = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0000111", name="editor preferred term")
+)
+has_curation_status = TypeDef(
+    reference=Reference(prefix=IAO_PREFIX, identifier="0000114", name="has curation status")
+)
+
 has_dbxref = TypeDef(reference=v.has_dbxref, is_metadata_tag=True)
 
 editor_note = TypeDef(
@@ -232,6 +288,19 @@ has_output = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002234", name="h
 
 has_successor = TypeDef.from_triple(prefix="BFO", identifier="0000063", name="has successor")
 has_predecessor = TypeDef.from_triple(prefix="BFO", identifier="0000062", name="has predecessor")
+
+has_suborganization = TypeDef(reference=v.has_suborganization)
+is_suborganization_of = TypeDef(reference=v.is_suborganization_of)
+
+gene_product_enables = TypeDef(
+    reference=Reference(prefix="RO", identifier="0018042", name="has gene product that enables"),
+    holds_over_chain=[
+        [
+            has_gene_product.reference,
+            enables.reference,
+        ]
+    ],
+)
 
 # ChEBI
 
@@ -257,13 +326,39 @@ has_functional_parent = TypeDef(
     reference=Reference(prefix="ro", identifier="0018038", name="has functional parent"),
 )
 
-has_citation = TypeDef(
-    reference=v.has_citation,
+positively_regulates = TypeDef(
+    Reference(prefix="RO", identifier="0002213", name="positively regulates")
+)
+negatively_regulates = TypeDef(
+    Reference(prefix="RO", identifier="0002212", name="negatively regulates")
+)
+is_agonist_of = TypeDef.from_triple("RO", "0018027", "is agonist of")
+is_inverse_agonist_of = TypeDef.from_triple("RO", "0018028", "is inverse agonist of")
+is_antagonist_of = TypeDef.from_triple("RO", "0018029", "is antagonist of")
+directly_regulates_activity_of = TypeDef.from_triple(
+    "RO", "0002448", "directly regulates activity of"
+)
+
+is_mentioned_by = TypeDef(
+    reference=v.is_mentioned_by,
     is_metadata_tag=True,
-    range=Reference(prefix="IAO", identifier="0000013", name="journal article"),
+    inverse=v.mentions,
+)
+mentions = TypeDef(
+    reference=v.mentions,
+    is_metadata_tag=True,
+    inverse=v.is_mentioned_by,
 )
 
 has_smiles = TypeDef(reference=v.has_smiles, is_metadata_tag=True).append_xref(v.debio_has_smiles)
+has_canonical_smiles = TypeDef(reference=v.has_canonical_smiles, is_metadata_tag=True).append_xref(
+    v.debio_has_smiles
+)
+has_isomeric_smiles = TypeDef(reference=v.has_isomeric_smiles, is_metadata_tag=True).append_xref(
+    v.debio_has_smiles
+)
+
+# https://chemkg.github.io/chemrof/isomeric_smiles_string/
 
 has_inchi = TypeDef(reference=v.has_inchi, is_metadata_tag=True).append_xref(v.debio_has_inchi)
 
@@ -305,6 +400,8 @@ has_end_date = TypeDef(
 
 has_title = TypeDef(reference=v.has_title, is_metadata_tag=True)
 has_license = TypeDef(reference=v.has_license, is_metadata_tag=True)
+has_creator = TypeDef(reference=v.has_creator, is_metadata_tag=True)
+
 has_description = TypeDef(reference=v.has_description, is_metadata_tag=True)
 obo_autogenerated_by = TypeDef(reference=v.obo_autogenerated_by, is_metadata_tag=True)
 obo_has_format_version = TypeDef(reference=v.obo_has_format_version, is_metadata_tag=True)

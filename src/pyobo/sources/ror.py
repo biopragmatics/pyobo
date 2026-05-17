@@ -2,44 +2,50 @@
 
 from __future__ import annotations
 
-import json
 import logging
-import zipfile
 from collections.abc import Iterable
 from typing import Any
 
 import bioregistry
-import zenodo_client
+import ror_downloader
 from pydantic import ValidationError
+from ror_downloader import OrganizationType
 from tqdm.auto import tqdm
 
+from pyobo import Annotation
 from pyobo.struct import Obo, Reference, Term
 from pyobo.struct.struct import CHARLIE_TERM, HUMAN_TERM, PYOBO_INJECTED, acronym
 from pyobo.struct.typedef import (
     has_homepage,
-    has_part,
+    has_ontology_hierarchy_predicate,
     has_predecessor,
+    has_suborganization,
     has_successor,
+    is_suborganization_of,
     located_in,
-    part_of,
     see_also,
 )
 
+__all__ = [
+    "RORGetter",
+    "get_ror_to_country_geonames",
+]
+
 logger = logging.getLogger(__name__)
 PREFIX = "ror"
-ROR_ZENODO_RECORD_ID = "10086202"
 
 # Constants
 ORG_CLASS = Reference(prefix="OBI", identifier="0000245", name="organization")
+ORG_ORG_CLASS = Reference(prefix="org", identifier="Organization", name="Organization")
 CITY_CLASS = Reference(prefix="ENVO", identifier="00000856", name="city")
 
 RMAP = {
-    "Related": see_also,
-    "Child": has_part,
-    "Parent": part_of,
-    "Predecessor": has_predecessor,
-    "Successor": has_successor,
-    "Located in": located_in,
+    "related": see_also,
+    "child": has_suborganization,
+    "parent": is_suborganization_of,
+    "predecessor": has_predecessor,
+    "successor": has_successor,
+    "located in": located_in,
 }
 NAME_REMAPPING = {
     "'s-Hertogenbosch": "Den Bosch",  # SMH Netherlands, why u gotta be like this
@@ -57,29 +63,33 @@ class RORGetter(Obo):
     typedefs = [has_homepage, *RMAP.values()]
     synonym_typedefs = [acronym]
     root_terms = [CITY_CLASS, ORG_CLASS]
+    property_values = [
+        Annotation(has_ontology_hierarchy_predicate.reference, is_suborganization_of.reference)
+    ]
 
-    def __post_init__(self):
-        self.data_version, _url, _path = _get_info()
+    def __post_init__(self) -> None:
+        self.data_version = ror_downloader.get_version_info(download=False).version
         super().__post_init__()
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
         yield CHARLIE_TERM
         yield HUMAN_TERM
-        yield Term(reference=ORG_CLASS)
+        yield Term(reference=ORG_CLASS).append_exact_match(ORG_ORG_CLASS)
         yield Term(reference=CITY_CLASS)
         yield from ROR_ORGANIZATION_TYPE_TO_OBI.values()
         yield from iterate_ror_terms(force=force)
 
 
-ROR_ORGANIZATION_TYPE_TO_OBI: dict[str, Term] = {
-    "Education": Term.default(PREFIX, "education", "educational organization"),
-    "Facility": Term.default(PREFIX, "facility", "facility"),
-    "Company": Term.default(PREFIX, "company", "company"),
-    "Government": Term.default(PREFIX, "government", "government organization"),
-    "Healthcare": Term.default(PREFIX, "healthcare", "healthcare organization"),
-    "Archive": Term.default(PREFIX, "archive", "archival organization"),
-    "Nonprofit": Term.default(PREFIX, "healthcare", "nonprofit organization")
+ROR_ORGANIZATION_TYPE_TO_OBI: dict[OrganizationType, Term] = {
+    "education": Term.default(PREFIX, "education", "educational organization"),
+    "facility": Term.default(PREFIX, "facility", "facility"),
+    "funder": Term.default(PREFIX, "funder", "funder"),
+    "company": Term.default(PREFIX, "company", "company"),
+    "government": Term.default(PREFIX, "government", "government organization"),
+    "healthcare": Term.default(PREFIX, "healthcare", "healthcare organization"),
+    "archive": Term.default(PREFIX, "archive", "archival organization"),
+    "nonprofit": Term.default(PREFIX, "healthcare", "nonprofit organization")
     .append_xref(Reference(prefix="ICO", identifier="0000048"))
     .append_xref(Reference(prefix="GSSO", identifier="004615")),
 }
@@ -93,91 +103,96 @@ _MISSED_ORG_TYPES: set[str] = set()
 
 def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
     """Iterate over terms in ROR."""
-    _version, _source_uri, records = get_latest(force=force)
+    status, records = ror_downloader.get_organizations(force=force)
     unhandled_xref_prefixes: set[str] = set()
 
     seen_geonames_references = set()
-    for record in tqdm(records, unit_scale=True, unit="record", desc=f"{PREFIX} v{_version}"):
-        identifier = record["id"].removeprefix("https://ror.org/")
-        name = record["name"]
-        name = NAME_REMAPPING.get(name, name)
+    for record in tqdm(
+        records, unit_scale=True, unit="record", desc=f"parsing {PREFIX} v{status.version}"
+    ):
+        identifier = record.id.removeprefix("https://ror.org/")
 
-        organization_types = record.get("types", [])
-        description = f"{organization_types[0]} in {record['country']['country_name']}"
-        if established := record["established"]:
-            description += f" established in {established}"
+        primary_name = record.get_preferred_label()
+        if primary_name is None:
+            raise ValueError("should have got a primary name...")
 
         term = Term(
-            reference=Reference(prefix=PREFIX, identifier=identifier, name=name),
+            reference=Reference(prefix=PREFIX, identifier=identifier, name=primary_name),
             type="Instance",
-            definition=description,
+            definition=record.get_description(),
         )
-        for organization_type in organization_types:
-            if organization_type == "Other":
-                term.append_parent(ORG_CLASS)
-            else:
+        for organization_type in record.types:
+            if organization_type in ROR_ORGANIZATION_TYPE_TO_OBI:
                 term.append_parent(ROR_ORGANIZATION_TYPE_TO_OBI[organization_type])
+            else:
+                term.append_parent(ORG_CLASS)
 
-        for link in record.get("links", []):
-            term.annotate_uri(has_homepage, link)
+        for link in record.links:
+            term.annotate_uri(has_homepage, link.value)
 
-        if name.startswith("The "):
-            term.append_synonym(name.removeprefix("The "))
+        if primary_name.startswith("The "):
+            term.append_synonym(primary_name.removeprefix("The "))
 
-        for relationship in record.get("relationships", []):
-            target_id = relationship["id"].removeprefix("https://ror.org/")
+        for relationship in record.relationships:
+            target_id = relationship.id.removeprefix("https://ror.org/")
             term.append_relationship(
-                RMAP[relationship["type"]], Reference(prefix=PREFIX, identifier=target_id)
+                RMAP[relationship.type], Reference(prefix=PREFIX, identifier=target_id)
             )
 
-        if record.get("status") != "active":
+        if record.status != "active":
             term.is_obsolete = True
 
-        for address in record.get("addresses", []):
-            city = address.get("geonames_city")
-            if not city:
-                continue
+        for location in record.locations:
             geonames_reference = Reference(
-                prefix="geonames", identifier=str(city["id"]), name=city["city"]
+                prefix="geonames",
+                identifier=str(location.geonames_id),
+                name=location.geonames_details.name,
             )
             seen_geonames_references.add(geonames_reference)
-            term.append_relationship(RMAP["Located in"], geonames_reference)
+            term.append_relationship(RMAP["located in"], geonames_reference)
 
-        for label_dict in record.get("labels", []):
-            label = label_dict["label"]
-            label = label.strip().replace("\n", " ")
-            language = label_dict["iso639"]
-            term.append_synonym(label, language=language)
-            if label.startswith("The "):
-                term.append_synonym(label.removeprefix("The "), language=language)
+        for name in record.names:
+            if "ror_display" in name.types:
+                continue
+            elif name.types == ["acronym"]:
+                term.append_synonym(name.value, type=acronym)
+            elif name.types == ["alias"]:
+                synonym = name.value.strip().replace("\n", " ")
+                term.append_synonym(synonym)
+                if synonym.startswith("The "):
+                    term.append_synonym(synonym.removeprefix("The "), language=name.lang)
+            elif name.types == ["label"]:
+                label = name.value.strip().replace("\n", " ")
+                term.append_synonym(label, language=name.lang)
+                if label.startswith("The "):
+                    term.append_synonym(label.removeprefix("The "), language=name.lang)
+            else:
+                tqdm.write(
+                    f"[ror:{identifier}] unhandled name types: {name.types} for {name.value}"
+                )
+                continue
 
-        for synonym in record.get("aliases", []):
-            synonym = synonym.strip().replace("\n", " ")
-            term.append_synonym(synonym)
-            if synonym.startswith("The "):
-                term.append_synonym(synonym.removeprefix("The "))
-
-        for acronym_synonym in record.get("acronyms", []):
-            term.append_synonym(acronym_synonym, type=acronym)
-
-        for prefix, xref_data in record.get("external_ids", {}).items():
-            if prefix == "OrgRef":
+        for external_id in record.external_ids:
+            if external_id.type.lower() == "orgref":
                 # OrgRef refers to wikipedia page id, see
                 # https://stackoverflow.com/questions/6168020/what-is-wikipedia-pageid-how-to-change-it-into-real-page-url
                 continue
-            norm_prefix = bioregistry.normalize_prefix(prefix)
+            norm_prefix = bioregistry.normalize_prefix(external_id.type)
+            xref_ids = external_id.all
+
             if norm_prefix is None:
-                if prefix not in unhandled_xref_prefixes:
-                    tqdm.write(f"Unhandled prefix: {prefix} in {name} ({term.curie}). Values:")
-                    for xref_id in xref_data["all"]:
+                if external_id.type not in unhandled_xref_prefixes:
+                    tqdm.write(
+                        f"Unhandled prefix: {external_id.type} in {primary_name} ({term.curie}). Values:"
+                    )
+                    for xref_id in xref_ids:
                         tqdm.write(f"- {xref_id}")
-                    unhandled_xref_prefixes.add(prefix)
+                    unhandled_xref_prefixes.add(external_id.type)
                 continue
 
-            identifiers = xref_data["all"]
-            if isinstance(identifiers, str):
-                identifiers = [identifiers]
-            for xref_id in identifiers:
+            if isinstance(xref_ids, str):
+                xref_ids = [xref_ids]
+            for xref_id in xref_ids:
                 xref_id = xref_id.replace(" ", "")
                 try:
                     xref = Reference(prefix=norm_prefix, identifier=xref_id)
@@ -194,30 +209,6 @@ def iterate_ror_terms(*, force: bool = False) -> Iterable[Term]:
         yield geonames_term
 
 
-def _get_info(*, force: bool = False):
-    client = zenodo_client.Zenodo()
-    latest_record_id = client.get_latest_record(ROR_ZENODO_RECORD_ID)
-    response = client.get_record(latest_record_id)
-    response_json = response.json()
-    version = response_json["metadata"]["version"].lstrip("v")
-    file_record = response_json["files"][0]
-    name = file_record["key"]
-    url = file_record["links"]["self"]
-    path = client.download(latest_record_id, name=name, force=force)
-    return version, url, path
-
-
-def get_latest(*, force: bool = False):
-    """Get the latest ROR metadata and records."""
-    version, url, path = _get_info(force=force)
-    with zipfile.ZipFile(path) as zf:
-        for zip_info in zf.filelist:
-            if zip_info.filename.endswith(".json"):
-                with zf.open(zip_info) as file:
-                    return version, url, json.load(file)
-    raise FileNotFoundError
-
-
 def get_ror_to_country_geonames(**kwargs: Any) -> dict[str, str]:
     """Get a mapping of ROR ids to GeoNames IDs for countries."""
     from pyobo.sources.geonames.geonames import get_city_to_country
@@ -225,9 +216,10 @@ def get_ror_to_country_geonames(**kwargs: Any) -> dict[str, str]:
     city_to_country = get_city_to_country()
     rv = {}
     for term in iterate_ror_terms(**kwargs):
-        city_geonames_reference = term.get_relationship(located_in)
-        if city_geonames_reference is None:
+        city_geonames_references = term.get_relationships(located_in)
+        if not city_geonames_references:
             continue
+        city_geonames_reference = city_geonames_references[0]
         if city_geonames_reference.identifier in city_to_country:
             rv[term.identifier] = city_to_country[city_geonames_reference.identifier]
     return rv

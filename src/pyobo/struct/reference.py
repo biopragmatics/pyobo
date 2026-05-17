@@ -25,6 +25,8 @@ from ..identifier_utils import (
 )
 
 __all__ = [
+    "OBOLiteral",
+    "Reference",
     "Referenced",
     "default_reference",
     "get_preferred_curie",
@@ -86,18 +88,20 @@ class Referenced:
             return self.prefix == other.prefix and self.identifier == other.identifier
         raise TypeError
 
-    def __lt__(self, other: Referenced) -> bool:
-        if not isinstance(other, curies.Reference | Referenced):
-            raise TypeError
-        return self.reference < other.reference
+    def __lt__(self, other: curies.Reference | Referenced) -> bool:
+        if isinstance(other, curies.Reference):
+            return self.reference < other
+        if isinstance(other, Referenced):
+            return self.reference < other.reference
+        raise TypeError
 
     @property
-    def prefix(self):
+    def prefix(self) -> str:
         """The prefix of the typedef."""
         return self.reference.prefix
 
     @property
-    def name(self):
+    def name(self) -> str | None:
         """The name of the typedef."""
         return self.reference.name
 
@@ -142,9 +146,11 @@ def get_preferred_curie(
 def default_reference(prefix: str, identifier: str, name: str | None = None) -> Reference:
     """Create a CURIE for an "unqualified" reference.
 
-    :param prefix: The prefix of the ontology in which the "unqualified" reference is made
+    :param prefix: The prefix of the ontology in which the "unqualified" reference is
+        made
     :param identifier: The "unqualified" reference. For example, if you just write
         "located_in" somewhere there is supposed to be a CURIE
+
     :returns: A CURIE for the "unqualified" reference based on the OBO semantic space
 
     >>> default_reference("chebi", "conjugate_base_of")
@@ -321,12 +327,12 @@ class OBOLiteral(NamedTuple):
         return cls(str(value).lower(), curies.Reference(prefix="xsd", identifier="boolean"), None)
 
     @classmethod
-    def decimal(cls, value) -> OBOLiteral:
+    def decimal(cls, value: float) -> OBOLiteral:
         """Get a decimal literal."""
         return cls(str(value), curies.Reference(prefix="xsd", identifier="decimal"), None)
 
     @classmethod
-    def float(cls, value) -> OBOLiteral:
+    def float(cls, value: float) -> OBOLiteral:
         """Get a float literal."""
         return cls(str(value), curies.Reference(prefix="xsd", identifier="float"), None)
 

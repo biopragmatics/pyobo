@@ -6,7 +6,7 @@ import logging
 import subprocess
 from collections.abc import Callable, Mapping
 from functools import lru_cache
-from typing import Any, TypeVar
+from typing import TypeVar
 
 import curies
 import pandas as pd
@@ -49,25 +49,32 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def get_name_by_curie(curie: str, **kwargs: Any) -> str | None:
+def get_name_by_curie(
+    curie: str,
+    /,
+    *,
+    upgrade_identifier: bool | None = None,
+    **kwargs: Unpack[GetOntologyKwargs],
+) -> str | None:
     """Get the name for a CURIE, if possible."""
-    return get_name(curie, **kwargs)
+    return get_name(curie, upgrade_identifier=upgrade_identifier, **kwargs)
 
 
 X = TypeVar("X")
 
 NO_BUILD_PREFIXES: set[str] = set()
-NO_BUILD_LOGGED: set = set()
 
 
 def _help_get(
     f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
     reference: Reference,
+    *,
+    upgrade_identifier: bool | None = None,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> X | None:
     """Get the result for an entity based on a mapping maker function ``f``."""
     try:
-        mapping = f(reference.prefix, **kwargs)  # type:ignore
+        mapping = f(reference.prefix, **kwargs)
     except NoBuildError:
         if reference.prefix not in NO_BUILD_PREFIXES:
             logger.warning("[%s] unable to look up results with %s", reference.prefix, f)
@@ -87,19 +94,32 @@ def _help_get(
             NO_BUILD_PREFIXES.add(reference.prefix)
         return None
 
-    primary_id = get_primary_identifier(reference, **kwargs)
-    return mapping.get(primary_id)
+    if upgrade_identifier is None:
+        if reference.identifier in mapping:
+            return mapping[reference.identifier]
+        else:
+            primary_id = get_primary_identifier(reference, **kwargs)
+            return mapping.get(primary_id)
+    elif upgrade_identifier is True:
+        primary_id = get_primary_identifier(reference, **kwargs)
+        return mapping.get(primary_id)
+    else:
+        return mapping.get(reference.identifier)
 
 
 def get_name(
     prefix: str | curies.Reference | curies.ReferenceTuple,
     identifier: str | None = None,
     /,
+    *,
+    upgrade_identifier: bool | None = None,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the name for an entity."""
     reference = _get_pi(prefix, identifier)
-    return _help_get(get_id_name_mapping, reference, **kwargs)
+    return _help_get(
+        get_id_name_mapping, reference, upgrade_identifier=upgrade_identifier, **kwargs
+    )
 
 
 @lru_cache
@@ -303,7 +323,7 @@ def get_id_synonyms_mapping(
     prefix: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, list[str]]:
     """Get the OBO file and output a synonym dictionary."""
-    df = get_literal_mappings_df(prefix=prefix, **kwargs)
+    df = get_literal_mappings_df(prefix, **kwargs)
     prefix_with_colon = f"{prefix}:"
     prefix_with_colon_len = len(prefix_with_colon)
     # keep only literal mappings with the right prefix
@@ -315,9 +335,9 @@ def get_id_synonyms_mapping(
 
 def get_literal_mappings(
     prefix: str, *, skip_obsolete: bool = False, **kwargs: Unpack[GetOntologyKwargs]
-) -> list[LiteralMapping]:
+) -> list[LiteralMapping[Reference]]:
     """Get literal mappings."""
-    df = get_literal_mappings_df(prefix=prefix, **kwargs)
+    df = get_literal_mappings_df(prefix, **kwargs)
     rv = ssslm.df_to_literal_mappings(df, reference_cls=Reference)
     if skip_obsolete:
         obsoletes = get_obsolete_references(prefix, **kwargs)
@@ -325,6 +345,7 @@ def get_literal_mappings(
     return rv
 
 
+@wrap_norm_prefix
 def get_literal_mappings_df(
     prefix: str,
     **kwargs: Unpack[GetOntologyKwargs],

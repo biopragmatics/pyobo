@@ -1,5 +1,6 @@
 """Tests for the reader."""
 
+import logging
 import unittest
 
 from pyobo import Obo, Reference, Term
@@ -33,7 +34,7 @@ ADNAN_MALIK = Reference(prefix="orcid", identifier="0000-0001-8123-5351")
 class TestUtils(unittest.TestCase):
     """Test utilities for the reader."""
 
-    def test_first_nonescaped_quote(self):
+    def test_first_nonescaped_quote(self) -> None:
         """Test finding the first non-escaped double quote."""
         self.assertIsNone(get_first_nonescaped_quote(""))
         self.assertEqual(0, get_first_nonescaped_quote('"'))
@@ -74,31 +75,24 @@ class TestReaderTerm(unittest.TestCase):
         value = getattr(term, tag)
         self.assertIsNone(value)
 
-        ontology = from_str(f"""\
-            ontology: chebi
+        for given_value, exp in [
+            ("true", True),
+            ("false", False),
+            ("1", True),
+            ("0", False),
+        ]:
+            ontology = from_str(f"""\
+                ontology: chebi
 
-            [Term]
-            id: CHEBI:1234
-            {tag}: true
-        """)
-        term = self.get_only_term(ontology)
-        self.assertTrue(hasattr(term, tag))
-        value = getattr(term, tag)
-        self.assertIsNotNone(value)
-        self.assertTrue(value)
-
-        ontology = from_str(f"""\
-            ontology: chebi
-
-            [Term]
-            id: CHEBI:1234
-            {tag}: false
-        """)
-        term = self.get_only_term(ontology)
-        self.assertTrue(hasattr(term, tag))
-        value = getattr(term, tag)
-        self.assertIsNotNone(value)
-        self.assertFalse(value)
+                [Term]
+                id: CHEBI:1234
+                {tag}: {given_value}
+            """)
+            term = self.get_only_term(ontology)
+            self.assertTrue(hasattr(term, tag))
+            value = getattr(term, tag)
+            self.assertIsNotNone(value)
+            self.assertEqual(exp, value)
 
     def test_0_minimal(self) -> None:
         """Test an ontology with a version but no date."""
@@ -306,7 +300,8 @@ class TestReaderTerm(unittest.TestCase):
         term = self.get_only_term(ontology)
         comments = term.get_property_values(comment)
         self.assertEqual(1, len(comments))
-        self.assertIsInstance(comments[0], OBOLiteral)
+        if not isinstance(comments[0], OBOLiteral):
+            raise self.fail()
         self.assertEqual("comment", comments[0].value)
 
     def test_8_subset(self) -> None:
@@ -321,6 +316,39 @@ class TestReaderTerm(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(1, len(term.subsets))
         self.assertEqual(default_reference("go", "TESTSET"), term.subsets[0])
+
+    def test_8_subset_blocked(self) -> None:
+        """Test parsing subsets that are blocked."""
+        logger = logging.getLogger("pyobo")
+        with self.assertLogs(logger, level="DEBUG") as cm:
+            ontology = from_str(
+                """\
+                ontology: chebi
+                data-version: 1
+                date: 20:11:2024 18:44
+
+                [Term]
+                id: CHEBI:10
+                subset: 2:STAR
+
+                [Term]
+                id: CHEBI:20
+                subset: 2:STAR
+            """,
+                strict=True,
+            )
+            self.assertEqual(
+                [
+                    "INFO:pyobo.struct.obo.reader:[chebi] extracting OBO using obonet",
+                    "DEBUG:pyobo.utils.misc:[chebi] using version 1",
+                    "WARNING:pyobo.struct.obo.reader:[chebi:10] subset - could not parse subset identifier: 2:STAR",
+                ],
+                cm.output,
+            )
+        terms = list(ontology.iter_terms())
+        self.assertEqual(2, len(terms))
+        self.assertEqual(0, len(terms[0].subsets))
+        self.assertEqual(0, len(terms[1].subsets))
 
     def test_9_synonym_minimal(self) -> None:
         """Test parsing a synonym just the text."""
@@ -646,11 +674,14 @@ class TestReaderTerm(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(
             {(has_dbxref.pair, Reference(prefix="cas", identifier="389-08-2").pair)},
-            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
+            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True, add_context=False)},
         )
         self.assertEqual(
             set(),
-            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=False)},
+            {
+                (a.pair, b.pair)
+                for a, b in term.get_mappings(include_xrefs=False, add_context=False)
+            },
         )
 
         ontology = from_str("""\
@@ -664,7 +695,10 @@ class TestReaderTerm(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(
             {(exact_match.pair, Reference(prefix="drugbank", identifier="DB00779").pair)},
-            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=False)},
+            {
+                (a.pair, b.pair)
+                for a, b in term.get_mappings(include_xrefs=False, add_context=False)
+            },
         )
         self.assertEqual(
             {
@@ -690,12 +724,13 @@ class TestReaderTerm(unittest.TestCase):
         axiom = axioms[0]
         self.assertIsInstance(axiom, Annotation)
         self.assertIsInstance(axiom.predicate, Reference)
-        self.assertIsInstance(axiom.value, Reference)
         self.assertEqual(has_dbxref.pair, axiom.predicate.pair)
+        if not isinstance(axiom.value, Reference):
+            raise self.fail()
         self.assertEqual(CHARLIE.pair, axiom.value.pair)
 
     def test_10_xrefs_with_provenance_object_comment(self) -> None:
-        """Test an xref, same as before but with a comment text."""
+        """Test a xref, same as before but with a comment text."""
         ontology = from_str(f"""\
             ontology: chebi
 
@@ -710,8 +745,9 @@ class TestReaderTerm(unittest.TestCase):
         axiom = axioms[0]
         self.assertIsInstance(axiom, Annotation)
         self.assertIsInstance(axiom.predicate, Reference)
-        self.assertIsInstance(axiom.value, Reference)
         self.assertEqual(has_dbxref.pair, axiom.predicate.pair)
+        if not isinstance(axiom.value, Reference):
+            raise self.fail()
         self.assertEqual(CHARLIE.pair, axiom.value.pair)
 
     def test_10_xrefs_with_provenance_uri(self) -> None:
@@ -1167,8 +1203,7 @@ class TestReaderTerm(unittest.TestCase):
             relationship: RO:0018033 CHEBI:5678
         """)
         term = self.get_only_term(ontology)
-        reference = term.get_relationship(is_conjugate_base_of)
-        self.assertIsNotNone(reference)
+        reference = term.get_relationship(is_conjugate_base_of, strict=True)
         self.assertEqual("chebi:5678", reference.curie)
 
     def test_18_relationship_qualified_defined(self) -> None:
@@ -1185,8 +1220,7 @@ class TestReaderTerm(unittest.TestCase):
             name: is conjugate base of
         """)
         term = self.get_only_term(ontology)
-        reference = term.get_relationship(is_conjugate_base_of)
-        self.assertIsNotNone(reference)
+        reference = term.get_relationship(is_conjugate_base_of, strict=True)
         self.assertEqual("chebi:5678", reference.curie)
 
     def test_18_relationship_unqualified(self) -> None:
@@ -1206,8 +1240,7 @@ class TestReaderTerm(unittest.TestCase):
         self.assertIsNone(term.get_relationship(is_conjugate_base_of))
         r = default_reference("chebi", "xyz")
         td = TypeDef(reference=r)
-        reference = term.get_relationship(td)
-        self.assertIsNotNone(reference)
+        reference = term.get_relationship(td, strict=True)
         self.assertEqual("chebi:5678", reference.curie)
 
         rr = list(ontology.iterate_filtered_relations(td))
@@ -1237,7 +1270,7 @@ class TestReaderTerm(unittest.TestCase):
         term = self.get_only_term(ontology)
         self.assertEqual(0, len(list(term.iterate_relations())))
 
-    def test_18_default_relation(self):
+    def test_18_default_relation(self) -> None:
         """Test parsing a default relation."""
         ontology = from_str("""\
             ontology: chebi
@@ -1265,7 +1298,8 @@ class TestReaderTerm(unittest.TestCase):
         mappings = term.get_mappings(add_context=True)
         self.assertEqual(1, len(mappings))
         context = mappings[0][2]
-        self.assertIsNotNone(context.contributor)
+        if context.contributor is None:
+            raise self.fail()
         self.assertEqual("0000-0003-4423-4370", context.contributor.identifier)
 
     # TODO created_by
@@ -1369,3 +1403,21 @@ class TestReaderTerm(unittest.TestCase):
             "orcid": {ADNAN_MALIK},
         }
         self.assertEqual(expected_references, ontology._get_references())
+
+    def test_get_grounder(self) -> None:
+        """Test getting a grounder from an ontology."""
+        ontology = from_str("""\
+            ontology: chebi
+            date: 20:11:2024 18:44
+
+            [Term]
+            id: CHEBI:16236
+            name: ethanol
+        """)
+        r1 = Reference(prefix="CHEBI", identifier="16236", name="ethanol")
+        grounder = ontology.get_grounder()
+        match = grounder.get_best_match("Ethanol")
+        self.assertIsNotNone(match)
+        if match is None:
+            raise ValueError
+        self.assertEqual(r1, match.reference)

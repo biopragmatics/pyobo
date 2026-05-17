@@ -1,14 +1,16 @@
 """High-level API for hierarchies."""
 
+from __future__ import annotations
+
 import logging
 import warnings
 from collections.abc import Iterable
 from functools import lru_cache
-from typing import overload
+from typing import NotRequired, cast, overload
 
 import networkx as nx
 from curies import ReferenceTuple
-from typing_extensions import NotRequired, Unpack
+from typing_extensions import Unpack
 
 from .edges import get_edges
 from .names import get_name, get_references
@@ -45,7 +47,7 @@ def get_hierarchy(
     extra_relations: Iterable[ReferenceHint] | None = None,
     properties: Iterable[ReferenceHint] | None = None,
     **kwargs: Unpack[HierarchyKwargs],
-) -> nx.DiGraph:
+) -> nx.DiGraph[Reference]:
     """Get hierarchy of parents as a directed graph.
 
     :param prefix: The name of the namespace.
@@ -163,7 +165,8 @@ def is_descendent(
     :param ancestor_prefix: The prefix for the ancestor
     :param ancestor_identifier: The local unique identifier for the ancestor
     :param kwargs: Keyword arguments for :func:`get_hierarchy`
-    :return: If the decendant has the given ancestor
+
+    :returns: If the decendant has the given ancestor
 
     Check that ``GO:0070246`` (natural killer cell apoptotic process) is a descendant of
     ``GO:0006915`` (apoptotic process)
@@ -197,7 +200,7 @@ def get_descendants(
     hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
     if t not in hierarchy:
         return None
-    return nx.ancestors(hierarchy, t)  # note this is backwards
+    return cast(set[Reference], nx.ancestors(hierarchy, t))  # note this is backwards
 
 
 @lru_cache
@@ -254,10 +257,11 @@ def has_ancestor(
     :param ancestor_prefix: The prefix for the ancestor
     :param ancestor_identifier: The local unique identifier for the ancestor
     :param kwargs: Keyword arguments for :func:`get_hierarchy`
-    :return: If the decendant has the given ancestor
 
-    Check that ``GO:0008219`` (cell death) is an ancestor of ``GO:0006915``
-    (apoptotic process):
+    :returns: If the decendant has the given ancestor
+
+    Check that ``GO:0008219`` (cell death) is an ancestor of ``GO:0006915`` (apoptotic
+    process):
 
     >>> apoptosis = Reference.from_curie("GO:0006915", name="apoptotic process")
     >>> cell_death = Reference.from_curie("GO:0008219", name="cell death")
@@ -299,7 +303,7 @@ def get_ancestors(
     if t not in hierarchy:
         return None
 
-    return nx.descendants(hierarchy, t)  # note this is backwards
+    return cast(set[Reference], nx.descendants(hierarchy, t))  # note this is backwards
 
 
 def get_subhierarchy(

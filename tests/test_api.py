@@ -3,13 +3,17 @@
 import importlib.util
 import unittest
 from contextlib import ExitStack
+from typing import Any
 from unittest import mock
 
 import bioregistry
-from curies import Reference, ReferenceTuple
+import curies
+from curies import ReferenceTuple
 from curies import vocabulary as _v
 from pydantic import ValidationError
 from ssslm import LiteralMapping
+from sssom_pydantic import SemanticMapping
+from sssom_pydantic.testing import assert_semantic_mapping_equal
 
 import pyobo
 from pyobo import Reference as PyOBOReference
@@ -19,6 +23,7 @@ from pyobo import (
     get_name_by_curie,
     get_primary_curie,
     get_primary_identifier,
+    get_primary_reference,
 )
 from pyobo.mocks import get_mock_id_alts_mapping, get_mock_id_name_mapping
 from pyobo.ner import get_grounder
@@ -52,6 +57,7 @@ bioregistry.manager.registry[TEST_P1] = bioregistry.Resource(
     prefix=TEST_P1,
     name="Test Semantic Space",
     pattern="^\\d+$",
+    download_owl="https://example.org/test.owl",
 )
 bioregistry.manager.synonyms[TEST_P2] = TEST_P2
 bioregistry.manager.registry[TEST_P2] = bioregistry.Resource(
@@ -72,7 +78,7 @@ def patch_ontologies(ontology: Obo, targets: list[str]) -> ExitStack:
 class TestAltIds(unittest.TestCase):
     """Tests for alternative identifiers."""
 
-    def test_get_primary_errors(self):
+    def test_get_primary_errors(self) -> None:
         """Test when calling get_primary_identifier incorrectly."""
         with self.assertRaises(ValueError):
             get_primary_identifier("go")
@@ -85,29 +91,44 @@ class TestAltIds(unittest.TestCase):
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_get_primary(self, _, __):
+    def test_get_primary(self, _: Any, __: Any) -> None:
         """Test upgrading an obsolete identifier."""
         primary_id = get_primary_identifier("go", "0001071")
         self.assertIsNotNone(primary_id)
         self.assertEqual("0003700", primary_id)
-        name = get_name(ReferenceTuple("go", "0001071"))
+        self.assertIsNone(get_name(ReferenceTuple("go", "0001071"), upgrade_identifier=False))
+        name = get_name(ReferenceTuple("go", "0001071"), upgrade_identifier=True)
         self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_get_primary_by_curie(self, _, __):
+    def test_get_primary_by_curie(self, _: Any, __: Any) -> None:
         """Test upgrading an obsolete CURIE."""
         primary_curie = get_primary_curie("go:0001071")
         self.assertIsNotNone(primary_curie)
         self.assertEqual("go:0003700", primary_curie)
-        name = get_name_by_curie("go:0001071")
+
+        primary_reference = get_primary_reference("go:0001071")
+        self.assertIsNotNone(primary_reference)
+        self.assertEqual(ReferenceTuple("go", "0003700"), primary_reference)
+
+        self.assertIsNone(get_name_by_curie("go:0001071", upgrade_identifier=False))
+
+        # if set explicitly to true, then it will do it eagerly
+        name = get_name_by_curie("go:0001071", upgrade_identifier=True)
+        self.assertIsNotNone(name)
+        self.assertEqual("DNA-binding transcription factor activity", name)
+
+        # if not set, or left as default, then it will do it only if there's no
+        # original name
+        name = get_name_by_curie("go:0001071", upgrade_identifier=None)
         self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_already_primary(self, _, __):
+    def test_already_primary(self, _: Any, __: Any) -> None:
         """Test when you give a primary id."""
         primary_id = get_primary_identifier(ReferenceTuple("go", "0003700"))
         self.assertIsNotNone(primary_id)
@@ -120,21 +141,21 @@ class TestAltIds(unittest.TestCase):
         self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
-        name = get_name(Reference(prefix="go", identifier="0003700"))
+        name = get_name(curies.Reference(prefix="go", identifier="0003700"))
         self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_get_primary_on_reference(self, _, __):
+    def test_get_primary_on_reference(self, _: Any, __: Any) -> None:
         """Test when you give a primary id."""
         self.assertEqual(
-            "0003700", get_primary_identifier(Reference(prefix="go", identifier="0001071"))
+            "0003700", get_primary_identifier(curies.Reference(prefix="go", identifier="0001071"))
         )
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_already_primary_by_curie(self, _, __):
+    def test_already_primary_by_curie(self, _: Any, __: Any) -> None:
         """Test when you give a primary CURIE."""
         primary_curie = get_primary_curie("go:0003700")
         self.assertIsNotNone(primary_curie)
@@ -145,11 +166,15 @@ class TestAltIds(unittest.TestCase):
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
-    def test_no_alts(self, _, __):
+    def test_no_alts(self, _: Any, __: Any) -> None:
         """Test alternate behavior for nomenclature source with no alts."""
         primary_id = get_primary_identifier(ReferenceTuple("ncbitaxon", "52818"))
         self.assertEqual("52818", primary_id)
         self.assertEqual("Allamanda cathartica", get_name(ReferenceTuple("ncbitaxon", "52818")))
+
+
+class TestEverything(unittest.TestCase):
+    """Big test for everything."""
 
     def test_api(self) -> None:
         """Test getting the hierarchy.
@@ -170,6 +195,17 @@ class TestAltIds(unittest.TestCase):
         t3 = Term(reference=r3).append_parent(r1).append_exact_match(r2_2)
         terms = [t1, t2, t3]
         ontology = make_ad_hoc_ontology(TEST_P1, terms=terms, _typedefs=[td1])
+
+        curies.Converter.from_prefix_map(
+            {
+                TEST_P1: f"https://example.org/{TEST_P1}:",
+                TEST_P2: f"https://example.org/{TEST_P2}:",
+                "IAO": "http://purl.obolibrary.org/obo/IAO_",
+                "skos": "http://www.w3.org/2004/02/skos/core#",
+                "oboInOwl": "http://www.geneontology.org/formats/oboInOwl#",
+                "semapv": "https://w3id.org/semapv/vocab/",
+            }
+        )
 
         targets = [
             "pyobo.api.names.get_ontology",
@@ -209,14 +245,53 @@ class TestAltIds(unittest.TestCase):
             self.assertEqual({t1.name: t1.identifier}, name_id)
 
             self.assertEqual(t1.name, pyobo.get_name(r1, cache=False))
-            self.assertEqual(t1.name, pyobo.get_name(r2, cache=False))
+            self.assertEqual(t1.name, pyobo.get_name(r2, cache=False, upgrade_identifier=True))
+            self.assertIsNone(pyobo.get_name(r2, cache=False, upgrade_identifier=False))
 
             # Xrefs
             d = pyobo.get_filtered_xrefs(TEST_P1, TEST_P2, cache=False, use_tqdm=False)
             self.assertEqual({"1": "X", "3": "Y"}, d)
 
-            # Synonyms
+            semantic_mappings = list(
+                pyobo.get_semantic_mappings(
+                    TEST_P1,
+                    cache=False,
+                    use_tqdm=False,
+                    version="1.0.0",
+                )
+            )
+            self.assertEqual(3, len(semantic_mappings))
+            subject_source = PyOBOReference(prefix="bioregistry", identifier=r1.prefix)
+            expected_semantic_mappings = [
+                SemanticMapping(
+                    subject=r1,
+                    predicate=PyOBOReference.from_reference(_v.alternative_term),
+                    object=r2,
+                    justification=_v.unspecified_matching_process.without_name(),
+                    source=subject_source,
+                    subject_source=subject_source,
+                ),
+                SemanticMapping(
+                    subject=r1,
+                    predicate=PyOBOReference.from_reference(_v.has_dbxref),
+                    object=r2_1,
+                    justification=_v.unspecified_matching_process.without_name(),
+                    source=subject_source,
+                    subject_source=subject_source,
+                ),
+                SemanticMapping(
+                    subject=r3,
+                    predicate=PyOBOReference.from_reference(_v.exact_match),
+                    object=r2_2,
+                    justification=_v.unspecified_matching_process.without_name(),
+                    source=subject_source,
+                    subject_source=subject_source,
+                ),
+            ]
+            for m1, m2 in zip(expected_semantic_mappings, semantic_mappings, strict=False):
+                assert_semantic_mapping_equal(self, m1, m2)
 
+            # Synonyms
             literal_mappings = pyobo.get_literal_mappings(TEST_P1, cache=False)
             expected = [
                 LiteralMapping(
@@ -236,8 +311,7 @@ class TestAltIds(unittest.TestCase):
 
             if importlib.util.find_spec("gilda"):
                 grounder = get_grounder(TEST_P1, cache=False)
-                match = grounder.get_best_match(syn1)
-                self.assertIsNotNone(match)
+                match = grounder.get_best_match(syn1, strict=True)
                 self.assertEqual(TEST_P1, match.prefix)
                 self.assertEqual("1", match.identifier)
 

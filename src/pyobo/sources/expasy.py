@@ -160,7 +160,8 @@ def normalize_expasy_id(expasy_id: str) -> str:
     """Return a standardized ExPASy identifier string.
 
     :param expasy_id: A possibly non-normalized ExPASy identifier
-    :return: A normalized string.
+
+    :returns: A normalized string.
     """
     return expasy_id.replace(" ", "")
 
@@ -178,7 +179,7 @@ def give_edge(unnormalized_ec_code: str) -> tuple[int, str | None, str]:
     return level, parent_id, ".".join(levels)
 
 
-def get_tree(lines: Iterable[str]):
+def get_tree(lines: Iterable[str]) -> dict[str, dict[str, Any]]:
     """Get the ExPASy tree mapping."""
     rv = {}
     for line in lines:
@@ -211,6 +212,7 @@ def get_database(lines: Iterable[str]) -> Mapping[str, dict[str, Any]]:
     """Parse the ExPASy database file and returns a list of enzyme entry dictionaries.
 
     :param lines: An iterator over the ExPASy database file or file-like
+
     :returns: A mapping from EC code to data
     """
     rv = {}
@@ -246,16 +248,16 @@ def get_database(lines: Iterable[str]) -> Mapping[str, dict[str, Any]]:
             elif descriptor == DE:
                 if "name" not in ec_data_entry["concept"]:
                     ec_data_entry["concept"]["name"] = ""
-                ec_data_entry["concept"]["name"] += value.rstrip(".")  # type:ignore
+                ec_data_entry["concept"]["name"] += value.rstrip(".")
             elif descriptor == CA:
                 if "reaction" not in ec_data_entry:
                     ec_data_entry["reaction"] = ""
-                ec_data_entry["reaction"] += value.rstrip(".")  # type:ignore
+                ec_data_entry["reaction"] += value.rstrip(".")
             elif descriptor == AN:
-                ec_data_entry["synonyms"].append(value.rstrip("."))  # type:ignore
+                ec_data_entry["synonyms"].append(value.rstrip("."))
             elif descriptor == PR:
                 value = value[len("PROSITE; ") : -1]  # remove trailing comma
-                ec_data_entry["domains"].append(  # type:ignore
+                ec_data_entry["domains"].append(
                     {
                         "namespace": "prosite",
                         "identifier": value,
@@ -266,7 +268,7 @@ def get_database(lines: Iterable[str]) -> Mapping[str, dict[str, Any]]:
                     if not uniprot_entry:
                         continue
                     uniprot_id, uniprot_accession = uniprot_entry.split(",")
-                    ec_data_entry["proteins"].append(  # type:ignore
+                    ec_data_entry["proteins"].append(
                         {
                             "namespace": "uniprot",
                             "name": uniprot_accession,
@@ -285,6 +287,7 @@ def _parse_transfer(value: str) -> list[str]:
     """Parse transferred entry string.
 
     :param value: A string for a transferred entry
+
     :returns: A list of EC codes that it got transferred to
 
     >>> _parse_transfer("Transferred entry: 1.1.1.198, 1.1.1.227 and 1.1.1.228.")
@@ -294,9 +297,9 @@ def _parse_transfer(value: str) -> list[str]:
     return sorted(x.strip().removeprefix("and").strip() for x in TRANSFER_SPLIT_RE.split(value))
 
 
-def _group_by_id(lines):
+def _group_by_id(lines: Iterable[str]) -> list[list[tuple[str, str]]]:
     """Group lines by identifier."""
-    groups = []
+    groups: list[list[tuple[str, str]]] = []
     for line in lines:  # TODO replace with itertools.groupby
         line = line.strip()
 

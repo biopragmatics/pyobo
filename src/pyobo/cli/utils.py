@@ -1,17 +1,19 @@
 """Utilities for the CLI."""
 
+from __future__ import annotations
+
 import datetime
 import pathlib
-from collections.abc import Callable
-from typing import TypeVar
+from typing import TYPE_CHECKING
 
 import click
-import pandas as pd
 
 from ..constants import DATABASE_DIRECTORY
 
+if TYPE_CHECKING:
+    import pandas as pd
+
 __all__ = [
-    "Clickable",
     "directory_option",
     "echo_df",
     "force_option",
@@ -58,4 +60,3 @@ version_option = click.option(
 force_process_option = click.option(
     "--force-process", is_flag=True, help="Force re-processing, but not necessarily re-downloading"
 )
-Clickable = TypeVar("Clickable", bound=Callable)

@@ -235,9 +235,9 @@ def _get_synonyms_df(force: bool = False) -> pd.DataFrame:
 
 
 def get_cities(
-    code_to_country,
-    code_to_admin1,
-    code_to_admin2,
+    code_to_country: Mapping[str, Term],
+    code_to_admin1: Mapping[str, Term],
+    code_to_admin2: Mapping[str, Term],
     *,
     minimum_population: int = 100_000,
     force: bool = False,

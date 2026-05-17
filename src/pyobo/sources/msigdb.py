@@ -8,7 +8,7 @@ from lxml import etree
 from pydantic import ValidationError
 from tqdm.auto import tqdm
 
-from pyobo.struct import Obo, Reference, Term, TypeDef, has_citation, has_participant
+from pyobo.struct import Obo, Reference, Term, TypeDef, has_participant, is_mentioned_by
 from pyobo.utils.path import ensure_path
 
 __all__ = [
@@ -43,7 +43,7 @@ class MSigDBGetter(Obo):
     """An ontology representation of MMSigDB's gene set nomenclature."""
 
     ontology = bioversions_key = PREFIX
-    typedefs = [has_participant, has_citation, *(p for _, p in PROPERTIES)]
+    typedefs = [has_participant, is_mentioned_by, *(p for _, p in PROPERTIES)]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -63,7 +63,7 @@ GO_URL_PREFIX = "http://amigo.geneontology.org/amigo/term/GO:"
 KEGG_URL_PREFIX = "http://www.genome.jp/kegg/pathway/hsa/"
 
 
-def _iter_entries(version: str, force: bool = False):
+def _iter_entries(version: str, force: bool = False) -> Iterable[etree.ElementTree]:
     xml_url = f"{BASE_URL}/{version}.Hs/msigdb_v{version}.Hs.xml.zip"
     path = ensure_path(prefix=PREFIX, url=xml_url, version=version, force=force)
     with zipfile.ZipFile(path, "r") as zf:
@@ -112,7 +112,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         elif reference_id.startswith("GSE"):
             term.append_see_also(Reference(prefix="gse", identifier=reference_id))
         else:
-            term.append_provenance(Reference(prefix="pubmed", identifier=reference_id))
+            term.append_mentioned_by(Reference(prefix="pubmed", identifier=reference_id))
 
         for key, typedef in PROPERTIES:
             if value := attrib[key].strip():
@@ -168,7 +168,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         yield term
 
 
-def _get_definition(attrib) -> str | None:
+def _get_definition(attrib: dict[str, str]) -> str | None:
     rv = attrib["DESCRIPTION_FULL"].strip() or attrib["DESCRIPTION_BRIEF"].strip() or None
     if rv is not None:
         return rv.replace(r"\d", "").replace(r"\s", "")

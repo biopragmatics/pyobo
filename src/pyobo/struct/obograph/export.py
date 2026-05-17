@@ -8,11 +8,11 @@ import curies
 import obographs as og
 from curies import Converter, ReferenceTuple
 from curies import vocabulary as v
+from pystow.utils import safe_open
 
 from pyobo.identifier_utils.api import get_converter
 from pyobo.struct import Obo, OBOLiteral, Stanza, Term, TypeDef
 from pyobo.struct import typedef as tdv
-from pyobo.utils.io import safe_open
 
 __all__ = [
     "to_obograph",
@@ -25,7 +25,7 @@ def write_obograph(obo: Obo, path: str | Path, *, converter: Converter | None = 
     """Write an ontology to a file as OBO Graph JSON."""
     path = Path(path).expanduser().resolve()
     raw_graph = to_obograph(obo, converter=converter)
-    with safe_open(path, read=False) as file:
+    with safe_open(path, operation="write") as file:
         file.write(raw_graph.model_dump_json(indent=2, exclude_none=True, exclude_unset=True))
 
 
@@ -33,7 +33,7 @@ def to_parsed_obograph_oracle(
     obo: Obo, *, converter: Converter | None = None
 ) -> og.StandardizedGraphDocument:
     """Serialize to OBO, convert to OBO Graph JSON with ROBOT, load, then parse."""
-    import bioontologies.robot
+    import robot_obo_tool
 
     if converter is None:
         converter = get_converter()
@@ -43,7 +43,7 @@ def to_parsed_obograph_oracle(
         obo_path = stub.with_suffix(".obo")
         obograph_path = stub.with_suffix(".json")
         obo.write_obo(obo_path)
-        bioontologies.robot.convert(input_path=obo_path, output_path=obograph_path)
+        robot_obo_tool.convert(input_path=obo_path, output_path=obograph_path)
         raw = og.read(obograph_path, squeeze=False)
     rv = raw.standardize(converter)
     for graph in rv.graphs:
@@ -70,8 +70,12 @@ def to_parsed_obograph(obo: Obo) -> og.StandardizedGraphDocument:
 
 
 def _to_parsed_graph(obo: Obo) -> og.StandardizedGraph:
+    if obo.ontology_iri:
+        ontology_iri = obo.ontology_iri
+    else:
+        ontology_iri = f"http://purl.obolibrary.org/obo/{obo.ontology}.owl"
     return og.StandardizedGraph(
-        id=f"http://purl.obolibrary.org/obo/{obo.ontology}.owl",
+        id=ontology_iri,
         meta=_get_meta(obo),
         nodes=_get_nodes(obo),
         edges=_get_edges(obo),
@@ -167,7 +171,9 @@ def _get_meta(obo: Obo) -> og.StandardizedMeta | None:
             )
         )
 
-    if obo.data_version:
+    if obo.ontology_version_iri:
+        version_iri = obo.ontology_version_iri
+    elif obo.data_version:
         version_iri = (
             f"http://purl.obolibrary.org/obo/{obo.ontology}/{obo.data_version}/{obo.ontology}.owl"
         )
