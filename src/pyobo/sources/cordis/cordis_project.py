@@ -75,4 +75,4 @@ def iter_terms(*, version: str | None = None) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    CordisProjectGetter.cli(["--obo"])
+    CordisProjectGetter.cli()

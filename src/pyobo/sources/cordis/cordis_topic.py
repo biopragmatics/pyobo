@@ -1,1 +1,0 @@
-"""Converter for CORDIS topics."""
