@@ -12,10 +12,10 @@ from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import abbreviation
 from pyobo.struct.struct_utils import Annotation
 from pyobo.struct.typedef import (
-    comment,
     definition_source,
     derives_from,
     exact_match,
+    has_comment,
     has_dbxref,
     is_conjugate_base_of,
     see_also,
@@ -298,7 +298,7 @@ class TestReaderTerm(unittest.TestCase):
             comment: comment
         """)
         term = self.get_only_term(ontology)
-        comments = term.get_property_values(comment)
+        comments = term.get_property_values(has_comment)
         self.assertEqual(1, len(comments))
         if not isinstance(comments[0], OBOLiteral):
             raise self.fail()

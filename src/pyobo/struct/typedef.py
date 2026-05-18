@@ -29,6 +29,7 @@ __all__ = [
     "gene_product_enables",
     "gene_product_member_of",
     "has_canonical_smiles",
+    "has_comment",
     "has_contributor",
     "has_creator",
     "has_curation_status",
@@ -162,7 +163,7 @@ is_a = TypeDef(reference=v.is_a)
 rdf_type = TypeDef(reference=v.rdf_type)
 subproperty_of = TypeDef(reference=v.subproperty_of)
 see_also = TypeDef(reference=v.see_also, is_metadata_tag=True)
-comment = TypeDef(reference=v.comment, is_metadata_tag=True)
+has_comment = TypeDef(reference=v.comment, is_metadata_tag=True)
 label = TypeDef(reference=v.label, is_metadata_tag=True)
 is_defined_by = TypeDef(
     reference=Reference(prefix="rdfs", identifier="isDefinedBy", name="is defined by"),

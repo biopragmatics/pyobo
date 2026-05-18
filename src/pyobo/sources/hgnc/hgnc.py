@@ -24,13 +24,13 @@ from pyobo.struct.struct import (
     previous_name,
 )
 from pyobo.struct.typedef import (
-    comment,
     enables,
     ends,
     exact_match,
     from_species,
     gene_product_enables,
     gene_product_of,
+    has_comment,
     has_gene_product,
     has_member,
     is_mentioned_by,
@@ -211,7 +211,7 @@ class HGNCGetter(Obo):
         located_in,
         starts,
         ends,
-        comment,
+        has_comment,
         enables,
     ]
     synonym_typedefs = [
@@ -448,7 +448,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                     location = location.removesuffix(qualifier_suffix)
                     annotations.append(
                         Annotation(
-                            predicate=comment.reference, value=OBOLiteral.string(qualifier_text)
+                            predicate=has_comment.reference, value=OBOLiteral.string(qualifier_text)
                         )
                     )
                     break

@@ -46,6 +46,7 @@ from .intact import IntactGetter
 from .interpro import InterProGetter
 from .itis import ITISGetter
 from .kegg import KEGGGeneGetter, KEGGGenomeGetter, KEGGPathwayGetter
+from .loinc import LOINCGetter
 from .mesh import MeSHGetter
 from .mgi import MGIGetter
 from .mirbase import MiRBaseFamilyGetter, MiRBaseGetter, MiRBaseMatureGetter
@@ -134,6 +135,7 @@ __all__ = [
     "KEGGGeneGetter",
     "KEGGGenomeGetter",
     "KEGGPathwayGetter",
+    "LOINCGetter",
     "MGIGetter",
     "MSigDBGetter",
     "MeSHGetter",
