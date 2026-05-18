@@ -965,8 +965,7 @@ def _iterate_obo_relations(
                 case OBOLiteral(dd, datatype, _language):
                     if predicate in skip_predicate_literals:
                         continue
-                    # TODO how to clean/escape value?
-                    end = f'"{dd}" {get_preferred_curie(datatype)}'
+                    end = f'"{_escape_literal(dd)}" {get_preferred_curie(datatype)}'
                     name = None
                 case curies.Reference():  # it's a reference
                     if predicate in skip_predicate_objects:
@@ -983,6 +982,10 @@ def _iterate_obo_relations(
             if predicate.name and name:
                 end += f" ! {predicate.name} {name}"
             yield start + end
+
+
+def _escape_literal(s: str) -> str:
+    return s.replace('"', '\\"')
 
 
 def _reference_or_literal_key(x: Reference | OBOLiteral) -> tuple[int, Reference | OBOLiteral]:

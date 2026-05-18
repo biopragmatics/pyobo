@@ -713,6 +713,8 @@ class TestTerm(unittest.TestCase):
 
     def test_12_property_string_with_quote(self) -> None:
         """Test emitting a string property literal with a quote in it."""
+        # see pyobo.struct.struct_utils._escape_literal for
+        # implementation of escaping for these literals
         term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
         term.annotate_string(RO_DUMMY, '"value" added')
         self.assert_obo_stanza(
