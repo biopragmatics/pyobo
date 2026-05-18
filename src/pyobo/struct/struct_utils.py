@@ -501,6 +501,16 @@ class Stanza(Referenced, HasReferencesMixin):
         """Append a datetime annotation."""
         return self.annotate_literal(prop, OBOLiteral.datetime(value), annotations=annotations)
 
+    def annotate_date(
+        self,
+        prop: ReferenceHint,
+        value: datetime.datetime | datetime.date | str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
+        """Append a date annotation."""
+        return self.annotate_literal(prop, OBOLiteral.date(value), annotations=annotations)
+
     def _iterate_obo_properties(
         self,
         *,
@@ -975,7 +985,7 @@ def _iterate_obo_relations(
                     end = reference_escape(value, ontology_prefix=ontology_prefix)
                     name = value.name
                 case _:
-                    raise TypeError(f"got unexpected value: {values}")
+                    raise TypeError(f"got unexpected type {type(values)} with value: {values}")
             end += _get_obo_trailing_modifiers(
                 predicate, value, annotations, ontology_prefix=ontology_prefix
             )

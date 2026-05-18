@@ -6,6 +6,8 @@ import datetime
 import logging
 from collections import Counter
 from collections.abc import Iterable, Sequence
+from datetime import date as date_cls
+from datetime import datetime as datetime_cls
 from typing import Any, NamedTuple
 
 import bioregistry
@@ -14,6 +16,7 @@ import dateutil.parser
 import pytz
 from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
+from curies import vocabulary as v
 from curies.preprocessing import BlocklistError
 
 from ..identifier_utils import (
@@ -304,9 +307,7 @@ def _parse_reference_or_uri_literal(
             return None
 
 
-unspecified_matching = Reference(
-    prefix="semapv", identifier="UnspecifiedMatching", name="unspecified matching process"
-)
+unspecified_matching = Reference.from_reference(v.unspecified_matching_process)
 
 
 class OBOLiteral(NamedTuple):
@@ -319,44 +320,53 @@ class OBOLiteral(NamedTuple):
     @classmethod
     def string(cls, value: str, *, language: str | None = None) -> OBOLiteral:
         """Get a string literal."""
-        return cls(value, curies.Reference(prefix="xsd", identifier="string"), language)
+        return cls(value, v.xsd_string, language)
 
     @classmethod
     def boolean(cls, value: bool) -> OBOLiteral:
         """Get a boolean literal."""
-        return cls(str(value).lower(), curies.Reference(prefix="xsd", identifier="boolean"), None)
+        return cls(str(value).lower(), v.xsd_boolean, None)
 
     @classmethod
     def decimal(cls, value: float) -> OBOLiteral:
         """Get a decimal literal."""
-        return cls(str(value), curies.Reference(prefix="xsd", identifier="decimal"), None)
+        return cls(str(value), v.xsd_decimal, None)
 
     @classmethod
     def float(cls, value: float) -> OBOLiteral:
         """Get a float literal."""
-        return cls(str(value), curies.Reference(prefix="xsd", identifier="float"), None)
+        return cls(str(value), v.xsd_float, None)
 
     @classmethod
     def integer(cls, value: int | str) -> OBOLiteral:
         """Get a integer literal."""
-        return cls(str(int(value)), curies.Reference(prefix="xsd", identifier="integer"), None)
+        return cls(str(int(value)), v.xsd_integer, None)
 
     @classmethod
     def year(cls, value: int | str) -> OBOLiteral:
         """Get a year (gYear) literal."""
-        return cls(str(int(value)), curies.Reference(prefix="xsd", identifier="gYear"), None)
+        return cls(str(int(value)), v.xsd_year, None)
 
     @classmethod
     def uri(cls, uri: str) -> OBOLiteral:
         """Get a string literal for a URI."""
-        return cls(uri, curies.Reference(prefix="xsd", identifier="anyURI"), None)
+        return cls(uri, v.xsd_uri, None)
 
     @classmethod
-    def datetime(cls, dt: datetime.datetime | str) -> OBOLiteral:
+    def datetime(cls, dt: datetime_cls | str) -> OBOLiteral:
         """Get a datetime literal."""
         if isinstance(dt, str):
             dt = _parse_datetime(dt)
-        return cls(dt.isoformat(), curies.Reference(prefix="xsd", identifier="dateTime"), None)
+        return cls(dt.isoformat(), v.xsd_datetime, None)
+
+    @classmethod
+    def date(cls, dt: datetime_cls | date_cls | str) -> OBOLiteral:
+        """Get a datetime literal."""
+        if isinstance(dt, str):
+            dt = datetime.date.fromisoformat(dt)
+        elif isinstance(dt, datetime.datetime):
+            dt = dt.date()
+        return cls(dt.isoformat(), v.xsd_date, None)
 
 
 def _parse_datetime(dd: str) -> datetime.datetime:
