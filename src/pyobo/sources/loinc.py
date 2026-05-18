@@ -32,7 +32,7 @@ class LOINCGetter(Obo):
 def get_terms(*, force: bool = False) -> Iterable[Term]:
     """Get terms."""
     _status, path = ensure_loinc(force=force)
-    df = read_zipfile_csv(path, inner_path="LoincTable/Loinc.csv", sep=",")
+    df = read_zipfile_csv(path, inner_path="LoincTable/Loinc.csv", dtype=str, sep=",")
 
     terms: dict[str, Term] = {}
 
