@@ -61,11 +61,11 @@ def iter_terms(*, version: str | None = None) -> Iterable[Term]:
                 term.append_exact_match(doi_reference)
             terms[term.identifier] = term
 
-    with open_cordis("organizations.csv", version=version) as reader:
+    with open_cordis("organization.csv", version=version) as reader:
         for row in reader:
             project_id = row["projectID"]
-            organization_id = row["organizationID"]
-            terms[project_id].append_relationship(
+            organization_id = row["organisationID"]
+            terms[project_id].annotate_object(
                 has_participant,
                 Reference(prefix=ORGANIZATION_PREFIX, identifier=organization_id),
                 # TODO can add all sorts of annotations from this file, like the cost, role, ordinal
