@@ -8,7 +8,7 @@ from pyobo.struct import part_of
 from pyobo.struct.obo import from_str
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct_utils import Annotation
-from pyobo.struct.typedef import comment, equivalent_class
+from pyobo.struct.typedef import equivalent_class, has_comment
 from pyobo.struct.vocabulary import has_license
 
 
@@ -313,8 +313,8 @@ class TestReaderOntologyMetadata(unittest.TestCase):
         """)
         self.assertEqual(
             [
-                Annotation(comment.reference, OBOLiteral.string("hello 1")),
-                Annotation(comment.reference, OBOLiteral.string("hello 2")),
+                Annotation(has_comment.reference, OBOLiteral.string("hello 1")),
+                Annotation(has_comment.reference, OBOLiteral.string("hello 2")),
             ],
             ontology.property_values,
         )

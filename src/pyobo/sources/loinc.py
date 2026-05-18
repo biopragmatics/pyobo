@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from pystow.utils import read_zipfile_csv
 
 from pyobo import Annotation, Obo, Reference, Term
-from pyobo.struct.typedef import comment as has_comment
+from pyobo.struct.typedef import has_comment
 
 PREFIX = "loinc"
 

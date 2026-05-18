@@ -40,8 +40,7 @@ from ..struct import (
     build_ontology,
 )
 from ..struct_utils import Annotation, Stanza
-from ..typedef import comment as has_comment
-from ..typedef import default_typedefs, has_ontology_root_term
+from ..typedef import default_typedefs, has_comment, has_ontology_root_term
 from ...constants import DATE_FORMAT, PROVENANCE_PREFIXES
 from ...identifier_utils import (
     NotCURIEError,
