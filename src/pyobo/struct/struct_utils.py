@@ -976,7 +976,7 @@ def _iterate_obo_relations(
                     end = reference_escape(value, ontology_prefix=ontology_prefix)
                     name = value.name
                 case _:
-                    raise TypeError(f"got unexpected value: {values}")
+                    raise TypeError(f"got unexpected type {type(values)} with value: {values}")
             end += _get_obo_trailing_modifiers(
                 predicate, value, annotations, ontology_prefix=ontology_prefix
             )
