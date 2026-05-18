@@ -6,23 +6,27 @@ from curies.vocabulary import acronym
 from tqdm import tqdm
 
 from pyobo import Obo, Reference, Term, TypeDef, default_reference
-from pyobo.sources.cordis.utils import open_cordis
+from pyobo.sources.cordis.utils import (
+    BASIS_PREFIX,
+    ORGANIZATION_PREFIX,
+    PROJECT_PREFIX,
+    open_cordis,
+)
+from pyobo.struct.typedef import has_participant
 
 __all__ = [
     "CordisProjectGetter",
 ]
 
-PREFIX = "cordis.project"
-
 # see euscivoc, which is in skosxl format
 
-HAS_LEGAL_BASIS = TypeDef(reference=default_reference(PREFIX, "hasLegalBasis"))
+HAS_LEGAL_BASIS = TypeDef(reference=default_reference(PROJECT_PREFIX, "hasLegalBasis"))
 
 
 class CordisProjectGetter(Obo):
     """An ontology representation of cordis projects."""
 
-    ontology = PREFIX
+    ontology = PROJECT_PREFIX
     typedefs = [HAS_LEGAL_BASIS]
     dynamic_version = True
 
@@ -33,6 +37,7 @@ class CordisProjectGetter(Obo):
 
 def iter_terms(version: str | None = None) -> Iterable[Term]:
     """Iterate over CORDIS project terms."""
+    terms: dict[str, Term] = {}
     with open_cordis("project.csv", version=version) as reader:
         for row in reader:
             term = Term(
@@ -43,7 +48,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
             )
             term.append_synonym(row["acronym"], type=acronym)
             term.append_property(
-                HAS_LEGAL_BASIS, Reference(prefix="cordis.basis", identifier=row["legalBasis"])
+                HAS_LEGAL_BASIS, Reference(prefix=BASIS_PREFIX, identifier=row["legalBasis"])
             )
 
             doi = row["grantDoi"]
@@ -53,7 +58,17 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                 tqdm.write(f"[{term.curie}] problem with DOI: {doi}")
             else:
                 term.append_exact_match(doi_reference)
-            yield term
+            terms[term.identifier] = term
+
+    with open_cordis("organizations.csv", version=version) as reader:
+        for row in reader:
+            project_id = row["projectID"]
+            organization_id = row["organizationID"]
+            terms[project_id].append_relationship(
+                has_participant,
+                Reference(prefix=ORGANIZATION_PREFIX, identifier=organization_id),
+                # TODO can add all sorts of annotations from this file, like the cost, role, ordinal
+            )
 
 
 if __name__ == "__main__":

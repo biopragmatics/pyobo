@@ -2,20 +2,22 @@
 
 from collections.abc import Iterable
 
-from pyobo import Obo, Reference, Term
-from pyobo.sources.cordis.utils import open_cordis
+from curies import vocabulary as v
+
+from pyobo import Annotation, Obo, Reference, Term
+from pyobo.sources.cordis.utils import ORGANIZATION_PREFIX, open_cordis
+from pyobo.struct.typedef import has_homepage
 
 __all__ = [
     "CordisOrganizationGetter",
 ]
 
-PREFIX = "cordis.organization"
-
 
 class CordisOrganizationGetter(Obo):
     """An ontology representation of CORDIS organizations."""
 
-    ontology = PREFIX
+    ontology = ORGANIZATION_PREFIX
+    typedefs = [has_homepage]
     dynamic_version = True
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -24,15 +26,27 @@ class CordisOrganizationGetter(Obo):
 
 
 def iter_terms(version: str | None = None) -> Iterable[Term]:
-    """Iterate over CPT terms."""
-    # TODO might need to add additional parts
+    """Iterate over CORDIS organization terms."""
     with open_cordis("organization.csv", version=version) as reader:
+        seen = set()
         for row in reader:
+            identifier = row["organisationID"]
+            if identifier in seen:
+                continue
+            seen.add(identifier)
             term = Term(
                 reference=Reference(
-                    prefix="cordis.project", identifier=row["id"], name=row["title"]
-                ),
+                    prefix=ORGANIZATION_PREFIX, identifier=identifier, name=row["name"]
+                )
             )
+            if short_name := row["shortName"]:
+                term.append_synonym(short_name, type=v.abbreviation)
+            if url := row["organizationURL"]:
+                term.append_property(Annotation.uri(has_homepage, url))
+            if vat := row["vatNumber"]:
+                term.append_exact_match(Reference(prefix="vat", identifier=vat))
+            term.append_exact_match(Reference(prefix="eu.rcn", identifier=row["rcn"]))
+            # TODO city, country, nutsCode
             yield term
 
 
