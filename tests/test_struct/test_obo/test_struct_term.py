@@ -729,7 +729,7 @@ class TestTerm(unittest.TestCase):
             ofn="""\
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
-                AnnotationAssertion(RO:1234567 GO:0050069 "\\"value\\" added"@en)
+                AnnotationAssertion(RO:1234567 GO:0050069 "\\"value\\" added"^^xsd:string)
             """,
         )
 
