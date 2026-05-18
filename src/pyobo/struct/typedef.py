@@ -15,6 +15,7 @@ __all__ = [
     "alternative_term",
     "broad_match",
     "close_match",
+    "comment",
     "contributes_to_condition",
     "default_typedefs",
     "derives_from_organism",

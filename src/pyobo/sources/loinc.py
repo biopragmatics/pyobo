@@ -8,11 +8,11 @@ from typing import Any
 import pandas as pd
 import pystow
 import requests
-from curies.vocabulary import has_comment
 from pydantic import BaseModel, Field
 from pystow.utils import read_zipfile_csv
 
 from pyobo import Annotation, Obo, Reference, Term
+from pyobo.struct.typedef import comment as has_comment
 
 PREFIX = "loinc"
 
@@ -21,7 +21,7 @@ class LOINCGetter(Obo):
     """An ontology representation of LOINC."""
 
     bioversions_key = ontology = PREFIX
-    typedefs = []
+    typedefs = [has_comment]
     root_terms = []
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
@@ -43,7 +43,7 @@ def get_terms(*, force: bool = False) -> Iterable[Term]:
     replaced_by_df = read_zipfile_csv(path, inner_path="LoincTable/MapTo.csv", sep=",")
     for old, new, comment in replaced_by_df.values:
         annotations = [Annotation.string(has_comment, comment)] if pd.notna(comment) else None
-        terms[old].append_replaced_by(terms[new], annotations=annotations)
+        terms[old].append_replaced_by(terms[new].reference, annotations=annotations)
 
     yield from terms.values()
 
