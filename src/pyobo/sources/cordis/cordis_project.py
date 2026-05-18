@@ -1,20 +1,18 @@
-"""Converter for CORDIS Projects."""
+"""Converter for CORDIS projects."""
 
 from collections.abc import Iterable
 
 from curies.vocabulary import acronym
-from pystow.utils import open_zip_reader
 from tqdm import tqdm
 
 from pyobo import Obo, Reference, Term, TypeDef, default_reference
-from pyobo.sources.cordis.utils import get_cordis_path
+from pyobo.sources.cordis.utils import open_cordis
 
 __all__ = [
     "CordisProjectGetter",
 ]
 
 PREFIX = "cordis.project"
-
 
 # see euscivoc, which is in skosxl format
 
@@ -33,14 +31,10 @@ class CordisProjectGetter(Obo):
         return iter_terms()
 
 
-def iter_terms() -> Iterable[Term]:
-    """Iterate over CPT terms."""
-    path = get_cordis_path()
-    # TODO might need to add additional parts
-    with open_zip_reader(path, "project.csv", delimiter=";") as reader:
-        header = next(reader)
+def iter_terms(version: str | None = None) -> Iterable[Term]:
+    """Iterate over CORDIS project terms."""
+    with open_cordis("project.csv", version=version) as reader:
         for row in reader:
-            row = dict(zip(header, row, strict=False))
             term = Term(
                 reference=Reference(
                     prefix="cordis.project", identifier=row["id"], name=row["title"]
