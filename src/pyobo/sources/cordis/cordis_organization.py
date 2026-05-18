@@ -4,13 +4,15 @@ from collections.abc import Iterable
 
 from curies import vocabulary as v
 
-from pyobo import Annotation, Obo, Reference, Term
+from pyobo import Obo, Reference, Term
 from pyobo.sources.cordis.utils import ORGANIZATION_PREFIX, open_cordis
 from pyobo.struct.typedef import has_homepage
 
 __all__ = [
     "CordisOrganizationGetter",
 ]
+
+ABBREVIATION = Reference.from_reference(v.abbreviation)
 
 
 class CordisOrganizationGetter(Obo):
@@ -40,9 +42,9 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                 )
             )
             if short_name := row["shortName"]:
-                term.append_synonym(short_name, type=v.abbreviation)
+                term.append_synonym(short_name, type=ABBREVIATION)
             if url := row["organizationURL"]:
-                term.append_property(Annotation.uri(has_homepage, url))
+                term.annotate_uri(has_homepage, url)
             if vat := row["vatNumber"]:
                 term.append_exact_match(Reference(prefix="vat", identifier=vat))
             term.append_exact_match(Reference(prefix="eu.rcn", identifier=row["rcn"]))

@@ -25,7 +25,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
     """Iterate over CORDIS legal basis terms."""
     with open_cordis("project.csv", version=version) as reader:
         unique = {row["legalBasis"]: row["title"] for row in reader}
-        for identifier, name in sorted(unique):
+        for identifier, name in sorted(unique.items()):
             yield Term.from_triple(BASIS_PREFIX, identifier, name)
 
     # TODO implement some kind of hierarchy?

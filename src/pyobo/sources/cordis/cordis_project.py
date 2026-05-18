@@ -2,7 +2,7 @@
 
 from collections.abc import Iterable
 
-from curies.vocabulary import acronym
+from curies import vocabulary as v
 from tqdm import tqdm
 
 from pyobo import Obo, Reference, Term, TypeDef, default_reference
@@ -21,6 +21,7 @@ __all__ = [
 # see euscivoc, which is in skosxl format
 
 HAS_LEGAL_BASIS = TypeDef(reference=default_reference(PROJECT_PREFIX, "hasLegalBasis"))
+ACRONYM = Reference.from_reference(v.acronym)
 
 
 class CordisProjectGetter(Obo):
@@ -35,7 +36,7 @@ class CordisProjectGetter(Obo):
         return iter_terms()
 
 
-def iter_terms(version: str | None = None) -> Iterable[Term]:
+def iter_terms(*, version: str | None = None) -> Iterable[Term]:
     """Iterate over CORDIS project terms."""
     terms: dict[str, Term] = {}
     with open_cordis("project.csv", version=version) as reader:
@@ -46,8 +47,8 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                 ),
                 # definition=row['objective'],
             )
-            term.append_synonym(row["acronym"], type=acronym)
-            term.append_property(
+            term.append_synonym(row["acronym"], type=ACRONYM)
+            term.annotate_object(
                 HAS_LEGAL_BASIS, Reference(prefix=BASIS_PREFIX, identifier=row["legalBasis"])
             )
 
@@ -69,6 +70,8 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
                 Reference(prefix=ORGANIZATION_PREFIX, identifier=organization_id),
                 # TODO can add all sorts of annotations from this file, like the cost, role, ordinal
             )
+
+    yield from terms.values()
 
 
 if __name__ == "__main__":
