@@ -771,6 +771,26 @@ class TestTerm(unittest.TestCase):
             typedefs={RO_DUMMY.pair: RO_DUMMY},
         )
 
+    def test_12_property_date(self) -> None:
+        """Test emitting property literals that were annotated as a date."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_date(RO_DUMMY, "1993-01-01")
+        self.assert_obo_stanza(
+            term,
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                property_value: RO:1234567 "1993-01-01" xsd:date
+            """,
+            ofn="""\
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(RO:1234567 GO:0050069 "1993-01-01"^^xsd:date)
+            """,
+            typedefs={RO_DUMMY.pair: RO_DUMMY},
+        )
+
     def test_12_property_object(self) -> None:
         """Test emitting property literals."""
         term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
