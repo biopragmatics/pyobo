@@ -363,8 +363,8 @@ class OBOLiteral(NamedTuple):
     def date(cls, dt: datetime_cls | date_cls | str) -> OBOLiteral:
         """Get a datetime literal."""
         if isinstance(dt, str):
-            dt = _parse_datetime(dt)
-        if isinstance(dt, datetime.datetime):
+            dt = datetime.date.fromisoformat(dt)
+        elif isinstance(dt, datetime.datetime):
             dt = dt.date()
         return cls(dt.isoformat(), v.xsd_date, None)
 
