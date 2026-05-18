@@ -58,7 +58,7 @@ def get_compartments(*, force: bool = False, version: str | None = None) -> dict
     table = soup.find(class_="myTable")
     if table is None:
         raise ValueError
-    for row in table.find_all("tr"):  # type:ignore[attr-defined]
+    for row in table.find_all("tr"):
         cells = list(row.find_all("td"))
         if not cells:
             continue

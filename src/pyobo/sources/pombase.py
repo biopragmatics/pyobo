@@ -74,8 +74,8 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
     }
     for _, reference in sorted(so.items()):
         yield Term(reference=reference)
-    for identifier, _, symbol, chromosome, name, uniprot_id, gtype, synonyms in tqdm(
-        df.values, unit_scale=True
+    for identifier, _, symbol, chromosome, name, gene_product_id, gtype, synonyms in tqdm(
+        df.values, unit_scale=True, desc=f"parsing {PREFIX}"
     ):
         if pd.isna(identifier):
             continue
@@ -90,10 +90,13 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         term.set_species(identifier="4896", name="Schizosaccharomyces pombe")
         for hgnc_id in identifier_to_hgnc_ids.get(identifier, []):
             term.annotate_object(orthologous, Reference(prefix="hgnc", identifier=hgnc_id))
-        if uniprot_id and pd.notna(uniprot_id):
-            term.annotate_object(
-                has_gene_product, Reference(prefix="uniprot", identifier=uniprot_id)
-            )
+        if gene_product_id and pd.notna(gene_product_id):
+            if gene_product_id.startswith("URS"):
+                gene_product = Reference(prefix="rnacentral", identifier=gene_product_id)
+            else:
+                gene_product = Reference(prefix="uniprot", identifier=gene_product_id)
+            term.annotate_object(has_gene_product, gene_product)
+
         if synonyms and pd.notna(synonyms):
             for synonym in synonyms.split(","):
                 term.append_synonym(synonym.strip())

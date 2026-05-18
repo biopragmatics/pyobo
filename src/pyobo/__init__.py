@@ -61,6 +61,7 @@ from .api import (
     has_ancestor,
     is_descendent,
 )
+from .constants import get_semantic_mapping_metadata
 from .getters import get_ontology
 from .ner import (
     get_grounder,
@@ -154,6 +155,7 @@ __all__ = [
     "get_scispacy_entities",
     "get_scispacy_entity_linker",
     "get_scispacy_knowledgebase",
+    "get_semantic_mapping_metadata",
     "get_semantic_mappings",
     "get_species",
     "get_sssom_df",

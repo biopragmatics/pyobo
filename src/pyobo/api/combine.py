@@ -22,7 +22,7 @@ def get_literal_mappings_subset(
     *,
     skip_obsolete: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
-) -> list[ssslm.LiteralMapping]:
+) -> list[ssslm.LiteralMapping[Reference]]:
     """Get a subset of literal mappings under the given ancestors."""
     if isinstance(ancestors, curies.Reference):
         ancestors = [ancestors]

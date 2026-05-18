@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "pyobo"
-version = "0.12.16-dev"
+version = "0.12.23-dev"
 description = "A python package for handling and generating OBO"
 readme = "README.md"
 authors = [
@@ -20,17 +20,16 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Framework :: Pytest",
     "Framework :: tox",
     "Framework :: Sphinx",
     "Natural Language :: English",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3 :: Only",
     "Typing :: Typed",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
@@ -51,11 +50,12 @@ keywords = [
 
 # License Information.
 # See PEP-639 at https://peps.python.org/pep-0639/#add-license-files-key
+license = "MIT"
 license-files = [
     "LICENSE",
 ]
 
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "obonet>=0.3.0",
     "click",
@@ -63,34 +63,38 @@ dependencies = [
     "pyyaml",
     "pandas",
     "requests",
-    "more_itertools",
-    "more_click>=0.0.2",
+    "more-itertools",
+    "more-click>=0.0.2",
     "humanize",
     "tabulate",
     "cachier",
-    "pystow>=0.7.5",
-    "bioversions>=0.8.231",
-    "bioregistry>=0.12.30",
-    "bioontologies>=0.7.2",
-    "ssslm>=0.0.13",
+    "pystow>=0.8.13",
+    "bioversions>=0.10.11",
+    "bioregistry>=0.13.53",
+    "ssslm>=0.2.0",
     "zenodo-client>=0.4.1",
-    "class_resolver>=0.6.0",
+    "class-resolver>=0.7.1",
     "pydantic>=2.0",
-    "curies>=0.10.17",
+    "curies>=0.13.11",
     "curies-processing>=0.1.6",
     "python-dateutil",
     "networkx>=3.4",
     # Resource Downloaders
-    "drugbank_downloader",
-    "chembl_downloader",
-    "umls_downloader>=0.1.3",
-    "clinicaltrials_downloader>=0.0.2",
+    "drugbank-downloader",
+    "chembl-downloader",
+    "umls-downloader>=0.1.3",
+    "clinicaltrials-downloader>=0.0.2",
     "nih-reporter-downloader>=0.0.1",
-    "typing_extensions",
+    "ror-downloader>=0.0.4",
+    #
+    "typing-extensions",
     "rdflib",
-    "obographs>=0.0.8",
-    "sssom_pydantic>=0.2.0",
+    "obographs>=0.0.11",
+    "sssom-pydantic>=0.5.7",
     "pytz",
+    "robot-obo-tool",
+    "pyperclip",
+    "lxml",
 ]
 
 # see https://peps.python.org/pep-0735/ and https://docs.astral.sh/uv/concepts/dependencies/#dependency-groups
@@ -103,8 +107,8 @@ docs = [
     "sphinx>=8,<9",
     "sphinx-rtd-theme>=3.0",
     "sphinx-click", 
-    "sphinx_automodapi",
-    "sphinx_toolbox<=4.0.0",
+    "sphinx-automodapi",
+    "sphinx-toolbox<=4.0.0",
 ]
 lint = [
     "ruff",
@@ -150,17 +154,37 @@ release = [
     "uv",
     "keyring",
 ]
+# note that scispacy currently only works on <= 3.12
+# because of its transitive dependencies. It also has
+# a hard cutoff on scipy because it relied on (private/unstable?)
+# functionality that no longer exists in newer versions
+scispacy = [
+    #"scispacy; python_version <= '3.12'",
+    #"spacy; python_version <= '3.12'",
+    #"scipy<1.11; python_version <= '3.12'",
+]
+pykeen = [
+    "pykeen",
+    "scipy>=1.17.1",
+]
+grape = [
+    "grape",
+    "embiggen",
+    "ensmallen",
+]
 
 # see https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#dependencies-optional-dependencies
 [project.optional-dependencies]
 gilda = [
-    "ssslm[gilda]",
+    "ssslm[gilda-slim]",
 ]
 gilda-slim = [
     "ssslm[gilda-slim]",
 ]
 sources = [
-    "pyobo[drugcentral,pid]",
+    # keep as sum of all sources
+    "psycopg2-binary",
+    "protmapper"
 ]
 drugcentral =[
     "psycopg2-binary",
@@ -168,23 +192,7 @@ drugcentral =[
 pid = [
     "protmapper",
 ]
-# note that scispacy currently only works on <= 3.12
-# because of its transitive dependencies. It also has
-# a hard cutoff on scipy because it relied on (private/unstable?)
-# functionality that no longer exists in newer versions
-scispacy = [
-    "scispacy; python_version <= '3.12'",
-    "spacy; python_version <= '3.12'",
-    "scipy<1.11; python_version <= '3.12'",
-]
-pykeen = [
-    "pykeen",
-]
-grape = [
-    "grape",
-    "embiggen",
-    "ensmallen",
-]
+
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
 # and also https://packaging.python.org/en/latest/specifications/well-known-project-urls/
@@ -316,7 +324,7 @@ known-first-party = [
 docstring-code-format = true
 
 [tool.bumpversion]
-current_version = "0.12.16-dev"
+current_version = "0.12.23-dev"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:-(?P<release>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+(?P<build>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?"
 serialize = [
     "{major}.{minor}.{patch}-{release}+{build}",

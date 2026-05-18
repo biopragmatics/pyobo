@@ -1,5 +1,6 @@
-Functional OWL
-==============
+################
+ Functional OWL
+################
 
 .. automodapi:: pyobo.struct.functional.dsl
 

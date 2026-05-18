@@ -15,12 +15,13 @@ EXCEPTIONS = {"biogrid", "agrovoc", "go", "chebi"}
 class TestSources(unittest.TestCase):
     """Test sources."""
 
-    def test_complete(self):
+    def test_complete(self) -> None:
         """Test all files are imported in `__init__.py`."""
         directory = Path(pyobo.sources.__file__).parent.resolve()
         for path in directory.iterdir():
             if (
-                path.stem in {"utils", "__init__", "__pycache__", "README", ".ropeproject"}
+                path.stem
+                in {"utils", "__init__", "__pycache__", "README", ".ropeproject", ".DS_Store"}
                 or path.stem.endswith("_utils")
                 or path.stem.endswith("_constants")
                 or path.stem in EXCEPTIONS

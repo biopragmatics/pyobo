@@ -10,6 +10,7 @@ import click
 
 from .database import main as database_main
 from .lookup import lookup
+from .obo_lexical_review import obo_lexical_review
 from ..constants import GLOBAL_SKIP, RAW_DIRECTORY
 from ..plugins import has_nomenclature_plugin
 
@@ -20,13 +21,13 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 @click.version_option()
-def main():
+def main() -> None:
     """CLI for PyOBO."""
 
 
 @main.command()
 @click.option("--remove-obo", is_flag=True)
-def clean(remove_obo: bool):
+def clean(remove_obo: bool) -> None:
     """Delete all cached files."""
     suffixes = [
         "_mappings.tsv",
@@ -54,15 +55,15 @@ def clean(remove_obo: bool):
 
 
 @main.command()
-def ls():
+def ls() -> None:
     """List how big all of the OBO files are."""
     import humanize
     from tabulate import tabulate
 
-    entries = [(prefix, os.path.getsize(path)) for prefix, path in _iter_cached_obo()]
+    entries_init = [(prefix, os.path.getsize(path)) for prefix, path in _iter_cached_obo()]
     entries = [
         (prefix, humanize.naturalsize(size), "✅" if not has_nomenclature_plugin(prefix) else "❌")
-        for prefix, size in sorted(entries, key=itemgetter(1), reverse=True)
+        for prefix, size in sorted(entries_init, key=itemgetter(1), reverse=True)
     ]
     click.echo(tabulate(entries, headers=["Source", "Size", "OBO"]))
 
@@ -101,6 +102,7 @@ def _no_download() -> set[str]:
 
 main.add_command(lookup)
 main.add_command(database_main)
+main.add_command(obo_lexical_review)
 
 if __name__ == "__main__":
     main()

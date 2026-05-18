@@ -63,7 +63,7 @@ GO_URL_PREFIX = "http://amigo.geneontology.org/amigo/term/GO:"
 KEGG_URL_PREFIX = "http://www.genome.jp/kegg/pathway/hsa/"
 
 
-def _iter_entries(version: str, force: bool = False):
+def _iter_entries(version: str, force: bool = False) -> Iterable[etree.ElementTree]:
     xml_url = f"{BASE_URL}/{version}.Hs/msigdb_v{version}.Hs.xml.zip"
     path = ensure_path(prefix=PREFIX, url=xml_url, version=version, force=force)
     with zipfile.ZipFile(path, "r") as zf:
@@ -168,7 +168,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         yield term
 
 
-def _get_definition(attrib) -> str | None:
+def _get_definition(attrib: dict[str, str]) -> str | None:
     rv = attrib["DESCRIPTION_FULL"].strip() or attrib["DESCRIPTION_BRIEF"].strip() or None
     if rv is not None:
         return rv.replace(r"\d", "").replace(r"\s", "")

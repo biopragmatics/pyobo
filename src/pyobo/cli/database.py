@@ -2,8 +2,9 @@
 
 import logging
 import warnings
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from pathlib import Path
+from typing import ParamSpec, TypeVar
 
 import click
 from more_click import verbose_option
@@ -11,7 +12,6 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from typing_extensions import Unpack
 
 from .utils import (
-    Clickable,
     directory_option,
     force_option,
     force_process_option,
@@ -37,9 +37,12 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
+P = ParamSpec("P")
+T = TypeVar("T")
+
 
 @click.group(name="database")
-def main():
+def main() -> None:
     """Build the PyOBO Database."""
 
 
@@ -53,7 +56,7 @@ skip_below_option = click.option(
 )
 
 
-def database_annotate(f: Clickable) -> Clickable:
+def database_annotate(f: Callable[P, T]) -> Callable[P, T]:
     """Add appropriate decorators to database CLI functions."""
     decorators = [
         main.command(),
@@ -126,8 +129,7 @@ def build(ctx: click.Context, eager_versions: bool, **kwargs: Unpack[DatabaseKwa
 @database_annotate
 def cache(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Cache all things."""
-    from .database_utils import iter_helper_helper
-    from ..getters import get_ontology
+    from ..getters import get_ontology, iter_helper_helper
 
     if zenodo:
         click.echo("no zenodo for caching")
@@ -144,9 +146,9 @@ def metadata(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) ->
     """Make the prefix-metadata dump."""
     import bioregistry
 
-    from .database_utils import IterHelperHelperDict, iter_helper_helper
     from ..api import get_metadata
-    from ..getters import db_output_helper
+    from ..constants import IterHelperHelperDict
+    from ..getters import db_output_helper, iter_helper_helper
 
     def _iter_metadata_internal(
         **kwargs: Unpack[IterHelperHelperDict],

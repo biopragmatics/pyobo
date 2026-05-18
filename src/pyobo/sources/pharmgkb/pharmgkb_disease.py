@@ -1,7 +1,6 @@
 """An ontology representation of PharmGKB phenotypes."""
 
 from collections.abc import Iterable
-from typing import cast
 
 import pandas as pd
 
@@ -64,7 +63,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
         for xref_line in split(row, "External Vocabulary"):
             xref_curie, _, _ = xref_line.strip('"').partition("(")
             try:
-                xref = cast(Reference, Reference.from_curie(xref_curie))
+                xref = Reference.from_curie(xref_curie)
             except Exception:  # noqa:S110
                 pass  # this happens when there's a comma in the name, but not a problem
             else:

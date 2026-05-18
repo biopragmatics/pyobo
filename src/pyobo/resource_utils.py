@@ -48,7 +48,7 @@ def _get_zenodo() -> Zenodo:
     return Zenodo()
 
 
-def _get_parts(_concept_rec_id, _record_id, version) -> Sequence[str]:
+def _get_parts(_concept_rec_id: str, _record_id: str, version: str) -> Sequence[str]:
     """Get sequence to use in :func:`pystow.ensure`.
 
     .. note::
@@ -154,7 +154,7 @@ def ensure_relations(force: bool = False) -> str:
 @click.command()
 @verbose_option
 @click.option("-f", "--force", is_flag=True)
-def main(force: bool):
+def main(force: bool) -> None:
     """Ensure resources are available."""
     for f in [
         ensure_ooh_na_na,

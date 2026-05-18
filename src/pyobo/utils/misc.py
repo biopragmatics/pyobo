@@ -17,7 +17,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-BIZARRE_LOGGED = set()
+BIZARRE_LOGGED: set[tuple[str, str]] = set()
 
 #: Rewrites for mostly static resources that have weird quirks
 VERSION_REWRITES = {
@@ -54,6 +54,7 @@ VERSION_PREFIXES = [
     "http://purls.helmholtz-metadaten.de/cdos/cdco/",  # http://purls.helmholtz-metadaten.de/cdos/cdco/1.0.0
     "https://endlessforms.info/gdo/releases/gdoa-",
     "https://openenergyplatform.org/ontology/oeo/releases/",
+    "https://w3id.org/amv/",  # https://w3id.org/amv/1.0
 ]
 VERSION_PREFIX_SPLITS = [
     "http://www.ebi.ac.uk/efo/releases/v",
@@ -194,7 +195,7 @@ def _prioritize_version(
     if date is not None:
         derived_date_version = date.strftime("%Y-%m-%d")
         logger.debug(
-            "[%s] does not report a version. falling back to date: %s",
+            "[%s] does not report a version using the `data-version` tag. falling back to date: %s",
             ontology_prefix,
             derived_date_version,
         )

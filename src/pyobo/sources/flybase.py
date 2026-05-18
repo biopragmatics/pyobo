@@ -85,7 +85,7 @@ def _get_human_orthologs(version: str, force: bool = False) -> Mapping[str, set[
     return multisetdict(df.values)
 
 
-def _get_synonyms(version, force):
+def _get_synonyms(version: str, force: bool) -> pd.DataFrame:
     url = f"{BASE_URL}/FB{version}/precomputed_files/synonyms/fb_synonym_fb_{version}.tsv.gz"
     df = ensure_df(PREFIX, url=url, force=force, version=version, skiprows=4, usecols=[0, 2])
     return df  # TODO use this

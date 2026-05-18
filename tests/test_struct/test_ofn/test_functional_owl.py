@@ -1,6 +1,9 @@
+# type:ignore
+
 """Tests for functional OWL."""
 
 import unittest
+from typing import ClassVar
 
 import rdflib
 from curies import Converter, Reference
@@ -22,6 +25,8 @@ from pyobo.struct.functional.utils import EXAMPLE_PREFIX_MAP, get_rdf_graph
 
 class TestBox(unittest.TestCase):
     """Test boxes."""
+
+    converter: ClassVar[Converter]
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -122,7 +127,7 @@ class TestBox(unittest.TestCase):
 class TestSection5(unittest.TestCase):
     """Test Section 5."""
 
-    def test_declarations(self):
+    def test_declarations(self) -> None:
         """Test declarations."""
         decl = f.Declaration("owl:Thing", "Class")
         self.assertEqual("Declaration(Class(owl:Thing))", decl.to_funowl())
@@ -146,7 +151,7 @@ class TestSection5(unittest.TestCase):
 class TestSection7(unittest.TestCase):
     """Test Section 7: Data Ranges."""
 
-    def test_data_ranges(self):
+    def test_data_ranges(self) -> None:
         """Test data ranges."""
         expr = f.DataIntersectionOf(
             [
@@ -188,7 +193,7 @@ class TestSection7(unittest.TestCase):
 class TestSection8ClassExpressions(unittest.TestCase):
     """Test Section 8: Class Expressions."""
 
-    def test_object_propositional(self):
+    def test_object_propositional(self) -> None:
         """Test propositional lists."""
         expr = f.ObjectIntersectionOf(["a:Dog", "a:CanTalk"])
         self.assertEqual("ObjectIntersectionOf(a:Dog a:CanTalk)", expr.to_funowl())
@@ -203,7 +208,7 @@ class TestSection8ClassExpressions(unittest.TestCase):
         expr = f.ObjectComplementOf("a:Bird")
         self.assertEqual("ObjectComplementOf(a:Bird)", expr.to_funowl())
 
-    def test_object_restrictions(self):
+    def test_object_restrictions(self) -> None:
         """Test object restrictions."""
         expr = f.ObjectSomeValuesFrom("a:hasPet", "a:Mongrel")
         self.assertEqual("ObjectSomeValuesFrom(a:hasPet a:Mongrel)", expr.to_funowl())
@@ -217,7 +222,7 @@ class TestSection8ClassExpressions(unittest.TestCase):
         expr = f.ObjectHasSelf("a:likes")
         self.assertEqual("ObjectHasSelf(a:likes)", expr.to_funowl())
 
-    def test_object_cardinality(self):
+    def test_object_cardinality(self) -> None:
         """Test object restrictions."""
         expr = f.ObjectMinCardinality(2, "a:fatherOf", "a:Man")
         self.assertEqual("ObjectMinCardinality(2 a:fatherOf a:Man)", expr.to_funowl())
@@ -228,7 +233,7 @@ class TestSection8ClassExpressions(unittest.TestCase):
         expr = f.ObjectExactCardinality(1, "a:hasPet", "a:Dog")
         self.assertEqual("ObjectExactCardinality(1 a:hasPet a:Dog)", expr.to_funowl())
 
-    def test_data_restrictions(self):
+    def test_data_restrictions(self) -> None:
         """Test object restrictions."""
         expr = f.DataSomeValuesFrom(
             ["a:hasAge"],
@@ -245,7 +250,7 @@ class TestSection8ClassExpressions(unittest.TestCase):
         expr = f.DataHasValue("a:hasAge", term.Literal(17))
         self.assertEqual('DataHasValue(a:hasAge "17"^^xsd:integer)', expr.to_funowl())
 
-    def test_data_cardinality(self):
+    def test_data_cardinality(self) -> None:
         """Test outputting data cardinality constraints."""
         r = "rdfs:label"
 
@@ -262,7 +267,7 @@ class TestSection8ClassExpressions(unittest.TestCase):
 class TestSection9Axioms(unittest.TestCase):
     """Test Section 9: Axioms."""
 
-    def test_subclass_of(self):
+    def test_subclass_of(self) -> None:
         """Test subclass axioms."""
         expr = f.SubClassOf("a:Baby", "a:Child")
         self.assertEqual("SubClassOf(a:Baby a:Child)", expr.to_funowl())
@@ -272,7 +277,7 @@ class TestSection9Axioms(unittest.TestCase):
             "SubClassOf(ObjectSomeValuesFrom(a:hasChild a:Child) a:Parent)", expr.to_funowl()
         )
 
-    def test_equivalent_classes(self):
+    def test_equivalent_classes(self) -> None:
         """Test equivalent class axioms."""
         expr = f.EquivalentClasses(["a:Boy", f.ObjectIntersectionOf(["a:Child", "a:Man"])])
         self.assertEqual(
@@ -285,7 +290,7 @@ class TestSection9Axioms(unittest.TestCase):
         with self.assertRaises(ValueError):
             f.EquivalentClasses(["a:Boy"])
 
-    def test_disjoint_union(self):
+    def test_disjoint_union(self) -> None:
         """Test disjoint union axioms."""
         expr = f.DisjointUnion("a:Child", ["a:Boy", "a:Girl"])
         self.assertEqual("DisjointUnion(a:Child a:Boy a:Girl)", expr.to_funowl())
@@ -302,7 +307,7 @@ class TestSection9Axioms(unittest.TestCase):
 class TestSection10(unittest.TestCase):
     """Test Section 9: Annotations."""
 
-    def test_annotation_assertion(self):
+    def test_annotation_assertion(self) -> None:
         """Test AnnotationAssertion."""
         expected = 'AnnotationAssertion(rdfs:label a:Person "Represents the set of all people.")'
         expr = f.AnnotationAssertion(
@@ -418,10 +423,12 @@ class TestMiscellaneous(unittest.TestCase):
 class TestRDF(unittest.TestCase):
     """Test serialization to RDF."""
 
+    axiom_examples: ClassVar[list[f.Axiom | f.Box]]
+
     @classmethod
     def setUpClass(cls) -> None:
         """Set up the serialization test case."""
-        cls.axiom_examples: list[f.Axiom] = [
+        cls.axiom_examples = [
             f.ClassAssertion(
                 f.DataSomeValuesFrom(
                     ["a:hasAge"], f.DatatypeRestriction("xsd:integer", [("xsd:maxExclusive", 20)])
@@ -442,7 +449,10 @@ class TestRDF(unittest.TestCase):
                 "a:Test", f.DataIntersectionOf(["xsd:integer", f.DataOneOf([1, 2, 3])])
             ),
             f.DatatypeDefinition(
-                "a:Test", f.DataUnionOf(["xsd:integer", f.DataOneOf([f.l("a"), f.l("b")])])
+                "a:Test",
+                f.DataUnionOf(
+                    ["xsd:integer", f.DataOneOf([rdflib.Literal("a"), rdflib.Literal("b")])]
+                ),
             ),
             f.DatatypeDefinition("a:Test", f.DataUnionOf(["xsd:integer", "xsd:string"])),
             f.DatatypeDefinition("a:Test", f.DataComplementOf("xsd:nonNegativeInteger")),
@@ -488,7 +498,7 @@ class TestRDF(unittest.TestCase):
             f.SubObjectPropertyOf(f.ObjectInverseOf("a:ope1"), "a:ope2"),
             f.EquivalentObjectProperties(["a:ope1", f.ObjectInverseOf("a:ope2")]),
             f.ClassAssertion(f.DataHasValue("a:hasAge", 17), "a:Meg"),
-            f.ClassAssertion(f.DataHasValue("a:hasHairColor", f.l("brown")), "a:Meg"),
+            f.ClassAssertion(f.DataHasValue("a:hasHairColor", rdflib.Literal("brown")), "a:Meg"),
             f.EquivalentClasses(["a:Boy", "a:Girl"]),
             # do the griffin parent both ways to see if sorting is happening in ROBOT
             f.EquivalentClasses(["a:GriffinParent", f.ObjectOneOf(["a:Peter", "a:Lois"])]),
@@ -510,8 +520,8 @@ class TestRDF(unittest.TestCase):
                 "a:hasPet",
                 annotations=[f.Annotation("dcterms:contributor", "orcid:0000-0003-4423-4370")],
             ),
-            f.AnnotationAssertion("rdfs:label", "a:Dog", f.l("dog")),
-            f.AnnotationAssertion("a:ap1", "a:Dog", f.l("dog")),
+            f.AnnotationAssertion("rdfs:label", "a:Dog", rdflib.Literal("dog")),
+            f.AnnotationAssertion("a:ap1", "a:Dog", rdflib.Literal("dog")),
             f.AnnotationPropertyRange("a:hasPet", "a:Pet"),
             f.AnnotationPropertyDomain("a:hasPet", "a:Person"),
             f.AsymmetricObjectProperty("a:hasParent"),
@@ -542,7 +552,7 @@ class TestRDF(unittest.TestCase):
             f.DisjointUnion("a:Child", ["a:Boy", "a:Girl"]),
             f.ClassAssertion("a:Child", "a:Stewie"),
             f.ClassAssertion(f.ObjectComplementOf("a:Girl"), "a:Stewie"),
-            f.DataPropertyAssertion("a:hasLastName", "a:Peter", f.l("Griffin")),
+            f.DataPropertyAssertion("a:hasLastName", "a:Peter", rdflib.Literal("Griffin")),
             f.DatatypeDefinition(
                 "a:SSN",
                 f.DatatypeRestriction(

@@ -54,7 +54,7 @@ def get_species(
 def get_id_species_mapping(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[str, str]:
     """Get an identifier to species mapping."""
     if prefix == "ncbigene":
-        from ..sources.ncbigene import get_ncbigene_id_to_species_mapping
+        from ..sources.ncbi.ncbigene import get_ncbigene_id_to_species_mapping
 
         logger.info("[%s] loading species mappings", prefix)
         rv = get_ncbigene_id_to_species_mapping()
