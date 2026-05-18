@@ -714,7 +714,7 @@ class TestTerm(unittest.TestCase):
     def test_12_property_string_with_quote(self) -> None:
         """Test emitting a string property literal with a quote in it."""
         term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
-        term.annotate_string(RO_DUMMY, "\"value\" added")
+        term.annotate_string(RO_DUMMY, '"value" added')
         self.assert_obo_stanza(
             term,
             obo="""\
