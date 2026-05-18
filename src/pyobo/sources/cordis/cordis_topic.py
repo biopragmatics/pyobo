@@ -32,4 +32,4 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    CordisTopicGetter.cli(["--obo"])
+    CordisTopicGetter.cli()

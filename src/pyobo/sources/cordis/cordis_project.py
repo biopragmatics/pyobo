@@ -58,12 +58,12 @@ HAS_STATUS = TypeDef(
 HAS_START = TypeDef(
     reference=default_reference(PROJECT_PREFIX, "hasStart"),
     domain=PROJECT.reference,
-    range=Reference.from_reference(v.xsd_date),
+    range=Reference.from_reference(v.xsd_datetime),
 )
 HAS_END = TypeDef(
     reference=default_reference(PROJECT_PREFIX, "hasEnd"),
     domain=PROJECT.reference,
-    range=Reference.from_reference(v.xsd_date),
+    range=Reference.from_reference(v.xsd_datetime),
 )
 ACRONYM = Reference.from_reference(v.acronym)
 
@@ -136,10 +136,11 @@ def iter_terms(*, version: str | None = None) -> Iterable[Term]:
                 scheme_counter[row["fundingScheme"]] += 1
                 term.annotate_string(HAS_FUNDING_SCHEME, funding_scheme)
 
+            # switch to date after https://github.com/protegeproject/protege/issues/1343
             if start_date := row["startDate"]:
-                term.annotate_date(HAS_START, start_date)
+                term.annotate_datetime(HAS_START, start_date)
             if end_date := row["endDate"]:
-                term.annotate_date(HAS_END, end_date)
+                term.annotate_datetime(HAS_END, end_date)
 
             term.annotate_object(HAS_STATUS, KEY_TO_STATUS[row["status"]])
 
@@ -166,4 +167,4 @@ def iter_terms(*, version: str | None = None) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    CordisProjectGetter.cli(["--obo"])
+    CordisProjectGetter.cli()
