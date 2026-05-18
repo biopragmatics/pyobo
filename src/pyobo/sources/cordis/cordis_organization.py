@@ -1,5 +1,7 @@
 """Converter for CORDIS organizations."""
 
+from __future__ import annotations
+
 from collections.abc import Iterable
 
 from curies import vocabulary as v

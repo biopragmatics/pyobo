@@ -1,5 +1,7 @@
 """Utilities for CORDIS resources."""
 
+from __future__ import annotations
+
 import csv
 from collections.abc import Generator
 from contextlib import contextmanager

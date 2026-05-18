@@ -1,5 +1,7 @@
 """Converter for CORDIS topics."""
 
+from __future__ import annotations
+
 from collections.abc import Iterable
 
 from pyobo.sources.cordis.utils import TOPIC_PREFIX, clean_topic_id, open_cordis

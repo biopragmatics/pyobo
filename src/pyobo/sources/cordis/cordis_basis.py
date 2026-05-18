@@ -1,5 +1,7 @@
 """Converter for CORDIS legal bases."""
 
+from __future__ import annotations
+
 from collections.abc import Iterable
 
 from pyobo.sources.cordis.utils import BASIS_PREFIX, open_cordis
