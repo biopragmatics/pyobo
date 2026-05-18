@@ -501,6 +501,16 @@ class Stanza(Referenced, HasReferencesMixin):
         """Append a datetime annotation."""
         return self.annotate_literal(prop, OBOLiteral.datetime(value), annotations=annotations)
 
+    def annotate_date(
+        self,
+        prop: ReferenceHint,
+        value: datetime.datetime | datetime.date | str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
+        """Append a date annotation."""
+        return self.annotate_literal(prop, OBOLiteral.date(value), annotations=annotations)
+
     def _iterate_obo_properties(
         self,
         *,
