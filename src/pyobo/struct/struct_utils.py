@@ -9,7 +9,7 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
-from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias, overload
+from typing import TYPE_CHECKING, Literal, NamedTuple, Self, TypeAlias, overload
 
 import curies
 from curies import ReferenceTuple
@@ -17,7 +17,6 @@ from curies import vocabulary as _v
 from curies.vocabulary import SynonymScope
 from pydantic import BaseModel, ConfigDict
 from ssslm import LiteralMapping
-from typing_extensions import Self
 
 from . import vocabulary as v
 from .reference import (
@@ -44,6 +43,7 @@ if TYPE_CHECKING:
     from pyobo.struct.struct import Synonym, TypeDef
 
 __all__ = [
+    "Annotation",
     "AnnotationsDict",
     "HasReferencesMixin",
     "ReferenceHint",
@@ -89,7 +89,7 @@ class Annotation(NamedTuple):
         return cls(predicate, OBOLiteral.string(value, language=language))
 
     @staticmethod
-    def _sort_key(x: Annotation):
+    def _sort_key(x: Annotation) -> tuple[Reference, tuple[int, Reference | OBOLiteral]]:
         return x.predicate, _reference_or_literal_key(x.value)
 
 
@@ -375,13 +375,15 @@ class Stanza(Referenced, HasReferencesMixin):
             yield f"intersection_of: {end}"
 
     @staticmethod
-    def _intersection_of_key(io: Reference | tuple[Reference, Reference]):
+    def _intersection_of_key(
+        io: Reference | tuple[Reference, Reference],
+    ) -> tuple[Literal[0], Reference] | tuple[Literal[1], tuple[Reference, Reference]]:
         if isinstance(io, Reference):
             return 0, io
         else:
             return 1, io
 
-    def _iterate_xref_obo(self, *, ontology_prefix) -> Iterable[str]:
+    def _iterate_xref_obo(self, *, ontology_prefix: str) -> Iterable[str]:
         for xref in sorted(self.xrefs):
             xref_yv = f"xref: {reference_escape(xref, ontology_prefix=ontology_prefix, add_name_comment=False)}"
             xref_yv += _get_obo_trailing_modifiers(
@@ -499,6 +501,16 @@ class Stanza(Referenced, HasReferencesMixin):
         """Append a datetime annotation."""
         return self.annotate_literal(prop, OBOLiteral.datetime(value), annotations=annotations)
 
+    def annotate_date(
+        self,
+        prop: ReferenceHint,
+        value: datetime.datetime | datetime.date | str,
+        *,
+        annotations: Iterable[Annotation] | None = None,
+    ) -> Self:
+        """Append a date annotation."""
+        return self.annotate_literal(prop, OBOLiteral.date(value), annotations=annotations)
+
     def _iterate_obo_properties(
         self,
         *,
@@ -508,10 +520,7 @@ class Stanza(Referenced, HasReferencesMixin):
         typedefs: Mapping[ReferenceTuple, TypeDef],
     ) -> Iterable[str]:
         for line in _iterate_obo_relations(
-            # the type checker seems to be a bit confused, this is an okay typing since we're
-            # passing a more explicit version. The issue is that list is used for the typing,
-            # which means it can't narrow properly
-            self.properties,  # type:ignore
+            self.properties,
             self._axioms,
             ontology_prefix=ontology_prefix,
             skip_predicate_objects=skip_predicate_objects,
@@ -524,10 +533,7 @@ class Stanza(Referenced, HasReferencesMixin):
         self, *, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
     ) -> Iterable[str]:
         for line in _iterate_obo_relations(
-            # the type checker seems to be a bit confused, this is an okay typing since we're
-            # passing a more explicit version. The issue is that list is used for the typing,
-            # which means it can't narrow properly
-            self.relationships,  # type:ignore
+            self.relationships,
             self._axioms,
             ontology_prefix=ontology_prefix,
             typedefs=typedefs,
@@ -604,13 +610,27 @@ class Stanza(Referenced, HasReferencesMixin):
         """Get relationships from the given type."""
         return self.relationships.get(_ensure_ref(typedef), [])
 
-    def get_relationship(self, typedef: ReferenceHint) -> Reference | None:
+    # docstr-coverage:excused `overload`
+    @overload
+    def get_relationship(
+        self, typedef: ReferenceHint, *, strict: Literal[False] = ...
+    ) -> Reference | None: ...
+
+    # docstr-coverage:excused `overload`
+    @overload
+    def get_relationship(
+        self, typedef: ReferenceHint, *, strict: Literal[True] = ...
+    ) -> Reference: ...
+
+    def get_relationship(self, typedef: ReferenceHint, *, strict: bool = False) -> Reference | None:
         """Get a single relationship of the given type."""
         r = self.get_relationships(typedef)
         if not r:
+            if strict:
+                raise ValueError
             return None
         if len(r) > 1:
-            raise ValueError
+            raise ValueError(f"multiple relationships returned: {r}")
         return r[0]
 
     def iterate_relation_targets(self, typedef: ReferenceHint) -> list[Reference]:
@@ -756,14 +776,14 @@ class Stanza(Referenced, HasReferencesMixin):
     # docstr-coverage:excused `overload`
     @overload
     def get_mappings(
-        self, *, include_xrefs: bool = ..., add_context: Literal[True] = True
-    ) -> list[tuple[Reference, Reference, MappingContext]]: ...
+        self, *, include_xrefs: bool = ..., add_context: Literal[False] = ...
+    ) -> list[tuple[Reference, Reference]]: ...
 
     # docstr-coverage:excused `overload`
     @overload
     def get_mappings(
-        self, *, include_xrefs: bool = ..., add_context: Literal[False] = False
-    ) -> list[tuple[Reference, Reference]]: ...
+        self, *, include_xrefs: bool = ..., add_context: Literal[True] = ...
+    ) -> list[tuple[Reference, Reference, MappingContext]]: ...
 
     def get_mappings(
         self, *, include_xrefs: bool = True, add_context: bool = False
@@ -955,8 +975,7 @@ def _iterate_obo_relations(
                 case OBOLiteral(dd, datatype, _language):
                     if predicate in skip_predicate_literals:
                         continue
-                    # TODO how to clean/escape value?
-                    end = f'"{dd}" {get_preferred_curie(datatype)}'
+                    end = f'"{_escape_literal(dd)}" {get_preferred_curie(datatype)}'
                     name = None
                 case curies.Reference():  # it's a reference
                     if predicate in skip_predicate_objects:
@@ -966,13 +985,17 @@ def _iterate_obo_relations(
                     end = reference_escape(value, ontology_prefix=ontology_prefix)
                     name = value.name
                 case _:
-                    raise TypeError(f"got unexpected value: {values}")
+                    raise TypeError(f"got unexpected type {type(values)} with value: {values}")
             end += _get_obo_trailing_modifiers(
                 predicate, value, annotations, ontology_prefix=ontology_prefix
             )
             if predicate.name and name:
                 end += f" ! {predicate.name} {name}"
             yield start + end
+
+
+def _escape_literal(s: str) -> str:
+    return s.replace('"', '\\"')
 
 
 def _reference_or_literal_key(x: Reference | OBOLiteral) -> tuple[int, Reference | OBOLiteral]:

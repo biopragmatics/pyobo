@@ -106,7 +106,7 @@ def _make_terms(
             yield term
 
 
-def _load_conv(path: Path, value_prefix):
+def _load_conv(path: Path, value_prefix: str) -> dict[str, str]:
     m = open_map_tsv(path)
     m = {k: v[len(value_prefix) :] for k, v in m.items()}
     return m

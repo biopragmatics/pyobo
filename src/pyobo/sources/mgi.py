@@ -39,7 +39,7 @@ class MGIGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return get_terms(force=force)
+        return get_terms(force=force, version=self.data_version)
 
 
 COLUMNS = ["MGI Accession ID", "Marker Symbol", "Marker Name"]
@@ -71,13 +71,12 @@ def get_ensembl_df(force: bool = False) -> pd.DataFrame:
     )
 
 
-def get_entrez_df(
-    force: bool = False,
-) -> pd.DataFrame:
+def get_entrez_df(force: bool = False, version: str | None = None) -> pd.DataFrame:
     """Get the Entrez mappings dataframe."""
     return ensure_df(
         PREFIX,
         url=ENTREZ_XREFS_URL,
+        version=version,
         sep="\t",
         names=[
             "mgi_id",
@@ -101,11 +100,11 @@ def get_entrez_df(
     )
 
 
-def get_terms(force: bool = False) -> Iterable[Term]:
+def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]:
     """Get the MGI terms."""
-    df = ensure_df(PREFIX, url=MARKERS_URL, sep="\t", force=force)
+    df = ensure_df(PREFIX, url=MARKERS_URL, version=version, sep="\t", force=force)
 
-    entrez_df = get_entrez_df(force=force)
+    entrez_df = get_entrez_df(force=force, version=version)
     mgi_to_entrez_id, mgi_to_synonyms = {}, {}
     for mgi_curie, synonyms, entrez_id in entrez_df[["mgi_id", "synonyms", "entrez_id"]].values:
         mgi_id = mgi_curie[len("MGI:") :]
@@ -143,7 +142,10 @@ def get_terms(force: bool = False) -> Iterable[Term]:
                 mgi_to_ensemble_protein_ids[mgi_id].append(ensemble_protein_id)
 
     for mgi_curie, name, definition in tqdm(
-        df[COLUMNS].values, total=len(df.index), desc=f"Mapping {PREFIX}", unit_scale=True
+        df[COLUMNS].values,
+        total=len(df.index),
+        desc=f"[{PREFIX} {version} parsing]",
+        unit_scale=True,
     ):
         identifier = mgi_curie[len("MGI:") :]
         term = Term(

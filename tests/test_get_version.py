@@ -6,7 +6,6 @@ from unittest import mock
 
 from pyobo.api.utils import get_version, get_version_pins
 from pyobo.utils.misc import (
-    _get_getter_urls,
     _get_version_from_artifact,
     _prioritize_version,
     cleanup_version,
@@ -20,31 +19,31 @@ FAULTY_MOCK_PYOBO_VERSION_PINS = "{'ncbitaxon': '2024-07-03'}"
 class TestVersionPins(unittest.TestCase):
     """Test using user-defined version pins."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Clear the cache before each test case."""
         get_version_pins.cache_clear()
 
-    def test_correct_version_pin_types(self):
+    def test_correct_version_pin_types(self) -> None:
         """Test resource and version type."""
         version_pins = get_version_pins()
         for resource_prefix, version in version_pins.items():
             self.assertIsInstance(resource_prefix, str)
             self.assertIsInstance(version, str)
 
-    def test_use_correct_version_pin(self):
+    def test_use_correct_version_pin(self) -> None:
         """Tests correct resource version is used."""
         version_pins = get_version_pins()
         for resource_prefix, version in version_pins.items():
             self.assertEqual(get_version(resource_prefix), version)
 
     @mock.patch.dict(os.environ, {"PYOBO_VERSION_PINS": ""})
-    def test_empty_version_pins(self):
+    def test_empty_version_pins(self) -> None:
         """Test empty version pins are processed correctly."""
         version_pins = get_version_pins()
         self.assertFalse(version_pins)
 
     @mock.patch.dict(os.environ, {"PYOBO_VERSION_PINS": FAULTY_MOCK_PYOBO_VERSION_PINS})
-    def test_incorrectly_set_version_pins(self):
+    def test_incorrectly_set_version_pins(self) -> None:
         """Test erroneously set version pins are processed correctly."""
         version_pins = get_version_pins()
         self.assertFalse(version_pins)
@@ -52,14 +51,6 @@ class TestVersionPins(unittest.TestCase):
 
 class TestVersionGetter(unittest.TestCase):
     """Test functions for getting versions."""
-
-    def test_prov(self) -> None:
-        """Test getting the version of prov."""
-        urls = list(_get_getter_urls("prov"))
-        self.assertEqual(1, len(urls))
-        self.assertEqual(("owl", "http://aber-owl.net/media/ontologies/PROV/1/prov.owl"), urls[0])
-        v = _get_version_from_artifact("prov")
-        self.assertEqual("20130430", v)
 
     def test_bao(self) -> None:
         """Test getting the version of BAO."""

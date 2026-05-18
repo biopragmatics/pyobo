@@ -26,7 +26,10 @@ __all__ = [
     "exact_match",
     "example_of_usage",
     "from_species",
+    "gene_product_enables",
     "gene_product_member_of",
+    "has_canonical_smiles",
+    "has_comment",
     "has_contributor",
     "has_creator",
     "has_curation_status",
@@ -36,9 +39,12 @@ __all__ = [
     "has_gene_product",
     "has_homepage",
     "has_inchi",
+    "has_isomeric_smiles",
     "has_mailbox",
     "has_mature",
     "has_member",
+    "has_ontology_hierarchy_predicate",
+    "has_ontology_root_term",
     "has_part",
     "has_participant",
     "has_predecessor",
@@ -47,6 +53,7 @@ __all__ = [
     "has_smiles",
     "has_source",
     "has_start_date",
+    "has_suborganization",
     "has_successor",
     "has_taxonomy_rank",
     "is_a",
@@ -54,6 +61,8 @@ __all__ = [
     "is_antagonist_of",
     "is_defined_by",
     "is_inverse_agonist_of",
+    "is_mentioned_by",
+    "is_suborganization_of",
     "located_in",
     "mapping_has_confidence",
     "mapping_has_justification",
@@ -154,7 +163,7 @@ is_a = TypeDef(reference=v.is_a)
 rdf_type = TypeDef(reference=v.rdf_type)
 subproperty_of = TypeDef(reference=v.subproperty_of)
 see_also = TypeDef(reference=v.see_also, is_metadata_tag=True)
-comment = TypeDef(reference=v.comment, is_metadata_tag=True)
+has_comment = TypeDef(reference=v.comment, is_metadata_tag=True)
 label = TypeDef(reference=v.label, is_metadata_tag=True)
 is_defined_by = TypeDef(
     reference=Reference(prefix="rdfs", identifier="isDefinedBy", name="is defined by"),
@@ -232,6 +241,18 @@ example_of_usage = TypeDef(
 )
 alternative_term = TypeDef(reference=v.alternative_term, is_metadata_tag=True)
 has_ontology_root_term = TypeDef(reference=v.has_ontology_root_term, is_metadata_tag=True)
+has_ontology_hierarchy_predicate = TypeDef(
+    reference=v.has_ontology_hierarchy_predicate, is_metadata_tag=True
+)
+"""
+You can annotate this into an ontology with
+
+.. code-block:: python
+
+    property_values = [
+        Annotation(has_ontology_hierarchy_predicate.reference, ...)
+    ]
+"""
 definition_source = TypeDef(
     reference=Reference(prefix=IAO_PREFIX, identifier="0000119", name="definition source"),
     is_metadata_tag=True,
@@ -268,6 +289,19 @@ has_output = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002234", name="h
 
 has_successor = TypeDef.from_triple(prefix="BFO", identifier="0000063", name="has successor")
 has_predecessor = TypeDef.from_triple(prefix="BFO", identifier="0000062", name="has predecessor")
+
+has_suborganization = TypeDef(reference=v.has_suborganization)
+is_suborganization_of = TypeDef(reference=v.is_suborganization_of)
+
+gene_product_enables = TypeDef(
+    reference=Reference(prefix="RO", identifier="0018042", name="has gene product that enables"),
+    holds_over_chain=[
+        [
+            has_gene_product.reference,
+            enables.reference,
+        ]
+    ],
+)
 
 # ChEBI
 
@@ -318,6 +352,14 @@ mentions = TypeDef(
 )
 
 has_smiles = TypeDef(reference=v.has_smiles, is_metadata_tag=True).append_xref(v.debio_has_smiles)
+has_canonical_smiles = TypeDef(reference=v.has_canonical_smiles, is_metadata_tag=True).append_xref(
+    v.debio_has_smiles
+)
+has_isomeric_smiles = TypeDef(reference=v.has_isomeric_smiles, is_metadata_tag=True).append_xref(
+    v.debio_has_smiles
+)
+
+# https://chemkg.github.io/chemrof/isomeric_smiles_string/
 
 has_inchi = TypeDef(reference=v.has_inchi, is_metadata_tag=True).append_xref(v.debio_has_inchi)
 

@@ -8,6 +8,7 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 
 import click
+from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
 from curies import vocabulary as v
 
@@ -16,7 +17,7 @@ from pyobo.struct.reference import (
     _obo_parse_identifier,
     _parse_reference_or_uri_literal,
 )
-from pyobo.struct.struct import Reference, SynonymTypeDef, _synonym_typedef_warn
+from pyobo.struct.struct import SynonymTypeDef, _synonym_typedef_warn
 from pyobo.struct.struct_utils import Annotation
 
 logger = logging.getLogger(__name__)

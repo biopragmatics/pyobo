@@ -54,7 +54,7 @@ class SLMGetter(Obo):
 INVALID_INCHI = {"-", "none"}
 
 
-def iter_terms(version: str, force: bool = False):
+def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate over SwissLipids terms."""
     df = ensure_df(
         prefix=PREFIX,

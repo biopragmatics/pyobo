@@ -14,22 +14,32 @@ from tqdm.auto import tqdm
 
 from pyobo.api.utils import get_version
 from pyobo.resources.so import get_so_name
-from pyobo.struct import (
-    Annotation,
-    Obo,
-    OBOLiteral,
-    Reference,
-    Term,
+from pyobo.sources.hgnc.hgncgenefamily import GENE_GROUP_PREFIX, get_gene_family_terms
+from pyobo.struct import Annotation, Obo, OBOLiteral, Reference, Term
+from pyobo.struct import vocabulary as v
+from pyobo.struct.struct import (
+    cleanup_terms,
+    gene_symbol_synonym,
+    previous_gene_symbol,
+    previous_name,
+)
+from pyobo.struct.typedef import (
+    enables,
+    ends,
+    exact_match,
     from_species,
-    gene_product_member_of,
+    gene_product_enables,
+    gene_product_of,
+    has_comment,
     has_gene_product,
+    has_member,
     is_mentioned_by,
+    located_in,
     member_of,
     orthologous,
+    starts,
     transcribes_to,
 )
-from pyobo.struct.struct import gene_symbol_synonym, previous_gene_symbol, previous_name
-from pyobo.struct.typedef import comment, ends, exact_match, located_in, starts
 from pyobo.utils.path import ensure_path
 
 __all__ = [
@@ -59,7 +69,7 @@ gene_xrefs = [
     ("lncipedia", "lncipedia"),
     ("orphanet", "orphanet"),
     ("pseudogene", "pseudogene.org"),
-    ("ena", "ena"),
+    #  ("ena.embl", "ena"), FIXME, ena gets mapped into into insdc.run. Need a top-level insdc namespace for this.
     ("refseq", "refseq_accession"),
     ("iuphar.receptor", "iuphar"),
     # ("mgi", "mgd_id"),
@@ -131,6 +141,7 @@ SKIP_KEYS = {
     "homeodb",  # TODO add to bioregistry, though this is defunct
     "mamit-trnadb",  # TODO add to bioregistry, though this is defunct
     "mane_select",  # TODO
+    "gene_group",  # gene_group_id is needed, but this just has label
 }
 
 #: A mapping from HGNC's locus_type annotations to sequence ontology identifiers
@@ -189,8 +200,10 @@ class HGNCGetter(Obo):
     typedefs = [
         from_species,
         has_gene_product,
-        gene_product_member_of,
+        gene_product_of,
+        gene_product_enables,
         transcribes_to,
+        has_member,
         orthologous,
         member_of,
         exact_match,
@@ -198,7 +211,8 @@ class HGNCGetter(Obo):
         located_in,
         starts,
         ends,
-        comment,
+        has_comment,
+        enables,
     ]
     synonym_typedefs = [
         previous_name,
@@ -214,7 +228,22 @@ class HGNCGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
-        return get_terms(force=force, version=self.data_version)
+        yield from cleanup_terms(
+            get_terms(force=force, version=self.data_version),
+            prefix=PREFIX,
+            prefix_allowlist={
+                "chr": v.chromosomal_region,
+                "uniprot": v.protein,
+                "mgi": v.gene,
+                "rgd": v.gene,
+                "go": v.molecular_function,
+                "ec": v.molecular_function,
+                "ncbigene": v.gene,
+                "rnacentral": v.rna,
+                "mirbase": v.rna,
+                "snornabase": v.rna,
+            },
+        )
 
 
 def _get_location_to_chr() -> dict[str, Reference]:
@@ -233,7 +262,7 @@ def _get_location_to_chr() -> dict[str, Reference]:
 def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]:
     """Get HGNC terms."""
     if version is None:
-        version = get_version("hgnc")
+        version = get_version(PREFIX)
 
     unhandled_locations: defaultdict[str, set[str]] = defaultdict(set)
     location_to_chr = _get_location_to_chr()
@@ -256,8 +285,10 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         for so_id in sorted(_so_ids)
     ]
 
+    yield from get_gene_family_terms(version=version, force=force)
+
     statuses = set()
-    for entry in tqdm(entries, desc=f"Mapping {PREFIX}", unit="gene", unit_scale=True):
+    for entry in tqdm(entries, desc=f"[{PREFIX} {version} parsing]", unit="gene", unit_scale=True):
         name, symbol, identifier = (
             entry.pop("name"),
             entry.pop("symbol"),
@@ -288,7 +319,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             if "-" in ec_code:
                 continue  # only add concrete annotations
             term.append_relationship(
-                gene_product_member_of,
+                gene_product_enables,
                 Reference(prefix="ec", identifier=ec_code.strip()),
             )
         for rna_central_ids in entry.pop("rna_central_id", []):
@@ -314,7 +345,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
 
         for rgd_curie in entry.pop("rgd_id", []):
             if not rgd_curie.startswith("RGD:"):
-                tqdm.write(f"hgnc:{identifier} had bad RGD CURIE: {rgd_curie}")
+                logger.debug(f"hgnc:{identifier} had bad RGD CURIE: {rgd_curie}")
                 continue
             rgd_id = rgd_curie[len("RGD:") :]
             term.append_relationship(
@@ -323,7 +354,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             )
         for mgi_curie in entry.pop("mgd_id", []):
             if not mgi_curie.startswith("MGI:"):
-                tqdm.write(f"[hgnc:{identifier}] had bad MGI CURIE: {mgi_curie}")
+                logger.debug(f"[hgnc:{identifier}] had bad MGI CURIE: {mgi_curie}")
                 continue
             mgi_id = mgi_curie[len("MGI:") :]
             if not mgi_id:
@@ -373,7 +404,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                 try:
                     xref = Reference(prefix=xref_prefix, identifier=str(xref_identifiers[0]))
                 except pydantic.ValidationError:
-                    tqdm.write(
+                    logger.debug(
                         f"[hgnc:{identifier}] had bad {key} xref: {xref_prefix}:{xref_identifiers[0]}"
                     )
                     continue
@@ -387,15 +418,10 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             term.append_mentioned_by(Reference(prefix="pubmed", identifier=str(pubmed_id)))
 
         gene_group_ids = entry.pop("gene_group_id", [])
-        gene_groups = entry.pop("gene_group", [])
-        for gene_group_id, gene_group_label in zip(gene_group_ids, gene_groups, strict=False):
+        for gene_group_id in gene_group_ids:
             term.append_relationship(
                 member_of,
-                Reference(
-                    prefix="hgnc.genegroup",
-                    identifier=str(gene_group_id),
-                    name=gene_group_label,
-                ),
+                Reference(prefix=GENE_GROUP_PREFIX, identifier=str(gene_group_id)),
             )
 
         for alias_symbol in entry.pop("alias_symbol", []):
@@ -422,7 +448,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
                     location = location.removesuffix(qualifier_suffix)
                     annotations.append(
                         Annotation(
-                            predicate=comment.reference, value=OBOLiteral.string(qualifier_text)
+                            predicate=has_comment.reference, value=OBOLiteral.string(qualifier_text)
                         )
                     )
                     break
@@ -519,7 +545,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         yield term
 
     if unhandled_locations:
-        logger.warning(
+        logger.debug(
             "Unhandled chromosomal locations:\n\n%s\n",
             tabulate(
                 [(k, len(vs), f"HGNC:{min(vs)}") for k, vs in unhandled_locations.items()],
@@ -529,7 +555,7 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
         )
 
     if unhandled_entry_keys:
-        logger.warning("Unhandled keys:\n%s", tabulate(unhandled_entry_keys.most_common()))
+        logger.debug("Unhandled keys:\n%s", tabulate(unhandled_entry_keys.most_common()))
 
 
 if __name__ == "__main__":

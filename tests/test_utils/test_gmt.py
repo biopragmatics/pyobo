@@ -9,7 +9,7 @@ from tests.constants import TEST_GMT_PATH, TEST_WP_GMT_PATH
 class TestGMT(unittest.TestCase):
     """Test parsing GMT files."""
 
-    def test_parse_standard(self):
+    def test_parse_standard(self) -> None:
         """Test parsing a standard GMT file."""
         x = list(parse_gmt_file(TEST_GMT_PATH))
         self.assertEqual(3, len(x))
@@ -30,7 +30,7 @@ class TestGMT(unittest.TestCase):
         )
         self.assertEqual({"2224", "1595"}, x[2][2])
 
-    def test_parse_wikipathways(self):
+    def test_parse_wikipathways(self) -> None:
         """Test parsing a WikiPathways GMT file."""
         x = list(parse_wikipathways_gmt(TEST_WP_GMT_PATH))
         self.assertEqual(3, len(x))

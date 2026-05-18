@@ -17,7 +17,6 @@ from pathlib import Path
 from textwrap import indent
 from typing import Any, TypeVar
 
-import bioontologies.robot
 import bioregistry
 import click
 import pystow.utils
@@ -80,10 +79,10 @@ REQUIRES_NO_ROBOT_CHECK = {
 
 
 def _convert_to_obo(path: Path) -> Path:
-    import bioontologies.robot
+    import robot_obo_tool
 
     _converted_obo_path = path.with_suffix(".obo")
-    bioontologies.robot.convert(path, _converted_obo_path, check=False)
+    robot_obo_tool.convert(path, _converted_obo_path, check=False)
     return _converted_obo_path
 
 
@@ -145,6 +144,7 @@ def get_ontology(
 
     if version is None:
         version = _get_version_from_artifact(prefix)
+        logger.info(f"[%s] current version is {version}", prefix)
 
     if force_process:
         obonet_json_gz_path = None
@@ -214,7 +214,7 @@ def _ensure_ontology_path(
         if url is None:
             continue
         try:
-            path = ensure_path(prefix, url=url, force=force, version=version)
+            path = ensure_path(prefix, url=url, force=force, version=version, backend="requests")
         except (urllib.error.HTTPError, pystow.utils.DownloadError):
             continue
         except pystow.utils.UnexpectedDirectoryError:
@@ -338,6 +338,8 @@ def iter_helper_helper(
 
     :yields: A prefix and the result of the callable ``f``
     """
+    from robot_obo_tool import ROBOTError
+
     strict = kwargs.get("strict", True)
     prefixes = list(
         _prefixes(
@@ -355,7 +357,7 @@ def iter_helper_helper(
             click.style(f"\n{prefix} - {bioregistry.get_name(prefix)}", fg="green", bold=True)
         )
         try:
-            yv = f(prefix, **kwargs)  # type:ignore
+            yv = f(prefix, **kwargs)
         except (UnhandledFormatError, NoBuildError) as e:
             # make sure this comes before the other runtimeerror catch
             logger.warning("[%s] %s", prefix, e)
@@ -382,7 +384,7 @@ def iter_helper_helper(
             if "DrugBank" not in str(e):
                 raise
             logger.warning("[drugbank] invalid credentials")
-        except (subprocess.CalledProcessError, bioontologies.robot.ROBOTError):
+        except (subprocess.CalledProcessError, ROBOTError):
             logger.warning("[%s] ROBOT was unable to convert OWL to OBO", prefix)
         except ValueError as e:
             if _is_xml(e):
@@ -407,7 +409,7 @@ def iter_helper_helper(
             yield prefix, yv
 
 
-def _is_xml(e) -> bool:
+def _is_xml(e: Exception) -> bool:
     return str(e).startswith("Tag-value pair parsing failed for:") or str(e).startswith(
         'Tag-value pair parsing failed for:\n<?xml version="1.0" encoding="UTF-8"?>'
     )

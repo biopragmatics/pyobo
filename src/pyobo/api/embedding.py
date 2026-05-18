@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import tempfile
+import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import bioregistry
 import curies
 import numpy as np
 import pandas as pd
+from pystow import get_sentence_transformer
 from tqdm import tqdm
 from typing_extensions import Unpack
 
@@ -34,10 +36,12 @@ __all__ = [
 
 def get_text_embedding_model() -> sentence_transformers.SentenceTransformer:
     """Get the default text embedding model."""
-    from sentence_transformers import SentenceTransformer
-
-    model = SentenceTransformer("all-MiniLM-L6-v2")
-    return model
+    warnings.warn(
+        "get_text_embedding_model() is deprecated, use pystow.get_sentence_transfomer() directly",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return get_sentence_transformer()
 
 
 def _get_text(
@@ -122,6 +126,10 @@ def get_graph_embeddings_df(
     return df
 
 
+EMBEDDING_INDEX_NAME = "luid"
+EMBEDDING_DIMENSIONALITY = 384
+
+
 @wrap_norm_prefix
 def get_text_embeddings_df(
     prefix: str,
@@ -144,7 +152,15 @@ def get_text_embeddings_df(
         prefix, CacheArtifact.embeddings, version=get_version_from_kwargs(prefix, kwargs)
     )
     if path.is_file() and not check_should_force(kwargs):
-        df = pd.read_csv(path, sep="\t").set_index(0)
+        # make an explicit dictionary so we make sure that the index column
+        # doesn't also get interpreted as a float. This would silently be an
+        # issue for any identifier space that has number-looking identifier patterns
+        dtype: dict[str, Any] = {str(i): float for i in range(EMBEDDING_DIMENSIONALITY)}
+        dtype[EMBEDDING_INDEX_NAME] = str
+        df = pd.read_csv(path, sep="\t", dtype=dtype, index_col=0)
+        if df.index.name != EMBEDDING_INDEX_NAME:
+            df.index.name = EMBEDDING_INDEX_NAME
+        df.index = df.index.astype(str)
         return df
 
     id_to_name = get_id_name_mapping(prefix, **kwargs)
@@ -157,9 +173,10 @@ def get_text_embeddings_df(
         luids.append(identifier)
         texts.append(text)
     if model is None:
-        model = get_text_embedding_model()
+        model = get_sentence_transformer()
     res = model.encode(texts, show_progress_bar=True)
     df = pd.DataFrame(res, index=luids)
+    df.index.name = EMBEDDING_INDEX_NAME
     df.to_csv(path, sep="\t")  # index is important here!
     return df
 
@@ -168,7 +185,7 @@ def get_text_embedding(
     reference: str | curies.Reference | curies.ReferenceTuple,
     *,
     model: sentence_transformers.SentenceTransformer | None = None,
-) -> np.ndarray | None:
+) -> np.ndarray[tuple[int], np.dtype[np.float64]] | None:
     """Get a text embedding for an entity, or return none if no text is available.
 
     :param reference: A reference, either as a string or Reference object
@@ -199,9 +216,9 @@ def get_text_embedding(
     if text is None:
         return None
     if model is None:
-        model = get_text_embedding_model()
+        model = get_sentence_transformer()
     res = model.encode([text])
-    return res[0]
+    return cast(np.ndarray[tuple[int], np.dtype[np.float64]], res[0])
 
 
 def get_text_embedding_similarity(
@@ -239,9 +256,9 @@ def get_text_embedding_similarity(
         # 0.24702128767967224
     """
     if model is None:
-        model = get_text_embedding_model()
+        model = get_sentence_transformer()
     e1 = get_text_embedding(reference_1, model=model)
     e2 = get_text_embedding(reference_2, model=model)
     if e1 is None or e2 is None:
         return None
-    return model.similarity(e1, e2)[0][0].item()
+    return cast(float, model.similarity(e1, e2)[0][0].item())

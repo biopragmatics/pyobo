@@ -17,6 +17,12 @@ from .civic_gene import CIVICGeneGetter
 from .clinicaltrials import ClinicalTrialsGetter
 from .complexportal import ComplexPortalGetter
 from .conso import CONSOGetter
+from .cordis import (
+    CordisBasisGetter,
+    CordisOrganizationGetter,
+    CordisProjectGetter,
+    CordisTopicGetter,
+)
 from .cpt import CPTGetter
 from .credit import CreditGetter
 from .cvx import CVXGetter
@@ -40,6 +46,7 @@ from .intact import IntactGetter
 from .interpro import InterProGetter
 from .itis import ITISGetter
 from .kegg import KEGGGeneGetter, KEGGGenomeGetter, KEGGPathwayGetter
+from .loinc import LOINCGetter
 from .mesh import MeSHGetter
 from .mgi import MGIGetter
 from .mirbase import MiRBaseFamilyGetter, MiRBaseGetter, MiRBaseMatureGetter
@@ -96,6 +103,10 @@ __all__ = [
     "ChEMBLTissueGetter",
     "ClinicalTrialsGetter",
     "ComplexPortalGetter",
+    "CordisBasisGetter",
+    "CordisOrganizationGetter",
+    "CordisProjectGetter",
+    "CordisTopicGetter",
     "CreditGetter",
     "DepMapGetter",
     "DictybaseGetter",
@@ -124,6 +135,7 @@ __all__ = [
     "KEGGGeneGetter",
     "KEGGGenomeGetter",
     "KEGGPathwayGetter",
+    "LOINCGetter",
     "MGIGetter",
     "MSigDBGetter",
     "MeSHGetter",

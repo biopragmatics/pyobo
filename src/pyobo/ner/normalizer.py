@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import Literal, overload
 
 from typing_extensions import Unpack
 
@@ -15,8 +16,34 @@ __all__ = [
 ]
 
 
+# docstr-coverage:excused `overload`
+@overload
 def ground(
-    prefix: str | Iterable[str], query: str, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str | Iterable[str],
+    query: str,
+    *,
+    strict_match: Literal[True] = ...,
+    **kwargs: Unpack[GetOntologyKwargs],
+) -> Reference: ...
+
+
+# docstr-coverage:excused `overload`
+@overload
+def ground(
+    prefix: str | Iterable[str],
+    query: str,
+    *,
+    strict_match: Literal[False] = ...,
+    **kwargs: Unpack[GetOntologyKwargs],
+) -> Reference | None: ...
+
+
+def ground(
+    prefix: str | Iterable[str],
+    query: str,
+    *,
+    strict_match: bool = False,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Reference | None:
     """Normalize a string given the prefix's labels and synonyms.
 
@@ -30,4 +57,6 @@ def ground(
         # TODO when generics are working, the grounder
         #  can be type annotated with the right reference
         return Reference.from_reference(match.reference)
+    if strict_match:
+        raise ValueError
     return None

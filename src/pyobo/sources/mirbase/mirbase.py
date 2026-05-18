@@ -57,7 +57,7 @@ def get_terms(version: str, force: bool = False) -> list[Term]:
         return list(_process_definitions_lines(file, version=version, force=force))
 
 
-def _prepare_organisms(version: str, force: bool = False):
+def _prepare_organisms(version: str, force: bool = False) -> dict[str, tuple[str, str]]:
     _assert_frozen_version(version)
     url = f"{BASE_URL}/organisms.txt.gz"
     df = ensure_df(
@@ -168,7 +168,7 @@ def get_mature_to_premature(version: str) -> Mapping[str, str]:
         ),
         header=["mirbase.mature_id", "mirbase_id"],
     )
-    def _inner():
+    def _inner() -> dict[str, str]:
         return {
             mature.identifier: term.identifier
             for term in get_terms(version)
@@ -185,11 +185,12 @@ def get_mature_id_to_name(version: str) -> Mapping[str, str]:
         path=prefix_directory_join(PREFIX, name=f"{PREFIX}.mature_mapping.tsv", version=version),
         header=["mirbase.mature_id", "name"],
     )
-    def _inner():
+    def _inner() -> Mapping[str, str]:
         return {
             mature.identifier: mature.name
             for term in get_terms(version)
             for mature in term.get_relationships(has_mature)
+            if mature.name is not None
         }
 
     return _inner()

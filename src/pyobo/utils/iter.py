@@ -3,6 +3,7 @@
 import csv
 import gzip
 from collections.abc import Iterable
+from pathlib import Path
 from typing import TypeVar
 
 from more_itertools import peekable
@@ -17,7 +18,7 @@ Z = TypeVar("Z")
 Y = TypeVar("Y")
 
 
-def iterate_gzips_together(a_path, b_path) -> Iterable[tuple[str, str, list[str]]]:
+def iterate_gzips_together(a_path: Path, b_path: Path) -> Iterable[tuple[str, str, list[str]]]:
     """Iterate over two gzipped files together."""
     with gzip.open(a_path, mode="rt", errors="ignore") as a, gzip.open(b_path, mode="rt") as b:
         a_reader = csv.reader(a, delimiter="\t", quoting=csv.QUOTE_MINIMAL)

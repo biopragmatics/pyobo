@@ -1,5 +1,6 @@
-Named Entity Recognition
-========================
+##########################
+ Named Entity Recognition
+##########################
 
 PyOBO has high-level wrappers to construct literal mapping objects defined by
 :mod:`ssslm.LiteralMapping`, which can be used to construct generic named entity
