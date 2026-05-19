@@ -65,21 +65,25 @@ def _get_latest_version() -> str:
 def parse_object(obj: dict[str, Any]) -> Iterable[Term]:
     """Parse a genomic object."""
     taxid = str(obj["taxon_id"])
+    description: str | None
+    if description := obj.get("description"):
+        description, _, _ = description.partition(" [Source")
+
     term = Term(
         reference=Reference(prefix=PREFIX, identifier=obj["id"]),
-        definition=obj.get("description"),
+        definition=description,
     ).set_species(taxid)
-    for transcript in obj["transcripts"]:
+    for transcript in obj.get("transcripts", []):
         transcript_term = Term(
             reference=Reference(prefix=PREFIX, identifier=transcript["id"]),
         ).set_species(taxid)
         term.append_relationship(transcribes_to, transcript_term)
-        for exon in transcript["exons"]:
-            exon_term = Term(
-                reference=Reference(prefix=PREFIX, identifier=exon["id"]),
+        for translation in transcript.get("translations", []):
+            translation_term = Term(
+                reference=Reference(prefix=PREFIX, identifier=translation["id"]),
             ).set_species(taxid)
-            transcript_term.append_relationship(translates_to, exon_term)
-            yield exon_term
+            transcript_term.append_relationship(translates_to, translation_term)
+            yield translation_term
         yield transcript_term
     yield term
 
