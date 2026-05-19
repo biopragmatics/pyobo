@@ -224,10 +224,11 @@ def _ensure_ontology_path(
     return None
 
 
-#: A dictioanry of prefixes to skip during full build with reasons as values
+#: A dictionary of prefixes to skip during full build with reasons as values
 SKIP: dict[str, str] = {
     "ncbigene": "too big, refs acquired from other dbs",
     "pubchem.compound": "top big, can't deal with this now",
+    "ensembl": "top big, can't deal with this now",
     "gaz": "Gazetteer is irrelevant for biology",
     "ma": "yanked",
     "bila": "yanked",

@@ -90,3 +90,7 @@ def iter_terms(version: str | None = None, force: bool = False) -> Iterable[Term
         data = safe_open_json(path)
         for obj in tqdm(data["genes"], desc=f"Processing {name}", unit="gene", unit_scale=True):
             yield from parse_object(obj)
+
+
+if __name__ == "__main__":
+    EnsemblGetter.cli()
