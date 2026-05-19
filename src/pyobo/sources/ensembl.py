@@ -64,20 +64,20 @@ def _get_latest_version() -> str:
 
 def parse_object(obj: dict[str, Any]) -> Iterable[Term]:
     """Parse a genomic object."""
+    taxid = str(obj["taxon_id"])
     term = Term(
-        reference=Reference(prefix="ensembl", identifier=obj["id"]),
+        reference=Reference(prefix=PREFIX, identifier=obj["id"]),
         definition=obj.get("description"),
-    )
-    term.set_species(str(obj["taxon_id"]))
+    ).set_species(taxid)
     for transcript in obj["transcripts"]:
         transcript_term = Term(
-            reference=Reference(prefix="ensembl", identifier=transcript["id"]),
-        )
+            reference=Reference(prefix=PREFIX, identifier=transcript["id"]),
+        ).set_species(taxid)
         term.append_relationship(transcribes_to, transcript_term)
         for exon in transcript["exons"]:
             exon_term = Term(
-                reference=Reference(prefix="ensembl", identifier=exon["id"]),
-            )
+                reference=Reference(prefix=PREFIX, identifier=exon["id"]),
+            ).set_species(taxid)
             transcript_term.append_relationship(translates_to, exon_term)
             yield exon_term
         yield transcript_term
