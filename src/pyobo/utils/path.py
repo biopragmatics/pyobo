@@ -26,6 +26,7 @@ __all__ = [
     "ensure_path",
     "get_cache_path",
     "get_relation_cache_path",
+    "join_path",
     "prefix_directory_join",
 ]
 
@@ -46,6 +47,16 @@ def prefix_directory_join(
         ensure_exists=ensure_exists,
         version=version,
     )
+
+
+def join_path(
+    prefix: str,
+    *parts: str,
+    version: VersionHint = None,
+    name: str | None = None,
+) -> Path:
+    """Download a file if it doesn't exist."""
+    return RAW_MODULE.module(prefix).join(*parts, name=name, version=version)
 
 
 def ensure_path(

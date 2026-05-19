@@ -30,6 +30,7 @@ from .depmap import DepMapGetter
 from .dictybase_gene import DictybaseGetter
 from .drugbank import DrugBankGetter, DrugBankSaltGetter
 from .drugcentral import DrugCentralGetter
+from .ensembl import EnsemblGetter
 from .expasy import ExpasyGetter
 from .famplex import FamPlexGetter
 from .flybase import FlyBaseGetter
@@ -113,6 +114,7 @@ __all__ = [
     "DrugBankGetter",
     "DrugBankSaltGetter",
     "DrugCentralGetter",
+    "EnsemblGetter",
     "ExpasyGetter",
     "FamPlexGetter",
     "FlyBaseGetter",
