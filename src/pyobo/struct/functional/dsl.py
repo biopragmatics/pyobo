@@ -9,8 +9,9 @@ from abc import abstractmethod
 from collections.abc import Iterable, Sequence
 from typing import ClassVar, TypeAlias
 
+import curies
 import rdflib.namespace
-from curies import Converter, Reference
+from curies import Converter
 from rdflib import OWL, RDF, RDFS, XSD, Graph, collection, term
 
 from pyobo.struct.reference import OBOLiteral, get_preferred_prefix
@@ -103,7 +104,7 @@ SupportedLiterals: TypeAlias = int | float | bool | str | datetime.date | dateti
 
 #: A partial hint for something that can be turned into an :class:`IdentifierBox`.
 #: Here, a string gets interpreted into a CURIE using :meth:`curies.Reference.from_curie`
-IdentifierHint = term.URIRef | Reference | str
+IdentifierHint = term.URIRef | curies.Reference | str
 
 
 class Box(FunctionalOWLSerializable, RDFNodeSerializable):
@@ -119,7 +120,7 @@ def obo_literal_to_rdflib(obo_literal: OBOLiteral, converter: Converter) -> rdfl
 class IdentifierBox(Box):
     """A simple wrapper around CURIEs and IRIs."""
 
-    identifier: term.URIRef | Reference
+    identifier: term.URIRef | curies.Reference
 
     def __init__(self, identifier: IdentifierBoxOrHint) -> None:
         """Initialize the identifier box with a URIRef, Reference, or string representing a CURIE."""
@@ -130,14 +131,14 @@ class IdentifierBox(Box):
         elif isinstance(identifier, term.URIRef):
             self.identifier = identifier
         elif isinstance(identifier, str):
-            self.identifier = Reference.from_curie(identifier)
+            self.identifier = curies.Reference.from_curie(identifier)
         elif isinstance(identifier, PyOBOReference):
             # it doesn't matter we're potentially throwing away the name,
             # since this annotation gets put in OFN in a different place
-            self.identifier = Reference(
+            self.identifier = curies.Reference(
                 prefix=get_preferred_prefix(identifier), identifier=identifier.identifier
             )
-        elif isinstance(identifier, Reference):
+        elif isinstance(identifier, curies.Reference):
             self.identifier = identifier
         else:
             raise TypeError(f"can not make an identifier box from: {identifier}")
