@@ -9,7 +9,6 @@ from collections.abc import Sequence
 
 import rdflib
 from curies import Converter, Reference
-from curies import vocabulary as pv
 from curies import vocabulary as v
 from rdflib import Graph, term
 
@@ -111,7 +110,7 @@ class LabelMacro(StringMacro):
     'AnnotationAssertion(rdfs:label hgnc:16793 "RAET1E"@en)'
     """
 
-    annotation_property = pv.has_label
+    annotation_property = v.has_label
 
 
 class DescriptionMacro(StringMacro):
@@ -121,19 +120,19 @@ class DescriptionMacro(StringMacro):
     'AnnotationAssertion(dcterms:description hgnc:16793 "retinoic acid early transcript 1E")'
     """
 
-    annotation_property = pv.has_description
+    annotation_property = v.has_description
 
 
 class CommentMacro(StringMacro):
     """A macro for comment string assertion."""
 
-    annotation_property = pv.has_comment
+    annotation_property = v.has_comment
 
 
 class OBONamespaceMacro(StringMacro):
     """A macro for OBO namespace string assertion."""
 
-    annotation_property = pv.obo_has_namespace
+    annotation_property = v.obo_has_namespace
 
 
 class ObjectAnnotationMacro(Macro):
@@ -149,13 +148,13 @@ class ObjectAnnotationMacro(Macro):
 class AltMacro(ObjectAnnotationMacro):
     """A macro for alternate ID assertion."""
 
-    annotation_property = pv.alternative_term
+    annotation_property = v.alternative_term
 
 
 class ReplacedByMacro(ObjectAnnotationMacro):
     """A macro for replaced by assertion."""
 
-    annotation_property = pv.term_replaced_by
+    annotation_property = v.term_replaced_by
 
 
 class OBOConsiderMacro(ObjectAnnotationMacro):
@@ -168,7 +167,7 @@ class OBOConsiderMacro(ObjectAnnotationMacro):
 class OBOIsSubsetMacro(ObjectAnnotationMacro):
     """A macro for OBO "in subset" assertion."""
 
-    annotation_property = pv.obo_in_subset
+    annotation_property = v.obo_in_subset
 
 
 class BooleanAnnotationMacro(Macro):
@@ -252,7 +251,7 @@ class SynonymMacro(Macro):
         if annotations is None:
             annotations = []
         if provenance:
-            annotations.extend(dsl.Annotation(pv.has_dbxref, r) for r in provenance)
+            annotations.extend(dsl.Annotation(v.has_dbxref, r) for r in provenance)
         if synonym_type is not None:
             annotations.append(dsl.Annotation(HAS_SYNONYM_TYPE, synonym_type))
         if scope is None:
