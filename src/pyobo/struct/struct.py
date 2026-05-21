@@ -2490,7 +2490,7 @@ def build_ontology(
         if has_repository not in typedefs:
             typedefs.append(has_repository)
 
-    return make_ad_hoc_ontology(
+    return _make_ad_hoc_ontology(
         _ontology=prefix,
         _name=name,
         _auto_generated_by=auto_generated_by,
@@ -2509,7 +2509,13 @@ def build_ontology(
     )
 
 
-def make_ad_hoc_ontology(
+def make_ad_hoc_ontology(*args: Any, **kwargs: Any) -> Obo:
+    """Build an ontology from parts."""
+    warnings.warn("use build_ontology() instead", DeprecationWarning, stacklevel=2)
+    return _make_ad_hoc_ontology(*args, **kwargs)
+
+
+def _make_ad_hoc_ontology(
     _ontology: str,
     _name: str | None = None,
     _auto_generated_by: str | None = None,

@@ -13,7 +13,7 @@ from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import (
     Synonym,
     TypeDef,
-    make_ad_hoc_ontology,
+    build_ontology,
 )
 from pyobo.struct.typedef import (
     exact_match,
@@ -32,11 +32,10 @@ ONTOLOGY_PREFIX = "go"
 
 def _ontology_from_typedef(prefix: str, typedef: TypeDef) -> Obo:
     name = bioregistry.get_name(prefix)
-    return make_ad_hoc_ontology(
-        _ontology=prefix,
-        _name=name,
-        _typedefs=[typedef],
-        terms=[],
+    return build_ontology(
+        prefix,
+        name=name,
+        typedefs=[typedef],
     )
 
 
