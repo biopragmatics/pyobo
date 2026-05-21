@@ -379,22 +379,12 @@ _SKIP = {
 
 def _yield_properties(term: Stanza, s: f.IdentifierBox) -> Iterable[f.AnnotationAssertion]:
     for typedef, values in term.properties.items():
+        if typedef in _SKIP:
+            continue
         for value in values:
-            annotations = _get_annotations(term, typedef, value)
-            match value:
-                case OBOLiteral():
-                    yield f.AnnotationAssertion(
-                        typedef,
-                        s,
-                        _oboliteral_to_literal(value),
-                        annotations=annotations,
-                    )
-                case Reference():
-                    if typedef in _SKIP:
-                        continue
-                    yield f.AnnotationAssertion(
-                        typedef,
-                        s,
-                        value,
-                        annotations=annotations,
-                    )
+            yield f.AnnotationAssertion(
+                typedef,
+                s,
+                _convert_literal_or_reference(value),
+                annotations=_get_annotations(term, typedef, value),
+            )
