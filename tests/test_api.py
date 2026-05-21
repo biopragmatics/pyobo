@@ -28,7 +28,7 @@ from pyobo import (
 from pyobo.mocks import get_mock_id_alts_mapping, get_mock_id_name_mapping
 from pyobo.ner import get_grounder
 from pyobo.struct import vocabulary as v
-from pyobo.struct.struct import Obo, Term, TypeDef, make_ad_hoc_ontology
+from pyobo.struct.struct import Obo, Term, TypeDef, build_ontology
 
 mock_id_alts_mapping = get_mock_id_alts_mapping(
     {
@@ -194,7 +194,7 @@ class TestEverything(unittest.TestCase):
         t2 = Term(reference=r2)
         t3 = Term(reference=r3).append_parent(r1).append_exact_match(r2_2)
         terms = [t1, t2, t3]
-        ontology = make_ad_hoc_ontology(TEST_P1, terms=terms, _typedefs=[td1])
+        ontology = build_ontology(TEST_P1, terms=terms, typedefs=[td1])
 
         curies.Converter.from_prefix_map(
             {

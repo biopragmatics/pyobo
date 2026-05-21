@@ -7,7 +7,8 @@ import obographs
 from curies import Converter
 from curies.vocabulary import xsd_float
 
-from pyobo.struct import Reference, TypeDef, make_ad_hoc_ontology
+from pyobo import build_ontology
+from pyobo.struct import Reference, TypeDef
 from pyobo.struct.obograph import assert_graph_equal, to_parsed_obograph
 
 
@@ -26,8 +27,10 @@ class TestFull(unittest.TestCase):
 
         obo_input = dedent("""\
             format-version: 1.4
+            idspace: dcterms http://purl.org/dc/terms/ "Dublin Core Metadata Initiative Terms"
             idspace: sssom https://w3id.org/sssom/ "Simple Standard for Sharing Ontological Mappings"
             ontology: test
+            property_value: dcterms:title "Test Semantic Space" xsd:string
 
             [Typedef]
             id: sssom:confidence
@@ -55,12 +58,15 @@ class TestFull(unittest.TestCase):
             reference=Reference(prefix="sssom", identifier="confidence"),
             range=Reference.from_reference(xsd_float),
         )
-        ontology = make_ad_hoc_ontology(
-            _ontology="test",
-            _typedefs=[td],
-            _idspaces=prefix_map,
+        ontology = build_ontology(
+            prefix="test",
+            typedefs=[td],
+            idspaces=prefix_map,
         )
 
+        # this test acts differently depending on the order of running
+        # tests because there's extra metadata injected into bioregistry
+        # about the `test` prefix somewhere in here
         self.assertEqual(
             [line for line in obo_input.strip().splitlines() if line],
             [line.strip() for line in ontology.iterate_obo_lines() if line.strip()],
