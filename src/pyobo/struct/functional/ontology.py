@@ -104,9 +104,8 @@ class Document:
             ontology.to_rdflib_node(graph, converter)
         return graph
 
-    def write_funowl(self, path: str | Path) -> None:
+    def write_funowl(self, path: str | Path | TextIO) -> None:
         """Write functional OWL to a file."""
-        path = Path(path).expanduser().resolve()
         with safe_open(path, operation="write") as file:
             file.write(self.to_funowl())
 
