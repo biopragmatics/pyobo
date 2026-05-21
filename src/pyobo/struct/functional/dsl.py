@@ -14,8 +14,8 @@ import rdflib.namespace
 from curies import Converter
 from rdflib import OWL, RDF, RDFS, XSD, Graph, collection, term
 
-from pyobo.struct.reference import OBOLiteral, get_preferred_prefix
 from pyobo.struct.reference import Reference as PyOBOReference
+from pyobo.struct.reference import get_preferred_prefix
 
 from .utils import FunctionalOWLSerializable, RDFNodeSerializable, list_to_funowl
 
@@ -111,12 +111,6 @@ class Box(FunctionalOWLSerializable, RDFNodeSerializable):
     """A model for objects that can be represented as nodes in RDF and Functional OWL."""
 
 
-def obo_literal_to_rdflib(obo_literal: OBOLiteral, converter: Converter) -> rdflib.Literal:
-    """Expand the OBO literal."""
-    iri = converter.expand(obo_literal.datatype.curie, strict=True)
-    return rdflib.Literal(obo_literal.value, datatype=rdflib.URIRef(iri))
-
-
 class IdentifierBox(Box):
     """A simple wrapper around CURIEs and IRIs."""
 
@@ -191,8 +185,6 @@ class LiteralBox(Box):
             self.literal = term.Literal(literal, datatype=XSD.date)
         elif isinstance(literal, datetime.datetime):
             self.literal = term.Literal(literal, datatype=XSD.dateTime)
-        elif isinstance(literal, OBOLiteral):
-            self.literal = obo_literal_to_rdflib(literal, self._converter)
         else:
             raise TypeError(f"Unhandled type for literal: {literal}")
 
@@ -219,7 +211,7 @@ class LiteralBox(Box):
 
 
 IdentifierBoxOrHint: TypeAlias = IdentifierHint | IdentifierBox
-LiteralBoxOrHint: TypeAlias = LiteralBox | term.Literal | SupportedLiterals | OBOLiteral
+LiteralBoxOrHint: TypeAlias = LiteralBox | term.Literal | SupportedLiterals
 PrimitiveHint: TypeAlias = IdentifierBoxOrHint | LiteralBoxOrHint
 PrimitiveBox: TypeAlias = LiteralBox | IdentifierBox
 
@@ -237,7 +229,7 @@ def _safe_primitive_box(value: PrimitiveHint) -> PrimitiveBox:
     # through, wrap it with rdflib.Literal
     if isinstance(value, str):
         return IdentifierBox(value)
-    if isinstance(value, SupportedLiterals | OBOLiteral):
+    if isinstance(value, SupportedLiterals):
         return LiteralBox(value)
     # everything else (e.g., URIRef, Reference) are for identifier boxes
     return IdentifierBox(value)
