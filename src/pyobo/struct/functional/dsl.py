@@ -111,6 +111,16 @@ class Box(FunctionalOWLSerializable, RDFNodeSerializable):
     """A model for objects that can be represented as nodes in RDF and Functional OWL."""
 
 
+def _upgrade_ref(reference: PyOBOReference | curies.Reference):
+    if isinstance(reference, PyOBOReference):
+        # it doesn't matter we're potentially throwing away the name,
+        # since this annotation gets put in OFN in a different place
+        return curies.Reference(
+            prefix=get_preferred_prefix(reference), identifier=reference.identifier
+        )
+    return reference
+
+
 class IdentifierBox(Box):
     """A simple wrapper around CURIEs and IRIs."""
 
@@ -126,14 +136,8 @@ class IdentifierBox(Box):
             self.identifier = identifier
         elif isinstance(identifier, str):
             self.identifier = curies.Reference.from_curie(identifier)
-        elif isinstance(identifier, PyOBOReference):
-            # it doesn't matter we're potentially throwing away the name,
-            # since this annotation gets put in OFN in a different place
-            self.identifier = curies.Reference(
-                prefix=get_preferred_prefix(identifier), identifier=identifier.identifier
-            )
         elif isinstance(identifier, curies.Reference):
-            self.identifier = identifier
+            self.identifier = _upgrade_ref(identifier)
         else:
             raise TypeError(f"can not make an identifier box from: {identifier}")
 
