@@ -111,7 +111,7 @@ class Box(FunctionalOWLSerializable, RDFNodeSerializable):
     """A model for objects that can be represented as nodes in RDF and Functional OWL."""
 
 
-def _upgrade_ref(reference: PyOBOReference | curies.Reference):
+def _upgrade_ref(reference: PyOBOReference | curies.Reference) -> curies.Reference:
     if isinstance(reference, PyOBOReference):
         # it doesn't matter we're potentially throwing away the name,
         # since this annotation gets put in OFN in a different place
