@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
-import curies
-import rdflib
-from curies import Converter, Reference
-from rdflib import OWL, RDF, Graph, term
+if TYPE_CHECKING:
+    import curies
+    import rdflib
 
 __all__ = [
     "EXAMPLE_PREFIX_MAP",
@@ -63,7 +63,7 @@ class RDFNodeSerializable(ABC):
     """An object that can be serialized to RDF as a node."""
 
     @abstractmethod
-    def to_rdflib_node(self, graph: Graph, converter: Converter) -> term.Node:
+    def to_rdflib_node(self, graph: rdflib.Graph, converter: curies.Converter) -> rdflib.Node:
         """Make RDF."""
 
     def to_ttl(self, prefix_map: dict[str, str], *, output_prefixes: bool = False) -> str:
@@ -75,17 +75,24 @@ EXAMPLE_ONTOLOGY_IRI = "https://example.org/example.ofn"
 
 
 def get_rdf_graph(
-    axioms: Iterable[RDFNodeSerializable], prefix_map: dict[str, str]
+    axioms: Iterable[RDFNodeSerializable], prefix_map: dict[str, str], *, uri: str | None = None
 ) -> rdflib.Graph:
     """Serialize axioms as an RDF graph."""
-    graph = Graph()
-    graph.add((term.URIRef(EXAMPLE_ONTOLOGY_IRI), RDF.type, OWL.Ontology))
+    import curies
+    import rdflib
+    from rdflib import OWL, RDF
+
+    if uri is None:
+        uri = EXAMPLE_ONTOLOGY_IRI
+
+    graph = rdflib.Graph()
+    graph.add((rdflib.URIRef(uri), RDF.type, OWL.Ontology))
     # chain these together so you don't have to worry about
     # default namespaces like owl
     converter = curies.chain(
         [
-            Converter.from_rdflib(graph),
-            Converter.from_prefix_map(prefix_map),
+            curies.Converter.from_rdflib(graph),
+            curies.Converter.from_prefix_map(prefix_map),
         ]
     )
     for prefix, uri_prefix in converter.bimap.items():
@@ -110,7 +117,7 @@ def serialize_turtle(
 
 
 def list_to_funowl(
-    elements: Iterable[FunctionalOWLSerializable | Reference], *, sep: str = " "
+    elements: Iterable[FunctionalOWLSerializable | curies.Reference], *, sep: str = " "
 ) -> str:
     """Serialize a list of objects as functional OWL, separated by space or other givne separator."""
     return sep.join(
