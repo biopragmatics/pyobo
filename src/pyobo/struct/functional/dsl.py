@@ -9,15 +9,13 @@ from abc import abstractmethod
 from collections.abc import Iterable, Sequence
 from typing import ClassVar, TypeAlias
 
+import curies
 import rdflib.namespace
-from curies import Converter, Reference
+from bioregistry import NormalizedReference, StandardReference
+from curies import Converter
 from rdflib import OWL, RDF, RDFS, XSD, Graph, collection, term
 
-from pyobo.struct.functional.utils import list_to_funowl
-from pyobo.struct.reference import OBOLiteral, Referenced, get_preferred_prefix
-from pyobo.struct.reference import Reference as PyOBOReference
-
-from .utils import FunctionalOWLSerializable, RDFNodeSerializable
+from .utils import FunctionalOWLSerializable, RDFNodeSerializable, list_to_funowl
 
 __all__ = [
     "Annotation",
@@ -104,28 +102,27 @@ SupportedLiterals: TypeAlias = int | float | bool | str | datetime.date | dateti
 
 #: A partial hint for something that can be turned into an :class:`IdentifierBox`.
 #: Here, a string gets interpreted into a CURIE using :meth:`curies.Reference.from_curie`
-IdentifierHint = term.URIRef | Reference | Referenced | str
+IdentifierHint = term.URIRef | curies.Reference | str
 
 
 class Box(FunctionalOWLSerializable, RDFNodeSerializable):
     """A model for objects that can be represented as nodes in RDF and Functional OWL."""
 
 
-def obo_literal_to_rdflib(obo_literal: OBOLiteral, converter: Converter) -> rdflib.Literal:
-    """Expand the OBO literal."""
-    iri = converter.expand(obo_literal.datatype.curie, strict=True)
-    return rdflib.Literal(obo_literal.value, datatype=rdflib.URIRef(iri))
+def _upgrade_ref(reference: NormalizedReference | curies.Reference) -> curies.Reference:
+    if isinstance(reference, NormalizedReference):
+        # this upgrades from using Bioregistry normalized prefixes into preferred prefixes
+        return StandardReference.from_reference(reference)
+    return reference
 
 
 class IdentifierBox(Box):
     """A simple wrapper around CURIEs and IRIs."""
 
-    identifier: term.URIRef | Reference
+    identifier: term.URIRef | curies.Reference
 
     def __init__(self, identifier: IdentifierBoxOrHint) -> None:
         """Initialize the identifier box with a URIRef, Reference, or string representing a CURIE."""
-        if isinstance(identifier, Referenced):
-            identifier = identifier.reference
         if isinstance(identifier, IdentifierBox):
             self.identifier = identifier.identifier
         # make sure to check for URIRef first,
@@ -133,15 +130,9 @@ class IdentifierBox(Box):
         elif isinstance(identifier, term.URIRef):
             self.identifier = identifier
         elif isinstance(identifier, str):
-            self.identifier = Reference.from_curie(identifier)
-        elif isinstance(identifier, PyOBOReference):
-            # it doesn't matter we're potentially throwing away the name,
-            # since this annotation gets put in OFN in a different place
-            self.identifier = Reference(
-                prefix=get_preferred_prefix(identifier), identifier=identifier.identifier
-            )
-        elif isinstance(identifier, Reference):
-            self.identifier = identifier
+            self.identifier = curies.Reference.from_curie(identifier)
+        elif isinstance(identifier, curies.Reference):
+            self.identifier = _upgrade_ref(identifier)
         else:
             raise TypeError(f"can not make an identifier box from: {identifier}")
 
@@ -193,8 +184,6 @@ class LiteralBox(Box):
             self.literal = term.Literal(literal, datatype=XSD.date)
         elif isinstance(literal, datetime.datetime):
             self.literal = term.Literal(literal, datatype=XSD.dateTime)
-        elif isinstance(literal, OBOLiteral):
-            self.literal = obo_literal_to_rdflib(literal, self._converter)
         else:
             raise TypeError(f"Unhandled type for literal: {literal}")
 
@@ -221,7 +210,7 @@ class LiteralBox(Box):
 
 
 IdentifierBoxOrHint: TypeAlias = IdentifierHint | IdentifierBox
-LiteralBoxOrHint: TypeAlias = LiteralBox | term.Literal | SupportedLiterals | OBOLiteral
+LiteralBoxOrHint: TypeAlias = LiteralBox | term.Literal | SupportedLiterals
 PrimitiveHint: TypeAlias = IdentifierBoxOrHint | LiteralBoxOrHint
 PrimitiveBox: TypeAlias = LiteralBox | IdentifierBox
 
@@ -239,7 +228,7 @@ def _safe_primitive_box(value: PrimitiveHint) -> PrimitiveBox:
     # through, wrap it with rdflib.Literal
     if isinstance(value, str):
         return IdentifierBox(value)
-    if isinstance(value, SupportedLiterals | OBOLiteral):
+    if isinstance(value, SupportedLiterals):
         return LiteralBox(value)
     # everything else (e.g., URIRef, Reference) are for identifier boxes
     return IdentifierBox(value)

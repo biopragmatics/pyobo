@@ -12,12 +12,8 @@ from curies import Converter
 from pystow.utils import safe_open
 from rdflib import OWL, RDF, Graph, term
 
-from pyobo.struct.functional.dsl import Annotation, Annotations, Axiom, Box
-from pyobo.struct.functional.utils import (
-    EXAMPLE_ONTOLOGY_IRI,
-    FunctionalOWLSerializable,
-    list_to_funowl,
-)
+from .dsl import Annotation, Annotations, Axiom, Box
+from .utils import EXAMPLE_ONTOLOGY_IRI, FunctionalOWLSerializable, list_to_funowl
 
 __all__ = [
     "Document",
@@ -108,9 +104,8 @@ class Document:
             ontology.to_rdflib_node(graph, converter)
         return graph
 
-    def write_funowl(self, path: str | Path) -> None:
+    def write_funowl(self, path: str | Path | TextIO) -> None:
         """Write functional OWL to a file."""
-        path = Path(path).expanduser().resolve()
         with safe_open(path, operation="write") as file:
             file.write(self.to_funowl())
 
