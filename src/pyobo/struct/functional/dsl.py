@@ -11,11 +11,9 @@ from typing import ClassVar, TypeAlias
 
 import curies
 import rdflib.namespace
+from bioregistry import NormalizedReference, StandardReference
 from curies import Converter
 from rdflib import OWL, RDF, RDFS, XSD, Graph, collection, term
-
-from pyobo.struct.reference import Reference as PyOBOReference
-from pyobo.struct.reference import get_preferred_prefix
 
 from .utils import FunctionalOWLSerializable, RDFNodeSerializable, list_to_funowl
 
@@ -111,13 +109,10 @@ class Box(FunctionalOWLSerializable, RDFNodeSerializable):
     """A model for objects that can be represented as nodes in RDF and Functional OWL."""
 
 
-def _upgrade_ref(reference: PyOBOReference | curies.Reference) -> curies.Reference:
-    if isinstance(reference, PyOBOReference):
-        # it doesn't matter we're potentially throwing away the name,
-        # since this annotation gets put in OFN in a different place
-        return curies.Reference(
-            prefix=get_preferred_prefix(reference), identifier=reference.identifier
-        )
+def _upgrade_ref(reference: NormalizedReference | curies.Reference) -> curies.Reference:
+    if isinstance(reference, NormalizedReference):
+        # this upgrades from using Bioregistry normalized prefixes into preferred prefixes
+        return StandardReference.from_reference(reference)
     return reference
 
 
