@@ -10,8 +10,6 @@ import rdflib
 from curies import Converter, Reference
 from rdflib import OWL, RDF, Graph, term
 
-from pyobo.constants import DEFAULT_PREFIX_MAP
-
 __all__ = [
     "EXAMPLE_PREFIX_MAP",
     "FunctionalOWLSerializable",
@@ -19,7 +17,16 @@ __all__ = [
     "get_rdf_graph",
 ]
 
+#: from table 2 of the Functional OWL syntax definition
+#: at https://www.w3.org/TR/owl2-syntax/#IRIs
+DEFAULT_PREFIX_MAP = {
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+}
 
+#: an example prefix map, only used in tests, and not in the implementation
 EXAMPLE_PREFIX_MAP = {
     **DEFAULT_PREFIX_MAP,
     "oboInOwl": "http://www.geneontology.org/formats/oboInOwl#",

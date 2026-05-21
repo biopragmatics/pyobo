@@ -76,15 +76,17 @@ def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
     if obo_ontology.synonym_typedefs:
         used_has_scope = False
         for synonym_typedef in obo_ontology.synonym_typedefs:
-            yield f.Declaration(synonym_typedef, type="AnnotationProperty")
+            yield f.Declaration(synonym_typedef.reference, type="AnnotationProperty")
             if synonym_typedef.name is not None:
-                yield m.LabelMacro(synonym_typedef, synonym_typedef.name)
-            yield f.SubAnnotationPropertyOf(synonym_typedef, "oboInOwl:SynonymTypeProperty")
+                yield m.LabelMacro(synonym_typedef.reference, synonym_typedef.name)
+            yield f.SubAnnotationPropertyOf(
+                synonym_typedef.reference, "oboInOwl:SynonymTypeProperty"
+            )
             if synonym_typedef.specificity:
                 used_has_scope = True
                 yield f.AnnotationAssertion(
                     "oboInOwl:hasScope",
-                    synonym_typedef,
+                    synonym_typedef.reference,
                     v.synonym_scopes[synonym_typedef.specificity],
                 )
         if used_has_scope:
@@ -123,7 +125,7 @@ def _oboliteral_to_literal(obo_literal: OBOLiteral) -> rdflib.Literal:
 
 def get_term_axioms(term: Term) -> Iterable[f.Box]:
     """Iterate over functional OWL axioms for a term."""
-    s = f.IdentifierBox(term)
+    s = f.IdentifierBox(term.reference)
     # 1 and 13
     if term.type == "Term":
         yield f.Declaration(s, type="Class")
@@ -223,7 +225,7 @@ def _convert_annotation(annotation: OBOAnnotation) -> f.Annotation:
 
 def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     """Iterate over functional OWL axioms for a typedef."""
-    r = f.IdentifierBox(typedef)
+    r = f.IdentifierBox(typedef.reference)
     # 40
     if typedef.is_metadata_tag:
         yield f.Declaration(r, type="AnnotationProperty")

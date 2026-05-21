@@ -12,12 +12,8 @@ from curies import Converter
 from pystow.utils import safe_open
 from rdflib import OWL, RDF, Graph, term
 
-from pyobo.struct.functional.dsl import Annotation, Annotations, Axiom, Box
-from pyobo.struct.functional.utils import (
-    EXAMPLE_ONTOLOGY_IRI,
-    FunctionalOWLSerializable,
-    list_to_funowl,
-)
+from .dsl import Annotation, Annotations, Axiom, Box
+from .utils import EXAMPLE_ONTOLOGY_IRI, FunctionalOWLSerializable, list_to_funowl
 
 __all__ = [
     "Document",

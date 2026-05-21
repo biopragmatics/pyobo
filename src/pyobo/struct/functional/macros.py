@@ -9,11 +9,11 @@ from collections.abc import Sequence
 
 import rdflib
 from curies import Converter, Reference
+from curies import vocabulary as pv
 from curies import vocabulary as v
 from rdflib import Graph, term
 
-from pyobo.struct import vocabulary as pv
-from pyobo.struct.functional import dsl as f
+from . import dsl
 
 __all__ = [
     "AltMacro",
@@ -34,10 +34,10 @@ def _safe_literal(value: str | rdflib.Literal, *, language: str | None = None) -
     return rdflib.Literal(value, lang=language)
 
 
-class Macro(f.Box):
+class Macro(dsl.Box):
     """A macro, which wraps a more complicated set of functional OWL axioms."""
 
-    def __init__(self, box: f.Box) -> None:
+    def __init__(self, box: dsl.Box) -> None:
         """Initialize the macro with a given axiom."""
         self.box = box
 
@@ -65,14 +65,14 @@ class RelationshipMacro(Macro):
 
     def __init__(
         self,
-        s: f.IdentifierBoxOrHint,
-        p: f.IdentifierBoxOrHint,
-        o: f.IdentifierBoxOrHint,
+        s: dsl.IdentifierBoxOrHint,
+        p: dsl.IdentifierBoxOrHint,
+        o: dsl.IdentifierBoxOrHint,
         *,
-        annotations: f.Annotations | None = None,
+        annotations: dsl.Annotations | None = None,
     ) -> None:
         """Instantiate the object-to-object SubClassOf macro."""
-        super().__init__(f.SubClassOf(s, f.ObjectSomeValuesFrom(p, o), annotations=annotations))
+        super().__init__(dsl.SubClassOf(s, dsl.ObjectSomeValuesFrom(p, o), annotations=annotations))
 
 
 class StringMacro(Macro):
@@ -82,15 +82,15 @@ class StringMacro(Macro):
 
     def __init__(
         self,
-        subject: f.IdentifierBoxOrHint,
+        subject: dsl.IdentifierBoxOrHint,
         value: str | rdflib.Literal,
         *,
         language: str | None = None,
-        annotations: f.Annotations | None = None,
+        annotations: dsl.Annotations | None = None,
     ) -> None:
         """Instatitate the string assertion macro."""
         super().__init__(
-            f.AnnotationAssertion(
+            dsl.AnnotationAssertion(
                 self.annotation_property,
                 subject,
                 _safe_literal(value, language=language),
@@ -111,7 +111,7 @@ class LabelMacro(StringMacro):
     'AnnotationAssertion(rdfs:label hgnc:16793 "RAET1E"@en)'
     """
 
-    annotation_property = pv.label
+    annotation_property = pv.has_label
 
 
 class DescriptionMacro(StringMacro):
@@ -127,13 +127,13 @@ class DescriptionMacro(StringMacro):
 class CommentMacro(StringMacro):
     """A macro for comment string assertion."""
 
-    annotation_property = pv.comment
+    annotation_property = pv.has_comment
 
 
 class OBONamespaceMacro(StringMacro):
     """A macro for OBO namespace string assertion."""
 
-    annotation_property = pv.has_obo_namespace
+    annotation_property = pv.obo_has_namespace
 
 
 class ObjectAnnotationMacro(Macro):
@@ -141,9 +141,9 @@ class ObjectAnnotationMacro(Macro):
 
     annotation_property: t.ClassVar[Reference]
 
-    def __init__(self, subject: f.IdentifierBoxOrHint, target: f.IdentifierBoxOrHint) -> None:
+    def __init__(self, subject: dsl.IdentifierBoxOrHint, target: dsl.IdentifierBoxOrHint) -> None:
         """Instatitate the annotation assertion macro."""
-        super().__init__(f.AnnotationAssertion(self.annotation_property, subject, target))
+        super().__init__(dsl.AnnotationAssertion(self.annotation_property, subject, target))
 
 
 class AltMacro(ObjectAnnotationMacro):
@@ -168,7 +168,7 @@ class OBOConsiderMacro(ObjectAnnotationMacro):
 class OBOIsSubsetMacro(ObjectAnnotationMacro):
     """A macro for OBO "in subset" assertion."""
 
-    annotation_property = pv.in_subset
+    annotation_property = pv.obo_in_subset
 
 
 class BooleanAnnotationMacro(Macro):
@@ -176,10 +176,10 @@ class BooleanAnnotationMacro(Macro):
 
     annotation_property: t.ClassVar[Reference]
 
-    def __init__(self, subject: f.IdentifierBoxOrHint, value: bool = True) -> None:
+    def __init__(self, subject: dsl.IdentifierBoxOrHint, value: bool = True) -> None:
         """Instatitate the annotation assertion macro, defaults to "true"."""
         super().__init__(
-            f.AnnotationAssertion(self.annotation_property, subject, f.LiteralBox(value))
+            dsl.AnnotationAssertion(self.annotation_property, subject, dsl.LiteralBox(value))
         )
 
 
@@ -239,28 +239,28 @@ class SynonymMacro(Macro):
 
     def __init__(
         self,
-        subject: f.IdentifierBoxOrHint,
+        subject: dsl.IdentifierBoxOrHint,
         value: str | rdflib.Literal,
-        scope: v.SynonymScope | f.IdentifierBoxOrHint | None = None,
+        scope: v.SynonymScope | dsl.IdentifierBoxOrHint | None = None,
         *,
         language: str | None = None,
-        annotations: f.Annotations | None = None,
-        synonym_type: f.IdentifierBoxOrHint | None = None,
-        provenance: Sequence[f.PrimitiveHint] | None = None,
+        annotations: dsl.Annotations | None = None,
+        synonym_type: dsl.IdentifierBoxOrHint | None = None,
+        provenance: Sequence[dsl.PrimitiveHint] | None = None,
     ) -> None:
         """Instatitate the synonym annotation assertion macro."""
         if annotations is None:
             annotations = []
         if provenance:
-            annotations.extend(f.Annotation(pv.has_dbxref, r) for r in provenance)
+            annotations.extend(dsl.Annotation(pv.has_dbxref, r) for r in provenance)
         if synonym_type is not None:
-            annotations.append(f.Annotation(HAS_SYNONYM_TYPE, synonym_type))
+            annotations.append(dsl.Annotation(HAS_SYNONYM_TYPE, synonym_type))
         if scope is None:
             scope = v.has_related_synonym
         elif isinstance(scope, str) and scope.upper() in t.get_args(v.SynonymScope):
             scope = v.synonym_scopes[scope.upper()]  # type:ignore[index]
         super().__init__(
-            f.AnnotationAssertion(
+            dsl.AnnotationAssertion(
                 scope,
                 subject,
                 _safe_literal(value, language=language),
@@ -283,23 +283,23 @@ class MappingMacro(Macro):
 
     def __init__(
         self,
-        subject: f.IdentifierBoxOrHint,
-        predicate: v.SemanticMappingScope | f.IdentifierBoxOrHint,
-        target: f.IdentifierBoxOrHint,
+        subject: dsl.IdentifierBoxOrHint,
+        predicate: v.SemanticMappingScope | dsl.IdentifierBoxOrHint,
+        target: dsl.IdentifierBoxOrHint,
         *,
-        annotations: f.Annotations | None = None,
-        mapping_justification: f.IdentifierBoxOrHint | None = None,
+        annotations: dsl.Annotations | None = None,
+        mapping_justification: dsl.IdentifierBoxOrHint | None = None,
     ) -> None:
         """Instatitate the mapping annotation assertion macro."""
         if annotations is None:
             annotations = []
         if mapping_justification is not None:
             # FIXME check mapping justification is from semapv
-            annotations.append(f.Annotation(HAS_MAPPING_JUSTIFICATION, mapping_justification))
+            annotations.append(dsl.Annotation(HAS_MAPPING_JUSTIFICATION, mapping_justification))
         if isinstance(predicate, str) and predicate.upper() in t.get_args(v.SemanticMappingScope):
             predicate = v.semantic_mapping_scopes[predicate.upper()]  # type:ignore[index]
         super().__init__(
-            f.AnnotationAssertion(
+            dsl.AnnotationAssertion(
                 predicate,
                 subject,
                 target,
@@ -317,8 +317,8 @@ class XrefMacro(MappingMacro):
 
     def __init__(
         self,
-        subject: f.IdentifierBoxOrHint,
-        target: f.IdentifierBoxOrHint,
+        subject: dsl.IdentifierBoxOrHint,
+        target: dsl.IdentifierBoxOrHint,
         **kwargs: t.Any,
     ) -> None:
         """Instatitate the database cross-reference annotation assertion macro."""
@@ -329,10 +329,10 @@ class HoldsOverChain(Macro):
     """A macro for the OBO-style "holds over chain" annotation."""
 
     def __init__(
-        self, predicate: f.IdentifierBoxOrHint, chain: Sequence[f.IdentifierBoxOrHint]
+        self, predicate: dsl.IdentifierBoxOrHint, chain: Sequence[dsl.IdentifierBoxOrHint]
     ) -> None:
         """Instantiate a "holds over chain" macro."""
-        super().__init__(f.SubObjectPropertyOf(f.ObjectPropertyChain(chain), predicate))
+        super().__init__(dsl.SubObjectPropertyOf(dsl.ObjectPropertyChain(chain), predicate))
 
 
 class TransitiveOver(HoldsOverChain):
@@ -349,7 +349,7 @@ class TransitiveOver(HoldsOverChain):
         This is a special case of :class:`HoldsOverChain`
     """
 
-    def __init__(self, predicate: f.IdentifierBoxOrHint, target: f.IdentifierBoxOrHint) -> None:
+    def __init__(self, predicate: dsl.IdentifierBoxOrHint, target: dsl.IdentifierBoxOrHint) -> None:
         """Instantiate a "transitive over" macro."""
         super().__init__(predicate, [predicate, target])
 
@@ -367,13 +367,13 @@ class DataPropertyMaxCardinality(Macro):
     def __init__(
         self,
         cardinality: int,
-        data_property_expression: f.DataPropertyExpression | f.IdentifierBoxOrHint,
+        data_property_expression: dsl.DataPropertyExpression | dsl.IdentifierBoxOrHint,
     ) -> None:
         """Initialize a data property maximum cardinality macro."""
         super().__init__(
-            f.SubClassOf(
+            dsl.SubClassOf(
                 "owl:Thing",
-                f.DataMaxCardinality(
+                dsl.DataMaxCardinality(
                     cardinality=cardinality, data_property_expression=data_property_expression
                 ),
             )
@@ -383,27 +383,29 @@ class DataPropertyMaxCardinality(Macro):
 class ObjectListOfMacro(Macro):
     """An object list macro."""
 
-    object_list_cls: t.ClassVar[type[f._ObjectList]]
+    object_list_cls: t.ClassVar[type[dsl._ObjectList]]
 
     def __init__(
         self,
-        term: f.IdentifierBoxOrHint,
+        term: dsl.IdentifierBoxOrHint,
         elements: Sequence[
-            f.IdentifierBoxOrHint | tuple[f.IdentifierBoxOrHint, f.IdentifierBoxOrHint]
+            dsl.IdentifierBoxOrHint | tuple[dsl.IdentifierBoxOrHint, dsl.IdentifierBoxOrHint]
         ],
     ) -> None:
         """Instantiate an "intersection of" macro."""
-        expressions: list[f.ClassExpression | f.IdentifierBoxOrHint] = []
+        expressions: list[dsl.ClassExpression | dsl.IdentifierBoxOrHint] = []
         for element in elements:
             if isinstance(element, tuple):
                 expressions.append(
-                    f.ObjectSomeValuesFrom(f.IdentifierBox(element[0]), f.IdentifierBox(element[1]))
+                    dsl.ObjectSomeValuesFrom(
+                        dsl.IdentifierBox(element[0]), dsl.IdentifierBox(element[1])
+                    )
                 )
             else:
                 expressions.append(element)
 
         super().__init__(
-            f.EquivalentClasses([f.IdentifierBox(term), self.object_list_cls(expressions)])
+            dsl.EquivalentClasses([dsl.IdentifierBox(term), self.object_list_cls(expressions)])
         )
 
 
@@ -416,10 +418,10 @@ class ClassIntersectionMacro(ObjectListOfMacro):
     'EquivalentClasses(ZFA:0000134 ObjectIntersectionOf(CL:0000540 ObjectSomeValuesFrom(BFO:0000050 NCBITaxon:7955)))'
     """
 
-    object_list_cls = f.ObjectIntersectionOf
+    object_list_cls = dsl.ObjectIntersectionOf
 
 
 class ClassUnionMacro(ObjectListOfMacro):
     """A macro that represents a class union."""
 
-    object_list_cls = f.ObjectUnionOf
+    object_list_cls = dsl.ObjectUnionOf
