@@ -13,13 +13,14 @@ from functional_owl import dsl as f
 from functional_owl import macros as m
 from rdflib import XSD
 
-from pyobo.struct import OBOLiteral, Stanza
-from pyobo.struct import vocabulary as pv
-from pyobo.struct.reference import Reference, _parse_datetime
+from . import vocabulary as pv
+from .reference import OBOLiteral, Reference, _parse_datetime
+from .struct_utils import Stanza
 
 if TYPE_CHECKING:
-    from pyobo.struct import Obo, Referenced, Term, TypeDef
-    from pyobo.struct.struct_utils import Annotation as OBOAnnotation
+    from .reference import Referenced
+    from .struct import Obo, Term, TypeDef
+    from .struct_utils import Annotation as OBOAnnotation
 
 __all__ = [
     "get_ofn_from_obo",
