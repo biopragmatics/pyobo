@@ -57,7 +57,7 @@ class TestTypeDef(unittest.TestCase):
 
     def assert_funowl_lines(self, text: str, typedef: TypeDef) -> None:
         """Assert functional OWL lines are equal."""
-        from pyobo.struct.functional.obo_to_functional import get_typedef_axioms
+        from pyobo.struct.functional import get_typedef_axioms
 
         self.assert_lines(
             text,

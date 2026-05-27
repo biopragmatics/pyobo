@@ -1073,7 +1073,7 @@ class Obo:
 
     def write_ofn(self, path: str | Path) -> None:
         """Write as Functional OWL (OFN)."""
-        from .functional.obo_to_functional import get_ofn_from_obo
+        from .functional import get_ofn_from_obo
 
         ofn = get_ofn_from_obo(self)
         ofn.write_funowl(path)
@@ -1089,7 +1089,7 @@ class Obo:
 
     def write_rdf(self, path: str | Path) -> None:
         """Write as Turtle RDF."""
-        from .functional.obo_to_functional import get_ofn_from_obo
+        from .functional import get_ofn_from_obo
 
         ofn = get_ofn_from_obo(self)
         ofn.write_rdf(path)
