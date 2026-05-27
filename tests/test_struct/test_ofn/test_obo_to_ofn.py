@@ -12,7 +12,7 @@ from pyobo.struct import (
     Term,
     default_reference,
 )
-from pyobo.struct.functional.obo_to_functional import get_ofn_from_obo
+from pyobo.struct.functional import get_ofn_from_obo
 
 
 class TestConversion(unittest.TestCase):

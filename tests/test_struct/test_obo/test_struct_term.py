@@ -18,7 +18,7 @@ from pyobo.struct import (
     Term,
     TypeDef,
 )
-from pyobo.struct.functional.obo_to_functional import get_term_axioms
+from pyobo.struct.functional import get_term_axioms
 from pyobo.struct.obograph import assert_graph_equal, to_parsed_obograph, to_parsed_obograph_oracle
 from pyobo.struct.reference import _parse_datetime, unspecified_matching
 from pyobo.struct.struct import BioregistryError, build_ontology
