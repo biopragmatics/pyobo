@@ -8,13 +8,13 @@ from typing import TYPE_CHECKING
 import curies
 import rdflib
 from curies import vocabulary as v
+from functional_owl import Document, Ontology
+from functional_owl import dsl as f
+from functional_owl import macros as m
 from rdflib import XSD
 
 from pyobo.struct import OBOLiteral, Stanza
 from pyobo.struct import vocabulary as pv
-from functional_owl import dsl as f
-from functional_owl import macros as m
-from functional_owl import Document, Ontology
 from pyobo.struct.reference import Reference, _parse_datetime
 
 if TYPE_CHECKING:
