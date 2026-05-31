@@ -1969,7 +1969,7 @@ class Obo:
         """Get a mapping from identifiers to a list of sorted synonym strings."""
         return multidict(self.iterate_synonym_rows(use_tqdm=use_tqdm))
 
-    def get_grounder(self) -> ssslm.Grounder:
+    def get_grounder(self) -> ssslm.Grounder[Reference]:
         """Get a grounder from this ontology.
 
         :returns: An object that can be used for named entity recognition and named
