@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import logging
-import warnings
 from collections.abc import Iterable
 from functools import lru_cache
-from typing import NotRequired, cast, overload
+from typing import NotRequired, cast
 
 import networkx as nx
 from curies import ReferenceTuple
@@ -126,44 +125,16 @@ def _get_predicate_sets(
     return predicates, reverse_predicates
 
 
-# docstr-coverage:excused `overload`
-@overload
 def is_descendent(
-    prefix: str,
-    identifier: str,
-    ancestor_prefix: str = ...,
-    ancestor_identifier: str = ...,
-    /,
-    **kwargs: Unpack[HierarchyKwargs],
-) -> bool: ...
-
-
-# docstr-coverage:excused `overload`
-@overload
-def is_descendent(
-    descendant: Reference,
-    ancestor: Reference,
-    _1: None = ...,
-    _2: None = ...,
-    /,
-    **kwargs: Unpack[HierarchyKwargs],
-) -> bool: ...
-
-
-def is_descendent(
-    prefix: str | Reference,
-    identifier: str | Reference,
-    ancestor_prefix: str | None = None,
-    ancestor_identifier: str | None = None,
+    descendant: str | Reference,
+    ancestor: str | Reference,
     /,
     **kwargs: Unpack[HierarchyKwargs],
 ) -> bool:
     """Check that the first identifier has the second as a descendent.
 
-    :param prefix: The prefix for the descendant
-    :param identifier: The local unique identifier for the descendant
-    :param ancestor_prefix: The prefix for the ancestor
-    :param ancestor_identifier: The local unique identifier for the ancestor
+    :param descendant: The prefix for the descendant
+    :param ancestor: The local unique identifier for the descendant
     :param kwargs: Keyword arguments for :func:`get_hierarchy`
 
     :returns: If the decendant has the given ancestor
@@ -176,14 +147,8 @@ def is_descendent(
     ... )
     >>> apoptosis = Reference.from_curie("GO:0006915", name="apoptotic process")
     >>> assert is_descendent(nk_apoptosis, apoptosis)
-
-    Using deprecated old-style arguments:
-
-    >>> assert is_descendent("go", "0070246", "go", "0006915")
     """
-    descendant, ancestor = _get_double_reference(
-        prefix, identifier, ancestor_prefix, ancestor_identifier
-    )
+    descendant, ancestor = _get_double_reference(descendant, ancestor)
     descendants = get_descendants(ancestor, **kwargs)
     return descendants is not None and descendant in descendants
 
@@ -218,44 +183,16 @@ def get_children(
     return set(hierarchy.predecessors(t))
 
 
-# docstr-coverage:excused `overload`
-@overload
 def has_ancestor(
-    prefix: str,
-    identifier: str,
-    ancestor_prefix: str = ...,
-    ancestor_identifier: str = ...,
-    /,
-    **kwargs: Unpack[HierarchyKwargs],
-) -> bool: ...
-
-
-# docstr-coverage:excused `overload`
-@overload
-def has_ancestor(
-    descendant: Reference,
-    ancestor: Reference,
-    _1: None = ...,
-    _2: None = ...,
-    /,
-    **kwargs: Unpack[HierarchyKwargs],
-) -> bool: ...
-
-
-def has_ancestor(
-    prefix: str | Reference,
-    identifier: str | Reference,
-    ancestor_prefix: str | None = None,
-    ancestor_identifier: str | None = None,
+    descendant: str | Reference,
+    ancestor: str | Reference,
     /,
     **kwargs: Unpack[HierarchyKwargs],
 ) -> bool:
     """Check that the first identifier has the second as an ancestor.
 
-    :param prefix: The prefix for the descendant
-    :param identifier: The local unique identifier for the descendant
-    :param ancestor_prefix: The prefix for the ancestor
-    :param ancestor_identifier: The local unique identifier for the ancestor
+    :param descendant: The descendant
+    :param ancestor: The ancestor
     :param kwargs: Keyword arguments for :func:`get_hierarchy`
 
     :returns: If the decendant has the given ancestor
@@ -266,27 +203,22 @@ def has_ancestor(
     >>> apoptosis = Reference.from_curie("GO:0006915", name="apoptotic process")
     >>> cell_death = Reference.from_curie("GO:0008219", name="cell death")
     >>> assert has_ancestor(apoptosis, cell_death)
-
-    The same, using the deprecated argumentation style:
-
-    >>> assert has_ancestor("go", "0006915", "go", "0008219")
     """
-    descendant, ancestor = _get_double_reference(
-        prefix, identifier, ancestor_prefix, ancestor_identifier
-    )
+    descendant, ancestor = _get_double_reference(descendant, ancestor)
     ancestors = get_ancestors(descendant, **kwargs)
     return ancestors is not None and ancestor in ancestors
 
 
 def _get_double_reference(
-    a: str | Reference, b: str | Reference, c: str | None, d: str | None
+    a: str | Reference, b: str | Reference, c: str | None = None, d: str | None = None
 ) -> tuple[Reference, Reference]:
-    if isinstance(a, Reference) and isinstance(b, Reference):
-        return a, b
-    elif all(isinstance(x, str) for x in (a, b, c, d)):
+    if c is not None or d is not None:
         raise NotImplementedError("passing strings is no longer supported")
-    else:
-        raise TypeError
+    if isinstance(a, str):
+        a = Reference.from_curie(a)
+    if isinstance(b, str):
+        b = Reference.from_curie(b)
+    return a, b
 
 
 @lru_cache
