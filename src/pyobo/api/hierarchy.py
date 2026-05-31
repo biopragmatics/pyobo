@@ -284,8 +284,7 @@ def _get_double_reference(
     if isinstance(a, Reference) and isinstance(b, Reference):
         return a, b
     elif all(isinstance(x, str) for x in (a, b, c, d)):
-        warnings.warn("passing strings is deprecated", DeprecationWarning, stacklevel=2)
-        return Reference(prefix=a, identifier=b), Reference(prefix=c, identifier=d)
+        raise NotImplementedError("passing strings is no longer supported")
     else:
         raise TypeError
 
