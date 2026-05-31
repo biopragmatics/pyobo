@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from collections.abc import Iterable
 from functools import lru_cache
-from typing import NotRequired, cast
+from typing import Literal, NotRequired, cast
 
 import networkx as nx
 from curies import ReferenceTuple
@@ -126,31 +127,14 @@ def _get_predicate_sets(
 
 
 def is_descendent(
-    descendant: str | Reference,
+    reference: str | Reference,
     ancestor: str | Reference,
     /,
     **kwargs: Unpack[HierarchyKwargs],
 ) -> bool:
-    """Check that the first identifier has the second as a descendent.
-
-    :param descendant: The prefix for the descendant
-    :param ancestor: The local unique identifier for the descendant
-    :param kwargs: Keyword arguments for :func:`get_hierarchy`
-
-    :returns: If the decendant has the given ancestor
-
-    Check that ``GO:0070246`` (natural killer cell apoptotic process) is a descendant of
-    ``GO:0006915`` (apoptotic process)
-
-    >>> nk_apoptosis = Reference.from_curie(
-    ...     "GO:0070246", name="natural killer cell apoptotic process"
-    ... )
-    >>> apoptosis = Reference.from_curie("GO:0006915", name="apoptotic process")
-    >>> assert is_descendent(nk_apoptosis, apoptosis)
-    """
-    descendant, ancestor = _get_double_reference(descendant, ancestor)
-    descendants = get_descendants(ancestor, **kwargs)
-    return descendants is not None and descendant in descendants
+    """Check if the refeference is a descendant of the ancestor."""
+    warnings.warn("use has_ancestor() instead", DeprecationWarning, stacklevel=2)
+    return has_ancestor(reference, ancestor, direction="down", **kwargs)
 
 
 @lru_cache
@@ -184,14 +168,15 @@ def get_children(
 
 
 def has_ancestor(
-    descendant: str | Reference,
+    reference: str | Reference,
     ancestor: str | Reference,
     /,
+    direction: Literal["up", "down"] = "up",
     **kwargs: Unpack[HierarchyKwargs],
 ) -> bool:
     """Check that the first identifier has the second as an ancestor.
 
-    :param descendant: The descendant
+    :param reference: The reference
     :param ancestor: The ancestor
     :param kwargs: Keyword arguments for :func:`get_hierarchy`
 
@@ -203,10 +188,23 @@ def has_ancestor(
     >>> apoptosis = Reference.from_curie("GO:0006915", name="apoptotic process")
     >>> cell_death = Reference.from_curie("GO:0008219", name="cell death")
     >>> assert has_ancestor(apoptosis, cell_death)
+
+    Check that ``GO:0070246`` (natural killer cell apoptotic process) is a descendant of
+    ``GO:0006915`` (apoptotic process)
+
+    >>> nk_apoptosis = Reference.from_curie(
+    ...     "GO:0070246", name="natural killer cell apoptotic process"
+    ... )
+    >>> apoptosis = Reference.from_curie("GO:0006915", name="apoptotic process")
+    >>> assert has_ancestor(nk_apoptosis, apoptosis)
     """
-    descendant, ancestor = _get_double_reference(descendant, ancestor)
-    ancestors = get_ancestors(descendant, **kwargs)
-    return ancestors is not None and ancestor in ancestors
+    reference, ancestor = _get_double_reference(reference, ancestor)
+    if direction == "up":
+        ancestors = get_ancestors(reference, **kwargs)
+        return ancestors is not None and ancestor in ancestors
+    else:
+        descendants = get_descendants(ancestor, **kwargs)
+        return descendants is not None and reference in descendants
 
 
 def _get_double_reference(
