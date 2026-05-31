@@ -10,7 +10,7 @@ import robot_obo_tool
 
 from pyobo import default_reference
 from pyobo.struct.reference import OBOLiteral
-from pyobo.struct.struct import Obo, build_ontology, make_ad_hoc_ontology
+from pyobo.struct.struct import Obo, build_ontology
 from pyobo.struct.struct_utils import Annotation
 from pyobo.struct.typedef import has_license
 
@@ -76,9 +76,9 @@ class TestOBOHeader(unittest.TestCase):
 
     def test_5_data_version(self) -> None:
         """Test ontology definition."""
-        ontology = make_ad_hoc_ontology(
-            _ontology="xxx",
-            _auto_generated_by="test",
+        ontology = build_ontology(
+            prefix="xxx",
+            auto_generated_by="test",
         )
         self.assert_obo_lines(
             """\
@@ -94,9 +94,9 @@ class TestOBOHeader(unittest.TestCase):
 
     def test_7_subsets(self) -> None:
         """Test ontology definition."""
-        ontology = make_ad_hoc_ontology(
-            _ontology="xxx",
-            _subsetdefs={default_reference("xxx", "HELLO"): "test"},
+        ontology = build_ontology(
+            prefix="xxx",
+            subsetdefs={default_reference("xxx", "HELLO"): "test"},
         )
         self.assert_obo_lines(
             """\
@@ -107,9 +107,9 @@ class TestOBOHeader(unittest.TestCase):
             ontology,
         )
 
-        ontology = make_ad_hoc_ontology(
-            _ontology="xxx",
-            _subsetdefs={default_reference("go", "HELLO"): "test"},
+        ontology = build_ontology(
+            prefix="xxx",
+            subsetdefs={default_reference("go", "HELLO"): "test"},
         )
         self.assert_obo_lines(
             """\
@@ -131,9 +131,9 @@ class TestOBOHeader(unittest.TestCase):
 
     def test_11_idspace(self) -> None:
         """Test idspace definitions."""
-        ontology = make_ad_hoc_ontology(
-            _ontology="xxx",
-            _idspaces={
+        ontology = build_ontology(
+            prefix="xxx",
+            idspaces={
                 "go": "http://purl.obolibrary.org/obo/GO_",
             },
         )
@@ -162,9 +162,7 @@ class TestOBOHeader(unittest.TestCase):
 
     def test_17_ontology(self) -> None:
         """Test ontology definition."""
-        ontology = make_ad_hoc_ontology(
-            _ontology="xxx",
-        )
+        ontology = build_ontology("xxx")
         self.assert_obo_lines(
             """\
             format-version: 1.4
@@ -175,9 +173,9 @@ class TestOBOHeader(unittest.TestCase):
 
     def test_18_properties(self) -> None:
         """Test properties."""
-        ontology = make_ad_hoc_ontology(
-            _ontology="xxx",
-            _root_terms=[default_reference("xxx", "ROOT1")],
+        ontology = build_ontology(
+            prefix="xxx",
+            root_terms=[default_reference("xxx", "ROOT1")],
         )
         self.assert_obo_lines(
             """\
@@ -190,9 +188,7 @@ class TestOBOHeader(unittest.TestCase):
 
     def test_18_properties_bioregistry(self) -> None:
         """Test auto-populating."""
-        ontology = make_ad_hoc_ontology(
-            _ontology="go",
-        )
+        ontology = build_ontology("go")
         self.assert_obo_lines(
             """\
             format-version: 1.4
@@ -201,6 +197,7 @@ class TestOBOHeader(unittest.TestCase):
             idspace: foaf http://xmlns.com/foaf/0.1/ "Friend of a Friend"
             idspace: orcid https://orcid.org/ "Open Researcher and Contributor"
             ontology: go
+            property_value: dcterms:title "Gene Ontology" xsd:string
             property_value: dcterms:license "CC-BY-4.0" xsd:string
             property_value: dcterms:description "The Gene Ontology project provides a controlled vocabulary to describe gene and gene product attributes in any organism." xsd:string
             property_value: foaf:homepage "http\\://geneontology.org/" xsd:anyURI
@@ -449,9 +446,9 @@ class TestOBOHeader(unittest.TestCase):
 
     def test_18_properties_external(self) -> None:
         """Test properties."""
-        ontology = make_ad_hoc_ontology(
-            _ontology="xxx",
-            _property_values=[
+        ontology = build_ontology(
+            prefix="xxx",
+            properties=[
                 Annotation(has_license.reference, OBOLiteral.string("CC0")),
             ],
         )

@@ -17,12 +17,11 @@ from pyobo.struct import (
     SynonymTypeDef,
     Term,
     TypeDef,
-    make_ad_hoc_ontology,
 )
-from pyobo.struct.functional.obo_to_functional import get_term_axioms
+from pyobo.struct.functional import get_term_axioms
 from pyobo.struct.obograph import assert_graph_equal, to_parsed_obograph, to_parsed_obograph_oracle
 from pyobo.struct.reference import _parse_datetime, unspecified_matching
-from pyobo.struct.struct import BioregistryError
+from pyobo.struct.struct import BioregistryError, build_ontology
 from pyobo.struct.typedef import (
     exact_match,
     has_contributor,
@@ -61,12 +60,12 @@ def _ontology_from_term(
     synonym_typedefs: list[SynonymTypeDef] | None = None,
 ) -> Obo:
     name = bioregistry.get_name(prefix)
-    return make_ad_hoc_ontology(
-        _ontology=prefix,
-        _name=name,
+    return build_ontology(
+        prefix=prefix,
+        name=name,
         terms=[term],
-        _typedefs=typedefs,
-        _synonym_typedefs=synonym_typedefs,
+        typedefs=typedefs,
+        synonym_typedefs=synonym_typedefs,
     )
 
 

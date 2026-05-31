@@ -1073,7 +1073,7 @@ class Obo:
 
     def write_ofn(self, path: str | Path) -> None:
         """Write as Functional OWL (OFN)."""
-        from .functional.obo_to_functional import get_ofn_from_obo
+        from .functional import get_ofn_from_obo
 
         ofn = get_ofn_from_obo(self)
         ofn.write_funowl(path)
@@ -1089,7 +1089,7 @@ class Obo:
 
     def write_rdf(self, path: str | Path) -> None:
         """Write as Turtle RDF."""
-        from .functional.obo_to_functional import get_ofn_from_obo
+        from .functional import get_ofn_from_obo
 
         ofn = get_ofn_from_obo(self)
         ofn.write_rdf(path)
@@ -2490,7 +2490,7 @@ def build_ontology(
         if has_repository not in typedefs:
             typedefs.append(has_repository)
 
-    return make_ad_hoc_ontology(
+    return _make_ad_hoc_ontology(
         _ontology=prefix,
         _name=name,
         _auto_generated_by=auto_generated_by,
@@ -2509,7 +2509,13 @@ def build_ontology(
     )
 
 
-def make_ad_hoc_ontology(
+def make_ad_hoc_ontology(*args: Any, **kwargs: Any) -> Obo:
+    """Build an ontology from parts."""
+    warnings.warn("use build_ontology() instead", DeprecationWarning, stacklevel=2)
+    return _make_ad_hoc_ontology(*args, **kwargs)
+
+
+def _make_ad_hoc_ontology(
     _ontology: str,
     _name: str | None = None,
     _auto_generated_by: str | None = None,
