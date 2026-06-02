@@ -392,15 +392,13 @@ This project has been supported by the following organizations (in alphabetical 
 
 -->
 
-<!--
 ### 💰 Funding
 
 This project has been supported by the following grants:
 
-| Funding Body  | Program                                                      | Grant Number |
-|---------------|--------------------------------------------------------------|--------------|
-| Funder        | [Grant Name (GRANT-ACRONYM)](https://example.com/grant-link) | ABCXYZ       |
--->
+| Funding Body | Program | Grant Number                                                            |
+| ------------ | ------- | ----------------------------------------------------------------------- |
+| NFDI4Chem    | DFG     | [441958208](https://gepris.dfg.de/gepris/projekt/441958208?language=en) |
 
 ### 🍪 Cookiecutter
 
