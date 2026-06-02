@@ -28,20 +28,10 @@ if TYPE_CHECKING:
 __all__ = [
     "get_graph_embeddings_df",
     "get_text_embedding",
-    "get_text_embedding_model",
     "get_text_embedding_similarity",
     "get_text_embeddings_df",
 ]
 
-
-def get_text_embedding_model() -> sentence_transformers.SentenceTransformer:
-    """Get the default text embedding model."""
-    warnings.warn(
-        "get_text_embedding_model() is deprecated, use pystow.get_sentence_transfomer() directly",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return get_sentence_transformer()
 
 
 def _get_text(

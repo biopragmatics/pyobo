@@ -882,16 +882,6 @@ class Stanza(Referenced, HasReferencesMixin):
         )
         return self
 
-    def append_provenance(
-        self,
-        reference: Reference,
-        *,
-        annotations: Iterable[Annotation] | None = None,
-    ) -> Self:
-        """Append a creative work that mentions this term."""
-        warnings.warn("use append_mentioned_by instead", DeprecationWarning, stacklevel=2)
-        return self.append_mentioned_by(reference, annotations=annotations)
-
     def append_mentioned_by(
         self,
         reference: Reference,

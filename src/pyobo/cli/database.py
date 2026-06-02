@@ -383,28 +383,6 @@ def properties(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) 
         update_zenodo(PROPERTIES_RECORD, paths)
 
 
-@database_annotate
-def xrefs(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
-    """Make the prefix-identifier-xref dump."""
-    from .database_utils import _iter_xrefs
-    from ..getters import db_output_helper
-
-    warnings.warn("Use pyobo.database.mappings instead", DeprecationWarning, stacklevel=2)
-    with logging_redirect_tqdm():
-        it = _iter_xrefs(**kwargs)
-        paths = db_output_helper(
-            it,
-            "xrefs",
-            ("prefix", "identifier", "xref_prefix", "xref_identifier", "provenance"),
-            summary_detailed=(0, 2),  # second column corresponds to xref prefix
-            directory=directory,
-        )
-    if zenodo:
-        from zenodo_client import update_zenodo
-
-        # see https://zenodo.org/record/4021477
-        update_zenodo(JAVERT_RECORD, paths)
-
 
 @database_annotate
 def mappings(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
@@ -428,7 +406,11 @@ def mappings(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) ->
             directory=directory,
         )
     if zenodo:
-        raise NotImplementedError("need to do initial manual upload of SSSOM build")
+        from zenodo_client import update_zenodo
+
+        # TODO might not work because file paths for old xrefs were different
+        # see https://zenodo.org/record/4021477
+        update_zenodo(JAVERT_RECORD, paths)
 
 
 if __name__ == "__main__":

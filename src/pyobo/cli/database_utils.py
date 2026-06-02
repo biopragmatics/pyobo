@@ -132,19 +132,6 @@ def _iter_properties(**kwargs: Unpack[IterHelperHelperDict]) -> Iterable[tuple[s
                 yield cast(tuple[str, str, str, str], (prefix, *t))
 
 
-def _iter_xrefs(
-    **kwargs: Unpack[IterHelperHelperDict],
-) -> Iterable[tuple[str, str, str, str, str]]:
-    warnings.warn(f"use {_iter_mappings.__name__} instead", DeprecationWarning, stacklevel=2)
-    it = iter_helper_helper(get_xrefs_df, **kwargs)
-    for prefix, df in it:
-        df.dropna(inplace=True)
-        for row in df.values:
-            if any(not element for element in row):
-                continue
-            yield cast(tuple[str, str, str, str, str], (prefix, *row, prefix))
-
-
 def _iter_mappings(
     **kwargs: Unpack[IterHelperHelperDict],
 ) -> Iterable[tuple[str, str, str, str, str]]:
