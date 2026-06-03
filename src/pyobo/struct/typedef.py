@@ -295,8 +295,8 @@ has_output = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002234", name="h
 has_successor = TypeDef.from_triple(prefix="BFO", identifier="0000063", name="has successor")
 has_predecessor = TypeDef.from_triple(prefix="BFO", identifier="0000062", name="has predecessor")
 
-has_suborganization = TypeDef(reference=v.has_suborganization)
-is_suborganization_of = TypeDef(reference=v.is_suborganization_of)
+has_suborganization = TypeDef(reference=v.has_suborganization).append_parent(has_part)
+is_suborganization_of = TypeDef(reference=v.is_suborganization_of).append_parent(part_of)
 
 gene_product_enables = TypeDef(
     reference=Reference(prefix="RO", identifier="0018042", name="has gene product that enables"),
