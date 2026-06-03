@@ -2,25 +2,31 @@
 
 See https://www.w3.org/2006/07/SWD/SKOS/skos-and-owl/master.html#Transform1
 
-OWL to SKOS in OBO
+PyOBO's data model closely resembles the highly expressive data model of Web Ontology
+Language (OWL). In contrast, the SKOS data model is much simpler than OWL, shedding the
+ability relationships between entities besides a loose hierarchy of broader and narrower
+relations.
 
-why? SKOS is a much simpler model than OWL with minimal semantics. it just represents a
-hierarchy, which is preferred by many domain communities for loose categorizations, over
-the detailed axiomization that OWL provides.
+Some communities prefer SKOS because of its simplicity and lack of need for more
+explicit and/or precise semantics.
 
-I haven't found any specifications about mapping OWL to SKOS, so I implemented my own in
-PyOBO
+While I found some `notes
+<https://www.w3.org/2006/07/SWD/SKOS/skos-and-owl/master.html>`_ from W3 on the
+relationship between SKOS and OWL, I surprisingly wasn't easily able to find something
+official-looking on how to downscale OWL to SKOS.
+
+Therefore, I implemented my own mapping in PyOBO:
 
 - ``rdfs:label`` becomes ``skos:prefLabel``
-- all synoynm predicates (``oboInOwl:hasExactSynoynm``, ``oboInOwl:hasNarrowSynoynm``,
-  ``oboInOwl:hasBroadSynoynm``) squashed to ``skos:altLabel`` and synonym type
+- all synonym predicates (``oboInOwl:hasExactSynonym``, ``oboInOwl:hasNarrowSynonym``,
+  ``oboInOwl:hasBroadSynonym``) squashed to ``skos:altLabel`` and synonym type
   information is thrown away
 - ``dcterms:description`` becomes ``skos:scopeNote``
 - ``rdf:subClassOf`` and ``rdf:type`` are squashed to ``skos:broadMatch``
 - similarly, individuals and classes are both squashed to ``skos:Concept``
 - predicates aren't translated into SKOS
 
-interestingly, SKOS has better support for language tags because it is so closely
+Interestingly, SKOS has better support for language tags because it is so closely
 defined based on RDF as a serialization (whereas OWL can be serialized in RDF, but OBO
 does not have many of the language support ideas that are inherent to RDF things)
 
