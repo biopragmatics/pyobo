@@ -1,8 +1,40 @@
 """Exports to SKOS.
 
-See:
+See https://www.w3.org/2006/07/SWD/SKOS/skos-and-owl/master.html#Transform1
 
-- https://www.w3.org/2006/07/SWD/SKOS/skos-and-owl/master.html#Transform1
+OWL to SKOS in OBO
+
+why? SKOS is a much simpler model than OWL with minimal semantics. it just represents a
+hierarchy, which is preferred by many domain communities for loose categorizations, over
+the detailed axiomization that OWL provides.
+
+I haven't found any specifications about mapping OWL to SKOS, so I implemented my own in
+PyOBO
+
+- ``rdfs:label`` becomes ``skos:prefLabel``
+- all synoynm predicates (``oboInOwl:hasExactSynoynm``, ``oboInOwl:hasNarrowSynoynm``,
+  ``oboInOwl:hasBroadSynoynm``) squashed to ``skos:altLabel`` and synonym type
+  information is thrown away
+- ``dcterms:description`` becomes ``skos:scopeNote``
+- ``rdf:subClassOf`` and ``rdf:type`` are squashed to ``skos:broadMatch``
+- similarly, individuals and classes are both squashed to ``skos:Concept``
+- predicates aren't translated into SKOS
+
+interestingly, SKOS has better support for language tags because it is so closely
+defined based on RDF as a serialization (whereas OWL can be serialized in RDF, but OBO
+does not have many of the language support ideas that are inherent to RDF things)
+
+1. relies on ``OMO:0003014`` annotations, added in
+   https://github.com/information-artifact-ontology/ontology-metadata/pull/193 which
+   allows ontologies to explicitly specify what are the hierarchical properties. this
+   originally comes from OLS, which enables, e.g., UBERON to specify that PART OF
+   relationships should be navigable in the hierarchical browser simultaneously with IS
+   A relationships
+2. show ROR as an example which uses the subOrganizationOf relationship
+3. I extended the notion of this annotation to also do some simple reasoning over the
+   inverse predicates for any annotated hierarchical properties. This is important in
+   the famplex case where the relationships are all famplex-centered, but in a SKOS
+   output, we want to capture some of the external relationships as narrowMatches
 """
 
 from __future__ import annotations

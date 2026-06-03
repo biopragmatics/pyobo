@@ -749,8 +749,8 @@ class Obo:
     def get_hierarchical_predicates(cls) -> list[Reference] | None:
         """Get hierarchical predicates annotated on the class.
 
-        :return: A list of hierarchical predicates. If none has been annotated,
-            or the list is explicitly just "is a", then ``None`` is returned.
+        :returns: A list of hierarchical predicates. If none has been annotated, or the
+            list is explicitly just "is a", then ``None`` is returned.
         """
         if cls.property_values is None:
             return None
