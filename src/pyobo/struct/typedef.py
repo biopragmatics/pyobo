@@ -12,6 +12,7 @@ from .struct import TypeDef
 from ..resources.ro import load_ro
 
 __all__ = [
+    "INVERSES",
     "alternative_term",
     "broad_match",
     "close_match",
@@ -171,11 +172,13 @@ is_defined_by = TypeDef(
     reference=Reference(prefix="rdfs", identifier="isDefinedBy", name="is defined by"),
     is_metadata_tag=True,
 )
+member_of_reference = Reference(prefix=RO_PREFIX, identifier="0002350", name="member of")
 has_member = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0002351", name="has member"),
+    inverse=member_of_reference,
 )
 member_of = TypeDef(
-    reference=Reference(prefix=RO_PREFIX, identifier="0002350", name="member of"),
+    reference=member_of_reference,
     inverse=has_member.reference,
 )
 superclass_of = TypeDef(
@@ -445,3 +448,7 @@ extended_match_typedefs = (
     alternative_term,
     term_replaced_by,
 )
+
+INVERSES = {
+    xx.reference: xx.inverse for xx in locals().values() if isinstance(xx, TypeDef) and xx.inverse
+}
