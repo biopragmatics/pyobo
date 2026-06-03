@@ -1,47 +1,4 @@
-"""Exports to SKOS.
-
-See https://www.w3.org/2006/07/SWD/SKOS/skos-and-owl/master.html#Transform1
-
-PyOBO's data model closely resembles the highly expressive data model of Web Ontology
-Language (OWL). In contrast, the SKOS data model is much simpler than OWL, shedding the
-ability relationships between entities besides a loose hierarchy of broader and narrower
-relations.
-
-Some communities prefer SKOS because of its simplicity and lack of need for more
-explicit and/or precise semantics.
-
-While I found some `notes
-<https://www.w3.org/2006/07/SWD/SKOS/skos-and-owl/master.html>`_ from W3 on the
-relationship between SKOS and OWL, I surprisingly wasn't easily able to find something
-official-looking on how to downscale OWL to SKOS.
-
-Therefore, I implemented my own mapping in PyOBO:
-
-- ``rdfs:label`` becomes ``skos:prefLabel``
-- all synonym predicates (``oboInOwl:hasExactSynonym``, ``oboInOwl:hasNarrowSynonym``,
-  ``oboInOwl:hasBroadSynonym``) squashed to ``skos:altLabel`` and synonym type
-  information is thrown away
-- ``dcterms:description`` becomes ``skos:scopeNote``
-- ``rdf:subClassOf`` and ``rdf:type`` are squashed to ``skos:broadMatch``
-- similarly, individuals and classes are both squashed to ``skos:Concept``
-- predicates aren't translated into SKOS
-
-Interestingly, SKOS has better support for language tags because it is so closely
-defined based on RDF as a serialization (whereas OWL can be serialized in RDF, but OBO
-does not have many of the language support ideas that are inherent to RDF things)
-
-1. relies on ``OMO:0003014`` annotations, added in
-   https://github.com/information-artifact-ontology/ontology-metadata/pull/193 which
-   allows ontologies to explicitly specify what are the hierarchical properties. this
-   originally comes from OLS, which enables, e.g., UBERON to specify that PART OF
-   relationships should be navigable in the hierarchical browser simultaneously with IS
-   A relationships
-2. show ROR as an example which uses the subOrganizationOf relationship
-3. I extended the notion of this annotation to also do some simple reasoning over the
-   inverse predicates for any annotated hierarchical properties. This is important in
-   the famplex case where the relationships are all famplex-centered, but in a SKOS
-   output, we want to capture some of the external relationships as narrowMatches
-"""
+"""Exports to SKOS."""
 
 from __future__ import annotations
 

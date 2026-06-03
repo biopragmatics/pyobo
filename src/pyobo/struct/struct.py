@@ -595,7 +595,7 @@ class Obo:
 
     bioversions_key: ClassVar[str | None] = None
 
-    #: Root terms to use for the ontology
+    #: Root terms to use for the ontology, which get annotated with IAO:0000700
     root_terms: ClassVar[list[Reference] | None] = None
 
     #: The date the ontology was generated
