@@ -40,29 +40,33 @@ def _expand_rdflib(converter: Converter, reference: Reference) -> URIRef:
     return rdflib.URIRef(converter.expand_reference(reference, strict=True))
 
 
-def to_skos(
-    obo: Obo, *, converter: Converter | None = None, concept_scheme_node: str | Node | None = None
-) -> Graph:
+def _add_ontology_metadata(obo: Obo, graph: Graph, ontology_node: Node) -> None:
+    import rdflib
+    from rdflib import DCTERMS
+
+    if obo.name:
+        graph.add((ontology_node, DCTERMS.title, rdflib.Literal(obo.name)))
+
+
+def to_skos(obo: Obo, *, converter: Converter | None = None, iri_: str | None = None) -> Graph:
     """Get the ontology as a SKOS in a RDFLib graph."""
     import rdflib
-    from rdflib import DCTERMS, RDF, SKOS
+    from rdflib import RDF, SKOS
+
+    from ..struct import get_iris
 
     if converter is None:
         import bioregistry
 
         converter = bioregistry.get_default_converter()
 
-    if concept_scheme_node is None:
-        concept_scheme_node = rdflib.BNode()
-    elif isinstance(concept_scheme_node, Node):
-        pass  # this needs to come before checking str
-    elif isinstance(concept_scheme_node, str):
-        concept_scheme_node = rdflib.URIRef(concept_scheme_node)
+    iri_, _ = get_iris(obo, extension=".ttl", iri=iri_)
+    concept_scheme_node = rdflib.URIRef(iri_)
 
     graph = rdflib.Graph()
+    converter.bind_rdflib(graph)
     graph.add((concept_scheme_node, RDF.type, SKOS.ConceptScheme))
-    if obo.name:
-        graph.add((concept_scheme_node, DCTERMS.title, rdflib.Literal(obo.name)))
+    _add_ontology_metadata(obo, graph, concept_scheme_node)
 
     for root_term in obo.root_terms or []:
         root_node = _expand_rdflib(converter, root_term)

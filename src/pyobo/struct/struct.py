@@ -94,6 +94,7 @@ __all__ = [
     "abbreviation",
     "acronym",
     "build_ontology",
+    "get_iris",
     "make_ad_hoc_ontology",
 ]
 
@@ -2643,3 +2644,26 @@ def cleanup_terms(
 
     rv = terms | {aux_term} | set(prefix_to_parent_term.values()) | set(undefined.values())
     return rv
+
+
+BIOPRAGMATICS_IRI_BASE = "https://w3id.org/biopragmatics/resources"
+
+
+def get_iris(
+    obo_ontology: Obo, *, extension: str, iri: str | None = None, version_iri: str | None = None
+) -> tuple[str, str | None]:
+    """Get IRIs."""
+    extension = extension.lstrip(".")
+    prefix = obo_ontology.ontology
+    base = f"{BIOPRAGMATICS_IRI_BASE}/{prefix}"
+    if iri is None:
+        if obo_ontology.ontology_iri:
+            iri = obo_ontology.ontology_iri
+        else:
+            iri = f"{base}/{prefix}.{extension}"
+    if version_iri is None:
+        if obo_ontology.ontology_version_iri:
+            version_iri = obo_ontology.ontology_version_iri
+        elif obo_ontology.data_version:
+            version_iri = f"{base}/{obo_ontology.data_version}/{prefix}.{extension}"
+    return iri, version_iri
