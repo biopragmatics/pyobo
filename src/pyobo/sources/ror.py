@@ -55,6 +55,23 @@ NAME_REMAPPING = {
     "Hematology\\Oncology Clinic": "Hematology/Oncology Clinic",
 }
 
+ROR_ORGANIZATION_TYPE_TO_OBI: dict[OrganizationType, Term] = {
+    "education": Term.default(PREFIX, "education", "educational organization"),
+    "facility": Term.default(PREFIX, "facility", "facility"),
+    "funder": Term.default(PREFIX, "funder", "funder"),
+    "company": Term.default(PREFIX, "company", "company"),
+    "government": Term.default(PREFIX, "government", "government organization"),
+    "healthcare": Term.default(PREFIX, "healthcare", "healthcare organization"),
+    "archive": Term.default(PREFIX, "archive", "archival organization"),
+    "nonprofit": Term.default(PREFIX, "healthcare", "nonprofit organization")
+    .append_xref(Reference(prefix="ICO", identifier="0000048"))
+    .append_xref(Reference(prefix="GSSO", identifier="004615")),
+}
+for _k, v in ROR_ORGANIZATION_TYPE_TO_OBI.items():
+    v.append_parent(ORG_CLASS)
+    v.append_contributor(CHARLIE_TERM)
+    v.append_comment(PYOBO_INJECTED)
+
 
 class RORGetter(Obo):
     """An ontology representation of the ROR."""
@@ -62,7 +79,7 @@ class RORGetter(Obo):
     ontology = bioregistry_key = PREFIX
     typedefs = [has_homepage, *RMAP.values()]
     synonym_typedefs = [acronym]
-    root_terms = [CITY_CLASS, ORG_CLASS]
+    root_terms = [CITY_CLASS, *(v.reference for v in ROR_ORGANIZATION_TYPE_TO_OBI.values())]
     property_values = [
         Annotation(has_ontology_hierarchy_predicate.reference, is_suborganization_of.reference)
     ]
@@ -80,23 +97,6 @@ class RORGetter(Obo):
         yield from ROR_ORGANIZATION_TYPE_TO_OBI.values()
         yield from iterate_ror_terms(force=force)
 
-
-ROR_ORGANIZATION_TYPE_TO_OBI: dict[OrganizationType, Term] = {
-    "education": Term.default(PREFIX, "education", "educational organization"),
-    "facility": Term.default(PREFIX, "facility", "facility"),
-    "funder": Term.default(PREFIX, "funder", "funder"),
-    "company": Term.default(PREFIX, "company", "company"),
-    "government": Term.default(PREFIX, "government", "government organization"),
-    "healthcare": Term.default(PREFIX, "healthcare", "healthcare organization"),
-    "archive": Term.default(PREFIX, "archive", "archival organization"),
-    "nonprofit": Term.default(PREFIX, "healthcare", "nonprofit organization")
-    .append_xref(Reference(prefix="ICO", identifier="0000048"))
-    .append_xref(Reference(prefix="GSSO", identifier="004615")),
-}
-for _k, v in ROR_ORGANIZATION_TYPE_TO_OBI.items():
-    v.append_parent(ORG_CLASS)
-    v.append_contributor(CHARLIE_TERM)
-    v.append_comment(PYOBO_INJECTED)
 
 _MISSED_ORG_TYPES: set[str] = set()
 

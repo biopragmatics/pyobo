@@ -94,6 +94,7 @@ __all__ = [
     "abbreviation",
     "acronym",
     "build_ontology",
+    "get_iris",
     "make_ad_hoc_ontology",
 ]
 
@@ -594,7 +595,7 @@ class Obo:
 
     bioversions_key: ClassVar[str | None] = None
 
-    #: Root terms to use for the ontology
+    #: Root terms to use for the ontology, which get annotated with IAO:0000700
     root_terms: ClassVar[list[Reference] | None] = None
 
     #: The date the ontology was generated
@@ -744,6 +745,23 @@ class Obo:
                 logger.warning(f"[{self.bioversions_key}] error while looking up version")
         return None
 
+    @classmethod
+    def get_hierarchical_predicates(cls) -> list[Reference] | None:
+        """Get hierarchical predicates annotated on the class.
+
+        :returns: A list of hierarchical predicates. If none has been annotated, or the
+            list is explicitly just "is a", then ``None`` is returned.
+        """
+        if cls.property_values is None:
+            return None
+        rv = []
+        for p in cls.property_values:
+            if p.predicate == v.has_ontology_hierarchy_predicate and isinstance(p.value, Reference):
+                rv.append(p.value)
+        if not rv or rv == [v.is_a]:
+            return None
+        return rv
+
     @property
     def _version_or_raise(self) -> str:
         if not self.data_version:
@@ -766,6 +784,14 @@ class Obo:
         from . import obograph
 
         obograph.write_obograph(self, path, converter=converter)
+
+    def write_skos(
+        self, path: str | Path, *, converter: Converter | None = None, format: str | None = None
+    ) -> None:
+        """Write SKOS."""
+        from .skos import write_skos
+
+        write_skos(self, path, converter=converter, format=format)
 
     @classmethod
     def cli(cls, *args: Any) -> Any:
@@ -791,6 +817,7 @@ class Obo:
         @click.option("--obo", is_flag=True, help="Write OBO")
         @click.option("--ofn", is_flag=True, help="Write Functional OWL (OFN)")
         @click.option("--ttl", is_flag=True, help="Write turtle RDF via OFN")
+        @click.option("--skos-ttl", is_flag=True, help="Write turtle RDF via SKOS")
         @click.option("--cache/--no-cache", is_flag=True, help="Write the cache", default=True)
         @click.option(
             "--version", help="Specify data version to get. Use this if bioversions is acting up."
@@ -801,6 +828,7 @@ class Obo:
             owl: bool,
             ofn: bool,
             ttl: bool,
+            skos_ttl: bool,
             version: str | None,
             rewrite: bool,
             cache: bool,
@@ -816,6 +844,7 @@ class Obo:
                 write_owl=owl,
                 write_ofn=ofn,
                 write_ttl=ttl,
+                write_skos_ttl=skos_ttl,
                 write_nodes=True,
                 force=force or rewrite,
                 use_tqdm=True,
@@ -1202,6 +1231,10 @@ class Obo:
     def _ttl_path(self) -> Path:
         return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.ttl")
 
+    @property
+    def _skos_ttl_path(self) -> Path:
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.skos.ttl")
+
     def _get_cache_config(
         self,
     ) -> list[tuple[CacheArtifact, Sequence[str], Callable[..., Iterable[tuple[Any, ...]]]]]:
@@ -1319,6 +1352,7 @@ class Obo:
         write_owl: bool = False,
         write_ofn: bool = False,
         write_ttl: bool = False,
+        write_skos_ttl: bool = False,
         write_nodes: bool = False,
         obograph_use_internal: bool = False,
         write_cache: bool = True,
@@ -1331,7 +1365,9 @@ class Obo:
         if write_obo and (not self._obo_path.is_file() or force):
             logger.info(f"[{self._prefix_version}] writing OBO to {self._obo_path}")
             self.write_obo(self._obo_path, use_tqdm=use_tqdm)
-        if (write_ofn or write_owl or write_obograph) and (not self._ofn_path.is_file() or force):
+        if (write_ofn or write_owl or (write_obograph and not obograph_use_internal)) and (
+            not self._ofn_path.is_file() or force
+        ):
             logger.info(f"[{self._prefix_version}] writing OFN to {self._ofn_path}")
             self.write_ofn(self._ofn_path)
         if write_obograph and (not self._obograph_path.is_file() or force):
@@ -1355,8 +1391,11 @@ class Obo:
                 self._ofn_path, self._owl_path, debug=True, merge=False, reason=False
             )
         if write_ttl and (not self._ttl_path.is_file() or force):
-            logger.info(f"[{self._prefix_version}] writing Turtle to {self._ttl_path}")
+            logger.info(f"[{self._prefix_version}] writing OFN Turtle to {self._ttl_path}")
             self.write_rdf(self._ttl_path)
+        if write_skos_ttl and (not self._skos_ttl_path.is_file() or force):
+            logger.info(f"[{self._prefix_version}] writing SKOS Turtle to {self._skos_ttl_path}")
+            self.write_skos(self._skos_ttl_path)
         if write_obonet and (not self._obonet_gz_path.is_file() or force):
             logger.info(f"[{self._prefix_version}] writing obonet to {self._obonet_gz_path}")
             self.write_obonet_gz(self._obonet_gz_path)
@@ -2605,3 +2644,26 @@ def cleanup_terms(
 
     rv = terms | {aux_term} | set(prefix_to_parent_term.values()) | set(undefined.values())
     return rv
+
+
+BIOPRAGMATICS_IRI_BASE = "https://w3id.org/biopragmatics/resources"
+
+
+def get_iris(
+    obo_ontology: Obo, *, extension: str, iri: str | None = None, version_iri: str | None = None
+) -> tuple[str, str | None]:
+    """Get IRIs."""
+    extension = extension.lstrip(".")
+    prefix = obo_ontology.ontology
+    base = f"{BIOPRAGMATICS_IRI_BASE}/{prefix}"
+    if iri is None:
+        if obo_ontology.ontology_iri:
+            iri = obo_ontology.ontology_iri
+        else:
+            iri = f"{base}/{prefix}.{extension}"
+    if version_iri is None:
+        if obo_ontology.ontology_version_iri:
+            version_iri = obo_ontology.ontology_version_iri
+        elif obo_ontology.data_version:
+            version_iri = f"{base}/{obo_ontology.data_version}/{prefix}.{extension}"
+    return iri, version_iri
