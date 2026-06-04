@@ -6,7 +6,7 @@ from collections.abc import Iterable
 
 import pystow.utils
 import requests
-from curies.vocabulary import abbreviation
+from curies.vocabulary import abbreviation, acronym
 from tqdm import tqdm
 
 from pyobo.struct import Obo, Reference, Term, TypeDef, default_reference
@@ -112,6 +112,18 @@ def _get_term(
         if initialism.startswith("<em>initialism</em>:"):
             initialism = initialism.removeprefix("<em>initialism</em>:").strip()
             term.append_synonym(initialism, type=Reference.from_reference(abbreviation))
+    if abbrev := record.pop("abbrev", None):
+        if abbrev.startswith("<em>abbrev</em>: "):
+            abbrev = abbrev.removeprefix("<em>abbrev</em>: ").strip()
+            term.append_synonym(abbrev, type=Reference.from_reference(abbreviation))
+    if acr := record.pop("acronym", None):
+        if acr.startswith("<em>acronym</em>:"):
+            acr = acr.removeprefix("<em>acronym</em>:").strip()
+            term.append_synonym(acr, type=Reference.from_reference(acronym))
+    if mentioned := record.pop("mentioned", None):
+        if mentioned.startswith("<em>mentioned</em>:"):
+            mentioned = mentioned.removeprefix("<em>mentioned</em>:").strip()
+            # TODO where to put this
 
     if synonym := record.pop("synonym", None):
         if synonym.startswith("<"):
@@ -145,11 +157,8 @@ SKIP_KEYS = [
     "disclaimer",
     "accessed",
     "doi",
-    "mentioned",  # TODO see goldbook:15155
     "also defines",  # TODO see goldbook:A00003
     "index",  # TODO see goldbook:A00543
-    "abbrev",  # TODO see goldbook:AT06994
-    "acronym",  # TODO see goldbook:09400
     "antonym",  # TODO see goldbook:13110
     "related",  # TODO see goldbook:C01245
     "intro",  # TODO see goldbook:Q04991
