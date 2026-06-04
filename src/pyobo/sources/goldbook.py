@@ -10,6 +10,8 @@ from curies.vocabulary import abbreviation
 from tqdm import tqdm
 
 from pyobo.struct import Obo, Reference, Term, TypeDef, default_reference
+from pyobo.struct import vocabulary as v
+from pyobo.struct.typedef import is_mentioned_by
 from pyobo.utils.path import ensure_path
 
 PREFIX = "goldbook"
@@ -24,7 +26,7 @@ class GoldBookGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
-    typedefs = [HAS_STATUS]
+    typedefs = [HAS_STATUS, is_mentioned_by]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""
@@ -33,19 +35,30 @@ class GoldBookGetter(Obo):
 
 def _iter_terms() -> Iterable[Term]:
     res = requests.get(URL, timeout=15).json()
+    seen_document_references = set()
+    yield Term(reference=v.document)
     for identifier in tqdm(res["terms"]["list"], unit_scale=True):
-        if term := _get_term(identifier):
+        term, document_references = _get_term(identifier)
+        if term and document_references:
             yield term
+            for document_reference in document_references:
+                if document_reference not in seen_document_references:
+                    seen_document_references.add(document_reference)
+                    yield Term(reference=document_reference, type="Instance").append_parent(
+                        v.document
+                    )
 
 
-def _get_term(identifier: str, *, verbose: bool = False) -> Term | None:
+def _get_term(
+    identifier: str, *, verbose: bool = False
+) -> tuple[None, None] | tuple[Term, list[Reference]]:
     url = TERM_URL_FORMAT.format(identifier)
     try:
         path = ensure_path(PREFIX, "terms", url=url, name=f"{identifier}.json")
     except pystow.utils.DownloadError:
         if verbose:
             tqdm.write(f"[{PREFIX}:{identifier}] failed to download {url}")
-        return None
+        return None, None
 
     try:
         with path.open() as file:
@@ -53,7 +66,7 @@ def _get_term(identifier: str, *, verbose: bool = False) -> Term | None:
     except json.decoder.JSONDecodeError:
         if verbose:
             tqdm.write(f"[{PREFIX}:{identifier}] failed to parse data in {path}")
-        return None
+        return None, None
 
     record = res["term"]
     definition_blocks = record.pop("definitions")
@@ -63,6 +76,8 @@ def _get_term(identifier: str, *, verbose: bool = False) -> Term | None:
     else:
         definition_block = None
         definition = None
+
+    documents = []
 
     term = Term(
         reference=Reference(
@@ -86,12 +101,12 @@ def _get_term(identifier: str, *, verbose: bool = False) -> Term | None:
                 term.append_see_also(link_reference)
         for source in definition_block.get("sources", []):
             if source_doi := _extract_doi(source):
-                term.append_mentioned_by(Reference(prefix="doi", identifier=source_doi))
+                source_reference = Reference(prefix="doi", identifier=source_doi)
+                documents.append(source_reference)
+                term.append_mentioned_by(source_reference)
 
     if status := record.pop("status", None):
         term.annotate_string(HAS_STATUS, status)
-    if doi := record.pop("doi", None):
-        term.append_exact_match(Reference(prefix="doi", identifier=doi))
 
     if initialism := record.pop("initialism", None):
         if initialism.startswith("<em>initialism</em>:"):
@@ -116,7 +131,7 @@ def _get_term(identifier: str, *, verbose: bool = False) -> Term | None:
     if record:
         tqdm.write(f"[{identifier}] unhandled keys: {record.keys()}")
 
-    return term
+    return term, documents
 
 
 SKIP_KEYS = [
@@ -129,14 +144,15 @@ SKIP_KEYS = [
     "collection",
     "disclaimer",
     "accessed",
+    "doi",
     "mentioned",  # TODO see goldbook:15155
-    "also defines",  # TODO see A00003
-    "index",  # TODO see A00543
-    "abbrev",  # TODO see AT06994
-    "acronym",  # TODO see 09400
-    "antonym",  # TODO see 13110
-    "related",  # TODO see C01245
-    "intro",  # TODO see Q04991
+    "also defines",  # TODO see goldbook:A00003
+    "index",  # TODO see goldbook:A00543
+    "abbrev",  # TODO see goldbook:AT06994
+    "acronym",  # TODO see goldbook:09400
+    "antonym",  # TODO see goldbook:13110
+    "related",  # TODO see goldbook:C01245
+    "intro",  # TODO see goldbook:Q04991
 ]
 
 DOI_RE = re.compile(r"10\.\d{4,}/\S+")

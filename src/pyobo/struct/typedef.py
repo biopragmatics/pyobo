@@ -349,11 +349,13 @@ is_mentioned_by = TypeDef(
     reference=v.is_mentioned_by,
     is_metadata_tag=True,
     inverse=v.mentions,
+    range=v.document,
 )
 mentions = TypeDef(
     reference=v.mentions,
     is_metadata_tag=True,
     inverse=v.is_mentioned_by,
+    domain=v.document,
 )
 
 has_smiles = TypeDef(reference=v.has_smiles, is_metadata_tag=True).append_xref(v.debio_has_smiles)
