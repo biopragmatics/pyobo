@@ -87,7 +87,7 @@ def to_skos(obo: Obo, *, converter: Converter | None = None, iri_: str | None = 
         if term.name:
             graph.add((term_node, SKOS.prefLabel, rdflib.Literal(term.name)))
         if term.definition:
-            graph.add((term_node, SKOS.scopeNote, rdflib.Literal(term.definition)))
+            graph.add((term_node, SKOS.definition, rdflib.Literal(term.definition)))
 
         for synonym in term.synonyms or []:
             graph.add(
