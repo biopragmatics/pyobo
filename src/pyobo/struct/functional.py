@@ -306,7 +306,10 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         yield f.DisjointObjectProperties([x, r])
     # 28
     if typedef.inverse:
-        yield f.InverseObjectProperties(r, typedef.inverse)
+        if typedef.is_metadata_tag:
+            pass  # not sure what to do
+        else:
+            yield f.InverseObjectProperties(r, typedef.inverse)
     # 29
     for to in typedef.transitive_over:
         yield m.TransitiveOver(r, to)
