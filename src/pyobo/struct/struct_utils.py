@@ -5,7 +5,6 @@ from __future__ import annotations
 import datetime
 import itertools as itt
 import logging
-import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence

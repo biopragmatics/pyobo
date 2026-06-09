@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import gzip
 import logging
-import warnings
 from collections.abc import Iterable
 from typing import cast
 
@@ -22,7 +21,6 @@ from ..api import (
     get_properties_df,
     get_relations_df,
     get_typedef_df,
-    get_xrefs_df,
 )
 from ..constants import IterHelperHelperDict
 from ..getters import iter_helper, iter_helper_helper

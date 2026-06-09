@@ -1,7 +1,6 @@
 """CLI for PyOBO Database Generation."""
 
 import logging
-import warnings
 from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import ParamSpec, TypeVar
@@ -383,7 +382,6 @@ def properties(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) 
         update_zenodo(PROPERTIES_RECORD, paths)
 
 
-
 @database_annotate
 def mappings(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the SSSOM dump."""
@@ -399,7 +397,7 @@ def mappings(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) ->
     ]
     with logging_redirect_tqdm():
         it = _iter_mappings(**kwargs)
-        db_output_helper(
+        paths = db_output_helper(
             it,
             "mappings",
             columns,

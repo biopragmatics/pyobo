@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import tempfile
-import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, cast
 
@@ -31,7 +30,6 @@ __all__ = [
     "get_text_embedding_similarity",
     "get_text_embeddings_df",
 ]
-
 
 
 def _get_text(

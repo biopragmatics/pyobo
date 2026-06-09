@@ -112,6 +112,7 @@ def _read_obo(
     return obonet.read_obo(
         tqdm(lines, disable=not use_tqdm, **tqdm_kwargs),
         ignore_obsolete=ignore_obsolete,
+        # TODO add include_clauses=True to get trailing modifiers
     )
 
 
