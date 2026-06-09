@@ -12,6 +12,7 @@ from .struct import TypeDef
 from ..resources.ro import load_ro
 
 __all__ = [
+    "INVERSES",
     "alternative_term",
     "broad_match",
     "close_match",
@@ -171,11 +172,13 @@ is_defined_by = TypeDef(
     reference=Reference(prefix="rdfs", identifier="isDefinedBy", name="is defined by"),
     is_metadata_tag=True,
 )
+member_of_reference = Reference(prefix=RO_PREFIX, identifier="0002350", name="member of")
 has_member = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0002351", name="has member"),
+    inverse=member_of_reference,
 )
 member_of = TypeDef(
-    reference=Reference(prefix=RO_PREFIX, identifier="0002350", name="member of"),
+    reference=member_of_reference,
     inverse=has_member.reference,
 )
 superclass_of = TypeDef(
@@ -292,8 +295,8 @@ has_output = TypeDef.from_triple(prefix=RO_PREFIX, identifier="0002234", name="h
 has_successor = TypeDef.from_triple(prefix="BFO", identifier="0000063", name="has successor")
 has_predecessor = TypeDef.from_triple(prefix="BFO", identifier="0000062", name="has predecessor")
 
-has_suborganization = TypeDef(reference=v.has_suborganization)
-is_suborganization_of = TypeDef(reference=v.is_suborganization_of)
+has_suborganization = TypeDef(reference=v.has_suborganization).append_parent(has_part)
+is_suborganization_of = TypeDef(reference=v.is_suborganization_of).append_parent(part_of)
 
 gene_product_enables = TypeDef(
     reference=Reference(prefix="RO", identifier="0018042", name="has gene product that enables"),
@@ -346,11 +349,13 @@ is_mentioned_by = TypeDef(
     reference=v.is_mentioned_by,
     is_metadata_tag=True,
     inverse=v.mentions,
+    range=v.document,
 )
 mentions = TypeDef(
     reference=v.mentions,
     is_metadata_tag=True,
     inverse=v.is_mentioned_by,
+    domain=v.document,
 )
 
 has_smiles = TypeDef(reference=v.has_smiles, is_metadata_tag=True).append_xref(v.debio_has_smiles)
@@ -445,3 +450,7 @@ extended_match_typedefs = (
     alternative_term,
     term_replaced_by,
 )
+
+INVERSES = {
+    xx.reference: xx.inverse for xx in locals().values() if isinstance(xx, TypeDef) and xx.inverse
+}

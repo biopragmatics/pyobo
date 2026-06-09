@@ -15,12 +15,13 @@ from rdflib import XSD
 
 from . import vocabulary as pv
 from .reference import OBOLiteral, Reference, _parse_datetime
-from .struct_utils import Stanza
+from .struct import get_iris
 
 if TYPE_CHECKING:
     from .reference import Referenced
     from .struct import Obo, Term, TypeDef
     from .struct_utils import Annotation as OBOAnnotation
+    from .struct_utils import Stanza
 
 __all__ = [
     "get_ofn_from_obo",
@@ -30,25 +31,13 @@ __all__ = [
     "get_typedef_axioms",
 ]
 
-_BASE = "https://w3id.org/biopragmatics/resources"
-
 
 def get_ofn_from_obo(
     obo_ontology: Obo, *, iri: str | None = None, version_iri: str | None = None
 ) -> Document:
     """Convert an ontology."""
-    prefix = obo_ontology.ontology
-    base = f"{_BASE}/{prefix}"
-    if iri is None:
-        if obo_ontology.ontology_iri:
-            iri = obo_ontology.ontology_iri
-        else:
-            iri = f"{base}/{prefix}.ofn"
-    if version_iri is None:
-        if obo_ontology.ontology_version_iri:
-            version_iri = obo_ontology.ontology_version_iri
-        elif obo_ontology.data_version:
-            version_iri = f"{base}/{obo_ontology.data_version}/{prefix}.ofn"
+    iri, version_iri = get_iris(obo_ontology, iri=iri, version_iri=version_iri, extension="ofn")
+
     ofn_ontology = Ontology(
         iri=iri,
         version_iri=version_iri,
@@ -317,7 +306,10 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         yield f.DisjointObjectProperties([x, r])
     # 28
     if typedef.inverse:
-        yield f.InverseObjectProperties(r, typedef.inverse)
+        if typedef.is_metadata_tag:
+            pass  # not sure what to do
+        else:
+            yield f.InverseObjectProperties(r, typedef.inverse)
     # 29
     for to in typedef.transitive_over:
         yield m.TransitiveOver(r, to)
