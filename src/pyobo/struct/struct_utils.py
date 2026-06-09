@@ -5,7 +5,6 @@ from __future__ import annotations
 import datetime
 import itertools as itt
 import logging
-import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
@@ -881,16 +880,6 @@ class Stanza(Referenced, HasReferencesMixin):
             Annotation(v.has_dbxref, _ensure_ref(reference)),
         )
         return self
-
-    def append_provenance(
-        self,
-        reference: Reference,
-        *,
-        annotations: Iterable[Annotation] | None = None,
-    ) -> Self:
-        """Append a creative work that mentions this term."""
-        warnings.warn("use append_mentioned_by instead", DeprecationWarning, stacklevel=2)
-        return self.append_mentioned_by(reference, annotations=annotations)
 
     def append_mentioned_by(
         self,

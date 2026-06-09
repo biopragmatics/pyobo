@@ -93,7 +93,7 @@ class TestAltIds(unittest.TestCase):
     @mock_id_names_mapping
     def test_get_primary(self, _: Any, __: Any) -> None:
         """Test upgrading an obsolete identifier."""
-        primary_id = get_primary_identifier("go", "0001071")
+        primary_id = get_primary_identifier("go:0001071")
         self.assertIsNotNone(primary_id)
         self.assertEqual("0003700", primary_id)
         self.assertIsNone(get_name(ReferenceTuple("go", "0001071"), upgrade_identifier=False))
