@@ -353,7 +353,19 @@ class TestEverything(unittest.TestCase):
             self.assertTrue(pyobo.has_ancestor(r3.curie, r1.curie, cache=False, use_tqdm=False))
             self.assertFalse(pyobo.has_ancestor(r1, r3, cache=False, use_tqdm=False))
             self.assertFalse(pyobo.has_ancestor(r1.curie, r3.curie, cache=False, use_tqdm=False))
-            self.assertTrue(pyobo.is_descendent(r3.curie, r1.curie, cache=False, use_tqdm=False))
-            self.assertTrue(pyobo.is_descendent(r3, r1, cache=False, use_tqdm=False))
-            self.assertFalse(pyobo.is_descendent(r1, r3, cache=False, use_tqdm=False))
-            self.assertFalse(pyobo.is_descendent(r1.curie, r3.curie, cache=False, use_tqdm=False))
+            self.assertTrue(
+                pyobo.has_ancestor(
+                    r3.curie, r1.curie, cache=False, use_tqdm=False, direction="down"
+                )
+            )
+            self.assertTrue(
+                pyobo.has_ancestor(r3, r1, cache=False, use_tqdm=False, direction="down")
+            )
+            self.assertFalse(
+                pyobo.has_ancestor(r1, r3, cache=False, use_tqdm=False, direction="down")
+            )
+            self.assertFalse(
+                pyobo.has_ancestor(
+                    r1.curie, r3.curie, cache=False, use_tqdm=False, direction="down"
+                )
+            )
