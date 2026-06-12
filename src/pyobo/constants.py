@@ -218,7 +218,12 @@ class IterHelperHelperDict(SlimGetOntologyKwargs):
 
 
 #: The ontology format
-OntologyFormat: TypeAlias = Literal["obo", "owl", "json", "rdf"]
+OntologyFormat: TypeAlias = Literal[
+    "obo",
+    "owl",
+    "json",
+    "rdf",
+]
 
 #: from table 2 of the Functional OWL syntax definition
 #: at https://www.w3.org/TR/owl2-syntax/#IRIs

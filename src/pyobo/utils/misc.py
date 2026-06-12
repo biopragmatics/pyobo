@@ -137,8 +137,11 @@ def _get_obograph_json_version(prefix: str, url: str) -> str | None:
     return cleanup_version(rv, prefix)
 
 
+
+VersionGetter: TypeAlias = Callable[[str, str], str | None]
+
 #: A mapping from data type to gersion getter function
-VERSION_GETTERS: dict[OntologyFormat, Callable[[str, str], str | None]] = {
+VERSION_GETTERS: dict[OntologyFormat, VersionGetter] = {
     "obo": _get_obo_version,
     "owl": _get_owl_version,
     "json": _get_obograph_json_version,
