@@ -648,6 +648,19 @@ class Stanza(Referenced, HasReferencesMixin):
         """Iterate over references or values."""
         return sorted(self.properties.get(_ensure_ref(typedef), []))
 
+    def remove_property_object(self, prop: ReferenceHint, obj: ReferenceHint) -> None:
+        """Remove a property object, if it exists."""
+        prop = _ensure_ref(prop)
+        obj = _ensure_ref(obj)
+        if prop not in self.properties:
+            return
+        self.properties[prop] = [p for p in self.properties[prop] if p != obj]
+
+        # delete any axioms associated with the predicate/object
+        xx = _property_resolve(prop, obj)
+        if xx in self._axioms:
+            del self._axioms[xx]
+
     def get_property_objects(self, prop: ReferenceHint) -> list[Reference]:
         """Get properties from the given key."""
         return sorted(
