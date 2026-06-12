@@ -167,7 +167,7 @@ def get_typedef(graph: rdflib.Graph, node: URIRef, converter: curies.Converter) 
     return typedef
 
 
-def _demo():
+def _demo() -> None:
     import pystow
 
     url = "https://nfdi4ing.pages.rwth-aachen.de/metadata4ing/metadata4ing/ontology.ttl"

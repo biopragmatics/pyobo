@@ -288,12 +288,6 @@ def _get_jskos_download(prefix: str) -> str | None:
     return bioregistry.get_jskos_download(prefix)
 
 
-def _get_skos_download(prefix: str) -> str | AnnotatedURL | None:
-    import bioregistry
-
-    return bioregistry.get_skos_download(prefix, get_format=True)
-
-
 #: Functions that get ontology files. Order matters in this list,
 #: since order implicitly defines priority
 ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | AnnotatedURL | None]]] = [
