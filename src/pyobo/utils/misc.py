@@ -5,10 +5,11 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Iterable
 from datetime import datetime
+from typing import TypeAlias
 
 import bioversions.utils
 
-from pyobo.constants import ONTOLOGY_GETTERS, OntologyFormat
+from ..constants import ONTOLOGY_GETTERS, OntologyFormat
 
 __all__ = [
     "VERSION_GETTERS",
