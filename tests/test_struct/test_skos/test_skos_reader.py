@@ -7,7 +7,7 @@ import curies
 import rdflib
 
 from pyobo.struct import Obo
-from pyobo.struct.skos import get_skos_ontology
+from pyobo.struct.skos import get_skos_from_rdflib
 
 HERE = Path(__file__).parent.resolve()
 PATH = HERE.joinpath("test.ttl")
@@ -27,5 +27,5 @@ class TestSKOSReader(unittest.TestCase):
         )
         graph = rdflib.Graph()
         graph.parse(PATH)
-        ontology = get_skos_ontology(graph, prefix="kim.hcrt", converter=converter)
+        ontology = get_skos_from_rdflib(graph, prefix="kim.hcrt", converter=converter)
         self.assertIsInstance(ontology, Obo)

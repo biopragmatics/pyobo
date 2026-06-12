@@ -12,7 +12,7 @@ from pyobo.identifier_utils import get_converter
 from pyobo.struct import Obo, Term, build_ontology
 
 __all__ = [
-    "get_skos_ontology",
+    "get_skos_from_rdflib",
     "read_skos",
 ]
 
@@ -27,10 +27,10 @@ def read_skos(
     """Read a SKOS RDF file."""
     graph = rdflib.Graph()
     graph.parse(path, format=rdf_format or "ttl")
-    return get_skos_ontology(graph, prefix=prefix, converter=converter)
+    return get_skos_from_rdflib(graph, prefix=prefix, converter=converter)
 
 
-def get_skos_ontology(
+def get_skos_from_rdflib(
     graph: rdflib.Graph,
     *,
     prefix: str | None = None,
@@ -124,12 +124,12 @@ def get_term(graph: rdflib.Graph, node: URIRef, converter: curies.Converter) -> 
     return term
 
 
-def _demo():
+def _demo() -> None:
     import pystow
 
     url = "https://raw.githubusercontent.com/dini-ag-kim/hcrt/refs/heads/master/hcrt.ttl"
     graph = pystow.ensure_rdf("dalia", url=url)
-    ontology = get_skos_ontology(graph)
+    ontology = get_skos_from_rdflib(graph)
     ontology.write_obo("/Users/cthoyt/Desktop/hcrt.obo")
 
 
