@@ -15,9 +15,6 @@ if TYPE_CHECKING:
     import sssom_pydantic
     from bioregistry.schema import AnnotatedURL
 
-if TYPE_CHECKING:
-    from bioregistry.schema import AnnotatedURL
-
 __all__ = [
     "DATABASE_DIRECTORY",
     "DEFAULT_PREFIX_MAP",
