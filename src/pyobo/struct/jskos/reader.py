@@ -7,9 +7,9 @@ from pathlib import Path
 import curies
 import jskos
 from jskos import ProcessedConcept, ProcessedKOS
-from tqdm import tqdm
 
 from pyobo.struct import Obo, build_ontology
+from ...identifier_utils import get_converter
 
 __all__ = [
     "from_pkos",
@@ -20,8 +20,6 @@ __all__ = [
 def read_jskos(path: str | Path, *, prefix: str, converter: curies.Converter | None = None) -> Obo:
     """Read JSKOS into an ontology."""
     if converter is None:
-        from ..identifier_utils import get_converter
-
         converter = get_converter()
     pkos = jskos.read(path).process(converter)
     return from_pkos(prefix=prefix, pkos=pkos)
@@ -47,9 +45,3 @@ def _iterate_concepts_inner(concept: ProcessedConcept):
         yield from _iterate_concepts_inner(broader)
     for _mapping in concept.mappings:
         raise NotImplementedError
-
-
-if __name__ == "__main__":
-    url = "https://oer-repo.uibk.ac.at/w3id.org/vocabs/oefos2012/schema.json"
-    o = read_jskos(url, prefix="oefos")
-    tqdm.write(str(o))
