@@ -1,9 +1,9 @@
 """CLI for PyOBO Database Generation."""
 
 import logging
-import warnings
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from pathlib import Path
+from typing import ParamSpec, TypeVar
 
 import click
 from more_click import verbose_option
@@ -11,7 +11,6 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from typing_extensions import Unpack
 
 from .utils import (
-    Clickable,
     directory_option,
     force_option,
     force_process_option,
@@ -37,9 +36,12 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
+P = ParamSpec("P")
+T = TypeVar("T")
+
 
 @click.group(name="database")
-def main():
+def main() -> None:
     """Build the PyOBO Database."""
 
 
@@ -53,7 +55,7 @@ skip_below_option = click.option(
 )
 
 
-def database_annotate(f: Clickable) -> Clickable:
+def database_annotate(f: Callable[P, T]) -> Callable[P, T]:
     """Add appropriate decorators to database CLI functions."""
     decorators = [
         main.command(),
@@ -126,8 +128,7 @@ def build(ctx: click.Context, eager_versions: bool, **kwargs: Unpack[DatabaseKwa
 @database_annotate
 def cache(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Cache all things."""
-    from .database_utils import iter_helper_helper
-    from ..getters import get_ontology
+    from ..getters import get_ontology, iter_helper_helper
 
     if zenodo:
         click.echo("no zenodo for caching")
@@ -144,9 +145,9 @@ def metadata(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) ->
     """Make the prefix-metadata dump."""
     import bioregistry
 
-    from .database_utils import IterHelperHelperDict, iter_helper_helper
     from ..api import get_metadata
-    from ..getters import db_output_helper
+    from ..constants import IterHelperHelperDict
+    from ..getters import db_output_helper, iter_helper_helper
 
     def _iter_metadata_internal(
         **kwargs: Unpack[IterHelperHelperDict],
@@ -382,29 +383,6 @@ def properties(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) 
 
 
 @database_annotate
-def xrefs(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
-    """Make the prefix-identifier-xref dump."""
-    from .database_utils import _iter_xrefs
-    from ..getters import db_output_helper
-
-    warnings.warn("Use pyobo.database.mappings instead", DeprecationWarning, stacklevel=2)
-    with logging_redirect_tqdm():
-        it = _iter_xrefs(**kwargs)
-        paths = db_output_helper(
-            it,
-            "xrefs",
-            ("prefix", "identifier", "xref_prefix", "xref_identifier", "provenance"),
-            summary_detailed=(0, 2),  # second column corresponds to xref prefix
-            directory=directory,
-        )
-    if zenodo:
-        from zenodo_client import update_zenodo
-
-        # see https://zenodo.org/record/4021477
-        update_zenodo(JAVERT_RECORD, paths)
-
-
-@database_annotate
 def mappings(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the SSSOM dump."""
     from .database_utils import _iter_mappings
@@ -419,14 +397,18 @@ def mappings(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) ->
     ]
     with logging_redirect_tqdm():
         it = _iter_mappings(**kwargs)
-        db_output_helper(
+        paths = db_output_helper(
             it,
             "mappings",
             columns,
             directory=directory,
         )
     if zenodo:
-        raise NotImplementedError("need to do initial manual upload of SSSOM build")
+        from zenodo_client import update_zenodo
+
+        # TODO might not work because file paths for old xrefs were different
+        # see https://zenodo.org/record/4021477
+        update_zenodo(JAVERT_RECORD, paths)
 
 
 if __name__ == "__main__":

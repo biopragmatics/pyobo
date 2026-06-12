@@ -61,7 +61,7 @@ def get_ncbigene_id_to_species_mapping() -> Mapping[str, str]:
     return _get_ncbigene_info_subset(["GeneID", "Symbol"])
 
 
-def _get_ncbigene_info_subset(usecols) -> Mapping[str, str]:
+def _get_ncbigene_info_subset(usecols: list[str]) -> Mapping[str, str]:
     df = _get_ncbigene_subset(usecols)
     return dict(df.values)
 

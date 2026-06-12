@@ -1,5 +1,6 @@
-Command Line Interface
-======================
+########################
+ Command Line Interface
+########################
 
 pyobo automatically installs the command ``pyobo``. See ``pyobo --help`` for usage
 details.

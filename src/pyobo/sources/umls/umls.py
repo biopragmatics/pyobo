@@ -60,10 +60,10 @@ class UMLSGetter(Obo):
         return iter_terms(version=self._version_or_raise)
 
 
-def get_semantic_types() -> Mapping[str, set[str]]:
+def get_semantic_types(*, version: str | None = None) -> Mapping[str, set[str]]:
     """Get UMLS semantic types for each term."""
     dd = defaultdict(set)
-    with open_umls_semantic_types() as file:
+    with open_umls_semantic_types(version=version) as file:
         # this is very fast and doesn't need a progress bar
         for line in file:
             cui, sty, _ = line.decode("utf8").split("|", 2)
@@ -71,12 +71,15 @@ def get_semantic_types() -> Mapping[str, set[str]]:
     return dict(dd)
 
 
+LENGTH = 17_500_000
+
+
 def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over UMLS terms."""
-    semantic_types = get_semantic_types()
+    semantic_types = get_semantic_types(version=version)
 
     with open_umls(version=version) as file:
-        it = tqdm(file, unit_scale=True, desc="[umls] parsing", total=16_700_000)
+        it = tqdm(file, unit_scale=True, desc="[umls] parsing", total=LENGTH)
         lines = (line.decode("utf-8").strip().split("|") for line in it)
         for cui, cui_lines in itt.groupby(lines, key=operator.itemgetter(0)):
             df = pd.DataFrame(list(cui_lines), columns=RRF_COLUMNS)

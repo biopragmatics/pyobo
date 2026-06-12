@@ -16,9 +16,9 @@ from obographs import (
     StandardizedSynonym,
 )
 
-from pyobo import Obo, Reference, StanzaType, Synonym, Term, TypeDef
+from pyobo import Obo, Reference, StanzaType, Synonym, Term, TypeDef, build_ontology
 from pyobo.identifier_utils import get_converter
-from pyobo.struct import Annotation, OBOLiteral, make_ad_hoc_ontology
+from pyobo.struct import Annotation, OBOLiteral
 from pyobo.struct import vocabulary as v
 from pyobo.struct.typedef import has_ontology_root_term
 
@@ -138,15 +138,15 @@ def from_standardized_graph(prefix: str, graph: StandardizedGraph) -> Obo:
     for _logical_definition_axiom in graph.logical_definition_axioms:
         pass  # TODO
 
-    return make_ad_hoc_ontology(
-        _ontology=prefix,
-        _name=graph.name,
+    return build_ontology(
+        prefix=prefix,
+        name=graph.name,
         terms=list(terms.values()),
-        _typedefs=list(typedefs.values()),
-        _root_terms=root_terms,
-        _property_values=property_values,
-        _data_version=graph.version or (graph.meta.version_iri if graph.meta is not None else None),
-        _auto_generated_by=auto_generated_by,
+        typedefs=list(typedefs.values()),
+        root_terms=root_terms,
+        properties=property_values,
+        version=graph.version or (graph.meta.version_iri if graph.meta is not None else None),
+        auto_generated_by=auto_generated_by,
     )
 
 

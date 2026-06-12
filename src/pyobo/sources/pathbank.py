@@ -107,7 +107,8 @@ def get_protein_mapping(version: str, force: bool = False) -> Mapping[str, set[R
             else:
                 reference = Reference(prefix="uniprot", identifier=protein_id)
         except ValueError:
-            tqdm.write(f"[pathbank] invalid uniprot identifier: {protein_id}")
+            if protein_id != "Z00Z00":  # This is know, I think a placeholder
+                tqdm.write(f"[pathbank] invalid uniprot identifier: {protein_id}")
         else:
             smpdb_id_to_proteins[pathway_id].add(reference)
     return smpdb_id_to_proteins

@@ -6,10 +6,13 @@ import logging
 import re
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias
+from typing import TYPE_CHECKING, Literal, NamedTuple, NotRequired, TypeAlias
 
 import pystow
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
+
+if TYPE_CHECKING:
+    import sssom_pydantic
 
 if TYPE_CHECKING:
     from bioregistry.schema import AnnotatedURL
@@ -24,13 +27,13 @@ __all__ = [
     "DatabaseKwargs",
     "GetOntologyKwargs",
     "IterHelperHelperDict",
-    "LookupKwargs",
     "OntologyFormat",
     "OntologyPathPack",
     "SlimGetOntologyKwargs",
     "check_should_cache",
     "check_should_force",
     "check_should_use_tqdm",
+    "get_semantic_mapping_metadata",
 ]
 
 logger = logging.getLogger(__name__)
@@ -199,16 +202,6 @@ def check_should_use_tqdm(data: GetOntologyKwargs) -> bool:
     return data.get("use_tqdm", True)
 
 
-class LookupKwargs(GetOntologyKwargs):
-    """Represents all arguments passed to :func:`pyobo.get_ontology`.
-
-    This dictionary does contain the ``prefix`` since it's used in the scope of CLI
-    functions.
-    """
-
-    prefix: str
-
-
 class IterHelperHelperDict(SlimGetOntologyKwargs):
     """Represents arguments needed when iterating over all ontologies.
 
@@ -297,3 +290,35 @@ ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | AnnotatedURL 
     ("skos", _get_skos_download),
     ("jskos", _get_jskos_download),
 ]
+
+
+def get_semantic_mapping_metadata(
+    prefix: str,
+    *,
+    id: str | None = None,
+    confidence: float | None = None,
+    version: str | None = None,
+    lookup_missing_version: bool = True,
+) -> sssom_pydantic.MappingSet:
+    """Get metadata for a resource."""
+    import bioregistry
+    import sssom_pydantic
+    from pydantic import AnyUrl
+
+    resource = bioregistry.get_resource(prefix, strict=True)
+    if version is None and lookup_missing_version:
+        import bioversions
+
+        version = bioversions.get_version(prefix, strict=False)
+    return sssom_pydantic.MappingSet(
+        id=id
+        or resource.get_download()
+        or f"https://w3id.org/biopragmatics/pyobo/mappings/{resource.prefix}.sssom.tsv",
+        title=resource.get_name(strict=True),
+        # maybe update this?
+        source=[AnyUrl(f"https://bioregistry.io/{resource.prefix}")],
+        description=resource.get_description(),
+        license=resource.get_license_url(),
+        confidence=confidence,
+        version=version,
+    )

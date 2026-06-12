@@ -50,7 +50,7 @@ def _lookup(name: str) -> str | None:
 
 def get_df() -> pd.DataFrame:
     """Get the BioGRID identifiers mapping dataframe."""
-    version = get_version("biogrid")
+    version = get_version(PREFIX)
     url = f"{BASE_URL}/BIOGRID-{version}/BIOGRID-IDENTIFIERS-{version}.tab.zip"
     df = ensure_df(PREFIX, url=url, skiprows=28, dtype=str, version=version)
     df["taxonomy_id"] = df["ORGANISM_OFFICIAL_NAME"].map(_lookup)

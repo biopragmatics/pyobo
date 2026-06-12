@@ -5,7 +5,7 @@ import logging
 import os
 import warnings
 from functools import lru_cache
-from typing import Literal, overload
+from typing import Literal, cast, overload
 
 import bioversions
 import curies
@@ -18,7 +18,9 @@ from ..utils.path import prefix_directory_join
 __all__ = [
     "VersionError",
     "get_version",
+    "get_version_from_kwargs",
     "get_version_pins",
+    "pin_version",
 ]
 
 logger = logging.getLogger(__name__)
@@ -30,14 +32,15 @@ class VersionError(ValueError):
 
 # docstr-coverage:excused `overload`
 @overload
-def get_version(prefix: str, *, strict: Literal[True] = True) -> str: ...
+def get_version(prefix: str, *, strict: Literal[True] = ...) -> str: ...
 
 
 # docstr-coverage:excused `overload`
 @overload
-def get_version(prefix: str, *, strict: Literal[False] = False) -> str | None: ...
+def get_version(prefix: str, *, strict: Literal[False] = ...) -> str | None: ...
 
 
+@lru_cache(None)
 def get_version(prefix: str, *, strict: bool = False) -> str | None:
     """Get the version for the resource, if available.
 
@@ -49,15 +52,19 @@ def get_version(prefix: str, *, strict: bool = False) -> str | None:
     :raises VersionError: if the version is not available and strict mode is enabled
     """
     # Prioritize loaded environment variable PYOBO_VERSION_PINS dictionary
-    version = get_version_pins().get(prefix)
-    if version:
+    if version := get_version_pins().get(prefix):
         return version
+
     try:
         version = bioversions.get_version(prefix)
     except KeyError:
         pass  # this prefix isn't available from bioversions
     except Exception as e:
-        raise ValueError(f"[{prefix}] could not get version from bioversions") from e
+        msg = f"[{prefix}] could not get version from bioversions"
+        if strict:
+            raise ValueError(msg) from e
+        logger.warning(msg)
+        raise
     else:
         if version:
             return version
@@ -65,7 +72,7 @@ def get_version(prefix: str, *, strict: bool = False) -> str | None:
     metadata_json_path = prefix_directory_join(prefix, name="metadata.json", ensure_exists=False)
     if metadata_json_path.exists():
         data = json.loads(metadata_json_path.read_text())
-        version = data["version"]
+        version = cast(str | None, data["version"])
         if version:
             return version
 
@@ -81,6 +88,11 @@ def get_version_from_kwargs(prefix: str, kwargs: GetOntologyKwargs) -> str | Non
         return version
     # it's okay if none gets returned after getting this far, we at least tried
     return get_version(prefix, strict=False)
+
+
+def pin_version(prefix: str, version: str) -> None:
+    """Pin the version."""
+    get_version_pins()[prefix] = version
 
 
 @lru_cache(1)
@@ -100,7 +112,7 @@ def get_version_pins() -> dict[str, str]:
         return {}
 
     try:
-        version_pins = json.loads(version_pins_str)
+        version_pins = cast(dict[str, str], json.loads(version_pins_str))
     except ValueError as e:
         logger.error(
             "The value for the environment variable PYOBO_VERSION_PINS "

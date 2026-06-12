@@ -3,25 +3,25 @@
 import unittest
 from collections.abc import Iterable
 from textwrap import dedent
-from typing import cast
 
 import bioregistry
 from curies import ReferenceTuple
+from sssom_pydantic import SemanticMapping
+from sssom_pydantic.testing import assert_semantic_mapping_equal
 
 from pyobo import Obo, Reference, default_reference
 from pyobo.constants import NCBITAXON_PREFIX
 from pyobo.identifier_utils import NotCURIEError
-from pyobo.struct.functional.obo_to_functional import get_term_axioms
-from pyobo.struct.obograph import assert_graph_equal, to_parsed_obograph, to_parsed_obograph_oracle
-from pyobo.struct.reference import _parse_datetime, unspecified_matching
-from pyobo.struct.struct import (
+from pyobo.struct import (
     Annotation,
-    BioregistryError,
     SynonymTypeDef,
     Term,
     TypeDef,
-    make_ad_hoc_ontology,
 )
+from pyobo.struct.functional import get_term_axioms
+from pyobo.struct.obograph import assert_graph_equal, to_parsed_obograph, to_parsed_obograph_oracle
+from pyobo.struct.reference import _parse_datetime, unspecified_matching
+from pyobo.struct.struct import BioregistryError, build_ontology
 from pyobo.struct.typedef import (
     exact_match,
     has_contributor,
@@ -47,8 +47,9 @@ class Nope(Obo):
 
     ontology = "nope"
 
-    def iter_terms(self, force: bool = False):
+    def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Do not do anything."""
+        yield from iter([])
 
 
 def _ontology_from_term(
@@ -58,8 +59,14 @@ def _ontology_from_term(
     typedefs: list[TypeDef] | None = None,
     synonym_typedefs: list[SynonymTypeDef] | None = None,
 ) -> Obo:
-    name = cast(str, bioregistry.get_name(prefix))
-    return make_ad_hoc_ontology(_ontology=prefix, _name=name, terms=[term], _typedefs=typedefs)
+    name = bioregistry.get_name(prefix)
+    return build_ontology(
+        prefix=prefix,
+        name=name,
+        terms=[term],
+        typedefs=typedefs,
+        synonym_typedefs=synonym_typedefs,
+    )
 
 
 class TestStruct(unittest.TestCase):
@@ -159,7 +166,7 @@ class TestTerm(unittest.TestCase):
                 prefix=term.prefix,
                 term=term,
                 typedefs=list(xx),
-                synonym_typedefs=synonym_typedefs.values() if synonym_typedefs else None,
+                synonym_typedefs=list(synonym_typedefs.values()) if synonym_typedefs else None,
             )
             self.maxDiff = None
             assert_graph_equal(
@@ -173,7 +180,7 @@ class TestTerm(unittest.TestCase):
         if curie is None:
             curie = f"oboInOwl:{name}"
         reference = Reference(prefix="GO", identifier="0000001")
-        term = Term(reference=reference, **{name: True})
+        term = Term(reference=reference, **{name: True})  # type:ignore[arg-type]
         self.assert_obo_stanza(
             term,
             obo=f"""\
@@ -191,7 +198,7 @@ class TestTerm(unittest.TestCase):
         self.assertIsNotNone(value)
         self.assertTrue(value)
 
-        term = Term(reference=reference, **{name: False})
+        term = Term(reference=reference, **{name: False})  # type:ignore[arg-type]
         self.assert_obo_stanza(
             term,
             obo=f"""\
@@ -323,7 +330,7 @@ class TestTerm(unittest.TestCase):
             """,
         )
 
-    def test_6_definition(self):
+    def test_6_definition(self) -> None:
         """Test adding a definition."""
         term = Term(LYSINE_DEHYDROGENASE_ACT, definition="Something")
         self.assert_obo_stanza(
@@ -553,14 +560,23 @@ class TestTerm(unittest.TestCase):
         )
 
         ontology = _ontology_from_term("go", term)
-        mappings_df = ontology.get_mappings_df()
-        self.assertEqual(
-            ["subject_id", "object_id", "predicate_id", "mapping_justification"],
-            list(mappings_df.columns),
-        )
-        self.assertEqual(
-            ["GO:0050069", "EC:1.4.1.15", "oboInOwl:hasDbXref", "semapv:UnspecifiedMatching"],
-            list(mappings_df.values[0]),
+        mappings = list(ontology.get_semantic_mappings())
+        self.assertEqual(1, len(mappings))
+        assert_semantic_mapping_equal(
+            self,
+            SemanticMapping(
+                subject=LYSINE_DEHYDROGENASE_ACT,
+                object=Reference.from_curie("EC:1.4.1.15"),
+                predicate=Reference.from_curie(
+                    "oboInOwl:hasDbXref", name="has database cross-reference"
+                ),
+                justification=Reference.from_curie("semapv:UnspecifiedMatching"),
+                # Added automatically based on ontology prefix
+                license="https://creativecommons.org/licenses/by/4.0/",
+                subject_source=Reference(prefix="obo", identifier="go.obo"),
+                source=Reference(prefix="obo", identifier="go.obo"),
+            ),
+            mappings[0],
         )
 
     def test_10_append_xref_with_float_axiom(self) -> None:
@@ -588,20 +604,24 @@ class TestTerm(unittest.TestCase):
         )
 
         ontology = _ontology_from_term("go", term)
-        mappings_df = ontology.get_mappings_df()
-        self.assertEqual(
-            ["subject_id", "object_id", "predicate_id", "mapping_justification", "confidence"],
-            list(mappings_df.columns),
-        )
-        self.assertEqual(
-            [
-                "GO:0050069",
-                "EC:1.4.1.15",
-                "oboInOwl:hasDbXref",
-                "semapv:UnspecifiedMatching",
-                0.99,
-            ],
-            list(mappings_df.values[0]),
+        mappings = list(ontology.get_semantic_mappings())
+
+        assert_semantic_mapping_equal(
+            self,
+            SemanticMapping(
+                subject=LYSINE_DEHYDROGENASE_ACT,
+                object=target,
+                predicate=Reference.from_curie(
+                    "oboInOwl:hasDbXref", name="has database cross-reference"
+                ),
+                justification=Reference.from_curie("semapv:UnspecifiedMatching"),
+                confidence=0.99,
+                # Added automatically based on ontology prefix
+                license="https://creativecommons.org/licenses/by/4.0/",
+                subject_source=Reference(prefix="obo", identifier="go.obo"),
+                source=Reference(prefix="obo", identifier="go.obo"),
+            ),
+            mappings[0],
         )
 
     def test_10_append_xref_with_string_axiom(self) -> None:
@@ -635,7 +655,7 @@ class TestTerm(unittest.TestCase):
         term.annotate_object(r, Reference(prefix="GO", identifier="1234569", name="dummy"))
         self.assert_obo_stanza(
             term,
-            typedefs={r.pair: r},
+            typedefs={r.pair: TypeDef(reference=r)},
             obo="""\
                 [Term]
                 id: GO:0050069
@@ -687,6 +707,28 @@ class TestTerm(unittest.TestCase):
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
                 AnnotationAssertion(RO:1234567 GO:0050069 "value"@en)
+            """,
+        )
+
+    def test_12_property_string_with_quote(self) -> None:
+        """Test emitting a string property literal with a quote in it."""
+        # see pyobo.struct.struct_utils._escape_literal for
+        # implementation of escaping for these literals
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_string(RO_DUMMY, '"value" added')
+        self.assert_obo_stanza(
+            term,
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                property_value: RO:1234567 "\\"value\\" added" xsd:string
+            """,
+            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            ofn="""\
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(RO:1234567 GO:0050069 "\\"value\\" added"^^xsd:string)
             """,
         )
 
@@ -746,6 +788,26 @@ class TestTerm(unittest.TestCase):
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
                 AnnotationAssertion(RO:1234567 GO:0050069 "1993"^^xsd:gYear)
+            """,
+            typedefs={RO_DUMMY.pair: RO_DUMMY},
+        )
+
+    def test_12_property_date(self) -> None:
+        """Test emitting property literals that were annotated as a date."""
+        term = Term(reference=LYSINE_DEHYDROGENASE_ACT)
+        term.annotate_date(RO_DUMMY, "1993-01-01")
+        self.assert_obo_stanza(
+            term,
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                property_value: RO:1234567 "1993-01-01" xsd:date
+            """,
+            ofn="""\
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(RO:1234567 GO:0050069 "1993-01-01"^^xsd:date)
             """,
             typedefs={RO_DUMMY.pair: RO_DUMMY},
         )
@@ -954,10 +1016,9 @@ class TestTerm(unittest.TestCase):
 
     def test_18_append_exact_match(self) -> None:
         """Test emitting a relationship."""
+        target = Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
         term = Term(LYSINE_DEHYDROGENASE_ACT)
-        term.append_exact_match(
-            Reference(prefix="eccode", identifier="1.4.1.15", name="lysine dehydrogenase")
-        )
+        term.append_exact_match(target)
         self.assert_obo_stanza(
             term,
             typedefs={RO_DUMMY.pair: RO_DUMMY},
@@ -975,14 +1036,21 @@ class TestTerm(unittest.TestCase):
         )
 
         ontology = _ontology_from_term("go", term)
-        mappings_df = ontology.get_mappings_df()
-        self.assertEqual(
-            ["subject_id", "object_id", "predicate_id", "mapping_justification"],
-            list(mappings_df.columns),
-        )
-        self.assertEqual(
-            ["GO:0050069", "EC:1.4.1.15", "skos:exactMatch", "semapv:UnspecifiedMatching"],
-            list(mappings_df.values[0]),
+        mappings = list(ontology.get_semantic_mappings())
+        self.assertEqual(1, len(mappings))
+        assert_semantic_mapping_equal(
+            self,
+            SemanticMapping(
+                subject=LYSINE_DEHYDROGENASE_ACT,
+                object=target,
+                predicate=Reference.from_curie("skos:exactMatch", name="exact match"),
+                justification=Reference.from_curie("semapv:UnspecifiedMatching"),
+                # Added automatically based on ontology prefix
+                license="https://creativecommons.org/licenses/by/4.0/",
+                subject_source=Reference(prefix="obo", identifier="go.obo"),
+                source=Reference(prefix="obo", identifier="go.obo"),
+            ),
+            mappings[0],
         )
 
         term = Term(LYSINE_DEHYDROGENASE_ACT)
@@ -1045,8 +1113,7 @@ class TestTerm(unittest.TestCase):
             """,
         )
 
-        species = term.get_species()
-        self.assertIsNotNone(species)
+        species = term.get_species(strict=True)
         self.assertEqual("ncbitaxon", species.prefix)
         self.assertEqual("9606", species.identifier)
 
@@ -1054,8 +1121,7 @@ class TestTerm(unittest.TestCase):
         """Test setting and getting species."""
         term = Term(reference=Reference(prefix="hgnc", identifier="1234"))
         term.set_species("9606", "Homo sapiens")
-        species = term.get_species()
-        self.assertIsNotNone(species)
+        species = term.get_species(strict=True)
         self.assertEqual(NCBITAXON_PREFIX, species.prefix)
         self.assertEqual("9606", species.identifier)
 
@@ -1090,9 +1156,9 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
             """,
         )
 
-        mappings = list(term.get_mappings(add_context=True))
-        self.assertEqual(1, len(mappings))
-        predicate, target_, context = mappings[0]
+        term_mappings = list(term.get_mappings(add_context=True))
+        self.assertEqual(1, len(term_mappings))
+        predicate, target_, context = term_mappings[0]
         self.assertEqual(exact_match.reference, predicate)
         self.assertEqual(target, target_)
         self.assertEqual(unspecified_matching, context.justification)
@@ -1100,20 +1166,22 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
         self.assertIsNone(context.contributor)
 
         ontology = _ontology_from_term("go", term)
-        mappings_df = ontology.get_mappings_df()
-        self.assertEqual(
-            ["subject_id", "object_id", "predicate_id", "mapping_justification", "confidence"],
-            list(mappings_df.columns),
-        )
-        self.assertEqual(
-            [
-                "GO:0050069",
-                "EC:1.4.1.15",
-                "skos:exactMatch",
-                "semapv:UnspecifiedMatching",
-                0.99,
-            ],
-            list(mappings_df.values[0]),
+        mappings = list(ontology.get_semantic_mappings())
+        self.assertEqual(1, len(mappings))
+        assert_semantic_mapping_equal(
+            self,
+            SemanticMapping(
+                subject=LYSINE_DEHYDROGENASE_ACT,
+                object=target,
+                predicate=Reference.from_curie("skos:exactMatch", name="exact match"),
+                justification=Reference.from_curie("semapv:UnspecifiedMatching"),
+                confidence=0.99,
+                # Added automatically based on ontology prefix
+                license="https://creativecommons.org/licenses/by/4.0/",
+                subject_source=Reference(prefix="obo", identifier="go.obo"),
+                source=Reference(prefix="obo", identifier="go.obo"),
+            ),
+            mappings[0],
         )
 
     def test_18_append_with_string_axioms(self) -> None:

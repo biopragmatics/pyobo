@@ -3,23 +3,25 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
+import curies
 import rdflib
 from curies import vocabulary as v
+from functional_owl import Document, Ontology
+from functional_owl import dsl as f
+from functional_owl import macros as m
 from rdflib import XSD
 
-from pyobo.struct import Stanza
-from pyobo.struct import vocabulary as pv
-from pyobo.struct.functional import dsl as f
-from pyobo.struct.functional import macros as m
-from pyobo.struct.functional.ontology import Document, Ontology
-from pyobo.struct.reference import OBOLiteral, Reference, _parse_datetime
+from . import vocabulary as pv
+from .reference import OBOLiteral, Reference, _parse_datetime
+from .struct import get_iris
 
 if TYPE_CHECKING:
-    from pyobo.struct.struct import Obo, Referenced, Term
-    from pyobo.struct.struct_utils import Annotation as OBOAnnotation
-    from pyobo.struct.typedef import TypeDef
+    from .reference import Referenced
+    from .struct import Obo, Term, TypeDef
+    from .struct_utils import Annotation as OBOAnnotation
+    from .struct_utils import Stanza
 
 __all__ = [
     "get_ofn_from_obo",
@@ -29,25 +31,13 @@ __all__ = [
     "get_typedef_axioms",
 ]
 
-_BASE = "https://w3id.org/biopragmatics/resources"
-
 
 def get_ofn_from_obo(
     obo_ontology: Obo, *, iri: str | None = None, version_iri: str | None = None
 ) -> Document:
     """Convert an ontology."""
-    prefix = obo_ontology.ontology
-    base = f"{_BASE}/{prefix}"
-    if iri is None:
-        if obo_ontology.ontology_iri:
-            iri = obo_ontology.ontology_iri
-        else:
-            iri = f"{base}/{prefix}.ofn"
-    if version_iri is None:
-        if obo_ontology.ontology_version_iri:
-            version_iri = obo_ontology.ontology_version_iri
-        elif obo_ontology.data_version:
-            version_iri = f"{base}/{obo_ontology.data_version}/{prefix}.ofn"
+    iri, version_iri = get_iris(obo_ontology, iri=iri, version_iri=version_iri, extension="ofn")
+
     ofn_ontology = Ontology(
         iri=iri,
         version_iri=version_iri,
@@ -64,12 +54,12 @@ def get_ofn_from_obo(
 def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
     """Get axioms from the ontology."""
     if obo_ontology.root_terms:
-        yield f.Declaration(pv.has_ontology_root_term, type="AnnotationProperty")
-        yield m.LabelMacro(pv.has_ontology_root_term, cast(str, pv.has_ontology_root_term.name))
+        yield f.Declaration(v.has_ontology_root_term, type="AnnotationProperty")
+        yield m.LabelMacro(v.has_ontology_root_term, v.has_ontology_root_term.name)
 
     if obo_ontology.subsetdefs:
         yield f.Declaration("oboInOwl:SubsetProperty", type="AnnotationProperty")
-        for subset_typedef, subset_label in obo_ontology.subsetdefs:
+        for subset_typedef, subset_label in obo_ontology.subsetdefs.items():
             yield f.Declaration(subset_typedef, type="AnnotationProperty")
             yield m.LabelMacro(subset_typedef, subset_label)
             yield f.SubAnnotationPropertyOf(subset_typedef, "oboInOwl:SubsetProperty")
@@ -77,14 +67,17 @@ def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
     if obo_ontology.synonym_typedefs:
         used_has_scope = False
         for synonym_typedef in obo_ontology.synonym_typedefs:
-            yield f.Declaration(synonym_typedef, type="AnnotationProperty")
-            yield m.LabelMacro(synonym_typedef, synonym_typedef.name)
-            yield f.SubAnnotationPropertyOf(synonym_typedef, "oboInOwl:SynonymTypeProperty")
+            yield f.Declaration(synonym_typedef.reference, type="AnnotationProperty")
+            if synonym_typedef.name is not None:
+                yield m.LabelMacro(synonym_typedef.reference, synonym_typedef.name)
+            yield f.SubAnnotationPropertyOf(
+                synonym_typedef.reference, "oboInOwl:SynonymTypeProperty"
+            )
             if synonym_typedef.specificity:
                 used_has_scope = True
                 yield f.AnnotationAssertion(
                     "oboInOwl:hasScope",
-                    synonym_typedef,
+                    synonym_typedef.reference,
                     v.synonym_scopes[synonym_typedef.specificity],
                 )
         if used_has_scope:
@@ -99,13 +92,16 @@ def get_ontology_axioms(obo_ontology: Obo) -> Iterable[f.Box]:
 
 def get_ontology_annotations(obo_ontology: Obo) -> Iterable[f.Annotation]:
     """Get annotations from the ontology."""
-    for predicate, value in obo_ontology._iterate_property_pairs():
-        yield f.Annotation(predicate, value)
+    for annotation in obo_ontology._iterate_property_pairs():
+        yield _convert_annotation(annotation)
     if obo_ontology.data_version:
-        yield f.Annotation(pv.version_info, OBOLiteral.string(obo_ontology.data_version))
+        yield f.Annotation(
+            v.owl_version_info, rdflib.Literal(obo_ontology.data_version, datatype=XSD.string)
+        )
     if obo_ontology.auto_generated_by is not None:
         yield f.Annotation(
-            pv.obo_autogenerated_by, OBOLiteral.string(obo_ontology.auto_generated_by)
+            v.obo_autogenerated_by,
+            rdflib.Literal(obo_ontology.auto_generated_by, datatype=XSD.string),
         )
 
 
@@ -123,17 +119,17 @@ def _oboliteral_to_literal(obo_literal: OBOLiteral) -> rdflib.Literal:
 
 def get_term_axioms(term: Term) -> Iterable[f.Box]:
     """Iterate over functional OWL axioms for a term."""
-    s = f.IdentifierBox(term)
+    s = f.IdentifierBox(term.reference)
     # 1 and 13
     if term.type == "Term":
         yield f.Declaration(s, type="Class")
         for parent in term.parents:
-            yield f.SubClassOf(s, parent, annotations=_get_annotations(term, pv.is_a, parent))
+            yield f.SubClassOf(s, parent, annotations=_get_annotations(term, v.is_a, parent))
     elif term.type == "Instance":
         yield f.Declaration(s, type="NamedIndividual")
         for parent in term.parents:
             yield f.ClassAssertion(
-                parent, s, annotations=_get_annotations(term, pv.rdf_type, parent)
+                parent, s, annotations=_get_annotations(term, v.rdf_type, parent)
             )
     else:
         raise ValueError(f"invalid term type: {term.type}")
@@ -195,35 +191,34 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
 
 
 def _get_annotations(
-    term: Stanza, p: Reference | Referenced, o: Reference | Referenced | OBOLiteral | str
+    term: Stanza, p: curies.Reference | Referenced, o: Reference | Referenced | OBOLiteral | str
 ) -> list[f.Annotation]:
     return _process_anns(term._get_annotations(p, o))
 
 
 def _process_anns(annotations: list[OBOAnnotation]) -> list[f.Annotation]:
-    """Convert OBO anotations to OFN annotations."""
+    """Convert OBO annotations to OFN annotations."""
     return [_convert_annotation(a) for a in annotations]
 
 
 def _convert_annotation(annotation: OBOAnnotation) -> f.Annotation:
-    """Convert OBO anotations to OFN annotations."""
-    match annotation.value:
+    """Convert OBO annotations to OFN annotations."""
+    return f.Annotation(annotation.predicate, _convert_literal_or_reference(annotation.value))
+
+
+def _convert_literal_or_reference(
+    value: OBOLiteral | curies.Reference,
+) -> rdflib.Literal | curies.Reference:
+    match value:
         case OBOLiteral():
-            return f.Annotation(
-                annotation.predicate,
-                _oboliteral_to_literal(annotation.value),
-            )
-        case Reference():
-            return f.Annotation(
-                annotation.predicate,
-                annotation.value,
-            )
-    raise TypeError
+            return _oboliteral_to_literal(value)
+        case curies.Reference():
+            return value
 
 
 def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     """Iterate over functional OWL axioms for a typedef."""
-    r = f.IdentifierBox(typedef)
+    r = f.IdentifierBox(typedef.reference)
     # 40
     if typedef.is_metadata_tag:
         yield f.Declaration(r, type="AnnotationProperty")
@@ -238,7 +233,7 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     # 4
     if typedef.namespace:
         yield m.OBONamespaceMacro(r, typedef.namespace)
-    # 5 the way this one works is that all of the alts get a term-replaced-by,
+    # 5 the way this one works is that all alts get a term-replaced-by,
     #   as well as getting their own deprecation axioms
     for alt_id in typedef.alt_ids:
         yield m.ReplacedByMacro(alt_id, r)
@@ -311,7 +306,10 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         yield f.DisjointObjectProperties([x, r])
     # 28
     if typedef.inverse:
-        yield f.InverseObjectProperties(r, typedef.inverse)
+        if typedef.is_metadata_tag:
+            pass  # not sure what to do
+        else:
+            yield f.InverseObjectProperties(r, typedef.inverse)
     # 29
     for to in typedef.transitive_over:
         yield m.TransitiveOver(r, to)
@@ -338,31 +336,31 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         yield m.OBOIsClassLevelMacro(r, typedef.is_class_level)
 
 
-def _yield_definition(term: Stanza, s) -> Iterable[m.DescriptionMacro]:
+def _yield_definition(term: Stanza, s: f.IdentifierBox) -> Iterable[m.DescriptionMacro]:
     if term.definition:
         yield m.DescriptionMacro(
             s,
             term.definition,
-            annotations=_get_annotations(term, pv.has_description, term.definition),
+            annotations=_get_annotations(term, v.has_description, term.definition),
         )
 
 
-def _yield_synonyms(stanza: Stanza, r) -> Iterable[m.SynonymMacro]:
+def _yield_synonyms(stanza: Stanza, r: f.IdentifierBox) -> Iterable[m.SynonymMacro]:
     for synonym in stanza.synonyms:
         yield m.SynonymMacro(
             r,
             synonym.name,
             scope=synonym.specificity,
             synonym_type=synonym.type,
-            provenance=synonym.provenance,
+            provenance=[_convert_literal_or_reference(value) for value in synonym.provenance],
             annotations=_process_anns(synonym.annotations),
             language=synonym.language,
         )
 
 
-def _yield_xrefs(term: Stanza, s) -> Iterable[m.XrefMacro]:
+def _yield_xrefs(term: Stanza, s: f.IdentifierBox) -> Iterable[m.XrefMacro]:
     for xref in term.xrefs:
-        yield m.XrefMacro(s, xref, annotations=_get_annotations(term, pv.has_dbxref, xref))
+        yield m.XrefMacro(s, xref, annotations=_get_annotations(term, v.has_dbxref, xref))
 
 
 _SKIP = {
@@ -372,24 +370,14 @@ _SKIP = {
 }
 
 
-def _yield_properties(term: Stanza, s) -> Iterable[f.AnnotationAssertion]:
+def _yield_properties(term: Stanza, s: f.IdentifierBox) -> Iterable[f.AnnotationAssertion]:
     for typedef, values in term.properties.items():
+        if typedef in _SKIP:
+            continue
         for value in values:
-            annotations = _get_annotations(term, typedef, value)
-            match value:
-                case OBOLiteral():
-                    yield f.AnnotationAssertion(
-                        typedef,
-                        s,
-                        _oboliteral_to_literal(value),
-                        annotations=annotations,
-                    )
-                case Reference():
-                    if typedef in _SKIP:
-                        continue
-                    yield f.AnnotationAssertion(
-                        typedef,
-                        s,
-                        value,
-                        annotations=annotations,
-                    )
+            yield f.AnnotationAssertion(
+                typedef,
+                s,
+                _convert_literal_or_reference(value),
+                annotations=_get_annotations(term, typedef, value),
+            )

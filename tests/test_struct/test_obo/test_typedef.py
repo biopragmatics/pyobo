@@ -3,17 +3,17 @@
 import unittest
 from collections.abc import Iterable
 from textwrap import dedent
-from typing import cast
 
 import bioregistry
+from bioregistry import NormalizedNamedReference
 from curies import vocabulary as v
 
 from pyobo import Obo, Reference, default_reference
-from pyobo.struct import TypeDef
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct import (
     Synonym,
-    make_ad_hoc_ontology,
+    TypeDef,
+    build_ontology,
 )
 from pyobo.struct.typedef import (
     exact_match,
@@ -31,12 +31,11 @@ ONTOLOGY_PREFIX = "go"
 
 
 def _ontology_from_typedef(prefix: str, typedef: TypeDef) -> Obo:
-    name = cast(str, bioregistry.get_name(prefix))
-    return make_ad_hoc_ontology(
-        _ontology=prefix,
-        _name=name,
-        _typedefs=[typedef],
-        terms=[],
+    name = bioregistry.get_name(prefix)
+    return build_ontology(
+        prefix,
+        name=name,
+        typedefs=[typedef],
     )
 
 
@@ -58,7 +57,7 @@ class TestTypeDef(unittest.TestCase):
 
     def assert_funowl_lines(self, text: str, typedef: TypeDef) -> None:
         """Assert functional OWL lines are equal."""
-        from pyobo.struct.functional.obo_to_functional import get_typedef_axioms
+        from pyobo.struct.functional import get_typedef_axioms
 
         self.assert_lines(
             text,
@@ -72,10 +71,10 @@ class TestTypeDef(unittest.TestCase):
         test_funowl: bool = True,
         funowl_func: str | None = None,
         funowl_curie: str | None = None,
-    ):
+    ) -> tuple[TypeDef, TypeDef]:
         """Assert the boolean tag parses properly."""
         reference = Reference(prefix="GO", identifier="0000001")
-        typedef_true = TypeDef(reference=reference, **{name: True})
+        typedef_true = TypeDef(reference=reference, **{name: True})  # type:ignore[arg-type]
         if funowl_curie is None:
             funowl_curie = f"oboInOwl:{name}"
         self.assert_obo_stanza(
@@ -109,7 +108,7 @@ class TestTypeDef(unittest.TestCase):
         self.assertIsNotNone(value)
         self.assertTrue(value)
 
-        typedef_false = TypeDef(reference=reference, **{name: False})
+        typedef_false = TypeDef(reference=reference, **{name: False})  # type:ignore[arg-type]
         self.assert_obo_stanza(
             f"""\
             [Typedef]
@@ -240,6 +239,8 @@ class TestTypeDef(unittest.TestCase):
     def test_6_description(self) -> None:
         """Test outputting a description."""
         typedef = TypeDef(reference=REF, definition=has_role.definition)
+        if has_role.definition is None:
+            raise self.fail("has_role is missing a definition")
         self.assert_obo_stanza(
             f"""\
             [Typedef]
@@ -315,7 +316,12 @@ class TestTypeDef(unittest.TestCase):
             typedef,
         )
 
-        typedef = TypeDef(reference=REF, synonyms=[Synonym("bears role", type=v.previous_name)])
+        typedef = TypeDef(
+            reference=REF,
+            synonyms=[
+                Synonym("bears role", type=NormalizedNamedReference.from_reference(v.previous_name))
+            ],
+        )
         self.assert_obo_stanza(
             """\
             [Typedef]
@@ -334,7 +340,13 @@ class TestTypeDef(unittest.TestCase):
 
         typedef = TypeDef(
             reference=REF,
-            synonyms=[Synonym("bears role", type=v.previous_name, specificity="EXACT")],
+            synonyms=[
+                Synonym(
+                    "bears role",
+                    type=NormalizedNamedReference.from_reference(v.previous_name),
+                    specificity="EXACT",
+                )
+            ],
         )
         self.assert_obo_stanza(
             """\
@@ -376,13 +388,7 @@ class TestTypeDef(unittest.TestCase):
         typedef = TypeDef(
             reference=REF,
             properties={
-                has_contributor.reference: [
-                    Reference(
-                        prefix=v.charlie.prefix,
-                        identifier=v.charlie.identifier,
-                        name=v.charlie.name,
-                    )
-                ],
+                has_contributor.reference: [NormalizedNamedReference.from_reference(v.charlie)],
                 has_inchi.reference: [OBOLiteral.string("abc")],
             },
         )

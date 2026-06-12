@@ -60,7 +60,7 @@ DTYPE = {
 ROOT = Reference(prefix="go", identifier="0032991", name="macromolecular complex")
 
 
-def _parse_members(s) -> list[tuple[Reference, str]]:
+def _parse_members(s: str) -> list[tuple[Reference, str]]:
     if pd.isna(s):
         return []
 
@@ -96,7 +96,7 @@ def _parse_members(s) -> list[tuple[Reference, str]]:
     return rv
 
 
-def _parse_xrefs(s) -> list[tuple[Reference, str]]:
+def _parse_xrefs(s: str) -> list[tuple[Reference, str]]:
     if pd.isna(s):
         return []
 

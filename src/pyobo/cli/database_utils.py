@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import gzip
 import logging
-import warnings
 from collections.abc import Iterable
-from functools import partial
 from typing import cast
 
 from tqdm.auto import tqdm
@@ -23,9 +21,9 @@ from ..api import (
     get_properties_df,
     get_relations_df,
     get_typedef_df,
-    get_xrefs_df,
 )
-from ..getters import IterHelperHelperDict, iter_helper, iter_helper_helper
+from ..constants import IterHelperHelperDict
+from ..getters import iter_helper, iter_helper_helper
 from ..sources import pubchem
 from ..sources.ncbi import ncbigene
 from ..utils.path import ensure_path
@@ -44,7 +42,9 @@ def _iter_ncbigene(left: int, right: int) -> Iterable[tuple[str, str, str]]:
             yield ncbigene.PREFIX, parts[left], parts[right]
 
 
-def _iter_names(leave: bool = False, **kwargs) -> Iterable[tuple[str, str, str]]:
+def _iter_names(
+    leave: bool = False, **kwargs: Unpack[IterHelperHelperDict]
+) -> Iterable[tuple[str, str, str]]:
     """Iterate over all prefix-identifier-name triples we can get.
 
     :param leave: should the tqdm be left behind?
@@ -54,7 +54,7 @@ def _iter_names(leave: bool = False, **kwargs) -> Iterable[tuple[str, str, str]]
     yield from _iter_pubchem_compound()
 
 
-def _iter_pubchem_compound():
+def _iter_pubchem_compound() -> Iterable[tuple[str, str, str]]:
     pcc_path = pubchem._ensure_cid_name_path()
     with gzip.open(pcc_path, mode="rt", encoding="ISO-8859-1") as file:
         for line in tqdm(
@@ -130,26 +130,9 @@ def _iter_properties(**kwargs: Unpack[IterHelperHelperDict]) -> Iterable[tuple[s
                 yield cast(tuple[str, str, str, str], (prefix, *t))
 
 
-def _iter_xrefs(
-    **kwargs: Unpack[IterHelperHelperDict],
-) -> Iterable[tuple[str, str, str, str, str]]:
-    warnings.warn(f"use {_iter_mappings.__name__} instead", DeprecationWarning, stacklevel=2)
-    it = iter_helper_helper(get_xrefs_df, **kwargs)
-    for prefix, df in it:
-        df.dropna(inplace=True)
-        for row in df.values:
-            if any(not element for element in row):
-                continue
-            yield cast(tuple[str, str, str, str, str], (prefix, *row, prefix))
-
-
 def _iter_mappings(
     **kwargs: Unpack[IterHelperHelperDict],
 ) -> Iterable[tuple[str, str, str, str, str]]:
-    f = partial(get_mappings_df, names=False, include_mapping_source_column=True)
-    # hack in a name to the partial function object since
-    # it's used for the tqdm description in iter_helper_helper
-    f.__name__ = "get_mappings_df"  # type:ignore
-    it = iter_helper_helper(f, **kwargs)
+    it = iter_helper_helper(get_mappings_df, **kwargs)
     for _prefix, df in it:
         yield from df.values

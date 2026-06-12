@@ -8,8 +8,16 @@ import bioregistry
 from pystow.utils import get_commit
 
 from pyobo import get_name_id_mapping
-from pyobo.struct import Obo, Reference, Term, _parse_str_or_curie_or_uri
-from pyobo.struct.typedef import has_member, has_part, is_a, is_mentioned_by, part_of
+from pyobo.struct import Annotation, Obo, Reference, Term, _parse_str_or_curie_or_uri
+from pyobo.struct.typedef import (
+    has_member,
+    has_ontology_hierarchy_predicate,
+    has_part,
+    is_a,
+    is_mentioned_by,
+    member_of,
+    part_of,
+)
 from pyobo.utils.io import multidict
 from pyobo.utils.path import ensure_df
 
@@ -23,7 +31,11 @@ class FamPlexGetter(Obo):
 
     ontology = PREFIX
     dynamic_version = True
-    typedefs = [has_member, has_part, is_a, part_of, is_mentioned_by]
+    typedefs = [has_member, member_of, has_part, is_a, part_of, is_mentioned_by]
+    property_values = [
+        Annotation(has_ontology_hierarchy_predicate.reference, part_of.reference),
+        Annotation(has_ontology_hierarchy_predicate.reference, member_of.reference),
+    ]
 
     def _get_version(self) -> str:
         return get_commit("sorgerlab", "famplex")

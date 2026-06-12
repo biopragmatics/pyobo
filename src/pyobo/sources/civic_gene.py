@@ -19,10 +19,16 @@ URL = "https://civicdb.org/downloads/nightly/nightly-GeneSummaries.tsv"
 GENE = Term(reference=default_reference(PREFIX, "gene", name="gene"))
 FACTOR = Term(reference=default_reference(PREFIX, "factor", name="factor"))
 FUSION = Term(reference=default_reference(PREFIX, "fusion", name="fusion"))
+REGION = Term(reference=default_reference(PREFIX, "region", name="region"))
 HAS_3P = TypeDef.default(PREFIX, "has3p", name="has 3' gene", is_metadata_tag=False)
 HAS_5P = TypeDef.default(PREFIX, "has5p", name="has 5' gene", is_metadata_tag=False)
 
-TYPES = {"Gene": GENE, "Factor": FACTOR, "Fusion": FUSION}
+TYPES = {
+    "Gene": GENE,
+    "Factor": FACTOR,
+    "Fusion": FUSION,
+    "Region": REGION,
+}
 
 
 class CIVICGeneGetter(Obo):

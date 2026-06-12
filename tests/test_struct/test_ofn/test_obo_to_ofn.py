@@ -5,14 +5,14 @@ from textwrap import dedent
 
 from curies import vocabulary as v
 
+from pyobo import build_ontology
 from pyobo.struct import (
     Reference,
     SynonymTypeDef,
     Term,
     default_reference,
-    make_ad_hoc_ontology,
 )
-from pyobo.struct.functional.obo_to_functional import get_ofn_from_obo
+from pyobo.struct.functional import get_ofn_from_obo
 
 
 class TestConversion(unittest.TestCase):
@@ -21,7 +21,7 @@ class TestConversion(unittest.TestCase):
     def test_simple_conversion(self) -> None:
         """Test conversion."""
         subset = default_reference("go", "SUBSET-1")
-        synonym_typedef = SynonymTypeDef(reference=v.previous_name)
+        synonym_typedef = SynonymTypeDef(reference=Reference.from_reference(v.previous_name))
         term = Term(
             reference=Reference(prefix="go", identifier="1234567", name="test"),
             subsets=[subset],
@@ -31,16 +31,16 @@ class TestConversion(unittest.TestCase):
         term.append_synonym("test-synonym-3", specificity="EXACT")
         term.append_synonym("test-synonym-4", type=synonym_typedef, language="en")
 
-        obo_ontology = make_ad_hoc_ontology(
-            _ontology="go",
-            _name="Gene Ontology",
-            _data_version="30",
-            _auto_generated_by="PyOBO",
+        obo_ontology = build_ontology(
+            prefix="go",
+            name="Gene Ontology",
+            version="30",
+            auto_generated_by="PyOBO",
             terms=[term],
-            _subsetdefs=[(subset, "test subset 1")],
-            _synonym_typedefs=[synonym_typedef],
-            _root_terms=[term.reference],
-            _idspaces={
+            subsetdefs={subset: "test subset 1"},
+            synonym_typedefs=[synonym_typedef],
+            root_terms=[term.reference],
+            idspaces={
                 "GO": "http://purl.obolibrary.org/obo/GO_",
             },
         )

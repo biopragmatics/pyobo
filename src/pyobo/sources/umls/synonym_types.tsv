@@ -15,7 +15,6 @@ CA2	ISO 3166-1 standard country code in alpha-2 (two-letter) format
 CA3	ISO 3166-1 standard country code in alpha-3 (three-letter) format
 CC	Trimmed ICPC component process
 CCN	Chemical code name
-CCS	FIPS 10-4 country code
 CD	Clinical Drug
 CDA	Clinical drug name in abbreviated format
 CDC	Clinical drug name in concatenated format (NDDF)

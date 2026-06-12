@@ -9,7 +9,7 @@ from collections.abc import Iterable
 
 from pyobo import default_reference
 from pyobo.struct import CHARLIE_TERM, HUMAN_TERM, PYOBO_INJECTED, Obo, Reference, Term, TypeDef
-from pyobo.struct.typedef import comment, has_contributor, see_also, term_replaced_by
+from pyobo.struct.typedef import has_comment, has_contributor, see_also, term_replaced_by
 from pyobo.utils.path import ensure_path
 
 PREFIX = "ncbi.gc"
@@ -69,7 +69,7 @@ class NCBIGCGetter(Obo):
     ontology = PREFIX
     static_version = VERSION
     root_terms = [GC_ROOT]
-    typedefs = [has_gc_code, has_contributor, see_also, comment, term_replaced_by]
+    typedefs = [has_gc_code, has_contributor, see_also, has_comment, term_replaced_by]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

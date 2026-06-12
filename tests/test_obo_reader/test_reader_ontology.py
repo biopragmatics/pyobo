@@ -8,7 +8,7 @@ from pyobo.struct import part_of
 from pyobo.struct.obo import from_str
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct_utils import Annotation
-from pyobo.struct.typedef import comment, equivalent_class
+from pyobo.struct.typedef import equivalent_class, has_comment
 from pyobo.struct.vocabulary import has_license
 
 
@@ -24,6 +24,8 @@ class TestReaderOntologyMetadata(unittest.TestCase):
 
     def get_only_typedef(self, ontology: Obo) -> TypeDef:
         """Assert there is only a single typedef in the ontology and return it."""
+        if ontology.typedefs is None:
+            raise self.fail()
         self.assertEqual(1, len(ontology.typedefs))
         return ontology.typedefs[0]
 
@@ -73,11 +75,40 @@ class TestReaderOntologyMetadata(unittest.TestCase):
         ontology = from_str("""\
             ontology: chebi
             subsetdef: TEST "comment"
+            subsetdef: TEST2 "comment2"
         """)
         self.assertEqual(
-            [(default_reference("chebi", "TEST"), "comment")],
+            {
+                default_reference("chebi", "TEST"): "comment",
+                default_reference("chebi", "TEST2"): "comment2",
+            },
             ontology.subsetdefs,
         )
+
+    def test_7_curie(self) -> None:
+        """Test parsing a subset definition that is a CURIE."""
+        ontology = from_str("""\
+            ontology: chebi
+            subsetdef: obo:test "name"
+        """)
+        self.assertEqual({Reference.from_curie("obo:test"): "name"}, ontology.subsetdefs)
+
+    def test_7_blocked_curie(self) -> None:
+        """Test parsing a subset definition that is explicitly blocked."""
+        source = """\
+            ontology: chebi
+            subsetdef: 1:STAR "Preliminary entries"
+        """
+        ontology = from_str(source, strict=False)
+        self.assertEqual({}, ontology.subsetdefs)
+
+    def test_7_uri(self) -> None:
+        """Test parsing a subset definition that is a URI."""
+        ontology = from_str("""\
+            ontology: chebi
+            subsetdef: http://purl.obolibrary.org/obo/chebi#TEST "name"
+        """)
+        self.assertEqual({default_reference("chebi", "TEST"): "name"}, ontology.subsetdefs)
 
     def test_8_synonym_typedef(self) -> None:
         """Test the ``synonym_typedef`` tag."""
@@ -183,7 +214,7 @@ class TestReaderOntologyMetadata(unittest.TestCase):
         )
 
     def test_13_xref_genus_differentia(self) -> None:
-        """Test the ``treat-xrefs-as-is_a `` macro.
+        """Test the ``treat-xrefs-as-is_a`` macro.
 
         The test should become the same as
 
@@ -282,8 +313,8 @@ class TestReaderOntologyMetadata(unittest.TestCase):
         """)
         self.assertEqual(
             [
-                Annotation(comment.reference, OBOLiteral.string("hello 1")),
-                Annotation(comment.reference, OBOLiteral.string("hello 2")),
+                Annotation(has_comment.reference, OBOLiteral.string("hello 1")),
+                Annotation(has_comment.reference, OBOLiteral.string("hello 2")),
             ],
             ontology.property_values,
         )
@@ -381,21 +412,21 @@ class TestReaderOntologyMetadata(unittest.TestCase):
 class TestVersionHandling(unittest.TestCase):
     """Test version handling."""
 
-    def test_no_version_no_data(self):
+    def test_no_version_no_data(self) -> None:
         """Test when nothing is given."""
         ontology = from_str("""\
             ontology: chebi
         """)
         self.assertIsNone(ontology.data_version)
 
-    def test_static_rewrite(self):
+    def test_static_rewrite(self) -> None:
         """Test using custom configuration for version lookup."""
         ontology = from_str("""\
             ontology: orth
         """)
         self.assertEqual("2", ontology.data_version, msg="The static rewrite wasn't applied")
 
-    def test_simple_version(self):
+    def test_simple_version(self) -> None:
         """Test handling a simple version."""
         ontology = from_str("""\
             ontology: chebi
@@ -403,7 +434,7 @@ class TestVersionHandling(unittest.TestCase):
         """)
         self.assertEqual("123", ontology.data_version)
 
-    def test_releases_prefix_simple(self):
+    def test_releases_prefix_simple(self) -> None:
         """Test a parsing a simple version starting with ``releases/``."""
         ontology = from_str("""\
             ontology: chebi
@@ -415,7 +446,7 @@ class TestVersionHandling(unittest.TestCase):
             msg="The prefix ``releases/`` wasn't properly automatically stripped",
         )
 
-    def test_releases_prefix_complex(self):
+    def test_releases_prefix_complex(self) -> None:
         """Test parsing a complex string starting with ``releases/``."""
         ontology = from_str("""\
             ontology: chebi
@@ -427,7 +458,7 @@ class TestVersionHandling(unittest.TestCase):
             msg="The prefix ``releases/`` wasn't properly automatically stripped",
         )
 
-    def test_no_version_with_date(self):
+    def test_no_version_with_date(self) -> None:
         """Test when the date is substituted for a missing version."""
         ontology = from_str("""\
             ontology: chebi
@@ -435,7 +466,7 @@ class TestVersionHandling(unittest.TestCase):
         """)
         self.assertEqual("2024-11-20", ontology.data_version)
 
-    def test_bad_version(self):
+    def test_bad_version(self) -> None:
         """Test that a version with slashes raises an error."""
         with self.assertRaises(ValueError):
             from_str("""\
@@ -443,7 +474,7 @@ class TestVersionHandling(unittest.TestCase):
                 data-version: /////
             """)
 
-    def test_data_prefix_strip(self):
+    def test_data_prefix_strip(self) -> None:
         """Test when a prefix gets stripped from the beginning of a version."""
         ontology = from_str("""\
             ontology: sasap
@@ -453,7 +484,7 @@ class TestVersionHandling(unittest.TestCase):
             "0.3.1", ontology.data_version, msg="The custom defined prefix wasn't stripped"
         )
 
-    def test_version_full_rewrite(self):
+    def test_version_full_rewrite(self) -> None:
         """Test when a version gets fully replaced from a custom configuration."""
         ontology = from_str("""\
             ontology: owl
@@ -463,7 +494,7 @@ class TestVersionHandling(unittest.TestCase):
             "2009-11-15", ontology.data_version, msg="The custom rewrite wasn't invooked"
         )
 
-    def test_version_injected(self):
+    def test_version_injected(self) -> None:
         """Test when a missing version gets overwritten."""
         ontology = from_str(
             """\
@@ -473,7 +504,7 @@ class TestVersionHandling(unittest.TestCase):
         )
         self.assertEqual("123", ontology.data_version)
 
-    def test_version_overwrite_mismatch(self):
+    def test_version_overwrite_mismatch(self) -> None:
         """Test when a version gets overwritten, but it's not matching."""
         ontology = from_str(
             """\

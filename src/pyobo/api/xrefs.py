@@ -5,11 +5,12 @@ import warnings
 from collections.abc import Mapping
 from functools import lru_cache
 
-import curies
+import bioregistry
 import pandas as pd
+import sssom_pydantic
 from curies import ReferenceTuple
 from sssom_pydantic import SemanticMapping
-from sssom_pydantic.io import row_to_semantic_mapping
+from sssom_pydantic.io import CachedSemanticMappings
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
@@ -20,9 +21,10 @@ from ..constants import (
     check_should_cache,
     check_should_force,
     check_should_use_tqdm,
+    get_semantic_mapping_metadata,
 )
 from ..getters import get_ontology
-from ..identifier_utils import get_converter, wrap_norm_prefix
+from ..identifier_utils import wrap_norm_prefix
 from ..struct import Obo
 from ..utils.cache import cached_df
 from ..utils.path import CacheArtifact, get_cache_path
@@ -103,41 +105,52 @@ def get_xrefs_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFra
     return df
 
 
-def get_sssom_df(
-    prefix: str | Obo, *, names: bool = True, **kwargs: Unpack[GetOntologyKwargs]
-) -> pd.DataFrame:
+def get_sssom_df(prefix: str | Obo, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get an SSSOM dataframe, replaced by :func:`get_mappings_df`."""
     warnings.warn("get_sssom_df was renamed to get_mappings_df", DeprecationWarning, stacklevel=2)
-    return get_mappings_df(prefix=prefix, names=names, **kwargs)
+    return get_mappings_df(prefix=prefix, **kwargs)
 
 
 def get_semantic_mappings(
     prefix: str,
-    converter: curies.Converter | None = None,
-    names: bool = True,
-    include_mapping_source_column: bool = False,
+    names: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> list[SemanticMapping]:
-    """Get semantic mapping objects."""
-    df = get_mappings_df(
-        prefix, names=names, include_mapping_source_column=include_mapping_source_column, **kwargs
+    """Get semantic mappings."""
+    version = get_version_from_kwargs(prefix, kwargs)
+
+    @CachedSemanticMappings(
+        path=get_cache_path(prefix, CacheArtifact.mappings, version=version),
+        force=check_should_force(kwargs),
+        cache=check_should_cache(kwargs),
     )
-    if converter is None:
-        converter = get_converter()
-    return [row_to_semantic_mapping(row, converter=converter) for _, row in df.iterrows()]
+    def _mapping_getter() -> sssom_pydantic.SemanticMappingPack:
+        logger.info("[%s] extracting SSSOM", prefix)
+        ontology = get_ontology(prefix, **kwargs)
+        mapping_set = get_semantic_mapping_metadata(prefix, version=version)
+        converter = bioregistry.get_default_converter()
+        mappings = list(
+            ontology.get_semantic_mappings(
+                progress=check_should_use_tqdm(kwargs),
+            )
+        )
+        return sssom_pydantic.SemanticMappingPack(
+            mappings=mappings, converter=converter, mapping_set=mapping_set
+        )
+
+    mappings = _mapping_getter().mappings
+    if names:
+        raise NotImplementedError
+    return mappings
 
 
 def get_mappings_df(
     prefix: str | Obo,
-    *,
-    names: bool = True,
-    include_mapping_source_column: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
     r"""Get semantic mappings from a source as an SSSOM dataframe.
 
     :param prefix: The ontology to look in for xrefs
-    :param names: Add name columns (``subject_label`` and ``object_label``)
 
     :returns: A SSSOM-compliant dataframe of xrefs
 
@@ -166,8 +179,6 @@ def get_mappings_df(
     """
     if isinstance(prefix, Obo):
         df = prefix.get_mappings_df(
-            include_subject_labels=names,
-            include_mapping_source_column=include_mapping_source_column,
             use_tqdm=check_should_use_tqdm(kwargs),
         )
         prefix = prefix.ontology
@@ -182,19 +193,8 @@ def get_mappings_df(
         def _df_getter() -> pd.DataFrame:
             logger.info("[%s] rebuilding SSSOM", prefix)
             ontology = get_ontology(prefix, **kwargs)
-            return ontology.get_mappings_df(
-                use_tqdm=check_should_use_tqdm(kwargs),
-                include_subject_labels=True,
-                include_mapping_source_column=include_mapping_source_column,
-            )
+            return ontology.get_mappings_df(use_tqdm=check_should_use_tqdm(kwargs))
 
         df = _df_getter()
-
-    if names:
-        from .names import get_name_by_curie
-
-        df["object_label"] = df["object_id"].map(get_name_by_curie)
-    elif "subject_label" in df.columns:
-        del df["subject_label"]
 
     return df

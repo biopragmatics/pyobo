@@ -19,7 +19,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-BIZARRE_LOGGED = set()
+BIZARRE_LOGGED: set[tuple[str, str]] = set()
 
 #: Rewrites for mostly static resources that have weird quirks
 VERSION_REWRITES = {
@@ -52,6 +52,11 @@ VERSION_PREFIXES = [
     "https://w3id.org/emi/version/",
     "https://nfdi4culture.de/ontology/",  # https://nfdi4culture.de/ontology/3.0.0
     "http://purls.helmholtz-metadaten.de/mwo/mwo.owl/",  # http://purls.helmholtz-metadaten.de/mwo/mwo.owl/3.0.0
+    "http://publications.europa.eu/ontology/euvoc#",
+    "http://purls.helmholtz-metadaten.de/cdos/cdco/",  # http://purls.helmholtz-metadaten.de/cdos/cdco/1.0.0
+    "https://endlessforms.info/gdo/releases/gdoa-",
+    "https://openenergyplatform.org/ontology/oeo/releases/",
+    "https://w3id.org/amv/",  # https://w3id.org/amv/1.0
 ]
 VERSION_PREFIX_SPLITS = [
     "http://www.ebi.ac.uk/efo/releases/v",
@@ -61,10 +66,12 @@ VERSION_PREFIX_SPLITS = [
     "http://nmrml.org/cv/v",  # as in http://nmrml.org/cv/v1.1.0/nmrCV
     "http://enanomapper.github.io/ontologies/releases/",  # as in http://enanomapper.github.io/ontologies/releases/10.0/enanomapper
     "https://w3id.org/sulo/sulo-",  # as in https://w3id.org/sulo/sulo-0.2.4.ttl
+    "https://spec.industrialontologies.org/ontology/",  # as in https://spec.industrialontologies.org/ontology/202401/core/Core
 ]
 BAD = {
     "http://purl.obolibrary.org/obo",
     "http://www.bioassayontology.org/bao/bao_complete",
+    "https://vocabularies.wikipathways.org",
 }
 
 
@@ -204,7 +211,7 @@ def _prioritize_version(
     if date is not None:
         derived_date_version = date.strftime("%Y-%m-%d")
         logger.debug(
-            "[%s] does not report a version. falling back to date: %s",
+            "[%s] does not report a version using the `data-version` tag. falling back to date: %s",
             ontology_prefix,
             derived_date_version,
         )

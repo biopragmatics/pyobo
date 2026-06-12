@@ -3,7 +3,8 @@
 import logging
 import tarfile
 from collections.abc import Iterable
-from xml.etree import ElementTree
+
+from lxml.etree import Element, ElementTree
 
 from pyobo.struct import Obo, Reference, Term, has_part
 from pyobo.utils.path import ensure_path
@@ -30,14 +31,14 @@ class GWASCentralStudyGetter(Obo):
         return iterate_terms(force=force, version=self._version_or_raise)
 
 
-def _find_text(element, name: str) -> str | None:
+def _find_text(element: Element, name: str) -> str | None:
     x = element.find(name)
-    if x is not None:
-        return x.text
+    if x is not None and isinstance(x.text, str) and x.text.strip():
+        return x.text.strip()
     return None
 
 
-def _get_term_from_tree(tree: ElementTree.ElementTree) -> Term:
+def _get_term_from_tree(tree: ElementTree) -> Term:
     name = _find_text(tree, "name")
     description = _find_text(tree, "description")
     if description:
@@ -79,7 +80,7 @@ def iterate_terms(version: str, force: bool = False) -> Iterable[Term]:
                 except ElementTree.ParseError:
                     logger.warning("malformed XML in %s", tar_info.path)
                     continue
-            yield _get_term_from_tree(tree)  # type:ignore
+            yield _get_term_from_tree(tree)
 
 
 if __name__ == "__main__":

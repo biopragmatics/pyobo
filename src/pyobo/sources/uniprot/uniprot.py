@@ -163,7 +163,7 @@ def iter_terms(version: str | None = None) -> Iterable[Term]:
             yield term
 
 
-def _parse_go(go_terms) -> list[Reference]:
+def _parse_go(go_terms: str | None) -> list[Reference]:
     rv = []
     if go_terms:
         for go_term in go_terms.split(";"):
