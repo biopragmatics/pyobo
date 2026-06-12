@@ -1,5 +1,6 @@
 """Read SKOS from RDF."""
 
+import itertools as itt
 from pathlib import Path
 
 import curies
@@ -146,14 +147,20 @@ def get_term(
             term.append_exact_match(
                 converter.parse_uri(str(exact_match), strict=True).to_pydantic()
             )
-    for broad_match in graph.objects(node, SKOS.broadMatch):
+    for broad_match in itt.chain(
+        graph.objects(node, SKOS.broader),
+        graph.objects(node, SKOS.broadMatch),
+    ):
         if isinstance(broad_match, URIRef):
             obj = converter.parse_uri(str(broad_match), strict=True).to_pydantic()
             if broad_match_becomes_parent and obj.prefix == term.prefix:
                 term.append_parent(obj)
             else:
                 term.append_broad_match(obj)
-    for narrow_match in graph.objects(node, SKOS.narrowMatch):
+    for narrow_match in itt.chain(
+        graph.objects(node, SKOS.narrower),
+        graph.objects(node, SKOS.narrowMatch),
+    ):
         if isinstance(narrow_match, URIRef):
             term.append_narrow_match(
                 converter.parse_uri(str(narrow_match), strict=True).to_pydantic()
