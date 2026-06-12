@@ -7,7 +7,6 @@ from pathlib import Path
 import curies
 import rdflib
 from bioregistry import NormalizedNamableReference, NormalizedNamedReference
-from bioregistry.schema import AnnotatedURL
 from curies import Reference
 from curies import vocabulary as v
 from rdflib import DCTERMS, RDF, RDFS, SKOS, VANN, Graph, Node, URIRef
@@ -215,47 +214,3 @@ def get_term(
                 converter.parse_uri(str(related_match), strict=True).to_pydantic()
             )
     return term
-
-
-def _demo() -> None:
-    import bioregistry
-    from tabulate import tabulate
-
-    rows = []
-
-    # for resource in bioregistry.resources():
-    #     rdf = resource.get_download_rdf(get_format=True)
-    #     if rdf and not resource.get_download_skos():
-    #         print(resource.prefix, rdf)
-    # return
-
-    for resource in tqdm(bioregistry.resources()):
-        match resource.get_download_skos(get_format=True):
-            case None:
-                continue
-            case str() as url:
-                try:
-                    ontology = read_skos(url, prefix=resource.prefix)
-                except SyntaxError:
-                    tqdm.write(f"need explicit RDF format for {resource.prefix}")
-                    continue
-                rows.append((resource.prefix, url, "", *_summarize(ontology)))
-            case AnnotatedURL() as model:
-                ontology = read_skos(model.url, prefix=resource.prefix, rdf_format=model.rdf_format)
-                rows.append((resource.prefix, model.url, model.rdf_format, *_summarize(ontology)))
-        ontology.write_obo(f"/Users/cthoyt/Desktop/{resource.prefix}.obo")
-
-    tqdm.write(tabulate(rows, headers=["prefix", "url", "format", "terms", "parents"]))
-
-
-def _summarize(ontology: Obo) -> tuple[int, ...]:
-    n_parents = 0
-    n_terms = 0
-    for term in ontology:
-        n_terms += 1
-        n_parents += len(term.parents)
-    return n_terms, n_parents
-
-
-if __name__ == "__main__":
-    _demo()
