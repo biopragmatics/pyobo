@@ -48,7 +48,7 @@ def _iterate_concepts_inner(concept: ProcessedConcept):
         raise NotImplementedError
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     url = "https://oer-repo.uibk.ac.at/w3id.org/vocabs/oefos2012/schema.json"
     o = read_jskos(url, prefix="oefos")
     print(o)
