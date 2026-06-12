@@ -133,7 +133,11 @@ def get_skos_from_rdflib(
 def _cleanup_narrow_matches(terms: dict[Reference, Term]) -> None:
     for parent in terms.values():
         for child in parent.get_property_objects(v.narrow_match):
-            if isinstance(child, Reference) and child in terms and parent in terms[child].parents:
+            if not isinstance(child, Reference):
+                continue
+            if child not in terms:
+                continue
+            if parent.reference in terms[child].parents:
                 parent.remove_property_object(v.narrow_match, child)
 
 

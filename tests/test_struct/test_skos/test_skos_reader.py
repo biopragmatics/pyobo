@@ -28,7 +28,7 @@ class TestSKOSReader(unittest.TestCase):
         ontology = read_skos(PATH, prefix="kim.hcrt", converter=converter)
         self.assertIsInstance(ontology, Obo)
 
-    def test_isced(self) -> None:
+    def test_narrow_matches_rewired(self) -> None:
         """Test ISCED 2013."""
         url = "https://github.com/dini-ag-kim/vocabs-edu/raw/refs/heads/master/isced-2013.ttl"
         converter = Converter.from_prefix_map(
