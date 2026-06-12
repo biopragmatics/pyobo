@@ -181,14 +181,13 @@ def _demo() -> None:
                 except SyntaxError:
                     tqdm.write(f"need explicit RDF format for {resource.prefix}")
                     continue
-                ontology.write_obo(f"/Users/cthoyt/Desktop/{resource.prefix}.obo")
                 rows.append((resource.prefix, url, "", len(list(ontology.iter_terms()))))
             case AnnotatedURL() as model:
                 ontology = read_skos(model.url, prefix=resource.prefix, rdf_format=model.rdf_format)
-                ontology.write_obo(f"/Users/cthoyt/Desktop/{resource.prefix}.obo")
                 rows.append(
                     (resource.prefix, model.url, model.rdf_format, len(list(ontology.iter_terms())))
                 )
+        ontology.write_obo(f"/Users/cthoyt/Desktop/{resource.prefix}.obo")
 
     tqdm.write(tabulate(rows))
 
