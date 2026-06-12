@@ -138,7 +138,6 @@ def _get_obograph_json_version(prefix: str, url: str) -> str | None:
     return cleanup_version(rv, prefix)
 
 
-
 VersionGetter: TypeAlias = Callable[[str, str], str | None]
 
 #: A mapping from data type to gersion getter function
