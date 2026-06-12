@@ -13,6 +13,7 @@ from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
     import sssom_pydantic
+    from bioregistry.schema import AnnotatedURL
 
 if TYPE_CHECKING:
     from bioregistry.schema import AnnotatedURL
@@ -221,7 +222,14 @@ class IterHelperHelperDict(SlimGetOntologyKwargs):
 
 
 #: The ontology format
-OntologyFormat: TypeAlias = Literal["obo", "owl", "json", "rdf", "skos", "jskos"]
+OntologyFormat: TypeAlias = Literal[
+    "obo",
+    "owl",
+    "json",
+    "rdf",
+    "skos",
+    "jskos",
+]
 
 #: from table 2 of the Functional OWL syntax definition
 #: at https://www.w3.org/TR/owl2-syntax/#IRIs
@@ -278,6 +286,12 @@ def _get_jskos_download(prefix: str) -> str | None:
     import bioregistry
 
     return bioregistry.get_jskos_download(prefix)
+
+
+def _get_skos_download(prefix: str) -> str | AnnotatedURL | None:
+    import bioregistry
+
+    return bioregistry.get_skos_download(prefix, get_format=True)
 
 
 #: Functions that get ontology files. Order matters in this list,

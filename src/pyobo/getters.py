@@ -231,7 +231,11 @@ ONTOLOGY_FORMAT_TO_SUFFIX: dict[OntologyFormat, str] = {
     "jskos": ".json",
 }
 
-XX_TO_SUFFIX: dict[str, str] = {"rdf/xml": ".xml", "xml": ".xml"}
+
+XX_TO_SUFFIX: dict[str, str] = {
+    "rdf/xml": ".xml",
+    "xml": ".xml",
+}
 
 
 def _name_from_url(
