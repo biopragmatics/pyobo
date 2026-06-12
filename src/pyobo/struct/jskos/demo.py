@@ -1,7 +1,8 @@
 """Demo JSKOS."""
 
-from pyobo.struct.jskos import read_jskos
 from tqdm import tqdm
+
+from pyobo.struct.jskos import read_jskos
 
 
 def _demo() -> None:

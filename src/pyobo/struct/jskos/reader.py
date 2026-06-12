@@ -9,7 +9,7 @@ import jskos
 from jskos import ProcessedConcept, ProcessedKOS
 
 from pyobo.struct import Obo, build_ontology
-from ...identifier_utils import get_converter
+from pyobo.identifier_utils import get_converter
 
 __all__ = [
     "from_pkos",
