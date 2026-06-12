@@ -79,6 +79,7 @@ dependencies = [
     "curies-processing>=0.1.6",
     "python-dateutil",
     "networkx>=3.4",
+    "jskos",
     # Resource Downloaders
     "drugbank-downloader",
     "chembl-downloader",
