@@ -7,6 +7,7 @@ from pathlib import Path
 import curies
 import jskos
 from jskos import ProcessedConcept, ProcessedKOS
+from tqdm import tqdm
 
 from pyobo.struct import Obo, build_ontology
 
@@ -51,4 +52,4 @@ def _iterate_concepts_inner(concept: ProcessedConcept):
 if __name__ == "__main__":
     url = "https://oer-repo.uibk.ac.at/w3id.org/vocabs/oefos2012/schema.json"
     o = read_jskos(url, prefix="oefos")
-    print(o)
+    tqdm.write(str(o))
