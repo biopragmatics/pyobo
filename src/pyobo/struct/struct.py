@@ -28,7 +28,6 @@ import sssom_pydantic
 from curies import Converter, ReferenceTuple
 from curies import vocabulary as _cv
 from more_click import force_option, verbose_option
-from pydantic import BaseModel
 from pystow.utils import safe_open, write_pydantic_json
 from tqdm.auto import tqdm
 
@@ -62,7 +61,6 @@ from .struct_utils import (
     _tag_property_targets,
 )
 from .utils import _boolean_tag, obo_escape_slim
-from ..api.utils import get_version
 from ..constants import (
     BUILD_SUBDIRECTORY_NAME,
     DATE_FORMAT,
@@ -82,6 +80,7 @@ from ..utils.path import (
     get_relation_cache_path,
     prefix_directory_join,
 )
+from ..utils.ver import VersionMetadata, get_version
 from ..version import get_version as get_pyobo_version
 
 __all__ = [
@@ -264,13 +263,6 @@ default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
     acronym.pair: acronym,
     uk_spelling.pair: uk_spelling,
 }
-
-
-class VersionMetadata(BaseModel):
-    """A model for version metadata information."""
-
-    version: str | None = None
-    date: datetime.date | None = None
 
 
 @dataclass
