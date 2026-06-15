@@ -2,15 +2,15 @@
 
 import logging
 from functools import lru_cache
-from typing import Any, cast
 
+from pystow.cache import CachedPydantic
 from typing_extensions import Unpack
 
 from .utils import get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..utils.cache import cached_json
+from ..struct.struct import VersionMetadata
 from ..utils.path import CacheArtifact, get_cache_path
 
 __all__ = [
@@ -22,14 +22,14 @@ logger = logging.getLogger(__name__)
 
 @lru_cache
 @wrap_norm_prefix
-def get_metadata(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> dict[str, Any]:
+def get_metadata(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> VersionMetadata:
     """Get metadata for the ontology."""
     version = get_version_from_kwargs(prefix, kwargs)
     path = get_cache_path(prefix, CacheArtifact.metadata, version=version)
 
-    @cached_json(path=path, force=check_should_force(kwargs))
-    def _get_json() -> dict[str, Any]:
+    @CachedPydantic(path=path, force=check_should_force(kwargs), model_cls=VersionMetadata)
+    def _inner() -> VersionMetadata:
         ontology = get_ontology(prefix, **kwargs)
         return ontology.get_metadata()
 
-    return cast(dict[str, Any], _get_json())
+    return _inner()

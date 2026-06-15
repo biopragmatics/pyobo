@@ -152,10 +152,14 @@ def metadata(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) ->
     def _iter_metadata_internal(
         **kwargs: Unpack[IterHelperHelperDict],
     ) -> Iterable[tuple[str, str, str, bool]]:
-        for prefix, data in iter_helper_helper(get_metadata, **kwargs):
-            version = data["version"]
-            logger.debug(f"[{prefix}] using version {version}")
-            yield prefix, version, data["date"], bioregistry.is_deprecated(prefix)
+        for prefix, metadata in iter_helper_helper(get_metadata, **kwargs):
+            logger.debug(f"[{prefix}] using version {metadata.version}")
+            yield (
+                prefix,
+                metadata.version,
+                metadata.date.isoformat() if metadata.date else "",
+                bioregistry.is_deprecated(prefix),
+            )
 
     it = _iter_metadata_internal(**kwargs)
     db_output_helper(

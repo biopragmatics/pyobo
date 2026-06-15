@@ -12,11 +12,12 @@ from typing import Any
 import bioversions
 from lxml import etree
 from lxml.etree import Element
+from pystow.cache import CachedJSON
 from tqdm.auto import tqdm
 
 from pyobo.identifier_utils import standardize_ec
 from pyobo.struct import Obo, Reference, Synonym, Term, default_reference
-from pyobo.utils.cache import cached_json, cached_mapping
+from pyobo.utils.cache import cached_mapping
 from pyobo.utils.path import ensure_path, prefix_directory_join
 
 __all__ = [
@@ -173,7 +174,7 @@ def ensure_mesh_descriptors(
 ) -> list[Mapping[str, Any]]:
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
 
-    @cached_json(path=prefix_directory_join(PREFIX, name="desc.json", version=version), force=force)
+    @CachedJSON(path=prefix_directory_join(PREFIX, name="desc.json", version=version), force=force)
     def _inner() -> list[dict[str, Any]]:
         path = ensure_path(PREFIX, url=get_descriptors_url(version), version=version)
         root = _get_xml_root(path)
@@ -199,7 +200,7 @@ def get_supplemental_url(version: str) -> str:
 def ensure_mesh_supplemental_records(version: str, force: bool = False) -> list[Mapping[str, Any]]:
     """Get the parsed MeSH dictionary, and cache it if it wasn't already."""
 
-    @cached_json(path=prefix_directory_join(PREFIX, name="supp.json", version=version), force=force)
+    @CachedJSON(path=prefix_directory_join(PREFIX, name="supp.json", version=version), force=force)
     def _inner() -> list[dict[str, Any]]:
         path = ensure_path(PREFIX, url=get_supplemental_url(version), version=version)
         root = _get_xml_root(path)

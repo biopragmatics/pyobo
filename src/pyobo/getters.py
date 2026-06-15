@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import datetime
-import json
 import logging
 import pathlib
 import subprocess
@@ -22,6 +21,8 @@ import click
 import pystow.utils
 import requests.exceptions
 from bioregistry.schema import AnnotatedURL, RDFFormat
+from pydantic import BaseModel
+from pystow.utils import write_pydantic_json
 from tabulate import tabulate
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
@@ -551,17 +552,13 @@ def db_output_helper(
             detailed_summary_writer.writerows((*keys, v) for keys, v in c_detailed.most_common())
         rv.append(("Summary (Detailed)", db_summary_detailed_path))
 
-    with open(db_metadata_path, "w") as file:
-        json.dump(
-            {
-                "version": get_version(),
-                "git_hash": get_git_hash(),
-                "date": datetime.datetime.now().strftime("%Y-%m-%d-%H-%M"),
-                "count": sum(c.values()),
-            },
-            file,
-            indent=2,
-        )
+    database_metadata = DatabaseMetadata(
+        version=get_version(),
+        git_hash=get_git_hash(),
+        date=datetime.datetime.now(),
+        count=sum(c.values()),
+    )
+    write_pydantic_json(database_metadata, db_metadata_path, indent=2)
 
     elapsed = time.time() - start
     click.secho(f"\nWrote the following files in {elapsed:.1f} seconds\n", fg="green")
@@ -572,3 +569,12 @@ def db_output_helper(
     click.echo()
 
     return [path for _, path in rv]
+
+
+class DatabaseMetadata(BaseModel):
+    """A model for database metadata."""
+
+    version: str  # PyOBO version
+    git_hash: str  # PyOBO git hash
+    date: datetime.datetime
+    count: int

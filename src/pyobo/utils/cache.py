@@ -10,7 +10,6 @@ import networkx as nx
 from pystow.cache import Cached
 from pystow.cache import CachedCollection as cached_collection  # noqa:N813
 from pystow.cache import CachedDataFrame as cached_df  # noqa:N813
-from pystow.cache import CachedJSON as cached_json  # noqa:N813
 from pystow.cache import CachedPickle as cached_pickle  # noqa:N813
 from pystow.utils import safe_open
 
@@ -22,7 +21,6 @@ __all__ = [
     # implemented here
     "cached_graph",
     # from pystow
-    "cached_json",
     "cached_mapping",
     "cached_multidict",
     "cached_pickle",

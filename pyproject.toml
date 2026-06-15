@@ -68,7 +68,7 @@ dependencies = [
     "humanize",
     "tabulate",
     "cachier",
-    "pystow>=0.8.16",
+    "pystow>=0.8.17",
     "bioversions>=0.10.45",
     "bioregistry>=0.13.59",
     "ssslm>=0.2.0",
