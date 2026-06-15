@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import inspect
-import json
 from collections.abc import Callable, Iterable, Mapping
 from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
@@ -113,7 +112,7 @@ def metadata(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     from ..api import get_metadata
 
     metadata = get_metadata(prefix, **kwargs)
-    click.echo(json.dumps(metadata, indent=2))
+    click.echo(metadata.model_dump_json(indent=2))
 
 
 @lookup_annotate

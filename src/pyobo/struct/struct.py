@@ -28,7 +28,7 @@ import sssom_pydantic
 from curies import Converter, ReferenceTuple
 from curies import vocabulary as _cv
 from more_click import force_option, verbose_option
-from pystow.utils import safe_open
+from pystow.utils import safe_open, write_pydantic_json
 from tqdm.auto import tqdm
 
 from . import vocabulary as v
@@ -61,7 +61,6 @@ from .struct_utils import (
     _tag_property_targets,
 )
 from .utils import _boolean_tag, obo_escape_slim
-from ..api.utils import get_version
 from ..constants import (
     BUILD_SUBDIRECTORY_NAME,
     DATE_FORMAT,
@@ -81,6 +80,7 @@ from ..utils.path import (
     get_relation_cache_path,
     prefix_directory_join,
 )
+from ..utils.ver import VersionMetadata, get_version
 from ..version import get_version as get_pyobo_version
 
 __all__ = [
@@ -1259,7 +1259,7 @@ class Obo:
 
     @property
     def _root_metadata_path(self) -> Path:
-        return prefix_directory_join(self.ontology, name="metadata.json")
+        return prefix_directory_join(self.ontology, name=CacheArtifact.metadata.value)
 
     @property
     def _obo_path(self) -> Path:
@@ -1329,8 +1329,7 @@ class Obo:
         metadata = self.get_metadata()
         for path in (self._root_metadata_path, self._get_cache_path(CacheArtifact.metadata)):
             logger.debug("[%s] caching metadata to %s", self._prefix_version, path)
-            with safe_open(path, operation="write") as file:
-                json.dump(metadata, file, indent=2)
+            write_pydantic_json(metadata, path, indent=2)
 
     def write_prefix_map(self) -> None:
         """Write a prefix map file that includes all prefixes used in this ontology."""
@@ -1588,12 +1587,9 @@ class Obo:
         )
         return rv
 
-    def get_metadata(self) -> dict[str, Any]:
+    def get_metadata(self) -> VersionMetadata:
         """Get metadata."""
-        return {
-            "version": self.data_version,
-            "date": self.date and self.date.isoformat(),
-        }
+        return VersionMetadata(version=self.data_version, date=self.date)
 
     def iterate_references(self, *, use_tqdm: bool = False) -> Iterable[Reference]:
         """Iterate over identifiers."""

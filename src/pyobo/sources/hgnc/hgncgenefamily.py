@@ -71,7 +71,7 @@ def get_gene_family_terms(*, version: str | None = None, force: bool = False) ->
     yield from terms
 
 
-def _get_terms_helper(version: str, force: bool = False) -> Iterable[Term]:
+def _get_terms_helper(version: str, *, force: bool = False) -> Iterable[Term]:
     alias_df = ensure_df(
         GENE_GROUP_PREFIX, url=FAMILIES_ALIAS_URL, force=force, sep=",", version=version
     )
