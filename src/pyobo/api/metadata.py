@@ -6,12 +6,11 @@ from functools import lru_cache
 from pystow.cache import CachedPydantic
 from typing_extensions import Unpack
 
-from .utils import get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
-from ..struct.struct import VersionMetadata
 from ..utils.path import CacheArtifact, get_cache_path
+from ..utils.ver import VersionMetadata, get_version_from_kwargs
 
 __all__ = [
     "get_metadata",

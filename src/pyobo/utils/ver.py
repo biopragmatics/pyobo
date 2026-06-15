@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "VersionError",
+    "VersionMetadata",
     "get_version",
     "get_version_from_kwargs",
     "get_version_pins",
@@ -29,11 +30,6 @@ __all__ = [
 
 class VersionError(ValueError):
     """A catch-all for version getting failure."""
-
-
-# docstr-coverage:excused `overload`
-@overload
-def get_version(prefix: str) -> str | None: ...
 
 
 # docstr-coverage:excused `overload`
