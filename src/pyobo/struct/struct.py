@@ -269,7 +269,7 @@ default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
 class VersionMetadata(BaseModel):
     """A model for version metadata information."""
 
-    version: str
+    version: str | None = None
     date: datetime.date | None = None
 
 
@@ -1267,7 +1267,7 @@ class Obo:
 
     @property
     def _root_metadata_path(self) -> Path:
-        return prefix_directory_join(self.ontology, name="metadata.json")
+        return prefix_directory_join(self.ontology, name=CacheArtifact.metadata.value)
 
     @property
     def _obo_path(self) -> Path:

@@ -153,10 +153,12 @@ def metadata(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) ->
         **kwargs: Unpack[IterHelperHelperDict],
     ) -> Iterable[tuple[str, str, str, bool]]:
         for prefix, metadata in iter_helper_helper(get_metadata, **kwargs):
+            if metadata.version is None and metadata.date is None:
+                continue
             logger.debug(f"[{prefix}] using version {metadata.version}")
             yield (
                 prefix,
-                metadata.version,
+                metadata.version or "",
                 metadata.date.isoformat() if metadata.date else "",
                 bioregistry.is_deprecated(prefix),
             )

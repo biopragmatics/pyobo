@@ -11,9 +11,11 @@ import bioversions
 import curies
 from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
+from pystow.utils import read_pydantic_json
 
 from ..constants import GetOntologyKwargs
-from ..utils.path import prefix_directory_join
+from ..struct.struct import VersionMetadata
+from ..utils.path import CacheArtifact, prefix_directory_join
 
 __all__ = [
     "VersionError",
@@ -69,12 +71,13 @@ def get_version(prefix: str, *, strict: bool = False) -> str | None:
         if version:
             return version
 
-    metadata_json_path = prefix_directory_join(prefix, name="metadata.json", ensure_exists=False)
-    if metadata_json_path.exists():
-        data = json.loads(metadata_json_path.read_text())
-        version = cast(str | None, data["version"])
-        if version:
-            return version
+    metadata_path = prefix_directory_join(
+        prefix, name=CacheArtifact.metadata.value, ensure_exists=False
+    )
+    if metadata_path.exists():
+        metadata = read_pydantic_json(metadata_path, VersionMetadata)
+        if metadata.version:
+            return metadata.version
 
     if strict:
         raise ValueError
