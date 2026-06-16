@@ -220,10 +220,10 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     """Iterate over functional OWL axioms for a typedef."""
     r = f.IdentifierBox(typedef.reference)
     # 40
-    if typedef.predicate_type == "annotation":
-        yield f.Declaration(r, type="AnnotationProperty")
-    elif typedef.predicate_type == "object":
+    if typedef.predicate_type is None or typedef.predicate_type == "object":
         yield f.Declaration(r, type="ObjectProperty")
+    elif typedef.predicate_type == "annotation":
+        yield f.Declaration(r, type="AnnotationProperty")
     elif typedef.predicate_type == "data":
         yield f.Declaration(r, type="DataProperty")
     else:
@@ -257,20 +257,20 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     yield from _yield_properties(typedef, r)
     # 12
     if typedef.domain:
-        if typedef.predicate_type == "annotation":
-            yield f.AnnotationPropertyDomain(r, typedef.domain)
-        elif typedef.predicate_type == "object":
+        if typedef.predicate_type is None or typedef.predicate_type == "object":
             yield f.ObjectPropertyDomain(r, typedef.domain)
+        elif typedef.predicate_type == "annotation":
+            yield f.AnnotationPropertyDomain(r, typedef.domain)
         elif typedef.predicate_type == "data":
             yield f.DataPropertyDomain(r, typedef.domain)
         else:
             raise ValueError
     # 13
     if typedef.range:
-        if typedef.predicate_type == "annotation":
-            yield f.AnnotationPropertyRange(r, typedef.range)
-        elif typedef.predicate_type == "object":
+        if typedef.predicate_type is None or typedef.predicate_type == "object":
             yield f.ObjectPropertyRange(r, typedef.range)
+        elif typedef.predicate_type == "annotation":
+            yield f.AnnotationPropertyRange(r, typedef.range)
         elif typedef.predicate_type == "data":
             yield f.DataPropertyRange(r, typedef.range)
         else:
@@ -304,10 +304,10 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         yield f.InverseFunctionalObjectProperty(r)
     # 23
     for parent in typedef.parents:
-        if typedef.predicate_type == "annotation":
-            yield f.SubAnnotationPropertyOf(r, parent)
-        elif typedef.predicate_type == "object":
+        if typedef.predicate_type is None or typedef.predicate_type == "object":
             yield f.SubObjectPropertyOf(r, parent)
+        elif typedef.predicate_type == "annotation":
+            yield f.SubAnnotationPropertyOf(r, parent)
         elif typedef.predicate_type == "data":
             yield f.SubDataPropertyOf(r, parent)
         else:

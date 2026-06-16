@@ -36,7 +36,7 @@ COLUMNS = [
     "HMDB",
     "PMID",
 ]
-LEVEL = TypeDef.default(PREFIX, "level", is_metadata_tag=True)
+LEVEL = TypeDef.default(PREFIX, "level", predicate_type="annotation")
 
 
 class SLMGetter(Obo):

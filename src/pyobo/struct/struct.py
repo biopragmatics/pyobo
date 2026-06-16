@@ -2519,12 +2519,12 @@ class TypeDef(Stanza):
 
     @classmethod
     def default(
-        cls, prefix: str, identifier: str, *, name: str | None = None, is_metadata_tag: bool
+        cls, prefix: str, identifier: str, *, name: str | None = None, predicate_type: TypeDefType
     ) -> Self:
         """Construct a default type definition from within the OBO namespace."""
         return cls(
             reference=default_reference(prefix, identifier, name=name),
-            predicate_type="annotation" if is_metadata_tag else "object",
+            predicate_type=predicate_type,
         )
 
 
