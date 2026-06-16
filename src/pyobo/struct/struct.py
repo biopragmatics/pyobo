@@ -70,6 +70,7 @@ from ..constants import (
     RELATION_PREFIX,
     TARGET_ID,
     TARGET_PREFIX,
+    TypeDefType,
     get_semantic_mapping_metadata,
 )
 from ..utils.cache import write_gzipped_graph
@@ -2149,10 +2150,14 @@ class Obo:
     @staticmethod
     def _get_stanza_type(stanza: Stanza) -> curies.Reference | None:
         if isinstance(stanza, TypeDef):
-            if stanza.is_metadata_tag:
-                return _cv.owl_annotation_property
-            else:
+            if stanza.predicate_type is None or stanza.predicate_type == "object":
                 return _cv.owl_object_property
+            elif stanza.predicate_type == "annotation":
+                return _cv.owl_annotation_property
+            elif stanza.predicate_type == "data":
+                return _cv.owl_data_property
+            else:
+                raise ValueError
         elif stanza.type == "Term":
             return _cv.owl_class
         elif stanza.type == "Instance":
@@ -2307,7 +2312,7 @@ class TypeDef(Stanza):
     #: that is useful to track, but does not impact the definition of the object or how it should
     #: be treated by a reasoner. Metadata tags might be used to record special term synonyms or
     #: structured notes about a term, for example.
-    is_metadata_tag: Annotated[bool | None, 40, "typedef-only"] = None
+    predicate_type: Annotated[TypeDefType | None, 40, "typedef-only"] = None
     is_class_level: Annotated[bool | None, 41] = None
 
     type: StanzaType = "TypeDef"
@@ -2502,7 +2507,8 @@ class TypeDef(Stanza):
         # 38 TODO expand_assertion_to
         # 39 TODO expand_expression_to
         # 40
-        yield from _boolean_tag("is_metadata_tag", self.is_metadata_tag)
+        if self.predicate_type == "annotation":
+            yield from _boolean_tag("is_metadata_tag", True)
         # 41
         yield from _boolean_tag("is_class_level", self.is_class_level)
 
@@ -2513,12 +2519,12 @@ class TypeDef(Stanza):
 
     @classmethod
     def default(
-        cls, prefix: str, identifier: str, *, name: str | None = None, is_metadata_tag: bool
+        cls, prefix: str, identifier: str, *, name: str | None = None, predicate_type: TypeDefType
     ) -> Self:
         """Construct a default type definition from within the OBO namespace."""
         return cls(
             reference=default_reference(prefix, identifier, name=name),
-            is_metadata_tag=is_metadata_tag,
+            predicate_type=predicate_type,
         )
 
 

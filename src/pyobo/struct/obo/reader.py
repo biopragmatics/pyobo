@@ -901,7 +901,7 @@ def iterate_typedefs(
         typedef = TypeDef(
             reference=reference,
             namespace=data.get("namespace"),
-            is_metadata_tag=_get_boolean(data, "is_metadata_tag"),
+            predicate_type="annotation" if _get_boolean(data, "is_metadata_tag") else None,
             is_class_level=_get_boolean(data, "is_class_level"),
             builtin=_get_boolean(data, "builtin"),
             is_obsolete=_get_boolean(data, "is_obsolete"),

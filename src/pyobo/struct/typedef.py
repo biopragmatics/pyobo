@@ -100,11 +100,11 @@ species_specific = TypeDef(
     "like a pathway, and X is the version that appears in a species. X should state which"
     "species with RO:0002162 (in taxon)",
 )
-has_left_to_right_reaction = TypeDef(v.has_left_to_right_reaction, is_metadata_tag=True)
-has_right_to_left_reaction = TypeDef(v.has_right_to_left_reaction, is_metadata_tag=True)
+has_left_to_right_reaction = TypeDef(v.has_left_to_right_reaction, predicate_type="annotation")
+has_right_to_left_reaction = TypeDef(v.has_right_to_left_reaction, predicate_type="annotation")
 has_bidirectional_reaction = TypeDef(
     reference=default_reference("RO", "hasBiDirectionalReaction"),
-    is_metadata_tag=True,
+    predicate_type="annotation",
 ).append_xref(Reference(prefix="debio", identifier="0000009", name="has bi-directional reaction"))
 reaction_enabled_by_molecular_function = TypeDef(
     reference=default_reference("RO", "reactionEnabledByMolecularFunction")
@@ -151,11 +151,11 @@ ends = TypeDef(
 contributes_to_condition = TypeDef(
     reference=Reference(prefix=RO_PREFIX, identifier="0003304", name="contributes to condition"),
 )
-exact_match = TypeDef(reference=v.exact_match, is_metadata_tag=True)
-narrow_match = TypeDef(reference=v.narrow_match, is_metadata_tag=True)
-broad_match = TypeDef(reference=v.broad_match, is_metadata_tag=True)
-close_match = TypeDef(reference=v.close_match, is_metadata_tag=True)
-related_match = TypeDef(reference=v.related_match, is_metadata_tag=True)
+exact_match = TypeDef(reference=v.exact_match, predicate_type="annotation")
+narrow_match = TypeDef(reference=v.narrow_match, predicate_type="annotation")
+broad_match = TypeDef(reference=v.broad_match, predicate_type="annotation")
+close_match = TypeDef(reference=v.close_match, predicate_type="annotation")
+related_match = TypeDef(reference=v.related_match, predicate_type="annotation")
 owl_same_as = TypeDef(
     reference=v.owl_same_as,
 )
@@ -165,12 +165,12 @@ equivalent_property = TypeDef(reference=v.equivalent_property)
 is_a = TypeDef(reference=v.is_a)
 rdf_type = TypeDef(reference=v.rdf_type)
 subproperty_of = TypeDef(reference=v.subproperty_of)
-see_also = TypeDef(reference=v.see_also, is_metadata_tag=True)
-has_comment = TypeDef(reference=v.comment, is_metadata_tag=True)
-label = TypeDef(reference=v.label, is_metadata_tag=True)
+see_also = TypeDef(reference=v.see_also, predicate_type="annotation")
+has_comment = TypeDef(reference=v.comment, predicate_type="annotation")
+label = TypeDef(reference=v.label, predicate_type="annotation")
 is_defined_by = TypeDef(
     reference=Reference(prefix="rdfs", identifier="isDefinedBy", name="is defined by"),
-    is_metadata_tag=True,
+    predicate_type="annotation",
 )
 member_of_reference = Reference(prefix=RO_PREFIX, identifier="0002350", name="member of")
 has_member = TypeDef(
@@ -239,15 +239,15 @@ has_salt = TypeDef(
     reference=Reference(prefix="debio", identifier="0000006", name="has salt"),
 )
 
-term_replaced_by = TypeDef(reference=v.term_replaced_by, is_metadata_tag=True)
+term_replaced_by = TypeDef(reference=v.term_replaced_by, predicate_type="annotation")
 example_of_usage = TypeDef(
     reference=Reference(prefix=IAO_PREFIX, identifier="0000112", name="example of usage"),
-    is_metadata_tag=True,
+    predicate_type="annotation",
 )
-alternative_term = TypeDef(reference=v.alternative_term, is_metadata_tag=True)
-has_ontology_root_term = TypeDef(reference=v.has_ontology_root_term, is_metadata_tag=True)
+alternative_term = TypeDef(reference=v.alternative_term, predicate_type="annotation")
+has_ontology_root_term = TypeDef(reference=v.has_ontology_root_term, predicate_type="annotation")
 has_ontology_hierarchy_predicate = TypeDef(
-    reference=v.has_ontology_hierarchy_predicate, is_metadata_tag=True
+    reference=v.has_ontology_hierarchy_predicate, predicate_type="annotation"
 )
 """
 You can annotate this into an ontology with
@@ -260,7 +260,7 @@ You can annotate this into an ontology with
 """
 definition_source = TypeDef(
     reference=Reference(prefix=IAO_PREFIX, identifier="0000119", name="definition source"),
-    is_metadata_tag=True,
+    predicate_type="annotation",
 )
 may_be_identical_to = TypeDef(
     reference=Reference(prefix=IAO_PREFIX, identifier="0006011", name="may be identical to")
@@ -273,11 +273,11 @@ has_curation_status = TypeDef(
     reference=Reference(prefix=IAO_PREFIX, identifier="0000114", name="has curation status")
 )
 
-has_dbxref = TypeDef(reference=v.has_dbxref, is_metadata_tag=True)
+has_dbxref = TypeDef(reference=v.has_dbxref, predicate_type="annotation")
 
 editor_note = TypeDef(
     reference=Reference(prefix=IAO_PREFIX, identifier="0000116", name="editor note"),
-    is_metadata_tag=True,
+    predicate_type="annotation",
 )
 
 is_immediately_transformed_from = TypeDef.from_triple(
@@ -347,77 +347,81 @@ directly_regulates_activity_of = TypeDef.from_triple(
 
 is_mentioned_by = TypeDef(
     reference=v.is_mentioned_by,
-    is_metadata_tag=True,
+    predicate_type="annotation",
     inverse=v.mentions,
     range=v.document,
 )
 mentions = TypeDef(
     reference=v.mentions,
-    is_metadata_tag=True,
+    predicate_type="annotation",
     inverse=v.is_mentioned_by,
     domain=v.document,
 )
 
-has_smiles = TypeDef(reference=v.has_smiles, is_metadata_tag=True).append_xref(v.debio_has_smiles)
-has_canonical_smiles = TypeDef(reference=v.has_canonical_smiles, is_metadata_tag=True).append_xref(
+has_smiles = TypeDef(reference=v.has_smiles, predicate_type="annotation").append_xref(
     v.debio_has_smiles
 )
-has_isomeric_smiles = TypeDef(reference=v.has_isomeric_smiles, is_metadata_tag=True).append_xref(
-    v.debio_has_smiles
-)
+has_canonical_smiles = TypeDef(
+    reference=v.has_canonical_smiles, predicate_type="annotation"
+).append_xref(v.debio_has_smiles)
+has_isomeric_smiles = TypeDef(
+    reference=v.has_isomeric_smiles, predicate_type="annotation"
+).append_xref(v.debio_has_smiles)
 
 # https://chemkg.github.io/chemrof/isomeric_smiles_string/
 
-has_inchi = TypeDef(reference=v.has_inchi, is_metadata_tag=True).append_xref(v.debio_has_inchi)
+has_inchi = TypeDef(reference=v.has_inchi, predicate_type="annotation").append_xref(
+    v.debio_has_inchi
+)
 
-has_homepage = TypeDef(reference=v.has_homepage, is_metadata_tag=True)
-has_depiction = TypeDef(reference=v.has_depiction, is_metadata_tag=True)
-has_mailbox = TypeDef(reference=v.has_mailbox, is_metadata_tag=True)
-has_mailing_list = TypeDef(reference=v.has_mailing_list, is_metadata_tag=True)
-has_repository = TypeDef(reference=v.has_repository, is_metadata_tag=True)
+has_homepage = TypeDef(reference=v.has_homepage, predicate_type="annotation")
+has_depiction = TypeDef(reference=v.has_depiction, predicate_type="annotation")
+has_mailbox = TypeDef(reference=v.has_mailbox, predicate_type="annotation")
+has_mailing_list = TypeDef(reference=v.has_mailing_list, predicate_type="annotation")
+has_repository = TypeDef(reference=v.has_repository, predicate_type="annotation")
 
 has_category = TypeDef(
     reference=Reference(prefix="biolink", identifier="category", name="has category"),
-    is_metadata_tag=True,
+    predicate_type="annotation",
 )
 
 has_taxonomy_rank = TypeDef(
     reference=Reference(prefix="taxrank", identifier="1000000", name="has rank"),
-    is_metadata_tag=True,
+    predicate_type="annotation",
 )
 
 mapping_has_justification = TypeDef(
     reference=v.mapping_has_justification,
-    is_metadata_tag=True,
+    predicate_type="annotation",
     range=Reference(prefix="semapv", identifier="Matching", name="matching process"),
 )
 mapping_has_confidence = TypeDef(
-    reference=v.mapping_has_confidence, is_metadata_tag=True, range=v.xsd_float
+    reference=v.mapping_has_confidence, predicate_type="annotation", range=v.xsd_float
 )
-has_contributor = TypeDef(reference=v.has_contributor, is_metadata_tag=True)
-has_source = TypeDef(reference=v.has_source, is_metadata_tag=True)
+has_contributor = TypeDef(reference=v.has_contributor, predicate_type="annotation")
+has_source = TypeDef(reference=v.has_source, predicate_type="annotation")
 
 has_start_date = TypeDef(
     reference=Reference(prefix="dcat", identifier="startDate", name="has start date"),
-    is_metadata_tag=True,
+    predicate_type="annotation",
 )
 has_end_date = TypeDef(
     reference=Reference(prefix="dcat", identifier="endDate", name="has end date"),
-    is_metadata_tag=True,
+    predicate_type="annotation",
 )
 
-has_title = TypeDef(reference=v.has_title, is_metadata_tag=True)
-has_license = TypeDef(reference=v.has_license, is_metadata_tag=True)
-has_creator = TypeDef(reference=v.has_creator, is_metadata_tag=True)
+has_title = TypeDef(reference=v.has_title, predicate_type="annotation")
+has_license = TypeDef(reference=v.has_license, predicate_type="annotation")
+has_creator = TypeDef(reference=v.has_creator, predicate_type="annotation")
 
-has_description = TypeDef(reference=v.has_description, is_metadata_tag=True)
-obo_autogenerated_by = TypeDef(reference=v.obo_autogenerated_by, is_metadata_tag=True)
-obo_has_format_version = TypeDef(reference=v.obo_has_format_version, is_metadata_tag=True)
-obo_is_metadata_tag = TypeDef(reference=v.obo_is_metadata_tag, is_metadata_tag=True)
-obo_has_id = TypeDef(reference=v.obo_has_id, is_metadata_tag=True)
+has_description = TypeDef(reference=v.has_description, predicate_type="annotation")
+obo_autogenerated_by = TypeDef(reference=v.obo_autogenerated_by, predicate_type="annotation")
+obo_has_format_version = TypeDef(reference=v.obo_has_format_version, predicate_type="annotation")
+obo_is_metadata_tag = TypeDef(reference=v.obo_is_metadata_tag, predicate_type="annotation")
+obo_has_id = TypeDef(reference=v.obo_has_id, predicate_type="annotation")
 
-in_subset = TypeDef(reference=v.in_subset, is_metadata_tag=True)
-has_term_editor = TypeDef(reference=v.has_term_editor, is_metadata_tag=True)
+in_subset = TypeDef(reference=v.in_subset, predicate_type="annotation")
+has_term_editor = TypeDef(reference=v.has_term_editor, predicate_type="annotation")
 
 default_typedefs: dict[ReferenceTuple, TypeDef] = {
     v.pair: v for v in locals().values() if isinstance(v, TypeDef)

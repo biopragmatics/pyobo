@@ -458,7 +458,34 @@ class TestReaderTypedef(unittest.TestCase):
 
     def test_40_is_metadata_tag(self) -> None:
         """Test the ``is_metadata_tag`` tag."""
-        self.assert_boolean_tag("is_metadata_tag")
+        ontology = from_str("""\
+            ontology: ro
+
+            [Typedef]
+            id: BFO:0000066
+        """)
+        typedef = self.get_only_typedef(ontology)
+        self.assertIsNone(typedef.predicate_type)
+
+        ontology = from_str("""\
+            ontology: ro
+
+            [Typedef]
+            id: BFO:0000066
+            is_metadata_tag: false
+        """)
+        typedef = self.get_only_typedef(ontology)
+        self.assertIsNone(typedef.predicate_type)
+
+        ontology = from_str("""\
+            ontology: ro
+
+            [Typedef]
+            id: BFO:0000066
+            is_metadata_tag: true
+        """)
+        typedef = self.get_only_typedef(ontology)
+        self.assertEqual("annotation", typedef.predicate_type)
 
     def test_41_is_class_level(self) -> None:
         """Test the ``is_class_level`` tag."""

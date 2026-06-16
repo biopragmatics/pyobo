@@ -18,7 +18,7 @@ PREFIX = "goldbook"
 URL = "https://goldbook.iupac.org/terms/index/all/json/download"
 TERM_URL_FORMAT = "https://goldbook.iupac.org/terms/view/{}/json"
 
-HAS_STATUS = TypeDef(reference=default_reference(PREFIX, "hasStatus"), is_metadata_tag=True)
+HAS_STATUS = TypeDef(reference=default_reference(PREFIX, "hasStatus"), predicate_type="annotation")
 
 
 class GoldBookGetter(Obo):

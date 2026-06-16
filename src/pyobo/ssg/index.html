@@ -106,8 +106,8 @@
                 {% for term in manifest %}
                     <tr>
                         <td>
-                            {% if term.is_metadata_tag %}
-                                Property
+                            {% if term.predicate_type %}
+                                {{ term.predicate_type.capitalize }}Property
                             {% else %}
                                 {{ term.type }}
                             {% endif %}

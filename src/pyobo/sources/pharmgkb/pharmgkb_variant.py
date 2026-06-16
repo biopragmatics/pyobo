@@ -16,7 +16,7 @@ URL = "https://api.pharmgkb.org/v1/download/file/data/variants.zip"
 
 
 HAS_GENE_ASSOCIATION = TypeDef.default(
-    PREFIX, "hasGeneAssociation", name="has gene association", is_metadata_tag=True
+    PREFIX, "hasGeneAssociation", name="has gene association", predicate_type="annotation"
 )
 
 

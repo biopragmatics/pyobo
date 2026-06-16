@@ -25,13 +25,13 @@ IS_OSI = TypeDef(
     reference=Reference(
         prefix=SPDX_TERM_PREFIX, identifier="isOsiApproved", name="is OSI approved"
     ),
-    is_metadata_tag=True,
+    predicate_type="annotation",
     domain=ROOT.reference,
     range=xsd_boolean,
 )
 IS_FSF = TypeDef(
     reference=Reference(prefix=SPDX_TERM_PREFIX, identifier="isFsfLibre", name="is FSF Libre"),
-    is_metadata_tag=True,
+    predicate_type="annotation",
     domain=ROOT.reference,
     range=xsd_boolean,
 )
