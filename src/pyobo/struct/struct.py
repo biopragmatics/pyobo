@@ -2147,7 +2147,7 @@ class Obo:
         return ssslm.literal_mappings_to_df(self.get_literal_mappings())
 
     @staticmethod
-    def _get_stanza_type(stanza: Stanza) -> Reference | None:
+    def _get_stanza_type(stanza: Stanza) -> curies.Reference | None:
         if isinstance(stanza, TypeDef):
             if stanza.is_metadata_tag:
                 return _cv.owl_annotation_property
