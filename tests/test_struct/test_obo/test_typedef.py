@@ -877,18 +877,66 @@ class TestTypeDef(unittest.TestCase):
 
     def test_40_is_metadata_tag(self) -> None:
         """Test the ``is_metadata_tag`` tag."""
-        td_true, td_false = self.assert_boolean_tag("is_metadata_tag", test_funowl=False)
-        self.assert_funowl_lines(
-            """
-            Declaration(AnnotationProperty(GO:0000001))
+        ref = Reference(prefix="GO", identifier="0000001")
+        typedef = TypeDef(reference=ref, predicate_type=None)
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:0000001
             """,
-            td_true,
+            typedef,
         )
         self.assert_funowl_lines(
             """
             Declaration(ObjectProperty(GO:0000001))
             """,
-            td_false,
+            typedef,
+        )
+
+        typedef = TypeDef(reference=ref, predicate_type="annotation")
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:0000001
+            is_metadata_tag: true
+            """,
+            typedef,
+        )
+        self.assert_funowl_lines(
+            """
+            Declaration(AnnotationProperty(GO:0000001))
+            """,
+            typedef,
+        )
+
+        typedef = TypeDef(reference=ref, predicate_type="object")
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:0000001
+            """,
+            typedef,
+        )
+        self.assert_funowl_lines(
+            """
+            Declaration(ObjectProperty(GO:0000001))
+            """,
+            typedef,
+        )
+
+        typedef = TypeDef(reference=ref, predicate_type="data")
+        self.assert_obo_stanza(
+            """\
+            [Typedef]
+            id: GO:0000001
+            """,
+            typedef,
+        )
+        self.assert_funowl_lines(
+            """
+            Declaration(DataProperty(GO:0000001))
+            """,
+            typedef,
         )
 
     def test_41_is_class_level(self) -> None:
