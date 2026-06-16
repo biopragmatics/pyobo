@@ -103,6 +103,27 @@ def mappings(target: str | None, prefix: str, **kwargs: Unpack[GetOntologyKwargs
 
 @lookup_annotate
 @prefix_argument
+@click.option("--output", "-o")
+def sssom(prefix: str, output: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
+    """Get SSSOM for the given resource."""
+    import sys
+
+    import sssom_pydantic
+
+    from ..api.xrefs import _get_sssom_getter
+
+    mapping_pack = _get_sssom_getter(prefix, **kwargs)()
+
+    sssom_pydantic.write(
+        mapping_pack.mappings,
+        path=output or sys.stdout,
+        converter=mapping_pack.converter,
+        metadata=mapping_pack.mapping_set,
+    )
+
+
+@lookup_annotate
+@prefix_argument
 def metadata(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Print the metadata for the given namespace."""
     from ..api import get_metadata
