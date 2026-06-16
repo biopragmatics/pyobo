@@ -6,6 +6,7 @@ from textwrap import dedent
 
 import bioregistry
 from curies import ReferenceTuple
+from curies import vocabulary as cv
 from sssom_pydantic import SemanticMapping
 from sssom_pydantic.testing import assert_semantic_mapping_equal
 
@@ -566,6 +567,7 @@ class TestTerm(unittest.TestCase):
             self,
             SemanticMapping(
                 subject=LYSINE_DEHYDROGENASE_ACT,
+                subject_type=cv.owl_class,
                 object=Reference.from_curie("EC:1.4.1.15"),
                 predicate=Reference.from_curie(
                     "oboInOwl:hasDbXref", name="has database cross-reference"
@@ -610,6 +612,7 @@ class TestTerm(unittest.TestCase):
             self,
             SemanticMapping(
                 subject=LYSINE_DEHYDROGENASE_ACT,
+                subject_type=cv.owl_class,
                 object=target,
                 predicate=Reference.from_curie(
                     "oboInOwl:hasDbXref", name="has database cross-reference"
@@ -1042,6 +1045,7 @@ class TestTerm(unittest.TestCase):
             self,
             SemanticMapping(
                 subject=LYSINE_DEHYDROGENASE_ACT,
+                subject_type=cv.owl_class,
                 object=target,
                 predicate=Reference.from_curie("skos:exactMatch", name="exact match"),
                 justification=Reference.from_curie("semapv:UnspecifiedMatching"),
@@ -1172,6 +1176,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
             self,
             SemanticMapping(
                 subject=LYSINE_DEHYDROGENASE_ACT,
+                subject_type=cv.owl_class,
                 object=target,
                 predicate=Reference.from_curie("skos:exactMatch", name="exact match"),
                 justification=Reference.from_curie("semapv:UnspecifiedMatching"),
