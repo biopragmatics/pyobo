@@ -2146,6 +2146,19 @@ class Obo:
         """Get a literal mappings dataframe."""
         return ssslm.literal_mappings_to_df(self.get_literal_mappings())
 
+    @staticmethod
+    def _get_stanza_type(stanza: Stanza) -> Reference | None:
+        if isinstance(stanza, TypeDef):
+            if stanza.is_metadata_tag:
+                return _cv.owl_annotation_property
+            else:
+                return _cv.owl_object_property
+        elif stanza.type == "Term":
+            return _cv.owl_class
+        elif stanza.type == "Instance":
+            return _cv.owl_named_individual
+        return None
+
     def get_semantic_mappings(
         self, *, progress: bool = False
     ) -> Iterable[sssom_pydantic.SemanticMapping]:
@@ -2153,12 +2166,14 @@ class Obo:
         license_url = bioregistry.get_license_url(self.ontology)
         source = _get_download_source(self.ontology)
         for stanza in self._iter_stanzas(use_tqdm=progress):
+            subject_type = self._get_stanza_type(stanza)
             for predicate, obj_ref, context in stanza.get_mappings(
                 include_xrefs=True, add_context=True
             ):
                 # TODO update object reference with label?
                 yield sssom_pydantic.SemanticMapping(
                     subject=stanza.reference,
+                    subject_type=subject_type,
                     predicate=predicate,
                     object=obj_ref,
                     confidence=context.confidence,
