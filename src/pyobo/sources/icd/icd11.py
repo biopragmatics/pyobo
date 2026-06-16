@@ -34,7 +34,9 @@ logger = logging.getLogger(__name__)
 PREFIX = "icd11"
 CODE_PREFIX = "icd11.code"
 
-CODE_PROP = TypeDef(reference=default_reference(PREFIX, "icd_mms_code"), is_metadata_tag=True)
+CODE_PROP = TypeDef(
+    reference=default_reference(PREFIX, "icd_mms_code"), predicate_type="annotation"
+)
 
 
 class ICD11Getter(Obo):

@@ -28,6 +28,7 @@ __all__ = [
     "OntologyFormat",
     "OntologyPathPack",
     "SlimGetOntologyKwargs",
+    "TypeDefType",
     "check_should_cache",
     "check_should_force",
     "check_should_use_tqdm",
@@ -319,3 +320,7 @@ def get_semantic_mapping_metadata(
         confidence=confidence,
         version=version,
     )
+
+
+#: The type of a typedef.
+TypeDefType = Literal["object", "annotation", "data"]

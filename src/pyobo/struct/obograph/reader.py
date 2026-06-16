@@ -20,6 +20,7 @@ from pyobo import Obo, Reference, StanzaType, Synonym, Term, TypeDef, build_onto
 from pyobo.identifier_utils import get_converter
 from pyobo.struct import Annotation, OBOLiteral
 from pyobo.struct import vocabulary as v
+from pyobo.struct.obograph.utils import INVERSE_PROPERTY_TYPE_MAP
 from pyobo.struct.typedef import has_ontology_root_term
 
 __all__ = [
@@ -178,7 +179,9 @@ def _from_term(node: StandardizedNode) -> Term:
 def _from_property(node: StandardizedNode) -> TypeDef:
     typedef = TypeDef(
         reference=_get_ref(node),
-        is_metadata_tag=node.property_type == "ANNOTATION",
+        predicate_type=INVERSE_PROPERTY_TYPE_MAP[node.property_type]
+        if node.property_type
+        else None,
     )
     if node.meta is not None:
         _process_typedef_meta(node.meta, typedef)

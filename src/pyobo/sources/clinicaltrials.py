@@ -19,13 +19,13 @@ INVESTIGATES_CONDITION = TypeDef(
     reference=default_reference(
         prefix=PREFIX, identifier="investigates_condition", name="investigates condition"
     ),
-    is_metadata_tag=True,
+    predicate_type="annotation",
 )
 HAS_INTERVENTION = TypeDef(
     reference=default_reference(
         prefix=PREFIX, identifier="has_intervention", name="has intervention"
     ),
-    is_metadata_tag=True,
+    predicate_type="annotation",
 )
 
 INVESTIGATION_TERM = Term(

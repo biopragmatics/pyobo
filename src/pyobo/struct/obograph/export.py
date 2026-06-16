@@ -13,6 +13,7 @@ from pystow.utils import safe_open
 from pyobo.identifier_utils.api import get_converter
 from pyobo.struct import Obo, OBOLiteral, Stanza, Term, TypeDef
 from pyobo.struct import typedef as tdv
+from pyobo.struct.obograph.utils import PROPERTY_TYPE_MAP
 
 __all__ = [
     "to_obograph",
@@ -305,7 +306,7 @@ def _get_typedef_node(typedef: TypeDef) -> og.StandardizedNode:
         label=typedef.name,
         meta=_meta_or_none(meta),
         type="PROPERTY",
-        property_type="ANNOTATION" if typedef.is_metadata_tag else "OBJECT",
+        property_type=PROPERTY_TYPE_MAP[typedef.predicate_type] if typedef.predicate_type else None,
     )
 
 

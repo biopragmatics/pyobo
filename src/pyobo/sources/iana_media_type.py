@@ -66,7 +66,7 @@ PREDICATE = TypeDef(
     domain=ROOT_MEDIA_TYPE.reference,
     range=ROOT_FILE_FORMAT.reference,
     definition="Connects a media type with a file format that has been observed to encode it",
-    is_metadata_tag=True,
+    predicate_type="annotation",
 )
 
 
