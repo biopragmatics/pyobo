@@ -2,7 +2,7 @@
 
 import logging
 import warnings
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from functools import lru_cache
 
 import bioregistry
@@ -112,10 +112,15 @@ def get_sssom_df(prefix: str | Obo, **kwargs: Unpack[GetOntologyKwargs]) -> pd.D
 
 
 def get_semantic_mappings(
-    prefix: str,
-    names: bool = False,
-    **kwargs: Unpack[GetOntologyKwargs],
+    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[SemanticMapping]:
+    """Get semantic mappings."""
+    return _get_sssom_getter(prefix, **kwargs)().mappings
+
+
+def _get_sssom_getter(
+    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+) -> Callable[[], sssom_pydantic.SemanticMappingPack]:
     """Get semantic mappings."""
     version = get_version_from_kwargs(prefix, kwargs)
 
@@ -138,10 +143,7 @@ def get_semantic_mappings(
             mappings=mappings, converter=converter, mapping_set=mapping_set
         )
 
-    mappings = _mapping_getter().mappings
-    if names:
-        raise NotImplementedError
-    return mappings
+    return _mapping_getter
 
 
 def get_mappings_df(
