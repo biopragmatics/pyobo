@@ -2150,10 +2150,10 @@ class Obo:
     @staticmethod
     def _get_stanza_type(stanza: Stanza) -> curies.Reference | None:
         if isinstance(stanza, TypeDef):
-            if stanza.predicate_type == "annotation":
-                return _cv.owl_annotation_property
-            elif stanza.predicate_type == "object":
+            if stanza.predicate_type is None or stanza.predicate_type == "object":
                 return _cv.owl_object_property
+            elif stanza.predicate_type == "annotation":
+                return _cv.owl_annotation_property
             elif stanza.predicate_type == "data":
                 return _cv.owl_data_property
             else:
