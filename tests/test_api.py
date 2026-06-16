@@ -265,6 +265,7 @@ class TestEverything(unittest.TestCase):
             expected_semantic_mappings = [
                 SemanticMapping(
                     subject=r1,
+                    subject_type=_v.owl_class,
                     predicate=PyOBOReference.from_reference(_v.alternative_term),
                     object=r2,
                     justification=_v.unspecified_matching_process.without_name(),
@@ -273,6 +274,7 @@ class TestEverything(unittest.TestCase):
                 ),
                 SemanticMapping(
                     subject=r1,
+                    subject_type=_v.owl_class,
                     predicate=PyOBOReference.from_reference(_v.has_dbxref),
                     object=r2_1,
                     justification=_v.unspecified_matching_process.without_name(),
@@ -281,6 +283,7 @@ class TestEverything(unittest.TestCase):
                 ),
                 SemanticMapping(
                     subject=r3,
+                    subject_type=_v.owl_class,
                     predicate=PyOBOReference.from_reference(_v.exact_match),
                     object=r2_2,
                     justification=_v.unspecified_matching_process.without_name(),
