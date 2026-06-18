@@ -4,11 +4,10 @@ import logging
 from collections.abc import Mapping
 from functools import lru_cache
 
-import curies
 from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
-from .utils import _get_pi, get_version_from_kwargs
+from .utils import SimpleReferenceHint, _get_pi, get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_force
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
@@ -24,9 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_species(
-    reference: str | curies.Reference | curies.ReferenceTuple,
-    /,
-    **kwargs: Unpack[GetOntologyKwargs],
+    reference: SimpleReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> str | None:
     """Get the species."""
     t = _get_pi(reference)

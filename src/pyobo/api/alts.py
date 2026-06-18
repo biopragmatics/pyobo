@@ -4,11 +4,10 @@ import logging
 from collections.abc import Mapping
 from functools import lru_cache
 
-import curies
 from pydantic import ValidationError
 from typing_extensions import Unpack
 
-from .utils import _get_pi, get_version_from_kwargs
+from .utils import SimpleReferenceHint, _get_pi, get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import Reference, wrap_norm_prefix
@@ -63,9 +62,7 @@ def get_alts_to_id(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[
 
 
 def get_primary_reference(
-    reference: str | curies.Reference | curies.ReferenceTuple,
-    /,
-    **kwargs: Unpack[GetOntologyKwargs],
+    reference: SimpleReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Reference | None:
     """Get the primary reference for an entity."""
     primary_reference = _get_pi(reference)
@@ -80,9 +77,7 @@ def get_primary_reference(
 
 
 def get_primary_curie(
-    reference: str | curies.Reference | curies.ReferenceTuple,
-    /,
-    **kwargs: Unpack[GetOntologyKwargs],
+    reference: SimpleReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> str | None:
     """Get the primary curie for an entity."""
     primary_reference = get_primary_reference(reference, **kwargs)
@@ -92,9 +87,7 @@ def get_primary_curie(
 
 
 def get_primary_identifier(
-    reference: str | curies.Reference | curies.ReferenceTuple,
-    /,
-    **kwargs: Unpack[GetOntologyKwargs],
+    reference: SimpleReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> str:
     """Get the primary identifier for an entity.
 

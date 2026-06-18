@@ -1,5 +1,7 @@
 """Utilities for high-level API."""
 
+from typing import TypeAlias
+
 import curies
 from curies import ReferenceTuple
 
@@ -13,6 +15,7 @@ from ..utils.ver import (
 )
 
 __all__ = [
+    "SimpleReferenceHint",
     "VersionError",
     "get_version",
     "get_version_from_kwargs",
@@ -21,7 +24,11 @@ __all__ = [
 ]
 
 
-def _get_pi(reference: str | curies.Reference | ReferenceTuple, /) -> Reference:
+SimpleReferenceHint: TypeAlias = str | curies.Reference | ReferenceTuple
+
+
+def _get_pi(reference: SimpleReferenceHint, /) -> Reference:
+    """Resolve a reference hint."""
     if isinstance(reference, Reference):
         return reference
     if isinstance(reference, ReferenceTuple | curies.Reference):

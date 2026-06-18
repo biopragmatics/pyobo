@@ -166,7 +166,7 @@ If you don't have time for two lines:
 ```python
 import pyobo
 
-pubchem_compound_id = pyobo.get_xref("chebi", "132964", "pubchem.compound")
+pubchem_compound_id = pyobo.get_xref("chebi:132964", "pubchem.compound")
 assert pubchem_compound_id == "3033674"
 ```
 
@@ -202,7 +202,7 @@ need to flip it:
 ```python
 import pyobo
 
-hgnc_id = pyobo.get_xref("hgnc", "4137", "ncbigene", flip=True)
+hgnc_id = pyobo.get_xref("hgnc:4137", "ncbigene", flip=True)
 assert hgnc_id == "6893"
 ```
 
@@ -227,7 +227,7 @@ If you don't have time for two lines:
 ```python
 import pyobo
 
-smiles = pyobo.get_property("chebi", "132964", "http://purl.obolibrary.org/obo/chebi/smiles")
+smiles = pyobo.get_property("chebi:132964", "http://purl.obolibrary.org/obo/chebi/smiles")
 assert smiles == "C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F"
 ```
 

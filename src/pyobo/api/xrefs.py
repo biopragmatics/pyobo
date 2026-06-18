@@ -13,7 +13,7 @@ from sssom_pydantic import SemanticMapping
 from sssom_pydantic.io import CachedSemanticMappings
 from typing_extensions import Unpack
 
-from .utils import get_version_from_kwargs
+from .utils import SimpleReferenceHint, _get_pi, get_version_from_kwargs
 from ..constants import (
     TARGET_ID,
     TARGET_PREFIX,
@@ -44,16 +44,17 @@ logger = logging.getLogger(__name__)
 
 @wrap_norm_prefix
 def get_xref(
-    prefix: str,
-    identifier: str,
+    reference: SimpleReferenceHint,
     new_prefix: str,
+    /,
     *,
     flip: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the xref with the new prefix if a direct path exists."""
-    filtered_xrefs = get_filtered_xrefs(prefix, new_prefix, flip=flip, **kwargs)
-    return filtered_xrefs.get(identifier)
+    reference = _get_pi(reference)
+    filtered_xrefs = get_filtered_xrefs(reference.prefix, new_prefix, flip=flip, **kwargs)
+    return filtered_xrefs.get(reference.identifier)
 
 
 @lru_cache

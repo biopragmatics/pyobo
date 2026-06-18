@@ -16,7 +16,7 @@ from ssslm import LiteralMapping
 from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
-from .utils import _get_pi, get_version_from_kwargs
+from .utils import SimpleReferenceHint, _get_pi, get_version_from_kwargs
 from ..constants import (
     GetOntologyKwargs,
     check_should_cache,
@@ -67,7 +67,7 @@ NO_BUILD_PREFIXES: set[str] = set()
 
 def _help_get(
     f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
-    reference: str | curies.Reference | ReferenceTuple
+    reference: SimpleReferenceHint,
     *,
     upgrade_identifier: bool | None = None,
     **kwargs: Unpack[GetOntologyKwargs],
