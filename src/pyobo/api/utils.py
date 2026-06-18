@@ -22,12 +22,12 @@ __all__ = [
 
 
 def _get_pi(
-    prefix: str | curies.Reference | ReferenceTuple, identifier: str | None = None, /
+    reference: str | curies.Reference | ReferenceTuple, _unused: str | None = None, /
 ) -> Reference:
-    if isinstance(prefix, ReferenceTuple | curies.Reference):
-        if identifier is not None:
-            raise ValueError("unexpected non-none value passed as second positional argument")
-        return Reference.from_reference(prefix)
-    if isinstance(prefix, str) and identifier is None:
-        return Reference.from_curie(prefix)
-    raise NotImplementedError
+    if _unused is not None:
+        raise ValueError("unexpected non-none value passed as second positional argument")
+    if isinstance(reference, ReferenceTuple | curies.Reference):
+        return Reference.from_reference(reference)
+    if isinstance(reference, str) and _unused is None:
+        return Reference.from_curie(reference)
+    raise TypeError(f"unexpected type {type(reference)}")
