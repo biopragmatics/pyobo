@@ -7,10 +7,10 @@ import json
 import logging
 import os
 from functools import lru_cache
-from typing import Literal, cast, overload
+from typing import Annotated, Any, Literal, cast, overload
 
 import bioversions
-from pydantic import BaseModel
+from pydantic import BaseModel, BeforeValidator
 from pystow.utils import read_pydantic_json
 
 from .path import CacheArtifact, prefix_directory_join
@@ -132,8 +132,14 @@ def get_version_pins() -> dict[str, str]:
     return version_pins
 
 
+def _ensure_date(value: Any) -> Any:
+    if isinstance(value, datetime.datetime):
+        value = value.date()
+    return value
+
+
 class VersionMetadata(BaseModel):
     """A model for version metadata information."""
 
     version: str | None = None
-    date: datetime.date | None = None
+    date: Annotated[datetime.date | None, BeforeValidator(_ensure_date)] = None
