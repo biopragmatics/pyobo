@@ -14,7 +14,6 @@ from typing import Any, TypeAlias
 
 import bioregistry
 import networkx as nx
-from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
 from curies.preprocessing import BlocklistError
 from curies.vocabulary import SynonymScope
@@ -45,6 +44,7 @@ from ...constants import DATE_FORMAT, PROVENANCE_PREFIXES
 from ...identifier_utils import (
     NotCURIEError,
     ParseError,
+    Reference,
     UnparsableIRIError,
     _is_valid_identifier,
     _parse_str_or_curie_or_uri_helper,

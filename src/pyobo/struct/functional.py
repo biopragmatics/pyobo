@@ -14,8 +14,9 @@ from functional_owl import macros as m
 from rdflib import XSD
 
 from . import vocabulary as pv
-from .reference import OBOLiteral, Reference, _parse_datetime
+from .reference import OBOLiteral, _parse_datetime
 from .struct import get_iris
+from ..identifier_utils import Reference
 
 if TYPE_CHECKING:
     from .reference import Referenced

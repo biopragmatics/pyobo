@@ -4,10 +4,10 @@ import unittest
 from typing import cast
 
 import obographs as og
-from curies import Reference
 from obographs import StandardizedGraph, StandardizedMeta
 
 from pyobo.constants import TypeDefType
+from pyobo.identifier_utils import Reference
 
 __all__ = [
     "assert_graph_equal",

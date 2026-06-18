@@ -14,7 +14,6 @@ import bioregistry
 import curies
 import dateutil.parser
 import pytz
-from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
 from curies import vocabulary as v
 from curies.preprocessing import BlocklistError
@@ -22,6 +21,7 @@ from curies.preprocessing import BlocklistError
 from ..identifier_utils import (
     NotCURIEError,
     ParseError,
+    Reference,
     UnparsableIRIError,
     _is_valid_identifier,
     _parse_str_or_curie_or_uri_helper,
@@ -29,7 +29,6 @@ from ..identifier_utils import (
 
 __all__ = [
     "OBOLiteral",
-    "Reference",
     "Referenced",
     "default_reference",
     "get_preferred_curie",
@@ -158,9 +157,13 @@ def default_reference(prefix: str, identifier: str, name: str | None = None) -> 
 
     >>> default_reference("chebi", "conjugate_base_of")
     Reference(prefix="obo", identifier="chebi#conjugate_base_of", name=None)
+
+    >>> default_reference("CHEBI", "conjugate_base_of")
+    Reference(prefix="obo", identifier="chebi#conjugate_base_of", name=None)
     """
     if not identifier.strip():
         raise ValueError("default identifier is empty")
+    prefix = bioregistry.normalize_prefix(prefix) or prefix.lower()
     return Reference(prefix="obo", identifier=f"{prefix}#{identifier}", name=name)
 
 

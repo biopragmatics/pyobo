@@ -5,16 +5,11 @@ from collections.abc import Iterable
 from textwrap import dedent
 
 import bioregistry
-from bioregistry import NormalizedNamedReference
 from curies import vocabulary as v
 
 from pyobo import Obo, Reference, default_reference
 from pyobo.struct.reference import OBOLiteral
-from pyobo.struct.struct import (
-    Synonym,
-    TypeDef,
-    build_ontology,
-)
+from pyobo.struct.struct import Synonym, TypeDef, build_ontology
 from pyobo.struct.typedef import (
     exact_match,
     has_contributor,
@@ -318,9 +313,7 @@ class TestTypeDef(unittest.TestCase):
 
         typedef = TypeDef(
             reference=REF,
-            synonyms=[
-                Synonym("bears role", type=NormalizedNamedReference.from_reference(v.previous_name))
-            ],
+            synonyms=[Synonym("bears role", type=Reference.from_reference(v.previous_name))],
         )
         self.assert_obo_stanza(
             """\
@@ -343,7 +336,7 @@ class TestTypeDef(unittest.TestCase):
             synonyms=[
                 Synonym(
                     "bears role",
-                    type=NormalizedNamedReference.from_reference(v.previous_name),
+                    type=Reference.from_reference(v.previous_name),
                     specificity="EXACT",
                 )
             ],
@@ -388,7 +381,7 @@ class TestTypeDef(unittest.TestCase):
         typedef = TypeDef(
             reference=REF,
             properties={
-                has_contributor.reference: [NormalizedNamedReference.from_reference(v.charlie)],
+                has_contributor.reference: [Reference.from_reference(v.charlie)],
                 has_inchi.reference: [OBOLiteral.string("abc")],
             },
         )

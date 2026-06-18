@@ -21,7 +21,7 @@ from .utils import (
 from ..constants import GetOntologyKwargs
 
 if TYPE_CHECKING:
-    from curies import Reference
+    import curies
 
 __all__ = [
     "lookup",
@@ -306,7 +306,7 @@ def descendants(curie: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
 
 
 def _list_curies(
-    references: Iterable[Reference] | None, **kwargs: Unpack[GetOntologyKwargs]
+    references: Iterable[curies.Reference] | None, **kwargs: Unpack[GetOntologyKwargs]
 ) -> None:
     if not references:
         return

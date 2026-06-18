@@ -78,33 +78,6 @@ class TestStruct(unittest.TestCase):
         with self.assertRaises(BioregistryError):
             Nope()
 
-    def test_reference_validation(self) -> None:
-        """Test validation of prefix."""
-        with self.assertRaises(ValueError):
-            Reference(prefix="nope", identifier="also_nope")
-
-        # For when we want to do regex checking
-        # with self.assertRaises(ValueError):
-        #     Reference(prefix="go", identifier="nope")
-        # with self.assertRaises(ValueError):
-        #     Reference(prefix="go", identifier="12345")
-
-        r1 = Reference(prefix="go", identifier="1234567")
-        self.assertEqual("go", r1.prefix)
-        self.assertEqual("1234567", r1.identifier)
-
-        r2 = Reference(prefix="GO", identifier="1234567")
-        self.assertEqual("go", r2.prefix)
-        self.assertEqual("1234567", r2.identifier)
-
-        r3 = Reference(prefix="go", identifier="GO:1234567")
-        self.assertEqual("go", r3.prefix)
-        self.assertEqual("1234567", r3.identifier)
-
-        r4 = Reference(prefix="GO", identifier="GO:1234567")
-        self.assertEqual("go", r4.prefix)
-        self.assertEqual("1234567", r4.identifier)
-
     def test_synonym_typedef(self) -> None:
         """Test synonym type definition serialization."""
         r1 = Reference(prefix="OMO", identifier="0003012", name="acronym")

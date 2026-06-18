@@ -5,7 +5,7 @@ from collections.abc import Sequence
 import curies
 from curies import vocabulary as _v
 
-from .reference import Reference
+from ..identifier_utils import Reference
 
 __all__ = [
     "equivalent_class",

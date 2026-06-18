@@ -34,7 +34,6 @@ from tqdm.auto import tqdm
 from . import vocabulary as v
 from .reference import (
     OBOLiteral,
-    Reference,
     Referenced,
     _reference_list_tag,
     comma_separate_references,
@@ -73,6 +72,7 @@ from ..constants import (
     TypeDefType,
     get_semantic_mapping_metadata,
 )
+from ..identifier_utils import Reference
 from ..utils.cache import write_gzipped_graph
 from ..utils.io import multidict, write_iterable_tsv
 from ..utils.path import (
@@ -466,7 +466,7 @@ class Term(Stanza):
             if species.prefix == prefix:
                 return species
         if strict:
-            raise ValueError
+            raise ValueError(f"no species found with prefix {prefix}")
         return None
 
     def extend_relationship(self, typedef: ReferenceHint, references: Iterable[Reference]) -> None:

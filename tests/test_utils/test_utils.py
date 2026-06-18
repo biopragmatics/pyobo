@@ -2,7 +2,7 @@
 
 import unittest
 
-from curies import Reference
+import curies
 
 from pyobo.identifier_utils import (
     NotCURIEError,
@@ -21,7 +21,7 @@ class TestStringUtils(unittest.TestCase):
     ) -> None:
         """Test a pair is parsed properly."""
         xx = _parse_str_or_curie_or_uri_helper(curie, ontology_prefix=ontology_prefix)
-        if not isinstance(xx, Reference):
+        if not isinstance(xx, curies.Reference):
             raise self.fail()
         self.assertEqual(expected, xx.pair)
 
