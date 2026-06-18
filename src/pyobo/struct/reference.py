@@ -14,7 +14,6 @@ import bioregistry
 import curies
 import dateutil.parser
 import pytz
-from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
 from curies import vocabulary as v
 from curies.preprocessing import BlocklistError
@@ -22,6 +21,7 @@ from curies.preprocessing import BlocklistError
 from ..identifier_utils import (
     NotCURIEError,
     ParseError,
+    Reference,
     UnparsableIRIError,
     _is_valid_identifier,
     _parse_str_or_curie_or_uri_helper,

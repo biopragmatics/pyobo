@@ -6,15 +6,13 @@ from pathlib import Path
 
 import curies
 import rdflib
-from bioregistry import NormalizedNamableReference, NormalizedNamedReference
-from curies import Reference
 from curies import vocabulary as v
 from rdflib import DCTERMS, RDF, RDFS, SKOS, VANN, Graph, Node, URIRef
 from tqdm import tqdm
 
 from pyobo import Annotation
 from pyobo.identifier_utils import get_converter
-from pyobo.struct import Obo, Term, build_ontology
+from pyobo.struct import Obo, Reference, Term, build_ontology
 from pyobo.struct.vocabulary import has_source
 
 __all__ = [
@@ -73,12 +71,10 @@ def get_skos_from_rdflib(
         raise ValueError(f"no prefix given nor found using {VANN.preferredNamespacePrefix}")
 
     root_terms = [
-        NormalizedNamableReference.from_reference(
-            converter.parse_uri(str(subject), strict=True).to_pydantic()
-        )
+        Reference.from_reference(converter.parse_uri(str(subject), strict=True).to_pydantic())
         for subject in graph.objects(scheme, SKOS.hasTopConcept)
     ]
-    terms: dict[Reference, Term] = {}
+    terms: dict[curies.Reference, Term] = {}
     for concept in tqdm(
         graph.subjects(RDF.type, SKOS.Concept),
         desc=f"[{prefix}] SKOS concepts to OWL",
@@ -129,10 +125,10 @@ def get_skos_from_rdflib(
     )
 
 
-def _cleanup_narrow_matches(terms: dict[Reference, Term]) -> None:
+def _cleanup_narrow_matches(terms: dict[curies.Reference, Term]) -> None:
     for parent in terms.values():
         for child in parent.get_property_objects(v.narrow_match):
-            if not isinstance(child, Reference):
+            if not isinstance(child, curies.Reference):
                 continue
             if child not in terms:
                 continue
@@ -174,7 +170,7 @@ def get_term(
     labels = _literal_objects(graph, node, SKOS.prefLabel, language_priority)
     definitions = _literal_objects(graph, node, SKOS.definition, language_priority)
     term = Term(
-        reference=NormalizedNamedReference(
+        reference=Reference(
             prefix=reference_tuple.prefix,
             identifier=reference_tuple.identifier,
             name=labels[0] if labels else None,

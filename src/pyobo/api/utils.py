@@ -3,9 +3,9 @@
 import warnings
 
 import curies
-from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
 
+from ..identifier_utils import Reference
 from ..utils.ver import (
     VersionError,
     get_version,

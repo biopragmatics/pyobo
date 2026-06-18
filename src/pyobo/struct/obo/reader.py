@@ -14,7 +14,6 @@ from typing import Any, TypeAlias
 
 import bioregistry
 import networkx as nx
-from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
 from curies.preprocessing import BlocklistError
 from curies.vocabulary import SynonymScope
@@ -33,6 +32,7 @@ from .. import vocabulary as v
 from ..reference import OBOLiteral, _obo_parse_identifier, default_reference
 from ..struct import (
     Obo,
+    Reference,
     Synonym,
     SynonymTypeDef,
     Term,

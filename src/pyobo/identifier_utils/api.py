@@ -9,13 +9,13 @@ from typing import Annotated, Any, ClassVar, Concatenate, ParamSpec, TypeVar
 
 import bioregistry
 import click
-from bioregistry import NormalizedNamableReference as Reference
 from bioregistry.constants import FailureReturnType
 from curies.preprocessing import BlocklistError, PreprocessingConverter
 from curies_processing import get_rules
 from pydantic import ValidationError
 from typing_extensions import Doc
 
+from .reference import Reference
 from .relations import ground_relation
 
 __all__ = [
@@ -24,6 +24,7 @@ __all__ = [
     "NotCURIEError",
     "ParseError",
     "ParseValidationError",
+    "Reference",
     "UnparsableIRIError",
     "UnregisteredPrefixError",
     "_parse_str_or_curie_or_uri_helper",
