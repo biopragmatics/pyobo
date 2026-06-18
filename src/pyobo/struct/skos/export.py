@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from curies import Converter, Reference
+    import curies
+    from curies import Converter
     from rdflib import Graph, Node, URIRef
 
     from pyobo.struct import Obo
@@ -29,7 +30,7 @@ def write_skos(
     graph.serialize(path, format=format or "ttl")
 
 
-def _expand_rdflib(converter: Converter, reference: Reference) -> URIRef:
+def _expand_rdflib(converter: Converter, reference: curies.Reference) -> URIRef:
     import rdflib
 
     return rdflib.URIRef(converter.expand_reference(reference, strict=True))
