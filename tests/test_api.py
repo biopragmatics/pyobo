@@ -16,8 +16,8 @@ from sssom_pydantic import SemanticMapping
 from sssom_pydantic.testing import assert_semantic_mapping_equal
 
 import pyobo
-from pyobo import Reference as PyOBOReference
 from pyobo import (
+    Reference,
     default_reference,
     get_name,
     get_name_by_curie,
@@ -114,7 +114,7 @@ class TestAltIds(unittest.TestCase):
 
         primary_reference = get_primary_reference(secondary_curie)
         self.assertIsNotNone(primary_reference)
-        self.assertEqual(PyOBOReference.from_curie(expected_primary_curie), primary_reference)
+        self.assertEqual(Reference.from_curie(expected_primary_curie), primary_reference)
 
         self.assertIsNone(get_name_by_curie(secondary_curie, upgrade_identifier=False))
 
@@ -161,7 +161,7 @@ class TestAltIds(unittest.TestCase):
         """Test when you give a primary CURIE."""
         for curie in ["go:0003700", "GO:0003700"]:
             primary_reference = get_primary_reference(curie)
-            self.assertEqual(PyOBOReference.from_curie(curie), primary_reference)
+            self.assertEqual(Reference.from_curie(curie), primary_reference)
             name = get_name_by_curie(curie)
             self.assertEqual("DNA-binding transcription factor activity", name)
 
@@ -184,11 +184,11 @@ class TestEverything(unittest.TestCase):
         """
         tr1 = default_reference(TEST_P1, "r1")
         td1 = TypeDef(reference=tr1)
-        r1 = PyOBOReference(prefix=TEST_P1, identifier="1", name="test name")
-        r2 = PyOBOReference(prefix=TEST_P1, identifier="2")
-        r3 = PyOBOReference(prefix=TEST_P1, identifier="3")
-        r2_1 = PyOBOReference(prefix=TEST_P2, identifier="X")
-        r2_2 = PyOBOReference(prefix=TEST_P2, identifier="Y")
+        r1 = Reference(prefix=TEST_P1, identifier="1", name="test name")
+        r2 = Reference(prefix=TEST_P1, identifier="2")
+        r3 = Reference(prefix=TEST_P1, identifier="3")
+        r2_1 = Reference(prefix=TEST_P2, identifier="X")
+        r2_2 = Reference(prefix=TEST_P2, identifier="Y")
         syn1 = "ttt1"
         t1 = Term(reference=r1).append_alt(r2).append_synonym(syn1).append_xref(r2_1)
         t1.append_comment("test comment")
@@ -262,12 +262,12 @@ class TestEverything(unittest.TestCase):
                 )
             )
             self.assertEqual(3, len(semantic_mappings))
-            subject_source = PyOBOReference(prefix="bioregistry", identifier=r1.prefix)
+            subject_source = Reference(prefix="bioregistry", identifier=r1.prefix)
             expected_semantic_mappings = [
                 SemanticMapping(
                     subject=r1,
                     subject_type=_v.owl_class,
-                    predicate=PyOBOReference.from_reference(_v.alternative_term),
+                    predicate=Reference.from_reference(_v.alternative_term),
                     object=r2,
                     justification=_v.unspecified_matching_process.without_name(),
                     source=subject_source,
@@ -276,7 +276,7 @@ class TestEverything(unittest.TestCase):
                 SemanticMapping(
                     subject=r1,
                     subject_type=_v.owl_class,
-                    predicate=PyOBOReference.from_reference(_v.has_dbxref),
+                    predicate=Reference.from_reference(_v.has_dbxref),
                     object=r2_1,
                     justification=_v.unspecified_matching_process.without_name(),
                     source=subject_source,
@@ -285,7 +285,7 @@ class TestEverything(unittest.TestCase):
                 SemanticMapping(
                     subject=r3,
                     subject_type=_v.owl_class,
-                    predicate=PyOBOReference.from_reference(_v.exact_match),
+                    predicate=Reference.from_reference(_v.exact_match),
                     object=r2_2,
                     justification=_v.unspecified_matching_process.without_name(),
                     source=subject_source,
@@ -301,13 +301,13 @@ class TestEverything(unittest.TestCase):
                 LiteralMapping(
                     text="ttt1",
                     reference=r1,
-                    predicate=PyOBOReference.from_reference(_v.has_related_synonym),
+                    predicate=Reference.from_reference(_v.has_related_synonym),
                     source=TEST_P1,
                 ),
                 LiteralMapping(
                     text="test name",
                     reference=r1,
-                    predicate=PyOBOReference.from_reference(_v.has_label),
+                    predicate=Reference.from_reference(_v.has_label),
                     source=TEST_P1,
                 ),
             ]
