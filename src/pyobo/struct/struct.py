@@ -2059,7 +2059,7 @@ class Obo:
         """Get a mapping from identifiers to a list of sorted synonym strings."""
         return multidict(self.iterate_synonym_rows(use_tqdm=use_tqdm))
 
-    def get_grounder(self) -> ssslm.Grounder:
+    def get_grounder(self) -> ssslm.Grounder[Reference]:
         """Get a grounder from this ontology.
 
         :returns: An object that can be used for named entity recognition and named
@@ -2099,7 +2099,7 @@ class Obo:
         """
         return ssslm.make_grounder(self.get_literal_mappings())
 
-    def get_literal_mappings(self) -> Iterable[ssslm.LiteralMapping]:
+    def get_literal_mappings(self) -> Iterable[ssslm.LiteralMapping[Reference]]:
         """Get literal mappings in a standard data model."""
         stanzas: Iterable[Stanza] = itt.chain(self, self.typedefs or [])
         yield from itt.chain.from_iterable(
