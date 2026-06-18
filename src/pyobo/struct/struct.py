@@ -2099,7 +2099,7 @@ class Obo:
         """
         return ssslm.make_grounder(self.get_literal_mappings())
 
-    def get_literal_mappings(self) -> Iterable[ssslm.LiteralMapping]:
+    def get_literal_mappings(self) -> Iterable[ssslm.LiteralMapping[Reference]]:
         """Get literal mappings in a standard data model."""
         stanzas: Iterable[Stanza] = itt.chain(self, self.typedefs or [])
         yield from itt.chain.from_iterable(
