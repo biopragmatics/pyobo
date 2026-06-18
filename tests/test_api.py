@@ -134,15 +134,12 @@ class TestAltIds(unittest.TestCase):
         self.assertIsNotNone(primary_id)
         self.assertEqual("0003700", primary_id)
         name = get_name(ReferenceTuple("go", "0003700"))
-        self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
         name = get_name(ReferenceTuple("go", "0003700"))
-        self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
         name = get_name(curies.Reference(prefix="go", identifier="0003700"))
-        self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
     @mock_id_alts_mapping
@@ -158,10 +155,8 @@ class TestAltIds(unittest.TestCase):
     def test_already_primary_by_curie(self, _: Any, __: Any) -> None:
         """Test when you give a primary CURIE."""
         primary_curie = get_primary_curie("go:0003700")
-        self.assertIsNotNone(primary_curie)
         self.assertEqual("go:0003700", primary_curie)
         name = get_name_by_curie("go:0003700")
-        self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
     @mock_id_alts_mapping

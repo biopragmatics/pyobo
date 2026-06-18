@@ -157,9 +157,13 @@ def default_reference(prefix: str, identifier: str, name: str | None = None) -> 
 
     >>> default_reference("chebi", "conjugate_base_of")
     Reference(prefix="obo", identifier="chebi#conjugate_base_of", name=None)
+
+    >>> default_reference("CHEBI", "conjugate_base_of")
+    Reference(prefix="obo", identifier="chebi#conjugate_base_of", name=None)
     """
     if not identifier.strip():
         raise ValueError("default identifier is empty")
+    prefix = bioregistry.normalize_prefix(prefix) or prefix.lower()
     return Reference(prefix="obo", identifier=f"{prefix}#{identifier}", name=name)
 
 

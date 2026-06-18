@@ -466,7 +466,7 @@ class Term(Stanza):
             if species.prefix == prefix:
                 return species
         if strict:
-            raise ValueError
+            raise ValueError(f"no species found with prefix {prefix}")
         return None
 
     def extend_relationship(self, typedef: ReferenceHint, references: Iterable[Reference]) -> None:
